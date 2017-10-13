@@ -1,2 +1,0 @@
-adjustable_array.lo adjustable_array.o:  \
- ../../src/base/adjustable_array.c

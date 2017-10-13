@@ -1,1 +1,0 @@
-cci_test.o cci_test.o: ../../src/replication/cci_test.c

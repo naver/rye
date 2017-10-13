@@ -1,2 +1,0 @@
-wait_for_graph.lo wait_for_graph.o:  \
- ../../src/transaction/wait_for_graph.c

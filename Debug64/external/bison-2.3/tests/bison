@@ -1,8 +1,0 @@
-#! /bin/sh
-# tests/bison.  Generated from bison.in by configure.
-# Wrapper around a non installed bison to make it work as an installed one.
-
-# Use the shipped files, not those installed.
-BISON_PKGDATADIR='/home1/ksseo/workspace/naver-rye/Debug64/external/bison-2.3/tests/../../../../external/bison-2.3/data'
-export BISON_PKGDATADIR
-exec $PREBISON '/home1/ksseo/workspace/naver-rye/Debug64/external/bison-2.3/tests/.././src/bison' ${1+"$@"}
