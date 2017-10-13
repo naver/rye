@@ -25,7 +25,9 @@ $ make install
 #### Install
 
 ```bash
+$ cd releases
 $ tar xvfz RYE.tar.gz
+$ mv RYE $HOME
 $ export RYE=$HOME/RYE
 $ export RYE_DATABASES=$HOME/db
 $ export PATH=$RYE/bin:$PATH
