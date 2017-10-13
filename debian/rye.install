@@ -1,0 +1,2 @@
+debian/local/rye.sh /etc/profile.d/
+debian/local/rye.conf /etc/ld.so.conf.d/

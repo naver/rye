@@ -1,0 +1,89 @@
+src/lzo1x_d3.lo src/lzo1x_d3.o:  \
+ ../../../external/lzo-2.10/src/lzo1x_d3.c \
+  ../../../external/lzo-2.10/src/config1x.h \
+  ../../../external/lzo-2.10/src/lzo_conf.h \
+  ../../../external/lzo-2.10/include/lzo/lzoconf.h config.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/limits.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/syslimits.h \
+  /usr/include/limits.h /usr/include/features.h /usr/include/sys/cdefs.h \
+  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+  /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h \
+  /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
+  /usr/include/bits/posix2_lim.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
+  ../../../external/lzo-2.10/include/lzo/lzodefs.h /usr/include/string.h \
+  /usr/include/bits/string.h /usr/include/bits/string2.h \
+  /usr/include/endian.h /usr/include/bits/endian.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/stdlib.h ../../../external/lzo-2.10/src/lzo_supp.h \
+  /usr/include/assert.h ../../../external/lzo-2.10/src/lzo_func.h \
+  ../../../external/lzo-2.10/src/lzo_ptr.h \
+  ../../../external/lzo-2.10/include/lzo/lzo1x.h \
+  ../../../external/lzo-2.10/src/lzo1x_d.ch \
+  ../../../external/lzo-2.10/src/lzo1_d.ch
+
+../../../external/lzo-2.10/src/config1x.h:
+
+../../../external/lzo-2.10/src/lzo_conf.h:
+
+../../../external/lzo-2.10/include/lzo/lzoconf.h:
+
+config.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/limits.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/bits/posix1_lim.h:
+
+/usr/include/bits/local_lim.h:
+
+/usr/include/linux/limits.h:
+
+/usr/include/bits/posix2_lim.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+../../../external/lzo-2.10/include/lzo/lzodefs.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/stdlib.h:
+
+../../../external/lzo-2.10/src/lzo_supp.h:
+
+/usr/include/assert.h:
+
+../../../external/lzo-2.10/src/lzo_func.h:
+
+../../../external/lzo-2.10/src/lzo_ptr.h:
+
+../../../external/lzo-2.10/include/lzo/lzo1x.h:
+
+../../../external/lzo-2.10/src/lzo1x_d.ch:
+
+../../../external/lzo-2.10/src/lzo1_d.ch:

@@ -1,0 +1,57 @@
+fd-safer.o fd-safer.o: ../../../../external/bison-2.3/lib/fd-safer.c \
+  ../config.h ../../../../external/bison-2.3/lib/unistd-safer.h \
+  /usr/include/errno.h /usr/include/features.h /usr/include/sys/cdefs.h \
+  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+  /usr/include/gnu/stubs-64.h /usr/include/bits/errno.h \
+  /usr/include/linux/errno.h /usr/include/asm/errno.h \
+  /usr/include/asm-x86_64/errno.h /usr/include/asm-generic/errno.h \
+  /usr/include/asm-generic/errno-base.h /usr/include/unistd.h \
+  /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
+  /usr/include/bits/types.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
+  /usr/include/bits/typesizes.h /usr/include/bits/confname.h \
+  /usr/include/getopt.h
+
+../config.h:
+
+../../../../external/bison-2.3/lib/unistd-safer.h:
+
+/usr/include/errno.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/bits/errno.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/asm/errno.h:
+
+/usr/include/asm-x86_64/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/environments.h:
+
+/usr/include/bits/types.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/getopt.h:

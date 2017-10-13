@@ -1,0 +1,193 @@
+common.lo common.o:  \
+ ../../../../external/libedit-20120601-3.0/src/common.c ../config.h \
+  ../../../../external/libedit-20120601-3.0/src/sys.h \
+  /usr/include/sys/cdefs.h /usr/include/features.h \
+  /usr/include/gnu/stubs.h /usr/include/bits/wordsize.h \
+  /usr/include/gnu/stubs-64.h /usr/include/stdio.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
+  /usr/include/bits/wchar.h /usr/include/gconv.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdarg.h \
+  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+  /usr/include/bits/stdio.h \
+  ../../../../external/libedit-20120601-3.0/src/el.h \
+  ../../../../external/libedit-20120601-3.0/src/histedit.h \
+  /usr/include/sys/types.h /usr/include/time.h /usr/include/endian.h \
+  /usr/include/bits/endian.h /usr/include/sys/select.h \
+  /usr/include/bits/select.h /usr/include/bits/sigset.h \
+  /usr/include/bits/time.h /usr/include/sys/sysmacros.h \
+  /usr/include/bits/pthreadtypes.h /usr/include/xlocale.h \
+  /usr/include/wctype.h \
+  ../../../../external/libedit-20120601-3.0/src/chartype.h \
+  ../../../../external/libedit-20120601-3.0/src/tty.h \
+  ../../../../external/libedit-20120601-3.0/src/sys.h \
+  /usr/include/termios.h /usr/include/bits/termios.h \
+  /usr/include/sys/ttydefaults.h /usr/include/unistd.h \
+  /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
+  /usr/include/bits/confname.h /usr/include/getopt.h \
+  ../../../../external/libedit-20120601-3.0/src/prompt.h \
+  ../../../../external/libedit-20120601-3.0/src/keymacro.h \
+  ../../../../external/libedit-20120601-3.0/src/terminal.h \
+  ../../../../external/libedit-20120601-3.0/src/refresh.h \
+  ../../../../external/libedit-20120601-3.0/src/chared.h \
+  /usr/include/ctype.h /usr/include/string.h /usr/include/bits/string.h \
+  /usr/include/bits/string2.h /usr/include/stdlib.h common.h vi.h emacs.h \
+  ../../../../external/libedit-20120601-3.0/src/search.h fcns.h \
+  ../../../../external/libedit-20120601-3.0/src/hist.h \
+  ../../../../external/libedit-20120601-3.0/src/map.h \
+  ../../../../external/libedit-20120601-3.0/src/parse.h \
+  ../../../../external/libedit-20120601-3.0/src/sig.h \
+  /usr/include/signal.h /usr/include/bits/signum.h \
+  /usr/include/bits/siginfo.h /usr/include/bits/sigaction.h \
+  /usr/include/bits/sigcontext.h /usr/include/bits/sigstack.h \
+  /usr/include/sys/ucontext.h /usr/include/bits/sigthread.h help.h \
+  ../../../../external/libedit-20120601-3.0/src/read.h
+
+../config.h:
+
+../../../../external/libedit-20120601-3.0/src/sys.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/features.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/stdio.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/gconv.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdarg.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/bits/stdio.h:
+
+../../../../external/libedit-20120601-3.0/src/el.h:
+
+../../../../external/libedit-20120601-3.0/src/histedit.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/time.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/sys/sysmacros.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/xlocale.h:
+
+/usr/include/wctype.h:
+
+../../../../external/libedit-20120601-3.0/src/chartype.h:
+
+../../../../external/libedit-20120601-3.0/src/tty.h:
+
+../../../../external/libedit-20120601-3.0/src/sys.h:
+
+/usr/include/termios.h:
+
+/usr/include/bits/termios.h:
+
+/usr/include/sys/ttydefaults.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/environments.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/getopt.h:
+
+../../../../external/libedit-20120601-3.0/src/prompt.h:
+
+../../../../external/libedit-20120601-3.0/src/keymacro.h:
+
+../../../../external/libedit-20120601-3.0/src/terminal.h:
+
+../../../../external/libedit-20120601-3.0/src/refresh.h:
+
+../../../../external/libedit-20120601-3.0/src/chared.h:
+
+/usr/include/ctype.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/include/stdlib.h:
+
+common.h:
+
+vi.h:
+
+emacs.h:
+
+../../../../external/libedit-20120601-3.0/src/search.h:
+
+fcns.h:
+
+../../../../external/libedit-20120601-3.0/src/hist.h:
+
+../../../../external/libedit-20120601-3.0/src/map.h:
+
+../../../../external/libedit-20120601-3.0/src/parse.h:
+
+../../../../external/libedit-20120601-3.0/src/sig.h:
+
+/usr/include/signal.h:
+
+/usr/include/bits/signum.h:
+
+/usr/include/bits/siginfo.h:
+
+/usr/include/bits/sigaction.h:
+
+/usr/include/bits/sigcontext.h:
+
+/usr/include/bits/sigstack.h:
+
+/usr/include/sys/ucontext.h:
+
+/usr/include/bits/sigthread.h:
+
+help.h:
+
+../../../../external/libedit-20120601-3.0/src/read.h:

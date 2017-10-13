@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ -z "`getent group rye`" ]; then
+	groupadd -r rye
+fi
+if [ -z "`getent passwd rye`" ]; then
+	useradd -g rye -d /opt/rye -s /bin/bash -c "Rye user" rye
+fi
+
+mkdir -p /opt/rye/log
+mkdir -p /opt/rye/var
+mkdir -p /opt/rye/tmp
+mkdir -p /opt/rye/databases
+chown -R rye:rye /opt/rye
+
+ldconfig
+
+
+

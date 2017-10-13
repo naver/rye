@@ -1,0 +1,9 @@
+Rye Database Management System
+==========================
+Rye is a DBMS being supported by an active community of open source developers 
+and provides better performance and features necessary for Web services. 
+
+Rye is distributed under three licenses according to its component, 
+Database engine is under GPL v2 or later and 
+APIs and Connectors are under BSD license and
+Rye Web Manager is under GPL v3 or later.

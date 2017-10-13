@@ -1,0 +1,699 @@
+query_dump.lo query_dump.o: ../../src/query/query_dump.c ../config.h \
+  ../../include/system.h /usr/include/stdio.h /usr/include/features.h \
+  /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
+  /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
+  /usr/include/bits/wchar.h /usr/include/gconv.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdarg.h \
+  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+  /usr/include/bits/stdio.h /usr/include/sys/types.h /usr/include/time.h \
+  /usr/include/endian.h /usr/include/bits/endian.h \
+  /usr/include/sys/select.h /usr/include/bits/select.h \
+  /usr/include/bits/sigset.h /usr/include/bits/time.h \
+  /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
+  /usr/include/sys/stat.h /usr/include/bits/stat.h /usr/include/stdlib.h \
+  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
+  /usr/include/xlocale.h /usr/include/alloca.h /usr/include/string.h \
+  /usr/include/bits/string.h /usr/include/bits/string2.h \
+  /usr/include/strings.h /usr/include/inttypes.h /usr/include/stdint.h \
+  /usr/include/unistd.h /usr/include/bits/posix_opt.h \
+  /usr/include/bits/environments.h /usr/include/bits/confname.h \
+  ../../src/base/getopt.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/limits.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/syslimits.h \
+  /usr/include/limits.h /usr/include/bits/posix1_lim.h \
+  /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
+  /usr/include/bits/posix2_lim.h /usr/include/bits/xopen_lim.h \
+  /usr/include/sys/param.h /usr/include/linux/param.h \
+  /usr/include/asm/param.h /usr/include/asm-x86_64/param.h \
+  /usr/include/regex.h /usr/include/libgen.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdbool.h \
+  ../../src/base/error_manager.h ../config.h /usr/include/pthread.h \
+  /usr/include/sched.h /usr/include/bits/sched.h /usr/include/signal.h \
+  /usr/include/bits/setjmp.h ../../src/base/error_code.h \
+  ../../src/base/system_parameter.h ../../src/base/error_manager.h \
+  ../../src/base/porting.h /usr/include/netinet/in.h \
+  /usr/include/sys/socket.h /usr/include/sys/uio.h \
+  /usr/include/bits/uio.h /usr/include/bits/socket.h \
+  /usr/include/bits/sockaddr.h /usr/include/asm/socket.h \
+  /usr/include/asm-x86_64/socket.h /usr/include/asm/sockios.h \
+  /usr/include/asm-x86_64/sockios.h /usr/include/bits/in.h \
+  /usr/include/bits/byteswap.h /usr/include/err.h \
+  ../../src/base/ini_parser.h ../../src/base/object_representation.h \
+  /usr/include/setjmp.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/float.h \
+  ../../src/storage/storage_common.h ../config.h ../../src/base/porting.h \
+  ../../src/compat/dbdef.h ../../src/api/rye_api.h ../config.h \
+  ../../src/base/error_code.h ../../src/compat/dbtype.h ../config.h \
+  ../../src/compat/dbdef.h ../../src/storage/oid.h \
+  ../../src/storage/storage_common.h ../../src/compat/dbtype.h \
+  ../../src/storage/byte_order.h ../../src/base/memory_alloc.h \
+  /usr/include/assert.h ../../src/thread/thread.h \
+  ../../src/base/porting.h ../../src/base/error_manager.h \
+  ../../src/base/system_parameter.h ../../src/query/query_executor.h \
+  ../external/include/jansson.h ../external/include/jansson_config.h \
+  ../../src/base/memory_hash.h ../../src/storage/storage_common.h \
+  ../../src/storage/oid.h ../../src/transaction/lock_manager.h \
+  ../config.h ../../src/base/error_manager.h ../../src/storage/oid.h \
+  ../../src/storage/storage_common.h ../../src/transaction/locator.h \
+  ../../src/base/object_representation.h ../../src/thread/thread.h \
+  ../../src/transaction/log_comm.h ../../src/compat/dbdef.h \
+  ../../src/query/query_list.h ../../src/object/object_domain.h \
+  ../config.h ../../src/base/error_manager.h \
+  ../../src/base/object_representation.h ../../src/transaction/boot.h \
+  ../../src/base/porting.h ../../src/connection/connection_error.h \
+  /usr/include/errno.h /usr/include/bits/errno.h \
+  /usr/include/linux/errno.h /usr/include/asm/errno.h \
+  /usr/include/asm-x86_64/errno.h /usr/include/asm-generic/errno.h \
+  /usr/include/asm-generic/errno-base.h ../../src/thread/thread.h \
+  ../../src/base/error_manager.h ../../src/connection/connection_defs.h \
+  /usr/include/poll.h /usr/include/sys/poll.h /usr/include/bits/poll.h \
+  ../../src/base/porting.h ../../src/base/memory_alloc.h \
+  ../../src/thread/critical_section.h ../../src/thread/thread.h \
+  ../../src/transaction/boot.h ../../src/query/scan_manager.h \
+  ../../src/storage/btree.h ../../src/base/error_manager.h \
+  ../../src/storage/oid.h ../../src/storage/statistics.h \
+  ../../src/object/object_domain.h ../../src/storage/disk_manager.h \
+  ../../src/transaction/recovery.h ../../src/query/query_evaluator.h \
+  ../../src/compat/dbtype.h ../../src/query/string_opfunc.h \
+  ../../src/base/intl_support.h /usr/include/locale.h \
+  /usr/include/bits/locale.h ../../src/query/numeric_opfunc.h \
+  ../external/include/libregex38a/regex38a.h \
+  ../../src/base/language_support.h ../../src/base/intl_support.h \
+  ../../src/base/locale_support.h ../../src/base/locale_lib_common.h \
+  ../../src/query/query_list.h ../../src/parser/parser_support.h \
+  ../config.h ../../src/base/error_manager.h ../../src/storage/oid.h \
+  ../../src/storage/storage_common.h ../../src/compat/dbtype.h \
+  ../../src/storage/heap_file.h ../../src/transaction/locator.h \
+  ../../src/storage/file_manager.h ../../src/transaction/log_manager.h \
+  ../../src/transaction/log_impl.h /usr/include/bits/signum.h \
+  /usr/include/bits/siginfo.h /usr/include/bits/sigaction.h \
+  /usr/include/bits/sigcontext.h /usr/include/bits/sigstack.h \
+  /usr/include/sys/ucontext.h /usr/include/bits/sigthread.h \
+  ../../src/transaction/log_compress.h ../../src/base/memory_alloc.h \
+  ../external/include/lzo/lzoconf.h ../external/include/lzo/lzodefs.h \
+  ../external/include/lzo/lzo1x.h ../../src/transaction/recovery.h \
+  ../../src/thread/critical_section.h ../../src/base/release_string.h \
+  ../../src/storage/file_io.h ../../src/base/release_string.h \
+  ../../src/base/memory_hash.h ../external/include/lzo/lzoconf.h \
+  ../external/include/lzo/lzo1x.h ../../src/thread/thread.h \
+  ../../src/storage/file_io_lock.h ../../src/transaction/lock_manager.h \
+  ../../src/connection/connection_globals.h ../../src/storage/backup.h \
+  ../../src/storage/file_io.h ../../src/connection/connection_defs.h \
+  ../../src/storage/disk_manager.h ../../src/storage/slotted_page.h \
+  ../../src/base/object_representation_sr.h \
+  ../../src/storage/system_catalog.h ../../src/base/memory_alloc.h \
+  ../../src/base/object_representation.h \
+  ../../src/storage/system_catalog.h ../../src/storage/page_buffer.h \
+  ../../src/transaction/lock_manager.h ../../src/thread/thread.h \
+  ../../src/base/binaryheap.h ../../src/storage/heap_file.h \
+  ../../src/compat/db.h ../../src/base/error_manager.h \
+  ../../src/compat/dbi.h ../../src/base/error_code.h \
+  ../../src/compat/dbtype.h ../../src/compat/db_date.h \
+  ../../src/compat/db_query.h ../../src/object/object_primitive.h \
+  ../../src/object/object_domain.h ../../src/object/class_object.h \
+  ../../src/object/work_space.h ../../src/storage/oid.h \
+  ../../src/storage/storage_common.h ../../src/compat/dbtype.h \
+  ../../src/compat/dbdef.h ../../src/object/quick_fit.h \
+  ../../src/transaction/locator.h ../../src/object/object_primitive.h \
+  ../../src/storage/statistics.h ../../src/query/cursor.h \
+  ../../src/compat/dbdef.h ../../src/object/object_primitive.h \
+  ../../src/base/ini_parser.h ../../src/base/intl_support.h \
+  ../../src/base/object_representation.h ../../src/object/object_domain.h \
+  ../../src/transaction/log_comm.h ../../src/parser/parser.h \
+  ../../src/compat/dbdef.h ../../src/parser/parse_tree.h \
+  ../external/include/jansson.h ../../src/query/query_evaluator.h \
+  ../../src/query/cursor.h ../../src/query/string_opfunc.h \
+  ../../src/base/message_catalog.h ../../src/object/authenticate.h \
+  ../../src/object/class_object.h ../../src/base/system_parameter.h \
+  ../../src/query/query_opfunc.h ../../src/base/memory_alloc.h \
+  ../../src/query/query_evaluator.h ../../src/parser/parse_tree.h \
+  ../../src/storage/external_sort.h ../../src/query/query_list.h \
+  ../../src/replication/repl.h ../../src/replication/repl_page_buffer.h \
+  ../../src/storage/storage_common.h ../../src/transaction/log_impl.h \
+  ../../src/replication/repl_common.h ../../src/compat/dbtype.h \
+  ../../src/cci/cas_cci.h ../../src/broker/cas_error.h \
+  ../../src/object/class_object.h ../../src/base/system_parameter.h \
+  ../../src/base/perf_monitor.h /usr/include/sys/time.h
+
+../config.h:
+
+../../include/system.h:
+
+/usr/include/stdio.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/gconv.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdarg.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/bits/stdio.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/time.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/sys/sysmacros.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/sys/stat.h:
+
+/usr/include/bits/stat.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/bits/waitflags.h:
+
+/usr/include/bits/waitstatus.h:
+
+/usr/include/xlocale.h:
+
+/usr/include/alloca.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/include/strings.h:
+
+/usr/include/inttypes.h:
+
+/usr/include/stdint.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/environments.h:
+
+/usr/include/bits/confname.h:
+
+../../src/base/getopt.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/limits.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/bits/posix1_lim.h:
+
+/usr/include/bits/local_lim.h:
+
+/usr/include/linux/limits.h:
+
+/usr/include/bits/posix2_lim.h:
+
+/usr/include/bits/xopen_lim.h:
+
+/usr/include/sys/param.h:
+
+/usr/include/linux/param.h:
+
+/usr/include/asm/param.h:
+
+/usr/include/asm-x86_64/param.h:
+
+/usr/include/regex.h:
+
+/usr/include/libgen.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdbool.h:
+
+../../src/base/error_manager.h:
+
+../config.h:
+
+/usr/include/pthread.h:
+
+/usr/include/sched.h:
+
+/usr/include/bits/sched.h:
+
+/usr/include/signal.h:
+
+/usr/include/bits/setjmp.h:
+
+../../src/base/error_code.h:
+
+../../src/base/system_parameter.h:
+
+../../src/base/error_manager.h:
+
+../../src/base/porting.h:
+
+/usr/include/netinet/in.h:
+
+/usr/include/sys/socket.h:
+
+/usr/include/sys/uio.h:
+
+/usr/include/bits/uio.h:
+
+/usr/include/bits/socket.h:
+
+/usr/include/bits/sockaddr.h:
+
+/usr/include/asm/socket.h:
+
+/usr/include/asm-x86_64/socket.h:
+
+/usr/include/asm/sockios.h:
+
+/usr/include/asm-x86_64/sockios.h:
+
+/usr/include/bits/in.h:
+
+/usr/include/bits/byteswap.h:
+
+/usr/include/err.h:
+
+../../src/base/ini_parser.h:
+
+../../src/base/object_representation.h:
+
+/usr/include/setjmp.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/float.h:
+
+../../src/storage/storage_common.h:
+
+../config.h:
+
+../../src/base/porting.h:
+
+../../src/compat/dbdef.h:
+
+../../src/api/rye_api.h:
+
+../config.h:
+
+../../src/base/error_code.h:
+
+../../src/compat/dbtype.h:
+
+../config.h:
+
+../../src/compat/dbdef.h:
+
+../../src/storage/oid.h:
+
+../../src/storage/storage_common.h:
+
+../../src/compat/dbtype.h:
+
+../../src/storage/byte_order.h:
+
+../../src/base/memory_alloc.h:
+
+/usr/include/assert.h:
+
+../../src/thread/thread.h:
+
+../../src/base/porting.h:
+
+../../src/base/error_manager.h:
+
+../../src/base/system_parameter.h:
+
+../../src/query/query_executor.h:
+
+../external/include/jansson.h:
+
+../external/include/jansson_config.h:
+
+../../src/base/memory_hash.h:
+
+../../src/storage/storage_common.h:
+
+../../src/storage/oid.h:
+
+../../src/transaction/lock_manager.h:
+
+../config.h:
+
+../../src/base/error_manager.h:
+
+../../src/storage/oid.h:
+
+../../src/storage/storage_common.h:
+
+../../src/transaction/locator.h:
+
+../../src/base/object_representation.h:
+
+../../src/thread/thread.h:
+
+../../src/transaction/log_comm.h:
+
+../../src/compat/dbdef.h:
+
+../../src/query/query_list.h:
+
+../../src/object/object_domain.h:
+
+../config.h:
+
+../../src/base/error_manager.h:
+
+../../src/base/object_representation.h:
+
+../../src/transaction/boot.h:
+
+../../src/base/porting.h:
+
+../../src/connection/connection_error.h:
+
+/usr/include/errno.h:
+
+/usr/include/bits/errno.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/asm/errno.h:
+
+/usr/include/asm-x86_64/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+../../src/thread/thread.h:
+
+../../src/base/error_manager.h:
+
+../../src/connection/connection_defs.h:
+
+/usr/include/poll.h:
+
+/usr/include/sys/poll.h:
+
+/usr/include/bits/poll.h:
+
+../../src/base/porting.h:
+
+../../src/base/memory_alloc.h:
+
+../../src/thread/critical_section.h:
+
+../../src/thread/thread.h:
+
+../../src/transaction/boot.h:
+
+../../src/query/scan_manager.h:
+
+../../src/storage/btree.h:
+
+../../src/base/error_manager.h:
+
+../../src/storage/oid.h:
+
+../../src/storage/statistics.h:
+
+../../src/object/object_domain.h:
+
+../../src/storage/disk_manager.h:
+
+../../src/transaction/recovery.h:
+
+../../src/query/query_evaluator.h:
+
+../../src/compat/dbtype.h:
+
+../../src/query/string_opfunc.h:
+
+../../src/base/intl_support.h:
+
+/usr/include/locale.h:
+
+/usr/include/bits/locale.h:
+
+../../src/query/numeric_opfunc.h:
+
+../external/include/libregex38a/regex38a.h:
+
+../../src/base/language_support.h:
+
+../../src/base/intl_support.h:
+
+../../src/base/locale_support.h:
+
+../../src/base/locale_lib_common.h:
+
+../../src/query/query_list.h:
+
+../../src/parser/parser_support.h:
+
+../config.h:
+
+../../src/base/error_manager.h:
+
+../../src/storage/oid.h:
+
+../../src/storage/storage_common.h:
+
+../../src/compat/dbtype.h:
+
+../../src/storage/heap_file.h:
+
+../../src/transaction/locator.h:
+
+../../src/storage/file_manager.h:
+
+../../src/transaction/log_manager.h:
+
+../../src/transaction/log_impl.h:
+
+/usr/include/bits/signum.h:
+
+/usr/include/bits/siginfo.h:
+
+/usr/include/bits/sigaction.h:
+
+/usr/include/bits/sigcontext.h:
+
+/usr/include/bits/sigstack.h:
+
+/usr/include/sys/ucontext.h:
+
+/usr/include/bits/sigthread.h:
+
+../../src/transaction/log_compress.h:
+
+../../src/base/memory_alloc.h:
+
+../external/include/lzo/lzoconf.h:
+
+../external/include/lzo/lzodefs.h:
+
+../external/include/lzo/lzo1x.h:
+
+../../src/transaction/recovery.h:
+
+../../src/thread/critical_section.h:
+
+../../src/base/release_string.h:
+
+../../src/storage/file_io.h:
+
+../../src/base/release_string.h:
+
+../../src/base/memory_hash.h:
+
+../external/include/lzo/lzoconf.h:
+
+../external/include/lzo/lzo1x.h:
+
+../../src/thread/thread.h:
+
+../../src/storage/file_io_lock.h:
+
+../../src/transaction/lock_manager.h:
+
+../../src/connection/connection_globals.h:
+
+../../src/storage/backup.h:
+
+../../src/storage/file_io.h:
+
+../../src/connection/connection_defs.h:
+
+../../src/storage/disk_manager.h:
+
+../../src/storage/slotted_page.h:
+
+../../src/base/object_representation_sr.h:
+
+../../src/storage/system_catalog.h:
+
+../../src/base/memory_alloc.h:
+
+../../src/base/object_representation.h:
+
+../../src/storage/system_catalog.h:
+
+../../src/storage/page_buffer.h:
+
+../../src/transaction/lock_manager.h:
+
+../../src/thread/thread.h:
+
+../../src/base/binaryheap.h:
+
+../../src/storage/heap_file.h:
+
+../../src/compat/db.h:
+
+../../src/base/error_manager.h:
+
+../../src/compat/dbi.h:
+
+../../src/base/error_code.h:
+
+../../src/compat/dbtype.h:
+
+../../src/compat/db_date.h:
+
+../../src/compat/db_query.h:
+
+../../src/object/object_primitive.h:
+
+../../src/object/object_domain.h:
+
+../../src/object/class_object.h:
+
+../../src/object/work_space.h:
+
+../../src/storage/oid.h:
+
+../../src/storage/storage_common.h:
+
+../../src/compat/dbtype.h:
+
+../../src/compat/dbdef.h:
+
+../../src/object/quick_fit.h:
+
+../../src/transaction/locator.h:
+
+../../src/object/object_primitive.h:
+
+../../src/storage/statistics.h:
+
+../../src/query/cursor.h:
+
+../../src/compat/dbdef.h:
+
+../../src/object/object_primitive.h:
+
+../../src/base/ini_parser.h:
+
+../../src/base/intl_support.h:
+
+../../src/base/object_representation.h:
+
+../../src/object/object_domain.h:
+
+../../src/transaction/log_comm.h:
+
+../../src/parser/parser.h:
+
+../../src/compat/dbdef.h:
+
+../../src/parser/parse_tree.h:
+
+../external/include/jansson.h:
+
+../../src/query/query_evaluator.h:
+
+../../src/query/cursor.h:
+
+../../src/query/string_opfunc.h:
+
+../../src/base/message_catalog.h:
+
+../../src/object/authenticate.h:
+
+../../src/object/class_object.h:
+
+../../src/base/system_parameter.h:
+
+../../src/query/query_opfunc.h:
+
+../../src/base/memory_alloc.h:
+
+../../src/query/query_evaluator.h:
+
+../../src/parser/parse_tree.h:
+
+../../src/storage/external_sort.h:
+
+../../src/query/query_list.h:
+
+../../src/replication/repl.h:
+
+../../src/replication/repl_page_buffer.h:
+
+../../src/storage/storage_common.h:
+
+../../src/transaction/log_impl.h:
+
+../../src/replication/repl_common.h:
+
+../../src/compat/dbtype.h:
+
+../../src/cci/cas_cci.h:
+
+../../src/broker/cas_error.h:
+
+../../src/object/class_object.h:
+
+../../src/base/system_parameter.h:
+
+../../src/base/perf_monitor.h:
+
+/usr/include/sys/time.h:

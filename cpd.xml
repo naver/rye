@@ -1,0 +1,8 @@
+<target name="cpd">
+    <taskdef name="cpd" classname="net.sourceforge.pmd.cpd.CPDTask" />
+    <cpd minimumTokenCount="100"
+        language="c"
+        ignoreIdentifiers="true"
+        ignoreLiterals="true">
+    </cpd>
+</target>

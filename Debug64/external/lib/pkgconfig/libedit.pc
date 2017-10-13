@@ -1,0 +1,12 @@
+prefix=/home1/ksseo/workspace/naver-rye/Debug64/external/libedit-20120601-3.0/..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libedit
+Description: command line editor library provides generic line editing, history, and tokenization functions.
+Version: 3.0
+Requires:
+Libs: -L${libdir} -ledit -lcurses 
+Cflags: -I${includedir} -I${includedir}/editline
+

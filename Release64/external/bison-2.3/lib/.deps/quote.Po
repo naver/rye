@@ -1,0 +1,12 @@
+quote.o quote.o: ../../../../external/bison-2.3/lib/quote.c ../config.h \
+  ../../../../external/bison-2.3/lib/quotearg.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
+  ../../../../external/bison-2.3/lib/quote.h
+
+../config.h:
+
+../../../../external/bison-2.3/lib/quotearg.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+../../../../external/bison-2.3/lib/quote.h:

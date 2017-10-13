@@ -1,0 +1,3 @@
+#!/bin/sh
+export RYE_BROKER=$RYE
+exec $RYE/bin/rye_broker $*

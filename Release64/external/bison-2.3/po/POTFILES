@@ -1,0 +1,22 @@
+     ../../../../external/bison-2.3/src/complain.c \
+     ../../../../external/bison-2.3/src/conflicts.c \
+     ../../../../external/bison-2.3/src/files.c \
+     ../../../../external/bison-2.3/src/getargs.c \
+     ../../../../external/bison-2.3/src/gram.c \
+     ../../../../external/bison-2.3/src/main.c \
+     ../../../../external/bison-2.3/src/parse-gram.y \
+     ../../../../external/bison-2.3/src/print.c \
+     ../../../../external/bison-2.3/src/reader.c \
+     ../../../../external/bison-2.3/src/reduce.c \
+     ../../../../external/bison-2.3/src/scan-gram.l \
+     ../../../../external/bison-2.3/src/symlist.c \
+     ../../../../external/bison-2.3/src/symtab.c \
+     ../../../../external/bison-2.3/lib/argmatch.c \
+     ../../../../external/bison-2.3/lib/bitset_stats.c \
+     ../../../../external/bison-2.3/lib/error.c \
+     ../../../../external/bison-2.3/lib/getopt.c \
+     ../../../../external/bison-2.3/lib/obstack.c \
+     ../../../../external/bison-2.3/lib/quotearg.c \
+     ../../../../external/bison-2.3/lib/subpipe.c \
+     ../../../../external/bison-2.3/lib/timevar.c \
+     ../../../../external/bison-2.3/lib/xalloc-die.c

@@ -1,0 +1,6 @@
+mpih-lshift-asm.lo mpih-lshift-asm.o: mpih-lshift-asm.S sysdep.h \
+  asm-syntax.h
+
+sysdep.h:
+
+asm-syntax.h:

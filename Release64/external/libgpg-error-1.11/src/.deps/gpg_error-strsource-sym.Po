@@ -1,0 +1,12 @@
+gpg_error-strsource-sym.o gpg_error-strsource-sym.o:  \
+ ../../../../external/libgpg-error-1.11/src/strsource-sym.c ../config.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h gpg-error.h \
+  err-sources-sym.h
+
+../config.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+gpg-error.h:
+
+err-sources-sym.h:

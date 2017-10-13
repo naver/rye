@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+
+<project default="dist-rye" name="Rye JDBC Driver">
+    <property name="rye-jar-file" value="JDBC-${version}-rye.jar"/>
+    <property name="bin-rye" value="bin-rye"/>
+    <property name="src-rye" value="src-rye"/>
+    <property name="src" value="."/>
+
+    <target name="init">
+        <available property="jdk1.3+" classname="java.lang.StrictMath"/>
+        <available property="jdk1.4+" classname="java.lang.CharSequence"/>
+        <available property="jdk1.5+" classname="java.lang.Readable"/>
+        <available property="jdk1.6+" classname="java.sql.NClob"/>
+
+        <condition property="isUnderJDK6">
+            <not>
+                <equals arg1="${jdk1.6+}" arg2="true" />
+            </not>
+        </condition>
+
+        <condition property="isJDK6">
+            <equals arg1="${ant.java.version}" arg2="1.6" />
+        </condition>
+
+        <mkdir dir="src"/>
+        <copy todir="src">
+            <fileset dir="${src}" excludes="**/.svn">
+                <include name="rye/**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="init-jdk6" depends="init" if="isUnderJDK6">
+        <copy todir="src">
+            <fileset dir="${src}" excludes="**/.svn">
+                <include name="java/**/*.java"/>
+                <include name="javax/**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="clean">
+        <delete failonerror="false" includeEmptyDirs="true">
+            <fileset dir="${bin-rye}"/>
+            <fileset dir="src"/>
+            <fileset dir="${src-rye}"/>
+            <fileset file="*.jar"/>
+        </delete>
+    </target>
+
+    <target name="dist-rye" depends="build-rye">
+        <jar jarfile="${rye-jar-file}">
+        <fileset dir="${bin-rye}"/>
+        <fileset file="${src}/sql-error-codes.xml"/>
+	<fileset file="src/Rye-JDBC-${version}"/>
+    </jar>
+    </target>
+
+    <target name="build-rye" depends="compile-rye">
+    </target>
+
+    <target name="compile-rye" depends="src-rye">
+        <javac destdir="${bin-rye}" source="1.6" target="1.6" encoding="EUC-KR" debug="true" debuglevel="lines,source" deprecation="off" includeantruntime="no">
+            <src path="${src-rye}"/>
+            <include name="**/*.java"/>
+        </javac>
+    </target>
+
+    <target name="src-rye" depends="init-jdk6">
+        <mkdir dir="${bin-rye}"/>
+        <mkdir dir="${src-rye}"/>
+        <copy file="src/Rye-JDBC-${version}" tofile="${src-rye}/Rye-JDBC-${version}"/>
+        <copy todir="${src-rye}" filtering="true">
+            <fileset dir="src">
+                <include name="**/*.java"/>
+            </fileset>
+            <filterset>
+                <filter token="JDBC_DRIVER_VERSION_STRING" value="${version}"/>
+            </filterset>
+        </copy>
+        <jar jarfile="JDBC-${version}-rye-src.jar">
+            <fileset dir="${src-rye}"/>
+            <fileset file="${src}/sql-error-codes.xml"/>
+	    <fileset file="src/Rye-JDBC-${version}"/>
+        </jar>
+    </target>
+</project>
+

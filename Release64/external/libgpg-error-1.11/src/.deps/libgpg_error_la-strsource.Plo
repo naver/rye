@@ -1,0 +1,37 @@
+libgpg_error_la-strsource.lo libgpg_error_la-strsource.o:  \
+ ../../../../external/libgpg-error-1.11/src/strsource.c ../config.h \
+  gpg-error.h /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
+  ../../../../external/libgpg-error-1.11/src/gettext.h \
+  /usr/include/libintl.h /usr/include/features.h /usr/include/sys/cdefs.h \
+  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+  /usr/include/gnu/stubs-64.h /usr/include/locale.h \
+  /usr/include/bits/locale.h /usr/include/xlocale.h \
+  ../../../../external/libgpg-error-1.11/src/err-sources.h
+
+../config.h:
+
+gpg-error.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+../../../../external/libgpg-error-1.11/src/gettext.h:
+
+/usr/include/libintl.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/locale.h:
+
+/usr/include/bits/locale.h:
+
+/usr/include/xlocale.h:
+
+../../../../external/libgpg-error-1.11/src/err-sources.h:

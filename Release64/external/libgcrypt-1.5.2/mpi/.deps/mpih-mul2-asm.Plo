@@ -1,0 +1,5 @@
+mpih-mul2-asm.lo mpih-mul2-asm.o: mpih-mul2-asm.S sysdep.h asm-syntax.h
+
+sysdep.h:
+
+asm-syntax.h:

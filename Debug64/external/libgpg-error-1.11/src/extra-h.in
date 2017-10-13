@@ -1,0 +1,7 @@
+/* The version string of this header. */
+#define GPG_ERROR_VERSION "1.11"
+
+/* The version number of this header. */
+#define GPG_ERROR_VERSION_NUMBER 0x010b00
+
+EOF

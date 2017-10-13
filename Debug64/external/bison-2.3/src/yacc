@@ -1,0 +1,2 @@
+#! /bin/sh
+exec /home1/ksseo/workspace/naver-rye/Debug64/external/bison-2.3/../bin/bison -y "$@"

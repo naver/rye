@@ -1,0 +1,6 @@
+#!/bin/sh
+
+if [ ! -z "`getent passwd rye`" ] && [ -e /opt/rye/bin/rye ]; then
+	su - rye -c "rye service stop"
+fi
+
