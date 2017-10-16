@@ -25,8 +25,7 @@ $ make install
 #### Install
 
 ```bash
-$ cd releases
-$ tar xvfz RYE.tar.gz
+$ tar xvfz RYE.1.0.0.0610.tar.gz
 $ mv RYE $HOME
 $ export RYE=$HOME/RYE
 $ export RYE_DATABASES=$HOME/db
@@ -35,8 +34,7 @@ $ export LD_LIBRARY_PATH=$RYE/lib:$LD_LIBRARY_PATH
 $ export CLASSPATH=$RYE/jdbc/rye_jdbc.jar:$CLASS_PATH
 $ rye --version
 rye (Rye utilities)
-Rye 1.0 (1.0.0.0610) (64bit release build for linux_gnu) (Oct 13 2017 16:11:58)
-Copyright (C) 2008 Search Solution Corporation. All rights reserved by Search Solution.
+Rye 1.0 (1.0.0.0610) (64bit release build for linux_gnu) (Oct 16 2017 16:20:53)
 ```
 
 #### Run
