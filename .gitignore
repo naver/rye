@@ -1,12 +1,6 @@
 .browse.VC*
-Makefile.in
 Debug
-aclocal.m4
 autom4te.cache
-config.h.in
-bison.info
-stamp-vti
-version.texi
 rsql_grammar.c
 rsql_grammar.h
 rsql_grammar.output
