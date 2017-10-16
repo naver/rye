@@ -4,7 +4,6 @@ Debug
 aclocal.m4
 autom4te.cache
 config.h.in
-configure
 bison.info
 stamp-vti
 version.texi
