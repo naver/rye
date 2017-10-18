@@ -1,5 +1,7 @@
 .browse.VC*
 Debug
+Debug64
+Release64
 autom4te.cache
 rsql_grammar.c
 rsql_grammar.h
