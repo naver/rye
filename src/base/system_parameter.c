@@ -592,7 +592,7 @@ static bool prm_bt_index_scan_oid_order_default = false;
 static unsigned int prm_bt_index_scan_oid_order_flag = 0;
 
 INT64 PRM_BOSR_MAXTMP_SIZE = INT_MIN;
-static INT64 prm_bosr_maxtmp_size = -1;	/* Infinite */
+static INT64 prm_bosr_maxtmp_size_default = -1;	/* Infinite */
 static unsigned int prm_bosr_maxtmp_flag = 0;
 
 INT64 PRM_LK_TIMEOUT = -1;
@@ -1327,6 +1327,7 @@ static unsigned int prm_ha_node_myself_flag = 0;
 typedef struct sysprm_param SYSPRM_PARAM;
 struct sysprm_param
 {
+  PARAM_ID param_id;
   const char *name;		/* the keyword expected */
   unsigned int static_flag;	/* bitmask flag representing status words */
   SYSPRM_DATATYPE datatype;	/* value data type */
@@ -1338,1432 +1339,12 @@ struct sysprm_param
   char *force_value;		/* address of (pointer to) force value string */
 };
 
-static SYSPRM_PARAM prm_Def[] = {
-  {PRM_NAME_ER_LOG_DEBUG,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_er_log_debug_flag,
-   (void *) &prm_er_log_debug_default,
-   (void *) &PRM_ER_LOG_DEBUG,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ER_LOG_LEVEL,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_KEYWORD,
-   (void *) &prm_er_log_level_flag,
-   (void *) &prm_er_log_level_default,
-   (void *) &PRM_ER_LOG_LEVEL,
-   (void *) &prm_er_log_level_upper, (void *) &prm_er_log_level_lower,
-   (char *) NULL},
-  {PRM_NAME_ER_LOG_WARNING,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_er_log_warning_flag,
-   (void *) &prm_er_log_warning_default,
-   (void *) &PRM_ER_LOG_WARNING,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ER_EXIT_ASK,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_er_exit_ask_flag,
-   (void *) &prm_er_exit_ask_default,
-   (void *) &PRM_ER_EXIT_ASK,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ER_LOG_SIZE,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_er_log_size_flag,
-   (void *) &prm_er_log_size_default,
-   (void *) &PRM_ER_LOG_SIZE,
-   (void *) NULL, (void *) &prm_er_log_size_lower,
-   (char *) NULL},
-  {PRM_NAME_ER_LOG_FILE,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER),
-   PRM_STRING,
-   (void *) &prm_er_log_file_flag,
-   (void *) &prm_er_log_file_default,
-   (void *) &PRM_ER_LOG_FILE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ACCESS_IP_CONTROL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_access_ip_control_flag,
-   (void *) &prm_access_ip_control_default,
-   (void *) &PRM_ACCESS_IP_CONTROL,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ACCESS_IP_CONTROL_FILE,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_STRING,
-   (void *) &prm_access_ip_control_file_flag,
-   (void *) &prm_access_ip_control_file_default,
-   (void *) &PRM_ACCESS_IP_CONTROL_FILE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_IO_LOCKF_ENABLE,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_io_lockf_enable_flag,
-   (void *) &prm_io_lockf_enable_default,
-   (void *) &PRM_IO_LOCKF_ENABLE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_SORT_BUFFER_SIZE,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_sort_buffer_size_flag,
-   (void *) &prm_sort_buffer_size_default,
-   (void *) &PRM_SORT_BUFFER_SIZE,
-   (void *) NULL, (void *) &prm_sort_buffer_size_lower,
-   (char *) NULL},
-  {PRM_NAME_PB_BUFFER_FLUSH_RATIO,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_FLOAT,
-   (void *) &prm_pb_buffer_flush_ratio_flag,
-   (void *) &prm_pb_buffer_flush_ratio_default,
-   (void *) &PRM_PB_BUFFER_FLUSH_RATIO,
-   (void *) &prm_pb_buffer_flush_ratio_upper,
-   (void *) &prm_pb_buffer_flush_ratio_lower,
-   (char *) NULL},
-  {PRM_NAME_PAGE_BUFFER_SIZE,
-   (PRM_FOR_SERVER | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_page_buffer_size_flag,
-   (void *) &prm_page_buffer_size_default,
-   (void *) &PRM_PAGE_BUFFER_SIZE,
-   (void *) NULL, (void *) &prm_page_buffer_size_lower,
-   (char *) NULL},
-  {PRM_NAME_HF_MAX_BESTSPACE_ENTRIES,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_hf_max_bestspace_entries_flag,
-   (void *) &prm_hf_max_bestspace_entries_default,
-   (void *) &PRM_HF_MAX_BESTSPACE_ENTRIES,
-   (void *) NULL, &prm_hf_max_bestspace_entries_lower,
-   (char *) NULL},
-  {PRM_NAME_BT_UNFILL_FACTOR,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_FLOAT,
-   (void *) &prm_bt_unfill_factor_flag,
-   (void *) &prm_bt_unfill_factor_default,
-   (void *) &PRM_BT_UNFILL_FACTOR,
-   (void *) &prm_bt_unfill_factor_upper, (void *) &prm_bt_unfill_factor_lower,
-   (char *) NULL},
-  {PRM_NAME_BT_OID_BUFFER_SIZE,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_bt_oid_buffer_size_flag,
-   (void *) &prm_bt_oid_buffer_size_default,
-   (void *) &PRM_BT_OID_BUFFER_SIZE,
-   (void *) &prm_bt_oid_buffer_size_upper,
-   (void *) &prm_bt_oid_buffer_size_lower,
-   (char *) NULL},
-  {PRM_NAME_BT_INDEX_SCAN_OID_ORDER,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_bt_index_scan_oid_order_flag,
-   (void *) &prm_bt_index_scan_oid_order_default,
-   (void *) &PRM_BT_INDEX_SCAN_OID_ORDER,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_BOSR_MAXTMP_SIZE,
-   (PRM_FOR_SERVER | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_bosr_maxtmp_flag,
-   (void *) &prm_bosr_maxtmp_size,
-   (void *) &PRM_BOSR_MAXTMP_SIZE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_LK_TIMEOUT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_lk_timeout_flag,
-   (void *) &prm_lk_timeout_default,
-   (void *) &PRM_LK_TIMEOUT,
-   (void *) &prm_lk_timeout_upper,
-   (void *) &prm_lk_timeout_lower,
-   (char *) NULL},
-  {PRM_NAME_LK_RUN_DEADLOCK_INTERVAL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_FLOAT,
-   (void *) &prm_lk_run_deadlock_interval_flag,
-   (void *) &prm_lk_run_deadlock_interval_default,
-   (void *) &PRM_LK_RUN_DEADLOCK_INTERVAL,
-   (void *) NULL, (void *) &prm_lk_run_deadlock_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_LOG_BUFFER_SIZE,
-   (PRM_FOR_SERVER | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_log_buffer_size_flag,
-   (void *) &prm_log_buffer_size_default,
-   (void *) &PRM_LOG_BUFFER_SIZE,
-   (void *) NULL, (void *) &prm_log_buffer_size_lower,
-   (char *) NULL},
-  {PRM_NAME_LOG_CHECKPOINT_SIZE,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_log_checkpoint_size_flag,
-   (void *) &prm_log_checkpoint_size_default,
-   (void *) &PRM_LOG_CHECKPOINT_SIZE,
-   (void *) NULL, (void *) &prm_log_checkpoint_size_lower,
-   (char *) NULL},
-  {PRM_NAME_LOG_CHECKPOINT_INTERVAL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_log_checkpoint_interval_flag,
-   (void *) &prm_log_checkpoint_interval_default,
-   (void *) &PRM_LOG_CHECKPOINT_INTERVAL,
-   (void *) NULL, (void *) &prm_log_checkpoint_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_LOG_CHECKPOINT_FLUSH_INTERVAL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT | PRM_HIDDEN),
-   PRM_BIGINT,
-   (void *) &prm_log_checkpoint_flush_interval_flag,
-   (void *) &prm_log_checkpoint_flush_interval_default,
-   (void *) &PRM_LOG_CHECKPOINT_FLUSH_INTERVAL,
-   (void *) NULL, (void *) &prm_log_checkpoint_flush_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_COMMIT_ON_SHUTDOWN,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_commit_on_shutdown_flag,
-   (void *) &prm_commit_on_shutdown_default,
-   (void *) &PRM_COMMIT_ON_SHUTDOWN,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_SHUTDOWN_WAIT_TIME,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT | PRM_HIDDEN),
-   PRM_BIGINT,
-   (void *) &prm_shutdown_wait_time_flag,
-   (void *) &prm_shutdown_wait_time_default,
-   (void *) &PRM_SHUTDOWN_WAIT_TIME,
-   (void *) NULL, (void *) &prm_shutdown_wait_time_lower,
-   (char *) NULL},
-  {PRM_NAME_RSQL_AUTO_COMMIT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_rsql_auto_commit_flag,
-   (void *) &prm_rsql_auto_commit_default,
-   (void *) &PRM_RSQL_AUTO_COMMIT,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_WS_HASHTABLE_SIZE,
-   (PRM_FOR_CLIENT | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_ws_hashtable_size_flag,
-   (void *) &prm_ws_hashtable_size_default,
-   (void *) &PRM_WS_HASHTABLE_SIZE,
-   (void *) NULL, (void *) &prm_ws_hashtable_size_lower,
-   (char *) NULL},
-  {PRM_NAME_WS_MEMORY_REPORT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_ws_memory_report_flag,
-   (void *) &prm_ws_memory_report_default,
-   (void *) &PRM_WS_MEMORY_REPORT,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_TCP_PORT_ID,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER),
-   PRM_INTEGER,
-   (void *) &prm_tcp_port_id_flag,
-   (void *) &prm_tcp_port_id_default,
-   (void *) &PRM_TCP_PORT_ID,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_TCP_CONNECTION_TIMEOUT,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_tcp_connection_timeout_flag,
-   (void *) &prm_tcp_connection_timeout_default,
-   (void *) &PRM_TCP_CONNECTION_TIMEOUT,
-   (void *) NULL, (void *) &prm_tcp_connection_timeout_lower,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZATION_LEVEL,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_optimization_level_flag,
-   (void *) &prm_optimization_level_default,
-   (void *) &PRM_OPTIMIZATION_LEVEL,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_QO_DUMP,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_qo_dump_flag,
-   (void *) &prm_qo_dump_default,
-   (void *) &PRM_QO_DUMP,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_THREAD_STACKSIZE,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_thread_stacksize_flag,
-   (void *) &prm_thread_stacksize_default,
-   (void *) &PRM_THREAD_STACKSIZE,
-   (void *) &prm_thread_stacksize_upper,
-   (void *) &prm_thread_stacksize_lower,
-   (char *) NULL},
-  {PRM_NAME_IO_BACKUP_NBUFFERS,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_io_backup_nbuffers_flag,
-   (void *) &prm_io_backup_nbuffers_default,
-   (void *) &PRM_IO_BACKUP_NBUFFERS,
-   (void *) NULL, (void *) &prm_io_backup_nbuffers_lower,
-   (char *) NULL},
-  {PRM_NAME_IO_BACKUP_MAX_VOLUME_SIZE,
-   (PRM_FOR_SERVER | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_io_backup_max_volume_size_flag,
-   (void *) &prm_io_backup_max_volume_size_default,
-   (void *) &PRM_IO_BACKUP_MAX_VOLUME_SIZE,
-   (void *) &prm_io_backup_max_volume_size_upper,
-   (void *) &prm_io_backup_max_volume_size_lower,
-   (char *) NULL},
-  {PRM_NAME_IO_BACKUP_SLEEP,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT | PRM_HIDDEN),
-   PRM_BIGINT,
-   (void *) &prm_io_backup_sleep_flag,
-   (void *) &prm_io_backup_sleep_default,
-   (void *) &PRM_IO_BACKUP_SLEEP,
-   (void *) NULL, (void *) &prm_io_backup_sleep_lower,
-   (char *) NULL},
-  {PRM_NAME_MAX_PAGES_IN_TEMP_FILE_CACHE,
-   (PRM_FOR_SERVER | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_max_pages_in_temp_file_cache_flag,
-   (void *) &prm_max_pages_in_temp_file_cache_default,
-   (void *) &PRM_MAX_PAGES_IN_TEMP_FILE_CACHE,
-   (void *) NULL, (void *) &prm_max_pages_in_temp_file_cache_lower,
-   (char *) NULL},
-  {PRM_NAME_MAX_ENTRIES_IN_TEMP_FILE_CACHE,
-   (PRM_FOR_SERVER | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_max_entries_in_temp_file_cache_flag,
-   (void *) &prm_max_entries_in_temp_file_cache_default,
-   (void *) &PRM_MAX_ENTRIES_IN_TEMP_FILE_CACHE,
-   (void *) NULL, (void *) &prm_max_entries_in_temp_file_cache_lower,
-   (char *) NULL},
-  {PRM_NAME_TEMP_MEM_BUFFER_SIZE,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_temp_mem_buffer_size_flag,
-   (void *) &prm_temp_mem_buffer_size_default,
-   (void *) &PRM_TEMP_MEM_BUFFER_SIZE,
-   (void *) &prm_temp_mem_buffer_size_upper,
-   (void *) &prm_temp_mem_buffer_size_lower,
-   (char *) NULL},
-  {PRM_NAME_INDEX_SCAN_KEY_BUFFER_SIZE,
-   (PRM_FOR_SERVER | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_index_scan_key_buffer_size_flag,
-   (void *) &prm_index_scan_key_buffer_size_default,
-   (void *) &PRM_INDEX_SCAN_KEY_BUFFER_SIZE,
-   (void *) NULL,
-   (void *) &prm_index_scan_key_buffer_size_lower,
-   (char *) NULL},
-  {PRM_NAME_ENABLE_HISTO,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_enable_histo_flag,
-   (void *) &prm_enable_histo_default,
-   (void *) &PRM_ENABLE_HISTO,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_PB_NUM_LRU_CHAINS,
-   (PRM_FOR_SERVER | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_pb_num_LRU_chains_flag,
-   (void *) &prm_pb_num_LRU_chains_default,
-   (void *) &PRM_PB_NUM_LRU_CHAINS,
-   (void *) &prm_pb_num_LRU_chains_upper,
-   (void *) &prm_pb_num_LRU_chains_lower,
-   (char *) NULL},
-  {PRM_NAME_PAGE_BG_FLUSH_INTERVAL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_page_bg_flush_interval_flag,
-   (void *) &prm_page_bg_flush_interval_default,
-   (void *) &PRM_PAGE_BG_FLUSH_INTERVAL,
-   (void *) NULL, (void *) &prm_page_bg_flush_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_ADAPTIVE_FLUSH_CONTROL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_adaptive_flush_control_flag,
-   (void *) &prm_adaptive_flush_control_default,
-   (void *) &PRM_ADAPTIVE_FLUSH_CONTROL,
-   (void *) NULL,
-   (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_MAX_FLUSH_SIZE_PER_SECOND,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_max_flush_size_per_second_flag,
-   (void *) &prm_max_flush_size_per_second_default,
-   (void *) &PRM_MAX_FLUSH_SIZE_PER_SECOND,
-   (void *) &prm_max_flush_size_per_second_upper,
-   (void *) &prm_max_flush_size_per_second_lower,
-   (char *) NULL},
-  {PRM_NAME_PB_SYNC_ON_FLUSH_SIZE,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_pb_sync_on_flush_size_flag,
-   (void *) &prm_pb_sync_on_flush_size_default,
-   (void *) &PRM_PB_SYNC_ON_FLUSH_SIZE,
-   (void *) &prm_pb_sync_on_flush_size_upper,
-   (void *) &prm_pb_sync_on_flush_size_lower,
-   (char *) NULL},
-  {PRM_NAME_PB_DEBUG_PAGE_VALIDATION_LEVEL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_KEYWORD,
-   (void *) &prm_pb_debug_page_validation_level_flag,
-   (void *) &prm_pb_debug_page_validation_level_default,
-   (void *) &PRM_PB_DEBUG_PAGE_VALIDATION_LEVEL,
-   (void *) NULL,
-   (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ANSI_QUOTES,
-   (PRM_FOR_CLIENT | PRM_TEST_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_ansi_quotes_flag,
-   (void *) &prm_ansi_quotes_default,
-   (void *) &PRM_ANSI_QUOTES,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_TEST_MODE,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_test_mode_flag,
-   (void *) &prm_test_mode_default,
-   (void *) &PRM_TEST_MODE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_GROUP_CONCAT_MAX_LEN,
-   (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_group_concat_max_len_flag,
-   (void *) &prm_group_concat_max_len_default,
-   (void *) &PRM_GROUP_CONCAT_MAX_LEN,
-   (void *) &prm_group_concat_max_len_upper,
-   (void *) &prm_group_concat_max_len_lower,
-   (char *) NULL},
-  {PRM_NAME_LIKE_TERM_SELECTIVITY,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_FLOAT,
-   (void *) &prm_like_term_selectivity_flag,
-   (void *) &prm_like_term_selectivity_default,
-   (void *) &PRM_LIKE_TERM_SELECTIVITY,
-   (void *) &prm_like_term_selectivity_upper,
-   (void *) &prm_like_term_selectivity_lower,
-   (char *) NULL},
-  {PRM_NAME_SUPPRESS_FSYNC,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_suppress_fsync_flag,
-   (void *) &prm_suppress_fsync_default,
-   (void *) &PRM_SUPPRESS_FSYNC,
-   (void *) &prm_suppress_fsync_upper,
-   (void *) &prm_suppress_fsync_lower,
-   (char *) NULL},
-  {PRM_NAME_CALL_STACK_DUMP_ON_ERROR,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_call_stack_dump_on_error_flag,
-   (void *) &prm_call_stack_dump_on_error_default,
-   (void *) &PRM_CALL_STACK_DUMP_ON_ERROR,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_CALL_STACK_DUMP_ACTIVATION,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_INTEGER_LIST,
-   (void *) &prm_call_stack_dump_activation_flag,
-   (void *) &prm_call_stack_dump_activation_default,
-   (void *) &PRM_CALL_STACK_DUMP_ACTIVATION,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_CALL_STACK_DUMP_DEACTIVATION,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_INTEGER_LIST,
-   (void *) &prm_call_stack_dump_deactivation_flag,
-   (void *) &prm_call_stack_dump_deactivation_default,
-   (void *) &PRM_CALL_STACK_DUMP_DEACTIVATION,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_MIGRATOR_COMPRESSED_PROTOCOL,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_migrator_compressed_protocol_flag,
-   (void *) &prm_migrator_compressed_protocol_default,
-   (void *) &PRM_MIGRATOR_COMPRESSED_PROTOCOL,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_AUTO_RESTART_SERVER,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_auto_restart_server_flag,
-   (void *) &prm_auto_restart_server_default,
-   (void *) &PRM_AUTO_RESTART_SERVER,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_XASL_MAX_PLAN_CACHE_ENTRIES,
-   (PRM_FOR_SERVER | PRM_FORCE_SERVER),
-   PRM_INTEGER,
-   (void *) &prm_xasl_max_plan_cache_entries_flag,
-   (void *) &prm_xasl_max_plan_cache_entries_default,
-   (void *) &PRM_XASL_MAX_PLAN_CACHE_ENTRIES,
-   (void *) NULL,
-   (void *) &prm_xasl_max_plan_cache_entries_lower,
-   (char *) NULL},
-  {PRM_NAME_XASL_MAX_PLAN_CACHE_CLONES,
-   (PRM_FOR_SERVER | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_xasl_max_plan_cache_clones_flag,
-   (void *) &prm_xasl_max_plan_cache_clones_default,
-   (void *) &PRM_XASL_MAX_PLAN_CACHE_CLONES,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_XASL_PLAN_CACHE_TIMEOUT,
-   (PRM_FOR_SERVER),
-   PRM_INTEGER,
-   (void *) &prm_xasl_plan_cache_timeout_flag,
-   (void *) &prm_xasl_plan_cache_timeout_default,
-   (void *) &PRM_XASL_PLAN_CACHE_TIMEOUT,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_USE_ORDERBY_SORT_LIMIT,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_use_orderby_sort_limit_flag,
-   (void *) &prm_use_orderby_sort_limit_default,
-   (void *) &PRM_USE_ORDERBY_SORT_LIMIT,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_LOGWR_COMPRESSED_PROTOCOL,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_logwr_compressed_protocol_flag,
-   (void *) &prm_logwr_compressed_protocol_default,
-   (void *) &PRM_LOGWR_COMPRESSED_PROTOCOL,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_MODE,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA | PRM_FORCE_SERVER),
-   PRM_KEYWORD,
-   (void *) &prm_ha_mode_flag,
-   (void *) &prm_ha_mode_default,
-   (void *) &PRM_HA_MODE,
-   (void *) &prm_ha_mode_upper,
-   (void *) &prm_ha_mode_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_NODE_LIST,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_RELOADABLE |
-    PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_node_list_flag,
-   (void *) &prm_ha_node_list_default,
-   (void *) &PRM_HA_NODE_LIST,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_REPLICA_LIST,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_RELOADABLE | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_replica_list_flag,
-   (void *) &prm_ha_replica_list_default,
-   (void *) &PRM_HA_REPLICA_LIST,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_DB_LIST,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_db_list_flag,
-   (void *) &prm_ha_db_list_default,
-   (void *) &PRM_HA_DB_LIST,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_COPY_LOG_BASE,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_copy_log_base_flag,
-   (void *) &prm_ha_copy_log_base_default,
-   (void *) &PRM_HA_COPY_LOG_BASE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_COPY_SYNC_MODE,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_copy_sync_mode_flag,
-   (void *) &prm_ha_copy_sync_mode_default,
-   (void *) &PRM_HA_COPY_SYNC_MODE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_APPLY_MAX_MEM_SIZE,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_apply_max_mem_size_flag,
-   (void *) &prm_ha_apply_max_mem_size_default,
-   (void *) &PRM_HA_APPLY_MAX_MEM_SIZE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_PORT_ID,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_port_id_flag,
-   (void *) &prm_ha_port_id_default,
-   (void *) &PRM_HA_PORT_ID,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_INIT_TIMER,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_init_timer_flag,
-   (void *) &prm_ha_init_timer_default,
-   (void *) &PRM_HA_INIT_TIMER,
-   (void *) &prm_ha_init_timer_upper,
-   (void *) &prm_ha_init_timer_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_HEARTBEAT_INTERVAL,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_heartbeat_interval_flag,
-   (void *) &prm_ha_heartbeat_interval_default,
-   (void *) &PRM_HA_HEARTBEAT_INTERVAL,
-   (void *) &prm_ha_heartbeat_interval_upper,
-   (void *) &prm_ha_heartbeat_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_CALC_SCORE_INTERVAL,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_calc_score_interval_flag,
-   (void *) &prm_ha_calc_score_interval_default,
-   (void *) &PRM_HA_CALC_SCORE_INTERVAL,
-   (void *) &prm_ha_calc_score_interval_upper,
-   (void *) &prm_ha_calc_score_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_FAILOVER_WAIT_TIME,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_failover_wait_time_flag,
-   (void *) &prm_ha_failover_wait_time_default,
-   (void *) &PRM_HA_FAILOVER_WAIT_TIME,
-   (void *) &prm_ha_failover_wait_time_upper,
-   (void *) &prm_ha_failover_wait_time_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_PROCESS_START_CONFIRM_INTERVAL,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_process_start_confirm_interval_flag,
-   (void *) &prm_ha_process_start_confirm_interval_default,
-   (void *) &PRM_HA_PROCESS_START_CONFIRM_INTERVAL,
-   (void *) &prm_ha_process_start_confirm_interval_upper,
-   (void *) &prm_ha_process_start_confirm_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_PROCESS_DEREG_CONFIRM_INTERVAL,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_process_dereg_confirm_interval_flag,
-   (void *) &prm_ha_process_dereg_confirm_interval_default,
-   (void *) &PRM_HA_PROCESS_DEREG_CONFIRM_INTERVAL,
-   (void *) &prm_ha_process_dereg_confirm_interval_upper,
-   (void *) &prm_ha_process_dereg_confirm_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_MAX_PROCESS_START_CONFIRM,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_max_process_start_confirm_flag,
-   (void *) &prm_ha_max_process_start_confirm_default,
-   (void *) &PRM_HA_MAX_PROCESS_START_CONFIRM,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_MAX_PROCESS_DEREG_CONFIRM,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_max_process_dereg_confirm_flag,
-   (void *) &prm_ha_max_process_dereg_confirm_default,
-   (void *) &PRM_HA_MAX_PROCESS_DEREG_CONFIRM,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_CHANGESLAVE_MAX_WAIT_TIME,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_changeslave_max_wait_time_flag,
-   (void *) &prm_ha_changeslave_max_wait_time_default,
-   (void *) &PRM_HA_CHANGESLAVE_MAX_WAIT_TIME,
-   (void *) &prm_ha_changeslave_max_wait_time_upper,
-   (void *) &prm_ha_changeslave_max_wait_time_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF,
-   (PRM_FOR_CLIENT | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_unacceptable_proc_restart_timediff_flag,
-   (void *) &prm_ha_unacceptable_proc_restart_timediff_default,
-   (void *) &PRM_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_SERVER_STATE_SYNC_INTERVAL,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_server_state_sync_interval_flag,
-   (void *) &prm_server_state_sync_interval_default,
-   (void *) &PRM_SERVER_STATE_SYNC_INTERVAL,
-   (void *) &prm_server_state_sync_interval_upper,
-   (void *) &prm_server_state_sync_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_MAX_HEARTBEAT_GAP,
-   (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_max_heartbeat_gap_flag,
-   (void *) &prm_ha_max_heartbeat_gap_default,
-   (void *) &PRM_HA_MAX_HEARTBEAT_GAP,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_PING_HOSTS,
-   (PRM_FOR_CLIENT | PRM_RELOADABLE | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_ping_hosts_flag,
-   (void *) &prm_ha_ping_hosts_default,
-   (void *) &PRM_HA_PING_HOSTS,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_IGNORE_ERROR_LIST,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA | PRM_USER_CHANGE),
-   PRM_INTEGER_LIST,
-   (void *) &prm_ha_ignore_error_list_flag,
-   (void *) &prm_ha_ignore_error_list_default,
-   (void *) &PRM_HA_IGNORE_ERROR_LIST,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_SQL_LOG_MAX_SIZE_IN_MB,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_sql_log_max_size_in_mb_flag,
-   (void *) &prm_ha_sql_log_max_size_in_mb_default,
-   (void *) &PRM_HA_SQL_LOG_MAX_SIZE_IN_MB,
-   (void *) &prm_ha_sql_log_max_size_in_mb_upper,
-   (void *) &prm_ha_sql_log_max_size_in_mb_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_COPY_LOG_MAX_ARCHIVES,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_copy_log_max_archives_flag,
-   (void *) &prm_ha_copy_log_max_archives_default,
-   (void *) &PRM_HA_COPY_LOG_MAX_ARCHIVES,
-   (void *) &prm_ha_copy_log_max_archives_upper,
-   (void *) &prm_ha_copy_log_max_archives_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_COPY_LOG_TIMEOUT,
-   (PRM_FOR_SERVER | PRM_FOR_HA | PRM_RELOADABLE | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_copy_log_timeout_flag,
-   (void *) &prm_ha_copy_log_timeout_default,
-   (void *) &PRM_HA_COPY_LOG_TIMEOUT,
-   (void *) &prm_ha_copy_log_timeout_upper,
-   (void *) &prm_ha_copy_log_timeout_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_REPLICA_DELAY,
-   (PRM_FOR_CLIENT | PRM_FOR_HA | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_replica_delay_flag,
-   (void *) &prm_ha_replica_delay_default,
-   (void *) &PRM_HA_REPLICA_DELAY,
-   (void *) &prm_ha_replica_delay_upper,
-   (void *) &prm_ha_replica_delay_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_REPLICA_TIME_BOUND,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_replica_time_bound_flag,
-   (void *) &prm_ha_replica_time_bound_default,
-   (void *) &PRM_HA_REPLICA_TIME_BOUND,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_DELAY_LIMIT,
-   (PRM_FOR_SERVER | PRM_FOR_HA | PRM_USER_CHANGE | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_delay_limit_flag,
-   (void *) &prm_ha_delay_limit_default,
-   (void *) &PRM_HA_DELAY_LIMIT,
-   (void *) &prm_ha_delay_limit_upper,
-   (void *) &prm_ha_delay_limit_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_DELAY_LIMIT_DELTA,
-   (PRM_FOR_SERVER | PRM_FOR_HA | PRM_USER_CHANGE | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_ha_delay_limit_delta_flag,
-   (void *) &prm_ha_delay_limit_delta_default,
-   (void *) &PRM_HA_DELAY_LIMIT_DELTA,
-   (void *) &prm_ha_delay_limit_delta_upper,
-   (void *) &prm_ha_delay_limit_delta_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_CHECK_DISK_FAILURE_INTERVAL,
-   (PRM_FOR_CLIENT | PRM_FOR_HA | PRM_TIME_UNIT | PRM_RELOADABLE),
-   PRM_BIGINT,
-   (void *) &prm_ha_check_disk_failure_interval_flag,
-   (void *) &prm_ha_check_disk_failure_interval_default,
-   (void *) &PRM_HA_CHECK_DISK_FAILURE_INTERVAL,
-   (void *) &prm_ha_check_disk_failure_interval_upper,
-   (void *) &prm_ha_check_disk_failure_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_LOG_ASYNC_LOG_FLUSH_INTERVAL,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_log_async_log_flush_interval_flag,
-   (void *) &prm_log_async_log_flush_interval_default,
-   (void *) &PRM_LOG_ASYNC_LOG_FLUSH_INTERVAL,
-   (void *) &prm_log_async_log_flush_interval_upper,
-   (void *) &prm_log_async_log_flush_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_LOG_COMPRESS,
-   (PRM_FOR_SERVER),
-   PRM_BOOLEAN,
-   (void *) &prm_log_compress_flag,
-   (void *) &prm_log_compress_default,
-   (void *) &PRM_LOG_COMPRESS,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_BLOCK_NOWHERE_STATEMENT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_block_nowhere_statement_flag,
-   (void *) &prm_block_nowhere_statement_default,
-   (void *) &PRM_BLOCK_NOWHERE_STATEMENT,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_BLOCK_DDL_STATEMENT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_block_ddl_statement_flag,
-   (void *) &prm_block_ddl_statement_default,
-   (void *) &PRM_BLOCK_DDL_STATEMENT,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_RSQL_HISTORY_NUM,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_rsql_history_num_flag,
-   (void *) &prm_rsql_history_num_default,
-   (void *) &PRM_RSQL_HISTORY_NUM,
-   (void *) &prm_rsql_history_num_upper,
-   (void *) &prm_rsql_history_num_lower,
-   (char *) NULL},
-  {PRM_NAME_LOG_TRACE_DEBUG,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_log_trace_debug_flag,
-   (void *) &prm_log_trace_debug_default,
-   (void *) &PRM_LOG_TRACE_DEBUG,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ER_PRODUCTION_MODE,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_er_production_mode_flag,
-   (void *) &prm_er_production_mode_default,
-   (void *) &PRM_ER_PRODUCTION_MODE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_ER_STOP_ON_ERROR,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_er_stop_on_error_flag,
-   (void *) &prm_er_stop_on_error_default,
-   (void *) &PRM_ER_STOP_ON_ERROR,
-   (void *) &prm_er_stop_on_error_upper, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_TCP_RCVBUF_SIZE,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_tcp_rcvbuf_size_flag,
-   (void *) &prm_tcp_rcvbuf_size_default,
-   (void *) &PRM_TCP_RCVBUF_SIZE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_TCP_SNDBUF_SIZE,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_tcp_sndbuf_size_flag,
-   (void *) &prm_tcp_sndbuf_size_default,
-   (void *) &PRM_TCP_SNDBUF_SIZE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_TCP_NODELAY,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_tcp_nodelay_flag,
-   (void *) &prm_tcp_nodelay_default,
-   (void *) &PRM_TCP_NODELAY,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_TCP_KEEPALIVE,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT),
-   PRM_BOOLEAN,
-   (void *) &prm_tcp_keepalive_flag,
-   (void *) &prm_tcp_keepalive_default,
-   (void *) &PRM_TCP_KEEPALIVE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_RSQL_SINGLE_LINE_MODE,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_rsql_single_line_mode_flag,
-   (void *) &prm_rsql_single_line_mode_default,
-   (void *) &PRM_RSQL_SINGLE_LINE_MODE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_XASL_DEBUG_DUMP,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_xasl_debug_dump_flag,
-   (void *) &prm_xasl_debug_dump_default,
-   (void *) &PRM_XASL_DEBUG_DUMP,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_LOG_MAX_ARCHIVES,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_log_max_archives_flag,
-   (void *) &prm_log_max_archives_default,
-   (void *) &PRM_LOG_MAX_ARCHIVES,
-   (void *) NULL, (void *) &prm_log_max_archives_lower,
-   (char *) NULL},
-  {PRM_NAME_FORCE_REMOVE_LOG_ARCHIVES,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_force_remove_log_archives_flag,
-   (void *) &prm_force_remove_log_archives_default,
-   (void *) &PRM_FORCE_REMOVE_LOG_ARCHIVES,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_REMOVE_LOG_ARCHIVES_INTERVAL,
-   (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_remove_log_archives_interval_flag,
-   (void *) &prm_remove_log_archives_interval_default,
-   (void *) &PRM_REMOVE_LOG_ARCHIVES_INTERVAL,
-   (void *) NULL, (void *) &prm_remove_log_archives_interval_lower,
-   (char *) NULL},
-  {PRM_NAME_EVENT_HANDLER,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER),
-   PRM_STRING,
-   (void *) &prm_event_handler_flag,
-   (void *) &prm_event_handler_default,
-   (void *) &PRM_EVENT_HANDLER,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_EVENT_ACTIVATION,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER),
-   PRM_INTEGER_LIST,
-   (void *) &prm_event_activation_flag,
-   (void *) &prm_event_activation_default,
-   (void *) &PRM_EVENT_ACTIVATION,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_MNT_WAITING_THREAD,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_mnt_waiting_thread_flag,
-   (void *) &prm_mnt_waiting_thread_default,
-   (void *) &PRM_MNT_WAITING_THREAD,
-   (void *) NULL, (void *) &prm_mnt_waiting_thread_lower,
-   (char *) NULL},
-  {PRM_NAME_MNT_STATS_THRESHOLD,
-   (PRM_FOR_SERVER | PRM_HIDDEN),
-   PRM_INTEGER_LIST,
-   (void *) &prm_mnt_stats_threshold_flag,
-   (void *) &prm_mnt_stats_threshold_default,
-   (void *) &PRM_MNT_STATS_THRESHOLD,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_SESSION_STATE_TIMEOUT,
-   (PRM_FOR_SERVER | PRM_TEST_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_session_timeout_flag,
-   (void *) &prm_session_timeout_default,
-   (void *) &PRM_SESSION_STATE_TIMEOUT,
-   (void *) &prm_session_timeout_upper,
-   (void *) &prm_session_timeout_lower,
-   (char *) NULL},
-  {PRM_NAME_MULTI_RANGE_OPT_LIMIT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_multi_range_opt_limit_flag,
-   (void *) &prm_multi_range_opt_limit_default,
-   (void *) &PRM_MULTI_RANGE_OPT_LIMIT,
-   (void *) &prm_multi_range_opt_limit_upper,
-   (void *) &prm_multi_range_opt_limit_lower,
-   (char *) NULL},
-  /* All the compound parameters *must* be at the end of the array so that the
-     changes they cause are not overridden by other parameters (for example in
-     sysprm_load_and_init the parameters are set to their default in the order
-     they are found in this array). */
-  {PRM_NAME_DB_VOLUME_SIZE,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_db_volume_size_flag,
-   (void *) &prm_db_volume_size_default,
-   (void *) &PRM_DB_VOLUME_SIZE,
-   (void *) &prm_db_volume_size_upper,
-   (void *) &prm_db_volume_size_lower,
-   (char *) NULL},
-  {PRM_NAME_CHECK_PEER_ALIVE,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_KEYWORD,
-   (void *) &prm_check_peer_alive_flag,
-   (void *) &prm_check_peer_alive_default,
-   (void *) &PRM_CHECK_PEER_ALIVE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_SQL_TRACE_SLOW,
-   (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_sql_trace_slow_flag,
-   (void *) &prm_sql_trace_slow_default,
-   (void *) &PRM_SQL_TRACE_SLOW,
-   (void *) &prm_sql_trace_slow_upper,
-   (void *) &prm_sql_trace_slow_lower,
-   (char *) NULL},
-  {PRM_NAME_SERVER_TRACE,
-   (PRM_USER_CHANGE | PRM_FOR_SERVER),
-   PRM_BOOLEAN,
-   (void *) &prm_server_trace_flag,
-   (void *) &prm_server_trace_default,
-   (void *) &PRM_SERVER_TRACE,
-   (void *) NULL,
-   (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_SQL_TRACE_EXECUTION_PLAN,
-   (PRM_USER_CHANGE | PRM_FOR_SERVER),
-   PRM_BOOLEAN,
-   (void *) &prm_sql_trace_execution_plan_flag,
-   (void *) &prm_sql_trace_execution_plan_default,
-   (void *) &PRM_SQL_TRACE_EXECUTION_PLAN,
-   (void *) NULL,
-   (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_LOG_TRACE_FLUSH_TIME,
-   (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_TIME_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_log_trace_flush_time_flag,
-   (void *) &prm_log_trace_flush_time_default,
-   (void *) &PRM_LOG_TRACE_FLUSH_TIME,
-   (void *) NULL,
-   (void *) &prm_log_trace_flush_time_lower,
-   (char *) NULL},
-  {PRM_NAME_GENERIC_VOL_PREALLOC_SIZE,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT),
-   PRM_BIGINT,
-   (void *) &prm_generic_vol_prealloc_size_flag,
-   (void *) &prm_generic_vol_prealloc_size_default,
-   (void *) &PRM_GENERIC_VOL_PREALLOC_SIZE,
-   (void *) &prm_generic_vol_prealloc_size_upper,
-   (void *) &prm_generic_vol_prealloc_size_lower,
-   (char *) NULL},
-  {PRM_NAME_SORT_LIMIT_MAX_COUNT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_sort_limit_max_count_flag,
-   (void *) &prm_sort_limit_max_count_default,
-   (void *) &PRM_SORT_LIMIT_MAX_COUNT,
-   (void *) &prm_sort_limit_max_count_upper,
-   (void *) &prm_sort_limit_max_count_lower,
-   (char *) NULL},
-  {PRM_NAME_SQL_TRACE_IOREADS,
-   (PRM_USER_CHANGE | PRM_FOR_SERVER),
-   PRM_INTEGER,
-   (void *) &prm_sql_trace_ioreads_flag,
-   (void *) &prm_sql_trace_ioreads_default,
-   (void *) &PRM_SQL_TRACE_IOREADS,
-   (void *) NULL,
-   (void *) &prm_sql_trace_ioreads_lower,
-   (char *) NULL},
-  {PRM_NAME_QUERY_TRACE,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_query_trace_flag,
-   (void *) &prm_query_trace_default,
-   (void *) &PRM_QUERY_TRACE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_QUERY_TRACE_FORMAT,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_KEYWORD,
-   (void *) &prm_query_trace_format_flag,
-   (void *) &prm_query_trace_format_default,
-   (void *) &PRM_QUERY_TRACE_FORMAT,
-   (void *) &prm_query_trace_format_upper,
-   (void *) &prm_query_trace_format_lower,
-   (char *) NULL},
-  {PRM_NAME_MAX_RECURSION_SQL_DEPTH,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_INTEGER,
-   (void *) &prm_max_recursion_sql_depth_flag,
-   (void *) &prm_max_recursion_sql_depth_default,
-   (void *) &PRM_MAX_RECURSION_SQL_DEPTH,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_BTREE_MERGE_ENABLED,
-   (PRM_FOR_SERVER | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_btree_merge_enabled_flag,
-   (void *) &prm_btree_merge_enabled_default,
-   (void *) &PRM_BTREE_MERGE_ENABLED,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
+#define NUM_PRM (PRM_LAST_ID + 1)
 
-  /* For shard debugging */
-  {PRM_NAME_SHARD_GROUPID_DEBUG,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_debug_flag,
-   (void *) &prm_shard_groupid_debug_default,
-   (void *) &PRM_SHARD_GROUPID_DEBUG,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
+static bool prm_Def_is_initialized = false;
+static SYSPRM_PARAM prm_Def[NUM_PRM];
 
-  {PRM_NAME_SHARD_GROUPID_01,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_01_flag,
-   (void *) &prm_shard_groupid_01_default,
-   (void *) &PRM_SHARD_GROUPID_01,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
 
-  {PRM_NAME_SHARD_GROUPID_02,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_02_flag,
-   (void *) &prm_shard_groupid_02_default,
-   (void *) &PRM_SHARD_GROUPID_02,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_03,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_03_flag,
-   (void *) &prm_shard_groupid_03_default,
-   (void *) &PRM_SHARD_GROUPID_03,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_04,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_04_flag,
-   (void *) &prm_shard_groupid_04_default,
-   (void *) &PRM_SHARD_GROUPID_04,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_05,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_05_flag,
-   (void *) &prm_shard_groupid_05_default,
-   (void *) &PRM_SHARD_GROUPID_05,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_06,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_06_flag,
-   (void *) &prm_shard_groupid_06_default,
-   (void *) &PRM_SHARD_GROUPID_06,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_07,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_07_flag,
-   (void *) &prm_shard_groupid_07_default,
-   (void *) &PRM_SHARD_GROUPID_07,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_08,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_08_flag,
-   (void *) &prm_shard_groupid_08_default,
-   (void *) &PRM_SHARD_GROUPID_08,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_09,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_09_flag,
-   (void *) &prm_shard_groupid_09_default,
-   (void *) &PRM_SHARD_GROUPID_09,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_SHARD_GROUPID_10,
-   (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE),
-   PRM_BOOLEAN,
-   (void *) &prm_shard_groupid_10_flag,
-   (void *) &prm_shard_groupid_10_default,
-   (void *) &PRM_SHARD_GROUPID_10,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-
-  {PRM_NAME_OPTIMIZER_RESERVE_01,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_01_flag,
-   (void *) &prm_optimizer_reserve_01_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_01,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_02,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_02_flag,
-   (void *) &prm_optimizer_reserve_02_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_02,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_03,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_03_flag,
-   (void *) &prm_optimizer_reserve_03_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_03,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_04,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_04_flag,
-   (void *) &prm_optimizer_reserve_04_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_04,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_05,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_05_flag,
-   (void *) &prm_optimizer_reserve_05_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_05,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_06,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_06_flag,
-   (void *) &prm_optimizer_reserve_06_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_06,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_07,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_07_flag,
-   (void *) &prm_optimizer_reserve_07_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_07,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_08,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_08_flag,
-   (void *) &prm_optimizer_reserve_08_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_08,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_09,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_09_flag,
-   (void *) &prm_optimizer_reserve_09_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_09,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_10,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_10_flag,
-   (void *) &prm_optimizer_reserve_10_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_10,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_11,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_11_flag,
-   (void *) &prm_optimizer_reserve_11_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_11,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_12,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_12_flag,
-   (void *) &prm_optimizer_reserve_12_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_12,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_13,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_13_flag,
-   (void *) &prm_optimizer_reserve_13_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_13,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_14,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_14_flag,
-   (void *) &prm_optimizer_reserve_14_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_14,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_15,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_15_flag,
-   (void *) &prm_optimizer_reserve_15_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_15,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_16,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_16_flag,
-   (void *) &prm_optimizer_reserve_16_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_16,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_17,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_17_flag,
-   (void *) &prm_optimizer_reserve_17_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_17,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_18,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_18_flag,
-   (void *) &prm_optimizer_reserve_18_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_18,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_19,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_19_flag,
-   (void *) &prm_optimizer_reserve_19_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_19,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_RESERVE_20,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_reserve_20_flag,
-   (void *) &prm_optimizer_reserve_20_default,
-   (void *) &PRM_OPTIMIZER_RESERVE_20,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION,
-   (PRM_FOR_SERVER | PRM_TEST_CHANGE | PRM_HIDDEN),
-   PRM_BOOLEAN,
-   (void *) &prm_optimizer_enable_aggregate_optimization_flag,
-   (void *) &prm_optimizer_enable_aggregate_optimization_default,
-   (void *) &PRM_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_HA_REPL_FILTER_TYPE,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_KEYWORD,
-   (void *) &prm_ha_repl_filter_type_flag,
-   (void *) &prm_ha_repl_filter_type_default,
-   (void *) &PRM_HA_REPL_FILTER_TYPE,
-   (void *) &prm_ha_repl_filter_type_upper,
-   (void *) &prm_ha_repl_filter_type_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_REPL_FILTER_FILE,
-   (PRM_FOR_CLIENT | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_ha_repl_filter_file_flag,
-   (void *) &prm_ha_repl_filter_file_default,
-   (void *) &PRM_HA_REPL_FILTER_FILE,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL},
-  {PRM_NAME_FAULT_INJECTION,
-   (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN),
-   PRM_STRING,
-   (void *) &prm_fault_injection_flag,
-   (void *) &prm_fault_injection_default,
-   (void *) &PRM_FAULT_INJECTION,
-   (void *) NULL, (void *) NULL,
-   (void *) NULL},
-  {PRM_NAME_RYE_SHM_KEY,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA),
-   PRM_STRING,
-   (void *) &prm_rye_shm_key_flag,
-   (void *) &prm_rye_shm_key_default,
-   (void *) &PRM_RYE_SHM_KEY,
-   (void *) NULL,
-   (void *) NULL,
-   (void *) NULL},
-  {PRM_NAME_HA_MAX_LOG_APPLIER,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA),
-   PRM_INTEGER,
-   (void *) &prm_ha_max_log_applier_flag,
-   (void *) &prm_ha_max_log_applier_default,
-   (void *) &PRM_HA_MAX_LOG_APPLIER,
-   (void *) &prm_ha_max_log_applier_upper,
-   (void *) &prm_ha_max_log_applier_lower,
-   (void *) NULL},
-
-  {PRM_NAME_MAX_CLIENTS,
-   (PRM_FOR_SERVER),
-   PRM_INTEGER,
-   (void *) &prm_max_clients_flag,
-   (void *) &prm_max_clients_default,
-   (void *) &PRM_MAX_CLIENTS,
-   (void *) &prm_max_clients_upper,
-   (void *) &prm_max_clients_lower,
-   (void *) NULL},
-  {PRM_NAME_MAX_COPYLOG_CONNECIONTS,
-   (PRM_FOR_SERVER),
-   PRM_INTEGER,
-   (void *) &prm_max_copylog_conns_flag,
-   (void *) &prm_max_copylog_conns_default,
-   (void *) &PRM_MAX_COPYLOG_CONNECTIONS,
-   (void *) &prm_max_copylog_conns_upper,
-   (void *) &prm_max_copylog_conns_lower,
-   (void *) NULL},
-  {PRM_NAME_MIGRATOR_MAX_REPL_DELAY,
-   (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-   PRM_INTEGER,
-   (void *) &prm_migrator_max_repl_delay_flag,
-   (void *) &prm_migrator_max_repl_delay_default,
-   (void *) &PRM_MIGRATOR_MAX_REPL_DELAY,
-   (void *) &prm_migrator_max_repl_delay_upper,
-   (void *) &prm_migrator_max_repl_delay_lower,
-   (char *) NULL},
-  {PRM_NAME_HA_NODE_MYSELF,
-   (PRM_FOR_CLIENT | PRM_FOR_SERVER),
-   PRM_STRING,
-   (void *) &prm_ha_node_myself_flag,
-   (void *) &prm_ha_node_myself_default,
-   (void *) &PRM_HA_NODE_MYSELF,
-   (void *) NULL, (void *) NULL,
-   (char *) NULL}
-};
-
-#define NUM_PRM ((int)(sizeof(prm_Def)/sizeof(prm_Def[0])))
 #define PARAM_MSG_FMT(msgid) msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_PARAMETERS, (msgid))
 
 #define GET_PRM(id) (&prm_Def[(id)])
@@ -2948,7 +1529,6 @@ static int prm_tune_parameters (void);
 #if !defined (SERVER_MODE)
 static int prm_get_next_param_value (char **data, char **prm, char **value);
 #endif
-static PARAM_ID sysprm_get_id (const SYSPRM_PARAM * prm);
 static int sysprm_compare_values (void *first_value, void *second_value,
 				  unsigned int val_type);
 static void sysprm_set_sysprm_value_from_parameter (SYSPRM_VALUE * prm_value,
@@ -2973,7 +1553,2088 @@ static int sysprm_packed_sysprm_value_length (SYSPRM_VALUE value,
 					      int offset);
 static char *sysprm_unpack_sysprm_value (char *ptr, SYSPRM_VALUE * value,
 					 SYSPRM_DATATYPE datatype);
+static void sysprm_initialize_prm_def ();
 
+/*
+ * sysprm_dump_parameters - Print out current system parameters
+ *   return: none
+ *   fp(in):
+ */
+static void
+sysprm_initialize_prm_def ()
+{
+  SYSPRM_PARAM *prm;
+
+  prm = &prm_Def[PRM_ID_ER_LOG_DEBUG];
+  prm->param_id = PRM_ID_ER_LOG_DEBUG;
+  prm->name = PRM_NAME_ER_LOG_DEBUG;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE
+		      | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_er_log_debug_flag;
+  prm->default_value = (void *) &prm_er_log_debug_default;
+  prm->value = (void *) &PRM_ER_LOG_DEBUG;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ER_LOG_LEVEL];
+  prm->param_id = PRM_ID_ER_LOG_LEVEL;
+  prm->name = PRM_NAME_ER_LOG_LEVEL;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_KEYWORD;
+  prm->dynamic_flag = &prm_er_log_level_flag;
+  prm->default_value = (void *) &prm_er_log_level_default;
+  prm->value = (void *) &PRM_ER_LOG_LEVEL;
+  prm->upper_limit = (void *) &prm_er_log_level_upper;
+  prm->lower_limit = (void *) &prm_er_log_level_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ER_LOG_WARNING];
+  prm->param_id = PRM_ID_ER_LOG_WARNING;
+  prm->name = PRM_NAME_ER_LOG_WARNING;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_er_log_warning_flag;
+  prm->default_value = (void *) &prm_er_log_warning_default;
+  prm->value = (void *) &PRM_ER_LOG_WARNING;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ER_EXIT_ASK];
+  prm->param_id = PRM_ID_ER_EXIT_ASK;
+  prm->name = PRM_NAME_ER_EXIT_ASK;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_er_exit_ask_flag;
+  prm->default_value = (void *) &prm_er_exit_ask_default;
+  prm->value = (void *) &PRM_ER_EXIT_ASK;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ER_LOG_SIZE];
+  prm->param_id = PRM_ID_ER_LOG_SIZE;
+  prm->name = PRM_NAME_ER_LOG_SIZE;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_er_log_size_flag;
+  prm->default_value = (void *) &prm_er_log_size_default;
+  prm->value = (void *) &PRM_ER_LOG_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_er_log_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ER_LOG_FILE];
+  prm->param_id = PRM_ID_ER_LOG_FILE;
+  prm->name = PRM_NAME_ER_LOG_FILE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_er_log_file_flag;
+  prm->default_value = (void *) &prm_er_log_file_default;
+  prm->value = (void *) &PRM_ER_LOG_FILE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ACCESS_IP_CONTROL];
+  prm->param_id = PRM_ID_ACCESS_IP_CONTROL;
+  prm->name = PRM_NAME_ACCESS_IP_CONTROL;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_access_ip_control_flag;
+  prm->default_value = (void *) &prm_access_ip_control_default;
+  prm->value = (void *) &PRM_ACCESS_IP_CONTROL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ACCESS_IP_CONTROL_FILE];
+  prm->param_id = PRM_ID_ACCESS_IP_CONTROL_FILE;
+  prm->name = PRM_NAME_ACCESS_IP_CONTROL_FILE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_access_ip_control_file_flag;
+  prm->default_value = (void *) &prm_access_ip_control_file_default;
+  prm->value = (void *) &PRM_ACCESS_IP_CONTROL_FILE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_IO_LOCKF_ENABLE];
+  prm->param_id = PRM_ID_IO_LOCKF_ENABLE;
+  prm->name = PRM_NAME_IO_LOCKF_ENABLE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_io_lockf_enable_flag;
+  prm->default_value = (void *) &prm_io_lockf_enable_default;
+  prm->value = (void *) &PRM_IO_LOCKF_ENABLE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SORT_BUFFER_SIZE];
+  prm->param_id = PRM_ID_SORT_BUFFER_SIZE;
+  prm->name = PRM_NAME_SORT_BUFFER_SIZE;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_sort_buffer_size_flag;
+  prm->default_value = (void *) &prm_sort_buffer_size_default;
+  prm->value = (void *) &PRM_SORT_BUFFER_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_sort_buffer_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_PB_BUFFER_FLUSH_RATIO];
+  prm->param_id = PRM_ID_PB_BUFFER_FLUSH_RATIO;
+  prm->name = PRM_NAME_PB_BUFFER_FLUSH_RATIO;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_FLOAT;
+  prm->dynamic_flag = &prm_pb_buffer_flush_ratio_flag;
+  prm->default_value = (void *) &prm_pb_buffer_flush_ratio_default;
+  prm->value = (void *) &PRM_PB_BUFFER_FLUSH_RATIO;
+  prm->upper_limit = (void *) &prm_pb_buffer_flush_ratio_upper;
+  prm->lower_limit = (void *) &prm_pb_buffer_flush_ratio_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_PAGE_BUFFER_SIZE];
+  prm->param_id = PRM_ID_PAGE_BUFFER_SIZE;
+  prm->name = PRM_NAME_PAGE_BUFFER_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_page_buffer_size_flag;
+  prm->default_value = (void *) &prm_page_buffer_size_default;
+  prm->value = (void *) &PRM_PAGE_BUFFER_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_page_buffer_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HF_MAX_BESTSPACE_ENTRIES];
+  prm->param_id = PRM_ID_HF_MAX_BESTSPACE_ENTRIES;
+  prm->name = PRM_NAME_HF_MAX_BESTSPACE_ENTRIES;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_hf_max_bestspace_entries_flag;
+  prm->default_value = (void *) &prm_hf_max_bestspace_entries_default;
+  prm->value = (void *) &PRM_HF_MAX_BESTSPACE_ENTRIES;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_hf_max_bestspace_entries_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_BT_UNFILL_FACTOR];
+  prm->param_id = PRM_ID_BT_UNFILL_FACTOR;
+  prm->name = PRM_NAME_BT_UNFILL_FACTOR;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_FLOAT;
+  prm->dynamic_flag = &prm_bt_unfill_factor_flag;
+  prm->default_value = (void *) &prm_bt_unfill_factor_default;
+  prm->value = (void *) &PRM_BT_UNFILL_FACTOR;
+  prm->upper_limit = (void *) &prm_bt_unfill_factor_upper;
+  prm->lower_limit = (void *) &prm_bt_unfill_factor_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_BT_OID_BUFFER_SIZE];
+  prm->param_id = PRM_ID_BT_OID_BUFFER_SIZE;
+  prm->name = PRM_NAME_BT_OID_BUFFER_SIZE;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_bt_oid_buffer_size_flag;
+  prm->default_value = (void *) &prm_bt_oid_buffer_size_default;
+  prm->value = (void *) &PRM_BT_OID_BUFFER_SIZE;
+  prm->upper_limit = (void *) &prm_bt_oid_buffer_size_upper;
+  prm->lower_limit = (void *) &prm_bt_oid_buffer_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_BT_INDEX_SCAN_OID_ORDER];
+  prm->param_id = PRM_ID_BT_INDEX_SCAN_OID_ORDER;
+  prm->name = PRM_NAME_BT_INDEX_SCAN_OID_ORDER;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_bt_index_scan_oid_order_flag;
+  prm->default_value = (void *) &prm_bt_index_scan_oid_order_default;
+  prm->value = (void *) &PRM_BT_INDEX_SCAN_OID_ORDER;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_BOSR_MAXTMP_SIZE];
+  prm->param_id = PRM_ID_BOSR_MAXTMP_SIZE;
+  prm->name = PRM_NAME_BOSR_MAXTMP_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_bosr_maxtmp_flag;
+  prm->default_value = (void *) &prm_bosr_maxtmp_size_default;
+  prm->value = (void *) &PRM_BOSR_MAXTMP_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LK_TIMEOUT];
+  prm->param_id = PRM_ID_LK_TIMEOUT;
+  prm->name = PRM_NAME_LK_TIMEOUT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_lk_timeout_flag;
+  prm->default_value = (void *) &prm_lk_timeout_default;
+  prm->value = (void *) &PRM_LK_TIMEOUT;
+  prm->upper_limit = (void *) &prm_lk_timeout_upper;
+  prm->lower_limit = (void *) &prm_lk_timeout_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LK_RUN_DEADLOCK_INTERVAL];
+  prm->param_id = PRM_ID_LK_RUN_DEADLOCK_INTERVAL;
+  prm->name = PRM_NAME_LK_RUN_DEADLOCK_INTERVAL;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_FLOAT;
+  prm->dynamic_flag = &prm_lk_run_deadlock_interval_flag;
+  prm->default_value = (void *) &prm_lk_run_deadlock_interval_default;
+  prm->value = (void *) &PRM_LK_RUN_DEADLOCK_INTERVAL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_lk_run_deadlock_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_BUFFER_SIZE];
+  prm->param_id = PRM_ID_LOG_BUFFER_SIZE;
+  prm->name = PRM_NAME_LOG_BUFFER_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_log_buffer_size_flag;
+  prm->default_value = (void *) &prm_log_buffer_size_default;
+  prm->value = (void *) &PRM_LOG_BUFFER_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_log_buffer_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_CHECKPOINT_SIZE];
+  prm->param_id = PRM_ID_LOG_CHECKPOINT_SIZE;
+  prm->name = PRM_NAME_LOG_CHECKPOINT_SIZE;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_log_checkpoint_size_flag;
+  prm->default_value = (void *) &prm_log_checkpoint_size_default;
+  prm->value = (void *) &PRM_LOG_CHECKPOINT_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_log_checkpoint_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_CHECKPOINT_INTERVAL];
+  prm->param_id = PRM_ID_LOG_CHECKPOINT_INTERVAL;
+  prm->name = PRM_NAME_LOG_CHECKPOINT_INTERVAL;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_log_checkpoint_interval_flag;
+  prm->default_value = (void *) &prm_log_checkpoint_interval_default;
+  prm->value = (void *) &PRM_LOG_CHECKPOINT_INTERVAL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_log_checkpoint_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_CHECKPOINT_FLUSH_INTERVAL];
+  prm->param_id = PRM_ID_LOG_CHECKPOINT_FLUSH_INTERVAL;
+  prm->name = PRM_NAME_LOG_CHECKPOINT_FLUSH_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT | PRM_HIDDEN);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_log_checkpoint_flush_interval_flag;
+  prm->default_value = (void *) &prm_log_checkpoint_flush_interval_default;
+  prm->value = (void *) &PRM_LOG_CHECKPOINT_FLUSH_INTERVAL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_log_checkpoint_flush_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_COMMIT_ON_SHUTDOWN];
+  prm->param_id = PRM_ID_COMMIT_ON_SHUTDOWN;
+  prm->name = PRM_NAME_COMMIT_ON_SHUTDOWN;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_commit_on_shutdown_flag;
+  prm->default_value = (void *) &prm_commit_on_shutdown_default;
+  prm->value = (void *) &PRM_COMMIT_ON_SHUTDOWN;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHUTDOWN_WAIT_TIME];
+  prm->param_id = PRM_ID_SHUTDOWN_WAIT_TIME;
+  prm->name = PRM_NAME_SHUTDOWN_WAIT_TIME;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT | PRM_HIDDEN);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_shutdown_wait_time_flag;
+  prm->default_value = (void *) &prm_shutdown_wait_time_default;
+  prm->value = (void *) &PRM_SHUTDOWN_WAIT_TIME;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_shutdown_wait_time_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_RSQL_AUTO_COMMIT];
+  prm->param_id = PRM_ID_RSQL_AUTO_COMMIT;
+  prm->name = PRM_NAME_RSQL_AUTO_COMMIT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_rsql_auto_commit_flag;
+  prm->default_value = (void *) &prm_rsql_auto_commit_default;
+  prm->value = (void *) &PRM_RSQL_AUTO_COMMIT;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_WS_HASHTABLE_SIZE];
+  prm->param_id = PRM_ID_WS_HASHTABLE_SIZE;
+  prm->name = PRM_NAME_WS_HASHTABLE_SIZE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ws_hashtable_size_flag;
+  prm->default_value = (void *) &prm_ws_hashtable_size_default;
+  prm->value = (void *) &PRM_WS_HASHTABLE_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_ws_hashtable_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_WS_MEMORY_REPORT];
+  prm->param_id = PRM_ID_WS_MEMORY_REPORT;
+  prm->name = PRM_NAME_WS_MEMORY_REPORT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_ws_memory_report_flag;
+  prm->default_value = (void *) &prm_ws_memory_report_default;
+  prm->value = (void *) &PRM_WS_MEMORY_REPORT;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TCP_PORT_ID];
+  prm->param_id = PRM_ID_TCP_PORT_ID;
+  prm->name = PRM_NAME_TCP_PORT_ID;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_tcp_port_id_flag;
+  prm->default_value = (void *) &prm_tcp_port_id_default;
+  prm->value = (void *) &PRM_TCP_PORT_ID;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TCP_CONNECTION_TIMEOUT];
+  prm->param_id = PRM_ID_TCP_CONNECTION_TIMEOUT;
+  prm->name = PRM_NAME_TCP_CONNECTION_TIMEOUT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_tcp_connection_timeout_flag;
+  prm->default_value = (void *) &prm_tcp_connection_timeout_default;
+  prm->value = (void *) &PRM_TCP_CONNECTION_TIMEOUT;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_tcp_connection_timeout_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZATION_LEVEL];
+  prm->param_id = PRM_ID_OPTIMIZATION_LEVEL;
+  prm->name = PRM_NAME_OPTIMIZATION_LEVEL;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_optimization_level_flag;
+  prm->default_value = (void *) &prm_optimization_level_default;
+  prm->value = (void *) &PRM_OPTIMIZATION_LEVEL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_QO_DUMP];
+  prm->param_id = PRM_ID_QO_DUMP;
+  prm->name = PRM_NAME_QO_DUMP;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_qo_dump_flag;
+  prm->default_value = (void *) &prm_qo_dump_default;
+  prm->value = (void *) &PRM_QO_DUMP;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_THREAD_STACKSIZE];
+  prm->param_id = PRM_ID_THREAD_STACKSIZE;
+  prm->name = PRM_NAME_THREAD_STACKSIZE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_thread_stacksize_flag;
+  prm->default_value = (void *) &prm_thread_stacksize_default;
+  prm->value = (void *) &PRM_THREAD_STACKSIZE;
+  prm->upper_limit = (void *) &prm_thread_stacksize_upper;
+  prm->lower_limit = (void *) &prm_thread_stacksize_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_IO_BACKUP_NBUFFERS];
+  prm->param_id = PRM_ID_IO_BACKUP_NBUFFERS;
+  prm->name = PRM_NAME_IO_BACKUP_NBUFFERS;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_io_backup_nbuffers_flag;
+  prm->default_value = (void *) &prm_io_backup_nbuffers_default;
+  prm->value = (void *) &PRM_IO_BACKUP_NBUFFERS;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_io_backup_nbuffers_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_IO_BACKUP_MAX_VOLUME_SIZE];
+  prm->param_id = PRM_ID_IO_BACKUP_MAX_VOLUME_SIZE;
+  prm->name = PRM_NAME_IO_BACKUP_MAX_VOLUME_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_io_backup_max_volume_size_flag;
+  prm->default_value = (void *) &prm_io_backup_max_volume_size_default;
+  prm->value = (void *) &PRM_IO_BACKUP_MAX_VOLUME_SIZE;
+  prm->upper_limit = (void *) &prm_io_backup_max_volume_size_upper;
+  prm->lower_limit = (void *) &prm_io_backup_max_volume_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_IO_BACKUP_SLEEP];
+  prm->param_id = PRM_ID_IO_BACKUP_SLEEP;
+  prm->name = PRM_NAME_IO_BACKUP_SLEEP;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT | PRM_HIDDEN);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_io_backup_sleep_flag;
+  prm->default_value = (void *) &prm_io_backup_sleep_default;
+  prm->value = (void *) &PRM_IO_BACKUP_SLEEP;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_io_backup_sleep_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MAX_PAGES_IN_TEMP_FILE_CACHE];
+  prm->param_id = PRM_ID_MAX_PAGES_IN_TEMP_FILE_CACHE;
+  prm->name = PRM_NAME_MAX_PAGES_IN_TEMP_FILE_CACHE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_max_pages_in_temp_file_cache_flag;
+  prm->default_value = (void *) &prm_max_pages_in_temp_file_cache_default;
+  prm->value = (void *) &PRM_MAX_PAGES_IN_TEMP_FILE_CACHE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_max_pages_in_temp_file_cache_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MAX_ENTRIES_IN_TEMP_FILE_CACHE];
+  prm->param_id = PRM_ID_MAX_ENTRIES_IN_TEMP_FILE_CACHE;
+  prm->name = PRM_NAME_MAX_ENTRIES_IN_TEMP_FILE_CACHE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_max_entries_in_temp_file_cache_flag;
+  prm->default_value = (void *) &prm_max_entries_in_temp_file_cache_default;
+  prm->value = (void *) &PRM_MAX_ENTRIES_IN_TEMP_FILE_CACHE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_max_entries_in_temp_file_cache_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TEMP_MEM_BUFFER_SIZE];
+  prm->param_id = PRM_ID_TEMP_MEM_BUFFER_SIZE;
+  prm->name = PRM_NAME_TEMP_MEM_BUFFER_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_temp_mem_buffer_size_flag;
+  prm->default_value = (void *) &prm_temp_mem_buffer_size_default;
+  prm->value = (void *) &PRM_TEMP_MEM_BUFFER_SIZE;
+  prm->upper_limit = (void *) &prm_temp_mem_buffer_size_upper;
+  prm->lower_limit = (void *) &prm_temp_mem_buffer_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_INDEX_SCAN_KEY_BUFFER_SIZE];
+  prm->param_id = PRM_ID_INDEX_SCAN_KEY_BUFFER_SIZE;
+  prm->name = PRM_NAME_INDEX_SCAN_KEY_BUFFER_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_index_scan_key_buffer_size_flag;
+  prm->default_value = (void *) &prm_index_scan_key_buffer_size_default;
+  prm->value = (void *) &PRM_INDEX_SCAN_KEY_BUFFER_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_index_scan_key_buffer_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ENABLE_HISTO];
+  prm->param_id = PRM_ID_ENABLE_HISTO;
+  prm->name = PRM_NAME_ENABLE_HISTO;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_enable_histo_flag;
+  prm->default_value = (void *) &prm_enable_histo_default;
+  prm->value = (void *) &PRM_ENABLE_HISTO;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_PB_NUM_LRU_CHAINS];
+  prm->param_id = PRM_ID_PB_NUM_LRU_CHAINS;
+  prm->name = PRM_NAME_PB_NUM_LRU_CHAINS;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_pb_num_LRU_chains_flag;
+  prm->default_value = (void *) &prm_pb_num_LRU_chains_default;
+  prm->value = (void *) &PRM_PB_NUM_LRU_CHAINS;
+  prm->upper_limit = (void *) &prm_pb_num_LRU_chains_upper;
+  prm->lower_limit = (void *) &prm_pb_num_LRU_chains_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_PAGE_BG_FLUSH_INTERVAL];
+  prm->param_id = PRM_ID_PAGE_BG_FLUSH_INTERVAL;
+  prm->name = PRM_NAME_PAGE_BG_FLUSH_INTERVAL;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_page_bg_flush_interval_flag;
+  prm->default_value = (void *) &prm_page_bg_flush_interval_default;
+  prm->value = (void *) &PRM_PAGE_BG_FLUSH_INTERVAL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_page_bg_flush_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ADAPTIVE_FLUSH_CONTROL];
+  prm->param_id = PRM_ID_ADAPTIVE_FLUSH_CONTROL;
+  prm->name = PRM_NAME_ADAPTIVE_FLUSH_CONTROL;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_adaptive_flush_control_flag;
+  prm->default_value = (void *) &prm_adaptive_flush_control_default;
+  prm->value = (void *) &PRM_ADAPTIVE_FLUSH_CONTROL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MAX_FLUSH_SIZE_PER_SECOND];
+  prm->param_id = PRM_ID_MAX_FLUSH_SIZE_PER_SECOND;
+  prm->name = PRM_NAME_MAX_FLUSH_SIZE_PER_SECOND;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_max_flush_size_per_second_flag;
+  prm->default_value = (void *) &prm_max_flush_size_per_second_default;
+  prm->value = (void *) &PRM_MAX_FLUSH_SIZE_PER_SECOND;
+  prm->upper_limit = (void *) &prm_max_flush_size_per_second_upper;
+  prm->lower_limit = (void *) &prm_max_flush_size_per_second_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_PB_SYNC_ON_FLUSH_SIZE];
+  prm->param_id = PRM_ID_PB_SYNC_ON_FLUSH_SIZE;
+  prm->name = PRM_NAME_PB_SYNC_ON_FLUSH_SIZE;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_pb_sync_on_flush_size_flag;
+  prm->default_value = (void *) &prm_pb_sync_on_flush_size_default;
+  prm->value = (void *) &PRM_PB_SYNC_ON_FLUSH_SIZE;
+  prm->upper_limit = (void *) &prm_pb_sync_on_flush_size_upper;
+  prm->lower_limit = (void *) &prm_pb_sync_on_flush_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_PB_DEBUG_PAGE_VALIDATION_LEVEL];
+  prm->param_id = PRM_ID_PB_DEBUG_PAGE_VALIDATION_LEVEL;
+  prm->name = PRM_NAME_PB_DEBUG_PAGE_VALIDATION_LEVEL;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_KEYWORD;
+  prm->dynamic_flag = &prm_pb_debug_page_validation_level_flag;
+  prm->default_value = (void *) &prm_pb_debug_page_validation_level_default;
+  prm->value = (void *) &PRM_PB_DEBUG_PAGE_VALIDATION_LEVEL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ANSI_QUOTES];
+  prm->param_id = PRM_ID_ANSI_QUOTES;
+  prm->name = PRM_NAME_ANSI_QUOTES;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_TEST_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_ansi_quotes_flag;
+  prm->default_value = (void *) &prm_ansi_quotes_default;
+  prm->value = (void *) &PRM_ANSI_QUOTES;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TEST_MODE];
+  prm->param_id = PRM_ID_TEST_MODE;
+  prm->name = PRM_NAME_TEST_MODE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_test_mode_flag;
+  prm->default_value = (void *) &prm_test_mode_default;
+  prm->value = (void *) &PRM_TEST_MODE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_GROUP_CONCAT_MAX_LEN];
+  prm->param_id = PRM_ID_GROUP_CONCAT_MAX_LEN;
+  prm->name = PRM_NAME_GROUP_CONCAT_MAX_LEN;
+  prm->static_flag = (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_group_concat_max_len_flag;
+  prm->default_value = (void *) &prm_group_concat_max_len_default;
+  prm->value = (void *) &PRM_GROUP_CONCAT_MAX_LEN;
+  prm->upper_limit = (void *) &prm_group_concat_max_len_upper;
+  prm->lower_limit = (void *) &prm_group_concat_max_len_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LIKE_TERM_SELECTIVITY];
+  prm->param_id = PRM_ID_LIKE_TERM_SELECTIVITY;
+  prm->name = PRM_NAME_LIKE_TERM_SELECTIVITY;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_FLOAT;
+  prm->dynamic_flag = &prm_like_term_selectivity_flag;
+  prm->default_value = (void *) &prm_like_term_selectivity_default;
+  prm->value = (void *) &PRM_LIKE_TERM_SELECTIVITY;
+  prm->upper_limit = (void *) &prm_like_term_selectivity_upper;
+  prm->lower_limit = (void *) &prm_like_term_selectivity_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SUPPRESS_FSYNC];
+  prm->param_id = PRM_ID_SUPPRESS_FSYNC;
+  prm->name = PRM_NAME_SUPPRESS_FSYNC;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_suppress_fsync_flag;
+  prm->default_value = (void *) &prm_suppress_fsync_default;
+  prm->value = (void *) &PRM_SUPPRESS_FSYNC;
+  prm->upper_limit = (void *) &prm_suppress_fsync_upper;
+  prm->lower_limit = (void *) &prm_suppress_fsync_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_CALL_STACK_DUMP_ON_ERROR];
+  prm->param_id = PRM_ID_CALL_STACK_DUMP_ON_ERROR;
+  prm->name = PRM_NAME_CALL_STACK_DUMP_ON_ERROR;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_call_stack_dump_on_error_flag;
+  prm->default_value = (void *) &prm_call_stack_dump_on_error_default;
+  prm->value = (void *) &PRM_CALL_STACK_DUMP_ON_ERROR;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_CALL_STACK_DUMP_ACTIVATION];
+  prm->param_id = PRM_ID_CALL_STACK_DUMP_ACTIVATION;
+  prm->name = PRM_NAME_CALL_STACK_DUMP_ACTIVATION;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER_LIST;
+  prm->dynamic_flag = &prm_call_stack_dump_activation_flag;
+  prm->default_value = (void *) &prm_call_stack_dump_activation_default;
+  prm->value = (void *) &PRM_CALL_STACK_DUMP_ACTIVATION;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_CALL_STACK_DUMP_DEACTIVATION];
+  prm->param_id = PRM_ID_CALL_STACK_DUMP_DEACTIVATION;
+  prm->name = PRM_NAME_CALL_STACK_DUMP_DEACTIVATION;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER_LIST;
+  prm->dynamic_flag = &prm_call_stack_dump_deactivation_flag;
+  prm->default_value = (void *) &prm_call_stack_dump_deactivation_default;
+  prm->value = (void *) &PRM_CALL_STACK_DUMP_DEACTIVATION;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MIGRATOR_COMPRESSED_PROTOCOL];
+  prm->param_id = PRM_ID_MIGRATOR_COMPRESSED_PROTOCOL;
+  prm->name = PRM_NAME_MIGRATOR_COMPRESSED_PROTOCOL;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_migrator_compressed_protocol_flag;
+  prm->default_value = (void *) &prm_migrator_compressed_protocol_default;
+  prm->value = (void *) &PRM_MIGRATOR_COMPRESSED_PROTOCOL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_AUTO_RESTART_SERVER];
+  prm->param_id = PRM_ID_AUTO_RESTART_SERVER;
+  prm->name = PRM_NAME_AUTO_RESTART_SERVER;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_auto_restart_server_flag;
+  prm->default_value = (void *) &prm_auto_restart_server_default;
+  prm->value = (void *) &PRM_AUTO_RESTART_SERVER;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_XASL_MAX_PLAN_CACHE_ENTRIES];
+  prm->param_id = PRM_ID_XASL_MAX_PLAN_CACHE_ENTRIES;
+  prm->name = PRM_NAME_XASL_MAX_PLAN_CACHE_ENTRIES;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_FORCE_SERVER);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_xasl_max_plan_cache_entries_flag;
+  prm->default_value = (void *) &prm_xasl_max_plan_cache_entries_default;
+  prm->value = (void *) &PRM_XASL_MAX_PLAN_CACHE_ENTRIES;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_xasl_max_plan_cache_entries_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_XASL_MAX_PLAN_CACHE_CLONES];
+  prm->param_id = PRM_ID_XASL_MAX_PLAN_CACHE_CLONES;
+  prm->name = PRM_NAME_XASL_MAX_PLAN_CACHE_CLONES;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_xasl_max_plan_cache_clones_flag;
+  prm->default_value = (void *) &prm_xasl_max_plan_cache_clones_default;
+  prm->value = (void *) &PRM_XASL_MAX_PLAN_CACHE_CLONES;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_XASL_PLAN_CACHE_TIMEOUT];
+  prm->param_id = PRM_ID_XASL_PLAN_CACHE_TIMEOUT;
+  prm->name = PRM_NAME_XASL_PLAN_CACHE_TIMEOUT;
+  prm->static_flag = (PRM_FOR_SERVER);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_xasl_plan_cache_timeout_flag;
+  prm->default_value = (void *) &prm_xasl_plan_cache_timeout_default;
+  prm->value = (void *) &PRM_XASL_PLAN_CACHE_TIMEOUT;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_USE_ORDERBY_SORT_LIMIT];
+  prm->param_id = PRM_ID_USE_ORDERBY_SORT_LIMIT;
+  prm->name = PRM_NAME_USE_ORDERBY_SORT_LIMIT;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_use_orderby_sort_limit_flag;
+  prm->default_value = (void *) &prm_use_orderby_sort_limit_default;
+  prm->value = (void *) &PRM_USE_ORDERBY_SORT_LIMIT;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOGWR_COMPRESSED_PROTOCOL];
+  prm->param_id = PRM_ID_LOGWR_COMPRESSED_PROTOCOL;
+  prm->name = PRM_NAME_LOGWR_COMPRESSED_PROTOCOL;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_logwr_compressed_protocol_flag;
+  prm->default_value = (void *) &prm_logwr_compressed_protocol_default;
+  prm->value = (void *) &PRM_LOGWR_COMPRESSED_PROTOCOL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_MODE];
+  prm->param_id = PRM_ID_HA_MODE;
+  prm->name = PRM_NAME_HA_MODE;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA | PRM_FORCE_SERVER);
+  prm->datatype = PRM_KEYWORD;
+  prm->dynamic_flag = &prm_ha_mode_flag;
+  prm->default_value = (void *) &prm_ha_mode_default;
+  prm->value = (void *) &PRM_HA_MODE;
+  prm->upper_limit = (void *) &prm_ha_mode_upper;
+  prm->lower_limit = (void *) &prm_ha_mode_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_NODE_LIST];
+  prm->param_id = PRM_ID_HA_NODE_LIST;
+  prm->name = PRM_NAME_HA_NODE_LIST;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_RELOADABLE |
+     PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_node_list_flag;
+  prm->default_value = (void *) &prm_ha_node_list_default;
+  prm->value = (void *) &PRM_HA_NODE_LIST;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_REPLICA_LIST];
+  prm->param_id = PRM_ID_HA_REPLICA_LIST;
+  prm->name = PRM_NAME_HA_REPLICA_LIST;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_RELOADABLE | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_replica_list_flag;
+  prm->default_value = (void *) &prm_ha_replica_list_default;
+  prm->value = (void *) &PRM_HA_REPLICA_LIST;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_DB_LIST];
+  prm->param_id = PRM_ID_HA_DB_LIST;
+  prm->name = PRM_NAME_HA_DB_LIST;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_db_list_flag;
+  prm->default_value = (void *) &prm_ha_db_list_default;
+  prm->value = (void *) &PRM_HA_DB_LIST;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_COPY_LOG_BASE];
+  prm->param_id = PRM_ID_HA_COPY_LOG_BASE;
+  prm->name = PRM_NAME_HA_COPY_LOG_BASE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_copy_log_base_flag;
+  prm->default_value = (void *) &prm_ha_copy_log_base_default;
+  prm->value = (void *) &PRM_HA_COPY_LOG_BASE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_COPY_SYNC_MODE];
+  prm->param_id = PRM_ID_HA_COPY_SYNC_MODE;
+  prm->name = PRM_NAME_HA_COPY_SYNC_MODE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_copy_sync_mode_flag;
+  prm->default_value = (void *) &prm_ha_copy_sync_mode_default;
+  prm->value = (void *) &PRM_HA_COPY_SYNC_MODE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_APPLY_MAX_MEM_SIZE];
+  prm->param_id = PRM_ID_HA_APPLY_MAX_MEM_SIZE;
+  prm->name = PRM_NAME_HA_APPLY_MAX_MEM_SIZE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_apply_max_mem_size_flag;
+  prm->default_value = (void *) &prm_ha_apply_max_mem_size_default;
+  prm->value = (void *) &PRM_HA_APPLY_MAX_MEM_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_PORT_ID];
+  prm->param_id = PRM_ID_HA_PORT_ID;
+  prm->name = PRM_NAME_HA_PORT_ID;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_port_id_flag;
+  prm->default_value = (void *) &prm_ha_port_id_default;
+  prm->value = (void *) &PRM_HA_PORT_ID;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_INIT_TIMER];
+  prm->param_id = PRM_ID_HA_INIT_TIMER;
+  prm->name = PRM_NAME_HA_INIT_TIMER;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_init_timer_flag;
+  prm->default_value = (void *) &prm_ha_init_timer_default;
+  prm->value = (void *) &PRM_HA_INIT_TIMER;
+  prm->upper_limit = (void *) &prm_ha_init_timer_upper;
+  prm->lower_limit = (void *) &prm_ha_init_timer_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_HEARTBEAT_INTERVAL];
+  prm->param_id = PRM_ID_HA_HEARTBEAT_INTERVAL;
+  prm->name = PRM_NAME_HA_HEARTBEAT_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_heartbeat_interval_flag;
+  prm->default_value = (void *) &prm_ha_heartbeat_interval_default;
+  prm->value = (void *) &PRM_HA_HEARTBEAT_INTERVAL;
+  prm->upper_limit = (void *) &prm_ha_heartbeat_interval_upper;
+  prm->lower_limit = (void *) &prm_ha_heartbeat_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_CALC_SCORE_INTERVAL];
+  prm->param_id = PRM_ID_HA_CALC_SCORE_INTERVAL;
+  prm->name = PRM_NAME_HA_CALC_SCORE_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_calc_score_interval_flag;
+  prm->default_value = (void *) &prm_ha_calc_score_interval_default;
+  prm->value = (void *) &PRM_HA_CALC_SCORE_INTERVAL;
+  prm->upper_limit = (void *) &prm_ha_calc_score_interval_upper;
+  prm->lower_limit = (void *) &prm_ha_calc_score_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_FAILOVER_WAIT_TIME];
+  prm->param_id = PRM_ID_HA_FAILOVER_WAIT_TIME;
+  prm->name = PRM_NAME_HA_FAILOVER_WAIT_TIME;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_failover_wait_time_flag;
+  prm->default_value = (void *) &prm_ha_failover_wait_time_default;
+  prm->value = (void *) &PRM_HA_FAILOVER_WAIT_TIME;
+  prm->upper_limit = (void *) &prm_ha_failover_wait_time_upper;
+  prm->lower_limit = (void *) &prm_ha_failover_wait_time_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_PROCESS_START_CONFIRM_INTERVAL];
+  prm->param_id = PRM_ID_HA_PROCESS_START_CONFIRM_INTERVAL;
+  prm->name = PRM_NAME_HA_PROCESS_START_CONFIRM_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_process_start_confirm_interval_flag;
+  prm->default_value =
+    (void *) &prm_ha_process_start_confirm_interval_default;
+  prm->value = (void *) &PRM_HA_PROCESS_START_CONFIRM_INTERVAL;
+  prm->upper_limit = (void *) &prm_ha_process_start_confirm_interval_upper;
+  prm->lower_limit = (void *) &prm_ha_process_start_confirm_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_PROCESS_DEREG_CONFIRM_INTERVAL];
+  prm->param_id = PRM_ID_HA_PROCESS_DEREG_CONFIRM_INTERVAL;
+  prm->name = PRM_NAME_HA_PROCESS_DEREG_CONFIRM_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_process_dereg_confirm_interval_flag;
+  prm->default_value =
+    (void *) &prm_ha_process_dereg_confirm_interval_default;
+  prm->value = (void *) &PRM_HA_PROCESS_DEREG_CONFIRM_INTERVAL;
+  prm->upper_limit = (void *) &prm_ha_process_dereg_confirm_interval_upper;
+  prm->lower_limit = (void *) &prm_ha_process_dereg_confirm_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_MAX_PROCESS_START_CONFIRM];
+  prm->param_id = PRM_ID_HA_MAX_PROCESS_START_CONFIRM;
+  prm->name = PRM_NAME_HA_MAX_PROCESS_START_CONFIRM;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_max_process_start_confirm_flag;
+  prm->default_value = (void *) &prm_ha_max_process_start_confirm_default;
+  prm->value = (void *) &PRM_HA_MAX_PROCESS_START_CONFIRM;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_MAX_PROCESS_DEREG_CONFIRM];
+  prm->param_id = PRM_ID_HA_MAX_PROCESS_DEREG_CONFIRM;
+  prm->name = PRM_NAME_HA_MAX_PROCESS_DEREG_CONFIRM;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_max_process_dereg_confirm_flag;
+  prm->default_value = (void *) &prm_ha_max_process_dereg_confirm_default;
+  prm->value = (void *) &PRM_HA_MAX_PROCESS_DEREG_CONFIRM;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_CHANGESALVE_MAX_WAIT_TIME];
+  prm->param_id = PRM_ID_HA_CHANGESALVE_MAX_WAIT_TIME;
+  prm->name = PRM_NAME_HA_CHANGESLAVE_MAX_WAIT_TIME;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_changeslave_max_wait_time_flag;
+  prm->default_value = (void *) &prm_ha_changeslave_max_wait_time_default;
+  prm->value = (void *) &PRM_HA_CHANGESLAVE_MAX_WAIT_TIME;
+  prm->upper_limit = (void *) &prm_ha_changeslave_max_wait_time_upper;
+  prm->lower_limit = (void *) &prm_ha_changeslave_max_wait_time_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF];
+  prm->param_id = PRM_ID_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF;
+  prm->name = PRM_NAME_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_unacceptable_proc_restart_timediff_flag;
+  prm->default_value =
+    (void *) &prm_ha_unacceptable_proc_restart_timediff_default;
+  prm->value = (void *) &PRM_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SERVER_STATE_SYNC_INTERVAL];
+  prm->param_id = PRM_ID_SERVER_STATE_SYNC_INTERVAL;
+  prm->name = PRM_NAME_SERVER_STATE_SYNC_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_server_state_sync_interval_flag;
+  prm->default_value = (void *) &prm_server_state_sync_interval_default;
+  prm->value = (void *) &PRM_SERVER_STATE_SYNC_INTERVAL;
+  prm->upper_limit = (void *) &prm_server_state_sync_interval_upper;
+  prm->lower_limit = (void *) &prm_server_state_sync_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_MAX_HEARTBEAT_GAP];
+  prm->param_id = PRM_ID_HA_MAX_HEARTBEAT_GAP;
+  prm->name = PRM_NAME_HA_MAX_HEARTBEAT_GAP;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_max_heartbeat_gap_flag;
+  prm->default_value = (void *) &prm_ha_max_heartbeat_gap_default;
+  prm->value = (void *) &PRM_HA_MAX_HEARTBEAT_GAP;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_PING_HOSTS];
+  prm->param_id = PRM_ID_HA_PING_HOSTS;
+  prm->name = PRM_NAME_HA_PING_HOSTS;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_RELOADABLE | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_ping_hosts_flag;
+  prm->default_value = (void *) &prm_ha_ping_hosts_default;
+  prm->value = (void *) &PRM_HA_PING_HOSTS;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_IGNORE_ERROR_LIST];
+  prm->param_id = PRM_ID_HA_IGNORE_ERROR_LIST;
+  prm->name = PRM_NAME_HA_IGNORE_ERROR_LIST;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER_LIST;
+  prm->dynamic_flag = &prm_ha_ignore_error_list_flag;
+  prm->default_value = (void *) &prm_ha_ignore_error_list_default;
+  prm->value = (void *) &PRM_HA_IGNORE_ERROR_LIST;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_SQL_LOG_MAX_SIZE_IN_MB];
+  prm->param_id = PRM_ID_HA_SQL_LOG_MAX_SIZE_IN_MB;
+  prm->name = PRM_NAME_HA_SQL_LOG_MAX_SIZE_IN_MB;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_sql_log_max_size_in_mb_flag;
+  prm->default_value = (void *) &prm_ha_sql_log_max_size_in_mb_default;
+  prm->value = (void *) &PRM_HA_SQL_LOG_MAX_SIZE_IN_MB;
+  prm->upper_limit = (void *) &prm_ha_sql_log_max_size_in_mb_upper;
+  prm->lower_limit = (void *) &prm_ha_sql_log_max_size_in_mb_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_COPY_LOG_MAX_ARCHIVES];
+  prm->param_id = PRM_ID_HA_COPY_LOG_MAX_ARCHIVES;
+  prm->name = PRM_NAME_HA_COPY_LOG_MAX_ARCHIVES;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_copy_log_max_archives_flag;
+  prm->default_value = (void *) &prm_ha_copy_log_max_archives_default;
+  prm->value = (void *) &PRM_HA_COPY_LOG_MAX_ARCHIVES;
+  prm->upper_limit = (void *) &prm_ha_copy_log_max_archives_upper;
+  prm->lower_limit = (void *) &prm_ha_copy_log_max_archives_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_COPY_LOG_TIMEOUT];
+  prm->param_id = PRM_ID_HA_COPY_LOG_TIMEOUT;
+  prm->name = PRM_NAME_HA_COPY_LOG_TIMEOUT;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_FOR_HA | PRM_RELOADABLE | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_copy_log_timeout_flag;
+  prm->default_value = (void *) &prm_ha_copy_log_timeout_default;
+  prm->value = (void *) &PRM_HA_COPY_LOG_TIMEOUT;
+  prm->upper_limit = (void *) &prm_ha_copy_log_timeout_upper;
+  prm->lower_limit = (void *) &prm_ha_copy_log_timeout_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_REPLICA_DELAY];
+  prm->param_id = PRM_ID_HA_REPLICA_DELAY;
+  prm->name = PRM_NAME_HA_REPLICA_DELAY;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_replica_delay_flag;
+  prm->default_value = (void *) &prm_ha_replica_delay_default;
+  prm->value = (void *) &PRM_HA_REPLICA_DELAY;
+  prm->upper_limit = (void *) &prm_ha_replica_delay_upper;
+  prm->lower_limit = (void *) &prm_ha_replica_delay_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_REPLICA_TIME_BOUND];
+  prm->param_id = PRM_ID_HA_REPLICA_TIME_BOUND;
+  prm->name = PRM_NAME_HA_REPLICA_TIME_BOUND;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_replica_time_bound_flag;
+  prm->default_value = (void *) &prm_ha_replica_time_bound_default;
+  prm->value = (void *) &PRM_HA_REPLICA_TIME_BOUND;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_DELAY_LIMIT];
+  prm->param_id = PRM_ID_HA_DELAY_LIMIT;
+  prm->name = PRM_NAME_HA_DELAY_LIMIT;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_FOR_HA | PRM_USER_CHANGE | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_delay_limit_flag;
+  prm->default_value = (void *) &prm_ha_delay_limit_default;
+  prm->value = (void *) &PRM_HA_DELAY_LIMIT;
+  prm->upper_limit = (void *) &prm_ha_delay_limit_upper;
+  prm->lower_limit = (void *) &prm_ha_delay_limit_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_DELAY_LIMIT_DELTA];
+  prm->param_id = PRM_ID_HA_DELAY_LIMIT_DELTA;
+  prm->name = PRM_NAME_HA_DELAY_LIMIT_DELTA;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_FOR_HA | PRM_USER_CHANGE | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_delay_limit_delta_flag;
+  prm->default_value = (void *) &prm_ha_delay_limit_delta_default;
+  prm->value = (void *) &PRM_HA_DELAY_LIMIT_DELTA;
+  prm->upper_limit = (void *) &prm_ha_delay_limit_delta_upper;
+  prm->lower_limit = (void *) &prm_ha_delay_limit_delta_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_CHECK_DISK_FAILURE_INTERVAL];
+  prm->param_id = PRM_ID_HA_CHECK_DISK_FAILURE_INTERVAL;
+  prm->name = PRM_NAME_HA_CHECK_DISK_FAILURE_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_CLIENT | PRM_FOR_HA | PRM_TIME_UNIT | PRM_RELOADABLE);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_ha_check_disk_failure_interval_flag;
+  prm->default_value = (void *) &prm_ha_check_disk_failure_interval_default;
+  prm->value = (void *) &PRM_HA_CHECK_DISK_FAILURE_INTERVAL;
+  prm->upper_limit = (void *) &prm_ha_check_disk_failure_interval_upper;
+  prm->lower_limit = (void *) &prm_ha_check_disk_failure_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_ASYNC_LOG_FLUSH_INTERVAL];
+  prm->param_id = PRM_ID_LOG_ASYNC_LOG_FLUSH_INTERVAL;
+  prm->name = PRM_NAME_LOG_ASYNC_LOG_FLUSH_INTERVAL;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_log_async_log_flush_interval_flag;
+  prm->default_value = (void *) &prm_log_async_log_flush_interval_default;
+  prm->value = (void *) &PRM_LOG_ASYNC_LOG_FLUSH_INTERVAL;
+  prm->upper_limit = (void *) &prm_log_async_log_flush_interval_upper;
+  prm->lower_limit = (void *) &prm_log_async_log_flush_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_COMPRESS];
+  prm->param_id = PRM_ID_LOG_COMPRESS;
+  prm->name = PRM_NAME_LOG_COMPRESS;
+  prm->static_flag = (PRM_FOR_SERVER);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_log_compress_flag;
+  prm->default_value = (void *) &prm_log_compress_default;
+  prm->value = (void *) &PRM_LOG_COMPRESS;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_BLOCK_NOWHERE_STATEMENT];
+  prm->param_id = PRM_ID_BLOCK_NOWHERE_STATEMENT;
+  prm->name = PRM_NAME_BLOCK_NOWHERE_STATEMENT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_block_nowhere_statement_flag;
+  prm->default_value = (void *) &prm_block_nowhere_statement_default;
+  prm->value = (void *) &PRM_BLOCK_NOWHERE_STATEMENT;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_BLOCK_DDL_STATEMENT];
+  prm->param_id = PRM_ID_BLOCK_DDL_STATEMENT;
+  prm->name = PRM_NAME_BLOCK_DDL_STATEMENT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_block_ddl_statement_flag;
+  prm->default_value = (void *) &prm_block_ddl_statement_default;
+  prm->value = (void *) &PRM_BLOCK_DDL_STATEMENT;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_RSQL_HISTORY_NUM];
+  prm->param_id = PRM_ID_RSQL_HISTORY_NUM;
+  prm->name = PRM_NAME_RSQL_HISTORY_NUM;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_rsql_history_num_flag;
+  prm->default_value = (void *) &prm_rsql_history_num_default;
+  prm->value = (void *) &PRM_RSQL_HISTORY_NUM;
+  prm->upper_limit = (void *) &prm_rsql_history_num_upper;
+  prm->lower_limit = (void *) &prm_rsql_history_num_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_TRACE_DEBUG];
+  prm->param_id = PRM_ID_LOG_TRACE_DEBUG;
+  prm->name = PRM_NAME_LOG_TRACE_DEBUG;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_log_trace_debug_flag;
+  prm->default_value = (void *) &prm_log_trace_debug_default;
+  prm->value = (void *) &PRM_LOG_TRACE_DEBUG;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ER_PRODUCTION_MODE];
+  prm->param_id = PRM_ID_ER_PRODUCTION_MODE;
+  prm->name = PRM_NAME_ER_PRODUCTION_MODE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_er_production_mode_flag;
+  prm->default_value = (void *) &prm_er_production_mode_default;
+  prm->value = (void *) &PRM_ER_PRODUCTION_MODE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_ER_STOP_ON_ERROR];
+  prm->param_id = PRM_ID_ER_STOP_ON_ERROR;
+  prm->name = PRM_NAME_ER_STOP_ON_ERROR;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_er_stop_on_error_flag;
+  prm->default_value = (void *) &prm_er_stop_on_error_default;
+  prm->value = (void *) &PRM_ER_STOP_ON_ERROR;
+  prm->upper_limit = (void *) &prm_er_stop_on_error_upper;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TCP_RCVBUF_SIZE];
+  prm->param_id = PRM_ID_TCP_RCVBUF_SIZE;
+  prm->name = PRM_NAME_TCP_RCVBUF_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_tcp_rcvbuf_size_flag;
+  prm->default_value = (void *) &prm_tcp_rcvbuf_size_default;
+  prm->value = (void *) &PRM_TCP_RCVBUF_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TCP_SNDBUF_SIZE];
+  prm->param_id = PRM_ID_TCP_SNDBUF_SIZE;
+  prm->name = PRM_NAME_TCP_SNDBUF_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_tcp_sndbuf_size_flag;
+  prm->default_value = (void *) &prm_tcp_sndbuf_size_default;
+  prm->value = (void *) &PRM_TCP_SNDBUF_SIZE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TCP_NODELAY];
+  prm->param_id = PRM_ID_TCP_NODELAY;
+  prm->name = PRM_NAME_TCP_NODELAY;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_tcp_nodelay_flag;
+  prm->default_value = (void *) &prm_tcp_nodelay_default;
+  prm->value = (void *) &PRM_TCP_NODELAY;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_TCP_KEEPALIVE];
+  prm->param_id = PRM_ID_TCP_KEEPALIVE;
+  prm->name = PRM_NAME_TCP_KEEPALIVE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_FOR_CLIENT);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_tcp_keepalive_flag;
+  prm->default_value = (void *) &prm_tcp_keepalive_default;
+  prm->value = (void *) &PRM_TCP_KEEPALIVE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_RSQL_SINGLE_LINE_MODE];
+  prm->param_id = PRM_ID_RSQL_SINGLE_LINE_MODE;
+  prm->name = PRM_NAME_RSQL_SINGLE_LINE_MODE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_rsql_single_line_mode_flag;
+  prm->default_value = (void *) &prm_rsql_single_line_mode_default;
+  prm->value = (void *) &PRM_RSQL_SINGLE_LINE_MODE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_XASL_DEBUG_DUMP];
+  prm->param_id = PRM_ID_XASL_DEBUG_DUMP;
+  prm->name = PRM_NAME_XASL_DEBUG_DUMP;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_xasl_debug_dump_flag;
+  prm->default_value = (void *) &prm_xasl_debug_dump_default;
+  prm->value = (void *) &PRM_XASL_DEBUG_DUMP;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_MAX_ARCHIVES];
+  prm->param_id = PRM_ID_LOG_MAX_ARCHIVES;
+  prm->name = PRM_NAME_LOG_MAX_ARCHIVES;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_log_max_archives_flag;
+  prm->default_value = (void *) &prm_log_max_archives_default;
+  prm->value = (void *) &PRM_LOG_MAX_ARCHIVES;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_log_max_archives_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_FORCE_REMOVE_LOG_ARCHIVES];
+  prm->param_id = PRM_ID_FORCE_REMOVE_LOG_ARCHIVES;
+  prm->name = PRM_NAME_FORCE_REMOVE_LOG_ARCHIVES;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_force_remove_log_archives_flag;
+  prm->default_value = (void *) &prm_force_remove_log_archives_default;
+  prm->value = (void *) &PRM_FORCE_REMOVE_LOG_ARCHIVES;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL];
+  prm->param_id = PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL;
+  prm->name = PRM_NAME_REMOVE_LOG_ARCHIVES_INTERVAL;
+  prm->static_flag =
+    (PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_remove_log_archives_interval_flag;
+  prm->default_value = (void *) &prm_remove_log_archives_interval_default;
+  prm->value = (void *) &PRM_REMOVE_LOG_ARCHIVES_INTERVAL;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_remove_log_archives_interval_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_EVENT_HANDLER];
+  prm->param_id = PRM_ID_EVENT_HANDLER;
+  prm->name = PRM_NAME_EVENT_HANDLER;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_event_handler_flag;
+  prm->default_value = (void *) &prm_event_handler_default;
+  prm->value = (void *) &PRM_EVENT_HANDLER;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_EVENT_ACTIVATION];
+  prm->param_id = PRM_ID_EVENT_ACTIVATION;
+  prm->name = PRM_NAME_EVENT_ACTIVATION;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER);
+  prm->datatype = PRM_INTEGER_LIST;
+  prm->dynamic_flag = &prm_event_activation_flag;
+  prm->default_value = (void *) &prm_event_activation_default;
+  prm->value = (void *) &PRM_EVENT_ACTIVATION;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MNT_WAITING_THREAD];
+  prm->param_id = PRM_ID_MNT_WAITING_THREAD;
+  prm->name = PRM_NAME_MNT_WAITING_THREAD;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_mnt_waiting_thread_flag;
+  prm->default_value = (void *) &prm_mnt_waiting_thread_default;
+  prm->value = (void *) &PRM_MNT_WAITING_THREAD;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_mnt_waiting_thread_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MNT_STATS_THRESHOLD];
+  prm->param_id = PRM_ID_MNT_STATS_THRESHOLD;
+  prm->name = PRM_NAME_MNT_STATS_THRESHOLD;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER_LIST;
+  prm->dynamic_flag = &prm_mnt_stats_threshold_flag;
+  prm->default_value = (void *) &prm_mnt_stats_threshold_default;
+  prm->value = (void *) &PRM_MNT_STATS_THRESHOLD;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SESSION_STATE_TIMEOUT];
+  prm->param_id = PRM_ID_SESSION_STATE_TIMEOUT;
+  prm->name = PRM_NAME_SESSION_STATE_TIMEOUT;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_TEST_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_session_timeout_flag;
+  prm->default_value = (void *) &prm_session_timeout_default;
+  prm->value = (void *) &PRM_SESSION_STATE_TIMEOUT;
+  prm->upper_limit = (void *) &prm_session_timeout_upper;
+  prm->lower_limit = (void *) &prm_session_timeout_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MULTI_RANGE_OPT_LIMIT];
+  prm->param_id = PRM_ID_MULTI_RANGE_OPT_LIMIT;
+  prm->name = PRM_NAME_MULTI_RANGE_OPT_LIMIT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_multi_range_opt_limit_flag;
+  prm->default_value = (void *) &prm_multi_range_opt_limit_default;
+  prm->value = (void *) &PRM_MULTI_RANGE_OPT_LIMIT;
+  prm->upper_limit = (void *) &prm_multi_range_opt_limit_upper;
+  prm->lower_limit = (void *) &prm_multi_range_opt_limit_lower;
+  prm->force_value = (char *) NULL;
+
+  /* All the compound parameters *must* be at the end of the array so that the
+     changes they cause are not overridden by other parameters (for example in
+     sysprm_load_and_init the parameters are set to their default in the order
+     they are found in this array). */
+  prm = &prm_Def[PRM_ID_DB_VOLUME_SIZE];
+  prm->param_id = PRM_ID_DB_VOLUME_SIZE;
+  prm->name = PRM_NAME_DB_VOLUME_SIZE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_db_volume_size_flag;
+  prm->default_value = (void *) &prm_db_volume_size_default;
+  prm->value = (void *) &PRM_DB_VOLUME_SIZE;
+  prm->upper_limit = (void *) &prm_db_volume_size_upper;
+  prm->lower_limit = (void *) &prm_db_volume_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_CHECK_PEER_ALIVE];
+  prm->param_id = PRM_ID_CHECK_PEER_ALIVE;
+  prm->name = PRM_NAME_CHECK_PEER_ALIVE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_KEYWORD;
+  prm->dynamic_flag = &prm_check_peer_alive_flag;
+  prm->default_value = (void *) &prm_check_peer_alive_default;
+  prm->value = (void *) &PRM_CHECK_PEER_ALIVE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SQL_TRACE_SLOW];
+  prm->param_id = PRM_ID_SQL_TRACE_SLOW;
+  prm->name = PRM_NAME_SQL_TRACE_SLOW;
+  prm->static_flag = (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_sql_trace_slow_flag;
+  prm->default_value = (void *) &prm_sql_trace_slow_default;
+  prm->value = (void *) &PRM_SQL_TRACE_SLOW;
+  prm->upper_limit = (void *) &prm_sql_trace_slow_upper;
+  prm->lower_limit = (void *) &prm_sql_trace_slow_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SERVER_TRACE];
+  prm->param_id = PRM_ID_SERVER_TRACE;
+  prm->name = PRM_NAME_SERVER_TRACE;
+  prm->static_flag = (PRM_USER_CHANGE | PRM_FOR_SERVER);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_server_trace_flag;
+  prm->default_value = (void *) &prm_server_trace_default;
+  prm->value = (void *) &PRM_SERVER_TRACE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SQL_TRACE_EXECUTION_PLAN];
+  prm->param_id = PRM_ID_SQL_TRACE_EXECUTION_PLAN;
+  prm->name = PRM_NAME_SQL_TRACE_EXECUTION_PLAN;
+  prm->static_flag = (PRM_USER_CHANGE | PRM_FOR_SERVER);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_sql_trace_execution_plan_flag;
+  prm->default_value = (void *) &prm_sql_trace_execution_plan_default;
+  prm->value = (void *) &PRM_SQL_TRACE_EXECUTION_PLAN;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_LOG_TRACE_FLUSH_TIME];
+  prm->param_id = PRM_ID_LOG_TRACE_FLUSH_TIME;
+  prm->name = PRM_NAME_LOG_TRACE_FLUSH_TIME;
+  prm->static_flag = (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_TIME_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_log_trace_flush_time_flag;
+  prm->default_value = (void *) &prm_log_trace_flush_time_default;
+  prm->value = (void *) &PRM_LOG_TRACE_FLUSH_TIME;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_log_trace_flush_time_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_GENERIC_VOL_PREALLOC_SIZE];
+  prm->param_id = PRM_ID_GENERIC_VOL_PREALLOC_SIZE;
+  prm->name = PRM_NAME_GENERIC_VOL_PREALLOC_SIZE;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT);
+  prm->datatype = PRM_BIGINT;
+  prm->dynamic_flag = &prm_generic_vol_prealloc_size_flag;
+  prm->default_value = (void *) &prm_generic_vol_prealloc_size_default;
+  prm->value = (void *) &PRM_GENERIC_VOL_PREALLOC_SIZE;
+  prm->upper_limit = (void *) &prm_generic_vol_prealloc_size_upper;
+  prm->lower_limit = (void *) &prm_generic_vol_prealloc_size_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SORT_LIMIT_MAX_COUNT];
+  prm->param_id = PRM_ID_SORT_LIMIT_MAX_COUNT;
+  prm->name = PRM_NAME_SORT_LIMIT_MAX_COUNT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_sort_limit_max_count_flag;
+  prm->default_value = (void *) &prm_sort_limit_max_count_default;
+  prm->value = (void *) &PRM_SORT_LIMIT_MAX_COUNT;
+  prm->upper_limit = (void *) &prm_sort_limit_max_count_upper;
+  prm->lower_limit = (void *) &prm_sort_limit_max_count_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SQL_TRACE_IOREADS];
+  prm->param_id = PRM_ID_SQL_TRACE_IOREADS;
+  prm->name = PRM_NAME_SQL_TRACE_IOREADS;
+  prm->static_flag = (PRM_USER_CHANGE | PRM_FOR_SERVER);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_sql_trace_ioreads_flag;
+  prm->default_value = (void *) &prm_sql_trace_ioreads_default;
+  prm->value = (void *) &PRM_SQL_TRACE_IOREADS;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) &prm_sql_trace_ioreads_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_QUERY_TRACE];
+  prm->param_id = PRM_ID_QUERY_TRACE;
+  prm->name = PRM_NAME_QUERY_TRACE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_query_trace_flag;
+  prm->default_value = (void *) &prm_query_trace_default;
+  prm->value = (void *) &PRM_QUERY_TRACE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_QUERY_TRACE_FORMAT];
+  prm->param_id = PRM_ID_QUERY_TRACE_FORMAT;
+  prm->name = PRM_NAME_QUERY_TRACE_FORMAT;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_KEYWORD;
+  prm->dynamic_flag = &prm_query_trace_format_flag;
+  prm->default_value = (void *) &prm_query_trace_format_default;
+  prm->value = (void *) &PRM_QUERY_TRACE_FORMAT;
+  prm->upper_limit = (void *) &prm_query_trace_format_upper;
+  prm->lower_limit = (void *) &prm_query_trace_format_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MAX_RECURSION_SQL_DEPTH];
+  prm->param_id = PRM_ID_MAX_RECURSION_SQL_DEPTH;
+  prm->name = PRM_NAME_MAX_RECURSION_SQL_DEPTH;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_max_recursion_sql_depth_flag;
+  prm->default_value = (void *) &prm_max_recursion_sql_depth_default;
+  prm->value = (void *) &PRM_MAX_RECURSION_SQL_DEPTH;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_BTREE_MERGE_ENABLED];
+  prm->param_id = PRM_ID_BTREE_MERGE_ENABLED;
+  prm->name = PRM_NAME_BTREE_MERGE_ENABLED;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_btree_merge_enabled_flag;
+  prm->default_value = (void *) &prm_btree_merge_enabled_default;
+  prm->value = (void *) &PRM_BTREE_MERGE_ENABLED;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  /* For shard debugging */
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_DEBUG];
+  prm->param_id = PRM_ID_SHARD_GROUPID_DEBUG;
+  prm->name = PRM_NAME_SHARD_GROUPID_DEBUG;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_debug_flag;
+  prm->default_value = (void *) &prm_shard_groupid_debug_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_DEBUG;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_01];
+  prm->param_id = PRM_ID_SHARD_GROUPID_01;
+  prm->name = PRM_NAME_SHARD_GROUPID_01;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_01_flag;
+  prm->default_value = (void *) &prm_shard_groupid_01_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_01;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_02];
+  prm->param_id = PRM_ID_SHARD_GROUPID_02;
+  prm->name = PRM_NAME_SHARD_GROUPID_02;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_02_flag;
+  prm->default_value = (void *) &prm_shard_groupid_02_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_02;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_03];
+  prm->param_id = PRM_ID_SHARD_GROUPID_03;
+  prm->name = PRM_NAME_SHARD_GROUPID_03;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_03_flag;
+  prm->default_value = (void *) &prm_shard_groupid_03_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_03;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_04];
+  prm->param_id = PRM_ID_SHARD_GROUPID_04;
+  prm->name = PRM_NAME_SHARD_GROUPID_04;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_04_flag;
+  prm->default_value = (void *) &prm_shard_groupid_04_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_04;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_05];
+  prm->param_id = PRM_ID_SHARD_GROUPID_05;
+  prm->name = PRM_NAME_SHARD_GROUPID_05;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_05_flag;
+  prm->default_value = (void *) &prm_shard_groupid_05_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_05;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_06];
+  prm->param_id = PRM_ID_SHARD_GROUPID_06;
+  prm->name = PRM_NAME_SHARD_GROUPID_06;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_06_flag;
+  prm->default_value = (void *) &prm_shard_groupid_06_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_06;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_07];
+  prm->param_id = PRM_ID_SHARD_GROUPID_07;
+  prm->name = PRM_NAME_SHARD_GROUPID_07;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_07_flag;
+  prm->default_value = (void *) &prm_shard_groupid_07_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_07;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_08];
+  prm->param_id = PRM_ID_SHARD_GROUPID_08;
+  prm->name = PRM_NAME_SHARD_GROUPID_08;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_08_flag;
+  prm->default_value = (void *) &prm_shard_groupid_08_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_08;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_09];
+  prm->param_id = PRM_ID_SHARD_GROUPID_09;
+  prm->name = PRM_NAME_SHARD_GROUPID_09;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_09_flag;
+  prm->default_value = (void *) &prm_shard_groupid_09_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_09;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_SHARD_GROUPID_10];
+  prm->param_id = PRM_ID_SHARD_GROUPID_10;
+  prm->name = PRM_NAME_SHARD_GROUPID_10;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_HIDDEN | PRM_USER_CHANGE);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_shard_groupid_10_flag;
+  prm->default_value = (void *) &prm_shard_groupid_10_default;
+  prm->value = (void *) &PRM_SHARD_GROUPID_10;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_01];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_01;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_01;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_01_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_01_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_01;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_02];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_02;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_02;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_02_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_02_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_02;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_03];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_03;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_03;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_03_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_03_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_03;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_04];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_04;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_04;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_04_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_04_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_04;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_05];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_05;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_05;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_05_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_05_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_05;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_06];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_06;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_06;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_06_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_06_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_06;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_07];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_07;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_07;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_07_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_07_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_07;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_08];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_08;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_08;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_08_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_08_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_08;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_09];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_09;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_09;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_09_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_09_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_09;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_10];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_10;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_10;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_10_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_10_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_10;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_11];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_11;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_11;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_11_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_11_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_11;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_12];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_12;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_12;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_12_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_12_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_12;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_13];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_13;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_13;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_13_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_13_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_13;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_14];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_14;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_14;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_14_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_14_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_14;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_15];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_15;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_15;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_15_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_15_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_15;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_16];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_16;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_16;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_16_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_16_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_16;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_17];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_17;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_17;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_17_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_17_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_17;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_18];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_18;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_18;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_18_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_18_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_18;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_19];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_19;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_19;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_19_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_19_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_19;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_RESERVE_20];
+  prm->param_id = PRM_ID_OPTIMIZER_RESERVE_20;
+  prm->name = PRM_NAME_OPTIMIZER_RESERVE_20;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_reserve_20_flag;
+  prm->default_value = (void *) &prm_optimizer_reserve_20_default;
+  prm->value = (void *) &PRM_OPTIMIZER_RESERVE_20;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION];
+  prm->param_id = PRM_ID_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION;
+  prm->name = PRM_NAME_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION;
+  prm->static_flag = (PRM_FOR_SERVER | PRM_TEST_CHANGE | PRM_HIDDEN);
+  prm->datatype = PRM_BOOLEAN;
+  prm->dynamic_flag = &prm_optimizer_enable_aggregate_optimization_flag;
+  prm->default_value =
+    (void *) &prm_optimizer_enable_aggregate_optimization_default;
+  prm->value = (void *) &PRM_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_REPL_FILTER_TYPE];
+  prm->param_id = PRM_ID_HA_REPL_FILTER_TYPE;
+  prm->name = PRM_NAME_HA_REPL_FILTER_TYPE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_KEYWORD;
+  prm->dynamic_flag = &prm_ha_repl_filter_type_flag;
+  prm->default_value = (void *) &prm_ha_repl_filter_type_default;
+  prm->value = (void *) &PRM_HA_REPL_FILTER_TYPE;
+  prm->upper_limit = (void *) &prm_ha_repl_filter_type_upper;
+  prm->lower_limit = (void *) &prm_ha_repl_filter_type_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_REPL_FILTER_FILE];
+  prm->param_id = PRM_ID_HA_REPL_FILTER_FILE;
+  prm->name = PRM_NAME_HA_REPL_FILTER_FILE;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_repl_filter_file_flag;
+  prm->default_value = (void *) &prm_ha_repl_filter_file_default;
+  prm->value = (void *) &PRM_HA_REPL_FILTER_FILE;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_FAULT_INJECTION];
+  prm->param_id = PRM_ID_FAULT_INJECTION;
+  prm->name = PRM_NAME_FAULT_INJECTION;
+  prm->static_flag =
+    (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_FOR_CLIENT | PRM_HIDDEN);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_fault_injection_flag;
+  prm->default_value = (void *) &prm_fault_injection_default;
+  prm->value = (void *) &PRM_FAULT_INJECTION;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_RYE_SHM_KEY];
+  prm->param_id = PRM_ID_RYE_SHM_KEY;
+  prm->name = PRM_NAME_RYE_SHM_KEY;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_rye_shm_key_flag;
+  prm->default_value = (void *) &prm_rye_shm_key_default;
+  prm->value = (void *) &PRM_RYE_SHM_KEY;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_MAX_LOG_APPLIER];
+  prm->param_id = PRM_ID_HA_MAX_LOG_APPLIER;
+  prm->name = PRM_NAME_HA_MAX_LOG_APPLIER;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FOR_HA);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_ha_max_log_applier_flag;
+  prm->default_value = (void *) &prm_ha_max_log_applier_default;
+  prm->value = (void *) &PRM_HA_MAX_LOG_APPLIER;
+  prm->upper_limit = (void *) &prm_ha_max_log_applier_upper;
+  prm->lower_limit = (void *) &prm_ha_max_log_applier_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MAX_CLIENTS];
+  prm->param_id = PRM_ID_MAX_CLIENTS;
+  prm->name = PRM_NAME_MAX_CLIENTS;
+  prm->static_flag = (PRM_FOR_SERVER);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_max_clients_flag;
+  prm->default_value = (void *) &prm_max_clients_default;
+  prm->value = (void *) &PRM_MAX_CLIENTS;
+  prm->upper_limit = (void *) &prm_max_clients_upper;
+  prm->lower_limit = (void *) &prm_max_clients_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MAX_COPYLOG_CONNECTIONS];
+  prm->param_id = PRM_ID_MAX_COPYLOG_CONNECTIONS;
+  prm->name = PRM_NAME_MAX_COPYLOG_CONNECIONTS;
+  prm->static_flag = (PRM_FOR_SERVER);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_max_copylog_conns_flag;
+  prm->default_value = (void *) &prm_max_copylog_conns_default;
+  prm->value = (void *) &PRM_MAX_COPYLOG_CONNECTIONS;
+  prm->upper_limit = (void *) &prm_max_copylog_conns_upper;
+  prm->lower_limit = (void *) &prm_max_copylog_conns_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_MIGRATOR_MAX_REPL_DELAY];
+  prm->param_id = PRM_ID_MIGRATOR_MAX_REPL_DELAY;
+  prm->name = PRM_NAME_MIGRATOR_MAX_REPL_DELAY;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_USER_CHANGE);
+  prm->datatype = PRM_INTEGER;
+  prm->dynamic_flag = &prm_migrator_max_repl_delay_flag;
+  prm->default_value = (void *) &prm_migrator_max_repl_delay_default;
+  prm->value = (void *) &PRM_MIGRATOR_MAX_REPL_DELAY;
+  prm->upper_limit = (void *) &prm_migrator_max_repl_delay_upper;
+  prm->lower_limit = (void *) &prm_migrator_max_repl_delay_lower;
+  prm->force_value = (char *) NULL;
+
+  prm = &prm_Def[PRM_ID_HA_NODE_MYSELF];
+  prm->param_id = PRM_ID_HA_NODE_MYSELF;
+  prm->name = PRM_NAME_HA_NODE_MYSELF;
+  prm->static_flag = (PRM_FOR_CLIENT | PRM_FOR_SERVER);
+  prm->datatype = PRM_STRING;
+  prm->dynamic_flag = &prm_ha_node_myself_flag;
+  prm->default_value = (void *) &prm_ha_node_myself_default;
+  prm->value = (void *) &PRM_HA_NODE_MYSELF;
+  prm->upper_limit = (void *) NULL;
+  prm->lower_limit = (void *) NULL;
+  prm->force_value = (char *) NULL;
+
+  prm_Def_is_initialized = true;
+}
 
 /*
  * sysprm_dump_parameters - Print out current system parameters
@@ -2986,6 +3647,11 @@ sysprm_dump_parameters (FILE * fp)
   char buf[LINE_MAX];
   int i;
   const SYSPRM_PARAM *prm;
+
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
 
   fprintf (fp, "#\n# %s\n#\n\n", sysprm_auto_conf_file_name);
 
@@ -3235,6 +3901,11 @@ sysprm_load_and_init_internal (const char *db_name, bool reload)
   unsigned int i;
   int r = NO_ERROR;
   char *s;
+
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
 
   if (reload)
     {
@@ -3786,6 +4457,11 @@ prm_check_environment (void)
   int i;
   char buf[PRM_DEFAULT_BUFFER_SIZE];
 
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   for (i = 0; i < NUM_PRM; i++)
     {
       SYSPRM_PARAM *prm;
@@ -3920,7 +4596,7 @@ sysprm_validate_change_parameters (const char *data, const bool persist,
 	      break;
 	    }
 	}
-      assign->prm_id = sysprm_get_id (prm);
+      assign->prm_id = prm->param_id;
       assign->persist = persist;
       assign->next = NULL;
 
@@ -4403,7 +5079,7 @@ sysprm_change_parameter_values (const SYSPRM_ASSIGN_VALUE * assignments,
 
 
 #if defined (SERVER_MODE)
-	  if (sysprm_get_id (prm) == PRM_ID_ACCESS_IP_CONTROL)
+	  if (prm->param_id == PRM_ID_ACCESS_IP_CONTROL)
 	    {
 	      css_set_accessible_ip_info ();
 	    }
@@ -4602,7 +5278,6 @@ prm_print (const SYSPRM_PARAM * prm, char *buf, size_t len,
 	   PRM_PRINT_MODE print_mode, PRM_PRINT_VALUE_MODE print_value_mode)
 {
   int n = 0;
-  PARAM_ID id;
   char left_side[PRM_DEFAULT_BUFFER_SIZE];
   char value_string[PRM_DEFAULT_BUFFER_SIZE];
   const char *prm_flag = "";
@@ -4636,8 +5311,8 @@ prm_print (const SYSPRM_PARAM * prm, char *buf, size_t len,
 
   if (print_mode == PRM_PRINT_ID)
     {
-      id = sysprm_get_id (prm);
-      snprintf (left_side, PRM_DEFAULT_BUFFER_SIZE, "%d(%s)=", id, prm_flag);
+      snprintf (left_side, PRM_DEFAULT_BUFFER_SIZE, "%d(%s)=", prm->param_id,
+		prm_flag);
     }
   else if (print_mode == PRM_PRINT_NAME)
     {
@@ -4654,8 +5329,8 @@ prm_print (const SYSPRM_PARAM * prm, char *buf, size_t len,
       prm_value = prm->value;
     }
 
-  n =
-    prm_print_value (prm, prm_value, value_string, len - strlen (left_side));
+  n = prm_print_value (prm, prm_value, value_string,
+		       len - strlen (left_side));
   if (n > 0)
     {
       n = snprintf (buf, len, "%s%s", left_side, value_string);
@@ -5345,7 +6020,7 @@ sysprm_obtain_parameters (char *data, SYSPRM_ASSIGN_VALUE ** prm_values_ptr)
 		  1, sizeof (SYSPRM_ASSIGN_VALUE));
 	  break;
 	}
-      prm_value->prm_id = sysprm_get_id (prm);
+      prm_value->prm_id = prm->param_id;
 #if 1				/* TODO - */
       prm_value->persist = false;
 #endif
@@ -5922,7 +6597,7 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
 		    *s = '\0';
 		    if (intl_mbs_casecmp ("DEFAULT", p) == 0)
 		      {
-			if (sysprm_get_id (prm) ==
+			if (prm->param_id ==
 			    PRM_ID_CALL_STACK_DUMP_ACTIVATION)
 			  {
 			    memcpy (&val[list_size + 1],
@@ -5930,8 +6605,7 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
 				    sizeof (call_stack_dump_error_codes));
 			    list_size += DIM (call_stack_dump_error_codes);
 			  }
-			else if (sysprm_get_id (prm) ==
-				 PRM_ID_HA_IGNORE_ERROR_LIST)
+			else if (prm->param_id == PRM_ID_HA_IGNORE_ERROR_LIST)
 			  {
 			    memcpy (&val[list_size + 1],
 				    ha_ignore_error_codes,
@@ -6158,32 +6832,31 @@ sysprm_set_value (SYSPRM_PARAM * prm, SYSPRM_VALUE value, bool set_flag,
 static void
 sysprm_set_system_parameter_value (SYSPRM_PARAM * prm, SYSPRM_VALUE value)
 {
-  PARAM_ID prm_id = sysprm_get_id (prm);
   switch (prm->datatype)
     {
     case PRM_INTEGER:
     case PRM_KEYWORD:
-      prm_set_integer_value (prm_id, value.i);
+      prm_set_integer_value (prm->param_id, value.i);
       break;
 
     case PRM_FLOAT:
-      prm_set_float_value (prm_id, value.f);
+      prm_set_float_value (prm->param_id, value.f);
       break;
 
     case PRM_BOOLEAN:
-      prm_set_bool_value (prm_id, value.b);
+      prm_set_bool_value (prm->param_id, value.b);
       break;
 
     case PRM_STRING:
-      prm_set_string_value (prm_id, value.str);
+      prm_set_string_value (prm->param_id, value.str);
       break;
 
     case PRM_INTEGER_LIST:
-      prm_set_integer_list_value (prm_id, value.integer_list);
+      prm_set_integer_list_value (prm->param_id, value.integer_list);
       break;
 
     case PRM_BIGINT:
-      prm_set_bigint_value (prm_id, value.bi);
+      prm_set_bigint_value (prm->param_id, value.bi);
       break;
 
     case PRM_NO_TYPE:
@@ -6314,6 +6987,11 @@ prm_find (const char *pname, const char *section)
   if (pname == NULL)
     {
       return NULL;
+    }
+
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
     }
 
   if (section != NULL)
@@ -6511,6 +7189,11 @@ sysprm_final (void)
   SYSPRM_PARAM *prm;
   char **valp;
   int i;
+
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
 
   for (i = 0; i < NUM_PRM; i++)
     {
@@ -7190,6 +7873,11 @@ prm_get_name (PARAM_ID prm_id)
 {
   assert (prm_id <= PRM_LAST_ID);
 
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   return prm_Def[prm_id].name;
 }
 
@@ -7205,6 +7893,11 @@ void *
 prm_get_value (PARAM_ID prm_id)
 {
   assert (prm_id <= PRM_LAST_ID);
+
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
 
 #if defined (SERVER_MODE)
   assert (PRM_IS_FOR_SERVER (prm_Def[prm_id].static_flag));
@@ -7233,6 +7926,11 @@ prm_get_value (PARAM_ID prm_id)
 int
 prm_get_integer_value (PARAM_ID prm_id)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_INTEGER (&prm_Def[prm_id])
 	  || PRM_IS_KEYWORD (&prm_Def[prm_id]));
@@ -7249,6 +7947,11 @@ prm_get_integer_value (PARAM_ID prm_id)
 bool
 prm_get_bool_value (PARAM_ID prm_id)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_BOOLEAN (&prm_Def[prm_id]));
 
@@ -7264,6 +7967,11 @@ prm_get_bool_value (PARAM_ID prm_id)
 float
 prm_get_float_value (PARAM_ID prm_id)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_FLOAT (&prm_Def[prm_id]));
 
@@ -7279,6 +7987,11 @@ prm_get_float_value (PARAM_ID prm_id)
 char *
 prm_get_string_value (PARAM_ID prm_id)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_STRING (&prm_Def[prm_id]));
 
@@ -7295,6 +8008,11 @@ prm_get_string_value (PARAM_ID prm_id)
 int *
 prm_get_integer_list_value (PARAM_ID prm_id)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_INTEGER_LIST (&prm_Def[prm_id]));
 
@@ -7310,6 +8028,11 @@ prm_get_integer_list_value (PARAM_ID prm_id)
 INT64
 prm_get_bigint_value (PARAM_ID prm_id)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_BIGINT (&prm_Def[prm_id]));
 
@@ -7328,6 +8051,11 @@ prm_get_bigint_value (PARAM_ID prm_id)
 void
 prm_set_integer_value (PARAM_ID prm_id, int value)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_INTEGER (&prm_Def[prm_id])
 	  || PRM_IS_KEYWORD (&prm_Def[prm_id]));
@@ -7345,6 +8073,11 @@ prm_set_integer_value (PARAM_ID prm_id, int value)
 void
 prm_set_bool_value (PARAM_ID prm_id, bool value)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_BOOLEAN (&prm_Def[prm_id]));
 
@@ -7361,6 +8094,11 @@ prm_set_bool_value (PARAM_ID prm_id, bool value)
 void
 prm_set_float_value (PARAM_ID prm_id, float value)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_FLOAT (&prm_Def[prm_id]));
 
@@ -7377,6 +8115,11 @@ prm_set_float_value (PARAM_ID prm_id, float value)
 void
 prm_set_string_value (PARAM_ID prm_id, char *value)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_STRING (&prm_Def[prm_id]));
 
@@ -7403,6 +8146,11 @@ prm_set_string_value (PARAM_ID prm_id, char *value)
 void
 prm_set_integer_list_value (PARAM_ID prm_id, int *value)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_INTEGER_LIST (&prm_Def[prm_id]));
 
@@ -7428,6 +8176,11 @@ prm_set_integer_list_value (PARAM_ID prm_id, int *value)
 void
 prm_set_bigint_value (PARAM_ID prm_id, INT64 value)
 {
+  if (prm_Def_is_initialized == false)
+    {
+      sysprm_initialize_prm_def ();
+    }
+
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_BIGINT (&prm_Def[prm_id]));
 
@@ -7879,22 +8632,6 @@ sysprm_free_assign_values (SYSPRM_ASSIGN_VALUE ** assign_values_ptr)
     }
 
   *assign_values_ptr = NULL;
-}
-
-/*
- * sysprm_get_id () - returns the id for a system parameter
- *
- * return  : id
- * prm(in) : address for system parameter
- */
-static PARAM_ID
-sysprm_get_id (const SYSPRM_PARAM * prm)
-{
-  int id = (prm - prm_Def);
-
-  assert (id >= PRM_FIRST_ID && id <= PRM_LAST_ID);
-
-  return (PARAM_ID) id;
 }
 
 /*
