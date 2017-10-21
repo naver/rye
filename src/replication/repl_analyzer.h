@@ -34,7 +34,7 @@
 
 #include "cas_cci.h"
 
-extern THREAD_RET_T THREAD_CALLING_CONVENTION analyzer_main (void *arg);
+extern void *analyzer_main (void *arg);
 extern int cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
 			       const char *database_name,
 			       const char *log_path);

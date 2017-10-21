@@ -1659,7 +1659,7 @@ exit_on_error:
  *
  * Note:
  */
-THREAD_RET_T THREAD_CALLING_CONVENTION
+void *
 analyzer_main (void *arg)
 {
   int error = NO_ERROR;
@@ -2041,12 +2041,6 @@ analyzer_main (void *arg)
 						     required_lsa.pageid);
 	      if (error != NO_ERROR)
 		{
-		  GOTO_EXIT_ON_ERROR;
-		}
-	      error = cirp_check_mem_size ();
-	      if (error != NO_ERROR)
-		{
-		  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
 		  GOTO_EXIT_ON_ERROR;
 		}
 
