@@ -520,7 +520,7 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
   int err_code = 0;
   int res_count;
   char fetch_flag;
-  char scrollable_cursor;
+  char scrollable_cursor = false;
   int remaining_time = 0;
   bool use_server_query_cancel = false;
   T_NET_RES *net_res;
