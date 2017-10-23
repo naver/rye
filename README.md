@@ -1,4 +1,6 @@
-### RYE: Native Sharding RDBMS [![Build Status](https://travis-ci.org/naver/rye.svg?branch=master)](https://travis-ci.org/naver/rye)
+[![Build Status](https://travis-ci.org/naver/rye.svg?branch=master)](https://travis-ci.org/naver/rye)
+[![Coverage Status](https://coveralls.io/repos/github/naver/rye/badge.svg?branch=master)](https://coveralls.io/github/naver/rye?branch=master)
+### RYE: Native Sharding RDBMS 
 Scalability problems in relational databases are perceived as a major disadvantage.
 Sharding is one of the solutions to overcome the scalability problems,
 but the lack of functionality supported by DBMS makes it difficult to apply for the application.
