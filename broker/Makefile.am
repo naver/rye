@@ -41,8 +41,8 @@ QATOOLS_DIR = $(SRC)/qatools
 AM_CPPFLAGS = @SRC_INC@ @EXT_INC@ \
 	@SYS_DEFS@ @VERSION_DEFS@ -DASYNC_MODE @XOPEN_DEFS@ -D_BSD_SOURCE \
 	-DDIAG_DEVEL -DCAS_BROKER @DIR_DEFS@
-AM_CFLAGS = -Werror
-AM_CXXFLAGS = -Werror
+#AM_CFLAGS = -Werror
+#AM_CXXFLAGS = -Werror
 
 bin_PROGRAMS = rye_broker rye_cas broker_changer \
 	broker_log_top broker_monitor_npot
