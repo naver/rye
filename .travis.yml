@@ -12,7 +12,7 @@ script:
 
 notifications:
   email:
-    - kyungsik.seo@navercorp.com
+    - dl_oss_rye@navercorp.com
 
 install: true
 
