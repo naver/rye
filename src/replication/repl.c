@@ -76,7 +76,7 @@ static int cirp_init_thread_entry (CIRP_THREAD_ENTRY * th_entry,
 static int cirp_create_thread (CIRP_THREAD_ENTRY * th_entry,
 			       void *(*start_routine) (void *));
 static bool check_master_alive (void);
-
+static void *health_check_main (void *arg);
 
 
 /*
@@ -101,7 +101,7 @@ main (int argc, char *argv[])
   int mem_size;
   int i;
   CIRP_THREAD_ENTRY writer_entry, flusher_entry;
-  CIRP_THREAD_ENTRY analyzer_entry;
+  CIRP_THREAD_ENTRY analyzer_entry, health_entry;
   CIRP_THREAD_ENTRY *applier_entries = NULL;
 
   REPL_ARGUMENT repl_arg;
@@ -220,6 +220,18 @@ main (int argc, char *argv[])
 
   error = cirpwr_initialize (repl_arg.db_name,
 			     repl_arg.log_path, repl_arg.mode);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  error = cirp_init_thread_entry (&health_entry, &repl_arg,
+				  CIRP_THREAD_HEALTH_CHEKER, -1);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  error = cirp_create_thread (&health_entry, health_check_main);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -939,6 +951,7 @@ exit_on_error:
   if (retry == true && rp_need_restart () == false)
     {
       THREAD_SLEEP (100);
+
       goto reconnect;
     }
 
@@ -951,6 +964,55 @@ exit_on_error:
     }
 
   return error;
+}
+
+/*
+ * health_check_main ()
+ */
+static void *
+health_check_main (void *arg)
+{
+  int error = NO_ERROR;
+  ER_MSG_INFO *th_er_msg_info;
+  CIRP_THREAD_ENTRY *th_entry = NULL;
+  char err_msg[ER_MSG_SIZE];
+  int wakeup_interval = 1000;	/* 1sec */
+
+  th_entry = (CIRP_THREAD_ENTRY *) arg;
+
+  th_er_msg_info = malloc (sizeof (ER_MSG_INFO));
+  error = er_set_msg_info (th_er_msg_info);
+  if (error != NO_ERROR)
+    {
+      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+
+      free_and_init (th_er_msg_info);
+      return NULL;
+    }
+
+  /* wait until thread_create finish */
+  error = pthread_mutex_lock (&th_entry->th_lock);
+  pthread_mutex_unlock (&th_entry->th_lock);
+
+  assert (th_entry->th_type == CIRP_THREAD_HEALTH_CHEKER);
+
+  while (REPL_NEED_SHUTDOWN () == false)
+    {
+      THREAD_SLEEP (wakeup_interval);
+
+      if (cirp_check_mem_size () != NO_ERROR)
+	{
+	  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+	}
+    }
+
+  snprintf (err_msg, sizeof (err_msg), "Health Checker Exit");
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
+	  err_msg);
+
+  free_and_init (th_er_msg_info);
+
+  return NULL;
 }
 
 /*

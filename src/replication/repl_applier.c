@@ -1800,7 +1800,7 @@ rp_applier_wait_start (CIRP_APPLIER_INFO * applier)
  * applier_main()-
  *    return: error code
  */
-THREAD_RET_T THREAD_CALLING_CONVENTION
+void *
 applier_main (void *arg)
 {
   int error = NO_ERROR;
