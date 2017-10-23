@@ -35,7 +35,7 @@
 #include "repl_queue.h"
 #include "cas_cci.h"
 
-extern THREAD_RET_T THREAD_CALLING_CONVENTION applier_main (void *arg);
+extern void *applier_main (void *arg);
 extern int cirp_init_applier (CIRP_APPLIER_INFO * applier,
 			      const char *database_name,
 			      const char *log_path);
