@@ -1,2 +1,30 @@
 language: c
+
+compiler:
+  - gcc
+
 script:
+  - ./autogen.sh
+  - mkdir Release64
+  - cd Release64
+  - ../configure
+  - make
+
+notifications:
+  email:
+    - dl_oss_rye@navercorp.com
+
+install: true
+
+# blocklist
+#branches:
+#  except:
+#  - legacy
+#  - experimental
+
+# safelist
+#branches:
+#  only:
+#  - master
+#  - stable
+#  - v1.0
