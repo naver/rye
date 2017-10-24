@@ -418,10 +418,9 @@ rel_compare (const char *rel_a, const char *rel_b)
  * log compatibility matrix
  */
 static REL_VERSION log_incompatible_versions[] = {
-  {9, 2, 0},
-
   /* PLEASE APPEND HERE versions that are incompatible with existing ones. */
   /* NOTE that versions are kept as ascending order. */
+  {1, 0, 0},
 
   /* zero indicates the end of the table */
   {0, 0, 0}
@@ -453,10 +452,9 @@ rel_is_log_compatible (const char *writer_rel_str, const char *reader_rel_str)
  * network compatibility matrix
  */
 static REL_VERSION net_incompatible_versions[] = {
-  {9, 2, 0},
-
   /* PLEASE APPEND HERE versions that are incompatible with existing ones. */
   /* NOTE that versions are kept as ascending order. */
+  {1, 0, 0},
 
   /* zero indicates the end of the table */
   {0, 0, 0}
@@ -556,10 +554,6 @@ rel_get_compatible_internal (const char *base_rel_str,
   if (check == CHECK_NET_PROTOCOL_COMPATIBILITY)
     {
       if (apply_major != base_major)
-	{
-	  return REL_NOT_COMPATIBLE;
-	}
-      if (apply_minor != base_minor)
 	{
 	  return REL_NOT_COMPATIBLE;
 	}
