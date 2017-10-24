@@ -153,7 +153,9 @@ struct sm_candidate
   int order;
 };
 
+#if 0
 #include <nlist.h>
+#endif
 
 /*
  *    This is the root of the currently active attribute descriptors.
