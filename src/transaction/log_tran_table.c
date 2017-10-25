@@ -1725,7 +1725,6 @@ exit_on_error:
 static int
 logtb_remove_working_tran (int tran_index)
 {
-  int error = NO_ERROR;
   WORKING_TRAN *current, *prev;
 
   for (prev = NULL, current = log_Gl.trantable.working_tran_list_head;
@@ -1787,7 +1786,6 @@ logtb_remove_working_tran (int tran_index)
 
   free_and_init (current);
 
-  assert (error == NO_ERROR);
   return NO_ERROR;
 }
 
@@ -3545,52 +3543,6 @@ logtb_shard_group_check_own (UNUSED_ARG THREAD_ENTRY * thread_p, int gid)
       return true;
     }
 
-#if !defined(NDEBUG)
-  if (prm_get_bool_value (PRM_ID_SHARD_GROUPID_DEBUG) == true)
-    {
-      if (gid == 1)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_01);
-	}
-      else if (gid == 2)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_02);
-	}
-      else if (gid == 3)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_03);
-	}
-      else if (gid == 4)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_04);
-	}
-      else if (gid == 5)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_05);
-	}
-      else if (gid == 6)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_06);
-	}
-      else if (gid == 7)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_07);
-	}
-      else if (gid == 8)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_08);
-	}
-      else if (gid == 9)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_09);
-	}
-      else if (gid == 10)
-	{
-	  return prm_get_bool_value (PRM_ID_SHARD_GROUPID_10);
-	}
-    }
-#endif /* !defined(NDEBUG) */
-
   return svr_shm_is_group_own (gid);
 #else
   /* check iff is invalid groupid
@@ -3623,11 +3575,9 @@ xlogtb_exist_working_tran (UNUSED_ARG THREAD_ENTRY * thread_p, int group_id)
 	}
 
       tdes = LOG_FIND_TDES (current->tran_index);
-#if defined(SERVER_MODE)
       assert (tdes != NULL);
       assert (tdes->trid != NULL_TRANID);
       assert (!LSA_ISNULL (&tdes->begin_lsa));
-#endif
 
       if (tdes != NULL
 	  && tdes->trid != NULL_TRANID
