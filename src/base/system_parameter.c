@@ -386,10 +386,11 @@ typedef enum
  * Bit masks for flag representing status words
  */
 
+#define PRM_EMPTY_FLAG	    0x00000000	/* empty flag */
+
 /*
  * Static flags
  */
-#define PRM_EMPTY_FLAG	    0x00000000	/* empty flag */
 #define PRM_USER_CHANGE     0x00000001	/* user can change, not implemented */
 #define PRM_FOR_CLIENT      0x00000002	/* is for client parameter */
 #define PRM_FOR_SERVER      0x00000004	/* is for server parameter */
@@ -407,9 +408,9 @@ typedef enum
 /*
  * Dynamic flags
  */
-#define PRM_SET             0x00000001	/* has been set */
-#define PRM_ALLOCATED       0x00000002	/* storage has been malloc'd */
-#define PRM_DEFAULT_USED    0x00000004	/* Default value has been used */
+#define PRM_SET             0x00010000	/* has been set */
+#define PRM_ALLOCATED       0x00020000	/* storage has been malloc'd */
+#define PRM_DEFAULT_USED    0x00040000	/* Default value has been used */
 
 /*
  * Macros to get data type
@@ -1030,9 +1031,8 @@ struct sysprm_param
 {
   PARAM_ID param_id;
   const char *name;		/* the keyword expected */
-  unsigned int static_flag;	/* bitmask flag representing status words */
+  unsigned int flag;		/* bitmask flag representing status words */
   SYSPRM_DATATYPE datatype;	/* value data type */
-  unsigned int dynamic_flag;	/* shared by both original and duplicated */
   void *default_value;		/* address of (pointer to) default value */
   void *value;			/* address of (pointer to) current value */
   void *upper_limit;		/* highest allowable value */
@@ -1049,8 +1049,7 @@ static SYSPRM_PARAM prm_Def[NUM_PRM];
 #define PARAM_MSG_FMT(msgid) msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_PARAMETERS, (msgid))
 
 #define GET_PRM(id) (&prm_Def[(id)])
-#define GET_PRM_STATIC_FLAG(id) ((GET_PRM (id))->static_flag)
-#define GET_PRM_DYNAMIC_FLAG(id) ((GET_PRM (id))->dynamic_flag)
+#define GET_PRM_FLAG(id) ((GET_PRM (id))->flag)
 #define GET_PRM_DATATYPE(id) ((GET_PRM (id))->datatype)
 
 /*
@@ -1252,7 +1251,7 @@ static char *sysprm_unpack_sysprm_value (char *ptr, SYSPRM_VALUE * value,
 					 SYSPRM_DATATYPE datatype);
 static void sysprm_initialize_prm_def ();
 static void sysprm_init_param (PARAM_ID param_id, const char *name,
-			       unsigned int static_flag,
+			       unsigned int flag,
 			       SYSPRM_DATATYPE datatype,
 			       void *default_value, void *value,
 			       void *upper_limit, void *lower_limit);
@@ -1265,7 +1264,7 @@ static void sysprm_init_param (PARAM_ID param_id, const char *name,
  *
  *  param_id(in):
  *  name(in):
- *  static_flag(in):
+ *  flag(in):
  *  datatype(in):
  *  default_value(in):
  *  value(in):
@@ -1274,7 +1273,7 @@ static void sysprm_init_param (PARAM_ID param_id, const char *name,
  */
 static void
 sysprm_init_param (PARAM_ID param_id, const char *name,
-		   unsigned int static_flag, SYSPRM_DATATYPE datatype,
+		   unsigned int flag, SYSPRM_DATATYPE datatype,
 		   void *default_value, void *value,
 		   void *upper_limit, void *lower_limit)
 {
@@ -1283,9 +1282,8 @@ sysprm_init_param (PARAM_ID param_id, const char *name,
   prm = &prm_Def[param_id];
   prm->param_id = param_id;
   prm->name = name;
-  prm->static_flag = static_flag;
+  prm->flag = flag;
   prm->datatype = datatype;
-  prm->dynamic_flag = 0;
   prm->default_value = default_value;
   prm->value = value;
   prm->upper_limit = upper_limit;
@@ -2371,8 +2369,7 @@ sysprm_dump_parameters (FILE * fp)
       prm = &prm_Def[i];
       assert (prm->param_id == (unsigned int) i);
 
-      if (PRM_IS_HIDDEN (prm->static_flag)
-	  || PRM_IS_OBSOLETED (prm->static_flag))
+      if (PRM_IS_HIDDEN (prm->flag) || PRM_IS_OBSOLETED (prm->flag))
 	{
 	  continue;
 	}
@@ -2566,7 +2563,7 @@ sysprm_set_er_log_file (const char *db_name)
     }
 
   er_log_file = prm_find (PRM_NAME_ER_LOG_FILE, NULL);
-  if (er_log_file == NULL || PRM_IS_SET (er_log_file->dynamic_flag))
+  if (er_log_file == NULL || PRM_IS_SET (er_log_file->flag))
     {
       return;
     }
@@ -2625,7 +2622,7 @@ sysprm_load_and_init_internal (const char *db_name, bool reload)
 	{
 	  assert (prm_Def[i].param_id == (unsigned int) i);
 
-	  if (PRM_IS_RELOADABLE (prm_Def[i].static_flag))
+	  if (PRM_IS_RELOADABLE (prm_Def[i].flag))
 	    {
 	      if (prm_set_default (&prm_Def[i]) != NO_ERROR)
 		{
@@ -2691,8 +2688,8 @@ sysprm_load_and_init_internal (const char *db_name, bool reload)
     {
       assert (prm_Def[i].param_id == (unsigned int) i);
 
-      if (!PRM_IS_SET (prm_Def[i].dynamic_flag)
-	  && !PRM_IS_OBSOLETED (prm_Def[i].static_flag))
+      if (!PRM_IS_SET (prm_Def[i].flag)
+	  && !PRM_IS_OBSOLETED (prm_Def[i].flag))
 	{
 	  if (prm_set_default (&prm_Def[i]) != NO_ERROR)
 	    {
@@ -2738,7 +2735,7 @@ sysprm_load_and_init_internal (const char *db_name, bool reload)
   /* verify flags are not incorrect or confusing */
   for (i = 0; i < NUM_PRM; i++)
     {
-      int flag = prm_Def[i].static_flag;
+      int flag = prm_Def[i].flag;
 
       assert (prm_Def[i].param_id == (unsigned int) i);
       if (PRM_USER_CAN_CHANGE (flag) && PRM_TEST_CHANGE_ONLY (flag))
@@ -2926,17 +2923,17 @@ prm_read_and_parse_server_persist_conf_file (const char *sect_name,
 		  goto exit_on_error;
 		}
 
-	      if (reload && !PRM_IS_RELOADABLE (prm->static_flag))
+	      if (reload && !PRM_IS_RELOADABLE (prm->flag))
 		{
 		  continue;
 		}
 
-	      if (PRM_IS_OBSOLETED (prm->static_flag))
+	      if (PRM_IS_OBSOLETED (prm->flag))
 		{
 		  continue;
 		}
 
-	      if (PRM_IS_DEPRECATED (prm->static_flag))
+	      if (PRM_IS_DEPRECATED (prm->flag))
 		{
 		  prm_report_bad_entry (key, -1,
 					PRM_ERR_DEPRICATED,
@@ -3270,8 +3267,8 @@ sysprm_validate_change_parameters (const char *data, const bool persist,
 
 #if 0				/* TODO - #955 set PERSIST; need more consideration */
       if (!check
-	  || PRM_USER_CAN_CHANGE (prm->static_flag)
-	  || (PRM_TEST_CHANGE_ONLY (prm->static_flag) && PRM_TEST_MODE))
+	  || PRM_USER_CAN_CHANGE (prm->flag)
+	  || (PRM_TEST_CHANGE_ONLY (prm->flag) && PRM_TEST_MODE))
 	{
 	  /* We allow changing the parameter value. */
 	}
@@ -3771,14 +3768,14 @@ sysprm_change_parameter_values (const SYSPRM_ASSIGN_VALUE * assignments,
 #endif
 	    {
 #if defined (CS_MODE)
-	      if (!PRM_IS_FOR_CLIENT (prm->static_flag))
+	      if (!PRM_IS_FOR_CLIENT (prm->flag))
 		{
 		  /* skip this assignment */
 		  continue;
 		}
 #endif
 #if defined (SERVER_MODE)
-	      if (!PRM_IS_FOR_SERVER (prm->static_flag))
+	      if (!PRM_IS_FOR_SERVER (prm->flag))
 		{
 		  /* skip this assignment */
 		  continue;
@@ -3791,8 +3788,8 @@ sysprm_change_parameter_values (const SYSPRM_ASSIGN_VALUE * assignments,
 #if 1				/* TODO - #955 set PERSIST; need more consideration */
 	  || av->persist
 #endif
-	  || PRM_USER_CAN_CHANGE (prm->static_flag)
-	  || (PRM_TEST_CHANGE_ONLY (prm->static_flag) && PRM_TEST_MODE))
+	  || PRM_USER_CAN_CHANGE (prm->flag)
+	  || (PRM_TEST_CHANGE_ONLY (prm->flag) && PRM_TEST_MODE))
 	{
 	  /* We allow changing the parameter value. */
 	  sysprm_set_value (prm, av->value, set_flag, true);
@@ -4015,16 +4012,15 @@ prm_print (const SYSPRM_PARAM * prm, char *buf, size_t len,
   assert (buf != NULL);
   assert (len > 0);
 
-  if (PRM_IS_FOR_SERVER (prm->static_flag)
-      && PRM_IS_FOR_CLIENT (prm->static_flag))
+  if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
     {
       prm_flag = "SERVER|CLIENT";
     }
-  else if (PRM_IS_FOR_SERVER (prm->static_flag))
+  else if (PRM_IS_FOR_SERVER (prm->flag))
     {
       prm_flag = "SERVER";
     }
-  else if (PRM_IS_FOR_CLIENT (prm->static_flag))
+  else if (PRM_IS_FOR_CLIENT (prm->flag))
     {
       prm_flag = "CLIENT";
     }
@@ -4113,7 +4109,7 @@ prm_print_bigint_value (char *buf, size_t len, INT64 val,
   assert (len > 0);
   assert (PRM_IS_BIGINT (prm));
 
-  if (PRM_HAS_SIZE_UNIT (prm->static_flag))
+  if (PRM_HAS_SIZE_UNIT (prm->flag))
     {
       error = util_byte_to_size_string (buf, len, val);
       if (error != NO_ERROR)
@@ -4121,7 +4117,7 @@ prm_print_bigint_value (char *buf, size_t len, INT64 val,
 	  return error;
 	}
     }
-  else if (PRM_HAS_TIME_UNIT (prm->static_flag))
+  else if (PRM_HAS_TIME_UNIT (prm->flag))
     {
       error = util_msec_to_time_string (buf, len, val);
       if (error != NO_ERROR)
@@ -4386,16 +4382,15 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
 
   prm = GET_PRM (prm_id);
 
-  if (PRM_IS_FOR_SERVER (prm->static_flag)
-      && PRM_IS_FOR_CLIENT (prm->static_flag))
+  if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
     {
       prm_flag = "SERVER|CLIENT";
     }
-  else if (PRM_IS_FOR_SERVER (prm->static_flag))
+  else if (PRM_IS_FOR_SERVER (prm->flag))
     {
       prm_flag = "SERVER";
     }
-  else if (PRM_IS_FOR_CLIENT (prm->static_flag))
+  else if (PRM_IS_FOR_CLIENT (prm->flag))
     {
       prm_flag = "CLIENT";
     }
@@ -4424,8 +4419,7 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
 	  }
 	val1_string = val1_buffer;
 
-	if (PRM_IS_FOR_SERVER (prm->static_flag)
-	    && PRM_IS_FOR_CLIENT (prm->static_flag))
+	if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
 	  {
 	    val = PRM_GET_INT (prm->value);
 
@@ -4451,8 +4445,7 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
 	  }
 	val1_string = val1_buffer;
 
-	if (PRM_IS_FOR_SERVER (prm->static_flag)
-	    && PRM_IS_FOR_CLIENT (prm->static_flag))
+	if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
 	  {
 	    val = PRM_GET_FLOAT (prm->value);
 
@@ -4478,8 +4471,7 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
 	  }
 	val1_string = val1_buffer;
 
-	if (PRM_IS_FOR_SERVER (prm->static_flag)
-	    && PRM_IS_FOR_CLIENT (prm->static_flag))
+	if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
 	  {
 	    val = PRM_GET_BOOL (prm->value);
 
@@ -4505,8 +4497,7 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
 	  }
 	val1_string = val1_buffer;
 
-	if (PRM_IS_FOR_SERVER (prm->static_flag)
-	    && PRM_IS_FOR_CLIENT (prm->static_flag))
+	if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
 	  {
 	    val = PRM_GET_INT (prm->value);
 
@@ -4532,8 +4523,7 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
 	  }
 	val1_string = val1_buffer;
 
-	if (PRM_IS_FOR_SERVER (prm->static_flag)
-	    && PRM_IS_FOR_CLIENT (prm->static_flag))
+	if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
 	  {
 	    val = PRM_GET_BIGINT (prm->value);
 
@@ -4551,8 +4541,7 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
       {
 	val1_string = value.str;
 
-	if (PRM_IS_FOR_SERVER (prm->static_flag)
-	    && PRM_IS_FOR_CLIENT (prm->static_flag))
+	if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
 	  {
 	    val2_string = PRM_GET_STRING (prm->value);
 	  }
@@ -4570,8 +4559,7 @@ sysprm_print_sysprm_value (PARAM_ID prm_id, SYSPRM_VALUE value, char *buf,
 	  }
 	val1_string = val1_buffer;
 
-	if (PRM_IS_FOR_SERVER (prm->static_flag)
-	    && PRM_IS_FOR_CLIENT (prm->static_flag))
+	if (PRM_IS_FOR_SERVER (prm->flag) && PRM_IS_FOR_CLIENT (prm->flag))
 	  {
 	    val = PRM_GET_INTEGER_LIST (prm->value);
 
@@ -4684,14 +4672,13 @@ sysprm_obtain_parameters (char *data, SYSPRM_ASSIGN_VALUE ** prm_values_ptr)
 	}
 
 #if defined (CS_MODE)
-      if (!PRM_IS_FOR_CLIENT (prm->static_flag)
-	  && !PRM_IS_FOR_SERVER (prm->static_flag))
+      if (!PRM_IS_FOR_CLIENT (prm->flag) && !PRM_IS_FOR_SERVER (prm->flag))
 	{
 	  error = PRM_ERR_CANNOT_CHANGE;
 	  break;
 	}
 
-      if (PRM_IS_FOR_SERVER (prm->static_flag))
+      if (PRM_IS_FOR_SERVER (prm->flag))
 	{
 	  /* have to read the value on server */
 	  scope_error = PRM_ERR_NOT_FOR_CLIENT;
@@ -4714,8 +4701,7 @@ sysprm_obtain_parameters (char *data, SYSPRM_ASSIGN_VALUE ** prm_values_ptr)
 #endif
       prm_value->next = NULL;
 #if defined (CS_MODE)
-      if (PRM_IS_FOR_CLIENT (prm->static_flag)
-	  && !PRM_IS_FOR_SERVER (prm->static_flag))
+      if (PRM_IS_FOR_CLIENT (prm->flag) && !PRM_IS_FOR_SERVER (prm->flag))
 	{
 	  /* set the value here */
 	  sysprm_set_sysprm_value_from_parameter (&prm_value->value, prm);
@@ -4787,7 +4773,7 @@ xsysprm_obtain_server_parameters (SYSPRM_ASSIGN_VALUE * prm_values)
     {
       prm = GET_PRM (prm_values->prm_id);
 
-      if (PRM_IS_FOR_SERVER (prm->static_flag))
+      if (PRM_IS_FOR_SERVER (prm->flag))
 	{
 	  /* set value */
 	  sysprm_set_sysprm_value_from_parameter (&prm_values->value, prm);
@@ -4815,7 +4801,7 @@ xsysprm_get_force_server_parameters (void)
       prm = GET_PRM (i);
       assert (prm->param_id == (unsigned int) i);
 
-      if (PRM_GET_FROM_SERVER (prm->static_flag))
+      if (PRM_GET_FROM_SERVER (prm->flag))
 	{
 	  SYSPRM_ASSIGN_VALUE *change_val =
 	    (SYSPRM_ASSIGN_VALUE *) malloc (sizeof (SYSPRM_ASSIGN_VALUE));
@@ -5071,8 +5057,7 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
 
   assert (new_value != NULL);
   if (!PRM_IS_BIGINT (prm)
-      && (PRM_HAS_SIZE_UNIT (prm->static_flag)
-	  || PRM_HAS_TIME_UNIT (prm->static_flag)))
+      && (PRM_HAS_SIZE_UNIT (prm->flag) || PRM_HAS_TIME_UNIT (prm->flag)))
     {
       assert (false);
       return PRM_ERR_BAD_PARAM;
@@ -5082,9 +5067,9 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
   if (check)
     {
       /* check the scope of parameter */
-      if (PRM_IS_FOR_CLIENT (prm->static_flag))
+      if (PRM_IS_FOR_CLIENT (prm->flag))
 	{
-	  if (PRM_IS_FOR_SERVER (prm->static_flag))
+	  if (PRM_IS_FOR_SERVER (prm->flag))
 	    {
 	      /* the value has to be changed on server too. user has to be
 	       * part of DBA group.
@@ -5094,7 +5079,7 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
 	}
       else
 	{
-	  if (PRM_IS_FOR_SERVER (prm->static_flag))
+	  if (PRM_IS_FOR_SERVER (prm->flag))
 	    {
 	      /* this value is only for server. user has to be DBA. */
 	      ret = PRM_ERR_NOT_FOR_CLIENT;
@@ -5111,7 +5096,7 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
 #if defined (SERVER_MODE)
   if (check)
     {
-      if (!PRM_IS_FOR_SERVER (prm->static_flag))
+      if (!PRM_IS_FOR_SERVER (prm->flag))
 	{
 	  return PRM_ERR_NOT_FOR_SERVER;
 	}
@@ -5155,14 +5140,14 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
 	INT64 val;
 	char *end_p;
 
-	if (PRM_HAS_SIZE_UNIT (prm->static_flag))
+	if (PRM_HAS_SIZE_UNIT (prm->flag))
 	  {
 	    if (util_size_string_to_byte (&val, value) != NO_ERROR)
 	      {
 		return PRM_ERR_BAD_VALUE;
 	      }
 	  }
-	else if (PRM_HAS_TIME_UNIT (prm->static_flag))
+	else if (PRM_HAS_TIME_UNIT (prm->flag))
 	  {
 	    if (util_time_string_to_msec (&val, value) != NO_ERROR)
 	      {
@@ -5503,9 +5488,9 @@ sysprm_set_value (SYSPRM_PARAM * prm, SYSPRM_VALUE value, bool set_flag,
 
   if (set_flag)
     {
-      PRM_SET_BIT (PRM_SET, prm->dynamic_flag);
+      PRM_SET_BIT (PRM_SET, prm->flag);
       /* Indicate that the default value was not used */
-      PRM_CLEAR_BIT (PRM_DEFAULT_USED, prm->dynamic_flag);
+      PRM_CLEAR_BIT (PRM_DEFAULT_USED, prm->flag);
     }
 
   return PRM_ERR_NO_ERROR;
@@ -5628,11 +5613,11 @@ prm_set_default (SYSPRM_PARAM * prm)
     {
       char *val, **valp;
 
-      if (PRM_IS_ALLOCATED (prm->dynamic_flag))
+      if (PRM_IS_ALLOCATED (prm->flag))
 	{
 	  char *str = PRM_GET_STRING (prm->value);
 	  free_and_init (str);
-	  PRM_CLEAR_BIT (PRM_ALLOCATED, prm->dynamic_flag);
+	  PRM_CLEAR_BIT (PRM_ALLOCATED, prm->flag);
 	}
 
       val = *(char **) prm->default_value;
@@ -5643,12 +5628,12 @@ prm_set_default (SYSPRM_PARAM * prm)
     {
       int *val, **valp;
 
-      if (PRM_IS_ALLOCATED (prm->dynamic_flag))
+      if (PRM_IS_ALLOCATED (prm->flag))
 	{
 	  int *int_list = PRM_GET_INTEGER_LIST (prm->value);
 
 	  free_and_init (int_list);
-	  PRM_CLEAR_BIT (PRM_ALLOCATED, prm->dynamic_flag);
+	  PRM_CLEAR_BIT (PRM_ALLOCATED, prm->flag);
 	}
 
       val = *(int **) prm->default_value;
@@ -5657,7 +5642,7 @@ prm_set_default (SYSPRM_PARAM * prm)
     }
 
   /* Indicate that the default value was used */
-  PRM_SET_BIT (PRM_DEFAULT_USED, prm->dynamic_flag);
+  PRM_SET_BIT (PRM_DEFAULT_USED, prm->flag);
 
   return NO_ERROR;
 }
@@ -5890,19 +5875,19 @@ sysprm_final (void)
       prm = &prm_Def[i];
       assert (prm->param_id == (unsigned int) i);
 
-      if (PRM_IS_ALLOCATED (prm->dynamic_flag) && PRM_IS_STRING (prm))
+      if (PRM_IS_ALLOCATED (prm->flag) && PRM_IS_STRING (prm))
 	{
 	  char *str = PRM_GET_STRING (prm->value);
 
 	  free_and_init (str);
-	  PRM_CLEAR_BIT (PRM_ALLOCATED, prm->dynamic_flag);
+	  PRM_CLEAR_BIT (PRM_ALLOCATED, prm->flag);
 
 	  valp = (char **) prm->value;
 	  *valp = NULL;
 	}
 
-      /* reset all dynamic flags */
-      prm->dynamic_flag = 0;
+      /* reset all flags */
+      prm->flag = PRM_EMPTY_FLAG;
     }
 }
 
@@ -6103,7 +6088,7 @@ prm_tune_parameters (void)
     }
 #endif /* SERVER_MODE */
 
-  if (PRM_DEFAULT_VAL_USED (rye_shm_key_prm->dynamic_flag))
+  if (PRM_DEFAULT_VAL_USED (rye_shm_key_prm->flag))
     {
       sprintf (newval, "%x", DEFAULT_RYE_SHM_KEY);
       prm_set (rye_shm_key_prm, newval, false);
@@ -6121,7 +6106,7 @@ prm_tune_parameters (void)
     }
 
   if (ha_node_myself_prm != NULL &&
-      !PRM_DEFAULT_VAL_USED (ha_node_myself_prm->dynamic_flag))
+      !PRM_DEFAULT_VAL_USED (ha_node_myself_prm->flag))
     {
       const char *ha_node_myself = PRM_GET_STRING (ha_node_myself_prm->value);
       if (inet_addr (ha_node_myself) == INADDR_NONE)
@@ -6131,7 +6116,7 @@ prm_tune_parameters (void)
     }
 
   if (ha_node_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_node_list_prm->dynamic_flag))
+      || PRM_DEFAULT_VAL_USED (ha_node_list_prm->flag))
     {
       if (GETHOSTNAME (host_name, sizeof (host_name)))
 	{
@@ -6151,7 +6136,7 @@ prm_tune_parameters (void)
     }
 
   if (ha_replica_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_replica_list_prm->dynamic_flag))
+      || PRM_DEFAULT_VAL_USED (ha_replica_list_prm->flag))
     {
       ;				/* nop */
     }
@@ -6166,12 +6151,12 @@ prm_tune_parameters (void)
 
   call_stack_dump_activation_prm =
     GET_PRM (PRM_ID_CALL_STACK_DUMP_ACTIVATION);
-  if (!PRM_IS_SET (call_stack_dump_activation_prm->dynamic_flag))
+  if (!PRM_IS_SET (call_stack_dump_activation_prm->flag))
     {
       int dim;
       int *integer_list = NULL;
 
-      if (PRM_IS_ALLOCATED (call_stack_dump_activation_prm->dynamic_flag))
+      if (PRM_IS_ALLOCATED (call_stack_dump_activation_prm->flag))
 	{
 	  free_and_init (PRM_GET_INTEGER_LIST
 			 (call_stack_dump_activation_prm->value));
@@ -6191,18 +6176,17 @@ prm_tune_parameters (void)
 	      dim * sizeof (int));
       prm_set_integer_list_value (PRM_ID_CALL_STACK_DUMP_ACTIVATION,
 				  integer_list);
-      PRM_SET_BIT (PRM_SET, call_stack_dump_activation_prm->dynamic_flag);
-      PRM_CLEAR_BIT (PRM_DEFAULT_USED,
-		     call_stack_dump_activation_prm->dynamic_flag);
+      PRM_SET_BIT (PRM_SET, call_stack_dump_activation_prm->flag);
+      PRM_CLEAR_BIT (PRM_DEFAULT_USED, call_stack_dump_activation_prm->flag);
     }
 
   ha_ignore_error_prm = GET_PRM (PRM_ID_HA_IGNORE_ERROR_LIST);
-  if (!PRM_IS_SET (ha_ignore_error_prm->dynamic_flag))
+  if (!PRM_IS_SET (ha_ignore_error_prm->flag))
     {
       int dim;
       int *integer_list = NULL;
 
-      if (PRM_IS_ALLOCATED (ha_ignore_error_prm->dynamic_flag))
+      if (PRM_IS_ALLOCATED (ha_ignore_error_prm->flag))
 	{
 	  free_and_init (PRM_GET_INTEGER_LIST (ha_ignore_error_prm->value));
 	}
@@ -6219,8 +6203,8 @@ prm_tune_parameters (void)
       integer_list[0] = dim;
       memcpy (&integer_list[1], ha_ignore_error_codes, dim * sizeof (int));
       prm_set_integer_list_value (PRM_ID_HA_IGNORE_ERROR_LIST, integer_list);
-      PRM_SET_BIT (PRM_SET, ha_ignore_error_prm->dynamic_flag);
-      PRM_CLEAR_BIT (PRM_DEFAULT_USED, ha_ignore_error_prm->dynamic_flag);
+      PRM_SET_BIT (PRM_SET, ha_ignore_error_prm->flag);
+      PRM_CLEAR_BIT (PRM_DEFAULT_USED, ha_ignore_error_prm->flag);
     }
 
   return NO_ERROR;
@@ -6302,14 +6286,14 @@ prm_tune_parameters (void)
       prm_set (ha_check_disk_failure_interval_prm, newval, false);
     }
 
-  if (PRM_DEFAULT_VAL_USED (rye_shm_key_prm->dynamic_flag))
+  if (PRM_DEFAULT_VAL_USED (rye_shm_key_prm->flag))
     {
       sprintf (newval, "%x", DEFAULT_RYE_SHM_KEY);
       prm_set (rye_shm_key_prm, newval, false);
     }
 
   if (ha_node_myself_prm != NULL &&
-      !PRM_DEFAULT_VAL_USED (ha_node_myself_prm->dynamic_flag))
+      !PRM_DEFAULT_VAL_USED (ha_node_myself_prm->flag))
     {
       const char *ha_node_myself = PRM_GET_STRING (ha_node_myself_prm->value);
       if (inet_addr (ha_node_myself) == INADDR_NONE)
@@ -6319,7 +6303,7 @@ prm_tune_parameters (void)
     }
 
   if (ha_node_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_node_list_prm->dynamic_flag))
+      || PRM_DEFAULT_VAL_USED (ha_node_list_prm->flag))
     {
       if (GETHOSTNAME (host_name, sizeof (host_name)))
 	{
@@ -6339,7 +6323,7 @@ prm_tune_parameters (void)
     }
 
   if (ha_replica_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_replica_list_prm->dynamic_flag))
+      || PRM_DEFAULT_VAL_USED (ha_replica_list_prm->flag))
     {
       ;				/* nop */
     }
@@ -6361,12 +6345,12 @@ prm_tune_parameters (void)
     }
 
   ha_ignore_error_prm = GET_PRM (PRM_ID_HA_IGNORE_ERROR_LIST);
-  if (!PRM_IS_SET (ha_ignore_error_prm->dynamic_flag))
+  if (!PRM_IS_SET (ha_ignore_error_prm->flag))
     {
       int dim;
       int *integer_list = NULL;
 
-      if (PRM_IS_ALLOCATED (ha_ignore_error_prm->dynamic_flag))
+      if (PRM_IS_ALLOCATED (ha_ignore_error_prm->flag))
 	{
 	  free_and_init (PRM_GET_INTEGER_LIST (ha_ignore_error_prm->value));
 	}
@@ -6383,8 +6367,8 @@ prm_tune_parameters (void)
       integer_list[0] = dim;
       memcpy (&integer_list[1], ha_ignore_error_codes, dim * sizeof (int));
       prm_set_integer_list_value (PRM_ID_HA_IGNORE_ERROR_LIST, integer_list);
-      PRM_SET_BIT (PRM_SET, ha_ignore_error_prm->dynamic_flag);
-      PRM_CLEAR_BIT (PRM_DEFAULT_USED, ha_ignore_error_prm->dynamic_flag);
+      PRM_SET_BIT (PRM_SET, ha_ignore_error_prm->flag);
+      PRM_CLEAR_BIT (PRM_DEFAULT_USED, ha_ignore_error_prm->flag);
     }
 
   return NO_ERROR;
@@ -6592,14 +6576,14 @@ prm_get_value (PARAM_ID prm_id)
     }
 
 #if defined (SERVER_MODE)
-  assert (PRM_IS_FOR_SERVER (prm_Def[prm_id].static_flag));
+  assert (PRM_IS_FOR_SERVER (prm_Def[prm_id].flag));
 #elif defined (CS_MODE)
-  assert (PRM_IS_FOR_CLIENT (prm_Def[prm_id].static_flag));
+  assert (PRM_IS_FOR_CLIENT (prm_Def[prm_id].flag));
 #endif
 
   if (!PRM_IS_BIGINT (&prm_Def[prm_id])
-      && (PRM_HAS_SIZE_UNIT (prm_Def[prm_id].static_flag)
-	  || PRM_HAS_TIME_UNIT (prm_Def[prm_id].static_flag)))
+      && (PRM_HAS_SIZE_UNIT (prm_Def[prm_id].flag)
+	  || PRM_HAS_TIME_UNIT (prm_Def[prm_id].flag)))
     {
       assert (false);
     }
@@ -6815,15 +6799,15 @@ prm_set_string_value (PARAM_ID prm_id, char *value)
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_STRING (&prm_Def[prm_id]));
 
-  if (PRM_IS_ALLOCATED (prm_Def[prm_id].dynamic_flag))
+  if (PRM_IS_ALLOCATED (prm_Def[prm_id].flag))
     {
       free_and_init (PRM_GET_STRING (prm_Def[prm_id].value));
-      PRM_CLEAR_BIT (PRM_ALLOCATED, prm_Def[prm_id].dynamic_flag);
+      PRM_CLEAR_BIT (PRM_ALLOCATED, prm_Def[prm_id].flag);
     }
   PRM_GET_STRING (prm_Def[prm_id].value) = value;
   if (PRM_GET_STRING (prm_Def[prm_id].value) != NULL)
     {
-      PRM_SET_BIT (PRM_ALLOCATED, prm_Def[prm_id].dynamic_flag);
+      PRM_SET_BIT (PRM_ALLOCATED, prm_Def[prm_id].flag);
     }
 }
 
@@ -6846,15 +6830,15 @@ prm_set_integer_list_value (PARAM_ID prm_id, int *value)
   assert (prm_id <= PRM_LAST_ID);
   assert (PRM_IS_INTEGER_LIST (&prm_Def[prm_id]));
 
-  if (PRM_IS_ALLOCATED (prm_Def[prm_id].dynamic_flag))
+  if (PRM_IS_ALLOCATED (prm_Def[prm_id].flag))
     {
       free_and_init (PRM_GET_INTEGER_LIST (prm_Def[prm_id].value));
-      PRM_CLEAR_BIT (PRM_ALLOCATED, prm_Def[prm_id].dynamic_flag);
+      PRM_CLEAR_BIT (PRM_ALLOCATED, prm_Def[prm_id].flag);
     }
   PRM_GET_INTEGER_LIST (prm_Def[prm_id].value) = value;
   if (PRM_GET_INTEGER_LIST (prm_Def[prm_id].value) != NULL)
     {
-      PRM_SET_BIT (PRM_ALLOCATED, prm_Def[prm_id].dynamic_flag);
+      PRM_SET_BIT (PRM_ALLOCATED, prm_Def[prm_id].flag);
     }
 }
 
