@@ -770,15 +770,31 @@ hm_create_health_check_th (void)
   pthread_t health_check_th;
 
   rv = pthread_attr_init (&thread_attr);
-  assert (rv == 0);
+  if (rv != 0)
+    {
+      assert (false);
+      return;
+    }
   rv = pthread_attr_setdetachstate (&thread_attr, PTHREAD_CREATE_DETACHED);
-  assert (rv == 0);
+  if (rv != 0)
+    {
+      assert (false);
+      return;
+    }
   rv = pthread_attr_setscope (&thread_attr, PTHREAD_SCOPE_SYSTEM);
-  assert (rv == 0);
+  if (rv != 0)
+    {
+      assert (false);
+      return;
+    }
   rv =
     pthread_create (&health_check_th, &thread_attr, hm_thread_health_checker,
 		    (void *) NULL);
-  assert (rv == 0);
+  if (rv != 0)
+    {
+      assert (false);
+      return;
+    }
 }
 
 void
