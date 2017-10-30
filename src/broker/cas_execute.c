@@ -515,9 +515,13 @@ ux_database_connect (const char *db_name, const char *db_user,
 
       if (need_au_disable == true)
 	{
+#if 1
+	  AU_RESTORE (1); /* TODO - avoid compile error */
+#else
 	  int dummy_au_save;
 
 	  AU_DISABLE (dummy_au_save);
+#endif
 	}
 
       er_log_debug (ARG_FILE_LINE,
@@ -646,12 +650,16 @@ ux_get_current_database_name (char *buf, int bufsize)
 void
 ux_database_shutdown ()
 {
-  int au_save = 0;
+//  int au_save = 0;
 
   if (db_get_client_type () == BOOT_CLIENT_REPL_BROKER)
     {
       AU_ENABLE_PASSWORDS ();
+#if 1
+      AU_ENABLE (0); /* TODO - - avoid compile error */
+#else
       AU_SAVE_AND_ENABLE (au_save);
+#endif
     }
 
   db_shutdown ();
@@ -1182,7 +1190,7 @@ ux_fetch (T_SRV_HANDLE * srv_handle, int cursor_pos, int fetch_count,
 	  int result_set_index, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 {
   int err_code;
-  int fetch_func_index;
+//  int fetch_func_index;
   T_FETCH_FUNC fetch_func;
 
   if (srv_handle == NULL)
@@ -1193,13 +1201,13 @@ ux_fetch (T_SRV_HANDLE * srv_handle, int cursor_pos, int fetch_count,
 
   if (srv_handle->schema_type < 0)
     {
-      fetch_func_index = 0;
+//      fetch_func_index = 0;
       fetch_func = fetch_result;
     }
   else if (srv_handle->schema_type >= CCI_SCH_FIRST
 	   && srv_handle->schema_type <= CCI_SCH_LAST)
     {
-      fetch_func_index = srv_handle->schema_type;
+//      fetch_func_index = srv_handle->schema_type;
       fetch_func = SCHEMA_INFO_FETCH_FUNC (srv_handle->schema_type);
     }
   else
@@ -2457,6 +2465,11 @@ prepare_column_list_info_set (DB_SESSION * session, T_QUERY_RESULT * q_result,
       for (col = column_info; col != NULL; col = db_query_format_next (col))
 	{
 	  cas_type = set_column_info (net_buf, col);
+	  if (cas_type < CCI_TYPE_FIRST || cas_type > CCI_TYPE_LAST)
+	    {
+	      assert (false);
+	      ;			/* TODO - avoid compile error */
+	    }
 	  num_cols++;
 	}
 
