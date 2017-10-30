@@ -656,7 +656,7 @@ ux_database_shutdown ()
     {
       AU_ENABLE_PASSWORDS ();
 #if 1
-      AU_ENABLE (0); /* TODO - - avoid compile error */
+      AU_ENABLE (0); /* TODO - avoid compile error */
 #else
       AU_SAVE_AND_ENABLE (au_save);
 #endif
