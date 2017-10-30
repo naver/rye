@@ -520,7 +520,9 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
   int err_code = 0;
   int res_count;
   char fetch_flag;
+#if 0
   char scrollable_cursor = false;
+#endif
   int remaining_time = 0;
   bool use_server_query_cancel = false;
   T_NET_RES *net_res;
@@ -532,6 +534,7 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
 
   QUERY_RESULT_FREE (req_handle);
 
+#if 0
   if (con_handle->autocommit_mode == CCI_AUTOCOMMIT_TRUE)
     {
       scrollable_cursor = false;
@@ -540,6 +543,8 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
     {
       scrollable_cursor = true;
     }
+#endif
+
   autocommit_flag = (char) con_handle->autocommit_mode;
 
   if (TIMEOUT_IS_SET (con_handle))
