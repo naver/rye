@@ -12,3 +12,6 @@ rsql_grammar.h
 rsql_grammar.output
 .project
 .cproject
+**/tags
+Debug64/
+Release64/
