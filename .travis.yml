@@ -46,4 +46,4 @@ addons:
     notification_email: kyungsik.seo@navercorp.com
     build_command_prepend: "./autogen.sh; mkdir Release64; cd Release64; ../configure"
     build_command:   "make -j 4"
-    branch_pattern: coverity_scan
+    branch_pattern: master
