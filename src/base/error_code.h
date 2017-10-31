@@ -1134,7 +1134,6 @@
 #define	ER_QPROC_CYCLE_DETECTED                     -979
 
 #define ER_MNT_WAITING_THREAD                       -980
-#define ER_MNT_STATS_THRESHOLD                      -981
 
 #define ER_INTERRUPTING                             -982
 

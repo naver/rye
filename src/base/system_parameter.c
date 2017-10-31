@@ -126,11 +126,7 @@ typedef enum
 
 #define PRM_NAME_HF_MAX_BESTSPACE_ENTRIES "max_bestspace_entries"
 
-#define PRM_NAME_BT_UNFILL_FACTOR "index_unfill_factor"
-
 #define PRM_NAME_BT_OID_BUFFER_SIZE "index_scan_oid_buffer_size"
-
-#define PRM_NAME_BT_INDEX_SCAN_OID_ORDER "index_scan_in_oid_order"
 
 #define PRM_NAME_BOSR_MAXTMP_SIZE "temp_file_max_size"
 
@@ -167,8 +163,6 @@ typedef enum
 #define PRM_NAME_THREAD_STACKSIZE "thread_stacksize"
 
 #define PRM_NAME_IO_BACKUP_NBUFFERS "backup_buffer_pages"
-
-#define PRM_NAME_IO_BACKUP_MAX_VOLUME_SIZE "backup_volume_max_size_bytes"
 
 #define PRM_NAME_IO_BACKUP_SLEEP "backup_sleep"
 
@@ -232,11 +226,7 @@ typedef enum
 
 #define PRM_NAME_HA_DB_LIST "ha_db_list"
 
-#define PRM_NAME_HA_COPY_LOG_BASE "ha_copy_log_base"
-
 #define PRM_NAME_HA_COPY_SYNC_MODE "ha_copy_sync_mode"
-
-#define PRM_NAME_HA_APPLY_MAX_MEM_SIZE "ha_apply_max_mem_size"
 
 #define PRM_NAME_HA_PORT_ID "ha_port_id"
 
@@ -267,8 +257,6 @@ typedef enum
 #define PRM_NAME_HA_PING_HOSTS "ha_ping_hosts"
 
 #define PRM_NAME_HA_IGNORE_ERROR_LIST "ha_ignore_error_list"
-
-#define PRM_NAME_HA_SQL_LOG_MAX_SIZE_IN_MB "ha_sql_log_max_size_in_mbytes"
 
 #define PRM_NAME_HA_COPY_LOG_MAX_ARCHIVES "ha_copy_log_max_archives"
 
@@ -324,8 +312,6 @@ typedef enum
 
 #define PRM_NAME_MNT_WAITING_THREAD "monitor_waiting_thread"
 
-#define PRM_NAME_MNT_STATS_THRESHOLD "monitor_stats_threshold"
-
 #define PRM_NAME_SESSION_STATE_TIMEOUT "session_state_timeout"
 
 #define PRM_NAME_MULTI_RANGE_OPT_LIMIT "multi_range_optimization_limit"
@@ -362,16 +348,13 @@ typedef enum
 
 #define PRM_NAME_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION "optimizer_enable_aggregate_optimization"
 
-#define PRM_NAME_HA_REPL_FILTER_TYPE "ha_repl_filter_type"
-#define PRM_NAME_HA_REPL_FILTER_FILE "ha_repl_filter_file"
-
 #define PRM_NAME_FAULT_INJECTION "fault_injection"
 
 #define PRM_NAME_RYE_SHM_KEY "rye_shm_key"
 #define PRM_NAME_HA_MAX_LOG_APPLIER "ha_max_log_applier"
 
 #define PRM_NAME_MAX_CLIENTS "max_clients"
-#define PRM_NAME_MAX_COPYLOG_CONNECIONTS "max_copylogdb_connections"
+#define PRM_NAME_MAX_COPYLOG_CONNECTIONS "max_copylogdb_connections"
 #define PRM_NAME_MIGRATOR_MAX_REPL_DELAY "migrator_max_repl_delay"
 #define PRM_NAME_HA_NODE_MYSELF "ha_node_myself"
 
@@ -527,18 +510,10 @@ int PRM_HF_MAX_BESTSPACE_ENTRIES = 1000000;
 static int prm_hf_max_bestspace_entries_default = 1000000;	/* 110 M */
 static unsigned int prm_hf_max_bestspace_entries_lower = 1000;
 
-float PRM_BT_UNFILL_FACTOR = 0.05f;
-static float prm_bt_unfill_factor_default = 0.05f;
-static float prm_bt_unfill_factor_lower = 0.0f;
-static float prm_bt_unfill_factor_upper = 0.5f;
-
 INT64 PRM_BT_OID_BUFFER_SIZE = 4 * IO_MAX_PAGE_SIZE;
 static INT64 prm_bt_oid_buffer_size_default = 4 * IO_MAX_PAGE_SIZE;
 static INT64 prm_bt_oid_buffer_size_lower = (INT64) (0.4f * IO_MAX_PAGE_SIZE);
 static INT64 prm_bt_oid_buffer_size_upper = 16 * IO_MAX_PAGE_SIZE;
-
-bool PRM_BT_INDEX_SCAN_OID_ORDER = false;
-static bool prm_bt_index_scan_oid_order_default = false;
 
 INT64 PRM_BOSR_MAXTMP_SIZE = INT_MIN;
 static INT64 prm_bosr_maxtmp_size_default = -1;	/* Infinite */
@@ -606,11 +581,6 @@ static INT64 prm_thread_stacksize_upper = INT_MAX;
 int PRM_IO_BACKUP_NBUFFERS = 256;
 static int prm_io_backup_nbuffers_default = 256;
 static int prm_io_backup_nbuffers_lower = 256;
-
-INT64 PRM_IO_BACKUP_MAX_VOLUME_SIZE = 0;
-static INT64 prm_io_backup_max_volume_size_default = 0;
-static INT64 prm_io_backup_max_volume_size_lower = 1024 * 32;
-static INT64 prm_io_backup_max_volume_size_upper = INT_MAX;
 
 INT64 PRM_IO_BACKUP_SLEEP = 0;
 static INT64 prm_io_backup_sleep_default = 0;
@@ -745,14 +715,8 @@ static const char *prm_ha_replica_list_default = NULL;
 const char *PRM_HA_DB_LIST = "";
 static const char *prm_ha_db_list_default = NULL;
 
-const char *PRM_HA_COPY_LOG_BASE = "";
-static const char *prm_ha_copy_log_base_default = NULL;
-
 const char *PRM_HA_COPY_SYNC_MODE = "";
 static const char *prm_ha_copy_sync_mode_default = NULL;
-
-int PRM_HA_APPLY_MAX_MEM_SIZE = HB_DEFAULT_APPLY_MAX_MEM_SIZE;
-static int prm_ha_apply_max_mem_size_default = HB_DEFAULT_APPLY_MAX_MEM_SIZE;
 
 int PRM_HA_PORT_ID = HB_DEFAULT_HA_PORT_ID;
 static int prm_ha_port_id_default = HB_DEFAULT_HA_PORT_ID;
@@ -814,11 +778,6 @@ static const char *prm_ha_ping_hosts_default = NULL;
 
 int *PRM_HA_IGNORE_ERROR_LIST = int_list_initial;
 static int *prm_ha_ignore_error_list_default = NULL;
-
-int PRM_HA_SQL_LOG_MAX_SIZE_IN_MB = INT_MIN;
-static int prm_ha_sql_log_max_size_in_mb_default = 50;
-static int prm_ha_sql_log_max_size_in_mb_upper = 2048;
-static int prm_ha_sql_log_max_size_in_mb_lower = 1;
 
 int PRM_HA_COPY_LOG_MAX_ARCHIVES = 1;
 static int prm_ha_copy_log_max_archives_default = 1;
@@ -921,9 +880,6 @@ int PRM_MNT_WAITING_THREAD = 0;
 static int prm_mnt_waiting_thread_default = 0;
 static int prm_mnt_waiting_thread_lower = 0;
 
-int *PRM_MNT_STATS_THRESHOLD = int_list_initial;
-static int *prm_mnt_stats_threshold_default = NULL;
-
 int PRM_SESSION_STATE_TIMEOUT = 60 * 60 * 6;	/* 6 hours */
 static int prm_session_timeout_default = 60 * 60 * 6;	/* 6 hours */
 static int prm_session_timeout_lower = 60;	/* 1 minute */
@@ -987,14 +943,6 @@ static bool prm_btree_merge_enabled_default = true;
 
 bool PRM_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION = true;
 static bool prm_optimizer_enable_aggregate_optimization_default = true;
-
-int PRM_HA_REPL_FILTER_TYPE = REPL_FILTER_NONE;
-static int prm_ha_repl_filter_type_default = REPL_FILTER_NONE;
-static int prm_ha_repl_filter_type_lower = REPL_FILTER_NONE;
-static int prm_ha_repl_filter_type_upper = REPL_FILTER_EXCLUDE_TBL;
-
-const char *PRM_HA_REPL_FILTER_FILE = "";
-static const char *prm_ha_repl_filter_file_default = "";
 
 
 const char *PRM_FAULT_INJECTION = "none";
@@ -1129,12 +1077,6 @@ static KEYVAL check_peer_alive_words[] = {
 static KEYVAL query_trace_format_words[] = {
   {"text", QUERY_TRACE_TEXT},
   {"json", QUERY_TRACE_JSON},
-};
-
-static KEYVAL ha_repl_filter_type_words[] = {
-  {"none", REPL_FILTER_NONE},
-  {"include_table", REPL_FILTER_INCLUDE_TBL},
-  {"exclude_table", REPL_FILTER_EXCLUDE_TBL}
 };
 
 static const int call_stack_dump_error_codes[] = {
@@ -1380,15 +1322,6 @@ sysprm_initialize_prm_def ()
 		     &PRM_HF_MAX_BESTSPACE_ENTRIES,
 		     NULL, &prm_hf_max_bestspace_entries_lower);
 
-  sysprm_init_param (PRM_ID_BT_UNFILL_FACTOR,
-		     PRM_NAME_BT_UNFILL_FACTOR,
-		     (PRM_FOR_SERVER | PRM_USER_CHANGE),
-		     PRM_FLOAT,
-		     &prm_bt_unfill_factor_default,
-		     &PRM_BT_UNFILL_FACTOR,
-		     &prm_bt_unfill_factor_upper,
-		     &prm_bt_unfill_factor_lower);
-
   sysprm_init_param (PRM_ID_BT_OID_BUFFER_SIZE,
 		     PRM_NAME_BT_OID_BUFFER_SIZE,
 		     (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_SIZE_UNIT |
@@ -1396,13 +1329,6 @@ sysprm_initialize_prm_def ()
 		     &prm_bt_oid_buffer_size_default, &PRM_BT_OID_BUFFER_SIZE,
 		     &prm_bt_oid_buffer_size_upper,
 		     &prm_bt_oid_buffer_size_lower);
-
-  sysprm_init_param (PRM_ID_BT_INDEX_SCAN_OID_ORDER,
-		     PRM_NAME_BT_INDEX_SCAN_OID_ORDER,
-		     (PRM_FOR_CLIENT | PRM_USER_CHANGE),
-		     PRM_BOOLEAN,
-		     &prm_bt_index_scan_oid_order_default,
-		     &PRM_BT_INDEX_SCAN_OID_ORDER, NULL, NULL);
 
   sysprm_init_param (PRM_ID_BOSR_MAXTMP_SIZE,
 		     PRM_NAME_BOSR_MAXTMP_SIZE,
@@ -1537,15 +1463,6 @@ sysprm_initialize_prm_def ()
 		     &prm_io_backup_nbuffers_default,
 		     &PRM_IO_BACKUP_NBUFFERS, NULL,
 		     &prm_io_backup_nbuffers_lower);
-
-  sysprm_init_param (PRM_ID_IO_BACKUP_MAX_VOLUME_SIZE,
-		     PRM_NAME_IO_BACKUP_MAX_VOLUME_SIZE,
-		     (PRM_FOR_SERVER | PRM_SIZE_UNIT),
-		     PRM_BIGINT,
-		     &prm_io_backup_max_volume_size_default,
-		     &PRM_IO_BACKUP_MAX_VOLUME_SIZE,
-		     &prm_io_backup_max_volume_size_upper,
-		     &prm_io_backup_max_volume_size_lower);
 
   sysprm_init_param (PRM_ID_IO_BACKUP_SLEEP,
 		     PRM_NAME_IO_BACKUP_SLEEP,
@@ -1780,26 +1697,12 @@ sysprm_initialize_prm_def ()
 		     PRM_STRING,
 		     &prm_ha_db_list_default, &PRM_HA_DB_LIST, NULL, NULL);
 
-  sysprm_init_param (PRM_ID_HA_COPY_LOG_BASE,
-		     PRM_NAME_HA_COPY_LOG_BASE,
-		     (PRM_FOR_CLIENT),
-		     PRM_STRING,
-		     &prm_ha_copy_log_base_default,
-		     &PRM_HA_COPY_LOG_BASE, NULL, NULL);
-
   sysprm_init_param (PRM_ID_HA_COPY_SYNC_MODE,
 		     PRM_NAME_HA_COPY_SYNC_MODE,
 		     (PRM_FOR_CLIENT),
 		     PRM_STRING,
 		     &prm_ha_copy_sync_mode_default,
 		     &PRM_HA_COPY_SYNC_MODE, NULL, NULL);
-
-  sysprm_init_param (PRM_ID_HA_APPLY_MAX_MEM_SIZE,
-		     PRM_NAME_HA_APPLY_MAX_MEM_SIZE,
-		     (PRM_FOR_CLIENT),
-		     PRM_INTEGER,
-		     &prm_ha_apply_max_mem_size_default,
-		     &PRM_HA_APPLY_MAX_MEM_SIZE, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_PORT_ID,
 		     PRM_NAME_HA_PORT_ID,
@@ -1873,7 +1776,7 @@ sysprm_initialize_prm_def ()
 		     &prm_ha_max_process_dereg_confirm_default,
 		     &PRM_HA_MAX_PROCESS_DEREG_CONFIRM, NULL, NULL);
 
-  sysprm_init_param (PRM_ID_HA_CHANGESALVE_MAX_WAIT_TIME,
+  sysprm_init_param (PRM_ID_HA_CHANGESLAVE_MAX_WAIT_TIME,
 		     PRM_NAME_HA_CHANGESLAVE_MAX_WAIT_TIME,
 		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
 		     PRM_BIGINT,
@@ -1918,15 +1821,6 @@ sysprm_initialize_prm_def ()
 		     PRM_INTEGER_LIST,
 		     &prm_ha_ignore_error_list_default,
 		     &PRM_HA_IGNORE_ERROR_LIST, NULL, NULL);
-
-  sysprm_init_param (PRM_ID_HA_SQL_LOG_MAX_SIZE_IN_MB,
-		     PRM_NAME_HA_SQL_LOG_MAX_SIZE_IN_MB,
-		     (PRM_FOR_CLIENT),
-		     PRM_INTEGER,
-		     &prm_ha_sql_log_max_size_in_mb_default,
-		     &PRM_HA_SQL_LOG_MAX_SIZE_IN_MB,
-		     &prm_ha_sql_log_max_size_in_mb_upper,
-		     &prm_ha_sql_log_max_size_in_mb_lower);
 
   sysprm_init_param (PRM_ID_HA_COPY_LOG_MAX_ARCHIVES,
 		     PRM_NAME_HA_COPY_LOG_MAX_ARCHIVES,
@@ -2132,13 +2026,6 @@ sysprm_initialize_prm_def ()
 		     &PRM_MNT_WAITING_THREAD, NULL,
 		     &prm_mnt_waiting_thread_lower);
 
-  sysprm_init_param (PRM_ID_MNT_STATS_THRESHOLD,
-		     PRM_NAME_MNT_STATS_THRESHOLD,
-		     (PRM_FOR_SERVER | PRM_HIDDEN),
-		     PRM_INTEGER_LIST,
-		     &prm_mnt_stats_threshold_default,
-		     &PRM_MNT_STATS_THRESHOLD, NULL, NULL);
-
   sysprm_init_param (PRM_ID_SESSION_STATE_TIMEOUT,
 		     PRM_NAME_SESSION_STATE_TIMEOUT,
 		     (PRM_FOR_SERVER | PRM_TEST_CHANGE),
@@ -2269,22 +2156,6 @@ sysprm_initialize_prm_def ()
 		     &PRM_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION, NULL,
 		     NULL);
 
-  sysprm_init_param (PRM_ID_HA_REPL_FILTER_TYPE,
-		     PRM_NAME_HA_REPL_FILTER_TYPE,
-		     (PRM_FOR_CLIENT),
-		     PRM_KEYWORD,
-		     &prm_ha_repl_filter_type_default,
-		     &PRM_HA_REPL_FILTER_TYPE,
-		     &prm_ha_repl_filter_type_upper,
-		     &prm_ha_repl_filter_type_lower);
-
-  sysprm_init_param (PRM_ID_HA_REPL_FILTER_FILE,
-		     PRM_NAME_HA_REPL_FILTER_FILE,
-		     (PRM_FOR_CLIENT),
-		     PRM_STRING,
-		     &prm_ha_repl_filter_file_default,
-		     &PRM_HA_REPL_FILTER_FILE, NULL, NULL);
-
   sysprm_init_param (PRM_ID_FAULT_INJECTION,
 		     PRM_NAME_FAULT_INJECTION,
 		     (PRM_USER_CHANGE | PRM_FOR_SERVER | PRM_FOR_CLIENT |
@@ -2316,7 +2187,7 @@ sysprm_initialize_prm_def ()
 		     &prm_max_clients_upper, &prm_max_clients_lower);
 
   sysprm_init_param (PRM_ID_MAX_COPYLOG_CONNECTIONS,
-		     PRM_NAME_MAX_COPYLOG_CONNECIONTS,
+		     PRM_NAME_MAX_COPYLOG_CONNECTIONS,
 		     (PRM_FOR_SERVER),
 		     PRM_INTEGER,
 		     &prm_max_copylog_conns_default,
@@ -4257,11 +4128,6 @@ prm_print_keyword_value (char *buf, size_t len, int val,
       keyvalp = prm_keyword (val, NULL, query_trace_format_words,
 			     DIM (query_trace_format_words));
     }
-  else if (intl_mbs_casecmp (prm->name, PRM_NAME_HA_REPL_FILTER_TYPE) == 0)
-    {
-      keyvalp = prm_keyword (val, NULL, ha_repl_filter_type_words,
-			     DIM (ha_repl_filter_type_words));
-    }
   else
     {
       assert (false);
@@ -5356,12 +5222,6 @@ sysprm_generate_new_value (SYSPRM_PARAM * prm, const char *value,
 	  {
 	    keyvalp = prm_keyword (-1, value, query_trace_format_words,
 				   DIM (query_trace_format_words));
-	  }
-	else if (intl_mbs_casecmp (prm->name,
-				   PRM_NAME_HA_REPL_FILTER_TYPE) == 0)
-	  {
-	    keyvalp = prm_keyword (-1, value, ha_repl_filter_type_words,
-				   DIM (ha_repl_filter_type_words));
 	  }
 	else
 	  {

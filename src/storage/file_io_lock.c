@@ -550,14 +550,10 @@ fileio_lock_la_dbname (int *lockf_vdes, char *db_name, char *log_path)
   char format_string[PATH_MAX];
   const char *base_p = NULL;
 
-  base_p = prm_get_string_value (PRM_ID_HA_COPY_LOG_BASE);
-  if (base_p == NULL || *base_p == '\0')
+  base_p = envvar_get (DATABASES_ENVNAME);
+  if (base_p == NULL)
     {
-      base_p = envvar_get (DATABASES_ENVNAME);
-      if (base_p == NULL)
-	{
-	  base_p = ".";
-	}
+      base_p = ".";
     }
   snprintf (lock_dir, sizeof (lock_dir), "%s/APPLYLOGDB", base_p);
   snprintf (lock_path, sizeof (lock_path), "%s/%s", lock_dir, db_name);
@@ -704,14 +700,10 @@ fileio_unlock_la_dbname (int *lockf_vdes, char *db_name, bool clear_owner)
       return FILEIO_NOT_LOCKF;
     }
 
-  base_p = prm_get_string_value (PRM_ID_HA_COPY_LOG_BASE);
-  if (base_p == NULL || *base_p == '\0')
+  base_p = envvar_get (DATABASES_ENVNAME);
+  if (base_p == NULL)
     {
-      base_p = envvar_get (DATABASES_ENVNAME);
-      if (base_p == NULL)
-	{
-	  base_p = ".";
-	}
+      base_p = ".";
     }
   snprintf (lock_dir, sizeof (lock_dir), "%s/APPLYLOGDB", base_p);
   snprintf (lock_path, sizeof (lock_path), "%s/%s", lock_dir, db_name);
