@@ -1,6 +1,6 @@
 ### 2. FUNCTION call
 ####  NET_SERVER_PING
-  *  request data0
+  * request data0
 
     | description | type | note |
     | -------- | -------- | -------- |
@@ -31,6 +31,7 @@
     | client_lock_wait | int |  |
 
   * response data0
+  
     | description | type | note |
     | -------- | -------- | -------- |
     | data1_size | int |  |
