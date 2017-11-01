@@ -447,7 +447,6 @@ typedef struct _node_config
   char *node_name;
   char *copy_log_base;
   char *copy_sync_mode;
-  int apply_max_mem_size;
 } HA_NODE_CONF;
 
 typedef struct _ha_config
