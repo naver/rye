@@ -911,6 +911,7 @@ css_open_new_socket_from_master (SOCKET fd, unsigned short *rid)
   struct msghdr msg;
   int pid;
   static struct cmsghdr *cmptr = NULL;
+  SOCKET *dataptr;
 
   iov[0].iov_base = (char *) &req_id;
   iov[0].iov_len = sizeof (unsigned short);
@@ -938,7 +939,8 @@ css_open_new_socket_from_master (SOCKET fd, unsigned short *rid)
   *rid = ntohs (req_id);
 
   pid = getpid ();
-  new_fd = *(SOCKET *) CMSG_DATA (cmptr);
+  dataptr = (SOCKET *) CMSG_DATA (cmptr);
+  new_fd = *dataptr;
 
 #ifdef SYSV
   ioctl (new_fd, SIOCSPGRP, (caddr_t) & pid);

@@ -1107,6 +1107,7 @@ restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
 		     int as_index)
 {
   int new_pid;
+  int r;
 
   as_info_p->psize = getsize (as_info_p->pid);
   if (as_info_p->psize > 1)
@@ -1125,7 +1126,13 @@ restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
       fp = fopen (pid_file_name, "r");
       if (fp)
 	{
-	  fscanf (fp, "%d", &old_pid);
+	  r = fscanf (fp, "%d", &old_pid);
+	  if (r != 1)
+	    {
+	      assert (false);
+	      ; /* TODO - avoid compile error */
+	    }
+
 	  fclose (fp);
 
 	  as_info_p->psize = getsize (old_pid);

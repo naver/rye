@@ -59,6 +59,7 @@ recv_fd (int fd, int *rid, struct timeval *recv_time)
   } control_un;
   struct cmsghdr *cmptr = NULL;
   struct sendmsg_s send_msg;
+  int *dataptr;
 
   iov[0].iov_base = (char *) &send_msg;
   iov[0].iov_len = sizeof (struct sendmsg_s);
@@ -87,7 +88,8 @@ recv_fd (int fd, int *rid, struct timeval *recv_time)
     }
 
   pid = getpid ();
-  new_fd = *(int *) CMSG_DATA (cmptr);
+  dataptr = (int *) CMSG_DATA (cmptr);
+  new_fd = *dataptr;
 
 #ifdef SYSV
   ioctl (new_fd, SIOCSPGRP, (caddr_t) & pid);
