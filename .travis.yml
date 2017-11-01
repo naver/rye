@@ -8,7 +8,7 @@ script:
   - mkdir Release64
   - cd Release64
   - ../configure
-  - make
+  - make -j 4
 
 notifications:
   email:
@@ -23,9 +23,9 @@ install: true
 #  - experimental
 
 # safelist
-branches:
-  only:
-  - master
+#branches:
+#  only:
+#  - master
 #  - stable
 #  - v1.0
 
