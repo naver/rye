@@ -5084,6 +5084,10 @@ shd_mg_propagate_shard_mgmt_port (T_LOCAL_MGMT_SYNC_INFO * sync_info)
 					   server_name, sizeof (server_name),
 					   &ha_state,
 					   LOCAL_MGMT_REQ_TIMEOUT_MSEC);
+      if (err < 0)
+	{
+	  ;			/* TODO - avoid compile error */
+	}
 
       shard_node_info->ha_state = ha_state;
 
@@ -6021,8 +6025,7 @@ select_migration_node (const T_SHARD_NODE_INFO ** run_mig_node,
 
   *run_mig_node = find_node_info_by_nodeid (db_node_info,
 					    mig_src_nodeid,
-					    HA_STATE_FOR_DRIVER_MASTER,
-					    NULL);
+					    HA_STATE_FOR_DRIVER_MASTER, NULL);
 
   if (dest_node_info != NULL)
     {

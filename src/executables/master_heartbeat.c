@@ -6253,7 +6253,7 @@ hb_changemode (HA_STATE req_node_state, bool force)
       error = hb_cluster_job_queue (HB_CJOB_CHANGE_SLAVE, NULL,
 				    HB_JOB_TIMER_IMMEDIATELY);
       changeslave_timeout = prm_get_bigint_value
-	(PRM_ID_HA_CHANGESALVE_MAX_WAIT_TIME);
+	(PRM_ID_HA_CHANGESLAVE_MAX_WAIT_TIME);
       error = hb_cluster_job_queue (HB_CJOB_CHANGEMODE_FORCE, NULL,
 				    changeslave_timeout);
     }

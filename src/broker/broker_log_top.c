@@ -669,7 +669,7 @@ read_execute_end_msg (const char *msg_p, int *res_code, int *runtime_msec)
 {
   char *p, *next_p;
   int sec, msec;
-  int tuple_count;
+//  int tuple_count;
   int result = 0;
   int val;
 
@@ -704,7 +704,7 @@ read_execute_end_msg (const char *msg_p, int *res_code, int *runtime_msec)
     {
       return -1;
     }
-  tuple_count = val;
+//  tuple_count = val;
 
   p = next_p + 1;
   if (strncmp (p, "time ", 5) != 0)

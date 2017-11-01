@@ -60,7 +60,6 @@ static int util_get_ha_parameters (const char **ha_node_list_p,
 				   const char **ha_db_list_p,
 				   const char **ha_sync_mode_p,
 				   const char **ha_copy_log_base_p,
-				   int *ha_max_mem_size_p,
 				   int *ha_max_log_applier_p);
 static bool util_is_replica_node (void);
 
@@ -520,7 +519,7 @@ util_get_ha_parameters (const char **ha_node_list_p,
 			const char **ha_db_list_p,
 			const char **ha_sync_mode_p,
 			const char **ha_copy_log_base_p,
-			int *ha_max_mem_size_p, int *ha_max_log_applier_p)
+			int *ha_max_log_applier_p)
 {
   int error = NO_ERROR;
 
@@ -543,17 +542,12 @@ util_get_ha_parameters (const char **ha_node_list_p,
     }
 
   *(ha_sync_mode_p) = prm_get_string_value (PRM_ID_HA_COPY_SYNC_MODE);
-  *(ha_max_mem_size_p) = prm_get_integer_value (PRM_ID_HA_APPLY_MAX_MEM_SIZE);
   *(ha_max_log_applier_p) = prm_get_integer_value (PRM_ID_HA_MAX_LOG_APPLIER);
 
-  *(ha_copy_log_base_p) = prm_get_string_value (PRM_ID_HA_COPY_LOG_BASE);
-  if (*(ha_copy_log_base_p) == NULL || **(ha_copy_log_base_p) == '\0')
+  *(ha_copy_log_base_p) = envvar_get (DATABASES_ENVNAME);
+  if (*(ha_copy_log_base_p) == NULL)
     {
-      *(ha_copy_log_base_p) = envvar_get (DATABASES_ENVNAME);
-      if (*(ha_copy_log_base_p) == NULL)
-	{
-	  *(ha_copy_log_base_p) = ".";
-	}
+      *(ha_copy_log_base_p) = ".";
     }
 
   return error;
@@ -667,14 +661,12 @@ util_make_ha_conf (HA_CONF * ha_conf)
   const char *ha_sync_mode_p = NULL;
   char **ha_sync_mode_pp = NULL;
   const char *ha_copy_log_base_p;
-  int ha_max_mem_size;
   int ha_max_log_applier;
   bool is_replica_node;
 
-  error =
-    util_get_ha_parameters (&ha_node_list_p, &ha_db_list_p, &ha_sync_mode_p,
-			    &ha_copy_log_base_p, &ha_max_mem_size,
-			    &ha_max_log_applier);
+  error = util_get_ha_parameters (&ha_node_list_p, &ha_db_list_p,
+				  &ha_sync_mode_p, &ha_copy_log_base_p,
+				  &ha_max_log_applier);
   if (error != NO_ERROR)
     {
       return error;
@@ -814,7 +806,6 @@ util_make_ha_conf (HA_CONF * ha_conf)
 
       ha_conf->node_conf[i].node_name = strdup (ha_node_list_pp[i]);
       ha_conf->node_conf[i].copy_log_base = strdup (ha_copy_log_base_p);
-      ha_conf->node_conf[i].apply_max_mem_size = ha_max_mem_size;
 
       if (ha_conf->node_conf[i].node_name == NULL
 	  || ha_conf->node_conf[i].copy_log_base == NULL)

@@ -42,12 +42,16 @@ ut_tolower (char *str)
   char *p;
 
   if (str == NULL)
-    return;
+    {
+      return;
+    }
 
   for (p = str; *p; p++)
     {
       if (*p >= 'A' && *p <= 'Z')
-	*p = *p - 'A' + 'a';
+	{
+	  *p = *p - 'A' + 'a';
+	}
     }
 }
 
@@ -233,7 +237,9 @@ ut_get_line (FILE * fp, T_STRING * t_str, char **out_str, int *lineno)
       memset (buf, 0, sizeof (buf));
       position = ftell (fp);
       if (fgets (buf, sizeof (buf), fp) == NULL)
-	break;
+	{
+	  break;
+	}
       /* if it is (debug) line, skip it */
       if (strncmp (buf + 19, "(debug)", 7) == 0)
 	{
@@ -266,6 +272,10 @@ ut_get_line (FILE * fp, T_STRING * t_str, char **out_str, int *lineno)
 	  rlen =
 	    fread ((void *) value, sizeof (char), info_size + tot_val_size,
 		   fp);
+	  if (rlen == 0)
+	    {
+	      ;			/* TODO - avoid compile error */
+	    }
 	  if (t_bind_string_add
 	      (t_str, value, info_size + tot_val_size, tot_val_size) < 0)
 	    {
