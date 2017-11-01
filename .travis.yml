@@ -8,7 +8,7 @@ script:
   - mkdir Release64
   - cd Release64
   - ../configure
-  - make -j 4
+  - make
 
 notifications:
   email:
@@ -45,5 +45,5 @@ addons:
       description: "Build submitted via Travis CI"
     notification_email: dl_oss_rye@navercorp.com
     build_command_prepend: "./autogen.sh; mkdir Release64; cd Release64; ../configure"
-    build_command:   "make -j 4"
+    build_command:   "make"
     branch_pattern: coverity_scan
