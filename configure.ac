@@ -158,6 +158,15 @@ NOWARN=""
 CFLAGS="$CFLAGS $WARN $NOWARN"
 CXXFLAGS="$CXXFLAGS $WARN_CXX $NOWARN"
 
+AC_MSG_CHECKING(whether -Wno-unused-result compiler option is accepted)
+SAVED_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wno-unused-result -Werror"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+    [AC_MSG_RESULT(yes)
+     CFLAGS="$SAVED_CFLAGS -Wno-unused-result"],
+    [AC_MSG_RESULT(no)
+     CFLAGS="$SAVED_CFLAGS"])
+
 case $MACHINE_TYPE in
 	x86*|i*86)	SYS_DEFS="$SYS_DEFS -DX86" ;;
 	*)		;;

@@ -184,7 +184,7 @@ extern "C"
   typedef enum
   {
     CCI_PARAM_FIRST = 1,
-    CCI_PARAM_MAX_STRING_LENGTH = 1,
+    CCI_PARAM_MAX_STRING_LENGTH = 1
   } T_CCI_DB_PARAM;
 
   typedef enum
