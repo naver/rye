@@ -113,7 +113,7 @@ main (int argc, char *argv[])
     {0, 0, 0, 0}
   };
 
-  argv[0] = UTIL_REPL_NAME;
+  argv[0] = (char *) UTIL_REPL_NAME;
 
   /* init client functions */
   cci_set_client_functions (or_pack_db_idxkey, db_idxkey_is_null,

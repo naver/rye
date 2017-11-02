@@ -1498,13 +1498,13 @@ rsql_do_session_cmd (SESSION_CMD cmd, char *argument,
 
 	    result = parse_int (&groupid, argument, 10);
 
-#if 0				/* TODO - */
 	    if (result != 0 || groupid < GLOBAL_GROUPID)
 	      {
+#if 0                           /* TODO - */
 		fprintf (rsql_Error_fp,
 			 "ERROR: Invalid groupid(%s).\n", argument);
-	      }
 #endif
+	      }
 
 	    rsql_arg->groupid = groupid;
 	  }
@@ -2023,7 +2023,7 @@ rsql_execute_statements (const RSQL_ARGUMENT * rsql_arg,
   DB_QUERY_TYPE *attr_spec = NULL;	/* result attribute spec. */
   int total;			/* number of statements to execute */
   bool do_abort_transaction = false;	/* flag for transaction abort */
-  char save_end;
+//  char save_end;
 
   rsql_Is_sigint_caught = false;
 
@@ -2038,7 +2038,7 @@ rsql_execute_statements (const RSQL_ARGUMENT * rsql_arg,
   db_set_interrupt (0);
 #endif
 
-  save_end = stream[stream_length];
+//  save_end = stream[stream_length];
   stream[stream_length] = '\0';
   session = db_open_buffer (stream);
   if (!session)
@@ -2172,15 +2172,17 @@ rsql_execute_statements (const RSQL_ARGUMENT * rsql_arg,
 	{
 	case RYE_STMT_SELECT:
 	  {
-	    const char *msg_p;
+//	    const char *msg_p;
 
 	    rsql_results (rsql_arg, result, attr_spec, line_no, stmt_type);
 
 	    rsql_Row_count = db_error;
 
+#if 0
 	    msg_p = ((rsql_Row_count > 1)
 		     ? rsql_get_message (RSQL_ROWS)
 		     : rsql_get_message (RSQL_ROW));
+#endif
 	    n = snprintf (stmt_msg, LINE_BUFFER_SIZE,
 			  rsql_get_message (RSQL_ROWS), rsql_Row_count,
 			  "selected");

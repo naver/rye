@@ -195,7 +195,7 @@ main (int argc, char **argv)
   fprintf (stdout, "\nThis may take a long time depending on the amount "
 	   "of recovery works to do.\n");
 
-  argv[0] = UTIL_SERVER_NAME;
+  argv[0] = (char *) UTIL_SERVER_NAME;
   /* save executable path */
   binary_name = basename (argv[0]);
   (void) envvar_bindir_file (executable_path, PATH_MAX, binary_name);
