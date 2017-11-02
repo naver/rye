@@ -1334,7 +1334,6 @@ net_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_res,
 		}
 	      else if (event.events & EPOLLIN)
 		{
-		  int error;
 		  T_BROKER_RESPONSE br_res;
 		  T_BROKER_RESPONSE_ADDITIONAL_MSG res_msg;
 		  int recv_timeout_msec = 1000;
