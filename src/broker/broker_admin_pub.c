@@ -53,7 +53,6 @@
 #include "broker_shm.h"
 #include "broker_util.h"
 #include "broker_env_def.h"
-#include "broker_process_size.h"
 #include "broker_admin_pub.h"
 #include "broker_filename.h"
 #include "broker_acl.h"
