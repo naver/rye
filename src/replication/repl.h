@@ -230,6 +230,7 @@ struct _cirp_repl_info
   INT64 start_vsize;
   char *broker_key;
   int broker_port;
+  int pid;
 
   CIRP_ANALYZER_INFO analyzer_info;
   CIRP_WRITER_INFO writer_info;
@@ -256,7 +257,6 @@ extern CIRP_REPL_INFO *Repl_Info;
 
 extern int cirp_connect_copylogdb (const char *db_name, bool retry);
 extern int cirp_check_mem_size (void);
-extern unsigned long cirp_get_mem_size (void);
 extern int cirp_connect_agents (const char *db_name);
 extern int rp_disconnect_agents (void);
 extern int cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer);

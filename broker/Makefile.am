@@ -61,7 +61,6 @@ rye_broker_SOURCES = \
 	$(BROKER_DIR)/broker.c \
 	$(BROKER_DIR)/broker_shm.c \
 	$(BROKER_DIR)/broker_util.c \
-	$(BROKER_DIR)/broker_process_size.c \
 	$(BROKER_DIR)/broker_max_heap.c \
 	$(BROKER_DIR)/broker_send_fd.c \
 	$(BROKER_DIR)/broker_recv_fd.c \
@@ -87,7 +86,6 @@ broker_changer_SOURCES = \
 	$(BROKER_DIR)/broker_changer.c \
 	$(BROKER_DIR)/broker_admin_pub.c \
 	$(BROKER_DIR)/broker_shm.c \
-	$(BROKER_DIR)/broker_process_size.c \
 	$(BROKER_DIR)/broker_config.c \
 	$(BROKER_DIR)/broker_util.c \
 	$(BROKER_DIR)/broker_max_heap.c \
@@ -107,7 +105,6 @@ rye_cas_SOURCES = \
 	$(BROKER_DIR)/broker_recv_fd.c \
 	$(BROKER_DIR)/cas_log.c \
 	$(BROKER_DIR)/broker_shm.c \
-	$(BROKER_DIR)/broker_process_size.c \
 	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/cas_error.c \
 	$(BROKER_DIR)/broker_acl.c \

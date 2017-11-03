@@ -2575,7 +2575,9 @@ paramdump (UTIL_FUNCTION_ARG * arg)
   char er_msg_file[PATH_MAX];
   const char *database_name;
   const char *output_file = NULL;
+#if defined (CS_MODE)
   bool both_flag = false;
+#endif
   FILE *outfp = NULL;
 
   if (utility_get_option_string_table_size (arg_map) != 1)
@@ -2592,7 +2594,9 @@ paramdump (UTIL_FUNCTION_ARG * arg)
 
   output_file = utility_get_option_string_value (arg_map,
 						 PARAMDUMP_OUTPUT_FILE_S, 0);
+#if defined (CS_MODE)
   both_flag = utility_get_option_bool_value (arg_map, PARAMDUMP_BOTH_S);
+#endif
 
   if (output_file == NULL)
     {

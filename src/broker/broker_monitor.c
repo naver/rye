@@ -50,7 +50,6 @@
 #include "broker_config.h"
 #include "broker_shm.h"
 #include "broker_util.h"
-#include "broker_process_size.h"
 #include "porting.h"
 #include "cas_util.h"
 #include "util_func.h"
@@ -774,7 +773,7 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 
   print_value (FIELD_QPS, &qps, FIELD_T_UINT64);
   print_value (FIELD_LQS, &lqs, FIELD_T_UINT64);
-  psize = getsize (as_info_p->pid);
+  psize = (int) (os_get_mem_size (as_info_p->pid) / ONE_K);
   print_value (FIELD_PSIZE, &psize, FIELD_T_INT);
   print_value (FIELD_STATUS,
 	       get_status_string (as_info_p,
@@ -1419,7 +1418,7 @@ print_monitor_items (BR_MONITORING_ITEM * mnt_items_cur,
     {
       int process_size;
 
-      process_size = getsize (br_info_p->broker_pid);
+      process_size = (int) (os_get_mem_size (br_info_p->broker_pid) / ONE_K);
       print_value (FIELD_PSIZE, &process_size, FIELD_T_INT);
     }
   print_value (FIELD_PORT, &(br_info_p->port), FIELD_T_INT);

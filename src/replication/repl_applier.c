@@ -1241,7 +1241,11 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
 {
   int error = NO_ERROR;
 
-  assert (item->item_type == RP_ITEM_TYPE_DDL);
+  if (item->item_type != RP_ITEM_TYPE_DDL)
+    {
+      assert (false);
+      ; /* TODO - avoid compiler warning */
+    }
 
   error = cirp_flush_repl_items (applier, false);
 

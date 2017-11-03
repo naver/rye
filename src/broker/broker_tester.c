@@ -84,8 +84,8 @@
         } while (0)
 
 #define HAS_RESULT_SET(CMD_TYPE)			\
-	  ((CMD_TYPE) == RYE_STMT_SELECT ||		\
-	   (CMD_TYPE) == RYE_STMT_SELECT_UPDATE)
+	  ((CMD_TYPE) == CCI_STMT_SELECT ||		\
+	   (CMD_TYPE) == CCI_STMT_SELECT_UPDATE)
 
 typedef struct
 {

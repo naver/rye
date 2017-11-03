@@ -902,7 +902,7 @@ bigint_to_string (DB_BIGINT int_value, int field_width, bool leading_zeros,
  *   format(in): conversion format type
  */
 static char *
-object_to_string (DB_OBJECT * object, int format)
+object_to_string (DB_OBJECT * object, UNUSED_ARG int format)
 {
   const char *name;
 
