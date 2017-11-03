@@ -160,8 +160,6 @@ enum
 { HISTO_OFF, HISTO_ON };
 static int rsql_Is_histo_on = HISTO_OFF;
 
-static jmp_buf rsql_Jmp_buf;
-
 static RSQL_COLUMN_WIDTH_INFO *rsql_column_width_info_list = NULL;
 static int rsql_column_width_info_list_size = 0;
 static int rsql_column_width_info_list_index = 0;
@@ -172,7 +170,6 @@ static void free_rsql_column_width_info_list ();
 static int initialize_rsql_column_width_info_list ();
 static int get_column_name_argument (char **column_name,
 				     char **val_str, char *argument);
-static void rsql_pipe_handler (int sig_no);
 static void display_buffer (void);
 static void start_rsql (RSQL_ARGUMENT * rsql_arg);
 static void rsql_read_file (const char *file_name);
@@ -286,18 +283,6 @@ rsql_display_msg (const char *string)
 }
 
 /*
- * rsql_pipe_handler() generic longjmp'ing signal handler used
- *                   where we need to catch broken pipe.
- *   return: none
- *   sig_no(in)
- */
-static void
-rsql_pipe_handler (UNUSED_ARG int sig_no)
-{
-  longjmp (rsql_Jmp_buf, 1);
-}
-
-/*
  * display_buffer() - display command buffer into stdout
  *   return: none
  */
@@ -306,40 +291,36 @@ display_buffer (void)
 {
   int l = 1;
   FILE *pf;
-  void (*rsql_pipe_save) (int);
+  const char *edit_contents, *p;
 
-  /* There is no SIGPIPE on WINDOWS */
-  rsql_pipe_save = os_set_signal_handler (SIGPIPE, &rsql_pipe_handler);
-  if (setjmp (rsql_Jmp_buf) == 0)
+  /* simple code without signal, setjmp, longjmp
+   */
+
+  pf = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
+
+  edit_contents = rsql_edit_contents_get ();
+
+  putc ('\n', pf);
+  while (edit_contents != NULL && *edit_contents != '\0')
     {
-      const char *edit_contents, *p;
-      pf = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
-
-      edit_contents = rsql_edit_contents_get ();
-
-      putc ('\n', pf);
-      while (edit_contents != NULL && *edit_contents != '\0')
+      fprintf (pf, "%4d  ", l++);
+      p = strchr (edit_contents, '\n');
+      if (p)
 	{
-	  fprintf (pf, "%4d  ", l++);
-	  p = strchr (edit_contents, '\n');
-	  if (p)
-	    {
-	      fwrite (edit_contents, 1, p - edit_contents, pf);
-	      edit_contents = p + 1;
-	    }
-	  else
-	    {
-	      fwrite (edit_contents, 1, strlen (edit_contents), pf);
-	      edit_contents = NULL;
-	    }
-	  fprintf (pf, "\n");
+	  fwrite (edit_contents, 1, p - edit_contents, pf);
+	  edit_contents = p + 1;
 	}
-      putc ('\n', pf);
-
-      rsql_pclose (pf, rsql_Output_fp);
+      else
+	{
+	  fwrite (edit_contents, 1, strlen (edit_contents), pf);
+	  edit_contents = NULL;
+	}
+      fprintf (pf, "\n");
     }
+  putc ('\n', pf);
 
-  (void) os_set_signal_handler (SIGPIPE, rsql_pipe_save);
+  rsql_pclose (pf, rsql_Output_fp);
+
 }
 
 
@@ -1500,7 +1481,7 @@ rsql_do_session_cmd (SESSION_CMD cmd, char *argument,
 
 	    if (result != 0 || groupid < GLOBAL_GROUPID)
 	      {
-#if 0                           /* TODO - */
+#if 0				/* TODO - */
 		fprintf (rsql_Error_fp,
 			 "ERROR: Invalid groupid(%s).\n", argument);
 #endif
@@ -2172,7 +2153,7 @@ rsql_execute_statements (const RSQL_ARGUMENT * rsql_arg,
 	{
 	case RYE_STMT_SELECT:
 	  {
-//	    const char *msg_p;
+//          const char *msg_p;
 
 	    rsql_results (rsql_arg, result, attr_spec, line_no, stmt_type);
 
