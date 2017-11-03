@@ -458,19 +458,19 @@ rsql_killtran (const char *argument)
       tran_index = atoi (argument);
     }
 
-  info = logtb_get_trans_info (false);
-  if (info == NULL)
-    {
-      rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-      goto error;
-    }
-
   /* dump transaction */
   if (tran_index <= 0)
     {
       rsql_pipe_save = signal (SIGPIPE, &rsql_pipe_handler);
       if (setjmp (rsql_Jmp_buf) == 0)
 	{
+	  info = logtb_get_trans_info (false);
+	  if (info == NULL)
+	    {
+	      rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+	      goto error;
+	    }
+
 	  p_stream = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
 
 	  fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_TITLE_TEXT));
@@ -489,6 +489,13 @@ rsql_killtran (const char *argument)
     }
   else
     {
+      info = logtb_get_trans_info (false);
+      if (info == NULL)
+        {
+          rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+          goto error;
+        }
+
       /* kill transaction */
       for (i = 0; i < info->num_trans; i++)
 	{
