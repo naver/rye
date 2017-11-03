@@ -91,7 +91,6 @@ rye_SOURCES = \
 	$(BROKER_DIR)/broker_shm.c \
 	$(BROKER_DIR)/broker_util.c \
 	$(BROKER_DIR)/broker_admin_pub.c \
-	$(BROKER_DIR)/broker_process_size.c \
 	$(BROKER_DIR)/broker_max_heap.c \
 	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/broker_acl.c \
