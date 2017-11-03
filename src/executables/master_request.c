@@ -51,6 +51,7 @@
 #include "client_support.h"
 #include "master_heartbeat.h"
 #include "object_representation.h"
+#include "rye_server_shm.h"
 
 #define IS_MASTER_SOCKET_FD(FD)         \
       ((FD) == css_Master_socket_fd[0] || (FD) == css_Master_socket_fd[1])
