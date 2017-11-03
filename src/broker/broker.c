@@ -58,7 +58,6 @@
 #include "cas_common.h"
 #include "broker_env_def.h"
 #include "broker_shm.h"
-#include "broker_process_size.h"
 #include "broker_util.h"
 #include "broker_filename.h"
 
@@ -900,7 +899,8 @@ broker_add_new_cas (void)
 
   pthread_mutex_lock (&broker_Shm_mutex);
   shm_Appl->info.as_info[add_as_index].pid = pid;
-  shm_Appl->info.as_info[add_as_index].psize = getsize (pid);
+  shm_Appl->info.as_info[add_as_index].psize =
+    (int) (os_get_mem_size (pid) / ONE_K);
   shm_Appl->info.as_info[add_as_index].psize_time = time (NULL);
   shm_Appl->info.as_info[add_as_index].uts_status = UTS_STATUS_IDLE;
   shm_Appl->info.as_info[add_as_index].service_flag = SERVICE_ON;
@@ -1109,7 +1109,7 @@ restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
   int new_pid;
   int r;
 
-  as_info_p->psize = getsize (as_info_p->pid);
+  as_info_p->psize = (int) (os_get_mem_size (as_info_p->pid) / ONE_K);
   if (as_info_p->psize > 1)
     {
       as_info_p->psize_time = time (NULL);
@@ -1135,7 +1135,7 @@ restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
 
 	  fclose (fp);
 
-	  as_info_p->psize = getsize (old_pid);
+	  as_info_p->psize = (int) (os_get_mem_size (old_pid) / ONE_K);
 	  if (as_info_p->psize > 1)
 	    {
 	      as_info_p->pid = old_pid;
@@ -1808,7 +1808,7 @@ psize_check_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
       return;
     }
 
-  as_info_p->psize = getsize (as_info_p->pid);
+  as_info_p->psize = (int) (os_get_mem_size (as_info_p->pid) / ONE_K);
 
   check_cas_log (shm_Br->br_info[br_index].name, as_info_p, as_index);
 }
