@@ -113,8 +113,8 @@ static int btree_merge_root (THREAD_ENTRY * thread_p, BTID_INT * btid,
 #endif
 static int btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			     PAGE_PTR P, PAGE_PTR Q, PAGE_PTR R,
-			     UNUSED_ARG VPID * P_vpid, VPID * Q_vpid, VPID * R_vpid,
-			     INT16 p_slot_id, short node_type,
+			     UNUSED_ARG VPID * P_vpid, VPID * Q_vpid,
+			     VPID * R_vpid, INT16 p_slot_id, short node_type,
 			     int is_left_merge, VPID * child_vpid);
 static PAGE_PTR btree_locate_key (THREAD_ENTRY * thread_p,
 				  BTID_INT * btid_int, const DB_IDXKEY * key,
@@ -853,11 +853,13 @@ btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
 {
   PAGE_PTR page_ptr = NULL;
 
-  page_ptr = pgbuf_fix (thread_p, vpid, newpg, requestmode, condition);
+  page_ptr =
+    pgbuf_fix2 (thread_p, vpid, newpg, requestmode, condition,
+		MNT_STATS_DATA_PAGE_FETCHES_BTREE);
 
-#if !defined(NDEBUG)
   if (vfid != NULL && page_ptr != NULL)
     {
+#if !defined(NDEBUG)
       assert (file_find_page (thread_p, vfid, vpid) == true);
 
       if (newpg == OLD_PAGE && spage_number_of_records (page_ptr) > 0)
@@ -883,8 +885,8 @@ btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
 					 &node_header.next_vpid) == true);
 	    }
 	}
-    }
 #endif
+    }
 
   return page_ptr;
 }
@@ -2442,7 +2444,7 @@ btree_delete_key_from_leaf (THREAD_ENTRY * thread_p, BTID_INT * btid,
   char rv_key[OR_OID_SIZE + OR_BTID_ALIGNED_SIZE + BTREE_MAX_KEYLEN +
 	      BTREE_MAX_ALIGN];
   int rv_key_len;
-  char rv_data_buf[IO_MAX_PAGE_SIZE + BTREE_MAX_ALIGN];
+//  char rv_data_buf[IO_MAX_PAGE_SIZE + BTREE_MAX_ALIGN];
   BTREE_NODE_HEADER node_header;
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
 
@@ -2945,7 +2947,8 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   INT16 left_slotid, right_slotid;
   PAGE_PTR left_pg = NULL;
   PAGE_PTR right_pg = NULL;
-  VPID left_vpid, right_vpid, next_vpid;
+  VPID left_vpid, next_vpid;
+//  VPID right_vpid;
   int left_cnt, right_cnt;
   BTREE_NODE_HEADER node_header;
   RECDES peek_rec1 = RECDES_INITIALIZER,
@@ -2994,6 +2997,7 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   left_slotid = is_left_merge ? (p_slot_id - 1) : p_slot_id;
 
   right_pg = is_left_merge ? Q : R;
+#if 0
   if (is_left_merge)
     {
       right_vpid = *Q_vpid;
@@ -3002,6 +3006,7 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
     {
       right_vpid = *R_vpid;
     }
+#endif
 
   right_slotid = is_left_merge ? p_slot_id : (p_slot_id + 1);
 
@@ -3654,8 +3659,8 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 //  int ret_val = NO_ERROR;
   short node_type;
   INT16 key_cnt;
-  bool is_root_empty, /* is_p_empty, */ is_q_empty,	/* is_r_empty, */
-    is_left_empty;
+  bool is_root_empty, /* is_p_empty, */ is_q_empty /* , is_r_empty, */ ;
+//  bool is_left_empty;
   short root_level;
   int Q_req_mode;
   bool do_merge = false;
@@ -4016,7 +4021,9 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 	      assert (key_cnt >= 0);
 	      BTREE_CHECK_KEY_CNT (Left, left_header.node_level,
 				   left_header.key_cnt);
+#if 0
 	      is_left_empty = (key_cnt == 0) ? true : false;
+#endif
 	      Left_used = DB_PAGESIZE - spage_get_free_space (thread_p, Left);
 
 	      do_merge = false;	/* init */
@@ -6539,7 +6546,7 @@ btree_rv_nodehdr_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   if (pg_slotid == NULL_SLOTID)
     {
       assert (false);
-      ; /* remove compiler warning */
+      ;				/* remove compiler warning */
     }
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6638,8 +6645,11 @@ btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 
   slotid = recv->offset;
   pg_slotid = spage_delete_for_recovery (thread_p, recv->pgptr, slotid);
-
-  assert (pg_slotid != NULL_SLOTID);
+  if (pg_slotid == NULL_SLOTID)
+    {
+      assert (false);
+      ;				/* remove compiler warning */
+    }
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
@@ -6799,8 +6809,11 @@ btree_rv_newpage_undo_alloc (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 
   ret =
     file_dealloc_page (thread_p, &pageid_struct->vfid, &pageid_struct->vpid);
-
-  assert (ret == NO_ERROR);
+  if (ret != NO_ERROR)
+    {
+      assert (false);
+      ;				/* remove compiler warning */
+    }
 
   return NO_ERROR;
 }
