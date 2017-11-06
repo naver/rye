@@ -2034,8 +2034,10 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 	  for (vpid.volid = volid, vpid.pageid = DISK_VOLHEADER_PAGE;
 	       vpid.pageid <= vhdr->sys_lastpage; vpid.pageid++)
 	    {
-	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-				 PGBUF_UNCONDITIONAL_LATCH);
+	      pgptr =
+		pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			    PGBUF_UNCONDITIONAL_LATCH,
+			    MNT_STATS_DATA_PAGE_FETCHES_FORMAT);
 	      if (pgptr != NULL)
 		{
 		  pgbuf_set_lsa_as_temporary (thread_p, pgptr);
@@ -5838,8 +5840,9 @@ disk_map_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * vpid,
   /* Read every page of the allocation table */
   for (vpid->pageid = at_fpageid; vpid->pageid <= at_lpageid; vpid->pageid++)
     {
-      at_pgptr = pgbuf_fix (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			    false);
+      at_pgptr = pgbuf_fix2 (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
       if (at_pgptr == NULL)
 	{
 	  return ER_FAILED;
@@ -5909,6 +5912,10 @@ disk_dump_goodvol_all (THREAD_ENTRY * thread_p, INT16 volid, void *arg)
 
   ret = disk_dump_goodvol_system (thread_p, out_fp, volid, NULL_PAGEID,
 				  NULL_PAGEID, NULL_PAGEID, NULL_PAGEID);
+  if (ret != NO_ERROR)
+    {
+      ;				/* remove compiler warning */
+    }
 
   return true;
 }
@@ -5979,6 +5986,11 @@ disk_rv_undo_format (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int ret = NO_ERROR;
 
   ret = disk_unformat (thread_p, (const char *) rcv->data);
+  if (ret != NO_ERROR)
+    {
+      ;				/* remove compiler warning */
+    }
+
   log_append_dboutside_redo (thread_p, RVLOG_OUTSIDE_LOGICAL_REDO_NOOP, 0,
 			     NULL);
   return NO_ERROR;
@@ -5998,6 +6010,10 @@ disk_rv_dump_hdr (FILE * fp, UNUSED_ARG int length_ignore, void *data)
 
   vhdr = (DISK_VAR_HEADER *) data;
   ret = disk_vhdr_dump (fp, vhdr);
+  if (ret != NO_ERROR)
+    {
+      ;				/* remove compiler warning */
+    }
 }
 
 /*

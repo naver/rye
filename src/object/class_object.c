@@ -2732,7 +2732,7 @@ classobj_copy_constraint_like (DB_CTMPL * ctemplate,
 
   assert (like_class_name != NULL);
 
-  assert (SM_IS_CONSTRAINT_INDEX_FAMILY (constraint_type));
+  assert (SM_IS_CONSTRAINT_INDEX_FAMILY (constraint->type));
 
   new_cons_name = constraint->name;
   if (new_cons_name == NULL)

@@ -113,7 +113,9 @@ typedef enum
   MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,	/* overflow page (with ovf_keyval)      */
   MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* area page                            */
   MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF,	/* catalog overflow page                         */
   MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* b+tree index page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_FORMAT,	/* disk_format                    */
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,

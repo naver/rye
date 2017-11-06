@@ -356,8 +356,12 @@ init_server_monitor_item ()
 		     "datapage", "fetch_area");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CATALOG],
 		     "datapage", "fetch_catalog");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF],
+		     "datapage", "fetch_catalog_ovf");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_BTREE],
 		     "datapage", "fetch_btree");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FORMAT],
+		     "datapage", "fetch_format");
 #endif
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],

@@ -2742,8 +2742,10 @@ do_change_att_schema_only (PARSER_CONTEXT * parser, DB_CTMPL * ctemplate,
   int error = NO_ERROR;
   bool change_first = false;
   const char *change_after_attr = NULL;
+#if 0
   const char *old_name = NULL;
-//  const char *new_name = NULL;
+  const char *new_name = NULL;
+#endif
   const char *attr_name = NULL;
 
   assert (attr_chg_prop != NULL);
@@ -2775,8 +2777,10 @@ do_change_att_schema_only (PARSER_CONTEXT * parser, DB_CTMPL * ctemplate,
 	}
 
       assert (old_name_node->node_type == PT_NAME);
+#if 0
       old_name = old_name_node->info.name.original;
-//      new_name = attr_name;
+      new_name = attr_name;
+#endif
 
       error = smt_rename_any (ctemplate, old_name_node->info.name.original,
 			      attr_name);
