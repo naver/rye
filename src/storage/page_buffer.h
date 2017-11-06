@@ -33,6 +33,7 @@
 #include "storage_common.h"
 #include "disk_manager.h"
 #include "lock_manager.h"
+#include "perf_monitor.h"
 
 #define NEW_PAGE		true	/* New page constant for page fetch */
 #define OLD_PAGE		false	/* Old page constant for page fetch */
@@ -116,9 +117,11 @@ typedef enum
   PAGE_BTREE_LEAF,		/* b+tree index leaf page               */
   PAGE_BTREE_NON_LEAF,		/* b+tree index non-leaf page           */
   PAGE_BTREE_ROOT,		/* b+tree index root page               */
+#if 0				/* unused */
   PAGE_BTREE_OVERFLOW_OID,	/* b+tree index ovf oids page           */
   PAGE_LOG,			/* NONE - log page (unused)             */
   PAGE_DROPPED_FILES,		/* Dropped files page.                  */
+#endif
   PAGE_LAST
 } BUFFER_PAGE_TYPE;
 
@@ -146,8 +149,8 @@ extern PAGE_PTR pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 				 PGBUF_LATCH_CONDITION condition,
 				 const char *caller_file, int caller_line);
 
-#define pgbuf_fix_without_validation(thread_p, vpid, newpg, requestmode, condition) \
-        pgbuf_fix_without_validation_debug(thread_p, vpid, newpg, requestmode, condition, \
+#define pgbuf_fix_without_validation(thread_p, vpid, newpg, requestmode, condition, item) \
+        pgbuf_fix_without_validation_debug(thread_p, vpid, newpg, requestmode, condition, item, \
                         __FILE__, __LINE__)
 extern PAGE_PTR pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 						    const VPID * vpid,
@@ -155,6 +158,7 @@ extern PAGE_PTR pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 						    int request_mode,
 						    PGBUF_LATCH_CONDITION
 						    condition,
+						    MNT_SERVER_ITEM item,
 						    const char *caller_file,
 						    int caller_line);
 #define pgbuf_unfix(thread_p, pgptr) \
@@ -174,14 +178,15 @@ extern int pgbuf_invalidate_debug (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 #else /* NDEBUG */
 extern PAGE_PTR pgbuf_flush (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 			     int free_page);
-#define pgbuf_fix_without_validation(thread_p, vpid, newpg, requestmode, condition) \
-  pgbuf_fix_without_validation_release(thread_p, vpid, newpg, requestmode, condition)
+#define pgbuf_fix_without_validation(thread_p, vpid, newpg, requestmode, condition, item) \
+  pgbuf_fix_without_validation_release(thread_p, vpid, newpg, requestmode, condition, item)
 extern PAGE_PTR pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 						      const VPID * vpid,
 						      int newpg,
 						      int requestmode,
 						      PGBUF_LATCH_CONDITION
-						      condition);
+						      condition,
+						      MNT_SERVER_ITEM item);
 #define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition) \
         pgbuf_fix_release(thread_p, vpid, newpg, requestmode, condition)
 extern PAGE_PTR pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid,

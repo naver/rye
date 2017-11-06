@@ -298,8 +298,8 @@ static int ehash_connect_bucket (THREAD_ENTRY * thread_p, EHID * ehid,
 static char ehash_find_depth (THREAD_ENTRY * thread_p, EHID * ehid,
 			      int location, VPID * vpid, VPID * sib_vpid);
 static void ehash_merge (THREAD_ENTRY * thread_p, EHID * ehid, void *key);
-static void ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid,
-				    int new_depth);
+static int ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid,
+				   int new_depth);
 static EHASH_HASH_KEY ehash_hash (const void *orig_key, DB_TYPE key_type);
 static int ehash_find_bucket_vpid (THREAD_ENTRY * thread_p,
 				   const EHID * ehid,
@@ -3787,7 +3787,7 @@ ehash_shrink_directory_if_need (THREAD_ENTRY * thread_p, EHID * ehid_p,
 
   if ((dir_header_p->depth - i) > 1)
     {
-      ehash_shrink_directory (thread_p, ehid_p, i + 1);
+      (void) ehash_shrink_directory (thread_p, ehid_p, i + 1);
     }
 }
 
@@ -4132,7 +4132,7 @@ ehash_merge (THREAD_ENTRY * thread_p, EHID * ehid_p, void *key_p)
  * The remaining portion of the directory is logged and updated
  * before the extra part is deallocated.
  */
-static void
+static int
 ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
 {
   int old_pages;
@@ -4163,18 +4163,18 @@ ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
 							  PGBUF_LATCH_WRITE);
   if (dir_header_p == NULL)
     {
-      return;
+      return ER_FAILED;
     }
 
   if (dir_header_p->depth < new_depth)
     {
 #ifdef EHASH_DEBUG
-      er_log_debug (ARG_FILE_LINE, "WARNING in eh_shrink_dir:"
+      er_log_debug (ARG_FILE_LINE, "WARNING in ehash_shrink_directory:"
 		    "The directory has a depth of %d , shrink is cancelled ",
 		    dir_header_p->depth);
 #endif
       pgbuf_unfix (thread_p, (PAGE_PTR) dir_header_p);
-      return;
+      return NO_ERROR;
     }
 
   old_ptrs = 1 << dir_header_p->depth;
@@ -4185,12 +4185,13 @@ ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
 
   end_offset = old_ptrs - 1;	/* Directory first pointer has an offset of 0 */
   ehash_dir_locate (&check_pages, &end_offset);
+  assert_release (check_pages == old_pages);
 #ifdef EHASH_DEBUG
   if (check_pages != old_pages)
     {
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_EH_ROOT_CORRUPTED,
 	      3, ehid_p->vfid.volid, ehid_p->vfid.fileid, ehid_p->pageid);
-      return;
+      return ER_FAILED;
     }
 #endif
 
@@ -4201,7 +4202,7 @@ ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
 				       PGBUF_LATCH_WRITE);
   if (old_dir_page_p == NULL)
     {
-      return;
+      return ER_FAILED;
     }
 
   new_dir_nth_page = 0;
@@ -4239,7 +4240,7 @@ ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
 	  if (old_dir_page_p == NULL)
 	    {
 	      pgbuf_set_dirty (thread_p, new_dir_page_p, FREE);
-	      return;
+	      return ER_FAILED;
 	    }
 	}
 
@@ -4267,7 +4268,7 @@ ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
 	  if (new_dir_page_p == NULL)
 	    {
 	      pgbuf_unfix_and_init (thread_p, old_dir_page_p);
-	      return;
+	      return ER_FAILED;
 	    }
 	  new_dir_offset = 0;
 
@@ -4296,6 +4297,8 @@ ehash_shrink_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
   new_end_offset = new_ptrs - 1;
   ehash_dir_locate (&new_pages, &new_end_offset);
   ret = file_truncate_to_numpages (thread_p, &ehid_p->vfid, new_pages + 1);
+
+  return ret;
 }
 
 static EHASH_HASH_KEY

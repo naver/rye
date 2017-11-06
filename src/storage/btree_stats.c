@@ -94,7 +94,7 @@ btree_get_stats_idxkey (UNUSED_ARG THREAD_ENTRY * thread_p,
 			BTREE_STATS_ENV * env, const DB_IDXKEY * key)
 {
   int rc = DB_UNK;
-  BTREE_SCAN *BTS;
+//  BTREE_SCAN *BTS;
   int i, k;
   const DB_VALUE *elem;
   int ret = NO_ERROR;
@@ -103,7 +103,7 @@ btree_get_stats_idxkey (UNUSED_ARG THREAD_ENTRY * thread_p,
   assert (key != NULL);
   assert (!DB_IDXKEY_IS_NULL (key));
 
-  BTS = &(env->btree_scan);
+//  BTS = &(env->btree_scan);
 
   assert (env->pkey.size == key->size - 1);
 

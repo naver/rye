@@ -899,12 +899,15 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 				    const VPID * vpid, int newpg,
 				    int request_mode,
 				    PGBUF_LATCH_CONDITION condition,
+				    MNT_SERVER_ITEM item,
 				    const char *caller_file, int caller_line)
 {
   PAGE_PTR pgptr;
 #if defined(SERVER_MODE)
   bool old_check_page_validation, rv;
 #endif
+
+  assert (item == MNT_STATS_DATA_PAGE_FETCHES_BTREE);
 
 #if defined(SERVER_MODE)
   old_check_page_validation =
@@ -925,7 +928,8 @@ PAGE_PTR
 pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 				      const VPID * vpid, int newpg,
 				      int request_mode,
-				      PGBUF_LATCH_CONDITION condition)
+				      PGBUF_LATCH_CONDITION condition,
+				      MNT_SERVER_ITEM item)
 {
   PAGE_PTR pgptr;
 #if defined(SERVER_MODE)
@@ -7192,12 +7196,14 @@ pgbuf_page_type_to_string (BUFFER_PAGE_TYPE page_type)
       return "PAGE_BTREE_NON_LEAF";
     case PAGE_BTREE_ROOT:
       return "PAGE_BTREE_ROOT";
+#if 0				/* unused */
     case PAGE_BTREE_OVERFLOW_OID:
       return "PAGE_BTREE_OVERFLOW_OID";
     case PAGE_LOG:
       return "PAGE_LOG";
     case PAGE_DROPPED_FILES:
       return "PAGE_DROPPED_FILES";
+#endif
     default:
       break;
     }

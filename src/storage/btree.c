@@ -2438,7 +2438,7 @@ btree_delete_key_from_leaf (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			    const DB_IDXKEY * key)
 {
   int ret = NO_ERROR;
-  char *rv_data;
+//  char *rv_data;
   char rv_key[OR_OID_SIZE + OR_BTID_ALIGNED_SIZE + BTREE_MAX_KEYLEN +
 	      BTREE_MAX_ALIGN];
   int rv_key_len;
@@ -2446,7 +2446,7 @@ btree_delete_key_from_leaf (THREAD_ENTRY * thread_p, BTID_INT * btid,
   BTREE_NODE_HEADER node_header;
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
 
-  rv_data = PTR_ALIGN (rv_data_buf, BTREE_MAX_ALIGN);
+//  rv_data = PTR_ALIGN (rv_data_buf, BTREE_MAX_ALIGN);
 
   ret = btree_rv_save_keyval (btid, key, rv_key, &rv_key_len);
   if (ret != NO_ERROR)
@@ -3333,7 +3333,7 @@ DB_IDXKEY *
 btree_delete (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key)
 {
   BTREE_NODE_HEADER root_header, *node_header = NULL;
-#if !defined(NDEBUG)
+#if 0				/* !defined(NDEBUG) */
   bool is_active;
 #endif
   VPID P_vpid, Q_vpid;
@@ -3376,7 +3376,7 @@ btree_delete (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key)
   old_check_interrupt = thread_set_check_interrupt (thread_p, false);
 #endif /* SERVER_MODE */
 
-#if !defined(NDEBUG)
+#if 0				/* !defined(NDEBUG) */
   is_active = logtb_is_current_active (thread_p);
 #endif
 
@@ -5279,7 +5279,7 @@ btree_initialize_bts (UNUSED_ARG THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 		      KEY_VAL_RANGE * key_val_range, FILTER_INFO * filter)
 {
   BTID_INT *btid = NULL;
-  OR_INDEX *indexp = NULL;
+//  OR_INDEX *indexp = NULL;
   int ret = NO_ERROR;
 
   assert (bts != NULL);
@@ -5292,7 +5292,7 @@ btree_initialize_bts (UNUSED_ARG THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 
   assert (!BTREE_INVALID_INDEX_ID (btid->sys_btid));
 
-  indexp = &(btid->classrepr->indexes[btid->indx_id]);
+//  indexp = &(btid->classrepr->indexes[btid->indx_id]);
 
   /* initialize page related fields */
   /* previous leaf page, current leaf page, overflow page */
@@ -5751,7 +5751,8 @@ btree_prepare_next_search (THREAD_ENTRY * thread_p, BTREE_SCAN * bts)
   /* fix the current leaf page */
   bts->C_page = pgbuf_fix_without_validation (thread_p, &bts->C_vpid,
 					      OLD_PAGE, PGBUF_LATCH_READ,
-					      PGBUF_UNCONDITIONAL_LATCH);
+					      PGBUF_UNCONDITIONAL_LATCH,
+					      MNT_STATS_DATA_PAGE_FETCHES_BTREE);
   if (bts->C_page == NULL)
     {
       GOTO_EXIT_ON_ERROR;

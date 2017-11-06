@@ -100,6 +100,22 @@ typedef enum
 
   /* Statistics at page level */
   MNT_STATS_DATA_PAGE_FETCHES,
+#if 1				/* fetches sub-info */
+  MNT_STATS_DATA_PAGE_FETCHES_FTAB,	/* file allocset table page             */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,	/* heap page header                     */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* volume header page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* volume bitmap page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* xasl stream page                     */
+  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* query result page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* ehash bucket/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_LARGEOBJ,	/* large object/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,	/* overflow page (with ovf_keyval)      */
+  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* area page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* b+tree index page                    */
+#endif
+
   MNT_STATS_DATA_PAGE_DIRTIES,
   MNT_STATS_DATA_PAGE_IOREADS,
   MNT_STATS_DATA_PAGE_IOWRITES,
