@@ -113,7 +113,7 @@ static int btree_merge_root (THREAD_ENTRY * thread_p, BTID_INT * btid,
 #endif
 static int btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			     PAGE_PTR P, PAGE_PTR Q, PAGE_PTR R,
-			     VPID * P_vpid, VPID * Q_vpid, VPID * R_vpid,
+			     UNUSED_ARG VPID * P_vpid, VPID * Q_vpid, VPID * R_vpid,
 			     INT16 p_slot_id, short node_type,
 			     int is_left_merge, VPID * child_vpid);
 static PAGE_PTR btree_locate_key (THREAD_ENTRY * thread_p,
@@ -2938,7 +2938,7 @@ exit_on_error:
  */
 static int
 btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
-		  PAGE_PTR Q, PAGE_PTR R, VPID * P_vpid,
+		  PAGE_PTR Q, PAGE_PTR R, UNUSED_ARG VPID * P_vpid,
 		  VPID * Q_vpid, VPID * R_vpid, INT16 p_slot_id,
 		  short node_type, int is_left_merge, VPID * child_vpid)
 {
@@ -5278,10 +5278,13 @@ static int
 btree_initialize_bts (UNUSED_ARG THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 		      KEY_VAL_RANGE * key_val_range, FILTER_INFO * filter)
 {
+#if !defined(NDEBUG)
   BTID_INT *btid = NULL;
 //  OR_INDEX *indexp = NULL;
+#endif
   int ret = NO_ERROR;
 
+#if !defined(NDEBUG)
   assert (bts != NULL);
   btid = &(bts->btid_int);
 
@@ -5293,6 +5296,7 @@ btree_initialize_bts (UNUSED_ARG THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
   assert (!BTREE_INVALID_INDEX_ID (btid->sys_btid));
 
 //  indexp = &(btid->classrepr->indexes[btid->indx_id]);
+#endif
 
   /* initialize page related fields */
   /* previous leaf page, current leaf page, overflow page */
@@ -5317,6 +5321,8 @@ btree_initialize_bts (UNUSED_ARG THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 
   bts->read_keys = 0;
   bts->qualified_keys = 0;
+
+  assert (ret == NO_ERROR);
 
   return ret;
 
@@ -6530,8 +6536,11 @@ btree_rv_nodehdr_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   PGSLOTID pg_slotid;
 
   pg_slotid = spage_delete (thread_p, recv->pgptr, HEADER);
-
-  assert (pg_slotid != NULL_SLOTID);
+  if (pg_slotid == NULL_SLOTID)
+    {
+      assert (false);
+      ; /* remove compiler warning */
+    }
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
   return NO_ERROR;

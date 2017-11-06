@@ -899,7 +899,7 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 				    const VPID * vpid, int newpg,
 				    int request_mode,
 				    PGBUF_LATCH_CONDITION condition,
-				    MNT_SERVER_ITEM item,
+				    UNUSED_ARG const MNT_SERVER_ITEM item,
 				    const char *caller_file, int caller_line)
 {
   PAGE_PTR pgptr;
@@ -929,7 +929,7 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 				      const VPID * vpid, int newpg,
 				      int request_mode,
 				      PGBUF_LATCH_CONDITION condition,
-				      MNT_SERVER_ITEM item)
+				      UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   PAGE_PTR pgptr;
 #if defined(SERVER_MODE)
@@ -950,6 +950,25 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
   return pgptr;
 }
 #endif /* NDEBUG */
+
+#if !defined(NDEBUG)
+PAGE_PTR
+pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+                 int request_mode, PGBUF_LATCH_CONDITION condition,
+                 UNUSED_ARG const MNT_SERVER_ITEM item,
+                 const char *caller_file, int caller_line)
+{
+  return pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition, caller_file, caller_line);
+}
+#else /* NDEBUG */
+PAGE_PTR
+pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+                   int request_mode, PGBUF_LATCH_CONDITION condition,
+                   UNUSED_ARG const MNT_SERVER_ITEM item)
+{
+  return pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition);
+}
+#endif                          /* NDEBUG */
 
 /*
  * pgbuf_fix () -

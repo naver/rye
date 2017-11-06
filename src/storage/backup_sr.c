@@ -578,7 +578,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
   BK_QUEUE *queue_p;
   BK_NODE *node_p;
   int rv;
-  bool need_unlock = false;
+//  bool need_unlock = false;
   BK_BACKUP_HEADER *backup_header_p;
 
   if (!session_p)
@@ -602,7 +602,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
       if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	{
-	  need_unlock = true;
+//	  need_unlock = true;
 	  goto exit_on_error;
 	}
 
@@ -635,7 +635,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
 	  if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	    {
-	      need_unlock = true;
+//	      need_unlock = true;
 	      goto exit_on_error;
 	    }
 	}

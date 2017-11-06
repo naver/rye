@@ -108,7 +108,10 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 		      INT16 slot_id)
 {
   int ret = NO_ERROR;
-  int key_len, max_free;
+  int max_free;
+#if !defined(NDEBUG)
+  int key_len;
+#endif
   RECDES rec = RECDES_INITIALIZER;
   char rec_buf[IO_MAX_PAGE_SIZE + BTREE_MAX_ALIGN];
   char rv_key[OR_OID_SIZE + OR_BTID_ALIGNED_SIZE + BTREE_MAX_KEYLEN +
@@ -123,7 +126,9 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 
 
   max_free = spage_max_space_for_new_record (thread_p, leaf_page);
+#if !defined(NDEBUG)
   key_len = btree_get_key_length (key);	/* TODO - */
+#endif
 
   /* form a new leaf record */
   assert (BTREE_IS_VALID_KEY_LEN (key_len));
@@ -871,7 +876,10 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 {
   short Q_node_type;
   INT16 mid_slot_id;
-  int nrecs, key_cnt, leftcnt, rightcnt, right;
+#if !defined(NDEBUG)
+  int nrecs;
+#endif
+  int key_cnt, leftcnt, rightcnt, right;
   RECDES rec = RECDES_INITIALIZER, trec = RECDES_INITIALIZER;
   NON_LEAF_REC nleaf_rec, nleaf_ptr;
   BTREE_NODE_HEADER qheader, rheader;
@@ -911,7 +919,9 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   rec.data = PTR_ALIGN (rec_buf, BTREE_MAX_ALIGN);
   rec.type = REC_HOME;
 
+#if !defined(NDEBUG)
   nrecs = spage_number_of_records (Q);	/* get the key count of page Q */
+#endif
 
   ret = btree_read_node_header (Q, &qheader);
   if (ret != NO_ERROR)
