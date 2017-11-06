@@ -41,8 +41,11 @@ QATOOLS_DIR = $(SRC)/qatools
 AM_CPPFLAGS = @SRC_INC@ @EXT_INC@ \
 	@SYS_DEFS@ @VERSION_DEFS@ -DASYNC_MODE @XOPEN_DEFS@ -D_BSD_SOURCE \
 	-DDIAG_DEVEL -DCAS_BROKER @DIR_DEFS@
-#AM_CFLAGS = -Werror
-#AM_CXXFLAGS = -Werror
+
+#AM_CFLAGS = @CFLAGS@ -Werror
+#AM_CXXFLAGS = @CXXFLAGS@ -Werror
+AM_CFLAGS = @CFLAGS@
+AM_CXXFLAGS = @CXXFLAGS@
 
 bin_PROGRAMS = rye_broker rye_cas broker_changer \
 	broker_log_top broker_monitor_npot
@@ -58,7 +61,6 @@ rye_broker_SOURCES = \
 	$(BROKER_DIR)/broker.c \
 	$(BROKER_DIR)/broker_shm.c \
 	$(BROKER_DIR)/broker_util.c \
-	$(BROKER_DIR)/broker_process_size.c \
 	$(BROKER_DIR)/broker_max_heap.c \
 	$(BROKER_DIR)/broker_send_fd.c \
 	$(BROKER_DIR)/broker_recv_fd.c \
@@ -84,7 +86,6 @@ broker_changer_SOURCES = \
 	$(BROKER_DIR)/broker_changer.c \
 	$(BROKER_DIR)/broker_admin_pub.c \
 	$(BROKER_DIR)/broker_shm.c \
-	$(BROKER_DIR)/broker_process_size.c \
 	$(BROKER_DIR)/broker_config.c \
 	$(BROKER_DIR)/broker_util.c \
 	$(BROKER_DIR)/broker_max_heap.c \
@@ -104,7 +105,6 @@ rye_cas_SOURCES = \
 	$(BROKER_DIR)/broker_recv_fd.c \
 	$(BROKER_DIR)/cas_log.c \
 	$(BROKER_DIR)/broker_shm.c \
-	$(BROKER_DIR)/broker_process_size.c \
 	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/cas_error.c \
 	$(BROKER_DIR)/broker_acl.c \

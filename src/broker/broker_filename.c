@@ -115,7 +115,7 @@ set_rye_file (T_RYE_FILE_ID fid, const char *value, const char *br_name)
     case FID_RYE_BROKER_CONF:
       if (IS_ABS_PATH (value))
 	{
-	  snprintf (rye_file[fid].file_name, BROKER_PATH_MAX, value);
+	  snprintf (rye_file[fid].file_name, BROKER_PATH_MAX, "%s/", value);
 	}
       else
 	{

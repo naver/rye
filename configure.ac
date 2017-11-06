@@ -158,6 +158,64 @@ NOWARN=""
 CFLAGS="$CFLAGS $WARN $NOWARN"
 CXXFLAGS="$CXXFLAGS $WARN_CXX $NOWARN"
 
+# TODO - Checks for cflags ######################################### START
+# AC_MSG_CHECKING(whether -Wno-unused-result compiler option is accepted)
+# SAVED_CFLAGS="$CFLAGS"
+# CFLAGS="$CFLAGS -Wno-unused-result -Werror"
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+#     [AC_MSG_RESULT(yes)
+#      CFLAGS="$SAVED_CFLAGS -Wno-unused-result"],
+#     [AC_MSG_RESULT(no)
+#      CFLAGS="$SAVED_CFLAGS"])
+# 
+# AC_MSG_CHECKING(whether -Wno-unused-function compiler option is accepted)
+# SAVED_CFLAGS="$CFLAGS"
+# CFLAGS="$CFLAGS -Wno-unused-function -Werror"
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+#     [AC_MSG_RESULT(yes)
+#      CFLAGS="$SAVED_CFLAGS -Wno-unused-function"],
+#     [AC_MSG_RESULT(no)
+#      CFLAGS="$SAVED_CFLAGS"])
+# 
+# AC_MSG_CHECKING(whether -Wno-cast-qual compiler option is accepted)
+# SAVED_CFLAGS="$CFLAGS"
+# CFLAGS="$CFLAGS -Wno-cast-qual -Werror"
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+#     [AC_MSG_RESULT(yes)
+#      CFLAGS="$SAVED_CFLAGS -Wno-cast-qual"],
+#     [AC_MSG_RESULT(no)
+#      CFLAGS="$SAVED_CFLAGS"])
+# 
+# AC_MSG_CHECKING(whether -Wno-unused-but-set-variable compiler option is accepted)
+# SAVED_CFLAGS="$CFLAGS"
+# CFLAGS="$CFLAGS -Wno-unused-but-set-variable -Werror"
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+#     [AC_MSG_RESULT(yes)
+#      CFLAGS="$SAVED_CFLAGS -Wno-unused-but-set-variable"],
+#     [AC_MSG_RESULT(no)
+#      CFLAGS="$SAVED_CFLAGS"])
+# 
+# AC_MSG_CHECKING(whether -Wno-discarded-qualifiers compiler option is accepted)
+# SAVED_CFLAGS="$CFLAGS"
+# CFLAGS="$CFLAGS -Wno-discarded-qualifiers -Werror"
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+#     [AC_MSG_RESULT(yes)
+#      CFLAGS="$SAVED_CFLAGS -Wno-discarded-qualifiers"],
+#     [AC_MSG_RESULT(no)
+#      CFLAGS="$SAVED_CFLAGS"])
+# 
+# # TODO: -Wstrict-aliasing=1 ==> -Wstrict-aliasing
+# AC_MSG_CHECKING(whether -Wstrict-aliasing compiler option is accepted)
+# SAVED_CFLAGS="$CFLAGS"
+# CFLAGS="$CFLAGS -Wstrict-aliasing=1 -Werror"
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+#     [AC_MSG_RESULT(yes)
+#      CFLAGS="$SAVED_CFLAGS -Wstrict-aliasing=1"],
+#     [AC_MSG_RESULT(no)
+#      CFLAGS="$SAVED_CFLAGS"])
+# 
+# TODO - Checks for cflags ######################################### END
+
 case $MACHINE_TYPE in
 	x86*|i*86)	SYS_DEFS="$SYS_DEFS -DX86" ;;
 	*)		;;

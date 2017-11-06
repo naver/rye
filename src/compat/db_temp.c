@@ -386,7 +386,7 @@ dbt_change_primary_key (DB_CTMPL * def, const char *index_name)
   /*
    * step 1: check source constraint
    */
-  if (unique_con->type != DB_CONSTRAINT_UNIQUE)
+  if (unique_con->type != SM_CONSTRAINT_UNIQUE)
     {
       error = ER_SM_NO_UNIQUE_CONSTRAINT;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, index_name);
