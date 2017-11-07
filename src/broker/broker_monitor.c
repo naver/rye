@@ -366,7 +366,7 @@ broker_monitor (int argc, char **argv)
   int shm_key_br_gl;
   int err, i;
   char *br_vector;
-  WINDOW *win;
+//  WINDOW *win;
   time_t time_old, time_cur;
   double elapsed_time;
 
@@ -417,7 +417,7 @@ broker_monitor (int argc, char **argv)
 
   if (refresh_Sec > 0 && !tty_Mode)
     {
-      win = initscr ();
+//      win = initscr ();
       timeout (refresh_Sec * 1000);
       noecho ();
     }
@@ -718,7 +718,7 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 {
   UINT64 qps;
   UINT64 lqs;
-  int col_len;
+//  int col_len;
   time_t tran_start_time;
   char ip_str[16];
   int as_id;
@@ -750,7 +750,7 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 	}
     }
 
-  col_len = 0;
+//  col_len = 0;
 
   print_value (FIELD_ID, &as_id, FIELD_T_INT);
   print_value (FIELD_PID, &as_info_p->pid, FIELD_T_INT);

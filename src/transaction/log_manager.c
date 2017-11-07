@@ -6260,8 +6260,10 @@ log_rollback_record (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
     }
   else
     {
-      rcv->pgptr = pgbuf_fix (thread_p, rcv_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH);
+      rcv->pgptr =
+	pgbuf_fix2 (thread_p, rcv_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+		    PGBUF_UNCONDITIONAL_LATCH,
+		    MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK);
     }
 
   /* GET BEFORE DATA */
