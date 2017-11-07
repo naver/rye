@@ -2838,7 +2838,8 @@ ehash_split_bucket (THREAD_ENTRY * thread_p, EHASH_DIR_HEADER * dir_header_p,
 				       PGBUF_LATCH_WRITE);
   if (sibling_page_p == NULL)
     {
-      (void) file_dealloc_page (thread_p, &bucket_vfid, sibling_vpid_p);
+      (void) file_dealloc_page (thread_p, &bucket_vfid, sibling_vpid_p,
+				MNT_STATS_DATA_PAGE_FETCHES_EHASH);
       VPID_SET_NULL (sibling_vpid_p);
       return NULL;
     }
@@ -2851,7 +2852,8 @@ ehash_split_bucket (THREAD_ENTRY * thread_p, EHASH_DIR_HEADER * dir_header_p,
 						sibling_page_p) != NO_ERROR)
     {
       pgbuf_unfix_and_init (thread_p, sibling_page_p);
-      (void) file_dealloc_page (thread_p, &bucket_vfid, sibling_vpid_p);
+      (void) file_dealloc_page (thread_p, &bucket_vfid, sibling_vpid_p,
+				MNT_STATS_DATA_PAGE_FETCHES_EHASH);
       VPID_SET_NULL (sibling_vpid_p);
       return NULL;
     }
@@ -4027,7 +4029,8 @@ ehash_merge (THREAD_ENTRY * thread_p, EHID * ehid_p, void *key_p)
 
 		  (void) file_dealloc_page (thread_p,
 					    &dir_header_p->bucket_file,
-					    &bucket_vpid);
+					    &bucket_vpid,
+					    MNT_STATS_DATA_PAGE_FETCHES_EHASH);
 
 		  /* Set all pointers to the bucket to NULL */
 		  if (ehash_connect_bucket (thread_p, ehid_p, old_local_depth,
@@ -4077,7 +4080,8 @@ ehash_merge (THREAD_ENTRY * thread_p, EHID * ehid_p, void *key_p)
 	      pgbuf_unfix_and_init (thread_p, bucket_page_p);
 
 	      (void) file_dealloc_page (thread_p, &dir_header_p->bucket_file,
-					&bucket_vpid);
+					&bucket_vpid,
+					MNT_STATS_DATA_PAGE_FETCHES_EHASH);
 
 	      ehash_adjust_local_depth (thread_p, ehid_p, dir_root_page_p,
 					dir_header_p, old_local_depth, -2);

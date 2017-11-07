@@ -911,7 +911,8 @@ btree_dealloc_page (THREAD_ENTRY * thread_p, BTID_INT * btid, VPID * vpid)
       return ER_FAILED;
     }
 
-  error = file_dealloc_page (thread_p, &btid->sys_btid->vfid, vpid);
+  error = file_dealloc_page (thread_p, &btid->sys_btid->vfid, vpid,
+			     MNT_STATS_DATA_PAGE_FETCHES_BTREE);
 
   log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
 
@@ -6808,7 +6809,8 @@ btree_rv_newpage_undo_alloc (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   pageid_struct = (const PAGEID_STRUCT *) recv->data;
 
   ret =
-    file_dealloc_page (thread_p, &pageid_struct->vfid, &pageid_struct->vpid);
+    file_dealloc_page (thread_p, &pageid_struct->vfid, &pageid_struct->vpid,
+		       MNT_STATS_DATA_PAGE_FETCHES_BTREE);
   if (ret != NO_ERROR)
     {
       assert (false);

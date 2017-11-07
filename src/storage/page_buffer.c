@@ -960,6 +960,10 @@ pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		  UNUSED_ARG const MNT_SERVER_ITEM item,
 		  const char *caller_file, int caller_line)
 {
+
+ assert (item != MNT_STATS_DATA_PAGE_FETCHES);
+ assert (MNT_GET_PARENT_ITEM(item) == MNT_STATS_DATA_PAGE_FETCHES);
+
   return pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
 			  caller_file, caller_line);
 }

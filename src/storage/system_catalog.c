@@ -658,6 +658,7 @@ catalog_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
 			     UNUSED_ARG DKNPAGES ignore_npages,
 			     void *is_overflow_page)
 {
+  MNT_SERVER_ITEM item;
   PAGE_PTR page_p;
   CATALOG_PAGE_HEADER page_header;
   PGSLOTID slot_id;
@@ -668,13 +669,14 @@ catalog_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
   };
   char data[CATALOG_PAGE_HEADER_SIZE + MAX_ALIGNMENT], *aligned_data;
 
+  item = ((bool) is_overflow_page) ?
+    MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF :
+    MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
+
   aligned_data = PTR_ALIGN (data, MAX_ALIGNMENT);
 
   page_p = pgbuf_fix2 (thread_p, vpid_p, NEW_PAGE, PGBUF_LATCH_WRITE,
-		       PGBUF_UNCONDITIONAL_LATCH,
-		       ( (bool) is_overflow_page ?
-			MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF :
-			MNT_STATS_DATA_PAGE_FETCHES_CATALOG));
+		       PGBUF_UNCONDITIONAL_LATCH, item);
   if (page_p == NULL)
     {
       return false;
@@ -727,7 +729,12 @@ static PAGE_PTR
 catalog_get_new_page (THREAD_ENTRY * thread_p, VPID * page_id_p,
 		      VPID * near_page_p, bool is_overflow_page)
 {
+  MNT_SERVER_ITEM item;
   PAGE_PTR page_p;
+
+  item = is_overflow_page ?
+    MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF :
+    MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
 
   if (file_alloc_pages (thread_p, &catalog_Id.vfid, page_id_p, 1, near_page_p,
 			catalog_initialize_new_page,
@@ -743,13 +750,10 @@ catalog_get_new_page (THREAD_ENTRY * thread_p, VPID * page_id_p,
    */
 
   page_p = pgbuf_fix2 (thread_p, page_id_p, OLD_PAGE, PGBUF_LATCH_WRITE,
-		       PGBUF_UNCONDITIONAL_LATCH,
-		       (is_overflow_page ?
-			MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF :
-			MNT_STATS_DATA_PAGE_FETCHES_CATALOG));
+		       PGBUF_UNCONDITIONAL_LATCH, item);
   if (page_p == NULL)
     {
-      (void) file_dealloc_page (thread_p, &catalog_Id.vfid, page_id_p);
+      (void) file_dealloc_page (thread_p, &catalog_Id.vfid, page_id_p, item);
       return NULL;
     }
 
@@ -1699,7 +1703,8 @@ catalog_drop_representation_helper (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 	CATALOG_GET_PGHEADER_OVFL_PGID_VOLID (record.data);
 
       pgbuf_unfix_and_init (thread_p, overflow_page_p);
-      file_dealloc_page (thread_p, &catalog_Id.vfid, &overflow_vpid);
+      file_dealloc_page (thread_p, &catalog_Id.vfid, &overflow_vpid,
+			 MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF);
       overflow_vpid = new_overflow_vpid;
     }
 
@@ -5481,7 +5486,8 @@ catalog_rv_ovf_page_logical_insert_undo (THREAD_ENTRY * thread_p,
   catalog_clear_hash_table ();
 
   vpid_p = (const VPID *) recv_p->data;
-  (void) file_dealloc_page (thread_p, &catalog_Id.vfid, vpid_p);
+  (void) file_dealloc_page (thread_p, &catalog_Id.vfid, vpid_p,
+			    MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF);
 
   return NO_ERROR;
 }

@@ -435,7 +435,8 @@ exit_on_error:
 
   for (i = 0; i < npages; i++)
     {
-      (void) file_dealloc_page (thread_p, ovf_vfid, &vpids[i]);
+      (void) file_dealloc_page (thread_p, ovf_vfid, &vpids[i],
+				MNT_STATS_DATA_PAGE_FETCHES_OVF);
     }
 
   if (vpids != vpids_buffer)
@@ -796,7 +797,8 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 		}
 	      addr.pgptr = NULL;
 
-	      error = file_dealloc_page (thread_p, ovf_vfid, &tmp_vpid);
+	      error = file_dealloc_page (thread_p, ovf_vfid, &tmp_vpid,
+					 MNT_STATS_DATA_PAGE_FETCHES_OVF);
 	      if (error != NO_ERROR)
 		{
 		  GOTO_EXIT_ON_ERROR;
@@ -846,7 +848,8 @@ overflow_delete_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
       goto exit_on_error;
     }
 
-  ret = file_dealloc_page (thread_p, ovf_vfid, vpid);
+  ret = file_dealloc_page (thread_p, ovf_vfid, vpid,
+			   MNT_STATS_DATA_PAGE_FETCHES_OVF);
   if (ret != NO_ERROR)
     {
       goto exit_on_error;
@@ -1371,7 +1374,8 @@ overflow_rv_newpage_logical_undo (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   const OVERFLOW_RECV_LINKS *newpg;
 
   newpg = (const OVERFLOW_RECV_LINKS *) rcv->data;
-  (void) file_dealloc_page (thread_p, &newpg->ovf_vfid, &newpg->new_vpid);
+  (void) file_dealloc_page (thread_p, &newpg->ovf_vfid, &newpg->new_vpid,
+			    MNT_STATS_DATA_PAGE_FETCHES_OVF);
   return NO_ERROR;
 }
 
