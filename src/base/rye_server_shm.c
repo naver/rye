@@ -180,7 +180,7 @@ void
 svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
 		       UINT64 exec_time)
 {
-  MNT_SERVER_ITEM prnt;	/* parent item */
+  MNT_SERVER_ITEM parent_item;
 
   if (rye_Server_shm == NULL)
     {
@@ -201,43 +201,11 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
       rye_Server_shm->global_stats.acc_time[item] += exec_time;
 #endif
 
-#if 1				/* fetches sub-info */
-      switch (item)
+      parent_item = MNT_GET_PARENT_ITEM (item);
+      if (parent_item != item)
 	{
-	case MNT_STATS_DATA_PAGE_FETCHES_FTAB:	/* file allocset table page             */
-	case MNT_STATS_DATA_PAGE_FETCHES_HEAP:	/* heap page                            */
-	case MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER:	/* heap page header                     */
-	case MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER:	/* volume header page                   */
-	case MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP:	/* volume bitmap page                   */
-	case MNT_STATS_DATA_PAGE_FETCHES_XASL:	/* xasl stream page                     */
-	case MNT_STATS_DATA_PAGE_FETCHES_QRESULT:	/* query result page                    */
-	case MNT_STATS_DATA_PAGE_FETCHES_EHASH:	/* ehash bucket/dir page                */
-	case MNT_STATS_DATA_PAGE_FETCHES_LARGEOBJ:	/* large object/dir page                */
-	case MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW:	/* overflow page (with ovf_keyval)      */
-	case MNT_STATS_DATA_PAGE_FETCHES_AREA:	/* area page                            */
-	case MNT_STATS_DATA_PAGE_FETCHES_CATALOG:	/* catalog page                         */
-	case MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF:	/* catalog overflow page                         */
-	case MNT_STATS_DATA_PAGE_FETCHES_BTREE:	/* b+tree index page                    */
-	case MNT_STATS_DATA_PAGE_FETCHES_FORMAT:	/* disk_format                    */
-	  prnt = MNT_STATS_DATA_PAGE_FETCHES;
-
-	  rye_Server_shm->tran_info[tran_index].stats.values[prnt] += value;
-
-#if defined(HAVE_ATOMIC_BUILTINS)
-	  value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[prnt],
-				 value);
-	  exec_time =
-	    ATOMIC_INC_64 (&rye_Server_shm->global_stats.acc_time[prnt],
-			   exec_time);
-#else
-	  rye_Server_shm->global_stats.values[prnt] += value;
-	  rye_Server_shm->global_stats.acc_time[prnt] += exec_time;
-#endif
-	  break;
-	default:
-	  break;
+	  svr_shm_stats_counter (tran_index, parent_item, value, exec_time);
 	}
-#endif
     }
 }
 

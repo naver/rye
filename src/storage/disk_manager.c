@@ -2037,7 +2037,7 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 	      pgptr =
 		pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
 			    PGBUF_UNCONDITIONAL_LATCH,
-			    MNT_STATS_DATA_PAGE_FETCHES_FORMAT);
+			    MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT);
 	      if (pgptr != NULL)
 		{
 		  pgbuf_set_lsa_as_temporary (thread_p, pgptr);
@@ -5914,7 +5914,7 @@ disk_dump_goodvol_all (THREAD_ENTRY * thread_p, INT16 volid, void *arg)
 				  NULL_PAGEID, NULL_PAGEID, NULL_PAGEID);
   if (ret != NO_ERROR)
     {
-      ;				/* remove compiler warning */
+      ;				/* TODO - avoid compile error */
     }
 
   return true;
@@ -5988,7 +5988,7 @@ disk_rv_undo_format (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   ret = disk_unformat (thread_p, (const char *) rcv->data);
   if (ret != NO_ERROR)
     {
-      ;				/* remove compiler warning */
+      ;				/* TODO - avoid compile error */
     }
 
   log_append_dboutside_redo (thread_p, RVLOG_OUTSIDE_LOGICAL_REDO_NOOP, 0,
@@ -6012,7 +6012,7 @@ disk_rv_dump_hdr (FILE * fp, UNUSED_ARG int length_ignore, void *data)
   ret = disk_vhdr_dump (fp, vhdr);
   if (ret != NO_ERROR)
     {
-      ;				/* remove compiler warning */
+      ;				/* TODO - avoid compile error */
     }
 }
 
@@ -6517,7 +6517,8 @@ disk_rv_alloctable_with_volheader (THREAD_ENTRY * thread_p, LOG_RCV * rcv,
   pgbuf_unfix_and_init (thread_p, rcv->pgptr);
 
   vhdr_rcv.pgptr = pgbuf_fix_with_retry (thread_p, &vhdr_vpid, OLD_PAGE,
-					 PGBUF_LATCH_WRITE, 10);
+					 PGBUF_LATCH_WRITE, 10,
+					 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (vhdr_rcv.pgptr == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MAYNEED_MEDIA_RECOVERY,
@@ -6527,7 +6528,8 @@ disk_rv_alloctable_with_volheader (THREAD_ENTRY * thread_p, LOG_RCV * rcv,
     }
 
   rcv->pgptr = pgbuf_fix_with_retry (thread_p, &page_vpid, OLD_PAGE,
-				     PGBUF_LATCH_WRITE, 10);
+				     PGBUF_LATCH_WRITE, 10,
+				     MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
   if (rcv->pgptr == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MAYNEED_MEDIA_RECOVERY,

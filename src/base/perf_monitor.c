@@ -85,11 +85,16 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   /* MNT_STATS_DATA_PAGE_FETCHES */
   {"Num_data_page_fetches", MNT_STATS_VALUE_COUNTER_WITH_TIME},
 #if 1				/* fetches sub-info */
-  {"Num_data_page_fetches_ftab", MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_heap", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_file_header", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_file_table", MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_heap_header", MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_volheader", MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_volbitmap", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_heap", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_heap_relocation",
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_heap_bestspace_sync",
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_vol_header", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_vol_bitmap", MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_xasl", MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_qresult", MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_ehash", MNT_STATS_VALUE_COUNTER_WITH_TIME},
@@ -97,7 +102,11 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_data_page_fetches_overflow", MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_area", MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_catalog", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_catalog_ovf", MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_btree", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+
+  {"Num_data_page_fetches_log_postpone", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_disk_format", MNT_STATS_VALUE_COUNTER_WITH_TIME},
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */

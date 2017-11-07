@@ -858,14 +858,15 @@ pgbuf_finalize (void)
  */
 PAGE_PTR
 pgbuf_fix_with_retry (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		      int mode, int retry)
+		      int mode, int retry,
+		      UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   PAGE_PTR pgptr;
   int i = 0;
   bool noretry = false;
 
-  while ((pgptr = pgbuf_fix (thread_p, vpid, newpg, mode,
-			     PGBUF_UNCONDITIONAL_LATCH)) == NULL)
+  while ((pgptr = pgbuf_fix2 (thread_p, vpid, newpg, mode,
+			      PGBUF_UNCONDITIONAL_LATCH, item)) == NULL)
     {
       switch (er_errid ())
 	{
@@ -954,21 +955,22 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 #if !defined(NDEBUG)
 PAGE_PTR
 pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-                 int request_mode, PGBUF_LATCH_CONDITION condition,
-                 UNUSED_ARG const MNT_SERVER_ITEM item,
-                 const char *caller_file, int caller_line)
+		  int request_mode, PGBUF_LATCH_CONDITION condition,
+		  UNUSED_ARG const MNT_SERVER_ITEM item,
+		  const char *caller_file, int caller_line)
 {
-  return pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition, caller_file, caller_line);
+  return pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
+			  caller_file, caller_line);
 }
 #else /* NDEBUG */
 PAGE_PTR
 pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-                   int request_mode, PGBUF_LATCH_CONDITION condition,
-                   UNUSED_ARG const MNT_SERVER_ITEM item)
+		    int request_mode, PGBUF_LATCH_CONDITION condition,
+		    UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   return pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition);
 }
-#endif                          /* NDEBUG */
+#endif /* NDEBUG */
 
 /*
  * pgbuf_fix () -

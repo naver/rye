@@ -101,9 +101,12 @@ typedef enum
   /* Statistics at page level */
   MNT_STATS_DATA_PAGE_FETCHES,
 #if 1				/* fetches sub-info */
-  MNT_STATS_DATA_PAGE_FETCHES_FTAB,	/* file allocset table page             */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,	/* file header page             */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,	/* file allocset table page             */
   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,	/* heap page header                     */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION,	/* heap relocation page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC,	/* bestspace_sync                            */
   MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* volume header page                   */
   MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* volume bitmap page                   */
   MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* xasl stream page                     */
@@ -115,7 +118,9 @@ typedef enum
   MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* catalog page                         */
   MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF,	/* catalog overflow page                         */
   MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* b+tree index page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_FORMAT,	/* disk_format                    */
+
+  MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT,	/* disk_format                    */
+  MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE,	/* postpone_op                     */
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,
@@ -226,6 +231,27 @@ typedef enum
 
   MNT_SIZE_OF_SERVER_EXEC_STATS
 } MNT_SERVER_ITEM;
+
+#define MNT_GET_PARENT_ITEM(m)                \
+  ((m == MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER     \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP       \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION       \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER     \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP     \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_XASL  \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_QRESULT       \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_EHASH \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_LARGEOBJ      \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW      \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_AREA  \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG       \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 
 /*
  * Server execution statistic structure

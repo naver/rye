@@ -1680,11 +1680,13 @@ file_descriptor_insert (UNUSED_ARG THREAD_ENTRY * thread_p,
   INT32 npages;
   int ipage;
   FILE_REST_DES *rest;
-#endif
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
+#endif
   int ret = NO_ERROR;
 
+#if defined (ENABLE_UNUSED_FUNCTION)
   addr.vfid = &fhdr->vfid;
+#endif
 
   if (file_des != NULL)
     {
@@ -7100,8 +7102,9 @@ file_allocset_find_page (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
   vpid = allocset->start_pages_vpid;
   while (isfound == DISK_INVALID && !VPID_ISNULL (&vpid))
     {
-      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			 PGBUF_UNCONDITIONAL_LATCH);
+      pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -12926,6 +12929,11 @@ file_rv_tracker_undo_register (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 
   vfid = (const VFID *) rcv->data;
   ret = file_rv_tracker_unregister_logical_undo (thread_p, vfid);
+  if (ret != NO_ERROR)
+    {
+      assert (false);
+      ;				/* TODO - avoid compile error */
+    }
 
   return NO_ERROR;		/* do not permit error */
 }

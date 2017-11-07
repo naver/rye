@@ -332,16 +332,24 @@ init_server_monitor_item ()
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES],
 		     "datapage", "fetch");
 #if 1				/* fetches sub-info */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FTAB],
-		     "datapage", "fetch_ftab");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_HEAP],
-		     "datapage", "fetch_heap");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER],
+		     "datapage", "fetch_file_header");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB],
+		     "datapage", "fetch_file_table");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER],
 		     "datapage", "fetch_heap_header");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_HEAP],
+		     "datapage", "fetch_heap");
+  SET_DB_STATS_INFO (&db_Stats_info
+		     [MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION],
+		     "datapage", "fetch_heap_relocation");
+  SET_DB_STATS_INFO (&db_Stats_info
+		     [MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC],
+		     "datapage", "fetch_heap_bestspace_sync");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER],
-		     "datapage", "fetch_volheader");
+		     "datapage", "fetch_vol_header");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP],
-		     "datapage", "fetch_volbitmap");
+		     "datapage", "fetch_vol_bitmap");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_XASL],
 		     "datapage", "fetch_xasl");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_QRESULT],
@@ -360,8 +368,11 @@ init_server_monitor_item ()
 		     "datapage", "fetch_catalog_ovf");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_BTREE],
 		     "datapage", "fetch_btree");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FORMAT],
-		     "datapage", "fetch_format");
+
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT],
+		     "datapage", "fetch_disk_format");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE],
+		     "datapage", "fetch_log_postpone");
 #endif
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],

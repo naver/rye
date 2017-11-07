@@ -133,7 +133,8 @@ extern int pgbuf_initialize (void);
 extern void pgbuf_finalize (void);
 extern PAGE_PTR pgbuf_fix_with_retry (THREAD_ENTRY * thread_p,
 				      const VPID * vpid, int newpg, int mode,
-				      int retry);
+				      int retry,
+				      UNUSED_ARG const MNT_SERVER_ITEM item);
 #if !defined(NDEBUG)
 #define pgbuf_flush(thread_p, pgptr, free_page) \
 	pgbuf_flush_debug(thread_p, pgptr, free_page, __FILE__, __LINE__)
@@ -145,12 +146,12 @@ extern PAGE_PTR pgbuf_flush_debug (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
         pgbuf_fix_debug2(thread_p, vpid, newpg, requestmode, condition, item, \
                         __FILE__, __LINE__)
 extern PAGE_PTR pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid,
-                                 int newpg, int requestmode,
-                                 PGBUF_LATCH_CONDITION condition,
-                                 UNUSED_ARG const MNT_SERVER_ITEM item,
-                                 const char *caller_file, int caller_line);
+				  int newpg, int requestmode,
+				  PGBUF_LATCH_CONDITION condition,
+				  UNUSED_ARG const MNT_SERVER_ITEM item,
+				  const char *caller_file, int caller_line);
 
-#if 1 /* delete me later */
+#if 1				/* delete me later */
 #define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition) \
         pgbuf_fix_debug(thread_p, vpid, newpg, requestmode, condition, \
                         __FILE__, __LINE__)
@@ -169,7 +170,8 @@ extern PAGE_PTR pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 						    int request_mode,
 						    PGBUF_LATCH_CONDITION
 						    condition,
-						    UNUSED_ARG const MNT_SERVER_ITEM item,
+						    UNUSED_ARG const
+						    MNT_SERVER_ITEM item,
 						    const char *caller_file,
 						    int caller_line);
 #define pgbuf_unfix(thread_p, pgptr) \
@@ -197,14 +199,16 @@ extern PAGE_PTR pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 						      int requestmode,
 						      PGBUF_LATCH_CONDITION
 						      condition,
-						      UNUSED_ARG const MNT_SERVER_ITEM item);
+						      UNUSED_ARG const
+						      MNT_SERVER_ITEM item);
 #define pgbuf_fix2(thread_p, vpid, newpg, requestmode, condition, item) \
         pgbuf_fix_release2(thread_p, vpid, newpg, requestmode, condition, item)
-extern PAGE_PTR pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid,
-                                   int newpg, int requestmode,
-                                   PGBUF_LATCH_CONDITION condition,
-                                   UNUSED_ARG const MNT_SERVER_ITEM item);
-#if 1 /* delete me later */
+extern PAGE_PTR pgbuf_fix_release2 (THREAD_ENTRY * thread_p,
+				    const VPID * vpid, int newpg,
+				    int requestmode,
+				    PGBUF_LATCH_CONDITION condition,
+				    UNUSED_ARG const MNT_SERVER_ITEM item);
+#if 1				/* delete me later */
 #define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition) \
         pgbuf_fix_release(thread_p, vpid, newpg, requestmode, condition)
 extern PAGE_PTR pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid,

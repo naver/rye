@@ -149,7 +149,7 @@ fileio_lock (const char *db_full_name_p, const char *vol_label_p,
   long long tmp_lock_time;
   int pid;
   bool retry = true;
-  int lockf_errno;
+//  int lockf_errno;
   FILEIO_LOCKF_TYPE result = FILEIO_LOCKF;
   int total_num_loops = 0;
   int num_loops = 0;
@@ -209,7 +209,7 @@ again:
 	  retry = true;
 	  continue;
 	}
-      lockf_errno = errno;
+//      lockf_errno = errno;
       retry = false;
 
       /* Volume seems to be mounted by someone else. Find out who has it. */
@@ -381,7 +381,7 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
   long long tmp_lock_time;
   int pid;
   bool retry = true;
-  int lockf_errno;
+//  int lockf_errno;
   FILEIO_LOCKF_TYPE result = FILEIO_LOCKF;
   int num_loops = 0;
   char io_timeval[64], format_string[32];
@@ -430,7 +430,7 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
 	  retry = true;
 	  continue;
 	}
-      lockf_errno = errno;
+//      lockf_errno = errno;
       retry = false;
 
       /* Volume seems to be mounted by someone else. Find out who has it. */

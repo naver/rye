@@ -3412,7 +3412,9 @@ do_prepare_insert (DB_SESSION * session, PT_NODE * statement)
 {
   int error = NO_ERROR;
   PARSER_CONTEXT *parser;
+#if !defined(NDEBUG)
   PT_NODE *class_;
+#endif
   PT_NODE *update = NULL;
   PT_NODE *values = NULL;
   int upd_has_uniques = 0;
@@ -3438,8 +3440,12 @@ do_prepare_insert (DB_SESSION * session, PT_NODE * statement)
 #endif
 
   statement->etc = NULL;
+
+#if !defined(NDEBUG)
   class_ = statement->info.insert.spec->info.spec.flat_entity_list;
   assert (class_->next == NULL);
+#endif
+
   values = statement->info.insert.value_clauses;
 
   /* prevent multi statements */
@@ -3516,7 +3522,9 @@ do_execute_insert (DB_SESSION * session, PT_NODE * statement)
 {
   int err;
   PARSER_CONTEXT *parser;
+#if !defined(NDEBUG)
   PT_NODE *flat;
+#endif
 //  DB_OBJECT *class_obj;
   QFILE_LIST_ID *list_id;
   QUERY_FLAG query_flag;
@@ -3551,8 +3559,10 @@ do_execute_insert (DB_SESSION * session, PT_NODE * statement)
       return err;
     }
 
+#if !defined(NDEBUG)
   flat = statement->info.insert.spec->info.spec.flat_entity_list;
   assert (flat->next == NULL);
+#endif
 //  class_obj = (flat) ? flat->info.name.db_object : NULL;
 
   query_flag = NOT_FROM_RESULT_CACHE | RESULT_CACHE_INHIBITED;

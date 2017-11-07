@@ -6546,7 +6546,7 @@ btree_rv_nodehdr_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   if (pg_slotid == NULL_SLOTID)
     {
       assert (false);
-      ;				/* remove compiler warning */
+      ;				/* TODO - avoid compile error */
     }
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6648,7 +6648,7 @@ btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   if (pg_slotid == NULL_SLOTID)
     {
       assert (false);
-      ;				/* remove compiler warning */
+      ;				/* TODO - avoid compile error */
     }
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6812,7 +6812,7 @@ btree_rv_newpage_undo_alloc (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   if (ret != NO_ERROR)
     {
       assert (false);
-      ;				/* remove compiler warning */
+      ;				/* TODO - avoid compile error */
     }
 
   return NO_ERROR;
