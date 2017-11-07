@@ -342,11 +342,10 @@ db_reset_private_heap (UNUSED_ARG THREAD_ENTRY * thread_p)
 void *
 db_private_alloc (UNUSED_ARG void *thrd, size_t size)
 {
-  void *ptr = NULL;
-
 #if defined (CS_MODE)
   return db_ws_alloc (size);
 #elif defined (SERVER_MODE)
+  void *ptr = NULL;
   HL_HEAPID heap_id;
 
   if (size <= 0)
@@ -372,6 +371,8 @@ db_private_alloc (UNUSED_ARG void *thrd, size_t size)
     }
   return ptr;
 #else /* SA_MODE */
+  void *ptr = NULL;
+
   if (!db_on_server)
     {
       return db_ws_alloc (size);
@@ -427,11 +428,10 @@ db_private_alloc (UNUSED_ARG void *thrd, size_t size)
 void *
 db_private_realloc (UNUSED_ARG void *thrd, void *ptr, size_t size)
 {
-  void *new_ptr = NULL;
-
 #if defined (CS_MODE)
   return db_ws_realloc (ptr, size);
 #elif defined (SERVER_MODE)
+  void *new_ptr = NULL;
   HL_HEAPID heap_id;
 
   if (size <= 0)
@@ -457,6 +457,8 @@ db_private_realloc (UNUSED_ARG void *thrd, void *ptr, size_t size)
     }
   return new_ptr;
 #else /* SA_MODE */
+  void *new_ptr = NULL;
+
   if (ptr == NULL)
     {
       return db_private_alloc (thrd, size);

@@ -4456,7 +4456,7 @@ hb_thread_cluster_reader (UNUSED_ARG void *arg)
 					    from_len);
 	    }
 
-	  FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE, 5000, 0);
+	  error = FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE, 5000, 0);
 	}
     }
 
