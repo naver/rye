@@ -916,7 +916,7 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 #endif /* SERVER_MODE */
 
   pgptr = pgbuf_fix_debug2 (thread_p, vpid, newpg, request_mode, condition,
-			    caller_file, caller_line, item);
+			    item, caller_file, caller_line);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
