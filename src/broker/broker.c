@@ -490,8 +490,8 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  new_job.priority = 0;
 	  new_job.port = ntohs (0);
 	  memcpy (new_job.ip_addr, &client_ip_addr, 4);
-	  new_job.clt_protocol_ver = br_req_msg->clt_protocol_ver;
 	  new_job.clt_type = br_req_msg->clt_type;
+	  new_job.clt_version = br_req_msg->clt_version;
 
 	  while (1)
 	    {
@@ -520,12 +520,23 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  int ret_code = CAS_ER_QUERY_CANCEL;
 
 	  int cas_id, cas_pid;
-	  char *cancel_msg = br_req_msg->op_code_msg;
+	  const char *cancel_msg;
+	  int msg_remain;
 
-	  memcpy ((char *) &cas_id, cancel_msg, 4);
-	  memcpy ((char *) &cas_pid, cancel_msg + 4, 4);
-	  cas_id = ntohl (cas_id) - 1;
-	  cas_pid = ntohl (cas_pid);
+	  brreq_msg_unpack_port_name (br_req_msg, &cancel_msg, &msg_remain);
+
+	  if (cancel_msg == NULL || msg_remain < 8)
+	    {
+	      cas_id = -1;
+	      cas_pid = -1;
+	    }
+	  else
+	    {
+	      memcpy ((char *) &cas_id, cancel_msg, 4);
+	      memcpy ((char *) &cas_pid, cancel_msg + 4, 4);
+	      cas_id = ntohl (cas_id) - 1;
+	      cas_pid = ntohl (cas_pid);
+	    }
 
 	  if (cas_id >= 0
 	      && cas_id < shm_Br->br_info[br_Index].appl_server_max_num
@@ -670,8 +681,7 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 
       shm_Appl->info.as_info[as_index].num_connect_requests++;
 
-      shm_Appl->info.as_info[as_index].client_protocol_version =
-	cur_job.clt_protocol_ver;
+      shm_Appl->info.as_info[as_index].clt_version = cur_job.clt_version;
       shm_Appl->info.as_info[as_index].client_type = cur_job.clt_type;
       memcpy (shm_Appl->info.as_info[as_index].cas_clt_ip, cur_job.ip_addr,
 	      4);
@@ -1130,7 +1140,7 @@ restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
 	  if (r != 1)
 	    {
 	      assert (false);
-	      ; /* TODO - avoid compile error */
+	      ;			/* TODO - avoid compile error */
 	    }
 
 	  fclose (fp);

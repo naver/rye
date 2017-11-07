@@ -297,7 +297,7 @@ public class ShardGroupConnection extends JciConnection
     public String getCasInfoString()
     {
 	return String.format("%s:%d:%s", getFirstConnectionInfo().getHostname(), getFirstConnectionInfo().getPort(),
-			getFirstConnectionInfo().getstrPortName());
+			getFirstConnectionInfo().getPortName());
     }
 
     synchronized public ShardAdmin getShardAdmin()
@@ -460,7 +460,7 @@ public class ShardGroupConnection extends JciConnection
 	    JciConnectionInfo conInfo = conUrl.getConInfoList().get(0);
 
 	    JciShardConnection con = shardInfo
-			    .getOneConnection(nodeid, conInfo.getstrPortName(), conUrl.getConnProperties(),
+			    .getOneConnection(nodeid, conInfo.getPortName(), conUrl.getConnProperties(),
 					    conUrl.getDbuser(), conUrl.getDbpasswd(), getAutoCommit(), this);
 
 	    con.setShardKey(shardKey);
@@ -513,7 +513,7 @@ public class ShardGroupConnection extends JciConnection
 	    RyeConnectionUrl conUrl = this.getConnectionUrl();
 	    JciConnectionInfo conInfo = conUrl.getConInfoList().get(0);
 
-	    JciShardConnection[] conArr = shardInfo.getNConnectionArray(nodeids, conInfo.getstrPortName(),
+	    JciShardConnection[] conArr = shardInfo.getNConnectionArray(nodeids, conInfo.getPortName(),
 			    conUrl.getConnProperties(), conUrl.getDbuser(), conUrl.getDbpasswd(), getAutoCommit(),
 			    jciCon);
 

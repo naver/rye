@@ -1,32 +1,20 @@
-## 1. Broker Request Message Protocol
+## Broker Request Message Protocol
 
-###  1.1 Message Protocol version
-
-  * Message Protocol version
-
-    | protocol version | value |
-    |--------|--------|
-    | PROTOCOL_V1 | 0x01 |
-
-  * Rye version vs Protocol version
-
-    | Rye version | Protocol version |
-    |--------|--------|
-	| 1.0 | PROTOCOL_V1 |
-
-### 1.2 Broker Request Message Protocol
+### Broker Request Message Protocol
   
   * Broker request
   
 	|Description |	Type | Data length | Note |
-    |--------|--------|--------|--------|
-	| client_magic_str | STR | 4 | “CUBV” | 
-	| client_protocol_version | SHORT | 2 |  | 
+	|--------|--------|--------|--------|
+	| client_magic_str | STR | 4 | "RYE\001" | 
+	| client_version_major | SHORT | 2 |  | 
+	| client_version_minor | SHORT | 2 |  | 
+	| client_version_patch | SHORT | 2 |  | 
+	| client_version_build | SHORT | 2 |  | 
 	| client_type | CHAR | 1 | 0x01: JDBC <br> 0x02: CCI | 
 	| op_code | CHAR | 1 |  | 
 	| op_code_msg_size | SHORT | 2 |  | 
-	| RESERVED | CHAR | 2 |  | 
-	| broker_name | CHAR | 64 |  | 
+	| RESERVED | CHAR | 4 |  | 
 	| op_code_msg | CHAR | [op_code_msg_size] | defined in each request | 
 
   * Broker response
@@ -41,33 +29,51 @@
 
     | Description | Type | Data length | Note | 
     | -------- | -------- | -------- | -------- | 
-    | server_protocol_version | SHORT | 2 |  | 
+    | server_version_major | SHORT | 2 |  | 
+    | server_version_minor | SHORT | 2 |  | 
+    | server_version_patch | SHORT | 2 |  | 
+    | server_version_build | SHORT | 2 |  | 
     | result_code | INT | 4 |  | 
     | msg_size_array | INT * 5 | 4 * 5 |  | 
 
-### 1.3 Normal Broker Request Message
+### Normal Broker Request Message
 
-#### 1.3.1 CAS_CONNECT
+#### CAS_CONNECT
   * op_code: 1
-  * op_code_msg: none
+  * op_code_msg
+
+    | Description | Type | Data length | 
+    | -------- | -------- | -------- | 
+    | broker_name_len | INT | 4 |
+    | broker_name | STRING | |
+
   * broker response msg: none
   
-#### 1.3.2 PING
-  * op_code: 2
-  * op_code_msg: none
-  * broker response msg: none
-
-#### 1.3.2 PING  
+#### PING
   * op_code: 2
   * op_code_msg
 
     | Description | Type | Data length | 
     | -------- | -------- | -------- | 
-    | msg_size | INT | 4 | 
-    | pid | INT | 4 | 
+    | broker_name_len | INT | 4 |
+    | broker_name | STRING | |
+
   * broker response msg: none
 
-### 1.4 LOCAL_MGMT Request Message
+#### CANCEL  
+  * op_code: 2
+  * op_code_msg
+
+    | Description | Type | Data length | 
+    | -------- | -------- | -------- | 
+    | broker_name_len | INT | 4 |
+    | broker_name | STRING | |
+    | cas_id | INT | 4 | 
+    | cas_pid | INT | 4 | 
+
+  * broker response msg: none
+
+### LOCAL_MGMT Request Message
   
   * op_code_msg format
 
@@ -84,7 +90,7 @@
     | arg_type | CHAR | 1 | 0x01: INT32 <br> 0x02: INT64 <br> 0x03: STRING <br> 0x04: STRING_ARRAY <br> 0x05: INT32_ARRAY |
 	| arg_value | INT32 <br> INT64 <br> STRING <br> STRING_ARRAY <br> INT32_ARRAY | 4 <br>   8 <br> size(4)+ string value <br> array_size + STRING values <br> array_size + INT32 values | BR_ARG_INT <br> BR_ARG_BIGINT <br> BR_ARG_STR <br> BR_ARG_STR_ARR <br> BR_ARG_INT_ARR|
 
-#### 1.4.1 SYNC_SHARD_MGMT_INFO
+#### SYNC_SHARD_MGMT_INFO
   
   * op_code: 16
   * br_req_arg
@@ -105,7 +111,7 @@
     | msg[0] | hostname | CHAR | - |
     | msg[1] | ha_state | INT | 4 | 
 
-#### 1.4.2 LAUNCH_PROCESS
+#### LAUNCH_PROCESS
   * op_code : 17
   * br_req_arg
 
@@ -123,7 +129,7 @@
     | msg[1] | stdout_msg | CHAR | - | 
     | msg[2] | stderr_msg | CHAR | -  | 
 
-#### 1.4.3 GET_SHARD_MGMT_INFO
+#### GET_SHARD_MGMT_INFO
   * op_code : 18
   * br_req_arg: none
     
@@ -148,7 +154,7 @@
       | dbname | CHAR | [dbname_len] | 
       | port | INT | 4 | 
 
-#### 1.4.4 SHARD_VERSION_INFO_COUNT
+#### SHARD_VERSION_INFO_COUNT
   * op_code: 19
   * br_req_arg: none
   * response msg
@@ -157,7 +163,7 @@
   | -------- | -------- | -------- | -------- | 
   | msg[0] | shard_version_info_count | INT | 4 | 
 
-#### 1.4.5 READ_RYE_FILE
+#### READ_RYE_FILE
   * op_code: 20
   * br_req_arg
 
@@ -171,7 +177,7 @@
   | -------- | -------- | -------- | -------- | 
   | msg[0] | file_contents | CHAR |  | 
 
-####  1.4.6 WRITE_RYE_CONF
+#### WRITE_RYE_CONF
   * op_code: 21
   * br_req_arg
 
@@ -182,7 +188,7 @@
 
   * response msg: none
 
-#### 1.4.7 UPDATE_CONF
+#### UPDATE_CONF
   * op_code: 22
   * br_req_arg
 
@@ -195,7 +201,7 @@
   
   * response msg: none
 
-#### 1.4.8 DELETE_CONF
+#### DELETE_CONF
   * op_code: 23
   * br_req_arg
   
@@ -207,7 +213,7 @@
 
   * response msg: none
 
-#### 1.4.9 GET_CONF
+#### GET_CONF
   * op_code: 24
   * br_req_arg: same as DELETE_CONF
   * response msg
@@ -216,7 +222,7 @@
   | -------- | -------- | -------- | -------- | 
   | msg[0] | conf_value | CHAR |  | 
 
-#### 1.4.10 BROKER_ACL_RELOAD
+#### BROKER_ACL_RELOAD
   * op_code: 24
   * br_req_arg
   
@@ -227,9 +233,9 @@
 
   * response msg: none
 
-### 1.5 SHARD_MGMT Request Message
+### SHARD_MGMT Request Message
 
-####  1.5.1 GET_SHARD_INFO
+#### GET_SHARD_INFO
   * op_code: 64
   * br_req_arg
   
@@ -308,7 +314,7 @@
       | ip_str | CHAR | [ip_str_len] | 
       | ha_state | CHAR | 1 | 
 
-#### 1.5.2 INIT_SHARD
+#### INIT_SHARD
   * op_code: 65
   * br_req_arg
 	
@@ -322,7 +328,7 @@
 
   * response msg:none
 
-#### 1.5.3 ADD_NODE
+#### ADD_NODE
   * op_code: 66
   * br_req_arg
     
@@ -334,7 +340,7 @@
 
     * response msg:none
 
-#### 1.5.4 DROP_NODE
+#### DROP_NODE
   * op_code: 67
   * br_req_arg
   
@@ -347,7 +353,7 @@
 
   * response msg:none
 
-#### 1.5.5 MIGRATION_START
+#### MIGRATION_START
   * op_code: 68
   * br_req_arg
   
@@ -361,12 +367,12 @@
 
   * response msg:none
 
-#### 1.5.6 MIGRATION_END
+#### MIGRATION_END
   * op_code: 69
   * br_req_arg: same as MIGRATION_START
   * response msg:none
 
-#### 1.5.7 DDL_START
+#### DDL_START
   * op_code: 70
   * br_req_arg
   
@@ -377,12 +383,12 @@
 
   * response msg:none
 
-#### 1.5.8 DDL_END
+#### DDL_END
   * op_code: 71
   * br_req_arg: same as DDL_START
   * response msg:none
 
-#### 1.5.9 REBALANCE_REQ
+#### REBALANCE_REQ
   * op_code: 72
   * br_req_arg
   
@@ -397,7 +403,7 @@
 
   * response msg:none
 
-#### 1.5.10 REBALANCE_JOB_COUNT
+#### REBALANCE_JOB_COUNT
   * op_code: 73
   * br_req_arg
   
@@ -408,7 +414,7 @@
 
   * response msg:none
 
-#### 1.5.11 GC_START
+#### GC_START
   * op_code: 74
   * br_req_arg
   
@@ -419,7 +425,7 @@
 
   * response msg:none
 
-#### 1.5.12 GC_END
+#### GC_END
   * op_code: 75
   * br_req_arg: same as GC_START
   * response msg:none

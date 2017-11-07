@@ -83,7 +83,10 @@
 
     | Description | Type | Data length | Note | 
     | -------- | -------- | -------- | -------- | 
-    | protocol_version | SHORT | 2 |  | 
+    | server_version_major | SHORT | 2 |  | 
+    | server_version_minor | SHORT | 2 |  | 
+    | server_version_patch | SHORT | 2 |  | 
+    | server_version_build | SHORT | 2 |  | 
     | cas_id | INT | 4 |  | 
     | cas_pid | INT | 4 |  | 
     | session_id_len | INT | 4 |  | 

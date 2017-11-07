@@ -56,7 +56,7 @@ enum tran_auto_commit
 typedef struct t_req_info T_REQ_INFO;
 struct t_req_info
 {
-  short clt_protocol_ver;
+  T_BROKER_RYE_VERSION clt_version;
   enum tran_auto_commit need_auto_commit;
   char need_rollback;
 };

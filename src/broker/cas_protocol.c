@@ -38,6 +38,19 @@
 #include "cas_common.h"
 #endif
 
+static short br_msg_unpack_short (const char **ptr);
+static int br_msg_unpack_int (const char **ptr);
+static char br_msg_unpack_char (const char **ptr);
+
+UINT64
+br_msg_protocol_version (const T_BROKER_RYE_VERSION * version)
+{
+  return (((UINT64) (version->ver_major) << 48) |
+	  ((UINT64) (version->ver_minor) << 32) |
+	  ((UINT64) (version->ver_patch) << 16) |
+	  ((UINT64) (version->ver_build)));
+}
+
 T_BROKER_REQUEST_MSG *
 brreq_msg_alloc (int opcode_msg_size)
 {
@@ -53,7 +66,6 @@ brreq_msg_alloc (int opcode_msg_size)
 
   if (tmp_ptr)
     {
-      tmp_ptr->broker_name = tmp_ptr->msg_buffer + BRREQ_MSG_IDX_BROKER_NAME;
       tmp_ptr->op_code_msg = tmp_ptr->msg_buffer + BRREQ_MSG_SIZE;
     }
 
@@ -78,7 +90,7 @@ brreq_msg_clone (const T_BROKER_REQUEST_MSG * org_msg)
   clone_msg = brreq_msg_alloc (org_msg->op_code_msg_size);
   if (clone_msg != NULL)
     {
-      clone_msg->clt_protocol_ver = org_msg->clt_protocol_ver;
+      clone_msg->clt_version = org_msg->clt_version;
       clone_msg->clt_type = org_msg->clt_type;
       clone_msg->op_code = org_msg->op_code;
       clone_msg->op_code_msg_size = org_msg->op_code_msg_size;
@@ -91,60 +103,47 @@ brreq_msg_clone (const T_BROKER_REQUEST_MSG * org_msg)
 int
 brreq_msg_unpack (T_BROKER_REQUEST_MSG * srv_con_msg)
 {
-  char *msg_buffer = srv_con_msg->msg_buffer;
-  char *ptr;
-  short tmp_short;
+  const char *ptr = srv_con_msg->msg_buffer;
 
-  if (strncmp (msg_buffer, BRREQ_MSG_MAGIC_STR, BRREQ_MSG_MAGIC_LEN) != 0)
+  if (strncmp (ptr, BRREQ_MSG_MAGIC_STR, BRREQ_MSG_MAGIC_LEN) != 0)
     {
       return -1;
     }
+  ptr += BRREQ_MSG_MAGIC_LEN;
 
-  ptr = msg_buffer + BRREQ_MSG_IDX_CLIENT_PROTO_VERSION;
-  memcpy (&tmp_short, ptr, 2);
-  srv_con_msg->clt_protocol_ver = ntohs (tmp_short);
+  srv_con_msg->clt_version.ver_major = br_msg_unpack_short (&ptr);
+  srv_con_msg->clt_version.ver_minor = br_msg_unpack_short (&ptr);
+  srv_con_msg->clt_version.ver_patch = br_msg_unpack_short (&ptr);
+  srv_con_msg->clt_version.ver_build = br_msg_unpack_short (&ptr);
 
-  srv_con_msg->clt_type = msg_buffer[BRREQ_MSG_IDX_CLIENT_TYPE];
+  srv_con_msg->clt_type = br_msg_unpack_char (&ptr);
+  srv_con_msg->op_code = br_msg_unpack_char (&ptr);
 
-  srv_con_msg->op_code = msg_buffer[BRREQ_MSG_IDX_OP_CODE];
-
-  ptr = msg_buffer + BRREQ_MSG_IDX_OP_CODE_MSG_SIZE;
-  memcpy (&tmp_short, ptr, 2);
-  srv_con_msg->op_code_msg_size = ntohs (tmp_short);
+  srv_con_msg->op_code_msg_size = br_msg_unpack_short (&ptr);
 
   return 0;
 }
 
 char *
 brreq_msg_pack (T_BROKER_REQUEST_MSG * srv_con_msg, char clt_type,
-		char op_code, int op_code_msg_size, const char *port_name)
+		char op_code, int op_code_msg_size)
 {
-  char *msg_buffer = srv_con_msg->msg_buffer;
-  char *ptr;
-  short tmp_short;
+  char *ptr = srv_con_msg->msg_buffer;
 
-  memset (msg_buffer, 0, BRREQ_MSG_SIZE);
+  memset (ptr, 0, BRREQ_MSG_SIZE);
 
-  memcpy (msg_buffer, BRREQ_MSG_MAGIC_STR, BRREQ_MSG_MAGIC_LEN);
+  ptr = br_msg_pack_str (ptr, BRREQ_MSG_MAGIC_STR, BRREQ_MSG_MAGIC_LEN);
 
-  ptr = msg_buffer + BRREQ_MSG_IDX_CLIENT_PROTO_VERSION;
-  tmp_short = htons ((short) CURRENT_PROTOCOL);
-  memcpy (ptr, &tmp_short, 2);
+  ptr = br_msg_pack_short (ptr, (short) MAJOR_VERSION);
+  ptr = br_msg_pack_short (ptr, (short) MINOR_VERSION);
+  ptr = br_msg_pack_short (ptr, (short) PATCH_VERSION);
+  ptr = br_msg_pack_short (ptr, (short) BUILD_SEQ);
 
-  msg_buffer[BRREQ_MSG_IDX_CLIENT_TYPE] = clt_type;
-
-  msg_buffer[BRREQ_MSG_IDX_OP_CODE] = op_code;
-
-  if (port_name != NULL)
-    {
-      strcpy (srv_con_msg->broker_name, port_name);
-    }
+  ptr = br_msg_pack_char (ptr, clt_type);
+  ptr = br_msg_pack_char (ptr, op_code);
 
   srv_con_msg->op_code_msg_size = op_code_msg_size;
-
-  ptr = msg_buffer + BRREQ_MSG_IDX_OP_CODE_MSG_SIZE;
-  tmp_short = htons (srv_con_msg->op_code_msg_size);
-  memcpy (ptr, &tmp_short, 2);
+  ptr = br_msg_pack_short (ptr, srv_con_msg->op_code_msg_size);
 
   return srv_con_msg->op_code_msg;
 }
@@ -153,24 +152,20 @@ void
 brres_msg_pack (T_BROKER_RESPONSE_NET_MSG * res_msg, int result_code,
 		int num_additional_msg, const int *additional_msg_size)
 {
-  short tmp_short;
-  int tmp_int;
   int i;
   char *ptr = res_msg->msg_buffer;
 
   memset (res_msg, 0, sizeof (T_BROKER_RESPONSE_NET_MSG));
 
-  tmp_int = htonl (BROKER_RESPONSE_MSG_SIZE);	/* msg size */
-  memcpy (ptr, &tmp_int, sizeof (int));
-  ptr += sizeof (int);
 
-  tmp_short = htons (CURRENT_PROTOCOL);
-  memcpy (ptr, &tmp_short, sizeof (short));
-  ptr += sizeof (short);
+  ptr = br_msg_pack_int (ptr, BROKER_RESPONSE_MSG_SIZE);	/* msg size */
 
-  tmp_int = htonl (result_code);
-  memcpy (ptr, &tmp_int, sizeof (int));
-  ptr += sizeof (int);
+  ptr = br_msg_pack_short (ptr, (short) MAJOR_VERSION);
+  ptr = br_msg_pack_short (ptr, (short) MINOR_VERSION);
+  ptr = br_msg_pack_short (ptr, (short) PATCH_VERSION);
+  ptr = br_msg_pack_short (ptr, (short) BUILD_SEQ);
+
+  ptr = br_msg_pack_int (ptr, result_code);
 
   if (num_additional_msg > BROKER_RESPONSE_MAX_ADDITIONAL_MSG)
     {
@@ -180,9 +175,7 @@ brres_msg_pack (T_BROKER_RESPONSE_NET_MSG * res_msg, int result_code,
 
   for (i = 0; i < num_additional_msg; i++)
     {
-      tmp_int = htonl (additional_msg_size[i]);
-      memcpy (ptr, &tmp_int, sizeof (int));
-      ptr += sizeof (int);
+      ptr = br_msg_pack_int (ptr, additional_msg_size[i]);
     }
 
   res_msg->msg_buffer_size = sizeof (int) + BROKER_RESPONSE_MSG_SIZE;
@@ -192,9 +185,8 @@ int
 brres_msg_unpack (T_BROKER_RESPONSE * res, const char *msg_buffer,
 		  int msg_size)
 {
-  short tmp_short;
-  int tmp_int;
   int i;
+  const char *ptr = msg_buffer;
 
   memset (res, 0, sizeof (T_BROKER_RESPONSE));
 
@@ -203,19 +195,17 @@ brres_msg_unpack (T_BROKER_RESPONSE * res, const char *msg_buffer,
       return -1;
     }
 
-  memcpy (&tmp_short, msg_buffer, sizeof (short));
-  res->srv_protocol_ver = ntohs (tmp_short);
-  msg_buffer += sizeof (short);
+  res->svr_version.ver_major = br_msg_unpack_short (&ptr);
+  res->svr_version.ver_minor = br_msg_unpack_short (&ptr);
+  res->svr_version.ver_patch = br_msg_unpack_short (&ptr);
+  res->svr_version.ver_build = br_msg_unpack_short (&ptr);
 
-  memcpy (&tmp_int, msg_buffer, sizeof (int));
-  res->result_code = ntohl (tmp_int);
-  msg_buffer += sizeof (int);
+  res->result_code = br_msg_unpack_int (&ptr);
 
   for (i = 0; i < BROKER_RESPONSE_MAX_ADDITIONAL_MSG; i++)
     {
-      memcpy (&tmp_int, msg_buffer, sizeof (int));
-      res->additional_message_size[i] = ntohl (tmp_int);
-      msg_buffer += sizeof (int);
+      res->additional_message_size[i] = br_msg_unpack_int (&ptr);
+
     }
 
   msg_size -= BROKER_RESPONSE_MSG_SIZE;
@@ -228,4 +218,144 @@ cas_status_info_init (char *info_ptr)
 {
   memset (info_ptr, 0, CAS_STATUS_INFO_SIZE);
   info_ptr[CAS_STATUS_INFO_IDX_STATUS] = CAS_STATUS_INACTIVE;
+}
+
+int
+brreq_msg_normal_broker_opcode_msg_size (const char *port_name, int add_size)
+{
+  int msg_size;
+
+  msg_size = sizeof (int);
+  if (port_name != NULL)
+    {
+      msg_size += strlen (port_name) + 1;
+    }
+  msg_size += add_size;
+
+  return msg_size;
+}
+
+char *
+brreq_msg_pack_port_name (char *ptr, const char *port_name)
+{
+  int size;
+
+  size = (port_name == NULL ? 0 : strlen (port_name) + 1);
+
+  ptr = br_msg_pack_int (ptr, size);
+  ptr = br_msg_pack_str (ptr, port_name, size);
+
+  return ptr;
+}
+
+const char *
+brreq_msg_unpack_port_name (const T_BROKER_REQUEST_MSG * brreq_msg,
+			    const char **ret_msg_ptr, int *ret_msg_remain)
+{
+  int port_name_len;
+  const char *port_name;
+  const char *ptr;
+  int msg_remain;
+
+  msg_remain = brreq_msg->op_code_msg_size;
+  ptr = brreq_msg->op_code_msg;
+
+  if (msg_remain < 4)
+    {
+      goto error;
+    }
+
+  port_name_len = br_msg_unpack_int (&ptr);
+
+  msg_remain -= sizeof (int);
+
+  if (port_name_len <= 0 || msg_remain < port_name_len)
+    {
+      goto error;
+    }
+
+  port_name = ptr;
+  assert (port_name[port_name_len - 1] == '\0');
+
+  ptr += port_name_len;
+  msg_remain -= port_name_len;
+
+  if (ret_msg_ptr != NULL)
+    {
+      *ret_msg_ptr = ptr;
+    }
+  if (ret_msg_remain != NULL)
+    {
+      *ret_msg_remain = msg_remain;
+    }
+
+  return port_name;
+
+error:
+  if (ret_msg_ptr != NULL)
+    {
+      *ret_msg_ptr = NULL;
+    }
+  if (ret_msg_remain != NULL)
+    {
+      *ret_msg_remain = 0;
+    }
+  return "";
+}
+
+char *
+br_msg_pack_int (char *ptr, int value)
+{
+  value = htonl (value);
+  memcpy (ptr, &value, 4);
+  return (ptr + 4);
+}
+
+char *
+br_msg_pack_short (char *ptr, short value)
+{
+  value = htons (value);
+  memcpy (ptr, &value, 2);
+  return (ptr + 2);
+}
+
+char *
+br_msg_pack_str (char *ptr, const char *str, int size)
+{
+  memcpy (ptr, str, size);
+  return (ptr + size);
+}
+
+char *
+br_msg_pack_char (char *ptr, char value)
+{
+  *ptr = value;
+  return (ptr + 1);
+}
+
+static short
+br_msg_unpack_short (const char **ptr)
+{
+  short tmp_value;
+  memcpy (&tmp_value, *ptr, 2);
+  *ptr += 2;
+  return (ntohs (tmp_value));
+}
+
+static int
+br_msg_unpack_int (const char **ptr)
+{
+  int tmp_int;
+  memcpy (&tmp_int, *ptr, 4);
+  *ptr += 4;
+  return (ntohl (tmp_int));
+}
+
+static char
+br_msg_unpack_char (const char **ptr)
+{
+  const char *value_ptr;
+  value_ptr = *ptr;
+  *ptr += 1;
+  return (*value_ptr);
 }

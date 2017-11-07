@@ -231,7 +231,6 @@ struct t_appl_server_info
   sem_t con_status_sem;
 
   short as_id;
-  short client_protocol_version;
 
   unsigned short cas_clt_port;
   unsigned char cas_clt_ip[4];
@@ -245,6 +244,8 @@ struct t_appl_server_info
   time_t transaction_start_time;
   time_t last_connect_time;
   time_t claimed_alive_time;	/* to check if the cas hangs */
+
+  T_BROKER_RYE_VERSION clt_version;
 
   INT64 num_requests_received;
   INT64 num_transactions_processed;
@@ -271,29 +272,6 @@ struct t_appl_server_info
   char database_name[SRV_CON_DBNAME_SIZE];
   char database_host[MAXHOSTNAMELEN];
   char database_user[SRV_CON_DBUSER_SIZE];
-};
-
-typedef struct t_client_info T_CLIENT_INFO;
-struct t_client_info
-{
-  int client_id;		/* client id */
-  int client_ip;		/* client ip address */
-  time_t connect_time;		/* first connect time */
-  short client_protocol_version;
-  char client_version[SRV_CON_VER_STR_MAX_SIZE];
-  char client_type;
-
-  int func_code;		/* current request function code */
-
-  time_t req_time;		/* current request receive from client time */
-  time_t res_time;		/* current response receive from cas time */
-
-  /* TODO : MORE STATISTICS INFOMATION per Client
-   *  INT64 num_queries_processed;
-   *  INT64 num_error_queries;
-   */
-  int isolation_level;
-  int lock_timeout;
 };
 
 /* database server */
