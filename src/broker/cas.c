@@ -403,7 +403,7 @@ cas_main (void)
   sql_log_Notice_mode_flush = false;
 
   psize_At_start = as_Info->psize =
-    (int) (os_get_mem_size (getpid ()) / ONE_K);
+    (int) (os_get_mem_size (getpid (), MEM_VSIZE) / ONE_K);
 
   if (shm_Appl->appl_server_max_size > shm_Appl->appl_server_hard_limit)
     {
