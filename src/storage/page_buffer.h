@@ -151,16 +151,6 @@ extern PAGE_PTR pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid,
 				  UNUSED_ARG const MNT_SERVER_ITEM item,
 				  const char *caller_file, int caller_line);
 
-#if 0				/* delete me later */
-#define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition) \
-        pgbuf_fix_debug(thread_p, vpid, newpg, requestmode, condition, \
-                        __FILE__, __LINE__)
-extern PAGE_PTR pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
-				 int newpg, int requestmode,
-				 PGBUF_LATCH_CONDITION condition,
-				 const char *caller_file, int caller_line);
-#endif
-
 #define pgbuf_fix_without_validation(thread_p, vpid, newpg, requestmode, condition, item) \
         pgbuf_fix_without_validation_debug(thread_p, vpid, newpg, requestmode, condition, item, \
                         __FILE__, __LINE__)
@@ -208,13 +198,6 @@ extern PAGE_PTR pgbuf_fix_release2 (THREAD_ENTRY * thread_p,
 				    int requestmode,
 				    PGBUF_LATCH_CONDITION condition,
 				    UNUSED_ARG const MNT_SERVER_ITEM item);
-#if 0				/* delete me later */
-#define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition) \
-        pgbuf_fix_release(thread_p, vpid, newpg, requestmode, condition)
-extern PAGE_PTR pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid,
-				   int newpg, int requestmode,
-				   PGBUF_LATCH_CONDITION condition);
-#endif
 extern void pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);
 extern int pgbuf_invalidate_all (THREAD_ENTRY * thread_p, VOLID volid);
 extern int pgbuf_invalidate (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);

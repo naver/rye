@@ -954,7 +954,7 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 #endif /* NDEBUG */
 
 /*
- * pgbuf_fix () -
+ * pgbuf_fix2 () -
  *   return: Pointer to the page or NULL
  *   vpid(in): Complete Page identifier
  *   newpg(in): Is this a newly allocated page ?
@@ -963,13 +963,15 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
  */
 #if !defined(NDEBUG)
 PAGE_PTR
-pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		 int request_mode, PGBUF_LATCH_CONDITION condition,
+                 UNUSED_ARG const MNT_SERVER_ITEM item,
 		 const char *caller_file, int caller_line)
 #else /* NDEBUG */
 PAGE_PTR
-pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		   int request_mode, PGBUF_LATCH_CONDITION condition)
+pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+		   int request_mode, PGBUF_LATCH_CONDITION condition,
+                 UNUSED_ARG const MNT_SERVER_ITEM item)
 #endif				/* NDEBUG */
 {
   PGBUF_BUFFER_HASH *hash_anchor;
@@ -988,6 +990,9 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   };
 #endif
   UINT64 perf_start;
+
+ assert (item != MNT_STATS_DATA_PAGE_FETCHES);
+ assert (MNT_GET_PARENT_ITEM(item) == MNT_STATS_DATA_PAGE_FETCHES);
 
   PERF_MON_GET_CURRENT_TIME (perf_start);
 
@@ -1243,35 +1248,10 @@ try_again:
     }
 
   /* Record number of fetches in statistics */
-  mnt_stats_counter_with_time (thread_p, MNT_STATS_DATA_PAGE_FETCHES, 1,
-			       perf_start);
+  mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
   return (PAGE_PTR) (&(bufptr->iopage_buffer->iopage.page[0]));
 }
-
-#if !defined(NDEBUG)
-PAGE_PTR
-pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-                  int request_mode, PGBUF_LATCH_CONDITION condition,
-                  UNUSED_ARG const MNT_SERVER_ITEM item,
-                  const char *caller_file, int caller_line)
-{
-
- assert (item != MNT_STATS_DATA_PAGE_FETCHES);
- assert (MNT_GET_PARENT_ITEM(item) == MNT_STATS_DATA_PAGE_FETCHES);
-
-  return pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
-                          caller_file, caller_line);
-}
-#else /* NDEBUG */
-PAGE_PTR
-pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-                    int request_mode, PGBUF_LATCH_CONDITION condition,
-                    UNUSED_ARG const MNT_SERVER_ITEM item)
-{
-  return pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition);
-}
-#endif /* NDEBUG */
 
 /*
  * pgbuf_unfix () - Free the buffer where the page associated with pgptr resides
