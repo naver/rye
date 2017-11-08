@@ -112,9 +112,9 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
    MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_log_rollback", 1,
    MNT_STATS_VALUE_COUNTER_WITH_TIME},
-   {"Num_data_page_fetches_checkpoint", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_checkpoint", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
 
-   {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */
@@ -565,12 +565,13 @@ mnt_stats_counter (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
 {
   int tran_index;
 
+  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
   assert (mnt_Stats_info[item].value_type == MNT_STATS_VALUE_COUNTER ||
 	  mnt_Stats_info[item].value_type == MNT_STATS_VALUE_EVENT);
 
   tran_index = logtb_get_current_tran_index (thread_p);
-  svr_shm_stats_counter (tran_index, item, value, 0);
+  svr_shm_stats_counter (tran_index, item, value, 0, 0);
 }
 
 /*
@@ -583,6 +584,7 @@ mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
   int tran_index;
   UINT64 end_time;
 
+  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
   assert (mnt_Stats_info[item].value_type ==
 	  MNT_STATS_VALUE_COUNTER_WITH_TIME);
@@ -590,7 +592,7 @@ mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
   PERF_MON_GET_CURRENT_TIME (end_time);
 
   tran_index = logtb_get_current_tran_index (thread_p);
-  svr_shm_stats_counter (tran_index, item, value, end_time - start_time);
+  svr_shm_stats_counter (tran_index, item, value, end_time - start_time, 0);
 }
 
 /*

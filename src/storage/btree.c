@@ -854,8 +854,8 @@ btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
   PAGE_PTR page_ptr = NULL;
 
   page_ptr =
-    pgbuf_fix2 (thread_p, vpid, newpg, requestmode, condition,
-		MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+    pgbuf_fix (thread_p, vpid, newpg, requestmode, condition,
+	       MNT_STATS_DATA_PAGE_FETCHES_BTREE);
 
   if (vfid != NULL && page_ptr != NULL)
     {

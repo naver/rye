@@ -739,9 +739,9 @@ ehash_initialize_bucket_new_page (THREAD_ENTRY * thread_p,
    * during insertions and deletions.
    */
 
-  page_p = pgbuf_fix2 (thread_p, vpid_p, NEW_PAGE, PGBUF_LATCH_WRITE,
-		       PGBUF_UNCONDITIONAL_LATCH,
-		       MNT_STATS_DATA_PAGE_FETCHES_EHASH);
+  page_p = pgbuf_fix (thread_p, vpid_p, NEW_PAGE, PGBUF_LATCH_WRITE,
+		      PGBUF_UNCONDITIONAL_LATCH,
+		      MNT_STATS_DATA_PAGE_FETCHES_EHASH);
   if (page_p == NULL)
     {
       return false;
@@ -1146,9 +1146,9 @@ ehash_create_helper (THREAD_ENTRY * thread_p, EHID * ehid_p, DB_TYPE key_type,
       return NULL;
     }
 
-  dir_page_p = pgbuf_fix2 (thread_p, &dir_vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_EHASH);
+  dir_page_p = pgbuf_fix (thread_p, &dir_vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_EHASH);
   if (dir_page_p == NULL)
     {
       (void) file_destroy (thread_p, &dir_vfid);
@@ -1216,9 +1216,9 @@ ehash_fix_old_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
 {
   PAGE_PTR page_p;
 
-  page_p = pgbuf_fix2 (thread_p, vpid_p, OLD_PAGE, latch_mode,
-		       PGBUF_UNCONDITIONAL_LATCH,
-		       MNT_STATS_DATA_PAGE_FETCHES_EHASH);
+  page_p = pgbuf_fix (thread_p, vpid_p, OLD_PAGE, latch_mode,
+		      PGBUF_UNCONDITIONAL_LATCH,
+		      MNT_STATS_DATA_PAGE_FETCHES_EHASH);
   if (page_p == NULL)
     {
       if (er_errid () == ER_PB_BAD_PAGEID)

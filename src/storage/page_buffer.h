@@ -142,14 +142,14 @@ extern PAGE_PTR pgbuf_flush_debug (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 				   int free_page,
 				   const char *caller_file, int caller_line);
 
-#define pgbuf_fix2(thread_p, vpid, newpg, requestmode, condition, item) \
-        pgbuf_fix_debug2(thread_p, vpid, newpg, requestmode, condition, item, \
+#define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition, item) \
+        pgbuf_fix_debug(thread_p, vpid, newpg, requestmode, condition, item, \
                         __FILE__, __LINE__)
-extern PAGE_PTR pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid,
-				  int newpg, int requestmode,
-				  PGBUF_LATCH_CONDITION condition,
-				  UNUSED_ARG const MNT_SERVER_ITEM item,
-				  const char *caller_file, int caller_line);
+extern PAGE_PTR pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
+				 int newpg, int requestmode,
+				 PGBUF_LATCH_CONDITION condition,
+				 UNUSED_ARG const MNT_SERVER_ITEM item,
+				 const char *caller_file, int caller_line);
 
 #define pgbuf_fix_without_validation(thread_p, vpid, newpg, requestmode, condition, item) \
         pgbuf_fix_without_validation_debug(thread_p, vpid, newpg, requestmode, condition, item, \
@@ -191,13 +191,13 @@ extern PAGE_PTR pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 						      condition,
 						      UNUSED_ARG const
 						      MNT_SERVER_ITEM item);
-#define pgbuf_fix2(thread_p, vpid, newpg, requestmode, condition, item) \
-        pgbuf_fix_release2(thread_p, vpid, newpg, requestmode, condition, item)
-extern PAGE_PTR pgbuf_fix_release2 (THREAD_ENTRY * thread_p,
-				    const VPID * vpid, int newpg,
-				    int requestmode,
-				    PGBUF_LATCH_CONDITION condition,
-				    UNUSED_ARG const MNT_SERVER_ITEM item);
+#define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition, item) \
+        pgbuf_fix_release(thread_p, vpid, newpg, requestmode, condition, item)
+extern PAGE_PTR pgbuf_fix_release (THREAD_ENTRY * thread_p,
+				   const VPID * vpid, int newpg,
+				   int requestmode,
+				   PGBUF_LATCH_CONDITION condition,
+				   UNUSED_ARG const MNT_SERVER_ITEM item);
 extern void pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);
 extern int pgbuf_invalidate_all (THREAD_ENTRY * thread_p, VOLID volid);
 extern int pgbuf_invalidate (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);

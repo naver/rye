@@ -122,7 +122,7 @@ extern void svr_shm_copy_stats (int tran_index,
 				MNT_SERVER_EXEC_STATS * to_stats);
 extern void svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats);
 extern void svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item,
-				   INT64 value, UINT64 exec_time);
+				   INT64 value, UINT64 exec_time, int level);
 extern void svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item,
 				 INT64 value);
 extern INT64 svr_shm_get_stats (int tran_index, MNT_SERVER_ITEM item);

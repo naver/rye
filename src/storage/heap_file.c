@@ -3788,9 +3788,9 @@ heap_vpid_init_new (THREAD_ENTRY * thread_p, const VFID * vfid,
    * page.
    */
 
-  addr.pgptr = pgbuf_fix2 (thread_p, new_vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+  addr.pgptr = pgbuf_fix (thread_p, new_vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
   if (addr.pgptr == NULL)
     {
@@ -10204,7 +10204,7 @@ heap_attrinfo_dump (THREAD_ENTRY * thread_p, FILE * fp,
   if (dump_schema == true)
     {
       (void) heap_classrepr_dump (thread_p, fp, &attr_info->class_oid,
-			     attr_info->read_classrepr);
+				  attr_info->read_classrepr);
     }
 
   for (i = 0; i < attr_info->num_values; i++)
@@ -13825,7 +13825,7 @@ heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
   VPID next_vpid;
 #endif
 
-  page_ptr = pgbuf_fix2 (thread_p, vpid, newpg, requestmode, condition, item);
+  page_ptr = pgbuf_fix (thread_p, vpid, newpg, requestmode, condition, item);
 
 #if !defined(NDEBUG)
   if (hfid != NULL && page_ptr != NULL)

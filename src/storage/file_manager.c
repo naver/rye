@@ -2941,9 +2941,9 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
     {
       vpid_ptr = &table_vpids[ftb_page_index];
       addr.pgptr =
-	pgbuf_fix2 (thread_p, vpid_ptr, NEW_PAGE, PGBUF_LATCH_WRITE,
-		    PGBUF_UNCONDITIONAL_LATCH,
-		    MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	pgbuf_fix (thread_p, vpid_ptr, NEW_PAGE, PGBUF_LATCH_WRITE,
+		   PGBUF_UNCONDITIONAL_LATCH,
+		   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (addr.pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -2973,9 +2973,9 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
       addr.pgptr = NULL;
     }
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &table_vpids[0], NEW_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &table_vpids[0], NEW_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -3095,9 +3095,9 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
   if (nsects > 0)
     {
       addr.pgptr =
-	pgbuf_fix2 (thread_p, &allocset->start_sects_vpid, OLD_PAGE,
-		    PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-		    MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	pgbuf_fix (thread_p, &allocset->start_sects_vpid, OLD_PAGE,
+		   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+		   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (addr.pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -3135,10 +3135,10 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
 	      pgbuf_set_dirty (thread_p, addr.pgptr, FREE);
 	      addr.pgptr = NULL;
 
-	      addr.pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE,
-				       PGBUF_LATCH_WRITE,
-				       PGBUF_UNCONDITIONAL_LATCH,
-				       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	      addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE,
+				      PGBUF_LATCH_WRITE,
+				      PGBUF_UNCONDITIONAL_LATCH,
+				      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 	      if (addr.pgptr == NULL)
 		{
 		  goto exit_on_error;
@@ -3297,9 +3297,8 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
   allocset_vpid.pageid = vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       return ER_FAILED;
@@ -3319,10 +3318,9 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 	  allocset_offset = offsetof (FILE_HEADER, allocset);
 	  while (!VPID_ISNULL (&allocset_vpid))
 	    {
-	      allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-					   PGBUF_LATCH_WRITE,
-					   PGBUF_UNCONDITIONAL_LATCH,
-					   item);
+	      allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+					  PGBUF_LATCH_WRITE,
+					  PGBUF_UNCONDITIONAL_LATCH, item);
 	      if (allocset_pgptr == NULL)
 		{
 		  pgbuf_unfix_and_init (thread_p, fhdr_pgptr);
@@ -3336,10 +3334,10 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 	      nxftb_vpid = allocset->start_pages_vpid;
 	      while (!VPID_ISNULL (&nxftb_vpid))
 		{
-		  pgptr = pgbuf_fix2 (thread_p, &nxftb_vpid, OLD_PAGE,
-				      PGBUF_LATCH_WRITE,
-				      PGBUF_UNCONDITIONAL_LATCH,
-				      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+		  pgptr = pgbuf_fix (thread_p, &nxftb_vpid, OLD_PAGE,
+				     PGBUF_LATCH_WRITE,
+				     PGBUF_UNCONDITIONAL_LATCH,
+				     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 		  if (pgptr == NULL)
 		    {
 		      pgbuf_unfix_and_init (thread_p, allocset_pgptr);
@@ -3498,9 +3496,8 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
   allocset_vpid.pageid = vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3536,10 +3533,9 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 	   * already been fetched as a file header page. This is done to code
 	   * the following easily.
 	   */
-	  allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-				       PGBUF_LATCH_WRITE,
-				       PGBUF_UNCONDITIONAL_LATCH,
-				       item);
+	  allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+				      PGBUF_LATCH_WRITE,
+				      PGBUF_UNCONDITIONAL_LATCH, item);
 	  if (allocset_pgptr == NULL)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -3559,10 +3555,10 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 	       * fetched previously as an allocation set. This is done to make
 	       * the following code easy to write.
 	       */
-	      pgptr = pgbuf_fix2 (thread_p, &nxftb_vpid, OLD_PAGE,
-				  PGBUF_LATCH_WRITE,
-				  PGBUF_UNCONDITIONAL_LATCH,
-				  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	      pgptr = pgbuf_fix (thread_p, &nxftb_vpid, OLD_PAGE,
+				 PGBUF_LATCH_WRITE,
+				 PGBUF_UNCONDITIONAL_LATCH,
+				 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 	      if (pgptr == NULL)
 		{
 		  GOTO_EXIT_ON_ERROR;
@@ -3679,10 +3675,10 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 	      nxftb_vpid = allocset->start_sects_vpid;
 	      while (!VPID_ISNULL (&nxftb_vpid))
 		{
-		  pgptr = pgbuf_fix2 (thread_p, &nxftb_vpid, OLD_PAGE,
-				      PGBUF_LATCH_WRITE,
-				      PGBUF_UNCONDITIONAL_LATCH,
-				      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+		  pgptr = pgbuf_fix (thread_p, &nxftb_vpid, OLD_PAGE,
+				     PGBUF_LATCH_WRITE,
+				     PGBUF_UNCONDITIONAL_LATCH,
+				     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 		  if (pgptr == NULL)
 		    {
 		      GOTO_EXIT_ON_ERROR;
@@ -3842,8 +3838,8 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 
   while (!VPID_ISNULL (&nxftb_vpid))
     {
-      pgptr = pgbuf_fix2 (thread_p, &nxftb_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH, item);
+      pgptr = pgbuf_fix (thread_p, &nxftb_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			 PGBUF_UNCONDITIONAL_LATCH, item);
       if (pgptr == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -4030,9 +4026,9 @@ file_get_type (THREAD_ENTRY * thread_p, const VFID * vfid)
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       return FILE_UNKNOWN_TYPE;
@@ -4069,9 +4065,9 @@ file_get_descriptor (THREAD_ENTRY * thread_p, const VFID * vfid,
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr != NULL)
     {
       fhdr = (FILE_HEADER *) (fhdr_pgptr + FILE_HEADER_OFFSET);
@@ -4103,9 +4099,9 @@ file_dump_descriptor (THREAD_ENTRY * thread_p, FILE * fp, const VFID * vfid)
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       return ER_FAILED;
@@ -4140,9 +4136,9 @@ file_get_numpages (THREAD_ENTRY * thread_p, const VFID * vfid,
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr != NULL)
     {
       fhdr = (FILE_HEADER *) (fhdr_pgptr + FILE_HEADER_OFFSET);
@@ -4313,9 +4309,9 @@ file_guess_numpages_overhead (THREAD_ENTRY * thread_p, const VFID * vfid,
 
       vpid.volid = vfid->volid;
       vpid.pageid = vfid->fileid;
-      fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			       PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+      fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
       if (fhdr_pgptr == NULL)
 	{
 	  return -1;
@@ -4323,10 +4319,10 @@ file_guess_numpages_overhead (THREAD_ENTRY * thread_p, const VFID * vfid,
 
       fhdr = (FILE_HEADER *) (fhdr_pgptr + FILE_HEADER_OFFSET);
 
-      allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid,
-				   OLD_PAGE, PGBUF_LATCH_READ,
-				   PGBUF_UNCONDITIONAL_LATCH,
-				   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid,
+				  OLD_PAGE, PGBUF_LATCH_READ,
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (allocset_pgptr == NULL)
 	{
 	  pgbuf_unfix_and_init (thread_p, fhdr_pgptr);
@@ -4381,9 +4377,9 @@ file_allocset_nthpage (THREAD_ENTRY * thread_p, const FILE_HEADER * fhdr,
   vpid = allocset->start_pages_vpid;
   while (!VPID_ISNULL (&vpid) && num_returned < num_desired_pages)
     {
-      pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (pgptr == NULL)
 	{
 	  return -1;
@@ -4476,9 +4472,9 @@ file_allocset_look_for_last_page (THREAD_ENTRY * thread_p,
   FILE_ALLOCSET *allocset;
   PAGE_PTR allocset_pgptr = NULL;
 
-  allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
-			       PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
+			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (allocset_pgptr == NULL)
     {
       VPID_SET_NULL (last_vpid);
@@ -4535,8 +4531,8 @@ file_find_nthpages (THREAD_ENTRY * thread_p, const VFID * vfid,
   allocset_vpid.pageid = vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       VPID_SET_NULL (nth_vpids);
@@ -4580,9 +4576,9 @@ file_find_nthpages (THREAD_ENTRY * thread_p, const VFID * vfid,
   while (!VPID_ISNULL (&allocset_vpid) && total_returned < num_desired_pages)
     {
       /* Fetch the page for the allocation set description */
-      allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-				   PGBUF_LATCH_READ,
-				   PGBUF_UNCONDITIONAL_LATCH, item);
+      allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+				  PGBUF_LATCH_READ,
+				  PGBUF_UNCONDITIONAL_LATCH, item);
       if (allocset_pgptr == NULL)
 	{
 	  VPID_SET_NULL (nth_vpids);
@@ -4695,9 +4691,9 @@ file_find_last_page (THREAD_ENTRY * thread_p, const VFID * vfid,
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       return NULL;
@@ -4938,9 +4934,9 @@ file_allocset_alloc_sector (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
   /* Find the end of the table of sector identifiers */
   while (!VPID_ISNULL (&allocset->end_sects_vpid))
     {
-      addr.pgptr = pgbuf_fix2 (thread_p, &allocset->end_sects_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      addr.pgptr = pgbuf_fix (thread_p, &allocset->end_sects_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (addr.pgptr == NULL)
 	{
 	  return NULL_SECTID;
@@ -5155,9 +5151,9 @@ file_allocset_expand_sector (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 
   /* Find the last page where the data will be moved from */
   from_vpid = allocset->end_pages_vpid;
-  from_pgptr = pgbuf_fix2 (thread_p, &from_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  from_pgptr = pgbuf_fix (thread_p, &from_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (from_pgptr == NULL)
     {
       return NULL;
@@ -5183,9 +5179,9 @@ file_allocset_expand_sector (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
       /* Same page as from-page. Fetch the page anyhow, to avoid complicated
          code (i.e., freeing pages) */
       to_vpid = from_vpid;
-      to_pgptr = pgbuf_fix2 (thread_p, &to_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			     PGBUF_UNCONDITIONAL_LATCH,
-			     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      to_pgptr = pgbuf_fix (thread_p, &to_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			    PGBUF_UNCONDITIONAL_LATCH,
+			    MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (to_pgptr == NULL)
 	{
 	  pgbuf_unfix_and_init (thread_p, from_pgptr);
@@ -5212,9 +5208,9 @@ file_allocset_expand_sector (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 	  return NULL;
 	}
 
-      to_pgptr = pgbuf_fix2 (thread_p, &to_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			     PGBUF_UNCONDITIONAL_LATCH,
-			     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      to_pgptr = pgbuf_fix (thread_p, &to_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			    PGBUF_UNCONDITIONAL_LATCH,
+			    MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (to_pgptr == NULL)
 	{
 	  pgbuf_unfix_and_init (thread_p, from_pgptr);
@@ -5279,10 +5275,10 @@ file_allocset_expand_sector (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 	  from_vpid = chain->prev_ftbvpid;
 	  pgbuf_unfix_and_init (thread_p, from_pgptr);
 
-	  from_pgptr = pgbuf_fix2 (thread_p, &from_vpid, OLD_PAGE,
-				   PGBUF_LATCH_WRITE,
-				   PGBUF_UNCONDITIONAL_LATCH,
-				   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	  from_pgptr = pgbuf_fix (thread_p, &from_vpid, OLD_PAGE,
+				  PGBUF_LATCH_WRITE,
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 	  if (from_pgptr == NULL)
 	    {
 	      pgbuf_unfix_and_init (thread_p, to_pgptr);
@@ -5329,9 +5325,9 @@ file_allocset_expand_sector (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 	  to_vpid = chain->prev_ftbvpid;
 	  pgbuf_set_dirty (thread_p, to_pgptr, FREE);
 
-	  to_pgptr = pgbuf_fix2 (thread_p, &to_vpid, OLD_PAGE,
-				 PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-				 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	  to_pgptr = pgbuf_fix (thread_p, &to_vpid, OLD_PAGE,
+				PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+				MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 	  if (to_pgptr == NULL)
 	    {
 	      pgbuf_unfix_and_init (thread_p, from_pgptr);
@@ -5470,9 +5466,9 @@ file_expand_ftab (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr)
     }
 
   /* Set allocated page as last file table page */
-  addr.pgptr = pgbuf_fix2 (thread_p, &new_ftb_vpid, NEW_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  addr.pgptr = pgbuf_fix (thread_p, &new_ftb_vpid, NEW_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (addr.pgptr == NULL)
     {
       /*
@@ -5512,9 +5508,9 @@ file_expand_ftab (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr)
        * Find the previous last page and modify its chain pointers according to
        * changes
        */
-      addr.pgptr = pgbuf_fix2 (thread_p, &prev_last_ftb_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      addr.pgptr = pgbuf_fix (thread_p, &prev_last_ftb_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (addr.pgptr == NULL)
 	{
 	  /*
@@ -5612,7 +5608,7 @@ file_debug_maybe_newset (PAGE_PTR fhdr_pgptr, FILE_HEADER * fhdr,
 
   if (file_Debug_newallocset_multiple_of > 0)
     {
-      allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid,
+      allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid,
 				  OLD_PAGE, PGBUF_LATCH_WRITE,
 				  PGBUF_UNCONDITIONAL_LATCH,
 				  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
@@ -5704,9 +5700,9 @@ file_allocset_add_set (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
   fhdr = (FILE_HEADER *) (fhdr_pgptr + FILE_HEADER_OFFSET);
   addr.vfid = &fhdr->vfid;
 
-  allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (allocset_pgptr == NULL)
     {
       goto exit_on_error;
@@ -5746,10 +5742,10 @@ file_allocset_add_set (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
     }
 
   /* Initialize the new allocation set */
-  new_allocset_pgptr = pgbuf_fix2 (thread_p, &new_allocset_vpid, OLD_PAGE,
-				   PGBUF_LATCH_WRITE,
-				   PGBUF_UNCONDITIONAL_LATCH,
-				   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  new_allocset_pgptr = pgbuf_fix (thread_p, &new_allocset_vpid, OLD_PAGE,
+				  PGBUF_LATCH_WRITE,
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (new_allocset_pgptr == NULL)
     {
       goto exit_on_error;
@@ -5945,9 +5941,9 @@ file_allocset_add_pageids (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
   /* Append the page identifiers at the end of the page table */
 
   vpid = allocset->end_pages_vpid;
-  pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-		      PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (pgptr == NULL)
     {
       return NULL_PAGEID;
@@ -6016,9 +6012,9 @@ file_allocset_add_pageids (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 
 	  /* Free this page and get the new page */
 	  pgbuf_unfix_and_init (thread_p, pgptr);
-	  pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	  pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 	  if (pgptr == NULL)
 	    {
 	      return NULL_PAGEID;
@@ -6160,9 +6156,9 @@ file_allocset_alloc_pages (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
    * This is done since the array of page identifiers must be stored in the
    * order of allocation.
    */
-  allocset_pgptr = pgbuf_fix2 (thread_p, allocset_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  allocset_pgptr = pgbuf_fix (thread_p, allocset_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (allocset_pgptr == NULL)
     {
       goto exit_on_error;
@@ -6211,9 +6207,9 @@ file_allocset_alloc_pages (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 
       while (!VPID_ISNULL (&vpid))
 	{
-	  pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	  pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 	  if (pgptr == NULL)
 	    {
 	      /* Unable to fetch file table page. Free the file header page and
@@ -6415,9 +6411,9 @@ file_alloc_pages (THREAD_ENTRY * thread_p, const VFID * vfid,
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -6645,9 +6641,9 @@ file_alloc_pages_as_noncontiguous (THREAD_ENTRY * thread_p,
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -6952,9 +6948,9 @@ file_alloc_pages_at_volid (THREAD_ENTRY * thread_p, const VFID * vfid,
   vpid.volid = vfid->volid;
   vpid.pageid = vfid->fileid;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -6974,9 +6970,9 @@ file_alloc_pages_at_volid (THREAD_ENTRY * thread_p, const VFID * vfid,
 
   /* Must allocate from the desired volume
      make sure that the last allocation set contains the desired volume */
-  allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (allocset_pgptr == NULL)
     {
       goto exit_on_error;
@@ -7159,9 +7155,9 @@ file_allocset_find_page (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
   vpid = allocset->start_pages_vpid;
   while (isfound == DISK_INVALID && !VPID_ISNULL (&vpid))
     {
-      pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -7661,9 +7657,9 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
       addr.vfid = vfid;
       addr.offset = -1;
 
-      addr.pgptr = pgbuf_fix2 (thread_p, dealloc_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       dealloc_item);
+      addr.pgptr = pgbuf_fix (thread_p, dealloc_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      dealloc_item);
       if (addr.pgptr != NULL)
 	{
 	  log_append_redo_data (thread_p, RVFL_LOGICAL_NOOP, &addr, 0, NULL);
@@ -7700,9 +7696,8 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
   allocset_vpid.pageid = vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -7713,9 +7708,9 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
   while (!VPID_ISNULL (&allocset_vpid))
     {
       /* Fetch the page for the allocation set description */
-      allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-				   PGBUF_LATCH_WRITE,
-				   PGBUF_UNCONDITIONAL_LATCH, item);
+      allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+				  PGBUF_LATCH_WRITE,
+				  PGBUF_UNCONDITIONAL_LATCH, item);
       if (allocset_pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -7884,9 +7879,8 @@ file_find_page (THREAD_ENTRY * thread_p, const VFID * vfid, const VPID * vpid)
   allocset_vpid.pageid = vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -7897,9 +7891,9 @@ file_find_page (THREAD_ENTRY * thread_p, const VFID * vfid, const VPID * vpid)
   while (!VPID_ISNULL (&allocset_vpid))
     {
       /* Fetch the page for the allocation set description */
-      allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-				   PGBUF_LATCH_WRITE,
-				   PGBUF_UNCONDITIONAL_LATCH, item);
+      allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+				  PGBUF_LATCH_WRITE,
+				  PGBUF_UNCONDITIONAL_LATCH, item);
       if (allocset_pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -8036,9 +8030,8 @@ file_truncate_to_numpages (THREAD_ENTRY * thread_p, const VFID * vfid,
   allocset_vpid.pageid = vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -8057,9 +8050,9 @@ file_truncate_to_numpages (THREAD_ENTRY * thread_p, const VFID * vfid,
 	   * already been fetched as a header page. This is done to code the
 	   * following easily.
 	   */
-	  allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-				       PGBUF_LATCH_WRITE,
-				       PGBUF_UNCONDITIONAL_LATCH, item);
+	  allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+				      PGBUF_LATCH_WRITE,
+				      PGBUF_UNCONDITIONAL_LATCH, item);
 	  if (allocset_pgptr == NULL)
 	    {
 	      /* Something went wrong */
@@ -8084,10 +8077,10 @@ file_truncate_to_numpages (THREAD_ENTRY * thread_p, const VFID * vfid,
 		   * has been fetched previously as an allocation set. This is
 		   * done to make the following code easy to write.
 		   */
-		  pgptr = pgbuf_fix2 (thread_p, &ftb_vpid, OLD_PAGE,
-				      PGBUF_LATCH_WRITE,
-				      PGBUF_UNCONDITIONAL_LATCH,
-				      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+		  pgptr = pgbuf_fix (thread_p, &ftb_vpid, OLD_PAGE,
+				     PGBUF_LATCH_WRITE,
+				     PGBUF_UNCONDITIONAL_LATCH,
+				     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 		  if (pgptr == NULL)
 		    {
 		      /* Something went wrong */
@@ -8614,9 +8607,9 @@ file_allocset_reuse_last_set (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 
   addr.vfid = &fhdr->vfid;
 
-  allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (allocset_pgptr == NULL)
     {
       goto exit_on_error;
@@ -8632,9 +8625,9 @@ file_allocset_reuse_last_set (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
       vpid = allocset->start_sects_vpid;
       while (!VPID_ISNULL (&vpid))
 	{
-	  pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	  pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
 	  if (pgptr == NULL)
 	    {
 	      goto exit_on_error;
@@ -10369,8 +10362,8 @@ file_dump_ftabs (THREAD_ENTRY * thread_p, FILE * fp, const FILE_HEADER * fhdr)
 
       (void) fprintf (fp, "%d|%d ", ftb_vpid.volid, ftb_vpid.pageid);
 
-      ftb_pgptr = pgbuf_fix2 (thread_p, &ftb_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			      PGBUF_UNCONDITIONAL_LATCH, item);
+      ftb_pgptr = pgbuf_fix (thread_p, &ftb_vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			     PGBUF_UNCONDITIONAL_LATCH, item);
       if (ftb_pgptr == NULL)
 	{
 	  return ER_FAILED;
@@ -10470,9 +10463,9 @@ file_allocset_dump_tables (THREAD_ENTRY * thread_p, FILE * fp,
   vpid = allocset->start_sects_vpid;
   while (!VPID_ISNULL (&vpid))
     {
-      pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (pgptr == NULL)
 	{
 	  ret = ER_FAILED;
@@ -10540,9 +10533,9 @@ file_allocset_dump_tables (THREAD_ENTRY * thread_p, FILE * fp,
   vpid = allocset->start_pages_vpid;
   while (!VPID_ISNULL (&vpid))
     {
-      pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (pgptr == NULL)
 	{
 	  ret = ER_FAILED;
@@ -10652,8 +10645,8 @@ file_dump (THREAD_ENTRY * thread_p, FILE * fp, const VFID * vfid)
   allocset_vpid.pageid = vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -10686,9 +10679,9 @@ file_dump (THREAD_ENTRY * thread_p, FILE * fp, const VFID * vfid)
 
   while (!VPID_ISNULL (&allocset_vpid))
     {
-      allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-				   PGBUF_LATCH_READ,
-				   PGBUF_UNCONDITIONAL_LATCH, item);
+      allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+				  PGBUF_LATCH_READ,
+				  PGBUF_UNCONDITIONAL_LATCH, item);
       if (allocset_pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -10880,9 +10873,9 @@ file_tracker_register (THREAD_ENTRY * thread_p, const VFID * vfid)
   vpid.pageid = file_Tracker->vfid->fileid;
 
   fhdr_pgptr =
-    pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-		PGBUF_UNCONDITIONAL_LATCH,
-		MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+    pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+	       PGBUF_UNCONDITIONAL_LATCH,
+	       MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       return NULL;
@@ -10905,9 +10898,9 @@ file_tracker_register (THREAD_ENTRY * thread_p, const VFID * vfid)
     }
 
   /* We need to know the allocset the file belongs to. */
-  allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid, OLD_PAGE,
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (allocset_pgptr == NULL)
     {
       goto exit_on_error;
@@ -10923,10 +10916,10 @@ file_tracker_register (THREAD_ENTRY * thread_p, const VFID * vfid)
 	  goto exit_on_error;
 	}
       /* Now get the new location for the allocation set */
-      allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid,
-				   OLD_PAGE, PGBUF_LATCH_WRITE,
-				   PGBUF_UNCONDITIONAL_LATCH,
-				   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid,
+				  OLD_PAGE, PGBUF_LATCH_WRITE,
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (allocset_pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -11006,9 +10999,8 @@ file_tracker_unregister (THREAD_ENTRY * thread_p, const VFID * vfid)
   allocset_vpid.pageid = file_Tracker->vfid->fileid;
   item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
 
-  fhdr_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   item);
+  fhdr_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, item);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -11019,9 +11011,9 @@ file_tracker_unregister (THREAD_ENTRY * thread_p, const VFID * vfid)
   /* Go over each allocation set until the page is found */
   while (!VPID_ISNULL (&allocset_vpid))
     {
-      allocset_pgptr = pgbuf_fix2 (thread_p, &allocset_vpid, OLD_PAGE,
-				   PGBUF_LATCH_WRITE,
-				   PGBUF_UNCONDITIONAL_LATCH, item);
+      allocset_pgptr = pgbuf_fix (thread_p, &allocset_vpid, OLD_PAGE,
+				  PGBUF_LATCH_WRITE,
+				  PGBUF_UNCONDITIONAL_LATCH, item);
       if (allocset_pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -11826,9 +11818,9 @@ file_tracker_dump (THREAD_ENTRY * thread_p, FILE * fp)
   set_vpids[0].volid = file_Tracker->vfid->volid;
   set_vpids[0].pageid = file_Tracker->vfid->fileid;
 
-  trk_fhdr_pgptr = pgbuf_fix2 (thread_p, &set_vpids[0], OLD_PAGE,
-			       PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  trk_fhdr_pgptr = pgbuf_fix (thread_p, &set_vpids[0], OLD_PAGE,
+			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (trk_fhdr_pgptr == NULL)
     {
       return ER_FAILED;
@@ -12202,9 +12194,9 @@ file_rv_tracker_unregister_logical_undo (THREAD_ENTRY * thread_p,
       vpid.volid = file_Tracker->vfid->volid;
       vpid.pageid = file_Tracker->vfid->fileid;
 
-      addr.pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			       PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+      addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
       if (addr.pgptr == NULL)
 	{
 	  return NO_ERROR;	/* do not permit error */
@@ -12268,10 +12260,10 @@ file_rv_undo_create_tmp (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 	      vpid.volid = vfid->volid;
 	      vpid.pageid = vfid->fileid;
 
-	      fhdr_pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE,
-				       PGBUF_LATCH_WRITE,
-				       PGBUF_UNCONDITIONAL_LATCH,
-				       MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+	      fhdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE,
+				      PGBUF_LATCH_WRITE,
+				      PGBUF_UNCONDITIONAL_LATCH,
+				      MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
 	      if (fhdr_pgptr == NULL)
 		{
 		  ret = ER_FAILED;

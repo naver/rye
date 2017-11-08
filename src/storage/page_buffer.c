@@ -865,8 +865,8 @@ pgbuf_fix_with_retry (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   int i = 0;
   bool noretry = false;
 
-  while ((pgptr = pgbuf_fix2 (thread_p, vpid, newpg, mode,
-			      PGBUF_UNCONDITIONAL_LATCH, item)) == NULL)
+  while ((pgptr = pgbuf_fix (thread_p, vpid, newpg, mode,
+			     PGBUF_UNCONDITIONAL_LATCH, item)) == NULL)
     {
       switch (er_errid ())
 	{
@@ -915,8 +915,8 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
     thread_set_check_page_validation (thread_p, false);
 #endif /* SERVER_MODE */
 
-  pgptr = pgbuf_fix_debug2 (thread_p, vpid, newpg, request_mode, condition,
-			    item, caller_file, caller_line);
+  pgptr = pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
+			   item, caller_file, caller_line);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
@@ -943,7 +943,7 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 #endif /* SERVER_MODE */
 
   pgptr =
-    pgbuf_fix_release2 (thread_p, vpid, newpg, request_mode, condition, item);
+    pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition, item);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
@@ -954,7 +954,7 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 #endif /* NDEBUG */
 
 /*
- * pgbuf_fix2 () -
+ * pgbuf_fix () -
  *   return: Pointer to the page or NULL
  *   vpid(in): Complete Page identifier
  *   newpg(in): Is this a newly allocated page ?
@@ -963,15 +963,15 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
  */
 #if !defined(NDEBUG)
 PAGE_PTR
-pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		 int request_mode, PGBUF_LATCH_CONDITION condition,
-                 UNUSED_ARG const MNT_SERVER_ITEM item,
+		 UNUSED_ARG const MNT_SERVER_ITEM item,
 		 const char *caller_file, int caller_line)
 #else /* NDEBUG */
 PAGE_PTR
-pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		   int request_mode, PGBUF_LATCH_CONDITION condition,
-                 UNUSED_ARG const MNT_SERVER_ITEM item)
+		   UNUSED_ARG const MNT_SERVER_ITEM item)
 #endif				/* NDEBUG */
 {
   PGBUF_BUFFER_HASH *hash_anchor;
@@ -991,8 +991,8 @@ pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 #endif
   UINT64 perf_start;
 
- assert (item != MNT_STATS_DATA_PAGE_FETCHES);
- assert (MNT_GET_PARENT_ITEM(item) == MNT_STATS_DATA_PAGE_FETCHES);
+  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
+  assert (MNT_GET_PARENT_ITEM (item) == MNT_STATS_DATA_PAGE_FETCHES);
 
   PERF_MON_GET_CURRENT_TIME (perf_start);
 
@@ -2539,9 +2539,9 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 	      vpid = bufptr->vpid;
 	      pthread_mutex_unlock (&bufptr->BCB_mutex);
 
-	      pgptr = pgbuf_fix2 (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-				  PGBUF_UNCONDITIONAL_LATCH,
-				  MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT);
+	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+				 PGBUF_UNCONDITIONAL_LATCH,
+				 MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT);
 	      if (pgptr == NULL
 		  || pgbuf_flush_with_wal (thread_p, pgptr) == NULL)
 		{
@@ -2654,9 +2654,9 @@ pgbuf_copy_to_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       /* The page is not on the buffer pool. Do we want to cache the page ? */
       if (do_fetch == true)
 	{
-	  pgptr = pgbuf_fix2 (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			      PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_AREA);
+	  pgptr = pgbuf_fix (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_AREA);
 	  if (pgptr != NULL)
 	    {
 	      memcpy (area, (char *) pgptr + start_offset, length);
@@ -2809,9 +2809,9 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       pthread_mutex_unlock (&bufptr->BCB_mutex);
     }
 
-  pgptr = pgbuf_fix2 (thread_p, vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-		      PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_AREA);
+  pgptr = pgbuf_fix (thread_p, vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_AREA);
   if (pgptr != NULL)
     {
       memcpy ((char *) pgptr + start_offset, area, length);

@@ -178,9 +178,31 @@ svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats)
  */
 void
 svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
-		       UINT64 exec_time)
+		       UINT64 exec_time, int level)
 {
   MNT_SERVER_ITEM parent_item;
+
+  assert (level == 0 && item != MNT_STATS_DATA_PAGE_FETCHES);
+#if 1
+  if (level == 1)
+    {
+      if (item != MNT_STATS_DATA_PAGE_FETCHES)
+	{
+	  int i = 1;
+
+	  while (i > 0)
+	    {
+	      fprintf (stdout, "***%d***\n", item);
+	      fflush (stdout);
+	    }
+	}
+      fprintf (stdout, "***%d***\n", item);
+      fflush (stdout);
+    }
+#else
+  assert (level == 1 && item == MNT_STATS_DATA_PAGE_FETCHES);
+#endif
+  assert (level <= 1);
 
   if (rye_Server_shm == NULL)
     {
@@ -204,7 +226,10 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
       parent_item = MNT_GET_PARENT_ITEM (item);
       if (parent_item != item)
 	{
-	  svr_shm_stats_counter (tran_index, parent_item, value, exec_time);
+	  assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);
+
+	  svr_shm_stats_counter (tran_index, parent_item, value, exec_time,
+				 level + 1);
 	}
     }
 }

@@ -222,8 +222,9 @@ log_rv_undo_record (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
     }
   else
     {
-      rcv->pgptr = pgbuf_fix2 (thread_p, rcv_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH, MNT_STATS_DATA_PAGE_FETCHES_OTHER);
+      rcv->pgptr = pgbuf_fix (thread_p, rcv_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_OTHER);
     }
 
   /* GET BEFORE DATA */
@@ -2405,7 +2406,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
-		  rcv.pgptr = pgbuf_fix2 (thread_p, &rcv_vpid, OLD_PAGE,
+		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
 					 PGBUF_LATCH_WRITE,
 					 PGBUF_UNCONDITIONAL_LATCH,
 					 MNT_STATS_DATA_PAGE_FETCHES_OTHER);
@@ -2581,7 +2582,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
-		  rcv.pgptr = pgbuf_fix2 (thread_p, &rcv_vpid, OLD_PAGE,
+		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
 					 PGBUF_LATCH_WRITE,
 					 PGBUF_UNCONDITIONAL_LATCH,
 					 MNT_STATS_DATA_PAGE_FETCHES_OTHER);
@@ -2733,7 +2734,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
-		  rcv.pgptr = pgbuf_fix2 (thread_p, &rcv_vpid, OLD_PAGE,
+		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
 					 PGBUF_LATCH_WRITE,
 					 PGBUF_UNCONDITIONAL_LATCH,
 					 MNT_STATS_DATA_PAGE_FETCHES_OTHER);
@@ -2843,7 +2844,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
-		  rcv.pgptr = pgbuf_fix2 (thread_p, &rcv_vpid, OLD_PAGE,
+		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
 					 PGBUF_LATCH_WRITE,
 					 PGBUF_UNCONDITIONAL_LATCH,
 					 MNT_STATS_DATA_PAGE_FETCHES_OTHER);
