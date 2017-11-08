@@ -118,8 +118,6 @@ static const char *rsql_Isolation_level_string[] = {
   "SERIALIZABLE"
 };
 
-static jmp_buf rsql_Jmp_buf;
-
 static const char *rsql_cmd_string (RYE_STMT_TYPE stmt_type,
 				    const char *default_string);
 static void display_empty_result (int stmt_type, int line_no);
@@ -151,8 +149,7 @@ static bool is_type_that_has_suffix (DB_TYPE type);
  */
 void
 rsql_results (const RSQL_ARGUMENT * rsql_arg, DB_QUERY_RESULT * result,
-	      DB_QUERY_TYPE * attr_spec, int line_no,
-	      RYE_STMT_TYPE stmt_type)
+	      DB_QUERY_TYPE * attr_spec, int line_no, RYE_STMT_TYPE stmt_type)
 {
   int i;
   DB_QUERY_TYPE *t;		/* temp ptr for attr_spec */
@@ -649,19 +646,6 @@ error:
 }
 
 /*
- * rsql_pipe_handler() - Generic longjmp'ing signal handler used
- *                     where we need to catch broken pipe.
- *   return: none
- *   sig(in): signal number
- */
-static void
-rsql_pipe_handler (UNUSED_ARG int sig_no)
-{
-  longjmp (rsql_Jmp_buf, 1);
-}
-
-static void (*rsql_pipe_save) (int sig);
-/*
  * write_results_to_stream()
  *   return: RSQL_FAILURE/RSQL_SUCCESS
  *   rsql_arg(in): rsql argument
@@ -675,12 +659,6 @@ static int
 write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
 			 const CUR_RESULT_INFO * result_info)
 {
-  /*
-   * These are volatile to avoid dangerous interaction with the longjmp
-   * handler for SIGPIPE problems.  The typedef is necessary so that we
-   * can tell the compiler that the top POINTER is volatile, not the
-   * characters that it eventually points to.
-   */
   typedef char **value_array;
   volatile value_array val;	/* attribute values array */
   int *len;			/* attribute values lengths */
@@ -688,7 +666,7 @@ write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
   int i;			/* loop counter */
   int object_no;		/* result object count */
   int e;			/* error code from DBI */
-  FILE *pf;			/* pipe stream to pager */
+  FILE *pf = NULL;		/* pipe stream to pager */
   int n;			/* # of cols for a line */
   RYE_STMT_TYPE stmt_type = result_info->curr_stmt_type;
   DB_QUERY_RESULT *result = result_info->query_result;
@@ -708,26 +686,61 @@ write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
   len = NULL;
   error = FALSE;
 
-  /*
-   * Do this *before* the setjmp to avoid the possibility of the value
-   * being clobbered by a longjmp.  Even if some internal thing longjmps
-   * to the end of the next block we still need to be able to close the
-   * pipe, so we can't risk having pf set back to some unknown value.
+  /* simple code without signal, setjmp, longjmp
    */
+
   pf = rsql_popen (rsql_Pager_cmd, fp);
 
-  if (setjmp (rsql_Jmp_buf) == 0)
+  rsql_fputs ("\n=== ", pf);
+  snprintf (rsql_Scratch_text, SCRATCH_TEXT_LEN,
+	    rsql_get_message (RSQL_RESULT_STMT_TITLE_FORMAT),
+	    rsql_cmd_string (stmt_type, "UNKNOWN"), line_no);
+  rsql_fputs (rsql_Scratch_text, pf);
+  rsql_fputs (" ===\n\n", pf);
+
+  if (db_query_first_tuple (result) < 0)
     {
-      rsql_pipe_save = os_set_signal_handler (SIGPIPE, &rsql_pipe_handler);
+      rsql_Error_code = RSQL_ERR_SQL_ERROR;
+      error = TRUE;
+      goto done;
+    }
 
-      rsql_fputs ("\n=== ", pf);
-      snprintf (rsql_Scratch_text, SCRATCH_TEXT_LEN,
-		rsql_get_message (RSQL_RESULT_STMT_TITLE_FORMAT),
-		rsql_cmd_string (stmt_type, "UNKNOWN"), line_no);
-      rsql_fputs (rsql_Scratch_text, pf);
-      rsql_fputs (" ===\n\n", pf);
+  if (!rsql_arg->line_output)
+    {
+      for (n = i = 0; i < num_attrs; i++)
+	{
+	  fprintf (pf, "  %*s", (int) (attr_lengths[i]), attr_names[i]);
+	  n += 2 + ((attr_lengths[i] > 0) ? attr_lengths[i] :
+		    -attr_lengths[i]);
+	}
+      putc ('\n', pf);
+      for (; n > 0; n--)
+	{
+	  putc ('=', pf);
+	}
+      putc ('\n', pf);
+    }
 
-      if (db_query_first_tuple (result) < 0)
+  for (object_no = 1;; object_no++)
+    {
+      rsql_Row_count = object_no;
+      /* free previous result */
+      if (val != NULL)
+	{
+	  assert (num_attrs == result_info->num_attrs);
+	  for (i = 0; i < num_attrs; i++)
+	    {
+	      free_and_init (val[i]);
+	    }
+	  free_and_init (val);
+	}
+      if (len)
+	{
+	  free_and_init (len);
+	}
+
+      val = get_current_result (&len, result_info);
+      if (val == NULL)
 	{
 	  rsql_Error_code = RSQL_ERR_SQL_ERROR;
 	  error = TRUE;
@@ -736,141 +749,87 @@ write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
 
       if (!rsql_arg->line_output)
 	{
-	  for (n = i = 0; i < num_attrs; i++)
-	    {
-	      fprintf (pf, "  %*s", (int) (attr_lengths[i]), attr_names[i]);
-	      n += 2 + ((attr_lengths[i] > 0) ? attr_lengths[i] :
-			-attr_lengths[i]);
-	    }
-	  putc ('\n', pf);
-	  for (; n > 0; n--)
-	    {
-	      putc ('=', pf);
-	    }
-	  putc ('\n', pf);
-	}
+	  int padding_size;
 
-      for (object_no = 1;; object_no++)
+	  for (i = 0; i < num_attrs; i++)
+	    {
+	      if (strcmp ("NULL", val[i]) == 0)
+		{
+		  is_null = true;
+		}
+	      else
+		{
+		  is_null = false;
+		}
+
+	      column_width = rsql_get_column_width (attr_names[i]);
+	      value_width =
+		calculate_width (column_width,
+				 rsql_string_width,
+				 len[i], attr_types[i], is_null);
+
+	      padding_size = (attr_lengths[i] > 0) ?
+		MAX (attr_lengths[i] -
+		     (value_width), 0)
+		: MIN (attr_lengths[i] + (value_width), 0);
+
+	      fprintf (pf, "  ");
+	      if (padding_size > 0)
+		{
+		  /* right justified */
+		  fprintf (pf, "%*s", (int) padding_size, "");
+		}
+
+	      value = val[i];
+	      if (is_type_that_has_suffix (attr_types[i]) && is_null == false)
+		{
+		  value[value_width - 1] = '\'';
+		}
+
+	      fwrite (value, 1, value_width, pf);
+
+	      if (padding_size < 0)
+		{
+		  /* left justified */
+		  fprintf (pf, "%*s", (int) (-padding_size), "");
+		}
+	    }
+	  putc ('\n', pf);
+	  /* fflush(pf); */
+	}
+      else
 	{
-	  rsql_Row_count = object_no;
-	  /* free previous result */
-	  if (val != NULL)
+	  fprintf (pf, "<%05d>", object_no);
+	  for (i = 0; i < num_attrs; i++)
 	    {
-	      assert (num_attrs == result_info->num_attrs);
-	      for (i = 0; i < num_attrs; i++)
-		{
-		  free_and_init (val[i]);
-		}
-	      free_and_init (val);
+	      fprintf (pf, "%*c", (int) ((i == 0) ? 1 : 8), ' ');
+	      fprintf (pf, "%*s: %s\n", (int) (-max_attr_name_length),
+		       attr_names[i], val[i]);
 	    }
-	  if (len)
-	    {
-	      free_and_init (len);
-	    }
-
-	  val = get_current_result (&len, result_info);
-	  if (val == NULL)
-	    {
-	      rsql_Error_code = RSQL_ERR_SQL_ERROR;
-	      error = TRUE;
-	      goto done;
-	    }
-
-	  if (!rsql_arg->line_output)
-	    {
-	      int padding_size;
-
-	      for (i = 0; i < num_attrs; i++)
-		{
-		  if (strcmp ("NULL", val[i]) == 0)
-		    {
-		      is_null = true;
-		    }
-		  else
-		    {
-		      is_null = false;
-		    }
-
-		  column_width = rsql_get_column_width (attr_names[i]);
-		  value_width =
-		    calculate_width (column_width,
-				     rsql_string_width,
-				     len[i], attr_types[i], is_null);
-
-		  padding_size = (attr_lengths[i] > 0) ?
-		    MAX (attr_lengths[i] -
-			 (value_width), 0)
-		    : MIN (attr_lengths[i] + (value_width), 0);
-
-		  fprintf (pf, "  ");
-		  if (padding_size > 0)
-		    {
-		      /* right justified */
-		      fprintf (pf, "%*s", (int) padding_size, "");
-		    }
-
-		  value = val[i];
-		  if (is_type_that_has_suffix (attr_types[i])
-		      && is_null == false)
-		    {
-		      value[value_width - 1] = '\'';
-		    }
-
-		  fwrite (value, 1, value_width, pf);
-
-		  if (padding_size < 0)
-		    {
-		      /* left justified */
-		      fprintf (pf, "%*s", (int) (-padding_size), "");
-		    }
-		}
-	      putc ('\n', pf);
-	      /* fflush(pf); */
-	    }
-	  else
-	    {
-	      fprintf (pf, "<%05d>", object_no);
-	      for (i = 0; i < num_attrs; i++)
-		{
-		  fprintf (pf, "%*c", (int) ((i == 0) ? 1 : 8), ' ');
-		  fprintf (pf, "%*s: %s\n", (int) (-max_attr_name_length),
-			   attr_names[i], val[i]);
-		}
-	      /* fflush(pf); */
-	    }
-
-	  /* advance to next */
-	  e = db_query_next_tuple (result);
-	  if (e < 0)
-	    {
-	      rsql_Error_code = RSQL_ERR_SQL_ERROR;
-	      error = TRUE;
-	      goto done;
-	    }
-	  else if (e == DB_CURSOR_END)
-	    {
-	      break;
-	    }
+	  /* fflush(pf); */
 	}
-      putc ('\n', pf);
+
+      /* advance to next */
+      e = db_query_next_tuple (result);
+      if (e < 0)
+	{
+	  rsql_Error_code = RSQL_ERR_SQL_ERROR;
+	  error = TRUE;
+	  goto done;
+	}
+      else if (e == DB_CURSOR_END)
+	{
+	  break;
+	}
     }
+  putc ('\n', pf);
 
 done:
 
   if (pf)
     {
-      /*
-       * Don't care for a sig pipe error when closing pipe.
-       *
-       * NOTE if I restore to previous signal handler which could be the
-       *      system default, the program could exit.
-       *      I cannot use the old error handler since I could not longjmp
-       */
-      (void) os_set_signal_handler (SIGPIPE, SIG_IGN);
       rsql_pclose (pf, fp);
     }
-
-  (void) os_set_signal_handler (SIGPIPE, rsql_pipe_save);
 
   /* free result */
   if (val != NULL)

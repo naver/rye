@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <signal.h>
-#include <setjmp.h>
 #include <pwd.h>
 #include "porting.h"
 #include "rsql.h"
@@ -45,7 +44,6 @@
 /* to build the current help message lines */
 static char **iq_More_lines;	/* more message lines */
 static int iq_Num_more_lines = 0;	/* number of more lines */
-static jmp_buf iq_Jmp_buf;
 
 #define DEFAULT_DB_ERROR_MSG_LEVEL      3	/* current max */
 
@@ -62,7 +60,6 @@ static RSQL_EDIT_CONTENTS rsql_Edit_contents =
   { NULL, 0, 0, RSQL_STATE_GENERAL };
 
 
-static void iq_pipe_handler (int sig_no);
 static void iq_format_err (char *string, int buf_size, int line_no,
 			   int col_no);
 static bool iq_input_device_is_a_tty (void);
@@ -654,30 +651,27 @@ rsql_display_more_lines (const char *title)
 {
   int i;
   FILE *pf;			/* pipe stream to pager */
-  void (*iq_pipe_save) (int sig);
 
-  iq_pipe_save = signal (SIGPIPE, &iq_pipe_handler);
-  if (setjmp (iq_Jmp_buf) == 0)
+  /* simple code without signal, setjmp, longjmp
+   */
+
+  pf = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
+
+  /* display title */
+  if (title != NULL)
     {
-      pf = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
-
-      /* display title */
-      if (title != NULL)
-	{
-	  sprintf (rsql_Scratch_text, "\n=== %s ===\n\n", title);
-	  rsql_fputs (rsql_Scratch_text, pf);
-	}
-
-      for (i = 0; i < iq_Num_more_lines; i++)
-	{
-	  rsql_fputs (iq_More_lines[i], pf);
-	  putc ('\n', pf);
-	}
-      putc ('\n', pf);
-
-      rsql_pclose (pf, rsql_Output_fp);
+      sprintf (rsql_Scratch_text, "\n=== %s ===\n\n", title);
+      rsql_fputs (rsql_Scratch_text, pf);
     }
-  signal (SIGPIPE, iq_pipe_save);
+
+  for (i = 0; i < iq_Num_more_lines; i++)
+    {
+      rsql_fputs (iq_More_lines[i], pf);
+      putc ('\n', pf);
+    }
+  putc ('\n', pf);
+
+  rsql_pclose (pf, rsql_Output_fp);
 }
 
 /*
@@ -701,20 +695,6 @@ rsql_free_more_lines (void)
       free_and_init (iq_More_lines);
       iq_Num_more_lines = 0;
     }
-}
-
-/*
- * iq_pipe_handler() - Generic longjmp'ing signal handler used
- *                     here we need to catch broken pipe
- *   return: none
- *   sig_no(in)
- *
- * Note:
- */
-static void
-iq_pipe_handler (UNUSED_ARG int sig_no)
-{
-  longjmp (iq_Jmp_buf, 1);
 }
 
 /*
