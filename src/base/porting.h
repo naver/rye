@@ -154,6 +154,13 @@ extern "C"
 #define INVALID_SOCKET (-1)
 #define IS_INVALID_SOCKET(socket) ((socket) < 0)
 
+  typedef enum
+  {
+    MEM_VSIZE = 1,
+    MEM_RSS
+  } PROC_MEMORY_TYPE;
+
+
 /*
  * wrapper for cuserid()
  */
@@ -161,7 +168,7 @@ extern "C"
 /*
  * wrapper for OS dependent operations
  */
-  extern INT64 os_get_mem_size (int pid);
+  extern INT64 os_get_mem_size (int pid, PROC_MEMORY_TYPE mem_type);
   extern int os_rename_file (const char *src_path, const char *dest_path);
 
 /* os_send_kill() - send the KILL signal to ourselves */
