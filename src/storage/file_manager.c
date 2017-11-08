@@ -5612,9 +5612,10 @@ file_debug_maybe_newset (PAGE_PTR fhdr_pgptr, FILE_HEADER * fhdr,
 
   if (file_Debug_newallocset_multiple_of > 0)
     {
-      allocset_pgptr = pgbuf_fix (thread_p, &fhdr->last_allocset_vpid,
+      allocset_pgptr = pgbuf_fix2 (thread_p, &fhdr->last_allocset_vpid,
 				  OLD_PAGE, PGBUF_LATCH_WRITE,
-				  PGBUF_UNCONDITIONAL_LATCH);
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (allocset_pgptr != NULL)
 	{
 	  allocset = (FILE_ALLOCSET *) ((char *) allocset_pgptr +

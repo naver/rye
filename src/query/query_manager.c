@@ -2352,8 +2352,9 @@ qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
   else
     {
       /* return temp file page */
-      page_p = pgbuf_fix (thread_p, vpid_p, OLD_PAGE,
-			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH);
+      page_p = pgbuf_fix2 (thread_p, vpid_p, OLD_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
     }
 
   return page_p;
@@ -2509,7 +2510,7 @@ qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
  *   tmp_vfid(in)       : tempfile_vfid struct pointer
  *
  * Note: This function tries to allocate a new page from an external
- * query file, fetchs and returns the page pointer. Since,
+ * query file, fetches and returns the page pointer. Since,
  * pages are not shared by different transactions, it does not
  * lock the page on fetching. If it can not allocate a new page,
  * necessary error code is set and NULL pointer is returned.
@@ -2537,10 +2538,11 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
 
   if (tmp_vfid_p->vpid_index != -1)
     {
-      page_p = pgbuf_fix (thread_p,
+      page_p = pgbuf_fix2 (thread_p,
 			  &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
 			  NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
       if (page_p == NULL)
 	{
 	  VPID_SET_NULL (vpid_p);
@@ -2631,9 +2633,10 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
   tmp_vfid_p->vpid_index = 0;
   tmp_vfid_p->total_count += num_pages;
 
-  page_p = pgbuf_fix (thread_p,
+  page_p = pgbuf_fix2 (thread_p,
 		      &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
-		      NEW_PAGE, PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH);
+		      NEW_PAGE, PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+		      MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
   if (page_p == NULL)
     {
       VPID_SET_NULL (vpid_p);
@@ -3204,7 +3207,10 @@ qmgr_free_list_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id,
     }
 
   qmgr_unlock_mutex (&tran_entry_p->lock);
-  return NO_ERROR;
+
+  assert (rc == NO_ERROR);
+
+  return rc;
 }
 
 /*

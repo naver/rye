@@ -3971,8 +3971,9 @@ disk_scramble_newpages (INT16 volid, INT32 first_pageid, INT32 npages,
 
   for (i = 0; i < npages; i++)
     {
-      addr.pgptr = pgbuf_fix (thread_p, &vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH);
+      addr.pgptr = pgbuf_fix2 (thread_p, &vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_OTHER);
       if (addr.pgptr != NULL)
 	{
 	  memset (addr.pgptr, MEM_REGION_SCRAMBLE_MARK, DB_PAGESIZE);

@@ -100,7 +100,6 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_data_page_fetches_xasl", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_qresult", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_ehash", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_largeobj", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_ovf_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_ovf", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_area", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
@@ -113,7 +112,9 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
    MNT_STATS_VALUE_COUNTER_WITH_TIME},
   {"Num_data_page_fetches_log_rollback", 1,
    MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_checkpoint", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+   {"Num_data_page_fetches_checkpoint", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+
+   {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */

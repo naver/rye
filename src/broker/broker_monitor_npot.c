@@ -356,8 +356,6 @@ init_server_monitor_item ()
 		     "datapage", "fetch_qresult");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_EHASH],
 		     "datapage", "fetch_ehash");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_LARGEOBJ],
-		     "datapage", "fetch_largeobj");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER],
 		     "datapage", "fetch_ovf_header");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OVF],
@@ -379,6 +377,9 @@ init_server_monitor_item ()
 		     "datapage", "fetch_log_rollback");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT],
 		     "datapage", "fetch_checkpoint");
+
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OTHER],
+                     "datapage", "fetch_other");
 #endif
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],

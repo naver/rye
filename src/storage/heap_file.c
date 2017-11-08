@@ -10189,7 +10189,6 @@ heap_attrinfo_dump (THREAD_ENTRY * thread_p, FILE * fp,
 {
   int i;
   HEAP_ATTRVALUE *value;	/* Disk value Attr info for a particular attr   */
-  int ret = NO_ERROR;
 
   /* check to make sure the attr_info has been used */
   if (attr_info->num_values == -1)
@@ -10204,8 +10203,7 @@ heap_attrinfo_dump (THREAD_ENTRY * thread_p, FILE * fp,
 
   if (dump_schema == true)
     {
-      ret =
-	heap_classrepr_dump (thread_p, fp, &attr_info->class_oid,
+      (void) heap_classrepr_dump (thread_p, fp, &attr_info->class_oid,
 			     attr_info->read_classrepr);
     }
 

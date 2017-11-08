@@ -112,7 +112,6 @@ typedef enum
   MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* xasl stream page                     */
   MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* query result page                    */
   MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* ehash bucket/dir page                */
-  MNT_STATS_DATA_PAGE_FETCHES_LARGEOBJ,	/* large object/dir page                */
   MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER,	/* overflow file header      */
   MNT_STATS_DATA_PAGE_FETCHES_OVF,	/* overflow page (with ovf_keyval)      */
   MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* area page                            */
@@ -124,6 +123,8 @@ typedef enum
   MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE,	/* postpone_op                     */
   MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK,	/* rollback_op                     */
   MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT,	/* checkpoint_op                     */
+
+  MNT_STATS_DATA_PAGE_FETCHES_OTHER,     /* misc (disk, recovery)                     */
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,
@@ -251,7 +252,6 @@ typedef enum
       || m == MNT_STATS_DATA_PAGE_FETCHES_XASL  \
       || m == MNT_STATS_DATA_PAGE_FETCHES_QRESULT       \
       || m == MNT_STATS_DATA_PAGE_FETCHES_EHASH \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_LARGEOBJ      \
       || m == MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER    \
       || m == MNT_STATS_DATA_PAGE_FETCHES_OVF   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_AREA  \
@@ -261,7 +261,8 @@ typedef enum
       || m == MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE  \
       || m == MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK  \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT) ? MNT_STATS_DATA_PAGE_FETCHES : m)
+      || m == MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT    \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_OTHER) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 
 /*
  * Server execution statistic structure

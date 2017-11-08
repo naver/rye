@@ -953,30 +953,6 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 }
 #endif /* NDEBUG */
 
-#if !defined(NDEBUG)
-PAGE_PTR
-pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		  int request_mode, PGBUF_LATCH_CONDITION condition,
-		  UNUSED_ARG const MNT_SERVER_ITEM item,
-		  const char *caller_file, int caller_line)
-{
-
- assert (item != MNT_STATS_DATA_PAGE_FETCHES);
- assert (MNT_GET_PARENT_ITEM(item) == MNT_STATS_DATA_PAGE_FETCHES);
-
-  return pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
-			  caller_file, caller_line);
-}
-#else /* NDEBUG */
-PAGE_PTR
-pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		    int request_mode, PGBUF_LATCH_CONDITION condition,
-		    UNUSED_ARG const MNT_SERVER_ITEM item)
-{
-  return pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition);
-}
-#endif /* NDEBUG */
-
 /*
  * pgbuf_fix () -
  *   return: Pointer to the page or NULL
@@ -1272,6 +1248,30 @@ try_again:
 
   return (PAGE_PTR) (&(bufptr->iopage_buffer->iopage.page[0]));
 }
+
+#if !defined(NDEBUG)
+PAGE_PTR
+pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+                  int request_mode, PGBUF_LATCH_CONDITION condition,
+                  UNUSED_ARG const MNT_SERVER_ITEM item,
+                  const char *caller_file, int caller_line)
+{
+
+ assert (item != MNT_STATS_DATA_PAGE_FETCHES);
+ assert (MNT_GET_PARENT_ITEM(item) == MNT_STATS_DATA_PAGE_FETCHES);
+
+  return pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
+                          caller_file, caller_line);
+}
+#else /* NDEBUG */
+PAGE_PTR
+pgbuf_fix_release2 (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
+                    int request_mode, PGBUF_LATCH_CONDITION condition,
+                    UNUSED_ARG const MNT_SERVER_ITEM item)
+{
+  return pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition);
+}
+#endif /* NDEBUG */
 
 /*
  * pgbuf_unfix () - Free the buffer where the page associated with pgptr resides

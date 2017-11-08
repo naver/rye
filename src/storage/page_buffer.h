@@ -151,7 +151,7 @@ extern PAGE_PTR pgbuf_fix_debug2 (THREAD_ENTRY * thread_p, const VPID * vpid,
 				  UNUSED_ARG const MNT_SERVER_ITEM item,
 				  const char *caller_file, int caller_line);
 
-#if 1				/* delete me later */
+#if 0				/* delete me later */
 #define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition) \
         pgbuf_fix_debug(thread_p, vpid, newpg, requestmode, condition, \
                         __FILE__, __LINE__)
@@ -208,7 +208,7 @@ extern PAGE_PTR pgbuf_fix_release2 (THREAD_ENTRY * thread_p,
 				    int requestmode,
 				    PGBUF_LATCH_CONDITION condition,
 				    UNUSED_ARG const MNT_SERVER_ITEM item);
-#if 1				/* delete me later */
+#if 0				/* delete me later */
 #define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition) \
         pgbuf_fix_release(thread_p, vpid, newpg, requestmode, condition)
 extern PAGE_PTR pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid,

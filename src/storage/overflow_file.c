@@ -1273,8 +1273,9 @@ overflow_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * ovf_vpid)
    */
 
   next_vpid = *ovf_vpid;
-  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH);
+  pgptr = pgbuf_fix2 (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_OVF);
   if (pgptr == NULL)
     {
       return ((ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
@@ -1308,8 +1309,9 @@ overflow_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * ovf_vpid)
 	      return ER_HEAP_OVFADDRESS_CORRUPTED;
 	    }
 
-	  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			     PGBUF_UNCONDITIONAL_LATCH);
+	  pgptr = pgbuf_fix2 (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_OVF);
 	  if (pgptr == NULL)
 	    {
 	      return ((ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
