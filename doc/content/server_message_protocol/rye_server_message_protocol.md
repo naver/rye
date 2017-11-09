@@ -45,11 +45,35 @@ enum css_packet_type
   * css_send_magic
     * DATA_TYPE packet
 
-    * packet data
+    * request data0
 
-      | data | description | note |
+      | description | type | note |
       | -------- | -------- | -------- |
-      | data0 | net_magic | { 0x00, 0x00, 0x00, 0x01, 0x20, 0x08, 0x11, 0x22 } |
+      | net_magic | char(8) | { 0x00, 0x00, 0x00, 'R', 'Y', 'E', 0x00, 0x01 } |
+
+    * request data1
+
+      | description | type | note |
+      | -------- | -------- | -------- |
+      | clt_version_major | short |  |
+      | clt_version_minor | short |  |
+      | clt_version_patch | short |  |
+      | clt_version_build | short |  |
+
+    * reply data0
+
+      | description | type | note |
+      | -------- | -------- | -------- |
+      | css_error | int |  |
+
+    * reply data1
+
+      | description | type | note |
+      | -------- | -------- | -------- |
+      | svr_version_major | short |  |
+      | svr_version_minor | short |  |
+      | svr_version_patch | short |  |
+      | svr_version_build | short |  |
 
   * send connect request packet
     * COMMAND_TYPE packet

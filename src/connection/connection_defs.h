@@ -180,7 +180,8 @@ enum css_error_code
   INTERRUPTED_READ = 14,
   CANT_ALLOC_BUFFER = 15,
   OS_ERROR = 16,
-  TIMEDOUT_ON_QUEUE = 17
+  TIMEDOUT_ON_QUEUE = 17,
+  NOT_COMPATIBLE_VERSION = 18
 };
 
 /*
@@ -365,16 +366,24 @@ typedef struct
 } CSS_NET_PACKET;
 
 /*
- * These are the data definitions for the queuing routines.
- */
-
-/*
  * This data structure is the interface between the client and the
  * communication software to identify the data connection.
  */
+
+typedef struct
+{
+  short major;
+  short minor;
+  short patch;
+  short build;
+} CSS_VERSION;
+#define CSS_CUR_VERSION		\
+	{ MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, BUILD_SEQ }
+
 typedef struct css_conn_entry CSS_CONN_ENTRY;
 struct css_conn_entry
 {
+  CSS_VERSION peer_version;
   SOCKET fd;
   unsigned short request_id;
   int status;			/* CONN_OPEN, CONN_CLOSED, CONN_CLOSING = 3 */

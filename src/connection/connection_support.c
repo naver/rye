@@ -81,7 +81,7 @@
 #define IO_VECTOR_SET_PTR(IOV_PTR, BUFF_PTR, LEN)		\
 	do {							\
 	  struct iovec *_tmp_iov_ptr = (IOV_PTR);		\
-	  _tmp_iov_ptr->iov_base = (caddr_t) (BUFF_PTR);	\
+	  _tmp_iov_ptr->iov_base = (BUFF_PTR);	\
 	  _tmp_iov_ptr->iov_len = (LEN);			\
 	} while (0)
 
@@ -968,6 +968,24 @@ css_trim_str (char *str)
 }
 #endif
 
+static void
+css_version_hton (CSS_VERSION * version)
+{
+  version->major = htons (version->major);
+  version->minor = htons (version->minor);
+  version->patch = htons (version->patch);
+  version->build = htons (version->build);
+}
+
+static void
+css_version_ntoh (CSS_VERSION * version)
+{
+  version->major = ntohs (version->major);
+  version->minor = ntohs (version->minor);
+  version->patch = ntohs (version->patch);
+  version->build = ntohs (version->build);
+}
+
 /*
  * css_send_magic () - send magic
  *
@@ -977,8 +995,45 @@ css_trim_str (char *str)
 int
 css_send_magic (CSS_CONN_ENTRY * conn)
 {
-  return (css_send_data_packet (conn, 0, 1,
-				css_Net_magic, sizeof (css_Net_magic)));
+  int css_errors;
+  int timeout;
+  CSS_NET_PACKET *recv_packet = NULL;
+  CSS_VERSION *peer_version = &conn->peer_version;
+  CSS_VERSION my_version = CSS_CUR_VERSION;
+
+  css_version_hton (&my_version);
+
+  css_errors = css_send_data_packet (conn, 0, 2,
+				     css_Net_magic, sizeof (css_Net_magic),
+				     &my_version, sizeof (CSS_VERSION));
+  if (css_errors != NO_ERRORS)
+    {
+      return css_errors;
+    }
+
+  timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
+
+  if (css_net_packet_recv (&recv_packet, conn, timeout, 2,
+			   &css_errors, sizeof (int),
+			   peer_version, sizeof (CSS_VERSION)) != NO_ERRORS)
+    {
+      return ERROR_ON_READ;
+    }
+
+  if (css_net_packet_get_recv_size (recv_packet, 0) != sizeof (int) ||
+      css_net_packet_get_recv_size (recv_packet, 1) != sizeof (CSS_VERSION))
+    {
+      css_errors = ERROR_ON_READ;
+    }
+  else
+    {
+      css_errors = ntohl (css_errors);
+      css_version_ntoh (peer_version);
+    }
+
+  css_net_packet_free (recv_packet);
+
+  return css_errors;
 }
 
 /*
@@ -990,52 +1045,55 @@ css_send_magic (CSS_CONN_ENTRY * conn)
 int
 css_check_magic (CSS_CONN_ENTRY * conn)
 {
-  int size;
-  char *p;
-  int css_error;
   int timeout;
   CSS_NET_PACKET *recv_packet = NULL;
+  char magic[sizeof (css_Net_magic)];
+  CSS_VERSION *peer_version = &conn->peer_version;
+  int css_errors;
 
   timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  if (css_net_packet_recv (&recv_packet, conn, timeout, 0) != NO_ERRORS)
+  if (css_net_packet_recv (&recv_packet, conn, timeout, 2,
+			   magic, sizeof (css_Net_magic),
+			   peer_version, sizeof (CSS_VERSION)) != NO_ERRORS)
     {
       return ERROR_ON_READ;
     }
 
-  p = css_net_packet_get_buffer (recv_packet, 0, -1, false);
-  if (p == NULL)
+
+  css_errors = NO_ERRORS;
+
+  if (css_net_packet_get_recv_size (recv_packet, 0) != sizeof (css_Net_magic)
+      || memcmp (magic, css_Net_magic, sizeof (css_Net_magic)) != 0
+      || css_net_packet_get_recv_size (recv_packet,
+				       1) != sizeof (CSS_VERSION))
     {
-      css_net_packet_free (recv_packet);
-
-      return ERROR_ON_READ;
-    }
-
-  size = css_net_packet_get_recv_size (recv_packet, 0);
-
-  css_error = NO_ERRORS;
-
-  if (size == sizeof (css_Net_magic))
-    {
-      unsigned int i;
-
-      for (i = 0; i < sizeof (css_Net_magic); i++)
-	{
-	  if (*(p++) != css_Net_magic[i])
-	    {
-	      css_error = WRONG_PACKET_TYPE;
-	      break;
-	    }
-	}
+      css_errors = ERROR_ON_READ;
     }
   else
     {
-      css_error = WRONG_PACKET_TYPE;
+      int result;
+      CSS_VERSION my_version = CSS_CUR_VERSION;
+
+      css_version_ntoh (peer_version);
+
+      if (my_version.major != peer_version->major)
+	{
+	  css_errors = NOT_COMPATIBLE_VERSION;
+	}
+
+      result = htonl (css_errors);
+      if (css_send_data_packet (conn, 0, 2, &result, sizeof (int),
+				&my_version,
+				sizeof (CSS_VERSION)) != NO_ERRORS)
+	{
+	  css_errors = ERROR_ON_WRITE;
+	}
     }
 
   css_net_packet_free (recv_packet);
 
-  return css_error;
+  return css_errors;
 }
 
 static int
