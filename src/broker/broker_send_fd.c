@@ -56,6 +56,7 @@ send_fd (int server_fd, int client_fd, int rid, struct timeval *recv_time)
   } control_un;
   struct cmsghdr *cmptr;
   struct sendmsg_s send_msg;
+  int *dataptr;
 
   assert (recv_time != NULL);
 
@@ -77,7 +78,8 @@ send_fd (int server_fd, int client_fd, int rid, struct timeval *recv_time)
   cmptr->cmsg_level = SOL_SOCKET;
   cmptr->cmsg_type = SCM_RIGHTS;
   cmptr->cmsg_len = CONTROLLEN;
-  *(int *) CMSG_DATA (cmptr) = client_fd;
+  dataptr = (int *) CMSG_DATA (cmptr);
+  *dataptr = client_fd;
 
   num_bytes = sendmsg (server_fd, &msg, 0);
 

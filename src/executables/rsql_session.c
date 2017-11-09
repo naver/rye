@@ -48,10 +48,6 @@
 		  APPEND_MORE_LINE(0, ""); \
 		} while(0)
 
-static jmp_buf rsql_Jmp_buf;
-
-static void rsql_pipe_handler (int sig_no);
-
 
 #define CMD_EMPTY_FLAG	  0x00000000
 #define CMD_CHECK_CONNECT 0x00000001
@@ -341,18 +337,6 @@ error:
 }
 
 /*
- * rsql_pipe_handler() - Generic longjmp'ing signal handler used
- *                     where we need to catch broken pipe
- *   return: none
- *   sig_no(in)
- */
-static void
-rsql_pipe_handler (UNUSED_ARG int sig_no)
-{
-  longjmp (rsql_Jmp_buf, 1);
-}
-
-/*
  * rsql_help_info() - display database information for given command
  *   return: none
  *   command(in): "schema [<class name>]"
@@ -451,7 +435,6 @@ rsql_killtran (const char *argument)
   TRANS_INFO *info = NULL;
   int tran_index = -1, i;
   FILE *p_stream;		/* pipe stream to pager */
-  void (*rsql_pipe_save) (int sig);
 
   if (argument)
     {
@@ -468,24 +451,22 @@ rsql_killtran (const char *argument)
   /* dump transaction */
   if (tran_index <= 0)
     {
-      rsql_pipe_save = signal (SIGPIPE, &rsql_pipe_handler);
-      if (setjmp (rsql_Jmp_buf) == 0)
+      /* simple code without signal, setjmp, longjmp
+       */
+
+      p_stream = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
+
+      fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_TITLE_TEXT));
+      for (i = 0; i < info->num_trans; i++)
 	{
-	  p_stream = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
-
-	  fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_TITLE_TEXT));
-	  for (i = 0; i < info->num_trans; i++)
-	    {
-	      fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_FORMAT),
-		       info->tran[i].tran_index,
-		       tran_get_tranlist_state_name (info->tran[i].state),
-		       info->tran[i].db_user, info->tran[i].host_name,
-		       info->tran[i].process_id, info->tran[i].program_name);
-	    }
-
-	  rsql_pclose (p_stream, rsql_Output_fp);
+	  fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_FORMAT),
+		   info->tran[i].tran_index,
+		   tran_get_tranlist_state_name (info->tran[i].state),
+		   info->tran[i].db_user, info->tran[i].host_name,
+		   info->tran[i].process_id, info->tran[i].program_name);
 	}
-      signal (SIGPIPE, rsql_pipe_save);
+
+      rsql_pclose (p_stream, rsql_Output_fp);
     }
   else
     {

@@ -113,7 +113,7 @@ main (int argc, char *argv[])
     {0, 0, 0, 0}
   };
 
-  argv[0] = UTIL_REPL_NAME;
+  argv[0] = (char *) UTIL_REPL_NAME;
 
   /* init client functions */
   cci_set_client_functions (or_pack_db_idxkey, db_idxkey_is_null,
@@ -332,7 +332,8 @@ main (int argc, char *argv[])
 	}
     }
 
-  Repl_Info->start_vsize = cirp_get_mem_size ();
+  Repl_Info->pid = getpid ();
+  Repl_Info->start_vsize = os_get_mem_size (Repl_Info->pid, MEM_RSS);
   Repl_Info->max_mem_size = Repl_Info->start_vsize + ONE_G;
 
   pthread_join (analyzer_entry.tid, NULL);
@@ -622,6 +623,7 @@ cirp_init_repl_info (const char *db_name, const char *log_path,
   Repl_Info->start_time = time (NULL);
   Repl_Info->max_mem_size = -1;
   Repl_Info->start_vsize = -1;
+  Repl_Info->pid = -1;
 
   error = cirp_init_writer (&Repl_Info->writer_info);
   if (error != NO_ERROR)
@@ -1016,28 +1018,6 @@ health_check_main (void *arg)
 }
 
 /*
- * cirp_get_mem_size () - get mem size with own pid
- *   return: memory size(bytes) of app.
- */
-unsigned long
-cirp_get_mem_size (void)
-{
-  unsigned long vsize = 0;
-  FILE *fp;
-
-  fp = fopen ("/proc/self/statm", "r");
-  if (fp != NULL)
-    {
-      fscanf (fp, "%lu", &vsize);
-      /* page to Kbyte */
-      vsize *= (sysconf (_SC_PAGESIZE) / ONE_K);
-      fclose (fp);
-    }
-
-  return vsize;
-}
-
-/*
  * cirp_check_mem_size()
  *   return: error code
  */
@@ -1052,13 +1032,9 @@ cirp_check_mem_size (void)
       return NO_ERROR;
     }
 
-  vsize = cirp_get_mem_size ();
+  vsize = os_get_mem_size (Repl_Info->pid, MEM_RSS);
   if (vsize > Repl_Info->max_mem_size)
     {
-      /*
-       * vmem size is more than max_mem_size
-       */
-      assert (false);
       error = ER_HA_LA_EXCEED_MAX_MEM_SIZE;
     }
 

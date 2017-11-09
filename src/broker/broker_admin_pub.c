@@ -53,7 +53,6 @@
 #include "broker_shm.h"
 #include "broker_util.h"
 #include "broker_env_def.h"
-#include "broker_process_size.h"
 #include "broker_admin_pub.h"
 #include "broker_filename.h"
 #include "broker_acl.h"
@@ -1764,7 +1763,7 @@ admin_get_broker_key_and_portid (char **broker_key, int *port,
   return 0;
 
 error:
-  RYE_FREE_MEM(*broker_key);
+  RYE_FREE_MEM (*broker_key);
   *port = -1;
 
   if (shm_br != NULL)
@@ -2045,7 +2044,7 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
   as_info->last_access_time = time (NULL);
   as_info->transaction_start_time = (time_t) 0;
   as_info->psize_time = time (NULL);
-  as_info->psize = os_get_mem_size (as_info->pid);
+  as_info->psize = os_get_mem_size (as_info->pid, MEM_VSIZE);
   if (as_info->psize > 1)
     {
       as_info->psize = as_info->psize / ONE_K;

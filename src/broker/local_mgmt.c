@@ -1254,8 +1254,11 @@ local_mg_read_rye_file (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
   file_size = stat_buf.st_size;
   contents = RYE_MALLOC (file_size + 1);
   read_len = read_outfile (rye_file_path, contents, file_size + 1);
-
-  assert (read_len == file_size);
+  if (read_len != file_size)
+    {
+      assert (false);
+      ;				/* TODO - avoid compile error */
+    }
 
   br_mgmt_result_msg_set (result_msg, file_size, contents);
 

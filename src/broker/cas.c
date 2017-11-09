@@ -53,7 +53,6 @@
 #include "broker_shm.h"
 #include "broker_util.h"
 #include "broker_env_def.h"
-#include "broker_process_size.h"
 #include "broker_acl.h"
 #include "environment_variable.h"
 
@@ -403,7 +402,8 @@ cas_main (void)
 
   sql_log_Notice_mode_flush = false;
 
-  psize_At_start = as_Info->psize = getsize (getpid ());
+  psize_At_start = as_Info->psize =
+    (int) (os_get_mem_size (getpid (), MEM_VSIZE) / ONE_K);
 
   if (shm_Appl->appl_server_max_size > shm_Appl->appl_server_hard_limit)
     {

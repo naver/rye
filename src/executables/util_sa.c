@@ -126,7 +126,7 @@ createdb (UTIL_FUNCTION_ARG * arg)
   char er_msg_file[PATH_MAX];
   int status;
   FILE *output_file = NULL;
-  FILE *user_define_file = NULL;
+//  FILE *user_define_file = NULL;
 
   const char *output_file_name;
   const char *program_name;
@@ -136,7 +136,7 @@ createdb (UTIL_FUNCTION_ARG * arg)
   bool verbose;
   const char *init_file_name;
   const char *volume_spec_file_name = NULL;
-  const char *user_define_file_name = NULL;
+//  const char *user_define_file_name = NULL;
 
   int db_volume_pages;
   int db_page_size;
@@ -191,7 +191,7 @@ createdb (UTIL_FUNCTION_ARG * arg)
 				     0);
 #endif
   assert (volume_spec_file_name == NULL);
-  assert (user_define_file_name == NULL);
+//  assert (user_define_file_name == NULL);
 
   db_page_size = IO_PAGESIZE;
 
@@ -364,7 +364,7 @@ createdb (UTIL_FUNCTION_ARG * arg)
       goto error_exit;
     }
 
-  assert (user_define_file_name == NULL);
+//  assert (user_define_file_name == NULL);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
   if (user_define_file_name != NULL)
@@ -467,7 +467,7 @@ createdb (UTIL_FUNCTION_ARG * arg)
 
   db_commit_transaction ();
 
-  assert (user_define_file == NULL);
+//  assert (user_define_file == NULL);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
   if (user_define_file != NULL)
