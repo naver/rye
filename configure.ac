@@ -152,8 +152,8 @@ case $SYSTEM_TYPE in
 		;;
 esac
 
-WARN="-Wall -W -Wwrite-strings -Wcast-qual -Wunused -Wmissing-prototypes -Wredundant-decls -Wno-long-long $WARN"
-WARN_CXX="-Wall -W -Wwrite-strings -Wcast-qual -Wunused -Wredundant-decls -Wno-long-long $WARN_CXX"
+WARN="-Wall -Wextra -Wwrite-strings -Wcast-qual -Wunused -Wmissing-prototypes -Wredundant-decls -Wno-long-long $WARN"
+WARN_CXX="-Wall -Wextra -Wwrite-strings -Wcast-qual -Wunused -Wredundant-decls -Wno-long-long $WARN_CXX"
 NOWARN=""
 CFLAGS="$CFLAGS $WARN $NOWARN"
 CXXFLAGS="$CXXFLAGS $WARN_CXX $NOWARN"
