@@ -178,31 +178,13 @@ svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats)
  */
 void
 svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
-		       UINT64 exec_time, int level)
+		       UINT64 exec_time)
 {
   MNT_SERVER_ITEM parent_item;
-
-  assert (level == 0 && item != MNT_STATS_DATA_PAGE_FETCHES);
-#if 1
-  if (level == 1)
-    {
-      if (item != MNT_STATS_DATA_PAGE_FETCHES)
-	{
-	  int i = 1;
-
-	  while (i > 0)
-	    {
-	      fprintf (stdout, "***%d***\n", item);
-	      fflush (stdout);
-	    }
-	}
-      fprintf (stdout, "***%d***\n", item);
-      fflush (stdout);
-    }
-#else
-  assert (level == 1 && item == MNT_STATS_DATA_PAGE_FETCHES);
+#if defined(HAVE_ATOMIC_BUILTINS)
+  INT64 after_value;
+  UINT64 after_exec_time;
 #endif
-  assert (level <= 1);
 
   if (rye_Server_shm == NULL)
     {
@@ -214,10 +196,11 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
       rye_Server_shm->tran_info[tran_index].stats.values[item] += value;
 
 #if defined(HAVE_ATOMIC_BUILTINS)
-      value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[item],
-			     value);
-      exec_time = ATOMIC_INC_64 (&rye_Server_shm->global_stats.acc_time[item],
-				 exec_time);
+      after_value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[item],
+				   value);
+      after_exec_time =
+	ATOMIC_INC_64 (&rye_Server_shm->global_stats.acc_time[item],
+		       exec_time);
 #else
       rye_Server_shm->global_stats.values[item] += value;
       rye_Server_shm->global_stats.acc_time[item] += exec_time;
@@ -228,8 +211,7 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
 	{
 	  assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);
 
-	  svr_shm_stats_counter (tran_index, parent_item, value, exec_time,
-				 level + 1);
+	  svr_shm_stats_counter (tran_index, parent_item, value, exec_time);
 	}
     }
 }
