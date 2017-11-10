@@ -125,6 +125,12 @@ struct fileio_page_reserved
 {
   LOG_LSA lsa;			/* Log Sequence number of page, Page recovery
 				   stuff */
+  INT32 pageid;			/* Page identifier */
+  INT16 volid;			/* Volume identifier where the page reside */
+  unsigned char ptype;		/* Page type */
+  unsigned char pflag_reserve_1;	/* unused - Reserved field */
+  INT64 p_reserve_2;		/* unused - Reserved field */
+  INT64 p_reserve_3;		/* unused - Reserved field */
 };
 
 /* The FILEIO_PAGE */
@@ -167,6 +173,9 @@ extern void *fileio_initialize_pages (THREAD_ENTRY * thread_p, int vdes,
 				      void *io_pgptr, DKNPAGES start_pageid,
 				      DKNPAGES npages, size_t page_size,
 				      int kbytes_to_be_written_per_sec);
+extern PAGE_TYPE fileio_get_page_ptype (UNUSED_ARG THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p);
+extern PAGE_TYPE fileio_set_page_ptype (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p, PAGE_TYPE ptype);
+extern FILEIO_PAGE *fileio_alloc_io_page (THREAD_ENTRY * thread_p);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern DKNPAGES fileio_truncate (VOLID volid, DKNPAGES npages_to_resize);
 #endif
@@ -292,7 +301,7 @@ extern char *fileio_ctime (INT64 * clock_p, char *buffer_p);
 extern void fileio_decache (THREAD_ENTRY * thread_p, int vdes);
 extern FILEIO_LOCKF_TYPE fileio_get_lockf_type (int vdes);
 extern int fileio_create (THREAD_ENTRY * thread_p, const char *db_fullname,
-                          const char *vlabel, VOLID volid, bool dolock,
-                          bool dosync);
+			  const char *vlabel, VOLID volid, bool dolock,
+			  bool dosync);
 
 #endif /* _FILE_IO_H_ */

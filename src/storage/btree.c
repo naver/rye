@@ -4018,8 +4018,12 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 	      node_type =
 		left_header.node_level >
 		1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE;
+#if 0
 	      key_cnt = left_header.key_cnt;
 	      assert (key_cnt >= 0);
+#else
+	      assert (left_header.key_cnt >= 0);
+#endif
 	      BTREE_CHECK_KEY_CNT (Left, left_header.node_level,
 				   left_header.key_cnt);
 #if 0

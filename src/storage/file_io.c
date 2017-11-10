@@ -308,7 +308,8 @@ static int fileio_expand_permanent_volume_info (FILEIO_VOLUME_HEADER * header,
 static int fileio_expand_temporary_volume_info (FILEIO_VOLUME_HEADER * header,
 						int volid);
 #endif
-
+static void fileio_initialize_res (THREAD_ENTRY * thread_p,
+				   FILEIO_PAGE_RESERVED * prv_p);
 static int fileio_get_primitive_way_max (const char *path,
 					 long int *filename_max,
 					 long int *pathname_max);
@@ -976,6 +977,75 @@ fileio_initialize_pages (THREAD_ENTRY * thread_p, int vol_fd, void *io_page_p,
   return io_page_p;
 }
 
+PAGE_TYPE
+fileio_get_page_ptype (UNUSED_ARG THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p)
+{
+  PAGE_TYPE ptype;
+
+  assert (prv_p != NULL);
+
+  ptype = (PAGE_TYPE) (prv_p->ptype);
+
+  return ptype;
+}
+
+PAGE_TYPE
+fileio_set_page_ptype (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p,
+                       PAGE_TYPE ptype)
+{
+  PAGE_TYPE old_ptype;
+
+  assert (prv_p != NULL);
+  assert (ptype >= PAGE_UNKNOWN);
+  assert (ptype <= PAGE_LAST);
+
+  old_ptype = fileio_get_page_ptype (thread_p, prv_p);
+
+  prv_p->ptype = (unsigned char) ptype;
+
+  return old_ptype;
+}
+
+/*
+ * fileio_initialize_res () -
+ *   return:
+ */
+static void
+fileio_initialize_res (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p)
+{
+  LSA_SET_NULL (&(prv_p->lsa));
+  prv_p->pageid = NULL_PAGEID;
+  prv_p->volid = NULL_VOLID;
+
+  prv_p->ptype = '\0';
+  (void) fileio_set_page_ptype (thread_p, prv_p, PAGE_UNKNOWN);
+  prv_p->pflag_reserve_1 = '\0';
+  prv_p->p_reserve_2 = 0;
+  prv_p->p_reserve_3 = 0;
+}
+
+/*
+ * fileio_alloc_io_page () - get clean I/O page
+ */
+FILEIO_PAGE *
+fileio_alloc_io_page (THREAD_ENTRY * thread_p)
+{
+  FILEIO_PAGE *malloc_io_pgptr = NULL;
+
+  malloc_io_pgptr = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
+  if (malloc_io_pgptr == NULL)
+    {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
+	      1, IO_PAGESIZE);
+      return NULL;
+    }
+
+  (void) fileio_initialize_res (thread_p, &(malloc_io_pgptr->prv));
+  MEM_REGION_INIT (&malloc_io_pgptr->page[0], DB_PAGESIZE);
+
+  return malloc_io_pgptr;
+}
+
 /*
  * fileio_open () - Same as Unix open, but with retry during interrupts
  *   return: volume descriptor identifier on success, NULL_VOLDES on failure
@@ -1199,7 +1269,7 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
 	       bool reuse_file)
 {
   int vol_fd;
-  FILEIO_PAGE *malloc_io_page_p;
+  FILEIO_PAGE *io_page_p;
   off_t offset;
   DKNPAGES max_npages;
   struct stat buf;
@@ -1283,16 +1353,13 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
       return NULL_VOLDES;
     }
 
-  malloc_io_page_p = (FILEIO_PAGE *) malloc (page_size);
-  if (malloc_io_page_p == NULL)
+  io_page_p = fileio_alloc_io_page (thread_p);
+  if (io_page_p == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, page_size);
       return NULL_VOLDES;
     }
-
-  MEM_REGION_INIT ((char *) malloc_io_page_p, page_size);
-  LSA_SET_NULL (&malloc_io_page_p->prv.lsa);
 
   vol_fd = fileio_create (thread_p, db_full_name_p, vol_label_p, vol_id,
 			  is_do_lock, is_do_sync);
@@ -1300,14 +1367,14 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
     {
       /* initialize the pages of the volume */
 
-      if (!((fileio_write (thread_p, vol_fd, malloc_io_page_p, npages - 1,
-			   page_size) == malloc_io_page_p)
+      if (!((fileio_write (thread_p, vol_fd, io_page_p, npages - 1,
+			   page_size) == io_page_p)
 	    && (is_sweep_clean == false
 		|| fileio_initialize_pages (thread_p, vol_fd,
-					    malloc_io_page_p, 0, npages,
+					    io_page_p, 0, npages,
 					    page_size,
 					    kbytes_to_be_written_per_sec) ==
-		malloc_io_page_p)))
+		io_page_p)))
 	{
 	  /* It is likely that we run of space. The partition where the volume
 	     was created has been used since we checked above. */
@@ -1317,7 +1384,7 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
 
 	  fileio_dismount (thread_p, vol_fd);
 	  fileio_unformat (thread_p, vol_label_p);
-	  free_and_init (malloc_io_page_p);
+	  free_and_init (io_page_p);
 	  if (er_errid () != ER_INTERRUPTED)
 	    {
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -1339,7 +1406,7 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
 
   er_log_debug (ARG_FILE_LINE, "fileio_format: end\n");
 
-  free_and_init (malloc_io_page_p);
+  free_and_init (io_page_p);
   return vol_fd;
 }
 
@@ -1426,19 +1493,16 @@ fileio_expand (THREAD_ENTRY * thread_p, VOLID vol_id, DKNPAGES npages_toadd,
 
   if (purpose != DISK_TEMPVOL_TEMP_PURPOSE)
     {
-      FILEIO_PAGE *malloc_io_page_p;
+      FILEIO_PAGE *io_page_p;
       DKNPAGES start_pageid, last_pageid;
 
-      malloc_io_page_p = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
-      if (malloc_io_page_p == NULL)
+      io_page_p = fileio_alloc_io_page (thread_p);
+      if (io_page_p == NULL)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 		  1, IO_PAGESIZE);
 	  return -1;
 	}
-
-      LSA_SET_NULL (&malloc_io_page_p->prv.lsa);
-      MEM_REGION_INIT (&malloc_io_page_p->page[0], DB_PAGESIZE);
 
       start_pageid = (DKNPAGES) (start_offset / IO_PAGESIZE);
       last_pageid = (DKNPAGES) (last_offset / IO_PAGESIZE);
@@ -1447,14 +1511,14 @@ fileio_expand (THREAD_ENTRY * thread_p, VOLID vol_id, DKNPAGES npages_toadd,
       assert_release (purpose == DISK_PERMVOL_GENERIC_PURPOSE);
 
       if (fileio_initialize_pages (thread_p, vol_fd,
-				   malloc_io_page_p, start_pageid,
+				   io_page_p, start_pageid,
 				   last_pageid - start_pageid + 1,
 				   IO_PAGESIZE, -1) == NULL)
 	{
 	  npages_toadd = -1;
 	}
 
-      free_and_init (malloc_io_page_p);
+      free_and_init (io_page_p);
     }
 
   if (npages_toadd < 0 && er_errid () != ER_INTERRUPTED)

@@ -6750,7 +6750,7 @@ disk_rv_redo_dboutside_init_pages (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   const DISK_RECV_INIT_PAGES_INFO *info;
   VOLID volid;
   int vol_fd;
-  FILEIO_PAGE *malloc_io_page_p;
+  FILEIO_PAGE *io_page_p;
 
   info = (const DISK_RECV_INIT_PAGES_INFO *) rcv->data;
 
@@ -6764,29 +6764,26 @@ disk_rv_redo_dboutside_init_pages (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
       return ER_FAILED;
     }
 
-  malloc_io_page_p = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
-  if (malloc_io_page_p == NULL)
+  io_page_p = fileio_alloc_io_page (thread_p);
+  if (io_page_p == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, IO_PAGESIZE);
       return ER_FAILED;
     }
 
-  LSA_SET_NULL (&malloc_io_page_p->prv.lsa);
-  MEM_REGION_INIT (&malloc_io_page_p->page[0], DB_PAGESIZE);
-
-  if (fileio_initialize_pages (thread_p, vol_fd, malloc_io_page_p,
+  if (fileio_initialize_pages (thread_p, vol_fd, io_page_p,
 			       info->start_pageid, info->npages,
 			       IO_PAGESIZE, -1) == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MAYNEED_MEDIA_RECOVERY,
 	      1, fileio_get_volume_label (volid, PEEK));
-      free_and_init (malloc_io_page_p);
+      free_and_init (io_page_p);
 
       return ER_FAILED;
     }
 
-  free_and_init (malloc_io_page_p);
+  free_and_init (io_page_p);
 
   return NO_ERROR;
 }
