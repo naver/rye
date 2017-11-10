@@ -40,6 +40,7 @@
 #include "disk_manager.h"
 #include "file_io.h"
 #include "thread.h"
+#include "perf_monitor.h"
 
 /*
  * NOTE: NULL_VOLID generally means a bad volume identifier

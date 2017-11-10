@@ -1851,7 +1851,8 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
   /* Lock the volume header in exclusive mode and then fetch the page. */
 
   addr.pgptr = pgbuf_fix (thread_p, &vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (addr.pgptr == NULL)
     {
       return NULL_VOLID;
@@ -2033,8 +2034,10 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 	  for (vpid.volid = volid, vpid.pageid = DISK_VOLHEADER_PAGE;
 	       vpid.pageid <= vhdr->sys_lastpage; vpid.pageid++)
 	    {
-	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-				 PGBUF_UNCONDITIONAL_LATCH);
+	      pgptr =
+		pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+			   PGBUF_UNCONDITIONAL_LATCH,
+			   MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT);
 	      if (pgptr != NULL)
 		{
 		  pgbuf_set_lsa_as_temporary (thread_p, pgptr);
@@ -2154,7 +2157,8 @@ disk_expand_tmp (THREAD_ENTRY * thread_p, INT16 volid, INT32 min_pages,
     }
 
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return -1;
@@ -2279,7 +2283,8 @@ disk_expand_perm (THREAD_ENTRY * thread_p, INT16 volid, INT32 npages)
   assert (csect_check_own (thread_p, CSECT_BOOT_SR_DBPARM) == 1);
 
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return -1;
@@ -2324,7 +2329,8 @@ disk_expand_perm (THREAD_ENTRY * thread_p, INT16 volid, INT32 npages)
 			     sizeof (DISK_RECV_INIT_PAGES_INFO), &log_data);
 
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return -1;
@@ -2432,11 +2438,13 @@ disk_reinit (THREAD_ENTRY * thread_p, INT16 volid, UNUSED_ARG void *ignore)
   vpid.pageid = DISK_VOLHEADER_PAGE;
 
   pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (pgptr == NULL)
     {
       return true;
     }
+
   vhdr = (DISK_VAR_HEADER *) pgptr;
 
   DISK_VERIFY_VAR_HEADER (vhdr);
@@ -2681,7 +2689,8 @@ disk_set_link (THREAD_ENTRY * thread_p, INT16 volid)
   vpid.pageid = DISK_VOLHEADER_PAGE;
 
   addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (addr.pgptr == NULL)
     {
       return ER_FAILED;
@@ -2751,7 +2760,8 @@ disk_set_boot_hfid (THREAD_ENTRY * thread_p, const HFID * hfid)
   vpid.pageid = DISK_VOLHEADER_PAGE;
 
   addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (addr.pgptr == NULL)
     {
       return ER_FAILED;
@@ -2787,7 +2797,8 @@ disk_get_boot_hfid (THREAD_ENTRY * thread_p, HFID * hfid)
   vpid.pageid = DISK_VOLHEADER_PAGE;
 
   pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (pgptr == NULL)
     {
       return NULL;
@@ -2831,7 +2842,8 @@ disk_get_link (THREAD_ENTRY * thread_p, const char *db_fullname, INT16 volid,
   vpid.pageid = DISK_VOLHEADER_PAGE;
 
   pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (pgptr == NULL)
     {
       return NULL;
@@ -2898,7 +2910,8 @@ disk_map_init (THREAD_ENTRY * thread_p, INT16 volid, INT32 at_fpageid,
   for (vpid.pageid = at_fpageid; vpid.pageid <= at_lpageid; vpid.pageid++)
     {
       addr.pgptr = pgbuf_fix (thread_p, &vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
       if (addr.pgptr == NULL)
 	{
 	  return ER_FAILED;
@@ -2988,7 +3001,8 @@ disk_set_checkpoint (THREAD_ENTRY * thread_p, INT16 volid,
    * that this is the only page among the volume system pages that is locked.
    */
   addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (addr.pgptr == NULL)
     {
       return ER_FAILED;
@@ -3038,7 +3052,8 @@ disk_get_checkpoint (THREAD_ENTRY * thread_p, INT16 volid, LOG_LSA * vol_lsa)
    * that this is the only page among the volume system pages that is locked.
    */
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return ER_FAILED;
@@ -3079,7 +3094,8 @@ disk_get_creation_time (THREAD_ENTRY * thread_p, INT16 volid,
   /* The creation of a volume does not change. Therefore, we do not lock
      the page. */
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return ER_FAILED;
@@ -3159,7 +3175,8 @@ xdisk_get_purpose_and_space_info (THREAD_ENTRY * thread_p,
       vpid.pageid = DISK_VOLHEADER_PAGE;
 
       hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			     PGBUF_UNCONDITIONAL_LATCH);
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
       if (hdr_pgptr == NULL)
 	{
 	  *vol_purpose = DISK_UNKNOWN_PURPOSE;
@@ -3235,7 +3252,8 @@ xdisk_get_purpose_and_sys_lastpage (THREAD_ENTRY * thread_p, INT16 volid,
 
   /* The purpose of a volume does not change, so we do not lock the page */
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return NULL_VOLID;
@@ -3297,7 +3315,8 @@ disk_get_total_numsectors (THREAD_ENTRY * thread_p, INT16 volid)
    * anyhow.
    */
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return -1;
@@ -3446,7 +3465,8 @@ xdisk_get_fullname (THREAD_ENTRY * thread_p, const char *database_name,
    * lock the header page since the field does not change.
    */
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       *vol_fullname = '\0';
@@ -3529,7 +3549,8 @@ disk_alloc_sector (THREAD_ENTRY * thread_p, INT16 volid, INT32 nsects,
    * that this is the only page among the volume system pages that is locked.
    */
   addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (addr.pgptr == NULL)
     {
       return DISK_SECTOR_WITH_ALL_PAGES;
@@ -3685,7 +3706,8 @@ disk_alloc_page (THREAD_ENTRY * thread_p, INT16 volid, INT32 sectid,
    * that this is the only page among the volume system pages that is locked.
    */
   addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (addr.pgptr == NULL)
     {
       return NULL_PAGEID;
@@ -3950,7 +3972,8 @@ disk_scramble_newpages (INT16 volid, INT32 first_pageid, INT32 npages,
   for (i = 0; i < npages; i++)
     {
       addr.pgptr = pgbuf_fix (thread_p, &vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_OTHER);
       if (addr.pgptr != NULL)
 	{
 	  memset (addr.pgptr, MEM_REGION_SCRAMBLE_MARK, DB_PAGESIZE);
@@ -4026,7 +4049,8 @@ disk_id_alloc (THREAD_ENTRY * thread_p, INT16 volid, DISK_VAR_HEADER * vhdr,
        nfound < nalloc && low_allid <= high_allid; vpid.pageid++)
     {
       addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			      PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
       if (addr.pgptr == NULL)
 	{
 	  nfound = 0;
@@ -4111,7 +4135,8 @@ disk_id_alloc (THREAD_ENTRY * thread_p, INT16 volid, DISK_VAR_HEADER * vhdr,
 	{
 	  addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE,
 				  PGBUF_LATCH_WRITE,
-				  PGBUF_UNCONDITIONAL_LATCH);
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
 	  if (addr.pgptr == NULL)
 	    {
 	      allid = NULL_PAGEID;
@@ -4187,7 +4212,8 @@ disk_check_sector_has_npages (THREAD_ENTRY * thread_p, INT16 volid,
        nfound < exp_npages && low_allid <= high_allid; vpid.pageid++)
     {
       addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			      PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
       if (addr.pgptr == NULL)
 	{
 	  break;
@@ -4279,7 +4305,9 @@ disk_dealloc_sector (THREAD_ENTRY * thread_p, INT16 volid, INT32 sectid,
    */
   while ((addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE,
 				  PGBUF_LATCH_WRITE,
-				  PGBUF_UNCONDITIONAL_LATCH)) == NULL)
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER)) ==
+	 NULL)
     {
       switch (er_errid ())
 	{
@@ -4416,7 +4444,9 @@ disk_dealloc_page (THREAD_ENTRY * thread_p, INT16 volid, INT32 pageid,
    */
   while ((addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE,
 				  PGBUF_LATCH_WRITE,
-				  PGBUF_UNCONDITIONAL_LATCH)) == NULL)
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER)) ==
+	 NULL)
     {
       switch (er_errid ())
 	{
@@ -4530,7 +4560,9 @@ disk_id_dealloc (THREAD_ENTRY * thread_p, INT16 volid, INT32 at_pg1,
       retry = 0;
       while ((addr.pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE,
 				      PGBUF_LATCH_WRITE,
-				      PGBUF_UNCONDITIONAL_LATCH)) == NULL)
+				      PGBUF_UNCONDITIONAL_LATCH,
+				      MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP))
+	     == NULL)
 	{
 	  switch (er_errid ())
 	    {
@@ -4683,7 +4715,8 @@ disk_get_maxcontiguous_numpages (THREAD_ENTRY * thread_p, INT16 volid,
    * that this is the only page among the volume system pages that is locked.
    */
   pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (pgptr == NULL)
     {
       return NULL_PAGEID;
@@ -4738,7 +4771,8 @@ disk_get_hint_contiguous_free_numpages (THREAD_ENTRY * thread_p, INT16 volid,
   vpid.pageid = DISK_VOLHEADER_PAGE;
 
   pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (pgptr == NULL)
     {
       *num_freepgs = -1;
@@ -4809,7 +4843,8 @@ disk_id_get_max_contiguous (THREAD_ENTRY * thread_p, INT16 volid,
        nfound < nunits_quit && low_allid <= high_allid; vpid.pageid++)
     {
       pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
       if (pgptr == NULL)
 	{
 	  nfound = 0;
@@ -4957,7 +4992,8 @@ disk_isvalid_page (THREAD_ENTRY * thread_p, INT16 volid, INT32 pageid)
    * that this is the only page among the volume system pages that is locked.
    */
   hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			 PGBUF_UNCONDITIONAL_LATCH);
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return DISK_ERROR;
@@ -5001,7 +5037,9 @@ disk_id_isvalid (THREAD_ENTRY * thread_p, INT16 volid, INT32 at_pg1,
   vpid.volid = volid;
   vpid.pageid = (allid / DISK_PAGE_BIT) + at_pg1;
 
-  at_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ, false);
+  at_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			PGBUF_UNCONDITIONAL_LATCH,
+			MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
   if (at_pgptr != NULL)
     {
       /* Locate the "at-byte" of the unit */
@@ -5374,7 +5412,9 @@ disk_dump_goodvol_system (THREAD_ENTRY * thread_p, FILE * fp, INT16 volid,
    * header and the map allocation tables until the operation is done. Note
    * that this is the only page among the volume system pages that is locked.
    */
-  hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ, false);
+  hdr_pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			 PGBUF_UNCONDITIONAL_LATCH,
+			 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (hdr_pgptr == NULL)
     {
       return ER_FAILED;
@@ -5802,7 +5842,8 @@ disk_map_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * vpid,
   for (vpid->pageid = at_fpageid; vpid->pageid <= at_lpageid; vpid->pageid++)
     {
       at_pgptr = pgbuf_fix (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			    false);
+			    PGBUF_UNCONDITIONAL_LATCH,
+			    MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
       if (at_pgptr == NULL)
 	{
 	  return ER_FAILED;
@@ -5872,6 +5913,10 @@ disk_dump_goodvol_all (THREAD_ENTRY * thread_p, INT16 volid, void *arg)
 
   ret = disk_dump_goodvol_system (thread_p, out_fp, volid, NULL_PAGEID,
 				  NULL_PAGEID, NULL_PAGEID, NULL_PAGEID);
+  if (ret != NO_ERROR)
+    {
+      ;				/* TODO - avoid compile error */
+    }
 
   return true;
 }
@@ -5942,6 +5987,11 @@ disk_rv_undo_format (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int ret = NO_ERROR;
 
   ret = disk_unformat (thread_p, (const char *) rcv->data);
+  if (ret != NO_ERROR)
+    {
+      ;				/* TODO - avoid compile error */
+    }
+
   log_append_dboutside_redo (thread_p, RVLOG_OUTSIDE_LOGICAL_REDO_NOOP, 0,
 			     NULL);
   return NO_ERROR;
@@ -5961,6 +6011,10 @@ disk_rv_dump_hdr (FILE * fp, UNUSED_ARG int length_ignore, void *data)
 
   vhdr = (DISK_VAR_HEADER *) data;
   ret = disk_vhdr_dump (fp, vhdr);
+  if (ret != NO_ERROR)
+    {
+      ;				/* TODO - avoid compile error */
+    }
 }
 
 /*
@@ -6464,7 +6518,8 @@ disk_rv_alloctable_with_volheader (THREAD_ENTRY * thread_p, LOG_RCV * rcv,
   pgbuf_unfix_and_init (thread_p, rcv->pgptr);
 
   vhdr_rcv.pgptr = pgbuf_fix_with_retry (thread_p, &vhdr_vpid, OLD_PAGE,
-					 PGBUF_LATCH_WRITE, 10);
+					 PGBUF_LATCH_WRITE, 10,
+					 MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (vhdr_rcv.pgptr == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MAYNEED_MEDIA_RECOVERY,
@@ -6474,7 +6529,8 @@ disk_rv_alloctable_with_volheader (THREAD_ENTRY * thread_p, LOG_RCV * rcv,
     }
 
   rcv->pgptr = pgbuf_fix_with_retry (thread_p, &page_vpid, OLD_PAGE,
-				     PGBUF_LATCH_WRITE, 10);
+				     PGBUF_LATCH_WRITE, 10,
+				     MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
   if (rcv->pgptr == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MAYNEED_MEDIA_RECOVERY,

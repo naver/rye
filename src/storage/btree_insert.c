@@ -108,7 +108,10 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 		      INT16 slot_id)
 {
   int ret = NO_ERROR;
-  int key_len, max_free;
+  int max_free;
+#if !defined(NDEBUG)
+  int key_len;
+#endif
   RECDES rec = RECDES_INITIALIZER;
   char rec_buf[IO_MAX_PAGE_SIZE + BTREE_MAX_ALIGN];
   char rv_key[OR_OID_SIZE + OR_BTID_ALIGNED_SIZE + BTREE_MAX_KEYLEN +
@@ -123,7 +126,9 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 
 
   max_free = spage_max_space_for_new_record (thread_p, leaf_page);
+#if !defined(NDEBUG)
   key_len = btree_get_key_length (key);	/* TODO - */
+#endif
 
   /* form a new leaf record */
   assert (BTREE_IS_VALID_KEY_LEN (key_len));
@@ -871,7 +876,10 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 {
   short Q_node_type;
   INT16 mid_slot_id;
-  int nrecs, key_cnt, leftcnt, rightcnt, right;
+#if !defined(NDEBUG)
+  int nrecs;
+#endif
+  int key_cnt, leftcnt, rightcnt, right;
   RECDES rec = RECDES_INITIALIZER, trec = RECDES_INITIALIZER;
   NON_LEAF_REC nleaf_rec, nleaf_ptr;
   BTREE_NODE_HEADER qheader, rheader;
@@ -880,7 +888,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   int i, c;
   bool clear_midkey = false;
   DB_IDXKEY mid_key;
-  int q_moved;
+//  int q_moved;
   RECSET_HEADER recset_header;	/* for recovery purposes */
   char *recset_data, *datap;	/* for recovery purposes */
   int recset_length;		/* for recovery purposes */
@@ -911,7 +919,9 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   rec.data = PTR_ALIGN (rec_buf, BTREE_MAX_ALIGN);
   rec.type = REC_HOME;
 
+#if !defined(NDEBUG)
   nrecs = spage_number_of_records (Q);	/* get the key count of page Q */
+#endif
 
   ret = btree_read_node_header (Q, &qheader);
   if (ret != NO_ERROR)
@@ -956,7 +966,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       assert (leftcnt + 1 + rightcnt == key_cnt);
     }
 
-  q_moved = (mid_slot_id == 0) ? 1 : 0;
+//  q_moved = (mid_slot_id == 0) ? 1 : 0;
 
   /* log the old header record for undo purposes */
   LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, Q, HEADER);
@@ -1392,7 +1402,7 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   bool clear_midkey = false;
   DB_IDXKEY mid_key;
   VPID page_vpid;
-  int q_moved, r_moved;
+//  int q_moved, r_moved;
   char *recset_data;		/* for recovery purposes */
   RECSET_HEADER recset_header;	/* for recovery purposes */
   int recset_length;		/* for recovery purposes */
@@ -1470,8 +1480,10 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   rightcnt = key_cnt - leftcnt - 1;
   assert (leftcnt + 1 + rightcnt == key_cnt);
 
+#if 0
   q_moved = (mid_slot_id == (nrecs - 1)) ? 1 : 0;
   r_moved = (mid_slot_id == 0) ? 1 : 0;
+#endif
 
   /* update root page P header */
   root_header.key_cnt = 1;

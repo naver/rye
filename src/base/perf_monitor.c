@@ -58,195 +58,232 @@ typedef enum
 typedef struct
 {
   const char *name;
+  const int level;
   MNT_STATS_VALUE_TYPE value_type;
 } MNT_EXEC_STATS_INFO;
 
 static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   /* MNT_STATS_DISK_SECTOR_ALLOCS */
-  {"Num_disk_sector_allocs", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_disk_sector_allocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_DISK_SECTOR_DEALLOCS */
-  {"Num_disk_sector_deallocs", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_disk_sector_deallocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_DISK_PAGE_ALLOCS */
-  {"Num_disk_page_allocs", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_disk_page_allocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_DISK_PAGE_DEALLOCS */
-  {"Num_disk_page_deallocs", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_disk_page_deallocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
 
   /* MNT_STATS_FILE_CREATES */
-  {"Num_file_creates", MNT_STATS_VALUE_COUNTER},
+  {"Num_file_creates", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_FILE_REMOVES */
-  {"Num_file_removes", MNT_STATS_VALUE_COUNTER},
+  {"Num_file_removes", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_FILE_IOREADS */
-  {"Num_file_ioreads", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_file_ioreads", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_FILE_IOWRITES */
-  {"Num_file_iowrites", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_file_iowrites", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_FILE_IOSYNCHES */
-  {"Num_file_iosynches", MNT_STATS_VALUE_COUNTER},
+  {"Num_file_iosynches", 0, MNT_STATS_VALUE_COUNTER},
 
   /* MNT_STATS_DATA_PAGE_FETCHES */
-  {"Num_data_page_fetches", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+
+#if 1				/* fetches sub-info */
+  {"Num_data_page_fetches_file_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_file_table", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_heap_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_heap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_heap_relocation", 1,
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_heap_bestspace_sync", 1,
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_vol_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_vol_bitmap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_xasl", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_qresult", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_ehash", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_ovf_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_ovf", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_area", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_catalog", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_catalog_ovf", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+
+  {"Num_data_page_fetches_disk_format", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_log_postpone", 1,
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_log_rollback", 1,
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_checkpoint", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+
+  {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+#endif
+
   /* MNT_STATS_DATA_PAGE_DIRTIES */
-  {"Num_data_page_dirties", MNT_STATS_VALUE_COUNTER},
+  {"Num_data_page_dirties", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_DATA_PAGE_IOREADS */
-  {"Num_data_page_ioreads", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_ioreads", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_DATA_PAGE_IOWRITES */
-  {"Num_data_page_iowrites", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_iowrites", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_DATA_PAGE_VICTIMS */
-  {"Num_data_page_victims", MNT_STATS_VALUE_COUNTER},
+  {"Num_data_page_victims", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_DATA_PAGE_IOWRITES_FOR_REPLACEMENT */
-  {"Num_data_page_iowrites_for_replacement", MNT_STATS_VALUE_COUNTER},
+  {"Num_data_page_iowrites_for_replacement", 0, MNT_STATS_VALUE_COUNTER},
 
   /* MNT_STATS_LOG_PAGE_IOREADS */
-  {"Num_log_page_ioreads", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_log_page_ioreads", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_LOG_PAGE_IOWRITES */
-  {"Num_log_page_iowrites", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_log_page_iowrites", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_LOG_APPEND_RECORDS */
-  {"Num_log_append_records", MNT_STATS_VALUE_COUNTER},
+  {"Num_log_append_records", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_LOG_ARCHIVES */
-  {"Num_log_archives", MNT_STATS_VALUE_COUNTER},
+  {"Num_log_archives", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_LOG_CHECKPOINTS */
-  {"Num_log_checkpoints", MNT_STATS_VALUE_EVENT},
+  {"Num_log_checkpoints", 0, MNT_STATS_VALUE_EVENT},
   /* MNT_STATS_LOG_WALS */
-  {"Num_log_wals", MNT_STATS_VALUE_COUNTER},
+  {"Num_log_wals", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_DDL_LOCKS_REQUESTS */
-  {"Num_ddl_locks_requests", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_ddl_locks_requests", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_CLASS_LOCKS_REQUEST */
-  {"Num_class_locks_request", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_class_locks_request", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_CATALOG_LOCKS_REQUEST */
-  {"Num_catalog_locks_request", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_catalog_locks_request", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_GLOBAL_LOCKS_REQUEST */
-  {"Num_global_locks_request", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_global_locks_request", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_SHARD_LOCKS_REQUEST */
-  {"Num_shard_locks_request", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_shard_locks_request", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_PAGE_LOCKS_ACQUIRED */
-  {"Num_page_locks_acquired", MNT_STATS_VALUE_COUNTER},
+  {"Num_page_locks_acquired", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_OBJECT_LOCKS_ACQUIRED */
-  {"Num_object_locks_acquired", MNT_STATS_VALUE_COUNTER},
+  {"Num_object_locks_acquired", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PAGE_LOCKS_CONVERTED */
-  {"Num_page_locks_converted", MNT_STATS_VALUE_COUNTER},
+  {"Num_page_locks_converted", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_OBJECT_LOCKS_CONVERTED */
-  {"Num_object_locks_converted", MNT_STATS_VALUE_COUNTER},
+  {"Num_object_locks_converted", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PAGE_LOCKS_RE_REQUESTED */
-  {"Num_page_locks_re-requested", MNT_STATS_VALUE_COUNTER},
+  {"Num_page_locks_re-requested", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_OBJECT_LOCKS_RE_REQUESTED */
-  {"Num_object_locks_re-requested", MNT_STATS_VALUE_COUNTER},
+  {"Num_object_locks_re-requested", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PAGE_LOCKS_WAITS */
-  {"Num_page_locks_waits", MNT_STATS_VALUE_COUNTER},
+  {"Num_page_locks_waits", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_OBJECT_LOCKS_WAITS */
-  {"Num_object_locks_waits", MNT_STATS_VALUE_COUNTER},
+  {"Num_object_locks_waits", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_TRAN_COMMITS */
-  {"Num_tran_commits", MNT_STATS_VALUE_COUNTER},
+  {"Num_tran_commits", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_TRAN_ROLLBACKS */
-  {"Num_tran_rollbacks", MNT_STATS_VALUE_COUNTER},
+  {"Num_tran_rollbacks", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_TRAN_SAVEPOINTS */
-  {"Num_tran_savepoints", MNT_STATS_VALUE_COUNTER},
+  {"Num_tran_savepoints", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_TRAN_TOPOPS */
-  {"Num_tran_topops", MNT_STATS_VALUE_EVENT},
+  {"Num_tran_topops", 0, MNT_STATS_VALUE_EVENT},
   /* MNT_STATS_TRAN_INTERRUPTS */
-  {"Num_tran_interrupts", MNT_STATS_VALUE_COUNTER},
+  {"Num_tran_interrupts", 0, MNT_STATS_VALUE_COUNTER},
 
   /* MNT_STATS_BTREE_INSERTS */
-  {"Num_btree_inserts", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_btree_inserts", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_BTREE_DELETES */
-  {"Num_btree_deletes", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_btree_deletes", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_BTREE_UPDATES */
-  {"Num_btree_updates", MNT_STATS_VALUE_COUNTER},
+  {"Num_btree_updates", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_BTREE_LOAD_DATA */
-  {"Num_btree_load_data", MNT_STATS_VALUE_EVENT},
+  {"Num_btree_load_data", 0, MNT_STATS_VALUE_EVENT},
   /* MNT_STATS_BTREE_COVERED */
-  {"Num_btree_covered", MNT_STATS_VALUE_COUNTER},
+  {"Num_btree_covered", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_BTREE_NONCOVERED */
-  {"Num_btree_noncovered", MNT_STATS_VALUE_COUNTER},
+  {"Num_btree_noncovered", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_BTREE_RESUMES */
-  {"Num_btree_resumes", MNT_STATS_VALUE_COUNTER},
+  {"Num_btree_resumes", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_BTREE_MULTIRANGE_OPTIMIZATION */
-  {"Num_btree_multirange_optimization", MNT_STATS_VALUE_COUNTER},
+  {"Num_btree_multirange_optimization", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_BTREE_SPLITS */
-  {"Num_btree_splits", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_btree_splits", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_BTREE_MERGES */
-  {"Num_btree_merges", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_btree_merges", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_BTREE_PAGE_ALLOCS */
-  {"Num_btree_page_allocs", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_btree_page_allocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_BTREE_PAGE_DEALLOCS */
-  {"Num_btree_page_deallocs", MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_btree_page_deallocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
 
   /* MNT_STATS_QUERY_SELECTS */
-  {"Num_query_selects", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_selects", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_QUERY_INSERTS */
-  {"Num_query_inserts", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_inserts", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_QUERY_DELETES */
-  {"Num_query_deletes", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_deletes", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_QUERY_UPDATES */
-  {"Num_query_updates", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_updates", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_QUERY_SSCANS */
-  {"Num_query_sscans", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_sscans", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_QUERY_ISCANS */
-  {"Num_query_iscans", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_iscans", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_QUERY_LSCANS */
-  {"Num_query_lscans", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_lscans", 0, MNT_STATS_VALUE_COUNTER},
+#if 0
   /* MNT_STATS_QUERY_METHSCANS */
-  {"Num_query_methscans", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_methscans", 0, MNT_STATS_VALUE_COUNTER},
+#endif
   /* MNT_STATS_QUERY_NLJOINS */
-  {"Num_query_nljoins", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_nljoins", 0, MNT_STATS_VALUE_COUNTER},
+#if 0
   /* MNT_STATS_QUERY_MJOINS */
-  {"Num_query_mjoins", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_mjoins", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_QUERY_OBJFETCHES */
-  {"Num_query_objfetches", MNT_STATS_VALUE_COUNTER},
+  {"Num_query_objfetches", 0, MNT_STATS_VALUE_COUNTER},
+#endif
   /* MNT_STATS_QUERY_HOLDABLE_CURSORS */
-  {"Num_query_holdable_cursors", MNT_STATS_VALUE_GAUGE},
+  {"Num_query_holdable_cursors", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_SORT_IO_PAGES */
-  {"Num_sort_io_pages", MNT_STATS_VALUE_COUNTER},
+  {"Num_sort_io_pages", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_SORT_DATA_PAGES */
-  {"Num_sort_data_pages", MNT_STATS_VALUE_COUNTER},
+  {"Num_sort_data_pages", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_NETWORK_REQUESTS */
-  {"Num_network_requests", MNT_STATS_VALUE_COUNTER},
+  {"Num_network_requests", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_ADAPTIVE_FLUSH_PAGES */
-  {"Num_adaptive_flush_pages", MNT_STATS_VALUE_COUNTER},
+  {"Num_adaptive_flush_pages", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_ADAPTIVE_FLUSH_LOG_PAGES */
-  {"Num_adaptive_flush_log_pages", MNT_STATS_VALUE_COUNTER},
+  {"Num_adaptive_flush_log_pages", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_ADAPTIVE_FLUSH_MAX_PAGES */
-  {"Num_adaptive_flush_max_pages", MNT_STATS_VALUE_COUNTER},
+  {"Num_adaptive_flush_max_pages", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PRIOR_LSA_LIST_SIZE */
-  {"Num_prior_lsa_list_size", MNT_STATS_VALUE_COUNTER},
+  {"Num_prior_lsa_list_size", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PRIOR_LSA_LIST_MAXED */
-  {"Num_prior_lsa_list_maxed", MNT_STATS_VALUE_COUNTER},
+  {"Num_prior_lsa_list_maxed", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PRIOR_LSA_LIST_REMOVED */
-  {"Num_prior_lsa_list_removed", MNT_STATS_VALUE_COUNTER},
+  {"Num_prior_lsa_list_removed", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_HEAP_STATS_BESTSPACE_ENTRIES */
-  {"Num_heap_stats_bestspace_entries", MNT_STATS_VALUE_GAUGE},
+  {"Num_heap_stats_bestspace_entries", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_HEAP_STATS_BESTSPACE_MAXED */
-  {"Num_heap_stats_bestspace_maxed", MNT_STATS_VALUE_COUNTER},
+  {"Num_heap_stats_bestspace_maxed", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_HA_LAST_FLUSHED_PAGEID */
-  {"Num_ha_last_flushed_pageid", MNT_STATS_VALUE_GAUGE},
+  {"Num_ha_last_flushed_pageid", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_HA_EOF_PAGEID */
-  {"Num_ha_eof_pageid", MNT_STATS_VALUE_GAUGE},
+  {"Num_ha_eof_pageid", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_HA_CURRENT_PAGEID */
-  {"Num_ha_current_pageid", MNT_STATS_VALUE_GAUGE},
+  {"Num_ha_current_pageid", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_HA_REQUIRED_PAGEID */
-  {"Num_ha_required_pageid", MNT_STATS_VALUE_GAUGE},
+  {"Num_ha_required_pageid", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_HA_REPLICATION_DELAY */
-  {"Time_ha_replication_delay", MNT_STATS_VALUE_GAUGE},
+  {"Time_ha_replication_delay", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_PLAN_CACHE_ADD */
-  {"Num_plan_cache_add", MNT_STATS_VALUE_COUNTER},
+  {"Num_plan_cache_add", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PLAN_CACHE_LOOKUP */
-  {"Num_plan_cache_lookup", MNT_STATS_VALUE_COUNTER},
+  {"Num_plan_cache_lookup", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PLAN_CACHE_HIT */
-  {"Num_plan_cache_hit", MNT_STATS_VALUE_COUNTER},
+  {"Num_plan_cache_hit", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PLAN_CACHE_MISS */
-  {"Num_plan_cache_miss", MNT_STATS_VALUE_COUNTER},
+  {"Num_plan_cache_miss", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PLAN_CACHE_FULL */
-  {"Num_plan_cache_full", MNT_STATS_VALUE_COUNTER},
+  {"Num_plan_cache_full", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PLAN_CACHE_DELETE */
-  {"Num_plan_cache_delete", MNT_STATS_VALUE_COUNTER},
+  {"Num_plan_cache_delete", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PLAN_CACHE_INVALID_XASL_ID */
-  {"Num_plan_cache_invalid_xasl_id", MNT_STATS_VALUE_COUNTER},
+  {"Num_plan_cache_invalid_xasl_id", 0, MNT_STATS_VALUE_COUNTER},
   /* MNT_STATS_PLAN_CACHE_QUERY_STRING_HASH_ENTRIES */
-  {"Num_plan_cache_query_string_hash_entries", MNT_STATS_VALUE_GAUGE},
+  {"Num_plan_cache_query_string_hash_entries", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_PLAN_CACHE_XASL_ID_HASH_ENTRIES */
-  {"Num_plan_cache_xasl_id_hash_entries", MNT_STATS_VALUE_GAUGE},
+  {"Num_plan_cache_xasl_id_hash_entries", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_PLAN_CACHE_CLASS_OID_HASH_ENTRIES */
-  {"Num_plan_cache_class_oid_hash_entries", MNT_STATS_VALUE_GAUGE},
+  {"Num_plan_cache_class_oid_hash_entries", 0, MNT_STATS_VALUE_GAUGE},
   /* MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO */
-  {"Data_page_buffer_hit_ratio", MNT_STATS_VALUE_COUNTER}
+  {"Data_page_buffer_hit_ratio", 0, MNT_STATS_VALUE_COUNTER}
 };
 
 #if defined(CS_MODE) || defined(SA_MODE)
@@ -410,7 +447,8 @@ mnt_server_dump_stats (const MNT_SERVER_EXEC_STATS * stats, FILE * stream,
 		       const char *substr)
 {
   unsigned int i;
-  const char *s;
+  const char *name, *s;
+  int level;
 
   if (stream == NULL)
     {
@@ -421,17 +459,28 @@ mnt_server_dump_stats (const MNT_SERVER_EXEC_STATS * stats, FILE * stream,
 
   for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS - 1; i++)
     {
+      name = mnt_Stats_info[i].name;
+      level = mnt_Stats_info[i].level;
+
       if (substr != NULL)
 	{
-	  s = strstr (mnt_Stats_info[i].name, substr);
+	  s = strstr (name, substr);
 	}
       else
 	{
-	  s = mnt_Stats_info[i].name;
+	  s = name;
 	}
+
       if (s)
 	{
-	  fprintf (stream, "%-29s = %10lld\n", mnt_Stats_info[i].name,
+	  /* sub-info indent */
+	  while (level > 0)
+	    {
+	      fprintf (stream, "   ");
+	      level--;
+	    }
+
+	  fprintf (stream, "%-29s = %10lld\n", name,
 		   (long long) stats->values[i]);
 	}
     }
@@ -516,6 +565,7 @@ mnt_stats_counter (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
 {
   int tran_index;
 
+  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
   assert (mnt_Stats_info[item].value_type == MNT_STATS_VALUE_COUNTER ||
 	  mnt_Stats_info[item].value_type == MNT_STATS_VALUE_EVENT);
@@ -534,6 +584,7 @@ mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
   int tran_index;
   UINT64 end_time;
 
+  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
   assert (mnt_Stats_info[item].value_type ==
 	  MNT_STATS_VALUE_COUNTER_WITH_TIME);
@@ -589,7 +640,8 @@ mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS * stats,
   unsigned int i;
   int ret;
   int remained_size;
-  const char *s;
+  const char *name, *s;
+  int level;
   char *p;
 
   if (buffer == NULL || buf_size <= 0)
@@ -611,19 +663,35 @@ mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS * stats,
 
   for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS - 1; i++)
     {
+      name = mnt_Stats_info[i].name;
+      level = mnt_Stats_info[i].level;
+
       if (substr != NULL)
 	{
-	  s = strstr (mnt_Stats_info[i].name, substr);
+	  s = strstr (name, substr);
 	}
       else
 	{
-	  s = mnt_Stats_info[i].name;
+	  s = name;
 	}
+
       if (s)
 	{
+	  /* sub-info indent */
+	  while (level > 0)
+	    {
+	      ret = snprintf (p, remained_size, "   ");
+	      remained_size -= ret;
+	      p += ret;
+	      if (remained_size <= 0)
+		{
+		  return;
+		}
+	      level--;
+	    }
+
 	  ret = snprintf (p, remained_size, "%-29s = %10lld\n",
-			  mnt_Stats_info[i].name,
-			  (long long) stats->values[i]);
+			  name, (long long) stats->values[i]);
 	  remained_size -= ret;
 	  p += ret;
 	  if (remained_size <= 0)
