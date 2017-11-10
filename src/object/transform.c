@@ -438,10 +438,6 @@ CATCLS_COLUMN columns_LogWriter[] = {
   ,
   {"last_received_time", "bigint"}
   ,
-  {"nx_archive_lsa", "bigint"}
-  ,
-  {"nx_archive_number", "int"}
-  ,
   {"eof_lsa", "bigint"}
 };
 CATCLS_CONSTRAINT cons_LogWriter[] = {
