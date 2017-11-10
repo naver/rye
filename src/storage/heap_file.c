@@ -1220,7 +1220,9 @@ heap_bestspace_remove_duplicated_hfid (UNUSED_ARG THREAD_ENTRY * thread_p,
 static PAGE_PTR heap_scan_pb_lock_and_fetch (THREAD_ENTRY * thread_p,
 					     VPID * vpid_ptr, int new_page,
 					     LOCK lock,
-					     HEAP_SCANCACHE * scan_cache);
+					     HEAP_SCANCACHE * scan_cache,
+					     UNUSED_ARG const MNT_SERVER_ITEM
+					     item);
 
 /*
  * heap_scan_pb_lock_and_fetch () -
@@ -1233,7 +1235,8 @@ static PAGE_PTR heap_scan_pb_lock_and_fetch (THREAD_ENTRY * thread_p,
 static PAGE_PTR
 heap_scan_pb_lock_and_fetch (THREAD_ENTRY * thread_p, VPID * vpid_ptr,
 			     int new_page, LOCK lock,
-			     HEAP_SCANCACHE * scan_cache)
+			     HEAP_SCANCACHE * scan_cache,
+			     UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   PAGE_PTR pgptr = NULL;
   LOCK page_lock;
@@ -1266,14 +1269,14 @@ heap_scan_pb_lock_and_fetch (THREAD_ENTRY * thread_p, VPID * vpid_ptr,
     {
       pgptr = heap_pgbuf_fix (thread_p, hfid, vpid_ptr,
 			      new_page, PGBUF_LATCH_READ,
-			      PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_UNCONDITIONAL_LATCH, item);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
     }
   else
     {
       pgptr = heap_pgbuf_fix (thread_p, hfid, vpid_ptr,
 			      new_page, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_UNCONDITIONAL_LATCH, item);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
     }
 
@@ -1794,7 +1797,9 @@ int
 heap_classrepr_free (OR_CLASSREP * classrep, int *idx_incache)
 {
   HEAP_CLASSREPR_ENTRY *cache_entry;
+#if !defined(NDEBUG)
   HEAP_CLASSREPR_HASH *hash_anchor;
+#endif
   int rv;
   int ret = NO_ERROR;
 
@@ -1806,8 +1811,10 @@ heap_classrepr_free (OR_CLASSREP * classrep, int *idx_incache)
 
   cache_entry = &heap_Classrepr_cache.area[*idx_incache];
 
+#if !defined(NDEBUG)
   hash_anchor =
     &heap_Classrepr->hash_table[REPR_HASH (&cache_entry->class_oid)];
+#endif
 
   rv = pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
 
@@ -2956,10 +2963,10 @@ heap_find_page_in_bestspace_cache (THREAD_ENTRY * thread_p,
   HEAP_FINDSPACE found;
   int old_wait_msecs;
   int search_cnt;
-  HEAP_BESTSPACE_ENTRY *ent;
+//  HEAP_BESTSPACE_ENTRY *ent;
   HEAP_BESTSPACE best;
   RECDES peek_rec = RECDES_INITIALIZER;
-  int best_array_index = -1;
+//  int best_array_index = -1;
   HEAP_CHAIN *heap_header;
 
   assert (scan_cache == NULL || HFID_EQ (hfid, &(scan_cache->hfid)));
@@ -3034,13 +3041,13 @@ heap_find_page_in_bestspace_cache (THREAD_ENTRY * thread_p,
 
   found = HEAP_FINDSPACE_NOTFOUND;
   search_cnt = 0;
-  best_array_index = 0;
+//  best_array_index = 0;
 
   while (found == HEAP_FINDSPACE_NOTFOUND)
     {
       best.freespace = -1;	/* init */
 
-      ent = NULL;
+//      ent = NULL;
       while (search_cnt < BEST_PAGE_SEARCH_MAX_COUNT
 	     && heap_bestspace_remove (thread_p, &best, hfid) == NO_ERROR)
 	{
@@ -3058,7 +3065,8 @@ heap_find_page_in_bestspace_cache (THREAD_ENTRY * thread_p,
 	}
 
       *pgptr = heap_scan_pb_lock_and_fetch (thread_p, &best.vpid,
-					    OLD_PAGE, X_LOCK, scan_cache);
+					    OLD_PAGE, X_LOCK, scan_cache,
+					    MNT_STATS_DATA_PAGE_FETCHES_HEAP);
       if (*pgptr == NULL)
 	{
 	  /* Add the free space of the page */
@@ -3247,7 +3255,8 @@ heap_read_full_search_vpid (THREAD_ENTRY * thread_p, VPID * full_search_vpid,
   header_vpid.pageid = hfid->hpgid;
 
   hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &header_vpid, OLD_PAGE,
-			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
   if (hdr_pgptr == NULL)
     {
@@ -3313,7 +3322,8 @@ heap_write_full_search_vpid (THREAD_ENTRY * thread_p, const HFID * hfid,
   header_vpid.pageid = hfid->hpgid;
 
   hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &header_vpid, OLD_PAGE,
-			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
   if (hdr_pgptr == NULL)
     {
@@ -3421,7 +3431,7 @@ heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
 	  if (++num_iterations > max_iterations
 	      || heap_Bestspace->bestspace_sync.stop_sync_bestspace == true)
 	    {
-	      er_log_debug (ARG_FILE_LINE, "heap_stats_sync_bestspace: "
+	      er_log_debug (ARG_FILE_LINE, "heap_bestspace_sync: "
 			    "num_iterations %d "
 			    "next_vpid { pageid %d volid %d }\n",
 			    num_iterations,
@@ -3441,7 +3451,8 @@ heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
 	}
 
       pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
-			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
       if (pgptr == NULL)
 	{
@@ -3488,7 +3499,7 @@ heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
     }
   while (!VPID_EQ (&next_vpid, &stopat_vpid));
 
-  er_log_debug (ARG_FILE_LINE, "heap_stats_sync_bestspace: "
+  er_log_debug (ARG_FILE_LINE, "heap_bestspace_sync: "
 		"scans from {%d|%d} to {%d|%d}, num_iterations(%d) "
 		"max_iterations(%d)\n",
 		start_vpid.volid, start_vpid.pageid,
@@ -3609,7 +3620,8 @@ heap_get_last_page (THREAD_ENTRY * thread_p, const HFID * hfid,
    */
   pgptr =
     heap_scan_pb_lock_and_fetch (thread_p, last_vpid, OLD_PAGE, X_LOCK,
-				 scan_cache);
+				 scan_cache,
+				 MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   if (pgptr == NULL)
     {
       goto exit_on_error;
@@ -3777,7 +3789,8 @@ heap_vpid_init_new (THREAD_ENTRY * thread_p, const VFID * vfid,
    */
 
   addr.pgptr = pgbuf_fix (thread_p, new_vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+			  PGBUF_UNCONDITIONAL_LATCH,
+			  MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
   if (addr.pgptr == NULL)
     {
@@ -3866,7 +3879,8 @@ heap_vpid_alloc (THREAD_ENTRY * thread_p, const HFID * hfid,
   vpid.pageid = hfid->hpgid;
 
   hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
-			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
   if (hdr_pgptr == NULL)
     {
@@ -3936,7 +3950,8 @@ heap_vpid_alloc (THREAD_ENTRY * thread_p, const HFID * hfid,
    * content of the page.
    */
   new_pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, X_LOCK,
-					   scan_cache);
+					   scan_cache,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 
   (void) heap_bestspace_append_hfid_to_sync_list (thread_p, hfid, &class_oid);
 
@@ -4000,7 +4015,8 @@ heap_vpid_remove (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   /* Get the chain record */
   rm_pgptr = heap_scan_pb_lock_and_fetch (thread_p, rm_vpid, OLD_PAGE, X_LOCK,
-					  NULL);
+					  NULL,
+					  MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   if (rm_pgptr == NULL)
     {
       /* Look like a system error. Unable to obtain chain header record */
@@ -4028,7 +4044,8 @@ heap_vpid_remove (THREAD_ENTRY * thread_p, const HFID * hfid,
   addr.offset = HEAP_HEADER_AND_CHAIN_SLOTID;
 
   addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, X_LOCK,
-					    NULL);
+					    NULL,
+					    MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   if (addr.pgptr == NULL)
     {
       /* something went wrong, return */
@@ -4122,7 +4139,8 @@ heap_vpid_remove (THREAD_ENTRY * thread_p, const HFID * hfid,
       addr.offset = HEAP_HEADER_AND_CHAIN_SLOTID;
 
       addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-						X_LOCK, NULL);
+						X_LOCK, NULL,
+						MNT_STATS_DATA_PAGE_FETCHES_HEAP);
       if (addr.pgptr == NULL)
 	{
 	  /* something went wrong, return */
@@ -4443,7 +4461,8 @@ heap_create_internal (THREAD_ENTRY * thread_p, HFID * hfid, int exp_npgs,
     }
 
   addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, NEW_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH);
+			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			       MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
   if (addr.pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -4888,7 +4907,7 @@ heap_find_slot_for_insert (THREAD_ENTRY * thread_p, const HFID * hfid,
 			   UNUSED_ARG OID * class_oid)
 {
   int slot_id = 0;
-  int slot_num;
+//  int slot_num;
   PAGE_PTR pgptr;
 
   assert (scan_cache == NULL || HFID_EQ (hfid, &(scan_cache->hfid)));
@@ -4901,7 +4920,7 @@ heap_find_slot_for_insert (THREAD_ENTRY * thread_p, const HFID * hfid,
       return NULL;
     }
 
-  slot_num = spage_number_of_slots (pgptr);
+//  slot_num = spage_number_of_slots (pgptr);
 
   oid->volid = pgbuf_get_volume_id (pgptr);
   oid->pageid = pgbuf_get_page_id (pgptr);
@@ -4951,7 +4970,7 @@ heap_insert_with_lock_internal (THREAD_ENTRY * thread_p, const HFID * hfid,
 				UNUSED_ARG int guess_sumlen)
 {
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;	/* Address of logging data */
-  bool isnew_rec;
+//  bool isnew_rec;
   RECDES tmp_recdes = RECDES_INITIALIZER, *undo_recdes = NULL;
   INT16 bytes_reserved;
   HEAP_BESTSPACE best;
@@ -4961,6 +4980,7 @@ heap_insert_with_lock_internal (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   addr.vfid = &hfid->vfid;
 
+#if 0
   if (recdes->type != REC_NEWHOME)
     {
       isnew_rec = true;
@@ -4973,6 +4993,7 @@ heap_insert_with_lock_internal (THREAD_ENTRY * thread_p, const HFID * hfid,
        */
       isnew_rec = false;
     }
+#endif
 
   OID_SET_NULL (oid);
 
@@ -5363,7 +5384,8 @@ try_again:
   if (addr.pgptr == NULL)
     {
       addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-						X_LOCK, scan_cache);
+						X_LOCK, scan_cache,
+						MNT_STATS_DATA_PAGE_FETCHES_HEAP);
       if (addr.pgptr == NULL)
 	{
 	  if (er_errid () == ER_PB_BAD_PAGEID)
@@ -5425,7 +5447,8 @@ try_again:
 
       forward_addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
 					   PGBUF_LATCH_WRITE,
-					   PGBUF_CONDITIONAL_LATCH);
+					   PGBUF_CONDITIONAL_LATCH,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
       if (forward_addr.pgptr == NULL)
 	{
@@ -5433,7 +5456,8 @@ try_again:
 
 	  forward_addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid,
 							    OLD_PAGE, X_LOCK,
-							    scan_cache);
+							    scan_cache,
+							    MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
 	  if (forward_addr.pgptr == NULL)
 	    {
 	      if (er_errid () == ER_PB_BAD_PAGEID)
@@ -5447,7 +5471,8 @@ try_again:
 	    }
 	  addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &home_vpid, OLD_PAGE,
 				       PGBUF_LATCH_WRITE,
-				       PGBUF_CONDITIONAL_LATCH);
+				       PGBUF_CONDITIONAL_LATCH,
+				       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 	  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
 	  if (addr.pgptr == NULL)
 	    {
@@ -5510,7 +5535,8 @@ try_again:
 
 	      hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
 					  PGBUF_LATCH_WRITE,
-					  PGBUF_CONDITIONAL_LATCH);
+					  PGBUF_CONDITIONAL_LATCH,
+					  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
 	      HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
 	      if (hdr_pgptr == NULL)
 		{
@@ -5519,7 +5545,8 @@ try_again:
 
 		  hdr_pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid,
 							   OLD_PAGE, X_LOCK,
-							   scan_cache);
+							   scan_cache,
+							   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
 		  if (hdr_pgptr == NULL)
 		    {
 		      goto error;
@@ -5527,7 +5554,8 @@ try_again:
 
 		  addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &home_vpid,
 					       OLD_PAGE, PGBUF_LATCH_WRITE,
-					       PGBUF_CONDITIONAL_LATCH);
+					       PGBUF_CONDITIONAL_LATCH,
+					       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 		  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
 		  if (addr.pgptr == NULL)
 		    {
@@ -5557,7 +5585,8 @@ try_again:
 		  forward_addr.pgptr =
 		    heap_pgbuf_fix (thread_p, hfid, &newhome_vpid, OLD_PAGE,
 				    PGBUF_LATCH_WRITE,
-				    PGBUF_CONDITIONAL_LATCH);
+				    PGBUF_CONDITIONAL_LATCH,
+				    MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
 		  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
 		  if (forward_addr.pgptr == NULL)
 		    {
@@ -5789,14 +5818,16 @@ try_again:
       vpid.pageid = hfid->hpgid;
 
       hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
-				  PGBUF_LATCH_WRITE, PGBUF_CONDITIONAL_LATCH);
+				  PGBUF_LATCH_WRITE, PGBUF_CONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
       if (hdr_pgptr == NULL)
 	{
 	  pgbuf_unfix_and_init (thread_p, addr.pgptr);
 
 	  hdr_pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-						   X_LOCK, scan_cache);
+						   X_LOCK, scan_cache,
+						   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
 	  if (hdr_pgptr == NULL)
 	    {
 	      goto error;
@@ -5804,7 +5835,8 @@ try_again:
 
 	  addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &home_vpid, OLD_PAGE,
 				       PGBUF_LATCH_WRITE,
-				       PGBUF_CONDITIONAL_LATCH);
+				       PGBUF_CONDITIONAL_LATCH,
+				       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 	  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
 	  if (addr.pgptr == NULL)
 	    {
@@ -5955,7 +5987,8 @@ try_again:
 
 	  hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
 				      PGBUF_LATCH_WRITE,
-				      PGBUF_CONDITIONAL_LATCH);
+				      PGBUF_CONDITIONAL_LATCH,
+				      MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
 	  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
 	  if (hdr_pgptr == NULL)
 	    {
@@ -5963,7 +5996,8 @@ try_again:
 
 	      hdr_pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid,
 						       OLD_PAGE, X_LOCK,
-						       scan_cache);
+						       scan_cache,
+						       MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
 	      if (hdr_pgptr == NULL)
 		{
 		  goto error;
@@ -5971,7 +6005,8 @@ try_again:
 
 	      addr.pgptr =
 		heap_pgbuf_fix (thread_p, hfid, &home_vpid, OLD_PAGE,
-				PGBUF_LATCH_WRITE, PGBUF_CONDITIONAL_LATCH);
+				PGBUF_LATCH_WRITE, PGBUF_CONDITIONAL_LATCH,
+				MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 	      HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
 	      if (addr.pgptr == NULL)
 		{
@@ -6379,7 +6414,8 @@ try_again:
   if (addr.pgptr == NULL)
     {
       addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-						X_LOCK, scan_cache);
+						X_LOCK, scan_cache,
+						MNT_STATS_DATA_PAGE_FETCHES_HEAP);
       if (addr.pgptr == NULL)
 	{
 	  if (er_errid () == ER_PB_BAD_PAGEID)
@@ -6444,7 +6480,8 @@ try_again:
 
       forward_addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
 					   PGBUF_LATCH_WRITE,
-					   PGBUF_CONDITIONAL_LATCH);
+					   PGBUF_CONDITIONAL_LATCH,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
       if (forward_addr.pgptr == NULL)
 	{
@@ -6452,7 +6489,8 @@ try_again:
 
 	  forward_addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid,
 							    OLD_PAGE, X_LOCK,
-							    scan_cache);
+							    scan_cache,
+							    MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
 	  if (forward_addr.pgptr == NULL)
 	    {
 	      if (er_errid () == ER_PB_BAD_PAGEID)
@@ -6466,7 +6504,8 @@ try_again:
 	    }
 	  addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &home_vpid, OLD_PAGE,
 				       PGBUF_LATCH_WRITE,
-				       PGBUF_CONDITIONAL_LATCH);
+				       PGBUF_CONDITIONAL_LATCH,
+				       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 	  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
 	  if (addr.pgptr == NULL)
 	    {
@@ -6558,14 +6597,16 @@ try_again:
       vpid.pageid = hfid->hpgid;
 
       hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
-				  PGBUF_LATCH_WRITE, PGBUF_CONDITIONAL_LATCH);
+				  PGBUF_LATCH_WRITE, PGBUF_CONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
       if (hdr_pgptr == NULL)
 	{
 	  pgbuf_unfix_and_init (thread_p, addr.pgptr);
 
 	  hdr_pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-						   X_LOCK, scan_cache);
+						   X_LOCK, scan_cache,
+						   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
 	  if (hdr_pgptr == NULL)
 	    {
 	      goto error;
@@ -6573,7 +6614,8 @@ try_again:
 
 	  addr.pgptr = heap_pgbuf_fix (thread_p, hfid, &home_vpid, OLD_PAGE,
 				       PGBUF_LATCH_WRITE,
-				       PGBUF_CONDITIONAL_LATCH);
+				       PGBUF_CONDITIONAL_LATCH,
+				       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 	  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
 	  if (addr.pgptr == NULL)
 	    {
@@ -6742,7 +6784,8 @@ heap_flush (THREAD_ENTRY * thread_p, const OID * oid)
   vpid.volid = oid->volid;
   vpid.pageid = oid->pageid;
   pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-				       NULL);
+				       NULL,
+				       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   if (pgptr == NULL)
     {
       if (er_errid () == ER_PB_BAD_PAGEID)
@@ -6788,7 +6831,8 @@ heap_flush (THREAD_ENTRY * thread_p, const OID * oid)
       vpid.pageid = forward_oid.pageid;
 
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL);
+					   NULL,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
       if (pgptr == NULL)
 	{
 	  if (er_errid () == ER_PB_BAD_PAGEID)
@@ -7493,7 +7537,8 @@ try_again:
 	  /* Free the previous scan page and obtain a new page */
 	  pgbuf_unfix_and_init (thread_p, scan_cache->pgptr);
 	  pgptr = heap_scan_pb_lock_and_fetch (thread_p, &home_vpid, OLD_PAGE,
-					       S_LOCK, scan_cache);
+					       S_LOCK, scan_cache,
+					       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 	  if (pgptr == NULL)
 	    {
 	      if (er_errid () == ER_PB_BAD_PAGEID)
@@ -7513,7 +7558,8 @@ try_again:
   else
     {
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &home_vpid, OLD_PAGE,
-					   S_LOCK, scan_cache);
+					   S_LOCK, scan_cache,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
       if (pgptr == NULL)
 	{
 	  if (er_errid () == ER_PB_BAD_PAGEID)
@@ -7595,7 +7641,8 @@ try_again:
       /* try to fix forward page conditionally */
       forward_pgptr = heap_pgbuf_fix (thread_p, hfid, &forward_vpid,
 				      OLD_PAGE, PGBUF_LATCH_READ,
-				      PGBUF_CONDITIONAL_LATCH);
+				      PGBUF_CONDITIONAL_LATCH,
+				      MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
       HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
       if (forward_pgptr == NULL)
 	{
@@ -7605,7 +7652,8 @@ try_again:
 	  forward_pgptr = heap_scan_pb_lock_and_fetch (thread_p,
 						       &forward_vpid,
 						       OLD_PAGE, S_LOCK,
-						       scan_cache);
+						       scan_cache,
+						       MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
 	  if (forward_pgptr == NULL)
 	    {
 	      if (er_errid () == ER_PB_BAD_PAGEID)
@@ -8015,7 +8063,8 @@ heap_next (THREAD_ENTRY * thread_p, const HFID * hfid, OID * class_oid,
 		retry_page_fix:
 		  pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid,
 						       OLD_PAGE, S_LOCK,
-						       scan_cache);
+						       scan_cache,
+						       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 		  if (pgptr == NULL)
 		    {
 		      if (er_errid () == ER_PB_BAD_PAGEID)
@@ -8069,7 +8118,8 @@ heap_next (THREAD_ENTRY * thread_p, const HFID * hfid, OID * class_oid,
 	  else
 	    {
 	      pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-						   S_LOCK, NULL);
+						   S_LOCK, NULL,
+						   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
 	      if (pgptr == NULL)
 		{
 		  if (er_errid () == ER_PB_BAD_PAGEID)
@@ -8163,7 +8213,8 @@ heap_next (THREAD_ENTRY * thread_p, const HFID * hfid, OID * class_oid,
 	  vpid.pageid = forward_oid.pageid;
 
 	  pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-					       S_LOCK, scan_cache);
+					       S_LOCK, scan_cache,
+					       MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION);
 	  if (pgptr == NULL)
 	    {
 	      /* something went wrong, return */
@@ -8619,7 +8670,8 @@ heap_does_exist (THREAD_ENTRY * thread_p, OID * class_oid, const OID * oid)
       /* Fetch the page where the record is stored */
 
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL);
+					   NULL,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
       if (pgptr == NULL)
 	{
 	  if (er_errid () == ER_PB_BAD_PAGEID)
@@ -8747,7 +8799,8 @@ heap_estimate_num_objects (THREAD_ENTRY * thread_p, const HFID * hfid,
   /* TODO:[happy] random sampling */
 
   hdr_pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE,
-			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
+			      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+			      MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
   if (hdr_pgptr == NULL)
     {
@@ -8840,6 +8893,7 @@ heap_get_capacity (THREAD_ENTRY * thread_p, const HFID * hfid,
   INT64 sum_freespace = 0;
   INT64 sum_reclength = 0;
   INT64 sum_overhead = 0;
+  MNT_SERVER_ITEM item;
 
   *num_recs = 0;
   *num_pages = 0;
@@ -8852,11 +8906,12 @@ heap_get_capacity (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   vpid.volid = hfid->vfid.volid;
   vpid.pageid = hfid->hpgid;
+  item = MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
 
   while (!VPID_ISNULL (&vpid))
     {
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL);
+					   NULL, item);
       if (pgptr == NULL)
 	{
 	  /* something went wrong, return error */
@@ -8934,6 +8989,8 @@ heap_get_capacity (THREAD_ENTRY * thread_p, const HFID * hfid,
 	}
       (void) heap_vpid_next (hfid, pgptr, &vpid);
       pgbuf_unfix_and_init (thread_p, pgptr);
+
+      item = MNT_STATS_DATA_PAGE_FETCHES_HEAP;
     }
 
   if (*num_pages > 0)
@@ -10132,7 +10189,6 @@ heap_attrinfo_dump (THREAD_ENTRY * thread_p, FILE * fp,
 {
   int i;
   HEAP_ATTRVALUE *value;	/* Disk value Attr info for a particular attr   */
-  int ret = NO_ERROR;
 
   /* check to make sure the attr_info has been used */
   if (attr_info->num_values == -1)
@@ -10147,9 +10203,8 @@ heap_attrinfo_dump (THREAD_ENTRY * thread_p, FILE * fp,
 
   if (dump_schema == true)
     {
-      ret =
-	heap_classrepr_dump (thread_p, fp, &attr_info->class_oid,
-			     attr_info->read_classrepr);
+      (void) heap_classrepr_dump (thread_p, fp, &attr_info->class_oid,
+				  attr_info->read_classrepr);
     }
 
   for (i = 0; i < attr_info->num_values; i++)
@@ -11512,7 +11567,8 @@ heap_attrvalue_get_key (THREAD_ENTRY * thread_p, int btid_index,
 {
   int ret = NO_ERROR;
   OR_INDEX *indexp = NULL;
-  int n_atts, reprid;
+//  int n_atts;
+  int reprid;
 
   assert (inst_oid != NULL);
   assert (OID_ISNULL (inst_oid) || inst_oid->groupid >= GLOBAL_GROUPID);
@@ -11551,7 +11607,7 @@ heap_attrvalue_get_key (THREAD_ENTRY * thread_p, int btid_index,
 
   indexp = &(idx_attrinfo->last_classrepr->indexes[btid_index]);
 
-  n_atts = indexp->n_atts;
+//  n_atts = indexp->n_atts;
   *btid = indexp->btid;
 
   /* Construct the key as a sequence of attribute
@@ -11783,7 +11839,8 @@ heap_prefetch (THREAD_ENTRY * thread_p, OID * class_oid, const OID * oid,
   vpid.pageid = oid->pageid;
 
   pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-				       NULL);
+				       NULL,
+				       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   if (pgptr == NULL)
     {
       ret = er_errid ();
@@ -11907,7 +11964,7 @@ heap_check_all_pages (THREAD_ENTRY * thread_p, HFID * hfid)
   int i;
   HEAP_CHKALL_RELOCOIDS chk;
   HEAP_CHKALL_RELOCOIDS *chk_objs = &chk;
-
+  MNT_SERVER_ITEM item;
 
   valid_pg = heap_chkreloc_start (chk_objs);
   if (valid_pg != DISK_VALID)
@@ -11919,6 +11976,7 @@ heap_check_all_pages (THREAD_ENTRY * thread_p, HFID * hfid)
 
   vpid.volid = hfid->vfid.volid;
   vpid.pageid = hfid->hpgid;
+  item = MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
 
   while (!VPID_ISNULL (&vpid) && valid_pg == DISK_VALID)
     {
@@ -11931,7 +11989,7 @@ heap_check_all_pages (THREAD_ENTRY * thread_p, HFID * hfid)
 	}
 
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL);
+					   NULL, item);
       if (pgptr == NULL)
 	{
 	  /* something went wrong, return */
@@ -11963,6 +12021,8 @@ heap_check_all_pages (THREAD_ENTRY * thread_p, HFID * hfid)
 	}
 
       pgbuf_unfix_and_init (thread_p, pgptr);
+
+      item = MNT_STATS_DATA_PAGE_FETCHES_HEAP;
     }
 
   if (chk_objs != NULL)
@@ -12005,10 +12065,11 @@ heap_check_all_pages (THREAD_ENTRY * thread_p, HFID * hfid)
       vpid.pageid = hfid->hpgid;
 
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL);
-      if (pgptr == NULL ||
-	  spage_get_record (pgptr, HEAP_HEADER_AND_CHAIN_SLOTID, &hdr_recdes,
-			    PEEK) != S_SUCCESS)
+					   NULL,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
+      if (pgptr == NULL
+	  || spage_get_record (pgptr, HEAP_HEADER_AND_CHAIN_SLOTID,
+			       &hdr_recdes, PEEK) != S_SUCCESS)
 	{
 	  /* Unable to peek heap header record */
 	  if (pgptr != NULL)
@@ -12195,6 +12256,7 @@ heap_dump (THREAD_ENTRY * thread_p, FILE * fp, HFID * hfid, bool dump_records)
   HEAP_CACHE_ATTRINFO attr_info;
   RECDES peek_recdes = RECDES_INITIALIZER;
   FILE_HEAP_DES hfdes;
+  MNT_SERVER_ITEM item;
   int ret = NO_ERROR;
 
   fprintf (fp, "\n\n*** DUMPING HEAP FILE: ");
@@ -12207,7 +12269,8 @@ heap_dump (THREAD_ENTRY * thread_p, FILE * fp, HFID * hfid, bool dump_records)
   vpid.volid = hfid->vfid.volid;
   vpid.pageid = hfid->hpgid;
   pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-				       NULL);
+				       NULL,
+				       MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
   if (pgptr == NULL)
     {
       /* Unable to fetch heap header page */
@@ -12238,10 +12301,12 @@ heap_dump (THREAD_ENTRY * thread_p, FILE * fp, HFID * hfid, bool dump_records)
   /* now scan every page and dump it */
   vpid.volid = hfid->vfid.volid;
   vpid.pageid = hfid->hpgid;
+  item = MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
+
   while (!VPID_ISNULL (&vpid))
     {
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL);
+					   NULL, item);
       if (pgptr == NULL)
 	{
 	  /* something went wrong, return */
@@ -12250,6 +12315,8 @@ heap_dump (THREAD_ENTRY * thread_p, FILE * fp, HFID * hfid, bool dump_records)
       spage_dump (thread_p, fp, pgptr, dump_records);
       (void) heap_vpid_next (hfid, pgptr, &vpid);
       pgbuf_unfix_and_init (thread_p, pgptr);
+
+      item = MNT_STATS_DATA_PAGE_FETCHES_HEAP;
     }
 
   /* Dump file table configuration */
@@ -13529,7 +13596,8 @@ heap_compact_pages (THREAD_ENTRY * thread_p, OID * class_oid)
     {
       vpid = next_vpid;
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, X_LOCK,
-					   NULL);
+					   NULL,
+					   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
       if (pgptr == NULL)
 	{
 	  ret = ER_FAILED;
@@ -13749,12 +13817,15 @@ fill_string_to_buffer (char **start, char *end, const char *str)
 PAGE_PTR
 heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
 		const VPID * vpid,
-		int newpg, int requestmode, PGBUF_LATCH_CONDITION condition)
+		int newpg, int requestmode, PGBUF_LATCH_CONDITION condition,
+		UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   PAGE_PTR page_ptr = NULL;
+#if !defined(NDEBUG)
   VPID next_vpid;
+#endif
 
-  page_ptr = pgbuf_fix (thread_p, vpid, newpg, requestmode, condition);
+  page_ptr = pgbuf_fix (thread_p, vpid, newpg, requestmode, condition, item);
 
 #if !defined(NDEBUG)
   if (hfid != NULL && page_ptr != NULL)

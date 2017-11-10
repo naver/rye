@@ -450,13 +450,15 @@ skip_token (char *p)
 }
 
 INT64
-os_get_mem_size (int pid)
+os_get_mem_size (int pid, PROC_MEMORY_TYPE mem_type)
 {
   char buf[4096];
   char *p;
-  int fd;
-  int read_len, i;
   INT64 psize;
+  int fd;
+  int read_len, i, pos;
+  bool page_unit = false;
+
 
   if (pid <= 0)
     {
@@ -481,12 +483,36 @@ os_get_mem_size (int pid)
 
   p = strchr (buf, ')');
   p++;
-  for (i = 0; i < 20; i++)
+
+  pos = -1;
+  page_unit = false;
+  switch (mem_type)
+    {
+    case MEM_VSIZE:
+      pos = 20;
+      page_unit = false;
+      break;
+    case MEM_RSS:
+      pos = 21;
+      page_unit = true;
+      break;
+    default:
+      assert (false);
+      return -1;
+    }
+
+  for (i = 0; i < pos; i++)
     {
       p = skip_token (p);
     }
 
   psize = atoll (p);
+  if (page_unit == true)
+    {
+      /* page to bytes */
+      psize = psize * sysconf (_SC_PAGESIZE);
+    }
+
   return psize;
 }
 

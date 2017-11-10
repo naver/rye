@@ -2154,7 +2154,7 @@ catcls_put_or_value_into_buffer (OR_VALUE * value_p,
 				 DISK_REPR * repr_p)
 {
   OR_VALUE *attrs, *var_attrs;
-  int n_attrs;
+//  int n_attrs;
   DISK_ATTR *fixed_p, *variable_p;
   int n_fixed, n_variable;
   DB_TYPE data_type;
@@ -2171,7 +2171,7 @@ catcls_put_or_value_into_buffer (OR_VALUE * value_p,
   n_variable = repr_p->n_variable;
 
   attrs = value_p->sub.value;
-  n_attrs = n_fixed + n_variable;
+//  n_attrs = n_fixed + n_variable;
 
   bound_size = OR_BOUND_BIT_BYTES (n_fixed);
   bound_bits = (char *) malloc (bound_size);
@@ -2294,7 +2294,7 @@ catcls_get_or_value_from_buffer (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
 				 OR_VALUE * value_p, DISK_REPR * repr_p)
 {
   OR_VALUE *attrs, *var_attrs;
-  int n_attrs;
+//  int n_attrs;
   DISK_ATTR *fixed_p, *variable_p;
   int n_fixed, n_variable;
   DB_TYPE data_type;
@@ -2312,7 +2312,7 @@ catcls_get_or_value_from_buffer (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
   n_variable = repr_p->n_variable;
 
   attrs = value_p->sub.value;
-  n_attrs = n_fixed + n_variable;
+//  n_attrs = n_fixed + n_variable;
 
   /* header */
   assert (OR_GET_OFFSET_SIZE (buf_p->ptr) == BIG_VAR_OFFSET_SIZE);

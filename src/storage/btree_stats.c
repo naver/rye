@@ -94,7 +94,7 @@ btree_get_stats_idxkey (UNUSED_ARG THREAD_ENTRY * thread_p,
 			BTREE_STATS_ENV * env, const DB_IDXKEY * key)
 {
   int rc = DB_UNK;
-  BTREE_SCAN *BTS;
+//  BTREE_SCAN *BTS;
   int i, k;
   const DB_VALUE *elem;
   int ret = NO_ERROR;
@@ -103,7 +103,7 @@ btree_get_stats_idxkey (UNUSED_ARG THREAD_ENTRY * thread_p,
   assert (key != NULL);
   assert (!DB_IDXKEY_IS_NULL (key));
 
-  BTS = &(env->btree_scan);
+//  BTS = &(env->btree_scan);
 
   assert (env->pkey.size == key->size - 1);
 
@@ -477,7 +477,9 @@ btree_get_stats (THREAD_ENTRY * thread_p, OID * class_oid,
   PAGE_PTR root_page_ptr = NULL;
   BTREE_NODE_HEADER root_header;
   BTREE_SCAN *BTS = NULL;
+#if !defined(NDEBUG)
   OR_INDEX *indexp = NULL;
+#endif
   int i;
   int ret = NO_ERROR;
 
@@ -583,7 +585,9 @@ btree_get_stats (THREAD_ENTRY * thread_p, OID * class_oid,
       GOTO_EXIT_ON_ERROR;
     }
 
+#if !defined(NDEBUG)
   indexp = &(BTS->btid_int.classrepr->indexes[BTS->btid_int.indx_id]);
+#endif
 
   /* initialize environment stat_info structure */
   stat_info->pages = npages;
@@ -599,7 +603,10 @@ btree_get_stats (THREAD_ENTRY * thread_p, OID * class_oid,
   stat_info->tot_free_space = 0;
 
   /* exclude rightmost OID type */
+
+#if !defined(NDEBUG)
   assert (env->pkey.size == indexp->n_atts);
+#endif
 
   if (with_fullscan || npages <= STATS_SAMPLING_THRESHOLD)
     {
