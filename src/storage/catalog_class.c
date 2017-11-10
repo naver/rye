@@ -120,7 +120,7 @@ extern int catcls_get_applier_info (THREAD_ENTRY * thread_p,
 extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 				     INT64 * current_pageid,
 				     INT64 * required_pageid,
-				     INT64 * last_access_time);
+				     INT64 * source_applied_time);
 extern int catcls_get_writer_info (THREAD_ENTRY * thread_p,
 				   INT64 * last_flushed_pageid,
 				   INT64 * eof_pageid);
@@ -4191,18 +4191,18 @@ exit:
  *   thread_p(in)  : thread context
  *   current_pageid(out):
  *   required_pageid(out):
- *   last_access_time(out):
+ *   source_applied_time(out):
  *
  */
 int
 catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 			  INT64 * current_pageid, INT64 * required_pageid,
-			  INT64 *last_access_time)
+			  INT64 * source_applied_time)
 {
   static OID class_oid = NULL_OID_INITIALIZER;
   static int current_lsa_att_id = NULL_ATTRID;
   static int required_lsa_att_id = NULL_ATTRID;
-  static int last_access_att_id = NULL_ATTRID;
+  static int applied_time_att_id = NULL_ATTRID;
   static HFID hfid = NULL_HFID_INITIALIZER;
 
   OID inst_oid;
@@ -4217,9 +4217,9 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
   int num_record = 0;
 
   assert (current_pageid != NULL && required_pageid != NULL
-      && last_access_time != NULL);
+	  && source_applied_time != NULL);
   *current_pageid = *required_pageid = NULL_PAGEID;
-  *last_access_time = 0;
+  *source_applied_time = 0;
 
   OID_SET_NULL (&inst_oid);
 
@@ -4250,7 +4250,7 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
   attr_info_inited = true;
 
   if (current_lsa_att_id == NULL_ATTRID || required_lsa_att_id == NULL_ATTRID
-      || last_access_att_id == NULL_ATTRID)
+      || applied_time_att_id == NULL_ATTRID)
     {
       heap_scancache_quick_start (&scan_cache);
       scan_cache_inited = true;
@@ -4279,14 +4279,14 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 	    {
 	      required_lsa_att_id = i;
 	    }
-	  else if(strcmp("last_access_time", rec_attr_name_p) == 0)
+	  else if (strcmp ("source_applied_time", rec_attr_name_p) == 0)
 	    {
-	      last_access_att_id = i;
+	      applied_time_att_id = i;
 	    }
 
 	  if (current_lsa_att_id != NULL_ATTRID
 	      && required_lsa_att_id != NULL_ATTRID
-	      && last_access_att_id != NULL_ATTRID)
+	      && applied_time_att_id != NULL_ATTRID)
 	    {
 	      break;
 	    }
@@ -4294,7 +4294,7 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 
       if (current_lsa_att_id == NULL_ATTRID
 	  || required_lsa_att_id == NULL_ATTRID
-	  || last_access_att_id == NULL_ATTRID)
+	  || applied_time_att_id == NULL_ATTRID)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 	  error = ER_FAILED;
@@ -4347,9 +4347,9 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 	      tmp_value = DB_GET_BIGINT (&heap_value->dbvalue);
 	      *required_pageid = tmp_value >> 15;
 	    }
-	  else if(heap_value->attrid == last_access_att_id)
+	  else if (heap_value->attrid == applied_time_att_id)
 	    {
-	      *last_access_time = DB_GET_BIGINT (&heap_value->dbvalue);
+	      *source_applied_time = DB_GET_BIGINT (&heap_value->dbvalue);
 	    }
 	}
       num_record++;

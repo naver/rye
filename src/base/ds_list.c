@@ -83,6 +83,81 @@ Rye_slist_free (RSList * list)
 }
 
 /*
+ * Rye_slist_free_full -
+ *   return:
+ *
+ *   list(in/out):
+ *   free_func(in):
+ */
+void
+Rye_slist_free_full (RSList * list, Rye_func free_func)
+{
+  RSNode *current, *next;
+
+  current = list->head;
+  while (current != NULL)
+    {
+      next = current->next;
+      if (current->data != NULL && free_func != NULL)
+	{
+	  free_func (current->data, NULL);
+	}
+      free (current);
+      current = next;
+    }
+
+  Rye_slist_clear (list);
+}
+
+/*
+ * Rye_slist_get_head -
+ *   return: user data
+ *
+ *   list(in):
+ */
+void *
+Rye_slist_get_head (RSList * list)
+{
+  if (list == NULL)
+    {
+      assert (false);
+      return NULL;
+    }
+
+  if (list->head == NULL)
+    {
+      /* empty */
+      return NULL;
+    }
+
+  return list->head->data;
+}
+
+/*
+ * Rye_slist_get_tail -
+ *   return: user data
+ *
+ *   list(in):
+ */
+void *
+Rye_slist_get_tail (RSList * list)
+{
+  if (list == NULL)
+    {
+      assert (false);
+      return NULL;
+    }
+
+  if (list->tail == NULL)
+    {
+      /* empty */
+      return NULL;
+    }
+
+  return list->tail->data;
+}
+
+/*
  * Rye_slist_prepend -
  *   return: new node
  *
@@ -172,13 +247,13 @@ Rye_slist_append (RSList * list, void *data)
 }
 
 /*
- * Rye_slist_remove_first -
+ * Rye_slist_remove_head -
  *   return: user data
  *
  *   list(in/out):
  */
 void *
-Rye_slist_remove_first (RSList * list)
+Rye_slist_remove_head (RSList * list)
 {
   RSNode *node = NULL;
   void *data = NULL;

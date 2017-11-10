@@ -2999,6 +2999,7 @@ log_append_ha_server_state (THREAD_ENTRY * thread_p, int state)
   struct log_ha_server_state *ha_server_state;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
+  struct timeval current_time;
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL)
@@ -3021,7 +3022,8 @@ log_append_ha_server_state (THREAD_ENTRY * thread_p, int state)
   memset (ha_server_state, 0, sizeof (struct log_ha_server_state));
 
   ha_server_state->server_state = state;
-  ha_server_state->at_time = time (NULL);
+  gettimeofday (&current_time, NULL);
+  ha_server_state->at_time = timeval_to_msec (&current_time);
 
   start_lsa = prior_lsa_next_record (thread_p, node, tdes);
 

@@ -237,7 +237,7 @@ extern int catcls_get_applier_info (THREAD_ENTRY * thread_p,
 extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 				     INT64 * current_pageid,
 				     INT64 * required_pageid,
-				     INT64 * last_access_time);
+				     INT64 * source_applied_time);
 extern int catcls_get_writer_info (THREAD_ENTRY * thread_p,
 				   INT64 * last_flushed_pageid,
 				   INT64 * eof_pageid);
@@ -2868,7 +2868,7 @@ thread_check_ha_delay_info_thread (void *arg_p)
 
   INT64 last_flushed_pageid, eof_pageid;
   INT64 current_pageid, required_pageid;
-  INT64 last_access_time;
+  INT64 source_applied_time;
   INT64 max_delay = 0;
 
 
@@ -2928,7 +2928,7 @@ thread_check_ha_delay_info_thread (void *arg_p)
 
       error_code = catcls_get_analyzer_info (tsd_ptr, &current_pageid,
 					     &required_pageid,
-					     &last_access_time);
+					     &source_applied_time);
       if (error_code != NO_ERROR)
 	{
 	  continue;
@@ -2939,7 +2939,7 @@ thread_check_ha_delay_info_thread (void *arg_p)
 		       required_pageid);
 
       gettimeofday (&cur_time, NULL);
-      max_delay = (cur_time.tv_sec - last_access_time) * ONE_SEC;
+      max_delay = timeval_to_msec (&cur_time) - source_applied_time;
       mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REPLICATION_DELAY, max_delay);
 
 
