@@ -180,6 +180,12 @@ void
 svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
 		       UINT64 exec_time)
 {
+  MNT_SERVER_ITEM parent_item;
+#if defined(HAVE_ATOMIC_BUILTINS)
+  INT64 after_value;
+  UINT64 after_exec_time;
+#endif
+
   if (rye_Server_shm == NULL)
     {
       return;
@@ -190,14 +196,23 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
       rye_Server_shm->tran_info[tran_index].stats.values[item] += value;
 
 #if defined(HAVE_ATOMIC_BUILTINS)
-      value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[item],
-			     value);
-      exec_time = ATOMIC_INC_64 (&rye_Server_shm->global_stats.acc_time[item],
-				 exec_time);
+      after_value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[item],
+				   value);
+      after_exec_time =
+	ATOMIC_INC_64 (&rye_Server_shm->global_stats.acc_time[item],
+		       exec_time);
 #else
       rye_Server_shm->global_stats.values[item] += value;
       rye_Server_shm->global_stats.acc_time[item] += exec_time;
 #endif
+
+      parent_item = MNT_GET_PARENT_ITEM (item);
+      if (parent_item != item)
+	{
+	  assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);
+
+	  svr_shm_stats_counter (tran_index, parent_item, value, exec_time);
+	}
     }
 }
 

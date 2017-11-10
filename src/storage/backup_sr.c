@@ -578,7 +578,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
   BK_QUEUE *queue_p;
   BK_NODE *node_p;
   int rv;
-  bool need_unlock = false;
+//  bool need_unlock = false;
   BK_BACKUP_HEADER *backup_header_p;
 
   if (!session_p)
@@ -602,7 +602,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
       if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	{
-	  need_unlock = true;
+//	  need_unlock = true;
 	  goto exit_on_error;
 	}
 
@@ -635,7 +635,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
 	  if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	    {
-	      need_unlock = true;
+//	      need_unlock = true;
 	      goto exit_on_error;
 	    }
 	}
@@ -699,7 +699,7 @@ bk_start_backup_thread (THREAD_ENTRY * thread_p,
 			int from_npages, BK_QUEUE * queue_p)
 {
   CSS_CONN_ENTRY *conn_p;
-  int conn_index;
+//  int conn_index;
   int i;
 
   /* Initialize global MT variables */
@@ -711,7 +711,7 @@ bk_start_backup_thread (THREAD_ENTRY * thread_p,
   thread_info_p->tran_index = logtb_get_current_tran_index (thread_p);
   /* start read threads */
   conn_p = thread_get_current_conn_entry ();
-  conn_index = (conn_p) ? conn_p->idx : 0;
+//  conn_index = (conn_p) ? conn_p->idx : 0;
   for (i = 1; i <= thread_info_p->act_r_threads; i++)
     {
       CSS_JOB_ENTRY new_job;
