@@ -1066,7 +1066,7 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
   assert (ind >= 0);
   index++;
 
-  applier->last_access_time = cci_get_bigint (&stmt, index, &ind);
+  applier->source_applied_time = cci_get_bigint (&stmt, index, &ind);
   if (stmt.err_buf.err_code < 0)
     {
       GOTO_EXIT_ON_ERROR;
