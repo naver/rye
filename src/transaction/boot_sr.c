@@ -3586,8 +3586,10 @@ void
 xboot_notify_unregister_client (THREAD_ENTRY * thread_p, int tran_index)
 {
   CSS_CONN_ENTRY *conn;
-  LOG_TDES *tdes;
+#if !defined(NDEBUG)
   int client_id;
+  LOG_TDES *tdes;
+#endif
 
   if (thread_p == NULL)
     {
@@ -3600,10 +3602,12 @@ xboot_notify_unregister_client (THREAD_ENTRY * thread_p, int tran_index)
 
   conn = thread_p->conn_entry;
 
+#if !defined(NDEBUG)
   client_id = conn->client_id;
   tdes = LOG_FIND_TDES (tran_index);
   assert (tdes != NULL);
   assert (tdes->client_id == client_id);
+#endif
 
   conn->status = CONN_CLOSING;
 }
