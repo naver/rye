@@ -1150,7 +1150,7 @@ struct log_ha_server_state
   int server_state;		/* server_state */
   int dummy;			/* dummy for alignment */
 
-  INT64 at_time;		/* time recorded by active server */
+  INT64 at_time;		/* time recorded by active server, Time in Milli seconds */
 };
 
 struct log_gid_bitmap_update

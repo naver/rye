@@ -522,7 +522,7 @@ cirpwr_create_active_log (CCI_CONN * conn)
 
       gettimeofday (&current_time, NULL);
       ct.start_time = timeval_to_msec (&current_time);
-      ct.last_access_time = ct.start_time;
+      ct.source_applied_time = ct.start_time;
 
       ct.creation_time = m_log_hdr->db_creation * 1000;
       ct.queue_full = 0;
@@ -777,12 +777,12 @@ cirpwr_finalize (void)
     {
       Rye_queue_free_full (cirpwr_Gl.recv_log_queue,
 			   cirpwr_rye_queue_node_free);
-      cirpwr_Gl.recv_log_queue = NULL;
+      free_and_init (cirpwr_Gl.recv_log_queue);
     }
   if (cirpwr_Gl.free_list != NULL)
     {
       Rye_queue_free_full (cirpwr_Gl.free_list, cirpwr_rye_queue_node_free);
-      cirpwr_Gl.free_list = NULL;
+      free_and_init (cirpwr_Gl.free_list);
     }
 
   RYE_FREE_MEM (cirpwr_Gl.logpg_area);

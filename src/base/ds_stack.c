@@ -78,9 +78,7 @@ Rye_stack_free_full (RStack * stack, Rye_func free_func)
       return;
     }
 
-  Rye_slist_foreach (&stack->list, free_func, NULL);
-
-  Rye_stack_free (stack);
+  Rye_slist_free_full (&stack->list, free_func);
 }
 
 /*
@@ -101,7 +99,7 @@ Rye_stack_push (RStack * stack, void *data)
       return NULL;
     }
 
-  /* Adds a new element on to the first of the list. */
+  /* Adds a new element on to the head of the list. */
   node = Rye_slist_prepend (&stack->list, data);
   if (node == NULL)
     {
@@ -126,5 +124,5 @@ Rye_stack_pop (RStack * stack)
       return NULL;
     }
 
-  return Rye_slist_remove_first (&stack->list);
+  return Rye_slist_remove_head (&stack->list);
 }

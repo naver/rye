@@ -236,7 +236,8 @@ extern int catcls_get_applier_info (THREAD_ENTRY * thread_p,
 				    INT64 * max_delay);
 extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 				     INT64 * current_pageid,
-				     INT64 * required_pageid);
+				     INT64 * required_pageid,
+				     INT64 * source_applied_time);
 extern int catcls_get_writer_info (THREAD_ENTRY * thread_p,
 				   INT64 * last_flushed_pageid,
 				   INT64 * eof_pageid);
@@ -2867,6 +2868,7 @@ thread_check_ha_delay_info_thread (void *arg_p)
 
   INT64 last_flushed_pageid, eof_pageid;
   INT64 current_pageid, required_pageid;
+  INT64 source_applied_time;
   INT64 max_delay = 0;
 
 
@@ -2925,26 +2927,32 @@ thread_check_ha_delay_info_thread (void *arg_p)
       mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_EOF_PAGEID, eof_pageid);
 
       error_code = catcls_get_analyzer_info (tsd_ptr, &current_pageid,
-					     &required_pageid);
+					     &required_pageid,
+					     &source_applied_time);
       if (error_code != NO_ERROR)
 	{
 	  continue;
 	}
+
       mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_CURRENT_PAGEID, current_pageid);
       mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REQUIRED_PAGEID,
 		       required_pageid);
+
+      gettimeofday (&cur_time, NULL);
+      max_delay = timeval_to_msec (&cur_time) - source_applied_time;
+      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REPLICATION_DELAY, max_delay);
+
 
       /* do its job */
       csect_enter (tsd_ptr, CSECT_HA_SERVER_STATE, INF_WAIT);
 
       server_state = svr_shm_get_server_state ();
+      log_append_ha_server_state (tsd_ptr, server_state);
 
       if (server_state != HA_STATE_SLAVE)
 	{
 	  css_unset_ha_repl_delayed ();
-	  mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REPLICATION_DELAY, 0);
 
-	  log_append_ha_server_state (tsd_ptr, server_state);
 	  csect_exit (CSECT_HA_SERVER_STATE);
 	}
       else
@@ -2959,14 +2967,6 @@ thread_check_ha_delay_info_thread (void *arg_p)
 	    {
 	      acceptable_delay = 0;
 	    }
-
-	  error_code = catcls_get_applier_info (tsd_ptr, &max_delay);
-	  if (error_code != NO_ERROR)
-	    {
-	      continue;
-	    }
-	  mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REPLICATION_DELAY,
-			   max_delay);
 
 	  if (max_delay > 0)
 	    {

@@ -63,8 +63,6 @@ Rye_queue_free (RQueue * queue)
     }
 
   Rye_slist_free (&queue->list);
-
-  free (queue);
 }
 
 /*
@@ -79,9 +77,25 @@ Rye_queue_free_full (RQueue * queue, Rye_func free_func)
       return;
     }
 
-  Rye_slist_foreach (&queue->list, free_func, NULL);
+  Rye_slist_free_full (&queue->list, free_func);
+}
 
-  Rye_queue_free (queue);
+/*
+ * Rye_queue_get_first -
+ *   return: user data
+ *
+ *   queue(in/out):
+ */
+void *
+Rye_queue_get_first (RQueue * queue)
+{
+  if (queue == NULL)
+    {
+      assert (false);
+      return NULL;
+    }
+
+  return Rye_slist_get_head (&queue->list);
 }
 
 /*
@@ -102,7 +116,7 @@ Rye_queue_enqueue (RQueue * queue, void *data)
       return NULL;
     }
 
-  /* Adds a new element on to the end of the list. */
+  /* Adds a new element on to the tail of the list. */
   node = Rye_slist_append (&queue->list, data);
   if (node == NULL)
     {
@@ -127,5 +141,5 @@ Rye_queue_dequeue (RQueue * queue)
       return NULL;
     }
 
-  return Rye_slist_remove_first (&queue->list);
+  return Rye_slist_remove_head (&queue->list);
 }

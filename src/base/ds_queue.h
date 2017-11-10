@@ -38,6 +38,7 @@ struct _rye_queue
 extern RQueue *Rye_queue_new (void);
 extern void Rye_queue_free (RQueue * queue);
 extern void Rye_queue_free_full (RQueue * queue, Rye_func free_func);
+extern void *Rye_queue_get_first (RQueue * queue);
 extern RSNode *Rye_queue_enqueue (RQueue * queue, void *data);
 extern void *Rye_queue_dequeue (RQueue * queue);
 
