@@ -3788,9 +3788,8 @@ heap_vpid_init_new (THREAD_ENTRY * thread_p, const VFID * vfid,
    * page.
    */
 
-  addr.pgptr = pgbuf_fix (thread_p, new_vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, new_vpid,
+				MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
   if (addr.pgptr == NULL)
     {

@@ -1778,9 +1778,7 @@ file_descriptor_insert (UNUSED_ARG THREAD_ENTRY * thread_p,
 	    }
 #endif /* FILE_DEBUG */
 
-	  addr.pgptr = pgbuf_fix (thread_p, &set_vpids[ipage], NEW_PAGE,
-				  PGBUF_LATCH_WRITE,
-				  PGBUF_UNCONDITIONAL_LATCH);
+	  addr.pgptr = pgbuf_fix_newpg (thread_p, &set_vpids[ipage]);
 	  if (addr.pgptr == NULL)
 	    {
 	      goto exit_on_error;
@@ -2941,9 +2939,8 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
     {
       vpid_ptr = &table_vpids[ftb_page_index];
       addr.pgptr =
-	pgbuf_fix (thread_p, vpid_ptr, NEW_PAGE, PGBUF_LATCH_WRITE,
-		   PGBUF_UNCONDITIONAL_LATCH,
-		   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+	pgbuf_fix_newpg (thread_p, vpid_ptr,
+			 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
       if (addr.pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -2973,9 +2970,8 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
       addr.pgptr = NULL;
     }
 
-  fhdr_pgptr = pgbuf_fix (thread_p, &table_vpids[0], NEW_PAGE,
-			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix_newpg (thread_p, &table_vpids[0],
+				MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -5466,9 +5462,8 @@ file_expand_ftab (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr)
     }
 
   /* Set allocated page as last file table page */
-  addr.pgptr = pgbuf_fix (thread_p, &new_ftb_vpid, NEW_PAGE,
-			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, &new_ftb_vpid,
+				MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
   if (addr.pgptr == NULL)
     {
       /*

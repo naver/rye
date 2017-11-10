@@ -2538,11 +2538,10 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
 
   if (tmp_vfid_p->vpid_index != -1)
     {
-      page_p = pgbuf_fix (thread_p,
-			  &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
-			  NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
+      page_p = pgbuf_fix_newpg (thread_p,
+				&(tmp_vfid_p->
+				  vpid_array[tmp_vfid_p->vpid_index]),
+				MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
       if (page_p == NULL)
 	{
 	  VPID_SET_NULL (vpid_p);
@@ -2633,10 +2632,9 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
   tmp_vfid_p->vpid_index = 0;
   tmp_vfid_p->total_count += num_pages;
 
-  page_p = pgbuf_fix (thread_p,
-		      &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
-		      NEW_PAGE, PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
+  page_p = pgbuf_fix_newpg (thread_p,
+			    &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
+			    MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
   if (page_p == NULL)
     {
       VPID_SET_NULL (vpid_p);

@@ -3685,8 +3685,7 @@ heap_vpid_init_new (THREAD_ENTRY * thread_p, const VFID * vfid,
    * page.
    */
 
-  addr.pgptr = pgbuf_fix (thread_p, new_vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, new_vpid);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
   if (addr.pgptr == NULL)
     {
@@ -4333,8 +4332,7 @@ heap_create_internal (THREAD_ENTRY * thread_p, HFID * hfid, int exp_npgs,
       GOTO_EXIT_ON_ERROR;
     }
 
-  addr.pgptr = pgbuf_fix (thread_p, &vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid,);
   if (addr.pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;

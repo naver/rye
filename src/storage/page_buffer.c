@@ -953,6 +953,51 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 }
 #endif /* NDEBUG */
 
+#if 1				/* TODO - delete me */
+
+#if !defined(NDEBUG)
+PAGE_PTR
+pgbuf_fix_debug_newpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+		       UNUSED_ARG const MNT_SERVER_ITEM item,
+		       const char *caller_file, int caller_line)
+{
+  return pgbuf_fix_debug (thread_p, vpid, NEW_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			  item, caller_file, caller_line);
+}
+
+PAGE_PTR
+pgbuf_fix_debug_oldpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+		       int request_mode, PGBUF_LATCH_CONDITION condition,
+		       UNUSED_ARG const MNT_SERVER_ITEM item,
+		       const char *caller_file, int caller_line)
+{
+  return pgbuf_fix_debug (thread_p, vpid, OLD_PAGE,
+			  request_mode, condition,
+			  item, caller_file, caller_line);
+}
+#else /* NDEBUG */
+PAGE_PTR
+pgbuf_fix_release_newpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+			 UNUSED_ARG const MNT_SERVER_ITEM item)
+{
+  return pgbuf_fix_release (thread_p, vpid, NEW_PAGE,
+			    PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			    item);
+}
+
+PAGE_PTR
+pgbuf_fix_release_oldpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+			 int request_mode, PGBUF_LATCH_CONDITION condition,
+			 UNUSED_ARG const MNT_SERVER_ITEM item)
+{
+  return pgbuf_fix_release (thread_p, vpid, OLD_PAGE,
+			    request_mode, condition, item);
+}
+#endif /* NDEBUG */
+
+#endif /* TODO - delete me */
+
 /*
  * pgbuf_fix () -
  *   return: Pointer to the page or NULL
@@ -2809,9 +2854,7 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       pthread_mutex_unlock (&bufptr->BCB_mutex);
     }
 
-  pgptr = pgbuf_fix (thread_p, vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-		     PGBUF_UNCONDITIONAL_LATCH,
-		     MNT_STATS_DATA_PAGE_FETCHES_AREA);
+  pgptr = pgbuf_fix_newpg (thread_p, vpid, MNT_STATS_DATA_PAGE_FETCHES_AREA);
   if (pgptr != NULL)
     {
       memcpy ((char *) pgptr + start_offset, area, length);

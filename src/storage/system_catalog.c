@@ -675,8 +675,7 @@ catalog_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
 
   aligned_data = PTR_ALIGN (data, MAX_ALIGNMENT);
 
-  page_p = pgbuf_fix (thread_p, vpid_p, NEW_PAGE, PGBUF_LATCH_WRITE,
-		      PGBUF_UNCONDITIONAL_LATCH, item);
+  page_p = pgbuf_fix_newpg (thread_p, vpid_p, item);
   if (page_p == NULL)
     {
       return false;

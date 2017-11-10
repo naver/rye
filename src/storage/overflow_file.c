@@ -330,9 +330,8 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 
   for (i = 0; i < npages; i++)
     {
-      addr.pgptr = pgbuf_fix (thread_p, &vpids[i], NEW_PAGE,
-			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_OVF);
+      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpids[i],
+				    MNT_STATS_DATA_PAGE_FETCHES_OVF);
       if (addr.pgptr == NULL)
 	{
 	  goto exit_on_error;
