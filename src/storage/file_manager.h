@@ -311,7 +311,8 @@ extern VPID *file_alloc_pages_at_volid (THREAD_ENTRY * thread_p,
 						     INT32 npages,
 						     void *args), void *args);
 extern int file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
-			      const VPID * dealloc_vpid);
+			      const VPID * dealloc_vpid,
+			      UNUSED_ARG MNT_SERVER_ITEM dealloc_item);
 extern int file_find_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 			   const VPID * vpid);
 extern int file_truncate_to_numpages (THREAD_ENTRY * thread_p,

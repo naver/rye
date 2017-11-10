@@ -333,7 +333,7 @@ main (int argc, char *argv[])
     }
 
   Repl_Info->pid = getpid ();
-  Repl_Info->start_vsize = os_get_mem_size (Repl_Info->pid);
+  Repl_Info->start_vsize = os_get_mem_size (Repl_Info->pid, MEM_RSS);
   Repl_Info->max_mem_size = Repl_Info->start_vsize + ONE_G;
 
   pthread_join (analyzer_entry.tid, NULL);
@@ -1032,13 +1032,9 @@ cirp_check_mem_size (void)
       return NO_ERROR;
     }
 
-  vsize = os_get_mem_size (Repl_Info->pid);
+  vsize = os_get_mem_size (Repl_Info->pid, MEM_RSS);
   if (vsize > Repl_Info->max_mem_size)
     {
-      /*
-       * vmem size is more than max_mem_size
-       */
-      assert (false);
       error = ER_HA_LA_EXCEED_MAX_MEM_SIZE;
     }
 

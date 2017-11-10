@@ -465,6 +465,7 @@ extern int heap_ovf_get_capacity (THREAD_ENTRY * thread_p,
 extern PAGE_PTR heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
 				const VPID * vpid,
 				int newpg, int requestmode,
-				PGBUF_LATCH_CONDITION condition);
+				PGBUF_LATCH_CONDITION condition,
+				UNUSED_ARG const MNT_SERVER_ITEM item);
 extern bool heap_is_big_length (int length);
 #endif /* _HEAP_FILE_H_ */
