@@ -1385,7 +1385,8 @@ prior_lsa_alloc_and_copy_data (THREAD_ENTRY * thread_p,
       break;
 
     case LOG_POSTPONE:
-      assert (ulength == 0 && udata == NULL);
+      assert (ulength == 0);
+      assert (udata == NULL);
 
       error = prior_lsa_gen_postpone_record (thread_p, node,
 					     rcvindex, addr, rlength, rdata);
@@ -2256,7 +2257,8 @@ logpb_dump_parameter (FILE * outfp)
   fprintf (outfp, "Log Parameters:\n");
 
   fprintf (outfp, "\tasync_log_flush_interval : %lld\n",
-	   (long long int) prm_get_bigint_value (PRM_ID_LOG_ASYNC_LOG_FLUSH_INTERVAL));
+	   (long long int)
+	   prm_get_bigint_value (PRM_ID_LOG_ASYNC_LOG_FLUSH_INTERVAL));
 }
 
 /*

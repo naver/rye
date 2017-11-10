@@ -149,7 +149,10 @@ pt_add_oid_to_select_list (PARSER_CONTEXT * parser, PT_NODE * statement)
 
   if (PT_IS_QUERY_NODE_TYPE (statement->node_type))
     {
-      PT_NODE *p, *ord;
+      PT_NODE *p;
+#if !defined(NDEBUG)
+      PT_NODE *ord;
+#endif
 
       /*
        * It would be nice to make this adjustment more automatic by
@@ -163,8 +166,10 @@ pt_add_oid_to_select_list (PARSER_CONTEXT * parser, PT_NODE * statement)
       p = statement->info.query.order_by;
       while (p)
 	{
+#if !defined(NDEBUG)
 	  ord = p->info.sort_spec.expr;
 	  assert (ord->node_type == PT_VALUE);
+#endif
 
 	  /* adjust value */
 	  p->info.sort_spec.pos_descr.pos_no += 1;

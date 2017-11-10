@@ -335,7 +335,7 @@ db_compile_statement_local (DB_SESSION * session)
   DB_QUERY_TYPE *qtype;
   int cmd_type;
   int err;
-  SERVER_INFO server_info;
+//  SERVER_INFO server_info;
   static long seed = 0;
 
   /* obvious error checking - invalid parameter */
@@ -397,8 +397,10 @@ db_compile_statement_local (DB_SESSION * session)
       return er_errid ();
     }
 
+#if 0
   /* get sys_date, sys_time, sys_datetime values from the server */
   server_info.info_bits = 0;	/* init */
+#endif
 
   if (seed == 0)
     {

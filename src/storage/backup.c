@@ -359,7 +359,11 @@ bk_make_backup_name (char *backup_name_p, const char *no_path_vol_name_p,
   n = snprintf (backup_name_p, PATH_MAX, "%s%c%s%sv%03d",
 		backup_path_p, PATH_SEPARATOR, no_path_vol_name_p,
 		BK_SUFFIX_BACKUP, unit_num);
-  assert (n > 0);
+  if (n <= 0)
+    {
+      assert (false);
+      ;				/* TODO - avoid compile error */
+    }
 }
 
 /*

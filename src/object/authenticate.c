@@ -1339,7 +1339,7 @@ au_insert_update_auth (UNUSED_ARG MOP grantor, MOP user, MOP class_mop,
   MOP au_obj;
   int index;
   int error = NO_ERROR;
-  char *grantee_name;
+//  char *grantee_name;
   const char *table_name;
   DB_VALUE user_value, value;
   DB_AUTH type;
@@ -1354,7 +1354,7 @@ au_insert_update_auth (UNUSED_ARG MOP grantor, MOP user, MOP class_mop,
   au_obj = au_get_auth (user, class_mop);
 
   obj_get (user, "name", &user_value);
-  grantee_name = db_get_string (&user_value);
+//  grantee_name = db_get_string (&user_value);
 
   table_name = sm_class_name (class_mop);
 
