@@ -240,6 +240,32 @@ struct btree_node_split_info
 
 typedef char *PAGE_PTR;		/* Pointer to a page */
 
+/* TODO - PAGE_TYPE is used for debugging */
+typedef enum
+{
+  PAGE_UNKNOWN = 0,		/* used for initialized page            */
+  PAGE_FILE_HEADER,		/* file header page                     */
+  PAGE_FILE_TABLE,		/* file allocset table page             */
+  PAGE_HEAP_HEADER,		/* heap page header                     */
+  PAGE_HEAP,			/* heap page                            */
+  PAGE_VOL_HEADER,		/* volume header page                   */
+  PAGE_VOL_BITMAP,		/* volume bitmap page                   */
+  PAGE_XASL,			/* xasl stream page                     */
+  PAGE_QRESULT,			/* query result page                    */
+  PAGE_EHASH,			/* ehash bucket/dir page                */
+  PAGE_OVF_HEADER,		/* overflow file header                 */
+  PAGE_OVF,			/* overflow page                        */
+  PAGE_AREA,			/* area page                            */
+  PAGE_CATALOG,			/* catalog page                         */
+  PAGE_CATALOG_OVF,		/* catalog overflow page                */
+  PAGE_BTREE_ROOT,		/* b+tree index root page               */
+  PAGE_BTREE_NON_LEAF,		/* b+tree index non-leaf page           */
+  PAGE_BTREE_LEAF,		/* b+tree index leaf page               */
+  PAGE_LOG,			/* NONE - log page (unused)             */
+  PAGE_DROPPED_FILES,		/* Dropped files page.                  */
+  PAGE_LAST = PAGE_DROPPED_FILES
+} PAGE_TYPE;
+
 #define ISCAN_OID_BUFFER_SIZE \
   ((prm_get_bigint_value (PRM_ID_BT_OID_BUFFER_SIZE) / OR_OID_SIZE) * OR_OID_SIZE)
 
@@ -515,4 +541,5 @@ extern char *hfid_to_string (char *buf, int buf_size, HFID * hfid);
 extern char *btid_to_string (char *buf, int buf_size, BTID * btid);
 extern BTID string_to_btid (const char *buffer);
 
+extern const char *page_type_to_string (PAGE_TYPE page_type);
 #endif /* _STORAGE_COMMON_H_ */

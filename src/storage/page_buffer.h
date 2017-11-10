@@ -98,34 +98,6 @@ typedef enum
   PGBUF_DEBUG_PAGE_VALIDATION_ALL
 } PGBUF_DEBUG_PAGE_VALIDATION_LEVEL;
 
-/* TODO - BUFFER_PAGE_TYPE is used for debugging */
-typedef enum
-{
-  PAGE_UNKNOWN = 0,		/* used for initialized page            */
-  PAGE_FTAB,			/* file allocset table page             */
-  PAGE_HEAP,			/* heap page                            */
-  PAGE_HEAP_HEADER,		/* heap page header                     */
-  PAGE_VOLHEADER,		/* volume header page                   */
-  PAGE_VOLBITMAP,		/* volume bitmap page                   */
-  PAGE_XASL,			/* xasl stream page                     */
-  PAGE_QRESULT,			/* query result page                    */
-  PAGE_EHASH,			/* ehash bucket/dir page                */
-  PAGE_LARGEOBJ,		/* large object/dir page                */
-  PAGE_OVERFLOW,		/* overflow page (with ovf_keyval)      */
-  PAGE_AREA,			/* area page                            */
-  PAGE_CATALOG,			/* catalog page                         */
-  PAGE_BTREE_LEAF,		/* b+tree index leaf page               */
-  PAGE_BTREE_NON_LEAF,		/* b+tree index non-leaf page           */
-  PAGE_BTREE_ROOT,		/* b+tree index root page               */
-#if 0				/* unused */
-  PAGE_BTREE_OVERFLOW_OID,	/* b+tree index ovf oids page           */
-  PAGE_LOG,			/* NONE - log page (unused)             */
-  PAGE_DROPPED_FILES,		/* Dropped files page.                  */
-#endif
-  PAGE_LAST
-} BUFFER_PAGE_TYPE;
-
-
 extern unsigned int pgbuf_hash_vpid (const void *key_vpid,
 				     unsigned int htsize);
 extern int pgbuf_compare_vpid (const void *key_vpid1, const void *key_vpid2);
@@ -289,7 +261,7 @@ extern void pgbuf_cache_permanent_volume_for_temporary (VOLID volid);
 extern void pgbuf_force_to_check_for_interrupts (void);
 extern bool pgbuf_is_log_check_for_interrupts (THREAD_ENTRY * thread_p);
 extern int pgbuf_get_num_hold_cnt (THREAD_ENTRY * thread_p,
-				   BUFFER_PAGE_TYPE page_type);
+				   PAGE_TYPE page_type);
 extern void pgbuf_unfix_all (THREAD_ENTRY * thread_p);
 extern void pgbuf_set_lsa_as_temporary (THREAD_ENTRY * thread_p,
 					PAGE_PTR pgptr);
@@ -307,7 +279,6 @@ extern DISK_ISVALID pgbuf_is_valid_page (THREAD_ENTRY * thread_p,
 							      vpid,
 							      void *args),
 					 void *args);
-extern const char *pgbuf_page_type_to_string (BUFFER_PAGE_TYPE page_type);
 
 #if defined(RYE_DEBUG)
 extern void pgbuf_dump_if_any_fixed (void);

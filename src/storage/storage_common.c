@@ -349,3 +349,61 @@ exit_on_error:
 
   return btid;
 }
+
+/*
+ * page_type_to_string () -
+ *
+ * return : void
+ *
+ */
+const char *
+page_type_to_string (PAGE_TYPE page_type)
+{
+  switch (page_type)
+    {
+    case PAGE_UNKNOWN:
+      return "PAGE_UNKNOWN";
+    case PAGE_FILE_HEADER:
+      return "PAGE_FILE_HEADER";
+    case PAGE_FILE_TABLE:
+      return "PAGE_FILE_TAB";
+    case PAGE_HEAP_HEADER:
+      return "PAGE_HEAP_HEADER";
+    case PAGE_HEAP:
+      return "PAGE_HEAP";
+    case PAGE_VOL_HEADER:
+      return "PAGE_VOL_HEADER";
+    case PAGE_VOL_BITMAP:
+      return "PAGE_VOL_BITMAP";
+    case PAGE_XASL:
+      return "PAGE_XASL";
+    case PAGE_QRESULT:
+      return "PAGE_QRESULT";
+    case PAGE_EHASH:
+      return "PAGE_EHASH";
+    case PAGE_OVF_HEADER:
+      return "PAGE_OVF_HEADER";
+    case PAGE_OVF:
+      return "PAGE_OVF";
+    case PAGE_AREA:
+      return "PAGE_AREA";
+    case PAGE_CATALOG:
+      return "PAGE_CATALOG";
+    case PAGE_BTREE_ROOT:
+      return "PAGE_BTREE_ROOT";
+    case PAGE_BTREE_NON_LEAF:
+      return "PAGE_BTREE_NON_LEAF";
+    case PAGE_BTREE_LEAF:
+      return "PAGE_BTREE_LEAF";
+    case PAGE_LOG:
+      return "PAGE_LOG";
+    case PAGE_DROPPED_FILES:
+      return "PAGE_DROPPED_FILES";
+    default:
+      break;
+    }
+
+  assert (false);
+
+  return "";
+}

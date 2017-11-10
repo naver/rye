@@ -128,10 +128,9 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
   max_free = spage_max_space_for_new_record (thread_p, leaf_page);
 #if !defined(NDEBUG)
   key_len = btree_get_key_length (key);	/* TODO - */
-#endif
 
-  /* form a new leaf record */
   assert (BTREE_IS_VALID_KEY_LEN (key_len));
+#endif
 
   /* put a LOGICAL log to undo the insertion of <key, oid> pair
    * to the B+tree index. This will be a call to delete this pair
@@ -144,6 +143,7 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
       return ret;
     }
 
+  /* form a new leaf record */
   ret = btree_write_record (thread_p, btid, NULL, key, BTREE_LEAF_NODE, &rec);
   if (ret != NO_ERROR)
     {

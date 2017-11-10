@@ -1477,7 +1477,7 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
  */
 int
 pgbuf_get_num_hold_cnt (UNUSED_ARG THREAD_ENTRY * thread_p,
-			BUFFER_PAGE_TYPE page_type)
+			PAGE_TYPE page_type)
 {
   int cnt = 0;
   int thrd_index;
@@ -1499,7 +1499,7 @@ pgbuf_get_num_hold_cnt (UNUSED_ARG THREAD_ENTRY * thread_p,
 	    {
 	      switch (page_type)
 		{
-		case PAGE_VOLHEADER:
+		case PAGE_VOL_HEADER:
 		  if (holder->bufptr->vpid.pageid != DISK_VOLHEADER_PAGE)
 		    {
 		      cnt--;
@@ -7160,64 +7160,4 @@ pgbuf_set_dirty_buffer_ptr (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 
   /* Record number of dirties in statistics */
   mnt_stats_counter (thread_p, MNT_STATS_DATA_PAGE_DIRTIES, 1);
-}
-
-/*
- * pgbuf_page_type_to_string () -
- *
- * return : void
- *
- */
-const char *
-pgbuf_page_type_to_string (BUFFER_PAGE_TYPE page_type)
-{
-  switch (page_type)
-    {
-    case PAGE_UNKNOWN:
-      return "PAGE_UNKNOWN";
-    case PAGE_FTAB:
-      return "PAGE_FTAB";
-    case PAGE_HEAP:
-      return "PAGE_HEAP";
-    case PAGE_HEAP_HEADER:
-      return "PAGE_HEAP_HEADER";
-    case PAGE_VOLHEADER:
-      return "PAGE_VOLHEADER";
-    case PAGE_VOLBITMAP:
-      return "PAGE_VOLBITMAP";
-    case PAGE_XASL:
-      return "PAGE_XASL";
-    case PAGE_QRESULT:
-      return "PAGE_QRESULT";
-    case PAGE_EHASH:
-      return "PAGE_EHASH";
-    case PAGE_LARGEOBJ:
-      return "PAGE_LARGEOBJ";
-    case PAGE_OVERFLOW:
-      return "PAGE_OVERFLOW";
-    case PAGE_AREA:
-      return "PAGE_AREA";
-    case PAGE_CATALOG:
-      return "PAGE_CATALOG";
-    case PAGE_BTREE_LEAF:
-      return "PAGE_BTREE_LEAF";
-    case PAGE_BTREE_NON_LEAF:
-      return "PAGE_BTREE_NON_LEAF";
-    case PAGE_BTREE_ROOT:
-      return "PAGE_BTREE_ROOT";
-#if 0				/* unused */
-    case PAGE_BTREE_OVERFLOW_OID:
-      return "PAGE_BTREE_OVERFLOW_OID";
-    case PAGE_LOG:
-      return "PAGE_LOG";
-    case PAGE_DROPPED_FILES:
-      return "PAGE_DROPPED_FILES";
-#endif
-    default:
-      break;
-    }
-
-  assert (false);
-
-  return "";
 }

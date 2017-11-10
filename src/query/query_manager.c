@@ -2446,7 +2446,7 @@ qmgr_set_dirty_page (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
  *
  * Note: A new query file page is allocated and returned. The page
  * fetched and returned, is not locked. This routine is called
- * succesively to allocate pages for the query result files (list
+ * successively to allocate pages for the query result files (list
  * files) or XASL tree files.
  * If an error occurs, NULL pointer is returned.
  */
