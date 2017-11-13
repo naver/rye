@@ -120,7 +120,7 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
   vpid.pageid = hfid->hpgid;
 
   mode = (docreate == true ? PGBUF_LATCH_WRITE : PGBUF_LATCH_READ);
-  addr_hdr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, OLD_PAGE, mode,
+  addr_hdr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, mode,
 				   PGBUF_UNCONDITIONAL_LATCH,
 				   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
   HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);

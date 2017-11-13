@@ -550,7 +550,7 @@ btree_get_stats (THREAD_ENTRY * thread_p, OID * class_oid,
 
   root_page_ptr =
     btree_pgbuf_fix (thread_p, &(stat_info->btid.vfid), &root_vpid,
-		     OLD_PAGE, PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
   if (root_page_ptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -734,7 +734,7 @@ btree_find_AR_sampling_leaf (THREAD_ENTRY * thread_p, BTID * btid,
   P_vpid.volid = btid->vfid.volid;
   P_vpid.pageid = btid->root_pageid;
   P_page =
-    btree_pgbuf_fix (thread_p, &(btid->vfid), &P_vpid, OLD_PAGE,
+    btree_pgbuf_fix (thread_p, &(btid->vfid), &P_vpid,
 		     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
   if (P_page == NULL)
     {
@@ -785,7 +785,7 @@ btree_find_AR_sampling_leaf (THREAD_ENTRY * thread_p, BTID * btid,
       btree_read_fixed_portion_of_non_leaf_record (&rec, &nleaf);
       C_vpid = nleaf.pnt;
       C_page =
-	btree_pgbuf_fix (thread_p, &(btid->vfid), &C_vpid, OLD_PAGE,
+	btree_pgbuf_fix (thread_p, &(btid->vfid), &C_vpid,
 			 PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
       if (C_page == NULL)
 	{
@@ -836,7 +836,7 @@ again:
   VPID_COPY (&C_vpid, &node_header.next_vpid);
   if (!VPID_ISNULL (&C_vpid))
     {
-      C_page = btree_pgbuf_fix (thread_p, &(btid->vfid), &C_vpid, OLD_PAGE,
+      C_page = btree_pgbuf_fix (thread_p, &(btid->vfid), &C_vpid,
 				PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
       if (C_page == NULL)
 	{

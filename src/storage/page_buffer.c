@@ -957,7 +957,7 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 
 #if !defined(NDEBUG)
 PAGE_PTR
-pgbuf_fix_debug_newpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 		       UNUSED_ARG const MNT_SERVER_ITEM item,
 		       const char *caller_file, int caller_line)
 {
@@ -967,7 +967,7 @@ pgbuf_fix_debug_newpg (THREAD_ENTRY * thread_p, const VPID * vpid,
 }
 
 PAGE_PTR
-pgbuf_fix_debug_oldpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+pgbuf_fix_oldpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 		       int request_mode, PGBUF_LATCH_CONDITION condition,
 		       UNUSED_ARG const MNT_SERVER_ITEM item,
 		       const char *caller_file, int caller_line)
@@ -1035,6 +1035,9 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   };
 #endif
   UINT64 perf_start;
+
+  assert ((newpg == NEW_PAGE && request_mode == PGBUF_LATCH_WRITE
+	   && condition == PGBUF_UNCONDITIONAL_LATCH) || newpg == OLD_PAGE);
 
   assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (MNT_GET_PARENT_ITEM (item) == MNT_STATS_DATA_PAGE_FETCHES);

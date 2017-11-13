@@ -125,17 +125,17 @@ extern PAGE_PTR pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 
 #if 1				/* TODO - delete me */
 #define pgbuf_fix_newpg(thread_p, vpid, item) \
-        pgbuf_fix_debug_newpg(thread_p, vpid, item, __FILE__, __LINE__)
-extern PAGE_PTR pgbuf_fix_debug_newpg (THREAD_ENTRY * thread_p,
+        pgbuf_fix_newpg_debug(thread_p, vpid, item, __FILE__, __LINE__)
+extern PAGE_PTR pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p,
 				       const VPID * vpid,
 				       UNUSED_ARG const MNT_SERVER_ITEM item,
 				       const char *caller_file,
 				       int caller_line);
 
 #define pgbuf_fix_oldpg(thread_p, vpid, requestmode, condition, item) \
-        pgbuf_fix_debug_oldpg(thread_p, vpid, requestmode, condition, item, \
+        pgbuf_fix_oldpg_debug(thread_p, vpid, requestmode, condition, item, \
                         __FILE__, __LINE__)
-extern PAGE_PTR pgbuf_fix_debug_oldpg (THREAD_ENTRY * thread_p,
+extern PAGE_PTR pgbuf_fix_oldpg_debug (THREAD_ENTRY * thread_p,
 				       const VPID * vpid, int requestmode,
 				       PGBUF_LATCH_CONDITION condition,
 				       UNUSED_ARG const MNT_SERVER_ITEM item,

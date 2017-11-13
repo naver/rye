@@ -978,7 +978,8 @@ fileio_initialize_pages (THREAD_ENTRY * thread_p, int vol_fd, void *io_page_p,
 }
 
 PAGE_TYPE
-fileio_get_page_ptype (UNUSED_ARG THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p)
+fileio_get_page_ptype (UNUSED_ARG THREAD_ENTRY * thread_p,
+		       FILEIO_PAGE_RESERVED * prv_p)
 {
   PAGE_TYPE ptype;
 
@@ -991,12 +992,12 @@ fileio_get_page_ptype (UNUSED_ARG THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED 
 
 PAGE_TYPE
 fileio_set_page_ptype (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p,
-                       PAGE_TYPE ptype)
+		       PAGE_TYPE ptype)
 {
   PAGE_TYPE old_ptype;
 
   assert (prv_p != NULL);
-  assert (ptype >= PAGE_UNKNOWN);
+//  assert (ptype >= PAGE_UNKNOWN);
   assert (ptype <= PAGE_LAST);
 
   old_ptype = fileio_get_page_ptype (thread_p, prv_p);

@@ -1877,7 +1877,7 @@ start_point:
     }
 #endif
 
-  P = btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid, OLD_PAGE,
+  P = btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid,
 		       P_req_mode, PGBUF_UNCONDITIONAL_LATCH);
   if (P == NULL)
     {
@@ -2058,7 +2058,7 @@ start_point:
 	      || Q_req_mode == PGBUF_LATCH_WRITE);
 
       Q = btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &Q_vpid,
-			   OLD_PAGE, Q_req_mode, PGBUF_UNCONDITIONAL_LATCH);
+			   Q_req_mode, PGBUF_UNCONDITIONAL_LATCH);
       if (Q == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -2435,7 +2435,7 @@ start_point:
   P_vpid.volid = btid->sys_btid->vfid.volid;	/* read the root page */
   P_vpid.pageid = btid->sys_btid->root_pageid;
   P =
-    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid, OLD_PAGE,
+    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid,
 		     non_leaf_request_mode, PGBUF_UNCONDITIONAL_LATCH);
   if (P == NULL)
     {
@@ -2599,7 +2599,7 @@ start_point:
 	  /* Q is non leaf node */
 	  Q =
 	    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &Q_vpid,
-			     OLD_PAGE, non_leaf_request_mode,
+			     non_leaf_request_mode,
 			     PGBUF_UNCONDITIONAL_LATCH);
 	  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_NON_LEAF);
 	}
@@ -2608,8 +2608,7 @@ start_point:
 	  /* Q is leaf node */
 	  Q =
 	    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &Q_vpid,
-			     OLD_PAGE, PGBUF_LATCH_WRITE,
-			     PGBUF_UNCONDITIONAL_LATCH);
+			     PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH);
 	  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_LEAF);
 	}
       if (Q == NULL)
@@ -2977,7 +2976,7 @@ btree_get_next_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
 
   next_page =
     btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid),
-		     &node_header.next_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+		     &node_header.next_vpid, PGBUF_LATCH_WRITE,
 		     PGBUF_UNCONDITIONAL_LATCH);
   if (next_page == NULL)
     {
