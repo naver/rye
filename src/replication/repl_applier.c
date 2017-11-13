@@ -324,7 +324,8 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
 		   unsigned int match_rcvindex, unsigned int *rcvindex,
 		   void **logs, char **rec_type, char **data, int *d_length)
 {
-  LOG_PAGE *pgptr = NULL, *old_pg;
+  LOG_PAGE *pgptr = NULL;
+//  LOG_PAGE *old_pg;
   PGLENGTH offset;
   int length;			/* type change PGLENGTH -> int */
   LOG_PAGEID pageid;
@@ -359,7 +360,7 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
       is_diff = (lrec->type == LOG_DIFF_UNDOREDO_DATA) ? true : false;
 
       length = DB_SIZEOF (struct log_undoredo);
-      old_pg = pgptr;
+//      old_pg = pgptr;
       CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, length, offset,
 					     pageid, pgptr, org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
@@ -574,7 +575,7 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
   LA_OVF_PAGE_LIST *ovf_list_tail = NULL;
   LA_OVF_PAGE_LIST *ovf_list_data = NULL;
   void *log_info;
-  VPID prev_vpid;
+//  VPID prev_vpid;
   bool first = true;
   int copyed_len;
   int area_len;
@@ -583,8 +584,10 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
   int length = 0;
 
   LSA_COPY (&current_lsa, &log_record->prev_tranlsa);
+#if 0
   prev_vpid.pageid = ((struct log_undoredo *) logs)->data.pageid;
   prev_vpid.volid = ((struct log_undoredo *) logs)->data.volid;
+#endif
 
   while (!LSA_ISNULL (&current_lsa))
     {
@@ -1244,7 +1247,7 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
   if (item->item_type != RP_ITEM_TYPE_DDL)
     {
       assert (false);
-      ; /* TODO - avoid compiler warning */
+      ;				/* TODO - avoid compiler warning */
     }
 
   error = cirp_flush_repl_items (applier, false);
@@ -1821,7 +1824,7 @@ applier_main (void *arg)
   CIRP_BUF_MGR *buf_mgr = NULL;
   CIRP_THREAD_ENTRY *th_entry = NULL;
   char err_msg[ER_MSG_SIZE];
-  bool need_shutdown = false;
+//  bool need_shutdown = false;
 
   th_entry = (CIRP_THREAD_ENTRY *) arg;
 
@@ -1859,7 +1862,7 @@ applier_main (void *arg)
 
   while (REPL_NEED_SHUTDOWN () == false)
     {
-      need_shutdown = false;
+//      need_shutdown = false;
 
       error = rp_applier_wait_start (applier);
       if (error != NO_ERROR)

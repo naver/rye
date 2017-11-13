@@ -3290,7 +3290,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
       if (thread_p->server_stats.page_wait_time == NULL)
 	{
 	  thread_p->server_stats.page_wait_time =
-	    (struct timeval *) calloc (CSECT_LAST, sizeof (struct timeval));
+	    (struct timeval *) calloc (PAGE_LAST, sizeof (struct timeval));
 	}
     }
   aligned_page_buf = PTR_ALIGN (page_buf, MAX_ALIGNMENT);

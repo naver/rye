@@ -101,30 +101,20 @@ typedef enum
   /* Statistics at page level */
   MNT_STATS_DATA_PAGE_FETCHES,
 #if 1				/* fetches sub-info */
-  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,	/* file header page             */
-  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,	/* file allocset table page             */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,	/* heap file header                     */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* heap page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION,	/* heap relocation page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC,	/* bestspace_sync                            */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* volume header page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* volume bitmap page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* xasl stream page                     */
-  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* query result page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* ehash bucket/dir page                */
-  MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER,	/* overflow file header      */
-  MNT_STATS_DATA_PAGE_FETCHES_OVF,	/* overflow page (with ovf_keyval)      */
-  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* area page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* catalog page                         */
-  MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF,	/* catalog overflow page                         */
-  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* b+tree index page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,	/* 1 file header page             */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,	/* 2 file allocset table page             */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* 3 heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* 4 volume header page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* 5 volume bitmap page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* 6 xasl stream page                     */
+  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* 7 query result page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* 8 ehash bucket/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,	/* 9 overflow page (with ovf_keyval)      */
+  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* 10 area page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* 11 catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* 12 b+tree index page                    */
 
-  MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT,	/* disk_format_op                  */
-  MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE,	/* postpone_op                     */
-  MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK,	/* rollback_op                     */
-  MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT,	/* checkpoint_op                     */
-
-  MNT_STATS_DATA_PAGE_FETCHES_OTHER,     /* misc (disk, recovery)                     */
+  MNT_STATS_DATA_PAGE_FETCHES_OTHER,	/* 13 misc (disk, recovery)                     */
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,
@@ -243,25 +233,16 @@ typedef enum
 #define MNT_GET_PARENT_ITEM(m)                \
   ((m == MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB   \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP       \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION       \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_XASL  \
       || m == MNT_STATS_DATA_PAGE_FETCHES_QRESULT       \
       || m == MNT_STATS_DATA_PAGE_FETCHES_EHASH \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER    \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_OVF   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_AREA  \
       || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG       \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT   \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE  \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK  \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT    \
       || m == MNT_STATS_DATA_PAGE_FETCHES_OTHER) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 
 /*

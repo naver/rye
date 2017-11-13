@@ -269,13 +269,12 @@ btree_get_subtree_capacity (THREAD_ENTRY * thread_p, BTID_INT * btid,
 	  page_vpid = nleaf_ptr.pnt;
 	  page =
 	    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &page_vpid,
-			     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
+			     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+			     PAGE_BTREE);
 	  if (page == NULL)
 	    {
 	      GOTO_EXIT_ON_ERROR;
 	    }
-	  BTREE_STATS_ADD_WAIT_TIME (node_header.node_level > 2
-				     ? PAGE_BTREE_NON_LEAF : PAGE_BTREE_LEAF);
 
 	  ret = btree_get_subtree_capacity (thread_p, btid, page, &cpc2);
 	  if (ret != NO_ERROR)
@@ -410,12 +409,11 @@ btree_index_capacity (THREAD_ENTRY * thread_p, OID * cls_oid,
   root_vpid.volid = btid->vfid.volid;
   root =
     btree_pgbuf_fix (thread_p, &(btid->vfid), &root_vpid, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_UNCONDITIONAL_LATCH, PAGE_BTREE_ROOT);
   if (root == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
-  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_ROOT);
 
   ret = btree_read_node_header (root, &root_header);
   if (ret != NO_ERROR)
@@ -684,13 +682,13 @@ btree_dump_tree (THREAD_ENTRY * thread_p, FILE * fp, BTID_INT * btid,
   p_vpid.volid = btid->sys_btid->vfid.volid;
   p_pgptr =
     btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &p_vpid,
-		     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+		     PAGE_BTREE_ROOT);
   if (p_pgptr == NULL)
     {
       error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
-  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_ROOT);
 
   error = btree_read_node_header (p_pgptr, &node_header);
   if (error != NO_ERROR)
@@ -773,13 +771,13 @@ btree_dump_subtree (THREAD_ENTRY * thread_p, FILE * fp, BTID_INT * btid,
 
 	  page =
 	    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &page_vpid,
-			     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH);
+			     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
+			     PAGE_BTREE);
 	  if (page == NULL)
 	    {
 	      error = er_errid ();
 	      GOTO_EXIT_ON_ERROR;
 	    }
-	  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_NON_LEAF);
 
 	  error = btree_dump_subtree (thread_p, fp, btid, page, &page_vpid,
 				      dump_level, dump_key, n + 4);

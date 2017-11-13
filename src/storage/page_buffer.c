@@ -958,6 +958,7 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 #if !defined(NDEBUG)
 PAGE_PTR
 pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
+		       UNUSED_ARG const PAGE_TYPE ptype,
 		       UNUSED_ARG const MNT_SERVER_ITEM item,
 		       const char *caller_file, int caller_line)
 {
@@ -978,7 +979,8 @@ pgbuf_fix_oldpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 }
 #else /* NDEBUG */
 PAGE_PTR
-pgbuf_fix_release_newpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+pgbuf_fix_newpg_release (THREAD_ENTRY * thread_p, const VPID * vpid,
+			 UNUSED_ARG const PAGE_TYPE ptype,
 			 UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   return pgbuf_fix_release (thread_p, vpid, NEW_PAGE,
@@ -987,7 +989,7 @@ pgbuf_fix_release_newpg (THREAD_ENTRY * thread_p, const VPID * vpid,
 }
 
 PAGE_PTR
-pgbuf_fix_release_oldpg (THREAD_ENTRY * thread_p, const VPID * vpid,
+pgbuf_fix_oldpg_release (THREAD_ENTRY * thread_p, const VPID * vpid,
 			 int request_mode, PGBUF_LATCH_CONDITION condition,
 			 UNUSED_ARG const MNT_SERVER_ITEM item)
 {
@@ -1547,7 +1549,7 @@ pgbuf_get_num_hold_cnt (UNUSED_ARG THREAD_ENTRY * thread_p,
 	    {
 	      switch (page_type)
 		{
-		case PAGE_VOL_HEADER:
+		case PAGE_VOLHEADER:
 		  if (holder->bufptr->vpid.pageid != DISK_VOLHEADER_PAGE)
 		    {
 		      cnt--;
@@ -2589,7 +2591,7 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 
 	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
 				 PGBUF_UNCONDITIONAL_LATCH,
-				 MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT);
+				 MNT_STATS_DATA_PAGE_FETCHES_OTHER);
 	      if (pgptr == NULL
 		  || pgbuf_flush_with_wal (thread_p, pgptr) == NULL)
 		{
@@ -2857,7 +2859,9 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       pthread_mutex_unlock (&bufptr->BCB_mutex);
     }
 
-  pgptr = pgbuf_fix_newpg (thread_p, vpid, MNT_STATS_DATA_PAGE_FETCHES_AREA);
+  pgptr =
+    pgbuf_fix_newpg (thread_p, vpid, PAGE_AREA,
+		     MNT_STATS_DATA_PAGE_FETCHES_AREA);
   if (pgptr != NULL)
     {
       memcpy ((char *) pgptr + start_offset, area, length);

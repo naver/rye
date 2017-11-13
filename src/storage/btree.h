@@ -363,7 +363,8 @@ extern PAGE_PTR btree_get_new_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
 extern PAGE_PTR btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
 				 const VPID * vpid,
 				 int requestmode,
-				 PGBUF_LATCH_CONDITION condition);
+				 PGBUF_LATCH_CONDITION condition,
+				 const PAGE_TYPE ptype);
 
 extern int btree_search_nonleaf_page (THREAD_ENTRY * thread_p,
 				      BTID_INT * btid, PAGE_PTR page_ptr,

@@ -4332,7 +4332,7 @@ heap_create_internal (THREAD_ENTRY * thread_p, HFID * hfid, int exp_npgs,
       GOTO_EXIT_ON_ERROR;
     }
 
-  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid,);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid);
   if (addr.pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;

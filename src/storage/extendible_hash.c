@@ -739,7 +739,7 @@ ehash_initialize_bucket_new_page (THREAD_ENTRY * thread_p,
    * during insertions and deletions.
    */
 
-  page_p = pgbuf_fix_newpg (thread_p, vpid_p,
+  page_p = pgbuf_fix_newpg (thread_p, vpid_p, PAGE_EHASH,
 			    MNT_STATS_DATA_PAGE_FETCHES_EHASH);
   if (page_p == NULL)
     {
@@ -1145,7 +1145,7 @@ ehash_create_helper (THREAD_ENTRY * thread_p, EHID * ehid_p, DB_TYPE key_type,
       return NULL;
     }
 
-  dir_page_p = pgbuf_fix_newpg (thread_p, &dir_vpid,
+  dir_page_p = pgbuf_fix_newpg (thread_p, &dir_vpid, PAGE_EHASH,
 				MNT_STATS_DATA_PAGE_FETCHES_EHASH);
   if (dir_page_p == NULL)
     {

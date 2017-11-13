@@ -361,43 +361,42 @@ page_type_to_string (PAGE_TYPE page_type)
 {
   switch (page_type)
     {
-    case PAGE_UNKNOWN:
+    case PAGE_UNKNOWN:		/* 0 */
       return "PAGE_UNKNOWN";
-    case PAGE_FILE_HEADER:
+    case PAGE_FILE_HEADER:	/* 1 */
       return "PAGE_FILE_HEADER";
-    case PAGE_FILE_TABLE:
+    case PAGE_FILE_TAB:	/* 2 */
       return "PAGE_FILE_TAB";
-    case PAGE_HEAP_HEADER:
-      return "PAGE_HEAP_HEADER";
-    case PAGE_HEAP:
+    case PAGE_HEAP:		/* 3 */
       return "PAGE_HEAP";
-    case PAGE_VOL_HEADER:
-      return "PAGE_VOL_HEADER";
-    case PAGE_VOL_BITMAP:
-      return "PAGE_VOL_BITMAP";
-    case PAGE_XASL:
+    case PAGE_VOLHEADER:	/* 4 */
+      return "PAGE_VOLHEADER";
+    case PAGE_VOLBITMAP:	/* 5 */
+      return "PAGE_VOLBITMAP";
+    case PAGE_XASL:		/* 6 */
       return "PAGE_XASL";
-    case PAGE_QRESULT:
+    case PAGE_QRESULT:		/* 7 */
       return "PAGE_QRESULT";
-    case PAGE_EHASH:
+    case PAGE_EHASH:		/* 8 */
       return "PAGE_EHASH";
-    case PAGE_OVF_HEADER:
-      return "PAGE_OVF_HEADER";
-    case PAGE_OVF:
-      return "PAGE_OVF";
-    case PAGE_AREA:
+    case PAGE_OVERFLOW:	/* 9 */
+      return "PAGE_OVERFLOW";
+    case PAGE_AREA:		/* 10 */
       return "PAGE_AREA";
-    case PAGE_CATALOG:
+    case PAGE_CATALOG:		/* 11 */
       return "PAGE_CATALOG";
-    case PAGE_BTREE_ROOT:
+    case PAGE_BTREE:		/* 12 */
+      return "PAGE_BTREE";
+    case PAGE_OTHER:		/* 13 */
+      return "PAGE_OTHER";
+
+    case PAGE_HEAP_HEADER:	/* 14 */
+      return "PAGE_HEAP_HEADER";
+    case PAGE_BTREE_ROOT:	/* 15 */
       return "PAGE_BTREE_ROOT";
-    case PAGE_BTREE_NON_LEAF:
-      return "PAGE_BTREE_NON_LEAF";
-    case PAGE_BTREE_LEAF:
-      return "PAGE_BTREE_LEAF";
-    case PAGE_LOG:
+    case PAGE_LOG:		/* 16 */
       return "PAGE_LOG";
-    case PAGE_DROPPED_FILES:
+    case PAGE_DROPPED_FILES:	/* 17 */
       return "PAGE_DROPPED_FILES";
     default:
       break;

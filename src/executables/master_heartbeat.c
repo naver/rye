@@ -4456,7 +4456,9 @@ hb_thread_cluster_reader (UNUSED_ARG void *arg)
 					    from_len);
 	    }
 
-	  error = FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE, 5000, 0);
+	  error =
+	    FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE, 5000,
+			     0);
 	}
     }
 
@@ -5963,7 +5965,7 @@ hb_get_process_info_string (bool verbose_yn)
   int rv, buf_size = 0, len = 0;
   char *p, *last;
   char *str = NULL;
-  bool printed_copylog = false;
+//  bool printed_copylog = false;
 
   if (hb_Resource == NULL)
     {
@@ -6010,7 +6012,7 @@ retry_memory:
     }
   p += len;
 
-  printed_copylog = false;
+//  printed_copylog = false;
   for (proc = hb_Resource->procs; proc; proc = proc->next)
     {
       sock_entq = css_return_entry_by_conn (proc->conn,

@@ -466,6 +466,7 @@ extern PAGE_PTR heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
 				const VPID * vpid,
 				int requestmode,
 				PGBUF_LATCH_CONDITION condition,
+				const PAGE_TYPE ptype,
 				UNUSED_ARG const MNT_SERVER_ITEM item);
 extern bool heap_is_big_length (int length);
 #endif /* _HEAP_FILE_H_ */

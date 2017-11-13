@@ -2541,6 +2541,7 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
       page_p = pgbuf_fix_newpg (thread_p,
 				&(tmp_vfid_p->
 				  vpid_array[tmp_vfid_p->vpid_index]),
+				PAGE_QRESULT,
 				MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
       if (page_p == NULL)
 	{
@@ -2634,6 +2635,7 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
 
   page_p = pgbuf_fix_newpg (thread_p,
 			    &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
+			    PAGE_QRESULT,
 			    MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
   if (page_p == NULL)
     {

@@ -406,7 +406,7 @@ disk_goodvol_decache (UNUSED_ARG THREAD_ENTRY * thread_p)
 {
   int ret = NO_ERROR;
 
-  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOL_HEADER) == 0);
+  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOLHEADER) == 0);
 
   /*
    * We do not check access to the cache, we will remove it.
@@ -531,7 +531,7 @@ disk_cache_goodvol_refresh_onevol (THREAD_ENTRY * thread_p, INT16 volid,
 	{
 	  assert (csect_check_own (thread_p,
 				   CSECT_DISK_REFRESH_GOODVOL) == 1);
-	  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOL_HEADER) == 0);
+	  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOLHEADER) == 0);
 	  disk_Cache->auto_extend_volid = volid;
 	}
     }
@@ -549,7 +549,7 @@ disk_goodvol_refresh_with_new (THREAD_ENTRY * thread_p, INT16 volid)
 {
   bool answer;
 
-  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOL_HEADER) == 0);
+  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOLHEADER) == 0);
 
   /*
    * using csect_enter() for the safety instead of an assert()
@@ -594,7 +594,7 @@ disk_goodvol_refresh (THREAD_ENTRY * thread_p, int hint_max_nvols)
   DISK_VOLPURPOSE vol_purpose;
   bool answer = false;
 
-  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOL_HEADER) == 0);
+  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOLHEADER) == 0);
 
   if (hint_max_nvols < 10)
     {
@@ -675,7 +675,7 @@ int
 disk_cache_set_auto_extend_volid (UNUSED_ARG THREAD_ENTRY * thread_p,
 				  VOLID volid)
 {
-  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOL_HEADER) == 0);
+  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_VOLHEADER) == 0);
 
   if (csect_enter (thread_p, CSECT_DISK_REFRESH_GOODVOL, INF_WAIT) !=
       NO_ERROR)
@@ -1850,7 +1850,7 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 
   /* Lock the volume header in exclusive mode and then fetch the page. */
 
-  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid,
+  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_VOLHEADER,
 				MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
   if (addr.pgptr == NULL)
     {
@@ -2036,7 +2036,7 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 	      pgptr =
 		pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
 			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT);
+			   MNT_STATS_DATA_PAGE_FETCHES_OTHER);
 	      if (pgptr != NULL)
 		{
 		  pgbuf_set_lsa_as_temporary (thread_p, pgptr);
@@ -2908,7 +2908,7 @@ disk_map_init (THREAD_ENTRY * thread_p, INT16 volid, INT32 at_fpageid,
   /* One page at a time */
   for (vpid.pageid = at_fpageid; vpid.pageid <= at_lpageid; vpid.pageid++)
     {
-      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid,
+      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_VOLBITMAP,
 				    MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
       if (addr.pgptr == NULL)
 	{
@@ -3969,7 +3969,7 @@ disk_scramble_newpages (INT16 volid, INT32 first_pageid, INT32 npages,
 
   for (i = 0; i < npages; i++)
     {
-      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid,
+      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_OTHER,
 				    MNT_STATS_DATA_PAGE_FETCHES_OTHER);
       if (addr.pgptr != NULL)
 	{

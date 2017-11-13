@@ -1014,7 +1014,7 @@ qfile_store_xasl (THREAD_ENTRY * thread_p, XASL_STREAM * stream)
 	}
 
       cur_vpid_p = &vpid_array[page_index];
-      cur_page_p = pgbuf_fix_newpg (thread_p, cur_vpid_p,
+      cur_page_p = pgbuf_fix_newpg (thread_p, cur_vpid_p, PAGE_XASL,
 				    MNT_STATS_DATA_PAGE_FETCHES_XASL);
       if (cur_page_p == NULL)
 	{

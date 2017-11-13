@@ -243,26 +243,27 @@ typedef char *PAGE_PTR;		/* Pointer to a page */
 /* TODO - PAGE_TYPE is used for debugging */
 typedef enum
 {
-  PAGE_UNKNOWN = 0,		/* used for initialized page            */
-  PAGE_FILE_HEADER,		/* file header page                     */
-  PAGE_FILE_TABLE,		/* file allocset table page             */
-  PAGE_HEAP_HEADER,		/* heap page header                     */
-  PAGE_HEAP,			/* heap page                            */
-  PAGE_VOL_HEADER,		/* volume header page                   */
-  PAGE_VOL_BITMAP,		/* volume bitmap page                   */
-  PAGE_XASL,			/* xasl stream page                     */
-  PAGE_QRESULT,			/* query result page                    */
-  PAGE_EHASH,			/* ehash bucket/dir page                */
-  PAGE_OVF_HEADER,		/* overflow file header                 */
-  PAGE_OVF,			/* overflow page                        */
-  PAGE_AREA,			/* area page                            */
-  PAGE_CATALOG,			/* catalog page                         */
-  PAGE_CATALOG_OVF,		/* catalog overflow page                */
-  PAGE_BTREE_ROOT,		/* b+tree index root page               */
-  PAGE_BTREE_NON_LEAF,		/* b+tree index non-leaf page           */
-  PAGE_BTREE_LEAF,		/* b+tree index leaf page               */
-  PAGE_LOG,			/* NONE - log page (unused)             */
-  PAGE_DROPPED_FILES,		/* Dropped files page.                  */
+  PAGE_UNKNOWN = 0,		/* 0 used for initialized page            */
+  PAGE_FILE_HEADER,		/* 1 file header page                     */
+  PAGE_FILE_TAB,		/* 2 file allocset table page             */
+  PAGE_HEAP,			/* 3 heap page                            */
+  PAGE_VOLHEADER,		/* 4 volume header page                   */
+  PAGE_VOLBITMAP,		/* 5 volume bitmap page                   */
+  PAGE_XASL,			/* 6 xasl stream page                     */
+  PAGE_QRESULT,			/* 7 query result page                    */
+  PAGE_EHASH,			/* 8 ehash bucket/dir page                */
+  PAGE_OVERFLOW,		/* 9 overflow page                        */
+  PAGE_AREA,			/* 10 area page                            */
+  PAGE_CATALOG,			/* 11 catalog page                         */
+  PAGE_BTREE,			/* 12 b+tree index page                    */
+
+#if 1				/* TODO - */
+  PAGE_OTHER,			/* 13 misc (disk, recovery)                     */
+  PAGE_HEAP_HEADER,		/* 14 heap header page               */
+  PAGE_BTREE_ROOT,		/* 15 b+tree index root page               */
+#endif
+  PAGE_LOG,			/* 16 NONE - log page (unused)             */
+  PAGE_DROPPED_FILES,		/* 17 Dropped files page.                  */
   PAGE_LAST = PAGE_DROPPED_FILES
 } PAGE_TYPE;
 

@@ -122,8 +122,8 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
   mode = (docreate == true ? PGBUF_LATCH_WRITE : PGBUF_LATCH_READ);
   addr_hdr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, mode,
 				   PGBUF_UNCONDITIONAL_LATCH,
-				   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER);
-  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
+				   PAGE_HEAP_HEADER,
+				   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
   if (addr_hdr.pgptr == NULL)
     {
       /* something went wrong, return */

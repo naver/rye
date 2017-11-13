@@ -669,7 +669,7 @@ rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
   int offset, area_len;
   RBL_OVERFLOW_DATA *ovfl_rec;
   const OVERFLOW_FIRST_PART *first;
-  const OVERFLOW_REST_PART *rest;
+//  const OVERFLOW_REST_PART *rest;
   int error;
 
   *is_completed = false;
@@ -740,7 +740,7 @@ rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
   else
     {
       offset = offsetof (OVERFLOW_REST_PART, data);
-      rest = (const OVERFLOW_REST_PART *) p;
+//      rest = (const OVERFLOW_REST_PART *) p;
     }
 
   area_len = length - offset;
