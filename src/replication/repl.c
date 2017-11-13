@@ -352,6 +352,8 @@ main (int argc, char *argv[])
   pthread_join (writer_entry.tid, NULL);
   pthread_join (flusher_entry.tid, NULL);
 
+  pthread_join (health_entry.tid, NULL);
+
   RYE_FREE_MEM (applier_entries);
 
   rp_disconnect_agents ();
@@ -1076,6 +1078,18 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   if (error != NO_ERROR)
     {
       assert (error != CCI_ER_NO_MORE_DATA);
+
+      return error;
+    }
+
+  assert (analyzer->q_applied_time == NULL);
+
+  analyzer->q_applied_time = Rye_queue_new ();
+  if (analyzer->q_applied_time == NULL)
+    {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+			   1, sizeof (RQueue));
 
       return error;
     }

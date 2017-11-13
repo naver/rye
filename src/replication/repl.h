@@ -30,6 +30,8 @@
 
 #include "repl_page_buffer.h"
 
+#include "ds_queue.h"
+
 #include "cas_cci.h"
 
 #define CIRP_TRAN_Q_SIZE        (1024)
@@ -111,7 +113,7 @@ struct cirp_ct_log_analyzer
   LOG_LSA required_lsa;
 
   INT64 start_time;		/* analyzer start time, Time in Milli seconds */
-  INT64 last_access_time;	/* Time in Milli seconds */
+  INT64 source_applied_time;	/* Time in Milli seconds */
   INT64 creation_time;		/* Time in Milli seconds */
 
   INT64 queue_full;
@@ -167,6 +169,13 @@ struct _cirp_tran_q
   CIRP_Q_ITEM log_item[CIRP_TRAN_Q_SIZE];
 };
 
+typedef struct __rp_applied_time_node RP_APPLIED_TIME_NODE;
+struct __rp_applied_time_node
+{
+  LOG_LSA applied_lsa;
+  INT64 applied_time;
+};
+
 typedef struct _cirp_analyzer_info CIRP_ANALYZER_INFO;
 struct _cirp_analyzer_info
 {
@@ -184,6 +193,7 @@ struct _cirp_analyzer_info
   int last_node_state;
   int last_ha_file_status;	/* FIXME-notout: check initial value */
   bool is_role_changed;
+  RQueue *q_applied_time;
 
   /* file lock */
   int log_path_lockf_vdes;
