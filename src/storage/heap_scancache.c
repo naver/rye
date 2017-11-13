@@ -3329,7 +3329,7 @@ heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
 	  if (++num_iterations > max_iterations
 	      || heap_Bestspace->bestspace_sync.stop_sync_bestspace == true)
 	    {
-	      er_log_debug (ARG_FILE_LINE, "heap_stats_sync_bestspace: "
+	      er_log_debug (ARG_FILE_LINE, "heap_bestspace_sync: "
 			    "num_iterations %d "
 			    "next_vpid { pageid %d volid %d }\n",
 			    num_iterations,
@@ -3396,7 +3396,7 @@ heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
     }
   while (!VPID_EQ (&next_vpid, &stopat_vpid));
 
-  er_log_debug (ARG_FILE_LINE, "heap_stats_sync_bestspace: "
+  er_log_debug (ARG_FILE_LINE, "heap_bestspace_sync: "
 		"scans from {%d|%d} to {%d|%d}, num_iterations(%d) "
 		"max_iterations(%d)\n",
 		start_vpid.volid, start_vpid.pageid,

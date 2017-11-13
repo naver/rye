@@ -858,14 +858,15 @@ pgbuf_finalize (void)
  */
 PAGE_PTR
 pgbuf_fix_with_retry (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		      int mode, int retry)
+		      int mode, int retry,
+		      UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   PAGE_PTR pgptr;
   int i = 0;
   bool noretry = false;
 
   while ((pgptr = pgbuf_fix (thread_p, vpid, newpg, mode,
-			     PGBUF_UNCONDITIONAL_LATCH)) == NULL)
+			     PGBUF_UNCONDITIONAL_LATCH, item)) == NULL)
     {
       switch (er_errid ())
 	{
@@ -899,6 +900,7 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 				    const VPID * vpid, int newpg,
 				    int request_mode,
 				    PGBUF_LATCH_CONDITION condition,
+				    UNUSED_ARG const MNT_SERVER_ITEM item,
 				    const char *caller_file, int caller_line)
 {
   PAGE_PTR pgptr;
@@ -906,13 +908,15 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
   bool old_check_page_validation, rv;
 #endif
 
+  assert (item == MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+
 #if defined(SERVER_MODE)
   old_check_page_validation =
     thread_set_check_page_validation (thread_p, false);
 #endif /* SERVER_MODE */
 
   pgptr = pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
-			   caller_file, caller_line);
+			   item, caller_file, caller_line);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
@@ -925,7 +929,8 @@ PAGE_PTR
 pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 				      const VPID * vpid, int newpg,
 				      int request_mode,
-				      PGBUF_LATCH_CONDITION condition)
+				      PGBUF_LATCH_CONDITION condition,
+				      UNUSED_ARG const MNT_SERVER_ITEM item)
 {
   PAGE_PTR pgptr;
 #if defined(SERVER_MODE)
@@ -937,7 +942,8 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 								false);
 #endif /* SERVER_MODE */
 
-  pgptr = pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition);
+  pgptr =
+    pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition, item);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
@@ -959,11 +965,13 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 PAGE_PTR
 pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		 int request_mode, PGBUF_LATCH_CONDITION condition,
+		 UNUSED_ARG const MNT_SERVER_ITEM item,
 		 const char *caller_file, int caller_line)
 #else /* NDEBUG */
 PAGE_PTR
 pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		   int request_mode, PGBUF_LATCH_CONDITION condition)
+		   int request_mode, PGBUF_LATCH_CONDITION condition,
+		   UNUSED_ARG const MNT_SERVER_ITEM item)
 #endif				/* NDEBUG */
 {
   PGBUF_BUFFER_HASH *hash_anchor;
@@ -982,6 +990,9 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   };
 #endif
   UINT64 perf_start;
+
+  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
+  assert (MNT_GET_PARENT_ITEM (item) == MNT_STATS_DATA_PAGE_FETCHES);
 
   PERF_MON_GET_CURRENT_TIME (perf_start);
 
@@ -1237,8 +1248,7 @@ try_again:
     }
 
   /* Record number of fetches in statistics */
-  mnt_stats_counter_with_time (thread_p, MNT_STATS_DATA_PAGE_FETCHES, 1,
-			       perf_start);
+  mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
   return (PAGE_PTR) (&(bufptr->iopage_buffer->iopage.page[0]));
 }
@@ -2530,7 +2540,8 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 	      pthread_mutex_unlock (&bufptr->BCB_mutex);
 
 	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-				 PGBUF_UNCONDITIONAL_LATCH);
+				 PGBUF_UNCONDITIONAL_LATCH,
+				 MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT);
 	      if (pgptr == NULL
 		  || pgbuf_flush_with_wal (thread_p, pgptr) == NULL)
 		{
@@ -2644,7 +2655,8 @@ pgbuf_copy_to_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       if (do_fetch == true)
 	{
 	  pgptr = pgbuf_fix (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			     PGBUF_UNCONDITIONAL_LATCH);
+			     PGBUF_UNCONDITIONAL_LATCH,
+			     MNT_STATS_DATA_PAGE_FETCHES_AREA);
 	  if (pgptr != NULL)
 	    {
 	      memcpy (area, (char *) pgptr + start_offset, length);
@@ -2798,7 +2810,8 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
     }
 
   pgptr = pgbuf_fix (thread_p, vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     PGBUF_UNCONDITIONAL_LATCH,
+		     MNT_STATS_DATA_PAGE_FETCHES_AREA);
   if (pgptr != NULL)
     {
       memcpy ((char *) pgptr + start_offset, area, length);
@@ -7192,12 +7205,14 @@ pgbuf_page_type_to_string (BUFFER_PAGE_TYPE page_type)
       return "PAGE_BTREE_NON_LEAF";
     case PAGE_BTREE_ROOT:
       return "PAGE_BTREE_ROOT";
+#if 0				/* unused */
     case PAGE_BTREE_OVERFLOW_OID:
       return "PAGE_BTREE_OVERFLOW_OID";
     case PAGE_LOG:
       return "PAGE_LOG";
     case PAGE_DROPPED_FILES:
       return "PAGE_DROPPED_FILES";
+#endif
     default:
       break;
     }

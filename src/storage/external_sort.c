@@ -593,7 +593,7 @@ sort_spage_find_free (SLOT ** out_sptr, INT16 * out_slotid, INT16 * out_space,
 static int
 sort_spage_insert (INT16 * slotid, PAGE_PTR pgptr, RECDES * recdes)
 {
-  SLOTTED_PAGE_HEADER *sphdr;
+//  SLOTTED_PAGE_HEADER *sphdr;
   SLOT *sptr;
   INT16 used_space;
   int error = NO_ERROR;
@@ -619,8 +619,10 @@ sort_spage_insert (INT16 * slotid, PAGE_PTR pgptr, RECDES * recdes)
       /* Find the free slot and insert the record */
       memcpy (((char *) pgptr + sptr->roffset), recdes->data, recdes->length);
 
+#if 0
       /* Indicate that we are spending our savings */
       sphdr = (SLOTTED_PAGE_HEADER *) pgptr;
+#endif
     }
 
   return NO_ERROR;

@@ -48,9 +48,12 @@ struct _rye_singly_linked_lists
 extern RSList *Rye_slist_alloc (void);
 extern void Rye_slist_clear (RSList * list);
 extern void Rye_slist_free (RSList * list);
+extern void Rye_slist_free_full (RSList * list, Rye_func free_func);
+extern void *Rye_slist_get_head (RSList * list);
+extern void *Rye_slist_get_tail (RSList * list);
 extern RSNode *Rye_slist_prepend (RSList * list, void *data);
 extern RSNode *Rye_slist_append (RSList * list, void *data);
-extern void *Rye_slist_remove_first (RSList * list);
+extern void *Rye_slist_remove_head (RSList * list);
 extern int Rye_slist_foreach (RSList * list, Rye_func func, void *user_data);
 
 #endif /* DS_LIST_H_ */

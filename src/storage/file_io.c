@@ -2801,7 +2801,7 @@ fileio_synchronize (UNUSED_ARG THREAD_ENTRY * thread_p, int vol_fd,
 #endif
 #if defined (SERVER_MODE)
   static pthread_mutex_t inc_cnt_mutex = PTHREAD_MUTEX_INITIALIZER;
-  int r;
+  int rv;
 #endif
 #if defined (SERVER_MODE)
   static int inc_cnt = 0;
@@ -2813,7 +2813,7 @@ fileio_synchronize (UNUSED_ARG THREAD_ENTRY * thread_p, int vol_fd,
 #if defined (SERVER_MODE)
   if (prm_get_integer_value (PRM_ID_SUPPRESS_FSYNC) > 0)
     {
-      r = pthread_mutex_lock (&inc_cnt_mutex);
+      rv = pthread_mutex_lock (&inc_cnt_mutex);
 
       if (++inc_cnt >= prm_get_integer_value (PRM_ID_SUPPRESS_FSYNC))
 	{

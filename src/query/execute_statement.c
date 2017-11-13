@@ -1976,7 +1976,7 @@ do_prepare_delete (DB_SESSION * session, PT_NODE * statement,
   int err;
   PARSER_CONTEXT *parser;
   PT_NODE *flat;
-  DB_OBJECT *class_obj;
+//  DB_OBJECT *class_obj;
   int au_save;
   bool has_virt_object;
   PT_NODE *node = NULL;
@@ -1994,9 +1994,7 @@ do_prepare_delete (DB_SESSION * session, PT_NODE * statement,
       return ER_OBJ_INVALID_ARGUMENTS;
     }
 
-#if 1
   assert (statement == NULL || statement->next == NULL);
-#endif
 
   save_stmt = statement;
 
@@ -2038,11 +2036,11 @@ do_prepare_delete (DB_SESSION * session, PT_NODE * statement,
 		    {
 		      has_virt_object = true;
 		    }
-		  class_obj = flat->info.name.db_object;
+//                class_obj = flat->info.name.db_object;
 		}
 	      else
 		{
-		  class_obj = NULL;
+//                class_obj = NULL;
 		}
 	    }
 
@@ -3414,7 +3412,9 @@ do_prepare_insert (DB_SESSION * session, PT_NODE * statement)
 {
   int error = NO_ERROR;
   PARSER_CONTEXT *parser;
+#if !defined(NDEBUG)
   PT_NODE *class_;
+#endif
   PT_NODE *update = NULL;
   PT_NODE *values = NULL;
   int upd_has_uniques = 0;
@@ -3440,8 +3440,12 @@ do_prepare_insert (DB_SESSION * session, PT_NODE * statement)
 #endif
 
   statement->etc = NULL;
+
+#if !defined(NDEBUG)
   class_ = statement->info.insert.spec->info.spec.flat_entity_list;
   assert (class_->next == NULL);
+#endif
+
   values = statement->info.insert.value_clauses;
 
   /* prevent multi statements */
@@ -3518,8 +3522,10 @@ do_execute_insert (DB_SESSION * session, PT_NODE * statement)
 {
   int err;
   PARSER_CONTEXT *parser;
+#if !defined(NDEBUG)
   PT_NODE *flat;
-  DB_OBJECT *class_obj;
+#endif
+//  DB_OBJECT *class_obj;
   QFILE_LIST_ID *list_id;
   QUERY_FLAG query_flag;
   QUERY_ID query_id_self;
@@ -3553,9 +3559,11 @@ do_execute_insert (DB_SESSION * session, PT_NODE * statement)
       return err;
     }
 
+#if !defined(NDEBUG)
   flat = statement->info.insert.spec->info.spec.flat_entity_list;
   assert (flat->next == NULL);
-  class_obj = (flat) ? flat->info.name.db_object : NULL;
+#endif
+//  class_obj = (flat) ? flat->info.name.db_object : NULL;
 
   query_flag = NOT_FROM_RESULT_CACHE | RESULT_CACHE_INHIBITED;
 

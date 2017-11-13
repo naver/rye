@@ -2988,6 +2988,7 @@ log_append_ha_server_state (THREAD_ENTRY * thread_p, int state)
   struct log_ha_server_state *ha_server_state;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
+  struct timeval current_time;
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL)
@@ -3010,7 +3011,8 @@ log_append_ha_server_state (THREAD_ENTRY * thread_p, int state)
   memset (ha_server_state, 0, sizeof (struct log_ha_server_state));
 
   ha_server_state->server_state = state;
-  ha_server_state->at_time = time (NULL);
+  gettimeofday (&current_time, NULL);
+  ha_server_state->at_time = timeval_to_msec (&current_time);
 
   start_lsa = prior_lsa_next_record (thread_p, node, tdes);
 
@@ -6249,8 +6251,10 @@ log_rollback_record (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
     }
   else
     {
-      rcv->pgptr = pgbuf_fix (thread_p, rcv_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH);
+      rcv->pgptr =
+	pgbuf_fix (thread_p, rcv_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
+		   PGBUF_UNCONDITIONAL_LATCH,
+		   MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK);
     }
 
   /* GET BEFORE DATA */
@@ -7256,7 +7260,8 @@ log_run_postpone_op (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
     }
 
   rcv.pgptr = pgbuf_fix_with_retry (thread_p, &rcv_vpid, OLD_PAGE,
-				    PGBUF_LATCH_WRITE, 10);
+				    PGBUF_LATCH_WRITE, 10,
+				    MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE);
 
   /* GET AFTER DATA */
 

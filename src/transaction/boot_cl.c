@@ -2201,10 +2201,10 @@ int
 boot_add_collations (MOP class_mop)
 {
   int i;
-  int count_collations;
+//  int count_collations;
   int found_coll = 0;
 
-  count_collations = lang_collation_count ();
+//  count_collations = lang_collation_count ();
 
   for (i = 0; i < LANG_MAX_COLLATIONS; i++)
     {
@@ -2258,7 +2258,7 @@ boot_add_collations (MOP class_mop)
       db_put_internal (obj, CT_DBCOLL_CHECKSUM_COLUMN, &val);
     }
 
-  assert (found_coll == count_collations);
+  assert (found_coll == lang_collation_count ());
 
   return NO_ERROR;
 }

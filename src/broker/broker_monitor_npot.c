@@ -1,21 +1,21 @@
-/* 
+/*
  * Copyright 2017 NAVER Corp.
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
- 
+
 /*
  * broker_monitor_npot.c -
  */
@@ -331,6 +331,57 @@ init_server_monitor_item ()
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES],
 		     "datapage", "fetch");
+#if 1				/* fetches sub-info */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER],
+		     "datapage", "fetch_file_header");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB],
+		     "datapage", "fetch_file_table");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER],
+		     "datapage", "fetch_heap_header");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_HEAP],
+		     "datapage", "fetch_heap");
+  SET_DB_STATS_INFO (&db_Stats_info
+		     [MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION],
+		     "datapage", "fetch_heap_relocation");
+  SET_DB_STATS_INFO (&db_Stats_info
+		     [MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC],
+		     "datapage", "fetch_heap_bestspace_sync");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER],
+		     "datapage", "fetch_vol_header");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP],
+		     "datapage", "fetch_vol_bitmap");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_XASL],
+		     "datapage", "fetch_xasl");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_QRESULT],
+		     "datapage", "fetch_qresult");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_EHASH],
+		     "datapage", "fetch_ehash");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER],
+		     "datapage", "fetch_ovf_header");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OVF],
+		     "datapage", "fetch_ovf");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_AREA],
+		     "datapage", "fetch_area");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CATALOG],
+		     "datapage", "fetch_catalog");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF],
+		     "datapage", "fetch_catalog_ovf");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_BTREE],
+		     "datapage", "fetch_btree");
+
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT],
+		     "datapage", "fetch_disk_format");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE],
+		     "datapage", "fetch_log_postpone");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK],
+		     "datapage", "fetch_log_rollback");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT],
+		     "datapage", "fetch_checkpoint");
+
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OTHER],
+                     "datapage", "fetch_other");
+#endif
+
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],
 		     "datapage", "ioread");
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOWRITES],
