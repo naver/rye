@@ -968,24 +968,6 @@ css_trim_str (char *str)
 }
 #endif
 
-static void
-css_version_hton (CSS_VERSION * version)
-{
-  version->major = htons (version->major);
-  version->minor = htons (version->minor);
-  version->patch = htons (version->patch);
-  version->build = htons (version->build);
-}
-
-static void
-css_version_ntoh (CSS_VERSION * version)
-{
-  version->major = ntohs (version->major);
-  version->minor = ntohs (version->minor);
-  version->patch = ntohs (version->patch);
-  version->build = ntohs (version->build);
-}
-
 /*
  * css_send_magic () - send magic
  *
@@ -998,14 +980,23 @@ css_send_magic (CSS_CONN_ENTRY * conn)
   int css_errors;
   int timeout;
   CSS_NET_PACKET *recv_packet = NULL;
-  CSS_VERSION *peer_version = &conn->peer_version;
-  CSS_VERSION my_version = CSS_CUR_VERSION;
+  RYE_VERSION *peer_version = &conn->peer_version;
+  RYE_VERSION my_version = RYE_CUR_VERSION;
 
-  css_version_hton (&my_version);
+  OR_ALIGNED_BUF (OR_VERSION_SIZE) a_send_buf;
+  char *send_ptr = OR_ALIGNED_BUF_START (a_send_buf);
+  int send_buf_size = OR_VERSION_SIZE;
+
+  OR_ALIGNED_BUF (OR_INT_SIZE + OR_VERSION_SIZE) a_recv_buf;
+  char *recv_ptr = OR_ALIGNED_BUF_START (a_recv_buf);
+  int recv_buf_size = (OR_INT_SIZE + OR_VERSION_SIZE);
+  char *ptr;
+
+  or_pack_version (send_ptr, &my_version);
 
   css_errors = css_send_data_packet (conn, 0, 2,
 				     css_Net_magic, sizeof (css_Net_magic),
-				     &my_version, sizeof (CSS_VERSION));
+				     send_ptr, send_buf_size);
   if (css_errors != NO_ERRORS)
     {
       return css_errors;
@@ -1013,22 +1004,20 @@ css_send_magic (CSS_CONN_ENTRY * conn)
 
   timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  if (css_net_packet_recv (&recv_packet, conn, timeout, 2,
-			   &css_errors, sizeof (int),
-			   peer_version, sizeof (CSS_VERSION)) != NO_ERRORS)
+  if (css_net_packet_recv (&recv_packet, conn, timeout, 1,
+			   recv_ptr, recv_buf_size) != NO_ERRORS)
     {
       return ERROR_ON_READ;
     }
 
-  if (css_net_packet_get_recv_size (recv_packet, 0) != sizeof (int) ||
-      css_net_packet_get_recv_size (recv_packet, 1) != sizeof (CSS_VERSION))
+  if (css_net_packet_get_recv_size (recv_packet, 0) != recv_buf_size)
     {
       css_errors = ERROR_ON_READ;
     }
   else
     {
-      css_errors = ntohl (css_errors);
-      css_version_ntoh (peer_version);
+      ptr = or_unpack_int (recv_ptr, &css_errors);
+      ptr = or_unpack_version (ptr, peer_version);
     }
 
   css_net_packet_free (recv_packet);
@@ -1048,14 +1037,18 @@ css_check_magic (CSS_CONN_ENTRY * conn)
   int timeout;
   CSS_NET_PACKET *recv_packet = NULL;
   char magic[sizeof (css_Net_magic)];
-  CSS_VERSION *peer_version = &conn->peer_version;
+  RYE_VERSION *peer_version = &conn->peer_version;
   int css_errors;
+
+  OR_ALIGNED_BUF (OR_VERSION_SIZE) a_recv_buf;
+  char *recv_ptr = OR_ALIGNED_BUF_START (a_recv_buf);
+  int recv_size = OR_VERSION_SIZE;
 
   timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
   if (css_net_packet_recv (&recv_packet, conn, timeout, 2,
 			   magic, sizeof (css_Net_magic),
-			   peer_version, sizeof (CSS_VERSION)) != NO_ERRORS)
+			   recv_ptr, recv_size) != NO_ERRORS)
     {
       return ERROR_ON_READ;
     }
@@ -1065,27 +1058,30 @@ css_check_magic (CSS_CONN_ENTRY * conn)
 
   if (css_net_packet_get_recv_size (recv_packet, 0) != sizeof (css_Net_magic)
       || memcmp (magic, css_Net_magic, sizeof (css_Net_magic)) != 0
-      || css_net_packet_get_recv_size (recv_packet,
-				       1) != sizeof (CSS_VERSION))
+      || css_net_packet_get_recv_size (recv_packet, 1) != recv_size)
     {
       css_errors = ERROR_ON_READ;
     }
   else
     {
-      int result;
-      CSS_VERSION my_version = CSS_CUR_VERSION;
+      RYE_VERSION my_version = RYE_CUR_VERSION;
 
-      css_version_ntoh (peer_version);
+      OR_ALIGNED_BUF (OR_INT_SIZE + OR_VERSION_SIZE) a_send_buf;
+      char *send_ptr = OR_ALIGNED_BUF_START (a_send_buf);
+      int send_size = (OR_INT_SIZE + OR_VERSION_SIZE);
+      char *ptr;
+
+      or_unpack_version (recv_ptr, peer_version);
 
       if (my_version.major != peer_version->major)
 	{
 	  css_errors = NOT_COMPATIBLE_VERSION;
 	}
 
-      result = htonl (css_errors);
-      if (css_send_data_packet (conn, 0, 2, &result, sizeof (int),
-				&my_version,
-				sizeof (CSS_VERSION)) != NO_ERRORS)
+      ptr = or_pack_int (send_ptr, css_errors);
+      ptr = or_pack_version (ptr, &my_version);
+
+      if (css_send_data_packet (conn, 0, 1, send_ptr, send_size) != NO_ERRORS)
 	{
 	  css_errors = ERROR_ON_WRITE;
 	}

@@ -356,14 +356,10 @@ db_connect_info_decode (T_NET_RES * net_res, T_CON_HANDLE * con_handle)
 
   prev_server_start_time = cas_connect_info->server_start_time;
 
-  if (net_res_to_short (&cas_connect_info->svr_version.ver_major,
-			net_res) < 0 ||
-      net_res_to_short (&cas_connect_info->svr_version.ver_minor,
-			net_res) < 0 ||
-      net_res_to_short (&cas_connect_info->svr_version.ver_patch,
-			net_res) < 0 ||
-      net_res_to_short (&cas_connect_info->svr_version.ver_build,
-			net_res) < 0 ||
+  if (net_res_to_short (&cas_connect_info->svr_version.major, net_res) < 0 ||
+      net_res_to_short (&cas_connect_info->svr_version.minor, net_res) < 0 ||
+      net_res_to_short (&cas_connect_info->svr_version.patch, net_res) < 0 ||
+      net_res_to_short (&cas_connect_info->svr_version.build, net_res) < 0 ||
       net_res_to_int (&cas_connect_info->cas_id, net_res) < 0 ||
       net_res_to_int (&cas_connect_info->cas_pid, net_res) < 0 ||
       net_res_to_str (&sessid_ptr, &sessid_size, net_res) < 0 ||

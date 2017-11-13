@@ -57,6 +57,7 @@ extern "C"
  * OTHER IMPORTED HEADER FILES						*
  ************************************************************************/
 
+#include "release_string.h"
 #include "cci_common.h"
 #include "cas_cci.h"
 #include "cas_protocol.h"
@@ -212,7 +213,7 @@ extern "C"
   {
     int cas_id;
     int cas_pid;
-    T_BROKER_RYE_VERSION svr_version;
+    RYE_VERSION svr_version;
     char dbms;
     char holdable_result;
     char statement_pooling;

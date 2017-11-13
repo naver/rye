@@ -35,6 +35,7 @@
 #endif /* SERVER_MODE */
 
 #include "porting.h"
+#include "release_string.h"
 #include "memory_alloc.h"
 #include "error_manager.h"
 #if defined(SERVER_MODE)
@@ -370,20 +371,10 @@ typedef struct
  * communication software to identify the data connection.
  */
 
-typedef struct
-{
-  short major;
-  short minor;
-  short patch;
-  short build;
-} CSS_VERSION;
-#define CSS_CUR_VERSION		\
-	{ MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, BUILD_SEQ }
-
 typedef struct css_conn_entry CSS_CONN_ENTRY;
 struct css_conn_entry
 {
-  CSS_VERSION peer_version;
+  RYE_VERSION peer_version;
   SOCKET fd;
   unsigned short request_id;
   int status;			/* CONN_OPEN, CONN_CLOSED, CONN_CLOSING = 3 */

@@ -32,6 +32,8 @@ extern "C"
 
 #ident "$Id$"
 
+#include "release_string.h"
+
 #define BRREQ_MSG_SIZE				20
 #define BRREQ_MSG_MAGIC_LEN			4
 #define BRREQ_MSG_MAGIC_STR			"RYE\001"
@@ -82,15 +84,7 @@ extern "C"
 
   typedef struct
   {
-    short ver_major;
-    short ver_minor;
-    short ver_patch;
-    short ver_build;
-  } T_BROKER_RYE_VERSION;
-
-  typedef struct
-  {
-    T_BROKER_RYE_VERSION clt_version;
+    RYE_VERSION clt_version;
     char clt_type;
     unsigned char op_code;
     short op_code_msg_size;
@@ -100,7 +94,7 @@ extern "C"
 
   typedef struct
   {
-    T_BROKER_RYE_VERSION svr_version;
+    RYE_VERSION svr_version;
     int result_code;
     int additional_message_size[BROKER_RESPONSE_MAX_ADDITIONAL_MSG];
   } T_BROKER_RESPONSE;
@@ -316,7 +310,7 @@ extern "C"
     HA_STATE_FOR_DRIVER_REPLICA
   } HA_STATE_FOR_DRIVER;
 
-  extern UINT64 br_msg_protocol_version (const T_BROKER_RYE_VERSION * ver);
+  extern UINT64 br_msg_protocol_version (const RYE_VERSION * ver);
   extern T_BROKER_REQUEST_MSG *brreq_msg_alloc (int opcode_msg_size);
   extern T_BROKER_REQUEST_MSG *brreq_msg_clone (const T_BROKER_REQUEST_MSG *
 						org_msg);

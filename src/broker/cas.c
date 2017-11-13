@@ -36,6 +36,8 @@
 #include <sys/time.h>
 #include <poll.h>
 
+#include "dbi.h"
+#include "dbval.h"
 #include "cas_common.h"
 #include "cas.h"
 #include "cas_network.h"

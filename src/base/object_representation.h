@@ -35,6 +35,7 @@
 #include <limits.h>
 #include <netinet/in.h>
 
+#include "release_string.h"
 #include "error_manager.h"
 #include "storage_common.h"
 #include "oid.h"
@@ -121,6 +122,8 @@
 #define OR_DATETIME_SIZE        8
 #define OR_DATETIME_DATE        0
 #define OR_DATETIME_TIME        4
+
+#define OR_VERSION_SIZE		(OR_SHORT_SIZE * 4)
 
 /* NUMERIC RANGES */
 #define OR_MAX_BYTE 127
@@ -997,6 +1000,10 @@ extern char *or_unpack_db_value_array (char *buffer, DB_VALUE ** val,
 #endif
 extern char *or_pack_ptr (char *ptr, UINTPTR ptrval);
 extern char *or_unpack_ptr (char *ptr, UINTPTR * ptrval);
+
+extern char *or_pack_version (char *ptr, const RYE_VERSION * version);
+extern char *or_unpack_version (char *ptr, RYE_VERSION * version);
+
 
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern char *or_pack_bool_array (char *ptr, const bool * bools, int size);

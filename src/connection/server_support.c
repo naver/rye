@@ -1534,16 +1534,11 @@ css_pack_server_name (const char *server_name, int *name_length)
 }
 
 /*
- * css_add_client_version_string() - add the version_string to socket queue
- *                                   entry structure
- *   return: pointer to version_string in the socket queue entry structure
- *   version_string(in):
+ * css_set_client_version() - 
  */
-const char *
-css_add_client_version_string (THREAD_ENTRY * thread_p,
-			       const char *version_string)
+void
+css_set_client_version (THREAD_ENTRY * thread_p, const RYE_VERSION * version)
 {
-  char *ver_str = NULL;
   CSS_CONN_ENTRY *conn;
 
   assert (thread_p != NULL);
@@ -1551,29 +1546,8 @@ css_add_client_version_string (THREAD_ENTRY * thread_p,
   conn = thread_p->conn_entry;
   if (conn != NULL)
     {
-      if (conn->version_string == NULL)
-	{
-	  ver_str = (char *) malloc (strlen (version_string) + 1);
-	  if (ver_str != NULL)
-	    {
-	      strcpy (ver_str, version_string);
-	      conn->version_string = ver_str;
-	    }
-	  else
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      strlen (version_string) + 1);
-	    }
-	}
-      else
-	{
-	  /* already registered */
-	  ver_str = conn->version_string;
-	}
+      conn->peer_version = *version;
     }
-
-  return ver_str;
 }
 
 bool

@@ -32,13 +32,16 @@
 #define REL_MAX_RELEASE_LENGTH 15
 #define REL_MAX_VERSION_LENGTH 256
 
-/*
- * REL_FIXUP_FUNCTION - Signature for a function that can part of
- *                      a disk compatibility rule.
- *                      An array of these functions can be returned by
- *                      rel_get_disk_compatible.
- */
-typedef void (*REL_FIXUP_FUNCTION) (void);
+typedef struct
+{
+  short major;
+  short minor;
+  short patch;
+  short build;
+} RYE_VERSION;
+
+#define RYE_CUR_VERSION		\
+	{ MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, BUILD_SEQ }
 
 /*
  * REL_COMPATIBILITY - Describes the various types of compatibility we can have.
@@ -47,9 +50,7 @@ typedef void (*REL_FIXUP_FUNCTION) (void);
 typedef enum
 {
   REL_NOT_COMPATIBLE,
-  REL_FULLY_COMPATIBLE,
-  REL_FORWARD_COMPATIBLE,
-  REL_BACKWARD_COMPATIBLE
+  REL_COMPATIBLE,
 } REL_COMPATIBILITY;
 
 extern const char *rel_name (void);
@@ -65,13 +66,13 @@ extern float rel_disk_compatible (void);
 extern void rel_set_disk_compatible (float level);
 extern int rel_bit_platform (void);
 
-extern int rel_compare (const char *rel_a, const char *rel_b);
-extern REL_COMPATIBILITY
-rel_get_disk_compatible (float db_level, REL_FIXUP_FUNCTION ** fixups);
+extern REL_COMPATIBILITY rel_get_disk_compatible (float db_level);
 extern bool rel_is_log_compatible (const char *writer_rel_str,
 				   const char *reader_rel_str);
-extern REL_COMPATIBILITY
-rel_get_net_compatible (const char *client_rel_str,
-			const char *server_rel_str);
+extern REL_COMPATIBILITY rel_check_net_compatible (const RYE_VERSION * ver1,
+						   const RYE_VERSION * ver2);
 extern void rel_copy_version_string (char *buf, size_t len);
+extern char *rel_version_to_string (RYE_VERSION * version, char *buffer,
+				    int buffer_len);
+
 #endif /* _RELEASE_STRING_H_ */

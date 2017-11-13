@@ -40,33 +40,6 @@
 #include "log_comm.h"
 #include "log_manager.h"
 
-/*
- * COMPATIBILITY_RULE - Structure that encapsulates compatibility rules.
- *                      For two revision levels, both a compatibility type
- *                      and optional fixup function list is defined.
- */
-
-typedef struct version
-{
-  unsigned char major;
-  unsigned char minor;
-  unsigned short patch;
-} REL_VERSION;
-
-typedef struct compatibility_rule
-{
-  REL_VERSION base;
-  REL_VERSION apply;
-  REL_COMPATIBILITY compatibility;
-  REL_FIXUP_FUNCTION *fix_function;
-} COMPATIBILITY_RULE;
-
-typedef enum
-{
-  CHECK_LOG_COMPATIBILITY,
-  CHECK_NET_PROTOCOL_COMPATIBILITY
-} COMPATIBILITY_CHECK_MODE;
-
 #if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * Copyright Information
@@ -95,9 +68,7 @@ static int bit_platform = __WORDSIZE;
 
 static REL_COMPATIBILITY
 rel_get_compatible_internal (const char *base_rel_str,
-			     const char *apply_rel_str,
-			     COMPATIBILITY_CHECK_MODE check,
-			     REL_VERSION rules[]);
+			     const char *apply_rel_str);
 
 /*
  * Disk (database image) Version Compatibility
@@ -238,193 +209,25 @@ rel_bit_platform (void)
 }
 
 /*
- * compatibility_rules - Static table of compatibility rules.
- *         Each time a change is made to the disk_compatibility_level
- *         a rule needs to be added to this table.
- *         If pair of numbers is absent from this table, the two are considered
- *         to be incompatible.
- * {base_level (of database), apply_level (of system), compatibility, fix_func}
- */
-static COMPATIBILITY_RULE disk_compatibility_rules[] = {
-  /* a zero indicates the end of the table */
-  {{0, 0, 0}, {0, 0, 0}, REL_NOT_COMPATIBLE, NULL}
-};
-
-/*
  * rel_get_disk_compatible - Test compatibility of disk (database image)
  *                          Check a disk compatibility number stored in
  *                          a database with the disk compatibility number
  *                          for the system being run
- *   return: One of the three compatibility constants (REL_FULLY_COMPATIBLE,
- *           REL_FORWARD_COMPATIBLE, and REL_BACKWARD_COMPATIBLE) or
- *           REL_NOT_COMPATIBLE if they are not compatible
+ *   return: REL_COMPATIBLE or REL_NOT_COMPATIBLE 
  *   db_level(in):
- *   REL_FIXUP_FUNCTION(in): function pointer table
- *
- * Note: The rules for compatibility are stored in the compatibility_rules
- *       table.  Whenever the disk_compatibility_level variable is changed
- *       an entry had better be made in the table.
  */
 REL_COMPATIBILITY
-rel_get_disk_compatible (float db_level, REL_FIXUP_FUNCTION ** fixups)
+rel_get_disk_compatible (float db_level)
 {
-  COMPATIBILITY_RULE *rule;
-  REL_COMPATIBILITY compat;
-  REL_FIXUP_FUNCTION *func;
-
-  func = NULL;
-
   if (disk_compatibility_level == db_level)
     {
-      compat = REL_FULLY_COMPATIBLE;
+      return REL_COMPATIBLE;
     }
   else
     {
-      compat = REL_NOT_COMPATIBLE;
-      for (rule = &disk_compatibility_rules[0];
-	   rule->base.major != 0 && compat == REL_NOT_COMPATIBLE; rule++)
-	{
-	  float base_level, apply_level;
-
-	  base_level = rule->base.major + (rule->base.minor / 10.0);
-	  apply_level = rule->apply.major + (rule->apply.minor / 10.0);
-
-	  if (base_level == db_level
-	      && apply_level == disk_compatibility_level)
-	    {
-	      compat = rule->compatibility;
-	      func = rule->fix_function;
-	    }
-	}
+      return REL_NOT_COMPATIBLE;
     }
-
-  if (fixups != NULL)
-    {
-      *fixups = func;
-    }
-
-  return compat;
 }
-
-
-/* Compare release strings.
- *
- * Returns:  < 0, if rel_a is earlier than rel_b
- *          == 0, if rel_a is the same as rel_b
- *           > 0, if rel_a is later than rel_b
- */
-/*
- * rel_compare - Compare release strings, A and B
- *   return:  < 0, if rel_a is earlier than rel_b
- *           == 0, if rel_a is the same as rel_b
- *            > 0, if rel_a is later than rel_b
- *   rel_a(in): release string A
- *   rel_b(in): release string B
- *
- * Note:
- */
-int
-rel_compare (const char *rel_a, const char *rel_b)
-{
-  int a, b, retval = 0;
-  char *a_temp, *b_temp, *end_p;
-
-  /*
-   * If we get a NULL for one of the values (and we shouldn't), guess that
-   * the versions are the same.
-   */
-  if (!rel_a || !rel_b)
-    {
-      retval = 0;
-    }
-  else
-    {
-      /*
-       * Compare strings
-       */
-      a_temp = (char *) rel_a;
-      b_temp = (char *) rel_b;
-      /*
-       * The following loop terminates if we determine that one string
-       * is greater than the other, or we reach the end of one of the
-       * strings.
-       */
-      while (!retval && *a_temp && *b_temp)
-	{
-	  str_to_int32 (&a, &end_p, a_temp, 10);
-	  a_temp = end_p;
-	  str_to_int32 (&b, &end_p, b_temp, 10);
-	  b_temp = end_p;
-	  if (a < b)
-	    {
-	      retval = -1;
-	    }
-	  else if (a > b)
-	    {
-	      retval = 1;
-	    }
-	  /*
-	   * This skips over the '.'.
-	   * This means that "?..?" will parse out to "?.?".
-	   */
-	  while (*a_temp && *a_temp == '.')
-	    {
-	      a_temp++;
-	    }
-	  while (*b_temp && *b_temp == '.')
-	    {
-	      b_temp++;
-	    }
-	  if (*a_temp && *b_temp
-	      && char_isalpha (*a_temp) && char_isalpha (*b_temp))
-	    {
-	      if (*a_temp != *b_temp)
-		retval = -1;
-	      a_temp++;
-	      b_temp++;
-	    }
-	}
-
-      if (!retval)
-	{
-	  /*
-	   * Both strings are the same up to this point.  If the rest is zeros,
-	   * they're still equal.
-	   */
-	  while (*a_temp)
-	    {
-	      if (*a_temp != '.' && *a_temp != '0')
-		{
-		  retval = 1;
-		  break;
-		}
-	      a_temp++;
-	    }
-	  while (*b_temp)
-	    {
-	      if (*b_temp != '.' && *b_temp != '0')
-		{
-		  retval = -1;
-		  break;
-		}
-	      b_temp++;
-	    }
-	}
-    }
-  return retval;
-}
-
-/*
- * log compatibility matrix
- */
-static REL_VERSION log_incompatible_versions[] = {
-  /* PLEASE APPEND HERE versions that are incompatible with existing ones. */
-  /* NOTE that versions are kept as ascending order. */
-  {1, 0, 0},
-
-  /* zero indicates the end of the table */
-  {0, 0, 0}
-};
 
 /*
  * rel_is_log_compatible - Test compatiblility of log file format
@@ -437,9 +240,7 @@ rel_is_log_compatible (const char *writer_rel_str, const char *reader_rel_str)
 {
   REL_COMPATIBILITY compat;
 
-  compat = rel_get_compatible_internal (writer_rel_str, reader_rel_str,
-					CHECK_LOG_COMPATIBILITY,
-					log_incompatible_versions);
+  compat = rel_get_compatible_internal (writer_rel_str, reader_rel_str);
   if (compat == REL_NOT_COMPATIBLE)
     {
       return false;
@@ -449,40 +250,27 @@ rel_is_log_compatible (const char *writer_rel_str, const char *reader_rel_str)
 }
 
 /*
- * network compatibility matrix
- */
-static REL_VERSION net_incompatible_versions[] = {
-  /* PLEASE APPEND HERE versions that are incompatible with existing ones. */
-  /* NOTE that versions are kept as ascending order. */
-  {1, 0, 0},
-
-  /* zero indicates the end of the table */
-  {0, 0, 0}
-};
-
-/*
- * rel_get_net_compatible - Compare the release strings from
- *                          the server and client to determine compatibility.
- * return: REL_COMPATIBILITY
- *  REL_NOT_COMPATIBLE if the client and the server are not compatible
- *  REL_FULLY_COMPATIBLE if the client and the server are compatible
- *  REL_FORWARD_COMPATIBLE if the client is forward compatible with the server
- *                         if the server is backward compatible with the client
- *                         the client is older than the server
- *  REL_BACKWARD_COMPATIBLE if the client is backward compatible with the server
- *                          if the server is forward compatible with the client
- *                          the client is newer than the server
- *
- *   client_rel_str(in): client's release string
- *   server_rel_str(in): server's release string
+ * rel_check_net_compatible - 
  */
 REL_COMPATIBILITY
-rel_get_net_compatible (const char *client_rel_str,
-			const char *server_rel_str)
+rel_check_net_compatible (const RYE_VERSION * ver1, const RYE_VERSION * ver2)
 {
-  return rel_get_compatible_internal (server_rel_str, client_rel_str,
-				      CHECK_NET_PROTOCOL_COMPATIBILITY,
-				      net_incompatible_versions);
+  if (ver1->major == ver2->major)
+    {
+      return REL_COMPATIBLE;
+    }
+  else
+    {
+      return REL_NOT_COMPATIBLE;
+    }
+}
+
+char *
+rel_version_to_string (RYE_VERSION * version, char *buffer, int buffer_len)
+{
+  snprintf (buffer, buffer_len, "%d.%d.%d.%04d",
+	    version->major, version->minor, version->patch, version->build);
+  return buffer;
 }
 
 /*
@@ -495,11 +283,8 @@ rel_get_net_compatible (const char *client_rel_str,
  */
 static REL_COMPATIBILITY
 rel_get_compatible_internal (const char *base_rel_str,
-			     const char *apply_rel_str,
-			     COMPATIBILITY_CHECK_MODE check,
-			     REL_VERSION versions[])
+			     const char *apply_rel_str)
 {
-  REL_VERSION *version, *base_version, *apply_version;
   char *base, *apply, *str_a, *str_b;
   int val;
 
@@ -551,50 +336,12 @@ rel_get_compatible_internal (const char *base_rel_str,
       str_b++;
     }
 
-  if (check == CHECK_NET_PROTOCOL_COMPATIBILITY)
+  if (apply_major == base_major)
     {
-      if (apply_major != base_major)
-	{
-	  return REL_NOT_COMPATIBLE;
-	}
-    }
-
-  /* check patch number */
-  apply = str_a;
-  base = str_b;
-  str_to_int32 (&val, &str_a, apply, 10);
-  apply_patch = (unsigned short) val;
-  str_to_int32 (&val, &str_b, base, 10);
-  base_patch = (unsigned short) val;
-  if (apply_major == base_major
-      && apply_minor == base_minor && apply_patch == base_patch)
-    {
-      return REL_FULLY_COMPATIBLE;
-    }
-
-  base_version = NULL;
-  apply_version = NULL;
-  for (version = &versions[0]; version->major != 0; version++)
-    {
-      if (base_major >= version->major
-	  && base_minor >= version->minor && base_patch >= version->patch)
-	{
-	  base_version = version;
-	}
-      if (apply_major >= version->major
-	  && apply_minor >= version->minor && apply_patch >= version->patch)
-	{
-	  apply_version = version;
-	}
-    }
-
-  if (base_version == NULL || apply_version == NULL
-      || base_version != apply_version)
-    {
-      return REL_NOT_COMPATIBLE;
+      return REL_COMPATIBLE;
     }
   else
     {
-      return REL_FULLY_COMPATIBLE;
+      return REL_NOT_COMPATIBLE;
     }
 }

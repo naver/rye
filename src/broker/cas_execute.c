@@ -35,8 +35,6 @@
 #include <sys/time.h>
 #include <assert.h>
 
-#include "cas_db_inc.h"
-
 #include "cas.h"
 #include "cas_common.h"
 #include "cas_execute.h"
@@ -516,7 +514,7 @@ ux_database_connect (const char *db_name, const char *db_user,
       if (need_au_disable == true)
 	{
 #if 1
-	  AU_RESTORE (1); /* TODO - avoid compile error */
+	  AU_RESTORE (1);	/* TODO - avoid compile error */
 #else
 	  int dummy_au_save;
 
@@ -656,7 +654,7 @@ ux_database_shutdown ()
     {
       AU_ENABLE_PASSWORDS ();
 #if 1
-      AU_ENABLE (0); /* TODO - avoid compile error */
+      AU_ENABLE (0);		/* TODO - avoid compile error */
 #else
       AU_SAVE_AND_ENABLE (au_save);
 #endif

@@ -126,7 +126,7 @@ css_initialize_conn (CSS_CONN_ENTRY * conn, SOCKET fd)
   conn->conn_reset_on_commit = false;
   conn->is_client_ro_tran = false;
   conn->server_shard_nodeid = 0;
-  memset (&conn->peer_version, 0, sizeof (CSS_VERSION));
+  memset (&conn->peer_version, 0, sizeof (RYE_VERSION));
 }
 
 /*

@@ -30,6 +30,7 @@
 #include <assert.h>
 
 #include "porting.h"
+#include "release_string.h"
 #include "cas_protocol.h"
 
 #ifdef CCI
@@ -43,12 +44,11 @@ static int br_msg_unpack_int (const char **ptr);
 static char br_msg_unpack_char (const char **ptr);
 
 UINT64
-br_msg_protocol_version (const T_BROKER_RYE_VERSION * version)
+br_msg_protocol_version (const RYE_VERSION * version)
 {
-  return (((UINT64) (version->ver_major) << 48) |
-	  ((UINT64) (version->ver_minor) << 32) |
-	  ((UINT64) (version->ver_patch) << 16) |
-	  ((UINT64) (version->ver_build)));
+  return (((UINT64) (version->major) << 48) |
+	  ((UINT64) (version->minor) << 32) |
+	  ((UINT64) (version->patch) << 16) | ((UINT64) (version->build)));
 }
 
 T_BROKER_REQUEST_MSG *
@@ -111,10 +111,10 @@ brreq_msg_unpack (T_BROKER_REQUEST_MSG * srv_con_msg)
     }
   ptr += BRREQ_MSG_MAGIC_LEN;
 
-  srv_con_msg->clt_version.ver_major = br_msg_unpack_short (&ptr);
-  srv_con_msg->clt_version.ver_minor = br_msg_unpack_short (&ptr);
-  srv_con_msg->clt_version.ver_patch = br_msg_unpack_short (&ptr);
-  srv_con_msg->clt_version.ver_build = br_msg_unpack_short (&ptr);
+  srv_con_msg->clt_version.major = br_msg_unpack_short (&ptr);
+  srv_con_msg->clt_version.minor = br_msg_unpack_short (&ptr);
+  srv_con_msg->clt_version.patch = br_msg_unpack_short (&ptr);
+  srv_con_msg->clt_version.build = br_msg_unpack_short (&ptr);
 
   srv_con_msg->clt_type = br_msg_unpack_char (&ptr);
   srv_con_msg->op_code = br_msg_unpack_char (&ptr);
@@ -195,10 +195,10 @@ brres_msg_unpack (T_BROKER_RESPONSE * res, const char *msg_buffer,
       return -1;
     }
 
-  res->svr_version.ver_major = br_msg_unpack_short (&ptr);
-  res->svr_version.ver_minor = br_msg_unpack_short (&ptr);
-  res->svr_version.ver_patch = br_msg_unpack_short (&ptr);
-  res->svr_version.ver_build = br_msg_unpack_short (&ptr);
+  res->svr_version.major = br_msg_unpack_short (&ptr);
+  res->svr_version.minor = br_msg_unpack_short (&ptr);
+  res->svr_version.patch = br_msg_unpack_short (&ptr);
+  res->svr_version.build = br_msg_unpack_short (&ptr);
 
   res->result_code = br_msg_unpack_int (&ptr);
 

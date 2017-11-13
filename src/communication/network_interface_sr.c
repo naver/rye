@@ -82,8 +82,6 @@ unsigned int db_on_server = 1;
 static bool need_to_abort_tran (THREAD_ENTRY * thread_p, int *errid);
 static int server_capabilities (void);
 static int check_client_capabilities (THREAD_ENTRY * thread_p, int client_cap,
-				      int rel_compare,
-				      REL_COMPATIBILITY * compatibility,
 				      const char *client_host);
 static int er_log_slow_query (THREAD_ENTRY * thread_p,
 			      EXECUTION_INFO * info,
@@ -249,38 +247,15 @@ server_capabilities (void)
  */
 static int
 check_client_capabilities (THREAD_ENTRY * thread_p, int client_cap,
-			   int rel_compare, REL_COMPATIBILITY * compatibility,
 			   const char *client_host)
 {
   int server_cap;
-
-  assert (compatibility != NULL);
 
   server_cap = server_capabilities ();
   /* interrupt-ability should be same */
   if ((server_cap ^ client_cap) & NET_CAP_INTERRUPT_ENABLED)
     {
       client_cap ^= NET_CAP_INTERRUPT_ENABLED;
-    }
-  /* network protocol compatibility */
-  if (*compatibility == REL_NOT_COMPATIBLE)
-    {
-      if (rel_compare < 0 && (client_cap & NET_CAP_FORWARD_COMPATIBLE))
-	{
-	  /*
-	   * The client is older than the server but the client has a forward
-	   * compatible capability.
-	   */
-	  *compatibility = REL_FORWARD_COMPATIBLE;
-	}
-      if (rel_compare > 0 && (client_cap & NET_CAP_BACKWARD_COMPATIBLE))
-	{
-	  /*
-	   * The client is newer than the server but the client has a backward
-	   * compatible capability.
-	   */
-	  *compatibility = REL_BACKWARD_COMPATIBLE;
-	}
     }
 
   if (client_cap & NET_CAP_HA_IGNORE_REPL_DELAY)
@@ -337,39 +312,34 @@ int
 server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
 			    char *request, int reqlen)
 {
-  OR_ALIGNED_BUF (REL_MAX_RELEASE_LENGTH + (OR_INT_SIZE * 2) +
+  OR_ALIGNED_BUF (OR_VERSION_SIZE + (OR_INT_SIZE * 2) +
 		  MAXHOSTNAMELEN) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   int reply_size = OR_ALIGNED_BUF_SIZE (a_reply);
   char *ptr;
-  const char *client_release, *client_host;
-  const char *server_release;
-  int client_capabilities, client_bit_platform, status = CSS_NO_ERRORS;
+  const char *client_host;
+  int client_capabilities, client_bit_platform;
   int client_type;
   int strlen1, strlen2;
-  REL_COMPATIBILITY compat;
-
-  server_release = rel_release_string ();
+  RYE_VERSION client_version;
+  RYE_VERSION server_version = RYE_CUR_VERSION;
 
   if (reqlen > 0)
     {
-      ptr = or_unpack_string_nocopy (request, &client_release);
+      ptr = or_unpack_version (request, &client_version);
       ptr = or_unpack_int (ptr, &client_capabilities);
       ptr = or_unpack_int (ptr, &client_bit_platform);
       ptr = or_unpack_int (ptr, &client_type);
       ptr = or_unpack_string_nocopy (ptr, &client_host);
-      if (client_release != NULL)
-	{
-	  client_release = css_add_client_version_string (thread_p,
-							  client_release);
-	}
+
+      css_set_client_version (thread_p, &client_version);
     }
   else
     {
-      client_release = NULL;
-      client_bit_platform = 0;
-      client_capabilities = 0;
-      client_host = NULL;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_SERVER_HAND_SHAKE, 1,
+	      client_host);
+      return_error_to_client (thread_p, rid);
+      return CSS_UNPLANNED_SHUTDOWN;
     }
 
   /* check bits model */
@@ -378,16 +348,7 @@ server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_DIFFERENT_BIT_PLATFORM,
 	      2, rel_bit_platform (), client_bit_platform);
       return_error_to_client (thread_p, rid);
-      status = CSS_UNPLANNED_SHUTDOWN;
-    }
-
-  /* If we can't get the client version, we have to disconnect it. */
-  if (client_release == NULL)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_SERVER_HAND_SHAKE, 1,
-	      client_host);
-      return_error_to_client (thread_p, rid);
-      status = CSS_UNPLANNED_SHUTDOWN;
+      return CSS_UNPLANNED_SHUTDOWN;
     }
 
   /*
@@ -395,21 +356,28 @@ server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
    * 2. check if the both capabilities of client and server are compatible.
    * 3. check if the client has a capability to make it compatible.
    */
-  compat = rel_get_net_compatible (client_release, server_release);
+  if (rel_check_net_compatible (&client_version,
+				&server_version) == REL_NOT_COMPATIBLE)
+    {
+      char buf1[REL_MAX_VERSION_LENGTH];
+      char buf2[REL_MAX_VERSION_LENGTH];
+
+      rel_version_to_string (&server_version, buf1, sizeof (buf1));
+      rel_version_to_string (&client_version, buf2, sizeof (buf2));
+
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_DIFFERENT_RELEASE, 2,
+	      buf1, buf2);
+      return_error_to_client (thread_p, rid);
+      return CSS_UNPLANNED_SHUTDOWN;
+    }
+
   if (check_client_capabilities (thread_p, client_capabilities,
-				 rel_compare (client_release, server_release),
-				 &compat, client_host) != client_capabilities)
+				 client_host) != client_capabilities)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_SERVER_HAND_SHAKE, 1,
 	      client_host);
       return_error_to_client (thread_p, rid);
-    }
-  if (compat == REL_NOT_COMPATIBLE)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_DIFFERENT_RELEASE, 2,
-	      server_release, client_release);
-      return_error_to_client (thread_p, rid);
-      status = CSS_UNPLANNED_SHUTDOWN;
+      return CSS_UNPLANNED_SHUTDOWN;
     }
 
   /* update connection counters for reserved connections */
@@ -418,22 +386,20 @@ server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 	      ER_CSS_CLIENTS_EXCEEDED, 1, NUM_NORMAL_TRANS);
       return_error_to_client (thread_p, rid);
-      status = CSS_UNPLANNED_SHUTDOWN;
-    }
-  else
-    {
-      thread_p->conn_entry->client_type = client_type;
+      return CSS_UNPLANNED_SHUTDOWN;
     }
 
-  reply_size = or_packed_string_length (server_release, &strlen1)
-    + (OR_INT_SIZE * 2) + or_packed_string_length (boot_Host_name, &strlen2);
-  ptr = or_pack_string_with_length (reply, server_release, strlen1);
+  thread_p->conn_entry->client_type = client_type;
+
+  reply_size = OR_VERSION_SIZE + (OR_INT_SIZE * 2) +
+    or_packed_string_length (boot_Host_name, &strlen2);
+  ptr = or_pack_version (reply, &server_version);
   ptr = or_pack_int (ptr, server_capabilities ());
   ptr = or_pack_int (ptr, rel_bit_platform ());
   ptr = or_pack_string_with_length (ptr, boot_Host_name, strlen2);
   css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply, reply_size);
 
-  return status;
+  return CSS_NO_ERRORS;
 }
 
 /*

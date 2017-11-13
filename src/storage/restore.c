@@ -1654,8 +1654,8 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   /* Removed strict condition for checking disk compatibility.
    * Check it according to the predefined rules.
    */
-  compat = rel_get_disk_compatible (bkdb_compatibility, NULL);
-  if (compat != REL_FULLY_COMPATIBLE && compat != REL_BACKWARD_COMPATIBLE)
+  compat = rel_get_disk_compatible (bkdb_compatibility);
+  if (compat != REL_COMPATIBLE)
     {
       /* Database is incompatible with current release */
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,

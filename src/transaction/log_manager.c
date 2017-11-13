@@ -873,7 +873,6 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
 			 LOG_LSA * stopat_lsa, bool init_emergency)
 {
   LOG_RECORD_HEADER *eof;	/* End of log record */
-  REL_FIXUP_FUNCTION *disk_compatibility_functions = NULL;
   REL_COMPATIBILITY compat;
   int i;
   int error_code = NO_ERROR;
@@ -1045,15 +1044,14 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
    * This will compare the given level against the value returned by
    * rel_disk_compatible().
    */
-  compat = rel_get_disk_compatible (log_Gl.hdr.db_compatibility,
-				    &disk_compatibility_functions);
+  compat = rel_get_disk_compatible (log_Gl.hdr.db_compatibility);
 
   /* If we're not completely compatible, signal an error.
    * There had been no compatibility rules on R2.1 or earlier version.
    * However, a compatibility rule between R2.2 and R2.1 (or earlier)
    * was added to provide restoration from R2.1 to R2.2.
    */
-  if (compat != REL_FULLY_COMPATIBLE)
+  if (compat != REL_COMPATIBLE)
     {
       /* Database is incompatible with current release */
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -1223,15 +1221,6 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
 				 log_Gl.chkpt_every_npages);
 
   logtb_set_to_system_tran_index (thread_p);
-
-  /* run the compatibility functions if we have any */
-  if (disk_compatibility_functions != NULL)
-    {
-      for (i = 0; disk_compatibility_functions[i] != NULL; i++)
-	{
-	  (*(disk_compatibility_functions[i])) ();
-	}
-    }
 
   logpb_initialize_arv_page_info_table ();
   logpb_initialize_logging_statistics ();

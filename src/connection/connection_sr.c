@@ -191,7 +191,7 @@ css_initialize_conn (CSS_CONN_ENTRY * conn, SOCKET fd)
   conn->con_close_handler_activated = false;
   conn->epoll_check_err = false;
 #endif
-  memset (&conn->peer_version, 0, sizeof (CSS_VERSION));
+  memset (&conn->peer_version, 0, sizeof (RYE_VERSION));
 
   return NO_ERROR;
 }

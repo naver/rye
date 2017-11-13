@@ -121,6 +121,7 @@ VOLID boot_User_volid = 0;
 char boot_Host_connected[MAXHOSTNAMELEN] = "";
 #endif /* CS_MODE */
 char boot_Host_name[MAXHOSTNAMELEN] = "";
+RYE_VERSION boot_Peer_version = RYE_CUR_VERSION;
 
 static char boot_Volume_label[PATH_MAX] = " ";
 static bool boot_Is_client_all_final = true;
@@ -1383,6 +1384,8 @@ boot_client_initialize_css (const char *dbname,
       error = net_client_init (dbname, hostlist[n]);
       if (error == NO_ERROR)
 	{
+	  RYE_VERSION server_version;
+
 	  /* save the hostname for the use of calling functions */
 	  if (boot_Host_connected != hostlist[n])
 	    {
@@ -1391,11 +1394,15 @@ boot_client_initialize_css (const char *dbname,
 	  er_log_debug (ARG_FILE_LINE, "ping server with handshake\n");
 	  /* ping to validate availability and to check compatibility */
 	  er_clear ();
-	  error =
-	    net_client_ping_server_with_handshake (client_type,
-						   check_capabilities,
-						   opt_cap);
-	  if (error != NO_ERROR)
+	  error = net_client_ping_server_with_handshake (client_type,
+							 check_capabilities,
+							 opt_cap,
+							 &server_version);
+	  if (error == NO_ERROR)
+	    {
+	      boot_Peer_version = server_version;
+	    }
+	  else
 	    {
 	      css_terminate (false);
 	    }

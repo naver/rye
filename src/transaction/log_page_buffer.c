@@ -2319,12 +2319,7 @@ logpb_find_header_parameters (THREAD_ENTRY * thread_p,
   /* only check for incompatibility here, this will be done again in
    * log_xinit which will run the compatibility functions if there are any.
    */
-  /* We added disk compatibility rules to R2.2. Before that release,
-   * rel_get_disk_compatible function returned only REL_FULLY_COMPATIBLE or
-   * REL_NOT_COMPATIBLE. However, it might return REL_BACKWARD_COMPATIBLE now.
-   */
-  if (rel_get_disk_compatible (*db_compatibility, NULL) !=
-      REL_FULLY_COMPATIBLE)
+  if (rel_get_disk_compatible (*db_compatibility) != REL_COMPATIBLE)
     {
       log_Gl.hdr.db_compatibility = *db_compatibility;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_INCOMPATIBLE_DATABASE,

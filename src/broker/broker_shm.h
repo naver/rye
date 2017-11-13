@@ -31,6 +31,7 @@
 #include <semaphore.h>
 
 #include "porting.h"
+#include "release_string.h"
 #include "broker_env_def.h"
 #include "broker_config.h"
 #include "broker_max_heap.h"
@@ -245,7 +246,7 @@ struct t_appl_server_info
   time_t last_connect_time;
   time_t claimed_alive_time;	/* to check if the cas hangs */
 
-  T_BROKER_RYE_VERSION clt_version;
+  RYE_VERSION clt_version;
 
   INT64 num_requests_received;
   INT64 num_transactions_processed;
