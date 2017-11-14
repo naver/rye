@@ -634,7 +634,7 @@ pgbuf_hash_func_mirror (const VPID * vpid)
 unsigned int
 pgbuf_hash_vpid (const void *key_vpid, unsigned int htsize)
 {
-  const VPID *vpid = (VPID *) key_vpid;
+  const VPID *vpid = (const VPID *) key_vpid;
 
   return ((vpid->pageid | ((unsigned int) vpid->volid) << 24) % htsize);
 }
@@ -648,8 +648,8 @@ pgbuf_hash_vpid (const void *key_vpid, unsigned int htsize)
 int
 pgbuf_compare_vpid (const void *key_vpid1, const void *key_vpid2)
 {
-  const VPID *vpid1 = (VPID *) key_vpid1;
-  const VPID *vpid2 = (VPID *) key_vpid2;
+  const VPID *vpid1 = (const VPID *) key_vpid1;
+  const VPID *vpid2 = (const VPID *) key_vpid2;
 
   return VPID_EQ (vpid1, vpid2);
 }
@@ -2222,11 +2222,11 @@ pgbuf_flush_all_unfixed_and_set_lsa_as_null (THREAD_ENTRY * thread_p,
 static int
 pgbuf_compare_victim_list (const void *p1, const void *p2)
 {
-  PGBUF_VICTIM_CANDIDATE_LIST *node1, *node2;
+  const PGBUF_VICTIM_CANDIDATE_LIST *node1, *node2;
   int diff;
 
-  node1 = (PGBUF_VICTIM_CANDIDATE_LIST *) p1;
-  node2 = (PGBUF_VICTIM_CANDIDATE_LIST *) p2;
+  node1 = (const PGBUF_VICTIM_CANDIDATE_LIST *) p1;
+  node2 = (const PGBUF_VICTIM_CANDIDATE_LIST *) p2;
 
   if (node1 == node2)
     {
