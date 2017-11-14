@@ -346,9 +346,10 @@ extern int file_dump_descriptor (THREAD_ENTRY * thread_p, FILE * fp,
 extern int file_rv_undo_create_tmp (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void file_rv_dump_create_tmp (FILE * fp, int length_ignore,
 				     void *data);
-
+extern int file_rv_redo_ftab_chain (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void file_rv_dump_ftab_chain (FILE * fp, int length_ignore,
 				     void *data);
+extern int file_rv_redo_fhdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void file_rv_dump_fhdr (FILE * fp, int length_ignore, void *data);
 extern void file_rv_dump_idtab (FILE * fp, int length, void *data);
 extern void file_rv_dump_allocset (FILE * fp, int length_ignore, void *data);

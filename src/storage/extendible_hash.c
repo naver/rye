@@ -747,13 +747,13 @@ ehash_initialize_bucket_new_page (THREAD_ENTRY * thread_p,
     }
 
   /*
-   * Initilize the bucket to contain variable-length records
+   * Initialize the bucket to contain variable-length records
    * on ordered slots.
    */
   spage_initialize (thread_p, page_p, UNANCHORED_KEEP_SEQUENCE, alignment,
 		    DONT_SAFEGUARD_RVSPACE);
 
-  /* Initilize the bucket header */
+  /* Initialize the bucket header */
   bucket_header.local_depth = depth;
 
   /* Set the record descriptor to the Bucket header */
@@ -1049,7 +1049,7 @@ ehash_create_helper (THREAD_ENTRY * thread_p, EHID * ehid_p, DB_TYPE key_type,
       alignment = sizeof (int);
     }
 
-  /* Create the first bucket and initilize its header */
+  /* Create the first bucket and initialize its header */
 
   /*
    * If the file type is TMP, we must call file_create_tmp, otherwise, if
@@ -1100,7 +1100,7 @@ ehash_create_helper (THREAD_ENTRY * thread_p, EHID * ehid_p, DB_TYPE key_type,
       ehash_dir_locate (&exp_dir_pages, &exp_bucket_pages);
     }
 
-  /* Create the directory (allocate the first page) and initilize its header */
+  /* Create the directory (allocate the first page) and initialize its header */
 
   /*
    * If the file type is TMP, we must call file_create_tmp, otherwise, if
@@ -1156,7 +1156,7 @@ ehash_create_helper (THREAD_ENTRY * thread_p, EHID * ehid_p, DB_TYPE key_type,
 
   dir_header_p = (EHASH_DIR_HEADER *) dir_page_p;
 
-  /* Initilize the directory header */
+  /* Initialize the directory header */
   dir_header_p->depth = 0;
   dir_header_p->key_type = key_type;
   dir_header_p->alignment = alignment;
@@ -1188,7 +1188,7 @@ ehash_create_helper (THREAD_ENTRY * thread_p, EHID * ehid_p, DB_TYPE key_type,
   /* Log the directory root page */
 
   LOG_ADDR_SET (&addr, &dir_vfid, dir_page_p, 0);
-  log_append_redo_data (thread_p, RVEH_REPLACE, &addr,
+  log_append_redo_data (thread_p, RVEH_INIT_DIR, &addr,
 			EHASH_DIR_HEADER_SIZE + sizeof (EHASH_DIR_RECORD),
 			dir_page_p);
 
@@ -2669,7 +2669,7 @@ ehash_find_first_bit_position (THREAD_ENTRY * thread_p,
 	}
     }
 
-  /* Initilize bit_position to one greater than the old local depth  */
+  /* Initialize bit_position to one greater than the old local depth  */
   bit_position = *out_old_local_depth_p + 1;
 
   /* Find out the correct bit_position that the keys differ */
@@ -2968,7 +2968,7 @@ ehash_expand_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
      Perform expansion
    ******************************/
 
-  /* Initilize source variables */
+  /* Initialize source variables */
   old_dir_nth_page = old_pages;	/* The last page of the old directory */
 
   old_dir_page_p = ehash_fix_nth_page (thread_p, &ehid_p->vfid,
@@ -2980,7 +2980,7 @@ ehash_expand_directory (THREAD_ENTRY * thread_p, EHID * ehid_p, int new_depth)
     }
   old_dir_offset = end_offset;
 
-  /* Initilize destination variables */
+  /* Initialize destination variables */
   new_dir_nth_page = new_pages;	/* The last page of the new directory */
 
   new_dir_page_p = ehash_fix_nth_page (thread_p, &ehid_p->vfid,
@@ -5537,11 +5537,24 @@ xeh_find (EHID * ehid, void *value, OID * oid)
  */
 
 /*
- * ehash_rv_init_bucket_redo () - Redo the initilization of a bucket page
+ * ehash_rv_init_dir_redo () - Redo the initialization of a directory
+ *   return: int
+ *   recv(in): Recovery structure
+ */
+int
+ehash_rv_init_dir_redo (THREAD_ENTRY * thread_p, LOG_RCV * recv_p)
+{
+  (void) pgbuf_set_page_ptype (thread_p, recv_p->pgptr, PAGE_EHASH);
+
+  return log_rv_copy_char (thread_p, recv_p);
+}
+
+/*
+ * ehash_rv_init_bucket_redo () - Redo the initialization of a bucket page
  *   return: int
  *   recv(in): Recovery structure
  *
- * Note: Redo the initilization of a bucket page. The data area of the
+ * Note: Redo the initialization of a bucket page. The data area of the
  * recovery structure contains the alignment value and the
  * local depth of the bucket page.
  */
@@ -5555,6 +5568,8 @@ ehash_rv_init_bucket_redo (THREAD_ENTRY * thread_p, LOG_RCV * recv_p)
   PGSLOTID slot_id;
   int success;
 
+  (void) pgbuf_set_page_ptype (thread_p, recv_p->pgptr, PAGE_EHASH);
+
   record_p = recv_p->data;
 
   alignment = *record_p;
@@ -5562,7 +5577,7 @@ ehash_rv_init_bucket_redo (THREAD_ENTRY * thread_p, LOG_RCV * recv_p)
   bucket_header.local_depth = *(const char *) record_p;
 
   /*
-   * Initilize the bucket to contain variable-length records
+   * Initialize the bucket to contain variable-length records
    * on ordered slots.
    */
   spage_initialize (thread_p, recv_p->pgptr, UNANCHORED_KEEP_SEQUENCE,

@@ -294,6 +294,8 @@ extern int btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p,
 extern void btree_rv_noderec_dump_slot_id (FILE * fp, int length, void *data);
 extern int btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv);
 extern int btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv);
+extern int btree_rv_newroot_redo_init (THREAD_ENTRY * thread_p,
+				       LOG_RCV * recv);
 extern int btree_rv_newpage_redo_init (THREAD_ENTRY * thread_p,
 				       LOG_RCV * recv);
 extern int btree_rv_newpage_undo_alloc (THREAD_ENTRY * thread_p,

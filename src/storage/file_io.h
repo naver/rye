@@ -173,8 +173,11 @@ extern void *fileio_initialize_pages (THREAD_ENTRY * thread_p, int vdes,
 				      void *io_pgptr, DKNPAGES start_pageid,
 				      DKNPAGES npages, size_t page_size,
 				      int kbytes_to_be_written_per_sec);
-extern PAGE_TYPE fileio_get_page_ptype (UNUSED_ARG THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p);
-extern PAGE_TYPE fileio_set_page_ptype (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p, PAGE_TYPE ptype);
+extern PAGE_TYPE fileio_get_page_ptype (UNUSED_ARG THREAD_ENTRY * thread_p,
+					FILEIO_PAGE_RESERVED * prv_p);
+extern PAGE_TYPE fileio_set_page_ptype (THREAD_ENTRY * thread_p,
+					FILEIO_PAGE_RESERVED * prv_p,
+					PAGE_TYPE ptype);
 extern FILEIO_PAGE *fileio_alloc_io_page (THREAD_ENTRY * thread_p);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern DKNPAGES fileio_truncate (VOLID volid, DKNPAGES npages_to_resize);
@@ -303,5 +306,7 @@ extern FILEIO_LOCKF_TYPE fileio_get_lockf_type (int vdes);
 extern int fileio_create (THREAD_ENTRY * thread_p, const char *db_fullname,
 			  const char *vlabel, VOLID volid, bool dolock,
 			  bool dosync);
+extern void fileio_initialize_res (THREAD_ENTRY * thread_p,
+				   FILEIO_PAGE_RESERVED * prv_p);
 
 #endif /* _FILE_IO_H_ */

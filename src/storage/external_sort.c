@@ -1448,11 +1448,11 @@ sort_listfile (THREAD_ENTRY * thread_p, INT16 volid, int est_inp_pg_cnt,
 
   for (i = 0; i < sort_param.tot_tempfiles; i++)
     {
-      /* Initilize temporary file identifier; real value will be set in
+      /* Initialize temporary file identifier; real value will be set in
          "sort_add_new_file () */
       sort_param.temp[i].volid = NULL_VOLID;
 
-      /* Initilize file contents list */
+      /* Initialize file contents list */
       sort_param.file_contents[i].num_pages =
 	(int *) malloc (SORT_INITIAL_DYN_ARRAY_SIZE * sizeof (int));
       if (sort_param.file_contents[i].num_pages == NULL)

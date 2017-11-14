@@ -367,33 +367,33 @@ page_type_to_string (PAGE_TYPE page_type)
       return "PAGE_FILE_HEADER";
     case PAGE_FILE_TAB:	/* 2 */
       return "PAGE_FILE_TAB";
-    case PAGE_HEAP:		/* 3 */
-      return "PAGE_HEAP";
-    case PAGE_VOLHEADER:	/* 4 */
-      return "PAGE_VOLHEADER";
-    case PAGE_VOLBITMAP:	/* 5 */
-      return "PAGE_VOLBITMAP";
-    case PAGE_XASL:		/* 6 */
-      return "PAGE_XASL";
-    case PAGE_QRESULT:		/* 7 */
-      return "PAGE_QRESULT";
-    case PAGE_EHASH:		/* 8 */
-      return "PAGE_EHASH";
-    case PAGE_OVERFLOW:	/* 9 */
-      return "PAGE_OVERFLOW";
-    case PAGE_AREA:		/* 10 */
-      return "PAGE_AREA";
-    case PAGE_CATALOG:		/* 11 */
-      return "PAGE_CATALOG";
-    case PAGE_BTREE:		/* 12 */
-      return "PAGE_BTREE";
-    case PAGE_OTHER:		/* 13 */
-      return "PAGE_OTHER";
-
-    case PAGE_HEAP_HEADER:	/* 14 */
+    case PAGE_HEAP_HEADER:	/* 3 */
       return "PAGE_HEAP_HEADER";
-    case PAGE_BTREE_ROOT:	/* 15 */
+    case PAGE_HEAP:		/* 4 */
+      return "PAGE_HEAP";
+    case PAGE_VOLHEADER:	/* 5 */
+      return "PAGE_VOLHEADER";
+    case PAGE_VOLBITMAP:	/* 6 */
+      return "PAGE_VOLBITMAP";
+    case PAGE_XASL:		/* 7 */
+      return "PAGE_XASL";
+    case PAGE_QRESULT:		/* 8 */
+      return "PAGE_QRESULT";
+    case PAGE_EHASH:		/* 9 */
+      return "PAGE_EHASH";
+    case PAGE_OVERFLOW:	/* 10 */
+      return "PAGE_OVERFLOW";
+    case PAGE_AREA:		/* 11 */
+      return "PAGE_AREA";
+    case PAGE_CATALOG:		/* 12 */
+      return "PAGE_CATALOG";
+    case PAGE_BTREE_ROOT:	/* 13 */
       return "PAGE_BTREE_ROOT";
+    case PAGE_BTREE:		/* 14 */
+      return "PAGE_BTREE";
+
+    case PAGE_OTHER:		/* 15 */
+      return "PAGE_OTHER";
     case PAGE_LOG:		/* 16 */
       return "PAGE_LOG";
     case PAGE_DROPPED_FILES:	/* 17 */

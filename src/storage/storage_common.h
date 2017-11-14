@@ -246,21 +246,21 @@ typedef enum
   PAGE_UNKNOWN = 0,		/* 0 used for initialized page            */
   PAGE_FILE_HEADER,		/* 1 file header page                     */
   PAGE_FILE_TAB,		/* 2 file allocset table page             */
-  PAGE_HEAP,			/* 3 heap page                            */
-  PAGE_VOLHEADER,		/* 4 volume header page                   */
-  PAGE_VOLBITMAP,		/* 5 volume bitmap page                   */
-  PAGE_XASL,			/* 6 xasl stream page                     */
-  PAGE_QRESULT,			/* 7 query result page                    */
-  PAGE_EHASH,			/* 8 ehash bucket/dir page                */
-  PAGE_OVERFLOW,		/* 9 overflow page                        */
-  PAGE_AREA,			/* 10 area page                            */
-  PAGE_CATALOG,			/* 11 catalog page                         */
-  PAGE_BTREE,			/* 12 b+tree index page                    */
+  PAGE_HEAP_HEADER,		/* 3 heap header page               */
+  PAGE_HEAP,			/* 4 heap page                            */
+  PAGE_VOLHEADER,		/* 5 volume header page                   */
+  PAGE_VOLBITMAP,		/* 6 volume bitmap page                   */
+  PAGE_XASL,			/* 7 xasl stream page                     */
+  PAGE_QRESULT,			/* 8 query result page                    */
+  PAGE_EHASH,			/* 9 ehash bucket/dir page                */
+  PAGE_OVERFLOW,		/* 10 overflow page                        */
+  PAGE_AREA,			/* 11 area page                            */
+  PAGE_CATALOG,			/* 12 catalog page                         */
+  PAGE_BTREE_ROOT,		/* 13 b+tree index root page               */
+  PAGE_BTREE,			/* 14 b+tree index page                    */
 
 #if 1				/* TODO - */
-  PAGE_OTHER,			/* 13 misc (disk, recovery)                     */
-  PAGE_HEAP_HEADER,		/* 14 heap header page               */
-  PAGE_BTREE_ROOT,		/* 15 b+tree index root page               */
+  PAGE_OTHER,			/* 15 misc (disk, recovery)                     */
 #endif
   PAGE_LOG,			/* 16 NONE - log page (unused)             */
   PAGE_DROPPED_FILES,		/* 17 Dropped files page.                  */

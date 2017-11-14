@@ -64,7 +64,7 @@ rv_init_rvfuns (void)
   rv_fun->recv_index = RVDK_FORMAT;
   rv_fun->recv_string = "RVDK_FORMAT";
   rv_fun->undofun = disk_rv_undo_format;
-  rv_fun->redofun = log_rv_copy_char;
+  rv_fun->redofun = disk_rv_redo_format;
   rv_fun->dump_undofun = log_rv_dump_char;
   rv_fun->dump_redofun = disk_rv_dump_hdr;
 
@@ -154,7 +154,7 @@ rv_init_rvfuns (void)
   rv_fun->recv_index = RVFL_FTAB_CHAIN;
   rv_fun->recv_string = "RVFL_FTAB_CHAIN";
   rv_fun->undofun = log_rv_copy_char;
-  rv_fun->redofun = log_rv_copy_char;
+  rv_fun->redofun = file_rv_redo_ftab_chain;
   rv_fun->dump_undofun = file_rv_dump_ftab_chain;
   rv_fun->dump_redofun = file_rv_dump_ftab_chain;
 
@@ -243,7 +243,7 @@ rv_init_rvfuns (void)
   rv_fun->recv_index = RVFL_FHDR;
   rv_fun->recv_string = "RVFL_FHDR";
   rv_fun->undofun = log_rv_copy_char;
-  rv_fun->redofun = log_rv_copy_char;
+  rv_fun->redofun = file_rv_redo_fhdr;
   rv_fun->dump_undofun = file_rv_dump_fhdr;
   rv_fun->dump_redofun = file_rv_dump_fhdr;
 
@@ -351,6 +351,14 @@ rv_init_rvfuns (void)
   rv_fun->dump_undofun = NULL;
   rv_fun->dump_redofun = heap_rv_dump_statistics;
 
+  rv_fun = &RV_fun[RVHF_NEWHDR];
+  rv_fun->recv_index = RVHF_NEWHDR;
+  rv_fun->recv_string = "RVHF_NEWHDR";
+  rv_fun->undofun = NULL;
+  rv_fun->redofun = heap_rv_redo_newhdr;
+  rv_fun->dump_undofun = NULL;
+  rv_fun->dump_redofun = heap_rv_dump_chain;
+
   rv_fun = &RV_fun[RVHF_NEWPAGE];
   rv_fun->recv_index = RVHF_NEWPAGE;
   rv_fun->recv_string = "RVHF_NEWPAGE";
@@ -429,7 +437,7 @@ rv_init_rvfuns (void)
   rv_fun->recv_index = RVOVF_NEWPAGE_INSERT;
   rv_fun->recv_string = "RVOVF_NEWPAGE_INSERT";
   rv_fun->undofun = NULL;
-  rv_fun->redofun = log_rv_copy_char;
+  rv_fun->redofun = overflow_rv_newpage_insert_redo;
   rv_fun->dump_undofun = NULL;
   rv_fun->dump_redofun = log_rv_dump_char;
 
@@ -478,6 +486,14 @@ rv_init_rvfuns (void)
   rv_fun->recv_string = "RVEH_DELETE";
   rv_fun->undofun = ehash_rv_delete_undo;
   rv_fun->redofun = ehash_rv_delete_redo;
+  rv_fun->dump_undofun = NULL;
+  rv_fun->dump_redofun = NULL;
+
+  rv_fun = &RV_fun[RVEH_INIT_DIR];
+  rv_fun->recv_index = RVEH_INIT_DIR;
+  rv_fun->recv_string = "RVEH_INIT_DIR";
+  rv_fun->undofun = log_rv_copy_char;
+  rv_fun->redofun = ehash_rv_init_dir_redo;
   rv_fun->dump_undofun = NULL;
   rv_fun->dump_redofun = NULL;
 
@@ -550,6 +566,14 @@ rv_init_rvfuns (void)
   rv_fun->recv_string = "RVBT_DEL_PGRECORDS";
   rv_fun->undofun = btree_rv_pagerec_insert;
   rv_fun->redofun = btree_rv_pagerec_delete;
+  rv_fun->dump_undofun = NULL;
+  rv_fun->dump_redofun = NULL;
+
+  rv_fun = &RV_fun[RVBT_GET_NEWROOT];
+  rv_fun->recv_index = RVBT_GET_NEWROOT;
+  rv_fun->recv_string = "RVBT_GET_NEWROOT";
+  rv_fun->undofun = NULL;
+  rv_fun->redofun = btree_rv_newroot_redo_init;
   rv_fun->dump_undofun = NULL;
   rv_fun->dump_redofun = NULL;
 

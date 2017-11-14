@@ -1402,6 +1402,19 @@ overflow_rv_newpage_logical_dump_undo (FILE * fp,
 }
 
 /*
+ * overflow_rv_newpage_insert_redo () -
+ *   return: 0 if no error, or error code
+ *   rcv(in): Recovery structure
+ */
+int
+overflow_rv_newpage_insert_redo (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, rcv->pgptr, PAGE_OVERFLOW);
+
+  return log_rv_copy_char (thread_p, rcv);
+}
+
+/*
  * overflow_rv_newpage_link_undo () - Undo allocation of new overflow page and the
  *                               reference to it
  *   return: 0 if no error, or error code

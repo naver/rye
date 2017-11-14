@@ -308,8 +308,6 @@ static int fileio_expand_permanent_volume_info (FILEIO_VOLUME_HEADER * header,
 static int fileio_expand_temporary_volume_info (FILEIO_VOLUME_HEADER * header,
 						int volid);
 #endif
-static void fileio_initialize_res (THREAD_ENTRY * thread_p,
-				   FILEIO_PAGE_RESERVED * prv_p);
 static int fileio_get_primitive_way_max (const char *path,
 					 long int *filename_max,
 					 long int *pathname_max);
@@ -1011,7 +1009,7 @@ fileio_set_page_ptype (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p,
  * fileio_initialize_res () -
  *   return:
  */
-static void
+void
 fileio_initialize_res (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p)
 {
   LSA_SET_NULL (&(prv_p->lsa));

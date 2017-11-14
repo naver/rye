@@ -73,6 +73,18 @@ struct btree_range_search_helper
   int num_copied_oids;		/* Current count of stored OID's */
 };
 
+static PAGE_PTR btree_initialize_new_page_helper (THREAD_ENTRY * thread_p,
+						  const VFID * vfid,
+						  const FILE_TYPE file_type,
+						  const VPID * vpid,
+						  INT32 ignore_npages,
+						  const unsigned short
+						  alignment);
+static bool btree_initialize_new_root (THREAD_ENTRY * thread_p,
+				       const VFID * vfid,
+				       const FILE_TYPE file_type,
+				       const VPID * vpid, INT32 ignore_npages,
+				       void *args);
 static bool btree_initialize_new_page (THREAD_ENTRY * thread_p,
 				       const VFID * vfid,
 				       const FILE_TYPE file_type,
@@ -929,8 +941,8 @@ btree_dealloc_page (THREAD_ENTRY * thread_p, BTID_INT * btid, VPID * vpid)
 }
 
 /*
- * btree_initialize_new_page () -
- *   return: bool
+ * btree_initialize_new_page_helper () -
+ *   return:
  *   vfid(in): File where the new page belongs
  *   file_type(in):
  *   vpid(in): The new page
@@ -941,6 +953,68 @@ btree_dealloc_page (THREAD_ENTRY * thread_p, BTID_INT * btid, VPID * vpid)
  *
  * Note: Initialize a newly allocated btree page.
  */
+static PAGE_PTR
+btree_initialize_new_page_helper (THREAD_ENTRY * thread_p, const VFID * vfid,
+				  UNUSED_ARG const FILE_TYPE file_type,
+				  const VPID * vpid,
+				  UNUSED_ARG INT32 ignore_npages,
+				  const unsigned short alignment)
+{
+  PAGE_PTR pgptr;
+
+  /*
+   * fetch and initialize the new page.
+   * The parameter UNANCHORED_KEEP_SEQUENCE indicates
+   * that the order of records will be preserved
+   * during insertions and deletions.
+   */
+
+  pgptr = pgbuf_fix_newpg (thread_p, vpid, PAGE_BTREE,
+			   MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+  if (pgptr == NULL)
+    {
+      return NULL;
+    }
+
+  if (vfid != NULL && pgptr != NULL)
+    {
+      assert (file_find_page (thread_p, vfid, vpid) == true);
+    }
+
+  spage_initialize (thread_p, pgptr, UNANCHORED_KEEP_SEQUENCE_BTREE,
+		    alignment, DONT_SAFEGUARD_RVSPACE);
+
+  return pgptr;
+}
+
+static bool
+btree_initialize_new_root (THREAD_ENTRY * thread_p, const VFID * vfid,
+			   UNUSED_ARG const FILE_TYPE file_type,
+			   const VPID * vpid, UNUSED_ARG INT32 ignore_npages,
+			   void *args)
+{
+  PAGE_PTR pgptr;
+  unsigned short alignment;
+  LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
+
+  alignment = *((unsigned short *) args);
+
+  pgptr =
+    btree_initialize_new_page_helper (thread_p, vfid, file_type, vpid,
+				      ignore_npages, alignment);
+  if (pgptr == NULL)
+    {
+      return false;
+    }
+
+  LOG_ADDR_SET (&addr, vfid, pgptr, -1);
+  log_append_redo_data (thread_p, RVBT_GET_NEWROOT, &addr,
+			sizeof (alignment), &alignment);
+  pgbuf_set_dirty (thread_p, pgptr, FREE);
+
+  return true;
+}
+
 static bool
 btree_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 			   UNUSED_ARG const FILE_TYPE file_type,
@@ -951,30 +1025,16 @@ btree_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid,
   unsigned short alignment;
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
 
-  /*
-   * fetch and initialize the new page.
-   * The parameter UNANCHORED_KEEP_SEQUENCE indicates
-   * that the order of records will be preserved
-   * during insertions and deletions.
-   */
+  alignment = *((unsigned short *) args);
 
   pgptr =
-    pgbuf_fix_newpg (thread_p, vpid, PAGE_BTREE,
-		     MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+    btree_initialize_new_page_helper (thread_p, vfid, file_type, vpid,
+				      ignore_npages, alignment);
   if (pgptr == NULL)
     {
       return false;
     }
 
-  if (vfid != NULL && pgptr != NULL)
-    {
-      assert (file_find_page (thread_p, vfid, vpid) == true);
-    }
-
-  alignment = *((unsigned short *) args);
-
-  spage_initialize (thread_p, pgptr, UNANCHORED_KEEP_SEQUENCE_BTREE,
-		    alignment, DONT_SAFEGUARD_RVSPACE);
   LOG_ADDR_SET (&addr, vfid, pgptr, -1);
   log_append_redo_data (thread_p, RVBT_GET_NEWPAGE, &addr,
 			sizeof (alignment), &alignment);
@@ -1621,7 +1681,7 @@ xbtree_add_index (THREAD_ENTRY * thread_p, BTID * btid, int num_atts,
   is_file_created = true;
 
   alignment = BTREE_MAX_ALIGN;
-  if (btree_initialize_new_page (thread_p, &btid->vfid, FILE_BTREE,
+  if (btree_initialize_new_root (thread_p, &btid->vfid, FILE_BTREE,
 				 &root_vpid, 1, (void *) &alignment) == false)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1629,7 +1689,7 @@ xbtree_add_index (THREAD_ENTRY * thread_p, BTID * btid, int num_atts,
 
   /*
    * Note: we fetch the page as old since it was initialized by
-   * btree_initialize_new_page; we want the current contents of
+   * btree_initialize_new_root; we want the current contents of
    * the page.
    */
   root_page =
@@ -6767,14 +6827,14 @@ btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 }
 
 /*
- * btree_rv_newpage_redo_init () -
+ * btree_rv_newpage_redo_init_helper () -
  *   return: int
  *   recv(in): Recovery structure
  *
  * Note: Initialize a B+tree page.
  */
-int
-btree_rv_newpage_redo_init (THREAD_ENTRY * thread_p, LOG_RCV * recv)
+static int
+btree_rv_newpage_redo_init_helper (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 {
   unsigned short alignment;
 
@@ -6784,7 +6844,24 @@ btree_rv_newpage_redo_init (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   spage_initialize (thread_p, recv->pgptr,
 		    UNANCHORED_KEEP_SEQUENCE_BTREE, alignment,
 		    DONT_SAFEGUARD_RVSPACE);
+
   return NO_ERROR;
+}
+
+int
+btree_rv_newroot_redo_init (THREAD_ENTRY * thread_p, LOG_RCV * recv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, recv->pgptr, PAGE_BTREE_ROOT);
+
+  return btree_rv_newpage_redo_init_helper (thread_p, recv);
+}
+
+int
+btree_rv_newpage_redo_init (THREAD_ENTRY * thread_p, LOG_RCV * recv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, recv->pgptr, PAGE_BTREE);
+
+  return btree_rv_newpage_redo_init_helper (thread_p, recv);
 }
 
 /*

@@ -5995,6 +5995,19 @@ disk_rv_undo_format (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 }
 
 /*
+ * disk_rv_redo_format () - Redo the initialization of a disk.
+ *   return: NO_ERROR
+ *   rcv(in): Recovery structure
+ */
+int
+disk_rv_redo_format (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, rcv->pgptr, PAGE_VOLHEADER);
+
+  return log_rv_copy_char (thread_p, rcv);
+}
+
+/*
  * disk_rv_dump_hdr () - Dump recovery header information.
  *   return: void
  *   length_ignore(in): Length of Recovery Data
@@ -6026,6 +6039,8 @@ disk_rv_redo_init_map (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   INT32 nalloc_bits;
   unsigned char *at_chptr;	/* Char Pointer to Sector/page allocator table */
   unsigned char *out_chptr;	/* Outside of page */
+
+  (void) pgbuf_set_page_ptype (thread_p, rcv->pgptr, PAGE_VOLBITMAP);
 
   nalloc_bits = *(const INT32 *) rcv->data;
 

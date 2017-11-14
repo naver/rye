@@ -103,18 +103,20 @@ typedef enum
 #if 1				/* fetches sub-info */
   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,	/* 1 file header page             */
   MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,	/* 2 file allocset table page             */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* 3 heap page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* 4 volume header page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* 5 volume bitmap page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* 6 xasl stream page                     */
-  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* 7 query result page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* 8 ehash bucket/dir page                */
-  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,	/* 9 overflow page (with ovf_keyval)      */
-  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* 10 area page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* 11 catalog page                         */
-  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* 12 b+tree index page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,	/* 3 heap header page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* 4 heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* 5 volume header page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* 6 volume bitmap page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* 7 xasl stream page                     */
+  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* 8 query result page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* 9 ehash bucket/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,	/* 10 overflow page (with ovf_keyval)      */
+  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* 11 area page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* 12 catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT,	/* 13 b+tree index root page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* 14 b+tree index page                    */
 
-  MNT_STATS_DATA_PAGE_FETCHES_OTHER,	/* 13 misc (disk, recovery)                     */
+  MNT_STATS_DATA_PAGE_FETCHES_OTHER,	/* 15 misc (disk, recovery)                     *//* TODO - */
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,
@@ -233,6 +235,7 @@ typedef enum
 #define MNT_GET_PARENT_ITEM(m)                \
   ((m == MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER       \
       || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP       \
       || m == MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP     \
@@ -242,6 +245,7 @@ typedef enum
       || m == MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_AREA  \
       || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG       \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT \
       || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE \
       || m == MNT_STATS_DATA_PAGE_FETCHES_OTHER) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 

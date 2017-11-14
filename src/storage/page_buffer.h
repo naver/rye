@@ -321,6 +321,15 @@ extern DISK_ISVALID pgbuf_is_valid_page (THREAD_ENTRY * thread_p,
 							      void *args),
 					 void *args);
 
+extern PAGE_TYPE pgbuf_get_page_ptype (THREAD_ENTRY * thread_p,
+				       PAGE_PTR pgptr);
+extern void pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
+				  PAGE_TYPE ptype);
+extern bool pgbuf_check_page_ptype (THREAD_ENTRY * thread_p,
+				    PAGE_PTR pgptr, PAGE_TYPE ptype);
+extern bool pgbuf_check_page_type_no_error (THREAD_ENTRY * thread_p,
+					    PAGE_PTR pgptr, PAGE_TYPE ptype);
+
 #if defined(RYE_DEBUG)
 extern void pgbuf_dump_if_any_fixed (void);
 #endif

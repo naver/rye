@@ -4500,7 +4500,7 @@ heap_create_internal (THREAD_ENTRY * thread_p, HFID * hfid, int exp_npgs,
    */
   addr.vfid = &hfid->vfid;
   addr.offset = HEAP_HEADER_AND_CHAIN_SLOTID;
-  log_append_redo_data (thread_p, RVHF_NEWPAGE,
+  log_append_redo_data (thread_p, RVHF_NEWHDR,
 			&addr, sizeof (heap_hdr), &heap_hdr);
   pgbuf_set_dirty (thread_p, addr.pgptr, FREE);
   addr.pgptr = NULL;
@@ -13116,13 +13116,13 @@ heap_bestspace_finalize (void)
  */
 
 /*
- * heap_rv_redo_newpage () - Redo the statistics or a new page
+ * heap_rv_redo_newpage_helper () - Redo the statistics or a new page
  *                                    allocation for a heap file
  *   return: int
  *   rcv(in): Recovery structure
  */
-int
-heap_rv_redo_newpage (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
+static int
+heap_rv_redo_newpage_helper (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 {
   RECDES recdes = RECDES_INITIALIZER;
   INT16 slotid;
@@ -13151,6 +13151,22 @@ heap_rv_redo_newpage (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
     }
 
   return NO_ERROR;
+}
+
+int
+heap_rv_redo_newhdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, rcv->pgptr, PAGE_HEAP_HEADER);
+
+  return heap_rv_redo_newpage_helper (thread_p, rcv);
+}
+
+int
+heap_rv_redo_newpage (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, rcv->pgptr, PAGE_HEAP);
+
+  return heap_rv_redo_newpage_helper (thread_p, rcv);
 }
 
 /*

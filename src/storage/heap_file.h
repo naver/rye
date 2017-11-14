@@ -414,6 +414,7 @@ extern int heap_attrinfo_set_uninitialized_global (THREAD_ENTRY * thread_p,
 #endif
 
 /* Recovery functions */
+extern int heap_rv_redo_newhdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern int heap_rv_redo_newpage (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern int heap_rv_undoredo_pagehdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void heap_rv_dump_statistics (FILE * fp, int ignore_length,

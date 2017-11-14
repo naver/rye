@@ -12302,6 +12302,20 @@ file_rv_dump_create_tmp (FILE * fp, UNUSED_ARG int length_ignore, void *data)
 }
 
 /* TODO: list for file_ftab_chain */
+
+/*
+ * file_rv_redo_ftab_chain () -
+ *   return: NO_ERROR
+ *   rcv(in): Recovery structure
+ */
+int
+file_rv_redo_ftab_chain (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, rcv->pgptr, PAGE_FILE_TAB);
+
+  return log_rv_copy_char (thread_p, rcv);
+}
+
 /*
  * file_rv_dump_ftab_chain () - Dump redo information to double link file table
  *                          pages
@@ -12318,6 +12332,19 @@ file_rv_dump_ftab_chain (FILE * fp, UNUSED_ARG int length_ignore, void *data)
   (void) fprintf (fp, "Next_ftb_vpid:%d|%d, Previous_ftb_vpid = %d|%d\n",
 		  recv->next_ftbvpid.volid, recv->next_ftbvpid.pageid,
 		  recv->prev_ftbvpid.volid, recv->prev_ftbvpid.pageid);
+}
+
+/*
+ * file_rv_redo_fhdr () -
+ *   return: NO_ERROR
+ *   rcv(in): Recovery structure
+ */
+int
+file_rv_redo_fhdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
+{
+  (void) pgbuf_set_page_ptype (thread_p, rcv->pgptr, PAGE_FILE_HEADER);
+
+  return log_rv_copy_char (thread_p, rcv);
 }
 
 /*

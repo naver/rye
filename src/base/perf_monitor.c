@@ -89,18 +89,20 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
 #if 1				/* fetches sub-info */
   {"Num_data_page_fetches_file_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 1 */
   {"Num_data_page_fetches_file_tab", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 2 */
-  {"Num_data_page_fetches_heap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 3 */
-  {"Num_data_page_fetches_volheader", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 4 */
-  {"Num_data_page_fetches_volbitmap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 5 */
-  {"Num_data_page_fetches_xasl", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 6 */
-  {"Num_data_page_fetches_qresult", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 7 */
-  {"Num_data_page_fetches_ehash", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 8 */
-  {"Num_data_page_fetches_overflow", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 9 */
-  {"Num_data_page_fetches_area", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 10 */
-  {"Num_data_page_fetches_catalog", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 11 */
-  {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 12 */
+  {"Num_data_page_fetches_heap_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 3 */
+  {"Num_data_page_fetches_heap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 4 */
+  {"Num_data_page_fetches_volheader", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 5 */
+  {"Num_data_page_fetches_volbitmap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 6 */
+  {"Num_data_page_fetches_xasl", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 7 */
+  {"Num_data_page_fetches_qresult", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 8 */
+  {"Num_data_page_fetches_ehash", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 9 */
+  {"Num_data_page_fetches_overflow", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 10 */
+  {"Num_data_page_fetches_area", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 11 */
+  {"Num_data_page_fetches_catalog", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 12 */
+  {"Num_data_page_fetches_btree_root", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 13 */
+  {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 14 */
 
-  {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 13 */
+  {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 15 *//* TODO - */
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */

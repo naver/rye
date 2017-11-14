@@ -5083,6 +5083,8 @@ catalog_rv_new_page_redo (THREAD_ENTRY * thread_p, LOG_RCV * recv_p)
 
   catalog_clear_hash_table ();
 
+  (void) pgbuf_set_page_ptype (thread_p, recv_p->pgptr, PAGE_CATALOG);
+
   spage_initialize (thread_p, recv_p->pgptr, ANCHORED,
 		    MAX_ALIGNMENT, SAFEGUARD_RVSPACE);
 
