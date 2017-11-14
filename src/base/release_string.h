@@ -42,37 +42,34 @@ typedef struct
 
 #define RYE_CUR_VERSION		\
 	{ MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, BUILD_SEQ }
+#define RYE_NULL_VERSION		\
+	{ 0, 0, 0, 0 }
 
-/*
- * REL_COMPATIBILITY - Describes the various types of compatibility we can have.
- *                     Returned by the rel_get_disk_compatible function.
- */
 typedef enum
 {
   REL_NOT_COMPATIBLE,
   REL_COMPATIBLE,
 } REL_COMPATIBILITY;
 
-extern const char *rel_name (void);
-extern const char *rel_release_string (void);
-extern const char *rel_major_release_string (void);
-extern const char *rel_build_number (void);
+extern const char *rel_package_string (void);
+extern const char *rel_version_string (void);
 extern const char *rel_build_os (void);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern const char *rel_copyright_header (void);
 extern const char *rel_copyright_body (void);
 #endif
-extern float rel_disk_compatible (void);
-extern void rel_set_disk_compatible (float level);
 extern int rel_bit_platform (void);
 
-extern REL_COMPATIBILITY rel_get_disk_compatible (float db_level);
-extern bool rel_is_log_compatible (const char *writer_rel_str,
-				   const char *reader_rel_str);
+extern RYE_VERSION rel_cur_version (void);
+extern RYE_VERSION rel_null_version (void);
+
+extern REL_COMPATIBILITY rel_check_disk_compatible (const RYE_VERSION *
+						    version);
+extern bool rel_is_log_compatible (const RYE_VERSION * version);
 extern REL_COMPATIBILITY rel_check_net_compatible (const RYE_VERSION * ver1,
 						   const RYE_VERSION * ver2);
-extern void rel_copy_version_string (char *buf, size_t len);
-extern char *rel_version_to_string (RYE_VERSION * version, char *buffer,
-				    int buffer_len);
+extern void rel_copy_release_string (char *buf, size_t len);
+extern void rel_version_to_string (RYE_VERSION * version, char *buffer,
+				   int buffer_len);
 
 #endif /* _RELEASE_STRING_H_ */

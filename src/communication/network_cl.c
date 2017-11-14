@@ -1587,8 +1587,7 @@ net_client_ping_server_with_handshake (int client_type,
   int reply_size = OR_ALIGNED_BUF_SIZE (a_reply);
   int request_size, server_capabilities, server_bit_platform;
   int strlen2;
-  REL_COMPATIBILITY compat;
-  RYE_VERSION client_version = RYE_CUR_VERSION;
+  RYE_VERSION client_version = rel_cur_version ();
 
   if (net_Server_host[0] == '\0' || net_Server_name[0] == '\0')
     {

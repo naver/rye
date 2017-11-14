@@ -154,6 +154,34 @@ master_shm_set_node_state (const char *host_name, unsigned short node_state)
 }
 
 /*
+ * master_shm_set_node_version ()-
+ *   return: error code
+ */
+int
+master_shm_set_node_version (const char *host_name,
+			     const RYE_VERSION * node_version)
+{
+  int i;
+
+  if (rye_Master_shm == NULL)
+    {
+      assert (false);
+      return ER_FAILED;
+    }
+
+  for (i = 0; i < rye_Master_shm->num_ha_nodes; i++)
+    {
+      if (strcmp (rye_Master_shm->ha_nodes[i].host_name, host_name) == 0)
+	{
+	  rye_Master_shm->ha_nodes[i].ha_node_version = *node_version;
+	  break;
+	}
+    }
+
+  return NO_ERROR;
+}
+
+/*
  * master_shm_reset_hb_nodes()-
  *   return: error code
  *

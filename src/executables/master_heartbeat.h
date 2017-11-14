@@ -171,6 +171,7 @@ struct hb_node_entry
   short heartbeat_gap;
 
   struct timeval last_recv_hbtime;	/* last received heartbeat time */
+  RYE_VERSION node_version;
 };
 
 /* heartbeat ping host entries */

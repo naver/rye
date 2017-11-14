@@ -100,7 +100,6 @@ static BOOT_SERVER_CREDENTIAL boot_Server_credential = {
   /* root_class_oid */ NULL_OID_INITIALIZER,
   /* root_class_hfid */ {{NULL_FILEID, NULL_VOLID}, NULL_PAGEID},
   /* data page_size */ -1, /* log page_size */ -1,
-  /* disk_compatibility */ 0.0,
   /* server_session_key */ {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
   INTL_CODESET_NONE,
   NULL,
@@ -509,7 +508,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * client_credential,
 				   MSGCAT_SET_GENERAL,
 				   MSGCAT_GENERAL_DATABASE_INIT),
 	   BOOT_FORMAT_MAX_LENGTH);
-  (void) fprintf (stdout, format, rel_name ());
+  (void) fprintf (stdout, format, rel_package_string ());
 #endif /* CS_MODE */
 
   cfg_free_hosts (hosts);
@@ -999,12 +998,6 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * client_credential)
     {
       error_code = er_errid ();
       goto error;
-    }
-
-  /* Reset the disk_level according to server.. */
-  if (rel_disk_compatible () != boot_Server_credential.disk_compatibility)
-    {
-      rel_set_disk_compatible (boot_Server_credential.disk_compatibility);
     }
 #endif /* CS_MODE */
 

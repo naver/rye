@@ -2790,8 +2790,6 @@ boot_register_client (BOOT_CLIENT_CREDENTIAL * client_credential,
 	      server_credential->page_size = (PGLENGTH) temp_int;
 	      ptr = or_unpack_int (ptr, &temp_int);
 	      server_credential->log_page_size = (PGLENGTH) temp_int;
-	      ptr = or_unpack_float (ptr,
-				     &server_credential->disk_compatibility);
 	      ptr = or_unpack_int (ptr, &server_credential->db_charset);
 	      ptr =
 		or_unpack_int (ptr, &server_credential->server_start_time);
@@ -6548,19 +6546,15 @@ bk_prepare_backup (UNUSED_ARG int num_threads, UNUSED_ARG int do_compress,
 	{
 	  ptr = or_unpack_int (area, &session->bkuphdr->iopageid);
 	  ptr = or_unpack_string (ptr, &str);
-	  strcpy (session->bkuphdr->magic, str);
+	  strcpy (session->bkuphdr->bk_magic, str);
 	  free_and_init (str);
 
-	  ptr = or_unpack_float (ptr, &session->bkuphdr->db_compatibility);
+	  ptr = or_unpack_version (ptr, &session->bkuphdr->bk_db_version);
 	  ptr = or_unpack_int (ptr, &session->bkuphdr->bk_hdr_version);
 	  ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
 	  ptr = or_unpack_int64 (ptr, &session->bkuphdr->db_creation);
 	  ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
 	  ptr = or_unpack_int64 (ptr, &session->bkuphdr->start_time);
-
-	  ptr = or_unpack_string (ptr, &str);
-	  strcpy (session->bkuphdr->db_release, str);
-	  free_and_init (str);
 
 	  ptr = or_unpack_string (ptr, &str);
 	  strcpy (session->bkuphdr->db_name, str);

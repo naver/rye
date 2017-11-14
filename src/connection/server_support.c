@@ -1472,19 +1472,8 @@ css_pack_server_name (const char *server_name, int *name_length)
 	  return NULL;
 	}
 
-      /*
-       * here we changed the 2nd string in packed_name from
-       * rel_release_string() to rel_major_release_string()
-       * solely for the purpose of matching the name of the rye driver.
-       * That is, the name of the rye driver has been changed to use
-       * MAJOR_RELEASE_STRING (see drivers/Makefile).  So, here we must also
-       * use rel_major_release_string(), so master can successfully find and
-       * fork rye drivers.
-       */
-
       sprintf (pid_string, "%d", getpid ());
       *name_length = strlen (server_name) + 1
-	+ strlen (rel_major_release_string ()) + 1
 	+ strlen (env_name) + 1 + strlen (pid_string) + 1;
 
       /* in order to prepend '#' */
@@ -1503,13 +1492,6 @@ css_pack_server_name (const char *server_name, int *name_length)
 
       *s++ = '#';
 
-      while (*t)
-	{
-	  *s++ = *t++;
-	}
-      *s++ = '\0';
-
-      t = rel_major_release_string ();
       while (*t)
 	{
 	  *s++ = *t++;
@@ -1633,7 +1615,7 @@ css_transit_ha_server_state (UNUSED_ARG THREAD_ENTRY * thread_p,
  */
 int
 css_check_ha_server_state_for_client (UNUSED_ARG THREAD_ENTRY * thread_p,
-				      int whence)
+				      UNUSED_ARG int whence)
 {
 #define FROM_OTHERS             0
 #define FROM_REGISTER_CLIENT    1

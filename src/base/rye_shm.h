@@ -92,16 +92,18 @@ struct _rye_shd_mgmt_table
 typedef struct _rye_shm_header RYE_SHM_HEADER;
 struct _rye_shm_header
 {
-  char magic_str[RYE_SHM_MAGIC_STR_SIZE];
+  char magic_string[RYE_SHM_MAGIC_STR_SIZE];
   int magic_number;
   RYE_SHM_TYPE shm_type;
   RYE_SHM_STATUS status;
   int shm_key;
+  RYE_VERSION shm_version;
 };
 
 typedef struct _rye_shm_ha_node RYE_SHM_HA_NODE;
 struct _rye_shm_ha_node
 {
+  RYE_VERSION ha_node_version;
   bool is_localhost;
   char host_name[MAXHOSTNAMELEN];
   HA_STATE node_state;

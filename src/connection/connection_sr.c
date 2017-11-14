@@ -182,7 +182,6 @@ css_initialize_conn (CSS_CONN_ENTRY * conn, SOCKET fd)
   conn->stop_talk = false;
   conn->ignore_repl_delay = false;
   conn->stop_phase = THREAD_STOP_WORKERS_EXCEPT_LOGWR;
-  conn->version_string = NULL;
   conn->session_id = DB_EMPTY_SESSION;
   conn->server_shard_nodeid = 0;
 #if defined(SERVER_MODE)
@@ -216,11 +215,6 @@ css_shutdown_conn (CSS_CONN_ENTRY * conn)
       conn->status = CONN_CLOSED;
       conn->stop_talk = false;
       conn->stop_phase = THREAD_STOP_WORKERS_EXCEPT_LOGWR;
-
-      if (conn->version_string)
-	{
-	  free_and_init (conn->version_string);
-	}
     }
 
 #if defined(SERVER_MODE)

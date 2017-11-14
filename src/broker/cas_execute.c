@@ -1259,7 +1259,7 @@ ux_get_db_version (T_NET_BUF * net_buf)
 {
   const char *p;
 
-  p = rel_build_number ();
+  p = rel_version_string ();
 
   if (p == NULL)
     {

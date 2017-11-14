@@ -2335,9 +2335,7 @@ xboot_initialize_server (THREAD_ENTRY * thread_p,
   char dbtxt_label[PATH_MAX];
   char fixed_pathbuf[PATH_MAX];
   char original_namebuf[PATH_MAX];
-#if defined (NDEBUG)
   char format[BOOT_FORMAT_MAX_LENGTH];
-#endif
   int error_code;
   void (*old_ctrl_c_handler) (int sig_no) = SIG_ERR;
   bool is_exist_volume;
@@ -2629,16 +2627,11 @@ xboot_initialize_server (THREAD_ENTRY * thread_p,
   rootclass_hfid->hpgid = boot_Db_parm->rootclass_hfid.hpgid;
 
   /* print_version string */
-#if defined (NDEBUG)
   strncpy (format, msgcat_message (MSGCAT_CATALOG_RYE,
 				   MSGCAT_SET_GENERAL,
 				   MSGCAT_GENERAL_DATABASE_INIT),
 	   BOOT_FORMAT_MAX_LENGTH);
-  fprintf (stdout, format, rel_name (), rel_build_number ());
-#else /* NDEBUG */
-  fprintf (stdout, "\n%s (%s) (%d debug build)\n\n", rel_name (),
-	   rel_build_number (), rel_bit_platform ());
-#endif /* !NDEBUG */
+  fprintf (stdout, format, rel_package_string ());
 
   if (old_ctrl_c_handler != SIG_ERR)
     {
@@ -2709,9 +2702,6 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
   char logpath[PATH_MAX];
   const char *log_prefix;
   bool old_object;
-#if defined (NDEBUG)
-  char format[BOOT_FORMAT_MAX_LENGTH];
-#endif
   int tran_index = NULL_TRAN_INDEX;
   RECDES recdes = RECDES_INITIALIZER;
 #if defined(SERVER_MODE)
@@ -3175,16 +3165,12 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
 
   if (print_restart)
     {
-#if defined (NDEBUG)
+      char format[BOOT_FORMAT_MAX_LENGTH];
       strncpy (format, msgcat_message (MSGCAT_CATALOG_RYE,
 				       MSGCAT_SET_GENERAL,
 				       MSGCAT_GENERAL_DATABASE_INIT),
 	       BOOT_FORMAT_MAX_LENGTH);
-      fprintf (stdout, format, rel_name ());
-#else /* NDEBUG */
-      fprintf (stdout, "\n%s (%s) (%d debug build)\n\n", rel_name (),
-	       rel_build_number (), rel_bit_platform ());
-#endif /* !NDEBUG */
+      fprintf (stdout, format, rel_package_string ());
     }
 
   /* server status could be changed by css_change_ha_server_state */
@@ -3460,7 +3446,6 @@ xboot_register_client (THREAD_ENTRY * thread_p,
 		 &boot_Db_parm->rootclass_hfid);
       server_credential->page_size = IO_PAGESIZE;
       server_credential->log_page_size = LOG_PAGESIZE;
-      server_credential->disk_compatibility = rel_disk_compatible ();
       memcpy (server_credential->server_session_key, boot_Server_session_key,
 	      SERVER_SESSION_KEY_SIZE);
       server_credential->db_charset = lang_charset ();

@@ -396,8 +396,6 @@ struct css_conn_entry
   bool con_close_handler_activated;
   int epoll_info_index;
 
-  char *version_string;		/* client version string */
-
   struct session_state *session_p;	/* session object for current request */
   int epoll_check_time;
   bool epoll_check_err;

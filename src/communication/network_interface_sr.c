@@ -320,9 +320,9 @@ server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
   const char *client_host;
   int client_capabilities, client_bit_platform;
   int client_type;
-  int strlen1, strlen2;
+  int strlen1;
   RYE_VERSION client_version;
-  RYE_VERSION server_version = RYE_CUR_VERSION;
+  RYE_VERSION server_version = rel_cur_version ();
 
   if (reqlen > 0)
     {
@@ -392,11 +392,11 @@ server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
   thread_p->conn_entry->client_type = client_type;
 
   reply_size = OR_VERSION_SIZE + (OR_INT_SIZE * 2) +
-    or_packed_string_length (boot_Host_name, &strlen2);
+    or_packed_string_length (boot_Host_name, &strlen1);
   ptr = or_pack_version (reply, &server_version);
   ptr = or_pack_int (ptr, server_capabilities ());
   ptr = or_pack_int (ptr, rel_bit_platform ());
-  ptr = or_pack_string_with_length (ptr, boot_Host_name, strlen2);
+  ptr = or_pack_string_with_length (ptr, boot_Host_name, strlen1);
   css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply, reply_size);
 
   return CSS_NO_ERRORS;
@@ -2331,8 +2331,7 @@ sboot_register_client (THREAD_ENTRY * thread_p, unsigned int rid,
     + OR_OID_SIZE		/* root_class_oid */
     + OR_HFID_SIZE		/* root_class_hfid */
     + OR_INT_SIZE		/* page_size */
-    + OR_INT_SIZE		/* log_page_size */
-    + OR_FLOAT_SIZE;		/* disk_compatibility */
+    + OR_INT_SIZE;		/* log_page_size */
 
   area_size += OR_INT_SIZE;	/* db_charset */
   area_size += OR_INT_SIZE;	/* server start time */
@@ -2357,7 +2356,6 @@ sboot_register_client (THREAD_ENTRY * thread_p, unsigned int rid,
   ptr = or_pack_hfid (ptr, &server_credential.root_class_hfid);
   ptr = or_pack_int (ptr, (int) server_credential.page_size);
   ptr = or_pack_int (ptr, (int) server_credential.log_page_size);
-  ptr = or_pack_float (ptr, server_credential.disk_compatibility);
   ptr = or_pack_int (ptr, server_credential.db_charset);
   ptr = or_pack_int (ptr, server_credential.server_start_time);
   ptr = or_pack_string_with_length (ptr, server_credential.db_lang, strlen3);
@@ -6138,7 +6136,7 @@ sbk_prepare_backup (THREAD_ENTRY * thread_p, unsigned int rid,
 {
   int num_threads, do_compress, sleep_msecs, make_slave;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
-  int area_size, strlen1, strlen2, strlen3;
+  int area_size, strlen1, strlen3;
   char *reply = NULL, *area = NULL, *ptr = NULL;
   int error;
   BK_BACKUP_SESSION *session;
@@ -6171,12 +6169,12 @@ sbk_prepare_backup (THREAD_ENTRY * thread_p, unsigned int rid,
     }
 
   area_size = OR_INT_SIZE	/* iopageid */
-    + or_packed_string_length (session->bkuphdr->magic, &strlen1)	/* magic */
-    + OR_FLOAT_SIZE		/* db_compatibility */
+    + or_packed_string_length (session->bkuphdr->bk_magic, &strlen1)	/* magic */
+    + OR_VERSION_SIZE		/* db_version */
     + OR_INT_SIZE		/* bk_hdr_version */
     + OR_BIGINT_ALIGNED_SIZE	/* db_creation */
     + OR_BIGINT_ALIGNED_SIZE	/* start_time */
-    + or_packed_string_length (session->bkuphdr->db_release, &strlen2) + or_packed_string_length (session->bkuphdr->db_name, &strlen3) + OR_INT_SIZE	/* db_iopagesize */
+    + or_packed_string_length (session->bkuphdr->db_name, &strlen3) + OR_INT_SIZE	/* db_iopagesize */
     + OR_LOG_LSA_ALIGNED_SIZE	/* chkpt_lsa */
     + OR_INT_SIZE		/* bkpagesize */
     + OR_INT_SIZE		/* first_arv_needed */
@@ -6192,15 +6190,13 @@ sbk_prepare_backup (THREAD_ENTRY * thread_p, unsigned int rid,
     }
 
   ptr = or_pack_int (area, session->bkuphdr->iopageid);
-  ptr = or_pack_string_with_length (ptr, session->bkuphdr->magic, strlen1);
-  ptr = or_pack_float (ptr, session->bkuphdr->db_compatibility);
+  ptr = or_pack_string_with_length (ptr, session->bkuphdr->bk_magic, strlen1);
+  ptr = or_pack_version (ptr, &session->bkuphdr->bk_db_version);
   ptr = or_pack_int (ptr, session->bkuphdr->bk_hdr_version);
   ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
   ptr = or_pack_int64 (ptr, session->bkuphdr->db_creation);
   ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
   ptr = or_pack_int64 (ptr, session->bkuphdr->start_time);
-  ptr = or_pack_string_with_length (ptr,
-				    session->bkuphdr->db_release, strlen2);
   ptr = or_pack_string_with_length (ptr, session->bkuphdr->db_name, strlen3);
   ptr = or_pack_int (ptr, session->bkuphdr->db_iopagesize);
   ptr = or_pack_log_lsa (ptr, &session->bkuphdr->chkpt_lsa);

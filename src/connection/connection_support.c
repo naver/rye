@@ -981,7 +981,7 @@ css_send_magic (CSS_CONN_ENTRY * conn)
   int timeout;
   CSS_NET_PACKET *recv_packet = NULL;
   RYE_VERSION *peer_version = &conn->peer_version;
-  RYE_VERSION my_version = RYE_CUR_VERSION;
+  RYE_VERSION my_version = rel_cur_version ();
 
   OR_ALIGNED_BUF (OR_VERSION_SIZE) a_send_buf;
   char *send_ptr = OR_ALIGNED_BUF_START (a_send_buf);
@@ -1064,7 +1064,7 @@ css_check_magic (CSS_CONN_ENTRY * conn)
     }
   else
     {
-      RYE_VERSION my_version = RYE_CUR_VERSION;
+      RYE_VERSION my_version = rel_cur_version ();
 
       OR_ALIGNED_BUF (OR_INT_SIZE + OR_VERSION_SIZE) a_send_buf;
       char *send_ptr = OR_ALIGNED_BUF_START (a_send_buf);
