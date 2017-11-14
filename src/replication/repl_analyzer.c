@@ -1778,7 +1778,7 @@ analyzer_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -1794,7 +1794,7 @@ analyzer_main (void *arg)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -2161,13 +2161,13 @@ analyzer_main (void *arg)
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
-      rp_set_agent_flag (REPL_AGENT_NEED_RESTART);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
 
       /* restart analyzer */
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_INIT);
     }
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
   cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 

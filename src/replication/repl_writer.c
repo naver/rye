@@ -57,6 +57,8 @@
 #include "repl_catalog.h"
 #include "repl_analyzer.h"
 
+#include "fault_injection.h"
+
 
 
 
@@ -1066,6 +1068,8 @@ cirpwr_writev_append_pages (LOG_PAGE ** to_flush, DKNPAGES npages)
 		cirpwr_Gl.bg_archive_info.current_page_id, fpageid,
 		phy_pageid, npages);
 
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 10000, 0);
+
   /* 2. active write */
   phy_pageid = cirpwr_to_physical_pageid (fpageid);
   if (fileio_writev (NULL, cirpwr_Gl.append_vdes, (void **) to_flush,
@@ -1526,6 +1530,8 @@ cirpwr_archive_active_log (void)
 		arvhdr->arv_num, arvhdr->fpageid,
 		arvhdr->fpageid + arvhdr->npages - 1);
 
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 2, 0);
+
   return NO_ERROR;
 
 exit_on_error:
@@ -1623,6 +1629,8 @@ cirpwr_write_log_pages (void)
     {
       GOTO_EXIT_ON_ERROR;
     }
+
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 1000, 0);
 
   (void) cirpwr_flush_header_page ();
 
@@ -1770,7 +1778,7 @@ log_copier_main (void *arg)
   error = er_set_msg_info (th_er_msg);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
       cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg);
@@ -1890,7 +1898,7 @@ log_copier_main (void *arg)
 	      err_msg);
     }
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
   cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
@@ -1933,7 +1941,7 @@ log_writer_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
       cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg_info);
@@ -1976,7 +1984,7 @@ log_writer_main (void *arg)
 	}
     }
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
   cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),

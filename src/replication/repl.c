@@ -54,6 +54,8 @@
 #include "repl_applier.h"
 #include "repl_writer.h"
 
+#include "fault_injection.h"
+
 
 CIRP_REPL_INFO *Repl_Info = NULL;
 
@@ -337,7 +339,7 @@ main (int argc, char *argv[])
   Repl_Info->max_mem_size = Repl_Info->start_vsize + ONE_G;
 
   pthread_join (analyzer_entry.tid, NULL);
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
   error = rp_end_all_applier ();
   if (error != NO_ERROR)
@@ -370,7 +372,7 @@ main (int argc, char *argv[])
 exit_on_error:
   assert (error != NO_ERROR);
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
   rp_disconnect_agents ();
 
@@ -515,7 +517,7 @@ rp_check_appliers_status (CIRP_AGENT_STATUS status)
 	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
 	  return error;
 	}
@@ -548,7 +550,7 @@ rp_start_all_applier (void)
 	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
 	  return error;
 	}
@@ -988,7 +990,7 @@ health_check_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
       free_and_init (th_er_msg_info);
       return NULL;
@@ -1006,7 +1008,13 @@ health_check_main (void *arg)
 
       if (cirp_check_mem_size () != NO_ERROR)
 	{
-	  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+	}
+
+      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL,
+			   1000, 0) != NO_ERROR)
+	{
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
 	}
     }
 
