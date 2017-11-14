@@ -3421,12 +3421,6 @@ xboot_register_client (THREAD_ENTRY * thread_p,
     {
 #if defined (SERVER_MODE)
       thread_p->conn_entry->tran_index = tran_index;
-#if 1				/* TODO - trace bug */
-      if (css_find_dupliated_conn (thread_p->conn_entry->idx) >= 0)
-	{
-	  abort ();
-	}
-#endif
 #endif /* SERVER_MODE */
       if (logtb_start_transaction_if_needed (thread_p) == NULL_TRANID)
 	{

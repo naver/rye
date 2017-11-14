@@ -296,7 +296,7 @@ rp_get_source_applied_time (RQueue * q_applied_time, LOG_LSA * required_lsa)
 	}
 
       node = Rye_queue_dequeue (q_applied_time);
-      assert (LSA_LE (&node->applied_lsa, required_lsa));
+      assert (node != NULL && LSA_LE (&node->applied_lsa, required_lsa));
       applied_time = node->applied_time;
 
       free_and_init (node);
