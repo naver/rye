@@ -357,9 +357,9 @@ exit_on_error:
  *
  */
 const char *
-page_type_to_string (PAGE_TYPE page_type)
+page_type_to_string (PAGE_TYPE ptype)
 {
-  switch (page_type)
+  switch (ptype)
     {
     case PAGE_UNKNOWN:		/* 0 */
       return "PAGE_UNKNOWN";
@@ -392,11 +392,9 @@ page_type_to_string (PAGE_TYPE page_type)
     case PAGE_BTREE:		/* 14 */
       return "PAGE_BTREE";
 
-    case PAGE_OTHER:		/* 15 */
-      return "PAGE_OTHER";
-    case PAGE_LOG:		/* 16 */
+    case PAGE_LOG:		/* 15 */
       return "PAGE_LOG";
-    case PAGE_DROPPED_FILES:	/* 17 */
+    case PAGE_DROPPED_FILES:	/* 16 */
       return "PAGE_DROPPED_FILES";
     default:
       break;

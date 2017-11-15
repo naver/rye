@@ -1850,8 +1850,7 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 
   /* Lock the volume header in exclusive mode and then fetch the page. */
 
-  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_VOLHEADER,
-				MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_VOLHEADER);
   if (addr.pgptr == NULL)
     {
       return NULL_VOLID;
@@ -2036,7 +2035,10 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 	      pgptr =
 		pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
 			   PGBUF_UNCONDITIONAL_LATCH,
-			   MNT_STATS_DATA_PAGE_FETCHES_OTHER);
+			   (vpid.pageid ==
+			    DISK_VOLHEADER_PAGE) ?
+			   MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER :
+			   MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN);
 	      if (pgptr != NULL)
 		{
 		  pgbuf_set_lsa_as_temporary (thread_p, pgptr);
@@ -2908,8 +2910,7 @@ disk_map_init (THREAD_ENTRY * thread_p, INT16 volid, INT32 at_fpageid,
   /* One page at a time */
   for (vpid.pageid = at_fpageid; vpid.pageid <= at_lpageid; vpid.pageid++)
     {
-      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_VOLBITMAP,
-				    MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP);
+      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_VOLBITMAP);
       if (addr.pgptr == NULL)
 	{
 	  return ER_FAILED;
@@ -3969,8 +3970,8 @@ disk_scramble_newpages (INT16 volid, INT32 first_pageid, INT32 npages,
 
   for (i = 0; i < npages; i++)
     {
-      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_OTHER,
-				    MNT_STATS_DATA_PAGE_FETCHES_OTHER);
+      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_UNKNOWN,
+				    MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN);
       if (addr.pgptr != NULL)
 	{
 	  memset (addr.pgptr, MEM_REGION_SCRAMBLE_MARK, DB_PAGESIZE);

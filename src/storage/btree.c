@@ -79,7 +79,8 @@ static PAGE_PTR btree_initialize_new_page_helper (THREAD_ENTRY * thread_p,
 						  const VPID * vpid,
 						  INT32 ignore_npages,
 						  const unsigned short
-						  alignment);
+						  alignment,
+						  const PAGE_TYPE ptype);
 static bool btree_initialize_new_root (THREAD_ENTRY * thread_p,
 				       const VFID * vfid,
 				       const FILE_TYPE file_type,
@@ -867,10 +868,12 @@ btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
 {
   PAGE_PTR page_ptr = NULL;
 
-  assert (ptype == PAGE_BTREE || ptype == PAGE_BTREE_ROOT);
+  assert (ptype == PAGE_BTREE_ROOT || ptype == PAGE_BTREE);
 
   page_ptr =
     pgbuf_fix (thread_p, vpid, OLD_PAGE, requestmode, condition,
+	       (ptype ==
+		PAGE_BTREE_ROOT) ? MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT :
 	       MNT_STATS_DATA_PAGE_FETCHES_BTREE);
 
   if (vfid != NULL && page_ptr != NULL)
@@ -903,8 +906,6 @@ btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
 	}
 #endif
     }
-
-  BTREE_STATS_ADD_WAIT_TIME (ptype);
 
   return page_ptr;
 }
@@ -958,9 +959,12 @@ btree_initialize_new_page_helper (THREAD_ENTRY * thread_p, const VFID * vfid,
 				  UNUSED_ARG const FILE_TYPE file_type,
 				  const VPID * vpid,
 				  UNUSED_ARG INT32 ignore_npages,
-				  const unsigned short alignment)
+				  const unsigned short alignment,
+				  const PAGE_TYPE ptype)
 {
   PAGE_PTR pgptr;
+
+  assert (ptype == PAGE_BTREE_ROOT || ptype == PAGE_BTREE);
 
   /*
    * fetch and initialize the new page.
@@ -969,8 +973,7 @@ btree_initialize_new_page_helper (THREAD_ENTRY * thread_p, const VFID * vfid,
    * during insertions and deletions.
    */
 
-  pgptr = pgbuf_fix_newpg (thread_p, vpid, PAGE_BTREE,
-			   MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+  pgptr = pgbuf_fix_newpg (thread_p, vpid, ptype);
   if (pgptr == NULL)
     {
       return NULL;
@@ -1001,7 +1004,8 @@ btree_initialize_new_root (THREAD_ENTRY * thread_p, const VFID * vfid,
 
   pgptr =
     btree_initialize_new_page_helper (thread_p, vfid, file_type, vpid,
-				      ignore_npages, alignment);
+				      ignore_npages, alignment,
+				      PAGE_BTREE_ROOT);
   if (pgptr == NULL)
     {
       return false;
@@ -1029,7 +1033,7 @@ btree_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 
   pgptr =
     btree_initialize_new_page_helper (thread_p, vfid, file_type, vpid,
-				      ignore_npages, alignment);
+				      ignore_npages, alignment, PAGE_BTREE);
   if (pgptr == NULL)
     {
       return false;

@@ -259,11 +259,8 @@ typedef enum
   PAGE_BTREE_ROOT,		/* 13 b+tree index root page               */
   PAGE_BTREE,			/* 14 b+tree index page                    */
 
-#if 1				/* TODO - */
-  PAGE_OTHER,			/* 15 misc (disk, recovery)                     */
-#endif
-  PAGE_LOG,			/* 16 NONE - log page (unused)             */
-  PAGE_DROPPED_FILES,		/* 17 Dropped files page.                  */
+  PAGE_LOG,			/* 15 NONE - log page (unused)             */
+  PAGE_DROPPED_FILES,		/* 16 Dropped files page.                  */
   PAGE_LAST = PAGE_DROPPED_FILES
 } PAGE_TYPE;
 
@@ -542,5 +539,5 @@ extern char *hfid_to_string (char *buf, int buf_size, HFID * hfid);
 extern char *btid_to_string (char *buf, int buf_size, BTID * btid);
 extern BTID string_to_btid (const char *buffer);
 
-extern const char *page_type_to_string (PAGE_TYPE page_type);
+extern const char *page_type_to_string (PAGE_TYPE ptype);
 #endif /* _STORAGE_COMMON_H_ */

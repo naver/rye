@@ -965,20 +965,15 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 PAGE_PTR
 pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 		       UNUSED_ARG const PAGE_TYPE ptype,
-		       UNUSED_ARG const MNT_SERVER_ITEM item,
 		       const char *caller_file, int caller_line)
 {
-  PAGE_PTR pgptr;
+  MNT_SERVER_ITEM item;
 
-  pgptr = pgbuf_fix_debug (thread_p, vpid, NEW_PAGE,
-			   PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			   item, caller_file, caller_line);
-  if (pgptr != NULL)
-    {
-      pgbuf_set_page_ptype (thread_p, pgptr, ptype);
-    }
+  item = mnt_page_ptype_to_server_item (ptype);
 
-  return pgptr;
+  return pgbuf_fix_debug (thread_p, vpid, NEW_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			  item, caller_file, caller_line);
 }
 
 PAGE_PTR
@@ -994,20 +989,15 @@ pgbuf_fix_oldpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 #else /* NDEBUG */
 PAGE_PTR
 pgbuf_fix_newpg_release (THREAD_ENTRY * thread_p, const VPID * vpid,
-			 UNUSED_ARG const PAGE_TYPE ptype,
-			 UNUSED_ARG const MNT_SERVER_ITEM item)
+			 UNUSED_ARG const PAGE_TYPE ptype)
 {
-  PAGE_PTR pgptr;
+  MNT_SERVER_ITEM item;
 
-  pgptr = pgbuf_fix_release (thread_p, vpid, NEW_PAGE,
-			     PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			     item);
-  if (pgptr != NULL)
-    {
-      pgbuf_set_page_ptype (thread_p, pgptr, ptype);
-    }
+  item = mnt_page_ptype_to_server_item (ptype);
 
-  return pgptr;
+  return pgbuf_fix_release (thread_p, vpid, NEW_PAGE,
+			    PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			    item);
 }
 
 PAGE_PTR
@@ -1045,6 +1035,9 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 {
   PGBUF_BUFFER_HASH *hash_anchor;
   PGBUF_BCB *bufptr;
+  PAGE_PTR pgptr;
+  PAGE_TYPE ptype;
+  FILEIO_PAGE_RESERVED *prv_p;
   int buf_lock_acquired;
   int wait_msecs;
 #if defined(SERVER_MODE)
@@ -1197,6 +1190,8 @@ try_again:
       bufptr->async_flush_request = false;
       LSA_SET_NULL (&bufptr->oldest_unflush_lsa);
 
+      prv_p = &(bufptr->iopage_buffer->iopage.prv);
+
       if (newpg != NEW_PAGE)
 	{
 	  UINT64 perf_start;
@@ -1225,11 +1220,26 @@ try_again:
 				       1, perf_start);
 
 	  if (pgbuf_is_temporary_volume (vpid->volid) == true
-	      && !LSA_IS_INIT_TEMP (&bufptr->iopage_buffer->iopage.prv.lsa))
+	      && !LSA_IS_INIT_TEMP (&(prv_p->lsa)))
 	    {
-	      LSA_SET_INIT_TEMP (&bufptr->iopage_buffer->iopage.prv.lsa);
+	      LSA_SET_INIT_TEMP (&(prv_p->lsa));
 	      pgbuf_set_dirty_buffer_ptr (thread_p, bufptr);
 	    }
+
+#if !defined (NDEBUG)
+	  /* perm volume */
+	  if (bufptr->vpid.volid > NULL_VOLID)
+	    {
+	      if (!log_is_in_crash_recovery ())
+		{
+		  if (!LSA_ISNULL (&(prv_p->lsa)))
+		    {
+		      assert (prv_p->pageid != NULL_PAGEID);
+		      assert (prv_p->volid != NULL_VOLID);
+		    }
+		}
+	    }
+#endif /* NDEBUG */
 
 	  mnt_stats_counter (thread_p, MNT_STATS_SORT_IO_PAGES, 1);
 	}
@@ -1244,11 +1254,18 @@ try_again:
 	  /* Don't need to read page from disk since it is a new page. */
 	  if (pgbuf_is_temporary_volume (vpid->volid) == true)
 	    {
-	      LSA_SET_INIT_TEMP (&bufptr->iopage_buffer->iopage.prv.lsa);
+	      LSA_SET_INIT_TEMP (&(prv_p->lsa));
 	    }
 	  else
 	    {
-	      LSA_SET_INIT_NONTEMP (&bufptr->iopage_buffer->iopage.prv.lsa);
+	      LSA_SET_INIT_NONTEMP (&(prv_p->lsa));
+	    }
+
+	  /* perm volume */
+	  if (bufptr->vpid.volid > NULL_VOLID)
+	    {
+	      /* Init Page identifier of NEW_PAGE */
+	      (void) fileio_initialize_res (thread_p, prv_p);
 	    }
 
 	  mnt_stats_counter (thread_p, MNT_STATS_SORT_DATA_PAGES, 1);
@@ -1319,10 +1336,24 @@ try_again:
       (void) pgbuf_unlock_page (hash_anchor, vpid, false);
     }
 
+  ptype = mnt_server_item_to_page_ptype (item);
+
+  CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
+
+  if (newpg == NEW_PAGE)
+    {
+      (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);
+    }
+  else
+    {
+      assert (ptype == PAGE_UNKNOWN
+	      || ptype == pgbuf_get_page_ptype (thread_p, pgptr));
+    }
+
   /* Record number of fetches in statistics */
   mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
-  return (PAGE_PTR) (&(bufptr->iopage_buffer->iopage.page[0]));
+  return pgptr;
 }
 
 /*
@@ -2613,7 +2644,7 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 
 	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
 				 PGBUF_UNCONDITIONAL_LATCH,
-				 MNT_STATS_DATA_PAGE_FETCHES_OTHER);
+				 MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN);
 	      if (pgptr == NULL
 		  || pgbuf_flush_with_wal (thread_p, pgptr) == NULL)
 		{
@@ -2881,9 +2912,7 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       pthread_mutex_unlock (&bufptr->BCB_mutex);
     }
 
-  pgptr =
-    pgbuf_fix_newpg (thread_p, vpid, PAGE_AREA,
-		     MNT_STATS_DATA_PAGE_FETCHES_AREA);
+  pgptr = pgbuf_fix_newpg (thread_p, vpid, PAGE_AREA);
   if (pgptr != NULL)
     {
       memcpy ((char *) pgptr + start_offset, area, length);
@@ -4479,7 +4508,12 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
 #if defined(SERVER_MODE)
   THREAD_ENTRY *cur_thrd_entry, *thrd_entry;
   int rv;
+#endif
+  PAGE_TYPE ptype;
+  PAGE_PTR pgptr;
+  int error = NO_ERROR;
 
+#if defined(SERVER_MODE)
   /* caller is holding bufptr->BCB_mutex */
 
   assert (bufptr->latch_mode != PGBUF_LATCH_VICTIM);
@@ -4569,18 +4603,21 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
        * When the request is waken up, the request is treated as a victim.
        */
 #if !defined(NDEBUG)
-      if (pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry,
-			     caller_file, caller_line) != NO_ERROR)
+      error = pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry,
+				 caller_file, caller_line);
 #else /* NDEBUG */
-      if (pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry) != NO_ERROR)
+      error = pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry);
 #endif /* NDEBUG */
-	{
-	  return ER_FAILED;
-	}
+
+      CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
+
+      ptype = pgbuf_get_page_ptype (thread_p, pgptr);
+
+      server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, ptype);
     }
 #endif /* SERVER_MODE */
 
-  return NO_ERROR;
+  return error;
 }
 
 #if defined(SERVER_MODE)
@@ -7304,7 +7341,7 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
       /* Check iff is the first time */
       if (prv_p->pageid == NULL_PAGEID && prv_p->volid == NULL_VOLID)
 	{
-	  fileio_initialize_res (thread_p, prv_p);
+	  (void) fileio_initialize_res (thread_p, prv_p);
 
 	  /* Set Page identifier */
 	  prv_p->pageid = bufptr->vpid.pageid;

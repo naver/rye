@@ -330,8 +330,7 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 
   for (i = 0; i < npages; i++)
     {
-      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpids[i], PAGE_OVERFLOW,
-				    MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW);
+      addr.pgptr = pgbuf_fix_newpg (thread_p, &vpids[i], PAGE_OVERFLOW);
       if (addr.pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -592,9 +591,18 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
   length = recdes->length;
   while (length > 0)
     {
-      addr.pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE,
-			      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW);
+      if (isnewpage == false)
+	{
+	  addr.pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE,
+				  PGBUF_LATCH_WRITE,
+				  PGBUF_UNCONDITIONAL_LATCH,
+				  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW);
+	}
+      else
+	{
+	  addr.pgptr = pgbuf_fix_newpg (thread_p, &next_vpid, PAGE_OVERFLOW);
+	}
+
       if (addr.pgptr == NULL)
 	{
 	  error = er_errid ();

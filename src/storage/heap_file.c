@@ -3773,9 +3773,7 @@ heap_vpid_init_new (THREAD_ENTRY * thread_p, const VFID * vfid,
    * page.
    */
 
-  addr.pgptr = pgbuf_fix_newpg (thread_p, new_vpid, PAGE_HEAP,
-				MNT_STATS_DATA_PAGE_FETCHES_HEAP);
-  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, new_vpid, PAGE_HEAP);
   if (addr.pgptr == NULL)
     {
       return false;		/* Initialization has failed */
@@ -4443,9 +4441,7 @@ heap_create_internal (THREAD_ENTRY * thread_p, HFID * hfid, int exp_npgs,
       GOTO_EXIT_ON_ERROR;
     }
 
-  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_HEAP_HEADER,
-				MNT_STATS_DATA_PAGE_FETCHES_HEAP);
-  HEAP_STATS_ADD_WAIT_TIME (PAGE_HEAP_HEADER);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_HEAP_HEADER);
 
   if (addr.pgptr == NULL)
     {
@@ -13218,12 +13214,11 @@ heap_rv_undoredo_pagehdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 void
 heap_rv_dump_statistics (FILE * fp, UNUSED_ARG int ignore_length, void *data)
 {
-  int ret = NO_ERROR;
-
   HEAP_HDR_STATS *heap_hdr;	/* Header of heap structure    */
 
   heap_hdr = (HEAP_HDR_STATS *) data;
-  ret = heap_dump_hdr (fp, heap_hdr);
+
+  (void) heap_dump_hdr (fp, heap_hdr);
 }
 
 /*
@@ -13821,8 +13816,6 @@ heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   page_ptr =
     pgbuf_fix (thread_p, vpid, OLD_PAGE, requestmode, condition, item);
-
-  HEAP_STATS_ADD_WAIT_TIME (ptype);
 
 #if !defined(NDEBUG)
   if (hfid != NULL && page_ptr != NULL)

@@ -50,9 +50,6 @@
 
 #define HEAP_MAX_ALIGN INT_ALIGNMENT	/* maximum alignment for heap record */
 
-#define HEAP_STATS_ADD_WAIT_TIME(page_type)    \
-                server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, page_type)
-
 /*
  * Heap scan structures
  */

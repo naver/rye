@@ -96,9 +96,6 @@ enum
 		btree_set_error(THREAD, KEY, OID, BTID, \
 		ER_ERROR_SEVERITY, ER_BTREE_UNIQUE_FAILED, __FILE__, __LINE__)
 
-#define BTREE_STATS_ADD_WAIT_TIME(page_type)    \
-                server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, page_type)
-
 /* BTID_INT structure from btree_load.h */
 typedef struct btid_int BTID_INT;
 struct btid_int

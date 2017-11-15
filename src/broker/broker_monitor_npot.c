@@ -347,7 +347,7 @@ init_server_monitor_item ()
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT], "datapage", "fetch_btree_root");	/* 13 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_BTREE], "datapage", "fetch_btree");	/* 14 */
 
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OTHER], "datapage", "fetch_other");	/* 15 *//* TODO - */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN], "datapage", "fetch_unknown");	/* 0 */
 #endif
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],

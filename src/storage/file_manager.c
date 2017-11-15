@@ -2938,9 +2938,7 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
   for (ftb_page_index = 1; ftb_page_index < num_ftb_pages; ftb_page_index++)
     {
       vpid_ptr = &table_vpids[ftb_page_index];
-      addr.pgptr =
-	pgbuf_fix_newpg (thread_p, vpid_ptr, PAGE_FILE_TAB,
-			 MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+      addr.pgptr = pgbuf_fix_newpg (thread_p, vpid_ptr, PAGE_FILE_TAB);
       if (addr.pgptr == NULL)
 	{
 	  goto exit_on_error;
@@ -2970,8 +2968,7 @@ file_create (THREAD_ENTRY * thread_p, VFID * vfid, INT32 exp_numpages,
       addr.pgptr = NULL;
     }
 
-  fhdr_pgptr = pgbuf_fix_newpg (thread_p, &table_vpids[0], PAGE_FILE_HEADER,
-				MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  fhdr_pgptr = pgbuf_fix_newpg (thread_p, &table_vpids[0], PAGE_FILE_HEADER);
   if (fhdr_pgptr == NULL)
     {
       goto exit_on_error;
@@ -5462,8 +5459,7 @@ file_expand_ftab (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr)
     }
 
   /* Set allocated page as last file table page */
-  addr.pgptr = pgbuf_fix_newpg (thread_p, &new_ftb_vpid, PAGE_FILE_TAB,
-				MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB);
+  addr.pgptr = pgbuf_fix_newpg (thread_p, &new_ftb_vpid, PAGE_FILE_TAB);
   if (addr.pgptr == NULL)
     {
       /*

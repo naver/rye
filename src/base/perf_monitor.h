@@ -33,6 +33,7 @@
 
 #include "memory_alloc.h"
 #include "thread.h"
+#include "storage_common.h"
 
 /* EXPORTED GLOBAL DEFINITIONS */
 #define MAX_DIAG_DATA_VALUE     0xfffffffffffffLL
@@ -116,7 +117,7 @@ typedef enum
   MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT,	/* 13 b+tree index root page                    */
   MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* 14 b+tree index page                    */
 
-  MNT_STATS_DATA_PAGE_FETCHES_OTHER,	/* 15 misc (disk, recovery)                     *//* TODO - */
+  MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN,	/* 0 unknown                     */
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,
@@ -247,7 +248,7 @@ typedef enum
       || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG       \
       || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT \
       || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_OTHER) ? MNT_STATS_DATA_PAGE_FETCHES : m)
+      || m == MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 
 /*
  * Server execution statistic structure
@@ -313,5 +314,8 @@ extern int mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
 			   MNT_SERVER_EXEC_STATS * old_stats);
 extern bool mnt_stats_is_cumulative (MNT_SERVER_ITEM item);
 extern bool mnt_stats_is_collecting_time (MNT_SERVER_ITEM item);
+
+extern PAGE_TYPE mnt_server_item_to_page_ptype (MNT_SERVER_ITEM item);
+extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item (PAGE_TYPE ptype);
 
 #endif /* _PERF_MONITOR_H_ */

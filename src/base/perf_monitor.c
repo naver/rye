@@ -102,7 +102,7 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_data_page_fetches_btree_root", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 13 */
   {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 14 */
 
-  {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 15 *//* TODO - */
+  {"Num_data_page_fetches_unknown", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 0 */
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */
@@ -791,4 +791,128 @@ mnt_stats_is_collecting_time (MNT_SERVER_ITEM item)
       assert (0);
       return false;
     }
+}
+
+PAGE_TYPE
+mnt_server_item_to_page_ptype (MNT_SERVER_ITEM item)
+{
+  PAGE_TYPE ptype;
+
+  switch (item)
+    {
+    case MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER:	/* 1 file header page             */
+      ptype = PAGE_FILE_HEADER;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB:	/* 2 file allocset table page             */
+      ptype = PAGE_FILE_TAB;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER:	/* 3 heap header page                            */
+      ptype = PAGE_HEAP_HEADER;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_HEAP:	/* 4 heap page                            */
+      ptype = PAGE_HEAP;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER:	/* 5 volume header page                   */
+      ptype = PAGE_VOLHEADER;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP:	/* 6 volume bitmap page                   */
+      ptype = PAGE_VOLBITMAP;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_XASL:	/* 7 xasl stream page                     */
+      ptype = PAGE_XASL;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_QRESULT:	/* 8 query result page                    */
+      ptype = PAGE_QRESULT;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_EHASH:	/* 9 ehash bucket/dir page                */
+      ptype = PAGE_EHASH;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW:	/* 10 overflow page (with ovf_keyval)      */
+      ptype = PAGE_OVERFLOW;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_AREA:	/* 11 area page                            */
+      ptype = PAGE_AREA;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_CATALOG:	/* 12 catalog page                         */
+      ptype = PAGE_CATALOG;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT:	/* 13 b+tree index root page                    */
+      ptype = PAGE_BTREE_ROOT;
+      break;
+    case MNT_STATS_DATA_PAGE_FETCHES_BTREE:	/* 14 b+tree index page                    */
+      ptype = PAGE_BTREE;
+      break;
+
+    case MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN:	/* 0 unknown                     */
+    default:
+      ptype = PAGE_UNKNOWN;
+      break;
+    }
+
+  return ptype;
+}
+
+MNT_SERVER_ITEM
+mnt_page_ptype_to_server_item (PAGE_TYPE ptype)
+{
+  MNT_SERVER_ITEM item;
+
+  assert (ptype < PAGE_LAST);
+
+  switch (ptype)
+    {
+    case PAGE_FILE_HEADER:	/* 1 file header page                     */
+      item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
+      break;
+    case PAGE_FILE_TAB:	/* 2 file allocset table page             */
+      item = MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB;
+      break;
+    case PAGE_HEAP_HEADER:	/* 3 heap header page               */
+      item = MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
+      break;
+    case PAGE_HEAP:		/* 4 heap page                            */
+      item = MNT_STATS_DATA_PAGE_FETCHES_HEAP;
+      break;
+    case PAGE_VOLHEADER:	/* 5 volume header page                   */
+      item = MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER;
+      break;
+    case PAGE_VOLBITMAP:	/* 6 volume bitmap page                   */
+      item = MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP;
+      break;
+    case PAGE_XASL:		/* 7 xasl stream page                     */
+      item = MNT_STATS_DATA_PAGE_FETCHES_XASL;
+      break;
+    case PAGE_QRESULT:		/* 8 query result page                    */
+      item = MNT_STATS_DATA_PAGE_FETCHES_QRESULT;
+      break;
+    case PAGE_EHASH:		/* 9 ehash bucket/dir page                */
+      item = MNT_STATS_DATA_PAGE_FETCHES_EHASH;
+      break;
+    case PAGE_OVERFLOW:	/* 10 overflow page                        */
+      item = MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW;
+      break;
+    case PAGE_AREA:		/* 11 area page                            */
+      item = MNT_STATS_DATA_PAGE_FETCHES_AREA;
+      break;
+    case PAGE_CATALOG:		/* 12 catalog page                         */
+      item = MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
+      break;
+    case PAGE_BTREE_ROOT:	/* 13 b+tree index root page               */
+      item = MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT;
+      break;
+    case PAGE_BTREE:		/* 14 b+tree index page                    */
+      item = MNT_STATS_DATA_PAGE_FETCHES_BTREE;
+      break;
+
+    case PAGE_UNKNOWN:		/* 0 used for initialized page            */
+#if 1				/* TODO - */
+    case PAGE_LOG:		/* 15 NONE - log page (unused)             */
+    case PAGE_DROPPED_FILES:
+#endif
+    default:
+      item = MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
+      break;
+    }
+
+  return item;
 }

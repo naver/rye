@@ -658,7 +658,6 @@ catalog_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
 			     UNUSED_ARG DKNPAGES ignore_npages,
 			     void *is_overflow_page)
 {
-  MNT_SERVER_ITEM item;
   PAGE_PTR page_p;
   CATALOG_PAGE_HEADER page_header;
   PGSLOTID slot_id;
@@ -669,11 +668,9 @@ catalog_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
   };
   char data[CATALOG_PAGE_HEADER_SIZE + MAX_ALIGNMENT], *aligned_data;
 
-  item = MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
-
   aligned_data = PTR_ALIGN (data, MAX_ALIGNMENT);
 
-  page_p = pgbuf_fix_newpg (thread_p, vpid_p, PAGE_CATALOG, item);
+  page_p = pgbuf_fix_newpg (thread_p, vpid_p, PAGE_CATALOG);
   if (page_p == NULL)
     {
       return false;
