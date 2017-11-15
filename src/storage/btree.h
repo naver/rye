@@ -260,7 +260,7 @@ extern int btree_update (THREAD_ENTRY * thread_p,
 			 DB_IDXKEY * old_key, DB_IDXKEY * new_key);
 extern int btree_find_min_or_max_key (THREAD_ENTRY * thread_p,
 				      OID * class_oid, BTID * btid,
-				      const VPID * root_vpid,
+				      const VPID * top_vpid,
 				      DB_IDXKEY * idxkey, int flag_minkey);
 
 extern bool btree_key_is_null (const DB_IDXKEY * key);
@@ -343,7 +343,7 @@ extern int btree_write_record (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			       int node_type, RECDES * rec);
 
 extern int btree_find_lower_bound_leaf (THREAD_ENTRY * thread_p,
-					const VPID * root_vpid,
+					const VPID * top_vpid,
 					BTREE_SCAN * BTS,
 					BTREE_STATS * stat_info);
 extern int btree_find_next_record (THREAD_ENTRY * thread_p, BTREE_SCAN * bts,

@@ -135,11 +135,11 @@ static PAGE_PTR btree_locate_key (THREAD_ENTRY * thread_p,
 				  bool * found);
 static PAGE_PTR btree_find_first_leaf (THREAD_ENTRY * thread_p,
 				       const BTID_INT * btid,
-				       const VPID * root_vpid, VPID * pg_vpid,
+				       const VPID * top_vpid, VPID * pg_vpid,
 				       BTREE_STATS * stat_info);
 static PAGE_PTR btree_find_last_leaf (THREAD_ENTRY * thread_p,
 				      const BTID_INT * btid,
-				      const VPID * root_vpid, VPID * pg_vpid);
+				      const VPID * top_vpid, VPID * pg_vpid);
 static int btree_initialize_bts (THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 				 KEY_VAL_RANGE * key_val_range,
 				 FILTER_INFO * filter);
@@ -4567,7 +4567,7 @@ error:
 /*
  * btree_find_lower_bound_leaf () -
  *   return: NO_ERROR
- *   root_vpid(in):
+ *   top_vpid(in):
  *   BTS(in):
  *   stat_info(in):
  *
@@ -4575,7 +4575,7 @@ error:
  */
 int
 btree_find_lower_bound_leaf (THREAD_ENTRY * thread_p,
-			     const VPID * root_vpid, BTREE_SCAN * BTS,
+			     const VPID * top_vpid, BTREE_SCAN * BTS,
 			     BTREE_STATS * stat_info)
 {
   int key_cnt;
@@ -4587,13 +4587,13 @@ btree_find_lower_bound_leaf (THREAD_ENTRY * thread_p,
   if (BTS->use_desc_index)
     {
       BTS->C_page =
-	btree_find_last_leaf (thread_p, &BTS->btid_int, root_vpid,
+	btree_find_last_leaf (thread_p, &BTS->btid_int, top_vpid,
 			      &BTS->C_vpid);
     }
   else
     {
       BTS->C_page =
-	btree_find_first_leaf (thread_p, &BTS->btid_int, root_vpid,
+	btree_find_first_leaf (thread_p, &BTS->btid_int, top_vpid,
 			       &BTS->C_vpid, stat_info);
     }
 
@@ -4658,7 +4658,7 @@ exit_on_error:
  * btree_find_first_leaf () -
  *   return: page pointer
  *   btid(in):
- *   root_vpid(in):
+ *   top_vpid(in):
  *   pg_vpid(in):
  *   stat_info(in):
  *
@@ -4666,7 +4666,7 @@ exit_on_error:
  */
 static PAGE_PTR
 btree_find_first_leaf (THREAD_ENTRY * thread_p, const BTID_INT * btid,
-		       const VPID * root_vpid, VPID * pg_vpid,
+		       const VPID * top_vpid, VPID * pg_vpid,
 		       BTREE_STATS * stat_info)
 {
   PAGE_PTR P_page = NULL, C_page = NULL;
@@ -4679,12 +4679,15 @@ btree_find_first_leaf (THREAD_ENTRY * thread_p, const BTID_INT * btid,
 
   VPID_SET_NULL (pg_vpid);
 
-  /* read the root page */
-  P_vpid = *root_vpid;
+  /* read the top page */
+  P_vpid = *top_vpid;
   P_page =
     btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid,
 		     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-		     PAGE_BTREE_ROOT);
+		     (P_vpid.volid == btid->sys_btid->vfid.volid
+		      && P_vpid.pageid ==
+		      btid->sys_btid->
+		      root_pageid) ? PAGE_BTREE_ROOT : PAGE_BTREE);
   if (P_page == NULL)
     {
       goto error;
@@ -4892,14 +4895,14 @@ error:
  * btree_find_last_leaf () -
  *   return: page pointer
  *   btid(in):
- *   root_vpid(in):
+ *   top_vpid(in):
  *   pg_vpid(in):
  *
  * Note: Find the page identifier for the last leaf page of the B+tree index.
  */
 static PAGE_PTR
 btree_find_last_leaf (THREAD_ENTRY * thread_p, const BTID_INT * btid,
-		      const VPID * root_vpid, VPID * pg_vpid)
+		      const VPID * top_vpid, VPID * pg_vpid)
 {
   PAGE_PTR P = NULL, Q = NULL;
   VPID P_vpid, Q_vpid;
@@ -4911,12 +4914,15 @@ btree_find_last_leaf (THREAD_ENTRY * thread_p, const BTID_INT * btid,
 
   VPID_SET_NULL (pg_vpid);
 
-  /* read the root page */
-  P_vpid = *root_vpid;
+  /* read the top page */
+  P_vpid = *top_vpid;
   P =
     btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid,
 		     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-		     PAGE_BTREE_ROOT);
+		     (P_vpid.volid == btid->sys_btid->vfid.volid
+		      && P_vpid.pageid ==
+		      btid->sys_btid->
+		      root_pageid) ? PAGE_BTREE_ROOT : PAGE_BTREE);
   if (P == NULL)
     {
       goto error;
@@ -6235,13 +6241,13 @@ btree_dump_curr_key (THREAD_ENTRY * thread_p, INDX_SCAN_ID * iscan_id)
  *   return: NO_ERROR
  *   class_oid(in):
  *   btid(in):
- *   root_vpid(in):
+ *   top_vpid(in):
  *   idxkey(out):
  *   find_min_key(in):
  */
 int
 btree_find_min_or_max_key (THREAD_ENTRY * thread_p, OID * class_oid,
-			   BTID * btid, const VPID * root_vpid,
+			   BTID * btid, const VPID * top_vpid,
 			   DB_IDXKEY * idxkey, int find_min_key)
 {
   bool clear_key = false;
@@ -6255,7 +6261,7 @@ btree_find_min_or_max_key (THREAD_ENTRY * thread_p, OID * class_oid,
 
   assert (class_oid != NULL);
   assert (btid != NULL);
-  assert (root_vpid != NULL);
+  assert (top_vpid != NULL);
 
   if (idxkey == NULL)
     {
@@ -6328,7 +6334,7 @@ btree_find_min_or_max_key (THREAD_ENTRY * thread_p, OID * class_oid,
       BTS->use_desc_index = 1;
     }
 
-  ret = btree_find_lower_bound_leaf (thread_p, root_vpid, BTS, NULL);
+  ret = btree_find_lower_bound_leaf (thread_p, top_vpid, BTS, NULL);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;

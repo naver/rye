@@ -497,6 +497,14 @@ rv_init_rvfuns (void)
   rv_fun->dump_undofun = NULL;
   rv_fun->dump_redofun = NULL;
 
+  rv_fun = &RV_fun[RVEH_INIT_NEW_DIR_PAGE];
+  rv_fun->recv_index = RVEH_INIT_NEW_DIR_PAGE;
+  rv_fun->recv_string = "RVEH_INIT_NEW_DIR_PAGE";
+  rv_fun->undofun = NULL;
+  rv_fun->redofun = ehash_rv_init_dir_new_page_redo;
+  rv_fun->dump_undofun = NULL;
+  rv_fun->dump_redofun = NULL;
+
   rv_fun = &RV_fun[RVEH_INIT_BUCKET];
   rv_fun->recv_index = RVEH_INIT_BUCKET;
   rv_fun->recv_string = "RVEH_INIT_BUCKET";

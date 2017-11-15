@@ -1346,8 +1346,18 @@ try_again:
     }
   else
     {
+      PAGE_TYPE pself;
+
+      pself = pgbuf_get_page_ptype (thread_p, pgptr);
+
       assert (ptype == PAGE_UNKNOWN
-	      || ptype == pgbuf_get_page_ptype (thread_p, pgptr));
+	      || ptype == pself
+	      || ((ptype == PAGE_FILE_HEADER || ptype == PAGE_FILE_TAB)
+		  && (pself == PAGE_FILE_HEADER || pself == PAGE_FILE_TAB))
+	      || ((ptype == PAGE_HEAP_HEADER || ptype == PAGE_HEAP)
+		  && (pself == PAGE_HEAP_HEADER || pself == PAGE_HEAP))
+	      /* || ((ptype == PAGE_BTREE_ROOT || ptype == PAGE_BTREE)
+	         && (pself == PAGE_BTREE_ROOT || pself == PAGE_BTREE)) */ );
     }
 
   /* Record number of fetches in statistics */
@@ -7522,21 +7532,28 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 
       prv_p = &(bufptr->iopage_buffer->iopage.prv);
 
-      /* Check Page identifier */
-      assert (bufptr->vpid.pageid == prv_p->pageid);
-      assert (bufptr->vpid.volid == prv_p->volid);
-
 #if 1				/* TODO - do not delete me */
       assert (prv_p->pflag_reserve_1 == '\0');
       assert (prv_p->p_reserve_2 == 0);
       assert (prv_p->p_reserve_3 == 0);
 #endif
 
-      return (bufptr->vpid.pageid == prv_p->pageid
-	      && bufptr->vpid.volid == prv_p->volid);
+      /* Check Page identifier */
+      if (!log_is_in_crash_recovery ())
+	{
+	  if (!LSA_ISNULL (&(prv_p->lsa)))
+	    {
+	      assert (prv_p->pageid != NULL_PAGEID);
+	      assert (prv_p->volid != NULL_VOLID);
+
+	      assert (bufptr->vpid.pageid == prv_p->pageid);
+	      assert (bufptr->vpid.volid == prv_p->volid);
+
+	      return (bufptr->vpid.pageid == prv_p->pageid
+		      && bufptr->vpid.volid == prv_p->volid);
+	    }
+	}
     }
-  else
-    {
-      return true;		/* nop */
-    }
+
+  return true;			/* nop */
 }

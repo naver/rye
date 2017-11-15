@@ -188,7 +188,7 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 
   vfid_fhdr_pgptr = pgbuf_fix (thread_p, &fhdr_vpid, OLD_PAGE,
 			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW);
+			       MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   if (vfid_fhdr_pgptr == NULL)
     {
       return NULL;
