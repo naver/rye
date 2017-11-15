@@ -31,7 +31,7 @@
 
 #include <unistd.h>
 
-#include "cas_db_inc.h"
+#include "dbi.h"
 #include "cas_execute.h"
 
 #include "cas.h"

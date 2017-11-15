@@ -5938,6 +5938,46 @@ or_unpack_ptr (char *ptr, UINTPTR * ptrval)
 }
 
 /*
+ * or_pack_version -
+ */
+char *
+or_pack_version (char *ptr, const RYE_VERSION * version)
+{
+  ptr = PTR_ALIGN (ptr, SHORT_ALIGNMENT);
+
+  OR_PUT_SHORT (ptr, version->major);
+  ptr += OR_SHORT_SIZE;
+  OR_PUT_SHORT (ptr, version->minor);
+  ptr += OR_SHORT_SIZE;
+  OR_PUT_SHORT (ptr, version->patch);
+  ptr += OR_SHORT_SIZE;
+  OR_PUT_SHORT (ptr, version->build);
+  ptr += OR_SHORT_SIZE;
+
+  return ptr;
+}
+
+/*
+ * or_unpack_version -
+ */
+char *
+or_unpack_version (char *ptr, RYE_VERSION * version)
+{
+  ptr = PTR_ALIGN (ptr, SHORT_ALIGNMENT);
+
+  version->major = OR_GET_SHORT (ptr);
+  ptr += OR_SHORT_SIZE;
+  version->minor = OR_GET_SHORT (ptr);
+  ptr += OR_SHORT_SIZE;
+  version->patch = OR_GET_SHORT (ptr);
+  ptr += OR_SHORT_SIZE;
+  version->build = OR_GET_SHORT (ptr);
+  ptr += OR_SHORT_SIZE;
+
+  return ptr;
+}
+
+/*
  * LITTLE ENDIAN TRANSFORMATION FUNCTIONS
  */
 

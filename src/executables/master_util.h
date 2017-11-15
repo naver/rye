@@ -42,7 +42,6 @@ struct socket_queue_entry
   int error_p;
   int pid;
   char *name;
-  char *version_string;
   char *env_var;
   CSS_CONN_ENTRY *conn_ptr;
   int port_id;

@@ -89,12 +89,13 @@ rye_shm_create (int shm_key, int size, RYE_SHM_TYPE shm_type)
 
   shm_header = (RYE_SHM_HEADER *) p;
 
-  assert (sizeof (shm_header->magic_str) > strlen (RYE_SHM_MAGIC_STR));
-  strcpy (shm_header->magic_str, RYE_SHM_MAGIC_STR);
+  assert (sizeof (shm_header->magic_string) > strlen (RYE_SHM_MAGIC_STR));
+  strcpy (shm_header->magic_string, RYE_SHM_MAGIC_STR);
   shm_header->magic_number = RYE_SHM_MAGIC_NUMBER;
   shm_header->shm_type = shm_type;
   shm_header->status = RYE_SHM_CREATED;
   shm_header->shm_key = shm_key;
+  shm_header->shm_version = rel_cur_version ();
 
   return p;
 }
@@ -448,7 +449,7 @@ static RYE_SHM_TYPE
 rye_shm_check_header (const RYE_SHM_HEADER * shm_header,
 		      RYE_SHM_TYPE shm_type, bool check_status)
 {
-  if (strcmp (shm_header->magic_str, RYE_SHM_MAGIC_STR) == 0)
+  if (strcmp (shm_header->magic_string, RYE_SHM_MAGIC_STR) == 0)
     {
       if (check_status == false ||
 	  (shm_header->status == RYE_SHM_VALID &&

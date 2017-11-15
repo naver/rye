@@ -1124,6 +1124,17 @@
 
   * response data0
 
+    | description | type | note |
+    | -------- | -------- | -------- |
+    | area_size | int |  |
+
+  * response data1
+
+    | description | type | note |
+    | -------- | -------- | -------- |
+    | bkup_hdr db_version | RYE_VERSION |  |
+    | ... | ... | |
+
 #### NET_SERVER_BK_BACKUP_VOLUME
   * request data0
 

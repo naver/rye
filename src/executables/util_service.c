@@ -512,7 +512,7 @@ util_service_version ()
 {
   char buf[REL_MAX_VERSION_LENGTH];
 
-  rel_copy_version_string (buf, REL_MAX_VERSION_LENGTH);
+  rel_copy_release_string (buf, REL_MAX_VERSION_LENGTH);
   print_message (stdout, MSGCAT_UTIL_GENERIC_VERSION, exec_Name, buf);
 }
 

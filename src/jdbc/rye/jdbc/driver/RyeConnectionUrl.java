@@ -159,7 +159,7 @@ public class RyeConnectionUrl
     public static String makeJdbcUrl(ArrayList<JciConnectionInfo> conInfoList, String dbname, String user,
 		    String passwd, String propStr)
     {
-	return makeJdbcUrl(getServerListForUrl(conInfoList), dbname, user, passwd, conInfoList.get(0).getstrPortName(),
+	return makeJdbcUrl(getServerListForUrl(conInfoList), dbname, user, passwd, conInfoList.get(0).getPortName(),
 			propStr);
     }
 

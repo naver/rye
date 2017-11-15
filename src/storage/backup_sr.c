@@ -602,7 +602,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
       if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	{
-//	  need_unlock = true;
+//        need_unlock = true;
 	  goto exit_on_error;
 	}
 
@@ -635,7 +635,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
 	  if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	    {
-//	      need_unlock = true;
+//            need_unlock = true;
 	      goto exit_on_error;
 	    }
 	}
@@ -1289,15 +1289,13 @@ bk_init_backup_header (BK_BACKUP_HEADER * backup_header_p,
 		       int make_slave)
 {
   backup_header_p->iopageid = BK_BACKUP_START_PAGE_ID;
-  strncpy (backup_header_p->magic, RYE_MAGIC_DATABASE_BACKUP,
+  strncpy (backup_header_p->bk_magic, RYE_MAGIC_DATABASE_BACKUP,
 	   RYE_MAGIC_MAX_LENGTH);
-  strncpy (backup_header_p->db_release, rel_release_string (),
-	   REL_MAX_RELEASE_LENGTH);
   strncpy (backup_header_p->db_name,
 	   fileio_get_base_file_name (log_Db_fullname), PATH_MAX);
   backup_header_p->db_creation = log_Gl.hdr.db_creation;
   backup_header_p->db_iopagesize = IO_PAGESIZE;
-  backup_header_p->db_compatibility = rel_disk_compatible ();
+  backup_header_p->bk_db_version = rel_cur_version ();
 
   LSA_COPY (&backup_header_p->chkpt_lsa, backup_checkpoint_lsa_p);
 
