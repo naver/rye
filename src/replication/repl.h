@@ -249,6 +249,8 @@ struct _cirp_repl_info
   CIRP_APPLIER_INFO applier_info[1];
 };
 
+#define RP_SET_AGENT_FLAG(flag) (rp_set_agent_flag (ARG_FILE_LINE, (flag)))
+
 #define REPL_NEED_SHUTDOWN()                                        \
   (rp_need_shutdown (ARG_FILE_LINE) == true || rp_dead_agent_exists () == true)
 

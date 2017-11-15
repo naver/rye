@@ -155,6 +155,17 @@ fi_init (void)
   fi_item->func = fi_handler_random_success;
   fi_item->state = FI_INIT_STATE;
 
+  fi_item = &fi_Test_items[FI_TEST_REPL_RANDOM_EXIT];
+  fi_item->name = "fi_repl_random_exit";
+  fi_item->func = fi_handler_random_exit;
+  fi_item->state = FI_INIT_STATE;
+
+  fi_item = &fi_Test_items[FI_TEST_REPL_RANDOM_FAIL];
+  fi_item->name = "fi_repl_random_fail";
+  fi_item->func = fi_handler_random_fail;
+  fi_item->state = FI_INIT_STATE;
+
+
   fi_hasalready_Initiated = true;
 }
 

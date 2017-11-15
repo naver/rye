@@ -1781,7 +1781,7 @@ rp_applier_wait_start (CIRP_APPLIER_INFO * applier)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
       return error;
     }
@@ -1838,7 +1838,7 @@ applier_main (void *arg)
   if (error != NO_ERROR)
     {
       assert (false);
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
       applier->status = CIRP_AGENT_DEAD;
 
       free_and_init (th_er_msg_info);
@@ -1852,7 +1852,7 @@ applier_main (void *arg)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
       applier->status = CIRP_AGENT_DEAD;
 
       free_and_init (th_er_msg_info);
@@ -2072,14 +2072,14 @@ applier_main (void *arg)
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
-      rp_set_agent_flag (REPL_AGENT_NEED_RESTART);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
 
 
       /* restart applier */
       applier->status = CIRP_AGENT_INIT;
     }
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
   applier->status = CIRP_AGENT_DEAD;
 
