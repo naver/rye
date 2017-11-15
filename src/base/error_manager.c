@@ -1464,7 +1464,7 @@ er_stop_on_error (int err_id)
   assert (er_hasalready_initiated);
 
   syslog (LOG_ALERT, er_cached_msg[ER_STOP_SYSLOG],
-	  rel_name (), err_id, cuserid (NULL), getpid ());
+	  rel_package_string (), err_id, cuserid (NULL), getpid ());
 
   (void) fprintf (stderr, "%s", er_cached_msg[ER_ER_ASK]);
   if (scanf ("%d", &exit_requested) != 1)
@@ -2727,7 +2727,9 @@ er_study_fmt (ER_FMT * fmt)
 	  int code;
 
 	  code = fmt->err_id;
+#if 0
 	  assert (false);
+#endif
 	  er_internal_msg (fmt, code, ER_ER_SUBSTITUTE_MSG);
 	  break;
 	}

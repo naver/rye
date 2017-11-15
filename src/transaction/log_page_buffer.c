@@ -1612,7 +1612,7 @@ int
 logpb_print_hash_entry (FILE * outfp, const void *key, void *ent,
 			UNUSED_ARG void *ignore)
 {
-  const LOG_PAGEID *pageid = (LOG_PAGEID *) key;
+  const LOG_PAGEID *pageid = (const LOG_PAGEID *) key;
   struct log_buffer *log_bufptr = (struct log_buffer *) ent;
 
   fprintf (outfp, "Pageid = %5lld, Address = %p\n",
@@ -1653,7 +1653,7 @@ logpb_initialize_header (THREAD_ENTRY * thread_p, struct log_header *loghdr,
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
   assert (loghdr != NULL);
 
-  strncpy (loghdr->magic, RYE_MAGIC_LOG_ACTIVE, RYE_MAGIC_MAX_LENGTH);
+  strncpy (loghdr->log_magic, RYE_MAGIC_LOG_ACTIVE, RYE_MAGIC_MAX_LENGTH);
 
   if (db_creation != NULL)
     {
@@ -1664,17 +1664,7 @@ logpb_initialize_header (THREAD_ENTRY * thread_p, struct log_header *loghdr,
       loghdr->db_creation = -1;
     }
 
-  if (strlen (rel_release_string ()) >= REL_MAX_RELEASE_LENGTH)
-    {
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_COMPILATION_RELEASE, 2,
-	      rel_release_string (), REL_MAX_RELEASE_LENGTH);
-      logpb_fatal_error (thread_p, true, ARG_FILE_LINE, "log_init_logheader");
-      return ER_LOG_COMPILATION_RELEASE;
-    }
-
-  strncpy (loghdr->db_release, rel_release_string (), REL_MAX_RELEASE_LENGTH);
-  loghdr->db_compatibility = rel_disk_compatible ();
+  loghdr->db_version = rel_cur_version ();
   loghdr->db_iopagesize = IO_PAGESIZE;
   loghdr->db_logpagesize = LOG_PAGESIZE;
   loghdr->is_shutdown = true;
@@ -2191,7 +2181,7 @@ logpb_write_page_to_disk (THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr,
  *                      Database Backup = db_backup
  *   db_iopagesize(in): Set as a side effect to iopagesize
  *   db_creation(in): Set as a side effect to time of database creation
- *   db_compatibility(in): Set as a side effect to database disk compatibility
+ *   db_versionb(in): Set as a side effect to database disk compatibility
  *   db_charset(in): Set as a side effect to database charset
  *
  * NOTE:Find some database creation parameters such as pagesize,
@@ -2203,7 +2193,7 @@ logpb_find_header_parameters (THREAD_ENTRY * thread_p,
 			      const char *prefix_logname,
 			      PGLENGTH * io_page_size,
 			      PGLENGTH * log_page_size,
-			      INT64 * creation_time, float *db_compatibility,
+			      INT64 * creation_time, RYE_VERSION * db_version,
 			      int *db_charset)
 {
   struct log_header hdr;	/* Log header */
@@ -2221,7 +2211,7 @@ logpb_find_header_parameters (THREAD_ENTRY * thread_p,
       *io_page_size = log_Gl.hdr.db_iopagesize;
       *log_page_size = log_Gl.hdr.db_logpagesize;
       *creation_time = log_Gl.hdr.db_creation;
-      *db_compatibility = log_Gl.hdr.db_compatibility;
+      *db_version = log_Gl.hdr.db_version;
 
       if (IO_PAGESIZE != *io_page_size || LOG_PAGESIZE != *log_page_size)
 	{
@@ -2296,7 +2286,7 @@ logpb_find_header_parameters (THREAD_ENTRY * thread_p,
   *io_page_size = hdr.db_iopagesize;
   *log_page_size = hdr.db_logpagesize;
   *creation_time = hdr.db_creation;
-  *db_compatibility = hdr.db_compatibility;
+  *db_version = hdr.db_version;
   *db_charset = (int) hdr.db_charset;
 
   /*
@@ -2319,17 +2309,15 @@ logpb_find_header_parameters (THREAD_ENTRY * thread_p,
   /* only check for incompatibility here, this will be done again in
    * log_xinit which will run the compatibility functions if there are any.
    */
-  /* We added disk compatibility rules to R2.2. Before that release,
-   * rel_get_disk_compatible function returned only REL_FULLY_COMPATIBLE or
-   * REL_NOT_COMPATIBLE. However, it might return REL_BACKWARD_COMPATIBLE now.
-   */
-  if (rel_get_disk_compatible (*db_compatibility, NULL) !=
-      REL_FULLY_COMPATIBLE)
+  if (rel_check_disk_compatible (db_version) != REL_COMPATIBLE)
     {
-      log_Gl.hdr.db_compatibility = *db_compatibility;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_INCOMPATIBLE_DATABASE,
-	      2, rel_name (), rel_release_string ());
+      char ver_string[REL_MAX_VERSION_LENGTH];
+      rel_version_to_string (db_version, ver_string, sizeof (ver_string));
+
+      log_Gl.hdr.db_version = *db_version;
       error_code = ER_LOG_INCOMPATIBLE_DATABASE;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
+	      ver_string, rel_version_string ());
       goto error;
     }
 
@@ -2365,7 +2353,7 @@ error:
   *io_page_size = -1;
   *log_page_size = -1;
   *creation_time = 0;
-  *db_compatibility = -1.0;
+  *db_version = rel_null_version ();
 
   return *io_page_size;
 }
@@ -5624,7 +5612,7 @@ logpb_remove_archive_logs_exceed_limit (THREAD_ENTRY * thread_p,
 #endif /* SERVER_MODE */
   int num_remove_arv_num;
   int log_max_archives = prm_get_integer_value (PRM_ID_LOG_MAX_ARCHIVES);
-  char *catmsg;
+  const char *catmsg;
   int deleted_count = 0;
 
   if (log_max_archives == INT_MAX)
@@ -5716,7 +5704,7 @@ logpb_remove_archive_logs_exceed_limit (THREAD_ENTRY * thread_p,
 			       MSGCAT_LOG_MAX_ARCHIVES_HAS_BEEN_EXCEEDED);
       if (catmsg == NULL)
 	{
-	  catmsg = (char *) "Number of active log archives has been exceeded"
+	  catmsg = "Number of active log archives has been exceeded"
 	    " the max desired number.";
 	}
       deleted_count = logpb_remove_archive_logs_internal (thread_p,
@@ -7598,7 +7586,8 @@ logpb_delete (THREAD_ENTRY * thread_p, VOLID num_perm_vols,
 	   * Make sure that the log is a log file and that it is compatible
 	   * with the running database and system
 	   */
-	  if (loghdr->db_compatibility != rel_disk_compatible ())
+	  if (rel_check_disk_compatible (&loghdr->db_version) !=
+	      REL_COMPATIBLE)
 	    {
 	      loghdr = NULL;
 	    }

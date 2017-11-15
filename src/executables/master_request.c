@@ -389,12 +389,21 @@ css_get_server_list_info (RYE_STRING * buffer)
       if (IS_MASTER_CONN_NAME_HA_SERVER (temp->name))
 	{
 	  short nodeid = 0;
+	  char ver_string[REL_MAX_VERSION_LENGTH];
+
+	  if (temp->conn_ptr == NULL)
+	    {
+	      strcpy (ver_string, "?");
+	    }
+	  else
+	    {
+	      rel_version_to_string (&temp->conn_ptr->peer_version,
+				     ver_string, sizeof (ver_string));
+	    }
 
 	  rye_server_shm_get_nodeid (&nodeid, temp->name + 1);
 	  rye_append_format_string (buffer, HA_SERVER_FORMAT_STRING,
-				    temp->name + 1,
-				    (temp->version_string ==
-				     NULL ? "?" : temp->version_string),
+				    temp->name + 1, ver_string,
 				    temp->pid, nodeid);
 	}
       else

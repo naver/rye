@@ -45,11 +45,24 @@ enum css_packet_type
   * css_send_magic
     * DATA_TYPE packet
 
-    * packet data
+    * request data0
 
-      | data | description | note |
+      | description | type | note |
       | -------- | -------- | -------- |
-      | data0 | net_magic | { 0x00, 0x00, 0x00, 0x01, 0x20, 0x08, 0x11, 0x22 } |
+      | net_magic | char(8) | { 0x00, 0x00, 0x00, 'R', 'Y', 'E', 0x00, 0x01 } |
+
+    * request data1
+
+      | description | type | note |
+      | -------- | -------- | -------- |
+      | client version | RYE_VERSION | major(2), minor(2), patch(2), build(2) |
+
+    * reply data0
+
+      | description | type | note |
+      | -------- | -------- | -------- |
+      | css_error | int |  |
+      | server version | RYE_VERSION | major(2), minor(2), patch(2), build(2) |
 
   * send connect request packet
     * COMMAND_TYPE packet
@@ -74,8 +87,8 @@ enum css_packet_type
 
       | description | type | note |
       | -------- | -------- | -------- |
-      | client_release | string |  |
-      | client_capabilities | int | bit mask <br> NET_CAP_BACKWARD_COMPATIBLE, NET_CAP_FORWARD_COMPATIBLE, NET_CAP_INTERRUPT_ENABLED, NET_CAP_UPDATE_DISABLED, NET_CAP_HA_REPL_DELAY, NET_CAP_HA_REPLICA, NET_CAP_HA_IGNORE_REPL_DELAY |
+      | client version | RYE_VERSION |  |
+      | client_capabilities | int | bit mask <br> NET_CAP_INTERRUPT_ENABLED, NET_CAP_UPDATE_DISABLED, NET_CAP_HA_REPL_DELAY, NET_CAP_HA_REPLICA, NET_CAP_HA_IGNORE_REPL_DELAY |
       | bit_platform | int | __WORDSIZE |
       | client_type | int |  |
       | host_name | string |  |
@@ -84,7 +97,7 @@ enum css_packet_type
 
       | description | type | note |
       | -------- | -------- | -------- |
-      | server_release | string |  |
+      | server_version | RYE_VERSION |  |
       | server_capabilities | int |  |
       | server_bit_platform | int |  |
       | server_host_name | string |  |

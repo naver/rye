@@ -688,10 +688,10 @@ rp_log_header_validate (const LOG_HEADER * log_hdr, const char *db_name)
   int error = NO_ERROR;
 
   /* check magic */
-  if (strncmp (log_hdr->magic,
+  if (strncmp (log_hdr->log_magic,
 	       RYE_MAGIC_LOG_ACTIVE, RYE_MAGIC_MAX_LENGTH) != 0)
     {
-      REPL_SET_GENERIC_ERROR (error, "invalid magic(%s)", log_hdr->magic);
+      REPL_SET_GENERIC_ERROR (error, "invalid magic(%s)", log_hdr->log_magic);
 
       return error;
     }

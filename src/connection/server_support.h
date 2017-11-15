@@ -68,8 +68,8 @@ extern unsigned int css_send_abort_to_client (CSS_CONN_ENTRY * conn,
 extern char *css_pack_server_name (const char *server_name, int *name_length);
 extern int css_init (char *server_name, int server_name_length,
 		     int connection_id);
-extern const char *css_add_client_version_string (THREAD_ENTRY * thread_p,
-						  const char *version_string);
+extern void css_set_client_version (THREAD_ENTRY * thread_p,
+				    const RYE_VERSION * version);
 extern void css_end_server_request (CSS_CONN_ENTRY * conn);
 extern bool css_is_shutdown_timeout_expired (void);
 

@@ -30,27 +30,19 @@
 
 package rye.jdbc.jci;
 
+import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeErrorCode;
 
 abstract public class Protocol
 {
     private static final int BRREQ_MSG_MAGIC_LEN = 4;
-    private static final byte[] BRREQ_MSG_MAGIC_STR = { 'C', 'U', 'B', 'V' };
-    private static final int BRREQ_MSG_IDX_CLIENT_PROTO_VERSION = 4;
-    private static final int BRREQ_MSG_IDX_CLIENT_TYPE = 6;
-    private static final int BRREQ_MSG_IDX_OP_CODE = 7;
-    private static final int BRREQ_MSG_IDX_OP_CODE_MSG_SIZE = 8;
-    private static final int BRREQ_MSG_IDX_BROKER_NAME = 16;
-    private static final int BRREQ_MSG_BROKER_NAME_LEN = 64;
-    private static final int BRREQ_MSG_SIZE = 16 + BRREQ_MSG_BROKER_NAME_LEN;
+    private static final byte[] BRREQ_MSG_MAGIC_STR = { 'R', 'Y', 'E', 0x01 };
+    private static final int BRREQ_MSG_SIZE = 20;
 
     private static final int BROKER_RESPONSE_MAX_ADDITIONAL_MSG = 5;
-    private static final int BROKER_RESPONSE_SIZE = 6 + 4 * BROKER_RESPONSE_MAX_ADDITIONAL_MSG;
+    private static final int BROKER_RESPONSE_SIZE = 12 + 4 * BROKER_RESPONSE_MAX_ADDITIONAL_MSG;
 
     public static final byte BR_RES_SHARD_INFO_ALL = 0, BR_RES_SHARD_INFO_CHANGED_ONLY = 1;
-
-    private static final short PROTOCOL_V1 = 1;
-    private static final short CURRENT_PROTOCOL = PROTOCOL_V1;
 
     /* normal broker request */
     public static final byte BRREQ_OP_CODE_CAS_CONNECT = 1;
@@ -228,10 +220,10 @@ abstract public class Protocol
     public static final int HA_STATE_MASTER = 1;
     public static final int HA_STATE_TO_BE_MASTER = 2;
     public static final int HA_STATE_SLAVE = 3;
-    public static final int HA_STATE_TO_BE_SLAVE= 4;
-    public static final int HA_STATE_REPLICA = 5; 
+    public static final int HA_STATE_TO_BE_SLAVE = 4;
+    public static final int HA_STATE_REPLICA = 5;
     public static final int HA_STATE_DEAD = 6; /* server is dead - virtual state; not exists */
-    
+
     public static final int HA_STATE_FOR_DRIVER_UNKNOWN = 0;
     public static final int HA_STATE_FOR_DRIVER_MASTER = 1;
     public static final int HA_STATE_FOR_DRIVER_TO_BE_MASTER = 2;
@@ -239,21 +231,45 @@ abstract public class Protocol
     public static final int HA_STATE_FOR_DRIVER_TO_BE_SLAVE = 4;
     public static final int HA_STATE_FOR_DRIVER_REPLICA = 5;
 
-    static byte[] getConnectMsg(byte[] portName)
+    static byte[] getConnectMsg(byte[] portNameMsgProtocol)
     {
-	return packBrokerRequestMsg(BRREQ_OP_CODE_CAS_CONNECT, (short) 0, portName);
+	byte[] msg = packBrokerRequestMsg(BRREQ_OP_CODE_CAS_CONNECT, (short) portNameMsgProtocol.length);
+	JciUtil.copy_bytes(msg, BRREQ_MSG_SIZE, portNameMsgProtocol.length, portNameMsgProtocol);
+	return msg;
     }
 
-    static byte[] getPingCheckMsg(byte[] portName)
+    static byte[] getPingCheckMsg(byte[] portNameMsgProtocol)
     {
-	return packBrokerRequestMsg(BRREQ_OP_CODE_PING, (short) 0, portName);
+	byte[] msg = packBrokerRequestMsg(BRREQ_OP_CODE_PING, (short) portNameMsgProtocol.length);
+	JciUtil.copy_bytes(msg, BRREQ_MSG_SIZE, portNameMsgProtocol.length, portNameMsgProtocol);
+	return msg;
     }
 
-    static byte[] getQueryCancelMsg(int casId, int casPid, byte[] portName)
+    static byte[] getQueryCancelMsg(int casId, int casPid, byte[] portNameMsgProtocol)
     {
-	byte[] msg = packBrokerRequestMsg(BRREQ_OP_CODE_QUERY_CANCEL, (short) 8, portName);
-	JciUtil.int2bytes(casId, msg, BRREQ_MSG_SIZE);
-	JciUtil.int2bytes(casPid, msg, BRREQ_MSG_SIZE + 4);
+	byte[] msg = packBrokerRequestMsg(BRREQ_OP_CODE_QUERY_CANCEL, (short) (portNameMsgProtocol.length + 8));
+	int pos = JciUtil.copy_bytes(msg, BRREQ_MSG_SIZE, portNameMsgProtocol.length, portNameMsgProtocol);
+	pos = JciUtil.int2bytes(casId, msg, pos);
+	pos = JciUtil.int2bytes(casPid, msg, pos);
+	return msg;
+    }
+
+    static byte[] packPortName(String portName)
+    {
+	byte[] msg;
+	int pos = 0;
+
+	if (portName == null) {
+	    msg = new byte[4];
+	    pos = JciUtil.int2bytes(0, msg, pos);
+	}
+	else {
+	    byte[] tmpBytes = portName.trim().toLowerCase().getBytes();
+	    msg = new byte[4 + tmpBytes.length + 1];
+	    pos = JciUtil.int2bytes(tmpBytes.length + 1, msg, pos);
+	    pos = JciUtil.copy_bytes(msg, pos, tmpBytes.length, tmpBytes);
+	    pos = JciUtil.copy_byte(msg, pos, (byte) '\0');
+	}
 	return msg;
     }
 
@@ -348,7 +364,7 @@ abstract public class Protocol
 	    throw new JciException(RyeErrorCode.ER_INVALID_ARGUMENT);
 	}
 
-	byte[] brRequest = packBrokerRequestMsg(opcode, (short) msgSize, null);
+	byte[] brRequest = packBrokerRequestMsg(opcode, (short) msgSize);
 	System.arraycopy(msg, 0, brRequest, BRREQ_MSG_SIZE, pos);
 
 	return brRequest;
@@ -405,7 +421,13 @@ abstract public class Protocol
 
 	int msgPos = 0;
 
-	short protoVer = JciUtil.bytes2short(resMsg, msgPos);
+	short verMajor = JciUtil.bytes2short(resMsg, msgPos);
+	msgPos += 2;
+	short verMinor = JciUtil.bytes2short(resMsg, msgPos);
+	msgPos += 2;
+	short verPatch = JciUtil.bytes2short(resMsg, msgPos);
+	msgPos += 2;
+	short verBuild = JciUtil.bytes2short(resMsg, msgPos);
 	msgPos += 2;
 
 	int resCode = JciUtil.bytes2int(resMsg, msgPos);
@@ -416,24 +438,25 @@ abstract public class Protocol
 	    additionalMsgSize[i] = JciUtil.bytes2int(resMsg, msgPos);
 	    msgPos += 4;
 	}
-	return (new BrokerResponse(protoVer, resCode, additionalMsgSize));
+
+	return (new BrokerResponse(verMajor, verMinor, verPatch, verBuild, resCode, additionalMsgSize));
     }
 
-    static private byte[] packBrokerRequestMsg(byte opcode, short opcodeMsgSize, byte[] portName)
+    static private byte[] packBrokerRequestMsg(byte opcode, short opcodeMsgSize)
     {
 	byte[] msg = new byte[BRREQ_MSG_SIZE + opcodeMsgSize];
 
-	System.arraycopy(BRREQ_MSG_MAGIC_STR, 0, msg, 0, BRREQ_MSG_MAGIC_LEN);
+	int pos = 0;
+	pos = JciUtil.copy_bytes(msg, pos, BRREQ_MSG_MAGIC_LEN, BRREQ_MSG_MAGIC_STR);
+	pos = JciUtil.short2bytes(RyeDriver.driverVersion.getMajor(), msg, pos);
+	pos = JciUtil.short2bytes(RyeDriver.driverVersion.getMinor(), msg, pos);
+	pos = JciUtil.short2bytes(RyeDriver.driverVersion.getPatch(), msg, pos);
+	pos = JciUtil.short2bytes(RyeDriver.driverVersion.getBuild(), msg, pos);
 
-	JciUtil.short2bytes(CURRENT_PROTOCOL, msg, BRREQ_MSG_IDX_CLIENT_PROTO_VERSION);
+	pos = JciUtil.copy_byte(msg, pos, CAS_CLIENT_JDBC);
+	pos = JciUtil.copy_byte(msg, pos, opcode);
 
-	msg[BRREQ_MSG_IDX_CLIENT_TYPE] = CAS_CLIENT_JDBC;
-
-	msg[BRREQ_MSG_IDX_OP_CODE] = opcode;
-
-	JciUtil.copy_bytes(msg, BRREQ_MSG_IDX_BROKER_NAME, BRREQ_MSG_BROKER_NAME_LEN, portName);
-
-	JciUtil.short2bytes(opcodeMsgSize, msg, BRREQ_MSG_IDX_OP_CODE_MSG_SIZE);
+	pos = JciUtil.short2bytes(opcodeMsgSize, msg, pos);
 
 	return msg;
     }
@@ -442,5 +465,4 @@ abstract public class Protocol
     {
 	return new byte[SESSION_ID_SIZE];
     }
-
 }

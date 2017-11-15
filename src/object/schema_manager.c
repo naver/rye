@@ -804,7 +804,7 @@ sm_rename_class (MOP op, const char *new_name)
   if (sm_has_text_domain (db_get_attributes (op), 1))
     {
       /* prevent to rename class */
-      ERROR1 (error, ER_REGU_NOT_IMPLEMENTED, rel_major_release_string ());
+      ERROR1 (error, ER_REGU_NOT_IMPLEMENTED, rel_version_string ());
       return error;
     }
 #endif /* ENABLE_UNUSED_FUNCTION */

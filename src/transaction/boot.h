@@ -177,7 +177,6 @@ struct boot_server_credential
   HFID root_class_hfid;
   PGLENGTH page_size;
   PGLENGTH log_page_size;
-  float disk_compatibility;
   char server_session_key[SERVER_SESSION_KEY_SIZE];
   int db_charset;
   const char *db_lang;

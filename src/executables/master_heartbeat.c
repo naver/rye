@@ -241,6 +241,8 @@ static int hb_remove_catalog_info (const HA_CONF * ha_conf,
 
 static void hb_cluster_set_node_state (HB_NODE_ENTRY * node,
 				       HA_STATE node_state);
+static void hb_cluster_set_node_version (HB_NODE_ENTRY * node,
+					 const RYE_VERSION * node_version);
 static void hb_shm_reset_hb_node (void);
 static void shm_master_update_server_state (HB_PROC_ENTRY * proc);
 
@@ -1807,9 +1809,12 @@ static void
 hb_cluster_send_heartbeat (bool is_req, char *host_name)
 {
   HBP_HEADER *hbp_header;
-  char buffer[HB_BUFFER_SZ], *p;
-  size_t msg_len;
+  char buffer[HB_BUFFER_SZ + MAX_ALIGNMENT], *p;
+  char *aligned_buffer;
+  size_t packet_len;
+  int msg_len;
   int send_len;
+  RYE_VERSION my_version = rel_cur_version ();
 
   struct sockaddr_in saddr;
   socklen_t saddr_len;
@@ -1825,17 +1830,22 @@ hb_cluster_send_heartbeat (bool is_req, char *host_name)
 
 
   memset ((void *) buffer, 0, sizeof (buffer));
-  hbp_header = (HBP_HEADER *) (&buffer[0]);
+  aligned_buffer = PTR_ALIGN (buffer, MAX_ALIGNMENT);
+
+  hbp_header = (HBP_HEADER *) aligned_buffer;
+
+  msg_len = OR_INT_SIZE + OR_VERSION_SIZE;
 
   hb_set_net_header (hbp_header, HBP_CLUSTER_HEARTBEAT, is_req,
-		     OR_INT_SIZE, 0, host_name);
+		     msg_len, 0, host_name);
 
   p = (char *) (hbp_header + 1);
   p = or_pack_int (p, hb_Cluster->node_state);
+  p = or_pack_version (p, &my_version);
 
-  msg_len = sizeof (HBP_HEADER) + OR_INT_SIZE;
+  packet_len = sizeof (HBP_HEADER) + msg_len;
 
-  send_len = sendto (hb_Cluster->sfd, (void *) &buffer[0], msg_len, 0,
+  send_len = sendto (hb_Cluster->sfd, (void *) aligned_buffer, packet_len, 0,
 		     (struct sockaddr *) &saddr, saddr_len);
   if (send_len <= 0)
     {
@@ -1900,8 +1910,12 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
     {
     case HBP_CLUSTER_HEARTBEAT:
       {
+	RYE_VERSION node_version;
+	RYE_VERSION my_version = rel_cur_version ();
+
 	p = (char *) (hbp_header + 1);
-	or_unpack_int (p, &node_state);
+	p = or_unpack_int (p, &node_state);
+	p = or_unpack_version (p, &node_version);
 
 	if (node_state < 0 || node_state >= HA_STATE_MAX)
 	  {
@@ -1914,7 +1928,9 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
 	/*
 	 * if heartbeat group id is mismatch, ignore heartbeat
 	 */
-	if (strcmp (hbp_header->group_id, hb_Cluster->group_id))
+	if (rel_check_net_compatible (&my_version,
+				      &node_version) == REL_NOT_COMPATIBLE ||
+	    strcmp (hbp_header->group_id, hb_Cluster->group_id))
 	  {
 	    break;
 	  }
@@ -1944,6 +1960,7 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
 	  }
 
 	hb_cluster_set_node_state (node, (unsigned short) node_state);
+	hb_cluster_set_node_version (node, &node_version);
 	node->heartbeat_gap = MAX (0, (node->heartbeat_gap - 1));
 	gettimeofday (&node->last_recv_hbtime, NULL);
       }
@@ -2149,6 +2166,7 @@ hb_add_node_to_cluster (char *host_name, unsigned short priority)
       p->heartbeat_gap = 0;
       p->last_recv_hbtime.tv_sec = 0;
       p->last_recv_hbtime.tv_usec = 0;
+      p->node_version = rel_null_version ();
 
       p->next = NULL;
       p->prev = NULL;
@@ -7375,6 +7393,14 @@ hb_cluster_set_node_state (HB_NODE_ENTRY * node, HA_STATE node_state)
 
   /* 2. update node's state */
   node->node_state = node_state;
+}
+
+static void
+hb_cluster_set_node_version (HB_NODE_ENTRY * node,
+			     const RYE_VERSION * node_version)
+{
+  master_shm_set_node_version (node->host_name, node_version);
+  node->node_version = *node_version;
 }
 
 /*

@@ -46,7 +46,7 @@ SOCKET css_Pipe_to_master = INVALID_SOCKET;	/* socket for Master->Slave communic
 
 /* do not change first 4 bytes of css_Net_magic */
 char css_Net_magic[CSS_NET_MAGIC_SIZE] =
-  { 0x00, 0x00, 0x00, 0x01, 0x20, 0x08, 0x11, 0x22 };
+  { 0x00, 0x00, 0x00, 'R', 'Y', 'E', 0x00, 0x01 };
 
 static bool css_Is_conn_rules_initialized = false;
 

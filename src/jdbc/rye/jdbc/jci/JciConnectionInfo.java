@@ -43,8 +43,8 @@ public class JciConnectionInfo
     private final InetAddress hostAddress;
     private final String hostname;
     private final int port;
-    private final byte[] bytePortName;
-    private final String strPortName;
+    private final byte[] portNameMsgProtocol;
+    private final String portName;
 
     public JciConnectionInfo(String host, int port, String portName) throws RyeException
     {
@@ -56,13 +56,8 @@ public class JciConnectionInfo
 	}
 	this.hostname = host;
 	this.port = port;
-	this.strPortName = portName;
-	if (portName == null) {
-	    this.bytePortName = null;
-	}
-	else {
-	    this.bytePortName = portName.trim().toLowerCase().getBytes();
-	}
+	this.portName = portName;
+	this.portNameMsgProtocol = Protocol.packPortName(portName);
     }
 
     private JciConnectionInfo(JciConnectionInfo src, String portName)
@@ -70,13 +65,8 @@ public class JciConnectionInfo
 	this.hostAddress = src.hostAddress;
 	this.hostname = src.hostname;
 	this.port = src.port;
-	this.strPortName = portName;
-	if (portName == null) {
-	    this.bytePortName = null;
-	}
-	else {
-	    this.bytePortName = portName.trim().toLowerCase().getBytes();
-	}
+	this.portName = portName;
+	this.portNameMsgProtocol = Protocol.packPortName(portName);
     }
 
     public static ArrayList<JciConnectionInfo> copyList(ArrayList<JciConnectionInfo> srcList, String portName)
@@ -105,7 +95,7 @@ public class JciConnectionInfo
 	    if (port != otherJciConInfo.port)
 		return false;
 
-	    return Arrays.equals(bytePortName, otherJciConInfo.bytePortName);
+	    return Arrays.equals(portNameMsgProtocol, otherJciConInfo.portNameMsgProtocol);
 	}
 	else {
 	    return false;
@@ -138,13 +128,13 @@ public class JciConnectionInfo
 	return port;
     }
 
-    public byte[] getbytePortName()
+    public byte[] portNameMsgProtocol()
     {
-	return bytePortName;
+	return portNameMsgProtocol;
     }
 
-    public String getstrPortName()
+    public String getPortName()
     {
-	return strPortName;
+	return portName;
     }
 }

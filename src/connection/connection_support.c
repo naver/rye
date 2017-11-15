@@ -81,7 +81,7 @@
 #define IO_VECTOR_SET_PTR(IOV_PTR, BUFF_PTR, LEN)		\
 	do {							\
 	  struct iovec *_tmp_iov_ptr = (IOV_PTR);		\
-	  _tmp_iov_ptr->iov_base = (caddr_t) (BUFF_PTR);	\
+	  _tmp_iov_ptr->iov_base = (BUFF_PTR);	\
 	  _tmp_iov_ptr->iov_len = (LEN);			\
 	} while (0)
 
@@ -977,8 +977,52 @@ css_trim_str (char *str)
 int
 css_send_magic (CSS_CONN_ENTRY * conn)
 {
-  return (css_send_data_packet (conn, 0, 1,
-				css_Net_magic, sizeof (css_Net_magic)));
+  int css_errors;
+  int timeout;
+  CSS_NET_PACKET *recv_packet = NULL;
+  RYE_VERSION *peer_version = &conn->peer_version;
+  RYE_VERSION my_version = rel_cur_version ();
+
+  OR_ALIGNED_BUF (OR_VERSION_SIZE) a_send_buf;
+  char *send_ptr = OR_ALIGNED_BUF_START (a_send_buf);
+  int send_buf_size = OR_VERSION_SIZE;
+
+  OR_ALIGNED_BUF (OR_INT_SIZE + OR_VERSION_SIZE) a_recv_buf;
+  char *recv_ptr = OR_ALIGNED_BUF_START (a_recv_buf);
+  int recv_buf_size = (OR_INT_SIZE + OR_VERSION_SIZE);
+  char *ptr;
+
+  or_pack_version (send_ptr, &my_version);
+
+  css_errors = css_send_data_packet (conn, 0, 2,
+				     css_Net_magic, sizeof (css_Net_magic),
+				     send_ptr, send_buf_size);
+  if (css_errors != NO_ERRORS)
+    {
+      return css_errors;
+    }
+
+  timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
+
+  if (css_net_packet_recv (&recv_packet, conn, timeout, 1,
+			   recv_ptr, recv_buf_size) != NO_ERRORS)
+    {
+      return ERROR_ON_READ;
+    }
+
+  if (css_net_packet_get_recv_size (recv_packet, 0) != recv_buf_size)
+    {
+      css_errors = ERROR_ON_READ;
+    }
+  else
+    {
+      ptr = or_unpack_int (recv_ptr, &css_errors);
+      ptr = or_unpack_version (ptr, peer_version);
+    }
+
+  css_net_packet_free (recv_packet);
+
+  return css_errors;
 }
 
 /*
@@ -990,52 +1034,62 @@ css_send_magic (CSS_CONN_ENTRY * conn)
 int
 css_check_magic (CSS_CONN_ENTRY * conn)
 {
-  int size;
-  char *p;
-  int css_error;
   int timeout;
   CSS_NET_PACKET *recv_packet = NULL;
+  char magic[sizeof (css_Net_magic)];
+  RYE_VERSION *peer_version = &conn->peer_version;
+  int css_errors;
+
+  OR_ALIGNED_BUF (OR_VERSION_SIZE) a_recv_buf;
+  char *recv_ptr = OR_ALIGNED_BUF_START (a_recv_buf);
+  int recv_size = OR_VERSION_SIZE;
 
   timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  if (css_net_packet_recv (&recv_packet, conn, timeout, 0) != NO_ERRORS)
+  if (css_net_packet_recv (&recv_packet, conn, timeout, 2,
+			   magic, sizeof (css_Net_magic),
+			   recv_ptr, recv_size) != NO_ERRORS)
     {
       return ERROR_ON_READ;
     }
 
-  p = css_net_packet_get_buffer (recv_packet, 0, -1, false);
-  if (p == NULL)
+
+  css_errors = NO_ERRORS;
+
+  if (css_net_packet_get_recv_size (recv_packet, 0) != sizeof (css_Net_magic)
+      || memcmp (magic, css_Net_magic, sizeof (css_Net_magic)) != 0
+      || css_net_packet_get_recv_size (recv_packet, 1) != recv_size)
     {
-      css_net_packet_free (recv_packet);
-
-      return ERROR_ON_READ;
-    }
-
-  size = css_net_packet_get_recv_size (recv_packet, 0);
-
-  css_error = NO_ERRORS;
-
-  if (size == sizeof (css_Net_magic))
-    {
-      unsigned int i;
-
-      for (i = 0; i < sizeof (css_Net_magic); i++)
-	{
-	  if (*(p++) != css_Net_magic[i])
-	    {
-	      css_error = WRONG_PACKET_TYPE;
-	      break;
-	    }
-	}
+      css_errors = ERROR_ON_READ;
     }
   else
     {
-      css_error = WRONG_PACKET_TYPE;
+      RYE_VERSION my_version = rel_cur_version ();
+
+      OR_ALIGNED_BUF (OR_INT_SIZE + OR_VERSION_SIZE) a_send_buf;
+      char *send_ptr = OR_ALIGNED_BUF_START (a_send_buf);
+      int send_size = (OR_INT_SIZE + OR_VERSION_SIZE);
+      char *ptr;
+
+      or_unpack_version (recv_ptr, peer_version);
+
+      if (my_version.major != peer_version->major)
+	{
+	  css_errors = NOT_COMPATIBLE_VERSION;
+	}
+
+      ptr = or_pack_int (send_ptr, css_errors);
+      ptr = or_pack_version (ptr, &my_version);
+
+      if (css_send_data_packet (conn, 0, 1, send_ptr, send_size) != NO_ERRORS)
+	{
+	  css_errors = ERROR_ON_WRITE;
+	}
     }
 
   css_net_packet_free (recv_packet);
 
-  return css_error;
+  return css_errors;
 }
 
 static int

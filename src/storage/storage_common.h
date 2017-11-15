@@ -473,12 +473,12 @@ struct bo_restart_arg
 
 /* Magic default values */
 #define RYE_MAGIC_MAX_LENGTH                 25
-#define RYE_MAGIC_PREFIX		     "Rye/"
-#define RYE_MAGIC_DATABASE_VOLUME            "Rye/Volume"
-#define RYE_MAGIC_LOG_ACTIVE                 "Rye/LogActive"
-#define RYE_MAGIC_LOG_ARCHIVE                "Rye/LogArchive"
-#define RYE_MAGIC_LOG_INFO                   "Rye/LogInfo"
-#define RYE_MAGIC_DATABASE_BACKUP            "Rye/Backup"
+#define RYE_MAGIC_PREFIX		     "RYE/"
+#define RYE_MAGIC_DATABASE_VOLUME            "RYE/Volume"
+#define RYE_MAGIC_LOG_ACTIVE                 "RYE/LogActive"
+#define RYE_MAGIC_LOG_ARCHIVE                "RYE/LogArchive"
+#define RYE_MAGIC_LOG_INFO                   "RYE/LogInfo"
+#define RYE_MAGIC_DATABASE_BACKUP            "RYE/Backup"
 
 /*
  * Typedefs related to the scan data structures

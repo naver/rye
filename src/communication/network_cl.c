@@ -89,8 +89,6 @@ static void return_error_to_server (char *host, unsigned int eid);
 #endif
 static int client_capabilities (void);
 static int check_server_capabilities (int server_cap, int client_type,
-				      int rel_compare,
-				      REL_COMPATIBILITY * compatibility,
 				      int opt_cap);
 static int set_server_error (int error);
 
@@ -254,12 +252,9 @@ get_capability_string (int cap, int cap_type)
  * return:
  */
 static int
-check_server_capabilities (int server_cap, int client_type, int rel_compare,
-			   REL_COMPATIBILITY * compatibility, int opt_cap)
+check_server_capabilities (int server_cap, int client_type, int opt_cap)
 {
   int client_cap;
-
-  assert (compatibility != NULL);
 
   client_cap = client_capabilities ();
   client_cap |= opt_cap;
@@ -316,33 +311,6 @@ check_server_capabilities (int server_cap, int client_type, int rel_compare,
       server_cap ^= NET_CAP_HA_REPL_DELAY;
 
       db_set_reconnect_reason (DB_RC_HA_REPL_DELAY);
-    }
-
-  /* network protocol compatibility */
-  if (*compatibility == REL_NOT_COMPATIBLE)
-    {
-      if (rel_compare < 0
-	  && ((server_cap & NET_CAP_BACKWARD_COMPATIBLE)
-	      || (client_cap & NET_CAP_FORWARD_COMPATIBLE)))
-	{
-	  /*
-	   * The client is older than the server but the server has a backward
-	   * compatible capability or the client has a forward compatible
-	   * capability.
-	   */
-	  *compatibility = REL_FORWARD_COMPATIBLE;
-	}
-      if (rel_compare > 0
-	  && ((server_cap & NET_CAP_FORWARD_COMPATIBLE)
-	      || (client_cap & NET_CAP_BACKWARD_COMPATIBLE)))
-	{
-	  /*
-	   * The client is newer than the server but the server has a forward
-	   * compatible capability or the client has a backward compatible
-	   * capability.
-	   */
-	  *compatibility = REL_BACKWARD_COMPATIBLE;
-	}
     }
 
   return server_cap;
@@ -1604,22 +1572,22 @@ net_client_ping_server (int client_val, int *server_val,
  */
 int
 net_client_ping_server_with_handshake (int client_type,
-				       bool check_capabilities, int opt_cap)
+				       bool check_capabilities, int opt_cap,
+				       RYE_VERSION * server_version)
 {
-  const char *client_release;
-  const char *server_release, *server_host;
+  const char *server_host;
   char *ptr;
   int error = NO_ERROR;
-  OR_ALIGNED_BUF (REL_MAX_RELEASE_LENGTH + (OR_INT_SIZE * 3) +
+  OR_ALIGNED_BUF (OR_VERSION_SIZE + (OR_INT_SIZE * 3) +
 		  MAXHOSTNAMELEN) a_request;
   char *request = OR_ALIGNED_BUF_START (a_request);
-  OR_ALIGNED_BUF (REL_MAX_RELEASE_LENGTH + (OR_INT_SIZE * 2) +
+  OR_ALIGNED_BUF (OR_VERSION_SIZE + (OR_INT_SIZE * 2) +
 		  MAXHOSTNAMELEN) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   int reply_size = OR_ALIGNED_BUF_SIZE (a_reply);
   int request_size, server_capabilities, server_bit_platform;
-  int strlen1, strlen2;
-  REL_COMPATIBILITY compat;
+  int strlen2;
+  RYE_VERSION client_version = rel_cur_version ();
 
   if (net_Server_host[0] == '\0' || net_Server_name[0] == '\0')
     {
@@ -1628,11 +1596,9 @@ net_client_ping_server_with_handshake (int client_type,
       return error;
     }
 
-  client_release = rel_release_string ();
-
-  request_size = or_packed_string_length (client_release, &strlen1)
-    + (OR_INT_SIZE * 3) + or_packed_string_length (boot_Host_name, &strlen2);
-  ptr = or_pack_string_with_length (request, client_release, strlen1);
+  request_size = (OR_VERSION_SIZE) + (OR_INT_SIZE * 3) +
+    or_packed_string_length (boot_Host_name, &strlen2);
+  ptr = or_pack_version (request, &client_version);
   ptr = or_pack_int (ptr, client_capabilities ());
   ptr = or_pack_int (ptr, rel_bit_platform ());
   ptr = or_pack_int (ptr, client_type);
@@ -1648,7 +1614,7 @@ net_client_ping_server_with_handshake (int client_type,
       return error;
     }
 
-  ptr = or_unpack_string_nocopy (reply, &server_release);
+  ptr = or_unpack_version (reply, server_version);
   ptr = or_unpack_int (ptr, &server_capabilities);
   ptr = or_unpack_int (ptr, &server_bit_platform);
   ptr = or_unpack_string_nocopy (ptr, &server_host);
@@ -1662,35 +1628,31 @@ net_client_ping_server_with_handshake (int client_type,
       return error;
     }
 
-  /* If we can't get the server version, we have to disconnect it. */
-  if (server_release == NULL)
-    {
-      error = ER_NET_HS_UNKNOWN_SERVER_REL;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-      return error;
-    }
-
   /*
    * 1. get the result of compatibility check.
    * 2. check if the both capabilities of client and server are compatible.
    * 3. check if the server has a capability to make it compatible.
    */
-  compat = rel_get_net_compatible (client_release, server_release);
-  if (check_capabilities == true
-      && check_server_capabilities (server_capabilities, client_type,
-				    rel_compare (client_release,
-						 server_release),
-				    &compat, opt_cap) != server_capabilities)
+  if (rel_check_net_compatible (&client_version,
+				server_version) == REL_NOT_COMPATIBLE)
+    {
+      char buf1[REL_MAX_VERSION_LENGTH];
+      char buf2[REL_MAX_VERSION_LENGTH];
+
+      rel_version_to_string (server_version, buf1, sizeof (buf1));
+      rel_version_to_string (&client_version, buf2, sizeof (buf2));
+
+      error = ER_NET_DIFFERENT_RELEASE;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, buf1, buf2);
+      return error;
+    }
+
+  if (check_capabilities == true &&
+      check_server_capabilities (server_capabilities, client_type,
+				 opt_cap) != server_capabilities)
     {
       error = ER_NET_SERVER_HAND_SHAKE;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, net_Server_host);
-      return error;
-    }
-  if (compat == REL_NOT_COMPATIBLE)
-    {
-      error = ER_NET_DIFFERENT_RELEASE;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
-	      server_release, client_release);
       return error;
     }
 

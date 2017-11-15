@@ -558,7 +558,7 @@ hb_pack_server_name (const char *server_name, int *name_length,
   char *packed_name = NULL;
   const char *env_name = NULL;
   char pid_string[16];
-  int n_len, l_len, r_len, e_len, p_len;
+  int n_len, l_len, e_len, p_len;
   int packed_name_offset;
 
   if (server_name != NULL)
@@ -569,19 +569,14 @@ hb_pack_server_name (const char *server_name, int *name_length,
 	  return NULL;
 	}
 
-      /* here we changed the 2nd string in packed_name from
-       * rel_release_string() to rel_major_release_string()
-       * solely for the purpose of matching the name of the Rye driver.
-       */
-
       snprintf (pid_string, sizeof (pid_string), "%d", getpid ());
+
       n_len = strlen (server_name) + 1;
       l_len = (log_path) ? strlen (log_path) + 1 : 0;
-      r_len = strlen (rel_major_release_string ()) + 1;
       e_len = strlen (env_name) + 1;
       p_len = strlen (pid_string) + 1;
       *name_length = n_len + 1 /* applier index */  + l_len
-	+ r_len + e_len + p_len + 5;
+	+ e_len + p_len + 5;
 
       packed_name = malloc (*name_length);
       if (packed_name == NULL)
@@ -610,11 +605,9 @@ hb_pack_server_name (const char *server_name, int *name_length,
 	  memcpy (packed_name + packed_name_offset + n_len, log_path, l_len);
 	}
       memcpy (packed_name + packed_name_offset + n_len + l_len,
-	      rel_major_release_string (), r_len);
-      memcpy (packed_name + packed_name_offset + n_len + l_len + r_len,
 	      env_name, e_len);
-      memcpy (packed_name + packed_name_offset + n_len + l_len + r_len +
-	      e_len, pid_string, p_len);
+      memcpy (packed_name + packed_name_offset + n_len + l_len + e_len,
+	      pid_string, p_len);
     }
   return (packed_name);
 }

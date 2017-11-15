@@ -681,7 +681,10 @@ public class JciNormalConnection extends JciConnection
 
 	InputBuffer inBuffer = new InputBuffer(client.getInputStream(), this, casInfo);
 
-	short protocolVersion = inBuffer.readShort();
+	short verMajor = inBuffer.readShort();
+	short verMinor = inBuffer.readShort();
+	short verPatch = inBuffer.readShort();
+	short verBuild = inBuffer.readShort();
 	int id = inBuffer.readInt();
 	int pid = inBuffer.readInt();
 	int sessionIdLen = inBuffer.readInt();
@@ -694,7 +697,8 @@ public class JciNormalConnection extends JciConnection
 	byte holdableResult = inBuffer.readByte();
 	byte statementPooling = inBuffer.readByte();
 
-	casInfo.set(protocolVersion, id, pid, dbSessionId, dbms, holdableResult, statementPooling);
+	casInfo.set(verMajor, verMinor, verPatch, verBuild, id, pid, dbSessionId, dbms, holdableResult,
+			statementPooling);
 
 	inBuffer.readByte(); /* cci_default_autocommit. not used in jdbc */
 	this.serverStartTime = inBuffer.readInt();
@@ -782,7 +786,7 @@ public class JciNormalConnection extends JciConnection
     public String getCasInfoString()
     {
 	return String.format("%s:%d:%s,%d,%d", curConnInfo.getHostname(), curConnInfo.getPort(),
-			curConnInfo.getstrPortName(), casInfo.getId(), casInfo.getPid());
+			curConnInfo.getPortName(), casInfo.getId(), casInfo.getPid());
     }
 
     boolean isActive()

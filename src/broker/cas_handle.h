@@ -27,8 +27,6 @@
 
 #ident "$Id$"
 
-#include "cas_db_inc.h"
-
 #define SRV_HANDLE_QUERY_SEQ_NUM(SRV_HANDLE)    \
         ((SRV_HANDLE) ? (SRV_HANDLE)->query_seq_num : 0)
 
