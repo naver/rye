@@ -132,9 +132,8 @@ CIRP_AGENT_STATUS
 cirp_get_analyzer_status (CIRP_ANALYZER_INFO * analyzer)
 {
   CIRP_AGENT_STATUS status;
-  int rv;
 
-  rv = pthread_mutex_lock (&analyzer->lock);
+  pthread_mutex_lock (&analyzer->lock);
   status = analyzer->status;
   pthread_mutex_unlock (&analyzer->lock);
 
@@ -152,9 +151,7 @@ int
 cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
 			     CIRP_AGENT_STATUS status)
 {
-  int rv;
-
-  rv = pthread_mutex_lock (&analyzer->lock);
+  pthread_mutex_lock (&analyzer->lock);
   analyzer->status = status;
   pthread_mutex_unlock (&analyzer->lock);
 

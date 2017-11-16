@@ -105,6 +105,7 @@ main (int argc, char *argv[])
   CIRP_THREAD_ENTRY writer_entry, flusher_entry;
   CIRP_THREAD_ENTRY analyzer_entry, health_entry;
   CIRP_THREAD_ENTRY *applier_entries = NULL;
+  char prog_name[] = UTIL_REPL_NAME;
 
   REPL_ARGUMENT repl_arg;
   int option_index;
@@ -115,7 +116,7 @@ main (int argc, char *argv[])
     {0, 0, 0, 0}
   };
 
-  argv[0] = (char *) UTIL_REPL_NAME;
+  argv[0] = prog_name;
 
   /* init client functions */
   cci_set_client_functions (or_pack_db_idxkey, db_idxkey_is_null,

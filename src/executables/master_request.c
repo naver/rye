@@ -278,7 +278,8 @@ static int
 css_process_start_time_info (CSS_CONN_ENTRY * conn, unsigned short rid,
 			     char *buffer, int buf_size)
 {
-  char *reply, *ptr;
+  char *reply;
+  UNUSED_VAR char *ptr;
   int reply_size;
   char *my_time;
   int strlen;
