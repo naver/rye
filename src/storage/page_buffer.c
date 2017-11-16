@@ -1230,14 +1230,14 @@ try_again:
 	  /* perm volume */
 	  if (bufptr->vpid.volid > NULL_VOLID)
 	    {
-	      if (!log_is_in_crash_recovery ())
-		{
-		  if (!LSA_ISNULL (&(prv_p->lsa)))
-		    {
-		      assert (prv_p->pageid != NULL_PAGEID);
-		      assert (prv_p->volid != NULL_VOLID);
-		    }
-		}
+//            if (!log_is_in_crash_recovery ())
+	      {
+		if (!LSA_ISNULL (&(prv_p->lsa)))
+		  {
+		    assert (prv_p->pageid != NULL_PAGEID);
+		    assert (prv_p->volid != NULL_VOLID);
+		  }
+	      }
 	    }
 #endif /* NDEBUG */
 
@@ -1355,9 +1355,14 @@ try_again:
 	      || ((ptype == PAGE_FILE_HEADER || ptype == PAGE_FILE_TAB)
 		  && (pself == PAGE_FILE_HEADER || pself == PAGE_FILE_TAB))
 	      || ((ptype == PAGE_HEAP_HEADER || ptype == PAGE_HEAP)
-		  && (pself == PAGE_HEAP_HEADER || pself == PAGE_HEAP))
-	      /* || ((ptype == PAGE_BTREE_ROOT || ptype == PAGE_BTREE)
-	         && (pself == PAGE_BTREE_ROOT || pself == PAGE_BTREE)) */ );
+		  && (pself == PAGE_HEAP_HEADER || pself == PAGE_HEAP)));
+
+#if 1
+      if (pself == PAGE_UNKNOWN)
+	{
+	  (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);
+	}
+#endif
     }
 
   /* Record number of fetches in statistics */
@@ -7351,12 +7356,17 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
       /* Check iff is the first time */
       if (prv_p->pageid == NULL_PAGEID && prv_p->volid == NULL_VOLID)
 	{
+	  assert (LSA_ISNULL (&(prv_p->lsa)));
+
 	  (void) fileio_initialize_res (thread_p, prv_p);
 
 	  /* Set Page identifier */
 	  prv_p->pageid = bufptr->vpid.pageid;
 	  prv_p->volid = bufptr->vpid.volid;
 	}
+
+      assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
+      assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
     }
 
 }
@@ -7539,20 +7549,20 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 #endif
 
       /* Check Page identifier */
-      if (!log_is_in_crash_recovery ())
-	{
-	  if (!LSA_ISNULL (&(prv_p->lsa)))
-	    {
-	      assert (prv_p->pageid != NULL_PAGEID);
-	      assert (prv_p->volid != NULL_VOLID);
+//      if (!log_is_in_crash_recovery ())
+      {
+	if (!LSA_ISNULL (&(prv_p->lsa)))
+	  {
+	    assert (prv_p->pageid != NULL_PAGEID);
+	    assert (prv_p->volid != NULL_VOLID);
 
-	      assert (bufptr->vpid.pageid == prv_p->pageid);
-	      assert (bufptr->vpid.volid == prv_p->volid);
+	    assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
+	    assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
 
-	      return (bufptr->vpid.pageid == prv_p->pageid
-		      && bufptr->vpid.volid == prv_p->volid);
-	    }
-	}
+	    return (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid)
+		    && VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
+	  }
+      }
     }
 
   return true;			/* nop */

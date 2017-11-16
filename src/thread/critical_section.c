@@ -1535,7 +1535,8 @@ int
 csect_exit_critical_section (CSS_CRITICAL_SECTION * cs_ptr)
 {
   int error_code = NO_ERROR;
-  bool ww, wr, wp;
+  bool ww, wp;
+  UNUSED_VAR bool wr;
 
   assert (cs_ptr != NULL);
 

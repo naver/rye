@@ -777,13 +777,12 @@ heap_bestspace_add (THREAD_ENTRY * thread_p, const HFID * hfid,
 		    VPID * vpid, int freespace)
 {
   HEAP_BESTSPACE_ENTRY *ent;
-  int rc;
   int error_code = NO_ERROR;
 
   assert (file_find_page (thread_p, &(hfid->vfid), vpid) == true);
   assert (prm_get_integer_value (PRM_ID_HF_MAX_BESTSPACE_ENTRIES) > 0);
 
-  rc = pthread_mutex_lock (&heap_Bestspace->bestspace_mutex);
+  pthread_mutex_lock (&heap_Bestspace->bestspace_mutex);
 
   ent = (HEAP_BESTSPACE_ENTRY *) mht_get (heap_Bestspace->vpid_ht, vpid);
 
@@ -918,9 +917,8 @@ heap_bestspace_del_all_entry_by_hfid (THREAD_ENTRY * thread_p,
   HEAP_BESTSPACE_ENTRY *ent;
   HEAP_SYNC_NODE *sync_node;
   int del_cnt = 0;
-  int rc;
 
-  rc = pthread_mutex_lock (&heap_Bestspace->bestspace_mutex);
+  pthread_mutex_lock (&heap_Bestspace->bestspace_mutex);
 
   while ((ent = (HEAP_BESTSPACE_ENTRY *) mht_get2 (heap_Bestspace->hfid_ht,
 						   hfid, NULL)) != NULL)
@@ -944,7 +942,7 @@ heap_bestspace_del_all_entry_by_hfid (THREAD_ENTRY * thread_p,
 	  mht_count (heap_Bestspace->hfid_ht));
   pthread_mutex_unlock (&heap_Bestspace->bestspace_mutex);
 
-  rc = pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
+  pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
 
   heap_Bestspace->bestspace_sync.stop_sync_bestspace = true;
 
@@ -1018,12 +1016,11 @@ heap_bestspace_remove (THREAD_ENTRY * thread_p, HEAP_BESTSPACE * best,
 {
   HEAP_BESTSPACE_ENTRY *ent = NULL;
   int error_code = NO_ERROR;
-  int rc;
 
   best->freespace = -1;
   VPID_SET_NULL (&best->vpid);
 
-  rc = pthread_mutex_lock (&heap_Bestspace->bestspace_mutex);
+  pthread_mutex_lock (&heap_Bestspace->bestspace_mutex);
 
   ent =
     (HEAP_BESTSPACE_ENTRY *) mht_get2 (heap_Bestspace->hfid_ht, hfid, NULL);
@@ -1099,9 +1096,8 @@ heap_bestspace_append_hfid_to_sync_list (UNUSED_ARG THREAD_ENTRY * thread_p,
 {
   int error_code = NO_ERROR;
   HEAP_SYNC_NODE *sync_node;
-  int rc;
 
-  rc = pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
+  pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
 
   if (heap_Bestspace->bestspace_sync.free_list_count > 0)
     {
@@ -1167,9 +1163,8 @@ static HEAP_SYNC_NODE *
 heap_bestspace_remove_sync_list (UNUSED_ARG THREAD_ENTRY * thread_p)
 {
   HEAP_SYNC_NODE *sync_list = NULL;
-  int rc;
 
-  rc = pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
+  pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
 
   sync_list = heap_Bestspace->bestspace_sync.sync_list;
   heap_Bestspace->bestspace_sync.sync_list = NULL;
@@ -1622,7 +1617,6 @@ heap_classrepr_decache_and_lock (THREAD_ENTRY * thread_p,
 {
   HEAP_CLASSREPR_ENTRY *cache_entry, *prev_entry, *cur_entry;
   HEAP_CLASSREPR_HASH *hash_anchor;
-  int rv;
   int ret = NO_ERROR;
 
   if (class_oid == NULL)
@@ -1642,7 +1636,7 @@ heap_classrepr_decache_and_lock (THREAD_ENTRY * thread_p,
    */
   while (true)
     {
-      rv = pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
+      pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
 
       for (cache_entry = hash_anchor->hash_next; cache_entry != NULL;
 	   cache_entry = cache_entry->hash_next)
@@ -1789,7 +1783,6 @@ heap_classrepr_free (OR_CLASSREP * classrep, int *idx_incache)
 #if !defined(NDEBUG)
   HEAP_CLASSREPR_HASH *hash_anchor;
 #endif
-  int rv;
   int ret = NO_ERROR;
 
   if (*idx_incache < 0)
@@ -1805,7 +1798,7 @@ heap_classrepr_free (OR_CLASSREP * classrep, int *idx_incache)
     &heap_Classrepr->hash_table[REPR_HASH (&cache_entry->class_oid)];
 #endif
 
-  rv = pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
+  pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
 
 #if !defined(NDEBUG)
   {
@@ -1894,13 +1887,12 @@ heap_classrepr_has_cache_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
 {
   HEAP_CLASSREPR_ENTRY *cache_entry = NULL;
   HEAP_CLASSREPR_HASH *hash_anchor = NULL;
-  int rv = NO_ERROR;
   bool found = false;
 
   hash_anchor = &heap_Classrepr->hash_table[REPR_HASH (class_oid)];
 
   found = false;
-  rv = pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
+  pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
   for (cache_entry = hash_anchor->hash_next; cache_entry != NULL;
        cache_entry = cache_entry->hash_next)
     {
@@ -1930,13 +1922,12 @@ heap_classrepr_has_lock (UNUSED_ARG THREAD_ENTRY * thread_p,
 #else
   HEAP_CLASSREPR_LOCK *cur_lock_entry = NULL;
   HEAP_CLASSREPR_HASH *hash_anchor = NULL;
-  int rv = NO_ERROR;
   bool found = false;
 
   hash_anchor = &heap_Classrepr->hash_table[REPR_HASH (class_oid)];
 
   found = false;
-  rv = pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
+  pthread_mutex_lock (&heap_Classrepr->classrepr_mutex);
   for (cur_lock_entry = hash_anchor->lock_next; cur_lock_entry != NULL;
        cur_lock_entry = cur_lock_entry->lock_next)
     {
@@ -3519,7 +3510,6 @@ heap_bestspace_sync_all_heap_files_if_needed (THREAD_ENTRY * thread_p)
   int error_code = NO_ERROR;
   DB_BIGINT dummy_num_recs;
   int node_count;
-  int rc;
 
   sync_list = heap_bestspace_remove_sync_list (thread_p);
   if (sync_list == NULL)
@@ -3555,7 +3545,7 @@ heap_bestspace_sync_all_heap_files_if_needed (THREAD_ENTRY * thread_p)
       node_count++;
     }
 
-  rc = pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
+  pthread_mutex_lock (&heap_Bestspace->bestspace_sync.sync_mutex);
 
   assert (node_tail != NULL);
   assert (node_count >= 1);
@@ -6735,7 +6725,7 @@ heap_flush (THREAD_ENTRY * thread_p, const OID * oid)
   INT16 type;
   OID forward_oid;
   RECDES forward_recdes = RECDES_INITIALIZER;
-  int ret = NO_ERROR;
+  UNUSED_VAR int ret = NO_ERROR;
 
   if (HEAP_ISVALID_OID (oid) != DISK_VALID)
     {
@@ -7275,7 +7265,7 @@ heap_scancache_end_internal (THREAD_ENTRY * thread_p,
 int
 heap_scancache_end (THREAD_ENTRY * thread_p, HEAP_SCANCACHE * scan_cache)
 {
-  int ret;
+  UNUSED_VAR int ret;
 
   ret = heap_scancache_end_internal (thread_p, scan_cache, END_SCAN);
 
@@ -7291,7 +7281,7 @@ int
 heap_scancache_end_when_scan_will_resume (THREAD_ENTRY * thread_p,
 					  HEAP_SCANCACHE * scan_cache)
 {
-  int ret;
+  UNUSED_VAR int ret;
 
   ret = heap_scancache_end_internal (thread_p, scan_cache, CONTINUE_SCAN);
 
@@ -9631,7 +9621,7 @@ exit_on_error:
 void
 heap_attrinfo_end (THREAD_ENTRY * thread_p, HEAP_CACHE_ATTRINFO * attr_info)
 {
-  int ret = NO_ERROR;
+  UNUSED_VAR int ret = NO_ERROR;
 
   /* check to make sure the attr_info has been used */
   if (attr_info->num_values == -1)

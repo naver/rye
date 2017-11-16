@@ -261,10 +261,13 @@ static bool ehash_initialize_bucket_new_page (THREAD_ENTRY * thread_p,
 					      void *alignment_depth);
 static bool ehash_initialize_dir_new_pages (THREAD_ENTRY * thread_p,
 					    const VFID * vfid,
-					    const FILE_TYPE file_type,
-					    const VPID * ignore_vpid,
+					    UNUSED_ARG const FILE_TYPE
+					    file_type,
+					    UNUSED_ARG const VPID *
+					    ignore_vpid,
 					    const INT32 * nthpage,
-					    INT32 npages, void *ignore_args);
+					    INT32 npages,
+					    UNUSED_ARG void *ignore_args);
 static short ehash_get_key_size (DB_TYPE key_type);
 static EHID *ehash_create_helper (THREAD_ENTRY * thread_p, EHID * ehid,
 				  DB_TYPE key_type, int exp_num_entries,
@@ -809,10 +812,10 @@ ehash_initialize_bucket_new_page (THREAD_ENTRY * thread_p,
  */
 static bool
 ehash_initialize_dir_new_pages (THREAD_ENTRY * thread_p, const VFID * vfid,
-				const FILE_TYPE file_type,
-				const VPID * ignore_vpid,
+				UNUSED_ARG const FILE_TYPE file_type,
+				UNUSED_ARG const VPID * ignore_vpid,
 				const INT32 * nthpage, INT32 npages,
-				void *ignore_args)
+				UNUSED_ARG void *ignore_args)
 {
   int i, max;
   VPID nth_vpid;
@@ -4975,9 +4978,9 @@ ehash_apply_each (THREAD_ENTRY * thread_p, EHID * ehid_p, RECDES * recdes_p,
 #endif
   char *str_next_key_p, *temp_p;
   int key_size;
-  char next_key[sizeof (double) * 2];	/* TODO - */
+  OID next_oid;
   int i;
-  void *key_p = &next_key;
+  void *key_p;
 
   switch (key_type)
     {
@@ -5021,33 +5024,9 @@ ehash_apply_each (THREAD_ENTRY * thread_p, EHID * ehid_p, RECDES * recdes_p,
       break;
 
     case DB_TYPE_OBJECT:
-      *((OID *) & next_key) = *(OID *) bucket_record_p;
+      COPY_OID (&next_oid, (OID *) bucket_record_p);
+      key_p = &next_oid;
       break;
-#if defined (ENABLE_UNUSED_FUNCTION)
-    case DB_TYPE_DOUBLE:
-      OR_MOVE_DOUBLE (bucket_record_p, &next_key);
-      break;
-
-    case DB_TYPE_INTEGER:
-      *((int *) &next_key) = *(int *) bucket_record_p;
-      break;
-
-    case DB_TYPE_BIGINT:
-      *((DB_BIGINT *) & next_key) = *(DB_BIGINT *) bucket_record_p;
-      break;
-
-    case DB_TYPE_DATE:
-      *((DB_DATE *) & next_key) = *(DB_DATE *) bucket_record_p;
-      break;
-
-    case DB_TYPE_TIME:
-      *((DB_TIME *) & next_key) = *(DB_TIME *) bucket_record_p;
-      break;
-
-    case DB_TYPE_DATETIME:
-      *((DB_DATETIME *) & next_key) = *(DB_DATETIME *) bucket_record_p;
-      break;
-#endif
 
     default:
       /* Unspecified key type: Directory header has been corrupted */

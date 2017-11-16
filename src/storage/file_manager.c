@@ -1778,7 +1778,8 @@ file_descriptor_insert (UNUSED_ARG THREAD_ENTRY * thread_p,
 	    }
 #endif /* FILE_DEBUG */
 
-	  addr.pgptr = pgbuf_fix_newpg (thread_p, &set_vpids[ipage]);
+	  addr.pgptr =
+	    pgbuf_fix_newpg (thread_p, &set_vpids[ipage], PAGE_FILE_TAB);
 	  if (addr.pgptr == NULL)
 	    {
 	      goto exit_on_error;

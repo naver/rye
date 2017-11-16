@@ -794,125 +794,99 @@ mnt_stats_is_collecting_time (MNT_SERVER_ITEM item)
 }
 
 PAGE_TYPE
-mnt_server_item_to_page_ptype (MNT_SERVER_ITEM item)
+mnt_server_item_to_page_ptype (const MNT_SERVER_ITEM item)
 {
-  PAGE_TYPE ptype;
-
   switch (item)
     {
     case MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER:	/* 1 file header page             */
-      ptype = PAGE_FILE_HEADER;
-      break;
+      return PAGE_FILE_HEADER;
     case MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB:	/* 2 file allocset table page             */
-      ptype = PAGE_FILE_TAB;
-      break;
+      return PAGE_FILE_TAB;
     case MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER:	/* 3 heap header page                            */
-      ptype = PAGE_HEAP_HEADER;
-      break;
+      return PAGE_HEAP_HEADER;
     case MNT_STATS_DATA_PAGE_FETCHES_HEAP:	/* 4 heap page                            */
-      ptype = PAGE_HEAP;
-      break;
+      return PAGE_HEAP;
     case MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER:	/* 5 volume header page                   */
-      ptype = PAGE_VOLHEADER;
-      break;
+      return PAGE_VOLHEADER;
     case MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP:	/* 6 volume bitmap page                   */
-      ptype = PAGE_VOLBITMAP;
-      break;
+      return PAGE_VOLBITMAP;
     case MNT_STATS_DATA_PAGE_FETCHES_XASL:	/* 7 xasl stream page                     */
-      ptype = PAGE_XASL;
-      break;
+      return PAGE_XASL;
     case MNT_STATS_DATA_PAGE_FETCHES_QRESULT:	/* 8 query result page                    */
-      ptype = PAGE_QRESULT;
-      break;
+      return PAGE_QRESULT;
     case MNT_STATS_DATA_PAGE_FETCHES_EHASH:	/* 9 ehash bucket/dir page                */
-      ptype = PAGE_EHASH;
-      break;
+      return PAGE_EHASH;
     case MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW:	/* 10 overflow page (with ovf_keyval)      */
-      ptype = PAGE_OVERFLOW;
-      break;
+      return PAGE_OVERFLOW;
     case MNT_STATS_DATA_PAGE_FETCHES_AREA:	/* 11 area page                            */
-      ptype = PAGE_AREA;
-      break;
+      return PAGE_AREA;
     case MNT_STATS_DATA_PAGE_FETCHES_CATALOG:	/* 12 catalog page                         */
-      ptype = PAGE_CATALOG;
-      break;
+      return PAGE_CATALOG;
     case MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT:	/* 13 b+tree index root page                    */
-      ptype = PAGE_BTREE_ROOT;
-      break;
+      return PAGE_BTREE_ROOT;
     case MNT_STATS_DATA_PAGE_FETCHES_BTREE:	/* 14 b+tree index page                    */
-      ptype = PAGE_BTREE;
-      break;
+      return PAGE_BTREE;
 
     case MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN:	/* 0 unknown                     */
+      return PAGE_UNKNOWN;
+
     default:
-      ptype = PAGE_UNKNOWN;
       break;
     }
 
-  return ptype;
+  assert (false);
+
+  return PAGE_UNKNOWN;
 }
 
 MNT_SERVER_ITEM
-mnt_page_ptype_to_server_item (PAGE_TYPE ptype)
+mnt_page_ptype_to_server_item (const PAGE_TYPE ptype)
 {
-  MNT_SERVER_ITEM item;
-
   assert (ptype < PAGE_LAST);
 
   switch (ptype)
     {
     case PAGE_FILE_HEADER:	/* 1 file header page                     */
-      item = MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
     case PAGE_FILE_TAB:	/* 2 file allocset table page             */
-      item = MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB;
     case PAGE_HEAP_HEADER:	/* 3 heap header page               */
-      item = MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
     case PAGE_HEAP:		/* 4 heap page                            */
-      item = MNT_STATS_DATA_PAGE_FETCHES_HEAP;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_HEAP;
     case PAGE_VOLHEADER:	/* 5 volume header page                   */
-      item = MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER;
     case PAGE_VOLBITMAP:	/* 6 volume bitmap page                   */
-      item = MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP;
     case PAGE_XASL:		/* 7 xasl stream page                     */
-      item = MNT_STATS_DATA_PAGE_FETCHES_XASL;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_XASL;
     case PAGE_QRESULT:		/* 8 query result page                    */
-      item = MNT_STATS_DATA_PAGE_FETCHES_QRESULT;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_QRESULT;
     case PAGE_EHASH:		/* 9 ehash bucket/dir page                */
-      item = MNT_STATS_DATA_PAGE_FETCHES_EHASH;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_EHASH;
     case PAGE_OVERFLOW:	/* 10 overflow page                        */
-      item = MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW;
     case PAGE_AREA:		/* 11 area page                            */
-      item = MNT_STATS_DATA_PAGE_FETCHES_AREA;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_AREA;
     case PAGE_CATALOG:		/* 12 catalog page                         */
-      item = MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
     case PAGE_BTREE_ROOT:	/* 13 b+tree index root page               */
-      item = MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT;
     case PAGE_BTREE:		/* 14 b+tree index page                    */
-      item = MNT_STATS_DATA_PAGE_FETCHES_BTREE;
-      break;
+      return MNT_STATS_DATA_PAGE_FETCHES_BTREE;
 
     case PAGE_UNKNOWN:		/* 0 used for initialized page            */
+      return MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
+
 #if 1				/* TODO - */
     case PAGE_LOG:		/* 15 NONE - log page (unused)             */
     case PAGE_DROPPED_FILES:
 #endif
     default:
-      item = MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
       break;
     }
 
-  return item;
+  assert (false);
+
+  return MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
 }

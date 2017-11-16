@@ -315,7 +315,7 @@ extern int mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
 extern bool mnt_stats_is_cumulative (MNT_SERVER_ITEM item);
 extern bool mnt_stats_is_collecting_time (MNT_SERVER_ITEM item);
 
-extern PAGE_TYPE mnt_server_item_to_page_ptype (MNT_SERVER_ITEM item);
-extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item (PAGE_TYPE ptype);
+extern PAGE_TYPE mnt_server_item_to_page_ptype (const MNT_SERVER_ITEM item);
+extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item (const PAGE_TYPE ptype);
 
 #endif /* _PERF_MONITOR_H_ */

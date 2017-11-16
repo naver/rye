@@ -92,6 +92,10 @@ typedef INT32 LOLENGTH;		/* Length for a large object */
 
 typedef INT32 GROUPID;		/* Shard group identifier */
 
+#define PAGEID_EQ(p1, p2) ((p1) == (p2))
+#define VOLID_EQ(v1, v2) ((v1) == (v2))
+
+
 /* Log address structure */
 
 typedef struct log_lsa LOG_LSA;	/* Log address identifier */

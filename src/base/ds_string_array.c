@@ -23,6 +23,7 @@
  */
 
 #include <assert.h>
+#include <sys/time.h>
 
 #include "ds_string_array.h"
 
