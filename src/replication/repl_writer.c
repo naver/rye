@@ -1420,7 +1420,7 @@ cirpwr_archive_active_log (void)
   char buffer[LINE_MAX];
   BACKGROUND_ARCHIVING_INFO *bg_arv_info;
   LOG_HEADER *m_log_hdr = NULL;
-  CIRP_WRITER_INFO *writer = NULL;
+  UNUSED_VAR CIRP_WRITER_INFO *writer = NULL;
   int error = NO_ERROR;
 
   writer = &Repl_Info->writer_info;
@@ -2009,9 +2009,7 @@ static int
 cirpwr_change_status (CIRP_WRITER_INFO * writer_info,
 		      CIRP_AGENT_STATUS status)
 {
-  int rv;
-
-  rv = pthread_mutex_lock (&writer_info->lock);
+  pthread_mutex_lock (&writer_info->lock);
   writer_info->status = status;
   pthread_mutex_unlock (&writer_info->lock);
 
@@ -2027,10 +2025,9 @@ cirpwr_change_status (CIRP_WRITER_INFO * writer_info,
 CIRP_AGENT_STATUS
 cirpwr_get_status (CIRP_WRITER_INFO * writer_info)
 {
-  int rv;
   CIRP_AGENT_STATUS status;
 
-  rv = pthread_mutex_lock (&writer_info->lock);
+  pthread_mutex_lock (&writer_info->lock);
   status = writer_info->status;
   pthread_mutex_unlock (&writer_info->lock);
 

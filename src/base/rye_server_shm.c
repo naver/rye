@@ -182,8 +182,8 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
 {
   MNT_SERVER_ITEM parent_item;
 #if defined(HAVE_ATOMIC_BUILTINS)
-  INT64 after_value;
-  UINT64 after_exec_time;
+  UNUSED_VAR INT64 after_value;
+  UNUSED_VAR UINT64 after_exec_time;
 #endif
 
   if (rye_Server_shm == NULL)

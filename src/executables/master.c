@@ -150,7 +150,6 @@ css_master_error (const char *error_string)
 static int
 css_master_timeout (void)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp;
   struct timeval timeout;
 
@@ -166,7 +165,7 @@ css_master_timeout (void)
    * processes, at least initially.  There don't appear to be any
    * similarly named "wait" functions in the MSVC runtime library.
    */
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (kill (temp->pid, 0) && errno == ESRCH)
@@ -703,11 +702,10 @@ css_enroll_master_exception_sockets (fd_set * fd_var)
 static void
 css_master_select_error (void)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp;
 
 again:
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd) && fcntl (temp->fd, F_GETFL, 0) < 0)
@@ -733,11 +731,10 @@ again:
 static void
 css_check_master_socket_input (int *count, fd_set * fd_var)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp, *next;
   SOCKET new_fd;
 
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
 
   for (temp = css_Master_socket_anchor; *count && temp; temp = next)
     {
@@ -788,11 +785,10 @@ css_check_master_socket_output (void)
 static int
 css_check_master_socket_exception (fd_set * fd_var)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp;
 
 again:
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd)
