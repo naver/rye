@@ -1145,6 +1145,7 @@ session_get_session_state (THREAD_ENTRY * thread_p)
   /* any request for this object should find it cached in the connection
    * entry */
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SES_SESSION_EXPIRED, 0);
+
   return NULL;
 #else
   SESSION_KEY key;
@@ -1157,11 +1158,7 @@ session_get_session_state (THREAD_ENTRY * thread_p)
       return NULL;
     }
 
-  error = csect_enter_as_reader (thread_p, CSECT_SESSION_STATE, INF_WAIT);
-  if (error != NO_ERROR)
-    {
-      return NULL;
-    }
+  csect_enter_as_reader (thread_p, CSECT_SESSION_STATE, INF_WAIT);
 
   if (!sessions_is_states_table_initialized ())
     {
