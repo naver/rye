@@ -997,7 +997,7 @@ pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 PAGE_PTR
 pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		   int request_mode, PGBUF_LATCH_CONDITION condition,
-		   UNUSED_ARG const PAGE_TYPE ptype)
+		   PAGE_TYPE ptype)
 #endif				/* NDEBUG */
 {
   PGBUF_BUFFER_HASH *hash_anchor;

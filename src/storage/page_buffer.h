@@ -176,7 +176,7 @@ extern PAGE_PTR pgbuf_fix_release (THREAD_ENTRY * thread_p,
 				   const VPID * vpid, int newpg,
 				   int requestmode,
 				   PGBUF_LATCH_CONDITION condition,
-				   UNUSED_ARG const PAGE_TYPE ptype);
+				   PAGE_TYPE ptype);
 
 #define pgbuf_fix_newpg(thread_p, vpid, ptype) \
         pgbuf_fix_newpg_release(thread_p, vpid, ptype)

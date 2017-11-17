@@ -316,7 +316,7 @@ server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   int reply_size = OR_ALIGNED_BUF_SIZE (a_reply);
   char *ptr;
-  const char *client_host;
+  const char *client_host = "";
   int client_capabilities, client_bit_platform;
   int client_type;
   int strlen1;
