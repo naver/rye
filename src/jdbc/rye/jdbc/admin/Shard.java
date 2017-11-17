@@ -52,13 +52,13 @@ public class Shard
 
 	if (command == null) {
 	    if (err != null) {
-		err.printf("rye shard utility\n");
-		err.printf("usage: java %s <command> [args]\n\n", className);
-		err.printf("available commands:\n");
+		err.printf("rye shard utility%n");
+		err.printf("usage: java %s <command> [args]%n%n", className);
+		err.printf("available commands:%n");
 		for (int i = 0; i < allCommands.length; i++) {
-		    err.printf("    %s\n", allCommands[i].commandName());
+		    err.printf("    %s%n", allCommands[i].commandName());
 		}
-		err.printf("\n");
+		err.printf("%n");
 	    }
 	    return false;
 	}

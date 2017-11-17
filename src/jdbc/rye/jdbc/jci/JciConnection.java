@@ -279,8 +279,8 @@ abstract public class JciConnection
 
 	StringBuffer b = new StringBuffer();
 	b.append("SLOW QUERY\n");
-	b.append(String.format("[CAS INFO]\n%s\n", getCasInfoString()));
-	b.append(String.format("[TIME]\nSTART: %s, ELAPSED: %d\n", dateFormat.format(new Date(begin)), elapsed));
+	b.append(String.format("[CAS INFO]%n%s%n", getCasInfoString()));
+	b.append(String.format("[TIME]%nSTART: %s, ELAPSED: %d%n", dateFormat.format(new Date(begin)), elapsed));
 	b.append("[SQL]\n").append(sql).append('\n');
 	if (p != null && p.getCount() > 0) {
 	    b.append("[BIND]\n");

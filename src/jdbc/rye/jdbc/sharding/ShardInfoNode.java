@@ -178,7 +178,7 @@ class ShardInfoNode
 	{
 	    StringBuffer sb = new StringBuffer();
 	    for (int i = 0; i < this.numDsInfo; i++) {
-		sb.append(String.format("	%s: total=%d, available=%d\n", this.conPoolArray[i].getServicePortName(),
+		sb.append(String.format("	%s: total=%d, available=%d%n", this.conPoolArray[i].getServicePortName(),
 				this.conPoolArray[i].getTotalConns(), this.conPoolArray[i].getAvailableConns()));
 	    }
 	    return sb.toString();
@@ -326,7 +326,7 @@ class ShardInfoNode
 	StringBuffer sb = new StringBuffer();
 
 	if (level > 1) {
-	    sb.append(String.format("NODE version = %d\n", version));
+	    sb.append(String.format("NODE version = %d%n", version));
 	}
 
 	Collection<ShardConnectionPool> allNodeConPools = nodeMap.values();
