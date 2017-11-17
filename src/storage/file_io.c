@@ -1010,7 +1010,6 @@ fileio_initialize_res (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p)
   prv_p->pageid = NULL_PAGEID;
   prv_p->volid = NULL_VOLID;
 
-  prv_p->ptype = '\0';
   (void) fileio_set_page_ptype (thread_p, prv_p, PAGE_UNKNOWN);
   prv_p->pflag_reserve_1 = '\0';
   prv_p->p_reserve_2 = 0;
