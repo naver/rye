@@ -49,18 +49,18 @@ public class RyeDriver implements Driver
 {
     // version
     public static final String version_string = "@JDBC_DRIVER_VERSION_STRING@";
-    public static final int major_version;
-    public static final int minor_version;
-    public static final int patch_version;
+    public static final RyeVersion driverVersion;
 
     static {
 	StringTokenizer st = new StringTokenizer(version_string, ".");
 	if (st.countTokens() != 4) {
 	    throw new RuntimeException("Could not parse version_string: " + version_string);
 	}
-	major_version = Integer.parseInt(st.nextToken());
-	minor_version = Integer.parseInt(st.nextToken());
-	patch_version = Integer.parseInt(st.nextToken());
+	short verMajor = Short.parseShort(st.nextToken());
+	short verMinor = Short.parseShort(st.nextToken());
+	short verPatch = Short.parseShort(st.nextToken());
+	short verBuild = Short.parseShort(st.nextToken());
+	driverVersion = new RyeVersion(verMajor, verMinor, verPatch, verBuild);
     }
 
     public static CopyOnWriteArrayList<JciConnectionInfo> unreachableHosts;
@@ -139,12 +139,12 @@ public class RyeDriver implements Driver
 
     public int getMajorVersion()
     {
-	return major_version;
+	return driverVersion.getMajor();
     }
 
     public int getMinorVersion()
     {
-	return minor_version;
+	return driverVersion.getMinor();
     }
 
     public boolean jdbcCompliant()

@@ -53,6 +53,7 @@
 #include "locator_sr.h"
 #include "network_interface_sr.h"
 #include "utility.h"
+#include "perf_monitor.h"
 
 #include "fault_injection.h"
 
@@ -128,10 +129,9 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
   max_free = spage_max_space_for_new_record (thread_p, leaf_page);
 #if !defined(NDEBUG)
   key_len = btree_get_key_length (key);	/* TODO - */
-#endif
 
-  /* form a new leaf record */
   assert (BTREE_IS_VALID_KEY_LEN (key_len));
+#endif
 
   /* put a LOGICAL log to undo the insertion of <key, oid> pair
    * to the B+tree index. This will be a call to delete this pair
@@ -144,6 +144,7 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
       return ret;
     }
 
+  /* form a new leaf record */
   ret = btree_write_record (thread_p, btid, NULL, key, BTREE_LEAF_NODE, &rec);
   if (ret != NO_ERROR)
     {
@@ -1877,13 +1878,13 @@ start_point:
     }
 #endif
 
-  P = btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid, OLD_PAGE,
-		       P_req_mode, PGBUF_UNCONDITIONAL_LATCH);
+  P = btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid,
+		       P_req_mode, PGBUF_UNCONDITIONAL_LATCH,
+		       PAGE_BTREE_ROOT);
   if (P == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
-  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_ROOT);
 
   /* free space in the root node */
   max_free = spage_max_space_for_new_record (thread_p, P);
@@ -2058,7 +2059,7 @@ start_point:
 	      || Q_req_mode == PGBUF_LATCH_WRITE);
 
       Q = btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &Q_vpid,
-			   OLD_PAGE, Q_req_mode, PGBUF_UNCONDITIONAL_LATCH);
+			   Q_req_mode, PGBUF_UNCONDITIONAL_LATCH, PAGE_BTREE);
       if (Q == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -2067,13 +2068,11 @@ start_point:
       if (pheader.node_level > 2)
 	{
 	  /* Q is non leaf node */
-	  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_NON_LEAF);
 	}
       else
 	{
 	  /* Q is leaf node */
 	  assert (Q_req_mode == PGBUF_LATCH_WRITE);
-	  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_LEAF);
 	}
 
       max_free = spage_max_space_for_new_record (thread_p, Q);
@@ -2435,13 +2434,13 @@ start_point:
   P_vpid.volid = btid->sys_btid->vfid.volid;	/* read the root page */
   P_vpid.pageid = btid->sys_btid->root_pageid;
   P =
-    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid, OLD_PAGE,
-		     non_leaf_request_mode, PGBUF_UNCONDITIONAL_LATCH);
+    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &P_vpid,
+		     non_leaf_request_mode, PGBUF_UNCONDITIONAL_LATCH,
+		     PAGE_BTREE_ROOT);
   if (P == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
-  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_ROOT);
 
   /* free space in the root node */
   max_free = spage_max_space_for_new_record (thread_p, P);
@@ -2594,24 +2593,24 @@ start_point:
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
+
       if (pheader.node_level > 2)
 	{
 	  /* Q is non leaf node */
 	  Q =
 	    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &Q_vpid,
-			     OLD_PAGE, non_leaf_request_mode,
-			     PGBUF_UNCONDITIONAL_LATCH);
-	  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_NON_LEAF);
+			     non_leaf_request_mode,
+			     PGBUF_UNCONDITIONAL_LATCH, PAGE_BTREE);
 	}
       else
 	{
 	  /* Q is leaf node */
 	  Q =
 	    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid), &Q_vpid,
-			     OLD_PAGE, PGBUF_LATCH_WRITE,
-			     PGBUF_UNCONDITIONAL_LATCH);
-	  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_LEAF);
+			     PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			     PAGE_BTREE);
 	}
+
       if (Q == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -2977,13 +2976,12 @@ btree_get_next_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
 
   next_page =
     btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid),
-		     &node_header.next_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-		     PGBUF_UNCONDITIONAL_LATCH);
+		     &node_header.next_vpid, PGBUF_LATCH_WRITE,
+		     PGBUF_UNCONDITIONAL_LATCH, PAGE_BTREE);
   if (next_page == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
-  BTREE_STATS_ADD_WAIT_TIME (PAGE_BTREE_LEAF);
 
   return next_page;
 

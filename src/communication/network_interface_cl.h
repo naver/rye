@@ -315,7 +315,8 @@ extern int net_client_ping_server (int client_val, int *server_val,
 				   int timeout);
 extern int net_client_ping_server_with_handshake (int client_type,
 						  bool check_capabilities,
-						  int opt_cap);
+						  int opt_cap,
+						  RYE_VERSION * svr_version);
 
 extern int net_client_init (const char *dbname, const char *hostname);
 extern int net_client_final (void);

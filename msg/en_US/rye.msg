@@ -151,8 +151,8 @@ $set 5 MSGCAT_SET_ERROR
 83 Length of path "%1$s" plus length of prefix logname "%2$s" is too long; the combined length must be less than %3$d.
 84 Length of prefix logname "%1$s" is too long; the length must be less than %2$d.
 85 The prefix name "%1$s" is not the same as "%2$s" on the log disk. The log may have been renamed outside the database domain.
-86 Database is incompatible with current "%1$s" release "%2$s".
-87 There are recovery actions that must recovered using "%1$s" release "%2$s" instead of release "%3$s". After the recovery, the database can be run on release "%4$s".
+86 Database "%1$s" is incompatible with current release "%2$s".
+87 There are recovery actions that must recovered using release "%1$s" instead of release "%2$s". After the recovery, the database can be run on release "%1$s".
 88 Internal error: Release string "%1$s" cannot exceed %2$d. Must change header log.
 89 Log "%1$s" does not belong to the given database.
 90 Redo logging is always a page level logging operation. A data page pointer must be given as part of the address.
@@ -713,7 +713,7 @@ $ LOADDB
 645 SYSTEM ERROR: State = %1$s of Transaction = %2$d (index = %3$d) \n is not the correct state to apply client postpone/undo actions... ignored
 646 SYSTEM ERROR: It seems that a compensating record is missing for logical logging rcvindex = %1$s\n. Without this compensating record crash recovery will not be done correctly
 647 Backup "%1$s" does not belong to the given database.
-648 Backup is incompatible with current "%1$s" release "%2$s".
+648 Backup "%1$s" is incompatible with current release "%2$s".
 649 Given precision of %1$d is invalid; it should be greater than %2$d and no greater than %3$d.
 650 Cannot create enough threads for 'max_clients=%1$d'.
 651 There is not virtual memory to preallocate %1$d sort buffers for each of %2$d threads.

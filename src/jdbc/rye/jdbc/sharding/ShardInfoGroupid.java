@@ -176,10 +176,10 @@ class ShardInfoGroupid
     {
 	StringBuffer sb = new StringBuffer();
 	if (level > 1) {
-	    sb.append(String.format("GROUPID version = %d\n", version));
+	    sb.append(String.format("GROUPID version = %d%n", version));
 	}
 	for (int i = 0; i < nodeid.length; i++) {
-	    sb.append(String.format("%7d %3d\n", i + 1, nodeid[i]));
+	    sb.append(String.format("%7d %3d%n", i + 1, nodeid[i]));
 	}
 	return sb.toString();
     }

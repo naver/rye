@@ -378,7 +378,7 @@ char *
 db_get_database_version (void)
 {
   char *name = NULL;
-  name = ws_copy_string (rel_build_number ());
+  name = ws_copy_string (rel_version_string ());
   return name;
 }
 

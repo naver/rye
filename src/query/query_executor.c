@@ -66,6 +66,7 @@
 #include "session.h"
 #include "btree_load.h"
 #include "transform.h"
+#include "perf_monitor.h"
 #if defined(RYE_DEBUG)
 #include "environment_variable.h"
 #endif /* RYE_DEBUG */
@@ -8060,7 +8061,7 @@ qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table)
   db_make_bigint (&val->vals[i++], bi);
 
   db_make_bigint (&val->vals[i++], log_analyzer->start_time);
-  db_make_bigint (&val->vals[i++], log_analyzer->last_access_time);
+  db_make_bigint (&val->vals[i++], log_analyzer->source_applied_time);
   db_make_bigint (&val->vals[i++], log_analyzer->creation_time);
 
   db_make_bigint (&val->vals[i++], log_analyzer->queue_full);

@@ -38,6 +38,7 @@ extern "C"
 
 #if defined(__GNUC__)
 #define UNUSED_ARG	__attribute__((__unused__))
+#define UNUSED_VAR	__attribute__((__unused__))
 #else
 #define __attribute__(X)
 #endif

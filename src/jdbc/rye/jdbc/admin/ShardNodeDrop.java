@@ -46,10 +46,10 @@ class ShardNodeDrop extends ShardCommand
 
     void printUsage(PrintStream out, String className)
     {
-	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST NODEID\n\n", className, commandName());
-	out.printf("valid options:\n");
-	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)\n", DEFAULT_LOCAL_MGMT_PORT);
-	out.printf("\t--password=PASSWORD		dba password\n");
+	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST NODEID%n%n", className, commandName());
+	out.printf("valid options:%n");
+	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)%n", DEFAULT_LOCAL_MGMT_PORT);
+	out.printf("\t--password=PASSWORD		dba password%n");
     }
 
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
@@ -128,7 +128,7 @@ class ShardNodeDrop extends ShardCommand
 	}
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
-	    printStatus(true, "%s: drop node\n", globalDbnameArr[i]);
+	    printStatus(true, "%s: drop node%n", globalDbnameArr[i]);
 
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 	    shardMgmtDropAllNodeid(shardMgmtInfo, globalDbnameArr[i], dropAllNodeid, dbaPasswordArr[i]);

@@ -73,6 +73,7 @@ send_fd (int server_fd, int client_fd, int rid, struct timeval *recv_time)
   msg.msg_name = (caddr_t) 0;
   msg.msg_control = control_un.control;
   msg.msg_controllen = CONTROLLEN;
+  msg.msg_flags = 0;
 
   cmptr = CMSG_FIRSTHDR (&msg);
   cmptr->cmsg_level = SOL_SOCKET;

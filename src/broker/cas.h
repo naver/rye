@@ -31,6 +31,7 @@
 #define CAS
 #endif
 
+#include "release_string.h"
 #include "broker_shm.h"
 #include "cas_protocol.h"
 #include "cas_cci.h"
@@ -56,7 +57,7 @@ enum tran_auto_commit
 typedef struct t_req_info T_REQ_INFO;
 struct t_req_info
 {
-  short clt_protocol_ver;
+  RYE_VERSION clt_version;
   enum tran_auto_commit need_auto_commit;
   char need_rollback;
 };

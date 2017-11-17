@@ -312,7 +312,7 @@ extern VPID *file_alloc_pages_at_volid (THREAD_ENTRY * thread_p,
 						     void *args), void *args);
 extern int file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 			      const VPID * dealloc_vpid,
-			      UNUSED_ARG MNT_SERVER_ITEM dealloc_item);
+			      UNUSED_ARG PAGE_TYPE dealloc_ptype);
 extern int file_find_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 			   const VPID * vpid);
 extern int file_truncate_to_numpages (THREAD_ENTRY * thread_p,
@@ -346,9 +346,10 @@ extern int file_dump_descriptor (THREAD_ENTRY * thread_p, FILE * fp,
 extern int file_rv_undo_create_tmp (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void file_rv_dump_create_tmp (FILE * fp, int length_ignore,
 				     void *data);
-
+extern int file_rv_redo_ftab_chain (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void file_rv_dump_ftab_chain (FILE * fp, int length_ignore,
 				     void *data);
+extern int file_rv_redo_fhdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void file_rv_dump_fhdr (FILE * fp, int length_ignore, void *data);
 extern void file_rv_dump_idtab (FILE * fp, int length, void *data);
 extern void file_rv_dump_allocset (FILE * fp, int length_ignore, void *data);

@@ -669,7 +669,7 @@ rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
   int offset, area_len;
   RBL_OVERFLOW_DATA *ovfl_rec;
   const OVERFLOW_FIRST_PART *first;
-  const OVERFLOW_REST_PART *rest;
+  UNUSED_VAR const OVERFLOW_REST_PART *rest;
   int error;
 
   *is_completed = false;
@@ -1013,7 +1013,8 @@ rbl_print_insert_att_values (PARSER_CONTEXT * parser,
   PARSER_VARCHAR *buffer = NULL;
   SM_ATTRIBUTE *att;
   char *mem;
-  int c, error;
+  int c;
+  UNUSED_VAR int error;
   DB_VALUE v;
 
   c = 0;
@@ -1132,7 +1133,8 @@ rbl_print_pk (PARSER_CONTEXT * parser, SM_CLASS * class_, MOBJ obj)
   PARSER_VARCHAR *buffer = NULL;
   SM_ATTRIBUTE *att;
   char *mem;
-  int c, error;
+  int c;
+  UNUSED_VAR int error;
   SM_CLASS_CONSTRAINT *pk_cons;
   DB_VALUE v;
 

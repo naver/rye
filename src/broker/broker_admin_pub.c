@@ -99,7 +99,7 @@ broker_create_dir (const char *new_dir)
   if (new_dir == NULL)
     return -1;
 
-  strcpy (path, new_dir);
+  STRNCPY (path, new_dir, sizeof (path));
   trim (path);
 
   p = path;

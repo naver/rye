@@ -39,6 +39,7 @@
 #include <poll.h>
 
 #include "porting.h"
+#include "dbi.h"
 #include "cas_common.h"
 #include "cas_network.h"
 #include "cas.h"

@@ -340,7 +340,7 @@ public class ShardInfo
 	    BasicLogger logger = shardInfoManager.logger;
 	    if (logger != null && waiterCount > 0) {
 		synchronized (logger) {
-		    logger.logInfo(String.format("ShardInfo(%s) waiter = %d\n", mgmtConInfo.getDbname(), waiterCount));
+		    logger.logInfo(String.format("ShardInfo(%s) waiter = %d%n", mgmtConInfo.getDbname(), waiterCount));
 		}
 	    }
 

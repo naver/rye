@@ -47,14 +47,12 @@
 #include "databases_file.h"
 #include "message_catalog.h"
 #include "util_func.h"
-#include "perf_monitor.h"
 #include "environment_variable.h"
 #include "page_buffer.h"
 #include "connection_error.h"
 #include "release_string.h"
 #include "xserver_interface.h"
 #include "log_manager.h"
-#include "perf_monitor.h"
 #include "server_support.h"
 #include "connection_error.h"
 #include "network_interface_sr.h"
@@ -373,7 +371,6 @@ bk_read_backup_volume (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p)
   BK_THREAD_INFO *thread_info_p;
   BK_QUEUE *queue_p;
   BK_NODE *node_p = NULL;
-  int rv;
   bool need_unlock = false;
   BK_BACKUP_HEADER *backup_header_p;
   BK_BACKUP_PAGE *save_area_p;
@@ -407,7 +404,7 @@ bk_read_backup_volume (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p)
   node_p = NULL;		/* init */
   while (1)
     {
-      rv = pthread_mutex_lock (&thread_info_p->mtx);
+      pthread_mutex_lock (&thread_info_p->mtx);
       while (thread_info_p->io_type == FILEIO_WRITE)
 	{
 	  pthread_cond_wait (&thread_info_p->rcv, &thread_info_p->mtx);
@@ -602,7 +599,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
       if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	{
-//	  need_unlock = true;
+//        need_unlock = true;
 	  goto exit_on_error;
 	}
 
@@ -635,7 +632,7 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 
 	  if (thread_info_p->io_type == FILEIO_ERROR_INTERRUPT)
 	    {
-//	      need_unlock = true;
+//            need_unlock = true;
 	      goto exit_on_error;
 	    }
 	}
@@ -1289,15 +1286,13 @@ bk_init_backup_header (BK_BACKUP_HEADER * backup_header_p,
 		       int make_slave)
 {
   backup_header_p->iopageid = BK_BACKUP_START_PAGE_ID;
-  strncpy (backup_header_p->magic, RYE_MAGIC_DATABASE_BACKUP,
+  strncpy (backup_header_p->bk_magic, RYE_MAGIC_DATABASE_BACKUP,
 	   RYE_MAGIC_MAX_LENGTH);
-  strncpy (backup_header_p->db_release, rel_release_string (),
-	   REL_MAX_RELEASE_LENGTH);
   strncpy (backup_header_p->db_name,
 	   fileio_get_base_file_name (log_Db_fullname), PATH_MAX);
   backup_header_p->db_creation = log_Gl.hdr.db_creation;
   backup_header_p->db_iopagesize = IO_PAGESIZE;
-  backup_header_p->db_compatibility = rel_disk_compatible ();
+  backup_header_p->bk_db_version = rel_cur_version ();
 
   LSA_COPY (&backup_header_p->chkpt_lsa, backup_checkpoint_lsa_p);
 
@@ -1339,7 +1334,6 @@ xbk_prepare_backup (THREAD_ENTRY * thread_p, int num_threads,
 {
   LOG_LSA chkpt_lsa;		/* Checkpoint address where the
 				 * backup process starts */
-  int rv;
   time_t wait_checkpoint_begin_time;
 
   bool print_backupdb_waiting_reason = false;
@@ -1440,7 +1434,7 @@ loop:
     }
 
   /* Get the current checkpoint address */
-  rv = pthread_mutex_lock (&log_Gl.chkpt_lsa_lock);
+  pthread_mutex_lock (&log_Gl.chkpt_lsa_lock);
   LSA_COPY (&chkpt_lsa, &log_Gl.hdr.chkpt_lsa);
   pthread_mutex_unlock (&log_Gl.chkpt_lsa_lock);
 
@@ -1577,7 +1571,6 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
   OR_ALIGNED_BUF (BK_PACKET_HDR_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   char *ptr;
-  int rv;
   bool continue_check;
 
   session = logtb_get_backup_session (thread_p);
@@ -1627,7 +1620,7 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
       /* wait for all working TXs */
       if (xlogtb_exist_working_tran (thread_p, NULL_GROUPID) == false)
 	{
-	  rv = pthread_mutex_lock (&log_Gl.prior_info.prior_lsa_mutex);
+	  pthread_mutex_lock (&log_Gl.prior_info.prior_lsa_mutex);
 
 	  LSA_COPY (&(session->bkuphdr->backuptime_lsa),
 		    &(log_Gl.prior_info.prior_lsa));

@@ -46,10 +46,10 @@ class ShardInstanceDrop extends ShardCommand
 
     void printUsage(PrintStream out, String className)
     {
-	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST NODE_INFO\n\n", className, commandName());
-	out.printf("valid options:\n");
-	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)\n", DEFAULT_LOCAL_MGMT_PORT);
-	out.printf("\t--password=PASSWORD		dba password\n");
+	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST NODE_INFO%n%n", className, commandName());
+	out.printf("valid options:%n");
+	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)%n", DEFAULT_LOCAL_MGMT_PORT);
+	out.printf("\t--password=PASSWORD		dba password%n");
     }
 
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
@@ -135,7 +135,7 @@ class ShardInstanceDrop extends ShardCommand
 	excludeDropNode(existingNodeInfo, dropNode);
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
-	    printStatus(true, "%s: drop instance\n", globalDbnameArr[i]);
+	    printStatus(true, "%s: drop instance%n", globalDbnameArr[i]);
 
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 	    shardMgmtDropNode(shardMgmtInfo, globalDbnameArr[i], dropNode, dbaPasswordArr[i]);
@@ -175,7 +175,7 @@ class ShardInstanceDrop extends ShardCommand
 
 	    NodeAddress[] hostArr = NodeInfo.getDistinctHostArr(node1Arr);
 	    for (int i = 0; i < hostArr.length; i++) {
-		printStatus(true, "%s: delete shard mgmt conf\n", hostArr[i].getIpAddr());
+		printStatus(true, "%s: delete shard mgmt conf%n", hostArr[i].getIpAddr());
 		LocalMgmt localMgmt = new LocalMgmt(hostArr[i].getIpAddr(), getLocalMgmtPort());
 		deleteShardMgmtConf(localMgmt);
 	    }
@@ -195,7 +195,7 @@ class ShardInstanceDrop extends ShardCommand
 
     private void changeHbExistingNode(NodeInfo[] existingNodeArr, String haGroupId) throws SQLException
     {
-	printStatus(true, "change rye_conf\n");
+	printStatus(true, "change rye_conf%n");
 
 	for (int i = 0; i < existingNodeArr.length; i++) {
 	    changeConfHaNodeList(existingNodeArr[i].getHostArr(), null, haGroupId);

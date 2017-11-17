@@ -87,34 +87,22 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_data_page_fetches", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
 
 #if 1				/* fetches sub-info */
-  {"Num_data_page_fetches_file_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_file_table", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_heap_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_heap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_heap_relocation", 1,
-   MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_heap_bestspace_sync", 1,
-   MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_vol_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_vol_bitmap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_xasl", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_qresult", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_ehash", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_ovf_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_ovf", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_area", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_catalog", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_catalog_ovf", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_file_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 1 */
+  {"Num_data_page_fetches_file_tab", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 2 */
+  {"Num_data_page_fetches_heap_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 3 */
+  {"Num_data_page_fetches_heap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 4 */
+  {"Num_data_page_fetches_volheader", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 5 */
+  {"Num_data_page_fetches_volbitmap", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 6 */
+  {"Num_data_page_fetches_xasl", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 7 */
+  {"Num_data_page_fetches_qresult", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 8 */
+  {"Num_data_page_fetches_ehash", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 9 */
+  {"Num_data_page_fetches_overflow", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 10 */
+  {"Num_data_page_fetches_area", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 11 */
+  {"Num_data_page_fetches_catalog", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 12 */
+  {"Num_data_page_fetches_btree_root", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 13 */
+  {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 14 */
 
-  {"Num_data_page_fetches_disk_format", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_log_postpone", 1,
-   MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_log_rollback", 1,
-   MNT_STATS_VALUE_COUNTER_WITH_TIME},
-  {"Num_data_page_fetches_checkpoint", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-
-  {"Num_data_page_fetches_other", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  {"Num_data_page_fetches_unknown", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 0 */
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */
@@ -803,4 +791,102 @@ mnt_stats_is_collecting_time (MNT_SERVER_ITEM item)
       assert (0);
       return false;
     }
+}
+
+PAGE_TYPE
+mnt_server_item_to_page_ptype (const MNT_SERVER_ITEM item)
+{
+  switch (item)
+    {
+    case MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER:	/* 1 file header page             */
+      return PAGE_FILE_HEADER;
+    case MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB:	/* 2 file allocset table page             */
+      return PAGE_FILE_TAB;
+    case MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER:	/* 3 heap header page                            */
+      return PAGE_HEAP_HEADER;
+    case MNT_STATS_DATA_PAGE_FETCHES_HEAP:	/* 4 heap page                            */
+      return PAGE_HEAP;
+    case MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER:	/* 5 volume header page                   */
+      return PAGE_VOLHEADER;
+    case MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP:	/* 6 volume bitmap page                   */
+      return PAGE_VOLBITMAP;
+    case MNT_STATS_DATA_PAGE_FETCHES_XASL:	/* 7 xasl stream page                     */
+      return PAGE_XASL;
+    case MNT_STATS_DATA_PAGE_FETCHES_QRESULT:	/* 8 query result page                    */
+      return PAGE_QRESULT;
+    case MNT_STATS_DATA_PAGE_FETCHES_EHASH:	/* 9 ehash bucket/dir page                */
+      return PAGE_EHASH;
+    case MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW:	/* 10 overflow page (with ovf_keyval)      */
+      return PAGE_OVERFLOW;
+    case MNT_STATS_DATA_PAGE_FETCHES_AREA:	/* 11 area page                            */
+      return PAGE_AREA;
+    case MNT_STATS_DATA_PAGE_FETCHES_CATALOG:	/* 12 catalog page                         */
+      return PAGE_CATALOG;
+    case MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT:	/* 13 b+tree index root page                    */
+      return PAGE_BTREE_ROOT;
+    case MNT_STATS_DATA_PAGE_FETCHES_BTREE:	/* 14 b+tree index page                    */
+      return PAGE_BTREE;
+
+    case MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN:	/* 0 unknown                     */
+      return PAGE_UNKNOWN;
+
+    default:
+      break;
+    }
+
+  assert (false);
+
+  return PAGE_UNKNOWN;
+}
+
+MNT_SERVER_ITEM
+mnt_page_ptype_to_server_item (const PAGE_TYPE ptype)
+{
+  assert (ptype < PAGE_LAST);
+
+  switch (ptype)
+    {
+    case PAGE_FILE_HEADER:	/* 1 file header page                     */
+      return MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
+    case PAGE_FILE_TAB:	/* 2 file allocset table page             */
+      return MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB;
+    case PAGE_HEAP_HEADER:	/* 3 heap header page               */
+      return MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
+    case PAGE_HEAP:		/* 4 heap page                            */
+      return MNT_STATS_DATA_PAGE_FETCHES_HEAP;
+    case PAGE_VOLHEADER:	/* 5 volume header page                   */
+      return MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER;
+    case PAGE_VOLBITMAP:	/* 6 volume bitmap page                   */
+      return MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP;
+    case PAGE_XASL:		/* 7 xasl stream page                     */
+      return MNT_STATS_DATA_PAGE_FETCHES_XASL;
+    case PAGE_QRESULT:		/* 8 query result page                    */
+      return MNT_STATS_DATA_PAGE_FETCHES_QRESULT;
+    case PAGE_EHASH:		/* 9 ehash bucket/dir page                */
+      return MNT_STATS_DATA_PAGE_FETCHES_EHASH;
+    case PAGE_OVERFLOW:	/* 10 overflow page                        */
+      return MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW;
+    case PAGE_AREA:		/* 11 area page                            */
+      return MNT_STATS_DATA_PAGE_FETCHES_AREA;
+    case PAGE_CATALOG:		/* 12 catalog page                         */
+      return MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
+    case PAGE_BTREE_ROOT:	/* 13 b+tree index root page               */
+      return MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT;
+    case PAGE_BTREE:		/* 14 b+tree index page                    */
+      return MNT_STATS_DATA_PAGE_FETCHES_BTREE;
+
+    case PAGE_UNKNOWN:		/* 0 used for initialized page            */
+      return MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
+
+#if 1				/* TODO - */
+    case PAGE_LOG:		/* 15 NONE - log page (unused)             */
+    case PAGE_DROPPED_FILES:
+#endif
+    default:
+      break;
+    }
+
+  assert (false);
+
+  return MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
 }

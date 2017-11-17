@@ -2354,7 +2354,7 @@ qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
       /* return temp file page */
       page_p = pgbuf_fix (thread_p, vpid_p, OLD_PAGE,
 			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
+			  PAGE_QRESULT);
     }
 
   return page_p;
@@ -2446,7 +2446,7 @@ qmgr_set_dirty_page (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
  *
  * Note: A new query file page is allocated and returned. The page
  * fetched and returned, is not locked. This routine is called
- * succesively to allocate pages for the query result files (list
+ * successively to allocate pages for the query result files (list
  * files) or XASL tree files.
  * If an error occurs, NULL pointer is returned.
  */
@@ -2538,11 +2538,10 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
 
   if (tmp_vfid_p->vpid_index != -1)
     {
-      page_p = pgbuf_fix (thread_p,
-			  &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
-			  NEW_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
+      page_p = pgbuf_fix_newpg (thread_p,
+				&(tmp_vfid_p->
+				  vpid_array[tmp_vfid_p->vpid_index]),
+				PAGE_QRESULT);
       if (page_p == NULL)
 	{
 	  VPID_SET_NULL (vpid_p);
@@ -2633,10 +2632,9 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
   tmp_vfid_p->vpid_index = 0;
   tmp_vfid_p->total_count += num_pages;
 
-  page_p = pgbuf_fix (thread_p,
-		      &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
-		      NEW_PAGE, PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
+  page_p = pgbuf_fix_newpg (thread_p,
+			    &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
+			    PAGE_QRESULT);
   if (page_p == NULL)
     {
       VPID_SET_NULL (vpid_p);

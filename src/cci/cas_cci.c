@@ -2800,11 +2800,8 @@ set_error_buffer (T_CCI_ERROR * err_buf_p,
 
 	  va_start (args, message);
 
-	  if (err_buf_p->err_msg != NULL)
-	    {
-	      vsnprintf (err_buf_p->err_msg,
-			 sizeof (err_buf_p->err_msg), message, args);
-	    }
+	  vsnprintf (err_buf_p->err_msg,
+		     sizeof (err_buf_p->err_msg), message, args);
 
 	  va_end (args);
 	}

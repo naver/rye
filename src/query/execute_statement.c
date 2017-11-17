@@ -1266,7 +1266,7 @@ static int
 do_check_delete (DB_SESSION * session, PT_NODE * statement,
 		 PT_DO_FUNC * do_func)
 {
-  PARSER_CONTEXT *parser;
+  UNUSED_VAR PARSER_CONTEXT *parser;
   int affected_count, error = 0;
 
   assert (session != NULL);
@@ -1307,7 +1307,7 @@ do_check_update (DB_SESSION * session, PT_NODE * statement,
 		 PT_DO_FUNC * do_func)
 {
   int err;
-  PARSER_CONTEXT *parser;
+  UNUSED_VAR PARSER_CONTEXT *parser;
 
   assert (session != NULL);
   assert (session->parser != NULL);
@@ -2950,7 +2950,7 @@ static int
 check_all_shard_query (DB_SESSION * session, UNUSED_ARG PT_NODE * stmt,
 		       int error)
 {
-  PARSER_CONTEXT *parser;
+  UNUSED_VAR PARSER_CONTEXT *parser;
 
   assert (session != NULL);
   assert (session->parser != NULL);
@@ -2984,7 +2984,7 @@ node_to_shardkey_info (DB_SESSION * session, PT_NODE * stmt,
 		       PT_NODE * att, PT_NODE * expr)
 {
   int error = NO_ERROR;
-  PARSER_CONTEXT *parser;
+  UNUSED_VAR PARSER_CONTEXT *parser;
 
   assert (session != NULL);
   assert (session->parser != NULL);
@@ -3068,7 +3068,7 @@ find_shard_key_node (DB_SESSION * session, PT_NODE * statement,
 		     PT_NODE * node)
 {
   int error = NO_ERROR;
-  PARSER_CONTEXT *parser;
+  UNUSED_VAR PARSER_CONTEXT *parser;
   PT_NODE *att, *expr;
   int coll_id;
   PT_NODE *elem;
@@ -3171,7 +3171,7 @@ find_shard_key_node (DB_SESSION * session, PT_NODE * statement,
 static int
 parser_set_shard_key (DB_SESSION * session, PT_NODE * statement)
 {
-  PARSER_CONTEXT *parser;
+  UNUSED_VAR PARSER_CONTEXT *parser;
   PT_NODE *att = NULL, *expr = NULL;
   PT_NODE *spec;
   DB_OBJECT *table;

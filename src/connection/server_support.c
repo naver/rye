@@ -1472,19 +1472,8 @@ css_pack_server_name (const char *server_name, int *name_length)
 	  return NULL;
 	}
 
-      /*
-       * here we changed the 2nd string in packed_name from
-       * rel_release_string() to rel_major_release_string()
-       * solely for the purpose of matching the name of the rye driver.
-       * That is, the name of the rye driver has been changed to use
-       * MAJOR_RELEASE_STRING (see drivers/Makefile).  So, here we must also
-       * use rel_major_release_string(), so master can successfully find and
-       * fork rye drivers.
-       */
-
       sprintf (pid_string, "%d", getpid ());
       *name_length = strlen (server_name) + 1
-	+ strlen (rel_major_release_string ()) + 1
 	+ strlen (env_name) + 1 + strlen (pid_string) + 1;
 
       /* in order to prepend '#' */
@@ -1509,13 +1498,6 @@ css_pack_server_name (const char *server_name, int *name_length)
 	}
       *s++ = '\0';
 
-      t = rel_major_release_string ();
-      while (*t)
-	{
-	  *s++ = *t++;
-	}
-      *s++ = '\0';
-
       t = env_name;
       while (*t)
 	{
@@ -1534,16 +1516,11 @@ css_pack_server_name (const char *server_name, int *name_length)
 }
 
 /*
- * css_add_client_version_string() - add the version_string to socket queue
- *                                   entry structure
- *   return: pointer to version_string in the socket queue entry structure
- *   version_string(in):
+ * css_set_client_version() - 
  */
-const char *
-css_add_client_version_string (THREAD_ENTRY * thread_p,
-			       const char *version_string)
+void
+css_set_client_version (THREAD_ENTRY * thread_p, const RYE_VERSION * version)
 {
-  char *ver_str = NULL;
   CSS_CONN_ENTRY *conn;
 
   assert (thread_p != NULL);
@@ -1551,29 +1528,8 @@ css_add_client_version_string (THREAD_ENTRY * thread_p,
   conn = thread_p->conn_entry;
   if (conn != NULL)
     {
-      if (conn->version_string == NULL)
-	{
-	  ver_str = (char *) malloc (strlen (version_string) + 1);
-	  if (ver_str != NULL)
-	    {
-	      strcpy (ver_str, version_string);
-	      conn->version_string = ver_str;
-	    }
-	  else
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      strlen (version_string) + 1);
-	    }
-	}
-      else
-	{
-	  /* already registered */
-	  ver_str = conn->version_string;
-	}
+      conn->peer_version = *version;
     }
-
-  return ver_str;
 }
 
 bool
@@ -1659,7 +1615,7 @@ css_transit_ha_server_state (UNUSED_ARG THREAD_ENTRY * thread_p,
  */
 int
 css_check_ha_server_state_for_client (UNUSED_ARG THREAD_ENTRY * thread_p,
-				      int whence)
+				      UNUSED_ARG int whence)
 {
 #define FROM_OTHERS             0
 #define FROM_REGISTER_CLIENT    1

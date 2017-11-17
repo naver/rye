@@ -50,9 +50,6 @@
 
 #define HEAP_MAX_ALIGN INT_ALIGNMENT	/* maximum alignment for heap record */
 
-#define HEAP_STATS_ADD_WAIT_TIME(page_type)    \
-                server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, page_type)
-
 /*
  * Heap scan structures
  */
@@ -414,6 +411,7 @@ extern int heap_attrinfo_set_uninitialized_global (THREAD_ENTRY * thread_p,
 #endif
 
 /* Recovery functions */
+extern int heap_rv_redo_newhdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern int heap_rv_redo_newpage (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern int heap_rv_undoredo_pagehdr (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void heap_rv_dump_statistics (FILE * fp, int ignore_length,
@@ -464,8 +462,8 @@ extern int heap_ovf_get_capacity (THREAD_ENTRY * thread_p,
 				  int *ovf_free_space);
 extern PAGE_PTR heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
 				const VPID * vpid,
-				int newpg, int requestmode,
+				int requestmode,
 				PGBUF_LATCH_CONDITION condition,
-				UNUSED_ARG const MNT_SERVER_ITEM item);
+				const PAGE_TYPE ptype);
 extern bool heap_is_big_length (int length);
 #endif /* _HEAP_FILE_H_ */
