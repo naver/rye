@@ -3214,16 +3214,19 @@ qo_plans_init (UNUSED_ARG QO_ENV * env)
 static void
 qo_plans_teardown (UNUSED_ARG QO_ENV * env)
 {
-  while (qo_plan_free_list)
-    {
-      QO_PLAN *plan = qo_plan_free_list;
+  QO_PLAN *plan;
 
-      qo_plan_free_list = plan->plan_un.free.link;
-      if (plan)
-	{
-	  free_and_init (plan);
-	}
-      ++qo_plans_demalloced;
+  while (qo_plan_free_list != NULL)
+    {
+      plan = qo_plan_free_list;
+
+      qo_plan_free_list = qo_plan_free_list->plan_un.free.link;
+
+      assert (plan != NULL);
+      plan->plan_un.free.link = NULL;
+      free_and_init (plan);
+
+      qo_plans_demalloced++;
     }
   qo_accumulating_plans = false;
 }
@@ -7799,7 +7802,7 @@ qo_search_isnull_key_expr (UNUSED_ARG PARSER_CONTEXT * parser,
 }
 
 /*
- * qo_plan_iscan_allow_cmp () - 
+ * qo_plan_iscan_allow_cmp () -
  *   return:  true/false
  *   a(in):
  *   b(in):

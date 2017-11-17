@@ -1242,12 +1242,11 @@ qo_reduce_order_by (PARSER_CONTEXT * parser, PT_NODE * node)
 		{
 		  PT_NODE *ord_num, *ins_num;
 
-		  ord_num = NULL;
-		  ins_num = NULL;
-
 		  /* generate orderby_num(), inst_num() */
-		  if (!(ord_num = parser_new_node (parser, PT_EXPR))
-		      || !(ins_num = parser_new_node (parser, PT_EXPR)))
+	        ord_num = parser_new_node (parser, PT_EXPR);
+	        ins_num = parser_new_node (parser, PT_EXPR);
+
+		  if (ord_num == NULL || ins_num == NULL)
 		    {
 		      if (ord_num)
 			{
@@ -3041,10 +3040,8 @@ qo_rewrite_query_as_derived (PARSER_CONTEXT * parser, PT_NODE * query)
 
 exit_on_error:
 
-  if (node != NULL)
-    {
-      parser_free_node (parser, node);
-    }
+  assert (node == NULL);
+
   if (new_query != NULL)
     {
       parser_free_node (parser, new_query);
@@ -3576,6 +3573,8 @@ qo_rewrite_subqueries (PARSER_CONTEXT * parser, PT_NODE * node, void *arg,
 		  tmp = parser_new_node (parser, PT_EXPR);
 		  if (tmp == NULL)
 		    {
+	           cnf_node->next = save_next;       /* restore link */
+
 		      PT_INTERNAL_ERROR (parser, "allocate new node");
 		      return NULL;
 		    }
