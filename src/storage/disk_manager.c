@@ -2036,8 +2036,7 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 	      pgptr =
 		pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
 			   PGBUF_UNCONDITIONAL_LATCH,
-			   (vpid.pageid ==
-			    DISK_VOLHEADER_PAGE) ? PAGE_VOLHEADER :
+			   (vpid.pageid == DISK_VOLHEADER_PAGE) ? PAGE_VOLHEADER :
 			   PAGE_UNKNOWN);
 	      if (pgptr != NULL)
 		{

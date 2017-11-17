@@ -2353,8 +2353,7 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
   int lru_idx, start_lru_idx;
   int error;
   int num_tries;
-#if defined(SERVER_MODE)
-  int rv;
+#if !defined(NDEBUG) && defined(SERVER_MODE)
   static THREAD_ENTRY *page_flush_thread = NULL;
 #endif /* SERVER_MODE */
 
@@ -2390,7 +2389,7 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
     {
       check_count = MAX (1, (int) (PGBUF_NUM_PAGES_IN_LRU * flush_ratio));
 
-      rv = pthread_mutex_lock (&pgbuf_Pool.buf_LRU_list[lru_idx].LRU_mutex);
+      pthread_mutex_lock (&pgbuf_Pool.buf_LRU_list[lru_idx].LRU_mutex);
       bufptr = pgbuf_Pool.buf_LRU_list[lru_idx].LRU_bottom;
 
       while ((bufptr != NULL) && (bufptr->zone != PGBUF_LRU_1_ZONE)
@@ -2438,7 +2437,7 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
 	{
 	  bufptr = victim_cand_list[i].bufptr;
 
-	  rv = pthread_mutex_lock (&bufptr->BCB_mutex);
+	  pthread_mutex_lock (&bufptr->BCB_mutex);
 	  /* flush condition check */
 	  if (!VPID_EQ (&bufptr->vpid, &victim_cand_list[i].vpid)
 	      || bufptr->dirty == false
@@ -7281,7 +7280,8 @@ pgbuf_get_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
   CAST_PGPTR_TO_BFPTR (bufptr, pgptr);
   assert (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
 
-  ptype = (PAGE_TYPE) (bufptr->iopage_buffer->iopage.prv.ptype);
+  ptype =
+    fileio_get_page_ptype (thread_p, &(bufptr->iopage_buffer->iopage.prv));
 
   assert (PAGE_UNKNOWN <= ptype);
   assert (ptype <= PAGE_BTREE);
@@ -7378,9 +7378,11 @@ pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 
   assert (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
 
-  bufptr->iopage_buffer->iopage.prv.ptype = (unsigned char) ptype;
+  (void) fileio_set_page_ptype (thread_p,
+				&(bufptr->iopage_buffer->iopage.prv), ptype);
 
-  assert (bufptr->iopage_buffer->iopage.prv.ptype == ptype);
+  assert (fileio_get_page_ptype
+	  (thread_p, &(bufptr->iopage_buffer->iopage.prv)) == ptype);
 }
 
 /*
@@ -7521,33 +7523,9 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   assert (prv_p->p_reserve_3 == 0);
 #endif
 
-#if 1
   assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
   assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
 
   return (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid)
 	  && VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
-#else
-  /* perm volume */
-  if (bufptr->vpid.volid > NULL_VOLID)
-    {
-      /* Check Page identifier */
-//      if (!log_is_in_crash_recovery ())
-      {
-	if (!LSA_ISNULL (&(prv_p->lsa)))
-	  {
-	    assert (prv_p->pageid != NULL_PAGEID);
-	    assert (prv_p->volid != NULL_VOLID);
-
-	    assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
-	    assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
-
-	    return (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid)
-		    && VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
-	  }
-      }
-    }
-
-  return true;			/* nop */
-#endif
 }
