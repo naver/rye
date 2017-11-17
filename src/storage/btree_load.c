@@ -36,6 +36,7 @@
 #include "heap_file.h"
 #include "file_manager.h"
 #include "xserver_interface.h"
+#include "perf_monitor.h"
 
 /*
  * xbtree_load_data () - load b+tree index

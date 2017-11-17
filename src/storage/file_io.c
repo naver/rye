@@ -60,7 +60,6 @@
 #include "databases_file.h"
 #include "message_catalog.h"
 #include "util_func.h"
-#include "perf_monitor.h"
 #include "environment_variable.h"
 #include "page_buffer.h"
 #include "connection_error.h"
@@ -477,7 +476,6 @@ fileio_flush_control_get_token (UNUSED_ARG THREAD_ENTRY * thread_p,
   return NO_ERROR;
 #else
   TOKEN_BUCKET *tb = fc_Token_bucket;
-  int rv = NO_ERROR;
   int retry_count = 0;
   int nreq;
   bool log_cs_own = false;
@@ -498,8 +496,7 @@ fileio_flush_control_get_token (UNUSED_ARG THREAD_ENTRY * thread_p,
   while (nreq > 0 && retry_count < 10)
     {
       /* try to get a token from share tokens */
-      rv = pthread_mutex_lock (&tb->token_mutex);
-      assert (rv == NO_ERROR);
+      pthread_mutex_lock (&tb->token_mutex);
 
       if (log_cs_own == true)
 	{
@@ -533,7 +530,7 @@ fileio_flush_control_get_token (UNUSED_ARG THREAD_ENTRY * thread_p,
 	}
 
       /* Wait for signal */
-      rv = pthread_cond_wait (&tb->waiter_cond, &tb->token_mutex);
+      pthread_cond_wait (&tb->waiter_cond, &tb->token_mutex);
 
       pthread_mutex_unlock (&tb->token_mutex);
       retry_count++;

@@ -47,7 +47,6 @@
 #include "connection_error.h"
 #include "message_catalog.h"
 #include "log_impl.h"
-#include "perf_monitor.h"
 #include "event_log.h"
 #include "util_func.h"
 

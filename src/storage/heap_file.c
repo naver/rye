@@ -62,6 +62,7 @@
 #include "query_executor.h"
 #include "fetch.h"
 #include "server_interface.h"
+#include "perf_monitor.h"
 #if 1				/* TODO - test npush */
 #include "transform.h"
 #endif
@@ -1234,6 +1235,7 @@ heap_scan_pb_lock_and_fetch (THREAD_ENTRY * thread_p, VPID * vpid_ptr,
   LOCK page_lock;
   const HFID *hfid;
 
+  assert (lock == S_LOCK || lock == X_LOCK);
   assert (ptype == PAGE_HEAP_HEADER || ptype == PAGE_HEAP);
 
   if (scan_cache != NULL)
@@ -1248,6 +1250,7 @@ heap_scan_pb_lock_and_fetch (THREAD_ENTRY * thread_p, VPID * vpid_ptr,
 	  assert (lock >= NULL_LOCK);
 	  page_lock = lock_Conv[scan_cache->page_latch][lock];
 	  assert (page_lock != NA_LOCK);
+	  assert (page_lock != NULL_LOCK);
 	}
 
       hfid = &(scan_cache->hfid);
@@ -3984,8 +3987,7 @@ heap_vpid_remove (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   /* Get the chain record */
   rm_pgptr = heap_scan_pb_lock_and_fetch (thread_p, rm_vpid, OLD_PAGE, X_LOCK,
-					  NULL,
-					  MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+					  NULL, PAGE_HEAP);
   if (rm_pgptr == NULL)
     {
       /* Look like a system error. Unable to obtain chain header record */
@@ -4013,8 +4015,7 @@ heap_vpid_remove (THREAD_ENTRY * thread_p, const HFID * hfid,
   addr.offset = HEAP_HEADER_AND_CHAIN_SLOTID;
 
   addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, X_LOCK,
-					    NULL,
-					    MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+					    NULL, PAGE_HEAP);
   if (addr.pgptr == NULL)
     {
       /* something went wrong, return */
@@ -4108,8 +4109,7 @@ heap_vpid_remove (THREAD_ENTRY * thread_p, const HFID * hfid,
       addr.offset = HEAP_HEADER_AND_CHAIN_SLOTID;
 
       addr.pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE,
-						X_LOCK, NULL,
-						MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+						X_LOCK, NULL, PAGE_HEAP);
       if (addr.pgptr == NULL)
 	{
 	  /* something went wrong, return */
@@ -8614,8 +8614,7 @@ heap_does_exist (THREAD_ENTRY * thread_p, OID * class_oid, const OID * oid)
       /* Fetch the page where the record is stored */
 
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL,
-					   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+					   NULL, PAGE_HEAP);
       if (pgptr == NULL)
 	{
 	  if (er_errid () == ER_PB_BAD_PAGEID)
@@ -12007,8 +12006,7 @@ heap_check_all_pages (THREAD_ENTRY * thread_p, HFID * hfid)
       vpid.pageid = hfid->hpgid;
 
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL,
-					   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+					   NULL, PAGE_HEAP);
       if (pgptr == NULL
 	  || spage_get_record (pgptr, HEAP_HEADER_AND_CHAIN_SLOTID,
 			       &hdr_recdes, PEEK) != S_SUCCESS)
@@ -13551,8 +13549,7 @@ heap_compact_pages (THREAD_ENTRY * thread_p, OID * class_oid)
     {
       vpid = next_vpid;
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, X_LOCK,
-					   NULL,
-					   MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+					   NULL, PAGE_HEAP);
       if (pgptr == NULL)
 	{
 	  ret = ER_FAILED;
@@ -13783,10 +13780,7 @@ heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
   assert (ptype == PAGE_HEAP_HEADER || ptype == PAGE_HEAP);
 
   page_ptr =
-    pgbuf_fix (thread_p, vpid, OLD_PAGE, requestmode, condition,
-	       (ptype ==
-		PAGE_HEAP_HEADER) ? MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER :
-	       MNT_STATS_DATA_PAGE_FETCHES_HEAP);
+    pgbuf_fix (thread_p, vpid, OLD_PAGE, requestmode, condition, ptype);
 
 #if !defined(NDEBUG)
   if (hfid != NULL && page_ptr != NULL)

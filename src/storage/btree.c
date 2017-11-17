@@ -53,6 +53,7 @@
 #include "locator_sr.h"
 #include "network_interface_sr.h"
 #include "utility.h"
+#include "perf_monitor.h"
 
 #include "fault_injection.h"
 
@@ -871,10 +872,7 @@ btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
   assert (ptype == PAGE_BTREE_ROOT || ptype == PAGE_BTREE);
 
   page_ptr =
-    pgbuf_fix (thread_p, vpid, OLD_PAGE, requestmode, condition,
-	       (ptype ==
-		PAGE_BTREE_ROOT) ? MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT :
-	       MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+    pgbuf_fix (thread_p, vpid, OLD_PAGE, requestmode, condition, ptype);
 
   if (vfid != NULL && page_ptr != NULL)
     {
@@ -930,8 +928,8 @@ btree_dealloc_page (THREAD_ENTRY * thread_p, BTID_INT * btid, VPID * vpid)
       return ER_FAILED;
     }
 
-  error = file_dealloc_page (thread_p, &btid->sys_btid->vfid, vpid,
-			     MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+  error =
+    file_dealloc_page (thread_p, &btid->sys_btid->vfid, vpid, PAGE_BTREE);
 
   log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
 
@@ -5834,7 +5832,7 @@ btree_prepare_next_search (THREAD_ENTRY * thread_p, BTREE_SCAN * bts)
   bts->C_page = pgbuf_fix_without_validation (thread_p, &bts->C_vpid,
 					      OLD_PAGE, PGBUF_LATCH_READ,
 					      PGBUF_UNCONDITIONAL_LATCH,
-					      MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+					      PAGE_BTREE);
   if (bts->C_page == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -6895,7 +6893,7 @@ btree_rv_newpage_undo_alloc (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 
   ret =
     file_dealloc_page (thread_p, &pageid_struct->vfid, &pageid_struct->vpid,
-		       MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+		       PAGE_BTREE);
   if (ret != NO_ERROR)
     {
       assert (false);

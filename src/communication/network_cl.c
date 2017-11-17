@@ -51,7 +51,6 @@
 #include "locator.h"
 #include "db.h"
 #include "client_support.h"
-#include "perf_monitor.h"
 #include "connection_less.h"
 #include "rbl_sync_log.h"
 #include "tcp.h"

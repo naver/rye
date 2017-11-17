@@ -1107,7 +1107,7 @@ qfile_load_xasl_node_header (THREAD_ENTRY * thread_p,
   /* get XASL stream page */
   xasl_page_p =
     pgbuf_fix (thread_p, &xasl_id_p->first_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-	       PGBUF_UNCONDITIONAL_LATCH, MNT_STATS_DATA_PAGE_FETCHES_XASL);
+	       PGBUF_UNCONDITIONAL_LATCH, PAGE_XASL);
   if (xasl_page_p == NULL)
     {
       return;
@@ -1137,7 +1137,7 @@ qfile_load_xasl (THREAD_ENTRY * thread_p, const XASL_ID * xasl_id_p,
 
   cur_page_p = pgbuf_fix (thread_p, &xasl_id_p->first_vpid, OLD_PAGE,
 			  PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_XASL);
+			  PAGE_XASL);
   if (cur_page_p == NULL)
     {
       return 0;
@@ -1171,8 +1171,7 @@ qfile_load_xasl (THREAD_ENTRY * thread_p, const XASL_ID * xasl_id_p,
 	{
 	  cur_page_p = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE,
 				  PGBUF_LATCH_READ,
-				  PGBUF_UNCONDITIONAL_LATCH,
-				  MNT_STATS_DATA_PAGE_FETCHES_XASL);
+				  PGBUF_UNCONDITIONAL_LATCH, PAGE_XASL);
 	  if (cur_page_p == NULL)
 	    {
 	      free_and_init (*xasl_p);
@@ -1466,8 +1465,7 @@ qfile_reopen_list_as_append_mode (THREAD_ENTRY * thread_p,
       assert_release (!VPID_ISNULL (&list_id_p->last_vpid));
       last_page_ptr = pgbuf_fix (thread_p, &list_id_p->last_vpid, OLD_PAGE,
 				 PGBUF_LATCH_WRITE,
-				 PGBUF_UNCONDITIONAL_LATCH,
-				 MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
+				 PGBUF_UNCONDITIONAL_LATCH, PAGE_QRESULT);
       if (last_page_ptr == NULL)
 	{
 	  return ER_FAILED;

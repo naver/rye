@@ -2354,7 +2354,7 @@ qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
       /* return temp file page */
       page_p = pgbuf_fix (thread_p, vpid_p, OLD_PAGE,
 			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_QRESULT);
+			  PAGE_QRESULT);
     }
 
   return page_p;

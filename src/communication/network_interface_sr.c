@@ -37,7 +37,6 @@
 #include "xserver_interface.h"
 #include "statistics_sr.h"
 #include "btree_load.h"
-#include "perf_monitor.h"
 #include "log_impl.h"
 #include "boot_sr.h"
 #include "locator_sr.h"

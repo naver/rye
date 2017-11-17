@@ -47,14 +47,12 @@
 #include "databases_file.h"
 #include "message_catalog.h"
 #include "util_func.h"
-#include "perf_monitor.h"
 #include "environment_variable.h"
 #include "page_buffer.h"
 #include "connection_error.h"
 #include "release_string.h"
 #include "xserver_interface.h"
 #include "log_manager.h"
-#include "perf_monitor.h"
 #if defined(SERVER_MODE)
 #include "server_support.h"
 #endif

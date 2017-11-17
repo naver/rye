@@ -53,6 +53,7 @@
 #include "locator_sr.h"
 #include "network_interface_sr.h"
 #include "utility.h"
+#include "perf_monitor.h"
 
 #include "fault_injection.h"
 
