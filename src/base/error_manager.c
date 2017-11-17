@@ -615,14 +615,7 @@ er_fname_free (const void *key, void *data, UNUSED_ARG void *args)
 static void
 er_initialize_key (void)
 {
-  int r;
-
-  r = pthread_key_create (&er_Thread_key, NULL);
-  if (r != 0)
-    {
-      assert (false);
-      ;				/* TODO - avid compiler warning */
-    }
+  pthread_key_create (&er_Thread_key, NULL);
 }
 
 /*

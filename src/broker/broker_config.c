@@ -249,7 +249,7 @@ dir_repath (char *path, size_t path_len)
       return;
     }
 
-  strncpy (tmp_str, path, BROKER_PATH_MAX);
+  STRNCPY (tmp_str, path, BROKER_PATH_MAX);
   snprintf (path, path_len, "%s/%s", envvar_root (), tmp_str);
 }
 
@@ -522,7 +522,8 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 
   tmp_str = ini_getstr (ini, sec_name, "PREFERRED_HOSTS",
 			DEFAULT_EMPTY_STRING, lineno);
-  strcpy (br_info->preferred_hosts, tmp_str);
+  STRNCPY (br_info->preferred_hosts, tmp_str,
+	   sizeof (br_info->preferred_hosts));
 
   tmp_str = ini_getstr (ini, sec_name, "CONNECT_ORDER_RANDOM", "ON", lineno);
   br_info->connect_order_random = conf_get_value_table_on_off (tmp_str);
@@ -902,11 +903,13 @@ broker_config_read_internal (const char *conf_file,
 
       for (i = 0; i < num_builtin_brokers; i++)
 	{
-	  strcpy (br_info[num_brs].name, builtin_brokers[i].broker_name);
+	  STRNCPY (br_info[num_brs].name, builtin_brokers[i].broker_name,
+		   sizeof (br_info[num_brs].name));
 	  if (set_broker_conf (&br_info[num_brs], NULL,
 			       builtin_brokers[i].broker_type, "",
 			       &lineno) < 0)
 	    {
+	      free (builtin_brokers);
 	      errcode = PARAM_BAD_VALUE;
 	      goto conf_error;
 	    }
@@ -1239,7 +1242,7 @@ broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
       fprintf (fp, "MONITOR_HANG_INTERVAL\t=%d\n",
 	       br_info[i].monitor_hang_interval);
       fprintf (fp, "HANG_TIMEOUT\t\t=%d\n", br_info[i].hang_timeout);
-      get_conf_string (br_info[i].reject_client_flag, tbl_on_off);
+      tmp_str = get_conf_string (br_info[i].reject_client_flag, tbl_on_off);
       if (tmp_str)
 	{
 	  fprintf (fp, "REJECT_CLIENT_FLAG\t=%s\n", tmp_str);

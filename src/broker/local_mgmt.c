@@ -441,7 +441,7 @@ read_outfile (const char *filename, char *result_buf, int result_buf_size)
   int fd;
 
   fd = open (filename, O_RDONLY);
-  if (fd > 0)
+  if (fd >= 0)
     {
       read_len = read (fd, result_buf, result_buf_size - 1);
       if (read_len < 0)
@@ -935,7 +935,7 @@ make_child_output_filename (char *infile, int infile_bufsize, bool mkinfile,
     {
       int fd;
       fd = open (infile, O_CREAT | O_TRUNC | O_WRONLY, 0666);
-      if (fd > 0)
+      if (fd >= 0)
 	{
 	  close (fd);
 	}

@@ -69,6 +69,7 @@ recv_fd (int fd, int *rid, struct timeval *recv_time)
   msg.msg_namelen = 0;
   msg.msg_control = control_un.control;
   msg.msg_controllen = CONTROLLEN;
+  msg.msg_flags = 0;
   cmptr = CMSG_FIRSTHDR (&msg);
   rc = recvmsg (fd, &msg, 0);
 

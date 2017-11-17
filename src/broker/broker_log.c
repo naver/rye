@@ -155,7 +155,8 @@ br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 	{
 	  int n;
 	  n = sprintf (clt_ip_str, " CLIENT=");
-	  ut_get_ipv4_string (clt_ip_str + n, sizeof (clt_ip_str), clt_ip);
+	  ut_get_ipv4_string (clt_ip_str + n, sizeof (clt_ip_str) - n,
+			      clt_ip);
 	}
 
       (void) er_datetime (NULL, time_str, sizeof (time_str));
@@ -188,7 +189,10 @@ br_log_end ()
 
 	  snprintf (backupfile, BROKER_PATH_MAX, "%s.bak", br_log_file);
 	  unlink (backupfile);
-	  rename (br_log_file, backupfile);
+	  if (rename (br_log_file, backupfile) < 0)
+	    {
+	      assert (0);
+	    }
 	}
 
       //TODO: reset

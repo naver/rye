@@ -12006,7 +12006,7 @@ heap_check_all_pages (THREAD_ENTRY * thread_p, HFID * hfid)
       vpid.pageid = hfid->hpgid;
 
       pgptr = heap_scan_pb_lock_and_fetch (thread_p, &vpid, OLD_PAGE, S_LOCK,
-					   NULL, PAGE_HEAP);
+					   NULL, PAGE_HEAP_HEADER);
       if (pgptr == NULL
 	  || spage_get_record (pgptr, HEAP_HEADER_AND_CHAIN_SLOTID,
 			       &hdr_recdes, PEEK) != S_SUCCESS)

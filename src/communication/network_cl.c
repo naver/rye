@@ -497,7 +497,7 @@ net_histo_setup_names (void)
     "NET_SERVER_PRM_SET_PARAMETERS";
   net_Req_buffer[NET_SERVER_PRM_GET_PARAMETERS].name =
     "NET_SERVER_PRM_GET_PARAMETERS";
-  net_Req_buffer[NET_SERVER_PRM_GET_PARAMETERS].name =
+  net_Req_buffer[NET_SERVER_PRM_GET_FORCE_PARAMETERS].name =
     "NET_SERVER_PRM_GET_FORCE_PARAMETERS";
   net_Req_buffer[NET_SERVER_PRM_DUMP_PARAMETERS].name =
     "NET_SERVER_PRM_DUMP_PARAMETERS";
@@ -1498,6 +1498,7 @@ net_client_request_recv_stream (int request,
 
       if (size > reply_streamdata_size)
 	{
+	  css_net_packet_free (recv_packet);
 	  error = ER_NET_DATASIZE_MISMATCH;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 		  error, 2, reply_streamdata_size, size);

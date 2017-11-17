@@ -286,10 +286,7 @@ static WORKER_GROUP_INFO worker_Group_info[WORKER_GROUP_MAX + 1] = {
 static void
 thread_initialize_key (void)
 {
-  int r;
-
-  r = pthread_key_create (&css_Thread_key, NULL);
-  assert (r == 0);
+  pthread_key_create (&css_Thread_key, NULL);
 }
 
 /*
