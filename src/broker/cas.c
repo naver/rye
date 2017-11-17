@@ -901,8 +901,11 @@ recv_client_fd_from_broker (SOCKET br_sock_fd, int *client_ip_addr,
       return -1;
     }
 
-  setsockopt (client_sock_fd, IPPROTO_TCP, TCP_NODELAY,
-	      (char *) &one, sizeof (one));
+  if (setsockopt (client_sock_fd, IPPROTO_TCP, TCP_NODELAY,
+		  (char *) &one, sizeof (one)) < 0)
+    {
+      assert (0);
+    }
   ut_set_keepalive (client_sock_fd);
 
   return client_sock_fd;
@@ -1286,7 +1289,8 @@ process_request (SOCKET sock_fd, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
       con_Status_before_check_cas = -1;
     }
 
-  strcpy (as_Info->log_msg, server_Fn_table[func_code - 1].name);
+  STRNCPY (as_Info->log_msg, server_Fn_table[func_code - 1].name,
+	   sizeof (as_Info->log_msg));
 
   server_fn = server_Fn_table[func_code - 1].func;
 

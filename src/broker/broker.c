@@ -406,8 +406,11 @@ receiver_thr_f (UNUSED_ARG void *arg)
   signal (SIGPIPE, SIG_IGN);
 
   timeout = 5;
-  setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-	      (char *) &timeout, sizeof (timeout));
+  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
+		  (char *) &timeout, sizeof (timeout)) < 0)
+    {
+      // assert (0);
+    }
 
   br_req_msg = brreq_msg_alloc (BRREQ_OP_CODE_MSG_MAX_SIZE);
   if (br_req_msg == NULL)
@@ -772,8 +775,12 @@ br_mgmt_accept (unsigned char *clt_ip_addr)
       return INVALID_SOCKET;
     }
 
-  setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-	      sizeof (one));
+  if (setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
+		  sizeof (one)) < 0)
+    {
+      assert (0);
+    }
+
   ut_set_keepalive (clt_sock_fd);
 
   return clt_sock_fd;
@@ -825,8 +832,11 @@ init_mgmt_socket (void)
       return (-1);
     }
 
-  setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-	      (char *) &timeout, sizeof (timeout));
+  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
+		  (char *) &timeout, sizeof (timeout)) < 0)
+    {
+      assert (0);
+    }
 
   return (0);
 }
@@ -1372,8 +1382,11 @@ retry:
       return INVALID_SOCKET;
     }
 
-  setsockopt (srv_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-	      sizeof (one));
+  if (setsockopt (srv_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
+		  sizeof (one)) < 0)
+    {
+      // assert (0);
+    }
 
   return srv_sock_fd;
 }
@@ -3333,8 +3346,8 @@ br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
   assert (strlen (dbname) < SRV_CON_DBNAME_SIZE);
   assert (strlen (host) < IP_ADDR_STR_LEN);
 
-  strcpy (node->local_dbname, dbname);
-  strcpy (node->host_ip_str, host);
+  STRNCPY (node->local_dbname, dbname, sizeof (node->local_dbname));
+  STRNCPY (node->host_ip_str, host, sizeof (node->host_ip_str));
 
   if (host_addr == INADDR_NONE)
     {

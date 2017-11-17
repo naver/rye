@@ -1710,7 +1710,10 @@ connect_retry:
   sock_addr_len = sizeof (struct sockaddr_in);
 
   flags = fcntl (sock_fd, F_GETFL);
-  fcntl (sock_fd, F_SETFL, flags | O_NONBLOCK);
+  if (fcntl (sock_fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
+      assert (0);
+    }
 
   ret = connect (sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len);
   if (ret < 0)
@@ -1786,15 +1789,24 @@ connect_retry:
 	}
     }
 
-  fcntl (sock_fd, F_SETFL, flags);
+  if (fcntl (sock_fd, F_SETFL, flags) < 0)
+    {
+      assert (0);
+    }
 
   sock_opt = 1;
-  setsockopt (sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt,
-	      sizeof (sock_opt));
+  if (setsockopt (sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt,
+		  sizeof (sock_opt)) < 0)
+    {
+      assert (0);
+    }
 
   sock_opt = 1;
-  setsockopt (sock_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt,
-	      sizeof (sock_opt));
+  if (setsockopt (sock_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt,
+		  sizeof (sock_opt)) < 0)
+    {
+      assert (0);
+    }
 
   *ret_sock = sock_fd;
   return CCI_ER_NO_ERROR;

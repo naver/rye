@@ -379,7 +379,7 @@ init_server_monitor_item ()
 		     "datapage", "fetch_checkpoint");
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OTHER],
-                     "datapage", "fetch_other");
+		     "datapage", "fetch_other");
 #endif
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],
@@ -1200,15 +1200,24 @@ tcp_connect ()
 	}
     }
 
-  fcntl (tcp_Send_fd, F_SETFL, flags);
+  if (fcntl (tcp_Send_fd, F_SETFL, flags) < 0)
+    {
+      assert (0);
+    }
 
   sock_opt = 1;
-  setsockopt (tcp_Send_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt,
-	      sizeof (sock_opt));
+  if (setsockopt (tcp_Send_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt,
+		  sizeof (sock_opt)) < 0)
+    {
+      assert (0);
+    }
 
   sock_opt = 1;
-  setsockopt (tcp_Send_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt,
-	      sizeof (sock_opt));
+  if (setsockopt (tcp_Send_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt,
+		  sizeof (sock_opt)) < 0)
+    {
+      assert (0);
+    }
 
   msg_size = snprintf (msg, sizeof (msg), "auth %s %s\n",
 		       tcp_Send_connect_info->id, tcp_Send_connect_info->pw);

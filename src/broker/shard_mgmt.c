@@ -3063,6 +3063,7 @@ shd_mg_rebalance_req (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
   if (mig_count < 0)
     {
+      RYE_FREE_MEM (mig_info);
       return mig_count;
     }
   else
