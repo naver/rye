@@ -153,7 +153,6 @@ extern "C"
 	  linger_buf.l_onoff = 1;	\
 	  linger_buf.l_linger = 0;	\
 	  if (setsockopt(X, SOL_SOCKET, SO_LINGER, (char *) &linger_buf, sizeof(linger_buf)) < 0) { 			\
-	    assert (0); 		\
 	  }				\
 	  close(X);			\
 	} while (0)
