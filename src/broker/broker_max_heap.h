@@ -29,6 +29,7 @@
 
 #include <sys/time.h>
 
+#include "release_string.h"
 #include "cas_common.h"
 #include "cas_protocol.h"
 
@@ -41,8 +42,8 @@ struct t_max_heap_node
   struct timeval recv_time;
   unsigned char ip_addr[4];
   unsigned short port;
-  short clt_protocol_ver;
   char clt_type;
+  RYE_VERSION clt_version;
 };
 
 int max_heap_insert (T_MAX_HEAP_NODE * max_heap, int max_heap_size,

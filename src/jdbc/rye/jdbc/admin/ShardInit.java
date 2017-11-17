@@ -52,15 +52,15 @@ class ShardInit extends ShardCommand
 
     void printUsage(PrintStream out, String className)
     {
-	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST_LIST SHARD_MGMT_PORT\n\n", className, commandName());
-	out.printf("valid options:\n");
-	out.printf("\t--add-node=NODE_INFO		additional node infomation\n");
-	out.printf("\t				nodeid:host[:port],...\n");
-	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)\n", DEFAULT_LOCAL_MGMT_PORT);
-	out.printf("\t--num-groups=GROUPS		number of shard key hash groups (default:%d)\n", DEFAULT_NUM_GROUPS);
-	out.printf("\t--createdb-option=PARAM	rye createdb option\n");
-	out.printf("\t--rye-server-conf=PARAM		rye-auto.conf server parameter\n");
-	out.printf("\t--rye-broker-conf=PARAM	rye-auto.conf broker parameter\n");
+	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST_LIST SHARD_MGMT_PORT%n%n", className, commandName());
+	out.printf("valid options:%n");
+	out.printf("\t--add-node=NODE_INFO		additional node infomation%n");
+	out.printf("\t				nodeid:host[:port],...%n");
+	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)%n", DEFAULT_LOCAL_MGMT_PORT);
+	out.printf("\t--num-groups=GROUPS		number of shard key hash groups (default:%d)%n", DEFAULT_NUM_GROUPS);
+	out.printf("\t--createdb-option=PARAM	rye createdb option%n");
+	out.printf("\t--rye-server-conf=PARAM		rye-auto.conf server parameter%n");
+	out.printf("\t--rye-broker-conf=PARAM	rye-auto.conf broker parameter%n");
     }
 
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
@@ -183,13 +183,13 @@ class ShardInit extends ShardCommand
 	String[] node1LocalDbname = shardMgmtHost.getLocalDbnameArr(globalDbnameArr);
 
 	for (int i = 0; i < hosts.length; i++) {
-	    printStatus(true, "%s: add shard_mgmt settings \n", hosts[i].getIpAddr());
+	    printStatus(true, "%s: add shard_mgmt settings %n", hosts[i].getIpAddr());
 
 	    createShardMgmt(hosts[i], node1LocalDbname);
 	}
 
 	for (int i = 0; i < hosts.length; i++) {
-	    printStatus(true, "%s: broker restart \n", hosts[i].getIpAddr());
+	    printStatus(true, "%s: broker restart %n", hosts[i].getIpAddr());
 
 	    brokerRestart(hosts[i]);
 	}
@@ -226,7 +226,7 @@ class ShardInit extends ShardCommand
 	    checkAllNodeidArr = NodeInfo.getAllNodeidArr(addNodeArr);
 	}
 	for (int i = 0; i < globalDbnameArr.length; i++) {
-	    printStatus(true, "%s: refresh shard info\n", globalDbnameArr[i]);
+	    printStatus(true, "%s: refresh shard info%n", globalDbnameArr[i]);
 
 	    refreshShardInfo(primaryShardMgmtInfo[i], globalDbnameArr[i], "", checkAllNodeidArr);
 	}
@@ -239,7 +239,7 @@ class ShardInit extends ShardCommand
     private void initShardMgmt(ShardMgmtInfo[] primaryShardMgmtInfo) throws SQLException
     {
 	for (int i = 0; i < globalDbnameArr.length; i++) {
-	    printStatus(true, "%s: initialize shard infomation\n", globalDbnameArr[i]);
+	    printStatus(true, "%s: initialize shard infomation%n", globalDbnameArr[i]);
 
 	    RyeConnection con = makeConnection(primaryShardMgmtInfo[i].getIpAddr(), primaryShardMgmtInfo[i].getPort(),
 			    globalDbnameArr[i], "dba", "", "rw", "useLazyConnection=true");

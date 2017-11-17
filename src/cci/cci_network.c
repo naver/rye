@@ -356,7 +356,10 @@ db_connect_info_decode (T_NET_RES * net_res, T_CON_HANDLE * con_handle)
 
   prev_server_start_time = cas_connect_info->server_start_time;
 
-  if (net_res_to_short (&cas_connect_info->protocol_version, net_res) < 0 ||
+  if (net_res_to_short (&cas_connect_info->svr_version.major, net_res) < 0 ||
+      net_res_to_short (&cas_connect_info->svr_version.minor, net_res) < 0 ||
+      net_res_to_short (&cas_connect_info->svr_version.patch, net_res) < 0 ||
+      net_res_to_short (&cas_connect_info->svr_version.build, net_res) < 0 ||
       net_res_to_int (&cas_connect_info->cas_id, net_res) < 0 ||
       net_res_to_int (&cas_connect_info->cas_pid, net_res) < 0 ||
       net_res_to_str (&sessid_ptr, &sessid_size, net_res) < 0 ||
@@ -455,26 +458,28 @@ int
 net_cancel_request (const T_CON_HANDLE * con_handle)
 {
   T_BROKER_REQUEST_MSG *cancel_msg;
-  int tmp_int;
   char *ptr;
   int error;
   int host_id;
   T_HOST_INFO *host_info;
+  int opcode_msg_size;
 
-  cancel_msg = brreq_msg_alloc (sizeof (int) * 2);
+  opcode_msg_size =
+    brreq_msg_normal_broker_opcode_msg_size (con_handle->port_name,
+					     sizeof (int) * 2);
+
+  cancel_msg = brreq_msg_alloc (opcode_msg_size);
   if (cancel_msg == NULL)
     {
       return CCI_ER_NO_MORE_MEMORY;
     }
 
   ptr = brreq_msg_pack (cancel_msg, CAS_CLIENT_CCI,
-			BRREQ_OP_CODE_QUERY_CANCEL, sizeof (int) * 2,
-			con_handle->port_name);
+			BRREQ_OP_CODE_QUERY_CANCEL, opcode_msg_size);
 
-  tmp_int = htonl (CON_CAS_ID (con_handle));
-  memcpy (ptr, &tmp_int, sizeof (int));
-  tmp_int = htonl (CON_CAS_PID (con_handle));
-  memcpy (ptr + sizeof (int), &tmp_int, sizeof (int));
+  ptr = brreq_msg_pack_port_name (ptr, con_handle->port_name);
+  ptr = br_msg_pack_int (ptr, CON_CAS_ID (con_handle));
+  ptr = br_msg_pack_int (ptr, CON_CAS_PID (con_handle));
 
   host_id = con_handle->alter_hosts->cur_id;
   host_info = &con_handle->alter_hosts->host_info[host_id];
@@ -1705,7 +1710,10 @@ connect_retry:
   sock_addr_len = sizeof (struct sockaddr_in);
 
   flags = fcntl (sock_fd, F_GETFL);
-  fcntl (sock_fd, F_SETFL, flags | O_NONBLOCK);
+  if (fcntl (sock_fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
+      assert (0);
+    }
 
   ret = connect (sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len);
   if (ret < 0)
@@ -1781,15 +1789,24 @@ connect_retry:
 	}
     }
 
-  fcntl (sock_fd, F_SETFL, flags);
+  if (fcntl (sock_fd, F_SETFL, flags) < 0)
+    {
+      assert (0);
+    }
 
   sock_opt = 1;
-  setsockopt (sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt,
-	      sizeof (sock_opt));
+  if (setsockopt (sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt,
+		  sizeof (sock_opt)) < 0)
+    {
+      assert (0);
+    }
 
   sock_opt = 1;
-  setsockopt (sock_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt,
-	      sizeof (sock_opt));
+  if (setsockopt (sock_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt,
+		  sizeof (sock_opt)) < 0)
+    {
+      assert (0);
+    }
 
   *ret_sock = sock_fd;
   return CCI_ER_NO_ERROR;
@@ -1799,12 +1816,17 @@ static T_BROKER_REQUEST_MSG *
 make_cas_connect_msg (const char *port_name)
 {
   T_BROKER_REQUEST_MSG *brreq_msg;
+  int opcode_msg_size;
 
-  brreq_msg = brreq_msg_alloc (0);
+  opcode_msg_size = brreq_msg_normal_broker_opcode_msg_size (port_name, 0);
+
+  brreq_msg = brreq_msg_alloc (opcode_msg_size);
   if (brreq_msg)
     {
-      brreq_msg_pack (brreq_msg, CAS_CLIENT_CCI, BRREQ_OP_CODE_CAS_CONNECT,
-		      0, port_name);
+      char *ptr;
+      ptr = brreq_msg_pack (brreq_msg, CAS_CLIENT_CCI,
+			    BRREQ_OP_CODE_CAS_CONNECT, opcode_msg_size);
+      ptr = brreq_msg_pack_port_name (ptr, port_name);
     }
 
   return brreq_msg;
@@ -1813,11 +1835,17 @@ make_cas_connect_msg (const char *port_name)
 static T_BROKER_REQUEST_MSG *
 make_ping_check_msg (const char *port_name)
 {
-  T_BROKER_REQUEST_MSG *ping_check_msg = brreq_msg_alloc (0);
+  int opcode_msg_size;
+
+  opcode_msg_size = brreq_msg_normal_broker_opcode_msg_size (port_name, 0);
+
+  T_BROKER_REQUEST_MSG *ping_check_msg = brreq_msg_alloc (opcode_msg_size);
   if (ping_check_msg)
     {
-      brreq_msg_pack (ping_check_msg, CAS_CLIENT_CCI, BRREQ_OP_CODE_PING,
-		      0, port_name);
+      char *ptr;
+      ptr = brreq_msg_pack (ping_check_msg, CAS_CLIENT_CCI,
+			    BRREQ_OP_CODE_PING, opcode_msg_size);
+      ptr = brreq_msg_pack_port_name (ptr, port_name);
     }
 
   return ping_check_msg;
@@ -1928,7 +1956,7 @@ make_mgmt_request_msg (char opcode, ...)
       char *ptr;
 
       ptr = brreq_msg_pack (brreq_msg, CAS_CLIENT_CCI,
-			    opcode, opcode_msg_size, NULL);
+			    opcode, opcode_msg_size);
 
       memcpy (ptr, msg, opcode_msg_size);
     }

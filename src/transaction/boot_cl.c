@@ -57,7 +57,6 @@
 #include "language_support.h"
 #include "message_catalog.h"
 #include "parser.h"
-#include "perf_monitor.h"
 #include "set_object.h"
 #include "cnv.h"
 #include "environment_variable.h"
@@ -100,7 +99,6 @@ static BOOT_SERVER_CREDENTIAL boot_Server_credential = {
   /* root_class_oid */ NULL_OID_INITIALIZER,
   /* root_class_hfid */ {{NULL_FILEID, NULL_VOLID}, NULL_PAGEID},
   /* data page_size */ -1, /* log page_size */ -1,
-  /* disk_compatibility */ 0.0,
   /* server_session_key */ {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
   INTL_CODESET_NONE,
   NULL,
@@ -121,6 +119,7 @@ VOLID boot_User_volid = 0;
 char boot_Host_connected[MAXHOSTNAMELEN] = "";
 #endif /* CS_MODE */
 char boot_Host_name[MAXHOSTNAMELEN] = "";
+RYE_VERSION boot_Peer_version = RYE_CUR_VERSION;
 
 static char boot_Volume_label[PATH_MAX] = " ";
 static bool boot_Is_client_all_final = true;
@@ -508,7 +507,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * client_credential,
 				   MSGCAT_SET_GENERAL,
 				   MSGCAT_GENERAL_DATABASE_INIT),
 	   BOOT_FORMAT_MAX_LENGTH);
-  (void) fprintf (stdout, format, rel_name ());
+  (void) fprintf (stdout, format, rel_package_string ());
 #endif /* CS_MODE */
 
   cfg_free_hosts (hosts);
@@ -999,12 +998,6 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * client_credential)
       error_code = er_errid ();
       goto error;
     }
-
-  /* Reset the disk_level according to server.. */
-  if (rel_disk_compatible () != boot_Server_credential.disk_compatibility)
-    {
-      rel_set_disk_compatible (boot_Server_credential.disk_compatibility);
-    }
 #endif /* CS_MODE */
 
 #if defined (ENABLE_UNUSED_FUNCTION)
@@ -1383,6 +1376,8 @@ boot_client_initialize_css (const char *dbname,
       error = net_client_init (dbname, hostlist[n]);
       if (error == NO_ERROR)
 	{
+	  RYE_VERSION server_version;
+
 	  /* save the hostname for the use of calling functions */
 	  if (boot_Host_connected != hostlist[n])
 	    {
@@ -1391,11 +1386,15 @@ boot_client_initialize_css (const char *dbname,
 	  er_log_debug (ARG_FILE_LINE, "ping server with handshake\n");
 	  /* ping to validate availability and to check compatibility */
 	  er_clear ();
-	  error =
-	    net_client_ping_server_with_handshake (client_type,
-						   check_capabilities,
-						   opt_cap);
-	  if (error != NO_ERROR)
+	  error = net_client_ping_server_with_handshake (client_type,
+							 check_capabilities,
+							 opt_cap,
+							 &server_version);
+	  if (error == NO_ERROR)
+	    {
+	      boot_Peer_version = server_version;
+	    }
+	  else
 	    {
 	      css_terminate (false);
 	    }

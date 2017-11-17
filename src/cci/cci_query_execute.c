@@ -545,6 +545,8 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
     }
 #endif
 
+  net_buf_init (&net_buf);
+
   autocommit_flag = (char) con_handle->autocommit_mode;
 
   if (TIMEOUT_IS_SET (con_handle))
@@ -562,8 +564,6 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
     {
       use_server_query_cancel = true;
     }
-
-  net_buf_init (&net_buf);
 
   net_buf_cp_str (&net_buf, &func_code, 1);
 
@@ -1329,6 +1329,8 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
       assert (0);
     }
 
+  net_buf_init (&net_buf);
+
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
@@ -1341,8 +1343,6 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
     }
 
   autocommit_flag = (char) con_handle->autocommit_mode;
-
-  net_buf_init (&net_buf);
 
   net_buf_cp_str (&net_buf, &func_code, 1);
 

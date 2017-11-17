@@ -438,10 +438,6 @@ CATCLS_COLUMN columns_LogWriter[] = {
   ,
   {"last_received_time", "bigint"}
   ,
-  {"nx_archive_lsa", "bigint"}
-  ,
-  {"nx_archive_number", "int"}
-  ,
   {"eof_lsa", "bigint"}
 };
 CATCLS_CONSTRAINT cons_LogWriter[] = {
@@ -471,7 +467,7 @@ CATCLS_COLUMN columns_LogAnalyzer[] = {
   ,
   {"start_time", "bigint"}
   ,
-  {"last_access_time", "bigint"}
+  {"source_applied_time", "bigint"}
   ,
   {"creation_time", "bigint"}
   ,
@@ -495,7 +491,7 @@ CATCLS_CONSTRAINT cons_LogAnalyzer[] = {
    }
   ,
   {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"last_access_time", NULL}
+   DB_CONSTRAINT_NOT_NULL, NULL, {"source_applied_time", NULL}
    }
   ,
   {

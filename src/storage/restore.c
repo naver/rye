@@ -47,14 +47,12 @@
 #include "databases_file.h"
 #include "message_catalog.h"
 #include "util_func.h"
-#include "perf_monitor.h"
 #include "environment_variable.h"
 #include "page_buffer.h"
 #include "connection_error.h"
 #include "release_string.h"
 #include "xserver_interface.h"
 #include "log_manager.h"
-#include "perf_monitor.h"
 #if defined(SERVER_MODE)
 #include "server_support.h"
 #endif
@@ -74,7 +72,7 @@ static BK_BACKUP_SESSION *bk_start_restore (THREAD_ENTRY * thread_p,
 					    char *backup_source,
 					    INT64 match_dbcreation,
 					    PGLENGTH * db_iopagesize,
-					    float *db_compatibility,
+					    RYE_VERSION * bkup_version,
 					    BK_BACKUP_SESSION * session,
 					    bool authenticate,
 					    INT64 match_bkupcreation,
@@ -371,7 +369,7 @@ bk_read_restore_header (BK_BACKUP_SESSION * session_p)
  *   backup_source(in): Name of backup destination device (file or directory)
  *   match_dbcreation(out): Creation of data base of backup
  *   db_iopagesize(out): Database size of database in backup
- *   db_compatibility(out): Disk compatibility of database in backup
+ *   bkdb_version(out): Disk compatibility of database in backup
  *   session(in/out): The session array
  *   authenticate(in): true when validation of new bkup volume header needed
  *   match_bkupcreation(in): explicit timestamp to match in new backup volume
@@ -385,7 +383,7 @@ bk_start_restore (THREAD_ENTRY * thread_p,
 		  char *backup_source_p,
 		  INT64 match_db_creation_time,
 		  PGLENGTH * db_io_page_size_p,
-		  float *db_compatibility_p,
+		  RYE_VERSION * bkdb_version,
 		  BK_BACKUP_SESSION * session_p,
 		  bool is_authenticate,
 		  INT64 match_backup_creation_time,
@@ -407,7 +405,7 @@ bk_start_restore (THREAD_ENTRY * thread_p,
   if (temp_session_p != NULL)
     {
       *db_io_page_size_p = session_p->bkuphdr->db_iopagesize;
-      *db_compatibility_p = session_p->bkuphdr->db_compatibility;
+      *bkdb_version = session_p->bkuphdr->bk_db_version;
     }
 
   return (temp_session_p);
@@ -505,7 +503,7 @@ bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
 
       /* Always check for a valid magic number, regardless of whether
          we need to check other authentications. */
-      if (strcmp (backup_header_p->magic, RYE_MAGIC_DATABASE_BACKUP) != 0)
+      if (strcmp (backup_header_p->bk_magic, RYE_MAGIC_DATABASE_BACKUP) != 0)
 	{
 	  if (is_first_time)
 	    {
@@ -521,19 +519,20 @@ bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
 	}
 
       /* Should check the release version before we do anything */
-      if (is_first_time
-	  && rel_is_log_compatible (backup_header_p->db_release,
-				    rel_release_string ()) != true)
+      if (is_first_time &&
+	  rel_is_log_compatible (&backup_header_p->bk_db_version) != true)
 	{
+	  char bkdb_release[REL_MAX_VERSION_LENGTH];
 	  /*
 	   * First time this database is restarted using the current version of
 	   * Rye. Recovery should be done using the old version of the
 	   * system
 	   */
+	  rel_version_to_string (&backup_header_p->bk_db_version,
+				 bkdb_release, sizeof (bkdb_release));
 	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_RECOVER_ON_OLD_RELEASE, 4,
-		  rel_name (), backup_header_p->db_release,
-		  rel_release_string (), rel_release_string ());
+		  ER_LOG_RECOVER_ON_OLD_RELEASE, 2,
+		  bkdb_release, rel_version_string ());
 	  return NULL;
 	}
 
@@ -692,16 +691,17 @@ bk_list_restore (THREAD_ENTRY * thread_p,
   BK_BACKUP_HEADER *backup_header_p;
   BK_VOL_HEADER_IN_BACKUP *file_header_p;
   PGLENGTH db_iopagesize;
-  float db_compatibility;
+  RYE_VERSION bkup_version;
   int nbytes;
   INT64 db_creation_time = 0;
   char file_name[PATH_MAX];
   time_t tmp_time;
   char time_val[CTIME_MAX];
+  char bkup_db_release[REL_MAX_VERSION_LENGTH];
 
   if (bk_start_restore (thread_p, db_full_name_p, backup_source_p,
 			db_creation_time, &db_iopagesize,
-			&db_compatibility, session_p, false, 0, NULL) == NULL)
+			&bkup_version, session_p, false, 0, NULL) == NULL)
     {
       /* Cannot access backup file.. Restore from backup is cancelled */
       if (er_errid () == ER_GENERIC_ERROR)
@@ -747,10 +747,12 @@ bk_list_restore (THREAD_ENTRY * thread_p,
   fprintf (stdout,
 	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
 			   MSGCAT_FILEIO_BKUP_HDR_TIME), time_val, 1);
+  rel_version_to_string (&backup_header_p->bk_db_version,
+			 bkup_db_release, sizeof (bkup_db_release));
   fprintf (stdout,
 	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
 			   MSGCAT_FILEIO_BKUP_HDR_RELEASES),
-	   backup_header_p->db_release, backup_header_p->db_compatibility);
+	   bkup_db_release, backup_header_p->bk_db_version.major);
   fprintf (stdout,
 	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
 			   MSGCAT_FILEIO_BKUP_HDR_BKUP_PAGESIZE),
@@ -923,21 +925,18 @@ static int
 bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
 			     int stop_page_id, BK_BACKUP_SESSION * session_p)
 {
-  FILEIO_PAGE *malloc_io_pgptr = NULL;
+  FILEIO_PAGE *io_pgptr = NULL;
 
-  malloc_io_pgptr = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
-  if (malloc_io_pgptr == NULL)
+  io_pgptr = fileio_alloc_io_page (thread_p);
+  if (io_pgptr == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, IO_PAGESIZE);
       return ER_FAILED;
     }
-  LSA_SET_NULL (&malloc_io_pgptr->prv.lsa);
-  MEM_REGION_INIT (&malloc_io_pgptr->page[0], DB_PAGESIZE);
 
   while (*next_page_id_p < stop_page_id)
     {
-
       /*
        * We did not back up a page since it was deallocated, or there
        * is a hole of some kind that must be filled in with correctly
@@ -945,7 +944,7 @@ bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
        */
 
       if (bk_write_restore (thread_p, session_p->dbfile.vdes,
-			    malloc_io_pgptr, session_p->dbfile.volid,
+			    io_pgptr, session_p->dbfile.volid,
 			    *next_page_id_p) == NULL)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -955,9 +954,9 @@ bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
       *next_page_id_p += 1;
     }
 
-  if (malloc_io_pgptr != NULL)
+  if (io_pgptr != NULL)
     {
-      free_and_init (malloc_io_pgptr);
+      free_and_init (io_pgptr);
     }
 
   return NO_ERROR;
@@ -1505,9 +1504,9 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   INT64 bkup_match_time = 0;
   PGLENGTH db_iopagesize;
   PGLENGTH log_page_size;
-  float db_compatibility;
+  RYE_VERSION db_version;
   PGLENGTH bkdb_iopagesize;
-  float bkdb_compatibility;
+  RYE_VERSION bkdb_version;
   bool error_expected = false;
   bool restore_in_progress = false;	/* true if any vols restored */
   int lgat_vdes = NULL_VOLDES;
@@ -1531,12 +1530,12 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   if (logpb_find_header_parameters (thread_p, db_fullname, logpath,
 				    prefix_logname, &db_iopagesize,
 				    &log_page_size, &db_creation,
-				    &db_compatibility, &dummy) == -1)
+				    &db_version, &dummy) == -1)
     {
       db_iopagesize = IO_PAGESIZE;
       log_page_size = LOG_PAGESIZE;
       db_creation = 0;
-      db_compatibility = rel_disk_compatible ();
+      db_version = rel_cur_version ();
     }
 
   /*
@@ -1574,7 +1573,7 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   printtoc = (r_args->printtoc) ? false : true;
   if (bk_start_restore (thread_p, db_fullname, from_volbackup,
 			db_creation, &bkdb_iopagesize,
-			&bkdb_compatibility, &session_storage,
+			&bkdb_version, &session_storage,
 			printtoc, bkup_match_time,
 			r_args->verbose_file) == NULL)
     {
@@ -1654,14 +1653,16 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   /* Removed strict condition for checking disk compatibility.
    * Check it according to the predefined rules.
    */
-  compat = rel_get_disk_compatible (bkdb_compatibility, NULL);
-  if (compat != REL_FULLY_COMPATIBLE && compat != REL_BACKWARD_COMPATIBLE)
+  compat = rel_check_disk_compatible (&bkdb_version);
+  if (compat != REL_COMPATIBLE)
     {
+      char bkdb_release[REL_MAX_VERSION_LENGTH];
+      rel_version_to_string (&bkdb_version, bkdb_release,
+			     sizeof (bkdb_release));
       /* Database is incompatible with current release */
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_BKUP_INCOMPATIBLE, 2,
-	      rel_name (), rel_release_string ());
       error_code = ER_LOG_BKUP_INCOMPATIBLE;
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
+	      bkdb_release, rel_version_string ());
       LOG_CS_EXIT ();
       goto error;
     }

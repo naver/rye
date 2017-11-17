@@ -57,6 +57,8 @@
 #include "repl_catalog.h"
 #include "repl_analyzer.h"
 
+#include "fault_injection.h"
+
 
 
 
@@ -522,7 +524,7 @@ cirpwr_create_active_log (CCI_CONN * conn)
 
       gettimeofday (&current_time, NULL);
       ct.start_time = timeval_to_msec (&current_time);
-      ct.last_access_time = ct.start_time;
+      ct.source_applied_time = ct.start_time;
 
       ct.creation_time = m_log_hdr->db_creation * 1000;
       ct.queue_full = 0;
@@ -686,10 +688,10 @@ rp_log_header_validate (const LOG_HEADER * log_hdr, const char *db_name)
   int error = NO_ERROR;
 
   /* check magic */
-  if (strncmp (log_hdr->magic,
+  if (strncmp (log_hdr->log_magic,
 	       RYE_MAGIC_LOG_ACTIVE, RYE_MAGIC_MAX_LENGTH) != 0)
     {
-      REPL_SET_GENERIC_ERROR (error, "invalid magic(%s)", log_hdr->magic);
+      REPL_SET_GENERIC_ERROR (error, "invalid magic(%s)", log_hdr->log_magic);
 
       return error;
     }
@@ -777,12 +779,12 @@ cirpwr_finalize (void)
     {
       Rye_queue_free_full (cirpwr_Gl.recv_log_queue,
 			   cirpwr_rye_queue_node_free);
-      cirpwr_Gl.recv_log_queue = NULL;
+      free_and_init (cirpwr_Gl.recv_log_queue);
     }
   if (cirpwr_Gl.free_list != NULL)
     {
       Rye_queue_free_full (cirpwr_Gl.free_list, cirpwr_rye_queue_node_free);
-      cirpwr_Gl.free_list = NULL;
+      free_and_init (cirpwr_Gl.free_list);
     }
 
   RYE_FREE_MEM (cirpwr_Gl.logpg_area);
@@ -1065,6 +1067,8 @@ cirpwr_writev_append_pages (LOG_PAGE ** to_flush, DKNPAGES npages)
 		"background archiving  current_page_id[%lld], fpageid[%lld, %lld], npages[%d]",
 		cirpwr_Gl.bg_archive_info.current_page_id, fpageid,
 		phy_pageid, npages);
+
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 10000, 0);
 
   /* 2. active write */
   phy_pageid = cirpwr_to_physical_pageid (fpageid);
@@ -1416,7 +1420,7 @@ cirpwr_archive_active_log (void)
   char buffer[LINE_MAX];
   BACKGROUND_ARCHIVING_INFO *bg_arv_info;
   LOG_HEADER *m_log_hdr = NULL;
-  CIRP_WRITER_INFO *writer = NULL;
+  UNUSED_VAR CIRP_WRITER_INFO *writer = NULL;
   int error = NO_ERROR;
 
   writer = &Repl_Info->writer_info;
@@ -1526,6 +1530,8 @@ cirpwr_archive_active_log (void)
 		arvhdr->arv_num, arvhdr->fpageid,
 		arvhdr->fpageid + arvhdr->npages - 1);
 
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 2, 0);
+
   return NO_ERROR;
 
 exit_on_error:
@@ -1623,6 +1629,8 @@ cirpwr_write_log_pages (void)
     {
       GOTO_EXIT_ON_ERROR;
     }
+
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 1000, 0);
 
   (void) cirpwr_flush_header_page ();
 
@@ -1770,7 +1778,7 @@ log_copier_main (void *arg)
   error = er_set_msg_info (th_er_msg);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
       cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg);
@@ -1890,7 +1898,7 @@ log_copier_main (void *arg)
 	      err_msg);
     }
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
   cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
@@ -1933,7 +1941,7 @@ log_writer_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
       cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg_info);
@@ -1976,7 +1984,7 @@ log_writer_main (void *arg)
 	}
     }
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
   cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
@@ -2001,9 +2009,7 @@ static int
 cirpwr_change_status (CIRP_WRITER_INFO * writer_info,
 		      CIRP_AGENT_STATUS status)
 {
-  int rv;
-
-  rv = pthread_mutex_lock (&writer_info->lock);
+  pthread_mutex_lock (&writer_info->lock);
   writer_info->status = status;
   pthread_mutex_unlock (&writer_info->lock);
 
@@ -2019,10 +2025,9 @@ cirpwr_change_status (CIRP_WRITER_INFO * writer_info,
 CIRP_AGENT_STATUS
 cirpwr_get_status (CIRP_WRITER_INFO * writer_info)
 {
-  int rv;
   CIRP_AGENT_STATUS status;
 
-  rv = pthread_mutex_lock (&writer_info->lock);
+  pthread_mutex_lock (&writer_info->lock);
   status = writer_info->status;
   pthread_mutex_unlock (&writer_info->lock);
 

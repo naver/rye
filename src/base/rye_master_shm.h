@@ -56,6 +56,8 @@ extern int master_shm_initialize (void);
 extern int master_shm_final (void);
 extern int master_shm_set_node_state (const char *host_name,
 				      unsigned short node_state);
+extern int master_shm_set_node_version (const char *host_name,
+					const RYE_VERSION * node_version);
 extern int master_shm_reset_hb_nodes (RYE_SHM_HA_NODE * nodes, int num_nodes);
 
 extern int master_shm_get_server_state (const char *dbname);

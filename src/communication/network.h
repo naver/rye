@@ -210,8 +210,6 @@ typedef enum
 } NET_SERVER_REQUEST;
 
 /* Server/client capabilities */
-#define NET_CAP_BACKWARD_COMPATIBLE     0x80000000
-#define NET_CAP_FORWARD_COMPATIBLE      0x40000000
 #define NET_CAP_INTERRUPT_ENABLED       0x00800000
 #define NET_CAP_UPDATE_DISABLED         0x00008000
 #define NET_CAP_HA_REPL_DELAY           0x00000008

@@ -30,11 +30,13 @@
 
 package rye.jdbc.jci;
 
+import rye.jdbc.driver.RyeVersion;
+
 class CasInfo
 {
     private int id;
     private int pid;
-    private short protocolVersion;
+    private RyeVersion svrVersion = new RyeVersion();
     private byte[] dbSessionId;
     private byte dbms;
     private byte holdableResult;
@@ -48,13 +50,14 @@ class CasInfo
 	statusInfo = new byte[Protocol.CAS_STATUS_INFO_SIZE];
 	statusInfo[Protocol.CAS_STATUS_INFO_IDX_STATUS] = Protocol.CAS_INFO_STATUS_INACTIVE;
 
-	set((short) 0, 0, 0, Protocol.createNullSessionId(), Protocol.CAS_DBMS_RYE,
-		Protocol.CAS_HOLDABLE_RESULT_SUPPORT, Protocol.CAS_STATEMENT_POOLING_ON);
+	set((short) 0, (short) 0, (short) 0, (short) 0, 0, 0, Protocol.createNullSessionId(), Protocol.CAS_DBMS_RYE,
+			Protocol.CAS_HOLDABLE_RESULT_SUPPORT, Protocol.CAS_STATEMENT_POOLING_ON);
     }
 
-    void set(short version, int id, int pid, byte[] session, byte dbms, byte holdable, byte pooling)
+    void set(short verMajor, short verMinor, short verPatch, short verBuild, int id, int pid, byte[] session,
+		    byte dbms, byte holdable, byte pooling)
     {
-	this.protocolVersion = version;
+	svrVersion.set(verMajor, verMinor, verPatch, verBuild);
 	this.id = id;
 	this.pid = pid;
 	this.dbSessionId = session;
@@ -73,9 +76,9 @@ class CasInfo
 	return pid;
     }
 
-    short getProtocolVersion()
+    long getServerProtocolVersion()
     {
-	return protocolVersion;
+	return svrVersion.getProtocolVersion();
     }
 
     byte[] getDbSessionId()
@@ -114,17 +117,17 @@ class CasInfo
     {
 	statusInfo[Protocol.CAS_STATUS_INFO_IDX_STATUS] = status;
     }
-    
+
     byte getStatusInfoStatus()
     {
 	return statusInfo[Protocol.CAS_STATUS_INFO_IDX_STATUS];
     }
-    
+
     short getStatusInfoServerNodeid()
     {
 	return serverNodeid;
     }
-    
+
     long getStatusInfoServerShardInfoVersion()
     {
 	return serverShardVersion;

@@ -349,3 +349,58 @@ exit_on_error:
 
   return btid;
 }
+
+/*
+ * page_type_to_string () -
+ *
+ * return : void
+ *
+ */
+const char *
+page_type_to_string (PAGE_TYPE ptype)
+{
+  switch (ptype)
+    {
+    case PAGE_UNKNOWN:		/* 0 */
+      return "PAGE_UNKNOWN";
+    case PAGE_FILE_HEADER:	/* 1 */
+      return "PAGE_FILE_HEADER";
+    case PAGE_FILE_TAB:	/* 2 */
+      return "PAGE_FILE_TAB";
+    case PAGE_HEAP_HEADER:	/* 3 */
+      return "PAGE_HEAP_HEADER";
+    case PAGE_HEAP:		/* 4 */
+      return "PAGE_HEAP";
+    case PAGE_VOLHEADER:	/* 5 */
+      return "PAGE_VOLHEADER";
+    case PAGE_VOLBITMAP:	/* 6 */
+      return "PAGE_VOLBITMAP";
+    case PAGE_XASL:		/* 7 */
+      return "PAGE_XASL";
+    case PAGE_QRESULT:		/* 8 */
+      return "PAGE_QRESULT";
+    case PAGE_EHASH:		/* 9 */
+      return "PAGE_EHASH";
+    case PAGE_OVERFLOW:	/* 10 */
+      return "PAGE_OVERFLOW";
+    case PAGE_AREA:		/* 11 */
+      return "PAGE_AREA";
+    case PAGE_CATALOG:		/* 12 */
+      return "PAGE_CATALOG";
+    case PAGE_BTREE_ROOT:	/* 13 */
+      return "PAGE_BTREE_ROOT";
+    case PAGE_BTREE:		/* 14 */
+      return "PAGE_BTREE";
+
+    case PAGE_LOG:		/* 15 */
+      return "PAGE_LOG";
+    case PAGE_DROPPED_FILES:	/* 16 */
+      return "PAGE_DROPPED_FILES";
+    default:
+      break;
+    }
+
+  assert (false);
+
+  return "";
+}

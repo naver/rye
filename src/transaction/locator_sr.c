@@ -64,6 +64,7 @@
 #include "transaction_sr.h"
 #include "boot_sr.h"
 #include "transform.h"
+#include "perf_monitor.h"
 
 #include "db.h"
 

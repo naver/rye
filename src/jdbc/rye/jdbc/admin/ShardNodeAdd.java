@@ -53,12 +53,12 @@ class ShardNodeAdd extends ShardCommand
     {
 	boolean isInstanceAdd = (this instanceof ShardInstanceAdd);
 
-	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST NODE_INFO\n\n", className, commandName());
-	out.printf("valid options:\n");
-	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)\n", DEFAULT_LOCAL_MGMT_PORT);
-	out.printf("\t--password=PASSWORD		dba password\n");
+	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST NODE_INFO%n%n", className, commandName());
+	out.printf("valid options:%n");
+	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)%n", DEFAULT_LOCAL_MGMT_PORT);
+	out.printf("\t--password=PASSWORD		dba password%n");
 	if (isInstanceAdd == false) {
-	    out.printf("\t--createdb-option=PARAM	rye createdb option\n");
+	    out.printf("\t--createdb-option=PARAM	rye createdb option%n");
 	}
     }
 
@@ -168,7 +168,7 @@ class ShardNodeAdd extends ShardCommand
 	initDB(addNodeArr, globalDbnameArr, brokerAcl, ryeConfContents, null, null, haGroupId, createdbOption);
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
-	    printStatus(true, "%s: add node\n", globalDbnameArr[i]);
+	    printStatus(true, "%s: add node%n", globalDbnameArr[i]);
 
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 	    shardMgmtNodeAdd(shardMgmtInfo, globalDbnameArr[i], addNodeArr, dbaPasswordArr[i]);

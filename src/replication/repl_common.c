@@ -65,8 +65,12 @@ rp_clear_agent_flag (void)
  * rp_set_agent_flag ()
  */
 void
-rp_set_agent_flag (int flag)
+rp_set_agent_flag (const char *file_name, int line, int flag)
 {
+  er_log_debug (ARG_FILE_LINE,
+		"FILE(%s,%d),repl_Agent_flag(%x), flag(%x), hb_Proc_shutdown(%d)",
+		file_name, line, repl_Agent_flag, flag, hb_Proc_shutdown);
+
   repl_Agent_flag |= flag;
 }
 

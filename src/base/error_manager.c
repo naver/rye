@@ -615,10 +615,7 @@ er_fname_free (const void *key, void *data, UNUSED_ARG void *args)
 static void
 er_initialize_key (void)
 {
-  int r;
-
-  r = pthread_key_create (&er_Thread_key, NULL);
-  assert (r == 0);
+  pthread_key_create (&er_Thread_key, NULL);
 }
 
 /*
@@ -1460,7 +1457,7 @@ er_stop_on_error (int err_id)
   assert (er_hasalready_initiated);
 
   syslog (LOG_ALERT, er_cached_msg[ER_STOP_SYSLOG],
-	  rel_name (), err_id, cuserid (NULL), getpid ());
+	  rel_package_string (), err_id, cuserid (NULL), getpid ());
 
   (void) fprintf (stderr, "%s", er_cached_msg[ER_ER_ASK]);
   if (scanf ("%d", &exit_requested) != 1)
@@ -2051,7 +2048,7 @@ _er_log_debug (const char *file_name, const int line_no, const char *fmt, ...)
   char *host_name = NULL;
   int pid = 0;
 #endif
-  int tran_index;
+  UNUSED_VAR int tran_index;
   ER_MSG_INFO *er_Info = er_get_msg_info ();
   ER_MSG *er_Msg = NULL;
 
@@ -2723,7 +2720,9 @@ er_study_fmt (ER_FMT * fmt)
 	  int code;
 
 	  code = fmt->err_id;
+#if 0
 	  assert (false);
+#endif
 	  er_internal_msg (fmt, code, ER_ER_SUBSTITUTE_MSG);
 	  break;
 	}
