@@ -992,8 +992,7 @@ pgbuf_fix_newpg_release (THREAD_ENTRY * thread_p, const VPID * vpid,
 PAGE_PTR
 pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		 int request_mode, PGBUF_LATCH_CONDITION condition,
-		 UNUSED_ARG const PAGE_TYPE ptype,
-		 const char *caller_file, int caller_line)
+		 PAGE_TYPE ptype, const char *caller_file, int caller_line)
 #else /* NDEBUG */
 PAGE_PTR
 pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
@@ -1310,21 +1309,20 @@ try_again:
 
       pself = pgbuf_get_page_ptype (thread_p, pgptr);
 
-#if 0
-      assert (ptype == PAGE_UNKNOWN
-	      || ptype == pself
-	      || ((ptype == PAGE_FILE_HEADER || ptype == PAGE_FILE_TAB)
-		  && (pself == PAGE_FILE_HEADER || pself == PAGE_FILE_TAB))
-	      || ((ptype == PAGE_HEAP_HEADER || ptype == PAGE_HEAP)
-		  && (pself == PAGE_HEAP_HEADER || pself == PAGE_HEAP)));
-#endif
-
-#if 1
       if (pself == PAGE_UNKNOWN)
 	{
+#if 1
 	  (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);	/* reset */
-	}
 #endif
+	}
+      else
+	{
+	  /* for format, rollback, postpone, checkpoint */
+	  if (ptype == PAGE_UNKNOWN)
+	    {
+	      ptype = pself;
+	    }
+	}
     }
 
   assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);

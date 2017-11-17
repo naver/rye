@@ -119,7 +119,7 @@ extern PAGE_PTR pgbuf_flush_debug (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 extern PAGE_PTR pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 				 int newpg, int requestmode,
 				 PGBUF_LATCH_CONDITION condition,
-				 UNUSED_ARG const PAGE_TYPE ptype,
+				 PAGE_TYPE ptype,
 				 const char *caller_file, int caller_line);
 
 #define pgbuf_fix_newpg(thread_p, vpid, ptype) \
