@@ -47,14 +47,12 @@
 #include "databases_file.h"
 #include "message_catalog.h"
 #include "util_func.h"
-#include "perf_monitor.h"
 #include "environment_variable.h"
 #include "page_buffer.h"
 #include "connection_error.h"
 #include "release_string.h"
 #include "xserver_interface.h"
 #include "log_manager.h"
-#include "perf_monitor.h"
 #if defined(SERVER_MODE)
 #include "server_support.h"
 #endif
@@ -927,21 +925,18 @@ static int
 bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
 			     int stop_page_id, BK_BACKUP_SESSION * session_p)
 {
-  FILEIO_PAGE *malloc_io_pgptr = NULL;
+  FILEIO_PAGE *io_pgptr = NULL;
 
-  malloc_io_pgptr = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
-  if (malloc_io_pgptr == NULL)
+  io_pgptr = fileio_alloc_io_page (thread_p);
+  if (io_pgptr == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, IO_PAGESIZE);
       return ER_FAILED;
     }
-  LSA_SET_NULL (&malloc_io_pgptr->prv.lsa);
-  MEM_REGION_INIT (&malloc_io_pgptr->page[0], DB_PAGESIZE);
 
   while (*next_page_id_p < stop_page_id)
     {
-
       /*
        * We did not back up a page since it was deallocated, or there
        * is a hole of some kind that must be filled in with correctly
@@ -949,7 +944,7 @@ bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
        */
 
       if (bk_write_restore (thread_p, session_p->dbfile.vdes,
-			    malloc_io_pgptr, session_p->dbfile.volid,
+			    io_pgptr, session_p->dbfile.volid,
 			    *next_page_id_p) == NULL)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -959,9 +954,9 @@ bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
       *next_page_id_p += 1;
     }
 
-  if (malloc_io_pgptr != NULL)
+  if (io_pgptr != NULL)
     {
-      free_and_init (malloc_io_pgptr);
+      free_and_init (io_pgptr);
     }
 
   return NO_ERROR;

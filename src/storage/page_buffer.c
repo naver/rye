@@ -586,7 +586,13 @@ static void pgbuf_set_dirty_buffer_ptr (THREAD_ENTRY * thread_p,
 					PGBUF_BCB * bufptr);
 static int pgbuf_compare_victim_list (const void *p1, const void *p2);
 
-
+static void pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p,
+				     PGBUF_BCB * bufptr);
+static bool pgbuf_check_page_ptype_internal (THREAD_ENTRY * thread_p,
+					     PAGE_PTR pgptr,
+					     PAGE_TYPE ptype, bool no_error);
+static bool pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p,
+				       PGBUF_BCB * bufptr);
 /*
  * pgbuf_hash_func_mirror () - Hash VPID into hash anchor
  *   return: hash value
@@ -858,15 +864,14 @@ pgbuf_finalize (void)
  */
 PAGE_PTR
 pgbuf_fix_with_retry (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		      int mode, int retry,
-		      UNUSED_ARG const MNT_SERVER_ITEM item)
+		      int mode, int retry, UNUSED_ARG const PAGE_TYPE ptype)
 {
   PAGE_PTR pgptr;
   int i = 0;
   bool noretry = false;
 
   while ((pgptr = pgbuf_fix (thread_p, vpid, newpg, mode,
-			     PGBUF_UNCONDITIONAL_LATCH, item)) == NULL)
+			     PGBUF_UNCONDITIONAL_LATCH, ptype)) == NULL)
     {
       switch (er_errid ())
 	{
@@ -900,7 +905,7 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 				    const VPID * vpid, int newpg,
 				    int request_mode,
 				    PGBUF_LATCH_CONDITION condition,
-				    UNUSED_ARG const MNT_SERVER_ITEM item,
+				    UNUSED_ARG const PAGE_TYPE ptype,
 				    const char *caller_file, int caller_line)
 {
   PAGE_PTR pgptr;
@@ -908,7 +913,7 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
   bool old_check_page_validation, rv;
 #endif
 
-  assert (item == MNT_STATS_DATA_PAGE_FETCHES_BTREE);
+  assert (ptype == PAGE_BTREE);
 
 #if defined(SERVER_MODE)
   old_check_page_validation =
@@ -916,7 +921,7 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 #endif /* SERVER_MODE */
 
   pgptr = pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
-			   item, caller_file, caller_line);
+			   ptype, caller_file, caller_line);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
@@ -930,7 +935,7 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 				      const VPID * vpid, int newpg,
 				      int request_mode,
 				      PGBUF_LATCH_CONDITION condition,
-				      UNUSED_ARG const MNT_SERVER_ITEM item)
+				      UNUSED_ARG const PAGE_TYPE ptype)
 {
   PAGE_PTR pgptr;
 #if defined(SERVER_MODE)
@@ -943,13 +948,35 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 #endif /* SERVER_MODE */
 
   pgptr =
-    pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition, item);
+    pgbuf_fix_release (thread_p, vpid, newpg, request_mode, condition, ptype);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
 #endif /* SERVER_MODE */
 
   return pgptr;
+}
+#endif /* NDEBUG */
+
+
+#if !defined(NDEBUG)
+PAGE_PTR
+pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
+		       UNUSED_ARG const PAGE_TYPE ptype,
+		       const char *caller_file, int caller_line)
+{
+  return pgbuf_fix_debug (thread_p, vpid, NEW_PAGE,
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			  ptype, caller_file, caller_line);
+}
+#else /* NDEBUG */
+PAGE_PTR
+pgbuf_fix_newpg_release (THREAD_ENTRY * thread_p, const VPID * vpid,
+			 UNUSED_ARG const PAGE_TYPE ptype)
+{
+  return pgbuf_fix_release (thread_p, vpid, NEW_PAGE,
+			    PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
+			    ptype);
 }
 #endif /* NDEBUG */
 
@@ -965,17 +992,19 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 PAGE_PTR
 pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		 int request_mode, PGBUF_LATCH_CONDITION condition,
-		 UNUSED_ARG const MNT_SERVER_ITEM item,
-		 const char *caller_file, int caller_line)
+		 PAGE_TYPE ptype, const char *caller_file, int caller_line)
 #else /* NDEBUG */
 PAGE_PTR
 pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 		   int request_mode, PGBUF_LATCH_CONDITION condition,
-		   UNUSED_ARG const MNT_SERVER_ITEM item)
+		   PAGE_TYPE ptype)
 #endif				/* NDEBUG */
 {
   PGBUF_BUFFER_HASH *hash_anchor;
   PGBUF_BCB *bufptr;
+  PAGE_PTR pgptr;
+  MNT_SERVER_ITEM item;
+  FILEIO_PAGE_RESERVED *prv_p;
   int buf_lock_acquired;
   int wait_msecs;
 #if defined(SERVER_MODE)
@@ -991,8 +1020,8 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 #endif
   UINT64 perf_start;
 
-  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
-  assert (MNT_GET_PARENT_ITEM (item) == MNT_STATS_DATA_PAGE_FETCHES);
+  assert ((newpg == NEW_PAGE && request_mode == PGBUF_LATCH_WRITE
+	   && condition == PGBUF_UNCONDITIONAL_LATCH) || newpg == OLD_PAGE);
 
   PERF_MON_GET_CURRENT_TIME (perf_start);
 
@@ -1125,6 +1154,8 @@ try_again:
       bufptr->async_flush_request = false;
       LSA_SET_NULL (&bufptr->oldest_unflush_lsa);
 
+      prv_p = &(bufptr->iopage_buffer->iopage.prv);
+
       if (newpg != NEW_PAGE)
 	{
 	  UINT64 perf_start;
@@ -1153,11 +1184,23 @@ try_again:
 				       1, perf_start);
 
 	  if (pgbuf_is_temporary_volume (vpid->volid) == true
-	      && !LSA_IS_INIT_TEMP (&bufptr->iopage_buffer->iopage.prv.lsa))
+	      && !LSA_IS_INIT_TEMP (&(prv_p->lsa)))
 	    {
-	      LSA_SET_INIT_TEMP (&bufptr->iopage_buffer->iopage.prv.lsa);
+	      LSA_SET_INIT_TEMP (&(prv_p->lsa));
 	      pgbuf_set_dirty_buffer_ptr (thread_p, bufptr);
 	    }
+
+#if !defined (NDEBUG)
+	  /* perm volume */
+	  if (bufptr->vpid.volid > NULL_VOLID)
+	    {
+	      if (!LSA_ISNULL (&(prv_p->lsa)))
+		{
+		  assert (prv_p->pageid != NULL_PAGEID);
+		  assert (prv_p->volid != NULL_VOLID);
+		}
+	    }
+#endif /* NDEBUG */
 
 	  mnt_stats_counter (thread_p, MNT_STATS_SORT_IO_PAGES, 1);
 	}
@@ -1172,11 +1215,18 @@ try_again:
 	  /* Don't need to read page from disk since it is a new page. */
 	  if (pgbuf_is_temporary_volume (vpid->volid) == true)
 	    {
-	      LSA_SET_INIT_TEMP (&bufptr->iopage_buffer->iopage.prv.lsa);
+	      LSA_SET_INIT_TEMP (&(prv_p->lsa));
 	    }
 	  else
 	    {
-	      LSA_SET_INIT_NONTEMP (&bufptr->iopage_buffer->iopage.prv.lsa);
+	      LSA_SET_INIT_NONTEMP (&(prv_p->lsa));
+	    }
+
+	  /* perm volume */
+	  if (bufptr->vpid.volid > NULL_VOLID)
+	    {
+	      /* Init Page identifier of NEW_PAGE */
+	      (void) fileio_initialize_res (thread_p, prv_p);
 	    }
 
 	  mnt_stats_counter (thread_p, MNT_STATS_SORT_DATA_PAGES, 1);
@@ -1247,10 +1297,45 @@ try_again:
       (void) pgbuf_unlock_page (hash_anchor, vpid, false);
     }
 
+  CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
+
+  if (newpg == NEW_PAGE)
+    {
+      (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);	/* set */
+    }
+  else
+    {
+      PAGE_TYPE pself;
+
+      pself = pgbuf_get_page_ptype (thread_p, pgptr);
+
+      if (pself == PAGE_UNKNOWN)
+	{
+#if 1
+	  (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);	/* reset */
+#endif
+	}
+      else
+	{
+	  /* for format, rollback, postpone, checkpoint */
+	  if (ptype == PAGE_UNKNOWN)
+	    {
+	      ptype = pself;
+	    }
+	}
+    }
+
+  assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);
+  assert_release (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
+
   /* Record number of fetches in statistics */
+  item = mnt_page_ptype_to_server_item (ptype);
+  assert (item != MNT_STATS_DATA_PAGE_FETCHES);
+  assert (MNT_GET_PARENT_ITEM (item) == MNT_STATS_DATA_PAGE_FETCHES);
+
   mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
-  return (PAGE_PTR) (&(bufptr->iopage_buffer->iopage.page[0]));
+  return pgptr;
 }
 
 /*
@@ -1477,7 +1562,7 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
  */
 int
 pgbuf_get_num_hold_cnt (UNUSED_ARG THREAD_ENTRY * thread_p,
-			BUFFER_PAGE_TYPE page_type)
+			PAGE_TYPE page_type)
 {
   int cnt = 0;
   int thrd_index;
@@ -2268,8 +2353,7 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
   int lru_idx, start_lru_idx;
   int error;
   int num_tries;
-#if defined(SERVER_MODE)
-  int rv;
+#if !defined(NDEBUG) && defined(SERVER_MODE)
   static THREAD_ENTRY *page_flush_thread = NULL;
 #endif /* SERVER_MODE */
 
@@ -2305,7 +2389,7 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
     {
       check_count = MAX (1, (int) (PGBUF_NUM_PAGES_IN_LRU * flush_ratio));
 
-      rv = pthread_mutex_lock (&pgbuf_Pool.buf_LRU_list[lru_idx].LRU_mutex);
+      pthread_mutex_lock (&pgbuf_Pool.buf_LRU_list[lru_idx].LRU_mutex);
       bufptr = pgbuf_Pool.buf_LRU_list[lru_idx].LRU_bottom;
 
       while ((bufptr != NULL) && (bufptr->zone != PGBUF_LRU_1_ZONE)
@@ -2353,7 +2437,7 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
 	{
 	  bufptr = victim_cand_list[i].bufptr;
 
-	  rv = pthread_mutex_lock (&bufptr->BCB_mutex);
+	  pthread_mutex_lock (&bufptr->BCB_mutex);
 	  /* flush condition check */
 	  if (!VPID_EQ (&bufptr->vpid, &victim_cand_list[i].vpid)
 	      || bufptr->dirty == false
@@ -2540,8 +2624,7 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 	      pthread_mutex_unlock (&bufptr->BCB_mutex);
 
 	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-				 PGBUF_UNCONDITIONAL_LATCH,
-				 MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT);
+				 PGBUF_UNCONDITIONAL_LATCH, PAGE_UNKNOWN);
 	      if (pgptr == NULL
 		  || pgbuf_flush_with_wal (thread_p, pgptr) == NULL)
 		{
@@ -2655,8 +2738,7 @@ pgbuf_copy_to_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       if (do_fetch == true)
 	{
 	  pgptr = pgbuf_fix (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			     PGBUF_UNCONDITIONAL_LATCH,
-			     MNT_STATS_DATA_PAGE_FETCHES_AREA);
+			     PGBUF_UNCONDITIONAL_LATCH, PAGE_AREA);
 	  if (pgptr != NULL)
 	    {
 	      memcpy (area, (char *) pgptr + start_offset, length);
@@ -2809,9 +2891,7 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       pthread_mutex_unlock (&bufptr->BCB_mutex);
     }
 
-  pgptr = pgbuf_fix (thread_p, vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
-		     PGBUF_UNCONDITIONAL_LATCH,
-		     MNT_STATS_DATA_PAGE_FETCHES_AREA);
+  pgptr = pgbuf_fix_newpg (thread_p, vpid, PAGE_AREA);
   if (pgptr != NULL)
     {
       memcpy ((char *) pgptr + start_offset, area, length);
@@ -2966,9 +3046,8 @@ pgbuf_set_lsa (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
       if (LSA_LT (lsa_ptr, &log_Gl.chkpt_redo_lsa))
 	{
 	  LOG_LSA chkpt_redo_lsa;
-	  int rc;
 
-	  rc = pthread_mutex_lock (&log_Gl.chkpt_lsa_lock);
+	  pthread_mutex_lock (&log_Gl.chkpt_lsa_lock);
 	  LSA_COPY (&chkpt_redo_lsa, &log_Gl.chkpt_redo_lsa);
 	  pthread_mutex_unlock (&log_Gl.chkpt_lsa_lock);
 
@@ -4407,7 +4486,12 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
 #if defined(SERVER_MODE)
   THREAD_ENTRY *cur_thrd_entry, *thrd_entry;
   int rv;
+  PAGE_TYPE ptype;
+  PAGE_PTR pgptr;
+#endif
+  int error = NO_ERROR;
 
+#if defined(SERVER_MODE)
   /* caller is holding bufptr->BCB_mutex */
 
   assert (bufptr->latch_mode != PGBUF_LATCH_VICTIM);
@@ -4497,18 +4581,21 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
        * When the request is waken up, the request is treated as a victim.
        */
 #if !defined(NDEBUG)
-      if (pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry,
-			     caller_file, caller_line) != NO_ERROR)
+      error = pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry,
+				 caller_file, caller_line);
 #else /* NDEBUG */
-      if (pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry) != NO_ERROR)
+      error = pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry);
 #endif /* NDEBUG */
-	{
-	  return ER_FAILED;
-	}
+
+      CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
+
+      ptype = pgbuf_get_page_ptype (thread_p, pgptr);
+
+      server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, ptype);
     }
 #endif /* SERVER_MODE */
 
-  return NO_ERROR;
+  return error;
 }
 
 #if defined(SERVER_MODE)
@@ -5211,9 +5298,8 @@ pgbuf_lock_page (THREAD_ENTRY * thread_p,
 	    {
 	      /* interrupt operation */
 	      THREAD_ENTRY *thrd_entry, *prev_thrd_entry = NULL;
-	      int r;
 
-	      r = pthread_mutex_lock (&hash_anchor->hash_mutex);
+	      pthread_mutex_lock (&hash_anchor->hash_mutex);
 	      thrd_entry = cur_buffer_lock->next_wait_thrd;
 
 	      while (thrd_entry != NULL)
@@ -5476,14 +5562,14 @@ pgbuf_victimize_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 #endif				/* NDEBUG */
 {
 #if defined(SERVER_MODE)
-  THREAD_ENTRY *cur_thrd_entry;
+//  THREAD_ENTRY *cur_thrd_entry;
 
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  cur_thrd_entry = thread_p;
+//  cur_thrd_entry = thread_p;
 #endif /* SERVER_MODE */
 
   /* the caller is holding bufptr->BCB_mutex */
@@ -7163,61 +7249,283 @@ pgbuf_set_dirty_buffer_ptr (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 }
 
 /*
- * pgbuf_page_type_to_string () -
- *
- * return : void
- *
+ * pgbuf_get_page_ptype () -
+ *   return:
+ *   pgptr(in): Pointer to page
  */
-const char *
-pgbuf_page_type_to_string (BUFFER_PAGE_TYPE page_type)
+PAGE_TYPE
+pgbuf_get_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 {
-  switch (page_type)
+  PGBUF_BCB *bufptr;
+  PAGE_TYPE ptype;
+
+  if (thread_p == NULL)
     {
-    case PAGE_UNKNOWN:
-      return "PAGE_UNKNOWN";
-    case PAGE_FTAB:
-      return "PAGE_FTAB";
-    case PAGE_HEAP:
-      return "PAGE_HEAP";
-    case PAGE_HEAP_HEADER:
-      return "PAGE_HEAP_HEADER";
-    case PAGE_VOLHEADER:
-      return "PAGE_VOLHEADER";
-    case PAGE_VOLBITMAP:
-      return "PAGE_VOLBITMAP";
-    case PAGE_XASL:
-      return "PAGE_XASL";
-    case PAGE_QRESULT:
-      return "PAGE_QRESULT";
-    case PAGE_EHASH:
-      return "PAGE_EHASH";
-    case PAGE_LARGEOBJ:
-      return "PAGE_LARGEOBJ";
-    case PAGE_OVERFLOW:
-      return "PAGE_OVERFLOW";
-    case PAGE_AREA:
-      return "PAGE_AREA";
-    case PAGE_CATALOG:
-      return "PAGE_CATALOG";
-    case PAGE_BTREE_LEAF:
-      return "PAGE_BTREE_LEAF";
-    case PAGE_BTREE_NON_LEAF:
-      return "PAGE_BTREE_NON_LEAF";
-    case PAGE_BTREE_ROOT:
-      return "PAGE_BTREE_ROOT";
-#if 0				/* unused */
-    case PAGE_BTREE_OVERFLOW_OID:
-      return "PAGE_BTREE_OVERFLOW_OID";
-    case PAGE_LOG:
-      return "PAGE_LOG";
-    case PAGE_DROPPED_FILES:
-      return "PAGE_DROPPED_FILES";
-#endif
-    default:
-      break;
+      thread_p = thread_get_thread_entry_info ();
     }
 
-  assert (false);
+#if 0
+  if (pgbuf_get_check_page_validation (thread_p,
+				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+    {
+      if (pgbuf_is_valid_page_ptr (pgptr) == false)
+	{
+	  return PAGE_UNKNOWN;	/* TODO - need to return error_code */
+	}
+    }
+#endif
 
-  return "";
+  /* NOTE: Does not need to hold BCB_mutex since the page is fixed */
+
+  CAST_PGPTR_TO_BFPTR (bufptr, pgptr);
+  assert (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
+
+  ptype =
+    fileio_get_page_ptype (thread_p, &(bufptr->iopage_buffer->iopage.prv));
+
+  assert (PAGE_UNKNOWN <= ptype);
+  assert (ptype <= PAGE_BTREE);
+
+  return ptype;
+}
+
+/*
+ * pgbuf_set_bcb_page_vpid () -
+ *   return: void
+ *   bufptr(in): pointer to buffer page
+ *
+ * Note: This function is used for debugging.
+ */
+static void
+pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
+{
+  if (bufptr == NULL || VPID_ISNULL (&bufptr->vpid))
+    {
+      assert (bufptr != NULL);
+      assert (!VPID_ISNULL (&bufptr->vpid));
+      return;
+    }
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  /* perm volume */
+//  if (bufptr->vpid.volid > NULL_VOLID)
+  {
+    FILEIO_PAGE_RESERVED *prv_p;
+
+    prv_p = &(bufptr->iopage_buffer->iopage.prv);
+
+    /* Check iff is the first time */
+    if (prv_p->pageid == NULL_PAGEID && prv_p->volid == NULL_VOLID)
+      {
+	assert (LSA_ISNULL (&(prv_p->lsa)));
+
+	(void) fileio_initialize_res (thread_p, prv_p);
+
+	/* Set Page identifier */
+	prv_p->pageid = bufptr->vpid.pageid;
+	prv_p->volid = bufptr->vpid.volid;
+      }
+
+    assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
+    assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
+  }
+
+}
+
+/*
+ * pgbuf_set_page_ptype () -
+ *   return: void
+ *   pgptr(in): Pointer to page
+ *   ptype(in): page type
+ *
+ * Note: This function is used for debugging.
+ */
+void
+pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
+		      PAGE_TYPE ptype)
+{
+  PGBUF_BCB *bufptr;
+
+  assert (pgptr != NULL);
+
+  assert (ptype >= PAGE_UNKNOWN);
+  assert (ptype <= PAGE_BTREE);
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  if (pgbuf_get_check_page_validation (thread_p,
+				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+    {
+      if (pgbuf_is_valid_page_ptr (pgptr) == false)
+	{
+	  assert (false);
+	  return;
+	}
+    }
+
+  CAST_PGPTR_TO_BFPTR (bufptr, pgptr);
+  assert (!VPID_ISNULL (&bufptr->vpid));
+
+  /* Set Page identifier iff needed */
+  (void) pgbuf_set_bcb_page_vpid (thread_p, bufptr);
+
+  assert (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
+
+  (void) fileio_set_page_ptype (thread_p,
+				&(bufptr->iopage_buffer->iopage.prv), ptype);
+
+  assert (fileio_get_page_ptype
+	  (thread_p, &(bufptr->iopage_buffer->iopage.prv)) == ptype);
+}
+
+/*
+ * pgbuf_check_page_type () - Check the page type is as expected. If it isn't
+ *                            an assert will be hit.
+ *
+ * return        : True if the page type is as expected.
+ * thread_p (in) : Thread entry.
+ * pgptr (in)    : Pointer to buffer page.
+ * ptype (in)    : Expected page type.
+ */
+bool
+pgbuf_check_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
+			PAGE_TYPE ptype)
+{
+  return pgbuf_check_page_ptype_internal (thread_p, pgptr, ptype, false);
+}
+
+#if 0
+/*
+ * pgbuf_check_page_type_no_error () - Return if the page type is the expected
+ *                                     type given as argument. No assert is
+ *                                     hit if not.
+ *
+ * return        : True if the page type is as expected.
+ * thread_p (in) : Thread entry.
+ * pgptr (in)    : Pointer to buffer page.
+ * ptype (in)    : Expected page type.
+ */
+bool
+pgbuf_check_page_type_no_error (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
+				PAGE_TYPE ptype)
+{
+  return pgbuf_check_page_ptype_internal (thread_p, pgptr, ptype, true);
+}
+#endif
+
+/*
+ * pgbuf_check_page_ptype_internal () -
+ *   return: true/false
+ *   bufptr(in): pointer to buffer page
+ *   ptype(in): page type
+ *
+ * Note: Verify if the given page's ptype is valid.
+ *       This function is used for debugging purposes.
+ */
+static bool
+pgbuf_check_page_ptype_internal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
+				 PAGE_TYPE ptype, bool no_error)
+{
+  PGBUF_BCB *bufptr;
+  PAGE_TYPE pself;
+
+  if (pgptr == NULL)
+    {
+      assert (false);
+      return false;
+    }
+
+#if 0				/* TODO - do not delete me */
+#if defined(NDEBUG)
+  if (log_is_in_crash_recovery ())
+    {
+      return true;
+    }
+#endif
+#endif
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+#if 0
+  if (pgbuf_get_check_page_validation (thread_p,
+				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+    {
+      if (pgbuf_is_valid_page_ptr (pgptr) == false)
+	{
+	  return false;
+	}
+    }
+#endif
+
+  /* NOTE: Does not need to hold BCB_mutex since the page is fixed */
+
+  CAST_PGPTR_TO_BFPTR (bufptr, pgptr);
+  assert (!VPID_ISNULL (&bufptr->vpid));
+
+  assert (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
+
+  pself = pgbuf_get_page_ptype (thread_p, pgptr);
+
+  if (ptype == PAGE_UNKNOWN
+      || ptype == pself
+      || ((ptype == PAGE_FILE_HEADER || ptype == PAGE_FILE_TAB)
+	  && (pself == PAGE_FILE_HEADER || pself == PAGE_FILE_TAB))
+      || ((ptype == PAGE_HEAP_HEADER || ptype == PAGE_HEAP)
+	  && (pself == PAGE_HEAP_HEADER || pself == PAGE_HEAP)))
+    {
+      return true;		/* OK */
+    }
+
+  assert (no_error);
+  return false;
+}
+
+/*
+ * pgbuf_check_bcb_page_vpid () - Validate an FILEIO_PAGE prv
+ *   return: true/false
+ *   bufptr(in): pointer to buffer page
+ *
+ * Note: Verify if the given page's prv is valid.
+ *       This function is used for debugging purposes.
+ */
+static bool
+pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
+{
+  FILEIO_PAGE_RESERVED *prv_p;
+
+  if (bufptr == NULL || VPID_ISNULL (&bufptr->vpid))
+    {
+      assert (bufptr != NULL);
+      assert (!VPID_ISNULL (&bufptr->vpid));
+      return false;
+    }
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  prv_p = &(bufptr->iopage_buffer->iopage.prv);
+
+#if 1				/* TODO - do not delete me */
+  assert (prv_p->pflag_reserve_1 == '\0');
+  assert (prv_p->p_reserve_2 == 0);
+  assert (prv_p->p_reserve_3 == 0);
+#endif
+
+  assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
+  assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
+
+  return (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid)
+	  && VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
 }

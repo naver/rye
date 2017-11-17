@@ -333,53 +333,36 @@ init_server_monitor_item ()
 		     "datapage", "fetch");
 #if 1				/* fetches sub-info */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER],
-		     "datapage", "fetch_file_header");
+                     "datapage", "fetch_file_header");	/* 1 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB],
-		     "datapage", "fetch_file_table");
+                     "datapage", "fetch_file_tab");	/* 2 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER],
-		     "datapage", "fetch_heap_header");
+                     "datapage", "fetch_heap_header");	/* 3 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_HEAP],
-		     "datapage", "fetch_heap");
-  SET_DB_STATS_INFO (&db_Stats_info
-		     [MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION],
-		     "datapage", "fetch_heap_relocation");
-  SET_DB_STATS_INFO (&db_Stats_info
-		     [MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC],
-		     "datapage", "fetch_heap_bestspace_sync");
+                     "datapage", "fetch_heap");	/* 4 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER],
-		     "datapage", "fetch_vol_header");
+                     "datapage", "fetch_volheader");	/* 5 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP],
-		     "datapage", "fetch_vol_bitmap");
+                     "datapage", "fetch_volbitmap");	/* 6 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_XASL],
-		     "datapage", "fetch_xasl");
+                     "datapage", "fetch_xasl");	/* 7 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_QRESULT],
-		     "datapage", "fetch_qresult");
+                     "datapage", "fetch_qresult");	/* 8 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_EHASH],
-		     "datapage", "fetch_ehash");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER],
-		     "datapage", "fetch_ovf_header");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OVF],
-		     "datapage", "fetch_ovf");
+                     "datapage", "fetch_ehash");	/* 9 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW],
+                     "datapage", "fetch_overflow");	/* 10 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_AREA],
-		     "datapage", "fetch_area");
+                     "datapage", "fetch_area");	/* 11 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CATALOG],
-		     "datapage", "fetch_catalog");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF],
-		     "datapage", "fetch_catalog_ovf");
+                     "datapage", "fetch_catalog");	/* 12 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT],
+                     "datapage", "fetch_btree_root");	/* 13 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_BTREE],
-		     "datapage", "fetch_btree");
+                     "datapage", "fetch_btree");	/* 14 */
 
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT],
-		     "datapage", "fetch_disk_format");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE],
-		     "datapage", "fetch_log_postpone");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK],
-		     "datapage", "fetch_log_rollback");
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT],
-		     "datapage", "fetch_checkpoint");
-
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OTHER],
-		     "datapage", "fetch_other");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN],
+                     "datapage", "fetch_unknown");	/* 0 */
 #endif
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],

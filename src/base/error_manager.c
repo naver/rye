@@ -615,10 +615,7 @@ er_fname_free (const void *key, void *data, UNUSED_ARG void *args)
 static void
 er_initialize_key (void)
 {
-  int r;
-
-  r = pthread_key_create (&er_Thread_key, NULL);
-  assert (r == 0);
+  pthread_key_create (&er_Thread_key, NULL);
 }
 
 /*
@@ -2051,7 +2048,7 @@ _er_log_debug (const char *file_name, const int line_no, const char *fmt, ...)
   char *host_name = NULL;
   int pid = 0;
 #endif
-  int tran_index;
+  UNUSED_VAR int tran_index;
   ER_MSG_INFO *er_Info = er_get_msg_info ();
   ER_MSG *er_Msg = NULL;
 

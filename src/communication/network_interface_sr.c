@@ -37,7 +37,6 @@
 #include "xserver_interface.h"
 #include "statistics_sr.h"
 #include "btree_load.h"
-#include "perf_monitor.h"
 #include "log_impl.h"
 #include "boot_sr.h"
 #include "locator_sr.h"
@@ -322,7 +321,7 @@ server_ping_with_handshake (THREAD_ENTRY * thread_p, unsigned int rid,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   int reply_size = OR_ALIGNED_BUF_SIZE (a_reply);
   char *ptr;
-  const char *client_host;
+  const char *client_host = "";
   int client_capabilities, client_bit_platform;
   int client_type;
   int strlen1;
@@ -3104,7 +3103,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
       if (thread_p->server_stats.page_wait_time == NULL)
 	{
 	  thread_p->server_stats.page_wait_time =
-	    (struct timeval *) calloc (CSECT_LAST, sizeof (struct timeval));
+	    (struct timeval *) calloc (PAGE_LAST, sizeof (struct timeval));
 	}
     }
   aligned_page_buf = PTR_ALIGN (page_buf, MAX_ALIGNMENT);

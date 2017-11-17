@@ -92,6 +92,10 @@ typedef INT32 LOLENGTH;		/* Length for a large object */
 
 typedef INT32 GROUPID;		/* Shard group identifier */
 
+#define PAGEID_EQ(p1, p2) ((p1) == (p2))
+#define VOLID_EQ(v1, v2) ((v1) == (v2))
+
+
 /* Log address structure */
 
 typedef struct log_lsa LOG_LSA;	/* Log address identifier */
@@ -239,6 +243,30 @@ struct btree_node_split_info
 };
 
 typedef char *PAGE_PTR;		/* Pointer to a page */
+
+/* TODO - PAGE_TYPE is used for debugging */
+typedef enum
+{
+  PAGE_UNKNOWN = 0,		/* 0 used for initialized page            */
+  PAGE_FILE_HEADER,		/* 1 file header page                     */
+  PAGE_FILE_TAB,		/* 2 file allocset table page             */
+  PAGE_HEAP_HEADER,		/* 3 heap header page               */
+  PAGE_HEAP,			/* 4 heap page                            */
+  PAGE_VOLHEADER,		/* 5 volume header page                   */
+  PAGE_VOLBITMAP,		/* 6 volume bitmap page                   */
+  PAGE_XASL,			/* 7 xasl stream page                     */
+  PAGE_QRESULT,			/* 8 query result page                    */
+  PAGE_EHASH,			/* 9 ehash bucket/dir page                */
+  PAGE_OVERFLOW,		/* 10 overflow page                        */
+  PAGE_AREA,			/* 11 area page                            */
+  PAGE_CATALOG,			/* 12 catalog page                         */
+  PAGE_BTREE_ROOT,		/* 13 b+tree index root page               */
+  PAGE_BTREE,			/* 14 b+tree index page                    */
+
+  PAGE_LOG,			/* 15 NONE - log page (unused)             */
+  PAGE_DROPPED_FILES,		/* 16 Dropped files page.                  */
+  PAGE_LAST = PAGE_DROPPED_FILES
+} PAGE_TYPE;
 
 #define ISCAN_OID_BUFFER_SIZE \
   ((prm_get_bigint_value (PRM_ID_BT_OID_BUFFER_SIZE) / OR_OID_SIZE) * OR_OID_SIZE)
@@ -515,4 +543,5 @@ extern char *hfid_to_string (char *buf, int buf_size, HFID * hfid);
 extern char *btid_to_string (char *buf, int buf_size, BTID * btid);
 extern BTID string_to_btid (const char *buffer);
 
+extern const char *page_type_to_string (PAGE_TYPE ptype);
 #endif /* _STORAGE_COMMON_H_ */

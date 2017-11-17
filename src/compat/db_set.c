@@ -82,7 +82,7 @@ db_seq_create (MOP classop, const char *name, int size)
 {
   DB_SET *set;
 #if !defined(SERVER_MODE)
-  int error = NO_ERROR;
+  UNUSED_VAR int error = NO_ERROR;
 #endif
 
   CHECK_CONNECT_NULL ();

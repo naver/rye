@@ -286,10 +286,7 @@ static WORKER_GROUP_INFO worker_Group_info[WORKER_GROUP_MAX + 1] = {
 static void
 thread_initialize_key (void)
 {
-  int r;
-
-  r = pthread_key_create (&css_Thread_key, NULL);
-  assert (r == 0);
+  pthread_key_create (&css_Thread_key, NULL);
 }
 
 /*
@@ -568,7 +565,7 @@ server_stats_dump (FILE * fp)
   for (j = 0; j < PAGE_LAST; j++)
     {
       fprintf (fp, "%*c%s:%lld\n", indent + 5, ' ',
-	       pgbuf_page_type_to_string (j), page_waits[j]);
+	       page_type_to_string (j), page_waits[j]);
     }
 
   free_and_init (cs_waits);
