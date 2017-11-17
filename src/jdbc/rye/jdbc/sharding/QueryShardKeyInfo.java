@@ -118,12 +118,12 @@ public class QueryShardKeyInfo
 
     public void dump(PrintStream out)
     {
-	out.printf("shardTable: %s\n", containsShardTable);
-	out.printf("sharKeyValues\n");
+	out.printf("shardTable: %s%n", containsShardTable);
+	out.printf("sharKeyValues%n");
 	for (int i = 0; i < shardKeyValues.length; i++) {
 	    out.println(shardKeyValues[i]);
 	}
-	out.printf("dshardKeyparameters\n");
+	out.printf("dshardKeyparameters%n");
 	for (int i = 0; i < shardKeyParameters.length; i++) {
 	    out.println(shardKeyParameters[i]);
 	}

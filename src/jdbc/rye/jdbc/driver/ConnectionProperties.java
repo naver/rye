@@ -124,9 +124,9 @@ public class ConnectionProperties
 
 	    try {
 		ConnectionProperty prop = (ConnectionProperty) propertyField.get(this);
-		out.printf("%s\n", prop.toString());
+		out.printf("%s%n", prop.toString());
 	    } catch (Exception e) {
-		out.printf("%s\n", e.getMessage());
+		out.printf("%s%n", e.getMessage());
 	    }
 	}
     }
