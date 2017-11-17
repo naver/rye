@@ -658,7 +658,6 @@ catalog_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
 			     UNUSED_ARG DKNPAGES ignore_npages,
 			     void *is_overflow_page)
 {
-  MNT_SERVER_ITEM item;
   PAGE_PTR page_p;
   CATALOG_PAGE_HEADER page_header;
   PGSLOTID slot_id;
@@ -669,14 +668,9 @@ catalog_initialize_new_page (THREAD_ENTRY * thread_p, const VFID * vfid_p,
   };
   char data[CATALOG_PAGE_HEADER_SIZE + MAX_ALIGNMENT], *aligned_data;
 
-  item = ((bool) is_overflow_page) ?
-    MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF :
-    MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
-
   aligned_data = PTR_ALIGN (data, MAX_ALIGNMENT);
 
-  page_p = pgbuf_fix (thread_p, vpid_p, NEW_PAGE, PGBUF_LATCH_WRITE,
-		      PGBUF_UNCONDITIONAL_LATCH, item);
+  page_p = pgbuf_fix_newpg (thread_p, vpid_p, PAGE_CATALOG);
   if (page_p == NULL)
     {
       return false;
@@ -729,12 +723,7 @@ static PAGE_PTR
 catalog_get_new_page (THREAD_ENTRY * thread_p, VPID * page_id_p,
 		      VPID * near_page_p, bool is_overflow_page)
 {
-  MNT_SERVER_ITEM item;
   PAGE_PTR page_p;
-
-  item = is_overflow_page ?
-    MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF :
-    MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
 
   if (file_alloc_pages (thread_p, &catalog_Id.vfid, page_id_p, 1, near_page_p,
 			catalog_initialize_new_page,
@@ -750,10 +739,11 @@ catalog_get_new_page (THREAD_ENTRY * thread_p, VPID * page_id_p,
    */
 
   page_p = pgbuf_fix (thread_p, page_id_p, OLD_PAGE, PGBUF_LATCH_WRITE,
-		      PGBUF_UNCONDITIONAL_LATCH, item);
+		      PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
   if (page_p == NULL)
     {
-      (void) file_dealloc_page (thread_p, &catalog_Id.vfid, page_id_p, item);
+      (void) file_dealloc_page (thread_p, &catalog_Id.vfid, page_id_p,
+				PAGE_CATALOG);
       return NULL;
     }
 
@@ -809,8 +799,7 @@ catalog_find_optimal_page (THREAD_ENTRY * thread_p, int size,
 	{
 	  page_p = pgbuf_fix (thread_p, &catalog_Max_space.max_page_id,
 			      OLD_PAGE, PGBUF_LATCH_WRITE,
-			      PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+			      PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
 	  if (page_p == NULL)
 	    {
 	      pthread_mutex_unlock (&catalog_Max_space_lock);
@@ -854,8 +843,7 @@ catalog_find_optimal_page (THREAD_ENTRY * thread_p, int size,
       pthread_mutex_unlock (&catalog_Max_space_lock);
 
       page_p = pgbuf_fix (thread_p, page_id_p, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+			  PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
       if (page_p == NULL)
 	{
 	  return NULL;
@@ -1407,7 +1395,7 @@ catalog_get_record_from_page (THREAD_ENTRY * thread_p,
   catalog_record_p->page_p = pgbuf_fix (thread_p, &catalog_record_p->vpid,
 					OLD_PAGE, PGBUF_LATCH_READ,
 					PGBUF_UNCONDITIONAL_LATCH,
-					MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF);
+					PAGE_CATALOG);
   if (catalog_record_p->page_p == NULL)
     {
       return ER_FAILED;
@@ -1689,8 +1677,7 @@ catalog_drop_representation_helper (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
       /* delete the records in the overflow pages, if any */
       overflow_page_p = pgbuf_fix (thread_p, &overflow_vpid, OLD_PAGE,
 				   PGBUF_LATCH_WRITE,
-				   PGBUF_UNCONDITIONAL_LATCH,
-				   MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF);
+				   PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
       if (overflow_page_p == NULL)
 	{
 	  return ER_FAILED;
@@ -1704,7 +1691,7 @@ catalog_drop_representation_helper (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 
       pgbuf_unfix_and_init (thread_p, overflow_page_p);
       file_dealloc_page (thread_p, &catalog_Id.vfid, &overflow_vpid,
-			 MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF);
+			 PAGE_CATALOG);
       overflow_vpid = new_overflow_vpid;
     }
 
@@ -1730,8 +1717,7 @@ catalog_drop_disk_representation_from_page (THREAD_ENTRY * thread_p,
   PAGE_PTR page_p;
 
   page_p = pgbuf_fix (thread_p, page_id_p, OLD_PAGE, PGBUF_LATCH_WRITE,
-		      PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+		      PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
   if (page_p == NULL)
     {
       return ER_FAILED;
@@ -1780,8 +1766,7 @@ catalog_drop_representation_class_from_page (THREAD_ENTRY * thread_p,
   else
     {
       page_p = pgbuf_fix (thread_p, page_id_p, OLD_PAGE, PGBUF_LATCH_WRITE,
-			  PGBUF_UNCONDITIONAL_LATCH,
-			  MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+			  PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
       if (page_p == NULL)
 	{
 	  return ER_FAILED;
@@ -1822,8 +1807,7 @@ catalog_get_representation_record (THREAD_ENTRY * thread_p, OID * oid_p,
   vpid.pageid = oid_p->pageid;
 
   page_p = pgbuf_fix (thread_p, &vpid, OLD_PAGE, latch,
-		      PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+		      PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
   if (page_p == NULL)
     {
       if (er_errid () == ER_PB_BAD_PAGEID)
@@ -2653,8 +2637,7 @@ catalog_create (THREAD_ENTRY * thread_p, CTID * catalog_id_p,
    */
 
   page_p = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-		      PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+		      PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
   if (page_p == NULL)
     {
       (void) xehash_destroy (thread_p, &catalog_id_p->xhid);
@@ -3093,7 +3076,7 @@ catalog_update_class_info (THREAD_ENTRY * thread_p, OID * class_id_p,
 
   page_p = pgbuf_fix (thread_p, &repr_item.page_id, OLD_PAGE,
 		      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+		      PAGE_CATALOG);
   if (page_p == NULL)
     {
       return NULL;
@@ -4164,7 +4147,7 @@ start:
 
   page_p = pgbuf_fix (thread_p, &repr_item.page_id, OLD_PAGE,
 		      PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-		      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+		      PAGE_CATALOG);
   if (page_p == NULL)
     {
       return NULL;
@@ -5003,8 +4986,7 @@ catalog_dump (THREAD_ENTRY * thread_p, FILE * fp, int dump_flag)
 	    }
 
 	  page_p = pgbuf_fix (thread_p, &page_id, OLD_PAGE, PGBUF_LATCH_READ,
-			      PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+			      PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
 	  if (page_p == NULL)
 	    {
 	      return;
@@ -5033,8 +5015,7 @@ catalog_dump (THREAD_ENTRY * thread_p, FILE * fp, int dump_flag)
 	    }
 
 	  page_p = pgbuf_fix (thread_p, &page_id, OLD_PAGE, PGBUF_LATCH_READ,
-			      PGBUF_UNCONDITIONAL_LATCH,
-			      MNT_STATS_DATA_PAGE_FETCHES_CATALOG);
+			      PGBUF_UNCONDITIONAL_LATCH, PAGE_CATALOG);
 	  if (page_p == NULL)
 	    {
 	      return;
@@ -5087,6 +5068,8 @@ catalog_rv_new_page_redo (THREAD_ENTRY * thread_p, LOG_RCV * recv_p)
   aligned_data = PTR_ALIGN (data, MAX_ALIGNMENT);
 
   catalog_clear_hash_table ();
+
+  (void) pgbuf_set_page_ptype (thread_p, recv_p->pgptr, PAGE_CATALOG);
 
   spage_initialize (thread_p, recv_p->pgptr, ANCHORED,
 		    MAX_ALIGNMENT, SAFEGUARD_RVSPACE);
@@ -5486,8 +5469,7 @@ catalog_rv_ovf_page_logical_insert_undo (THREAD_ENTRY * thread_p,
   catalog_clear_hash_table ();
 
   vpid_p = (const VPID *) recv_p->data;
-  (void) file_dealloc_page (thread_p, &catalog_Id.vfid, vpid_p,
-			    MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF);
+  (void) file_dealloc_page (thread_p, &catalog_Id.vfid, vpid_p, PAGE_CATALOG);
 
   return NO_ERROR;
 }

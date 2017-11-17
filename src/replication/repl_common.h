@@ -115,7 +115,7 @@ extern int repl_Need_shutdown;
 
 extern void rp_signal_handler (int signo);
 extern void rp_clear_agent_flag (void);
-extern void rp_set_agent_flag (int flag);
+extern void rp_set_agent_flag (const char *file_name, int line, int flag);
 extern bool rp_agent_flag_enabled (int flag);
 extern bool rp_need_restart (void);
 extern bool rp_need_shutdown (const char *file_name, int line);

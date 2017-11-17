@@ -42,7 +42,7 @@ public class BrokerHandler
 	JciSocket socket = new JciSocket(conInfo, timeout, sockTimeout);
 
 	try {
-	    socket.getOutputStream().write(Protocol.getConnectMsg(conInfo.getbytePortName()));
+	    socket.getOutputStream().write(Protocol.getConnectMsg(conInfo.portNameMsgProtocol()));
 	    socket.getOutputStream().flush();
 
 	    BrokerResponse brRes = readBrokerResponse(socket.getInputStream());
@@ -77,14 +77,14 @@ public class BrokerHandler
 
     static void pingBroker(JciConnectionInfo conInfo, int timeout) throws IOException, JciException
     {
-	if (conInfo == null || conInfo.getbytePortName() == null) {
+	if (conInfo == null || conInfo.getPortName() == null) {
 	    return;
 	}
 
 	JciSocket socket = new JciSocket(conInfo, timeout, timeout);
 
 	try {
-	    socket.getOutputStream().write(Protocol.getPingCheckMsg(conInfo.getbytePortName()));
+	    socket.getOutputStream().write(Protocol.getPingCheckMsg(conInfo.portNameMsgProtocol()));
 	    socket.getOutputStream().flush();
 
 	    BrokerResponse brRes = readBrokerResponse(socket.getInputStream());
@@ -121,7 +121,7 @@ public class BrokerHandler
     static void cancelQuery(JciConnectionInfo conInfo, int casId, int casPid, int timeout) throws IOException,
 		    JciException
     {
-	cancelQueryInternal(conInfo, Protocol.getQueryCancelMsg(casId, casPid, conInfo.getbytePortName()), timeout);
+	cancelQueryInternal(conInfo, Protocol.getQueryCancelMsg(casId, casPid, conInfo.portNameMsgProtocol()), timeout);
     }
 
     public static BrokerResponse syncShardInfo(JciConnectionInfo conInfo, String dbname, long nodeVersion,

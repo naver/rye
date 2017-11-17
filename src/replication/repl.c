@@ -54,6 +54,8 @@
 #include "repl_applier.h"
 #include "repl_writer.h"
 
+#include "fault_injection.h"
+
 
 CIRP_REPL_INFO *Repl_Info = NULL;
 
@@ -103,6 +105,7 @@ main (int argc, char *argv[])
   CIRP_THREAD_ENTRY writer_entry, flusher_entry;
   CIRP_THREAD_ENTRY analyzer_entry, health_entry;
   CIRP_THREAD_ENTRY *applier_entries = NULL;
+  char prog_name[] = UTIL_REPL_NAME;
 
   REPL_ARGUMENT repl_arg;
   int option_index;
@@ -113,7 +116,7 @@ main (int argc, char *argv[])
     {0, 0, 0, 0}
   };
 
-  argv[0] = (char *) UTIL_REPL_NAME;
+  argv[0] = prog_name;
 
   /* init client functions */
   cci_set_client_functions (or_pack_db_idxkey, db_idxkey_is_null,
@@ -337,7 +340,7 @@ main (int argc, char *argv[])
   Repl_Info->max_mem_size = Repl_Info->start_vsize + ONE_G;
 
   pthread_join (analyzer_entry.tid, NULL);
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
   error = rp_end_all_applier ();
   if (error != NO_ERROR)
@@ -351,6 +354,8 @@ main (int argc, char *argv[])
     }
   pthread_join (writer_entry.tid, NULL);
   pthread_join (flusher_entry.tid, NULL);
+
+  pthread_join (health_entry.tid, NULL);
 
   RYE_FREE_MEM (applier_entries);
 
@@ -368,7 +373,7 @@ main (int argc, char *argv[])
 exit_on_error:
   assert (error != NO_ERROR);
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
   rp_disconnect_agents ();
 
@@ -513,7 +518,7 @@ rp_check_appliers_status (CIRP_AGENT_STATUS status)
 	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
 	  return error;
 	}
@@ -546,7 +551,7 @@ rp_start_all_applier (void)
 	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
 	  return error;
 	}
@@ -986,7 +991,7 @@ health_check_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
       free_and_init (th_er_msg_info);
       return NULL;
@@ -1004,7 +1009,13 @@ health_check_main (void *arg)
 
       if (cirp_check_mem_size () != NO_ERROR)
 	{
-	  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+	}
+
+      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL,
+			   1000, 0) != NO_ERROR)
+	{
+	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
 	}
     }
 
@@ -1076,6 +1087,18 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   if (error != NO_ERROR)
     {
       assert (error != CCI_ER_NO_MORE_DATA);
+
+      return error;
+    }
+
+  assert (analyzer->q_applied_time == NULL);
+
+  analyzer->q_applied_time = Rye_queue_new ();
+  if (analyzer->q_applied_time == NULL)
+    {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+			   1, sizeof (RQueue));
 
       return error;
     }

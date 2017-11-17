@@ -149,12 +149,12 @@ public class RyeDatabaseMetaData implements DatabaseMetaData
 
     public int getDriverMajorVersion()
     {
-	return RyeDriver.major_version;
+	return RyeDriver.driverVersion.getMajor();
     }
 
     public int getDriverMinorVersion()
     {
-	return RyeDriver.minor_version;
+	return RyeDriver.driverVersion.getMinor();
     }
 
     public synchronized boolean usesLocalFiles() throws SQLException

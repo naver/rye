@@ -30,16 +30,19 @@
 
 package rye.jdbc.jci;
 
+import rye.jdbc.driver.RyeVersion;
+
 public class BrokerResponse
 {
-    private int resultCode;
-    private short protocolVersion;
-    private int[] additionalMsgSize;
+    private final int resultCode;
+    private final RyeVersion svrVersion;
+    private final int[] additionalMsgSize;
     private byte[][] additionalMsg;
 
-    BrokerResponse(short protocolVersion, int resultCode, int[] additionalMsgSize)
+    BrokerResponse(short verMajor, short verMinor, short verPatch, short verBuild, int resultCode,
+		    int[] additionalMsgSize)
     {
-	this.protocolVersion = protocolVersion;
+	this.svrVersion = new RyeVersion(verMajor, verMinor, verPatch, verBuild);
 	this.resultCode = resultCode;
 	this.additionalMsgSize = additionalMsgSize;
 	additionalMsg = null;
@@ -50,9 +53,9 @@ public class BrokerResponse
 	return resultCode;
     }
 
-    short getProtocolVersion()
+    long getServerProtocolVersion()
     {
-	return protocolVersion;
+	return svrVersion.getProtocolVersion();
     }
 
     int getAdditionalMsgSize(int index)

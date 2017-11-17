@@ -29,7 +29,6 @@
 #include "cas.h"
 #include "cas_net_buf.h"
 #include "cas_handle.h"
-#include "cas_db_inc.h"
 
 #define ERROR_INFO_SET(ERR_CODE, ERR_INDICATOR)\
 	error_info_set(ERR_CODE, ERR_INDICATOR, __FILE__, __LINE__)

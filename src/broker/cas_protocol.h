@@ -32,17 +32,12 @@ extern "C"
 
 #ident "$Id$"
 
-#define BRREQ_MSG_SIZE			(16 + BRREQ_MSG_BROKER_NAME_LEN)
+#include "release_string.h"
+
+#define BRREQ_MSG_SIZE				20
 #define BRREQ_MSG_MAGIC_LEN			4
-#define BRREQ_MSG_MAGIC_STR			"CUBV"
-#define BRREQ_MSG_IDX_CLIENT_PROTO_VERSION	4
-#define BRREQ_MSG_IDX_CLIENT_TYPE		6
-#define BRREQ_MSG_IDX_OP_CODE			7
-#define BRREQ_MSG_IDX_OP_CODE_MSG_SIZE		8
-#define BRREQ_MSG_IDX_RESERVED			10
-#define BRREQ_MSG_IDX_BROKER_NAME		16
+#define BRREQ_MSG_MAGIC_STR			"RYE\001"
 #define BRREQ_OP_CODE_MSG_MAX_SIZE		0x7fff	/* short int */
-#define BRREQ_MSG_BROKER_NAME_LEN		64
 
 /* db_name used by client's broker health checker */
 #define HEALTH_CHECK_DUMMY_DB "___health_check_dummy_db___"
@@ -60,7 +55,7 @@ extern "C"
 
 #define BROKER_RESPONSE_MAX_ADDITIONAL_MSG 	5
 #define BROKER_RESPONSE_MSG_SIZE		\
-	      (6 + sizeof(int) * BROKER_RESPONSE_MAX_ADDITIONAL_MSG)
+	      (12 + sizeof(int) * BROKER_RESPONSE_MAX_ADDITIONAL_MSG)
   /* protocol(2),  result_code(4), additional_mesaage_size */
 
 #define SRV_CON_DBNAME_SIZE			32
@@ -89,18 +84,17 @@ extern "C"
 
   typedef struct
   {
-    short clt_protocol_ver;
+    RYE_VERSION clt_version;
     char clt_type;
     unsigned char op_code;
     short op_code_msg_size;
     char *op_code_msg;
-    char *broker_name;
     char msg_buffer[BRREQ_MSG_SIZE];
   } T_BROKER_REQUEST_MSG;
 
   typedef struct
   {
-    short srv_protocol_ver;
+    RYE_VERSION svr_version;
     int result_code;
     int additional_message_size[BROKER_RESPONSE_MAX_ADDITIONAL_MSG];
   } T_BROKER_RESPONSE;
@@ -197,12 +191,6 @@ extern "C"
     MGMT_REBALANCE_JOB_COUNT_TYPE_COMPLETE = 1,
     MGMT_REBALANCE_JOB_COUNT_TYPE_FAILED = 2
   } T_MGMT_REBALANCE_JOB_COUNT_TYPE;
-
-  typedef enum
-  {
-    PROTOCOL_V1 = 1,
-    CURRENT_PROTOCOL = PROTOCOL_V1
-  } T_CAS_PROTOCOL_VERSION;
 
   typedef enum
   {
@@ -322,6 +310,7 @@ extern "C"
     HA_STATE_FOR_DRIVER_REPLICA
   } HA_STATE_FOR_DRIVER;
 
+  extern UINT64 br_msg_protocol_version (const RYE_VERSION * ver);
   extern T_BROKER_REQUEST_MSG *brreq_msg_alloc (int opcode_msg_size);
   extern T_BROKER_REQUEST_MSG *brreq_msg_clone (const T_BROKER_REQUEST_MSG *
 						org_msg);
@@ -330,13 +319,26 @@ extern "C"
   extern int brreq_msg_unpack (T_BROKER_REQUEST_MSG * srv_con_msg);
   extern char *brreq_msg_pack (T_BROKER_REQUEST_MSG * srv_con_msg,
 			       char clt_type, char op_code,
-			       int op_code_msg_size, const char *port_name);
+			       int op_code_msg_size);
   extern void brres_msg_pack (T_BROKER_RESPONSE_NET_MSG * res_msg,
 			      int result_code, int num_additional_msg,
 			      const int *addtional_msg_size);
   extern int brres_msg_unpack (T_BROKER_RESPONSE * res,
 			       const char *msg_buffer, int msg_size);
   extern void cas_status_info_init (char *info_ptr);
+
+  extern int brreq_msg_normal_broker_opcode_msg_size (const char *port_name,
+						      int add_size);
+  extern char *brreq_msg_pack_port_name (char *ptr, const char *port_name);
+  extern const char *brreq_msg_unpack_port_name (const T_BROKER_REQUEST_MSG *
+						 brreq_msg,
+						 const char **ret_msg_ptr,
+						 int *ret_msg_remain);
+  extern char *br_msg_pack_int (char *ptr, int value);
+  extern char *br_msg_pack_short (char *ptr, short value);
+  extern char *br_msg_pack_str (char *ptr, const char *str, int size);
+  extern char *br_msg_pack_char (char *ptr, char value);
+
 
 #ifdef __cplusplus
 }

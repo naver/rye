@@ -36,6 +36,8 @@
 #include <sys/time.h>
 #include <poll.h>
 
+#include "dbi.h"
+#include "dbval.h"
 #include "cas_common.h"
 #include "cas.h"
 #include "cas_network.h"
@@ -251,7 +253,10 @@ cas_send_connect_reply_to_driver (SOCKET client_sock_fd,
 
   net_buf_cp_byte (net_buf, SUCCESS_RESPONSE);
 
-  net_buf_cp_short (net_buf, CURRENT_PROTOCOL);
+  net_buf_cp_short (net_buf, MAJOR_VERSION);
+  net_buf_cp_short (net_buf, MINOR_VERSION);
+  net_buf_cp_short (net_buf, PATCH_VERSION);
+  net_buf_cp_short (net_buf, BUILD_SEQ);
   net_buf_cp_int (net_buf, shm_As_index + 1, NULL);
   net_buf_cp_int (net_buf, getpid (), NULL);
   net_buf_cp_int (net_buf, DRIVER_SESSION_SIZE, NULL);
@@ -473,7 +478,7 @@ cas_main (void)
 	  goto finish_cas;
 	}
 
-      req_Info.clt_protocol_ver = as_Info->client_protocol_version;
+      req_Info.clt_version = as_Info->clt_version;
 
       err_code = read_db_connect_msg (&db_connect_msg, client_Sock_fd);
       if (err_code < 0)
@@ -896,8 +901,11 @@ recv_client_fd_from_broker (SOCKET br_sock_fd, int *client_ip_addr,
       return -1;
     }
 
-  setsockopt (client_sock_fd, IPPROTO_TCP, TCP_NODELAY,
-	      (char *) &one, sizeof (one));
+  if (setsockopt (client_sock_fd, IPPROTO_TCP, TCP_NODELAY,
+		  (char *) &one, sizeof (one)) < 0)
+    {
+      assert (0);
+    }
   ut_set_keepalive (client_sock_fd);
 
   return client_sock_fd;
@@ -1281,7 +1289,8 @@ process_request (SOCKET sock_fd, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
       con_Status_before_check_cas = -1;
     }
 
-  strcpy (as_Info->log_msg, server_Fn_table[func_code - 1].name);
+  STRNCPY (as_Info->log_msg, server_Fn_table[func_code - 1].name,
+	   sizeof (as_Info->log_msg));
 
   server_fn = server_Fn_table[func_code - 1].func;
 

@@ -86,7 +86,8 @@ static int local_mgmt_init_child_process_queue (void);
 static int local_mg_transfer_driver_req (SOCKET * clt_sock_fd,
 					 int clt_ip_addr,
 					 const T_BROKER_REQUEST_MSG *
-					 br_req_msg);
+					 br_req_msg,
+					 const char *transfer_broker_name);
 
 static T_LOCAL_MGMT_JOB_QUEUE *local_mg_create_job_queue (void);
 static T_LOCAL_MGMT_JOB_QUEUE *local_mg_init_mgmt_job_queue (void);
@@ -270,8 +271,13 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 
       if (IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code))
 	{
+	  const char *transfer_broker_name;
+	  transfer_broker_name =
+	    brreq_msg_unpack_port_name (br_req_msg, NULL, NULL);
+
 	  err_code = local_mg_transfer_driver_req (&clt_sock_fd, clt_ip_addr,
-						   br_req_msg);
+						   br_req_msg,
+						   transfer_broker_name);
 
 	  if (br_req_msg->op_code == BRREQ_OP_CODE_CAS_CONNECT)
 	    {
@@ -327,7 +333,8 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 
 static int
 local_mg_transfer_driver_req (SOCKET * clt_sock_fd, int clt_ip_addr,
-			      const T_BROKER_REQUEST_MSG * br_req_msg)
+			      const T_BROKER_REQUEST_MSG * br_req_msg,
+			      const char *transfer_broker_name)
 {
   SOCKET br_sock_fd;
   int status;
@@ -338,7 +345,7 @@ local_mg_transfer_driver_req (SOCKET * clt_sock_fd, int clt_ip_addr,
 
   br_info_service_broker = ut_find_broker (shm_Br->br_info,
 					   shm_Br->num_broker,
-					   br_req_msg->broker_name,
+					   transfer_broker_name,
 					   NORMAL_BROKER);
   if (br_info_service_broker == NULL)
     {
@@ -434,7 +441,7 @@ read_outfile (const char *filename, char *result_buf, int result_buf_size)
   int fd;
 
   fd = open (filename, O_RDONLY);
-  if (fd > 0)
+  if (fd >= 0)
     {
       read_len = read (fd, result_buf, result_buf_size - 1);
       if (read_len < 0)
@@ -928,7 +935,7 @@ make_child_output_filename (char *infile, int infile_bufsize, bool mkinfile,
     {
       int fd;
       fd = open (infile, O_CREAT | O_TRUNC | O_WRONLY, 0666);
-      if (fd > 0)
+      if (fd >= 0)
 	{
 	  close (fd);
 	}

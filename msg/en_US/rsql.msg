@@ -167,5 +167,6 @@ $ rsql help messages
 \tcsstat                 - critical section information\n\
 \tplan                   - plan cache information\n\
 \tqcache                 - query cache information\n
+\tserverstats            - server statistics information\n\
 235 <Partitions>
 236 A table name is required.

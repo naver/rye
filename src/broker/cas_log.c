@@ -456,7 +456,10 @@ cas_log_backup (T_CAS_LOG_HANDLE * log_handle,
     }
 
   unlink (backup_filepath);
-  rename (filepath, backup_filepath);
+  if (rename (filepath, backup_filepath) < 0)
+    {
+      assert (0);
+    }
 }
 
 void

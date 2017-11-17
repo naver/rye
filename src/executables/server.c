@@ -39,7 +39,6 @@
 #include "network.h"
 #include "environment_variable.h"
 #include "boot_sr.h"
-#include "perf_monitor.h"
 #include "util_func.h"
 #include "tcp.h"
 #include "heartbeat.h"
@@ -173,6 +172,7 @@ main (int argc, char **argv)
   char *binary_name;
   int ret_val = 0;
   sigset_t sigurg_mask;
+  char prog_name[] = UTIL_SERVER_NAME;
 
   register_fatal_signal_handler (SIGABRT);
   register_fatal_signal_handler (SIGILL);
@@ -195,7 +195,7 @@ main (int argc, char **argv)
   fprintf (stdout, "\nThis may take a long time depending on the amount "
 	   "of recovery works to do.\n");
 
-  argv[0] = (char *) UTIL_SERVER_NAME;
+  argv[0] = prog_name;
   /* save executable path */
   binary_name = basename (argv[0]);
   (void) envvar_bindir_file (executable_path, PATH_MAX, binary_name);

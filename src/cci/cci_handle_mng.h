@@ -57,6 +57,7 @@ extern "C"
  * OTHER IMPORTED HEADER FILES						*
  ************************************************************************/
 
+#include "release_string.h"
 #include "cci_common.h"
 #include "cas_cci.h"
 #include "cas_protocol.h"
@@ -189,7 +190,7 @@ extern "C"
 #define CON_CAS_PID(c)					\
 	((c)->cas_connect_info.cas_pid)
 #define CON_CAS_PROTO_VERSION(c)			\
-	((c)->cas_connect_info.protocol_version)
+	br_msg_protocol_version(&((c)->cas_connect_info.svr_version))
 #define CON_SESSION_ID(c)				\
 	((c)->cas_connect_info.session_id)
 #define CON_CAS_STATUS_INFO(c)				\
@@ -212,7 +213,7 @@ extern "C"
   {
     int cas_id;
     int cas_pid;
-    short protocol_version;
+    RYE_VERSION svr_version;
     char dbms;
     char holdable_result;
     char statement_pooling;

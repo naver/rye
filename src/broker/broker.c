@@ -406,8 +406,11 @@ receiver_thr_f (UNUSED_ARG void *arg)
   signal (SIGPIPE, SIG_IGN);
 
   timeout = 5;
-  setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-	      (char *) &timeout, sizeof (timeout));
+  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
+		  (char *) &timeout, sizeof (timeout)) < 0)
+    {
+      // assert (0);
+    }
 
   br_req_msg = brreq_msg_alloc (BRREQ_OP_CODE_MSG_MAX_SIZE);
   if (br_req_msg == NULL)
@@ -489,8 +492,8 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  new_job.priority = 0;
 	  new_job.port = ntohs (0);
 	  memcpy (new_job.ip_addr, &client_ip_addr, 4);
-	  new_job.clt_protocol_ver = br_req_msg->clt_protocol_ver;
 	  new_job.clt_type = br_req_msg->clt_type;
+	  new_job.clt_version = br_req_msg->clt_version;
 
 	  while (1)
 	    {
@@ -519,12 +522,23 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  int ret_code = CAS_ER_QUERY_CANCEL;
 
 	  int cas_id, cas_pid;
-	  char *cancel_msg = br_req_msg->op_code_msg;
+	  const char *cancel_msg;
+	  int msg_remain;
 
-	  memcpy ((char *) &cas_id, cancel_msg, 4);
-	  memcpy ((char *) &cas_pid, cancel_msg + 4, 4);
-	  cas_id = ntohl (cas_id) - 1;
-	  cas_pid = ntohl (cas_pid);
+	  brreq_msg_unpack_port_name (br_req_msg, &cancel_msg, &msg_remain);
+
+	  if (cancel_msg == NULL || msg_remain < 8)
+	    {
+	      cas_id = -1;
+	      cas_pid = -1;
+	    }
+	  else
+	    {
+	      memcpy ((char *) &cas_id, cancel_msg, 4);
+	      memcpy ((char *) &cas_pid, cancel_msg + 4, 4);
+	      cas_id = ntohl (cas_id) - 1;
+	      cas_pid = ntohl (cas_pid);
+	    }
 
 	  if (cas_id >= 0
 	      && cas_id < shm_Br->br_info[br_Index].appl_server_max_num
@@ -669,8 +683,7 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 
       shm_Appl->info.as_info[as_index].num_connect_requests++;
 
-      shm_Appl->info.as_info[as_index].client_protocol_version =
-	cur_job.clt_protocol_ver;
+      shm_Appl->info.as_info[as_index].clt_version = cur_job.clt_version;
       shm_Appl->info.as_info[as_index].client_type = cur_job.clt_type;
       memcpy (shm_Appl->info.as_info[as_index].cas_clt_ip, cur_job.ip_addr,
 	      4);
@@ -762,8 +775,12 @@ br_mgmt_accept (unsigned char *clt_ip_addr)
       return INVALID_SOCKET;
     }
 
-  setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-	      sizeof (one));
+  if (setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
+		  sizeof (one)) < 0)
+    {
+      assert (0);
+    }
+
   ut_set_keepalive (clt_sock_fd);
 
   return clt_sock_fd;
@@ -815,8 +832,11 @@ init_mgmt_socket (void)
       return (-1);
     }
 
-  setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-	      (char *) &timeout, sizeof (timeout));
+  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
+		  (char *) &timeout, sizeof (timeout)) < 0)
+    {
+      assert (0);
+    }
 
   return (0);
 }
@@ -1362,8 +1382,11 @@ retry:
       return INVALID_SOCKET;
     }
 
-  setsockopt (srv_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-	      sizeof (one));
+  if (setsockopt (srv_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
+		  sizeof (one)) < 0)
+    {
+      // assert (0);
+    }
 
   return srv_sock_fd;
 }
@@ -3323,8 +3346,8 @@ br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
   assert (strlen (dbname) < SRV_CON_DBNAME_SIZE);
   assert (strlen (host) < IP_ADDR_STR_LEN);
 
-  strcpy (node->local_dbname, dbname);
-  strcpy (node->host_ip_str, host);
+  STRNCPY (node->local_dbname, dbname, sizeof (node->local_dbname));
+  STRNCPY (node->host_ip_str, host, sizeof (node->host_ip_str));
 
   if (host_addr == INADDR_NONE)
     {

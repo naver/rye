@@ -124,15 +124,13 @@ struct bk_backup_header
 {
   PAGEID iopageid;		/* Must be the same as start of an BK_BACKUP_PAGE
 				   NOTE: a union would be better. */
-  char magic[RYE_MAGIC_MAX_LENGTH];	/* Magic value for file/magic
+  char bk_magic[RYE_MAGIC_MAX_LENGTH];	/* Magic value for file/magic
 					   Unix utility */
-  float db_compatibility;	/* Compatibility of the database against the
-				   current release of Rye */
+  RYE_VERSION bk_db_version;	/* rye version for compatibility check */
   int bk_hdr_version;		/* For future compatibility checking */
   INT64 db_creation;		/* Database creation time */
   INT64 start_time;		/* Time of backup start */
   INT64 end_time;		/* Time of backup end */
-  char db_release[REL_MAX_RELEASE_LENGTH];	/* Rye Release */
   char db_name[PATH_MAX];	/* Fullname of backed up database.
 				   Really more than one byte */
   char db_host[MAXHOSTNAMELEN];	/* Fullname of backed up database.

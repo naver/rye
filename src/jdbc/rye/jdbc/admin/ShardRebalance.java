@@ -46,12 +46,12 @@ class ShardRebalance extends ShardCommand
 
     void printUsage(PrintStream out, String className)
     {
-	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST SOURCE_NODEID_LIST DEST_NODEID_LIST \n\n",
+	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST SOURCE_NODEID_LIST DEST_NODEID_LIST %n%n",
 			className, commandName());
-	out.printf("valid options:\n");
-	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)\n", DEFAULT_LOCAL_MGMT_PORT);
-	out.printf("\t--password=PASSWORD		dba password\n");
-	out.printf("\t--move-all			move all group ids in source nodes (default:false) \n");
+	out.printf("valid options:%n");
+	out.printf("\t--local-mgmt-port=PORT		local mgmt port (default:%d)%n", DEFAULT_LOCAL_MGMT_PORT);
+	out.printf("\t--password=PASSWORD		dba password%n");
+	out.printf("\t--move-all			move all group ids in source nodes (default:false) %n");
     }
 
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
@@ -132,7 +132,7 @@ class ShardRebalance extends ShardCommand
 	}
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
-	    printStatus(true, "%s: rebalance\n", globalDbnameArr[i]);
+	    printStatus(true, "%s: rebalance%n", globalDbnameArr[i]);
 
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 	    shardMgmtRebalance(shardMgmtInfo, globalDbnameArr[i], dbaPasswordArr[i], srcNodeArr, destNodeArr, moveAll);

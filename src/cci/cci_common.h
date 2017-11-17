@@ -152,7 +152,8 @@ extern "C"
 	  struct linger linger_buf;	\
 	  linger_buf.l_onoff = 1;	\
 	  linger_buf.l_linger = 0;	\
-	  setsockopt(X, SOL_SOCKET, SO_LINGER, (char *) &linger_buf, sizeof(linger_buf));	\
+	  if (setsockopt(X, SOL_SOCKET, SO_LINGER, (char *) &linger_buf, sizeof(linger_buf)) < 0) { 			\
+	  }				\
 	  close(X);			\
 	} while (0)
 
@@ -304,7 +305,8 @@ extern "C"
   extern void *cci_mht_get (CCI_MHT_TABLE * ht, void *key);
   extern void *cci_mht_put (CCI_MHT_TABLE * ht, void *key, void *data);
   extern void *cci_mht_put_data (CCI_MHT_TABLE * ht, void *key, void *data);
-  extern int cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func, void *func_args);
+  extern int cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func,
+			    void *func_args);
 
 
   extern int hostname2uchar (const char *host, unsigned char *ip_addr);

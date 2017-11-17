@@ -35,6 +35,7 @@
 #endif /* SERVER_MODE */
 
 #include "porting.h"
+#include "release_string.h"
 #include "memory_alloc.h"
 #include "error_manager.h"
 #if defined(SERVER_MODE)
@@ -180,7 +181,8 @@ enum css_error_code
   INTERRUPTED_READ = 14,
   CANT_ALLOC_BUFFER = 15,
   OS_ERROR = 16,
-  TIMEDOUT_ON_QUEUE = 17
+  TIMEDOUT_ON_QUEUE = 17,
+  NOT_COMPATIBLE_VERSION = 18
 };
 
 /*
@@ -365,16 +367,14 @@ typedef struct
 } CSS_NET_PACKET;
 
 /*
- * These are the data definitions for the queuing routines.
- */
-
-/*
  * This data structure is the interface between the client and the
  * communication software to identify the data connection.
  */
+
 typedef struct css_conn_entry CSS_CONN_ENTRY;
 struct css_conn_entry
 {
+  RYE_VERSION peer_version;
   SOCKET fd;
   unsigned short request_id;
   int status;			/* CONN_OPEN, CONN_CLOSED, CONN_CLOSING = 3 */
@@ -395,8 +395,6 @@ struct css_conn_entry
   unsigned short stop_phase;
   bool con_close_handler_activated;
   int epoll_info_index;
-
-  char *version_string;		/* client version string */
 
   struct session_state *session_p;	/* session object for current request */
   int epoll_check_time;

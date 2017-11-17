@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
+#include "dbi.h"
 #include "cas.h"
 #include "cas_common.h"
 #include "cas_execute.h"

@@ -33,7 +33,7 @@ main (UNUSED_ARG int argc, UNUSED_ARG char *argv[])
 {
   char buf[REL_MAX_VERSION_LENGTH];
 
-  rel_copy_version_string (buf, REL_MAX_VERSION_LENGTH);
+  rel_copy_release_string (buf, REL_MAX_VERSION_LENGTH);
   fprintf (stdout, "\n%s\n\n", buf);
   return 0;
 }

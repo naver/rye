@@ -117,6 +117,9 @@ static int cirp_find_committed_tran (const void *key, void *data, void *args);
 static int cirp_free_tran (const void *key, void *data, void *args);
 static int cirp_find_lowest_tran_start_lsa (const void *key, void *data,
 					    void *args);
+static INT64 rp_get_source_applied_time (RQueue * q_applied_time,
+					 LOG_LSA * required_lsa);
+static int rp_applied_time_node_free (void *node, UNUSED_ARG void *data);
 
 
 /*
@@ -129,9 +132,8 @@ CIRP_AGENT_STATUS
 cirp_get_analyzer_status (CIRP_ANALYZER_INFO * analyzer)
 {
   CIRP_AGENT_STATUS status;
-  int rv;
 
-  rv = pthread_mutex_lock (&analyzer->lock);
+  pthread_mutex_lock (&analyzer->lock);
   status = analyzer->status;
   pthread_mutex_unlock (&analyzer->lock);
 
@@ -149,9 +151,7 @@ int
 cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
 			     CIRP_AGENT_STATUS status)
 {
-  int rv;
-
-  rv = pthread_mutex_lock (&analyzer->lock);
+  pthread_mutex_lock (&analyzer->lock);
   analyzer->status = status;
   pthread_mutex_unlock (&analyzer->lock);
 
@@ -266,6 +266,43 @@ cirp_find_lowest_tran_start_lsa (UNUSED_ARG const void *key,
 }
 
 /*
+ * rp_get_source_applied_time -
+ *   return: applied time
+ *
+ *   q_applied_time(in/out):
+ *   required_lsa(in):
+ */
+static INT64
+rp_get_source_applied_time (RQueue * q_applied_time, LOG_LSA * required_lsa)
+{
+  INT64 applied_time = 0;
+  RP_APPLIED_TIME_NODE *node = NULL;
+
+  if (q_applied_time == NULL || required_lsa == NULL)
+    {
+      assert (false);
+      return 0;
+    }
+
+  while (true)
+    {
+      node = (RP_APPLIED_TIME_NODE *) Rye_queue_get_first (q_applied_time);
+      if (node == NULL || LSA_GT (&node->applied_lsa, required_lsa))
+	{
+	  break;
+	}
+
+      node = Rye_queue_dequeue (q_applied_time);
+      assert (node != NULL && LSA_LE (&node->applied_lsa, required_lsa));
+      applied_time = node->applied_time;
+
+      free_and_init (node);
+    }
+
+  return applied_time;
+}
+
+/*
  * cirp_anlz_update_progress_from_appliers ()-
  *    return: error code
  *
@@ -280,6 +317,7 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
   CIRP_TRAN_COMMITTED_ARRAY committed_tran;
   int error = NO_ERROR;
   CIRP_APPLIER_INFO *applier = NULL;
+  INT64 source_applied_time;
 
   for (i = 0; i < Repl_Info->num_applier; i++)
     {
@@ -332,6 +370,14 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
 	{
 	  LSA_COPY (&analyzer->ct.required_lsa, &lowest_tran_start_lsa);
 	}
+    }
+
+  source_applied_time = rp_get_source_applied_time (analyzer->q_applied_time,
+						    &analyzer->ct.
+						    required_lsa);
+  if (source_applied_time > 0)
+    {
+      analyzer->ct.source_applied_time = source_applied_time;
     }
 
   er_log_debug (ARG_FILE_LINE,
@@ -590,6 +636,25 @@ cirp_final_analyzer (CIRP_ANALYZER_INFO * analyzer)
 }
 
 /*
+ * rp_applied_time_node_free -
+ *   return: error code
+ *
+ *   node(in/out):
+ *   data(in/out):
+ */
+static int
+rp_applied_time_node_free (void *node, UNUSED_ARG void *data)
+{
+  RP_APPLIED_TIME_NODE *tmp;
+
+  tmp = (RP_APPLIED_TIME_NODE *) node;
+
+  free_and_init (tmp);
+
+  return NO_ERROR;
+}
+
+/*
  * cirp_clear_analyzer ()
  *    return: NO_ERROR
  *
@@ -615,6 +680,13 @@ cirp_clear_analyzer (CIRP_ANALYZER_INFO * analyzer)
   analyzer->is_end_of_record = false;
   analyzer->last_node_state = HA_STATE_NA;
   analyzer->is_role_changed = false;
+
+  if (analyzer->q_applied_time != NULL)
+    {
+      Rye_queue_free_full (analyzer->q_applied_time,
+			   rp_applied_time_node_free);
+      free_and_init (analyzer->q_applied_time);
+    }
 
   memset (&analyzer->conn, 0, sizeof (CCI_CONN));
 
@@ -642,7 +714,6 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
   analyzer->is_end_of_record = false;
   analyzer->last_node_state = HA_STATE_NA;
   analyzer->is_role_changed = false;
-
 
   analyzer->db_lockf_vdes = NULL_VOLDES;
   analyzer->log_path_lockf_vdes = NULL_VOLDES;
@@ -1584,14 +1655,29 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
     case LOG_DUMMY_HA_SERVER_STATE:
       {
 	struct log_ha_server_state state;
+	RP_APPLIED_TIME_NODE *node;
 
 	error = cirp_log_get_ha_server_state (&state, pg_ptr, final);
 	if (error != NO_ERROR)
 	  {
 	    GOTO_EXIT_ON_ERROR;
 	  }
+	node =
+	  (RP_APPLIED_TIME_NODE *) malloc (sizeof (RP_APPLIED_TIME_NODE));
+	if (node == NULL)
+	  {
+	    error = ER_OUT_OF_VIRTUAL_MEMORY;
+	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+		    1, sizeof (RP_APPLIED_TIME_NODE));
+	    GOTO_EXIT_ON_ERROR;
+	  }
+	node->applied_time = state.at_time;
+	LSA_COPY (&node->applied_lsa, &final);
 
-	if (state.server_state != HA_STATE_MASTER
+	Rye_queue_enqueue (analyzer->q_applied_time, node);
+
+	if (state.server_state != HA_STATE_SLAVE
+	    && state.server_state != HA_STATE_MASTER
 	    && state.server_state != HA_STATE_TO_BE_SLAVE)
 	  {
 	    if (Repl_Info->analyzer_info.db_lockf_vdes != NULL_VOLDES)
@@ -1689,7 +1775,7 @@ analyzer_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -1705,7 +1791,7 @@ analyzer_main (void *arg)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -2026,14 +2112,21 @@ analyzer_main (void *arg)
 
 	  /* commit */
 	  gettimeofday (&current_time, NULL);
-	  analyzer->ct.last_access_time = timeval_to_msec (&current_time);
 	  diff_msec = timeval_diff_in_msec (&current_time, &commit_time);
-	  if (diff_msec > 1000)
+	  if (diff_msec > 1000 || analyzer->is_role_changed == true)
 	    {
 	      error = cirp_anlz_log_commit ();
 	      if (error != NO_ERROR)
 		{
 		  GOTO_EXIT_ON_ERROR;
+		}
+	      if (analyzer->is_role_changed == true)
+		{
+		  error = cirp_unlock_dbname (analyzer, true);
+		  if (error != NO_ERROR)
+		    {
+		      GOTO_EXIT_ON_ERROR;
+		    }
 		}
 
 	      error = cirp_logpb_remove_archive_log (buf_mgr,
@@ -2047,14 +2140,6 @@ analyzer_main (void *arg)
 	      commit_time = current_time;
 	    }
 
-	  if (analyzer->is_role_changed == true)
-	    {
-	      error = cirp_unlock_dbname (analyzer, true);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
-	    }
 	}			/* end loop analyzation   */
 
       /* Fall through */
@@ -2073,13 +2158,13 @@ analyzer_main (void *arg)
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
-      rp_set_agent_flag (REPL_AGENT_NEED_RESTART);
+      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
 
       /* restart analyzer */
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_INIT);
     }
 
-  rp_set_agent_flag (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
 
   cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 

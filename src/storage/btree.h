@@ -96,9 +96,6 @@ enum
 		btree_set_error(THREAD, KEY, OID, BTID, \
 		ER_ERROR_SEVERITY, ER_BTREE_UNIQUE_FAILED, __FILE__, __LINE__)
 
-#define BTREE_STATS_ADD_WAIT_TIME(page_type)    \
-                server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, page_type)
-
 /* BTID_INT structure from btree_load.h */
 typedef struct btid_int BTID_INT;
 struct btid_int
@@ -263,7 +260,7 @@ extern int btree_update (THREAD_ENTRY * thread_p,
 			 DB_IDXKEY * old_key, DB_IDXKEY * new_key);
 extern int btree_find_min_or_max_key (THREAD_ENTRY * thread_p,
 				      OID * class_oid, BTID * btid,
-				      const VPID * root_vpid,
+				      const VPID * top_vpid,
 				      DB_IDXKEY * idxkey, int flag_minkey);
 
 extern bool btree_key_is_null (const DB_IDXKEY * key);
@@ -294,6 +291,8 @@ extern int btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p,
 extern void btree_rv_noderec_dump_slot_id (FILE * fp, int length, void *data);
 extern int btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv);
 extern int btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv);
+extern int btree_rv_newroot_redo_init (THREAD_ENTRY * thread_p,
+				       LOG_RCV * recv);
 extern int btree_rv_newpage_redo_init (THREAD_ENTRY * thread_p,
 				       LOG_RCV * recv);
 extern int btree_rv_newpage_undo_alloc (THREAD_ENTRY * thread_p,
@@ -344,7 +343,7 @@ extern int btree_write_record (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			       int node_type, RECDES * rec);
 
 extern int btree_find_lower_bound_leaf (THREAD_ENTRY * thread_p,
-					const VPID * root_vpid,
+					const VPID * top_vpid,
 					BTREE_SCAN * BTS,
 					BTREE_STATS * stat_info);
 extern int btree_find_next_record (THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
@@ -362,8 +361,9 @@ extern PAGE_PTR btree_get_new_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
 
 extern PAGE_PTR btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
 				 const VPID * vpid,
-				 int newpg, int requestmode,
-				 PGBUF_LATCH_CONDITION condition);
+				 int requestmode,
+				 PGBUF_LATCH_CONDITION condition,
+				 const PAGE_TYPE ptype);
 
 extern int btree_search_nonleaf_page (THREAD_ENTRY * thread_p,
 				      BTID_INT * btid, PAGE_PTR page_ptr,

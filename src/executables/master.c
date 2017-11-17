@@ -74,9 +74,7 @@ static void css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
 				    char *server_name,
 				    int server_name_length);
 static void css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-				    SOCKET_QUEUE_ENTRY * entry,
-				    char *server_name,
-				    int server_name_length);
+    SOCKET_QUEUE_ENTRY * entry, char *server_name);
 static void css_register_new_server (CSS_CONN_ENTRY * conn,
 				     unsigned short rid, char *server_name,
 				     int server_name_length);
@@ -152,7 +150,6 @@ css_master_error (const char *error_string)
 static int
 css_master_timeout (void)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp;
   struct timeval timeout;
 
@@ -168,7 +165,7 @@ css_master_timeout (void)
    * processes, at least initially.  There don't appear to be any
    * similarly named "wait" functions in the MSVC runtime library.
    */
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (kill (temp->pid, 0) && errno == ESRCH)
@@ -310,6 +307,16 @@ css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
   if (datagram != NULL && css_tcp_master_datagram (datagram, &server_fd))
     {
       datagram_conn = css_make_conn (server_fd);
+      if (datagram_conn == NULL)
+        {
+          assert (false);
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+                               server_name);
+          return;
+        }
+
+      datagram_conn->peer_version = conn->peer_version;
 #if defined(DEBUG)
       css_Active_server_count++;
 #endif
@@ -324,27 +331,16 @@ css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
 	  if (entry != NULL)
 	    {
 	      server_name += length;
-	      entry->version_string =
-		(char *) malloc (strlen (server_name) + 1);
-	      if (entry->version_string != NULL)
+
+	      entry->env_var = (char *) malloc (strlen (server_name) + 1);
+	      if (entry->env_var != NULL)
 		{
-		  strcpy (entry->version_string, server_name);
-		  server_name += strlen (entry->version_string) + 1;
-
-		  entry->env_var = (char *) malloc (strlen (server_name) + 1);
-		  if (entry->env_var != NULL)
-		    {
-		      strcpy (entry->env_var, server_name);
-		    }
-
-		  server_name += strlen (server_name) + 1;
-
-		  entry->pid = atoi (server_name);
+		  strcpy (entry->env_var, server_name);
 		}
-	      else
-		{
-		  entry->env_var = NULL;
-		}
+
+	      server_name += strlen (server_name) + 1;
+
+	      entry->pid = atoi (server_name);
 	    }
 	}
     }
@@ -363,12 +359,10 @@ css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
  */
 static void
 css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-			SOCKET_QUEUE_ENTRY * entry,
-			char *server_name, int server_name_length)
+    SOCKET_QUEUE_ENTRY * entry, char *server_name)
 {
   char *datagram;
   SOCKET server_fd = INVALID_SOCKET;
-  int length;
   CSS_CONN_ENTRY *datagram_conn;
   CSS_NET_PACKET *recv_packet = NULL;
 
@@ -384,19 +378,19 @@ css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
   if (datagram != NULL && css_tcp_master_datagram (datagram, &server_fd))
     {
       datagram_conn = css_make_conn (server_fd);
+      if (datagram_conn == NULL)
+        {
+          assert (false);
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+                               server_name);
+          return;
+        }
+
       entry->fd = server_fd;
+      datagram_conn->peer_version = entry->conn_ptr->peer_version;
       css_free_conn (entry->conn_ptr);
       entry->conn_ptr = datagram_conn;
-      length = strlen (server_name) + 1;
-      if (length < server_name_length)
-	{
-	  server_name += length;
-	  if ((entry->version_string =
-	       (char *) malloc (strlen (server_name) + 1)) != NULL)
-	    {
-	      strcpy (entry->version_string, server_name);
-	    }
-	}
     }
 
   css_net_packet_free (recv_packet);
@@ -422,8 +416,7 @@ css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid,
       if (IS_INVALID_SOCKET (entry->fd))
 	{
 	  /* accept a server that was auto-started */
-	  css_accept_old_request (conn, rid, entry, server_name,
-				  server_name_length);
+	  css_accept_old_request (conn, rid, entry, server_name);
 	}
       else
 	{
@@ -727,11 +720,10 @@ css_enroll_master_exception_sockets (fd_set * fd_var)
 static void
 css_master_select_error (void)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp;
 
 again:
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd) && fcntl (temp->fd, F_GETFL, 0) < 0)
@@ -757,11 +749,10 @@ again:
 static void
 css_check_master_socket_input (int *count, fd_set * fd_var)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp, *next;
   SOCKET new_fd;
 
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
 
   for (temp = css_Master_socket_anchor; *count && temp; temp = next)
     {
@@ -812,11 +803,10 @@ css_check_master_socket_output (void)
 static int
 css_check_master_socket_exception (fd_set * fd_var)
 {
-  int rv;
   SOCKET_QUEUE_ENTRY *temp;
 
 again:
-  rv = pthread_mutex_lock (&css_Master_socket_anchor_lock);
+  pthread_mutex_lock (&css_Master_socket_anchor_lock);
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd)
@@ -1070,10 +1060,6 @@ css_free_entry (SOCKET_QUEUE_ENTRY * entry_p)
     {
       free_and_init (entry_p->name);
     }
-  if (entry_p->version_string)
-    {
-      free_and_init (entry_p->version_string);
-    }
   if (entry_p->env_var)
     {
       free_and_init (entry_p->env_var);
@@ -1160,7 +1146,6 @@ css_add_request_to_socket_queue (CSS_CONN_ENTRY * conn_p,
       p->name = NULL;
     }
 
-  p->version_string = NULL;
   p->env_var = NULL;
   p->fd_type = fd_type;
   p->queue_p = 0;

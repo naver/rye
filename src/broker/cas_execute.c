@@ -35,8 +35,6 @@
 #include <sys/time.h>
 #include <assert.h>
 
-#include "cas_db_inc.h"
-
 #include "cas.h"
 #include "cas_common.h"
 #include "cas_execute.h"
@@ -516,7 +514,7 @@ ux_database_connect (const char *db_name, const char *db_user,
       if (need_au_disable == true)
 	{
 #if 1
-	  AU_RESTORE (1); /* TODO - avoid compile error */
+	  AU_RESTORE (1);	/* TODO - avoid compile error */
 #else
 	  int dummy_au_save;
 
@@ -613,7 +611,7 @@ ux_change_dbuser (const char *user, const char *passwd)
 
   hm_srv_handle_free_all (true);
 
-  strncpy (dbname, DB_Name, MAX_HA_DBINFO_LENGTH);
+  STRNCPY (dbname, DB_Name, sizeof (dbname));
 
   err_code = ux_database_connect (dbname, user, passwd, NULL);
   if (err_code < 0)
@@ -637,8 +635,7 @@ ux_get_current_database_name (char *buf, int bufsize)
 {
   char *p;
 
-  strncpy (buf, DB_Name, bufsize);
-  buf[bufsize - 1] = '\0';
+  STRNCPY (buf, DB_Name, bufsize);
 
   p = strchr (buf, '@');
   if (p != NULL)
@@ -656,7 +653,7 @@ ux_database_shutdown ()
     {
       AU_ENABLE_PASSWORDS ();
 #if 1
-      AU_ENABLE (0); /* TODO - avoid compile error */
+      AU_ENABLE (0);		/* TODO - avoid compile error */
 #else
       AU_SAVE_AND_ENABLE (au_save);
 #endif
@@ -1261,7 +1258,7 @@ ux_get_db_version (T_NET_BUF * net_buf)
 {
   const char *p;
 
-  p = rel_build_number ();
+  p = rel_version_string ();
 
   if (p == NULL)
     {
@@ -1744,7 +1741,7 @@ netval_to_dbval (void *net_type, void *net_value, DB_VALUE * out_val)
 	net_arg_get_str (&value, &val_size, net_value);
 	if (value != NULL)
 	  {
-	    strcpy (tmp, value);
+	    STRNCPY (tmp, value, sizeof (tmp));
 	  }
 	tmp[val_size] = '\0';
 	trim (tmp);
@@ -2803,7 +2800,7 @@ schema_table_priv (char *table_name_pattern, UNUSED_ARG char *column_name,
   DB_VALUE bind_value[3];
   char all_pattern[] = "%";
 
-  strcpy (cur_user, DB_User);
+  STRNCPY (cur_user, DB_User, sizeof (cur_user));
   ut_toupper (cur_user);
 
   snprintf (sql_stmt, sizeof (sql_stmt),
@@ -2889,7 +2886,7 @@ schema_column_priv (char *table_name, char *column_name_pattern,
   DB_VALUE bind_value[3];
   char all_pattern[] = "%";
 
-  strcpy (cur_user, DB_User);
+  STRNCPY (cur_user, DB_User, sizeof (cur_user));
   ut_toupper (cur_user);
 
   snprintf (sql_stmt, sizeof (sql_stmt),
@@ -3838,7 +3835,7 @@ ux_send_repl_ddl_tran (int num_item, void **obj_argv)
   char *save_db_name = NULL;
   DB_QUERY_RESULT *result;
   DB_QUERY_ERROR query_error;
-  int num_error;
+  int num_error = 0;
 
   if (num_item != 2)
     {

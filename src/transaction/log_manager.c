@@ -68,6 +68,7 @@
 #include "repl_log.h"
 #include "memory_hash.h"
 #include "connection_support.h"
+#include "perf_monitor.h"
 #include "fault_injection.h"
 
 #if !defined(SERVER_MODE)
@@ -873,9 +874,6 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
 			 LOG_LSA * stopat_lsa, bool init_emergency)
 {
   LOG_RECORD_HEADER *eof;	/* End of log record */
-  REL_FIXUP_FUNCTION *disk_compatibility_functions = NULL;
-  REL_COMPATIBILITY compat;
-  int i;
   int error_code = NO_ERROR;
   LOG_LSA null_lsa;
   BACKGROUND_ARCHIVING_INFO *bg_arv_info;
@@ -1041,30 +1039,24 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
       return error_code;
     }
 
-  /* Make sure that the database is compatible with the Rye version.
-   * This will compare the given level against the value returned by
-   * rel_disk_compatible().
+  /* Make sure that the database is compatible with current Rye version.
    */
-  compat = rel_get_disk_compatible (log_Gl.hdr.db_compatibility,
-				    &disk_compatibility_functions);
 
-  /* If we're not completely compatible, signal an error.
-   * There had been no compatibility rules on R2.1 or earlier version.
-   * However, a compatibility rule between R2.2 and R2.1 (or earlier)
-   * was added to provide restoration from R2.1 to R2.2.
-   */
-  if (compat != REL_FULLY_COMPATIBLE)
+  if (memcmp (log_Gl.hdr.log_magic, RYE_MAGIC_PREFIX,
+	      strlen (RYE_MAGIC_PREFIX)) != 0 ||
+      rel_check_disk_compatible (&log_Gl.hdr.db_version) != REL_COMPATIBLE)
     {
+      char ver_string[REL_MAX_VERSION_LENGTH];
+      rel_version_to_string (&log_Gl.hdr.db_version, ver_string,
+			     sizeof (ver_string));
       /* Database is incompatible with current release */
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_INCOMPATIBLE_DATABASE, 2,
-	      rel_name (), rel_release_string ());
       error_code = ER_LOG_INCOMPATIBLE_DATABASE;
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
+	      ver_string, rel_version_string ());
       goto error;
     }
 
-  if (rel_is_log_compatible (log_Gl.hdr.db_release,
-			     rel_release_string ()) != true)
+  if (rel_is_log_compatible (&log_Gl.hdr.db_version) != true)
     {
       /*
        * First time this database is restarted using the current version of
@@ -1073,28 +1065,14 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
        */
       if (log_Gl.hdr.is_shutdown == false)
 	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_RECOVER_ON_OLD_RELEASE, 4,
-		  rel_name (), log_Gl.hdr.db_release,
-		  rel_release_string (), rel_release_string ());
+	  char log_db_version[REL_MAX_VERSION_LENGTH];
+	  rel_version_to_string (&log_Gl.hdr.db_version,
+				 log_db_version, sizeof (log_db_version));
 	  error_code = ER_LOG_RECOVER_ON_OLD_RELEASE;
+	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
+		  log_db_version, rel_version_string ());
 	  goto error;
 	}
-
-      /*
-       * It seems safe to move to new version of the system
-       */
-
-      if (strlen (rel_release_string ()) >= REL_MAX_RELEASE_LENGTH)
-	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_COMPILATION_RELEASE, 2,
-		  rel_release_string (), REL_MAX_RELEASE_LENGTH);
-	  error_code = ER_LOG_COMPILATION_RELEASE;
-	  goto error;
-	}
-      strncpy (log_Gl.hdr.db_release, rel_release_string (),
-	       REL_MAX_RELEASE_LENGTH);
     }
 
 
@@ -1223,15 +1201,6 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
 				 log_Gl.chkpt_every_npages);
 
   logtb_set_to_system_tran_index (thread_p);
-
-  /* run the compatibility functions if we have any */
-  if (disk_compatibility_functions != NULL)
-    {
-      for (i = 0; disk_compatibility_functions[i] != NULL; i++)
-	{
-	  (*(disk_compatibility_functions[i])) ();
-	}
-    }
 
   logpb_initialize_arv_page_info_table ();
   logpb_initialize_logging_statistics ();
@@ -2999,6 +2968,7 @@ log_append_ha_server_state (THREAD_ENTRY * thread_p, int state)
   struct log_ha_server_state *ha_server_state;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
+  struct timeval current_time;
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL)
@@ -3021,7 +2991,8 @@ log_append_ha_server_state (THREAD_ENTRY * thread_p, int state)
   memset (ha_server_state, 0, sizeof (struct log_ha_server_state));
 
   ha_server_state->server_state = state;
-  ha_server_state->at_time = time (NULL);
+  gettimeofday (&current_time, NULL);
+  ha_server_state->at_time = timeval_to_msec (&current_time);
 
   start_lsa = prior_lsa_next_record (thread_p, node, tdes);
 
@@ -5260,14 +5231,16 @@ log_dump_header (FILE * out_fp, struct log_header *log_header_p)
   fprintf (out_fp,
 	   "HDR: Magic Symbol = %s at disk location = %lld\n"
 	   "     Creation_time = %s"
-	   "     Release = %s, Compatibility_disk_version = %g,\n"
+	   "     Release = %d.%d.%d.%04d,\n"
 	   "     Db_pagesize = %d, log_pagesize= %d, Shutdown = %d,\n"
 	   "     Next_trid = %d, Num_avg_trans = %d, Num_avg_locks = %d,\n"
 	   "     Num_active_log_pages = %d, First_active_log_page = %lld,\n"
 	   "     Current_append = %lld|%d, Checkpoint = %lld|%d,\n",
-	   log_header_p->magic, (long long) offsetof (LOG_PAGE, area),
-	   time_val, log_header_p->db_release,
-	   log_header_p->db_compatibility, log_header_p->db_iopagesize,
+	   log_header_p->log_magic, (long long) offsetof (LOG_PAGE, area),
+	   time_val,
+	   log_header_p->db_version.major, log_header_p->db_version.minor,
+	   log_header_p->db_version.patch, log_header_p->db_version.build,
+	   log_header_p->db_iopagesize,
 	   log_header_p->db_logpagesize, log_header_p->is_shutdown,
 	   log_header_p->next_trid, log_header_p->avg_ntrans,
 	   log_header_p->avg_nlocks, log_header_p->npages,
@@ -6262,8 +6235,7 @@ log_rollback_record (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
     {
       rcv->pgptr =
 	pgbuf_fix (thread_p, rcv_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-		   PGBUF_UNCONDITIONAL_LATCH,
-		   MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK);
+		   PGBUF_UNCONDITIONAL_LATCH, PAGE_UNKNOWN);
     }
 
   /* GET BEFORE DATA */
@@ -7269,8 +7241,7 @@ log_run_postpone_op (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
     }
 
   rcv.pgptr = pgbuf_fix_with_retry (thread_p, &rcv_vpid, OLD_PAGE,
-				    PGBUF_LATCH_WRITE, 10,
-				    MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE);
+				    PGBUF_LATCH_WRITE, 10, PAGE_UNKNOWN);
 
   /* GET AFTER DATA */
 
@@ -7653,14 +7624,14 @@ log_get_io_page_size (THREAD_ENTRY * thread_p, const char *db_fullname,
   PGLENGTH db_iopagesize;
   PGLENGTH ignore_log_page_size;
   INT64 ignore_dbcreation;
-  float ignore_dbcomp;
+  RYE_VERSION ignore_db_version;
   int dummy;
 
   LOG_CS_ENTER (thread_p);
   if (logpb_find_header_parameters (thread_p, db_fullname, logpath,
 				    prefix_logname, &db_iopagesize,
 				    &ignore_log_page_size, &ignore_dbcreation,
-				    &ignore_dbcomp, &dummy) == -1)
+				    &ignore_db_version, &dummy) == -1)
     {
       /*
        * For case where active log could not be found, user still needs
