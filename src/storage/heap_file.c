@@ -4373,7 +4373,12 @@ heap_create_internal (THREAD_ENTRY * thread_p, HFID * hfid, int exp_npgs,
   FILE_HEAP_DES hfdes;
   bool top_op_active = false;
 
-  assert (hfid != NULL);
+  if (hfid == NULL)
+    {
+      assert (false);
+      GOTO_EXIT_ON_ERROR;
+    }
+
 #if !defined(NDEBUG)
 #if defined(SERVER_MODE)
   assert (class_oid != NULL);
@@ -4430,16 +4435,12 @@ heap_create_internal (THREAD_ENTRY * thread_p, HFID * hfid, int exp_npgs,
     }
 
   addr.pgptr = pgbuf_fix_newpg (thread_p, &vpid, PAGE_HEAP_HEADER);
-
   if (addr.pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
-  if (hfid != NULL && addr.pgptr != NULL)
-    {
-      assert (file_find_page (thread_p, &(hfid->vfid), &vpid) == true);
-    }
+  assert (file_find_page (thread_p, &(hfid->vfid), &vpid) == true);
 
   hfid->hpgid = vpid.pageid;
 
