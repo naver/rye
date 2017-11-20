@@ -3945,8 +3945,8 @@ boot_create_all_volumes (THREAD_ENTRY * thread_p,
 
   /* Create the needed files */
   if (file_tracker_create (thread_p, &boot_Db_parm->trk_vfid) == NULL
-      || xheap_create (thread_p, &boot_Db_parm->hfid, NULL) < 0
-      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid, NULL) < 0
+      || xheap_create (thread_p, &boot_Db_parm->hfid, NULL) != NO_ERROR
+      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid, NULL) != NO_ERROR
       || heap_assign_address (thread_p, &boot_Db_parm->rootclass_hfid,
 			      &boot_Db_parm->rootclass_oid, 0) != NO_ERROR)
     {
