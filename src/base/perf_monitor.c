@@ -103,6 +103,14 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 14 */
 
   {"Num_data_page_fetches_unknown", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 0 */
+
+  {"Num_data_page_fetches_op_file_alloc_pages", 1, MNT_STATS_VALUE_COUNTER},	/* 15 */
+  {"Num_data_page_fetches_op_file_dealloc_page", 1, MNT_STATS_VALUE_COUNTER},	/* 16 */
+  {"Num_data_page_fetches_op_heap_find_best_page", 1, MNT_STATS_VALUE_COUNTER},	/* 17 */
+  {"Num_data_page_fetches_op_heap_bestspace_sync", 1, MNT_STATS_VALUE_COUNTER},	/* 18 */
+  {"Num_data_page_fetches_op_heap_ovf_insert", 1, MNT_STATS_VALUE_COUNTER},	/* 19 */
+  {"Num_data_page_fetches_op_heap_ovf_update", 1, MNT_STATS_VALUE_COUNTER},	/* 20 */
+  /* reserve 21~24 */
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */

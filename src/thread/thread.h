@@ -153,6 +153,19 @@ struct server_trace_stat
   struct timeval *page_wait_time;
 };
 
+#if 1
+/*
+ * fetches sub-info
+ */
+#define MNT_SERVER_ITEM_TRACKER_MAX 10
+
+typedef struct mnt_server_item_tracker MNT_SERVER_ITEM_TRACKER;
+struct mnt_server_item_tracker
+{
+  int item;			/* MNT_SERVER_ITEM */
+};
+#endif
+
 typedef enum
 {
   JOB_QUEUE_CLIENT = 0,
@@ -233,6 +246,9 @@ struct thread_entry
   EVENT_STAT event_stats;
 
   SERVER_TRACE_STAT server_stats;
+
+  int mnt_tracker_top;
+  MNT_SERVER_ITEM_TRACKER mnt_tracker_stack[MNT_SERVER_ITEM_TRACKER_MAX];
 
   /* for query profile */
   int trace_format;
@@ -415,6 +431,13 @@ extern int server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
 extern bool thread_is_auto_volume_expansion_thread_available (void);
 
 extern int thread_lock_entry (THREAD_ENTRY * thread_p);
+
+extern void thread_mnt_tracker_push (THREAD_ENTRY * thread_p, int item,
+				   int *status);
+extern MNT_SERVER_ITEM_TRACKER *thread_mnt_tracker_pop (THREAD_ENTRY * thread_p,
+						      int *status);
+extern void thread_mnt_tracker_display (THREAD_ENTRY * thread_p);
+extern void thread_mnt_tracker_counter (THREAD_ENTRY * thread_p, INT64 value, int *status);
 
 #endif /* SERVER_MODE */
 

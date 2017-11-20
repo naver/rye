@@ -1213,6 +1213,8 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
   memset (&(entry_p->event_stats), 0, sizeof (EVENT_STAT));
   memset (&(entry_p->server_stats), 0, sizeof (SERVER_TRACE_STAT));
 
+  entry_p->mnt_tracker_top = -1;
+
   entry_p->on_trace = false;
   entry_p->clear_trace = false;
   entry_p->sort_stats_active = false;
@@ -4286,3 +4288,100 @@ thread_job_queue_control_thread (void *arg_p)
   return (THREAD_RET_T) 0;
 }
 #endif
+
+
+void
+thread_mnt_tracker_push (THREAD_ENTRY * thread_p, int item, int *status)
+{
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  if (thread_p->mnt_tracker_top >= (MNT_SERVER_ITEM_TRACKER_MAX - 1))
+    {
+      *status = ER_FAILED;
+    }
+  else
+    {
+      *status = NO_ERROR;
+      thread_p->mnt_tracker_top++;
+      thread_p->mnt_tracker_stack[thread_p->mnt_tracker_top].item = item;
+    }
+}
+
+MNT_SERVER_ITEM_TRACKER *
+thread_mnt_tracker_pop (THREAD_ENTRY * thread_p, int *status)
+{
+  MNT_SERVER_ITEM_TRACKER *ret;
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  if (thread_p->mnt_tracker_top <= -1)
+    {
+      ret = NULL;
+      *status = ER_FAILED;
+    }
+  else
+    {
+      *status = NO_ERROR;
+      ret = &(thread_p->mnt_tracker_stack[thread_p->mnt_tracker_top]);
+      thread_p->mnt_tracker_top--;
+    }
+
+  return ret;
+}
+
+void
+thread_mnt_tracker_display (THREAD_ENTRY * thread_p)
+{
+  int i;
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  fprintf (stdout, "\nThe Stack is: ");
+  if (thread_p->mnt_tracker_top <= -1)
+    {
+      fprintf (stdout, "empty");
+    }
+  else
+    {
+      for (i = thread_p->mnt_tracker_top; i >= 0; i--)
+	{
+	  fprintf (stdout, "\n--------\n|%3d   |\n--------",
+		   thread_p->mnt_tracker_stack[i].item);
+	}
+    }
+  fprintf (stdout, "\n");
+}
+
+void
+thread_mnt_tracker_counter (THREAD_ENTRY * thread_p, INT64 value, int *status)
+{
+  int i;
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  if (thread_p->mnt_tracker_top <= -1)
+    {
+      *status = ER_FAILED;
+    }
+  else
+    {
+      *status = NO_ERROR;
+
+      for (i = thread_p->mnt_tracker_top; i >= 0; i--)
+        {
+          mnt_stats_counter (thread_p, thread_p->mnt_tracker_stack[i].item, value);
+        }
+    }
+}
