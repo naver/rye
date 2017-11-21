@@ -30,9 +30,10 @@
 #include "log_impl.h"
 
 extern int xlogwr_get_log_pages (THREAD_ENTRY * thread_p,
-				 LOG_PAGEID first_pageid, LOGWR_MODE mode,
+				 LOG_PAGEID first_pageid,
 				 bool compressed_protocol);
 extern LOG_PAGEID logwr_get_min_copied_fpageid (void);
+extern LOGWR_ENTRY *logwr_find_copy_completed_entry (LOGWR_INFO *writer_info);
 
 extern int xmigrator_get_log_pages (THREAD_ENTRY * thread_p,
 				    LOG_PAGEID first_pageid,

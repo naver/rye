@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <limits.h>
 
+#include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <assert.h>
@@ -1857,6 +1858,7 @@ thread_suspend_with_other_mutex (THREAD_ENTRY * thread_p,
     }
   else
     {
+      assert (to != NULL);
       r = pthread_cond_timedwait (&thread_p->wakeup_cond, mutex_p, to);
     }
 
@@ -2856,9 +2858,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_check_ha_delay_info_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  struct timeval cur_time = { 0, 0 };
-  struct timeval tmp_time = { 0, 0 };
-  struct timespec wakeup_time = { 0, 0 };
+  struct timespec cur_time = { 0, 0 };
   int rv;
   int wakeup_interval = 1000;
   int error_code;
@@ -2890,10 +2890,9 @@ thread_check_ha_delay_info_thread (void *arg_p)
     {
       er_clear ();
 
-      gettimeofday (&cur_time, NULL);
+      clock_gettime(CLOCK_REALTIME, &cur_time);
 
-      (void) timeval_add_msec (&tmp_time, &cur_time, wakeup_interval);
-      (void) timeval_to_timespec (&wakeup_time, &tmp_time);
+      cur_time = timespec_add_msec (&cur_time, wakeup_interval);
 
       rv = pthread_mutex_lock (&thread_Check_ha_delay_info_thread.lock);
       thread_Check_ha_delay_info_thread.is_running = false;
@@ -2903,7 +2902,7 @@ thread_check_ha_delay_info_thread (void *arg_p)
 	  rv =
 	    pthread_cond_timedwait (&thread_Check_ha_delay_info_thread.cond,
 				    &thread_Check_ha_delay_info_thread.lock,
-				    &wakeup_time);
+				    &cur_time);
 	}
       while (rv == 0 && tsd_ptr->shutdown == false);
 
@@ -2938,8 +2937,8 @@ thread_check_ha_delay_info_thread (void *arg_p)
       mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REQUIRED_PAGEID,
 		       required_pageid);
 
-      gettimeofday (&cur_time, NULL);
-      max_delay = timeval_to_msec (&cur_time) - source_applied_time;
+      clock_gettime (CLOCK_REALTIME, &cur_time);
+      max_delay = timespec_to_msec (&cur_time) - source_applied_time;
       mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REPLICATION_DELAY, max_delay);
 
 
@@ -3269,9 +3268,8 @@ thread_log_flush_thread (void *arg_p)
   int rv, ret;
 
   struct timespec LFT_wakeup_time = { 0, 0 };
-  struct timeval wakeup_time = { 0, 0 };
-  struct timeval wait_time = { 0, 0 };
-  struct timeval tmp_timeval = { 0, 0 };
+  struct timespec wakeup_time = { 0, 0 };
+  struct timespec wait_time = { 0, 0 };
 
   int working_time, remained_time, total_elapsed_time, param_refresh_remained;
   int gc_interval, wakeup_interval;
@@ -3294,7 +3292,7 @@ thread_log_flush_thread (void *arg_p)
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
-  gettimeofday (&wakeup_time, NULL);
+  clock_gettime (CLOCK_REALTIME, &wakeup_time);
   total_elapsed_time = 0;
   param_refresh_remained = param_refresh_interval;
 
@@ -3314,13 +3312,12 @@ thread_log_flush_thread (void *arg_p)
 	  wakeup_interval = MIN (gc_interval, wakeup_interval);
 	}
 
-      gettimeofday (&wait_time, NULL);
-      working_time = (int) timeval_diff_in_msec (&wait_time, &wakeup_time);
+      clock_gettime (CLOCK_REALTIME, &wait_time);
+      working_time = (int) timespec_diff_in_msec (&wait_time, &wakeup_time);
       total_elapsed_time += working_time;
 
       remained_time = MAX ((int) (wakeup_interval - working_time), 0);
-      (void) timeval_add_msec (&tmp_timeval, &wait_time, remained_time);
-      (void) timeval_to_timespec (&LFT_wakeup_time, &tmp_timeval);
+      LFT_wakeup_time = timespec_add_msec (&wait_time, remained_time);
 
       rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
 
@@ -3336,8 +3333,8 @@ thread_log_flush_thread (void *arg_p)
 
       rv = pthread_mutex_unlock (&thread_Log_flush_thread.lock);
 
-      gettimeofday (&wakeup_time, NULL);
-      total_elapsed_time += timeval_diff_in_msec (&wakeup_time, &wait_time);
+      clock_gettime(CLOCK_REALTIME, &wakeup_time);
+      total_elapsed_time += timespec_diff_in_msec (&wakeup_time, &wait_time);
 
       if (tsd_ptr->shutdown)
 	{
@@ -3373,12 +3370,6 @@ thread_log_flush_thread (void *arg_p)
       pthread_cond_broadcast (&group_commit_info->gc_cond);
       thread_reset_nrequestors_of_log_flush_thread ();
       pthread_mutex_unlock (&group_commit_info->gc_mutex);
-
-#if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "thread_log_flush_thread: "
-		    "[%d]send signal - waiters\n", (int) THREAD_ID ());
-#endif /* RYE_DEBUG */
     }
 
   rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);

@@ -632,7 +632,7 @@ static int fill_string_to_buffer (char **start, char *end, const char *str);
 static unsigned int
 heap_hash_vpid (const void *key_vpid, unsigned int htsize)
 {
-  const VPID *vpid = (VPID *) key_vpid;
+  const VPID *vpid = (const VPID *) key_vpid;
 
   return ((vpid->pageid | ((unsigned int) vpid->volid) << 24) % htsize);
 }
@@ -646,8 +646,8 @@ heap_hash_vpid (const void *key_vpid, unsigned int htsize)
 static int
 heap_compare_vpid (const void *key_vpid1, const void *key_vpid2)
 {
-  const VPID *vpid1 = (VPID *) key_vpid1;
-  const VPID *vpid2 = (VPID *) key_vpid2;
+  const VPID *vpid1 = (const VPID *) key_vpid1;
+  const VPID *vpid2 = (const VPID *) key_vpid2;
 
   return VPID_EQ (vpid1, vpid2);
 }
@@ -661,7 +661,7 @@ heap_compare_vpid (const void *key_vpid1, const void *key_vpid2)
 static unsigned int
 heap_hash_hfid (const void *key_hfid, unsigned int htsize)
 {
-  const HFID *hfid = (HFID *) key_hfid;
+  const HFID *hfid = (const HFID *) key_hfid;
 
   return ((hfid->hpgid | ((unsigned int) hfid->vfid.volid) << 24) % htsize);
 }
@@ -675,8 +675,8 @@ heap_hash_hfid (const void *key_hfid, unsigned int htsize)
 static int
 heap_compare_hfid (const void *key_hfid1, const void *key_hfid2)
 {
-  const HFID *hfid1 = (HFID *) key_hfid1;
-  const HFID *hfid2 = (HFID *) key_hfid2;
+  const HFID *hfid1 = (const HFID *) key_hfid1;
+  const HFID *hfid2 = (const HFID *) key_hfid2;
 
   return HFID_EQ (hfid1, hfid2);
 }
@@ -13268,7 +13268,7 @@ heap_rv_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int sp_success;
 
   slotid = rcv->offset;
-  recdes.type = *(INT16 *) (rcv->data);
+  recdes.type = *(const INT16 *) (rcv->data);
   recdes.data = (char *) (rcv->data) + sizeof (recdes.type) + sizeof (OID);
   recdes.length = rcv->length - sizeof (recdes.type) - sizeof (OID);
   recdes.area_size = recdes.length;
@@ -13371,7 +13371,7 @@ heap_rv_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int sp_success;
 
   slotid = rcv->offset;
-  recdes.type = *(INT16 *) (rcv->data);
+  recdes.type = *(const INT16 *) (rcv->data);
   recdes.data = (char *) (rcv->data) + sizeof (recdes.type) + sizeof (OID);
   recdes.length = rcv->length - sizeof (recdes.type) - sizeof (OID);
   recdes.area_size = recdes.length;
@@ -13405,9 +13405,9 @@ heap_rv_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 int
 heap_rv_undo_create (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 {
-  HFID *hfid;
+  const HFID *hfid;
 
-  hfid = (HFID *) (rcv->data);
+  hfid = (const HFID *) (rcv->data);
 
   return xheap_destroy (thread_p, hfid);
 }
@@ -13654,16 +13654,16 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
   OR_CLASSREP **rep_all;
   int count, i;
   char *classname;
-  bool need_free_classname = false;
+  const char *print_classname;
 
   classname = heap_get_class_name (thread_p, class_oid);
   if (classname == NULL)
     {
-      classname = (char *) "unknown";
+      print_classname = "unknown";
     }
   else
     {
-      need_free_classname = true;
+      print_classname = classname;
     }
 
   heap_scancache_quick_start (&scan_cache);
@@ -13677,7 +13677,7 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
 	{
 	  fprintf (fp, "*** Dumping representations of class %s\n"
 		   "    Classname = %s, Class-OID = %d|%d|%d, #Repr = %d\n\n",
-		   classname, classname, (int) class_oid->volid,
+		   print_classname, print_classname, (int) class_oid->volid,
 		   class_oid->pageid, (int) class_oid->slotid, count);
 
 	  for (i = 0; i < count; i++)
@@ -13694,7 +13694,7 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
 
   heap_scancache_end (thread_p, &scan_cache);
 
-  if (need_free_classname)
+  if (classname != NULL)
     {
       free_and_init (classname);
     }

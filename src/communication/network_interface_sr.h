@@ -244,11 +244,9 @@ extern int xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
 					  INT64 first_pageid, int num_page,
 					  int file_status);
 extern int xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
-					    char *logpg_area, int area_size,
-					    LOGWR_MODE mode);
+					    char *logpg_area, int area_size);
 extern int xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
-					     LOG_PAGEID * fpageid_ptr,
-					     LOGWR_MODE * mode_ptr);
+					     LOG_PAGEID * fpageid_ptr);
 extern void sheap_get_class_num_objs_and_pages (THREAD_ENTRY * thread_p,
 						unsigned int rid,
 						char *request, int reqlen);

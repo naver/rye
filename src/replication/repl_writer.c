@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <sys/ipc.h>
+#include <time.h>
 
 #include "log_impl.h"
 
@@ -1689,7 +1690,7 @@ cirpwr_get_log_header ()
   LOGWR_CONTEXT ctx = {
     -1, 0, false
   };
-  OR_ALIGNED_BUF (OR_INT_SIZE * 3 + OR_INT64_SIZE) a_request;
+  OR_ALIGNED_BUF (OR_INT_SIZE * 2 + OR_INT64_SIZE) a_request;
   OR_ALIGNED_BUF (OR_INT_SIZE * 5 + OR_INT64_SIZE) a_reply;
   char *request, *reply;
   char *ptr;
@@ -1709,7 +1710,6 @@ cirpwr_get_log_header ()
 
   /* HEADER PAGE REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
-  ptr = or_pack_int (ptr, LOGWR_MODE_ASYNC);
   ptr = or_pack_int (ptr, NO_ERROR);
   ptr = or_pack_int (ptr, compressed_protocol);
 
@@ -1734,9 +1734,9 @@ cirpwr_get_log_header ()
 
   /* END REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
-  ptr = or_pack_int (ptr, LOGWR_MODE_ASYNC);
   /* send ER_GENERIC_ERROR to make LWT not wait for more page requests */
   ptr = or_pack_int (ptr, ER_GENERIC_ERROR);
+  ptr = or_pack_int (ptr, compressed_protocol);
 
   error = net_client_get_log_header (&ctx, request,
 				     OR_ALIGNED_BUF_SIZE (a_request), reply,
@@ -1931,7 +1931,6 @@ log_writer_main (void *arg)
   CIRP_THREAD_ENTRY *th_entry = NULL;
   char err_msg[ER_MSG_SIZE];
   RECV_Q_NODE *node;
-  struct timeval cur_time, tmp_timeval;
   struct timespec wakeup_time;
   int wakeup_interval = 100;	/* msec */
 
@@ -1956,10 +1955,9 @@ log_writer_main (void *arg)
 
   while (REPL_NEED_SHUTDOWN () == false)
     {
-      gettimeofday (&cur_time, NULL);
+      clock_gettime (CLOCK_REALTIME, &wakeup_time);
 
-      timeval_add_msec (&tmp_timeval, &cur_time, wakeup_interval);
-      timeval_to_timespec (&wakeup_time, &tmp_timeval);
+      wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
 
       pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
       pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond, &cirpwr_Gl.recv_q_lock,
@@ -2067,23 +2065,16 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
   if (first_pageid_torecv <= 0)
     {
       /* received first pageid of active or archive log */
-      mode = LOGWR_MODE_ASYNC;
+      ;
     }
   else if (cirpwr_Gl.last_received_file_status ==
 	   LOG_HA_FILESTAT_SYNCHRONIZED)
     {
-      mode = cirpwr_Gl.mode;
+      ;
     }
   else
     {
       first_pageid_torecv = first_pageid_torecv + 1;
-      mode = LOGWR_MODE_ASYNC;
-
-      /* In case of archiving, not replication delay */
-      if (first_pageid_torecv == log_hdr->nxarv_pageid)
-	{
-	  mode = cirpwr_Gl.mode;
-	}
     }
 
   if (prm_get_bool_value (PRM_ID_LOGWR_COMPRESSED_PROTOCOL))
@@ -2096,9 +2087,8 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"cirpwr_get_log_pages, fpageid(%lld), mode(%s), compressed_protocol(%d)",
-		first_pageid_torecv, LOGWR_MODE_NAME (mode),
-		compressed_protocol);
+		"cirpwr_get_log_pages, fpageid(%lld),  compressed_protocol(%d)",
+		first_pageid_torecv, compressed_protocol);
 
   save_mode = cirpwr_Gl.mode;
   cirpwr_Gl.mode = mode;
@@ -2107,7 +2097,6 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
   reply = OR_ALIGNED_BUF_START (a_reply);
 
   ptr = or_pack_int64 (request, first_pageid_torecv);
-  ptr = or_pack_int (ptr, mode);
   ptr = or_pack_int (ptr, ctx_ptr->last_error);
   ptr = or_pack_int (ptr, compressed_protocol);
 
@@ -2189,7 +2178,6 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
   int server_request_num;
   bool do_read;
   int recv_q_node_count = 0;
-  struct timeval cur_time, tmp_timeval;
   struct timespec wakeup_time;
   int wakeup_interval = 100;
 
@@ -2290,10 +2278,9 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	    while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
 		   && rp_need_restart () == false)
 	      {
-		gettimeofday (&cur_time, NULL);
+		clock_gettime (CLOCK_REALTIME, &wakeup_time);
 
-		timeval_add_msec (&tmp_timeval, &cur_time, wakeup_interval);
-		timeval_to_timespec (&wakeup_time, &tmp_timeval);
+		wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
 
 		pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
 		pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,

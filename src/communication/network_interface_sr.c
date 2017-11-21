@@ -5046,8 +5046,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
  */
 int
 xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
-				 char *logpg_area, int area_size,
-				 UNUSED_ARG LOGWR_MODE mode)
+				 char *logpg_area, int area_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -5058,13 +5057,11 @@ xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
 
   ptr = or_pack_int (reply, area_size);
 
-#if 1
   if (ZIP_CHECK (area_size))
     {
       area_size = (int) GET_ZIP_LEN (area_size);
       assert (area_size > 0);
     }
-#endif
 
   rc = css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 				 reply, OR_ALIGNED_BUF_SIZE (a_reply),
@@ -5089,13 +5086,11 @@ xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
  */
 int
 xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
-				  LOG_PAGEID * fpageid_ptr,
-				  LOGWR_MODE * mode_ptr)
+				  LOG_PAGEID * fpageid_ptr)
 {
   char *reply = NULL;
   int reply_size;
   LOG_PAGEID first_pageid;
-  int mode;
   char *ptr;
   int error;
   int remote_error;
@@ -5118,17 +5113,15 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
 
   assert (reply != NULL);
   ptr = or_unpack_int64 (reply, &first_pageid);
-  ptr = or_unpack_int (ptr, &mode);
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);	/* ignore */
   free_and_init (reply);
 
   *fpageid_ptr = first_pageid;
-  *mode_ptr = mode;
 
   er_log_debug (ARG_FILE_LINE, "xlog_get_page_request_with_reply, "
-		"fpageid(%lld), mode(%s), compressed_protocol(%d)\n",
-		first_pageid, LOGWR_MODE_NAME (mode), compressed_protocol);
+		"fpageid(%lld), compressed_protocol(%d)\n",
+		first_pageid, compressed_protocol);
 
   return (remote_error != NO_ERROR) ? remote_error : error;
 }
@@ -5591,18 +5584,15 @@ slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   char *ptr;
   LOG_PAGEID first_pageid;
-  LOGWR_MODE mode;
-  int m, error, remote_error;
+  int error, remote_error;
   int compressed_protocol;
 
   ptr = or_unpack_int64 (request, &first_pageid);
-  ptr = or_unpack_int (ptr, &m);
-  mode = (LOGWR_MODE) m;
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);
   assert (compressed_protocol == 1 || compressed_protocol == 0);
 
-  error = xlogwr_get_log_pages (thread_p, first_pageid, mode,
+  error = xlogwr_get_log_pages (thread_p, first_pageid,
 				((compressed_protocol == 1) ? true : false));
   if (error == ER_INTERRUPTED)
     {
