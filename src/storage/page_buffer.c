@@ -1297,6 +1297,9 @@ try_again:
       (void) pgbuf_unlock_page (hash_anchor, vpid, false);
     }
 
+  /* Set Page identifier iff needed */
+  (void) pgbuf_set_bcb_page_vpid (thread_p, bufptr);
+
   CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
 
   if (newpg == NEW_PAGE)
@@ -7283,7 +7286,7 @@ pgbuf_get_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
   ptype =
     fileio_get_page_ptype (thread_p, &(bufptr->iopage_buffer->iopage.prv));
 
-  assert (PAGE_UNKNOWN <= ptype);
+//  assert (PAGE_UNKNOWN <= ptype);
   assert (ptype <= PAGE_BTREE);
 
   return ptype;
@@ -7299,6 +7302,8 @@ pgbuf_get_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 static void
 pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 {
+  FILEIO_PAGE_RESERVED *prv_p;
+
   if (bufptr == NULL || VPID_ISNULL (&bufptr->vpid))
     {
       assert (bufptr != NULL);
@@ -7308,32 +7313,25 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 
   if (thread_p == NULL)
     {
-      thread_p = thread_get_thread_entry_info ();
+      thread_p = thread_get_thread_entry_info();
     }
 
-  /* perm volume */
-//  if (bufptr->vpid.volid > NULL_VOLID)
-  {
-    FILEIO_PAGE_RESERVED *prv_p;
+  prv_p = &(bufptr->iopage_buffer->iopage.prv);
 
-    prv_p = &(bufptr->iopage_buffer->iopage.prv);
+  /* Check iff is the first time */
+  if (prv_p->pageid == NULL_PAGEID && prv_p->volid == NULL_VOLID)
+    {
+      assert (LSA_ISNULL (&(prv_p->lsa)));
 
-    /* Check iff is the first time */
-    if (prv_p->pageid == NULL_PAGEID && prv_p->volid == NULL_VOLID)
-      {
-	assert (LSA_ISNULL (&(prv_p->lsa)));
+      (void) fileio_initialize_res(thread_p, prv_p);
 
-	(void) fileio_initialize_res (thread_p, prv_p);
+      /* Set Page identifier */
+      prv_p->pageid = bufptr->vpid.pageid;
+      prv_p->volid = bufptr->vpid.volid;
+    }
 
-	/* Set Page identifier */
-	prv_p->pageid = bufptr->vpid.pageid;
-	prv_p->volid = bufptr->vpid.volid;
-      }
-
-    assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
-    assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
-  }
-
+  assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
+  assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
 }
 
 /*
@@ -7352,7 +7350,7 @@ pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 
   assert (pgptr != NULL);
 
-  assert (ptype >= PAGE_UNKNOWN);
+//  assert (ptype >= PAGE_UNKNOWN);
   assert (ptype <= PAGE_BTREE);
 
   if (thread_p == NULL)
@@ -7522,6 +7520,12 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   assert (prv_p->p_reserve_2 == 0);
   assert (prv_p->p_reserve_3 == 0);
 #endif
+
+  /* Check iff is not initialized yet */
+  if (LSA_ISNULL (&(prv_p->lsa)))
+      {
+        return true; /* nop */
+      }
 
   assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
   assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
