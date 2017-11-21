@@ -2169,6 +2169,46 @@ log_recovery_analysis (THREAD_ENTRY * thread_p, LOG_LSA * start_lsa,
   return;
 }
 
+static PAGE_TYPE
+rv_rcvindex_page_type (LOG_RCVINDEX rcvindex)
+{
+  switch (rcvindex)
+    {
+    case RVBT_GET_NEWROOT:
+      return PAGE_BTREE_ROOT;
+    case RVBT_GET_NEWPAGE:
+      return PAGE_BTREE;
+    case RVCT_NEWPAGE:
+      return PAGE_CATALOG;
+    case RVDK_FORMAT:
+      return PAGE_VOLHEADER;
+    case RVDK_INITMAP:
+      return PAGE_VOLBITMAP;
+    case RVEH_INIT_DIR:
+    case RVEH_INIT_NEW_DIR_PAGE:
+    case RVEH_INIT_BUCKET:
+      return PAGE_EHASH;
+    case RVFL_FHDR:
+      return PAGE_FILE_HEADER;
+    case RVFL_FTAB_CHAIN:
+      return PAGE_FILE_TAB;
+    case RVHF_NEWHDR:
+      return PAGE_HEAP_HEADER;
+    case RVHF_NEWPAGE:
+      return PAGE_HEAP;
+    case RVOVF_NEWPAGE_INSERT:
+    case RVOVF_PAGE_UPDATE:
+      return PAGE_OVERFLOW;
+
+    default:
+      break;
+    }
+
+  assert (false);
+
+  return PAGE_UNKNOWN;
+}
+
 /*
  * log_recovery_redo - SCAN FORWARD REDOING DATA
  *
@@ -2225,6 +2265,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
   LOG_ZIP *undo_unzip_ptr = NULL;
   LOG_ZIP *redo_unzip_ptr = NULL;
   bool is_diff_rec;
+  PAGE_TYPE ptype;
 
   aligned_log_pgbuf = PTR_ALIGN (log_pgbuf, MAX_ALIGNMENT);
 
@@ -2405,10 +2446,21 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
-		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
-					 PGBUF_LATCH_WRITE,
-					 PGBUF_UNCONDITIONAL_LATCH,
-					 PAGE_UNKNOWN);
+
+		  if (RCV_IS_NEWPG_LOG (undoredo->data.rcvindex))
+		    {
+		      ptype = rv_rcvindex_page_type (undoredo->data.rcvindex);
+		      rcv.pgptr =
+			pgbuf_fix_newpg (thread_p, &rcv_vpid, ptype);
+		    }
+		  else
+		    {
+		      rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
+					     PGBUF_LATCH_WRITE,
+					     PGBUF_UNCONDITIONAL_LATCH,
+					     PAGE_UNKNOWN);
+		    }
+
 		  if (rcv.pgptr == NULL)
 		    {
 		      break;
@@ -2581,10 +2633,21 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
-		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
-					 PGBUF_LATCH_WRITE,
-					 PGBUF_UNCONDITIONAL_LATCH,
-					 PAGE_UNKNOWN);
+
+		  if (RCV_IS_NEWPG_LOG (redo->data.rcvindex))
+		    {
+		      ptype = rv_rcvindex_page_type (redo->data.rcvindex);
+		      rcv.pgptr =
+			pgbuf_fix_newpg (thread_p, &rcv_vpid, ptype);
+		    }
+		  else
+		    {
+		      rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
+					     PGBUF_LATCH_WRITE,
+					     PGBUF_UNCONDITIONAL_LATCH,
+					     PAGE_UNKNOWN);
+		    }
+
 		  if (rcv.pgptr == NULL)
 		    {
 		      break;
