@@ -6350,6 +6350,7 @@ file_alloc_pages (THREAD_ENTRY * thread_p, const VFID * vfid,
 			       const VPID * first_alloc_vpid,
 			       INT32 npages, void *args), void *args)
 {
+  int status = NO_ERROR;
   FILE_HEADER *fhdr;
   PAGE_PTR fhdr_pgptr = NULL;
   VPID vpid;
@@ -6361,6 +6362,10 @@ file_alloc_pages (THREAD_ENTRY * thread_p, const VFID * vfid,
   bool restore_check_interrupt = false;
 #endif /* SERVER_MODE */
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES,
+			 &status);
+
   /*
    * Start a TOP SYSTEM OPERATION.
    * This top system operation will be either ABORTED (case of failure) or
@@ -6371,6 +6376,12 @@ file_alloc_pages (THREAD_ENTRY * thread_p, const VFID * vfid,
   if (log_start_system_op (thread_p) == NULL)
     {
       VPID_SET_NULL (first_alloc_vpid);
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return NULL;
     }
 
@@ -6502,6 +6513,12 @@ file_alloc_pages (THREAD_ENTRY * thread_p, const VFID * vfid,
     }
 #endif /* SERVER_MODE */
 
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
   return first_alloc_vpid;
 
 exit_on_error:
@@ -6521,6 +6538,12 @@ exit_on_error:
       thread_set_check_interrupt (thread_p, old_val);
     }
 #endif /* SERVER_MODE */
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
 
   return NULL;
 }
@@ -7593,6 +7616,7 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 		   const VPID * dealloc_vpid,
 		   UNUSED_ARG PAGE_TYPE dealloc_ptype)
 {
+  int status = NO_ERROR;
   FILE_ALLOCSET *allocset;
   VPID allocset_vpid;
   INT16 allocset_offset;
@@ -7608,9 +7632,19 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 #endif /* SERVER_MODE */
   PAGE_TYPE ptype;
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE,
+			 &status);
+
   isfile_new = file_isnew_with_type (thread_p, vfid, &file_type);
   if (isfile_new == FILE_ERROR)
     {
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return ER_FAILED;
     }
 
@@ -7640,6 +7674,13 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 	  pgbuf_set_dirty (thread_p, addr.pgptr, FREE);
 	  addr.pgptr = NULL;
 	}
+
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return NO_ERROR;
     }
 
@@ -7651,6 +7692,12 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 
   if (log_start_system_op (thread_p) == NULL)
     {
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return ER_FAILED;
     }
 
@@ -7727,7 +7774,7 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
 			  ER_FILE_TABLE_CORRUPTED, 2, vfid->volid,
 			  vfid->fileid);
 
-		  assert_release (0);
+		  assert_release (false);
 		}
 
 	      VPID_SET_NULL (&allocset_vpid);
@@ -7777,6 +7824,12 @@ file_dealloc_page (THREAD_ENTRY * thread_p, const VFID * vfid,
     }
 #endif /* SERVER_MODE */
 
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
   return ret;
 
 exit_on_error:
@@ -7799,6 +7852,12 @@ exit_on_error:
       thread_set_check_interrupt (thread_p, old_val);
     }
 #endif /* SERVER_MODE */
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
 
   if (ret == NO_ERROR)
     {
