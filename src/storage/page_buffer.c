@@ -1301,6 +1301,9 @@ try_again:
       (void) pgbuf_unlock_page (hash_anchor, vpid, false);
     }
 
+  /* Set Page identifier iff needed */
+  (void) pgbuf_set_bcb_page_vpid (thread_p, bufptr);
+
   CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
 
   if (newpg == NEW_PAGE)
@@ -7314,7 +7317,7 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 
   if (thread_p == NULL)
     {
-      thread_p = thread_get_thread_entry_info ();
+      thread_p = thread_get_thread_entry_info();
     }
 
   prv_p = &(bufptr->iopage_buffer->iopage.prv);
