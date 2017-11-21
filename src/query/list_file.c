@@ -67,7 +67,6 @@
 #define pthread_mutex_destroy(a)
 #define pthread_mutex_lock(a)	0
 #define pthread_mutex_unlock(a)
-static int rv;
 
 #define thread_sleep(a)
 #endif /* not SERVER_MODE */
@@ -424,9 +423,6 @@ qfile_free_sort_list (SORT_LIST * sort_list_p)
 {
   SORT_LIST *p;
   int count;
-#if defined(SERVER_MODE)
-  int rv;
-#endif /* SERVER_MODE */
 
   if (sort_list_p == NULL)
     {
@@ -438,7 +434,7 @@ qfile_free_sort_list (SORT_LIST * sort_list_p)
       count++;
     }
 
-  rv = pthread_mutex_lock (&qfile_Free_sort_list_mutex);
+  pthread_mutex_lock (&qfile_Free_sort_list_mutex);
 
   /* TODO: introduce other param rather than MAX_THREADS */
   if (qfile_Free_sort_list_count < thread_num_worker_threads ())
@@ -479,9 +475,6 @@ qfile_allocate_sort_list (int count)
   SORT_LIST *s, *p;
   int i;
   int num_remains;
-#if defined(SERVER_MODE)
-  int rv;
-#endif /* SERVER_MODE */
 
   if (count <= 0)
     {
@@ -491,7 +484,7 @@ qfile_allocate_sort_list (int count)
   /* allocate complete list */
   if (qfile_Free_sort_list != NULL)
     {
-      rv = pthread_mutex_lock (&qfile_Free_sort_list_mutex);
+      pthread_mutex_lock (&qfile_Free_sort_list_mutex);
 
       if (qfile_Free_sort_list != NULL)
 	{
@@ -529,7 +522,7 @@ qfile_allocate_sort_list (int count)
 		}
 	      if (i > 0)
 		{
-		  rv = pthread_mutex_lock (&qfile_Free_sort_list_mutex);
+		  pthread_mutex_lock (&qfile_Free_sort_list_mutex);
 		  qfile_Free_sort_list_total += i;
 		  pthread_mutex_unlock (&qfile_Free_sort_list_mutex);
 		}
@@ -556,7 +549,7 @@ qfile_allocate_sort_list (int count)
 
   if (i > 0)
     {
-      rv = pthread_mutex_lock (&qfile_Free_sort_list_mutex);
+      pthread_mutex_lock (&qfile_Free_sort_list_mutex);
       qfile_Free_sort_list_total += count;
       pthread_mutex_unlock (&qfile_Free_sort_list_mutex);
     }
@@ -1202,14 +1195,11 @@ qfile_initialize (void)
 {
   SORT_LIST *sort_list_p;
   int i;
-#if defined(SERVER_MODE)
-  int rv;
-#endif /* SERVER_MODE */
 
   qfile_Max_tuple_page_size = QFILE_MAX_TUPLE_SIZE_IN_PAGE;
   qfile_Xasl_page_size = spage_max_record_size () - QFILE_PAGE_HEADER_SIZE;
 
-  rv = pthread_mutex_lock (&qfile_Free_sort_list_mutex);
+  pthread_mutex_lock (&qfile_Free_sort_list_mutex);
 
   if (qfile_Free_sort_list == NULL)
     {
@@ -2391,7 +2381,6 @@ xqfile_get_list_file_page (THREAD_ENTRY * thread_p, QUERY_ID query_id,
   int tran_index;
 #if defined(SERVER_MODE)
   int error = NO_ERROR;
-  int rv;
 #endif /* SERVER_MODE */
 
   assert (page_buf_p != NULL);
@@ -2496,12 +2485,12 @@ xqfile_get_list_file_page (THREAD_ENTRY * thread_p, QUERY_ID query_id,
       VPID_SET (&vpid, vol_id, page_id);
     }
 
-  rv = pthread_mutex_lock (&query_entry_p->lock);
+  pthread_mutex_lock (&query_entry_p->lock);
   list_id_p = query_entry_p->list_id;
   tfile_vfid_p = list_id_p->tfile_vfid;
   pthread_mutex_unlock (&query_entry_p->lock);
 
-  rv = pthread_mutex_lock (&query_entry_p->lock);
+  pthread_mutex_lock (&query_entry_p->lock);
   list_id_p = query_entry_p->list_id;
   tfile_vfid_p = (list_id_p) ? list_id_p->tfile_vfid : NULL;
   pthread_mutex_unlock (&query_entry_p->lock);
