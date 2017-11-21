@@ -117,7 +117,7 @@ extern PAGE_PTR pgbuf_flush_debug (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
         pgbuf_fix_debug(thread_p, vpid, newpg, requestmode, condition, ptype, \
                         __FILE__, __LINE__)
 extern PAGE_PTR pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
-				 int newpg, int requestmode,
+				 int newpg, PGBUF_LATCH_MODE requestmode,
 				 PGBUF_LATCH_CONDITION condition,
 				 PAGE_TYPE ptype,
 				 const char *caller_file, int caller_line);
@@ -136,11 +136,12 @@ extern PAGE_PTR pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p,
 extern PAGE_PTR pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 						    const VPID * vpid,
 						    int newpg,
-						    int request_mode,
+						    PGBUF_LATCH_MODE
+						    request_mode,
 						    PGBUF_LATCH_CONDITION
 						    condition,
-						    UNUSED_ARG const
-						    PAGE_TYPE ptype,
+						    UNUSED_ARG const PAGE_TYPE
+						    ptype,
 						    const char *caller_file,
 						    int caller_line);
 #define pgbuf_unfix(thread_p, pgptr) \
@@ -165,7 +166,8 @@ extern PAGE_PTR pgbuf_flush (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 extern PAGE_PTR pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 						      const VPID * vpid,
 						      int newpg,
-						      int requestmode,
+						      PGBUF_LATCH_MODE
+						      requestmode,
 						      PGBUF_LATCH_CONDITION
 						      condition,
 						      UNUSED_ARG const
@@ -174,7 +176,7 @@ extern PAGE_PTR pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
         pgbuf_fix_release(thread_p, vpid, newpg, requestmode, condition, ptype)
 extern PAGE_PTR pgbuf_fix_release (THREAD_ENTRY * thread_p,
 				   const VPID * vpid, int newpg,
-				   int requestmode,
+				   PGBUF_LATCH_MODE requestmode,
 				   PGBUF_LATCH_CONDITION condition,
 				   PAGE_TYPE ptype);
 

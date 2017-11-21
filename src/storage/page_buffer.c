@@ -242,7 +242,7 @@ struct pgbuf_bcb
   int ipool;			/* Buffer pool index */
   VPID vpid;			/* Volume and page identifier of resident page */
   int fcnt;			/* Fix count */
-  int latch_mode;		/* page latch mode */
+  PGBUF_LATCH_MODE latch_mode;	/* page latch mode */
 #if defined(SERVER_MODE)
   THREAD_ENTRY *next_wait_thrd;	/* BCB waiting queue */
 #endif				/* SERVER_MODE */
@@ -453,7 +453,8 @@ static int pgbuf_unlatch_thrd_holder (THREAD_ENTRY * thread_p,
 				      PGBUF_BCB * bufptr);
 #if !defined(NDEBUG)
 static int pgbuf_latch_bcb_upon_fix (THREAD_ENTRY * thread_p,
-				     PGBUF_BCB * bufptr, int request_mode,
+				     PGBUF_BCB * bufptr,
+				     PGBUF_LATCH_MODE request_mode,
 				     int buf_lock_acquired,
 				     PGBUF_LATCH_CONDITION condition,
 				     const char *caller_file,
@@ -903,7 +904,7 @@ pgbuf_fix_with_retry (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 PAGE_PTR
 pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 				    const VPID * vpid, int newpg,
-				    int request_mode,
+				    PGBUF_LATCH_MODE request_mode,
 				    PGBUF_LATCH_CONDITION condition,
 				    UNUSED_ARG const PAGE_TYPE ptype,
 				    const char *caller_file, int caller_line)
@@ -933,7 +934,7 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 PAGE_PTR
 pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 				      const VPID * vpid, int newpg,
-				      int request_mode,
+				      PGBUF_LATCH_MODE request_mode,
 				      PGBUF_LATCH_CONDITION condition,
 				      UNUSED_ARG const PAGE_TYPE ptype)
 {
@@ -993,13 +994,14 @@ pgbuf_fix_newpg_release (THREAD_ENTRY * thread_p, const VPID * vpid,
 #if !defined(NDEBUG)
 PAGE_PTR
 pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		 int request_mode, PGBUF_LATCH_CONDITION condition,
-		 PAGE_TYPE ptype, const char *caller_file, int caller_line)
+		 PGBUF_LATCH_MODE request_mode,
+		 PGBUF_LATCH_CONDITION condition, PAGE_TYPE ptype,
+		 const char *caller_file, int caller_line)
 #else /* NDEBUG */
 PAGE_PTR
 pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
-		   int request_mode, PGBUF_LATCH_CONDITION condition,
-		   PAGE_TYPE ptype)
+		   PGBUF_LATCH_MODE request_mode,
+		   PGBUF_LATCH_CONDITION condition, PAGE_TYPE ptype)
 #endif				/* NDEBUG */
 {
   PGBUF_BUFFER_HASH *hash_anchor;
@@ -3999,7 +4001,8 @@ exit_on_error:
 #if !defined(NDEBUG)
 static int
 pgbuf_latch_bcb_upon_fix (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
-			  int request_mode, int buf_lock_acquired,
+			  PGBUF_LATCH_MODE request_mode,
+			  int buf_lock_acquired,
 			  PGBUF_LATCH_CONDITION condition,
 			  const char *caller_file, int caller_line)
 #else /* NDEBUG */

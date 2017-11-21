@@ -219,21 +219,42 @@ OID *
 heap_ovf_insert (THREAD_ENTRY * thread_p, const HFID * hfid, OID * ovf_oid,
 		 RECDES * recdes, const OID * class_oid)
 {
+  int status = NO_ERROR;
   VFID ovf_vfid;
   VPID ovf_vpid;		/* Address of overflow insertion */
+
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT,
+			 &status);
 
   if (heap_ovf_find_vfid (thread_p, hfid, &ovf_vfid, true) == NULL
       || overflow_insert (thread_p, &ovf_vfid, &ovf_vpid, recdes,
 			  NULL, class_oid) == NULL)
     {
-      return NULL;
+      goto exit_on_error;
     }
 
   ovf_oid->pageid = ovf_vpid.pageid;
   ovf_oid->volid = ovf_vpid.volid;
   ovf_oid->slotid = NULL_SLOTID;	/* Irrelevant */
 
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
   return ovf_oid;
+
+exit_on_error:
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
+  return NULL;
 }
 
 /*
@@ -249,12 +270,17 @@ const OID *
 heap_ovf_update (THREAD_ENTRY * thread_p, const HFID * hfid,
 		 const OID * ovf_oid, RECDES * recdes)
 {
+  int status = NO_ERROR;
   VFID ovf_vfid;
   VPID ovf_vpid;
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE,
+			 &status);
+
   if (heap_ovf_find_vfid (thread_p, hfid, &ovf_vfid, false) == NULL)
     {
-      return NULL;
+      goto exit_on_error;
     }
 
   ovf_vpid.pageid = ovf_oid->pageid;
@@ -262,12 +288,26 @@ heap_ovf_update (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   if (overflow_update (thread_p, &ovf_vfid, &ovf_vpid, recdes) == NULL)
     {
-      return NULL;
+      goto exit_on_error;
     }
-  else
+
+  if (status == NO_ERROR)
     {
-      return ovf_oid;
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
     }
+
+  return ovf_oid;
+
+exit_on_error:
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
+  return NULL;
 }
 
 /*
@@ -282,12 +322,17 @@ const OID *
 heap_ovf_delete (THREAD_ENTRY * thread_p, const HFID * hfid,
 		 const OID * ovf_oid)
 {
+  int status = NO_ERROR;
   VFID ovf_vfid;
   VPID ovf_vpid;
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE,
+			 &status);
+
   if (heap_ovf_find_vfid (thread_p, hfid, &ovf_vfid, false) == NULL)
     {
-      return NULL;
+      goto exit_on_error;
     }
 
   ovf_vpid.pageid = ovf_oid->pageid;
@@ -295,13 +340,26 @@ heap_ovf_delete (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   if (overflow_delete (thread_p, &ovf_vfid, &ovf_vpid) == NULL)
     {
-      return NULL;
-    }
-  else
-    {
-      return ovf_oid;
+      goto exit_on_error;
     }
 
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
+  return ovf_oid;
+
+exit_on_error:
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
+  return NULL;
 }
 
 /*
