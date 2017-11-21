@@ -4514,7 +4514,11 @@ exit_on_error:
     {
       pgbuf_unfix_and_init (thread_p, addr.pgptr);
     }
-  HFID_SET_NULL (hfid);
+
+  if (hfid != NULL)
+    {
+      HFID_SET_NULL (hfid);
+    }
 
   if (top_op_active == true)
     {

@@ -364,12 +364,18 @@ init_server_monitor_item ()
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN],
                      "datapage", "fetch_unknown");	/* 0 */
 
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_FILE_ALLOC_PAGES], "datapage", "fetch_op_file_alloc_pages");	/* 15 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_FILE_DEALLOC_PAGE], "datapage", "fetch_op_file_dealloc_page");	/* 16 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_FIND_BEST_PAGE], "datapage", "fetch_op_heap_find_best_page");	/* 17 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_BESTSPACE_SYNC], "datapage", "fetch_op_heap_find_bestspace_sync");	/* 18 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_OVF_INSERT], "datapage", "fetch_op_heap_ovf_insert");	/* 19 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_OVF_UPDATE], "datapage", "fetch_op_heap_ovf_update");	/* 20 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_FILE_ALLOC_PAGES],
+                     "datapage", "fetch_op_file_alloc_pages");	/* 15 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_FILE_DEALLOC_PAGE],
+                     "datapage", "fetch_op_file_dealloc_page");	/* 16 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_FIND_BEST_PAGE],
+                     "datapage", "fetch_op_heap_find_best_page");	/* 17 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_BESTSPACE_SYNC],
+                     "datapage", "fetch_op_heap_find_bestspace_sync");	/* 18 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_OVF_INSERT],
+                     "datapage", "fetch_op_heap_ovf_insert");	/* 19 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_OP_HEAP_OVF_UPDATE],
+                     "datapage", "fetch_op_heap_ovf_update");	/* 20 */
   /* reserve 21~24 */
 #endif
 
