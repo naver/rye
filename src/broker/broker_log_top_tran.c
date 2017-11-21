@@ -119,7 +119,10 @@ log_top (FILE * fp, char *filename, long start_offset, long end_offset)
 
   if (start_offset != -1)
     {
-      fseek (fp, start_offset, SEEK_SET);
+      if (fseek (fp, start_offset, SEEK_SET) < 0)
+	{
+	  goto error;
+	}
     }
 
   while (1)

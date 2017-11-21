@@ -47,7 +47,6 @@
 #include "connection_error.h"
 #include "message_catalog.h"
 #include "log_impl.h"
-#include "perf_monitor.h"
 #include "event_log.h"
 #include "util_func.h"
 
@@ -685,6 +684,14 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
   int status = CSS_NO_ERRORS;
   int error_code;
   CSS_CONN_ENTRY *conn;
+  int popped = NO_ERROR;
+
+  popped = NO_ERROR;		/* init */
+  while (popped == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &popped);
+      assert (popped == ER_FAILED);	/* mnt_track stack must be empty */
+    }
 
   if (buffer == NULL && size > 0)
     {
@@ -809,6 +816,14 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
     }
 
 end:
+
+  popped = NO_ERROR;		/* init */
+  while (popped == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &popped);
+      assert (popped == ER_FAILED);	/* mnt_track stack must be empty */
+    }
+
   db_reset_private_heap (thread_p);
 
   return (status);
@@ -829,7 +844,7 @@ net_server_conn_down (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg,
   int prev_thrd_cnt, thrd_cnt;
   bool continue_check;
   int client_id;
-  int local_tran_index;
+//  int local_tran_index;
   THREAD_ENTRY *suspended_p;
 
   if (thread_p == NULL)
@@ -841,7 +856,7 @@ net_server_conn_down (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg,
 	}
     }
 
-  local_tran_index = thread_p->tran_index;
+//  local_tran_index = thread_p->tran_index;
 
   conn_p = (CSS_CONN_ENTRY *) arg;
   tran_index = conn_p->tran_index;

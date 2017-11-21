@@ -46,12 +46,12 @@ class ShardChangeConf extends ShardCommand
 
     void printUsage(PrintStream out, String className)
     {
-	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST\n\n", className, commandName());
-	out.printf("valid options:\n");
-	out.printf("\t--local-mgmt-port=PORT            local mgmt port (default:%d)\n", DEFAULT_LOCAL_MGMT_PORT);
-	out.printf("\t--password=PASSWORD		dba password\n");
-	out.printf("\t--rye-server-conf=PARAM		rye-auto.conf server parameter\n");
-	out.printf("\t--rye-broker-conf=PARAM	rye-auto.conf broker parameter\n");
+	out.printf("usage: java %s %s GLOBAL_DBNAME SHARD_MGMT_HOST%n%n", className, commandName());
+	out.printf("valid options:%n");
+	out.printf("\t--local-mgmt-port=PORT            local mgmt port (default:%d)%n", DEFAULT_LOCAL_MGMT_PORT);
+	out.printf("\t--password=PASSWORD		dba password%n");
+	out.printf("\t--rye-server-conf=PARAM		rye-auto.conf server parameter%n");
+	out.printf("\t--rye-broker-conf=PARAM	rye-auto.conf broker parameter%n");
     }
 
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
@@ -164,9 +164,9 @@ class ShardChangeConf extends ShardCommand
 	    try {
 		localMgmt = new LocalMgmt(host, port);
 	    } catch (Exception e) {
-		errStream.printf("ERROR: %s:%d connection fail\n", host, port);
+		errStream.printf("ERROR: %s:%d connection fail%n", host, port);
 		if (verboseOut != null) {
-		    verboseOut.printf("ERROR: %s:%d connection fail\n", host, port);
+		    verboseOut.printf("ERROR: %s:%d connection fail%n", host, port);
 
 		}
 		res = false;
@@ -181,13 +181,13 @@ class ShardChangeConf extends ShardCommand
 		    changeRyeConf(localMgmt, ryeConfValue);
 
 		    if (verboseOut != null) {
-			verboseOut.printf("success\n");
+			verboseOut.printf("success%n");
 		    }
 		} catch (Exception e) {
-		    errStream.printf("%s:%s	%s.%s.%s ... fail\n", globalDbname, host, ryeConfValue.getProcName(),
+		    errStream.printf("%s:%s	%s.%s.%s ... fail%n", globalDbname, host, ryeConfValue.getProcName(),
 				    ryeConfValue.getSectName(), ryeConfValue.getKeyName());
 		    if (verboseOut != null) {
-			verboseOut.printf("fail\n");
+			verboseOut.printf("fail%n");
 		    }
 		    res = false;
 		}

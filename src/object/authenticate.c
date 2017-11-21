@@ -3820,7 +3820,7 @@ au_print_class_auth (MOP class_mop)
  */
 
 /*
- * au_install() - This is used to initilize the authorization system in a
+ * au_install() - This is used to initialize the authorization system in a
  *                freshly created database.
  *                It should only be called within the createdb tool.
  *   return: error code

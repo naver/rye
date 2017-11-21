@@ -66,6 +66,7 @@
 #include "session.h"
 #include "btree_load.h"
 #include "transform.h"
+#include "perf_monitor.h"
 #if defined(RYE_DEBUG)
 #include "environment_variable.h"
 #endif /* RYE_DEBUG */

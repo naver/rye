@@ -74,7 +74,7 @@ static void css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
 				    char *server_name,
 				    int server_name_length);
 static void css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-				    SOCKET_QUEUE_ENTRY * entry);
+    SOCKET_QUEUE_ENTRY * entry, char *server_name);
 static void css_register_new_server (CSS_CONN_ENTRY * conn,
 				     unsigned short rid, char *server_name,
 				     int server_name_length);
@@ -307,6 +307,15 @@ css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
   if (datagram != NULL && css_tcp_master_datagram (datagram, &server_fd))
     {
       datagram_conn = css_make_conn (server_fd);
+      if (datagram_conn == NULL)
+        {
+          assert (false);
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+                               server_name);
+          return;
+        }
+
       datagram_conn->peer_version = conn->peer_version;
 #if defined(DEBUG)
       css_Active_server_count++;
@@ -350,7 +359,7 @@ css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
  */
 static void
 css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-			SOCKET_QUEUE_ENTRY * entry)
+    SOCKET_QUEUE_ENTRY * entry, char *server_name)
 {
   char *datagram;
   SOCKET server_fd = INVALID_SOCKET;
@@ -369,6 +378,15 @@ css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
   if (datagram != NULL && css_tcp_master_datagram (datagram, &server_fd))
     {
       datagram_conn = css_make_conn (server_fd);
+      if (datagram_conn == NULL)
+        {
+          assert (false);
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+                               server_name);
+          return;
+        }
+
       entry->fd = server_fd;
       datagram_conn->peer_version = entry->conn_ptr->peer_version;
       css_free_conn (entry->conn_ptr);
@@ -398,7 +416,7 @@ css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid,
       if (IS_INVALID_SOCKET (entry->fd))
 	{
 	  /* accept a server that was auto-started */
-	  css_accept_old_request (conn, rid, entry);
+	  css_accept_old_request (conn, rid, entry, server_name);
 	}
       else
 	{

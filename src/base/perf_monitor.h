@@ -33,6 +33,7 @@
 
 #include "memory_alloc.h"
 #include "thread.h"
+#include "storage_common.h"
 
 /* EXPORTED GLOBAL DEFINITIONS */
 #define MAX_DIAG_DATA_VALUE     0xfffffffffffffLL
@@ -101,30 +102,35 @@ typedef enum
   /* Statistics at page level */
   MNT_STATS_DATA_PAGE_FETCHES,
 #if 1				/* fetches sub-info */
-  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,	/* file header page             */
-  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,	/* file allocset table page             */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,	/* heap file header                     */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* heap page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION,	/* heap relocation page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC,	/* bestspace_sync                            */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* volume header page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* volume bitmap page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* xasl stream page                     */
-  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* query result page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* ehash bucket/dir page                */
-  MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER,	/* overflow file header      */
-  MNT_STATS_DATA_PAGE_FETCHES_OVF,	/* overflow page (with ovf_keyval)      */
-  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* area page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* catalog page                         */
-  MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF,	/* catalog overflow page                         */
-  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* b+tree index page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,	/* 1 file header page             */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,	/* 2 file allocset table page             */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,	/* 3 heap header page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* 4 heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* 5 volume header page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* 6 volume bitmap page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* 7 xasl stream page                     */
+  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* 8 query result page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* 9 ehash bucket/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,	/* 10 overflow page (with ovf_keyval)      */
+  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* 11 area page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* 12 catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT,	/* 13 b+tree index root page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* 14 b+tree index page                    */
 
-  MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT,	/* disk_format_op                  */
-  MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE,	/* postpone_op                     */
-  MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK,	/* rollback_op                     */
-  MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT,	/* checkpoint_op                     */
+  MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN,	/* 0 unknown                     */
 
-  MNT_STATS_DATA_PAGE_FETCHES_OTHER,     /* misc (disk, recovery)                     */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES,	/* 15 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE,	/* 16 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE,	/* 17 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC,	/* 18 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT,	/* 19 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE,	/* 20 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE,	/* 21 */
+#if 0
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_22,	/* reserve 22~24 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_23,	/* reserve 22~24 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_24,	/* reserve 22~24 */
+#endif
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,
@@ -243,26 +249,19 @@ typedef enum
 #define MNT_GET_PARENT_ITEM(m)                \
   ((m == MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB   \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER       \
       || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP       \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_RELOCATION       \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_BESTSPACE_SYNC   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_XASL  \
       || m == MNT_STATS_DATA_PAGE_FETCHES_QRESULT       \
       || m == MNT_STATS_DATA_PAGE_FETCHES_EHASH \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_OVF_HEADER    \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_OVF   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_AREA  \
       || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG       \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_CATALOG_OVF   \
+      || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT \
       || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_DISK_FORMAT   \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_LOG_POSTPONE  \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_LOG_ROLLBACK  \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_CHECKPOINT    \
-      || m == MNT_STATS_DATA_PAGE_FETCHES_OTHER) ? MNT_STATS_DATA_PAGE_FETCHES : m)
+      || m == MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 
 /*
  * Server execution statistic structure
@@ -328,5 +327,8 @@ extern int mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
 			   MNT_SERVER_EXEC_STATS * old_stats);
 extern bool mnt_stats_is_cumulative (MNT_SERVER_ITEM item);
 extern bool mnt_stats_is_collecting_time (MNT_SERVER_ITEM item);
+
+extern PAGE_TYPE mnt_server_item_to_page_ptype (const MNT_SERVER_ITEM item);
+extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item (const PAGE_TYPE ptype);
 
 #endif /* _PERF_MONITOR_H_ */
