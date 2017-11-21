@@ -966,6 +966,8 @@ pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 		       UNUSED_ARG const PAGE_TYPE ptype,
 		       const char *caller_file, int caller_line)
 {
+  assert (ptype != PAGE_UNKNOWN);
+
   return pgbuf_fix_debug (thread_p, vpid, NEW_PAGE,
 			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
 			  ptype, caller_file, caller_line);
@@ -1299,9 +1301,6 @@ try_again:
       (void) pgbuf_unlock_page (hash_anchor, vpid, false);
     }
 
-  /* Set Page identifier iff needed */
-  (void) pgbuf_set_bcb_page_vpid (thread_p, bufptr);
-
   CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
 
   if (newpg == NEW_PAGE)
@@ -1331,7 +1330,6 @@ try_again:
     }
 
   assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);
-  assert_release (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
 
   /* Record number of fetches in statistics */
   item = mnt_page_ptype_to_server_item (ptype);
@@ -7526,11 +7524,13 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   assert (prv_p->p_reserve_3 == 0);
 #endif
 
+#if 0
   /* Check iff is not initialized yet */
   if (LSA_ISNULL (&(prv_p->lsa)))
     {
       return true;		/* nop */
     }
+#endif
 
   assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
   assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));

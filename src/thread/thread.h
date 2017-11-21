@@ -64,6 +64,11 @@ extern int thread_Recursion_depth;
 #define server_stats_set_current_wait_time(thread_p, stats_type, wait_start)
 #define server_stats_add_current_wait_time(thread_p, stats_type, sub_type)
 
+#define thread_mnt_track_push(thread_p, item, status)
+#define thread_mnt_track_pop(thread_p, status)
+#define thread_mnt_track_dump(thread_p)
+#define thread_mnt_track_counter(thread_p, value, exec_time)
+
 typedef void THREAD_ENTRY;
 #else /* !SERVER_MODE */
 
@@ -153,18 +158,16 @@ struct server_trace_stat
   struct timeval *page_wait_time;
 };
 
-#if 1
 /*
  * fetches sub-info
  */
-#define MNT_SERVER_ITEM_TRACKER_MAX 10
+#define THREAD_MNT_TRACK_MAX 10
 
-typedef struct mnt_server_item_tracker MNT_SERVER_ITEM_TRACKER;
-struct mnt_server_item_tracker
+typedef struct thread_mnt_track THREAD_MNT_TRACK;
+struct thread_mnt_track
 {
   int item;			/* MNT_SERVER_ITEM */
 };
-#endif
 
 typedef enum
 {
@@ -247,8 +250,8 @@ struct thread_entry
 
   SERVER_TRACE_STAT server_stats;
 
-  int mnt_tracker_top;
-  MNT_SERVER_ITEM_TRACKER mnt_tracker_stack[MNT_SERVER_ITEM_TRACKER_MAX];
+  int mnt_track_top;
+  THREAD_MNT_TRACK mnt_track_stack[THREAD_MNT_TRACK_MAX];
 
   /* for query profile */
   int trace_format;
@@ -432,12 +435,13 @@ extern bool thread_is_auto_volume_expansion_thread_available (void);
 
 extern int thread_lock_entry (THREAD_ENTRY * thread_p);
 
-extern void thread_mnt_tracker_push (THREAD_ENTRY * thread_p, int item,
+extern void thread_mnt_track_push (THREAD_ENTRY * thread_p, int item,
 				   int *status);
-extern MNT_SERVER_ITEM_TRACKER *thread_mnt_tracker_pop (THREAD_ENTRY * thread_p,
-						      int *status);
-extern void thread_mnt_tracker_display (THREAD_ENTRY * thread_p);
-extern void thread_mnt_tracker_counter (THREAD_ENTRY * thread_p, INT64 value, int *status);
+extern THREAD_MNT_TRACK *thread_mnt_track_pop (THREAD_ENTRY * thread_p,
+					       int *status);
+extern void thread_mnt_track_dump (THREAD_ENTRY * thread_p);
+extern void thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
+				      UINT64 exec_time);
 
 #endif /* SERVER_MODE */
 

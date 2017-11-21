@@ -1213,7 +1213,7 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
   memset (&(entry_p->event_stats), 0, sizeof (EVENT_STAT));
   memset (&(entry_p->server_stats), 0, sizeof (SERVER_TRACE_STAT));
 
-  entry_p->mnt_tracker_top = -1;
+  entry_p->mnt_track_top = -1;
 
   entry_p->on_trace = false;
   entry_p->clear_trace = false;
@@ -4291,36 +4291,36 @@ thread_job_queue_control_thread (void *arg_p)
 
 
 void
-thread_mnt_tracker_push (THREAD_ENTRY * thread_p, int item, int *status)
+thread_mnt_track_push (THREAD_ENTRY * thread_p, int item, int *status)
 {
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  if (thread_p->mnt_tracker_top >= (MNT_SERVER_ITEM_TRACKER_MAX - 1))
+  if (thread_p->mnt_track_top >= (THREAD_MNT_TRACK_MAX - 1))
     {
       *status = ER_FAILED;
     }
   else
     {
       *status = NO_ERROR;
-      thread_p->mnt_tracker_top++;
-      thread_p->mnt_tracker_stack[thread_p->mnt_tracker_top].item = item;
+      thread_p->mnt_track_top++;
+      thread_p->mnt_track_stack[thread_p->mnt_track_top].item = item;
     }
 }
 
-MNT_SERVER_ITEM_TRACKER *
-thread_mnt_tracker_pop (THREAD_ENTRY * thread_p, int *status)
+THREAD_MNT_TRACK *
+thread_mnt_track_pop (THREAD_ENTRY * thread_p, int *status)
 {
-  MNT_SERVER_ITEM_TRACKER *ret;
+  THREAD_MNT_TRACK *ret;
 
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  if (thread_p->mnt_tracker_top <= -1)
+  if (thread_p->mnt_track_top <= -1)
     {
       ret = NULL;
       *status = ER_FAILED;
@@ -4328,15 +4328,15 @@ thread_mnt_tracker_pop (THREAD_ENTRY * thread_p, int *status)
   else
     {
       *status = NO_ERROR;
-      ret = &(thread_p->mnt_tracker_stack[thread_p->mnt_tracker_top]);
-      thread_p->mnt_tracker_top--;
+      ret = &(thread_p->mnt_track_stack[thread_p->mnt_track_top]);
+      thread_p->mnt_track_top--;
     }
 
   return ret;
 }
 
 void
-thread_mnt_tracker_display (THREAD_ENTRY * thread_p)
+thread_mnt_track_dump (THREAD_ENTRY * thread_p)
 {
   int i;
 
@@ -4346,24 +4346,26 @@ thread_mnt_tracker_display (THREAD_ENTRY * thread_p)
     }
 
   fprintf (stdout, "\nThe Stack is: ");
-  if (thread_p->mnt_tracker_top <= -1)
+  if (thread_p->mnt_track_top <= -1)
     {
       fprintf (stdout, "empty");
     }
   else
     {
-      for (i = thread_p->mnt_tracker_top; i >= 0; i--)
+      for (i = thread_p->mnt_track_top; i >= 0; i--)
 	{
 	  fprintf (stdout, "\n--------\n|%3d   |\n--------",
-		   thread_p->mnt_tracker_stack[i].item);
+		   thread_p->mnt_track_stack[i].item);
 	}
     }
   fprintf (stdout, "\n");
 }
 
 void
-thread_mnt_tracker_counter (THREAD_ENTRY * thread_p, INT64 value, int *status)
+thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
+			  UINT64 exec_time)
 {
+  int tran_index;
   int i;
 
   if (thread_p == NULL)
@@ -4371,17 +4373,11 @@ thread_mnt_tracker_counter (THREAD_ENTRY * thread_p, INT64 value, int *status)
       thread_p = thread_get_thread_entry_info ();
     }
 
-  if (thread_p->mnt_tracker_top <= -1)
-    {
-      *status = ER_FAILED;
-    }
-  else
-    {
-      *status = NO_ERROR;
+  tran_index = logtb_get_current_tran_index (thread_p);
 
-      for (i = thread_p->mnt_tracker_top; i >= 0; i--)
-        {
-          mnt_stats_counter (thread_p, thread_p->mnt_tracker_stack[i].item, value);
-        }
+  for (i = thread_p->mnt_track_top; i >= 0; i--)
+    {
+      svr_shm_stats_counter (tran_index, thread_p->mnt_track_stack[i].item,
+			     value, exec_time);
     }
 }

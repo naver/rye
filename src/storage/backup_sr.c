@@ -993,6 +993,7 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 
       node_p->nread = backup_header_p->bkpagesize + BK_BACKUP_PAGE_OVERHEAD;
       memset (&node_p->area->iopage, '\0', backup_header_p->bkpagesize);
+      (void) fileio_initialize_res (thread_p, &(node_p->area->iopage.prv));
       BK_SET_BACKUP_PAGE_ID (node_p->area,
 			     BK_BACKUP_FILE_END_PAGE_ID,
 			     backup_header_p->bkpagesize);
