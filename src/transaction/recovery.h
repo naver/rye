@@ -193,4 +193,20 @@ extern int rv_init_rvfuns (void);
              || ((idx) == RVBT_KEYVAL_INSERT) \
              || ((idx) == RVBT_KEYVAL_DELETE) ) ? true : false )
 
+#define RCV_IS_NEWPG_LOG(idx)                       	\
+          ( (((idx) == RVBT_GET_NEWROOT)		\
+             || ((idx) == RVBT_GET_NEWPAGE)		\
+             || ((idx) == RVCT_NEWPAGE)			\
+             || ((idx) == RVDK_FORMAT)			\
+             || ((idx) == RVDK_INITMAP)			\
+             || ((idx) == RVEH_INIT_DIR)		\
+             || ((idx) == RVEH_INIT_NEW_DIR_PAGE)	\
+             || ((idx) == RVEH_INIT_BUCKET)		\
+             || ((idx) == RVFL_FHDR)			\
+             || ((idx) == RVFL_FTAB_CHAIN)		\
+             || ((idx) == RVHF_NEWHDR)			\
+             || ((idx) == RVHF_NEWPAGE)                 \
+             || ((idx) == RVOVF_NEWPAGE_INSERT)		\
+             || ((idx) == RVOVF_PAGE_UPDATE) ) ? true : false )
+
 #endif /* _RECOVERY_H_ */

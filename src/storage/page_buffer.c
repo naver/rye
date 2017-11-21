@@ -965,6 +965,8 @@ pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 		       UNUSED_ARG const PAGE_TYPE ptype,
 		       const char *caller_file, int caller_line)
 {
+  assert (ptype != PAGE_UNKNOWN);
+
   return pgbuf_fix_debug (thread_p, vpid, NEW_PAGE,
 			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
 			  ptype, caller_file, caller_line);
@@ -1297,9 +1299,6 @@ try_again:
       (void) pgbuf_unlock_page (hash_anchor, vpid, false);
     }
 
-  /* Set Page identifier iff needed */
-  (void) pgbuf_set_bcb_page_vpid (thread_p, bufptr);
-
   CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
 
   if (newpg == NEW_PAGE)
@@ -1329,7 +1328,6 @@ try_again:
     }
 
   assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);
-  assert_release (pgbuf_check_bcb_page_vpid (thread_p, bufptr) == true);
 
   /* Record number of fetches in statistics */
   item = mnt_page_ptype_to_server_item (ptype);
@@ -7313,7 +7311,7 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 
   if (thread_p == NULL)
     {
-      thread_p = thread_get_thread_entry_info();
+      thread_p = thread_get_thread_entry_info ();
     }
 
   prv_p = &(bufptr->iopage_buffer->iopage.prv);
@@ -7323,7 +7321,7 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
     {
       assert (LSA_ISNULL (&(prv_p->lsa)));
 
-      (void) fileio_initialize_res(thread_p, prv_p);
+      (void) fileio_initialize_res (thread_p, prv_p);
 
       /* Set Page identifier */
       prv_p->pageid = bufptr->vpid.pageid;
@@ -7358,6 +7356,7 @@ pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
       thread_p = thread_get_thread_entry_info ();
     }
 
+#if 0
   if (pgbuf_get_check_page_validation (thread_p,
 				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
@@ -7367,6 +7366,7 @@ pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 	  return;
 	}
     }
+#endif
 
   CAST_PGPTR_TO_BFPTR (bufptr, pgptr);
   assert (!VPID_ISNULL (&bufptr->vpid));
@@ -7521,11 +7521,13 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   assert (prv_p->p_reserve_3 == 0);
 #endif
 
+#if 0
   /* Check iff is not initialized yet */
   if (LSA_ISNULL (&(prv_p->lsa)))
-      {
-        return true; /* nop */
-      }
+    {
+      return true;		/* nop */
+    }
+#endif
 
   assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
   assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
