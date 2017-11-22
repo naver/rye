@@ -1328,7 +1328,7 @@ try_again:
 	    }
 	}
 
-      assert (ptye != PAGE_UNKNOWN);
+      assert (ptype != PAGE_UNKNOWN);
     }
 
   assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);
