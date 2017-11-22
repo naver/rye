@@ -1282,8 +1282,6 @@ css_net_packet_free (CSS_NET_PACKET * net_packet)
 
   if (net_packet)
     {
-      er_log_debug (ARG_FILE_LINE, "PACKET_FREE:%x", net_packet);
-
       for (i = 0; i < net_packet->header.num_buffers; i++)
 	{
 	  css_net_packet_buffer_free (net_packet, i, true);
@@ -1303,7 +1301,6 @@ css_net_packet_alloc (UNUSED_ARG CSS_CONN_ENTRY * conn,
     {
       tmp_net_packet->header = *net_header;
       memset (tmp_net_packet->buffer, 0, sizeof (tmp_net_packet->buffer));
-      er_log_debug (ARG_FILE_LINE, "PACKET_ALLOC:%x", tmp_net_packet);
     }
 
   return tmp_net_packet;

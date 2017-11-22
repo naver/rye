@@ -131,11 +131,14 @@ static int hb_check_ping (const char *host);
 
 /* cluster jobs queue */
 static HB_JOB_ENTRY *hb_cluster_job_dequeue (void);
-static int hb_cluster_job_queue (unsigned int job_type, HB_JOB_ARG * arg,
-				 unsigned int msec);
-static int
-hb_cluster_job_set_expire_and_reorder (unsigned int job_type,
-				       unsigned int msec);
+static int hb_cluster_job_queue_debug (const char *fname, int line,
+				       unsigned int job_type,
+				       HB_JOB_ARG * arg, unsigned int msec);
+#define hb_cluster_job_queue(job_type,arg,msec) \
+        hb_cluster_job_queue_debug (ARG_FILE_LINE, job_type, arg, msec)
+
+static int hb_cluster_job_set_expire_and_reorder (unsigned int job_type,
+						  unsigned int msec);
 static void hb_cluster_job_shutdown (void);
 
 /* cluster node */
@@ -170,8 +173,12 @@ static void hb_resource_demote_kill_server_proc (void);
 
 /* resource job queue */
 static HB_JOB_ENTRY *hb_resource_job_dequeue (void);
-static int hb_resource_job_queue (unsigned int job_type, HB_JOB_ARG * arg,
-				  unsigned int msec);
+static int hb_resource_job_queue_debug (const char *fname, int line,
+					unsigned int job_type,
+					HB_JOB_ARG * arg, unsigned int msec);
+#define hb_resource_job_queue(job_type, arg, msec) \
+  hb_resource_job_queue_debug (ARG_FILE_LINE, job_type, arg, msec)
+
 static int
 hb_resource_job_set_expire_and_reorder (unsigned int job_type,
 					unsigned int msec);
@@ -2064,7 +2071,7 @@ hb_cluster_job_dequeue (void)
 }
 
 /*
- * hb_cluster_job_queue() -
+ * hb_cluster_job_queue_debug() -
  *   return: NO_ERROR or ER_FAILED
  *
  *   job_type(in):
@@ -2072,8 +2079,9 @@ hb_cluster_job_dequeue (void)
  *   msec(in):
  */
 static int
-hb_cluster_job_queue (unsigned int job_type, HB_JOB_ARG * arg,
-		      unsigned int msec)
+hb_cluster_job_queue_debug (const char *fname, int line,
+			    unsigned int job_type, HB_JOB_ARG * arg,
+			    unsigned int msec)
 {
   if (job_type >= HB_RJOB_PROC_START)
     {
@@ -2081,6 +2089,9 @@ hb_cluster_job_queue (unsigned int job_type, HB_JOB_ARG * arg,
 		    "unknown job type. (job_type:%d).\n", job_type);
       return ER_FAILED;
     }
+  er_log_debug (ARG_FILE_LINE, "hb_cluster_job_queue(%s,%d)"
+		"-job_type(%s), msec(%d)", fname, line,
+		hb_Requests[job_type].name, msec);
 
   return hb_job_queue (cluster_JobQ, job_type, arg, msec);
 }
@@ -3603,7 +3614,7 @@ hb_resource_job_dequeue (void)
 }
 
 /*
- * hb_resource_job_queue() -
+ * hb_resource_job_queue_debug() -
  *   return: NO_ERROR or ER_FAILED
  *
  *   job_type(in):
@@ -3611,8 +3622,9 @@ hb_resource_job_dequeue (void)
  *   msec(in):
  */
 static int
-hb_resource_job_queue (unsigned int job_type, HB_JOB_ARG * arg,
-		       unsigned int msec)
+hb_resource_job_queue_debug (const char *fname, int line,
+			     unsigned int job_type, HB_JOB_ARG * arg,
+			     unsigned int msec)
 {
   if (job_type < HB_RJOB_PROC_START || job_type >= HB_JOB_MAX)
     {
@@ -3620,6 +3632,9 @@ hb_resource_job_queue (unsigned int job_type, HB_JOB_ARG * arg,
 		    "unknown job type. (job_type:%d).\n", job_type);
       return ER_FAILED;
     }
+  er_log_debug (ARG_FILE_LINE, "hb_resource_job_queue (%s,%d)-"
+		"job_type(%s), msec(%d)", fname, line,
+		hb_Requests[job_type].name, msec);
 
   return hb_job_queue (resource_JobQ, job_type, arg, msec);
 }
@@ -4359,11 +4374,14 @@ hb_resource_get_server_eof (void)
 	}
 
       error = rye_server_shm_get_eof_lsa (&eof_lsa, proc->argv[1]);
-      if (error == NO_ERROR)
+      if (error != NO_ERROR || LSA_ISNULL (&eof_lsa))
 	{
-	  assert (!LSA_ISNULL (&eof_lsa));
-	  LSA_COPY (&proc->curr_eof, &eof_lsa);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
+		  1, "fail get_eof_lsa");
+	  break;
 	}
+
+      LSA_COPY (&proc->curr_eof, &eof_lsa);
     }
 
   return;
@@ -4718,7 +4736,8 @@ hb_thread_check_groupid_bitmap (UNUSED_ARG void *arg)
     {
       for (proc = hb_Resource->procs; proc; proc = proc->next)
 	{
-	  if (proc->sync_groupid_bitmap == false)
+	  if (proc->type == HB_PTYPE_SERVER
+	      && proc->sync_groupid_bitmap == false)
 	    {
 	      break;
 	    }
@@ -7065,22 +7084,16 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
 
   p += snprintf (p, MAX ((last - p), 0), "=============================="
 		 "==================================================\n");
-  p +=
-    snprintf (p, MAX ((last - p), 0), " * state : %s \n",
-	      css_ha_state_string (hb_Cluster->node_state));
+  p += snprintf (p, MAX ((last - p), 0), " * state : %s \n",
+		 css_ha_state_string (hb_Cluster->node_state));
 
   p += snprintf (p, MAX ((last - p), 0), "------------------------------"
 		 "--------------------------------------------------\n");
-  p +=
-    snprintf (p, MAX ((last - p), 0), "%-10s %-22s %-15s %-10s\n", "pid",
-	      "state", "type", "socket fd");
-  p +=
-    snprintf (p, MAX ((last - p), 0), "     %-30s %-35s\n", "exec-path",
-	      "args");
-  p +=
-    snprintf (p, MAX ((last - p), 0),
-	      "------------------------------"
-	      "--------------------------------------------------\n");
+  p += snprintf (p, MAX ((last - p), 0), "%-10s %-22s %-15s %-10s %-15s\n",
+		 "pid", "state", "type", "socket fd", "server_state");
+  p += snprintf (p, MAX ((last - p), 0),
+		 "------------------------------"
+		 "--------------------------------------------------\n");
 
   for (proc = hb_Resource->procs; proc; proc = proc->next)
     {
@@ -7088,12 +7101,10 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
 	continue;
 
       p +=
-	snprintf (p, MAX ((last - p), 0), "%-10d %-22s %-15s %-10d\n",
+	snprintf (p, MAX ((last - p), 0), "%-10d %-22s %-15s %-10d %-15s\n",
 		  proc->pid, hb_process_state_string (proc->state),
-		  hb_process_type_string (proc->type), proc->sfd);
-      p +=
-	snprintf (p, MAX ((last - p), 0), "      %-30s %-35s\n",
-		  proc->exec_path, proc->args);
+		  hb_process_type_string (proc->type), proc->sfd,
+		  css_ha_state_string (proc->server_state));
     }
 
   p += snprintf (p, MAX ((last - p), 0), "=============================="
