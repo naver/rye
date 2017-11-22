@@ -349,14 +349,18 @@ init_server_monitor_item ()
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN], "datapage", "fetch_unknown");	/* 0 */
 
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES], "datapage", "fetch_track_file_alloc_pages");	/* 15 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE], "datapage", "fetch_track_file_dealloc_page");	/* 16 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE], "datapage", "fetch_track_heap_find_best_page");	/* 17 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC], "datapage", "fetch_track_heap_find_bestspace_sync");	/* 18 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT], "datapage", "fetch_track_heap_ovf_insert");	/* 19 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE], "datapage", "fetch_track_heap_ovf_update");	/* 20 */
-  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE], "datapage", "fetch_track_heap_ovf_delete");	/* 21 */
-  /* reserve 22~24 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES], "datapage", "fetch_track_file_allocset_alloc_pages");	/* 15 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES], "datapage", "fetch_track_file_alloc_pages");	/* 16 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE], "datapage", "fetch_track_file_dealloc_page");	/* 17 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE], "datapage", "fetch_track_heap_find_best_page");	/* 18 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC], "datapage", "fetch_track_heap_find_bestspace_sync");	/* 19 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT], "datapage", "fetch_track_heap_ovf_insert");	/* 20 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE], "datapage", "fetch_track_heap_ovf_update");	/* 21 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE], "datapage", "fetch_track_heap_ovf_delete");	/* 22 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL], "datapage", "fetch_track_btree_merge_level");	/* 23 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA], "datapage", "fetch_track_btree_load_data");	/* 24 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT], "datapage", "fetch_track_pgbuf_flush_checkpoint");	/* 25 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK], "datapage", "fetch_track_log_rollback");	/* 26 */
 #endif
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_IOREADS],

@@ -6109,6 +6109,7 @@ file_allocset_alloc_pages (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 			   const VPID * near_vpid,
 			   FILE_ALLOC_VPIDS * alloc_vpids)
 {
+  int status = NO_ERROR;
   FILE_HEADER *fhdr;
   FILE_ALLOCSET *allocset;
   PAGE_PTR allocset_pgptr = NULL;
@@ -6127,6 +6128,10 @@ file_allocset_alloc_pages (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
   int retry = 0;
 #endif
   DISK_PAGE_TYPE alloc_page_type;
+
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES,
+			 &status);
 
   /*
    * Allocation of pages and sectors is done only from the last allocation set.
@@ -6310,6 +6315,12 @@ file_allocset_alloc_pages (THREAD_ENTRY * thread_p, PAGE_PTR fhdr_pgptr,
 
   pgbuf_unfix_and_init (thread_p, allocset_pgptr);
 
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
   return answer;
 
 exit_on_error:
@@ -6322,6 +6333,12 @@ exit_on_error:
   if (allocset_pgptr)
     {
       pgbuf_unfix_and_init (thread_p, allocset_pgptr);
+    }
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
     }
 
   VPID_SET_NULL (first_new_vpid);
