@@ -113,8 +113,8 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_data_page_fetches_track_heap_ovf_delete", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 22 */
   {"Num_data_page_fetches_track_btree_merge_level", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 23 */
   {"Num_data_page_fetches_track_btree_load_data", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 24 */
-  {"Num_data_page_fetches_pgbuf_flush_checkpoint", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 25 */
-  {"Num_data_page_fetches_log_rollback", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 26 */
+  {"Num_data_page_fetches_track_pgbuf_flush_checkpoint", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 25 */
+  {"Num_data_page_fetches_track_log_rollback", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 26 */
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */
