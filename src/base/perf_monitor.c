@@ -85,7 +85,6 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
 
   /* MNT_STATS_DATA_PAGE_FETCHES */
   {"Num_data_page_fetches", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
-
 #if 1				/* fetches sub-info */
   {"Num_data_page_fetches_file_header", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 1 */
   {"Num_data_page_fetches_file_tab", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 2 */
@@ -104,14 +103,18 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
 
   {"Num_data_page_fetches_unknown", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 0 */
 
-  {"Num_data_page_fetches_track_file_alloc_pages", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 15 */
-  {"Num_data_page_fetches_track_file_dealloc_page", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 16 */
-  {"Num_data_page_fetches_track_heap_find_best_page", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 17 */
-  {"Num_data_page_fetches_track_heap_bestspace_sync", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 18 */
-  {"Num_data_page_fetches_track_heap_ovf_insert", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 19 */
-  {"Num_data_page_fetches_track_heap_ovf_update", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 20 */
-  {"Num_data_page_fetches_track_heap_ovf_delete", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 20 */
-  /* reserve 22~24 */
+  {"Num_data_page_fetches_track_file_allocset_alloc_pages", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 15 */
+  {"Num_data_page_fetches_track_file_alloc_pages", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 16 */
+  {"Num_data_page_fetches_track_file_dealloc_page", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 17 */
+  {"Num_data_page_fetches_track_heap_find_best_page", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 18 */
+  {"Num_data_page_fetches_track_heap_bestspace_sync", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 19 */
+  {"Num_data_page_fetches_track_heap_ovf_insert", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 20 */
+  {"Num_data_page_fetches_track_heap_ovf_update", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 21 */
+  {"Num_data_page_fetches_track_heap_ovf_delete", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 22 */
+  {"Num_data_page_fetches_track_btree_merge_level", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 23 */
+  {"Num_data_page_fetches_track_btree_load_data", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 24 */
+  {"Num_data_page_fetches_track_pgbuf_flush_checkpoint", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 25 */
+  {"Num_data_page_fetches_track_log_rollback", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 26 */
 #endif
 
   /* MNT_STATS_DATA_PAGE_DIRTIES */
