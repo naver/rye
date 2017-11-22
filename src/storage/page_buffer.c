@@ -1327,6 +1327,8 @@ try_again:
 	      ptype = pself;
 	    }
 	}
+
+      assert (ptype != PAGE_UNKNOWN);
     }
 
   assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);
@@ -2521,6 +2523,7 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 			LOG_LSA * smallest_lsa)
 #endif				/* NDEBUG */
 {
+  int status = NO_ERROR;
   PGBUF_BCB *bufptr;
   int bufid;
   bool done_flush;
@@ -2529,7 +2532,13 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 #if defined(SERVER_MODE)
   int sleep_msecs;
   int rv;
+#endif /* SERVER_MODE */
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT,
+			 &status);
+
+#if defined(SERVER_MODE)
   sleep_msecs = prm_get_bigint_value (PRM_ID_LOG_CHECKPOINT_FLUSH_INTERVAL);
 #endif /* SERVER_MODE */
 
@@ -2667,9 +2676,21 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 #if defined(SERVER_MODE)
       if (thread_p && thread_p->shutdown == true)
 	{
+	  if (status == NO_ERROR)
+	    {
+	      thread_mnt_track_pop (thread_p, &status);
+	      assert (status == NO_ERROR);
+	    }
+
 	  return ER_FAILED;
 	}
 #endif /* SERVER_MODE */
+    }
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
     }
 
   return NO_ERROR;
