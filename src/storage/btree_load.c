@@ -50,6 +50,7 @@ int
 xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid,
 		  OID * class_oid, HFID * hfid)
 {
+  int status = NO_ERROR;
   SCAN_CODE scan_result;
   DB_IDXKEY key;
   HEAP_SCANCACHE hfscan_cache;
@@ -63,12 +64,22 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid,
   bool attrinfo_inited = false, scancache_inited = false;
   bool top_op_active = false;
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA,
+			 &status);
+
   DB_IDXKEY_MAKE_NULL (&key);
 
 #if 1				/* TODO - */
   if (HFID_IS_NULL (hfid))
     {
       /* is from createdb; au_install () */
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return NO_ERROR;
     }
 #endif
@@ -206,6 +217,12 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid,
 
   mnt_stats_event_off (thread_p, MNT_STATS_BTREE_LOAD_DATA);
 
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
   return error;
 
 exit_on_error:
@@ -231,6 +248,12 @@ exit_on_error:
     {
       assert (false);
       error = ER_FAILED;
+    }
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
     }
 
   return error;

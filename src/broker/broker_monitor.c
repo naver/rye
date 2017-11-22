@@ -366,7 +366,7 @@ broker_monitor (int argc, char **argv)
   int shm_key_br_gl;
   int err, i;
   char *br_vector;
-//  WINDOW *win;
+  UNUSED_VAR WINDOW *win;
   time_t time_old, time_cur;
   double elapsed_time;
 
@@ -417,7 +417,7 @@ broker_monitor (int argc, char **argv)
 
   if (refresh_Sec > 0 && !tty_Mode)
     {
-//      win = initscr ();
+      win = initscr ();
       timeout (refresh_Sec * 1000);
       noecho ();
     }
