@@ -6510,6 +6510,7 @@ static void
 log_rollback (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 	      const LOG_LSA * upto_lsa_ptr)
 {
+  int status = NO_ERROR;
   LOG_LSA prev_tranlsa;		/* Previous LSA                    */
   LOG_LSA upto_lsa;		/* copy of upto_lsa_ptr contents   */
   char log_pgbuf[IO_MAX_PAGE_SIZE + MAX_ALIGNMENT], *aligned_log_pgbuf;
@@ -6534,6 +6535,10 @@ log_rollback (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 
   aligned_log_pgbuf = PTR_ALIGN (log_pgbuf, MAX_ALIGNMENT);
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK,
+			 &status);
+
   /*
    * Execute every single undo log record upto the given upto_lsa_ptr since it
    * is not a system crash
@@ -6542,6 +6547,13 @@ log_rollback (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
   if (LSA_ISNULL (&tdes->last_lsa))
     {
       /* Nothing to undo */
+
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return;
     }
 
@@ -6577,6 +6589,13 @@ log_rollback (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
   if (log_unzip_ptr == NULL)
     {
       logpb_fatal_error (thread_p, true, ARG_FILE_LINE, "log_rollback");
+
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return;
     }
 
@@ -6593,6 +6612,13 @@ log_rollback (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 	    {
 	      log_zip_free (log_unzip_ptr);
 	    }
+
+	  if (status == NO_ERROR)
+	    {
+	      thread_mnt_track_pop (thread_p, &status);
+	      assert (status == NO_ERROR);
+	    }
+
 	  return;
 	}
 
@@ -6777,8 +6803,13 @@ log_rollback (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
       log_zip_free (log_unzip_ptr);
     }
 
-  return;
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
 
+  return;
 }
 
 /*
