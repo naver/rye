@@ -633,7 +633,7 @@ static int fill_string_to_buffer (char **start, char *end, const char *str);
 static unsigned int
 heap_hash_vpid (const void *key_vpid, unsigned int htsize)
 {
-  const VPID *vpid = (VPID *) key_vpid;
+  const VPID *vpid = (const VPID *) key_vpid;
 
   return ((vpid->pageid | ((unsigned int) vpid->volid) << 24) % htsize);
 }
@@ -647,8 +647,8 @@ heap_hash_vpid (const void *key_vpid, unsigned int htsize)
 static int
 heap_compare_vpid (const void *key_vpid1, const void *key_vpid2)
 {
-  const VPID *vpid1 = (VPID *) key_vpid1;
-  const VPID *vpid2 = (VPID *) key_vpid2;
+  const VPID *vpid1 = (const VPID *) key_vpid1;
+  const VPID *vpid2 = (const VPID *) key_vpid2;
 
   return VPID_EQ (vpid1, vpid2);
 }
@@ -662,7 +662,7 @@ heap_compare_vpid (const void *key_vpid1, const void *key_vpid2)
 static unsigned int
 heap_hash_hfid (const void *key_hfid, unsigned int htsize)
 {
-  const HFID *hfid = (HFID *) key_hfid;
+  const HFID *hfid = (const HFID *) key_hfid;
 
   return ((hfid->hpgid | ((unsigned int) hfid->vfid.volid) << 24) % htsize);
 }
@@ -676,8 +676,8 @@ heap_hash_hfid (const void *key_hfid, unsigned int htsize)
 static int
 heap_compare_hfid (const void *key_hfid1, const void *key_hfid2)
 {
-  const HFID *hfid1 = (HFID *) key_hfid1;
-  const HFID *hfid2 = (HFID *) key_hfid2;
+  const HFID *hfid1 = (const HFID *) key_hfid1;
+  const HFID *hfid2 = (const HFID *) key_hfid2;
 
   return HFID_EQ (hfid1, hfid2);
 }
