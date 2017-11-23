@@ -647,30 +647,6 @@ css_ha_state_string (HA_STATE server_state)
 }
 
 /*
- * css_ha_applier_state_string
- */
-const char *
-css_ha_applier_state_string (HA_APPLY_STATE state)
-{
-  switch (state)
-    {
-    case HA_APPLY_STATE_NA:
-      return "na";
-    case HA_APPLY_STATE_UNREGISTERED:
-      return HA_APPLY_STATE_UNREGISTERED_STR;
-    case HA_APPLY_STATE_RECOVERING:
-      return HA_APPLY_STATE_RECOVERING_STR;
-    case HA_APPLY_STATE_WORKING:
-      return HA_APPLY_STATE_WORKING_STR;
-    case HA_APPLY_STATE_DONE:
-      return HA_APPLY_STATE_DONE_STR;
-    case HA_APPLY_STATE_ERROR:
-      return HA_APPLY_STATE_ERROR_STR;
-    }
-  return "invalid";
-}
-
-/*
  * css_ha_mode_string
  */
 const char *

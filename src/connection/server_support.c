@@ -1516,7 +1516,7 @@ css_pack_server_name (const char *server_name, int *name_length)
 }
 
 /*
- * css_set_client_version() - 
+ * css_set_client_version() -
  */
 void
 css_set_client_version (THREAD_ENTRY * thread_p, const RYE_VERSION * version)
@@ -1787,7 +1787,7 @@ css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
 
   er_log_debug (ARG_FILE_LINE,
 		"css_notify_ha_apply_state: node %s state %s\n",
-		host_ip, css_ha_applier_state_string (state));
+		host_ip, HA_APPLY_STATE_NAME (state));
 
   error = csect_enter (thread_p, CSECT_HA_SERVER_STATE, INF_WAIT);
   if (error != NO_ERROR)

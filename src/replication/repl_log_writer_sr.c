@@ -364,10 +364,13 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"logwr_pack_log_pages, fpageid(%lld), lpageid(%lld), num_pages(%lld), area_size(%d)"
-		"\n status(%d), delayed_free_log_pgptr(%p)\n",
-		fpageid, lpageid, num_logpgs, area_size,
-		entry->status, log_Gl.append.delayed_free_log_pgptr);
+		"logwr_pack_log_pages, fpageid(%lld), lpageid(%lld), "
+		"num_pages(%lld), status:%s, fa_file_status:%s, "
+		"send eof(%ld,%d)\n",
+		fpageid, lpageid, num_logpgs,
+		LOGWR_STATUS_NAME (*status),
+		LOG_HA_FILESTAT_NAME (ha_file_status),
+		eof_lsa.pageid, eof_lsa.offset);
 
   return NO_ERROR;
 

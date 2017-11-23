@@ -4634,6 +4634,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   unsigned int rid, rc;
   char *ptr;
+  HA_STATE server_state;
 
   rid = thread_get_comm_request_id (thread_p);
 
@@ -4648,20 +4649,21 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
       return ER_FAILED;
     }
 
+  server_state = svr_shm_get_server_state ();
+
+
   ptr = or_pack_int (reply, (int) GET_NEXT_LOG_PAGES);
   ptr = or_pack_int (ptr, area_size);
   ptr = or_pack_int64 (ptr, first_pageid);
   ptr = or_pack_int (ptr, num_page);
   ptr = or_pack_int (ptr, file_status);
-  ptr = or_pack_int (ptr, svr_shm_get_server_state ());
+  ptr = or_pack_int (ptr, server_state);
 
-#if 1
   if (ZIP_CHECK (area_size))
     {
       area_size = (int) GET_ZIP_LEN (area_size);
       assert (area_size > 0);
     }
-#endif
 
   rc = css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 				 reply, OR_ALIGNED_BUF_SIZE (a_reply),
@@ -4672,8 +4674,10 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"xlog_send_log_pages_to_client, reply(GET_NEXT_LOG_PAGES), area_size(%d)\n",
-		area_size);
+		"xlog_send_log_pages_to_client- first_pageid:%ld, "
+		"num_page:%d, file_status:%s, server_state:%s\n",
+		first_pageid, num_page, LOG_HA_FILESTAT_NAME (file_status),
+		HA_STATE_NAME (server_state));
 
   return NO_ERROR;
 }
@@ -4759,9 +4763,9 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
 
   *fpageid_ptr = first_pageid;
 
-  er_log_debug (ARG_FILE_LINE, "xlog_get_page_request_with_reply, "
-		"fpageid(%lld), compressed_protocol(%d)\n",
-		first_pageid, compressed_protocol);
+  er_log_debug (ARG_FILE_LINE, "xlog_get_page_request_with_reply-"
+		"fpageid:%ld, remote_error:%d, compressed_protocol:%d\n",
+		first_pageid, remote_error, compressed_protocol);
 
   return (remote_error != NO_ERROR) ? remote_error : error;
 }
