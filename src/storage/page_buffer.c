@@ -4657,8 +4657,6 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
 
       ptype = pgbuf_get_page_ptype (thread_p, pgptr);
 
-      server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, ptype);
-
       item = mnt_page_ptype_to_server_item_fetches_waits (ptype);
       assert (item >= MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER);
       assert (item <= MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN);
@@ -4831,8 +4829,6 @@ try_again:
       gettimeofday (&end, NULL);
       ADD_TIMEVAL (thrd_entry->event_stats.latch_waits, start, end);
     }
-
-  server_stats_set_current_wait_time (thrd_entry, SERVER_STATS_PAGE, &start);
 
   if (r == 0)
     {

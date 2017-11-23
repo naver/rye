@@ -139,8 +139,7 @@ struct event_stat
 typedef enum server_stats_type SERVER_STATS_TYPE;
 enum server_stats_type
 {
-  SERVER_STATS_CS,
-  SERVER_STATS_PAGE
+  SERVER_STATS_CS
 };
 
 /* stats for server trace */
@@ -154,8 +153,6 @@ struct server_trace_stat
 
   struct timeval cs_total_wait_time;
   struct timeval *cs_wait_time;
-  struct timeval page_total_wait_time;
-  struct timeval *page_wait_time;
 };
 
 /*

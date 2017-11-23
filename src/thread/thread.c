@@ -508,27 +508,17 @@ server_stats_dump (FILE * fp)
 {
   int i, j;
   int indent = 2;
-  long long total_cs_waits, total_page_waits_old;
-  long long *cs_waits, *page_waits;
+  long long total_cs_waits;
+  long long *cs_waits;
   MNT_SERVER_EXEC_STATS stats;
   MNT_SERVER_ITEM item;
   UINT64 total_page_waits_clock;
   INT64 total_page_waits_num;
-//  INT64 values;
-//  UINT64 acc_time;
 
   total_cs_waits = 0;
   cs_waits = (long long *) calloc (CSECT_LAST, sizeof (long long));
   if (cs_waits == NULL)
     {
-      return ER_OUT_OF_VIRTUAL_MEMORY;
-    }
-
-  total_page_waits_old = 0;
-  page_waits = (long long *) calloc (PAGE_LAST, sizeof (long long));
-  if (page_waits == NULL)
-    {
-      free_and_init (cs_waits);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -546,17 +536,6 @@ server_stats_dump (FILE * fp)
 	    }
 	  total_cs_waits += TO_MSEC (entry->server_stats.cs_total_wait_time);
 	}
-
-      if (entry->server_stats.page_wait_time != NULL)
-	{
-	  for (j = 0; j < PAGE_LAST; j++)
-	    {
-	      page_waits[j] +=
-		TO_MSEC (entry->server_stats.page_wait_time[j]);
-	    }
-	  total_page_waits_old +=
-	    TO_MSEC (entry->server_stats.page_total_wait_time);
-	}
     }
 
   fprintf (fp, "%*ccs_wait total wait:%lld\n", indent, ' ', total_cs_waits);
@@ -566,15 +545,6 @@ server_stats_dump (FILE * fp)
 	       cs_waits[j]);
     }
 
-  fprintf (fp, "%*cpage_wait total wait:%lld\n", indent, ' ',
-	   total_page_waits_old);
-  for (j = 0; j < PAGE_LAST; j++)
-    {
-      fprintf (fp, "%*c%s:%lld\n", indent + 5, ' ',
-	       page_type_to_string (j), page_waits[j]);
-    }
-
-#if 1
   svr_shm_copy_global_stats (&stats);
 
   total_page_waits_clock = 0;
@@ -597,10 +567,8 @@ server_stats_dump (FILE * fp)
 	       page_type_to_string (j),
 	       mnt_clock_to_time (stats.acc_time[item]), stats.values[item]);
     }
-#endif
 
   free_and_init (cs_waits);
-  free_and_init (page_waits);
 
   return NO_ERROR;
 }
@@ -646,9 +614,9 @@ server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
       ADD_TIMEVAL (thread_p->server_stats.cs_total_wait_time,
 		   *wait_start, wait_end);
       break;
-    case SERVER_STATS_PAGE:
-      ADD_TIMEVAL (thread_p->server_stats.page_total_wait_time,
-		   *wait_start, wait_end);
+
+    default:
+      assert (false);
       break;
     }
 
@@ -674,9 +642,9 @@ server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
       ADD_WAIT_TIMEVAL (thread_p->server_stats.cs_wait_time[sub_type],
 			thread_p->server_stats.current_wait_time);
       break;
-    case SERVER_STATS_PAGE:
-      ADD_WAIT_TIMEVAL (thread_p->server_stats.page_wait_time[sub_type],
-			thread_p->server_stats.current_wait_time);
+
+    default:
+      assert (false);
       break;
     }
   INIT_TIMEVAL (thread_p->server_stats.current_wait_time);
