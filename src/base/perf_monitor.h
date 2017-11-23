@@ -308,6 +308,11 @@ extern void mnt_stats_counter_with_time (THREAD_ENTRY * thread_p,
 					 UINT64 start_time);
 extern void mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
 			     INT64 value);
+#if 0
+extern INT64 mnt_get_stats_with_time (THREAD_ENTRY * thread_p,
+				      MNT_SERVER_ITEM item,
+				      UINT64 * acc_time);
+#endif
 extern INT64 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item);
 
 extern void mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS *
@@ -330,5 +335,7 @@ extern bool mnt_stats_is_collecting_time (MNT_SERVER_ITEM item);
 
 extern PAGE_TYPE mnt_server_item_to_page_ptype (const MNT_SERVER_ITEM item);
 extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item (const PAGE_TYPE ptype);
+
+extern UINT64 mnt_clock_to_time (const UINT64 acc_time);
 
 #endif /* _PERF_MONITOR_H_ */

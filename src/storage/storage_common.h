@@ -245,6 +245,7 @@ struct btree_node_split_info
 typedef char *PAGE_PTR;		/* Pointer to a page */
 
 /* TODO - PAGE_TYPE is used for debugging */
+/* fetches sub-info */
 typedef enum
 {
   PAGE_UNKNOWN = 0,		/* 0 used for initialized page            */
@@ -263,9 +264,7 @@ typedef enum
   PAGE_BTREE_ROOT,		/* 13 b+tree index root page               */
   PAGE_BTREE,			/* 14 b+tree index page                    */
 
-  PAGE_LOG,			/* 15 NONE - log page (unused)             */
-  PAGE_DROPPED_FILES,		/* 16 Dropped files page.                  */
-  PAGE_LAST = PAGE_DROPPED_FILES
+  PAGE_LAST = PAGE_BTREE
 } PAGE_TYPE;
 
 #define ISCAN_OID_BUFFER_SIZE \

@@ -507,10 +507,13 @@ int
 server_stats_dump (FILE * fp)
 {
   int i, j;
-  THREAD_ENTRY *thread_p;
   int indent = 2;
   long long total_cs_waits, total_page_waits;
   long long *cs_waits, *page_waits;
+  MNT_SERVER_EXEC_STATS stats;
+  MNT_SERVER_ITEM item;
+//  UINT64 value;
+//  UINT64 acc_time;
 
   total_cs_waits = 0;
   cs_waits = (long long *) calloc (CSECT_LAST, sizeof (long long));
@@ -529,27 +532,28 @@ server_stats_dump (FILE * fp)
 
   for (i = 1; i < thread_Manager.num_total; i++)
     {
-      thread_p = &thread_Manager.thread_array[i];
+      THREAD_ENTRY *entry;
 
-      if (thread_p->server_stats.cs_wait_time != NULL)
+      entry = &thread_Manager.thread_array[i];
+
+      if (entry->server_stats.cs_wait_time != NULL)
 	{
 	  for (j = 0; j < CSECT_LAST; j++)
 	    {
-	      cs_waits[j] += TO_MSEC (thread_p->server_stats.cs_wait_time[j]);
+	      cs_waits[j] += TO_MSEC (entry->server_stats.cs_wait_time[j]);
 	    }
-	  total_cs_waits +=
-	    TO_MSEC (thread_p->server_stats.cs_total_wait_time);
+	  total_cs_waits += TO_MSEC (entry->server_stats.cs_total_wait_time);
 	}
 
-      if (thread_p->server_stats.page_wait_time != NULL)
+      if (entry->server_stats.page_wait_time != NULL)
 	{
 	  for (j = 0; j < PAGE_LAST; j++)
 	    {
 	      page_waits[j] +=
-		TO_MSEC (thread_p->server_stats.page_wait_time[j]);
+		TO_MSEC (entry->server_stats.page_wait_time[j]);
 	    }
 	  total_page_waits +=
-	    TO_MSEC (thread_p->server_stats.page_total_wait_time);
+	    TO_MSEC (entry->server_stats.page_total_wait_time);
 	}
     }
 
@@ -567,6 +571,19 @@ server_stats_dump (FILE * fp)
       fprintf (fp, "%*c%s:%lld\n", indent + 5, ' ',
 	       page_type_to_string (j), page_waits[j]);
     }
+
+#if 1
+  svr_shm_copy_global_stats (&stats);
+  for (j = PAGE_UNKNOWN; j <= PAGE_BTREE; j++)
+    {
+      item = mnt_page_ptype_to_server_item (j);
+//      value = mnt_get_stats_with_time (thread_p, item, &acc_time);
+
+      fprintf (fp, "%*c%s:%ld (%ld)\n", indent + 5, ' ',
+	       page_type_to_string (j), stats.acc_time[item],
+	       mnt_clock_to_time (stats.values[item]));
+    }
+#endif
 
   free_and_init (cs_waits);
   free_and_init (page_waits);
@@ -2375,7 +2392,7 @@ thread_worker (void *arg_p)
   THREAD_ENTRY *tsd_ptr;
   CSS_THREAD_FN handler_func;
   CSS_THREAD_ARG handler_func_arg;
-  CSS_CONN_ENTRY *job_conn;
+//  CSS_CONN_ENTRY *job_conn;
   int rv;
   CSS_JOB_ENTRY new_job;
 
@@ -2404,7 +2421,7 @@ thread_worker (void *arg_p)
 	  continue;
 	}
 
-      job_conn = new_job.conn_entry;
+//      job_conn = new_job.conn_entry;
       handler_func = new_job.func;
       handler_func_arg = new_job.arg;
 

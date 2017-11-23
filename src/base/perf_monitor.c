@@ -619,6 +619,23 @@ mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
   svr_shm_stats_gauge (tran_index, item, value);
 }
 
+#if 0
+/*
+ * mnt_get_stats_with_time -
+ */
+INT64
+mnt_get_stats_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
+			 UINT64 * acc_time)
+{
+  int tran_index;
+
+  tran_index = logtb_get_current_tran_index (thread_p);
+  assert (tran_index >= 0);
+
+  return svr_shm_get_stats (tran_index, item);
+}
+#endif
+
 /*
  * mnt_get_stats -
  */
@@ -899,10 +916,6 @@ mnt_page_ptype_to_server_item (const PAGE_TYPE ptype)
     case PAGE_UNKNOWN:		/* 0 used for initialized page            */
       return MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
 
-#if 1				/* TODO - */
-    case PAGE_LOG:		/* 15 NONE - log page (unused)             */
-    case PAGE_DROPPED_FILES:
-#endif
     default:
       break;
     }
@@ -910,4 +923,14 @@ mnt_page_ptype_to_server_item (const PAGE_TYPE ptype)
   assert (false);
 
   return MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
+}
+
+UINT64
+mnt_clock_to_time (const UINT64 acc_time)
+{
+  /* TODO - under construction
+   *
+   */
+
+  return acc_time;
 }
