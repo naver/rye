@@ -1295,9 +1295,7 @@ struct log_pb_global_data
   int num_buffers;		/* Number of log buffers     */
   int clock_hand;		/* Clock hand                */
 
-#if defined(SERVER_MODE)
-  CSS_CRITICAL_SECTION lpb_cs;
-#else				/* !SERVER_MODE */
+#if !defined(SERVER_MODE)
   LOG_ZIP *log_zip_undo;
   LOG_ZIP *log_zip_redo;
   char *log_data_ptr;
@@ -1423,7 +1421,7 @@ extern void logpb_free_without_mutex (LOG_PAGE * log_pgptr);
 extern LOG_PAGEID logpb_get_page_id (LOG_PAGE * log_pgptr);
 extern int logpb_print_hash_entry (FILE * outfp, const void *key,
 				   void *ent, void *ignore);
-extern int logpb_initialize_header (THREAD_ENTRY * thread_p,
+extern int logpb_initialize_header (UNUSED_ARG THREAD_ENTRY * thread_p,
 				    struct log_header *loghdr,
 				    const char *prefix_logname,
 				    DKNPAGES npages, INT64 * db_creation);

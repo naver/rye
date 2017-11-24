@@ -70,6 +70,7 @@ static const char *css_Csect_name[] = {
   "ER_MSG_CACHE",
   "WFG",
   "LOG",
+  "LOG_BUFFER",
   "LOCATOR_CLASSNAME_TABLE",
   "FILE_NEWFILE",
   "QPROC_QUERY_TABLE",
