@@ -513,7 +513,7 @@ server_stats_dump (FILE * fp)
   MNT_SERVER_EXEC_STATS stats;
   MNT_SERVER_ITEM item;
   UINT64 total_page_waits_clock;
-  INT64 total_page_waits_num;
+//  INT64 total_page_waits_num;
 
   total_cs_waits = 0;
   cs_waits = (long long *) calloc (CSECT_LAST, sizeof (long long));
@@ -548,24 +548,32 @@ server_stats_dump (FILE * fp)
   svr_shm_copy_global_stats (&stats);
 
   total_page_waits_clock = 0;
-  total_page_waits_num = 0;
+//  total_page_waits_num = 0;
   for (j = 0; j < PAGE_LAST; j++)
     {
       item = mnt_page_ptype_to_server_item_fetches_waits (j);
 
       total_page_waits_clock += stats.acc_time[item];
-      total_page_waits_num += stats.values[item];
+//      total_page_waits_num += stats.values[item];
     }
 
-  fprintf (fp, "%*cpage_wait total wait:%ld (%ld)\n", indent, ' ',
-	   mnt_clock_to_time (total_page_waits_clock), total_page_waits_num);
+  fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
+	   mnt_clock_to_time (total_page_waits_clock));
   for (j = 0; j < PAGE_LAST; j++)
     {
       item = mnt_page_ptype_to_server_item_fetches_waits (j);
 
-      fprintf (fp, "%*c%s:%ld (%ld)\n", indent + 5, ' ',
+      fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
 	       page_type_to_string (j),
-	       mnt_clock_to_time (stats.acc_time[item]), stats.values[item]);
+	       mnt_clock_to_time (stats.acc_time[item]));
+      /* keep out zero division */
+      if (total_page_waits_clock > 0)
+	{
+	  fprintf (fp, "(%.1f%%)",
+		   ((double) mnt_clock_to_time (stats.acc_time[item]) /
+		    total_page_waits_clock) * 100);
+	}
+      fprintf (fp, "\n");
     }
 
   free_and_init (cs_waits);
