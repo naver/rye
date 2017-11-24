@@ -71,6 +71,7 @@ static const char *css_Csect_name[] = {
   "WFG",
   "LOG",
   "LOG_BUFFER",
+  "LOG_ARCHIVE",
   "LOCATOR_CLASSNAME_TABLE",
   "FILE_NEWFILE",
   "QPROC_QUERY_TABLE",

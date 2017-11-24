@@ -677,8 +677,6 @@ logpb_initialize_pool (THREAD_ENTRY * thread_p)
       goto error;
     }
 
-  csect_initialize_critical_section (&log_Gl.archive.archives_cs);
-
   pthread_mutex_init (&log_Gl.chkpt_lsa_lock, NULL);
 
   pthread_cond_init (&group_commit_info->gc_cond, NULL);
@@ -770,8 +768,6 @@ logpb_finalize_pool (void)
   csect_exit (CSECT_LOG_BUFFER);
 
   logpb_finalize_flush_info ();
-
-  csect_finalize_critical_section (&log_Gl.archive.archives_cs);
 
   pthread_mutex_destroy (&log_Gl.chkpt_lsa_lock);
 

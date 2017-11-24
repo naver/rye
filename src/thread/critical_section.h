@@ -47,6 +47,7 @@ enum
   CSECT_WFG,			/* Latch for wait-for-graph */
   CSECT_LOG,			/* Latch for log manager */
   CSECT_LOG_BUFFER,		/* Latch for log page buffer */
+  CSECT_LOG_ARCHIVE,             /* Latch for log archives */
   CSECT_LOCATOR_SR_CLASSNAME_TABLE,	/* Latch for temp classname to classOID entries */
   CSECT_FILE_NEWFILE,		/* Latch related to new file table */
   CSECT_QPROC_QUERY_TABLE,	/* Latch for query manager table */
