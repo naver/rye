@@ -196,7 +196,10 @@ csect_initialize_entry (int cs_index)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
+  assert (sizeof (css_Csect_name) / sizeof (css_Csect_name[0]) ==
+	  CRITICAL_SECTION_COUNT);
 
   cs_ptr = &css_Csect_array[cs_index];
   cs_ptr->cs_index = cs_index;
@@ -1716,7 +1719,8 @@ csect_dump_statistics (FILE * fp)
 const char *
 csect_get_cs_name (int cs_index)
 {
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
 
   return css_Csect_array[cs_index].name;
 }
