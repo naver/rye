@@ -47,7 +47,7 @@ enum cirpwr_action
   CIRPWR_ACTION_FORCE_FLUSH = 0x02,
 };
 
-#define HB_RECV_Q_MAX_COUNT 500
+#define HB_RECV_Q_MAX_COUNT 250
 
 typedef struct cirpwr_queue_node RECV_Q_NODE;
 struct cirpwr_queue_node
@@ -116,6 +116,9 @@ extern int cirpwr_write_log_pages (void);
 extern void *log_copier_main (void *arg);
 extern void *log_writer_main (void *arg);
 
-extern CIRP_AGENT_STATUS cirpwr_get_status (CIRP_WRITER_INFO * writer_info);
+extern CIRP_AGENT_STATUS cirpwr_get_copier_status (CIRP_WRITER_INFO *
+						   writer_info);
+extern CIRP_AGENT_STATUS cirpwr_get_writer_status (CIRP_WRITER_INFO *
+						   writer_info);
 
 #endif /* _REPL_WRITER_H_ */
