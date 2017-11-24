@@ -116,8 +116,23 @@ typedef enum
   MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* 12 catalog page                         */
   MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT,	/* 13 b+tree index root page                    */
   MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* 14 b+tree index page                    */
-
   MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN,	/* 0 unknown                     */
+
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER,      /* 1 file header page             */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB,   /* 2 file allocset table page             */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER,        /* 3 heap header page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP,       /* 4 heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER,  /* 5 volume header page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP,  /* 6 volume bitmap page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_XASL,       /* 7 xasl stream page                     */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT,    /* 8 query result page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH,      /* 9 ehash bucket/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW,   /* 10 overflow page (with ovf_keyval)      */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_AREA,       /* 11 area page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG,    /* 12 catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT, /* 13 b+tree index root page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE,      /* 14 b+tree index page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN,    /* 0 unknown                     */
 
   MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES,	/* 15 */
   MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES,	/* 16 */
@@ -308,6 +323,11 @@ extern void mnt_stats_counter_with_time (THREAD_ENTRY * thread_p,
 					 UINT64 start_time);
 extern void mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
 			     INT64 value);
+#if 0
+extern INT64 mnt_get_stats_with_time (THREAD_ENTRY * thread_p,
+				      MNT_SERVER_ITEM item,
+				      UINT64 * acc_time);
+#endif
 extern INT64 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item);
 
 extern void mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS *
@@ -328,7 +348,12 @@ extern int mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
 extern bool mnt_stats_is_cumulative (MNT_SERVER_ITEM item);
 extern bool mnt_stats_is_collecting_time (MNT_SERVER_ITEM item);
 
-extern PAGE_TYPE mnt_server_item_to_page_ptype (const MNT_SERVER_ITEM item);
-extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item (const PAGE_TYPE ptype);
+extern PAGE_TYPE mnt_server_item_fetches_to_page_ptype (const MNT_SERVER_ITEM item);
+extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches (const PAGE_TYPE
+							      ptype);
+extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches_waits (const PAGE_TYPE
+							    ptype);
+
+extern UINT64 mnt_clock_to_time (const UINT64 acc_time);
 
 #endif /* _PERF_MONITOR_H_ */

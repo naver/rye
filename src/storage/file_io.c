@@ -990,7 +990,7 @@ fileio_set_page_ptype (THREAD_ENTRY * thread_p, FILEIO_PAGE_RESERVED * prv_p,
 
   assert (prv_p != NULL);
 //  assert (ptype >= PAGE_UNKNOWN);
-  assert (ptype <= PAGE_LAST);
+  assert (ptype < PAGE_LAST);
 
   old_ptype = fileio_get_page_ptype (thread_p, prv_p);
 

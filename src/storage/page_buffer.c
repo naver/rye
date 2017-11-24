@@ -759,7 +759,7 @@ error:
 void
 pgbuf_finalize (void)
 {
-  PGBUF_BCB *bufptr;
+  UNUSED_VAR PGBUF_BCB *bufptr;
   void *area;
   PGBUF_HOLDER_SET *holder_set;
   int i;
@@ -911,7 +911,8 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
 {
   PAGE_PTR pgptr;
 #if defined(SERVER_MODE)
-  bool old_check_page_validation, rv;
+  bool old_check_page_validation;
+  UNUSED_VAR bool rv;
 #endif
 
   assert (ptype == PAGE_BTREE);
@@ -1012,7 +1013,7 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   int buf_lock_acquired;
   int wait_msecs;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
 #if !defined(NDEBUG)
@@ -1162,8 +1163,9 @@ try_again:
 
       if (newpg != NEW_PAGE)
 	{
-	  UINT64 perf_start;
-	  PERF_MON_GET_CURRENT_TIME (perf_start);
+	  UINT64 io_perf_start;
+
+	  PERF_MON_GET_CURRENT_TIME (io_perf_start);
 	  /* Record number of reads in statistics */
 	  if (fileio_read (thread_p,
 			   fileio_get_volume_descriptor (vpid->volid),
@@ -1185,7 +1187,7 @@ try_again:
 	      return NULL;
 	    }
 	  mnt_stats_counter_with_time (thread_p, MNT_STATS_DATA_PAGE_IOREADS,
-				       1, perf_start);
+				       1, io_perf_start);
 
 	  if (pgbuf_is_temporary_volume (vpid->volid) == true
 	      && !LSA_IS_INIT_TEMP (&(prv_p->lsa)))
@@ -1237,6 +1239,38 @@ try_again:
 	}
       buf_lock_acquired = true;
     }
+
+#if 1
+  CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
+
+  if (newpg == NEW_PAGE)
+    {
+      (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);	/* set */
+    }
+  else
+    {
+      PAGE_TYPE pself;
+
+      pself = pgbuf_get_page_ptype (thread_p, pgptr);
+
+      if (pself == PAGE_UNKNOWN)
+	{
+	  (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);	/* reset */
+	}
+      else
+	{
+	  /* for format, rollback, postpone, checkpoint */
+	  if (ptype == PAGE_UNKNOWN)
+	    {
+	      ptype = pself;
+	    }
+	}
+
+      assert (ptype != PAGE_UNKNOWN);
+    }
+
+  assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);
+#endif
 
   /* At this place, the caller is holding bufptr->BCB_mutex */
 
@@ -1301,6 +1335,7 @@ try_again:
       (void) pgbuf_unlock_page (hash_anchor, vpid, false);
     }
 
+#if 0
   CAST_BFPTR_TO_PGPTR (pgptr, bufptr);
 
   if (newpg == NEW_PAGE)
@@ -1315,9 +1350,7 @@ try_again:
 
       if (pself == PAGE_UNKNOWN)
 	{
-#if 1
 	  (void) pgbuf_set_page_ptype (thread_p, pgptr, ptype);	/* reset */
-#endif
 	}
       else
 	{
@@ -1332,11 +1365,14 @@ try_again:
     }
 
   assert (pgbuf_check_page_ptype (thread_p, pgptr, ptype) == true);
+#endif
 
   /* Record number of fetches in statistics */
-  item = mnt_page_ptype_to_server_item (ptype);
+  item = mnt_page_ptype_to_server_item_fetches (ptype);
   assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (MNT_GET_PARENT_ITEM (item) == MNT_STATS_DATA_PAGE_FETCHES);
+  assert (item >= MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
+  assert (item <= MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN);
 
   mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
@@ -1363,7 +1399,7 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
   PGBUF_BCB *bufptr;
   int holder_status;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
 #if !defined (NDEBUG)
@@ -1746,7 +1782,7 @@ pgbuf_invalidate (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
   VPID temp_vpid;
   int holder_status;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   if (pgbuf_get_check_page_validation (thread_p,
@@ -1958,7 +1994,7 @@ pgbuf_invalidate_all (THREAD_ENTRY * thread_p, VOLID volid)
   VPID temp_vpid;
   int bufid;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /*
@@ -2054,7 +2090,7 @@ pgbuf_flush (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, int free_page)
   PGBUF_BCB *bufptr;
   int holder_status;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   if (pgbuf_get_check_page_validation (thread_p,
@@ -2123,7 +2159,7 @@ pgbuf_flush_with_wal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 {
   PGBUF_BCB *bufptr;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   if (pgbuf_get_check_page_validation (thread_p,
@@ -2172,7 +2208,7 @@ pgbuf_flush_all_helper (THREAD_ENTRY * thread_p, VOLID volid,
   PGBUF_BCB *bufptr;
   int i;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /* Flush all unfixed dirty buffers */
@@ -2531,7 +2567,7 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
   VPID vpid;
 #if defined(SERVER_MODE)
   int sleep_msecs;
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   thread_mnt_track_push (thread_p,
@@ -3254,7 +3290,7 @@ void
 pgbuf_refresh_max_permanent_volume_id (VOLID volid)
 {
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&pgbuf_Pool.volinfo_mutex);
@@ -3278,7 +3314,7 @@ pgbuf_cache_permanent_volume_for_temporary (VOLID volid)
   void *area;
   int num_entries, nbytes;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&pgbuf_Pool.volinfo_mutex);
@@ -3451,7 +3487,7 @@ pgbuf_is_temporary_volume (VOLID volid)
 {
   int i;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&pgbuf_Pool.volinfo_mutex);
@@ -3755,7 +3791,7 @@ pgbuf_allocate_thrd_holder_entry (UNUSED_ARG THREAD_ENTRY * thread_p)
   PGBUF_HOLDER *holder;
   PGBUF_HOLDER_SET *holder_set;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   thrd_index = THREAD_GET_CURRENT_ENTRY_INDEX (thread_p);
@@ -4510,7 +4546,7 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
 {
 #if defined(SERVER_MODE)
   THREAD_ENTRY *cur_thrd_entry, *thrd_entry;
-  int rv;
+  UNUSED_VAR int rv;
   PAGE_TYPE ptype;
   PAGE_PTR pgptr;
 #endif
@@ -4605,6 +4641,11 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
        * some time interval, the request will be waken up by timeout.
        * When the request is waken up, the request is treated as a victim.
        */
+      UINT64 perf_start;
+      MNT_SERVER_ITEM item;
+
+      PERF_MON_GET_CURRENT_TIME (perf_start);
+
 #if !defined(NDEBUG)
       error = pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry,
 				 caller_file, caller_line);
@@ -4616,7 +4657,11 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
 
       ptype = pgbuf_get_page_ptype (thread_p, pgptr);
 
-      server_stats_add_current_wait_time (thread_p, SERVER_STATS_PAGE, ptype);
+      item = mnt_page_ptype_to_server_item_fetches_waits (ptype);
+      assert (item >= MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER);
+      assert (item <= MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN);
+
+      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
     }
 #endif /* SERVER_MODE */
 
@@ -4647,7 +4692,7 @@ pgbuf_timed_sleep_error_handling (THREAD_ENTRY * thread_p,
   THREAD_ENTRY *prev_thrd_entry;
   THREAD_ENTRY *curr_thrd_entry;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&bufptr->BCB_mutex);
@@ -4784,8 +4829,6 @@ try_again:
       gettimeofday (&end, NULL);
       ADD_TIMEVAL (thrd_entry->event_stats.latch_waits, start, end);
     }
-
-  server_stats_set_current_wait_time (thrd_entry, SERVER_STATS_PAGE, &start);
 
   if (r == 0)
     {
@@ -5178,7 +5221,7 @@ pgbuf_insert_into_hash_chain (PGBUF_BUFFER_HASH * hash_anchor,
 			      PGBUF_BCB * bufptr)
 {
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /* Note that the caller is not holding bufptr->BCB_mutex */
@@ -5208,7 +5251,7 @@ pgbuf_delete_from_hash_chain (PGBUF_BCB * bufptr)
   PGBUF_BCB *prev_bufptr;
   PGBUF_BCB *curr_bufptr;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /* the caller is holding bufptr->BCB_mutex */
@@ -5398,7 +5441,7 @@ pgbuf_unlock_page (UNUSED_ARG PGBUF_BUFFER_HASH * hash_anchor,
 		   UNUSED_ARG int need_hash_mutex)
 {
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 
   PGBUF_BUFFER_LOCK *prev_buffer_lock, *cur_buffer_lock;
   THREAD_ENTRY *cur_thrd_entry;
@@ -5896,7 +5939,7 @@ pgbuf_get_bcb_from_invalid_list (void)
 {
   PGBUF_BCB *bufptr;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /* check if invalid BCB list is empty (step 1) */
@@ -5942,7 +5985,7 @@ static int
 pgbuf_put_bcb_into_invalid_list (PGBUF_BCB * bufptr)
 {
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /* the caller is holding bufptr->BCB_mutex */
@@ -5995,7 +6038,7 @@ pgbuf_get_victim_from_lru_list (THREAD_ENTRY * thread_p, const VPID * vpid,
   int lru_idx;
   int check_myself;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
   bool found;
 
@@ -6143,7 +6186,7 @@ pgbuf_invalidate_bcb_from_lru (PGBUF_BCB * bufptr)
 {
   int lru_idx;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   lru_idx = pgbuf_get_lru_index (&bufptr->vpid);
@@ -6202,7 +6245,7 @@ pgbuf_relocate_top_lru (PGBUF_BCB * bufptr)
 {
   int lru_idx;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   assert (bufptr->zone != PGBUF_LRU_1_ZONE);
@@ -6291,7 +6334,7 @@ pgbuf_relocate_bottom_lru (PGBUF_BCB * bufptr)
 {
   int lru_idx;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   assert (bufptr->zone != PGBUF_LRU_1_ZONE
@@ -6368,7 +6411,7 @@ pgbuf_flush_page_with_wal (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 {
 #if defined(SERVER_MODE)
   THREAD_ENTRY *thrd_entry;
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
   char page_buf[IO_MAX_PAGE_SIZE + MAX_ALIGNMENT];
   FILEIO_PAGE *iopage;
@@ -6641,7 +6684,7 @@ pgbuf_is_valid_page_ptr (const PAGE_PTR pgptr)
   PGBUF_BCB *bufptr;
   int bufid;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif
 
   /* NOTE: Does not need to hold BCB_mutex since the page is fixed */
@@ -7150,7 +7193,7 @@ pgbuf_add_fixed_at (PGBUF_HOLDER * holder, const char *caller_file,
     }
 #endif
 
-  p = (char *) caller_file + strlen (caller_file);
+  p = caller_file + strlen (caller_file);
   while (p)
     {
       if (p == caller_file)
