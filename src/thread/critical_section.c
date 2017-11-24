@@ -91,7 +91,10 @@ static const char *css_Csect_name[] = {
   "SESSION_STATE",
   "ACL",
   "EVENT_LOG_FILE",
-  "ACCESS_STATUS"
+  "ACCESS_STATUS",
+  "TEMPFILE_CACHE",
+  "CSS_ACTIVE_CONN",
+  "CSS_FREE_CONN"
 };
 
 static int csect_initialize_entry (int cs_index);
@@ -1667,7 +1670,8 @@ csect_exit (int cs_index)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
 
   cs_ptr = &css_Csect_array[cs_index];
   return csect_exit_critical_section (cs_ptr);

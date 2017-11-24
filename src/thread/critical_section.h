@@ -69,6 +69,9 @@ enum
   CSECT_ACL,			/* Latch for accessible IP list table */
   CSECT_EVENT_LOG_FILE,		/* Latch for event log file */
   CSECT_ACCESS_STATUS,		/* Latch for user access status */
+  CSECT_TEMPFILE_CACHE,		/* Latch for temp file cache */
+  CSECT_CSS_ACTIVE_CONN,	/* Latch for active css active conn */
+  CSECT_CSS_FREE_CONN,		/* Latch for free css free conn */
   CSECT_LAST
 };
 
