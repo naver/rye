@@ -3712,6 +3712,7 @@ static int
 btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 		   int P_req_mode, short merge_level)
 {
+  int status = NO_ERROR;
   BTREE_NODE_HEADER pheader, qheader, /* rheader, */ left_header;
   VPID P_vpid, Q_vpid, /* R_vpid, */ Left_vpid, child_vpid;
   VPID *del_vpid = NULL, *new_del_vpid = NULL;
@@ -3737,6 +3738,10 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
   UINT64 perf_start;
 
   assert (merge_level > 1);
+
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL,
+			 &status);
 
   PERF_MON_GET_CURRENT_TIME (perf_start);
 
@@ -4288,6 +4293,12 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
   mnt_stats_counter_with_time (thread_p, MNT_STATS_BTREE_MERGES, 1,
 			       perf_start);
 
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
+    }
+
   return NO_ERROR;
 
 exit_on_error:
@@ -4335,6 +4346,12 @@ exit_on_error:
 	  (void) btree_dealloc_page (thread_p, btid, &(del_vpid[i]));
 	}
       free_and_init (del_vpid);
+    }
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
     }
 
   return ER_FAILED;

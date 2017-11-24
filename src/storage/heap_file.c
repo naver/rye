@@ -633,7 +633,7 @@ static int fill_string_to_buffer (char **start, char *end, const char *str);
 static unsigned int
 heap_hash_vpid (const void *key_vpid, unsigned int htsize)
 {
-  const VPID *vpid = (VPID *) key_vpid;
+  const VPID *vpid = (const VPID *) key_vpid;
 
   return ((vpid->pageid | ((unsigned int) vpid->volid) << 24) % htsize);
 }
@@ -647,8 +647,8 @@ heap_hash_vpid (const void *key_vpid, unsigned int htsize)
 static int
 heap_compare_vpid (const void *key_vpid1, const void *key_vpid2)
 {
-  const VPID *vpid1 = (VPID *) key_vpid1;
-  const VPID *vpid2 = (VPID *) key_vpid2;
+  const VPID *vpid1 = (const VPID *) key_vpid1;
+  const VPID *vpid2 = (const VPID *) key_vpid2;
 
   return VPID_EQ (vpid1, vpid2);
 }
@@ -662,7 +662,7 @@ heap_compare_vpid (const void *key_vpid1, const void *key_vpid2)
 static unsigned int
 heap_hash_hfid (const void *key_hfid, unsigned int htsize)
 {
-  const HFID *hfid = (HFID *) key_hfid;
+  const HFID *hfid = (const HFID *) key_hfid;
 
   return ((hfid->hpgid | ((unsigned int) hfid->vfid.volid) << 24) % htsize);
 }
@@ -676,8 +676,8 @@ heap_hash_hfid (const void *key_hfid, unsigned int htsize)
 static int
 heap_compare_hfid (const void *key_hfid1, const void *key_hfid2)
 {
-  const HFID *hfid1 = (HFID *) key_hfid1;
-  const HFID *hfid2 = (HFID *) key_hfid2;
+  const HFID *hfid1 = (const HFID *) key_hfid1;
+  const HFID *hfid2 = (const HFID *) key_hfid2;
 
   return HFID_EQ (hfid1, hfid2);
 }
@@ -3158,8 +3158,13 @@ heap_find_best_page (THREAD_ENTRY * thread_p, const HFID * hfid,
 		     int needed_space, UNUSED_ARG bool isnew_rec,
 		     UNUSED_ARG int newrec_size, HEAP_SCANCACHE * scan_cache)
 {
+  int status = NO_ERROR;
   PAGE_PTR pgptr = NULL;	/* The page with the best space */
   int total_space;
+
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE,
+			 &status);
 
   /*
    * Try to use the space cache for as much information as possible to avoid
@@ -3185,6 +3190,12 @@ heap_find_best_page (THREAD_ENTRY * thread_p, const HFID * hfid,
 					    scan_cache,
 					    &pgptr) == HEAP_FINDSPACE_ERROR)
     {
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return NULL;
     }
 
@@ -3209,6 +3220,12 @@ heap_find_best_page (THREAD_ENTRY * thread_p, const HFID * hfid,
        * at a later point.
        */
       scan_cache->pgptr = NULL;
+    }
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
     }
 
   return pgptr;
@@ -3368,6 +3385,7 @@ static int
 heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
 		     const HFID * hfid, bool scan_all)
 {
+  int status = NO_ERROR;
   PAGE_PTR pgptr = NULL;
   VPID vpid;
   VPID start_vpid = { NULL_PAGEID, NULL_VOLID };
@@ -3380,11 +3398,21 @@ heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
   int num_iterations = 0, max_iterations;
   int error_code = NO_ERROR;
 
+  thread_mnt_track_push (thread_p,
+			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC,
+			 &status);
+
   *num_recs = 0;
 
   error_code = heap_read_full_search_vpid (thread_p, &next_vpid, hfid);
   if (error_code != NO_ERROR)
     {
+      if (status == NO_ERROR)
+	{
+	  thread_mnt_track_pop (thread_p, &status);
+	  assert (status == NO_ERROR);
+	}
+
       return error_code;
     }
 
@@ -3494,6 +3522,12 @@ heap_bestspace_sync (THREAD_ENTRY * thread_p, DB_BIGINT * num_recs,
     {
       /* Save the last position to be searched next time. */
       error_code = heap_write_full_search_vpid (thread_p, hfid, &next_vpid);
+    }
+
+  if (status == NO_ERROR)
+    {
+      thread_mnt_track_pop (thread_p, &status);
+      assert (status == NO_ERROR);
     }
 
   return error_code;
@@ -4514,7 +4548,11 @@ exit_on_error:
     {
       pgbuf_unfix_and_init (thread_p, addr.pgptr);
     }
-  HFID_SET_NULL (hfid);
+
+  if (hfid != NULL)
+    {
+      HFID_SET_NULL (hfid);
+    }
 
   if (top_op_active == true)
     {

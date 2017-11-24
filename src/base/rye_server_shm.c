@@ -238,6 +238,31 @@ svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item, INT64 value)
     }
 }
 
+#if 0
+/*
+ * svr_shm_get_stats_with_time -
+ */
+INT64
+svr_shm_get_stats_with_time (int tran_index, MNT_SERVER_ITEM item,
+			     UINT64 * acc_time)
+{
+  if (rye_Server_shm == NULL ||
+      tran_index < 0 || tran_index >= rye_Server_shm->ntrans)
+    {
+      return 0;
+    }
+
+  assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
+
+  if (acc_time != NULL)
+    {
+      *acc_time = rye_Server_shm->tran_info[tran_index].stats.acc_time[item];
+    }
+
+  return rye_Server_shm->tran_info[tran_index].stats.values[item];
+}
+#endif
+
 /*
  * svr_shm_get_stats -
  */

@@ -507,10 +507,13 @@ int
 server_stats_dump (FILE * fp)
 {
   int i, j;
-  THREAD_ENTRY *thread_p;
   int indent = 2;
-  long long total_cs_waits, total_page_waits;
-  long long *cs_waits, *page_waits;
+  long long total_cs_waits;
+  long long *cs_waits;
+  MNT_SERVER_EXEC_STATS stats;
+  MNT_SERVER_ITEM item;
+  UINT64 total_page_waits_clock;
+//  INT64 total_page_waits_num;
 
   total_cs_waits = 0;
   cs_waits = (long long *) calloc (CSECT_LAST, sizeof (long long));
@@ -519,37 +522,19 @@ server_stats_dump (FILE * fp)
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
-  total_page_waits = 0;
-  page_waits = (long long *) calloc (PAGE_LAST, sizeof (long long));
-  if (page_waits == NULL)
-    {
-      free_and_init (cs_waits);
-      return ER_OUT_OF_VIRTUAL_MEMORY;
-    }
-
   for (i = 1; i < thread_Manager.num_total; i++)
     {
-      thread_p = &thread_Manager.thread_array[i];
+      THREAD_ENTRY *entry;
 
-      if (thread_p->server_stats.cs_wait_time != NULL)
+      entry = &thread_Manager.thread_array[i];
+
+      if (entry->server_stats.cs_wait_time != NULL)
 	{
 	  for (j = 0; j < CSECT_LAST; j++)
 	    {
-	      cs_waits[j] += TO_MSEC (thread_p->server_stats.cs_wait_time[j]);
+	      cs_waits[j] += TO_MSEC (entry->server_stats.cs_wait_time[j]);
 	    }
-	  total_cs_waits +=
-	    TO_MSEC (thread_p->server_stats.cs_total_wait_time);
-	}
-
-      if (thread_p->server_stats.page_wait_time != NULL)
-	{
-	  for (j = 0; j < PAGE_LAST; j++)
-	    {
-	      page_waits[j] +=
-		TO_MSEC (thread_p->server_stats.page_wait_time[j]);
-	    }
-	  total_page_waits +=
-	    TO_MSEC (thread_p->server_stats.page_total_wait_time);
+	  total_cs_waits += TO_MSEC (entry->server_stats.cs_total_wait_time);
 	}
     }
 
@@ -560,16 +545,38 @@ server_stats_dump (FILE * fp)
 	       cs_waits[j]);
     }
 
-  fprintf (fp, "%*cpage_wait total wait:%lld\n", indent, ' ',
-	   total_page_waits);
+  svr_shm_copy_global_stats (&stats);
+
+  total_page_waits_clock = 0;
+//  total_page_waits_num = 0;
   for (j = 0; j < PAGE_LAST; j++)
     {
-      fprintf (fp, "%*c%s:%lld\n", indent + 5, ' ',
-	       page_type_to_string (j), page_waits[j]);
+      item = mnt_page_ptype_to_server_item_fetches_waits (j);
+
+      total_page_waits_clock += stats.acc_time[item];
+//      total_page_waits_num += stats.values[item];
+    }
+
+  fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
+	   mnt_clock_to_time (total_page_waits_clock));
+  for (j = 0; j < PAGE_LAST; j++)
+    {
+      item = mnt_page_ptype_to_server_item_fetches_waits (j);
+
+      fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
+	       page_type_to_string (j),
+	       mnt_clock_to_time (stats.acc_time[item]));
+      /* keep out zero division */
+      if (total_page_waits_clock > 0)
+	{
+	  fprintf (fp, "(%.1f%%)",
+		   ((double) mnt_clock_to_time (stats.acc_time[item]) /
+		    total_page_waits_clock) * 100);
+	}
+      fprintf (fp, "\n");
     }
 
   free_and_init (cs_waits);
-  free_and_init (page_waits);
 
   return NO_ERROR;
 }
@@ -615,9 +622,9 @@ server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
       ADD_TIMEVAL (thread_p->server_stats.cs_total_wait_time,
 		   *wait_start, wait_end);
       break;
-    case SERVER_STATS_PAGE:
-      ADD_TIMEVAL (thread_p->server_stats.page_total_wait_time,
-		   *wait_start, wait_end);
+
+    default:
+      assert (false);
       break;
     }
 
@@ -643,9 +650,9 @@ server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
       ADD_WAIT_TIMEVAL (thread_p->server_stats.cs_wait_time[sub_type],
 			thread_p->server_stats.current_wait_time);
       break;
-    case SERVER_STATS_PAGE:
-      ADD_WAIT_TIMEVAL (thread_p->server_stats.page_wait_time[sub_type],
-			thread_p->server_stats.current_wait_time);
+
+    default:
+      assert (false);
       break;
     }
   INIT_TIMEVAL (thread_p->server_stats.current_wait_time);
@@ -947,7 +954,7 @@ loop:
 static void
 thread_wakeup_daemon_thread (DAEMON_THREAD_MONITOR * daemon_monitor)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&daemon_monitor->lock);
   pthread_cond_signal (&daemon_monitor->cond);
@@ -1212,6 +1219,8 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
 
   memset (&(entry_p->event_stats), 0, sizeof (EVENT_STAT));
   memset (&(entry_p->server_stats), 0, sizeof (SERVER_TRACE_STAT));
+
+  entry_p->mnt_track_top = -1;
 
   entry_p->on_trace = false;
   entry_p->clear_trace = false;
@@ -1989,7 +1998,8 @@ thread_set_comm_request_id (unsigned int request_id)
 int
 thread_has_threads (THREAD_ENTRY * caller, int tran_index, int client_id)
 {
-  int i, n, rv;
+  int i, n;
+  UNUSED_VAR int rv;
   THREAD_ENTRY *thread_p;
   CSS_CONN_ENTRY *conn_p;
 
@@ -2373,8 +2383,8 @@ thread_worker (void *arg_p)
   THREAD_ENTRY *tsd_ptr;
   CSS_THREAD_FN handler_func;
   CSS_THREAD_ARG handler_func_arg;
-  CSS_CONN_ENTRY *job_conn;
-  int rv;
+//  CSS_CONN_ENTRY *job_conn;
+  UNUSED_VAR int rv;
   CSS_JOB_ENTRY new_job;
 
   tsd_ptr = (THREAD_ENTRY *) arg_p;
@@ -2402,7 +2412,7 @@ thread_worker (void *arg_p)
 	  continue;
 	}
 
-      job_conn = new_job.conn_entry;
+//      job_conn = new_job.conn_entry;
       handler_func = new_job.func;
       handler_func_arg = new_job.arg;
 
@@ -2434,7 +2444,7 @@ thread_worker (void *arg_p)
 static void
 thread_reset_thread_info (THREAD_ENTRY * thread_p)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   thread_p->conn_entry = NULL;
   thread_p->status = TS_FREE;
@@ -2460,7 +2470,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_deadlock_detect_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv;
+  UNUSED_VAR int rv;
   THREAD_ENTRY *thread_p;
   int thrd_index;
   bool state;
@@ -2555,7 +2565,7 @@ thread_deadlock_detect_thread (void *arg_p)
 void
 thread_wakeup_deadlock_detect_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Deadlock_detect_thread.lock);
   if (thread_Deadlock_detect_thread.is_running == false)
@@ -2573,7 +2583,7 @@ thread_session_control_thread (void *arg_p)
   struct timespec to = {
     0, 0
   };
-  int rv = 0;
+  UNUSED_VAR int rv = 0;
 
   tsd_ptr = (THREAD_ENTRY *) arg_p;
 
@@ -2644,7 +2654,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_checkpoint_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv;
+  UNUSED_VAR int rv;
 
   struct timespec to = {
     0, 0
@@ -2703,7 +2713,7 @@ thread_checkpoint_thread (void *arg_p)
 void
 thread_wakeup_checkpoint_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Checkpoint_thread.lock);
   pthread_cond_signal (&thread_Checkpoint_thread.cond);
@@ -2720,7 +2730,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_purge_archive_logs_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv;
+  UNUSED_VAR int rv;
   time_t cur_time, last_deleted_time = 0;
   struct timespec to = {
     0, 0
@@ -2823,7 +2833,7 @@ thread_purge_archive_logs_thread (void *arg_p)
 void
 thread_wakeup_purge_archive_logs_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Purge_archive_logs_thread.lock);
   pthread_cond_signal (&thread_Purge_archive_logs_thread.cond);
@@ -3114,7 +3124,7 @@ thread_page_flush_thread (void *arg_p)
 void
 thread_wakeup_page_flush_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
   if (!thread_Page_flush_thread.is_running)
@@ -3131,7 +3141,7 @@ thread_wakeup_page_flush_thread (void)
 bool
 thread_is_page_flush_thread_available (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
   bool is_available;
 
   rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
@@ -3263,7 +3273,8 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_log_flush_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv, ret;
+  int ret;
+  UNUSED_VAR int rv;
 
   struct timespec LFT_wakeup_time = { 0, 0 };
   struct timeval wakeup_time = { 0, 0 };
@@ -3403,7 +3414,7 @@ thread_log_flush_thread (void *arg_p)
 void
 thread_wakeup_log_flush_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
   pthread_cond_signal (&thread_Log_flush_thread.cond);
@@ -3418,7 +3429,7 @@ thread_wakeup_log_flush_thread (void)
 static void
 thread_reset_nrequestors_of_log_flush_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
   thread_Log_flush_thread.nrequestors = 0;
@@ -3452,7 +3463,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_log_clock_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr = NULL;
-  int rv = 0;
+  UNUSED_VAR int rv = 0;
   struct timeval now;
 
 #if defined(HAVE_ATOMIC_BUILTINS)
@@ -3638,7 +3649,7 @@ thread_auto_volume_expansion_thread (void *arg_p)
 bool
 thread_auto_volume_expansion_thread_is_running (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
   bool ret;
 
   rv = pthread_mutex_lock (&thread_Auto_volume_expansion_thread.lock);
@@ -3669,7 +3680,7 @@ thread_is_auto_volume_expansion_thread_available (void)
 void
 thread_wakeup_auto_volume_expansion_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Auto_volume_expansion_thread.lock);
   if (!thread_Auto_volume_expansion_thread.is_running)
@@ -3689,7 +3700,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_heap_bestspace_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr = NULL;
-  int rv = 0;
+  UNUSED_VAR int rv = 0;
   struct timeval now;
 
   tsd_ptr = (THREAD_ENTRY *) arg_p;
@@ -4286,3 +4297,96 @@ thread_job_queue_control_thread (void *arg_p)
   return (THREAD_RET_T) 0;
 }
 #endif
+
+
+void
+thread_mnt_track_push (THREAD_ENTRY * thread_p, int item, int *status)
+{
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  if (thread_p->mnt_track_top >= (THREAD_MNT_TRACK_MAX - 1))
+    {
+      *status = ER_FAILED;
+    }
+  else
+    {
+      *status = NO_ERROR;
+      thread_p->mnt_track_top++;
+      thread_p->mnt_track_stack[thread_p->mnt_track_top].item = item;
+    }
+}
+
+THREAD_MNT_TRACK *
+thread_mnt_track_pop (THREAD_ENTRY * thread_p, int *status)
+{
+  THREAD_MNT_TRACK *ret;
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  if (thread_p->mnt_track_top <= -1)
+    {
+      ret = NULL;
+      *status = ER_FAILED;
+    }
+  else
+    {
+      *status = NO_ERROR;
+      ret = &(thread_p->mnt_track_stack[thread_p->mnt_track_top]);
+      thread_p->mnt_track_top--;
+    }
+
+  return ret;
+}
+
+void
+thread_mnt_track_dump (THREAD_ENTRY * thread_p)
+{
+  int i;
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  fprintf (stdout, "\nThe Stack is: ");
+  if (thread_p->mnt_track_top <= -1)
+    {
+      fprintf (stdout, "empty");
+    }
+  else
+    {
+      for (i = thread_p->mnt_track_top; i >= 0; i--)
+	{
+	  fprintf (stdout, "\n--------\n|%3d   |\n--------",
+		   thread_p->mnt_track_stack[i].item);
+	}
+    }
+  fprintf (stdout, "\n");
+}
+
+void
+thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
+			  UINT64 exec_time)
+{
+  int tran_index;
+  int i;
+
+  if (thread_p == NULL)
+    {
+      thread_p = thread_get_thread_entry_info ();
+    }
+
+  tran_index = logtb_get_current_tran_index (thread_p);
+
+  for (i = thread_p->mnt_track_top; i >= 0; i--)
+    {
+      svr_shm_stats_counter (tran_index, thread_p->mnt_track_stack[i].item,
+			     value, exec_time);
+    }
+}

@@ -271,6 +271,7 @@ ut_get_line (FILE * fp, T_STRING * t_str, char **out_str, int *lineno)
 	  if (fseek (fp, position, SEEK_SET) < 0)
 	    {
 	      fprintf (stderr, "fseek error.\n");
+	      RYE_FREE_MEM (value);
 	      return -1;
 	    }
 	  rlen =

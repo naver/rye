@@ -495,6 +495,7 @@ bk_finish_backup_session (BK_BACKUP_SESSION * session_p)
   if (session_p->bkuphdr->make_slave == false)
     {
       end_page.iopageid = BK_BACKUP_END_PAGE_ID;
+      (void) fileio_initialize_res (NULL, &(end_page.iopage.prv));
       nbytes = offsetof (BK_BACKUP_PAGE, iopage);
       memset (session_p->bkup.buffer, '\0', session_p->bkup.iosize);
       memcpy (session_p->bkup.buffer, &end_page, nbytes);
