@@ -96,8 +96,7 @@ static const char *css_Csect_name[] = {
   "ACCESS_STATUS",
   "TEMPFILE_CACHE",
   "CSS_ACTIVE_CONN",
-  "CSS_FREE_CONN",
-  "UNKNOWN"
+  "CSS_FREE_CONN"
 };
 
 static int csect_initialize_entry (const CSECT_TYPE cs_index);
@@ -1018,7 +1017,8 @@ csect_enter_as_reader (THREAD_ENTRY * thread_p, int cs_index, int wait_secs)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
 
   cs_ptr = &css_Csect_array[cs_index];
   return csect_enter_critical_section_as_reader (thread_p, cs_ptr, wait_secs);
@@ -1306,7 +1306,8 @@ csect_demote (THREAD_ENTRY * thread_p, int cs_index, int wait_secs)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
 
   cs_ptr = &css_Csect_array[cs_index];
   return csect_demote_critical_section (thread_p, cs_ptr, wait_secs);
@@ -1760,7 +1761,8 @@ csect_check_own (THREAD_ENTRY * thread_p, int cs_index)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
 
   cs_ptr = &css_Csect_array[cs_index];
 

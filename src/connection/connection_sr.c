@@ -389,7 +389,8 @@ css_insert_into_active_conn_list (CSS_CONN_ENTRY * conn)
 
   css_Num_active_conn++;
 
-  assert (css_Num_active_conn > 0 && css_Num_active_conn <= css_Num_max_conn);
+  assert (css_Num_active_conn > 0);
+  assert (css_Num_active_conn <= css_Num_max_conn);
 
   csect_exit (CSECT_CSS_ACTIVE_CONN);
 }
