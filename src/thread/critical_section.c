@@ -96,10 +96,11 @@ static const char *css_Csect_name[] = {
   "ACCESS_STATUS",
   "TEMPFILE_CACHE",
   "CSS_ACTIVE_CONN",
-  "CSS_FREE_CONN"
+  "CSS_FREE_CONN",
+  "UNKNOWN"
 };
 
-static int csect_initialize_entry (int cs_index);
+static int csect_initialize_entry (const CSECT_TYPE cs_index);
 static int csect_finalize_entry (int cs_index);
 static int csect_wait_on_writer_queue (THREAD_ENTRY * thread_p,
 				       CSS_CRITICAL_SECTION * cs_ptr,
@@ -194,11 +195,11 @@ csect_initialize_critical_section (CSS_CRITICAL_SECTION * cs_ptr)
  *   cs_index(in): critical section entry index
  */
 static int
-csect_initialize_entry (int cs_index)
+csect_initialize_entry (const CSECT_TYPE cs_index)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0);
+//  assert (cs_index >= 0);
   assert (cs_index < CRITICAL_SECTION_COUNT);
   assert (sizeof (css_Csect_name) / sizeof (css_Csect_name[0]) ==
 	  CRITICAL_SECTION_COUNT);
@@ -265,10 +266,11 @@ csect_finalize_entry (int cs_index)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
 
   cs_ptr = &css_Csect_array[cs_index];
-  cs_ptr->cs_index = 0;
+  cs_ptr->cs_index = CSECT_UNKNOWN;
   cs_ptr->name = NULL;
   return csect_finalize_critical_section (cs_ptr);
 }
@@ -287,6 +289,7 @@ csect_initialize (void)
       error_code = csect_initialize_entry (i);
       if (error_code != NO_ERROR)
 	{
+	  assert (false);
 	  break;
 	}
     }
@@ -530,8 +533,11 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
   struct timeval start_time, end_time, elapsed_time;
 #endif
   struct timeval wait_start, wait_end;
+  UINT64 perf_start;
+  MNT_SERVER_ITEM item;
 
   assert (cs_ptr != NULL);
+  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
@@ -573,8 +579,9 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 	      cs_ptr->waiting_writers++;
 	      cs_ptr->total_nwaits++;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -587,8 +594,8 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
 			       wait_start, wait_end);
 		}
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)
@@ -643,8 +650,9 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 
 	      cs_ptr->waiting_writers++;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -658,8 +666,7 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)
@@ -787,8 +794,11 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
   struct timeval start_time, end_time, elapsed_time;
 #endif
   struct timeval wait_start, wait_end;
+  UINT64 perf_start;
+  MNT_SERVER_ITEM item;
 
   assert (cs_ptr != NULL);
+  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
@@ -831,8 +841,9 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 	      cs_ptr->total_nwaits++;
 	      thread_p->resume_status = THREAD_CSECT_READER_SUSPENDED;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -845,8 +856,8 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
 			       wait_start, wait_end);
 		}
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      if (error_code != NO_ERROR)
 		{
@@ -884,8 +895,9 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 
 	      thread_p->resume_status = THREAD_CSECT_READER_SUSPENDED;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -898,8 +910,8 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
 			       wait_start, wait_end);
 		}
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      if (error_code != 0)
 		{
@@ -1029,8 +1041,11 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
   struct timeval start_time, end_time, elapsed_time;
 #endif
   struct timeval wait_start, wait_end;
+  UINT64 perf_start;
+  MNT_SERVER_ITEM item;
 
   assert (cs_ptr != NULL);
+  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
@@ -1095,8 +1110,9 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 	      cs_ptr->total_nwaits++;
 	      thread_p->resume_status = THREAD_CSECT_READER_SUSPENDED;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -1109,8 +1125,8 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
 			       wait_start, wait_end);
 		}
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      if (error_code != NO_ERROR)
 		{
@@ -1148,8 +1164,9 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 
 	      thread_p->resume_status = THREAD_CSECT_READER_SUSPENDED;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -1162,8 +1179,8 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
 			       wait_start, wait_end);
 		}
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      if (error_code != 0)
 		{
@@ -1312,8 +1329,11 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
   struct timeval start_time, end_time, elapsed_time;
 #endif
   struct timeval wait_start, wait_end;
+  UINT64 perf_start;
+  MNT_SERVER_ITEM item;
 
   assert (cs_ptr != NULL);
+  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
@@ -1370,8 +1390,9 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 	      cs_ptr->waiting_writers++;
 	      cs_ptr->total_nwaits++;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -1384,8 +1405,8 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
 			       wait_start, wait_end);
 		}
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)
@@ -1412,8 +1433,9 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 
 	      cs_ptr->waiting_writers++;
 
-	      if (thread_p->event_stats.trace_slow_query == true
-		  || thread_p->server_stats.server_trace == true)
+	      PERF_MON_GET_CURRENT_TIME (perf_start);
+
+	      if (thread_p->event_stats.trace_slow_query == true)
 		{
 		  gettimeofday (&wait_start, NULL);
 		}
@@ -1426,8 +1448,8 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
 			       wait_start, wait_end);
 		}
-	      server_stats_add_wait_time (thread_p, SERVER_STATS_CS,
-					  cs_ptr->cs_index, &wait_start);
+
+	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)

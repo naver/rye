@@ -63,6 +63,53 @@ typedef struct
 } MNT_EXEC_STATS_INFO;
 
 static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
+  /* MNT_STATS_CSECT_WAITS_ER_LOG_FILE *//* 0 */
+  {"Num_csect_waits_er_log_file", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_ER_MSG_CACHE *//* 1 */
+  {"Num_csect_waits_er_msg_cache", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_WFG *//* 2 */
+  {"Num_csect_waits_wfg", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_LOG *//* 3 */
+  {"Num_csect_waits_log", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_LOG_BUFFER *//* 4 */
+  {"Num_csect_waits_log_buffer", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_LOG_ARCHIVE *//* 5 */
+  {"Num_csect_waits_log_archive", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE *//* 6 */
+  {"Num_csect_waits_sr_locator_classname_table", 0,
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_FILE_NEWFILE *//* 7 */
+  {"Num_csect_waits_file_newfile", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE *//* 8 */
+  {"Num_csect_waits_qproc_query_table", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM *//* 9 */
+  {"Num_csect_waits_boot_sr_dbparm", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL *//* 10 */
+  {"Num_csect_waits_disk_refresh_goodvol", 0,
+   MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER *//* 11 */
+  {"Num_csect_waits_cnf_fmt_lexer", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_CT_OID_TABLE *//* 12 */
+  {"Num_csect_waits_ct_oid_table", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_HA_SERVER_STATE *//* 13 */
+  {"Num_csect_waits_ha_server_state", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_SESSION_STATE / *//* 14 */
+  {"Num_csect_waits_session_state", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_ACL *//* 15 */
+  {"Num_csect_waits_acl", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE *//* 16 */
+  {"Num_csect_waits_event_log_file", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_ACCESS_STATUS *//* 17 */
+  {"Num_csect_waits_access_status", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE *//* 18 */
+  {"Num_csect_waits_tempfile_cache", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN *//* 19 */
+  {"Num_csect_waits_css_active_conn", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_CSS_FREE_CONN *//* 20 */
+  {"Num_csect_waits_css_free_conn", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_CSECT_WAITS_UNKNOWN *//* 21 */
+  {"Num_csect_waits_unknown", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+
   /* MNT_STATS_DISK_SECTOR_ALLOCS */
   {"Num_disk_sector_allocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_DISK_SECTOR_DEALLOCS */
@@ -102,21 +149,21 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_data_page_fetches_btree", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 14 */
   {"Num_data_page_fetches_unknown", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 0 */
 
-  {"Num_data_page_fetches_waits_file_header", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},    /* 1 */
-  {"Num_data_page_fetches_waits_file_tab", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},       /* 2 */
-  {"Num_data_page_fetches_waits_heap_header", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},    /* 3 */
-  {"Num_data_page_fetches_waits_heap", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},   /* 4 */
-  {"Num_data_page_fetches_waits_volheader", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},      /* 5 */
-  {"Num_data_page_fetches_waits_volbitmap", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},      /* 6 */
-  {"Num_data_page_fetches_waits_xasl", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},   /* 7 */
-  {"Num_data_page_fetches_waits_qresult", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},        /* 8 */
-  {"Num_data_page_fetches_waits_ehash", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},  /* 9 */
-  {"Num_data_page_fetches_waits_overflow", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},       /* 10 */
-  {"Num_data_page_fetches_waits_area", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},   /* 11 */
-  {"Num_data_page_fetches_waits_catalog", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},        /* 12 */
-  {"Num_data_page_fetches_waits_btree_root", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},     /* 13 */
-  {"Num_data_page_fetches_waits_btree", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},  /* 14 */
-  {"Num_data_page_fetches_waits_unknown", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},        /* 0 */
+  {"Num_data_page_fetches_waits_file_header", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 1 */
+  {"Num_data_page_fetches_waits_file_tab", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 2 */
+  {"Num_data_page_fetches_waits_heap_header", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 3 */
+  {"Num_data_page_fetches_waits_heap", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 4 */
+  {"Num_data_page_fetches_waits_volheader", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 5 */
+  {"Num_data_page_fetches_waits_volbitmap", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 6 */
+  {"Num_data_page_fetches_waits_xasl", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 7 */
+  {"Num_data_page_fetches_waits_qresult", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 8 */
+  {"Num_data_page_fetches_waits_ehash", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 9 */
+  {"Num_data_page_fetches_waits_overflow", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 10 */
+  {"Num_data_page_fetches_waits_area", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 11 */
+  {"Num_data_page_fetches_waits_catalog", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 12 */
+  {"Num_data_page_fetches_waits_btree_root", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 13 */
+  {"Num_data_page_fetches_waits_btree", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 14 */
+  {"Num_data_page_fetches_waits_unknown", 2, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 0 */
 
   {"Num_data_page_fetches_track_file_allocset_alloc_pages", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 15 */
   {"Num_data_page_fetches_track_file_alloc_pages", 1, MNT_STATS_VALUE_COUNTER_WITH_TIME},	/* 16 */
@@ -844,6 +891,69 @@ mnt_stats_is_collecting_time (MNT_SERVER_ITEM item)
       assert (0);
       return false;
     }
+}
+
+MNT_SERVER_ITEM
+mnt_csect_type_to_server_item_waits (const CSECT_TYPE ctype)
+{
+  assert (ctype < CSECT_LAST);
+
+  switch (ctype)
+    {
+    case CSECT_ER_LOG_FILE:	/* 0 */
+      return MNT_STATS_CSECT_WAITS_ER_LOG_FILE;
+    case CSECT_ER_MSG_CACHE:	/* 1 */
+      return MNT_STATS_CSECT_WAITS_ER_MSG_CACHE;
+    case CSECT_WFG:		/* 2 */
+      return MNT_STATS_CSECT_WAITS_WFG;
+    case CSECT_LOG:		/* 3 */
+      return MNT_STATS_CSECT_WAITS_LOG;
+    case CSECT_LOG_BUFFER:	/* 4 */
+      return MNT_STATS_CSECT_WAITS_LOG_BUFFER;
+    case CSECT_LOG_ARCHIVE:	/* 5 */
+      return MNT_STATS_CSECT_WAITS_LOG_ARCHIVE;
+    case CSECT_LOCATOR_SR_CLASSNAME_TABLE:	/* 6 */
+      return MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE;
+    case CSECT_FILE_NEWFILE:	/* 7 */
+      return MNT_STATS_CSECT_WAITS_FILE_NEWFILE;
+    case CSECT_QPROC_QUERY_TABLE:	/* 8 */
+      return MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE;
+    case CSECT_BOOT_SR_DBPARM:	/* 9 */
+      return MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM;
+    case CSECT_DISK_REFRESH_GOODVOL:	/* 10 */
+      return MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL;
+    case CSECT_CNV_FMT_LEXER:	/* 11 */
+      return MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER;
+    case CSECT_CT_OID_TABLE:	/* 12 */
+      return MNT_STATS_CSECT_WAITS_CT_OID_TABLE;
+    case CSECT_HA_SERVER_STATE:	/* 13 */
+      return MNT_STATS_CSECT_WAITS_HA_SERVER_STATE;
+    case CSECT_SESSION_STATE:	/* 14 */
+      return MNT_STATS_CSECT_WAITS_SESSION_STATE;
+    case CSECT_ACL:		/* 15 */
+      return MNT_STATS_CSECT_WAITS_ACL;
+    case CSECT_EVENT_LOG_FILE:	/* 16 */
+      return MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE;
+    case CSECT_ACCESS_STATUS:	/* 17 */
+      return MNT_STATS_CSECT_WAITS_ACCESS_STATUS;
+    case CSECT_TEMPFILE_CACHE:	/* 18 */
+      return MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE;
+    case CSECT_CSS_ACTIVE_CONN:	/* 19 */
+      return MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN;
+    case CSECT_CSS_FREE_CONN:	/* 20 */
+      return MNT_STATS_CSECT_WAITS_CSS_FREE_CONN;
+
+    case CSECT_UNKNOWN:	/* 21 */
+      assert (false);
+      return MNT_STATS_CSECT_WAITS_UNKNOWN;
+
+    default:
+      break;
+    }
+
+  assert (false);
+
+  return MNT_STATS_CSECT_WAITS_UNKNOWN;
 }
 
 PAGE_TYPE

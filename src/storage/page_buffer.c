@@ -4814,8 +4814,7 @@ try_again:
   to.tv_sec = time (NULL) + wait_secs;
   to.tv_nsec = 0;
 
-  if (thrd_entry->event_stats.trace_slow_query == true
-      || thrd_entry->server_stats.server_trace == true)
+  if (thrd_entry->event_stats.trace_slow_query == true)
     {
       gettimeofday (&start, NULL);
     }
