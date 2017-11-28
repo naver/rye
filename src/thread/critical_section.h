@@ -90,8 +90,10 @@ typedef struct css_critical_section
   THREAD_ENTRY *waiting_promoters_queue;	/* queue of waiting promoters */
   pthread_t owner;		/* CS owner writer */
   int tran_index;		/* transaction id acquiring CS */
+#if 1 /* TODO - unsigned int ==> UINT64 */
   unsigned int total_enter;
   unsigned int total_nwaits;	/* total # of waiters */
+#endif
   struct timeval max_wait;
   struct timeval total_wait;
 } CSS_CRITICAL_SECTION;

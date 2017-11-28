@@ -805,6 +805,7 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
     }
 
   cs_ptr->total_enter++;
+
 #if defined (EnableThreadMonitoring)
   if (0 < prm_get_integer_value (PRM_ID_MNT_WAITING_THREAD))
     {
@@ -1053,6 +1054,7 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
     }
 
   cs_ptr->total_enter++;
+
 #if defined (EnableThreadMonitoring)
   if (0 < prm_get_integer_value (PRM_ID_MNT_WAITING_THREAD))
     {
@@ -1342,6 +1344,7 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
     }
 
   cs_ptr->total_enter++;
+
 #if defined (EnableThreadMonitoring)
   if (0 < prm_get_integer_value (PRM_ID_MNT_WAITING_THREAD))
     {
@@ -1727,6 +1730,7 @@ csect_dump_statistics (FILE * fp)
 	       cs_ptr->max_wait.tv_sec, cs_ptr->max_wait.tv_usec,
 	       cs_ptr->total_wait.tv_sec, cs_ptr->total_wait.tv_usec);
 
+#if 1 /* TODO - unsigned int ==> UINT64 */
       cs_ptr->total_enter = 0;
       cs_ptr->total_nwaits = 0;
       cs_ptr->max_wait.tv_sec = 0;
@@ -1734,6 +1738,7 @@ csect_dump_statistics (FILE * fp)
 
       cs_ptr->total_wait.tv_sec = 0;
       cs_ptr->total_wait.tv_usec = 0;
+#endif
     }
 }
 
