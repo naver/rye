@@ -166,7 +166,7 @@ csect_initialize_critical_section (CSS_CRITICAL_SECTION * cs_ptr)
 
   cs_ptr->rwlock = 0;
   cs_ptr->owner = ((pthread_t) 0);
-  cs_ptr->tran_index = -1;
+  cs_ptr->tran_index = NULL_TRAN_INDEX;
   cs_ptr->waiting_writers = 0;
   cs_ptr->waiting_writers_queue = NULL;
   cs_ptr->waiting_promoters_queue = NULL;
@@ -239,7 +239,7 @@ csect_finalize_critical_section (CSS_CRITICAL_SECTION * cs_ptr)
 
   cs_ptr->rwlock = 0;
   cs_ptr->owner = ((pthread_t) 0);
-  cs_ptr->tran_index = -1;
+  cs_ptr->tran_index = NULL_TRAN_INDEX;
   cs_ptr->waiting_writers = 0;
   cs_ptr->waiting_writers_queue = NULL;
   cs_ptr->waiting_promoters_queue = NULL;
@@ -595,6 +595,7 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 					   perf_start);
 
 	      cs_ptr->waiting_writers--;
+
 	      if (error_code != NO_ERROR)
 		{
 		  r = pthread_mutex_unlock (&cs_ptr->lock);
@@ -667,6 +668,7 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 					   perf_start);
 
 	      cs_ptr->waiting_writers--;
+
 	      if (error_code != NO_ERROR)
 		{
 		  r = pthread_mutex_unlock (&cs_ptr->lock);
@@ -1417,6 +1419,7 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 					   perf_start);
 
 	      cs_ptr->waiting_writers--;
+
 	      if (error_code != NO_ERROR)
 		{
 		  r = pthread_mutex_unlock (&cs_ptr->lock);
@@ -1461,6 +1464,7 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 					   perf_start);
 
 	      cs_ptr->waiting_writers--;
+
 	      if (error_code != NO_ERROR)
 		{
 		  r = pthread_mutex_unlock (&cs_ptr->lock);
@@ -1559,7 +1563,8 @@ csect_promote (THREAD_ENTRY * thread_p, int cs_index, int wait_secs)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
 
-  assert (cs_index >= 0 && cs_index < CRITICAL_SECTION_COUNT);
+  assert (cs_index >= 0);
+  assert (cs_index < CRITICAL_SECTION_COUNT);
 
   cs_ptr = &css_Csect_array[cs_index];
   return csect_promote_critical_section (thread_p, cs_ptr, wait_secs);
@@ -1608,7 +1613,7 @@ csect_exit_critical_section (CSS_CRITICAL_SECTION * cs_ptr)
 	{
 	  assert (cs_ptr->rwlock == 0);
 	  cs_ptr->owner = ((pthread_t) 0);
-	  cs_ptr->tran_index = -1;
+	  cs_ptr->tran_index = NULL_TRAN_INDEX;
 	}
     }
   else if (cs_ptr->rwlock > 0)
@@ -1733,7 +1738,7 @@ csect_dump_statistics (FILE * fp)
          "|          Total Wait "
          "|          Total wait |     Max Wait\n");
 
-  for (i = 0; i < CSECT_LAST; i++)
+  for (i = 0; i < CRITICAL_SECTION_COUNT; i++)
     {
       cs_ptr = &css_Csect_array[i];
 

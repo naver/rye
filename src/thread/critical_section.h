@@ -90,7 +90,7 @@ typedef struct css_critical_section
   THREAD_ENTRY *waiting_writers_queue;	/* queue of waiting writers */
   THREAD_ENTRY *waiting_promoters_queue;	/* queue of waiting promoters */
   pthread_t owner;		/* CS owner writer */
-  int tran_index;		/* transaction id acquiring CS */
+  int tran_index;		/* transaction id acquiring CS, is debug info */
 #if 1				/* TODO - */
   struct timeval max_wait;
 #endif
