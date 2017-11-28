@@ -68,13 +68,8 @@ static void css_reject_client_request (CSS_CONN_ENTRY * conn,
 				       unsigned short rid, int reason);
 static void css_reject_server_request (CSS_CONN_ENTRY * conn,
 				       unsigned short rid, int reason);
-static void css_accept_server_request (CSS_CONN_ENTRY * conn,
-				       unsigned short rid, int reason);
-static void css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-				    char *server_name,
-				    int server_name_length);
-static void css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-    SOCKET_QUEUE_ENTRY * entry, char *server_name);
+static int css_accept_server_request (CSS_CONN_ENTRY * conn,
+				      unsigned short rid);
 static void css_register_new_server (CSS_CONN_ENTRY * conn,
 				     unsigned short rid, char *server_name,
 				     int server_name_length);
@@ -261,139 +256,32 @@ css_reject_server_request (CSS_CONN_ENTRY * conn, unsigned short rid,
 }
 
 /*
- * css_accept_server_request() - Sends an accept reply to the server to
- *              indicate that it is now connected to the master server
+ * css_accept_server_request() - Accepts a connect request from a server
  *   return: none
  *   conn(in)
- *   reason(in)
+ *   rid(in)
  */
-static void
-css_accept_server_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-			   int reason)
+static int
+css_accept_server_request (CSS_CONN_ENTRY * conn, unsigned short rid)
 {
+  CSS_NET_PACKET *recv_packet = NULL;
+  int error = ER_FAILED;
   int accept_reason;
 
-  accept_reason = htonl (reason);
+  accept_reason = htonl (SERVER_REQUEST_ACCEPTED);
   css_send_data_packet (conn, rid, 1, (char *) &accept_reason, sizeof (int));
-}
 
-/*
- * css_accept_new_request() - Accepts a connect request from a new server
- *   return: none
- *   conn(in)
- *   rid(in)
- *   server_name(in)
- *   server_name_length(in)
- */
-static void
-css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-			char *server_name, int server_name_length)
-{
-  SOCKET server_fd = INVALID_SOCKET;
-  int length;
-  CSS_CONN_ENTRY *datagram_conn;
-  SOCKET_QUEUE_ENTRY *entry;
-  char *datagram;
-  CSS_NET_PACKET *recv_packet = NULL;
-
-  css_accept_server_request (conn, rid, SERVER_REQUEST_ACCEPTED);
-
-  if (css_recv_data_from_server (&recv_packet, conn, rid, -1, 0) != NO_ERRORS)
+  if (css_recv_data_from_server (&recv_packet, conn, rid, -1, 1,
+				 &error, sizeof (int)) != NO_ERRORS)
     {
-      return;
+      return ER_FAILED;
     }
-  datagram = css_net_packet_get_buffer (recv_packet, 0, -1, false);
 
-  if (datagram != NULL && css_tcp_master_datagram (datagram, &server_fd))
-    {
-      datagram_conn = css_make_conn (server_fd);
-      if (datagram_conn == NULL)
-        {
-          assert (false);
-          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-                               server_name);
-          return;
-        }
-
-      datagram_conn->peer_version = conn->peer_version;
-#if defined(DEBUG)
-      css_Active_server_count++;
-#endif
-      css_add_request_to_socket_queue (datagram_conn, server_name, server_fd,
-				       READ_WRITE, 0,
-				       &css_Master_socket_anchor);
-      length = strlen (server_name) + 1;
-      if (length < server_name_length)
-	{
-	  entry = css_return_entry_of_server (server_name,
-					      css_Master_socket_anchor);
-	  if (entry != NULL)
-	    {
-	      server_name += length;
-
-	      entry->env_var = (char *) malloc (strlen (server_name) + 1);
-	      if (entry->env_var != NULL)
-		{
-		  strcpy (entry->env_var, server_name);
-		}
-
-	      server_name += strlen (server_name) + 1;
-
-	      entry->pid = atoi (server_name);
-	    }
-	}
-    }
+  error = ntohl (error);
 
   css_net_packet_free (recv_packet);
-}
 
-/*
- * css_accept_old_request() - Accepts a connect request from a server
- *   return: none
- *   conn(in)
- *   rid(in)
- *   entry(out)
- *   server_name(in)
- *   server_name_length(in)
- */
-static void
-css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-    SOCKET_QUEUE_ENTRY * entry, char *server_name)
-{
-  char *datagram;
-  SOCKET server_fd = INVALID_SOCKET;
-  CSS_CONN_ENTRY *datagram_conn;
-  CSS_NET_PACKET *recv_packet = NULL;
-
-  css_accept_server_request (conn, rid, SERVER_REQUEST_ACCEPTED);
-
-  if (css_recv_data_from_server (&recv_packet, conn, rid, -1, 0) != NO_ERRORS)
-    {
-      return;
-    }
-
-  datagram = css_net_packet_get_buffer (recv_packet, 0, -1, false);
-
-  if (datagram != NULL && css_tcp_master_datagram (datagram, &server_fd))
-    {
-      datagram_conn = css_make_conn (server_fd);
-      if (datagram_conn == NULL)
-        {
-          assert (false);
-          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-                               server_name);
-          return;
-        }
-
-      entry->fd = server_fd;
-      datagram_conn->peer_version = entry->conn_ptr->peer_version;
-      css_free_conn (entry->conn_ptr);
-      entry->conn_ptr = datagram_conn;
-    }
-
-  css_net_packet_free (recv_packet);
+  return error;
 }
 
 /*
@@ -409,25 +297,70 @@ css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid,
 			 char *server_name, int server_name_length)
 {
   SOCKET_QUEUE_ENTRY *entry;
+  int length;
 
   entry = css_return_entry_of_server (server_name, css_Master_socket_anchor);
-  if (entry != NULL)
+
+  if (entry != NULL && !IS_INVALID_SOCKET (entry->fd))
     {
-      if (IS_INVALID_SOCKET (entry->fd))
-	{
-	  /* accept a server that was auto-started */
-	  css_accept_old_request (conn, rid, entry, server_name);
-	}
-      else
-	{
-	  /* reject a server with a duplicate name */
-	  css_reject_server_request (conn, rid, SERVER_ALREADY_EXISTS);
-	}
+      /* reject a server with a duplicate name */
+      css_reject_server_request (conn, rid, SERVER_ALREADY_EXISTS);
+      css_free_conn (conn);
+      return;
+    }
+
+  /* accept a server that was auto-started */
+  if (css_accept_server_request (conn, rid) != NO_ERROR)
+    {
+      assert (false);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			   ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+			   server_name);
+      css_free_conn (conn);
+      return;
+    }
+
+  if (entry == NULL)
+    {
+#if defined(DEBUG)
+      css_Active_server_count++;
+#endif
+      entry = css_add_request_to_socket_queue (conn, server_name, conn->fd,
+					       READ_WRITE, 0,
+					       &css_Master_socket_anchor);
     }
   else
     {
-      /* accept a request from a new server */
-      css_accept_new_request (conn, rid, server_name, server_name_length);
+      css_free_conn (entry->conn_ptr);
+      entry->fd = conn->fd;
+      entry->conn_ptr = conn;
+    }
+
+  if (entry == NULL)
+    {
+      assert (false);
+      css_free_conn (conn);
+      return;
+    }
+
+  length = strlen (server_name) + 1;
+  if (length < server_name_length)
+    {
+      server_name += length;
+
+      if (entry->env_var != NULL)
+	{
+	  free (entry->env_var);
+	}
+      entry->env_var = (char *) malloc (strlen (server_name) + 1);
+      if (entry->env_var != NULL)
+	{
+	  strcpy (entry->env_var, server_name);
+	}
+
+      server_name += strlen (server_name) + 1;
+
+      entry->pid = atoi (server_name);
     }
 }
 
@@ -562,7 +495,7 @@ css_process_new_connection (SOCKET fd)
       return;
     }
 
-  if (css_receive_request (conn, &recv_packet) == NO_ERRORS)
+  if (css_recv_command_packet (conn, &recv_packet) == NO_ERRORS)
     {
       char *server_name;
       int server_name_length;
@@ -586,7 +519,8 @@ css_process_new_connection (SOCKET fd)
 	case MASTER_CONN_TYPE_HB_PROC:	/* request from a new server or new repl */
 	  css_register_new_server (conn, request_id, server_name,
 				   server_name_length);
-	  css_free_conn (conn);
+	  /* conn is reused or freed in css_register_new_server()
+	   * do not call css_free_conn() here */
 	  break;
 	default:
 	  css_free_conn (conn);

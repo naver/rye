@@ -49,6 +49,7 @@ struct ip_info
 extern CSS_CONN_ENTRY *css_Conn_array;
 extern CSS_CONN_ENTRY *css_Active_conn_anchor;
 extern CSS_CRITICAL_SECTION css_Active_conn_csect;
+extern CSS_CONN_ENTRY *css_Listen_conn;
 
 extern int css_Num_access_user;
 
@@ -72,9 +73,6 @@ extern void css_decrement_num_conn (BOOT_CLIENT_TYPE client_type);
 extern void css_free_conn (CSS_CONN_ENTRY * conn);
 extern void css_print_conn_entry_info (CSS_CONN_ENTRY * p);
 extern void css_print_conn_list (void);
-extern CSS_CONN_ENTRY *css_connect_to_master_server (int master_port_id,
-						     const char *server_name,
-						     int name_length);
 extern CSS_CONN_ENTRY *css_find_conn_by_tran_index (int tran_index);
 extern int css_get_session_ids_for_active_connections (SESSION_ID ** ids,
 						       int *count);
@@ -109,8 +107,13 @@ extern int css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
 					     CSS_CONN_ENTRY * conn, int rid,
 					     int timeout, int num_buffers,
 					     ...);
-extern int css_recv_request_from_client (CSS_CONN_ENTRY * conn,
-					 CSS_NET_PACKET ** recv_packet);
 extern int css_find_dupliated_conn (int conn_idx);
+
+extern int css_common_connect_sr (CSS_CONN_ENTRY * conn,
+				  unsigned short *rid,
+				  const char *host_name,
+				  int connect_type,
+				  const char *server_name,
+				  int server_name_length, int port);
 
 #endif /* _CONNECTION_SR_H_ */

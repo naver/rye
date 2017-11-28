@@ -47,6 +47,13 @@
 
 #define HB_STOP_WAITING_TIME			        (1*ONE_SEC)
 
+#define MASTER_CONN_NAME_HA_SERVER		'#'
+#define MASTER_CONN_NAME_HA_REPL		'$'
+#define IS_MASTER_CONN_NAME_DRIVER(name)	(*((char *)name) == '-')
+#define IS_MASTER_CONN_NAME_HA_SERVER(name)	(*((char *)name) == MASTER_CONN_NAME_HA_SERVER)
+#define IS_MASTER_CONN_NAME_HA_REPL(name)	(*((char *)name) == MASTER_CONN_NAME_HA_REPL)
+
+
 /* heartbeat resource process type */
 typedef enum hb_proc_type HB_PROC_TYPE;
 enum hb_proc_type

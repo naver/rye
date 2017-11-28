@@ -72,22 +72,12 @@ static void css_initialize_conn (CSS_CONN_ENTRY * conn, SOCKET fd);
 static void css_close_conn (CSS_CONN_ENTRY * conn);
 static void css_dealloc_conn (CSS_CONN_ENTRY * conn);
 
-static CSS_CONN_ENTRY *css_common_connect (const char *host_name,
-					   CSS_CONN_ENTRY * conn,
-					   int connect_type,
-					   const char *server_name,
-					   int server_name_length,
-					   int port, int timeout,
-					   unsigned short *rid,
-					   bool send_magic);
-static CSS_CONN_ENTRY *css_server_connect (const char *host_name,
-					   CSS_CONN_ENTRY * conn,
-					   const char *server_name,
-					   unsigned short *rid);
-static CSS_CONN_ENTRY *css_server_connect_part_two (const char *host_name,
-						    CSS_CONN_ENTRY * conn,
-						    int port_id,
-						    unsigned short *rid);
+static int css_server_connect (const char *host_name,
+			       CSS_CONN_ENTRY * conn,
+			       const char *server_name, unsigned short *rid);
+static int css_server_connect_part_two (const char *host_name,
+					CSS_CONN_ENTRY * conn,
+					int port_id, unsigned short *rid);
 /*
  * css_shutdown_conn () -
  *   return: void
@@ -296,121 +286,72 @@ css_send_close_request (CSS_CONN_ENTRY * conn)
 }
 
 /*
- * css_receive_request () - "blocking" read for a new request
- *   return:
- *   conn(in):
- *   recv_packet(out):
+ * css_common_connect_cl () - actually try to make a connection to a server
+ *   return: CSS_ERROR
  */
 int
-css_receive_request (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet)
-{
-  int rc;
-  CSS_NET_PACKET *tmp_recv_packet = NULL;
-
-  if (recv_packet == NULL)
-    {
-      assert (false);
-
-      return CONNECTION_CLOSED;
-    }
-
-  rc = css_net_packet_recv (&tmp_recv_packet, conn, -1, 0);
-  if (rc != NO_ERRORS)
-    {
-      return rc;
-    }
-
-  if (tmp_recv_packet->header.packet_type != COMMAND_TYPE)
-    {
-      css_net_packet_free (tmp_recv_packet);
-      return WRONG_PACKET_TYPE;
-    }
-
-  *recv_packet = tmp_recv_packet;
-
-  TRACE ("in css_receive_request, received request: %d\n",
-	 tmp_recv_packet->header.function_code);
-
-  return (rc);
-}
-
-/*
- * css_common_connect () - actually try to make a connection to a server
- *   return:
- *   host_name(in):
- *   conn(in/out):
- *   connect_type(in):
- *   server_name(in):
- *   server_name_length(in):
- *   port(in):
- *   timeout(in): timeout in seconds
- *   rid(out):
- */
-static CSS_CONN_ENTRY *
-css_common_connect (const char *host_name, CSS_CONN_ENTRY * conn,
-		    int connect_type, const char *server_name,
-		    int server_name_length, int port, int timeout,
-		    unsigned short *rid, bool send_magic)
+css_common_connect_cl (const char *host_name, CSS_CONN_ENTRY * conn,
+		       int connect_type, const char *dbname,
+		       const char *packed_name, int packed_name_len,
+		       int port, int timeout,
+		       unsigned short *rid, bool send_magic)
 {
   SOCKET fd;
+  int css_error = NO_ERRORS;
 
-  if (timeout > 0)
-    {
-      /* timeout in milli-seconds in css_tcp_client_open_with_timeout() */
-      fd = css_tcp_client_open_with_timeout (host_name, port, timeout * 1000);
-    }
-  else
-    {
-      fd = css_tcp_client_open_with_retry (host_name, port, true);
-    }
+  fd = css_tcp_client_open (host_name, port, connect_type, dbname,
+			    timeout * 1000);
 
   if (!IS_INVALID_SOCKET (fd))
     {
-      int css_error;
-
       conn->fd = fd;
 
-      if (send_magic == true && css_send_magic (conn) != NO_ERRORS)
+      if (send_magic == true)
 	{
-	  return NULL;
+	  css_error = css_send_magic (conn);
 	}
 
-      css_error = css_send_command_packet (conn, connect_type, rid, 1,
-					   server_name, server_name_length);
       if (css_error == NO_ERRORS)
 	{
-	  return conn;
+	  css_error = css_send_command_packet (conn, connect_type, rid, 1,
+					       packed_name,
+					       packed_name_len);
 	}
-    }
-  else if (errno == ETIMEDOUT)
-    {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_CONNECT_TIMEDOUT, 2, host_name,
-			   timeout);
     }
   else
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1,
-			   host_name);
+      if (errno == ETIMEDOUT)
+	{
+	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			       ERR_CSS_TCP_CONNECT_TIMEDOUT, 2, host_name,
+			       timeout);
+	}
+      else
+	{
+	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			       ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1,
+			       host_name);
+	}
+      css_error = REQUEST_REFUSED;
     }
 
-  return NULL;
+  return css_error;
 }
 
 /*
  * css_server_connect () - actually try to make a connection to a server
- *   return:
+ *   return: CSS_ERROR
  *   host_name(in):
  *   conn(in):
  *   server_name(in):
  *   rid(out):
  */
-static CSS_CONN_ENTRY *
+static int
 css_server_connect (const char *host_name, CSS_CONN_ENTRY * conn,
 		    const char *server_name, unsigned short *rid)
 {
   int length;
+  int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT);
 
   if (server_name)
     {
@@ -421,170 +362,49 @@ css_server_connect (const char *host_name, CSS_CONN_ENTRY * conn,
       length = 0;
     }
 
-  /* timeout in second in css_common_connect() */
-  return (css_common_connect
-	  (host_name, conn, MASTER_CONN_TYPE_TO_SERVER, server_name, length,
-	   css_Service_id,
-	   prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT), rid, true));
+  return (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_TO_SERVER,
+				 server_name, server_name, length,
+				 css_Service_id, timeout, rid, true));
 }
 
 /* New style server connection function that uses an explicit port id */
 
 /*
  * css_server_connect_part_two () -
- *   return:
+ *   return: CSS_ERROR
  *   host_name(in):
  *   conn(in):
  *   port_id(in):
  *   rid(in):
  */
-static CSS_CONN_ENTRY *
+static int
 css_server_connect_part_two (const char *host_name, CSS_CONN_ENTRY * conn,
 			     int port_id, unsigned short *rid)
 {
   int reason = -1;
-  CSS_CONN_ENTRY *return_status;
+  int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT);
+  int css_error;
 
-  return_status = NULL;
-
-  /*
-   * Use css_common_connect with the server's port id, since we already
-   * know we'll be connecting to the right server, don't bother sending
-   * the server name.
-   */
-  /* timeout in second in css_common_connect() */
-  if (css_common_connect
-      (host_name, conn, MASTER_CONN_TYPE_TO_SERVER, NULL, 0, port_id,
-       prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT), rid,
-       false) != NULL)
+  css_error = css_common_connect_cl (host_name, conn,
+				     MASTER_CONN_TYPE_TO_SERVER,
+				     NULL, NULL, 0,
+				     port_id, timeout, rid, false);
+  if (css_error == NO_ERRORS)
     {
       /* now ask for a reply from the server */
-      if (css_recv_data_from_server
-	  (NULL, conn, *rid, -1, 1, (char *) &reason,
-	   sizeof (int)) == NO_ERRORS)
+      css_error = css_recv_data_from_server (NULL, conn, *rid, -1, 1,
+					     (char *) &reason, sizeof (int));
+      if (css_error == NO_ERRORS)
 	{
 	  reason = ntohl (reason);
-	  if (reason == SERVER_CONNECTED)
+	  if (reason != SERVER_CONNECTED)
 	    {
-	      return_status = conn;
+	      css_error = ERROR_ON_READ;
 	    }
-
-	  /* we shouldn't have to deal with SERVER_STARTED responses here ? */
 	}
     }
 
-  return return_status;
-}
-
-/*
- * css_connect_to_master_server () - connect to the master from the server
- *   return:
- *   master_port_id(in):
- *   server_name(in):
- *   name_length(in):
- *
- * Note: The server name argument is actually a combination of two strings,
- *       the server name and the server version
- */
-CSS_CONN_ENTRY *
-css_connect_to_master_server (int master_port_id,
-			      const char *server_name, int name_length)
-{
-  char hname[MAXHOSTNAMELEN];
-  CSS_CONN_ENTRY *conn;
-  unsigned short rid;
-  int response, response_buff;
-  char *pname;
-  int datagram_fd, socket_fd;
-
-  css_Service_id = master_port_id;
-  if (GETHOSTNAME (hname, MAXHOSTNAMELEN) == 0)
-    {
-      conn = css_make_conn (0);
-      if (conn == NULL)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-			       server_name);
-	  return NULL;
-	}
-
-      if (css_common_connect
-	  (hname, conn, MASTER_CONN_TYPE_HB_PROC, server_name, name_length,
-	   master_port_id, 0, &rid, true) == NULL)
-	{
-	  css_free_conn (conn);
-	  return NULL;
-	}
-      else
-	{
-	  if (css_recv_data_from_server (NULL, conn, rid, -1, 1,
-					 (char *) &response_buff,
-					 sizeof (int)) == NO_ERRORS)
-	    {
-	      response = ntohl (response_buff);
-
-	      TRACE
-		("connect_to_master received %d as response from master\n",
-		 response);
-
-	      switch (response)
-		{
-		case SERVER_ALREADY_EXISTS:
-		  css_free_conn (conn);
-
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ERR_CSS_SERVER_ALREADY_EXISTS, 1, server_name);
-		  return NULL;
-
-		case SERVER_REQUEST_ACCEPTED:
-		  /* send the "pathname" for the datagram */
-		  /* be sure to open the datagram first.  */
-		  pname = tempnam (NULL, "rye");
-		  if (pname)
-		    {
-		      if (css_tcp_setup_server_datagram (pname, &socket_fd)
-			  && css_send_data_packet (conn, rid, 1, pname,
-						   strlen (pname) + 1) ==
-			  NO_ERRORS
-			  && css_tcp_listen_server_datagram (socket_fd,
-							     &datagram_fd))
-			{
-			  (void) unlink (pname);
-			  /* don't use free_and_init on pname since it came from tempnam() */
-			  free (pname);
-			  css_free_conn (conn);
-			  close (socket_fd);
-			  return (css_make_conn (datagram_fd));
-			}
-		      else
-			{
-			  /* don't use free_and_init on pname since it came from tempnam() */
-			  free (pname);
-			  er_set_with_oserror (ER_ERROR_SEVERITY,
-					       ARG_FILE_LINE,
-					       ERR_CSS_ERROR_DURING_SERVER_CONNECT,
-					       1, server_name);
-			  css_free_conn (conn);
-			  return NULL;
-			}
-		    }
-		  else
-		    {
-		      /* Could not create the temporary file */
-		      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-					   ERR_CSS_ERROR_DURING_SERVER_CONNECT,
-					   1, server_name);
-		      css_free_conn (conn);
-		      return NULL;
-		    }
-		}
-	    }
-	}
-      css_free_conn (conn);
-    }
-
-  return NULL;
+  return css_error;
 }
 
 /*
@@ -610,7 +430,7 @@ css_connect_to_rye_server (const char *host_name, const char *server_name)
     }
 
   retry_count = 0;
-  if (css_server_connect (host_name, conn, server_name, &rid) == NULL)
+  if (css_server_connect (host_name, conn, server_name, &rid) != NO_ERRORS)
     {
       goto exit;
     }
@@ -644,7 +464,8 @@ css_connect_to_rye_server (const char *host_name, const char *server_name)
       port_id = ntohl (reply[1]);
       css_close_conn (conn);
 
-      if (css_server_connect_part_two (host_name, conn, port_id, &rid))
+      if (css_server_connect_part_two (host_name, conn, port_id,
+				       &rid) == NO_ERRORS)
 	{
 	  return conn;
 	}
@@ -715,7 +536,7 @@ css_connect_to_master_timeout (const char *host_name, int port_id,
   CSS_CONN_ENTRY *conn;
   double time = timeout;
 
-  conn = css_make_conn (0);
+  conn = css_make_conn (INVALID_SOCKET);
   if (conn == NULL)
     {
       return NULL;
@@ -723,8 +544,17 @@ css_connect_to_master_timeout (const char *host_name, int port_id,
 
   time = ceil (time / 1000);
 
-  return (css_common_connect (host_name, conn, MASTER_CONN_TYPE_INFO, NULL, 0,
-			      port_id, (int) time, rid, true));
+  if (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_INFO, 
+			     NULL, NULL, 0,
+			     port_id, (int) time, rid, true) == NO_ERRORS)
+    {
+      return conn;
+    }
+  else
+    {
+      css_free_conn (conn);
+      return NULL;
+    }
 }
 
 /*
@@ -808,7 +638,8 @@ css_does_master_exist (int port_id)
   SOCKET fd;
 
   /* Don't waste time retrying between master to master connections */
-  fd = css_tcp_client_open_with_retry ("localhost", port_id, false);
+  fd = css_tcp_client_open ("localhost", port_id, MASTER_CONN_TYPE_INFO, NULL,
+			    1000);
   if (!IS_INVALID_SOCKET (fd))
     {
       css_shutdown_socket (fd);

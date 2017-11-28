@@ -1382,11 +1382,9 @@ css_master_request_handler (SOCKET_QUEUE_ENTRY * sock_ent)
 
   conn = sock_ent->conn_ptr;
 
-  css_error = css_receive_request (conn, &recv_packet);
-  if (css_error != NO_ERRORS)
+  if (css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "receive error request. (error:%d). \n", css_error);
+      er_log_debug (ARG_FILE_LINE, "receive error request.\n");
 
       hb_cleanup_conn_and_start_process (conn);
       return;

@@ -84,13 +84,9 @@ CSS_CRITICAL_SECTION css_Active_conn_csect;
 static LAST_ACCESS_STATUS *css_Access_status_anchor = NULL;
 int css_Num_access_user = 0;
 
+CSS_CONN_ENTRY *css_Listen_conn = NULL;
+
 static int css_get_next_client_id (void);
-static CSS_CONN_ENTRY *css_common_connect (CSS_CONN_ENTRY * conn,
-					   unsigned short *rid,
-					   const char *host_name,
-					   int connect_type,
-					   const char *server_name,
-					   int server_name_length, int port);
 
 static void css_dealloc_conn (CSS_CONN_ENTRY * conn);
 
@@ -722,152 +718,43 @@ css_print_conn_list (void)
 }
 
 /*
- * css_common_connect() - actually try to make a connection to a server.
- *   return: connection entry if success, or NULL
- *   conn(in): connection entry will be connected
- *   rid(out): request id
- *   host_name(in): host name of server
- *   connect_type(in):
- *   server_name(in):
- *   server_name_length(in):
- *   port(in):
+ * css_common_connect_sr() - actually try to make a connection to a server.
+ *   return: CSS_ERROR
  */
-static CSS_CONN_ENTRY *
-css_common_connect (CSS_CONN_ENTRY * conn, unsigned short *rid,
-		    const char *host_name, int connect_type,
-		    const char *server_name, int server_name_length, int port)
+int
+css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
+		       const char *host_name, int connect_type,
+		       const char *packed_name, int packed_name_len,
+		       int port)
 {
   SOCKET fd;
+  int css_error = NO_ERRORS;
+  int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  fd = css_tcp_client_open (host_name, port);
-
-  if (!IS_INVALID_SOCKET (fd))
+  fd = css_tcp_client_open (host_name, port, connect_type, NULL,
+			    timeout);
+  if (IS_INVALID_SOCKET (fd))
     {
-      int css_error;
-
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER,
+			   1, host_name);
+      css_error = REQUEST_REFUSED;
+    }
+  else
+    {
       conn->fd = fd;
 
-      if (css_send_magic (conn) != NO_ERRORS)
-	{
-	  return NULL;
-	}
+      css_error = css_send_magic (conn);
 
-      css_error = css_send_command_packet (conn, connect_type, rid, 1,
-					   server_name, server_name_length);
       if (css_error == NO_ERRORS)
 	{
-	  return (conn);
+	  css_error = css_send_command_packet (conn, connect_type, rid, 1,
+					       packed_name,
+					       packed_name_len);
 	}
     }
 
-  return (NULL);
-}
-
-/*
- * css_connect_to_master_server() - Connect to the master from the server.
- *   return: connection entry if success, or NULL
- *   master_port_id(in):
- *   server_name(in): name + version
- *   name_length(in):
- */
-CSS_CONN_ENTRY *
-css_connect_to_master_server (int master_port_id, const char *server_name,
-			      int name_length)
-{
-  char hname[MAXHOSTNAMELEN];
-  CSS_CONN_ENTRY *conn;
-  unsigned short rid;
-  int response, response_buff;
-  char *pname;
-  int datagram_fd, socket_fd;
-
-  css_Service_id = master_port_id;
-  if (GETHOSTNAME (hname, MAXHOSTNAMELEN) == 0)
-    {
-      conn = css_make_conn (0);
-      if (conn == NULL)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-			       server_name);
-	  return (NULL);
-	}
-
-      if (css_common_connect (conn, &rid, hname, MASTER_CONN_TYPE_HB_PROC,
-			      server_name, name_length,
-			      master_port_id) == NULL)
-	{
-	  css_free_conn (conn);
-	  return (NULL);
-	}
-      else
-	{
-	  if (css_recv_data_packet_from_client (NULL, conn, rid, -1, 1,
-						(char *) &response_buff,
-						sizeof (int)) == NO_ERRORS)
-	    {
-	      response = ntohl (response_buff);
-	      TRACE
-		("css_connect_to_master_server received %d as response from master\n",
-		 response);
-
-	      switch (response)
-		{
-		case SERVER_ALREADY_EXISTS:
-		  css_free_conn (conn);
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ERR_CSS_SERVER_ALREADY_EXISTS, 1, server_name);
-		  return (NULL);
-
-		case SERVER_REQUEST_ACCEPTED:
-		  /* send the "pathname" for the datagram */
-		  /* be sure to open the datagram first.  */
-		  pname = tempnam (NULL, "rye");
-		  if (pname)
-		    {
-		      if (css_tcp_setup_server_datagram (pname, &socket_fd)
-			  && (css_send_data_packet (conn, rid, 1, pname,
-						    strlen (pname) + 1) ==
-			      NO_ERRORS)
-			  &&
-			  (css_tcp_listen_server_datagram
-			   (socket_fd, &datagram_fd)))
-			{
-			  (void) unlink (pname);
-			  /* don't use free_and_init on pname since
-			     it came from tempnam() */
-			  free (pname);
-			  css_free_conn (conn);
-			  return (css_make_conn (datagram_fd));
-			}
-		      else
-			{
-			  /* don't use free_and_init on pname since
-			     it came from tempnam() */
-			  free (pname);
-			  er_set_with_oserror (ER_ERROR_SEVERITY,
-					       ARG_FILE_LINE,
-					       ERR_CSS_ERROR_DURING_SERVER_CONNECT,
-					       1, server_name);
-			  css_free_conn (conn);
-			  return (NULL);
-			}
-		    }
-		  else
-		    {
-		      /* Could not create the temporary file */
-		      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-					   ERR_CSS_ERROR_DURING_SERVER_CONNECT,
-					   1, server_name);
-		      css_free_conn (conn);
-		      return (NULL);
-		    }
-		}
-	    }
-	}
-      css_free_conn (conn);
-    }
-  return (NULL);
+  return css_error;
 }
 
 /*
@@ -1226,30 +1113,6 @@ css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
     }
 
   return css_error;
-}
-
-int
-css_recv_request_from_client (CSS_CONN_ENTRY * conn,
-			      CSS_NET_PACKET ** recv_packet)
-{
-  int status;
-  CSS_NET_PACKET *tmp_recv_packet = NULL;
-
-  status = css_net_packet_recv (&tmp_recv_packet, conn, -1, 0);
-  if (status != NO_ERRORS)
-    {
-      return ER_FAILED;
-    }
-
-  if (tmp_recv_packet->header.packet_type == COMMAND_TYPE)
-    {
-      *recv_packet = tmp_recv_packet;
-      return NO_ERROR;
-    }
-
-  css_net_packet_free (tmp_recv_packet);
-
-  return ER_FAILED;
 }
 
 int

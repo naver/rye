@@ -28,12 +28,16 @@
 #ident "$Id$"
 
 #include "connection_defs.h"
+#include "heartbeat.h"
 
 typedef void (*CSS_SERVER_TIMEOUT_FN) (void);
 /* check server alive */
 typedef bool (*CSS_CHECK_SERVER_ALIVE_FN) (const char *, const char *);
 typedef bool (*CSS_CHECK_CLIENT_ALIVE_FN) (void);
 extern CSS_CHECK_SERVER_ALIVE_FN css_check_server_alive_fn;
+
+extern int css_recv_command_packet (CSS_CONN_ENTRY * conn,
+				    CSS_NET_PACKET ** recv_packet);
 
 extern int css_send_data_packet (CSS_CONN_ENTRY * conn, unsigned short rid,
 				 int num_buffers, ...);
@@ -84,5 +88,10 @@ extern int css_send_magic (CSS_CONN_ENTRY * conn);
 extern int css_check_magic (CSS_CONN_ENTRY * conn);
 
 extern bool css_is_client_ro_tran (THREAD_ENTRY * thread_p);
+
+extern CSS_CONN_ENTRY *css_register_to_master (int master_port_id,
+					       HB_PROC_TYPE type,
+					       const char *server_name,
+					       const char *log_path);
 
 #endif /* _CONNECTION_SUPPORT_H_ */

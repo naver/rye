@@ -53,11 +53,4 @@ extern bool master_util_config_startup (const char *db_name, int *port_id);
 extern pthread_mutex_t css_Master_er_log_enable_lock;
 extern bool css_Master_er_log_enabled;
 
-#define MASTER_CONN_NAME_HA_SERVER               '#'
-#define MASTER_CONN_NAME_HA_REPL                 '$'
-
-#define IS_MASTER_CONN_NAME_DRIVER(name)         (*((char *)name) == '-')
-#define IS_MASTER_CONN_NAME_HA_SERVER(name)      (*((char *)name) == MASTER_CONN_NAME_HA_SERVER)
-#define IS_MASTER_CONN_NAME_HA_REPL(name)  (*((char *)name) == MASTER_CONN_NAME_HA_REPL)
-
 #endif /* _MASTER_UTIL_H_ */

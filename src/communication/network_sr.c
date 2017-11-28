@@ -1000,8 +1000,6 @@ int
 net_server_start (const char *server_name)
 {
   int error = NO_ERROR;
-  int name_length;
-  char *packed_name;
   int r, status = 0;
 
   /* open the system message catalog, before prm_ ?  */
@@ -1052,15 +1050,13 @@ net_server_start (const char *server_name)
     }
   else
     {
-      packed_name = css_pack_server_name (server_name, &name_length);
       r = css_init_job_queue ();
 
       if (r == NO_ERROR)
 	{
-	  r = css_init (packed_name, name_length,
+	  r = css_init (server_name, 
 			prm_get_integer_value (PRM_ID_TCP_PORT_ID));
 	}
-      free_and_init (packed_name);
 
       if (r < 0)
 	{

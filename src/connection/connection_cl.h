@@ -34,10 +34,6 @@ extern void css_shutdown_conn (CSS_CONN_ENTRY * conn);
 extern CSS_CONN_ENTRY *css_make_conn (SOCKET fd);
 extern void css_free_conn (CSS_CONN_ENTRY * conn);
 
-extern CSS_CONN_ENTRY *css_connect_to_master_server (int master_port_id,
-						     const char *server_name,
-						     int name_length);
-
 extern CSS_CONN_ENTRY *css_find_exception_conn (void);
 
 extern CSS_CONN_ENTRY *css_connect_to_rye_server (const char *host_name,
@@ -57,12 +53,20 @@ extern int css_send_request_to_master (CSS_CONN_ENTRY * conn,
 
 extern bool css_does_master_exist (int port_id);
 
-extern int css_receive_request (CSS_CONN_ENTRY * conn,
-				CSS_NET_PACKET ** recv_packet);
 extern int css_send_close_request (CSS_CONN_ENTRY * conn);
 
 extern int css_test_for_open_conn (CSS_CONN_ENTRY * conn);
 extern CSS_CONN_ENTRY *css_find_conn_from_fd (SOCKET fd);
 extern unsigned short css_get_request_id (CSS_CONN_ENTRY * conn);
+
+extern int css_common_connect_cl (const char *host_name,
+				  CSS_CONN_ENTRY * conn,
+				  int connect_type,
+				  const char *server_name,
+				  const char *packed_name,
+				  int packed_name_len,
+				  int port, int timeout,
+				  unsigned short *rid, bool send_magic);
+
 
 #endif /* _CONNECTION_CL_H_ */

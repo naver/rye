@@ -47,22 +47,15 @@
 #include "error_manager.h"
 #include "connection_defs.h"
 #include "connection_support.h"
+#include "connection_cl.h"
 #include "tcp.h"
 #include "heartbeat.h"
 #include "master_heartbeat.h"
 #include "utility.h"
 
-extern CSS_CONN_ENTRY *css_connect_to_master_server (int master_port_id,
-						     const char *server_name,
-						     int name_length);
-extern void css_shutdown_conn (CSS_CONN_ENTRY * conn);
-
 #if defined(CS_MODE)
 static THREAD_RET_T THREAD_CALLING_CONVENTION hb_thread_master_reader (void
 								       *arg);
-static char *hb_pack_server_name (const char *server_name, int *name_length,
-				  const char *log_path, HB_PROC_TYPE type);
-
 static CSS_CONN_ENTRY *hb_connect_to_master (const char *server_name,
 					     const char *log_path,
 					     HB_PROC_TYPE type);
@@ -537,82 +530,6 @@ hb_process_master_request (void)
 
 #if defined(CS_MODE)
 /*
- * hb_pack_server_name() - make a "server_name" string
- *   return: packed name
- *   server_name(in)   : server name
- *   name_length(out)  : length of packed name
- *   log_path(in)      : log path
- *
- * Note:
- *         make a "server_name" string to connect to master
- *         server_name = server_type ( # ) +
- *                       server_name +
- *                       release_string +
- *                       env_name +   ($RYE path)
- *                       pid_string   (process id)
- */
-static char *
-hb_pack_server_name (const char *server_name, int *name_length,
-		     const char *log_path, HB_PROC_TYPE type)
-{
-  char *packed_name = NULL;
-  const char *env_name = NULL;
-  char pid_string[16];
-  int n_len, l_len, e_len, p_len;
-  int packed_name_offset;
-
-  if (server_name != NULL)
-    {
-      env_name = envvar_root ();
-      if (env_name == NULL)
-	{
-	  return NULL;
-	}
-
-      snprintf (pid_string, sizeof (pid_string), "%d", getpid ());
-
-      n_len = strlen (server_name) + 1;
-      l_len = (log_path) ? strlen (log_path) + 1 : 0;
-      e_len = strlen (env_name) + 1;
-      p_len = strlen (pid_string) + 1;
-      *name_length = n_len + 1 /* applier index */  + l_len
-	+ e_len + p_len + 5;
-
-      packed_name = malloc (*name_length);
-      if (packed_name == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, (*name_length));
-	  return NULL;
-	}
-
-      if (type == HB_PTYPE_REPLICATION)
-	{
-	  packed_name[0] = MASTER_CONN_NAME_HA_REPL;
-	  packed_name_offset = 1;
-	}
-      else
-	{
-	  assert (0);
-
-	  free_and_init (packed_name);
-	  return NULL;
-	}
-      memcpy (packed_name + packed_name_offset, server_name, n_len);
-      if (l_len)
-	{
-	  packed_name[(packed_name_offset + n_len) - 1] = ':';
-	  memcpy (packed_name + packed_name_offset + n_len, log_path, l_len);
-	}
-      memcpy (packed_name + packed_name_offset + n_len + l_len,
-	      env_name, e_len);
-      memcpy (packed_name + packed_name_offset + n_len + l_len + e_len,
-	      pid_string, p_len);
-    }
-  return (packed_name);
-}
-
-/*
  * hb_connect_to_master() - connect to the master server
  *   return: conn
  *   server_name(in): server name
@@ -623,25 +540,16 @@ hb_connect_to_master (const char *server_name, const char *log_path,
 		      HB_PROC_TYPE type)
 {
   CSS_CONN_ENTRY *conn;
-  char *packed_name;
   int name_length = 0;
 
-  packed_name = hb_pack_server_name (server_name, &name_length,
-				     log_path, type);
-  if (packed_name == NULL)
-    {
-      return NULL;
-    }
-  conn = css_connect_to_master_server (prm_get_master_port_id (), packed_name,
-				       name_length);
+  conn = css_register_to_master (prm_get_master_port_id (), type, server_name,
+				 log_path);
   if (conn == NULL)
     {
-      free_and_init (packed_name);
       return NULL;
     }
 
   hb_Pipe_to_master = conn->fd;
-  free_and_init (packed_name);
   return conn;
 }
 

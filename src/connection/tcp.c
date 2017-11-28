@@ -79,39 +79,34 @@ static const int css_Maximum_server_count = 50;
 }
 
 static void css_sockopt (SOCKET sd);
-static int css_sockaddr (const char *host, int port, struct sockaddr *saddr,
-			 socklen_t * slen);
+static in_addr_t css_sockaddr (const char *host, int port,
+			       int connect_type, const char *dbname,
+			       struct sockaddr *saddr, socklen_t * slen);
 
 void
 css_get_master_domain_path (char *path_buf, int buf_len)
 {
-  char sock_dir[PATH_MAX];
-
-  envvar_vardir_file (sock_dir, PATH_MAX, "RYE_SOCK");
-  snprintf (path_buf, buf_len, "%s/%s%d", sock_dir, envvar_prefix (),
-	    prm_get_master_port_id ());
-
-  er_log_debug (ARG_FILE_LINE, "sock_path=%s\n", path_buf);
+  css_get_server_domain_path (path_buf, buf_len, "rye_master");
 }
 
-/*
- * css_tcp_client_open () -
- *   return:
- *   host(in):
- *   port(in):
- */
-SOCKET
-css_tcp_client_open (const char *host, int port)
+void
+css_get_server_domain_path (char *path_buf, int buf_len, const char *dbname)
 {
-  SOCKET fd;
+  char sock_dir[PATH_MAX];
 
-  fd = css_tcp_client_open_with_retry (host, port, true);
-  if (IS_INVALID_SOCKET (fd))
+  if (dbname == NULL)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1, host);
+      assert (0);
+      dbname = "UNKNOWN_DB";
     }
-  return fd;
+  else
+    {
+      envvar_vardir_file (sock_dir, PATH_MAX, "RYE_SOCK");
+      snprintf (path_buf, buf_len, "%s/%s.%s", sock_dir, envvar_prefix (),
+      		dbname);
+    }
+
+  er_log_debug (ARG_FILE_LINE, "sock_path=%s\n", path_buf);
 }
 
 static void
@@ -178,9 +173,9 @@ css_host_ip_addr ()
  *   saddr(out):
  *   slen(out):
  */
-static int
-css_sockaddr (const char *host, int port, struct sockaddr *saddr,
-	      socklen_t * slen)
+static in_addr_t
+css_sockaddr (const char *host, int port, int connect_type,
+	      const char *dbname, struct sockaddr *saddr, socklen_t * slen)
 {
   in_addr_t in_addr;
 
@@ -189,19 +184,26 @@ css_sockaddr (const char *host, int port, struct sockaddr *saddr,
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 	      ERR_CSS_TCP_HOST_NAME_ERROR, 1, host);
-      return ERR_CSS_TCP_HOST_NAME_ERROR;
+      return in_addr;
     }
 
   /*
    * Compare with the TCP address with localhost.
    * If it is, use Unix domain socket rather than TCP for the performance
    */
-  if (in_addr == inet_addr ("127.0.0.1"))
+  if (in_addr == inet_addr (LOCALHOST))
     {
       struct sockaddr_un unix_saddr;
       char sock_path[PATH_MAX];
 
-      css_get_master_domain_path (sock_path, PATH_MAX);
+      if (connect_type == MASTER_CONN_TYPE_TO_SERVER)
+	{
+	  css_get_server_domain_path (sock_path, sizeof (sock_path), dbname);
+	}
+      else
+	{
+	  css_get_master_domain_path (sock_path, sizeof (sock_path));
+	}
 
       memset ((void *) &unix_saddr, 0, sizeof (unix_saddr));
       unix_saddr.sun_family = AF_UNIX;
@@ -223,157 +225,19 @@ css_sockaddr (const char *host, int port, struct sockaddr *saddr,
       memcpy ((void *) saddr, (void *) &tcp_saddr, *slen);
     }
 
-  return NO_ERROR;
+  return in_addr;
 }
 
 /*
- * css_tcp_client_open_with_retry () -
- *   return:
- *   host(in):
- *   port(in):
- *   willretry(in):
- */
-SOCKET
-css_tcp_client_open_with_retry (const char *host, int port, bool will_retry)
-{
-  SOCKET sd = INVALID_SOCKET;
-  struct sockaddr *saddr;
-  socklen_t slen;
-  time_t start_contime;
-  int nsecs, sleep_nsecs = 1;
-  int success, num_retries = 0;
-  union
-  {
-    struct sockaddr_in in;
-    struct sockaddr_un un;
-  } saddr_buf;
-
-  assert (host != NULL);
-  assert (port > 0);
-
-  saddr = (struct sockaddr *) &saddr_buf;
-  if (css_sockaddr (host, port, saddr, &slen) != NO_ERROR)
-    {
-      return INVALID_SOCKET;
-    }
-
-  start_contime = time (NULL);
-  do
-    {
-      sd = socket (saddr->sa_family, SOCK_STREAM, 0);
-      if (IS_INVALID_SOCKET (sd))
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_TCP_CANNOT_CREATE_SOCKET, 0);
-	  return INVALID_SOCKET;
-	}
-      else
-	{
-	  css_sockopt (sd);
-	}
-
-      /*
-       * If we get an ECONNREFUSED from the connect, we close the socket, and
-       * retry again. This is needed since the backlog parameter of the SUN
-       * machine is too small (See man page of listen...see BUG section).
-       * To avoid a possible infinite loop, we only retry five times
-       */
-    again_eintr:
-      if ((success = connect (sd, saddr, slen)) == 0)
-	{
-	  /* connection is established successfully */
-	  break;
-	}
-      if (errno == EINTR)
-	{
-	  goto again_eintr;
-	}
-
-      if ((errno == ECONNREFUSED || errno == ETIMEDOUT) && will_retry == true)
-	{
-	  nsecs = (int) difftime (time (NULL), start_contime);
-	  nsecs -= prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT);
-	  if (nsecs >= 0 && num_retries > TCP_MIN_NUM_RETRIES)
-	    {
-	      will_retry = false;
-	    }
-	  else
-	    {
-	      /*
-	       * Wait a little bit to change the load of the server.
-	       * Don't wait for more than 1/2 min or the timeout period
-	       */
-	      if (sleep_nsecs > 30)
-		{
-		  sleep_nsecs = 30;
-		}
-
-	      /*
-	       * Sleep only when we have not timed out. That is, when nsecs is
-	       * negative.
-	       */
-	      if (nsecs < 0 && sleep_nsecs > (-nsecs))
-		{
-		  sleep_nsecs = -nsecs;
-		}
-	      if (nsecs < 0)
-		{
-		  (void) sleep (sleep_nsecs);
-		  sleep_nsecs *= 2;	/* Go 1, 2, 4, 8, etc */
-		}
-	      num_retries++;
-	    }
-	}
-      else
-	{
-	  will_retry = false;	/* Don't retry */
-	}
-
-      /*
-       * According to the Sun man page of connect & listen. When a connect
-       * was forcefully rejected. The calling program must close the
-       * socket descriptor, before another connect is retried.
-       *
-       * The server's host is probably overloaded. Sleep for a while, then
-       * try again. We sleep a different number of seconds between 1 and 30
-       * to avoid having the same situation with other processes that could
-       * have reached the timeout/refuse connection.
-       *
-       * The sleep time is guessing that the server is not going to be
-       * overloaded by connections in that amount of time.
-       *
-       * Similar things are suggested by R. Stevens Unix Network programming
-       * book. See Remote Command execution example in Chapter 14
-       *
-       * See connect and listen MAN pages.
-       */
-      close (sd);
-      sd = INVALID_SOCKET;
-    }
-  while (success < 0 && will_retry == true);
-
-  if (success < 0)
-    {
-#if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open_with_retry:"
-		    "connection failed with retries %d errno %d\n",
-		    num_retries, errno);
-#endif /* RYE_DEBUG */
-      return INVALID_SOCKET;
-    }
-
-  return sd;
-}
-
-/*
- * css_tcp_client_open_with_timeout() -
+ * css_tcp_client_open () -
  *   return: socket descriptor
  *   host(in): host name
  *   port(in): port no
  *   timeout(in): timeout in milli-seconds
  */
 SOCKET
-css_tcp_client_open_with_timeout (const char *host, int port, int timeout)
+css_tcp_client_open (const char *host, int port, int connect_type,
+		     const char *dbname, int timeout)
 {
   SOCKET sd = -1;
   struct sockaddr *saddr;
@@ -388,10 +252,15 @@ css_tcp_client_open_with_timeout (const char *host, int port, int timeout)
 
   assert (host != NULL);
   assert (port > 0);
-  assert (timeout >= 0);
+
+  if (timeout < 0)
+    {
+      timeout = 5000;
+    }
 
   saddr = (struct sockaddr *) &saddr_buf;
-  if (css_sockaddr (host, port, saddr, &slen) != NO_ERROR)
+  if (css_sockaddr (host, port, connect_type, dbname,
+		    saddr, &slen) == INADDR_NONE)
     {
       return INVALID_SOCKET;
     }
@@ -424,7 +293,7 @@ again_eintr:
   if (errno != EINPROGRESS)
     {
       close (sd);
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open_with_timeout:"
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
 		    "connect failed with errno %d", errno);
       return INVALID_SOCKET;
     }
@@ -441,7 +310,7 @@ retry_poll:
 	  goto retry_poll;
 	}
 
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open_with_timeout:"
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
 		    "poll failed errno %d", errno);
       close (sd);
       return INVALID_SOCKET;
@@ -451,7 +320,7 @@ retry_poll:
       /* 0 means it timed out and no fd is changed */
       errno = ETIMEDOUT;
       close (sd);
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open_with_timeout:"
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
 		    "poll failed with timeout %d", timeout);
       return INVALID_SOCKET;
     }
@@ -460,14 +329,14 @@ retry_poll:
   slen = sizeof (n);
   if (getsockopt (sd, SOL_SOCKET, SO_ERROR, (void *) &n, &slen) < 0)
     {
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open_with_timeout:"
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
 		    "getsockopt failed errno %d", errno);
       close (sd);
       return INVALID_SOCKET;
     }
   if (n != 0)
     {
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open_with_timeout:"
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
 		    "connection failed errno %d", n);
       close (sd);
       return INVALID_SOCKET;
@@ -719,6 +588,8 @@ css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd)
   int servlen;
   struct sockaddr_un serv_addr;
 
+  unlink (pathname);
+
   *sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
   if (IS_INVALID_SOCKET (*sockfd))
     {
@@ -753,46 +624,6 @@ css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd)
 			   ERR_CSS_TCP_ACCEPT_ERROR, 0);
       return false;
     }
-
-  return true;
-}
-
-/*
- * css_tcp_listen_server_datagram() - verifies that the pipe to the master has
- *                                    been setup properly
- *   return:
- *   sockfd(in):
- *   newfd(in):
- */
-bool
-css_tcp_listen_server_datagram (SOCKET sockfd, SOCKET * newfd)
-{
-  socklen_t clilen;
-  struct sockaddr_un cli_addr;
-  int boolean = 1;
-
-  clilen = sizeof (cli_addr);
-
-  while (true)
-    {
-      *newfd = accept (sockfd, (struct sockaddr *) &cli_addr, &clilen);
-      if (IS_INVALID_SOCKET (*newfd) < 0)
-	{
-	  if (errno == EINTR)
-	    {
-	      continue;
-	    }
-
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_TCP_DATAGRAM_ACCEPT, 0);
-	  return false;
-	}
-
-      break;
-    }
-
-  setsockopt (sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &boolean,
-	      sizeof (boolean));
 
   return true;
 }
@@ -1026,54 +857,6 @@ css_shutdown_socket (SOCKET fd)
     }
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * css_gethostid() - returns the 32 bit host identifier for this machine
- *   return: 32 bit host identifier
- *
- * Note: Used for host key validation and some other purposes. Uses gethostid()
- *       on the Sun machines, for the rest, it tries to determine the IP
- *       address and encodes that as a 32 bit value.
- */
-unsigned int
-css_gethostid (void)
-{
-  unsigned int id = 0;
-
-#ifdef HAVE_GETHOSTID
-  id = (unsigned int) gethostid ();
-#endif /* !HAVE_GETHOSTID */
-  return id;
-}
-#endif
-
-/*
- * css_open_server_connection_socket() -
- *   return:
- *
- * Note: Stub functions for the new-style connection protocol.
- *       Eventually should try to support these on non-NT platforms.
- *       See also wintcp.c
- */
-int
-css_open_server_connection_socket (void)
-{
-  return -1;
-}
-
-/*
- * css_close_server_connection_socket() -
- *   return; void
- *
- * Note: Stub functions for the new-style connection protocol.
- *       Eventually should try to support these on non-NT platforms.
- *       See also wintcp.c
- */
-void
-css_close_server_connection_socket (void)
-{
-}
-
 int
 css_get_max_socket_fds (void)
 {
@@ -1243,31 +1026,3 @@ css_get_peer_name (SOCKET sockfd, char *hostname, size_t len)
     }
   return getnameinfo (saddr, saddr_len, hostname, len, NULL, 0, NI_NOFQDN);
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * css_get_sock_name() - get the hostname of the socket
- *   return: 0 if success; otherwise errno
- *   hostname(in): buffer for hostname
- *   len(in): size of the hostname buffer
- */
-int
-css_get_sock_name (SOCKET sockfd, char *hostname, size_t len)
-{
-  union
-  {
-    struct sockaddr_in in;
-    struct sockaddr_un un;
-  } saddr_buf;
-  struct sockaddr *saddr;
-  socklen_t saddr_len;
-
-  saddr = (struct sockaddr *) &saddr_buf;
-  saddr_len = sizeof (saddr_buf);
-  if (getsockname (sockfd, saddr, &saddr_len) != 0)
-    {
-      return errno;
-    }
-  return getnameinfo (saddr, saddr_len, hostname, len, NULL, 0, NI_NOFQDN);
-}
-#endif

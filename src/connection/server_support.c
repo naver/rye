@@ -120,6 +120,7 @@ static int css_check_conn (CSS_CONN_ENTRY * p);
 static void css_set_shutdown_timeout (INT64 timeout);
 static int css_get_master_request (CSS_CONN_ENTRY * conn,
 				   CSS_NET_PACKET ** recv_packet);
+static void css_process_connect_request (void);
 static int css_process_master_request (CSS_CONN_ENTRY * conn);
 static void css_process_shutdown_request (SOCKET master_fd);
 static void css_process_new_client (SOCKET master_fd);
@@ -127,7 +128,7 @@ static void css_process_change_server_ha_mode_request (char *data,
 						       int datasize);
 
 static void css_close_connection_to_master (void);
-static int css_reestablish_connection_to_master (void);
+static void css_close_server_listen_socket (void);
 static void dummy_sigurg_handler (int sig);
 static int css_check_accessibility (SOCKET new_fd);
 
@@ -147,6 +148,7 @@ static int css_job_entry_get (JOB_QUEUE * job_queue,
 			      CSS_JOB_ENTRY * job_entry);
 static int css_con_close_handler (THREAD_ENTRY * thread_p,
 				  CSS_THREAD_ARG arg);
+static int css_accept_new_client (unsigned short rid, CSS_CONN_ENTRY * conn);
 
 /*
  * css_init_job_queue () -
@@ -456,29 +458,6 @@ css_final_job_queue (void)
 }
 
 /*
- * css_setup_server_loop() -
- *   return:
- */
-static void
-css_setup_server_loop (void)
-{
-  (void) os_set_signal_handler (SIGPIPE, SIG_IGN);
-  (void) os_set_signal_handler (SIGFPE, SIG_IGN);
-
-  if (!IS_INVALID_SOCKET (css_Pipe_to_master))
-    {
-      /* execute master thread. */
-      css_master_thread ();
-
-    }
-  else
-    {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_MASTER_PIPE_ERROR, 0);
-    }
-}
-
-/*
  * css_check_conn() -
  *   return:
  *   p(in):
@@ -512,67 +491,62 @@ css_set_shutdown_timeout (INT64 timeout)
 }
 
 /*
- * css_master_thread() - Master thread, accept/process master process's request
+ * css_setup_server_loop() -
  *   return:
- *   arg(in):
  */
-void *
-css_master_thread (void)
+static void
+css_setup_server_loop (void)
 {
-  int r, run_code = 1, status = 0, nfds = 0;
+  int r, run_code = 1, nfds = 0;
   struct pollfd po[] = { {0, 0, 0}, {0, 0, 0} };
+
+  (void) os_set_signal_handler (SIGPIPE, SIG_IGN);
+  (void) os_set_signal_handler (SIGFPE, SIG_IGN);
+
+  assert (css_Listen_conn != NULL);
+  assert (!IS_INVALID_SOCKET (css_Listen_conn->fd));
+  assert (css_Master_conn != NULL);
+  assert (!IS_INVALID_SOCKET (css_Master_conn->fd));
 
   while (run_code)
     {
-      /* check if socket has error or client is down */
-      if (!IS_INVALID_SOCKET (css_Pipe_to_master)
-	  && css_check_conn (css_Master_conn) < 0)
-	{
-	  css_shutdown_conn (css_Master_conn);
-	  css_Pipe_to_master = INVALID_SOCKET;
-	}
-
-      if (!IS_INVALID_SOCKET (css_Pipe_to_master))
-	{
-	  po[0].fd = css_Pipe_to_master;
-	  po[0].events = POLLIN;
-	  nfds = 1;
-	}
+      po[0].fd = css_Master_conn->fd;
+      po[0].events = POLLIN;
+      po[0].revents = 0;
+      po[1].fd = css_Listen_conn->fd;
+      po[1].events = POLLIN;
+      po[1].revents = 0;
+      nfds = 2;
 
       /* select() sets timeout value to 0 or waited time */
-      r = poll (po, nfds,
-		(prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) *
-		 1000));
-      if (r > 0
-	  && (IS_INVALID_SOCKET (css_Pipe_to_master)
-	      || !(po[0].revents & POLLIN)))
-	{
-	  continue;
-	}
-
+      r = poll (po, nfds, 5000);
       if (r < 0)
 	{
-	  if (!IS_INVALID_SOCKET (css_Pipe_to_master)
-	      && fcntl (css_Pipe_to_master, F_GETFL, status) == SockError)
+	  if (css_check_conn (css_Master_conn) < 0)
 	    {
-	      css_close_connection_to_master ();
 	      break;
 	    }
 	}
       else if (r > 0)
 	{
-	  if (!IS_INVALID_SOCKET (css_Pipe_to_master)
-	      && (po[0].revents & POLLIN))
+	  if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
+	    {
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+		      ER_HB_PROCESS_EVENT, 2,
+		      "Error on master connection", "");
+	      break;
+	    }
+	  else if (po[1].revents & POLLERR || po[1].revents & POLLHUP)
+	    {
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+		      ER_HB_PROCESS_EVENT, 2,
+		      "Error on server connection", "");
+	      break;
+	    }
+
+	  if (po[0].revents & POLLIN)
 	    {
 	      run_code = css_process_master_request (css_Master_conn);
-	      if (run_code == -1)
-		{
-		  css_close_connection_to_master ();
-		  /* shutdown message received */
-
-		  run_code = 0;
-		}
-
 	      if (run_code == 0)
 		{
 		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -581,31 +555,21 @@ css_master_thread (void)
 			  "");
 		}
 	    }
-	  else
-	    {
-	      break;
-	    }
-	}
 
-      if (run_code)
-	{
-	  if (IS_INVALID_SOCKET (css_Pipe_to_master))
+	  if (po[1].revents & POLLIN)
 	    {
-	      css_reestablish_connection_to_master ();
+	      css_process_connect_request ();
 	    }
-	}
-      else
-	{
-	  break;
 	}
     }
+
+  css_close_connection_to_master ();
+  css_close_server_listen_socket ();
 
   css_set_shutdown_timeout (prm_get_bigint_value (PRM_ID_SHUTDOWN_WAIT_TIME));
 
   /* going down, so stop dispatching request */
   css_empty_job_queue ();
-
-  return NULL;
 }
 
 /*
@@ -633,6 +597,78 @@ css_get_master_request (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet)
 }
 
 /*
+ * css_process_connect_request () -
+ */
+static void
+css_process_connect_request ()
+{
+  SOCKET cli_fd = INVALID_SOCKET;
+  CSS_CONN_ENTRY *conn = NULL;
+  CSS_NET_PACKET *recv_packet = NULL;
+  enum css_master_conn_type conn_type;
+  unsigned short rid;
+
+  cli_fd = css_master_accept (css_Listen_conn->fd);
+  if (IS_INVALID_SOCKET (cli_fd))
+    {
+      goto error;
+    }
+
+  if ((conn = css_make_conn (cli_fd)) == NULL ||
+      css_check_magic (conn) != NO_ERRORS ||
+      css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
+    {
+      goto error;
+    }
+
+  conn_type = recv_packet->header.function_code;
+  rid = recv_packet->header.request_id;
+
+  if (conn_type == MASTER_CONN_TYPE_TO_SERVER)
+    {
+      if (css_accept_new_client (rid, conn) != NO_ERROR)
+	{
+	  goto error;
+	}
+
+      css_net_packet_free (recv_packet);
+      er_log_debug (ARG_FILE_LINE, "css_process_connect_request");
+      return;
+    }
+
+error:
+  if (conn == NULL)
+    {
+      css_shutdown_socket (cli_fd);
+    }
+  else
+    {
+      css_free_conn (conn);
+    }
+  css_net_packet_free (recv_packet);
+}
+
+/*
+ * css_accept_new_client () -
+ */
+static int
+css_accept_new_client (unsigned short rid, CSS_CONN_ENTRY * conn)
+{
+  int reason;
+  CSS_JOB_ENTRY job_entry;
+
+  reason = htonl (SERVER_CONNECTED);
+
+  css_send_data_packet (conn, rid, 1, (char *) &reason, sizeof (int));
+
+  css_insert_into_active_conn_list (conn);
+
+  CSS_JOB_ENTRY_SET (job_entry, conn, css_internal_request_handler, conn);
+
+  return (css_add_to_job_queue (JOB_QUEUE_CLIENT, &job_entry));
+}
+
+/*
  * css_process_master_request () -
  *   return:
  *   master_fd(in):
@@ -644,17 +680,15 @@ css_process_master_request (CSS_CONN_ENTRY * conn)
 {
   int r;
   CSS_NET_PACKET *recv_packet = NULL;
-  unsigned short rid;
   char *data = NULL;
   int datasize;
   CSS_MASTER_TO_SERVER_REQUEST request;
 
   if (css_get_master_request (conn, &recv_packet) != NO_ERROR)
     {
-      return -1;
+      return 0;
     }
 
-  rid = recv_packet->header.request_id;
   datasize = css_net_packet_get_recv_size (recv_packet, 0);
   if (datasize > 0)
     {
@@ -682,7 +716,7 @@ css_process_master_request (CSS_CONN_ENTRY * conn)
     default:
       assert (false);
       /* master do not respond */
-      r = -1;
+      r = 0;
       break;
     }
 
@@ -764,17 +798,12 @@ css_process_new_client (SOCKET master_fd)
       return;
     }
 
-  reason = htonl (SERVER_CONNECTED);
-  css_send_data_packet (conn, rid, 1, (char *) &reason, sizeof (int));
-
-  css_insert_into_active_conn_list (conn);
-
-  CSS_JOB_ENTRY_SET (job_entry, conn, css_internal_request_handler, conn);
-  if (css_add_to_job_queue (JOB_QUEUE_CLIENT, &job_entry) != NO_ERROR)
+  if (css_accept_new_client (rid, conn) != NO_ERROR)
     {
       css_shutdown_conn (conn);
       css_free_conn (conn);
     }
+  er_log_debug (ARG_FILE_LINE, "css_process_new_client()");
 }
 
 /*
@@ -822,12 +851,24 @@ css_process_change_server_ha_mode_request (char *data, int datasize)
 static void
 css_close_connection_to_master (void)
 {
-  if (!IS_INVALID_SOCKET (css_Pipe_to_master))
+  if (css_Master_conn != NULL)
     {
       css_shutdown_conn (css_Master_conn);
     }
-  css_Pipe_to_master = INVALID_SOCKET;
   css_Master_conn = NULL;
+}
+
+/*
+ * css_close_server_listen_socket() -
+ */
+static void
+css_close_server_listen_socket (void)
+{
+  if (css_Listen_conn != NULL)
+    {
+      css_shutdown_conn (css_Listen_conn);
+    }
+  css_Listen_conn = NULL;
 }
 
 /*
@@ -849,51 +890,6 @@ css_is_shutdown_timeout_expired (void)
     }
 
   return false;
-}
-
-/*
- * css_reestablish_connection_to_master() -
- *   return:
- */
-static int
-css_reestablish_connection_to_master (void)
-{
-  CSS_CONN_ENTRY *conn;
-  static int i = CSS_WAIT_COUNT;
-  char *packed_server_name;
-  int name_length;
-
-  if (i-- > 0)
-    {
-      return 0;
-    }
-  i = CSS_WAIT_COUNT;
-
-  packed_server_name = css_pack_server_name (css_Master_server_name,
-					     &name_length);
-  if (packed_server_name != NULL)
-    {
-      conn = css_connect_to_master_server (css_Master_port_id,
-					   packed_server_name, name_length);
-      if (conn != NULL)
-	{
-	  css_Pipe_to_master = conn->fd;
-	  if (css_Master_conn)
-	    {
-	      css_free_conn (css_Master_conn);
-	    }
-	  css_Master_conn = conn;
-	  free_and_init (packed_server_name);
-	  return 1;
-	}
-      else
-	{
-	  free_and_init (packed_server_name);
-	}
-    }
-
-  css_Pipe_to_master = INVALID_SOCKET;
-  return 0;
 }
 
 /*
@@ -1032,7 +1028,6 @@ void *
 css_oob_handler_thread (void *arg)
 {
   THREAD_ENTRY *thrd_entry;
-  int r;
   int sig;
   sigset_t sigurg_mask;
   struct sigaction act;
@@ -1040,7 +1035,7 @@ css_oob_handler_thread (void *arg)
   thrd_entry = (THREAD_ENTRY *) arg;
 
   /* wait until THREAD_CREATE finish */
-  r = pthread_mutex_lock (&thrd_entry->th_entry_lock);
+  pthread_mutex_lock (&thrd_entry->th_entry_lock);
   pthread_mutex_unlock (&thrd_entry->th_entry_lock);
 
   thread_set_thread_entry_info (thrd_entry);
@@ -1057,7 +1052,7 @@ css_oob_handler_thread (void *arg)
 
   while (!thrd_entry->shutdown)
     {
-      r = sigwait (&sigurg_mask, &sig);
+      sigwait (&sigurg_mask, &sig);
     }
   thrd_entry->status = TS_DEAD;
 
@@ -1084,7 +1079,7 @@ css_block_all_active_conn (unsigned short stop_phase)
 	  continue;
 	}
       css_end_server_request (conn);
-      if (!IS_INVALID_SOCKET (conn->fd) && conn->fd != css_Pipe_to_master)
+      if (!IS_INVALID_SOCKET (conn->fd) && conn->fd != css_Master_conn->fd)
 	{
 	  conn->stop_talk = true;
 	  logtb_set_tran_index_interrupt (NULL, conn->tran_index, 1);
@@ -1173,7 +1168,7 @@ css_internal_request_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg)
 
 
       recv_packet = NULL;
-      if (css_recv_request_from_client (conn, &recv_packet) != NO_ERROR)
+      if (css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
 	{
 	  conn->status = CONN_CLOSING;
 	  break;
@@ -1276,7 +1271,6 @@ css_con_close_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg)
  * css_init() -
  *   return:
  *   server_name(in):
- *   name_length(in):
  *   port_id(in):
  *
  * Note: This routine is the entry point for the server interface. Once this
@@ -1284,7 +1278,7 @@ css_con_close_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg)
  *       server/scheduler is stopped.
  */
 int
-css_init (char *server_name, int name_length, int port_id)
+css_init (char *server_name, int port_id)
 {
   THREAD_ENTRY *thread_p;
   CSS_CONN_ENTRY *conn;
@@ -1313,15 +1307,24 @@ css_init (char *server_name, int name_length, int port_id)
       return ER_FAILED;
     }
 
-  conn = css_connect_to_master_server (port_id, server_name, name_length);
+  conn = css_register_to_master (port_id, HB_PTYPE_SERVER, server_name, NULL);
   if (conn != NULL)
     {
+      char pname[PATH_MAX];
+      int socket_fd;
+
+      css_get_server_domain_path (pname, sizeof (pname), server_name);
+      if (css_tcp_setup_server_datagram (pname, &socket_fd) == false)
+	{
+	  goto shutdown;
+	}
+      css_Listen_conn = css_make_conn (socket_fd);
+
       /* insert conn into active conn list */
       css_insert_into_active_conn_list (conn);
 
       css_Master_server_name = strdup (server_name);
       css_Master_port_id = port_id;
-      css_Pipe_to_master = conn->fd;
       css_Master_conn = conn;
 
       status = hb_register_to_master (css_Master_conn, HB_PTYPE_SERVER);
@@ -1372,18 +1375,12 @@ shutdown:
   thread_stop_active_workers (THREAD_STOP_LOGWR);
 
   css_close_connection_to_master ();
-
-  css_close_server_connection_socket ();
+  css_close_server_listen_socket ();
 
   if (css_Master_server_name)
     {
       free_and_init (css_Master_server_name);
     }
-
-  /* If this was opened for the new style connection protocol, make sure
-   * it gets closed.
-   */
-  css_close_server_connection_socket ();
 
   return status;
 }
@@ -1443,76 +1440,6 @@ void
 css_end_server_request (CSS_CONN_ENTRY * conn)
 {
   conn->status = CONN_CLOSING;
-}
-
-/*
- * css_pack_server_name() -
- *   return: a new string containing the server name and the database version
- *           string
- *   server_name(in): the name of the database volume
- *   name_length(out): returned size of the server_name
- *
- * Note: Builds a character buffer with three embedded strings: the database
- *       volume name, a string containing the release identifier, and the
- *       Rye environment variable (if exists)
- */
-char *
-css_pack_server_name (const char *server_name, int *name_length)
-{
-  char *packed_name = NULL;
-  const char *env_name = NULL;
-  char pid_string[16], *s;
-  const char *t;
-
-  if (server_name != NULL)
-    {
-      env_name = envvar_root ();
-      if (env_name == NULL)
-	{
-	  return NULL;
-	}
-
-      sprintf (pid_string, "%d", getpid ());
-      *name_length = strlen (server_name) + 1
-	+ strlen (env_name) + 1 + strlen (pid_string) + 1;
-
-      /* in order to prepend '#' */
-      (*name_length)++;
-
-      packed_name = (char *) malloc (*name_length);
-      if (packed_name == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, *name_length);
-	  return NULL;
-	}
-
-      s = packed_name;
-      t = server_name;
-
-      *s++ = '#';
-
-      while (*t)
-	{
-	  *s++ = *t++;
-	}
-      *s++ = '\0';
-
-      t = env_name;
-      while (*t)
-	{
-	  *s++ = *t++;
-	}
-      *s++ = '\0';
-
-      t = pid_string;
-      while (*t)
-	{
-	  *s++ = *t++;
-	}
-      *s++ = '\0';
-    }
-  return packed_name;
 }
 
 /*
