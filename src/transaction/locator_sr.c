@@ -1242,7 +1242,7 @@ static int
 locator_force_drop_class_name_entry (const void *name, void *ent, void *rm)
 {
   LOCATOR_TMP_CLASSNAME_ENTRY *entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) ent;
-  LOCATOR_TMP_DESIRED_CLASSNAME_ENTRIES *drop;
+  UNUSED_VAR LOCATOR_TMP_DESIRED_CLASSNAME_ENTRIES *drop;
   char *classname;
   OID class_oid;
   THREAD_ENTRY *thread_p;
@@ -4579,7 +4579,8 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
   bool new_isnull, old_isnull;
   OR_INDEX *indexp = NULL;
   BTID_INT btid_int;
-  int i, j, k, num_btids, old_num_btids;
+  int i, j, k, num_btids;
+  UNUSED_VAR int old_num_btids;
   bool found_btid = true;
   HEAP_IDX_ELEMENTS_INFO new_idx_info;
   HEAP_IDX_ELEMENTS_INFO old_idx_info;

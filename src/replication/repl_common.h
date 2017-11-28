@@ -28,20 +28,8 @@
 #include "log_impl.h"
 
 
-#define LA_MAX_REPL_ITEM_WITHOUT_RELEASE_PB     50
 #define LA_GET_PAGE_RETRY_COUNT                 100
-#define LA_REPL_LIST_COUNT                      50
 
-#if 1				/* FIXME-notout: willdel */
-#define LA_PAGE_DOESNOT_EXIST                   0
-#define LA_PAGE_EXST_IN_ACTIVE_LOG              1
-#define LA_PAGE_EXST_IN_ARCHIVE_LOG             2
-#endif
-
-
-#define REPL_AGENT_NO_ERROR                     (0x00)
-#define REPL_AGENT_NEED_RESTART		        (0x01)
-#define REPL_AGENT_NEED_SHUTDOWN                (0x02)
 
 typedef enum _rp_tran_type RP_TRAN_TYPE;
 enum _rp_tran_type
@@ -114,9 +102,9 @@ struct cirp_repl_item
 extern int repl_Need_shutdown;
 
 extern void rp_signal_handler (int signo);
-extern void rp_clear_agent_flag (void);
-extern void rp_set_agent_flag (const char *file_name, int line, int flag);
-extern bool rp_agent_flag_enabled (int flag);
+extern void rp_clear_need_restart (void);
+extern void rp_set_agent_need_restart (const char *file_name, int line);
+extern void rp_set_agent_need_shutdown (const char *file_name, int line);
 extern bool rp_need_restart (void);
 extern bool rp_need_shutdown (const char *file_name, int line);
 

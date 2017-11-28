@@ -120,6 +120,8 @@ static int cirp_find_lowest_tran_start_lsa (const void *key, void *data,
 static INT64 rp_get_source_applied_time (RQueue * q_applied_time,
 					 LOG_LSA * required_lsa);
 static int rp_applied_time_node_free (void *node, UNUSED_ARG void *data);
+static int cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
+					CIRP_AGENT_STATUS status);
 
 
 /*
@@ -147,7 +149,7 @@ cirp_get_analyzer_status (CIRP_ANALYZER_INFO * analyzer)
  *    analyzer(in/out):
  *    status(in):
  */
-int
+static int
 cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
 			     CIRP_AGENT_STATUS status)
 {
@@ -708,6 +710,7 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
 {
   int error = NO_ERROR;
 
+  analyzer->status = CIRP_AGENT_INIT;
   analyzer->apply_state = HA_APPLY_STATE_UNREGISTERED;
 
   analyzer->last_is_end_of_record = false;
@@ -1775,7 +1778,7 @@ analyzer_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -1791,7 +1794,7 @@ analyzer_main (void *arg)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -1811,7 +1814,7 @@ analyzer_main (void *arg)
 
       rp_disconnect_agents ();
 
-      rp_clear_agent_flag ();
+      rp_clear_need_restart ();
 
       error = cirp_connect_agents (th_entry->arg->db_name);
       if (error != NO_ERROR)
@@ -2158,13 +2161,13 @@ analyzer_main (void *arg)
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
+      RP_SET_AGENT_NEED_RESTART ();
 
       /* restart analyzer */
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_INIT);
     }
 
-  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_NEED_SHUTDOWN ();
 
   cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 

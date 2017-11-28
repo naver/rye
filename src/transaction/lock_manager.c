@@ -1033,7 +1033,7 @@ lock_alloc_resource_block (void)
   LK_RES_BLOCK *res_block;
   int i;
   LK_RES *res_ptr = NULL;
-  int rv;
+  UNUSED_VAR int rv;
 
   /* The caller is holding a hash mutex and resource free list mutex */
 
@@ -1101,7 +1101,7 @@ lock_alloc_entry (void)
   int count_try_alloc_entry;
   int count_try_alloc_table;
   LK_ENTRY *entry_ptr;
-  int rv;
+  UNUSED_VAR int rv;
 
   /* The caller is holding a resource mutex */
 
