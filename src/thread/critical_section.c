@@ -1728,7 +1728,7 @@ csect_dump_statistics (FILE * fp)
   svr_shm_copy_global_stats (&stats);
 
   fprintf (fp,
-         " CS Name                "
+         "              CS Name   "
          "|         Total Enter "
          "|          Total Wait "
          "|          Total wait |     Max Wait\n");
