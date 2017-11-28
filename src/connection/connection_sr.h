@@ -63,10 +63,6 @@ extern void css_final_conn_list (void);
 extern CSS_CONN_ENTRY *css_make_conn (SOCKET fd);
 extern void css_insert_into_active_conn_list (CSS_CONN_ENTRY * conn);
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern int css_get_num_free_conn (void);
-#endif
-
 extern int css_increment_num_conn (BOOT_CLIENT_TYPE client_type);
 extern void css_decrement_num_conn (BOOT_CLIENT_TYPE client_type);
 

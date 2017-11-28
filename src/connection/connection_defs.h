@@ -154,10 +154,9 @@ enum css_status
   SERVER_IS_RECOVERING = 3,	/* not used */
   SERVER_HAS_SHUT_DOWN = 4,	/* not used */
   ERROR_MESSAGE_FROM_MASTER = 5,	/* an error message is returned */
-  SERVER_CONNECTED_NEW = 6,
-  SERVER_CLIENTS_EXCEEDED = 7,
-  SERVER_INACCESSIBLE_IP = 8,
-  SERVER_HANG = 9
+  SERVER_CLIENTS_EXCEEDED = 6,
+  SERVER_INACCESSIBLE_IP = 7,
+  SERVER_HANG = 8
 };
 
 /*

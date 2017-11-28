@@ -420,17 +420,6 @@ css_dealloc_conn (CSS_CONN_ENTRY * conn)
   csect_exit_critical_section (&css_Free_conn_csect);
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * css_get_num_free_conn -
- */
-int
-css_get_num_free_conn (void)
-{
-  return css_Num_free_conn;
-}
-#endif
-
 /*
  * css_increment_num_conn_internal() - increments conn counter
  *   based on client type
@@ -724,15 +713,13 @@ css_print_conn_list (void)
 int
 css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
 		       const char *host_name, int connect_type,
-		       const char *packed_name, int packed_name_len,
-		       int port)
+		       const char *packed_name, int packed_name_len, int port)
 {
   SOCKET fd;
   int css_error = NO_ERRORS;
   int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  fd = css_tcp_client_open (host_name, port, connect_type, NULL,
-			    timeout);
+  fd = css_tcp_client_open (host_name, port, connect_type, NULL, timeout);
   if (IS_INVALID_SOCKET (fd))
     {
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -749,8 +736,7 @@ css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
       if (css_error == NO_ERRORS)
 	{
 	  css_error = css_send_command_packet (conn, connect_type, rid, 1,
-					       packed_name,
-					       packed_name_len);
+					       packed_name, packed_name_len);
 	}
     }
 

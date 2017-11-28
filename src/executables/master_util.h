@@ -44,7 +44,6 @@ struct socket_queue_entry
   char *name;
   char *env_var;
   CSS_CONN_ENTRY *conn_ptr;
-  int port_id;
   struct socket_queue_entry *next;
 };
 

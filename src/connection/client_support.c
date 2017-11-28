@@ -221,23 +221,6 @@ css_send_data_to_server_v (char *host, unsigned short rid,
   return css_Errno;
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-int
-css_send_data_to_server (char *host, unsigned short rid, int num_buffers, ...)
-{
-  int rc;
-  va_list args;
-
-  va_start (args, num_buffers);
-
-  rc = css_send_data_to_server (host, rid, num_buffers, args);
-
-  va_end (args);
-
-  return rc;
-}
-#endif
-
 /*
  * css_terminate() - "gracefully" terminate all requests
  *   server_error(in):
@@ -307,23 +290,6 @@ css_send_request_to_server_v (char *host, int request, int num_args,
   css_Errno = SERVER_WAS_NOT_FOUND;
   return 0;
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-unsigned int
-css_send_request_to_server (char *host, int request, int num_args, ...)
-{
-  va_list args;
-  unsigned int rc;
-
-  va_start (args, num_args);
-
-  rc = css_send_request_to_server_v (host, request, num_args, args);
-
-  va_end (args);
-
-  return rc;
-}
-#endif
 
 int
 css_recv_data_from_server (CSS_NET_PACKET ** recv_packet,

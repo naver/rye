@@ -75,9 +75,6 @@ static void css_dealloc_conn (CSS_CONN_ENTRY * conn);
 static int css_server_connect (const char *host_name,
 			       CSS_CONN_ENTRY * conn,
 			       const char *server_name, unsigned short *rid);
-static int css_server_connect_part_two (const char *host_name,
-					CSS_CONN_ENTRY * conn,
-					int port_id, unsigned short *rid);
 /*
  * css_shutdown_conn () -
  *   return: void
@@ -314,8 +311,7 @@ css_common_connect_cl (const char *host_name, CSS_CONN_ENTRY * conn,
       if (css_error == NO_ERRORS)
 	{
 	  css_error = css_send_command_packet (conn, connect_type, rid, 1,
-					       packed_name,
-					       packed_name_len);
+					       packed_name, packed_name_len);
 	}
     }
   else
@@ -365,46 +361,6 @@ css_server_connect (const char *host_name, CSS_CONN_ENTRY * conn,
   return (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_TO_SERVER,
 				 server_name, server_name, length,
 				 css_Service_id, timeout, rid, true));
-}
-
-/* New style server connection function that uses an explicit port id */
-
-/*
- * css_server_connect_part_two () -
- *   return: CSS_ERROR
- *   host_name(in):
- *   conn(in):
- *   port_id(in):
- *   rid(in):
- */
-static int
-css_server_connect_part_two (const char *host_name, CSS_CONN_ENTRY * conn,
-			     int port_id, unsigned short *rid)
-{
-  int reason = -1;
-  int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT);
-  int css_error;
-
-  css_error = css_common_connect_cl (host_name, conn,
-				     MASTER_CONN_TYPE_TO_SERVER,
-				     NULL, NULL, 0,
-				     port_id, timeout, rid, false);
-  if (css_error == NO_ERRORS)
-    {
-      /* now ask for a reply from the server */
-      css_error = css_recv_data_from_server (NULL, conn, *rid, -1, 1,
-					     (char *) &reason, sizeof (int));
-      if (css_error == NO_ERRORS)
-	{
-	  reason = ntohl (reason);
-	  if (reason != SERVER_CONNECTED)
-	    {
-	      css_error = ERROR_ON_READ;
-	    }
-	}
-    }
-
-  return css_error;
 }
 
 /*
@@ -457,17 +413,6 @@ css_connect_to_rye_server (const char *host_name, const char *server_name)
       else
 	{
 	  css_close_conn (conn);
-	}
-      break;
-
-    case SERVER_CONNECTED_NEW:
-      port_id = ntohl (reply[1]);
-      css_close_conn (conn);
-
-      if (css_server_connect_part_two (host_name, conn, port_id,
-				       &rid) == NO_ERRORS)
-	{
-	  return conn;
 	}
       break;
 
@@ -544,7 +489,7 @@ css_connect_to_master_timeout (const char *host_name, int port_id,
 
   time = ceil (time / 1000);
 
-  if (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_INFO, 
+  if (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_INFO,
 			     NULL, NULL, 0,
 			     port_id, (int) time, rid, true) == NO_ERRORS)
     {

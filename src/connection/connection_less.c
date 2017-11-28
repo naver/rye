@@ -271,37 +271,3 @@ css_return_entry_from_conn (CSS_CONN_ENTRY * conn, CSS_MAP_ENTRY * anchor)
 
   return (NULL);
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * css_return_eid_from_conn() - return an eid from a conn pointer
- *   return: enquiry id
- *   conn(in): connection
- *   anchor(in/out):  map entry anchor
- *   rid(in): request id
- *
- * Note: If the conn is not queued, it will be added, and the eid computed.
- *       This is for use by servers ONLY (note lack of host name).
- */
-unsigned int
-css_return_eid_from_conn (CSS_CONN_ENTRY * conn, CSS_MAP_ENTRY ** anchor,
-			  unsigned short rid)
-{
-  CSS_MAP_ENTRY *map_entry_p;
-
-  map_entry_p = css_return_entry_from_conn (conn, *anchor);
-  if (map_entry_p == NULL)
-    {
-      map_entry_p = css_queue_connection (conn, (char *) "", anchor);
-    }
-
-  if (map_entry_p == NULL)
-    {
-      return 0;
-    }
-  else
-    {
-      return (css_make_eid (map_entry_p->id, rid));
-    }
-}
-#endif

@@ -418,46 +418,24 @@ css_send_to_existing_server (CSS_CONN_ENTRY * conn, unsigned short rid,
 					 css_Master_socket_anchor);
       if (temp != NULL && (hb_is_deactivation_started () == false))
 	{
-	  if (temp->port_id == -1)
+	  /* use old style connection */
+	  if (IS_INVALID_SOCKET (temp->fd))
 	    {
-	      /* use old style connection */
-	      if (IS_INVALID_SOCKET (temp->fd))
-		{
-		  css_reject_client_request (conn, rid, SERVER_STARTED);
-		  return;
-		}
-	      else
-		{
-		  if (hb_is_hang_process (temp->fd))
-		    {
-		      css_reject_client_request (conn, rid, SERVER_HANG);
-		      return;
-		    }
-
-		  if (css_send_new_request_to_server (temp, conn->fd, rid))
-		    {
-		      return;
-		    }
-		}
+	      css_reject_client_request (conn, rid, SERVER_STARTED);
+	      return;
 	    }
 	  else
 	    {
-	      int reply[2];
-	      /* Use new style connection.
-	         We found a registered server, give the client a response
-	         telling it to re-connect using the server's port id.
-	       */
 	      if (hb_is_hang_process (temp->fd))
 		{
 		  css_reject_client_request (conn, rid, SERVER_HANG);
 		  return;
 		}
 
-	      reply[0] = htonl (SERVER_CONNECTED_NEW);
-	      reply[1] = htonl (temp->port_id);
-	      css_send_data_packet (conn, rid, 1,
-				    (char *) reply, sizeof (int) * 2);
-	      return;
+	      if (css_send_new_request_to_server (temp, conn->fd, rid))
+		{
+		  return;
+		}
 	    }
 	}
       css_reject_client_request (conn, rid, SERVER_NOT_FOUND);
@@ -1087,7 +1065,6 @@ css_add_request_to_socket_queue (CSS_CONN_ENTRY * conn_p,
   p->pid = pid;
   p->db_error = 0;
   p->next = *anchor_p;
-  p->port_id = -1;
   *anchor_p = p;
 
   return p;

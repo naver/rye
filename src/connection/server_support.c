@@ -122,7 +122,6 @@ static int css_get_master_request (CSS_CONN_ENTRY * conn,
 				   CSS_NET_PACKET ** recv_packet);
 static void css_process_connect_request (void);
 static int css_process_master_request (CSS_CONN_ENTRY * conn);
-static void css_process_shutdown_request (SOCKET master_fd);
 static void css_process_new_client (SOCKET master_fd);
 static void css_process_change_server_ha_mode_request (char *data,
 						       int datasize);
@@ -137,9 +136,6 @@ static int css_epoll_init (void);
 static int css_epoll_ctl (int epoll_fd, int epoll_op, CSS_CONN_ENTRY * conn);
 
 static void css_job_entry_list_init (CSS_JOB_ENTRY_LIST * ptr);
-#if defined (ENABLE_UNUSED_FUNCTION)
-static void css_job_entry_list_finalize (CSS_JOB_ENTRY_LIST * ptr);
-#endif
 static void css_job_entry_list_add (CSS_JOB_ENTRY_LIST * ptr,
 				    CSS_JOB_ENTRY * item);
 static CSS_JOB_ENTRY *css_job_entry_list_remove (CSS_JOB_ENTRY_LIST * ptr);
@@ -705,7 +701,6 @@ css_process_master_request (CSS_CONN_ENTRY * conn)
       break;
 
     case SERVER_START_SHUTDOWN:
-      css_process_shutdown_request (conn->fd);
       r = 0;
       break;
 
@@ -723,16 +718,6 @@ css_process_master_request (CSS_CONN_ENTRY * conn)
   css_net_packet_free (recv_packet);
 
   return r;
-}
-
-/*
- * css_process_shutdown_request () -
- *   return:
- *   master_fd(in):
- */
-static void
-css_process_shutdown_request (UNUSED_ARG SOCKET master_fd)
-{
 }
 
 /*
@@ -2059,13 +2044,6 @@ css_job_entry_list_init (CSS_JOB_ENTRY_LIST * list)
 {
   memset (list, 0, sizeof (CSS_JOB_ENTRY_LIST));
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-static void
-css_job_entry_list_finalize (CSS_JOB_ENTRY_LIST * list)
-{
-}
-#endif
 
 /*
  * css_job_entry_list_add() - add an element to last of the list
