@@ -132,6 +132,44 @@ static int cirp_get_applier_data (CIRP_APPLIER_INFO * applier,
 				  CIRP_CT_LOG_APPLIER * ct_data);
 static int cirp_set_applier_data (CIRP_APPLIER_INFO * applier,
 				  CIRP_CT_LOG_APPLIER * ct_data);
+static int cirp_change_applier_status (CIRP_APPLIER_INFO * applier,
+				       CIRP_AGENT_STATUS status);
+
+/*
+ * cirp_get_applier_status ()-
+ *   return: ha agent status
+ *
+ *   analyzer(in):
+ */
+CIRP_AGENT_STATUS
+cirp_get_applier_status (CIRP_APPLIER_INFO * applier)
+{
+  CIRP_AGENT_STATUS status;
+
+  pthread_mutex_lock (&applier->lock);
+  status = applier->status;
+  pthread_mutex_unlock (&applier->lock);
+
+  return status;
+}
+
+/*
+ * cirp_change_applier_status ()-
+ *    return: NO_ERROR
+ *
+ *    analyzer(in/out):
+ *    status(in):
+ */
+static int
+cirp_change_applier_status (CIRP_APPLIER_INFO * applier,
+			    CIRP_AGENT_STATUS status)
+{
+  pthread_mutex_lock (&applier->lock);
+  applier->status = status;
+  pthread_mutex_unlock (&applier->lock);
+
+  return NO_ERROR;
+}
 
 /*
  * cirp_get_undoredo_diff() - get undo/redo diff data
@@ -1779,7 +1817,7 @@ rp_applier_wait_start (CIRP_APPLIER_INFO * applier)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
 
       return error;
     }
@@ -1835,8 +1873,8 @@ applier_main (void *arg)
   if (error != NO_ERROR)
     {
       assert (false);
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
-      applier->status = CIRP_AGENT_DEAD;
+      RP_SET_AGENT_NEED_SHUTDOWN ();
+      cirp_change_applier_status (applier, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg_info);
       return NULL;
@@ -1849,8 +1887,8 @@ applier_main (void *arg)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
-      applier->status = CIRP_AGENT_DEAD;
+      RP_SET_AGENT_NEED_SHUTDOWN ();
+      cirp_change_applier_status (applier, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg_info);
       return NULL;
@@ -2067,16 +2105,15 @@ applier_main (void *arg)
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
+      RP_SET_AGENT_NEED_RESTART ();
 
 
       /* restart applier */
-      applier->status = CIRP_AGENT_INIT;
+      cirp_change_applier_status (applier, CIRP_AGENT_INIT);
     }
 
-  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
-
-  applier->status = CIRP_AGENT_DEAD;
+  RP_SET_AGENT_NEED_SHUTDOWN ();
+  cirp_change_applier_status (applier, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
 	    "Applier-%d Exit: committed_lsa(%lld,%d)", applier_index,
@@ -2119,22 +2156,4 @@ cirp_appl_get_committed_lsa (CIRP_APPLIER_INFO * applier,
 
   assert (error == NO_ERROR);
   return NO_ERROR;
-}
-
-/*
- * cirp_get_applier_status ()-
- *   return: ha agent status
- *
- *   applier(in):
- */
-CIRP_AGENT_STATUS
-cirp_get_applier_status (CIRP_APPLIER_INFO * applier)
-{
-  CIRP_AGENT_STATUS status;
-
-  pthread_mutex_lock (&applier->lock);
-  status = applier->status;
-  pthread_mutex_unlock (&applier->lock);
-
-  return status;
 }
