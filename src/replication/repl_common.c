@@ -41,7 +41,8 @@
 #include "heartbeat.h"
 
 
-int repl_Agent_flag = REPL_AGENT_NO_ERROR;
+static bool repl_Agent_need_restart = false;
+static bool repl_Agent_need_shutdown = false;
 
 /*
  * rp_signal_handler ()
@@ -49,38 +50,46 @@ int repl_Agent_flag = REPL_AGENT_NO_ERROR;
 void
 rp_signal_handler (UNUSED_ARG int signo)
 {
-  repl_Agent_flag |= REPL_AGENT_NEED_SHUTDOWN;
+  repl_Agent_need_shutdown = true;
 }
 
 /*
- * rp_clear_agent_flag ()
+ * rp_clear_need_restart ()
  */
 void
-rp_clear_agent_flag (void)
+rp_clear_need_restart (void)
 {
-  repl_Agent_flag = REPL_AGENT_NO_ERROR;
+  repl_Agent_need_restart = false;
 }
 
 /*
  * rp_set_agent_flag ()
  */
 void
-rp_set_agent_flag (const char *file_name, int line, int flag)
+rp_set_agent_need_restart (const char *file_name, int line)
 {
   er_log_debug (ARG_FILE_LINE,
-		"FILE(%s,%d),repl_Agent_flag(%x), flag(%x), hb_Proc_shutdown(%d)",
-		file_name, line, repl_Agent_flag, flag, hb_Proc_shutdown);
+		"FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
+		"hb_Proc_shutdown(%d)",
+		file_name, line, repl_Agent_need_restart,
+		repl_Agent_need_shutdown, hb_Proc_shutdown);
 
-  repl_Agent_flag |= flag;
+  repl_Agent_need_restart = true;
 }
 
 /*
- * rp_agent_flag_enabled ()
+ * rp_set_agent_flag ()
  */
-bool
-rp_agent_flag_enabled (int flag)
+void
+rp_set_agent_need_shutdown (const char *file_name, int line)
 {
-  return (repl_Agent_flag & flag) != REPL_AGENT_NO_ERROR;
+  er_log_debug (ARG_FILE_LINE,
+		"FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
+		"hb_Proc_shutdown(%d)",
+		file_name, line, repl_Agent_need_restart,
+		repl_Agent_need_shutdown, hb_Proc_shutdown);
+
+  repl_Agent_need_shutdown = true;
 }
 
 /*
@@ -89,18 +98,25 @@ rp_agent_flag_enabled (int flag)
 bool
 rp_need_restart (void)
 {
-  return (repl_Agent_flag != REPL_AGENT_NO_ERROR || hb_Proc_shutdown == true);
+  return (repl_Agent_need_restart == true || repl_Agent_need_shutdown == true
+	  || hb_Proc_shutdown == true);
 }
 
+/*
+ * rp_need_shutdown -
+ *   return: bool
+ *
+ */
 bool
 rp_need_shutdown (const char *file_name, int line)
 {
   er_log_debug (ARG_FILE_LINE,
-		"FILE(%s,%d),repl_Agent_flag(%x), hb_Proc_shutdown(%d)",
-		file_name, line, repl_Agent_flag, hb_Proc_shutdown);
+		"FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
+		"hb_Proc_shutdown(%d)",
+		file_name, line, repl_Agent_need_restart,
+		repl_Agent_need_shutdown, hb_Proc_shutdown);
 
-  return (rp_agent_flag_enabled (REPL_AGENT_NEED_SHUTDOWN) == true
-	  || hb_Proc_shutdown == true);
+  return (repl_Agent_need_shutdown == true || hb_Proc_shutdown == true);
 }
 
 /*

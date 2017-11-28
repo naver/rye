@@ -206,7 +206,7 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
       rye_Server_shm->global_stats.acc_time[item] += exec_time;
 #endif
 
-      parent_item = MNT_GET_PARENT_ITEM (item);
+      parent_item = MNT_GET_PARENT_ITEM_FETCHES (item);
       if (parent_item != item)
 	{
 	  assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);

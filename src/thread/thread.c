@@ -65,7 +65,6 @@
 
 #include "rye_server_shm.h"
 
-
 #include "fault_injection.h"
 
 
@@ -506,81 +505,73 @@ thread_set_worker_group_info (int max_workers, int base_index,
 int
 server_stats_dump (FILE * fp)
 {
-  int i, j;
+  int i;
   int indent = 2;
-  long long total_cs_waits;
-  long long *cs_waits;
   MNT_SERVER_EXEC_STATS stats;
-  MNT_SERVER_ITEM item;
+  MNT_SERVER_ITEM item_waits;
+  UINT64 total_cs_waits_clock;
   UINT64 total_page_waits_clock;
-//  INT64 total_page_waits_num;
-
-  total_cs_waits = 0;
-  cs_waits = (long long *) calloc (CSECT_LAST, sizeof (long long));
-  if (cs_waits == NULL)
-    {
-      return ER_OUT_OF_VIRTUAL_MEMORY;
-    }
-
-  for (i = 1; i < thread_Manager.num_total; i++)
-    {
-      THREAD_ENTRY *entry;
-
-      entry = &thread_Manager.thread_array[i];
-
-      if (entry->server_stats.cs_wait_time != NULL)
-	{
-	  for (j = 0; j < CSECT_LAST; j++)
-	    {
-	      cs_waits[j] += TO_MSEC (entry->server_stats.cs_wait_time[j]);
-	    }
-	  total_cs_waits += TO_MSEC (entry->server_stats.cs_total_wait_time);
-	}
-    }
-
-  fprintf (fp, "%*ccs_wait total wait:%lld\n", indent, ' ', total_cs_waits);
-  for (j = 0; j < CSECT_LAST; j++)
-    {
-      fprintf (fp, "%*c%s:%lld\n", indent + 5, ' ', csect_get_cs_name (j),
-	       cs_waits[j]);
-    }
 
   svr_shm_copy_global_stats (&stats);
 
-  total_page_waits_clock = 0;
-//  total_page_waits_num = 0;
-  for (j = 0; j < PAGE_LAST; j++)
+  total_cs_waits_clock = 0;
+  for (i = 0; i < CSECT_LAST; i++)
     {
-      item = mnt_page_ptype_to_server_item_fetches_waits (j);
+      item_waits = mnt_csect_type_to_server_item_waits (i);
 
-      total_page_waits_clock += stats.acc_time[item];
-//      total_page_waits_num += stats.values[item];
+      total_cs_waits_clock += stats.acc_time[item_waits];
+    }
+
+  fprintf (fp, "%*cs_wait total wait:%ld\n", indent, ' ',
+	   mnt_clock_to_time (total_cs_waits_clock));
+  for (i = 0; i < CSECT_LAST; i++)
+    {
+      item_waits = mnt_csect_type_to_server_item_waits (i);
+
+      fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
+	       csect_get_cs_name (i),
+	       mnt_clock_to_time (stats.acc_time[item_waits]));
+      /* keep out zero division */
+      if (total_cs_waits_clock > 0)
+	{
+	  fprintf (fp, "(%.1f%%)",
+		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
+		    total_cs_waits_clock) * 100);
+	}
+      fprintf (fp, "\n");
+    }
+
+  total_page_waits_clock = 0;
+  for (i = 0; i < PAGE_LAST; i++)
+    {
+      item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
+
+      total_page_waits_clock += stats.acc_time[item_waits];
     }
 
   fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
 	   mnt_clock_to_time (total_page_waits_clock));
-  for (j = 0; j < PAGE_LAST; j++)
+  for (i = 0; i < PAGE_LAST; i++)
     {
-      item = mnt_page_ptype_to_server_item_fetches_waits (j);
+      item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
-	       page_type_to_string (j),
-	       mnt_clock_to_time (stats.acc_time[item]));
+	       page_type_to_string (i),
+	       mnt_clock_to_time (stats.acc_time[item_waits]));
       /* keep out zero division */
       if (total_page_waits_clock > 0)
 	{
 	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats.acc_time[item]) /
+		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
 		    total_page_waits_clock) * 100);
 	}
       fprintf (fp, "\n");
     }
 
-  free_and_init (cs_waits);
-
   return NO_ERROR;
 }
 
+#if 0
 int
 server_stats_add_wait_time (THREAD_ENTRY * thread_p,
 			    SERVER_STATS_TYPE stats_type, int sub_type,
@@ -659,6 +650,7 @@ server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
 
   return NO_ERROR;
 }
+#endif
 
 /*
  * thread_start_workers() - Boot up every threads.
@@ -1218,7 +1210,9 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
   thread_clear_recursion_depth (entry_p);
 
   memset (&(entry_p->event_stats), 0, sizeof (EVENT_STAT));
+#if 0
   memset (&(entry_p->server_stats), 0, sizeof (SERVER_TRACE_STAT));
+#endif
 
   entry_p->mnt_track_top = -1;
 
