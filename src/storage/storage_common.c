@@ -392,10 +392,6 @@ page_type_to_string (PAGE_TYPE ptype)
     case PAGE_BTREE:		/* 14 */
       return "PAGE_BTREE";
 
-    case PAGE_LOG:		/* 15 */
-      return "PAGE_LOG";
-    case PAGE_DROPPED_FILES:	/* 16 */
-      return "PAGE_DROPPED_FILES";
     default:
       break;
     }

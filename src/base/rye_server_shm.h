@@ -125,6 +125,11 @@ extern void svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item,
 				   INT64 value, UINT64 exec_time);
 extern void svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item,
 				 INT64 value);
+#if 0
+extern INT64 svr_shm_get_stats_with_time (int tran_index,
+					  MNT_SERVER_ITEM item,
+					  UINT64 * acc_time);
+#endif
 extern INT64 svr_shm_get_stats (int tran_index, MNT_SERVER_ITEM item);
 extern void svr_shm_set_eof (LOG_LSA * eof);
 extern short svr_shm_get_nodeid (void);

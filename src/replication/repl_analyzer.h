@@ -43,7 +43,5 @@ extern int cirp_clear_analyzer (CIRP_ANALYZER_INFO * analyzer);
 
 extern CIRP_AGENT_STATUS cirp_get_analyzer_status (CIRP_ANALYZER_INFO *
 						   analyzer);
-extern int cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
-					CIRP_AGENT_STATUS status);
 
 #endif /* _REPL_ANALYZER_H_ */

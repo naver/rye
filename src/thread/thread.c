@@ -65,7 +65,6 @@
 
 #include "rye_server_shm.h"
 
-
 #include "fault_injection.h"
 
 
@@ -506,74 +505,73 @@ thread_set_worker_group_info (int max_workers, int base_index,
 int
 server_stats_dump (FILE * fp)
 {
-  int i, j;
-  THREAD_ENTRY *thread_p;
+  int i;
   int indent = 2;
-  long long total_cs_waits, total_page_waits;
-  long long *cs_waits, *page_waits;
+  MNT_SERVER_EXEC_STATS stats;
+  MNT_SERVER_ITEM item_waits;
+  UINT64 total_cs_waits_clock;
+  UINT64 total_page_waits_clock;
 
-  total_cs_waits = 0;
-  cs_waits = (long long *) calloc (CSECT_LAST, sizeof (long long));
-  if (cs_waits == NULL)
+  svr_shm_copy_global_stats (&stats);
+
+  total_cs_waits_clock = 0;
+  for (i = 0; i < CSECT_LAST; i++)
     {
-      return ER_OUT_OF_VIRTUAL_MEMORY;
+      item_waits = mnt_csect_type_to_server_item_waits (i);
+
+      total_cs_waits_clock += stats.acc_time[item_waits];
     }
 
-  total_page_waits = 0;
-  page_waits = (long long *) calloc (PAGE_LAST, sizeof (long long));
-  if (page_waits == NULL)
+  fprintf (fp, "%*cs_wait total wait:%ld\n", indent, ' ',
+	   mnt_clock_to_time (total_cs_waits_clock));
+  for (i = 0; i < CSECT_LAST; i++)
     {
-      free_and_init (cs_waits);
-      return ER_OUT_OF_VIRTUAL_MEMORY;
-    }
+      item_waits = mnt_csect_type_to_server_item_waits (i);
 
-  for (i = 1; i < thread_Manager.num_total; i++)
-    {
-      thread_p = &thread_Manager.thread_array[i];
-
-      if (thread_p->server_stats.cs_wait_time != NULL)
+      fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
+	       csect_get_cs_name (i),
+	       mnt_clock_to_time (stats.acc_time[item_waits]));
+      /* keep out zero division */
+      if (total_cs_waits_clock > 0)
 	{
-	  for (j = 0; j < CSECT_LAST; j++)
-	    {
-	      cs_waits[j] += TO_MSEC (thread_p->server_stats.cs_wait_time[j]);
-	    }
-	  total_cs_waits +=
-	    TO_MSEC (thread_p->server_stats.cs_total_wait_time);
+	  fprintf (fp, "(%.1f%%)",
+		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
+		    total_cs_waits_clock) * 100);
 	}
+      fprintf (fp, "\n");
+    }
 
-      if (thread_p->server_stats.page_wait_time != NULL)
+  total_page_waits_clock = 0;
+  for (i = 0; i < PAGE_LAST; i++)
+    {
+      item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
+
+      total_page_waits_clock += stats.acc_time[item_waits];
+    }
+
+  fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
+	   mnt_clock_to_time (total_page_waits_clock));
+  for (i = 0; i < PAGE_LAST; i++)
+    {
+      item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
+
+      fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
+	       page_type_to_string (i),
+	       mnt_clock_to_time (stats.acc_time[item_waits]));
+      /* keep out zero division */
+      if (total_page_waits_clock > 0)
 	{
-	  for (j = 0; j < PAGE_LAST; j++)
-	    {
-	      page_waits[j] +=
-		TO_MSEC (thread_p->server_stats.page_wait_time[j]);
-	    }
-	  total_page_waits +=
-	    TO_MSEC (thread_p->server_stats.page_total_wait_time);
+	  fprintf (fp, "(%.1f%%)",
+		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
+		    total_page_waits_clock) * 100);
 	}
+      fprintf (fp, "\n");
     }
-
-  fprintf (fp, "%*ccs_wait total wait:%lld\n", indent, ' ', total_cs_waits);
-  for (j = 0; j < CSECT_LAST; j++)
-    {
-      fprintf (fp, "%*c%s:%lld\n", indent + 5, ' ', csect_get_cs_name (j),
-	       cs_waits[j]);
-    }
-
-  fprintf (fp, "%*cpage_wait total wait:%lld\n", indent, ' ',
-	   total_page_waits);
-  for (j = 0; j < PAGE_LAST; j++)
-    {
-      fprintf (fp, "%*c%s:%lld\n", indent + 5, ' ',
-	       page_type_to_string (j), page_waits[j]);
-    }
-
-  free_and_init (cs_waits);
-  free_and_init (page_waits);
 
   return NO_ERROR;
 }
 
+#if 0
 int
 server_stats_add_wait_time (THREAD_ENTRY * thread_p,
 			    SERVER_STATS_TYPE stats_type, int sub_type,
@@ -615,9 +613,9 @@ server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
       ADD_TIMEVAL (thread_p->server_stats.cs_total_wait_time,
 		   *wait_start, wait_end);
       break;
-    case SERVER_STATS_PAGE:
-      ADD_TIMEVAL (thread_p->server_stats.page_total_wait_time,
-		   *wait_start, wait_end);
+
+    default:
+      assert (false);
       break;
     }
 
@@ -643,15 +641,16 @@ server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
       ADD_WAIT_TIMEVAL (thread_p->server_stats.cs_wait_time[sub_type],
 			thread_p->server_stats.current_wait_time);
       break;
-    case SERVER_STATS_PAGE:
-      ADD_WAIT_TIMEVAL (thread_p->server_stats.page_wait_time[sub_type],
-			thread_p->server_stats.current_wait_time);
+
+    default:
+      assert (false);
       break;
     }
   INIT_TIMEVAL (thread_p->server_stats.current_wait_time);
 
   return NO_ERROR;
 }
+#endif
 
 /*
  * thread_start_workers() - Boot up every threads.
@@ -947,7 +946,7 @@ loop:
 static void
 thread_wakeup_daemon_thread (DAEMON_THREAD_MONITOR * daemon_monitor)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&daemon_monitor->lock);
   pthread_cond_signal (&daemon_monitor->cond);
@@ -1211,7 +1210,9 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
   thread_clear_recursion_depth (entry_p);
 
   memset (&(entry_p->event_stats), 0, sizeof (EVENT_STAT));
+#if 0
   memset (&(entry_p->server_stats), 0, sizeof (SERVER_TRACE_STAT));
+#endif
 
   entry_p->mnt_track_top = -1;
 
@@ -1991,7 +1992,8 @@ thread_set_comm_request_id (unsigned int request_id)
 int
 thread_has_threads (THREAD_ENTRY * caller, int tran_index, int client_id)
 {
-  int i, n, rv;
+  int i, n;
+  UNUSED_VAR int rv;
   THREAD_ENTRY *thread_p;
   CSS_CONN_ENTRY *conn_p;
 
@@ -2375,8 +2377,8 @@ thread_worker (void *arg_p)
   THREAD_ENTRY *tsd_ptr;
   CSS_THREAD_FN handler_func;
   CSS_THREAD_ARG handler_func_arg;
-  CSS_CONN_ENTRY *job_conn;
-  int rv;
+//  CSS_CONN_ENTRY *job_conn;
+  UNUSED_VAR int rv;
   CSS_JOB_ENTRY new_job;
 
   tsd_ptr = (THREAD_ENTRY *) arg_p;
@@ -2404,7 +2406,7 @@ thread_worker (void *arg_p)
 	  continue;
 	}
 
-      job_conn = new_job.conn_entry;
+//      job_conn = new_job.conn_entry;
       handler_func = new_job.func;
       handler_func_arg = new_job.arg;
 
@@ -2436,7 +2438,7 @@ thread_worker (void *arg_p)
 static void
 thread_reset_thread_info (THREAD_ENTRY * thread_p)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   thread_p->conn_entry = NULL;
   thread_p->status = TS_FREE;
@@ -2462,7 +2464,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_deadlock_detect_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv;
+  UNUSED_VAR int rv;
   THREAD_ENTRY *thread_p;
   int thrd_index;
   bool state;
@@ -2557,7 +2559,7 @@ thread_deadlock_detect_thread (void *arg_p)
 void
 thread_wakeup_deadlock_detect_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Deadlock_detect_thread.lock);
   if (thread_Deadlock_detect_thread.is_running == false)
@@ -2575,7 +2577,7 @@ thread_session_control_thread (void *arg_p)
   struct timespec to = {
     0, 0
   };
-  int rv = 0;
+  UNUSED_VAR int rv = 0;
 
   tsd_ptr = (THREAD_ENTRY *) arg_p;
 
@@ -2646,7 +2648,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_checkpoint_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv;
+  UNUSED_VAR int rv;
 
   struct timespec to = {
     0, 0
@@ -2705,7 +2707,7 @@ thread_checkpoint_thread (void *arg_p)
 void
 thread_wakeup_checkpoint_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Checkpoint_thread.lock);
   pthread_cond_signal (&thread_Checkpoint_thread.cond);
@@ -2722,7 +2724,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_purge_archive_logs_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv;
+  UNUSED_VAR int rv;
   time_t cur_time, last_deleted_time = 0;
   struct timespec to = {
     0, 0
@@ -2825,7 +2827,7 @@ thread_purge_archive_logs_thread (void *arg_p)
 void
 thread_wakeup_purge_archive_logs_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Purge_archive_logs_thread.lock);
   pthread_cond_signal (&thread_Purge_archive_logs_thread.cond);
@@ -3116,7 +3118,7 @@ thread_page_flush_thread (void *arg_p)
 void
 thread_wakeup_page_flush_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
   if (!thread_Page_flush_thread.is_running)
@@ -3133,7 +3135,7 @@ thread_wakeup_page_flush_thread (void)
 bool
 thread_is_page_flush_thread_available (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
   bool is_available;
 
   rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
@@ -3265,7 +3267,8 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_log_flush_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  int rv, ret;
+  int ret;
+  UNUSED_VAR int rv;
 
   struct timespec LFT_wakeup_time = { 0, 0 };
   struct timeval wakeup_time = { 0, 0 };
@@ -3405,7 +3408,7 @@ thread_log_flush_thread (void *arg_p)
 void
 thread_wakeup_log_flush_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
   pthread_cond_signal (&thread_Log_flush_thread.cond);
@@ -3420,7 +3423,7 @@ thread_wakeup_log_flush_thread (void)
 static void
 thread_reset_nrequestors_of_log_flush_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
   thread_Log_flush_thread.nrequestors = 0;
@@ -3454,7 +3457,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_log_clock_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr = NULL;
-  int rv = 0;
+  UNUSED_VAR int rv = 0;
   struct timeval now;
 
 #if defined(HAVE_ATOMIC_BUILTINS)
@@ -3640,7 +3643,7 @@ thread_auto_volume_expansion_thread (void *arg_p)
 bool
 thread_auto_volume_expansion_thread_is_running (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
   bool ret;
 
   rv = pthread_mutex_lock (&thread_Auto_volume_expansion_thread.lock);
@@ -3671,7 +3674,7 @@ thread_is_auto_volume_expansion_thread_available (void)
 void
 thread_wakeup_auto_volume_expansion_thread (void)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&thread_Auto_volume_expansion_thread.lock);
   if (!thread_Auto_volume_expansion_thread.is_running)
@@ -3691,7 +3694,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_heap_bestspace_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr = NULL;
-  int rv = 0;
+  UNUSED_VAR int rv = 0;
   struct timeval now;
 
   tsd_ptr = (THREAD_ENTRY *) arg_p;

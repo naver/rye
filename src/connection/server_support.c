@@ -644,7 +644,7 @@ css_process_master_request (CSS_CONN_ENTRY * conn)
 {
   int r;
   CSS_NET_PACKET *recv_packet = NULL;
-  unsigned short rid;
+  UNUSED_VAR unsigned short rid;
   char *data = NULL;
   int datasize;
   CSS_MASTER_TO_SERVER_REQUEST request;
@@ -1032,7 +1032,7 @@ void *
 css_oob_handler_thread (void *arg)
 {
   THREAD_ENTRY *thrd_entry;
-  int r;
+  UNUSED_VAR int r;
   int sig;
   sigset_t sigurg_mask;
   struct sigaction act;
@@ -1075,7 +1075,11 @@ css_block_all_active_conn (unsigned short stop_phase)
 {
   CSS_CONN_ENTRY *conn;
 
-  csect_enter_critical_section (NULL, &css_Active_conn_csect, INF_WAIT);
+  if (csect_enter (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) != NO_ERROR)
+    {
+      assert (false);
+      return;
+    }
 
   for (conn = css_Active_conn_anchor; conn != NULL; conn = conn->next)
     {
@@ -1091,7 +1095,7 @@ css_block_all_active_conn (unsigned short stop_phase)
 	}
     }
 
-  csect_exit_critical_section (&css_Active_conn_csect);
+  csect_exit (CSECT_CSS_ACTIVE_CONN);
 }
 
 /*
@@ -1516,7 +1520,7 @@ css_pack_server_name (const char *server_name, int *name_length)
 }
 
 /*
- * css_set_client_version() - 
+ * css_set_client_version() -
  */
 void
 css_set_client_version (THREAD_ENTRY * thread_p, const RYE_VERSION * version)
