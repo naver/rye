@@ -318,6 +318,30 @@ init_server_monitor_item ()
       db_Stats_info[i].is_collecting_time = mnt_stats_is_collecting_time (i);
     }
 
+#if 1				/* csect sub-info */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_ER_LOG_FILE], "csect", "er_log_file");	/* 0 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_ER_MSG_CACHE], "csect", "er_msg_cache");	/* 1 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_WFG], "csect", "wfg");	/* 2 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_LOG], "csect", "log");	/* 3 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_LOG_BUFFER], "csect", "log_buffer");	/* 4 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_LOG_ARCHIVE], "csect", "log_archive");	/* 5 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE], "csect", "sr_locator_classname_table");	/* 6 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_FILE_NEWFILE], "csect", "file_newfile");	/* 7 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_QPROC_QUERY_TABLE], "csect", "qproc_query_table");	/* 8 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_BOOT_SR_DBPARM], "csect", "boot_sr_dbparm");	/* 9 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_DISK_REFRESH_GOODVOL], "csect", "disk_refresh_goodvol");	/* 10 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_CNV_FMT_LEXER], "csect", "cnv_fmt_lexer");	/* 11 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_CT_OID_TABLE], "csect", "ct_oid_table");	/* 12 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_HA_SERVER_STATE], "csect", "ha_server_state");	/* 13 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_SESSION_STATE], "csect", "session_state");	/* 14 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_ACL], "csect", "waits_acl");	/* 15 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_EVENT_LOG_FILE], "csect", "event_log_file");	/* 16 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_ACCESS_STATUS], "csect", "access_status");	/* 17 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_TEMPFILE_CACHE], "csect", "tempfile_cache");	/* 18 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_CSS_ACTIVE_CONN], "csect", "css_active_conn");	/* 19 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_CSS_FREE_CONN], "csect", "css_free_conn");	/* 20 */
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_UNKNOWN], "csect", "unknown");	/* 21 */
+
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_WAITS_ER_LOG_FILE], "csect", "waits_er_log_file");	/* 0 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_WAITS_ER_MSG_CACHE], "csect", "waits_er_msg_cache");	/* 1 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_WAITS_WFG], "csect", "waits_wfg");	/* 2 */
@@ -340,6 +364,7 @@ init_server_monitor_item ()
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN], "csect", "waits_css_active_conn");	/* 19 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_WAITS_CSS_FREE_CONN], "csect", "waits_css_free_conn");	/* 20 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_WAITS_UNKNOWN], "csect", "waits_unknown");	/* 21 */
+#endif
 
 #if 0
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DISK_SECTOR_ALLOCS],

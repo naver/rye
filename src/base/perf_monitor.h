@@ -88,6 +88,30 @@
 typedef enum
 {
   /* Statistics at critical section */
+#if 1				/* csect sub-info */
+  MNT_STATS_CSECT_ER_LOG_FILE,	/* 0 */
+  MNT_STATS_CSECT_ER_MSG_CACHE,	/* 1 */
+  MNT_STATS_CSECT_WFG,		/* 2 */
+  MNT_STATS_CSECT_LOG,		/* 3 */
+  MNT_STATS_CSECT_LOG_BUFFER,	/* 4 */
+  MNT_STATS_CSECT_LOG_ARCHIVE,	/* 5 */
+  MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE,	/* 6 */
+  MNT_STATS_CSECT_FILE_NEWFILE,	/* 7 */
+  MNT_STATS_CSECT_QPROC_QUERY_TABLE,	/* 8 */
+  MNT_STATS_CSECT_BOOT_SR_DBPARM,	/* 9 */
+  MNT_STATS_CSECT_DISK_REFRESH_GOODVOL,	/* 10 */
+  MNT_STATS_CSECT_CNV_FMT_LEXER,	/* 11 */
+  MNT_STATS_CSECT_CT_OID_TABLE,	/* 12 */
+  MNT_STATS_CSECT_HA_SERVER_STATE,	/* 13 */
+  MNT_STATS_CSECT_SESSION_STATE,	/* 14 */
+  MNT_STATS_CSECT_ACL,		/* 15 */
+  MNT_STATS_CSECT_EVENT_LOG_FILE,	/* 16 */
+  MNT_STATS_CSECT_ACCESS_STATUS,	/* 17 */
+  MNT_STATS_CSECT_TEMPFILE_CACHE,	/* 18 */
+  MNT_STATS_CSECT_CSS_ACTIVE_CONN,	/* 19 */
+  MNT_STATS_CSECT_CSS_FREE_CONN,	/* 20 */
+  MNT_STATS_CSECT_UNKNOWN,	/* 21 */
+
   MNT_STATS_CSECT_WAITS_ER_LOG_FILE,	/* 0 */
   MNT_STATS_CSECT_WAITS_ER_MSG_CACHE,	/* 1 */
   MNT_STATS_CSECT_WAITS_WFG,	/* 2 */
@@ -110,6 +134,7 @@ typedef enum
   MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN,	/* 19 */
   MNT_STATS_CSECT_WAITS_CSS_FREE_CONN,	/* 20 */
   MNT_STATS_CSECT_WAITS_UNKNOWN,	/* 21 */
+#endif
 
   /* Statistics at disk level */
   MNT_STATS_DISK_SECTOR_ALLOCS,
@@ -286,7 +311,7 @@ typedef enum
   MNT_SIZE_OF_SERVER_EXEC_STATS
 } MNT_SERVER_ITEM;
 
-#define MNT_GET_PARENT_ITEM(m)                \
+#define MNT_GET_PARENT_ITEM_FETCHES(m)                \
   ((m == MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER     \
       || m == MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB   \
       || m == MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER       \
@@ -373,6 +398,7 @@ extern int mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
 extern bool mnt_stats_is_cumulative (MNT_SERVER_ITEM item);
 extern bool mnt_stats_is_collecting_time (MNT_SERVER_ITEM item);
 
+extern MNT_SERVER_ITEM mnt_csect_type_to_server_item (const CSECT_TYPE ctype);
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item_waits (const CSECT_TYPE
 							    ctype);
 

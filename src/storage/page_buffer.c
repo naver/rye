@@ -1370,7 +1370,7 @@ try_again:
   /* Record number of fetches in statistics */
   item = mnt_page_ptype_to_server_item_fetches (ptype);
   assert (item != MNT_STATS_DATA_PAGE_FETCHES);
-  assert (MNT_GET_PARENT_ITEM (item) == MNT_STATS_DATA_PAGE_FETCHES);
+  assert (MNT_GET_PARENT_ITEM_FETCHES (item) == MNT_STATS_DATA_PAGE_FETCHES);
   assert (item >= MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER);
   assert (item <= MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN);
 

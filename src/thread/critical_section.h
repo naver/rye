@@ -40,6 +40,7 @@ enum
  * These are the user defined lock definitions. When adding more locks, also
  * add initialization entries in critical_section.c
  */
+/* csect sub-info */
 typedef enum
 {
   CSECT_ER_LOG_FILE = 0,	/* Latch for error msg log file */
@@ -90,12 +91,9 @@ typedef struct css_critical_section
   THREAD_ENTRY *waiting_promoters_queue;	/* queue of waiting promoters */
   pthread_t owner;		/* CS owner writer */
   int tran_index;		/* transaction id acquiring CS */
-#if 1 /* TODO - unsigned int ==> UINT64 */
-  unsigned int total_enter;
-  unsigned int total_nwaits;	/* total # of waiters */
-#endif
+#if 1				/* TODO - */
   struct timeval max_wait;
-  struct timeval total_wait;
+#endif
 } CSS_CRITICAL_SECTION;
 
 #define CSS_CRITICAL_SECTION_INITIALIZER \

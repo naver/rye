@@ -37,6 +37,8 @@
 #include "perf_monitor.h"
 #include "system_parameter.h"
 
+#include "rye_server_shm.h"
+
 #undef csect_initialize_critical_section
 #undef csect_finalize_critical_section
 #undef csect_enter
@@ -63,6 +65,7 @@ do { \
 } while (0)
 
 /* define critical section array */
+/* csect sub-info */
 CSS_CRITICAL_SECTION css_Csect_array[CRITICAL_SECTION_COUNT];
 
 static const char *css_Csect_name[] = {
@@ -168,13 +171,10 @@ csect_initialize_critical_section (CSS_CRITICAL_SECTION * cs_ptr)
   cs_ptr->waiting_writers_queue = NULL;
   cs_ptr->waiting_promoters_queue = NULL;
 
-  cs_ptr->total_enter = 0;
-  cs_ptr->total_nwaits = 0;
-
+#if 1				/* TODO - */
   cs_ptr->max_wait.tv_sec = 0;
   cs_ptr->max_wait.tv_usec = 0;
-  cs_ptr->total_wait.tv_sec = 0;
-  cs_ptr->total_wait.tv_usec = 0;
+#endif
 
   error_code = pthread_mutexattr_destroy (&mattr);
   if (error_code != NO_ERROR)
@@ -244,13 +244,10 @@ csect_finalize_critical_section (CSS_CRITICAL_SECTION * cs_ptr)
   cs_ptr->waiting_writers_queue = NULL;
   cs_ptr->waiting_promoters_queue = NULL;
 
-  cs_ptr->total_enter = 0;
-  cs_ptr->total_nwaits = 0;
-
+#if 1				/* TODO - */
   cs_ptr->max_wait.tv_sec = 0;
   cs_ptr->max_wait.tv_usec = 0;
-  cs_ptr->total_wait.tv_sec = 0;
-  cs_ptr->total_wait.tv_usec = 0;
+#endif
 
   return NO_ERROR;
 }
@@ -533,17 +530,18 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 #endif
   struct timeval wait_start, wait_end;
   UINT64 perf_start;
-  MNT_SERVER_ITEM item;
+  MNT_SERVER_ITEM item, item_waits;
 
   assert (cs_ptr != NULL);
-  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
+  item = mnt_csect_type_to_server_item (cs_ptr->cs_index);
+  item_waits = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  cs_ptr->total_enter++;
+  mnt_stats_counter (thread_p, item, 1);
 
 #if defined (EnableThreadMonitoring)
   if (0 < prm_get_integer_value (PRM_ID_MNT_WAITING_THREAD))
@@ -576,7 +574,6 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 	  if (wait_secs == INF_WAIT)
 	    {
 	      cs_ptr->waiting_writers++;
-	      cs_ptr->total_nwaits++;
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
@@ -594,7 +591,8 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)
@@ -665,7 +663,8 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)
@@ -794,17 +793,18 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 #endif
   struct timeval wait_start, wait_end;
   UINT64 perf_start;
-  MNT_SERVER_ITEM item;
+  MNT_SERVER_ITEM item, item_waits;
 
   assert (cs_ptr != NULL);
-  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
+  item = mnt_csect_type_to_server_item (cs_ptr->cs_index);
+  item_waits = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  cs_ptr->total_enter++;
+  mnt_stats_counter (thread_p, item, 1);
 
 #if defined (EnableThreadMonitoring)
   if (0 < prm_get_integer_value (PRM_ID_MNT_WAITING_THREAD))
@@ -838,7 +838,6 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 	  /* reader should wait writer(s). */
 	  if (wait_secs == INF_WAIT)
 	    {
-	      cs_ptr->total_nwaits++;
 	      thread_p->resume_status = THREAD_CSECT_READER_SUSPENDED;
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
@@ -857,7 +856,8 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      if (error_code != NO_ERROR)
 		{
@@ -911,7 +911,8 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      if (error_code != 0)
 		{
@@ -1043,17 +1044,18 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 #endif
   struct timeval wait_start, wait_end;
   UINT64 perf_start;
-  MNT_SERVER_ITEM item;
+  MNT_SERVER_ITEM item, item_waits;
 
   assert (cs_ptr != NULL);
-  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
+  item = mnt_csect_type_to_server_item (cs_ptr->cs_index);
+  item_waits = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  cs_ptr->total_enter++;
+  mnt_stats_counter (thread_p, item, 1);
 
 #if defined (EnableThreadMonitoring)
   if (0 < prm_get_integer_value (PRM_ID_MNT_WAITING_THREAD))
@@ -1109,7 +1111,6 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 	  /* reader should wait writer(s). */
 	  if (wait_secs == INF_WAIT)
 	    {
-	      cs_ptr->total_nwaits++;
 	      thread_p->resume_status = THREAD_CSECT_READER_SUSPENDED;
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
@@ -1128,7 +1129,8 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      if (error_code != NO_ERROR)
 		{
@@ -1182,7 +1184,8 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      if (error_code != 0)
 		{
@@ -1333,17 +1336,18 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 #endif
   struct timeval wait_start, wait_end;
   UINT64 perf_start;
-  MNT_SERVER_ITEM item;
+  MNT_SERVER_ITEM item, item_waits;
 
   assert (cs_ptr != NULL);
-  item = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
+  item = mnt_csect_type_to_server_item (cs_ptr->cs_index);
+  item_waits = mnt_csect_type_to_server_item_waits (cs_ptr->cs_index);
 
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  cs_ptr->total_enter++;
+  mnt_stats_counter (thread_p, item, 1);
 
 #if defined (EnableThreadMonitoring)
   if (0 < prm_get_integer_value (PRM_ID_MNT_WAITING_THREAD))
@@ -1392,7 +1396,6 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 	  if (wait_secs == INF_WAIT)
 	    {
 	      cs_ptr->waiting_writers++;
-	      cs_ptr->total_nwaits++;
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
@@ -1410,7 +1413,8 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)
@@ -1453,7 +1457,8 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 			       wait_start, wait_end);
 		}
 
-	      mnt_stats_counter_with_time (thread_p, item, 1, perf_start);
+	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
+					   perf_start);
 
 	      cs_ptr->waiting_writers--;
 	      if (error_code != NO_ERROR)
@@ -1717,27 +1722,33 @@ csect_dump_statistics (FILE * fp)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
   int i;
+  MNT_SERVER_EXEC_STATS stats;
+  MNT_SERVER_ITEM item, item_waits;
+
+  svr_shm_copy_global_stats (&stats);
 
   fprintf (fp,
-	   "             CS Name    |Total Enter|Total Wait |   Max Wait    |  Total wait\n");
+         " CS Name                "
+         "|         Total Enter "
+         "|          Total Wait "
+         "|          Total wait |     Max Wait\n");
 
-  for (i = 0; i < CRITICAL_SECTION_COUNT; i++)
+  for (i = 0; i < CSECT_LAST; i++)
     {
       cs_ptr = &css_Csect_array[i];
-      fprintf (fp,
-	       "%23s |%10d |%10d | %6ld.%06ld | %6ld.%06ld\n",
-	       cs_ptr->name, cs_ptr->total_enter, cs_ptr->total_nwaits,
-	       cs_ptr->max_wait.tv_sec, cs_ptr->max_wait.tv_usec,
-	       cs_ptr->total_wait.tv_sec, cs_ptr->total_wait.tv_usec);
 
-#if 1 /* TODO - unsigned int ==> UINT64 */
-      cs_ptr->total_enter = 0;
-      cs_ptr->total_nwaits = 0;
+      item = mnt_csect_type_to_server_item (i);
+      item_waits = mnt_csect_type_to_server_item_waits (i);
+
+      fprintf (fp,
+	       "%23s |%20ld |%20ld |%20ld |%6ld.%06ld\n",
+	       cs_ptr->name, stats.values[item], stats.values[item_waits],
+	       mnt_clock_to_time (stats.acc_time[item_waits]),
+	       cs_ptr->max_wait.tv_sec, cs_ptr->max_wait.tv_usec);
+
+#if 1				/* TODO - */
       cs_ptr->max_wait.tv_sec = 0;
       cs_ptr->max_wait.tv_usec = 0;
-
-      cs_ptr->total_wait.tv_sec = 0;
-      cs_ptr->total_wait.tv_usec = 0;
 #endif
     }
 }

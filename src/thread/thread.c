@@ -65,7 +65,6 @@
 
 #include "rye_server_shm.h"
 
-
 #include "fault_injection.h"
 
 
@@ -509,7 +508,7 @@ server_stats_dump (FILE * fp)
   int i;
   int indent = 2;
   MNT_SERVER_EXEC_STATS stats;
-  MNT_SERVER_ITEM item;
+  MNT_SERVER_ITEM item_waits;
   UINT64 total_cs_waits_clock;
   UINT64 total_page_waits_clock;
 
@@ -518,25 +517,25 @@ server_stats_dump (FILE * fp)
   total_cs_waits_clock = 0;
   for (i = 0; i < CSECT_LAST; i++)
     {
-      item = mnt_csect_type_to_server_item_waits (i);
+      item_waits = mnt_csect_type_to_server_item_waits (i);
 
-      total_cs_waits_clock += stats.acc_time[item];
+      total_cs_waits_clock += stats.acc_time[item_waits];
     }
 
   fprintf (fp, "%*cs_wait total wait:%ld\n", indent, ' ',
 	   mnt_clock_to_time (total_cs_waits_clock));
   for (i = 0; i < CSECT_LAST; i++)
     {
-      item = mnt_csect_type_to_server_item_waits (i);
+      item_waits = mnt_csect_type_to_server_item_waits (i);
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
 	       csect_get_cs_name (i),
-	       mnt_clock_to_time (stats.acc_time[item]));
+	       mnt_clock_to_time (stats.acc_time[item_waits]));
       /* keep out zero division */
       if (total_cs_waits_clock > 0)
 	{
 	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats.acc_time[item]) /
+		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
 		    total_cs_waits_clock) * 100);
 	}
       fprintf (fp, "\n");
@@ -545,25 +544,25 @@ server_stats_dump (FILE * fp)
   total_page_waits_clock = 0;
   for (i = 0; i < PAGE_LAST; i++)
     {
-      item = mnt_page_ptype_to_server_item_fetches_waits (i);
+      item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
 
-      total_page_waits_clock += stats.acc_time[item];
+      total_page_waits_clock += stats.acc_time[item_waits];
     }
 
   fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
 	   mnt_clock_to_time (total_page_waits_clock));
   for (i = 0; i < PAGE_LAST; i++)
     {
-      item = mnt_page_ptype_to_server_item_fetches_waits (i);
+      item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
 	       page_type_to_string (i),
-	       mnt_clock_to_time (stats.acc_time[item]));
+	       mnt_clock_to_time (stats.acc_time[item_waits]));
       /* keep out zero division */
       if (total_page_waits_clock > 0)
 	{
 	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats.acc_time[item]) /
+		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
 		    total_page_waits_clock) * 100);
 	}
       fprintf (fp, "\n");
