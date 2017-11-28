@@ -329,8 +329,6 @@ typedef enum
 
 #define PRM_NAME_SQL_TRACE_SLOW "sql_trace_slow"
 
-#define PRM_NAME_SERVER_TRACE "server_trace"
-
 #define PRM_NAME_LOG_TRACE_FLUSH_TIME "log_trace_flush_time"
 
 #define PRM_NAME_GENERIC_VOL_PREALLOC_SIZE "generic_vol_prealloc_size"
@@ -908,9 +906,6 @@ INT64 PRM_SQL_TRACE_SLOW = -1;
 static INT64 prm_sql_trace_slow_default = -1;
 static INT64 prm_sql_trace_slow_lower = -1;
 static INT64 prm_sql_trace_slow_upper = 24 * ONE_HOUR;
-
-bool PRM_SERVER_TRACE = false;
-static bool prm_server_trace_default = false;
 
 bool PRM_SQL_TRACE_EXECUTION_PLAN = false;
 static bool prm_sql_trace_execution_plan_default = false;
@@ -2071,13 +2066,6 @@ sysprm_initialize_prm_def ()
 		     &prm_sql_trace_slow_default,
 		     &PRM_SQL_TRACE_SLOW,
 		     &prm_sql_trace_slow_upper, &prm_sql_trace_slow_lower);
-
-  sysprm_init_param (PRM_ID_SERVER_TRACE,
-		     PRM_NAME_SERVER_TRACE,
-		     (PRM_USER_CHANGE | PRM_FOR_SERVER),
-		     PRM_BOOLEAN,
-		     &prm_server_trace_default, &PRM_SERVER_TRACE, NULL,
-		     NULL);
 
   sysprm_init_param (PRM_ID_SQL_TRACE_EXECUTION_PLAN,
 		     PRM_NAME_SQL_TRACE_EXECUTION_PLAN,
