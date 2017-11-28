@@ -47,9 +47,4 @@ struct socket_queue_entry
   struct socket_queue_entry *next;
 };
 
-extern bool master_util_config_startup (const char *db_name, int *port_id);
-
-extern pthread_mutex_t css_Master_er_log_enable_lock;
-extern bool css_Master_er_log_enabled;
-
 #endif /* _MASTER_UTIL_H_ */

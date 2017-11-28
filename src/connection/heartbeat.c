@@ -540,10 +540,8 @@ hb_connect_to_master (const char *server_name, const char *log_path,
 		      HB_PROC_TYPE type)
 {
   CSS_CONN_ENTRY *conn;
-  int name_length = 0;
 
-  conn = css_register_to_master (prm_get_master_port_id (), type, server_name,
-				 log_path);
+  conn = css_register_to_master (type, server_name, log_path);
   if (conn == NULL)
     {
       return NULL;

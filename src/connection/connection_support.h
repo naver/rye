@@ -89,8 +89,7 @@ extern int css_check_magic (CSS_CONN_ENTRY * conn);
 
 extern bool css_is_client_ro_tran (THREAD_ENTRY * thread_p);
 
-extern CSS_CONN_ENTRY *css_register_to_master (int master_port_id,
-					       HB_PROC_TYPE type,
+extern CSS_CONN_ENTRY *css_register_to_master (HB_PROC_TYPE type,
 					       const char *server_name,
 					       const char *log_path);
 

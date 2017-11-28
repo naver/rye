@@ -37,7 +37,7 @@ extern void css_get_master_domain_path (char *path_buf, int buf_len);
 extern void css_get_server_domain_path (char *path_buf, int buf_len,
 					const char *dbname);
 
-extern int css_tcp_master_open (int port, SOCKET * sockfd);
+extern int css_tcp_master_open (SOCKET * sockfd);
 extern bool css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd);
 extern bool css_tcp_master_datagram (char *pathname, SOCKET * sockfd);
 extern SOCKET css_master_accept (SOCKET sockfd);
@@ -49,9 +49,8 @@ extern void css_shutdown_socket (SOCKET fd);
 extern SOCKET css_server_accept (SOCKET sockfd);
 extern int css_get_max_socket_fds (void);
 
-extern int css_tcp_client_open (const char *host, int port,
-				int connect_type, const char *dbname,
-				int timeout);
+extern int css_tcp_client_open (const char *host, int connect_type,
+				const char *dbname, int timeout);
 extern int css_ping (SOCKET sd, struct sockaddr_in *sa_send, int timeout);
 extern bool css_peer_alive (SOCKET sd, int timeout);
 extern in_addr_t css_host_ip_addr (void);

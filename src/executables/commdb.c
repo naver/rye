@@ -604,14 +604,7 @@ make_local_master_connection (CSS_CONN_ENTRY ** local_conn)
   if (*local_conn == NULL)
     {
       unsigned short rid;
-      int port_id = prm_get_master_port_id ();
-      if (port_id <= 0)
-	{
-	  return NULL;
-	}
-
-      *local_conn = css_connect_to_master_for_info ("localhost", port_id,
-						    &rid);
+      *local_conn = css_connect_to_master_for_info ("localhost", &rid);
     }
 
   return *local_conn;

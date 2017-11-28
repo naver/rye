@@ -64,7 +64,7 @@ extern int css_send_reply_to_client (CSS_CONN_ENTRY * conn, unsigned int eid,
 				     int num_buffers, ...);
 extern unsigned int css_send_abort_to_client (CSS_CONN_ENTRY * conn,
 					      unsigned int eid);
-extern int css_init (char *server_name, int connection_id);
+extern int css_init (const char *server_name);
 extern void css_set_client_version (THREAD_ENTRY * thread_p,
 				    const RYE_VERSION * version);
 extern void css_end_server_request (CSS_CONN_ENTRY * conn);

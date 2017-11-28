@@ -1044,7 +1044,7 @@ net_client_request_with_callback (int request, char *argbuf, int argsize,
 				  CSS_NET_PACKET ** recv_packet)
 {
   unsigned int eid;
-  char *ptr;
+  UNUSED_VAR char *ptr;
   QUERY_SERVER_REQUEST server_request;
   int server_request_num;
   CSS_NET_PACKET *tmp_recv_packet = NULL;
@@ -1678,8 +1678,7 @@ net_client_init (const char *dbname, const char *hostname)
   /* don't really need to do this every time but bruce says its ok -
      we probably need to guarentee that a css_terminate is always
      called before this */
-  error = css_client_init (prm_get_integer_value (PRM_ID_TCP_PORT_ID),
-			   dbname, hostname);
+  error = css_client_init (dbname, hostname);
   if (error != NO_ERROR)
     {
       goto end;

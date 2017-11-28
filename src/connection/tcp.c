@@ -79,8 +79,8 @@ static const int css_Maximum_server_count = 50;
 }
 
 static void css_sockopt (SOCKET sd);
-static in_addr_t css_sockaddr (const char *host, int port,
-			       int connect_type, const char *dbname,
+static in_addr_t css_sockaddr (const char *host, int connect_type,
+			       const char *dbname,
 			       struct sockaddr *saddr, socklen_t * slen);
 
 void
@@ -103,7 +103,7 @@ css_get_server_domain_path (char *path_buf, int buf_len, const char *dbname)
     {
       envvar_vardir_file (sock_dir, PATH_MAX, "RYE_SOCK");
       snprintf (path_buf, buf_len, "%s/%s.%s", sock_dir, envvar_prefix (),
-      		dbname);
+		dbname);
     }
 
   er_log_debug (ARG_FILE_LINE, "sock_path=%s\n", path_buf);
@@ -174,8 +174,8 @@ css_host_ip_addr ()
  *   slen(out):
  */
 static in_addr_t
-css_sockaddr (const char *host, int port, int connect_type,
-	      const char *dbname, struct sockaddr *saddr, socklen_t * slen)
+css_sockaddr (const char *host, int connect_type, const char *dbname,
+	      struct sockaddr *saddr, socklen_t * slen)
 {
   in_addr_t in_addr;
 
@@ -215,6 +215,7 @@ css_sockaddr (const char *host, int port, int connect_type,
   else
     {
       struct sockaddr_in tcp_saddr;
+      int port = prm_get_master_port_id ();
 
       memset ((void *) &tcp_saddr, 0, sizeof (tcp_saddr));
       tcp_saddr.sin_family = AF_INET;
@@ -236,7 +237,7 @@ css_sockaddr (const char *host, int port, int connect_type,
  *   timeout(in): timeout in milli-seconds
  */
 SOCKET
-css_tcp_client_open (const char *host, int port, int connect_type,
+css_tcp_client_open (const char *host, int connect_type,
 		     const char *dbname, int timeout)
 {
   SOCKET sd = -1;
@@ -251,7 +252,6 @@ css_tcp_client_open (const char *host, int port, int connect_type,
   } saddr_buf;
 
   assert (host != NULL);
-  assert (port > 0);
 
   if (timeout < 0)
     {
@@ -259,8 +259,7 @@ css_tcp_client_open (const char *host, int port, int connect_type,
     }
 
   saddr = (struct sockaddr *) &saddr_buf;
-  if (css_sockaddr (host, port, connect_type, dbname,
-		    saddr, &slen) == INADDR_NONE)
+  if (css_sockaddr (host, connect_type, dbname, saddr, &slen) == INADDR_NONE)
     {
       return INVALID_SOCKET;
     }
@@ -352,7 +351,7 @@ retry_poll:
  *   sockfd(in):
  */
 int
-css_tcp_master_open (int port, SOCKET * sockfd)
+css_tcp_master_open (SOCKET * sockfd)
 {
   struct sockaddr_in tcp_srv_addr;	/* server's internet socket addr */
   struct sockaddr_un unix_srv_addr;
@@ -360,6 +359,7 @@ css_tcp_master_open (int port, SOCKET * sockfd)
   int reuseaddr_flag = 1;
   struct stat unix_socket_stat;
   char sock_path[PATH_MAX];
+  int port = prm_get_master_port_id ();
 
   /*
    * We have to create a socket ourselves and bind our well-known address to it.

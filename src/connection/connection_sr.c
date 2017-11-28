@@ -713,13 +713,13 @@ css_print_conn_list (void)
 int
 css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
 		       const char *host_name, int connect_type,
-		       const char *packed_name, int packed_name_len, int port)
+		       const char *packed_name, int packed_name_len)
 {
   SOCKET fd;
   int css_error = NO_ERRORS;
   int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  fd = css_tcp_client_open (host_name, port, connect_type, NULL, timeout);
+  fd = css_tcp_client_open (host_name, connect_type, NULL, timeout);
   if (IS_INVALID_SOCKET (fd))
     {
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,

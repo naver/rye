@@ -614,7 +614,6 @@ static int
 process_master (int command_type)
 {
   int status = NO_ERROR;
-  int master_port = prm_get_master_port_id ();
 
   switch (command_type)
     {
@@ -622,7 +621,7 @@ process_master (int command_type)
       {
 	print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		       PRINT_MASTER_NAME, PRINT_CMD_START);
-	if (!css_does_master_exist (master_port))
+	if (!css_does_master_exist ())
 	  {
 	    char argv0[] = UTIL_MASTER_NAME;
 	    char *args[] = { argv0, NULL };
@@ -630,8 +629,7 @@ process_master (int command_type)
 				   false, NULL);
 	    /* The master process needs a few seconds to bind port */
 	    sleep (3);
-	    status = css_does_master_exist (master_port) ?
-	      NO_ERROR : ER_GENERIC_ERROR;
+	    status = css_does_master_exist ()? NO_ERROR : ER_GENERIC_ERROR;
 	    print_result (PRINT_MASTER_NAME, status, command_type);
 	  }
 	else
@@ -647,9 +645,9 @@ process_master (int command_type)
     case ARG_CMD_STOP:
       print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		     PRINT_MASTER_NAME, PRINT_CMD_STOP);
-      if (css_does_master_exist (master_port))
+      if (css_does_master_exist ())
 	{
-	  while (css_does_master_exist (master_port))
+	  while (css_does_master_exist ())
 	    {
 	      if (commdb_master_shutdown (&master_Conn, 0) != NO_ERROR)
 		{
@@ -721,12 +719,10 @@ check_all_services_status (UNUSED_ARG unsigned int sleep_time,
 			   UTIL_ALL_SERVICES_STATUS expected_status)
 {
   bool ret;
-  int master_port;
   bool broker_running;
 
-  master_port = prm_get_master_port_id ();
   /* check whether rye_master is running */
-  ret = css_does_master_exist (master_port);
+  ret = css_does_master_exist ();
   if ((expected_status == ALL_SERVICES_RUNNING && !ret)
       || (expected_status == ALL_SERVICES_STOPPED && ret))
     {
@@ -809,7 +805,7 @@ process_service (int command_type)
     case ARG_CMD_STATUS:
       print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		     PRINT_MASTER_NAME, PRINT_CMD_STATUS);
-      if (css_does_master_exist (prm_get_master_port_id ()))
+      if (css_does_master_exist ())
 	{
 	  print_message (stdout, MSGCAT_UTIL_GENERIC_ALREADY_RUNNING_1S,
 			 PRINT_MASTER_NAME);
@@ -858,7 +854,6 @@ process_server (int command_type, int argc, char **argv, bool show_usage)
 {
   char buf[4096];
   int status = NO_ERROR;
-  int master_port = prm_get_master_port_id ();
 
   memset (buf, '\0', sizeof (buf));
 
@@ -882,7 +877,7 @@ process_server (int command_type, int argc, char **argv, bool show_usage)
     case ARG_CMD_STATUS:
       print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		     PRINT_SERVER_NAME, PRINT_CMD_STATUS);
-      if (css_does_master_exist (master_port))
+      if (css_does_master_exist ())
 	{
 	  status = commdb_get_server_status (&master_Conn);
 	}
@@ -1137,7 +1132,6 @@ process_broker (int command_type, int argc, char **argv)
 static int
 us_hb_activate (void)
 {
-  int master_port;
   int error = NO_ERROR;
   bool success;
 
@@ -1146,14 +1140,7 @@ us_hb_activate (void)
    * 1. ACTIVATE_HEARTBEAT->IS_REGISTERED_HA_PROCS
    */
 
-  master_port = prm_get_master_port_id ();
-  if (master_port <= 0)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-      return error;
-    }
-
-  if (!css_does_master_exist (master_port))
+  if (!css_does_master_exist ())
     {
       error = ER_GENERIC_ERROR;
       print_message (stdout, MSGCAT_UTIL_GENERIC_NOT_RUNNING_1S,
@@ -1200,7 +1187,6 @@ us_hb_activate (void)
 static int
 us_hb_reload (void)
 {
-  int master_port;
   int error = NO_ERROR;
   bool success;
   INT64 old_ha_node_reset_time, new_ha_node_reset_time;
@@ -1210,14 +1196,7 @@ us_hb_reload (void)
    * 1. RECOFIG_HEARTBEAT->IS_REGISTERED_HA_PROCS
    */
 
-  master_port = prm_get_master_port_id ();
-  if (master_port <= 0)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-      return error;
-    }
-
-  if (!css_does_master_exist (master_port))
+  if (!css_does_master_exist ())
     {
       error = ER_GENERIC_ERROR;
       print_message (stdout, MSGCAT_UTIL_GENERIC_NOT_RUNNING_1S,
@@ -1279,7 +1258,6 @@ us_hb_reload (void)
 static int
 us_hb_changemode (HA_STATE req_node_state, bool force)
 {
-  int master_port;
   int error = NO_ERROR;
 
   /*
@@ -1287,14 +1265,7 @@ us_hb_changemode (HA_STATE req_node_state, bool force)
    * 1. RECOFIG_HEARTBEAT->IS_REGISTERED_HA_PROCS
    */
 
-  master_port = prm_get_master_port_id ();
-  if (master_port <= 0)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-      return error;
-    }
-
-  if (!css_does_master_exist (master_port))
+  if (!css_does_master_exist ())
     {
       error = ER_GENERIC_ERROR;
       print_message (stdout, MSGCAT_UTIL_GENERIC_NOT_RUNNING_1S,
@@ -1325,7 +1296,6 @@ static int
 us_hb_deactivate (const char *hostname, bool immediate_stop)
 {
   CSS_CONN_ENTRY *tmp_master_conn = NULL;
-  int port_id;
   unsigned short rid;
   int status = NO_ERROR;
   bool success;
@@ -1341,12 +1311,7 @@ us_hb_deactivate (const char *hostname, bool immediate_stop)
    * 2. DEACTIVATE_HEARTBEAT->DEACT_CONFIRM_NO_SERVER
    */
 
-  port_id = prm_get_master_port_id ();
-  if (port_id <= 0)
-    {
-      return ER_FAILED;
-    }
-  tmp_master_conn = css_connect_to_master_for_info (hostname, port_id, &rid);
+  tmp_master_conn = css_connect_to_master_for_info (hostname, &rid);
   if (tmp_master_conn == NULL)
     {
       return ER_FAILED;
@@ -1568,13 +1533,11 @@ static int
 process_heartbeat_status (int argc, char **argv)
 {
   int status = NO_ERROR;
-  int master_port;
 
   print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		 PRINT_HEARTBEAT_NAME, PRINT_CMD_STATUS);
 
-  master_port = prm_get_master_port_id ();
-  if (css_does_master_exist (master_port))
+  if (css_does_master_exist ())
     {
       bool verbose = false;
 
@@ -1710,7 +1673,6 @@ process_heartbeat (int command_type, int argc, char **argv)
   int status = NO_ERROR;
   HA_CONF ha_conf;
   bool broker_running;
-  int master_port = prm_get_master_port_id ();
 
   memset ((void *) &ha_conf, 0, sizeof (HA_CONF));
   status = util_make_ha_conf (&ha_conf);
@@ -1725,7 +1687,7 @@ process_heartbeat (int command_type, int argc, char **argv)
   switch (command_type)
     {
     case ARG_CMD_START:
-      if (!css_does_master_exist (master_port))
+      if (!css_does_master_exist ())
 	{
 	  status = process_master (command_type);
 	  if (status != NO_ERROR)

@@ -72,7 +72,6 @@
 
 static struct timeval css_Shutdown_timeout = { 0, 0 };
 static char *css_Master_server_name = NULL;	/* database identifier */
-static int css_Master_port_id;
 static CSS_CONN_ENTRY *css_Master_conn;
 static IP_INFO *css_Server_accessible_ip_info;
 static char *ip_list_file_name = NULL;
@@ -738,7 +737,6 @@ css_process_new_client (SOCKET master_fd)
   void *area;
   char buffer[1024];
   int length = 1024;
-  CSS_JOB_ENTRY job_entry;
 
   /* receive new socket descriptor from the master */
   new_fd = css_open_new_socket_from_master (master_fd, &rid);
@@ -1254,22 +1252,19 @@ css_con_close_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg)
 
 /*
  * css_init() -
- *   return:
- *   server_name(in):
- *   port_id(in):
  *
  * Note: This routine is the entry point for the server interface. Once this
  *       routine is called, control will not return to the caller until the
  *       server/scheduler is stopped.
  */
 int
-css_init (char *server_name, int port_id)
+css_init (const char *server_name)
 {
   THREAD_ENTRY *thread_p;
   CSS_CONN_ENTRY *conn;
   int status = ER_FAILED;
 
-  if (server_name == NULL || port_id <= 0)
+  if (server_name == NULL)
     {
       return ER_FAILED;
     }
@@ -1292,7 +1287,7 @@ css_init (char *server_name, int port_id)
       return ER_FAILED;
     }
 
-  conn = css_register_to_master (port_id, HB_PTYPE_SERVER, server_name, NULL);
+  conn = css_register_to_master (HB_PTYPE_SERVER, server_name, NULL);
   if (conn != NULL)
     {
       char pname[PATH_MAX];
@@ -1309,7 +1304,6 @@ css_init (char *server_name, int port_id)
       css_insert_into_active_conn_list (conn);
 
       css_Master_server_name = strdup (server_name);
-      css_Master_port_id = port_id;
       css_Master_conn = conn;
 
       status = hb_register_to_master (css_Master_conn, HB_PTYPE_SERVER);

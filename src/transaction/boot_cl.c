@@ -930,10 +930,9 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * client_credential)
 		    "boot_client_initialize_css () error %d\n", error_code);
       goto error;
     }
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECTED_TO, 5,
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECTED_TO, 4,
 	  client_credential->program_name, client_credential->process_id,
-	  client_credential->db_name, boot_Host_connected,
-	  prm_get_integer_value (PRM_ID_TCP_PORT_ID));
+	  client_credential->db_name, boot_Host_connected);
 
   /* tune some client parameters with the value from the server */
   sysprm_tune_client_parameters ();

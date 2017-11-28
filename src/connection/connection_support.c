@@ -1672,7 +1672,7 @@ css_pack_server_name_for_hb_register (int *name_length, HB_PROC_TYPE type,
  * css_register_to_master () - register to the master 
  */
 CSS_CONN_ENTRY *
-css_register_to_master (int master_port_id, HB_PROC_TYPE type,
+css_register_to_master (HB_PROC_TYPE type,
 			const char *server_name, const char *log_path)
 {
   const char *hname = LOCALHOST;
@@ -1682,8 +1682,6 @@ css_register_to_master (int master_port_id, HB_PROC_TYPE type,
   int css_error;
   char *packed_name = NULL;
   int name_length;
-
-  css_Service_id = master_port_id;
 
   conn = css_make_conn (INVALID_SOCKET);
   if (conn == NULL)
@@ -1696,13 +1694,11 @@ css_register_to_master (int master_port_id, HB_PROC_TYPE type,
 
   packed_name = css_pack_server_name_for_hb_register (&name_length,
 						      type,
-						      server_name,
-						      log_path);
+						      server_name, log_path);
 #if defined(SERVER_MODE)
   css_error = css_common_connect_sr (conn, &rid, hname,
 				     MASTER_CONN_TYPE_HB_PROC,
-				     packed_name, name_length,
-				     master_port_id);
+				     packed_name, name_length);
   if (css_error == NO_ERRORS)
     {
       css_error = css_recv_data_packet_from_client (NULL, conn, rid, -1, 1,
@@ -1712,7 +1708,7 @@ css_register_to_master (int master_port_id, HB_PROC_TYPE type,
 #else
   css_error = css_common_connect_cl (hname, conn, MASTER_CONN_TYPE_HB_PROC,
 				     NULL, packed_name, name_length,
-				     master_port_id, 0, &rid, true);
+				     0, &rid, true);
   if (css_error == NO_ERRORS)
     {
       css_error = css_recv_data_from_server (NULL, conn, rid, -1, 1,

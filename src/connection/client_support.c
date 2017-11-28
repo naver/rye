@@ -119,21 +119,13 @@ css_set_pipe_signal (void)
 
 /*
  * css_client_init() - initialize the network portion of the client interface
- *   return:
- *   sockid(in): sSocket number for remote host
- *   alloc_function(in): function for memory allocation
- *   free_function(in): function to return memory
- *   oob_function(in): function to call on receipt of an out of band message
- *   server_name(in):
- *   host_name(in):
  */
 int
-css_client_init (int sockid, const char *server_name, const char *host_name)
+css_client_init (const char *server_name, const char *host_name)
 {
   CSS_CONN_ENTRY *conn;
   int error = NO_ERROR;
 
-  css_Service_id = sockid;
   css_set_pipe_signal ();
 
   conn = css_connect_to_rye_server (host_name, server_name);

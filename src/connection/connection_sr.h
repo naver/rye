@@ -110,6 +110,6 @@ extern int css_common_connect_sr (CSS_CONN_ENTRY * conn,
 				  const char *host_name,
 				  int connect_type,
 				  const char *server_name,
-				  int server_name_length, int port);
+				  int server_name_length);
 
 #endif /* _CONNECTION_SR_H_ */

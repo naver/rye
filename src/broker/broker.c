@@ -1485,7 +1485,6 @@ static CSS_CONN_ENTRY *
 connect_to_master_for_server_monitor (const char *db_name,
 				      const char *db_host)
 {
-  int port_id;
   unsigned short rid;
 
   if (sysprm_load_and_init (db_name) != NO_ERROR)
@@ -1493,14 +1492,8 @@ connect_to_master_for_server_monitor (const char *db_name,
       return NULL;
     }
 
-  port_id = prm_get_master_port_id ();
-  if (port_id <= 0)
-    {
-      return NULL;
-    }
-
   /* timeout : 5000 milliseconds */
-  return (css_connect_to_master_timeout (db_host, port_id, 5000, &rid));
+  return (css_connect_to_master_timeout (db_host, 5000, &rid));
 }
 
 static int

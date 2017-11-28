@@ -1070,8 +1070,7 @@ net_server_start (const char *server_name)
 
       if (r == NO_ERROR)
 	{
-	  r = css_init (server_name, 
-			prm_get_integer_value (PRM_ID_TCP_PORT_ID));
+	  r = css_init (server_name);
 	}
 
       if (r < 0)

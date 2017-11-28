@@ -123,7 +123,7 @@ static int hb_cluster_calc_score (void);
 static void hb_set_net_header (HBP_HEADER * header, unsigned char type,
 			       bool is_req, unsigned short len,
 			       unsigned int seq, char *dest_host_name);
-static int hb_sockaddr (const char *host, int port, struct sockaddr *saddr,
+static int hb_sockaddr (const char *host, struct sockaddr *saddr,
 			socklen_t * slen);
 
 /* common */
@@ -294,6 +294,10 @@ struct hb_request
 };
 
 static struct hb_request hb_Requests[HB_JOB_MAX];
+
+static pthread_mutex_t css_Master_er_log_enable_lock =
+  PTHREAD_MUTEX_INITIALIZER;
+static bool css_Master_er_log_enabled = true;
 
 #define HA_NODE_INFO_FORMAT_STRING       \
 	" HA-Node Info (current %s, state %s)\n"
@@ -1816,8 +1820,8 @@ hb_cluster_send_heartbeat (bool is_req, char *host_name)
 
   /* construct destination address */
   memset ((void *) &saddr, 0, sizeof (saddr));
-  if (hb_sockaddr (host_name, prm_get_integer_value (PRM_ID_HA_PORT_ID),
-		   (struct sockaddr *) &saddr, &saddr_len) != NO_ERROR)
+  if (hb_sockaddr (host_name, (struct sockaddr *) &saddr,
+		   &saddr_len) != NO_ERROR)
     {
       er_log_debug (ARG_FILE_LINE, "hb_sockaddr failed. \n");
       return;
@@ -2012,18 +2016,12 @@ hb_set_net_header (HBP_HEADER * header, unsigned char type, bool is_req,
 
 /*
  * hb_sockaddr() -
- *   return: NO_ERROR
- *
- *   host(in):
- *   port(in):
- *   saddr(out):
- *   slen(out):
  */
 static int
-hb_sockaddr (const char *host, int port, struct sockaddr *saddr,
-	     socklen_t * slen)
+hb_sockaddr (const char *host, struct sockaddr *saddr, socklen_t * slen)
 {
   struct sockaddr_in udp_saddr;
+  int port = prm_get_integer_value (PRM_ID_HA_PORT_ID);
 
   /*
    * Construct address for UDP socket

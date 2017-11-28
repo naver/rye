@@ -290,14 +290,12 @@ int
 css_common_connect_cl (const char *host_name, CSS_CONN_ENTRY * conn,
 		       int connect_type, const char *dbname,
 		       const char *packed_name, int packed_name_len,
-		       int port, int timeout,
-		       unsigned short *rid, bool send_magic)
+		       int timeout, unsigned short *rid, bool send_magic)
 {
   SOCKET fd;
   int css_error = NO_ERRORS;
 
-  fd = css_tcp_client_open (host_name, port, connect_type, dbname,
-			    timeout * 1000);
+  fd = css_tcp_client_open (host_name, connect_type, dbname, timeout * 1000);
 
   if (!IS_INVALID_SOCKET (fd))
     {
@@ -360,21 +358,18 @@ css_server_connect (const char *host_name, CSS_CONN_ENTRY * conn,
 
   return (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_TO_SERVER,
 				 server_name, server_name, length,
-				 css_Service_id, timeout, rid, true));
+				 timeout, rid, true));
 }
 
 /*
  * css_connect_to_rye_server () - make a new connection to a server
- *   return:
- *   host_name(in):
- *   server_name(in):
  */
 CSS_CONN_ENTRY *
 css_connect_to_rye_server (const char *host_name, const char *server_name)
 {
   CSS_CONN_ENTRY *conn;
   int css_error;
-  int reason, port_id;
+  int reason;
   int retry_count;
   unsigned short rid;
   int reply[2];
@@ -448,26 +443,20 @@ exit:
 
 /*
  * css_connect_to_master_for_info () - connect to the master server
- *   return:
- *   host_name(in):
- *   port_id(in):
- *   rid(out):
  *
  * Note: This will allow the client to extract information from the master,
  *       as well as modify runtime parameters.
  */
 CSS_CONN_ENTRY *
-css_connect_to_master_for_info (const char *host_name, int port_id,
-				unsigned short *rid)
+css_connect_to_master_for_info (const char *host_name, unsigned short *rid)
 {
-  return (css_connect_to_master_timeout (host_name, port_id, 0, rid));
+  return (css_connect_to_master_timeout (host_name, 0, rid));
 }
 
 /*
  * css_connect_to_master_timeout () - connect to the master server
  *   return:
  *   host_name(in):
- *   port_id(in):
  *   timeout(in): timeout in milli-seconds
  *   rid(out):
  *
@@ -475,8 +464,8 @@ css_connect_to_master_for_info (const char *host_name, int port_id,
  *       as well as modify runtime parameters.
  */
 CSS_CONN_ENTRY *
-css_connect_to_master_timeout (const char *host_name, int port_id,
-			       int timeout, unsigned short *rid)
+css_connect_to_master_timeout (const char *host_name, int timeout,
+			       unsigned short *rid)
 {
   CSS_CONN_ENTRY *conn;
   double time = timeout;
@@ -491,7 +480,7 @@ css_connect_to_master_timeout (const char *host_name, int port_id,
 
   if (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_INFO,
 			     NULL, NULL, 0,
-			     port_id, (int) time, rid, true) == NO_ERRORS)
+			     (int) time, rid, true) == NO_ERRORS)
     {
       return conn;
     }
@@ -574,17 +563,14 @@ css_send_request_to_master (CSS_CONN_ENTRY * conn, CSS_MASTER_REQUEST request,
 
 /*
  * css_does_master_exist () -
- *   return:
- *   port_id(in):
  */
 bool
-css_does_master_exist (int port_id)
+css_does_master_exist ()
 {
   SOCKET fd;
 
   /* Don't waste time retrying between master to master connections */
-  fd = css_tcp_client_open ("localhost", port_id, MASTER_CONN_TYPE_INFO, NULL,
-			    1000);
+  fd = css_tcp_client_open ("localhost", MASTER_CONN_TYPE_INFO, NULL, 1000);
   if (!IS_INVALID_SOCKET (fd))
     {
       css_shutdown_socket (fd);

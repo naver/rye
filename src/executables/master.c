@@ -63,7 +63,7 @@
 
 static void css_master_error (const char *error_string);
 static int css_master_timeout (void);
-static int css_master_init (int cport, SOCKET * clientfd);
+static int css_master_init (SOCKET * clientfd);
 static void css_reject_client_request (CSS_CONN_ENTRY * conn,
 				       unsigned short rid, int reason);
 static void css_reject_server_request (CSS_CONN_ENTRY * conn,
@@ -115,8 +115,6 @@ SOCKET css_Master_socket_fd[2] = { INVALID_SOCKET, INVALID_SOCKET };
 /* This is the queue anchor of sockets used by the Master server. */
 SOCKET_QUEUE_ENTRY *css_Master_socket_anchor = NULL;
 pthread_mutex_t css_Master_socket_anchor_lock;
-pthread_mutex_t css_Master_er_log_enable_lock = PTHREAD_MUTEX_INITIALIZER;
-bool css_Master_er_log_enabled = true;
 
 /*
  * css_master_error() - print error message to syslog or console
@@ -204,7 +202,7 @@ css_master_cleanup (UNUSED_ARG int sig)
  *   clientfd(out)
  */
 static int
-css_master_init (int cport, SOCKET * clientfd)
+css_master_init (SOCKET * clientfd)
 {
   (void) os_set_signal_handler (SIGSTOP, css_master_cleanup);
   if (os_set_signal_handler (SIGTERM, css_master_cleanup) == SIG_ERR ||
@@ -218,7 +216,7 @@ css_master_init (int cport, SOCKET * clientfd)
 
   pthread_mutex_init (&css_Master_socket_anchor_lock, NULL);
 
-  return (css_tcp_master_open (cport, clientfd));
+  return (css_tcp_master_open (clientfd));
 }
 
 /*
@@ -851,8 +849,7 @@ main (int argc, char **argv)
       goto cleanup;
     }
 
-  if (master_util_config_startup ((argc > 1) ? argv[1] : NULL,
-				  &port_id) == false)
+  if (sysprm_load_and_init ((argc > 1) ? argv[1] : NULL) != NO_ERROR)
     {
       msg_format = msgcat_message (MSGCAT_CATALOG_UTILS,
 				   MSGCAT_UTIL_SET_MASTER,
@@ -863,7 +860,7 @@ main (int argc, char **argv)
       goto cleanup;
     }
 
-  if (css_does_master_exist (port_id))
+  if (css_does_master_exist ())
     {
       msg_format =
 	msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER,
@@ -895,7 +892,7 @@ main (int argc, char **argv)
 
   css_master_requests_init ();
 
-  if (css_master_init (port_id, css_Master_socket_fd) != NO_ERROR)
+  if (css_master_init (css_Master_socket_fd) != NO_ERROR)
     {
       PRINT_AND_LOG_ERR_MSG ("%s: %s\n", argv[0], db_error_string (1));
       css_master_error (msgcat_message (MSGCAT_CATALOG_UTILS,

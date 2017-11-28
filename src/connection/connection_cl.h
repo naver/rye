@@ -39,10 +39,8 @@ extern CSS_CONN_ENTRY *css_find_exception_conn (void);
 extern CSS_CONN_ENTRY *css_connect_to_rye_server (const char *host_name,
 						  const char *server_name);
 extern CSS_CONN_ENTRY *css_connect_to_master_for_info (const char *host_name,
-						       int port_id,
 						       unsigned short *rid);
 extern CSS_CONN_ENTRY *css_connect_to_master_timeout (const char *host_name,
-						      int port_id,
 						      int timeout,
 						      unsigned short *rid);
 extern int css_send_request_to_master (CSS_CONN_ENTRY * conn,
@@ -51,7 +49,7 @@ extern int css_send_request_to_master (CSS_CONN_ENTRY * conn,
 				       int num_send_buffers,
 				       int num_recv_buffers, ...);
 
-extern bool css_does_master_exist (int port_id);
+extern bool css_does_master_exist (void);
 
 extern int css_send_close_request (CSS_CONN_ENTRY * conn);
 
@@ -64,8 +62,7 @@ extern int css_common_connect_cl (const char *host_name,
 				  int connect_type,
 				  const char *server_name,
 				  const char *packed_name,
-				  int packed_name_len,
-				  int port, int timeout,
+				  int packed_name_len, int timeout,
 				  unsigned short *rid, bool send_magic);
 
 

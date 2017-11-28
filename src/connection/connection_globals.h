@@ -56,9 +56,6 @@ typedef struct css_conn_rule_info
   int num_curr_conn;
 } CSS_CONN_RULE_INFO;
 
-extern int css_Service_id;
-extern const char *css_Service_name;
-
 extern CSS_CONN_RULE_INFO css_Conn_rules[];
 extern const int css_Conn_rules_size;
 
