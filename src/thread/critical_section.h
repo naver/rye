@@ -40,12 +40,15 @@ enum
  * These are the user defined lock definitions. When adding more locks, also
  * add initialization entries in critical_section.c
  */
-enum
+/* csect sub-info */
+typedef enum
 {
   CSECT_ER_LOG_FILE = 0,	/* Latch for error msg log file */
   CSECT_ER_MSG_CACHE,		/* Latch for error msg cache */
   CSECT_WFG,			/* Latch for wait-for-graph */
   CSECT_LOG,			/* Latch for log manager */
+  CSECT_LOG_BUFFER,		/* Latch for log page buffer */
+  CSECT_LOG_ARCHIVE,		/* Latch for log archives */
   CSECT_LOCATOR_SR_CLASSNAME_TABLE,	/* Latch for temp classname to classOID entries */
   CSECT_FILE_NEWFILE,		/* Latch related to new file table */
   CSECT_QPROC_QUERY_TABLE,	/* Latch for query manager table */
@@ -69,12 +72,16 @@ enum
   CSECT_ACL,			/* Latch for accessible IP list table */
   CSECT_EVENT_LOG_FILE,		/* Latch for event log file */
   CSECT_ACCESS_STATUS,		/* Latch for user access status */
-  CSECT_LAST
-};
+  CSECT_TEMPFILE_CACHE,		/* Latch for temp file cache */
+  CSECT_CSS_ACTIVE_CONN,	/* Latch for active css active conn */
+  CSECT_CSS_FREE_CONN,		/* Latch for free css free conn */
+  CSECT_UNKNOWN,
+  CSECT_LAST = CSECT_UNKNOWN
+} CSECT_TYPE;
 
 typedef struct css_critical_section
 {
-  int cs_index;
+  CSECT_TYPE cs_index;
   const char *name;
   pthread_mutex_t lock;		/* read/write monitor lock */
   int rwlock;			/* >0 = # readers, <0 = writer, 0 = none */
@@ -83,11 +90,10 @@ typedef struct css_critical_section
   THREAD_ENTRY *waiting_writers_queue;	/* queue of waiting writers */
   THREAD_ENTRY *waiting_promoters_queue;	/* queue of waiting promoters */
   pthread_t owner;		/* CS owner writer */
-  int tran_index;		/* transaction id acquiring CS */
-  unsigned int total_enter;
-  unsigned int total_nwaits;	/* total # of waiters */
+  int tran_index;		/* transaction id acquiring CS, is debug info */
+#if 1				/* TODO - */
   struct timeval max_wait;
-  struct timeval total_wait;
+#endif
 } CSS_CRITICAL_SECTION;
 
 #define CSS_CRITICAL_SECTION_INITIALIZER \

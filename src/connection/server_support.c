@@ -1053,7 +1053,11 @@ css_block_all_active_conn (unsigned short stop_phase)
 {
   CSS_CONN_ENTRY *conn;
 
-  csect_enter_critical_section (NULL, &css_Active_conn_csect, INF_WAIT);
+  if (csect_enter (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) != NO_ERROR)
+    {
+      assert (false);
+      return;
+    }
 
   for (conn = css_Active_conn_anchor; conn != NULL; conn = conn->next)
     {
@@ -1069,7 +1073,7 @@ css_block_all_active_conn (unsigned short stop_phase)
 	}
     }
 
-  csect_exit_critical_section (&css_Active_conn_csect);
+  csect_exit (CSECT_CSS_ACTIVE_CONN);
 }
 
 /*

@@ -1392,14 +1392,16 @@ loop:
 	      CSS_JOB_ENTRY job_entry;
 
 	      conn = css_find_conn_by_tran_index (i);
+	      if (conn != NULL)
+		{
+		  CSS_JOB_ENTRY_SET (job_entry, conn,
+				     (CSS_THREAD_FN) log_abort_by_tdes,
+				     (CSS_THREAD_ARG) tdes);
 
-	      CSS_JOB_ENTRY_SET (job_entry, conn,
-				 (CSS_THREAD_FN) log_abort_by_tdes,
-				 (CSS_THREAD_ARG) tdes);
+		  css_add_to_job_queue (JOB_QUEUE_CLOSE, &job_entry);
 
-	      css_add_to_job_queue (JOB_QUEUE_CLOSE, &job_entry);
-
-	      abort_thread_running[i] = 1;
+		  abort_thread_running[i] = 1;
+		}
 
 	      repeat_loop = true;
 	    }
