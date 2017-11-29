@@ -5,7 +5,7 @@ compiler:
 
 script:
   - ./autogen.sh
-  - rmdir -rf Release64
+  - rm -rf Release64
   - mkdir Release64
   - cd Release64
   - ../configure
@@ -45,6 +45,6 @@ addons:
       name: "naver/rye"
       description: "Build submitted via Travis CI"
     notification_email: dl_oss_rye@navercorp.com
-    build_command_prepend: "./autogen.sh; rmdir -rf Release64_cov; mkdir Release64_cov; cd Release64_cov; ../configure"
+    build_command_prepend: "./autogen.sh; rm -rf Release64_cov; mkdir Release64_cov; cd Release64_cov; ../configure"
     build_command:   "make"
     branch_pattern: coverity_scan
