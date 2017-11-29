@@ -146,8 +146,7 @@ static void hb_cluster_remove_all_nodes (HB_NODE_ENTRY * first);
 static HB_NODE_ENTRY *hb_return_node_by_name (char *name);
 static HB_NODE_ENTRY *hb_return_node_by_name_except_me (char *name);
 
-static int hb_cluster_load_group_and_node_list (const char *ha_node_list,
-						const char *ha_replica_list);
+static int hb_cluster_load_group_and_node_list (void);
 
 /* ping host related functions */
 static HB_PING_HOST_ENTRY *hb_add_ping_host (char *host_name);
@@ -209,7 +208,7 @@ static void *hb_thread_worker (UNUSED_ARG void *arg);
 #endif
 
 /* initializer */
-static int hb_cluster_initialize (const char *nodes, const char *replicas);
+static int hb_cluster_initialize (void);
 static int hb_cluster_job_initialize (void);
 static int hb_resource_initialize (void);
 static int hb_resource_job_initialize (void);
@@ -2362,13 +2361,14 @@ hb_return_node_by_name_except_me (char *name)
  *   host_list(in):
  */
 static int
-hb_cluster_load_group_and_node_list (const char *ha_node_list,
-				     const char *ha_replica_list)
+hb_cluster_load_group_and_node_list ()
 {
   int priority, num_nodes;
   char tmp_string[LINE_MAX];
   char *p, *savep;
   HB_NODE_ENTRY *node;
+  const char *ha_node_list = prm_get_string_value (PRM_ID_HA_NODE_LIST);
+  const char *ha_replica_list = prm_get_string_value (PRM_ID_HA_REPLICA_LIST);
 
   if (ha_node_list == NULL)
     {
@@ -4784,18 +4784,10 @@ hb_cluster_job_initialize (void)
  *
  */
 static int
-hb_cluster_initialize (const char *nodes, const char *replicas)
+hb_cluster_initialize ()
 {
   struct sockaddr_in udp_saddr;
   struct in_addr node_addr;
-
-  if (nodes == NULL)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_PRM_BAD_VALUE, 1,
-	      prm_get_name (PRM_ID_HA_NODE_LIST));
-
-      return ER_PRM_BAD_VALUE;
-    }
 
   if (hb_Cluster == NULL)
     {
@@ -4842,8 +4834,7 @@ hb_cluster_initialize (const char *nodes, const char *replicas)
 
   hb_Cluster->ping_hosts = NULL;
 
-  hb_Cluster->num_nodes = hb_cluster_load_group_and_node_list (nodes,
-							       replicas);
+  hb_Cluster->num_nodes = hb_cluster_load_group_and_node_list ();
   if (hb_Cluster->num_nodes < 1)
     {
       er_log_debug (ARG_FILE_LINE,
@@ -5246,9 +5237,7 @@ hb_master_init (void)
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_HB_STARTED, 0);
 
   sysprm_reload_and_init (NULL);
-  error = hb_cluster_initialize (prm_get_string_value (PRM_ID_HA_NODE_LIST),
-				 prm_get_string_value
-				 (PRM_ID_HA_REPLICA_LIST));
+  error = hb_cluster_initialize ();
   if (error != NO_ERROR)
     {
       er_log_debug (ARG_FILE_LINE, "hb_cluster_initialize failed. "
@@ -5583,11 +5572,6 @@ hb_reload_config (RYE_STRING * removed_hosts)
 
   sysprm_reload_and_init (NULL);
 
-  if (prm_get_string_value (PRM_ID_HA_NODE_LIST) == NULL)
-    {
-      return ER_FAILED;
-    }
-
   pthread_mutex_lock (&hb_Cluster->lock);
 
   /* backup old ping hosts */
@@ -5621,11 +5605,7 @@ hb_reload_config (RYE_STRING * removed_hosts)
     }
 
   /* reload node list */
-  hb_Cluster->num_nodes =
-    hb_cluster_load_group_and_node_list (prm_get_string_value
-					 (PRM_ID_HA_NODE_LIST),
-					 prm_get_string_value
-					 (PRM_ID_HA_REPLICA_LIST));
+  hb_Cluster->num_nodes = hb_cluster_load_group_and_node_list ();
 
   if (hb_Cluster->num_nodes < 1 ||
       (hb_Cluster->master

@@ -39,6 +39,9 @@
 #define HA_MAX_LOG_APPLIER_LOWER (2)
 #define HA_MAX_LOG_APPLIER_UPPER (64)
 
+#define PRM_HB_MAX_GROUP_ID_LEN		(64)
+#define PRM_MAX_HA_NODE_LIST		(32)
+
 typedef enum
 {
   PRM_ERR_NO_ERROR = NO_ERROR,
@@ -268,6 +271,19 @@ struct sysprm_assign_value
   SYSPRM_ASSIGN_VALUE *next;
 };
 
+typedef struct
+{
+  unsigned int ip;
+  int port;
+} PRM_NODE_INFO;
+
+typedef struct
+{
+  char hb_group_id[PRM_HB_MAX_GROUP_ID_LEN];
+  int num_nodes;
+  PRM_NODE_INFO nodes[PRM_MAX_HA_NODE_LIST];
+} PRM_NODE_LIST;
+
 extern const char sysprm_cm_conf_file_name[];
 extern const char sysprm_auto_conf_file_name[];
 
@@ -373,5 +389,9 @@ extern int sysprm_print_assign_values (SYSPRM_ASSIGN_VALUE * prm_values,
 extern int sysprm_print_assign_names (char *buffer, int length,
 				      SYSPRM_ASSIGN_VALUE * prm_values);
 extern int sysprm_set_error (SYSPRM_ERR rc, const char *data);
+
+extern void prm_get_ha_node_list (PRM_NODE_LIST * cp_node_list);
+extern void prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list);
+extern unsigned int prm_get_ha_node_myself (void);
 
 #endif /* _SYSTEM_PARAMETER_H_ */

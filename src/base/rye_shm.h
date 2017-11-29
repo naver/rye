@@ -36,7 +36,7 @@
 #include "connection_defs.h"
 
 
-#define SHM_MAX_HA_NODE_LIST		(32)
+#define SHM_MAX_HA_NODE_LIST		(PRM_MAX_HA_NODE_LIST)
 #define SHM_MAX_REPL_COUNT              SHM_MAX_HA_NODE_LIST
 #define SHM_MAX_DB_SERVERS		(10)
 

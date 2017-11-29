@@ -81,7 +81,7 @@ enum HBP_CLUSTER_MESSAGE
   HBP_CLUSTER_MSG_MAX
 };
 
-#define HB_MAX_GROUP_ID_LEN		(64)
+#define HB_MAX_GROUP_ID_LEN		(PRM_HB_MAX_GROUP_ID_LEN)
 #define HB_MAX_SZ_PROC_EXEC_PATH        (128)
 #define HB_MAX_NUM_PROC_ARGV            (16)
 #define HB_MAX_SZ_PROC_ARGV             (64)

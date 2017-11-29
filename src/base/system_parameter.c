@@ -707,10 +707,14 @@ static int prm_ha_mode_default = HA_MODE_FAIL_BACK;
 static int prm_ha_mode_upper = HA_MODE_REPLICA;
 static int prm_ha_mode_lower = HA_MODE_FAIL_BACK;
 
-const char *PRM_HA_NODE_LIST = "";
+static PRM_NODE_LIST prm_Ha_node_list;
+
+const char *PRM_HA_NODE_LIST_STR = NULL;
 static const char *prm_ha_node_list_default = NULL;
 
-const char *PRM_HA_REPLICA_LIST = "";
+static PRM_NODE_LIST prm_Ha_replica_list;
+
+const char *PRM_HA_REPLICA_LIST_STR = NULL;
 static const char *prm_ha_replica_list_default = NULL;
 
 const char *PRM_HA_DB_LIST = "";
@@ -972,8 +976,12 @@ static int prm_migrator_max_repl_delay_default = 3 * 1000;
 static int prm_migrator_max_repl_delay_lower = 0;
 static int prm_migrator_max_repl_delay_upper = INT_MAX;
 
-const char *PRM_HA_NODE_MYSELF = "";
-static const char *prm_ha_node_myself_default = "";
+static unsigned int prm_Ha_node_myself_ip = INADDR_NONE;
+
+const char *PRM_HA_NODE_MYSELF = NULL;
+static const char *prm_ha_node_myself_default = NULL;
+
+static unsigned int prm_Localhost_ip;
 
 typedef struct sysprm_param SYSPRM_PARAM;
 struct sysprm_param
@@ -987,6 +995,7 @@ struct sysprm_param
   void *upper_limit;		/* highest allowable value */
   void *lower_limit;		/* lowest allowable value */
   char *force_value;		/* address of (pointer to) force value string */
+  int (*post_assign_fn) (SYSPRM_PARAM *);	/* post assign function */
 };
 
 #define NUM_PRM (PRM_LAST_ID + 1)
@@ -1162,7 +1171,6 @@ static int prm_set_default (SYSPRM_PARAM * prm);
 static SYSPRM_PARAM *prm_find (const char *pname, const char *section);
 static const KEYVAL *prm_keyword (int val, const char *name,
 				  const KEYVAL * tbl, int dim);
-static int prm_tune_hostname_list (SYSPRM_PARAM * list_prm, PARAM_ID prm_id);
 static int prm_tune_parameters (void);
 
 #if !defined (SERVER_MODE)
@@ -1199,7 +1207,9 @@ static void sysprm_init_param (PARAM_ID param_id, const char *name,
 			       void *default_value, void *value,
 			       void *upper_limit, void *lower_limit);
 
-
+static int prm_call_post_assign_fn (SYSPRM_PARAM * prm);
+static int prm_node_list_post_assign (SYSPRM_PARAM * prm);
+static int prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm);
 
 /*
  * init_param -
@@ -1232,6 +1242,13 @@ sysprm_init_param (PARAM_ID param_id, const char *name,
   prm->upper_limit = upper_limit;
   prm->lower_limit = lower_limit;
   prm->force_value = (char *) NULL;
+  prm->post_assign_fn = NULL;
+}
+
+static void
+sysprm_set_post_assign_fn (PARAM_ID param_id, int (*func) (SYSPRM_PARAM *))
+{
+  prm_Def[param_id].post_assign_fn = func;
 }
 
 /*
@@ -1242,6 +1259,8 @@ sysprm_init_param (PARAM_ID param_id, const char *name,
 static void
 sysprm_initialize_prm_def ()
 {
+  prm_Localhost_ip = inet_addr (LOCALHOST);
+
   sysprm_init_param (PRM_ID_ER_LOG_DEBUG, PRM_NAME_ER_LOG_DEBUG,
 		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE |
 		      PRM_HIDDEN), PRM_BOOLEAN,
@@ -1683,14 +1702,14 @@ sysprm_initialize_prm_def ()
 		      PRM_RELOADABLE),
 		     PRM_STRING,
 		     &prm_ha_node_list_default,
-		     &PRM_HA_NODE_LIST, NULL, NULL);
+		     &PRM_HA_NODE_LIST_STR, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_REPLICA_LIST,
 		     PRM_NAME_HA_REPLICA_LIST,
 		     (PRM_FOR_CLIENT | PRM_USER_CHANGE | PRM_RELOADABLE),
 		     PRM_STRING,
-		     &prm_ha_replica_list_default, &PRM_HA_REPLICA_LIST, NULL,
-		     NULL);
+		     &prm_ha_replica_list_default, &PRM_HA_REPLICA_LIST_STR,
+		     NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_DB_LIST,
 		     PRM_NAME_HA_DB_LIST,
@@ -2212,6 +2231,11 @@ sysprm_initialize_prm_def ()
 		     &prm_ha_node_myself_default, &PRM_HA_NODE_MYSELF, NULL,
 		     NULL);
 
+  sysprm_set_post_assign_fn (PRM_ID_HA_NODE_LIST, prm_node_list_post_assign);
+  sysprm_set_post_assign_fn (PRM_ID_HA_REPLICA_LIST,
+			     prm_node_list_post_assign);
+  sysprm_set_post_assign_fn (PRM_ID_HA_NODE_MYSELF,
+			     prm_ha_node_myself_post_assign);
 
   prm_Def_is_initialized = true;
 }
@@ -5410,7 +5434,7 @@ sysprm_set_value (SYSPRM_PARAM * prm, SYSPRM_VALUE value, bool set_flag,
       PRM_CLEAR_BIT (PRM_DEFAULT_USED, prm->flag);
     }
 
-  return PRM_ERR_NO_ERROR;
+  return prm_call_post_assign_fn (prm);
 }
 
 /*
@@ -5560,6 +5584,8 @@ prm_set_default (SYSPRM_PARAM * prm)
 
   /* Indicate that the default value was used */
   PRM_SET_BIT (PRM_DEFAULT_USED, prm->flag);
+
+  prm_call_post_assign_fn (prm);
 
   return NO_ERROR;
 }
@@ -5809,104 +5835,6 @@ sysprm_final (void)
 }
 
 /*
- * prm_tune_hostname_list - Convert hostname list to IP addr list
- *
- *   return: error code
- */
-static int
-prm_tune_hostname_list (SYSPRM_PARAM * list_prm, PARAM_ID prm_id)
-{
-  const char *list_str = NULL, *p = NULL;
-  char **list_pp = NULL;
-  int remaining, cplen, i;
-  struct in_addr node_addr;
-  char *ip_addr = NULL;
-
-  char newval[LINE_MAX];
-
-  assert (list_prm != NULL);
-  assert (prm_id == PRM_ID_HA_NODE_LIST || prm_id == PRM_ID_HA_REPLICA_LIST);
-
-  list_str = prm_get_string_value (prm_id);
-
-  list_pp = util_split_ha_node (list_str);
-  if (list_pp == NULL)
-    {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
-
-      fprintf (stderr, message);
-
-      return ER_FAILED;
-    }
-
-  remaining = sizeof (newval) - 1;
-
-  p = strchr (list_str, '@');
-  if (p == NULL || p == list_str)
-    {
-      assert (false);
-      if (list_pp)
-	{
-	  util_free_string_array (list_pp);
-	  list_pp = NULL;
-	}
-
-      return ER_FAILED;
-    }
-
-  cplen = (p - list_str) + 1;	/* include '@' */
-  cplen = MIN (cplen, remaining);
-  strncpy (newval, list_str, cplen);
-  newval[cplen] = '\0';
-  remaining -= cplen;
-  assert (remaining > 0);
-
-  /* convert hostname to IP */
-  for (i = 0; list_pp[i] != NULL && remaining > 0; i++)
-    {
-      if (i > 0)
-	{
-	  /* put delimiter */
-	  assert (remaining > 1);
-	  strncat (newval, ":", 1);
-	  remaining -= 1;
-	}
-
-      assert (strlen (list_pp[i]) > 0);
-      node_addr.s_addr = hostname_to_ip (list_pp[i]);
-      if (node_addr.s_addr == INADDR_NONE)
-	{
-	  assert (false);
-	  if (list_pp)
-	    {
-	      util_free_string_array (list_pp);
-	      list_pp = NULL;
-	    }
-
-	  return ER_FAILED;
-	}
-
-      ip_addr = inet_ntoa (node_addr);
-      assert (strlen (ip_addr) > 0);
-
-      assert (remaining > strlen (ip_addr));
-      strncat (newval, ip_addr, remaining);
-      remaining -= strlen (ip_addr);
-    }
-
-  if (list_pp)
-    {
-      util_free_string_array (list_pp);
-      list_pp = NULL;
-    }
-
-  prm_set (list_prm, newval, false);
-
-  return NO_ERROR;
-}
-
-/*
  * prm_tune_parameters - Sets the values of various system parameters
  *                       depending on the value of other parameters
  *   return: error code
@@ -5921,37 +5849,27 @@ static int
 prm_tune_parameters (void)
 {
   SYSPRM_PARAM *max_plan_cache_entries_prm;
-  SYSPRM_PARAM *max_plan_cache_clones_prm;
   SYSPRM_PARAM *ha_mode_prm;
   SYSPRM_PARAM *test_mode_prm;
   SYSPRM_PARAM *auto_restart_server_prm;
-  SYSPRM_PARAM *ha_node_list_prm;
-  SYSPRM_PARAM *ha_replica_list_prm;
-  SYSPRM_PARAM *max_log_archives_prm;
+  UNUSED_VAR SYSPRM_PARAM *max_log_archives_prm;
   SYSPRM_PARAM *force_remove_log_archives_prm;
   SYSPRM_PARAM *call_stack_dump_activation_prm;
   SYSPRM_PARAM *ha_ignore_error_prm;
-  SYSPRM_PARAM *ha_node_myself_prm;
   SYSPRM_PARAM *rye_shm_key_prm;
 
   char newval[LINE_MAX];
-  char host_name[MAXHOSTNAMELEN];
 
   /* Find the parameters that require tuning */
   max_plan_cache_entries_prm =
     prm_find (PRM_NAME_XASL_MAX_PLAN_CACHE_ENTRIES, NULL);
-  max_plan_cache_clones_prm =
-    prm_find (PRM_NAME_XASL_MAX_PLAN_CACHE_CLONES, NULL);
 
   ha_mode_prm = prm_find (PRM_NAME_HA_MODE, NULL);
   test_mode_prm = prm_find (PRM_NAME_TEST_MODE, NULL);
   auto_restart_server_prm = prm_find (PRM_NAME_AUTO_RESTART_SERVER, NULL);
-  ha_node_list_prm = prm_find (PRM_NAME_HA_NODE_LIST, NULL);
-  ha_replica_list_prm = prm_find (PRM_NAME_HA_REPLICA_LIST, NULL);
   max_log_archives_prm = prm_find (PRM_NAME_LOG_MAX_ARCHIVES, NULL);
   force_remove_log_archives_prm =
     prm_find (PRM_NAME_FORCE_REMOVE_LOG_ARCHIVES, NULL);
-  ha_node_myself_prm = prm_find (PRM_NAME_HA_NODE_MYSELF, NULL);
   rye_shm_key_prm = prm_find (PRM_NAME_RYE_SHM_KEY, NULL);
 
   /* check Plan Cache and Query Cache parameters */
@@ -6022,50 +5940,6 @@ prm_tune_parameters (void)
 	}
     }
 
-  if (ha_node_myself_prm != NULL &&
-      !PRM_DEFAULT_VAL_USED (ha_node_myself_prm->flag))
-    {
-      const char *ha_node_myself = PRM_GET_STRING (ha_node_myself_prm->value);
-      if (inet_addr (ha_node_myself) == INADDR_NONE)
-	{
-	  return ER_FAILED;
-	}
-    }
-
-  if (ha_node_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_node_list_prm->flag))
-    {
-      if (GETHOSTNAME (host_name, sizeof (host_name)))
-	{
-	  strncpy (host_name, "localhost", sizeof (host_name) - 1);
-	}
-
-      snprintf (newval, sizeof (newval) - 1, "%s@%s", host_name, host_name);
-      prm_set (ha_node_list_prm, newval, false);
-    }
-  else
-    {
-      if (prm_tune_hostname_list (ha_node_list_prm,
-				  PRM_ID_HA_NODE_LIST) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
-    }
-
-  if (ha_replica_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_replica_list_prm->flag))
-    {
-      ;				/* nop */
-    }
-  else
-    {
-      if (prm_tune_hostname_list (ha_replica_list_prm,
-				  PRM_ID_HA_REPLICA_LIST) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
-    }
-
   call_stack_dump_activation_prm =
     GET_PRM (PRM_ID_CALL_STACK_DUMP_ACTIVATION);
   if (!PRM_IS_SET (call_stack_dump_activation_prm->flag))
@@ -6131,18 +6005,14 @@ static int
 prm_tune_parameters (void)
 {
   SYSPRM_PARAM *max_plan_cache_entries_prm;
-  SYSPRM_PARAM *ha_node_list_prm;
-  SYSPRM_PARAM *ha_replica_list_prm;
   SYSPRM_PARAM *ha_mode_prm;
   SYSPRM_PARAM *test_mode_prm;
   SYSPRM_PARAM *ha_copy_log_timeout_prm;
   SYSPRM_PARAM *ha_check_disk_failure_interval_prm;
   SYSPRM_PARAM *ha_ignore_error_prm;
-  SYSPRM_PARAM *ha_node_myself_prm;
   SYSPRM_PARAM *rye_shm_key_prm;
 
   char newval[LINE_MAX];
-  char host_name[MAXHOSTNAMELEN];
 
   INT64 ha_check_disk_failure_interval_value;
   INT64 ha_copy_log_timeout_value;
@@ -6150,15 +6020,12 @@ prm_tune_parameters (void)
   /* Find the parameters that require tuning */
   max_plan_cache_entries_prm =
     prm_find (PRM_NAME_XASL_MAX_PLAN_CACHE_ENTRIES, NULL);
-  ha_node_list_prm = prm_find (PRM_NAME_HA_NODE_LIST, NULL);
-  ha_replica_list_prm = prm_find (PRM_NAME_HA_REPLICA_LIST, NULL);
 
   ha_mode_prm = prm_find (PRM_NAME_HA_MODE, NULL);
   test_mode_prm = prm_find (PRM_NAME_TEST_MODE, NULL);
   ha_copy_log_timeout_prm = prm_find (PRM_NAME_HA_COPY_LOG_TIMEOUT, NULL);
   ha_check_disk_failure_interval_prm =
     prm_find (PRM_NAME_HA_CHECK_DISK_FAILURE_INTERVAL, NULL);
-  ha_node_myself_prm = prm_find (PRM_NAME_HA_NODE_MYSELF, NULL);
   rye_shm_key_prm = prm_find (PRM_NAME_RYE_SHM_KEY, NULL);
 
   assert (max_plan_cache_entries_prm != NULL);
@@ -6207,50 +6074,6 @@ prm_tune_parameters (void)
     {
       sprintf (newval, "%x", DEFAULT_RYE_SHM_KEY);
       prm_set (rye_shm_key_prm, newval, false);
-    }
-
-  if (ha_node_myself_prm != NULL &&
-      !PRM_DEFAULT_VAL_USED (ha_node_myself_prm->flag))
-    {
-      const char *ha_node_myself = PRM_GET_STRING (ha_node_myself_prm->value);
-      if (inet_addr (ha_node_myself) == INADDR_NONE)
-	{
-	  return ER_FAILED;
-	}
-    }
-
-  if (ha_node_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_node_list_prm->flag))
-    {
-      if (GETHOSTNAME (host_name, sizeof (host_name)))
-	{
-	  strncpy (host_name, "localhost", sizeof (host_name) - 1);
-	}
-
-      snprintf (newval, sizeof (newval) - 1, "%s@%s", host_name, host_name);
-      prm_set (ha_node_list_prm, newval, false);
-    }
-  else
-    {
-      if (prm_tune_hostname_list (ha_node_list_prm,
-				  PRM_ID_HA_NODE_LIST) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
-    }
-
-  if (ha_replica_list_prm == NULL
-      || PRM_DEFAULT_VAL_USED (ha_replica_list_prm->flag))
-    {
-      ;				/* nop */
-    }
-  else
-    {
-      if (prm_tune_hostname_list (ha_replica_list_prm,
-				  PRM_ID_HA_REPLICA_LIST) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
     }
 
   assert (ha_mode_prm != NULL);
@@ -7546,4 +7369,166 @@ sysprm_set_error (SYSPRM_ERR rc, const char *data)
     }
 
   return error;
+}
+
+void
+prm_get_ha_node_list (PRM_NODE_LIST * cp_node_list)
+{
+  *cp_node_list = prm_Ha_node_list;
+}
+
+void
+prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list)
+{
+  *cp_node_list = prm_Ha_replica_list;
+}
+
+unsigned int
+prm_get_ha_node_myself ()
+{
+  return prm_Ha_node_myself_ip;
+}
+
+static int
+prm_call_post_assign_fn (SYSPRM_PARAM * prm)
+{
+  if (prm->post_assign_fn == NULL)
+    {
+      return PRM_ERR_NO_ERROR;
+    }
+#if defined (SA_MODE) || defined (SERVER_MODE)
+  if (prm->flag & PRM_FOR_SERVER)
+#else
+  if (prm->flag & PRM_FOR_CLIENT)
+#endif
+    {
+      return (*prm->post_assign_fn) (prm);
+    }
+
+  return PRM_ERR_NO_ERROR;
+}
+
+/*
+ * prm_ha_node_myself_post_assign
+ */
+static int
+prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm)
+{
+  char *str_value;
+
+  assert (prm->param_id == PRM_ID_HA_NODE_MYSELF);
+
+  str_value = prm_get_string_value (prm->param_id);
+  trim (str_value);
+  if (str_value == NULL || str_value[0] == '\0')
+    {
+      prm_Ha_node_myself_ip = INADDR_NONE;
+    }
+  else
+    {
+      unsigned int ip;
+
+      ip = hostname_to_ip (str_value);
+      if (ip == INADDR_NONE)
+	{
+	  return PRM_ERR_BAD_VALUE;
+	}
+
+      prm_Ha_node_myself_ip = ip;
+    }
+
+  return PRM_ERR_NO_ERROR;
+}
+
+/*
+ * prm_node_list_post_assign ()
+ */
+static int
+prm_node_list_post_assign (SYSPRM_PARAM * prm)
+{
+  PRM_NODE_LIST node_list;
+  char **list_pp = NULL;
+  char *list_str = NULL;
+  char *p;
+  int cplen;
+  int i;
+
+  assert (prm->param_id == PRM_ID_HA_NODE_LIST ||
+	  prm->param_id == PRM_ID_HA_REPLICA_LIST);
+
+  memset (&node_list, 0, sizeof (node_list));
+
+  list_str = prm_get_string_value (prm->param_id);
+  trim (list_str);
+  if (list_str == NULL || list_str[0] == '\0')
+    {
+      goto end;
+    }
+
+  p = strchr (list_str, '@');
+  if (p == NULL)
+    {
+      return PRM_ERR_BAD_VALUE;
+    }
+
+  cplen = (p - list_str);
+  cplen = MIN (cplen, (int) sizeof (node_list.hb_group_id) - 1);
+  strncpy (node_list.hb_group_id, list_str, cplen);
+
+  list_pp = util_split_string (p + 1, ",");
+  for (i = 0; list_pp[i] != NULL; i++)
+    {
+      if (i >= PRM_MAX_HA_NODE_LIST)
+	{
+	  goto error;
+	}
+
+      p = strchr (list_pp[i], ':');
+      if (p != NULL)
+	{
+	  if (parse_int (&node_list.nodes[i].port, p + 1, 10) != 0)
+	    {
+	      goto error;
+	    }
+
+	  *p = '\0';
+	}
+
+      node_list.nodes[i].ip = hostname_to_ip (list_pp[i]);
+      if (node_list.nodes[i].ip == INADDR_NONE)
+	{
+	  goto error;
+	}
+
+      node_list.num_nodes++;
+    }
+
+  util_free_string_array (list_pp);
+
+end:
+  if (prm->param_id == PRM_ID_HA_NODE_LIST)
+    {
+      if (node_list.num_nodes == 0)
+	{
+	  node_list.hb_group_id[0] = '\0';
+	  node_list.nodes[0].ip = prm_Localhost_ip;
+	  node_list.nodes[0].port = 0;
+	  node_list.num_nodes = 1;
+	}
+
+      prm_Ha_node_list = node_list;
+    }
+  else if (prm->param_id == PRM_ID_HA_REPLICA_LIST)
+    {
+      prm_Ha_replica_list = node_list;
+    }
+
+  return PRM_ERR_NO_ERROR;
+
+error:
+  if (list_pp != NULL)
+    {
+      util_free_string_array (list_pp);
+    }
+  return PRM_ERR_BAD_VALUE;
 }
