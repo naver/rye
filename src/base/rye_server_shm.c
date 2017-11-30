@@ -174,11 +174,11 @@ svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats)
 }
 
 /*
- * svr_shm_stats_counter -
+ * svr_shm_stats_counter_with_time -
  */
 void
-svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
-		       UINT64 exec_time)
+svr_shm_stats_counter_with_time (int tran_index, MNT_SERVER_ITEM item,
+				 INT64 value, UINT64 exec_time)
 {
   MNT_SERVER_ITEM parent_item;
 #if defined(HAVE_ATOMIC_BUILTINS)
@@ -194,6 +194,7 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
   if (tran_index >= 0 && tran_index < rye_Server_shm->ntrans)
     {
       rye_Server_shm->tran_info[tran_index].stats.values[item] += value;
+      rye_Server_shm->tran_info[tran_index].stats.acc_time[item] += exec_time;
 
 #if defined(HAVE_ATOMIC_BUILTINS)
       after_value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[item],
@@ -211,7 +212,8 @@ svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item, INT64 value,
 	{
 	  assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);
 
-	  svr_shm_stats_counter (tran_index, parent_item, value, exec_time);
+	  svr_shm_stats_counter_with_time (tran_index, parent_item, value,
+					   exec_time);
 	}
     }
 }

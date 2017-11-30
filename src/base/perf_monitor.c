@@ -634,7 +634,7 @@ mnt_stats_counter (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
 	  mnt_Stats_info[item].value_type == MNT_STATS_VALUE_EVENT);
 
   tran_index = logtb_get_current_tran_index (thread_p);
-  svr_shm_stats_counter (tran_index, item, value, 0);
+  svr_shm_stats_counter_with_time (tran_index, item, value, 0);
 }
 
 /*
@@ -656,7 +656,8 @@ mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
   PERF_MON_GET_CURRENT_TIME (end_time);
 
   tran_index = logtb_get_current_tran_index (thread_p);
-  svr_shm_stats_counter (tran_index, item, value, end_time - start_time);
+  svr_shm_stats_counter_with_time (tran_index, item, value,
+				   end_time - start_time);
 
   parent_item = MNT_GET_PARENT_ITEM_FETCHES (item);
   if (parent_item != item)

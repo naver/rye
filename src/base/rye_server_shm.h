@@ -121,8 +121,9 @@ extern int svr_shm_get_start_time (void);
 extern void svr_shm_copy_stats (int tran_index,
 				MNT_SERVER_EXEC_STATS * to_stats);
 extern void svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats);
-extern void svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item,
-				   INT64 value, UINT64 exec_time);
+extern void svr_shm_stats_counter_with_time (int tran_index,
+					     MNT_SERVER_ITEM item,
+					     INT64 value, UINT64 exec_time);
 extern void svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item,
 				 INT64 value);
 #if 0

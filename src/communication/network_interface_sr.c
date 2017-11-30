@@ -135,15 +135,18 @@ need_to_abort_tran (THREAD_ENTRY * thread_p, int *errid)
    *  set after that.
    *  So, re-set that error to rollback in client side.
    */
-  tdes = logtb_get_current_tdes (thread_p);
-  if (tdes != NULL && tdes->tran_abort_reason != TRAN_NORMAL
-      && flag_abort == false)
+  if (flag_abort == false)
     {
-      flag_abort = true;
+      tdes = logtb_get_current_tdes (thread_p);
+      if (tdes != NULL && tdes->tran_abort_reason != TRAN_NORMAL)
+	{
+	  flag_abort = true;
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_UNILATERALLY_ABORTED, 4,
-	      thread_p->tran_index, tdes->client.db_user,
-	      tdes->client.host_name, tdes->client.process_id);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+		  ER_LK_UNILATERALLY_ABORTED, 4, thread_p->tran_index,
+		  tdes->client.db_user, tdes->client.host_name,
+		  tdes->client.process_id);
+	}
     }
 
   return flag_abort;
@@ -3183,24 +3186,6 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 	    }
 	}
 
-      if (xasl_cache_entry_p)
-	{
-	  tran_abort = need_to_abort_tran (thread_p, &error_code);
-	  if (tran_abort == true)
-	    {
-	      /* Remove transaction id from xasl cache entry before
-	       * return_error_to_client, where current transaction may be aborted.
-	       * Otherwise, another transaction may be resumed and
-	       * xasl_cache_entry_p may be removed by that transaction, during class
-	       * deletion.
-	       */
-	      (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
-							    xasl_cache_entry_p,
-							    true);
-	      xasl_cache_entry_p = NULL;
-	    }
-	}
-
       return_error_to_client (thread_p, rid);
     }
 
@@ -3290,11 +3275,10 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   /* pack size of a page to return as a third argumnet of the reply */
   ptr = or_pack_int (ptr, page_size);
 
-  /* We may release the xasl cache entry when the transaction aborted.
-   * To refer the contents of the freed entry for the case will cause defects.
-   */
-  if (tran_abort == false)
+  if (xasl_cache_entry_p)
     {
+      assert (info.sql_hash_text != NULL);
+
       if (trace_slow_msec >= 0 || trace_ioread > 0)
 	{
 	  gettimeofday (&end, NULL);
@@ -3332,10 +3316,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 	{
 	  event_log_temp_expand_pages (thread_p, &info);
 	}
-    }
 
-  if (xasl_cache_entry_p)
-    {
       (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
 						    xasl_cache_entry_p, true);
     }
@@ -3502,6 +3483,8 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
+
+  assert (info->sql_hash_text != NULL);
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = logtb_get_current_tdes (thread_p);
