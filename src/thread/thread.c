@@ -522,7 +522,7 @@ server_stats_dump (FILE * fp)
       total_cs_waits_clock += stats.acc_time[item_waits];
     }
 
-  fprintf (fp, "%*cs_wait total wait:%ld\n", indent, ' ',
+  fprintf (fp, "%*ccsect_wait total wait:%ld\n", indent, ' ',
 	   mnt_clock_to_time (total_cs_waits_clock));
   for (i = 0; i < CSECT_LAST; i++)
     {
