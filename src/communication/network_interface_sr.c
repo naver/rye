@@ -3094,6 +3094,8 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 	}
     }
 
+  xmnt_server_clear_stats (thread_p, MNT_STATS_DISK_TEMP_EXPAND);
+
   aligned_page_buf = PTR_ALIGN (page_buf, MAX_ALIGNMENT);
 
   reply = OR_ALIGNED_BUF_START (a_reply);
@@ -3312,7 +3314,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 #endif
 	}
 
-      if (thread_p->event_stats.temp_expand_pages > 0)
+      if (mnt_get_stats (thread_p, MNT_STATS_DISK_TEMP_EXPAND) > 0)
 	{
 	  event_log_temp_expand_pages (thread_p, &info);
 	}
@@ -3578,6 +3580,10 @@ event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info)
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
+  INT64 temp_expand_pages;
+  UINT64 temp_expand_clock;
+
+  assert (info->sql_hash_text != NULL);
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = LOG_FIND_TDES (tran_index);
@@ -3589,6 +3595,10 @@ event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info)
       return;
     }
 
+  temp_expand_pages =
+    mnt_get_stats_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+			     &temp_expand_clock);
+
   event_log_print_client_info (tran_index, indent);
   fprintf (log_fp, "%*csql: %s\n", indent, ' ',
 	   info->sql_hash_text ? info->sql_hash_text : "(UNKNOWN HASH_TEXT)");
@@ -3598,10 +3608,10 @@ event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info)
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %d\n", indent, ' ',
-	   TO_MSEC (thread_p->event_stats.temp_expand_time));
-  fprintf (log_fp, "%*cpages: %d\n\n", indent, ' ',
-	   thread_p->event_stats.temp_expand_pages);
+  fprintf (log_fp, "%*ctime: %ld\n", indent, ' ',
+	   mnt_clock_to_time (temp_expand_clock));
+  fprintf (log_fp, "%*cpages: %lld\n\n", indent, ' ',
+	   (long long int) temp_expand_pages);
 
   event_log_end (thread_p);
 }

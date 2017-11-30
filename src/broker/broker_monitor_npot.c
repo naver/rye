@@ -376,6 +376,8 @@ init_server_monitor_item ()
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DISK_PAGE_DEALLOCS],
 		     "disk", "page_deallocs");
 #endif
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DISK_TEMP_EXPAND],
+		     "disk", "temp_expand");
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES],
 		     "datapage", "fetch");

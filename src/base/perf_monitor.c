@@ -119,6 +119,8 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   {"Num_disk_page_allocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
   /* MNT_STATS_DISK_PAGE_DEALLOCS */
   {"Num_disk_page_deallocs", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_DISK_TEMP_EXPAND */
+  {"Num_disk_temp_expand", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
 
   /* MNT_STATS_FILE_CREATES */
   {"Num_file_creates", 0, MNT_STATS_VALUE_COUNTER},
@@ -587,6 +589,25 @@ mnt_get_current_times (time_t * cpu_user_time, time_t * cpu_sys_time,
 
 #if defined(SERVER_MODE) || defined(SA_MODE)
 /*
+ * xmnt_server_clear_stats - Clear recorded server statistics for the current
+ *                          transaction index
+ *   return: none
+ *   item(in):
+ */
+void
+xmnt_server_clear_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item)
+{
+  int tran_index;
+
+  assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
+
+  tran_index = logtb_get_current_tran_index (thread_p);
+  assert (tran_index >= 0);
+
+  svr_shm_clear_stats (tran_index, item);
+}
+
+/*
  * xmnt_server_copy_stats - Copy recorded server statistics for the current
  *                          transaction index
  *   return: none
@@ -683,7 +704,6 @@ mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
   svr_shm_stats_gauge (tran_index, item, value);
 }
 
-#if 0
 /*
  * mnt_get_stats_with_time -
  */
@@ -696,9 +716,8 @@ mnt_get_stats_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
   tran_index = logtb_get_current_tran_index (thread_p);
   assert (tran_index >= 0);
 
-  return svr_shm_get_stats (tran_index, item);
+  return svr_shm_get_stats_with_time (tran_index, item, acc_time);
 }
-#endif
 
 /*
  * mnt_get_stats -
@@ -706,12 +725,7 @@ mnt_get_stats_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
 INT64
 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item)
 {
-  int tran_index;
-
-  tran_index = logtb_get_current_tran_index (thread_p);
-  assert (tran_index >= 0);
-
-  return svr_shm_get_stats (tran_index, item);
+  return mnt_get_stats_with_time (thread_p, item, NULL);
 }
 
 /*

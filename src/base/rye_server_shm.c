@@ -129,6 +129,29 @@ svr_shm_get_start_time ()
 }
 
 /*
+ * svr_shm_clear_stats - Clear recorded server statistics for the current
+ *                          transaction index
+ *   return: none
+ *   item(in):
+ */
+void
+svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item)
+{
+  assert (tran_index >= 0);
+
+  if (rye_Server_shm == NULL
+      || tran_index < 0 || tran_index >= rye_Server_shm->ntrans)
+    {
+      assert (false);
+    }
+  else
+    {
+      rye_Server_shm->tran_info[tran_index].stats.values[item] = 0;
+      rye_Server_shm->tran_info[tran_index].stats.acc_time[item] = 0;
+    }
+}
+
+/*
  * svr_shm_copy_stats - Copy recorded server statistics for the current
  *                          transaction index
  *   return: none
@@ -240,7 +263,6 @@ svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item, INT64 value)
     }
 }
 
-#if 0
 /*
  * svr_shm_get_stats_with_time -
  */
@@ -263,24 +285,17 @@ svr_shm_get_stats_with_time (int tran_index, MNT_SERVER_ITEM item,
 
   return rye_Server_shm->tran_info[tran_index].stats.values[item];
 }
-#endif
 
+#if 0
 /*
  * svr_shm_get_stats -
  */
 INT64
 svr_shm_get_stats (int tran_index, MNT_SERVER_ITEM item)
 {
-  if (rye_Server_shm == NULL ||
-      tran_index < 0 || tran_index >= rye_Server_shm->ntrans)
-    {
-      return 0;
-    }
-
-  assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
-
-  return rye_Server_shm->tran_info[tran_index].stats.values[item];
+  return svr_shm_get_stats_with_time (tran_index, item, NULL);
 }
+#endif
 
 /*
  * svr_shm_set_eof ()-
