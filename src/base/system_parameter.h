@@ -200,7 +200,6 @@ enum param_id
   PRM_ID_DB_VOLUME_SIZE,
   PRM_ID_CHECK_PEER_ALIVE,
   PRM_ID_SQL_TRACE_SLOW,
-  PRM_ID_SERVER_TRACE,
   PRM_ID_SQL_TRACE_EXECUTION_PLAN,
   PRM_ID_LOG_TRACE_FLUSH_TIME,
   PRM_ID_GENERIC_VOL_PREALLOC_SIZE,
@@ -296,6 +295,7 @@ extern void sysprm_dump_parameters (FILE * fp);
 extern int sysprm_dump_persist_conf_file (FILE * fp, const char *proc_name,
 					  const char *sect_name);
 extern void sysprm_set_er_log_file (const char *base_db_name);
+extern void sysprm_set_repl_er_log_file (const char *db_name);
 extern void sysprm_dump_server_parameters (FILE * fp);
 extern int sysprm_obtain_parameters (char *data,
 				     SYSPRM_ASSIGN_VALUE ** prm_values);

@@ -48,7 +48,6 @@ struct ip_info
 
 extern CSS_CONN_ENTRY *css_Conn_array;
 extern CSS_CONN_ENTRY *css_Active_conn_anchor;
-extern CSS_CRITICAL_SECTION css_Active_conn_csect;
 
 extern int css_Num_access_user;
 

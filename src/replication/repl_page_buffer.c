@@ -92,8 +92,9 @@ static int cirp_logpb_fetch_from_archive (CIRP_BUF_MGR * buf_mgr,
 					  LOG_PAGEID pageid, char *data);
 static int cirp_logpb_fetch_from_active (CIRP_BUF_MGR * buf_mgr,
 					 LOG_PAGEID pageid, char *data);
-static CIRP_LOGPB *cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr,
-					      LOG_PAGEID pageid);
+static int cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr,
+				      CIRP_LOGPB ** out_logpb,
+				      LOG_PAGEID pageid);
 static int cirp_logpb_expand_buffer (CIRP_BUF_MGR * buf_mgr);
 static void cirp_logpb_clear_logpb (CIRP_LOGPB * logpb);
 
@@ -1597,21 +1598,35 @@ exit_on_error:
 
 /*
  * cirp_logpb_replace_buffer()-
- *    return: log buffer
+ *    return: error code
  *
+ *    logpb(out):
  *    pageid(in):
  */
-static CIRP_LOGPB *
-cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid)
+static int
+cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, CIRP_LOGPB ** out_logpb,
+			   LOG_PAGEID pageid)
 {
   int error = NO_ERROR;
   CIRP_LOGPB_CACHE *cache;
   CIRP_LOGPB *logpb = NULL;
-  int i, num_recently_freed, found = -1;
+  int i, num_recently_freed, found;
   static unsigned int last = 0;
+
+  if (out_logpb == NULL)
+    {
+      assert (false);
+
+      error = ER_GENERIC_ERROR;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "Invalid arguments");
+      return error;
+    }
+  *out_logpb = NULL;
 
   cache = &buf_mgr->cache;
 
+  found = -1;
   while (found < 0)
     {
       num_recently_freed = 0;
@@ -1648,11 +1663,14 @@ cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid)
 	  if (error != NO_ERROR)
 	    {
 	      cirp_logpb_clear_logpb (logpb);
-	      return NULL;
+	      return error;
 	    }
 
+	  *out_logpb = logpb;
+
 	  assert (logpb->pageid > NULL_PAGEID);
-	  return logpb;
+	  assert (error == NO_ERROR);
+	  return NO_ERROR;
 	}
 
       if (num_recently_freed > 0)
@@ -1663,40 +1681,66 @@ cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid)
       error = cirp_logpb_expand_buffer (buf_mgr);
       if (error != NO_ERROR)
 	{
-	  return NULL;
+	  return error;
 	}
     }
 
-  return NULL;
+  assert (false);
+  error = ER_GENERIC_ERROR;
+  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "fatal error");
+
+  return error;
 }
 
 /*
  * cirp_logpb_get_page_buffer_debug()-
  *    return: log buffer
  *
+ *    out_logpb(out):
  *    pageid(in):
  *    file_name(in):
  *    line_number(in):
  */
-CIRP_LOGPB *
+int
 cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
+				  CIRP_LOGPB ** out_logpb,
 				  LOG_PAGEID pageid,
 				  UNUSED_ARG const char *file_name,
 				  UNUSED_ARG int line_number)
 {
   CIRP_LOGPB_CACHE *cache;
   CIRP_LOGPB *logpb = NULL;
+  int error = NO_ERROR;
 
   cache = &buf_mgr->cache;
 
-  assert (pageid >= NULL_PAGEID);
+  if (out_logpb == NULL || pageid < NULL_PAGEID)
+    {
+      assert (false);
+
+      error = ER_GENERIC_ERROR;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "Invalid arguments");
+      return error;
+    }
+
+  *out_logpb = NULL;
+
   logpb = (CIRP_LOGPB *) mht_get (cache->hash_table, (void *) &pageid);
   if (logpb == NULL)
     {
-      logpb = cirp_logpb_replace_buffer (buf_mgr, pageid);
-      if (logpb == NULL)
+      error = cirp_logpb_replace_buffer (buf_mgr, &logpb, pageid);
+      if (error != NO_ERROR || logpb == NULL)
 	{
-	  return NULL;
+	  assert (error != NO_ERROR && logpb == NULL);
+	  if (error == NO_ERROR)
+	    {
+	      error = ER_GENERIC_ERROR;
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+		      "Invalid return value");
+	    }
+
+	  return error;
 	}
       assert (logpb->log_page.hdr.logical_pageid == pageid);
 
@@ -1705,7 +1749,11 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
       if (mht_put (cache->hash_table, &logpb->pageid, logpb) == NULL)
 	{
 	  cirp_logpb_clear_logpb (logpb);
-	  return NULL;
+
+	  error = ER_GENERIC_ERROR;
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+		  1, "memory hash table error");
+	  return error;
 	}
 
       logpb->num_fixed = 1;
@@ -1719,7 +1767,10 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
 	  (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
 	  cirp_logpb_clear_logpb (logpb);
 
-	  return NULL;
+	  error = ER_GENERIC_ERROR;
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+		  1, "Invalid log page");
+	  return error;
 	}
 
       logpb->num_fixed++;
@@ -1732,43 +1783,60 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
   }
 #endif
 
-  return logpb;
+  *out_logpb = logpb;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
  * cirp_logpb_get_log_page_debug()-
  *   return: log page
  *
+ *   log_page(out):
  *   pageid(in):
  *   file_name(in):
  *   line_number(in):
  */
-LOG_PAGE *
+#if !defined(NDEBUG)
+int
 cirp_logpb_get_log_page_debug (CIRP_BUF_MGR * buf_mgr,
+			       LOG_PAGE ** log_page,
 			       LOG_PAGEID pageid,
 			       UNUSED_ARG const char *file_name,
 			       UNUSED_ARG int line_number)
+#else
+int
+cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr,
+			 LOG_PAGE ** log_page, LOG_PAGEID pageid)
+#endif
 {
   CIRP_LOGPB *logpb = NULL;
+  int error = NO_ERROR;
 
-  if (pageid == NULL_PAGEID)
+  if (pageid == NULL_PAGEID || log_page == NULL)
     {
       assert (false);
-      return NULL;
-    }
 
-  logpb = cirp_logpb_get_page_buffer (buf_mgr, pageid);
-  if (logpb == NULL)
+      error = ER_GENERIC_ERROR;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "Invalid arguments");
+      return error;
+    }
+  *log_page = NULL;
+
+  error = cirp_logpb_get_page_buffer (buf_mgr, &logpb, pageid);
+  if (error != NO_ERROR || logpb == NULL)
     {
-      if (er_errid () == NO_ERROR)
-	{
-	  assert (false);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-		  1, "Invalid error code");
-	}
+      assert (error != NO_ERROR && logpb == NULL);
 
-      return NULL;
+      if (error == NO_ERROR)
+	{
+	  error = ER_FAILED;
+	}
+      return error;
     }
+  assert (logpb != NULL);
 
 #if !defined(NDEBUG)
   {
@@ -1777,7 +1845,10 @@ cirp_logpb_get_log_page_debug (CIRP_BUF_MGR * buf_mgr,
   }
 #endif
 
-  return (&logpb->log_page);
+  *log_page = &logpb->log_page;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
@@ -1974,6 +2045,105 @@ exit_on_error:
     }
 
   return error;
+}
+
+/*
+ * rp_log_read_advance_when_doesnt_fit -
+ *   return: error code
+ *
+ *   pgptr(in/out):
+ *   pageid(in/out):
+ *   offset(in/out):
+ *   length(in):
+ *   org_pgptr(in):
+ *
+ */
+int
+rp_log_read_advance_when_doesnt_fit (CIRP_BUF_MGR * buf_mgr,
+				     LOG_PAGE ** pgptr, LOG_PAGEID * pageid,
+				     PGLENGTH * offset, int length,
+				     LOG_PAGE * org_pgptr)
+{
+  int error = NO_ERROR;
+
+  if ((*offset) + length >= CIRP_LOGAREA_SIZE (buf_mgr))
+    {
+      if ((org_pgptr) != (*pgptr))
+	{
+	  cirp_logpb_release (buf_mgr, (*pgptr)->hdr.logical_pageid);
+	}
+
+      *pageid = *pageid + 1;
+      error = cirp_logpb_get_log_page (buf_mgr, pgptr, *pageid);
+      if (error != NO_ERROR || (*pgptr) == NULL)
+	{
+	  assert (error != NO_ERROR && (*pgptr) == NULL);
+
+	  return error;
+	}
+      (*offset) = 0;
+    }
+
+  return NO_ERROR;
+}
+
+/*
+ * rp_log_read_align ()
+ *   return: error code
+ *
+ *   pgptr(in/out):
+ *   pageid(in/out):
+ *   offset(in/out):
+ *   org_pgptr(in):
+ */
+int
+rp_log_read_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
+		   LOG_PAGEID * pageid, PGLENGTH * offset,
+		   LOG_PAGE * org_pgptr)
+{
+  int error = NO_ERROR;
+
+  *offset = DB_ALIGN (*offset, MAX_ALIGNMENT);
+  while ((*offset) >= CIRP_LOGAREA_SIZE (buf_mgr))
+    {
+      if ((*pgptr) != org_pgptr)
+	{
+	  cirp_logpb_release (buf_mgr, (*pgptr)->hdr.logical_pageid);
+	}
+
+      *pageid = *pageid + 1;
+      error = cirp_logpb_get_log_page (buf_mgr, pgptr, *pageid);
+      if (error != NO_ERROR || (*pgptr) == NULL)
+	{
+	  assert (error != NO_ERROR && (*pgptr) == NULL);
+	  return error;
+	}
+
+      *offset -= CIRP_LOGAREA_SIZE (buf_mgr);
+      *offset = DB_ALIGN (*offset, MAX_ALIGNMENT);
+    }
+
+  return NO_ERROR;
+}
+
+/*
+ * rp_log_read_add_align ()
+ *   return: error code
+ *
+ *   pgptr(in/out):
+ *   pageid(in/out):
+ *   offset(in/out):
+ *   add_length(in):
+ *   org_pgptr(in):
+
+ */
+int
+rp_log_read_add_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
+		       LOG_PAGEID * pageid, PGLENGTH * offset, int add_length,
+		       LOG_PAGE * org_pgptr)
+{
+  *offset += add_length;
+  return rp_log_read_align (buf_mgr, pgptr, pageid, offset, org_pgptr);
 }
 
 /*
@@ -2433,15 +2603,16 @@ cirp_log_get_eot_time (CIRP_BUF_MGR * buf_mgr, time_t * donetime,
   offset = lsa.offset + DB_SIZEOF (LOG_RECORD_HEADER);
 
   pgptr = org_pgptr;
-  CIRP_LOG_READ_ALIGN (buf_mgr, error, offset, pageid, pgptr, org_pgptr);
+  error = rp_log_read_align (buf_mgr, &pgptr, &pageid, &offset, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
-  CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error,
-					 SSIZEOF (struct log_donetime),
-					 offset, pageid, pgptr, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
+					       &offset,
+					       SSIZEOF (struct log_donetime),
+					       org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2511,8 +2682,8 @@ cirp_log_get_ha_server_state (struct log_ha_server_state *state,
   pgptr = org_pgptr;
 
   length = DB_SIZEOF (struct log_ha_server_state);
-  CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, length, offset,
-					 pageid, pgptr, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
+					       &offset, length, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2572,10 +2743,10 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
     {
       while (rec_length > 0)
 	{
-	  CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, 0,
-						 log_offset,
-						 log_pageid, pgptr,
-						 org_pgptr);
+	  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
+						       &log_pageid,
+						       &log_offset, 0,
+						       org_pgptr);
 	  if (error != NO_ERROR || pgptr == NULL)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -2597,10 +2768,10 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
       rec_length = (int) sizeof (OID);
       while (rec_length > 0)
 	{
-	  CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, 0,
-						 log_offset,
-						 log_pageid, pgptr,
-						 org_pgptr);
+	  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
+						       &log_pageid,
+						       &log_offset, 0,
+						       org_pgptr);
 	  if (error != NO_ERROR || pgptr == NULL)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -2627,8 +2798,9 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
   /* The log data is not contiguous */
   while (t_length > 0)
     {
-      CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, 0, log_offset,
-					     log_pageid, pgptr, org_pgptr);
+      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
+						   &log_pageid, &log_offset,
+						   0, org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -2712,14 +2884,14 @@ cirp_make_repl_item_from_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGE * org_pgptr,
   offset = DB_SIZEOF (LOG_RECORD_HEADER) + lsa->offset;
   length = DB_SIZEOF (struct log_replication);
 
-  CIRP_LOG_READ_ALIGN (buf_mgr, error, offset, pageid, pgptr, org_pgptr);
+  error = rp_log_read_align (buf_mgr, &pgptr, &pageid, &offset, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
-  CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, length, offset,
-					 pageid, pgptr, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
+					       &offset, length, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2729,7 +2901,7 @@ cirp_make_repl_item_from_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGE * org_pgptr,
   offset += length;
   length = repl_log->length;
 
-  CIRP_LOG_READ_ALIGN (buf_mgr, error, offset, pageid, pgptr, org_pgptr);
+  error = rp_log_read_align (buf_mgr, &pgptr, &pageid, &offset, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2871,8 +3043,8 @@ cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
   pgptr = org_pgptr;
 
   length = DB_SIZEOF (struct log_gid_bitmap_update);
-  CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, length, offset,
-					 pageid, pgptr, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
+					       &offset, length, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;

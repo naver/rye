@@ -144,11 +144,14 @@ static int net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node);
 static LOG_PAGEID cirpwr_get_fpageid (LOG_PAGEID current_pageid,
 				      const LOG_HEADER * head);
 
-static int cirpwr_change_status (CIRP_WRITER_INFO * writer_info,
-				 CIRP_AGENT_STATUS status);
-
 static RECV_Q_NODE *cirpwr_alloc_recv_node (void);
 static int cirpwr_copy_all_omitted_pages (LOG_PAGEID fpageid);
+
+static int cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info,
+					CIRP_AGENT_STATUS status);
+static int cirpwr_change_writer_status (CIRP_WRITER_INFO * writer_info,
+					CIRP_AGENT_STATUS status);
+
 
 /*
  * cirpwr_to_physical_pageid -
@@ -300,7 +303,8 @@ cirp_final_writer (CIRP_WRITER_INFO * writer)
   writer->reader_count = 0;
   writer->is_archiving = false;
 
-  writer->status = CIRP_AGENT_DEAD;
+  writer->copier_status = CIRP_AGENT_DEAD;
+  writer->writer_status = CIRP_AGENT_DEAD;
 
   return NO_ERROR;
 }
@@ -335,7 +339,8 @@ cirp_init_writer (CIRP_WRITER_INFO * writer)
   writer->reader_count = 0;
   writer->is_archiving = false;
 
-  cirpwr_change_status (writer, CIRP_AGENT_INIT);
+  cirpwr_change_copier_status (writer, CIRP_AGENT_INIT);
+  cirpwr_change_writer_status (writer, CIRP_AGENT_INIT);
 
   memset (&writer->ct, 0, sizeof (CIRP_CT_LOG_WRITER));
 
@@ -1602,9 +1607,9 @@ cirpwr_write_log_pages (void)
 	{
 	  pthread_mutex_unlock (&writer->lock);
 	  has_writer_mutex = false;
-	  if (rp_need_restart () == true)
+	  if (REPL_NEED_SHUTDOWN () == true)
 	    {
-	      REPL_SET_GENERIC_ERROR (error, "need_restart");
+	      REPL_SET_GENERIC_ERROR (error, "NEED SHUTDOWN");
 
 	      GOTO_EXIT_ON_ERROR;
 	    }
@@ -1778,8 +1783,8 @@ log_copier_main (void *arg)
   error = er_set_msg_info (th_er_msg);
   if (error != NO_ERROR)
     {
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
-      cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
+      cirpwr_change_copier_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg);
       return NULL;
@@ -1806,6 +1811,10 @@ log_copier_main (void *arg)
 	  error = cirp_connect_copylogdb (th_entry->arg->db_name, false);
 	  if (error != NO_ERROR)
 	    {
+	      int recv_q_node_count, wakeup_interval = 100;
+	      struct timeval cur_time, tmp_timeval;
+	      struct timespec wakeup_time;
+
 	      m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
 	      if (m_hdr->ha_info.server_state != HA_STATE_DEAD)
 		{
@@ -1817,6 +1826,25 @@ log_copier_main (void *arg)
 		      Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
 		      pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
 		      pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+
+		      do
+			{
+			  gettimeofday (&cur_time, NULL);
+
+			  timeval_add_msec (&tmp_timeval, &cur_time,
+					    wakeup_interval);
+			  timeval_to_timespec (&wakeup_time, &tmp_timeval);
+
+			  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+			  pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,
+						  &cirpwr_Gl.recv_q_lock,
+						  &wakeup_time);
+			  recv_q_node_count =
+			    cirpwr_Gl.recv_log_queue->list.count;
+			  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+			}
+		      while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
+			     && REPL_NEED_SHUTDOWN () == false);
 		    }
 		}
 	      THREAD_SLEEP (100);
@@ -1826,7 +1854,7 @@ log_copier_main (void *arg)
 	}
 
       /* copy log pages */
-      while (ctx.shutdown == false && rp_need_restart () == false)
+      while (ctx.shutdown == false && REPL_NEED_SHUTDOWN () == false)
 	{
 	  error = cirpwr_get_log_pages (&ctx);
 	  if (error != NO_ERROR)
@@ -1898,8 +1926,8 @@ log_copier_main (void *arg)
 	      err_msg);
     }
 
-  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
-  cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
+  RP_SET_AGENT_NEED_SHUTDOWN ();
+  cirpwr_change_copier_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
 	    "Writer Exit: mode(%d), last_pageid(%lld)", th_entry->arg->mode,
@@ -1940,8 +1968,8 @@ log_writer_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
-      cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
+      cirpwr_change_writer_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
       free_and_init (th_er_msg_info);
       return NULL;
@@ -1982,8 +2010,8 @@ log_writer_main (void *arg)
 	}
     }
 
-  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
-  cirpwr_change_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
+  RP_SET_AGENT_NEED_SHUTDOWN ();
+  cirpwr_change_writer_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
 	    "Flusher Exit: mode(%d), last_pageid(%lld)", th_entry->arg->mode,
@@ -1997,36 +2025,72 @@ log_writer_main (void *arg)
 }
 
 /*
- * cirpwr_change_status ()
+ * cirpwr_change_copier_status ()
  *   return: NO_ERROR
  *
  *   writer_info(in/out):
  *   status(in):
  */
 static int
-cirpwr_change_status (CIRP_WRITER_INFO * writer_info,
-		      CIRP_AGENT_STATUS status)
+cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info,
+			     CIRP_AGENT_STATUS status)
 {
   pthread_mutex_lock (&writer_info->lock);
-  writer_info->status = status;
+  writer_info->copier_status = status;
   pthread_mutex_unlock (&writer_info->lock);
 
   return NO_ERROR;
 }
 
 /*
- * cirpwr_change_status ()
+ * cirpwr_change_writer_status ()
+ *   return: NO_ERROR
+ *
+ *   writer_info(in/out):
+ *   status(in):
+ */
+static int
+cirpwr_change_writer_status (CIRP_WRITER_INFO * writer_info,
+			     CIRP_AGENT_STATUS status)
+{
+  pthread_mutex_lock (&writer_info->lock);
+  writer_info->writer_status = status;
+  pthread_mutex_unlock (&writer_info->lock);
+
+  return NO_ERROR;
+}
+
+/*
+ * cirpwr_get_copier_status ()
  *   return: NO_ERROR
  *
  *   writer_info(in):
  */
 CIRP_AGENT_STATUS
-cirpwr_get_status (CIRP_WRITER_INFO * writer_info)
+cirpwr_get_copier_status (CIRP_WRITER_INFO * writer_info)
 {
   CIRP_AGENT_STATUS status;
 
   pthread_mutex_lock (&writer_info->lock);
-  status = writer_info->status;
+  status = writer_info->copier_status;
+  pthread_mutex_unlock (&writer_info->lock);
+
+  return status;
+}
+
+/*
+ * cirpwr_get_writer_status ()
+ *   return: NO_ERROR
+ *
+ *   writer_info(in):
+ */
+CIRP_AGENT_STATUS
+cirpwr_get_writer_status (CIRP_WRITER_INFO * writer_info)
+{
+  CIRP_AGENT_STATUS status;
+
+  pthread_mutex_lock (&writer_info->lock);
+  status = writer_info->writer_status;
   pthread_mutex_unlock (&writer_info->lock);
 
   return status;
@@ -2276,11 +2340,12 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	    pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
 	    while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
-		   && rp_need_restart () == false)
+		   && REPL_NEED_SHUTDOWN () == false)
 	      {
 		clock_gettime (CLOCK_REALTIME, &wakeup_time);
 
-		wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
+		wakeup_time =
+		  timespec_add_msec (&wakeup_time, wakeup_interval);
 
 		pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
 		pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,

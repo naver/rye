@@ -81,6 +81,7 @@
 
 
 #define ER_LOG_FILE_DIR	"server"
+#define ER_REPL_LOG_FILE_DIR  "repl"
 
 #if !defined (CS_MODE)
 static const char sysprm_error_log_file[] = "rye_server.err";
@@ -327,8 +328,6 @@ typedef enum
 
 #define PRM_NAME_SQL_TRACE_SLOW "sql_trace_slow"
 
-#define PRM_NAME_SERVER_TRACE "server_trace"
-
 #define PRM_NAME_LOG_TRACE_FLUSH_TIME "log_trace_flush_time"
 
 #define PRM_NAME_GENERIC_VOL_PREALLOC_SIZE "generic_vol_prealloc_size"
@@ -476,9 +475,9 @@ static bool prm_er_log_warning_default = false;
 int PRM_ER_EXIT_ASK = ER_EXIT_DEFAULT;
 static int prm_er_exit_ask_default = ER_EXIT_DEFAULT;
 
-UINT64 PRM_ER_LOG_SIZE = (100000 * 80L);
-static UINT64 prm_er_log_size_default = (100000 * 80L);
-static UINT64 prm_er_log_size_lower = (100 * 80);
+UINT64 PRM_ER_LOG_SIZE = 10 * ONE_M;
+static UINT64 prm_er_log_size_default = 10 * ONE_M;
+static UINT64 prm_er_log_size_lower = 10 * ONE_K;
 
 const char *PRM_ER_LOG_FILE = sysprm_error_log_file;
 static const char *prm_er_log_file_default = sysprm_error_log_file;
@@ -906,9 +905,6 @@ INT64 PRM_SQL_TRACE_SLOW = -1;
 static INT64 prm_sql_trace_slow_default = -1;
 static INT64 prm_sql_trace_slow_lower = -1;
 static INT64 prm_sql_trace_slow_upper = 24 * ONE_HOUR;
-
-bool PRM_SERVER_TRACE = false;
-static bool prm_server_trace_default = false;
 
 bool PRM_SQL_TRACE_EXECUTION_PLAN = false;
 static bool prm_sql_trace_execution_plan_default = false;
@@ -2070,13 +2066,6 @@ sysprm_initialize_prm_def ()
 		     &PRM_SQL_TRACE_SLOW,
 		     &prm_sql_trace_slow_upper, &prm_sql_trace_slow_lower);
 
-  sysprm_init_param (PRM_ID_SERVER_TRACE,
-		     PRM_NAME_SERVER_TRACE,
-		     (PRM_USER_CHANGE | PRM_FOR_SERVER),
-		     PRM_BOOLEAN,
-		     &prm_server_trace_default, &PRM_SERVER_TRACE, NULL,
-		     NULL);
-
   sysprm_init_param (PRM_ID_SQL_TRACE_EXECUTION_PLAN,
 		     PRM_NAME_SQL_TRACE_EXECUTION_PLAN,
 		     (PRM_USER_CHANGE | PRM_FOR_SERVER),
@@ -2458,6 +2447,62 @@ sysprm_set_er_log_file (const char *db_name)
       snprintf (error_log_name, PATH_MAX - 1,
 		"%s%c%s_%04d%02d%02d_%02d%02d.err", ER_LOG_FILE_DIR,
 		PATH_SEPARATOR, base_db_name, log_tm_p->tm_year + 1900,
+		log_tm_p->tm_mon + 1, log_tm_p->tm_mday, log_tm_p->tm_hour,
+		log_tm_p->tm_min);
+      prm_set (er_log_file, error_log_name, true);
+    }
+}
+
+/*
+ * sysprm_set_repl_er_log_file -
+ *   return: void
+ *   base_db_name(in): database name
+ *
+ */
+void
+sysprm_set_repl_er_log_file (const char *db_name)
+{
+  char *s, *base_db_name, *peer_node;
+  char local_db_name[DB_MAX_IDENTIFIER_LENGTH + 1];
+  time_t log_time;
+  struct tm log_tm, *log_tm_p = &log_tm;
+  char error_log_name[PATH_MAX];
+  SYSPRM_PARAM *er_log_file;
+
+  if (db_name == NULL)
+    {
+      return;
+    }
+
+  er_log_file = prm_find (PRM_NAME_ER_LOG_FILE, NULL);
+  if (er_log_file == NULL || PRM_IS_SET (er_log_file->flag))
+    {
+      return;
+    }
+  peer_node = NULL;
+
+  strncpy (local_db_name, db_name, DB_MAX_IDENTIFIER_LENGTH);
+  local_db_name[DB_MAX_IDENTIFIER_LENGTH] = '\0';
+  s = strchr (local_db_name, '@');
+  if (s)
+    {
+      *s = '\0';
+      peer_node = s + 1;
+    }
+  base_db_name = basename ((char *) local_db_name);
+  if (base_db_name == NULL)
+    {
+      return;
+    }
+
+  log_time = time (NULL);
+  log_tm_p = localtime_r (&log_time, &log_tm);
+  if (log_tm_p != NULL)
+    {
+      snprintf (error_log_name, PATH_MAX - 1,
+		"%s%c%s_%s_%04d%02d%02d_%02d%02d.err", ER_REPL_LOG_FILE_DIR,
+		PATH_SEPARATOR, base_db_name, peer_node,
+		log_tm_p->tm_year + 1900,
 		log_tm_p->tm_mon + 1, log_tm_p->tm_mday, log_tm_p->tm_hour,
 		log_tm_p->tm_min);
       prm_set (er_log_file, error_log_name, true);

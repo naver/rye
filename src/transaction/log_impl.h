@@ -71,14 +71,11 @@
         logtb_unlock_tran_table(thread_p)
 
 #define LOG_ARCHIVE_CS_ENTER(thread_p)                                       \
-        csect_enter_critical_section (thread_p, &log_Gl.archive.archives_cs, \
-                                      INF_WAIT)
+        csect_enter (thread_p, CSECT_LOG_ARCHIVE, INF_WAIT)
 #define LOG_ARCHIVE_CS_ENTER_READ_MODE(thread_p)                             \
-        csect_enter_critical_section_as_reader (thread_p,                    \
-                                                &log_Gl.archive.archives_cs, \
-                                                INF_WAIT)
+        csect_enter_as_reader (thread_p, CSECT_LOG_ARCHIVE, INF_WAIT)
 #define LOG_ARCHIVE_CS_EXIT() \
-        csect_exit_critical_section (&log_Gl.archive.archives_cs)
+        csect_exit (CSECT_LOG_ARCHIVE)
 
 #else /* SERVER_MODE */
 #define LOG_CS_ENTER(thread_p)
@@ -101,14 +98,11 @@
 #define LOG_CS_OWN_READ_MODE(thread_p) (csect_check_own (thread_p, CSECT_LOG) == 2)
 
 #define LOG_ARCHIVE_CS_OWN(thread_p)                 \
-        (csect_check_own_critical_section (thread_p, \
-           &log_Gl.archive.archives_cs) >= 1)
+        (csect_check_own (thread_p, CSECT_LOG_ARCHIVE) >= 1)
 #define LOG_ARCHIVE_CS_OWN_WRITE_MODE(thread_p)     \
-       (csect_check_own_critical_section (thread_p, \
-           &log_Gl.archive.archives_cs) == 1)
+       (csect_check_own (thread_p, CSECT_LOG_ARCHIVE) == 1)
 #define LOG_ARCHIVE_CS_OWN_READ_MODE(thread_p)      \
-       (csect_check_own_critical_section (thread_p, \
-           &log_Gl.archive.archives_cs) == 2)
+       (csect_check_own (thread_p, CSECT_LOG_ARCHIVE) == 2)
 
 #else /* SERVER_MODE */
 #define LOG_CS_OWN(thread_p) (true)
@@ -1144,7 +1138,6 @@ struct log_archives
   int max_unav;			/* Max size of unavailable array */
   int next_unav;		/* Last unavailable entry        */
   int *unav_archives;		/* Unavailable archives          */
-  CSS_CRITICAL_SECTION archives_cs;
 };
 
 #define LOG_ARCHIVES_INITIALIZER                     \
@@ -1152,8 +1145,7 @@ struct log_archives
    LOG_ARV_HEADER_INITIALIZER,                       \
    0, 0,                                             \
    /* unav_archives */                               \
-   NULL,                                             \
-   CSS_CRITICAL_SECTION_INITIALIZER }
+   NULL }
 
 typedef struct background_archiving_info BACKGROUND_ARCHIVING_INFO;
 struct background_archiving_info
@@ -1293,9 +1285,7 @@ struct log_pb_global_data
   int num_buffers;		/* Number of log buffers     */
   int clock_hand;		/* Clock hand                */
 
-#if defined(SERVER_MODE)
-  CSS_CRITICAL_SECTION lpb_cs;
-#else				/* !SERVER_MODE */
+#if !defined(SERVER_MODE)
   LOG_ZIP *log_zip_undo;
   LOG_ZIP *log_zip_redo;
   char *log_data_ptr;

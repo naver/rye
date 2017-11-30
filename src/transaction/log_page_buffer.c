@@ -231,9 +231,7 @@ int log_default_input_for_archive_log_location = -1;
 
 LOG_PB_GLOBAL_DATA log_Pb = {
   false, NULL, NULL, NULL, 0, 0
-#if defined(SERVER_MODE)
-    , CSS_CRITICAL_SECTION_INITIALIZER
-#else /* !SERVER_MODE */
+#if !defined(SERVER_MODE)
     , NULL, NULL, NULL, 0
 #endif /* !SERVER_MODE */
 };
@@ -456,7 +454,7 @@ logpb_expand_pool (int num_new_buffers)
 
   assert (LOG_CS_OWN_WRITE_MODE (NULL));
 
-  csect_enter_critical_section (NULL, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (NULL, CSECT_LOG_BUFFER, INF_WAIT);
 
   if (num_new_buffers <= 0)
     {
@@ -486,13 +484,15 @@ logpb_expand_pool (int num_new_buffers)
   while ((unsigned int) num_new_buffers > LOG_MAX_NUM_CONTIGUOUS_BUFFERS)
     {
       /* Note that we control overflow of size in this way */
-      csect_exit_critical_section (&log_Pb.lpb_cs);
+      csect_exit (CSECT_LOG_BUFFER);
       error_code = logpb_expand_pool (LOG_MAX_NUM_CONTIGUOUS_BUFFERS);
       if (error_code != NO_ERROR)
 	{
 	  return error_code;
 	}
-      csect_enter_critical_section (NULL, &log_Pb.lpb_cs, INF_WAIT);
+
+      csect_enter (NULL, CSECT_LOG_BUFFER, INF_WAIT);
+
       num_new_buffers -= LOG_MAX_NUM_CONTIGUOUS_BUFFERS;
     }
 
@@ -511,7 +511,7 @@ logpb_expand_pool (int num_new_buffers)
       area = (struct log_bufarea *) malloc (size);
       if (area == NULL)
 	{
-	  csect_exit_critical_section (&log_Pb.lpb_cs);
+	  csect_exit (CSECT_LOG_BUFFER);
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 		  1, size);
 	  return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -525,7 +525,7 @@ logpb_expand_pool (int num_new_buffers)
 	{
 	  free_and_init (area);
 
-	  csect_exit_critical_section (&log_Pb.lpb_cs);
+	  csect_exit (CSECT_LOG_BUFFER);
 
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 		  1, total_buffers * sizeof (*log_Pb.pool));
@@ -555,7 +555,7 @@ logpb_expand_pool (int num_new_buffers)
       log_Pb.num_buffers = total_buffers;
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   log_Stat.log_buffer_expand_count++;
 
@@ -645,8 +645,6 @@ logpb_initialize_pool (THREAD_ENTRY * thread_p)
   log_Pb.pool = NULL;
   log_Pb.poolarea = NULL;
 
-  csect_initialize_critical_section (&log_Pb.lpb_cs);
-
   /*
    * Create an area to keep the number of desired buffers
    */
@@ -670,8 +668,6 @@ logpb_initialize_pool (THREAD_ENTRY * thread_p)
     {
       goto error;
     }
-
-  csect_initialize_critical_section (&log_Gl.archive.archives_cs);
 
   pthread_mutex_init (&log_Gl.chkpt_lsa_lock, NULL);
 
@@ -706,7 +702,7 @@ logpb_finalize_pool (void)
 
   assert (LOG_CS_OWN_WRITE_MODE (NULL));
 
-  csect_enter_critical_section (NULL, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (NULL, CSECT_LOG_BUFFER, INF_WAIT);
   if (log_Pb.pool != NULL)
     {
       if (log_Gl.append.log_pgptr != NULL)
@@ -742,13 +738,9 @@ logpb_finalize_pool (void)
       free_and_init (area);
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
-
-  csect_finalize_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   logpb_finalize_flush_info ();
-
-  csect_finalize_critical_section (&log_Gl.archive.archives_cs);
 
   pthread_mutex_destroy (&log_Gl.chkpt_lsa_lock);
 
@@ -828,7 +820,7 @@ logpb_invalidate_pool (THREAD_ENTRY * thread_p)
    */
   logpb_flush_pages_direct (thread_p);
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 
   for (i = 0; i < log_Pb.num_buffers; i++)
     {
@@ -843,7 +835,7 @@ logpb_invalidate_pool (THREAD_ENTRY * thread_p)
 	}
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 }
 
 /*
@@ -902,14 +894,13 @@ logpb_replace (THREAD_ENTRY * thread_p, bool * retry)
 		  ixpool = log_bufptr->ipool;
 		  if (log_bufptr->dirty == true)
 		    {
-		      csect_exit_critical_section (&log_Pb.lpb_cs);
+		      csect_exit (CSECT_LOG_BUFFER);
 
 		      assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 		      log_Stat.log_buffer_flush_count_by_replacement++;
 		      logpb_flush_all_append_pages (thread_p);
 
-		      csect_enter_critical_section (thread_p,
-						    &log_Pb.lpb_cs, INF_WAIT);
+		      csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 		      *retry = true;
 		      return NULL;
 		    }
@@ -933,7 +924,7 @@ logpb_replace (THREAD_ENTRY * thread_p, bool * retry)
        * aborted at the same time or it is likely that there is a bug in the
        * system (e.g., buffer are not being freed).
        */
-      csect_exit_critical_section (&log_Pb.lpb_cs);
+      csect_exit (CSECT_LOG_BUFFER);
 
       error_code = logpb_expand_pool (-1);
 
@@ -950,7 +941,7 @@ logpb_replace (THREAD_ENTRY * thread_p, bool * retry)
 	}
       log_bufptr = NULL;
 
-      csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+      csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
     }
 
   return log_bufptr;
@@ -1007,7 +998,7 @@ logpb_fix_page (THREAD_ENTRY * thread_p, LOG_PAGEID pageid, int fetch_mode)
   assert ((fetch_mode == NEW_PAGE) || (fetch_mode == OLD_PAGE));
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 
   log_bufptr = (struct log_buffer *) mht_get (log_Pb.ht, &pageid);
   if (log_bufptr == NULL)
@@ -1082,7 +1073,7 @@ logpb_fix_page (THREAD_ENTRY * thread_p, LOG_PAGEID pageid, int fetch_mode)
       log_bufptr->fcnt++;
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   assert (log_bufptr != NULL);
 
@@ -1102,7 +1093,7 @@ error:
       logpb_initialize_log_buffer (log_bufptr);
       logpb_reset_clock_hand (log_bufptr->ipool);
     }
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   return NULL;
 }
@@ -1127,7 +1118,17 @@ logpb_set_dirty (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr,
   /* Get the address of the buffer from the page. */
   bufptr = LOG_GET_LOG_BUFFER_PTR (log_pgptr);
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+#if defined(RYE_DEBUG)
+  if (bufptr->pageid != LOGPB_HEADER_PAGE_ID
+      && (bufptr->pageid < LOGPB_NEXT_ARCHIVE_PAGE_ID
+	  || bufptr->pageid > LOGPB_LAST_ACTIVE_PAGE_ID))
+    {
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_FLUSHING_UNUPDATABLE,
+	      1, bufptr->pageid);
+    }
+#endif /* RYE_DEBUG */
+
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 
   bufptr->dirty = true;
   if (free_page == FREE)
@@ -1135,7 +1136,7 @@ logpb_set_dirty (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr,
       logpb_unfix_page (bufptr);
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 }
 
 /*
@@ -1156,11 +1157,11 @@ logpb_is_dirty (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr)
   /* Get the address of the buffer from the page. */
   bufptr = LOG_GET_LOG_BUFFER_PTR (log_pgptr);
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 
   is_dirty = (bool) bufptr->dirty;
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   return is_dirty;
 }
@@ -1180,7 +1181,7 @@ logpb_is_any_dirty (void)
   int i;
   bool ret;
 
-  csect_enter_critical_section (NULL, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (NULL, CSECT_LOG_BUFFER, INF_WAIT);
 
   ret = false;
   for (i = 0; i < log_Pb.num_buffers; i++)
@@ -1193,7 +1194,8 @@ logpb_is_any_dirty (void)
 	}
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
+
   return ret;
 }
 #endif /* !NDEBUG */
@@ -1220,7 +1222,7 @@ logpb_flush_page (THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr,
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 
   if (bufptr->dirty == true)
     {
@@ -1250,12 +1252,12 @@ logpb_flush_page (THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr,
       logpb_unfix_page (bufptr);
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   return NO_ERROR;
 
 error:
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   return ER_FAILED;
 }
@@ -1274,11 +1276,11 @@ error:
 void
 logpb_free_page (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr)
 {
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 
   logpb_free_without_mutex (log_pgptr);
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 }
 
 /*
@@ -1349,7 +1351,7 @@ logpb_dump (FILE * out_fp)
       return;
     }
 
-  csect_enter_critical_section (NULL, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (NULL, CSECT_LOG_BUFFER, INF_WAIT);
 
   logpb_dump_information (out_fp);
 
@@ -1364,7 +1366,7 @@ logpb_dump (FILE * out_fp)
 
   logpb_dump_pages (out_fp);
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 }
 
 /*
@@ -1842,7 +1844,7 @@ logpb_copy_page (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
 
   LOG_CS_ENTER_READ_MODE (thread_p);
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
 
   log_bufptr = (struct log_buffer *) mht_get (log_Pb.ht, &pageid);
   if (log_bufptr != NULL)
@@ -1851,7 +1853,7 @@ logpb_copy_page (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
       ret_pgptr = log_pgptr;
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
 
   if (log_bufptr == NULL)
     {
@@ -2256,7 +2258,7 @@ logpb_fetch_start_append_page (THREAD_ENTRY * thread_p)
   int flag = OLD_PAGE;
   bool need_flush;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
   LOG_FLUSH_INFO *flush_info = &log_Gl.flush_info;
 
@@ -2378,7 +2380,7 @@ logpb_next_append_page (THREAD_ENTRY * thread_p,
 {
   bool need_flush;
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
   LOG_FLUSH_INFO *flush_info = &log_Gl.flush_info;
 
@@ -2735,7 +2737,7 @@ logpb_prior_lsa_append_all_list (THREAD_ENTRY * thread_p)
 {
   LOG_PRIOR_NODE *prior_list;
   INT64 current_size;
-  int rv;
+  UNUSED_VAR int rv;
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
@@ -2804,7 +2806,7 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 #endif
 
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
   LOGWR_ENTRY *entry;
 #endif /* SERVER_MODE */
   UINT64 perf_start;
@@ -2975,7 +2977,7 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
   rv = pthread_mutex_lock (&flush_info->flush_mutex);
   hold_flush_mutex = true;
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
   hold_lpb_cs = true;
 
   /* Record number of writes in statistics */
@@ -3017,7 +3019,7 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 	       *
 	       * Flush the accumulated contiguous pages
 	       */
-	      csect_exit_critical_section (&log_Pb.lpb_cs);
+	      csect_exit (CSECT_LOG_BUFFER);
 	      hold_lpb_cs = false;
 
 	      if (logpb_writev_append_pages (thread_p,
@@ -3038,8 +3040,8 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 		  idxflush = -1;
 		}
 
-	      csect_enter_critical_section (thread_p, &log_Pb.lpb_cs,
-					    INF_WAIT);
+	      csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
+
 	      hold_lpb_cs = true;
 	    }
 	}
@@ -3067,7 +3069,7 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
    * If there are any accumulated pages, flush them at this point
    */
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
   hold_lpb_cs = false;
 
   if (idxflush != -1)
@@ -3149,7 +3151,7 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
    * any more.
    */
 
-  csect_enter_critical_section (thread_p, &log_Pb.lpb_cs, INF_WAIT);
+  csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
   hold_lpb_cs = true;
 
   for (i = 0; i < flush_info->num_toflush; i++)
@@ -3158,7 +3160,7 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
       bufptr->dirty = false;
     }
 
-  csect_exit_critical_section (&log_Pb.lpb_cs);
+  csect_exit (CSECT_LOG_BUFFER);
   hold_lpb_cs = false;
 
 #if !defined(NDEBUG)
@@ -3301,7 +3303,7 @@ error:
 
   if (hold_lpb_cs)
     {
-      csect_exit_critical_section (&log_Pb.lpb_cs);
+      csect_exit (CSECT_LOG_BUFFER);
     }
   if (hold_flush_mutex)
     {
@@ -3441,7 +3443,7 @@ void
 logpb_invalid_all_append_pages (THREAD_ENTRY * thread_p)
 {
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
   LOG_FLUSH_INFO *flush_info = &log_Gl.flush_info;
 
@@ -3510,7 +3512,7 @@ static void
 logpb_start_append (THREAD_ENTRY * thread_p, LOG_RECORD_HEADER * header)
 {
   LOG_RECORD_HEADER *log_rec;	/* Log record */
-  LOG_PAGEID initial_pageid;
+  UNUSED_VAR LOG_PAGEID initial_pageid;
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
@@ -6054,7 +6056,7 @@ logpb_checkpoint (THREAD_ENTRY * thread_p)
   const char *catmsg;
   int num_perm_vols;
   VOLID volid;
-  int rv;
+  UNUSED_VAR int rv;
   int error_code = NO_ERROR;
   LOG_PAGEID smallest_pageid;
   int first_arv_num_not_needed;
@@ -7258,7 +7260,7 @@ static void
 logpb_finalize_flush_info (void)
 {
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
   LOG_FLUSH_INFO *flush_info = &log_Gl.flush_info;
 
@@ -7287,7 +7289,7 @@ static void
 logpb_finalize_writer_info (void)
 {
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif
   LOGWR_ENTRY *entry, *next_entry;
   LOGWR_INFO *writer_info = &log_Gl.writer_info;
