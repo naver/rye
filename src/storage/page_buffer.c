@@ -4789,7 +4789,7 @@ pgbuf_timed_sleep (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
   char *client_user_name;	/* Client user name for tran */
   char *client_host_name;	/* Client host for tran */
   int client_pid;		/* Client process identifier for tran */
-  struct timeval start, end;
+  UINT64 perf_start;
 
   /* After holding the mutex associated with conditional variable,
      release the bufptr->BCB_mutex. */
@@ -4814,20 +4814,15 @@ try_again:
   to.tv_sec = time (NULL) + wait_secs;
   to.tv_nsec = 0;
 
-  if (thrd_entry->event_stats.trace_slow_query == true)
-    {
-      gettimeofday (&start, NULL);
-    }
-
   thrd_entry->resume_status = THREAD_PGBUF_SUSPENDED;
+
+  PERF_MON_GET_CURRENT_TIME (perf_start);
+
   r = pthread_cond_timedwait (&thrd_entry->wakeup_cond,
 			      &thrd_entry->th_entry_lock, &to);
 
-  if (thrd_entry->event_stats.trace_slow_query == true)
-    {
-      gettimeofday (&end, NULL);
-      ADD_TIMEVAL (thrd_entry->event_stats.latch_waits, start, end);
-    }
+  mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LATCH_WAITS, 1,
+			       perf_start);
 
   if (r == 0)
     {
