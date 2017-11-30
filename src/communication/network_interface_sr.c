@@ -96,7 +96,9 @@ static void event_log_many_ioreads (THREAD_ENTRY * thread_p,
 				    int time,
 				    MNT_SERVER_EXEC_STATS * diff_stats);
 static void event_log_temp_expand_pages (THREAD_ENTRY * thread_p,
-					 EXECUTION_INFO * info);
+					 EXECUTION_INFO * info,
+					 INT64 expand_pages,
+					 UINT64 expand_clock);
 static void check_reset_on_commit (THREAD_ENTRY * thread_p);
 
 static FILE *dump_func_open_tmpfile (THREAD_ENTRY * thread_p,
@@ -135,15 +137,18 @@ need_to_abort_tran (THREAD_ENTRY * thread_p, int *errid)
    *  set after that.
    *  So, re-set that error to rollback in client side.
    */
-  tdes = logtb_get_current_tdes (thread_p);
-  if (tdes != NULL && tdes->tran_abort_reason != TRAN_NORMAL
-      && flag_abort == false)
+  if (flag_abort == false)
     {
-      flag_abort = true;
+      tdes = logtb_get_current_tdes (thread_p);
+      if (tdes != NULL && tdes->tran_abort_reason != TRAN_NORMAL)
+	{
+	  flag_abort = true;
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_UNILATERALLY_ABORTED, 4,
-	      thread_p->tran_index, tdes->client.db_user,
-	      tdes->client.host_name, tdes->client.process_id);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+		  ER_LK_UNILATERALLY_ABORTED, 4, thread_p->tran_index,
+		  tdes->client.db_user, tdes->client.host_name,
+		  tdes->client.process_id);
+	}
     }
 
   return flag_abort;
@@ -3069,6 +3074,8 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   int error_code = NO_ERROR;
   bool tran_abort = false;
   CSS_NET_PACKET *recv_packet = thread_p->recv_packet;
+  INT64 old_expand_pages, new_expand_pages;
+  UINT64 old_expand_clock, new_expand_clock;
 
   EXECUTION_INFO info = { NULL, NULL, NULL };
   trace_slow_msec = prm_get_bigint_value (PRM_ID_SQL_TRACE_SLOW);
@@ -3084,12 +3091,11 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 #endif
       xmnt_server_copy_stats (thread_p, &base_stats);
       gettimeofday (&start, NULL);
-
-      if (trace_slow_msec >= 0)
-	{
-	  thread_p->event_stats.trace_slow_query = true;
-	}
     }
+
+  old_expand_pages =
+    mnt_get_stats_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+			     &old_expand_clock);
 
   aligned_page_buf = PTR_ALIGN (page_buf, MAX_ALIGNMENT);
 
@@ -3183,24 +3189,6 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 	    }
 	}
 
-      if (xasl_cache_entry_p)
-	{
-	  tran_abort = need_to_abort_tran (thread_p, &error_code);
-	  if (tran_abort == true)
-	    {
-	      /* Remove transaction id from xasl cache entry before
-	       * return_error_to_client, where current transaction may be aborted.
-	       * Otherwise, another transaction may be resumed and
-	       * xasl_cache_entry_p may be removed by that transaction, during class
-	       * deletion.
-	       */
-	      (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
-							    xasl_cache_entry_p,
-							    true);
-	      xasl_cache_entry_p = NULL;
-	    }
-	}
-
       return_error_to_client (thread_p, rid);
     }
 
@@ -3290,11 +3278,10 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   /* pack size of a page to return as a third argumnet of the reply */
   ptr = or_pack_int (ptr, page_size);
 
-  /* We may release the xasl cache entry when the transaction aborted.
-   * To refer the contents of the freed entry for the case will cause defects.
-   */
-  if (tran_abort == false)
+  if (xasl_cache_entry_p)
     {
+      assert (info.sql_hash_text != NULL);
+
       if (trace_slow_msec >= 0 || trace_ioread > 0)
 	{
 	  gettimeofday (&end, NULL);
@@ -3328,14 +3315,17 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 #endif
 	}
 
-      if (thread_p->event_stats.temp_expand_pages > 0)
-	{
-	  event_log_temp_expand_pages (thread_p, &info);
-	}
-    }
+      new_expand_pages =
+	mnt_get_stats_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+				 &new_expand_clock);
 
-  if (xasl_cache_entry_p)
-    {
+      if (new_expand_pages - old_expand_pages > 0)
+	{
+	  event_log_temp_expand_pages (thread_p, &info,
+				       new_expand_pages - old_expand_pages,
+				       new_expand_clock - old_expand_clock);
+	}
+
       (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
 						    xasl_cache_entry_p, true);
     }
@@ -3502,6 +3492,11 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
+  int i;
+  MNT_SERVER_ITEM item_waits;
+  UINT64 total_cs_waits_clock;
+
+  assert (info->sql_hash_text != NULL);
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = logtb_get_current_tdes (thread_p);
@@ -3521,16 +3516,31 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %d\n", indent, ' ', time);
+  fprintf (log_fp, "%*ctime: fetch=%ld, ioread=%ld, iowrite=%ld (%dms)\n", indent, ' ',
+      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
+      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
+      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_IOWRITES]),
+                                    time);
   fprintf (log_fp, "%*cbuffer: fetch=%lld, ioread=%lld, iowrite=%lld\n",
 	   indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_FETCHES],
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS],
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOWRITES]);
-  fprintf (log_fp, "%*cwait: cs=%d, lock=%d, latch=%d\n\n", indent, ' ',
-	   TO_MSEC (thread_p->event_stats.cs_waits),
-	   TO_MSEC (thread_p->event_stats.lock_waits),
-	   TO_MSEC (thread_p->event_stats.latch_waits));
+
+  total_cs_waits_clock = 0;
+  for (i = 0; i < CSECT_LAST; i++)
+    {
+      item_waits = mnt_csect_type_to_server_item_waits (i);
+
+      total_cs_waits_clock += diff_stats->acc_time[item_waits];
+    }
+
+  fprintf (log_fp, "%*cwait: csect=%ld, lock=%ld, latch=%ld\n\n", indent, ' ',
+	   mnt_clock_to_time (total_cs_waits_clock),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_SQL_TRACE_LOCK_WAITS]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_SQL_TRACE_LATCH_WAITS]));
 
   event_log_end (thread_p);
 }
@@ -3573,7 +3583,9 @@ event_log_many_ioreads (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %d\n", indent, ' ', time);
+  fprintf (log_fp, "%*ctime: %ld (%dms)\n", indent, ' ',
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]), time);
   fprintf (log_fp, "%*cioreads: %lld\n\n", indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS]);
 
@@ -3589,12 +3601,18 @@ event_log_many_ioreads (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
  *   bind_vals(in):
  */
 static void
-event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info)
+event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
+			     INT64 expand_pages, UINT64 expand_clock)
 {
   FILE *log_fp;
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
+  INT64 temp_expand_pages;
+
+  assert (info->sql_hash_text != NULL);
+  assert (expand_pages > 0);
+  assert (expand_clock > 0);
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = LOG_FIND_TDES (tran_index);
@@ -3615,10 +3633,10 @@ event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info)
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %d\n", indent, ' ',
-	   TO_MSEC (thread_p->event_stats.temp_expand_time));
-  fprintf (log_fp, "%*cpages: %d\n\n", indent, ' ',
-	   thread_p->event_stats.temp_expand_pages);
+  fprintf (log_fp, "%*ctime: %ld\n", indent, ' ',
+	   mnt_clock_to_time (expand_clock));
+  fprintf (log_fp, "%*cpages: %lld\n\n", indent, ' ',
+	   (long long int) expand_pages);
 
   event_log_end (thread_p);
 }

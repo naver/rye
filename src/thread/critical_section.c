@@ -528,7 +528,6 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 #if defined (EnableThreadMonitoring)
   struct timeval start_time, end_time, elapsed_time;
 #endif
-  struct timeval wait_start, wait_end;
   UINT64 perf_start;
   MNT_SERVER_ITEM item, item_waits;
 
@@ -577,19 +576,8 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = csect_wait_on_writer_queue (thread_p, cs_ptr,
 						       INF_WAIT, NULL);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -650,19 +638,8 @@ csect_enter_critical_section (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = csect_wait_on_writer_queue (thread_p, cs_ptr,
 						       NOT_WAIT, &to);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -793,7 +770,6 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 #if defined (EnableThreadMonitoring)
   struct timeval start_time, end_time, elapsed_time;
 #endif
-  struct timeval wait_start, wait_end;
   UINT64 perf_start;
   MNT_SERVER_ITEM item, item_waits;
 
@@ -844,19 +820,8 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = pthread_cond_wait (&cs_ptr->readers_ok,
 					      &cs_ptr->lock);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -899,19 +864,8 @@ csect_enter_critical_section_as_reader (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = pthread_cond_timedwait (&cs_ptr->readers_ok,
 						   &cs_ptr->lock, &to);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -1044,7 +998,6 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 #if defined (EnableThreadMonitoring)
   struct timeval start_time, end_time, elapsed_time;
 #endif
-  struct timeval wait_start, wait_end;
   UINT64 perf_start;
   MNT_SERVER_ITEM item, item_waits;
 
@@ -1117,19 +1070,8 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = pthread_cond_wait (&cs_ptr->readers_ok,
 					      &cs_ptr->lock);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -1172,19 +1114,8 @@ csect_demote_critical_section (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = pthread_cond_timedwait (&cs_ptr->readers_ok,
 						   &cs_ptr->lock, &to);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -1336,7 +1267,6 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 #if defined (EnableThreadMonitoring)
   struct timeval start_time, end_time, elapsed_time;
 #endif
-  struct timeval wait_start, wait_end;
   UINT64 perf_start;
   MNT_SERVER_ITEM item, item_waits;
 
@@ -1401,19 +1331,8 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = csect_wait_on_promoter_queue (thread_p, cs_ptr,
 							 INF_WAIT, NULL);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -1446,19 +1365,8 @@ csect_promote_critical_section (THREAD_ENTRY * thread_p,
 
 	      PERF_MON_GET_CURRENT_TIME (perf_start);
 
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_start, NULL);
-		}
-
 	      error_code = csect_wait_on_promoter_queue (thread_p, cs_ptr,
 							 NOT_WAIT, &to);
-	      if (thread_p->event_stats.trace_slow_query == true)
-		{
-		  gettimeofday (&wait_end, NULL);
-		  ADD_TIMEVAL (thread_p->event_stats.cs_waits,
-			       wait_start, wait_end);
-		}
 
 	      mnt_stats_counter_with_time (thread_p, item_waits, 1,
 					   perf_start);
@@ -1733,10 +1641,9 @@ csect_dump_statistics (FILE * fp)
   svr_shm_copy_global_stats (&stats);
 
   fprintf (fp,
-         "              CS Name   "
-         "|         Total Enter "
-         "|          Total Wait "
-         "|          Total wait |     Max Wait\n");
+	   "              CS Name   "
+	   "|         Total Enter "
+	   "|          Total Wait " "|          Total wait |     Max Wait\n");
 
   for (i = 0; i < CRITICAL_SECTION_COUNT; i++)
     {
