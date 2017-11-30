@@ -120,14 +120,6 @@ enum
 typedef struct event_stat EVENT_STAT;
 struct event_stat
 {
-  /* slow query stats */
-  struct timeval cs_waits;
-  struct timeval lock_waits;
-  struct timeval latch_waits;
-
-  /* save PRM_ID_SQL_TRACE_SLOW for performance */
-  bool trace_slow_query;
-
   /* log flush thread wait time */
   int trace_log_flush_time;
 };

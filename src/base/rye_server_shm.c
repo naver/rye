@@ -128,6 +128,7 @@ svr_shm_get_start_time ()
 #endif /* SERVER_MODE */
 }
 
+#if 0
 /*
  * svr_shm_clear_stats - Clear recorded server statistics for the current
  *                          transaction index
@@ -150,6 +151,7 @@ svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item)
       rye_Server_shm->tran_info[tran_index].stats.acc_time[item] = 0;
     }
 }
+#endif
 
 /*
  * svr_shm_copy_stats - Copy recorded server statistics for the current

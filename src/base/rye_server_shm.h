@@ -118,7 +118,9 @@ struct _rye_server_shm
 extern int svr_shm_initialize (const char *dbname, int max_ntrans,
 			       int server_pid);
 extern int svr_shm_get_start_time (void);
+#if 0
 extern void svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item);
+#endif
 extern void svr_shm_copy_stats (int tran_index,
 				MNT_SERVER_EXEC_STATS * to_stats);
 extern void svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats);

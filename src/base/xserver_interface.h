@@ -255,8 +255,10 @@ extern int xmnt_server_start_stats (THREAD_ENTRY * thread_p,
 				    bool for_all_trans);
 extern void xmnt_server_stop_stats (THREAD_ENTRY * thread_p);
 #endif
+#if 0
 extern void xmnt_server_clear_stats (THREAD_ENTRY * thread_p,
 				     MNT_SERVER_ITEM item);
+#endif
 extern void xmnt_server_copy_stats (THREAD_ENTRY * thread_p,
 				    MNT_SERVER_EXEC_STATS * to_stats);
 extern void xmnt_server_copy_global_stats (THREAD_ENTRY * thread_p,

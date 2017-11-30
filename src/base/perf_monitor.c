@@ -63,6 +63,11 @@ typedef struct
 } MNT_EXEC_STATS_INFO;
 
 static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
+  /* MNT_STATS_SQL_TRACE_LOCK_WAITS */
+  {"Num_sql_trace_lock_waits", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+  /* MNT_STATS_SQL_TRACE_LATCH_WAITS */
+  {"Num_sql_trace_latch_waits", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
+
 #if 1				/* csect sub-info */
   {"Num_csect_er_log_file", 0, MNT_STATS_VALUE_COUNTER},	/* 0 */
   {"Num_csect_er_msg_cache", 0, MNT_STATS_VALUE_COUNTER},	/* 1 */
@@ -588,6 +593,7 @@ mnt_get_current_times (time_t * cpu_user_time, time_t * cpu_sys_time,
 
 
 #if defined(SERVER_MODE) || defined(SA_MODE)
+#if 0
 /*
  * xmnt_server_clear_stats - Clear recorded server statistics for the current
  *                          transaction index
@@ -606,6 +612,7 @@ xmnt_server_clear_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item)
 
   svr_shm_clear_stats (tran_index, item);
 }
+#endif
 
 /*
  * xmnt_server_copy_stats - Copy recorded server statistics for the current
@@ -852,6 +859,7 @@ mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
 
   for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS; i++)
     {
+      /* calc diff values */
       if (IS_CUMMULATIVE_VALUE (mnt_Stats_info[i].value_type))
 	{
 	  if (new_stats->values[i] >= old_stats->values[i])
@@ -867,6 +875,18 @@ mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
       else
 	{
 	  diff_stats->values[i] = new_stats->values[i];
+	}
+
+      /* calc diff acc_time */
+      assert (new_stats->acc_time[i] >= old_stats->acc_time[i]);
+      if (new_stats->acc_time[i] >= old_stats->acc_time[i])
+	{
+	  diff_stats->acc_time[i] =
+	    (new_stats->acc_time[i] - old_stats->acc_time[i]);
+	}
+      else
+	{
+	  diff_stats->acc_time[i] = 0;
 	}
     }
 

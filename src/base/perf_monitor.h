@@ -87,6 +87,10 @@
 
 typedef enum
 {
+  /* Statistics at sql trace */
+  MNT_STATS_SQL_TRACE_LOCK_WAITS,
+  MNT_STATS_SQL_TRACE_LATCH_WAITS,
+
   /* Statistics at critical section */
 #if 1				/* csect sub-info */
   MNT_STATS_CSECT_ER_LOG_FILE,	/* 0 */

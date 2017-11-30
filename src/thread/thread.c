@@ -1486,7 +1486,7 @@ thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
 {
   int r;
   int old_status;
-  struct timeval start, end;
+  UINT64 perf_start;
 
   assert (thread_p->status == TS_RUN || thread_p->status == TS_CHECK);
   old_status = thread_p->status;
@@ -1494,30 +1494,30 @@ thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
 
   thread_p->resume_status = suspended_reason;
 
-  if (thread_p->event_stats.trace_slow_query == true)
-    {
-      gettimeofday (&start, NULL);
-    }
+  PERF_MON_GET_CURRENT_TIME (perf_start);
 
   r = pthread_cond_wait (&thread_p->wakeup_cond, &thread_p->th_entry_lock);
+
+  if (suspended_reason == THREAD_LOCK_SUSPENDED)
+    {
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LOCK_WAITS,
+				   1, perf_start);
+    }
+  else if (suspended_reason == THREAD_PGBUF_SUSPENDED)
+    {
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LATCH_WAITS,
+				   1, perf_start);
+    }
+  else
+    {
+      /* TODO - */
+    }
+
   if (r != 0)
     {
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 			   ER_CSS_PTHREAD_COND_WAIT, 0);
       return ER_CSS_PTHREAD_COND_WAIT;
-    }
-
-  if (thread_p->event_stats.trace_slow_query == true)
-    {
-      gettimeofday (&end, NULL);
-      if (suspended_reason == THREAD_LOCK_SUSPENDED)
-	{
-	  ADD_TIMEVAL (thread_p->event_stats.lock_waits, start, end);
-	}
-      else if (suspended_reason == THREAD_PGBUF_SUSPENDED)
-	{
-	  ADD_TIMEVAL (thread_p->event_stats.latch_waits, start, end);
-	}
     }
 
   thread_p->status = old_status;
