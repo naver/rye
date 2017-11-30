@@ -228,9 +228,8 @@ cirp_get_undoredo_diff (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** org_pgptr,
 	  GOTO_EXIT_ON_ERROR;
 	}
     }
-
-  CIRP_LOG_READ_ADD_ALIGN (buf_mgr, error, *undo_length, temp_offset,
-			   temp_pageid, temp_pg, temp_pg);
+  error = rp_log_read_add_align (buf_mgr, &temp_pg, &temp_pageid,
+				 &temp_offset, *undo_length, temp_pg);
   if (error != NO_ERROR || temp_pg == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -385,7 +384,7 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
   offset = DB_SIZEOF (LOG_RECORD_HEADER) + lsa->offset;
   pageid = lsa->pageid;
 
-  CIRP_LOG_READ_ALIGN (buf_mgr, error, offset, pageid, pgptr, org_pgptr);
+  error = rp_log_read_align (buf_mgr, &pgptr, &pageid, &offset, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -399,8 +398,9 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
 
       length = DB_SIZEOF (struct log_undoredo);
       old_pg = pgptr;
-      CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, length, offset,
-					     pageid, pgptr, org_pgptr);
+      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
+						   &offset, length,
+						   org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -430,8 +430,8 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
 	  *logs = (void *) NULL;
 	}
 
-      CIRP_LOG_READ_ADD_ALIGN (buf_mgr, error, DB_SIZEOF (*undoredo), offset,
-			       pageid, pgptr, org_pgptr);
+      error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset,
+				     DB_SIZEOF (*undoredo), org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -445,8 +445,9 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
 	}
       else
 	{
-	  CIRP_LOG_READ_ADD_ALIGN (buf_mgr, error, GET_ZIP_LEN (undo_length),
-				   offset, pageid, pgptr, org_pgptr);
+	  error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset,
+					 GET_ZIP_LEN (undo_length),
+					 org_pgptr);
 	}
       if (error != NO_ERROR || pgptr == NULL)
 	{
@@ -457,8 +458,9 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
 
     case LOG_REDO_DATA:
       length = DB_SIZEOF (struct log_redo);
-      CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT (buf_mgr, error, length, offset,
-					     pageid, pgptr, org_pgptr);
+      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
+						   &pageid, &offset, length,
+						   org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -483,8 +485,8 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
 	  *logs = (void *) NULL;
 	}
 
-      CIRP_LOG_READ_ADD_ALIGN (buf_mgr, error, DB_SIZEOF (*redo), offset,
-			       pageid, pgptr, org_pgptr);
+      error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset,
+				     DB_SIZEOF (*redo), org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -627,11 +629,18 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
 
   while (!LSA_ISNULL (&current_lsa))
     {
-      current_log_page = cirp_logpb_get_log_page (buf_mgr,
-						  current_lsa.pageid);
-      if (current_log_page == NULL)
+      error = cirp_logpb_get_log_page (buf_mgr, &current_log_page,
+				       current_lsa.pageid);
+      if (error != NO_ERROR || current_log_page == NULL)
 	{
-	  error = er_errid ();
+	  assert (error != NO_ERROR && current_log_page == NULL);
+
+	  if (error == NO_ERROR)
+	    {
+	      error = ER_GENERIC_ERROR;
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+		      1, "Invalid return value");
+	    }
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -790,10 +799,18 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
   LSA_COPY (&lsa, &lrec->prev_tranlsa);
   if (!LSA_ISNULL (&lsa))
     {
-      pg = cirp_logpb_get_log_page (buf_mgr, lsa.pageid);
-      if (pg == NULL)
+      error = cirp_logpb_get_log_page (buf_mgr, &pg, lsa.pageid);
+      if (error != NO_ERROR || pg == NULL)
 	{
-	  error = er_errid ();
+	  assert (error != NO_ERROR && pg == NULL);
+
+	  if (error == NO_ERROR)
+	    {
+	      error = ER_GENERIC_ERROR;
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+		      1, "Invalid return value");
+	    }
+
 	  return error;
 	}
       tmp_lrec = LOG_GET_LOG_RECORD_HEADER (pg, &lsa);
@@ -1093,10 +1110,17 @@ cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
   /* get the target log page */
   old_pageid = item->target_lsa.pageid;
-  pgptr = cirp_logpb_get_log_page (buf_mgr, old_pageid);
-  if (pgptr == NULL)
+  error = cirp_logpb_get_log_page (buf_mgr, &pgptr, old_pageid);
+  if (error != NO_ERROR || pgptr == NULL)
     {
-      error = er_errid ();
+      assert (error != NO_ERROR && pgptr == NULL);
+
+      if (error == NO_ERROR)
+	{
+	  error = ER_GENERIC_ERROR;
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+		  1, "Invalid return value");
+	}
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1202,10 +1226,17 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
   /* get the target log page */
   old_pageid = item->target_lsa.pageid;
-  pgptr = cirp_logpb_get_log_page (buf_mgr, old_pageid);
-  if (pgptr == NULL)
+  error = cirp_logpb_get_log_page (buf_mgr, &pgptr, old_pageid);
+  if (error != NO_ERROR || pgptr == NULL)
     {
-      error = er_errid ();
+      assert (error != NO_ERROR && pgptr == NULL);
+
+      if (error == NO_ERROR)
+	{
+	  error = ER_GENERIC_ERROR;
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+		  1, "Invalid return value");
+	}
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1995,11 +2026,17 @@ applier_main (void *arg)
 		}
 	      log_hdr = buf_mgr->act_log.log_hdr;
 
-	      log_buf = cirp_logpb_get_page_buffer (buf_mgr,
-						    final_lsa.pageid);
-	      if (log_buf == NULL)
+	      error = cirp_logpb_get_page_buffer (buf_mgr, &log_buf,
+						  final_lsa.pageid);
+	      if (error != NO_ERROR || log_buf == NULL)
 		{
 		  assert (false);
+		  if (error == NO_ERROR)
+		    {
+		      error = ER_GENERIC_ERROR;
+		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+			      1, "Invalid return value");
+		    }
 		  GOTO_EXIT_ON_ERROR;
 		}
 
