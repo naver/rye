@@ -32,12 +32,12 @@ script:
     fi
 
   - ./autogen.sh
-#  - rm -rf Release64
-#  - mkdir Release64
-#  - cd Release64
-#  - ../configure
-#  - make
-  - bash ./build.sh -m release -t x86_64
+  - rm -rf Release64
+  - mkdir Release64
+  - cd Release64
+  - ../configure
+  - make
+#  - bash ./build.sh -m release -t x86_64
 
 notifications:
   email:
