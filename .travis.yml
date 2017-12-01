@@ -10,6 +10,10 @@ env:
    - secure: "LZmNzxg2O+34twcNEv7n11ZZcXmbYGC/In78kytq4wgQaBK9EWC5p08UqtnTrGHxkIzFU53p01BRL8qBW5GxnnPMiSQWp41FPaYnpTXUTqHxFqY6yeNdRfGsQ7EPcFLc8R8YYG6bbJ8ODrLULUpMGUVrdk4L+g2gv9Q9++hpE9TEhLDN/4jhGoZ+94AzjKCUSghtOfWocW9hTtyFFvY+cD4feCvZsk1Dr3mNat2ZcJf/uBNNV0Pm2F+jzdrbBD1FToevLMCMmh5PKOrASXaNj4RNdaVmDvV/O1NRxAk2lOQkZyq3jWz6Xg1EKHgF8JRgLEUDVkvHMFz5w1JyHYRt0nirsdJXzV7yB7/uQQFpXJ2EHsvrhWD1BghHwdIFyNWf4hEG0bXbwYC2oaNhr2LoItbWoDNs73OEefExcjpVLJR2LKMn/HvgdXMQ54lMoLPbTlGSolqsuvgTmgYsEyIH2gTFKtLr8dYhi+QKJYtVcwzliu16MziX+6vKEHKsSRVTy6gCVj5JKxbs81dmE/zIh/8ZGh7dCQHGuoyq3/I8pZY4WoamgJUKoDjQGZLxweirjB1SRnrNKwwSU768wMjPIddwwbeJNwMEn9n9oPwBZqiF0T3wLASurNPX3fYV0TpNka3yxr69fc2urwtFflEqEqbgx9SRxUahZvRG02dZwos="
 
 addons:
+  apt:
+    packages:
+      - automake1.9
+
   coverity_scan:
     project:
       name: "naver/rye"
@@ -31,13 +35,13 @@ script:
         exit 0;
     fi
 
-  - ./autogen.sh
-  - rm -rf Release64
-  - mkdir Release64
-  - cd Release64
-  - ../configure
-  - make
-#  - bash ./build.sh -m release -t x86_64
+  - bash ./build.sh -m release -t x86_64
+#  - ./autogen.sh
+#  - rm -rf Release64
+#  - mkdir Release64
+#  - cd Release64
+#  - ../configure
+#  - make
 
 notifications:
   email:
