@@ -278,7 +278,8 @@ function build_compile ()
 {
   # make
   print_check "Building"
-  (cd $build_dir && make -j)
+#  (cd $build_dir && make -j) # Disable -j to compile rsql_grammar.y
+  (cd $build_dir && make)
   [ $? -eq 0 ] && print_result "OK" || print_fatal "Building failed"
 }
 
