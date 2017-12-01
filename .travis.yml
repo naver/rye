@@ -12,7 +12,7 @@ env:
 addons:
   apt:
     packages:
-      - automake1.9
+      - automake
 
   coverity_scan:
     project:
