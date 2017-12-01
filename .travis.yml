@@ -12,6 +12,7 @@ env:
 addons:
   apt:
     packages:
+      - make
 #      - automake-1.9 # for external/bison-2.3
 #      - automake-1.12 # for external/libedit
 

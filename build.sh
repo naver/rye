@@ -779,7 +779,7 @@ function build_package ()
 	  if [ -d "$build_dir/$package_basename" ]; then
 	    rm -rf $build_dir/$package_basename
 	  fi
-	  mkdir -p $build_dir/$package_basename
+	  mkdir $build_dir/$package_basename
 	  if [ "$(readlink -f $build_dir/..)" = "$source_dir" ]; then
 	    configure_dir="../.."
 	  else
@@ -804,7 +804,7 @@ function build_package ()
 	  if [ -d "$build_dir/$package_basename" ]; then
 	    rm -rf $build_dir/$package_basename
 	  fi
-	  mkdir -p $build_dir/$package_basename
+	  mkdir $build_dir/$package_basename
 	  cp -r $source_dir/contrib/php* $build_dir/$package_basename/
 	  (cd $build_dir && tar czf $output_dir/$package_name $package_basename)
 	  if [ $? -eq 0 ]; then
