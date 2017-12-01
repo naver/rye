@@ -37,7 +37,8 @@ script:
         exit 0;
     fi
 
-  - bash ./build.sh -m release -t x86_64
+# Build only
+  - bash ./build.sh -m release -t x86_64 build
 #  - ./autogen.sh
 #  - rm -rf Release64
 #  - mkdir Release64
