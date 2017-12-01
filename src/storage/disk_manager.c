@@ -2142,7 +2142,7 @@ disk_expand_tmp (THREAD_ENTRY * thread_p, INT16 volid, INT32 min_pages,
   INT32 npages_toadd;
   INT32 nsects_toadd;
 #if defined(SERVER_MODE)
-  struct timeval start, end;
+  UINT64 perf_start;
 #endif /* SERVER_MODE */
 
   vpid.volid = volid;
@@ -2193,7 +2193,7 @@ disk_expand_tmp (THREAD_ENTRY * thread_p, INT16 volid, INT32 min_pages,
     }
 
 #if defined(SERVER_MODE)
-  gettimeofday (&start, NULL);
+  PERF_MON_GET_CURRENT_TIME (perf_start);
 #endif /* SERVER_MODE */
 
   if (fileio_expand (thread_p, volid, npages_toadd, DISK_TEMPVOL_TEMP_PURPOSE)
@@ -2203,9 +2203,8 @@ disk_expand_tmp (THREAD_ENTRY * thread_p, INT16 volid, INT32 min_pages,
     }
 
 #if defined(SERVER_MODE)
-  gettimeofday (&end, NULL);
-  ADD_TIMEVAL (thread_p->event_stats.temp_expand_time, start, end);
-  thread_p->event_stats.temp_expand_pages += npages_toadd;
+  mnt_stats_counter_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+			       npages_toadd, perf_start);
 #endif /* SERVER_MODE */
 
   /*

@@ -2832,7 +2832,7 @@ lock_internal_perform_lock_object (THREAD_ENTRY * thread_p, int tran_index,
 				   const DB_VALUE * val, LOCK lock,
 				   int wait_msecs, LK_ENTRY ** entry_addr_ptr)
 {
-  TRAN_ISOLATION isolation;
+  UNUSED_VAR TRAN_ISOLATION isolation;
   unsigned int hash_index;
   LK_HASH *hash_anchor;
   int ret_val;
@@ -2841,7 +2841,7 @@ lock_internal_perform_lock_object (THREAD_ENTRY * thread_p, int tran_index,
   LK_ENTRY *entry_ptr = (LK_ENTRY *) NULL;
   LK_ENTRY *wait_entry_ptr = (LK_ENTRY *) NULL;
   LK_ENTRY *prev, *curr, *i;
-  bool lock_conversion = false;
+  UNUSED_VAR bool lock_conversion = false;
   THREAD_ENTRY *thrd_entry;
   int rv;
   int compat;
@@ -3748,8 +3748,8 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
   int can_timeout;
   int i, u, v, w, n;
   bool false_dd_cycle = false;
-  bool lock_holder_found = false;
-  bool inact_trans_found = false;
+  UNUSED_VAR bool lock_holder_found = false;
+  UNUSED_VAR bool inact_trans_found = false;
   int tot_WFG_nodes;
 #if defined(RYE_DEBUG)
   int num_WFG_nodes;
@@ -4787,7 +4787,7 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
 #else /* !SERVER_MODE */
   int tran_index;
   int wait_msecs;
-  TRAN_ISOLATION isolation;
+  UNUSED_VAR TRAN_ISOLATION isolation;
   LK_LOCKINFO *cls_lockinfo = NULL;
   LK_LOCKINFO *ins_lockinfo = NULL;
   LC_LOCKSET_REQOBJ *reqobjects;	/* Description of one instance to
@@ -4960,7 +4960,7 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
 #else /* !SERVER_MODE */
   int tran_index;
   int wait_msecs;
-  TRAN_ISOLATION isolation;
+  UNUSED_VAR TRAN_ISOLATION isolation;
   LK_LOCKINFO *cls_lockinfo = NULL;
   LK_ENTRY *class_entry = NULL;
   int cls_count;

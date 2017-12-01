@@ -293,8 +293,6 @@ cirp_final_writer (CIRP_WRITER_INFO * writer)
       return NO_ERROR;
     }
 
-  pthread_mutex_destroy (&writer->lock);
-
   if (writer->hdr_page != NULL)
     {
       free_and_init (writer->hdr_page);
@@ -302,8 +300,12 @@ cirp_final_writer (CIRP_WRITER_INFO * writer)
   writer->reader_count = 0;
   writer->is_archiving = false;
 
+  pthread_mutex_lock (&writer->lock);
   writer->copier_status = CIRP_AGENT_DEAD;
   writer->writer_status = CIRP_AGENT_DEAD;
+  pthread_mutex_unlock (&writer->lock);
+
+  pthread_mutex_destroy (&writer->lock);
 
   return NO_ERROR;
 }
@@ -1606,9 +1608,9 @@ cirpwr_write_log_pages (void)
 	{
 	  pthread_mutex_unlock (&writer->lock);
 	  has_writer_mutex = false;
-	  if (rp_need_restart () == true)
+	  if (REPL_NEED_SHUTDOWN () == true)
 	    {
-	      REPL_SET_GENERIC_ERROR (error, "need_restart");
+	      REPL_SET_GENERIC_ERROR (error, "NEED SHUTDOWN");
 
 	      GOTO_EXIT_ON_ERROR;
 	    }
@@ -1844,7 +1846,7 @@ log_copier_main (void *arg)
 			  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 			}
 		      while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
-			     && rp_need_restart () == false);
+			     && REPL_NEED_SHUTDOWN () == false);
 		    }
 		}
 	      THREAD_SLEEP (100);
@@ -1854,7 +1856,7 @@ log_copier_main (void *arg)
 	}
 
       /* copy log pages */
-      while (ctx.shutdown == false && rp_need_restart () == false)
+      while (ctx.shutdown == false && REPL_NEED_SHUTDOWN () == false)
 	{
 	  error = cirpwr_get_log_pages (&ctx);
 	  if (error != NO_ERROR)
@@ -2352,7 +2354,7 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	    pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
 	    while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
-		   && rp_need_restart () == false)
+		   && REPL_NEED_SHUTDOWN () == false)
 	      {
 		gettimeofday (&cur_time, NULL);
 
