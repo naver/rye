@@ -79,9 +79,9 @@ static const int css_Maximum_server_count = 50;
 }
 
 static void css_sockopt (SOCKET sd);
-static in_addr_t css_sockaddr (const char *host, int connect_type,
-			       const char *dbname,
-			       struct sockaddr *saddr, socklen_t * slen);
+static void css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
+			  const char *dbname, struct sockaddr *saddr,
+			  socklen_t * slen);
 
 void
 css_get_master_domain_path (char *path_buf, int buf_len)
@@ -141,57 +141,14 @@ css_sockopt (SOCKET sd)
     }
 }
 
-in_addr_t
-css_host_ip_addr ()
-{
-  const char *host_myself;
-
-  host_myself = prm_get_string_value (PRM_ID_HA_NODE_MYSELF);
-
-  if (host_myself == NULL || host_myself[0] == '\0')
-    {
-      char host_name[MAXHOSTNAMELEN];
-
-      if (GETHOSTNAME (host_name, sizeof (host_name)))
-	{
-	  return INADDR_NONE;
-	}
-
-      return hostname_to_ip (host_name);
-    }
-  else
-    {
-      return inet_addr (host_myself);
-    }
-}
-
 /*
  * css_sockaddr()
- *   return:
- *   host(in):
- *   port(in):
- *   saddr(out):
- *   slen(out):
  */
-static in_addr_t
-css_sockaddr (const char *host, int connect_type, const char *dbname,
-	      struct sockaddr *saddr, socklen_t * slen)
+static void
+css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
+	      const char *dbname, struct sockaddr *saddr, socklen_t * slen)
 {
-  in_addr_t in_addr;
-
-  in_addr = hostname_to_ip (host);
-  if (in_addr == INADDR_NONE)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ERR_CSS_TCP_HOST_NAME_ERROR, 1, host);
-      return in_addr;
-    }
-
-  /*
-   * Compare with the TCP address with localhost.
-   * If it is, use Unix domain socket rather than TCP for the performance
-   */
-  if (in_addr == inet_addr (LOCALHOST))
+  if (prm_is_myself_node_info (node_info))
     {
       struct sockaddr_un unix_saddr;
       char sock_path[PATH_MAX];
@@ -215,7 +172,8 @@ css_sockaddr (const char *host, int connect_type, const char *dbname,
   else
     {
       struct sockaddr_in tcp_saddr;
-      int port = prm_get_master_port_id ();
+      in_addr_t in_addr = node_info->ip;
+      int port = node_info->port;
 
       memset ((void *) &tcp_saddr, 0, sizeof (tcp_saddr));
       tcp_saddr.sin_family = AF_INET;
@@ -225,19 +183,13 @@ css_sockaddr (const char *host, int connect_type, const char *dbname,
       *slen = sizeof (tcp_saddr);
       memcpy ((void *) saddr, (void *) &tcp_saddr, *slen);
     }
-
-  return in_addr;
 }
 
 /*
  * css_tcp_client_open () -
- *   return: socket descriptor
- *   host(in): host name
- *   port(in): port no
- *   timeout(in): timeout in milli-seconds
  */
 SOCKET
-css_tcp_client_open (const char *host, int connect_type,
+css_tcp_client_open (const PRM_NODE_INFO * node_info, int connect_type,
 		     const char *dbname, int timeout)
 {
   SOCKET sd = -1;
@@ -251,7 +203,7 @@ css_tcp_client_open (const char *host, int connect_type,
     struct sockaddr_un un;
   } saddr_buf;
 
-  assert (host != NULL);
+  assert (node_info != NULL);
 
   if (timeout < 0)
     {
@@ -259,10 +211,7 @@ css_tcp_client_open (const char *host, int connect_type,
     }
 
   saddr = (struct sockaddr *) &saddr_buf;
-  if (css_sockaddr (host, connect_type, dbname, saddr, &slen) == INADDR_NONE)
-    {
-      return INVALID_SOCKET;
-    }
+  css_sockaddr (node_info, connect_type, dbname, saddr, &slen);
 
   sd = socket (saddr->sa_family, SOCK_STREAM, 0);
   if (sd < 0)
@@ -1025,4 +974,11 @@ css_get_peer_name (SOCKET sockfd, char *hostname, size_t len)
       return errno;
     }
   return getnameinfo (saddr, saddr_len, hostname, len, NULL, 0, NI_NOFQDN);
+}
+
+int
+css_ip_to_str (char *buf, int size, in_addr_t ip)
+{
+  unsigned char *p = (unsigned char *) &ip;
+  return snprintf (buf, size, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 }

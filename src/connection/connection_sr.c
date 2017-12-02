@@ -714,19 +714,20 @@ css_print_conn_list (void)
  */
 int
 css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
-		       const char *host_name, int connect_type,
+		       const PRM_NODE_INFO * node_info, int connect_type,
 		       const char *packed_name, int packed_name_len)
 {
   SOCKET fd;
   int css_error = NO_ERRORS;
   int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  fd = css_tcp_client_open (host_name, connect_type, NULL, timeout);
+  fd = css_tcp_client_open (node_info, connect_type, NULL, timeout);
   if (IS_INVALID_SOCKET (fd))
     {
+      char hostname[256];
+      prm_node_info_to_str (hostname, sizeof (hostname), node_info);
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER,
-			   1, host_name);
+			   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1, hostname);
       css_error = REQUEST_REFUSED;
     }
   else

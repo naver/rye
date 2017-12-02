@@ -61,7 +61,7 @@ typedef struct local_mgmt_job T_LOCAL_MGMT_JOB;
 struct local_mgmt_job
 {
   int clt_sock_fd;
-  unsigned char clt_ip_addr[4];
+  in_addr_t clt_ip;
   union
   {
     T_BROKER_REQUEST_MSG *req_msg;
@@ -84,7 +84,7 @@ struct local_mgmt_job_queue
 
 static int local_mgmt_init_child_process_queue (void);
 static int local_mg_transfer_driver_req (SOCKET * clt_sock_fd,
-					 int clt_ip_addr,
+					 in_addr_t clt_ip_addr,
 					 const T_BROKER_REQUEST_MSG *
 					 br_req_msg,
 					 const char *transfer_broker_name);
@@ -99,7 +99,7 @@ static T_LOCAL_MGMT_JOB *local_mg_job_queue_remove (T_LOCAL_MGMT_JOB_QUEUE *
 						    job_queue);
 static int local_mg_job_queue_add (T_LOCAL_MGMT_JOB_QUEUE * job_queue,
 				   SOCKET * clt_sock_fd,
-				   const unsigned char *clt_ip_addr,
+				   in_addr_t clt_ip_addr,
 				   T_BROKER_REQUEST_MSG * req_msg,
 				   T_LOCAL_MGMT_CHILD_PROC_INFO * child_info,
 				   bool need_mutex_lock);
@@ -223,7 +223,7 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
   T_BROKER_REQUEST_MSG *br_req_msg;
   int err_code = 0;
   ER_MSG_INFO *er_msg;
-  int clt_ip_addr;
+  in_addr_t clt_ip_addr;
   T_LOCAL_MGMT_JOB_QUEUE *mgmt_job_queue;
 
   signal (SIGPIPE, SIG_IGN);
@@ -256,7 +256,7 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
     {
       err_code = 0;
 
-      clt_sock_fd = br_mgmt_accept ((unsigned char *) &clt_ip_addr);
+      clt_sock_fd = br_mgmt_accept (&clt_ip_addr);
       if (IS_INVALID_SOCKET (clt_sock_fd))
 	{
 	  continue;
@@ -303,10 +303,8 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 	  else
 	    {
 	      err_code = local_mg_job_queue_add (mgmt_job_queue,
-						 &clt_sock_fd,
-						 (unsigned char *)
-						 &clt_ip_addr, clone_req_msg,
-						 NULL, true);
+						 &clt_sock_fd, clt_ip_addr,
+						 clone_req_msg, NULL, true);
 	    }
 	  shm_Local_mgmt_info->admin_req_count++;
 	}
@@ -332,7 +330,7 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 }
 
 static int
-local_mg_transfer_driver_req (SOCKET * clt_sock_fd, int clt_ip_addr,
+local_mg_transfer_driver_req (SOCKET * clt_sock_fd, in_addr_t clt_ip_addr,
 			      const T_BROKER_REQUEST_MSG * br_req_msg,
 			      const char *transfer_broker_name)
 {
@@ -671,7 +669,7 @@ set_job_queue_job_count (T_LOCAL_MGMT_JOB_QUEUE * job_queue, int num_job)
 static int
 local_mg_job_queue_add (T_LOCAL_MGMT_JOB_QUEUE * job_queue,
 			SOCKET * clt_sock_fd,
-			const unsigned char *clt_ip_addr,
+			in_addr_t clt_ip_addr,
 			T_BROKER_REQUEST_MSG * req_msg,
 			T_LOCAL_MGMT_CHILD_PROC_INFO * child_info,
 			bool need_mutex_lock)
@@ -686,7 +684,7 @@ local_mg_job_queue_add (T_LOCAL_MGMT_JOB_QUEUE * job_queue,
 	  memset (job, 0, sizeof (T_LOCAL_MGMT_JOB));
 
 	  job->clt_sock_fd = *clt_sock_fd;
-	  memcpy (job->clt_ip_addr, clt_ip_addr, 4);
+	  job->clt_ip = clt_ip_addr;
 
 	  if (req_msg != NULL)
 	    {
@@ -849,15 +847,17 @@ local_mg_sync_shard_mgmt_info (T_LOCAL_MGMT_JOB * job,
 			       UNUSED_ARG T_MGMT_RESULT_MSG * result_msg)
 {
   HA_STATE server_state;
+  PRM_NODE_INFO shard_mgmt_node_info;
+
+  prm_set_node_info (&shard_mgmt_node_info,
+		     job->clt_ip, req_arg->value.shard_mgmt_info.port);
 
   rye_master_shm_add_shard_mgmt_info (req_arg->value.shard_mgmt_info.
 				      local_dbname,
 				      req_arg->value.shard_mgmt_info.
 				      global_dbname,
 				      req_arg->value.shard_mgmt_info.nodeid,
-				      job->clt_ip_addr,
-				      req_arg->value.shard_mgmt_info.port);
-
+				      &shard_mgmt_node_info);
 
   LOCK_SHM ();
 
@@ -990,7 +990,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
   argc = launch_arg->argc;
   argv[argc] = NULL;
 
-  ut_get_ipv4_string (caller_host, sizeof (caller_host), job->clt_ip_addr);
+  ut_get_ipv4_string (caller_host, sizeof (caller_host), job->clt_ip);
 
   rye_root_dir = envvar_root ();
 
@@ -1103,7 +1103,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 			    argv);
 
       error = local_mg_job_queue_add (child_Process_queue,
-				      &job->clt_sock_fd, job->clt_ip_addr,
+				      &job->clt_sock_fd, job->clt_ip,
 				      NULL, child_info, false);
 
       shm_copy_child_process_info ();

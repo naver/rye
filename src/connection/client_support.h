@@ -32,7 +32,8 @@
 extern int css_Errno;
 extern CSS_MAP_ENTRY *css_Client_anchor;
 
-extern int css_client_init (const char *server_name, const char *host_name);
+extern int css_client_init (const char *server_name,
+			    const PRM_NODE_INFO * node_info);
 extern int css_send_error_to_server (char *host, unsigned int eid,
 				     char *buffer, int buffer_size);
 extern int css_send_data_to_server_v (char *host, unsigned short rid,

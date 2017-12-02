@@ -36,11 +36,13 @@ extern void css_free_conn (CSS_CONN_ENTRY * conn);
 
 extern CSS_CONN_ENTRY *css_find_exception_conn (void);
 
-extern CSS_CONN_ENTRY *css_connect_to_rye_server (const char *host_name,
+extern CSS_CONN_ENTRY *css_connect_to_rye_server (const PRM_NODE_INFO * node,
 						  const char *server_name);
-extern CSS_CONN_ENTRY *css_connect_to_master_for_info (const char *host_name,
+extern CSS_CONN_ENTRY *css_connect_to_master_for_info (const PRM_NODE_INFO *
+						       node_info,
 						       unsigned short *rid);
-extern CSS_CONN_ENTRY *css_connect_to_master_timeout (const char *host_name,
+extern CSS_CONN_ENTRY *css_connect_to_master_timeout (const PRM_NODE_INFO *
+						      node_info,
 						      int timeout,
 						      unsigned short *rid);
 extern int css_send_request_to_master (CSS_CONN_ENTRY * conn,
@@ -57,7 +59,7 @@ extern int css_test_for_open_conn (CSS_CONN_ENTRY * conn);
 extern CSS_CONN_ENTRY *css_find_conn_from_fd (SOCKET fd);
 extern unsigned short css_get_request_id (CSS_CONN_ENTRY * conn);
 
-extern int css_common_connect_cl (const char *host_name,
+extern int css_common_connect_cl (const PRM_NODE_INFO * node_info,
 				  CSS_CONN_ENTRY * conn,
 				  int connect_type,
 				  const char *server_name,

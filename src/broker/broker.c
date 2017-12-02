@@ -150,10 +150,10 @@ static void get_as_sql_log_filename (char *log_filename,
 static void get_as_slow_log_filename (char *log_filename,
 				      const char *broker_name, int as_index);
 
-static int insert_db_server_check_list (T_DB_SERVER * list_p,
-					int check_list_cnt,
-					const char *db_name,
-					const char *db_host);
+static int add_db_server_check_list (T_DB_SERVER * list_p,
+				     int check_list_cnt,
+				     const char *db_name,
+				     const PRM_NODE_INFO * db_host);
 
 T_SHM_BROKER *shm_Br = NULL;
 int br_Index = -1;
@@ -387,7 +387,7 @@ receiver_thr_f (UNUSED_ARG void *arg)
   int one = 1;
   T_BROKER_REQUEST_MSG *br_req_msg;
   int timeout;
-  int client_ip_addr;
+  in_addr_t client_ip_addr;
   struct timeval mgmt_recv_time;
   int error;
   ER_MSG_INFO *er_msg;
@@ -446,7 +446,8 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  continue;
 	}
 
-      clt_sock_fd = recv_fd (mgmt_sock_fd, &client_ip_addr, &mgmt_recv_time);
+      clt_sock_fd = recv_fd (mgmt_sock_fd, (int *) &client_ip_addr,
+			     &mgmt_recv_time);
       if (clt_sock_fd < 0)
 	{
 	  RYE_CLOSE_SOCKET (mgmt_sock_fd);
@@ -491,7 +492,7 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  new_job.recv_time = mgmt_recv_time;
 	  new_job.priority = 0;
 	  new_job.port = ntohs (0);
-	  memcpy (new_job.ip_addr, &client_ip_addr, 4);
+	  new_job.ip = client_ip_addr;
 	  new_job.clt_type = br_req_msg->clt_type;
 	  new_job.clt_version = br_req_msg->clt_version;
 
@@ -540,13 +541,13 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	      cas_pid = ntohl (cas_pid);
 	    }
 
-	  if (cas_id >= 0
-	      && cas_id < shm_Br->br_info[br_Index].appl_server_max_num
-	      && shm_Appl->info.as_info[cas_id].service_flag == SERVICE_ON
-	      && shm_Appl->info.as_info[cas_id].pid == cas_pid
-	      && shm_Appl->info.as_info[cas_id].uts_status == UTS_STATUS_BUSY
-	      && memcmp (&shm_Appl->info.as_info[cas_id].cas_clt_ip,
-			 &client_ip_addr, 4) == 0)
+	  if (cas_id >= 0 &&
+	      cas_id < shm_Br->br_info[br_Index].appl_server_max_num &&
+	      shm_Appl->info.as_info[cas_id].service_flag == SERVICE_ON &&
+	      shm_Appl->info.as_info[cas_id].pid == cas_pid &&
+	      shm_Appl->info.as_info[cas_id].uts_status == UTS_STATUS_BUSY &&
+	      shm_Appl->info.as_info[cas_id].cas_clt_ip_addr ==
+	      client_ip_addr)
 	    {
 	      ret_code = 0;
 	      kill (cas_pid, SIGUSR1);
@@ -685,8 +686,7 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 
       shm_Appl->info.as_info[as_index].clt_version = cur_job.clt_version;
       shm_Appl->info.as_info[as_index].client_type = cur_job.clt_type;
-      memcpy (shm_Appl->info.as_info[as_index].cas_clt_ip, cur_job.ip_addr,
-	      4);
+      shm_Appl->info.as_info[as_index].cas_clt_ip_addr = cur_job.ip;
       shm_Appl->info.as_info[as_index].cas_clt_port = cur_job.port;
 
       srv_sock_fd = br_connect_srv (shm_Br->br_info[br_Index].name,
@@ -694,7 +694,7 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 
       if (!IS_INVALID_SOCKET (srv_sock_fd))
 	{
-	  int ip_addr;
+	  in_addr_t ip_addr;
 	  int ret_val;
 	  int con_status, uts_status;
 
@@ -718,7 +718,7 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 	      goto retry;
 	    }
 
-	  memcpy (&ip_addr, cur_job.ip_addr, 4);
+	  ip_addr = cur_job.ip;
 	  ret_val = send_fd (srv_sock_fd, cur_job.clt_sock_fd, ip_addr,
 			     &cur_job.recv_time);
 	  if (ret_val > 0)
@@ -752,7 +752,7 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 }
 
 SOCKET
-br_mgmt_accept (unsigned char *clt_ip_addr)
+br_mgmt_accept (in_addr_t * clt_ip_addr)
 {
   T_SOCKLEN clt_sock_addr_len;
   struct sockaddr_in clt_sock_addr;
@@ -767,7 +767,7 @@ br_mgmt_accept (unsigned char *clt_ip_addr)
       return INVALID_SOCKET;
     }
 
-  memcpy (clt_ip_addr, &(clt_sock_addr.sin_addr), 4);
+  *clt_ip_addr = clt_sock_addr.sin_addr.s_addr;
 
   if (fcntl (clt_sock_fd, F_SETFL, FNDELAY) < 0)
     {
@@ -926,8 +926,7 @@ broker_add_new_cas (void)
   shm_Appl->info.as_info[add_as_index].service_flag = SERVICE_ON;
   shm_Appl->info.as_info[add_as_index].reset_flag = FALSE;
 
-  memset (&shm_Appl->info.as_info[add_as_index].cas_clt_ip[0], 0x0,
-	  sizeof (shm_Appl->info.as_info[add_as_index].cas_clt_ip));
+  shm_Appl->info.as_info[add_as_index].cas_clt_ip_addr = 0;
   shm_Appl->info.as_info[add_as_index].cas_clt_port = 0;
   shm_Appl->info.as_info[add_as_index].client_version[0] = '\0';
 
@@ -1483,7 +1482,7 @@ cas_monitor_thr_f (UNUSED_ARG void *ar)
 
 static CSS_CONN_ENTRY *
 connect_to_master_for_server_monitor (const char *db_name,
-				      const char *db_host)
+				      const PRM_NODE_INFO * db_node)
 {
   unsigned short rid;
 
@@ -1493,7 +1492,7 @@ connect_to_master_for_server_monitor (const char *db_name,
     }
 
   /* timeout : 5000 milliseconds */
-  return (css_connect_to_master_timeout (db_host, 5000, &rid));
+  return (css_connect_to_master_timeout (db_node, 5000, &rid));
 }
 
 static int
@@ -1540,16 +1539,16 @@ get_server_state_from_master (CSS_CONN_ENTRY * conn, const char *db_name)
 }
 
 static int
-insert_db_server_check_list (T_DB_SERVER * list_p,
-			     int check_list_cnt, const char *db_name,
-			     const char *db_host)
+add_db_server_check_list (T_DB_SERVER * list_p,
+			  int check_list_cnt, const char *db_name,
+			  const PRM_NODE_INFO * db_node)
 {
   int i;
 
   for (i = 0; i < check_list_cnt && i < UNUSABLE_DATABASE_MAX; i++)
     {
       if (strcmp (db_name, list_p[i].database_name) == 0
-	  && strcmp (db_host, list_p[i].database_host) == 0)
+	  && prm_is_same_node (db_node, &list_p[i].db_node) == true)
 	{
 	  return check_list_cnt;
 	}
@@ -1561,7 +1560,7 @@ insert_db_server_check_list (T_DB_SERVER * list_p,
     }
 
   strncpy (list_p[i].database_name, db_name, SRV_CON_DBNAME_SIZE - 1);
-  strncpy (list_p[i].database_host, db_host, MAXHOSTNAMELEN - 1);
+  list_p[i].db_node = *db_node;
   list_p[i].server_state = HA_STATE_UNKNOWN;
 
   return i + 1;
@@ -1576,14 +1575,12 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
   T_APPL_SERVER_INFO *as_info_p;
   T_DB_SERVER *check_list;
   CSS_CONN_ENTRY *conn = NULL;
-  char **ha_hosts = NULL;
-  int num_hosts = 0;
-  char **preferred_hosts;
   char *unusable_db_name;
-  char *unusable_db_host;
+  PRM_NODE_INFO unusable_db_node = PRM_NULL_NODE_INFO;
   char busy_cas_db_name[SRV_CON_DBNAME_SIZE];
   int error;
   ER_MSG_INFO *er_msg;
+  PRM_NODE_LIST ha_node_list;
 
   er_msg = malloc (sizeof (ER_MSG_INFO));
   error = er_set_msg_info (er_msg);
@@ -1607,11 +1604,7 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 	  continue;
 	}
 
-      if (ha_hosts != NULL)
-	{
-	  cfg_free_hosts (ha_hosts);
-	}
-      ha_hosts = cfg_get_hosts_from_prm (&num_hosts);
+      prm_get_ha_node_list (&ha_node_list);
 
       /* 1. collect server check list */
       check_list_cnt = 0;
@@ -1621,12 +1614,12 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 	{
 	  unusable_db_name =
 	    shm_Appl->unusable_databases[u_index][i].database_name;
-	  unusable_db_host =
-	    shm_Appl->unusable_databases[u_index][i].database_host;
+	  unusable_db_node = shm_Appl->unusable_databases[u_index][i].db_node;
 
-	  check_list_cnt =
-	    insert_db_server_check_list (check_list, check_list_cnt,
-					 unusable_db_name, unusable_db_host);
+	  check_list_cnt = add_db_server_check_list (check_list,
+						     check_list_cnt,
+						     unusable_db_name,
+						     &unusable_db_node);
 	}
 
       for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
@@ -1639,29 +1632,24 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 
 	      if (busy_cas_db_name[0] != '\0')
 		{
-		  preferred_hosts =
-		    util_split_string (shm_Appl->preferred_hosts, ":");
-		  if (preferred_hosts != NULL)
-		    {
-		      for (j = 0; preferred_hosts[j] != NULL; j++)
-			{
-			  check_list_cnt =
-			    insert_db_server_check_list (check_list,
-							 check_list_cnt,
-							 busy_cas_db_name,
-							 preferred_hosts[j]);
-			}
+		  PRM_NODE_LIST preferred_hosts;
 
-		      util_free_string_array (preferred_hosts);
-		    }
-
-		  for (j = 0; j < num_hosts; j++)
+		  preferred_hosts = shm_Appl->preferred_hosts;
+		  for (j = 0; j < preferred_hosts.num_nodes; j++)
 		    {
 		      check_list_cnt =
-			insert_db_server_check_list (check_list,
-						     check_list_cnt,
-						     busy_cas_db_name,
-						     ha_hosts[j]);
+			add_db_server_check_list (check_list, check_list_cnt,
+						  busy_cas_db_name,
+						  &preferred_hosts.nodes[j]);
+		    }
+
+		  for (j = 0; j < ha_node_list.num_nodes; j++)
+		    {
+		      check_list_cnt =
+			add_db_server_check_list (check_list,
+						  check_list_cnt,
+						  busy_cas_db_name,
+						  &ha_node_list.nodes[j]);
 		    }
 		}
 	    }
@@ -1672,8 +1660,7 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 	{
 	  conn =
 	    connect_to_master_for_server_monitor (check_list[i].database_name,
-						  check_list[i].
-						  database_host);
+						  &check_list[i].db_node);
 
 	  check_list[i].server_state =
 	    get_server_state_from_master (conn, check_list[i].database_name);
@@ -1696,9 +1683,8 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 	      strncpy (shm_Appl->unusable_databases[u_index][cnt].
 		       database_name, check_list[i].database_name,
 		       SRV_CON_DBNAME_SIZE - 1);
-	      strncpy (shm_Appl->unusable_databases[u_index][cnt].
-		       database_host, check_list[i].database_host,
-		       MAXHOSTNAMELEN - 1);
+	      shm_Appl->unusable_databases[u_index][cnt].db_node =
+		check_list[i].db_node;
 	      cnt++;
 	    }
 	}
@@ -1709,7 +1695,6 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
       THREAD_SLEEP (MONITOR_SERVER_INTERVAL * 1000);
     }
 
-  cfg_free_hosts (ha_hosts);
   free_and_init (check_list);
 
   return NULL;
@@ -2530,7 +2515,7 @@ node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
   char *str_port;
   char *local_dbname;
   char *host_str;
-  unsigned char ip_addr[4];
+  in_addr_t ip_addr;
   char *cp_arg_str;
   int error = 0;
   int node_id, port;
@@ -2558,11 +2543,11 @@ node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
   if (strcasecmp (host_str, "localhost") == 0 ||
       strcmp (host_str, "127.0.0.1") == 0)
     {
-      memcpy (ip_addr, shm_Br->my_ip_addr, 4);
+      ip_addr = shm_Br->my_ip;
     }
   else
     {
-      if (cci_host_str_to_addr (host_str, ip_addr) < 0)
+      if (cci_host_str_to_addr (host_str, (unsigned char *) &ip_addr) < 0)
 	{
 	  error = -1;
 	  goto end;

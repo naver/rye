@@ -976,8 +976,6 @@ static unsigned int prm_Ha_node_myself_ip = INADDR_NONE;
 const char *PRM_HA_NODE_MYSELF = NULL;
 static const char *prm_ha_node_myself_default = NULL;
 
-static unsigned int prm_Localhost_ip;
-
 typedef struct sysprm_param SYSPRM_PARAM;
 struct sysprm_param
 {
@@ -1205,6 +1203,10 @@ static void sysprm_init_param (PARAM_ID param_id, const char *name,
 static int prm_call_post_assign_fn (SYSPRM_PARAM * prm);
 static int prm_node_list_post_assign (SYSPRM_PARAM * prm);
 static int prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm);
+static void prm_node_info_set_default_port (PRM_NODE_LIST * node_list);
+static int prm_split_node_info_internal (PRM_NODE_LIST * node_list,
+					 const char *node_list_str,
+					 bool include_local_host);
 
 /*
  * init_param -
@@ -1254,8 +1256,6 @@ sysprm_set_post_assign_fn (PARAM_ID param_id, int (*func) (SYSPRM_PARAM *))
 static void
 sysprm_initialize_prm_def ()
 {
-  prm_Localhost_ip = inet_addr (LOCALHOST);
-
   sysprm_init_param (PRM_ID_ER_LOG_DEBUG, PRM_NAME_ER_LOG_DEBUG,
 		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE |
 		      PRM_HIDDEN), PRM_BOOLEAN,
@@ -7363,18 +7363,51 @@ void
 prm_get_ha_node_list (PRM_NODE_LIST * cp_node_list)
 {
   *cp_node_list = prm_Ha_node_list;
+  prm_node_info_set_default_port (cp_node_list);
 }
 
 void
 prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list)
 {
   *cp_node_list = prm_Ha_replica_list;
+  prm_node_info_set_default_port (cp_node_list);
 }
 
 unsigned int
 prm_get_ha_node_myself ()
 {
   return prm_Ha_node_myself_ip;
+}
+
+PRM_NODE_INFO
+prm_get_null_node_info ()
+{
+  PRM_NODE_INFO node_info = PRM_NULL_NODE_INFO;
+  return node_info;
+}
+
+PRM_NODE_INFO
+prm_get_myself_node_info ()
+{
+  PRM_NODE_INFO node_info;
+  node_info.ip = prm_get_ha_node_myself ();
+  node_info.port = prm_get_master_port_id ();;
+  return node_info;
+}
+
+bool
+prm_is_myself_node_info (const PRM_NODE_INFO * node_info)
+{
+  PRM_NODE_INFO myself_nodeinfo = prm_get_myself_node_info ();
+  return prm_is_same_node (&myself_nodeinfo, node_info);
+}
+
+void
+prm_node_info_to_str (char *buf, int size, const PRM_NODE_INFO * node_info)
+{
+  int n;
+  n = css_ip_to_str (buf, size, node_info->ip);
+  snprintf (buf + n, size - n, ".%d", node_info->port);
 }
 
 static int
@@ -7403,6 +7436,7 @@ static int
 prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm)
 {
   char *str_value;
+  unsigned int ip;
 
   assert (prm->param_id == PRM_ID_HA_NODE_MYSELF);
 
@@ -7410,21 +7444,28 @@ prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm)
   trim (str_value);
   if (str_value == NULL || str_value[0] == '\0')
     {
-      prm_Ha_node_myself_ip = INADDR_NONE;
+      ip = INADDR_NONE;
     }
   else
     {
-      unsigned int ip;
-
       ip = hostname_to_ip (str_value);
       if (ip == INADDR_NONE)
 	{
 	  return PRM_ERR_BAD_VALUE;
 	}
 
-      prm_Ha_node_myself_ip = ip;
     }
 
+  if (ip == INADDR_NONE)
+    {
+      char hostname[MAXHOSTNAMELEN];
+      if (GETHOSTNAME (hostname, sizeof (hostname)) == 0)
+	{
+	  ip = hostname_to_ip (hostname);
+	}
+    }
+
+  prm_Ha_node_myself_ip = ip;
   return PRM_ERR_NO_ERROR;
 }
 
@@ -7435,11 +7476,7 @@ static int
 prm_node_list_post_assign (SYSPRM_PARAM * prm)
 {
   PRM_NODE_LIST node_list;
-  char **list_pp = NULL;
   char *list_str = NULL;
-  char *p;
-  int cplen;
-  int i;
 
   assert (prm->param_id == PRM_ID_HA_NODE_LIST ||
 	  prm->param_id == PRM_ID_HA_REPLICA_LIST);
@@ -7448,59 +7485,33 @@ prm_node_list_post_assign (SYSPRM_PARAM * prm)
 
   list_str = prm_get_string_value (prm->param_id);
   trim (list_str);
-  if (list_str == NULL || list_str[0] == '\0')
+  if (list_str != NULL && list_str[0] != '\0')
     {
-      goto end;
-    }
+      char *p;
+      int cplen;
 
-  p = strchr (list_str, '@');
-  if (p == NULL)
-    {
-      return PRM_ERR_BAD_VALUE;
-    }
+      p = strchr (list_str, '@');
+      if (p == NULL)
+	{
+	  return PRM_ERR_BAD_VALUE;
+	}
 
-  cplen = (p - list_str);
-  cplen = MIN (cplen, (int) sizeof (node_list.hb_group_id) - 1);
-  strncpy (node_list.hb_group_id, list_str, cplen);
+      cplen = (p - list_str);
+      cplen = MIN (cplen, (int) sizeof (node_list.hb_group_id) - 1);
+      strncpy (node_list.hb_group_id, list_str, cplen);
 
-  list_pp = util_split_string (p + 1, ",");
-  for (i = 0; list_pp[i] != NULL; i++)
-    {
-      if (i >= PRM_MAX_HA_NODE_LIST)
+      if (prm_split_node_info_internal (&node_list, p + 1, false) != NO_ERROR)
 	{
 	  goto error;
 	}
-
-      p = strchr (list_pp[i], ':');
-      if (p != NULL)
-	{
-	  if (parse_int (&node_list.nodes[i].port, p + 1, 10) != 0)
-	    {
-	      goto error;
-	    }
-
-	  *p = '\0';
-	}
-
-      node_list.nodes[i].ip = hostname_to_ip (list_pp[i]);
-      if (node_list.nodes[i].ip == INADDR_NONE)
-	{
-	  goto error;
-	}
-
-      node_list.num_nodes++;
     }
 
-  util_free_string_array (list_pp);
-
-end:
   if (prm->param_id == PRM_ID_HA_NODE_LIST)
     {
       if (node_list.num_nodes == 0)
 	{
 	  node_list.hb_group_id[0] = '\0';
-	  node_list.nodes[0].ip = prm_Localhost_ip;
-	  node_list.nodes[0].port = 0;
+	  node_list.nodes[0] = prm_get_myself_node_info ();
 	  node_list.num_nodes = 1;
 	}
 
@@ -7514,9 +7525,138 @@ end:
   return PRM_ERR_NO_ERROR;
 
 error:
-  if (list_pp != NULL)
-    {
-      util_free_string_array (list_pp);
-    }
   return PRM_ERR_BAD_VALUE;
+}
+
+int
+prm_split_node_info (PRM_NODE_LIST * node_list,
+		     const char *node_list_str, bool include_local_host)
+{
+  int error;
+
+  error = prm_split_node_info_internal (node_list, node_list_str,
+					include_local_host);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
+
+  prm_node_info_set_default_port (node_list);
+  return NO_ERROR;
+}
+
+static void
+prm_node_info_set_default_port (PRM_NODE_LIST * node_list)
+{
+  int i;
+
+  for (i = 0; i < node_list->num_nodes; i++)
+    {
+      if (node_list->nodes[i].port == 0)
+	{
+	  node_list->nodes[i].port = prm_get_master_port_id ();
+	}
+    }
+}
+
+static int
+prm_split_node_info_internal (PRM_NODE_LIST * node_list,
+			      const char *node_list_str,
+			      bool include_local_host)
+{
+  char **list_pp = NULL;
+  char *p;
+  int error = ER_INVCALID_ARGUMENT;
+  int i;
+
+  if (include_local_host)
+    {
+      node_list->nodes[0] = prm_get_myself_node_info ();
+      node_list->num_nodes = 1;
+    }
+  else
+    {
+      node_list->num_nodes = 0;
+    }
+
+  list_pp = util_split_string (node_list_str, ",");
+  if (list_pp == NULL)
+    {
+      return NO_ERROR;
+    }
+
+  for (i = 0; list_pp[i] != NULL; i++)
+    {
+      int port = 0;
+      in_addr_t ip = INADDR_NONE;
+
+      trim (list_pp[i]);
+      if (list_pp[i][0] == '\0')
+	{
+	  continue;
+	}
+
+      if (i >= PRM_MAX_HA_NODE_LIST)
+	{
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, node_list_str);
+	  goto end;
+	}
+
+      p = strchr (list_pp[i], ':');
+      if (p != NULL)
+	{
+	  if (parse_int (&port, p + 1, 10) != 0)
+	    {
+
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, p + 1);
+	      goto end;
+	    }
+
+	  *p = '\0';
+	}
+
+      ip = hostname_to_ip (list_pp[i]);
+      if (ip == INADDR_NONE)
+	{
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, list_pp[i]);
+	  goto end;
+	}
+
+      if (ip == inet_addr ("127.0.0.1"))
+	{
+	  node_list->nodes[node_list->num_nodes].ip = prm_Ha_node_myself_ip;
+	}
+      else
+	{
+	  node_list->nodes[node_list->num_nodes].ip = ip;
+	}
+      node_list->nodes[node_list->num_nodes].port = port;
+      node_list->num_nodes++;
+    }
+
+  error = NO_ERROR;
+
+end:
+  util_free_string_array (list_pp);
+  return error;
+}
+
+bool
+prm_is_same_node (const PRM_NODE_INFO * node1, const PRM_NODE_INFO * node2)
+{
+  if (node1->ip == node2->ip && node1->port == node2->port)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+void
+prm_set_node_info (PRM_NODE_INFO * node_info, in_addr_t ip, int port)
+{
+  node_info->ip = ip;
+  node_info->port = port;
 }

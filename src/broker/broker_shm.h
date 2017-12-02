@@ -37,6 +37,7 @@
 #include "broker_max_heap.h"
 #include "cas_protocol.h"
 
+#include "system_parameter.h"
 #include "rye_shm.h"
 
 #define 	STATE_KEEP_TRUE		1
@@ -234,7 +235,7 @@ struct t_appl_server_info
   short as_id;
 
   unsigned short cas_clt_port;
-  unsigned char cas_clt_ip[4];
+  in_addr_t cas_clt_ip_addr;
 
   int num_request;		/* number of request */
   int pid;			/* the process id */
@@ -268,10 +269,10 @@ struct t_appl_server_info
   int num_holdable_results;
   int cas_change_mode;
 
+  PRM_NODE_INFO db_node;
   char client_version[SRV_CON_VER_STR_MAX_SIZE];
   char log_msg[SHM_LOG_MSG_SIZE];
   char database_name[SRV_CON_DBNAME_SIZE];
-  char database_host[MAXHOSTNAMELEN];
   char database_user[SRV_CON_DBUSER_SIZE];
 };
 
@@ -280,7 +281,7 @@ typedef struct t_db_server T_DB_SERVER;
 struct t_db_server
 {
   char database_name[SRV_CON_DBNAME_SIZE];
-  char database_host[MAXHOSTNAMELEN];
+  PRM_NODE_INFO db_node;
   int server_state;
 };
 
@@ -305,9 +306,9 @@ struct t_shm_appl_server
   char log_dir[CONF_LOG_FILE_LEN];
   char broker_name[BROKER_NAME_LEN];
   char appl_server_name[APPL_SERVER_NAME_MAX_SIZE];
-  char preferred_hosts[SHM_APPL_SERVER_NAME_MAX];
+  PRM_NODE_LIST preferred_hosts;
 
-  unsigned char local_ip_addr[4];
+  in_addr_t local_ip;
 
   /* from br_info */
   char source_env[CONF_LOG_FILE_LEN];
@@ -361,7 +362,7 @@ struct t_shm_broker
 
   char broker_key[SHM_BROKER_KEY_LEN + 1];
 
-  unsigned char my_ip_addr[4];
+  in_addr_t my_ip;
   uid_t owner_uid;
   int num_broker;		/* number of broker */
 

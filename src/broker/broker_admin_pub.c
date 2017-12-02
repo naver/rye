@@ -1087,27 +1087,16 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
     }
   else if (strcasecmp (conf_name, "PREFERRED_HOSTS") == 0)
     {
-      const char *host_name = conf_value;
-      int host_name_len = 0;
+      PRM_NODE_LIST node_list;
 
-      host_name_len = strlen (host_name);
-
-      if (host_name_len >= BROKER_INFO_NAME_MAX
-	  || host_name_len >= SHM_APPL_SERVER_NAME_MAX)
+      if (prm_split_node_info (&node_list, conf_value, false) != NO_ERROR)
 	{
-	  SET_ADMIN_ERR_MSG ("The length of the host name is too long.");
+	  SET_ADMIN_ERR_MSG ("invalid value: %s", conf_value);
 	  goto set_conf_error;
 	}
 
-      if (strncasecmp (br_info_p->preferred_hosts, host_name, host_name_len)
-	  == 0)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", host_name);
-	  goto set_conf_error;
-	}
-
-      strncpy (br_info_p->preferred_hosts, host_name, host_name_len);
-      strncpy (shm_as_p->preferred_hosts, host_name, host_name_len);
+      br_info_p->preferred_hosts = node_list;
+      shm_as_p->preferred_hosts = node_list;
     }
   else if (strcasecmp (conf_name, "MAX_PREPARED_STMT_COUNT") == 0)
     {
@@ -1994,7 +1983,7 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
   as_info->cur_sql_log_mode = shm_appl->sql_log_mode;
   as_info->cur_slow_log_mode = shm_appl->slow_log_mode;
 
-  memset (&as_info->cas_clt_ip[0], 0x0, sizeof (as_info->cas_clt_ip));
+  as_info->cas_clt_ip_addr = 0;
   as_info->cas_clt_port = 0;
   as_info->client_version[0] = '\0';
 

@@ -29,7 +29,7 @@
 #include <config.h>
 #include <stdio.h>
 #include "util_func.h"
-
+#include "system_parameter.h"
 /*
  * UTILITY MESSAGE SETS
  */
@@ -444,9 +444,9 @@ typedef struct
 
 typedef struct _node_config
 {
-  char *node_name;
+  PRM_NODE_INFO node;
   char *copy_log_base;
-  char *copy_sync_mode;
+  const char *copy_sync_mode;
 } HA_NODE_CONF;
 
 typedef struct _ha_config
@@ -798,14 +798,8 @@ extern INT64 utility_get_option_bigint_value (UTIL_ARG_MAP * arg_map,
 					      int arg_ch);
 extern int utility_get_option_string_table_size (UTIL_ARG_MAP * arg_map);
 
-extern bool util_is_localhost (char *host);
-
 extern void util_free_ha_conf (HA_CONF * ha_conf);
 extern int util_make_ha_conf (HA_CONF * ha_conf);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern int util_get_num_of_ha_nodes (const char *node_list);
-#endif
-extern char **util_split_ha_node (const char *str);
 #if defined(NDEBUG)
 extern void util_redirect_stdout_to_null (void);
 #endif

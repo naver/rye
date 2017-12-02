@@ -41,6 +41,7 @@
 #include "utility.h"
 #include "system_parameter.h"
 #include "environment_variable.h"
+#include "tcp.h"
 
 #define UTIL_LOG_MAX_HEADER_LEN    (40)
 #define UTIL_LOG_MAX_MSG_SIZE       (1024)
@@ -265,10 +266,39 @@ util_split_string (const char *str, const char *delim)
   return r;
 }
 
+char **
+util_node_info_to_string_array (PRM_NODE_LIST * node_list)
+{
+  char **r;
+  int i;
+
+  r = malloc (sizeof (char *) * (node_list->num_nodes + 1));
+  if (r == NULL)
+    {
+      return NULL;
+    }
+
+  for (i = 0; i < node_list->num_nodes; i++)
+    {
+      char host[256];
+      css_ip_to_str (host, sizeof (host), node_list->nodes[i].ip);
+      snprintf (host, sizeof (host), "%s:%d", host, node_list->nodes[i].port);
+      r[i] = strdup (host);
+    }
+  r[node_list->num_nodes] = NULL;
+
+  return r;
+}
+
 void
 util_free_string_array (char **array)
 {
   int i;
+
+  if (array == NULL)
+    {
+      return;
+    }
 
   for (i = 0; array[i] != NULL; i++)
     {

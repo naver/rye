@@ -31,6 +31,7 @@
 #include "porting.h"
 #include "master_util.h"
 #include "heartbeat.h"
+#include "tcp.h"
 
 /* ping result */
 enum HB_PING_RESULT
@@ -156,7 +157,6 @@ struct hb_list
   HB_LIST **prev;
 };
 
-
 /* heartbeat node entries */
 typedef struct hb_node_entry HB_NODE_ENTRY;
 struct hb_node_entry
@@ -164,7 +164,8 @@ struct hb_node_entry
   HB_NODE_ENTRY *next;
   HB_NODE_ENTRY **prev;
 
-  char host_name[MAXHOSTNAMELEN];
+  PRM_NODE_INFO node_info;
+  char host_name[IP_ADDR_STR_LEN];
   unsigned short priority;
   HA_STATE node_state;
   short score;
@@ -195,7 +196,8 @@ struct hb_cluster
 
   HA_STATE node_state;
   char group_id[HB_MAX_GROUP_ID_LEN];
-  char host_name[MAXHOSTNAMELEN];
+  PRM_NODE_INFO my_node_info;
+  char my_host_name[IP_ADDR_STR_LEN];
 
   int num_nodes;
   HB_NODE_ENTRY *nodes;

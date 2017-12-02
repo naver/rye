@@ -1082,7 +1082,7 @@
 #define ER_QPROC_FUNCTION_ARG_ERROR                 -935
 #define ER_QPROC_OVERFLOW_EXP                       -936
 
-#define ER_INTERFACE_DBMS                           -937
+#define ER_INVCALID_ARGUMENT                        -937
 #define ER_INTERFACE_INVALID_ARGUMENT               -938
 #define ER_INTERFACE_TOO_MANY_CONNECTION            -939
 #define ER_INTERFACE_INVALID_HANDLE                 -940

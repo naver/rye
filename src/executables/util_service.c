@@ -172,7 +172,8 @@ static bool check_all_services_status (unsigned int sleep_time,
 				       expected_status);
 
 
-static int us_hb_deactivate (const char *hostname, bool immediate_stop);
+static int us_hb_deactivate (const PRM_NODE_INFO * node_info,
+			     bool immediate_stop);
 static int us_hb_activate (void);
 static int us_hb_reload (void);
 static int us_hb_changemode (HA_STATE req_node_state, bool force);
@@ -1293,16 +1294,17 @@ us_hb_changemode (HA_STATE req_node_state, bool force)
  *    immediate_stop(in):
  */
 static int
-us_hb_deactivate (const char *hostname, bool immediate_stop)
+us_hb_deactivate (const PRM_NODE_INFO * node_info, bool immediate_stop)
 {
   CSS_CONN_ENTRY *tmp_master_conn = NULL;
   unsigned short rid;
   int status = NO_ERROR;
   bool success;
+  PRM_NODE_INFO myself_node_info = prm_get_myself_node_info ();
 
-  if (hostname == NULL || hostname[0] == '\0')
+  if (node_info == NULL)
     {
-      hostname = "localhost";
+      node_info = &myself_node_info;
     }
 
   /*
@@ -1311,7 +1313,7 @@ us_hb_deactivate (const char *hostname, bool immediate_stop)
    * 2. DEACTIVATE_HEARTBEAT->DEACT_CONFIRM_NO_SERVER
    */
 
-  tmp_master_conn = css_connect_to_master_for_info (hostname, &rid);
+  tmp_master_conn = css_connect_to_master_for_info (node_info, &rid);
   if (tmp_master_conn == NULL)
     {
       return ER_FAILED;
@@ -1424,6 +1426,7 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
   char **hb_args = NULL;
   char hb_arg0[] = PRINT_HEARTBEAT_NAME " " PRINT_CMD_STOP;
   bool immediate_stop = false;
+  PRM_NODE_INFO node_info = prm_get_myself_node_info ();
 
   struct option hb_stop_opts[] = {
     {HB_STOP_HB_DEACT_IMMEDIATELY_L, 0, 0, HB_STOP_HB_DEACT_IMMEDIATELY_S},
@@ -1459,6 +1462,7 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
       switch (opt)
 	{
 	case HB_STOP_HOST_S:
+	  /* TODO fix me. hostname to PRM_NODE_INFO - cgkang */
 	  strncpy (hostname, optarg, sizeof (hostname) - 1);
 	  break;
 	case HB_STOP_HB_DEACT_IMMEDIATELY_S:
@@ -1502,12 +1506,7 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
       goto ret;
     }
 
-  if (hostname == NULL || hostname[0] == '\0')
-    {
-      strncpy (hostname, "localhost", sizeof (hostname) - 1);
-    }
-
-  status = us_hb_deactivate (hostname, immediate_stop);
+  status = us_hb_deactivate (&node_info, immediate_stop);
 
   if (status == NO_ERROR)
     {

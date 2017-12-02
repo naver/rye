@@ -106,7 +106,7 @@ extern int css_find_dupliated_conn (int conn_idx);
 
 extern int css_common_connect_sr (CSS_CONN_ENTRY * conn,
 				  unsigned short *rid,
-				  const char *host_name,
+				  const PRM_NODE_INFO * node_info,
 				  int connect_type,
 				  const char *server_name,
 				  int server_name_length);

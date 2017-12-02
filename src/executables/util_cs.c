@@ -136,7 +136,7 @@ connect_db (const char *db, const char *host)
 }
 
 static int
-find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
+find_connect_host_index (const char *dbname, char **hosts,
 			 HA_STATE expect_server_state)
 {
   int i;
@@ -146,7 +146,7 @@ find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
   db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
   db_login ("DBA", NULL);
 
-  for (i = 0; i < num_hosts; i++)
+  for (i = 0; hosts[i] != NULL; i++)
     {
       server_state = connect_db (dbname, hosts[i]);
       if (server_state == expect_server_state)
@@ -166,7 +166,6 @@ find_connect_server (char *db_name, char *db_host, const char *database_name,
 		     BACKUPDB_CONNECT_ORDER c_order)
 {
   char **ha_hosts = NULL;
-  int num_ha_hosts = 0;
   char *ptr;
   int idx;
 
@@ -174,44 +173,41 @@ find_connect_server (char *db_name, char *db_host, const char *database_name,
   if (ptr != NULL)
     {
       strncpy (db_name, database_name, ptr - database_name);
-      ha_hosts = cfg_get_hosts (ptr + 1, &num_ha_hosts, false);
+      ha_hosts = util_split_string (ptr + 1, ",");
     }
   else
     {
+      PRM_NODE_LIST node_list;
+      prm_get_ha_node_list (&node_list);
+
       strcpy (db_name, database_name);
-      ha_hosts = cfg_get_hosts_from_prm (&num_ha_hosts);
+      ha_hosts = util_node_info_to_string_array (&node_list);
     }
 
   if (c_order == BACKUPDB_SLAVE_MASTER)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_SLAVE);
+      idx = find_connect_host_index (db_name, ha_hosts, HA_STATE_SLAVE);
       if (idx < 0)
 	{
-	  idx = find_connect_host_index (db_name, ha_hosts,
-					 num_ha_hosts, HA_STATE_MASTER);
+	  idx = find_connect_host_index (db_name, ha_hosts, HA_STATE_MASTER);
 	}
     }
   else if (c_order == BACKUPDB_MASTER_SLAVE)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_MASTER);
+      idx = find_connect_host_index (db_name, ha_hosts, HA_STATE_MASTER);
       if (idx < 0)
 	{
-	  idx = find_connect_host_index (db_name, ha_hosts,
-					 num_ha_hosts, HA_STATE_SLAVE);
+	  idx = find_connect_host_index (db_name, ha_hosts, HA_STATE_SLAVE);
 	}
     }
   else if (c_order == BACKUPDB_SLAVE_ONLY)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_SLAVE);
+      idx = find_connect_host_index (db_name, ha_hosts, HA_STATE_SLAVE);
     }
   else
     {
       assert (c_order == BACKUPDB_MASTER_ONLY);
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_MASTER);
+      idx = find_connect_host_index (db_name, ha_hosts, HA_STATE_MASTER);
     }
 
   if (idx >= 0)
@@ -223,11 +219,11 @@ find_connect_server (char *db_name, char *db_host, const char *database_name,
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
 					     MSGCAT_UTIL_SET_BACKUPDB,
 					     BACKUPDB_NOT_FOUND_HOST));
-      cfg_free_hosts (ha_hosts);
+      util_free_string_array (ha_hosts);
       return -1;
     }
 
-  cfg_free_hosts (ha_hosts);
+  util_free_string_array (ha_hosts);
 
   return 0;
 }
@@ -2045,9 +2041,8 @@ tranlist (UTIL_FUNCTION_ARG * arg)
       goto error_exit;
     }
 
-  error =
-    db_restart_ex (arg->command_name, database_name, username, password, NULL,
-		   BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
+  error = db_restart_ex (arg->command_name, database_name, username, password,
+			 BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
   if (error != NO_ERROR)
     {
       char msg_buf[64];
@@ -2072,10 +2067,9 @@ tranlist (UTIL_FUNCTION_ARG * arg)
 	    }
 	  password = passbuf;
 
-	  error =
-	    db_restart_ex (arg->command_name, database_name, username,
-			   password, NULL,
-			   BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
+	  error = db_restart_ex (arg->command_name, database_name,
+				 username, password,
+				 BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
 	}
 
       if (error != NO_ERROR)

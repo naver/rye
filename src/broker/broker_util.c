@@ -161,15 +161,13 @@ as_pid_file_create (char *br_name, int as_index)
 }
 
 char *
-ut_get_ipv4_string (char *ip_str, int len, const unsigned char *ip_addr)
+ut_get_ipv4_string (char *ip_str, int len, in_addr_t ip_addr)
 {
-  assert (ip_addr != NULL);
+  const unsigned char *ip = (const unsigned char *) &ip_addr;
   assert (ip_str != NULL);
   assert (len >= 16);		/* xxx.xxx.xxx.xxx\0 */
 
-  snprintf (ip_str, len, "%d.%d.%d.%d", (unsigned char) ip_addr[0],
-	    (unsigned char) ip_addr[1],
-	    (unsigned char) ip_addr[2], (unsigned char) ip_addr[3]);
+  snprintf (ip_str, len, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
   return (ip_str);
 }
 

@@ -29,6 +29,7 @@
 
 #include "cas_common.h"
 #include "broker_shm.h"
+#include "tcp.h"
 
 #define IS_NORMAL_BROKER_OPCODE(OPCODE)			\
 	((OPCODE) >= BRREQ_OP_CODE_MIN && (OPCODE) <= BRREQ_OP_CODE_MAX)
@@ -45,8 +46,6 @@
 
 #define BR_DEFAULT_WRITE_TIMEOUT	60
 #define BR_DEFAULT_READ_TIMEOUT		60
-
-#define IP_ADDR_STR_LEN		20
 
 /* structures for mgmt request values */
 typedef struct
@@ -211,7 +210,7 @@ typedef struct
   char buf[BROKER_RESPONSE_MAX_ADDITIONAL_MSG][MGMT_RESULT_MSG_MAX_SIZE];
 } T_MGMT_RESULT_MSG;
 
-extern SOCKET br_mgmt_accept (unsigned char *clt_ip_addr);
+extern SOCKET br_mgmt_accept (in_addr_t *clt_ip_addr);
 
 extern THREAD_FUNC shard_mgmt_receiver_thr_f (void *arg);
 extern THREAD_FUNC local_mgmt_receiver_thr_f (void *arg);

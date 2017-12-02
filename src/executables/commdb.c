@@ -603,8 +603,9 @@ make_local_master_connection (CSS_CONN_ENTRY ** local_conn)
 {
   if (*local_conn == NULL)
     {
+      PRM_NODE_INFO node_info = prm_get_myself_node_info ();
       unsigned short rid;
-      *local_conn = css_connect_to_master_for_info ("localhost", &rid);
+      *local_conn = css_connect_to_master_for_info (&node_info, &rid);
     }
 
   return *local_conn;

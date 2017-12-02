@@ -32,7 +32,8 @@
 
 typedef void (*CSS_SERVER_TIMEOUT_FN) (void);
 /* check server alive */
-typedef bool (*CSS_CHECK_SERVER_ALIVE_FN) (const char *, const char *);
+typedef bool (*CSS_CHECK_SERVER_ALIVE_FN) (const char *,
+					   const PRM_NODE_INFO *);
 typedef bool (*CSS_CHECK_CLIENT_ALIVE_FN) (void);
 extern CSS_CHECK_SERVER_ALIVE_FN css_check_server_alive_fn;
 

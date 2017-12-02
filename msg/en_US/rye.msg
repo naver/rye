@@ -1002,7 +1002,7 @@ $ LOADDB
 934 Null type referenced.
 935 Argument of %1$s function is out of range.
 936 Overflow occurred in exp context.
-937 Database error.
+937 Invalid argument: %1$s
 938 Invalid argument.
 939 There are too many connection.
 940 The handle is invalid.

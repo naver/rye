@@ -63,8 +63,7 @@ extern void as_pid_file_create (char *br_name, int as_index);
 extern void ut_get_as_pid_name (char *pid_name, char *br_name, int as_index,
 				int len);
 
-extern char *ut_get_ipv4_string (char *ip_str, int len,
-				 const unsigned char *ip_addr);
+extern char *ut_get_ipv4_string (char *ip_str, int len, in_addr_t ip_addr);
 extern float ut_get_avg_from_array (int array[], int size);
 extern bool ut_is_appl_server_ready (int pid, char *ready_flag);
 extern void ut_get_broker_port_name (char *port_name, const char *broker_name,

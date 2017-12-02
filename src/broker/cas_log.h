@@ -55,7 +55,7 @@ extern void cas_log_init (T_SHM_APPL_SERVER * shm_p,
 extern void cas_log_close_all (void);
 
 extern int cas_access_log (struct timeval *start_time, int as_index,
-			   int client_ip_addr, char *dbname, char *dbuser,
+			   in_addr_t client_ip, char *dbname, char *dbuser,
 			   ACCESS_LOG_TYPE log_type);
 extern void cas_log_write (T_CAS_LOG_TYPE cas_log_type, int flag,
 			   struct timeval *log_time, unsigned int seq_num,

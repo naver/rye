@@ -296,6 +296,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
   const char *tmp_str;
   float tmp_float;
   char path_buff[BROKER_PATH_MAX];
+  PRM_NODE_LIST preferred_hosts;
 
   tmp_str = ini_getstr (ini, sec_name, "CCI_DEFAULT_AUTOCOMMIT", "ON",
 			lineno);
@@ -522,8 +523,11 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 
   tmp_str = ini_getstr (ini, sec_name, "PREFERRED_HOSTS",
 			DEFAULT_EMPTY_STRING, lineno);
-  STRNCPY (br_info->preferred_hosts, tmp_str,
-	   sizeof (br_info->preferred_hosts));
+  if (prm_split_node_info (&preferred_hosts, tmp_str, false) != NO_ERROR)
+    {
+      return -1;
+    }
+  br_info->preferred_hosts = preferred_hosts;
 
   tmp_str = ini_getstr (ini, sec_name, "CONNECT_ORDER_RANDOM", "ON", lineno);
   br_info->connect_order_random = conf_get_value_table_on_off (tmp_str);
@@ -1230,7 +1234,8 @@ broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
 	       br_info[i].appl_server_hard_limit / ONE_K);
       fprintf (fp, "MAX_PREPARED_STMT_COUNT\t=%d\n",
 	       br_info[i].max_prepared_stmt_count);
-      fprintf (fp, "PREFERRED_HOSTS\t\t=%s\n", br_info[i].preferred_hosts);
+      fprintf (fp, "PREFERRED_HOSTS\t\t=%d\n",
+	       br_info[i].preferred_hosts.num_nodes);
 
       tmp_str =
 	get_conf_string (br_info[i].cci_default_autocommit, tbl_on_off);

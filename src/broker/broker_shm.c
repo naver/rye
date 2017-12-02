@@ -77,7 +77,7 @@ br_shm_init_shm_broker (int shm_key_br_gl, T_BROKER_INFO * br_info,
   get_random_string (shm_br->broker_key, SHM_BROKER_KEY_LEN);
   shm_br->shm_header.status = RYE_SHM_VALID;
 
-  memcpy (shm_br->my_ip_addr, ip_addr, 4);
+  memcpy (&shm_br->my_ip, ip_addr, 4);
   shm_br->owner_uid = getuid ();
 
   /* create a new session */
@@ -160,7 +160,7 @@ br_shm_init_shm_as (T_BROKER_INFO * br_info_p, int shm_key_br_gl)
 
   shm_as_p->cas_rctime = br_info_p->cas_rctime;
 
-  strcpy (shm_as_p->preferred_hosts, br_info_p->preferred_hosts);
+  shm_as_p->preferred_hosts = br_info_p->preferred_hosts;
   strcpy (shm_as_p->appl_server_name, get_appl_server_name ());
 
   for (as_index = 0; as_index < br_info_p->appl_server_max_num; as_index++)
@@ -196,7 +196,7 @@ broker_shm_set_as_info (T_APPL_SERVER_INFO * as_info_p,
   as_info_p->num_connect_rejected = 0;
   as_info_p->num_restarts = 0;
   as_info_p->database_name[0] = '\0';
-  as_info_p->database_host[0] = '\0';
+  as_info_p->db_node = prm_get_null_node_info ();
   as_info_p->database_user[0] = '\0';
   as_info_p->last_connect_time = 0;
   as_info_p->num_holdable_results = 0;

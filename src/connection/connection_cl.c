@@ -72,7 +72,7 @@ static void css_initialize_conn (CSS_CONN_ENTRY * conn, SOCKET fd);
 static void css_close_conn (CSS_CONN_ENTRY * conn);
 static void css_dealloc_conn (CSS_CONN_ENTRY * conn);
 
-static int css_server_connect (const char *host_name,
+static int css_server_connect (const PRM_NODE_INFO * node_info,
 			       CSS_CONN_ENTRY * conn,
 			       const char *server_name, unsigned short *rid);
 /*
@@ -287,7 +287,7 @@ css_send_close_request (CSS_CONN_ENTRY * conn)
  *   return: CSS_ERROR
  */
 int
-css_common_connect_cl (const char *host_name, CSS_CONN_ENTRY * conn,
+css_common_connect_cl (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
 		       int connect_type, const char *dbname,
 		       const char *packed_name, int packed_name_len,
 		       int timeout, unsigned short *rid, bool send_magic)
@@ -295,7 +295,7 @@ css_common_connect_cl (const char *host_name, CSS_CONN_ENTRY * conn,
   SOCKET fd;
   int css_error = NO_ERRORS;
 
-  fd = css_tcp_client_open (host_name, connect_type, dbname, timeout * 1000);
+  fd = css_tcp_client_open (node_info, connect_type, dbname, timeout * 1000);
 
   if (!IS_INVALID_SOCKET (fd))
     {
@@ -314,17 +314,19 @@ css_common_connect_cl (const char *host_name, CSS_CONN_ENTRY * conn,
     }
   else
     {
+      char hostname[256];
+      prm_node_info_to_str (hostname, sizeof (hostname), node_info);
       if (errno == ETIMEDOUT)
 	{
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_TCP_CONNECT_TIMEDOUT, 2, host_name,
+			       ERR_CSS_TCP_CONNECT_TIMEDOUT, 2, hostname,
 			       timeout);
 	}
       else
 	{
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 			       ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1,
-			       host_name);
+			       hostname);
 	}
       css_error = REQUEST_REFUSED;
     }
@@ -335,13 +337,9 @@ css_common_connect_cl (const char *host_name, CSS_CONN_ENTRY * conn,
 /*
  * css_server_connect () - actually try to make a connection to a server
  *   return: CSS_ERROR
- *   host_name(in):
- *   conn(in):
- *   server_name(in):
- *   rid(out):
  */
 static int
-css_server_connect (const char *host_name, CSS_CONN_ENTRY * conn,
+css_server_connect (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
 		    const char *server_name, unsigned short *rid)
 {
   int length;
@@ -356,7 +354,7 @@ css_server_connect (const char *host_name, CSS_CONN_ENTRY * conn,
       length = 0;
     }
 
-  return (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_TO_SERVER,
+  return (css_common_connect_cl (node_info, conn, MASTER_CONN_TYPE_TO_SERVER,
 				 server_name, server_name, length,
 				 timeout, rid, true));
 }
@@ -365,7 +363,8 @@ css_server_connect (const char *host_name, CSS_CONN_ENTRY * conn,
  * css_connect_to_rye_server () - make a new connection to a server
  */
 CSS_CONN_ENTRY *
-css_connect_to_rye_server (const char *host_name, const char *server_name)
+css_connect_to_rye_server (const PRM_NODE_INFO * node_info,
+			   const char *server_name)
 {
   CSS_CONN_ENTRY *conn;
   int css_error;
@@ -381,7 +380,7 @@ css_connect_to_rye_server (const char *host_name, const char *server_name)
     }
 
   retry_count = 0;
-  if (css_server_connect (host_name, conn, server_name, &rid) != NO_ERRORS)
+  if (css_server_connect (node_info, conn, server_name, &rid) != NO_ERRORS)
     {
       goto exit;
     }
@@ -448,15 +447,15 @@ exit:
  *       as well as modify runtime parameters.
  */
 CSS_CONN_ENTRY *
-css_connect_to_master_for_info (const char *host_name, unsigned short *rid)
+css_connect_to_master_for_info (const PRM_NODE_INFO * node_info,
+				unsigned short *rid)
 {
-  return (css_connect_to_master_timeout (host_name, 0, rid));
+  return (css_connect_to_master_timeout (node_info, 0, rid));
 }
 
 /*
  * css_connect_to_master_timeout () - connect to the master server
  *   return:
- *   host_name(in):
  *   timeout(in): timeout in milli-seconds
  *   rid(out):
  *
@@ -464,7 +463,7 @@ css_connect_to_master_for_info (const char *host_name, unsigned short *rid)
  *       as well as modify runtime parameters.
  */
 CSS_CONN_ENTRY *
-css_connect_to_master_timeout (const char *host_name, int timeout,
+css_connect_to_master_timeout (const PRM_NODE_INFO * node_info, int timeout,
 			       unsigned short *rid)
 {
   CSS_CONN_ENTRY *conn;
@@ -478,7 +477,7 @@ css_connect_to_master_timeout (const char *host_name, int timeout,
 
   time = ceil (time / 1000);
 
-  if (css_common_connect_cl (host_name, conn, MASTER_CONN_TYPE_INFO,
+  if (css_common_connect_cl (node_info, conn, MASTER_CONN_TYPE_INFO,
 			     NULL, NULL, 0,
 			     (int) time, rid, true) == NO_ERRORS)
     {
@@ -568,9 +567,10 @@ bool
 css_does_master_exist ()
 {
   SOCKET fd;
+  PRM_NODE_INFO node_info = prm_get_myself_node_info ();
 
   /* Don't waste time retrying between master to master connections */
-  fd = css_tcp_client_open ("localhost", MASTER_CONN_TYPE_INFO, NULL, 1000);
+  fd = css_tcp_client_open (&node_info, MASTER_CONN_TYPE_INFO, NULL, 1000);
   if (!IS_INVALID_SOCKET (fd))
     {
       css_shutdown_socket (fd);

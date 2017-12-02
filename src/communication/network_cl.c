@@ -77,7 +77,7 @@ static INT64 net_Histo_last_call_time = 0;
 static INT64 net_Histo_total_server_time = 0;
 
 /* Contains the name of the current sever host machine.  */
-static char net_Server_host[MAXHOSTNAMELEN + 1] = "";
+static char net_Server_host[MAX_NODE_INFO_STR_LEN] = "";
 static in_addr_t net_Server_addr = INADDR_NONE;
 
 /* Contains the name of the current server name. */
@@ -1662,59 +1662,39 @@ net_client_ping_server_with_handshake (int client_type,
 /*
  * net_client_init -
  *
- * return: error code
- *
- *   dbname(in): server name
- *   hostname(in): server host name
- *
  * Note: This is called during startup to initialize the client side
  *    communications. It sets up CSS and verifies connection with the server.
  */
 int
-net_client_init (const char *dbname, const char *hostname)
+net_client_init (const char *dbname, const PRM_NODE_INFO * node_info)
 {
   int error = NO_ERROR;
 
   /* don't really need to do this every time but bruce says its ok -
      we probably need to guarentee that a css_terminate is always
      called before this */
-  error = css_client_init (dbname, hostname);
+  error = css_client_init (dbname, node_info);
   if (error != NO_ERROR)
     {
       goto end;
     }
 
-  /* since urgent_message_handler() doesn't do anything yet, just
-     use the default handler provided by css which writes things
-     to the system console */
-
   /* set our host/server names for further css communication */
-  if (hostname != NULL && strlen (hostname) <= MAXHOSTNAMELEN)
-    {
-      strcpy (net_Server_host, hostname);
-      net_Server_addr = hostname_to_ip (hostname);
-      assert (net_Server_addr != INADDR_NONE);
+  prm_node_info_to_str (net_Server_host, sizeof (net_Server_host), node_info);
+  net_Server_addr = node_info->ip;
+  assert (net_Server_addr != INADDR_NONE);
 
-      if (dbname != NULL && strlen (dbname) <= DB_MAX_IDENTIFIER_LENGTH)
-	{
-	  strcpy (net_Server_name, dbname);
-	}
-      else
-	{
-	  error = ER_NET_INVALID_SERVER_NAME;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, dbname);
-	}
+  if (dbname != NULL && strlen (dbname) <= DB_MAX_IDENTIFIER_LENGTH)
+    {
+      strcpy (net_Server_name, dbname);
     }
   else
     {
-      error = ER_NET_INVALID_HOST_NAME;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, hostname);
+      error = ER_NET_INVALID_SERVER_NAME;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, dbname);
     }
 
-  /* On error, flush any state that may have been initialized by css.
-   * This is important for the PC's since we must shutdown Winsock
-   * after it has been opened by css_client_init.
-   */
+  /* On error, flush any state that may have been initialized by css  */
 end:
   if (error)
     {

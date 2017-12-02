@@ -1687,16 +1687,19 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
  */
 int
 css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
-			   const char *host_ip, HA_APPLY_STATE state)
+			   const PRM_NODE_INFO * node_info,
+			   HA_APPLY_STATE state)
 {
   int error = NO_ERROR;
+  char host[256];
 
   assert (state >= HA_APPLY_STATE_UNREGISTERED
 	  && state <= HA_APPLY_STATE_ERROR);
 
+  css_ip_to_str (host, sizeof (host), node_info->ip);
   er_log_debug (ARG_FILE_LINE,
-		"css_notify_ha_apply_state: node %s state %s\n",
-		host_ip, css_ha_applier_state_string (state));
+		"css_notify_ha_apply_state: node %s:%d state %s\n",
+		host, node_info->port, css_ha_applier_state_string (state));
 
   error = csect_enter (thread_p, CSECT_HA_SERVER_STATE, INF_WAIT);
   if (error != NO_ERROR)
@@ -1704,7 +1707,7 @@ css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
       return error;
     }
 
-  error = svr_shm_set_repl_info (host_ip, state);
+  error = svr_shm_set_repl_info (node_info, state);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;

@@ -110,7 +110,8 @@ static void hb_cluster_job_check_valid_ping_server (HB_JOB_ARG * arg);
 static void hb_cluster_job_demote (HB_JOB_ARG * arg);
 
 static void hb_cluster_request_heartbeat_to_all (void);
-static void hb_cluster_send_heartbeat (bool is_req, char *host_name);
+static void hb_cluster_send_heartbeat (bool is_req,
+				       const PRM_NODE_INFO * node);
 static void hb_cluster_receive_heartbeat (char *buffer, int len,
 					  struct sockaddr_in *from,
 					  socklen_t from_len);
@@ -122,8 +123,9 @@ static int hb_cluster_calc_score (void);
 
 static void hb_set_net_header (HBP_HEADER * header, unsigned char type,
 			       bool is_req, unsigned short len,
-			       unsigned int seq, char *dest_host_name);
-static int hb_sockaddr (const char *host, struct sockaddr *saddr,
+			       unsigned int seq,
+			       const PRM_NODE_INFO * dest_host);
+static int hb_sockaddr (const PRM_NODE_INFO * node, struct sockaddr *saddr,
 			socklen_t * slen);
 
 /* common */
@@ -139,12 +141,14 @@ hb_cluster_job_set_expire_and_reorder (unsigned int job_type,
 static void hb_cluster_job_shutdown (void);
 
 /* cluster node */
-static HB_NODE_ENTRY *hb_add_node_to_cluster (char *host_name,
+static HB_NODE_ENTRY *hb_add_node_to_cluster (PRM_NODE_INFO * node,
 					      unsigned short priority);
 static void hb_remove_node (HB_NODE_ENTRY * entry_p);
 static void hb_cluster_remove_all_nodes (HB_NODE_ENTRY * first);
-static HB_NODE_ENTRY *hb_return_node_by_name (char *name);
-static HB_NODE_ENTRY *hb_return_node_by_name_except_me (char *name);
+static HB_NODE_ENTRY *hb_return_node_by_name (const PRM_NODE_INFO *
+					      node_info);
+static HB_NODE_ENTRY *hb_return_node_by_name_except_me (const PRM_NODE_INFO *
+							node_info);
 
 static int hb_cluster_load_group_and_node_list (void);
 
@@ -193,8 +197,7 @@ static void hb_resource_get_server_eof (void);
 static bool hb_resource_check_server_log_grow (void);
 
 static int hb_server_start (const HA_CONF * ha_conf, char *db_name);
-static int hb_repl_start (const HA_CONF * ha_conf,
-			  const char *db_name, const char *node_name);
+static int hb_repl_start (const HA_CONF * ha_conf);
 static int hb_repl_stop (void);
 
 static void *hb_thread_cluster_worker (void *arg);
@@ -225,7 +228,7 @@ static void hb_kill_process (pid_t * pids, int count);
 static const char *hb_process_state_string (int pstate);
 static const char *hb_ping_result_string (int ping_result);
 
-static int hb_reload_config (RYE_STRING * removed_hosts);
+static int hb_reload_config (PRM_NODE_LIST * removed_nodes);
 
 static int hb_help_sprint_processes_info (char *buffer, int max_length);
 static int hb_help_sprint_nodes_info (char *buffer, int max_length);
@@ -233,9 +236,10 @@ static int hb_help_sprint_ping_host_info (char *buffer, int max_length);
 
 static int hb_get_process_info (char *info, int max_size,
 				HB_PROC_ENTRY * proc, int verbose_yn);
-static int hb_remove_copylog (const HA_CONF * ha_conf, char **removed_hosts);
+static int hb_remove_copylog (const HA_CONF * ha_conf,
+			      const PRM_NODE_LIST * rm_nodes);
 static int hb_remove_catalog_info (const HA_CONF * ha_conf,
-				   char **removed_hosts);
+				   const PRM_NODE_LIST * removed_nodes);
 
 static void hb_cluster_set_node_state (HB_NODE_ENTRY * node,
 				       HA_STATE node_state);
@@ -1784,12 +1788,13 @@ hb_cluster_request_heartbeat_to_all (void)
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      if (strcmp (hb_Cluster->host_name, node->host_name) == 0)
+      if (prm_is_same_node (&hb_Cluster->my_node_info,
+			    &node->node_info) == true)
 	{
 	  continue;
 	}
 
-      hb_cluster_send_heartbeat (true, node->host_name);
+      hb_cluster_send_heartbeat (true, &node->node_info);
       node->heartbeat_gap++;
     }
 
@@ -1799,12 +1804,9 @@ hb_cluster_request_heartbeat_to_all (void)
 /*
  * hb_cluster_send_heartbeat() -
  *   return: none
- *
- *   is_req(in):
- *   host_name(in):
  */
 static void
-hb_cluster_send_heartbeat (bool is_req, char *host_name)
+hb_cluster_send_heartbeat (bool is_req, const PRM_NODE_INFO * node)
 {
   HBP_HEADER *hbp_header;
   char buffer[HB_BUFFER_SZ + MAX_ALIGNMENT], *p;
@@ -1819,8 +1821,7 @@ hb_cluster_send_heartbeat (bool is_req, char *host_name)
 
   /* construct destination address */
   memset ((void *) &saddr, 0, sizeof (saddr));
-  if (hb_sockaddr (host_name, (struct sockaddr *) &saddr,
-		   &saddr_len) != NO_ERROR)
+  if (hb_sockaddr (node, (struct sockaddr *) &saddr, &saddr_len) != NO_ERROR)
     {
       er_log_debug (ARG_FILE_LINE, "hb_sockaddr failed. \n");
       return;
@@ -1835,7 +1836,7 @@ hb_cluster_send_heartbeat (bool is_req, char *host_name)
   msg_len = OR_INT_SIZE + OR_VERSION_SIZE;
 
   hb_set_net_header (hbp_header, HBP_CLUSTER_HEARTBEAT, is_req,
-		     msg_len, 0, host_name);
+		     msg_len, 0, node);
 
   p = (char *) (hbp_header + 1);
   p = or_pack_int (p, hb_Cluster->node_state);
@@ -1885,11 +1886,15 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
     }
 
   /* validate receive message */
-  if (strcmp (hb_Cluster->host_name, hbp_header->dest_host_name))
+  if (prm_is_same_node (&hb_Cluster->my_node_info,
+			&hbp_header->dest_host) == false)
     {
+      char dest_host[256];
+      css_ip_to_str (dest_host, sizeof (dest_host), hbp_header->dest_host.ip);
+
       er_log_debug (ARG_FILE_LINE, "hostname mismatch. "
 		    "(host_name:{%s}, dest_host_name:{%s}).\n",
-		    hb_Cluster->host_name, hbp_header->dest_host_name);
+		    hb_Cluster->my_host_name, dest_host);
       pthread_mutex_unlock (&hb_Cluster->lock);
       return;
     }
@@ -1938,15 +1943,19 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
 	 */
 	if (hbp_header->r && hb_Cluster->hide_to_demote == false)
 	  {
-	    hb_cluster_send_heartbeat (false, hbp_header->orig_host_name);
+	    hb_cluster_send_heartbeat (false, &hbp_header->orig_host);
 	  }
 
-	node = hb_return_node_by_name_except_me (hbp_header->orig_host_name);
+	node = hb_return_node_by_name_except_me (&hbp_header->orig_host);
 	if (node == NULL)
 	  {
+	    char orig_host[256];
+	    css_ip_to_str (orig_host, sizeof (orig_host),
+			   hbp_header->orig_host.ip);
+
 	    er_log_debug (ARG_FILE_LINE,
 			  "receive heartbeat have unknown host_name. "
-			  "(host_name:{%s}).\n", hbp_header->orig_host_name);
+			  "(host_name:{%s}).\n", orig_host);
 	    break;
 	  }
 
@@ -1996,7 +2005,8 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
  */
 static void
 hb_set_net_header (HBP_HEADER * header, unsigned char type, bool is_req,
-		   unsigned short len, unsigned int seq, char *dest_host_name)
+		   unsigned short len, unsigned int seq,
+		   const PRM_NODE_INFO * dest_host)
 {
   header->type = type;
   header->r = (is_req) ? 1 : 0;
@@ -2005,39 +2015,27 @@ hb_set_net_header (HBP_HEADER * header, unsigned char type, bool is_req,
   strncpy (header->group_id, hb_Cluster->group_id,
 	   sizeof (header->group_id) - 1);
   header->group_id[sizeof (header->group_id) - 1] = '\0';
-  strncpy (header->dest_host_name, dest_host_name,
-	   sizeof (header->dest_host_name) - 1);
-  header->dest_host_name[sizeof (header->dest_host_name) - 1] = '\0';
-  strncpy (header->orig_host_name, hb_Cluster->host_name,
-	   sizeof (header->orig_host_name) - 1);
-  header->orig_host_name[sizeof (header->orig_host_name) - 1] = '\0';
+  header->dest_host = *dest_host;
+  header->orig_host = hb_Cluster->my_node_info;
 }
 
 /*
  * hb_sockaddr() -
  */
 static int
-hb_sockaddr (const char *host, struct sockaddr *saddr, socklen_t * slen)
+hb_sockaddr (const PRM_NODE_INFO * node, struct sockaddr *saddr,
+	     socklen_t * slen)
 {
   struct sockaddr_in udp_saddr;
-  int port = prm_get_integer_value (PRM_ID_HA_PORT_ID);
 
   /*
    * Construct address for UDP socket
    */
   memset ((void *) &udp_saddr, 0, sizeof (udp_saddr));
   udp_saddr.sin_family = AF_INET;
-  udp_saddr.sin_port = htons (port);
+  udp_saddr.sin_port = htons (node->port);
 
-  udp_saddr.sin_addr.s_addr = hostname_to_ip (host);
-  if (udp_saddr.sin_addr.s_addr == INADDR_NONE)
-    {
-      er_log_debug (ARG_FILE_LINE,
-		    "Failed to resolve IP address of %s", host);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_BO_UNABLE_TO_FIND_HOSTNAME, 0);
-      return ER_BO_UNABLE_TO_FIND_HOSTNAME;
-    }
+  udp_saddr.sin_addr.s_addr = node->ip;
 
   *slen = sizeof (udp_saddr);
   memcpy ((void *) saddr, (void *) &udp_saddr, *slen);
@@ -2123,17 +2121,14 @@ hb_cluster_job_shutdown (void)
 /*
  * hb_add_node_to_cluster() -
  *   return: pointer to heartbeat node entry
- *
- *   host_name(in):
- *   priority(in):
  */
 static HB_NODE_ENTRY *
-hb_add_node_to_cluster (char *host_name, unsigned short priority)
+hb_add_node_to_cluster (PRM_NODE_INFO * node, unsigned short priority)
 {
   HB_NODE_ENTRY *p;
   HB_NODE_ENTRY **first_pp;
 
-  if (host_name == NULL)
+  if (node == NULL)
     {
       return NULL;
     }
@@ -2141,16 +2136,8 @@ hb_add_node_to_cluster (char *host_name, unsigned short priority)
   p = (HB_NODE_ENTRY *) malloc (sizeof (HB_NODE_ENTRY));
   if (p)
     {
-      if (strcmp (host_name, "localhost") == 0)
-	{
-	  strncpy (p->host_name, hb_Cluster->host_name,
-		   sizeof (p->host_name) - 1);
-	}
-      else
-	{
-	  strncpy (p->host_name, host_name, sizeof (p->host_name) - 1);
-	}
-      p->host_name[sizeof (p->host_name) - 1] = '\0';
+      p->node_info = *node;
+      css_ip_to_str (p->host_name, sizeof (p->host_name), node->ip);
       p->priority = priority;
       p->node_state = HA_STATE_UNKNOWN;
       p->score = 0;
@@ -2312,18 +2299,16 @@ hb_cluster_load_ping_host_list (char *ha_ping_host_list)
  *   name(in):
  */
 static HB_NODE_ENTRY *
-hb_return_node_by_name (char *name)
+hb_return_node_by_name (const PRM_NODE_INFO * node_info)
 {
   HB_NODE_ENTRY *node;
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      if (strcmp (name, node->host_name))
+      if (prm_is_same_node (node_info, &node->node_info) == true)
 	{
-	  continue;
+	  return (node);
 	}
-
-      return (node);
     }
 
   return NULL;
@@ -2336,19 +2321,17 @@ hb_return_node_by_name (char *name)
  *   name(in):
  */
 static HB_NODE_ENTRY *
-hb_return_node_by_name_except_me (char *name)
+hb_return_node_by_name_except_me (const PRM_NODE_INFO * node_info)
 {
   HB_NODE_ENTRY *node;
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      if (strcmp (name, node->host_name) ||
-	  (strcmp (name, hb_Cluster->host_name) == 0))
+      if (prm_is_same_node (node_info, &node->node_info) == true &&
+	  prm_is_same_node (node_info, &hb_Cluster->my_node_info) == false)
 	{
-	  continue;
+	  return (node);
 	}
-
-      return (node);
     }
 
   return NULL;
@@ -2363,47 +2346,29 @@ hb_return_node_by_name_except_me (char *name)
 static int
 hb_cluster_load_group_and_node_list ()
 {
-  int priority, num_nodes;
-  char tmp_string[LINE_MAX];
-  char *p, *savep;
   HB_NODE_ENTRY *node;
-  const char *ha_node_list = prm_get_string_value (PRM_ID_HA_NODE_LIST);
-  const char *ha_replica_list = prm_get_string_value (PRM_ID_HA_REPLICA_LIST);
+  PRM_NODE_LIST ha_node_list;
+  PRM_NODE_LIST ha_replica_list;
+  int i;
 
-  if (ha_node_list == NULL)
-    {
-      er_log_debug (ARG_FILE_LINE,
-		    "invalid ha_node_list. (ha_node_list:NULL).\n");
-      return ER_FAILED;
-    }
+  prm_get_ha_node_list (&ha_node_list);
+  prm_get_ha_replica_list (&ha_replica_list);
 
   hb_Cluster->myself = NULL;
 
-  strncpy (tmp_string, ha_node_list, LINE_MAX);
-  tmp_string[LINE_MAX - 1] = '\0';
-  for (priority = 0, p = strtok_r (tmp_string, "@", &savep);
-       p; priority++, p = strtok_r (NULL, " ,:", &savep))
+  strncpy (hb_Cluster->group_id, ha_node_list.hb_group_id,
+	   sizeof (hb_Cluster->group_id) - 1);
+  hb_Cluster->group_id[sizeof (hb_Cluster->group_id) - 1] = '\0';
+
+  for (i = 0; i < ha_node_list.num_nodes; i++)
     {
-
-      if (priority == 0)
+      node = hb_add_node_to_cluster (&ha_node_list.nodes[i], i + 1);
+      if (node)
 	{
-	  /* TODO : trim group id */
-	  /* set heartbeat group id */
-	  strncpy (hb_Cluster->group_id, p,
-		   sizeof (hb_Cluster->group_id) - 1);
-	  hb_Cluster->group_id[sizeof (hb_Cluster->group_id) - 1] = '\0';
-
-	}
-      else
-	{
-	  /* TODO : trim node name */
-	  node = hb_add_node_to_cluster (p, (priority));
-	  if (node)
+	  if (prm_is_same_node (&node->node_info,
+				&hb_Cluster->my_node_info) == true)
 	    {
-	      if (strcmp (node->host_name, hb_Cluster->host_name) == 0)
-		{
-		  hb_Cluster->myself = node;
-		}
+	      hb_Cluster->myself = node;
 	    }
 	}
     }
@@ -2415,37 +2380,24 @@ hb_cluster_load_group_and_node_list ()
 		    "myself should be in the ha_replica_list. \n");
       return ER_FAILED;
     }
-  num_nodes = priority;
 
-  if (ha_replica_list)
+  if (ha_replica_list.num_nodes > 0)
     {
-      strncpy (tmp_string, ha_replica_list, LINE_MAX);
-      tmp_string[LINE_MAX - 1] = '\0';
-    }
-  else
-    {
-      tmp_string[0] = '\0';
-    }
-
-  for (priority = 0, p = strtok_r (tmp_string, "@", &savep);
-       p; priority++, p = strtok_r (NULL, " ,:", &savep))
-    {
-
-      if (priority == 0)
+      if (strcmp (hb_Cluster->group_id, ha_replica_list.hb_group_id) != 0)
 	{
-	  if (strcmp (hb_Cluster->group_id, p) != 0)
-	    {
-	      er_log_debug (ARG_FILE_LINE,
-			    "different group id ('ha_node_list', 'ha_replica_list') \n");
-	      return ER_FAILED;
-	    }
+	  er_log_debug (ARG_FILE_LINE,
+			"different group id ('ha_node_list', 'ha_replica_list') \n");
+	  return ER_FAILED;
 	}
-      else
+
+      for (i = 0; i < ha_replica_list.num_nodes; i++)
 	{
-	  node = hb_add_node_to_cluster (p, HB_REPLICA_PRIORITY);
+	  node = hb_add_node_to_cluster (&ha_replica_list.nodes[i],
+					 HB_REPLICA_PRIORITY);
 	  if (node)
 	    {
-	      if (strcmp (node->host_name, hb_Cluster->host_name) == 0)
+	      if (prm_is_same_node (&node->node_info,
+				    &hb_Cluster->my_node_info) == true)
 		{
 		  hb_Cluster->myself = node;
 		  hb_Cluster->node_state = HA_STATE_REPLICA;
@@ -2460,7 +2412,7 @@ hb_cluster_load_group_and_node_list ()
       return ER_FAILED;
     }
 
-  return num_nodes + priority;
+  return ha_node_list.num_nodes + ha_replica_list.num_nodes;
 }
 
 /*
@@ -2485,10 +2437,11 @@ make_shard_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
   CCI_SHARD_GROUPID_INFO *groupid_info = NULL;
   char global_dbname[RYE_SHD_MGMT_TABLE_DBNAME_SIZE];
   short nodeid = 0;
-  unsigned char shard_mgmt_ip[4];
+  const unsigned char *shard_mgmt_ip;
   int shard_mgmt_port;
   int error = NO_ERROR;
   int i;
+  PRM_NODE_INFO shard_mgmt_node_info;
 
   /* init out-param */
   shard_info->groupid_bitmap_size = -1;
@@ -2496,7 +2449,7 @@ make_shard_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
   shard_info->nodeid = -1;
 
   if (master_shm_get_shard_mgmt_info (local_dbname, global_dbname, &nodeid,
-				      shard_mgmt_ip, &shard_mgmt_port) < 0)
+				      &shard_mgmt_node_info) < 0)
     {
       error = ER_GENERIC_ERROR;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
@@ -2504,6 +2457,9 @@ make_shard_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
       return error;
     }
 
+  /* TODO: cgkang */
+  shard_mgmt_ip = (const unsigned char *) &shard_mgmt_node_info.ip;
+  shard_mgmt_port = shard_mgmt_node_info.port;
   snprintf (url, sizeof (url),
 	    "cci:rye://%d.%d.%d.%d:%d/%s:dba/rw?queryTimeout=1000",
 	    shard_mgmt_ip[0], shard_mgmt_ip[1], shard_mgmt_ip[2],
@@ -3490,21 +3446,9 @@ hb_resource_job_reload_nodes (UNUSED_ARG HB_JOB_ARG * arg)
 {
   HA_CONF *ha_conf = NULL;
   int error = NO_ERROR;
-  RYE_STRING removed_hosts;
-  char **hosts = NULL;
+  PRM_NODE_LIST removed_nodes;
 
-  error = rye_init_string (&removed_hosts,
-			   MAXHOSTNAMELEN * (hb_Cluster->num_nodes + 5));
-  if (error < 0)
-    {
-      error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, MAXHOSTNAMELEN * (hb_Cluster->num_nodes + 5));
-
-      return;
-    }
-
-  error = hb_reload_config (&removed_hosts);
+  error = hb_reload_config (&removed_nodes);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3530,19 +3474,15 @@ hb_resource_job_reload_nodes (UNUSED_ARG HB_JOB_ARG * arg)
       GOTO_EXIT_ON_ERROR;
     }
 
-  hosts = rye_split_string (&removed_hosts, ",");
-  if (hosts != NULL)
+  error = hb_remove_copylog (ha_conf, &removed_nodes);
+  if (error != NO_ERROR)
     {
-      error = hb_remove_copylog (ha_conf, hosts);
-      if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
-      error = hb_remove_catalog_info (ha_conf, hosts);
-      if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+      GOTO_EXIT_ON_ERROR;
+    }
+  error = hb_remove_catalog_info (ha_conf, &removed_nodes);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
     }
 
   error = hb_process_start (ha_conf);
@@ -3551,13 +3491,6 @@ hb_resource_job_reload_nodes (UNUSED_ARG HB_JOB_ARG * arg)
       GOTO_EXIT_ON_ERROR;
     }
 
-  rye_free_string (&removed_hosts);
-
-  if (hosts != NULL)
-    {
-      rye_free_string_array (hosts);
-      hosts = NULL;
-    }
   if (ha_conf != NULL)
     {
       util_free_ha_conf (ha_conf);
@@ -3570,12 +3503,6 @@ hb_resource_job_reload_nodes (UNUSED_ARG HB_JOB_ARG * arg)
 exit_on_error:
   assert (error != NO_ERROR);
 
-  rye_free_string (&removed_hosts);
-  if (hosts != NULL)
-    {
-      rye_free_string_array (hosts);
-      hosts = NULL;
-    }
   if (ha_conf != NULL)
     {
       util_free_ha_conf (ha_conf);
@@ -4787,7 +4714,7 @@ static int
 hb_cluster_initialize ()
 {
   struct sockaddr_in udp_saddr;
-  struct in_addr node_addr;
+  PRM_NODE_INFO my_node_info;
 
   if (hb_Cluster == NULL)
     {
@@ -4799,11 +4726,13 @@ hb_cluster_initialize ()
 	  return ER_OUT_OF_VIRTUAL_MEMORY;
 	}
 
+      memset (hb_Cluster, 0, sizeof (HB_CLUSTER));
+
       pthread_mutex_init (&hb_Cluster->lock, NULL);
     }
 
-  node_addr.s_addr = css_host_ip_addr ();
-  if (node_addr.s_addr == INADDR_NONE)
+  my_node_info = prm_get_myself_node_info ();
+  if (my_node_info.ip == INADDR_NONE)
     {
       er_log_debug (ARG_FILE_LINE, "Failed to resolve IP address");
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -4817,9 +4746,9 @@ hb_cluster_initialize ()
   hb_Cluster->is_isolated = false;
   hb_Cluster->is_ping_check_enabled = true;
   hb_Cluster->sfd = INVALID_SOCKET;
-  strncpy (hb_Cluster->host_name, inet_ntoa (node_addr),
-	   sizeof (hb_Cluster->host_name) - 1);
-  hb_Cluster->host_name[sizeof (hb_Cluster->host_name) - 1] = '\0';
+  hb_Cluster->my_node_info = my_node_info;
+  css_ip_to_str (hb_Cluster->my_host_name, sizeof (hb_Cluster->my_host_name),
+		 my_node_info.ip);
   if (prm_get_integer_value (PRM_ID_HA_MODE) == HA_MODE_REPLICA)
     {
       hb_Cluster->node_state = HA_STATE_REPLICA;
@@ -5451,12 +5380,13 @@ hb_cluster_cleanup (void)
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      if (strcmp (hb_Cluster->host_name, node->host_name) == 0)
+      if (prm_is_same_node (&hb_Cluster->my_node_info,
+			    &node->node_info) == true)
 	{
 	  continue;
 	}
 
-      hb_cluster_send_heartbeat (true, node->host_name);
+      hb_cluster_send_heartbeat (true, &node->node_info);
       node->heartbeat_gap++;
     }
 
@@ -5556,14 +5486,15 @@ hb_ping_result_string (int ping_result)
  *  num_removed_hosts(out):
  */
 static int
-hb_reload_config (RYE_STRING * removed_hosts)
+hb_reload_config (PRM_NODE_LIST * rm_modes)
 {
   int old_num_nodes, old_num_ping_hosts, error;
   HB_NODE_ENTRY *old_nodes;
   HB_NODE_ENTRY *old_node, *old_myself, *old_master, *new_node;
   HB_PING_HOST_ENTRY *old_ping_hosts;
   bool found_node = false;
-  int not_found_count;
+
+  rm_modes->num_nodes = 0;
 
   if (hb_Cluster == NULL)
     {
@@ -5608,8 +5539,8 @@ hb_reload_config (RYE_STRING * removed_hosts)
   hb_Cluster->num_nodes = hb_cluster_load_group_and_node_list ();
 
   if (hb_Cluster->num_nodes < 1 ||
-      (hb_Cluster->master
-       && hb_return_node_by_name (hb_Cluster->master->host_name) == NULL))
+      (hb_Cluster->master &&
+       hb_return_node_by_name (&hb_Cluster->master->node_info) == NULL))
     {
       error = ER_PRM_BAD_VALUE;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
@@ -5619,13 +5550,13 @@ hb_reload_config (RYE_STRING * removed_hosts)
     }
 
   /* find removed nodes */
-  not_found_count = 0;
   for (old_node = old_nodes; old_node; old_node = old_node->next)
     {
       found_node = false;
       for (new_node = hb_Cluster->nodes; new_node; new_node = new_node->next)
 	{
-	  if (strcmp (new_node->host_name, old_node->host_name) == 0)
+	  if (prm_is_same_node (&new_node->node_info,
+				&old_node->node_info) == true)
 	    {
 	      found_node = true;
 	      break;
@@ -5635,20 +5566,8 @@ hb_reload_config (RYE_STRING * removed_hosts)
       if (found_node == false)
 	{
 	  /* append remove node list */
-	  if (not_found_count != 0)
-	    {
-	      (void) rye_append_string (removed_hosts, ",");
-	    }
-	  error = rye_append_string (removed_hosts, old_node->host_name);
-	  if (error < 0)
-	    {
-	      error = ER_GENERIC_ERROR;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		      "removed hosts array is exceeded");
-
-	      goto reconfig_error;
-	    }
-	  not_found_count++;
+	  rm_modes->nodes[rm_modes->num_nodes] = old_node->node_info;
+	  rm_modes->num_nodes++;
 	}
     }
 
@@ -5656,12 +5575,14 @@ hb_reload_config (RYE_STRING * removed_hosts)
     {
       for (old_node = old_nodes; old_node; old_node = old_node->next)
 	{
-	  if (strcmp (new_node->host_name, old_node->host_name) != 0)
+	  if (prm_is_same_node (&new_node->node_info,
+				&old_node->node_info) == false)
 	    {
 	      continue;
 	    }
-	  if (old_master
-	      && strcmp (new_node->host_name, old_master->host_name) == 0)
+	  if (old_master &&
+	      prm_is_same_node (&new_node->node_info,
+				&old_master->node_info) == true)
 	    {
 	      hb_Cluster->master = new_node;
 	    }
@@ -5674,7 +5595,7 @@ hb_reload_config (RYE_STRING * removed_hosts)
 	    old_node->last_recv_hbtime.tv_usec;
 
 	  /* mark node wouldn't deregister */
-	  old_node->host_name[0] = '\0';
+	  old_node->node_info.ip = INADDR_NONE;
 	}
     }
 
@@ -5702,7 +5623,7 @@ reconfig_error:
   er_log_debug (ARG_FILE_LINE, "reconfigure heartebat failed. "
 		"(num_nodes:%d, master:{%s}).\n",
 		hb_Cluster->num_nodes,
-		(hb_Cluster->master) ? hb_Cluster->master->host_name : "-");
+		(hb_Cluster->master ? hb_Cluster->master->host_name : "-"));
 
 /* restore ping hosts */
   hb_Cluster->num_ping_hosts = old_num_ping_hosts;
@@ -5913,7 +5834,7 @@ hb_get_node_info_string (bool verbose_yn)
   last = p + buf_size;
 
   p += snprintf (p, MAX ((last - p), 0), HA_NODE_INFO_FORMAT_STRING,
-		 hb_Cluster->host_name,
+		 hb_Cluster->my_host_name,
 		 css_ha_state_string (hb_Cluster->node_state));
 
   for (node = hb_Cluster->nodes; node; node = node->next)
@@ -6440,7 +6361,7 @@ hb_process_start (const HA_CONF * ha_conf)
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = hb_repl_start (ha_conf, NULL, NULL);
+  error = hb_repl_start (ha_conf);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -6489,7 +6410,7 @@ hb_server_start (const HA_CONF * ha_conf, char *db_name)
 }
 
 static int
-hb_remove_copylog (const HA_CONF * ha_conf, char **removed_hosts)
+hb_remove_copylog (const HA_CONF * ha_conf, const PRM_NODE_LIST * rm_nodes)
 {
   int i, j;
   char **dbs;
@@ -6499,11 +6420,13 @@ hb_remove_copylog (const HA_CONF * ha_conf, char **removed_hosts)
   dbs = ha_conf->db_names;
   for (i = 0; dbs[i] != NULL; i++)
     {
-      for (j = 0; removed_hosts[j] != NULL; j++)
+      for (j = 0; j < rm_nodes->num_nodes; j++)
 	{
+	  char host[256];
+	  css_ip_to_str (host, sizeof (host), rm_nodes->nodes[j].ip);
 	  ha_make_log_path (log_path, sizeof (log_path),
 			    ha_conf->node_conf[0].copy_log_base, dbs[i],
-			    removed_hosts[j]);
+			    host);
 	  assert (strlen (log_path) > 0);
 	  fileio_make_log_active_name (active_name, log_path, dbs[i]);
 
@@ -6552,7 +6475,8 @@ hb_remove_host_from_catalog (CCI_CONN * conn, const char *removed_host)
 }
 
 static int
-hb_remove_catalog_info (const HA_CONF * ha_conf, char **removed_hosts)
+hb_remove_catalog_info (const HA_CONF * ha_conf,
+			const PRM_NODE_LIST * rm_nodes)
 {
   int error = NO_ERROR;
   int i, j;
@@ -6597,9 +6521,11 @@ hb_remove_catalog_info (const HA_CONF * ha_conf, char **removed_hosts)
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-      for (j = 0; error == NO_ERROR && removed_hosts[j] != NULL; j++)
+      for (j = 0; error == NO_ERROR && j < rm_nodes->num_nodes; j++)
 	{
-	  error = hb_remove_host_from_catalog (&conn, removed_hosts[j]);
+	  char host[256];
+	  css_ip_to_str (host, sizeof (host), rm_nodes->nodes[j].ip);
+	  error = hb_remove_host_from_catalog (&conn, host);
 	}
       if (error == NO_ERROR)
 	{
@@ -6632,8 +6558,7 @@ exit_on_error:
  *
  */
 static int
-hb_repl_start (const HA_CONF * ha_conf, const char *db_name,
-	       const char *node_name)
+hb_repl_start (const HA_CONF * ha_conf)
 {
   HBP_PROC_REGISTER proc_reg;
   int num_db_found = 0, num_node_found = 0;
@@ -6647,29 +6572,23 @@ hb_repl_start (const HA_CONF * ha_conf, const char *db_name,
   nc = ha_conf->node_conf;
   for (i = 0; dbs[i] != NULL; i++)
     {
-      if (db_name != NULL && strcmp (db_name, dbs[i]))
-	{
-	  continue;
-	}
       num_db_found++;
 
       for (j = 0; j < num_nodes; j++)
 	{
-	  if (node_name != NULL && strcmp (nc[j].node_name, node_name) != 0)
-	    {
-	      continue;
-	    }
-	  if (util_is_localhost (nc[j].node_name))
+	  char ip_str[256];
+
+	  if (prm_is_myself_node_info (&nc[j].node))
 	    {
 	      continue;
 	    }
 	  num_node_found++;
 
 
+	  css_ip_to_str (ip_str, sizeof (ip_str), nc[j].node.ip);
 	  error = hb_make_hbp_register (&proc_reg, ha_conf,
 					HB_PTYPE_REPLICATION,
-					HB_PCMD_START, dbs[i],
-					nc[j].node_name);
+					HB_PCMD_START, dbs[i], ip_str);
 	  if (error != NO_ERROR)
 	    {
 	      return error;
@@ -6995,7 +6914,7 @@ hb_help_sprint_nodes_info (char *buffer, int max_length)
   p +=
     snprintf (p, MAX ((last - p), 0),
 	      " * group_id : %s   host_name : %s   state : %s \n",
-	      hb_Cluster->group_id, hb_Cluster->host_name,
+	      hb_Cluster->group_id, hb_Cluster->my_host_name,
 	      css_ha_state_string (hb_Cluster->node_state));
   p +=
     snprintf (p, MAX ((last - p), 0),
@@ -7116,7 +7035,7 @@ hb_check_request_eligibility (SOCKET sd, int *result)
   *result = HB_HC_UNAUTHORIZED;
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      node_addr.s_addr = hostname_to_ip (node->host_name);
+      node_addr.s_addr = node->node_info.ip;
       if (node_addr.s_addr == INADDR_NONE)
 	{
 	  er_log_debug (ARG_FILE_LINE,
@@ -7346,7 +7265,7 @@ hb_cluster_set_node_state (HB_NODE_ENTRY * node, HA_STATE node_state)
   /* 1. change shm node state */
   if (node->node_state != node_state)
     {
-      master_shm_set_node_state (node->host_name, node_state);
+      master_shm_set_node_state (&node->node_info, node_state);
     }
 
   /* 2. update node's state */
@@ -7357,7 +7276,7 @@ static void
 hb_cluster_set_node_version (HB_NODE_ENTRY * node,
 			     const RYE_VERSION * node_version)
 {
-  master_shm_set_node_version (node->host_name, node_version);
+  master_shm_set_node_version (&node->node_info, node_version);
   node->node_version = *node_version;
 }
 
@@ -7375,9 +7294,7 @@ hb_shm_reset_hb_node (void)
   num_nodes = 0;
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      strncpy (ha_nodes[num_nodes].host_name, node->host_name,
-	       sizeof (ha_nodes[num_nodes].host_name));
-
+      ha_nodes[num_nodes].node_info = node->node_info;
       ha_nodes[num_nodes].node_state = node->node_state;
       ha_nodes[num_nodes].priority = node->priority;
 

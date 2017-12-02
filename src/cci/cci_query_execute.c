@@ -2933,7 +2933,7 @@ qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
 
 int
 qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
-			  const char *host_ip, int state)
+			  in_addr_t ip, int port, int state)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_NOTIFY_HA_AGENT_STATE;
@@ -2948,7 +2948,8 @@ qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
   net_buf_init (&net_buf);
 
   net_buf_cp_str (&net_buf, &func_code, 1);
-  ADD_ARG_STR (&net_buf, host_ip, strlen (host_ip) + 1);
+  ADD_ARG_INT (&net_buf, ip);
+  ADD_ARG_INT (&net_buf, port);
   ADD_ARG_INT (&net_buf, state);
   ADD_ARG_INT (&net_buf, con_handle->autocommit_mode);
 

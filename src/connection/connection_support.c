@@ -1675,13 +1675,13 @@ CSS_CONN_ENTRY *
 css_register_to_master (HB_PROC_TYPE type,
 			const char *server_name, const char *log_path)
 {
-  const char *hname = LOCALHOST;
   CSS_CONN_ENTRY *conn;
   unsigned short rid;
   int response;
   int css_error;
   char *packed_name = NULL;
   int name_length;
+  PRM_NODE_INFO node_info = prm_get_myself_node_info ();
 
   conn = css_make_conn (INVALID_SOCKET);
   if (conn == NULL)
@@ -1696,7 +1696,7 @@ css_register_to_master (HB_PROC_TYPE type,
 						      type,
 						      server_name, log_path);
 #if defined(SERVER_MODE)
-  css_error = css_common_connect_sr (conn, &rid, hname,
+  css_error = css_common_connect_sr (conn, &rid, &node_info,
 				     MASTER_CONN_TYPE_HB_PROC,
 				     packed_name, name_length);
   if (css_error == NO_ERRORS)
@@ -1706,7 +1706,8 @@ css_register_to_master (HB_PROC_TYPE type,
 						    sizeof (int));
     }
 #else
-  css_error = css_common_connect_cl (hname, conn, MASTER_CONN_TYPE_HB_PROC,
+  css_error = css_common_connect_cl (&node_info, conn,
+				     MASTER_CONN_TYPE_HB_PROC,
 				     NULL, packed_name, name_length,
 				     0, &rid, true);
   if (css_error == NO_ERRORS)

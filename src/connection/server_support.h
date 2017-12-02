@@ -78,7 +78,7 @@ extern int css_check_ha_server_state_for_client (THREAD_ENTRY * thread_p,
 extern int css_change_ha_server_state (THREAD_ENTRY * thread_p,
 				       HA_STATE req_server_state, bool force);
 extern int css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
-				      const char *host_ip,
+				      const PRM_NODE_INFO * node_info,
 				      HA_APPLY_STATE state);
 extern THREAD_RET_T THREAD_CALLING_CONVENTION
 css_connection_handler_thread (void *arg_p);

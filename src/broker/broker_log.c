@@ -46,7 +46,7 @@ static char *make_broker_log_filename (char *buf, size_t buf_size,
 				       const char *br_name, int port);
 static void br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 				   struct timeval *logtime,
-				   const unsigned char *clt_ip,
+				   in_addr_t clt_ip,
 				   const char *fmt, va_list ap);
 static const char *br_log_severity_str (T_BROKER_LOG_SEVERITY severity);
 static void br_log_end (void);
@@ -93,7 +93,7 @@ br_log_check ()
 }
 
 void
-br_log_write (T_BROKER_LOG_SEVERITY severity, const unsigned char *clt_ip,
+br_log_write (T_BROKER_LOG_SEVERITY severity, in_addr_t clt_ip,
 	      const char *fmt, ...)
 {
   struct timeval logtime;
@@ -134,8 +134,7 @@ br_log_hang_time ()
 static void
 br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 		       UNUSED_ARG struct timeval *logtime,
-		       const unsigned char *clt_ip,
-		       const char *fmt, va_list ap)
+		       in_addr_t clt_ip, const char *fmt, va_list ap)
 {
   char time_str[256];
   char clt_ip_str[64];
@@ -147,7 +146,7 @@ br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 
   if (br_log_fp != NULL)
     {
-      if (clt_ip == NULL)
+      if (clt_ip == INADDR_NONE)
 	{
 	  clt_ip_str[0] = '\0';
 	}

@@ -121,17 +121,20 @@ css_set_pipe_signal (void)
  * css_client_init() - initialize the network portion of the client interface
  */
 int
-css_client_init (const char *server_name, const char *host_name)
+css_client_init (const char *server_name, const PRM_NODE_INFO * node_info)
 {
   CSS_CONN_ENTRY *conn;
   int error = NO_ERROR;
+  char hostname[256];
 
   css_set_pipe_signal ();
 
-  conn = css_connect_to_rye_server (host_name, server_name);
+  prm_node_info_to_str (hostname, sizeof (hostname), node_info);
+
+  conn = css_connect_to_rye_server (node_info, server_name);
   if (conn != NULL)
     {
-      css_queue_connection (conn, host_name, &css_Client_anchor);
+      css_queue_connection (conn, hostname, &css_Client_anchor);
     }
   else
     {
@@ -140,7 +143,7 @@ css_client_init (const char *server_name, const char *host_name)
 	{
 	  error = ER_NET_CANT_CONNECT_SERVER;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
-		  server_name, host_name);
+		  server_name, hostname);
 	}
     }
 

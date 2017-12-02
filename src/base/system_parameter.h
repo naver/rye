@@ -42,6 +42,8 @@
 #define PRM_HB_MAX_GROUP_ID_LEN		(64)
 #define PRM_MAX_HA_NODE_LIST		(32)
 
+#define MAX_NODE_INFO_STR_LEN		(32)
+
 typedef enum
 {
   PRM_ERR_NO_ERROR = NO_ERROR,
@@ -270,12 +272,14 @@ struct sysprm_assign_value
   SYSPRM_ASSIGN_VALUE *next;
 };
 
+#define PRM_NULL_NODE_INFO		{ INADDR_NONE, 0 }
 typedef struct
 {
-  unsigned int ip;
+  in_addr_t ip;
   int port;
 } PRM_NODE_INFO;
 
+#define PRM_EMPTY_NODE_LIST	{ "", 0, { PRM_NULL_NODE_INFO } }
 typedef struct
 {
   char hb_group_id[PRM_HB_MAX_GROUP_ID_LEN];
@@ -392,5 +396,18 @@ extern int sysprm_set_error (SYSPRM_ERR rc, const char *data);
 extern void prm_get_ha_node_list (PRM_NODE_LIST * cp_node_list);
 extern void prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list);
 extern unsigned int prm_get_ha_node_myself (void);
+extern PRM_NODE_INFO prm_get_null_node_info (void);
+extern PRM_NODE_INFO prm_get_myself_node_info (void);
+extern void prm_node_info_to_str (char *buf, int size,
+				  const PRM_NODE_INFO * node_info);
+
+extern int prm_split_node_info (PRM_NODE_LIST * node_list,
+				const char *node_list_str,
+				bool include_local_host);
+extern bool prm_is_myself_node_info (const PRM_NODE_INFO * node_info);
+extern bool prm_is_same_node (const PRM_NODE_INFO * node1,
+			      const PRM_NODE_INFO * node2);
+extern void prm_set_node_info (PRM_NODE_INFO *node_info,
+			       in_addr_t ip, int port);
 
 #endif /* _SYSTEM_PARAMETER_H_ */

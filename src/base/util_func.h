@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <math.h>
 
+#include "system_parameter.h"
+
 #define UTIL_PID_ENVVAR_NAME         "UTIL_PID"
 #define infinity()     (HUGE_VAL)
 
@@ -54,6 +56,8 @@ extern void util_disarm_signal_handlers (void);
 #endif
 extern char **util_split_string (const char *str, const char *delim);
 extern void util_free_string_array (char **array);
+extern char **util_node_info_to_string_array (PRM_NODE_LIST * node_list);
+
 extern time_t util_str_to_time_since_epoch (char *str);
 
 extern int util_log_write_result (int error);

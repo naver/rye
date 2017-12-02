@@ -40,7 +40,7 @@ struct t_max_heap_node
   int priority;
   SOCKET clt_sock_fd;
   struct timeval recv_time;
-  unsigned char ip_addr[4];
+  in_addr_t ip;
   unsigned short port;
   char clt_type;
   RYE_VERSION clt_version;

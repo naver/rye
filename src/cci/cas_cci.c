@@ -54,6 +54,7 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 /************************************************************************
  * OTHER IMPORTED HEADER FILES                                          *
@@ -2565,6 +2566,11 @@ cci_notify_ha_agent_state (CCI_CONN * conn, const char *host_ip, int state)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
+  in_addr_t ip;
+  int port;
+
+  ip = inet_addr (host_ip);
+  port = 0;
 
   error = CON_API_PRE (conn, NULL, &con_handle, 0);
   if (error < 0)
@@ -2579,7 +2585,7 @@ cci_notify_ha_agent_state (CCI_CONN * conn, const char *host_ip, int state)
 
   if (error == CCI_ER_NO_ERROR)
     {
-      error = qe_notify_ha_agent_state (con_handle, host_ip, state);
+      error = qe_notify_ha_agent_state (con_handle, ip, port, state);
     }
 
   CON_STMT_API_POST (conn, NULL, con_handle, error);

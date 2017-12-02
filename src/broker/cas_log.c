@@ -595,7 +595,7 @@ cas_sql_log_query_cancel ()
       tv.tv_sec = query_Cancel_time / 1000;
       tv.tv_usec = (query_Cancel_time % 1000) * 1000;
 
-      ut_get_ipv4_string (ip_str, sizeof (ip_str), as_info->cas_clt_ip);
+      ut_get_ipv4_string (ip_str, sizeof (ip_str), as_info->cas_clt_ip_addr);
 
       query_Cancel_time = 0;
 
@@ -626,7 +626,7 @@ cas_log_write_string (T_CAS_LOG_TYPE cas_log_type, char *value,
 }
 
 int
-cas_access_log (struct timeval *start_time, int as_index, int client_ip_addr,
+cas_access_log (struct timeval *start_time, int as_index, in_addr_t client_ip,
 		char *dbname, char *dbuser, ACCESS_LOG_TYPE log_type)
 {
   char clt_ip_str[16];
@@ -647,8 +647,7 @@ cas_access_log (struct timeval *start_time, int as_index, int client_ip_addr,
       access_type_str = (log_type == NEW_CONNECTION ? "NEW" : "OLD");
     }
 
-  ut_get_ipv4_string (clt_ip_str, sizeof (clt_ip_str),
-		      (unsigned char *) (&client_ip_addr));
+  ut_get_ipv4_string (clt_ip_str, sizeof (clt_ip_str), client_ip);
 
   cas_log_write (cas_log_type,
 		 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_LOG_END,
