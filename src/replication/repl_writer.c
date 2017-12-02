@@ -292,8 +292,6 @@ cirp_final_writer (CIRP_WRITER_INFO * writer)
       return NO_ERROR;
     }
 
-  pthread_mutex_destroy (&writer->lock);
-
   if (writer->hdr_page != NULL)
     {
       free_and_init (writer->hdr_page);
@@ -301,8 +299,12 @@ cirp_final_writer (CIRP_WRITER_INFO * writer)
   writer->reader_count = 0;
   writer->is_archiving = false;
 
+  pthread_mutex_lock (&writer->lock);
   writer->copier_status = CIRP_AGENT_DEAD;
   writer->writer_status = CIRP_AGENT_DEAD;
+  pthread_mutex_unlock (&writer->lock);
+
+  pthread_mutex_destroy (&writer->lock);
 
   return NO_ERROR;
 }
