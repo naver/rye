@@ -107,8 +107,6 @@ CIRP_LOGWR_GLOBAL cirpwr_Gl = {
   0,
   /* num_toflush */
   0,
-  /* mode */
-  LOGWR_MODE_ASYNC,
   /* action */
   CIRPWR_ACTION_NONE,
   /* last_arv_lpageid */
@@ -360,12 +358,11 @@ exit_on_error:
  *
  *   db_name(in):
  *   log_path(in):
- *   mode(in):
  *
  * Note:
  */
 int
-cirpwr_initialize (const char *db_name, const char *log_path, int mode)
+cirpwr_initialize (const char *db_name, const char *log_path)
 {
   int log_nbuffers;
   char *at_char = NULL;
@@ -383,8 +380,6 @@ cirpwr_initialize (const char *db_name, const char *log_path, int mode)
       cirpwr_Gl.host_ip = at_char + 1;
     }
   strncpy (cirpwr_Gl.log_path, log_path, PATH_MAX - 1);
-  /* set the mode */
-  cirpwr_Gl.mode = mode;
 
   /* set the active log file path */
   fileio_make_log_active_name (cirpwr_Gl.active_name, log_path,
@@ -807,7 +802,6 @@ cirpwr_finalize (void)
       fileio_dismount (NULL, cirpwr_Gl.append_vdes);
       cirpwr_Gl.append_vdes = NULL_VOLDES;
     }
-  cirpwr_Gl.mode = LOGWR_MODE_ASYNC;
   cirpwr_Gl.action = CIRPWR_ACTION_NONE;
 
   if (cirpwr_Gl.bg_archive_info.vdes != NULL_VOLDES)
@@ -1695,7 +1689,7 @@ cirpwr_get_log_header ()
   LOGWR_CONTEXT ctx = {
     -1, 0, false
   };
-  OR_ALIGNED_BUF (OR_INT_SIZE * 2 + OR_INT64_SIZE) a_request;
+  OR_ALIGNED_BUF (OR_INT_SIZE * 3 + OR_INT64_SIZE) a_request;
   OR_ALIGNED_BUF (OR_INT_SIZE * 5 + OR_INT64_SIZE) a_reply;
   char *request, *reply;
   char *ptr;
@@ -1715,6 +1709,7 @@ cirpwr_get_log_header ()
 
   /* HEADER PAGE REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
+  ptr = or_pack_int (ptr, LOGWR_MODE_SYNC);	/* tmp_protocal */
   ptr = or_pack_int (ptr, NO_ERROR);
   ptr = or_pack_int (ptr, compressed_protocol);
 
@@ -1739,9 +1734,10 @@ cirpwr_get_log_header ()
 
   /* END REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
+  ptr = or_pack_int (ptr, LOGWR_MODE_SYNC);	/* tmp_protocal */
   /* send ER_GENERIC_ERROR to make LWT not wait for more page requests */
   ptr = or_pack_int (ptr, ER_GENERIC_ERROR);
-  ptr = or_pack_int (ptr, compressed_protocol);
+//  ptr = or_pack_int (ptr, compressed_protocol);
 
   error = net_client_get_log_header (&ctx, request,
 				     OR_ALIGNED_BUF_SIZE (a_request), reply,
@@ -1812,7 +1808,6 @@ log_copier_main (void *arg)
 	  if (error != NO_ERROR)
 	    {
 	      int recv_q_node_count, wakeup_interval = 100;
-	      struct timeval cur_time, tmp_timeval;
 	      struct timespec wakeup_time;
 
 	      m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
@@ -1829,11 +1824,9 @@ log_copier_main (void *arg)
 
 		      do
 			{
-			  gettimeofday (&cur_time, NULL);
-
-			  timeval_add_msec (&tmp_timeval, &cur_time,
-					    wakeup_interval);
-			  timeval_to_timespec (&wakeup_time, &tmp_timeval);
+			  clock_gettime (CLOCK_REALTIME, &wakeup_time);
+			  wakeup_time = timespec_add_msec (&wakeup_time,
+							   wakeup_interval);
 
 			  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
 			  pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,
@@ -2114,7 +2107,6 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
   char *ptr;
   LOG_PAGEID first_pageid_torecv;
   LOG_HEADER *log_hdr = NULL;
-  LOGWR_MODE mode, save_mode;
   int compressed_protocol;
   int error = NO_ERROR;
 
@@ -2154,13 +2146,11 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
 		"cirpwr_get_log_pages, fpageid(%lld),  compressed_protocol(%d)",
 		first_pageid_torecv, compressed_protocol);
 
-  save_mode = cirpwr_Gl.mode;
-  cirpwr_Gl.mode = mode;
-
   request = OR_ALIGNED_BUF_START (a_request);
   reply = OR_ALIGNED_BUF_START (a_reply);
 
   ptr = or_pack_int64 (request, first_pageid_torecv);
+  ptr = or_pack_int (ptr, 0);	/* tmp_protocal */
   ptr = or_pack_int (ptr, ctx_ptr->last_error);
   ptr = or_pack_int (ptr, compressed_protocol);
 
@@ -2171,8 +2161,6 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
 						  (a_request), reply,
 						  OR_ALIGNED_BUF_SIZE
 						  (a_reply));
-
-  cirpwr_Gl.mode = save_mode;
 
   return error;
 }

@@ -221,8 +221,7 @@ main (int argc, char *argv[])
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirpwr_initialize (repl_arg.db_name,
-			     repl_arg.log_path, repl_arg.mode);
+  error = cirpwr_initialize (repl_arg.db_name, repl_arg.log_path);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;

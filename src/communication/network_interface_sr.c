@@ -4724,6 +4724,7 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
   int error;
   int remote_error;
   int compressed_protocol;
+  int tmp_protocal;
 
   /* Obtain success message from the client, without blocking the
      server. */
@@ -4742,6 +4743,7 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
 
   assert (reply != NULL);
   ptr = or_unpack_int64 (reply, &first_pageid);
+  ptr = or_unpack_int (ptr, &tmp_protocal);
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);	/* ignore */
   free_and_init (reply);
@@ -5152,9 +5154,11 @@ slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
   char *ptr;
   LOG_PAGEID first_pageid;
   int error, remote_error;
+  int tmp_protocal;
   int compressed_protocol;
 
   ptr = or_unpack_int64 (request, &first_pageid);
+  ptr = or_unpack_int (ptr, &tmp_protocal);
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);
   assert (compressed_protocol == 1 || compressed_protocol == 0);
