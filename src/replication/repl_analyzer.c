@@ -1944,10 +1944,17 @@ analyzer_main (void *arg)
 	    }
 
 	  /* get the target page from log */
-	  log_buf = cirp_logpb_get_page_buffer (buf_mgr, final_lsa.pageid);
-	  if (log_buf == NULL)
+	  error = cirp_logpb_get_page_buffer (buf_mgr, &log_buf,
+					      final_lsa.pageid);
+	  if (error != NO_ERROR || log_buf == NULL)
 	    {
-	      error = er_errid ();
+	      assert (error != NO_ERROR && log_buf == NULL);
+	      if (error == NO_ERROR)
+		{
+		  error = ER_GENERIC_ERROR;
+		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+			  1, "Invalid return value");
+		}
 
 	      /* request page is greater then last_flushed_pageid.(in log_header) */
 	      if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)

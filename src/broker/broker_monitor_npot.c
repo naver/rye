@@ -319,6 +319,11 @@ init_server_monitor_item ()
       db_Stats_info[i].is_collecting_time = mnt_stats_is_collecting_time (i);
     }
 
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_SQL_TRACE_LOCK_WAITS],
+		     "sql_trace", "lock_waits");
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_SQL_TRACE_LATCH_WAITS],
+		     "sql_trace", "latch_waits");
+
 #if 1				/* csect sub-info */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_ER_LOG_FILE], "csect", "er_log_file");	/* 0 */
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_CSECT_ER_MSG_CACHE], "csect", "er_msg_cache");	/* 1 */
@@ -377,6 +382,8 @@ init_server_monitor_item ()
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DISK_PAGE_DEALLOCS],
 		     "disk", "page_deallocs");
 #endif
+  SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DISK_TEMP_EXPAND],
+		     "disk", "temp_expand");
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_FETCHES],
 		     "datapage", "fetch");

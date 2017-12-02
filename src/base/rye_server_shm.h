@@ -118,19 +118,23 @@ struct _rye_server_shm
 extern int svr_shm_initialize (const char *dbname, int max_ntrans,
 			       int server_pid);
 extern int svr_shm_get_start_time (void);
+#if 0
+extern void svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item);
+#endif
 extern void svr_shm_copy_stats (int tran_index,
 				MNT_SERVER_EXEC_STATS * to_stats);
 extern void svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats);
-extern void svr_shm_stats_counter (int tran_index, MNT_SERVER_ITEM item,
-				   INT64 value, UINT64 exec_time);
+extern void svr_shm_stats_counter_with_time (int tran_index,
+					     MNT_SERVER_ITEM item,
+					     INT64 value, UINT64 exec_time);
 extern void svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item,
 				 INT64 value);
-#if 0
 extern INT64 svr_shm_get_stats_with_time (int tran_index,
 					  MNT_SERVER_ITEM item,
 					  UINT64 * acc_time);
-#endif
+#if 0
 extern INT64 svr_shm_get_stats (int tran_index, MNT_SERVER_ITEM item);
+#endif
 extern void svr_shm_set_eof (LOG_LSA * eof);
 extern short svr_shm_get_nodeid (void);
 extern bool svr_shm_is_group_own (int gid);

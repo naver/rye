@@ -87,6 +87,10 @@
 
 typedef enum
 {
+  /* Statistics at sql trace */
+  MNT_STATS_SQL_TRACE_LOCK_WAITS,
+  MNT_STATS_SQL_TRACE_LATCH_WAITS,
+
   /* Statistics at critical section */
 #if 1				/* csect sub-info */
   MNT_STATS_CSECT_ER_LOG_FILE,	/* 0 */
@@ -141,6 +145,7 @@ typedef enum
   MNT_STATS_DISK_SECTOR_DEALLOCS,
   MNT_STATS_DISK_PAGE_ALLOCS,
   MNT_STATS_DISK_PAGE_DEALLOCS,
+  MNT_STATS_DISK_TEMP_EXPAND,
 
   /* Statistics at file io level */
   MNT_STATS_FILE_CREATES,
@@ -373,11 +378,9 @@ extern void mnt_stats_counter_with_time (THREAD_ENTRY * thread_p,
 					 UINT64 start_time);
 extern void mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
 			     INT64 value);
-#if 0
 extern INT64 mnt_get_stats_with_time (THREAD_ENTRY * thread_p,
 				      MNT_SERVER_ITEM item,
 				      UINT64 * acc_time);
-#endif
 extern INT64 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item);
 
 extern void mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS *

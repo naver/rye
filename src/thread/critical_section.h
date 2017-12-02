@@ -76,7 +76,7 @@ typedef enum
   CSECT_CSS_ACTIVE_CONN,	/* Latch for active css active conn */
   CSECT_CSS_FREE_CONN,		/* Latch for free css free conn */
   CSECT_UNKNOWN,
-  CSECT_LAST = CSECT_UNKNOWN
+  CSECT_LAST = CSECT_UNKNOWN	/* refer MNT_STATS_CSECT_WAITS_UNKNOWN */
 } CSECT_TYPE;
 
 typedef struct css_critical_section
