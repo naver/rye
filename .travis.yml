@@ -29,14 +29,18 @@ before_install:
 install: true
 
 script:
-  - if [[ "${COVERITY_SCAN_BRANCH}" == 1 ]];
-      then
-        echo "Don't build on coverty_scan branch.";
-        exit 0;
-    fi
+#  - if [[ "${COVERITY_SCAN_BRANCH}" == 1 ]];
+#      then
+#        echo "Don't build on coverty_scan branch.";
+#        exit 0;
+#    fi
 
 # Build only
-  - bash ./build.sh -m release -t x86_64 build
+  - if [[ "${COVERITY_SCAN_BRANCH}" != 1 ]];
+      then
+        bash ./build.sh -m release -t x86_64 build;
+    fi
+#  - bash ./build.sh -m release -t x86_64 build
 #  - ./autogen.sh
 #  - rm -rf Release64
 #  - mkdir Release64

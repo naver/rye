@@ -69,7 +69,6 @@
 #include "ini_parser.h"
 #include "tcp.h"
 #include "heartbeat.h"
-#include "repl_defs.h"
 #include "utility.h"
 #include "page_buffer.h"
 #if !defined (CS_MODE)
@@ -949,8 +948,8 @@ static const char *prm_rye_shm_key_default = "";
 
 int PRM_HA_MAX_LOG_APPLIER = 0;
 static int prm_ha_max_log_applier_default = 8;
-static int prm_ha_max_log_applier_lower = HA_MAX_LOG_APPLIER_LOWER;
-static int prm_ha_max_log_applier_upper = HA_MAX_LOG_APPLIER_UPPER;
+static int prm_ha_max_log_applier_lower = 2;
+static int prm_ha_max_log_applier_upper = 64;
 
 int PRM_MAX_CLIENTS = 10000;
 static int prm_max_clients_default = 100;
@@ -4159,7 +4158,6 @@ prm_print_keyword_value (char *buf, size_t len, int val,
 			     DIM (pgbuf_debug_page_validation_level_words));
     }
   else if (intl_mbs_casecmp (prm->name, PRM_NAME_HA_MODE) == 0)
-
     {
       keyvalp = prm_keyword (val, NULL, ha_mode_words, DIM (ha_mode_words));
     }

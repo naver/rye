@@ -64,8 +64,8 @@ enum hb_proc_command
   HB_PCMD_MAX
 };
 
-#define HB_PTYPE_SERVER_STR             "HA-server"
-#define HB_PTYPE_REPLICATION_STR        "HA-replication"
+#define HB_PTYPE_SERVER_STR             "rye_server"
+#define HB_PTYPE_REPLICATION_STR        "rye_repl"
 #define HB_PTYPE_STR_SZ                 (16)
 
 enum HBP_CLUSTER_MESSAGE
