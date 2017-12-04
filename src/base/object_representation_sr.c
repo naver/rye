@@ -1301,7 +1301,8 @@ or_get_constraints (OR_INDEX ** or_index, int *n_constraints, RECDES * record,
   OR_BUF buf;
   char *start, *conset, *diskcon, *disk_con_att, *ptr;
   char *valptr, *valptr1, *valptr2;
-  int vallen, vallen1, vallen2;
+  int vallen, vallen1;
+  UNUSED_VAR int vallen2;
   char *btid_string;
   int num_cons, n_atts;
   int att_id;
