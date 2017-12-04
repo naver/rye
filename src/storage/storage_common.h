@@ -264,7 +264,7 @@ typedef enum
   PAGE_BTREE_ROOT,		/* 13 b+tree index root page               */
   PAGE_BTREE,			/* 14 b+tree index page                    */
 
-  PAGE_LAST             /* 15 */
+  PAGE_LAST			/* 15 */
 } PAGE_TYPE;
 
 #define ISCAN_OID_BUFFER_SIZE \
