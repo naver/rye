@@ -185,8 +185,11 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 
   assert_release (node_header.key_cnt >= 1);
   assert (node_header.node_level == 1);
-  BTREE_CHECK_KEY_CNT (leaf_page, node_header.node_level,
-		       node_header.key_cnt);
+  if (btree_check_key_cnt (leaf_page, node_header.node_level,
+			   node_header.key_cnt) != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
 
   assert (node_header.split_info.pivot >= 0);
   assert (node_header.key_cnt > 0);
@@ -550,7 +553,11 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
       node_type = BTREE_LEAF_NODE;
     }
   key_cnt = node_header.key_cnt;
-  BTREE_CHECK_KEY_CNT (page_ptr, node_header.node_level, node_header.key_cnt);
+  if (btree_check_key_cnt
+      (page_ptr, node_header.node_level, node_header.key_cnt) != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
 
   n = spage_number_of_records (page_ptr) - 1;	/* last record position */
   split_info = node_header.split_info;
@@ -1201,7 +1208,11 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   pheader.key_cnt++;
   assert_release (pheader.key_cnt >= 1);
   assert (pheader.node_level > 1);
-  BTREE_CHECK_KEY_CNT (P, pheader.node_level, pheader.key_cnt);
+  if (btree_check_key_cnt (P, pheader.node_level, pheader.key_cnt) !=
+      NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
   assert_release (pheader.split_info.pivot >= 0);
   assert_release (pheader.key_cnt > 0);
   btree_split_next_pivot (&pheader.split_info,
@@ -1914,7 +1925,11 @@ start_point:
    */
   key_cnt += 1;
 
-  BTREE_CHECK_KEY_CNT (P, pheader.node_level, pheader.key_cnt);
+  if (btree_check_key_cnt (P, pheader.node_level, pheader.key_cnt) !=
+      NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
 
   /* there is a need to split the root, only if there is not enough space
    * for a new entry and either there are more than one record.
@@ -2030,7 +2045,11 @@ start_point:
   node_type = BTREE_NON_LEAF_NODE;
   key_cnt = pheader.key_cnt;
   assert (key_cnt >= 0);
-  BTREE_CHECK_KEY_CNT (P, pheader.node_level, pheader.key_cnt);
+  if (btree_check_key_cnt (P, pheader.node_level, pheader.key_cnt) !=
+      NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
   VPID_COPY (&next_vpid, &pheader.next_vpid);
 
   while (node_type == BTREE_NON_LEAF_NODE)
@@ -2090,7 +2109,11 @@ start_point:
       assert (key_cnt >= 0);
       /* if Q is a non leaf node, the number of keys is actually one greater */
       key_cnt = (node_type == BTREE_LEAF_NODE) ? key_cnt : key_cnt + 1;
-      BTREE_CHECK_KEY_CNT (Q, qheader.node_level, qheader.key_cnt);
+      if (btree_check_key_cnt (Q, qheader.node_level, qheader.key_cnt) !=
+	  NO_ERROR)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
 
       if (node_type == BTREE_NON_LEAF_NODE)
 	{
@@ -2269,7 +2292,12 @@ start_point:
 	pheader.node_level > 1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE;
       key_cnt = pheader.key_cnt;
       assert_release (key_cnt >= 0);
-      BTREE_CHECK_KEY_CNT (P, pheader.node_level, pheader.key_cnt);
+      if (btree_check_key_cnt (P, pheader.node_level, pheader.key_cnt) !=
+	  NO_ERROR)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
+
       VPID_COPY (&next_vpid, &pheader.next_vpid);
 
       if (node_type == BTREE_NON_LEAF_NODE)
@@ -2463,7 +2491,11 @@ start_point:
    */
   key_cnt += 1;
 
-  BTREE_CHECK_KEY_CNT (P, pheader.node_level, pheader.key_cnt);
+  if (btree_check_key_cnt (P, pheader.node_level, pheader.key_cnt) !=
+      NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
 
   /* there is a need to split the root, only if there is not enough space
    * for a new entry and either there are more than one record.
@@ -2580,7 +2612,12 @@ start_point:
   node_type = BTREE_NON_LEAF_NODE;
   key_cnt = pheader.key_cnt;
   assert_release (key_cnt >= 0);
-  BTREE_CHECK_KEY_CNT (P, pheader.node_level, pheader.key_cnt);
+  if (btree_check_key_cnt (P, pheader.node_level, pheader.key_cnt) !=
+      NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
   VPID_COPY (&next_vpid, &pheader.next_vpid);
 
   while (node_type == BTREE_NON_LEAF_NODE)
@@ -2631,7 +2668,11 @@ start_point:
       assert_release (key_cnt >= 0);
       /* if Q is a non leaf node, the number of keys is actually one greater */
       key_cnt = (node_type == BTREE_LEAF_NODE) ? key_cnt : key_cnt + 1;
-      BTREE_CHECK_KEY_CNT (Q, qheader.node_level, qheader.key_cnt);
+      if (btree_check_key_cnt (Q, qheader.node_level, qheader.key_cnt) !=
+	  NO_ERROR)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
 
       if (node_type == BTREE_NON_LEAF_NODE)
 	{
@@ -2760,7 +2801,12 @@ start_point:
 	pheader.node_level > 1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE;
       key_cnt = pheader.key_cnt;
       assert_release (key_cnt >= 0);
-      BTREE_CHECK_KEY_CNT (P, pheader.node_level, pheader.key_cnt);
+      if (btree_check_key_cnt (P, pheader.node_level, pheader.key_cnt) !=
+	  NO_ERROR)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
+
       VPID_COPY (&next_vpid, &pheader.next_vpid);
     }				/* while */
 
@@ -2919,8 +2965,12 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   assert_release (node_header.key_cnt >= 1);
 
   assert (node_header.node_level == 1);
-  BTREE_CHECK_KEY_CNT (recv->pgptr, node_header.node_level,
-		       node_header.key_cnt);
+  if (btree_check_key_cnt (recv->pgptr, node_header.node_level,
+			   node_header.key_cnt) != NO_ERROR)
+    {
+      assert (false);
+      goto error;
+    }
 
   /* update split_info */
   assert (node_header.split_info.pivot >= 0);
