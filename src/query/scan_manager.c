@@ -583,7 +583,7 @@ scan_alloc_iscan_oid_buf_list (void)
 {
   OID *oid_buf_p;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   oid_buf_p = NULL;
@@ -617,7 +617,7 @@ static void
 scan_free_iscan_oid_buf_list (OID * oid_buf_p)
 {
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&scan_Iscan_oid_buf_list_mutex);
@@ -1084,7 +1084,8 @@ scan_dbvals_to_idxkey (THREAD_ENTRY * thread_p, DB_IDXKEY * retval,
   DB_VALUE *val = NULL;
   DB_TYPE col_type, val_type;
   int common_coll = -1;
-  int idx_ncols = 0, i;
+  UNUSED_VAR int idx_ncols = 0;
+  int i;
   REGU_VARIABLE_LIST operand;
   TP_DOMAIN *idx_dom = NULL;
 

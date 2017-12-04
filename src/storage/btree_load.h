@@ -75,9 +75,6 @@
 #define BTREE_IS_VALID_KEY_LEN(key_len) \
   ((key_len) > 0 && (key_len) <= BTREE_MAX_KEYLEN)
 
-#define BTREE_CHECK_KEY_CNT(P, L, K) \
-  assert (((L) > 1 && (K) + 2 == spage_number_of_records (P)) \
-	  || ((L) == 1 && (K) + 1 == spage_number_of_records (P)));
 
 /*
  * B+tree load structures
@@ -89,6 +86,9 @@ struct btree_node
   BTREE_NODE *next;		/* Pointer to next node */
   VPID pageid;			/* Identifier of the page */
 };
+
+extern int btree_check_key_cnt (PAGE_PTR page_p, short node_level,
+				short key_cnt);
 
 extern int btree_compare_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			      const DB_IDXKEY * key1,
