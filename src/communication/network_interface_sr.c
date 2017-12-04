@@ -3516,11 +3516,14 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: fetch=%ld, ioread=%ld, iowrite=%ld (%dms)\n", indent, ' ',
-      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
-      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
-      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_IOWRITES]),
-                                    time);
+  fprintf (log_fp, "%*ctime: fetch=%ld, ioread=%ld, iowrite=%ld (%dms)\n",
+	   indent, ' ',
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOWRITES]), time);
   fprintf (log_fp, "%*cbuffer: fetch=%lld, ioread=%lld, iowrite=%lld\n",
 	   indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_FETCHES],
@@ -4742,7 +4745,6 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
   int error;
   int remote_error;
   int compressed_protocol;
-  int tmp_protocal;
 
   /* Obtain success message from the client, without blocking the
      server. */
@@ -4761,7 +4763,6 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
 
   assert (reply != NULL);
   ptr = or_unpack_int64 (reply, &first_pageid);
-  ptr = or_unpack_int (ptr, &tmp_protocal);
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);	/* ignore */
   free_and_init (reply);
@@ -5172,11 +5173,9 @@ slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
   char *ptr;
   LOG_PAGEID first_pageid;
   int error, remote_error;
-  int tmp_protocal;
   int compressed_protocol;
 
   ptr = or_unpack_int64 (request, &first_pageid);
-  ptr = or_unpack_int (ptr, &tmp_protocal);
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);
   assert (compressed_protocol == 1 || compressed_protocol == 0);

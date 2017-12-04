@@ -72,7 +72,6 @@ typedef struct
 {
   char *log_path;
   char *db_name;
-  int mode;
 } REPL_ARGUMENT;
 
 typedef struct cirp_thread_entry CIRP_THREAD_ENTRY;

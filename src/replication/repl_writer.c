@@ -1295,7 +1295,7 @@ cirpwr_flush_header_page (void)
 		cirpwr_Gl.db_name,
 		(cirpwr_Gl.host_ip != NULL) ? cirpwr_Gl.host_ip : "unknown",
 		css_ha_state_string (cirpwr_Gl.ha_info.server_state),
-		css_ha_state_string (cirpwr_Gl.ha_info.server_state));
+		css_ha_state_string (m_log_hdr->ha_info.server_state));
 
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE,
 	      1, buffer);
@@ -1691,7 +1691,7 @@ cirpwr_get_log_header ()
   LOGWR_CONTEXT ctx = {
     -1, 0, false
   };
-  OR_ALIGNED_BUF (OR_INT_SIZE * 3 + OR_INT64_SIZE) a_request;
+  OR_ALIGNED_BUF (OR_INT_SIZE * 2 + OR_INT64_SIZE) a_request;
   OR_ALIGNED_BUF (OR_INT_SIZE * 5 + OR_INT64_SIZE) a_reply;
   char *request, *reply;
   char *ptr;
@@ -1711,7 +1711,6 @@ cirpwr_get_log_header ()
 
   /* HEADER PAGE REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
-  ptr = or_pack_int (ptr, LOGWR_MODE_SYNC);	/* tmp_protocal */
   ptr = or_pack_int (ptr, NO_ERROR);
   ptr = or_pack_int (ptr, compressed_protocol);
 
@@ -1736,10 +1735,9 @@ cirpwr_get_log_header ()
 
   /* END REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
-  ptr = or_pack_int (ptr, LOGWR_MODE_SYNC);	/* tmp_protocal */
   /* send ER_GENERIC_ERROR to make LWT not wait for more page requests */
   ptr = or_pack_int (ptr, ER_GENERIC_ERROR);
-//  ptr = or_pack_int (ptr, compressed_protocol);
+  ptr = or_pack_int (ptr, compressed_protocol);
 
   error = net_client_get_log_header (&ctx, request,
 				     OR_ALIGNED_BUF_SIZE (a_request), reply,
@@ -1754,10 +1752,6 @@ cirpwr_get_log_header ()
  * log_copier_main -
  *
  * return: NO_ERROR if successful, error_code otherwise
- *
- *   db_name(in): database name to copy the log file
- *   log_path(in): file pathname to copy the log file
- *   mode(in): LOGWR_MODE_SYNC, LOGWR_MODE_ASYNC or LOGWR_MODE_SEMISYNC
  *
  * Note:
  */
@@ -1795,8 +1789,7 @@ log_copier_main (void *arg)
   assert (th_entry->th_type == CIRP_THREAD_WRITER);
 
   snprintf (err_msg, sizeof (err_msg),
-	    "Writer Start: mode(%d), last_pageid(%lld)",
-	    th_entry->arg->mode,
+	    "Writer Start: last_pageid(%lld)",
 	    (long long) cirpwr_Gl.ha_info.last_flushed_pageid);
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	  err_msg);
@@ -1914,9 +1907,8 @@ log_copier_main (void *arg)
       retry_count++;
 
       snprintf (err_msg, sizeof (err_msg),
-		"Writer Retry: mode(%d), last_pageid(%lld)",
-		th_entry->arg->mode,
-		(long long) cirpwr_Gl.ha_info.last_flushed_pageid);
+		"Writer Retry: last_pageid(%ld)",
+		cirpwr_Gl.ha_info.last_flushed_pageid);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
     }
@@ -1924,9 +1916,8 @@ log_copier_main (void *arg)
   RP_SET_AGENT_NEED_SHUTDOWN ();
   cirpwr_change_copier_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
-  snprintf (err_msg, sizeof (err_msg),
-	    "Writer Exit: mode(%d), last_pageid(%lld)", th_entry->arg->mode,
-	    (long long) cirpwr_Gl.ha_info.last_flushed_pageid);
+  snprintf (err_msg, sizeof (err_msg), "Writer Exit: last_pageid(%ld)",
+	    cirpwr_Gl.ha_info.last_flushed_pageid);
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	  err_msg);
 
@@ -2008,9 +1999,8 @@ log_writer_main (void *arg)
   RP_SET_AGENT_NEED_SHUTDOWN ();
   cirpwr_change_writer_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
-  snprintf (err_msg, sizeof (err_msg),
-	    "Flusher Exit: mode(%d), last_pageid(%lld)", th_entry->arg->mode,
-	    (long long) cirpwr_Gl.ha_info.last_flushed_pageid);
+  snprintf (err_msg, sizeof (err_msg), "Flusher Exit: last_pageid(%ld)",
+	    cirpwr_Gl.ha_info.last_flushed_pageid);
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	  err_msg);
 
@@ -2103,7 +2093,7 @@ cirpwr_get_writer_status (CIRP_WRITER_INFO * writer_info)
 static int
 cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
 {
-  OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 3) a_request;
+  OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 2) a_request;
   OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 5) a_reply;
   char *request, *reply;
   char *ptr;
@@ -2152,7 +2142,6 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
   reply = OR_ALIGNED_BUF_START (a_reply);
 
   ptr = or_pack_int64 (request, first_pageid_torecv);
-  ptr = or_pack_int (ptr, 0);	/* tmp_protocal */
   ptr = or_pack_int (ptr, ctx_ptr->last_error);
   ptr = or_pack_int (ptr, compressed_protocol);
 
@@ -2230,7 +2219,6 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
   char *ptr;
   QUERY_SERVER_REQUEST server_request;
   int server_request_num;
-  bool do_read;
   int recv_q_node_count = 0;
   struct timespec wakeup_time;
   int wakeup_interval = 100;
@@ -2259,9 +2247,8 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	}
     }
 
-  do
+  while (ctx_ptr->shutdown != true)
     {
-      do_read = false;
       CSS_NET_PACKET *recv_packet;
       RECV_Q_NODE *node;
 
@@ -2349,8 +2336,11 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	    data_recv_size = css_net_packet_get_recv_size (recv_packet, 1);
 	    if (data_recv_size < length)
 	      {
+		assert (false);
+
 		error = ER_NET_SERVER_CRASHED;
 		er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+		ctx_ptr->shutdown = true;
 	      }
 	  }
 	  break;
@@ -2387,7 +2377,6 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 	}
     }
-  while (do_read /*server_request != END_CALLBACK */ );
 
   return (error);
 }
