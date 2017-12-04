@@ -19,8 +19,8 @@ addons:
       name: "naver/rye"
       description: "Build submitted via Travis CI"
 #   notification_email: dl_oss_rye@navercorp.com
-#   build_command_prepend: "./autogen.sh"
-    build_command:   "bash ./build.sh -m release -t x86_64 build"
+    build_command_prepend: "./autogen.sh; rm -rf Release64; mkdir Release64; cd Release64; ../configure"
+    build_command:   "make"
     branch_pattern: coverity_scan
 
 before_install:
