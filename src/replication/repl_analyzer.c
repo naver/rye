@@ -559,17 +559,16 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
 	{
 	  error = ER_HA_LA_FAILED_TO_CHANGE_STATE;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
-		  css_ha_applier_state_string (analyzer->apply_state),
-		  css_ha_applier_state_string (new_state));
+		  HA_APPLY_STATE_NAME (analyzer->apply_state),
+		  HA_APPLY_STATE_NAME (new_state));
 	  GOTO_EXIT_ON_ERROR;
 	}
 
       snprintf (buffer, sizeof (buffer),
 		"change log apply state from '%s' to '%s'. "
 		"last required_lsa: %lld|%lld",
-		css_ha_applier_state_string (analyzer->
-					     apply_state),
-		css_ha_applier_state_string (new_state),
+		HA_APPLY_STATE_NAME (analyzer->apply_state),
+		HA_APPLY_STATE_NAME (new_state),
 		(long long) analyzer->ct.required_lsa.pageid,
 		(long long) analyzer->ct.required_lsa.offset);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
