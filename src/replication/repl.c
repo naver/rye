@@ -221,8 +221,7 @@ main (int argc, char *argv[])
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirpwr_initialize (repl_arg.db_name,
-			     repl_arg.log_path, repl_arg.mode);
+  error = cirpwr_initialize (repl_arg.db_name, repl_arg.log_path);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -400,8 +399,6 @@ cirp_init_repl_arg (REPL_ARGUMENT * repl_arg)
   repl_arg->log_path = NULL;
   repl_arg->db_name = NULL;
 
-  repl_arg->mode = LOGWR_MODE_SYNC;
-
   return;
 }
 
@@ -416,8 +413,6 @@ cirp_free_repl_arg (REPL_ARGUMENT * repl_arg)
 {
   RYE_FREE_MEM (repl_arg->log_path);
   RYE_FREE_MEM (repl_arg->db_name);
-
-  repl_arg->mode = -1;
 
   return;
 }
