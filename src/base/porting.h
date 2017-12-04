@@ -258,11 +258,17 @@ struct rye_string
 /* for time */
 extern INT64 timeval_diff_in_msec (const struct timeval *end_time,
 				   const struct timeval *start_time);
-extern int timeval_add_msec (struct timeval *added_time,
-			     const struct timeval *start_time, int msec);
+extern struct timeval timeval_add_msec (const struct timeval *start_time,
+					int add_msec);
 extern int timeval_to_timespec (struct timespec *to,
 				const struct timeval *from);
 extern INT64 timeval_to_msec (const struct timeval *val);
+
+extern struct timespec timespec_add_msec (const struct timespec *start_time,
+					  int add_msec);
+extern INT64 timespec_diff_in_msec (const struct timespec *end_time,
+				    const struct timespec *start_time);
+extern INT64 timespec_to_msec (const struct timespec *val);
 
 /* for stream file */
 extern FILE *port_open_memstream (char **ptr, size_t * sizeloc);

@@ -615,31 +615,24 @@ timeval_diff_in_msec (const struct timeval *end_time,
 
 /*
  * timeval_add_msec -
- *   return: 0
+ *   return: added timeval
  *
- *   addted_time(out):
  *   start_time(in):
  *   msec(in):
  */
-int
-timeval_add_msec (struct timeval *added_time,
-		  const struct timeval *start_time, int msec)
+struct timeval
+timeval_add_msec (const struct timeval *start_time, int add_msec)
 {
-  int usec;
+  struct timeval added_time;
+  int add_usec;
 
-  if (added_time == start_time)
-    {
-      assert (false);
-      return -1;
-    }
+  added_time.tv_sec = start_time->tv_sec + add_msec / 1000LL;
+  add_usec = (add_msec % 1000LL) * 1000LL;
 
-  added_time->tv_sec = start_time->tv_sec + msec / 1000LL;
-  usec = (msec % 1000LL) * 1000LL;
+  added_time.tv_sec += (start_time->tv_usec + add_usec) / 1000000LL;
+  added_time.tv_usec = (start_time->tv_usec + add_usec) % 1000000LL;
 
-  added_time->tv_sec += (start_time->tv_usec + usec) / 1000000LL;
-  added_time->tv_usec = (start_time->tv_usec + usec) % 1000000LL;
-
-  return 0;
+  return added_time;
 }
 
 /*
@@ -678,6 +671,63 @@ timeval_to_msec (const struct timeval * val)
   return time_in_msecs;
 }
 
+/*
+ * timespec_add_msec -
+ *   return: 0
+ *
+ *   addted_time(out):
+ *   start_time(in):
+ *   msec(in):
+ */
+struct timespec
+timespec_add_msec (const struct timespec *start_time, int add_msec)
+{
+  struct timespec added_time;
+  long add_nsec;
+
+  added_time.tv_sec = start_time->tv_sec + add_msec / 1000LL;
+  add_nsec = (add_msec % 1000LL) * 1000000LL;
+
+  added_time.tv_sec += (start_time->tv_nsec + add_nsec) / 1000000000LL;
+  added_time.tv_nsec = (start_time->tv_nsec + add_nsec) % 1000000000LL;
+
+  return added_time;
+}
+
+/*
+ * timespec_diff_in_msec -
+ *
+ *   return: msec
+ *
+ */
+INT64
+timespec_diff_in_msec (const struct timespec * end_time,
+		       const struct timespec * start_time)
+{
+  INT64 msec;
+
+  msec = (end_time->tv_sec - start_time->tv_sec) * 1000LL;
+  msec += (end_time->tv_nsec - start_time->tv_nsec) / 1000000LL;
+
+  return msec;
+}
+
+/*
+ * timeval_to_msec -
+ *
+ *   return: msec
+ *
+ */
+INT64
+timespec_to_msec (const struct timespec * val)
+{
+  INT64 time_in_msecs;
+
+  time_in_msecs = val->tv_sec * 1000LL;
+  time_in_msecs += val->tv_nsec / 1000000LL;
+
+  return time_in_msecs;
+}
 
 /*
  * port_open_memstream - make memory stream file handle if possible.

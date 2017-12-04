@@ -49,7 +49,7 @@ AM_CFLAGS = @CFLAGS@
 AM_CXXFLAGS = @CXXFLAGS@
 
 #AM_LDADD = @SYS_LIBS@
-LIBS += @SYS_LIBS@
+LIBS += @SYS_LIBS@ -lrt
 
 
 bin_PROGRAMS = \
@@ -149,7 +149,7 @@ rye_repl_SOURCES = \
 	$(BROKER_DIR)/broker_util.c \
 	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/broker_shm.c
-rye_repl_LDADD = @CS_LIB@ @CCI_LIB@ @EXT_LIBS@ 
+rye_repl_LDADD = @CS_LIB@ @CCI_LIB@ @EXT_LIBS@
 
 rye_test_SOURCES = \
 	$(REPLICATION_DIR)/cci_test.c

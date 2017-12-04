@@ -74,7 +74,8 @@ static void css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
 				    char *server_name,
 				    int server_name_length);
 static void css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-    SOCKET_QUEUE_ENTRY * entry, char *server_name);
+				    SOCKET_QUEUE_ENTRY * entry,
+				    char *server_name);
 static void css_register_new_server (CSS_CONN_ENTRY * conn,
 				     unsigned short rid, char *server_name,
 				     int server_name_length);
@@ -308,13 +309,13 @@ css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
     {
       datagram_conn = css_make_conn (server_fd);
       if (datagram_conn == NULL)
-        {
-          assert (false);
-          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-                               server_name);
-          return;
-        }
+	{
+	  assert (false);
+	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			       ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+			       server_name);
+	  return;
+	}
 
       datagram_conn->peer_version = conn->peer_version;
 #if defined(DEBUG)
@@ -359,7 +360,7 @@ css_accept_new_request (CSS_CONN_ENTRY * conn, unsigned short rid,
  */
 static void
 css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-    SOCKET_QUEUE_ENTRY * entry, char *server_name)
+			SOCKET_QUEUE_ENTRY * entry, char *server_name)
 {
   char *datagram;
   SOCKET server_fd = INVALID_SOCKET;
@@ -379,13 +380,13 @@ css_accept_old_request (CSS_CONN_ENTRY * conn, unsigned short rid,
     {
       datagram_conn = css_make_conn (server_fd);
       if (datagram_conn == NULL)
-        {
-          assert (false);
-          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-                               ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-                               server_name);
-          return;
-        }
+	{
+	  assert (false);
+	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			       ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+			       server_name);
+	  return;
+	}
 
       entry->fd = server_fd;
       datagram_conn->peer_version = entry->conn_ptr->peer_version;
@@ -548,6 +549,7 @@ css_process_new_connection (SOCKET fd)
   enum css_master_conn_type conn_type;
   unsigned short request_id;
   CSS_NET_PACKET *recv_packet = NULL;
+  int error = NO_ERRORS;
 
   css_Total_request_count++;
   conn = css_make_conn (fd);
@@ -562,7 +564,8 @@ css_process_new_connection (SOCKET fd)
       return;
     }
 
-  if (css_receive_request (conn, &recv_packet) == NO_ERRORS)
+  error = css_receive_request (conn, &recv_packet);
+  if (error == NO_ERRORS)
     {
       char *server_name;
       int server_name_length;
@@ -597,6 +600,9 @@ css_process_new_connection (SOCKET fd)
     }
   else
     {
+      er_log_debug (ARG_FILE_LINE, "new conn: receive request error(%d)",
+		    error);
+
       css_free_conn (conn);
     }
 }

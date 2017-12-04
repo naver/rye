@@ -36,8 +36,6 @@
 #include "porting.h"
 #include "ini_parser.h"
 
-#define HA_MAX_LOG_APPLIER_LOWER (2)
-#define HA_MAX_LOG_APPLIER_UPPER (64)
 
 typedef enum
 {
