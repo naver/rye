@@ -1663,9 +1663,10 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
   curr_server_state = svr_shm_get_server_state ();
   er_log_debug (ARG_FILE_LINE,
 		"css_change_ha_server_state: ha_server_state %s "
-		"state %s force %c \n",
+		"state %s %s \n",
 		css_ha_state_string (curr_server_state),
-		css_ha_state_string (req_server_state), (force ? 't' : 'f'));
+		css_ha_state_string (req_server_state),
+		(force ? "force" : "no_force"));
 
   if (req_server_state == curr_server_state)
     {
@@ -1790,7 +1791,7 @@ css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
 
   er_log_debug (ARG_FILE_LINE,
 		"css_notify_ha_apply_state: node %s state %s\n",
-		host_ip, css_ha_applier_state_string (state));
+		host_ip, HA_APPLY_STATE_NAME (state));
 
   error = csect_enter (thread_p, CSECT_HA_SERVER_STATE, INF_WAIT);
   if (error != NO_ERROR)
