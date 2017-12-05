@@ -1937,11 +1937,11 @@ logtb_find_current_ha_status (UNUSED_ARG THREAD_ENTRY * thread_p)
 #if defined(SERVER_MODE)
 //  csect_enter (thread_p, CSECT_HA_SERVER_STATE, INF_WAIT);
 
-  status = css_ha_state_string (svr_shm_get_server_state ());
+  status = HA_STATE_NAME (svr_shm_get_server_state ());
 
 //  csect_exit (CSECT_HA_SERVER_STATE);
 #else
-  status = css_ha_state_string (HA_STATE_NA);
+  status = HA_STATE_NAME (HA_STATE_NA);
 #endif
 
   return status;

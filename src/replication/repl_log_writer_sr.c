@@ -689,11 +689,38 @@ logwr_find_copy_completed_entry (LOGWR_INFO * writer_info)
 
   entry = writer_info->writer_list;
   found_entry = NULL;
-  while (entry)
+  while (entry != NULL)
     {
       if ((entry->status == LOGWR_STATUS_WAIT
 	   || entry->status == LOGWR_STATUS_DONE)
 	  && LSA_GE (&entry->last_sent_eof_lsa, eof))
+	{
+	  found_entry = entry;
+	  break;
+	}
+      entry = entry->next;
+    }
+
+  return found_entry;
+}
+
+/*
+ * logwr_find_entry_status -
+ *
+ * return:
+ *
+ * Note:
+ */
+LOGWR_ENTRY *
+logwr_find_entry_status (LOGWR_INFO * writer_info, LOGWR_STATUS status)
+{
+  LOGWR_ENTRY *entry, *found_entry;
+
+  entry = writer_info->writer_list;
+  found_entry = NULL;
+  while (entry != NULL)
+    {
+      if (entry->status == status)
 	{
 	  found_entry = entry;
 	  break;

@@ -65,7 +65,6 @@ extern int css_net_packet_get_recv_size (CSS_NET_PACKET * net_packet,
 					 int index);
 
 
-extern const char *css_ha_state_string (HA_STATE server_state);
 extern const char *css_ha_mode_string (HA_MODE mode);
 extern const char *css_ha_filestat_string (LOG_HA_FILESTAT ha_file_state);
 

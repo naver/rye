@@ -615,38 +615,6 @@ css_send_master_request (int request, CSS_NET_PACKET ** recv_packet,
 #endif
 
 /*
- * css_ha_state_string
- */
-const char *
-css_ha_state_string (HA_STATE server_state)
-{
-  switch (server_state)
-    {
-    case HA_STATE_NA:
-      return "na";
-    case HA_STATE_UNKNOWN:
-      return HA_STATE_UNKNOWN_STR;
-    case HA_STATE_MASTER:
-      return HA_STATE_MASTER_STR;
-    case HA_STATE_TO_BE_MASTER:
-      return HA_STATE_TO_BE_MASTER_STR;
-    case HA_STATE_SLAVE:
-      return HA_STATE_SLAVE_STR;
-    case HA_STATE_TO_BE_SLAVE:
-      return HA_STATE_TO_BE_SLAVE_STR;
-    case HA_STATE_REPLICA:
-      return HA_STATE_REPLICA_STR;
-    case HA_STATE_DEAD:
-      return HA_STATE_DEAD_STR;
-    default:
-      assert (false);
-      break;
-    }
-
-  return "invalid";
-}
-
-/*
  * css_ha_mode_string
  */
 const char *
