@@ -1664,8 +1664,8 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
   er_log_debug (ARG_FILE_LINE,
 		"css_change_ha_server_state: ha_server_state %s "
 		"state %s %s \n",
-		css_ha_state_string (curr_server_state),
-		css_ha_state_string (req_server_state),
+		HA_STATE_NAME (curr_server_state),
+		HA_STATE_NAME (req_server_state),
 		(force ? "force" : "no_force"));
 
   if (req_server_state == curr_server_state)
@@ -1766,8 +1766,8 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
       log_append_ha_server_state (thread_p, new_server_state);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 	      ER_CSS_SERVER_HA_MODE_CHANGE, 2,
-	      css_ha_state_string (curr_server_state),
-	      css_ha_state_string (svr_shm_get_server_state ()));
+	      HA_STATE_NAME (curr_server_state),
+	      HA_STATE_NAME (svr_shm_get_server_state ()));
     }
 
   csect_exit (CSECT_HA_SERVER_STATE);

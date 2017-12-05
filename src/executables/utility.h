@@ -446,7 +446,6 @@ typedef struct _node_config
 {
   char *node_name;
   char *copy_log_base;
-  char *copy_sync_mode;
 } HA_NODE_CONF;
 
 typedef struct _ha_config
@@ -820,8 +819,6 @@ typedef struct
   int keyval;
   const char *keystr;
 } UTIL_KEYWORD;
-
-extern int copylogdb_keyword (int *keyval_p, const char **keystr_p);
 
 extern int utility_keyword_value (UTIL_KEYWORD * keywords,
 				  int *keyval_p, char **keystr_p);

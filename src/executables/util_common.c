@@ -58,7 +58,6 @@ static char **util_split_ha_db (const char *str);
 static char **util_split_ha_sync (const char *str);
 static int util_get_ha_parameters (const char **ha_node_list_p,
 				   const char **ha_db_list_p,
-				   const char **ha_sync_mode_p,
 				   const char **ha_copy_log_base_p,
 				   int *ha_max_log_applier_p);
 static bool util_is_replica_node (void);
@@ -495,29 +494,9 @@ util_split_ha_sync (const char *str)
   return util_split_string (str, " ,:");
 }
 
-/*
- * copylogdb_keyword() - get keyword value or string of the copylogdb mode
- *   return: NO_ERROR or ER_FAILED
- *   keyval_p(in/out): keyword value
- *   keystr_p(in/out): keyword string
- */
-int
-copylogdb_keyword (int *keyval_p, const char **keystr_p)
-{
-  static UTIL_KEYWORD keywords[] = {
-    {LOGWR_MODE_ASYNC, "async"},
-    {LOGWR_MODE_SEMISYNC, "semisync"},
-    {LOGWR_MODE_SYNC, "sync"},
-    {-1, NULL}
-  };
-
-  return utility_keyword_search (keywords, keyval_p, keystr_p);
-}
-
 static int
 util_get_ha_parameters (const char **ha_node_list_p,
 			const char **ha_db_list_p,
-			const char **ha_sync_mode_p,
 			const char **ha_copy_log_base_p,
 			int *ha_max_log_applier_p)
 {
@@ -541,7 +520,6 @@ util_get_ha_parameters (const char **ha_node_list_p,
       return ER_GENERIC_ERROR;
     }
 
-  *(ha_sync_mode_p) = prm_get_string_value (PRM_ID_HA_COPY_SYNC_MODE);
   *(ha_max_log_applier_p) = prm_get_integer_value (PRM_ID_HA_MAX_LOG_APPLIER);
 
   *(ha_copy_log_base_p) = envvar_get (DATABASES_ENVNAME);
@@ -624,11 +602,6 @@ util_free_ha_conf (HA_CONF * ha_conf)
 	{
 	  free_and_init (nc[i].copy_log_base);
 	}
-
-      if (nc[i].copy_sync_mode)
-	{
-	  free_and_init (nc[i].copy_sync_mode);
-	}
     }
   free_and_init (ha_conf->node_conf);
   ha_conf->num_node_conf = 0;
@@ -658,15 +631,12 @@ util_make_ha_conf (HA_CONF * ha_conf)
   const char *ha_db_list_p = NULL;
   const char *ha_node_list_p = NULL;
   char **ha_node_list_pp = NULL;
-  const char *ha_sync_mode_p = NULL;
-  char **ha_sync_mode_pp = NULL;
   const char *ha_copy_log_base_p;
   int ha_max_log_applier;
   bool is_replica_node;
 
   error = util_get_ha_parameters (&ha_node_list_p, &ha_db_list_p,
-				  &ha_sync_mode_p, &ha_copy_log_base_p,
-				  &ha_max_log_applier);
+				  &ha_copy_log_base_p, &ha_max_log_applier);
   if (error != NO_ERROR)
     {
       return error;
@@ -716,90 +686,6 @@ util_make_ha_conf (HA_CONF * ha_conf)
   ha_conf->num_node_conf = num_ha_nodes;
   ha_conf->max_log_applier = ha_max_log_applier;
 
-  /* set ha_sync_mode */
-  is_replica_node = util_is_replica_node ();
-  if (is_replica_node == true)
-    {
-      for (i = 0; i < num_ha_nodes; i++)
-	{
-	  ha_conf->node_conf[i].copy_sync_mode = strdup ("async");
-	  if (ha_conf->node_conf[i].copy_sync_mode == NULL)
-	    {
-	      const char *message =
-		utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
-	      fprintf (stderr, message);
-
-	      error = ER_GENERIC_ERROR;
-	      goto ret;
-	    }
-	}
-    }
-  else
-    {
-      if (ha_sync_mode_p == NULL || *(ha_sync_mode_p) == '\0')
-	{
-	  for (i = 0; i < num_ha_nodes; i++)
-	    {
-	      ha_conf->node_conf[i].copy_sync_mode = strdup ("sync");
-	      if (ha_conf->node_conf[i].copy_sync_mode == NULL)
-		{
-		  const char *message =
-		    utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
-		  fprintf (stderr, message);
-
-		  error = ER_GENERIC_ERROR;
-		  goto ret;
-		}
-	    }
-	}
-      else
-	{
-	  int mode;
-
-	  ha_sync_mode_pp = util_split_ha_sync (ha_sync_mode_p);
-	  if (ha_sync_mode_pp == NULL)
-	    {
-	      const char *message =
-		utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
-	      fprintf (stderr, message);
-
-	      error = ER_GENERIC_ERROR;
-	      goto ret;
-	    }
-
-	  for (i = 0; i < num_ha_nodes; i++)
-	    {
-	      const char *tmp_mode_p = ha_sync_mode_pp[i];
-	      mode = -1;
-	      if (tmp_mode_p == NULL ||
-		  copylogdb_keyword (&mode, &tmp_mode_p) == -1)
-		{
-		  const char *message =
-		    utility_get_generic_message
-		    (MSGCAT_UTIL_GENERIC_INVALID_PARAMETER);
-
-		  fprintf (stderr, message,
-			   prm_get_name (PRM_ID_HA_COPY_SYNC_MODE),
-			   (tmp_mode_p) ? tmp_mode_p : "");
-
-		  error = ER_GENERIC_ERROR;
-		  goto ret;
-		}
-
-	      ha_conf->node_conf[i].copy_sync_mode = strdup (tmp_mode_p);
-	      if (ha_conf->node_conf[i].copy_sync_mode == NULL)
-		{
-		  const char *message =
-		    utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
-		  fprintf (stderr, message);
-
-		  error = ER_GENERIC_ERROR;
-		  goto ret;
-		}
-	    }
-	}
-    }
-
   for (i = 0; i < num_ha_nodes; i++)
     {
       assert_release (ha_node_list_pp[i] != NULL);
@@ -824,12 +710,6 @@ ret:
     {
       util_free_string_array (ha_node_list_pp);
       ha_node_list_pp = NULL;
-    }
-
-  if (ha_sync_mode_pp)
-    {
-      util_free_string_array (ha_sync_mode_pp);
-      ha_sync_mode_pp = NULL;
     }
 
   if (error != NO_ERROR)
