@@ -3072,7 +3072,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   MNT_SERVER_EXEC_STATS base_stats, current_stats, diff_stats;
   char *sql_id = NULL;
   int error_code = NO_ERROR;
-  bool tran_abort = false;
+  UNUSED_VAR bool tran_abort = false;
   CSS_NET_PACKET *recv_packet = thread_p->recv_packet;
   INT64 old_expand_pages, new_expand_pages;
   UINT64 old_expand_clock, new_expand_clock;
@@ -3611,7 +3611,7 @@ event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
-  INT64 temp_expand_pages;
+  UNUSED_VAR INT64 temp_expand_pages;
 
   assert (info->sql_hash_text != NULL);
   assert (expand_pages > 0);

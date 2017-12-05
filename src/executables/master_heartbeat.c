@@ -7085,10 +7085,11 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
   p += snprintf (p, MAX ((last - p), 0), "=============================="
 		 "==================================================\n");
   p += snprintf (p, MAX ((last - p), 0), " * state : %s \n",
-		 HA_STATE_NAME (hb_Cluster->node_state));
-
-  p += snprintf (p, MAX ((last - p), 0), "------------------------------"
-		 "--------------------------------------------------\n");
+		 <<<<<<<HEAD HA_STATE_NAME (hb_Cluster->node_state));
+  == == == = css_ha_state_string (hb_Cluster->node_state));
+  >>>>>>>53 d4e2f103cf4e3a9878fb96281e8904832baf19
+    p += snprintf (p, MAX ((last - p), 0), "------------------------------"
+		   "--------------------------------------------------\n");
   p += snprintf (p, MAX ((last - p), 0), "%-10s %-22s %-15s %-10s %-15s\n",
 		 "pid", "state", "type", "socket fd", "server_state");
   p += snprintf (p, MAX ((last - p), 0),
@@ -7104,8 +7105,9 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
 	snprintf (p, MAX ((last - p), 0), "%-10d %-22s %-15s %-10d %-15s\n",
 		  proc->pid, hb_process_state_string (proc->state),
 		  hb_process_type_string (proc->type), proc->sfd,
-		  HA_STATE_NAME (proc->server_state));
-    }
+		  <<<<<<<HEAD HA_STATE_NAME (proc->server_state));
+      == == == = css_ha_state_string (proc->server_state));
+    >>>>>>>53 d4e2f103cf4e3a9878fb96281e8904832baf19}
 
   p += snprintf (p, MAX ((last - p), 0), "=============================="
 		 "==================================================\n");
@@ -7114,8 +7116,7 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
   return p - buffer;
 }
 
-int
-hb_check_request_eligibility (SOCKET sd, int *result)
+int hb_check_request_eligibility (SOCKET sd, int *result)
 {
   char error_string[LINE_MAX];
   char request_from[MAXHOSTNAMELEN] = "";
@@ -7205,8 +7206,7 @@ end:
  *
  *   return: none
  */
-void
-hb_start_deactivate_server_info (void)
+void hb_start_deactivate_server_info (void)
 {
   assert (hb_Deactivate_info.info_started == false);
 
@@ -7219,14 +7219,12 @@ hb_start_deactivate_server_info (void)
   hb_Deactivate_info.info_started = true;
 }
 
-bool
-hb_is_deactivation_started (void)
+bool hb_is_deactivation_started (void)
 {
   return hb_Deactivate_info.info_started;
 }
 
-bool
-hb_is_deactivation_ready (void)
+bool hb_is_deactivation_ready (void)
 {
   HB_PROC_ENTRY *proc;
 
@@ -7251,8 +7249,7 @@ hb_is_deactivation_ready (void)
  *
  *   return: none
  */
-int
-hb_get_deactivating_server_count (void)
+int hb_get_deactivating_server_count (void)
 {
   int i, num_active_server = 0;
 
@@ -7288,8 +7285,7 @@ hb_get_deactivating_server_count (void)
  *
  *   return: none
  */
-void
-hb_finish_deactivate_server_info (void)
+void hb_finish_deactivate_server_info (void)
 {
   if (hb_Deactivate_info.server_pid_list != NULL)
     {
@@ -7306,8 +7302,7 @@ hb_finish_deactivate_server_info (void)
  *
  *   sfd(in):
  */
-int
-hb_return_proc_state_by_fd (int sfd)
+int hb_return_proc_state_by_fd (int sfd)
 {
   int state = 0;
   HB_PROC_ENTRY *proc;
@@ -7342,8 +7337,7 @@ hb_return_proc_state_by_fd (int sfd)
  *
  *   sfd(in):
  */
-bool
-hb_is_hang_process (int sfd)
+bool hb_is_hang_process (int sfd)
 {
   HB_PROC_ENTRY *proc;
 
@@ -7374,7 +7368,7 @@ hb_is_hang_process (int sfd)
  * hb_cluster_set_node_state() -
  */
 static void
-hb_cluster_set_node_state (HB_NODE_ENTRY * node, HA_STATE node_state)
+  hb_cluster_set_node_state (HB_NODE_ENTRY * node, HA_STATE node_state)
 {
   /* 1. change shm node state */
   if (node->node_state != node_state)
@@ -7387,8 +7381,8 @@ hb_cluster_set_node_state (HB_NODE_ENTRY * node, HA_STATE node_state)
 }
 
 static void
-hb_cluster_set_node_version (HB_NODE_ENTRY * node,
-			     const RYE_VERSION * node_version)
+  hb_cluster_set_node_version (HB_NODE_ENTRY * node,
+			       const RYE_VERSION * node_version)
 {
   master_shm_set_node_version (node->host_name, node_version);
   node->node_version = *node_version;
@@ -7398,8 +7392,7 @@ hb_cluster_set_node_version (HB_NODE_ENTRY * node,
  * hb_shm_reset_hb_node ()
  *   return: none
  */
-static void
-hb_shm_reset_hb_node (void)
+static void hb_shm_reset_hb_node (void)
 {
   HB_NODE_ENTRY *node;
   int num_nodes;
@@ -7429,8 +7422,7 @@ hb_shm_reset_hb_node (void)
   master_shm_reset_hb_nodes (ha_nodes, num_nodes);
 }
 
-static void
-shm_master_update_server_state (HB_PROC_ENTRY * proc)
+static void shm_master_update_server_state (HB_PROC_ENTRY * proc)
 {
   if (proc->type != HB_PTYPE_SERVER)
     {
