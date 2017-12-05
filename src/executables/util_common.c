@@ -411,25 +411,6 @@ util_split_ha_db (const char *str)
   return util_split_string (str, " ,:");
 }
 
-/*
- * copylogdb_keyword() - get keyword value or string of the copylogdb mode
- *   return: NO_ERROR or ER_FAILED
- *   keyval_p(in/out): keyword value
- *   keystr_p(in/out): keyword string
- */
-int
-copylogdb_keyword (int *keyval_p, const char **keystr_p)
-{
-  static UTIL_KEYWORD keywords[] = {
-    {LOGWR_MODE_ASYNC, "async"},
-    {LOGWR_MODE_SEMISYNC, "semisync"},
-    {LOGWR_MODE_SYNC, "sync"},
-    {-1, NULL}
-  };
-
-  return utility_keyword_search (keywords, keyval_p, keystr_p);
-}
-
 static int
 util_get_ha_parameters (PRM_NODE_LIST * ha_node_list,
 			const char **ha_db_list_p,
@@ -547,7 +528,6 @@ util_make_ha_conf (HA_CONF * ha_conf)
   for (i = 0; i < ha_node_list.num_nodes; i++)
     {
       ha_conf->node_conf[i].node = ha_node_list.nodes[i];
-      ha_conf->node_conf[i].copy_sync_mode = "sync";
       ha_conf->node_conf[i].copy_log_base = strdup (ha_copy_log_base_p);
 
       if (ha_conf->node_conf[i].copy_log_base == NULL)

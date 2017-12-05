@@ -446,8 +446,8 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
       snprintf (buffer, ONE_K,
 		"change the state of HA Node (%s@%s) from '%s' to '%s'",
 		buf_mgr->prefix_name, host_str,
-		css_ha_state_string (analyzer->last_node_state),
-		css_ha_state_string (curr_node_state));
+		HA_STATE_NAME (analyzer->last_node_state),
+		HA_STATE_NAME (curr_node_state));
 
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 	      ER_HA_GENERIC_ERROR, 1, buffer);
@@ -1694,7 +1694,7 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
 		snprintf (buffer, sizeof (buffer),
 			  "the state of HA server (%s@%s) is changed to %s",
 			  buf_mgr->prefix_name, host_str,
-			  css_ha_state_string (state.server_state));
+			  HA_STATE_NAME (state.server_state));
 
 		er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 			ER_NOTIFY_MESSAGE, 1, buffer);
