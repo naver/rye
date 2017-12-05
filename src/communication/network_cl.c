@@ -1272,8 +1272,8 @@ net_client_logwr_send_end_msg (unsigned int eid, int error)
 
   /* END REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
-  ptr = or_pack_int (ptr, LOGWR_MODE_ASYNC);
   ptr = or_pack_int (ptr, error);
+  ptr = or_pack_int (ptr, 0);	/* compressed_protocol */
 
   return (net_client_data_send_msg (eid, 1,
 				    request,
