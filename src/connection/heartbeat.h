@@ -141,7 +141,8 @@ extern int hb_make_hbp_register (HBP_PROC_REGISTER * hbp_register,
 				 const HA_CONF * ha_conf,
 				 HB_PROC_TYPE proc_type,
 				 HB_PROC_COMMAND command_type,
-				 const char *db_name, const char *host_ip);
+				 const char *db_name,
+				 const PRM_NODE_INFO * host_info);
 
 extern bool hb_Proc_shutdown;
 

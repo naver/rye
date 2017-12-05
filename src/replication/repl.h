@@ -35,7 +35,6 @@
 #include "cas_cci.h"
 
 #define CIRP_TRAN_Q_SIZE        (1024)
-#define HOST_IP_SIZE            20
 
 typedef enum _cirp_agent_status CIRP_AGENT_STATUS;
 enum _cirp_agent_status
@@ -88,7 +87,7 @@ struct cirp_thread_entry
 typedef struct cirp_ct_log_applier CIRP_CT_LOG_APPLIER;
 struct cirp_ct_log_applier
 {
-  char host_ip[HOST_IP_SIZE];
+  PRM_NODE_INFO host_info;
   int id;
 
   LOG_LSA committed_lsa;	/* last committed commit log lsa */
@@ -106,7 +105,7 @@ struct cirp_ct_log_applier
 typedef struct cirp_ct_log_analyzer CIRP_CT_LOG_ANALYZER;
 struct cirp_ct_log_analyzer
 {
-  char host_ip[HOST_IP_SIZE];
+  PRM_NODE_INFO host_info;
 
   LOG_LSA current_lsa;
   LOG_LSA required_lsa;
@@ -121,7 +120,7 @@ struct cirp_ct_log_analyzer
 typedef struct cirp_ct_log_writer CIRP_CT_LOG_WRITER;
 struct cirp_ct_log_writer
 {
-  char host_ip[HOST_IP_SIZE];
+  PRM_NODE_INFO host_info;
 
   INT64 last_flushed_pageid;
   INT64 last_received_time;	/* Time in Milli seconds */

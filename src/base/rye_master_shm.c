@@ -574,20 +574,17 @@ rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes, int *num_nodes,
  *   host(in):
  */
 int
-rye_master_shm_get_node_state (HA_STATE * node_state, const char *host_ip)
+rye_master_shm_get_node_state (HA_STATE * node_state,
+			       const PRM_NODE_INFO * node_info)
 {
   RYE_SHM_MASTER *master_shm;
   int i;
-  PRM_NODE_INFO node_info;
 
-  if (node_state == NULL || host_ip == NULL)
+  if (node_state == NULL || node_info == NULL)
     {
       assert (false);
       return ER_FAILED;
     }
-
-  node_info.ip = hostname_to_ip (host_ip);
-  node_info.port = prm_get_local_port_id ();	/* TODO: cgkang */
 
   *node_state = HA_STATE_NA;
 
@@ -600,7 +597,7 @@ rye_master_shm_get_node_state (HA_STATE * node_state, const char *host_ip)
   for (i = 0; i < master_shm->num_ha_nodes; i++)
     {
       if (prm_is_same_node (&master_shm->ha_nodes[i].node_info,
-			    &node_info) == true)
+			    node_info) == true)
 	{
 	  *node_state = master_shm->ha_nodes[i].node_state;
 	}
@@ -693,9 +690,9 @@ rye_master_shm_dump (FILE * outfp)
   fprintf (outfp, "ha_nodes: %d\n", num_hb_nodes);
   for (i = 0; i < num_hb_nodes; i++)
     {
-      char host[256];
-      css_ip_to_str (host, sizeof (host),
-		     shm_master->ha_nodes[i].node_info.ip);
+      char host[MAX_NODE_INFO_STR_LEN];
+      prm_node_info_to_str (host, sizeof (host),
+			    &shm_master->ha_nodes[i].node_info);
       fprintf (outfp, "\t%s:node_state=%d priority=%d\n",
 	       host, shm_master->ha_nodes[i].node_state,
 	       shm_master->ha_nodes[i].priority);

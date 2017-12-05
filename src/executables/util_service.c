@@ -1422,7 +1422,6 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
   int hb_argc;
   int opt, opt_idx = 0;
   char opt_str[64];
-  char hostname[MAXHOSTNAMELEN] = "";
   char **hb_args = NULL;
   char hb_arg0[] = PRINT_HEARTBEAT_NAME " " PRINT_CMD_STOP;
   bool immediate_stop = false;
@@ -1430,7 +1429,6 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
 
   struct option hb_stop_opts[] = {
     {HB_STOP_HB_DEACT_IMMEDIATELY_L, 0, 0, HB_STOP_HB_DEACT_IMMEDIATELY_S},
-    {HB_STOP_HOST_L, 1, 0, HB_STOP_HOST_S},
     {0, 0, 0, 0}
   };
 
@@ -1461,10 +1459,6 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
     {
       switch (opt)
 	{
-	case HB_STOP_HOST_S:
-	  /* TODO fix me. hostname to PRM_NODE_INFO - cgkang */
-	  strncpy (hostname, optarg, sizeof (hostname) - 1);
-	  break;
 	case HB_STOP_HB_DEACT_IMMEDIATELY_S:
 	  immediate_stop = true;
 	  break;
@@ -1478,7 +1472,7 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
   if (status == NO_ERROR && hb_argc > optind)
     {
       /* -h, -i options do not take a non-option argument */
-      if (hostname[0] != '\0' || immediate_stop == true)
+      if (immediate_stop == true)
 	{
 	  status = ER_GENERIC_ERROR;
 	  print_message (stderr, MSGCAT_UTIL_GENERIC_ARGS_OVER,

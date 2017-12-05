@@ -398,9 +398,9 @@ extern PRM_NODE_INFO prm_get_myself_node_info (void);
 extern void prm_node_info_to_str (char *buf, int size,
 				  const PRM_NODE_INFO * node_info);
 
-extern int prm_split_node_info (PRM_NODE_LIST * node_list,
-				const char *node_list_str,
-				bool include_local_host);
+extern int prm_split_node_str (PRM_NODE_LIST * node_list,
+			       const char *node_list_str,
+			       bool include_local_host);
 extern bool prm_is_myself_node_info (const PRM_NODE_INFO * node_info);
 extern bool prm_is_same_node (const PRM_NODE_INFO * node1,
 			      const PRM_NODE_INFO * node2);

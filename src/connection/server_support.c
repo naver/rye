@@ -1657,15 +1657,15 @@ css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
 			   HA_APPLY_STATE state)
 {
   int error = NO_ERROR;
-  char host[256];
+  char host[MAX_NODE_INFO_STR_LEN];
 
   assert (state >= HA_APPLY_STATE_UNREGISTERED
 	  && state <= HA_APPLY_STATE_ERROR);
 
-  css_ip_to_str (host, sizeof (host), node_info->ip);
+  prm_node_info_to_str (host, sizeof (host), node_info);
   er_log_debug (ARG_FILE_LINE,
 		"css_notify_ha_apply_state: node %s state %s\n",
-		host_ip, HA_APPLY_STATE_NAME (state));
+		host, HA_APPLY_STATE_NAME (state));
 
   error = csect_enter (thread_p, CSECT_HA_SERVER_STATE, INF_WAIT);
   if (error != NO_ERROR)

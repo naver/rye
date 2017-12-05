@@ -27,7 +27,6 @@
 #include "dbtype.h"
 #include "log_impl.h"
 
-
 #define LA_GET_PAGE_RETRY_COUNT                 100
 
 
@@ -114,6 +113,9 @@ extern CIRP_REPL_ITEM *cirp_new_repl_item_data (const LOG_LSA * lsa,
 extern CIRP_REPL_ITEM *cirp_new_repl_item_ddl (const LOG_LSA * lsa);
 extern CIRP_REPL_ITEM *cirp_new_repl_catalog_item (const LOG_LSA * lsa);
 
-
+extern int rp_make_repl_host_key (DB_VALUE * dbval,
+				  const PRM_NODE_INFO * node_info);
+extern int rp_host_str_to_node_info (PRM_NODE_INFO * node_info,
+				     const char *key_str);
 
 #endif /* REPL_LOG_COMMON_H_ */

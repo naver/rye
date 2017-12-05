@@ -347,7 +347,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
       db_path_info->db_host = boot_Db_host_buf;
     }
 
-  prm_split_node_info (&node_list, db_path_info->db_host, false);
+  prm_split_node_str (&node_list, db_path_info->db_host, false);
 
   /* Get the absolute path name */
   COMPOSE_FULL_NAME (boot_Volume_label, sizeof (boot_Volume_label),
@@ -637,7 +637,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
       if (cli_cred->client_type == BOOT_CLIENT_REPL_BROKER)
 	{
 #if defined(CS_MODE)
-	  prm_split_node_info (&node_list, NULL, true);
+	  prm_split_node_str (&node_list, NULL, true);
 #else /* CS_MODE */
 	  error_code = ER_NOT_IN_STANDALONE;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code,
@@ -656,7 +656,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
 	      prm_get_ha_node_list (&node_list);
 	      if (node_list.num_nodes <= 0)
 		{
-		  prm_split_node_info (&node_list, NULL, true);
+		  prm_split_node_str (&node_list, NULL, true);
 		}
 	    }
 
@@ -679,7 +679,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
 #if defined(CS_MODE)
       *ptr = '\0';		/* screen 'db@host' */
 
-      prm_split_node_info (&node_list, ptr + 1, false);
+      prm_split_node_str (&node_list, ptr + 1, false);
 
       strncpy (db_name, cli_cred->db_name, sizeof (db_name));
       db_name[sizeof (db_name) - 1] = '\0';

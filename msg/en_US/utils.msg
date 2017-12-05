@@ -152,7 +152,7 @@ usage: %2$s heartbeat <command> [args]\n\
 \n\
 Available command:\n\
     start          [database-name]\n\
-    stop           [-h <hostname>] [-i] [database-name]\n\
+    stop           [-i] [database-name]\n\
     status         [-v]\n\
     reload\n
 28 Invalid command.\n

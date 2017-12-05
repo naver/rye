@@ -1198,9 +1198,9 @@ static int prm_call_post_assign_fn (SYSPRM_PARAM * prm);
 static int prm_node_list_post_assign (SYSPRM_PARAM * prm);
 static int prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm);
 static void prm_node_info_set_default_port (PRM_NODE_LIST * node_list);
-static int prm_split_node_info_internal (PRM_NODE_LIST * node_list,
-					 const char *node_list_str,
-					 bool include_local_host);
+static int prm_split_node_str_internal (PRM_NODE_LIST * node_list,
+					const char *node_list_str,
+					bool include_local_host);
 
 /*
  * init_param -
@@ -7395,7 +7395,7 @@ prm_node_info_to_str (char *buf, int size, const PRM_NODE_INFO * node_info)
 {
   int n;
   n = css_ip_to_str (buf, size, node_info->ip);
-  snprintf (buf + n, size - n, ".%d", node_info->port);
+  snprintf (buf + n, size - n, ":%d", node_info->port);
 }
 
 static int
@@ -7488,7 +7488,7 @@ prm_node_list_post_assign (SYSPRM_PARAM * prm)
       cplen = MIN (cplen, (int) sizeof (node_list.hb_group_id) - 1);
       strncpy (node_list.hb_group_id, list_str, cplen);
 
-      if (prm_split_node_info_internal (&node_list, p + 1, false) != NO_ERROR)
+      if (prm_split_node_str_internal (&node_list, p + 1, false) != NO_ERROR)
 	{
 	  goto error;
 	}
@@ -7517,13 +7517,13 @@ error:
 }
 
 int
-prm_split_node_info (PRM_NODE_LIST * node_list,
-		     const char *node_list_str, bool include_local_host)
+prm_split_node_str (PRM_NODE_LIST * node_list,
+		    const char *node_list_str, bool include_local_host)
 {
   int error;
 
-  error = prm_split_node_info_internal (node_list, node_list_str,
-					include_local_host);
+  error = prm_split_node_str_internal (node_list, node_list_str,
+				       include_local_host);
   if (error != NO_ERROR)
     {
       return error;
@@ -7548,9 +7548,9 @@ prm_node_info_set_default_port (PRM_NODE_LIST * node_list)
 }
 
 static int
-prm_split_node_info_internal (PRM_NODE_LIST * node_list,
-			      const char *node_list_str,
-			      bool include_local_host)
+prm_split_node_str_internal (PRM_NODE_LIST * node_list,
+			     const char *node_list_str,
+			     bool include_local_host)
 {
   char **list_pp = NULL;
   char *p;

@@ -165,7 +165,6 @@ struct hb_node_entry
   HB_NODE_ENTRY **prev;
 
   PRM_NODE_INFO node_info;
-  char host_name[IP_ADDR_STR_LEN];
   unsigned short priority;
   HA_STATE node_state;
   short score;
@@ -197,7 +196,6 @@ struct hb_cluster
   HA_STATE node_state;
   char group_id[HB_MAX_GROUP_ID_LEN];
   PRM_NODE_INFO my_node_info;
-  char my_host_name[IP_ADDR_STR_LEN];
 
   int num_nodes;
   HB_NODE_ENTRY *nodes;

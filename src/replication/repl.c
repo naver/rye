@@ -1135,7 +1135,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   INT64 current_time_in_msec;
   CIRP_WRITER_INFO *writer = NULL;
   LOG_HEADER *log_hdr = NULL;
-  char *host_ip = NULL;
+  const PRM_NODE_INFO *host_info = NULL;
 
   writer = &Repl_Info->writer_info;
 
@@ -1146,13 +1146,13 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
     }
   log_hdr = analyzer->buf_mgr.act_log.log_hdr;
 
-  host_ip = analyzer->buf_mgr.host_name;
+  host_info = &analyzer->buf_mgr.host_info;
 
   gettimeofday (&t, NULL);
   current_time_in_msec = timeval_to_msec (&t);
 
   /* get analyzer info */
-  error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_ip);
+  error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_info);
   if (error != NO_ERROR)
     {
       assert (error != CCI_ER_NO_MORE_DATA);
@@ -1188,7 +1188,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   analyzer->ct.start_time = current_time_in_msec;
 
   /* init writer info */
-  error = rpct_init_writer_info (&analyzer->conn, &writer->ct, host_ip,
+  error = rpct_init_writer_info (&analyzer->conn, &writer->ct, host_info,
 				 &log_hdr->eof_lsa, current_time_in_msec);
   if (error != NO_ERROR)
     {
@@ -1196,7 +1196,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
     }
 
   /* init applier info */
-  error = rpct_init_applier_info (&analyzer->conn, host_ip,
+  error = rpct_init_applier_info (&analyzer->conn, host_info,
 				  current_time_in_msec);
   if (error != NO_ERROR)
     {

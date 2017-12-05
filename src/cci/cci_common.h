@@ -306,9 +306,6 @@ extern "C"
   extern int cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func,
 			    void *func_args);
 
-
-  extern int hostname2uchar (const char *host, unsigned char *ip_addr);
-
 /************************************************************************
  * PUBLIC VARIABLES							*
  ************************************************************************/

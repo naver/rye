@@ -230,6 +230,7 @@ TRANSACTION_SOURCES = \
 	$(TRANSACTION_DIR)/wait_for_graph.c 
 
 REPLICATION_SOURCES = \
+	$(REPLICATION_DIR)/repl_common.c \
 	$(REPLICATION_DIR)/repl_log.c
 
 SHARD_SOURCES = \

@@ -1896,12 +1896,16 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
   if (prm_is_same_node (&hb_Cluster->my_node_info,
 			&hbp_header->dest_host) == false)
     {
-      char dest_host[256];
-      css_ip_to_str (dest_host, sizeof (dest_host), hbp_header->dest_host.ip);
+      char dest_host[MAX_NODE_INFO_STR_LEN];
+      char my_host[MAX_NODE_INFO_STR_LEN];
+      prm_node_info_to_str (dest_host, sizeof (dest_host),
+			    &hbp_header->dest_host);
+      prm_node_info_to_str (my_host, sizeof (my_host),
+			    &hb_Cluster->my_node_info);
 
       er_log_debug (ARG_FILE_LINE, "hostname mismatch. "
 		    "(host_name:{%s}, dest_host_name:{%s}).\n",
-		    hb_Cluster->my_host_name, dest_host);
+		    my_host, dest_host);
       pthread_mutex_unlock (&hb_Cluster->lock);
       return;
     }
@@ -1956,9 +1960,9 @@ hb_cluster_receive_heartbeat (char *buffer, int len,
 	node = hb_return_node_by_name_except_me (&hbp_header->orig_host);
 	if (node == NULL)
 	  {
-	    char orig_host[256];
-	    css_ip_to_str (orig_host, sizeof (orig_host),
-			   hbp_header->orig_host.ip);
+	    char orig_host[MAX_NODE_INFO_STR_LEN];
+	    prm_node_info_to_str (orig_host, sizeof (orig_host),
+				  &hbp_header->orig_host);
 
 	    er_log_debug (ARG_FILE_LINE,
 			  "receive heartbeat have unknown host_name. "
@@ -2148,7 +2152,6 @@ hb_add_node_to_cluster (PRM_NODE_INFO * node, unsigned short priority)
   if (p)
     {
       p->node_info = *node;
-      css_ip_to_str (p->host_name, sizeof (p->host_name), node->ip);
       p->priority = priority;
       p->node_state = HA_STATE_UNKNOWN;
       p->score = 0;
@@ -2468,7 +2471,6 @@ make_shard_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
       return error;
     }
 
-  /* TODO: cgkang */
   shard_mgmt_ip = (const unsigned char *) &shard_mgmt_node_info.ip;
   shard_mgmt_port = shard_mgmt_node_info.port;
   snprintf (url, sizeof (url),
@@ -4766,8 +4768,6 @@ hb_cluster_initialize ()
   hb_Cluster->is_ping_check_enabled = true;
   hb_Cluster->sfd = INVALID_SOCKET;
   hb_Cluster->my_node_info = my_node_info;
-  css_ip_to_str (hb_Cluster->my_host_name, sizeof (hb_Cluster->my_host_name),
-		 my_node_info.ip);
   if (prm_get_integer_value (PRM_ID_HA_MODE) == HA_MODE_REPLICA)
     {
       hb_Cluster->node_state = HA_STATE_REPLICA;
@@ -5512,6 +5512,7 @@ hb_reload_config (PRM_NODE_LIST * rm_modes)
   HB_NODE_ENTRY *old_node, *old_myself, *old_master, *new_node;
   HB_PING_HOST_ENTRY *old_ping_hosts;
   bool found_node = false;
+  char host_name[MAX_NODE_INFO_STR_LEN];
 
   rm_modes->num_nodes = 0;
 
@@ -5639,10 +5640,18 @@ hb_reload_config (PRM_NODE_LIST * rm_modes)
   return NO_ERROR;
 
 reconfig_error:
+  if (hb_Cluster->master)
+    {
+      prm_node_info_to_str (host_name, sizeof (host_name),
+			    &hb_Cluster->master->node_info);
+    }
+  else
+    {
+      strcpy (host_name, "-");
+    }
   er_log_debug (ARG_FILE_LINE, "reconfigure heartebat failed. "
 		"(num_nodes:%d, master:{%s}).\n",
-		hb_Cluster->num_nodes,
-		(hb_Cluster->master ? hb_Cluster->master->host_name : "-"));
+		hb_Cluster->num_nodes, host_name);
 
 /* restore ping hosts */
   hb_Cluster->num_ping_hosts = old_num_ping_hosts;
@@ -5811,6 +5820,7 @@ hb_get_node_info_string (bool verbose_yn)
   int buf_size = 0, required_size = 0;
   char *p, *last;
   char *str;
+  char host_name[MAX_NODE_INFO_STR_LEN];
 
   if (hb_Cluster == NULL)
     {
@@ -5852,14 +5862,16 @@ hb_get_node_info_string (bool verbose_yn)
   p = str;
   last = p + buf_size;
 
+  prm_node_info_to_str (host_name, sizeof (host_name),
+			&hb_Cluster->my_node_info);
   p += snprintf (p, MAX ((last - p), 0), HA_NODE_INFO_FORMAT_STRING,
-		 hb_Cluster->my_host_name,
-		 css_ha_state_string (hb_Cluster->node_state));
+		 host_name, css_ha_state_string (hb_Cluster->node_state));
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
+      prm_node_info_to_str (host_name, sizeof (host_name), &node->node_info);
       p += snprintf (p, MAX ((last - p), 0), HA_NODE_FORMAT_STRING,
-		     node->host_name, node->priority,
+		     host_name, node->priority,
 		     css_ha_state_string (node->node_state));
       if (verbose_yn)
 	{
@@ -6441,8 +6453,8 @@ hb_remove_copylog (const HA_CONF * ha_conf, const PRM_NODE_LIST * rm_nodes)
     {
       for (j = 0; j < rm_nodes->num_nodes; j++)
 	{
-	  char host[256];
-	  css_ip_to_str (host, sizeof (host), rm_nodes->nodes[j].ip);
+	  char host[MAX_NODE_INFO_STR_LEN];
+	  prm_node_info_to_str (host, sizeof (host), &rm_nodes->nodes[j]);
 	  ha_make_log_path (log_path, sizeof (log_path),
 			    ha_conf->node_conf[0].copy_log_base, dbs[i],
 			    host);
@@ -6457,7 +6469,7 @@ hb_remove_copylog (const HA_CONF * ha_conf, const PRM_NODE_LIST * rm_nodes)
 }
 
 static int
-hb_remove_host_from_catalog (CCI_CONN * conn, const char *removed_host)
+hb_remove_host_from_catalog (CCI_CONN * conn, const PRM_NODE_INFO * host_info)
 {
   char query[ONE_K];
   const char *query_format[] = {
@@ -6467,11 +6479,13 @@ hb_remove_host_from_catalog (CCI_CONN * conn, const char *removed_host)
   };
   CCI_STMT stmt;
   int i, error;
+  char host_key_str[MAX_NODE_INFO_STR_LEN];
 
+  prm_node_info_to_str (host_key_str, sizeof (host_key_str), host_info);
 
   for (i = 0; i < (int) DIM (query_format); i++)
     {
-      snprintf (query, sizeof (query), query_format[i], removed_host);
+      snprintf (query, sizeof (query), query_format[i], host_key_str);
       error = cci_prepare (conn, &stmt, query, 0);
       if (error < 0)
 	{
@@ -6542,9 +6556,7 @@ hb_remove_catalog_info (const HA_CONF * ha_conf,
 
       for (j = 0; error == NO_ERROR && j < rm_nodes->num_nodes; j++)
 	{
-	  char host[256];
-	  css_ip_to_str (host, sizeof (host), rm_nodes->nodes[j].ip);
-	  error = hb_remove_host_from_catalog (&conn, host);
+	  error = hb_remove_host_from_catalog (&conn, &rm_nodes->nodes[j]);
 	}
       if (error == NO_ERROR)
 	{
@@ -6595,19 +6607,15 @@ hb_repl_start (const HA_CONF * ha_conf)
 
       for (j = 0; j < num_nodes; j++)
 	{
-	  char ip_str[256];
-
 	  if (prm_is_myself_node_info (&nc[j].node))
 	    {
 	      continue;
 	    }
 	  num_node_found++;
 
-
-	  css_ip_to_str (ip_str, sizeof (ip_str), nc[j].node.ip);
 	  error = hb_make_hbp_register (&proc_reg, ha_conf,
 					HB_PTYPE_REPLICATION,
-					HB_PCMD_START, dbs[i], ip_str);
+					HB_PCMD_START, dbs[i], &nc[j].node);
 	  if (error != NO_ERROR)
 	    {
 	      return error;
@@ -6811,6 +6819,7 @@ hb_check_ping (const char *host)
   int ping_result;
   FILE *fp;
   HB_NODE_ENTRY *node;
+  PRM_NODE_INFO node_info;
 
   if (FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_PING_HOST, 30, 0) != NO_ERROR)
     {
@@ -6819,9 +6828,11 @@ hb_check_ping (const char *host)
 
   /* If host_p is in the cluster node, then skip to check */
 
+  rp_host_str_to_node_info (&node_info, host);
+
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      if (strcmp (host, node->host_name) == 0)
+      if (node_info.ip == node->node_info.ip)
 	{
 	  /* PING Host is same as cluster's host name */
 	  snprintf (buf, sizeof (buf), "Useless PING host name %s", host);
@@ -6918,6 +6929,7 @@ hb_help_sprint_nodes_info (char *buffer, int max_length)
 {
   HB_NODE_ENTRY *node;
   char *p, *last;
+  char host_name[MAX_NODE_INFO_STR_LEN];
 
   if (*buffer != '\0')
     {
@@ -6930,11 +6942,12 @@ hb_help_sprint_nodes_info (char *buffer, int max_length)
   p += snprintf (p, MAX ((last - p), 0), "HA Node Info\n");
   p += snprintf (p, MAX ((last - p), 0), "=============================="
 		 "==================================================\n");
-  p +=
-    snprintf (p, MAX ((last - p), 0),
-	      " * group_id : %s   host_name : %s   state : %s \n",
-	      hb_Cluster->group_id, hb_Cluster->my_host_name,
-	      css_ha_state_string (hb_Cluster->node_state));
+  prm_node_info_to_str (host_name, sizeof (host_name),
+			&hb_Cluster->my_node_info);
+  p += snprintf (p, MAX ((last - p), 0),
+		 " * group_id : %s   host_name : %s   state : %s \n",
+		 hb_Cluster->group_id, host_name,
+		 css_ha_state_string (hb_Cluster->node_state));
   p +=
     snprintf (p, MAX ((last - p), 0),
 	      "------------------------------"
@@ -6949,11 +6962,12 @@ hb_help_sprint_nodes_info (char *buffer, int max_length)
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      p +=
-	snprintf (p, MAX ((last - p), 0), "%-20s %-10u %-15s %-10d %-20d\n",
-		  node->host_name, node->priority,
-		  css_ha_state_string (node->node_state), node->score,
-		  node->heartbeat_gap);
+      prm_node_info_to_str (host_name, sizeof (host_name), &node->node_info);
+      p += snprintf (p, MAX ((last - p), 0),
+		     "%-20s %-10u %-15s %-10d %-20d\n",
+		     host_name, node->priority,
+		     css_ha_state_string (node->node_state), node->score,
+		     node->heartbeat_gap);
     }
 
   p += snprintf (p, MAX ((last - p), 0), "=============================="
@@ -7049,9 +7063,11 @@ hb_check_request_eligibility (SOCKET sd, int *result)
       node_addr.s_addr = node->node_info.ip;
       if (node_addr.s_addr == INADDR_NONE)
 	{
+	  char host_name[MAX_NODE_INFO_STR_LEN];
+	  prm_node_info_to_str (host_name, sizeof (host_name),
+				&node->node_info);
 	  er_log_debug (ARG_FILE_LINE,
-			"Failed to resolve IP address of %s",
-			node->host_name);
+			"Failed to resolve IP address of %s", host_name);
 	  *result = HB_HC_FAILED;
 	  continue;
 	}

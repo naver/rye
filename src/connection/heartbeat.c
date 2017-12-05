@@ -283,16 +283,23 @@ int
 hb_make_hbp_register (HBP_PROC_REGISTER * hbp_register,
 		      const HA_CONF * ha_conf, HB_PROC_TYPE proc_type,
 		      HB_PROC_COMMAND command_type, const char *db_name,
-		      const char *host_ip)
+		      const PRM_NODE_INFO * host_info)
 {
   char log_path[PATH_MAX], db_host[PATH_MAX], exec_path[PATH_MAX];
   int i;
   const char *util_name = NULL;
   const char *args[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-  ha_make_log_path (log_path, sizeof (log_path),
-		    ha_conf->node_conf[0].copy_log_base, db_name, host_ip);
-  ha_concat_db_and_host (db_host, sizeof (db_host), db_name, host_ip);
+  if (proc_type == HB_PTYPE_REPLICATION)
+    {
+      char host_str[MAX_NODE_INFO_STR_LEN];
+      assert (host_info != NULL);
+      prm_node_info_to_str (host_str, sizeof (host_str), host_info);
+      ha_make_log_path (log_path, sizeof (log_path),
+			ha_conf->node_conf[0].copy_log_base,
+			db_name, host_str);
+      ha_concat_db_and_host (db_host, sizeof (db_host), db_name, host_str);
+    }
 
   i = 0;
   switch (proc_type)

@@ -518,7 +518,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 
   tmp_str = ini_getstr (ini, sec_name, "PREFERRED_HOSTS",
 			DEFAULT_EMPTY_STRING, lineno);
-  if (prm_split_node_info (&preferred_hosts, tmp_str, false) != NO_ERROR)
+  if (prm_split_node_str (&preferred_hosts, tmp_str, false) != NO_ERROR)
     {
       return -1;
     }

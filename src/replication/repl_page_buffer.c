@@ -45,8 +45,8 @@
 static LOG_PHY_PAGEID cirp_to_phy_pageid (CIRP_BUF_MGR * buf_mgr,
 					  LOG_PAGEID logical_pageid);
 
-static char *cirp_get_hostname_from_log_path (const char *log_path,
-					      const char *db_name);
+static PRM_NODE_INFO cirp_get_hostname_from_log_path (const char *log_path,
+						      const char *db_name);
 
 
 static int cirp_log_io_read (char *vname, int vdes, void *io_pgptr,
@@ -118,15 +118,16 @@ static int cirp_init_recdes_pool (CIRP_BUF_MGR * buf_mgr, int page_size,
  *    log_path(in):
  *    db_name(in):
  */
-static char *
+static PRM_NODE_INFO
 cirp_get_hostname_from_log_path (const char *log_path, const char *db_name)
 {
   char *hostname = NULL;
   const char *p;
+  PRM_NODE_INFO host_info = prm_get_null_node_info ();
 
   if (log_path == NULL)
     {
-      return NULL;
+      goto end;
     }
 
   p = log_path;
@@ -143,23 +144,27 @@ cirp_get_hostname_from_log_path (const char *log_path, const char *db_name)
       p--;
       if (p == log_path)
 	{
-	  return NULL;
+	  goto end;
 	}
     }
 
   hostname = strstr (p, db_name);
   if (hostname == NULL)
     {
-      return NULL;
+      goto end;
     }
 
   hostname += strlen (db_name);
   if (*hostname != '_')
     {
-      return NULL;
+      goto end;
     }
 
-  return hostname + 1;
+  hostname++;
+
+end:
+  rp_host_str_to_node_info (&host_info, hostname);
+  return host_info;
 }
 
 /*
@@ -2175,7 +2180,7 @@ cirp_logpb_common_final (CIRP_BUF_MGR * buf_mgr)
 {
   buf_mgr->log_path[0] = '\0';
   buf_mgr->prefix_name[0] = '\0';
-  buf_mgr->host_name[0] = '\0';
+  buf_mgr->host_info = prm_get_null_node_info ();
   buf_mgr->log_info_path[0] = '\0';
 
   buf_mgr->last_nxarv_num = ARV_NUM_INITIAL_VAL;
@@ -2197,7 +2202,7 @@ cirp_logpb_init_buffer_manager (CIRP_BUF_MGR * buf_mgr)
 
   buf_mgr->log_path[0] = '\0';
   buf_mgr->prefix_name[0] = '\0';
-  buf_mgr->host_name[0] = '\0';
+  buf_mgr->host_info = prm_get_null_node_info ();
   buf_mgr->log_info_path[0] = '\0';
 
   buf_mgr->act_log.path[0] = '\0';
@@ -2250,15 +2255,8 @@ cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr, const char *db_name,
       *p = '\0';
     }
 
-  p = cirp_get_hostname_from_log_path (log_path, buf_mgr->prefix_name);
-  if (p != NULL)
-    {
-      strncpy (buf_mgr->host_name, p, MAXHOSTNAMELEN);
-    }
-  else
-    {
-      strncpy (buf_mgr->host_name, "unknown", MAXHOSTNAMELEN);
-    }
+  buf_mgr->host_info = cirp_get_hostname_from_log_path (log_path,
+							buf_mgr->prefix_name);
 
   fileio_make_log_info_name (buf_mgr->log_info_path, log_path,
 			     buf_mgr->prefix_name);

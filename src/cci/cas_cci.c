@@ -2547,15 +2547,10 @@ cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items)
 }
 
 int
-cci_notify_ha_agent_state (CCI_CONN * conn, const char *host_ip, int state)
+cci_notify_ha_agent_state (CCI_CONN * conn, in_addr_t ip, int port, int state)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
-  in_addr_t ip;
-  int port;
-
-  ip = inet_addr (host_ip);
-  port = 0;
 
   error = CON_API_PRE (conn, NULL, &con_handle, 0);
   if (error < 0)

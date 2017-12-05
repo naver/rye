@@ -441,9 +441,11 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
 
   if (analyzer->last_node_state != curr_node_state)
     {
+      char host_str[MAX_NODE_INFO_STR_LEN];
+      prm_node_info_to_str (host_str, sizeof (host_str), &buf_mgr->host_info);
       snprintf (buffer, ONE_K,
 		"change the state of HA Node (%s@%s) from '%s' to '%s'",
-		buf_mgr->prefix_name, buf_mgr->host_name,
+		buf_mgr->prefix_name, host_str,
 		css_ha_state_string (analyzer->last_node_state),
 		css_ha_state_string (curr_node_state));
 
@@ -554,7 +556,9 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
 	}
 
       error = cci_notify_ha_agent_state (&analyzer->conn,
-					 analyzer->ct.host_ip, new_state);
+					 analyzer->ct.host_info.ip,
+					 analyzer->ct.host_info.port,
+					 new_state);
       if (error != NO_ERROR)
 	{
 	  error = ER_HA_LA_FAILED_TO_CHANGE_STATE;
@@ -1684,9 +1688,12 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
 	  {
 	    if (Repl_Info->analyzer_info.db_lockf_vdes != NULL_VOLDES)
 	      {
+		char host_str[MAX_NODE_INFO_STR_LEN];
+		prm_node_info_to_str (host_str, sizeof (host_str),
+				      &buf_mgr->host_info);
 		snprintf (buffer, sizeof (buffer),
 			  "the state of HA server (%s@%s) is changed to %s",
-			  buf_mgr->prefix_name, buf_mgr->host_name,
+			  buf_mgr->prefix_name, host_str,
 			  css_ha_state_string (state.server_state));
 
 		er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
@@ -1859,7 +1866,7 @@ analyzer_main (void *arg)
 	{
 	  /* check and change state */
 	  error = rye_master_shm_get_node_state (&curr_node_state,
-						 analyzer->ct.host_ip);
+						 &analyzer->ct.host_info);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;

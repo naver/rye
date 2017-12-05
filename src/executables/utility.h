@@ -699,8 +699,6 @@ typedef struct _ha_config
 
 #define HB_STOP_HB_DEACT_IMMEDIATELY_S          'i'
 #define HB_STOP_HB_DEACT_IMMEDIATELY_L          "immediately"
-#define HB_STOP_HOST_S                          'h'
-#define HB_STOP_HOST_L                          "host"
 
 #define HB_CHANGEMODE_MASTER_L                  'master'
 #define HB_CHANGEMODE_MASTER_S                  14000

@@ -1089,7 +1089,7 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
     {
       PRM_NODE_LIST node_list;
 
-      if (prm_split_node_info (&node_list, conf_value, false) != NO_ERROR)
+      if (prm_split_node_str (&node_list, conf_value, false) != NO_ERROR)
 	{
 	  SET_ADMIN_ERR_MSG ("invalid value: %s", conf_value);
 	  goto set_conf_error;

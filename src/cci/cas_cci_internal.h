@@ -129,8 +129,8 @@ extern void cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY
 				      CCI_DB_GET_STRING db_get_string_func);
 extern int cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head,
 			       int num_items);
-extern int cci_notify_ha_agent_state (CCI_CONN * conn, const char *host_ip,
-				      int state);
+extern int cci_notify_ha_agent_state (CCI_CONN * conn, in_addr_t ip,
+				      int port, int state);
 extern int cci_change_dbuser (CCI_CONN * conn, const char *user,
 			      const char *passwd);
 
