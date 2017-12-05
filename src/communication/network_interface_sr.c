@@ -3073,7 +3073,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   MNT_SERVER_EXEC_STATS base_stats, current_stats, diff_stats;
   char *sql_id = NULL;
   int error_code = NO_ERROR;
-  bool tran_abort = false;
+  UNUSED_VAR bool tran_abort = false;
   CSS_NET_PACKET *recv_packet = thread_p->recv_packet;
   INT64 old_expand_pages, new_expand_pages;
   UINT64 old_expand_clock, new_expand_clock;
@@ -3517,11 +3517,14 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: fetch=%ld, ioread=%ld, iowrite=%ld (%dms)\n", indent, ' ',
-      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
-      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
-      mnt_clock_to_time (diff_stats->acc_time[MNT_STATS_DATA_PAGE_IOWRITES]),
-                                    time);
+  fprintf (log_fp, "%*ctime: fetch=%ld, ioread=%ld, iowrite=%ld (%dms)\n",
+	   indent, ' ',
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOWRITES]), time);
   fprintf (log_fp, "%*cbuffer: fetch=%lld, ioread=%lld, iowrite=%lld\n",
 	   indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_FETCHES],
@@ -3609,7 +3612,7 @@ event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
-  INT64 temp_expand_pages;
+  UNUSED_VAR INT64 temp_expand_pages;
 
   assert (info->sql_hash_text != NULL);
   assert (expand_pages > 0);
@@ -4638,6 +4641,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   unsigned int rid, rc;
   char *ptr;
+  HA_STATE server_state;
 
   rid = thread_get_comm_request_id (thread_p);
 
@@ -4652,20 +4656,21 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
       return ER_FAILED;
     }
 
+  server_state = svr_shm_get_server_state ();
+
+
   ptr = or_pack_int (reply, (int) GET_NEXT_LOG_PAGES);
   ptr = or_pack_int (ptr, area_size);
   ptr = or_pack_int64 (ptr, first_pageid);
   ptr = or_pack_int (ptr, num_page);
   ptr = or_pack_int (ptr, file_status);
-  ptr = or_pack_int (ptr, svr_shm_get_server_state ());
+  ptr = or_pack_int (ptr, server_state);
 
-#if 1
   if (ZIP_CHECK (area_size))
     {
       area_size = (int) GET_ZIP_LEN (area_size);
       assert (area_size > 0);
     }
-#endif
 
   rc = css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 				 reply, OR_ALIGNED_BUF_SIZE (a_reply),
@@ -4676,8 +4681,10 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"xlog_send_log_pages_to_client, reply(GET_NEXT_LOG_PAGES), area_size(%d)\n",
-		area_size);
+		"xlog_send_log_pages_to_client- first_pageid:%ld, "
+		"num_page:%d, file_status:%s, server_state:%s\n",
+		first_pageid, num_page, LOG_HA_FILESTAT_NAME (file_status),
+		HA_STATE_NAME (server_state));
 
   return NO_ERROR;
 }
@@ -4690,8 +4697,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
  */
 int
 xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
-				 char *logpg_area, int area_size,
-				 UNUSED_ARG LOGWR_MODE mode)
+				 char *logpg_area, int area_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -4702,13 +4708,11 @@ xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
 
   ptr = or_pack_int (reply, area_size);
 
-#if 1
   if (ZIP_CHECK (area_size))
     {
       area_size = (int) GET_ZIP_LEN (area_size);
       assert (area_size > 0);
     }
-#endif
 
   rc = css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 				 reply, OR_ALIGNED_BUF_SIZE (a_reply),
@@ -4733,13 +4737,11 @@ xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
  */
 int
 xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
-				  LOG_PAGEID * fpageid_ptr,
-				  LOGWR_MODE * mode_ptr)
+				  LOG_PAGEID * fpageid_ptr)
 {
   char *reply = NULL;
   int reply_size;
   LOG_PAGEID first_pageid;
-  int mode;
   char *ptr;
   int error;
   int remote_error;
@@ -4762,17 +4764,15 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
 
   assert (reply != NULL);
   ptr = or_unpack_int64 (reply, &first_pageid);
-  ptr = or_unpack_int (ptr, &mode);
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);	/* ignore */
   free_and_init (reply);
 
   *fpageid_ptr = first_pageid;
-  *mode_ptr = mode;
 
-  er_log_debug (ARG_FILE_LINE, "xlog_get_page_request_with_reply, "
-		"fpageid(%lld), mode(%s), compressed_protocol(%d)\n",
-		first_pageid, LOGWR_MODE_NAME (mode), compressed_protocol);
+  er_log_debug (ARG_FILE_LINE, "xlog_get_page_request_with_reply-"
+		"fpageid:%ld, remote_error:%d, compressed_protocol:%d\n",
+		first_pageid, remote_error, compressed_protocol);
 
   return (remote_error != NO_ERROR) ? remote_error : error;
 }
@@ -5173,18 +5173,15 @@ slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   char *ptr;
   LOG_PAGEID first_pageid;
-  LOGWR_MODE mode;
-  int m, error, remote_error;
+  int error, remote_error;
   int compressed_protocol;
 
   ptr = or_unpack_int64 (request, &first_pageid);
-  ptr = or_unpack_int (ptr, &m);
-  mode = (LOGWR_MODE) m;
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);
   assert (compressed_protocol == 1 || compressed_protocol == 0);
 
-  error = xlogwr_get_log_pages (thread_p, first_pageid, mode,
+  error = xlogwr_get_log_pages (thread_p, first_pageid,
 				((compressed_protocol == 1) ? true : false));
   if (error == ER_INTERRUPTED)
     {

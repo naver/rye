@@ -1014,103 +1014,6 @@ net_client_request (int request, CSS_NET_PACKET ** recv_packet,
 }
 
 /*
- * net_client_request_with_callback -
- *
- * return: error status
- *
- *   request(in): server request id
- *   argbuf(in): argument buffer (small)
- *   argsize(in): byte size of argbuf
- *   databuf1(in): first data buffer to send (large)
- *   datasize1(in): size of first data buffer
- *   databuf2(in): second data buffer to send (large)
- *   datasize2(in): size of second data buffer
- *   replybuf(in): reply argument buffer (small)
- *   replysize(in): size of reply argument buffer
- *
- * Note: This is one of the functions that is called to perform a server
- *    request.
- *    This is similar to net_client_request2, but the first
- *    field in the reply argument buffer is a request code which can
- *    cause the client to perform actions such as call methods.  When
- *    the actions are completed, a reply is sent to the server.  Eventually
- *    the server responds to the original request with a request code
- *    that indicates that the request is complete and this routine
- *    returns.
- */
-int
-net_client_request_with_callback (int request, char *argbuf, int argsize,
-				  char *reply, int replysize,
-				  CSS_NET_PACKET ** recv_packet)
-{
-  unsigned int eid;
-  UNUSED_VAR char *ptr;
-  QUERY_SERVER_REQUEST server_request;
-  int server_request_num;
-  CSS_NET_PACKET *tmp_recv_packet = NULL;
-  int error;
-
-  error = 0;
-
-#if defined(HISTO)
-  if (net_Histo_setup)
-    {
-      net_histo_add_entry (request, argsize + datasize1 + datasize2);
-    }
-#endif /* HISTO */
-
-  error = net_client_request_send_msg (&eid, request, 1, argbuf, argsize);
-  if (error != NO_ERROR)
-    {
-      return error;
-    }
-
-  do
-    {
-      error = net_client_request_recv_msg (&tmp_recv_packet, eid, -1,
-					   1, reply, replysize);
-      if (error != NO_ERROR)
-	{
-	  return error;
-	}
-
-      ptr = or_unpack_int (reply, &server_request_num);
-      server_request = (QUERY_SERVER_REQUEST) server_request_num;
-
-      switch (server_request)
-	{
-	case QUERY_END:
-	case END_CALLBACK:
-	  if (recv_packet)
-	    {
-	      *recv_packet = tmp_recv_packet;
-	      tmp_recv_packet = NULL;
-	    }
-	  break;
-
-	default:
-	  error = ER_NET_SERVER_DATA_RECEIVE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	  server_request = QUERY_END;
-	  break;
-	}
-
-      css_net_packet_free (tmp_recv_packet);
-    }
-  while (server_request != END_CALLBACK && server_request != QUERY_END);
-
-#if defined(HISTO)
-  if (net_Histo_setup)
-    {
-      net_histo_request_finished (request,
-				  replysize + *replydatasize_listid +
-				  *replydatasize_page + *replaydatasize_plan);
-    }
-#endif /* HISTO */
-  return (error);
-}
-
-/*
  * net_client_get_log_header -
  *
  * return:
@@ -1177,13 +1080,12 @@ net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr,
 	ptr = or_unpack_int (ptr, &num_page);
 	ptr = or_unpack_int (ptr, &file_status);
 	ptr = or_unpack_int (ptr, &server_status);
-#if 1
+
 	if (ZIP_CHECK (length))
 	  {
 	    is_zipped = true;
 	    length = (int) GET_ZIP_LEN (length);
 	  }
-#endif
 
 	if (length <= 0)
 	  {
@@ -1202,7 +1104,6 @@ net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr,
 	      }
 	    else
 	      {
-#if 1
 		if (is_zipped)
 		  {
 		    LOG_ZIP *unzip_logpg_area;
@@ -1251,7 +1152,6 @@ net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr,
 			unzip_logpg_area = NULL;
 		      }
 		  }
-#endif
 
 		*logpg_area_buf = logpg_area;
 	      }

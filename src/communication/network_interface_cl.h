@@ -295,10 +295,6 @@ extern int net_client_request_recv_msg_v (CSS_NET_PACKET ** recv_packet,
 extern int net_client_request (int request, CSS_NET_PACKET ** recv_packet,
 			       int num_send_buffers, int num_recv_buffers,
 			       ...);
-extern int net_client_request_with_callback (int request,
-					     char *argbuf, int argsize,
-					     char *replybuf, int replysize,
-					     CSS_NET_PACKET ** recv_packet);
 extern int net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr, char *argbuf,
 				      int argsize, char *replybuf,
 				      int replysize, char **logpg_area_buf);

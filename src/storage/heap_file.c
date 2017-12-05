@@ -13261,7 +13261,7 @@ heap_rv_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int sp_success;
 
   slotid = rcv->offset;
-  recdes.type = *(INT16 *) (rcv->data);
+  recdes.type = *(const INT16 *) (rcv->data);
   recdes.data = (char *) (rcv->data) + sizeof (recdes.type) + sizeof (OID);
   recdes.length = rcv->length - sizeof (recdes.type) - sizeof (OID);
   recdes.area_size = recdes.length;
@@ -13364,7 +13364,7 @@ heap_rv_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int sp_success;
 
   slotid = rcv->offset;
-  recdes.type = *(INT16 *) (rcv->data);
+  recdes.type = *(const INT16 *) (rcv->data);
   recdes.data = (char *) (rcv->data) + sizeof (recdes.type) + sizeof (OID);
   recdes.length = rcv->length - sizeof (recdes.type) - sizeof (OID);
   recdes.area_size = recdes.length;
@@ -13398,9 +13398,9 @@ heap_rv_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 int
 heap_rv_undo_create (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 {
-  HFID *hfid;
+  const HFID *hfid;
 
-  hfid = (HFID *) (rcv->data);
+  hfid = (const HFID *) (rcv->data);
 
   return xheap_destroy (thread_p, hfid);
 }
@@ -13645,16 +13645,16 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
   OR_CLASSREP **rep_all;
   int count, i;
   char *classname;
-  bool need_free_classname = false;
+  const char *print_classname;
 
   classname = heap_get_class_name (thread_p, class_oid);
   if (classname == NULL)
     {
-      classname = (char *) "unknown";
+      print_classname = "unknown";
     }
   else
     {
-      need_free_classname = true;
+      print_classname = classname;
     }
 
   heap_scancache_quick_start (&scan_cache);
@@ -13668,7 +13668,7 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
 	{
 	  fprintf (fp, "*** Dumping representations of class %s\n"
 		   "    Classname = %s, Class-OID = %d|%d|%d, #Repr = %d\n\n",
-		   classname, classname, (int) class_oid->volid,
+		   print_classname, print_classname, (int) class_oid->volid,
 		   class_oid->pageid, (int) class_oid->slotid, count);
 
 	  for (i = 0; i < count; i++)
@@ -13685,7 +13685,7 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
 
   heap_scancache_end (thread_p, &scan_cache);
 
-  if (need_free_classname)
+  if (classname != NULL)
     {
       free_and_init (classname);
     }

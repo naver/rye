@@ -613,7 +613,8 @@ catalog_put_repr_item_to_record (char *rec_p, CATALOG_REPR_ITEM * item_p)
 static void
 catalog_initialize_max_space (CATALOG_MAX_SPACE * max_space_p)
 {
-  int rv;
+  UNUSED_VAR int rv;
+
   rv = pthread_mutex_lock (&catalog_Max_space_lock);
 
   max_space_p->max_page_id.pageid = NULL_PAGEID;
@@ -626,7 +627,8 @@ catalog_initialize_max_space (CATALOG_MAX_SPACE * max_space_p)
 static void
 catalog_update_max_space (VPID * page_id_p, PGLENGTH space)
 {
-  int rv;
+  UNUSED_VAR int rv;
+
   rv = pthread_mutex_lock (&catalog_Max_space_lock);
 
   if (VPID_EQ (page_id_p, &catalog_Max_space.max_page_id))
@@ -776,7 +778,7 @@ catalog_find_optimal_page (THREAD_ENTRY * thread_p, int size,
   float empty_ratio;
   int page_count;
   bool is_overflow_page;
-  int rv;
+  UNUSED_VAR int rv;
 
   aligned_data = PTR_ALIGN (data, MAX_ALIGNMENT);
 
@@ -1888,7 +1890,7 @@ static void
 catalog_delete_key (OID * class_id_p, REPR_ID repr_id)
 {
   CATALOG_KEY catalog_key;
-  int rv;
+  UNUSED_VAR int rv;
 
   assert (class_id_p != NULL);
 
@@ -2204,7 +2206,7 @@ catalog_get_representation_item (THREAD_ENTRY * thread_p, OID * class_id_p,
   int repr_pos, repr_count;
   char *repr_p;
   CATALOG_KEY catalog_key;
-  int rv;
+  UNUSED_VAR int rv;
 
   assert (class_id_p != NULL);
 
@@ -5039,7 +5041,7 @@ catalog_dump (THREAD_ENTRY * thread_p, FILE * fp, int dump_flag)
 static void
 catalog_clear_hash_table ()
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&catalog_Hash_table_lock);
   if (catalog_Hash_table != NULL)

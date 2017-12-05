@@ -5380,7 +5380,7 @@ set_rebalance_node_type (int node_count, T_REBALANCE_AMOUNT * rbl_amount,
 	    }
 	  else
 	    {
-	      rbl_amount[i].nodeid = 0;	/* unknwon type. ignore node id */
+	      rbl_amount[i].nodeid = 0;	/* unknown type. ignore node id */
 	    }
 	}
     }

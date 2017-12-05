@@ -36,8 +36,6 @@
 #include "porting.h"
 #include "ini_parser.h"
 
-#define HA_MAX_LOG_APPLIER_LOWER (2)
-#define HA_MAX_LOG_APPLIER_UPPER (64)
 
 #define PRM_HB_MAX_GROUP_ID_LEN		(64)
 #define PRM_MAX_HA_NODE_LIST		(32)

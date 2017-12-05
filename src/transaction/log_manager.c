@@ -693,7 +693,7 @@ log_create_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
   log_Gl.rcv_phase = LOG_RECOVERY_ANALYSIS_PHASE;
 
   /* Initialize the log header */
-  if (logpb_initialize_header (thread_p, &log_Gl.hdr, prefix_logname, npages,
+  if (logpb_initialize_header (&log_Gl.hdr, prefix_logname, npages,
 			       db_creation) != NO_ERROR)
     {
       logpb_finalize_pool ();
@@ -947,9 +947,8 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
 
 	  log_npages = log_get_num_pages_for_creation (-1);
 
-	  error_code =
-	    logpb_initialize_header (thread_p, &log_Gl.hdr, prefix_logname,
-				     log_npages, &db_creation);
+	  error_code = logpb_initialize_header (&log_Gl.hdr, prefix_logname,
+						log_npages, &db_creation);
 	  if (error_code != NO_ERROR)
 	    {
 	      goto error;

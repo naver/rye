@@ -255,6 +255,17 @@ enum _ha_state
 #define HA_STATE_REPLICA_STR             "replica"
 #define HA_STATE_DEAD_STR                "dead"
 
+#define HA_STATE_NAME(ha_stat)                           \
+  ((ha_stat) == HA_STATE_NA ? "na" :                     \
+   (ha_stat) == HA_STATE_UNKNOWN ? "unknown" :           \
+   (ha_stat) == HA_STATE_MASTER ? "master" :             \
+   (ha_stat) == HA_STATE_TO_BE_MASTER ? "to-be-master" : \
+   (ha_stat) == HA_STATE_SLAVE ? "slave" :               \
+   (ha_stat) == HA_STATE_TO_BE_SLAVE ? "to-be-slave" :   \
+   (ha_stat) == HA_STATE_REPLICA ? "replica" :           \
+   (ha_stat) == HA_STATE_DEAD ? "dead" : "invalid")
+
+
 /*
  * HA log applier state
  */
@@ -268,11 +279,14 @@ enum ha_apply_state
   HA_APPLY_STATE_DONE = 3,
   HA_APPLY_STATE_ERROR = 4
 };
-#define HA_APPLY_STATE_UNREGISTERED_STR   "unregistered"
-#define HA_APPLY_STATE_RECOVERING_STR     "recovering"
-#define HA_APPLY_STATE_WORKING_STR        "working"
-#define HA_APPLY_STATE_DONE_STR           "done"
-#define HA_APPLY_STATE_ERROR_STR          "error"
+
+#define HA_APPLY_STATE_NAME(apply_stat)                           \
+  ((apply_stat) == HA_APPLY_STATE_NA ? "na" :                     \
+   (apply_stat) == HA_APPLY_STATE_UNREGISTERED ? "unregistered" : \
+   (apply_stat) == HA_APPLY_STATE_RECOVERING ? "recovering" :     \
+   (apply_stat) == HA_APPLY_STATE_WORKING ? "working" :           \
+   (apply_stat) == HA_APPLY_STATE_DONE ? "done" :                 \
+   (apply_stat) == HA_APPLY_STATE_ERROR ? "error" : "invalid")
 
 typedef enum log_ha_filestat LOG_HA_FILESTAT;
 enum log_ha_filestat
@@ -281,6 +295,11 @@ enum log_ha_filestat
   LOG_HA_FILESTAT_ARCHIVED = 1,
   LOG_HA_FILESTAT_SYNCHRONIZED = 2
 };
+
+#define LOG_HA_FILESTAT_NAME(fstat)                                   \
+  ((fstat) == LOG_HA_FILESTAT_CLEAR ? "clear" :                       \
+   (fstat) == LOG_HA_FILESTAT_ARCHIVED ? "archived" :                 \
+   (fstat) == LOG_HA_FILESTAT_SYNCHRONIZED ? "synchronized" : "invalid")
 
 #define HA_DELAY_ERR_CORRECTION             1000
 
