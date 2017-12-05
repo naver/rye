@@ -3239,27 +3239,15 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
   rv = pthread_cond_broadcast (&writer_info->wr_list_cond);
 
   /* It waits until all log writer threads are done */
-  entry = writer_info->writer_list;
-  while (entry != NULL)
+  while (logwr_find_entry_status (writer_info, LOGWR_STATUS_FETCH) != NULL
+	 && logwr_find_copy_completed_entry (writer_info) == NULL)
     {
-      if (entry->status == LOGWR_STATUS_FETCH)
-	{
-	  break;
-	}
-      entry = entry->next;
-    }
+      struct timespec to;
 
-  if (entry != NULL)
-    {
-      while (logwr_find_copy_completed_entry (writer_info) == NULL)
-	{
-	  struct timespec to;
-
-	  clock_gettime (CLOCK_REALTIME, &to);
-	  to = timespec_add_msec (&to, 100);
-	  rv = pthread_cond_timedwait (&writer_info->wr_list_cond,
-				       &writer_info->wr_list_mutex, &to);
-	}
+      clock_gettime (CLOCK_REALTIME, &to);
+      to = timespec_add_msec (&to, 100);
+      rv = pthread_cond_timedwait (&writer_info->wr_list_cond,
+				   &writer_info->wr_list_mutex, &to);
     }
 
   writer_info->trace_last_writer = false;
