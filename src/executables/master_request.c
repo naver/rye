@@ -53,8 +53,7 @@
 #include "object_representation.h"
 #include "rye_server_shm.h"
 
-#define IS_MASTER_SOCKET_FD(FD)         \
-      ((FD) == css_Master_socket_fd[0] || (FD) == css_Master_socket_fd[1])
+#define IS_MASTER_SOCKET_FD(FD)		((FD) == css_Master_socket_fd)
 
 #define HA_SERVER_FORMAT_STRING " HA-Server %s (rel %s, pid %d, nodeid %d)\n"
 #define HA_REPL_FORMAT_STRING " HA-Repl %s (rel %s, pid %d, nodeid %d)\n"
@@ -1301,10 +1300,9 @@ css_process_kill_master (void)
 {
   char sock_path[PATH_MAX];
 
-  css_shutdown_socket (css_Master_socket_fd[0]);
-  css_shutdown_socket (css_Master_socket_fd[1]);
+  css_shutdown_socket (css_Master_socket_fd);
 
-  css_get_master_domain_path (sock_path, PATH_MAX);
+  css_get_master_domain_path (sock_path, PATH_MAX, false);
   unlink (sock_path);
 
   hb_resource_shutdown_and_cleanup ();

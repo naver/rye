@@ -61,8 +61,6 @@
 #include "broker_util.h"
 #include "broker_filename.h"
 
-#include "broker_send_fd.h"
-#include "broker_recv_fd.h"
 #include "broker_log.h"
 #include "broker.h"
 #include "cas_cci_internal.h"
@@ -446,8 +444,8 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  continue;
 	}
 
-      clt_sock_fd = recv_fd (mgmt_sock_fd, (int *) &client_ip_addr,
-			     &mgmt_recv_time);
+      clt_sock_fd = css_recv_fd (mgmt_sock_fd, (int *) &client_ip_addr,
+				 &mgmt_recv_time);
       if (clt_sock_fd < 0)
 	{
 	  RYE_CLOSE_SOCKET (mgmt_sock_fd);
@@ -719,7 +717,8 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 	    }
 
 	  ip_addr = cur_job.ip;
-	  ret_val = send_fd (srv_sock_fd, cur_job.clt_sock_fd, ip_addr,
+	  ret_val =
+	    css_transfer_fd (srv_sock_fd, cur_job.clt_sock_fd, ip_addr,
 			     &cur_job.recv_time);
 	  if (ret_val > 0)
 	    {
@@ -2478,6 +2477,8 @@ static int req_arg_get_conf (T_MGMT_REQ_ARG * req_arg, int num_args,
 			     const T_MGMT_REQ_ARG_CONTAINER * args);
 static int req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg, int num_args,
 				  const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg, int num_args,
+				      const T_MGMT_REQ_ARG_CONTAINER * args);
 static int req_arg_get_no_arg (T_MGMT_REQ_ARG * req_arg, int num_args,
 			       const T_MGMT_REQ_ARG_CONTAINER * args);
 
@@ -2504,6 +2505,7 @@ static T_REQ_ARG_READ_FUNC_TABLE req_Arg_read_func_table[] = {
   {BRREQ_OP_CODE_DELETE_CONF, req_arg_get_conf},
   {BRREQ_OP_CODE_GET_CONF, req_arg_get_conf},
   {BRREQ_OP_CODE_BR_ACL_RELOAD, req_arg_br_acl_reload},
+  {BRREQ_OP_CODE_CONNECT_DB_SERVER, req_arg_connect_db_server},
   {0, NULL}
 };
 
@@ -3120,6 +3122,25 @@ req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg,
     {
       return BR_ER_INVALID_ARGUMENT;
     }
+
+  return 0;
+}
+
+static int
+req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg,
+			   int num_args,
+			   const T_MGMT_REQ_ARG_CONTAINER * args)
+{
+  T_MGMT_REQ_ARG_CONNECT_DB_SERVER *connect_db_server_arg;
+
+  connect_db_server_arg = &req_arg->value.connect_db_server_arg;
+
+  if (check_mgmt_req_arg (num_args, args, 1, MGMT_REQ_ARG_STR) < 0)
+    {
+      return BR_ER_INVALID_ARGUMENT;
+    }
+
+  connect_db_server_arg->db_name = MGMT_ARG_STRING_VALUE (&args[0]);
 
   return 0;
 }

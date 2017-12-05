@@ -50,7 +50,6 @@
 #define DEFAULT_SHARD_MGMT_NUM_MIGRATOR	2
 
 #define DEFAULT_BROKER_SHM_KEY		(DEFAULT_RYE_SHM_KEY + DEFUALT_BROKER_SHM_KEY_BASE)
-#define DEFAULT_BROKER_PORT		30000
 #define DEFAULT_ADMIN_LOG_FILE		"rye_broker.log"
 #define DEFAULT_SESSION_TIMEOUT		"5min"
 #define DEFAULT_MAX_QUERY_TIMEOUT       "0"
@@ -305,10 +304,6 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
     {
       return -1;
     }
-
-  /*
-     br_info->port = ini_getint (ini, sec_name, "BROKER_PORT", 0, lineno);
-   */
 
   tmp_str = ini_getstr (ini, sec_name, "SERVICE", "ON", lineno);
   br_info->service_flag = conf_get_value_table_on_off (tmp_str);
@@ -676,8 +671,7 @@ get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl,
 
   *shm_key_br_gl = ini_gethex (ini, BROKER_SECTION_NAME, "BROKER_SHM_KEY",
 			       DEFAULT_BROKER_SHM_KEY, lineno);
-  *mgmt_port = ini_getint (ini, BROKER_SECTION_NAME, "BROKER_PORT",
-			   DEFAULT_BROKER_PORT, lineno);
+  *mgmt_port = prm_get_local_port_id ();
 
   if (admin_log_file != NULL)
     {

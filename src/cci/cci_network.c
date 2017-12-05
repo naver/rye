@@ -1374,6 +1374,31 @@ net_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_res,
     }
 }
 
+int
+net_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname,
+			    int timeout_msec)
+{
+  T_BROKER_REQUEST_MSG *req_msg = NULL;
+  T_BROKER_RESPONSE_ADDITIONAL_MSG res_msg;
+  SOCKET sock_fd = INVALID_SOCKET;
+
+  net_additional_msg_clear (&res_msg);
+
+  req_msg = make_mgmt_request_msg (BRREQ_OP_CODE_CONNECT_DB_SERVER,
+				   MGMT_REQ_ARG_STR, dbname,
+				   MGMT_REQ_ARG_END);
+  if (net_mgmt_admin_req (&sock_fd, host, timeout_msec, req_msg,
+			  &res_msg, NULL, false, false) < 0)
+    {
+      return INVALID_SOCKET;
+    }
+
+  net_additional_msg_free (&res_msg);
+
+  assert (sock_fd != INVALID_SOCKET);
+  return sock_fd;
+}
+
 /************************************************************************
  * IMPLEMENTATION OF PRIVATE FUNCTIONS	 				*
  ************************************************************************/

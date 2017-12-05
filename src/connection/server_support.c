@@ -119,16 +119,16 @@ static int css_check_conn (CSS_CONN_ENTRY * p);
 static void css_set_shutdown_timeout (INT64 timeout);
 static int css_get_master_request (CSS_CONN_ENTRY * conn,
 				   CSS_NET_PACKET ** recv_packet);
-static void css_process_connect_request (void);
+static void css_process_connect_request (CSS_CONN_ENTRY * conn,
+					 in_addr_t clt_addr);
 static int css_process_master_request (CSS_CONN_ENTRY * conn);
-static void css_process_new_client (SOCKET master_fd);
 static void css_process_change_server_ha_mode_request (char *data,
 						       int datasize);
 
 static void css_close_connection_to_master (void);
 static void css_close_server_listen_socket (void);
 static void dummy_sigurg_handler (int sig);
-static int css_check_accessibility (SOCKET new_fd);
+static int css_check_accessibility (in_addr_t clt_ip);
 
 static void css_epoll_stop (void);
 static int css_epoll_init (void);
@@ -143,7 +143,10 @@ static int css_job_entry_get (JOB_QUEUE * job_queue,
 			      CSS_JOB_ENTRY * job_entry);
 static int css_con_close_handler (THREAD_ENTRY * thread_p,
 				  CSS_THREAD_ARG arg);
-static int css_accept_new_client (unsigned short rid, CSS_CONN_ENTRY * conn);
+static void css_send_new_client_response (CSS_CONN_ENTRY * conn, int reason,
+					  unsigned short rid,
+					  bool send_error);
+
 
 /*
  * css_init_job_queue () -
@@ -553,7 +556,7 @@ css_setup_server_loop (void)
 
 	  if (po[1].revents & POLLIN)
 	    {
-	      css_process_connect_request ();
+	      css_process_connect_request (NULL, INADDR_NONE);
 	    }
 	}
     }
@@ -595,22 +598,29 @@ css_get_master_request (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet)
  * css_process_connect_request () -
  */
 static void
-css_process_connect_request ()
+css_process_connect_request (CSS_CONN_ENTRY * conn, in_addr_t clt_ip_addr)
 {
-  SOCKET cli_fd = INVALID_SOCKET;
-  CSS_CONN_ENTRY *conn = NULL;
   CSS_NET_PACKET *recv_packet = NULL;
-  enum css_master_conn_type conn_type;
+  SVR_CONNECT_TYPE conn_type;
   unsigned short rid;
 
-  cli_fd = css_master_accept (css_Listen_conn->fd);
-  if (IS_INVALID_SOCKET (cli_fd))
+  if (conn == NULL)
     {
-      goto error;
+      SOCKET cli_fd = css_master_accept (css_Listen_conn->fd);
+
+      if (IS_INVALID_SOCKET (cli_fd))
+	{
+	  goto error;
+	}
+      conn = css_make_conn (cli_fd);
+      if (conn == NULL)
+	{
+	  css_shutdown_socket (cli_fd);
+	  goto error;
+	}
     }
 
-  if ((conn = css_make_conn (cli_fd)) == NULL ||
-      css_check_magic (conn) != NO_ERRORS ||
+  if (css_check_magic (conn) != NO_ERRORS ||
       css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
     {
       goto error;
@@ -619,48 +629,77 @@ css_process_connect_request ()
   conn_type = recv_packet->header.function_code;
   rid = recv_packet->header.request_id;
 
-  if (conn_type == MASTER_CONN_TYPE_TO_SERVER)
+  css_net_packet_free (recv_packet);
+
+  if (conn_type == SVR_CONNECT_TYPE_TO_SERVER)
     {
-      if (css_accept_new_client (rid, conn) != NO_ERROR)
+      if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == true &&
+	  css_check_accessibility (clt_ip_addr) != NO_ERROR)
 	{
-	  goto error;
+	  css_send_new_client_response (conn, SERVER_INACCESSIBLE_IP,
+					rid, true);
 	}
+      else
+	{
+	  CSS_JOB_ENTRY job_entry;
 
-      css_net_packet_free (recv_packet);
-      er_log_debug (ARG_FILE_LINE, "css_process_connect_request");
-      return;
+	  css_send_new_client_response (conn, SERVER_CONNECTED, rid, false);
+
+	  css_insert_into_active_conn_list (conn);
+	  CSS_JOB_ENTRY_SET (job_entry, conn, css_internal_request_handler,
+			     conn);
+	  if (css_add_to_job_queue (JOB_QUEUE_CLIENT, &job_entry) == NO_ERROR)
+	    {
+	      return;
+	    }
+	}
     }
-
-error:
-  if (conn == NULL)
+  else if (conn_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
     {
-      css_shutdown_socket (cli_fd);
+      SOCKET recv_fd;
+
+      assert (clt_ip_addr == INADDR_NONE);
+
+      css_send_new_client_response (conn, SERVER_CONNECTED, rid, false);
+
+      recv_fd = css_recv_fd (conn->fd, (int *) &clt_ip_addr, NULL);
+      if (recv_fd != INVALID_SOCKET)
+	{
+	  css_shutdown_socket (conn->fd);
+	  conn->fd = recv_fd;
+	  css_process_connect_request (conn, clt_ip_addr);
+	  return;
+	}
     }
   else
     {
+      assert (0);
+    }
+
+error:
+  if (conn != NULL)
+    {
       css_free_conn (conn);
     }
-  css_net_packet_free (recv_packet);
 }
 
 /*
- * css_accept_new_client () -
+ * css_send_new_client_response () -
  */
-static int
-css_accept_new_client (unsigned short rid, CSS_CONN_ENTRY * conn)
+static void
+css_send_new_client_response (CSS_CONN_ENTRY * conn, int reason,
+			      unsigned short rid, bool send_error)
 {
-  int reason;
-  CSS_JOB_ENTRY job_entry;
-
-  reason = htonl (SERVER_CONNECTED);
-
-  css_send_data_packet (conn, rid, 1, (char *) &reason, sizeof (int));
-
-  css_insert_into_active_conn_list (conn);
-
-  CSS_JOB_ENTRY_SET (job_entry, conn, css_internal_request_handler, conn);
-
-  return (css_add_to_job_queue (JOB_QUEUE_CLIENT, &job_entry));
+  reason = htonl (reason);
+  css_send_data_packet (conn, rid, 1, (char *) &reason, (int) sizeof (int));
+  if (send_error)
+    {
+      void *area;
+      char buffer[1024];
+      int length = sizeof (buffer);
+      area = er_get_area_error (buffer, &length);
+      css_send_error_packet (conn, rid, (const char *) area, length);
+    }
 }
 
 /*
@@ -695,10 +734,6 @@ css_process_master_request (CSS_CONN_ENTRY * conn)
   request = recv_packet->header.function_code;
   switch (request)
     {
-    case SERVER_START_NEW_CLIENT:
-      css_process_new_client (conn->fd);
-      break;
-
     case SERVER_START_SHUTDOWN:
       r = 0;
       break;
@@ -717,76 +752,6 @@ css_process_master_request (CSS_CONN_ENTRY * conn)
   css_net_packet_free (recv_packet);
 
   return r;
-}
-
-/*
- * css_process_new_client () -
- *   return:
- *   master_fd(in):
- *   read_fd_var(in/out):
- *   exception_fd_var(in/out):
- */
-static void
-css_process_new_client (SOCKET master_fd)
-{
-  SOCKET new_fd;
-  int reason;
-  CSS_CONN_ENTRY *conn;
-  unsigned short rid;
-  CSS_CONN_ENTRY temp_conn;
-  void *area;
-  char buffer[1024];
-  int length = 1024;
-
-  /* receive new socket descriptor from the master */
-  new_fd = css_open_new_socket_from_master (master_fd, &rid);
-  if (IS_INVALID_SOCKET (new_fd))
-    {
-      return;
-    }
-
-  if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == true &&
-      css_check_accessibility (new_fd) != NO_ERROR)
-    {
-      css_initialize_conn (&temp_conn, new_fd);
-
-      reason = htonl (SERVER_INACCESSIBLE_IP);
-      css_send_data_packet (&temp_conn, rid, 1,
-			    (char *) &reason, (int) sizeof (int));
-
-      area = er_get_area_error (buffer, &length);
-
-      css_send_error_packet (&temp_conn, rid, (const char *) area, length);
-      css_shutdown_conn (&temp_conn);
-      er_clear ();
-      return;
-    }
-
-  conn = css_make_conn (new_fd);
-  if (conn == NULL)
-    {
-      css_initialize_conn (&temp_conn, new_fd);
-
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_CLIENTS_EXCEEDED,
-	      1, NUM_NORMAL_TRANS);
-      reason = htonl (SERVER_CLIENTS_EXCEEDED);
-      css_send_data_packet (&temp_conn, rid, 1,
-			    (char *) &reason, (int) sizeof (int));
-
-      area = er_get_area_error (buffer, &length);
-
-      css_send_error_packet (&temp_conn, rid, (const char *) area, length);
-      css_shutdown_conn (&temp_conn);
-      er_clear ();
-      return;
-    }
-
-  if (css_accept_new_client (rid, conn) != NO_ERROR)
-    {
-      css_shutdown_conn (conn);
-      css_free_conn (conn);
-    }
-  er_log_debug (ARG_FILE_LINE, "css_process_new_client()");
 }
 
 /*
@@ -1727,26 +1692,14 @@ exit_on_error:
 
 #if defined(SERVER_MODE)
 static int
-css_check_accessibility (SOCKET new_fd)
+css_check_accessibility (in_addr_t clt_ip)
 {
-  socklen_t saddr_len;
-  struct sockaddr_in clt_sock_addr;
   unsigned char *ip_addr;
   int err_code;
 
-  saddr_len = sizeof (clt_sock_addr);
+  ip_addr = (unsigned char *) &clt_ip;
 
-  if (getpeername (new_fd,
-		   (struct sockaddr *) &clt_sock_addr, &saddr_len) != 0)
-    {
-      return ER_FAILED;
-    }
-
-  ip_addr = (unsigned char *) &(clt_sock_addr.sin_addr);
-
-  if (clt_sock_addr.sin_family == AF_UNIX ||
-      (ip_addr[0] == 127 && ip_addr[1] == 0 &&
-       ip_addr[2] == 0 && ip_addr[3] == 1))
+  if (clt_ip == INADDR_NONE)
     {
       return NO_ERROR;
     }
@@ -1754,10 +1707,7 @@ css_check_accessibility (SOCKET new_fd)
   if (css_Server_accessible_ip_info == NULL)
     {
       char ip_str[32];
-
-      sprintf (ip_str, "%d.%d.%d.%d", (unsigned char) ip_addr[0],
-	       ip_addr[1], ip_addr[2], ip_addr[3]);
-
+      css_ip_to_str (ip_str, sizeof (ip_str), clt_ip);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 	      ER_INACCESSIBLE_IP, 1, ip_str);
 
@@ -1771,10 +1721,7 @@ css_check_accessibility (SOCKET new_fd)
   if (err_code != NO_ERROR)
     {
       char ip_str[32];
-
-      sprintf (ip_str, "%d.%d.%d.%d", (unsigned char) ip_addr[0],
-	       ip_addr[1], ip_addr[2], ip_addr[3]);
-
+      css_ip_to_str (ip_str, sizeof (ip_str), clt_ip);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 	      ER_INACCESSIBLE_IP, 1, ip_str);
     }

@@ -50,8 +50,7 @@
 #include "connection_support.h"
 #include "perf_monitor.h"
 #include "boot_cl.h"
-
-#include "broker_recv_fd.h"
+#include "tcp.h"
 
 #include "broker_shm.h"
 #include "broker_util.h"
@@ -893,7 +892,7 @@ recv_client_fd_from_broker (SOCKET br_sock_fd, int *client_ip_addr,
       return -1;
     }
 
-  client_sock_fd = recv_fd (br_sock_fd, client_ip_addr, broker_recv_time);
+  client_sock_fd = css_recv_fd (br_sock_fd, client_ip_addr, broker_recv_time);
   if (client_sock_fd == -1)
     {
       cas_sql_log_write_and_end (0, "HANDSHAKE ERROR recv_fd %d",

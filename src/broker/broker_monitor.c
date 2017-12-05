@@ -873,6 +873,9 @@ local_mgmt_monitor (const T_SHM_LOCAL_MGMT_INFO * shm_info_p)
   str_out ("cancel:%d", shm_info_p->cancel_req_count);
   str_out ("%c", FIELD_DELIMITER);
   str_out ("admin_req:%d", shm_info_p->admin_req_count);
+  str_out ("%c", FIELD_DELIMITER);
+  str_out ("db_connect:%d(%d)",
+	   shm_info_p->db_connect_success, shm_info_p->db_connect_fail);
   print_newline ();
 
   str_out ("%s", indent1);

@@ -37,7 +37,8 @@ extern void css_free_conn (CSS_CONN_ENTRY * conn);
 extern CSS_CONN_ENTRY *css_find_exception_conn (void);
 
 extern CSS_CONN_ENTRY *css_connect_to_rye_server (const PRM_NODE_INFO * node,
-						  const char *server_name);
+						  const char *server_name,
+						  int connect_type);
 extern CSS_CONN_ENTRY *css_connect_to_master_for_info (const PRM_NODE_INFO *
 						       node_info,
 						       unsigned short *rid);

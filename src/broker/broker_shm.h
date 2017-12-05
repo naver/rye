@@ -205,6 +205,8 @@ typedef struct
   int cancel_req_count;
   int admin_req_count;
   int error_req_count;
+  int db_connect_success;
+  int db_connect_fail;
   T_SHM_MGMT_QUEUE_INFO admin_req_queue;
   int num_child_process;
   T_LOCAL_MGMT_CHILD_PROC_INFO child_process_info[SHM_MAX_CHILD_INFO];

@@ -1697,7 +1697,7 @@ css_register_to_master (HB_PROC_TYPE type,
 						      server_name, log_path);
 #if defined(SERVER_MODE)
   css_error = css_common_connect_sr (conn, &rid, &node_info,
-				     MASTER_CONN_TYPE_HB_PROC,
+				     SVR_CONNECT_TYPE_MASTER_HB_PROC,
 				     packed_name, name_length);
   if (css_error == NO_ERRORS)
     {
@@ -1707,7 +1707,7 @@ css_register_to_master (HB_PROC_TYPE type,
     }
 #else
   css_error = css_common_connect_cl (&node_info, conn,
-				     MASTER_CONN_TYPE_HB_PROC,
+				     SVR_CONNECT_TYPE_MASTER_HB_PROC,
 				     NULL, packed_name, name_length,
 				     0, &rid, true);
   if (css_error == NO_ERRORS)

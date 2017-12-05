@@ -36,6 +36,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "connection_defs.h"
+#include "connection_cl.h"
 #include "system_parameter.h"
 #include "cas_protocol.h"
 #include "cas_common.h"
@@ -43,7 +45,6 @@
 #include "broker.h"
 #include "cas_error.h"
 #include "broker_util.h"
-#include "broker_send_fd.h"
 #include "rye_master_shm.h"
 #include "broker_filename.h"
 #include "cas_cci_internal.h"
@@ -140,6 +141,9 @@ static int local_mg_get_conf (T_LOCAL_MGMT_JOB * job,
 static int local_mg_br_acl_reload (T_LOCAL_MGMT_JOB * job,
 				   const T_MGMT_REQ_ARG * req_arg,
 				   T_MGMT_RESULT_MSG * result_msg);
+static int local_mg_connect_db_server (T_LOCAL_MGMT_JOB * job,
+				       const T_MGMT_REQ_ARG * req_arg,
+				       T_MGMT_RESULT_MSG * result_msg);
 static void shm_copy_child_process_info (void);
 static char *local_mgmt_pack_str (char *ptr, char *str, int len);
 static char *local_mgmt_pack_int (char *ptr, int value);
@@ -174,6 +178,8 @@ static T_LOCAL_MG_ADMIN_FUNC_TABLE local_Mg_admin_func_table[] = {
    "GET_CONF"},
   {BRREQ_OP_CODE_BR_ACL_RELOAD, local_mg_br_acl_reload,
    "BR_ACL_RELOAD"},
+  {BRREQ_OP_CODE_CONNECT_DB_SERVER, local_mg_connect_db_server,
+   "CONNECT_DB_SERVER"},
   {-1, NULL, NULL}
 };
 
@@ -366,7 +372,7 @@ local_mg_transfer_driver_req (SOCKET * clt_sock_fd, in_addr_t clt_ip_addr,
       return BR_ER_BROKER_NOT_FOUND;
     }
 
-  if (send_fd (br_sock_fd, *clt_sock_fd, clt_ip_addr, &recv_time) < 0)
+  if (css_transfer_fd (br_sock_fd, *clt_sock_fd, clt_ip_addr, &recv_time) < 0)
     {
       RYE_CLOSE_SOCKET (br_sock_fd);
       return BR_ER_BROKER_NOT_FOUND;
@@ -1455,6 +1461,40 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 	}
 
       return (child_exit_status == 0 ? 0 : BR_ER_BR_ACL_RELOAD);
+    }
+}
+
+static int
+local_mg_connect_db_server (T_LOCAL_MGMT_JOB * job,
+			    const T_MGMT_REQ_ARG * req_arg,
+			    UNUSED_ARG T_MGMT_RESULT_MSG * result_msg)
+{
+  const char *db_name;
+  PRM_NODE_INFO node_info = prm_get_myself_node_info ();
+  CSS_CONN_ENTRY *conn;
+
+  db_name = req_arg->value.connect_db_server_arg.db_name;
+  assert (db_name != NULL);
+
+  conn = css_connect_to_rye_server (&node_info, db_name,
+				    SVR_CONNECT_TYPE_TRANSFER_CONN);
+  if (conn == NULL)
+    {
+      return -1;
+    }
+
+  if (css_transfer_fd (conn->fd, job->clt_sock_fd, job->clt_ip, NULL) < 0)
+    {
+      css_free_conn (conn);
+      shm_Local_mgmt_info->db_connect_fail++;
+      return -1;
+    }
+  else
+    {
+      css_free_conn (conn);
+      job->clt_sock_fd = INVALID_SOCKET;
+      shm_Local_mgmt_info->db_connect_success++;
+      return 0;
     }
 }
 

@@ -120,8 +120,6 @@ typedef struct
 
 static int init_tester_info (TESTER_INFO * br_tester_info);
 
-static double get_elapsed_time (const struct timeval *start_time);
-
 static int execute_test_with_query (CCI_CONN * conn, const char *query,
 				    bool verbose_mode);
 
@@ -456,22 +454,6 @@ init_tester_info (TESTER_INFO * br_tester_info)
   return ret;
 }
 
-static double
-get_elapsed_time (const struct timeval *start_time)
-{
-  struct timeval end_time;
-  double elapsed_time;
-
-  assert (start_time);
-
-  gettimeofday (&end_time, NULL);
-
-  elapsed_time = end_time.tv_sec - start_time->tv_sec;
-  elapsed_time += (end_time.tv_usec - start_time->tv_usec) / (double) 1000000;
-
-  return elapsed_time;
-}
-
 static int
 execute_test_with_query (CCI_CONN * conn, const char *query,
 			 bool verbose_mode)
@@ -521,7 +503,8 @@ end_execute:
   else
     {
       PRINT_RESULT ("%sROW COUNT=%d, EXECUTION TIME=%.6f sec\n",
-		    PRINT_INDENT3, ret, get_elapsed_time (&start_time));
+		    PRINT_INDENT3, ret,
+		    timeval_diff_in_msec (NULL, &start_time) / 1000.0);
 
       if (verbose_mode)
 	{

@@ -37,6 +37,7 @@
 
 #include "cas_cci.h"
 #include "repl_page_buffer.h"
+#include "cci_handle_mng.h"
 
 #define IS_CCI_NO_ERROR(ERRCODE)	((ERRCODE) >= 0)
 
@@ -111,6 +112,8 @@ extern int cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 extern int cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 					 int timeout_msec);
 extern int cc_mgmt_count_launch_process (void);
+extern int cci_mgmt_connect_db_server (const T_HOST_INFO * host,
+				       const char *dbname, int timeout_msec);
 
 extern int cci_host_str_to_addr (const char *host_str,
 				 unsigned char *ip_addr);

@@ -31,7 +31,6 @@
 #include "utility.h"
 
 /* heartbeat */
-#define HB_DEFAULT_HA_PORT_ID                           (59901)
 #define HB_DEFAULT_APPLY_MAX_MEM_SIZE                   (500)
 
 #define HB_DEFAULT_CHECK_VALID_PING_SERVER_INTERVAL           (1*ONE_HOUR)

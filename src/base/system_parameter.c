@@ -153,7 +153,7 @@ typedef enum
 
 #define PRM_NAME_WS_MEMORY_REPORT "workspace_memory_report"
 
-#define PRM_NAME_TCP_PORT_ID "rye_port_id"
+#define PRM_NAME_LOCAL_PORT_ID "local_port_id"
 
 #define PRM_NAME_TCP_CONNECTION_TIMEOUT "connection_timeout"
 
@@ -228,8 +228,6 @@ typedef enum
 #define PRM_NAME_HA_DB_LIST "ha_db_list"
 
 #define PRM_NAME_HA_COPY_SYNC_MODE "ha_copy_sync_mode"
-
-#define PRM_NAME_HA_PORT_ID "ha_port_id"
 
 #define PRM_NAME_HA_INIT_TIMER "ha_init_timer"
 
@@ -559,8 +557,8 @@ static int prm_ws_hashtable_size_lower = 1024;
 bool PRM_WS_MEMORY_REPORT = false;
 static bool prm_ws_memory_report_default = false;
 
-int PRM_TCP_PORT_ID = 1523;
-static int prm_tcp_port_id_default = 1523;
+int PRM_LOCAL_PORT_ID = 30000;
+static int prm_local_port_id_default = 30000;
 
 int PRM_TCP_CONNECTION_TIMEOUT = 5;
 static int prm_tcp_connection_timeout_default = 5;
@@ -721,9 +719,6 @@ static const char *prm_ha_db_list_default = NULL;
 const char *PRM_HA_COPY_SYNC_MODE = "";
 static const char *prm_ha_copy_sync_mode_default = NULL;
 
-int PRM_HA_PORT_ID = HB_DEFAULT_HA_PORT_ID;
-static int prm_ha_port_id_default = HB_DEFAULT_HA_PORT_ID;
-
 INT64 PRM_HA_INIT_TIMER = 10 * ONE_SEC;
 static INT64 prm_ha_init_timer_default = 10 * ONE_SEC;
 static INT64 prm_ha_init_timer_upper = INT_MAX;
@@ -850,8 +845,8 @@ static int prm_tcp_rcvbuf_size_default = -1;
 int PRM_TCP_SNDBUF_SIZE = -1;
 static int prm_tcp_sndbuf_size_default = -1;
 
-bool PRM_TCP_NODELAY = false;
-static bool prm_tcp_nodelay_default = false;
+bool PRM_TCP_NODELAY = true;
+static bool prm_tcp_nodelay_default = true;
 
 bool PRM_TCP_KEEPALIVE = true;
 static bool prm_tcp_keepalive_default = true;
@@ -1435,11 +1430,12 @@ sysprm_initialize_prm_def ()
 		     &prm_ws_memory_report_default,
 		     &PRM_WS_MEMORY_REPORT, NULL, NULL);
 
-  sysprm_init_param (PRM_ID_TCP_PORT_ID,
-		     PRM_NAME_TCP_PORT_ID,
+  sysprm_init_param (PRM_ID_LOCAL_PORT_ID,
+		     PRM_NAME_LOCAL_PORT_ID,
 		     (PRM_FOR_CLIENT | PRM_FOR_SERVER),
 		     PRM_INTEGER,
-		     &prm_tcp_port_id_default, &PRM_TCP_PORT_ID, NULL, NULL);
+		     &prm_local_port_id_default, &PRM_LOCAL_PORT_ID, NULL,
+		     NULL);
 
   sysprm_init_param (PRM_ID_TCP_CONNECTION_TIMEOUT,
 		     PRM_NAME_TCP_CONNECTION_TIMEOUT,
@@ -1718,12 +1714,6 @@ sysprm_initialize_prm_def ()
 		     PRM_STRING,
 		     &prm_ha_copy_sync_mode_default,
 		     &PRM_HA_COPY_SYNC_MODE, NULL, NULL);
-
-  sysprm_init_param (PRM_ID_HA_PORT_ID,
-		     PRM_NAME_HA_PORT_ID,
-		     (PRM_FOR_CLIENT),
-		     PRM_INTEGER,
-		     &prm_ha_port_id_default, &PRM_HA_PORT_ID, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_INIT_TIMER,
 		     PRM_NAME_HA_INIT_TIMER,
@@ -6130,9 +6120,9 @@ sysprm_tune_client_parameters (void)
 #endif /* CS_MODE */
 
 int
-prm_get_master_port_id (void)
+prm_get_local_port_id (void)
 {
-  return PRM_TCP_PORT_ID;
+  return PRM_LOCAL_PORT_ID;
 }
 
 bool
@@ -7391,7 +7381,7 @@ prm_get_myself_node_info ()
 {
   PRM_NODE_INFO node_info;
   node_info.ip = prm_get_ha_node_myself ();
-  node_info.port = prm_get_master_port_id ();;
+  node_info.port = prm_get_local_port_id ();;
   return node_info;
 }
 
@@ -7554,7 +7544,7 @@ prm_node_info_set_default_port (PRM_NODE_LIST * node_list)
     {
       if (node_list->nodes[i].port == 0)
 	{
-	  node_list->nodes[i].port = prm_get_master_port_id ();
+	  node_list->nodes[i].port = prm_get_local_port_id ();
 	}
     }
 }

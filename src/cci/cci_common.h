@@ -289,8 +289,6 @@ extern "C"
 /************************************************************************
  * PUBLIC FUNCTION PROTOTYPES						*
  ************************************************************************/
-  extern int get_elapsed_time (struct timeval *start_time);
-
   extern unsigned int cci_mht_5strhash (const void *key,
 					unsigned int ht_size);
   extern int cci_mht_strcasecmpeq (const void *key1, const void *key2);

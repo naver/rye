@@ -131,7 +131,8 @@ css_client_init (const char *server_name, const PRM_NODE_INFO * node_info)
 
   prm_node_info_to_str (hostname, sizeof (hostname), node_info);
 
-  conn = css_connect_to_rye_server (node_info, server_name);
+  conn = css_connect_to_rye_server (node_info, server_name,
+				    SVR_CONNECT_TYPE_TO_SERVER);
   if (conn != NULL)
     {
       css_queue_connection (conn, hostname, &css_Client_anchor);

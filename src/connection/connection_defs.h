@@ -49,12 +49,13 @@
  * from the client when initiating a connection. They distinguish the
  * difference between an information connection and a user connection.
  */
-enum css_master_conn_type
+typedef enum
 {
-  MASTER_CONN_TYPE_INFO,	/* send master request to the master server */
-  MASTER_CONN_TYPE_TO_SERVER,	/* get data from the database server */
-  MASTER_CONN_TYPE_HB_PROC	/* let new server attach */
-};
+  SVR_CONNECT_TYPE_MASTER_INFO,	/* send master request to the master server */
+  SVR_CONNECT_TYPE_TO_SERVER,	/* get data from the database server */
+  SVR_CONNECT_TYPE_TRANSFER_CONN,	/* get data from the database server */
+  SVR_CONNECT_TYPE_MASTER_HB_PROC	/* let new server attach */
+} SVR_CONNECT_TYPE;
 
 /*
  * These are the responses from the master to a server
@@ -104,7 +105,6 @@ enum _css_master_request
 typedef enum _css_master_to_server_request CSS_MASTER_TO_SERVER_REQUEST;
 enum _css_master_to_server_request
 {
-  SERVER_START_NEW_CLIENT,
   SERVER_START_SHUTDOWN,
   SERVER_CHANGE_HA_MODE
 };
@@ -149,14 +149,8 @@ enum css_packet_type
 enum css_status
 {
   SERVER_CONNECTED = 0,
-  SERVER_NOT_FOUND = 1,
-  SERVER_STARTED = 2,
-  SERVER_IS_RECOVERING = 3,	/* not used */
-  SERVER_HAS_SHUT_DOWN = 4,	/* not used */
-  ERROR_MESSAGE_FROM_MASTER = 5,	/* an error message is returned */
-  SERVER_CLIENTS_EXCEEDED = 6,
-  SERVER_INACCESSIBLE_IP = 7,
-  SERVER_HANG = 8
+  SERVER_CLIENTS_EXCEEDED = 1,
+  SERVER_INACCESSIBLE_IP = 2
 };
 
 /*

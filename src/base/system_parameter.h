@@ -118,7 +118,7 @@ enum param_id
   PRM_ID_RSQL_AUTO_COMMIT,
   PRM_ID_WS_HASHTABLE_SIZE,
   PRM_ID_WS_MEMORY_REPORT,
-  PRM_ID_TCP_PORT_ID,
+  PRM_ID_LOCAL_PORT_ID,
   PRM_ID_TCP_CONNECTION_TIMEOUT,
   PRM_ID_OPTIMIZATION_LEVEL,
   PRM_ID_QO_DUMP,
@@ -156,7 +156,6 @@ enum param_id
   PRM_ID_HA_REPLICA_LIST,
   PRM_ID_HA_DB_LIST,
   PRM_ID_HA_COPY_SYNC_MODE,
-  PRM_ID_HA_PORT_ID,
   PRM_ID_HA_INIT_TIMER,
   PRM_ID_HA_HEARTBEAT_INTERVAL,
   PRM_ID_HA_CALC_SCORE_INTERVAL,
@@ -344,7 +343,7 @@ extern int sysprm_set_to_default (const char *pname, bool set_to_force);
 #endif
 extern int sysprm_check_range (const char *pname, void *value);
 extern int sysprm_get_range (const char *pname, void *min, void *max);
-extern int prm_get_master_port_id (void);
+extern int prm_get_local_port_id (void);
 extern bool prm_get_commit_on_shutdown (void);
 
 extern char *sysprm_pack_assign_values (char *ptr,
@@ -407,7 +406,7 @@ extern int prm_split_node_info (PRM_NODE_LIST * node_list,
 extern bool prm_is_myself_node_info (const PRM_NODE_INFO * node_info);
 extern bool prm_is_same_node (const PRM_NODE_INFO * node1,
 			      const PRM_NODE_INFO * node2);
-extern void prm_set_node_info (PRM_NODE_INFO *node_info,
+extern void prm_set_node_info (PRM_NODE_INFO * node_info,
 			       in_addr_t ip, int port);
 
 #endif /* _SYSTEM_PARAMETER_H_ */

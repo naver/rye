@@ -72,9 +72,6 @@ static void css_initialize_conn (CSS_CONN_ENTRY * conn, SOCKET fd);
 static void css_close_conn (CSS_CONN_ENTRY * conn);
 static void css_dealloc_conn (CSS_CONN_ENTRY * conn);
 
-static int css_server_connect (const PRM_NODE_INFO * node_info,
-			       CSS_CONN_ENTRY * conn,
-			       const char *server_name, unsigned short *rid);
 /*
  * css_shutdown_conn () -
  *   return: void
@@ -335,43 +332,23 @@ css_common_connect_cl (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
 }
 
 /*
- * css_server_connect () - actually try to make a connection to a server
- *   return: CSS_ERROR
- */
-static int
-css_server_connect (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
-		    const char *server_name, unsigned short *rid)
-{
-  int length;
-  int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT);
-
-  if (server_name)
-    {
-      length = strlen (server_name) + 1;
-    }
-  else
-    {
-      length = 0;
-    }
-
-  return (css_common_connect_cl (node_info, conn, MASTER_CONN_TYPE_TO_SERVER,
-				 server_name, server_name, length,
-				 timeout, rid, true));
-}
-
-/*
  * css_connect_to_rye_server () - make a new connection to a server
  */
 CSS_CONN_ENTRY *
 css_connect_to_rye_server (const PRM_NODE_INFO * node_info,
-			   const char *server_name)
+			   const char *server_name, int connect_type)
 {
   CSS_CONN_ENTRY *conn;
   int css_error;
   int reason;
-  int retry_count;
   unsigned short rid;
   int reply[2];
+  const char *packed_name;
+  int packed_name_len;
+  int timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT);
+
+  packed_name = server_name;
+  packed_name_len = (server_name == NULL ? 0 : strlen (server_name) + 1);
 
   conn = css_make_conn (-1);
   if (conn == NULL)
@@ -379,8 +356,9 @@ css_connect_to_rye_server (const PRM_NODE_INFO * node_info,
       return NULL;
     }
 
-  retry_count = 0;
-  if (css_server_connect (node_info, conn, server_name, &rid) != NO_ERRORS)
+  if (css_common_connect_cl (node_info, conn, connect_type, server_name,
+			     packed_name, packed_name_len, timeout, &rid,
+			     true) != NO_ERRORS)
     {
       goto exit;
     }
@@ -394,45 +372,25 @@ css_connect_to_rye_server (const PRM_NODE_INFO * node_info,
 
   reason = ntohl (reply[0]);
 
-  switch (reason)
+  if (reason == SERVER_CONNECTED)
     {
-    case SERVER_CONNECTED:
       return conn;
+    }
+  else
+    {
+      int error_length;
+      char *error_area;
 
-    case SERVER_STARTED:
-      if (++retry_count > 20)
+      error_area = NULL;
+      if (css_recv_error_from_server (conn, rid, &error_area,
+				      &error_length, -1) == NO_ERRORS)
 	{
-	  break;
+	  if (error_area != NULL)
+	    {
+	      er_set_area_error ((void *) error_area);
+	      free_and_init (error_area);
+	    }
 	}
-      else
-	{
-	  css_close_conn (conn);
-	}
-      break;
-
-    case SERVER_IS_RECOVERING:
-    case SERVER_CLIENTS_EXCEEDED:
-    case SERVER_INACCESSIBLE_IP:
-      {
-	int error_length;
-	char *error_area;
-
-	error_area = NULL;
-	if (css_recv_error_from_server (conn, rid, &error_area,
-					&error_length, -1) == NO_ERRORS)
-	  {
-	    if (error_area != NULL)
-	      {
-		er_set_area_error ((void *) error_area);
-		free_and_init (error_area);
-	      }
-	  }
-	break;
-      }
-    case SERVER_NOT_FOUND:
-    case SERVER_HANG:
-    default:
-      break;
     }
 
 exit:
@@ -477,7 +435,7 @@ css_connect_to_master_timeout (const PRM_NODE_INFO * node_info, int timeout,
 
   time = ceil (time / 1000);
 
-  if (css_common_connect_cl (node_info, conn, MASTER_CONN_TYPE_INFO,
+  if (css_common_connect_cl (node_info, conn, SVR_CONNECT_TYPE_MASTER_INFO,
 			     NULL, NULL, 0,
 			     (int) time, rid, true) == NO_ERRORS)
     {
@@ -570,7 +528,9 @@ css_does_master_exist ()
   PRM_NODE_INFO node_info = prm_get_myself_node_info ();
 
   /* Don't waste time retrying between master to master connections */
-  fd = css_tcp_client_open (&node_info, MASTER_CONN_TYPE_INFO, NULL, 1000);
+  fd =
+    css_tcp_client_open (&node_info, SVR_CONNECT_TYPE_MASTER_INFO, NULL,
+			 1000);
   if (!IS_INVALID_SOCKET (fd))
     {
       css_shutdown_socket (fd);

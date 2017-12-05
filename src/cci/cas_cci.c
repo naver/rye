@@ -193,28 +193,6 @@ CCI_FREE_FUNCTION cci_free = free;
  ************************************************************************/
 
 int
-get_elapsed_time (struct timeval *start_time)
-{
-  INT64 start_time_milli, end_time_milli;
-  struct timeval end_time;
-
-  assert (start_time);
-
-  if (start_time->tv_sec == 0 && start_time->tv_usec == 0)
-    {
-      return 0;
-    }
-
-  gettimeofday (&end_time, NULL);
-
-  start_time_milli =
-    start_time->tv_sec * 1000LL + start_time->tv_usec / 1000LL;
-  end_time_milli = end_time.tv_sec * 1000LL + end_time.tv_usec / 1000LL;
-
-  return (int) (end_time_milli - start_time_milli);
-}
-
-int
 cci_get_version_string (char *str, size_t len)
 {
   if (str)
@@ -2504,6 +2482,13 @@ cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 }
 
 int
+cci_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname,
+			    int timeout_msec)
+{
+  return net_mgmt_connect_db_server (host, dbname, timeout_msec);
+}
+
+int
 cc_mgmt_count_launch_process ()
 {
   return net_mgmt_count_launch_process ();
@@ -2650,7 +2635,9 @@ cas_connect_internal (T_CON_HANDLE * con_handle, int *connect)
   if (TIMEOUT_IS_SET (con_handle))
     {
       remained_time = (con_handle->current_timeout
-		       - get_elapsed_time (&con_handle->start_time));
+		       - (int) timeval_diff_in_msec (NULL,
+						     &con_handle->
+						     start_time));
       if (remained_time <= 0)
 	{
 	  return CCI_ER_LOGIN_TIMEOUT;

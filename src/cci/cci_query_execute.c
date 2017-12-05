@@ -411,7 +411,8 @@ qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);
@@ -552,7 +553,8 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  err_code = CCI_ER_QUERY_TIMEOUT;
@@ -1267,7 +1269,8 @@ qe_get_db_version (T_CON_HANDLE * con_handle, char *out_buf, int buf_size)
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);
@@ -1334,7 +1337,8 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);
@@ -1438,7 +1442,8 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);

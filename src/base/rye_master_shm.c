@@ -587,7 +587,7 @@ rye_master_shm_get_node_state (HA_STATE * node_state, const char *host_ip)
     }
 
   node_info.ip = hostname_to_ip (host_ip);
-  node_info.port = prm_get_master_port_id ();	/* TODO: cgkang */
+  node_info.port = prm_get_local_port_id ();	/* TODO: cgkang */
 
   *node_state = HA_STATE_NA;
 

@@ -176,6 +176,11 @@ typedef struct
 
 typedef struct
 {
+  const char *db_name;
+} T_MGMT_REQ_ARG_CONNECT_DB_SERVER;
+
+typedef struct
+{
   const char *clt_dbname;
   void *alloc_buffer;
   union
@@ -196,6 +201,7 @@ typedef struct
     T_MGMT_REQ_ARG_UPDATE_CONF update_conf_arg;
     T_MGMT_REQ_ARG_GET_CONF get_conf_arg;
     T_MGMT_REQ_ARG_BR_ACL_RELOAD br_acl_reload_arg;
+    T_MGMT_REQ_ARG_CONNECT_DB_SERVER connect_db_server_arg;
     int dummy;
   } value;
 } T_MGMT_REQ_ARG;
@@ -210,7 +216,7 @@ typedef struct
   char buf[BROKER_RESPONSE_MAX_ADDITIONAL_MSG][MGMT_RESULT_MSG_MAX_SIZE];
 } T_MGMT_RESULT_MSG;
 
-extern SOCKET br_mgmt_accept (in_addr_t *clt_ip_addr);
+extern SOCKET br_mgmt_accept (in_addr_t * clt_ip_addr);
 
 extern THREAD_FUNC shard_mgmt_receiver_thr_f (void *arg);
 extern THREAD_FUNC local_mgmt_receiver_thr_f (void *arg);

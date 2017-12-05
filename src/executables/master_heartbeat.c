@@ -4803,7 +4803,7 @@ hb_cluster_initialize ()
   memset ((void *) &udp_saddr, 0, sizeof (udp_saddr));
   udp_saddr.sin_family = AF_INET;
   udp_saddr.sin_addr.s_addr = htonl (INADDR_ANY);
-  udp_saddr.sin_port = htons (prm_get_integer_value (PRM_ID_HA_PORT_ID));
+  udp_saddr.sin_port = htons (prm_get_local_port_id ());
 
   if (bind (hb_Cluster->sfd, (struct sockaddr *) &udp_saddr,
 	    sizeof (udp_saddr)) < 0)
