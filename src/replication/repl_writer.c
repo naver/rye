@@ -601,10 +601,6 @@ cirpwr_get_fpageid (LOG_PAGEID current_pageid, const LOG_HEADER * head)
  *
  * return:
  *
- *   db_name(in):
- *   log_path(in):
- *   mode(in):
- *
  * Note:
  */
 int
@@ -1294,8 +1290,8 @@ cirpwr_flush_header_page (void)
 		"change the state of HA server (%s@%s) from '%s' to '%s'",
 		cirpwr_Gl.db_name,
 		(cirpwr_Gl.host_ip != NULL) ? cirpwr_Gl.host_ip : "unknown",
-		css_ha_state_string (cirpwr_Gl.ha_info.server_state),
-		css_ha_state_string (m_log_hdr->ha_info.server_state));
+		HA_STATE_NAME (cirpwr_Gl.ha_info.server_state),
+		HA_STATE_NAME (m_log_hdr->ha_info.server_state));
 
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE,
 	      1, buffer);
@@ -1352,8 +1348,8 @@ cirpwr_flush_header_page (void)
   er_log_debug (ARG_FILE_LINE,
 		"cirpwr_flush_header_page, ha_server_state=%s, ha_file_status=%s\n"
 		"last_flushed_pageid(%lld), nxarv_pageid(%lld), nxarv_num(%d)\n",
-		css_ha_state_string (cirpwr_Gl.ha_info.
-				     server_state),
+		HA_STATE_NAME (cirpwr_Gl.ha_info.
+			       server_state),
 		css_ha_filestat_string (cirpwr_Gl.ha_info.file_status),
 		(long long) cirpwr_Gl.ha_info.last_flushed_pageid,
 		(long long) cirpwr_Gl.ha_info.nxarv_pageid,
@@ -1933,7 +1929,6 @@ log_copier_main (void *arg)
  *
  *   db_name(in): database name to copy the log file
  *   log_path(in): file pathname to copy the log file
- *   mode(in): LOGWR_MODE_SYNC, LOGWR_MODE_ASYNC or LOGWR_MODE_SEMISYNC
  *
  * Note:
  */
@@ -2102,9 +2097,6 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
   int compressed_protocol;
   int error = NO_ERROR;
 
-  /* Do it as async mode at the first request to the server.
-     And, if several pages are left to get, keep it as async mode */
-
   log_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
 
   assert (!LSA_ISNULL (&log_hdr->eof_lsa));
@@ -2222,6 +2214,8 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
   int recv_q_node_count = 0;
   struct timespec wakeup_time;
   int wakeup_interval = 100;
+  CSS_NET_PACKET *recv_packet;
+  RECV_Q_NODE *node;
 
   error = 0;
 
@@ -2247,135 +2241,127 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	}
     }
 
-  while (ctx_ptr->shutdown != true)
+  node = cirpwr_alloc_recv_node ();
+  if (node == NULL)
     {
-      CSS_NET_PACKET *recv_packet;
-      RECV_Q_NODE *node;
+      error = er_errid ();
 
-      recv_packet = NULL;
+      return error;
+    }
 
-      node = cirpwr_alloc_recv_node ();
-      if (node == NULL)
-	{
-	  error = er_errid ();
+  recv_packet = NULL;
+  error = net_client_request_recv_msg (&recv_packet, eid, -1, 2,
+				       replybuf, replysize,
+				       node->data, node->area_length);
+  if (error != NO_ERROR)
+    {
+      pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+      Rye_queue_enqueue (cirpwr_Gl.free_list, node);
+      node = NULL;
+      pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
-	  return error;
-	}
+      return error;
+    }
 
-      error = net_client_request_recv_msg (&recv_packet, eid, -1, 2,
-					   replybuf, replysize,
-					   node->data, node->area_length);
-      if (error != NO_ERROR)
-	{
-	  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	  Rye_queue_enqueue (cirpwr_Gl.free_list, node);
-	  node = NULL;
-	  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+  ptr = or_unpack_int (replybuf, &server_request_num);
+  server_request = (QUERY_SERVER_REQUEST) server_request_num;
 
-	  return error;
-	}
+  switch (server_request)
+    {
+    case GET_NEXT_LOG_PAGES:
+      {
+	int length;
+	INT64 pageid;
+	int num_page, file_status, server_status;
+	int data_recv_size;
 
-      ptr = or_unpack_int (replybuf, &server_request_num);
-      server_request = (QUERY_SERVER_REQUEST) server_request_num;
+	ptr = or_unpack_int (ptr, &length);
+	ptr = or_unpack_int64 (ptr, &pageid);
+	ptr = or_unpack_int (ptr, &num_page);
+	ptr = or_unpack_int (ptr, &file_status);
+	ptr = or_unpack_int (ptr, &server_status);
 
-      switch (server_request)
-	{
-	case GET_NEXT_LOG_PAGES:
+	if (pageid < 0 || num_page < 0)
 	  {
-	    int length;
-	    INT64 pageid;
-	    int num_page, file_status, server_status;
-	    int data_recv_size;
+	    assert (false);
 
-	    ptr = or_unpack_int (ptr, &length);
-	    ptr = or_unpack_int64 (ptr, &pageid);
-	    ptr = or_unpack_int (ptr, &num_page);
-	    ptr = or_unpack_int (ptr, &file_status);
-	    ptr = or_unpack_int (ptr, &server_status);
+	    error = ER_NET_SERVER_CRASHED;
+	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+	    return error;
+	  }
+	node->server_status = server_status;
+	node->fpageid = pageid;
+	node->num_page = num_page;
+	node->length = length;
 
-	    if (pageid < 0 || num_page < 0)
-	      {
-		assert (false);
+	cirpwr_Gl.last_received_pageid = pageid + num_page - 1;
+	cirpwr_Gl.last_received_file_status = file_status;
 
-		error = ER_NET_SERVER_CRASHED;
-		er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-		return error;
-	      }
-	    node->server_status = server_status;
-	    node->fpageid = pageid;
-	    node->num_page = num_page;
-	    node->length = length;
+	pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+	Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
+	node = NULL;
+	recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
+	pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
+	pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
-	    cirpwr_Gl.last_received_pageid = pageid + num_page - 1;
-	    cirpwr_Gl.last_received_file_status = file_status;
+	while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
+	       && REPL_NEED_SHUTDOWN () == false)
+	  {
+	    clock_gettime (CLOCK_REALTIME, &wakeup_time);
+
+	    wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
 
 	    pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	    Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
-	    node = NULL;
+	    pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,
+				    &cirpwr_Gl.recv_q_lock, &wakeup_time);
 	    recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
-	    pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
 	    pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-
-	    while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
-		   && REPL_NEED_SHUTDOWN () == false)
-	      {
-		clock_gettime (CLOCK_REALTIME, &wakeup_time);
-
-		wakeup_time =
-		  timespec_add_msec (&wakeup_time, wakeup_interval);
-
-		pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-		pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,
-					&cirpwr_Gl.recv_q_lock, &wakeup_time);
-		recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
-		pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-	      }
-
-	    assert (length <= cirpwr_Gl.logpg_area_size);
-
-	    data_recv_size = css_net_packet_get_recv_size (recv_packet, 1);
-	    if (data_recv_size < length)
-	      {
-		assert (false);
-
-		error = ER_NET_SERVER_CRASHED;
-		er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-		ctx_ptr->shutdown = true;
-	      }
 	  }
-	  break;
-	case END_CALLBACK:
-	  ptr = or_unpack_int (ptr, &request_error);
-	  if (request_error != ctx_ptr->last_error)
-	    {
-	      /* By server error or shutdown */
-	      error = request_error;
-	      if (error != ER_HA_LW_FAILED_GET_LOG_PAGE)
-		{
-		  error = ER_NET_SERVER_CRASHED;
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-		}
-	    }
 
-	  ctx_ptr->shutdown = true;
-	  break;
-	default:
-	  /* TODO: handle the unknown request as an error */
-	  error = ER_NET_SERVER_DATA_RECEIVE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+	assert (length <= cirpwr_Gl.logpg_area_size);
 
-	  ctx_ptr->shutdown = true;
-	  break;
-	}
+	data_recv_size = css_net_packet_get_recv_size (recv_packet, 1);
+	if (data_recv_size < length)
+	  {
+	    assert (false);
 
-      css_net_packet_free (recv_packet);
-      if (node != NULL)
+	    error = ER_NET_SERVER_CRASHED;
+	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+	    ctx_ptr->shutdown = true;
+	  }
+      }
+      break;
+    case END_CALLBACK:
+      ptr = or_unpack_int (ptr, &request_error);
+      if (request_error != ctx_ptr->last_error)
 	{
-	  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	  Rye_queue_enqueue (cirpwr_Gl.free_list, node);
-	  node = NULL;
-	  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+	  /* By server error or shutdown */
+	  error = request_error;
+	  if (error != ER_HA_LW_FAILED_GET_LOG_PAGE)
+	    {
+	      error = ER_NET_SERVER_CRASHED;
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+	    }
 	}
+
+      ctx_ptr->shutdown = true;
+      break;
+    default:
+      /* TODO: handle the unknown request as an error */
+      error = ER_NET_SERVER_DATA_RECEIVE;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+
+      ctx_ptr->shutdown = true;
+      break;
+    }
+
+  css_net_packet_free (recv_packet);
+  if (node != NULL)
+    {
+      pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+      Rye_queue_enqueue (cirpwr_Gl.free_list, node);
+      node = NULL;
+      pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
     }
 
   return (error);

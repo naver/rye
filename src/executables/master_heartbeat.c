@@ -1552,9 +1552,9 @@ hb_cluster_job_changemode_force (HB_JOB_ARG * arg)
 	      er_log_debug (ARG_FILE_LINE,
 			    "send changemode force request. "
 			    "(node_state:%s, pid:%d, proc_state:%s, server_state:%s). \n",
-			    css_ha_state_string (hb_Resource->node_state),
+			    HA_STATE_NAME (hb_Resource->node_state),
 			    proc->pid, hb_process_state_string (proc->state),
-			    css_ha_state_string (proc->server_state));
+			    HA_STATE_NAME (proc->server_state));
 
 	      error = hb_resource_sync_server_state (proc, true);
 	      if (NO_ERROR != error)
@@ -3458,9 +3458,9 @@ hb_resource_job_sync_server_state (HB_JOB_ARG * arg)
 	  er_log_debug (ARG_FILE_LINE,
 			"send changemode request. "
 			"(node_state:%s, pid:%d, proc_state:%s, server_state:%s). \n",
-			css_ha_state_string (hb_Resource->node_state),
+			HA_STATE_NAME (hb_Resource->node_state),
 			proc->pid, hb_process_state_string (proc->state),
-			css_ha_state_string (proc->server_state));
+			HA_STATE_NAME (proc->server_state));
 
 	  force = false;
 	  if (hb_Resource->node_state == HA_STATE_MASTER
@@ -4120,7 +4120,7 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 	    "%s (pid:%d, proc state:%s, server state:%s, args:%s)",
 	    HB_RESULT_SUCCESS_STR, proc_reg->pid,
 	    hb_process_state_string (proc->state),
-	    css_ha_state_string (proc->server_state), proc_reg->args);
+	    HA_STATE_NAME (proc->server_state), proc_reg->args);
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_HB_PROCESS_EVENT, 2,
 	  "Registered as local process entries", err_msg);
 
@@ -4148,7 +4148,7 @@ exit_on_error:
 	    "%s (expected pid: %d, pid:%d, proc state:%s, server state:%s, args:%s)",
 	    HB_RESULT_FAILURE_STR, proc->pid, proc_reg->pid,
 	    hb_process_state_string (proc->state),
-	    css_ha_state_string (proc->server_state), proc_reg->args);
+	    HA_STATE_NAME (proc->server_state), proc_reg->args);
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_PROCESS_EVENT, 2,
 	  "Registered as local process entries", err_msg);
 
@@ -4223,7 +4223,7 @@ hb_resource_sync_server_state (HB_PROC_ENTRY * proc, bool force)
       snprintf (error_string, LINE_MAX,
 		"Failed to send changemode request to the server. "
 		"(state:%d[%s], args:[%s], pid:%d)",
-		server_state, css_ha_state_string (server_state), proc->args,
+		server_state, HA_STATE_NAME (server_state), proc->args,
 		proc->pid);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1,
 	      error_string);
@@ -4234,7 +4234,7 @@ hb_resource_sync_server_state (HB_PROC_ENTRY * proc, bool force)
   snprintf (error_string, LINE_MAX,
 	    "Send changemode request to the server. "
 	    "(state:%d[%s], args:[%s], pid:%d)",
-	    server_state, css_ha_state_string (server_state), proc->args,
+	    server_state, HA_STATE_NAME (server_state), proc->args,
 	    proc->pid);
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1,
 	  error_string);
@@ -4274,7 +4274,7 @@ hb_resource_receive_changemode (CSS_CONN_ENTRY * conn, int server_state)
   snprintf (error_string, LINE_MAX,
 	    "Receive changemode response from the server. "
 	    "(server_state:%d[%s], args:[%s], pid:%d)", server_state,
-	    css_ha_state_string (server_state), proc->args, proc->pid);
+	    HA_STATE_NAME (server_state), proc->args, proc->pid);
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1,
 	  error_string);
 
@@ -5955,13 +5955,13 @@ hb_get_node_info_string (bool verbose_yn)
 
   p += snprintf (p, MAX ((last - p), 0), HA_NODE_INFO_FORMAT_STRING,
 		 hb_Cluster->host_name,
-		 css_ha_state_string (hb_Cluster->node_state));
+		 HA_STATE_NAME (hb_Cluster->node_state));
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
       p += snprintf (p, MAX ((last - p), 0), HA_NODE_FORMAT_STRING,
 		     node->host_name, node->priority,
-		     css_ha_state_string (node->node_state));
+		     HA_STATE_NAME (node->node_state));
       if (verbose_yn)
 	{
 	  p += snprintf (p, MAX ((last - p), 0), HA_NODE_SCORE_FORMAT_STRING,
@@ -6030,7 +6030,7 @@ retry_memory:
   last = p + buf_size;
 
   len = snprintf (p, MAX ((last - p), 0), HA_PROCESS_INFO_FORMAT_STRING,
-		  getpid (), css_ha_state_string (hb_Resource->node_state));
+		  getpid (), HA_STATE_NAME (hb_Resource->node_state));
   if (len < 0)
     {
       goto retry_memory;
@@ -6091,7 +6091,7 @@ hb_get_process_info (char *info, int max_size, HB_PROC_ENTRY * proc,
 		      HA_SERVER_PROCESS_FORMAT_STRING,
 		      proc->argv[1], proc->pid,
 		      hb_process_state_string (proc->state),
-		      css_ha_state_string (proc->server_state));
+		      HA_STATE_NAME (proc->server_state));
       break;
     case HB_PTYPE_REPLICATION:
       len =
@@ -7037,7 +7037,7 @@ hb_help_sprint_nodes_info (char *buffer, int max_length)
     snprintf (p, MAX ((last - p), 0),
 	      " * group_id : %s   host_name : %s   state : %s \n",
 	      hb_Cluster->group_id, hb_Cluster->host_name,
-	      css_ha_state_string (hb_Cluster->node_state));
+	      HA_STATE_NAME (hb_Cluster->node_state));
   p +=
     snprintf (p, MAX ((last - p), 0),
 	      "------------------------------"
@@ -7055,7 +7055,7 @@ hb_help_sprint_nodes_info (char *buffer, int max_length)
       p +=
 	snprintf (p, MAX ((last - p), 0), "%-20s %-10u %-15s %-10d %-20d\n",
 		  node->host_name, node->priority,
-		  css_ha_state_string (node->node_state), node->score,
+		  HA_STATE_NAME (node->node_state), node->score,
 		  node->heartbeat_gap);
     }
 
@@ -7085,7 +7085,7 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
   p += snprintf (p, MAX ((last - p), 0), "=============================="
 		 "==================================================\n");
   p += snprintf (p, MAX ((last - p), 0), " * state : %s \n",
-		 css_ha_state_string (hb_Cluster->node_state));
+		 HA_STATE_NAME (hb_Cluster->node_state));
 
   p += snprintf (p, MAX ((last - p), 0), "------------------------------"
 		 "--------------------------------------------------\n");
@@ -7104,7 +7104,7 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
 	snprintf (p, MAX ((last - p), 0), "%-10d %-22s %-15s %-10d %-15s\n",
 		  proc->pid, hb_process_state_string (proc->state),
 		  hb_process_type_string (proc->type), proc->sfd,
-		  css_ha_state_string (proc->server_state));
+		  HA_STATE_NAME (proc->server_state));
     }
 
   p += snprintf (p, MAX ((last - p), 0), "=============================="
