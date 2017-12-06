@@ -45,7 +45,6 @@
 #include "cas_net_buf.h"
 #include "cas_log.h"
 #include "cas_util.h"
-#include "broker_filename.h"
 #include "cas_execute.h"
 #include "connection_support.h"
 #include "perf_monitor.h"
@@ -455,9 +454,6 @@ cas_main (void)
 
       if (as_Info->cas_err_log_reset == CAS_LOG_RESET_REOPEN)
 	{
-	  set_rye_file (FID_LOG_DIR, shm_Appl->log_dir,
-			shm_Appl->broker_name);
-
 	  er_stack_clearall ();
 	  er_clear ();
 	  as_Info->cas_err_log_reset = 0;
@@ -1474,15 +1470,13 @@ exit_on_end:
 static int
 cas_init ()
 {
-  char buf[BROKER_PATH_MAX];
-  char db_err_log_file[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
+  char err_log_file[BROKER_PATH_MAX];
 
   if (cas_init_shm () < 0)
     {
       return -1;
     }
-
-  set_rye_file (FID_LOG_DIR, shm_Appl->log_dir, shm_Appl->broker_name);
 
   as_pid_file_create (shm_Appl->broker_name, as_Info->as_id);
 
@@ -1490,12 +1484,12 @@ cas_init ()
   css_register_check_client_alive_fn (check_client_alive);
   css_register_server_timeout_fn (set_hang_check_time);
 
-  sprintf (db_err_log_file, "%s%s_%d.err",
-	   get_rye_file (FID_ERR_LOG_DIR, buf, BROKER_PATH_MAX),
-	   shm_Appl->broker_name, shm_As_index + 1);
+  snprintf (filename, sizeof (filename),
+	    "%s_%d.err", shm_Appl->broker_name, shm_As_index + 1);
+  envvar_ryelog_broker_errorlog_file (err_log_file, sizeof (err_log_file),
+				      shm_Appl->broker_name, filename);
 
-  (void) er_init (db_err_log_file,
-		  prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
+  (void) er_init (err_log_file, prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
 
   if (lang_init () != NO_ERROR)
     {

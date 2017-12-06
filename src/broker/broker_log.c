@@ -35,7 +35,6 @@
 #include "broker_config.h"
 #include "broker_shm.h"
 
-#include "broker_filename.h"
 #include "broker_util.h"
 #include "broker_log.h"
 #include "error_manager.h"
@@ -71,8 +70,6 @@ void
 br_log_check ()
 {
   pthread_mutex_lock (&br_log_lock);
-
-  set_rye_file (FID_LOG_DIR, shm_appl->log_dir, shm_appl->broker_name);
 
   if (br_log_fp != NULL)
     {
@@ -255,9 +252,9 @@ static char *
 make_broker_log_filename (char *buf, size_t buf_size, const char *br_name,
 			  int port)
 {
-  char dirname[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
 
-  get_rye_file (FID_LOG_DIR, dirname, BROKER_PATH_MAX);
-  snprintf (buf, buf_size, "%s%s.%d.log", dirname, br_name, port);
+  snprintf (filename, sizeof (filename), "%s.%d.log", br_name, port);
+  envvar_ryelog_broker_file (buf, buf_size, br_name, filename);
   return buf;
 }

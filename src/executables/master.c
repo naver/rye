@@ -706,6 +706,10 @@ is_master_running ()
       goto running;
     }
 
+  /* create dir */
+  envvar_socket_file (master_lock_file, sizeof (master_lock_file), "");
+  rye_mkdir (master_lock_file, 0755);
+
   css_get_master_domain_path (master_lock_file,
 			      sizeof (master_lock_file), true);
   fd = fileio_open (master_lock_file, O_RDWR | O_CREAT, 0666);

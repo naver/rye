@@ -283,9 +283,6 @@ typedef struct
   PRM_NODE_INFO nodes[PRM_MAX_HA_NODE_LIST];
 } PRM_NODE_LIST;
 
-extern const char sysprm_cm_conf_file_name[];
-extern const char sysprm_auto_conf_file_name[];
-
 extern const char *prm_get_name (PARAM_ID prm_id);
 
 extern void *prm_get_value (PARAM_ID prm_id);

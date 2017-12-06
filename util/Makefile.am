@@ -72,7 +72,6 @@ rye_master_SOURCES = \
 	$(BROKER_DIR)/broker_acl.c \
 	$(BROKER_DIR)/broker_config.c \
 	$(BROKER_DIR)/broker_util.c \
-	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/broker_shm.c
 rye_master_LDADD = @CS_LIB@ @CCI_LIB@
 
@@ -92,7 +91,6 @@ rye_SOURCES = \
 	$(BROKER_DIR)/broker_util.c \
 	$(BROKER_DIR)/broker_admin_pub.c \
 	$(BROKER_DIR)/broker_max_heap.c \
-	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/broker_acl.c \
 	$(BROKER_DIR)/broker_log_util.c \
 	$(BROKER_DIR)/log_top_string.c \
@@ -147,7 +145,6 @@ rye_repl_SOURCES = \
 	$(BROKER_DIR)/broker_acl.c \
 	$(BROKER_DIR)/broker_config.c \
 	$(BROKER_DIR)/broker_util.c \
-	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/broker_shm.c
 rye_repl_LDADD = @CS_LIB@ @CCI_LIB@ @EXT_LIBS@
 

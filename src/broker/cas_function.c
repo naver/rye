@@ -43,8 +43,6 @@
 #include "cas_handle.h"
 #include "cas_util.h"
 #include "cas_execute.h"
-#include "broker_filename.h"
-
 
 static FN_RETURN fn_prepare_internal (int argc, void **argv,
 				      T_NET_BUF * net_buf,
@@ -919,7 +917,7 @@ fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf,
   char *sql_stmt = NULL;
   DB_SESSION *session;
   char plan_dump_filename[BROKER_PATH_MAX];
-  char dirname[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
 
   if (argc < 1)
     {
@@ -935,9 +933,9 @@ fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf,
       return FN_KEEP_CONN;
     }
 
-  get_rye_file (FID_CAS_TMP_DIR, dirname, BROKER_PATH_MAX);
-  snprintf (plan_dump_filename, BROKER_PATH_MAX - 1, "%s/%d.plan", dirname,
-	    (int) getpid ());
+  snprintf (filename, sizeof (filename), "%d.plan", (int) getpid ());
+  envvar_tmpdir_file (plan_dump_filename, sizeof (plan_dump_filename),
+		      filename);
   unlink (plan_dump_filename);
 
   db_query_plan_dump_file (plan_dump_filename);

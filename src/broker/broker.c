@@ -59,7 +59,6 @@
 #include "broker_env_def.h"
 #include "broker_shm.h"
 #include "broker_util.h"
-#include "broker_filename.h"
 
 #include "broker_log.h"
 #include "broker.h"
@@ -143,9 +142,9 @@ static bool broker_drop_one_cas_by_time_to_kill (void);
 
 static void check_cas_log (const char *br_name,
 			   T_APPL_SERVER_INFO * as_info_p, int as_index);
-static void get_as_sql_log_filename (char *log_filename,
+static void get_as_sql_log_filename (char *log_filename, size_t buf_size,
 				     const char *broker_name, int as_index);
-static void get_as_slow_log_filename (char *log_filename,
+static void get_as_slow_log_filename (char *log_filename, size_t buf_size,
 				      const char *broker_name, int as_index);
 
 static int add_db_server_check_list (T_DB_SERVER * list_p,
@@ -235,8 +234,6 @@ main ()
     }
 
   br_log_init (shm_Appl);
-  set_rye_file (FID_LOG_DIR, shm_Appl->log_dir,
-		shm_Br->br_info[br_Index].name);
 
   sysprm_load_and_init (NULL);
 
@@ -1867,7 +1864,8 @@ check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p,
 
   if (as_info_p->cur_sql_log_mode != SQL_LOG_MODE_NONE)
     {
-      get_as_sql_log_filename (log_filename, br_name, as_index);
+      get_as_sql_log_filename (log_filename, sizeof (log_filename), br_name,
+			       as_index);
 
       if (access (log_filename, F_OK) < 0)
 	{
@@ -1883,7 +1881,8 @@ check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p,
 
   if (as_info_p->cur_slow_log_mode != SLOW_LOG_MODE_OFF)
     {
-      get_as_slow_log_filename (log_filename, br_name, as_index);
+      get_as_slow_log_filename (log_filename, sizeof (log_filename), br_name,
+				as_index);
 
       if (access (log_filename, F_OK) < 0)
 	{
@@ -2121,27 +2120,28 @@ return_error:
 }
 
 static void
-get_as_sql_log_filename (char *log_filename, const char *broker_name,
-			 int as_index)
+get_as_sql_log_filename (char *log_filename, size_t buf_size,
+			 const char *broker_name, int as_index)
 {
-  char dirname[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
 
-  get_rye_file (FID_SQL_LOG_DIR, dirname, BROKER_PATH_MAX);
-
-  snprintf (log_filename, BROKER_PATH_MAX, "%s%s_%d.sql.log", dirname,
+  snprintf (filename, sizeof (filename), "%s_%d.sql.log",
 	    broker_name, as_index + 1);
+
+  envvar_ryelog_broker_sqllog_file (log_filename, buf_size, broker_name,
+				    filename);
 }
 
 static void
-get_as_slow_log_filename (char *log_filename, const char *broker_name,
-			  int as_index)
+get_as_slow_log_filename (char *log_filename, size_t buf_size,
+			  const char *broker_name, int as_index)
 {
-  char dirname[BROKER_PATH_MAX];
+  char tmp_filename[BROKER_PATH_MAX];
 
-  get_rye_file (FID_SLOW_LOG_DIR, dirname, BROKER_PATH_MAX);
-
-  snprintf (log_filename, BROKER_PATH_MAX, "%s%s_%d.slow.log", dirname,
+  snprintf (tmp_filename, sizeof (tmp_filename), "%s_%d.slow.log",
 	    broker_name, as_index + 1);
+  envvar_ryelog_broker_slowlog_file (log_filename, buf_size, broker_name,
+				     tmp_filename);
 }
 
 /*

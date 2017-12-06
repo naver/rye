@@ -89,9 +89,6 @@ static const char sysprm_error_log_file[] = "rye_server.err";
 static const char sysprm_error_log_file[] = "rye_client.err";
 #endif /* CS_MODE */
 
-const char sysprm_cm_conf_file_name[] = "cm.conf";
-const char sysprm_auto_conf_file_name[] = "rye-auto.conf";
-
 typedef enum
 {
   SYSPRM_UPD_KEY = 1,
@@ -2222,7 +2219,7 @@ sysprm_dump_parameters (FILE * fp)
       sysprm_initialize_prm_def ();
     }
 
-  fprintf (fp, "#\n# %s\n#\n\n", sysprm_auto_conf_file_name);
+  fprintf (fp, "#\n# %s\n#\n\n", RYE_CONF_FILE);
 
   fprintf (fp, "\n# system parameters\n");
   for (i = 0; i < NUM_PRM; i++)
@@ -2275,14 +2272,13 @@ sysprm_dump_persist_conf_file (FILE * fp, const char *proc_name,
       fp = stdout;
     }
 
-  fprintf (fp, "#\n# %s\n#\n\n", sysprm_auto_conf_file_name);
+  fprintf (fp, "#\n# %s\n#\n\n", RYE_CONF_FILE);
   fprintf (fp,
 	   "# system parameters were loaded from the files ([@section])\n");
 
   /* STEP 1: load file object from conf file
    */
-  if (envvar_confdir_file (file_being_dealt_with, PATH_MAX,
-			   sysprm_auto_conf_file_name) == NULL)
+  if (envvar_rye_conf_file (file_being_dealt_with, PATH_MAX) == NULL)
     {
       assert (false);
       goto exit_on_error;
@@ -2743,8 +2739,7 @@ prm_read_and_parse_server_persist_conf_file (const char *sect_name,
 
   /* STEP 1: load file object from conf file
    */
-  if (envvar_confdir_file (file_being_dealt_with, PATH_MAX,
-			   sysprm_auto_conf_file_name) == NULL)
+  if (envvar_rye_conf_file (file_being_dealt_with, PATH_MAX) == NULL)
     {
       assert (false);
       goto exit_on_error;
@@ -2939,8 +2934,7 @@ prm_read_and_parse_broker_persist_conf_file (INI_TABLE * ini)
 
   /* STEP 1: load file object from conf file
    */
-  if (envvar_confdir_file (file_being_dealt_with, PATH_MAX,
-			   sysprm_auto_conf_file_name) == NULL)
+  if (envvar_rye_conf_file (file_being_dealt_with, PATH_MAX) == NULL)
     {
       assert (false);
       goto exit_on_error;
@@ -3366,8 +3360,7 @@ sysprm_change_persist_conf_file (const char *proc_name, const char *sect_name,
 
   /* STEP 1: load file object from conf file
    */
-  if (envvar_confdir_file (file_being_dealt_with, PATH_MAX,
-			   sysprm_auto_conf_file_name) == NULL)
+  if (envvar_rye_conf_file (file_being_dealt_with, PATH_MAX) == NULL)
     {
       assert (false);
       goto exit_on_error;
@@ -3570,8 +3563,7 @@ sysprm_get_persist_conf (char *value, int max_size,
     }
 
   /* load file object from conf file */
-  if (envvar_confdir_file (file_being_dealt_with, PATH_MAX,
-			   sysprm_auto_conf_file_name) == NULL)
+  if (envvar_rye_conf_file (file_being_dealt_with, PATH_MAX) == NULL)
     {
       assert (false);
       goto exit_on_error;

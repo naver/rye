@@ -46,7 +46,6 @@
 #include "cas_error.h"
 #include "broker_util.h"
 #include "rye_master_shm.h"
-#include "broker_filename.h"
 #include "cas_cci_internal.h"
 #include "error_manager.h"
 #include "master_heartbeat.h"
@@ -934,7 +933,7 @@ make_child_output_filename (char *infile, int infile_bufsize, bool mkinfile,
 {
   char dirname[BROKER_PATH_MAX];
 
-  get_rye_file (FID_CAS_TMP_DIR, dirname, BROKER_PATH_MAX);
+  envvar_tmpdir_file (dirname, BROKER_PATH_MAX, "");
 
   snprintf (infile, infile_bufsize, "%s/local_mgmt.%u.in", dirname, seq);
   if (mkinfile)
@@ -1049,7 +1048,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
       int fd_stderr = -1;
       char working_dir[BROKER_PATH_MAX];
 
-      get_rye_file (FID_CAS_TMP_DIR, working_dir, BROKER_PATH_MAX);
+      envvar_tmpdir_file (working_dir, BROKER_PATH_MAX, "");
       chdir (working_dir);
 
       for (i = 3; i < 256; i++)
@@ -1227,12 +1226,6 @@ local_mg_num_shard_version_info (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
   return 0;
 }
 
-static char *
-get_rye_conf_path (char *path, size_t size)
-{
-  return envvar_confdir_file (path, size, sysprm_auto_conf_file_name);
-}
-
 static int
 local_mg_read_rye_file (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 			UNUSED_ARG const T_MGMT_REQ_ARG * req_arg,
@@ -1250,12 +1243,11 @@ local_mg_read_rye_file (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 
   if (arg_read_rye_file->which_file == READ_RYE_FILE_RYE_CONF)
     {
-      get_rye_conf_path (rye_file_path, PATH_MAX);
+      envvar_rye_conf_file (rye_file_path, sizeof (rye_file_path));
     }
   else if (arg_read_rye_file->which_file == READ_RYE_FILE_BR_ACL)
     {
-      get_rye_file (FID_ACCESS_CONTROL_FILE, rye_file_path,
-		    sizeof (rye_file_path));
+      envvar_broker_acl_file (rye_file_path, sizeof (rye_file_path));
     }
 
   if (rye_file_path[0] == '\0' || stat (rye_file_path, &stat_buf) < 0
@@ -1292,7 +1284,7 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 
   arg_write_conf = &req_arg->value.write_rye_conf_arg;
 
-  if (get_rye_conf_path (rye_conf_path, PATH_MAX) == NULL)
+  if (envvar_rye_conf_file (rye_conf_path, sizeof (rye_conf_path)) == NULL)
     {
       return BR_ER_RYE_CONF;
     }
@@ -1410,22 +1402,22 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 			UNUSED_ARG T_MGMT_RESULT_MSG * result_msg)
 {
   const T_MGMT_REQ_ARG_BR_ACL_RELOAD *arg_br_acl_reload;
-  char tmp_file[BROKER_PATH_MAX] = "";
-  int n;
+  char tmp_acl_filepath[BROKER_PATH_MAX] = "";
+  char tmp_filename[BROKER_PATH_MAX];
   int childpid;
 
   arg_br_acl_reload = &req_arg->value.br_acl_reload_arg;
 
-  get_rye_file (FID_CAS_TMP_DIR, tmp_file, sizeof (tmp_file));
-  n = strlen (tmp_file);
-  n +=
-    snprintf (tmp_file + n, sizeof (tmp_file) - n, "acl.tmp.%d", getpid ());
-  if (n >= (int) sizeof (tmp_file) - 1)
+  snprintf (tmp_filename, sizeof (tmp_filename), "acl.tmp.%d", getpid ());
+  envvar_tmpdir_file (tmp_acl_filepath, sizeof (tmp_acl_filepath),
+		      tmp_filename);
+
+  if (strlen (tmp_acl_filepath) >= (int) sizeof (tmp_acl_filepath) - 1)
     {
       return BR_ER_BR_ACL_RELOAD;
     }
 
-  if (file_write (tmp_file, arg_br_acl_reload->acl,
+  if (file_write (tmp_acl_filepath, arg_br_acl_reload->acl,
 		  arg_br_acl_reload->size) < 0)
     {
       return BR_ER_BR_ACL_RELOAD;
@@ -1438,6 +1430,7 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
     }
   else if (childpid == 0)
     {
+      int n;
       char rye_cmd[BROKER_PATH_MAX];
 
       for (n = 3; n < 256; n++)
@@ -1447,7 +1440,8 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 
       snprintf (rye_cmd, sizeof (rye_cmd), "%s/bin/rye", envvar_root ());
 
-      execl (rye_cmd, rye_cmd, "broker", "acl", "reload", tmp_file, NULL);
+      execl (rye_cmd, rye_cmd, "broker", "acl", "reload", tmp_acl_filepath,
+	     NULL);
 
       exit (-1);
     }

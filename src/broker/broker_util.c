@@ -43,7 +43,6 @@
 #include "cas_common.h"
 #include "broker_env_def.h"
 #include "broker_util.h"
-#include "broker_filename.h"
 #include "environment_variable.h"
 #include "porting.h"
 
@@ -214,22 +213,18 @@ ut_is_appl_server_ready (int pid, char *ready_flag)
 void
 ut_get_broker_port_name (char *port_name, const char *broker_name, int len)
 {
-  char dir_name[BROKER_PATH_MAX];
-
-  get_rye_file (FID_SOCK_DIR, dir_name, BROKER_PATH_MAX);
-
-  snprintf (port_name, len, "%s%s.B", dir_name, broker_name);
+  char filename[BROKER_PATH_MAX];
+  snprintf (filename, sizeof (filename), "%s.B", broker_name);
+  envvar_socket_file (port_name, len, filename);
 }
 
 void
 ut_get_as_port_name (char *port_name, const char *broker_name,
 		     int as_id, int len)
 {
-  char dir_name[BROKER_PATH_MAX];
-
-  get_rye_file (FID_SOCK_DIR, dir_name, BROKER_PATH_MAX);
-
-  snprintf (port_name, len, "%s%s.%d", dir_name, broker_name, as_id + 1);
+  char filename[BROKER_PATH_MAX];
+  snprintf (filename, sizeof (filename), "%s.%d", broker_name, as_id + 1);
+  envvar_socket_file (port_name, len, filename);
 }
 
 double
@@ -355,11 +350,9 @@ ut_time_string_to_sec (const char *time_str, const char *default_unit)
 void
 ut_get_as_pid_name (char *pid_name, char *br_name, int as_index, int len)
 {
-  char dir_name[BROKER_PATH_MAX];
-
-  get_rye_file (FID_AS_PID_DIR, dir_name, BROKER_PATH_MAX);
-
-  snprintf (pid_name, len, "%s%s_%d.pid", dir_name, br_name, as_index + 1);
+  char filename[BROKER_PATH_MAX];
+  snprintf (filename, sizeof (filename), "%s_%d.pid", br_name, as_index + 1);
+  envvar_as_pid_dir_file (pid_name, len, filename);
 }
 
 T_BROKER_INFO *

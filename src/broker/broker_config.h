@@ -194,7 +194,6 @@ struct t_broker_info
   int num_busy_count;
   int max_prepared_stmt_count;
   int access_log_max_size;	/* kbytes */
-  char log_dir[CONF_LOG_FILE_LEN];
   char source_env[CONF_LOG_FILE_LEN];
   PRM_NODE_LIST preferred_hosts;
 

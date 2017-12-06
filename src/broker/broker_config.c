@@ -40,7 +40,6 @@
 #include "cas_common.h"
 #include "broker_config.h"
 #include "broker_shm.h"
-#include "broker_filename.h"
 #include "broker_util.h"
 #include "util_func.h"
 #include "rye_shm.h"
@@ -294,7 +293,6 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 {
   const char *tmp_str;
   float tmp_float;
-  char path_buff[BROKER_PATH_MAX];
   PRM_NODE_LIST preferred_hosts;
 
   tmp_str = ini_getstr (ini, sec_name, "CCI_DEFAULT_AUTOCOMMIT", "ON",
@@ -362,10 +360,6 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
     {
       return -1;
     }
-
-  tmp_str = ini_getstr (ini, sec_name, "LOG_DIR", DEFAULT_LOG_DIR, lineno);
-  (void) envvar_ryelogdir_file (path_buff, BROKER_PATH_MAX, tmp_str);
-  MAKE_FILEPATH (br_info->log_dir, path_buff, CONF_LOG_FILE_LEN);
 
   br_info->max_prepared_stmt_count = ini_getint (ini, sec_name,
 						 "MAX_PREPARED_STMT_COUNT",
@@ -1054,25 +1048,18 @@ broker_config_read (T_BROKER_INFO * br_info,
 		    char *admin_log_file, char admin_flag)
 {
   int err = 0;
-  char default_conf_file_path[BROKER_PATH_MAX], file_name[BROKER_PATH_MAX],
-    file_being_dealt_with[BROKER_PATH_MAX];
+  char conf_file_path[BROKER_PATH_MAX];
 
   if (br_info != NULL)
     {
       memset (br_info, 0, sizeof (T_BROKER_INFO) * MAX_BROKER_NUM);
     }
 
-  get_rye_file (FID_RYE_BROKER_CONF, default_conf_file_path, BROKER_PATH_MAX);
+  envvar_rye_conf_file (conf_file_path, sizeof (conf_file_path));
 
-  basename_r (default_conf_file_path, file_name, BROKER_PATH_MAX);
-
-  /* $RYE_DATABASES/rye-auto.conf */
-  strcpy (file_being_dealt_with, default_conf_file_path);
-
-  err = broker_config_read_internal (file_being_dealt_with, br_info,
+  err = broker_config_read_internal (conf_file_path, br_info,
 				     num_broker, broker_shm_key,
 				     admin_log_file, admin_flag);
-
 
   return err;
 }
@@ -1129,7 +1116,6 @@ broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
       fprintf (fp, "APPL_SERVER_MAX_SIZE\t=%d\n",
 	       br_info[i].appl_server_max_size / ONE_K);
       fprintf (fp, "SESSION_TIMEOUT\t\t=%d\n", br_info[i].session_timeout);
-      fprintf (fp, "LOG_DIR\t\t\t=%s\n", br_info[i].log_dir);
       tmp_str = get_conf_string (br_info[i].log_backup, tbl_on_off);
       if (tmp_str)
 	{

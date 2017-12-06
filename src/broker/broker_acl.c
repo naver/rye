@@ -31,7 +31,6 @@
 #include "broker_acl.h"
 #include "cas_error.h"
 #include "broker_util.h"
-#include "broker_filename.h"
 #include "error_manager.h"
 
 #define ADMIN_ERR_MSG_SIZE	1024

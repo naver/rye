@@ -305,7 +305,6 @@ struct t_shm_appl_server
   int replica_only_flag;
   int max_num_delayed_hosts_lookup;	/* max num of HA delayed hosts to lookup */
 
-  char log_dir[CONF_LOG_FILE_LEN];
   char broker_name[BROKER_NAME_LEN];
   char appl_server_name[APPL_SERVER_NAME_MAX_SIZE];
   PRM_NODE_LIST preferred_hosts;

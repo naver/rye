@@ -42,8 +42,6 @@
 #include "cas_util.h"
 #include "cas_log.h"
 
-#include "broker_filename.h"
-
 #include "release_string.h"
 #include "perf_monitor.h"
 #include "intl_support.h"

@@ -36,7 +36,6 @@
 #include "cas_common.h"
 #include "cas_error.h"
 #include "broker_shm.h"
-#include "broker_filename.h"
 #include "broker_util.h"
 #include "error_code.h"
 #include "error_manager.h"
@@ -129,7 +128,6 @@ br_shm_init_shm_as (T_BROKER_INFO * br_info_p, int shm_key_br_gl)
   memset (shm_as_p->unusable_databases_cnt, 0,
 	  sizeof (shm_as_p->unusable_databases_cnt));
 
-  strcpy (shm_as_p->log_dir, br_info_p->log_dir);
   strcpy (shm_as_p->broker_name, br_info_p->name);
 
   shm_as_p->broker_port = br_info_p->port;

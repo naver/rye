@@ -89,37 +89,38 @@ static int css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
 			 const char *dbname, struct sockaddr *saddr,
 			 socklen_t * slen);
 
+static void
+css_get_domain_path_internal (char *path_buf, int buf_len,
+			      const char *name, const char *ext)
+{
+  char filename[PATH_MAX];
+
+  assert (name != NULL);
+  assert (ext != NULL);
+
+  snprintf (filename, PATH_MAX, "%s.%s", name, ext);
+  envvar_socket_file (path_buf, buf_len, filename);
+
+  er_log_debug (ARG_FILE_LINE, "sock_path=%s\n", path_buf);
+}
+
 void
 css_get_master_domain_path (char *path_buf, int buf_len, bool is_lock_file)
 {
   if (is_lock_file)
     {
-      css_get_server_domain_path (path_buf, buf_len, "rye_master.lock");
+      css_get_domain_path_internal (path_buf, buf_len, "rye_master", "lock");
     }
   else
     {
-      css_get_server_domain_path (path_buf, buf_len, "rye_master");
+      css_get_domain_path_internal (path_buf, buf_len, "rye_master", "sock");
     }
 }
 
 void
 css_get_server_domain_path (char *path_buf, int buf_len, const char *dbname)
 {
-  char sock_dir[PATH_MAX];
-
-  if (dbname == NULL)
-    {
-      assert (0);
-      dbname = "UNKNOWN_DB";
-    }
-  else
-    {
-      envvar_vardir_file (sock_dir, PATH_MAX, "RYE_SOCK");
-      snprintf (path_buf, buf_len, "%s/%s.%s", sock_dir, envvar_prefix (),
-		dbname);
-    }
-
-  er_log_debug (ARG_FILE_LINE, "sock_path=%s\n", path_buf);
+  css_get_domain_path_internal (path_buf, buf_len, "rye_server", dbname);
 }
 
 static void
