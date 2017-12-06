@@ -306,6 +306,8 @@ cirp_final_writer (CIRP_WRITER_INFO * writer)
 
   pthread_mutex_destroy (&writer->lock);
 
+  pthread_cond_destroy (&writer->cond);
+
   return NO_ERROR;
 }
 
@@ -327,6 +329,13 @@ cirp_init_writer (CIRP_WRITER_INFO * writer)
 
       GOTO_EXIT_ON_ERROR;
     }
+  if (pthread_cond_init (&writer->cond, NULL) < 0)
+    {
+      error = ER_CSS_PTHREAD_COND_INIT;
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+      GOTO_EXIT_ON_ERROR;
+    }
+
   writer->hdr_page = (LOG_PAGE *) malloc (IO_MAX_PAGE_SIZE);
   if (writer->hdr_page == NULL)
     {
@@ -825,6 +834,7 @@ cirpwr_set_hdr_and_flush_info (void)
   COPY_LOG_HEADER *ha_info = NULL;
   LOG_PAGEID fpageid;
   BACKGROUND_ARCHIVING_INFO *bg_info;
+  int error = NO_ERROR;
 
   /* Set the flush information */
   p = cirpwr_Gl.logpg_area + LOG_PAGESIZE;
@@ -837,8 +847,6 @@ cirpwr_set_hdr_and_flush_info (void)
 
   if (num_toflush == 0)
     {
-      int error = NO_ERROR;
-
       assert (false);
 
       REPL_SET_GENERIC_ERROR (error, " ");
@@ -887,6 +895,61 @@ cirpwr_set_hdr_and_flush_info (void)
       cirpwr_Gl.last_arv_lpageid = m_log_hdr->nxarv_pageid - 1;
 
       assert (cirpwr_Gl.last_arv_lpageid + 1 == fpageid);
+    }
+
+  /*
+   * LWT sets the archiving flag at the time when it sends new active page
+   * after archiving finished, so that logwr_archive_active_log() should
+   * be executed before logwr_flush_all_append_pages().
+   */
+  if (cirpwr_Gl.action & CIRPWR_ACTION_ARCHIVING)
+    {
+      CIRP_WRITER_INFO *writer = NULL;
+      struct timespec wakeup_time;
+
+      writer = &Repl_Info->writer_info;
+
+      error = pthread_mutex_lock (&writer->lock);
+      if (error != NO_ERROR)
+	{
+	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
+	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+
+	  return error;
+	}
+
+      while (writer->reader_count > 0)
+	{
+	  if (REPL_NEED_SHUTDOWN () == true)
+	    {
+	      pthread_mutex_unlock (&writer->lock);
+
+	      REPL_SET_GENERIC_ERROR (error, "NEED SHUTDOWN");
+	      return error;
+	    }
+	  clock_gettime (CLOCK_REALTIME, &wakeup_time);
+	  wakeup_time = timespec_add_msec (&wakeup_time, 10);
+	  pthread_cond_timedwait (&writer->cond, &writer->lock, &wakeup_time);
+	}
+
+      writer->is_archiving = true;
+      error = cirpwr_archive_active_log ();
+      writer->is_archiving = false;
+      if (error != NO_ERROR)
+	{
+	  pthread_mutex_unlock (&writer->lock);
+	  return error;
+	}
+
+      cirpwr_Gl.action &= ~CIRPWR_ACTION_ARCHIVING;
+
+      pthread_mutex_unlock (&writer->lock);
+
+      error = cirpwr_flush_header_page ();
+      if (error != NO_ERROR)
+	{
+	  return error;
+	}
     }
 
   ha_info->last_flushed_pageid = last_pgptr->hdr.logical_pageid;
@@ -1577,51 +1640,6 @@ cirpwr_write_log_pages (void)
       return NO_ERROR;
     }
 
-  /*
-   * LWT sets the archiving flag at the time when it sends new active page
-   * after archiving finished, so that logwr_archive_active_log() should
-   * be executed before logwr_flush_all_append_pages().
-   */
-  if (cirpwr_Gl.action & CIRPWR_ACTION_ARCHIVING)
-    {
-    retry_archiving:
-      error = pthread_mutex_lock (&writer->lock);
-      if (error != NO_ERROR)
-	{
-	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-
-	  GOTO_EXIT_ON_ERROR;
-	}
-      has_writer_mutex = true;
-
-      if (writer->reader_count > 0)
-	{
-	  pthread_mutex_unlock (&writer->lock);
-	  has_writer_mutex = false;
-	  if (REPL_NEED_SHUTDOWN () == true)
-	    {
-	      REPL_SET_GENERIC_ERROR (error, "NEED SHUTDOWN");
-
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  THREAD_SLEEP (10);
-	  goto retry_archiving;
-	}
-
-      writer->is_archiving = true;
-      error = cirpwr_archive_active_log ();
-      writer->is_archiving = false;
-      if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
-      cirpwr_Gl.action &= ~CIRPWR_ACTION_ARCHIVING;
-
-      pthread_mutex_unlock (&writer->lock);
-      has_writer_mutex = false;
-    }
-
   error = cirpwr_flush_all_append_pages ();
   if (error != NO_ERROR)
     {
@@ -1630,7 +1648,11 @@ cirpwr_write_log_pages (void)
 
   FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 1000, 0);
 
-  (void) cirpwr_flush_header_page ();
+  error = cirpwr_flush_header_page ();
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
 
   error = pthread_mutex_lock (&writer->lock);
   if (error != NO_ERROR)
