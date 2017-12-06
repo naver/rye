@@ -1581,7 +1581,7 @@ net_client_init (const char *dbname, const PRM_NODE_INFO * node_info)
 
   /* set our host/server names for further css communication */
   prm_node_info_to_str (net_Server_host, sizeof (net_Server_host), node_info);
-  net_Server_addr = node_info->ip;
+  net_Server_addr = PRM_NODE_INFO_GET_IP (node_info);
   assert (net_Server_addr != INADDR_NONE);
 
   if (dbname != NULL && strlen (dbname) <= DB_MAX_IDENTIFIER_LENGTH)

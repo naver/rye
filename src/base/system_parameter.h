@@ -269,6 +269,13 @@ struct sysprm_assign_value
 };
 
 #define PRM_NULL_NODE_INFO		{ INADDR_NONE, 0 }
+#define PRM_NODE_INFO_SET(NODE_INFO,IP,PORT)		\
+	do {						\
+	  (NODE_INFO)->ip = IP;				\
+	  (NODE_INFO)->port = PORT;			\
+	} while (0)
+#define PRM_NODE_INFO_GET_IP(NODE_INFO)		((NODE_INFO)->ip)
+#define PRM_NODE_INFO_GET_PORT(NODE_INFO)	((NODE_INFO)->port)
 typedef struct
 {
   in_addr_t ip;
@@ -400,7 +407,5 @@ extern int prm_split_node_str (PRM_NODE_LIST * node_list,
 extern bool prm_is_myself_node_info (const PRM_NODE_INFO * node_info);
 extern bool prm_is_same_node (const PRM_NODE_INFO * node1,
 			      const PRM_NODE_INFO * node2);
-extern void prm_set_node_info (PRM_NODE_INFO * node_info,
-			       in_addr_t ip, int port);
 
 #endif /* _SYSTEM_PARAMETER_H_ */

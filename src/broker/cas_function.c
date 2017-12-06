@@ -1554,6 +1554,8 @@ fn_notify_ha_agent_state (int argc, void **argv, T_NET_BUF * net_buf,
   int arg_idx = 0;
   int error;
   PRM_NODE_INFO node_info;
+  in_addr_t ip;
+  int port;
 
   if (argc != 4)
     {
@@ -1561,20 +1563,21 @@ fn_notify_ha_agent_state (int argc, void **argv, T_NET_BUF * net_buf,
       goto error_exit;
     }
 
-  net_arg_get_int ((int *) &node_info.ip, argv[arg_idx++]);
-  net_arg_get_int (&node_info.port, argv[arg_idx++]);
+  net_arg_get_int ((int *) &ip, argv[arg_idx++]);
+  net_arg_get_int (&port, argv[arg_idx++]);
   net_arg_get_int (&state, argv[arg_idx++]);
   net_arg_get_int (&autocommit_mode, argv[arg_idx++]);
 
-  if (node_info.port == 0)
+  if (port == 0)
     {
-      node_info.port = prm_get_local_port_id ();
+      port = prm_get_local_port_id ();
     }
+  PRM_NODE_INFO_SET (&node_info, ip, port);
 
   prm_node_info_to_str (host_str, sizeof (host_str), &node_info);
   cas_sql_log_write (0,
-		     "notify_ha_agent_state (host: %s:%d, state: %d)",
-		     host_str, node_info.port, state);
+		     "notify_ha_agent_state (host: %s, state: %d)",
+		     host_str, state);
 
   error = boot_notify_ha_apply_state (&node_info, state);
   if (error < 0)

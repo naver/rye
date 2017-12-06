@@ -555,10 +555,13 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-      error = cci_notify_ha_agent_state (&analyzer->conn,
-					 analyzer->ct.host_info.ip,
-					 analyzer->ct.host_info.port,
-					 new_state);
+      error =
+	cci_notify_ha_agent_state (&analyzer->conn,
+				   PRM_NODE_INFO_GET_IP (&analyzer->ct.
+							 host_info),
+				   PRM_NODE_INFO_GET_PORT (&analyzer->ct.
+							   host_info),
+				   new_state);
       if (error != NO_ERROR)
 	{
 	  error = ER_HA_LA_FAILED_TO_CHANGE_STATE;

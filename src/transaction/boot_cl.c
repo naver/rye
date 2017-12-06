@@ -770,7 +770,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
 	      optional_cap = BOOT_NO_OPT_CAP;
 	    }
 
-	  boot_Host_connected.ip = INADDR_NONE;
+	  boot_Host_connected = prm_get_null_node_info ();
 
 	  db_unset_reconnect_reason (DB_RC_NON_PREFERRED_HOSTS);
 
@@ -791,7 +791,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
 		  er_log_debug (ARG_FILE_LINE, "boot_restart_client: "
 				"boot_cli_init_css () ER_NET_SERVER_HAND_SHAKE\n");
 
-		  boot_Host_connected.ip = INADDR_NONE;
+		  boot_Host_connected = prm_get_null_node_info ();
 		}
 	      else
 		{
@@ -1305,7 +1305,7 @@ boot_cli_init_css (const char *dbname, const PRM_NODE_LIST * arg_node_list,
     }
 
   /* try the connected host first */
-  if (boot_Host_connected.ip == INADDR_NONE)
+  if (PRM_NODE_INFO_GET_IP (&boot_Host_connected) == INADDR_NONE)
     {
       node_list = *arg_node_list;
     }
@@ -2494,8 +2494,7 @@ void
 boot_clear_host_connected (void)
 {
 #if defined(CS_MODE)
-  memset (&boot_Host_connected, 0, sizeof (boot_Host_connected));
-  boot_Host_connected.ip = INADDR_NONE;
+  boot_Host_connected = prm_get_null_node_info ();
 #endif
 }
 

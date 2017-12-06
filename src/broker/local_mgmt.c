@@ -854,7 +854,7 @@ local_mg_sync_shard_mgmt_info (T_LOCAL_MGMT_JOB * job,
   HA_STATE server_state;
   PRM_NODE_INFO shard_mgmt_node_info;
 
-  prm_set_node_info (&shard_mgmt_node_info,
+  PRM_NODE_INFO_SET (&shard_mgmt_node_info,
 		     job->clt_ip, req_arg->value.shard_mgmt_info.port);
 
   rye_master_shm_add_shard_mgmt_info (req_arg->value.shard_mgmt_info.

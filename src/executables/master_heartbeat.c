@@ -2044,9 +2044,9 @@ hb_sockaddr (const PRM_NODE_INFO * node, struct sockaddr *saddr,
    */
   memset ((void *) &udp_saddr, 0, sizeof (udp_saddr));
   udp_saddr.sin_family = AF_INET;
-  udp_saddr.sin_port = htons (node->port);
+  udp_saddr.sin_port = htons (PRM_NODE_INFO_GET_PORT (node));
 
-  udp_saddr.sin_addr.s_addr = node->ip;
+  udp_saddr.sin_addr.s_addr = PRM_NODE_INFO_GET_IP (node);
 
   *slen = sizeof (udp_saddr);
   memcpy ((void *) saddr, (void *) &udp_saddr, *slen);
@@ -2471,8 +2471,9 @@ make_shard_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
       return error;
     }
 
-  shard_mgmt_ip = (const unsigned char *) &shard_mgmt_node_info.ip;
-  shard_mgmt_port = shard_mgmt_node_info.port;
+  shard_mgmt_ip =
+    (const unsigned char *) &(PRM_NODE_INFO_GET_IP (&shard_mgmt_node_info));
+  shard_mgmt_port = PRM_NODE_INFO_GET_PORT (&shard_mgmt_node_info);
   snprintf (url, sizeof (url),
 	    "cci:rye://%d.%d.%d.%d:%d/%s:dba/rw?queryTimeout=1000",
 	    shard_mgmt_ip[0], shard_mgmt_ip[1], shard_mgmt_ip[2],
@@ -4753,7 +4754,7 @@ hb_cluster_initialize ()
     }
 
   my_node_info = prm_get_myself_node_info ();
-  if (my_node_info.ip == INADDR_NONE)
+  if (PRM_NODE_INFO_GET_IP (&my_node_info) == INADDR_NONE)
     {
       er_log_debug (ARG_FILE_LINE, "Failed to resolve IP address");
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -5615,7 +5616,7 @@ hb_reload_config (PRM_NODE_LIST * rm_modes)
 	    old_node->last_recv_hbtime.tv_usec;
 
 	  /* mark node wouldn't deregister */
-	  old_node->node_info.ip = INADDR_NONE;
+	  old_node->node_info = prm_get_null_node_info ();
 	}
     }
 
@@ -6832,7 +6833,8 @@ hb_check_ping (const char *host)
 
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      if (node_info.ip == node->node_info.ip)
+      if (PRM_NODE_INFO_GET_IP (&node_info) ==
+	  PRM_NODE_INFO_GET_IP (&node->node_info))
 	{
 	  /* PING Host is same as cluster's host name */
 	  snprintf (buf, sizeof (buf), "Useless PING host name %s", host);
@@ -7059,7 +7061,7 @@ hb_check_request_eligibility (SOCKET sd, int *result)
   *result = HB_HC_UNAUTHORIZED;
   for (node = hb_Cluster->nodes; node; node = node->next)
     {
-      node_addr.s_addr = node->node_info.ip;
+      node_addr.s_addr = PRM_NODE_INFO_GET_IP (&node->node_info);
       if (node_addr.s_addr == INADDR_NONE)
 	{
 	  char host_name[MAX_NODE_INFO_STR_LEN];

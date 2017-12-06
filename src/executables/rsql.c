@@ -2360,7 +2360,8 @@ rsql_print_database (void)
   db_name = db_get_database_name ();
   connected_node = boot_get_host_connected ();
 
-  if (db_name == NULL || connected_node.ip == INADDR_NONE)
+  if (db_name == NULL ||
+      PRM_NODE_INFO_GET_IP (&connected_node) == INADDR_NONE)
     {
       fprintf (rsql_Error_fp, "\n\tNOT CONNECTED\n\n");
     }

@@ -3471,8 +3471,8 @@ boot_notify_ha_apply_state (const PRM_NODE_INFO * node_info,
   reply = OR_ALIGNED_BUF_START (a_reply);
   request = OR_ALIGNED_BUF_START (a_request);
 
-  ptr = or_pack_int (request, node_info->ip);
-  ptr = or_pack_int (ptr, node_info->port);
+  ptr = or_pack_int (request, PRM_NODE_INFO_GET_IP (node_info));
+  ptr = or_pack_int (ptr, PRM_NODE_INFO_GET_PORT (node_info));
   ptr = or_pack_int (ptr, (int) state);
 
   req_error = net_client_request (NET_SERVER_BO_NOTIFY_HA_APPLY_STATE,

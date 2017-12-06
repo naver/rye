@@ -318,7 +318,8 @@ master_shm_get_shard_mgmt_info (const char *local_dbname,
 
 	  for (j = 0; j < RYE_SHD_MGMT_INFO_MAX_COUNT; j++)
 	    {
-	      if (shd_mgmt_entry->shd_mgmt_info[j].node_info.port == 0)
+	      if (PRM_NODE_INFO_GET_PORT
+		  (&shd_mgmt_entry->shd_mgmt_info[j].node_info) == 0)
 		{
 		  break;
 		}
@@ -329,7 +330,8 @@ master_shm_get_shard_mgmt_info (const char *local_dbname,
 		}
 	    }
 
-	  if (shd_mgmt_entry->shd_mgmt_info[recent].node_info.port != 0)
+	  if (PRM_NODE_INFO_GET_PORT
+	      (&shd_mgmt_entry->shd_mgmt_info[recent].node_info) != 0)
 	    {
 	      strncpy (global_dbname, shd_mgmt_entry->global_dbname,
 		       RYE_SHD_MGMT_TABLE_DBNAME_SIZE);
@@ -633,7 +635,8 @@ dump_shard_mgmt_info (FILE * outfp, RYE_SHM_MASTER * rye_shm)
 	  char time_array[256];
 	  char node_str[MAX_NODE_INFO_STR_LEN];
 
-	  if (rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].node_info.port == 0)
+	  if (PRM_NODE_INFO_GET_PORT
+	      (&rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].node_info) == 0)
 	    {
 	      break;
 	    }
@@ -740,7 +743,8 @@ set_shard_mgmt_info (RYE_SHD_MGMT_TABLE * shd_mgmt_table_entry,
 
   for (i = 0; i < RYE_SHD_MGMT_INFO_MAX_COUNT; i++)
     {
-      if (shd_mgmt_table_entry->shd_mgmt_info[i].node_info.port == 0)
+      if (PRM_NODE_INFO_GET_PORT
+	  (&shd_mgmt_table_entry->shd_mgmt_info[i].node_info) == 0)
 	{
 	  /* shard mgmt info not found. */
 	  set_index = i;

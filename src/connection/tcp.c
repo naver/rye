@@ -188,8 +188,8 @@ css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
   else
     {
       struct sockaddr_in tcp_saddr;
-      in_addr_t in_addr = node_info->ip;
-      int port = node_info->port;
+      in_addr_t in_addr = PRM_NODE_INFO_GET_IP (node_info);
+      int port = PRM_NODE_INFO_GET_PORT (node_info);
 
       memset ((void *) &tcp_saddr, 0, sizeof (tcp_saddr));
       tcp_saddr.sin_family = AF_INET;

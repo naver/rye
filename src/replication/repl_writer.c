@@ -1291,7 +1291,7 @@ cirpwr_flush_header_page (void)
   if (cirpwr_Gl.ha_info.server_state != m_log_hdr->ha_info.server_state)
     {
       char host_str[MAX_NODE_INFO_STR_LEN];
-      if (cirpwr_Gl.host_info.ip == INADDR_NONE)
+      if (PRM_NODE_INFO_GET_IP (&cirpwr_Gl.host_info) == INADDR_NONE)
 	{
 	  strcpy (host_str, "unknown");
 	}
