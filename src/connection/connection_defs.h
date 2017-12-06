@@ -254,13 +254,16 @@ enum _ha_state
 
 #define HA_STATE_STR_SZ                  (13)
 
-#define HA_STATE_UNKNOWN_STR             "unknown"
-#define HA_STATE_MASTER_STR              "master"
-#define HA_STATE_TO_BE_MASTER_STR        "to-be-master"
-#define HA_STATE_SLAVE_STR               "slave"
-#define HA_STATE_TO_BE_SLAVE_STR         "to-be-slave"
-#define HA_STATE_REPLICA_STR             "replica"
-#define HA_STATE_DEAD_STR                "dead"
+#define HA_STATE_NAME(ha_stat)                           \
+  ((ha_stat) == HA_STATE_NA ? "na" :                     \
+   (ha_stat) == HA_STATE_UNKNOWN ? "unknown" :           \
+   (ha_stat) == HA_STATE_MASTER ? "master" :             \
+   (ha_stat) == HA_STATE_TO_BE_MASTER ? "to-be-master" : \
+   (ha_stat) == HA_STATE_SLAVE ? "slave" :               \
+   (ha_stat) == HA_STATE_TO_BE_SLAVE ? "to-be-slave" :   \
+   (ha_stat) == HA_STATE_REPLICA ? "replica" :           \
+   (ha_stat) == HA_STATE_DEAD ? "dead" : "invalid")
+
 
 #define HA_STATE_NAME(ha_stat)                           \
   ((ha_stat) == HA_STATE_NA ? "na" :                     \

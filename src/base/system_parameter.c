@@ -226,8 +226,6 @@ typedef enum
 
 #define PRM_NAME_HA_DB_LIST "ha_db_list"
 
-#define PRM_NAME_HA_COPY_SYNC_MODE "ha_copy_sync_mode"
-
 #define PRM_NAME_HA_PORT_ID "ha_port_id"
 
 #define PRM_NAME_HA_INIT_TIMER "ha_init_timer"
@@ -712,9 +710,6 @@ static const char *prm_ha_replica_list_default = NULL;
 
 const char *PRM_HA_DB_LIST = "";
 static const char *prm_ha_db_list_default = NULL;
-
-const char *PRM_HA_COPY_SYNC_MODE = "";
-static const char *prm_ha_copy_sync_mode_default = NULL;
 
 int PRM_HA_PORT_ID = HB_DEFAULT_HA_PORT_ID;
 static int prm_ha_port_id_default = HB_DEFAULT_HA_PORT_ID;
@@ -1691,13 +1686,6 @@ sysprm_initialize_prm_def ()
 		     (PRM_FOR_CLIENT | PRM_FOR_SERVER),
 		     PRM_STRING,
 		     &prm_ha_db_list_default, &PRM_HA_DB_LIST, NULL, NULL);
-
-  sysprm_init_param (PRM_ID_HA_COPY_SYNC_MODE,
-		     PRM_NAME_HA_COPY_SYNC_MODE,
-		     (PRM_FOR_CLIENT),
-		     PRM_STRING,
-		     &prm_ha_copy_sync_mode_default,
-		     &PRM_HA_COPY_SYNC_MODE, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_PORT_ID,
 		     PRM_NAME_HA_PORT_ID,

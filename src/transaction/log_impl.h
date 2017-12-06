@@ -416,18 +416,6 @@ struct log_group_commit_info
 #define LOG_GROUP_COMMIT_INFO_INITIALIZER                     \
   {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER}
 
-typedef enum logwr_mode LOGWR_MODE;
-enum logwr_mode
-{
-  LOGWR_MODE_ASYNC = 1,
-  LOGWR_MODE_SEMISYNC,
-  LOGWR_MODE_SYNC
-};
-
-#define LOGWR_MODE_NAME(mode)                         \
-  ((mode) == LOGWR_MODE_SYNC ? "sync" :               \
-   (mode) == LOGWR_MODE_ASYNC ? "async" : "semisync")
-
 typedef enum logwr_status LOGWR_STATUS;
 enum logwr_status
 {
