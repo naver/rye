@@ -1555,6 +1555,7 @@ cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
 	}
       assert (writer->is_archiving == false);
       writer->reader_count--;
+      pthread_cond_signal (&writer->cond);
 
       pthread_mutex_unlock (&writer->lock);
       has_mutex = false;
@@ -1589,6 +1590,7 @@ exit_on_error:
     {
       pthread_mutex_lock (&writer->lock);
       writer->reader_count--;
+      pthread_cond_signal (&writer->cond);
       pthread_mutex_unlock (&writer->lock);
       has_mutex = false;
     }
