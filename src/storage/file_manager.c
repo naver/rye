@@ -3458,8 +3458,8 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
       pb_invalid_temp_called = true;
       if (!out_of_range)
 	{
-	  if ((file_type == FILE_TMP || file_type == FILE_QUERY_AREA)
-	      && file_tmpfile_cache_put (thread_p, vfid, file_type))
+	  assert (file_type == FILE_TMP || file_type == FILE_QUERY_AREA);
+	  if (file_tmpfile_cache_put (thread_p, vfid, file_type))
 	    {
 	      pgbuf_unfix_and_init (thread_p, fhdr_pgptr);
 

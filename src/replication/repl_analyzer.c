@@ -2067,12 +2067,12 @@ analyzer_main (void *arg)
 	      lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
 	      if (lrec->type == LOG_END_OF_LOG)
 		{
-		  assert (false);
 		  analyzer->is_end_of_record = true;
+		  cirp_logpb_decache_range (buf_mgr, final_lsa.pageid,
+					    LOGPAGEID_MAX);
 		  break;
 		}
-	      if (lrec->type == LOG_END_OF_LOG
-		  || !CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
+	      if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
 		  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec)
 		  || LSA_ISNULL (&lrec->forw_lsa)
 		  || LSA_GT (&final_lsa, &lrec->forw_lsa))
