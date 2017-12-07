@@ -920,7 +920,7 @@ cirpwr_set_hdr_and_flush_info (void)
 
       while (writer->reader_count > 0)
 	{
-	  if (REPL_NEED_SHUTDOWN () == true)
+	  if (rp_need_shutdown (ARG_FILE_LINE) == true)
 	    {
 	      pthread_mutex_unlock (&writer->lock);
 
@@ -1487,6 +1487,17 @@ cirpwr_archive_active_log (void)
   writer = &Repl_Info->writer_info;
 
   bg_arv_info = &cirpwr_Gl.bg_archive_info;
+
+  if (bg_arv_info->start_page_id >= cirpwr_Gl.last_arv_lpageid)
+    {
+      /* archive file already created */
+      assert ((cirpwr_Gl.ha_info.nxarv_pageid
+	       == cirpwr_Gl.last_arv_lpageid + 1)
+	      && (bg_arv_info->start_page_id
+		  == cirpwr_Gl.last_arv_lpageid + 1));
+
+      return NO_ERROR;
+    }
 
   error = cirpwr_copy_all_omitted_pages (cirpwr_Gl.last_arv_lpageid);
   if (error != NO_ERROR)
