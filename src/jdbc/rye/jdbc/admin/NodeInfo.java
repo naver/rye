@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
+import rye.jdbc.jci.JciConnectionInfo;
+
 class NodeAddress
 {
     private final String orgHostname;
@@ -60,6 +62,16 @@ class NodeAddress
 	this.ipaddr = inetAddr.getHostAddress();
     }
 
+    JciConnectionInfo toJciConnectionInfo() throws SQLException
+    {
+	return new JciConnectionInfo(this.getIpAddr(), this.getPort(), "rw");
+    }
+
+    public String toString()
+    {
+	return String.format("%s:%d", this.getIpAddr(), this.getPort());
+    }
+
     String getIpAddr()
     {
 	return this.ipaddr;
@@ -74,11 +86,11 @@ class NodeAddress
 	return hosts;
     }
 
-    static String[] getIpAddrArr(NodeAddress[] nodeAddr)
+    static String[] getIpPortArr(NodeAddress[] nodeAddr)
     {
 	String[] ipaddr = new String[nodeAddr.length];
 	for (int i = 0; i < nodeAddr.length; i++) {
-	    ipaddr[i] = nodeAddr[i].getIpAddr();
+	    ipaddr[i] = String.format("%s:%d", nodeAddr[i].getIpAddr(), nodeAddr[i].getPort());
 	}
 	return ipaddr;
     }
@@ -299,7 +311,7 @@ class NodeInfo
 	return args;
     }
 
-    static NodeInfo makeNodeInfo(int nodeid, String[] hostInfo) throws Exception
+    static NodeInfo makeNodeInfo(int nodeid, String[] hostInfo, int localMgmtPort) throws Exception
     {
 	if (nodeid <= 0 || hostInfo == null || hostInfo.length == 0) {
 	    return null;
@@ -311,7 +323,7 @@ class NodeInfo
 	    String[] tmp = ShardCommand.splitList(hostInfo[i], ":", false);
 
 	    if (tmp.length == 1) {
-		hostArr[i] = new NodeAddress(tmp[0], 0);
+		hostArr[i] = new NodeAddress(tmp[0], localMgmtPort);
 	    }
 	    else if (tmp.length == 2) {
 		hostArr[i] = new NodeAddress(tmp[0], Integer.parseInt(tmp[1]));
@@ -324,7 +336,7 @@ class NodeInfo
 	return new NodeInfo(nodeid, hostArr, null);
     }
 
-    static NodeInfo[] makeNodeInfoArr(String[] nodeHostInfo) throws Exception
+    static NodeInfo[] makeNodeInfoArr(String[] nodeHostInfo, int localMgmtPort) throws Exception
     {
 	if (nodeHostInfo == null || nodeHostInfo.length == 0) {
 	    return null;
@@ -339,7 +351,7 @@ class NodeInfo
 
 	    if (tmp.length == 2) {
 		nodeid = Integer.parseInt(tmp[0]);
-		nodeAddr = new NodeAddress(tmp[1], 0);
+		nodeAddr = new NodeAddress(tmp[1], localMgmtPort);
 	    }
 	    else if (tmp.length == 3) {
 		nodeid = Integer.parseInt(tmp[0]);

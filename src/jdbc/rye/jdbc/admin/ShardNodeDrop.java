@@ -33,7 +33,7 @@ import rye.jdbc.sharding.ShardAdmin;
 class ShardNodeDrop extends ShardCommand
 {
     private String[] globalDbnameArr;
-    private String shardMgmtHost;
+    private NodeAddress shardMgmtHost;
     private String[] dbaPasswordArr;
     private int dropAllNodeid;
 
@@ -55,6 +55,7 @@ class ShardNodeDrop extends ShardCommand
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
     {
 	String password = "";
+	int localMgmtPort = ShardCommand.DEFAULT_LOCAL_MGMT_PORT;
 
 	for (int i = 0; i < optArgs.length; i++) {
 	    String[] tmpArr = splitArgNameValue(optArgs[i]);
@@ -62,7 +63,8 @@ class ShardNodeDrop extends ShardCommand
 	    String argValue = tmpArr[1];
 
 	    if (argName.equals("--local-mgmt-port")) {
-		if (setLocalMgmtPort(argValue) == false) {
+		localMgmtPort = Integer.parseInt(argValue);
+		if (localMgmtPort <= 0) {
 		    throw makeAdminRyeException(null, "invalid option value: %s", optArgs[i]);
 		}
 	    }
@@ -90,10 +92,7 @@ class ShardNodeDrop extends ShardCommand
 	    throw makeAdminRyeException(null, "invalid global dbname '%s'", argGlobalDbname);
 	}
 
-	shardMgmtHost = argShardMgmtHost.trim().toLowerCase();
-	if (shardMgmtHost.length() == 0) {
-	    throw makeAdminRyeException(null, "invalid shard mgmt host '%s'", argShardMgmtHost);
-	}
+	shardMgmtHost = new NodeAddress(argShardMgmtHost, localMgmtPort);
 
 	dropAllNodeid = Integer.parseInt(argNodeid);
 	if (dropAllNodeid <= 1) {
@@ -115,7 +114,7 @@ class ShardNodeDrop extends ShardCommand
 	for (int i = 0; i < globalDbnameArr.length; i++) {
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 
-	    RyeConnection con = makeConnection(shardMgmtHost, shardMgmtInfo.getPort(), globalDbnameArr[i], "dba",
+	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i], "dba",
 			    dbaPasswordArr[i], "rw", "");
 
 	    ShardAdmin shardAdmin = getShardAdmin(con, globalDbnameArr[i], shardMgmtInfo);

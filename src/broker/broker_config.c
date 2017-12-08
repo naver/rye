@@ -48,7 +48,6 @@
 
 #define DEFAULT_SHARD_MGMT_NUM_MIGRATOR	2
 
-#define DEFAULT_BROKER_SHM_KEY		(DEFAULT_RYE_SHM_KEY + DEFUALT_BROKER_SHM_KEY_BASE)
 #define DEFAULT_ADMIN_LOG_FILE		"rye_broker.log"
 #define DEFAULT_SESSION_TIMEOUT		"5min"
 #define DEFAULT_MAX_QUERY_TIMEOUT       "0"
@@ -662,9 +661,15 @@ get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl,
 {
   const char *ini_string;
   char path_buff[BROKER_PATH_MAX];
+  int default_shm_key;
+  const char *str_shm_key;
+
+  str_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
+  parse_int (&default_shm_key, str_shm_key, 16);
+  default_shm_key += DEFUALT_BROKER_SHM_KEY_BASE;
 
   *shm_key_br_gl = ini_gethex (ini, BROKER_SECTION_NAME, "BROKER_SHM_KEY",
-			       DEFAULT_BROKER_SHM_KEY, lineno);
+			       default_shm_key, lineno);
   *mgmt_port = prm_get_local_port_id ();
 
   if (admin_log_file != NULL)

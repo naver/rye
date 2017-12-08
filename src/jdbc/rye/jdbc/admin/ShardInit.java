@@ -65,21 +65,20 @@ class ShardInit extends ShardCommand
 
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
     {
+	String argAddNode = null;
+	int localMgmtPort = ShardCommand.DEFAULT_LOCAL_MGMT_PORT;
+
 	for (int i = 0; i < optArgs.length; i++) {
 	    String[] tmpArr = splitArgNameValue(optArgs[i]);
 	    String argName = tmpArr[0];
 	    String argValue = tmpArr[1];
 
 	    if (argName.equals("--add-node")) {
-		if (argValue.length() > 0) {
-		    addNodeArr = NodeInfo.makeNodeInfoArr(splitList(argValue, ",", false));
-		    if (addNodeArr == null) {
-			throw makeAdminRyeException(null, "invalid option value: %s", optArgs[i]);
-		    }
-		}
+		argAddNode = argValue;
 	    }
 	    else if (argName.equals("--local-mgmt-port")) {
-		if (setLocalMgmtPort(argValue) == false) {
+		localMgmtPort = Integer.parseInt(argValue);
+		if (localMgmtPort <= 0) {
 		    throw makeAdminRyeException(null, "invalid option value: %s", optArgs[i]);
 		}
 	    }
@@ -133,6 +132,13 @@ class ShardInit extends ShardCommand
 	    throw makeAdminRyeException(null, "invalid option");
 	}
 
+	if (argAddNode != null && argAddNode.length() > 0) {
+	    addNodeArr = NodeInfo.makeNodeInfoArr(splitList(argAddNode, ",", false), localMgmtPort);
+	    if (addNodeArr == null) {
+		throw makeAdminRyeException(null, "invalid option value: %s", argAddNode);
+	    }
+	}
+
 	String argGlobalDbanme = args[0];
 	String argShardMgmtHost = args[1];
 	String argShardMgmtPort = args[2];
@@ -142,7 +148,7 @@ class ShardInit extends ShardCommand
 	    throw makeAdminRyeException(null, "invalid global dbname '%s'", argGlobalDbanme);
 	}
 
-	shardMgmtHost = NodeInfo.makeNodeInfo(FIRST_NODEID, splitList(argShardMgmtHost, ",", true));
+	shardMgmtHost = NodeInfo.makeNodeInfo(FIRST_NODEID, splitList(argShardMgmtHost, ",", true), localMgmtPort);
 	if (shardMgmtHost == null) {
 	    throw makeAdminRyeException(null, "invalid shard mgmt host '%s'", argShardMgmtHost);
 	}
@@ -195,13 +201,15 @@ class ShardInit extends ShardCommand
 	}
 
 	String primaryShardMgmtHost = hosts[0].getIpAddr();
+	int primaryLocalMgmtPort = hosts[0].getPort();
 	ShardMgmtInfo[] primaryShardMgmtInfo = new ShardMgmtInfo[globalDbnameArr.length];
 	for (int i = 0; i < globalDbnameArr.length; i++) {
 	    primaryShardMgmtInfo[i] = new ShardMgmtInfo(globalDbnameArr[i], primaryShardMgmtHost, shardMgmtPort + i);
 	}
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
-	    testConnection(primaryShardMgmtHost, getLocalMgmtPort(), node1LocalDbname[i], "dba", "", "rw", "", true, 0);
+	    testConnection(primaryShardMgmtHost, primaryLocalMgmtPort, node1LocalDbname[i], "dba", "", "rw", "", true,
+			    0);
 	    testConnection(primaryShardMgmtHost, primaryShardMgmtInfo[i].getPort(), globalDbnameArr[i], "dba", "",
 			    "rw", "useLazyConnection=true", false, 0);
 	}
@@ -258,7 +266,7 @@ class ShardInit extends ShardCommand
 	String dbnameList = concatStrArr(localDbname, ",", false);
 	String portStr = String.valueOf(shardMgmtPort);
 
-	LocalMgmt localMgmt = new LocalMgmt(host.getIpAddr(), getLocalMgmtPort());
+	LocalMgmt localMgmt = new LocalMgmt(host.toJciConnectionInfo());
 
 	changeRyeConf(localMgmt, new RyeBrokerShardmgmtConfValue("shard_mgmt_port", portStr));
 	changeRyeConf(localMgmt, new RyeBrokerShardmgmtConfValue("shard_mgmt_metadb", dbnameList));

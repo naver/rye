@@ -34,6 +34,7 @@
 #include <sys/wait.h>
 
 #include "porting.h"
+#include "dbi.h"
 #include "utility.h"
 #include "error_code.h"
 #include "util_support.h"
@@ -177,6 +178,10 @@ static int us_hb_deactivate (const PRM_NODE_INFO * node_info,
 static int us_hb_activate (void);
 static int us_hb_reload (void);
 static int us_hb_changemode (HA_STATE req_node_state, bool force);
+
+static int change_prm_from_argv (int argc, char **argv);
+static int changeable_Prm_list[] =
+  { PRM_ID_LOCAL_PORT_ID, PRM_ID_RYE_SHM_KEY };
 
 #define US_HB_DEREG_WAIT_TIME_IN_SEC	100
 
@@ -329,7 +334,7 @@ util_get_command_option_mask (ARG_TYPE command_type)
 int
 main (int argc, char *argv[])
 {
-  ARG_TYPE util_type, command_type;
+  ARG_TYPE util_type, command_type = ARG_UNKNOWN;
   int status;
   pid_t pid = getpid ();
   char env_buf[16];
@@ -339,15 +344,6 @@ main (int argc, char *argv[])
 
   exec_Name = basename (argv[0]);
 
-  if (argc == 2)
-    {
-      if (parse_arg (us_Arg_map, argv[1]) == ARG_CMD_VERSION)
-	{
-	  util_service_version ();
-	  return EXIT_SUCCESS;
-	}
-    }
-
   /* validate the number of arguments to avoid klocwork's error message */
   if (argc < 2 || argc > 1024)
     {
@@ -356,14 +352,63 @@ main (int argc, char *argv[])
     }
 
   util_type = parse_arg (us_Arg_map, argv[1]);
+
+  if (util_type == ARG_CMD_HELP)
+    {
+      util_type = -1;
+      goto usage;
+    }
+  else if (util_type == ARG_CMD_VERSION)
+    {
+      util_service_version ();
+      return EXIT_SUCCESS;
+    }
+
   if (!IS_ARG_UTIL (util_type))
     {
-      util_type = parse_arg (us_Arg_map, argv[2]);
-      if (!IS_ARG_UTIL (util_type))
+      print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_NAME,
+		     argv[1]);
+      goto error;
+    }
+
+  if (util_type == ARG_UTIL_SERVICE || util_type == ARG_UTIL_BROKER ||
+      util_type == ARG_UTIL_HEARTBEAT)
+    {
+      if (argc < 3)
 	{
-	  print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_NAME,
-			 argv[1]);
-	  goto error;
+	  goto usage;
+	}
+      else
+	{
+	  command_type = parse_arg (us_Arg_map, (char *) argv[2]);
+	  if (!IS_ARG_CMD (command_type))
+	    {
+	      print_message (stderr,
+			     MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
+			     argv[2]);
+	      goto error;
+	    }
+	  else
+	    {
+	      int util_mask = util_get_service_option_mask (util_type);
+	      int command_mask = util_get_command_option_mask (command_type);
+
+	      if ((util_mask & command_mask) == 0)
+		{
+		  print_message (stderr,
+				 MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
+				 argv[2]);
+		  goto error;
+		}
+	    }
+	}
+
+      if (command_type == ARG_CMD_START)
+	{
+	  if (change_prm_from_argv (argc - 3, argv + 3) < 0)
+	    {
+	      goto error;
+	    }
 	}
     }
 
@@ -409,39 +454,10 @@ main (int argc, char *argv[])
       return status;
     }
 
-  if (util_type == ARG_CMD_HELP)
+  if (command_type == ARG_UNKNOWN)
     {
-      util_type = -1;
+      assert (0);
       goto usage;
-    }
-
-  if (argc < 3)
-    {
-      goto usage;
-    }
-
-  command_type = parse_arg (us_Arg_map, (char *) argv[2]);
-  if (!IS_ARG_CMD (command_type))
-    {
-      command_type = parse_arg (us_Arg_map, (char *) argv[1]);
-      if (!IS_ARG_CMD (command_type))
-	{
-	  print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
-			 argv[2]);
-	  goto error;
-	}
-    }
-  else
-    {
-      int util_mask = util_get_service_option_mask (util_type);
-      int command_mask = util_get_command_option_mask (command_type);
-
-      if ((util_mask & command_mask) == 0)
-	{
-	  print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
-			 argv[2]);
-	  goto error;
-	}
     }
 
   util_log_write_command (argc, argv);
@@ -1763,4 +1779,47 @@ static int
 load_properties (void)
 {
   return sysprm_load_and_init (NULL);
+}
+
+static int
+change_prm_from_argv (int argc, char **argv)
+{
+  char conf_path[PATH_MAX];
+  struct stat statbuf;
+  int i, j;
+
+  envvar_rye_conf_file (conf_path, sizeof (conf_path));
+  if (stat (conf_path, &statbuf) == -1 || errno == ENOENT)
+    {
+      /* changing prm is allowed when rye conf file does not exist */
+
+      for (i = 0; i < (int) DIM (changeable_Prm_list); i++)
+	{
+	  const char *prm_name = prm_get_name (changeable_Prm_list[i]);
+	  int name_len = strlen (prm_name);
+
+	  for (j = 0; j < argc; j++)
+	    {
+	      char *ptr_eq = argv[j] + name_len;
+	      char *ptr_value = ptr_eq + 1;
+
+	      if (prm_name != NULL &&
+		  strncmp (argv[j], prm_name, name_len) == 0 &&
+		  *ptr_eq == '=')
+		{
+		  trim (ptr_value);
+		  if (db_update_persist_conf_file ("server", "common",
+						   prm_name,
+						   ptr_value) != NO_ERROR)
+		    {
+		      PRINT_AND_LOG_ERR_MSG ("Cannot update conf [%s]\n",
+					     argv[j]);
+		      return -1;
+		    }
+		}
+	    }
+	}
+    }
+
+  return 0;
 }

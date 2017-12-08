@@ -7371,6 +7371,14 @@ void
 prm_node_info_to_str (char *buf, int size, const PRM_NODE_INFO * node_info)
 {
   int n;
+  PRM_NODE_INFO tmp_node_info;
+
+  if (node_info == NULL)
+    {
+      tmp_node_info = prm_get_myself_node_info ();
+      node_info = &tmp_node_info;
+    }
+
   n = css_ip_to_str (buf, size, PRM_NODE_INFO_GET_IP (node_info));
   snprintf (buf + n, size - n, ":%d", PRM_NODE_INFO_GET_PORT (node_info));
 }

@@ -62,6 +62,7 @@
 #include "system_parameter.h"
 #include "environment_variable.h"
 #include "tcp.h"
+#include "cas_cci_internal.h"
 
 #define HOST_ID_ARRAY_SIZE 8	/* size of the host_id string */
 #define TCP_MIN_NUM_RETRIES 3
@@ -167,7 +168,8 @@ css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
       struct sockaddr_un unix_saddr;
       char sock_path[PATH_MAX];
 
-      if (connect_type == SVR_CONNECT_TYPE_TO_SERVER)
+      if (connect_type == SVR_CONNECT_TYPE_TO_SERVER ||
+	  connect_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
 	{
 	  css_get_server_domain_path (sock_path, sizeof (sock_path), dbname);
 	}
@@ -221,17 +223,26 @@ css_tcp_client_open (const PRM_NODE_INFO * node_info, int connect_type,
     struct sockaddr_un un;
   } saddr_buf;
 
-  assert (node_info != NULL);
-
   if (timeout < 0)
     {
       timeout = 5000;
     }
 
   saddr = (struct sockaddr *) &saddr_buf;
-  css_sockaddr (node_info, connect_type, dbname, saddr, &slen);
+  if (css_sockaddr (node_info, connect_type, dbname, saddr, &slen) == AF_INET)
+    {
+      T_HOST_INFO cci_host_info;
+      in_addr_t ip;
+      ip = PRM_NODE_INFO_GET_IP (node_info);
+      memcpy (cci_host_info.ip_addr, &ip, sizeof (in_addr_t));
+      cci_host_info.port = PRM_NODE_INFO_GET_PORT (node_info);
+      sd = cci_mgmt_connect_db_server (&cci_host_info, dbname, timeout);
+    }
+  else
+    {
+      sd = socket (saddr->sa_family, SOCK_STREAM, 0);
+    }
 
-  sd = socket (saddr->sa_family, SOCK_STREAM, 0);
   if (sd < 0)
     {
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,

@@ -21,7 +21,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 package rye.jdbc.admin;
 
 import java.io.ByteArrayInputStream;
@@ -49,7 +49,12 @@ public class LocalMgmt
 
     public LocalMgmt(String localMgmtHost, int localMgmtPort) throws SQLException
     {
-	conInfo = new JciConnectionInfo(localMgmtHost, localMgmtPort, "rw");
+	this(new JciConnectionInfo(localMgmtHost, localMgmtPort, "rw"));
+    }
+
+    public LocalMgmt(JciConnectionInfo conInfo) throws SQLException
+    {
+	this.conInfo = conInfo;
 
 	conInfoList = new ArrayList<JciConnectionInfo>();
 	conInfoList.add(conInfo);

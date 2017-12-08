@@ -2557,6 +2557,11 @@ node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
     }
   ut_get_ipv4_string (host_ip, IP_ADDR_STR_LEN, ip_addr);
 
+  if (port == 0)
+    {
+      port = prm_get_local_port_id ();
+    }
+
   br_copy_shard_node_info (node_info, node_id, local_dbname, host_ip, port,
 			   INADDR_NONE, HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
 

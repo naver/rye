@@ -1486,7 +1486,6 @@ local_mg_connect_db_server (T_LOCAL_MGMT_JOB * job,
   else
     {
       css_free_conn (conn);
-      job->clt_sock_fd = INVALID_SOCKET;
       shm_Local_mgmt_info->db_connect_success++;
       return 0;
     }
