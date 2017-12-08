@@ -10591,7 +10591,7 @@ qexec_delete_xasl_cache_ent (THREAD_ENTRY * thread_p, void *data, void *args)
       if (file_destroy (thread_p, &(ent->xasl_id.temp_vfid)) != NO_ERROR)
 	{
 	  er_log_debug (ARG_FILE_LINE,
-			"qexec_delete_xasl_cache_ent: fl_destroy failed for vfid { %d %d }\n",
+			"qexec_delete_xasl_cache_ent: file_destroy failed for vfid { %d %d }\n",
 			ent->xasl_id.temp_vfid.fileid,
 			ent->xasl_id.temp_vfid.volid);
 	}

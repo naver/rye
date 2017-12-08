@@ -131,6 +131,7 @@ typedef struct cirp_writer_info CIRP_WRITER_INFO;
 struct cirp_writer_info
 {
   pthread_mutex_t lock;
+  pthread_cond_t cond;
 
   LOG_PAGE *hdr_page;
 
