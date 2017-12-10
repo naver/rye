@@ -74,22 +74,17 @@ ut_kill_process (int pid)
   return 0;
 }
 
-int
-ut_kill_broker_process (int pid, int broker_type, char *broker_name)
+void
+ut_kill_broker_process (const T_BROKER_INFO * br_info)
 {
-  ut_kill_process (pid);
+  char tmp[BROKER_PATH_MAX];
 
-  if (broker_type == NORMAL_BROKER && broker_name != NULL)
+  ut_kill_process (br_info->broker_pid);
+
+  if (ut_get_broker_port_name (tmp, BROKER_PATH_MAX, br_info) == 0)
     {
-      char tmp[BROKER_PATH_MAX];
-
-      ut_get_broker_port_name (tmp, broker_name, BROKER_PATH_MAX);
-
       unlink (tmp);
-
-      return 0;
     }
-  return -1;
 }
 
 int
@@ -210,12 +205,30 @@ ut_is_appl_server_ready (int pid, char *ready_flag)
   return false;
 }
 
-void
-ut_get_broker_port_name (char *port_name, const char *broker_name, int len)
+int
+ut_get_broker_port_name (char *port_name, size_t len,
+			 const T_BROKER_INFO * br_info)
 {
-  char filename[BROKER_PATH_MAX];
-  snprintf (filename, sizeof (filename), "%s.B", broker_name);
+  char filename[BROKER_PATH_MAX] = "";
+
+  if (br_info->broker_type == NORMAL_BROKER && br_info->name[0] != '\0')
+    {
+      snprintf (filename, sizeof (filename), "rye_broker.%s", br_info->name);
+    }
+  else if (br_info->broker_type == SHARD_MGMT &&
+	   br_info->shard_global_dbname[0] != '\0')
+    {
+      snprintf (filename, sizeof (filename), "shard_mgmt.%s",
+		br_info->shard_global_dbname);
+    }
+
+  if (filename[0] == '\0')
+    {
+      return -1;
+    }
+
   envvar_socket_file (port_name, len, filename);
+  return 0;
 }
 
 void
@@ -361,10 +374,39 @@ ut_find_broker (T_BROKER_INFO * br_info, int num_brs, const char *brname,
 {
   int i;
 
+  if (brname == NULL)
+    {
+      assert (0);
+      return NULL;
+    }
+
   for (i = 0; i < num_brs; i++)
     {
       if (strcmp (brname, br_info[i].name) == 0 &&
 	  br_info[i].broker_type == broker_type)
+	{
+	  return (&br_info[i]);
+	}
+    }
+
+  return NULL;
+}
+
+T_BROKER_INFO *
+ut_find_shard_mgmt (T_BROKER_INFO * br_info, int num_brs, const char *dbname)
+{
+  int i;
+
+  if (dbname == NULL)
+    {
+      assert (0);
+      return NULL;
+    }
+
+  for (i = 0; i < num_brs; i++)
+    {
+      if (br_info[i].broker_type == SHARD_MGMT &&
+	  strcmp (dbname, br_info[i].shard_global_dbname) == 0)
 	{
 	  return (&br_info[i]);
 	}

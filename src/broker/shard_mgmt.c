@@ -181,7 +181,7 @@ T_TABLE_DEF table_Def_shard_node = {
   {{COL_SHARD_NODE_NODEID, COLUMN_TYPE_INT, true},
    {COL_SHARD_NODE_DBNAME, COLUMN_TYPE_STRING, true},
    {COL_SHARD_NODE_HOST, COLUMN_TYPE_STRING, true},
-   {COL_SHARD_NODE_PORT, COLUMN_TYPE_INT, false},
+   {COL_SHARD_NODE_PORT, COLUMN_TYPE_INT, true},
    {COL_SHARD_NODE_STATUS, COLUMN_TYPE_INT, false},
    {COL_SHARD_NODE_VERSION, COLUMN_TYPE_BIGINT, false}}
 };
@@ -774,7 +774,7 @@ shd_mg_init (int shard_mgmt_port, int local_mgmt_port,
   shm_Shard_mgmt_info = &shm_Appl->info.shard_mgmt_info;
 
   sprintf (local_Mgmt_connect_url,
-	   "cci:rye://localhost:%d/%s:dba/%s?query_timeout=%d",
+	   "cci:rye://localhost:%d/%s:dba/%s?query_timeout=%d&connectionType=local",
 	   local_mgmt_port, shard_metadb, BR_SHARD_MGMT_NAME,
 	   CCI_QUERY_TIMEOUT);
 
@@ -840,25 +840,17 @@ shard_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
     {
       err_code = 0;
 
-      clt_sock_fd = br_mgmt_accept (&clt_ip_addr);
+      clt_sock_fd = br_accept_unix_domain (&clt_ip_addr, &recv_time,
+					   br_req_msg);
 
       if (IS_INVALID_SOCKET (clt_sock_fd))
 	{
 	  continue;
 	}
 
-      gettimeofday (&recv_time, NULL);
-
-      if (br_read_broker_request_msg (clt_sock_fd, br_req_msg) < 0)
-	{
-	  err_code = CAS_ER_COMMUNICATION;
-	  goto end;
-	}
-
-      if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
+      if (br_req_msg->op_code == BRREQ_OP_CODE_PING_SHARD_MGMT)
 	{
 	  br_send_result_to_client (clt_sock_fd, 0, NULL);
-	  RYE_CLOSE_SOCKET (clt_sock_fd);
 	  shm_Br_info->ping_req_count++;
 	  continue;
 	}
@@ -2404,9 +2396,10 @@ update_shard_node_table_status (CCI_CONN * conn,
   int num_param = 0;
 
   sprintf (sql_and_param.sql,
-	   "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ?",
+	   "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
 	   TABLE_SHARD_NODE, COL_SHARD_NODE_STATUS,
-	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME, COL_SHARD_NODE_HOST);
+	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
+	   COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
 
   SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT,
 		  &node_status);
@@ -2416,6 +2409,8 @@ update_shard_node_table_status (CCI_CONN * conn,
 		  node_info->local_dbname);
   SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_VARCHAR,
 		  node_info->host_ip_str);
+  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT,
+		  &node_info->port);
 
   sql_and_param.num_bind = num_param;
   sql_and_param.check_affected_rows = true;
@@ -3592,15 +3587,17 @@ make_query_node_drop (T_SQL_AND_PARAM * sql_and_param,
   int num_bind = 0;
 
   sprintf (sql_and_param->sql,
-	   "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ?",
-	   TABLE_SHARD_NODE, COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
-	   COL_SHARD_NODE_HOST);
+	   "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
+	   TABLE_SHARD_NODE,
+	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
+	   COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &node_info->node_id);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
 		  node_info->local_dbname);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
 		  node_info->host_ip_str);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &node_info->port);
 
   sql_and_param->num_bind = num_bind;
   sql_and_param->check_affected_rows = true;
@@ -4221,8 +4218,11 @@ select_all_db_info (CCI_CONN * conn_arg)
 	  goto select_all_db_info_end;
 	}
 
-      STRNCPY (shm_Br_info->shard_global_dbname, shard_db_rec.global_dbname,
-	       SRV_CON_DBNAME_SIZE);
+      if (strcmp (shm_Br_info->shard_global_dbname,
+		  shard_db_rec.global_dbname) != 0)
+	{
+	  assert (0);
+	}
     }
 
   if (shard_db_rec.buf != db_Sync_info.shard_db_rec.buf)

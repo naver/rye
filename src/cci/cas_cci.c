@@ -2957,7 +2957,7 @@ con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
     {
       assert (force_conn == false);
 
-      if (!con_handle->is_sharding_connection)
+      if (IS_CON_TYPE_LOCAL (con_handle))
 	{
 	  return con_stmt_api_post (conn, stmt, con_handle,
 				    CCI_ER_NOT_SHARDING_CONNECTION,

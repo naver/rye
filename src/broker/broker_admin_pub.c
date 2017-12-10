@@ -1671,6 +1671,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
   const char *broker_exe_name;
   int broker_check_loop_count = 30;
   char br_index_env_str[32];
+  char broker_port_name[BROKER_PATH_MAX] = "";
 
   br_info->br_init_err.err_code = 1;	/* will be changed to 0 (success) or err code */
   br_info->br_init_err.os_err_code = 0;
@@ -1690,11 +1691,9 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
     }
   assert (shm_appl->num_appl_server <= APPL_SERVER_NUM_LIMIT);
 
-  if (br_info->broker_type == NORMAL_BROKER)
+  if (ut_get_broker_port_name (broker_port_name,
+			       sizeof (broker_port_name), br_info) == 0)
     {
-      char broker_port_name[BROKER_PATH_MAX];
-      ut_get_broker_port_name (broker_port_name, br_info->name,
-			       sizeof (broker_port_name));
       unlink (broker_port_name);
     }
 
@@ -1809,8 +1808,7 @@ br_inactivate (T_BROKER_INFO * br_info)
 
   if (br_info->broker_pid)
     {
-      ut_kill_broker_process (br_info->broker_pid, br_info->broker_type,
-			      br_info->name);
+      ut_kill_broker_process (br_info);
 
       br_info->broker_pid = 0;
 

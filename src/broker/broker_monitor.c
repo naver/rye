@@ -1048,7 +1048,10 @@ mgmt_monitor ()
 	}
 
       str_out ("%cPID=%d", FIELD_DELIMITER, br_info_p->broker_pid);
-      str_out ("%cPORT=%d", FIELD_DELIMITER, br_info_p->port);
+      if (br_info_p->broker_type == LOCAL_MGMT)
+	{
+	  str_out ("%cPORT=%d", FIELD_DELIMITER, br_info_p->port);
+	}
 
       if (br_info_p->broker_type == SHARD_MGMT)
 	{

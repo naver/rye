@@ -62,7 +62,9 @@
 #include "system_parameter.h"
 #include "environment_variable.h"
 #include "tcp.h"
+#if defined(CS_MODE)
 #include "cas_cci_internal.h"
+#endif
 
 #define HOST_ID_ARRAY_SIZE 8	/* size of the host_id string */
 #define TCP_MIN_NUM_RETRIES 3
@@ -231,12 +233,17 @@ css_tcp_client_open (const PRM_NODE_INFO * node_info, int connect_type,
   saddr = (struct sockaddr *) &saddr_buf;
   if (css_sockaddr (node_info, connect_type, dbname, saddr, &slen) == AF_INET)
     {
+#if defined(CS_MODE)
       T_HOST_INFO cci_host_info;
       in_addr_t ip;
       ip = PRM_NODE_INFO_GET_IP (node_info);
       memcpy (cci_host_info.ip_addr, &ip, sizeof (in_addr_t));
       cci_host_info.port = PRM_NODE_INFO_GET_PORT (node_info);
       sd = cci_mgmt_connect_db_server (&cci_host_info, dbname, timeout);
+#else
+      assert (0);
+      sd = INVALID_SOCKET;
+#endif
     }
   else
     {

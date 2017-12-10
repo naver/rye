@@ -375,21 +375,24 @@ abstract class ShardCommand
 	String[] localDbname = nodeInfo.getLocalDbnameArr(globalDbname);
 
 	for (int i = 0; i < localDbname.length; i++) {
-	    testConnection(hosts[0].getIpAddr(), hosts[0].getPort(), localDbname[i], "dba", "", "rw", "", true, 0);
+	    testLocalConnection(hosts[0], localDbname[i], "dba", "", "rw", true, 0);
 	}
     }
 
-    void testConnection(String host, int brokerPort, String dbname, String dbuser, String dbpasswd, String portName,
-		    String urlProperty, boolean checkMaster, int checkNodeid)
+    void testLocalConnection(NodeAddress host, String dbname, String dbuser, String dbpasswd, String portName,
+		    boolean checkMaster, int checkNodeid)
     {
 	int retryCount = 300;
 
-	printStatus(true, "%s:%s:%d connection test. check_master=%s, check_nodeid=%d ... ", host, dbname, brokerPort,
+	String urlProperty = "connectionType=local";
+
+	printStatus(true, "%s:%s connection test. check_master=%s, check_nodeid=%d ... ", host.toString(), dbname,
 			checkMaster, checkNodeid);
 
 	while (retryCount-- > 0) {
 	    try {
-		RyeConnection con = makeConnection(host, brokerPort, dbname, dbuser, dbpasswd, portName, urlProperty);
+		RyeConnection con = makeConnection(host.getIpAddr(), host.getPort(), dbname, dbuser, dbpasswd,
+				portName, urlProperty);
 
 		int serverHaMode = con.getServerHaMode();
 		int serverNodeid = con.getStatusInfoServerNodeid();
@@ -424,6 +427,30 @@ abstract class ShardCommand
 	printStatus(false, "fail\n");
     }
 
+    void testGlobalConnection(NodeAddress host, String dbname)
+    {
+	int retryCount = 300;
+
+	printStatus(true, "%s:%s global connection test ... ", host.toString(), dbname);
+
+	try {
+	    while (retryCount-- > 0) {
+		boolean res = ShardAdmin.ping(host.toJciConnectionInfo(), dbname, 1000);
+		if (res == true) {
+		    printStatus(false, "OK\n");
+		    return;
+		}
+
+		try {
+		    Thread.sleep(1000);
+		} catch (Exception e) {
+		}
+	    }
+	} catch (SQLException e) {
+	}
+	printStatus(false, "fail\n");
+    }
+
     void checkNodeidInitialized(NodeInfo nodeInfo, String[] globalDbnameArr)
     {
 	String[] localDbname = nodeInfo.getLocalDbnameArr(globalDbnameArr);
@@ -431,8 +458,7 @@ abstract class ShardCommand
 	int checkNodeid = nodeInfo.getNodeid();
 
 	for (int j = 0; j < localDbname.length; j++) {
-	    testConnection(hosts[0].getIpAddr(), hosts[0].getPort(), localDbname[j], "dba", "", "rw", "", true,
-			    checkNodeid);
+	    testLocalConnection(hosts[0], localDbname[j], "dba", "", "rw", true, checkNodeid);
 	}
     }
 
@@ -697,8 +723,7 @@ abstract class ShardCommand
     private void checkBrokerRunning(NodeAddress[] hostArr, String localDbname, String dbaPasswd) throws Exception
     {
 	for (int i = 0; i < hostArr.length; i++) {
-	    testConnection(hostArr[i].getIpAddr(), hostArr[i].getPort(), localDbname, "dba", dbaPasswd, "rw", "",
-			    false, 0);
+	    testLocalConnection(hostArr[i], localDbname, "dba", dbaPasswd, "rw", false, 0);
 	}
     }
 

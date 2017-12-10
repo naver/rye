@@ -724,7 +724,7 @@ cirp_get_cci_connection (CCI_CONN * conn, const char *db_name)
     }
 
   snprintf (url, sizeof (url),
-	    "cci:rye://localhost:%d/%s/repl?error_on_server_restart=yes",
+	    "cci:rye://localhost:%d/%s/repl?error_on_server_restart=yes&connectionType=local",
 	    Repl_Info->broker_port, local_db_name);
 
   error = cci_connect (conn, url, "dba", Repl_Info->broker_key);

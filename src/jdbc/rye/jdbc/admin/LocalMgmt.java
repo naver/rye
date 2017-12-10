@@ -94,7 +94,9 @@ public class LocalMgmt
 		ByteArrayInputStream instream = new ByteArrayInputStream(resultmsg, offset, mgmtInfoSize);
 		offset += mgmtInfoSize;
 
-		shardMgmtInfo[i] = new ShardMgmtInfo(unpackString(instream), conInfo.getHostname(), unpackInt(instream));
+		String dbname = unpackString(instream);
+		int port = unpackInt(instream);
+		shardMgmtInfo[i] = new ShardMgmtInfo(dbname, new NodeAddress(conInfo.getHostname(), port));
 	    }
 
 	    return shardMgmtInfo;

@@ -2475,7 +2475,7 @@ make_shard_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
     (const unsigned char *) &(PRM_NODE_INFO_GET_IP (&shard_mgmt_node_info));
   shard_mgmt_port = PRM_NODE_INFO_GET_PORT (&shard_mgmt_node_info);
   snprintf (url, sizeof (url),
-	    "cci:rye://%d.%d.%d.%d:%d/%s:dba/rw?queryTimeout=1000",
+	    "cci:rye://%d.%d.%d.%d:%d/%s:dba/rw?queryTimeout=1000&connectionType=global",
 	    shard_mgmt_ip[0], shard_mgmt_ip[1], shard_mgmt_ip[2],
 	    shard_mgmt_ip[3], shard_mgmt_port, global_dbname);
 
@@ -6534,7 +6534,8 @@ hb_remove_catalog_info (const HA_CONF * ha_conf,
   for (i = 0; dbs[i] != NULL; i++)
     {
       snprintf (url, sizeof (url),
-		"cci:rye://localhost:%d/%s/repl?", portid, dbs[i]);
+		"cci:rye://localhost:%d/%s/repl?connectionType=local",
+		portid, dbs[i]);
       error = cci_connect (&conn, url, "dba", broker_key);
       if (error < 0)
 	{

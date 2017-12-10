@@ -83,11 +83,9 @@ struct local_mgmt_job_queue
 };
 
 static int local_mgmt_init_child_process_queue (void);
-static int local_mg_transfer_driver_req (SOCKET * clt_sock_fd,
-					 in_addr_t clt_ip_addr,
-					 const T_BROKER_REQUEST_MSG *
-					 br_req_msg,
-					 const char *transfer_broker_name);
+static int local_mg_transfer_req (int target_broker_type,
+				  SOCKET * clt_sock_fd, in_addr_t clt_ip_addr,
+				  const T_BROKER_REQUEST_MSG * br_req_msg);
 
 static T_LOCAL_MGMT_JOB_QUEUE *local_mg_create_job_queue (void);
 static T_LOCAL_MGMT_JOB_QUEUE *local_mg_init_mgmt_job_queue (void);
@@ -274,28 +272,32 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 	  goto end;
 	}
 
-      if (IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code))
+      if (IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code) ||
+	  IS_SHARD_MGMT_OPCODE (br_req_msg->op_code))
 	{
-	  const char *transfer_broker_name;
-	  transfer_broker_name =
-	    brreq_msg_unpack_port_name (br_req_msg, NULL, NULL);
+	  int target_broker_type = SHARD_MGMT;
+	  if (IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code))
+	    {
+	      target_broker_type = NORMAL_BROKER;
+	    }
 
-	  err_code = local_mg_transfer_driver_req (&clt_sock_fd, clt_ip_addr,
-						   br_req_msg,
-						   transfer_broker_name);
+	  err_code = local_mg_transfer_req (target_broker_type,
+					    &clt_sock_fd, clt_ip_addr,
+					    br_req_msg);
 
 	  if (br_req_msg->op_code == BRREQ_OP_CODE_CAS_CONNECT)
 	    {
 	      shm_Local_mgmt_info->connect_req_count++;
 	    }
-	  else if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
-	    {
-	      shm_Local_mgmt_info->ping_req_count++;
-	    }
 	  else if (br_req_msg->op_code == BRREQ_OP_CODE_QUERY_CANCEL)
 	    {
 	      shm_Local_mgmt_info->cancel_req_count++;
 	    }
+	}
+      else if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
+	{
+	  br_send_result_to_client (clt_sock_fd, 0, NULL);
+	  shm_Local_mgmt_info->ping_req_count++;
 	}
       else if (IS_LOCAL_MGMT_OPCODE (br_req_msg->op_code))
 	{
@@ -335,28 +337,46 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 }
 
 static int
-local_mg_transfer_driver_req (SOCKET * clt_sock_fd, in_addr_t clt_ip_addr,
-			      const T_BROKER_REQUEST_MSG * br_req_msg,
-			      const char *transfer_broker_name)
+local_mg_transfer_req (int target_broker_type, SOCKET * clt_sock_fd,
+		       in_addr_t clt_ip_addr,
+		       const T_BROKER_REQUEST_MSG * br_req_msg)
 {
   SOCKET br_sock_fd;
   int status;
   struct timeval recv_time;
-  const T_BROKER_INFO *br_info_service_broker;
+  const T_BROKER_INFO *br_info_service_broker = NULL;
 
   gettimeofday (&recv_time, NULL);
 
-  br_info_service_broker = ut_find_broker (shm_Br->br_info,
-					   shm_Br->num_broker,
-					   transfer_broker_name,
-					   NORMAL_BROKER);
+  if (target_broker_type == NORMAL_BROKER)
+    {
+      const char *transfer_broker_name;
+      transfer_broker_name = brreq_msg_unpack_port_name (br_req_msg,
+							 NULL, NULL);
+      br_info_service_broker = ut_find_broker (shm_Br->br_info,
+					       shm_Br->num_broker,
+					       transfer_broker_name,
+					       NORMAL_BROKER);
+    }
+  else if (target_broker_type == SHARD_MGMT)
+    {
+      T_MGMT_REQ_ARG req_arg;
+      if (br_mgmt_get_req_arg (&req_arg, br_req_msg) >= 0)
+	{
+	  br_info_service_broker = ut_find_shard_mgmt (shm_Br->br_info,
+						       shm_Br->num_broker,
+						       req_arg.clt_dbname);
+	  RYE_FREE_MEM (req_arg.alloc_buffer);
+	}
+    }
+
   if (br_info_service_broker == NULL)
     {
       assert (false);
       return BR_ER_BROKER_NOT_FOUND;
     }
 
-  br_sock_fd = br_connect_srv (br_info_service_broker->name, true, -1);
+  br_sock_fd = br_connect_srv (true, br_info_service_broker, -1);
   if (IS_INVALID_SOCKET (br_sock_fd))
     {
       return BR_ER_BROKER_NOT_FOUND;

@@ -235,11 +235,22 @@ rbl_conf_get_dest_node (int index)
 static int
 rbl_conf_make_connection (const char *host, int port, const char *dbname,
 			  CCI_CONN * conn, bool dbname_with_host,
-			  bool to_slave, bool ignore_dba_password)
+			  bool to_slave, bool ignore_dba_password,
+			  bool is_local_con)
 {
   char url[1024];
   const char *rwmode = "rw";
   char *pw = NULL;
+  const char *url_property;
+
+  if (is_local_con)
+    {
+      url_property = "connectionType=local";
+    }
+  else
+    {
+      url_property = "connectionType=global";
+    }
 
   if (to_slave == true)
     {
@@ -248,12 +259,13 @@ rbl_conf_make_connection (const char *host, int port, const char *dbname,
 
   if (dbname_with_host == true)
     {
-      sprintf (url, "cci:rye://%s:%d/%s@%s/%s?",
-	       host, port, dbname, host, rwmode);
+      sprintf (url, "cci:rye://%s:%d/%s@%s/%s?%s",
+	       host, port, dbname, host, rwmode, url_property);
     }
   else
     {
-      sprintf (url, "cci:rye://%s:%d/%s/%s?", host, port, dbname, rwmode);
+      sprintf (url, "cci:rye://%s:%d/%s/%s?%s",
+	       host, port, dbname, rwmode, url_property);
     }
 
   if (ignore_dba_password == false)
@@ -288,7 +300,7 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
   sprintf (prog_Name, "%s_%d", PROG_NAME, group_id);
 
   error = rbl_conf_make_connection (mgmt_host, mgmt_port, mgmt_dbname,
-				    &mgmt_Conn, false, false, false);
+				    &mgmt_Conn, false, false, false, false);
   if (error != NO_ERROR)
     {
       return error;
@@ -361,7 +373,8 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
 
   error = rbl_conf_make_connection (src_node->hostname, src_node->port,
 				    src_node->dbname, &srcdb_Conn, true,
-				    src_node_ha_staus == RBL_SLAVE, false);
+				    src_node_ha_staus == RBL_SLAVE, false,
+				    true);
   if (error != NO_ERROR)
     {
       return error;
@@ -373,7 +386,7 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
 	{
 	  error = rbl_conf_make_connection (dest_host, dest_port, dest_dbname,
 					    &destdb_Conn[i], false, false,
-					    true);
+					    true, true);
 	  if (error != NO_ERROR)
 	    {
 	      return error;
@@ -394,7 +407,7 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
 	  error =
 	    rbl_conf_make_connection (dest_node->hostname, dest_node->port,
 				      dest_node->dbname, &destdb_Conn[i],
-				      false, false, false);
+				      false, false, false, true);
 	  if (error != NO_ERROR)
 	    {
 	      return error;
@@ -442,7 +455,7 @@ rbl_conf_update_src_groupid (RBL_COPY_CONTEXT * ctx, bool on_off,
       node = src_Node_info[src_Master_index];
       error = rbl_conf_make_connection (node->hostname, node->port,
 					node->dbname, &tmp_conn, true,
-					false, false);
+					false, false, true);
       if (error != NO_ERROR)
 	{
 	  return error;
@@ -576,7 +589,7 @@ rbl_conf_insert_gid_removed_info_srcdb (int group_id, bool run_slave)
       node = src_Node_info[src_Master_index];
       error = rbl_conf_make_connection (node->hostname, node->port,
 					node->dbname, &tmp_conn, true, false,
-					false);
+					false, true);
       if (error != NO_ERROR)
 	{
 	  return error;

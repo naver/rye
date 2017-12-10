@@ -224,6 +224,11 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
 
   assert (con_handle->con_status == CCI_CON_STATUS_OUT_TRAN);
 
+  if (IS_CON_TYPE_GLOBAL (con_handle))
+    {
+      goto end;
+    }
+
   cas_connect_msg = make_cas_connect_msg (con_handle->port_name);
   if (cas_connect_msg == NULL)
     {
@@ -261,15 +266,7 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
   err_code = br_res.result_code;
   if (err_code < 0)
     {
-      if (err_code == BR_ER_NOT_SHARD_MGMT_OPCODE)
-	{
-	  con_handle->is_sharding_connection = true;
-	  CLOSE_SOCKET (srv_sock_fd);
-	}
-      else
-	{
-	  goto connect_srv_error;
-	}
+      goto connect_srv_error;
     }
   else if (err_code > 0)
     {
@@ -277,8 +274,7 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
       err_code = CCI_ER_COMMUNICATION;
       goto connect_srv_error;
     }
-
-  if (!con_handle->is_sharding_connection)
+  else
     {
       T_NET_RES *net_res;
 
@@ -322,6 +318,7 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
       FREE_MEM (net_res);
     }
 
+end:
   con_handle->alter_hosts->cur_id = host_id;
 
   if (con_handle->alter_hosts->count > 0)

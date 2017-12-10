@@ -86,13 +86,12 @@
 typedef struct
 {
   bool has_shard_mgmt;
-  int port;
   char **metadb;
   int num_metadb;
   int num_migrator;
 } T_SHARD_MGMT_CONFIG;
 
-#define INIT_SHARD_MGMT_CONFIG { false, 0, NULL, 0, 0 }
+#define INIT_SHARD_MGMT_CONFIG { false, NULL, 0, 0 }
 
 typedef struct
 {
@@ -120,7 +119,9 @@ enum
   SECTION_NAME_TOO_LONG = 4
 };
 
+#if 0
 static int check_port_number (T_BROKER_INFO * br_info, int num_brs);
+#endif
 static int get_conf_value (const char *string, T_CONF_TABLE * conf_table);
 static const char *get_conf_string (int value, T_CONF_TABLE * conf_table);
 
@@ -198,6 +199,7 @@ conf_file_has_been_loaded (const char *conf_path)
     }
 }
 
+#if 0
 /*
  * check_port_number - Check broker's port number
  *   return: 0 or -1 if duplicated
@@ -228,6 +230,7 @@ check_port_number (T_BROKER_INFO * br_info, int num_brs)
     }
   return 0;
 }
+#endif
 
 /*
  * dir_repath - Fix path to absolute path
@@ -602,11 +605,19 @@ tune_builtin_broker_conf (T_BROKER_INFO * br_info, int num_brs, int mgmt_port,
       tmp_br_info->shard_mgmt_num_migrator = shard_mgmt_config->num_migrator;
       if (metadb_idx < shard_mgmt_config->num_metadb)
 	{
-	  tmp_br_info->port = shard_mgmt_config->port + metadb_idx;
+	  int len;
+
+	  tmp_br_info->port = mgmt_port;
 	  strncpy (tmp_br_info->shard_metadb,
 		   shard_mgmt_config->metadb[metadb_idx],
 		   sizeof (tmp_br_info->shard_metadb));
 	  metadb_idx++;
+
+	  STRNCPY (tmp_br_info->shard_global_dbname,
+		   tmp_br_info->shard_metadb,
+		   sizeof (tmp_br_info->shard_global_dbname));
+	  len = MAX (0, strlen (tmp_br_info->shard_global_dbname) - 1);
+	  tmp_br_info->shard_global_dbname[len] = '\0';	/* rm nodeid */
 	}
       else
 	{
@@ -693,14 +704,6 @@ get_shard_mgmt_config (T_SHARD_MGMT_CONFIG * shard_mgmt_config,
   const char *tmp_str;
   char **metadb = NULL;
   int num_metadb;
-
-  shard_mgmt_config->port = ini_getint (ini, SHARD_MGMT_SECTION_NAME,
-					"SHARD_MGMT_PORT", 0, &lineno);
-  if (shard_mgmt_config->port <= 0)
-    {
-      PRINT_CONF_ERROR ("config error, invalid SHARD_MGMT_PORT\n");
-      error_flag = true;
-    }
 
   shard_mgmt_config->num_migrator = ini_getint (ini, SHARD_MGMT_SECTION_NAME,
 						"SHARD_MGMT_NUM_MIGRATOR",
@@ -991,10 +994,12 @@ broker_config_read_internal (const char *conf_file,
 
   if (admin_flag && br_info != NULL)
     {
+#if 0
       if (check_port_number (br_info, num_brs) < 0)
 	{
 	  goto conf_error;
 	}
+#endif
 
       for (i = 0; i < num_brs; i++)
 	{

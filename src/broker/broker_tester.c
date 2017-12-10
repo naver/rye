@@ -670,6 +670,16 @@ make_connection (CCI_CONN * conn, const char *host, int port,
   char conn_url[LINE_MAX];
   char tester_err_msg[TESTER_ERR_MSG_SIZE] = "";
   char tester_server_nodeid[128] = "";
+  const char *url_property;
+
+  if (is_shard_mgmt == false)
+    {
+      url_property = "connectionType=global";
+    }
+  else
+    {
+      url_property = "connectionType=local";
+    }
 
   if (is_shard_mgmt)
     {
@@ -690,8 +700,8 @@ make_connection (CCI_CONN * conn, const char *host, int port,
       return -1;
     }
 
-  snprintf (conn_url, sizeof (conn_url), "cci:rye://%s:%d/%s:dba/%s",
-	    host, port, dbname, broker_name);
+  snprintf (conn_url, sizeof (conn_url), "cci:rye://%s:%d/%s:dba/%s?%s",
+	    host, port, dbname, broker_name, url_property);
   ret = cci_connect (conn, conn_url, db_user, db_passwd);
 
   if (ret < 0)

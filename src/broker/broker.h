@@ -217,6 +217,9 @@ typedef struct
 } T_MGMT_RESULT_MSG;
 
 extern SOCKET br_mgmt_accept (in_addr_t * clt_ip_addr);
+extern SOCKET br_accept_unix_domain (in_addr_t * clt_ip_addr,
+				     struct timeval *mgmt_recv_time,
+				     T_BROKER_REQUEST_MSG * br_req_msg);
 
 extern THREAD_FUNC shard_mgmt_receiver_thr_f (void *arg);
 extern THREAD_FUNC local_mgmt_receiver_thr_f (void *arg);
@@ -226,7 +229,7 @@ extern int shd_mg_init (int shard_mgmt_port, int local_mgmt_port,
 
 extern int br_read_broker_request_msg (SOCKET clt_sock_fd,
 				       T_BROKER_REQUEST_MSG * br_req_msg);
-extern SOCKET br_connect_srv (const char *br_name, bool is_mgmt,
+extern SOCKET br_connect_srv (bool is_mgmt, const T_BROKER_INFO * br_info,
 			      int as_index);
 extern void br_send_result_to_client (int sock, int err_code,
 				      const T_MGMT_RESULT_MSG * result_msg);

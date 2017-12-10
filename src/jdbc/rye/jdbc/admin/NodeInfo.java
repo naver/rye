@@ -409,11 +409,6 @@ class ShardMgmtInfo
     private final String globalDbname;
     private final NodeAddress nodeAddr;
 
-    ShardMgmtInfo(String globalDbname, String hostname, int port) throws SQLException
-    {
-	this(globalDbname, new NodeAddress(hostname, port));
-    }
-
     ShardMgmtInfo(String globalDbname, NodeAddress nodeAddr)
     {
 	this.globalDbname = globalDbname;
