@@ -390,7 +390,7 @@ extern int btree_rv_save_keyval (BTID_INT * btid, const DB_IDXKEY * key,
 extern int btree_rv_util_save_page_records (PAGE_PTR page_ptr,
 					    INT16 first_slotid, int rec_cnt,
 					    INT16 ins_slotid, char *data,
-					    int *length);
+					    const int data_len, int *length);
 
 #if !defined(NDEBUG)
 extern int btree_fence_check_key (THREAD_ENTRY * thread_p,

@@ -2821,7 +2821,7 @@ btree_merge_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   recset_header.rec_cnt = left_cnt;
   recset_header.first_slotid = 1;
   ret = btree_rv_util_save_page_records (Q, 1, left_cnt, 1, recset_data,
-					 &recset_length);
+					 IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2898,7 +2898,8 @@ btree_merge_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   recset_header.first_slotid = left_cnt + 1;
 
   ret = btree_rv_util_save_page_records (R, 1, right_cnt, left_cnt + 1,
-					 recset_data, &recset_length);
+					 recset_data, IO_MAX_PAGE_SIZE,
+					 &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3203,7 +3204,7 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   recset_header.first_slotid = left_cnt + 1;
   ret = btree_rv_util_save_page_records (right_pg, 1, right_cnt,
 					 left_cnt + 1, recset_data,
-					 &recset_length);
+					 IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -6530,9 +6531,10 @@ exit_on_error:
  *   first_slotid(in): First Slot identifier to be saved
  *   rec_cnt(in): Number of slots to be saved
  *   ins_slotid(in): First Slot identifier to reinsert set of records
- *   data(in): Data area where the records will be stored
+ *   data(out): Data area where the records will be stored
  *             (Enough space(DB_PAGESIZE) must have been allocated by caller
- *   length(in): Effective length of the data area after save is completed
+ *   data_len(in): Data area buffer length
+ *   length(out): Effective length of the data area after save is completed
  *
  * Note: Copy the set of records to designated data area.
  *
@@ -6542,11 +6544,13 @@ int
 btree_rv_util_save_page_records (PAGE_PTR page_ptr,
 				 INT16 first_slotid,
 				 int rec_cnt, INT16 ins_slotid,
-				 char *data, int *length)
+				 char *data, const int data_len, int *length)
 {
   RECDES rec = RECDES_INITIALIZER;
   int i, offset, wasted;
   char *datap;
+
+  assert (data_len == IO_MAX_PAGE_SIZE);
 
   *length = 0;
   datap = (char *) data + sizeof (RECSET_HEADER);
@@ -6563,20 +6567,47 @@ btree_rv_util_save_page_records (PAGE_PTR page_ptr,
 	  return er_errid ();
 	}
 
+      if (offset + 2 > data_len)
+	{
+	  assert (false);	/* TODO - index crash */
+	  break;
+	}
       *(INT16 *) datap = rec.length;
       datap += 2;
       offset += 2;
 
+      if (offset + 2 > data_len)
+	{
+	  assert (false);	/* TODO - index crash */
+	  break;
+	}
       *(INT16 *) datap = rec.type;
       datap += 2;
       offset += 2;
 
+      if (offset + rec.length > data_len)
+	{
+	  assert (false);	/* TODO - index crash */
+	  break;
+	}
       memcpy (datap, rec.data, rec.length);
       datap += rec.length;
       offset += rec.length;
+
       wasted = DB_WASTED_ALIGN (offset, BTREE_MAX_ALIGN);
+      if (offset + wasted > data_len)
+	{
+	  assert (false);	/* TODO - index crash */
+	  break;
+	}
       datap += wasted;
       offset += wasted;
+    }
+
+  if (i < rec_cnt)
+    {
+      assert (false);		/* TODO - index crash */
+      return ER_FAILED;
     }
 
   datap = data;

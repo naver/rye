@@ -543,7 +543,7 @@ int
 log_get_db_start_parameters (INT64 * db_creation, LOG_LSA * chkpt_lsa)
 {
 #if defined(SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
   memcpy (db_creation, &log_Gl.hdr.db_creation, sizeof (*db_creation));
   rv = pthread_mutex_lock (&log_Gl.chkpt_lsa_lock);
@@ -1628,7 +1628,7 @@ log_append_undoredo_data (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 			  const void *redo_data)
 {
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
 
@@ -1759,7 +1759,7 @@ log_append_undo_data (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 		      LOG_DATA_ADDR * addr, int length, const void *data)
 {
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
 

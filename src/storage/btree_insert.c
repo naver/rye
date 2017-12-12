@@ -383,8 +383,11 @@ btree_get_prefix (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
 
   assert (key1 != NULL);
   assert (key2 != NULL);
-  assert (!DB_IDXKEY_IS_NULL (key1));
-  assert (!DB_IDXKEY_IS_NULL (key2));
+  if (DB_IDXKEY_IS_NULL (key1) || DB_IDXKEY_IS_NULL (key2))
+    {
+      assert (false);		/* TODO - index crash */
+      return ER_FAILED;
+    }
 
   assert (prefix_key != NULL);
 
@@ -562,9 +565,9 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
   n = spage_number_of_records (page_ptr) - 1;	/* last record position */
   split_info = node_header.split_info;
 
-  if (key_cnt <= 3)
+  if (n < 0 || key_cnt <= 3)
     {
-      assert (false);
+      assert (false);		/* TODO - index crash */
 
       er_log_debug (ARG_FILE_LINE,
 		    "btree_find_split_point: node key count underflow: %d",
@@ -1048,7 +1051,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   /* read the before image of second half of page Q for undo logging */
   ret = btree_rv_util_save_page_records (Q, mid_slot_id + 1, right,
 					 mid_slot_id + 1, recset_data,
-					 &recset_length);
+					 IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1079,7 +1082,9 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       if (i > 1)
 	{
 	  ret = btree_rv_util_save_page_records (R, 1, i - 1, 1,
-						 recset_data, &recset_length);
+						 recset_data,
+						 IO_MAX_PAGE_SIZE,
+						 &recset_length);
 	  if (ret == NO_ERROR)
 	    {
 	      LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, Q, -1);
@@ -1583,7 +1588,7 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
   /* Log page R records for redo purposes */
   ret = btree_rv_util_save_page_records (R, 1, right, 1, recset_data,
-					 &recset_length);
+					 IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1615,7 +1620,7 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
   /* Log page Q records for redo purposes */
   ret = btree_rv_util_save_page_records (Q, 1, left, 1, recset_data,
-					 &recset_length);
+					 IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2102,11 +2107,15 @@ start_point:
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-      assert (pheader.node_level - 1 == qheader.node_level);
+      if (pheader.node_level - 1 != qheader.node_level || qheader.key_cnt < 0)
+	{
+	  assert (false);	/* TODO - index crash */
+	  GOTO_EXIT_ON_ERROR;
+	}
+
       node_type =
 	qheader.node_level > 1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE;
       key_cnt = qheader.key_cnt;
-      assert (key_cnt >= 0);
       /* if Q is a non leaf node, the number of keys is actually one greater */
       key_cnt = (node_type == BTREE_LEAF_NODE) ? key_cnt : key_cnt + 1;
       if (btree_check_key_cnt (Q, qheader.node_level, qheader.key_cnt) !=
