@@ -206,73 +206,6 @@ master_shm_reset_hb_nodes (RYE_SHM_HA_NODE * nodes, int num_nodes)
 }
 
 /*
- * master_shm_get_server_state ()
- *   return: error code
- *
- *   pid(in):
- *   state(in):
- */
-int
-master_shm_get_server_state (const char *dbname)
-{
-  int server_state = HA_STATE_NA;
-  int num_db_servers;
-  int i;
-
-  if (rye_Master_shm == NULL)
-    {
-      assert (0);
-      return ER_FAILED;
-    }
-
-  num_db_servers = MIN (rye_Master_shm->num_db_servers, SHM_MAX_DB_SERVERS);
-  for (i = 0; i < num_db_servers; i++)
-    {
-      if (strncasecmp (rye_Master_shm->db_server_info[i].dbname,
-		       dbname, SHM_DBNAME_SIZE) == 0)
-	{
-	  server_state = rye_Master_shm->db_server_info[i].server_state;
-	  break;
-	}
-    }
-
-  return server_state;
-}
-
-/*
- * master_shm_update_server_state ()
- *   return: error code
- *
- *   pid(in):
- *   state(in):
- */
-int
-master_shm_update_server_state (int pid, unsigned char server_state)
-{
-  int num_db_servers;
-  int i;
-
-  if (rye_Master_shm == NULL)
-    {
-      assert (0);
-      return ER_FAILED;
-    }
-
-  num_db_servers = MIN (rye_Master_shm->num_db_servers, SHM_MAX_DB_SERVERS);
-  for (i = 0; i < num_db_servers; i++)
-    {
-      if (rye_Master_shm->db_server_info[i].pid == pid)
-	{
-	  rye_Master_shm->db_server_info[i].server_state = server_state;
-	  break;
-	}
-    }
-
-  return NO_ERROR;
-}
-
-
-/*
  * master_shm_get_shard_mgmt_info () -
  *    return: NO_ERROR or ER_FAILED
  */
@@ -430,15 +363,14 @@ rye_master_shm_detach (RYE_SHM_MASTER * shm_p)
  *   return: error code or shm key index
  *
  *   dbname(in):
- *   server_pid(in):
  */
 int
-rye_master_shm_get_new_server_shm_key (const char *dbname, int server_pid)
+rye_master_shm_get_new_server_shm_key (const char *dbname)
 {
   RYE_SHM_MASTER *master_shm = NULL;
-  RYE_SHM_DB_SERVER_INFO *shm_server_info_p = NULL;
+  RYE_SHM_INFO *shm_info_p = NULL;
   int rv;
-  int i, num_db_servers;
+  int i, num_shm;
   int res_index = -1;
   int svr_shm_key = -1;
 
@@ -461,12 +393,12 @@ rye_master_shm_get_new_server_shm_key (const char *dbname, int server_pid)
       return -1;
     }
 
-  assert (master_shm->num_db_servers <= SHM_MAX_DB_SERVERS);
+  assert (master_shm->num_shm <= MAX_NUM_SHM);
   res_index = -1;
-  num_db_servers = MIN (master_shm->num_db_servers, SHM_MAX_DB_SERVERS);
-  for (i = 0; i < num_db_servers; i++)
+  num_shm = MIN (master_shm->num_shm, MAX_NUM_SHM);
+  for (i = 0; i < num_shm; i++)
     {
-      if (strcmp (master_shm->db_server_info[i].dbname, dbname) == 0)
+      if (strcmp (master_shm->shm_info[i].name, dbname) == 0)
 	{
 	  res_index = i;
 	  break;
@@ -475,9 +407,9 @@ rye_master_shm_get_new_server_shm_key (const char *dbname, int server_pid)
 
   if (res_index >= 0)
     {
-      shm_server_info_p = &(master_shm->db_server_info[res_index]);
+      shm_info_p = &(master_shm->shm_info[res_index]);
 
-      svr_shm_key = shm_server_info_p->shm_key;
+      svr_shm_key = shm_info_p->shm_key;
 
       rye_shm_destroy (svr_shm_key);
     }
@@ -486,7 +418,7 @@ rye_master_shm_get_new_server_shm_key (const char *dbname, int server_pid)
       char *str_shm_key;
       int master_shm_key;
 
-      if (master_shm->num_db_servers >= SHM_MAX_DB_SERVERS)
+      if (master_shm->num_shm >= MAX_NUM_SHM)
 	{
 	  assert (false);
 
@@ -495,13 +427,14 @@ rye_master_shm_get_new_server_shm_key (const char *dbname, int server_pid)
 	  return -1;
 	}
 
-      res_index = master_shm->num_db_servers;
+      res_index = master_shm->num_shm;
 
-      shm_server_info_p = &(master_shm->db_server_info[res_index]);
+      shm_info_p = &(master_shm->shm_info[res_index]);
 
-      strncpy (shm_server_info_p->dbname, dbname, SHM_DBNAME_SIZE);
-      shm_server_info_p->dbname[SHM_DBNAME_SIZE - 1] = '\0';
-      shm_server_info_p->shm_key = 0;
+      strncpy (shm_info_p->name, dbname, SHM_NAME_SIZE);
+      shm_info_p->name[SHM_NAME_SIZE - 1] = '\0';
+      shm_info_p->shm_key = 0;
+      shm_info_p->type = RYE_SHM_TYPE_SERVER;
 
       str_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
       parse_int (&master_shm_key, str_shm_key, 16);
@@ -509,11 +442,8 @@ rye_master_shm_get_new_server_shm_key (const char *dbname, int server_pid)
       svr_shm_key = (master_shm_key + DEFUALT_SERVER_SHM_KEY_BASE +
 		     res_index);
 
-      master_shm->num_db_servers++;
+      master_shm->num_shm++;
     }
-
-  shm_server_info_p->pid = server_pid;
-  shm_server_info_p->server_state = HA_STATE_UNKNOWN;
 
   pthread_mutex_unlock (&master_shm->lock);
 
@@ -678,15 +608,13 @@ rye_master_shm_dump (FILE * outfp)
 
   fprintf (outfp, "shm_key:%x\n", shm_master->shm_header.shm_key);
 
-  assert (shm_master->num_db_servers <= SHM_MAX_DB_SERVERS);
-  num_shm_keys = MIN (shm_master->num_db_servers, SHM_MAX_DB_SERVERS);
+  assert (shm_master->num_shm <= MAX_NUM_SHM);
+  num_shm_keys = MIN (shm_master->num_shm, MAX_NUM_SHM);
   for (i = 0; i < num_shm_keys; i++)
     {
-      fprintf (outfp, "\tIndex:%-3d, type:%s, dbname:%s key:%08x, state:%d\n",
-	       i, rye_shm_type_to_string (RYE_SHM_TYPE_SERVER),
-	       shm_master->db_server_info[i].dbname,
-	       shm_master->db_server_info[i].shm_key,
-	       shm_master->db_server_info[i].server_state);
+      fprintf (outfp, "\tIndex:%-3d, type:%s, name:%s key:%08x\n",
+	       i, RYE_SHM_TYPE_NAME (shm_master->shm_info[i].type),
+	       shm_master->shm_info[i].name, shm_master->shm_info[i].shm_key);
     }
 
   num_hb_nodes = MIN (shm_master->num_ha_nodes, SHM_MAX_HA_NODE_LIST);
@@ -824,66 +752,6 @@ rye_master_shm_add_shard_mgmt_info (const char *local_dbname,
   return error;
 }
 
-int
-rye_master_shm_get_server_state (const char *dbname, HA_STATE * server_state)
-{
-  RYE_SHM_MASTER *shm_master;
-  int num_db_servers;
-  int i;
-
-  if (dbname == NULL || server_state == NULL)
-    {
-      assert (false);
-      return ER_FAILED;
-    }
-
-  *server_state = HA_STATE_UNKNOWN;
-
-  shm_master = rye_master_shm_attach ();
-  if (shm_master == NULL)
-    {
-      return ER_FAILED;;
-    }
-
-  num_db_servers = MIN (shm_master->num_db_servers, SHM_MAX_DB_SERVERS);
-  for (i = 0; i < num_db_servers; i++)
-    {
-      if (strcmp (dbname, shm_master->db_server_info[i].dbname) == 0)
-	{
-	  *server_state = shm_master->db_server_info[i].server_state;
-	}
-    }
-
-  rye_master_shm_detach (shm_master);
-  return NO_ERROR;
-}
-
-int
-rye_master_shm_set_server_state (const char *dbname, int server_state)
-{
-  RYE_SHM_MASTER *shm_master;
-  int num_db_servers;
-  int i;
-
-  shm_master = rye_master_shm_attach ();
-  if (shm_master == NULL)
-    {
-      return ER_FAILED;;
-    }
-
-  num_db_servers = MIN (shm_master->num_db_servers, SHM_MAX_DB_SERVERS);
-  for (i = 0; i < num_db_servers; i++)
-    {
-      if (strcmp (dbname, shm_master->db_server_info[i].dbname) == 0)
-	{
-	  shm_master->db_server_info[i].server_state = server_state;
-	}
-    }
-
-  rye_master_shm_detach (shm_master);
-  return NO_ERROR;
-}
-
 /*
  * rye_master_shm_get_server_shm_key ()-
  *   retrun: -1 or shm key
@@ -896,7 +764,7 @@ rye_master_shm_get_server_shm_key (const char *dbname)
   RYE_SHM_MASTER *shm_master;
   int server_shm_key = -1;
   int i;
-  int num_db_servers;
+  int num_shm;
 
   shm_master = rye_master_shm_attach ();
   if (shm_master == NULL)
@@ -904,13 +772,14 @@ rye_master_shm_get_server_shm_key (const char *dbname)
       return -1;
     }
 
-  assert (shm_master->num_db_servers <= SHM_MAX_DB_SERVERS);
-  num_db_servers = MIN (shm_master->num_db_servers, SHM_MAX_DB_SERVERS);
-  for (i = 0; i < num_db_servers; i++)
+  assert (shm_master->num_shm <= MAX_NUM_SHM);
+  num_shm = MIN (shm_master->num_shm, MAX_NUM_SHM);
+  for (i = 0; i < num_shm; i++)
     {
-      if (strcmp (shm_master->db_server_info[i].dbname, dbname) == 0)
+      if (strcmp (shm_master->shm_info[i].name, dbname) == 0
+	  && shm_master->shm_info[i].type == RYE_SHM_TYPE_SERVER)
 	{
-	  server_shm_key = shm_master->db_server_info[i].shm_key;
+	  server_shm_key = shm_master->shm_info[i].shm_key;
 	  break;
 	}
     }
@@ -932,7 +801,7 @@ rye_master_shm_set_server_shm_key (const char *dbname, int server_shm_key)
 {
   RYE_SHM_MASTER *shm_master;
   int i;
-  int num_db_servers;
+  int num_shm;
 
   shm_master = rye_master_shm_attach ();
   if (shm_master == NULL)
@@ -940,20 +809,21 @@ rye_master_shm_set_server_shm_key (const char *dbname, int server_shm_key)
       return -1;
     }
 
-  assert (shm_master->num_db_servers <= SHM_MAX_DB_SERVERS);
-  num_db_servers = MIN (shm_master->num_db_servers, SHM_MAX_DB_SERVERS);
-  for (i = 0; i < num_db_servers; i++)
+  assert (shm_master->num_shm <= MAX_NUM_SHM);
+  num_shm = MIN (shm_master->num_shm, MAX_NUM_SHM);
+  for (i = 0; i < num_shm; i++)
     {
-      if (strcmp (shm_master->db_server_info[i].dbname, dbname) == 0)
+      if (strcmp (shm_master->shm_info[i].name, dbname) == 0
+	  && shm_master->shm_info[i].type == RYE_SHM_TYPE_SERVER)
 	{
-	  shm_master->db_server_info[i].shm_key = server_shm_key;
+	  shm_master->shm_info[i].shm_key = server_shm_key;
 	  break;
 	}
     }
 
   rye_master_shm_detach (shm_master);
 
-  if (i == num_db_servers)
+  if (i == num_shm)
     {
       return -1;
     }

@@ -5182,22 +5182,15 @@ slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
 
   error = xlogwr_get_log_pages (thread_p, first_pageid,
 				((compressed_protocol == 1) ? true : false));
-  if (error == ER_INTERRUPTED)
+  if (error != ER_INTERRUPTED)
     {
       return_error_to_client (thread_p, rid);
     }
 
-  if (error == ER_NET_DATA_RECEIVE_TIMEDOUT)
-    {
-      css_end_server_request (thread_p->conn_entry);
-    }
-  else
-    {
-      ptr = or_pack_int (reply, (int) END_CALLBACK);
-      ptr = or_pack_int (ptr, error);
-      (void) css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-				       OR_ALIGNED_BUF_SIZE (a_reply));
-    }
+  ptr = or_pack_int (reply, (int) END_CALLBACK);
+  ptr = or_pack_int (ptr, error);
+  (void) css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
+				   OR_ALIGNED_BUF_SIZE (a_reply));
 
   return;
 }

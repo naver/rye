@@ -265,17 +265,6 @@ enum _ha_state
    (ha_stat) == HA_STATE_DEAD ? "dead" : "invalid")
 
 
-#define HA_STATE_NAME(ha_stat)                           \
-  ((ha_stat) == HA_STATE_NA ? "na" :                     \
-   (ha_stat) == HA_STATE_UNKNOWN ? "unknown" :           \
-   (ha_stat) == HA_STATE_MASTER ? "master" :             \
-   (ha_stat) == HA_STATE_TO_BE_MASTER ? "to-be-master" : \
-   (ha_stat) == HA_STATE_SLAVE ? "slave" :               \
-   (ha_stat) == HA_STATE_TO_BE_SLAVE ? "to-be-slave" :   \
-   (ha_stat) == HA_STATE_REPLICA ? "replica" :           \
-   (ha_stat) == HA_STATE_DEAD ? "dead" : "invalid")
-
-
 /*
  * HA log applier state
  */

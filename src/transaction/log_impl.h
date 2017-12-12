@@ -1367,10 +1367,8 @@ extern LOG_PB_GLOBAL_DATA log_Pb;
 
 extern LOG_LOGGING_STAT log_Stat;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
 /* Current time in seconds */
 extern UINT64 log_Clock_msec;
-#endif /* HAVE_ATOMIC_BUILTINS */
 
 /* Name of the database and logs */
 extern char log_Path[];
@@ -1414,11 +1412,6 @@ extern LOG_PAGE *logpb_fetch_page (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
 extern LOG_PAGE *logpb_copy_page_from_log_buffer (THREAD_ENTRY * thread_p,
 						  LOG_PAGEID pageid,
 						  LOG_PAGE * log_pgptr);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern LOG_PAGE *logpb_copy_page_from_file (THREAD_ENTRY * thread_p,
-					    LOG_PAGEID pageid,
-					    LOG_PAGE * log_pgptr);
-#endif
 extern LOG_PAGE *logpb_read_page_from_file (THREAD_ENTRY * thread_p,
 					    LOG_PAGEID pageid,
 					    LOG_PAGE * log_pgptr);

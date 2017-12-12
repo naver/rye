@@ -3426,12 +3426,10 @@ thread_get_log_clock_msec (void)
 {
   struct timeval tv;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
   if (thread_Log_clock_thread.is_available == true)
     {
       return log_Clock_msec;
     }
-#endif
 
   gettimeofday (&tv, NULL);
 
@@ -3451,9 +3449,7 @@ thread_log_clock_thread (void *arg_p)
   UNUSED_VAR int rv = 0;
   struct timeval now;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
   assert (sizeof (log_Clock_msec) >= sizeof (now.tv_sec));
-#endif /* HAVE_ATOMIC_BUILTINS */
   tsd_ptr = (THREAD_ENTRY *) arg_p;
 
   /* wait until THREAD_CREATE() finishes */
@@ -3468,7 +3464,6 @@ thread_log_clock_thread (void *arg_p)
 
   while (!tsd_ptr->shutdown)
     {
-#if defined(HAVE_ATOMIC_BUILTINS)
       INT64 clock_milli_sec;
       er_clear ();
 
@@ -3477,38 +3472,6 @@ thread_log_clock_thread (void *arg_p)
       clock_milli_sec = (now.tv_sec * 1000LL) + (now.tv_usec / 1000LL);
       ATOMIC_TAS_64 (&log_Clock_msec, clock_milli_sec);
       thread_sleep (200);	/* 200 msec */
-#else /* HAVE_ATOMIC_BUILTINS */
-      int wakeup_interval = 1000;
-      struct timespec wakeup_time;
-      INT64 tmp_usec;
-
-      er_clear ();
-      gettimeofday (&now, NULL);
-      wakeup_time.tv_sec = now.tv_sec + (wakeup_interval / 1000);
-      tmp_usec = now.tv_usec + (wakeup_interval % 1000) * 1000;
-
-      if (tmp_usec >= 1000000)
-	{
-	  wakeup_time.tv_sec += 1;
-	  tmp_usec -= 1000000;
-	}
-      wakeup_time.tv_nsec = tmp_usec * 1000;
-
-      rv = pthread_mutex_lock (&thread_Log_clock_thread.lock);
-      thread_Log_clock_thread.is_running = false;
-
-      do
-	{
-	  rv = pthread_cond_timedwait (&thread_Log_clock_thread.cond,
-				       &thread_Log_clock_thread.lock,
-				       &wakeup_time);
-	}
-      while (rv == 0 && tsd_ptr->shutdown == false);
-
-      thread_Log_clock_thread.is_running = true;
-
-      pthread_mutex_unlock (&thread_Log_clock_thread.lock);
-#endif /* HAVE_ATOMIC_BUILTINS */
     }
 
   thread_Log_clock_thread.is_available = false;
