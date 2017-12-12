@@ -51,7 +51,7 @@ static void rye_server_shm_detach (RYE_SERVER_SHM * shm_p);
  * svr_shm_initialize -
  */
 int
-svr_shm_initialize (const char *dbname, int max_ntrans, int server_pid)
+svr_shm_initialize (const char *dbname, int max_ntrans)
 {
   int error = NO_ERROR;
   RYE_SERVER_SHM *shm_server = NULL;
@@ -61,7 +61,7 @@ svr_shm_initialize (const char *dbname, int max_ntrans, int server_pid)
   return NO_ERROR;
 #endif
 
-  svr_shm_key = rye_master_shm_get_new_server_shm_key (dbname, server_pid);
+  svr_shm_key = rye_master_shm_get_new_server_shm_key (dbname);
   if (svr_shm_key < 0)
     {
       return ER_FAILED;
@@ -206,10 +206,8 @@ svr_shm_stats_counter_with_time (int tran_index, MNT_SERVER_ITEM item,
 				 INT64 value, UINT64 exec_time)
 {
   MNT_SERVER_ITEM parent_item;
-#if defined(HAVE_ATOMIC_BUILTINS)
-  UNUSED_VAR INT64 after_value;
-  UNUSED_VAR UINT64 after_exec_time;
-#endif
+  INT64 after_value;
+  UINT64 after_exec_time;
 
   if (rye_Server_shm == NULL)
     {
@@ -221,16 +219,11 @@ svr_shm_stats_counter_with_time (int tran_index, MNT_SERVER_ITEM item,
       rye_Server_shm->tran_info[tran_index].stats.values[item] += value;
       rye_Server_shm->tran_info[tran_index].stats.acc_time[item] += exec_time;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
       after_value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[item],
 				   value);
       after_exec_time =
 	ATOMIC_INC_64 (&rye_Server_shm->global_stats.acc_time[item],
 		       exec_time);
-#else
-      rye_Server_shm->global_stats.values[item] += value;
-      rye_Server_shm->global_stats.acc_time[item] += exec_time;
-#endif
 
       parent_item = MNT_GET_PARENT_ITEM_FETCHES (item);
       if (parent_item != item)
@@ -255,12 +248,8 @@ svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item, INT64 value)
 	{
 	  rye_Server_shm->tran_info[tran_index].stats.values[item] = value;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
 	  value = ATOMIC_TAS_64 (&rye_Server_shm->global_stats.values[item],
 				 value);
-#else
-	  rye_Server_shm->global_stats.values[item] = value;
-#endif
 	}
     }
 }
@@ -480,8 +469,6 @@ svr_shm_set_server_state (HA_STATE server_state)
   if (rye_Server_shm->server_state != server_state)
     {
       rye_Server_shm->server_state = server_state;
-
-      rye_master_shm_set_server_state (rye_Server_shm->dbname, server_state);
     }
 
   return NO_ERROR;
@@ -774,6 +761,72 @@ rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
   shm_p->shard_info.num_groupid = shard_info->num_groupid;
 
   shm_p->shard_info.groupid_bitmap_size = shard_info->groupid_bitmap_size;
+
+  rye_server_shm_detach (shm_p);
+
+  return NO_ERROR;
+}
+
+/*
+ * rye_server_shm_set_state ()-
+ *
+ *   dbname(in):
+ *   server_state(in):
+ */
+int
+rye_server_shm_set_state (const char *dbname, HA_STATE server_state)
+{
+  RYE_SERVER_SHM *shm_p;
+
+  assert (rye_Server_shm == NULL);
+
+  if (dbname == NULL)
+    {
+      assert (false);
+      return ER_FAILED;
+    }
+
+  shm_p = rye_server_shm_attach (dbname, false);
+  if (shm_p == NULL)
+    {
+      return ER_FAILED;
+    }
+
+  shm_p->server_state = server_state;
+
+  rye_server_shm_detach (shm_p);
+
+  return NO_ERROR;
+}
+
+/*
+ * rye_server_shm_get_state ()-
+ *   return: error code
+ *
+ *   server_state(out):
+ *   dbname(in):
+ */
+int
+rye_server_shm_get_state (HA_STATE * server_state, const char *dbname)
+{
+  RYE_SERVER_SHM *shm_p;
+
+  assert (rye_Server_shm == NULL);
+
+  if (dbname == NULL || server_state == NULL)
+    {
+      assert (false);
+      return ER_FAILED;
+    }
+  *server_state = HA_STATE_UNKNOWN;
+
+  shm_p = rye_server_shm_attach (dbname, true);
+  if (shm_p == NULL)
+    {
+      return ER_FAILED;
+    }
+
+  *server_state = shm_p->server_state;
 
   rye_server_shm_detach (shm_p);
 
