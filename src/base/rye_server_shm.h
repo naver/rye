@@ -115,8 +115,7 @@ struct _rye_server_shm
 };
 
 /* server functions */
-extern int svr_shm_initialize (const char *dbname, int max_ntrans,
-			       int server_pid);
+extern int svr_shm_initialize (const char *dbname, int max_ntrans);
 extern int svr_shm_get_start_time (void);
 #if 0
 extern void svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item);
@@ -150,6 +149,10 @@ extern int svr_shm_set_repl_info (const char *host_ip, HA_APPLY_STATE state);
 /* client functions */
 extern int rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO *
 					      shard_info, const char *dbname);
+extern int rye_server_shm_set_state (const char *dbname,
+				     HA_STATE server_state);
+extern int rye_server_shm_get_state (HA_STATE * server_state,
+				     const char *dbname);
 extern int rye_server_shm_get_global_stats (MNT_SERVER_EXEC_STATS *
 					    global_stats, const char *dbname);
 extern int rye_server_shm_get_eof_lsa (LOG_LSA * eof_lsa, const char *dbname);

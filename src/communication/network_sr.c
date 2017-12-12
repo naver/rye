@@ -697,6 +697,7 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_CANT_ALLOC_BUFFER, 0);
       return_error_to_client (thread_p, rid);
+      css_send_abort_to_client (thread_p->conn_entry, rid);
       status = CSS_UNPLANNED_SHUTDOWN;
       goto end;
     }
@@ -705,6 +706,10 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
   if (request == NET_SERVER_PING_WITH_HANDSHAKE)
     {
       status = server_ping_with_handshake (thread_p, rid, buffer, size);
+      if (status != CSS_NO_ERRORS)
+	{
+	  css_send_abort_to_client (thread_p->conn_entry, rid);
+	}
       goto end;
     }
   else if (request == NET_SERVER_SHUTDOWN)
@@ -721,6 +726,7 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
       er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NET_UNKNOWN_SERVER_REQ,
 	      0);
       return_error_to_client (thread_p, rid);
+      css_send_abort_to_client (thread_p->conn_entry, rid);
       goto end;
     }
 #if defined(RYE_DEBUG)

@@ -1790,34 +1790,6 @@ logpb_copy_page_from_log_buffer (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
   return ret_pgptr;
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * logpb_copy_page_from_file -
- *
- * return: Pointer to the page or NULL
- *
- */
-LOG_PAGE *
-logpb_copy_page_from_file (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
-			   LOG_PAGE * log_pgptr)
-{
-  LOG_PAGE *ret_pgptr = NULL;
-
-  assert (log_pgptr != NULL);
-  assert (pageid != NULL_PAGEID);
-  assert (pageid <= log_Gl.hdr.append_lsa.pageid);
-
-  LOG_CS_ENTER_READ_MODE (thread_p);
-  if (log_pgptr != NULL)
-    {
-      ret_pgptr = logpb_read_page_from_file (thread_p, pageid, log_pgptr);
-    }
-  LOG_CS_EXIT ();
-
-  return ret_pgptr;
-}
-#endif
-
 /*
  * logpb_copy_page - copy a exist_log page using local buffer
  *

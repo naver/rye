@@ -384,63 +384,6 @@ exit:
 }
 #endif
 
-#if defined(RYE_SHM_UNUSED_FUNCTION)
-/*
- * rye_shm_status_to_string () -
- *    return:
- *
- *    shm_status(in):
- */
-const char *
-rye_shm_status_to_string (RYE_SHM_STATUS shm_status)
-{
-  switch (shm_status)
-    {
-    case RYE_SHM_UNKNOWN:
-      return "RYE_SHM_UNKNOWN";
-    case RYE_SHM_INVALID:
-      return "RYE_SHM_INVALID";
-    case RYE_SHM_VALID:
-      return "RYE_SHM_VALID";
-    case RYE_SHM_MARK_DELETED:
-      return "RYE_SHM_MARK_DELETED";
-    default:
-      assert (false);
-      return "UNKNOWN TYPE";
-    }
-
-  assert (false);
-  return "UNKNOWN TYPE";
-}
-#endif
-
-/*
- * rye_shm_type_to_string ()-
- *    return:
- *
- *    shm_type(in):
- */
-const char *
-rye_shm_type_to_string (RYE_SHM_TYPE shm_type)
-{
-  switch (shm_type)
-    {
-    case RYE_SHM_TYPE_MASTER:
-      return "RYE_SHM_TYPE_MASTER";
-    case RYE_SHM_TYPE_SERVER:
-      return "RYE_SHM_TYPE_SERVER";
-    case RYE_SHM_TYPE_BROKER_GLOBAL:
-      return "RYE_SHM_TYPE_BROKER_GLOBAL";
-    case RYE_SHM_TYPE_BROKER_LOCAL:
-      return "RYE_SHM_TYPE_BROKER_LOCAL";
-    default:
-      break;
-    }
-
-  assert (false);
-  return "UNKNOWN TYPE";
-}
-
 /*
  * rye_shm_check_header () -
  *    return: true or false
@@ -489,14 +432,15 @@ rye_shm_destroy_all_server_shm ()
       return ER_FAILED;
     }
 
-  assert (shm_master->num_db_servers <= SHM_MAX_DB_SERVERS);
-  num_keys = MIN (shm_master->num_db_servers, SHM_MAX_DB_SERVERS);
+  assert (shm_master->num_shm <= MAX_NUM_SHM);
+  num_keys = MIN (shm_master->num_shm, MAX_NUM_SHM);
   for (i = 0; i < num_keys; i++)
     {
-      rye_shm_destroy (shm_master->db_server_info[i].shm_key);
-      shm_master->db_server_info[i].shm_key = 0;
+      rye_shm_destroy (shm_master->shm_info[i].shm_key);
+      shm_master->shm_info[i].shm_key = 0;
+      shm_master->shm_info[i].type = RYE_SHM_TYPE_UNKNOWN;
     }
-  shm_master->num_db_servers = 0;
+  shm_master->num_shm = 0;
 
   rye_shm_detach (shm_master);
 
