@@ -45,6 +45,7 @@
 #include "log_top_string.h"
 #include "broker_log_top.h"
 #include "broker_log_util.h"
+#include "environment_variable.h"
 
 #define MAX_SRV_HANDLE		3000
 #define CLIENT_MSG_BUF_SIZE	1024
@@ -94,11 +95,42 @@ main (int argc, char *argv[])
 {
   int arg_start;
   int error = 0;
+  int i;
 
   arg_start = get_args (argc, argv);
   if (arg_start < 0)
     {
       return -1;
+    }
+
+  for (i = arg_start; i < argc; i++)
+    {
+      struct stat statbuf;
+      char tmpfile[PATH_MAX];
+      char *file_ptr = NULL;
+
+      if (stat (argv[i], &statbuf) == 0 && S_ISREG (statbuf.st_mode))
+	{
+	  file_ptr = argv[i];
+	}
+      else
+	{
+	  envvar_ryelogdir_file (tmpfile, sizeof (tmpfile), argv[i]);
+	  if (stat (tmpfile, &statbuf) == 0 && S_ISREG (statbuf.st_mode))
+	    {
+	      file_ptr = tmpfile;
+	    }
+	}
+
+      if (file_ptr == NULL)
+	{
+	  fprintf (stderr, "file not found [%s]\n", argv[i]);
+	  return -1;
+	}
+      else
+	{
+	  argv[i] = strdup (file_ptr);
+	}
     }
 
   if (mode_tran)
@@ -108,6 +140,11 @@ main (int argc, char *argv[])
   else
     {
       error = log_top_query (argc, argv, arg_start);
+    }
+
+  for (i = arg_start; i < argc; i++)
+    {
+      free (argv[i]);
     }
 
   return error;

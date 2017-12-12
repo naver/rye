@@ -672,7 +672,7 @@ make_connection (CCI_CONN * conn, const char *host, int port,
   char tester_server_nodeid[128] = "";
   const char *url_property;
 
-  if (is_shard_mgmt == false)
+  if (is_shard_mgmt)
     {
       url_property = "connectionType=global";
     }
