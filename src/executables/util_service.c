@@ -539,14 +539,11 @@ proc_execute (const char *file, char *args[], bool wait_child,
 	      bool close_output, bool close_err, int *out_pid)
 {
   pid_t pid, tmp;
-  char executable_path[PATH_MAX];
 
   if (out_pid)
     {
       *out_pid = 0;
     }
-
-  (void) envvar_bindir_file (executable_path, PATH_MAX, file);
 
   /* do not process SIGCHLD, a child process will be defunct */
   if (wait_child)
@@ -566,6 +563,10 @@ proc_execute (const char *file, char *args[], bool wait_child,
     }
   else if (pid == 0)
     {
+      char executable_path[PATH_MAX];
+
+      (void) envvar_bindir_file (executable_path, PATH_MAX, file);
+
       /* a child process handle SIGCHLD to SIG_DFL */
       signal (SIGCHLD, SIG_DFL);
       if (close_output)
@@ -640,8 +641,9 @@ process_master (int command_type)
 		       PRINT_MASTER_NAME, PRINT_CMD_START);
 	if (!css_does_master_exist ())
 	  {
-	    char argv0[] = UTIL_MASTER_NAME;
+	    char argv0[PATH_MAX];
 	    char *args[] = { argv0, NULL };
+	    envvar_process_name (argv0, sizeof (argv0), UTIL_MASTER_NAME);
 	    status = proc_execute (UTIL_MASTER_NAME, args, false, false,
 				   false, NULL);
 	    /* The master process needs a few seconds to bind port */

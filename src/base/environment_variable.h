@@ -63,20 +63,22 @@ extern char *envvar_socket_file (char *path, size_t size,
 extern char *envvar_as_pid_dir_file (char *path, size_t size,
 				     const char *filename);
 
-extern char *envvar_ryelogdir_file (char *path, size_t size,
-				    const char *filename);
-extern char *envvar_ryelog_broker_file (char *path, size_t size,
-					const char *br_name,
-					const char *filename);
-extern char *envvar_ryelog_broker_sqllog_file (char *path, size_t size,
+extern void envvar_ryelogdir_file (char *path, size_t size,
+				   const char *filename);
+extern void envvar_ryelog_broker_file (char *path, size_t size,
+				       const char *br_name,
+				       const char *filename);
+extern void envvar_ryelog_broker_sqllog_file (char *path, size_t size,
+					      const char *br_name,
+					      const char *filename);
+extern void envvar_ryelog_broker_slowlog_file (char *path, size_t size,
 					       const char *br_name,
 					       const char *filename);
-extern char *envvar_ryelog_broker_slowlog_file (char *path, size_t size,
+extern void envvar_ryelog_broker_errorlog_file (char *path, size_t size,
 						const char *br_name,
 						const char *filename);
-extern char *envvar_ryelog_broker_errorlog_file (char *path, size_t size,
-						 const char *br_name,
-						 const char *filename);
-extern char *envvar_broker_acl_file (char *path, size_t size);
+extern void envvar_broker_acl_file (char *path, size_t size);
+extern void envvar_process_name (char *buf, size_t size,
+				 const char *base_name);
 
 #endif /* _ENVIRONMENT_VARIABLE_H_ */

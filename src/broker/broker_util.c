@@ -414,3 +414,38 @@ ut_find_shard_mgmt (T_BROKER_INFO * br_info, int num_brs, const char *dbname)
 
   return NULL;
 }
+
+void
+ut_make_broker_process_name (char *buf, size_t size,
+			     const T_BROKER_INFO * br_info)
+{
+  char tmp_proc_name[PATH_MAX];
+  if (br_info->broker_type == SHARD_MGMT)
+    {
+      snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_shard_mgmt_%s",
+		NAME_CAS_BROKER, br_info->shard_global_dbname);
+    }
+  else if (br_info->broker_type == SHARD_MGMT)
+    {
+      snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_local_mgmt",
+		NAME_CAS_BROKER);
+    }
+  else
+    {
+      snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_%s",
+		NAME_CAS_BROKER, br_info->name);
+    }
+
+  envvar_process_name (buf, size, tmp_proc_name);
+}
+
+void
+ut_make_cas_process_name (char *buf, size_t size, const char *broker_name,
+			  int as_index)
+{
+  char tmp_proc_name[PATH_MAX];
+  snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_%s_%d",
+	    APPL_SERVER_CAS_NAME, broker_name, as_index + 1);
+
+  envvar_process_name (buf, size, tmp_proc_name);
+}

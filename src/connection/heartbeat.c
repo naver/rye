@@ -104,9 +104,9 @@ hb_process_type_string (int ptype)
  *   exec_path(in):
  */
 void
-hb_set_exec_path (char *exec_path)
+hb_set_exec_path (const char *prog_name)
 {
-  strncpy (hb_Exec_path, exec_path, sizeof (hb_Exec_path) - 1);
+  envvar_bindir_file (hb_Exec_path, sizeof (hb_Exec_path), prog_name);
 }
 
 /*

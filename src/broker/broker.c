@@ -1031,7 +1031,6 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 {
   char appl_name[APPL_SERVER_NAME_MAX_SIZE];
   int pid;
-  char argv0[128];
   int i;
   char path[BROKER_PATH_MAX];
   char as_id_env_str[32];
@@ -1065,6 +1064,7 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
   pid = fork ();
   if (pid == 0)
     {
+      char argv0[PATH_MAX];
       signal (SIGCHLD, SIG_DFL);
 
       for (i = 3; i <= max_Open_fd; i++)
@@ -1081,8 +1081,8 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 		"%s=%d", AS_ID_ENV_STR, as_index);
       putenv (as_id_env_str);
 
-      snprintf (argv0, sizeof (argv0) - 1, "%s_%s_%d",
-		shm_Br->br_info[br_index].name, appl_name, as_index + 1);
+      ut_make_cas_process_name (argv0, sizeof (argv0),
+				shm_Br->br_info[br_index].name, as_index);
 
       execle (appl_name, argv0, NULL, environ);
 

@@ -79,4 +79,9 @@ extern T_BROKER_INFO *ut_find_broker (T_BROKER_INFO * br_info, int num_brs,
 				      const char *brname, char broker_type);
 extern T_BROKER_INFO *ut_find_shard_mgmt (T_BROKER_INFO * br_info,
 					  int num_brs, const char *dbname);
+extern void ut_make_broker_process_name (char *buf, size_t size,
+					 const T_BROKER_INFO * br_info);
+extern void ut_make_cas_process_name (char *buf, size_t size,
+				      const char *broker_name, int as_index);
+
 #endif /* _BROKER_UTIL_H_ */

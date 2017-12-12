@@ -126,7 +126,7 @@ struct hbp_proc_register
  * externs
  */
 extern const char *hb_process_type_string (int ptype);
-extern void hb_set_exec_path (char *exec_path);
+extern void hb_set_exec_path (const char *prog_name);
 extern void hb_set_argv (char **argv);
 extern int css_send_heartbeat_request (CSS_CONN_ENTRY * conn, int command,
 				       int num_buffers, ...);

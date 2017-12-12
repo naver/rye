@@ -2943,6 +2943,8 @@ hb_resource_job_proc_start (HB_JOB_ARG * arg)
     {
       int max_fd, i;
       char proc_id_env_str[ONE_K];
+      char argv0[PATH_MAX];
+      const char *exe_name;
 
       max_fd = css_get_max_socket_fds ();
       for (i = 3; i <= max_fd; i++)
@@ -2952,6 +2954,26 @@ hb_resource_job_proc_start (HB_JOB_ARG * arg)
 
       sprintf (proc_id_env_str, "%s=%d", HB_PROC_ID_STR, getpid ());
       putenv (proc_id_env_str);
+
+      if (proc->type == HB_PTYPE_SERVER)
+	{
+	  exe_name = UTIL_SERVER_NAME;
+	}
+      else if (proc->type == HB_PTYPE_REPLICATION)
+	{
+	  exe_name = UTIL_RYE_REL_NAME;
+	}
+      else
+	{
+	  assert (0);
+	  exe_name = NULL;
+	}
+      if (exe_name != NULL)
+	{
+	  envvar_process_name (argv0, sizeof (argv0), exe_name);
+	  argv[0] = argv0;
+	}
+
       error = execv (proc->exec_path, argv);
 
       exit (0);

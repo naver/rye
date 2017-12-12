@@ -867,7 +867,6 @@ cirp_connect_to_master (const char *db_name, const char *log_path,
 			char **argv)
 {
   int error = NO_ERROR;
-  char executable_path[PATH_MAX];
 
   error = check_database_name (db_name);
   if (error != NO_ERROR)
@@ -879,10 +878,7 @@ cirp_connect_to_master (const char *db_name, const char *log_path,
   util_redirect_stdout_to_null ();
 #endif
 
-  /* save executable path */
-  (void) envvar_bindir_file (executable_path, PATH_MAX, UTIL_REPL_NAME);
-
-  hb_set_exec_path (executable_path);
+  hb_set_exec_path (UTIL_REPL_NAME);
   hb_set_argv (argv);
 
   /* initialize system parameters */

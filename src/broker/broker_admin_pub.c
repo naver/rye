@@ -1713,6 +1713,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
   if (pid == 0)
     {
       signal (SIGCHLD, SIG_DFL);
+      char argv0[PATH_MAX];
 
       br_info->broker_pid = getpid ();
 
@@ -1730,11 +1731,12 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
       putenv (br_index_env_str);
 
       broker_exe_name = NAME_CAS_BROKER;
+      ut_make_broker_process_name (argv0, sizeof (argv0), br_info);
 
       rye_shm_detach (shm_appl);
       rye_shm_detach (shm_br);
 
-      if (execle (broker_exe_name, broker_exe_name, NULL, environ) < 0)
+      if (execle (broker_exe_name, argv0, NULL, environ) < 0)
 	{
 	  br_info->broker_pid = 0;
 	  perror (broker_exe_name);
@@ -1859,7 +1861,6 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
   int i;
   char as_id_env_str[32];
 
-  char process_name[128];
   char port_name[BROKER_PATH_MAX];
 
   ut_get_as_port_name (port_name, br_info->name, as_index, BROKER_PATH_MAX);
@@ -1891,6 +1892,8 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
 
   if (pid == 0)
     {
+      char argv0[PATH_MAX];
+
       if (env != NULL)
 	{
 	  for (i = 0; i < env_num; i++)
@@ -1908,13 +1911,13 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
       strcpy (appl_name, shm_appl->appl_server_name);
 
 
-      snprintf (process_name, sizeof (process_name) - 1, "%s_%s_%d",
-		br_info->name, appl_name, as_index + 1);
+      ut_make_cas_process_name (argv0, sizeof (argv0), br_info->name,
+				as_index);
 
       rye_shm_detach (shm_appl);
       rye_shm_detach (shm_br);
 
-      if (execle (appl_name, process_name, NULL, environ) < 0)
+      if (execle (appl_name, argv0, NULL, environ) < 0)
 	{
 	  perror (appl_name);
 	}

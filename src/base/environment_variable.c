@@ -267,10 +267,10 @@ envvar_tmpdir_file (char *path, size_t size, const char *filename)
   return envvar_confdir_file_with_dir (path, size, "tmp", filename);
 }
 
-char *
+void
 envvar_ryelogdir_file (char *path, size_t size, const char *filename)
 {
-  return envvar_confdir_file_with_dir (path, size, "ryelog", filename);
+  envvar_confdir_file_with_dir (path, size, "ryelog", filename);
 }
 
 static char *
@@ -294,21 +294,21 @@ envvar_ryelog_broker_subdir_file (char *path, size_t size, const char *dir1,
   return path;
 }
 
-char *
+void
 envvar_ryelog_broker_file (char *path, size_t size, const char *br_name,
 			   const char *filename)
 {
   envvar_ryelog_broker_subdir_file (path, size, br_name, NULL, filename);
 }
 
-char *
+void
 envvar_ryelog_broker_sqllog_file (char *path, size_t size,
 				  const char *br_name, const char *filename)
 {
   envvar_ryelog_broker_subdir_file (path, size, br_name, "sql_log", filename);
 }
 
-char *
+void
 envvar_ryelog_broker_slowlog_file (char *path, size_t size,
 				   const char *br_name, const char *filename)
 {
@@ -316,7 +316,7 @@ envvar_ryelog_broker_slowlog_file (char *path, size_t size,
 				    filename);
 }
 
-char *
+void
 envvar_ryelog_broker_errorlog_file (char *path, size_t size,
 				    const char *br_name, const char *filename)
 {
@@ -324,8 +324,24 @@ envvar_ryelog_broker_errorlog_file (char *path, size_t size,
 				    filename);
 }
 
-char *
+void
 envvar_broker_acl_file (char *path, size_t size)
 {
-  return envvar_confdir_file (path, size, BROKER_ACL_FILE);
+  envvar_confdir_file (path, size, BROKER_ACL_FILE);
+}
+
+void
+envvar_process_name (char *buf, size_t size, const char *base_name)
+{
+  const char *prefix;
+
+  prefix = envvar_get ("PROCESS_PREFIX");
+  if (prefix == NULL || *prefix == '\0')
+    {
+      snprintf (buf, size, "%s", base_name);
+    }
+  else
+    {
+      snprintf (buf, size, "%s_%s", prefix, base_name);
+    }
 }
