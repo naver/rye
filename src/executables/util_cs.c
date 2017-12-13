@@ -149,7 +149,7 @@ find_connect_host_index (const char *dbname, const PRM_NODE_LIST * node_list,
   db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
   db_login ("DBA", NULL);
 
-  for (i = 0; node_list->num_nodes; i++)
+  for (i = 0; i < node_list->num_nodes; i++)
     {
       server_state = connect_db (dbname, &node_list->nodes[i]);
       if (server_state == expect_server_state)

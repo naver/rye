@@ -229,12 +229,19 @@ abstract class ShardCommand
     RyeConnection makeConnection(String brokerHost, int brokerPort, String dbName, String dbUser, String dbPassword,
 		    String portName, String urlProperty) throws SQLException
     {
-	String url = makeConnectionUrl(brokerHost, brokerPort, dbName, "", "", portName, urlProperty);
+	String url = makeConnectionUrl(brokerHost, brokerPort, dbName, "", "", portName, urlProperty, true);
+	return (RyeConnection) ryeDriver.connect(url, dbUser, dbPassword, shardInfoManager);
+    }
+
+    RyeConnection makeLocalConnection(String brokerHost, int brokerPort, String dbName, String dbUser,
+		    String dbPassword, String portName, String urlProperty) throws SQLException
+    {
+	String url = makeConnectionUrl(brokerHost, brokerPort, dbName, "", "", portName, urlProperty, false);
 	return (RyeConnection) ryeDriver.connect(url, dbUser, dbPassword, shardInfoManager);
     }
 
     private static String makeConnectionUrl(String brokerHost, int brokerPort, String dbName, String dbUser,
-		    String dbPassword, String portName, String urlProperty)
+		    String dbPassword, String portName, String urlProperty, boolean isGlobalConn)
     {
 	if (dbUser == null) {
 	    dbUser = "";
@@ -244,6 +251,12 @@ abstract class ShardCommand
 	}
 	if (urlProperty == null) {
 	    urlProperty = "";
+	}
+	if (isGlobalConn == false) {
+	    if (urlProperty.length() > 0) {
+		urlProperty = urlProperty + "&";
+	    }
+	    urlProperty = urlProperty + "connectionType=local";
 	}
 
 	return String.format("jdbc:rye://%s:%d/%s:%s:%s/%s?%s", brokerHost, brokerPort, dbName, dbUser, dbPassword,
@@ -384,15 +397,13 @@ abstract class ShardCommand
     {
 	int retryCount = 300;
 
-	String urlProperty = "connectionType=local";
-
 	printStatus(true, "%s:%s connection test. check_master=%s, check_nodeid=%d ... ", host.toString(), dbname,
 			checkMaster, checkNodeid);
 
 	while (retryCount-- > 0) {
 	    try {
-		RyeConnection con = makeConnection(host.getIpAddr(), host.getPort(), dbname, dbuser, dbpasswd,
-				portName, urlProperty);
+		RyeConnection con = makeLocalConnection(host.getIpAddr(), host.getPort(), dbname, dbuser, dbpasswd,
+				portName, null);
 
 		int serverHaMode = con.getServerHaMode();
 		int serverNodeid = con.getStatusInfoServerNodeid();
@@ -479,7 +490,7 @@ abstract class ShardCommand
     {
 	try {
 	    RyeConnection con = makeConnection(shardMgmt.getIpAddr(), shardMgmt.getPort(), globalDbname, "dba",
-			    dbaPasswd, "rw", "");
+			    dbaPasswd, "rw", null);
 	    ShardAdmin shardAdmin = con.getShardAdmin();
 	    for (int i = 0; i < 100; i++) {
 		if (hasNodeid(shardAdmin, checkNodeidArr)) {
@@ -869,15 +880,12 @@ abstract class ShardCommand
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
 	    String localDbname = NodeInfo.getLocalDbname(globalDbnameArr[i], FIRST_NODEID);
-	    verifyPassword(shardMgmtHost, localDbname, "dba", dbaPasswordArr[i]);
-	}
-    }
 
-    private void verifyPassword(NodeAddress host, String dbname, String dbuser, String password) throws SQLException
-    {
-	String url = makeConnectionUrl(host.getIpAddr(), host.getPort(), dbname, "", "", "rw", "");
-	RyeConnection con = (RyeConnection) ryeDriver.connect(url, dbuser, password, shardInfoManager);
-	con.close();
+	    RyeConnection con = makeLocalConnection(shardMgmtHost.getIpAddr(), shardMgmtHost.getPort(), localDbname,
+			    "dba", dbaPasswordArr[i], "rw", null);
+	    con.close();
+
+	}
     }
 
     static RyeException makeAdminRyeException(Throwable cause, String format, Object... args)

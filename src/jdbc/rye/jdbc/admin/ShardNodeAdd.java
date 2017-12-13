@@ -137,7 +137,7 @@ class ShardNodeAdd extends ShardCommand
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 
 	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i],
-			    "dba", dbaPasswordArr[i], "rw", "");
+			    "dba", dbaPasswordArr[i], "rw", null);
 
 	    ShardAdmin shardAdmin = getShardAdmin(con, globalDbnameArr[i], shardMgmtInfo);
 
@@ -145,7 +145,8 @@ class ShardNodeAdd extends ShardCommand
 		isAvailableNodeid(shardAdmin);
 	    }
 	    else {
-		existingNodeInfo = getExistingNodeInfo(shardAdmin, addNodeArr, existingNodeInfo, shardMgmtHost.getPort());
+		existingNodeInfo = getExistingNodeInfo(shardAdmin, addNodeArr, existingNodeInfo,
+				shardMgmtHost.getPort());
 	    }
 
 	    con.close();
@@ -214,7 +215,7 @@ class ShardNodeAdd extends ShardCommand
 	RyeConnection con = null;
 
 	con = makeConnection(shardMgmtInfo.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba", dbaPasswd, "rw",
-			"");
+			null);
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 
 	String[] addArg = addNode.toNodeAddArg(globalDbname);

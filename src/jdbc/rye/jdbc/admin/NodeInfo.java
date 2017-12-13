@@ -41,21 +41,33 @@ class NodeAddress
     private final InetAddress inetAddr;
     private final String ipaddr;
 
-    NodeAddress(String hostname, int port) throws SQLException
+    NodeAddress(String argHostname, int port) throws SQLException
     {
-	hostname = hostname.trim().toLowerCase();
-	this.orgHostname = hostname;
+	argHostname = argHostname.trim().toLowerCase();
+
+	String[] tmp = argHostname.split(":");
+	if (tmp.length == 1) {
+	}
+	else if (tmp.length == 2) {
+	    port = Integer.parseInt(tmp[1]);
+	}
+	else {
+	    throw ShardCommand.makeAdminRyeException(null, "invalid host string: %s", argHostname);
+	}
+	argHostname = tmp[0];
+
+	this.orgHostname = argHostname;
 	this.port = port;
 
 	try {
-	    if (hostname.equalsIgnoreCase("localhost") || hostname.equals("127.0.0.1")) {
+	    if (argHostname.equalsIgnoreCase("localhost") || argHostname.equals("127.0.0.1")) {
 		inetAddr = InetAddress.getLocalHost();
 	    }
 	    else {
-		inetAddr = InetAddress.getByName(hostname);
+		inetAddr = InetAddress.getByName(argHostname);
 	    }
 	} catch (UnknownHostException e) {
-	    throw ShardCommand.makeAdminRyeException(e, "unknown host '%s'", hostname);
+	    throw ShardCommand.makeAdminRyeException(e, "unknown host '%s'", argHostname);
 	}
 
 	this.hostname = inetAddr.getHostName();
@@ -237,7 +249,7 @@ class NodeInfo
 	for (int i = 0; i < hostArr.length; i++) {
 	    boolean hasSameHost = false;
 	    for (int j = 0; j < other.hostArr.length; j++) {
-		if (hostArr[i].getIpAddr().equals(other.hostArr[j].getIpAddr())) {
+		if (hostArr[i].equals(other.hostArr[j])) {
 		    hasSameHost = true;
 		    break;
 		}
@@ -320,17 +332,7 @@ class NodeInfo
 	NodeAddress[] hostArr = new NodeAddress[hostInfo.length];
 
 	for (int i = 0; i < hostInfo.length; i++) {
-	    String[] tmp = ShardCommand.splitList(hostInfo[i], ":", false);
-
-	    if (tmp.length == 1) {
-		hostArr[i] = new NodeAddress(tmp[0], localMgmtPort);
-	    }
-	    else if (tmp.length == 2) {
-		hostArr[i] = new NodeAddress(tmp[0], Integer.parseInt(tmp[1]));
-	    }
-	    else {
-		return null;
-	    }
+	    hostArr[i] = new NodeAddress(hostInfo[i], localMgmtPort);
 	}
 
 	return new NodeInfo(nodeid, hostArr, null);
@@ -345,21 +347,13 @@ class NodeInfo
 	HashMap<Integer, ArrayList<NodeAddress>> nodeMap = new HashMap<Integer, ArrayList<NodeAddress>>();
 
 	for (int i = 0; i < nodeHostInfo.length; i++) {
-	    String[] tmp = ShardCommand.splitList(nodeHostInfo[i], ":", false);
-	    int nodeid;
-	    NodeAddress nodeAddr;
+	    int idx = nodeHostInfo[i].indexOf(':');
+	    if (idx < 0) {
+		throw ShardCommand.makeAdminRyeException(null, "invalid node info '%s'", nodeHostInfo[i]);
+	    }
 
-	    if (tmp.length == 2) {
-		nodeid = Integer.parseInt(tmp[0]);
-		nodeAddr = new NodeAddress(tmp[1], localMgmtPort);
-	    }
-	    else if (tmp.length == 3) {
-		nodeid = Integer.parseInt(tmp[0]);
-		nodeAddr = new NodeAddress(tmp[1], Integer.parseInt(tmp[2]));
-	    }
-	    else {
-		return null;
-	    }
+	    int nodeid = Integer.parseInt(nodeHostInfo[i].substring(0, idx));
+	    NodeAddress nodeAddr = new NodeAddress(nodeHostInfo[i].substring(idx + 1), localMgmtPort);
 
 	    ArrayList<NodeAddress> list = nodeMap.get(nodeid);
 	    if (list == null) {

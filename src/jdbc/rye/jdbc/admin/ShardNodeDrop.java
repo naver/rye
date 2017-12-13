@@ -114,8 +114,8 @@ class ShardNodeDrop extends ShardCommand
 	for (int i = 0; i < globalDbnameArr.length; i++) {
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 
-	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i], "dba",
-			    dbaPasswordArr[i], "rw", "");
+	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i],
+			    "dba", dbaPasswordArr[i], "rw", null);
 
 	    ShardAdmin shardAdmin = getShardAdmin(con, globalDbnameArr[i], shardMgmtInfo);
 
@@ -144,7 +144,7 @@ class ShardNodeDrop extends ShardCommand
 	RyeConnection con = null;
 
 	con = makeConnection(shardMgmtInfo.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba", dbaPasswd, "rw",
-			"");
+			null);
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 
 	shardAdmin.dropNodeidAll(nodeid);

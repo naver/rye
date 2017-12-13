@@ -372,7 +372,6 @@ local_mg_transfer_req (int target_broker_type, SOCKET * clt_sock_fd,
 
   if (br_info_service_broker == NULL)
     {
-      assert (false);
       return BR_ER_BROKER_NOT_FOUND;
     }
 
@@ -1301,6 +1300,11 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
   int fd;
   int write_len;
   char rye_conf_path[PATH_MAX];
+  int local_port_id;
+  const char *rye_shm_key;
+
+  local_port_id = prm_get_local_port_id ();
+  rye_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
 
   arg_write_conf = &req_arg->value.write_rye_conf_arg;
 
@@ -1321,13 +1325,26 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 
   if (write_len == arg_write_conf->size)
     {
-      return 0;
+      char buf[64];
+      int err = 0;
+
+      snprintf(buf, sizeof (buf), "%d", local_port_id);
+      err = db_update_persist_conf_file ("server", "common",
+					 "local_port_id", buf);
+      if (err == NO_ERROR)
+        {
+	  err = db_update_persist_conf_file ("server", "common",
+					     "rye_shm_key", rye_shm_key);
+	}
+
+      if (err == NO_ERROR)
+        {
+	  return 0;
+	}
     }
-  else
-    {
-      assert (0);
-      return BR_ER_RYE_CONF;
-    }
+    
+  assert (0);
+  return BR_ER_RYE_CONF;
 }
 
 static int

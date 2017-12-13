@@ -122,7 +122,7 @@ class ShardInstanceDrop extends ShardCommand
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 
 	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i],
-			    "dba", dbaPasswordArr[i], "rw", "");
+			    "dba", dbaPasswordArr[i], "rw", null);
 
 	    ShardAdmin shardAdmin = getShardAdmin(con, globalDbnameArr[i], shardMgmtInfo);
 
@@ -207,7 +207,7 @@ class ShardInstanceDrop extends ShardCommand
 		    throws SQLException
     {
 	RyeConnection con = makeConnection(shardMgmtInfo.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba",
-			dbaPasswd, "rw", "");
+			dbaPasswd, "rw", null);
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 
 	String[] dropNodeArg = dropNode.toNodeAddArg(globalDbname);

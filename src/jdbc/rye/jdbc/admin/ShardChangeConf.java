@@ -129,7 +129,7 @@ class ShardChangeConf extends ShardCommand
 	ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbname);
 
 	RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba",
-			dbaPasswd, "rw", "");
+			dbaPasswd, "rw", null);
 
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 

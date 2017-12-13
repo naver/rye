@@ -75,12 +75,19 @@ rbl_conf_get_destdb_conn (int index)
 }
 
 static HA_STATE
-rbl_conf_connect_db (const char *db, const char *host)
+rbl_conf_connect_db (const char *db, const char *host, int port)
 {
   int error;
   char dbname[MAXHOSTNAMELEN + MAX_DBNAME_SIZE + 2];
 
-  sprintf (dbname, "%s@%s", db, host);
+  if (port > 0)
+    {
+      sprintf (dbname, "%s@%s:%d", db, host, port);
+    }
+  else
+    {
+      sprintf (dbname, "%s@%s", db, host);
+    }
   boot_clear_host_connected ();
 
   error = db_restart (prog_Name, TRUE, dbname);
@@ -106,7 +113,8 @@ rbl_conf_find_master_node_index (CCI_NODE_INFO ** node_info, int num_node)
   for (i = 0; i < num_node; i++)
     {
       server_state = rbl_conf_connect_db (node_info[i]->dbname,
-					  node_info[i]->hostname);
+					  node_info[i]->hostname,
+					  node_info[i]->port);
       if (server_state == HA_STATE_MASTER)
 	{
 	  db_shutdown ();
@@ -143,7 +151,8 @@ rbl_conf_connect_srcdb (int mode)
     {
       server_state =
 	rbl_conf_connect_db (src_Node_info[src_Master_index]->dbname,
-			     src_Node_info[src_Master_index]->hostname);
+			     src_Node_info[src_Master_index]->hostname,
+			     src_Node_info[src_Master_index]->port);
       RBL_ASSERT (server_state == HA_STATE_MASTER);
 
       if (server_state == HA_STATE_MASTER)
@@ -163,7 +172,7 @@ rbl_conf_connect_srcdb (int mode)
 	    }
 
 	  server_state = rbl_conf_connect_db (src_Node_info[i]->dbname,
-					      "localhost");
+					      "localhost", -1);
 	  if (server_state == HA_STATE_SLAVE)
 	    {
 	      src_Connected_index = i;

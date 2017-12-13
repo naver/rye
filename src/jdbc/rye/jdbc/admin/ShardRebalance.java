@@ -125,7 +125,7 @@ class ShardRebalance extends ShardCommand
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 
 	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i],
-			    "dba", dbaPasswordArr[i], "rw", "");
+			    "dba", dbaPasswordArr[i], "rw", null);
 
 	    con.close();
 	}
@@ -148,7 +148,7 @@ class ShardRebalance extends ShardCommand
 	RyeConnection con = null;
 
 	con = makeConnection(shardMgmtInfo.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba", dbaPasswd, "rw",
-			"");
+			null);
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 
 	if (moveAll) {
