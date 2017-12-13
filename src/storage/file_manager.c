@@ -13415,7 +13415,7 @@ file_print_name_of_class (THREAD_ENTRY * thread_p, FILE * fp,
       class_name_p = heap_get_class_name (thread_p, class_oid_p);
       fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s)\n",
 	       class_oid_p->volid, class_oid_p->pageid, class_oid_p->slotid,
-	       (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*");
+	       (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*");
       if (class_name_p)
 	{
 	  free_and_init (class_name_p);
@@ -13438,7 +13438,7 @@ file_print_class_name_of_instance (THREAD_ENTRY * thread_p, FILE * fp,
       class_name_p = heap_get_class_name_of_instance (thread_p, inst_oid_p);
       fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s)\n",
 	       inst_oid_p->volid, inst_oid_p->pageid, inst_oid_p->slotid,
-	       (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*");
+	       (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*");
       if (class_name_p)
 	{
 	  free_and_init (class_name_p);
@@ -13462,7 +13462,7 @@ file_print_name_of_class_with_attrid (THREAD_ENTRY * thread_p, FILE * fp,
       class_name_p = heap_get_class_name (thread_p, class_oid_p);
       fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s), ATTRID: %2d\n",
 	       class_oid_p->volid, class_oid_p->pageid, class_oid_p->slotid,
-	       (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*", attr_id);
+	       (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*", attr_id);
       if (class_name_p)
 	{
 	  free_and_init (class_name_p);
@@ -13529,7 +13529,7 @@ file_print_class_name_index_name_with_attrid (THREAD_ENTRY * thread_p,
   /* print */
   fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s), %s, ATTRID: %2d",
 	   class_oid_p->volid, class_oid_p->pageid, class_oid_p->slotid,
-	   (class_name_p == NULL) ? "*UNKNOWN-CLASS*" : class_name_p,
+	   (class_name_p == NULL) ? "*UNKNOWN-TABLE*" : class_name_p,
 	   (index_name_p == NULL) ? "*UNKNOWN-INDEX*" : index_name_p,
 	   attr_id);
 
