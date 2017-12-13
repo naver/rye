@@ -1002,7 +1002,8 @@ shard_mgmt_monitor (const T_SHM_SHARD_MGMT_INFO * shm_info_p)
       str_out ("id:%d %s:%d %s (%s:%s)",
 	       shm_info_p->shard_node_info[i].node_id,
 	       shm_info_p->shard_node_info[i].host_ip,
-	       shm_info_p->shard_node_info[i].port,
+	       PRM_NODE_INFO_GET_PORT (&shm_info_p->shard_node_info[i].
+				       host_info),
 	       shm_info_p->shard_node_info[i].local_dbname,
 	       shm_info_p->shard_node_info[i].host_name, ha_mode_str);
       print_newline ();

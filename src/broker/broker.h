@@ -53,8 +53,7 @@ typedef struct
   int node_id;
   char local_dbname[SRV_CON_DBNAME_SIZE];
   char host_ip_str[IP_ADDR_STR_LEN];
-  int port;
-  in_addr_t host_ip_addr;
+  PRM_NODE_INFO host_info;
   HA_STATE_FOR_DRIVER ha_state;
   char host_name[SHM_NODE_INFO_STR_SIZE];	/* monitoring purpose */
 } T_SHARD_NODE_INFO;
@@ -251,8 +250,9 @@ extern void br_mgmt_result_msg_reset (T_MGMT_RESULT_MSG * result_msg);
 extern int br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg,
 				   int msg_size, const void *msg);
 extern void br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
-				     const char *dbname, const char *host,
-				     int port, in_addr_t host_addr,
+				     const char *dbname,
+				     const char *host_ip_str,
+				     const PRM_NODE_INFO * host_info,
 				     HA_STATE_FOR_DRIVER ha_state,
 				     const char *host_name);
 extern void br_set_init_error (int err_code, int os_err_code);

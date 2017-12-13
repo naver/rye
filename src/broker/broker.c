@@ -2473,18 +2473,35 @@ static T_REQ_ARG_READ_FUNC_TABLE req_Arg_read_func_table[] = {
 };
 
 static int
+host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
+{
+  PRM_NODE_LIST node_list;
+  if (host_str != NULL &&
+      prm_split_node_str (&node_list, host_str, false) == NO_ERROR &&
+      node_list.num_nodes >= 1)
+    {
+      *node_info = node_list.nodes[0];
+      return NO_ERROR;
+    }
+  else
+    {
+      PRM_NODE_INFO tmp_node_info = prm_get_null_node_info ();
+      *node_info = tmp_node_info;
+      return ER_FAILED;
+    }
+}
+
+static int
 node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
 {
   char *save_ptr = NULL;
   char *str_id;
-  char *str_port;
   char *local_dbname;
   char *host_str;
-  in_addr_t ip_addr;
   char *cp_arg_str;
   int error = 0;
-  int node_id, port;
-  char host_ip[IP_ADDR_STR_LEN];
+  int node_id;
+  PRM_NODE_INFO host_info;
 
   RYE_ALLOC_COPY_STR (cp_arg_str, arg_str);
   if (cp_arg_str == NULL)
@@ -2494,39 +2511,19 @@ node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
 
   str_id = strtok_r (cp_arg_str, ":", &save_ptr);
   local_dbname = strtok_r (NULL, ":", &save_ptr);
-  host_str = strtok_r (NULL, ":", &save_ptr);
-  str_port = strtok_r (NULL, ":", &save_ptr);
+  host_str = save_ptr;
 
   if (local_dbname == NULL || host_str == NULL ||
       strlen (local_dbname) >= SRV_CON_DBNAME_SIZE ||
-      str_to_int (&node_id, str_id) < 0 || str_to_int (&port, str_port) < 0)
+      str_to_int (&node_id, str_id) < 0 ||
+      host_str_to_node_info (&host_info, host_str) != NO_ERROR)
     {
       error = -1;
       goto end;
     }
 
-  if (strcasecmp (host_str, "localhost") == 0 ||
-      strcmp (host_str, "127.0.0.1") == 0)
-    {
-      ip_addr = shm_Br->my_ip;
-    }
-  else
-    {
-      if (cci_host_str_to_addr (host_str, (unsigned char *) &ip_addr) < 0)
-	{
-	  error = -1;
-	  goto end;
-	}
-    }
-  ut_get_ipv4_string (host_ip, IP_ADDR_STR_LEN, ip_addr);
-
-  if (port == 0)
-    {
-      port = prm_get_local_port_id ();
-    }
-
-  br_copy_shard_node_info (node_info, node_id, local_dbname, host_ip, port,
-			   INADDR_NONE, HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
+  br_copy_shard_node_info (node_info, node_id, local_dbname, NULL, &host_info,
+			   HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
 
 end:
   RYE_FREE_MEM (cp_arg_str);
@@ -3319,25 +3316,26 @@ br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg, int msg_size,
 
 void
 br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
-			 const char *dbname, const char *host, int port,
-			 in_addr_t host_addr, HA_STATE_FOR_DRIVER ha_state,
-			 const char *host_name)
+			 const char *dbname, const char *host_ip_str,
+			 const PRM_NODE_INFO * host_info,
+			 HA_STATE_FOR_DRIVER ha_state, const char *host_name)
 {
   node->node_id = node_id;
-  node->port = port;
 
   assert (strlen (dbname) < SRV_CON_DBNAME_SIZE);
-  assert (strlen (host) < IP_ADDR_STR_LEN);
 
   STRNCPY (node->local_dbname, dbname, sizeof (node->local_dbname));
-  STRNCPY (node->host_ip_str, host, sizeof (node->host_ip_str));
 
-  if (host_addr == INADDR_NONE)
+  node->host_info = *host_info;
+  if (host_ip_str == NULL)
     {
-      host_addr = inet_addr (host);
+      css_ip_to_str (node->host_ip_str, sizeof (node->host_ip_str),
+		     PRM_NODE_INFO_GET_IP (host_info));
     }
-  assert (host_addr != INADDR_NONE);
-  node->host_ip_addr = host_addr;
+  else
+    {
+      STRNCPY (node->host_ip_str, host_ip_str, sizeof (node->host_ip_str));
+    }
 
   node->ha_state = ha_state;
 

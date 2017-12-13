@@ -162,7 +162,7 @@ typedef struct
   char host_ip[SHM_NODE_INFO_STR_SIZE];
   char host_name[SHM_NODE_INFO_STR_SIZE];
   HA_STATE_FOR_DRIVER ha_state;
-  int port;
+  PRM_NODE_INFO host_info;
 } T_SHM_SHARD_NODE_INFO;
 
 #define SHM_SHARD_NODE_INFO_MAX		100

@@ -7567,7 +7567,7 @@ prm_split_node_str_internal (PRM_NODE_LIST * node_list,
 	}
       else
 	{
-	  if (parse_int (&port, p + 1, 10) != 0)
+	  if (parse_int (&port, p + 1, 10) != 0 || port <= 0)
 	    {
 
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, p + 1);
