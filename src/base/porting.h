@@ -198,14 +198,6 @@ extern "C"
 /*
  * Interfaces for atomic operations
  *
- * Developers should check HAVE_ATOMIC_BUILTINS before using atomic builtins
- * as follows.
- *  #if defined(HAVE_ATOMIC_BUILTINS)
- *   ... write codes with atomic builtins ...
- *  #else
- *   ... leave legacy codes or write codes without atomic builtins ...
- *  #endif
- *
  * ATOMIC_TAS_xx (atomic test-and-set) writes new_val into *ptr, and returns
  * the previous contents of *ptr. ATOMIC_CAS_xx (atomic compare-and-swap) returns
  * true if the swap is done. It is only done if *ptr equals to cmp_val.
@@ -216,8 +208,6 @@ extern "C"
  * 64bit values. That is why we define two types of macros.
  */
 #if defined(HAVE_GCC_ATOMIC_BUILTINS)
-
-#define HAVE_ATOMIC_BUILTINS
 
 #define ATOMIC_TAS_32(ptr, new_val) \
 	__sync_lock_test_and_set(ptr, new_val)

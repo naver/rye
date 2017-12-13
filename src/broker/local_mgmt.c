@@ -893,9 +893,9 @@ local_mg_sync_shard_mgmt_info (T_LOCAL_MGMT_JOB * job,
 			  strlen (local_Mgmt_server_info.hostname) + 1,
 			  local_Mgmt_server_info.hostname);
 
-  if (rye_master_shm_get_server_state
-      (req_arg->value.shard_mgmt_info.local_dbname,
-       &server_state) == NO_ERROR)
+  if (rye_server_shm_get_state (&server_state,
+				req_arg->value.shard_mgmt_info.
+				local_dbname) == NO_ERROR)
     {
       int ha_state_for_driver;
 

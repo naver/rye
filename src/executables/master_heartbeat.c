@@ -7372,5 +7372,5 @@ shm_master_update_server_state (HB_PROC_ENTRY * proc)
       return;
     }
 
-  master_shm_update_server_state (proc->pid, proc->server_state);
+  rye_server_shm_set_state (proc->argv[1], proc->server_state);
 }

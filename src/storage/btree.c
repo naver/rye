@@ -656,7 +656,9 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
   int i;
   DB_TYPE type;
   TP_DOMAIN *dom;
+  char index_name_on_table[LINE_MAX];
 
+  /* Assertions */
   assert (btid != NULL);
   assert (btid->classrepr != NULL);
   assert (btid->classrepr_cache_idx != -1);
@@ -678,6 +680,7 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
    */
 
   indexp = &(btid->classrepr->indexes[btid->indx_id]);
+  assert (indexp->btname != NULL);
 
 #if 1				/* safe code */
   DB_IDXKEY_MAKE_NULL (key);
@@ -700,7 +703,7 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
       if (error != NO_ERROR)
 	{
 	  assert (false);
-	  return error;
+	  goto exit_on_error;
 	}
     }
 
@@ -721,7 +724,7 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
   if (error != NO_ERROR)
     {
       assert (false);
-      return error;
+      goto exit_on_error;
     }
 
   for (i = 0; error == NO_ERROR && i < indexp->n_atts; i++)
@@ -778,7 +781,7 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
   if (error != NO_ERROR)
     {
       assert (false);
-      return error;
+      goto exit_on_error;
     }
 
   assert (BTREE_IS_VALID_KEY_LEN (btree_get_key_length (key)));
@@ -791,7 +794,8 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
       error = btree_get_oid_from_key (thread_p, btid, key, &oid);
       if (error != NO_ERROR)
 	{
-	  return error;
+	  assert (false);
+	  goto exit_on_error;
 	}
       assert (!OID_ISNULL (&oid));
 
@@ -807,9 +811,34 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
     }
 #endif
 
+  if (error != NO_ERROR || DB_IDXKEY_IS_NULL (key))
+    {
+      goto exit_on_error;
+    }
+
   assert (error == NO_ERROR);
+  assert (!DB_IDXKEY_IS_NULL (key));
+
+end:
 
   return error;
+
+exit_on_error:
+
+/* TODO - index crash */
+
+  /* init */
+  strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+
+  (void) btree_get_indexname_on_table (thread_p, btid, index_name_on_table,
+				       LINE_MAX);
+
+  error = ER_BTREE_PAGE_CORRUPTED;
+  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	  index_name_on_table);
+  assert (false);
+
+  goto end;
 }
 
 /*
@@ -2820,8 +2849,10 @@ btree_merge_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   /* Log the page Q records for undo/redo purposes on page P. */
   recset_header.rec_cnt = left_cnt;
   recset_header.first_slotid = 1;
-  ret = btree_rv_util_save_page_records (Q, 1, left_cnt, 1, recset_data,
-					 &recset_length);
+  ret =
+    btree_rv_util_save_page_records (thread_p, btid, Q, 1, left_cnt, 1,
+				     recset_data, IO_MAX_PAGE_SIZE,
+				     &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2897,8 +2928,10 @@ btree_merge_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   recset_header.rec_cnt = right_cnt;
   recset_header.first_slotid = left_cnt + 1;
 
-  ret = btree_rv_util_save_page_records (R, 1, right_cnt, left_cnt + 1,
-					 recset_data, &recset_length);
+  ret =
+    btree_rv_util_save_page_records (thread_p, btid, R, 1, right_cnt,
+				     left_cnt + 1, recset_data,
+				     IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3201,9 +3234,10 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   /* Log the right page records for undo purposes on the left page. */
   recset_header.rec_cnt = right_cnt;
   recset_header.first_slotid = left_cnt + 1;
-  ret = btree_rv_util_save_page_records (right_pg, 1, right_cnt,
-					 left_cnt + 1, recset_data,
-					 &recset_length);
+  ret =
+    btree_rv_util_save_page_records (thread_p, btid, right_pg, 1, right_cnt,
+				     left_cnt + 1, recset_data,
+				     IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -6530,23 +6564,33 @@ exit_on_error:
  *   first_slotid(in): First Slot identifier to be saved
  *   rec_cnt(in): Number of slots to be saved
  *   ins_slotid(in): First Slot identifier to reinsert set of records
- *   data(in): Data area where the records will be stored
+ *   data(out): Data area where the records will be stored
  *             (Enough space(DB_PAGESIZE) must have been allocated by caller
- *   length(in): Effective length of the data area after save is completed
+ *   data_len(in): Data area buffer length
+ *   length(out): Effective length of the data area after save is completed
  *
  * Note: Copy the set of records to designated data area.
  *
  * Note: This is a UTILITY routine, but not an actual recovery routine
  */
 int
-btree_rv_util_save_page_records (PAGE_PTR page_ptr,
+btree_rv_util_save_page_records (THREAD_ENTRY * thread_p, BTID_INT * btid,
+				 PAGE_PTR page_ptr,
 				 INT16 first_slotid,
 				 int rec_cnt, INT16 ins_slotid,
-				 char *data, int *length)
+				 char *data, const int data_len, int *length)
 {
   RECDES rec = RECDES_INITIALIZER;
   int i, offset, wasted;
   char *datap;
+
+  /* Assertions */
+  assert (btid != NULL);
+  assert (btid->classrepr != NULL);
+  assert (btid->classrepr_cache_idx != -1);
+  assert (btid->indx_id != -1);
+
+  assert (data_len == IO_MAX_PAGE_SIZE);
 
   *length = 0;
   datap = (char *) data + sizeof (RECSET_HEADER);
@@ -6563,20 +6607,58 @@ btree_rv_util_save_page_records (PAGE_PTR page_ptr,
 	  return er_errid ();
 	}
 
+      if (offset + 2 > data_len)
+	{
+	  assert (false);
+	  break;
+	}
       *(INT16 *) datap = rec.length;
       datap += 2;
       offset += 2;
 
+      if (offset + 2 > data_len)
+	{
+	  assert (false);
+	  break;
+	}
       *(INT16 *) datap = rec.type;
       datap += 2;
       offset += 2;
 
+      if (offset + rec.length > data_len)
+	{
+	  assert (false);
+	  break;
+	}
       memcpy (datap, rec.data, rec.length);
       datap += rec.length;
       offset += rec.length;
+
       wasted = DB_WASTED_ALIGN (offset, BTREE_MAX_ALIGN);
+      if (offset + wasted > data_len)
+	{
+	  assert (false);
+	  break;
+	}
       datap += wasted;
       offset += wasted;
+    }
+
+  if (i < rec_cnt)
+    {				/* TODO - index crash */
+      char index_name_on_table[LINE_MAX];
+
+      /* init */
+      strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+
+      (void) btree_get_indexname_on_table (thread_p, btid,
+					   index_name_on_table, LINE_MAX);
+
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_BTREE_PAGE_CORRUPTED,
+	      1, index_name_on_table);
+      assert (false);
+
+      return ER_FAILED;
     }
 
   datap = data;
@@ -7497,79 +7579,46 @@ btree_key_has_null (const DB_IDXKEY * key)
 }
 #endif
 
-int
-btree_set_error (THREAD_ENTRY * thread_p, const DB_IDXKEY * key,
-		 OID * obj_oid, BTID * btid,
-		 int severity, int err_id, const char *filename, int lineno)
+void
+btree_get_indexname_on_table (THREAD_ENTRY * thread_p,
+			      const BTID_INT * btid, char *buffer,
+			      const int buffer_len)
 {
-#define OID_MSG_BUF_SIZE 64
-
-  char key_str[LINE_MAX];
   char *class_name = NULL;
-  char *index_name = NULL;
-  char btid_msg_buf[OID_MSG_BUF_SIZE];
-  char class_oid_msg_buf[OID_MSG_BUF_SIZE];
-  char oid_msg_buf[OID_MSG_BUF_SIZE];
-  OID class_oid;
+  OR_INDEX *indexp = NULL;
 
-  if (key != NULL)
+  if (btid == NULL || buffer == NULL || buffer_len < LINE_MAX)
     {
-      help_sprint_idxkey (key, key_str, sizeof (key_str) - 1);
-      key_str[LINE_MAX - 1] = '\0';
-    }
-  else
-    {
-      strcpy (key_str, "*UNKNOWN-KEY*");
+      assert (false);		/* invalid input args */
+      return;
     }
 
-  heap_get_class_oid (thread_p, &class_oid, obj_oid);
+  /* Assertions */
+  assert (btid != NULL);
+  assert (btid->classrepr != NULL);
+  assert (btid->classrepr_cache_idx != -1);
+  assert (btid->indx_id != -1);
 
-  if (!OID_ISNULL (&class_oid))
+  indexp = &(btid->classrepr->indexes[btid->indx_id]);
+
+  assert (!OID_ISNULL (&(btid->cls_oid)));
+  assert (indexp->btname != NULL);
+
+  if (!OID_ISNULL (&(btid->cls_oid)))
     {
-      class_name = heap_get_class_name (thread_p, &class_oid);
-      if (heap_get_indexname_of_btid (thread_p,
-				      &class_oid, btid,
-				      &index_name) != NO_ERROR)
-	{
-	  index_name = NULL;
-	}
+      class_name = heap_get_class_name (thread_p, &(btid->cls_oid));
     }
 
-  if (index_name && btid)
-    {
-      snprintf (btid_msg_buf, OID_MSG_BUF_SIZE, "(B+tree: %d|%d|%d)",
-		btid->vfid.volid, btid->vfid.fileid, btid->root_pageid);
-    }
+  snprintf (buffer, buffer_len, "INDEX %s ON TABLE %s",
+	    (indexp->btname) ? indexp->btname : "*UNKNOWN-INDEX*",
+	    (class_name) ? class_name : "*UNKNOWN-TABLE*");
 
-  if (class_name)
-    {
-      snprintf (class_oid_msg_buf, OID_MSG_BUF_SIZE, "(CLASS_OID: %d|%d|%d)",
-		class_oid.volid, class_oid.pageid, class_oid.slotid);
-    }
-
-  if (key && obj_oid)
-    {
-      snprintf (oid_msg_buf, OID_MSG_BUF_SIZE, "(OID: %d|%d|%d)",
-		obj_oid->volid, obj_oid->pageid, obj_oid->slotid);
-    }
-
-  er_set (severity, filename, lineno, err_id, 6,
-	  (index_name) ? index_name : "*UNKNOWN-INDEX*",
-	  (index_name && btid) ? btid_msg_buf : "",
-	  (class_name) ? class_name : "*UNKNOWN-CLASS*",
-	  (class_name) ? class_oid_msg_buf : "", key_str,
-	  (key && obj_oid) ? oid_msg_buf : "");
-
-  if (index_name)
-    {
-      free_and_init (index_name);
-    }
   if (class_name)
     {
       free_and_init (class_name);
     }
 
-  return NO_ERROR;
+  return;
 }
 
 /*

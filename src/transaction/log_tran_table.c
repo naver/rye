@@ -885,7 +885,7 @@ logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
   int visited_loop_start_pos;
   LOG_TDES *tdes;		/* Transaction descriptor */
   int tran_index;		/* The assigned index */
-  int save_tran_index;		/* Save as a good index to assign */
+  UNUSED_VAR int save_tran_index;		/* Save as a good index to assign */
   int assigned_tran_indics, total_tran_indices;
 
 #if defined(SERVER_MODE)

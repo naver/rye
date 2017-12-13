@@ -154,7 +154,7 @@ main (int argc, char *argv[])
   T_SHM_INFO *shm_info;
 
   signal (SIGPIPE, SIG_IGN);
-  assert (BROKER_NAME_LEN >= SHM_DBNAME_SIZE);
+  assert (BROKER_NAME_LEN >= SHM_NAME_SIZE);
 
   if (get_args (argc, argv) < 0)
     {
