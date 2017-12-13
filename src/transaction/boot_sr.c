@@ -2850,7 +2850,7 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
    * svr_shm_initialize() destroy already created shared memory and recreate.
    * it is safe to call svr_shm_initialize() after volumes are mounted
    */
-  if (svr_shm_initialize (db_name, MAX_NTRANS, getpid ()) != NO_ERROR)
+  if (svr_shm_initialize (db_name, MAX_NTRANS) != NO_ERROR)
     {
       return ER_FAILED;
     }
@@ -3945,7 +3945,8 @@ boot_create_all_volumes (THREAD_ENTRY * thread_p,
   /* Create the needed files */
   if (file_tracker_create (thread_p, &boot_Db_parm->trk_vfid) == NULL
       || xheap_create (thread_p, &boot_Db_parm->hfid, NULL) != NO_ERROR
-      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid, NULL) != NO_ERROR
+      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid,
+		       NULL) != NO_ERROR
       || heap_assign_address (thread_p, &boot_Db_parm->rootclass_hfid,
 			      &boot_Db_parm->rootclass_oid, 0) != NO_ERROR)
     {

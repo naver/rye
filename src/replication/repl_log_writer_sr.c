@@ -562,12 +562,11 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
       /* wait until LFT finishes flushing */
       rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
-      if (entry->status == LOGWR_STATUS_FETCH
-	  && writer_info->flush_completed == false)
+      while (entry->status == LOGWR_STATUS_FETCH
+	     && writer_info->flush_completed == false)
 	{
 	  rv = pthread_cond_wait (&writer_info->wr_list_cond,
 				  &writer_info->wr_list_mutex);
-	  assert (writer_info->flush_completed == true);
 	}
 
       pthread_mutex_unlock (&writer_info->wr_list_mutex);
