@@ -912,7 +912,7 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
       fprintf (fp, "INDEX %s ON CLASS %s (CLASS_OID:%2d|%4d|%2d) \n\n",
 	       (btname) ? btname : "*UNKNOWN-INDEX*",
-	       (class_name) ? class_name : "*UNKNOWN-CLASS*",
+	       (class_name) ? class_name : "*UNKNOWN-TABLE*",
 	       class_oid.volid, class_oid.pageid, class_oid.slotid);
 
       if (class_name)

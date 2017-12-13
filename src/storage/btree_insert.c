@@ -320,9 +320,23 @@ btree_insert_into_leaf (THREAD_ENTRY * thread_p,
   if (INDEX_IS_UNIQUE (indexp)
       && max_diff_column_index == key->size - 1 && !btree_key_is_null (key))
     {
-      btree_get_oid_from_key (thread_p, btid, key, &oid);
-      BTREE_SET_UNIQUE_VIOLATION_ERROR (thread_p, key, &oid, btid->sys_btid);
+      char index_name_on_table[LINE_MAX];
+      char key_str[LINE_MAX];
+
+      /* init */
+      strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+      strcpy (key_str, "*UNKNOWN-KEY*");
+
+      (void) btree_get_indexname_on_table (thread_p,
+					   btid, index_name_on_table,
+					   LINE_MAX);
+
+      help_sprint_idxkey (key, key_str, sizeof (key_str) - 1);
+      key_str[LINE_MAX - 1] = '\0';
+
       error = ER_BTREE_UNIQUE_FAILED;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, index_name_on_table,
+	      key_str);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -384,8 +398,19 @@ btree_get_prefix (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
   assert (key1 != NULL);
   assert (key2 != NULL);
   if (DB_IDXKEY_IS_NULL (key1) || DB_IDXKEY_IS_NULL (key2))
-    {
-      assert (false);		/* TODO - index crash */
+    {				/* TODO - index crash */
+      char index_name_on_table[LINE_MAX];
+
+      /* init */
+      strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+
+      (void) btree_get_indexname_on_table (thread_p, btid,
+					   index_name_on_table, LINE_MAX);
+
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_BTREE_PAGE_CORRUPTED,
+	      1, index_name_on_table);
+      assert (false);
+
       return ER_FAILED;
     }
 
@@ -531,6 +556,12 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
   NON_LEAF_REC nleaf_pnt;
   BTREE_NODE_SPLIT_INFO split_info;
 
+  /* Assertions */
+  assert (btid != NULL);
+  assert (btid->classrepr != NULL);
+  assert (btid->classrepr_cache_idx != -1);
+  assert (btid->indx_id != -1);
+
   assert (DB_IDXKEY_IS_NULL (mid_key));
 
   assert (clear_midkey != NULL);
@@ -566,12 +597,24 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
   split_info = node_header.split_info;
 
   if (n < 0 || key_cnt <= 3)
-    {
-      assert (false);		/* TODO - index crash */
+    {				/* TODO - index crash */
+      char index_name_on_table[LINE_MAX];
+
+      /* init */
+      strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+
+      (void) btree_get_indexname_on_table (thread_p, btid,
+					   index_name_on_table, LINE_MAX);
+
+      error = ER_BTREE_PAGE_CORRUPTED;
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      index_name_on_table);
 
       er_log_debug (ARG_FILE_LINE,
 		    "btree_find_split_point: node key count underflow: %d",
 		    key_cnt);
+      assert (false);
+
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -1049,9 +1092,10 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   recset_data = PTR_ALIGN (recset_data_buf, BTREE_MAX_ALIGN);
 
   /* read the before image of second half of page Q for undo logging */
-  ret = btree_rv_util_save_page_records (Q, mid_slot_id + 1, right,
-					 mid_slot_id + 1, recset_data,
-					 IO_MAX_PAGE_SIZE, &recset_length);
+  ret =
+    btree_rv_util_save_page_records (thread_p, btid, Q, mid_slot_id + 1,
+				     right, mid_slot_id + 1, recset_data,
+				     IO_MAX_PAGE_SIZE, &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1081,10 +1125,10 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
     {
       if (i > 1)
 	{
-	  ret = btree_rv_util_save_page_records (R, 1, i - 1, 1,
-						 recset_data,
-						 IO_MAX_PAGE_SIZE,
-						 &recset_length);
+	  ret =
+	    btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1, 1,
+					     recset_data, IO_MAX_PAGE_SIZE,
+					     &recset_length);
 	  if (ret == NO_ERROR)
 	    {
 	      LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, Q, -1);
@@ -1587,8 +1631,10 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   recset_data = PTR_ALIGN (recset_data_buf, BTREE_MAX_ALIGN);
 
   /* Log page R records for redo purposes */
-  ret = btree_rv_util_save_page_records (R, 1, right, 1, recset_data,
-					 IO_MAX_PAGE_SIZE, &recset_length);
+  ret =
+    btree_rv_util_save_page_records (thread_p, btid, R, 1, right, 1,
+				     recset_data, IO_MAX_PAGE_SIZE,
+				     &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1619,8 +1665,10 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
     }
 
   /* Log page Q records for redo purposes */
-  ret = btree_rv_util_save_page_records (Q, 1, left, 1, recset_data,
-					 IO_MAX_PAGE_SIZE, &recset_length);
+  ret =
+    btree_rv_util_save_page_records (thread_p, btid, Q, 1, left, 1,
+				     recset_data, IO_MAX_PAGE_SIZE,
+				     &recset_length);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1844,6 +1892,12 @@ btree_insert (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key)
 #endif
 
   PERF_MON_GET_CURRENT_TIME (perf_start);
+
+  /* Assertions */
+  assert (btid != NULL);
+  assert (btid->classrepr != NULL);
+  assert (btid->classrepr_cache_idx != -1);
+  assert (btid->indx_id != -1);
 
   assert (key != NULL);
   if (key == NULL)
@@ -2108,8 +2162,19 @@ start_point:
 	}
 
       if (pheader.node_level - 1 != qheader.node_level || qheader.key_cnt < 0)
-	{
-	  assert (false);	/* TODO - index crash */
+	{			/* TODO - index crash */
+	  char index_name_on_table[LINE_MAX];
+
+	  /* init */
+	  strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+
+	  (void) btree_get_indexname_on_table (thread_p, btid,
+					       index_name_on_table, LINE_MAX);
+
+	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+		  ER_BTREE_PAGE_CORRUPTED, 1, index_name_on_table);
+	  assert (false);
+
 	  GOTO_EXIT_ON_ERROR;
 	}
 

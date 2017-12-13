@@ -1855,7 +1855,7 @@ log_append_redo_data (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 		      LOG_DATA_ADDR * addr, int length, const void *data)
 {
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
 
@@ -1972,7 +1972,7 @@ log_append_undoredo_crumbs (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 			    const LOG_CRUMB * redo_crumbs)
 {
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
 
@@ -2085,7 +2085,7 @@ log_append_undo_crumbs (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 			const LOG_CRUMB * crumbs)
 {
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
 
@@ -2193,7 +2193,7 @@ log_append_redo_crumbs (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 			const LOG_CRUMB * crumbs)
 {
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
 
@@ -2453,7 +2453,7 @@ log_append_dboutside_redo (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 			   int length, const void *data)
 {
   LOG_TDES *tdes;		/* Transaction descriptor     */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
 
 #if defined(RYE_DEBUG)
@@ -2523,7 +2523,7 @@ log_append_postpone (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
   LOG_RCV rcv;			/* Recovery structure for execution   */
   bool skipredo;
   LOG_LSA *crash_lsa;
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
 
 #if defined(RYE_DEBUG)
@@ -2668,7 +2668,7 @@ log_append_run_postpone (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 {
   struct log_run_postpone *run_posp;	/* A run postpone record              */
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
 
@@ -3067,7 +3067,7 @@ log_skip_logging_set_lsa (THREAD_ENTRY * thread_p, LOG_DATA_ADDR * addr)
   LOG_PRIOR_NODE *node;
   LOG_LSA start_lsa;
   LOG_TDES *tdes;		/* Transaction descriptor             */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
 
   assert (addr && addr->pgptr != NULL);
   if (addr == NULL || addr->pgptr == NULL)
@@ -3168,7 +3168,7 @@ log_append_savepoint (THREAD_ENTRY * thread_p, const char *savept_name)
   struct log_savept *savept;	/* A savept log record                  */
   LOG_TDES *tdes;		/* Transaction descriptor               */
   int length;			/* Length of the name of the save point */
-  int error_code;
+  UNUSED_VAR int error_code;
   LOG_PRIOR_NODE *node;
 
   assert (savept_name != NULL);
@@ -3454,7 +3454,7 @@ log_end_system_op (THREAD_ENTRY * thread_p, LOG_RESULT_TOPOP result)
 				 * returned to this state
 				 */
   TRAN_STATE state;
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL)
@@ -3610,7 +3610,7 @@ LOG_LSA *
 log_get_parent_lsa_system_op (THREAD_ENTRY * thread_p, LOG_LSA * parent_lsa)
 {
   LOG_TDES *tdes;		/* Transaction descriptor        */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL)
@@ -3647,7 +3647,7 @@ bool
 log_is_tran_in_system_op (THREAD_ENTRY * thread_p)
 {
   LOG_TDES *tdes;		/* Transaction descriptor */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL)
@@ -4591,7 +4591,7 @@ log_commit (THREAD_ENTRY * thread_p, int tran_index)
 {
   TRAN_STATE state;		/* State of committed transaction */
   LOG_TDES *tdes;		/* Transaction descriptor         */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
 
   if (tran_index == NULL_TRAN_INDEX)
     {
@@ -4679,7 +4679,7 @@ log_abort (THREAD_ENTRY * thread_p, int tran_index)
 {
   TRAN_STATE state;		/* State of aborted transaction */
   LOG_TDES *tdes;		/* Transaction descriptor       */
-  int error_code = NO_ERROR;
+  UNUSED_VAR int error_code = NO_ERROR;
 
   if (tran_index == NULL_TRAN_INDEX)
     {

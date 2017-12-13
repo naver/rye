@@ -3348,7 +3348,7 @@ logpb_flush_pages (THREAD_ENTRY * thread_p, UNUSED_ARG LOG_LSA * flush_lsa)
   logpb_flush_pages_direct (thread_p);
   LOG_CS_EXIT ();
 #else /* SERVER_MODE */
-  int rv;
+  UNUSED_VAR int rv;
   struct timespec wakeup_time = { 0, 0 };
   int max_wait_time_in_msec = 1000;
   bool group_commit;
