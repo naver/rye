@@ -126,10 +126,10 @@ static int btree_merge_root (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			     short node_type);
 #endif
 static int btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid,
-			     PAGE_PTR P, PAGE_PTR Q, PAGE_PTR R,
-			     UNUSED_ARG VPID * P_vpid, VPID * Q_vpid,
-			     VPID * R_vpid, INT16 p_slot_id, short node_type,
-			     int is_left_merge, VPID * child_vpid);
+			     PAGE_PTR P, PAGE_PTR L, PAGE_PTR Q,
+			     UNUSED_ARG VPID * P_vpid, VPID * L_vpid,
+			     VPID * Q_vpid, INT16 p_slot_id, short node_type,
+			     VPID * child_vpid);
 static PAGE_PTR btree_locate_key (THREAD_ENTRY * thread_p,
 				  BTID_INT * btid_int, const DB_IDXKEY * key,
 				  VPID * pg_vpid, INT16 * slot_id,
@@ -199,7 +199,7 @@ static int btree_save_range_search_result (THREAD_ENTRY * thread_p,
 					   INDX_SCAN_ID * index_scan_id_p);
 
 static int btree_check_key_cnt (PAGE_PTR page_p, short node_level,
-                                short key_cnt);
+				short key_cnt);
 
 /*
  * btree_clear_key_value () -
@@ -3044,19 +3044,17 @@ exit_on_error:
  *   return: NO_ERROR
  *   btid(in): The B+tree index identifier
  *   P(in): Page pointer for the parent page of page Q
+ *   L(in): Page pointer for the left sibling of page Q
  *   Q(in): Page pointer for the child page of P that will be merged
- *   R(in): Page pointer for the left or right sibling of page Q
  *   next_page(in):
  *   P_vpid(in): Page identifier for page P
+ *   L_vpid(in): Page identifier for page L
  *   Q_vpid(in): Page identifier for page Q
- *   R_vpid(in): Page identifier for page R
  *   p_slot_id(in): The slot of parent page P which points to page Q
  *   node_type(in): shows whether page Q is a leaf page, or not
- *   is_left_merge(in): Flag which shows whether Q will merge with its left or
- *                   right sibling
- *   child_vpid(in): Child page identifier to be followed, Q or R.
+ *   child_vpid(in): Child page identifier to be followed, L.
  *
- * Note: Page Q is merged with page R which must be its left sibling.
+ * Note: Page Q is merged with page L which must be its left sibling.
  * After the merge operation, page Q becomes ready for deallocation.
  * Deallocation is left to the calling routine.
  *
@@ -3065,9 +3063,9 @@ exit_on_error:
  */
 static int
 btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
-		  PAGE_PTR Q, PAGE_PTR R, UNUSED_ARG VPID * P_vpid,
-		  VPID * Q_vpid, VPID * R_vpid, INT16 p_slot_id,
-		  short node_type, int is_left_merge, VPID * child_vpid)
+		  PAGE_PTR L, PAGE_PTR Q, UNUSED_ARG VPID * P_vpid,
+		  VPID * L_vpid, VPID * Q_vpid, INT16 p_slot_id,
+		  short node_type, VPID * child_vpid)
 {
   INT16 left_slotid, right_slotid;
   PAGE_PTR left_pg = NULL;
@@ -3095,12 +3093,10 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
   assert (P == NULL || (P_vpid != NULL && !VPID_ISNULL (P_vpid)));
 
+  assert (L != NULL);
   assert (Q != NULL);
-  assert (R != NULL);
+  assert (L_vpid != NULL && !VPID_ISNULL (L_vpid));
   assert (Q_vpid != NULL && !VPID_ISNULL (Q_vpid));
-  assert (R_vpid != NULL && !VPID_ISNULL (R_vpid));
-
-  assert (is_left_merge == 1);
 
   /* initializations */
   recset_data = NULL;
@@ -3112,32 +3108,12 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
   DB_IDXKEY_MAKE_NULL (&left_key);
 
-  left_pg = is_left_merge ? R : Q;
-  if (is_left_merge)
-    {
-      left_vpid = *R_vpid;
-    }
-  else
-    {
-      assert (false);
-      left_vpid = *Q_vpid;
-    }
+  left_pg = L;
+  left_slotid = p_slot_id - 1;
+  left_vpid = *L_vpid;
 
-  left_slotid = is_left_merge ? (p_slot_id - 1) : p_slot_id;
-
-  right_pg = is_left_merge ? Q : R;
-#if 0
-  if (is_left_merge)
-    {
-      right_vpid = *Q_vpid;
-    }
-  else
-    {
-      right_vpid = *R_vpid;
-    }
-#endif
-
-  right_slotid = is_left_merge ? p_slot_id : (p_slot_id + 1);
+  right_pg = Q;
+  right_slotid = p_slot_id;
 
   /* get left page header information */
   if (btree_read_node_header (left_pg, &left_header) != NO_ERROR)
@@ -3157,14 +3133,14 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       /* is not merge root */
 
       if (btree_read_node_header (P, &pheader) != NO_ERROR)
-        {
-          GOTO_EXIT_ON_ERROR;
-        }
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
 
       /* log the old header record for undo purposes */
       LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, P, HEADER);
       log_append_undo_data (thread_p, RVBT_NDRECORD_UPD, &addr,
-                            sizeof (pheader), &pheader);
+			    sizeof (pheader), &pheader);
     }
   else
     {
@@ -3180,9 +3156,9 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
       /* read the first record */
       if (spage_get_record (left_pg, 1, &peek_rec, PEEK) != S_SUCCESS)
-        {
-          GOTO_EXIT_ON_ERROR;
-        }
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
 
       /* delete first record */
       /* prepare undo log record */
@@ -3191,14 +3167,14 @@ btree_merge_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       /* log the deleted slotid for undo/redo purposes */
       LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, left_pg, log_addr_offset);
       log_append_undoredo_data (thread_p, RVBT_NDRECORD_DEL, &addr,
-                                peek_rec.length,
-                                sizeof (log_addr_offset), peek_rec.data,
-                                &log_addr_offset);
+				peek_rec.length,
+				sizeof (log_addr_offset), peek_rec.data,
+				&log_addr_offset);
 
       if (spage_delete (thread_p, left_pg, 1) != 1)
-        {
-          GOTO_EXIT_ON_ERROR;
-        }
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
 
       assert (spage_number_of_records (left_pg) == 1);
     }
@@ -3804,7 +3780,7 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
   PAGE_PTR next_page = NULL;
   RECDES peek_rec = RECDES_INITIALIZER;
   NON_LEAF_REC nleaf_ptr;
-  LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
+//  LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
   int Q_used, /* R_used, */ Left_used;
   INT16 p_slot_id, m_slot_id;
   int top_op_active = 0;
@@ -3926,10 +3902,9 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
       log_start_system_op (thread_p);
       top_op_active = 1;
 
-      if (btree_merge_node (thread_p, btid, NULL, Q, P,
-			    NULL, &Q_vpid, &P_vpid,
-			    1, node_type, LEFT_MERGE,
-			    &child_vpid) != NO_ERROR)
+      if (btree_merge_node (thread_p, btid, NULL, P, Q,
+			    NULL, &P_vpid, &Q_vpid,
+			    1, node_type, &child_vpid) != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
@@ -4191,9 +4166,9 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 	      log_start_system_op (thread_p);
 	      top_op_active = 1;
 
-	      if (btree_merge_node (thread_p, btid, P, Q, Left,
-				    &P_vpid, &Q_vpid, &Left_vpid,
-				    m_slot_id, node_type, LEFT_MERGE,
+	      if (btree_merge_node (thread_p, btid, P, Left, Q,
+				    &P_vpid, &Left_vpid, &Q_vpid,
+				    m_slot_id, node_type,
 				    &child_vpid) != NO_ERROR)
 		{
 		  GOTO_EXIT_ON_ERROR;

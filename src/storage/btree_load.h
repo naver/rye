@@ -58,8 +58,6 @@
 #define NLEAFENTSZ(n) ( DISK_VPID_SIZE + n )
 
 #define HEADER 0		/* Header (Oth) record of the page  */
-#define LEFT_MERGE 1		/* Left Merge Operation             */
-#define RIGHT_MERGE 0		/* Right Merge Operation            */
 
 #define BTREE_INVALID_INDEX_ID(btid) \
  ((btid) == NULL ||\
