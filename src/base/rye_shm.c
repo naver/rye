@@ -130,7 +130,7 @@ rye_shm_is_used_key (int shm_key)
  * rye_shm_check_shm
  */
 RYE_SHM_TYPE
-rye_shm_check_shm (int shm_key, int which_shm, bool check_status)
+rye_shm_check_shm (int shm_key, RYE_SHM_TYPE shm_type, bool check_status)
 {
   void *p;
   int ret_shm_type = RYE_SHM_TYPE_UNKNOWN;
@@ -153,7 +153,7 @@ rye_shm_check_shm (int shm_key, int which_shm, bool check_status)
       return RYE_SHM_TYPE_UNKNOWN;
     }
 
-  ret_shm_type = rye_shm_check_header ((RYE_SHM_HEADER *) p, which_shm,
+  ret_shm_type = rye_shm_check_header ((RYE_SHM_HEADER *) p, shm_type,
 				       check_status);
 
   shmdt (p);
@@ -264,7 +264,7 @@ rye_shm_destroy (int shm_key)
     }
 
   shm_header = (RYE_SHM_HEADER *) shmat (mid, (char *) 0, 0);
-  if (shm_header == (RYE_SHM_HEADER *) - 1)
+  if (shm_header == (RYE_SHM_HEADER *) (-1))
     {
       assert (false);
       return ER_FAILED;

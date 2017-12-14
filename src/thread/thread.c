@@ -4320,7 +4320,7 @@ thread_mnt_track_dump (THREAD_ENTRY * thread_p)
 
 void
 thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
-			  UINT64 exec_time)
+			  UINT64 start_time)
 {
   int tran_index;
   int i;
@@ -4334,8 +4334,8 @@ thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
 
   for (i = thread_p->mnt_track_top; i >= 0; i--)
     {
-      svr_shm_stats_counter_with_time (tran_index,
-				       thread_p->mnt_track_stack[i].item,
-				       value, exec_time);
+      monitor_stats_count_with_time (tran_index,
+				     thread_p->mnt_track_stack[i].item,
+				     value, start_time);
     }
 }

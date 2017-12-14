@@ -61,7 +61,7 @@ svr_shm_initialize (const char *dbname, int max_ntrans)
   return NO_ERROR;
 #endif
 
-  svr_shm_key = rye_master_shm_get_new_server_shm_key (dbname);
+  svr_shm_key = rye_master_shm_get_new_shm_key (dbname, RYE_SHM_TYPE_SERVER);
   if (svr_shm_key < 0)
     {
       return ER_FAILED;
@@ -77,11 +77,6 @@ svr_shm_initialize (const char *dbname, int max_ntrans)
 	      (sizeof (SERVER_SHM_TRAN_INFO) * (max_ntrans)));
   shm_server = rye_shm_create (svr_shm_key, shm_size, RYE_SHM_TYPE_SERVER);
   if (shm_server == NULL)
-    {
-      return ER_FAILED;
-    }
-
-  if (rye_master_shm_set_server_shm_key (dbname, svr_shm_key) < 0)
     {
       return ER_FAILED;
     }
@@ -691,7 +686,7 @@ rye_server_shm_attach (const char *dbname, bool is_monitoring)
 
   assert (rye_Server_shm == NULL);
 
-  svr_shm_key = rye_master_shm_get_server_shm_key (dbname);
+  svr_shm_key = rye_master_shm_get_shm_key (dbname, RYE_SHM_TYPE_SERVER);
   shm_p = rye_shm_attach (svr_shm_key, RYE_SHM_TYPE_SERVER, is_monitoring);
 
   return shm_p;
@@ -898,46 +893,6 @@ rye_server_shm_get_eof_lsa (LOG_LSA * eof_lsa, const char *dbname)
   rye_server_shm_detach (shm_p);
 
   return NO_ERROR;
-}
-
-/*
- * rye_server_shm_get_global_stats_from_key ()-
- *   return: error code
- *
- *   global_stats(out):
- *   dbname(out):
- *   shm_key(in):
- *   num_stats_values(in):
- */
-int
-rye_server_shm_get_global_stats_from_key (MNT_SERVER_EXEC_STATS *
-					  global_stats, char *dbname,
-					  int shm_key, int num_stats_values)
-{
-  RYE_SERVER_SHM *shm_p;
-  int err = NO_ERROR;
-
-  assert (rye_Server_shm == NULL);
-
-  shm_p = rye_shm_attach (shm_key, RYE_SHM_TYPE_SERVER, true);
-  if (shm_p == NULL)
-    {
-      return ER_FAILED;
-    }
-
-  if (shm_p->num_stats_values != num_stats_values)
-    {
-      err = ER_FAILED;
-      goto end;
-    }
-
-  strncpy (dbname, shm_p->dbname, sizeof (shm_p->dbname));
-  *global_stats = shm_p->global_stats;
-
-end:
-  rye_server_shm_detach (shm_p);
-
-  return err;
 }
 
 /*

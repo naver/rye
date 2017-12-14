@@ -67,7 +67,7 @@ extern int thread_Recursion_depth;
 #define thread_mnt_track_push(thread_p, item, status)
 #define thread_mnt_track_pop(thread_p, status)
 #define thread_mnt_track_dump(thread_p)
-#define thread_mnt_track_counter(thread_p, value, exec_time)
+#define thread_mnt_track_counter(thread_p, value, start_time)
 
 typedef void THREAD_ENTRY;
 #else /* !SERVER_MODE */
@@ -432,7 +432,7 @@ extern THREAD_MNT_TRACK *thread_mnt_track_pop (THREAD_ENTRY * thread_p,
 					       int *status);
 extern void thread_mnt_track_dump (THREAD_ENTRY * thread_p);
 extern void thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
-				      UINT64 exec_time);
+				      UINT64 start_time);
 
 #endif /* SERVER_MODE */
 

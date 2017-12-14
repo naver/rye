@@ -156,11 +156,6 @@ extern int rye_server_shm_get_state (HA_STATE * server_state,
 extern int rye_server_shm_get_global_stats (MNT_SERVER_EXEC_STATS *
 					    global_stats, const char *dbname);
 extern int rye_server_shm_get_eof_lsa (LOG_LSA * eof_lsa, const char *dbname);
-extern int rye_server_shm_get_global_stats_from_key (MNT_SERVER_EXEC_STATS *
-						     global_stats,
-						     char *dbname,
-						     int shm_key,
-						     int num_stats_values);
 extern int rye_server_shm_get_nodeid (short *nodeid, const char *dbname);
 
 #endif /* _RYE_SERVER_SHM_H_ */

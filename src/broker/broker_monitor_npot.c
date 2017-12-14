@@ -560,14 +560,14 @@ init_server_monitor_item ()
 static void
 npot_server_monitor (T_SHM_INFO * shm_info)
 {
-  MNT_SERVER_EXEC_STATS cur_global_stats;
+  MONITOR_STATS cur_global_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
   time_t check_time = time (NULL);
   char dbname[SHM_DBNAME_SIZE];
   int i, err;
 
-  err = rye_server_shm_get_global_stats_from_key (&cur_global_stats, dbname,
-						  shm_info->key,
-						  MNT_SIZE_OF_SERVER_EXEC_STATS);
+  err = monitor_copy_global_stats (cur_global_stats, dbname,
+				   MNT_SIZE_OF_SERVER_EXEC_STATS,
+				   shm_info->key);
   if (err < 0)
     {
       return;
@@ -583,8 +583,8 @@ npot_server_monitor (T_SHM_INFO * shm_info)
       print_monitor_item (db_Stats_info[i].metric, db_Stats_info[i].item,
 			  shm_info->user_name,
 			  TAG_DB_NAME, dbname,
-			  check_time, cur_global_stats.values[i],
-			  cur_global_stats.acc_time[i],
+			  check_time, cur_global_stats[i].value,
+			  cur_global_stats[i].acc_time,
 			  db_Stats_info[i].is_cumulative,
 			  db_Stats_info[i].is_collecting_time);
     }
