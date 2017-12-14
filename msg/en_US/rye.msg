@@ -735,7 +735,7 @@ $ LOADDB
 667 Cannot match table '%1$s' with corresponding C++ class.
 668 Internal error: Unknown type '%1$d'.
 669 Server refused client connection: max clients, (%1$d), exceeded.
-670 Operation would have caused one or more unique constraint violations. INDEX %1$s%2$s ON TABLE %3$s%4$s. key: %5$s%6$s.
+670 Operation would have caused one or more unique constraint violations. %1$s. key: %2$s.
 671 A network read/write error occurred for socket %1$d associated with your transaction (index %2$d, %3$s@%4$s|%5$d)
 672 Socket %1$d associated with your transaction (index %2$d, %3$s@%4$s|%5$d) is closed.
 673 Your connection to the server has been closed since the server is going down immediately.
@@ -1200,7 +1200,7 @@ $ LOADDB
 1132 Encryption library failure: %1$s
 1133 Copylogdb for %1$s already exists.
 1134 Applylogdb for %1$s already exists.
-1135 A previous link of B+tree(%1$s) is corrupted.: vpid = (%2$d, %3$d)
+1135 Internal error: %1$s. The index page is corrupted.
 1136 A previous link of B+tree(%1$s) is repaired.: vpid = (%2$d, %3$d)
 1137 The query has been rejected due to attempt to exceed the maximum allowed nesting level(%1$d).
 1138 Handshake error (peer host %1$s): incompatible interruptibility. (client: %2$s, server: %3$s)

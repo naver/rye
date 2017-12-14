@@ -1634,7 +1634,7 @@ prior_lsa_next_record_internal (THREAD_ENTRY * thread_p,
 				int with_lock)
 {
   LOG_LSA start_lsa;
-  int rv;
+  UNUSED_VAR int rv;
 
   assert (tdes->tran_index != NULL_TRAN_INDEX);
   assert (tdes->trid != NULL_TRANID);
@@ -1748,7 +1748,7 @@ int
 prior_lsa_get_current_lsa (UNUSED_ARG THREAD_ENTRY * thread_p,
 			   LOG_LSA * current_lsa)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&log_Gl.prior_info.prior_lsa_mutex);
 

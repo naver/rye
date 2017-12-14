@@ -1327,8 +1327,8 @@
 
 #define ER_ENCRYPTION_LIB_FAILED		    -1132
 
-#define ER_BTREE_CORRUPT_PREV_LINK                  -1135
-#define ER_BTREE_REPAIR_PREV_LINK                   -1136
+#define ER_BTREE_PAGE_CORRUPTED                     -1135
+#define ER_BTREE_REPAIR_PREV_LINK                   -1136 /* unused */
 
 #define ER_MAX_RECURSION_SQL_DEPTH                  -1137
 
