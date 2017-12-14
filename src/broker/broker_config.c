@@ -40,7 +40,6 @@
 #include "cas_common.h"
 #include "broker_config.h"
 #include "broker_shm.h"
-#include "broker_filename.h"
 #include "broker_util.h"
 #include "util_func.h"
 #include "rye_shm.h"
@@ -49,8 +48,6 @@
 
 #define DEFAULT_SHARD_MGMT_NUM_MIGRATOR	2
 
-#define DEFAULT_BROKER_SHM_KEY		(DEFAULT_RYE_SHM_KEY + DEFUALT_BROKER_SHM_KEY_BASE)
-#define DEFAULT_BROKER_PORT		30000
 #define DEFAULT_ADMIN_LOG_FILE		"rye_broker.log"
 #define DEFAULT_SESSION_TIMEOUT		"5min"
 #define DEFAULT_MAX_QUERY_TIMEOUT       "0"
@@ -89,13 +86,12 @@
 typedef struct
 {
   bool has_shard_mgmt;
-  int port;
   char **metadb;
   int num_metadb;
   int num_migrator;
 } T_SHARD_MGMT_CONFIG;
 
-#define INIT_SHARD_MGMT_CONFIG { false, 0, NULL, 0, 0 }
+#define INIT_SHARD_MGMT_CONFIG { false, NULL, 0, 0 }
 
 typedef struct
 {
@@ -123,7 +119,9 @@ enum
   SECTION_NAME_TOO_LONG = 4
 };
 
+#if 0
 static int check_port_number (T_BROKER_INFO * br_info, int num_brs);
+#endif
 static int get_conf_value (const char *string, T_CONF_TABLE * conf_table);
 static const char *get_conf_string (int value, T_CONF_TABLE * conf_table);
 
@@ -201,6 +199,7 @@ conf_file_has_been_loaded (const char *conf_path)
     }
 }
 
+#if 0
 /*
  * check_port_number - Check broker's port number
  *   return: 0 or -1 if duplicated
@@ -231,6 +230,7 @@ check_port_number (T_BROKER_INFO * br_info, int num_brs)
     }
   return 0;
 }
+#endif
 
 /*
  * dir_repath - Fix path to absolute path
@@ -295,7 +295,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 {
   const char *tmp_str;
   float tmp_float;
-  char path_buff[BROKER_PATH_MAX];
+  PRM_NODE_LIST preferred_hosts;
 
   tmp_str = ini_getstr (ini, sec_name, "CCI_DEFAULT_AUTOCOMMIT", "ON",
 			lineno);
@@ -304,10 +304,6 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
     {
       return -1;
     }
-
-  /*
-     br_info->port = ini_getint (ini, sec_name, "BROKER_PORT", 0, lineno);
-   */
 
   tmp_str = ini_getstr (ini, sec_name, "SERVICE", "ON", lineno);
   br_info->service_flag = conf_get_value_table_on_off (tmp_str);
@@ -366,10 +362,6 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
     {
       return -1;
     }
-
-  tmp_str = ini_getstr (ini, sec_name, "LOG_DIR", DEFAULT_LOG_DIR, lineno);
-  (void) envvar_ryelogdir_file (path_buff, BROKER_PATH_MAX, tmp_str);
-  MAKE_FILEPATH (br_info->log_dir, path_buff, CONF_LOG_FILE_LEN);
 
   br_info->max_prepared_stmt_count = ini_getint (ini, sec_name,
 						 "MAX_PREPARED_STMT_COUNT",
@@ -522,8 +514,11 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 
   tmp_str = ini_getstr (ini, sec_name, "PREFERRED_HOSTS",
 			DEFAULT_EMPTY_STRING, lineno);
-  STRNCPY (br_info->preferred_hosts, tmp_str,
-	   sizeof (br_info->preferred_hosts));
+  if (prm_split_node_str (&preferred_hosts, tmp_str, false) != NO_ERROR)
+    {
+      return -1;
+    }
+  br_info->preferred_hosts = preferred_hosts;
 
   tmp_str = ini_getstr (ini, sec_name, "CONNECT_ORDER_RANDOM", "ON", lineno);
   br_info->connect_order_random = conf_get_value_table_on_off (tmp_str);
@@ -610,11 +605,19 @@ tune_builtin_broker_conf (T_BROKER_INFO * br_info, int num_brs, int mgmt_port,
       tmp_br_info->shard_mgmt_num_migrator = shard_mgmt_config->num_migrator;
       if (metadb_idx < shard_mgmt_config->num_metadb)
 	{
-	  tmp_br_info->port = shard_mgmt_config->port + metadb_idx;
+	  int len;
+
+	  tmp_br_info->port = mgmt_port;
 	  strncpy (tmp_br_info->shard_metadb,
 		   shard_mgmt_config->metadb[metadb_idx],
 		   sizeof (tmp_br_info->shard_metadb));
 	  metadb_idx++;
+
+	  STRNCPY (tmp_br_info->shard_global_dbname,
+		   tmp_br_info->shard_metadb,
+		   sizeof (tmp_br_info->shard_global_dbname));
+	  len = MAX (0, strlen (tmp_br_info->shard_global_dbname) - 1);
+	  tmp_br_info->shard_global_dbname[len] = '\0';	/* rm nodeid */
 	}
       else
 	{
@@ -669,11 +672,16 @@ get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl,
 {
   const char *ini_string;
   char path_buff[BROKER_PATH_MAX];
+  int default_shm_key;
+  const char *str_shm_key;
+
+  str_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
+  parse_int (&default_shm_key, str_shm_key, 16);
+  default_shm_key += DEFUALT_BROKER_SHM_KEY_BASE;
 
   *shm_key_br_gl = ini_gethex (ini, BROKER_SECTION_NAME, "BROKER_SHM_KEY",
-			       DEFAULT_BROKER_SHM_KEY, lineno);
-  *mgmt_port = ini_getint (ini, BROKER_SECTION_NAME, "BROKER_PORT",
-			   DEFAULT_BROKER_PORT, lineno);
+			       default_shm_key, lineno);
+  *mgmt_port = prm_get_rye_port_id ();
 
   if (admin_log_file != NULL)
     {
@@ -696,14 +704,6 @@ get_shard_mgmt_config (T_SHARD_MGMT_CONFIG * shard_mgmt_config,
   const char *tmp_str;
   char **metadb = NULL;
   int num_metadb;
-
-  shard_mgmt_config->port = ini_getint (ini, SHARD_MGMT_SECTION_NAME,
-					"SHARD_MGMT_PORT", 0, &lineno);
-  if (shard_mgmt_config->port <= 0)
-    {
-      PRINT_CONF_ERROR ("config error, invalid SHARD_MGMT_PORT\n");
-      error_flag = true;
-    }
 
   shard_mgmt_config->num_migrator = ini_getint (ini, SHARD_MGMT_SECTION_NAME,
 						"SHARD_MGMT_NUM_MIGRATOR",
@@ -994,10 +994,12 @@ broker_config_read_internal (const char *conf_file,
 
   if (admin_flag && br_info != NULL)
     {
+#if 0
       if (check_port_number (br_info, num_brs) < 0)
 	{
 	  goto conf_error;
 	}
+#endif
 
       for (i = 0; i < num_brs; i++)
 	{
@@ -1056,25 +1058,18 @@ broker_config_read (T_BROKER_INFO * br_info,
 		    char *admin_log_file, char admin_flag)
 {
   int err = 0;
-  char default_conf_file_path[BROKER_PATH_MAX], file_name[BROKER_PATH_MAX],
-    file_being_dealt_with[BROKER_PATH_MAX];
+  char conf_file_path[BROKER_PATH_MAX];
 
   if (br_info != NULL)
     {
       memset (br_info, 0, sizeof (T_BROKER_INFO) * MAX_BROKER_NUM);
     }
 
-  get_rye_file (FID_RYE_BROKER_CONF, default_conf_file_path, BROKER_PATH_MAX);
+  envvar_rye_conf_file (conf_file_path, sizeof (conf_file_path));
 
-  basename_r (default_conf_file_path, file_name, BROKER_PATH_MAX);
-
-  /* $RYE_DATABASES/rye-auto.conf */
-  strcpy (file_being_dealt_with, default_conf_file_path);
-
-  err = broker_config_read_internal (file_being_dealt_with, br_info,
+  err = broker_config_read_internal (conf_file_path, br_info,
 				     num_broker, broker_shm_key,
 				     admin_log_file, admin_flag);
-
 
   return err;
 }
@@ -1131,7 +1126,6 @@ broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
       fprintf (fp, "APPL_SERVER_MAX_SIZE\t=%d\n",
 	       br_info[i].appl_server_max_size / ONE_K);
       fprintf (fp, "SESSION_TIMEOUT\t\t=%d\n", br_info[i].session_timeout);
-      fprintf (fp, "LOG_DIR\t\t\t=%s\n", br_info[i].log_dir);
       tmp_str = get_conf_string (br_info[i].log_backup, tbl_on_off);
       if (tmp_str)
 	{
@@ -1230,7 +1224,8 @@ broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
 	       br_info[i].appl_server_hard_limit / ONE_K);
       fprintf (fp, "MAX_PREPARED_STMT_COUNT\t=%d\n",
 	       br_info[i].max_prepared_stmt_count);
-      fprintf (fp, "PREFERRED_HOSTS\t\t=%s\n", br_info[i].preferred_hosts);
+      fprintf (fp, "PREFERRED_HOSTS\t\t=%d\n",
+	       br_info[i].preferred_hosts.num_nodes);
 
       tmp_str =
 	get_conf_string (br_info[i].cci_default_autocommit, tbl_on_off);

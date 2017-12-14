@@ -572,8 +572,8 @@ svr_shm_sync_node_info_to_repl (void)
       found = false;
       for (j = 0; j < num_nodes; j++)
 	{
-	  if (strncasecmp (nodes[j].host_name,
-			   repl_info->host_ip, HOST_IP_SIZE) == 0)
+	  if (prm_is_same_node (&nodes[j].node_info,
+				&repl_info->node_info) == true)
 	    {
 	      found = true;
 	      break;
@@ -592,8 +592,8 @@ svr_shm_sync_node_info_to_repl (void)
       for (j = 0; j < rye_Server_shm->ha_info.num_repl; j++)
 	{
 	  repl_info = &rye_Server_shm->ha_info.repl_info[j];
-	  if (strncasecmp (nodes[i].host_name,
-			   repl_info->host_ip, HOST_IP_SIZE) == 0)
+	  if (prm_is_same_node (&nodes[i].node_info,
+				&repl_info->node_info) == true)
 	    {
 	      found = true;
 	      break;
@@ -602,8 +602,7 @@ svr_shm_sync_node_info_to_repl (void)
 
       if (found == false)
 	{
-	  strncpy (new_repl_info[new_repl_count].host_ip,
-		   nodes[i].host_name, HOST_IP_SIZE);
+	  new_repl_info[new_repl_count].node_info = nodes[i].node_info;
 	  new_repl_info[new_repl_count].state = HA_APPLY_STATE_UNREGISTERED;
 	  new_repl_info[new_repl_count].is_local_host = nodes[i].is_localhost;
 
@@ -624,7 +623,7 @@ svr_shm_sync_node_info_to_repl (void)
  * svr_shm_set_repl_info
  */
 int
-svr_shm_set_repl_info (const char *host_ip, HA_APPLY_STATE state)
+svr_shm_set_repl_info (const PRM_NODE_INFO * node_info, HA_APPLY_STATE state)
 {
   SERVER_SHM_REPL_INFO *found_repl_info = NULL, *repl_info;
   int error = NO_ERROR;
@@ -649,7 +648,7 @@ svr_shm_set_repl_info (const char *host_ip, HA_APPLY_STATE state)
   for (i = 0; i < rye_Server_shm->ha_info.num_repl; i++)
     {
       repl_info = &rye_Server_shm->ha_info.repl_info[i];
-      if (strncasecmp (repl_info->host_ip, host_ip, HOST_IP_SIZE) == 0)
+      if (prm_is_same_node (&repl_info->node_info, node_info) == true)
 	{
 	  found_repl_info = repl_info;
 	  break;

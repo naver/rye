@@ -31,7 +31,6 @@
 #include "broker_acl.h"
 #include "cas_error.h"
 #include "broker_util.h"
-#include "broker_filename.h"
 #include "error_manager.h"
 
 #define ADMIN_ERR_MSG_SIZE	1024
@@ -89,7 +88,7 @@ br_acl_init_shm (T_SHM_APPL_SERVER * shm_appl, T_BROKER_INFO * br_info_p,
       return -1;
     }
 
-  memcpy (shm_appl->local_ip_addr, shm_br->my_ip_addr, 4);
+  shm_appl->local_ip = shm_br->my_ip;
 
   return 0;
 }
@@ -362,12 +361,12 @@ br_acl_check_right (T_SHM_APPL_SERVER * shm_appl,
 
   if (memcmp (address, local_Host, sizeof (local_Host)) == 0 ||
       (shm_appl != NULL &&
-       memcmp (shm_appl->local_ip_addr, address, ACL_IP_BYTE_COUNT) == 0))
+       memcmp (&shm_appl->local_ip, address, ACL_IP_BYTE_COUNT) == 0))
     {
       memcpy (test_addr[test_addr_count++], local_Host, ACL_IP_BYTE_COUNT);
       if (shm_appl != NULL)
 	{
-	  memcpy (test_addr[test_addr_count++], shm_appl->local_ip_addr,
+	  memcpy (test_addr[test_addr_count++], &shm_appl->local_ip,
 		  ACL_IP_BYTE_COUNT);
 	}
     }

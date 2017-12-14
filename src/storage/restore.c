@@ -698,6 +698,7 @@ bk_list_restore (THREAD_ENTRY * thread_p,
   time_t tmp_time;
   char time_val[CTIME_MAX];
   char bkup_db_release[REL_MAX_VERSION_LENGTH];
+  char db_host_str[MAX_NODE_INFO_STR_LEN];
 
   if (bk_start_restore (thread_p, db_full_name_p, backup_source_p,
 			db_creation_time, &db_iopagesize,
@@ -771,10 +772,12 @@ bk_list_restore (THREAD_ENTRY * thread_p,
   assert (!LSA_ISNULL (&(backup_header_p->backuptime_lsa)));
   assert (backup_header_p->end_time > 0);
 
+  prm_node_info_to_str (db_host_str, sizeof (db_host_str),
+			&backup_header_p->db_host_info);
   fprintf (stdout,
 	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
 			   MSGCAT_FILEIO_BKUP_HDR_HOST_INFO),
-	   backup_header_p->db_host, backup_header_p->server_state,
+	   db_host_str, backup_header_p->server_state,
 	   backup_header_p->backuptime_lsa.pageid,
 	   backup_header_p->backuptime_lsa.offset,
 	   backup_header_p->make_slave ? "YES" : "NO");
@@ -1746,7 +1749,7 @@ end:
   unlink (lgat_tmpname);
 
   r_args->server_state = session->bkuphdr->server_state;
-  strcpy (r_args->db_host, session->bkuphdr->db_host);
+  r_args->db_host_info = session->bkuphdr->db_host_info;
   r_args->backuptime_lsa = session->bkuphdr->backuptime_lsa;
   r_args->db_creation = session->bkuphdr->db_creation;
 

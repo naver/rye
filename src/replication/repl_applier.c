@@ -1577,7 +1577,9 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
 			      LOG_LSA * commit_lsa)
 {
   int error = NO_ERROR;
+#if 0
   DB_IDXKEY key;
+#endif
   CIRP_CT_LOG_APPLIER ct_data;
   LOG_LSA null_lsa;
   CIRP_REPL_ITEM *item;
@@ -1592,10 +1594,12 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
 
   LSA_SET_NULL (&null_lsa);
 
+#if 0
   /* make pkey idxkey */
   key.size = 2;
   DB_MAKE_STRING (&key.vals[0], applier->ct.host_ip);
   DB_MAKE_INT (&key.vals[1], applier->ct.id);
+#endif
 
   error = cirp_get_applier_data (applier, &ct_data);
   if (error != NO_ERROR)

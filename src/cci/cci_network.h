@@ -155,6 +155,8 @@ extern int net_mgmt_launch_process_req (T_CCI_LAUNCH_RESULT * launch_result,
 extern int net_mgmt_count_launch_process (void);
 extern int net_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_res,
 					 int poll_timeout);
+extern int net_mgmt_connect_db_server (const T_HOST_INFO * host,
+				       const char *dbname, int timeout_msec);
 
 
 /************************************************************************

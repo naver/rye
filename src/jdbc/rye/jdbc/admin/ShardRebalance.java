@@ -32,7 +32,7 @@ import rye.jdbc.sharding.ShardAdmin;
 
 class ShardRebalance extends ShardCommand
 {
-    private String shardMgmtHost;
+    private NodeAddress shardMgmtHost;
     private String[] dbaPasswordArr;
     private String[] globalDbnameArr;
     private int[] srcNodeArr;
@@ -57,6 +57,7 @@ class ShardRebalance extends ShardCommand
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
     {
 	String password = "";
+	int localMgmtPort = ShardCommand.DEFAULT_LOCAL_MGMT_PORT;
 
 	for (int i = 0; i < optArgs.length; i++) {
 	    String[] tmpArr = splitArgNameValue(optArgs[i]);
@@ -64,7 +65,8 @@ class ShardRebalance extends ShardCommand
 	    String argValue = tmpArr[1];
 
 	    if (argName.equals("--local-mgmt-port")) {
-		if (setLocalMgmtPort(argValue) == false) {
+		localMgmtPort = Integer.parseInt(argValue);
+		if (localMgmtPort <= 0) {
 		    throw makeAdminRyeException(null, "invalid option value: %s", optArgs[i]);
 		}
 	    }
@@ -101,10 +103,7 @@ class ShardRebalance extends ShardCommand
 	    throw makeAdminRyeException(null, "invalid global dbname '%s'", argGlobalDbname);
 	}
 
-	shardMgmtHost = argShardMgmtHost.trim().toLowerCase();
-	if (shardMgmtHost.length() == 0) {
-	    throw makeAdminRyeException(null, "invalid shard mgmt host '%s'", argShardMgmtHost);
-	}
+	shardMgmtHost = new NodeAddress(argShardMgmtHost, localMgmtPort);
 
 	srcNodeArr = toIntArr(splitList(argSrcNodes, ",", false));
 	destNodeArr = toIntArr(splitList(argDestNodes, ",", false));
@@ -119,14 +118,14 @@ class ShardRebalance extends ShardCommand
     {
 	verifyPassword(shardMgmtHost, globalDbnameArr, dbaPasswordArr);
 
-	LocalMgmt localMgmt = new LocalMgmt(shardMgmtHost, getLocalMgmtPort());
+	LocalMgmt localMgmt = new LocalMgmt(shardMgmtHost.toJciConnectionInfo());
 	ShardMgmtInfo[] shardMgmtInfoArr = localMgmt.getShardMgmtInfo();
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 
-	    RyeConnection con = makeConnection(shardMgmtHost, shardMgmtInfo.getPort(), globalDbnameArr[i], "dba",
-			    dbaPasswordArr[i], "rw", "");
+	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i],
+			    "dba", dbaPasswordArr[i], "rw", null);
 
 	    con.close();
 	}
@@ -149,7 +148,7 @@ class ShardRebalance extends ShardCommand
 	RyeConnection con = null;
 
 	con = makeConnection(shardMgmtInfo.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba", dbaPasswd, "rw",
-			"");
+			null);
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 
 	if (moveAll) {

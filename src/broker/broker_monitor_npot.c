@@ -43,6 +43,7 @@
 #include "broker_shm.h"
 #include "error_manager.h"
 #include "rye_server_shm.h"
+#include "tcp.h"
 
 #define MONITOR_INTERVAL	10
 
@@ -1394,4 +1395,47 @@ CS_FUNC_PRM_GET_BOOL_VALUE (UNUSED_ARG PARAM_ID prm_id)
 {
   assert (0);
   return true;
+}
+
+#define CS_FUNC_PRM_IS_SAME_NODE prm_is_same_node
+bool
+CS_FUNC_PRM_IS_SAME_NODE (UNUSED_ARG const PRM_NODE_INFO * node1,
+			  UNUSED_ARG const PRM_NODE_INFO * node2)
+{
+  assert (0);
+  return false;
+}
+
+#define CS_FUNC_CSS_IP_TO_STR css_ip_to_str
+int
+CS_FUNC_CSS_IP_TO_STR (UNUSED_ARG char *buf, UNUSED_ARG int size,
+		       UNUSED_ARG in_addr_t ip)
+{
+  assert (0);
+  return -1;
+}
+
+#define CS_FUNC_PRM_GET_RYE_PORT_ID prm_get_rye_port_id
+int
+CS_FUNC_PRM_GET_RYE_PORT_ID ()
+{
+  assert (0);
+  return 0;
+}
+
+#define CS_FUNC_PRM_GET_NULL_NODE_INFO prm_get_null_node_info
+PRM_NODE_INFO
+CS_FUNC_PRM_GET_NULL_NODE_INFO (void)
+{
+  assert (0);
+  PRM_NODE_INFO node_info = PRM_NULL_NODE_INFO;
+  return node_info;
+}
+
+#define CS_FUNC_PRM_NODE_INFO_TO_STR prm_node_info_to_str
+void
+CS_FUNC_PRM_NODE_INFO_TO_STR (UNUSED_ARG char *buf, UNUSED_ARG int size,
+			      UNUSED_ARG const PRM_NODE_INFO * node_info)
+{
+  assert (0);
 }

@@ -117,7 +117,7 @@ struct _cirp_log_buffer_msg
 
   char log_path[PATH_MAX];
   char prefix_name[PATH_MAX];
-  char host_name[PATH_MAX];
+  PRM_NODE_INFO host_info;
   char log_info_path[PATH_MAX];
 
   CIRP_ACT_LOG act_log;

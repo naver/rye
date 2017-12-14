@@ -244,8 +244,8 @@ libryecs_la_SOURCES = \
 	$(ES_SOURCES)
 
 libryecs_la_LDFLAGS = -version-number @LT_VERSION@
-libryecs_la_LIBADD = @EXT_LIBS@ @SYS_LIBS@ $(LIBADD_DL)
-libryecs_la_DEPENDENCIES = @EXT_LIBS@
+libryecs_la_LIBADD = @CCI_LIB@ @EXT_LIBS@ @SYS_LIBS@ $(LIBADD_DL)
+libryecs_la_DEPENDENCIES = @CCI_LIB@ @EXT_LIBS@
 libryecs_la_LINK = $(LINK)
 
 VERSIONED_FILES = \

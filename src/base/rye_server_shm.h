@@ -81,7 +81,7 @@ struct _server_shm_groupid_bitmap
 typedef struct _server_shm_repl_info SERVER_SHM_REPL_INFO;
 struct _server_shm_repl_info
 {
-  char host_ip[HOST_IP_SIZE];
+  PRM_NODE_INFO node_info;
   bool is_local_host;
   HA_APPLY_STATE state;
 };
@@ -143,8 +143,8 @@ extern int svr_shm_set_server_state (HA_STATE server_state);
 extern HA_STATE svr_shm_get_server_state (void);
 extern bool svr_shm_check_repl_done (void);
 extern int svr_shm_sync_node_info_to_repl (void);
-extern int svr_shm_set_repl_info (const char *host_ip, HA_APPLY_STATE state);
-
+extern int svr_shm_set_repl_info (const PRM_NODE_INFO * node_info,
+				  HA_APPLY_STATE state);
 
 /* client functions */
 extern int rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO *

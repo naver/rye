@@ -33,6 +33,7 @@
 #include "rye_master_shm.h"
 #include "error_manager.h"
 #include "system_parameter.h"
+#include "tcp.h"
 
 static RYE_SHM_MASTER *rye_Master_shm = NULL;
 
@@ -126,12 +127,10 @@ master_shm_final (void)
 /*
  * master_shm_set_node_state ()-
  *   return: error code
- *
- *   host_name(in):
- *   state(in):
  */
 int
-master_shm_set_node_state (const char *host_name, unsigned short node_state)
+master_shm_set_node_state (const PRM_NODE_INFO * node_info,
+			   unsigned short node_state)
 {
   int i;
 
@@ -143,7 +142,8 @@ master_shm_set_node_state (const char *host_name, unsigned short node_state)
 
   for (i = 0; i < rye_Master_shm->num_ha_nodes; i++)
     {
-      if (strcmp (rye_Master_shm->ha_nodes[i].host_name, host_name) == 0)
+      if (prm_is_same_node (&rye_Master_shm->ha_nodes[i].node_info,
+			    node_info) == true)
 	{
 	  rye_Master_shm->ha_nodes[i].node_state = node_state;
 	  break;
@@ -158,7 +158,7 @@ master_shm_set_node_state (const char *host_name, unsigned short node_state)
  *   return: error code
  */
 int
-master_shm_set_node_version (const char *host_name,
+master_shm_set_node_version (const PRM_NODE_INFO * node_info,
 			     const RYE_VERSION * node_version)
 {
   int i;
@@ -171,7 +171,8 @@ master_shm_set_node_version (const char *host_name,
 
   for (i = 0; i < rye_Master_shm->num_ha_nodes; i++)
     {
-      if (strcmp (rye_Master_shm->ha_nodes[i].host_name, host_name) == 0)
+      if (prm_is_same_node (&rye_Master_shm->ha_nodes[i].node_info,
+			    node_info) == true)
 	{
 	  rye_Master_shm->ha_nodes[i].ha_node_version = *node_version;
 	  break;
@@ -213,8 +214,7 @@ int
 master_shm_get_shard_mgmt_info (const char *local_dbname,
 				char *global_dbname,
 				short *nodeid,
-				unsigned char *shard_mgmt_ip,
-				int *shard_mgmt_port)
+				PRM_NODE_INFO * shard_mgmt_node_info)
 {
   int i, rv;
   int error = ER_FAILED;
@@ -251,7 +251,8 @@ master_shm_get_shard_mgmt_info (const char *local_dbname,
 
 	  for (j = 0; j < RYE_SHD_MGMT_INFO_MAX_COUNT; j++)
 	    {
-	      if (shd_mgmt_entry->shd_mgmt_info[j].port == 0)
+	      if (PRM_NODE_INFO_GET_PORT
+		  (&shd_mgmt_entry->shd_mgmt_info[j].node_info) == 0)
 		{
 		  break;
 		}
@@ -262,14 +263,14 @@ master_shm_get_shard_mgmt_info (const char *local_dbname,
 		}
 	    }
 
-	  if (shd_mgmt_entry->shd_mgmt_info[recent].port != 0)
+	  if (PRM_NODE_INFO_GET_PORT
+	      (&shd_mgmt_entry->shd_mgmt_info[recent].node_info) != 0)
 	    {
 	      strncpy (global_dbname, shd_mgmt_entry->global_dbname,
 		       RYE_SHD_MGMT_TABLE_DBNAME_SIZE);
 	      *nodeid = shd_mgmt_entry->nodeid;
-	      memcpy (shard_mgmt_ip,
-		      shd_mgmt_entry->shd_mgmt_info[recent].ip_addr, 4);
-	      *shard_mgmt_port = shd_mgmt_entry->shd_mgmt_info[recent].port;
+	      *shard_mgmt_node_info =
+		shd_mgmt_entry->shd_mgmt_info[recent].node_info;
 	      error = NO_ERROR;
 	    }
 
@@ -504,12 +505,13 @@ rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes, int *num_nodes,
  *   host(in):
  */
 int
-rye_master_shm_get_node_state (HA_STATE * node_state, const char *host)
+rye_master_shm_get_node_state (HA_STATE * node_state,
+			       const PRM_NODE_INFO * node_info)
 {
   RYE_SHM_MASTER *master_shm;
   int i;
 
-  if (node_state == NULL || host == NULL)
+  if (node_state == NULL || node_info == NULL)
     {
       assert (false);
       return ER_FAILED;
@@ -525,8 +527,8 @@ rye_master_shm_get_node_state (HA_STATE * node_state, const char *host)
 
   for (i = 0; i < master_shm->num_ha_nodes; i++)
     {
-      if (strncasecmp (master_shm->ha_nodes[i].host_name, host,
-		       MAXHOSTNAMELEN) == 0)
+      if (prm_is_same_node (&master_shm->ha_nodes[i].node_info,
+			    node_info) == true)
 	{
 	  *node_state = master_shm->ha_nodes[i].node_state;
 	}
@@ -558,15 +560,12 @@ dump_shard_mgmt_info (FILE * outfp, RYE_SHM_MASTER * rye_shm)
 
       for (j = 0; j < RYE_SHD_MGMT_INFO_MAX_COUNT; j++)
 	{
-	  int port;
-	  unsigned char *ipaddr;
 	  struct timeval time_val;
 	  char time_array[256];
+	  char node_str[MAX_NODE_INFO_STR_LEN];
 
-	  port = rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].port;
-	  ipaddr = rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].ip_addr;
-
-	  if (port == 0)
+	  if (PRM_NODE_INFO_GET_PORT
+	      (&rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].node_info) == 0)
 	    {
 	      break;
 	    }
@@ -577,9 +576,10 @@ dump_shard_mgmt_info (FILE * outfp, RYE_SHM_MASTER * rye_shm)
 
 	  (void) er_datetime (&time_val, time_array, sizeof (time_array));
 
-	  fprintf (outfp, "\t\t%d.%d.%d.%d %d %s\n",
-		   (int) ipaddr[0], (int) ipaddr[1],
-		   (int) ipaddr[2], (int) ipaddr[3], port, time_array);
+	  prm_node_info_to_str (node_str, sizeof (node_str),
+				&rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].
+				node_info);
+	  fprintf (outfp, "\t\t%s %s\n", node_str, time_array);
 	}
     }
 }
@@ -620,9 +620,11 @@ rye_master_shm_dump (FILE * outfp)
   fprintf (outfp, "ha_nodes: %d\n", num_hb_nodes);
   for (i = 0; i < num_hb_nodes; i++)
     {
+      char host[MAX_NODE_INFO_STR_LEN];
+      prm_node_info_to_str (host, sizeof (host),
+			    &shm_master->ha_nodes[i].node_info);
       fprintf (outfp, "\t%s:node_state=%d priority=%d\n",
-	       shm_master->ha_nodes[i].host_name,
-	       shm_master->ha_nodes[i].node_state,
+	       host, shm_master->ha_nodes[i].node_state,
 	       shm_master->ha_nodes[i].priority);
     }
 
@@ -645,8 +647,7 @@ static void
 set_shard_mgmt_info (RYE_SHD_MGMT_TABLE * shd_mgmt_table_entry,
 		     const char *local_dbname,
 		     const char *global_dbname,
-		     short nodeid,
-		     const unsigned char *shard_mgmt_ip, int shard_mgmt_port)
+		     short nodeid, const PRM_NODE_INFO * shard_mgmt_node_info)
 {
   int i;
   int set_index = 0;
@@ -669,15 +670,17 @@ set_shard_mgmt_info (RYE_SHD_MGMT_TABLE * shd_mgmt_table_entry,
 
   for (i = 0; i < RYE_SHD_MGMT_INFO_MAX_COUNT; i++)
     {
-      if (shd_mgmt_table_entry->shd_mgmt_info[i].port == 0)
+      if (PRM_NODE_INFO_GET_PORT
+	  (&shd_mgmt_table_entry->shd_mgmt_info[i].node_info) == 0)
 	{
 	  /* shard mgmt info not found. */
 	  set_index = i;
 	  break;
 	}
-      else if (shd_mgmt_table_entry->shd_mgmt_info[i].port == shard_mgmt_port
-	       && memcmp (shd_mgmt_table_entry->shd_mgmt_info[i].ip_addr,
-			  shard_mgmt_ip, 4) == 0)
+      else
+	if (prm_is_same_node
+	    (&shd_mgmt_table_entry->shd_mgmt_info[i].node_info,
+	     shard_mgmt_node_info) == true)
 	{
 	  /* shard mgmt info exists. */
 	  set_index = i;
@@ -696,9 +699,8 @@ set_shard_mgmt_info (RYE_SHD_MGMT_TABLE * shd_mgmt_table_entry,
 
     }
 
-  memcpy (shd_mgmt_table_entry->shd_mgmt_info[set_index].ip_addr,
-	  shard_mgmt_ip, 4);
-  shd_mgmt_table_entry->shd_mgmt_info[set_index].port = shard_mgmt_port;
+  shd_mgmt_table_entry->shd_mgmt_info[set_index].node_info =
+    *shard_mgmt_node_info;
   shd_mgmt_table_entry->shd_mgmt_info[set_index].sync_time = time (NULL);
 }
 
@@ -710,8 +712,8 @@ int
 rye_master_shm_add_shard_mgmt_info (const char *local_dbname,
 				    const char *global_dbname,
 				    short nodeid,
-				    const unsigned char *shard_mgmt_ip,
-				    int shard_mgmt_port)
+				    const PRM_NODE_INFO *
+				    shard_mgmt_node_info)
 {
   int i, rv;
   RYE_SHM_MASTER *rye_shm;
@@ -737,8 +739,7 @@ rye_master_shm_add_shard_mgmt_info (const char *local_dbname,
 	  strcmp (local_dbname, rye_shm->shd_mgmt_table[i].local_dbname) == 0)
 	{
 	  set_shard_mgmt_info (&rye_shm->shd_mgmt_table[i], local_dbname,
-			       global_dbname, nodeid,
-			       shard_mgmt_ip, shard_mgmt_port);
+			       global_dbname, nodeid, shard_mgmt_node_info);
 	  error = NO_ERROR;
 	  break;
 	}

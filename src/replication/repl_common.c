@@ -40,7 +40,7 @@
 #include "repl_log.h"
 #include "heartbeat.h"
 
-
+#if defined(CS_MODE) || defined(SERVER_MODE)
 static bool repl_Agent_need_restart = false;
 static bool repl_Agent_need_shutdown = false;
 
@@ -290,4 +290,50 @@ cirp_free_repl_item (CIRP_REPL_ITEM * item)
   free_and_init (item);
 
   return;
+}
+#endif /* CS_MODE || SERVER_MODE */
+
+/*
+ * rp_make_repl_host_key () -
+ *
+ *   return:
+ *   dbval(out):
+ *   node_info(in):
+ */
+int
+rp_make_repl_host_key (DB_VALUE * dbval, const PRM_NODE_INFO * node_info)
+{
+  char *host_key_str;
+
+  host_key_str = (char *) malloc (MAX_NODE_INFO_STR_LEN);
+  if (host_key_str == NULL)
+    {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+	      ER_OUT_OF_VIRTUAL_MEMORY, 1, MAX_NODE_INFO_STR_LEN);
+      return ER_OUT_OF_VIRTUAL_MEMORY;
+    }
+  prm_node_info_to_str (host_key_str, MAX_NODE_INFO_STR_LEN, node_info);
+  db_make_string (dbval, host_key_str);
+  dbval->need_clear = true;
+
+  return NO_ERROR;
+}
+
+int
+rp_host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
+{
+  PRM_NODE_LIST node_list;
+  if (host_str != NULL &&
+      prm_split_node_str (&node_list, host_str, false) == NO_ERROR &&
+      node_list.num_nodes >= 1)
+    {
+      *node_info = node_list.nodes[0];
+      return NO_ERROR;
+    }
+  else
+    {
+      PRM_NODE_INFO tmp_node_info = prm_get_null_node_info ();
+      *node_info = tmp_node_info;
+      return ER_FAILED;
+    }
 }

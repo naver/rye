@@ -209,6 +209,11 @@ extern "C"
   ((c)->cas_connect_info.cci_default_autocommit == CCI_DEFAULT_AUTOCOMMIT_ON ? \
           CCI_AUTOCOMMIT_TRUE : CCI_AUTOCOMMIT_FALSE)
 
+#define IS_CON_TYPE_LOCAL(CON_HANDLE)		\
+	((CON_HANDLE)->con_property.con_type == CON_TYPE_LOCAL)
+#define IS_CON_TYPE_GLOBAL(CON_HANDLE)	\
+	((CON_HANDLE)->con_property.con_type == CON_TYPE_GLOBAL)
+
   typedef struct
   {
     int cas_id;
@@ -222,6 +227,12 @@ extern "C"
     char status_info[CAS_STATUS_INFO_SIZE];
     int server_start_time;
   } T_CAS_CONNECT_INFO;
+
+  typedef enum
+  {
+    CON_TYPE_GLOBAL,
+    CON_TYPE_LOCAL
+  } T_CON_TYPE;
 
   typedef struct
   {
@@ -238,11 +249,11 @@ extern "C"
     char log_trace_network;
     char *log_base;
     char *log_filename;
+    T_CON_TYPE con_type;
   } T_CON_PROPERTY;
 
   typedef struct
   {
-    bool is_sharding_connection;
     short server_shard_nodeid;
     CCI_HANDLE_ID con_handle_id;
     char used;
