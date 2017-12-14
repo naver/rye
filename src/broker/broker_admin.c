@@ -108,39 +108,6 @@ broker_admin (int command_type, int argc, char **argv)
       /* change the working directory to $RYE/bin */
       ut_cd_work_dir ();
 
-      if (argc >= 1 && strncmp (argv[0], "local_mgmt_port=", 16) == 0)
-	{
-	  int local_mgmt_port = 0;
-	  const char *port_str_value;
-
-	  port_str_value = argv[0] + 16;
-	  parse_int (&local_mgmt_port, port_str_value, 0);
-	  if (local_mgmt_port > 0)
-	    {
-	      T_BROKER_INFO *br_local_mgmt;
-	      br_local_mgmt = ut_find_broker (br_info, num_broker,
-					      BR_LOCAL_MGMT_NAME, LOCAL_MGMT);
-	      if (br_local_mgmt == NULL)
-		{
-		  assert (false);
-		}
-	      else
-		{
-		  err = db_update_persist_conf_file ("broker",
-						     BROKER_SECTION_NAME,
-						     "broker_port",
-						     port_str_value);
-		  if (err != NO_ERROR)
-		    {
-		      PRINT_AND_LOG_ERR_MSG ("Cannot update conf file\n");
-		      return -1;
-		    }
-
-		  br_local_mgmt->port = local_mgmt_port;
-		}
-	    }
-	}
-
       if (rye_shm_is_used_key (shm_key_br_gl) == false)
 	{
 	  if (admin_start_cmd (br_info, num_broker, shm_key_br_gl) < 0)

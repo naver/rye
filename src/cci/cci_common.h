@@ -289,8 +289,6 @@ extern "C"
 /************************************************************************
  * PUBLIC FUNCTION PROTOTYPES						*
  ************************************************************************/
-  extern int get_elapsed_time (struct timeval *start_time);
-
   extern unsigned int cci_mht_5strhash (const void *key,
 					unsigned int ht_size);
   extern int cci_mht_strcasecmpeq (const void *key1, const void *key2);
@@ -307,9 +305,6 @@ extern "C"
   extern void *cci_mht_put_data (CCI_MHT_TABLE * ht, void *key, void *data);
   extern int cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func,
 			    void *func_args);
-
-
-  extern int hostname2uchar (const char *host, unsigned char *ip_addr);
 
 /************************************************************************
  * PUBLIC VARIABLES							*

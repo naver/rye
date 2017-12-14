@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <ctype.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -606,6 +607,18 @@ timeval_diff_in_msec (const struct timeval *end_time,
 		      const struct timeval *start_time)
 {
   INT64 msec;
+  struct timeval end_time_value;
+
+  if (start_time->tv_sec == 0 && start_time->tv_usec == 0)
+    {
+      return 0;
+    }
+
+  if (end_time == NULL)
+    {
+      gettimeofday (&end_time_value, NULL);
+      end_time = &end_time_value;
+    }
 
   msec = (end_time->tv_sec - start_time->tv_sec) * 1000LL;
   msec += (end_time->tv_usec - start_time->tv_usec) / 1000LL;

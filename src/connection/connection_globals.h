@@ -56,13 +56,8 @@ typedef struct css_conn_rule_info
   int num_curr_conn;
 } CSS_CONN_RULE_INFO;
 
-extern int css_Service_id;
-extern const char *css_Service_name;
-
 extern CSS_CONN_RULE_INFO css_Conn_rules[];
 extern const int css_Conn_rules_size;
-
-extern SOCKET css_Pipe_to_master;
 
 #define CSS_NET_MAGIC_SIZE		8
 extern char css_Net_magic[CSS_NET_MAGIC_SIZE];

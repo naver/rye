@@ -41,8 +41,6 @@
 #include "cas_util.h"
 #include "cas_log.h"
 
-#include "broker_filename.h"
-
 static bool server_aborted = false;
 
 void

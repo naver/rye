@@ -73,8 +73,8 @@ CIRP_LOGWR_GLOBAL cirpwr_Gl = {
   /* db_name */
   {'0'}
   ,
-  /* hostname */
-  NULL,
+  /* host info */
+  PRM_NULL_NODE_INFO,
   /* log_path */
   {'0'}
   ,
@@ -387,8 +387,12 @@ cirpwr_initialize (const char *db_name, const char *log_path)
   at_char = strchr (cirpwr_Gl.db_name, '@');
   if (at_char != NULL)
     {
+      if (rp_host_str_to_node_info (&cirpwr_Gl.host_info,
+				    at_char + 1) != NO_ERROR)
+	{
+	  assert (0);
+	}
       *at_char = '\0';
-      cirpwr_Gl.host_ip = at_char + 1;
     }
   strncpy (cirpwr_Gl.log_path, log_path, PATH_MAX - 1);
 
@@ -514,7 +518,7 @@ cirpwr_create_active_log (CCI_CONN * conn)
       return error;
     }
 
-  error = rpct_get_log_analyzer (conn, &ct, cirpwr_Gl.host_ip);
+  error = rpct_get_log_analyzer (conn, &ct, &cirpwr_Gl.host_info);
   if (error != NO_ERROR && error != CCI_ER_NO_MORE_DATA)
     {
       return error;
@@ -528,7 +532,7 @@ cirpwr_create_active_log (CCI_CONN * conn)
       /* insert new log analyzer info */
 
       memset (&ct, 0, sizeof (CIRP_CT_LOG_ANALYZER));
-      strncpy (ct.host_ip, cirpwr_Gl.host_ip, HOST_IP_SIZE - 1);
+      ct.host_info = cirpwr_Gl.host_info;
 
       /* set first record */
       LSA_COPY (&ct.current_lsa, &m_log_hdr->sof_lsa);
@@ -1349,10 +1353,19 @@ cirpwr_flush_header_page (void)
   m_log_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
   if (cirpwr_Gl.ha_info.server_state != m_log_hdr->ha_info.server_state)
     {
+      char host_str[MAX_NODE_INFO_STR_LEN];
+      if (PRM_NODE_INFO_GET_IP (&cirpwr_Gl.host_info) == INADDR_NONE)
+	{
+	  strcpy (host_str, "unknown");
+	}
+      else
+	{
+	  prm_node_info_to_str (host_str, sizeof (host_str),
+				&cirpwr_Gl.host_info);
+	}
       snprintf (buffer, ONE_K,
 		"change the state of HA server (%s@%s) from '%s' to '%s'",
-		cirpwr_Gl.db_name,
-		(cirpwr_Gl.host_ip != NULL) ? cirpwr_Gl.host_ip : "unknown",
+		cirpwr_Gl.db_name, host_str,
 		HA_STATE_NAME (cirpwr_Gl.ha_info.server_state),
 		HA_STATE_NAME (m_log_hdr->ha_info.server_state));
 

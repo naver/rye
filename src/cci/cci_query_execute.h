@@ -272,7 +272,7 @@ extern int qe_get_server_mode (T_CON_HANDLE * con_handle, int *mode,
 extern int qe_send_repl_data (T_CON_HANDLE * con_handle,
 			      CIRP_REPL_ITEM * head, int num_items);
 extern int qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
-				     const char *host_ip, int state);
+				     in_addr_t ip, int port, int state);
 extern int qe_change_dbuser (T_CON_HANDLE * con_handle, const char *user,
 			     const char *passwd);
 

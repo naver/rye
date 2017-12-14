@@ -42,7 +42,7 @@
 #include "connection_defs.h"
 #include "backup.h"
 
-extern int bk_run_backup (char *db_name, char *db_host,
+extern int bk_run_backup (char *db_name, const PRM_NODE_INFO * db_host_info,
 			  const char *backup_path,
 			  const char *backup_verbose_file_path,
 			  int num_threads, int do_compress,

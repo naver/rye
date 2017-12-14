@@ -68,7 +68,7 @@ struct cirp_logwr_global
   LOG_PAGE *loghdr_pgptr;
 
   char db_name[PATH_MAX];
-  const char *host_ip;
+  PRM_NODE_INFO host_info;
   char log_path[PATH_MAX];
   char loginf_path[PATH_MAX];
   char active_name[PATH_MAX];
