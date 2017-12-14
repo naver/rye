@@ -1491,6 +1491,8 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 	  return BR_ER_BR_ACL_RELOAD;
 	}
 
+      unlink (tmp_acl_filepath);
+
       return (child_exit_status == 0 ? 0 : BR_ER_BR_ACL_RELOAD);
     }
 }
