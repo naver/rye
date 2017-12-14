@@ -7543,16 +7543,14 @@ btree_check_key_cnt (PAGE_PTR page_p, short node_level, short key_cnt)
 
   if (page_p == NULL || node_level <= 0 || key_cnt < 0)
     {
-      assert (false);
-      return ER_FAILED;
+      goto exit_on_error;
     }
 
   num_slots = spage_number_of_slots (page_p);
   num_records = spage_number_of_records (page_p);
   if (num_slots <= 0 || num_records <= 0 || num_slots != num_records)
     {
-      assert (false);
-      return ER_FAILED;
+      goto exit_on_error;
     }
 
   if (node_level > 1)
@@ -7570,6 +7568,10 @@ btree_check_key_cnt (PAGE_PTR page_p, short node_level, short key_cnt)
 	}
     }
 
+exit_on_error:
+
+  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_BTREE_PAGE_CORRUPTED, 1,
+	  "*UNKNOWN-INDEX*" /* TODO - */ );
   assert (false);
 
   return ER_FAILED;
