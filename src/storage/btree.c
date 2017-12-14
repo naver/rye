@@ -3804,7 +3804,6 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
   PAGE_PTR next_page = NULL;
   RECDES peek_rec = RECDES_INITIALIZER;
   NON_LEAF_REC nleaf_ptr;
-//  PGLENGTH log_addr_offset;
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
   int Q_used, /* R_used, */ Left_used;
   INT16 p_slot_id, m_slot_id;
@@ -3926,28 +3925,6 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
       /* Start system permanent operation */
       log_start_system_op (thread_p);
       top_op_active = 1;
-
-#if 0
-      /* delete first record */
-      /* prepare undo log record */
-
-      log_addr_offset = 1;
-      /* log the deleted slotid for undo/redo purposes */
-      LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, P, log_addr_offset);
-      log_append_undoredo_data (thread_p, RVBT_NDRECORD_DEL, &addr,
-				peek_rec.length,
-				sizeof (log_addr_offset), peek_rec.data,
-				&log_addr_offset);
-
-      if (spage_delete (thread_p, P, 1) != 1)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
-
-      assert (spage_number_of_records (P) == 1);
-
-      FI_TEST (thread_p, FI_TEST_BTREE_MANAGER_RANDOM_EXIT, 0);
-#endif
 
       if (btree_merge_node (thread_p, btid, NULL, Q, P,
 			    NULL, &Q_vpid, &P_vpid,
@@ -7605,11 +7582,7 @@ btree_check_key_cnt (PAGE_PTR page_p, short node_level, short key_cnt)
 
   if (node_level > 1)
     {				/* non-leaf node */
-      if (key_cnt + 2 == num_records
-#if 0
-	  || (key_cnt == 0 || num_records == 1) /* TODO - is merge root */
-#endif
-	  )
+      if (key_cnt + 2 == num_records)
 	{
 	  return NO_ERROR;
 	}
