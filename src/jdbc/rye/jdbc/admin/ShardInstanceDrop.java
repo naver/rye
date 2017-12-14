@@ -33,7 +33,7 @@ import rye.jdbc.sharding.ShardAdmin;
 class ShardInstanceDrop extends ShardCommand
 {
     private String[] globalDbnameArr;
-    private String shardMgmtHost;
+    private NodeAddress shardMgmtHost;
     private String[] dbaPasswordArr;
     protected NodeInfo dropNode;
     private ShardMgmtInfo[] shardMgmtInfoArr;
@@ -55,6 +55,7 @@ class ShardInstanceDrop extends ShardCommand
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
     {
 	String password = "";
+	int localMgmtPort = ShardCommand.DEFAULT_LOCAL_MGMT_PORT;
 
 	for (int i = 0; i < optArgs.length; i++) {
 	    String[] tmpArr = splitArgNameValue(optArgs[i]);
@@ -62,7 +63,8 @@ class ShardInstanceDrop extends ShardCommand
 	    String argValue = tmpArr[1];
 
 	    if (argName.equals("--local-mgmt-port")) {
-		if (setLocalMgmtPort(argValue) == false) {
+		localMgmtPort = Integer.parseInt(argValue);
+		if (localMgmtPort <= 0) {
 		    throw makeAdminRyeException(null, "invalid option value: %s", optArgs[i]);
 		}
 	    }
@@ -91,12 +93,9 @@ class ShardInstanceDrop extends ShardCommand
 	    throw makeAdminRyeException(null, "invalid global dbname '%s'", argGlobalDbname);
 	}
 
-	shardMgmtHost = argShardMgmtHost.trim().toLowerCase();
-	if (shardMgmtHost.length() == 0) {
-	    throw makeAdminRyeException(null, "invalid shard mgmt host '%s'", argShardMgmtHost);
-	}
+	shardMgmtHost = new NodeAddress(argShardMgmtHost, localMgmtPort);
 
-	NodeInfo[] tmpArr = NodeInfo.makeNodeInfoArr(argNodeInfo);
+	NodeInfo[] tmpArr = NodeInfo.makeNodeInfoArr(argNodeInfo, localMgmtPort);
 	if (tmpArr == null) {
 	    throw makeAdminRyeException(null, "invalid node info '%s'", argNodeInfo[0]);
 	}
@@ -117,17 +116,18 @@ class ShardInstanceDrop extends ShardCommand
 
 	shardMgmtInfoArr = getAllShardMgmtInfoFromLocalMgmt(shardMgmtHost);
 
-	String haGroupId = getHaGroupId(new LocalMgmt(shardMgmtHost, getLocalMgmtPort()));
+	String haGroupId = getHaGroupId(new LocalMgmt(shardMgmtHost.toJciConnectionInfo()));
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
 	    ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbnameArr[i]);
 
-	    RyeConnection con = makeConnection(shardMgmtHost, shardMgmtInfo.getPort(), globalDbnameArr[i], "dba",
-			    dbaPasswordArr[i], "rw", "");
+	    RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbnameArr[i],
+			    "dba", dbaPasswordArr[i], "rw", null);
 
 	    ShardAdmin shardAdmin = getShardAdmin(con, globalDbnameArr[i], shardMgmtInfo);
 
-	    existingNodeInfo = getExistingNodeInfo(shardAdmin, dropNodeInfoArr, existingNodeInfo);
+	    existingNodeInfo = getExistingNodeInfo(shardAdmin, dropNodeInfoArr, existingNodeInfo,
+			    shardMgmtHost.getPort());
 
 	    con.close();
 	}
@@ -176,7 +176,7 @@ class ShardInstanceDrop extends ShardCommand
 	    NodeAddress[] hostArr = NodeInfo.getDistinctHostArr(node1Arr);
 	    for (int i = 0; i < hostArr.length; i++) {
 		printStatus(true, "%s: delete shard mgmt conf%n", hostArr[i].getIpAddr());
-		LocalMgmt localMgmt = new LocalMgmt(hostArr[i].getIpAddr(), getLocalMgmtPort());
+		LocalMgmt localMgmt = new LocalMgmt(hostArr[i].toJciConnectionInfo());
 		deleteShardMgmtConf(localMgmt);
 	    }
 
@@ -207,7 +207,7 @@ class ShardInstanceDrop extends ShardCommand
 		    throws SQLException
     {
 	RyeConnection con = makeConnection(shardMgmtInfo.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba",
-			dbaPasswd, "rw", "");
+			dbaPasswd, "rw", null);
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 
 	String[] dropNodeArg = dropNode.toNodeAddArg(globalDbname);

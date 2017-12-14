@@ -8006,6 +8006,7 @@ qexec_cast_ct_applier_to_idxkey (DB_IDXKEY * val, void *ct_table)
   CIRP_CT_LOG_APPLIER *log_applier;
   INT64 bi;
   int i;
+  int error;
 
   log_applier = (CIRP_CT_LOG_APPLIER *) ct_table;
 
@@ -8014,7 +8015,11 @@ qexec_cast_ct_applier_to_idxkey (DB_IDXKEY * val, void *ct_table)
 
   /* table_LogApplier column order */
   i = 0;
-  db_make_string (&val->vals[i++], log_applier->host_ip);
+  error = rp_make_repl_host_key (&val->vals[i++], &log_applier->host_info);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
   db_make_int (&val->vals[i++], log_applier->id);
 
   bi = lsa_to_int64 (log_applier->committed_lsa);
@@ -8047,6 +8052,7 @@ qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table)
   CIRP_CT_LOG_ANALYZER *log_analyzer;
   INT64 bi;
   int i;
+  int error;
 
   log_analyzer = (CIRP_CT_LOG_ANALYZER *) ct_table;
 
@@ -8055,7 +8061,11 @@ qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table)
 
   /* table_LogApplier column order */
   i = 0;
-  db_make_string (&val->vals[i++], log_analyzer->host_ip);
+  error = rp_make_repl_host_key (&val->vals[i++], &log_analyzer->host_info);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
 
   bi = lsa_to_int64 (log_analyzer->current_lsa);
   db_make_bigint (&val->vals[i++], bi);
@@ -8086,6 +8096,7 @@ qexec_cast_ct_writer_to_idxkey (DB_IDXKEY * val, void *ct_table)
   CIRP_CT_LOG_WRITER *writer;
   INT64 bi;
   int i;
+  int error;
 
   writer = (CIRP_CT_LOG_WRITER *) ct_table;
 
@@ -8094,7 +8105,11 @@ qexec_cast_ct_writer_to_idxkey (DB_IDXKEY * val, void *ct_table)
 
   /* table_LogWriter column order */
   i = 0;
-  db_make_string (&val->vals[i++], writer->host_ip);
+  error = rp_make_repl_host_key (&val->vals[i++], &writer->host_info);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
 
   db_make_bigint (&val->vals[i++], writer->last_flushed_pageid);
 

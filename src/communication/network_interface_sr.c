@@ -2434,19 +2434,24 @@ sboot_notify_ha_apply_state (THREAD_ENTRY * thread_p, unsigned int rid,
 {
   int i, status;
   HA_APPLY_STATE state;
-  const char *host_ip;
   char *ptr;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
+  PRM_NODE_INFO node_info;
+  in_addr_t ip;
+  int port;
 
-  ptr = or_unpack_string_nocopy (request, &host_ip);
+  ptr = or_unpack_int (request, (int *) &ip);
+  ptr = or_unpack_int (ptr, &port);
   ptr = or_unpack_int (ptr, &i);
   state = (HA_APPLY_STATE) i;
+
+  PRM_NODE_INFO_SET (&node_info, ip, port);
 
   if (state >= HA_APPLY_STATE_UNREGISTERED && state <= HA_APPLY_STATE_ERROR)
     {
 
-      status = css_notify_ha_apply_state (thread_p, host_ip, state);
+      status = css_notify_ha_apply_state (thread_p, &node_info, state);
       if (status != NO_ERROR)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ERROR_FROM_SERVER,

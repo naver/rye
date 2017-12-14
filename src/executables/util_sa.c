@@ -884,9 +884,8 @@ restoredb (UTIL_FUNCTION_ARG * arg)
       memset (&analyzer_info, 0, sizeof (CIRP_CT_LOG_ANALYZER));
 
 #if 1				/* TODO - fix me; convert host_name to host_ip */
-      strncpy (analyzer_info.host_ip, restart_arg.db_host, HOST_IP_SIZE - 1);
+      analyzer_info.host_info = restart_arg.db_host_info;
 #endif
-      analyzer_info.host_ip[HOST_IP_SIZE - 1] = '\0';
       analyzer_info.current_lsa = restart_arg.backuptime_lsa;
       analyzer_info.required_lsa = restart_arg.backuptime_lsa;
       analyzer_info.creation_time = restart_arg.db_creation * 1000;
@@ -894,7 +893,12 @@ restoredb (UTIL_FUNCTION_ARG * arg)
       /* make pkey idxkey */
       DB_IDXKEY_MAKE_NULL (&key);
       key.size = 1;
-      db_make_string (&key.vals[0], analyzer_info.host_ip);
+      error_code = rp_make_repl_host_key (&key.vals[0],
+					  &analyzer_info.host_info);
+      if (error_code != NO_ERROR)
+	{
+	  goto error_exit;
+	}
       error_code = qexec_upsert_analyzer_info (NULL, &key, &analyzer_info);
       if (error_code != NO_ERROR)
 	{

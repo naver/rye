@@ -39,11 +39,6 @@ extern void css_remove_queued_connection_by_entry (CSS_MAP_ENTRY * entry,
 						   CSS_MAP_ENTRY ** anchor);
 extern CSS_MAP_ENTRY *css_return_open_entry (char *host,
 					     CSS_MAP_ENTRY ** anchor);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern unsigned int css_return_eid_from_conn (CSS_CONN_ENTRY * conn,
-					      CSS_MAP_ENTRY ** anchor,
-					      unsigned short rid);
-#endif
 extern CSS_MAP_ENTRY *css_return_entry_from_conn (CSS_CONN_ENTRY * conn,
 						  CSS_MAP_ENTRY * anchor);
 #endif /* _CONNECTION_LESS_H_ */

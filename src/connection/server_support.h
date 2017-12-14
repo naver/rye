@@ -59,15 +59,12 @@ extern void css_block_all_active_conn (unsigned short stop_phase);
 extern void css_wakeup_all_jobq_waiters (void);
 
 extern void *css_oob_handler_thread (void *arg);
-extern void *css_master_thread (void);
 
 extern int css_send_reply_to_client (CSS_CONN_ENTRY * conn, unsigned int eid,
 				     int num_buffers, ...);
 extern unsigned int css_send_abort_to_client (CSS_CONN_ENTRY * conn,
 					      unsigned int eid);
-extern char *css_pack_server_name (const char *server_name, int *name_length);
-extern int css_init (char *server_name, int server_name_length,
-		     int connection_id);
+extern int css_init (const char *server_name);
 extern void css_set_client_version (THREAD_ENTRY * thread_p,
 				    const RYE_VERSION * version);
 extern void css_end_server_request (CSS_CONN_ENTRY * conn);
@@ -81,7 +78,7 @@ extern int css_check_ha_server_state_for_client (THREAD_ENTRY * thread_p,
 extern int css_change_ha_server_state (THREAD_ENTRY * thread_p,
 				       HA_STATE req_server_state, bool force);
 extern int css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
-				      const char *host_ip,
+				      const PRM_NODE_INFO * node_info,
 				      HA_APPLY_STATE state);
 extern THREAD_RET_T THREAD_CALLING_CONVENTION
 css_connection_handler_thread (void *arg_p);

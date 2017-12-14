@@ -164,7 +164,7 @@ class ShardInfoNode
 			sb.append(",");
 		    }
 
-		    sb.append(conInfo.getHostname());
+		    sb.append(conInfo.getHostAddress().getHostAddress());
 		    sb.append(":");
 		    sb.append(conInfo.getPort());
 		}

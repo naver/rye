@@ -36,7 +36,7 @@
 #include "connection_defs.h"
 
 
-#define SHM_MAX_HA_NODE_LIST		(32)
+#define SHM_MAX_HA_NODE_LIST		(PRM_MAX_HA_NODE_LIST)
 #define SHM_MAX_REPL_COUNT              SHM_MAX_HA_NODE_LIST
 #define SHM_MAX_DB_SERVERS              (10)
 #define MAX_NUM_SHM		        (SHM_MAX_DB_SERVERS * 3)
@@ -98,8 +98,7 @@ struct _rye_shd_mgmt_table
   short nodeid;
   struct
   {
-    unsigned char ip_addr[4];
-    int port;
+    PRM_NODE_INFO node_info;
     int sync_time;
   } shd_mgmt_info[RYE_SHD_MGMT_INFO_MAX_COUNT];
 };
@@ -120,7 +119,7 @@ struct _rye_shm_ha_node
 {
   RYE_VERSION ha_node_version;
   bool is_localhost;
-  char host_name[MAXHOSTNAMELEN];
+  PRM_NODE_INFO node_info;
   HA_STATE node_state;
   unsigned short priority;
 };

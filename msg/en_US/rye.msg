@@ -735,7 +735,7 @@ $ LOADDB
 667 Cannot match table '%1$s' with corresponding C++ class.
 668 Internal error: Unknown type '%1$d'.
 669 Server refused client connection: max clients, (%1$d), exceeded.
-670 Operation would have caused one or more unique constraint violations. INDEX %1$s%2$s ON TABLE %3$s%4$s. key: %5$s%6$s.
+670 Operation would have caused one or more unique constraint violations. %1$s. key: %2$s.
 671 A network read/write error occurred for socket %1$d associated with your transaction (index %2$d, %3$s@%4$s|%5$d)
 672 Socket %1$d associated with your transaction (index %2$d, %3$s@%4$s|%5$d) is closed.
 673 Your connection to the server has been closed since the server is going down immediately.
@@ -1002,7 +1002,7 @@ $ LOADDB
 934 Null type referenced.
 935 Argument of %1$s function is out of range.
 936 Overflow occurred in exp context.
-937 Database error.
+937 Invalid argument: %1$s
 938 Invalid argument.
 939 There are too many connection.
 940 The handle is invalid.
@@ -1036,7 +1036,7 @@ $ LOADDB
 968 Your transaction (index %1$d, %2$s@%3$s|%4$d) timed out waiting on %5$s lock on value %6$s because of deadlock. You are waiting for user(s) %7$s to finish.
 969 Server bit platform (%1$d) is different from client bit platform (%2$d).
 970 Server HA mode is changed from '%1$s' to '%2$s'.
-971 Program '%1$s' (pid %2$d) connected to database server '%3$s' on the host '%4$s' (port %5$d).
+971 Program '%1$s' (pid %2$d) connected to database server '%3$s' on the host '%4$s'.
 972 Program '%1$s' (pid %2$d) was connected from the host '%3$s'. (transaction index %4$d)
 973 Server status is %1$s.
 974 Archive log "%1$s" is created to archive pages from %2$lld to %3$lld.
@@ -1200,7 +1200,7 @@ $ LOADDB
 1132 Encryption library failure: %1$s
 1133 Copylogdb for %1$s already exists.
 1134 Applylogdb for %1$s already exists.
-1135 A previous link of B+tree(%1$s) is corrupted.: vpid = (%2$d, %3$d)
+1135 Internal error: %1$s. The index page is corrupted.
 1136 A previous link of B+tree(%1$s) is repaired.: vpid = (%2$d, %3$d)
 1137 The query has been rejected due to attempt to exceed the maximum allowed nesting level(%1$d).
 1138 Handshake error (peer host %1$s): incompatible interruptibility. (client: %2$s, server: %3$s)

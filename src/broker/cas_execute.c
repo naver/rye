@@ -42,8 +42,6 @@
 #include "cas_util.h"
 #include "cas_log.h"
 
-#include "broker_filename.h"
-
 #include "release_string.h"
 #include "perf_monitor.h"
 #include "intl_support.h"
@@ -55,6 +53,7 @@
 #include "shard_catalog.h"
 #include "transform.h"
 #include "object_print.h"
+#include "boot_cl.h"
 
 #include "log_impl.h"
 #include "slotted_page.h"
@@ -412,7 +411,7 @@ ux_database_connect (const char *db_name, const char *db_user,
 {
   int err_code, client_type;
   const char *p = NULL;
-  const char *host_connected = NULL;
+  PRM_NODE_INFO node_connected;
   bool need_au_disable = false;
 
   if (db_name == NULL || db_name[0] == '\0')
@@ -420,14 +419,14 @@ ux_database_connect (const char *db_name, const char *db_user,
       return ERROR_INFO_SET (-1, CAS_ERROR_INDICATOR);
     }
 
-  host_connected = db_get_host_connected ();
+  node_connected = boot_get_host_connected ();
 
   if (cas_get_db_connect_status () != 1	/* DB_CONNECTION_STATUS_CONNECTED */
       || DB_Name[0] == '\0'
       || strcmp (DB_Name, db_name) != 0
       || strcmp (DB_User, db_user) != 0
       || strcmp (DB_Passwd, db_passwd) != 0
-      || strcmp (as_Info->database_host, host_connected) != 0)
+      || prm_is_same_node (&as_Info->db_node, &node_connected) == false)
     {
       if (cas_get_db_connect_status () == -1)	/* DB_CONNECTION_STATUS_RESET */
 	{
@@ -487,7 +486,7 @@ ux_database_connect (const char *db_name, const char *db_user,
 		    "ux_database_connect: %s",
 		    BOOT_CLIENT_TYPE_STRING (client_type));
 
-      db_set_preferred_hosts (shm_Appl->preferred_hosts);
+      db_set_preferred_hosts (&shm_Appl->preferred_hosts);
       db_set_connect_order_random (shm_Appl->connect_order_random);
       db_set_max_num_delayed_hosts_lookup (shm_Appl->
 					   max_num_delayed_hosts_lookup);
@@ -505,7 +504,7 @@ ux_database_connect (const char *db_name, const char *db_user,
 	  need_au_disable = true;
 	}
       err_code = db_restart_ex (program_Name, db_name, db_user, db_passwd,
-				NULL, client_type);
+				client_type);
       if (err_code < 0)
 	{
 	  goto connect_error;
@@ -522,9 +521,6 @@ ux_database_connect (const char *db_name, const char *db_user,
 #endif
 	}
 
-      er_log_debug (ARG_FILE_LINE,
-		    "ux_database_connect: db_login(%s) db_restart(%s) at %s",
-		    db_user, db_name, host_connected);
       p = strchr (db_name, '@');
       if (p)
 	{
@@ -539,8 +535,7 @@ ux_database_connect (const char *db_name, const char *db_user,
 	  strncpy (as_Info->database_name, db_name,
 		   sizeof (as_Info->database_name) - 1);
 	}
-      strncpy (as_Info->database_host, host_connected,
-	       sizeof (as_Info->database_host) - 1);
+      as_Info->db_node = boot_get_host_connected ();
       as_Info->last_connect_time = time (NULL);
 
       strncpy (DB_Name, db_name, sizeof (DB_Name) - 1);
@@ -554,10 +549,6 @@ ux_database_connect (const char *db_name, const char *db_user,
        * previous clients
        */
       er_clear ();
-
-      er_log_debug (ARG_FILE_LINE,
-		    "ux_database_connect(check password): db_login(%s) db_restart(%s) at %s",
-		    db_user, db_name, host_connected);
 
       if (db_get_client_type () == BOOT_CLIENT_REPL_BROKER)
 	{
@@ -664,7 +655,7 @@ ux_database_shutdown ()
 
   er_log_debug (ARG_FILE_LINE, "ux_database_shutdown: db_shutdown()");
   as_Info->database_name[0] = '\0';
-  as_Info->database_host[0] = '\0';
+  as_Info->db_node = prm_get_null_node_info ();
   as_Info->database_user[0] = '\0';
   as_Info->last_connect_time = 0;
   memset (DB_Name, 0, sizeof (DB_Name));

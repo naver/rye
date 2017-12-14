@@ -31,35 +31,3 @@
 
 #include "system_parameter.h"
 #include "master_util.h"
-
-/*
- * master_util_config_startup() - get port id and service name from parameters
- *   return: true if port id and service name are valid,
- *           otherwise false
- *   db_name(in)
- *   port_id(out)
- */
-bool
-master_util_config_startup (const char *db_name, int *port_id)
-{
-  if (sysprm_load_and_init (db_name) != NO_ERROR)
-    {
-      return false;
-    }
-  *port_id = prm_get_master_port_id ();
-
-  /*
-   * Must give either port_id or service_name
-   * if port == 0, nothing special use port number of service
-   *    port < 0, bind a local reserved port
-   *    port > 0, it is the port number of service
-   */
-  if (*port_id <= 0)
-    {
-      return false;
-    }
-  else
-    {
-      return true;
-    }
-}

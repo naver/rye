@@ -41,6 +41,7 @@
 #include "utility.h"
 #include "system_parameter.h"
 #include "environment_variable.h"
+#include "tcp.h"
 
 #define UTIL_LOG_MAX_HEADER_LEN    (40)
 #define UTIL_LOG_MAX_MSG_SIZE       (1024)
@@ -269,6 +270,11 @@ void
 util_free_string_array (char **array)
 {
   int i;
+
+  if (array == NULL)
+    {
+      return;
+    }
 
   for (i = 0; array[i] != NULL; i++)
     {

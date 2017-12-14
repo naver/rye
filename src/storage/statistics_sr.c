@@ -113,7 +113,7 @@ xstats_update_statistics (THREAD_ENTRY * thread_p, OID * class_id_p,
 
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 	  ER_LOG_STARTED_TO_UPDATE_STATISTICS, 4,
-	  class_name ? class_name : "*UNKNOWN-CLASS*",
+	  class_name ? class_name : "*UNKNOWN-TABLE*",
 	  class_id_p->volid, class_id_p->pageid, class_id_p->slotid);
 
   /* if class information was not obtained */
@@ -302,7 +302,7 @@ end:
 
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 	  ER_LOG_FINISHED_TO_UPDATE_STATISTICS, 5,
-	  class_name ? class_name : "*UNKNOWN-CLASS*",
+	  class_name ? class_name : "*UNKNOWN-TABLE*",
 	  class_id_p->volid, class_id_p->pageid, class_id_p->slotid,
 	  error_code);
 
