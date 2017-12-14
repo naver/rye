@@ -48,9 +48,16 @@ public class ConnectionProperties
 	EXCEPTION, ROUND, CONVERT_TO_NULL
     };
 
+    public enum CONNECTION_TYPE {
+	GLOBAL, LOCAL
+    };
+
     private static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull";
     private static final String ZERO_DATETIME_BEHAVIOR_EXCEPTION = "exception";
     private static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
+
+    private static final String CONNECTION_TYPE_GLOBAL = "global";
+    private static final String CONNECTION_TYPE_LOCAL = "local";
 
     private static final String[] booleanTrueValues = { "true", "yes", "on" };
     private static final String[] booleanFalseValues = { "false", "no", "off" };
@@ -100,6 +107,9 @@ public class ConnectionProperties
 
     private final ZeroDateTimeBehaviorConnectionProperty zeroDateTimeBehavior = new ZeroDateTimeBehaviorConnectionProperty(
 		    "zeroDateTimeBehavior");
+
+    private final ConnectionTypeConnectionProperty connectionType = new ConnectionTypeConnectionProperty(
+		    "connectionType");
 
     private final BooleanConnectionProperty useLazyConnection = new BooleanConnectionProperty("useLazyConnection",
 		    false);
@@ -239,6 +249,11 @@ public class ConnectionProperties
     public ZERO_DATE_BEHAVIOR getZeroDateTimeBehavior()
     {
 	return zeroDateTimeBehavior.zeroDateBehavior;
+    }
+
+    public CONNECTION_TYPE getConnectionType()
+    {
+	return connectionType.connType;
     }
 
     public boolean getUseLazyConnection()
@@ -490,6 +505,49 @@ public class ConnectionProperties
 	    }
 
 	    return String.format("%s:%s=%s", this.getClass().getName(), this.getPropertyName(), behavior);
+	}
+    }
+
+    private class ConnectionTypeConnectionProperty extends ConnectionProperty
+    {
+	CONNECTION_TYPE connType = CONNECTION_TYPE.GLOBAL;
+
+	ConnectionTypeConnectionProperty(String propertyName)
+	{
+	    super(propertyName);
+	}
+
+	void setValue(Object o) throws SQLException
+	{
+	    if (o != null && o instanceof String) {
+		String str = ((String) o).trim().toLowerCase();
+		if (str.equals(CONNECTION_TYPE_GLOBAL)) {
+		    this.connType = CONNECTION_TYPE.GLOBAL;
+		    return;
+		}
+		if (str.equals(CONNECTION_TYPE_LOCAL)) {
+		    this.connType = CONNECTION_TYPE.LOCAL;
+		    return;
+		}
+	    }
+
+	    errorUncompatibleValue(o);
+	}
+
+	public String toString()
+	{
+	    String type = null;
+	    switch (this.connType)
+	    {
+	    case GLOBAL:
+		type = CONNECTION_TYPE_GLOBAL;
+		break;
+	    case LOCAL:
+		type = CONNECTION_TYPE_LOCAL;
+		break;
+	    }
+
+	    return String.format("%s:%s=%s", this.getClass().getName(), this.getPropertyName(), type);
 	}
     }
 }

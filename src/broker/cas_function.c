@@ -43,8 +43,6 @@
 #include "cas_handle.h"
 #include "cas_util.h"
 #include "cas_execute.h"
-#include "broker_filename.h"
-
 
 static FN_RETURN fn_prepare_internal (int argc, void **argv,
 				      T_NET_BUF * net_buf,
@@ -919,7 +917,7 @@ fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf,
   char *sql_stmt = NULL;
   DB_SESSION *session;
   char plan_dump_filename[BROKER_PATH_MAX];
-  char dirname[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
 
   if (argc < 1)
     {
@@ -935,9 +933,9 @@ fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf,
       return FN_KEEP_CONN;
     }
 
-  get_rye_file (FID_CAS_TMP_DIR, dirname, BROKER_PATH_MAX);
-  snprintf (plan_dump_filename, BROKER_PATH_MAX - 1, "%s/%d.plan", dirname,
-	    (int) getpid ());
+  snprintf (filename, sizeof (filename), "%d.plan", (int) getpid ());
+  envvar_tmpdir_file (plan_dump_filename, sizeof (plan_dump_filename),
+		      filename);
   unlink (plan_dump_filename);
 
   db_query_plan_dump_file (plan_dump_filename);
@@ -1552,26 +1550,36 @@ fn_notify_ha_agent_state (int argc, void **argv, T_NET_BUF * net_buf,
 			  UNUSED_ARG T_REQ_INFO * req_info)
 {
   int state, autocommit_mode = FALSE;
-  char *host_ip;
-  int host_ip_len;
+  char host_str[MAX_NODE_INFO_STR_LEN];
   int arg_idx = 0;
   int error;
+  PRM_NODE_INFO node_info;
+  in_addr_t ip;
+  int port;
 
-  if (argc != 3)
+  if (argc != 4)
     {
       ERROR_INFO_SET (CAS_ER_ARGS, CAS_ERROR_INDICATOR);
       goto error_exit;
     }
 
-  net_arg_get_str (&host_ip, &host_ip_len, argv[arg_idx++]);
+  net_arg_get_int ((int *) &ip, argv[arg_idx++]);
+  net_arg_get_int (&port, argv[arg_idx++]);
   net_arg_get_int (&state, argv[arg_idx++]);
   net_arg_get_int (&autocommit_mode, argv[arg_idx++]);
 
-  cas_sql_log_write (0,
-		     "notify_ha_agent_state (host_ip: %s, state: %d)",
-		     host_ip, state);
+  if (port == 0)
+    {
+      port = prm_get_rye_port_id ();
+    }
+  PRM_NODE_INFO_SET (&node_info, ip, port);
 
-  error = boot_notify_ha_apply_state (host_ip, state);
+  prm_node_info_to_str (host_str, sizeof (host_str), &node_info);
+  cas_sql_log_write (0,
+		     "notify_ha_agent_state (host: %s, state: %d)",
+		     host_str, state);
+
+  error = boot_notify_ha_apply_state (&node_info, state);
   if (error < 0)
     {
       ERROR_INFO_SET (error, DBMS_ERROR_INDICATOR);

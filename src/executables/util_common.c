@@ -55,12 +55,10 @@ static int utility_get_option_index (UTIL_ARG_MAP * arg_map, int arg_ch);
 static int check_database_name_local (const char *name,
 				      int existing_or_new_db);
 static char **util_split_ha_db (const char *str);
-static char **util_split_ha_sync (const char *str);
-static int util_get_ha_parameters (const char **ha_node_list_p,
+static int util_get_ha_parameters (PRM_NODE_LIST * ha_node_list,
 				   const char **ha_db_list_p,
 				   const char **ha_copy_log_base_p,
 				   int *ha_max_log_applier_p);
-static bool util_is_replica_node (void);
 
 /*
  * utility_initialize() - initialize Rye library
@@ -407,95 +405,14 @@ utility_localtime (const time_t * ts, struct tm *result)
   return 0;
 }
 
-/*
- * util_is_localhost -
- *
- * return:
- *
- * NOTE:
- */
-bool
-util_is_localhost (char *host)
-{
-  struct in_addr node_addr;
-
-  node_addr.s_addr = css_host_ip_addr ();
-  if (node_addr.s_addr == INADDR_NONE)
-    {
-      assert (false);		/* should be impossible */
-      return false;
-    }
-
-  if (strcmp (host, inet_ntoa (node_addr)) == 0)
-    {
-      return true;
-    }
-
-  return false;
-}
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * util_get_num_of_ha_nodes - counter the number of nodes
- *      in either ha_node_list or ha_replica_list
- *    return: the number of nodes in a node list
- *    node_list(in): ha_node_list or ha_replica_list
- */
-int
-util_get_num_of_ha_nodes (const char *node_list)
-{
-  char **ha_node_list_pp = NULL;
-  int num_of_nodes = 0;
-
-  if (node_list == NULL)
-    {
-      return 0;
-    }
-  if ((ha_node_list_pp = util_split_ha_node (node_list)) != NULL)
-    {
-      for (num_of_nodes = 0; ha_node_list_pp[num_of_nodes] != NULL;)
-	{
-	  num_of_nodes++;
-	}
-    }
-
-  if (ha_node_list_pp)
-    {
-      util_free_string_array (ha_node_list_pp);
-    }
-
-  return num_of_nodes;
-}
-#endif
-
-char **
-util_split_ha_node (const char *str)
-{
-  char *start_node;
-
-  start_node = strchr (str, '@');
-  if (start_node == NULL || str == start_node)
-    {
-      return NULL;
-    }
-
-  return util_split_string (start_node + 1, " ,:");
-}
-
 static char **
 util_split_ha_db (const char *str)
 {
   return util_split_string (str, " ,:");
 }
 
-static char **
-util_split_ha_sync (const char *str)
-{
-  return util_split_string (str, " ,:");
-}
-
 static int
-util_get_ha_parameters (const char **ha_node_list_p,
+util_get_ha_parameters (PRM_NODE_LIST * ha_node_list,
 			const char **ha_db_list_p,
 			const char **ha_copy_log_base_p,
 			int *ha_max_log_applier_p)
@@ -511,14 +428,7 @@ util_get_ha_parameters (const char **ha_node_list_p,
       return ER_GENERIC_ERROR;
     }
 
-  *(ha_node_list_p) = prm_get_string_value (PRM_ID_HA_NODE_LIST);
-  if (*(ha_node_list_p) == NULL || **(ha_node_list_p) == '\0')
-    {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_INVALID_PARAMETER);
-      fprintf (stderr, message, prm_get_name (PRM_ID_HA_NODE_LIST), "");
-      return ER_GENERIC_ERROR;
-    }
+  prm_get_ha_node_list (ha_node_list);
 
   *(ha_max_log_applier_p) = prm_get_integer_value (PRM_ID_HA_MAX_LOG_APPLIER);
 
@@ -529,53 +439,6 @@ util_get_ha_parameters (const char **ha_node_list_p,
     }
 
   return error;
-}
-
-static bool
-util_is_replica_node (void)
-{
-  bool is_replica_node = false;
-  int i;
-  struct in_addr node_addr;
-  char *ha_replica_list_p, **ha_replica_list_pp = NULL;
-
-  ha_replica_list_p = prm_get_string_value (PRM_ID_HA_REPLICA_LIST);
-  if (ha_replica_list_p != NULL && *(ha_replica_list_p) != '\0')
-    {
-      ha_replica_list_pp = util_split_ha_node (ha_replica_list_p);
-      if (ha_replica_list_pp != NULL)
-	{
-	  node_addr.s_addr = css_host_ip_addr ();
-	  if (node_addr.s_addr == INADDR_NONE)
-	    {
-	      assert (false);	/* should be impossible */
-
-	      if (ha_replica_list_pp)
-		{
-		  util_free_string_array (ha_replica_list_pp);
-		}
-
-	      return false;
-	    }
-
-	  for (i = 0; ha_replica_list_pp[i] != NULL; i++)
-	    {
-	      if (strcmp (ha_replica_list_pp[i], inet_ntoa (node_addr)) == 0)
-		{
-		  is_replica_node = true;
-		  break;
-		}
-	    }
-
-	}
-    }
-
-  if (ha_replica_list_pp)
-    {
-      util_free_string_array (ha_replica_list_pp);
-    }
-
-  return is_replica_node;
 }
 
 /*
@@ -593,11 +456,6 @@ util_free_ha_conf (HA_CONF * ha_conf)
 
   for (i = 0, nc = ha_conf->node_conf; i < ha_conf->num_node_conf; i++)
     {
-      if (nc[i].node_name)
-	{
-	  free_and_init (nc[i].node_name);
-	}
-
       if (nc[i].copy_log_base)
 	{
 	  free_and_init (nc[i].copy_log_base);
@@ -627,15 +485,13 @@ int
 util_make_ha_conf (HA_CONF * ha_conf)
 {
   int error = NO_ERROR;
-  int i, num_ha_nodes;
+  int i;
   const char *ha_db_list_p = NULL;
-  const char *ha_node_list_p = NULL;
-  char **ha_node_list_pp = NULL;
   const char *ha_copy_log_base_p;
   int ha_max_log_applier;
-  bool is_replica_node;
+  PRM_NODE_LIST ha_node_list;
 
-  error = util_get_ha_parameters (&ha_node_list_p, &ha_db_list_p,
+  error = util_get_ha_parameters (&ha_node_list, &ha_db_list_p,
 				  &ha_copy_log_base_p, &ha_max_log_applier);
   if (error != NO_ERROR)
     {
@@ -653,25 +509,8 @@ util_make_ha_conf (HA_CONF * ha_conf)
       goto ret;
     }
 
-  ha_node_list_pp = util_split_ha_node (ha_node_list_p);
-  if (ha_node_list_pp == NULL)
-    {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
-      fprintf (stderr, message);
-
-      error = ER_GENERIC_ERROR;
-      goto ret;
-    }
-
-  for (i = 0; ha_node_list_pp[i] != NULL;)
-    {
-      i++;
-    }
-  num_ha_nodes = i;
-
   ha_conf->node_conf =
-    (HA_NODE_CONF *) malloc (sizeof (HA_NODE_CONF) * num_ha_nodes);
+    (HA_NODE_CONF *) malloc (sizeof (HA_NODE_CONF) * ha_node_list.num_nodes);
   if (ha_conf->node_conf == NULL)
     {
       const char *message =
@@ -682,19 +521,16 @@ util_make_ha_conf (HA_CONF * ha_conf)
       goto ret;
     }
   memset ((void *) ha_conf->node_conf, 0,
-	  sizeof (HA_NODE_CONF) * num_ha_nodes);
-  ha_conf->num_node_conf = num_ha_nodes;
+	  sizeof (HA_NODE_CONF) * ha_node_list.num_nodes);
+  ha_conf->num_node_conf = ha_node_list.num_nodes;
   ha_conf->max_log_applier = ha_max_log_applier;
 
-  for (i = 0; i < num_ha_nodes; i++)
+  for (i = 0; i < ha_node_list.num_nodes; i++)
     {
-      assert_release (ha_node_list_pp[i] != NULL);
-
-      ha_conf->node_conf[i].node_name = strdup (ha_node_list_pp[i]);
+      ha_conf->node_conf[i].node = ha_node_list.nodes[i];
       ha_conf->node_conf[i].copy_log_base = strdup (ha_copy_log_base_p);
 
-      if (ha_conf->node_conf[i].node_name == NULL
-	  || ha_conf->node_conf[i].copy_log_base == NULL)
+      if (ha_conf->node_conf[i].copy_log_base == NULL)
 	{
 	  const char *message =
 	    utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
@@ -706,12 +542,6 @@ util_make_ha_conf (HA_CONF * ha_conf)
     }
 
 ret:
-  if (ha_node_list_pp)
-    {
-      util_free_string_array (ha_node_list_pp);
-      ha_node_list_pp = NULL;
-    }
-
   if (error != NO_ERROR)
     {
       util_free_ha_conf (ha_conf);

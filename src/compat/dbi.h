@@ -56,7 +56,7 @@ extern int db_restart (const char *program,
 		       int print_version, const char *volume);
 extern int db_restart_ex (const char *program, const char *db_name,
 			  const char *db_user, const char *db_password,
-			  const char *preferred_hosts, int client_type);
+			  int client_type);
 extern int db_get_server_start_time (void);
 extern void db_set_server_session_key (const char *key);
 extern char *db_get_server_session_key (void);
@@ -225,7 +225,7 @@ extern int db_drop_constraint (MOP classmop,
 /* Browsing functions */
 extern char *db_get_database_name (void);
 extern void db_set_client_type (int client_type);
-extern void db_set_preferred_hosts (const char *hosts);
+extern void db_set_preferred_hosts (const PRM_NODE_LIST * hosts);
 extern void db_set_connect_order_random (bool connect_order_random);
 #if !defined(SERVER_MODE)
 extern int db_get_client_type (void);
@@ -488,8 +488,6 @@ extern int db_set_system_parameters (char *prm_names, int len,
 extern int db_get_system_parameters (char *data, int len);
 extern int db_get_system_parameter_value (char *value, int max_len,
 					  const char *param_name);
-
-extern const char *db_get_host_connected (void);
 
 extern void db_clear_host_connected (void);
 extern char *db_get_database_version (void);

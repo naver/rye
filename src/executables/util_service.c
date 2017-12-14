@@ -34,6 +34,7 @@
 #include <sys/wait.h>
 
 #include "porting.h"
+#include "dbi.h"
 #include "utility.h"
 #include "error_code.h"
 #include "util_support.h"
@@ -172,10 +173,15 @@ static bool check_all_services_status (unsigned int sleep_time,
 				       expected_status);
 
 
-static int us_hb_deactivate (const char *hostname, bool immediate_stop);
+static int us_hb_deactivate (const PRM_NODE_INFO * node_info,
+			     bool immediate_stop);
 static int us_hb_activate (void);
 static int us_hb_reload (void);
 static int us_hb_changemode (HA_STATE req_node_state, bool force);
+
+static int change_prm_from_argv (int argc, char **argv);
+static int changeable_Prm_list[] =
+  { PRM_ID_RYE_PORT_ID, PRM_ID_RYE_SHM_KEY };
 
 #define US_HB_DEREG_WAIT_TIME_IN_SEC	100
 
@@ -328,7 +334,7 @@ util_get_command_option_mask (ARG_TYPE command_type)
 int
 main (int argc, char *argv[])
 {
-  ARG_TYPE util_type, command_type;
+  ARG_TYPE util_type, command_type = ARG_UNKNOWN;
   int status;
   pid_t pid = getpid ();
   char env_buf[16];
@@ -338,15 +344,6 @@ main (int argc, char *argv[])
 
   exec_Name = basename (argv[0]);
 
-  if (argc == 2)
-    {
-      if (parse_arg (us_Arg_map, argv[1]) == ARG_CMD_VERSION)
-	{
-	  util_service_version ();
-	  return EXIT_SUCCESS;
-	}
-    }
-
   /* validate the number of arguments to avoid klocwork's error message */
   if (argc < 2 || argc > 1024)
     {
@@ -355,14 +352,63 @@ main (int argc, char *argv[])
     }
 
   util_type = parse_arg (us_Arg_map, argv[1]);
+
+  if (util_type == ARG_CMD_HELP)
+    {
+      util_type = -1;
+      goto usage;
+    }
+  else if (util_type == ARG_CMD_VERSION)
+    {
+      util_service_version ();
+      return EXIT_SUCCESS;
+    }
+
   if (!IS_ARG_UTIL (util_type))
     {
-      util_type = parse_arg (us_Arg_map, argv[2]);
-      if (!IS_ARG_UTIL (util_type))
+      print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_NAME,
+		     argv[1]);
+      goto error;
+    }
+
+  if (util_type == ARG_UTIL_SERVICE || util_type == ARG_UTIL_BROKER ||
+      util_type == ARG_UTIL_HEARTBEAT)
+    {
+      if (argc < 3)
 	{
-	  print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_NAME,
-			 argv[1]);
-	  goto error;
+	  goto usage;
+	}
+      else
+	{
+	  command_type = parse_arg (us_Arg_map, (char *) argv[2]);
+	  if (!IS_ARG_CMD (command_type))
+	    {
+	      print_message (stderr,
+			     MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
+			     argv[2]);
+	      goto error;
+	    }
+	  else
+	    {
+	      int util_mask = util_get_service_option_mask (util_type);
+	      int command_mask = util_get_command_option_mask (command_type);
+
+	      if ((util_mask & command_mask) == 0)
+		{
+		  print_message (stderr,
+				 MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
+				 argv[2]);
+		  goto error;
+		}
+	    }
+	}
+
+      if (command_type == ARG_CMD_START)
+	{
+	  if (change_prm_from_argv (argc - 3, argv + 3) < 0)
+	    {
+	      goto error;
+	    }
 	}
     }
 
@@ -408,39 +454,10 @@ main (int argc, char *argv[])
       return status;
     }
 
-  if (util_type == ARG_CMD_HELP)
+  if (command_type == ARG_UNKNOWN)
     {
-      util_type = -1;
+      assert (0);
       goto usage;
-    }
-
-  if (argc < 3)
-    {
-      goto usage;
-    }
-
-  command_type = parse_arg (us_Arg_map, (char *) argv[2]);
-  if (!IS_ARG_CMD (command_type))
-    {
-      command_type = parse_arg (us_Arg_map, (char *) argv[1]);
-      if (!IS_ARG_CMD (command_type))
-	{
-	  print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
-			 argv[2]);
-	  goto error;
-	}
-    }
-  else
-    {
-      int util_mask = util_get_service_option_mask (util_type);
-      int command_mask = util_get_command_option_mask (command_type);
-
-      if ((util_mask & command_mask) == 0)
-	{
-	  print_message (stderr, MSGCAT_UTIL_GENERIC_SERVICE_INVALID_CMD,
-			 argv[2]);
-	  goto error;
-	}
     }
 
   util_log_write_command (argc, argv);
@@ -522,14 +539,11 @@ proc_execute (const char *file, char *args[], bool wait_child,
 	      bool close_output, bool close_err, int *out_pid)
 {
   pid_t pid, tmp;
-  char executable_path[PATH_MAX];
 
   if (out_pid)
     {
       *out_pid = 0;
     }
-
-  (void) envvar_bindir_file (executable_path, PATH_MAX, file);
 
   /* do not process SIGCHLD, a child process will be defunct */
   if (wait_child)
@@ -549,6 +563,10 @@ proc_execute (const char *file, char *args[], bool wait_child,
     }
   else if (pid == 0)
     {
+      char executable_path[PATH_MAX];
+
+      (void) envvar_bindir_file (executable_path, PATH_MAX, file);
+
       /* a child process handle SIGCHLD to SIG_DFL */
       signal (SIGCHLD, SIG_DFL);
       if (close_output)
@@ -614,7 +632,6 @@ static int
 process_master (int command_type)
 {
   int status = NO_ERROR;
-  int master_port = prm_get_master_port_id ();
 
   switch (command_type)
     {
@@ -622,16 +639,16 @@ process_master (int command_type)
       {
 	print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		       PRINT_MASTER_NAME, PRINT_CMD_START);
-	if (!css_does_master_exist (master_port))
+	if (!css_does_master_exist ())
 	  {
-	    char argv0[] = UTIL_MASTER_NAME;
+	    char argv0[PATH_MAX];
 	    char *args[] = { argv0, NULL };
+	    envvar_process_name (argv0, sizeof (argv0), UTIL_MASTER_NAME);
 	    status = proc_execute (UTIL_MASTER_NAME, args, false, false,
 				   false, NULL);
 	    /* The master process needs a few seconds to bind port */
 	    sleep (3);
-	    status = css_does_master_exist (master_port) ?
-	      NO_ERROR : ER_GENERIC_ERROR;
+	    status = css_does_master_exist ()? NO_ERROR : ER_GENERIC_ERROR;
 	    print_result (PRINT_MASTER_NAME, status, command_type);
 	  }
 	else
@@ -647,9 +664,9 @@ process_master (int command_type)
     case ARG_CMD_STOP:
       print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		     PRINT_MASTER_NAME, PRINT_CMD_STOP);
-      if (css_does_master_exist (master_port))
+      if (css_does_master_exist ())
 	{
-	  while (css_does_master_exist (master_port))
+	  while (css_does_master_exist ())
 	    {
 	      if (commdb_master_shutdown (&master_Conn, 0) != NO_ERROR)
 		{
@@ -721,12 +738,10 @@ check_all_services_status (UNUSED_ARG unsigned int sleep_time,
 			   UTIL_ALL_SERVICES_STATUS expected_status)
 {
   bool ret;
-  int master_port;
   bool broker_running;
 
-  master_port = prm_get_master_port_id ();
   /* check whether rye_master is running */
-  ret = css_does_master_exist (master_port);
+  ret = css_does_master_exist ();
   if ((expected_status == ALL_SERVICES_RUNNING && !ret)
       || (expected_status == ALL_SERVICES_STOPPED && ret))
     {
@@ -809,7 +824,7 @@ process_service (int command_type)
     case ARG_CMD_STATUS:
       print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		     PRINT_MASTER_NAME, PRINT_CMD_STATUS);
-      if (css_does_master_exist (prm_get_master_port_id ()))
+      if (css_does_master_exist ())
 	{
 	  print_message (stdout, MSGCAT_UTIL_GENERIC_ALREADY_RUNNING_1S,
 			 PRINT_MASTER_NAME);
@@ -858,7 +873,6 @@ process_server (int command_type, int argc, char **argv, bool show_usage)
 {
   char buf[4096];
   int status = NO_ERROR;
-  int master_port = prm_get_master_port_id ();
 
   memset (buf, '\0', sizeof (buf));
 
@@ -882,7 +896,7 @@ process_server (int command_type, int argc, char **argv, bool show_usage)
     case ARG_CMD_STATUS:
       print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		     PRINT_SERVER_NAME, PRINT_CMD_STATUS);
-      if (css_does_master_exist (master_port))
+      if (css_does_master_exist ())
 	{
 	  status = commdb_get_server_status (&master_Conn);
 	}
@@ -1137,7 +1151,6 @@ process_broker (int command_type, int argc, char **argv)
 static int
 us_hb_activate (void)
 {
-  int master_port;
   int error = NO_ERROR;
   bool success;
 
@@ -1146,14 +1159,7 @@ us_hb_activate (void)
    * 1. ACTIVATE_HEARTBEAT->IS_REGISTERED_HA_PROCS
    */
 
-  master_port = prm_get_master_port_id ();
-  if (master_port <= 0)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-      return error;
-    }
-
-  if (!css_does_master_exist (master_port))
+  if (!css_does_master_exist ())
     {
       error = ER_GENERIC_ERROR;
       print_message (stdout, MSGCAT_UTIL_GENERIC_NOT_RUNNING_1S,
@@ -1200,7 +1206,6 @@ us_hb_activate (void)
 static int
 us_hb_reload (void)
 {
-  int master_port;
   int error = NO_ERROR;
   bool success;
   INT64 old_ha_node_reset_time, new_ha_node_reset_time;
@@ -1210,14 +1215,7 @@ us_hb_reload (void)
    * 1. RECOFIG_HEARTBEAT->IS_REGISTERED_HA_PROCS
    */
 
-  master_port = prm_get_master_port_id ();
-  if (master_port <= 0)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-      return error;
-    }
-
-  if (!css_does_master_exist (master_port))
+  if (!css_does_master_exist ())
     {
       error = ER_GENERIC_ERROR;
       print_message (stdout, MSGCAT_UTIL_GENERIC_NOT_RUNNING_1S,
@@ -1279,7 +1277,6 @@ us_hb_reload (void)
 static int
 us_hb_changemode (HA_STATE req_node_state, bool force)
 {
-  int master_port;
   int error = NO_ERROR;
 
   /*
@@ -1287,14 +1284,7 @@ us_hb_changemode (HA_STATE req_node_state, bool force)
    * 1. RECOFIG_HEARTBEAT->IS_REGISTERED_HA_PROCS
    */
 
-  master_port = prm_get_master_port_id ();
-  if (master_port <= 0)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-      return error;
-    }
-
-  if (!css_does_master_exist (master_port))
+  if (!css_does_master_exist ())
     {
       error = ER_GENERIC_ERROR;
       print_message (stdout, MSGCAT_UTIL_GENERIC_NOT_RUNNING_1S,
@@ -1322,17 +1312,17 @@ us_hb_changemode (HA_STATE req_node_state, bool force)
  *    immediate_stop(in):
  */
 static int
-us_hb_deactivate (const char *hostname, bool immediate_stop)
+us_hb_deactivate (const PRM_NODE_INFO * node_info, bool immediate_stop)
 {
   CSS_CONN_ENTRY *tmp_master_conn = NULL;
-  int port_id;
   unsigned short rid;
   int status = NO_ERROR;
   bool success;
+  PRM_NODE_INFO myself_node_info = prm_get_myself_node_info ();
 
-  if (hostname == NULL || hostname[0] == '\0')
+  if (node_info == NULL)
     {
-      hostname = "localhost";
+      node_info = &myself_node_info;
     }
 
   /*
@@ -1341,12 +1331,7 @@ us_hb_deactivate (const char *hostname, bool immediate_stop)
    * 2. DEACTIVATE_HEARTBEAT->DEACT_CONFIRM_NO_SERVER
    */
 
-  port_id = prm_get_master_port_id ();
-  if (port_id <= 0)
-    {
-      return ER_FAILED;
-    }
-  tmp_master_conn = css_connect_to_master_for_info (hostname, port_id, &rid);
+  tmp_master_conn = css_connect_to_master_for_info (node_info, &rid);
   if (tmp_master_conn == NULL)
     {
       return ER_FAILED;
@@ -1455,14 +1440,13 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
   int hb_argc;
   int opt, opt_idx = 0;
   char opt_str[64];
-  char hostname[MAXHOSTNAMELEN] = "";
   char **hb_args = NULL;
   char hb_arg0[] = PRINT_HEARTBEAT_NAME " " PRINT_CMD_STOP;
   bool immediate_stop = false;
+  PRM_NODE_INFO node_info = prm_get_myself_node_info ();
 
   struct option hb_stop_opts[] = {
     {HB_STOP_HB_DEACT_IMMEDIATELY_L, 0, 0, HB_STOP_HB_DEACT_IMMEDIATELY_S},
-    {HB_STOP_HOST_L, 1, 0, HB_STOP_HOST_S},
     {0, 0, 0, 0}
   };
 
@@ -1493,9 +1477,6 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
     {
       switch (opt)
 	{
-	case HB_STOP_HOST_S:
-	  strncpy (hostname, optarg, sizeof (hostname) - 1);
-	  break;
 	case HB_STOP_HB_DEACT_IMMEDIATELY_S:
 	  immediate_stop = true;
 	  break;
@@ -1509,7 +1490,7 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
   if (status == NO_ERROR && hb_argc > optind)
     {
       /* -h, -i options do not take a non-option argument */
-      if (hostname[0] != '\0' || immediate_stop == true)
+      if (immediate_stop == true)
 	{
 	  status = ER_GENERIC_ERROR;
 	  print_message (stderr, MSGCAT_UTIL_GENERIC_ARGS_OVER,
@@ -1537,12 +1518,7 @@ process_heartbeat_stop (UNUSED_ARG HA_CONF * ha_conf, UNUSED_ARG int argc,
       goto ret;
     }
 
-  if (hostname == NULL || hostname[0] == '\0')
-    {
-      strncpy (hostname, "localhost", sizeof (hostname) - 1);
-    }
-
-  status = us_hb_deactivate (hostname, immediate_stop);
+  status = us_hb_deactivate (&node_info, immediate_stop);
 
   if (status == NO_ERROR)
     {
@@ -1568,13 +1544,11 @@ static int
 process_heartbeat_status (int argc, char **argv)
 {
   int status = NO_ERROR;
-  int master_port;
 
   print_message (stdout, MSGCAT_UTIL_GENERIC_START_STOP_2S,
 		 PRINT_HEARTBEAT_NAME, PRINT_CMD_STATUS);
 
-  master_port = prm_get_master_port_id ();
-  if (css_does_master_exist (master_port))
+  if (css_does_master_exist ())
     {
       bool verbose = false;
 
@@ -1710,7 +1684,6 @@ process_heartbeat (int command_type, int argc, char **argv)
   int status = NO_ERROR;
   HA_CONF ha_conf;
   bool broker_running;
-  int master_port = prm_get_master_port_id ();
 
   memset ((void *) &ha_conf, 0, sizeof (HA_CONF));
   status = util_make_ha_conf (&ha_conf);
@@ -1725,7 +1698,7 @@ process_heartbeat (int command_type, int argc, char **argv)
   switch (command_type)
     {
     case ARG_CMD_START:
-      if (!css_does_master_exist (master_port))
+      if (!css_does_master_exist ())
 	{
 	  status = process_master (command_type);
 	  if (status != NO_ERROR)
@@ -1808,4 +1781,47 @@ static int
 load_properties (void)
 {
   return sysprm_load_and_init (NULL);
+}
+
+static int
+change_prm_from_argv (int argc, char **argv)
+{
+  char conf_path[PATH_MAX];
+  struct stat statbuf;
+  int i, j;
+
+  envvar_rye_conf_file (conf_path, sizeof (conf_path));
+  if (stat (conf_path, &statbuf) == -1 || errno == ENOENT)
+    {
+      /* changing prm is allowed when rye conf file does not exist */
+
+      for (i = 0; i < (int) DIM (changeable_Prm_list); i++)
+	{
+	  const char *prm_name = prm_get_name (changeable_Prm_list[i]);
+	  int name_len = strlen (prm_name);
+
+	  for (j = 0; j < argc; j++)
+	    {
+	      char *ptr_eq = argv[j] + name_len;
+	      char *ptr_value = ptr_eq + 1;
+
+	      if (prm_name != NULL &&
+		  strncmp (argv[j], prm_name, name_len) == 0 &&
+		  *ptr_eq == '=')
+		{
+		  trim (ptr_value);
+		  if (db_update_persist_conf_file ("server", "common",
+						   prm_name,
+						   ptr_value) != NO_ERROR)
+		    {
+		      PRINT_AND_LOG_ERR_MSG ("Cannot update conf [%s]\n",
+					     argv[j]);
+		      return -1;
+		    }
+		}
+	    }
+	}
+    }
+
+  return 0;
 }

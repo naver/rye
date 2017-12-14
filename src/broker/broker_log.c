@@ -35,7 +35,6 @@
 #include "broker_config.h"
 #include "broker_shm.h"
 
-#include "broker_filename.h"
 #include "broker_util.h"
 #include "broker_log.h"
 #include "error_manager.h"
@@ -46,7 +45,7 @@ static char *make_broker_log_filename (char *buf, size_t buf_size,
 				       const char *br_name, int port);
 static void br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 				   struct timeval *logtime,
-				   const unsigned char *clt_ip,
+				   in_addr_t clt_ip,
 				   const char *fmt, va_list ap);
 static const char *br_log_severity_str (T_BROKER_LOG_SEVERITY severity);
 static void br_log_end (void);
@@ -72,8 +71,6 @@ br_log_check ()
 {
   pthread_mutex_lock (&br_log_lock);
 
-  set_rye_file (FID_LOG_DIR, shm_appl->log_dir, shm_appl->broker_name);
-
   if (br_log_fp != NULL)
     {
       if (access (br_log_file, F_OK) < 0)
@@ -93,7 +90,7 @@ br_log_check ()
 }
 
 void
-br_log_write (T_BROKER_LOG_SEVERITY severity, const unsigned char *clt_ip,
+br_log_write (T_BROKER_LOG_SEVERITY severity, in_addr_t clt_ip,
 	      const char *fmt, ...)
 {
   struct timeval logtime;
@@ -134,8 +131,7 @@ br_log_hang_time ()
 static void
 br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 		       UNUSED_ARG struct timeval *logtime,
-		       const unsigned char *clt_ip,
-		       const char *fmt, va_list ap)
+		       in_addr_t clt_ip, const char *fmt, va_list ap)
 {
   char time_str[256];
   char clt_ip_str[64];
@@ -147,7 +143,7 @@ br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 
   if (br_log_fp != NULL)
     {
-      if (clt_ip == NULL)
+      if (clt_ip == INADDR_NONE)
 	{
 	  clt_ip_str[0] = '\0';
 	}
@@ -256,9 +252,9 @@ static char *
 make_broker_log_filename (char *buf, size_t buf_size, const char *br_name,
 			  int port)
 {
-  char dirname[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
 
-  get_rye_file (FID_LOG_DIR, dirname, BROKER_PATH_MAX);
-  snprintf (buf, buf_size, "%s%s.%d.log", dirname, br_name, port);
+  snprintf (filename, sizeof (filename), "%s.%d.log", br_name, port);
+  envvar_ryelog_broker_file (buf, buf_size, br_name, filename);
   return buf;
 }

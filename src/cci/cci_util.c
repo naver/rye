@@ -73,9 +73,6 @@ static void *cci_reg_malloc (void *dummy, size_t s);
 static void *cci_reg_realloc (void *dummy, void *p, size_t s);
 static void cci_reg_free (void *dummy, void *p);
 
-static void ipstr2uchar (const char *ip_str, unsigned char *ip_addr);
-static int is_ip_str (const char *ip_str);
-
 /************************************************************************
  * INTERFACE VARIABLES							*
  ************************************************************************/
@@ -240,18 +237,17 @@ ut_bit_to_str (char *bit_str, int bit_size, char *str, int str_size)
 int
 ut_host_str_to_addr (const char *ip_str, unsigned char *ip_addr)
 {
-  if (is_ip_str (ip_str))
+  in_addr_t in_addr;
+
+  in_addr = hostname_to_ip (ip_str);
+  if (in_addr == INADDR_NONE)
     {
-      ipstr2uchar (ip_str, ip_addr);
+      return CCI_ER_HOSTNAME;
     }
-  else
-    {
-      if (hostname2uchar (ip_str, ip_addr) < 0)
-	{
-	  return CCI_ER_HOSTNAME;
-	}
-    }
-  return 0;
+
+  memcpy ((void *) ip_addr, (void *) &in_addr, sizeof (in_addr));
+
+  return CCI_ER_NO_ERROR;
 }
 
 int
@@ -306,44 +302,6 @@ ut_tolower (char *str)
 /************************************************************************
  * IMPLEMENTATION OF PRIVATE FUNCTIONS	 				*
  ************************************************************************/
-
-static int
-is_ip_str (const char *ip_str)
-{
-  const char *p;
-
-  for (p = ip_str; *p; p++)
-    {
-      if ((*p >= '0' && *p <= '9') || (*p == '.'))
-	{
-	  continue;
-	}
-      return 0;
-    }
-
-  return 1;
-}
-
-static void
-ipstr2uchar (const char *ip_str, unsigned char *ip_addr)
-{
-  int ip0, ip1, ip2, ip3;
-
-  if (ip_str == NULL)
-    {
-      memset (ip_addr, 0, 4);
-      return;
-    }
-
-  ip0 = ip1 = ip2 = ip3 = 0;
-
-  sscanf (ip_str, "%d%*c%d%*c%d%*c%d", &ip0, &ip1, &ip2, &ip3);
-
-  ip_addr[0] = (unsigned char) ip0;
-  ip_addr[1] = (unsigned char) ip1;
-  ip_addr[2] = (unsigned char) ip2;
-  ip_addr[3] = (unsigned char) ip3;
-}
 
 static char
 is_float_str (const char *str)

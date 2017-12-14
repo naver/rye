@@ -70,7 +70,7 @@ void (*prev_sigfpe_handler) (int) = SIG_DFL;
 char db_Database_name[DB_MAX_IDENTIFIER_LENGTH + 1];
 char db_Program_name[PATH_MAX];
 
-static char *db_Preferred_hosts = NULL;
+static PRM_NODE_LIST db_Preferred_hosts = PRM_EMPTY_NODE_LIST;
 static bool db_Connect_order_random = true;
 static int db_Max_num_delayed_hosts_lookup = -1;
 static int db_Delayed_hosts_count = 0;
@@ -404,16 +404,11 @@ db_set_client_type (int client_type)
 }
 
 void
-db_set_preferred_hosts (const char *hosts)
+db_set_preferred_hosts (const PRM_NODE_LIST * node_list)
 {
-  if (db_Preferred_hosts)
+  if (node_list)
     {
-      free_and_init (db_Preferred_hosts);
-    }
-
-  if (hosts)
-    {
-      db_Preferred_hosts = strdup (hosts);
+      db_Preferred_hosts = *node_list;
     }
 }
 
@@ -604,7 +599,7 @@ db_restart (const char *program, UNUSED_ARG int print_version,
   client_credential.login_name = NULL;
   client_credential.host_name = NULL;
   client_credential.process_id = -1;
-  client_credential.preferred_hosts = db_Preferred_hosts;
+  client_credential.preferred_nodes = db_Preferred_hosts;
   client_credential.connect_order_random = db_Connect_order_random;
 
   error = boot_restart_client (&client_credential);
@@ -632,13 +627,10 @@ db_restart (const char *program, UNUSED_ARG int print_version,
  *   db_user(in) : the database user name
  *   db_password(in) : the password
  *   client_type(in) : BOOT_CLIENT_TYPE_XXX in boot.h
- *   preferred_hosts(in) : DO NOT USE IT, set it to NULL and
- *                         use db_set_preferred_hosts instead
  */
 int
 db_restart_ex (const char *program, const char *db_name, const char *db_user,
-	       const char *db_password, const char *preferred_hosts,
-	       int client_type)
+	       const char *db_password, int client_type)
 {
   int retval;
 
@@ -661,15 +653,6 @@ db_restart_ex (const char *program, const char *db_name, const char *db_user,
       break;
     }
 #endif
-  /* For backward compatibility.
-   * Do not use the parameter, preferred_hosts.
-   * A caller is supposed to use db_set_preferred_hosts
-   * before db_restart_ex is called.
-   */
-  if (preferred_hosts != NULL)
-    {
-      db_set_preferred_hosts (preferred_hosts);
-    }
 
   return db_restart (program, false, db_name);
 }
@@ -1859,22 +1842,6 @@ db_get_system_parameter_value (char *value, int max_len,
 
   assert (error == NO_ERROR);
   return error;
-}
-
-/*
- * db_get_host_connected() - return the host name connected
- * return : host name or NULL
- */
-const char *
-db_get_host_connected (void)
-{
-  /*CHECK_CONNECT_NULL (); */
-
-#if defined(CS_MODE)
-  return boot_get_host_connected ();
-#else
-  return "localhost";
-#endif
 }
 
 int

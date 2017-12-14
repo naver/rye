@@ -1002,7 +1002,7 @@ $ LOADDB
 934 Null type referenced.
 935 Argument of %1$s function is out of range.
 936 Overflow occurred in exp context.
-937 Database error.
+937 Invalid argument: %1$s
 938 Invalid argument.
 939 There are too many connection.
 940 The handle is invalid.
@@ -1036,7 +1036,7 @@ $ LOADDB
 968 Your transaction (index %1$d, %2$s@%3$s|%4$d) timed out waiting on %5$s lock on value %6$s because of deadlock. You are waiting for user(s) %7$s to finish.
 969 Server bit platform (%1$d) is different from client bit platform (%2$d).
 970 Server HA mode is changed from '%1$s' to '%2$s'.
-971 Program '%1$s' (pid %2$d) connected to database server '%3$s' on the host '%4$s' (port %5$d).
+971 Program '%1$s' (pid %2$d) connected to database server '%3$s' on the host '%4$s'.
 972 Program '%1$s' (pid %2$d) was connected from the host '%3$s'. (transaction index %4$d)
 973 Server status is %1$s.
 974 Archive log "%1$s" is created to archive pages from %2$lld to %3$lld.

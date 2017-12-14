@@ -41,7 +41,6 @@
 #include "broker_config.h"
 
 #include "broker_env_def.h"
-#include "broker_filename.h"
 #include "broker_util.h"
 #include "dbi.h"
 #include "broker_shm.h"
@@ -332,39 +331,27 @@ static void
 make_cas_log_filename (T_CAS_LOG_TYPE cas_log_type, char *filename_buf,
 		       size_t buf_size)
 {
-  char dirname[BROKER_PATH_MAX];
+  char tmp_filename[BROKER_PATH_MAX];
 
   assert (filename_buf != NULL);
 
   if (cas_log_type == CAS_LOG_SQL_LOG)
     {
-      if (as_info->cas_log_reset == CAS_LOG_RESET_REOPEN)
-	{
-	  set_rye_file (FID_LOG_DIR, shm_appl->log_dir,
-			shm_appl->broker_name);
-	}
-
-      get_rye_file (FID_SQL_LOG_DIR, dirname, BROKER_PATH_MAX);
-      snprintf (filename_buf, buf_size, "%s%s_%d.sql.log", dirname,
-		shm_appl->broker_name, cas_id);
+      snprintf (tmp_filename, sizeof (tmp_filename),
+		"%s_%d.sql.log", shm_appl->broker_name, cas_id);
+      envvar_ryelog_broker_sqllog_file (filename_buf, buf_size,
+					shm_appl->broker_name, tmp_filename);
     }
   else if (cas_log_type == CAS_LOG_SLOW_LOG)
     {
-      if (as_info->cas_slow_log_reset == CAS_LOG_RESET_REOPEN)
-	{
-	  set_rye_file (FID_LOG_DIR, shm_appl->log_dir,
-			shm_appl->broker_name);
-	}
-
-      get_rye_file (FID_SLOW_LOG_DIR, dirname, BROKER_PATH_MAX);
-      snprintf (filename_buf, buf_size, "%s%s_%d.slow.log", dirname,
-		shm_appl->broker_name, cas_id);
+      snprintf (tmp_filename, sizeof (tmp_filename),
+		"%s_%d.slow.log", shm_appl->broker_name, cas_id);
+      envvar_ryelog_broker_slowlog_file (filename_buf, buf_size,
+					 shm_appl->broker_name, tmp_filename);
     }
   else if (IS_CAS_LOG_ACCESS_LOG (cas_log_type))
     {
       const char *denied_file_postfix;
-
-      get_rye_file (FID_LOG_DIR, dirname, BROKER_PATH_MAX);
 
       if (cas_log_type == CAS_LOG_DENIED_ACCESS_LOG)
 	{
@@ -375,9 +362,11 @@ make_cas_log_filename (T_CAS_LOG_TYPE cas_log_type, char *filename_buf,
 	  denied_file_postfix = "";
 	}
 
-      snprintf (filename_buf, buf_size, "%s%s%s%s",
-		dirname, shm_appl->broker_name,
+      snprintf (tmp_filename, sizeof (tmp_filename), "%s%s%s",
+		shm_appl->broker_name,
 		ACCESS_LOG_FILENAME_POSTFIX, denied_file_postfix);
+      envvar_ryelog_broker_file (filename_buf, buf_size,
+				 shm_appl->broker_name, tmp_filename);
     }
   else
     {
@@ -595,7 +584,7 @@ cas_sql_log_query_cancel ()
       tv.tv_sec = query_Cancel_time / 1000;
       tv.tv_usec = (query_Cancel_time % 1000) * 1000;
 
-      ut_get_ipv4_string (ip_str, sizeof (ip_str), as_info->cas_clt_ip);
+      ut_get_ipv4_string (ip_str, sizeof (ip_str), as_info->cas_clt_ip_addr);
 
       query_Cancel_time = 0;
 
@@ -626,7 +615,7 @@ cas_log_write_string (T_CAS_LOG_TYPE cas_log_type, char *value,
 }
 
 int
-cas_access_log (struct timeval *start_time, int as_index, int client_ip_addr,
+cas_access_log (struct timeval *start_time, int as_index, in_addr_t client_ip,
 		char *dbname, char *dbuser, ACCESS_LOG_TYPE log_type)
 {
   char clt_ip_str[16];
@@ -647,8 +636,7 @@ cas_access_log (struct timeval *start_time, int as_index, int client_ip_addr,
       access_type_str = (log_type == NEW_CONNECTION ? "NEW" : "OLD");
     }
 
-  ut_get_ipv4_string (clt_ip_str, sizeof (clt_ip_str),
-		      (unsigned char *) (&client_ip_addr));
+  ut_get_ipv4_string (clt_ip_str, sizeof (clt_ip_str), client_ip);
 
   cas_log_write (cas_log_type,
 		 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_LOG_END,

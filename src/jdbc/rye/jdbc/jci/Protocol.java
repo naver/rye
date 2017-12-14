@@ -46,8 +46,7 @@ abstract public class Protocol
 
     /* normal broker request */
     public static final byte BRREQ_OP_CODE_CAS_CONNECT = 1;
-    public static final byte BRREQ_OP_CODE_PING = 2;
-    public static final byte BRREQ_OP_CODE_QUERY_CANCEL = 3;
+    public static final byte BRREQ_OP_CODE_QUERY_CANCEL = 2;
     /* local mgmt request */
     public static final byte BRREQ_OP_CODE_LAUNCH_PROCESS = 17;
     public static final byte BRREQ_OP_CODE_GET_SHARD_MGMT_INFO = 18;
@@ -58,6 +57,7 @@ abstract public class Protocol
     public static final byte BRREQ_OP_CODE_DELETE_CONF = 23;
     public static final byte BRREQ_OP_CODE_GET_CONF = 24;
     public static final byte BRREQ_OP_CODE_BR_ACL_RELOAD = 25;
+    public static final byte BRREQ_OP_CODE_PING = 27;
 
     /* shard mgmt request */
     public static final byte BRREQ_OP_CODE_GET_SHARD_INFO = 64;
@@ -72,6 +72,7 @@ abstract public class Protocol
     public static final byte BRREQ_OP_CODE_REBALANCE_JOB_COUNT = 73;
     public static final byte BRREQ_OP_CODE_GC_START = 74;
     public static final byte BRREQ_OP_CODE_GC_END = 75;
+    public static final byte BRREQ_OP_CODE_PING_SHARD_MGMT = 76;
 
     public static final int READ_RYE_FILE_RYE_CONF = 1;
     public static final int READ_RYE_FILE_BR_ACL = 2;

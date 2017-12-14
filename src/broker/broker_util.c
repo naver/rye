@@ -43,7 +43,6 @@
 #include "cas_common.h"
 #include "broker_env_def.h"
 #include "broker_util.h"
-#include "broker_filename.h"
 #include "environment_variable.h"
 #include "porting.h"
 
@@ -75,22 +74,17 @@ ut_kill_process (int pid)
   return 0;
 }
 
-int
-ut_kill_broker_process (int pid, int broker_type, char *broker_name)
+void
+ut_kill_broker_process (const T_BROKER_INFO * br_info)
 {
-  ut_kill_process (pid);
+  char tmp[BROKER_PATH_MAX];
 
-  if (broker_type == NORMAL_BROKER && broker_name != NULL)
+  ut_kill_process (br_info->broker_pid);
+
+  if (ut_get_broker_port_name (tmp, BROKER_PATH_MAX, br_info) == 0)
     {
-      char tmp[BROKER_PATH_MAX];
-
-      ut_get_broker_port_name (tmp, broker_name, BROKER_PATH_MAX);
-
       unlink (tmp);
-
-      return 0;
     }
-  return -1;
 }
 
 int
@@ -161,15 +155,13 @@ as_pid_file_create (char *br_name, int as_index)
 }
 
 char *
-ut_get_ipv4_string (char *ip_str, int len, const unsigned char *ip_addr)
+ut_get_ipv4_string (char *ip_str, int len, in_addr_t ip_addr)
 {
-  assert (ip_addr != NULL);
+  const unsigned char *ip = (const unsigned char *) &ip_addr;
   assert (ip_str != NULL);
   assert (len >= 16);		/* xxx.xxx.xxx.xxx\0 */
 
-  snprintf (ip_str, len, "%d.%d.%d.%d", (unsigned char) ip_addr[0],
-	    (unsigned char) ip_addr[1],
-	    (unsigned char) ip_addr[2], (unsigned char) ip_addr[3]);
+  snprintf (ip_str, len, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
   return (ip_str);
 }
 
@@ -213,25 +205,39 @@ ut_is_appl_server_ready (int pid, char *ready_flag)
   return false;
 }
 
-void
-ut_get_broker_port_name (char *port_name, const char *broker_name, int len)
+int
+ut_get_broker_port_name (char *port_name, size_t len,
+			 const T_BROKER_INFO * br_info)
 {
-  char dir_name[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX] = "";
 
-  get_rye_file (FID_SOCK_DIR, dir_name, BROKER_PATH_MAX);
+  if (br_info->broker_type == NORMAL_BROKER && br_info->name[0] != '\0')
+    {
+      snprintf (filename, sizeof (filename), "rye_broker.%s", br_info->name);
+    }
+  else if (br_info->broker_type == SHARD_MGMT &&
+	   br_info->shard_global_dbname[0] != '\0')
+    {
+      snprintf (filename, sizeof (filename), "shard_mgmt.%s",
+		br_info->shard_global_dbname);
+    }
 
-  snprintf (port_name, len, "%s%s.B", dir_name, broker_name);
+  if (filename[0] == '\0')
+    {
+      return -1;
+    }
+
+  envvar_socket_file (port_name, len, filename);
+  return 0;
 }
 
 void
 ut_get_as_port_name (char *port_name, const char *broker_name,
 		     int as_id, int len)
 {
-  char dir_name[BROKER_PATH_MAX];
-
-  get_rye_file (FID_SOCK_DIR, dir_name, BROKER_PATH_MAX);
-
-  snprintf (port_name, len, "%s%s.%d", dir_name, broker_name, as_id + 1);
+  char filename[BROKER_PATH_MAX];
+  snprintf (filename, sizeof (filename), "%s.%d", broker_name, as_id + 1);
+  envvar_socket_file (port_name, len, filename);
 }
 
 double
@@ -357,11 +363,9 @@ ut_time_string_to_sec (const char *time_str, const char *default_unit)
 void
 ut_get_as_pid_name (char *pid_name, char *br_name, int as_index, int len)
 {
-  char dir_name[BROKER_PATH_MAX];
-
-  get_rye_file (FID_AS_PID_DIR, dir_name, BROKER_PATH_MAX);
-
-  snprintf (pid_name, len, "%s%s_%d.pid", dir_name, br_name, as_index + 1);
+  char filename[BROKER_PATH_MAX];
+  snprintf (filename, sizeof (filename), "%s_%d.pid", br_name, as_index + 1);
+  envvar_as_pid_dir_file (pid_name, len, filename);
 }
 
 T_BROKER_INFO *
@@ -369,6 +373,12 @@ ut_find_broker (T_BROKER_INFO * br_info, int num_brs, const char *brname,
 		char broker_type)
 {
   int i;
+
+  if (brname == NULL)
+    {
+      assert (0);
+      return NULL;
+    }
 
   for (i = 0; i < num_brs; i++)
     {
@@ -380,4 +390,62 @@ ut_find_broker (T_BROKER_INFO * br_info, int num_brs, const char *brname,
     }
 
   return NULL;
+}
+
+T_BROKER_INFO *
+ut_find_shard_mgmt (T_BROKER_INFO * br_info, int num_brs, const char *dbname)
+{
+  int i;
+
+  if (dbname == NULL)
+    {
+      assert (0);
+      return NULL;
+    }
+
+  for (i = 0; i < num_brs; i++)
+    {
+      if (br_info[i].broker_type == SHARD_MGMT &&
+	  strcmp (dbname, br_info[i].shard_global_dbname) == 0)
+	{
+	  return (&br_info[i]);
+	}
+    }
+
+  return NULL;
+}
+
+void
+ut_make_broker_process_name (char *buf, size_t size,
+			     const T_BROKER_INFO * br_info)
+{
+  char tmp_proc_name[PATH_MAX];
+  if (br_info->broker_type == SHARD_MGMT)
+    {
+      snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_shard_mgmt_%s",
+		NAME_CAS_BROKER, br_info->shard_global_dbname);
+    }
+  else if (br_info->broker_type == SHARD_MGMT)
+    {
+      snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_local_mgmt",
+		NAME_CAS_BROKER);
+    }
+  else
+    {
+      snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_%s",
+		NAME_CAS_BROKER, br_info->name);
+    }
+
+  envvar_process_name (buf, size, tmp_proc_name);
+}
+
+void
+ut_make_cas_process_name (char *buf, size_t size, const char *broker_name,
+			  int as_index)
+{
+  char tmp_proc_name[PATH_MAX];
+  snprintf (tmp_proc_name, sizeof (tmp_proc_name), "%s_%s_%d",
+	    APPL_SERVER_CAS_NAME, broker_name, as_index + 1);
+
+  envvar_process_name (buf, size, tmp_proc_name);
 }

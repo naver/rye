@@ -59,10 +59,7 @@
 #include "broker_env_def.h"
 #include "broker_shm.h"
 #include "broker_util.h"
-#include "broker_filename.h"
 
-#include "broker_send_fd.h"
-#include "broker_recv_fd.h"
 #include "broker_log.h"
 #include "broker.h"
 #include "cas_cci_internal.h"
@@ -114,8 +111,8 @@ enum SERVER_STATE
 };
 
 static void cleanup (int signo);
-static int init_mgmt_socket (void);
-static int init_service_broker_socket (void);
+static int init_inet_socket (void);
+static int init_unix_socket (const T_BROKER_INFO * br_info);
 static int broker_init_shm (void);
 
 static void cas_monitor_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
@@ -145,15 +142,15 @@ static bool broker_drop_one_cas_by_time_to_kill (void);
 
 static void check_cas_log (const char *br_name,
 			   T_APPL_SERVER_INFO * as_info_p, int as_index);
-static void get_as_sql_log_filename (char *log_filename,
+static void get_as_sql_log_filename (char *log_filename, size_t buf_size,
 				     const char *broker_name, int as_index);
-static void get_as_slow_log_filename (char *log_filename,
+static void get_as_slow_log_filename (char *log_filename, size_t buf_size,
 				      const char *broker_name, int as_index);
 
-static int insert_db_server_check_list (T_DB_SERVER * list_p,
-					int check_list_cnt,
-					const char *db_name,
-					const char *db_host);
+static int add_db_server_check_list (T_DB_SERVER * list_p,
+				     int check_list_cnt,
+				     const char *db_name,
+				     const PRM_NODE_INFO * db_host);
 
 T_SHM_BROKER *shm_Br = NULL;
 int br_Index = -1;
@@ -220,25 +217,22 @@ main ()
   pthread_mutex_init (&run_Appl_mutex, NULL);
   pthread_mutex_init (&broker_Shm_mutex, NULL);
 
-  if (shm_Br->br_info[br_Index].broker_type == SHARD_MGMT ||
-      shm_Br->br_info[br_Index].broker_type == LOCAL_MGMT)
+  if (shm_Br->br_info[br_Index].broker_type == LOCAL_MGMT)
     {
-      if (init_mgmt_socket () == -1)
+      if (init_inet_socket () == -1)
 	{
 	  goto error1;
 	}
     }
   else
     {
-      if (init_service_broker_socket () == -1)
+      if (init_unix_socket (&shm_Br->br_info[br_Index]) < 0)
 	{
 	  goto error1;
 	}
     }
 
   br_log_init (shm_Appl);
-  set_rye_file (FID_LOG_DIR, shm_Appl->log_dir,
-		shm_Br->br_info[br_Index].name);
 
   sysprm_load_and_init (NULL);
 
@@ -376,18 +370,14 @@ br_send_result_to_client (int sock_fd, int err_code,
 static THREAD_FUNC
 receiver_thr_f (UNUSED_ARG void *arg)
 {
-  T_SOCKLEN clt_sock_addr_len;
-  struct sockaddr_in clt_sock_addr;
   SOCKET clt_sock_fd;
-  SOCKET mgmt_sock_fd;
   int job_queue_size;
   T_MAX_HEAP_NODE *job_queue;
   T_MAX_HEAP_NODE new_job;
   int job_count;
-  int one = 1;
   T_BROKER_REQUEST_MSG *br_req_msg;
   int timeout;
-  int client_ip_addr;
+  in_addr_t client_ip_addr;
   struct timeval mgmt_recv_time;
   int error;
   ER_MSG_INFO *er_msg;
@@ -421,54 +411,13 @@ receiver_thr_f (UNUSED_ARG void *arg)
 
   while (br_Process_flag)
     {
-      clt_sock_addr_len = sizeof (clt_sock_addr);
-      mgmt_sock_fd = accept (br_Listen_sock_fd,
-			     (struct sockaddr *) &clt_sock_addr,
-			     &clt_sock_addr_len);
-      if (IS_INVALID_SOCKET (mgmt_sock_fd))
+      clt_sock_fd = br_accept_unix_domain (&client_ip_addr, &mgmt_recv_time,
+					   br_req_msg);
+
+      if (IS_INVALID_SOCKET (clt_sock_fd))
 	{
 	  continue;
 	}
-
-      if (shm_Br->br_info[br_Index].monitor_hang_flag
-	  && shm_Br->br_info[br_Index].reject_client_flag)
-	{
-	  shm_Br->br_info[br_Index].reject_client_count++;
-	  RYE_CLOSE_SOCKET (mgmt_sock_fd);
-	  continue;
-	}
-
-      if (br_read_broker_request_msg (mgmt_sock_fd, br_req_msg) < 0 ||
-	  !IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code))
-	{
-	  RYE_CLOSE_SOCKET (mgmt_sock_fd);
-	  shm_Br->br_info[br_Index].connect_fail_count++;
-	  continue;
-	}
-
-      clt_sock_fd = recv_fd (mgmt_sock_fd, &client_ip_addr, &mgmt_recv_time);
-      if (clt_sock_fd < 0)
-	{
-	  RYE_CLOSE_SOCKET (mgmt_sock_fd);
-	  shm_Br->br_info[br_Index].connect_fail_count++;
-	  continue;
-	}
-
-      br_write_nbytes_to_client (mgmt_sock_fd, (char *) &one, sizeof (one),
-				 BR_SOCKET_TIMEOUT_SEC);
-      RYE_CLOSE_SOCKET (mgmt_sock_fd);
-
-      if (fcntl (clt_sock_fd, F_SETFL, FNDELAY) < 0)
-	{
-	  RYE_CLOSE_SOCKET (mgmt_sock_fd);
-	  shm_Br->br_info[br_Index].connect_fail_count++;
-	  continue;
-	}
-
-      setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-		  sizeof (one));
-      ut_set_keepalive (clt_sock_fd);
-
 
       if (br_req_msg->op_code == BRREQ_OP_CODE_CAS_CONNECT)
 	{
@@ -491,7 +440,7 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	  new_job.recv_time = mgmt_recv_time;
 	  new_job.priority = 0;
 	  new_job.port = ntohs (0);
-	  memcpy (new_job.ip_addr, &client_ip_addr, 4);
+	  new_job.ip = client_ip_addr;
 	  new_job.clt_type = br_req_msg->clt_type;
 	  new_job.clt_version = br_req_msg->clt_version;
 
@@ -510,12 +459,6 @@ receiver_thr_f (UNUSED_ARG void *arg)
 		  break;
 		}
 	    }
-	}
-      else if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
-	{
-	  br_send_result_to_client (clt_sock_fd, 0, NULL);
-	  RYE_CLOSE_SOCKET (clt_sock_fd);
-	  shm_Br->br_info[br_Index].ping_req_count++;
 	}
       else if (br_req_msg->op_code == BRREQ_OP_CODE_QUERY_CANCEL)
 	{
@@ -540,13 +483,13 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	      cas_pid = ntohl (cas_pid);
 	    }
 
-	  if (cas_id >= 0
-	      && cas_id < shm_Br->br_info[br_Index].appl_server_max_num
-	      && shm_Appl->info.as_info[cas_id].service_flag == SERVICE_ON
-	      && shm_Appl->info.as_info[cas_id].pid == cas_pid
-	      && shm_Appl->info.as_info[cas_id].uts_status == UTS_STATUS_BUSY
-	      && memcmp (&shm_Appl->info.as_info[cas_id].cas_clt_ip,
-			 &client_ip_addr, 4) == 0)
+	  if (cas_id >= 0 &&
+	      cas_id < shm_Br->br_info[br_Index].appl_server_max_num &&
+	      shm_Appl->info.as_info[cas_id].service_flag == SERVICE_ON &&
+	      shm_Appl->info.as_info[cas_id].pid == cas_pid &&
+	      shm_Appl->info.as_info[cas_id].uts_status == UTS_STATUS_BUSY &&
+	      shm_Appl->info.as_info[cas_id].cas_clt_ip_addr ==
+	      client_ip_addr)
 	    {
 	      ret_code = 0;
 	      kill (cas_pid, SIGUSR1);
@@ -685,16 +628,15 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 
       shm_Appl->info.as_info[as_index].clt_version = cur_job.clt_version;
       shm_Appl->info.as_info[as_index].client_type = cur_job.clt_type;
-      memcpy (shm_Appl->info.as_info[as_index].cas_clt_ip, cur_job.ip_addr,
-	      4);
+      shm_Appl->info.as_info[as_index].cas_clt_ip_addr = cur_job.ip;
       shm_Appl->info.as_info[as_index].cas_clt_port = cur_job.port;
 
-      srv_sock_fd = br_connect_srv (shm_Br->br_info[br_Index].name,
-				    false, as_index);
+      srv_sock_fd = br_connect_srv (false, &shm_Br->br_info[br_Index],
+				    as_index);
 
       if (!IS_INVALID_SOCKET (srv_sock_fd))
 	{
-	  int ip_addr;
+	  in_addr_t ip_addr;
 	  int ret_val;
 	  int con_status, uts_status;
 
@@ -718,8 +660,9 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 	      goto retry;
 	    }
 
-	  memcpy (&ip_addr, cur_job.ip_addr, 4);
-	  ret_val = send_fd (srv_sock_fd, cur_job.clt_sock_fd, ip_addr,
+	  ip_addr = cur_job.ip;
+	  ret_val =
+	    css_transfer_fd (srv_sock_fd, cur_job.clt_sock_fd, ip_addr,
 			     &cur_job.recv_time);
 	  if (ret_val > 0)
 	    {
@@ -752,7 +695,74 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 }
 
 SOCKET
-br_mgmt_accept (unsigned char *clt_ip_addr)
+br_accept_unix_domain (in_addr_t * clt_ip_addr,
+		       struct timeval * mgmt_recv_time,
+		       T_BROKER_REQUEST_MSG * br_req_msg)
+{
+  int mgmt_sockfd;
+  struct sockaddr_in clt_sock_addr;
+  int one = 1;
+  T_SOCKLEN clt_sock_addr_len;
+  SOCKET clt_sock_fd;
+  int br_type = shm_Br->br_info[br_Index].broker_type;
+
+  assert (br_type == NORMAL_BROKER || br_type == SHARD_MGMT);
+
+  clt_sock_addr_len = sizeof (clt_sock_addr);
+  mgmt_sockfd = accept (br_Listen_sock_fd, (struct sockaddr *) &clt_sock_addr,
+			&clt_sock_addr_len);
+  if (IS_INVALID_SOCKET (mgmt_sockfd))
+    {
+      return INVALID_SOCKET;
+    }
+
+  if (shm_Br->br_info[br_Index].monitor_hang_flag
+      && shm_Br->br_info[br_Index].reject_client_flag)
+    {
+      shm_Br->br_info[br_Index].reject_client_count++;
+      RYE_CLOSE_SOCKET (mgmt_sockfd);
+      return INVALID_SOCKET;
+    }
+
+  if (br_read_broker_request_msg (mgmt_sockfd, br_req_msg) < 0 ||
+      (br_type == NORMAL_BROKER &&
+       !IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code)) ||
+      (br_type == SHARD_MGMT && !IS_SHARD_MGMT_OPCODE (br_req_msg->op_code)))
+    {
+      shm_Br->br_info[br_Index].connect_fail_count++;
+      RYE_CLOSE_SOCKET (mgmt_sockfd);
+      return INVALID_SOCKET;
+    }
+
+  clt_sock_fd = css_recv_fd (mgmt_sockfd, (int *) clt_ip_addr,
+			     mgmt_recv_time);
+  if (clt_sock_fd < 0)
+    {
+      RYE_CLOSE_SOCKET (mgmt_sockfd);
+      shm_Br->br_info[br_Index].connect_fail_count++;
+      return INVALID_SOCKET;
+    }
+
+  br_write_nbytes_to_client (mgmt_sockfd, (char *) &one, sizeof (one),
+			     BR_SOCKET_TIMEOUT_SEC);
+  RYE_CLOSE_SOCKET (mgmt_sockfd);
+
+  if (fcntl (clt_sock_fd, F_SETFL, FNDELAY) < 0)
+    {
+      RYE_CLOSE_SOCKET (clt_sock_fd);
+      shm_Br->br_info[br_Index].connect_fail_count++;
+      return INVALID_SOCKET;
+    }
+
+  setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
+	      sizeof (one));
+  ut_set_keepalive (clt_sock_fd);
+
+  return clt_sock_fd;
+}
+
+SOCKET
+br_mgmt_accept (in_addr_t * clt_ip_addr)
 {
   T_SOCKLEN clt_sock_addr_len;
   struct sockaddr_in clt_sock_addr;
@@ -767,7 +777,7 @@ br_mgmt_accept (unsigned char *clt_ip_addr)
       return INVALID_SOCKET;
     }
 
-  memcpy (clt_ip_addr, &(clt_sock_addr.sin_addr), 4);
+  *clt_ip_addr = clt_sock_addr.sin_addr.s_addr;
 
   if (fcntl (clt_sock_fd, F_SETFL, FNDELAY) < 0)
     {
@@ -787,7 +797,7 @@ br_mgmt_accept (unsigned char *clt_ip_addr)
 }
 
 static int
-init_mgmt_socket (void)
+init_inet_socket (void)
 {
   int n;
   int one = 1;
@@ -842,7 +852,7 @@ init_mgmt_socket (void)
 }
 
 static int
-init_service_broker_socket (void)
+init_unix_socket (const T_BROKER_INFO * br_info)
 {
   int one = 1;
   int sock_addr_len;
@@ -866,8 +876,14 @@ init_service_broker_socket (void)
   memset (&sock_addr, 0, sizeof (struct sockaddr_un));
   sock_addr.sun_family = AF_UNIX;
 
-  ut_get_broker_port_name (sock_addr.sun_path, shm_Br->br_info[br_Index].name,
-			   sizeof (sock_addr.sun_path));
+  if (ut_get_broker_port_name (sock_addr.sun_path,
+			       sizeof (sock_addr.sun_path), br_info) < 0)
+    {
+      br_set_init_error (BR_ER_INIT_CANT_CREATE_SOCKET, 0);
+      RYE_CLOSE_SOCKET (br_Listen_sock_fd);
+      return -1;
+    }
+
   sock_addr_len =
     strlen (sock_addr.sun_path) + sizeof (sock_addr.sun_family) + 1;
 
@@ -926,8 +942,7 @@ broker_add_new_cas (void)
   shm_Appl->info.as_info[add_as_index].service_flag = SERVICE_ON;
   shm_Appl->info.as_info[add_as_index].reset_flag = FALSE;
 
-  memset (&shm_Appl->info.as_info[add_as_index].cas_clt_ip[0], 0x0,
-	  sizeof (shm_Appl->info.as_info[add_as_index].cas_clt_ip));
+  shm_Appl->info.as_info[add_as_index].cas_clt_ip_addr = 0;
   shm_Appl->info.as_info[add_as_index].cas_clt_port = 0;
   shm_Appl->info.as_info[add_as_index].client_version[0] = '\0';
 
@@ -1016,7 +1031,6 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 {
   char appl_name[APPL_SERVER_NAME_MAX_SIZE];
   int pid;
-  char argv0[128];
   int i;
   char path[BROKER_PATH_MAX];
   char as_id_env_str[32];
@@ -1050,6 +1064,7 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
   pid = fork ();
   if (pid == 0)
     {
+      char argv0[PATH_MAX];
       signal (SIGCHLD, SIG_DFL);
 
       for (i = 3; i <= max_Open_fd; i++)
@@ -1066,8 +1081,8 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 		"%s=%d", AS_ID_ENV_STR, as_index);
       putenv (as_id_env_str);
 
-      snprintf (argv0, sizeof (argv0) - 1, "%s_%s_%d",
-		shm_Br->br_info[br_index].name, appl_name, as_index + 1);
+      ut_make_cas_process_name (argv0, sizeof (argv0),
+				shm_Br->br_info[br_index].name, as_index);
 
       execle (appl_name, argv0, NULL, environ);
 
@@ -1330,7 +1345,7 @@ br_read_nbytes_from_client (SOCKET sock_fd, char *buf, int size,
 }
 
 SOCKET
-br_connect_srv (const char *br_name, bool is_mgmt, int as_index)
+br_connect_srv (bool is_mgmt, const T_BROKER_INFO * br_info, int as_index)
 {
   int sock_addr_len;
   struct sockaddr_un sock_addr;
@@ -1342,19 +1357,24 @@ retry:
 
   srv_sock_fd = socket (AF_UNIX, SOCK_STREAM, 0);
   if (IS_INVALID_SOCKET (srv_sock_fd))
-    return INVALID_SOCKET;
+    {
+      return INVALID_SOCKET;
+    }
 
   memset (&sock_addr, 0, sizeof (struct sockaddr_un));
   sock_addr.sun_family = AF_UNIX;
 
   if (is_mgmt)
     {
-      ut_get_broker_port_name (sock_addr.sun_path, br_name,
-			       sizeof (sock_addr.sun_path));
+      if (ut_get_broker_port_name (sock_addr.sun_path,
+				   sizeof (sock_addr.sun_path), br_info) < 0)
+	{
+	  assert (0);
+	}
     }
   else
     {
-      ut_get_as_port_name (sock_addr.sun_path, br_name, as_index,
+      ut_get_as_port_name (sock_addr.sun_path, br_info->name, as_index,
 			   sizeof (sock_addr.sun_path));
     }
 
@@ -1481,82 +1501,17 @@ cas_monitor_thr_f (UNUSED_ARG void *ar)
   return NULL;
 }
 
-static CSS_CONN_ENTRY *
-connect_to_master_for_server_monitor (const char *db_name,
-				      const char *db_host)
-{
-  int port_id;
-  unsigned short rid;
-
-  if (sysprm_load_and_init (db_name) != NO_ERROR)
-    {
-      return NULL;
-    }
-
-  port_id = prm_get_master_port_id ();
-  if (port_id <= 0)
-    {
-      return NULL;
-    }
-
-  /* timeout : 5000 milliseconds */
-  return (css_connect_to_master_timeout (db_host, port_id, 5000, &rid));
-}
-
 static int
-get_server_state_from_master (CSS_CONN_ENTRY * conn, const char *db_name)
-{
-  int css_error = NO_ERRORS;
-  char *request = NULL;
-  int request_size, strlen1;
-  char *reply = NULL;
-  int reply_size;
-  int server_state = SERVER_STATE_UNKNOWN;
-
-  if (conn == NULL)
-    {
-      return SERVER_STATE_UNKNOWN;
-    }
-
-  request_size = or_packed_string_length (db_name, &strlen1);
-  request = (char *) malloc (request_size);
-  if (request == NULL)
-    {
-      return SERVER_STATE_UNKNOWN;
-    }
-  or_pack_string_with_length (request, db_name, strlen1);
-
-  /* timeout : 5000 milliseconds */
-  css_error = css_send_request_to_master (conn, MASTER_GET_SERVER_STATE,
-					  5000, 1, 1,
-					  request, request_size, &reply,
-					  &reply_size);
-  if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
-    {
-      free_and_init (request);
-
-      return SERVER_STATE_UNKNOWN;
-    }
-
-  or_unpack_int (reply, &server_state);
-
-  free_and_init (reply);
-  free_and_init (request);
-
-  return server_state;
-}
-
-static int
-insert_db_server_check_list (T_DB_SERVER * list_p,
-			     int check_list_cnt, const char *db_name,
-			     const char *db_host)
+add_db_server_check_list (T_DB_SERVER * list_p,
+			  int check_list_cnt, const char *db_name,
+			  const PRM_NODE_INFO * db_node)
 {
   int i;
 
   for (i = 0; i < check_list_cnt && i < UNUSABLE_DATABASE_MAX; i++)
     {
       if (strcmp (db_name, list_p[i].database_name) == 0
-	  && strcmp (db_host, list_p[i].database_host) == 0)
+	  && prm_is_same_node (db_node, &list_p[i].db_node) == true)
 	{
 	  return check_list_cnt;
 	}
@@ -1568,7 +1523,7 @@ insert_db_server_check_list (T_DB_SERVER * list_p,
     }
 
   strncpy (list_p[i].database_name, db_name, SRV_CON_DBNAME_SIZE - 1);
-  strncpy (list_p[i].database_host, db_host, MAXHOSTNAMELEN - 1);
+  list_p[i].db_node = *db_node;
   list_p[i].server_state = HA_STATE_UNKNOWN;
 
   return i + 1;
@@ -1582,15 +1537,12 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
   int check_list_cnt = 0;
   T_APPL_SERVER_INFO *as_info_p;
   T_DB_SERVER *check_list;
-  CSS_CONN_ENTRY *conn = NULL;
-  char **ha_hosts = NULL;
-  int num_hosts = 0;
-  char **preferred_hosts;
   char *unusable_db_name;
-  char *unusable_db_host;
+  PRM_NODE_INFO unusable_db_node = PRM_NULL_NODE_INFO;
   char busy_cas_db_name[SRV_CON_DBNAME_SIZE];
   int error;
   ER_MSG_INFO *er_msg;
+  PRM_NODE_LIST ha_node_list;
 
   er_msg = malloc (sizeof (ER_MSG_INFO));
   error = er_set_msg_info (er_msg);
@@ -1614,11 +1566,7 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 	  continue;
 	}
 
-      if (ha_hosts != NULL)
-	{
-	  cfg_free_hosts (ha_hosts);
-	}
-      ha_hosts = cfg_get_hosts_from_prm (&num_hosts);
+      prm_get_ha_node_list (&ha_node_list);
 
       /* 1. collect server check list */
       check_list_cnt = 0;
@@ -1628,12 +1576,12 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 	{
 	  unusable_db_name =
 	    shm_Appl->unusable_databases[u_index][i].database_name;
-	  unusable_db_host =
-	    shm_Appl->unusable_databases[u_index][i].database_host;
+	  unusable_db_node = shm_Appl->unusable_databases[u_index][i].db_node;
 
-	  check_list_cnt =
-	    insert_db_server_check_list (check_list, check_list_cnt,
-					 unusable_db_name, unusable_db_host);
+	  check_list_cnt = add_db_server_check_list (check_list,
+						     check_list_cnt,
+						     unusable_db_name,
+						     &unusable_db_node);
 	}
 
       for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
@@ -1646,29 +1594,24 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 
 	      if (busy_cas_db_name[0] != '\0')
 		{
-		  preferred_hosts =
-		    util_split_string (shm_Appl->preferred_hosts, ":");
-		  if (preferred_hosts != NULL)
-		    {
-		      for (j = 0; preferred_hosts[j] != NULL; j++)
-			{
-			  check_list_cnt =
-			    insert_db_server_check_list (check_list,
-							 check_list_cnt,
-							 busy_cas_db_name,
-							 preferred_hosts[j]);
-			}
+		  PRM_NODE_LIST preferred_hosts;
 
-		      util_free_string_array (preferred_hosts);
-		    }
-
-		  for (j = 0; j < num_hosts; j++)
+		  preferred_hosts = shm_Appl->preferred_hosts;
+		  for (j = 0; j < preferred_hosts.num_nodes; j++)
 		    {
 		      check_list_cnt =
-			insert_db_server_check_list (check_list,
-						     check_list_cnt,
-						     busy_cas_db_name,
-						     ha_hosts[j]);
+			add_db_server_check_list (check_list, check_list_cnt,
+						  busy_cas_db_name,
+						  &preferred_hosts.nodes[j]);
+		    }
+
+		  for (j = 0; j < ha_node_list.num_nodes; j++)
+		    {
+		      check_list_cnt =
+			add_db_server_check_list (check_list,
+						  check_list_cnt,
+						  busy_cas_db_name,
+						  &ha_node_list.nodes[j]);
 		    }
 		}
 	    }
@@ -1677,18 +1620,10 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
       /* 2. check server state */
       for (i = 0; i < check_list_cnt; i++)
 	{
-	  conn =
-	    connect_to_master_for_server_monitor (check_list[i].database_name,
-						  check_list[i].
-						  database_host);
+	  HA_STATE node_state = HA_STATE_UNKNOWN;
 
-	  check_list[i].server_state =
-	    get_server_state_from_master (conn, check_list[i].database_name);
-	  if (conn != NULL)
-	    {
-	      css_free_conn (conn);
-	      conn = NULL;
-	    }
+	  rye_master_shm_get_node_state (&node_state, &check_list[i].db_node);
+	  check_list[i].server_state = node_state;
 	}
 
       /* 3. record server state to the shared memory */
@@ -1703,9 +1638,8 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
 	      strncpy (shm_Appl->unusable_databases[u_index][cnt].
 		       database_name, check_list[i].database_name,
 		       SRV_CON_DBNAME_SIZE - 1);
-	      strncpy (shm_Appl->unusable_databases[u_index][cnt].
-		       database_host, check_list[i].database_host,
-		       MAXHOSTNAMELEN - 1);
+	      shm_Appl->unusable_databases[u_index][cnt].db_node =
+		check_list[i].db_node;
 	      cnt++;
 	    }
 	}
@@ -1716,7 +1650,6 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
       THREAD_SLEEP (MONITOR_SERVER_INTERVAL * 1000);
     }
 
-  cfg_free_hosts (ha_hosts);
   free_and_init (check_list);
 
   return NULL;
@@ -1890,7 +1823,8 @@ check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p,
 
   if (as_info_p->cur_sql_log_mode != SQL_LOG_MODE_NONE)
     {
-      get_as_sql_log_filename (log_filename, br_name, as_index);
+      get_as_sql_log_filename (log_filename, sizeof (log_filename), br_name,
+			       as_index);
 
       if (access (log_filename, F_OK) < 0)
 	{
@@ -1906,7 +1840,8 @@ check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p,
 
   if (as_info_p->cur_slow_log_mode != SLOW_LOG_MODE_OFF)
     {
-      get_as_slow_log_filename (log_filename, br_name, as_index);
+      get_as_slow_log_filename (log_filename, sizeof (log_filename), br_name,
+				as_index);
 
       if (access (log_filename, F_OK) < 0)
 	{
@@ -2144,27 +2079,28 @@ return_error:
 }
 
 static void
-get_as_sql_log_filename (char *log_filename, const char *broker_name,
-			 int as_index)
+get_as_sql_log_filename (char *log_filename, size_t buf_size,
+			 const char *broker_name, int as_index)
 {
-  char dirname[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
 
-  get_rye_file (FID_SQL_LOG_DIR, dirname, BROKER_PATH_MAX);
-
-  snprintf (log_filename, BROKER_PATH_MAX, "%s%s_%d.sql.log", dirname,
+  snprintf (filename, sizeof (filename), "%s_%d.sql.log",
 	    broker_name, as_index + 1);
+
+  envvar_ryelog_broker_sqllog_file (log_filename, buf_size, broker_name,
+				    filename);
 }
 
 static void
-get_as_slow_log_filename (char *log_filename, const char *broker_name,
-			  int as_index)
+get_as_slow_log_filename (char *log_filename, size_t buf_size,
+			  const char *broker_name, int as_index)
 {
-  char dirname[BROKER_PATH_MAX];
+  char tmp_filename[BROKER_PATH_MAX];
 
-  get_rye_file (FID_SLOW_LOG_DIR, dirname, BROKER_PATH_MAX);
-
-  snprintf (log_filename, BROKER_PATH_MAX, "%s%s_%d.slow.log", dirname,
+  snprintf (tmp_filename, sizeof (tmp_filename), "%s_%d.slow.log",
 	    broker_name, as_index + 1);
+  envvar_ryelog_broker_slowlog_file (log_filename, buf_size, broker_name,
+				     tmp_filename);
 }
 
 /*
@@ -2484,6 +2420,9 @@ static int req_arg_rebalance_job_count (T_MGMT_REQ_ARG * req_arg,
 					int num_args,
 					const T_MGMT_REQ_ARG_CONTAINER *
 					args);
+static int req_arg_ping_shard_mgmt (T_MGMT_REQ_ARG * req_arg,
+				    int num_args,
+				    const T_MGMT_REQ_ARG_CONTAINER * args);
 static int req_arg_sync_shard_mgmt_info (T_MGMT_REQ_ARG * req_arg,
 					 int num_args,
 					 const T_MGMT_REQ_ARG_CONTAINER *
@@ -2500,6 +2439,8 @@ static int req_arg_get_conf (T_MGMT_REQ_ARG * req_arg, int num_args,
 			     const T_MGMT_REQ_ARG_CONTAINER * args);
 static int req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg, int num_args,
 				  const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg, int num_args,
+				      const T_MGMT_REQ_ARG_CONTAINER * args);
 static int req_arg_get_no_arg (T_MGMT_REQ_ARG * req_arg, int num_args,
 			       const T_MGMT_REQ_ARG_CONTAINER * args);
 
@@ -2516,6 +2457,7 @@ static T_REQ_ARG_READ_FUNC_TABLE req_Arg_read_func_table[] = {
   {BRREQ_OP_CODE_GC_END, req_arg_gc_start_end},
   {BRREQ_OP_CODE_REBALANCE_REQ, req_arg_rebalance_req},
   {BRREQ_OP_CODE_REBALANCE_JOB_COUNT, req_arg_rebalance_job_count},
+  {BRREQ_OP_CODE_PING_SHARD_MGMT, req_arg_ping_shard_mgmt},
   {BRREQ_OP_CODE_SYNC_SHARD_MGMT_INFO, req_arg_sync_shard_mgmt_info},
   {BRREQ_OP_CODE_LAUNCH_PROCESS, req_arg_launch_process},
   {BRREQ_OP_CODE_GET_SHARD_MGMT_INFO, req_arg_get_no_arg},
@@ -2526,22 +2468,40 @@ static T_REQ_ARG_READ_FUNC_TABLE req_Arg_read_func_table[] = {
   {BRREQ_OP_CODE_DELETE_CONF, req_arg_get_conf},
   {BRREQ_OP_CODE_GET_CONF, req_arg_get_conf},
   {BRREQ_OP_CODE_BR_ACL_RELOAD, req_arg_br_acl_reload},
+  {BRREQ_OP_CODE_CONNECT_DB_SERVER, req_arg_connect_db_server},
   {0, NULL}
 };
+
+static int
+host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
+{
+  PRM_NODE_LIST node_list;
+  if (host_str != NULL &&
+      prm_split_node_str (&node_list, host_str, false) == NO_ERROR &&
+      node_list.num_nodes >= 1)
+    {
+      *node_info = node_list.nodes[0];
+      return NO_ERROR;
+    }
+  else
+    {
+      PRM_NODE_INFO tmp_node_info = prm_get_null_node_info ();
+      *node_info = tmp_node_info;
+      return ER_FAILED;
+    }
+}
 
 static int
 node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
 {
   char *save_ptr = NULL;
   char *str_id;
-  char *str_port;
   char *local_dbname;
   char *host_str;
-  unsigned char ip_addr[4];
   char *cp_arg_str;
   int error = 0;
-  int node_id, port;
-  char host_ip[IP_ADDR_STR_LEN];
+  int node_id;
+  PRM_NODE_INFO host_info;
 
   RYE_ALLOC_COPY_STR (cp_arg_str, arg_str);
   if (cp_arg_str == NULL)
@@ -2551,34 +2511,19 @@ node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
 
   str_id = strtok_r (cp_arg_str, ":", &save_ptr);
   local_dbname = strtok_r (NULL, ":", &save_ptr);
-  host_str = strtok_r (NULL, ":", &save_ptr);
-  str_port = strtok_r (NULL, ":", &save_ptr);
+  host_str = save_ptr;
 
   if (local_dbname == NULL || host_str == NULL ||
       strlen (local_dbname) >= SRV_CON_DBNAME_SIZE ||
-      str_to_int (&node_id, str_id) < 0 || str_to_int (&port, str_port) < 0)
+      str_to_int (&node_id, str_id) < 0 ||
+      host_str_to_node_info (&host_info, host_str) != NO_ERROR)
     {
       error = -1;
       goto end;
     }
 
-  if (strcasecmp (host_str, "localhost") == 0 ||
-      strcmp (host_str, "127.0.0.1") == 0)
-    {
-      memcpy (ip_addr, shm_Br->my_ip_addr, 4);
-    }
-  else
-    {
-      if (cci_host_str_to_addr (host_str, ip_addr) < 0)
-	{
-	  error = -1;
-	  goto end;
-	}
-    }
-  ut_get_ipv4_string (host_ip, IP_ADDR_STR_LEN, ip_addr);
-
-  br_copy_shard_node_info (node_info, node_id, local_dbname, host_ip, port,
-			   INADDR_NONE, HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
+  br_copy_shard_node_info (node_info, node_id, local_dbname, NULL, &host_info,
+			   HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
 
 end:
   RYE_FREE_MEM (cp_arg_str);
@@ -2663,6 +2608,8 @@ req_arg_shard_init (T_MGMT_REQ_ARG * req_arg,
     {
       return BR_ER_INVALID_ARGUMENT;
     }
+
+  req_arg->clt_dbname = init_arg->global_dbname;
 
   req_arg->alloc_buffer = RYE_MALLOC (sizeof (T_SHARD_NODE_INFO) *
 				      num_init_nodes);
@@ -2921,6 +2868,20 @@ req_arg_rebalance_job_count (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
+req_arg_ping_shard_mgmt (T_MGMT_REQ_ARG * req_arg,
+			 int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+{
+  if (check_mgmt_req_arg (num_args, args, 1, MGMT_REQ_ARG_STR) < 0)
+    {
+      return BR_ER_INVALID_ARGUMENT;
+    }
+
+  req_arg->clt_dbname = MGMT_ARG_STRING_VALUE (&args[0]);
+
+  return 0;
+}
+
+static int
 req_arg_sync_shard_mgmt_info (T_MGMT_REQ_ARG * req_arg,
 			      int num_args,
 			      const T_MGMT_REQ_ARG_CONTAINER * args)
@@ -3147,6 +3108,25 @@ req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
+req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg,
+			   int num_args,
+			   const T_MGMT_REQ_ARG_CONTAINER * args)
+{
+  T_MGMT_REQ_ARG_CONNECT_DB_SERVER *connect_db_server_arg;
+
+  connect_db_server_arg = &req_arg->value.connect_db_server_arg;
+
+  if (check_mgmt_req_arg (num_args, args, 1, MGMT_REQ_ARG_STR) < 0)
+    {
+      return BR_ER_INVALID_ARGUMENT;
+    }
+
+  connect_db_server_arg->db_name = MGMT_ARG_STRING_VALUE (&args[0]);
+
+  return 0;
+}
+
+static int
 req_arg_get_no_arg (UNUSED_ARG T_MGMT_REQ_ARG * req_arg,
 		    int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
@@ -3336,25 +3316,26 @@ br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg, int msg_size,
 
 void
 br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
-			 const char *dbname, const char *host, int port,
-			 in_addr_t host_addr, HA_STATE_FOR_DRIVER ha_state,
-			 const char *host_name)
+			 const char *dbname, const char *host_ip_str,
+			 const PRM_NODE_INFO * host_info,
+			 HA_STATE_FOR_DRIVER ha_state, const char *host_name)
 {
   node->node_id = node_id;
-  node->port = port;
 
   assert (strlen (dbname) < SRV_CON_DBNAME_SIZE);
-  assert (strlen (host) < IP_ADDR_STR_LEN);
 
   STRNCPY (node->local_dbname, dbname, sizeof (node->local_dbname));
-  STRNCPY (node->host_ip_str, host, sizeof (node->host_ip_str));
 
-  if (host_addr == INADDR_NONE)
+  node->host_info = *host_info;
+  if (host_ip_str == NULL)
     {
-      host_addr = inet_addr (host);
+      css_ip_to_str (node->host_ip_str, sizeof (node->host_ip_str),
+		     PRM_NODE_INFO_GET_IP (host_info));
     }
-  assert (host_addr != INADDR_NONE);
-  node->host_ip_addr = host_addr;
+  else
+    {
+      STRNCPY (node->host_ip_str, host_ip_str, sizeof (node->host_ip_str));
+    }
 
   node->ha_state = ha_state;
 

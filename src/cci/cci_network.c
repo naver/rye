@@ -224,6 +224,11 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
 
   assert (con_handle->con_status == CCI_CON_STATUS_OUT_TRAN);
 
+  if (IS_CON_TYPE_GLOBAL (con_handle))
+    {
+      goto end;
+    }
+
   cas_connect_msg = make_cas_connect_msg (con_handle->port_name);
   if (cas_connect_msg == NULL)
     {
@@ -261,15 +266,7 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
   err_code = br_res.result_code;
   if (err_code < 0)
     {
-      if (err_code == BR_ER_NOT_SHARD_MGMT_OPCODE)
-	{
-	  con_handle->is_sharding_connection = true;
-	  CLOSE_SOCKET (srv_sock_fd);
-	}
-      else
-	{
-	  goto connect_srv_error;
-	}
+      goto connect_srv_error;
     }
   else if (err_code > 0)
     {
@@ -277,8 +274,7 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
       err_code = CCI_ER_COMMUNICATION;
       goto connect_srv_error;
     }
-
-  if (!con_handle->is_sharding_connection)
+  else
     {
       T_NET_RES *net_res;
 
@@ -322,6 +318,7 @@ net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout)
       FREE_MEM (net_res);
     }
 
+end:
   con_handle->alter_hosts->cur_id = host_id;
 
   if (con_handle->alter_hosts->count > 0)
@@ -1372,6 +1369,31 @@ net_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_res,
 	  return CCI_ER_ASYNC_LAUNCH_FAIL;
 	}
     }
+}
+
+int
+net_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname,
+			    int timeout_msec)
+{
+  T_BROKER_REQUEST_MSG *req_msg = NULL;
+  T_BROKER_RESPONSE_ADDITIONAL_MSG res_msg;
+  SOCKET sock_fd = INVALID_SOCKET;
+
+  net_additional_msg_clear (&res_msg);
+
+  req_msg = make_mgmt_request_msg (BRREQ_OP_CODE_CONNECT_DB_SERVER,
+				   MGMT_REQ_ARG_STR, dbname,
+				   MGMT_REQ_ARG_END);
+  if (net_mgmt_admin_req (&sock_fd, host, timeout_msec, req_msg,
+			  &res_msg, NULL, false, false) < 0)
+    {
+      return INVALID_SOCKET;
+    }
+
+  net_additional_msg_free (&res_msg);
+
+  assert (sock_fd != INVALID_SOCKET);
+  return sock_fd;
 }
 
 /************************************************************************
