@@ -1415,9 +1415,9 @@ CS_FUNC_CSS_IP_TO_STR (UNUSED_ARG char *buf, UNUSED_ARG int size,
   return -1;
 }
 
-#define CS_FUNC_PRM_GET_MASTER_PORT_ID prm_get_local_port_id
+#define CS_FUNC_PRM_GET_RYE_PORT_ID prm_get_rye_port_id
 int
-CS_FUNC_PRM_GET_MASTER_PORT_ID ()
+CS_FUNC_PRM_GET_RYE_PORT_ID ()
 {
   assert (0);
   return 0;

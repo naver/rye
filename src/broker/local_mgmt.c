@@ -1300,10 +1300,10 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
   int fd;
   int write_len;
   char rye_conf_path[PATH_MAX];
-  int local_port_id;
+  int rye_port_id;
   const char *rye_shm_key;
 
-  local_port_id = prm_get_local_port_id ();
+  rye_port_id = prm_get_rye_port_id ();
   rye_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
 
   arg_write_conf = &req_arg->value.write_rye_conf_arg;
@@ -1328,9 +1328,9 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
       char buf[64];
       int err = 0;
 
-      snprintf(buf, sizeof (buf), "%d", local_port_id);
+      snprintf(buf, sizeof (buf), "%d", rye_port_id);
       err = db_update_persist_conf_file ("server", "common",
-					 "local_port_id", buf);
+					 "rye_port_id", buf);
       if (err == NO_ERROR)
         {
 	  err = db_update_persist_conf_file ("server", "common",

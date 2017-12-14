@@ -149,7 +149,7 @@ typedef enum
 
 #define PRM_NAME_WS_MEMORY_REPORT "workspace_memory_report"
 
-#define PRM_NAME_LOCAL_PORT_ID "local_port_id"
+#define PRM_NAME_RYE_PORT_ID "rye_port_id"
 
 #define PRM_NAME_TCP_CONNECTION_TIMEOUT "connection_timeout"
 
@@ -551,8 +551,8 @@ static int prm_ws_hashtable_size_lower = 1024;
 bool PRM_WS_MEMORY_REPORT = false;
 static bool prm_ws_memory_report_default = false;
 
-int PRM_LOCAL_PORT_ID = 30000;
-static int prm_local_port_id_default = 30000;
+int PRM_RYE_PORT_ID = 30000;
+static int prm_rye_port_id_default = 30000;
 
 int PRM_TCP_CONNECTION_TIMEOUT = 5;
 static int prm_tcp_connection_timeout_default = 5;
@@ -1420,11 +1420,11 @@ sysprm_initialize_prm_def ()
 		     &prm_ws_memory_report_default,
 		     &PRM_WS_MEMORY_REPORT, NULL, NULL);
 
-  sysprm_init_param (PRM_ID_LOCAL_PORT_ID,
-		     PRM_NAME_LOCAL_PORT_ID,
+  sysprm_init_param (PRM_ID_RYE_PORT_ID,
+		     PRM_NAME_RYE_PORT_ID,
 		     (PRM_FOR_CLIENT | PRM_FOR_SERVER),
 		     PRM_INTEGER,
-		     &prm_local_port_id_default, &PRM_LOCAL_PORT_ID, NULL,
+		     &prm_rye_port_id_default, &PRM_RYE_PORT_ID, NULL,
 		     NULL);
 
   sysprm_init_param (PRM_ID_TCP_CONNECTION_TIMEOUT,
@@ -6097,9 +6097,9 @@ sysprm_tune_client_parameters (void)
 #endif /* CS_MODE */
 
 int
-prm_get_local_port_id (void)
+prm_get_rye_port_id (void)
 {
-  return PRM_LOCAL_PORT_ID;
+  return PRM_RYE_PORT_ID;
 }
 
 bool
@@ -7356,7 +7356,7 @@ prm_get_myself_node_info ()
 {
   PRM_NODE_INFO node_info;
   PRM_NODE_INFO_SET (&node_info, prm_get_ha_node_myself (),
-		     prm_get_local_port_id ());
+		     prm_get_rye_port_id ());
   return node_info;
 }
 
@@ -7563,7 +7563,7 @@ prm_split_node_str_internal (PRM_NODE_LIST * node_list,
       p = strchr (list_pp[i], ':');
       if (p == NULL)
 	{
-	  port = prm_get_local_port_id ();
+	  port = prm_get_rye_port_id ();
 	}
       else
 	{

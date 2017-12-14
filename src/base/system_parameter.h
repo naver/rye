@@ -116,7 +116,7 @@ enum param_id
   PRM_ID_RSQL_AUTO_COMMIT,
   PRM_ID_WS_HASHTABLE_SIZE,
   PRM_ID_WS_MEMORY_REPORT,
-  PRM_ID_LOCAL_PORT_ID,
+  PRM_ID_RYE_PORT_ID,
   PRM_ID_TCP_CONNECTION_TIMEOUT,
   PRM_ID_OPTIMIZATION_LEVEL,
   PRM_ID_QO_DUMP,
@@ -344,7 +344,7 @@ extern int sysprm_set_to_default (const char *pname, bool set_to_force);
 #endif
 extern int sysprm_check_range (const char *pname, void *value);
 extern int sysprm_get_range (const char *pname, void *min, void *max);
-extern int prm_get_local_port_id (void);
+extern int prm_get_rye_port_id (void);
 extern bool prm_get_commit_on_shutdown (void);
 
 extern char *sysprm_pack_assign_values (char *ptr,

@@ -681,7 +681,7 @@ get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl,
 
   *shm_key_br_gl = ini_gethex (ini, BROKER_SECTION_NAME, "BROKER_SHM_KEY",
 			       default_shm_key, lineno);
-  *mgmt_port = prm_get_local_port_id ();
+  *mgmt_port = prm_get_rye_port_id ();
 
   if (admin_log_file != NULL)
     {

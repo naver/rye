@@ -1570,7 +1570,7 @@ fn_notify_ha_agent_state (int argc, void **argv, T_NET_BUF * net_buf,
 
   if (port == 0)
     {
-      port = prm_get_local_port_id ();
+      port = prm_get_rye_port_id ();
     }
   PRM_NODE_INFO_SET (&node_info, ip, port);
 
