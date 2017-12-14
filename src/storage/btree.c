@@ -6478,7 +6478,7 @@ btree_rv_util_save_page_records (THREAD_ENTRY * thread_p, BTID_INT * btid,
       if (spage_get_record (page_ptr, first_slotid + i, &rec, PEEK)
 	  != S_SUCCESS)
 	{
-	  return er_errid ();
+	  break;
 	}
 
       if (offset + 2 > data_len)
