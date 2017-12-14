@@ -58,6 +58,8 @@ main (int argc, char *argv[])
       return -1;
     }
 
+  sysprm_load_and_init (NULL);
+
   if (broker_config_read (NULL, NULL, &shm_key_br_gl, NULL, 0) < 0)
     {
       printf ("config file error\n");

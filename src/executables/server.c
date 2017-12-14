@@ -48,8 +48,6 @@ static void crash_handler (int signo, siginfo_t * siginfo, void *dummyp);
 
 static const char *database_name = "";
 
-static char executable_path[PATH_MAX];
-
 /*
  * unmask_signal(): unmask the given signal
  *
@@ -128,6 +126,8 @@ crash_handler (int signo, siginfo_t * siginfo, UNUSED_ARG void *dummyp)
       char err_log[PATH_MAX];
       int ppid;
       int fd, fd_max;
+      char exe_path[PATH_MAX];
+      char argv0[PATH_MAX];
 
       fd_max = css_get_max_socket_fds ();
 
@@ -155,7 +155,10 @@ crash_handler (int signo, siginfo_t * siginfo, UNUSED_ARG void *dummyp)
 	  rename (prm_get_string_value (PRM_ID_ER_LOG_FILE), err_log);
 	}
 
-      execl (executable_path, executable_path, database_name, NULL);
+      envvar_bindir_file (exe_path, sizeof (exe_path), UTIL_SERVER_NAME);
+      envvar_process_name (argv0, sizeof (argv0), UTIL_SERVER_NAME);
+
+      execl (exe_path, argv0, database_name, NULL);
       exit (0);
     }
 }
@@ -169,7 +172,6 @@ crash_handler (int signo, siginfo_t * siginfo, UNUSED_ARG void *dummyp)
 int
 main (int argc, char **argv)
 {
-  char *binary_name;
   int ret_val = 0;
   sigset_t sigurg_mask;
   char prog_name[] = UTIL_SERVER_NAME;
@@ -196,13 +198,9 @@ main (int argc, char **argv)
 	   "of recovery works to do.\n");
 
   argv[0] = prog_name;
-  /* save executable path */
-  binary_name = basename (argv[0]);
-  (void) envvar_bindir_file (executable_path, PATH_MAX, binary_name);
-  /* save database name */
   database_name = argv[1];
 
-  hb_set_exec_path (executable_path);
+  hb_set_exec_path (UTIL_SERVER_NAME);
   hb_set_argv (argv);
 
   /* create a new session */

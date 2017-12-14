@@ -3286,7 +3286,9 @@ locator_repl_mflush (LOCATOR_MFLUSH_CACHE * mflush)
 		  repl_obj->recdes->length);
 	  mflush->recdes.length = repl_obj->recdes->length;
 
+#if 0
 	  assert (or_grp_id (&mflush->recdes) >= GLOBAL_GROUPID);
+#endif
 	}
 
       mflush->mobjs->num_objs++;

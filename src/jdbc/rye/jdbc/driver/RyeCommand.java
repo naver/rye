@@ -51,10 +51,15 @@ public class RyeCommand
 
     public RyeCommand(String localMgmtHost, int localMgmtPort) throws RyeException
     {
-	conInfo = new JciConnectionInfo(localMgmtHost, localMgmtPort, null);
-	protocolCommand = new Integer(Protocol.MGMT_LAUNCH_PROCESS_RYE_COMMAND);
+	this(new JciConnectionInfo(localMgmtHost, localMgmtPort, null));
     }
 
+    public RyeCommand (JciConnectionInfo conInfo) throws RyeException
+    {
+	this.conInfo = conInfo;
+	protocolCommand = new Integer(Protocol.MGMT_LAUNCH_PROCESS_RYE_COMMAND);
+    }
+    
     public int exec(String[] args) throws RyeException
     {
 	if (args == null || args.length == 0) {

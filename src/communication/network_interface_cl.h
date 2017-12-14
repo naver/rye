@@ -189,7 +189,7 @@ extern int boot_restart_from_backup (int print_restart, const char *db_name,
 				     BO_RESTART_ARG * r_args);
 extern bool boot_shutdown_server (void);
 extern HA_STATE boot_get_server_state (void);
-extern int boot_notify_ha_apply_state (const char *host_ip,
+extern int boot_notify_ha_apply_state (const PRM_NODE_INFO * node_info,
 				       HA_APPLY_STATE state);
 extern char *stats_get_statistics_from_server (OID * classoid,
 					       unsigned int timestamp,
@@ -314,7 +314,8 @@ extern int net_client_ping_server_with_handshake (int client_type,
 						  int opt_cap,
 						  RYE_VERSION * svr_version);
 
-extern int net_client_init (const char *dbname, const char *hostname);
+extern int net_client_init (const char *dbname,
+			    const PRM_NODE_INFO * node_info);
 extern int net_client_final (void);
 
 extern int net_client_send_data (char *host, unsigned int rc, char *databuf,

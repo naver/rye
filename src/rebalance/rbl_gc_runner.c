@@ -75,11 +75,21 @@ print_usage_and_exit (void)
 
 static int
 rbl_gc_connect (const char *host, int port, const char *dbname,
-		const char *pw, CCI_CONN * conn)
+		const char *pw, CCI_CONN * conn, bool is_local_con)
 {
-  char url[256];
+  char url[1024];
+  const char *url_property;
 
-  sprintf (url, "cci:rye://%s:%d/%s/rw?", host, port, dbname);
+  if (is_local_con)
+    {
+      url_property = "connectionType=local";
+    }
+  else
+    {
+      url_property = "connectionType=global";
+    }
+
+  sprintf (url, "cci:rye://%s:%d/%s/rw?%s", host, port, dbname, url_property);
 
   if (cci_connect (conn, url, "dba", pw ? pw : "") < 0)
     {
@@ -113,7 +123,7 @@ rbl_gc_thread (void *arg)
     }
 
   error = rbl_gc_connect (node->hostname, node->port, node->dbname,
-			  ctx->pw, &ctx->conn);
+			  ctx->pw, &ctx->conn, true);
   if (error != NO_ERROR)
     {
       RBL_NOTICE (ARG_FILE_LINE, "DB connection fail: "
@@ -185,7 +195,21 @@ main (int argc, char *argv[])
 	}
     }
 
-  if (host == NULL || dbname == NULL || port < 0 || max_runtime < 0)
+  if (host != NULL)
+    {
+      char *p = strchr (host, ':');
+      if (p != NULL)
+	{
+	  int tmp_port;
+	  *p = '\0';
+	  if (parse_int (&tmp_port, p + 1, 10) == 0 && tmp_port > 0)
+	    {
+	      port = tmp_port;
+	    }
+	}
+    }
+
+  if (host == NULL || dbname == NULL || port <= 0 || max_runtime < 0)
     {
       print_usage_and_exit ();
       return ER_FAILED;
@@ -197,7 +221,7 @@ main (int argc, char *argv[])
 	      "Garbage collect start: host = %s, port = %d, dbname = %s, "
 	      "max runtime = %d\n", host, port, dbname, max_runtime);
 
-  error = rbl_gc_connect (host, port, dbname, pw, &conn);
+  error = rbl_gc_connect (host, port, dbname, pw, &conn, false);
   if (error != NO_ERROR)
     {
       RBL_ERROR_MSG (ARG_FILE_LINE, "DB connection fail = %d\n", error);

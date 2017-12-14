@@ -118,12 +118,15 @@ static int tranlist_cmp_f (const void *p1, const void *p2);
 #endif
 
 static HA_STATE
-connect_db (const char *db, const char *host)
+connect_db (const char *db, const PRM_NODE_INFO * node_info)
 {
   int error;
-  char dbname[MAXHOSTNAMELEN + MAX_DBNAME_SIZE + 2];
+  char dbname[MAX_NODE_INFO_STR_LEN + MAX_DBNAME_SIZE + 2];
+  char host_str[MAX_NODE_INFO_STR_LEN];
 
-  sprintf (dbname, "%s@%s", db, host);
+  prm_node_info_to_str (host_str, sizeof (host_str), node_info);
+
+  sprintf (dbname, "%s@%s", db, host_str);
   boot_clear_host_connected ();
 
   error = db_restart ("backupdb", TRUE, dbname);
@@ -136,7 +139,7 @@ connect_db (const char *db, const char *host)
 }
 
 static int
-find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
+find_connect_host_index (const char *dbname, const PRM_NODE_LIST * node_list,
 			 HA_STATE expect_server_state)
 {
   int i;
@@ -146,9 +149,9 @@ find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
   db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
   db_login ("DBA", NULL);
 
-  for (i = 0; i < num_hosts; i++)
+  for (i = 0; i < node_list->num_nodes; i++)
     {
-      server_state = connect_db (dbname, hosts[i]);
+      server_state = connect_db (dbname, &node_list->nodes[i]);
       if (server_state == expect_server_state)
 	{
 	  db_shutdown ();
@@ -162,72 +165,64 @@ find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
 }
 
 static int
-find_connect_server (char *db_name, char *db_host, const char *database_name,
+find_connect_server (char *db_name, PRM_NODE_INFO * db_host,
+		     const char *database_name,
 		     BACKUPDB_CONNECT_ORDER c_order)
 {
-  char **ha_hosts = NULL;
-  int num_ha_hosts = 0;
   char *ptr;
-  int idx;
+  int idx = -1;
+  PRM_NODE_LIST node_list;
 
-  ptr = strstr (database_name, "@");
-  if (ptr != NULL)
+  strcpy (db_name, database_name);
+  ptr = strstr (db_name, "@");
+  if (ptr == NULL)
     {
-      strncpy (db_name, database_name, ptr - database_name);
-      ha_hosts = cfg_get_hosts (ptr + 1, &num_ha_hosts, false);
+      prm_get_ha_node_list (&node_list);
     }
   else
     {
-      strcpy (db_name, database_name);
-      ha_hosts = cfg_get_hosts_from_prm (&num_ha_hosts);
+      prm_split_node_str (&node_list, ptr + 1, false);
+      *ptr = '\0';
     }
 
   if (c_order == BACKUPDB_SLAVE_MASTER)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_SLAVE);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_SLAVE);
       if (idx < 0)
 	{
-	  idx = find_connect_host_index (db_name, ha_hosts,
-					 num_ha_hosts, HA_STATE_MASTER);
+	  idx =
+	    find_connect_host_index (db_name, &node_list, HA_STATE_MASTER);
 	}
     }
   else if (c_order == BACKUPDB_MASTER_SLAVE)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_MASTER);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_MASTER);
       if (idx < 0)
 	{
-	  idx = find_connect_host_index (db_name, ha_hosts,
-					 num_ha_hosts, HA_STATE_SLAVE);
+	  idx = find_connect_host_index (db_name, &node_list, HA_STATE_SLAVE);
 	}
     }
   else if (c_order == BACKUPDB_SLAVE_ONLY)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_SLAVE);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_SLAVE);
     }
   else
     {
       assert (c_order == BACKUPDB_MASTER_ONLY);
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_MASTER);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_MASTER);
     }
 
   if (idx >= 0)
     {
-      strcpy (db_host, ha_hosts[idx]);
+      *db_host = node_list.nodes[idx];
     }
   else
     {
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
 					     MSGCAT_UTIL_SET_BACKUPDB,
 					     BACKUPDB_NOT_FOUND_HOST));
-      cfg_free_hosts (ha_hosts);
       return -1;
     }
-
-  cfg_free_hosts (ha_hosts);
 
   return 0;
 }
@@ -257,7 +252,8 @@ backupdb (UTIL_FUNCTION_ARG * arg)
   char backup_path_buf[PATH_MAX];
   HA_STATE server_state;
   char db_name[MAX_DBNAME_SIZE];
-  char db_host[MAXHOSTNAMELEN];
+  char db_host_str[MAX_NODE_INFO_STR_LEN];
+  PRM_NODE_INFO db_host_info;
   char db_fullname[MAXHOSTNAMELEN + MAX_DBNAME_SIZE];
   BACKUPDB_CONNECT_ORDER c_order = BACKUPDB_SLAVE_MASTER;
 
@@ -376,12 +372,14 @@ backupdb (UTIL_FUNCTION_ARG * arg)
 	}
     }
 
-  if (find_connect_server (db_name, db_host, database_name, c_order) < 0)
+  if (find_connect_server (db_name, &db_host_info, database_name,
+			   c_order) < 0)
     {
       goto error_exit;
     }
 
-  sprintf (db_fullname, "%s@%s", db_name, db_host);
+  prm_node_info_to_str (db_host_str, sizeof (db_host_str), &db_host_info);
+  sprintf (db_fullname, "%s@%s", db_name, db_host_str);
 
   AU_DISABLE_PASSWORDS ();
   db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
@@ -417,7 +415,7 @@ backupdb (UTIL_FUNCTION_ARG * arg)
       css_register_check_client_alive_fn (check_client_alive);
       server_state = db_get_server_state ();
 
-      if (bk_run_backup (db_name, db_host, backup_path,
+      if (bk_run_backup (db_name, &db_host_info, backup_path,
 			 backup_verbose_file, backup_num_threads,
 			 compress_flag, sleep_msecs,
 			 remove_log_archives, force_overwrite,
@@ -2045,9 +2043,8 @@ tranlist (UTIL_FUNCTION_ARG * arg)
       goto error_exit;
     }
 
-  error =
-    db_restart_ex (arg->command_name, database_name, username, password, NULL,
-		   BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
+  error = db_restart_ex (arg->command_name, database_name, username, password,
+			 BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
   if (error != NO_ERROR)
     {
       char msg_buf[64];
@@ -2072,10 +2069,9 @@ tranlist (UTIL_FUNCTION_ARG * arg)
 	    }
 	  password = passbuf;
 
-	  error =
-	    db_restart_ex (arg->command_name, database_name, username,
-			   password, NULL,
-			   BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
+	  error = db_restart_ex (arg->command_name, database_name,
+				 username, password,
+				 BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
 	}
 
       if (error != NO_ERROR)

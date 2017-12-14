@@ -424,6 +424,17 @@ public class ShardAdmin
 	}
     }
 
+    public static boolean ping(JciConnectionInfo conInfo, String globalDbname, int timeout)
+    {
+	try {
+	    byte[] sendMsg = Protocol.mgmtRequestMsg(Protocol.BRREQ_OP_CODE_PING_SHARD_MGMT, globalDbname);
+	    BrokerHandler.shardMgmtAdminRequest(null, conInfo, sendMsg, timeout, true);
+	    return true;
+	} catch (Exception e) {
+	    return false;
+	}
+    }
+
     public boolean hasNodeid(int nodeid)
     {
 	return shardInfo.hasNodeid(nodeid);

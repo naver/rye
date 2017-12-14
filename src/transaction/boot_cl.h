@@ -37,15 +37,12 @@
 #include "error_manager.h"
 #include "storage_common.h"
 #include "transaction_cl.h"
+#include "system_parameter.h"
 
 #define BOOT_IS_CLIENT_RESTARTED() (tm_Tran_index != NULL_TRAN_INDEX)
 
 /* Volume assigned for new files/objects  (e.g., heap files) */
 extern VOLID boot_User_volid;
-#if defined(CS_MODE)
-/* Server host connected */
-extern char boot_Host_connected[MAXHOSTNAMELEN];
-#endif /* CS_MODE */
 
 extern int boot_initialize_client (BOOT_CLIENT_CREDENTIAL * client_credential,
 				   BOOT_DB_PATH_INFO * db_path_info,
@@ -62,8 +59,8 @@ extern void boot_donot_shutdown_client_at_exit (void);
 #endif
 extern void boot_server_die_or_changed (void);
 extern void boot_client_all_finalize (void);
+extern PRM_NODE_INFO boot_get_host_connected (void);
 #if defined(CS_MODE)
-extern char *boot_get_host_connected (void);
 extern int boot_get_server_start_time (void);
 #endif /* CS_MODE */
 
