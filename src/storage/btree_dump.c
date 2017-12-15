@@ -862,8 +862,7 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
   key_cnt = node_header.key_cnt;
   assert_release (key_cnt >= 0);
-  node_type =
-    node_header.node_level > 1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE;
+  node_type = BTREE_GET_NODE_TYPE (node_header.node_level);
   VPID_COPY (&next_vpid, &node_header.next_vpid);
   VPID_COPY (&prev_vpid, &node_header.prev_vpid);
   btree_print_space (fp, n);
@@ -989,17 +988,19 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 void
 btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
 {
-  BTREE_NODE_HEADER *node_header;
+  BTREE_NODE_HEADER *hdr;
+  short node_type;
 
-  node_header = (BTREE_NODE_HEADER *) data;
+  hdr = (BTREE_NODE_HEADER *) data;
+
+  node_type = BTREE_GET_NODE_TYPE (hdr->node_level);
 
   fprintf (fp,
 	   "\nNODE_TYPE: %s KEY_CNT: %4d "
 	   "NEXT_PAGEID: {%4d , %4d} \n\n",
-	   node_type_to_string (node_header->node_level >
-				1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE),
-	   node_header->key_cnt, node_header->next_vpid.volid,
-	   node_header->next_vpid.pageid);
+	   node_type_to_string (node_type),
+	   hdr->key_cnt, hdr->next_vpid.volid,
+	   hdr->next_vpid.pageid);
 }
 
 static const char *
