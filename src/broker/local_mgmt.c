@@ -50,6 +50,8 @@
 #include "error_manager.h"
 #include "master_heartbeat.h"
 #include "dbi.h"
+#include "rye_server_shm.h"
+#include "tcp.h"
 
 #define LOCK_SHM() 	pthread_mutex_lock (&shm_Lock)
 #define UNLOCK_SHM() 	pthread_mutex_unlock (&shm_Lock)
@@ -1014,7 +1016,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
   argc = launch_arg->argc;
   argv[argc] = NULL;
 
-  ut_get_ipv4_string (caller_host, sizeof (caller_host), job->clt_ip);
+  css_ip_to_str (caller_host, sizeof (caller_host), job->clt_ip);
 
   rye_root_dir = envvar_root ();
 
@@ -1328,21 +1330,21 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
       char buf[64];
       int err = 0;
 
-      snprintf(buf, sizeof (buf), "%d", rye_port_id);
+      snprintf (buf, sizeof (buf), "%d", rye_port_id);
       err = db_update_persist_conf_file ("server", "common",
 					 "rye_port_id", buf);
       if (err == NO_ERROR)
-        {
+	{
 	  err = db_update_persist_conf_file ("server", "common",
 					     "rye_shm_key", rye_shm_key);
 	}
 
       if (err == NO_ERROR)
-        {
+	{
 	  return 0;
 	}
     }
-    
+
   assert (0);
   return BR_ER_RYE_CONF;
 }

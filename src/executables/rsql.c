@@ -2383,9 +2383,9 @@ rsql_print_database (void)
       ha_state = HA_STATE_NAME (db_get_server_state ());
       fprintf (rsql_Output_fp, "\n\t%s@%s [%s]\n\n", db_name,
 	       converted_host_name, ha_state);
-
-      db_ws_free (db_name);
     }
+
+  db_ws_free (db_name);
 }
 
 /*
