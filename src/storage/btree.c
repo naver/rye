@@ -198,8 +198,8 @@ static int btree_save_range_search_result (THREAD_ENTRY * thread_p,
 					   btrs_helper,
 					   INDX_SCAN_ID * index_scan_id_p);
 
-static int btree_check_key_cnt (PAGE_PTR page_p, short node_level,
-				short key_cnt);
+static int btree_check_key_cnt (BTID_INT * btid, PAGE_PTR page_p,
+				short node_level, short key_cnt);
 
 /*
  * btree_clear_key_value () -
@@ -269,7 +269,7 @@ btree_write_node_header (BTID_INT * btid, PAGE_PTR pg_ptr,
   int error_code = NO_ERROR;
 
   error_code =
-    btree_check_key_cnt (pg_ptr, header->node_level, header->key_cnt);
+    btree_check_key_cnt (btid, pg_ptr, header->node_level, header->key_cnt);
   if (error_code != NO_ERROR)
     {
       goto error;
@@ -371,7 +371,7 @@ btree_read_node_header (BTID_INT * btid, PAGE_PTR pg_ptr,
   *header = *((BTREE_NODE_HEADER *) (peek_rec.data));
 
   error_code =
-    btree_check_key_cnt (pg_ptr, header->node_level, header->key_cnt);
+    btree_check_key_cnt (btid, pg_ptr, header->node_level, header->key_cnt);
   if (error_code != NO_ERROR)
     {
       goto error;
@@ -671,7 +671,6 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
   int i;
   DB_TYPE type;
   TP_DOMAIN *dom;
-  char index_name_on_table[LINE_MAX];
 
   /* Assertions */
   assert (btid != NULL);
@@ -841,17 +840,20 @@ end:
 exit_on_error:
 
 /* TODO - index crash */
+  {
+    char index_name_on_table[LINE_MAX];
 
-  /* init */
-  strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+    /* init */
+    strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
 
-  (void) btree_get_indexname_on_table (thread_p, btid, index_name_on_table,
-				       LINE_MAX);
+    (void) btree_get_indexname_on_table (thread_p, btid, index_name_on_table,
+					 LINE_MAX);
 
-  error = ER_BTREE_PAGE_CORRUPTED;
-  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	  index_name_on_table);
-  assert (false);
+    error = ER_BTREE_PAGE_CORRUPTED;
+    er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	    index_name_on_table);
+    assert (false);
+  }
 
   goto end;
 }
@@ -7465,17 +7467,24 @@ btree_get_indexname_on_table (THREAD_ENTRY * thread_p,
   char *class_name = NULL;
   OR_INDEX *indexp = NULL;
 
+  if (thread_p == NULL)
+    {
+      assert (false);		/* invalid input args */
+      return;
+    }
+
   if (btid == NULL || buffer == NULL || buffer_len < LINE_MAX)
     {
       assert (false);		/* invalid input args */
       return;
     }
 
-  /* Assertions */
-  assert (btid != NULL);
-  assert (btid->classrepr != NULL);
-  assert (btid->classrepr_cache_idx != -1);
-  assert (btid->indx_id != -1);
+  if (btid->classrepr == NULL || btid->classrepr_cache_idx == -1
+      || btid->indx_id == -1 || btid->indx_id >= btid->classrepr->n_indexes)
+    {
+      assert (false);		/* invalid input args */
+      return;
+    }
 
   indexp = &(btid->classrepr->indexes[btid->indx_id]);
 
@@ -7545,10 +7554,12 @@ btree_set_vpid_previous_vpid (THREAD_ENTRY * thread_p, BTID_INT * btid,
 }
 
 static int
-btree_check_key_cnt (PAGE_PTR page_p, short node_level, short key_cnt)
+btree_check_key_cnt (BTID_INT * btid, PAGE_PTR page_p, short node_level,
+		     short key_cnt)
 {
   PGNSLOTS num_slots;		/* Number of allocated slots for the page */
   PGNSLOTS num_records;		/* Number of records on page */
+  THREAD_ENTRY *thread_p;
 
   if (page_p == NULL || node_level <= 0 || key_cnt < 0)
     {
@@ -7579,8 +7590,25 @@ btree_check_key_cnt (PAGE_PTR page_p, short node_level, short key_cnt)
 
 exit_on_error:
 
-  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_BTREE_PAGE_CORRUPTED, 1,
-	  "*UNKNOWN-INDEX*" /* TODO - */ );
+/* TODO - index crash */
+  thread_p = thread_get_thread_entry_info ();
+  if (thread_p == NULL)
+    {
+      assert (false);		/* give up */
+    }
+  else
+    {
+      char index_name_on_table[LINE_MAX];
+
+      /* init */
+      strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+
+      (void) btree_get_indexname_on_table (thread_p, btid,
+					   index_name_on_table, LINE_MAX);
+
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_BTREE_PAGE_CORRUPTED,
+	      1, index_name_on_table);
+    }
   assert (false);
 
   return ER_FAILED;
