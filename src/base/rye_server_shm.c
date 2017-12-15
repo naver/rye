@@ -206,8 +206,8 @@ svr_shm_stats_counter_with_time (int tran_index, MNT_SERVER_ITEM item,
 				 INT64 value, UINT64 exec_time)
 {
   MNT_SERVER_ITEM parent_item;
-  INT64 after_value;
-  UINT64 after_exec_time;
+  UNUSED_VAR INT64 after_value;
+  UNUSED_VAR UINT64 after_exec_time;
 
   if (rye_Server_shm == NULL)
     {
