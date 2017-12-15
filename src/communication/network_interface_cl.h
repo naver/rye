@@ -189,7 +189,7 @@ extern int boot_restart_from_backup (int print_restart, const char *db_name,
 				     BO_RESTART_ARG * r_args);
 extern bool boot_shutdown_server (void);
 extern HA_STATE boot_get_server_state (void);
-extern int boot_notify_ha_apply_state (const char *host_ip,
+extern int boot_notify_ha_apply_state (const PRM_NODE_INFO * node_info,
 				       HA_APPLY_STATE state);
 extern char *stats_get_statistics_from_server (OID * classoid,
 					       unsigned int timestamp,
@@ -295,10 +295,6 @@ extern int net_client_request_recv_msg_v (CSS_NET_PACKET ** recv_packet,
 extern int net_client_request (int request, CSS_NET_PACKET ** recv_packet,
 			       int num_send_buffers, int num_recv_buffers,
 			       ...);
-extern int net_client_request_with_callback (int request,
-					     char *argbuf, int argsize,
-					     char *replybuf, int replysize,
-					     CSS_NET_PACKET ** recv_packet);
 extern int net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr, char *argbuf,
 				      int argsize, char *replybuf,
 				      int replysize, char **logpg_area_buf);
@@ -318,7 +314,8 @@ extern int net_client_ping_server_with_handshake (int client_type,
 						  int opt_cap,
 						  RYE_VERSION * svr_version);
 
-extern int net_client_init (const char *dbname, const char *hostname);
+extern int net_client_init (const char *dbname,
+			    const PRM_NODE_INFO * node_info);
 extern int net_client_final (void);
 
 extern int net_client_send_data (char *host, unsigned int rc, char *databuf,

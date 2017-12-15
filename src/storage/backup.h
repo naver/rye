@@ -31,6 +31,7 @@
 #include <time.h>
 
 #include "porting.h"
+#include "system_parameter.h"
 #include "storage_common.h"
 #include "release_string.h"
 #include "dbtype.h"
@@ -133,8 +134,7 @@ struct bk_backup_header
   INT64 end_time;		/* Time of backup end */
   char db_name[PATH_MAX];	/* Fullname of backed up database.
 				   Really more than one byte */
-  char db_host[MAXHOSTNAMELEN];	/* Fullname of backed up database.
-				   Really more than one byte */
+  PRM_NODE_INFO db_host_info;	/* host info */
   PGLENGTH db_iopagesize;	/* Size of database pages */
   LOG_LSA chkpt_lsa;		/* LSA for next incremental backup */
   LOG_LSA backuptime_lsa;	/* for HA apply */

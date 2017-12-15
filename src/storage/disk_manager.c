@@ -175,9 +175,6 @@ struct disk_cache_volinfo
   INT16 nvols;			/* Total number of permanent volumes */
   struct
   {
-#if !defined(HAVE_ATOMIC_BUILTINS) && defined(SERVER_MODE)
-    pthread_mutex_t update_lock;	/* Protect below variables from concurrent updates */
-#endif
     INT16 nvols;		/* Number of volumes for this purpose */
     int total_pages;		/* Number of total pages for this purpose */
     int free_pages;		/* Number of free pages for this purpose */
@@ -190,19 +187,11 @@ struct disk_cache_volinfo
 static DISK_CACHE_VOLINFO disk_Cache_struct = {
   0, 0,
   {
-#if !defined(HAVE_ATOMIC_BUILTINS) && defined(SERVER_MODE)
-   {PTHREAD_MUTEX_INITIALIZER, 0, 0, 0},
-   {PTHREAD_MUTEX_INITIALIZER, 0, 0, 0},
-   {PTHREAD_MUTEX_INITIALIZER, 0, 0, 0},
-   {PTHREAD_MUTEX_INITIALIZER, 0, 0, 0},
-   {PTHREAD_MUTEX_INITIALIZER, 0, 0, 0}
-#else
    {0, 0, 0},
    {0, 0, 0},
    {0, 0, 0},
    {0, 0, 0},
    {0, 0, 0}
-#endif
    },
   NULL,
   NULL_VOLID
@@ -712,9 +701,6 @@ disk_cache_goodvol_update (UNUSED_ARG THREAD_ENTRY * thread_p, INT16 volid,
   int start_at = -1;
   int end_at = -1;
   int i;
-#if !defined(HAVE_ATOMIC_BUILTINS)
-  int rv;
-#endif
 
 #if defined (SERVER_MODE)
   int total_free_pages = 0;
@@ -816,7 +802,6 @@ disk_cache_goodvol_update (UNUSED_ARG THREAD_ENTRY * thread_p, INT16 volid,
    * total amount of free space for all volumes of that purpose has dropped
    * below the warning level, send a warning
    */
-#if defined(HAVE_ATOMIC_BUILTINS)
   if (do_update_total)
     {
       ATOMIC_INC_32 (&(disk_Cache->purpose[vol_purpose].total_pages),
@@ -824,14 +809,6 @@ disk_cache_goodvol_update (UNUSED_ARG THREAD_ENTRY * thread_p, INT16 volid,
     }
   ATOMIC_INC_32 (&(disk_Cache->purpose[vol_purpose].free_pages),
 		 nfree_pages_toadd);
-#else /* HAVE_ATOMIC_BUILTINS */
-  rv = pthread_mutex_lock (&(disk_Cache->purpose[vol_purpose].update_lock));
-  if (do_update_total)
-    {
-      disk_Cache->purpose[vol_purpose].total_pages += nfree_pages_toadd;
-    }
-  disk_Cache->purpose[vol_purpose].free_pages += nfree_pages_toadd;
-#endif /* HAVE_ATOMIC_BUILTINS */
 
   if (disk_Cache->purpose[vol_purpose].free_pages < 0)
     {
@@ -840,10 +817,6 @@ disk_cache_goodvol_update (UNUSED_ARG THREAD_ENTRY * thread_p, INT16 volid,
 #endif
       disk_Cache->purpose[vol_purpose].free_pages = 0;
     }
-
-#if !defined(HAVE_ATOMIC_BUILTINS)
-  pthread_mutex_unlock (&(disk_Cache->purpose[vol_purpose].update_lock));
-#endif /* ! HAVE_ATOMIC_BUILTINS */
 
 #if defined (SERVER_MODE)
   if (need_to_check_auto_volume_ext == true)
@@ -2036,7 +2009,8 @@ disk_format (THREAD_ENTRY * thread_p, const char *dbname, INT16 volid,
 	      pgptr =
 		pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
 			   PGBUF_UNCONDITIONAL_LATCH,
-			   (vpid.pageid == DISK_VOLHEADER_PAGE) ? PAGE_VOLHEADER :
+			   (vpid.pageid ==
+			    DISK_VOLHEADER_PAGE) ? PAGE_VOLHEADER :
 			   PAGE_UNKNOWN);
 	      if (pgptr != NULL)
 		{
@@ -2142,7 +2116,7 @@ disk_expand_tmp (THREAD_ENTRY * thread_p, INT16 volid, INT32 min_pages,
   INT32 npages_toadd;
   INT32 nsects_toadd;
 #if defined(SERVER_MODE)
-  struct timeval start, end;
+  UINT64 perf_start;
 #endif /* SERVER_MODE */
 
   vpid.volid = volid;
@@ -2193,7 +2167,7 @@ disk_expand_tmp (THREAD_ENTRY * thread_p, INT16 volid, INT32 min_pages,
     }
 
 #if defined(SERVER_MODE)
-  gettimeofday (&start, NULL);
+  PERF_MON_GET_CURRENT_TIME (perf_start);
 #endif /* SERVER_MODE */
 
   if (fileio_expand (thread_p, volid, npages_toadd, DISK_TEMPVOL_TEMP_PURPOSE)
@@ -2203,9 +2177,8 @@ disk_expand_tmp (THREAD_ENTRY * thread_p, INT16 volid, INT32 min_pages,
     }
 
 #if defined(SERVER_MODE)
-  gettimeofday (&end, NULL);
-  ADD_TIMEVAL (thread_p->event_stats.temp_expand_time, start, end);
-  thread_p->event_stats.temp_expand_pages += npages_toadd;
+  mnt_stats_counter_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+			       npages_toadd, perf_start);
 #endif /* SERVER_MODE */
 
   /*

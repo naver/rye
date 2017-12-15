@@ -49,12 +49,13 @@
  * from the client when initiating a connection. They distinguish the
  * difference between an information connection and a user connection.
  */
-enum css_master_conn_type
+typedef enum
 {
-  MASTER_CONN_TYPE_INFO,	/* send master request to the master server */
-  MASTER_CONN_TYPE_TO_SERVER,	/* get data from the database server */
-  MASTER_CONN_TYPE_HB_PROC	/* let new server attach */
-};
+  SVR_CONNECT_TYPE_MASTER_INFO,	/* send master request to the master server */
+  SVR_CONNECT_TYPE_TO_SERVER,	/* get data from the database server */
+  SVR_CONNECT_TYPE_TRANSFER_CONN,	/* get data from the database server */
+  SVR_CONNECT_TYPE_MASTER_HB_PROC	/* let new server attach */
+} SVR_CONNECT_TYPE;
 
 /*
  * These are the responses from the master to a server
@@ -104,7 +105,6 @@ enum _css_master_request
 typedef enum _css_master_to_server_request CSS_MASTER_TO_SERVER_REQUEST;
 enum _css_master_to_server_request
 {
-  SERVER_START_NEW_CLIENT,
   SERVER_START_SHUTDOWN,
   SERVER_CHANGE_HA_MODE
 };
@@ -149,15 +149,8 @@ enum css_packet_type
 enum css_status
 {
   SERVER_CONNECTED = 0,
-  SERVER_NOT_FOUND = 1,
-  SERVER_STARTED = 2,
-  SERVER_IS_RECOVERING = 3,	/* not used */
-  SERVER_HAS_SHUT_DOWN = 4,	/* not used */
-  ERROR_MESSAGE_FROM_MASTER = 5,	/* an error message is returned */
-  SERVER_CONNECTED_NEW = 6,
-  SERVER_CLIENTS_EXCEEDED = 7,
-  SERVER_INACCESSIBLE_IP = 8,
-  SERVER_HANG = 9
+  SERVER_CLIENTS_EXCEEDED = 1,
+  SERVER_INACCESSIBLE_IP = 2
 };
 
 /*
@@ -254,13 +247,16 @@ enum _ha_state
 
 #define HA_STATE_STR_SZ                  (13)
 
-#define HA_STATE_UNKNOWN_STR             "unknown"
-#define HA_STATE_MASTER_STR              "master"
-#define HA_STATE_TO_BE_MASTER_STR        "to-be-master"
-#define HA_STATE_SLAVE_STR               "slave"
-#define HA_STATE_TO_BE_SLAVE_STR         "to-be-slave"
-#define HA_STATE_REPLICA_STR             "replica"
-#define HA_STATE_DEAD_STR                "dead"
+#define HA_STATE_NAME(ha_stat)                           \
+  ((ha_stat) == HA_STATE_NA ? "na" :                     \
+   (ha_stat) == HA_STATE_UNKNOWN ? "unknown" :           \
+   (ha_stat) == HA_STATE_MASTER ? "master" :             \
+   (ha_stat) == HA_STATE_TO_BE_MASTER ? "to-be-master" : \
+   (ha_stat) == HA_STATE_SLAVE ? "slave" :               \
+   (ha_stat) == HA_STATE_TO_BE_SLAVE ? "to-be-slave" :   \
+   (ha_stat) == HA_STATE_REPLICA ? "replica" :           \
+   (ha_stat) == HA_STATE_DEAD ? "dead" : "invalid")
+
 
 /*
  * HA log applier state
@@ -275,11 +271,14 @@ enum ha_apply_state
   HA_APPLY_STATE_DONE = 3,
   HA_APPLY_STATE_ERROR = 4
 };
-#define HA_APPLY_STATE_UNREGISTERED_STR   "unregistered"
-#define HA_APPLY_STATE_RECOVERING_STR     "recovering"
-#define HA_APPLY_STATE_WORKING_STR        "working"
-#define HA_APPLY_STATE_DONE_STR           "done"
-#define HA_APPLY_STATE_ERROR_STR          "error"
+
+#define HA_APPLY_STATE_NAME(apply_stat)                           \
+  ((apply_stat) == HA_APPLY_STATE_NA ? "na" :                     \
+   (apply_stat) == HA_APPLY_STATE_UNREGISTERED ? "unregistered" : \
+   (apply_stat) == HA_APPLY_STATE_RECOVERING ? "recovering" :     \
+   (apply_stat) == HA_APPLY_STATE_WORKING ? "working" :           \
+   (apply_stat) == HA_APPLY_STATE_DONE ? "done" :                 \
+   (apply_stat) == HA_APPLY_STATE_ERROR ? "error" : "invalid")
 
 typedef enum log_ha_filestat LOG_HA_FILESTAT;
 enum log_ha_filestat
@@ -288,6 +287,11 @@ enum log_ha_filestat
   LOG_HA_FILESTAT_ARCHIVED = 1,
   LOG_HA_FILESTAT_SYNCHRONIZED = 2
 };
+
+#define LOG_HA_FILESTAT_NAME(fstat)                                   \
+  ((fstat) == LOG_HA_FILESTAT_CLEAR ? "clear" :                       \
+   (fstat) == LOG_HA_FILESTAT_ARCHIVED ? "archived" :                 \
+   (fstat) == LOG_HA_FILESTAT_SYNCHRONIZED ? "synchronized" : "invalid")
 
 #define HA_DELAY_ERR_CORRECTION             1000
 

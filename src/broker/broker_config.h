@@ -28,6 +28,7 @@
 #include "config.h"
 #include "cas_protocol.h"
 #include "environment_variable.h"
+#include "system_parameter.h"
 
 #define NUM_BUILTIN_BROKERS                     6
 #define BR_LOCAL_MGMT_NAME			"_local_mgmt_"
@@ -193,9 +194,8 @@ struct t_broker_info
   int num_busy_count;
   int max_prepared_stmt_count;
   int access_log_max_size;	/* kbytes */
-  char log_dir[CONF_LOG_FILE_LEN];
   char source_env[CONF_LOG_FILE_LEN];
-  char preferred_hosts[BROKER_INFO_NAME_MAX];
+  PRM_NODE_LIST preferred_hosts;
 
   char ready_to_service;
   char cci_default_autocommit;

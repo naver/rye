@@ -35,6 +35,8 @@
 #include "databases_file.h"
 #include "environment_variable.h"
 
+#define RYE_CONF_FILE	"rye-auto.conf"
+
 /* available root directory symbols; NULL terminated array */
 static const char envvar_Prefix_name[] = "RYE";
 static const char *envvar_Prefix = NULL;
@@ -57,41 +59,11 @@ static const char *env_msg[] = {
   "The $%s is too long. (%s)\n"
 };
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-static void
-envvar_check_environment (void)
-{
-  const char *rye_tmp = envvar_get ("TMP");
-
-  if (rye_tmp)
-    {
-      char name[_ENVVAR_MAX_LENGTH];
-      size_t len = strlen (rye_tmp);
-      size_t limit = 108 - 12;
-      /* 108 = sizeof (((struct sockaddr_un *) 0)->sun_path) */
-      /* 12  = ("RYE65384" + 1) */
-      envvar_name (name, _ENVVAR_MAX_LENGTH, "TMP");
-      if (!IS_ABS_PATH (rye_tmp))
-	{
-	  fprintf (stderr, env_msg[ENV_MUST_ABS_PATH], name, rye_tmp);
-	  fflush (stderr);
-	  exit (1);
-	}
-      if (len > limit)
-	{
-	  fprintf (stderr, env_msg[ENV_TOO_LONG], name, rye_tmp);
-	  fflush (stderr);
-	  exit (1);
-	}
-    }
-}
-#endif
-
 /*
  * envvar_prefix - find a recognized prefix symbol
  *   return: prefix symbol
  */
-const char *
+static const char *
 envvar_prefix (void)
 {
   if (envvar_Prefix == NULL)
@@ -115,10 +87,6 @@ envvar_prefix (void)
 	  fflush (stderr);
 	  exit (1);
 	}
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-      envvar_check_environment ();
-#endif
     }
 
   return envvar_Prefix;
@@ -146,31 +114,10 @@ envvar_root (void)
  *   size(out): size of the buffer
  *   name(in): an environment variable name
  */
-const char *
+static const char *
 envvar_name (char *buf, size_t size, const char *name)
 {
-  const char *prefix;
-  char *pname;
-
-  pname = buf;
-  prefix = envvar_prefix ();
-  while (size > 1 && *prefix)
-    {
-      *pname++ = *prefix++;
-      size--;
-    }
-  if (size > 1)
-    {
-      *pname++ = '_';
-      size--;
-    }
-  while (size > 1 && *name)
-    {
-      *pname++ = *name++;
-      size--;
-    }
-  *pname = '\0';
-
+  snprintf (buf, size, "%s_%s", envvar_prefix (), name);
   return buf;
 }
 
@@ -214,208 +161,20 @@ envvar_set (const char *name, const char *val)
   return NO_ERROR;
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * envvar_expand - expand environment variables (${ENV}) with their values
- *                 within the string
- *   return: error code
- *   string(in): string containing environment variables
- *   buffer(out): output buffer
- *   maxlen(in): maximum length of output buffer
- *
- * Note:
- *   The environment variables must be prefixed with a '$' and are
- *   enclosed by '{' and '}' or terminated by a non alpha numeric character
- *   except for '_'.
- *   If all of the referenced environment variables were expanded,
- *   NO_ERROR is returned.  If a reference could not be expanded, the output
- *   buffer will contain the name of the unresolved variable.
- *   This function can handle up to 10 environment variables. It is an error
- *   if exceeds.
- */
-int
-envvar_expand (const char *string, char *buffer, size_t maxlen)
-{
-#define _ENVVAR_MAX_EXPANSION   (10 * 2 + 1)
-  struct _fragment
-  {
-    const char *str;
-    size_t len;
-  } fragments[_ENVVAR_MAX_EXPANSION], *cur, *fen;
-  char *s, *e, env[_ENVVAR_MAX_LENGTH], *val;
-
-  s = strchr (string, '$');
-  if (!s)
-    {
-      /* no environment variable in the string */
-      (void) strlcpy (buffer, string, maxlen);
-      return NO_ERROR;
-    }
-
-  cur = fragments;
-  fen = fragments + _ENVVAR_MAX_EXPANSION;
-
-  do
-    {
-      env[0] = '\0';
-
-      if (s[1] == '{')
-	{
-	  for (e = s + 1; *e && *e != '}'; e++)
-	    ;
-	  if (*e && (e - s - 2) < _ENVVAR_MAX_LENGTH)
-	    {
-	      /* ${ENV}; copy the name of the environment variable */
-	      (void) strlcpy (env, s + 2, e - s - 1);
-	      e++;
-	    }
-	}
-      else
-	{
-	  for (e = s + 1; *e && (isalnum (*e) || *e == '_'); e++)
-	    ;
-	  if ((e - s - 1) < _ENVVAR_MAX_LENGTH)
-	    {
-	      /* $ENV; copy the name of the environment variable */
-	      (void) strlcpy (env, s + 1, e - s);
-	    }
-	}
-
-      if (env[0])
-	{
-	  /* a environment variable is referred; get the value */
-	  val = getenv (env);
-	  if (!val)
-	    {
-	      /* error */
-	      (void) strlcpy (buffer, env, maxlen);
-	      return ER_FAILED;
-	    }
-	  if (s > string)
-	    {
-	      /* a fragment */
-	      cur->str = string;
-	      cur->len = s - string;
-	      if (++cur > fen)
-		{
-		  /* error */
-		  *buffer = '\0';
-		  return ER_FAILED;
-		}
-	    }
-	  /* a fragment of the value */
-	  cur->str = val;
-	  cur->len = strlen (val);
-	  if (++cur > fen)
-	    {
-	      /* error */
-	      *buffer = '\0';
-	      return ER_FAILED;
-	    }
-	}
-      else
-	{
-	  cur->str = string;
-	  cur->len = e - string;
-	  if (++cur > fen)
-	    {
-	      /* error */
-	      *buffer = '\0';
-	      return ER_FAILED;
-	    }
-	}
-
-      string = e;
-      s = strchr (string, '$');
-    }
-  while (s);
-
-  if (*string)
-    {
-      cur->str = string;
-      cur->len = strlen (string);
-      cur++;
-    }
-  cur->str = NULL;
-  cur->len = 0;
-
-  /* assemble fragments */
-  for (cur = fragments; cur->len && maxlen > 1; cur++)
-    {
-      if (cur->len >= maxlen)
-	{
-	  cur->len = maxlen - 1;
-	}
-      (void) memcpy (buffer, cur->str, cur->len);
-      buffer += cur->len;
-      maxlen -= cur->len;
-    }
-  *buffer = '\0';
-
-  return NO_ERROR;
-}
-#endif
-
 char *
 envvar_bindir_file (char *path, size_t size, const char *filename)
 {
   assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/bin/%s", envvar_Root, filename);
-
-  path[size - 1] = '\0';
+  snprintf (path, size, "%s/bin/%s", envvar_root (), filename);
   return path;
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-char *
-envvar_libdir_file (char *path, size_t size, const char *filename)
-{
-  assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/lib/%s", envvar_Root, filename);
-
-  path[size - 1] = '\0';
-  return path;
-}
-
-char *
-envvar_javadir_file (char *path, size_t size, const char *filename)
-{
-  assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/java/%s", envvar_Root, filename);
-
-  path[size - 1] = '\0';
-  return path;
-}
-#endif
 
 char *
 envvar_localedir_file (char *path, size_t size, const char *langpath,
 		       const char *filename)
 {
   assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/msg/%s/%s", envvar_Root, langpath, filename);
-
-  path[size - 1] = '\0';
+  snprintf (path, size, "%s/msg/%s/%s", envvar_root (), langpath, filename);
   return path;
 }
 
@@ -438,6 +197,28 @@ envvar_confdir_file (char *path, size_t size, const char *filename)
   return path;
 }
 
+static char *
+envvar_confdir_file_with_dir (char *path, size_t size,
+			      const char *dirname, const char *filename)
+{
+  char dirpath[PATH_MAX];
+
+  assert (dirname != NULL);
+  assert (filename != NULL);
+
+  envvar_confdir_file (dirpath, PATH_MAX, dirname);
+
+  snprintf (path, size, "%s/%s", dirpath, filename);
+
+  return path;
+}
+
+char *
+envvar_rye_conf_file (char *path, size_t size)
+{
+  return envvar_confdir_file (path, size, RYE_CONF_FILE);
+}
+
 char *
 envvar_db_dir (char *path, size_t size, const char *db_name)
 {
@@ -447,151 +228,120 @@ envvar_db_dir (char *path, size_t size, const char *db_name)
 char *
 envvar_db_log_dir (char *path, size_t size, const char *db_name)
 {
-  char buf[PATH_MAX];
-
-  /* assign default log volume path */
-  snprintf (buf, PATH_MAX, "%s/log", db_name);
-  buf[PATH_MAX - 1] = '\0';
-
-  return envvar_confdir_file (path, size, buf);
+  return envvar_confdir_file_with_dir (path, size, db_name, "log");
 }
 
 char *
 envvar_vardir_file (char *path, size_t size, const char *filename)
 {
+  return envvar_confdir_file_with_dir (path, size, "var", filename);
+}
+
+char *
+envvar_socket_file (char *path, size_t size, const char *filename)
+{
+  char sock_dir[PATH_MAX];
+
   assert (filename != NULL);
 
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/var/%s", envvar_Root, filename);
+  envvar_vardir_file (sock_dir, PATH_MAX, "RYE_SOCK");
+  snprintf (path, size, "%s/%s", sock_dir, filename);
+  return path;
+}
 
-  path[size - 1] = '\0';
+char *
+envvar_as_pid_dir_file (char *path, size_t size, const char *filename)
+{
+  char as_pid_dir[PATH_MAX];
+
+  assert (filename != NULL);
+
+  envvar_vardir_file (as_pid_dir, PATH_MAX, "as_pid");
+  snprintf (path, size, "%s/%s", as_pid_dir, filename);
   return path;
 }
 
 char *
 envvar_tmpdir_file (char *path, size_t size, const char *filename)
 {
-  assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/tmp/%s", envvar_Root, filename);
-
-  path[size - 1] = '\0';
-  return path;
+  return envvar_confdir_file_with_dir (path, size, "tmp", filename);
 }
 
-char *
+void
 envvar_ryelogdir_file (char *path, size_t size, const char *filename)
 {
-  const char *env_name;
-
-  assert (filename != NULL);
-
-  env_name = envvar_get (DATABASES_ENVNAME);
-  if (env_name == NULL || strlen (env_name) == 0)
-    {
-      return NULL;
-    }
-
-  snprintf (path, size, "%s/ryelog/%s", env_name, filename);
-  path[size - 1] = '\0';
-
-  return path;
-
+  envvar_confdir_file_with_dir (path, size, "ryelog", filename);
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
+static char *
+envvar_ryelog_broker_subdir_file (char *path, size_t size, const char *dir1,
+				  const char *dir2, const char *filename)
+{
+  char broker_log_dir[PATH_MAX];
+  int n;
+
+  envvar_ryelogdir_file (broker_log_dir, sizeof (broker_log_dir), "broker");
+
+  n = snprintf (path, size, "%s/%s", broker_log_dir, dir1);
+  if (dir2 != NULL)
+    {
+      n += snprintf (path + n, size - n, "/%s", dir2);
+    }
+  if (filename != NULL)
+    {
+      snprintf (path + n, size - n, "/%s", filename);
+    }
+  return path;
+}
+
 void
-envvar_trim_char (char *env_val, const int c)
+envvar_ryelog_broker_file (char *path, size_t size, const char *br_name,
+			   const char *filename)
 {
-  char *buf;
-  int size;
-
-  if (env_val == NULL)
-    {
-      return;
-    }
-
-  size = strlen (env_val);
-
-  if (*env_val == c && size > 2)
-    {
-      buf = (char *) malloc (1 + size);
-      if (buf != NULL)
-	{
-	  strcpy (buf, env_val);
-	  strncpy (env_val, buf + 1, size - 2);
-	  env_val[size - 2] = '\0';
-
-	  free (buf);
-	}
-    }
+  envvar_ryelog_broker_subdir_file (path, size, br_name, NULL, filename);
 }
 
-char *
-envvar_ldmldir_file (char *path, size_t size, const char *filename)
+void
+envvar_ryelog_broker_sqllog_file (char *path, size_t size,
+				  const char *br_name, const char *filename)
 {
-  assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/locales/data/ldml/%s", envvar_Root, filename);
-
-  path[size - 1] = '\0';
-  return path;
+  envvar_ryelog_broker_subdir_file (path, size, br_name, "sql_log", filename);
 }
 
-char *
-envvar_codepagedir_file (char *path, size_t size, const char *filename)
+void
+envvar_ryelog_broker_slowlog_file (char *path, size_t size,
+				   const char *br_name, const char *filename)
 {
-  assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/locales/data/codepages/%s", envvar_Root,
-	    filename);
-
-  path[size - 1] = '\0';
-  return path;
+  envvar_ryelog_broker_subdir_file (path, size, br_name, "slow_log",
+				    filename);
 }
 
-char *
-envvar_localedatadir_file (char *path, size_t size, const char *filename)
+void
+envvar_ryelog_broker_errorlog_file (char *path, size_t size,
+				    const char *br_name, const char *filename)
 {
-  assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/locales/data/%s", envvar_Root, filename);
-
-  path[size - 1] = '\0';
-  return path;
+  envvar_ryelog_broker_subdir_file (path, size, br_name, "error_log",
+				    filename);
 }
 
-char *
-envvar_loclib_dir_file (char *path, size_t size, const char *filename)
+void
+envvar_broker_acl_file (char *path, size_t size)
 {
-  assert (filename != NULL);
-
-  if (envvar_Root == NULL)
-    {
-      envvar_root ();
-    }
-  snprintf (path, size, "%s/locales/loclib/%s", envvar_Root, filename);
-
-  path[size - 1] = '\0';
-  return path;
+  envvar_confdir_file (path, size, BROKER_ACL_FILE);
 }
-#endif
+
+void
+envvar_process_name (char *buf, size_t size, const char *base_name)
+{
+  const char *prefix;
+
+  prefix = envvar_get ("PROCESS_PREFIX");
+  if (prefix == NULL || *prefix == '\0')
+    {
+      snprintf (buf, size, "%s", base_name);
+    }
+  else
+    {
+      snprintf (buf, size, "%s_%s", prefix, base_name);
+    }
+}

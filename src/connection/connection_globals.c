@@ -39,11 +39,6 @@
 #include "utility.h"
 #include "system_parameter.h"
 
-const char *css_Service_name = "rye";
-int css_Service_id = 1523;
-
-SOCKET css_Pipe_to_master = INVALID_SOCKET;	/* socket for Master->Slave communication */
-
 /* do not change first 4 bytes of css_Net_magic */
 char css_Net_magic[CSS_NET_MAGIC_SIZE] =
   { 0x00, 0x00, 0x00, 'R', 'Y', 'E', 0x00, 0x01 };

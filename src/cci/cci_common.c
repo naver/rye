@@ -732,22 +732,6 @@ cci_mht_put_data (CCI_MHT_TABLE * ht, void *key, void *data)
   return cci_mht_put_internal (ht, key, data, CCI_MHT_OPT_KEEP_KEY);
 }
 
-int
-hostname2uchar (const char *host, unsigned char *ip_addr)
-{
-  in_addr_t in_addr;
-
-  in_addr = hostname_to_ip (host);
-  if (in_addr == INADDR_NONE)
-    {
-      return INVALID_SOCKET;
-    }
-
-  memcpy ((void *) ip_addr, (void *) &in_addr, sizeof (in_addr));
-
-  return CCI_ER_NO_ERROR;
-}
-
 /*
  * cci_mht_clear - copied from mht_clear in memory_hash.c
  */

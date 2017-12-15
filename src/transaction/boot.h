@@ -26,6 +26,7 @@
 
 #include "porting.h"
 #include "storage_common.h"
+#include "system_parameter.h"
 
 typedef enum boot_client_type BOOT_CLIENT_TYPE;
 enum boot_client_type
@@ -142,8 +143,7 @@ enum boot_client_type
             || BOOT_BROKER_AND_DEFAULT_CLIENT_TYPE(client_type)))) ? 0 : 1)
 
 #define BOOT_IS_PREFERRED_HOSTS_SET(credential) \
-        ((credential)->preferred_hosts != NULL \
-        && (credential)->preferred_hosts[0] != '\0')
+        ((credential)->preferred_nodes.num_nodes > 0)
 
 typedef struct boot_client_credential BOOT_CLIENT_CREDENTIAL;
 struct boot_client_credential
@@ -156,7 +156,7 @@ struct boot_client_credential
   const char *program_name;	/* PATH_MAX */
   const char *login_name;	/* L_cuserid */
   const char *host_name;	/* MAXHOSTNAMELEN */
-  const char *preferred_hosts;	/* LINE_MAX */
+  PRM_NODE_LIST preferred_nodes;	/* LINE_MAX */
   bool connect_order_random;
   int process_id;
 };

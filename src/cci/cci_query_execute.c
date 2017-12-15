@@ -247,7 +247,7 @@ qe_end_tran (T_CON_HANDLE * con_handle, char type)
   char type_str[2];
 #endif
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       con_handle->con_status = CCI_CON_STATUS_OUT_TRAN;
       return CCI_ER_NO_ERROR;
@@ -356,9 +356,10 @@ qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   int remaining_time = 0;
   T_NET_RES *net_res;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   if (!reuse)
@@ -411,7 +412,8 @@ qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);
@@ -527,9 +529,10 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
   bool use_server_query_cancel = false;
   T_NET_RES *net_res;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   QUERY_RESULT_FREE (req_handle);
@@ -552,7 +555,8 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  err_code = CCI_ER_QUERY_TIMEOUT;
@@ -705,9 +709,10 @@ qe_get_db_parameter (T_CON_HANDLE * con_handle, T_CCI_DB_PARAM param_name,
   int val;
   T_NET_RES *net_res;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   if (ret_val == NULL)
@@ -761,9 +766,10 @@ qe_close_query_result (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle)
   T_NET_BUF net_buf;
   char func_code = CAS_FC_CURSOR_CLOSE;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   if (!hm_get_con_handle_holdable (con_handle)
@@ -799,9 +805,10 @@ qe_close_query_result (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle)
 int
 qe_close_req_handle (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle)
 {
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   return qe_close_req_handle_internal (req_handle, con_handle, false);
@@ -1004,9 +1011,10 @@ qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   int num_tuple;
   T_NET_RES *net_res;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   if (req_handle->cursor_pos <= 0)
@@ -1158,9 +1166,10 @@ qe_schema_info (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   char dummy_stmt_type;
   int dummy_parameter_count;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   net_buf_init (&net_buf);
@@ -1247,9 +1256,10 @@ qe_get_db_version (T_CON_HANDLE * con_handle, char *out_buf, int buf_size)
   int err_code, remaining_time = 0;
   T_NET_RES *net_res;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   net_buf_init (&net_buf);
@@ -1267,7 +1277,8 @@ qe_get_db_version (T_CON_HANDLE * con_handle, char *out_buf, int buf_size)
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);
@@ -1324,9 +1335,10 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   int group_id = 0;
   T_NET_RES *net_res;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   net_buf_init (&net_buf);
@@ -1334,7 +1346,8 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);
@@ -1438,7 +1451,8 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -= get_elapsed_time (&con_handle->start_time);
+      remaining_time -=
+	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
 	{
 	  net_buf_clear (&net_buf);
@@ -1771,9 +1785,10 @@ qe_get_query_plan (T_CON_HANDLE * con_handle, const char *sql, char **out_buf)
   int err_code;
   T_NET_RES *net_res;
 
-  if (con_handle->is_sharding_connection)
+  if (IS_CON_TYPE_GLOBAL (con_handle))
     {
       assert (0);
+      return CCI_ER_NOT_IMPLEMENTED;
     }
 
   if (sql == NULL)
@@ -2933,7 +2948,7 @@ qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
 
 int
 qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
-			  const char *host_ip, int state)
+			  in_addr_t ip, int port, int state)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_NOTIFY_HA_AGENT_STATE;
@@ -2948,7 +2963,8 @@ qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
   net_buf_init (&net_buf);
 
   net_buf_cp_str (&net_buf, &func_code, 1);
-  ADD_ARG_STR (&net_buf, host_ip, strlen (host_ip) + 1);
+  ADD_ARG_INT (&net_buf, ip);
+  ADD_ARG_INT (&net_buf, port);
   ADD_ARG_INT (&net_buf, state);
   ADD_ARG_INT (&net_buf, con_handle->autocommit_mode);
 

@@ -120,6 +120,8 @@ static int cirp_find_lowest_tran_start_lsa (const void *key, void *data,
 static INT64 rp_get_source_applied_time (RQueue * q_applied_time,
 					 LOG_LSA * required_lsa);
 static int rp_applied_time_node_free (void *node, UNUSED_ARG void *data);
+static int cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
+					CIRP_AGENT_STATUS status);
 
 
 /*
@@ -147,7 +149,7 @@ cirp_get_analyzer_status (CIRP_ANALYZER_INFO * analyzer)
  *    analyzer(in/out):
  *    status(in):
  */
-int
+static int
 cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
 			     CIRP_AGENT_STATUS status)
 {
@@ -439,11 +441,13 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
 
   if (analyzer->last_node_state != curr_node_state)
     {
+      char host_str[MAX_NODE_INFO_STR_LEN];
+      prm_node_info_to_str (host_str, sizeof (host_str), &buf_mgr->host_info);
       snprintf (buffer, ONE_K,
 		"change the state of HA Node (%s@%s) from '%s' to '%s'",
-		buf_mgr->prefix_name, buf_mgr->host_name,
-		css_ha_state_string (analyzer->last_node_state),
-		css_ha_state_string (curr_node_state));
+		buf_mgr->prefix_name, host_str,
+		HA_STATE_NAME (analyzer->last_node_state),
+		HA_STATE_NAME (curr_node_state));
 
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 	      ER_HA_GENERIC_ERROR, 1, buffer);
@@ -551,23 +555,27 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-      error = cci_notify_ha_agent_state (&analyzer->conn,
-					 analyzer->ct.host_ip, new_state);
+      error =
+	cci_notify_ha_agent_state (&analyzer->conn,
+				   PRM_NODE_INFO_GET_IP (&analyzer->ct.
+							 host_info),
+				   PRM_NODE_INFO_GET_PORT (&analyzer->ct.
+							   host_info),
+				   new_state);
       if (error != NO_ERROR)
 	{
 	  error = ER_HA_LA_FAILED_TO_CHANGE_STATE;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
-		  css_ha_applier_state_string (analyzer->apply_state),
-		  css_ha_applier_state_string (new_state));
+		  HA_APPLY_STATE_NAME (analyzer->apply_state),
+		  HA_APPLY_STATE_NAME (new_state));
 	  GOTO_EXIT_ON_ERROR;
 	}
 
       snprintf (buffer, sizeof (buffer),
 		"change log apply state from '%s' to '%s'. "
 		"last required_lsa: %lld|%lld",
-		css_ha_applier_state_string (analyzer->
-					     apply_state),
-		css_ha_applier_state_string (new_state),
+		HA_APPLY_STATE_NAME (analyzer->apply_state),
+		HA_APPLY_STATE_NAME (new_state),
 		(long long) analyzer->ct.required_lsa.pageid,
 		(long long) analyzer->ct.required_lsa.offset);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
@@ -708,6 +716,7 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
 {
   int error = NO_ERROR;
 
+  analyzer->status = CIRP_AGENT_INIT;
   analyzer->apply_state = HA_APPLY_STATE_UNREGISTERED;
 
   analyzer->last_is_end_of_record = false;
@@ -1682,10 +1691,13 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
 	  {
 	    if (Repl_Info->analyzer_info.db_lockf_vdes != NULL_VOLDES)
 	      {
+		char host_str[MAX_NODE_INFO_STR_LEN];
+		prm_node_info_to_str (host_str, sizeof (host_str),
+				      &buf_mgr->host_info);
 		snprintf (buffer, sizeof (buffer),
 			  "the state of HA server (%s@%s) is changed to %s",
-			  buf_mgr->prefix_name, buf_mgr->host_name,
-			  css_ha_state_string (state.server_state));
+			  buf_mgr->prefix_name, host_str,
+			  HA_STATE_NAME (state.server_state));
 
 		er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 			ER_NOTIFY_MESSAGE, 1, buffer);
@@ -1775,7 +1787,7 @@ analyzer_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -1791,7 +1803,7 @@ analyzer_main (void *arg)
       error = ER_CSS_PTHREAD_MUTEX_LOCK;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
 
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
@@ -1811,7 +1823,7 @@ analyzer_main (void *arg)
 
       rp_disconnect_agents ();
 
-      rp_clear_agent_flag ();
+      rp_clear_need_restart ();
 
       error = cirp_connect_agents (th_entry->arg->db_name);
       if (error != NO_ERROR)
@@ -1857,7 +1869,7 @@ analyzer_main (void *arg)
 	{
 	  /* check and change state */
 	  error = rye_master_shm_get_node_state (&curr_node_state,
-						 analyzer->ct.host_ip);
+						 &analyzer->ct.host_info);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -1941,10 +1953,17 @@ analyzer_main (void *arg)
 	    }
 
 	  /* get the target page from log */
-	  log_buf = cirp_logpb_get_page_buffer (buf_mgr, final_lsa.pageid);
-	  if (log_buf == NULL)
+	  error = cirp_logpb_get_page_buffer (buf_mgr, &log_buf,
+					      final_lsa.pageid);
+	  if (error != NO_ERROR || log_buf == NULL)
 	    {
-	      error = er_errid ();
+	      assert (error != NO_ERROR && log_buf == NULL);
+	      if (error == NO_ERROR)
+		{
+		  error = ER_GENERIC_ERROR;
+		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+			  1, "Invalid return value");
+		}
 
 	      /* request page is greater then last_flushed_pageid.(in log_header) */
 	      if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)
@@ -2058,12 +2077,12 @@ analyzer_main (void *arg)
 	      lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
 	      if (lrec->type == LOG_END_OF_LOG)
 		{
-		  assert (false);
 		  analyzer->is_end_of_record = true;
+		  cirp_logpb_decache_range (buf_mgr, final_lsa.pageid,
+					    LOGPAGEID_MAX);
 		  break;
 		}
-	      if (lrec->type == LOG_END_OF_LOG
-		  || !CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
+	      if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
 		  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec)
 		  || LSA_ISNULL (&lrec->forw_lsa)
 		  || LSA_GT (&final_lsa, &lrec->forw_lsa))
@@ -2158,13 +2177,13 @@ analyzer_main (void *arg)
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
+      RP_SET_AGENT_NEED_RESTART ();
 
       /* restart analyzer */
       cirp_change_analyzer_status (analyzer, CIRP_AGENT_INIT);
     }
 
-  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_NEED_SHUTDOWN ();
 
   cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 

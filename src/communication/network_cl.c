@@ -77,7 +77,7 @@ static INT64 net_Histo_last_call_time = 0;
 static INT64 net_Histo_total_server_time = 0;
 
 /* Contains the name of the current sever host machine.  */
-static char net_Server_host[MAXHOSTNAMELEN + 1] = "";
+static char net_Server_host[MAX_NODE_INFO_STR_LEN] = "";
 static in_addr_t net_Server_addr = INADDR_NONE;
 
 /* Contains the name of the current server name. */
@@ -1014,103 +1014,6 @@ net_client_request (int request, CSS_NET_PACKET ** recv_packet,
 }
 
 /*
- * net_client_request_with_callback -
- *
- * return: error status
- *
- *   request(in): server request id
- *   argbuf(in): argument buffer (small)
- *   argsize(in): byte size of argbuf
- *   databuf1(in): first data buffer to send (large)
- *   datasize1(in): size of first data buffer
- *   databuf2(in): second data buffer to send (large)
- *   datasize2(in): size of second data buffer
- *   replybuf(in): reply argument buffer (small)
- *   replysize(in): size of reply argument buffer
- *
- * Note: This is one of the functions that is called to perform a server
- *    request.
- *    This is similar to net_client_request2, but the first
- *    field in the reply argument buffer is a request code which can
- *    cause the client to perform actions such as call methods.  When
- *    the actions are completed, a reply is sent to the server.  Eventually
- *    the server responds to the original request with a request code
- *    that indicates that the request is complete and this routine
- *    returns.
- */
-int
-net_client_request_with_callback (int request, char *argbuf, int argsize,
-				  char *reply, int replysize,
-				  CSS_NET_PACKET ** recv_packet)
-{
-  unsigned int eid;
-  char *ptr;
-  QUERY_SERVER_REQUEST server_request;
-  int server_request_num;
-  CSS_NET_PACKET *tmp_recv_packet = NULL;
-  int error;
-
-  error = 0;
-
-#if defined(HISTO)
-  if (net_Histo_setup)
-    {
-      net_histo_add_entry (request, argsize + datasize1 + datasize2);
-    }
-#endif /* HISTO */
-
-  error = net_client_request_send_msg (&eid, request, 1, argbuf, argsize);
-  if (error != NO_ERROR)
-    {
-      return error;
-    }
-
-  do
-    {
-      error = net_client_request_recv_msg (&tmp_recv_packet, eid, -1,
-					   1, reply, replysize);
-      if (error != NO_ERROR)
-	{
-	  return error;
-	}
-
-      ptr = or_unpack_int (reply, &server_request_num);
-      server_request = (QUERY_SERVER_REQUEST) server_request_num;
-
-      switch (server_request)
-	{
-	case QUERY_END:
-	case END_CALLBACK:
-	  if (recv_packet)
-	    {
-	      *recv_packet = tmp_recv_packet;
-	      tmp_recv_packet = NULL;
-	    }
-	  break;
-
-	default:
-	  error = ER_NET_SERVER_DATA_RECEIVE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	  server_request = QUERY_END;
-	  break;
-	}
-
-      css_net_packet_free (tmp_recv_packet);
-    }
-  while (server_request != END_CALLBACK && server_request != QUERY_END);
-
-#if defined(HISTO)
-  if (net_Histo_setup)
-    {
-      net_histo_request_finished (request,
-				  replysize + *replydatasize_listid +
-				  *replydatasize_page + *replaydatasize_plan);
-    }
-#endif /* HISTO */
-  return (error);
-}
-
-/*
  * net_client_get_log_header -
  *
  * return:
@@ -1177,13 +1080,12 @@ net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr,
 	ptr = or_unpack_int (ptr, &num_page);
 	ptr = or_unpack_int (ptr, &file_status);
 	ptr = or_unpack_int (ptr, &server_status);
-#if 1
+
 	if (ZIP_CHECK (length))
 	  {
 	    is_zipped = true;
 	    length = (int) GET_ZIP_LEN (length);
 	  }
-#endif
 
 	if (length <= 0)
 	  {
@@ -1202,7 +1104,6 @@ net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr,
 	      }
 	    else
 	      {
-#if 1
 		if (is_zipped)
 		  {
 		    LOG_ZIP *unzip_logpg_area;
@@ -1251,7 +1152,6 @@ net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr,
 			unzip_logpg_area = NULL;
 		      }
 		  }
-#endif
 
 		*logpg_area_buf = logpg_area;
 	      }
@@ -1372,8 +1272,8 @@ net_client_logwr_send_end_msg (unsigned int eid, int error)
 
   /* END REQUEST */
   ptr = or_pack_int64 (request, LOGPB_HEADER_PAGE_ID);
-  ptr = or_pack_int (ptr, LOGWR_MODE_ASYNC);
   ptr = or_pack_int (ptr, error);
+  ptr = or_pack_int (ptr, 0);	/* compressed_protocol */
 
   return (net_client_data_send_msg (eid, 1,
 				    request,
@@ -1662,60 +1562,39 @@ net_client_ping_server_with_handshake (int client_type,
 /*
  * net_client_init -
  *
- * return: error code
- *
- *   dbname(in): server name
- *   hostname(in): server host name
- *
  * Note: This is called during startup to initialize the client side
  *    communications. It sets up CSS and verifies connection with the server.
  */
 int
-net_client_init (const char *dbname, const char *hostname)
+net_client_init (const char *dbname, const PRM_NODE_INFO * node_info)
 {
   int error = NO_ERROR;
 
   /* don't really need to do this every time but bruce says its ok -
      we probably need to guarentee that a css_terminate is always
      called before this */
-  error = css_client_init (prm_get_integer_value (PRM_ID_TCP_PORT_ID),
-			   dbname, hostname);
+  error = css_client_init (dbname, node_info);
   if (error != NO_ERROR)
     {
       goto end;
     }
 
-  /* since urgent_message_handler() doesn't do anything yet, just
-     use the default handler provided by css which writes things
-     to the system console */
-
   /* set our host/server names for further css communication */
-  if (hostname != NULL && strlen (hostname) <= MAXHOSTNAMELEN)
-    {
-      strcpy (net_Server_host, hostname);
-      net_Server_addr = hostname_to_ip (hostname);
-      assert (net_Server_addr != INADDR_NONE);
+  prm_node_info_to_str (net_Server_host, sizeof (net_Server_host), node_info);
+  net_Server_addr = PRM_NODE_INFO_GET_IP (node_info);
+  assert (net_Server_addr != INADDR_NONE);
 
-      if (dbname != NULL && strlen (dbname) <= DB_MAX_IDENTIFIER_LENGTH)
-	{
-	  strcpy (net_Server_name, dbname);
-	}
-      else
-	{
-	  error = ER_NET_INVALID_SERVER_NAME;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, dbname);
-	}
+  if (dbname != NULL && strlen (dbname) <= DB_MAX_IDENTIFIER_LENGTH)
+    {
+      strcpy (net_Server_name, dbname);
     }
   else
     {
-      error = ER_NET_INVALID_HOST_NAME;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, hostname);
+      error = ER_NET_INVALID_SERVER_NAME;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, dbname);
     }
 
-  /* On error, flush any state that may have been initialized by css.
-   * This is important for the PC's since we must shutdown Winsock
-   * after it has been opened by css_client_init.
-   */
+  /* On error, flush any state that may have been initialized by css  */
 end:
   if (error)
     {

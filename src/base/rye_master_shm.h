@@ -47,54 +47,43 @@ struct _rye_shm_master
   int num_ha_nodes;
   RYE_SHM_HA_NODE ha_nodes[SHM_MAX_HA_NODE_LIST];
 
-  int num_db_servers;
-  RYE_SHM_DB_SERVER_INFO db_server_info[SHM_MAX_DB_SERVERS];
+  int num_shm;
+  RYE_SHM_INFO shm_info[MAX_NUM_SHM];
 };
 
 /* master use function */
 extern int master_shm_initialize (void);
 extern int master_shm_final (void);
-extern int master_shm_set_node_state (const char *host_name,
+extern int master_shm_set_node_state (const PRM_NODE_INFO * node_info,
 				      unsigned short node_state);
-extern int master_shm_set_node_version (const char *host_name,
+extern int master_shm_set_node_version (const PRM_NODE_INFO * node_info,
 					const RYE_VERSION * node_version);
 extern int master_shm_reset_hb_nodes (RYE_SHM_HA_NODE * nodes, int num_nodes);
-
-extern int master_shm_get_server_state (const char *dbname);
-extern int master_shm_update_server_state (int pid,
-					   unsigned char server_state);
 
 extern int master_shm_get_shard_mgmt_info (const char *local_dbname,
 					   char *global_dbname,
 					   short *nodeid,
-					   unsigned char *shard_mgmt_ip,
-					   int *shard_mgmt_port);
+					   PRM_NODE_INFO *
+					   shard_mgmt_node_info);
 
 /* non-master use functions */
-extern int rye_master_shm_get_new_server_shm_key (const char *dbname,
-						  int server_pid);
+extern int rye_master_shm_get_new_server_shm_key (const char *dbname);
 extern int rye_master_shm_get_server_shm_key (const char *dbname);
 extern int rye_master_shm_set_server_shm_key (const char *dbname,
 					      int server_shm_key);
-
-extern int rye_master_shm_get_server_state (const char *dbname,
-					    HA_STATE * server_state);
-extern int rye_master_shm_set_server_state (const char *dbname,
-					    int server_state);
 
 extern int rye_master_shm_get_node_reset_time (INT64 * node_reset_time);
 
 extern int rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes,
 					int *num_nodes, int max_nodes);
 extern int rye_master_shm_get_node_state (HA_STATE * node_state,
-					  const char *host);
+					  const PRM_NODE_INFO * node_info);
 
 extern int rye_master_shm_add_shard_mgmt_info (const char *local_dbname,
 					       const char *global_dbname,
 					       short nodeid,
-					       const unsigned char
-					       *shard_mgmt_ip,
-					       int shard_mgmt_port);
+					       const PRM_NODE_INFO
+					       * shard_mgmt_node_info);
 
 extern int rye_master_shm_dump (FILE * outfp);
 

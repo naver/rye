@@ -96,7 +96,9 @@ static void event_log_many_ioreads (THREAD_ENTRY * thread_p,
 				    int time,
 				    MNT_SERVER_EXEC_STATS * diff_stats);
 static void event_log_temp_expand_pages (THREAD_ENTRY * thread_p,
-					 EXECUTION_INFO * info);
+					 EXECUTION_INFO * info,
+					 INT64 expand_pages,
+					 UINT64 expand_clock);
 static void check_reset_on_commit (THREAD_ENTRY * thread_p);
 
 static FILE *dump_func_open_tmpfile (THREAD_ENTRY * thread_p,
@@ -135,15 +137,18 @@ need_to_abort_tran (THREAD_ENTRY * thread_p, int *errid)
    *  set after that.
    *  So, re-set that error to rollback in client side.
    */
-  tdes = logtb_get_current_tdes (thread_p);
-  if (tdes != NULL && tdes->tran_abort_reason != TRAN_NORMAL
-      && flag_abort == false)
+  if (flag_abort == false)
     {
-      flag_abort = true;
+      tdes = logtb_get_current_tdes (thread_p);
+      if (tdes != NULL && tdes->tran_abort_reason != TRAN_NORMAL)
+	{
+	  flag_abort = true;
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_UNILATERALLY_ABORTED, 4,
-	      thread_p->tran_index, tdes->client.db_user,
-	      tdes->client.host_name, tdes->client.process_id);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+		  ER_LK_UNILATERALLY_ABORTED, 4, thread_p->tran_index,
+		  tdes->client.db_user, tdes->client.host_name,
+		  tdes->client.process_id);
+	}
     }
 
   return flag_abort;
@@ -2429,19 +2434,24 @@ sboot_notify_ha_apply_state (THREAD_ENTRY * thread_p, unsigned int rid,
 {
   int i, status;
   HA_APPLY_STATE state;
-  const char *host_ip;
   char *ptr;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
+  PRM_NODE_INFO node_info;
+  in_addr_t ip;
+  int port;
 
-  ptr = or_unpack_string_nocopy (request, &host_ip);
+  ptr = or_unpack_int (request, (int *) &ip);
+  ptr = or_unpack_int (ptr, &port);
   ptr = or_unpack_int (ptr, &i);
   state = (HA_APPLY_STATE) i;
+
+  PRM_NODE_INFO_SET (&node_info, ip, port);
 
   if (state >= HA_APPLY_STATE_UNREGISTERED && state <= HA_APPLY_STATE_ERROR)
     {
 
-      status = css_notify_ha_apply_state (thread_p, host_ip, state);
+      status = css_notify_ha_apply_state (thread_p, &node_info, state);
       if (status != NO_ERROR)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ERROR_FROM_SERVER,
@@ -3067,8 +3077,10 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   MNT_SERVER_EXEC_STATS base_stats, current_stats, diff_stats;
   char *sql_id = NULL;
   int error_code = NO_ERROR;
-  bool tran_abort = false;
+  UNUSED_VAR bool tran_abort = false;
   CSS_NET_PACKET *recv_packet = thread_p->recv_packet;
+  INT64 old_expand_pages, new_expand_pages;
+  UINT64 old_expand_clock, new_expand_clock;
 
   EXECUTION_INFO info = { NULL, NULL, NULL };
   trace_slow_msec = prm_get_bigint_value (PRM_ID_SQL_TRACE_SLOW);
@@ -3084,23 +3096,12 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 #endif
       xmnt_server_copy_stats (thread_p, &base_stats);
       gettimeofday (&start, NULL);
-
-      if (trace_slow_msec >= 0)
-	{
-	  thread_p->event_stats.trace_slow_query = true;
-	}
     }
 
-  thread_p->server_stats.server_trace = false;
-  if (prm_get_bool_value (PRM_ID_SERVER_TRACE) == true)
-    {
-      thread_p->server_stats.server_trace = true;
-      if (thread_p->server_stats.cs_wait_time == NULL)
-	{
-	  thread_p->server_stats.cs_wait_time =
-	    (struct timeval *) calloc (CSECT_LAST, sizeof (struct timeval));
-	}
-    }
+  old_expand_pages =
+    mnt_get_stats_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+			     &old_expand_clock);
+
   aligned_page_buf = PTR_ALIGN (page_buf, MAX_ALIGNMENT);
 
   reply = OR_ALIGNED_BUF_START (a_reply);
@@ -3193,24 +3194,6 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 	    }
 	}
 
-      if (xasl_cache_entry_p)
-	{
-	  tran_abort = need_to_abort_tran (thread_p, &error_code);
-	  if (tran_abort == true)
-	    {
-	      /* Remove transaction id from xasl cache entry before
-	       * return_error_to_client, where current transaction may be aborted.
-	       * Otherwise, another transaction may be resumed and
-	       * xasl_cache_entry_p may be removed by that transaction, during class
-	       * deletion.
-	       */
-	      (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
-							    xasl_cache_entry_p,
-							    true);
-	      xasl_cache_entry_p = NULL;
-	    }
-	}
-
       return_error_to_client (thread_p, rid);
     }
 
@@ -3300,11 +3283,10 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   /* pack size of a page to return as a third argumnet of the reply */
   ptr = or_pack_int (ptr, page_size);
 
-  /* We may release the xasl cache entry when the transaction aborted.
-   * To refer the contents of the freed entry for the case will cause defects.
-   */
-  if (tran_abort == false)
+  if (xasl_cache_entry_p)
     {
+      assert (info.sql_hash_text != NULL);
+
       if (trace_slow_msec >= 0 || trace_ioread > 0)
 	{
 	  gettimeofday (&end, NULL);
@@ -3338,14 +3320,17 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 #endif
 	}
 
-      if (thread_p->event_stats.temp_expand_pages > 0)
-	{
-	  event_log_temp_expand_pages (thread_p, &info);
-	}
-    }
+      new_expand_pages =
+	mnt_get_stats_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+				 &new_expand_clock);
 
-  if (xasl_cache_entry_p)
-    {
+      if (new_expand_pages - old_expand_pages > 0)
+	{
+	  event_log_temp_expand_pages (thread_p, &info,
+				       new_expand_pages - old_expand_pages,
+				       new_expand_clock - old_expand_clock);
+	}
+
       (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
 						    xasl_cache_entry_p, true);
     }
@@ -3512,6 +3497,11 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
+  int i;
+  MNT_SERVER_ITEM item_waits;
+  UINT64 total_cs_waits_clock;
+
+  assert (info->sql_hash_text != NULL);
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = logtb_get_current_tdes (thread_p);
@@ -3531,16 +3521,34 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %d\n", indent, ' ', time);
+  fprintf (log_fp, "%*ctime: fetch=%ld, ioread=%ld, iowrite=%ld (%dms)\n",
+	   indent, ' ',
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOWRITES]), time);
   fprintf (log_fp, "%*cbuffer: fetch=%lld, ioread=%lld, iowrite=%lld\n",
 	   indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_FETCHES],
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS],
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOWRITES]);
-  fprintf (log_fp, "%*cwait: cs=%d, lock=%d, latch=%d\n\n", indent, ' ',
-	   TO_MSEC (thread_p->event_stats.cs_waits),
-	   TO_MSEC (thread_p->event_stats.lock_waits),
-	   TO_MSEC (thread_p->event_stats.latch_waits));
+
+  total_cs_waits_clock = 0;
+  for (i = 0; i < CSECT_LAST; i++)
+    {
+      item_waits = mnt_csect_type_to_server_item_waits (i);
+
+      total_cs_waits_clock += diff_stats->acc_time[item_waits];
+    }
+
+  fprintf (log_fp, "%*cwait: csect=%ld, lock=%ld, latch=%ld\n\n", indent, ' ',
+	   mnt_clock_to_time (total_cs_waits_clock),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_SQL_TRACE_LOCK_WAITS]),
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_SQL_TRACE_LATCH_WAITS]));
 
   event_log_end (thread_p);
 }
@@ -3583,7 +3591,9 @@ event_log_many_ioreads (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %d\n", indent, ' ', time);
+  fprintf (log_fp, "%*ctime: %ld (%dms)\n", indent, ' ',
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]), time);
   fprintf (log_fp, "%*cioreads: %lld\n\n", indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS]);
 
@@ -3599,12 +3609,18 @@ event_log_many_ioreads (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
  *   bind_vals(in):
  */
 static void
-event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info)
+event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
+			     INT64 expand_pages, UINT64 expand_clock)
 {
   FILE *log_fp;
   int indent = 2;
   LOG_TDES *tdes;
   int tran_index;
+  UNUSED_VAR INT64 temp_expand_pages;
+
+  assert (info->sql_hash_text != NULL);
+  assert (expand_pages > 0);
+  assert (expand_clock > 0);
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = LOG_FIND_TDES (tran_index);
@@ -3625,10 +3641,10 @@ event_log_temp_expand_pages (THREAD_ENTRY * thread_p, EXECUTION_INFO * info)
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %d\n", indent, ' ',
-	   TO_MSEC (thread_p->event_stats.temp_expand_time));
-  fprintf (log_fp, "%*cpages: %d\n\n", indent, ' ',
-	   thread_p->event_stats.temp_expand_pages);
+  fprintf (log_fp, "%*ctime: %ld\n", indent, ' ',
+	   mnt_clock_to_time (expand_clock));
+  fprintf (log_fp, "%*cpages: %lld\n\n", indent, ' ',
+	   (long long int) expand_pages);
 
   event_log_end (thread_p);
 }
@@ -4629,6 +4645,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   unsigned int rid, rc;
   char *ptr;
+  HA_STATE server_state;
 
   rid = thread_get_comm_request_id (thread_p);
 
@@ -4643,20 +4660,21 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
       return ER_FAILED;
     }
 
+  server_state = svr_shm_get_server_state ();
+
+
   ptr = or_pack_int (reply, (int) GET_NEXT_LOG_PAGES);
   ptr = or_pack_int (ptr, area_size);
   ptr = or_pack_int64 (ptr, first_pageid);
   ptr = or_pack_int (ptr, num_page);
   ptr = or_pack_int (ptr, file_status);
-  ptr = or_pack_int (ptr, svr_shm_get_server_state ());
+  ptr = or_pack_int (ptr, server_state);
 
-#if 1
   if (ZIP_CHECK (area_size))
     {
       area_size = (int) GET_ZIP_LEN (area_size);
       assert (area_size > 0);
     }
-#endif
 
   rc = css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 				 reply, OR_ALIGNED_BUF_SIZE (a_reply),
@@ -4667,8 +4685,10 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"xlog_send_log_pages_to_client, reply(GET_NEXT_LOG_PAGES), area_size(%d)\n",
-		area_size);
+		"xlog_send_log_pages_to_client- first_pageid:%ld, "
+		"num_page:%d, file_status:%s, server_state:%s\n",
+		first_pageid, num_page, LOG_HA_FILESTAT_NAME (file_status),
+		HA_STATE_NAME (server_state));
 
   return NO_ERROR;
 }
@@ -4681,8 +4701,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
  */
 int
 xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
-				 char *logpg_area, int area_size,
-				 UNUSED_ARG LOGWR_MODE mode)
+				 char *logpg_area, int area_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -4693,13 +4712,11 @@ xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
 
   ptr = or_pack_int (reply, area_size);
 
-#if 1
   if (ZIP_CHECK (area_size))
     {
       area_size = (int) GET_ZIP_LEN (area_size);
       assert (area_size > 0);
     }
-#endif
 
   rc = css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 				 reply, OR_ALIGNED_BUF_SIZE (a_reply),
@@ -4724,13 +4741,11 @@ xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
  */
 int
 xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
-				  LOG_PAGEID * fpageid_ptr,
-				  LOGWR_MODE * mode_ptr)
+				  LOG_PAGEID * fpageid_ptr)
 {
   char *reply = NULL;
   int reply_size;
   LOG_PAGEID first_pageid;
-  int mode;
   char *ptr;
   int error;
   int remote_error;
@@ -4753,17 +4768,15 @@ xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
 
   assert (reply != NULL);
   ptr = or_unpack_int64 (reply, &first_pageid);
-  ptr = or_unpack_int (ptr, &mode);
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);	/* ignore */
   free_and_init (reply);
 
   *fpageid_ptr = first_pageid;
-  *mode_ptr = mode;
 
-  er_log_debug (ARG_FILE_LINE, "xlog_get_page_request_with_reply, "
-		"fpageid(%lld), mode(%s), compressed_protocol(%d)\n",
-		first_pageid, LOGWR_MODE_NAME (mode), compressed_protocol);
+  er_log_debug (ARG_FILE_LINE, "xlog_get_page_request_with_reply-"
+		"fpageid:%ld, remote_error:%d, compressed_protocol:%d\n",
+		first_pageid, remote_error, compressed_protocol);
 
   return (remote_error != NO_ERROR) ? remote_error : error;
 }
@@ -5164,35 +5177,25 @@ slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   char *ptr;
   LOG_PAGEID first_pageid;
-  LOGWR_MODE mode;
-  int m, error, remote_error;
+  int error, remote_error;
   int compressed_protocol;
 
   ptr = or_unpack_int64 (request, &first_pageid);
-  ptr = or_unpack_int (ptr, &m);
-  mode = (LOGWR_MODE) m;
   ptr = or_unpack_int (ptr, &remote_error);
   ptr = or_unpack_int (ptr, &compressed_protocol);
   assert (compressed_protocol == 1 || compressed_protocol == 0);
 
-  error = xlogwr_get_log_pages (thread_p, first_pageid, mode,
+  error = xlogwr_get_log_pages (thread_p, first_pageid,
 				((compressed_protocol == 1) ? true : false));
-  if (error == ER_INTERRUPTED)
+  if (error != ER_INTERRUPTED)
     {
       return_error_to_client (thread_p, rid);
     }
 
-  if (error == ER_NET_DATA_RECEIVE_TIMEDOUT)
-    {
-      css_end_server_request (thread_p->conn_entry);
-    }
-  else
-    {
-      ptr = or_pack_int (reply, (int) END_CALLBACK);
-      ptr = or_pack_int (ptr, error);
-      (void) css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-				       OR_ALIGNED_BUF_SIZE (a_reply));
-    }
+  ptr = or_pack_int (reply, (int) END_CALLBACK);
+  ptr = or_pack_int (ptr, error);
+  (void) css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
+				   OR_ALIGNED_BUF_SIZE (a_reply));
 
   return;
 }

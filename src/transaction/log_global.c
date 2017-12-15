@@ -99,10 +99,8 @@ LOG_GLOBAL log_Gl = {
   BACKGROUND_ARCHIVING_INFO_INITIALIZER
 };
 
-#if defined(HAVE_ATOMIC_BUILTINS)
 /* Current time in milliseconds */
 UINT64 log_Clock_msec = 0;
-#endif /* HAVE_ATOMIC_BUILTINS */
 
 /* Name of the database and logs */
 char log_Path[PATH_MAX];

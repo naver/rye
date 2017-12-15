@@ -32,23 +32,15 @@
 extern int css_Errno;
 extern CSS_MAP_ENTRY *css_Client_anchor;
 
-extern int css_client_init (int sockid, const char *server_name,
-			    const char *host_name);
+extern int css_client_init (const char *server_name,
+			    const PRM_NODE_INFO * node_info);
 extern int css_send_error_to_server (char *host, unsigned int eid,
 				     char *buffer, int buffer_size);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern int css_send_data_to_server (char *host, unsigned short rid,
-				    int num_buffers, ...);
-#endif
 extern int css_send_data_to_server_v (char *host, unsigned short rid,
 				      int num_buffers, va_list args);
 
 extern void css_terminate (bool server_error);
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern unsigned int css_send_request_to_server (char *host, int request,
-						int num_buffers, ...);
-#endif
 extern unsigned int css_send_request_to_server_v (char *host, int request,
 						  int num_buffers,
 						  va_list args);

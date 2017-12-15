@@ -56,7 +56,6 @@
 
 #include "fault_injection.h"
 
-
 CIRP_REPL_INFO *Repl_Info = NULL;
 
 extern CIRP_LOGWR_GLOBAL cirpwr_Gl;
@@ -66,7 +65,7 @@ static int cirp_init_repl_info (const char *database_name,
 static int cirp_final_repl_info (void);
 static int cirp_get_cci_connection (CCI_CONN * conn, const char *db_name);
 
-static int cirp_connect_to_master (const char *db_name, const char *log_path,
+static int cirp_connect_to_master (const char *db_name, const char *log_pAath,
 				   char **argv);
 
 static void cirp_init_repl_arg (REPL_ARGUMENT * repl_arg);
@@ -79,7 +78,10 @@ static int cirp_create_thread (CIRP_THREAD_ENTRY * th_entry,
 			       void *(*start_routine) (void *));
 static bool check_master_alive (void);
 static void *health_check_main (void *arg);
+static int cirp_check_mem_size (void);
 
+
+FILE *repl_debug_fp = NULL;
 
 /*
  * print_usage_and_exit() -
@@ -97,7 +99,6 @@ print_usage_and_exit (void)
 int
 main (int argc, char *argv[])
 {
-  char er_msg_file[PATH_MAX];
   int error = NO_ERROR;
   int num_applier = 0;
   int mem_size;
@@ -178,9 +179,8 @@ main (int argc, char *argv[])
       GOTO_EXIT_ON_ERROR;
     }
 
-  snprintf (er_msg_file, sizeof (er_msg_file) - 1,
-	    "%s_%s.err", repl_arg.db_name, argv[0]);
-  error = er_init (er_msg_file, ER_EXIT_DEFAULT);
+  sysprm_set_repl_er_log_file (repl_arg.db_name);
+  error = er_init (NULL, ER_EXIT_DEFAULT);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -221,8 +221,7 @@ main (int argc, char *argv[])
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirpwr_initialize (repl_arg.db_name,
-			     repl_arg.log_path, repl_arg.mode);
+  error = cirpwr_initialize (repl_arg.db_name, repl_arg.log_path);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -340,7 +339,7 @@ main (int argc, char *argv[])
   Repl_Info->max_mem_size = Repl_Info->start_vsize + ONE_G;
 
   pthread_join (analyzer_entry.tid, NULL);
-  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_NEED_SHUTDOWN ();
 
   error = rp_end_all_applier ();
   if (error != NO_ERROR)
@@ -373,7 +372,7 @@ main (int argc, char *argv[])
 exit_on_error:
   assert (error != NO_ERROR);
 
-  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+  RP_SET_AGENT_NEED_SHUTDOWN ();
 
   rp_disconnect_agents ();
 
@@ -400,8 +399,6 @@ cirp_init_repl_arg (REPL_ARGUMENT * repl_arg)
   repl_arg->log_path = NULL;
   repl_arg->db_name = NULL;
 
-  repl_arg->mode = LOGWR_MODE_SYNC;
-
   return;
 }
 
@@ -416,8 +413,6 @@ cirp_free_repl_arg (REPL_ARGUMENT * repl_arg)
 {
   RYE_FREE_MEM (repl_arg->log_path);
   RYE_FREE_MEM (repl_arg->db_name);
-
-  repl_arg->mode = -1;
 
   return;
 }
@@ -518,7 +513,7 @@ rp_check_appliers_status (CIRP_AGENT_STATUS status)
 	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_NEED_SHUTDOWN ();
 
 	  return error;
 	}
@@ -551,7 +546,7 @@ rp_start_all_applier (void)
 	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+	  RP_SET_AGENT_NEED_SHUTDOWN ();
 
 	  return error;
 	}
@@ -656,6 +651,8 @@ cirp_init_repl_info (const char *db_name, const char *log_path,
 	}
     }
 
+  Repl_Info->health_check_status = CIRP_AGENT_INIT;
+
   assert (error == NO_ERROR);
   return error;
 
@@ -727,7 +724,7 @@ cirp_get_cci_connection (CCI_CONN * conn, const char *db_name)
     }
 
   snprintf (url, sizeof (url),
-	    "cci:rye://localhost:%d/%s/repl?error_on_server_restart=yes",
+	    "cci:rye://localhost:%d/%s/repl?error_on_server_restart=yes&connectionType=local",
 	    Repl_Info->broker_port, local_db_name);
 
   error = cci_connect (conn, url, "dba", Repl_Info->broker_key);
@@ -870,7 +867,6 @@ cirp_connect_to_master (const char *db_name, const char *log_path,
 			char **argv)
 {
   int error = NO_ERROR;
-  char executable_path[PATH_MAX];
 
   error = check_database_name (db_name);
   if (error != NO_ERROR)
@@ -882,10 +878,7 @@ cirp_connect_to_master (const char *db_name, const char *log_path,
   util_redirect_stdout_to_null ();
 #endif
 
-  /* save executable path */
-  (void) envvar_bindir_file (executable_path, PATH_MAX, UTIL_REPL_NAME);
-
-  hb_set_exec_path (executable_path);
+  hb_set_exec_path (UTIL_REPL_NAME);
   hb_set_argv (argv);
 
   /* initialize system parameters */
@@ -974,6 +967,48 @@ exit_on_error:
 }
 
 /*
+ * _rp_log_debug - Print debugging message to the repl log file
+ *   return: none
+ *   file_name(in):
+ *   line_no(in):
+ *   fmt(in):
+ *   ...(in):
+ *
+ * Note:
+ */
+void
+_rp_log_debug (const char *file_name, const int line_no, const char *fmt, ...)
+{
+  va_list ap;
+  char time_array[256];
+  char f_path[PATH_MAX];
+  char filename[64];
+
+  if (repl_debug_fp == NULL)
+    {
+      sprintf (filename, "repl/rye_repl_mem.check");
+      envvar_ryelogdir_file (f_path, PATH_MAX, filename);
+      repl_debug_fp = fopen (f_path, "a+");
+      if (repl_debug_fp == NULL)
+	{
+	  return;
+	}
+    }
+
+  (void) er_datetime (NULL, time_array, sizeof (time_array));
+
+  fprintf (repl_debug_fp, "\nTime: %s - file %s, line %d: ", time_array,
+	   file_name, line_no);
+
+  /* Print out remainder of message */
+  va_start (ap, fmt);
+  vfprintf (repl_debug_fp, fmt, ap);
+  va_end (ap);
+
+  fflush (repl_debug_fp);
+}
+
+/*
  * health_check_main ()
  */
 static void *
@@ -984,6 +1019,7 @@ health_check_main (void *arg)
   CIRP_THREAD_ENTRY *th_entry = NULL;
   char err_msg[ER_MSG_SIZE];
   int wakeup_interval = 1000;	/* 1sec */
+  int vsize, index;
 
   th_entry = (CIRP_THREAD_ENTRY *) arg;
 
@@ -991,7 +1027,7 @@ health_check_main (void *arg)
   error = er_set_msg_info (th_er_msg_info);
   if (error != NO_ERROR)
     {
-      RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+      RP_SET_AGENT_NEED_SHUTDOWN ();
 
       free_and_init (th_er_msg_info);
       return NULL;
@@ -1003,21 +1039,48 @@ health_check_main (void *arg)
 
   assert (th_entry->th_type == CIRP_THREAD_HEALTH_CHEKER);
 
+  Repl_Info->health_check_status = CIRP_AGENT_BUSY;
+
+  index = 0;
   while (REPL_NEED_SHUTDOWN () == false)
     {
       THREAD_SLEEP (wakeup_interval);
 
       if (cirp_check_mem_size () != NO_ERROR)
 	{
-	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_SHUTDOWN);
+	  vsize = os_get_mem_size (Repl_Info->pid, MEM_RSS);
+	  rp_log_debug ("%25s - current: %15ld, start:%15ld, max:%15ld",
+			"Exceed Max Mem",
+			vsize, Repl_Info->start_vsize,
+			Repl_Info->max_mem_size);
+
+	  RP_SET_AGENT_NEED_SHUTDOWN ();
+	}
+
+      if (index++ % 60 == 0)
+	{
+	  vsize = os_get_mem_size (Repl_Info->pid, MEM_RSS);
+	  rp_log_debug ("%25s - current: %15ld, start:%15ld, max:%15ld",
+			"Health Checker",
+			vsize, Repl_Info->start_vsize,
+			Repl_Info->max_mem_size);
 	}
 
       if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL,
 			   1000, 0) != NO_ERROR)
 	{
-	  RP_SET_AGENT_FLAG (REPL_AGENT_NEED_RESTART);
+	  RP_SET_AGENT_NEED_RESTART ();
 	}
     }
+
+  RP_SET_AGENT_NEED_SHUTDOWN ();
+
+  Repl_Info->health_check_status = CIRP_AGENT_DEAD;
+
+  vsize = os_get_mem_size (Repl_Info->pid, MEM_RSS);
+  rp_log_debug ("%25s - current: %10ld, start:%10ld, max:%10ld",
+		"Exit Health Checker",
+		vsize, Repl_Info->start_vsize, Repl_Info->max_mem_size);
 
   snprintf (err_msg, sizeof (err_msg), "Health Checker Exit");
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
@@ -1032,7 +1095,7 @@ health_check_main (void *arg)
  * cirp_check_mem_size()
  *   return: error code
  */
-int
+static int
 cirp_check_mem_size (void)
 {
   int error = NO_ERROR;
@@ -1047,6 +1110,8 @@ cirp_check_mem_size (void)
   if (vsize > Repl_Info->max_mem_size)
     {
       error = ER_HA_LA_EXCEED_MAX_MEM_SIZE;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
+	      2, vsize, Repl_Info->max_mem_size);
     }
 
   return error;
@@ -1066,7 +1131,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   INT64 current_time_in_msec;
   CIRP_WRITER_INFO *writer = NULL;
   LOG_HEADER *log_hdr = NULL;
-  char *host_ip = NULL;
+  const PRM_NODE_INFO *host_info = NULL;
 
   writer = &Repl_Info->writer_info;
 
@@ -1077,13 +1142,13 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
     }
   log_hdr = analyzer->buf_mgr.act_log.log_hdr;
 
-  host_ip = analyzer->buf_mgr.host_name;
+  host_info = &analyzer->buf_mgr.host_info;
 
   gettimeofday (&t, NULL);
   current_time_in_msec = timeval_to_msec (&t);
 
   /* get analyzer info */
-  error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_ip);
+  error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_info);
   if (error != NO_ERROR)
     {
       assert (error != CCI_ER_NO_MORE_DATA);
@@ -1119,7 +1184,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   analyzer->ct.start_time = current_time_in_msec;
 
   /* init writer info */
-  error = rpct_init_writer_info (&analyzer->conn, &writer->ct, host_ip,
+  error = rpct_init_writer_info (&analyzer->conn, &writer->ct, host_info,
 				 &log_hdr->eof_lsa, current_time_in_msec);
   if (error != NO_ERROR)
     {
@@ -1127,7 +1192,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
     }
 
   /* init applier info */
-  error = rpct_init_applier_info (&analyzer->conn, host_ip,
+  error = rpct_init_applier_info (&analyzer->conn, host_info,
 				  current_time_in_msec);
   if (error != NO_ERROR)
     {
@@ -1153,7 +1218,12 @@ rp_dead_agent_exists (void)
       return true;
     }
 
-  status = cirpwr_get_status (&Repl_Info->writer_info);
+  status = cirpwr_get_copier_status (&Repl_Info->writer_info);
+  if (status == CIRP_AGENT_DEAD)
+    {
+      return true;
+    }
+  status = cirpwr_get_writer_status (&Repl_Info->writer_info);
   if (status == CIRP_AGENT_DEAD)
     {
       return true;
@@ -1166,6 +1236,11 @@ rp_dead_agent_exists (void)
 	{
 	  return true;
 	}
+    }
+
+  if (Repl_Info->health_check_status == CIRP_AGENT_DEAD)
+    {
+      return true;
     }
 
   return false;

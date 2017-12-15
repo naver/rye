@@ -117,7 +117,7 @@ struct _cirp_log_buffer_msg
 
   char log_path[PATH_MAX];
   char prefix_name[PATH_MAX];
-  char host_name[PATH_MAX];
+  PRM_NODE_INFO host_info;
   char log_info_path[PATH_MAX];
 
   CIRP_ACT_LOG act_log;
@@ -154,45 +154,6 @@ struct _cirp_log_buffer_msg
       && ((lrec)->trid == NULL_TRANID || (lrec)->trid >= 0)             \
       && ((lrec)->type > LOG_SMALLER_LOGREC_TYPE && (lrec)->type < LOG_LARGER_LOGREC_TYPE))
 
-#define CIRP_LOG_READ_ADVANCE_WHEN_DOESNT_FIT(mgr, result, length, offset, pageid, pgptr, org_pgptr) \
-  do {                                                                         \
-    if ((offset)+(length) >= CIRP_LOGAREA_SIZE(mgr)) {                         \
-      if ((org_pgptr) != (pgptr)) {                                            \
-        cirp_logpb_release (mgr, (pgptr)->hdr.logical_pageid);                 \
-      }                                                                        \
-      (pgptr) = cirp_logpb_get_log_page((mgr), ++(pageid));                    \
-      if ((pgptr) == NULL) {                                                   \
-        (result) = er_errid ();                                                \
-        assert ((result) != NO_ERROR);                                         \
-        break;                                                                 \
-      }                                                                        \
-      (offset) = 0;                                                            \
-    }                                                                          \
-  } while(0)
-
-#define CIRP_LOG_READ_ALIGN(mgr, result, offset, pageid, pgptr, org_pgptr)     \
-  do {                                                                         \
-    (offset) = DB_ALIGN((offset), MAX_ALIGNMENT);                              \
-    while ((offset) >= CIRP_LOGAREA_SIZE(mgr)) {                               \
-      if ((pgptr) != org_pgptr) {                                              \
-        cirp_logpb_release (mgr, (pgptr)->hdr.logical_pageid);                 \
-      }                                                                        \
-      (pgptr) = cirp_logpb_get_log_page(mgr, ++(pageid));                      \
-      if ((pgptr) == NULL) {                                                   \
-        (result) = er_errid();                                                 \
-        assert ((result) != NO_ERROR);                                         \
-        break;                                                                 \
-      }                                                                        \
-      (offset) -= CIRP_LOGAREA_SIZE(mgr);                                      \
-      (offset) = DB_ALIGN((offset), MAX_ALIGNMENT);                            \
-    }                                                                          \
-  } while(0)
-
-#define CIRP_LOG_READ_ADD_ALIGN(mgr, result, add, offset, pageid, pgptr, org_pgptr) \
-  do {                                                                              \
-    (offset) += (add);                                                              \
-    CIRP_LOG_READ_ALIGN(mgr, result, (offset), (pageid), (pgptr), (org_pgptr));     \
-  } while(0)
 
 extern int cirp_logpb_act_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr);
 
@@ -204,21 +165,26 @@ extern int cirp_realloc_recdes_data (CIRP_BUF_MGR * buf_mgr,
 				     RECDES * recdes, int data_size);
 
 
+#if !defined(NDEBUG)
+#define cirp_logpb_get_log_page(mgr, log_page, pageid) \
+  cirp_logpb_get_log_page_debug (mgr, log_page, pageid, __FILE__, __LINE__)
+extern int cirp_logpb_get_log_page_debug (CIRP_BUF_MGR * buf_mgr,
+					  LOG_PAGE ** log_page,
+					  LOG_PAGEID pageid,
+					  const char *file_name,
+					  int line_number);
+#else
+extern int cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr,
+				    LOG_PAGE ** log_page, LOG_PAGEID pageid);
+#endif
 
-#define cirp_logpb_get_log_page(mgr, pageid) \
-  cirp_logpb_get_log_page_debug (mgr, pageid, __FILE__, __LINE__)
-extern LOG_PAGE *cirp_logpb_get_log_page_debug (CIRP_BUF_MGR * buf_mgr,
-						LOG_PAGEID pageid,
-						const char *file_name,
-						int line_number);
-
-#define cirp_logpb_get_page_buffer(mgr, pageid) \
-    cirp_logpb_get_page_buffer_debug (mgr, pageid, __FILE__, __LINE__)
-extern CIRP_LOGPB *cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR *
-						     buf_mgr,
-						     LOG_PAGEID pageid,
-						     const char *file_name,
-						     int line_number);
+#define cirp_logpb_get_page_buffer(mgr, out_logpb, pageid) \
+    cirp_logpb_get_page_buffer_debug (mgr, out_logpb, pageid, __FILE__, __LINE__)
+extern int cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
+					     CIRP_LOGPB ** out_logpb,
+					     LOG_PAGEID pageid,
+					     const char *file_name,
+					     int line_number);
 
 #define cirp_logpb_release(mgr, pageid) \
   cirp_logpb_release_debug (mgr, pageid, __FILE__, __LINE__)
@@ -229,6 +195,17 @@ extern int cirp_logpb_release_all (CIRP_BUF_MGR * buf_mgr,
 				   LOG_PAGEID exclude_pageid);
 extern int cirp_logpb_decache_range (CIRP_BUF_MGR * buf_mgr,
 				     LOG_PAGEID from, LOG_PAGEID to);
+extern int rp_log_read_advance_when_doesnt_fit (CIRP_BUF_MGR * buf_mgr,
+						LOG_PAGE ** pgptr,
+						LOG_PAGEID * pageid,
+						PGLENGTH * offset, int length,
+						LOG_PAGE * org_pgptr);
+extern int rp_log_read_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
+			      LOG_PAGEID * pageid, PGLENGTH * offset,
+			      LOG_PAGE * org_pgptr);
+extern int rp_log_read_add_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
+				  LOG_PAGEID * pageid, PGLENGTH * offset,
+				  int add_length, LOG_PAGE * org_pgptr);
 
 extern void cirp_logpb_final (CIRP_BUF_MGR * buf_mgr);
 extern int cirp_logpb_initialize (CIRP_BUF_MGR * buf_mgr,

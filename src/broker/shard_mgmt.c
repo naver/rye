@@ -181,7 +181,7 @@ T_TABLE_DEF table_Def_shard_node = {
   {{COL_SHARD_NODE_NODEID, COLUMN_TYPE_INT, true},
    {COL_SHARD_NODE_DBNAME, COLUMN_TYPE_STRING, true},
    {COL_SHARD_NODE_HOST, COLUMN_TYPE_STRING, true},
-   {COL_SHARD_NODE_PORT, COLUMN_TYPE_INT, false},
+   {COL_SHARD_NODE_PORT, COLUMN_TYPE_INT, true},
    {COL_SHARD_NODE_STATUS, COLUMN_TYPE_INT, false},
    {COL_SHARD_NODE_VERSION, COLUMN_TYPE_BIGINT, false}}
 };
@@ -238,7 +238,7 @@ T_INDEX_DEF shard_indexes[] = {
 #define BR_LOG_CCI_ERROR(COMMAND, ERR_CODE, ERR_MSG, QUERY)		\
 	do {								\
 	  const char *_tmp_query = QUERY;				\
-	  br_log_write (BROKER_LOG_ERROR, NULL,				\
+	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE,			\
 	  		"METADB error: %s: %d, %s -- %s",		\
 			COMMAND, ERR_CODE, ERR_MSG, 			\
 			(_tmp_query == NULL ? "" : _tmp_query));	\
@@ -276,7 +276,7 @@ struct shard_mgmt_job
   bool is_retry;
   int clt_sock_fd;
   time_t request_time;
-  unsigned char clt_ip_addr[4];
+  in_addr_t clt_ip_addr;
   T_BROKER_REQUEST_MSG *req_msg;
   T_SHD_MG_COMPENSATION_JOB *compensation_job;
   struct shard_mgmt_job *next;
@@ -553,7 +553,7 @@ static void shd_job_add_internal (T_SHARD_JOB_QUEUE * job_queue,
 				  T_SHARD_MGMT_JOB * job, bool is_retry);
 static int shd_mg_sync_local_mgmt_job_add (void);
 static int shd_mg_job_queue_add (int clt_sock_fd,
-				 const unsigned char *clt_ip_addr,
+				 in_addr_t clt_ip_addr,
 				 const T_BROKER_REQUEST_MSG * req_msg);
 static T_SHARD_MGMT_JOB *shd_mg_job_queue_remove_all (T_SHARD_JOB_QUEUE *
 						      job_queue);
@@ -561,7 +561,7 @@ static void set_job_queue_job_count (T_SHARD_JOB_QUEUE * job_queue,
 				     int num_job);
 static void free_mgmt_job (T_SHARD_MGMT_JOB * job);
 static T_SHARD_MGMT_JOB *make_new_mgmt_job (int clt_sock_fd,
-					    const unsigned char *clt_ip_addr,
+					    in_addr_t clt_ip_addr,
 					    const T_BROKER_REQUEST_MSG *
 					    req_msg);
 static T_SHARD_JOB_QUEUE *find_shard_job_queue (T_JOB_QUEUE_TYPE
@@ -774,7 +774,7 @@ shd_mg_init (int shard_mgmt_port, int local_mgmt_port,
   shm_Shard_mgmt_info = &shm_Appl->info.shard_mgmt_info;
 
   sprintf (local_Mgmt_connect_url,
-	   "cci:rye://localhost:%d/%s:dba/%s?query_timeout=%d",
+	   "cci:rye://localhost:%d/%s:dba/%s?query_timeout=%d&connectionType=local",
 	   local_mgmt_port, shard_metadb, BR_SHARD_MGMT_NAME,
 	   CCI_QUERY_TIMEOUT);
 
@@ -818,7 +818,7 @@ shard_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
   int err_code = 0;
   ER_MSG_INFO *er_msg;
   struct timeval recv_time;
-  unsigned char clt_ip_addr[4];
+  in_addr_t clt_ip_addr;
 
   signal (SIGPIPE, SIG_IGN);
 
@@ -840,25 +840,17 @@ shard_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
     {
       err_code = 0;
 
-      clt_sock_fd = br_mgmt_accept (clt_ip_addr);
+      clt_sock_fd = br_accept_unix_domain (&clt_ip_addr, &recv_time,
+					   br_req_msg);
 
       if (IS_INVALID_SOCKET (clt_sock_fd))
 	{
 	  continue;
 	}
 
-      gettimeofday (&recv_time, NULL);
-
-      if (br_read_broker_request_msg (clt_sock_fd, br_req_msg) < 0)
-	{
-	  err_code = CAS_ER_COMMUNICATION;
-	  goto end;
-	}
-
-      if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
+      if (br_req_msg->op_code == BRREQ_OP_CODE_PING_SHARD_MGMT)
 	{
 	  br_send_result_to_client (clt_sock_fd, 0, NULL);
-	  RYE_CLOSE_SOCKET (clt_sock_fd);
 	  shm_Br_info->ping_req_count++;
 	  continue;
 	}
@@ -1196,7 +1188,7 @@ set_shm_shard_node_info (const T_LOCAL_MGMT_SYNC_INFO * sync_info)
       shm_node_info = &shm_Shard_mgmt_info->shard_node_info[i];
 
       shm_node_info->node_id = src_node_info->node_id;
-      shm_node_info->port = src_node_info->port;
+      shm_node_info->host_info = src_node_info->host_info;
       STRNCPY (shm_node_info->local_dbname, src_node_info->local_dbname,
 	       sizeof (shm_node_info->local_dbname));
       STRNCPY (shm_node_info->host_ip, src_node_info->host_ip_str,
@@ -1381,7 +1373,7 @@ shd_mg_migrator_wait_thr (void *arg)
 		  migrator_msg =
 		    (launch_res.stderr_size > 0 ? launch_res.stderr_buf : "");
 		}
-	      br_log_write (BROKER_LOG_NOTICE, NULL,
+	      br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
 			    "exit migrator %s %s: status:%d (%s)",
 			    launch_res.userdata, success_fail,
 			    launch_res.exit_status, migrator_msg);
@@ -2091,11 +2083,6 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
       return error;
     }
 
-  if (add_node.port == 0)
-    {
-      add_node.port = shard_Mgmt_server_info.local_mgmt_port;
-    }
-
   set_migrator_dba_passwd (req_arg->value.node_add_arg.dba_passwd);
 
   if (exist_same_node == true || mig_src_nodeid == 0)
@@ -2135,7 +2122,8 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
       br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
 		    "[NODE-ADD %d:%s:%s:%d] migration schema: error=%d",
 		    add_node.node_id, add_node.local_dbname,
-		    add_node.host_ip_str, add_node.port, error);
+		    add_node.host_ip_str,
+		    PRM_NODE_INFO_GET_PORT (&add_node.host_info), error);
 
       if (commit_success)
 	{
@@ -2174,7 +2162,8 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
       br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
 		    "[NODE-ADD %d:%s:%s:%d] migration global table: error=%d",
 		    add_node.node_id, add_node.local_dbname,
-		    add_node.host_ip_str, add_node.port, error);
+		    add_node.host_ip_str,
+		    PRM_NODE_INFO_GET_PORT (&add_node.host_info), error);
 
       if (commit_success)
 	{
@@ -2210,7 +2199,8 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
 		"[NODE-ADD %d:%s:%s:%d] complete",
 		org_add_node->node_id, org_add_node->local_dbname,
-		org_add_node->host_ip_str, org_add_node->port);
+		org_add_node->host_ip_str,
+		PRM_NODE_INFO_GET_PORT (&org_add_node->host_info));
   return 0;
 
 node_add_fail:
@@ -2252,7 +2242,8 @@ node_add_fail:
   br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
 		"[NODE-ADD %d:%s:%s:%d] fail: error=%d,%d",
 		org_add_node->node_id, org_add_node->local_dbname,
-		org_add_node->host_ip_str, org_add_node->port,
+		org_add_node->host_ip_str,
+		PRM_NODE_INFO_GET_PORT (&org_add_node->host_info),
 		error, fail_recovery_error);
 
   return error;
@@ -2323,7 +2314,7 @@ node_add_commit_and_migration (CCI_CONN * conn, bool * commit_success,
 				   &launch_res);
   if (error < 0)
     {
-      br_log_write (BROKER_LOG_ERROR, NULL,
+      br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
 		    "migrator fail: %s migration, "
 		    "src_node=%d, dest_node = %d, cci error = %d",
 		    (schema_migration ? "schema" : "global table"),
@@ -2340,26 +2331,28 @@ node_add_commit_and_migration (CCI_CONN * conn, bool * commit_success,
 
   if (launch_res.exit_status == 0)
     {
-      br_log_write (BROKER_LOG_NOTICE, NULL,
+      br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
 		    "exit migrator success: %s migration, "
 		    "src_node=%d, dest_node = %d, "
 		    "migrator@%s:%d exit status:%d (%s)",
 		    (schema_migration ? "schema" : "global table"),
 		    src_nodeid, dest_node_info->node_id,
 		    run_node_info->host_ip_str,
-		    run_node_info->port, launch_res.exit_status,
+		    PRM_NODE_INFO_GET_PORT (&run_node_info->host_info),
+		    launch_res.exit_status,
 		    launch_res.stdout_size > 0 ? launch_res.stdout_buf : "");
     }
   else
     {
-      br_log_write (BROKER_LOG_ERROR, NULL,
+      br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
 		    "exit migrator fail: %s migration, "
 		    "src_node=%d, dest_node = %d, "
 		    "migrator@%s:%d exit status:%d (%s)",
 		    (schema_migration ? "schema" : "global table"),
 		    src_nodeid, dest_node_info->node_id,
 		    run_node_info->host_ip_str,
-		    run_node_info->port, launch_res.exit_status,
+		    PRM_NODE_INFO_GET_PORT (&run_node_info->host_info),
+		    launch_res.exit_status,
 		    launch_res.stderr_size > 0 ? launch_res.stderr_buf : "");
       return BR_ER_SCHEMA_MIGRATION_FAIL;
     }
@@ -2404,9 +2397,10 @@ update_shard_node_table_status (CCI_CONN * conn,
   int num_param = 0;
 
   sprintf (sql_and_param.sql,
-	   "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ?",
+	   "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
 	   TABLE_SHARD_NODE, COL_SHARD_NODE_STATUS,
-	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME, COL_SHARD_NODE_HOST);
+	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
+	   COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
 
   SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT,
 		  &node_status);
@@ -2416,6 +2410,8 @@ update_shard_node_table_status (CCI_CONN * conn,
 		  node_info->local_dbname);
   SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_VARCHAR,
 		  node_info->host_ip_str);
+  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT,
+		  &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
 
   sql_and_param.num_bind = num_param;
   sql_and_param.check_affected_rows = true;
@@ -2508,7 +2504,8 @@ shd_mg_node_drop (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 	  br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
 			"[NODE-DROP %d:%s:%s:%d] fail",
 			drop_node->node_id, drop_node->local_dbname,
-			drop_node->host_ip_str, drop_node->port);
+			drop_node->host_ip_str,
+			PRM_NODE_INFO_GET_PORT (&drop_node->host_info));
 	}
       return BR_ER_METADB;
     }
@@ -2525,7 +2522,8 @@ shd_mg_node_drop (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
       br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
 		    "[NODE-DROP %d:%s:%s:%d] complete",
 		    drop_node->node_id, drop_node->local_dbname,
-		    drop_node->host_ip_str, drop_node->port);
+		    drop_node->host_ip_str,
+		    PRM_NODE_INFO_GET_PORT (&drop_node->host_info));
     }
   return 0;
 }
@@ -3308,7 +3306,8 @@ insert_shard_groupid_table (CCI_CONN * conn, int all_groupid_count,
 	}
       else if (error == 0)
 	{
-	  br_log_write (BROKER_LOG_ERROR, NULL, "%s: affected row = 0", sql);
+	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "%s: affected row = 0",
+			sql);
 	  return BR_ER_METADB;
 	}
 
@@ -3573,7 +3572,8 @@ make_query_insert_shard_node (T_SQL_AND_PARAM * sql_and_param,
 		  node_info->local_dbname);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
 		  node_info->host_ip_str);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &node_info->port);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
+		  &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, node_status);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, node_version);
 
@@ -3591,15 +3591,18 @@ make_query_node_drop (T_SQL_AND_PARAM * sql_and_param,
   int num_bind = 0;
 
   sprintf (sql_and_param->sql,
-	   "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ?",
-	   TABLE_SHARD_NODE, COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
-	   COL_SHARD_NODE_HOST);
+	   "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
+	   TABLE_SHARD_NODE,
+	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
+	   COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &node_info->node_id);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
 		  node_info->local_dbname);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
 		  node_info->host_ip_str);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
+		  &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
 
   sql_and_param->num_bind = num_bind;
   sql_and_param->check_affected_rows = true;
@@ -3781,7 +3784,7 @@ shd_mg_sync_local_mgmt_job_add ()
  * shd_mg_job_queue_add -
 */
 static int
-shd_mg_job_queue_add (int clt_sock_fd, const unsigned char *clt_ip_addr,
+shd_mg_job_queue_add (int clt_sock_fd, in_addr_t clt_ip_addr,
 		      const T_BROKER_REQUEST_MSG * req_msg)
 {
   T_SHARD_JOB_QUEUE *job_queue;
@@ -3901,9 +3904,8 @@ free_mgmt_job (T_SHARD_MGMT_JOB * job)
  * make_new_mgmt_job -
 */
 static T_SHARD_MGMT_JOB *
-make_new_mgmt_job (int clt_sock_fd,
-		   const unsigned char
-		   *clt_ip_addr, const T_BROKER_REQUEST_MSG * req_msg)
+make_new_mgmt_job (int clt_sock_fd, in_addr_t clt_ip_addr,
+		   const T_BROKER_REQUEST_MSG * req_msg)
 {
   T_SHARD_MGMT_JOB *job;
 
@@ -3913,7 +3915,7 @@ make_new_mgmt_job (int clt_sock_fd,
       memset (job, 0, sizeof (T_SHARD_MGMT_JOB));
 
       job->clt_sock_fd = clt_sock_fd;
-      memcpy (job->clt_ip_addr, clt_ip_addr, 4);
+      job->clt_ip_addr = clt_ip_addr;
 
       job->req_msg = brreq_msg_clone (req_msg);
       if (job->req_msg == NULL)
@@ -4200,7 +4202,7 @@ select_all_db_info (CCI_CONN * conn_arg)
 
   if (check_fetch_indicator (ind, DIM (ind)) < 0)
     {
-      br_log_write (BROKER_LOG_ERROR, NULL, "fetch error [%s]", query);
+      br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "fetch error [%s]", query);
       goto select_all_db_info_end;
     }
 
@@ -4216,12 +4218,16 @@ select_all_db_info (CCI_CONN * conn_arg)
       shard_db_rec.global_dbname = shard_db_rec.buf;
       if (shard_db_rec.global_dbname == NULL)
 	{
-	  br_log_write (BROKER_LOG_ERROR, NULL, "malloc fail [%s]", query);
+	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail [%s]",
+			query);
 	  goto select_all_db_info_end;
 	}
 
-      STRNCPY (shm_Br_info->shard_global_dbname, shard_db_rec.global_dbname,
-	       SRV_CON_DBNAME_SIZE);
+      if (strcmp (shm_Br_info->shard_global_dbname,
+		  shard_db_rec.global_dbname) != 0)
+	{
+	  assert (0);
+	}
     }
 
   if (shard_db_rec.buf != db_Sync_info.shard_db_rec.buf)
@@ -4237,7 +4243,7 @@ select_all_db_info (CCI_CONN * conn_arg)
 
   err = 0;
 
-  br_log_write (BROKER_LOG_NOTICE, NULL,
+  br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
 		"shard_db info: dbname=%s, groupid_count=%d, "
 		"gid_info_last_ver=%d, node_info_last_ver=%d, "
 		"mig_req_count=%d, ddl_req_count=%d, gc_req_count=%d, "
@@ -4309,7 +4315,8 @@ select_all_gid_info (CCI_CONN * conn_arg)
   db_groupid_info = db_groupid_info_alloc (res);
   if (db_groupid_info == NULL)
     {
-      br_log_write (BROKER_LOG_ERROR, NULL, "malloc fail: [%s]", query);
+      br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail: [%s]",
+		    query);
       goto select_all_gid_info_end;
     }
 
@@ -4414,7 +4421,8 @@ select_all_node_info (CCI_CONN * conn_arg)
   node_info = db_node_info_alloc (res);
   if (node_info == NULL)
     {
-      br_log_write (BROKER_LOG_ERROR, NULL, "malloc fail: [%s]", query);
+      br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail: [%s]",
+		    query);
       goto select_all_node_info_end;
     }
 
@@ -4426,6 +4434,8 @@ select_all_node_info (CCI_CONN * conn_arg)
       int tmp_nodeid;
       int tmp_port;
       int ind[COL_COUNT_SHARD_NODE];
+      in_addr_t tmp_host_addr;
+      PRM_NODE_INFO tmp_host_info;
 
       err = cci_fetch_next (&stmt);
       if (err == CCI_ER_NO_MORE_DATA)
@@ -4447,7 +4457,10 @@ select_all_node_info (CCI_CONN * conn_arg)
       tmp_host = cci_get_string (&stmt, 3, &ind[2]);
       tmp_port = cci_get_int (&stmt, 4, &ind[3]);
 
-      if (check_fetch_indicator (ind, DIM (ind)) < 0)
+      tmp_host_addr = inet_addr (tmp_host);
+
+      if (check_fetch_indicator (ind, DIM (ind)) < 0 ||
+	  tmp_host_addr == INADDR_NONE)
 	{
 	  db_node_info_free (node_info);
 	  node_info = NULL;
@@ -4456,13 +4469,15 @@ select_all_node_info (CCI_CONN * conn_arg)
 
       if (tmp_port <= 0)
 	{
+	  assert (0);
 	  tmp_port = shard_Mgmt_server_info.local_mgmt_port;
 	}
 
+      PRM_NODE_INFO_SET (&tmp_host_info, tmp_host_addr, tmp_port);
+
       br_copy_shard_node_info (&node_info->node_info[row], tmp_nodeid,
-			       tmp_dbname, tmp_host, tmp_port,
-			       INADDR_NONE, HA_STATE_FOR_DRIVER_UNKNOWN,
-			       NULL);
+			       tmp_dbname, tmp_host, &tmp_host_info,
+			       HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
       row++;
     }
 
@@ -4515,8 +4530,8 @@ find_node_info (T_DB_NODE_INFO * db_node_info,
 	{
 	  if (strcmp (find_node->local_dbname,
 		      db_node_info->node_info[i].local_dbname) == 0 &&
-	      strcmp (find_node->host_ip_str,
-		      db_node_info->node_info[i].host_ip_str) == 0)
+	      prm_is_same_node (&db_node_info->node_info[i].host_info,
+				&find_node->host_info) == true)
 	    {
 	      node_found = &db_node_info->node_info[i];
 	    }
@@ -4630,8 +4645,7 @@ clone_db_node_info (T_DB_NODE_INFO ** ret_db_node_info,
 			       src_node_info->node_info[i].node_id,
 			       src_node_info->node_info[i].local_dbname,
 			       src_node_info->node_info[i].host_ip_str,
-			       src_node_info->node_info[i].port,
-			       src_node_info->node_info[i].host_ip_addr,
+			       &src_node_info->node_info[i].host_info,
 			       src_node_info->node_info[i].ha_state,
 			       src_node_info->node_info[i].host_name);
     }
@@ -4775,7 +4789,10 @@ make_node_info_net_stream (T_DB_NODE_INFO * db_node_info)
 	  ptr = br_mgmt_net_add_short (ptr, shard_node_info->node_id);
 	  ptr = br_mgmt_net_add_string (ptr, shard_node_info->local_dbname);
 	  ptr = br_mgmt_net_add_string (ptr, shard_node_info->host_ip_str);
-	  ptr = br_mgmt_net_add_int (ptr, shard_node_info->port);
+	  ptr =
+	    br_mgmt_net_add_int (ptr,
+				 PRM_NODE_INFO_GET_PORT (&shard_node_info->
+							 host_info));
 	}
     }
 
@@ -4966,7 +4983,7 @@ admin_query_execute_array (CCI_CONN * conn, int num_sql,
 	}
       else if (sql_and_param[i].check_affected_rows && res == 0)
 	{
-	  br_log_write (BROKER_LOG_ERROR, NULL,
+	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
 			"%s: affected row = 0", sql_and_param[i].sql);
 	  return BR_ER_METADB;
 	}
@@ -5075,7 +5092,8 @@ shd_mg_propagate_shard_mgmt_port (T_LOCAL_MGMT_SYNC_INFO * sync_info)
       int ha_state;
 
       err = cci_mgmt_sync_shard_mgmt_info (shard_node_info->host_ip_str,
-					   shard_node_info->port,
+					   PRM_NODE_INFO_GET_PORT
+					   (&shard_node_info->host_info),
 					   shard_node_info->local_dbname,
 					   sync_info->global_dbname,
 					   shard_node_info->node_id,
@@ -5377,7 +5395,7 @@ set_rebalance_node_type (int node_count, T_REBALANCE_AMOUNT * rbl_amount,
 	    }
 	  else
 	    {
-	      rbl_amount[i].nodeid = 0;	/* unknwon type. ignore node id */
+	      rbl_amount[i].nodeid = 0;	/* unknown type. ignore node id */
 	    }
 	}
     }
@@ -5770,7 +5788,7 @@ update_status_expired_migrator (CCI_CONN * conn,
 
   assert (res < 0 || sum_expired_migrator <= res);
 
-  br_log_write (BROKER_LOG_NOTICE, NULL, "migrator timeout : %d", res);
+  br_log_write (BROKER_LOG_NOTICE, INADDR_NONE, "migrator timeout : %d", res);
 
   return res;
 }
@@ -6088,7 +6106,8 @@ launch_migrator_process (const char *global_dbname, int groupid,
 
   if (schema_migration)
     {
-      sprintf (dest_port_str, "%d", dest_node_info->port);
+      sprintf (dest_port_str, "%d",
+	       PRM_NODE_INFO_GET_PORT (&dest_node_info->host_info));
 
       argv[argc++] = "--copy-schema";
       argv[argc++] = "--dst-host";
@@ -6129,10 +6148,10 @@ launch_migrator_process (const char *global_dbname, int groupid,
   sprintf (launch_res->userdata, "%d", groupid);
 
   error = cci_mgmt_launch_process (launch_res, run_node_info->host_ip_str,
-				   run_node_info->port,
-				   MGMT_LAUNCH_PROCESS_MIGRATOR,
-				   wait_child, argc, argv, num_env, envp,
-				   timeout_msec);
+				   PRM_NODE_INFO_GET_PORT (&run_node_info->
+							   host_info),
+				   MGMT_LAUNCH_PROCESS_MIGRATOR, wait_child,
+				   argc, argv, num_env, envp, timeout_msec);
   return error;
 }
 
@@ -6165,7 +6184,7 @@ run_rebalance_migrator (const T_GROUP_MIGRATION_INFO * mig_info,
 			     &rand_buf);
       if (run_node_info == NULL || dest_node_info == NULL)
 	{
-	  br_log_write (BROKER_LOG_ERROR, NULL,
+	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
 			"run migrator fail: cannot select migrator host. (groupid=%d, src_node=%d, dest_node = %d) selected node : %d",
 			mig_info[i].groupid, mig_info[i].src_nodeid,
 			mig_info[i].dest_nodeid,
@@ -6180,7 +6199,7 @@ run_rebalance_migrator (const T_GROUP_MIGRATION_INFO * mig_info,
 
       if (error < 0)
 	{
-	  br_log_write (BROKER_LOG_ERROR, NULL,
+	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
 			"run migrator fail: groupid=%d, src_node=%d, dest_node = %d",
 			mig_info[i].groupid, mig_info[i].src_nodeid,
 			mig_info[i].dest_nodeid);
@@ -6198,7 +6217,7 @@ run_rebalance_migrator (const T_GROUP_MIGRATION_INFO * mig_info,
 	      ha_mode_str = "slave";
 	    }
 
-	  br_log_write (BROKER_LOG_NOTICE, NULL,
+	  br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
 			"run migrator: groupid=%d, src_node=%d, dest_node = %d "
 			"- running on %s (nodeid:%d, %s)",
 			mig_info[i].groupid, mig_info[i].src_nodeid,

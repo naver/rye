@@ -47,7 +47,7 @@ enum cirpwr_action
   CIRPWR_ACTION_FORCE_FLUSH = 0x02,
 };
 
-#define HB_RECV_Q_MAX_COUNT 500
+#define HB_RECV_Q_MAX_COUNT 250
 
 typedef struct cirpwr_queue_node RECV_Q_NODE;
 struct cirpwr_queue_node
@@ -68,7 +68,7 @@ struct cirp_logwr_global
   LOG_PAGE *loghdr_pgptr;
 
   char db_name[PATH_MAX];
-  const char *host_ip;
+  PRM_NODE_INFO host_info;
   char log_path[PATH_MAX];
   char loginf_path[PATH_MAX];
   char active_name[PATH_MAX];
@@ -91,7 +91,6 @@ struct cirp_logwr_global
   int max_toflush;
   int num_toflush;
 
-  LOGWR_MODE mode;
   CIRPWR_ACTION action;
 
   LOG_PAGEID last_arv_lpageid;
@@ -106,8 +105,7 @@ extern int cirpwr_init_copy_log_info (void);
 
 extern int cirp_init_writer (CIRP_WRITER_INFO * writer);
 extern int cirp_final_writer (CIRP_WRITER_INFO * writer);
-extern int cirpwr_initialize (const char *db_name, const char *log_path,
-			      int mode);
+extern int cirpwr_initialize (const char *db_name, const char *log_path);
 extern int cirpwr_read_active_log_info (void);
 extern void cirpwr_finalize (void);
 
@@ -116,6 +114,9 @@ extern int cirpwr_write_log_pages (void);
 extern void *log_copier_main (void *arg);
 extern void *log_writer_main (void *arg);
 
-extern CIRP_AGENT_STATUS cirpwr_get_status (CIRP_WRITER_INFO * writer_info);
+extern CIRP_AGENT_STATUS cirpwr_get_copier_status (CIRP_WRITER_INFO *
+						   writer_info);
+extern CIRP_AGENT_STATUS cirpwr_get_writer_status (CIRP_WRITER_INFO *
+						   writer_info);
 
 #endif /* _REPL_WRITER_H_ */

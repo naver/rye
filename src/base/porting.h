@@ -198,14 +198,6 @@ extern "C"
 /*
  * Interfaces for atomic operations
  *
- * Developers should check HAVE_ATOMIC_BUILTINS before using atomic builtins
- * as follows.
- *  #if defined(HAVE_ATOMIC_BUILTINS)
- *   ... write codes with atomic builtins ...
- *  #else
- *   ... leave legacy codes or write codes without atomic builtins ...
- *  #endif
- *
  * ATOMIC_TAS_xx (atomic test-and-set) writes new_val into *ptr, and returns
  * the previous contents of *ptr. ATOMIC_CAS_xx (atomic compare-and-swap) returns
  * true if the swap is done. It is only done if *ptr equals to cmp_val.
@@ -216,8 +208,6 @@ extern "C"
  * 64bit values. That is why we define two types of macros.
  */
 #if defined(HAVE_GCC_ATOMIC_BUILTINS)
-
-#define HAVE_ATOMIC_BUILTINS
 
 #define ATOMIC_TAS_32(ptr, new_val) \
 	__sync_lock_test_and_set(ptr, new_val)
@@ -258,11 +248,17 @@ struct rye_string
 /* for time */
 extern INT64 timeval_diff_in_msec (const struct timeval *end_time,
 				   const struct timeval *start_time);
-extern int timeval_add_msec (struct timeval *added_time,
-			     const struct timeval *start_time, int msec);
+extern struct timeval timeval_add_msec (const struct timeval *start_time,
+					int add_msec);
 extern int timeval_to_timespec (struct timespec *to,
 				const struct timeval *from);
 extern INT64 timeval_to_msec (const struct timeval *val);
+
+extern struct timespec timespec_add_msec (const struct timespec *start_time,
+					  int add_msec);
+extern INT64 timespec_diff_in_msec (const struct timespec *end_time,
+				    const struct timespec *start_time);
+extern INT64 timespec_to_msec (const struct timespec *val);
 
 /* for stream file */
 extern FILE *port_open_memstream (char **ptr, size_t * sizeloc);

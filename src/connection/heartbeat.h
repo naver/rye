@@ -31,7 +31,6 @@
 #include "utility.h"
 
 /* heartbeat */
-#define HB_DEFAULT_HA_PORT_ID                           (59901)
 #define HB_DEFAULT_APPLY_MAX_MEM_SIZE                   (500)
 
 #define HB_DEFAULT_CHECK_VALID_PING_SERVER_INTERVAL           (1*ONE_HOUR)
@@ -46,6 +45,13 @@
 #define HB_DISK_FAILURE_CHECK_TIMER                     (1*100)
 
 #define HB_STOP_WAITING_TIME			        (1*ONE_SEC)
+
+#define MASTER_CONN_NAME_HA_SERVER		'#'
+#define MASTER_CONN_NAME_HA_REPL		'$'
+#define IS_MASTER_CONN_NAME_DRIVER(name)	(*((char *)name) == '-')
+#define IS_MASTER_CONN_NAME_HA_SERVER(name)	(*((char *)name) == MASTER_CONN_NAME_HA_SERVER)
+#define IS_MASTER_CONN_NAME_HA_REPL(name)	(*((char *)name) == MASTER_CONN_NAME_HA_REPL)
+
 
 /* heartbeat resource process type */
 typedef enum hb_proc_type HB_PROC_TYPE;
@@ -64,8 +70,8 @@ enum hb_proc_command
   HB_PCMD_MAX
 };
 
-#define HB_PTYPE_SERVER_STR             "HA-server"
-#define HB_PTYPE_REPLICATION_STR        "HA-replication"
+#define HB_PTYPE_SERVER_STR             "rye_server"
+#define HB_PTYPE_REPLICATION_STR        "rye_repl"
 #define HB_PTYPE_STR_SZ                 (16)
 
 enum HBP_CLUSTER_MESSAGE
@@ -74,7 +80,7 @@ enum HBP_CLUSTER_MESSAGE
   HBP_CLUSTER_MSG_MAX
 };
 
-#define HB_MAX_GROUP_ID_LEN		(64)
+#define HB_MAX_GROUP_ID_LEN		(PRM_HB_MAX_GROUP_ID_LEN)
 #define HB_MAX_SZ_PROC_EXEC_PATH        (128)
 #define HB_MAX_NUM_PROC_ARGV            (16)
 #define HB_MAX_SZ_PROC_ARGV             (64)
@@ -95,8 +101,8 @@ struct hbp_header
   unsigned short len;
   unsigned int seq;
   char group_id[HB_MAX_GROUP_ID_LEN];
-  char orig_host_name[MAXHOSTNAMELEN];
-  char dest_host_name[MAXHOSTNAMELEN];
+  PRM_NODE_INFO orig_host;
+  PRM_NODE_INFO dest_host;
 };
 
 
@@ -120,7 +126,7 @@ struct hbp_proc_register
  * externs
  */
 extern const char *hb_process_type_string (int ptype);
-extern void hb_set_exec_path (char *exec_path);
+extern void hb_set_exec_path (const char *prog_name);
 extern void hb_set_argv (char **argv);
 extern int css_send_heartbeat_request (CSS_CONN_ENTRY * conn, int command,
 				       int num_buffers, ...);
@@ -135,7 +141,8 @@ extern int hb_make_hbp_register (HBP_PROC_REGISTER * hbp_register,
 				 const HA_CONF * ha_conf,
 				 HB_PROC_TYPE proc_type,
 				 HB_PROC_COMMAND command_type,
-				 const char *db_name, const char *host_ip);
+				 const char *db_name,
+				 const PRM_NODE_INFO * host_info);
 
 extern bool hb_Proc_shutdown;
 

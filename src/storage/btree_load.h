@@ -58,8 +58,6 @@
 #define NLEAFENTSZ(n) ( DISK_VPID_SIZE + n )
 
 #define HEADER 0		/* Header (Oth) record of the page  */
-#define LEFT_MERGE 1		/* Left Merge Operation             */
-#define RIGHT_MERGE 0		/* Right Merge Operation            */
 
 #define BTREE_INVALID_INDEX_ID(btid) \
  ((btid) == NULL ||\
@@ -75,9 +73,9 @@
 #define BTREE_IS_VALID_KEY_LEN(key_len) \
   ((key_len) > 0 && (key_len) <= BTREE_MAX_KEYLEN)
 
-#define BTREE_CHECK_KEY_CNT(P, L, K) \
-  assert (((L) > 1 && (K) + 2 == spage_number_of_records (P)) \
-	  || ((L) == 1 && (K) + 1 == spage_number_of_records (P)));
+#define BTREE_GET_NODE_TYPE(node_level) \
+  (((node_level) > 1) ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE);
+
 
 /*
  * B+tree load structures

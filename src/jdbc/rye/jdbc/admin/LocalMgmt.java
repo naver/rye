@@ -21,7 +21,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 package rye.jdbc.admin;
 
 import java.io.ByteArrayInputStream;
@@ -49,7 +49,12 @@ public class LocalMgmt
 
     public LocalMgmt(String localMgmtHost, int localMgmtPort) throws SQLException
     {
-	conInfo = new JciConnectionInfo(localMgmtHost, localMgmtPort, "rw");
+	this(new JciConnectionInfo(localMgmtHost, localMgmtPort, "rw"));
+    }
+
+    public LocalMgmt(JciConnectionInfo conInfo) throws SQLException
+    {
+	this.conInfo = conInfo;
 
 	conInfoList = new ArrayList<JciConnectionInfo>();
 	conInfoList.add(conInfo);
@@ -89,7 +94,9 @@ public class LocalMgmt
 		ByteArrayInputStream instream = new ByteArrayInputStream(resultmsg, offset, mgmtInfoSize);
 		offset += mgmtInfoSize;
 
-		shardMgmtInfo[i] = new ShardMgmtInfo(unpackString(instream), conInfo.getHostname(), unpackInt(instream));
+		String dbname = unpackString(instream);
+		int port = unpackInt(instream);
+		shardMgmtInfo[i] = new ShardMgmtInfo(dbname, new NodeAddress(conInfo.getHostname(), port));
 	    }
 
 	    return shardMgmtInfo;

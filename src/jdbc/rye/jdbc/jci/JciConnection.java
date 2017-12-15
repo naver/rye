@@ -34,6 +34,7 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import rye.jdbc.driver.ConnectionProperties.CONNECTION_TYPE;
 import rye.jdbc.driver.RyeConnection;
 import rye.jdbc.driver.RyeConnectionUrl;
 import rye.jdbc.driver.RyeErrorCode;
@@ -87,10 +88,16 @@ abstract public class JciConnection
     public static JciConnection makeJciConnection(RyeConnectionUrl connUrl, String user, String passwd,
 		    ShardInfoManager shardInfoManager) throws RyeException
     {
-	try {
+	CONNECTION_TYPE connType = connUrl.getConnProperties().getConnectionType();
+	
+	if (connType == CONNECTION_TYPE.LOCAL) {
+	    try {
 	    return new JciNormalConnection(connUrl, null, user, passwd);
-	} catch (JciException e) {
-	    if (e.getJciError() == RyeErrorCode.ER_SHARD_MGMT) {
+	    } catch (JciException e) {
+		throw RyeException.createRyeException(connUrl, e);
+	    }
+	}
+	else {
 		ShardMgmtConnectionInfo shardMgmtConInfo = new ShardMgmtConnectionInfo(connUrl.getConInfoArray(),
 				connUrl.getDbname());
 
@@ -101,13 +108,9 @@ abstract public class JciConnection
 
 		ShardInfo tmpShardInfo = shardInfoManager.getShardInfo(shardMgmtConInfo, shardLogfile);
 		if (tmpShardInfo == null) {
-		    throw RyeException.createRyeException(connUrl, RyeErrorCode.ER_SHARD_INFO_INVALID, e);
+		    throw RyeException.createRyeException(connUrl, RyeErrorCode.ER_SHARD_INFO_INVALID, null);
 		}
 		return new ShardGroupConnection(connUrl, tmpShardInfo, user, passwd);
-	    }
-	    else {
-		throw RyeException.createRyeException(connUrl, e);
-	    }
 	}
     }
 

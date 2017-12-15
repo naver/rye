@@ -58,7 +58,8 @@ typedef enum
 {
   BOOL_PROPERTY,
   INT_PROPERTY,
-  STRING_PROPERTY
+  STRING_PROPERTY,
+  CON_TYPE_PROPERTY
 } T_TYPE_PROPERTY;
 
 typedef struct
@@ -175,6 +176,18 @@ cci_url_set_value (T_URL_PROPERTY * property, const char *value)
 	if (*((char **) property->data) == NULL)
 	  {
 	    return CCI_ER_NO_MORE_MEMORY;
+	  }
+	break;
+      }
+    case CON_TYPE_PROPERTY:
+      {
+	if (strcasecmp (value, "local") == 0)
+	  {
+	    *((T_CON_TYPE *) property->data) = CON_TYPE_LOCAL;
+	  }
+	else
+	  {
+	    *((T_CON_TYPE *) property->data) = CON_TYPE_GLOBAL;
 	  }
 	break;
       }
@@ -395,6 +408,7 @@ con_property_init (T_CON_PROPERTY * con_property)
   con_property->log_trace_api = false;
   con_property->log_trace_network = false;
   con_property->error_on_server_restart = false;
+  con_property->con_type = CON_TYPE_GLOBAL;
 }
 
 int
@@ -421,7 +435,9 @@ cci_url_get_properties (T_CON_PROPERTY * url_property, const char *properties)
     {"disconnect_on_query_timeout", BOOL_PROPERTY,
      &url_property->disconnect_on_query_timeout},
     {"error_on_server_restart", BOOL_PROPERTY,
-     &url_property->error_on_server_restart}
+     &url_property->error_on_server_restart},
+    {"connectionType", CON_TYPE_PROPERTY,
+     &url_property->con_type}
   };
   int error = CCI_ER_NO_ERROR;
 

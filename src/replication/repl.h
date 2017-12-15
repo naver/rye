@@ -35,7 +35,6 @@
 #include "cas_cci.h"
 
 #define CIRP_TRAN_Q_SIZE        (1024)
-#define HOST_IP_SIZE            20
 
 typedef enum _cirp_agent_status CIRP_AGENT_STATUS;
 enum _cirp_agent_status
@@ -72,7 +71,6 @@ typedef struct
 {
   char *log_path;
   char *db_name;
-  int mode;
 } REPL_ARGUMENT;
 
 typedef struct cirp_thread_entry CIRP_THREAD_ENTRY;
@@ -89,7 +87,7 @@ struct cirp_thread_entry
 typedef struct cirp_ct_log_applier CIRP_CT_LOG_APPLIER;
 struct cirp_ct_log_applier
 {
-  char host_ip[HOST_IP_SIZE];
+  PRM_NODE_INFO host_info;
   int id;
 
   LOG_LSA committed_lsa;	/* last committed commit log lsa */
@@ -107,7 +105,7 @@ struct cirp_ct_log_applier
 typedef struct cirp_ct_log_analyzer CIRP_CT_LOG_ANALYZER;
 struct cirp_ct_log_analyzer
 {
-  char host_ip[HOST_IP_SIZE];
+  PRM_NODE_INFO host_info;
 
   LOG_LSA current_lsa;
   LOG_LSA required_lsa;
@@ -122,7 +120,7 @@ struct cirp_ct_log_analyzer
 typedef struct cirp_ct_log_writer CIRP_CT_LOG_WRITER;
 struct cirp_ct_log_writer
 {
-  char host_ip[HOST_IP_SIZE];
+  PRM_NODE_INFO host_info;
 
   INT64 last_flushed_pageid;
   INT64 last_received_time;	/* Time in Milli seconds */
@@ -133,13 +131,15 @@ typedef struct cirp_writer_info CIRP_WRITER_INFO;
 struct cirp_writer_info
 {
   pthread_mutex_t lock;
+  pthread_cond_t cond;
 
   LOG_PAGE *hdr_page;
 
   int reader_count;
   bool is_archiving;
 
-  CIRP_AGENT_STATUS status;
+  CIRP_AGENT_STATUS writer_status;
+  CIRP_AGENT_STATUS copier_status;
 
   CIRP_CT_LOG_WRITER ct;
 };
@@ -242,6 +242,8 @@ struct _cirp_repl_info
   int broker_port;
   int pid;
 
+  CIRP_AGENT_STATUS health_check_status;
+
   CIRP_ANALYZER_INFO analyzer_info;
   CIRP_WRITER_INFO writer_info;
 
@@ -249,7 +251,8 @@ struct _cirp_repl_info
   CIRP_APPLIER_INFO applier_info[1];
 };
 
-#define RP_SET_AGENT_FLAG(flag) (rp_set_agent_flag (ARG_FILE_LINE, (flag)))
+#define RP_SET_AGENT_NEED_RESTART() (rp_set_agent_need_restart (ARG_FILE_LINE))
+#define RP_SET_AGENT_NEED_SHUTDOWN() (rp_set_agent_need_shutdown (ARG_FILE_LINE))
 
 #define REPL_NEED_SHUTDOWN()                                        \
   (rp_need_shutdown (ARG_FILE_LINE) == true || rp_dead_agent_exists () == true)
@@ -268,7 +271,6 @@ struct _cirp_repl_info
 extern CIRP_REPL_INFO *Repl_Info;
 
 extern int cirp_connect_copylogdb (const char *db_name, bool retry);
-extern int cirp_check_mem_size (void);
 extern int cirp_connect_agents (const char *db_name);
 extern int rp_disconnect_agents (void);
 extern int cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer);
@@ -278,6 +280,15 @@ extern bool rp_dead_agent_exists (void);
 extern int rp_start_all_applier (void);
 extern int rp_end_all_applier (void);
 extern bool rp_check_appliers_status (CIRP_AGENT_STATUS status);
+extern void _rp_log_debug (const char *file_name, const int line_no,
+			   const char *fmt, ...);
+
+#define REPL_MEM_CHECK_DEBUG
+#if defined(REPL_MEM_CHECK_DEBUG) || !defined (NDEBUG)
+#define rp_log_debug(...) _rp_log_debug(ARG_FILE_LINE, __VA_ARGS__)
+#else
+#define rp_log_debug(...)
+#endif
 
 
 #endif /* _REPL_H_ */

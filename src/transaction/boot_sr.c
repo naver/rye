@@ -1460,7 +1460,7 @@ boot_add_temp_volume (THREAD_ENTRY * thread_p, DKNPAGES min_npages)
   DKNPAGES ext_npages, part_npages;
   DBDEF_VOL_EXT_INFO ext_info;
 #if defined (SERVER_MODE)
-  struct timeval start, end;
+  UINT64 perf_start;
 #endif /* SERVER_MODE */
 
   if (boot_Temp_volumes_max_pages == -2)
@@ -1616,7 +1616,7 @@ boot_add_temp_volume (THREAD_ENTRY * thread_p, DKNPAGES min_npages)
 	  ext_info.extend_npages = ext_info.max_npages;
 
 #if defined(SERVER_MODE)
-	  gettimeofday (&start, NULL);
+	  PERF_MON_GET_CURRENT_TIME (perf_start);
 #endif /* SERVER_MODE */
 
 	  temp_volid = boot_add_volume (thread_p, &ext_info);
@@ -1627,9 +1627,8 @@ boot_add_temp_volume (THREAD_ENTRY * thread_p, DKNPAGES min_npages)
 	    }
 
 #if defined(SERVER_MODE)
-	  gettimeofday (&end, NULL);
-	  ADD_TIMEVAL (thread_p->event_stats.temp_expand_time, start, end);
-	  thread_p->event_stats.temp_expand_pages += possible_max_npages;
+	  mnt_stats_counter_with_time (thread_p, MNT_STATS_DISK_TEMP_EXPAND,
+				       possible_max_npages, perf_start);
 #endif /* SERVER_MODE */
 	}
     }
@@ -2851,7 +2850,7 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
    * svr_shm_initialize() destroy already created shared memory and recreate.
    * it is safe to call svr_shm_initialize() after volumes are mounted
    */
-  if (svr_shm_initialize (db_name, MAX_NTRANS, getpid ()) != NO_ERROR)
+  if (svr_shm_initialize (db_name, MAX_NTRANS) != NO_ERROR)
     {
       return ER_FAILED;
     }
@@ -3946,7 +3945,8 @@ boot_create_all_volumes (THREAD_ENTRY * thread_p,
   /* Create the needed files */
   if (file_tracker_create (thread_p, &boot_Db_parm->trk_vfid) == NULL
       || xheap_create (thread_p, &boot_Db_parm->hfid, NULL) != NO_ERROR
-      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid, NULL) != NO_ERROR
+      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid,
+		       NULL) != NO_ERROR
       || heap_assign_address (thread_p, &boot_Db_parm->rootclass_hfid,
 			      &boot_Db_parm->rootclass_oid, 0) != NO_ERROR)
     {

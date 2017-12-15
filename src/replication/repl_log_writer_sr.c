@@ -40,21 +40,20 @@
 #define LOGWR_THREAD_SUSPEND_TIMEOUT 	10
 
 static int logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
+					LOGWR_INFO * writer_info,
 					THREAD_ENTRY * thread_p,
-					LOG_PAGEID fpageid, int mode);
-static bool logwr_unregister_writer_entry (LOGWR_ENTRY * wr_entry,
-					   int status);
+					LOG_PAGEID fpageid);
 static int logwr_pack_log_pages (THREAD_ENTRY * thread_p, char *logpg_area,
 				 LOG_ZIP * zip_logpg, int *logpg_used_size,
 				 int *status, LOGWR_ENTRY * entry,
 				 INT64 * send_pageid, int *num_page,
-				 int *file_status);
+				 LOG_HA_FILESTAT * file_status);
+static void logwr_write_start (LOGWR_INFO * writer_info, LOGWR_ENTRY * entry);
 static void logwr_write_end (THREAD_ENTRY * thread_p,
-			     LOGWR_INFO * writer_info, LOGWR_ENTRY * entry,
-			     int status);
-static void logwr_set_eof_lsa (THREAD_ENTRY * thread_p, LOGWR_ENTRY * entry);
-static bool logwr_is_delayed (THREAD_ENTRY * thread_p, LOGWR_ENTRY * entry);
-static void logwr_update_last_sent_eof_lsa (LOGWR_ENTRY * entry);
+			     LOGWR_INFO * writer_info, LOGWR_ENTRY * entry);
+static void logwr_unregister_writer_entry (LOGWR_INFO * writer_info,
+					   LOGWR_ENTRY * wr_entry);
+
 
 /*
  * logwr_register_writer_entry -
@@ -62,23 +61,20 @@ static void logwr_update_last_sent_eof_lsa (LOGWR_ENTRY * entry);
  * return:
  *
  *   wr_entry_p(out):
- *   id(in):
+ *   writer_info(in/out):
+ *   thread_p(in):
  *   fpageid(in):
- *   mode(in):
  *
  * Note:
  */
 static int
 logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
-			     THREAD_ENTRY * thread_p,
-			     LOG_PAGEID fpageid, int mode)
+			     LOGWR_INFO * writer_info,
+			     THREAD_ENTRY * thread_p, LOG_PAGEID fpageid)
 {
   LOGWR_ENTRY *entry;
-  int rv;
-  LOGWR_INFO *writer_info = &log_Gl.writer_info;
 
   *wr_entry_p = NULL;
-  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
   entry = writer_info->writer_list;
   while (entry)
@@ -95,7 +91,6 @@ logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
       entry = malloc (sizeof (LOGWR_ENTRY));
       if (entry == NULL)
 	{
-	  pthread_mutex_unlock (&writer_info->wr_list_mutex);
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 		  1, sizeof (LOGWR_ENTRY));
 	  return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -103,13 +98,10 @@ logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
 
       entry->thread_p = thread_p;
       entry->fpageid = fpageid;
-      entry->mode = mode;
       entry->start_copy_time = 0;
 
       entry->status = LOGWR_STATUS_DELAY;
-      LSA_SET_NULL (&entry->eof_lsa);
       LSA_SET_NULL (&entry->last_sent_eof_lsa);
-      LSA_SET_NULL (&entry->tmp_last_sent_eof_lsa);
 
       entry->next = writer_info->writer_list;
       writer_info->writer_list = entry;
@@ -117,80 +109,47 @@ logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
   else
     {
       entry->fpageid = fpageid;
-      entry->mode = mode;
-      if (entry->status != LOGWR_STATUS_DELAY)
+      if (entry->status == LOGWR_STATUS_DONE)
 	{
 	  entry->status = LOGWR_STATUS_WAIT;
 	  entry->start_copy_time = 0;
 	}
     }
 
-  pthread_mutex_unlock (&writer_info->wr_list_mutex);
   *wr_entry_p = entry;
 
   return NO_ERROR;
 }
 
 /*
- * logwr_unregister_writer_entry -
- *
- * return:
- *
- *   wr_entry(in):
- *   status(in):
- *
- * Note:
+ * logwr_unregister_writer_entry
  */
-static bool
-logwr_unregister_writer_entry (LOGWR_ENTRY * wr_entry, int status)
+static void
+logwr_unregister_writer_entry (LOGWR_INFO * writer_info,
+			       LOGWR_ENTRY * wr_entry)
 {
-  LOGWR_ENTRY *entry;
-  bool is_all_done;
-  int rv;
-  LOGWR_INFO *writer_info = &log_Gl.writer_info;
-
-  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
-
-  wr_entry->status = status;
+  LOGWR_ENTRY *entry, *prev_entry;
 
   entry = writer_info->writer_list;
   while (entry)
     {
-      if (entry->status == LOGWR_STATUS_FETCH)
+      if (entry == wr_entry)
 	{
+	  if (entry == writer_info->writer_list)
+	    {
+	      writer_info->writer_list = entry->next;
+	    }
+	  else
+	    {
+	      prev_entry->next = entry->next;
+	    }
+	  free_and_init (entry);
 	  break;
 	}
+
+      prev_entry = entry;
       entry = entry->next;
     }
-
-  is_all_done = (entry == NULL) ? true : false;
-
-  if (status == LOGWR_STATUS_ERROR)
-    {
-      LOGWR_ENTRY *prev_entry = NULL;
-      entry = writer_info->writer_list;
-      while (entry)
-	{
-	  if (entry == wr_entry)
-	    {
-	      if (entry == writer_info->writer_list)
-		{
-		  writer_info->writer_list = entry->next;
-		}
-	      else
-		{
-		  prev_entry->next = entry->next;
-		}
-	      free_and_init (entry);
-	      break;
-	    }
-	  prev_entry = entry;
-	  entry = entry->next;
-	}
-    }
-  pthread_mutex_unlock (&writer_info->wr_list_mutex);
-
-  return is_all_done;
 }
 
 /*
@@ -214,7 +173,8 @@ static int
 logwr_pack_log_pages (THREAD_ENTRY * thread_p,
 		      char *logpg_area, LOG_ZIP * zip_logpg,
 		      int *logpg_used_size, int *status, LOGWR_ENTRY * entry,
-		      INT64 * send_pageid, int *num_page, int *file_status)
+		      INT64 * send_pageid, int *num_page,
+		      LOG_HA_FILESTAT * file_status)
 {
   LOG_PAGEID fpageid, lpageid, pageid;
   char *p;
@@ -222,7 +182,7 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
   LOG_PAGE *log_pgptr;
   INT64 num_logpgs;
   bool is_hdr_page_only;
-  int ha_file_status;
+  LOG_HA_FILESTAT ha_file_status;
   int error_code;
 
   struct log_arv_header arvhdr;
@@ -237,14 +197,7 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
 
   LOG_CS_ENTER_READ_MODE (thread_p);
 
-  if (LSA_ISNULL (&entry->eof_lsa))
-    {
-      LSA_COPY (&eof_lsa, &log_Gl.hdr.eof_lsa);
-    }
-  else
-    {
-      LSA_COPY (&eof_lsa, &entry->eof_lsa);
-    }
+  LSA_COPY (&eof_lsa, &log_Gl.hdr.eof_lsa);
 
   if (!is_hdr_page_only)
     {
@@ -312,12 +265,13 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
       if (lpageid == eof_lsa.pageid)
 	{
 	  ha_file_status = LOG_HA_FILESTAT_SYNCHRONIZED;
+	  LSA_COPY (&entry->last_sent_eof_lsa, &eof_lsa);
 	}
     }
 
   /* Set the server status on the header information */
   log_Gl.hdr.ha_info.server_state = svr_shm_get_server_state ();
-  log_Gl.hdr.ha_info.file_status = ha_file_status;
+  log_Gl.hdr.ha_info.file_status = (int) ha_file_status;
 
   /* Allocate the log page area */
   num_logpgs = (is_hdr_page_only) ? 1 : (int) ((lpageid - fpageid + 1) + 1);
@@ -391,13 +345,10 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
   if (!is_hdr_page_only && (lpageid >= eof_lsa.pageid))
     {
       *status = LOGWR_STATUS_DONE;
-      LSA_COPY (&entry->tmp_last_sent_eof_lsa, &eof_lsa);
     }
   else
     {
       *status = LOGWR_STATUS_DELAY;
-      entry->tmp_last_sent_eof_lsa.pageid = lpageid;
-      entry->tmp_last_sent_eof_lsa.offset = NULL_OFFSET;
     }
   if (send_pageid != NULL)
     {
@@ -413,10 +364,13 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"logwr_pack_log_pages, fpageid(%lld), lpageid(%lld), num_pages(%lld), area_size(%d)"
-		"\n status(%d), delayed_free_log_pgptr(%p)\n",
-		fpageid, lpageid, num_logpgs, area_size,
-		entry->status, log_Gl.append.delayed_free_log_pgptr);
+		"logwr_pack_log_pages, fpageid(%lld), lpageid(%lld), "
+		"num_pages(%lld), status:%s, fa_file_status:%s, "
+		"send eof(%ld,%d)\n",
+		fpageid, lpageid, num_logpgs,
+		LOGWR_STATUS_NAME (*status),
+		LOG_HA_FILESTAT_NAME (ha_file_status),
+		eof_lsa.pageid, eof_lsa.offset);
 
   return NO_ERROR;
 
@@ -428,72 +382,58 @@ error:
   return error_code;
 }
 
+/*
+ * logwr_write_start ()
+ *   return:
+ *
+ *   writer_info(in):
+ *   entry(in/out):
+ */
+static void
+logwr_write_start (LOGWR_INFO * writer_info, LOGWR_ENTRY * entry)
+{
+  if (entry == NULL)
+    {
+      assert (false);
+      return;
+    }
+
+  if (entry->status == LOGWR_STATUS_FETCH
+      && writer_info->trace_last_writer == true)
+    {
+      entry->start_copy_time = thread_get_log_clock_msec ();
+    }
+}
+
+/*
+ * logwr_write_end ()
+ *    return:
+ *
+ *    writer_info(in):
+ *    entry(in/out):
+ */
 static void
 logwr_write_end (THREAD_ENTRY * thread_p, LOGWR_INFO * writer_info,
-		 LOGWR_ENTRY * entry, int status)
+		 LOGWR_ENTRY * entry)
 {
-  int rv;
-  int prev_status;
-  INT64 saved_start_time;
-
-  rv = pthread_mutex_lock (&writer_info->flush_end_mutex);
-
-  prev_status = entry->status;
-  saved_start_time = entry->start_copy_time;
-
-  if (entry != NULL && logwr_unregister_writer_entry (entry, status))
+  if (entry == NULL)
     {
-      if (prev_status == LOGWR_STATUS_FETCH
-	  && writer_info->trace_last_writer == true)
-	{
-	  assert (saved_start_time > 0);
-	  writer_info->last_writer_elapsed_time =
-	    thread_get_log_clock_msec () - saved_start_time;
-
-	  logtb_get_current_client_ids (thread_p,
-					&writer_info->
-					last_writer_client_info);
-	}
-      pthread_cond_signal (&writer_info->flush_end_cond);
-    }
-  pthread_mutex_unlock (&writer_info->flush_end_mutex);
-  return;
-}
-
-static void
-logwr_set_eof_lsa (THREAD_ENTRY * thread_p, LOGWR_ENTRY * entry)
-{
-  if (LSA_ISNULL (&entry->eof_lsa))
-    {
-      LOG_CS_ENTER (thread_p);
-      LSA_COPY (&entry->eof_lsa, &log_Gl.hdr.eof_lsa);
-      LOG_CS_EXIT ();
+      assert (false);
+      return;
     }
 
-  return;
-}
-
-static bool
-logwr_is_delayed (THREAD_ENTRY * thread_p, LOGWR_ENTRY * entry)
-{
-  logwr_set_eof_lsa (thread_p, entry);
-
-  if (entry == NULL
-      || LSA_ISNULL (&entry->last_sent_eof_lsa)
-      || LSA_GE (&entry->last_sent_eof_lsa, &entry->eof_lsa))
+  if (entry->status == LOGWR_STATUS_FETCH
+      && writer_info->trace_last_writer == true)
     {
-      return false;
-    }
-  return true;
-}
+      assert (entry->start_copy_time > 0);
 
-static void
-logwr_update_last_sent_eof_lsa (LOGWR_ENTRY * entry)
-{
-  if (entry)
-    {
-      LSA_COPY (&entry->last_sent_eof_lsa, &entry->tmp_last_sent_eof_lsa);
+      writer_info->last_writer_elapsed_time =
+	thread_get_log_clock_msec () - entry->start_copy_time;
+
+      logtb_get_current_client_ids (thread_p,
+				    &writer_info->last_writer_client_info);
     }
+
   return;
 }
 
@@ -504,31 +444,26 @@ logwr_update_last_sent_eof_lsa (LOGWR_ENTRY * entry)
  *
  *   thread_p(in):
  *   first_pageid(in):
- *   mode(in):
  *   compressed_protocol(in):
  *
  * Note:
  */
 int
 xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
-		      LOGWR_MODE mode, bool compressed_protocol)
+		      bool compressed_protocol)
 {
-  LOGWR_ENTRY *entry;
+  LOGWR_ENTRY *entry = NULL;
   char *logpg_area;
   LOG_ZIP *zip_logpg = NULL;
   int logpg_used_size;
   LOG_PAGEID next_fpageid;
-  LOGWR_MODE next_mode;
-  LOGWR_MODE orig_mode = LOGWR_MODE_ASYNC;
   int status;
-  int timeout;
   int rv;
   int error_code;
-  bool need_cs_exit_after_send = true;
-  struct timespec to;
   LOGWR_INFO *writer_info = &log_Gl.writer_info;
   INT64 send_pageid = 0;
-  int send_num_page = 0, ha_file_status = LOG_HA_FILESTAT_CLEAR;
+  int send_num_page = 0;
+  LOG_HA_FILESTAT ha_file_status = LOG_HA_FILESTAT_CLEAR;
 
   logpg_used_size = 0;
   logpg_area =
@@ -559,111 +494,55 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
       thread_p->conn_entry->stop_phase = THREAD_STOP_LOGWR;
     }
 
+  entry = NULL;
   while (true)
     {
-      /* In case that a non-ASYNC mode client internally uses ASYNC mode */
-      orig_mode = MAX (mode, orig_mode);
-
-      er_log_debug (ARG_FILE_LINE,
-		    "[tid:%ld] xlogwr_get_log_pages, fpageid(%lld), mode(%s), comprssed_protocol(%d)\n",
-		    thread_p->tid, first_pageid, LOGWR_MODE_NAME (mode),
-		    compressed_protocol);
-
       /* Register the writer at the list and wait until LFT start to work */
-      rv = pthread_mutex_lock (&writer_info->flush_start_mutex);
-      error_code = logwr_register_writer_entry (&entry, thread_p,
-						first_pageid, mode);
+      rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+
+      error_code = logwr_register_writer_entry (&entry, writer_info, thread_p,
+						first_pageid);
       if (error_code != NO_ERROR)
 	{
-	  pthread_mutex_unlock (&writer_info->flush_start_mutex);
+	  pthread_mutex_unlock (&writer_info->wr_list_mutex);
 	  status = LOGWR_STATUS_ERROR;
-	  goto error;
+	  GOTO_EXIT_ON_ERROR;
 	}
+      er_log_debug (ARG_FILE_LINE,
+		    "[tid:%ld] xlogwr_get_log_pages, fpageid(%lld),"
+		    " entry->statue(%s), comprssed_protocol(%d)\n",
+		    thread_p->tid, first_pageid,
+		    LOGWR_STATUS_NAME (entry->status), compressed_protocol);
 
+      assert (entry->status == LOGWR_STATUS_DELAY
+	      || entry->status == LOGWR_STATUS_WAIT
+	      || entry->status == LOGWR_STATUS_FETCH);
       if (entry->status == LOGWR_STATUS_WAIT)
 	{
-	  bool continue_checking = true;
-
-	  if (mode == LOGWR_MODE_ASYNC)
-	    {
-	      timeout = LOGWR_THREAD_SUSPEND_TIMEOUT;
-	      to.tv_sec = time (NULL) + timeout;
-	      to.tv_nsec = 0;
-	    }
-	  else
-	    {
-	      timeout = INF_WAIT;
-	      to.tv_sec = to.tv_nsec = 0;
-	    }
-
 	  rv = thread_suspend_with_other_mutex (thread_p,
 						&writer_info->
-						flush_start_mutex, timeout,
-						&to, THREAD_LOGWR_SUSPENDED);
-	  if (rv == ER_CSS_PTHREAD_COND_TIMEDOUT)
+						wr_list_mutex, INF_WAIT,
+						NULL, THREAD_LOGWR_SUSPENDED);
+	  if (rv != NO_ERROR
+	      || thread_p->resume_status != THREAD_LOGWR_RESUMED)
 	    {
-	      pthread_mutex_unlock (&writer_info->flush_start_mutex);
+	      pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
-	      rv = pthread_mutex_lock (&writer_info->flush_end_mutex);
-	      if (logwr_unregister_writer_entry (entry, LOGWR_STATUS_DELAY))
-		{
-		  pthread_cond_signal (&writer_info->flush_end_cond);
-		}
-	      pthread_mutex_unlock (&writer_info->flush_end_mutex);
+	      error_code = (rv != NO_ERROR) ? rv : ER_FAILED;
+	      status = LOGWR_STATUS_ERROR;
+	      GOTO_EXIT_ON_ERROR;
+	    }
 
+	  if (entry->status != LOGWR_STATUS_FETCH)
+	    {
+	      pthread_mutex_unlock (&writer_info->wr_list_mutex);
 	      continue;
 	    }
-	  else if (rv == ER_CSS_PTHREAD_MUTEX_LOCK
-		   || rv == ER_CSS_PTHREAD_MUTEX_UNLOCK
-		   || rv == ER_CSS_PTHREAD_COND_WAIT)
-	    {
-	      pthread_mutex_unlock (&writer_info->flush_start_mutex);
 
-	      error_code = ER_FAILED;
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-
-	  pthread_mutex_unlock (&writer_info->flush_start_mutex);
-
-	  if (logtb_is_interrupted (thread_p, false, &continue_checking))
-	    {
-	      /* interrupted, shutdown or connection has gone. */
-	      error_code = ER_INTERRUPTED;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 0);
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-	  else if (thread_p->resume_status == THREAD_RESUME_DUE_TO_INTERRUPT)
-	    {
-	      if (logwr_is_delayed (thread_p, entry))
-		{
-		  logwr_write_end (thread_p, writer_info, entry,
-				   LOGWR_STATUS_DELAY);
-		  continue;
-		}
-
-	      error_code = ER_INTERRUPTED;
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-	  else if (thread_p->resume_status != THREAD_LOGWR_RESUMED)
-	    {
-	      error_code = ER_FAILED;
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-	}
-      else
-	{
-	  assert (entry->status == LOGWR_STATUS_DELAY);
-	  pthread_mutex_unlock (&writer_info->flush_start_mutex);
+	  logwr_write_start (writer_info, entry);
 	}
 
-      if (thread_p->resume_status == THREAD_RESUME_DUE_TO_INTERRUPT)
-	{
-	  logwr_set_eof_lsa (thread_p, entry);
-	}
+      pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
       /* Send the log pages to be flushed until now */
       error_code = logwr_pack_log_pages (thread_p, logpg_area, zip_logpg,
@@ -677,49 +556,20 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
 		  error_code, 1, first_pageid);
 
 	  status = LOGWR_STATUS_ERROR;
-	  goto error;
+	  GOTO_EXIT_ON_ERROR;
 	}
 
       /* wait until LFT finishes flushing */
-      rv = pthread_mutex_lock (&writer_info->flush_wait_mutex);
+      rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
-      if (entry->status == LOGWR_STATUS_FETCH
-	  && writer_info->flush_completed == false)
+      while (entry->status == LOGWR_STATUS_FETCH
+	     && writer_info->flush_completed == false)
 	{
-	  rv =
-	    pthread_cond_wait (&writer_info->flush_wait_cond,
-			       &writer_info->flush_wait_mutex);
-	  assert_release (writer_info->flush_completed == true);
-	}
-      rv = pthread_mutex_unlock (&writer_info->flush_wait_mutex);
-
-      if (entry->status == LOGWR_STATUS_FETCH)
-	{
-	  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
-	  entry->start_copy_time = thread_get_log_clock_msec ();
-	  pthread_mutex_unlock (&writer_info->wr_list_mutex);
+	  rv = pthread_cond_wait (&writer_info->wr_list_cond,
+				  &writer_info->wr_list_mutex);
 	}
 
-      /* In case of async mode, unregister the writer and wakeup LFT to finish */
-      /*
-         The result mode is the following.
-
-         transition \ req mode |  req_sync   req_async
-         -----------------------------------------
-         delay -> delay    |  n/a        ASYNC
-         delay -> done     |  n/a        SYNC
-         wait -> delay     |  SYNC       ASYNC
-         wait -> done      |  SYNC       ASYNC
-       */
-
-      if (orig_mode == LOGWR_MODE_ASYNC
-	  || (mode == LOGWR_MODE_ASYNC &&
-	      (entry->status != LOGWR_STATUS_DELAY
-	       || status != LOGWR_STATUS_DONE)))
-	{
-	  logwr_write_end (thread_p, writer_info, entry, status);
-	  need_cs_exit_after_send = false;
-	}
+      pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
       error_code = xlog_send_log_pages_to_client (thread_p, logpg_area,
 						  logpg_used_size,
@@ -728,49 +578,51 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
       if (error_code != NO_ERROR)
 	{
 	  status = LOGWR_STATUS_ERROR;
-	  goto error;
+	  GOTO_EXIT_ON_ERROR;
 	}
 
       /* Get the next request from the client and reset the arguments */
-      error_code = xlog_get_page_request_with_reply (thread_p, &next_fpageid,
-						     &next_mode);
+      error_code = xlog_get_page_request_with_reply (thread_p, &next_fpageid);
       if (error_code != NO_ERROR)
 	{
 	  status = LOGWR_STATUS_ERROR;
-	  goto error;
+	  GOTO_EXIT_ON_ERROR;
 	}
 
-      logwr_update_last_sent_eof_lsa (entry);
-
-      /* In case of sync mode, unregister the writer and wakeup LFT to finish */
-      if (need_cs_exit_after_send)
+      if (status == LOGWR_STATUS_DONE)
 	{
-	  logwr_write_end (thread_p, writer_info, entry, status);
+	  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+
+	  entry->status = status;
+	  logwr_write_end (thread_p, writer_info, entry);
+
+	  pthread_cond_signal (&writer_info->wr_list_cond);
+
+	  pthread_mutex_unlock (&writer_info->wr_list_mutex);
 	}
 
       /* Reset the arguments for the next request */
       first_pageid = next_fpageid;
-      mode = next_mode;
-      need_cs_exit_after_send = true;
     }
 
-  free_and_init (logpg_area);
-  if (zip_logpg != NULL)
-    {
-      log_zip_free (zip_logpg);
-      zip_logpg = NULL;
-    }
+  assert (false);
 
-  assert_release (false);
-  return ER_FAILED;
-
-error:
+exit_on_error:
+  assert (error_code != NO_ERROR);
 
   er_log_debug (ARG_FILE_LINE,
 		"[tid:%ld] xlogwr_get_log_pages, error(%d)\n",
 		thread_p->tid, error_code);
 
-  logwr_write_end (thread_p, writer_info, entry, status);
+  if (entry != NULL)
+    {
+      rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+
+      entry->status = LOGWR_STATUS_ERROR;
+      logwr_unregister_writer_entry (writer_info, entry);
+
+      pthread_mutex_unlock (&writer_info->wr_list_mutex);
+    }
 
   free_and_init (logpg_area);
   if (zip_logpg != NULL)
@@ -821,37 +673,61 @@ logwr_get_min_copied_fpageid (void)
   return (min_fpageid);
 }
 
-static void
-logwr_remove_writer_entry (LOGWR_ENTRY * wr_entry)
+/*
+ * logwr_find_copy_completed_entry -
+ *
+ * return:
+ *
+ * Note:
+ */
+LOGWR_ENTRY *
+logwr_find_copy_completed_entry (LOGWR_INFO * writer_info)
 {
-  LOGWR_INFO *writer_info = &log_Gl.writer_info;
-  LOGWR_ENTRY *entry, *prev_entry;
-  int rv;
-
-  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+  LOG_LSA *eof = &log_Gl.hdr.eof_lsa;
+  LOGWR_ENTRY *entry, *found_entry;
 
   entry = writer_info->writer_list;
-  while (entry)
+  found_entry = NULL;
+  while (entry != NULL)
     {
-      if (entry == wr_entry)
+      if ((entry->status == LOGWR_STATUS_WAIT
+	   || entry->status == LOGWR_STATUS_DONE)
+	  && LSA_GE (&entry->last_sent_eof_lsa, eof))
 	{
-	  if (entry == writer_info->writer_list)
-	    {
-	      writer_info->writer_list = entry->next;
-	    }
-	  else
-	    {
-	      prev_entry->next = entry->next;
-	    }
-	  free_and_init (entry);
+	  found_entry = entry;
 	  break;
 	}
-
-      prev_entry = entry;
       entry = entry->next;
     }
 
-  pthread_mutex_unlock (&writer_info->wr_list_mutex);
+  return found_entry;
+}
+
+/*
+ * logwr_find_entry_status -
+ *
+ * return:
+ *
+ * Note:
+ */
+LOGWR_ENTRY *
+logwr_find_entry_status (LOGWR_INFO * writer_info, LOGWR_STATUS status)
+{
+  LOGWR_ENTRY *entry, *found_entry;
+
+  entry = writer_info->writer_list;
+  found_entry = NULL;
+  while (entry != NULL)
+    {
+      if (entry->status == status)
+	{
+	  found_entry = entry;
+	  break;
+	}
+      entry = entry->next;
+    }
+
+  return found_entry;
 }
 
 /*
@@ -869,16 +745,13 @@ int
 xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
 			 bool compressed_protocol)
 {
-  LOGWR_ENTRY *entry;
+  LOGWR_ENTRY *entry = NULL;
   char *logpg_area;
   LOG_ZIP *zip_logpg = NULL;
   int logpg_used_size;
-  LOGWR_MODE mode = LOGWR_MODE_ASYNC;
   int status;
-  int timeout;
   int rv;
   int error_code;
-  struct timespec to;
   LOGWR_INFO *writer_info = &log_Gl.writer_info;
 
   logpg_used_size = 0;
@@ -907,163 +780,66 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
       zip_logpg = NULL;
     }
 
-  if (thread_p->conn_entry)
+  if (thread_p->conn_entry != NULL)
     {
       thread_p->conn_entry->stop_phase = THREAD_STOP_LOGWR;
     }
 
-  while (true)
+  er_log_debug (ARG_FILE_LINE,
+		"[tid:%ld] xmigrator_get_log_pages, fpageid(%lld), compressed_protocol(%d)\n",
+		thread_p->tid, first_pageid, compressed_protocol);
+
+  /* Register the writer at the list and wait until LFT start to work */
+  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+
+  error_code = logwr_register_writer_entry (&entry, writer_info, thread_p,
+					    first_pageid);
+  if (error_code != NO_ERROR)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "[tid:%ld] xmigrator_get_log_pages, fpageid(%lld), mode(%s), compressed_protocol(%d)\n",
-		    thread_p->tid, first_pageid, LOGWR_MODE_NAME (mode),
-		    compressed_protocol);
-
-      /* Register the writer at the list and wait until LFT start to work */
-      rv = pthread_mutex_lock (&writer_info->flush_start_mutex);
-      error_code = logwr_register_writer_entry (&entry, thread_p,
-						first_pageid, mode);
-      if (error_code != NO_ERROR)
-	{
-	  pthread_mutex_unlock (&writer_info->flush_start_mutex);
-	  status = LOGWR_STATUS_ERROR;
-	  goto error;
-	}
-
-      if (entry->status == LOGWR_STATUS_WAIT)
-	{
-	  bool continue_checking = true;
-
-	  if (mode == LOGWR_MODE_ASYNC)
-	    {
-	      timeout = LOGWR_THREAD_SUSPEND_TIMEOUT;
-	      to.tv_sec = time (NULL) + timeout;
-	      to.tv_nsec = 0;
-	    }
-	  else
-	    {
-	      timeout = INF_WAIT;
-	      to.tv_sec = to.tv_nsec = 0;
-	    }
-
-	  rv = thread_suspend_with_other_mutex (thread_p,
-						&writer_info->
-						flush_start_mutex, timeout,
-						&to, THREAD_LOGWR_SUSPENDED);
-	  if (rv == ER_CSS_PTHREAD_COND_TIMEDOUT)
-	    {
-	      pthread_mutex_unlock (&writer_info->flush_start_mutex);
-
-	      rv = pthread_mutex_lock (&writer_info->flush_end_mutex);
-	      if (logwr_unregister_writer_entry (entry, LOGWR_STATUS_DELAY))
-		{
-		  pthread_cond_signal (&writer_info->flush_end_cond);
-		}
-	      pthread_mutex_unlock (&writer_info->flush_end_mutex);
-
-	      continue;
-	    }
-	  else if (rv == ER_CSS_PTHREAD_MUTEX_LOCK
-		   || rv == ER_CSS_PTHREAD_MUTEX_UNLOCK
-		   || rv == ER_CSS_PTHREAD_COND_WAIT)
-	    {
-	      pthread_mutex_unlock (&writer_info->flush_start_mutex);
-
-	      error_code = ER_FAILED;
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-
-	  pthread_mutex_unlock (&writer_info->flush_start_mutex);
-
-	  if (logtb_is_interrupted (thread_p, false, &continue_checking))
-	    {
-	      /* interrupted, shutdown or connection has gone. */
-	      error_code = ER_INTERRUPTED;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 0);
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-	  else if (thread_p->resume_status == THREAD_RESUME_DUE_TO_INTERRUPT)
-	    {
-	      if (logwr_is_delayed (thread_p, entry))
-		{
-		  logwr_write_end (thread_p, writer_info, entry,
-				   LOGWR_STATUS_DELAY);
-		  continue;
-		}
-
-	      error_code = ER_INTERRUPTED;
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-	  else if (thread_p->resume_status != THREAD_LOGWR_RESUMED)
-	    {
-	      error_code = ER_FAILED;
-	      status = LOGWR_STATUS_ERROR;
-	      goto error;
-	    }
-	}
-      else
-	{
-	  assert (entry->status == LOGWR_STATUS_DELAY);
-	  pthread_mutex_unlock (&writer_info->flush_start_mutex);
-	}
-
-      if (thread_p->resume_status == THREAD_RESUME_DUE_TO_INTERRUPT)
-	{
-	  logwr_set_eof_lsa (thread_p, entry);
-	}
-
-      /* Send the log pages to be flushed until now */
-      error_code =
-	logwr_pack_log_pages (thread_p, logpg_area, zip_logpg,
-			      &logpg_used_size, &status, entry, NULL, NULL,
-			      NULL);
-      if (error_code != NO_ERROR)
-	{
-	  error_code = ER_HA_LW_FAILED_GET_LOG_PAGE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1,
-		  first_pageid);
-
-	  status = LOGWR_STATUS_ERROR;
-	  goto error;
-	}
-
-      /* wait until LFT finishes flushing */
-      rv = pthread_mutex_lock (&writer_info->flush_wait_mutex);
-
-      if (entry->status == LOGWR_STATUS_FETCH
-	  && writer_info->flush_completed == false)
-	{
-	  rv =
-	    pthread_cond_wait (&writer_info->flush_wait_cond,
-			       &writer_info->flush_wait_mutex);
-	  assert_release (writer_info->flush_completed == true);
-	}
-      rv = pthread_mutex_unlock (&writer_info->flush_wait_mutex);
-
-      if (entry->status == LOGWR_STATUS_FETCH)
-	{
-	  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
-	  entry->start_copy_time = thread_get_log_clock_msec ();
-	  pthread_mutex_unlock (&writer_info->wr_list_mutex);
-	}
-
-      assert (entry->status != LOGWR_STATUS_ERROR);
-      logwr_write_end (thread_p, writer_info, entry, status);
-
-      error_code = xlog_send_log_pages_to_migrator (thread_p, logpg_area,
-						    logpg_used_size, mode);
-      if (error_code != NO_ERROR)
-	{
-	  status = LOGWR_STATUS_ERROR;
-	  goto error;
-	}
-
-      logwr_remove_writer_entry (entry);
-      break;
+      pthread_mutex_unlock (&writer_info->wr_list_mutex);
+      status = LOGWR_STATUS_ERROR;
+      goto error;
     }
+  assert (entry != NULL);
+
+  if (entry->status != LOGWR_STATUS_DELAY)
+    {
+      assert (false);
+
+      pthread_mutex_unlock (&writer_info->wr_list_mutex);
+
+      error_code = ER_FAILED;
+      status = LOGWR_STATUS_ERROR;
+      goto error;
+    }
+
+  pthread_mutex_unlock (&writer_info->wr_list_mutex);
+
+
+  /* Send the log pages to be flushed until now */
+  error_code = logwr_pack_log_pages (thread_p, logpg_area, zip_logpg,
+				     &logpg_used_size, &status, entry, NULL,
+				     NULL, NULL);
+  if (error_code != NO_ERROR)
+    {
+      error_code = ER_HA_LW_FAILED_GET_LOG_PAGE;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, first_pageid);
+
+      status = LOGWR_STATUS_ERROR;
+      goto error;
+    }
+
+  error_code = xlog_send_log_pages_to_migrator (thread_p, logpg_area,
+						logpg_used_size);
+  if (error_code != NO_ERROR)
+    {
+      status = LOGWR_STATUS_ERROR;
+      goto error;
+    }
+
+  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+  logwr_unregister_writer_entry (writer_info, entry);
+  pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
   free_and_init (logpg_area);
   if (zip_logpg != NULL)
@@ -1080,7 +856,9 @@ error:
 		"[tid:%ld] xmigrator_get_log_pages, error(%d)\n",
 		thread_p->tid, error_code);
 
-  logwr_write_end (thread_p, writer_info, entry, status);
+  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+  logwr_unregister_writer_entry (writer_info, entry);
+  pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
   free_and_init (logpg_area);
   if (zip_logpg != NULL)

@@ -29,6 +29,7 @@
 #ident "$Id$"
 
 #include "boot.h"
+#include "system_parameter.h"
 
 /* Name of the environment variable pointing to database file */
 #define DATABASES_ENVNAME "DATABASES"
@@ -37,14 +38,10 @@
 #define DATABASES_FILENAME "databases.txt"
 
 extern char *cfg_maycreate_get_directory_filename (char *buffer, size_t size);
-extern char **cfg_get_hosts (const char *prim_host, int *count,
-			     bool include_local_host);
-extern char **cfg_get_hosts_from_prm (int *count);
-extern char **cfg_get_hosts_from_shm (int *count,
-				      BOOT_CLIENT_TYPE client_type,
-				      bool connect_order_random);
+extern int cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list,
+				   BOOT_CLIENT_TYPE client_type,
+				   bool connect_order_random);
 
-extern void cfg_free_hosts (char **host_array);
 extern int cfg_database_exists (bool * exists, int vdes, const char *dbname);
 extern int cfg_database_add (int vdes, const char *dbname);
 extern int cfg_database_delete (int vdes, const char *dbname);

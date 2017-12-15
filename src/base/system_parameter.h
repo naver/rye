@@ -36,8 +36,11 @@
 #include "porting.h"
 #include "ini_parser.h"
 
-#define HA_MAX_LOG_APPLIER_LOWER (2)
-#define HA_MAX_LOG_APPLIER_UPPER (64)
+
+#define PRM_HB_MAX_GROUP_ID_LEN		(64)
+#define PRM_MAX_HA_NODE_LIST		(32)
+
+#define MAX_NODE_INFO_STR_LEN		(32)
 
 typedef enum
 {
@@ -113,7 +116,7 @@ enum param_id
   PRM_ID_RSQL_AUTO_COMMIT,
   PRM_ID_WS_HASHTABLE_SIZE,
   PRM_ID_WS_MEMORY_REPORT,
-  PRM_ID_TCP_PORT_ID,
+  PRM_ID_RYE_PORT_ID,
   PRM_ID_TCP_CONNECTION_TIMEOUT,
   PRM_ID_OPTIMIZATION_LEVEL,
   PRM_ID_QO_DUMP,
@@ -150,8 +153,6 @@ enum param_id
   PRM_ID_HA_NODE_LIST,
   PRM_ID_HA_REPLICA_LIST,
   PRM_ID_HA_DB_LIST,
-  PRM_ID_HA_COPY_SYNC_MODE,
-  PRM_ID_HA_PORT_ID,
   PRM_ID_HA_INIT_TIMER,
   PRM_ID_HA_HEARTBEAT_INTERVAL,
   PRM_ID_HA_CALC_SCORE_INTERVAL,
@@ -202,7 +203,6 @@ enum param_id
   PRM_ID_DB_VOLUME_SIZE,
   PRM_ID_CHECK_PEER_ALIVE,
   PRM_ID_SQL_TRACE_SLOW,
-  PRM_ID_SERVER_TRACE,
   PRM_ID_SQL_TRACE_EXECUTION_PLAN,
   PRM_ID_LOG_TRACE_FLUSH_TIME,
   PRM_ID_GENERIC_VOL_PREALLOC_SIZE,
@@ -268,8 +268,27 @@ struct sysprm_assign_value
   SYSPRM_ASSIGN_VALUE *next;
 };
 
-extern const char sysprm_cm_conf_file_name[];
-extern const char sysprm_auto_conf_file_name[];
+#define PRM_NULL_NODE_INFO		{ INADDR_NONE, 0 }
+#define PRM_NODE_INFO_SET(NODE_INFO,IP,PORT)		\
+	do {						\
+	  (NODE_INFO)->ip = IP;				\
+	  (NODE_INFO)->port = PORT;			\
+	} while (0)
+#define PRM_NODE_INFO_GET_IP(NODE_INFO)		((NODE_INFO)->ip)
+#define PRM_NODE_INFO_GET_PORT(NODE_INFO)	((NODE_INFO)->port)
+typedef struct
+{
+  in_addr_t ip;
+  int port;
+} PRM_NODE_INFO;
+
+#define PRM_EMPTY_NODE_LIST	{ "", 0, { PRM_NULL_NODE_INFO } }
+typedef struct
+{
+  char hb_group_id[PRM_HB_MAX_GROUP_ID_LEN];
+  int num_nodes;
+  PRM_NODE_INFO nodes[PRM_MAX_HA_NODE_LIST];
+} PRM_NODE_LIST;
 
 extern const char *prm_get_name (PARAM_ID prm_id);
 
@@ -298,6 +317,7 @@ extern void sysprm_dump_parameters (FILE * fp);
 extern int sysprm_dump_persist_conf_file (FILE * fp, const char *proc_name,
 					  const char *sect_name);
 extern void sysprm_set_er_log_file (const char *base_db_name);
+extern void sysprm_set_repl_er_log_file (const char *db_name);
 extern void sysprm_dump_server_parameters (FILE * fp);
 extern int sysprm_obtain_parameters (char *data,
 				     SYSPRM_ASSIGN_VALUE ** prm_values);
@@ -324,7 +344,7 @@ extern int sysprm_set_to_default (const char *pname, bool set_to_force);
 #endif
 extern int sysprm_check_range (const char *pname, void *value);
 extern int sysprm_get_range (const char *pname, void *min, void *max);
-extern int prm_get_master_port_id (void);
+extern int prm_get_rye_port_id (void);
 extern bool prm_get_commit_on_shutdown (void);
 
 extern char *sysprm_pack_assign_values (char *ptr,
@@ -372,5 +392,20 @@ extern int sysprm_print_assign_values (SYSPRM_ASSIGN_VALUE * prm_values,
 extern int sysprm_print_assign_names (char *buffer, int length,
 				      SYSPRM_ASSIGN_VALUE * prm_values);
 extern int sysprm_set_error (SYSPRM_ERR rc, const char *data);
+
+extern void prm_get_ha_node_list (PRM_NODE_LIST * cp_node_list);
+extern void prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list);
+extern unsigned int prm_get_ha_node_myself (void);
+extern PRM_NODE_INFO prm_get_null_node_info (void);
+extern PRM_NODE_INFO prm_get_myself_node_info (void);
+extern void prm_node_info_to_str (char *buf, int size,
+				  const PRM_NODE_INFO * node_info);
+
+extern int prm_split_node_str (PRM_NODE_LIST * node_list,
+			       const char *node_list_str,
+			       bool include_local_host);
+extern bool prm_is_myself_node_info (const PRM_NODE_INFO * node_info);
+extern bool prm_is_same_node (const PRM_NODE_INFO * node1,
+			      const PRM_NODE_INFO * node2);
 
 #endif /* _SYSTEM_PARAMETER_H_ */

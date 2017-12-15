@@ -60,9 +60,9 @@ extern int thread_Recursion_depth;
 #define thread_clear_recursion_depth(thread_p) (thread_Recursion_depth = 0)
 
 #define server_stats_dump(fp)
-#define server_stats_add_wait_time(thread_p, stats_type, sub_type, wait_start)
-#define server_stats_set_current_wait_time(thread_p, stats_type, wait_start)
-#define server_stats_add_current_wait_time(thread_p, stats_type, sub_type)
+// #define server_stats_add_wait_time(thread_p, stats_type, sub_type, wait_start)
+// #define server_stats_set_current_wait_time(thread_p, stats_type, wait_start)
+// #define server_stats_add_current_wait_time(thread_p, stats_type, sub_type)
 
 #define thread_mnt_track_push(thread_p, item, status)
 #define thread_mnt_track_pop(thread_p, status)
@@ -120,22 +120,11 @@ enum
 typedef struct event_stat EVENT_STAT;
 struct event_stat
 {
-  /* slow query stats */
-  struct timeval cs_waits;
-  struct timeval lock_waits;
-  struct timeval latch_waits;
-
-  /* temp volume expand stats */
-  struct timeval temp_expand_time;
-  int temp_expand_pages;
-
-  /* save PRM_ID_SQL_TRACE_SLOW for performance */
-  bool trace_slow_query;
-
   /* log flush thread wait time */
   int trace_log_flush_time;
 };
 
+#if 0
 typedef enum server_stats_type SERVER_STATS_TYPE;
 enum server_stats_type
 {
@@ -154,6 +143,7 @@ struct server_trace_stat
   struct timeval cs_total_wait_time;
   struct timeval *cs_wait_time;
 };
+#endif
 
 /*
  * fetches sub-info
@@ -245,7 +235,9 @@ struct thread_entry
 
   EVENT_STAT event_stats;
 
+#if 0
   SERVER_TRACE_STAT server_stats;
+#endif
 
   int mnt_track_top;
   THREAD_MNT_TRACK mnt_track_stack[THREAD_MNT_TRACK_MAX];
@@ -417,6 +409,7 @@ extern void thread_clear_recursion_depth (THREAD_ENTRY * thread_p);
 extern INT64 thread_get_log_clock_msec (void);
 
 extern int server_stats_dump (FILE * fp);
+#if 0
 extern int server_stats_add_wait_time (THREAD_ENTRY * thread_p,
 				       SERVER_STATS_TYPE stats_type,
 				       int sub_type,
@@ -427,6 +420,7 @@ extern int server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
 extern int server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
 					       SERVER_STATS_TYPE stats_type,
 					       int sub_type);
+#endif
 
 extern bool thread_is_auto_volume_expansion_thread_available (void);
 

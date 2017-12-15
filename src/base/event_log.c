@@ -275,6 +275,7 @@ event_log_print_client_info (int tran_index, int indent)
 {
   char *prog, *user, *host;
   int pid;
+  int errid = NO_ERROR;
 
   if (event_Fp == NULL)
     {
@@ -287,7 +288,17 @@ event_log_print_client_info (int tran_index, int indent)
     {
       fprintf (event_Fp, "%*c", indent, ' ');
     }
-  fprintf (event_Fp, "client: %s@%s|%s(%d)\n", user, host, prog, pid);
+
+  fprintf (event_Fp, "client: %s@%s|%s(%d)", user, host, prog, pid);
+
+  errid = er_errid ();
+  if (errid != NO_ERROR)
+    {
+      fprintf (event_Fp, " , ERROR_CODE = %d", errid);
+    }
+
+  fprintf (event_Fp, "\n");
+
 }
 
 /*
