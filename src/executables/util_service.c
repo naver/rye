@@ -1798,6 +1798,12 @@ change_prm_from_argv (int argc, char **argv)
       for (i = 0; i < (int) DIM (changeable_Prm_list); i++)
 	{
 	  const char *prm_name = prm_get_name (changeable_Prm_list[i]);
+
+	  if (prm_name == NULL)
+	    {
+	      assert (0);
+	      continue;
+	    }
 	  int name_len = strlen (prm_name);
 
 	  for (j = 0; j < argc; j++)
