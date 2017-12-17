@@ -690,11 +690,11 @@ abstract class ShardCommand
 	printStatus(true, "%s: hb start \n", host);
 
 	try {
-	    executeRyeCommand(0, host, "rye", "heartbeat", "stop");
+	    executeRyeCommand(0, host, "rye", "service", "restart");
 	} catch (SQLException e) {
 	}
 
-	executeRyeCommand(0, host, "rye", "heartbeat", "start");
+	// executeRyeCommand(0, host, "rye", "heartbeat", "start");
     }
 
     void hbStop(NodeInfo[] nodeInfoArr) throws SQLException

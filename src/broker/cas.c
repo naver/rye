@@ -459,8 +459,7 @@ cas_main (void)
 	  as_Info->cas_err_log_reset = 0;
 	}
 
-      ut_get_ipv4_string (client_ip_str, sizeof (client_ip_str),
-			  client_ip_addr);
+      css_ip_to_str (client_ip_str, sizeof (client_ip_str), client_ip_addr);
       cas_sql_log_write_and_end (0, "CLIENT IP %s", client_ip_str);
 
       unset_hang_check_time ();
