@@ -945,5 +945,9 @@ int
 css_ip_to_str (char *buf, int size, in_addr_t ip)
 {
   unsigned char *p = (unsigned char *) &ip;
+
+  assert (buf != NULL);
+  assert (size >= 16);
+
   return snprintf (buf, size, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 }

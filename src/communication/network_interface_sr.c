@@ -3522,19 +3522,19 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: fetch=%ld, ioread=%ld, iowrite=%ld (%dms)\n",
-	   indent, ' ',
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_IOWRITES]), time);
-  fprintf (log_fp, "%*cbuffer: fetch=%lld, ioread=%lld, iowrite=%lld\n",
+  fprintf (log_fp, "%*ctime: %dms\n", indent, ' ', time);
+  fprintf (log_fp,
+	   "%*cbuffer: fetch=%lld(%d), ioread=%lld(%d), iowrite=%lld(%d)\n",
 	   indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_FETCHES],
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS],
-	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOWRITES]);
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
+	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOWRITES],
+	   mnt_clock_to_time (diff_stats->
+			      acc_time[MNT_STATS_DATA_PAGE_IOWRITES]));
 
   total_cs_waits_clock = 0;
   for (i = 0; i < CSECT_LAST; i++)
@@ -3592,11 +3592,11 @@ event_log_many_ioreads (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
       event_log_bind_values (log_fp, tran_index, tdes->num_exec_queries - 1);
     }
 
-  fprintf (log_fp, "%*ctime: %ld (%dms)\n", indent, ' ',
+  fprintf (log_fp, "%*ctime: %dms\n", indent, ' ', time);
+  fprintf (log_fp, "%*cioreads: %lld(%ld)\n\n", indent, ' ',
+	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS],
 	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]), time);
-  fprintf (log_fp, "%*cioreads: %lld\n\n", indent, ' ',
-	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS]);
+			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]));
 
   event_log_end (thread_p);
 }

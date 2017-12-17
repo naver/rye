@@ -38,6 +38,7 @@
 #include "broker_util.h"
 #include "broker_log.h"
 #include "error_manager.h"
+#include "tcp.h"
 
 static void br_log_open (char *br_name, int port);
 static void br_log_close (void);
@@ -151,8 +152,7 @@ br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
 	{
 	  int n;
 	  n = sprintf (clt_ip_str, " CLIENT=");
-	  ut_get_ipv4_string (clt_ip_str + n, sizeof (clt_ip_str) - n,
-			      clt_ip);
+	  css_ip_to_str (clt_ip_str + n, sizeof (clt_ip_str) - n, clt_ip);
 	}
 
       (void) er_datetime (NULL, time_str, sizeof (time_str));

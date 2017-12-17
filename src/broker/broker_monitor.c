@@ -56,6 +56,7 @@
 #include "connection_defs.h"
 #include "language_support.h"
 #include "broker_admin_pub.h"
+#include "tcp.h"
 
 #define		DEFAULT_CHECK_PERIOD		300	/* seconds */
 #define		MAX_APPL_NUM		100
@@ -813,10 +814,8 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 	  print_value (FIELD_LAST_CONNECT_TIME, "-", FIELD_T_STRING);
 	}
 
-      print_value (FIELD_CLIENT_IP,
-		   ut_get_ipv4_string (ip_str, sizeof (ip_str),
-				       as_info_p->cas_clt_ip_addr),
-		   FIELD_T_STRING);
+      css_ip_to_str (ip_str, sizeof (ip_str), as_info_p->cas_clt_ip_addr);
+      print_value (FIELD_CLIENT_IP, ip_str, FIELD_T_STRING);
       print_value (FIELD_CLIENT_VERSION, as_info_p->client_version,
 		   FIELD_T_STRING);
 
