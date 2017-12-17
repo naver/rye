@@ -63,12 +63,6 @@
 /* max groupid is 1000000 */
 #define SHARD_MAX_BITMAP_SIZE (130*ONE_K)
 
-typedef struct _server_shm_tran_info SERVER_SHM_TRAN_INFO;
-struct _server_shm_tran_info
-{
-  MNT_SERVER_EXEC_STATS stats;
-};
-
 typedef struct _server_shm_groupid_bitmap SERVER_SHM_SHARD_INFO;
 struct _server_shm_groupid_bitmap
 {
@@ -107,32 +101,13 @@ struct _rye_server_shm
   SERVER_SHM_HA_INFO ha_info;
 
   char dbname[SHM_DBNAME_SIZE];
-  int ntrans;
-  int num_stats_values;
-
-  MNT_SERVER_EXEC_STATS global_stats;
-  SERVER_SHM_TRAN_INFO tran_info[1];
 };
 
 /* server functions */
-extern int svr_shm_initialize (const char *dbname, int max_ntrans);
+extern int svr_shm_initialize (const char *dbname);
 extern int svr_shm_get_start_time (void);
 #if 0
 extern void svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item);
-#endif
-extern void svr_shm_copy_stats (int tran_index,
-				MNT_SERVER_EXEC_STATS * to_stats);
-extern void svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats);
-extern void svr_shm_stats_counter_with_time (int tran_index,
-					     MNT_SERVER_ITEM item,
-					     INT64 value, UINT64 exec_time);
-extern void svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item,
-				 INT64 value);
-extern INT64 svr_shm_get_stats_with_time (int tran_index,
-					  MNT_SERVER_ITEM item,
-					  UINT64 * acc_time);
-#if 0
-extern INT64 svr_shm_get_stats (int tran_index, MNT_SERVER_ITEM item);
 #endif
 extern void svr_shm_set_eof (LOG_LSA * eof);
 extern short svr_shm_get_nodeid (void);
@@ -153,14 +128,7 @@ extern int rye_server_shm_set_state (const char *dbname,
 				     HA_STATE server_state);
 extern int rye_server_shm_get_state (HA_STATE * server_state,
 				     const char *dbname);
-extern int rye_server_shm_get_global_stats (MNT_SERVER_EXEC_STATS *
-					    global_stats, const char *dbname);
 extern int rye_server_shm_get_eof_lsa (LOG_LSA * eof_lsa, const char *dbname);
-extern int rye_server_shm_get_global_stats_from_key (MNT_SERVER_EXEC_STATS *
-						     global_stats,
-						     char *dbname,
-						     int shm_key,
-						     int num_stats_values);
 extern int rye_server_shm_get_nodeid (short *nodeid, const char *dbname);
 
 #endif /* _RYE_SERVER_SHM_H_ */

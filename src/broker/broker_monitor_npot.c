@@ -42,6 +42,7 @@
 #include "cci_common.h"
 #include "broker_shm.h"
 #include "error_manager.h"
+#include "monitor.h"
 #include "rye_server_shm.h"
 #include "tcp.h"
 
@@ -103,7 +104,7 @@ typedef struct
 
 static int get_args (int argc, char *argv[]);
 static int set_my_hostname (void);
-static int init_server_monitor_item (void);
+static int init_server_monitor_item (int shm_key);
 static void npot_server_monitor (T_SHM_INFO * shm_info);
 static void npot_broker_monitor (T_SHM_INFO * shm_info);
 static char *get_pw_name (uid_t uid);
@@ -142,7 +143,8 @@ static char my_Hostname[64];
 static CCI_MHT_TABLE *item_Ht;
 static CCI_MHT_TABLE *uid_Ht;
 
-static T_DB_STATS_INFO *db_Stats_info;
+static MONITOR_INFO *server_Monitor = NULL;
+static T_DB_STATS_INFO *db_Stats_info = NULL;
 static T_TCP_SEND_CONNECT_INFO *tcp_Send_connect_info = NULL;
 static int tcp_Send_fd = -1;
 static char tag_Service[64];
@@ -162,11 +164,6 @@ main (int argc, char *argv[])
     }
 
   if (set_my_hostname () < 0)
-    {
-      return -1;
-    }
-
-  if (init_server_monitor_item () < 0)
     {
       return -1;
     }
@@ -212,7 +209,7 @@ main (int argc, char *argv[])
 		{
 		  npot_broker_monitor (shm_info);
 		}
-	      else if (shm_info->shm_type == RYE_SHM_TYPE_SERVER)
+	      else if (shm_info->shm_type == RYE_SHM_TYPE_MONITOR_SERVER)
 		{
 		  npot_server_monitor (shm_info);
 		}
@@ -299,7 +296,7 @@ set_my_hostname ()
 	} while (0)
 
 static int
-init_server_monitor_item ()
+init_server_monitor_item (int shm_key)
 {
   int i;
 
@@ -309,14 +306,22 @@ init_server_monitor_item ()
     {
       return -1;
     }
-
   memset (db_Stats_info, 0,
 	  sizeof (T_DB_STATS_INFO) * MNT_SIZE_OF_SERVER_EXEC_STATS);
 
+  server_Monitor = monitor_create_viewer_from_key (shm_key,
+						   RYE_SHM_TYPE_MONITOR_SERVER);
+  if (server_Monitor == NULL)
+    {
+      return -1;
+    }
+
   for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS; i++)
     {
-      db_Stats_info[i].is_cumulative = mnt_stats_is_cumulative (i);
-      db_Stats_info[i].is_collecting_time = mnt_stats_is_collecting_time (i);
+      db_Stats_info[i].is_cumulative =
+	monitor_stats_is_cumulative (server_Monitor, i);
+      db_Stats_info[i].is_collecting_time =
+	monitor_stats_is_collecting_time (server_Monitor, i);
     }
 
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_SQL_TRACE_LOCK_WAITS],
@@ -555,20 +560,29 @@ init_server_monitor_item ()
   SET_DB_STATS_INFO (&db_Stats_info[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO],
 		     "buffer", "hit_ratio");
 
+  monitor_close_viewer_data (server_Monitor, RYE_SHM_TYPE_MONITOR_SERVER);
+
   return 0;
 }
 
 static void
 npot_server_monitor (T_SHM_INFO * shm_info)
 {
-  MNT_SERVER_EXEC_STATS cur_global_stats;
+  MONITOR_STATS cur_global_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
   time_t check_time = time (NULL);
-  char dbname[SHM_DBNAME_SIZE];
   int i, err;
 
-  err = rye_server_shm_get_global_stats_from_key (&cur_global_stats, dbname,
-						  shm_info->key,
-						  MNT_SIZE_OF_SERVER_EXEC_STATS);
+  if (server_Monitor == NULL)
+    {
+      if (init_server_monitor_item (shm_info->key) < 0)
+	{
+	  return;
+	}
+    }
+  assert (server_Monitor != NULL && db_Stats_info != NULL);
+
+  err = monitor_copy_global_stats (server_Monitor, cur_global_stats,
+				   MNT_SIZE_OF_SERVER_EXEC_STATS);
   if (err < 0)
     {
       return;
@@ -583,12 +597,14 @@ npot_server_monitor (T_SHM_INFO * shm_info)
 
       print_monitor_item (db_Stats_info[i].metric, db_Stats_info[i].item,
 			  shm_info->user_name,
-			  TAG_DB_NAME, dbname,
-			  check_time, cur_global_stats.values[i],
-			  cur_global_stats.acc_time[i],
+			  TAG_DB_NAME, server_Monitor->data->name,
+			  check_time, cur_global_stats[i].value,
+			  cur_global_stats[i].acc_time,
 			  db_Stats_info[i].is_cumulative,
 			  db_Stats_info[i].is_collecting_time);
     }
+
+  monitor_close_viewer_data (server_Monitor, MNT_SIZE_OF_SERVER_EXEC_STATS);
 }
 
 static void
@@ -1361,6 +1377,13 @@ CS_FUNC_ER_SET_WITH_OSERROR (UNUSED_ARG int severity,
 int
 CS_FUNC_ER_SET_ERROR_POSITION (UNUSED_ARG const char *file_name,
 			       UNUSED_ARG int line_no)
+{
+  return -1;
+}
+
+#define CS_FUNC_ER_ERRID er_errid
+int
+CS_FUNC_ER_ERRID (void)
 {
   return -1;
 }
