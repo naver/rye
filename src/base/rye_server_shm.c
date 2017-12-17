@@ -51,7 +51,7 @@ static void rye_server_shm_detach (RYE_SERVER_SHM * shm_p);
  * svr_shm_initialize -
  */
 int
-svr_shm_initialize (const char *dbname, int max_ntrans)
+svr_shm_initialize (const char *dbname)
 {
   int error = NO_ERROR;
   RYE_SERVER_SHM *shm_server = NULL;
@@ -73,15 +73,12 @@ svr_shm_initialize (const char *dbname, int max_ntrans)
       rye_shm_destroy (svr_shm_key);
     }
 
-  shm_size = (sizeof (RYE_SERVER_SHM) +
-	      (sizeof (SERVER_SHM_TRAN_INFO) * (max_ntrans)));
+  shm_size = sizeof (RYE_SERVER_SHM);
   shm_server = rye_shm_create (svr_shm_key, shm_size, RYE_SHM_TYPE_SERVER);
   if (shm_server == NULL)
     {
       return ER_FAILED;
     }
-
-  assert (SHM_DBNAME_SIZE >= strlen (dbname));
 
   shm_server->shard_info.groupid_bitmap_size = -1;
   shm_server->shard_info.nodeid = -1;
@@ -94,11 +91,6 @@ svr_shm_initialize (const char *dbname, int max_ntrans)
   shm_server->shm_header.status = RYE_SHM_VALID;
   shm_server->start_time = time (NULL);
   shm_server->server_state = HA_STATE_UNKNOWN;
-
-  shm_server->ntrans = max_ntrans;
-  strncpy (shm_server->dbname, dbname, SHM_DBNAME_SIZE);
-  shm_server->dbname[SHM_DBNAME_SIZE - 1] = '\0';
-  shm_server->num_stats_values = MNT_SIZE_OF_SERVER_EXEC_STATS;
 
   rye_Server_shm = shm_server;
 
@@ -145,141 +137,6 @@ svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item)
       rye_Server_shm->tran_info[tran_index].stats.values[item] = 0;
       rye_Server_shm->tran_info[tran_index].stats.acc_time[item] = 0;
     }
-}
-#endif
-
-/*
- * svr_shm_copy_stats - Copy recorded server statistics for the current
- *                          transaction index
- *   return: none
- *   to_stats(out): buffer to copy
- */
-void
-svr_shm_copy_stats (int tran_index, MNT_SERVER_EXEC_STATS * to_stats)
-{
-  assert (to_stats != NULL);
-  assert (tran_index >= 0);
-
-  if (rye_Server_shm == NULL
-      || tran_index < 0 || tran_index >= rye_Server_shm->ntrans)
-    {
-      assert (false);
-      memset (to_stats, 0, sizeof (MNT_SERVER_EXEC_STATS));
-    }
-  else
-    {
-      *to_stats = rye_Server_shm->tran_info[tran_index].stats;
-    }
-}
-
-/*
- * svr_shm_copy_global_stats - Copy recorded system wide statistics
- *   return: none
- *   to_stats(out): buffer to copy
- */
-void
-svr_shm_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats)
-{
-  assert (to_stats != NULL);
-
-  if (rye_Server_shm == NULL)
-    {
-      assert (false);
-      memset (to_stats, 0, sizeof (MNT_SERVER_EXEC_STATS));
-    }
-  else
-    {
-      *to_stats = rye_Server_shm->global_stats;
-    }
-}
-
-/*
- * svr_shm_stats_counter_with_time -
- */
-void
-svr_shm_stats_counter_with_time (int tran_index, MNT_SERVER_ITEM item,
-				 INT64 value, UINT64 exec_time)
-{
-  MNT_SERVER_ITEM parent_item;
-  INT64 after_value;
-  UINT64 after_exec_time;
-
-  if (rye_Server_shm == NULL)
-    {
-      return;
-    }
-
-  if (tran_index >= 0 && tran_index < rye_Server_shm->ntrans)
-    {
-      rye_Server_shm->tran_info[tran_index].stats.values[item] += value;
-      rye_Server_shm->tran_info[tran_index].stats.acc_time[item] += exec_time;
-
-      after_value = ATOMIC_INC_64 (&rye_Server_shm->global_stats.values[item],
-				   value);
-      after_exec_time =
-	ATOMIC_INC_64 (&rye_Server_shm->global_stats.acc_time[item],
-		       exec_time);
-
-      parent_item = MNT_GET_PARENT_ITEM_FETCHES (item);
-      if (parent_item != item)
-	{
-	  assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);
-
-	  svr_shm_stats_counter_with_time (tran_index, parent_item, value,
-					   exec_time);
-	}
-    }
-}
-
-/*
- * svr_shm_stats_gauge -
- */
-void
-svr_shm_stats_gauge (int tran_index, MNT_SERVER_ITEM item, INT64 value)
-{
-  if (rye_Server_shm != NULL)
-    {
-      if (tran_index >= 0 && tran_index < rye_Server_shm->ntrans)
-	{
-	  rye_Server_shm->tran_info[tran_index].stats.values[item] = value;
-
-	  value = ATOMIC_TAS_64 (&rye_Server_shm->global_stats.values[item],
-				 value);
-	}
-    }
-}
-
-/*
- * svr_shm_get_stats_with_time -
- */
-INT64
-svr_shm_get_stats_with_time (int tran_index, MNT_SERVER_ITEM item,
-			     UINT64 * acc_time)
-{
-  if (rye_Server_shm == NULL ||
-      tran_index < 0 || tran_index >= rye_Server_shm->ntrans)
-    {
-      return 0;
-    }
-
-  assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
-
-  if (acc_time != NULL)
-    {
-      *acc_time = rye_Server_shm->tran_info[tran_index].stats.acc_time[item];
-    }
-
-  return rye_Server_shm->tran_info[tran_index].stats.values[item];
-}
-
-#if 0
-/*
- * svr_shm_get_stats -
- */
-INT64
-svr_shm_get_stats (int tran_index, MNT_SERVER_ITEM item)
-{
-  return svr_shm_get_stats_with_time (tran_index, item, NULL);
 }
 #endif
 
@@ -821,40 +678,6 @@ rye_server_shm_get_state (HA_STATE * server_state, const char *dbname)
     }
 
   *server_state = shm_p->server_state;
-
-  rye_server_shm_detach (shm_p);
-
-  return NO_ERROR;
-}
-
-/*
- * rye_server_shm_get_global_stats ()-
- *   return: error code
- *
- *   global_stats(out):
- *   dbname(in):
- */
-int
-rye_server_shm_get_global_stats (MNT_SERVER_EXEC_STATS * global_stats,
-				 const char *dbname)
-{
-  RYE_SERVER_SHM *shm_p;
-
-  assert (rye_Server_shm == NULL);
-
-  if (dbname == NULL)
-    {
-      assert (false);
-      return ER_FAILED;
-    }
-
-  shm_p = rye_server_shm_attach (dbname, true);
-  if (shm_p == NULL)
-    {
-      return ER_FAILED;
-    }
-
-  *global_stats = shm_p->global_stats;
 
   rye_server_shm_detach (shm_p);
 

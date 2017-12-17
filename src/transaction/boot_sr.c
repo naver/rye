@@ -64,6 +64,7 @@
 #include "language_support.h"
 #include "message_catalog.h"
 #include "perf_monitor.h"
+#include "monitor.h"
 #include "set_object.h"
 #include "object_domain.h"
 #include "environment_variable.h"
@@ -2711,6 +2712,7 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
   TRAN_STATE tran_state = TRAN_UNACTIVE_UNKNOWN;
   LANG_COLL_COMPAT *db_collations = NULL;
   int db_coll_cnt;
+  char monitor_name[ONE_K];
 
   /* language data is loaded in context of server */
   if (lang_init () != NO_ERROR)
@@ -2850,7 +2852,15 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
    * svr_shm_initialize() destroy already created shared memory and recreate.
    * it is safe to call svr_shm_initialize() after volumes are mounted
    */
-  if (svr_shm_initialize (db_name, MAX_NTRANS) != NO_ERROR)
+  if (svr_shm_initialize (db_name) != NO_ERROR)
+    {
+      return ER_FAILED;
+    }
+
+  monitor_make_server_name (monitor_name, db_name);
+  if (monitor_create_collector (monitor_name,
+				MAX_NTRANS + 1,
+				RYE_SHM_TYPE_MONITOR_SERVER) != NO_ERROR)
     {
       return ER_FAILED;
     }

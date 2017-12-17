@@ -429,11 +429,11 @@ rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type)
 		  1, "too many databases in master shm");
 	  return -1;
 	}
+      res_index = master_shm->num_shm;
+
       str_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
       parse_int (&master_shm_key, str_shm_key, 16);
       shm_key = (master_shm_key + DEFUALT_SHM_KEY_BASE + res_index);
-
-      res_index = master_shm->num_shm;
 
       shm_info_p = &(master_shm->shm_info[res_index]);
 
@@ -623,8 +623,8 @@ rye_master_shm_dump (FILE * outfp)
       char host[MAX_NODE_INFO_STR_LEN];
       prm_node_info_to_str (host, sizeof (host),
 			    &shm_master->ha_nodes[i].node_info);
-      fprintf (outfp, "\t%s:node_state=%d priority=%d\n",
-	       host, shm_master->ha_nodes[i].node_state,
+      fprintf (outfp, "\t%s:node_state=%s priority=%d\n",
+	       host, HA_STATE_NAME (shm_master->ha_nodes[i].node_state),
 	       shm_master->ha_nodes[i].priority);
     }
 

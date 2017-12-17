@@ -51,11 +51,6 @@ typedef enum
   MNT_STATS_VALUE_EVENT
 } MNT_STATS_VALUE_TYPE;
 
-#define IS_CUMMULATIVE_VALUE(TYPE)	\
-	((TYPE) == MNT_STATS_VALUE_COUNTER || (TYPE) == MNT_STATS_VALUE_COUNTER_WITH_TIME)
-#define IS_COLLECTING_TIME(TYPE)	\
-	((TYPE) == MNT_STATS_VALUE_COUNTER_WITH_TIME)
-
 typedef struct
 {
   const char *name;
@@ -63,6 +58,7 @@ typedef struct
   MNT_STATS_VALUE_TYPE value_type;
 } MNT_EXEC_STATS_INFO;
 
+#if 0
 static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   /* MNT_STATS_SQL_TRACE_LOCK_WAITS */
   {"Num_sql_trace_lock_waits", 0, MNT_STATS_VALUE_COUNTER_WITH_TIME},
@@ -356,6 +352,7 @@ static MNT_EXEC_STATS_INFO mnt_Stats_info[MNT_SIZE_OF_SERVER_EXEC_STATS] = {
   /* MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO */
   {"Data_page_buffer_hit_ratio", 0, MNT_STATS_VALUE_COUNTER}
 };
+#endif
 
 #if defined(CS_MODE) || defined(SA_MODE)
 /* Client execution statistic structure */
@@ -380,6 +377,15 @@ static void mnt_get_current_times (time_t * cpu_usr_time,
 				   time_t * elapsed_time);
 #endif
 static void mnt_calc_hit_ratio (MNT_SERVER_EXEC_STATS * stats);
+
+static void mnt_server_stats_to_monitor_stats (MONITOR_STATS * monitor_stats,
+					       const MNT_SERVER_EXEC_STATS *
+					       server_stats);
+static void mnt_monitor_stats_to_server_stats (MNT_SERVER_EXEC_STATS *
+					       server_stats,
+					       const MONITOR_STATS *
+					       monitor_stats);
+
 
 #if defined(CS_MODE) || defined(SA_MODE)
 /*
@@ -453,58 +459,13 @@ mnt_print_stats (FILE * stream)
       fprintf (stream, "Elapsed (sec)                 = %10d\n",
 	       (int) (elapsed_total_time - mnt_Stat_info.elapsed_start_time));
 
+#if 0				/* TODO: remove me if you don't need this function */
       if (mnt_diff_stats (&diff_result, &cur_server_stats,
 			  &mnt_Stat_info.base_server_stats) == NO_ERROR)
 	{
 	  mnt_server_dump_stats (&diff_result, stream, NULL);
 	}
-    }
-}
-
-/*
- * mnt_print_global_stats - Print the global statistics
- *   return:
- *   stream(in): if NULL is given, stdout is used
- */
-void
-mnt_print_global_stats (FILE * stream, bool cumulative, const char *substr,
-			const char *dbname)
-{
-  MNT_SERVER_EXEC_STATS diff_result;
-  MNT_SERVER_EXEC_STATS cur_global_stats;
-  int err = NO_ERROR;
-
-  if (stream == NULL)
-    {
-      stream = stdout;
-    }
-
-  if (dbname == NULL)
-    {
-      err = mnt_server_copy_global_stats (&cur_global_stats);
-    }
-  else
-    {
-      err = rye_server_shm_get_global_stats (&cur_global_stats, dbname);
-      err = monitor_copy_global_stats (&cur_global_stats,);
-    }
-
-  if (err == NO_ERROR)
-    {
-      if (cumulative)
-	{
-	  mnt_server_dump_stats (&cur_global_stats, stream, substr);
-	}
-      else
-	{
-	  if (mnt_diff_stats (&diff_result,
-			      &cur_global_stats,
-			      &mnt_Stat_info.old_global_stats) == NO_ERROR)
-	    {
-	      mnt_server_dump_stats (&diff_result, stream, substr);
-	    }
-	  mnt_Stat_info.old_global_stats = cur_global_stats;
-	}
+#endif
     }
 }
 
@@ -515,50 +476,21 @@ mnt_print_global_stats (FILE * stream, bool cumulative, const char *substr,
  *   stream(in): if NULL is given, stdout is used
  */
 static void
-mnt_server_dump_stats (const
-		       MNT_SERVER_EXEC_STATS
-		       * stats, FILE * stream, const char *substr)
+mnt_server_dump_stats (const MNT_SERVER_EXEC_STATS * stats, FILE * stream,
+		       const char *substr)
 {
-  unsigned int i;
-  const char *name, *s;
-  int level;
+  char stat_buf[4 * ONE_K];
+
   if (stream == NULL)
     {
       stream = stdout;
     }
 
-  fprintf (stream, "\n *** SERVER EXECUTION STATISTICS *** \n");
-  for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS - 1; i++)
-    {
-      name = mnt_Stats_info[i].name;
-      level = mnt_Stats_info[i].level;
-      if (substr != NULL)
-	{
-	  s = strstr (name, substr);
-	}
-      else
-	{
-	  s = name;
-	}
+  stat_buf[0] = '\0';
+  mnt_server_dump_stats_to_buffer (stats, stat_buf, sizeof (stat_buf),
+				   substr);
 
-      if (s)
-	{
-	  /* sub-info indent */
-	  while (level > 0)
-	    {
-	      fprintf (stream, "   ");
-	      level--;
-	    }
-
-	  fprintf (stream, "%-29s = %10lld\n",
-		   name, (long long) stats->values[i]);
-	}
-    }
-
-  fprintf (stream, "\n *** OTHER STATISTICS *** \n");
-  fprintf (stream,
-	   "Data_page_buffer_hit_ratio    = %10.2f\n",
-	   (float) stats->values[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO] / 100);
+  fprintf (stream, "%s", stat_buf);
 }
 
 /*
@@ -589,29 +521,16 @@ mnt_get_current_times (time_t *
 
 #endif /* CS_MODE || SA_MODE */
 
-
-#if defined(SERVER_MODE) || defined(SA_MODE)
-#if 0
 /*
- * xmnt_server_clear_stats - Clear recorded server statistics for the current
- *                          transaction index
- *   return: none
- *   item(in):
+ * mnt_server_stats_to_monitor_stats
+ *    return:
+ *
+ *    monitor_stats(out):
+ *    server_stats(in):
  */
-void
-xmnt_server_clear_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item)
-{
-  int tran_index;
-  assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
-  tran_index = logtb_get_current_tran_index (thread_p);
-  assert (tran_index >= 0);
-  svr_shm_clear_stats (tran_index, item);
-}
-#endif
-
 static void
-  mnt_server_stats_to_monitor_stats
-  (MONITOR_STATS * monitor_stats, MNT_SERVER_EXEC_STATS * server_stats)
+mnt_server_stats_to_monitor_stats (MONITOR_STATS * monitor_stats,
+				   const MNT_SERVER_EXEC_STATS * server_stats)
 {
   int i;
   for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS; i++)
@@ -621,9 +540,16 @@ static void
     }
 }
 
+/*
+ * mnt_monitor_stats_to_server_stats ()
+ *   return:
+ *
+ *   server_stats(out):
+ *   monitor_stats(in):
+ */
 static void
-  mnt_monitor_stats_to_server_stats
-  (MNT_SERVER_EXEC_STATS * server_stats, MONITOR_STATS * monitor_stats)
+mnt_monitor_stats_to_server_stats (MNT_SERVER_EXEC_STATS * server_stats,
+				   const MONITOR_STATS * monitor_stats)
 {
   int i;
   for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS; i++)
@@ -632,6 +558,8 @@ static void
       server_stats->acc_time[i] = monitor_stats[i].acc_time;
     }
 }
+
+#if defined(SERVER_MODE) || defined(SA_MODE)
 
 /*
  * xmnt_server_copy_stats - Copy recorded server statistics for the current
@@ -648,8 +576,8 @@ xmnt_server_copy_stats (THREAD_ENTRY *
   assert (to_stats != NULL);
   tran_index = logtb_get_current_tran_index (thread_p);
   assert (tran_index >= 0);
-  monitor_copy_stats (monitor_stats,
-		      MNT_SIZE_OF_SERVER_EXEC_STATS, tran_index);
+  monitor_copy_stats (NULL, monitor_stats,
+		      MNT_SIZE_OF_SERVER_EXEC_STATS, tran_index + 1);
   mnt_monitor_stats_to_server_stats (to_stats, monitor_stats);
 }
 
@@ -664,8 +592,11 @@ xmnt_server_copy_global_stats (UNUSED_ARG
 			       * thread_p, MNT_SERVER_EXEC_STATS * to_stats)
 {
   MONITOR_STATS monitor_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+
   assert (to_stats != NULL);
-  monitor_copy_global_stats (monitor_stats);
+
+  monitor_copy_global_stats (NULL, monitor_stats,
+			     MNT_SIZE_OF_SERVER_EXEC_STATS);
   mnt_monitor_stats_to_server_stats (to_stats, monitor_stats);
 }
 
@@ -678,12 +609,14 @@ mnt_stats_counter (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
   int tran_index;
   assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
-  assert (mnt_Stats_info[item].
-	  value_type ==
-	  MNT_STATS_VALUE_COUNTER
-	  || mnt_Stats_info[item].value_type == MNT_STATS_VALUE_EVENT);
+
   tran_index = logtb_get_current_tran_index (thread_p);
-  monitor_stats_counter (tran_index, item, value, 0);
+  if (tran_index < 0)
+    {
+      return;
+    }
+
+  monitor_stats_counter (tran_index + 1, item, value);
 }
 
 /*
@@ -696,20 +629,24 @@ mnt_stats_counter_with_time (THREAD_ENTRY
 			     item, INT64 value, UINT64 start_time)
 {
   int tran_index;
-  UINT64 end_time;
   MNT_SERVER_ITEM parent_item;
   assert (item != MNT_STATS_DATA_PAGE_FETCHES);
   assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
-  assert (mnt_Stats_info[item].
-	  value_type == MNT_STATS_VALUE_COUNTER_WITH_TIME);
+
   tran_index = logtb_get_current_tran_index (thread_p);
-  monitor_stats_count_with_time (tran_index, item, value, start_time);
+  if (tran_index < 0)
+    {
+      return;
+    }
+
+  monitor_stats_counter_with_time (tran_index + 1, item, value, start_time);
   parent_item = MNT_GET_PARENT_ITEM_FETCHES (item);
   if (parent_item != item)
     {
       assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);
-      monitor_stats_count_with_time
-	(tran_index, parent_item, value, start_time);
+      monitor_stats_counter_with_time (tran_index + 1, parent_item, value,
+				       start_time);
+
       thread_mnt_track_counter (thread_p, value, start_time);
     }
 }
@@ -722,9 +659,14 @@ mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
 {
   int tran_index;
   assert (item < MNT_SIZE_OF_SERVER_EXEC_STATS);
-  assert (mnt_Stats_info[item].value_type == MNT_STATS_VALUE_GAUGE);
+
   tran_index = logtb_get_current_tran_index (thread_p);
-  monitor_stats_gauge (tran_index, item, value);
+  if (tran_index < 0)
+    {
+      return;
+    }
+
+  monitor_stats_gauge (tran_index + 1, item, value);
 }
 
 /*
@@ -735,9 +677,11 @@ mnt_get_stats_with_time (THREAD_ENTRY *
 			 thread_p, MNT_SERVER_ITEM item, UINT64 * acc_time)
 {
   int tran_index;
+
   tran_index = logtb_get_current_tran_index (thread_p);
   assert (tran_index >= 0);
-  return monitor_get_stats_with_time (acc_time, tran_index, item);
+
+  return monitor_get_stats_with_time (acc_time, tran_index + 1, item);
 }
 
 /*
@@ -749,6 +693,8 @@ mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item)
   return mnt_get_stats_with_time (thread_p, item, NULL);
 }
 
+#endif /* SERVER_MODE || SA_MODE */
+
 /*
  * mnt_server_dump_stats_to_buffer -
  *   return: none
@@ -758,13 +704,13 @@ mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item)
  *   substr(in):
  */
 void
-mnt_server_dump_stats_to_buffer (const
-				 MNT_SERVER_EXEC_STATS
-				 * stats,
-				 char
-				 *buffer, int buf_size, const char *substr)
+mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS * stats,
+				 char *buffer, int buf_size,
+				 const char *substr)
 {
+#if 0
   MONITOR_STATS monitor_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+#endif
   char header[ONE_K], tail[ONE_K];
   if (buffer == NULL || buf_size <= 0)
     {
@@ -778,14 +724,18 @@ mnt_server_dump_stats_to_buffer (const
 	    "Data_page_buffer_hit_ratio    = %10.2f\n",
 	    (float) stats->
 	    values[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO] / 100);
+
+  snprintf (buffer, buf_size, "%s%s", header, tail);
+
+#if 0				/* TODO: remove me if you don't need this function */
   mnt_server_stats_to_monitor_stats (monitor_stats, stats);
   monitor_dump_stats_to_buffer (buffer,
 				buf_size,
 				monitor_stats,
 				MNT_SIZE_OF_SERVER_EXEC_STATS,
 				header, tail, substr);
+#endif
 }
-#endif /* SERVER_MODE || SA_MODE */
 
 /*
  * mnt_calc_hit_ratio - Do post processing of server statistics
@@ -816,10 +766,9 @@ mnt_calc_hit_ratio (MNT_SERVER_EXEC_STATS * stats)
  * mnt_diff_stats -
  */
 int
-mnt_diff_stats (MNT_SERVER_EXEC_STATS *
-		diff_stats,
-		MNT_SERVER_EXEC_STATS *
-		new_stats, MNT_SERVER_EXEC_STATS * old_stats)
+mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
+		MNT_SERVER_EXEC_STATS * new_stats,
+		MNT_SERVER_EXEC_STATS * old_stats)
 {
   int i;
   if (!diff_stats || !new_stats || !old_stats)
@@ -828,6 +777,7 @@ mnt_diff_stats (MNT_SERVER_EXEC_STATS *
       return ER_FAILED;
     }
 
+#if 0				/* TODO: remove me if you don't need this function */
   for (i = 0; i < MNT_SIZE_OF_SERVER_EXEC_STATS; i++)
     {
       /* calc diff values */
@@ -860,43 +810,10 @@ mnt_diff_stats (MNT_SERVER_EXEC_STATS *
 	  diff_stats->acc_time[i] = 0;
 	}
     }
+#endif
 
   mnt_calc_hit_ratio (diff_stats);
   return NO_ERROR;
-}
-
-/*
- * mnt_stats_is_cumulative: -
- */
-bool
-mnt_stats_is_cumulative (MNT_SERVER_ITEM item)
-{
-  if (item < MNT_SIZE_OF_SERVER_EXEC_STATS)
-    {
-      return (IS_CUMMULATIVE_VALUE (mnt_Stats_info[item].value_type));
-    }
-  else
-    {
-      assert (0);
-      return false;
-    }
-}
-
-/*
- * mnt_stats_is_collecting_time: -
- */
-bool
-mnt_stats_is_collecting_time (MNT_SERVER_ITEM item)
-{
-  if (item < MNT_SIZE_OF_SERVER_EXEC_STATS)
-    {
-      return (IS_COLLECTING_TIME (mnt_Stats_info[item].value_type));
-    }
-  else
-    {
-      assert (0);
-      return false;
-    }
 }
 
 MNT_SERVER_ITEM
