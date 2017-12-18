@@ -3523,7 +3523,7 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
 
   fprintf (log_fp, "%*ctime: %dms\n", indent, ' ', time);
   fprintf (log_fp,
-	   "%*cbuffer: fetch=%lld(%d), ioread=%lld(%d), iowrite=%lld(%d)\n",
+	   "%*cbuffer: fetch=%lld(%ld), ioread=%lld(%ld), iowrite=%lld(%ld)\n",
 	   indent, ' ',
 	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_FETCHES],
 	   mnt_clock_to_time (diff_stats->

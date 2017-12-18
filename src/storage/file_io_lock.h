@@ -44,7 +44,9 @@ extern FILEIO_LOCKF_TYPE fileio_lock_la_dbname (int *lockf_vdes,
 extern FILEIO_LOCKF_TYPE fileio_unlock_la_dbname (int *lockf_vdes,
 						  char *db_name,
 						  bool clear_owner);
+#if 0
 extern int fileio_get_lock (int fd, const char *vol_label_p);
+#endif
 extern int fileio_get_lock_retry (int fd, const char *vol_label_p);
 
 extern FILEIO_LOCKF_TYPE fileio_lock (const char *db_fullname,

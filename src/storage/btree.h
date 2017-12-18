@@ -247,10 +247,6 @@ extern DB_IDXKEY *btree_delete (THREAD_ENTRY * thread_p,
 				BTID_INT * btid, DB_IDXKEY * key);
 extern DB_IDXKEY *btree_insert (THREAD_ENTRY * thread_p,
 				BTID_INT * btid, DB_IDXKEY * key);
-#if 1				/* TODO - do not delete me */
-extern DB_IDXKEY *btree_insert_old (THREAD_ENTRY * thread_p,
-				    BTID_INT * btid, DB_IDXKEY * key);
-#endif
 extern int btree_update (THREAD_ENTRY * thread_p,
 			 BTID_INT * btid,
 			 DB_IDXKEY * old_key, DB_IDXKEY * new_key);
