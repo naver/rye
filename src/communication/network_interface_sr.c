@@ -32,6 +32,7 @@
 
 #include "porting.h"
 #include "perf_monitor.h"
+#include "monitor.h"
 #include "memory_alloc.h"
 #include "storage_common.h"
 #include "xserver_interface.h"
@@ -85,16 +86,14 @@ static int check_client_capabilities (THREAD_ENTRY * thread_p, int client_cap,
 static int er_log_slow_query (THREAD_ENTRY * thread_p,
 			      EXECUTION_INFO * info,
 			      int time,
-			      MNT_SERVER_EXEC_STATS * diff_stats,
+			      MONITOR_STATS * diff_stats,
 			      char *queryinfo_string);
 static void event_log_slow_query (THREAD_ENTRY * thread_p,
 				  EXECUTION_INFO * info,
-				  int time,
-				  MNT_SERVER_EXEC_STATS * diff_stats);
+				  int time, MONITOR_STATS * diff_stats);
 static void event_log_many_ioreads (THREAD_ENTRY * thread_p,
 				    EXECUTION_INFO * info,
-				    int time,
-				    MNT_SERVER_EXEC_STATS * diff_stats);
+				    int time, MONITOR_STATS * diff_stats);
 static void event_log_temp_expand_pages (THREAD_ENTRY * thread_p,
 					 EXECUTION_INFO * info,
 					 INT64 expand_pages,
@@ -3074,7 +3073,9 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   char queryinfo_string[QUERY_INFO_BUF_SIZE];
   int trace_slow_msec, trace_ioread;
 
-  MNT_SERVER_EXEC_STATS base_stats, current_stats, diff_stats;
+  MONITOR_STATS base_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+  MONITOR_STATS current_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+  MONITOR_STATS diff_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
   char *sql_id = NULL;
   int error_code = NO_ERROR;
   UNUSED_VAR bool tran_abort = false;
@@ -3091,10 +3092,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 
   if (trace_slow_msec >= 0 || trace_ioread > 0)
     {
-#if defined (ENABLE_UNUSED_FUNCTION)
-      xmnt_server_start_stats (thread_p, false);
-#endif
-      xmnt_server_copy_stats (thread_p, &base_stats);
+      mnt_server_copy_stats (thread_p, base_stats);
       gettimeofday (&start, NULL);
     }
 
@@ -3294,30 +3292,28 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 	    (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec -
 						  start.tv_usec) / 1000;
 
-	  xmnt_server_copy_stats (thread_p, &current_stats);
-	  mnt_diff_stats (&diff_stats, &current_stats, &base_stats);
+	  mnt_server_copy_stats (thread_p, current_stats);
+	  monitor_diff_stats (NULL, diff_stats, current_stats, base_stats,
+			      MNT_SIZE_OF_SERVER_EXEC_STATS);
+	  mnt_calc_hit_ratio (diff_stats);
 
 	  if (response_time >= trace_slow_msec)
 	    {
 	      queryinfo_string_length = er_log_slow_query (thread_p, &info,
 							   response_time,
-							   &diff_stats,
+							   diff_stats,
 							   queryinfo_string);
 	      event_log_slow_query (thread_p, &info, response_time,
-				    &diff_stats);
+				    diff_stats);
 	    }
 
 	  if (trace_ioread > 0 &&
-	      (diff_stats.values[MNT_STATS_DATA_PAGE_IOREADS] >=
-	       trace_ioread))
+	      (diff_stats[MNT_STATS_DATA_PAGE_IOREADS].value >= trace_ioread))
 	    {
 	      event_log_many_ioreads (thread_p, &info, response_time,
-				      &diff_stats);
+				      diff_stats);
 	    }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-	  xmnt_server_stop_stats (thread_p);
-#endif
 	}
 
       new_expand_pages =
@@ -3421,7 +3417,7 @@ execute_end:
  */
 static int
 er_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
-		   int time, MNT_SERVER_EXEC_STATS * diff_stats,
+		   int time, MONITOR_STATS * diff_stats,
 		   char *queryinfo_string)
 {
   char stat_buf[STATDUMP_BUF_SIZE];
@@ -3492,7 +3488,7 @@ er_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
  */
 static void
 event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
-		      int time, MNT_SERVER_EXEC_STATS * diff_stats)
+		      int time, MONITOR_STATS * diff_stats)
 {
   FILE *log_fp;
   int indent = 2;
@@ -3524,32 +3520,32 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
 
   fprintf (log_fp, "%*ctime: %dms\n", indent, ' ', time);
   fprintf (log_fp,
-	   "%*cbuffer: fetch=%lld(%ld), ioread=%lld(%ld), iowrite=%lld(%ld)\n",
+	   "%*cbuffer: fetch=%ld(%ld), ioread=%ld(%ld), iowrite=%ld(%ld)\n",
 	   indent, ' ',
-	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_FETCHES],
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_FETCHES]),
-	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS],
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]),
-	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOWRITES],
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_IOWRITES]));
+	   diff_stats[MNT_STATS_DATA_PAGE_FETCHES].value,
+	   mnt_clock_to_time (diff_stats[MNT_STATS_DATA_PAGE_FETCHES].
+			      acc_time),
+	   diff_stats[MNT_STATS_DATA_PAGE_IOREADS].value,
+	   mnt_clock_to_time (diff_stats[MNT_STATS_DATA_PAGE_IOREADS].
+			      acc_time),
+	   diff_stats[MNT_STATS_DATA_PAGE_IOWRITES].value,
+	   mnt_clock_to_time (diff_stats[MNT_STATS_DATA_PAGE_IOWRITES].
+			      acc_time));
 
   total_cs_waits_clock = 0;
   for (i = 0; i < CSECT_LAST; i++)
     {
       item_waits = mnt_csect_type_to_server_item_waits (i);
 
-      total_cs_waits_clock += diff_stats->acc_time[item_waits];
+      total_cs_waits_clock += diff_stats[item_waits].acc_time;
     }
 
   fprintf (log_fp, "%*cwait: csect=%ld, lock=%ld, latch=%ld\n\n", indent, ' ',
 	   mnt_clock_to_time (total_cs_waits_clock),
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_SQL_TRACE_LOCK_WAITS]),
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_SQL_TRACE_LATCH_WAITS]));
+	   mnt_clock_to_time (diff_stats[MNT_STATS_SQL_TRACE_LOCK_WAITS].
+			      acc_time),
+	   mnt_clock_to_time (diff_stats[MNT_STATS_SQL_TRACE_LATCH_WAITS].
+			      acc_time));
 
   event_log_end (thread_p);
 }
@@ -3566,7 +3562,7 @@ event_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
  */
 static void
 event_log_many_ioreads (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
-			int time, MNT_SERVER_EXEC_STATS * diff_stats)
+			int time, MONITOR_STATS * diff_stats)
 {
   FILE *log_fp;
   int indent = 2;
@@ -3594,9 +3590,9 @@ event_log_many_ioreads (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
 
   fprintf (log_fp, "%*ctime: %dms\n", indent, ' ', time);
   fprintf (log_fp, "%*cioreads: %lld(%ld)\n\n", indent, ' ',
-	   (long long int) diff_stats->values[MNT_STATS_DATA_PAGE_IOREADS],
-	   mnt_clock_to_time (diff_stats->
-			      acc_time[MNT_STATS_DATA_PAGE_IOREADS]));
+	   (long long int) diff_stats[MNT_STATS_DATA_PAGE_IOREADS].value,
+	   mnt_clock_to_time (diff_stats[MNT_STATS_DATA_PAGE_IOREADS].
+			      acc_time));
 
   event_log_end (thread_p);
 }
@@ -3850,116 +3846,6 @@ sqmgr_get_query_info (THREAD_ENTRY * thread_p, unsigned int rid,
   free_and_init (buf);
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * smnt_server_start_stats -
- *
- * return:
- *
- *   rid(in):
- *   request(in):
- *   reqlen(in):
- *
- * NOTE:
- */
-void
-smnt_server_start_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-			 char *request, int reqlen)
-{
-  int success, for_all_trans;
-  OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
-  char *reply = OR_ALIGNED_BUF_START (a_reply);
-
-  or_unpack_int (request, &for_all_trans);
-
-  success = xmnt_server_start_stats (thread_p, (bool) for_all_trans);
-  if (success != NO_ERROR)
-    {
-      return_error_to_client (thread_p, rid);
-    }
-
-  (void) or_pack_int (reply, (int) success);
-  css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-			    OR_ALIGNED_BUF_SIZE (a_reply));
-}
-
-/*
- * smnt_server_stop_stats -
- *
- * return:
- *
- *   rid(in):
- *   request(in):
- *   reqlen(in):
- *
- * NOTE:
- */
-void
-smnt_server_stop_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-			char *request, int reqlen)
-{
-  OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
-  char *reply = OR_ALIGNED_BUF_START (a_reply);
-
-  xmnt_server_stop_stats (thread_p);
-  /* dummy reply message */
-  (void) or_pack_int (reply, 1);
-  css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-			    OR_ALIGNED_BUF_SIZE (a_reply));
-}
-#endif
-
-/*
- * smnt_server_copy_stats -
- *
- * return:
- *
- *   rid(in):
- *   request(in):
- *   reqlen(in):
- *
- * NOTE:
- */
-void
-smnt_server_copy_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-			UNUSED_ARG char *request, UNUSED_ARG int reqlen)
-{
-  OR_ALIGNED_BUF (STAT_SIZE_PACKED) a_reply;
-  char *reply = OR_ALIGNED_BUF_START (a_reply);
-  MNT_SERVER_EXEC_STATS stats;
-
-  xmnt_server_copy_stats (thread_p, &stats);
-  net_pack_stats (reply, &stats);
-  css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-			    OR_ALIGNED_BUF_SIZE (a_reply));
-}
-
-/*
- * smnt_server_copy_global_stats -
- *
- * return:
- *
- *   rid(in):
- *   request(in):
- *   reqlen(in):
- *
- * NOTE:
- */
-void
-smnt_server_copy_global_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-			       UNUSED_ARG char *request,
-			       UNUSED_ARG int reqlen)
-{
-  OR_ALIGNED_BUF (STAT_SIZE_PACKED) a_reply;
-  char *reply = OR_ALIGNED_BUF_START (a_reply);
-  MNT_SERVER_EXEC_STATS stats;
-
-  xmnt_server_copy_global_stats (thread_p, &stats);
-  net_pack_stats (reply, &stats);
-  css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-			    OR_ALIGNED_BUF_SIZE (a_reply));
-}
-
 /*
  * sct_can_accept_new_repr -
  *
@@ -4088,36 +3974,6 @@ xs_receive_data_from_client (THREAD_ENTRY * thread_p,
 }
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * stest_performance -
- *
- * return:
- *
- *   rid(in):
- *   request(in):
- *   reqlen(in):
- *
- * NOTE:
- */
-void
-stest_performance (THREAD_ENTRY * thread_p, unsigned int rid, char *request,
-		   int reqlen)
-{
-  int return_size;
-  OR_ALIGNED_BUF (10000) a_reply;
-  char *reply = OR_ALIGNED_BUF_START (a_reply);
-
-  if (reqlen >= OR_INT_SIZE)
-    {
-      or_unpack_int (request, &return_size);
-      if (return_size > 0)
-	{
-	  css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-				    return_size);
-	}
-    }
-}
-
 /*
  * slocator_assign_oid_batch -
  *
@@ -5336,45 +5192,6 @@ ssession_end_session (THREAD_ENTRY * thread_p, unsigned int rid,
   css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
 			    OR_ALIGNED_BUF_SIZE (a_reply));
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * slogin_user - login user
- * return: error code or NO_ERROR
- *   rid(in):
- *   request(in):
- *   reqlen(in):
- */
-void
-slogin_user (THREAD_ENTRY * thread_p, unsigned int rid, char *request,
-	     int reqlen)
-{
-  int err = NO_ERROR;
-  OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
-  char *reply = OR_ALIGNED_BUF_START (a_reply);
-  const char *username = NULL;
-
-  or_unpack_string_nocopy (request, &username);
-  if (username == NULL)
-    {
-      return_error_to_client (thread_p, rid);
-      err = ER_FAILED;
-    }
-  else
-    {
-      err = xlogin_user (thread_p, username);
-      if (err != NO_ERROR)
-	{
-	  return_error_to_client (thread_p, rid);
-	}
-    }
-
-  or_pack_int (reply, err);
-
-  css_send_reply_to_client (thread_p->conn_entry, rid, 1, reply,
-			    OR_ALIGNED_BUF_SIZE (a_reply));
-}
-#endif
 
 /*
  * sboot_get_locales_info () - get info about locales

@@ -4340,7 +4340,7 @@ thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
 
   for (i = thread_p->mnt_track_top; i >= 0; i--)
     {
-      monitor_stats_counter_with_time (tran_index,
+      monitor_stats_counter_with_time (tran_index + 1,
 				       thread_p->mnt_track_stack[i].item,
 				       value, start_time);
     }

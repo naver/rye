@@ -249,16 +249,6 @@ extern void xqmgr_dump_query_plans (THREAD_ENTRY * thread_p, FILE * outfp);
 
 extern int xqmgr_get_query_info (THREAD_ENTRY * thread_p, QUERY_ID query_id);
 
-/* server execution statistics */
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern int xmnt_server_start_stats (THREAD_ENTRY * thread_p,
-				    bool for_all_trans);
-extern void xmnt_server_stop_stats (THREAD_ENTRY * thread_p);
-#endif
-extern void xmnt_server_copy_stats (THREAD_ENTRY * thread_p,
-				    MNT_SERVER_EXEC_STATS * to_stats);
-extern void xmnt_server_copy_global_stats (THREAD_ENTRY * thread_p,
-					   MNT_SERVER_EXEC_STATS * to_stats);
 /* catalog manager interface */
 
 extern int xcatalog_is_acceptable_new_representation (THREAD_ENTRY * thread_p,

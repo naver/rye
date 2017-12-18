@@ -327,21 +327,11 @@ typedef enum
       || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE \
       || m == MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 
-/*
- * Server execution statistic structure
- */
-typedef struct mnt_server_exec_stats MNT_SERVER_EXEC_STATS;
-struct mnt_server_exec_stats
-{
-  INT64 values[MNT_SIZE_OF_SERVER_EXEC_STATS];
-  UINT64 acc_time[MNT_SIZE_OF_SERVER_EXEC_STATS];
-};
 
 #if defined(CS_MODE) || defined(SA_MODE)
 extern int mnt_start_stats (bool for_all_trans);
 extern int mnt_stop_stats (void);
 extern void mnt_reset_stats (void);
-extern void mnt_print_stats (FILE * stream);
 #endif /* CS_MODE || SA_MODE */
 
 #if defined(SERVER_MODE) || defined (SA_MODE)
@@ -374,7 +364,8 @@ extern INT64 mnt_get_stats_with_time (THREAD_ENTRY * thread_p,
 				      MNT_SERVER_ITEM item,
 				      UINT64 * acc_time);
 extern INT64 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item);
-
+extern void mnt_server_copy_stats (THREAD_ENTRY * thread_p,
+				   MONITOR_STATS * to_stats);
 #else /* SERVER_MODE || SA_MODE */
 #define mnt_stats_counter(THREAD_P,ITEM,VALUE)
 #define mnt_stats_counter_with_time(THREAD_P,ITEM,VALUE,START_TIME)
@@ -383,14 +374,7 @@ extern INT64 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item);
 #define PERF_MON_GET_CURRENT_TIME(VAR)
 #endif /* CS_MODE */
 
-extern void mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS *
-					     stats, char *buffer,
-					     int buf_size,
-					     const char *substr);
-
-extern int mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
-			   MNT_SERVER_EXEC_STATS * new_stats,
-			   MNT_SERVER_EXEC_STATS * old_stats);
+extern void mnt_calc_hit_ratio (MONITOR_STATS * stats);
 
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item (const CSECT_TYPE ctype);
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item_waits (const CSECT_TYPE

@@ -68,8 +68,8 @@ typedef struct
   RYE_SHM_HEADER shm_header;
 
   char name[SHM_NAME_SIZE];
-  int num_mnt_stats;
-  int num_threads;
+  int num_stats;
+  int num_monitors;
 
   MONITOR_STATS stats[1];
 } RYE_MONITOR_SHM;
@@ -118,13 +118,13 @@ extern void monitor_make_server_name (char *monitor_name,
  ******************************************************************/
 extern int monitor_create_collector (const char *name, int num_thread,
 				     RYE_SHM_TYPE shm_type);
-extern void monitor_stats_counter (int thread_index, int item, INT64 value);
-extern void monitor_stats_counter_with_time (int thread_index, int item,
+extern void monitor_stats_counter (int mnt_id, int item, INT64 value);
+extern void monitor_stats_counter_with_time (int mnt_id, int item,
 					     INT64 value, UINT64 start_time);
-extern void monitor_stats_gauge (int thread_index, int item, INT64 value);
-extern INT64 monitor_get_stats_with_time (UINT64 * acc_time, int thread_index,
+extern void monitor_stats_gauge (int mnt_id, int item, INT64 value);
+extern INT64 monitor_get_stats_with_time (UINT64 * acc_time, int mnt_id,
 					  int item);
-extern INT64 monitor_get_stats (int thread_index, int item);
+extern INT64 monitor_get_stats (int mnt_id, int item);
 
 
 /******************************************************************
@@ -141,7 +141,7 @@ extern bool monitor_stats_is_collecting_time (MONITOR_INFO * monitor_info,
 					      int item);
 extern int monitor_copy_stats (MONITOR_INFO * monitor,
 			       MONITOR_STATS * to_stats, int num_stats,
-			       int thread_index);
+			       int mnt_id);
 extern int monitor_copy_global_stats (MONITOR_INFO * monitor,
 				      MONITOR_STATS * to_stats,
 				      int num_stats);
