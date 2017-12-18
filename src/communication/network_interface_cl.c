@@ -6081,17 +6081,6 @@ histo_print (FILE * stream)
 }
 
 void
-histo_print_global_stats (FILE * stream, bool cumulative, const char *substr,
-			  const char *db_name)
-{
-#if defined (CS_MODE)
-  net_histo_print_global_stats (stream, cumulative, substr, db_name);
-#else /* CS_MODE */
-  mnt_print_global_stats (stream, cumulative, substr, db_name);
-#endif /* !CS_MODE */
-}
-
-void
 histo_clear (void)
 {
 #if defined (CS_MODE)

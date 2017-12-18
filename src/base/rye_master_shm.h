@@ -67,10 +67,9 @@ extern int master_shm_get_shard_mgmt_info (const char *local_dbname,
 					   shard_mgmt_node_info);
 
 /* non-master use functions */
-extern int rye_master_shm_get_new_server_shm_key (const char *dbname);
-extern int rye_master_shm_get_server_shm_key (const char *dbname);
-extern int rye_master_shm_set_server_shm_key (const char *dbname,
-					      int server_shm_key);
+extern int rye_master_shm_get_new_shm_key (const char *name,
+					   RYE_SHM_TYPE type);
+extern int rye_master_shm_get_shm_key (const char *name, RYE_SHM_TYPE type);
 
 extern int rye_master_shm_get_node_reset_time (INT64 * node_reset_time);
 

@@ -58,6 +58,7 @@
 #include "heartbeat.h"
 #include "connection_support.h"
 #include "backup_cl.h"
+#include "monitor.h"
 
 #define PASSBUF_SIZE 12
 #define SPACEDB_NUM_VOL_PURPOSE 5
@@ -2728,6 +2729,13 @@ statdump (UTIL_FUNCTION_ARG * arg)
   FILE *outfp = NULL;
   const char *local_db_name = NULL;
   char tmp_dbname[ONE_K];
+  MONITOR_INFO *monitor_info = NULL;
+  char monitor_name[ONE_K];
+  char header[ONE_K], tail[ONE_K];
+  char *ptr;
+  MONITOR_STATS cur_global_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+  MONITOR_STATS old_global_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+  MONITOR_STATS diff_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
 
 
   if (utility_get_option_string_table_size (arg_map) != 1)
@@ -2792,32 +2800,30 @@ statdump (UTIL_FUNCTION_ARG * arg)
   strncpy (tmp_dbname, database_name, sizeof (tmp_dbname));
   tmp_dbname[sizeof (tmp_dbname) - 1] = '\0';
 
-  char *p = strchr (tmp_dbname, '@');
-  if (p == NULL || strcmp (p + 1, "localhost") == 0)
+  ptr = strchr (tmp_dbname, '@');
+  if (ptr != NULL && strcmp (ptr + 1, "localhost") != 0)
     {
-      if (p)
-	{
-	  *p = '\0';
-	}
-
-      sysprm_load_and_init (NULL);
-
-      local_db_name = tmp_dbname;
+      PRINT_AND_LOG_ERR_MSG ("%s\n", "Invalid host name");
+      goto error_exit;
     }
 
-  if (local_db_name == NULL)
+  if (ptr != NULL)
     {
-      AU_DISABLE_PASSWORDS ();
-      db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
-      db_login ("DBA", NULL);
+      *ptr = '\0';
+    }
 
-      if (db_restart (arg->command_name, TRUE, database_name) != NO_ERROR)
-	{
-	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
-	  goto error_exit;
-	}
+  local_db_name = tmp_dbname;
 
-      histo_start (true);
+  sysprm_load_and_init (NULL);
+
+  monitor_make_server_name (monitor_name, local_db_name);
+  monitor_info = monitor_create_viewer_from_name (monitor_name,
+						  RYE_SHM_TYPE_MONITOR_SERVER);
+  if (monitor_info == NULL)
+    {
+      PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+
+      goto error_exit;
     }
 
   if (interval > 0)
@@ -2826,10 +2832,62 @@ statdump (UTIL_FUNCTION_ARG * arg)
       os_set_signal_handler (SIGINT, intr_handler);
     }
 
+  snprintf (header, sizeof (header),
+	    "\n *** SERVER EXECUTION STATISTICS *** \n");
+
+  memset (cur_global_stats, 0, sizeof (cur_global_stats));
+  memset (old_global_stats, 0, sizeof (old_global_stats));
+  memset (diff_stats, 0, sizeof (diff_stats));
+
   do
     {
       print_timestamp (outfp);
-      histo_print_global_stats (outfp, cumulative, substr, local_db_name);
+
+      if (monitor_copy_global_stats (monitor_info, cur_global_stats,
+				     MNT_SIZE_OF_SERVER_EXEC_STATS)
+	  != NO_ERROR)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+	  goto error_exit;
+	}
+
+      if (cumulative)
+	{
+	  snprintf (tail, sizeof (tail),
+		    "\n *** OTHER STATISTICS *** \n"
+		    "Data_page_buffer_hit_ratio    = %10.2f\n",
+		    (float)
+		    cur_global_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
+		    value / 100);
+
+	  monitor_dump_stats (monitor_info, outfp, &cur_global_stats,
+			      MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
+			      substr);
+	}
+      else
+	{
+	  if (monitor_diff_stats (monitor_info, diff_stats,
+				  cur_global_stats,
+				  old_global_stats,
+				  MNT_SIZE_OF_SERVER_EXEC_STATS) == NO_ERROR)
+	    {
+	      snprintf (tail, sizeof (tail),
+			"\n *** OTHER STATISTICS *** \n"
+			"Data_page_buffer_hit_ratio    = %10.2f\n",
+			(float)
+			diff_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
+			value / 100);
+	      monitor_dump_stats (monitor_info, outfp, &diff_stats,
+				  MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
+				  substr);
+	    }
+
+	  memcpy (old_global_stats, cur_global_stats,
+		  sizeof (cur_global_stats));
+	}
+
+      monitor_close_viewer_data (monitor_info, MNT_SIZE_OF_SERVER_EXEC_STATS);
+
       fflush (outfp);
       sleep (interval);
     }
@@ -2859,6 +2917,11 @@ error_exit:
   if (outfp != stdout && outfp != NULL)
     {
       fclose (outfp);
+    }
+  if (monitor_info != NULL)
+    {
+      monitor_close_viewer_data (monitor_info, MNT_SIZE_OF_SERVER_EXEC_STATS);
+      free_and_init (monitor_info);
     }
   return EXIT_FAILURE;
 #else /* CS_MODE */

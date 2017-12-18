@@ -3433,8 +3433,9 @@ er_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
 
   if (prm_get_bool_value (PRM_ID_SQL_TRACE_EXECUTION_PLAN) == true)
     {
-      mnt_server_dump_stats_to_buffer (diff_stats, stat_buf,
-				       STATDUMP_BUF_SIZE, NULL);
+      monitor_dump_stats_to_buffer (NULL, stat_buf, STATDUMP_BUF_SIZE,
+				    diff_stats, MNT_SIZE_OF_SERVER_EXEC_STATS,
+				    NULL, NULL, NULL);
     }
   else
     {
