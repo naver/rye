@@ -133,12 +133,6 @@ typedef enum
 
   NET_SERVER_LS_GET_LIST_FILE_PAGE,
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-  NET_SERVER_MNT_SERVER_START_STATS,
-  NET_SERVER_MNT_SERVER_STOP_STATS,
-#endif
-  NET_SERVER_MNT_SERVER_COPY_STATS,
-
   NET_SERVER_CT_CAN_ACCEPT_NEW_REPR,
 
   NET_SERVER_CSS_KILL_TRANSACTION,
@@ -155,13 +149,7 @@ typedef enum
 
   NET_SERVER_LOGWR_GET_LOG_PAGES,
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-  NET_SERVER_TEST_PERFORMANCE,
-#endif
-
   NET_SERVER_SHUTDOWN,
-
-  NET_SERVER_MNT_SERVER_COPY_GLOBAL_STATS,
 
   /* Followings are not grouped because they are appended after the above.
      It is necessary to rearrange with changing network compatibility. */
@@ -177,10 +165,6 @@ typedef enum
 
   NET_SERVER_ACL_DUMP,
   NET_SERVER_ACL_RELOAD,
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-  NET_SERVER_LOGIN_USER,
-#endif
 
   NET_SERVER_CSS_DUMP_SERVER_STAT,
 
@@ -215,10 +199,6 @@ typedef enum
 #define NET_CAP_HA_REPL_DELAY           0x00000008
 #define NET_CAP_HA_REPLICA              0x00000004
 #define NET_CAP_HA_IGNORE_REPL_DELAY	0x00000002
-
-extern char *net_pack_stats (char *buf, MNT_SERVER_EXEC_STATS * stats);
-extern char *net_unpack_stats (char *buf, MNT_SERVER_EXEC_STATS * stats);
-
 
 /* Server startup */
 extern int net_server_start (const char *name);

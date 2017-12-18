@@ -37,8 +37,8 @@
 	((TYPE) == MONITOR_STATS_VALUE_COUNTER_WITH_TIME)
 
 
-MONITOR_INFO mntMonitor = {
-  -1, RYE_SHM_TYPE_UNKNOWN, MONITOR_TYPE_VIEWER, 0, NULL, NULL
+MONITOR_INFO mntCollector = {
+  -1, RYE_SHM_TYPE_UNKNOWN, MONITOR_TYPE_COLLECTOR, 0, NULL, NULL
 };
 
 static MONITOR_STATS_INFO *monitor_init_server_stats_info (int num_stats);
@@ -1038,10 +1038,10 @@ monitor_init_server_stats_info (int num_stats)
  * monitor_create_collector
  */
 int
-monitor_create_collector (const char *name, int num_thread,
+monitor_create_collector (const char *name, int num_monitors,
 			  RYE_SHM_TYPE shm_type)
 {
-  RYE_MONITOR_SHM *shm_monitor = NULL;
+  RYE_MONITOR_SHM *shm_p = NULL;
   MONITOR_STATS_INFO *stats_info = NULL;
   int num_stats;
   int shm_size, shm_key = -1;
@@ -1076,29 +1076,29 @@ monitor_create_collector (const char *name, int num_thread,
       rye_shm_destroy (shm_key);
     }
 
-  /* global stats + thread stats */
+  /* global stats + monitor stats */
   shm_size = (sizeof (RYE_MONITOR_SHM)
-	      + sizeof (MONITOR_STATS) * num_stats * (num_thread + 1));
-  shm_monitor = rye_shm_create (shm_key, shm_size, shm_type);
-  if (shm_monitor == NULL)
+	      + sizeof (MONITOR_STATS) * num_stats * (num_monitors + 1));
+  shm_p = rye_shm_create (shm_key, shm_size, shm_type);
+  if (shm_p == NULL)
     {
       error = er_errid ();
       goto exit_on_error;
     }
 
-  shm_monitor->num_mnt_stats = num_stats;
-  shm_monitor->num_threads = num_thread;
-  strncpy (shm_monitor->name, name, SHM_NAME_SIZE);
-  shm_monitor->name[SHM_NAME_SIZE - 1] = '\0';
+  shm_p->num_stats = num_stats;
+  shm_p->num_monitors = num_monitors;
+  strncpy (shm_p->name, name, SHM_NAME_SIZE);
+  shm_p->name[SHM_NAME_SIZE - 1] = '\0';
 
-  shm_monitor->shm_header.status = RYE_SHM_VALID;
+  shm_p->shm_header.status = RYE_SHM_VALID;
 
-  mntMonitor.num_stats = num_stats;
-  mntMonitor.shm_key = shm_key;
-  mntMonitor.shm_type = shm_type;
-  mntMonitor.info = stats_info;
-  mntMonitor.data = shm_monitor;
-  mntMonitor.type = MONITOR_TYPE_COLLECTOR;
+  mntCollector.num_stats = num_stats;
+  mntCollector.shm_key = shm_key;
+  mntCollector.shm_type = shm_type;
+  mntCollector.info = stats_info;
+  mntCollector.data = shm_p;
+  mntCollector.type = MONITOR_TYPE_COLLECTOR;
 
   return NO_ERROR;
 
@@ -1112,10 +1112,10 @@ exit_on_error:
 	      1, "Invalid error code");
     }
 
-  if (shm_monitor != NULL)
+  if (shm_p != NULL)
     {
-      rye_shm_detach (shm_monitor);
-      shm_monitor = NULL;
+      rye_shm_detach (shm_p);
+      shm_p = NULL;
     }
   if (shm_key != -1)
     {
@@ -1135,47 +1135,47 @@ exit_on_error:
  * monitor_stats_counter -
  */
 void
-monitor_stats_counter (int thread_index, int item, INT64 value)
+monitor_stats_counter (int mnt_id, int item, INT64 value)
 {
-  monitor_stats_counter_with_time (thread_index, item, value, 0);
+  monitor_stats_counter_with_time (mnt_id, item, value, 0);
 }
 
 /*
  * monitor_stats_counter_with_time ()-
  *   return:
  *
- *   thread_index(in):
+ *   mnt_id(in):
  *   item(in):
  *   value(in):
  *   exec_time(in):
  */
 void
-monitor_stats_counter_with_time (int thread_index, int item, INT64 value,
+monitor_stats_counter_with_time (int mnt_id, int item, INT64 value,
 				 UINT64 start_time)
 {
-  INT64 after_value;
-  UINT64 after_exec_time;
+  UNUSED_VAR INT64 after_value;
+  UNUSED_VAR UINT64 after_exec_time;
   UINT64 end_time, exec_time;
   int item_index;
 
-  if (mntMonitor.info == NULL || mntMonitor.data == NULL
-      || mntMonitor.type != MONITOR_TYPE_COLLECTOR)
+  if (mntCollector.info == NULL || mntCollector.data == NULL
+      || mntCollector.type != MONITOR_TYPE_COLLECTOR)
     {
       return;
     }
 
-  if (item < 0 || item >= mntMonitor.num_stats
-      || thread_index <= 0 || thread_index > mntMonitor.data->num_threads
-      || (mntMonitor.info[item].value_type != MONITOR_STATS_VALUE_COUNTER
-	  && mntMonitor.info[item].value_type !=
+  if (item < 0 || item >= mntCollector.num_stats
+      || mnt_id <= 0 || mnt_id > mntCollector.data->num_monitors
+      || (mntCollector.info[item].value_type != MONITOR_STATS_VALUE_COUNTER
+	  && mntCollector.info[item].value_type !=
 	  MONITOR_STATS_VALUE_COUNTER_WITH_TIME
-	  && mntMonitor.info[item].value_type != MONITOR_STATS_VALUE_EVENT))
+	  && mntCollector.info[item].value_type != MONITOR_STATS_VALUE_EVENT))
     {
       assert (false);
       return;
     }
 
-  if (mntMonitor.info[item].value_type ==
+  if (mntCollector.info[item].value_type ==
       MONITOR_STATS_VALUE_COUNTER_WITH_TIME)
     {
       assert (start_time != 0);
@@ -1190,44 +1190,49 @@ monitor_stats_counter_with_time (int thread_index, int item, INT64 value,
     }
 
   /* thread stats */
-  item_index = thread_index * mntMonitor.num_stats + item;
-  mntMonitor.data->stats[item_index].value += value;
-  mntMonitor.data->stats[item_index].acc_time += exec_time;
+  item_index = mnt_id * mntCollector.num_stats + item;
+  after_value =
+    ATOMIC_INC_64 (&mntCollector.data->stats[item_index].value, value);
+  after_exec_time =
+    ATOMIC_INC_64 (&mntCollector.data->stats[item_index].acc_time, exec_time);
 
   /* global stats */
-  after_value = ATOMIC_INC_64 (&mntMonitor.data->stats[item].value, value);
+  after_value = ATOMIC_INC_64 (&mntCollector.data->stats[item].value, value);
   after_exec_time =
-    ATOMIC_INC_64 (&mntMonitor.data->stats[item].acc_time, exec_time);
+    ATOMIC_INC_64 (&mntCollector.data->stats[item].acc_time, exec_time);
 }
 
 /*
  * monitor_stats_gauge -
  */
 void
-monitor_stats_gauge (int thread_index, int item, INT64 value)
+monitor_stats_gauge (int mnt_id, int item, INT64 value)
 {
+  UNUSED_VAR INT64 after_value;
   int item_index;
 
-  if (mntMonitor.info == NULL || mntMonitor.data == NULL
-      || mntMonitor.type != MONITOR_TYPE_COLLECTOR)
+  if (mntCollector.info == NULL || mntCollector.data == NULL
+      || mntCollector.type != MONITOR_TYPE_COLLECTOR)
     {
       return;
     }
 
-  if (item < 0 || item >= mntMonitor.num_stats
-      || thread_index <= 0 || thread_index > mntMonitor.data->num_threads
-      || mntMonitor.info[item].value_type != MONITOR_STATS_VALUE_GAUGE)
+  if (item < 0 || item >= mntCollector.num_stats
+      || mnt_id <= 0 || mnt_id > mntCollector.data->num_monitors
+      || mntCollector.info[item].value_type != MONITOR_STATS_VALUE_GAUGE)
     {
       assert (false);
       return;
     }
 
   /* thread stats */
-  item_index = thread_index * mntMonitor.num_stats + item;
-  mntMonitor.data->stats[item_index].value = value;
+  item_index = mnt_id * mntCollector.num_stats + item;
+  after_value =
+    ATOMIC_TAS_64 (&mntCollector.data->stats[item_index].value, value);
+
 
   /* global stats */
-  value = ATOMIC_TAS_64 (&mntMonitor.data->stats[item].value, value);
+  after_value = ATOMIC_TAS_64 (&mntCollector.data->stats[item].value, value);
 }
 
 /*
@@ -1239,32 +1244,32 @@ monitor_stats_gauge (int thread_index, int item, INT64 value)
  *   item(in):
  */
 INT64
-monitor_get_stats_with_time (UINT64 * acc_time, int thread_index, int item)
+monitor_get_stats_with_time (UINT64 * acc_time, int mnt_id, int item)
 {
   int item_index;
 
-  if (mntMonitor.info == NULL || mntMonitor.data == NULL
-      || mntMonitor.type != MONITOR_TYPE_COLLECTOR)
+  if (mntCollector.info == NULL || mntCollector.data == NULL
+      || mntCollector.type != MONITOR_TYPE_COLLECTOR)
     {
       assert (false);
       return 0;
     }
 
-  if (item < 0 || item >= mntMonitor.num_stats
-      || thread_index <= 0 || thread_index > mntMonitor.data->num_threads)
+  if (item < 0 || item >= mntCollector.num_stats
+      || mnt_id <= 0 || mnt_id > mntCollector.data->num_monitors)
     {
       assert (false);
       return 0;
     }
 
   /* thread stats */
-  item_index = thread_index * mntMonitor.num_stats + item;
+  item_index = mnt_id * mntCollector.num_stats + item;
   if (acc_time != NULL)
     {
-      *acc_time = mntMonitor.data->stats[item_index].acc_time;
+      *acc_time = mntCollector.data->stats[item_index].acc_time;
     }
 
-  return mntMonitor.data->stats[item_index].value;
+  return mntCollector.data->stats[item_index].value;
 }
 
 /*
@@ -1275,9 +1280,9 @@ monitor_get_stats_with_time (UINT64 * acc_time, int thread_index, int item)
  *   item(in):
  */
 INT64
-monitor_get_stats (int thread_index, int item)
+monitor_get_stats (int mnt_id, int item)
 {
-  return monitor_get_stats_with_time (NULL, thread_index, item);
+  return monitor_get_stats_with_time (NULL, mnt_id, item);
 }
 
 
@@ -1375,8 +1380,7 @@ monitor_create_viewer (const char *name, int shm_key, RYE_SHM_TYPE shm_type)
       goto exit_on_error;
     }
 
-  if (shm_p->num_mnt_stats != num_stats
-      || shm_p->shm_header.shm_key != shm_key)
+  if (shm_p->num_stats != num_stats || shm_p->shm_header.shm_key != shm_key)
     {
       assert (false);
 
@@ -1483,7 +1487,7 @@ monitor_open_viewer_data (MONITOR_INFO * monitor, int num_stats)
 	}
     }
 
-  if (num_stats != shm_p->num_mnt_stats || num_stats != monitor->num_stats)
+  if (num_stats != shm_p->num_stats || num_stats != monitor->num_stats)
     {
       assert (false);
 
@@ -1513,7 +1517,7 @@ monitor_close_viewer_data (MONITOR_INFO * monitor, int num_stats)
       return ER_FAILED;
     }
 
-  if (monitor->data != NULL && monitor->data->num_mnt_stats == num_stats)
+  if (monitor->data != NULL && monitor->data->num_stats == num_stats)
     {
       rye_shm_detach (monitor->data);
       monitor->data = NULL;
@@ -1529,19 +1533,19 @@ monitor_close_viewer_data (MONITOR_INFO * monitor, int num_stats)
  *   monitor(in/out):
  *   to_stats(out):
  *   num_stats(in):
- *   int thread_index(in):
+ *   int mnt_id(in):
  */
 int
 monitor_copy_stats (MONITOR_INFO * monitor,
-		    MONITOR_STATS * to_stats, int num_stats, int thread_index)
+		    MONITOR_STATS * to_stats, int num_stats, int mnt_id)
 {
   RYE_MONITOR_SHM *shm_p = NULL;
   int error = NO_ERROR;
 
   if (monitor == NULL)
     {
-      assert (mntMonitor.type == MONITOR_TYPE_COLLECTOR);
-      shm_p = mntMonitor.data;
+      assert (mntCollector.type == MONITOR_TYPE_COLLECTOR);
+      shm_p = mntCollector.data;
     }
   else
     {
@@ -1553,7 +1557,7 @@ monitor_copy_stats (MONITOR_INFO * monitor,
       shm_p = monitor->data;
     }
 
-  if (shm_p == NULL || thread_index <= 0 || thread_index > shm_p->num_threads)
+  if (shm_p == NULL || mnt_id <= 0 || mnt_id > shm_p->num_monitors)
     {
       assert (false);
 
@@ -1561,7 +1565,7 @@ monitor_copy_stats (MONITOR_INFO * monitor,
     }
 
   /* copy thread stats */
-  memcpy (to_stats, &shm_p->stats[thread_index * num_stats],
+  memcpy (to_stats, &shm_p->stats[mnt_id * num_stats],
 	  sizeof (MONITOR_STATS) * num_stats);
 
   return error;
@@ -1574,7 +1578,6 @@ monitor_copy_stats (MONITOR_INFO * monitor,
  *   monitor(in/out):
  *   to_stats(out):
  *   num_stats(in):
- *   int thread_index(in):
  */
 int
 monitor_copy_global_stats (MONITOR_INFO * monitor,
@@ -1585,8 +1588,8 @@ monitor_copy_global_stats (MONITOR_INFO * monitor,
 
   if (monitor == NULL)
     {
-      assert (mntMonitor.type == MONITOR_TYPE_COLLECTOR);
-      shm_p = mntMonitor.data;
+      assert (mntCollector.type == MONITOR_TYPE_COLLECTOR);
+      shm_p = mntCollector.data;
     }
   else
     {
@@ -1629,17 +1632,19 @@ monitor_diff_stats (MONITOR_INFO * monitor, MONITOR_STATS * diff_stats,
   if (diff_stats == NULL || new_stats == NULL || old_stats == NULL)
     {
       assert (0);
+      memset (diff_stats, 0, sizeof (MONITOR_STATS) * num_stats);
       return ER_FAILED;
     }
 
   if (monitor == NULL)
     {
-      assert (mntMonitor.type == MONITOR_TYPE_COLLECTOR);
-      monitor = &mntMonitor;
+      assert (mntCollector.type == MONITOR_TYPE_COLLECTOR);
+      monitor = &mntCollector;
     }
   if (monitor->num_stats != num_stats)
     {
       assert (false);
+      memset (diff_stats, 0, sizeof (MONITOR_STATS) * num_stats);
       return ER_FAILED;
     }
 
@@ -1748,8 +1753,8 @@ monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
 
   if (monitor == NULL)
     {
-      assert (mntMonitor.type == MONITOR_TYPE_COLLECTOR);
-      monitor = &mntMonitor;
+      assert (mntCollector.type == MONITOR_TYPE_COLLECTOR);
+      monitor = &mntCollector;
     }
   if (monitor->num_stats != num_stats)
     {
