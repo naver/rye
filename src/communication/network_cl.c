@@ -632,23 +632,6 @@ net_histo_print (FILE * stream)
 }
 
 /*
- * net_histo_print_global_stats -
- *
- * return:
- *
- * Note:
- */
-void
-net_histo_print_global_stats (FILE * stream, bool cumulative,
-			      const char *substr, const char *db_name)
-{
-  if (net_Histo_setup_mnt || db_name != NULL)
-    {
-      mnt_print_global_stats (stream, cumulative, substr, db_name);
-    }
-}
-
-/*
  * net_histo_start -
  *
  * return: NO_ERROR or ER_FAILED
