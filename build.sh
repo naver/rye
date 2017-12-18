@@ -1052,6 +1052,8 @@ function get_options ()
 
 function build_dist ()
 {
+  build_install
+
   if [ "$build_mode" = "coverage" ]; then
     print_error "Pakcages with coverage mode is not supported. Skip"
     return 0
@@ -1075,7 +1077,8 @@ function build_prepare ()
 
 function build_build ()
 {
-  build_prepare && build_configure && build_compile && build_install
+  build_prepare && build_configure && build_compile
+#  build_prepare && build_configure && build_compile && build_install
 }
 
 
