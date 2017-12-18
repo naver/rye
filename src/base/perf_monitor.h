@@ -35,6 +35,7 @@
 #include "thread.h"
 #include "storage_common.h"
 #include "critical_section.h"
+#include "monitor.h"
 
 /* EXPORTED GLOBAL DEFINITIONS */
 #define MAX_DIAG_DATA_VALUE     0xfffffffffffffLL
@@ -261,14 +262,7 @@ typedef enum
   MNT_STATS_QUERY_SSCANS,
   MNT_STATS_QUERY_ISCANS,
   MNT_STATS_QUERY_LSCANS,
-#if 0
-  MNT_STATS_QUERY_METHSCANS,
-#endif
   MNT_STATS_QUERY_NLJOINS,
-#if 0
-  MNT_STATS_QUERY_MJOINS,
-  MNT_STATS_QUERY_OBJFETCHES,
-#endif
   MNT_STATS_QUERY_HOLDABLE_CURSORS,
 
   /* execution statistics for external sort */
@@ -333,23 +327,11 @@ typedef enum
       || m == MNT_STATS_DATA_PAGE_FETCHES_BTREE \
       || m == MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN) ? MNT_STATS_DATA_PAGE_FETCHES : m)
 
-/*
- * Server execution statistic structure
- */
-typedef struct mnt_server_exec_stats MNT_SERVER_EXEC_STATS;
-struct mnt_server_exec_stats
-{
-  INT64 values[MNT_SIZE_OF_SERVER_EXEC_STATS];
-  UINT64 acc_time[MNT_SIZE_OF_SERVER_EXEC_STATS];
-};
 
 #if defined(CS_MODE) || defined(SA_MODE)
 extern int mnt_start_stats (bool for_all_trans);
 extern int mnt_stop_stats (void);
 extern void mnt_reset_stats (void);
-extern void mnt_print_stats (FILE * stream);
-extern void mnt_print_global_stats (FILE * stream, bool cumulative,
-				    const char *substr, const char *db_name);
 #endif /* CS_MODE || SA_MODE */
 
 #if defined(SERVER_MODE) || defined (SA_MODE)
@@ -382,11 +364,8 @@ extern INT64 mnt_get_stats_with_time (THREAD_ENTRY * thread_p,
 				      MNT_SERVER_ITEM item,
 				      UINT64 * acc_time);
 extern INT64 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item);
-
-extern void mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS *
-					     stats, char *buffer,
-					     int buf_size,
-					     const char *substr);
+extern void mnt_server_copy_stats (THREAD_ENTRY * thread_p,
+				   MONITOR_STATS * to_stats);
 #else /* SERVER_MODE || SA_MODE */
 #define mnt_stats_counter(THREAD_P,ITEM,VALUE)
 #define mnt_stats_counter_with_time(THREAD_P,ITEM,VALUE,START_TIME)
@@ -395,11 +374,7 @@ extern void mnt_server_dump_stats_to_buffer (const MNT_SERVER_EXEC_STATS *
 #define PERF_MON_GET_CURRENT_TIME(VAR)
 #endif /* CS_MODE */
 
-extern int mnt_diff_stats (MNT_SERVER_EXEC_STATS * diff_stats,
-			   MNT_SERVER_EXEC_STATS * new_stats,
-			   MNT_SERVER_EXEC_STATS * old_stats);
-extern bool mnt_stats_is_cumulative (MNT_SERVER_ITEM item);
-extern bool mnt_stats_is_collecting_time (MNT_SERVER_ITEM item);
+extern void mnt_calc_hit_ratio (MONITOR_STATS * stats);
 
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item (const CSECT_TYPE ctype);
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item_waits (const CSECT_TYPE
@@ -412,7 +387,6 @@ extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches (const PAGE_TYPE
 extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches_waits (const
 								    PAGE_TYPE
 								    ptype);
-
 extern UINT64 mnt_clock_to_time (const UINT64 acc_time);
 
 #endif /* _PERF_MONITOR_H_ */

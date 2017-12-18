@@ -426,24 +426,6 @@ net_server_init (void)
   req_p->processing_function = sqfile_get_list_file_page;
   req_p->name = "NET_SERVER_LS_GET_LIST_FILE_PAGE";
 
-  /* monitor */
-#if defined (ENABLE_UNUSED_FUNCTION)
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_START_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_start_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_START_STATS";
-
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_STOP_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_stop_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_STOP_STATS";
-#endif
-
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_COPY_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_copy_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_COPY_STATS";
-
   /* catalog */
   req_p = &net_Requests[NET_SERVER_CT_CAN_ACCEPT_NEW_REPR];
   req_p->action_attribute = (CHECK_DB_MODIFICATION | IN_TRANSACTION);
@@ -505,23 +487,10 @@ net_server_init (void)
   req_p->processing_function = slogwr_get_log_pages;
   req_p->name = "NET_SERVER_LOGWR_GET_LOG_PAGES";
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-  /* test */
-  req_p = &net_Requests[NET_SERVER_TEST_PERFORMANCE];
-  req_p->processing_function = stest_performance;
-  req_p->name = "NET_SERVER_TEST_PERFORMANCE";
-#endif
-
   /* shutdown */
   req_p = &net_Requests[NET_SERVER_SHUTDOWN];
   req_p->action_attribute = CHECK_AUTHORIZATION;
   req_p->name = "NET_SERVER_SHUTDOWN";
-
-  /* monitor */
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_COPY_GLOBAL_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_copy_global_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_COPY_GLOBAL_STATS";
 
   /* session state */
   req_p = &net_Requests[NET_SERVER_SES_CHECK_SESSION];
@@ -540,12 +509,6 @@ net_server_init (void)
   req_p = &net_Requests[NET_SERVER_ACL_RELOAD];
   req_p->processing_function = sacl_reload;
   req_p->name = "NET_SERVER_ACL_RELOAD";
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-  req_p = &net_Requests[NET_SERVER_LOGIN_USER];
-  req_p->processing_function = slogin_user;
-  req_p->name = "NET_SERVER_SET_USERNAME";
-#endif
 
   req_p = &net_Requests[NET_SERVER_LC_REPL_FORCE];
   req_p->action_attribute = (CHECK_DB_MODIFICATION | IN_TRANSACTION);

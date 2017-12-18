@@ -7592,11 +7592,7 @@ exit_on_error:
 
 /* TODO - index crash */
   thread_p = thread_get_thread_entry_info ();
-  if (thread_p == NULL)
-    {
-      assert (false);		/* give up */
-    }
-  else
+  if (thread_p != NULL)
     {
       char index_name_on_table[LINE_MAX];
 

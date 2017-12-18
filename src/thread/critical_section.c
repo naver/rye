@@ -1635,10 +1635,10 @@ csect_dump_statistics (FILE * fp)
 {
   CSS_CRITICAL_SECTION *cs_ptr;
   int i;
-  MNT_SERVER_EXEC_STATS stats;
+  MONITOR_STATS stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
   MNT_SERVER_ITEM item, item_waits;
 
-  svr_shm_copy_global_stats (&stats);
+  monitor_copy_global_stats (NULL, stats, MNT_SIZE_OF_SERVER_EXEC_STATS);
 
   fprintf (fp,
 	   "              CS Name   "
@@ -1654,14 +1654,12 @@ csect_dump_statistics (FILE * fp)
 
       fprintf (fp,
 	       "%23s |%20ld |%20ld |%20ld |%6ld.%06ld\n",
-	       cs_ptr->name, stats.values[item], stats.values[item_waits],
-	       mnt_clock_to_time (stats.acc_time[item_waits]),
+	       cs_ptr->name, stats[item].value, stats[item_waits].value,
+	       mnt_clock_to_time (stats[item_waits].acc_time),
 	       cs_ptr->max_wait.tv_sec, cs_ptr->max_wait.tv_usec);
 
-#if 1				/* TODO - */
       cs_ptr->max_wait.tv_sec = 0;
       cs_ptr->max_wait.tv_usec = 0;
-#endif
     }
 }
 

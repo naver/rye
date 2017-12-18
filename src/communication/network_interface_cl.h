@@ -231,12 +231,6 @@ extern int qmgr_get_query_info (DB_QUERY_RESULT * query_result, int *done,
 extern int qmgr_sync_query (DB_QUERY_RESULT * query_result, int wait);
 #endif
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern int mnt_server_start_stats (bool for_all_trans);
-extern int mnt_server_stop_stats (void);
-#endif
-extern int mnt_server_copy_stats (MNT_SERVER_EXEC_STATS * to_stats);
-extern int mnt_server_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats);
 extern int catalog_is_acceptable_new_representation (OID * class_id,
 						     HFID * hfid,
 						     int *can_accept);
@@ -265,17 +259,11 @@ extern bool histo_is_supported (void);
 extern int histo_start (bool for_all_trans);
 extern int histo_stop (void);
 extern void histo_print (FILE * stream);
-extern void histo_print_global_stats (FILE * stream, bool cumulative,
-				      const char *substr,
-				      const char *db_name);
 extern void histo_clear (void);
 
 extern int net_histo_start (bool for_all_trans);
 extern int net_histo_stop (void);
 extern void net_histo_print (FILE * stream);
-extern void net_histo_print_global_stats (FILE * stream, bool cumulative,
-					  const char *substr,
-					  const char *db_name);
 extern void net_histo_clear (void);
 
 extern int net_client_request_send_msg (unsigned int *eid, int request,
@@ -341,9 +329,6 @@ extern int csession_find_or_create_session (SESSION_ID * session_id,
 					    const char *program_name);
 extern int csession_end_session (SESSION_ID session_id);
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern int clogin_user (const char *username);
-#endif
 extern int logtb_update_group_id (int migrator_id, int group_id, int target,
 				  int on_off);
 extern int logtb_block_globl_dml (int start_or_end);
