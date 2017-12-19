@@ -1742,9 +1742,7 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
 	  assert (error != NO_ERROR && logpb == NULL);
 	  if (error == NO_ERROR)
 	    {
-	      error = ER_GENERIC_ERROR;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		      "Invalid return value");
+	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	    }
 
 	  return error;
@@ -1757,9 +1755,7 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
 	{
 	  cirp_logpb_clear_logpb (logpb);
 
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, "memory hash table error");
+	  REPL_SET_GENERIC_ERROR (error, "memory hash table error");
 	  return error;
 	}
 
@@ -1774,9 +1770,7 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
 	  (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
 	  cirp_logpb_clear_logpb (logpb);
 
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, "Invalid log page");
+	  REPL_SET_GENERIC_ERROR (error, "Invalid log page");
 	  return error;
 	}
 
@@ -1825,9 +1819,7 @@ cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr,
     {
       assert (false);
 
-      error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "Invalid arguments");
+      REPL_SET_GENERIC_ERROR (error, "Invalid arguments");
       return error;
     }
   *log_page = NULL;
@@ -1873,6 +1865,7 @@ cirp_logpb_release_debug (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
 {
   CIRP_LOGPB_CACHE *cache;
   CIRP_LOGPB *logpb = NULL;
+  int error = NO_ERROR;
 
   cache = &buf_mgr->cache;
 
@@ -1888,9 +1881,8 @@ cirp_logpb_release_debug (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
     {
       assert (false);
 
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
-	      "repl log buffer error");
-      return ER_GENERIC_ERROR;
+      REPL_SET_GENERIC_ERROR (error, "repl log buffer error");
+      return error;
     }
 
   logpb->num_fixed--;
@@ -1908,6 +1900,7 @@ cirp_logpb_release_debug (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
   }
 #endif
 
+  assert (error == NO_ERROR);
   return NO_ERROR;
 }
 
@@ -2353,15 +2346,16 @@ cirp_realloc_recdes_data (CIRP_BUF_MGR * buf_mgr, RECDES * recdes,
 			  int data_size)
 {
   CIRP_RECDES_POOL *pool = NULL;
+  int error = NO_ERROR;
 
   pool = &buf_mgr->la_recdes_pool;
 
   if (pool->is_initialized == false)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
-	      "invalid arguments");
-      return ER_GENERIC_ERROR;
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid arguments");
+      return error;
     }
 
   if (recdes->area_size < data_size)
@@ -2375,15 +2369,16 @@ cirp_realloc_recdes_data (CIRP_BUF_MGR * buf_mgr, RECDES * recdes,
       recdes->data = (char *) malloc (data_size);
       if (recdes->data == NULL)
 	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OUT_OF_VIRTUAL_MEMORY, 1, data_size);
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
+	  error = ER_OUT_OF_VIRTUAL_MEMORY;
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, data_size);
+	  return error;
 	}
 
       recdes->area_size = data_size;
     }
   recdes->length = 0;
 
+  assert (error == NO_ERROR);
   return NO_ERROR;
 }
 
@@ -2522,9 +2517,7 @@ exit_on_error:
   if (error == NO_ERROR)
     {
       assert (false);
-      error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
     }
 
   cirp_logpb_final (buf_mgr);
@@ -2533,28 +2526,38 @@ exit_on_error:
 }
 
 /*
- * cirp_assign_recdes_from_pool() - get a recdes from pool
- *   return: a recdes having area with size of db page size
+ * rp_assign_recdes_from_pool() - get a recdes from pool
+ *   return: error code
  *
  *   buf_mgr(in/out):
+ *   rec(out): a recdes having area with size of db page size
  *
  * Note: if a recdes that is about to be assigned has an area
  * greater than db page size, then it first frees the area.
  */
-RECDES *
-cirp_assign_recdes_from_pool (CIRP_BUF_MGR * buf_mgr)
+int
+rp_assign_recdes_from_pool (CIRP_BUF_MGR * buf_mgr, RECDES ** rec)
 {
   CIRP_RECDES_POOL *pool;
   RECDES *recdes;
+  int error = NO_ERROR;
+
+  if (buf_mgr == NULL || rec == NULL)
+    {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid arguments");
+      return error;
+    }
+  *rec = NULL;
 
   pool = &buf_mgr->la_recdes_pool;
 
   if (pool->is_initialized == false)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
-	      "log buffer pool not initialized");
+      REPL_SET_GENERIC_ERROR (error, "log buffer pool not initialized");
 
-      return NULL;
+      return error;
     }
 
   recdes = &pool->recdes_arr[pool->next_idx];
@@ -2573,7 +2576,10 @@ cirp_assign_recdes_from_pool (CIRP_BUF_MGR * buf_mgr)
   pool->next_idx++;
   pool->next_idx %= pool->num_recdes;
 
-  return recdes;
+  *rec = recdes;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 
@@ -2634,9 +2640,7 @@ exit_on_error:
     {
       assert (false);
 
-      error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid error code");
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
     }
 
   if (pgptr != NULL && pgptr != org_pgptr)
@@ -2820,13 +2824,7 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
       area_offset += copy_length;
       log_offset += copy_length;
     }
-
-  if (pgptr == NULL)
-    {
-      assert (false);
-      error = er_errid ();
-      GOTO_EXIT_ON_ERROR;
-    }
+  assert (error == NO_ERROR && pgptr != NULL);
 
   if (pgptr != org_pgptr)
     {
@@ -2841,8 +2839,7 @@ exit_on_error:
     {
       assert (false);
 
-      error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid error");
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
     }
 
   if (pgptr != NULL && pgptr != org_pgptr)
@@ -2857,27 +2854,148 @@ exit_on_error:
  * cirp_make_repl_item_from_log ()
  *    return: repl_item
  *
+ *    repl_item(out):
  *    log_pgptr(in):
  *    log_type(in):
  *    tranid(in):
  *    lsa(in):
  */
-CIRP_REPL_ITEM *
-cirp_make_repl_item_from_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGE * org_pgptr,
-			      int log_type, const LOG_LSA * lsa)
+int
+rp_make_repl_data_item_from_log (CIRP_BUF_MGR * buf_mgr,
+				 CIRP_REPL_ITEM * repl_item,
+				 LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
 {
   int error = NO_ERROR;
-  CIRP_REPL_ITEM *item = NULL;
   struct log_replication *repl_log;
   LOG_PAGE *pgptr;
   PGLENGTH offset;
   LOG_PAGEID pageid;
   int length;			/* type change PGLENGTH -> int */
   char *ptr;
-
+  RP_DATA_ITEM *data;
   char *area = NULL;
 
-  assert (buf_mgr != NULL && org_pgptr != NULL && lsa != NULL);
+  assert (buf_mgr != NULL && repl_item != NULL
+	  && org_pgptr != NULL && lsa != NULL);
+  assert (repl_item->item_type == RP_ITEM_TYPE_DATA);
+
+  pgptr = org_pgptr;
+  pageid = lsa->pageid;
+  offset = lsa->offset + DB_SIZEOF (LOG_RECORD_HEADER);
+  length = DB_SIZEOF (struct log_replication);
+
+  error = rp_log_read_align (buf_mgr, &pgptr, &pageid, &offset, org_pgptr);
+  if (error != NO_ERROR || pgptr == NULL)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
+					       &offset, length, org_pgptr);
+  if (error != NO_ERROR || pgptr == NULL)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  repl_log = (struct log_replication *) ((char *) pgptr->area + offset);
+  offset += length;
+  length = repl_log->length;
+
+  error = rp_log_read_align (buf_mgr, &pgptr, &pageid, &offset, org_pgptr);
+  if (error != NO_ERROR || pgptr == NULL)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  area = (char *) malloc (length);
+  if (area == NULL)
+    {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, length);
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  error = cirp_log_copy_fromlog (buf_mgr, NULL, area, length, pageid,
+				 offset, pgptr);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  data = &repl_item->info.data;
+
+  LSA_COPY (&data->target_lsa, &repl_log->lsa);
+  data->rcv_index = repl_log->rcvindex;
+
+  ptr = or_unpack_int (area, &data->groupid);
+  ptr = or_unpack_string (ptr, &data->class_name);
+  assert (ptr != NULL);
+  ptr = or_unpack_db_idxkey (ptr, &data->key);
+  assert (ptr != NULL);
+
+  if (area)
+    {
+      free_and_init (area);
+    }
+
+  if (pgptr != NULL && pgptr != org_pgptr)
+    {
+      cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
+    }
+
+  assert (error == NO_ERROR);
+  return error;
+
+exit_on_error:
+  if (error == NO_ERROR)
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
+    }
+
+  if (area != NULL)
+    {
+      free_and_init (area);
+    }
+
+  if (pgptr != NULL && pgptr != org_pgptr)
+    {
+      cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
+    }
+
+  return error;
+}
+
+/*
+ * cirp_make_repl_schema_item_from_log ()
+ *    return: repl_item
+ *
+ *    repl_item(out):
+ *    log_pgptr(in):
+ *    log_type(in):
+ *    tranid(in):
+ *    lsa(in):
+ */
+int
+rp_make_repl_schema_item_from_log (CIRP_BUF_MGR * buf_mgr,
+				   CIRP_REPL_ITEM * repl_item,
+				   LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
+{
+  int error = NO_ERROR;
+  struct log_replication *repl_log;
+  LOG_PAGE *pgptr;
+  PGLENGTH offset;
+  LOG_PAGEID pageid;
+  int length;			/* type change PGLENGTH -> int */
+  char *ptr;
+  RP_DDL_ITEM *ddl;
+  const char *class_name;
+  int tmp;
+  char *area = NULL;
+
+  assert (buf_mgr != NULL && repl_item != NULL
+	  && org_pgptr != NULL && lsa != NULL);
+  assert (repl_item->item_type == RP_ITEM_TYPE_DDL);
 
   pgptr = org_pgptr;
   pageid = lsa->pageid;
@@ -2922,59 +3040,15 @@ cirp_make_repl_item_from_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGE * org_pgptr,
       GOTO_EXIT_ON_ERROR;
     }
 
-  switch (log_type)
-    {
-    case LOG_REPLICATION_DATA:
-      {
-	RP_DATA_ITEM *data;
+  ddl = &repl_item->info.ddl;
+  assert (LSA_EQ (lsa, &ddl->lsa));
 
-	item = cirp_new_repl_item_data (lsa, &repl_log->lsa);
-	if (item == NULL)
-	  {
-	    error = er_errid ();
-	    GOTO_EXIT_ON_ERROR;
-	  }
-	data = &item->info.data;
-
-	data->rcv_index = repl_log->rcvindex;
-
-	ptr = or_unpack_int (area, &data->groupid);
-	ptr = or_unpack_string (ptr, &data->class_name);
-	assert (ptr != NULL);
-	ptr = or_unpack_db_idxkey (ptr, &data->key);
-	assert (ptr != NULL);
-      }
-      break;
-
-    case LOG_REPLICATION_SCHEMA:
-      {
-	RP_DDL_ITEM *ddl;
-	const char *class_name;
-	int tmp;
-
-	item = cirp_new_repl_item_ddl (lsa);
-	if (item == NULL)
-	  {
-	    error = er_errid ();
-	    GOTO_EXIT_ON_ERROR;
-	  }
-	ddl = &item->info.ddl;
-
-	ptr = or_unpack_int (area, &tmp);
-	ddl->stmt_type = tmp;
-	ptr = or_unpack_int (ptr, &ddl->ddl_type);
-	ptr = or_unpack_string_nocopy (ptr, &class_name);
-	ptr = or_unpack_string (ptr, &ddl->query);
-	ptr = or_unpack_string (ptr, &ddl->db_user);
-      }
-      break;
-
-    default:
-      /* unknown log type */
-      error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, __FILE__);
-      GOTO_EXIT_ON_ERROR;
-    }
+  ptr = or_unpack_int (area, &tmp);
+  ddl->stmt_type = tmp;
+  ptr = or_unpack_int (ptr, &ddl->ddl_type);
+  ptr = or_unpack_string_nocopy (ptr, &class_name);
+  ptr = or_unpack_string (ptr, &ddl->query);
+  ptr = or_unpack_string (ptr, &ddl->db_user);
 
   if (area)
     {
@@ -2987,20 +3061,18 @@ cirp_make_repl_item_from_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGE * org_pgptr,
     }
 
   assert (error == NO_ERROR);
-  return item;
+  return error;
 
 exit_on_error:
-  assert (error != NO_ERROR);
+  if (error == NO_ERROR)
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
+    }
 
   if (area != NULL)
     {
       free_and_init (area);
-    }
-
-  if (item != NULL)
-    {
-      cirp_free_repl_item (item);
-      item = NULL;
     }
 
   if (pgptr != NULL && pgptr != org_pgptr)
@@ -3008,7 +3080,7 @@ exit_on_error:
       cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
     }
 
-  return NULL;
+  return error;
 }
 
 /*
@@ -3022,7 +3094,7 @@ exit_on_error:
 int
 cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
 				struct log_gid_bitmap_update *gbu,
-				LOG_PAGE * org_pgptr, LOG_LSA * lsa)
+				LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
 {
   int error = NO_ERROR;
   LOG_PAGEID pageid;
@@ -3039,7 +3111,7 @@ cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
     }
 
   pageid = lsa->pageid;
-  offset = DB_SIZEOF (LOG_RECORD_HEADER) + lsa->offset;
+  offset = lsa->offset + DB_SIZEOF (LOG_RECORD_HEADER);
   pgptr = org_pgptr;
 
   length = DB_SIZEOF (struct log_gid_bitmap_update);
