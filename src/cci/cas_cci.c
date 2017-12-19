@@ -2452,7 +2452,8 @@ cci_mgmt_sync_shard_mgmt_info (const char *hostname, int mgmt_port,
 int
 cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 			 const char *hostname, int mgmt_port,
-			 int launch_proc_id, bool wait_child,
+			 int launch_proc_id,
+			 bool recv_stdout, bool wait_child,
 			 int argc, const char **argv,
 			 int num_env, const char **envp, int timeout_msec)
 {
@@ -2466,7 +2467,7 @@ cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
     }
 
   error = net_mgmt_launch_process_req (launch_result, &host_info,
-				       launch_proc_id,
+				       launch_proc_id, recv_stdout,
 				       (wait_child ? 1 : 0),
 				       argc, argv, num_env, envp,
 				       timeout_msec);

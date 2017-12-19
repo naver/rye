@@ -1223,8 +1223,8 @@ net_mgmt_shard_mgmt_info_req (const T_HOST_INFO * host,
 int
 net_mgmt_launch_process_req (T_CCI_LAUNCH_RESULT * launch_result,
 			     const T_HOST_INFO * host,
-			     int launch_proc_id, bool wait_child,
-			     int argc, const char **argv,
+			     int launch_proc_id, bool recv_stdout,
+			     bool wait_child, int argc, const char **argv,
 			     int num_env, const char **envp, int timeout_msec)
 {
   T_BROKER_REQUEST_MSG *req_msg = NULL;
@@ -1234,6 +1234,12 @@ net_mgmt_launch_process_req (T_CCI_LAUNCH_RESULT * launch_result,
   bool async_recv = (wait_child ? false : true);
   bool force_wait = (wait_child ? true : false);
   T_ASYNC_LAUNCH_RESULT *async_launch_res = NULL;
+  int flag = MGMT_LAUNCH_FLAG_NO_FLAG;
+
+  if (recv_stdout == false)
+    {
+      flag |= MGMT_LAUNCH_FLAG_NO_RESULT;
+    }
 
   if (!wait_child)
     {
@@ -1249,6 +1255,7 @@ net_mgmt_launch_process_req (T_CCI_LAUNCH_RESULT * launch_result,
 
   req_msg = make_mgmt_request_msg (BRREQ_OP_CODE_LAUNCH_PROCESS,
 				   MGMT_REQ_ARG_INT, launch_proc_id,
+				   MGMT_REQ_ARG_INT, flag,
 				   MGMT_REQ_ARG_STR_ARRAY, argc, argv,
 				   MGMT_REQ_ARG_STR_ARRAY, num_env, envp,
 				   MGMT_REQ_ARG_END);
