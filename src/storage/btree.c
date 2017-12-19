@@ -171,8 +171,6 @@ static int btree_top_n_items_binary_search (RANGE_OPT_ITEM ** top_n_items,
 					    DB_VALUE * new_key_values,
 					    int no_keys, int first, int last,
 					    int *new_pos);
-static int btree_get_record (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
-			     int slot_id, RECDES * rec, int is_peeking);
 static int btree_delete_key_from_leaf (THREAD_ENTRY * thread_p,
 				       BTID_INT * btid, PAGE_PTR leaf_pg,
 				       INT16 slot_id, const DB_IDXKEY * key);
@@ -4895,44 +4893,6 @@ error:
 }
 
 /*
- * btree_get_record -
- *   return:
- *
- *   page_p(in):
- *   slot_id(in):
- *   rec(out):
- *   is_peeking(in):
- */
-static int
-btree_get_record (UNUSED_ARG THREAD_ENTRY * thread_p, PAGE_PTR page_p,
-		  int slot_id, RECDES * rec, int is_peeking)
-{
-#if !defined(NDEBUG)
-  BTREE_NODE_HEADER node_header;
-
-  if (btree_read_node_header (NULL, page_p, &node_header) != NO_ERROR)
-    {
-      goto error;
-    }
-#endif
-
-  if (slot_id <= HEADER)
-    {
-      goto error;
-    }
-
-  if (spage_get_record (page_p, slot_id, rec, is_peeking) != S_SUCCESS)
-    {
-      goto error;
-    }
-
-  return NO_ERROR;
-
-error:
-  return ((er_errid () == NO_ERROR) ? ER_FAILED : er_errid ());
-}
-
-/*
  * btree_find_last_leaf () -
  *   return: page pointer
  *   btid(in):
@@ -4994,6 +4954,7 @@ btree_find_last_leaf (THREAD_ENTRY * thread_p, const BTID_INT * btid,
 	{
 	  goto error;
 	}
+
       btree_read_fixed_portion_of_non_leaf_record (&rec, &nleaf);
       Q_vpid = nleaf.pnt;
       Q =
@@ -5011,36 +4972,6 @@ btree_find_last_leaf (THREAD_ENTRY * thread_p, const BTID_INT * btid,
 	}
 
       node_type = BTREE_GET_NODE_TYPE (node_header.node_level);
-
-      if (node_type == BTREE_LEAF_NODE)
-	{
-	  int key_cnt;
-
-	  key_cnt = node_header.key_cnt;
-	  assert_release (key_cnt >= 0);
-
-	  /* for empty leaf-page, retry one more */
-	  if (key_cnt <= 0)
-	    {
-	      /* get the last sibling record */
-	      if (btree_get_record (thread_p, P, num_records - 2,
-				    &rec, PEEK) == NO_ERROR)
-		{
-		  pgbuf_unfix_and_init (thread_p, Q);
-
-		  btree_read_fixed_portion_of_non_leaf_record (&rec, &nleaf);
-		  Q_vpid = nleaf.pnt;
-		  Q =
-		    btree_pgbuf_fix (thread_p, &(btid->sys_btid->vfid),
-				     &Q_vpid, PGBUF_LATCH_READ,
-				     PGBUF_UNCONDITIONAL_LATCH, PAGE_BTREE);
-		  if (Q == NULL)
-		    {
-		      goto error;
-		    }
-		}
-	    }
-	}
 
       pgbuf_unfix_and_init (thread_p, P);
 
@@ -5442,10 +5373,10 @@ btree_initialize_bts (UNUSED_ARG THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 
 #if 0
 exit_on_error:
-#endif
 
   return (ret == NO_ERROR
 	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+#endif
 }
 
 /*
@@ -5976,9 +5907,8 @@ btree_apply_key_range_and_filter (THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
       if (c == DB_UNK)
 	{
 	  /* error should have been set */
-#if 1
 	  assert (er_errid () == ER_TP_CANT_COERCE);
-#endif
+
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -5989,10 +5919,28 @@ btree_apply_key_range_and_filter (THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 	}
     }
 
+  if (c == 0)
+    { /* is impossible case; last is OID, should be different */
+      char index_name_on_table[LINE_MAX];
+
+      /* init */
+      strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
+
+      (void) btree_get_indexname_on_table (thread_p, &(bts->btid_int),
+                                           index_name_on_table, LINE_MAX);
+
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_BTREE_PAGE_CORRUPTED,
+              1, index_name_on_table);
+      assert (false);
+
+      GOTO_EXIT_ON_ERROR;
+    }
+
   if (c < 0)			/* DB_LT */
     {
       *is_key_range_satisfied = false;
     }
+#if 0
   else if (c == 0)		/* DB_EQ */
     {
       if (bts->key_val->range == GT_LE
@@ -6005,6 +5953,7 @@ btree_apply_key_range_and_filter (THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
 	  *is_key_range_satisfied = false;
 	}
     }
+#endif
   else				/* DB_GT */
     {
       *is_key_range_satisfied = true;
@@ -6150,7 +6099,6 @@ btree_attrinfo_read_dbvalues (UNUSED_ARG THREAD_ENTRY * thread_p,
       attr_value->dbvalue = curr_key->vals[j];
       attr_value->dbvalue.need_clear = false;
 
-#if !defined(NDEBUG)
       if (pr_is_string_type (DB_VALUE_DOMAIN_TYPE (&(attr_value->dbvalue))))
 	{
 	  int precision = DB_VALUE_PRECISION (&(attr_value->dbvalue));
@@ -6158,12 +6106,12 @@ btree_attrinfo_read_dbvalues (UNUSED_ARG THREAD_ENTRY * thread_p,
 
 	  if (precision == TP_FLOATING_PRECISION_VALUE)
 	    {
+	      assert (false); /* TODO - trace */
 	      precision = DB_MAX_STRING_LENGTH;
 	    }
 
 	  assert (string_length <= precision);
 	}
-#endif
 
       attr_value->state = HEAP_WRITTEN_ATTRVALUE;
       attr_value++;
@@ -6208,6 +6156,9 @@ btree_dump_curr_key (THREAD_ENTRY * thread_p, INDX_SCAN_ID * iscan_id)
 
   /* pointer to index scan info. structure */
   bts = &(iscan_id->bt_scan);
+
+  assert (iscan_id->rest_attrs.num_attrs > 0);
+  assert (iscan_id->pred_attrs.num_attrs == 0); /* TODO - trace */
 
   if (iscan_id->rest_attrs.num_attrs > 0)
     {

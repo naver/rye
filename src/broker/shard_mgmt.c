@@ -6148,7 +6148,8 @@ launch_migrator_process (const char *global_dbname, int groupid,
   error = cci_mgmt_launch_process (launch_res, run_node_info->host_ip_str,
 				   PRM_NODE_INFO_GET_PORT (&run_node_info->
 							   host_info),
-				   MGMT_LAUNCH_PROCESS_MIGRATOR, wait_child,
+				   MGMT_LAUNCH_PROCESS_MIGRATOR,
+				   true, wait_child,
 				   argc, argv, num_env, envp, timeout_msec);
   return error;
 }
