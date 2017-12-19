@@ -470,15 +470,6 @@ net_histo_setup_names (void)
   net_Req_buffer[NET_SERVER_LS_GET_LIST_FILE_PAGE].name =
     "NET_SERVER_LS_GET_LIST_FILE_PAGE";
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-  net_Req_buffer[NET_SERVER_MNT_SERVER_START_STATS].name =
-    "NET_SERVER_MNT_SERVER_START_STATS";
-  net_Req_buffer[NET_SERVER_MNT_SERVER_STOP_STATS].name =
-    "NET_SERVER_MNT_SERVER_STOP_STATS";
-#endif
-  net_Req_buffer[NET_SERVER_MNT_SERVER_COPY_STATS].name =
-    "NET_SERVER_MNT_SERVER_COPY_STATS";
-
   net_Req_buffer[NET_SERVER_CT_CAN_ACCEPT_NEW_REPR].name =
     "NET_SERVER_CT_CAN_ACCEPT_NEW_REPR";
 
@@ -508,11 +499,6 @@ net_histo_setup_names (void)
 
   net_Req_buffer[NET_SERVER_LOGWR_GET_LOG_PAGES].name =
     "NET_SERVER_LOGWR_GET_LOG_PAGES";
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-  net_Req_buffer[NET_SERVER_TEST_PERFORMANCE].name =
-    "NET_SERVER_TEST_PERFORMANCE";
-#endif
 
   net_Req_buffer[NET_SERVER_SHUTDOWN].name = "NET_SERVER_SHUTDOWN";
 
@@ -624,10 +610,6 @@ net_histo_print (FILE * stream)
       fprintf (stream, "\n Average server response time = %6.6f secs \n"
 	       " Average time between client requests = %6.6f secs \n",
 	       avg_response_time, avg_client_time);
-    }
-  if (net_Histo_setup_mnt)
-    {
-      mnt_print_stats (stream);
     }
 }
 

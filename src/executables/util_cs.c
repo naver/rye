@@ -2860,7 +2860,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
 		    cur_global_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
 		    value / 100);
 
-	  monitor_dump_stats (monitor_info, outfp, &cur_global_stats,
+	  monitor_dump_stats (monitor_info, outfp, cur_global_stats,
 			      MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
 			      substr);
 	}
@@ -2871,13 +2871,15 @@ statdump (UTIL_FUNCTION_ARG * arg)
 				  old_global_stats,
 				  MNT_SIZE_OF_SERVER_EXEC_STATS) == NO_ERROR)
 	    {
+	      mnt_calc_hit_ratio (diff_stats);
+
 	      snprintf (tail, sizeof (tail),
 			"\n *** OTHER STATISTICS *** \n"
 			"Data_page_buffer_hit_ratio    = %10.2f\n",
 			(float)
 			diff_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
 			value / 100);
-	      monitor_dump_stats (monitor_info, outfp, &diff_stats,
+	      monitor_dump_stats (monitor_info, outfp, diff_stats,
 				  MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
 				  substr);
 	    }
