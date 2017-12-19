@@ -106,7 +106,8 @@ extern int cci_mgmt_sync_shard_mgmt_info (const char *hostname,
 					  int *server_mode, int timeout_msec);
 extern int cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 				    const char *hostname, int mgmt_port,
-				    int launch_proc_id, bool wait_child,
+				    int launch_proc_id,
+				    bool recv_stdout, bool wait_child,
 				    int argc, const char **argv, int num_env,
 				    const char **envp, int timeout_msec);
 extern int cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result,

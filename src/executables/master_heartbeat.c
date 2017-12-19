@@ -2961,7 +2961,7 @@ hb_resource_job_proc_start (HB_JOB_ARG * arg)
 	}
       else if (proc->type == HB_PTYPE_REPLICATION)
 	{
-	  exe_name = UTIL_RYE_REL_NAME;
+	  exe_name = UTIL_REPL_NAME;
 	}
       else
 	{

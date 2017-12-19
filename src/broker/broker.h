@@ -135,6 +135,7 @@ typedef struct
 typedef struct
 {
   T_MGMT_LAUNCH_PROCESS_ID launch_process_id;
+  int flag;
   int argc;
   int num_env;
   char **argv;
@@ -180,6 +181,11 @@ typedef struct
 
 typedef struct
 {
+  const char *file;
+} T_MGMT_REQ_ARG_RM_TMP_FILE;
+
+typedef struct
+{
   const char *clt_dbname;
   void *alloc_buffer;
   union
@@ -201,6 +207,7 @@ typedef struct
     T_MGMT_REQ_ARG_GET_CONF get_conf_arg;
     T_MGMT_REQ_ARG_BR_ACL_RELOAD br_acl_reload_arg;
     T_MGMT_REQ_ARG_CONNECT_DB_SERVER connect_db_server_arg;
+    T_MGMT_REQ_ARG_RM_TMP_FILE rm_tmp_file_arg;
     int dummy;
   } value;
 } T_MGMT_REQ_ARG;
