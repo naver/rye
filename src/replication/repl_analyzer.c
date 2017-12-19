@@ -95,15 +95,15 @@ static bool cirp_anlz_is_any_applier_busy (void);
 static int cirp_anlz_assign_repl_item (int tranid, int rectype,
 				       LOG_LSA * commit_lsa);
 static CIRP_TRAN *cirp_find_tran (int tranid);
-static CIRP_TRAN *cirp_add_tran (int tranid);
+static int cirp_add_tran (CIRP_TRAN ** tran, int tranid);
 static int cirp_anlz_get_applier_index (int *index,
 					const DB_VALUE * shard_key,
 					int num_appliers);
 static int cirp_check_duplicated (int *lockf_vdes, const char *logpath,
 				  const char *dbname);
 
-static int cirp_set_repl_log (LOG_PAGE * log_pgptr, int log_type, int tranid,
-			      const LOG_LSA * lsa);
+static int rp_set_repl_log (LOG_PAGE * log_pgptr, int log_type, int tranid,
+			    const LOG_LSA * lsa);
 
 static int cirp_lock_dbname (CIRP_ANALYZER_INFO * analyzer);
 static int cirp_unlock_dbname (CIRP_ANALYZER_INFO * analyzer,
@@ -122,7 +122,11 @@ static INT64 rp_get_source_applied_time (RQueue * q_applied_time,
 static int rp_applied_time_node_free (void *node, UNUSED_ARG void *data);
 static int cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
 					CIRP_AGENT_STATUS status);
-
+static int rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
+			      LOG_PAGE * log_pgptr, const LOG_LSA * lsa);
+static int rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
+			    LOG_PAGE * log_pgptr, const LOG_LSA * lsa);
+static int rp_set_gid_bitmap_log (CIRP_TRAN * tran, const LOG_LSA * lsa);
 
 /*
  * cirp_get_analyzer_status ()-
@@ -1050,7 +1054,9 @@ cirp_find_tran (int tranid)
 /*
  * cirp_add_tran() - return the apply list for the target
  *                             transaction id
- *   return: pointer to the target apply list
+ *   return: error code
+ *
+ *   tran(out): pointer to the target apply list
  *   tranid(in): the target transaction id
  *
  * Note:
@@ -1062,37 +1068,70 @@ cirp_find_tran (int tranid)
  *     the apply list of the target transaction, and apply the replication
  *     items to the slave orderly.
  */
-static CIRP_TRAN *
-cirp_add_tran (int tranid)
+static int
+cirp_add_tran (CIRP_TRAN ** tran, int tranid)
 {
-  CIRP_TRAN *tran = NULL;
+  CIRP_TRAN *new_tran = NULL;
+  int error = NO_ERROR;
 
-  tran = cirp_find_tran (tranid);
-  if (tran != NULL)
-    {
-      assert (false);
-      return tran;
-    }
-
-  tran = (CIRP_TRAN *) RYE_MALLOC (sizeof (CIRP_TRAN));
   if (tran == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (CIRP_TRAN));
-      return NULL;
-    }
-  cirp_init_tran (tran);
-  tran->tranid = tranid;
+      assert (false);
 
-  if (mht_put (Repl_Info->analyzer_info.tran_table, &tran->tranid, tran) ==
-      NULL)
+      REPL_SET_GENERIC_ERROR (error, "Invalid argument");
+
+      return error;
+    }
+  *tran = NULL;
+
+  new_tran = cirp_find_tran (tranid);
+  if (new_tran != NULL)
     {
-      RYE_FREE_MEM (tran);
+      assert (false);
 
-      return NULL;
+      REPL_SET_GENERIC_ERROR (error, "Exists transaction info");
+      return error;
     }
 
-  return tran;
+  new_tran = (CIRP_TRAN *) RYE_MALLOC (sizeof (CIRP_TRAN));
+  if (new_tran == NULL)
+    {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (CIRP_TRAN));
+
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  cirp_init_tran (new_tran);
+  new_tran->tranid = tranid;
+
+  if (mht_put (Repl_Info->analyzer_info.tran_table,
+	       &new_tran->tranid, new_tran) == NULL)
+    {
+      error = er_errid ();
+
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  *tran = new_tran;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
+
+exit_on_error:
+  if (error == NO_ERROR)
+    {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
+    }
+
+  if (new_tran != NULL)
+    {
+      RYE_FREE_MEM (new_tran);
+    }
+
+  return error;
 }
 
 /*
@@ -1124,7 +1163,158 @@ cirp_anlz_get_applier_index (int *index, const DB_VALUE * shard_key,
 }
 
 /*
- * cirp_set_repl_log() - insert the replication item into the apply list
+ * rp_set_schema_log -
+ *   return: error code
+ *
+ *   buf_mgr(in/out):
+ *   tran(in/out):
+ *   log_pgptr(in):
+ *   lsa(in):
+ */
+static int
+rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
+		   LOG_PAGE * log_pgptr, const LOG_LSA * lsa)
+{
+  CIRP_REPL_ITEM *item = NULL;
+  int error = NO_ERROR;
+
+  error = rp_new_repl_item_ddl (&item, lsa);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
+
+  error = rp_make_repl_schema_item_from_log (buf_mgr, item, log_pgptr, lsa);
+  if (error != NO_ERROR)
+    {
+      cirp_free_repl_item (item);
+      return error;
+    }
+
+  assert (tran->repl_item == NULL);
+  tran->repl_item = item;
+  tran->applier_index = DDL_APPLIER_INDEX;
+
+  er_log_debug (ARG_FILE_LINE, "make schema: lsa(%ld,%ld), query(%s)",
+		lsa->pageid, lsa->offset, item->info.ddl.query);
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
+}
+
+/*
+ * rp_set_data_log -
+ *   return: error code
+ *
+ *   buf_mgr(in/out):
+ *   tran(in/out):
+ *   log_pgptr(in):
+ *   lsa(in):
+ */
+static int
+rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
+		 LOG_PAGE * log_pgptr, const LOG_LSA * lsa)
+{
+  CIRP_REPL_ITEM *item = NULL;
+  RP_DATA_ITEM *data_item = NULL;
+  int error = NO_ERROR;
+
+  error = rp_new_repl_item_data (&item, lsa);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
+  error = rp_make_repl_data_item_from_log (buf_mgr, item, log_pgptr, lsa);
+  if (error != NO_ERROR)
+    {
+      cirp_free_repl_item (item);
+      return error;
+    }
+
+  assert (tran->repl_item == NULL);
+  tran->repl_item = item;
+
+
+  data_item = &item->info.data;
+
+  assert (!DB_IDXKEY_IS_NULL (&data_item->key));
+
+  if (data_item->groupid == GLOBAL_GROUPID)
+    {
+      if (strcasecmp (data_item->class_name,
+		      CT_SHARD_GID_SKEY_INFO_NAME) == 0)
+	{
+	  /* PK -> (group_id, shard_key) */
+	  data_item->groupid = DB_GET_INTEGER (&(data_item->key.vals[0]));
+	  error = cirp_anlz_get_applier_index (&tran->applier_index,
+					       &(data_item->key.vals[1]),
+					       Repl_Info->num_applier);
+	  if (error != NO_ERROR)
+	    {
+	      return error;
+	    }
+
+	  assert (DDL_APPLIER_INDEX < tran->applier_index
+		  && tran->applier_index < Repl_Info->num_applier);
+	}
+      else
+	{
+	  tran->applier_index = GLOBAL_APPLIER_INDEX;
+	}
+    }
+  else
+    {
+      /* PK -> (shard_key, ... ) */
+      error = cirp_anlz_get_applier_index (&tran->applier_index,
+					   &(data_item->key.vals[0]),
+					   Repl_Info->num_applier);
+      if (error != NO_ERROR)
+	{
+	  return error;
+	}
+      assert (DDL_APPLIER_INDEX < tran->applier_index
+	      && tran->applier_index < Repl_Info->num_applier);
+    }
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
+}
+
+/*
+ * rp_set_gid_bitmap_log -
+ *   return: error code
+ *
+ *   tran(in/out):
+ *   lsa(in):
+ */
+static int
+rp_set_gid_bitmap_log (CIRP_TRAN * tran, const LOG_LSA * lsa)
+{
+  CIRP_REPL_ITEM *item = NULL;
+  RP_DDL_ITEM *ddl_item = NULL;
+  int error = NO_ERROR;
+
+  error = rp_new_repl_item_ddl (&item, lsa);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
+
+  assert (tran->repl_item == NULL);
+  tran->repl_item = item;
+  tran->applier_index = DDL_APPLIER_INDEX;
+
+  ddl_item = &item->info.ddl;
+  ddl_item->ddl_type = REPL_BLOCKED_DDL;
+
+  er_log_debug (ARG_FILE_LINE, "gid_bitmap_update: cirp_set_repl_log");
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
+}
+
+/*
+ * rp_set_repl_log() - insert the replication item into the apply list
  *   return: NO_ERROR or error code
  *   log_pgptr : pointer to the log page
  *   tranid: the target transaction id
@@ -1138,15 +1328,12 @@ cirp_anlz_get_applier_index (int *index, const DB_VALUE * shard_key,
  *     inserted REPLICAION LOG records to the slave.
  */
 static int
-cirp_set_repl_log (LOG_PAGE * log_pgptr,
-		   int log_type, int tranid, const LOG_LSA * lsa)
+rp_set_repl_log (LOG_PAGE * log_pgptr,
+		 int log_type, int tranid, const LOG_LSA * lsa)
 {
-  int error = NO_ERROR;
-  CIRP_TRAN *tran;
-  CIRP_REPL_ITEM *item = NULL;
+  CIRP_TRAN *tran = NULL;
   CIRP_BUF_MGR *buf_mgr = NULL;
-  RP_DATA_ITEM *data_item;
-  RP_DDL_ITEM *ddl_item;
+  int error = NO_ERROR;
 
   buf_mgr = &Repl_Info->analyzer_info.buf_mgr;
 
@@ -1165,101 +1352,30 @@ cirp_set_repl_log (LOG_PAGE * log_pgptr,
       return NO_ERROR;
     }
 
+  assert (tran->repl_item == NULL);
+
   switch (log_type)
     {
     case LOG_REPLICATION_SCHEMA:
-      item = cirp_make_repl_item_from_log (buf_mgr, log_pgptr, log_type, lsa);
-      if (item == NULL)
+      error = rp_set_schema_log (buf_mgr, tran, log_pgptr, lsa);
+      if (error != NO_ERROR)
 	{
-	  error = er_errid ();
-	  assert (error != NO_ERROR);
-
 	  return error;
 	}
-
-      /* There would be only one DDL item for each transaction */
-      assert (tran->repl_item == NULL);
-
-      tran->repl_item = item;
-      tran->applier_index = DDL_APPLIER_INDEX;
-
-      assert (item->item_type == RP_ITEM_TYPE_DDL);
-      ddl_item = &item->info.ddl;
-      er_log_debug (ARG_FILE_LINE, "make schema: lsa:%lld,%d",
-		    (long long) ddl_item->lsa.pageid, ddl_item->lsa.offset);
       break;
     case LOG_REPLICATION_DATA:
-      item = cirp_make_repl_item_from_log (buf_mgr, log_pgptr, log_type, lsa);
-      if (item == NULL)
+      error = rp_set_data_log (buf_mgr, tran, log_pgptr, lsa);
+      if (error != NO_ERROR)
 	{
-	  error = er_errid ();
-	  assert (error != NO_ERROR);
-
 	  return error;
-	}
-
-      tran->repl_item = item;
-
-      assert (item->item_type == RP_ITEM_TYPE_DATA);
-      data_item = &item->info.data;
-
-      assert (!DB_IDXKEY_IS_NULL (&data_item->key));
-
-      if (data_item->groupid == GLOBAL_GROUPID)
-	{
-	  if (strcasecmp (data_item->class_name,
-			  CT_SHARD_GID_SKEY_INFO_NAME) == 0)
-	    {
-	      /* PK -> (group_id, shard_key) */
-	      data_item->groupid = DB_GET_INTEGER (&(data_item->key.vals[0]));
-	      error = cirp_anlz_get_applier_index (&tran->applier_index,
-						   &(data_item->key.vals[1]),
-						   Repl_Info->num_applier);
-	      if (error != NO_ERROR)
-		{
-		  return error;
-		}
-
-	      assert (DDL_APPLIER_INDEX < tran->applier_index
-		      && tran->applier_index < Repl_Info->num_applier);
-	    }
-	  else
-	    {
-	      tran->applier_index = GLOBAL_APPLIER_INDEX;
-	    }
-	}
-      else
-	{
-	  /* PK -> (shard_key, ... ) */
-	  error = cirp_anlz_get_applier_index (&tran->applier_index,
-					       &(data_item->key.vals[0]),
-					       Repl_Info->num_applier);
-	  if (error != NO_ERROR)
-	    {
-	      return error;
-	    }
-	  assert (DDL_APPLIER_INDEX < tran->applier_index
-		  && tran->applier_index < Repl_Info->num_applier);
 	}
       break;
     case LOG_DUMMY_UPDATE_GID_BITMAP:
-      item = cirp_new_repl_item_ddl (lsa);
-      if (item == NULL)
+      error = rp_set_gid_bitmap_log (tran, lsa);
+      if (error != NO_ERROR)
 	{
-	  error = er_errid ();
-	  assert (error != NO_ERROR);
-
 	  return error;
 	}
-      assert (tran->repl_item == NULL);
-      tran->repl_item = item;
-      tran->applier_index = DDL_APPLIER_INDEX;
-
-      assert (item->item_type == RP_ITEM_TYPE_DDL);
-      ddl_item = &item->info.ddl;
-      ddl_item->ddl_type = REPL_BLOCKED_DDL;
-
-      er_log_debug (ARG_FILE_LINE, "gid_bitmap_update: cirp_set_repl_log");
       break;
 
     default:
@@ -1582,11 +1698,9 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
       && (lrec->trid != LOG_SYSTEM_TRANID)
       && (LSA_ISNULL (&lrec->prev_tranlsa)))
     {
-      tran = cirp_add_tran (lrec->trid);
-      if (tran == NULL)
+      error = cirp_add_tran (&tran, lrec->trid);
+      if (error != NO_ERROR)
 	{
-	  error = er_errid ();
-
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -1614,7 +1728,7 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
     case LOG_REPLICATION_SCHEMA:
     case LOG_DUMMY_UPDATE_GID_BITMAP:
       /* add the replication log to the target transaction */
-      error = cirp_set_repl_log (pg_ptr, lrec->type, lrec->trid, &final);
+      error = rp_set_repl_log (pg_ptr, lrec->type, lrec->trid, &final);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;

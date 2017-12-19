@@ -38,6 +38,7 @@
 #include "connection_support.h"
 #include "repl_common.h"
 #include "repl_log.h"
+#include "repl.h"
 #include "heartbeat.h"
 
 #if defined(CS_MODE) || defined(SERVER_MODE)
@@ -121,23 +122,33 @@ rp_need_shutdown (const char *file_name, int line)
 
 /*
  * cirp_new_repl_item_data()-
- *    return: repl_item
+ *    return: error code
  *
+ *    repl_item(out):
  *    lsa(in):
- *    target_lsa(in):
  */
-CIRP_REPL_ITEM *
-cirp_new_repl_item_data (const LOG_LSA * lsa, const LOG_LSA * target_lsa)
+int
+rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
 {
-  CIRP_REPL_ITEM *item;
-  RP_DATA_ITEM *data;
+  CIRP_REPL_ITEM *item = NULL;
+  RP_DATA_ITEM *data = NULL;
+  int error = NO_ERROR;
+
+  if (repl_item == NULL || lsa == NULL)
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid argument");
+      return error;
+    }
+  *repl_item = NULL;
 
   item = malloc (DB_SIZEOF (CIRP_REPL_ITEM));
   if (item == NULL)
     {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (CIRP_REPL_ITEM));
-      return NULL;
+	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      return error;
     }
 
   item->item_type = RP_ITEM_TYPE_DATA;
@@ -151,32 +162,46 @@ cirp_new_repl_item_data (const LOG_LSA * lsa, const LOG_LSA * target_lsa)
   DB_IDXKEY_MAKE_NULL (&data->key);
 
   LSA_COPY (&data->lsa, lsa);
-  LSA_COPY (&data->target_lsa, target_lsa);
+  LSA_SET_NULL (&data->target_lsa);
 
   data->recdes = NULL;
 
-  return item;
+  *repl_item = item;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
  * cirp_new_repl_item_ddl()-
- *    return: repl_item
+ *    return: error code
  *
+ *    repl_item(out):
  *    lsa(in):
  */
-CIRP_REPL_ITEM *
-cirp_new_repl_item_ddl (const LOG_LSA * lsa)
+int
+rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_DDL_ITEM *ddl;
+  int error = NO_ERROR;
 
+  if (repl_item == NULL || lsa == NULL)
+    {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid argument");
+      return error;
+    }
+  *repl_item = NULL;
 
   item = malloc (DB_SIZEOF (CIRP_REPL_ITEM));
   if (item == NULL)
     {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (CIRP_REPL_ITEM));
-      return NULL;
+	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      return error;
     }
 
   item->item_type = RP_ITEM_TYPE_DDL;
@@ -191,28 +216,42 @@ cirp_new_repl_item_ddl (const LOG_LSA * lsa)
   ddl->query = NULL;
   LSA_COPY (&ddl->lsa, lsa);
 
-  return item;
+  *repl_item = item;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
- * cirp_new_repl_catalog_item()-
- *    return: repl_item
+ * rp_new_repl_catalog_item()-
+ *    return: error code
  *
+ *    repl_item(out):
  *    lsa(in):
- *    target_lsa(in):
  */
-CIRP_REPL_ITEM *
-cirp_new_repl_catalog_item (const LOG_LSA * lsa)
+int
+rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_CATALOG_ITEM *catalog;
+  int error = NO_ERROR;
+
+  if (repl_item == NULL || lsa == NULL)
+    {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid argument");
+      return error;
+    }
+  *repl_item = NULL;
 
   item = malloc (DB_SIZEOF (CIRP_REPL_ITEM));
   if (item == NULL)
     {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (CIRP_REPL_ITEM));
-      return NULL;
+	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      return error;
     }
 
   item->item_type = RP_ITEM_TYPE_CATALOG;
@@ -227,7 +266,10 @@ cirp_new_repl_catalog_item (const LOG_LSA * lsa)
 
   LSA_COPY (&catalog->lsa, lsa);
 
-  return item;
+  *repl_item = item;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*

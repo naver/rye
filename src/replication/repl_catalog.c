@@ -178,10 +178,9 @@ rpct_insert_log_writer (CCI_CONN * conn, CIRP_CT_LOG_WRITER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -245,10 +244,9 @@ rpct_update_log_writer (CCI_CONN * conn, CIRP_CT_LOG_WRITER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -358,10 +356,9 @@ rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -426,10 +423,9 @@ rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -744,10 +740,9 @@ rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -812,10 +807,9 @@ rpct_update_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 

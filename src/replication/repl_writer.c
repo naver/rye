@@ -142,7 +142,7 @@ static int net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node);
 static LOG_PAGEID cirpwr_get_fpageid (LOG_PAGEID current_pageid,
 				      const LOG_HEADER * head);
 
-static RECV_Q_NODE *cirpwr_alloc_recv_node (void);
+static int rpwr_alloc_recv_node (RECV_Q_NODE ** node);
 static int cirpwr_copy_all_omitted_pages (LOG_PAGEID fpageid);
 
 static int cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info,
@@ -1850,8 +1850,8 @@ log_copier_main (void *arg)
 	      m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
 	      if (m_hdr->ha_info.server_state != HA_STATE_DEAD)
 		{
-		  node = cirpwr_alloc_recv_node ();
-		  if (node != NULL)
+		  error = rpwr_alloc_recv_node (&node);
+		  if (error == NO_ERROR)
 		    {
 		      node->server_status = HA_STATE_DEAD;
 		      pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
@@ -1899,8 +1899,8 @@ log_copier_main (void *arg)
 		  m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
 		  if (m_hdr->ha_info.server_state != HA_STATE_DEAD)
 		    {
-		      node = cirpwr_alloc_recv_node ();
-		      if (node != NULL)
+		      error = rpwr_alloc_recv_node (&node);
+		      if (error == NO_ERROR)
 			{
 			  node->server_status = HA_STATE_DEAD;
 			  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
@@ -2195,48 +2195,62 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
 }
 
 /*
- * cirpwr_alloc_recv_node ()-
- *   return: recv queue node
+ * rpwr_alloc_recv_node ()-
+ *   return: error code
+ *
+ *   node(out):recv queue node
  */
-static RECV_Q_NODE *
-cirpwr_alloc_recv_node (void)
+static int
+rpwr_alloc_recv_node (RECV_Q_NODE ** node)
 {
-  RECV_Q_NODE *node;
+  RECV_Q_NODE *q_node;
   int size;
   int error = NO_ERROR;
 
-  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-  node = Rye_queue_dequeue (cirpwr_Gl.free_list);
-  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
   if (node == NULL)
     {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid arguments");
+      return error;
+    }
+  *node = NULL;
+
+  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+  q_node = Rye_queue_dequeue (cirpwr_Gl.free_list);
+  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+  if (q_node == NULL)
+    {
       size = sizeof (RECV_Q_NODE);
-      node = (RECV_Q_NODE *) malloc (size);
-      if (node == NULL)
+      q_node = (RECV_Q_NODE *) malloc (size);
+      if (q_node == NULL)
 	{
 	  error = ER_OUT_OF_VIRTUAL_MEMORY;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, size);
-	  return NULL;
+	  return error;
 	}
 
       size = LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE;
-      node->data = (char *) malloc (size);
-      if (node->data == NULL)
+      q_node->data = (char *) malloc (size);
+      if (q_node->data == NULL)
 	{
-	  free (node);
+	  free (q_node);
 
 	  error = ER_OUT_OF_VIRTUAL_MEMORY;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, size);
-	  return NULL;
+	  return error;
 	}
-      node->area_length = size;
+      q_node->area_length = size;
     }
 
-  node->fpageid = 0;
-  node->length = 0;
-  node->num_page = 0;
+  q_node->fpageid = 0;
+  q_node->length = 0;
+  q_node->num_page = 0;
 
-  return node;
+  *node = q_node;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
@@ -2287,11 +2301,9 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	}
     }
 
-  node = cirpwr_alloc_recv_node ();
-  if (node == NULL)
+  error = rpwr_alloc_recv_node (&node);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
-
       return error;
     }
 
