@@ -43,9 +43,7 @@
 #include "thread.h"
 #include "connection_error.h"
 #endif /* SERVER_MODE */
-#if !defined(NDEBUG)
 #include "btree_load.h"
-#endif
 
 #define SPAGE_SEARCH_NEXT       1
 #define SPAGE_SEARCH_PREV       -1
