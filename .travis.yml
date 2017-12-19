@@ -36,11 +36,14 @@ script:
 #    fi
 
 # Build only
-#  - if [[ "${COVERITY_SCAN_BRANCH}" != 1 ]];
-#      then
-#        bash ./build.sh -m release -t x86_64 build;
-#    fi
   - bash ./build.sh -m release -t x86_64 build
+# Install
+  - if [[ "${COVERITY_SCAN_BRANCH}" != 1 ]];
+      then
+        cd build_x86_64_release;
+        make install;
+    fi
+
 #  - ./autogen.sh
 #  - rm -rf Release64
 #  - mkdir Release64
