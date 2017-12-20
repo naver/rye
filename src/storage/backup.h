@@ -114,7 +114,6 @@ typedef struct bk_backup_page BK_BACKUP_PAGE;
 struct bk_backup_page
 {
   PAGEID iopageid;		/* Identifier of page to buffer */
-  INT32 dummy;			/* Dummy field for 8byte align */
   FILEIO_PAGE iopage;		/* The content of the page */
 };
 

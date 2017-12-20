@@ -1351,6 +1351,7 @@ prior_lsa_alloc_and_copy_data (THREAD_ENTRY * thread_p,
 
   node->log_header.type = rec_type;
 
+  node->data_header_length = 0;
   node->data_header = NULL;
   node->ulength = 0;
   node->udata = NULL;

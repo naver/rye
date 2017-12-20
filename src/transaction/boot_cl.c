@@ -244,6 +244,8 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
   assert (cli_cred != NULL);
   assert (db_path_info != NULL);
 
+  memset (&node_list, 0, sizeof (node_list));
+
   tran_index = NULL_TRAN_INDEX;
   /* If the client is restarted, shutdown the client */
   if (BOOT_IS_CLIENT_RESTARTED ())
@@ -578,6 +580,10 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
   char db_name[DB_MAX_IDENTIFIER_LENGTH];
 
   assert (cli_cred != NULL);
+
+#if defined(CS_MODE)
+  memset (&node_list, 0, sizeof (node_list));
+#endif /* CS_MODE */
 
   /* If the client is restarted, shutdown the client */
   if (BOOT_IS_CLIENT_RESTARTED ())
