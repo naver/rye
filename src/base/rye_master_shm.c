@@ -234,7 +234,7 @@ master_shm_get_shard_mgmt_info (const char *local_dbname,
 
   for (i = 0; i < RYE_SHD_MGMT_TABLE_SIZE; i++)
     {
-      if (rye_Master_shm->shd_mgmt_table[i].local_dbname == '\0')
+      if (rye_Master_shm->shd_mgmt_table[i].local_dbname[0] == '\0')
 	{
 	  break;
 	}

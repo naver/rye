@@ -287,8 +287,7 @@ extern void pgbuf_set_lsa_as_permanent (THREAD_ENTRY * thread_p,
 #endif /* RYE_DEBUG */
 extern bool pgbuf_is_lsa_temporary (PAGE_PTR pgptr);
 extern void pgbuf_invalidate_temporary_file (VOLID volid, PAGEID first_pageid,
-					     DKNPAGES npages,
-					     bool need_invalidate);
+					     DKNPAGES npages);
 extern DISK_ISVALID pgbuf_is_valid_page (THREAD_ENTRY * thread_p,
 					 const VPID * vpid, bool no_error,
 					 DISK_ISVALID (*fun) (const VPID *

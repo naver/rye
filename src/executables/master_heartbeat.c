@@ -4231,6 +4231,8 @@ hb_resource_receive_changemode (CSS_CONN_ENTRY * conn, int server_state)
   if (proc->state != HB_PSTATE_REGISTERED)
     {
       assert (false);
+      pthread_mutex_unlock (&hb_Resource->lock);
+      pthread_mutex_unlock (&hb_Cluster->lock);
       return;
     }
 

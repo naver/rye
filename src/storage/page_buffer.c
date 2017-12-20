@@ -1894,11 +1894,10 @@ pgbuf_invalidate (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
  *   volid(in):
  *   first_pageid(in):
  *   npages(in):
- *   need_invalidate(in):
  */
 void
 pgbuf_invalidate_temporary_file (VOLID volid, PAGEID first_pageid,
-				 DKNPAGES npages, bool need_invalidate)
+				 DKNPAGES npages)
 {
   PGBUF_BUFFER_HASH *hash_anchor;
   PGBUF_BCB *bufptr;
@@ -1906,10 +1905,6 @@ pgbuf_invalidate_temporary_file (VOLID volid, PAGEID first_pageid,
   VPID vpid;
   int i;
   bool is_last_page = false;
-
-#if 1				/* at here, do not invalidate page buffer - NEED FUTURE WORK */
-  need_invalidate = false;
-#endif
 
   vpid.volid = volid;
   for (i = 0; i < npages; i++)
@@ -1928,6 +1923,7 @@ pgbuf_invalidate_temporary_file (VOLID volid, PAGEID first_pageid,
       /* if this query was executed in asynchronous mode, a page may have
        * positive(1) fcnt(get_list_file_page performs pgbuf_fix()).
        */
+      assert (bufptr->fcnt == 0);
       if (bufptr->fcnt > 0)
 	{
 	  pthread_mutex_unlock (&bufptr->BCB_mutex);
@@ -1937,6 +1933,7 @@ pgbuf_invalidate_temporary_file (VOLID volid, PAGEID first_pageid,
       /* check if page should be invalidated */
       if (VPID_ISNULL (&bufptr->vpid) || !VPID_EQ (&vpid, &bufptr->vpid))
 	{
+	  assert (false);
 	  pthread_mutex_unlock (&bufptr->BCB_mutex);
 	  continue;
 	}
@@ -1954,16 +1951,7 @@ pgbuf_invalidate_temporary_file (VOLID volid, PAGEID first_pageid,
       bufptr->dirty = false;
       LSA_SET_NULL (&bufptr->oldest_unflush_lsa);
 
-#if 0				/* BTS CUBRIDSUS-3627 */
-      if (need_invalidate == true)
-	{
-	  (void) pgbuf_invalidate_bcb (bufptr);
-	}
-      else
-#endif
-	{
-	  pthread_mutex_unlock (&bufptr->BCB_mutex);
-	}
+      pthread_mutex_unlock (&bufptr->BCB_mutex);
 
       if (is_last_page)
 	{
