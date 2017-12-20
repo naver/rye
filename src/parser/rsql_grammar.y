@@ -6942,8 +6942,7 @@ opt_orderby_clause
                                               {
                                                 is_alias = true;
                                               }
-
-					    if (intl_identifier_casecmp (n_str, c_str) == 0)
+					    else if (intl_identifier_casecmp (n_str, c_str) == 0)
 					      {
 					        is_col = true;
                                               }
