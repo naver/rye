@@ -42,6 +42,7 @@ MONITOR_INFO mntCollector = {
 };
 
 static MONITOR_STATS_INFO *monitor_init_server_stats_info (int num_stats);
+static MONITOR_STATS_INFO *monitor_init_repl_stats_info (int num_stats);
 static MONITOR_STATS_INFO *monitor_init_stats_info (int *num_stats,
 						    RYE_SHM_TYPE shm_type);
 static MONITOR_INFO *monitor_create_viewer (const char *name, int shm_key,
@@ -57,7 +58,20 @@ static MONITOR_INFO *monitor_create_viewer (const char *name, int shm_key,
 void
 monitor_make_server_name (char *monitor_name, const char *db_name)
 {
-  sprintf (monitor_name, "%s%s", db_name, MONITOR_SUFFIX_SERVER);
+  sprintf (monitor_name, "%s%s", db_name, MONITOR_SUFFIX);
+}
+
+/*
+ * monitor_make_repl_name
+ *   return:
+ *
+ *   monitor_name(out):
+ *   db_name(in):
+ */
+void
+monitor_make_repl_name (char *monitor_name, const char *db_name)
+{
+  sprintf (monitor_name, "%s%s", db_name, MONITOR_SUFFIX);
 }
 
 /*
@@ -78,6 +92,14 @@ monitor_init_stats_info (int *num_stats, RYE_SHM_TYPE shm_type)
 	  return NULL;
 	}
       *num_stats = MNT_SIZE_OF_SERVER_EXEC_STATS;
+      break;
+    case RYE_SHM_TYPE_MONITOR_REPL:
+      stats_info = monitor_init_repl_stats_info (MNT_SIZE_OF_REPL_EXEC_STATS);
+      if (stats_info == NULL)
+	{
+	  return NULL;
+	}
+      *num_stats = MNT_SIZE_OF_REPL_EXEC_STATS;
       break;
     default:
       assert (false);
@@ -1019,6 +1041,71 @@ monitor_init_server_stats_info (int num_stats)
   info->name = "Data_page_buffer_hit_ratio";
   info->level = 0;
   info->value_type = MONITOR_STATS_VALUE_COUNTER;
+
+#if !defined(NDEBUG)
+  for (i = 0; i < num_stats; i++)
+    {
+      assert (stats_info[i].name != NULL);
+    }
+#endif
+
+  return stats_info;
+}
+
+static MONITOR_STATS_INFO *
+monitor_init_repl_stats_info (int num_stats)
+{
+  MONITOR_STATS_INFO *stats_info;
+  MONITOR_STATS_INFO *info;
+  int size, i;
+
+  if (num_stats != MNT_SIZE_OF_REPL_EXEC_STATS)
+    {
+      assert (false);
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
+	      1, "Invalid number of monitor stats info");
+      return NULL;
+    }
+
+  size = sizeof (MONITOR_STATS_INFO) * num_stats;
+  stats_info = (MONITOR_STATS_INFO *) malloc (size);
+  if (stats_info == NULL)
+    {
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+	      ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+      return NULL;
+    }
+  memset (stats_info, 0, size);
+
+  info = &stats_info[MNT_RP_LAST_RECEIVED_PAGEID];
+  info->name = "repl_last_received_pageid";
+  info->level = 0;
+  info->value_type = MONITOR_STATS_VALUE_GAUGE;
+
+  info = &stats_info[MNT_RP_LAST_FLUSHED_PAGEID];
+  info->name = "repl_last_flushed_pageid";
+  info->level = 0;
+  info->value_type = MONITOR_STATS_VALUE_GAUGE;
+
+  info = &stats_info[MNT_RP_EOF_PAGEID];
+  info->name = "repl_eof_pageid";
+  info->level = 0;
+  info->value_type = MONITOR_STATS_VALUE_GAUGE;
+
+  info = &stats_info[MNT_RP_CURRENT_PAGEID];
+  info->name = "repl_current_pageid";
+  info->level = 0;
+  info->value_type = MONITOR_STATS_VALUE_GAUGE;
+
+  info = &stats_info[MNT_RP_REQUIRED_PAGEID];
+  info->name = "repl_required_pageid";
+  info->level = 0;
+  info->value_type = MONITOR_STATS_VALUE_GAUGE;
+
+  info = &stats_info[MNT_RP_DELAY];
+  info->name = "repl_delay_time";
+  info->level = 0;
+  info->value_type = MONITOR_STATS_VALUE_GAUGE;
 
 #if !defined(NDEBUG)
   for (i = 0; i < num_stats; i++)

@@ -87,7 +87,7 @@ typedef struct
 } MONITOR_INFO;
 
 
-#define MONITOR_SUFFIX_SERVER "_svr"
+#define MONITOR_SUFFIX "_mnt"
 
 
 #if defined(X86)
@@ -110,8 +110,22 @@ typedef struct
         ((TYPE) == MONITOR_STATS_VALUE_COUNTER_WITH_TIME)
 
 
+/* repl monitor items */
+typedef enum
+{
+  MNT_RP_LAST_RECEIVED_PAGEID,
+  MNT_RP_LAST_FLUSHED_PAGEID,
+  MNT_RP_EOF_PAGEID,
+  MNT_RP_CURRENT_PAGEID,
+  MNT_RP_REQUIRED_PAGEID,
+  MNT_RP_DELAY,
+
+  MNT_SIZE_OF_REPL_EXEC_STATS
+} MNT_REPL_ITEM;
+
 extern void monitor_make_server_name (char *monitor_name,
 				      const char *db_name);
+extern void monitor_make_repl_name (char *monitor_name, const char *db_name);
 
 /******************************************************************
  * MONITOR COLLECTOR

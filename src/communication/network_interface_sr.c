@@ -4495,10 +4495,10 @@ slogtb_dump_trantable (THREAD_ENTRY * thread_p, unsigned int rid,
 int
 xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
 			       char *logpg_area, int area_size,
-			       INT64 first_pageid, int num_page,
-			       int file_status)
+			       INT64 eof_pageid, INT64 first_pageid,
+			       int num_page, int file_status)
 {
-  OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 5) a_reply;
+  OR_ALIGNED_BUF (OR_INT64_SIZE * 2 + OR_INT_SIZE * 5) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   unsigned int rid, rc;
   char *ptr;
@@ -4523,6 +4523,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
   ptr = or_pack_int (reply, (int) GET_NEXT_LOG_PAGES);
   ptr = or_pack_int (ptr, area_size);
   ptr = or_pack_int64 (ptr, first_pageid);
+  ptr = or_pack_int64 (ptr, eof_pageid);
   ptr = or_pack_int (ptr, num_page);
   ptr = or_pack_int (ptr, file_status);
   ptr = or_pack_int (ptr, server_state);

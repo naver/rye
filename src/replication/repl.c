@@ -53,6 +53,7 @@
 #include "repl_analyzer.h"
 #include "repl_applier.h"
 #include "repl_writer.h"
+#include "monitor.h"
 
 #include "fault_injection.h"
 
@@ -107,6 +108,7 @@ main (int argc, char *argv[])
   CIRP_THREAD_ENTRY analyzer_entry, health_entry;
   CIRP_THREAD_ENTRY *applier_entries = NULL;
   char prog_name[] = UTIL_REPL_NAME;
+  char monitor_name[ONE_K];
 
   REPL_ARGUMENT repl_arg;
   int option_index;
@@ -221,6 +223,14 @@ main (int argc, char *argv[])
       GOTO_EXIT_ON_ERROR;
     }
 
+  monitor_make_repl_name (monitor_name, repl_arg.db_name);
+  error = monitor_create_collector (monitor_name, num_applier + 3,
+				    RYE_SHM_TYPE_MONITOR_REPL);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
   error = cirpwr_initialize (repl_arg.db_name, repl_arg.log_path);
   if (error != NO_ERROR)
     {
@@ -273,7 +283,7 @@ main (int argc, char *argv[])
     }
 
   error = cirp_init_thread_entry (&writer_entry, &repl_arg,
-				  CIRP_THREAD_WRITER, -1);
+				  CIRP_THREAD_COPIER, -1);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -398,6 +408,9 @@ cirp_init_repl_arg (REPL_ARGUMENT * repl_arg)
 {
   repl_arg->log_path = NULL;
   repl_arg->db_name = NULL;
+  repl_arg->local_dbname = NULL;
+  repl_arg->peer_host_name = NULL;
+  repl_arg->port_id = -1;
 
   return;
 }

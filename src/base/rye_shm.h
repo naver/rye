@@ -81,7 +81,8 @@ enum _rye_shm_type
   RYE_SHM_TYPE_BROKER_GLOBAL,
   RYE_SHM_TYPE_BROKER_LOCAL,
   RYE_SHM_TYPE_MONITOR_SERVER,
-  RYE_SHM_TYPE_MAX = RYE_SHM_TYPE_MONITOR_SERVER
+  RYE_SHM_TYPE_MONITOR_REPL,
+  RYE_SHM_TYPE_MAX = RYE_SHM_TYPE_MONITOR_REPL
 };
 
 #define RYE_SHM_TYPE_NAME(type)                                                        \

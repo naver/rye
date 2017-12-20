@@ -2729,7 +2729,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
   FILE *outfp = NULL;
   const char *local_db_name = NULL;
   char tmp_dbname[ONE_K];
-  MONITOR_INFO *monitor_info = NULL;
+  MONITOR_INFO *server_monitor = NULL;
+  MONITOR_INFO *repl_monitor = NULL;
   char monitor_name[ONE_K];
   char header[ONE_K], tail[ONE_K];
   char *ptr;
@@ -2817,9 +2818,9 @@ statdump (UTIL_FUNCTION_ARG * arg)
   sysprm_load_and_init (NULL);
 
   monitor_make_server_name (monitor_name, local_db_name);
-  monitor_info = monitor_create_viewer_from_name (monitor_name,
-						  RYE_SHM_TYPE_MONITOR_SERVER);
-  if (monitor_info == NULL)
+  server_monitor = monitor_create_viewer_from_name (monitor_name,
+						    RYE_SHM_TYPE_MONITOR_SERVER);
+  if (server_monitor == NULL)
     {
       PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
 
@@ -2843,7 +2844,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
     {
       print_timestamp (outfp);
 
-      if (monitor_copy_global_stats (monitor_info, cur_global_stats,
+      if (monitor_copy_global_stats (server_monitor, cur_global_stats,
 				     MNT_SIZE_OF_SERVER_EXEC_STATS)
 	  != NO_ERROR)
 	{
@@ -2860,13 +2861,13 @@ statdump (UTIL_FUNCTION_ARG * arg)
 		    cur_global_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
 		    value / 100);
 
-	  monitor_dump_stats (monitor_info, outfp, cur_global_stats,
+	  monitor_dump_stats (server_monitor, outfp, cur_global_stats,
 			      MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
 			      substr);
 	}
       else
 	{
-	  if (monitor_diff_stats (monitor_info, diff_stats,
+	  if (monitor_diff_stats (server_monitor, diff_stats,
 				  cur_global_stats,
 				  old_global_stats,
 				  MNT_SIZE_OF_SERVER_EXEC_STATS) == NO_ERROR)
@@ -2879,7 +2880,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
 			(float)
 			diff_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
 			value / 100);
-	      monitor_dump_stats (monitor_info, outfp, diff_stats,
+	      monitor_dump_stats (server_monitor, outfp, diff_stats,
 				  MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
 				  substr);
 	    }
@@ -2888,7 +2889,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
 		  sizeof (cur_global_stats));
 	}
 
-      monitor_close_viewer_data (monitor_info, MNT_SIZE_OF_SERVER_EXEC_STATS);
+      monitor_close_viewer_data (server_monitor,
+				 MNT_SIZE_OF_SERVER_EXEC_STATS);
 
       fflush (outfp);
       sleep (interval);
@@ -2920,10 +2922,11 @@ error_exit:
     {
       fclose (outfp);
     }
-  if (monitor_info != NULL)
+  if (server_monitor != NULL)
     {
-      monitor_close_viewer_data (monitor_info, MNT_SIZE_OF_SERVER_EXEC_STATS);
-      free_and_init (monitor_info);
+      monitor_close_viewer_data (server_monitor,
+				 MNT_SIZE_OF_SERVER_EXEC_STATS);
+      free_and_init (server_monitor);
     }
   return EXIT_FAILURE;
 #else /* CS_MODE */

@@ -46,7 +46,8 @@ static int logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
 static int logwr_pack_log_pages (THREAD_ENTRY * thread_p, char *logpg_area,
 				 LOG_ZIP * zip_logpg, int *logpg_used_size,
 				 int *status, LOGWR_ENTRY * entry,
-				 INT64 * send_pageid, int *num_page,
+				 INT64 * eof_pageid, INT64 * send_pageid,
+				 int *num_page,
 				 LOG_HA_FILESTAT * file_status);
 static void logwr_write_start (LOGWR_INFO * writer_info, LOGWR_ENTRY * entry);
 static void logwr_write_end (THREAD_ENTRY * thread_p,
@@ -173,7 +174,7 @@ static int
 logwr_pack_log_pages (THREAD_ENTRY * thread_p,
 		      char *logpg_area, LOG_ZIP * zip_logpg,
 		      int *logpg_used_size, int *status, LOGWR_ENTRY * entry,
-		      INT64 * send_pageid, int *num_page,
+		      INT64 * eof_pageid, INT64 * send_pageid, int *num_page,
 		      LOG_HA_FILESTAT * file_status)
 {
   LOG_PAGEID fpageid, lpageid, pageid;
@@ -354,6 +355,10 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
     {
       *send_pageid = (is_hdr_page_only) ? 0 : fpageid;
     }
+  if (eof_pageid != NULL)
+    {
+      *eof_pageid = eof_lsa.pageid;
+    }
   if (num_page != NULL)
     {
       *num_page = (is_hdr_page_only) ? 0 : (lpageid - fpageid + 1);
@@ -461,7 +466,7 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
   int rv;
   int error_code;
   LOGWR_INFO *writer_info = &log_Gl.writer_info;
-  INT64 send_pageid = 0;
+  INT64 send_pageid = 0, eof_pageid = 0;
   int send_num_page = 0;
   LOG_HA_FILESTAT ha_file_status = LOG_HA_FILESTAT_CLEAR;
 
@@ -547,8 +552,8 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
       /* Send the log pages to be flushed until now */
       error_code = logwr_pack_log_pages (thread_p, logpg_area, zip_logpg,
 					 &logpg_used_size, &status, entry,
-					 &send_pageid, &send_num_page,
-					 &ha_file_status);
+					 &eof_pageid, &send_pageid,
+					 &send_num_page, &ha_file_status);
       if (error_code != NO_ERROR)
 	{
 	  error_code = ER_HA_LW_FAILED_GET_LOG_PAGE;
@@ -573,7 +578,8 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
 
       error_code = xlog_send_log_pages_to_client (thread_p, logpg_area,
 						  logpg_used_size,
-						  send_pageid, send_num_page,
+						  eof_pageid, send_pageid,
+						  send_num_page,
 						  ha_file_status);
       if (error_code != NO_ERROR)
 	{
@@ -648,7 +654,7 @@ logwr_get_min_copied_fpageid (void)
   LOGWR_ENTRY *entry;
   int num_entries = 0;
   LOG_PAGEID min_fpageid = LOGPAGEID_MAX;
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
@@ -750,7 +756,7 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
   LOG_ZIP *zip_logpg = NULL;
   int logpg_used_size;
   int status;
-  int rv;
+  UNUSED_VAR int rv;
   int error_code;
   LOGWR_INFO *writer_info = &log_Gl.writer_info;
 
@@ -818,8 +824,8 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
 
   /* Send the log pages to be flushed until now */
   error_code = logwr_pack_log_pages (thread_p, logpg_area, zip_logpg,
-				     &logpg_used_size, &status, entry, NULL,
-				     NULL, NULL);
+				     &logpg_used_size, &status, entry,
+				     NULL, NULL, NULL, NULL);
   if (error_code != NO_ERROR)
     {
       error_code = ER_HA_LW_FAILED_GET_LOG_PAGE;
