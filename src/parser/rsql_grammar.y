@@ -6948,15 +6948,6 @@ opt_orderby_clause
 					        is_col = true;
                                               }
 
-					    if (is_alias && is_col)
-					      {
-					        /* alias/col name ambiguity, raise error */
-					        PT_ERRORmf (this_parser, order, MSGCAT_SET_PARSER_SEMANTIC,
-					  		MSGCAT_SEMANTIC_AMBIGUOUS_COLUMN_IN_ORDERING,
-							n_str);
-					        break;
-					      }
-
 					    if (is_alias || is_col)
 					      {
 						if (found_star)
@@ -6978,6 +6969,15 @@ opt_orderby_clause
 
 						parser_free_node (this_parser, order->info.sort_spec.expr);
 						order->info.sort_spec.expr = temp;
+
+					        if (is_alias && is_col)
+					          {
+					            /* alias/col name ambiguity, raise error */
+					            PT_ERRORmf (this_parser, order, MSGCAT_SET_PARSER_SEMANTIC,
+					  	        	MSGCAT_SEMANTIC_AMBIGUOUS_COLUMN_IN_ORDERING,
+						        	n_str);
+					            break;
+					          }
 					      }
 					  }
 				      }
