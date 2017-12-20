@@ -903,6 +903,8 @@ hb_cluster_job_calc_score (HB_JOB_ARG * arg)
       free_and_init (arg);
     }
 
+  hb_info_str[0] = '\0'; /* init */
+
   pthread_mutex_lock (&hb_Cluster->lock);
 
   num_master = hb_cluster_calc_score ();
@@ -1205,6 +1207,8 @@ hb_cluster_job_failover (HB_JOB_ARG * arg)
   UNUSED_VAR int num_master;
   char hb_info_str[HB_INFO_STR_MAX];
 
+  hb_info_str[0] = '\0'; /* init */
+
   pthread_mutex_lock (&hb_Cluster->lock);
 
   num_master = hb_cluster_calc_score ();
@@ -1277,6 +1281,8 @@ hb_cluster_job_demote (HB_JOB_ARG * arg)
 		    "(arg:%p, proc_arg:%p). \n", arg, clst_arg);
       return;
     }
+
+  hb_info_str[0] = '\0'; /* init */
 
   pthread_mutex_lock (&hb_Cluster->lock);
 
@@ -1381,6 +1387,8 @@ hb_cluster_job_failback (HB_JOB_ARG * arg)
   size_t size;
   bool emergency_kill_enabled = false;
 
+  hb_info_str[0] = '\0'; /* init */
+
   pthread_mutex_lock (&hb_Cluster->lock);
 
   hb_Cluster->node_state = HA_STATE_SLAVE;
@@ -1483,6 +1491,8 @@ hb_cluster_job_changeslave (HB_JOB_ARG * arg)
   int error;
   char hb_info_str[HB_INFO_STR_MAX];
 
+  hb_info_str[0] = '\0'; /* init */
+
   pthread_mutex_lock (&hb_Cluster->lock);
 
   hb_Cluster->node_state = HA_STATE_TO_BE_SLAVE;
@@ -1537,6 +1547,7 @@ hb_cluster_job_changemode_force (HB_JOB_ARG * arg)
   HB_PROC_ENTRY *proc;
   bool change_server_state = false;
 
+  hb_info_str[0] = '\0'; /* init */
 
   pthread_mutex_lock (&css_Master_socket_anchor_lock);
   pthread_mutex_lock (&hb_Resource->lock);

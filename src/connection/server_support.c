@@ -762,7 +762,7 @@ static void
 css_process_change_server_ha_mode_request (char *data, int datasize)
 {
   HA_STATE server_state = HA_STATE_NA;
-  bool force;
+  bool force = false;
   THREAD_ENTRY *thread_p;
 
   if (data == NULL || datasize < (int) (sizeof (int) * 2))
