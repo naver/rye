@@ -115,9 +115,9 @@ static int cirp_apply_update_log (CIRP_APPLIER_INFO * applier,
 static int cirp_apply_schema_log (CIRP_APPLIER_INFO * applier,
 				  CIRP_REPL_ITEM * item);
 
-static int cirp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
-				      LOG_PAGE * log_pgptr, int log_type,
-				      LOG_LSA * final_lsa);
+static int rp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
+				    LOG_PAGE * log_pgptr, int log_type,
+				    LOG_LSA * final_lsa);
 static int cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
 				       LOG_LSA * commit_lsa,
 				       LOG_RECORD_HEADER * lrec,
@@ -134,6 +134,15 @@ static int cirp_set_applier_data (CIRP_APPLIER_INFO * applier,
 				  CIRP_CT_LOG_APPLIER * ct_data);
 static int cirp_change_applier_status (CIRP_APPLIER_INFO * applier,
 				       CIRP_AGENT_STATUS status);
+static int rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier,
+				      LOG_PAGE * log_pgptr,
+				      const LOG_LSA * final_lsa);
+static int rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
+				    LOG_PAGE * log_pgptr,
+				    const LOG_LSA * final_lsa);
+static int rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier,
+					  LOG_PAGE * log_pgptr,
+					  const LOG_LSA * final_lsa);
 
 /*
  * cirp_get_applier_status ()-
@@ -637,9 +646,7 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
 
 	  if (error == NO_ERROR)
 	    {
-	      error = ER_GENERIC_ERROR;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		      1, "Invalid return value");
+	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	    }
 	  GOTO_EXIT_ON_ERROR;
 	}
@@ -806,9 +813,7 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
 
 	  if (error == NO_ERROR)
 	    {
-	      error = ER_GENERIC_ERROR;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		      1, "Invalid return value");
+	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	    }
 
 	  return error;
@@ -1117,18 +1122,15 @@ cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
       if (error == NO_ERROR)
 	{
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, "Invalid return value");
+	  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	}
 
       GOTO_EXIT_ON_ERROR;
     }
 
-  recdes = cirp_assign_recdes_from_pool (buf_mgr);
-  if (recdes == NULL)
+  error = rp_assign_recdes_from_pool (buf_mgr, &recdes);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -1233,18 +1235,15 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
       if (error == NO_ERROR)
 	{
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, "Invalid return value");
+	  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	}
 
       GOTO_EXIT_ON_ERROR;
     }
 
-  recdes = cirp_assign_recdes_from_pool (buf_mgr);
-  if (recdes == NULL)
+  error = rp_assign_recdes_from_pool (buf_mgr, &recdes);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -1325,7 +1324,198 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
 }
 
 /*
- * cirp_appl_apply_repl_item () -
+ * rp_appl_apply_schema_item -
+ *   return: error code
+ *
+ *   applier(in/out):
+ *   log_pgptr(in):
+ *   final_lsa(in):
+ */
+static int
+rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier,
+			   LOG_PAGE * log_pgptr, const LOG_LSA * final_lsa)
+{
+  CIRP_REPL_ITEM *item = NULL;
+  int error = NO_ERROR;
+
+  error = rp_new_repl_item_ddl (&item, final_lsa);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  error = rp_make_repl_schema_item_from_log (&applier->buf_mgr, item,
+					     log_pgptr, final_lsa);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  error = cirp_apply_schema_log (applier, item);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  error = cirp_add_repl_object (applier, item);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  item = NULL;
+
+  assert (error == NO_ERROR);
+  return error;
+
+exit_on_error:
+  if (error == NO_ERROR)
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
+    }
+
+  if (item != NULL)
+    {
+      cirp_free_repl_item (item);
+      item = NULL;
+    }
+  return error;
+}
+
+/*
+ * rp_appl_apply_data_item -
+ *   return: error code
+ *
+ *   applier(in/out):
+ *   log_pgptr(in):
+ *   final_lsa(in):
+ */
+static int
+rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
+			 LOG_PAGE * log_pgptr, const LOG_LSA * final_lsa)
+{
+  CIRP_REPL_ITEM *item = NULL;
+  RP_DATA_ITEM *data = NULL;
+  int error = NO_ERROR;
+
+  error = rp_new_repl_item_data (&item, final_lsa);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  error = rp_make_repl_data_item_from_log (&applier->buf_mgr, item,
+					   log_pgptr, final_lsa);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  data = &item->info.data;
+  switch (data->rcv_index)
+    {
+    case RVREPL_DATA_UPDATE:
+      error = cirp_apply_update_log (applier, data);
+      break;
+
+    case RVREPL_DATA_INSERT:
+      error = cirp_apply_insert_log (applier, data);
+      break;
+
+    case RVREPL_DATA_DELETE:
+      error = cirp_apply_delete_log (applier, data);
+      break;
+
+    default:
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error,
+			      "rp_appl_apply_repl_item : rcv_index %d "
+			      "lsa(%lld,%d) target lsa(%lld,%d)\n",
+			      data->rcv_index,
+			      (long long) data->lsa.pageid,
+			      data->lsa.offset,
+			      (long long) data->target_lsa.pageid,
+			      data->target_lsa.offset);
+    }
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  error = cirp_add_repl_object (applier, item);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  item = NULL;
+
+  assert (error == NO_ERROR);
+  return error;
+
+exit_on_error:
+  if (error == NO_ERROR)
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
+    }
+
+  if (item != NULL)
+    {
+      cirp_free_repl_item (item);
+      item = NULL;
+    }
+  return error;
+}
+
+/*
+ * rp_appl_apply_gid_bitmap_item -
+ *   return: error code
+ *
+ *   applier(in/out):
+ *   log_pgptr(in):
+ *   final_lsa(in):
+ */
+static int
+rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier,
+			       LOG_PAGE * log_pgptr,
+			       const LOG_LSA * final_lsa)
+{
+  struct log_gid_bitmap_update gbu;
+  int error = NO_ERROR;
+
+  error = cirp_log_get_gid_bitmap_update (&applier->buf_mgr, &gbu,
+					  log_pgptr, final_lsa);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  if (gbu.target == 0)
+    {
+      error = cci_update_db_group_id (&applier->conn, gbu.migrator_id,
+				      gbu.group_id, 1 /* slave */ ,
+				      gbu.on_off);
+      if (error < 0)
+	{
+	  REPL_SET_GENERIC_ERROR (error, applier->conn.err_buf.err_msg);
+	  GOTO_EXIT_ON_ERROR;
+	}
+    }
+
+  assert (error == NO_ERROR);
+  return error;
+
+exit_on_error:
+  if (error == NO_ERROR)
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
+    }
+
+  return error;
+}
+
+/*
+ * rp_appl_apply_repl_item () -
  *    return: error code
  *
  *    log_pgptr(in):
@@ -1333,119 +1523,55 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
  *    final_lsa(in):
  */
 static int
-cirp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
-			   LOG_PAGE * log_pgptr, int log_type,
-			   LOG_LSA * final_lsa)
+rp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
+			 LOG_PAGE * log_pgptr, int log_type,
+			 LOG_LSA * final_lsa)
 {
   int error = NO_ERROR;
-  CIRP_REPL_ITEM *item = NULL;
-  struct log_gid_bitmap_update gbu;
 
   assert (log_type == LOG_REPLICATION_DATA
 	  || log_type == LOG_REPLICATION_SCHEMA
 	  || log_type == LOG_DUMMY_UPDATE_GID_BITMAP);
 
-  if (log_type == LOG_REPLICATION_SCHEMA || log_type == LOG_REPLICATION_DATA)
+  switch (log_type)
     {
-      item = cirp_make_repl_item_from_log (&applier->buf_mgr, log_pgptr,
-					   log_type, final_lsa);
-      if (item == NULL)
-	{
-	  error = er_errid ();
-	  GOTO_EXIT_ON_ERROR;
-	}
-    }
-  else if (log_type == LOG_DUMMY_UPDATE_GID_BITMAP)
-    {
-      error = cirp_log_get_gid_bitmap_update (&applier->buf_mgr, &gbu,
-					      log_pgptr, final_lsa);
+    case LOG_REPLICATION_SCHEMA:
+      error = rp_appl_apply_schema_item (applier, log_pgptr, final_lsa);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
-    }
-
-  if (log_type == LOG_REPLICATION_SCHEMA)
-    {
-      error = cirp_apply_schema_log (applier, item);
-      if (error == NO_ERROR)
+      break;
+    case LOG_REPLICATION_DATA:
+      error = rp_appl_apply_data_item (applier, log_pgptr, final_lsa);
+      if (error != NO_ERROR)
 	{
-	  error = cirp_add_repl_object (applier, item);
+	  GOTO_EXIT_ON_ERROR;
 	}
-    }
-  else if (log_type == LOG_REPLICATION_DATA)
-    {
-      RP_DATA_ITEM *data;
-
-      assert (item->item_type == RP_ITEM_TYPE_DATA);
-
-      data = &item->info.data;
-      switch (data->rcv_index)
+      break;
+    case LOG_DUMMY_UPDATE_GID_BITMAP:
+      error = rp_appl_apply_gid_bitmap_item (applier, log_pgptr, final_lsa);
+      if (error != NO_ERROR)
 	{
-	case RVREPL_DATA_UPDATE:
-	  error = cirp_apply_update_log (applier, data);
-	  break;
-
-	case RVREPL_DATA_INSERT:
-	  error = cirp_apply_insert_log (applier, data);
-	  break;
-
-	case RVREPL_DATA_DELETE:
-	  error = cirp_apply_delete_log (applier, data);
-	  break;
-
-	default:
-	  assert (false);
-
-	  REPL_SET_GENERIC_ERROR (error,
-				  "cirp_appl_apply_repl_item : rcv_index %d "
-				  "lsa(%lld,%d) target lsa(%lld,%d)\n",
-				  data->rcv_index,
-				  (long long) data->lsa.pageid,
-				  data->lsa.offset,
-				  (long long) data->target_lsa.pageid,
-				  data->target_lsa.offset);
+	  GOTO_EXIT_ON_ERROR;
 	}
-      if (error == NO_ERROR)
-	{
-	  error = cirp_add_repl_object (applier, item);
-	}
-    }
-  else if (log_type == LOG_DUMMY_UPDATE_GID_BITMAP)
-    {
-      if (gbu.target == 0)
-	{
-	  error = cci_update_db_group_id (&applier->conn, gbu.migrator_id,
-					  gbu.group_id, 1 /* slave */ ,
-					  gbu.on_off);
-	  if (error < 0)
-	    {
-	      REPL_SET_GENERIC_ERROR (error, applier->conn.err_buf.err_msg);
-	    }
-	}
-    }
-  else
-    {
+      break;
+    default:
       assert (false);
 
       REPL_SET_GENERIC_ERROR (error, "invalid replication log type");
-    }
-
-  if (error != NO_ERROR)
-    {
       GOTO_EXIT_ON_ERROR;
+      break;
     }
 
   assert (error == NO_ERROR);
   return error;
 
 exit_on_error:
-  assert (error != NO_ERROR);
-
-  if (item != NULL)
+  if (error == NO_ERROR)
     {
-      cirp_free_repl_item (item);
-      item = NULL;
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
     }
 
   return error;
@@ -1474,8 +1600,8 @@ cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
       || lrec->type == LOG_REPLICATION_SCHEMA
       || lrec->type == LOG_DUMMY_UPDATE_GID_BITMAP)
     {
-      error = cirp_appl_apply_repl_item (applier, pg_ptr, lrec->type,
-					 &final_lsa);
+      error = rp_appl_apply_repl_item (applier, pg_ptr, lrec->type,
+				       &final_lsa);
     }
   else if (lrec->type == LOG_COMMIT)
     {
@@ -1577,9 +1703,6 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
 			      LOG_LSA * commit_lsa)
 {
   int error = NO_ERROR;
-#if 0
-  DB_IDXKEY key;
-#endif
   CIRP_CT_LOG_APPLIER ct_data;
   LOG_LSA null_lsa;
   CIRP_REPL_ITEM *item;
@@ -1593,13 +1716,6 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
     }
 
   LSA_SET_NULL (&null_lsa);
-
-#if 0
-  /* make pkey idxkey */
-  key.size = 2;
-  DB_MAKE_STRING (&key.vals[0], applier->ct.host_ip);
-  DB_MAKE_INT (&key.vals[1], applier->ct.id);
-#endif
 
   error = cirp_get_applier_data (applier, &ct_data);
   if (error != NO_ERROR)
@@ -1615,17 +1731,21 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
       GOTO_EXIT_ON_ERROR;
     }
 
-  item = cirp_new_repl_catalog_item (commit_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, commit_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
   assert (item->item_type == RP_ITEM_TYPE_CATALOG);
   catalog = &item->info.catalog;
 
-  recdes = cirp_assign_recdes_from_pool (&applier->buf_mgr);
+  error = rp_assign_recdes_from_pool (&applier->buf_mgr, &recdes);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
   assert (recdes != NULL);
+
   error = rpct_applier_to_catalog_item (catalog, recdes, &ct_data);
   if (error != NO_ERROR)
     {
@@ -2037,9 +2157,7 @@ applier_main (void *arg)
 		  assert (false);
 		  if (error == NO_ERROR)
 		    {
-		      error = ER_GENERIC_ERROR;
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-			      1, "Invalid return value");
+		      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 		    }
 		  GOTO_EXIT_ON_ERROR;
 		}

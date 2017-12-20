@@ -272,6 +272,21 @@ public class LocalMgmt
 	}
     }
 
+    void deleteTmpFile(String file) throws SQLException
+    {
+	try {
+	    byte[] sendMsg = Protocol.mgmtRequestMsg(Protocol.BRREQ_OP_CODE_RM_TMP_FILE, file);
+
+	    BrokerResponse brRes = BrokerHandler.mgmtRequest(null, conInfo, sendMsg, timeout, true);
+	    int result = brRes.getResultCode();
+	    if (result < 0) {
+		throw new JciException(result);
+	    }
+	} catch (JciException e) {
+	    throw RyeException.createRyeException(makeRyeConnectionUrlForException(), e);
+	}
+    }
+
     private int unpackInt(ByteArrayInputStream instream) throws JciException
     {
 	if (instream.available() < RES_INT_SIZE) {
