@@ -321,9 +321,19 @@ css_common_connect_cl (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
 	}
       else
 	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1,
-			       hostname);
+	  if (connect_type == SVR_CONNECT_TYPE_TO_SERVER ||
+	      connect_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
+	    {
+	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+				   ER_NET_CANT_CONNECT_SERVER, 2,
+				   dbname, hostname);
+	    }
+	  else
+	    {
+	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+				   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1,
+				   hostname);
+	    }
 	}
       css_error = REQUEST_REFUSED;
     }
