@@ -1157,7 +1157,7 @@ bk_read_backup (THREAD_ENTRY * thread_p,
       if (sleep_msecs > 0)
 	{
 	  sleep_msecs =
-	    (int) (((double) sleep_msecs) / (ONE_M / io_page_size));
+	    (int) (((double) sleep_msecs) / ((double) ONE_M / io_page_size));
 
 	  if (sleep_msecs > 0)
 	    {
