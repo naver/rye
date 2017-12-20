@@ -3969,7 +3969,7 @@ int
 hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 			       CSS_CONN_ENTRY * conn)
 {
-  char err_msg[ER_MSG_SIZE] = "";
+  char err_msg[LINE_MAX] = "";
   HB_PROC_ENTRY *proc;
   int proc_state;
   int error = NO_ERROR;
