@@ -2958,8 +2958,8 @@ pt_check_shard_key (PARSER_CONTEXT * parser, PT_NODE * node)
     {
       /* is impossible */
       PT_ERRORf (parser, node,
-                 "check syntax at %s, expecting 'SHARD BY' expression.",
-                 pt_short_print (parser, node));
+		 "check syntax at %s, expecting 'SHARD BY' expression.",
+		 pt_short_print (parser, node));
       return;
     }
 
@@ -5651,12 +5651,12 @@ pt_check_path_eq (PARSER_CONTEXT * parser, const PT_NODE * p,
 {
   PT_NODE_TYPE n;
 
-  if (!p && !q)
+  if (p == NULL && q == NULL)
     {
       return 0;
     }
 
-  if (!p || !q)
+  if (p == NULL || q == NULL)
     {
       return 1;
     }
@@ -5702,13 +5702,13 @@ pt_check_path_eq (PARSER_CONTEXT * parser, const PT_NODE * p,
        * That even allows us to use this very function to
        * implement recognition of common path expressions.
        */
-      if (!p->info.dot.arg2 || !q->info.dot.arg2)
+      if (p->info.dot.arg2 == NULL || q->info.dot.arg2 == NULL)
 	{
 	  return 1;
 	}
 
-      if (!p->info.dot.arg2->node_type == PT_NAME
-	  || !q->info.dot.arg2->node_type == PT_NAME)
+      if (p->info.dot.arg2->node_type != PT_NAME
+	  || q->info.dot.arg2->node_type != PT_NAME)
 	{
 	  return 1;
 	}

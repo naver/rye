@@ -89,14 +89,17 @@
          (c) == SM_CONSTRAINT_INDEX)      \
          ? true : false )
 
+#if 0
 #define SM_MAP_INDEX_ATTFLAG_TO_INDEX_TYPE_ERROR(c) \
         (SM_IS_ATTFLAG_UNIQUE_FAMILY(c) ? ER_SM_INVALID_UNIQUE_TYPE: \
          (c) == SM_ATTFLAG_INDEX         ? ER_SM_INVALID_INDEX_TYPE: \
-                                            assert(false),ER_SM_INVALID_INDEX_TYPE)
+                                            ER_SM_INVALID_INDEX_TYPE)
+#endif
+
 #define SM_MAP_INDEX_ATTFLAG_TO_VCLASS_ERROR(c) \
         (SM_IS_ATTFLAG_UNIQUE_FAMILY(c) ? ER_SM_UNIQUE_ON_VCLASS: \
           (c) == SM_ATTFLAG_INDEX        ? ER_SM_UNIQUE_ON_VCLASS: \
-                                            assert(false),ER_SM_UNIQUE_ON_VCLASS)
+                                            ER_SM_UNIQUE_ON_VCLASS)
 
 /*
  *    This constant defines the maximum size in bytes of a class name,
