@@ -75,6 +75,8 @@ rbl_error_log (int severity, const char *file_name, const int line_no,
   if (r < 0)
     {
       assert (false);
+      va_end (ap);
+      pthread_mutex_unlock (&log_Mutex);
       return;
     }
 

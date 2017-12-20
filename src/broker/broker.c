@@ -181,6 +181,7 @@ static T_BR_INIT_ERROR br_Init_error = { 0, 0 };
 int
 main ()
 {
+  char broker_err_file[BROKER_PATH_MAX];
   pthread_t receiver_thread;
   pthread_t dispatch_thread;
   pthread_t cas_monitor_thread;
@@ -190,16 +191,29 @@ main ()
 
   int error;
 
-  er_init ("broker.err", ER_EXIT_DEFAULT);
-
-  error = lang_init ();
-  if (error != NO_ERROR)
+  error = broker_init_shm ();
+  if (error)
     {
       goto error1;
     }
 
-  error = broker_init_shm ();
-  if (error)
+  if (shm_Br->br_info[br_Index].broker_type == LOCAL_MGMT)
+    {
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.local_mgmt.err");
+    }
+  else if (shm_Br->br_info[br_Index].broker_type == SHARD_MGMT)
+    {
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.shard_mgmt.%s.err", shm_Br->br_info[br_Index].shard_global_dbname);
+    }
+  else
+    {
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.%s.err", shm_Br->br_info[br_Index].name);
+    }
+
+  er_init (broker_err_file, ER_EXIT_DEFAULT);
+
+  error = lang_init ();
+  if (error != NO_ERROR)
     {
       goto error1;
     }

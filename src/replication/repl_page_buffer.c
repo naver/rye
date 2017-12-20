@@ -1966,8 +1966,6 @@ cirp_logpb_decache_range (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID from,
 	  continue;
 	}
 
-      assert (logpb->pageid == from);
-
       (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
 
       cirp_logpb_clear_logpb (logpb);

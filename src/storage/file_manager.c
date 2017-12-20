@@ -3385,7 +3385,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 
 				  pgbuf_invalidate_temporary_file
 				    (allocset->volid, batch_firstid,
-				     batch_ndealloc, true);
+				     batch_ndealloc);
 
 				  /* Start again */
 				  batch_firstid = *aid_ptr;
@@ -3406,7 +3406,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 
 		      pgbuf_invalidate_temporary_file (allocset->volid,
 						       batch_firstid,
-						       batch_ndealloc, true);
+						       batch_ndealloc);
 		    }
 
 		  /* Get next page in the allocation set */
@@ -3607,7 +3607,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 				{
 				  pgbuf_invalidate_temporary_file
 				    (allocset->volid, batch_firstid,
-				     batch_ndealloc, false);
+				     batch_ndealloc);
 				}
 
 			      (void) disk_dealloc_page (thread_p,
@@ -3636,7 +3636,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 		    {
 		      pgbuf_invalidate_temporary_file (allocset->volid,
 						       batch_firstid,
-						       batch_ndealloc, false);
+						       batch_ndealloc);
 		    }
 
 		  (void) disk_dealloc_page (thread_p, allocset->volid,

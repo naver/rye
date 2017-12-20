@@ -89,13 +89,17 @@ struct local_mgmt_job_queue
   T_SHM_MGMT_QUEUE_INFO *shm_queue_info;
 };
 
-static int local_mgmt_init_child_process_queue (void);
 static int local_mg_transfer_req (int target_broker_type,
 				  SOCKET * clt_sock_fd, in_addr_t clt_ip_addr,
 				  const T_BROKER_REQUEST_MSG * br_req_msg);
 
-static T_LOCAL_MGMT_JOB_QUEUE *local_mg_create_job_queue (void);
-static T_LOCAL_MGMT_JOB_QUEUE *local_mg_init_mgmt_job_queue (void);
+static T_LOCAL_MGMT_JOB_QUEUE *local_mg_create_job_queue (int num_workers,
+							  T_SHM_MGMT_QUEUE_INFO
+							  * shm_queue_info,
+							  THREAD_FUNC
+							  (*worker_func) (void
+									  *));
+static int local_mg_init_mgmt_job_queue (void);
 static THREAD_FUNC local_mg_child_process_waiter (void *arg);
 static THREAD_FUNC local_mg_admin_worker (void *arg);
 
@@ -192,8 +196,11 @@ static T_LOCAL_MG_ADMIN_FUNC_TABLE local_Mg_admin_func_table[] = {
   {-1, NULL, NULL}
 };
 
+static T_LOCAL_MGMT_JOB_QUEUE *job_Q_mgmt;
+static T_LOCAL_MGMT_JOB_QUEUE *job_Q_connect_db;
+
 static T_SHM_LOCAL_MGMT_INFO *shm_Local_mgmt_info;
-static T_LOCAL_MGMT_JOB_QUEUE *child_Process_queue;
+static T_LOCAL_MGMT_JOB_QUEUE *job_Q_child_proc;
 static unsigned int child_Outfile_seq = 0;
 
 static struct _local_mgmt_server_info
@@ -204,30 +211,15 @@ static struct _local_mgmt_server_info
 int
 local_mgmt_init ()
 {
-  if (local_mgmt_init_child_process_queue () < 0)
+  if (local_mg_init_mgmt_job_queue () < 0)
     {
+      br_set_init_error (BR_ER_INIT_LOCAL_MGMT_INIT_FAIL, 0);
       return -1;
     }
 
   memset (&local_Mgmt_server_info, 0, sizeof (local_Mgmt_server_info));
   gethostname (local_Mgmt_server_info.hostname,
 	       sizeof (local_Mgmt_server_info.hostname) - 1);
-  return 0;
-}
-
-static int
-local_mgmt_init_child_process_queue ()
-{
-  pthread_t thr;
-
-  child_Process_queue = local_mg_create_job_queue ();
-  if (child_Process_queue == NULL)
-    {
-      return -1;
-    }
-
-  THREAD_BEGIN (thr, local_mg_child_process_waiter, NULL);
-
   return 0;
 }
 
@@ -239,7 +231,6 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
   int err_code = 0;
   ER_MSG_INFO *er_msg;
   in_addr_t clt_ip_addr;
-  T_LOCAL_MGMT_JOB_QUEUE *mgmt_job_queue;
 
   signal (SIGPIPE, SIG_IGN);
 
@@ -247,16 +238,6 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
   err_code = er_set_msg_info (er_msg);
   if (err_code != NO_ERROR)
     {
-      return NULL;
-    }
-
-  shm_Local_mgmt_info = &shm_Appl->info.local_mgmt_info;
-
-  mgmt_job_queue = local_mg_init_mgmt_job_queue ();
-  if (mgmt_job_queue == NULL)
-    {
-      br_Process_flag = 0;
-      br_set_init_error (BR_ER_INIT_LOCAL_MGMT_INIT_FAIL, 0);
       return NULL;
     }
 
@@ -279,7 +260,7 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 
       if (br_read_broker_request_msg (clt_sock_fd, br_req_msg) < 0)
 	{
-	  shm_Local_mgmt_info->error_req_count++;
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->error_req_count, 1);
 	  err_code = CAS_ER_COMMUNICATION;
 	  goto end;
 	}
@@ -299,17 +280,17 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 
 	  if (br_req_msg->op_code == BRREQ_OP_CODE_CAS_CONNECT)
 	    {
-	      shm_Local_mgmt_info->connect_req_count++;
+	      ATOMIC_INC_32 (&shm_Local_mgmt_info->connect_req_count, 1);
 	    }
 	  else if (br_req_msg->op_code == BRREQ_OP_CODE_QUERY_CANCEL)
 	    {
-	      shm_Local_mgmt_info->cancel_req_count++;
+	      ATOMIC_INC_32 (&shm_Local_mgmt_info->cancel_req_count, 1);
 	    }
 	}
       else if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
 	{
 	  br_send_result_to_client (clt_sock_fd, 0, NULL);
-	  shm_Local_mgmt_info->ping_req_count++;
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->ping_req_count, 1);
 	}
       else if (IS_LOCAL_MGMT_OPCODE (br_req_msg->op_code))
 	{
@@ -321,15 +302,28 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 	    }
 	  else
 	    {
-	      err_code = local_mg_job_queue_add (mgmt_job_queue,
-						 &clt_sock_fd, clt_ip_addr,
-						 clone_req_msg, NULL, true);
+	      if (br_req_msg->op_code == BRREQ_OP_CODE_CONNECT_DB_SERVER)
+		{
+		  err_code = local_mg_job_queue_add (job_Q_connect_db,
+						     &clt_sock_fd,
+						     clt_ip_addr,
+						     clone_req_msg, NULL,
+						     true);
+		}
+	      else
+		{
+		  err_code = local_mg_job_queue_add (job_Q_mgmt,
+						     &clt_sock_fd,
+						     clt_ip_addr,
+						     clone_req_msg, NULL,
+						     true);
+		}
 	    }
-	  shm_Local_mgmt_info->admin_req_count++;
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->admin_req_count, 1);
 	}
       else
 	{
-	  shm_Local_mgmt_info->error_req_count++;
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->error_req_count, 1);
 	  err_code = CAS_ER_COMMUNICATION;
 	}
 
@@ -418,9 +412,12 @@ local_mg_transfer_req (int target_broker_type, SOCKET * clt_sock_fd,
 }
 
 static T_LOCAL_MGMT_JOB_QUEUE *
-local_mg_create_job_queue ()
+local_mg_create_job_queue (int num_workers,
+			   T_SHM_MGMT_QUEUE_INFO * shm_queue_info,
+			   THREAD_FUNC (*worker_func) (void *))
 {
   T_LOCAL_MGMT_JOB_QUEUE *job_queue;
+  int i;
 
   job_queue = RYE_MALLOC (sizeof (T_LOCAL_MGMT_JOB_QUEUE));
 
@@ -434,42 +431,50 @@ local_mg_create_job_queue ()
 	  RYE_FREE_MEM (job_queue);
 	  return NULL;
 	}
+
+      job_queue->num_workers = num_workers;
+      job_queue->shm_queue_info = shm_queue_info;
+
+      for (i = 0; i < num_workers; i++)
+	{
+	  pthread_t worker_thr;
+	  THREAD_BEGIN (worker_thr, worker_func, job_queue);
+	}
     }
 
   return job_queue;
 }
 
-static T_LOCAL_MGMT_JOB_QUEUE *
+static int
 local_mg_init_mgmt_job_queue ()
 {
-  T_LOCAL_MGMT_JOB_QUEUE *mgmt_job_queue;
-  pthread_t mgmt_admin_worker;
-  int i;
-
   if (pthread_mutex_init (&shm_Lock, NULL) < 0)
     {
-      return NULL;
+      return -1;
     }
   if (pthread_mutex_init (&css_Lock, NULL) < 0)
     {
-      return NULL;
+      return -1;
     }
 
-  mgmt_job_queue = local_mg_create_job_queue ();
-  if (mgmt_job_queue == NULL)
+  shm_Local_mgmt_info = &shm_Appl->info.local_mgmt_info;
+
+  job_Q_mgmt =
+    local_mg_create_job_queue (1, &shm_Local_mgmt_info->admin_req_queue,
+			       local_mg_admin_worker);
+  job_Q_connect_db =
+    local_mg_create_job_queue (1, &shm_Local_mgmt_info->db_connect_req_queue,
+			       local_mg_admin_worker);
+  job_Q_child_proc =
+    local_mg_create_job_queue (1, NULL, local_mg_child_process_waiter);
+
+  if (job_Q_mgmt == NULL || job_Q_connect_db == NULL ||
+      job_Q_child_proc == NULL)
     {
-      return NULL;
+      return -1;
     }
 
-  mgmt_job_queue->num_workers = 1;
-  mgmt_job_queue->shm_queue_info = &shm_Local_mgmt_info->admin_req_queue;
-
-  for (i = 0; i < mgmt_job_queue->num_workers; i++)
-    {
-      THREAD_BEGIN (mgmt_admin_worker, local_mg_admin_worker, mgmt_job_queue);
-    }
-
-  return mgmt_job_queue;
+  return 0;
 }
 
 static char *
@@ -566,9 +571,9 @@ set_child_process_result (T_MGMT_RESULT_MSG * result_msg,
 }
 
 static THREAD_FUNC
-local_mg_child_process_waiter (UNUSED_ARG void *arg)
+local_mg_child_process_waiter (void *arg)
 {
-  T_LOCAL_MGMT_JOB_QUEUE *job_queue = child_Process_queue;
+  T_LOCAL_MGMT_JOB_QUEUE *job_queue = (T_LOCAL_MGMT_JOB_QUEUE *) arg;
   T_MGMT_RESULT_MSG result_msg;
   int error;
   ER_MSG_INFO *er_msg;
@@ -846,7 +851,7 @@ local_mg_job_queue_remove (T_LOCAL_MGMT_JOB_QUEUE * job_queue)
 static T_LOCAL_MGMT_JOB *
 local_mg_process_queue_remove_by_pid (int pid)
 {
-  T_LOCAL_MGMT_JOB_QUEUE *job_queue = child_Process_queue;
+  T_LOCAL_MGMT_JOB_QUEUE *job_queue = job_Q_child_proc;
   T_LOCAL_MGMT_JOB *job;
 
   if (job_queue->back->info.child_info->pid == pid)
@@ -1108,7 +1113,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 
   signal (SIGCHLD, SIG_DFL);
 
-  pthread_mutex_lock (&child_Process_queue->lock);
+  pthread_mutex_lock (&job_Q_child_proc->lock);
 
   if (MGMT_LUANCH_IS_FLAG_SET (launch_arg->flag, MGMT_LAUNCH_FLAG_NO_RESULT))
     {
@@ -1193,14 +1198,14 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
       copy_launch_proc_cmd (child_info->cmd, sizeof (child_info->cmd), argc,
 			    argv);
 
-      error = local_mg_job_queue_add (child_Process_queue,
+      error = local_mg_job_queue_add (job_Q_child_proc,
 				      &job->clt_sock_fd, job->clt_ip,
 				      NULL, &child_info, false);
 
       shm_copy_child_process_info ();
     }
 
-  pthread_mutex_unlock (&child_Process_queue->lock);
+  pthread_mutex_unlock (&job_Q_child_proc->lock);
 
   RYE_FREE_MEM (argv);
   RYE_FREE_MEM (child_info);
@@ -1212,7 +1217,7 @@ static void
 shm_copy_child_process_info ()
 {
   int num_child = 0;
-  T_LOCAL_MGMT_JOB *job = child_Process_queue->back;
+  T_LOCAL_MGMT_JOB *job = job_Q_child_proc->back;
 
   while (job != NULL && num_child < SHM_MAX_CHILD_INFO)
     {
@@ -1575,12 +1580,12 @@ local_mg_connect_db_server (T_LOCAL_MGMT_JOB * job,
 
   if (css_transfer_fd (conn->fd, job->clt_sock_fd, job->clt_ip, NULL) < 0)
     {
-      shm_Local_mgmt_info->db_connect_fail++;
+      ATOMIC_INC_32 (&shm_Local_mgmt_info->db_connect_fail, 1);
       status = BR_ER_CONNECT_DB;
     }
   else
     {
-      shm_Local_mgmt_info->db_connect_success++;
+      ATOMIC_INC_32 (&shm_Local_mgmt_info->db_connect_success, 1);
       status = 0;
     }
 
