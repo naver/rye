@@ -148,7 +148,8 @@ extern int net_mgmt_shard_mgmt_info_req (const T_HOST_INFO * host,
 					 int *server_mode, int timeout_msec);
 extern int net_mgmt_launch_process_req (T_CCI_LAUNCH_RESULT * launch_result,
 					const T_HOST_INFO * host,
-					int launch_proc, bool wait_child,
+					int launch_proc,
+					bool recv_stdout, bool wait_child,
 					int argc, const char **argv,
 					int num_env, const char **envp,
 					int timeout_msec);

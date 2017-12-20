@@ -6693,7 +6693,7 @@ lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
 	    {
 	      error = ER_LC_UNKNOWN_CLASSNAME;
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		      CT_SHARD_GID_SKEY_INFO_NAME);
+		      CT_LOG_APPLIER_NAME);
 
 	      return error;
 	    }

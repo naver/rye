@@ -43,9 +43,7 @@
 #include "thread.h"
 #include "connection_error.h"
 #endif /* SERVER_MODE */
-#if !defined(NDEBUG)
 #include "btree_load.h"
-#endif
 
 #define SPAGE_SEARCH_NEXT       1
 #define SPAGE_SEARCH_PREV       -1
@@ -123,7 +121,7 @@ struct spage_slots_context
   SPAGE_SLOT *slot;		/* Iterator about slot in the page */
 };
 
-static MHT_TABLE *spage_Mht_saving;	/* Memory hash table for savings */
+static MHT_TABLE *spage_Mht_saving = NULL;	/* Memory hash table for savings */
 
 #if defined(SERVER_MODE)
 pthread_mutex_t spage_saving_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -358,6 +356,7 @@ spage_free_saved_spaces (THREAD_ENTRY * thread_p, void *first_save_entry)
 	  /* Total saved space should be 0 or positive */
 	  if (head->total_saved < 0)
 	    {			/* defense code */
+	      assert_release (false);
 	      head->total_saved = 0;
 	    }
 	}
@@ -493,6 +492,7 @@ spage_save_space (THREAD_ENTRY * thread_p, SPAGE_HEADER * page_header_p,
        * is completed.
        */
       tdes = logtb_get_current_tdes (thread_p);
+      assert_release (tdes != NULL);
       if (tdes != NULL)
 	{
 	  entry_p->tran_next_save = ((SPAGE_SAVE_ENTRY *)
@@ -924,8 +924,8 @@ spage_get_free_space_without_saving (UNUSED_ARG THREAD_ENTRY * thread_p,
   free_space = page_header_p->total_free;
   if (free_space < 0)
     {				/* defense code */
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       free_space = 0;
     }
 
@@ -1171,7 +1171,7 @@ spage_compact (PAGE_PTR page_p)
 	    }
 	}
 
-      assert (page_header_p->num_records == j);
+      assert_release (page_header_p->num_records == j);
       if (page_header_p->num_records != j)
 	{
 	  VPID vpid;
@@ -1293,9 +1293,9 @@ spage_find_free_slot (PAGE_PTR page_p, SPAGE_SLOT ** out_slot_p,
 
   if (spage_find_slot (page_p, page_header_p, slot_id, false) != slot_p)
     {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert (false);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       return SP_ERROR;
     }
 
@@ -1406,8 +1406,8 @@ spage_find_empty_slot (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 
   if (slot_id > page_header_p->num_slots)
     {				/* defense code */
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return SP_ERROR;
     }
 
@@ -1672,8 +1672,8 @@ spage_find_empty_slot_at (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 
   if (slot_id > page_header_p->num_slots)
     {				/* defense code */
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return SP_ERROR;
     }
 
@@ -1915,6 +1915,7 @@ spage_insert_at (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2094,6 +2095,7 @@ spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id)
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return NULL_SLOTID;
     }
 
@@ -2126,8 +2128,8 @@ spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id)
       free_space += sizeof (SPAGE_SLOT);
       break;
     default:
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return NULL_SLOTID;
     }
 
@@ -2136,9 +2138,9 @@ spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id)
       && spage_save_space (thread_p, page_header_p, page_p,
 			   free_space) != NO_ERROR)
     {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert (false);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       return NULL_SLOTID;
     }
 
@@ -2203,8 +2205,8 @@ spage_check_updatable (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 
   if (record_descriptor_p->length < 0)
     {
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2222,6 +2224,7 @@ spage_check_updatable (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2282,8 +2285,8 @@ spage_update_record_in_place (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 
   if (record_descriptor_p->length < 0)
     {
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2341,8 +2344,8 @@ spage_update_record_after_compact (PAGE_PTR page_p,
 
   if (record_descriptor_p->length < 0)
     {
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2375,6 +2378,7 @@ spage_update_record_after_compact (PAGE_PTR page_p,
 
       if (spage_compact (page_p) != NO_ERROR)
 	{
+	  assert_release (false);
 	  slot_p->offset_to_record = old_offset;
 	  page_header_p->total_free -= (old_waste + slot_p->record_length);
 	  page_header_p->num_records++;
@@ -2436,8 +2440,8 @@ spage_update (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
 
   if (record_descriptor_p->length < 0)
     {
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2489,9 +2493,9 @@ spage_update (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
 			   page_header_p->total_free - total_free_save)
       != NO_ERROR)
     {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert (false);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       return SP_ERROR;
     }
   SPAGE_VERIFY_HEADER (page_header_p);
@@ -2552,10 +2556,10 @@ spage_update_record_type (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
   slot_p = spage_find_slot (page_p, page_header_p, slot_id, true);
   if (slot_p == NULL)
     {
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return;
     }
 
@@ -2670,6 +2674,7 @@ spage_split (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2751,6 +2756,7 @@ spage_split (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
 	      *out_new_slot_id_p = NULL_SLOTID;
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
 		      "");
+	      assert_release (false);
 	      return SP_ERROR;
 	    }
 
@@ -2837,9 +2843,9 @@ spage_split (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
 			       page_header_p->total_free - total_free_save) !=
 	  NO_ERROR)
 	{
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 	  assert (false);
 
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 	  return SP_ERROR;
 	}
     }
@@ -2884,6 +2890,7 @@ spage_take_out (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -2994,9 +3001,9 @@ spage_take_out (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
 			   page_header_p->total_free - total_free_save) !=
       NO_ERROR)
     {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert (false);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       return SP_ERROR;
     }
 
@@ -3083,6 +3090,7 @@ spage_put_helper (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -3208,6 +3216,7 @@ spage_put_helper (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
       if (copyarea == NULL)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+	  assert_release (false);
 	  return SP_ERROR;
 	}
 
@@ -3328,9 +3337,9 @@ spage_put_helper (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
 			    page_header_p->total_free - total_free_save) !=
 	  NO_ERROR))
     {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert (false);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       return SP_ERROR;
     }
 
@@ -3373,8 +3382,8 @@ spage_overwrite (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
 
   if (record_descriptor_p->length < 0)
     {
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+      assert (false);
       return SP_ERROR;
     }
 
@@ -3384,6 +3393,7 @@ spage_overwrite (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -3449,6 +3459,7 @@ spage_merge (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID first_slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      first_slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -3459,6 +3470,7 @@ spage_merge (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID first_slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      second_slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return SP_ERROR;
     }
 
@@ -3635,9 +3647,9 @@ spage_merge (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID first_slot_id,
 			   page_header_p->total_free - total_free_save) !=
       NO_ERROR)
     {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert (false);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       return SP_ERROR;
     }
 
@@ -3838,6 +3850,7 @@ spage_get_record (PAGE_PTR page_p, PGSLOTID slot_id,
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return S_DOESNT_EXIST;
     }
 
@@ -3931,6 +3944,7 @@ spage_get_record_length (PAGE_PTR page_p, PGSLOTID slot_id)
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return -1;
     }
 
@@ -3961,6 +3975,7 @@ spage_get_space_for_record (PAGE_PTR page_p, PGSLOTID slot_id)
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return -1;
     }
 
@@ -3993,6 +4008,7 @@ spage_get_record_type (PAGE_PTR page_p, PGSLOTID slot_id)
       || slot_p->record_type == REC_MARKDELETED
       || slot_p->record_type == REC_DELETED_WILL_REUSE)
     {
+      assert_release (false);
       return REC_UNKNOWN;
     }
 
@@ -4499,10 +4515,10 @@ spage_check_slot_owner (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
   slot_p = spage_find_slot (page_p, page_header_p, slot_id, false);
   if (slot_p == NULL)
     {
-      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SP_UNKNOWN_SLOTID, 3,
 	      slot_id, pgbuf_get_page_id (page_p),
 	      pgbuf_get_volume_label (page_p));
+      assert (false);
       return 0;
     }
 
@@ -4573,17 +4589,15 @@ spage_find_slot (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 
   if (is_unknown_slot_check)
     {
-#if !defined(NDEBUG)
       if (page_header_p->anchor_type == UNANCHORED_KEEP_SEQUENCE_BTREE
 	  && slot_id == 0)
 	{
 	  if (slot_p->record_length != sizeof (BTREE_NODE_HEADER))
 	    {
-	      assert (false);	/* is impossible */
+	      assert_release (false);	/* is impossible */
 	      return NULL;
 	    }
 	}
-#endif
 
       if (spage_is_unknown_slot (slot_id, page_header_p, slot_p))
 	{
@@ -4648,11 +4662,20 @@ static bool
 spage_has_enough_contiguous_space (PAGE_PTR page_p,
 				   SPAGE_HEADER * page_header_p, int space)
 {
+  int err = NO_ERROR;
+
   assert (page_p != NULL);
   SPAGE_VERIFY_HEADER (page_header_p);
 
-  return (space <= page_header_p->cont_free
-	  || spage_compact (page_p) == NO_ERROR);
+  if (space <= page_header_p->cont_free)
+    {
+      return true;
+    }
+
+  err = spage_compact (page_p);
+  assert_release (err == NO_ERROR);
+
+  return (err == NO_ERROR);
 }
 
 /*

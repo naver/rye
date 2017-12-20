@@ -35,6 +35,7 @@ import rye.jdbc.driver.RyeCommand;
 import rye.jdbc.driver.RyeConnection;
 import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeException;
+import rye.jdbc.jci.Protocol;
 import rye.jdbc.sharding.ShardAdmin;
 import rye.jdbc.sharding.ShardInfoManager;
 import rye.jdbc.sharding.ShardNodeInstance;
@@ -302,7 +303,7 @@ abstract class ShardCommand
 	return sb.toString();
     }
 
-    void executeRyeCommand(int timeout, NodeAddress host, String... args) throws SQLException
+    void executeRyeCommand(int timeout, NodeAddress host, int flag, String... args) throws SQLException
     {
 	if (verboseOut != null) {
 	    StringBuffer msg = new StringBuffer();
@@ -319,7 +320,7 @@ abstract class ShardCommand
 	if (timeout != 0) {
 	    ryeCommand.setTimeout(timeout);
 	}
-	ryeCommand.exec(args);
+	ryeCommand.exec(flag, args);
 
 	int exitStatus = ryeCommand.getCommandExitStatus();
 
@@ -606,8 +607,14 @@ abstract class ShardCommand
 
 	String bkvFile = String.format("%s_bkv000", dbname);
 
-	executeRyeCommand(-1, host, "rye", "backupdb", dbname, "-m");
-	executeRyeCommand(-1, host, "rye", "restoredb", dbname, "-m", "-B", bkvFile);
+	try {
+	    executeRyeCommand(-1, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "backupdb", dbname, "-m");
+	    executeRyeCommand(-1, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "restoredb", dbname, "-m", "-B",
+			    bkvFile);
+	} finally {
+	    LocalMgmt localMgmt = new LocalMgmt(host.toJciConnectionInfo());
+	    localMgmt.deleteTmpFile(bkvFile);
+	}
     }
 
     private void createDatabase(String[] localDbname, NodeAddress[] host, ArrayList<String> optionList)
@@ -634,7 +641,7 @@ abstract class ShardCommand
 	    }
 	}
 
-	executeRyeCommand(-1, host, createdbCommand);
+	executeRyeCommand(-1, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, createdbCommand);
     }
 
     private void changeConfHaDbList(String[] localDbname, NodeAddress[] hosts) throws SQLException
@@ -690,7 +697,7 @@ abstract class ShardCommand
 	printStatus(true, "%s: hb start \n", host);
 
 	try {
-	    executeRyeCommand(0, host, "rye", "service", "restart");
+	    executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_RESULT, "rye", "service", "restart");
 	} catch (SQLException e) {
 	}
 
@@ -711,7 +718,7 @@ abstract class ShardCommand
     {
 	printStatus(true, "%s: hb stop\n", host);
 
-	executeRyeCommand(0, host, "rye", "heartbeat", "stop");
+	executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "heartbeat", "stop");
     }
 
     void hbReload(NodeInfo[] nodeInfoArr) throws SQLException
@@ -728,7 +735,7 @@ abstract class ShardCommand
     {
 	printStatus(true, "%s: hb reload \n", host);
 
-	executeRyeCommand(0, host, "rye", "heartbeat", "reload");
+	executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "heartbeat", "reload");
     }
 
     private void checkBrokerRunning(NodeAddress[] hostArr, String localDbname, String dbaPasswd) throws Exception
@@ -758,7 +765,7 @@ abstract class ShardCommand
     {
 	/* do not check rye command result. 'rye broker restart' command always returns error */
 	try {
-	    executeRyeCommand(0, host, "rye", "broker", "restart");
+	    executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_RESULT, "rye", "broker", "restart");
 	} catch (SQLException e) {
 	}
     }
