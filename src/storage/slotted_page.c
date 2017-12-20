@@ -4008,7 +4008,11 @@ spage_get_record_type (PAGE_PTR page_p, PGSLOTID slot_id)
       || slot_p->record_type == REC_MARKDELETED
       || slot_p->record_type == REC_DELETED_WILL_REUSE)
     {
+#if defined (SA_MODE)
+      /* permit for disgdb 8 dump log */
+#else
       assert_release (false);
+#endif
       return REC_UNKNOWN;
     }
 
