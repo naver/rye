@@ -208,6 +208,7 @@ typedef struct
   int db_connect_success;
   int db_connect_fail;
   T_SHM_MGMT_QUEUE_INFO admin_req_queue;
+  T_SHM_MGMT_QUEUE_INFO db_connect_req_queue;
   int num_child_process;
   T_LOCAL_MGMT_CHILD_PROC_INFO child_process_info[SHM_MAX_CHILD_INFO];
 } T_SHM_LOCAL_MGMT_INFO;

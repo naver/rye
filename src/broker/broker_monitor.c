@@ -883,6 +883,8 @@ local_mgmt_monitor (const T_SHM_LOCAL_MGMT_INFO * shm_info_p)
 
   str_out ("%s", indent2);
   str_out ("admin_req:%d", shm_info_p->admin_req_queue.num_job);
+  str_out ("%c", FIELD_DELIMITER);
+  str_out ("db_connect_req:%d", shm_info_p->db_connect_req_queue.num_job);
   print_newline ();
 
   str_out ("%s", indent1);
