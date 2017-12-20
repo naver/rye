@@ -1934,6 +1934,8 @@ analyzer_main (void *arg)
 	  THREAD_SLEEP (100);
 	  continue;
 	}
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
+	      "All Agent Stopped");
 
       rp_disconnect_agents ();
 
@@ -1954,19 +1956,12 @@ analyzer_main (void *arg)
 	  continue;
 	}
 
-      error = rp_start_all_applier ();
-      if (error != NO_ERROR)
-	{
-	  THREAD_SLEEP (1000);
-	  continue;
-	}
-
       /* initialize */
       LSA_COPY (&final_lsa, &analyzer->ct.required_lsa);
       LSA_COPY (&analyzer->ct.current_lsa, &final_lsa);
 
       snprintf (err_msg, sizeof (err_msg),
-		"Analyzer Start. required_lsa: %lld|%d."
+		"All Agent Start. required_lsa: %lld|%d."
 		"current LSA: %lld|%d.",
 		(long long) analyzer->ct.required_lsa.pageid,
 		analyzer->ct.required_lsa.offset,
@@ -1974,6 +1969,16 @@ analyzer_main (void *arg)
 		analyzer->ct.current_lsa.offset);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
+
+      error = rp_start_all_applier ();
+      if (error != NO_ERROR)
+	{
+	  THREAD_SLEEP (1000);
+	  continue;
+	}
+
+      /* decache all */
+      cirp_logpb_decache_range (buf_mgr, 0, LOGPAGEID_MAX);
 
       gettimeofday (&commit_time, NULL);
 
