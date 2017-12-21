@@ -498,6 +498,7 @@ css_process_ha_ping_host_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   reply = (char *) malloc (reply_size);
   if (reply == NULL)
     {
+      free_and_init (ping_host_info);
       return CANT_ALLOC_BUFFER;
     }
 
@@ -598,6 +599,7 @@ css_process_ha_process_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   reply = (char *) malloc (reply_size);
   if (reply == NULL)
     {
+      free_and_init (process_info);
       return CANT_ALLOC_BUFFER;
     }
 

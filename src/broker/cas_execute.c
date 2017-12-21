@@ -3865,7 +3865,7 @@ ux_send_repl_ddl_tran (int num_item, void **obj_argv)
        || item.info.ddl.stmt_type == RYE_STMT_ALTER_CLASS)
       && (item.info.ddl.db_user != NULL && item.info.ddl.db_user[0] != '\0'))
     {
-      strncpy (db_name, DB_Name, sizeof (db_name));
+      STRNCPY (db_name, DB_Name, sizeof (db_name));
       error = ux_database_connect (db_name, item.info.ddl.db_user,
 				   shm_Br_master->broker_key, NULL);
       if (error < 0)

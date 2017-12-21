@@ -853,7 +853,7 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
     (BK_VOL_HEADER_IN_BACKUP *) (&session_p->dbfile.area->iopage);
   file_header_p->volid = session_p->dbfile.volid;
   file_header_p->nbytes = session_p->dbfile.nbytes;
-  strncpy (file_header_p->vlabel, session_p->dbfile.vlabel, PATH_MAX);
+  STRNCPY (file_header_p->vlabel, session_p->dbfile.vlabel, PATH_MAX);
   nread = BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE;
 
   if (bk_send_backup (thread_p, session_p, BK_PACKET_VOL_START,
