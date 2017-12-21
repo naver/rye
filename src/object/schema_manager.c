@@ -1456,7 +1456,7 @@ int
 sm_update_statistics (MOP classop, bool update_stats, bool with_fullscan)
 {
   int error = NO_ERROR;
-  SM_CLASS *class_;
+  SM_CLASS *class_ = NULL;
 
   assert_release (classop != NULL);
 
@@ -1522,7 +1522,6 @@ sm_update_all_statistics (bool update_stats, bool with_fullscan)
 {
   int error = NO_ERROR;
   DB_OBJLIST *cl;
-  SM_CLASS *class_;
 
   /* make sure the workspace is flushed before calculating stats */
   if (locator_all_flush () != NO_ERROR)
@@ -1541,27 +1540,9 @@ sm_update_all_statistics (bool update_stats, bool with_fullscan)
   for (cl = ws_Resident_classes; cl != NULL; cl = cl->next)
     {
       if (!WS_ISMARK_DELETED (cl->op))
-	{
-	  /* uncache statistics only if object is cached - MOP trickery */
-	  if (cl->op->object != NULL)
-	    {
-	      class_ = (SM_CLASS *) cl->op->object;
-	      if (class_->stats != NULL)
-		{
-		  stats_free_statistics (class_->stats);
-		  class_->stats = NULL;
-		}
-
-	      /* make sure the class is flushed but quit if an error happens */
-	      error = locator_flush_class (cl->op);
-	      if (error != NO_ERROR)
-		{
-		  return error;
-		}
-
-	      class_->stats = stats_get_statistics (WS_OID (cl->op), 0);
-	    }
-	}
+        {
+          (void) sm_update_statistics (cl->op, update_stats, with_fullscan);
+        }
     }
 
   assert (error == NO_ERROR);
@@ -5381,7 +5362,7 @@ sm_default_constraint_name (const char *class_name,
   char *name = NULL;
   int name_length = 0;
   bool do_desc;
-  int error = NO_ERROR;
+  UNUSED_VAR int error = NO_ERROR;
   int n_attrs = 0;
   /*
    *  Construct the constraint name
