@@ -2493,6 +2493,9 @@ static int
 host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
 {
   PRM_NODE_LIST node_list;
+
+  memset (&node_list, 0, sizeof (node_list));
+
   if (host_str != NULL &&
       prm_split_node_str (&node_list, host_str, false) == NO_ERROR &&
       node_list.num_nodes >= 1)

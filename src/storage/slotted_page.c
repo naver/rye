@@ -4011,7 +4011,7 @@ spage_get_record_type (PAGE_PTR page_p, PGSLOTID slot_id)
 #if defined (SA_MODE)
       /* permit for disgdb 8 dump log */
 #else
-      assert_release (false);
+      assert_release (slot_p == NULL);
 #endif
       return REC_UNKNOWN;
     }
@@ -4559,6 +4559,10 @@ spage_is_unknown_slot (PGSLOTID slot_id, SPAGE_HEADER * page_header_p,
       || slot_p->offset_to_record > max_offset)
     {
       assert (slot_p->offset_to_record == SPAGE_EMPTY_OFFSET);
+#if 0 /* TODO - trace */
+      assert (slot_p->record_type == REC_MARKDELETED
+              || slot_p->record_type == REC_DELETED_WILL_REUSE);
+#endif
 
       is_unknown = true;
     }

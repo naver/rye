@@ -2829,7 +2829,7 @@ rsql (const char *argv0, RSQL_ARGUMENT * rsql_arg)
     {
       strncat (rsql_Prompt, " ", avail_size);
     }
-  strncpy (rsql_Name, rsql_get_message (RSQL_NAME), sizeof (rsql_Name));
+  STRNCPY (rsql_Name, rsql_get_message (RSQL_NAME), sizeof (rsql_Name));
 
   /* it is necessary to be opening rsql_Input_fp at this point
    */

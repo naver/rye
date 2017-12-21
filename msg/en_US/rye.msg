@@ -1859,7 +1859,7 @@ $set 15 MSGCAT_SET_IO
 3 \n\n*** BACKUP HEADER INFORMATION ***\n\n
 4 Backup magic file identification %1$s,\n
 5          Release: %1$s\n\
-     Disk Version: %2$g\n
+     Disk Version: %2$d\n
 6    Database Name: %1$s\n\
  DB Creation Time: %2$s\
          Pagesize: %3$d\n

@@ -2280,6 +2280,7 @@ sboot_add_volume_extension (THREAD_ENTRY * thread_p, unsigned int rid,
   ptr = or_unpack_string_nocopy (request, &tmp_str);
   ext_info.fullname = tmp_str;
   ptr = or_unpack_int (ptr, &ext_info.max_npages);
+  ext_info.extend_npages = ext_info.max_npages;
   ptr = or_unpack_int (ptr, &ext_info.max_writesize_in_sec);
   ptr = or_unpack_int (ptr, &tmp);
   ext_info.purpose = (DB_VOLPURPOSE) tmp;

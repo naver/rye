@@ -173,6 +173,8 @@ find_connect_server (char *db_name, PRM_NODE_INFO * db_host,
   int idx = -1;
   PRM_NODE_LIST node_list;
 
+  memset (&node_list, 0, sizeof (node_list));
+
   strcpy (db_name, database_name);
   ptr = strstr (db_name, "@");
   if (ptr == NULL)
