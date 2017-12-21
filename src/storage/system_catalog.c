@@ -2284,7 +2284,7 @@ catalog_get_representation_item (THREAD_ENTRY * thread_p, OID * class_id_p,
 	{
 #if defined(CT_DEBUG)
 	  er_log_debug (ARG_FILE_LINE,
-			"ct_get_repritem: Insertion to hash table"
+			"catalog_get_representation_item: Insertion to hash table"
 			"failed.\n Key: Class_Id: { %d , %d , %d } Repr: %d",
 			class_id_p->pageid, class_id_p->volid,
 			class_id_p->slotid, repr_item_p->repr_id);
