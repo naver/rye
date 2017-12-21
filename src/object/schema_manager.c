@@ -1539,7 +1539,10 @@ sm_update_all_statistics (bool update_stats, bool with_fullscan)
   /* Need to reset the statistics cache for all resident classes */
   for (cl = ws_Resident_classes; cl != NULL; cl = cl->next)
     {
-      (void) sm_update_statistics (cl->op, update_stats, with_fullscan);
+      if (!WS_ISMARK_DELETED (cl->op))
+        {
+          (void) sm_update_statistics (cl->op, update_stats, with_fullscan);
+        }
     }
 
   assert (error == NO_ERROR);
