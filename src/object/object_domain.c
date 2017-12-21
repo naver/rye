@@ -1999,7 +1999,7 @@ tp_domain_cache (TP_DOMAIN * transient)
   TP_DOMAIN *domain, *dlist;
   TP_DOMAIN *ins_pos = NULL;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /* guard against a bad transient domain */
@@ -2495,7 +2495,7 @@ tp_domain_add (TP_DOMAIN ** dlist, TP_DOMAIN * domain)
 {
   int error = NO_ERROR;
   TP_DOMAIN *d, *found, *last;
-  DB_TYPE type_id;
+  UNUSED_VAR DB_TYPE type_id;
 
   last = NULL;
   type_id = TP_DOMAIN_TYPE (domain);
@@ -2708,8 +2708,10 @@ tp_domain_drop (TP_DOMAIN ** dlist, TP_DOMAIN * domain)
 int
 tp_domain_filter_list (TP_DOMAIN * dlist)
 {
-  TP_DOMAIN *d, *prev, *next;
-  int has_object, changes;
+  TP_DOMAIN *d, *next;
+  UNUSED_VAR TP_DOMAIN *prev;
+  int changes;
+  UNUSED_VAR int has_object;
 
   has_object = changes = 0;
 
@@ -2868,6 +2870,7 @@ tp_domain_select (const TP_DOMAIN * domain_list,
   TP_DOMAIN *best, *d;
   TP_DOMAIN **others;
   DB_TYPE vtype;
+  UNUSED_VAR DB_VALUE temp;
   int i;
 
   best = NULL;
@@ -2908,7 +2911,6 @@ tp_domain_select (const TP_DOMAIN * domain_list,
 	   */
 	  OID *oid;
 	  DB_OBJECT *mop;
-	  DB_VALUE temp;
 
 	  oid = (OID *) db_get_oid (value);
 	  if (oid)

@@ -4559,6 +4559,10 @@ spage_is_unknown_slot (PGSLOTID slot_id, SPAGE_HEADER * page_header_p,
       || slot_p->offset_to_record > max_offset)
     {
       assert (slot_p->offset_to_record == SPAGE_EMPTY_OFFSET);
+#if 0 /* TODO - trace */
+      assert (slot_p->record_type == REC_MARKDELETED
+              || slot_p->record_type == REC_DELETED_WILL_REUSE);
+#endif
 
       is_unknown = true;
     }
