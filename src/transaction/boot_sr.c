@@ -3175,7 +3175,8 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
   if (print_restart)
     {
       char format[BOOT_FORMAT_MAX_LENGTH];
-      strncpy (format, msgcat_message (MSGCAT_CATALOG_RYE,
+
+      STRNCPY (format, msgcat_message (MSGCAT_CATALOG_RYE,
 				       MSGCAT_SET_GENERAL,
 				       MSGCAT_GENERAL_DATABASE_INIT),
 	       BOOT_FORMAT_MAX_LENGTH);

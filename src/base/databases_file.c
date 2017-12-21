@@ -163,8 +163,7 @@ cfg_pop_linetoken (char *str_p, char **token_p)
       token = (char *) malloc (length + 1);
       if (token != NULL)
 	{
-	  strncpy (token, p, length);
-	  token[length] = '\0';
+	  STRNCPY (token, p, length + 1);
 	}
     }
 

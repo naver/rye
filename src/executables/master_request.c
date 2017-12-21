@@ -645,6 +645,7 @@ css_process_ha_admin_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   reply = (char *) malloc (reply_size);
   if (reply == NULL)
     {
+      free_and_init (admin_info);
       return CANT_ALLOC_BUFFER;
     }
 

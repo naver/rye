@@ -74,13 +74,6 @@
 	  }					\
 	} while (0)
 
-#define STRNCPY(DEST_PTR, SRC_PTR, SIZE)		\
-	do {						\
-	  int _cp_size = (SIZE) - 1;			\
-	  strncpy (DEST_PTR, SRC_PTR, _cp_size);	\
-	  (DEST_PTR)[_cp_size] = '\0';			\
-	} while (0)
-
 #define RYE_CLOSE_SOCKET(X)		\
 	do {			\
 	  if (!IS_INVALID_SOCKET(X)) close(X);		\
