@@ -811,6 +811,8 @@ rbl_get_ovfl_redo_record (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
   if (recdes->data == NULL)
     {
       RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, recdes->length);
+      free_and_init (raw_data);
+
       return RBL_OUT_OF_MEMORY;
     }
 

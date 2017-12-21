@@ -2057,6 +2057,8 @@ applier_main (void *arg)
 	{
 	  continue;
 	}
+      /* decache all */
+      cirp_logpb_decache_range (&applier->buf_mgr, 0, LOGPAGEID_MAX);
 
       gettimeofday (&time_commit, NULL);
       LSA_SET_NULL (&commit_lsa);

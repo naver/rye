@@ -106,7 +106,7 @@ main (int argc, char *argv[])
   CIRP_THREAD_ENTRY writer_entry, flusher_entry;
   CIRP_THREAD_ENTRY analyzer_entry, health_entry;
   CIRP_THREAD_ENTRY *applier_entries = NULL;
-  char prog_name[] = UTIL_REPL_NAME;
+  const char *prog_name = UTIL_REPL_NAME;
 
   REPL_ARGUMENT repl_arg;
   int option_index;

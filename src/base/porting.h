@@ -304,6 +304,13 @@ extern size_t strlcpy (char *, const char *, size_t);
 /* for etc */
 #define ABS(i) ((i) >= 0 ? (i) : -(i))
 
+#define STRNCPY(DEST_PTR, SRC_PTR, SIZE)                \
+        do {                                            \
+          int _cp_size = (SIZE) - 1;                    \
+          strncpy (DEST_PTR, SRC_PTR, _cp_size);        \
+          (DEST_PTR)[_cp_size] = '\0';                  \
+        } while (0)
+
 #define THREAD_SLEEP(milliseconds)                              \
   do {                                                          \
     struct timeval to;                                          \

@@ -174,7 +174,7 @@ main (int argc, char **argv)
 {
   int ret_val = 0;
   sigset_t sigurg_mask;
-  char prog_name[] = UTIL_SERVER_NAME;
+  const char *prog_name = UTIL_SERVER_NAME;
 
   register_fatal_signal_handler (SIGABRT);
   register_fatal_signal_handler (SIGILL);
