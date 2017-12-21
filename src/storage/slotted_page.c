@@ -4011,7 +4011,7 @@ spage_get_record_type (PAGE_PTR page_p, PGSLOTID slot_id)
 #if defined (SA_MODE)
       /* permit for disgdb 8 dump log */
 #else
-      assert_release (false);
+      assert_release (slot_p == NULL);
 #endif
       return REC_UNKNOWN;
     }
