@@ -108,10 +108,12 @@ extern bool rp_need_restart (void);
 extern bool rp_need_shutdown (const char *file_name, int line);
 
 extern void cirp_free_repl_item (CIRP_REPL_ITEM * item);
-extern CIRP_REPL_ITEM *cirp_new_repl_item_data (const LOG_LSA * lsa,
-						const LOG_LSA * target_lsa);
-extern CIRP_REPL_ITEM *cirp_new_repl_item_ddl (const LOG_LSA * lsa);
-extern CIRP_REPL_ITEM *cirp_new_repl_catalog_item (const LOG_LSA * lsa);
+extern int rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item,
+				  const LOG_LSA * lsa);
+extern int rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item,
+				 const LOG_LSA * lsa);
+extern int rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item,
+				     const LOG_LSA * lsa);
 
 extern int rp_make_repl_host_key (DB_VALUE * dbval,
 				  const PRM_NODE_INFO * node_info);

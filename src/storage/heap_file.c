@@ -5816,7 +5816,6 @@ try_again:
 	  goto error;
 	}
 
-
       /* Header of heap */
       vpid.volid = hfid->vfid.volid;
       vpid.pageid = hfid->hpgid;

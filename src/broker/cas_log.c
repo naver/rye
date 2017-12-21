@@ -44,6 +44,7 @@
 #include "broker_util.h"
 #include "dbi.h"
 #include "broker_shm.h"
+#include "tcp.h"
 
 #define SQL_LOG_BUFFER_SIZE 163840
 #define ACCESS_LOG_IS_DENIED_TYPE(T)  ((T)==ACL_REJECTED)
@@ -584,7 +585,7 @@ cas_sql_log_query_cancel ()
       tv.tv_sec = query_Cancel_time / 1000;
       tv.tv_usec = (query_Cancel_time % 1000) * 1000;
 
-      ut_get_ipv4_string (ip_str, sizeof (ip_str), as_info->cas_clt_ip_addr);
+      css_ip_to_str (ip_str, sizeof (ip_str), as_info->cas_clt_ip_addr);
 
       query_Cancel_time = 0;
 
@@ -636,7 +637,7 @@ cas_access_log (struct timeval *start_time, int as_index, in_addr_t client_ip,
       access_type_str = (log_type == NEW_CONNECTION ? "NEW" : "OLD");
     }
 
-  ut_get_ipv4_string (clt_ip_str, sizeof (clt_ip_str), client_ip);
+  css_ip_to_str (clt_ip_str, sizeof (clt_ip_str), client_ip);
 
   cas_log_write (cas_log_type,
 		 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_LOG_END,

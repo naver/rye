@@ -193,18 +193,6 @@ extern void sqmgr_dump_query_plans (THREAD_ENTRY * thread_p, unsigned int rid,
 				    char *request, int reqlen);
 extern void sqmgr_get_query_info (THREAD_ENTRY * thread_p, unsigned int rid,
 				  char *request, int reqlen);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern void smnt_server_start_stats (THREAD_ENTRY * thread_p,
-				     unsigned int rid, char *request,
-				     int reqlen);
-extern void smnt_server_stop_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-				    char *request, int reqlen);
-#endif
-extern void smnt_server_copy_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-				    char *request, int reqlen);
-extern void smnt_server_copy_global_stats (THREAD_ENTRY * thread_p,
-					   unsigned int rid, char *request,
-					   int reqlen);
 extern void sct_can_accept_new_repr (THREAD_ENTRY * thread_p,
 				     unsigned int rid, char *request,
 				     int reqlen);
@@ -212,8 +200,6 @@ extern int xs_receive_data_from_client (THREAD_ENTRY * thread_p,
 					char **area, int *datasize,
 					int timeout);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern void stest_performance (THREAD_ENTRY * thread_p, unsigned int rid,
-			       char *request, int reqlen);
 extern void slocator_assign_oid_batch (THREAD_ENTRY * thread_p,
 				       unsigned int rid, char *request,
 				       int reqlen);
@@ -286,10 +272,6 @@ extern void ssession_get_prepared_statement (THREAD_ENTRY * thread_p,
 extern void ssession_delete_prepared_statement (THREAD_ENTRY * thread_p,
 						unsigned int rid,
 						char *request, int reqlen);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern void slogin_user (THREAD_ENTRY * thread_p, unsigned int rid,
-			 char *request, int reqlen);
-#endif
 extern void sboot_get_locales_info (THREAD_ENTRY * thread_p, unsigned int rid,
 				    char *request, int reqlen);
 extern void slocator_lock_system_ddl_lock (THREAD_ENTRY * thread_p,

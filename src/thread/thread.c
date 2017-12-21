@@ -508,19 +508,25 @@ server_stats_dump (FILE * fp)
 {
   int i;
   int indent = 2;
-  MNT_SERVER_EXEC_STATS stats;
+  int error = NO_ERROR;
+  MONITOR_STATS stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
   MNT_SERVER_ITEM item_waits;
   UINT64 total_cs_waits_clock;
   UINT64 total_page_waits_clock;
 
-  svr_shm_copy_global_stats (&stats);
+  error = monitor_copy_global_stats (NULL, stats,
+				     MNT_SIZE_OF_SERVER_EXEC_STATS);
+  if (error < 0)
+    {
+      return ER_FAILED;
+    }
 
   total_cs_waits_clock = 0;
   for (i = 0; i < CSECT_LAST; i++)
     {
       item_waits = mnt_csect_type_to_server_item_waits (i);
 
-      total_cs_waits_clock += stats.acc_time[item_waits];
+      total_cs_waits_clock += stats[item_waits].acc_time;
     }
 
   fprintf (fp, "%*ccsect_wait total wait:%ld\n", indent, ' ',
@@ -531,12 +537,12 @@ server_stats_dump (FILE * fp)
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
 	       csect_get_cs_name (i),
-	       mnt_clock_to_time (stats.acc_time[item_waits]));
+	       mnt_clock_to_time (stats[item_waits].acc_time));
       /* keep out zero division */
       if (total_cs_waits_clock > 0)
 	{
 	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
+		   ((double) mnt_clock_to_time (stats[item_waits].acc_time) /
 		    total_cs_waits_clock) * 100);
 	}
       fprintf (fp, "\n");
@@ -547,7 +553,7 @@ server_stats_dump (FILE * fp)
     {
       item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
 
-      total_page_waits_clock += stats.acc_time[item_waits];
+      total_page_waits_clock += stats[item_waits].acc_time;
     }
 
   fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
@@ -558,12 +564,12 @@ server_stats_dump (FILE * fp)
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
 	       page_type_to_string (i),
-	       mnt_clock_to_time (stats.acc_time[item_waits]));
+	       mnt_clock_to_time (stats[item_waits].acc_time));
       /* keep out zero division */
       if (total_page_waits_clock > 0)
 	{
 	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
+		   ((double) mnt_clock_to_time (stats[item_waits].acc_time) /
 		    total_page_waits_clock) * 100);
 	}
       fprintf (fp, "\n");
@@ -4320,7 +4326,7 @@ thread_mnt_track_dump (THREAD_ENTRY * thread_p)
 
 void
 thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
-			  UINT64 exec_time)
+			  UINT64 start_time)
 {
   int tran_index;
   int i;
@@ -4334,8 +4340,8 @@ thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
 
   for (i = thread_p->mnt_track_top; i >= 0; i--)
     {
-      svr_shm_stats_counter_with_time (tran_index,
+      monitor_stats_counter_with_time (tran_index + 1,
 				       thread_p->mnt_track_stack[i].item,
-				       value, exec_time);
+				       value, start_time);
     }
 }

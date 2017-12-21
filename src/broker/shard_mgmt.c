@@ -4434,7 +4434,7 @@ select_all_node_info (CCI_CONN * conn_arg)
       int tmp_nodeid;
       int tmp_port;
       int ind[COL_COUNT_SHARD_NODE];
-      in_addr_t tmp_host_addr;
+      in_addr_t tmp_host_addr = INADDR_NONE;
       PRM_NODE_INFO tmp_host_info;
 
       err = cci_fetch_next (&stmt);
@@ -4457,10 +4457,8 @@ select_all_node_info (CCI_CONN * conn_arg)
       tmp_host = cci_get_string (&stmt, 3, &ind[2]);
       tmp_port = cci_get_int (&stmt, 4, &ind[3]);
 
-      tmp_host_addr = inet_addr (tmp_host);
-
       if (check_fetch_indicator (ind, DIM (ind)) < 0 ||
-	  tmp_host_addr == INADDR_NONE)
+	  ((tmp_host_addr = inet_addr (tmp_host)) == INADDR_NONE))
 	{
 	  db_node_info_free (node_info);
 	  node_info = NULL;
@@ -6150,7 +6148,8 @@ launch_migrator_process (const char *global_dbname, int groupid,
   error = cci_mgmt_launch_process (launch_res, run_node_info->host_ip_str,
 				   PRM_NODE_INFO_GET_PORT (&run_node_info->
 							   host_info),
-				   MGMT_LAUNCH_PROCESS_MIGRATOR, wait_child,
+				   MGMT_LAUNCH_PROCESS_MIGRATOR,
+				   true, wait_child,
 				   argc, argv, num_env, envp, timeout_msec);
   return error;
 }

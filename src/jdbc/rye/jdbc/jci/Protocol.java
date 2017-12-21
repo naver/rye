@@ -58,6 +58,7 @@ abstract public class Protocol
     public static final byte BRREQ_OP_CODE_GET_CONF = 24;
     public static final byte BRREQ_OP_CODE_BR_ACL_RELOAD = 25;
     public static final byte BRREQ_OP_CODE_PING = 27;
+    public static final byte BRREQ_OP_CODE_RM_TMP_FILE = 28;
 
     /* shard mgmt request */
     public static final byte BRREQ_OP_CODE_GET_SHARD_INFO = 64;
@@ -88,6 +89,9 @@ abstract public class Protocol
 
     public static final int MGMT_LAUNCH_PROCESS_MIGRATOR = 1;
     public static final int MGMT_LAUNCH_PROCESS_RYE_COMMAND = 2;
+
+    public static final int MGMT_LAUNCH_FLAG_NO_FLAG = 0;
+    public static final int MGMT_LAUNCH_FLAG_NO_RESULT = 1;
 
     public static final int MGMT_LAUNCH_ERROR_EXEC_FAIL = -101;
     public static final int MGMT_LAUNCH_ERROR_ABNORMALLY_TERMINATED = -102;

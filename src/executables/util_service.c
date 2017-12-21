@@ -180,8 +180,7 @@ static int us_hb_reload (void);
 static int us_hb_changemode (HA_STATE req_node_state, bool force);
 
 static int change_prm_from_argv (int argc, char **argv);
-static int changeable_Prm_list[] =
-  { PRM_ID_RYE_PORT_ID, PRM_ID_RYE_SHM_KEY };
+static int changeable_Prm_list[] = { PRM_ID_RYE_PORT_ID, PRM_ID_RYE_SHM_KEY };
 
 #define US_HB_DEREG_WAIT_TIME_IN_SEC	100
 
@@ -1798,6 +1797,12 @@ change_prm_from_argv (int argc, char **argv)
       for (i = 0; i < (int) DIM (changeable_Prm_list); i++)
 	{
 	  const char *prm_name = prm_get_name (changeable_Prm_list[i]);
+
+	  if (prm_name == NULL)
+	    {
+	      assert (0);
+	      continue;
+	    }
 	  int name_len = strlen (prm_name);
 
 	  for (j = 0; j < argc; j++)

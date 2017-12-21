@@ -247,10 +247,6 @@ extern DB_IDXKEY *btree_delete (THREAD_ENTRY * thread_p,
 				BTID_INT * btid, DB_IDXKEY * key);
 extern DB_IDXKEY *btree_insert (THREAD_ENTRY * thread_p,
 				BTID_INT * btid, DB_IDXKEY * key);
-#if 1				/* TODO - do not delete me */
-extern DB_IDXKEY *btree_insert_old (THREAD_ENTRY * thread_p,
-				    BTID_INT * btid, DB_IDXKEY * key);
-#endif
 extern int btree_update (THREAD_ENTRY * thread_p,
 			 BTID_INT * btid,
 			 DB_IDXKEY * old_key, DB_IDXKEY * new_key);
@@ -324,7 +320,7 @@ extern bool btree_clear_key_value (bool * clear_flag, DB_IDXKEY * key);
 extern int btree_get_key_length (const DB_IDXKEY * key);
 extern int btree_get_oid_from_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 				   const DB_IDXKEY * key, OID * oid);
-extern int btree_read_node_header (PAGE_PTR pg_ptr,
+extern int btree_read_node_header (BTID_INT * btid, PAGE_PTR pg_ptr,
 				   BTREE_NODE_HEADER * header);
 extern void btree_read_fixed_portion_of_non_leaf_record (RECDES * rec,
 							 NON_LEAF_REC *
@@ -348,7 +344,7 @@ extern int btree_init_node_header (THREAD_ENTRY * thread_p,
 				   BTREE_NODE_HEADER * node_header);
 extern int btree_insert_node_header (THREAD_ENTRY * thread_p, PAGE_PTR pg_ptr,
 				     BTREE_NODE_HEADER * header);
-extern int btree_write_node_header (PAGE_PTR pg_ptr,
+extern int btree_write_node_header (BTID_INT * btid, PAGE_PTR pg_ptr,
 				    BTREE_NODE_HEADER * header);
 
 extern PAGE_PTR btree_get_new_page (THREAD_ENTRY * thread_p, BTID_INT * btid,

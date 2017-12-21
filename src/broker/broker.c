@@ -181,6 +181,7 @@ static T_BR_INIT_ERROR br_Init_error = { 0, 0 };
 int
 main ()
 {
+  char broker_err_file[BROKER_PATH_MAX];
   pthread_t receiver_thread;
   pthread_t dispatch_thread;
   pthread_t cas_monitor_thread;
@@ -190,16 +191,29 @@ main ()
 
   int error;
 
-  er_init ("broker.err", ER_EXIT_DEFAULT);
-
-  error = lang_init ();
-  if (error != NO_ERROR)
+  error = broker_init_shm ();
+  if (error)
     {
       goto error1;
     }
 
-  error = broker_init_shm ();
-  if (error)
+  if (shm_Br->br_info[br_Index].broker_type == LOCAL_MGMT)
+    {
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.local_mgmt.err");
+    }
+  else if (shm_Br->br_info[br_Index].broker_type == SHARD_MGMT)
+    {
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.shard_mgmt.%s.err", shm_Br->br_info[br_Index].shard_global_dbname);
+    }
+  else
+    {
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.%s.err", shm_Br->br_info[br_Index].name);
+    }
+
+  er_init (broker_err_file, ER_EXIT_DEFAULT);
+
+  error = lang_init ();
+  if (error != NO_ERROR)
     {
       goto error1;
     }
@@ -2441,6 +2455,8 @@ static int req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg, int num_args,
 				  const T_MGMT_REQ_ARG_CONTAINER * args);
 static int req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg, int num_args,
 				      const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_rm_tmp_file (T_MGMT_REQ_ARG * req_arg, int num_args,
+				const T_MGMT_REQ_ARG_CONTAINER * args);
 static int req_arg_get_no_arg (T_MGMT_REQ_ARG * req_arg, int num_args,
 			       const T_MGMT_REQ_ARG_CONTAINER * args);
 
@@ -2469,6 +2485,7 @@ static T_REQ_ARG_READ_FUNC_TABLE req_Arg_read_func_table[] = {
   {BRREQ_OP_CODE_GET_CONF, req_arg_get_conf},
   {BRREQ_OP_CODE_BR_ACL_RELOAD, req_arg_br_acl_reload},
   {BRREQ_OP_CODE_CONNECT_DB_SERVER, req_arg_connect_db_server},
+  {BRREQ_OP_CODE_RM_TMP_FILE, req_arg_rm_tmp_file},
   {0, NULL}
 };
 
@@ -2920,10 +2937,12 @@ req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
   int argc;
   int num_env;
   const char **alloc_buffer;
+  int flag;
 
   launch_arg = &req_arg->value.launch_process_arg;
 
-  if (check_mgmt_req_arg (num_args, args, 3, MGMT_REQ_ARG_INT,
+  if (check_mgmt_req_arg (num_args, args, 4,
+			  MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT,
 			  MGMT_REQ_ARG_STR_ARRAY, MGMT_REQ_ARG_STR_ARRAY) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
@@ -2931,10 +2950,11 @@ req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
 
   req_arg->clt_dbname = NULL;
   launch_proc_id = MGMT_ARG_INT_VALUE (&args[0]);
-  argc = MGMT_ARG_STR_ARR_SIZE (&args[1]);
-  argv = MGMT_ARG_STR_ARR_VALUE (&args[1]);
-  num_env = MGMT_ARG_STR_ARR_SIZE (&args[2]);
-  envp = MGMT_ARG_STR_ARR_VALUE (&args[2]);
+  flag = MGMT_ARG_INT_VALUE (&args[1]);
+  argc = MGMT_ARG_STR_ARR_SIZE (&args[2]);
+  argv = MGMT_ARG_STR_ARR_VALUE (&args[2]);
+  num_env = MGMT_ARG_STR_ARR_SIZE (&args[3]);
+  envp = MGMT_ARG_STR_ARR_VALUE (&args[3]);
 
   if (launch_proc_id < MGMT_LAUNCH_PROCESS_ID_MIN ||
       launch_proc_id > MGMT_LAUNCH_PROCESS_ID_MAX || argc < 1 || num_env < 0)
@@ -2968,6 +2988,7 @@ req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
   launch_arg->envp =
     (char **) (((char *) req_arg->alloc_buffer) + envp_offset);
   launch_arg->launch_process_id = launch_proc_id;
+  launch_arg->flag = flag;
 
   return 0;
 }
@@ -3122,6 +3143,24 @@ req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg,
     }
 
   connect_db_server_arg->db_name = MGMT_ARG_STRING_VALUE (&args[0]);
+
+  return 0;
+}
+
+static int
+req_arg_rm_tmp_file (T_MGMT_REQ_ARG * req_arg, int num_args,
+		     const T_MGMT_REQ_ARG_CONTAINER * args)
+{
+  T_MGMT_REQ_ARG_RM_TMP_FILE *rm_tmp_file_arg;
+
+  rm_tmp_file_arg = &req_arg->value.rm_tmp_file_arg;
+
+  if (check_mgmt_req_arg (num_args, args, 1, MGMT_REQ_ARG_STR) < 0)
+    {
+      return BR_ER_INVALID_ARGUMENT;
+    }
+
+  rm_tmp_file_arg->file = MGMT_ARG_STRING_VALUE (&args[0]);
 
   return 0;
 }

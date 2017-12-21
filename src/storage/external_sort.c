@@ -659,6 +659,8 @@ sort_spage_get_record (PAGE_PTR pgptr, INT16 slotid, RECDES * recdes,
   SLOTTED_PAGE_HEADER *sphdr;
   SLOT *sptr;
 
+  assert (peek_p == PEEK);
+
   sphdr = (SLOTTED_PAGE_HEADER *) pgptr;
 
   sptr = (SLOT *) ((char *) pgptr + DB_PAGESIZE - sizeof (SLOT));
