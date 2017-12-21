@@ -4936,9 +4936,8 @@ heap_find_slot_for_insert (THREAD_ENTRY * thread_p, const HFID * hfid,
   oid->volid = pgbuf_get_volume_id (pgptr);
   oid->pageid = pgbuf_get_page_id (pgptr);
 
-  /* find REC_DELETED_WILL_REUSE slot or add new slot */
-  /* slot_id == slot_num means add new slot */
-  slot_id = spage_find_free_slot (pgptr, NULL, slot_id);
+  /* add new slot */
+  slot_id = spage_find_free_slot (pgptr, NULL);
   oid->slotid = slot_id;
 
   if (slot_id == SP_ERROR)
@@ -6200,7 +6199,6 @@ try_again:
 
     case REC_NEWHOME:
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     default:
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HEAP_BAD_OBJECT_TYPE, 3,
 	      oid->volid, oid->pageid, oid->slotid);
@@ -6709,7 +6707,6 @@ try_again:
       break;
 
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     default:
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HEAP_BAD_OBJECT_TYPE, 3,
 	      oid->volid, oid->pageid, oid->slotid);
@@ -6861,7 +6858,6 @@ heap_flush (THREAD_ENTRY * thread_p, const OID * oid)
     case REC_HOME:
     case REC_NEWHOME:
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     default:
       break;
     }
@@ -7874,7 +7870,6 @@ try_again:
       break;
 
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     case REC_NEWHOME:
     default:
       scan = S_ERROR;
@@ -8375,7 +8370,6 @@ heap_next (THREAD_ENTRY * thread_p, const HFID * hfid, OID * class_oid,
 
 	case REC_NEWHOME:
 	case REC_MARKDELETED:
-	case REC_DELETED_WILL_REUSE:
 	default:
 	  /* This should never happen */
 	  scan = S_ERROR;
@@ -8960,7 +8954,6 @@ heap_get_capacity (THREAD_ENTRY * thread_p, const HFID * hfid,
 		       */
 		      sum_overhead += spage_get_record_length (pgptr, slotid);
 		      break;
-		    case REC_DELETED_WILL_REUSE:
 		    default:
 		      break;
 		    }
@@ -12960,7 +12953,6 @@ heap_chkreloc_next (HEAP_CHKALL_RELOCOIDS * chk, PAGE_PTR pgptr)
 	  break;
 
 	case REC_MARKDELETED:
-	case REC_DELETED_WILL_REUSE:
 	default:
 	  break;
 	}

@@ -68,15 +68,11 @@ enum
  */
   REC_MARKDELETED = 6,
 
-/* Slot does not describe any record.
- * A record was stored in this slot.  Slot will be reused.
- */
-  REC_DELETED_WILL_REUSE = 7,
-
 /* current used 4bit record type max */
-  REC_4BIT_USED_TYPE_MAX = 7,
+  REC_4BIT_USED_TYPE_MAX = 6,
 
 /* unused reserved record type */
+  REC_RESERVED_TYPE_07 = 7,
   REC_RESERVED_TYPE_08 = 8,
   REC_RESERVED_TYPE_09 = 9,
   REC_RESERVED_TYPE_10 = 10,
@@ -194,7 +190,6 @@ extern const char *spage_anchor_flag_string (const INT16 anchor_type);
 extern const char *spage_alignment_string (unsigned short alignment);
 
 extern PGSLOTID spage_find_free_slot (PAGE_PTR page_p,
-				      SPAGE_SLOT ** out_slot_p,
-				      PGSLOTID start_id);
+				      SPAGE_SLOT ** out_slot_p);
 
 #endif /* _SLOTTED_PAGE_H_ */

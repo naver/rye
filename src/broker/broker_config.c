@@ -297,6 +297,8 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
   float tmp_float;
   PRM_NODE_LIST preferred_hosts;
 
+  memset (&preferred_hosts, 0, sizeof (preferred_hosts));
+
   tmp_str = ini_getstr (ini, sec_name, "CCI_DEFAULT_AUTOCOMMIT", "ON",
 			lineno);
   br_info->cci_default_autocommit = conf_get_value_table_on_off (tmp_str);
