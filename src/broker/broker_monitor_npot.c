@@ -106,6 +106,7 @@ static int get_args (int argc, char *argv[]);
 static int set_my_hostname (void);
 static int init_server_monitor_item (int shm_key);
 static void npot_server_monitor (T_SHM_INFO * shm_info);
+static void npot_repl_monitor (T_SHM_INFO * shm_info);
 static void npot_broker_monitor (T_SHM_INFO * shm_info);
 static char *get_pw_name (uid_t uid);
 static T_SHM_INFO *make_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type,
@@ -145,6 +146,10 @@ static CCI_MHT_TABLE *uid_Ht;
 
 static MONITOR_INFO *server_Monitor = NULL;
 static T_DB_STATS_INFO *db_Stats_info = NULL;
+
+static MONITOR_INFO *repl_Monitor = NULL;
+static T_DB_STATS_INFO *repl_Stats_info = NULL;
+
 static T_TCP_SEND_CONNECT_INFO *tcp_Send_connect_info = NULL;
 static int tcp_Send_fd = -1;
 static char tag_Service[64];
@@ -212,6 +217,10 @@ main (int argc, char *argv[])
 	      else if (shm_info->shm_type == RYE_SHM_TYPE_MONITOR_SERVER)
 		{
 		  npot_server_monitor (shm_info);
+		}
+	      else if (shm_info->shm_type == RYE_SHM_TYPE_MONITOR_REPL)
+		{
+		  npot_repl_monitor (shm_info);
 		}
 	    }
 	  shm_info = shm_info->next;
@@ -605,6 +614,93 @@ npot_server_monitor (T_SHM_INFO * shm_info)
     }
 
   monitor_close_viewer_data (server_Monitor, MNT_SIZE_OF_SERVER_EXEC_STATS);
+}
+
+static int
+init_repl_monitor_item (int shm_key)
+{
+  int i;
+
+  repl_Stats_info = malloc (sizeof (T_DB_STATS_INFO) *
+			    MNT_SIZE_OF_REPL_EXEC_STATS);
+  if (repl_Stats_info == NULL)
+    {
+      return -1;
+    }
+  memset (repl_Stats_info, 0,
+	  sizeof (T_DB_STATS_INFO) * MNT_SIZE_OF_REPL_EXEC_STATS);
+
+  repl_Monitor = monitor_create_viewer_from_key (shm_key,
+						 RYE_SHM_TYPE_MONITOR_REPL);
+  if (repl_Monitor == NULL)
+    {
+      return -1;
+    }
+
+  for (i = 0; i < MNT_SIZE_OF_REPL_EXEC_STATS; i++)
+    {
+      repl_Stats_info[i].is_cumulative =
+	monitor_stats_is_cumulative (repl_Monitor, i);
+      db_Stats_info[i].is_collecting_time =
+	monitor_stats_is_collecting_time (repl_Monitor, i);
+    }
+
+  SET_DB_STATS_INFO (&repl_Stats_info[MNT_RP_LAST_RECEIVED_PAGEID],
+		     "ha", "last_received_pageid");
+  SET_DB_STATS_INFO (&repl_Stats_info[MNT_RP_LAST_FLUSHED_PAGEID],
+		     "ha", "last_flushed_pageid");
+  SET_DB_STATS_INFO (&repl_Stats_info[MNT_RP_EOF_PAGEID], "ha", "eof_pageid");
+  SET_DB_STATS_INFO (&repl_Stats_info[MNT_RP_CURRENT_PAGEID],
+		     "ha", "current_pageid");
+  SET_DB_STATS_INFO (&repl_Stats_info[MNT_RP_REQUIRED_PAGEID],
+		     "ha", "required_pageid");
+  SET_DB_STATS_INFO (&repl_Stats_info[MNT_RP_DELAY], "ha", "delay");
+
+  monitor_close_viewer_data (repl_Monitor, RYE_SHM_TYPE_MONITOR_REPL);
+
+  return 0;
+}
+
+static void
+npot_repl_monitor (T_SHM_INFO * shm_info)
+{
+  MONITOR_STATS cur_stats[MNT_SIZE_OF_REPL_EXEC_STATS];
+  time_t check_time = time (NULL);
+  int i, err;
+
+  if (repl_Monitor == NULL)
+    {
+      if (init_repl_monitor_item (shm_info->key) < 0)
+	{
+	  return;
+	}
+    }
+  assert (repl_Monitor != NULL && repl_Stats_info != NULL);
+
+  err = monitor_copy_global_stats (repl_Monitor, cur_stats,
+				   MNT_SIZE_OF_REPL_EXEC_STATS);
+  if (err < 0)
+    {
+      return;
+    }
+
+  for (i = 0; i < MNT_SIZE_OF_REPL_EXEC_STATS; i++)
+    {
+      if (repl_Stats_info[i].metric == NULL)
+	{
+	  continue;
+	}
+
+      print_monitor_item (repl_Stats_info[i].metric, repl_Stats_info[i].item,
+			  shm_info->user_name,
+			  TAG_DB_NAME, repl_Monitor->data->name,
+			  check_time, cur_stats[i].value,
+			  cur_stats[i].acc_time,
+			  repl_Stats_info[i].is_cumulative,
+			  repl_Stats_info[i].is_collecting_time);
+    }
+
+  monitor_close_viewer_data (repl_Monitor, MNT_SIZE_OF_SERVER_EXEC_STATS);
 }
 
 static void

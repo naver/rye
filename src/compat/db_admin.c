@@ -70,7 +70,7 @@ void (*prev_sigfpe_handler) (int) = SIG_DFL;
 char db_Database_name[DB_MAX_IDENTIFIER_LENGTH + 1];
 char db_Program_name[PATH_MAX];
 
-static PRM_NODE_LIST db_Preferred_hosts = PRM_EMPTY_NODE_LIST;
+static PRM_NODE_LIST db_Preferred_hosts = PRM_NODE_LIST_INITIALIZER;
 static bool db_Connect_order_random = true;
 static int db_Max_num_delayed_hosts_lookup = -1;
 static int db_Delayed_hosts_count = 0;

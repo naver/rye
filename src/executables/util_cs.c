@@ -112,7 +112,6 @@ static bool check_client_alive (void);
 static int spacedb_get_size_str (char *buf, UINT64 num_pages,
 				 T_SPACEDB_SIZE_UNIT size_unit);
 #if defined (CS_MODE)
-static void print_timestamp (FILE * outfp);
 static int print_tran_entry (const ONE_TRAN_INFO * tran_info,
 			     TRANDUMP_LEVEL dump_level);
 static int tranlist_cmp_f (const void *p1, const void *p2);
@@ -2696,21 +2695,6 @@ error_exit:
   return EXIT_FAILURE;
 }
 
-#if defined (CS_MODE)
-static void
-print_timestamp (FILE * outfp)
-{
-  time_t tloc;
-  struct tm tmloc;
-  char str[80];
-
-  tloc = time (NULL);
-  utility_localtime (&tloc, &tmloc);
-  strftime (str, 80, "%a %B %d %H:%M:%S %Z %Y", &tmloc);
-  fprintf (outfp, "\n\t%s\n", str);
-}
-#endif
-
 /*
  * statdump() - statdump main routine
  *   return: EXIT_SUCCESS/EXIT_FAILURE
@@ -2723,21 +2707,31 @@ statdump (UTIL_FUNCTION_ARG * arg)
   char er_msg_file[PATH_MAX];
   const char *database_name;
   const char *output_file = NULL;
+  const char *output_type = NULL;
   int interval;
   bool cumulative;
   const char *substr;
   FILE *outfp = NULL;
-  const char *local_db_name = NULL;
-  char tmp_dbname[ONE_K];
-  MONITOR_INFO *server_monitor = NULL;
-  MONITOR_INFO *repl_monitor = NULL;
-  char monitor_name[ONE_K];
-  char header[ONE_K], tail[ONE_K];
+  char local_db_name[ONE_K], name[ONE_K];
+  char hostname[MAX_NODE_INFO_STR_LEN];
   char *ptr;
-  MONITOR_STATS cur_global_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
-  MONITOR_STATS old_global_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
-  MONITOR_STATS diff_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+  bool is_header_printed;
 
+  char monitor_name[ONE_K];
+
+  MONITOR_DUMP_TYPE dump_type = MNT_DUMP_TYPE_NORMAL;
+
+  MONITOR_INFO *server_monitor = NULL;
+  MONITOR_STATS server_cur_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+  MONITOR_STATS server_old_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+
+  MONITOR_INFO *repl_monitor[PRM_MAX_HA_NODE_LIST];
+  PRM_NODE_LIST node_list = PRM_NODE_LIST_INITIALIZER;
+  MONITOR_STATS *repl_cur_stats[PRM_MAX_HA_NODE_LIST];
+  MONITOR_STATS *repl_old_stats[PRM_MAX_HA_NODE_LIST];
+  int repl_stats_size;
+
+  int i;
 
   if (utility_get_option_string_table_size (arg_map) != 1)
     {
@@ -2753,6 +2747,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
 
   output_file = utility_get_option_string_value (arg_map,
 						 STATDUMP_OUTPUT_FILE_S, 0);
+  output_type = utility_get_option_string_value (arg_map,
+						 STATDUMP_OUTPUT_TYPE_S, 0);
   interval = utility_get_option_int_value (arg_map, STATDUMP_INTERVAL_S);
   if (interval < 0)
     {
@@ -2783,14 +2779,35 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	}
     }
 
+  if (output_type == NULL)
+    {
+      dump_type = MNT_DUMP_TYPE_NORMAL;
+    }
+  else if (strcasecmp (output_type, "csv") == 0)
+    {
+      dump_type = MNT_DUMP_TYPE_CSV_DATA;
+    }
+
   if (check_database_name (database_name) != NO_ERROR)
     {
       goto error_exit;
     }
 
+  snprintf (local_db_name, sizeof (local_db_name), "%s", database_name);
+  ptr = strchr (local_db_name, '@');
+  if (ptr != NULL)
+    {
+      if (strcmp (ptr + 1, "localhost") != 0)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("%s\n", "Invalid host name");
+	  goto error_exit;
+	}
+      *ptr = '\0';
+    }
+
   /* error message log file */
   snprintf (er_msg_file, sizeof (er_msg_file) - 1,
-	    "%s_%s.err", database_name, arg->command_name);
+	    "%s_%s.err", local_db_name, arg->command_name);
   er_init (er_msg_file, ER_EXIT_DEFAULT);
 
   if (lang_init () != NO_ERROR)
@@ -2798,33 +2815,65 @@ statdump (UTIL_FUNCTION_ARG * arg)
       goto error_exit;
     }
 
-  strncpy (tmp_dbname, database_name, sizeof (tmp_dbname));
-  tmp_dbname[sizeof (tmp_dbname) - 1] = '\0';
-
-  ptr = strchr (tmp_dbname, '@');
-  if (ptr != NULL && strcmp (ptr + 1, "localhost") != 0)
-    {
-      PRINT_AND_LOG_ERR_MSG ("%s\n", "Invalid host name");
-      goto error_exit;
-    }
-
-  if (ptr != NULL)
-    {
-      *ptr = '\0';
-    }
-
-  local_db_name = tmp_dbname;
-
   sysprm_load_and_init (NULL);
+
 
   monitor_make_server_name (monitor_name, local_db_name);
   server_monitor = monitor_create_viewer_from_name (monitor_name,
 						    RYE_SHM_TYPE_MONITOR_SERVER);
   if (server_monitor == NULL)
     {
-      PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+      PRINT_AND_LOG_ERR_MSG ("Not found shm name(%s) of monitor\n",
+			     monitor_name);
 
       goto error_exit;
+    }
+  memset (server_cur_stats, 0, sizeof (server_cur_stats));
+  memset (server_old_stats, 0, sizeof (server_old_stats));
+
+  prm_get_ha_node_list (&node_list);
+
+  for (i = 0; i < node_list.num_nodes; i++)
+    {
+      repl_monitor[i] = NULL;
+      repl_old_stats[i] = NULL;
+      repl_cur_stats[i] = NULL;
+
+      if (prm_is_myself_node_info (&node_list.nodes[i]))
+	{
+	  continue;
+	}
+
+      prm_node_info_to_str (hostname, sizeof (hostname), &node_list.nodes[i]);
+      /* db_name@host_ip:port_id */
+      snprintf (name, sizeof (name), "%s@%s", local_db_name, hostname);
+
+      monitor_make_server_name (monitor_name, name);
+      repl_monitor[i] = monitor_create_viewer_from_name (monitor_name,
+							 RYE_SHM_TYPE_MONITOR_REPL);
+      if (repl_monitor[i] == NULL)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("Not found shm name(%s) of monitor\n",
+				 monitor_name);
+	  goto error_exit;
+	}
+
+      repl_stats_size = sizeof (MONITOR_STATS) * repl_monitor[i]->num_stats;
+      repl_cur_stats[i] = (MONITOR_STATS *) malloc (repl_stats_size);
+      if (repl_cur_stats[i] == NULL)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("Out of virtual memory\n");
+	  goto error_exit;
+	}
+      memset (repl_cur_stats[i], 0, repl_stats_size);
+
+      repl_old_stats[i] = (MONITOR_STATS *) malloc (repl_stats_size);
+      if (repl_old_stats[i] == NULL)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("Out of virtual memory\n");
+	  goto error_exit;
+	}
+      memset (repl_old_stats[i], 0, repl_stats_size);
     }
 
   if (interval > 0)
@@ -2833,65 +2882,81 @@ statdump (UTIL_FUNCTION_ARG * arg)
       os_set_signal_handler (SIGINT, intr_handler);
     }
 
-  snprintf (header, sizeof (header),
-	    "\n *** SERVER EXECUTION STATISTICS *** \n");
-
-  memset (cur_global_stats, 0, sizeof (cur_global_stats));
-  memset (old_global_stats, 0, sizeof (old_global_stats));
-  memset (diff_stats, 0, sizeof (diff_stats));
-
+  is_header_printed = false;
   do
     {
-      print_timestamp (outfp);
+      if (dump_type == MNT_DUMP_TYPE_CSV_DATA && is_header_printed == false)
+	{
+	  monitor_dump_stats (outfp, server_monitor,
+			      MNT_SIZE_OF_SERVER_EXEC_STATS, NULL,
+			      NULL, cumulative,
+			      MNT_DUMP_TYPE_CSV_HEADER, substr, NULL);
 
-      if (monitor_copy_global_stats (server_monitor, cur_global_stats,
+	  for (i = 0; i < node_list.num_nodes; i++)
+	    {
+	      if (repl_monitor[i] == NULL)
+		{
+		  continue;
+		}
+	      monitor_dump_stats (outfp, repl_monitor[i],
+				  MNT_SIZE_OF_REPL_EXEC_STATS, NULL, NULL,
+				  cumulative, MNT_DUMP_TYPE_CSV_HEADER,
+				  substr, NULL);
+	    }
+	  is_header_printed = true;
+	}
+
+      /* server statdump */
+      if (monitor_copy_global_stats (server_monitor, server_cur_stats,
 				     MNT_SIZE_OF_SERVER_EXEC_STATS)
 	  != NO_ERROR)
 	{
 	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
-	  goto error_exit;
+	  continue;
 	}
-
-      if (cumulative)
-	{
-	  snprintf (tail, sizeof (tail),
-		    "\n *** OTHER STATISTICS *** \n"
-		    "Data_page_buffer_hit_ratio    = %10.2f\n",
-		    (float)
-		    cur_global_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
-		    value / 100);
-
-	  monitor_dump_stats (server_monitor, outfp, cur_global_stats,
-			      MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
-			      substr);
-	}
-      else
-	{
-	  if (monitor_diff_stats (server_monitor, diff_stats,
-				  cur_global_stats,
-				  old_global_stats,
-				  MNT_SIZE_OF_SERVER_EXEC_STATS) == NO_ERROR)
-	    {
-	      mnt_calc_hit_ratio (diff_stats);
-
-	      snprintf (tail, sizeof (tail),
-			"\n *** OTHER STATISTICS *** \n"
-			"Data_page_buffer_hit_ratio    = %10.2f\n",
-			(float)
-			diff_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].
-			value / 100);
-	      monitor_dump_stats (server_monitor, outfp, diff_stats,
-				  MNT_SIZE_OF_SERVER_EXEC_STATS, header, tail,
-				  substr);
-	    }
-
-	  memcpy (old_global_stats, cur_global_stats,
-		  sizeof (cur_global_stats));
-	}
-
+      monitor_dump_stats (outfp, server_monitor,
+			  MNT_SIZE_OF_SERVER_EXEC_STATS, server_cur_stats,
+			  server_old_stats, cumulative,
+			  dump_type, substr, mnt_calc_hit_ratio);
+      memcpy (server_old_stats, server_cur_stats, sizeof (server_cur_stats));
       monitor_close_viewer_data (server_monitor,
 				 MNT_SIZE_OF_SERVER_EXEC_STATS);
 
+      /* repl statdump */
+      for (i = 0; i < node_list.num_nodes; i++)
+	{
+	  if (repl_monitor[i] == NULL)
+	    {
+	      continue;
+	    }
+
+	  if (monitor_copy_global_stats (repl_monitor[i], repl_cur_stats[i],
+					 MNT_SIZE_OF_REPL_EXEC_STATS)
+	      != NO_ERROR)
+	    {
+	      PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+	      continue;
+	    }
+	}
+
+      for (i = 0; i < node_list.num_nodes; i++)
+	{
+	  if (repl_monitor[i] == NULL)
+	    {
+	      continue;
+	    }
+	  monitor_dump_stats (outfp, repl_monitor[i],
+			      MNT_SIZE_OF_REPL_EXEC_STATS,
+			      repl_cur_stats[i], repl_old_stats[i],
+			      cumulative, dump_type, substr, NULL);
+	  memcpy (repl_old_stats[i], repl_cur_stats[i],
+		  sizeof (MONITOR_STATS) * MNT_SIZE_OF_REPL_EXEC_STATS);
+
+	  monitor_close_viewer_data (repl_monitor[i],
+				     MNT_SIZE_OF_SERVER_EXEC_STATS);
+	}
+
+      fprintf (outfp, "\n");
       fflush (outfp);
       sleep (interval);
     }
@@ -2927,6 +2992,22 @@ error_exit:
       monitor_close_viewer_data (server_monitor,
 				 MNT_SIZE_OF_SERVER_EXEC_STATS);
       free_and_init (server_monitor);
+    }
+  for (i = 0; i < node_list.num_nodes; i++)
+    {
+      if (repl_monitor[i] != NULL)
+	{
+	  monitor_close_viewer_data (repl_monitor[i],
+				     MNT_SIZE_OF_REPL_EXEC_STATS);
+	}
+      if (repl_old_stats[i] != NULL)
+	{
+	  free_and_init (repl_old_stats[i]);
+	}
+      if (repl_cur_stats[i] != NULL)
+	{
+	  free_and_init (repl_cur_stats[i]);
+	}
     }
   return EXIT_FAILURE;
 #else /* CS_MODE */

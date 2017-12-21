@@ -374,7 +374,7 @@ extern void mnt_server_copy_stats (THREAD_ENTRY * thread_p,
 #define PERF_MON_GET_CURRENT_TIME(VAR)
 #endif /* CS_MODE */
 
-extern void mnt_calc_hit_ratio (MONITOR_STATS * stats);
+extern void mnt_calc_hit_ratio (MONITOR_STATS * stats, int num_stats);
 
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item (const CSECT_TYPE ctype);
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item_waits (const CSECT_TYPE

@@ -74,7 +74,7 @@ CIRP_LOGWR_GLOBAL cirpwr_Gl = {
   {'0'}
   ,
   /* host info */
-  PRM_NULL_NODE_INFO,
+  PRM_NODE_INFO_INITIALIZER,
   /* log_path */
   {'0'}
   ,

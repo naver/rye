@@ -91,7 +91,8 @@ enum _rye_shm_type
    (type) == RYE_SHM_TYPE_SERVER ? "RYE_SHM_TYPE_SERVER" :                             \
    (type) == RYE_SHM_TYPE_BROKER_GLOBAL ? "RYE_SHM_TYPE_BROKER_GLOBAL" :               \
    (type) == RYE_SHM_TYPE_BROKER_LOCAL ? "RYE_SHM_TYPE_BROKER_LOCAL" :                 \
-   (type) == RYE_SHM_TYPE_MONITOR_SERVER ? "RYE_SHM_TYPE_MONITOR_SERVER" : "UNKNOWN TYPE")
+   (type) == RYE_SHM_TYPE_MONITOR_SERVER ? "RYE_SHM_TYPE_MONITOR_SERVER" :             \
+   (type) == RYE_SHM_TYPE_MONITOR_REPL ? "RYE_SHM_TYPE_MONITOR_REPL" : "UNKNOWN TYPE")
 
 
 typedef struct _rye_shd_mgmt_table RYE_SHD_MGMT_TABLE;

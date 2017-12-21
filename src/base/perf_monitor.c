@@ -242,10 +242,19 @@ mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item)
  * mnt_calc_hit_ratio - Do post processing of server statistics
  *   return: none
  *   stats(in/out): server statistics block to be processed
+ *   num_stats(in):
  */
 void
-mnt_calc_hit_ratio (MONITOR_STATS * stats)
+mnt_calc_hit_ratio (MONITOR_STATS * stats, int num_stats)
 {
+  if (MNT_STATS_DATA_PAGE_FETCHES >= num_stats
+      || MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO >= num_stats
+      || MNT_STATS_DATA_PAGE_IOREADS >= num_stats)
+    {
+      assert (false);
+      return;
+    }
+
   if (stats[MNT_STATS_DATA_PAGE_FETCHES].value == 0)
     {
       stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].value = 100 * 100;

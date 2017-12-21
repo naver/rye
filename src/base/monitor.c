@@ -47,7 +47,17 @@ static MONITOR_STATS_INFO *monitor_init_stats_info (int *num_stats,
 						    RYE_SHM_TYPE shm_type);
 static MONITOR_INFO *monitor_create_viewer (const char *name, int shm_key,
 					    RYE_SHM_TYPE shm_type);
-
+static void monitor_dump_stats_normal (char *buffer, int buf_size,
+				       MONITOR_INFO * monitor,
+				       MONITOR_STATS * stats,
+				       const char *substr);
+static void monitor_dump_stats_csv_header (char *buffer, int buf_size,
+					   MONITOR_INFO * monitor,
+					   const char *substr);
+static void monitor_dump_stats_csv (char *buffer, int buf_size,
+				    MONITOR_INFO * monitor,
+				    MONITOR_STATS * stats,
+				    const char *substr);
 /*
  * monitor_make_server_name
  *   return:
@@ -1458,7 +1468,6 @@ monitor_create_viewer (const char *name, int shm_key, RYE_SHM_TYPE shm_type)
     {
       shm_key = rye_master_shm_get_shm_key (name, shm_type);
     }
-  assert (shm_key > 0);
 
   shm_p = rye_shm_attach (shm_key, shm_type, true);
   if (shm_p == NULL)
@@ -1774,8 +1783,8 @@ monitor_diff_stats (MONITOR_INFO * monitor, MONITOR_STATS * diff_stats,
  * monitor_dump_stats
  *   return:
  *
- *   monitor(in/out):
  *   stream(out):
+ *   monitor(in):
  *   stats(in):
  *   num_stats(in):
  *   header(in):
@@ -1783,25 +1792,67 @@ monitor_diff_stats (MONITOR_INFO * monitor, MONITOR_STATS * diff_stats,
  *   substr(in):
  */
 void
-monitor_dump_stats (MONITOR_INFO * monitor, FILE * stream,
-		    MONITOR_STATS * stats, int num_stats,
-		    const char *header, const char *tail, const char *substr)
+monitor_dump_stats (FILE * stream,
+		    MONITOR_INFO * monitor,
+		    int num_stats, MONITOR_STATS * cur_stats,
+		    MONITOR_STATS * old_stats, int cumulative,
+		    MONITOR_DUMP_TYPE dump_type, const char *substr,
+		    void (*calc_func) (MONITOR_STATS * stats, int num_stats))
 {
+  MONITOR_STATS *diff_stats = NULL;
   char stat_buf[4 * ONE_K];
 
-  if (header != NULL)
+  stat_buf[0] = '\0';
+
+  if (dump_type == MNT_DUMP_TYPE_CSV_HEADER)
     {
-      fprintf (stream, "%s", header);
+      monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
+				    NULL, num_stats, dump_type, substr);
+    }
+  else
+    {
+
+      if (cumulative)
+	{
+	  if (calc_func != NULL)
+	    {
+	      calc_func (cur_stats, num_stats);
+	    }
+	  monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
+					cur_stats, num_stats, dump_type,
+					substr);
+	}
+      else
+	{
+	  diff_stats =
+	    (MONITOR_STATS *) malloc (sizeof (MONITOR_STATS) * num_stats);
+	  if (diff_stats == NULL)
+	    {
+	      return;
+	    }
+
+	  if (monitor_diff_stats (monitor, diff_stats, cur_stats,
+				  old_stats, num_stats) != NO_ERROR)
+	    {
+	      free_and_init (diff_stats);
+	      return;
+	    }
+
+	  if (calc_func != NULL)
+	    {
+	      calc_func (diff_stats, num_stats);
+	    }
+	  monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
+					diff_stats, num_stats, dump_type,
+					substr);
+	}
     }
 
-  stat_buf[0] = '\0';
-  monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf), stats,
-				num_stats, NULL, NULL, substr);
   fprintf (stream, "%s", stat_buf);
 
-  if (tail != NULL)
+  if (diff_stats != NULL)
     {
-      fprintf (stream, "%s", tail);
+      free_and_init (diff_stats);
     }
 }
 
@@ -1822,16 +1873,8 @@ void
 monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
 			      char *buffer, int buf_size,
 			      MONITOR_STATS * stats, int num_stats,
-			      const char *header, const char *tail,
-			      const char *substr)
+			      MONITOR_DUMP_TYPE dump_type, const char *substr)
 {
-  int i;
-  int ret;
-  int remained_size;
-  const char *name, *s;
-  int level;
-  char *p;
-
   if (buffer == NULL || buf_size <= 0)
     {
       assert (false);
@@ -1849,42 +1892,79 @@ monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
       return;
     }
 
-  p = buffer;
-  remained_size = buf_size - 1;
-  if (header != NULL)
+  switch (dump_type)
     {
-      ret = snprintf (p, remained_size, "%s", header);
-      remained_size -= ret;
-      p += ret;
+    case MNT_DUMP_TYPE_NORMAL:
+      monitor_dump_stats_normal (buffer, buf_size, monitor, stats, substr);
+      break;
+    case MNT_DUMP_TYPE_CSV_HEADER:
+      monitor_dump_stats_csv_header (buffer, buf_size, monitor, substr);
+      break;
+    case MNT_DUMP_TYPE_CSV_DATA:
+      monitor_dump_stats_csv (buffer, buf_size, monitor, stats, substr);
+      break;
+    default:
+      assert (false);
+      break;
     }
+}
 
+/*
+ * monitor_dump_stats_normal -
+ *   return:
+ *
+ *   buffer(out):
+ *   buf_size(in):
+ *   monitor(in):
+ *   stats(in):
+ *   substr(in):
+ */
+static void
+monitor_dump_stats_normal (char *buffer, int buf_size,
+			   MONITOR_INFO * monitor, MONITOR_STATS * stats,
+			   const char *substr)
+{
+  char time_array[256];
+  char *out;
+  const char *str;
+  int level, remained_size, ret;
+  int i;
+
+  assert (buffer != NULL && monitor != NULL && stats != NULL);
+
+  out = buffer;
+  remained_size = buf_size - 1;
+
+  er_datetime (NULL, time_array, sizeof (time_array));
+  ret = snprintf (out, remained_size, "%s\n", time_array);
+  remained_size -= ret;
+  out += ret;
   if (remained_size <= 0)
     {
       return;
     }
 
-  for (i = 0; i < num_stats - 1; i++)
+  for (i = 0; i < monitor->num_stats; i++)
     {
-      name = monitor->info[i].name;
       level = monitor->info[i].level;
 
       if (substr != NULL)
 	{
-	  s = strstr (name, substr);
+	  str = strstr (monitor->info[i].name, substr);
 	}
       else
 	{
-	  s = name;
+	  str = monitor->info[i].name;
 	}
 
-      if (s != NULL)
+      if (str != NULL)
 	{
 	  /* sub-info indent */
 	  while (level > 0)
 	    {
-	      ret = snprintf (p, remained_size, "   ");
+	      ret = snprintf (out, remained_size, "   ");
 	      remained_size -= ret;
-	      p += ret;
+	      out += ret;
 	      if (remained_size <= 0)
 		{
 		  return;
@@ -1892,10 +1972,10 @@ monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
 	      level--;
 	    }
 
-	  ret = snprintf (p, remained_size, "%-29s = %10lld\n",
-			  name, (long long) stats[i].value);
+	  ret = snprintf (out, remained_size, "%-29s = %10lld\n",
+			  monitor->info[i].name, (long long) stats[i].value);
 	  remained_size -= ret;
-	  p += ret;
+	  out += ret;
 	  if (remained_size <= 0)
 	    {
 	      return;
@@ -1903,11 +1983,123 @@ monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
 	}
     }
 
-  if (tail != NULL)
+  buffer[buf_size - 1] = '\0';
+}
+
+/*
+ * monitor_dump_stats_csv_header -
+ *   return:
+ *
+ *   buffer(out):
+ *   buf_size(in):
+ *   monitor(in):
+ *   stats(in):
+ *   substr(in):
+ */
+static void
+monitor_dump_stats_csv_header (char *buffer, int buf_size,
+			       MONITOR_INFO * monitor, const char *substr)
+{
+  char *out;
+  const char *str;
+  int remained_size, ret;
+  int i;
+
+  assert (buffer != NULL && monitor != NULL);
+
+  out = buffer;
+  remained_size = buf_size - 1;
+
+  ret = snprintf (out, remained_size, ",time");
+  remained_size -= ret;
+  out += ret;
+  if (remained_size <= 0)
     {
-      ret = snprintf (p, remained_size, "%s", tail);
-      remained_size -= ret;
-      p += ret;
+      return;
+    }
+
+  for (i = 0; i < monitor->num_stats; i++)
+    {
+      if (substr != NULL)
+	{
+	  str = strstr (monitor->info[i].name, substr);
+	}
+      else
+	{
+	  str = monitor->info[i].name;
+	}
+
+      if (str != NULL)
+	{
+	  ret = snprintf (out, remained_size, ",%s", monitor->info[i].name);
+	  remained_size -= ret;
+	  out += ret;
+	  if (remained_size <= 0)
+	    {
+	      return;
+	    }
+	}
+    }
+
+  buffer[buf_size - 1] = '\0';
+}
+
+/*
+ * monitor_dump_stats_csv -
+ *   return:
+ *
+ *   buffer(out):
+ *   buf_size(in):
+ *   monitor(in):
+ *   stats(in):
+ *   substr(in):
+ */
+static void
+monitor_dump_stats_csv (char *buffer, int buf_size,
+			MONITOR_INFO * monitor, MONITOR_STATS * stats,
+			const char *substr)
+{
+  char time_array[256];
+  char *out;
+  const char *str;
+  int remained_size, ret;
+  int i;
+
+  assert (buffer != NULL && monitor != NULL && stats != NULL);
+
+  out = buffer;
+  remained_size = buf_size - 1;
+
+  er_datetime (NULL, time_array, sizeof (time_array));
+  ret = snprintf (out, remained_size, ",%s", time_array);
+  remained_size -= ret;
+  out += ret;
+  if (remained_size <= 0)
+    {
+      return;
+    }
+
+  for (i = 0; i < monitor->num_stats; i++)
+    {
+      if (substr != NULL)
+	{
+	  str = strstr (monitor->info[i].name, substr);
+	}
+      else
+	{
+	  str = monitor->info[i].name;
+	}
+
+      if (str != NULL)
+	{
+	  ret = snprintf (out, remained_size, ",%ld", stats[i].value);
+	  remained_size -= ret;
+	  out += ret;
+	  if (remained_size <= 0)
+	    {
+	      return;
+	    }
+	}
     }
 
   buffer[buf_size - 1] = '\0';

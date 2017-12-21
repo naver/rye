@@ -523,6 +523,7 @@ valid options:\n\
   -c, --cumulative             print cumulative stats\n\
   -i, --interval=S             print stats every S secs\n\
   -s, --substr=STRING          print stat item only that match the substring\n
+  -t, --output-type=STRING     print format(csv...); default: none\n
 
 $set 44 MSGCAT_UTIL_SET_APPLYINFO
 21 Enter DBA password:

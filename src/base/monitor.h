@@ -38,9 +38,16 @@
 
 typedef enum
 {
+  MNT_DUMP_TYPE_NORMAL,
+  MNT_DUMP_TYPE_CSV_DATA,
+  MNT_DUMP_TYPE_CSV_HEADER
+} MONITOR_DUMP_TYPE;
+
+typedef enum
+{
   MONITOR_TYPE_COLLECTOR,
   MONITOR_TYPE_VIEWER,
-} MONITOR_TYPE;;
+} MONITOR_TYPE;
 
 typedef enum
 {
@@ -162,13 +169,16 @@ extern int monitor_copy_global_stats (MONITOR_INFO * monitor,
 extern void monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
 					  char *buffer, int buf_size,
 					  MONITOR_STATS * stats,
-					  int num_stats, const char *header,
-					  const char *tail,
+					  int num_stats,
+					  MONITOR_DUMP_TYPE dump_type,
 					  const char *substr);
-extern void monitor_dump_stats (MONITOR_INFO * monitor, FILE * stream,
-				MONITOR_STATS * stats, int num_stats,
-				const char *header, const char *tail,
-				const char *substr);
+extern void monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
+				int num_stats, MONITOR_STATS * cur_stats,
+				MONITOR_STATS * old_stats, int cumulative,
+				MONITOR_DUMP_TYPE dump_type,
+				const char *substr,
+				void (*calc_func) (MONITOR_STATS * stats,
+						   int num_stats));
 extern int monitor_diff_stats (MONITOR_INFO * monitor,
 			       MONITOR_STATS * diff_stats,
 			       MONITOR_STATS * new_stats,
