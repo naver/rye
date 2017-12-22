@@ -30,6 +30,7 @@
 
 package rye.jdbc.driver;
 
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -64,12 +65,12 @@ public class RyeDriver implements Driver
     }
 
     public static CopyOnWriteArrayList<JciConnectionInfo> unreachableHosts;
-    public static String sysCharsetName;
+    public static final Charset sysCharset = Charset.forName("utf-8");
+    public static final Charset charsetAscii = Charset.forName("ascii");
 
     static RyeDriver ryeDriver = null;
 
     static {
-	sysCharsetName = System.getProperty("file.encoding");
 	try {
 	    ryeDriver = new RyeDriver();
 	    DriverManager.registerDriver(ryeDriver);

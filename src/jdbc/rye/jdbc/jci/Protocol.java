@@ -269,7 +269,7 @@ abstract public class Protocol
 	    pos = JciUtil.int2bytes(0, msg, pos);
 	}
 	else {
-	    byte[] tmpBytes = portName.trim().toLowerCase().getBytes();
+	    byte[] tmpBytes = portName.trim().toLowerCase().getBytes(RyeDriver.sysCharset);
 	    msg = new byte[4 + tmpBytes.length + 1];
 	    pos = JciUtil.int2bytes(tmpBytes.length + 1, msg, pos);
 	    pos = JciUtil.copy_bytes(msg, pos, tmpBytes.length, tmpBytes);
@@ -311,7 +311,7 @@ abstract public class Protocol
 	    else if (argValue instanceof String || argValue instanceof byte[]) {
 		byte[] bStr;
 		if (argValue instanceof String) {
-		    bStr = ((String) argValue).getBytes();
+		    bStr = ((String) argValue).getBytes(RyeDriver.sysCharset);
 		}
 		else {
 		    bStr = ((byte[]) argValue);

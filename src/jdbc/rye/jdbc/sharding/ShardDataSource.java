@@ -201,7 +201,7 @@ class ShardDataSource
 	    return -1;
 	}
 	else {
-	    return totalConns;
+	    return getTotalConns();
 	}
     }
 

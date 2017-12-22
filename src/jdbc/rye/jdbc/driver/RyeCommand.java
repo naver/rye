@@ -40,7 +40,7 @@ import rye.jdbc.jci.Protocol;
 public class RyeCommand
 {
     private static final String[] emptyStringArray = {};
-    private final int DEFAULT_TIMEOUT = 600 * 1000;
+    private static final int DEFAULT_TIMEOUT = 600 * 1000;
 
     private final JciConnectionInfo conInfo;
     private int timeout = DEFAULT_TIMEOUT;

@@ -634,7 +634,7 @@ public class RyeConnection implements Connection
 	return jciCon.getTraceShardConnection();
     }
 
-    public ShardAdmin getShardAdmin()
+    public ShardAdmin getShardAdmin() throws RyeException
     {
 	return jciCon.getShardAdmin();
     }
