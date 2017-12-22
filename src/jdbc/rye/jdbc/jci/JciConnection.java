@@ -31,6 +31,7 @@
 package rye.jdbc.jci;
 
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -184,12 +185,12 @@ abstract public class JciConnection
 	return connProperties.getQueryTimeout();
     }
 
-    public String getCharset()
+    public Charset getCharset()
     {
 	return connProperties.getCharset();
     }
 
-    public String getShardkeyCharset()
+    public Charset getShardkeyCharset()
     {
 	return connProperties.getCharset();
     }
@@ -339,7 +340,7 @@ abstract public class JciConnection
 
     abstract public String getTraceShardConnection();
 
-    abstract public ShardAdmin getShardAdmin();
+    abstract public ShardAdmin getShardAdmin() throws RyeException;
 
     abstract public void setReuseShardStatement(boolean reuseStatement);
 

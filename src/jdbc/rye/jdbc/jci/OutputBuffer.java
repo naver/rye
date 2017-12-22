@@ -33,6 +33,7 @@ package rye.jdbc.jci;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -118,14 +119,15 @@ class OutputBuffer
 	return 4;
     }
 
-    int addString(String str, boolean useConCharset) throws IOException
+    int addString(String str, Charset charset) throws IOException
     {
 	byte[] b;
 
-	if (useConCharset)
-	    b = str.getBytes(jciCon.getCharset());
-	else
-	    b = str.getBytes();
+	if (charset == null) {
+	    charset = jciCon.getCharset();
+	}
+
+	b = str.getBytes(charset);
 
 	dataBuffer.writeInt(b.length + 1);
 	dataBuffer.write(b, 0, b.length);
