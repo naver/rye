@@ -31,6 +31,7 @@
 package rye.jdbc.jci;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -45,11 +46,14 @@ public class InputBuffer
     private int capacity;
     private byte buffer[];
     private JciConnection jciCon;
+    private final Charset charset;
 
-    InputBuffer(TimedDataInputStream inStream, JciConnection con, CasInfo casInfo) throws IOException, JciException
+    InputBuffer(TimedDataInputStream inStream, JciConnection con, CasInfo casInfo, Charset charset) throws IOException,
+		    JciException
     {
 	position = 0;
 	jciCon = con;
+	this.charset = charset;
 
 	byte[] headerData = new byte[Protocol.MSG_HEADER_SIZE];
 	inStream.readFully(headerData);
@@ -73,12 +77,13 @@ public class InputBuffer
 	}
     }
 
-    public InputBuffer(byte[] netStream)
+    public InputBuffer(byte[] netStream, Charset charset)
     {
 	position = 0;
 	jciCon = null;
 	capacity = netStream.length;
 	buffer = netStream;
+	this.charset = charset;
     }
 
     public boolean readBoolean() throws JciException
@@ -185,13 +190,13 @@ public class InputBuffer
 	    throw JciException.createJciException(jciCon, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
 	}
 
-	String s = new String(buffer, position, len - 1);
+	String s = new String(buffer, position, len - 1, charset);
 	position += len;
 
 	return s;
     }
 
-    public String readString(int size, String charsetName) throws JciException
+    public String readString(int size, Charset applyCharset) throws JciException
     {
 	String stringData;
 
@@ -202,11 +207,7 @@ public class InputBuffer
 	    throw JciException.createJciException(jciCon, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
 	}
 
-	try {
-	    stringData = new String(buffer, position, size - 1, charsetName);
-	} catch (java.io.UnsupportedEncodingException e) {
-	    stringData = new String(buffer, position, size - 1);
-	}
+	stringData = new String(buffer, position, size - 1, applyCharset);
 
 	position += size;
 

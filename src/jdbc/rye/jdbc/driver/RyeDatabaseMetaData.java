@@ -127,14 +127,19 @@ public class RyeDatabaseMetaData implements DatabaseMetaData
     public synchronized String getDatabaseProductVersion() throws SQLException
     {
 	String ver = jciCon.getVersionRequest();
-	StringTokenizer st = new StringTokenizer(ver, ".");
-	if (st.countTokens() == 4) { // ex)
-				     // 8.4.9.9999(major.minor.patch.build
-	    this.major_version = Integer.parseInt(st.nextToken());
-	    this.minor_version = Integer.parseInt(st.nextToken());
+	if (ver == null) {
+	    return "";
 	}
+	else {
+	    StringTokenizer st = new StringTokenizer(ver, ".");
+	    if (st.countTokens() == 4) { // ex)
+					 // 8.4.9.9999(major.minor.patch.build
+		this.major_version = Integer.parseInt(st.nextToken());
+		this.minor_version = Integer.parseInt(st.nextToken());
+	    }
 
-	return ver;
+	    return ver;
+	}
     }
 
     public synchronized String getDriverName() throws SQLException

@@ -24,12 +24,13 @@
 
 package rye.jdbc.sharding;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.zip.CRC32;
 
+import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeErrorCode;
 import rye.jdbc.driver.RyeException;
 import rye.jdbc.jci.InputBuffer;
@@ -47,7 +48,7 @@ class ShardInfoGroupid
 
     ShardInfoGroupid(byte[] netStream, short[] oldNodeid, ShardInfo shardInfo) throws JciException
     {
-	InputBuffer in = new InputBuffer(netStream);
+	InputBuffer in = new InputBuffer(netStream, RyeDriver.sysCharset);
 
 	short[] nodeidArr;
 	long version = in.readLong();
@@ -119,7 +120,8 @@ class ShardInfoGroupid
 	return idArr;
     }
 
-    ShardKey[] getDistinctShardKeyArray(String[] shardKeyArr, String charset, JciConnection jciCon) throws RyeException
+    ShardKey[] getDistinctShardKeyArray(String[] shardKeyArr, Charset charset, JciConnection jciCon)
+		    throws RyeException
     {
 	HashSet<ShardKey> keySet = new HashSet<ShardKey>();
 
@@ -133,18 +135,15 @@ class ShardInfoGroupid
 	return idArr;
     }
 
-    ShardKey makeShardKey(String shardKey, String charset, JciConnection jciCon) throws RyeException
+    ShardKey makeShardKey(String shardKey, Charset charset, JciConnection jciCon) throws RyeException
     {
 	if (shardKey == null) {
 	    throw RyeException.createRyeException(jciCon, RyeErrorCode.ER_SHARD_NODE_CONNECTION_INVALID, null);
 	}
 
 	byte[] byteKey;
-	try {
-	    byteKey = shardKey.trim().toLowerCase().getBytes(charset);
-	} catch (UnsupportedEncodingException e) {
-	    throw RyeException.createRyeException(jciCon, RyeErrorCode.ER_UNKNOWN, e.getMessage(), e);
-	}
+
+	byteKey = shardKey.trim().toLowerCase().getBytes(charset);
 
 	CRC32 crc = new CRC32();
 	crc.update(byteKey);

@@ -96,15 +96,15 @@ public class BrokerHealthCheck extends Thread
 	    }
 
 	    outBuffer.newRequest(toBroker.getOutputStream(), Protocol.CAS_FC_CONNECT_DB);
-	    outBuffer.addString(Protocol.HEALTH_CHECK_DUMMY_DB, false);
-	    outBuffer.addString("", false);
-	    outBuffer.addString("", false);
-	    outBuffer.addString(url, false);
-	    outBuffer.addString(RyeDriver.version_string, false);
+	    outBuffer.addString(Protocol.HEALTH_CHECK_DUMMY_DB, RyeDriver.sysCharset);
+	    outBuffer.addString("", RyeDriver.sysCharset);
+	    outBuffer.addString("", RyeDriver.sysCharset);
+	    outBuffer.addString(url, RyeDriver.sysCharset);
+	    outBuffer.addString(RyeDriver.version_string, RyeDriver.sysCharset);
 	    outBuffer.addBytes(sessionId);
 	    outBuffer.sendData(casInfo.getStatusInfo());
 
-	    InputBuffer inBuffer = new InputBuffer(toBroker.getInputStream(), null, casInfo);
+	    InputBuffer inBuffer = new InputBuffer(toBroker.getInputStream(), null, casInfo, RyeDriver.sysCharset);
 
 	    inBuffer.readShort(); // protocol version
 

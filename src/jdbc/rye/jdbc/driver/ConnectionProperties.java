@@ -31,8 +31,8 @@
 package rye.jdbc.driver;
 
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -65,7 +65,7 @@ public class ConnectionProperties
     public static final int MAX_QUERY_TIMEOUT = 2000000;
     public static final int MAX_CONNECT_TIMEOUT = 2000000;
 
-    private static final String DEFAULT_CHARSET = "utf-8";
+    private static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
 
     static ArrayList<Field> PROPERTY_LIST = new ArrayList<Field>();
     static {
@@ -221,7 +221,7 @@ public class ConnectionProperties
 	return logFile.stringValue;
     }
 
-    public String getCharset()
+    public Charset getCharset()
     {
 	return charSet.charset;
     }
@@ -425,7 +425,7 @@ public class ConnectionProperties
 
     private class CharSetConnectionProperty extends ConnectionProperty
     {
-	String charset = DEFAULT_CHARSET;
+	Charset charset = DEFAULT_CHARSET;
 
 	CharSetConnectionProperty(String propertyName)
 	{
@@ -434,20 +434,11 @@ public class ConnectionProperties
 
 	void setValue(Object o) throws SQLException
 	{
-	    if (o == null) {
+	    try {
+		this.charset = Charset.forName((String) o);
+	    } catch (Exception e) {
+		errorUncompatibleValue(o);
 	    }
-	    else if (o instanceof String) {
-		try {
-		    byte[] s = { 0 };
-		    new String(s, (String) o);
-
-		    this.charset = ((String) o);
-		    return;
-		} catch (UnsupportedEncodingException e) {
-		}
-	    }
-
-	    errorUncompatibleValue(o);
 	}
 
 	public String toString()

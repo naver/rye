@@ -366,10 +366,10 @@ public class ShardGroupStatement extends JciStatement
 	    break;
 
 	case SELECT_UPDATE:
-	    if (isShardTableQuery && shardKeyArr.length != 1) {
+	case SELECT:
+	    if (sqlType == RyeCommandType.SQL_TYPE.SELECT_UPDATE && isShardTableQuery && shardKeyArr.length != 1) {
 		throw RyeException.createRyeException(jciCon, RyeErrorCode.ER_SHARD_DML_SHARD_KEY, null);
 	    }
-	case SELECT:
 	    if (isShardTableQuery == true) {
 		if (shardKeyArr.length == 1) {
 		    executeOneShardSELECT(shardKeyArr[0], forcePrepare, maxRow, maxField, queryTimeout, bindParameter);
