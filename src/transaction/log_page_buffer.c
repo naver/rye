@@ -6206,7 +6206,7 @@ logpb_checkpoint (THREAD_ENTRY * thread_p)
 	  LSA_COPY (&chkpt_one->savept_lsa, &act_tdes->savept_lsa);
 	  LSA_COPY (&chkpt_one->tail_topresult_lsa,
 		    &act_tdes->tail_topresult_lsa);
-	  strncpy (chkpt_one->user_name, act_tdes->client.db_user,
+	  STRNCPY (chkpt_one->user_name, act_tdes->client.db_user,
 		   LOG_USERNAME_MAX);
 	  ntrans++;
 	  if (act_tdes->topops.last >= 0

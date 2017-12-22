@@ -3970,7 +3970,7 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 			       CSS_CONN_ENTRY * conn)
 {
   char err_msg[LINE_MAX] = "";
-  HB_PROC_ENTRY *proc;
+  HB_PROC_ENTRY *proc = NULL;
   int proc_state;
   int error = NO_ERROR;
   HB_JOB_ARG *job_arg = NULL;
@@ -4065,6 +4065,7 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
       if (job_arg == NULL)
 	{
 	  hb_remove_proc (proc);
+	  proc = NULL;
 
 	  error = er_errid ();
 	  GOTO_EXIT_ON_ERROR;
@@ -4101,15 +4102,17 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 exit_on_error:
 
   assert (error != NO_ERROR);
-  assert (proc != NULL);
 
   pthread_mutex_unlock (&hb_Resource->lock);
 
-  snprintf (err_msg, LINE_MAX,
-	    "%s (expected pid: %d, pid:%d, proc state:%s, server state:%s, args:%s)",
-	    HB_RESULT_FAILURE_STR, proc->pid, proc_reg->pid,
-	    hb_process_state_string (proc->state),
-	    HA_STATE_NAME (proc->server_state), proc_reg->args);
+  if (proc != NULL)
+    {
+      snprintf (err_msg, LINE_MAX,
+		"%s (expected pid: %d, pid:%d, proc state:%s, server state:%s, args:%s)",
+		HB_RESULT_FAILURE_STR, proc->pid, proc_reg->pid,
+		hb_process_state_string (proc->state),
+		HA_STATE_NAME (proc->server_state), proc_reg->args);
+    }
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_PROCESS_EVENT, 2,
 	  "Registered as local process entries", err_msg);
 

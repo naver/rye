@@ -512,7 +512,7 @@ log_rv_find_checkpoint (THREAD_ENTRY * thread_p, VOLID volid,
 			LOG_LSA * rcv_lsa)
 {
   LOG_LSA chkpt_lsa;		/* Checkpoint LSA of volume */
-  int ret = NO_ERROR;
+  UNUSED_VAR int ret = NO_ERROR;
 
   ret = disk_get_checkpoint (thread_p, volid, &chkpt_lsa);
   if (LSA_ISNULL (rcv_lsa) || LSA_LT (&chkpt_lsa, rcv_lsa))
@@ -2317,6 +2317,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 	      && (LSA_ISNULL (end_redo_lsa) || LSA_GE (&lsa, end_redo_lsa)))
 	    {
 	      log_zip_free (undo_unzip_ptr);
+	      log_zip_free (redo_unzip_ptr);
 	      return;
 	    }
 	  else
@@ -2324,6 +2325,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 	      logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
 				 "log_recovery_redo");
 	      log_zip_free (undo_unzip_ptr);
+	      log_zip_free (redo_unzip_ptr);
 	      return;
 	    }
 	}
@@ -2537,6 +2539,7 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 						     ARG_FILE_LINE,
 						     "log_recovery_redo");
 				  log_zip_free (undo_unzip_ptr);
+				  log_zip_free (redo_unzip_ptr);
 				  return;
 				}
 			      log_lsa.offset = 0;
@@ -3772,7 +3775,7 @@ log_recovery_notpartof_volumes (THREAD_ENTRY * thread_p)
   char vol_fullname[PATH_MAX];
   INT64 vol_dbcreation;		/* Database creation time in volume */
   char *alloc_extpath = NULL;
-  int ret = NO_ERROR;
+  UNUSED_VAR int ret = NO_ERROR;
 
   start_volid = boot_find_next_permanent_volid (thread_p);
 

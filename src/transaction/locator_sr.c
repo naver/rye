@@ -2481,6 +2481,7 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
 	  if (nxobj.mobjs != NULL)
 	    {
 	      locator_free_copy_area (nxobj.comm_area);
+	      nxobj.comm_area = NULL;
 	    }
 	  error_code = ER_FAILED;
 	  goto error;
@@ -2549,6 +2550,7 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
 		}
 
 	      locator_free_copy_area (nxobj.comm_area);
+	      nxobj.comm_area = NULL;
 	      scan = S_SUCCESS;
 	      break;		/* finish the for */
 	    }
@@ -2649,6 +2651,7 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
 		    }
 
 		  locator_free_copy_area (nxobj.comm_area);
+		  nxobj.comm_area = NULL;
 		  scan = S_SUCCESS;
 		  break;	/* finish the for */
 		}
@@ -2672,6 +2675,7 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
       if (nxobj.mobjs != NULL)
 	{
 	  locator_free_copy_area (nxobj.comm_area);
+	  nxobj.comm_area = NULL;
 	}
       goto error;
     }
@@ -2682,6 +2686,7 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
       if (nxobj.mobjs != NULL)
 	{
 	  locator_free_copy_area (nxobj.comm_area);
+	  nxobj.comm_area = NULL;
 	}
       error_code = ER_FAILED;
       goto error;
@@ -2689,6 +2694,7 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
   else if (nxobj.mobjs != NULL && nxobj.mobjs->num_objs == 0)
     {
       locator_free_copy_area (nxobj.comm_area);
+      nxobj.comm_area = NULL;
     }
   else
     {
@@ -5373,6 +5379,7 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
 	  if (nxobj.mobjs != NULL)
 	    {
 	      locator_free_copy_area (nxobj.comm_area);
+	      nxobj.comm_area = NULL;
 	    }
 	  return ER_FAILED;
 	}
@@ -5431,6 +5438,7 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
 		}
 
 	      locator_free_copy_area (nxobj.comm_area);
+	      nxobj.comm_area = NULL;
 	      scan = S_SUCCESS;
 	      break;		/* finish the for */
 	    }
@@ -5457,6 +5465,7 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
       if (nxobj.mobjs != NULL)
 	{
 	  locator_free_copy_area (nxobj.comm_area);
+	  nxobj.comm_area = NULL;
 	}
       return error_code;
     }
@@ -5467,12 +5476,14 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
       if (nxobj.mobjs != NULL)
 	{
 	  locator_free_copy_area (nxobj.comm_area);
+	  nxobj.comm_area = NULL;
 	}
       return ER_FAILED;
     }
   else if (nxobj.mobjs != NULL && nxobj.mobjs->num_objs == 0)
     {
       locator_free_copy_area (nxobj.comm_area);
+      nxobj.comm_area = NULL;
     }
   else
     {

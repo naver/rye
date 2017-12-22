@@ -4011,7 +4011,7 @@ ws_add_to_repl_obj_list (const char *class_name, DB_IDXKEY * key,
 
   DB_IDXKEY_MAKE_NULL (&repl_obj->key);
 
-  strncpy (repl_obj->class_name, class_name, sizeof (repl_obj->class_name));
+  STRNCPY (repl_obj->class_name, class_name, sizeof (repl_obj->class_name));
   error = db_idxkey_clone (key, &repl_obj->key);
   if (error != NO_ERROR)
     {

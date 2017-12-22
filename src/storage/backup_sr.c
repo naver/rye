@@ -1289,7 +1289,7 @@ bk_init_backup_header (BK_BACKUP_HEADER * backup_header_p,
   backup_header_p->iopageid = BK_BACKUP_START_PAGE_ID;
   strncpy (backup_header_p->bk_magic, RYE_MAGIC_DATABASE_BACKUP,
 	   RYE_MAGIC_MAX_LENGTH);
-  strncpy (backup_header_p->db_name,
+  STRNCPY (backup_header_p->db_name,
 	   fileio_get_base_file_name (log_Db_fullname), PATH_MAX);
   backup_header_p->db_creation = log_Gl.hdr.db_creation;
   backup_header_p->db_iopagesize = IO_PAGESIZE;
