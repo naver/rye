@@ -847,7 +847,8 @@ abstract class ShardCommand
 	    printStatus(true, "check broker port %s \n", hosts[i].toString());
 
 	    if (isOccupiedLocalMgmt(hosts[i]) == true) {
-		throw makeAdminRyeException(null, "node '%s' is in use", hosts[i].getOrgHostname());
+		throw makeAdminRyeException(null, "node '%s:%d' is in use", hosts[i].getOrgHostname(),
+				hosts[i].getPort());
 	    }
 	}
     }
