@@ -420,6 +420,7 @@ rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type)
     {
       char *str_shm_key;
       int master_shm_key;
+      int key_offset;
 
       if (master_shm->num_shm >= MAX_NUM_SHM)
 	{
@@ -433,7 +434,17 @@ rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type)
 
       str_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
       parse_int (&master_shm_key, str_shm_key, 16);
-      shm_key = (master_shm_key + DEFUALT_SHM_KEY_BASE + res_index);
+
+      if (type == RYE_SHM_TYPE_SERVER)
+	{
+	  key_offset = DEFUALT_SERVER_SHM_KEY_BASE;
+	}
+      else
+	{
+	  assert (type == RYE_SHM_TYPE_MONITOR_SERVER);
+	  key_offset = DEFUALT_MONITOR_SERVER_SHM_KEY_BASE;
+	}
+      shm_key = (master_shm_key + key_offset + res_index);
 
       shm_info_p = &(master_shm->shm_info[res_index]);
 
