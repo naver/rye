@@ -1051,7 +1051,25 @@ pt_is_ddl_statement (const PT_NODE * node)
 {
   if (node)
     {
-      return STMT_TYPE_IS_DDL (node->node_type);
+      switch (node->node_type)
+	{
+	case PT_CREATE_ENTITY:
+	case PT_ALTER:
+	case PT_RENAME:
+	case PT_DROP:
+	case PT_CREATE_INDEX:
+	case PT_ALTER_INDEX:
+	case PT_DROP_INDEX:
+	case PT_CREATE_USER:
+	case PT_ALTER_USER:
+	case PT_DROP_USER:
+	case PT_GRANT:
+	case PT_REVOKE:
+	case PT_UPDATE_STATS:
+	  return true;
+	default:
+	  return false;
+	}
     }
 
   return false;
@@ -2004,11 +2022,17 @@ void
 pt_record_warning (PARSER_CONTEXT * parser, int line_no,
 		   int col_no, const char *msg)
 {
-  PT_NODE *node = parser_new_node (parser, PT_ZZ_ERROR_MSG);
-  node->line_number = line_no;
-  node->column_number = col_no;
-  node->info.error_msg.error_message = pt_append_string (parser, NULL, msg);
-  parser->warnings = parser_append_node (node, parser->warnings);
+  PT_NODE *node = NULL;
+
+  node = parser_new_node (parser, PT_ZZ_ERROR_MSG);
+  if (node != NULL)
+    {
+      node->line_number = line_no;
+      node->column_number = col_no;
+      node->info.error_msg.error_message =
+	pt_append_string (parser, NULL, msg);
+      parser->warnings = parser_append_node (node, parser->warnings);
+    }
 }
 
 #if 0				/* unused */
@@ -5922,7 +5946,7 @@ pt_check_grammar_charset_collation (PARSER_CONTEXT * parser,
 				    PT_NODE * coll_node, int *coll_id)
 {
   LANG_COLLATION *lang_coll;
-  int coll_charset;
+  UNUSED_VAR int coll_charset;
 
   assert (coll_id != NULL);
 
@@ -6208,7 +6232,7 @@ pt_get_query_limit_from_orderby_for (PARSER_CONTEXT * parser,
 				     DB_VALUE * upper_limit, bool * has_limit)
 {
   int op;
-  PT_NODE *arg_ordby_num = NULL;
+  UNUSED_VAR PT_NODE *arg_ordby_num = NULL;
   PT_NODE *rhs = NULL;
   PT_NODE *arg1 = NULL, *arg2 = NULL;
   PT_NODE *save_next = NULL;
@@ -6316,7 +6340,7 @@ pt_get_query_limit_from_orderby_for (PARSER_CONTEXT * parser,
   else if (op == PT_BETWEEN)
     {
       PT_NODE *between_and = orderby_for->info.expr.arg2;
-      PT_NODE *between_upper = NULL;
+      UNUSED_VAR PT_NODE *between_upper = NULL;
       int between_op;
 
       assert (between_and != NULL && between_and->node_type == PT_EXPR);

@@ -2350,29 +2350,36 @@ qexec_ordby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes,
 		      /* I think this way is very inefficient. */
 		      tplrec.size = 0;
 		      tplrec.tpl = NULL;
-		      qfile_get_tuple (thread_p, page,
-				       page + key->s.original.offset, &tplrec,
-				       list_idp);
-		      data = tplrec.tpl;
-		      /* update orderby_num() in the tuple */
-		      for (i = 0;
-			   ordby_info && i < ordby_info->ordbynum_pos_cnt;
-			   i++)
+		      error = qfile_get_tuple (thread_p, page,
+					       page + key->s.original.offset,
+					       &tplrec, list_idp);
+		      if (error == NO_ERROR)
 			{
-			  QFILE_GET_TUPLE_VALUE_HEADER_POSITION (data,
-								 ordby_info->
-								 ordbynum_pos
-								 [i], tvalhp);
-			  (void)
-			    qdata_copy_db_value_to_tuple_value (ordby_info->
-								ordbynum_val,
-								tvalhp,
-								&tval_size);
+			  data = tplrec.tpl;
+			  /* update orderby_num() in the tuple */
+			  for (i = 0;
+			       ordby_info && i < ordby_info->ordbynum_pos_cnt;
+			       i++)
+			    {
+			      QFILE_GET_TUPLE_VALUE_HEADER_POSITION (data,
+								     ordby_info->
+								     ordbynum_pos
+								     [i],
+								     tvalhp);
+			      (void)
+				qdata_copy_db_value_to_tuple_value
+				(ordby_info->ordbynum_val, tvalhp,
+				 &tval_size);
+			    }
+			  error =
+			    qfile_add_tuple_to_list (thread_p,
+						     info->output_file, data);
 			}
-		      error =
-			qfile_add_tuple_to_list (thread_p, info->output_file,
-						 data);
-		      free_and_init (tplrec.tpl);
+
+		      if (tplrec.tpl != NULL)
+			{
+			  free_and_init (tplrec.tpl);
+			}
 		    }
 		  else
 		    {
@@ -3183,6 +3190,10 @@ qexec_gby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes, void *arg)
 	      dummy.tpl = info->gby_rec.data;
 	      status =
 		qfile_get_tuple (thread_p, page, data, &dummy, list_idp);
+	      if (status != NO_ERROR)
+		{
+		  goto exit_on_error;
+		}
 
 	      if (dummy.tpl != info->gby_rec.data)
 		{
@@ -3193,10 +3204,6 @@ qexec_gby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes, void *arg)
 		   */
 		  info->gby_rec.area_size = dummy.size;
 		  info->gby_rec.data = dummy.tpl;
-		}
-	      if (status != NO_ERROR)
-		{
-		  goto exit_on_error;
 		}
 
 	      data = info->gby_rec.data;
@@ -6910,7 +6917,7 @@ qexec_check_modification (THREAD_ENTRY * thread_p,
       assert (query_p->xasl_ent != NULL);
 
       ent = query_p->xasl_ent;
-#if 1 /* TODO - may be wrong assert ?? */
+#if 1				/* TODO - may be wrong assert ?? */
       assert (ent->deletion_marker == false);
 #endif
 
@@ -12659,6 +12666,12 @@ qexec_setup_topn_proc (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
       count++;
     }
 
+  if (count == 0)
+    {
+      error = ER_FAILED;
+      goto error_return;
+    }
+
   max_size = prm_get_bigint_value (PRM_ID_SORT_BUFFER_SIZE);
 
   top_n = (TOPN_TUPLES *) malloc (sizeof (TOPN_TUPLES));
@@ -12940,6 +12953,13 @@ qexec_topn_tuples_to_list_id (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
   ORDBYNUM_INFO ordby_info;
   DB_LOGICAL res = V_FALSE;
 
+  assert (xasl != NULL);
+  assert (xasl->topn_items != NULL);
+
+  assert (xasl->topn_items->heap != NULL);
+  assert (xasl->topn_items->sort_items != NULL);
+  assert (xasl->topn_items->values_count > 0);
+
   /* setup ordby_info so that we can evaluate the orderby_num() predicate */
   ordby_info.xasl_state = xasl_state;
   ordby_info.ordbynum_pred = xasl->ordbynum_pred;
@@ -12959,9 +12979,11 @@ qexec_topn_tuples_to_list_id (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
   bh_to_sorted_array (heap);
 
   /* dump all items in heap to listfile */
-  if (tpl_descr->f_valp == NULL && list_id->type_list.type_cnt > 0)
+  if (tpl_descr->f_valp == NULL)
     {
       size_t size = values_count * DB_SIZEOF (DB_VALUE *);
+
+      assert (list_id->type_list.type_cnt > 0);
 
       tpl_descr->f_valp = (DB_VALUE **) malloc (size);
       if (tpl_descr->f_valp == NULL)

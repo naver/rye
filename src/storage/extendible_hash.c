@@ -5422,25 +5422,26 @@ ehash_dump_bucket (PAGE_PTR bucket_page_p, FILE * out_fp, DB_TYPE key_type)
   double d;
 #endif
 
+  num_records = spage_number_of_records (bucket_page_p);
+
   (void) spage_next_record (bucket_page_p, &first_slot_id, &recdes, PEEK);
   bucket_header_p = (EHASH_BUCKET_HEADER *) recdes.data;
+  assert (bucket_header_p != NULL);
 
   fprintf (out_fp,
 	   "************************************************************\n");
   fprintf (out_fp,
 	   "*  local_depth : %d                                         *\n",
-	   bucket_header_p->local_depth);
+	   bucket_header_p ? bucket_header_p->local_depth : -1);
   fprintf (out_fp,
 	   "*  no. records : %d                                         *\n",
-	   spage_number_of_records (bucket_page_p) - 1);
+	   num_records - 1);
   fprintf (out_fp,
 	   "*                                                          *\n");
   fprintf (out_fp,
 	   "*   No          Key                   Assoc Value          *\n");
   fprintf (out_fp,
 	   "*  ====   =====================    ==================      *\n");
-
-  num_records = spage_number_of_records (bucket_page_p);
 
   for (slot_id = 1; slot_id < num_records; slot_id++)
     {

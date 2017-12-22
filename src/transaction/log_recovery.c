@@ -3736,6 +3736,7 @@ log_unformat_ahead_volumes (THREAD_ENTRY * thread_p, VOLID volid,
 			    VOLID * start_volid)
 {
   bool result = true;
+  char *vlabel = NULL;
 
   if (volid != NULL_VOLID && volid >= *start_volid)
     {
@@ -3746,12 +3747,8 @@ log_unformat_ahead_volumes (THREAD_ENTRY * thread_p, VOLID volid,
 	}
       else
 	{
-	  char *vlabel = fileio_get_volume_label (volid, ALLOC_COPY);
+	  vlabel = fileio_get_volume_label (volid, ALLOC_COPY);
 	  fileio_unformat (thread_p, vlabel);
-	  if (vlabel)
-	    {
-	      free (vlabel);
-	    }
 	}
     }
   return result;

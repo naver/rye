@@ -4184,6 +4184,7 @@ locator_allocate_copy_area_by_attr_info (THREAD_ENTRY * thread_p,
     copyarea_length_hint <= 0 ? DB_PAGESIZE : copyarea_length_hint;
   SCAN_CODE scan = S_DOESNT_FIT;
 
+  assert (attr_info != NULL);
   assert (shard_groupid != NULL_GROUPID);
 
   while (scan == S_DOESNT_FIT)

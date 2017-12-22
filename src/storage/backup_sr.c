@@ -140,21 +140,25 @@ bk_finalize_backup_thread (BK_BACKUP_SESSION * session_p)
   for (node = qp->free_list; node; node = node_next)
     {
       node_next = node->next;
-      switch (session_p->bkuphdr->zip_method)
+      if (session_p->bkuphdr != NULL)
 	{
-	case BK_ZIP_LZO1X_METHOD:
-	  if (node->wrkmem != NULL)
+	  switch (session_p->bkuphdr->zip_method)
 	    {
-	      free_and_init (node->wrkmem);
-	    }
+	    case BK_ZIP_LZO1X_METHOD:
+	      if (node->wrkmem != NULL)
+		{
+		  free_and_init (node->wrkmem);
+		}
 
-	  if (node->zip_page != NULL)
-	    {
-	      free_and_init (node->zip_page);
+	      if (node->zip_page != NULL)
+		{
+		  free_and_init (node->zip_page);
+		}
+	      break;
+	    default:
+	      assert (false);
+	      break;
 	    }
-	  break;
-	default:
-	  break;
 	}
 
       if (node->area != NULL)

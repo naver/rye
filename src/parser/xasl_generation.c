@@ -2881,6 +2881,12 @@ pt_make_table_info (PARSER_CONTEXT * parser, PT_NODE * table_spec)
 {
   TABLE_INFO *table_info;
 
+  if (table_spec == NULL)
+    {
+      assert (false);
+      return NULL;
+    }
+
   table_info = pt_table_info_alloc ();
   if (table_info == NULL)
     {
@@ -10577,7 +10583,7 @@ pt_to_constraint_pred (PARSER_CONTEXT * parser, XASL_NODE * xasl,
 {
   PT_NODE *pt_pred =
     NULL, *node, *conj, *next, *oid_is_null_expr, *constraint;
-  PT_NODE *name, *spec_list;
+  PT_NODE *name, *spec_list = NULL;
   PRED_EXPR *pred = NULL;
   TABLE_INFO *ti = NULL;
 
@@ -10625,7 +10631,11 @@ pt_to_constraint_pred (PARSER_CONTEXT * parser, XASL_NODE * xasl,
 	  spec_list = spec_list->next;
 	}
 
-      assert (spec_list);
+      if (spec_list == NULL)
+	{
+	  assert (false);
+	  goto outofmem;
+	}
 
       /* create not null constraint */
       constraint->next = NULL;
@@ -13280,11 +13290,15 @@ pt_numbering_set_continue_post (UNUSED_ARG PARSER_CONTEXT * parser,
       for (i = 0; i < 3; i++)
 	{
 	  child = children[i];
-	  if (child
-	      && ((child->node_type == PT_FUNCTION
-		   && child->info.function.function_type == PT_GROUPBY_NUM)
-		  || (child->node_type == PT_EXPR
-		      && PT_IS_NUMBERING_AFTER_EXECUTION (child->info.expr.op))))
+	  if (child == NULL)
+	    {
+	      continue;
+	    }
+
+	  if ((child->node_type == PT_FUNCTION
+	       && child->info.function.function_type == PT_GROUPBY_NUM)
+	      || (child->node_type == PT_EXPR
+		  && PT_IS_NUMBERING_AFTER_EXECUTION (child->info.expr.op)))
 	    {
 	      /* we have a subexpression with numbering functions and we
 	       * don't have a logical operator therefore we set the continue
