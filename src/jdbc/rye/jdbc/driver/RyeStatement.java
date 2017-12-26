@@ -47,7 +47,7 @@ import rye.jdbc.jci.RyeCommandType;
 public class RyeStatement implements Statement
 {
     protected final RyeConnection con;
-    protected JciConnection jciCon;
+    protected final JciConnection jciCon;
     protected JciStatement jciStmt;
     protected boolean completed;
     protected RyeResultSet result_set;

@@ -562,7 +562,11 @@ public class JciNormalStatement extends JciStatement
 	case RyeType.TYPE_VARCHAR:
 	    return inBuffer.readString(size);
 	case RyeType.TYPE_NUMERIC:
-	    return new BigDecimal(inBuffer.readString(size, RyeDriver.sysCharset));
+	    String tmp = inBuffer.readString(size, RyeDriver.sysCharset);
+	    if (tmp == null) {
+		throw JciException.createJciException(jciCon, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
+	    }
+	    return new BigDecimal(tmp);
 	case RyeType.TYPE_BIGINT:
 	    return new Long(inBuffer.readLong());
 	case RyeType.TYPE_INT:
