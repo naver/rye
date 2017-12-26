@@ -1051,6 +1051,8 @@ pt_is_ddl_statement (const PT_NODE * node)
 {
   if (node)
     {
+      /* refer do_replicate_schema ()
+       */
       switch (node->node_type)
 	{
 	case PT_CREATE_ENTITY:
