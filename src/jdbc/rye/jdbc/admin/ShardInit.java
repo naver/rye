@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import rye.jdbc.driver.RyeConnection;
+import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.sharding.ShardAdmin;
 
 class ShardInit extends ShardCommand
@@ -117,7 +118,7 @@ class ShardInit extends ShardCommand
 		if (argValue == null) {
 		    throw makeAdminRyeException(null, "invalid option value: %s", optArgs[i]);
 		}
-		brokerAcl = argValue.getBytes();
+		brokerAcl = argValue.getBytes(RyeDriver.sysCharset);
 	    }
 	    else if (argName.equals("-v")) {
 		setVerboseOut(out);
@@ -175,7 +176,7 @@ class ShardInit extends ShardCommand
     {
 	checkLocalMgmtOccupied(addNodeArr);
 
-	initDB(addNodeArr, globalDbnameArr, brokerAcl, null, changeRyeConf, null, makeRandomeId(HA_GROUP_ID_LEN),
+	initDB(addNodeArr, globalDbnameArr, brokerAcl, null, changeRyeConf, null, makeRandomId(HA_GROUP_ID_LEN),
 			createdbOption);
 
 	NodeAddress[] hosts = shardMgmtHost.getHostArr();

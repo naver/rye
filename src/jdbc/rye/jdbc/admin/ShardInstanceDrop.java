@@ -132,6 +132,10 @@ class ShardInstanceDrop extends ShardCommand
 	    con.close();
 	}
 
+	if (existingNodeInfo == null) {
+	    throw makeAdminRyeException(null, "invalid node configuration");
+	}
+
 	excludeDropNode(existingNodeInfo, dropNode);
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {

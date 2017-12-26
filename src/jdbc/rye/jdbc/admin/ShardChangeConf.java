@@ -169,6 +169,7 @@ class ShardChangeConf extends ShardCommand
 
 		}
 		res = false;
+		continue;
 	    }
 
 	    for (RyeConfValue ryeConfValue : changeRyeConfList) {

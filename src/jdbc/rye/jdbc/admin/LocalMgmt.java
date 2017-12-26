@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import rye.jdbc.driver.RyeConnectionUrl;
+import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeErrorCode;
 import rye.jdbc.driver.RyeException;
 import rye.jdbc.jci.BrokerHandler;
@@ -43,7 +44,7 @@ public class LocalMgmt
     private final static int DEFAULT_TIMEOUT = 600 * 1000;
     private final static int RES_INT_SIZE = 4;
 
-    private final int timeout = DEFAULT_TIMEOUT;
+    private static final int timeout = DEFAULT_TIMEOUT;
     private final JciConnectionInfo conInfo;
     private final ArrayList<JciConnectionInfo> conInfoList;
 
@@ -265,7 +266,7 @@ public class LocalMgmt
 		return null;
 	    }
 	    else {
-		return new String(confValue, 0, confValue.length - 1);
+		return new String(confValue, 0, confValue.length - 1, RyeDriver.sysCharset);
 	    }
 	} catch (JciException e) {
 	    throw RyeException.createRyeException(makeRyeConnectionUrlForException(), e);
@@ -294,7 +295,9 @@ public class LocalMgmt
 	}
 
 	byte[] res = new byte[RES_INT_SIZE];
-	instream.read(res, 0, res.length);
+	if (instream.read(res, 0, res.length) < res.length) {
+	    throw JciException.createJciException(null, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
+	}
 	return JciUtil.bytes2int(res, 0);
     }
 
@@ -309,7 +312,7 @@ public class LocalMgmt
 	instream.read(res, 0, res.length);
 	instream.read();
 
-	return new String(res);
+	return new String(res, RyeDriver.sysCharset);
     }
 
     private RyeConnectionUrl makeRyeConnectionUrlForException()

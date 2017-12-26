@@ -339,7 +339,7 @@ abstract class ShardCommand
 	    String cmdErrMsg = "";
 	    byte[] stderrMsg = ryeCommand.getCommandStderr();
 	    if (stderrMsg != null) {
-		cmdErrMsg = String.format("(%s)", (new String(stderrMsg)).trim());
+		cmdErrMsg = String.format("(%s)", (new String(stderrMsg, RyeDriver.sysCharset)).trim());
 	    }
 	    throw makeAdminRyeException(null, "%s: rye command fail: %s %s", host.toString(), command, cmdErrMsg);
 	}
@@ -847,7 +847,8 @@ abstract class ShardCommand
 	    printStatus(true, "check broker port %s \n", hosts[i].toString());
 
 	    if (isOccupiedLocalMgmt(hosts[i]) == true) {
-		throw makeAdminRyeException(null, "node '%s' is in use", hosts[i].getOrgHostname());
+		throw makeAdminRyeException(null, "node '%s:%d' is in use", hosts[i].getOrgHostname(),
+				hosts[i].getPort());
 	    }
 	}
     }
@@ -916,12 +917,12 @@ abstract class ShardCommand
 	return haNodeList.substring(0, idx);
     }
 
-    String makeRandomeId(int len)
+    String makeRandomId(int len)
     {
 	Random r = new Random();
-	byte[] b = new byte[len];
+	char[] b = new char[len];
 	for (int i = 0; i < len; i++) {
-	    b[i] = (byte) ('a' + r.nextInt(26));
+	    b[i] = (char) ('a' + r.nextInt(26));
 	}
 	return new String(b);
     }

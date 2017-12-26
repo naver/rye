@@ -117,6 +117,11 @@ class NodeAddress
 	return this.orgHostname;
     }
 
+    public int hashCode()
+    {
+	return (this.ipaddr.hashCode() + port);
+    }
+
     public boolean equals(Object o)
     {
 	if (o != null && o instanceof NodeAddress) {

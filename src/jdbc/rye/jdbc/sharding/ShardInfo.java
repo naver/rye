@@ -24,9 +24,11 @@
 
 package rye.jdbc.sharding;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import rye.jdbc.driver.ConnectionProperties;
+import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeErrorCode;
 import rye.jdbc.driver.RyeException;
 import rye.jdbc.jci.BrokerHandler;
@@ -134,7 +136,7 @@ public class ShardInfo
 	return curGroupidInfo;
     }
 
-    ShardKey makeShardKey(String shardKey, String conCharset, JciConnection jciCon) throws RyeException
+    ShardKey makeShardKey(String shardKey, Charset conCharset, JciConnection jciCon) throws RyeException
     {
 	return getGroupidInfo(jciCon).makeShardKey(shardKey, conCharset, jciCon);
     }
@@ -154,7 +156,7 @@ public class ShardInfo
 	return getGroupidInfo(jciCon).getDistinctNodeIdArray(shardKeyArr);
     }
 
-    ShardKey[] getDistinctShardKeyArray(String[] strShardKeyArr, String charset, JciConnection jciCon)
+    ShardKey[] getDistinctShardKeyArray(String[] strShardKeyArr, Charset charset, JciConnection jciCon)
 		    throws RyeException
     {
 	return getGroupidInfo(jciCon).getDistinctShardKeyArray(strShardKeyArr, charset, jciCon);
@@ -275,13 +277,9 @@ public class ShardInfo
 		brRes = BrokerHandler.syncShardInfo(conInfoArr[i], mgmtConInfo.getDbname(), (nodeInfo == null ? 0
 				: nodeInfo.getVersion()), (groupidInfo == null ? 0 : groupidInfo.getVersion()),
 				svrShardInfoCreatedAt, ShardInfoManager.SYNC_WAIT_MILLISEC);
+		break;
 	    } catch (JciException e) {
-		int errno = e.getJciError();
-		if (RyeErrorCode.isBrokerNotAvailable(errno)) {
-		}
-		continue;
 	    }
-	    break;
 	}
 
 	ShardInfoNode newNodeInfo = null;
@@ -362,7 +360,7 @@ public class ShardInfo
 	    long oldCreatedAt = svrShardInfoCreatedAt;
 
 	    try {
-		InputBuffer in = new InputBuffer(netStream);
+		InputBuffer in = new InputBuffer(netStream, RyeDriver.sysCharset);
 		svrShardInfoCreatedAt = in.readLong();
 
 		if (oldCreatedAt != svrShardInfoCreatedAt) {
@@ -388,7 +386,7 @@ public class ShardInfo
 	    return;
 	}
 
-	InputBuffer in = new InputBuffer(netStream);
+	InputBuffer in = new InputBuffer(netStream, RyeDriver.sysCharset);
 
 	int count = in.readInt();
 

@@ -52,11 +52,6 @@ public class JciError
 	this(null, RyeErrorCode.ER_NO_ERROR);
     }
 
-    JciError(JciConnection c)
-    {
-	this(c, RyeErrorCode.ER_NO_ERROR);
-    }
-
     public JciError(JciConnection c, int errCode, Throwable t)
     {
 	this(c, errCode);
