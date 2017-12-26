@@ -300,7 +300,7 @@ public class ShardGroupConnection extends JciConnection
 			getFirstConnectionInfo().getPortName());
     }
 
-    synchronized public ShardAdmin getShardAdmin()
+    synchronized public ShardAdmin getShardAdmin() throws RyeException
     {
 	if (shardAdmin == null) {
 	    shardAdmin = new ShardAdmin(this.getFirstConnectionInfo(), this.getQueryTimeout() * 1000, shardInfo, this);

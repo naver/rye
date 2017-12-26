@@ -358,7 +358,7 @@ public class RyePreparedStatement extends RyeStatement implements PreparedStatem
 
 	    len = in.read(value);
 
-	    bindParameter.setParameter(parameterIndex, new String(value, 0, len), jciCon);
+	    bindParameter.setParameter(parameterIndex, new String(value, 0, len, RyeDriver.charsetAscii), jciCon);
 	} catch (IOException e) {
 	    throw con.createRyeException(RyeErrorCode.ER_IOEXCEPTION_IN_STREAM, e);
 	}
@@ -594,7 +594,6 @@ public class RyePreparedStatement extends RyeStatement implements PreparedStatem
 		    }
 
 		    con.removeStatement(this);
-		    con = null;
 		    bindParameter.clear();
 		}
 	    }
@@ -629,13 +628,7 @@ public class RyePreparedStatement extends RyeStatement implements PreparedStatem
     protected void checkIsOpen() throws SQLException
     {
 	if (is_closed) {
-	    if (con != null) {
-		throw con.createRyeException(RyeErrorCode.ER_PREPARED_STATEMENT_CLOSED, null);
-	    }
-	    else {
-		throw RyeException.createRyeException(jciCon, RyeErrorCode.ER_PREPARED_STATEMENT_CLOSED, null);
-	    }
-
+	    throw con.createRyeException(RyeErrorCode.ER_PREPARED_STATEMENT_CLOSED, null);
 	}
     }
 

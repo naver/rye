@@ -37,6 +37,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
 
+import rye.jdbc.driver.RyeDriver;
+
 public class BasicLogger implements Log
 {
     private static final int FATAL = 0;
@@ -73,7 +75,7 @@ public class BasicLogger implements Log
 	    String canonicalPath = f.getCanonicalPath();
 	    writer = writerTable.get(canonicalPath);
 	    if (writer == null) {
-		writer = new PrintWriter(canonicalPath);
+		writer = new PrintWriter(canonicalPath, RyeDriver.sysCharset.name());
 		writerTable.put(canonicalPath, writer);
 	    }
 	} catch (IOException e) {

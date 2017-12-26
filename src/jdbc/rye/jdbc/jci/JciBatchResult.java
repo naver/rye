@@ -101,6 +101,12 @@ public class JciBatchResult
 		}
 	    }
 	}
-	throw bex;
+
+	if (bex == null) {
+	    throw new BatchUpdateException("unknown error", null, -1, res);
+	}
+	else {
+	    throw bex;
+	}
     }
 }

@@ -200,7 +200,7 @@ public class JciNormalConnection extends JciConnection
 	    if (size <= 0) {
 		return null;
 	    }
-	    return inBuffer.readString(size, RyeDriver.sysCharsetName);
+	    return inBuffer.readString(size, RyeDriver.sysCharset);
 	} catch (JciException e) {
 	    throw RyeException.createRyeException(this, e);
 	} catch (IOException e) {
@@ -252,7 +252,7 @@ public class JciNormalConnection extends JciConnection
 	    inBuffer = send_recv_msg();
 
 	    int infoSize = inBuffer.readInt();
-	    String plan = inBuffer.readString(infoSize, getCharset());
+	    String plan = inBuffer.readString(infoSize);
 	    if (plan == null) {
 		plan = "";
 	    }
@@ -603,12 +603,12 @@ public class JciNormalConnection extends JciConnection
     private InputBuffer send_recv_msg() throws JciException, IOException
     {
 	if (client == null) {
-	    JciException.createJciException(this, RyeErrorCode.ER_COMMUNICATION);
+	    throw JciException.createJciException(this, RyeErrorCode.ER_COMMUNICATION);
 	}
 
 	outBuffer.sendData(casInfo.getStatusInfo());
 
-	InputBuffer inputBuffer = new InputBuffer(client.getInputStream(), this, casInfo);
+	InputBuffer inputBuffer = new InputBuffer(client.getInputStream(), this, casInfo, this.getCharset());
 
 	return inputBuffer;
     }
@@ -679,7 +679,7 @@ public class JciNormalConnection extends JciConnection
 	outBuffer.addBytes(casInfo.getDbSessionId());
 	outBuffer.sendData(casInfo.getStatusInfo());
 
-	InputBuffer inBuffer = new InputBuffer(client.getInputStream(), this, casInfo);
+	InputBuffer inBuffer = new InputBuffer(client.getInputStream(), this, casInfo, this.getCharset());
 
 	short verMajor = inBuffer.readShort();
 	short verMinor = inBuffer.readShort();
@@ -803,9 +803,9 @@ public class JciNormalConnection extends JciConnection
 	return null;
     }
 
-    public ShardAdmin getShardAdmin()
+    public ShardAdmin getShardAdmin() throws RyeException
     {
-	return null;
+	throw new RyeException("JciNormalConnection cannot make ShardAdmin", null);
     }
 
     public void setReuseShardStatement(boolean reuseStatement)
@@ -857,7 +857,7 @@ public class JciNormalConnection extends JciConnection
 	    scale = inBuffer.readShort();
 	    precision = inBuffer.readInt();
 	    int nameSize = inBuffer.readInt();
-	    columnLabel = inBuffer.readString(nameSize, getCharset());
+	    columnLabel = inBuffer.readString(nameSize);
 
 	    String tableName = null;
 	    String dbColName = null;
@@ -867,12 +867,12 @@ public class JciNormalConnection extends JciConnection
 	    boolean isPrimaryKey = false;
 
 	    nameSize = inBuffer.readInt();
-	    dbColName = inBuffer.readString(nameSize, getCharset());
+	    dbColName = inBuffer.readString(nameSize);
 	    nameSize = inBuffer.readInt();
-	    tableName = inBuffer.readString(nameSize, getCharset());
+	    tableName = inBuffer.readString(nameSize);
 	    isNullable = inBuffer.readBoolean();
 
-	    defValue = inBuffer.readString(inBuffer.readInt(), getCharset());
+	    defValue = inBuffer.readString(inBuffer.readInt());
 	    isUniqueKey = inBuffer.readBoolean();
 	    isPrimaryKey = inBuffer.readBoolean();
 
@@ -896,7 +896,7 @@ public class JciNormalConnection extends JciConnection
 	    shardKeyValues = new String[numShardKeyValues];
 	    for (int i = 0; i < numShardKeyValues; i++) {
 		int size = inBuffer.readInt();
-		shardKeyValues[i] = inBuffer.readString(size, getCharset());
+		shardKeyValues[i] = inBuffer.readString(size);
 	    }
 	}
 
