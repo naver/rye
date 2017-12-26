@@ -10648,7 +10648,9 @@ heap_attrinfo_transform_to_disk (THREAD_ENTRY * thread_p,
   OR_BUF orep, *buf;
   char *ptr_bound, *ptr_varvals;
   HEAP_ATTRVALUE *value;	/* Disk value Attr info for a particular attr */
+#if 0
   DB_VALUE temp_dbvalue;
+#endif
   PR_TYPE *pr_type;		/* Primitive type array function structure */
   unsigned int repid_bits;
   SCAN_CODE status;
@@ -10818,12 +10820,14 @@ heap_attrinfo_transform_to_disk (THREAD_ENTRY * thread_p,
 		   *     advance to next attribute.
 		   *  2) and set the bound bit as unbound
 		   */
+#if 0
 		  db_value_domain_init (&temp_dbvalue,
 					value->last_attrepr->type,
 					value->last_attrepr->domain->
 					precision,
 					value->last_attrepr->domain->scale);
 		  dbvalue = &temp_dbvalue;
+#endif
 		  OR_CLEAR_BOUND_BIT (ptr_bound,
 				      value->last_attrepr->position);
 
