@@ -2627,7 +2627,7 @@ xboot_initialize_server (THREAD_ENTRY * thread_p,
   rootclass_hfid->hpgid = boot_Db_parm->rootclass_hfid.hpgid;
 
   /* print_version string */
-  strncpy (format, msgcat_message (MSGCAT_CATALOG_RYE,
+  STRNCPY (format, msgcat_message (MSGCAT_CATALOG_RYE,
 				   MSGCAT_SET_GENERAL,
 				   MSGCAT_GENERAL_DATABASE_INIT),
 	   BOOT_FORMAT_MAX_LENGTH);

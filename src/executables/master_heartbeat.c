@@ -903,7 +903,7 @@ hb_cluster_job_calc_score (HB_JOB_ARG * arg)
       free_and_init (arg);
     }
 
-  hb_info_str[0] = '\0'; /* init */
+  hb_info_str[0] = '\0';	/* init */
 
   pthread_mutex_lock (&hb_Cluster->lock);
 
@@ -1207,7 +1207,7 @@ hb_cluster_job_failover (HB_JOB_ARG * arg)
   UNUSED_VAR int num_master;
   char hb_info_str[HB_INFO_STR_MAX];
 
-  hb_info_str[0] = '\0'; /* init */
+  hb_info_str[0] = '\0';	/* init */
 
   pthread_mutex_lock (&hb_Cluster->lock);
 
@@ -1282,7 +1282,7 @@ hb_cluster_job_demote (HB_JOB_ARG * arg)
       return;
     }
 
-  hb_info_str[0] = '\0'; /* init */
+  hb_info_str[0] = '\0';	/* init */
 
   pthread_mutex_lock (&hb_Cluster->lock);
 
@@ -1387,7 +1387,7 @@ hb_cluster_job_failback (HB_JOB_ARG * arg)
   size_t size;
   bool emergency_kill_enabled = false;
 
-  hb_info_str[0] = '\0'; /* init */
+  hb_info_str[0] = '\0';	/* init */
 
   pthread_mutex_lock (&hb_Cluster->lock);
 
@@ -1491,7 +1491,7 @@ hb_cluster_job_changeslave (HB_JOB_ARG * arg)
   int error;
   char hb_info_str[HB_INFO_STR_MAX];
 
-  hb_info_str[0] = '\0'; /* init */
+  hb_info_str[0] = '\0';	/* init */
 
   pthread_mutex_lock (&hb_Cluster->lock);
 
@@ -1547,7 +1547,7 @@ hb_cluster_job_changemode_force (HB_JOB_ARG * arg)
   HB_PROC_ENTRY *proc;
   bool change_server_state = false;
 
-  hb_info_str[0] = '\0'; /* init */
+  hb_info_str[0] = '\0';	/* init */
 
   pthread_mutex_lock (&css_Master_socket_anchor_lock);
   pthread_mutex_lock (&hb_Resource->lock);
@@ -2598,7 +2598,7 @@ hb_resource_job_change_groupid_bitmap (UNUSED_ARG HB_JOB_ARG * arg)
 
       if (proc->type == HB_PTYPE_SERVER && proc->sync_groupid_bitmap == false)
 	{
-	  strncpy (local_dbname[send_bitmap_count], proc->argv[1],
+	  STRNCPY (local_dbname[send_bitmap_count], proc->argv[1],
 		   HB_MAX_SZ_PROC_ARGV);
 	  send_bitmap_count++;
 	}
@@ -3970,7 +3970,7 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 			       CSS_CONN_ENTRY * conn)
 {
   char err_msg[LINE_MAX] = "";
-  HB_PROC_ENTRY *proc;
+  HB_PROC_ENTRY *proc = NULL;
   int proc_state;
   int error = NO_ERROR;
   HB_JOB_ARG *job_arg = NULL;
@@ -4065,6 +4065,7 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
       if (job_arg == NULL)
 	{
 	  hb_remove_proc (proc);
+	  proc = NULL;
 
 	  error = er_errid ();
 	  GOTO_EXIT_ON_ERROR;
@@ -4101,15 +4102,17 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 exit_on_error:
 
   assert (error != NO_ERROR);
-  assert (proc != NULL);
 
   pthread_mutex_unlock (&hb_Resource->lock);
 
-  snprintf (err_msg, LINE_MAX,
-	    "%s (expected pid: %d, pid:%d, proc state:%s, server state:%s, args:%s)",
-	    HB_RESULT_FAILURE_STR, proc->pid, proc_reg->pid,
-	    hb_process_state_string (proc->state),
-	    HA_STATE_NAME (proc->server_state), proc_reg->args);
+  if (proc != NULL)
+    {
+      snprintf (err_msg, LINE_MAX,
+		"%s (expected pid: %d, pid:%d, proc state:%s, server state:%s, args:%s)",
+		HB_RESULT_FAILURE_STR, proc->pid, proc_reg->pid,
+		hb_process_state_string (proc->state),
+		HA_STATE_NAME (proc->server_state), proc_reg->args);
+    }
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_PROCESS_EVENT, 2,
 	  "Registered as local process entries", err_msg);
 

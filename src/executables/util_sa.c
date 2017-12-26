@@ -1099,6 +1099,11 @@ diagdb (UTIL_FUNCTION_ARG * arg)
 
   db_shutdown ();
 
+  if (outfp != stdout && outfp != NULL)
+    {
+      fclose (outfp);
+    }
+
   return EXIT_SUCCESS;
 
 print_diag_usage:
@@ -1108,5 +1113,11 @@ print_diag_usage:
   util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_ARGUMENT);
 
 error_exit:
+
+  if (outfp != stdout && outfp != NULL)
+    {
+      fclose (outfp);
+    }
+
   return EXIT_FAILURE;
 }

@@ -1741,7 +1741,7 @@ rsql_read_file (const char *file_name)
    * We've successfully read the file, so remember its name for
    * subsequent reads.
    */
-  strncpy (current_file, p, sizeof (current_file));
+  STRNCPY (current_file, p, sizeof (current_file));
 
   if (rsql_edit_read_file (fp) == RSQL_FAILURE)
     {
@@ -1820,7 +1820,7 @@ rsql_write_file (const char *file_name, int append_flag)
    * We've successfully opened the file, so remember its name for
    * subsequent writes.
    */
-  strncpy (current_file, p, sizeof (current_file));
+  STRNCPY (current_file, p, sizeof (current_file));
 
   if (rsql_edit_write_file (fp) == RSQL_FAILURE)
     {

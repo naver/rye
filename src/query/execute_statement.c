@@ -1523,9 +1523,11 @@ is_server_update_allowed (PARSER_CONTEXT * parser, PT_NODE ** non_null_attrs,
   PT_NODE *spec = NULL;
   int save_au;
 
-  assert (non_null_attrs != NULL && has_uniques != NULL
-	  && server_allowed != NULL);
+  assert (non_null_attrs != NULL);
   assert (*non_null_attrs == NULL);
+  assert (has_uniques != NULL);
+  assert (server_allowed != NULL);
+
   *has_uniques = 0;
   *server_allowed = 0;
 
@@ -3936,6 +3938,8 @@ do_replicate_schema (PARSER_CONTEXT * parser, PT_NODE * statement)
       return NO_ERROR;
     }
 
+  /* refer pt_is_ddl_statement ()
+   */
   switch (statement->node_type)
     {
     case PT_CREATE_ENTITY:

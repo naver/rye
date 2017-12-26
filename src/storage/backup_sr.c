@@ -140,21 +140,25 @@ bk_finalize_backup_thread (BK_BACKUP_SESSION * session_p)
   for (node = qp->free_list; node; node = node_next)
     {
       node_next = node->next;
-      switch (session_p->bkuphdr->zip_method)
+      if (session_p->bkuphdr != NULL)
 	{
-	case BK_ZIP_LZO1X_METHOD:
-	  if (node->wrkmem != NULL)
+	  switch (session_p->bkuphdr->zip_method)
 	    {
-	      free_and_init (node->wrkmem);
-	    }
+	    case BK_ZIP_LZO1X_METHOD:
+	      if (node->wrkmem != NULL)
+		{
+		  free_and_init (node->wrkmem);
+		}
 
-	  if (node->zip_page != NULL)
-	    {
-	      free_and_init (node->zip_page);
+	      if (node->zip_page != NULL)
+		{
+		  free_and_init (node->zip_page);
+		}
+	      break;
+	    default:
+	      assert (false);
+	      break;
 	    }
-	  break;
-	default:
-	  break;
 	}
 
       if (node->area != NULL)
@@ -853,7 +857,7 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
     (BK_VOL_HEADER_IN_BACKUP *) (&session_p->dbfile.area->iopage);
   file_header_p->volid = session_p->dbfile.volid;
   file_header_p->nbytes = session_p->dbfile.nbytes;
-  strncpy (file_header_p->vlabel, session_p->dbfile.vlabel, PATH_MAX);
+  STRNCPY (file_header_p->vlabel, session_p->dbfile.vlabel, PATH_MAX);
   nread = BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE;
 
   if (bk_send_backup (thread_p, session_p, BK_PACKET_VOL_START,
@@ -1289,7 +1293,7 @@ bk_init_backup_header (BK_BACKUP_HEADER * backup_header_p,
   backup_header_p->iopageid = BK_BACKUP_START_PAGE_ID;
   strncpy (backup_header_p->bk_magic, RYE_MAGIC_DATABASE_BACKUP,
 	   RYE_MAGIC_MAX_LENGTH);
-  strncpy (backup_header_p->db_name,
+  STRNCPY (backup_header_p->db_name,
 	   fileio_get_base_file_name (log_Db_fullname), PATH_MAX);
   backup_header_p->db_creation = log_Gl.hdr.db_creation;
   backup_header_p->db_iopagesize = IO_PAGESIZE;

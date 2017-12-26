@@ -449,6 +449,13 @@ get_current_result (int **lengths, const CUR_RESULT_INFO * result_info)
   DB_QUERY_RESULT *result = result_info->query_result;
   int num_attrs = result_info->num_attrs;
 
+  assert (lengths != NULL);
+  if (lengths == NULL)
+    {
+      rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+      goto error;
+    }
+
   val = (char **) malloc (sizeof (char *) * num_attrs);
   if (val == NULL)
     {
@@ -620,10 +627,9 @@ get_current_result (int **lengths, const CUR_RESULT_INFO * result_info)
 	}
     }
 
-  if (lengths)
-    {
-      *lengths = len;
-    }
+  assert (lengths != NULL);
+  *lengths = len;
+
   return (val);
 
 error:
@@ -642,6 +648,7 @@ error:
     {
       free_and_init (len);
     }
+
   return ((char **) NULL);
 }
 
