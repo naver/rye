@@ -213,7 +213,7 @@ bk_read_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
   ssize_t nbytes;
   char *buffer_p;
   bool is_end_of_backup = false;
-  bool is_need_next_vol = false;
+  UNUSED_VAR bool is_need_next_vol = false;
 
   /* Read until you acumulate the desired number of bytes (a database page)
      or the EOF mark is reached. */
@@ -440,7 +440,7 @@ bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
   int unit_num = BK_INITIAL_BACKUP_UNITS;
   PAGEID expect_page_id;
   bool is_need_retry;
-  bool is_original_header = true;
+  UNUSED_VAR bool is_original_header = true;
   struct stat stbuf;
   const char *db_nopath_name_p;
   char copy_name[PATH_MAX];
@@ -825,7 +825,7 @@ bk_list_restore (THREAD_ENTRY * thread_p,
 	       CEIL_PTVDIV (file_header_p->nbytes, IO_PAGESIZE));
       session_p->dbfile.volid = file_header_p->volid;
       session_p->dbfile.nbytes = file_header_p->nbytes;
-      strncpy (file_name, file_header_p->vlabel, PATH_MAX);
+      STRNCPY (file_name, file_header_p->vlabel, PATH_MAX);
       session_p->dbfile.vlabel = file_name;
       /* Read all file pages until the end of the file */
       if (bk_skip_restore_volume (thread_p, session_p) != NO_ERROR)

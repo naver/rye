@@ -353,7 +353,6 @@
 #define PT_IS_NUMBERING_AFTER_EXECUTION(op) \
         ( ((op) == PT_INST_NUM || \
            (op) == PT_ROWNUM || \
-           (op) == PT_GROUPBY_NUM || \
            (op) == PT_ORDERBY_NUM) ? true : false )
 
 #define PT_IS_EXPR_NODE_WITH_OPERATOR(n, op_type) \

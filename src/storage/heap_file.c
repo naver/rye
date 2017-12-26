@@ -10657,10 +10657,11 @@ heap_attrinfo_transform_to_disk (THREAD_ENTRY * thread_p,
   int expected_size, tmp;
   volatile int offset_size;
 
+  assert (attr_info != NULL);
   assert (shard_groupid != NULL_GROUPID);
 
   /* check to make sure the attr_info has been used, it should not be empty. */
-  if (attr_info->num_values == -1)
+  if (attr_info == NULL || attr_info->num_values == -1)
     {
       return S_ERROR;
     }

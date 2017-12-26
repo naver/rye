@@ -2881,6 +2881,12 @@ pt_make_table_info (PARSER_CONTEXT * parser, PT_NODE * table_spec)
 {
   TABLE_INFO *table_info;
 
+  if (table_spec == NULL)
+    {
+      assert (false);
+      return NULL;
+    }
+
   table_info = pt_table_info_alloc ();
   if (table_info == NULL)
     {
@@ -3751,7 +3757,7 @@ static REGU_VARIABLE *
 pt_make_regu_hostvar (PARSER_CONTEXT * parser, const PT_NODE * node)
 {
   REGU_VARIABLE *regu;
-  DB_VALUE *val;
+  UNUSED_VAR DB_VALUE *val;
 
   regu = regu_var_alloc ();
   if (regu)
@@ -9807,7 +9813,7 @@ pt_to_union_proc (PARSER_CONTEXT * parser, PT_NODE * node, PROC_TYPE type)
       pt_set_aptr (parser, node, xasl);
 
       /* save info for derived table size estimation */
-      switch (type)
+      switch (node->node_type)
 	{
 	case PT_UNION:
 	  xasl->projected_size =
@@ -10297,7 +10303,7 @@ pt_spec_to_xasl_class_oid_list (UNUSED_ARG PARSER_CONTEXT * parser,
 				int **tcard_listp, int *nump, int *sizep)
 {
   PT_NODE *flat;
-  OID *oid, *v_oid, *o_list;
+  OID *oid, *v_oid, *o_list = NULL;
   int *t_list = NULL;
   DB_OBJECT *class_obj;
   SM_CLASS *smclass;
@@ -10413,17 +10419,19 @@ pt_spec_to_xasl_class_oid_list (UNUSED_ARG PARSER_CONTEXT * parser,
   return o_num;
 
 error:
-  if (*oid_listp)
+  if (o_list)
     {
-      free_and_init (*oid_listp);
+      free_and_init (o_list);
     }
 
-  if (*tcard_listp)
+  if (t_list)
     {
-      free_and_init (*tcard_listp);
+      free_and_init (t_list);
     }
 
   *nump = *sizep = 0;
+  *oid_listp = NULL;
+  *tcard_listp = NULL;
 
   return -1;
 }
@@ -10575,7 +10583,7 @@ pt_to_constraint_pred (PARSER_CONTEXT * parser, XASL_NODE * xasl,
 {
   PT_NODE *pt_pred =
     NULL, *node, *conj, *next, *oid_is_null_expr, *constraint;
-  PT_NODE *name, *spec_list;
+  PT_NODE *name, *spec_list = NULL;
   PRED_EXPR *pred = NULL;
   TABLE_INFO *ti = NULL;
 
@@ -10623,7 +10631,11 @@ pt_to_constraint_pred (PARSER_CONTEXT * parser, XASL_NODE * xasl,
 	  spec_list = spec_list->next;
 	}
 
-      assert (spec_list);
+      if (spec_list == NULL)
+	{
+	  assert (false);
+	  goto outofmem;
+	}
 
       /* create not null constraint */
       constraint->next = NULL;
@@ -11248,7 +11260,8 @@ pt_to_odku_info (PARSER_CONTEXT * parser, PT_NODE * insert, XASL_NODE * xasl)
   int insert_subquery;
   PT_ASSIGNMENTS_HELPER assignments_helper;
   DB_OBJECT *cls_obj = NULL;
-  int i = 0, error = NO_ERROR;
+  int i = 0;
+  UNUSED_VAR int error = NO_ERROR;
   ODKU_INFO *odku = NULL;
   TABLE_INFO *ti = NULL;
   DB_ATTRIBUTE *attr = NULL;
@@ -12967,7 +12980,7 @@ pt_agg_orderby_to_sort_list (PARSER_CONTEXT * parser, PT_NODE * order_list,
   SORT_LIST *sort = NULL;
   SORT_LIST *lastsort = NULL;
   PT_NODE *node = NULL;
-  int i;
+  UNUSED_VAR int i;
 
   i = 0;			/* SORT_LIST pos_no start from 0 */
 
@@ -13277,13 +13290,15 @@ pt_numbering_set_continue_post (UNUSED_ARG PARSER_CONTEXT * parser,
       for (i = 0; i < 3; i++)
 	{
 	  child = children[i];
-	  if (child && ((child->node_type == PT_FUNCTION &&
-			 child->info.function.function_type ==
-			 PT_GROUPBY_NUM)
-			||
-			(child->node_type == PT_EXPR &&
-			 PT_IS_NUMBERING_AFTER_EXECUTION (child->info.expr.
-							  op))))
+	  if (child == NULL)
+	    {
+	      continue;
+	    }
+
+	  if ((child->node_type == PT_FUNCTION
+	       && child->info.function.function_type == PT_GROUPBY_NUM)
+	      || (child->node_type == PT_EXPR
+		  && PT_IS_NUMBERING_AFTER_EXECUTION (child->info.expr.op)))
 	    {
 	      /* we have a subexpression with numbering functions and we
 	       * don't have a logical operator therefore we set the continue
