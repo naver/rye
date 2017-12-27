@@ -931,8 +931,8 @@ bool PRM_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION = true;
 static bool prm_optimizer_enable_aggregate_optimization_default = true;
 
 
-const char *PRM_FAULT_INJECTION = "none";
-static const char *prm_fault_injection_default = "none";
+const char *PRM_FAULT_INJECTION = NULL;
+static const char *prm_fault_injection_default = NULL;
 
 const char *PRM_RYE_SHM_KEY = "";
 static const char *prm_rye_shm_key_default = "";
