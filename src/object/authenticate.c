@@ -2509,18 +2509,17 @@ au_revoke (MOP user, MOP class_mop, DB_AUTH type)
       auth = au_get_auth (user, class_mop);
       if (auth == NULL)
 	{
-	  error = ER_AU_ACCESS_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, "db_auth",
-		  AU_USER_CLASS_NAME);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_ACCESS_ERROR, 2,
+		  "db_auth", AU_USER_CLASS_NAME);
+	  /* do not return error; go ahead */
 	}
       else
 	{
 	  error = apply_auth_grants (auth, &bits);
-	}
-
-      if (error != NO_ERROR)
-	{
-	  goto fail_end;
+	  if (error != NO_ERROR)
+	    {
+	      goto fail_end;
+	    }
 	}
 
       if ((bits & (int) type) == 0)

@@ -1222,11 +1222,8 @@ scan_dbvals_to_idxkey (THREAD_ENTRY * thread_p, DB_IDXKEY * retval,
 	    {
 	      /* Coerce the value to index domain  */
 #if 1				/* TODO - at current, do not care ret value */
-	      ret = tp_value_coerce_strict (val, &(retval->vals[i]), idx_dom);
-	      if (ret != NO_ERROR)
-		{
-		  goto err_exit;
-		}
+	      (void) tp_value_coerce_strict (val, &(retval->vals[i]),
+					     idx_dom);
 #endif
 	    }
 	}
