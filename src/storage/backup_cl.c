@@ -637,6 +637,7 @@ bk_write_backup (BK_BACKUP_SESSION * session_p, ssize_t to_write_nbytes,
 	}
       else
 	{
+	  assert (session_p->bkuphdr->zip_method == BK_ZIP_NONE_METHOD);
 	  buffer_p = session_p->bkup.buffer;
 	}
 
