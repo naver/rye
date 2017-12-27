@@ -2345,8 +2345,19 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 
 	    error = ER_NET_SERVER_CRASHED;
 	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+
+	    css_net_packet_free (recv_packet);
+	    if (node != NULL)
+	      {
+		pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+		Rye_queue_enqueue (cirpwr_Gl.free_list, node);
+		node = NULL;
+		pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+	      }
+
 	    return error;
 	  }
+
 	node->server_status = server_status;
 	node->fpageid = pageid;
 	node->num_page = num_page;

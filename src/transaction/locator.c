@@ -302,7 +302,7 @@ locator_allocate_packed (int packed_size)
   char *packed_area = NULL;
   int i, tail;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&locator_Keep.packed_areas.lock);
@@ -376,7 +376,7 @@ locator_free_packed (char *packed_area, int packed_size)
 {
   int tail;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&locator_Keep.packed_areas.lock);
@@ -438,7 +438,7 @@ locator_allocate_copy_area_by_length (int min_length)
   int network_pagesize;
   int i;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   /*
@@ -561,7 +561,7 @@ void
 locator_free_copy_area (LC_COPYAREA * copyarea)
 {
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   if (copyarea == NULL)
@@ -983,10 +983,11 @@ locator_allocate_lockset (int max_reqobjs,
 			  LOCK reqobj_class_lock, int quit_on_errors)
 {
   LC_LOCKSET *lockset = NULL;	/* Area for requested objects    */
+  bool new_alloced = false;
   int length;
   int i;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   length = (sizeof (*lockset)
@@ -1026,6 +1027,7 @@ locator_allocate_lockset (int max_reqobjs,
   if (lockset == NULL)
     {
       lockset = (LC_LOCKSET *) malloc (length);
+      new_alloced = true;
     }
   if (lockset == NULL)
     {
@@ -1036,6 +1038,11 @@ locator_allocate_lockset (int max_reqobjs,
 				  reqobj_class_lock,
 				  quit_on_errors) != NO_ERROR)
     {
+      if (new_alloced)
+	{
+	  free_and_init (lockset);
+	}
+
       return NULL;
     }
 
@@ -1181,7 +1188,7 @@ void
 locator_free_lockset (LC_LOCKSET * lockset)
 {
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   if (lockset->packed)
@@ -1690,10 +1697,11 @@ LC_LOCKHINT *
 locator_allocate_lockhint (int max_classes, int quit_on_errors)
 {
   LC_LOCKHINT *lockhint = NULL;
+  bool new_alloced = false;
   int length;
   int i;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   length = sizeof (*lockhint) + (max_classes * sizeof (*(lockhint->classes)));
@@ -1729,6 +1737,7 @@ locator_allocate_lockhint (int max_classes, int quit_on_errors)
   if (lockhint == NULL)
     {
       lockhint = (LC_LOCKHINT *) malloc (length);
+      new_alloced = true;
     }
   if (lockhint == NULL)
     {
@@ -1738,6 +1747,11 @@ locator_allocate_lockhint (int max_classes, int quit_on_errors)
   if (locator_initialize_lockhint (lockhint, length, max_classes,
 				   quit_on_errors) != NO_ERROR)
     {
+      if (new_alloced)
+	{
+	  free_and_init (lockhint);
+	}
+
       return NULL;
     }
 
@@ -1832,7 +1846,7 @@ void
 locator_free_lockhint (LC_LOCKHINT * lockhint)
 {
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   if (lockhint->packed)

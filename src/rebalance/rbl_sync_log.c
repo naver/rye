@@ -1420,6 +1420,11 @@ rbl_analyze_log_record (RBL_SYNC_CONTEXT * ctx, LOG_RECORD_HEADER * lrec)
 	    {
 	      ovfl_rec = (RBL_OVERFLOW_DATA *) mht_get (ht_Tran_ovfl_rec,
 							&lrec->trid);
+	      if (ovfl_rec == NULL)
+		{
+		  RBL_ASSERT (0);
+		  return ER_FAILED;
+		}
 
 	      RBL_ASSERT (ovfl_rec->recdes.data != NULL);
 	      sql = rbl_make_sql (&ovfl_rec->recdes, &ovfl_rec->class_oid,

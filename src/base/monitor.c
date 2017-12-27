@@ -1632,7 +1632,10 @@ monitor_diff_stats (MONITOR_INFO * monitor, MONITOR_STATS * diff_stats,
   if (diff_stats == NULL || new_stats == NULL || old_stats == NULL)
     {
       assert (0);
-      memset (diff_stats, 0, sizeof (MONITOR_STATS) * num_stats);
+      if (diff_stats != NULL)
+	{
+	  memset (diff_stats, 0, sizeof (MONITOR_STATS) * num_stats);
+	}
       return ER_FAILED;
     }
 

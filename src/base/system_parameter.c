@@ -1424,8 +1424,7 @@ sysprm_initialize_prm_def ()
 		     PRM_NAME_RYE_PORT_ID,
 		     (PRM_FOR_CLIENT | PRM_FOR_SERVER),
 		     PRM_INTEGER,
-		     &prm_rye_port_id_default, &PRM_RYE_PORT_ID, NULL,
-		     NULL);
+		     &prm_rye_port_id_default, &PRM_RYE_PORT_ID, NULL, NULL);
 
   sysprm_init_param (PRM_ID_TCP_CONNECTION_TIMEOUT,
 		     PRM_NAME_TCP_CONNECTION_TIMEOUT,
@@ -5347,12 +5346,14 @@ sysprm_set_value (SYSPRM_PARAM * prm, SYSPRM_VALUE value, bool set_flag,
 	case PRM_STRING:
 	  if (value.str != NULL)
 	    {
+	      int len;
+
+	      len = strlen (value.str);
 	      value.str = strdup (value.str);
 	      if (value.str == NULL)
 		{
 		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_OUT_OF_VIRTUAL_MEMORY, 1,
-			  strlen (value.str) + 1);
+			  ER_OUT_OF_VIRTUAL_MEMORY, 1, len + 1);
 		  return PRM_ERR_NO_MEM_FOR_PRM;
 		}
 	    }
@@ -7065,7 +7066,7 @@ sysprm_compare_values (void *first_value, void *second_value,
 	    return 0;
 	  }
 
-	if (second_int_list == NULL || second_int_list == NULL)
+	if (first_int_list == NULL || second_int_list == NULL)
 	  {
 	    /* only one value is null, return different */
 	    return 1;
