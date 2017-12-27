@@ -2275,7 +2275,7 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
   struct timespec wakeup_time;
   int wakeup_interval = 100;
   CSS_NET_PACKET *recv_packet;
-  RECV_Q_NODE *node;
+  RECV_Q_NODE *node = NULL;
 
   error = 0;
 

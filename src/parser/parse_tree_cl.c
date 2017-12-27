@@ -10819,6 +10819,7 @@ pt_apply_constraint (PARSER_CONTEXT * parser, PT_NODE * p,
     case PT_CONSTRAIN_INDEX:
       p->info.constraint.un.index.attrs
 	= g (parser, p->info.constraint.un.index.attrs, arg);
+      break;
 
     case PT_CONSTRAIN_CHECK:
       p->info.constraint.un.check.expr
