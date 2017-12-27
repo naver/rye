@@ -134,11 +134,6 @@ class NodeAddress
 	return false;
     }
 
-    boolean equalHost(NodeAddress other)
-    {
-	return this.inetAddr.equals(other.inetAddr);
-    }
-
     static void checkDuplicateNode(NodeAddress[] nodeArr) throws SQLException
     {
 	for (int i = 0; i < nodeArr.length; i++) {
@@ -196,7 +191,7 @@ class NodeInfo
 	for (int i = 0; i < existingHostArr.length; i++) {
 	    for (int j = 0; j < dropHostArr.length; j++) {
 		if (existingHostArr[i] != null) {
-		    if (existingHostArr[i].equalHost(dropHostArr[j])) {
+		    if (existingHostArr[i].equals(dropHostArr[j])) {
 			existingHostArr[i] = null;
 			dropCount++;
 		    }

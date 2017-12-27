@@ -155,8 +155,9 @@ bk_finalize_backup_thread (BK_BACKUP_SESSION * session_p)
 		  free_and_init (node->zip_page);
 		}
 	      break;
+
 	    default:
-	      assert (false);
+	      assert (session_p->bkuphdr->zip_method == BK_ZIP_NONE_METHOD);
 	      break;
 	    }
 	}
@@ -250,7 +251,9 @@ bk_compress_backup_node (BK_NODE * node_p, BK_BACKUP_HEADER * backup_header_p)
 	  memcpy (node_p->zip_page->buf, node_p->area, node_p->nread);
 	}
       break;
+
     default:
+      assert (backup_header_p->zip_method == BK_ZIP_NONE_METHOD);
       break;
     }
 
@@ -293,7 +296,9 @@ bk_write_backup_node (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p,
       buffer_p = (char *) node_p->zip_page;
       nbytes = sizeof (lzo_uint) + node_p->zip_page->buf_len;
       break;
+
     default:
+      assert (backup_header_p->zip_method == BK_ZIP_NONE_METHOD);
       buffer_p = (char *) node_p->area;
       nbytes = node_p->nread;
       break;

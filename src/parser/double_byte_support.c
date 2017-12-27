@@ -725,7 +725,10 @@ dbcs_get_next_w_char (PARSER_CONTEXT * parser)
 	    {
 	      return_char = EOF;
 	    }
-	  return_char = ((input_char & 0xff) << 8) | c1;
+	  else
+	    {
+	      return_char = ((input_char & 0xff) << 8) | c1;
+	    }
 	}
     }
 

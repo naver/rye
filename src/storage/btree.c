@@ -4269,8 +4269,12 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 	}
 
       node_type = BTREE_GET_NODE_TYPE (pheader.node_level);
+#if 0
       key_cnt = pheader.key_cnt;
       assert (key_cnt >= 0);
+#else
+      assert (pheader.key_cnt >= 0);
+#endif
 
       if (node_type == BTREE_NON_LEAF_NODE)
 	{
@@ -5920,17 +5924,17 @@ btree_apply_key_range_and_filter (THREAD_ENTRY * thread_p, BTREE_SCAN * bts,
     }
 
   if (c == 0)
-    { /* is impossible case; last is OID, should be different */
+    {				/* is impossible case; last is OID, should be different */
       char index_name_on_table[LINE_MAX];
 
       /* init */
       strcpy (index_name_on_table, "*UNKNOWN-INDEX*");
 
       (void) btree_get_indexname_on_table (thread_p, &(bts->btid_int),
-                                           index_name_on_table, LINE_MAX);
+					   index_name_on_table, LINE_MAX);
 
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_BTREE_PAGE_CORRUPTED,
-              1, index_name_on_table);
+	      1, index_name_on_table);
       assert (false);
 
       GOTO_EXIT_ON_ERROR;
@@ -6106,7 +6110,7 @@ btree_attrinfo_read_dbvalues (UNUSED_ARG THREAD_ENTRY * thread_p,
 
 	  if (precision == TP_FLOATING_PRECISION_VALUE)
 	    {
-	      assert (false); /* TODO - trace */
+	      assert (false);	/* TODO - trace */
 	      precision = DB_MAX_STRING_LENGTH;
 	    }
 
@@ -6158,7 +6162,7 @@ btree_dump_curr_key (THREAD_ENTRY * thread_p, INDX_SCAN_ID * iscan_id)
   bts = &(iscan_id->bt_scan);
 
   assert (iscan_id->rest_attrs.num_attrs > 0);
-  assert (iscan_id->pred_attrs.num_attrs == 0); /* TODO - trace */
+  assert (iscan_id->pred_attrs.num_attrs == 0);	/* TODO - trace */
 
   if (iscan_id->rest_attrs.num_attrs > 0)
     {

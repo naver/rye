@@ -2484,49 +2484,56 @@ au_revoke (MOP user, MOP class_mop, DB_AUTH type)
     }
 
   error = au_fetch_class_force (class_mop, &classobj, S_LOCK);
-  if (error == NO_ERROR)
+  if (error != NO_ERROR)
     {
-      if (classobj->owner == user)
-	{
-	  error = ER_AU_CANT_REVOKE_OWNER;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
-	  goto fail_end;
-	}
+      goto fail_end;
+    }
 
-      error = check_grant_option (class_mop, classobj, type);
-      if (error != NO_ERROR)
-	{
-	  goto fail_end;
-	}
+  if (classobj->owner == user)
+    {
+      error = ER_AU_CANT_REVOKE_OWNER;
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
+      goto fail_end;
+    }
+
+  error = check_grant_option (class_mop, classobj, type);
+  if (error != NO_ERROR)
+    {
+      goto fail_end;
+    }
+
 #if defined(SA_MODE)
-      if (catcls_Enable == true)
+  if (catcls_Enable == true)
 #endif /* SA_MODE */
+    {
+      auth = au_get_auth (user, class_mop);
+      if (auth == NULL)
 	{
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_ACCESS_ERROR, 2,
+		  "db_auth", AU_USER_CLASS_NAME);
+	  /* do not return error; go ahead */
+	}
+      else
+	{
+	  error = apply_auth_grants (auth, &bits);
+	  if (error != NO_ERROR)
+	    {
+	      goto fail_end;
+	    }
+	}
 
-	  auth = au_get_auth (user, class_mop);
-	  if (auth == NULL)
-	    {
-	      error = ER_AU_ACCESS_ERROR;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, "db_auth",
-		      AU_USER_CLASS_NAME);
-	    }
-	  else
-	    {
-	      error = apply_auth_grants (auth, &bits);
-	    }
-	  if ((bits & (int) type) == 0)
-	    {
-	      error = ER_AU_GRANT_NOT_FOUND;
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
-	    }
-	  else
-	    {
-	      error =
-		au_insert_update_auth (Au_user, user, class_mop, type, false);
+      if ((bits & (int) type) == 0)
+	{
+	  error = ER_AU_GRANT_NOT_FOUND;
+	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
+	}
+      else
+	{
+	  error =
+	    au_insert_update_auth (Au_user, user, class_mop, type, false);
 
-	      reset_cache_for_user_and_class (classobj);
-	      sm_bump_local_schema_version ();
-	    }
+	  reset_cache_for_user_and_class (classobj);
+	  sm_bump_local_schema_version ();
 	}
     }
 

@@ -3013,7 +3013,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 		}
 
 	      csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
-
 	      hold_lpb_cs = true;
 	    }
 	}
