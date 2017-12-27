@@ -640,7 +640,10 @@ do_alter_clause_drop_index (PARSER_CONTEXT * const parser,
   if (obj == NULL)
     {
       error_code = er_errid ();
+      assert (error_code != NO_ERROR);
+      goto error_exit;
     }
+
   error_code =
     create_or_drop_index_helper (parser, alter->info.alter.constraint_list->
 				 info.name.original,

@@ -925,9 +925,13 @@ loop:
 		  r =
 		    thread_wakeup_already_had_mutex (suspended_p,
 						     THREAD_RESUME_DUE_TO_INTERRUPT);
+		  if (r != NO_ERROR)
+		    {
+		      return r;
+		    }
 		}
-	      r = thread_unlock_entry (suspended_p);
 
+	      r = thread_unlock_entry (suspended_p);
 	      if (r != NO_ERROR)
 		{
 		  return r;

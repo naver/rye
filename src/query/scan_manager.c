@@ -1222,7 +1222,8 @@ scan_dbvals_to_idxkey (THREAD_ENTRY * thread_p, DB_IDXKEY * retval,
 	    {
 	      /* Coerce the value to index domain  */
 #if 1				/* TODO - at current, do not care ret value */
-	      ret = tp_value_coerce_strict (val, &(retval->vals[i]), idx_dom);
+	      (void) tp_value_coerce_strict (val, &(retval->vals[i]),
+					     idx_dom);
 #endif
 	    }
 	}
@@ -1446,6 +1447,13 @@ scan_regu_key_to_index_key (THREAD_ENTRY * thread_p,
 				 key_val_range->num_index_term, key_minmax);
     }
 
+  if (ret != NO_ERROR)
+    {
+      key_val_range->range = NA_NA;
+
+      return ret;
+    }
+
   if (key_ranges->key2)
     {
       assert (key_ranges->key2->type == TYPE_FUNC);
@@ -1514,6 +1522,13 @@ scan_regu_key_to_index_key (THREAD_ENTRY * thread_p,
 				     key_val_range->num_index_term,
 				     key_minmax);
 	}
+    }
+
+  if (ret != NO_ERROR)
+    {
+      key_val_range->range = NA_NA;
+
+      return ret;
     }
 
   if (key_val_range->range == EQ_NA)

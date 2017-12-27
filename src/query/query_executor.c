@@ -5012,8 +5012,6 @@ qexec_execute_delete (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 	  oid = DB_GET_OID (valp);
 	  assert (!OID_ISNULL (oid));
 
-	  val_list = val_list->next;
-
 	  if (internal_class.class_oid == NULL)
 	    {
 	      /* find class HFID */
