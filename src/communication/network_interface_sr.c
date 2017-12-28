@@ -3294,8 +3294,7 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 						  start.tv_usec) / 1000;
 
 	  mnt_server_copy_stats (thread_p, current_stats);
-	  monitor_diff_stats (NULL, diff_stats, current_stats, base_stats,
-			      MNT_SIZE_OF_SERVER_EXEC_STATS);
+	  monitor_diff_stats (NULL, diff_stats, current_stats, base_stats);
 	  mnt_calc_hit_ratio (diff_stats, MNT_SIZE_OF_SERVER_EXEC_STATS);
 
 	  if (response_time >= trace_slow_msec)
@@ -3431,8 +3430,7 @@ er_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
   if (prm_get_bool_value (PRM_ID_SQL_TRACE_EXECUTION_PLAN) == true)
     {
       monitor_dump_stats_to_buffer (NULL, stat_buf, STATDUMP_BUF_SIZE,
-				    diff_stats, MNT_SIZE_OF_SERVER_EXEC_STATS,
-				    MNT_DUMP_TYPE_NORMAL, NULL);
+				    diff_stats, MNT_DUMP_TYPE_NORMAL, NULL);
     }
   else
     {

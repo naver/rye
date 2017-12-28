@@ -2857,10 +2857,10 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
       return ER_FAILED;
     }
 
-  monitor_make_server_name (monitor_name, db_name);
+  monitor_make_name (monitor_name, db_name);
   if (monitor_create_collector (monitor_name,
 				MAX_NTRANS + 1,
-				RYE_SHM_TYPE_MONITOR_SERVER) != NO_ERROR)
+				MONITOR_TYPE_SERVER) != NO_ERROR)
     {
       return ER_FAILED;
     }

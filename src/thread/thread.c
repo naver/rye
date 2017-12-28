@@ -232,15 +232,8 @@ static int thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason,
 				   bool had_mutex);
 static void thread_reset_nrequestors_of_log_flush_thread (void);
 
-extern int catcls_get_applier_info (THREAD_ENTRY * thread_p,
-				    INT64 * max_delay);
 extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
-				     INT64 * current_pageid,
-				     INT64 * required_pageid,
 				     INT64 * source_applied_time);
-extern int catcls_get_writer_info (THREAD_ENTRY * thread_p,
-				   INT64 * last_flushed_pageid,
-				   INT64 * eof_pageid);
 
 static int thread_create_thread_attr (pthread_attr_t * thread_attr);
 static int thread_destroy_thread_attr (pthread_attr_t * thread_attr);
@@ -514,8 +507,7 @@ server_stats_dump (FILE * fp)
   UINT64 total_cs_waits_clock;
   UINT64 total_page_waits_clock;
 
-  error = monitor_copy_global_stats (NULL, stats,
-				     MNT_SIZE_OF_SERVER_EXEC_STATS);
+  error = monitor_copy_global_stats (NULL, stats);
   if (error < 0)
     {
       return ER_FAILED;
@@ -2873,8 +2865,6 @@ thread_check_ha_delay_info_thread (void *arg_p)
   int acceptable_delay;
   HA_STATE server_state;
 
-  INT64 last_flushed_pageid, eof_pageid;
-  INT64 current_pageid, required_pageid;
   INT64 source_applied_time;
   INT64 max_delay = 0;
 
@@ -2922,32 +2912,19 @@ thread_check_ha_delay_info_thread (void *arg_p)
 	  break;
 	}
 
-      error_code = catcls_get_writer_info (tsd_ptr, &last_flushed_pageid,
-					   &eof_pageid);
-      if (error_code != NO_ERROR)
-	{
-	  continue;
-	}
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_LAST_FLUSHED_PAGEID,
-		       last_flushed_pageid);
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_EOF_PAGEID, eof_pageid);
-
-      error_code = catcls_get_analyzer_info (tsd_ptr, &current_pageid,
-					     &required_pageid,
-					     &source_applied_time);
       if (error_code != NO_ERROR)
 	{
 	  continue;
 	}
 
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_CURRENT_PAGEID, current_pageid);
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REQUIRED_PAGEID,
-		       required_pageid);
+      error_code = catcls_get_analyzer_info (tsd_ptr, &source_applied_time);
+      if (error_code != NO_ERROR)
+	{
+	  continue;
+	}
 
       clock_gettime (CLOCK_REALTIME, &cur_time);
       max_delay = timespec_to_msec (&cur_time) - source_applied_time;
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REPLICATION_DELAY, max_delay);
-
 
       /* do its job */
       csect_enter (tsd_ptr, CSECT_HA_SERVER_STATE, INF_WAIT);

@@ -2820,9 +2820,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
   sysprm_load_and_init (NULL);
 
 
-  monitor_make_server_name (monitor_name, local_db_name);
-  server_monitor = monitor_create_viewer_from_name (monitor_name,
-						    RYE_SHM_TYPE_MONITOR_SERVER);
+  monitor_make_name (monitor_name, local_db_name);
+  server_monitor = monitor_create_viewer_from_name (monitor_name);
   if (server_monitor == NULL)
     {
       PRINT_AND_LOG_ERR_MSG ("Not found shm name(%s) of monitor\n",
@@ -2850,9 +2849,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
       /* db_name@host_ip:port_id */
       snprintf (name, sizeof (name), "%s@%s", local_db_name, hostname);
 
-      monitor_make_server_name (monitor_name, name);
-      repl_monitor[i] = monitor_create_viewer_from_name (monitor_name,
-							 RYE_SHM_TYPE_MONITOR_REPL);
+      monitor_make_name (monitor_name, name);
+      repl_monitor[i] = monitor_create_viewer_from_name (monitor_name);
       if (repl_monitor[i] == NULL)
 	{
 	  PRINT_AND_LOG_ERR_MSG ("Not found shm name(%s) of monitor\n",
@@ -2860,7 +2858,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	  goto error_exit;
 	}
 
-      repl_stats_size = sizeof (MONITOR_STATS) * repl_monitor[i]->num_stats;
+      repl_stats_size =
+	sizeof (MONITOR_STATS) * repl_monitor[i]->meta->num_stats;
       repl_cur_stats[i] = (MONITOR_STATS *) malloc (repl_stats_size);
       if (repl_cur_stats[i] == NULL)
 	{
@@ -2889,9 +2888,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
     {
       if (dump_type == MNT_DUMP_TYPE_CSV_DATA && is_header_printed == false)
 	{
-	  monitor_dump_stats (outfp, server_monitor,
-			      MNT_SIZE_OF_SERVER_EXEC_STATS, NULL,
-			      NULL, cumulative,
+	  monitor_dump_stats (outfp, server_monitor, NULL, NULL, cumulative,
 			      MNT_DUMP_TYPE_CSV_HEADER, substr, NULL);
 
 	  for (i = 0; i < node_list.num_nodes; i++)
@@ -2900,8 +2897,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
 		{
 		  continue;
 		}
-	      monitor_dump_stats (outfp, repl_monitor[i],
-				  MNT_SIZE_OF_REPL_EXEC_STATS, NULL, NULL,
+	      monitor_dump_stats (outfp, repl_monitor[i], NULL, NULL,
 				  cumulative, MNT_DUMP_TYPE_CSV_HEADER,
 				  substr, NULL);
 	    }
@@ -2909,20 +2905,17 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	}
 
       /* server statdump */
-      if (monitor_copy_global_stats (server_monitor, server_cur_stats,
-				     MNT_SIZE_OF_SERVER_EXEC_STATS)
-	  != NO_ERROR)
+      if (monitor_copy_global_stats (server_monitor,
+				     server_cur_stats) != NO_ERROR)
 	{
 	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
 	  continue;
 	}
-      monitor_dump_stats (outfp, server_monitor,
-			  MNT_SIZE_OF_SERVER_EXEC_STATS, server_cur_stats,
+      monitor_dump_stats (outfp, server_monitor, server_cur_stats,
 			  server_old_stats, cumulative,
 			  dump_type, substr, mnt_calc_hit_ratio);
       memcpy (server_old_stats, server_cur_stats, sizeof (server_cur_stats));
-      monitor_close_viewer_data (server_monitor,
-				 MNT_SIZE_OF_SERVER_EXEC_STATS);
+      monitor_close_viewer_data (server_monitor);
 
       /* repl statdump */
       for (i = 0; i < node_list.num_nodes; i++)
@@ -2932,9 +2925,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	      continue;
 	    }
 
-	  if (monitor_copy_global_stats (repl_monitor[i], repl_cur_stats[i],
-					 MNT_SIZE_OF_REPL_EXEC_STATS)
-	      != NO_ERROR)
+	  if (monitor_copy_global_stats (repl_monitor[i],
+					 repl_cur_stats[i]) != NO_ERROR)
 	    {
 	      PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
 	      continue;
@@ -2948,14 +2940,12 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	      continue;
 	    }
 	  monitor_dump_stats (outfp, repl_monitor[i],
-			      MNT_SIZE_OF_REPL_EXEC_STATS,
 			      repl_cur_stats[i], repl_old_stats[i],
 			      cumulative, dump_type, substr, NULL);
 	  memcpy (repl_old_stats[i], repl_cur_stats[i],
 		  sizeof (MONITOR_STATS) * MNT_SIZE_OF_REPL_EXEC_STATS);
 
-	  monitor_close_viewer_data (repl_monitor[i],
-				     MNT_SIZE_OF_SERVER_EXEC_STATS);
+	  monitor_close_viewer_data (repl_monitor[i]);
 	}
 
       fprintf (outfp, "\n");
@@ -2991,16 +2981,13 @@ error_exit:
     }
   if (server_monitor != NULL)
     {
-      monitor_close_viewer_data (server_monitor,
-				 MNT_SIZE_OF_SERVER_EXEC_STATS);
-      free_and_init (server_monitor);
+      monitor_final_viewer (server_monitor);
     }
   for (i = 0; i < node_list.num_nodes; i++)
     {
       if (repl_monitor[i] != NULL)
 	{
-	  monitor_close_viewer_data (repl_monitor[i],
-				     MNT_SIZE_OF_REPL_EXEC_STATS);
+	  monitor_final_viewer (repl_monitor[i]);
 	}
       if (repl_old_stats[i] != NULL)
 	{

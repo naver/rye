@@ -141,8 +141,7 @@ mnt_server_copy_stats (THREAD_ENTRY * thread_p, MONITOR_STATS * to_stats)
 
   tran_index = logtb_get_current_tran_index (thread_p);
   assert (tran_index >= 0);
-  monitor_copy_stats (NULL, to_stats,
-		      MNT_SIZE_OF_SERVER_EXEC_STATS, tran_index + 1);
+  monitor_copy_stats (NULL, to_stats, tran_index + 1);
 }
 
 /*

@@ -223,9 +223,9 @@ main (int argc, char *argv[])
       GOTO_EXIT_ON_ERROR;
     }
 
-  monitor_make_repl_name (monitor_name, repl_arg.db_name);
+  monitor_make_name (monitor_name, repl_arg.db_name);
   error = monitor_create_collector (monitor_name, num_applier + 3,
-				    RYE_SHM_TYPE_MONITOR_REPL);
+				    MONITOR_TYPE_REPL);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -376,6 +376,8 @@ main (int argc, char *argv[])
 
   cirpwr_finalize ();
 
+  monitor_final_collector ();
+
   assert (error == NO_ERROR);
   return EXIT_SUCCESS;
 
@@ -393,6 +395,8 @@ exit_on_error:
   cirp_free_repl_arg (&repl_arg);
 
   cirpwr_finalize ();
+
+  monitor_final_collector ();
 
   return EXIT_FAILURE;
 }

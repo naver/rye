@@ -1677,6 +1677,7 @@ prior_lsa_next_record_internal (THREAD_ENTRY * thread_p,
     }
 
   log_Gl.prior_info.list_size += (sizeof (LOG_PRIOR_NODE) + node->data_header_length + node->ulength + node->rlength);	/* bytes */
+  mnt_stats_gauge (thread_p, MNT_STATS_PRIOR_LSA_LIST_SIZE, log_Gl.prior_info.list_size / ONE_K);	/* kbytes */
 
   if (with_lock == LOG_PRIOR_LSA_WITHOUT_LOCK)
     {
