@@ -59,18 +59,20 @@ struct _cirp_stats
 typedef enum _cirp_thread_type CIRP_THREAD_TYPE;
 enum _cirp_thread_type
 {
-  CIRP_THREAD_WRITER,
+  CIRP_THREAD_COPIER,
   CIRP_THREAD_FLUSHER,
   CIRP_THREAD_ANALYZER,
   CIRP_THREAD_APPLIER,
-  CIRP_THREAD_HEALTH_CHEKER,
-  CIRP_THREAD_COPY_ARCHIVE
+  CIRP_THREAD_HEALTH_CHEKER
 };
 
 typedef struct
 {
   char *log_path;
   char *db_name;
+  char *local_dbname;
+  char *peer_host_name;
+  int port_id;
 } REPL_ARGUMENT;
 
 typedef struct cirp_thread_entry CIRP_THREAD_ENTRY;
@@ -250,6 +252,12 @@ struct _cirp_repl_info
   int num_applier;
   CIRP_APPLIER_INFO applier_info[1];
 };
+
+#define MNT_RP_COPIER_ID                1
+#define MNT_RP_FLUSHER_ID               2
+#define MNT_RP_ANALYZER_ID              3
+#define MNT_RP_HEALTH_CHEKER_ID         4
+#define MNT_RP_APPLIER_BASE_ID          5
 
 #define RP_SET_AGENT_NEED_RESTART() (rp_set_agent_need_restart (ARG_FILE_LINE))
 #define RP_SET_AGENT_NEED_SHUTDOWN() (rp_set_agent_need_shutdown (ARG_FILE_LINE))

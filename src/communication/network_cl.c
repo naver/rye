@@ -1035,13 +1035,14 @@ net_client_get_log_header (LOGWR_CONTEXT * ctx_ptr,
     case GET_NEXT_LOG_PAGES:
       {
 	int length;
-	INT64 pageid;
+	INT64 pageid, eof_pageid;
 	int num_page, file_status, server_status;
 	char *logpg_area;
 	bool is_zipped = false;
 
 	ptr = or_unpack_int (ptr, (int *) (&length));
 	ptr = or_unpack_int64 (ptr, &pageid);
+	ptr = or_unpack_int64 (ptr, &eof_pageid);
 	ptr = or_unpack_int (ptr, &num_page);
 	ptr = or_unpack_int (ptr, &file_status);
 	ptr = or_unpack_int (ptr, &server_status);

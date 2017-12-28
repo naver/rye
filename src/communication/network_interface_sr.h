@@ -227,6 +227,7 @@ extern void slogtb_dump_trantable (THREAD_ENTRY * thread_p, unsigned int rid,
 
 extern int xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
 					  char *logpb_area, int area_size,
+					  INT64 eof_pageid,
 					  INT64 first_pageid, int num_page,
 					  int file_status);
 extern int xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
@@ -252,9 +253,8 @@ extern void sprm_server_dump_parameters (THREAD_ENTRY * thread_p,
 					 int reqlen);
 extern void srepl_set_info (THREAD_ENTRY * thread_p, unsigned int rid,
 			    char *request, int reqlen);
-extern void srepl_log_get_eof_lsa (THREAD_ENTRY * thread_p,
-				   unsigned int rid, char *request,
-				   int reqlen);
+extern void srepl_log_get_eof_lsa (THREAD_ENTRY * thread_p, unsigned int rid,
+				   char *request, int reqlen);
 extern void slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
 				  char *request, int reqlen);
 
