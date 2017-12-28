@@ -103,8 +103,8 @@ typedef struct
 static int get_args (int argc, char *argv[]);
 static int set_my_hostname (void);
 static int init_server_monitor_item (void);
-static void npot_server_monitor (T_SHM_INFO * shm_info);
-static void npot_broker_monitor (T_SHM_INFO * shm_info);
+static void npot_server_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print);
+static void npot_broker_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print);
 static char *get_pw_name (uid_t uid);
 static T_SHM_INFO *make_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type,
 				  const char *user_name);
@@ -125,7 +125,8 @@ static void print_monitor_item (const char *metric_name,
 				const char *broker_db_name, time_t check_time,
 				int64_t value, uint64_t acc_time,
 				bool is_cumulative_value,
-				bool is_collecting_time);
+				bool is_collecting_time,
+				bool is_rawdata_print);
 static void send_data (const char *metric_name, const char *item_name,
 		       const char *instance, const char *tag_broker_or_db,
 		       const char *broker_db_name, time_t check_time,
@@ -151,6 +152,7 @@ int
 main (int argc, char *argv[])
 {
   T_SHM_INFO *shm_info;
+  bool is_rawdata_print = false;
 
   signal (SIGPIPE, SIG_IGN);
   assert (BROKER_NAME_LEN >= SHM_DBNAME_SIZE);
@@ -158,6 +160,11 @@ main (int argc, char *argv[])
   if (get_args (argc, argv) < 0)
     {
       return -1;
+    }
+
+  if (tcp_Send_connect_info == NULL && repeat_Count == 1)
+    {
+      is_rawdata_print = true;
     }
 
   if (set_my_hostname () < 0)
@@ -209,11 +216,11 @@ main (int argc, char *argv[])
 	    {
 	      if (shm_info->shm_type == RYE_SHM_TYPE_BROKER_GLOBAL)
 		{
-		  npot_broker_monitor (shm_info);
+		  npot_broker_monitor (shm_info, is_rawdata_print);
 		}
 	      else if (shm_info->shm_type == RYE_SHM_TYPE_SERVER)
 		{
-		  npot_server_monitor (shm_info);
+		  npot_server_monitor (shm_info, is_rawdata_print);
 		}
 	    }
 	  shm_info = shm_info->next;
@@ -558,7 +565,7 @@ init_server_monitor_item ()
 }
 
 static void
-npot_server_monitor (T_SHM_INFO * shm_info)
+npot_server_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print)
 {
   MNT_SERVER_EXEC_STATS cur_global_stats;
   time_t check_time = time (NULL);
@@ -586,12 +593,13 @@ npot_server_monitor (T_SHM_INFO * shm_info)
 			  check_time, cur_global_stats.values[i],
 			  cur_global_stats.acc_time[i],
 			  db_Stats_info[i].is_cumulative,
-			  db_Stats_info[i].is_collecting_time);
+			  db_Stats_info[i].is_collecting_time,
+			  is_rawdata_print);
     }
 }
 
 static void
-npot_broker_monitor (T_SHM_INFO * shm_info)
+npot_broker_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print)
 {
   T_SHM_BROKER *shm_br;
   int br_idx;
@@ -656,14 +664,14 @@ npot_broker_monitor (T_SHM_INFO * shm_info)
 
       print_monitor_item (METRIC_BROKER_QPS, NULL, shm_info->user_name,
 			  TAG_BROKER_NAME, br_info_p->name, check_time,
-			  num_qx, 0, true, false);
+			  num_qx, 0, true, false, is_rawdata_print);
       print_monitor_item (METRIC_BROKER_ERROR, NULL,
 			  shm_info->user_name, TAG_BROKER_NAME,
 			  br_info_p->name, check_time, num_error, 0, true,
-			  false);
+			  false, is_rawdata_print);
       print_monitor_item (METRIC_BROKER_BUSY_CAS, NULL, shm_info->user_name,
 			  TAG_BROKER_NAME, br_info_p->name, check_time,
-			  num_busy, 0, false, false);
+			  num_busy, 0, false, false, is_rawdata_print);
 
       rye_shm_detach (shm_appl);
     }
@@ -725,14 +733,15 @@ print_monitor_item (const char *metric_name, const char *item_name,
 		    const char *instance, const char *tag_broker_or_db,
 		    const char *broker_db_name, time_t check_time,
 		    int64_t value, uint64_t acc_time,
-		    bool is_cumulative_value, bool is_collecting_time)
+		    bool is_cumulative_value, bool is_collecting_time,
+		    bool is_rawdata_print)
 {
   char value_buf[128];
   char *value_p = NULL;
   char avg_time_buf[128];
   char *avg_time_p = NULL;
 
-  if (is_cumulative_value)
+  if (is_cumulative_value && !is_rawdata_print)
     {
       T_MONITOR_ITEM cur_item;
       T_MONITOR_ITEM *prev_item;
