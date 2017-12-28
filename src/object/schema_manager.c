@@ -1540,9 +1540,9 @@ sm_update_all_statistics (bool update_stats, bool with_fullscan)
   for (cl = ws_Resident_classes; cl != NULL; cl = cl->next)
     {
       if (!WS_ISMARK_DELETED (cl->op))
-        {
-          (void) sm_update_statistics (cl->op, update_stats, with_fullscan);
-        }
+	{
+	  (void) sm_update_statistics (cl->op, update_stats, with_fullscan);
+	}
     }
 
   assert (error == NO_ERROR);
@@ -5397,6 +5397,15 @@ sm_default_constraint_name (const char *class_name,
       for (ptr = att_names; *ptr != NULL; ptr++)
 	{
 	  n_attrs++;
+	}
+
+      if (n_attrs <= 0)
+	{
+	  /* this should not happen */
+	  assert (false);
+	  ERROR0 (error, ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
+	  name = NULL;
+	  goto exit;
 	}
 
       i = 0;
