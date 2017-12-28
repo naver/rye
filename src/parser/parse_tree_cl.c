@@ -10621,8 +10621,9 @@ pt_print_value (PARSER_CONTEXT * parser, PT_NODE * p)
 	      OBJ_SPRINT_DB_DOUBLE (s, p->info.value.data_value.d);
 	      break;
 	    case PT_TYPE_NUMERIC:
-	      strcpy (s,
-		      (const char *) (p->info.value.data_value.str->bytes));
+	      STRNCPY (s,
+		       (const char *) (p->info.value.data_value.str->bytes),
+		       PT_MEMB_PRINTABLE_BUF_SIZE);
 	      break;
 	    case PT_TYPE_INTEGER:
 	      sprintf (s, "%ld", p->info.value.data_value.i);

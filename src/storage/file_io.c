@@ -1628,7 +1628,7 @@ fileio_unformat_and_rename (UNUSED_ARG THREAD_ENTRY * thread_p,
       /* if vol_label_p is a pointer of global vinfo->vlabel,
        * It can be reset in fileio_dismount
        */
-      strcpy (vlabel_p, vol_label_p);
+      STRNCPY (vlabel_p, vol_label_p, PATH_MAX);
       vol_label_p = vlabel_p;
       fileio_dismount (thread_p, vol_fd);
     }

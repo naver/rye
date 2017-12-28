@@ -383,7 +383,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 
   tmp_str = ini_getstr (ini, sec_name, "SOURCE_ENV",
 			DEFAULT_EMPTY_STRING, lineno);
-  strcpy (br_info->source_env, tmp_str);
+  STRNCPY (br_info->source_env, tmp_str, CONF_LOG_FILE_LEN);
 
   tmp_str = ini_getstr (ini, sec_name, "SQL_LOG",
 			DEFAULT_SQL_LOG_MODE, lineno);
