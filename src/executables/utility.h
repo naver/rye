@@ -725,6 +725,8 @@ typedef struct _ha_config
 #define STATDUMP_CUMULATIVE_L                   "cumulative"
 #define STATDUMP_SUBSTR_S			's'
 #define STATDUMP_SUBSTR_L			"substr"
+#define STATDUMP_OUTPUT_TYPE_S                  't'
+#define STATDUMP_OUTPUT_TYPE_L                  "output-type"
 
 /* acl option list */
 #define ACLDB_RELOAD_S                          'r'

@@ -386,6 +386,9 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
       analyzer->ct.source_applied_time = source_applied_time;
     }
 
+  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID,
+		       analyzer->ct.required_lsa.pageid);
+
   er_log_debug (ARG_FILE_LINE,
 		"update progress:lowest_tran_start_lsa:%lld,%d, "
 		"current_lsa:%lld,%d, "
@@ -755,7 +758,7 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
     }
 
   error = cirp_check_duplicated (&analyzer->log_path_lockf_vdes,
-				 log_path, database_name);
+				 log_path, analyzer->buf_mgr.prefix_name);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1500,6 +1503,7 @@ cirp_anlz_log_commit (void)
 
   CIRP_WRITER_INFO *writer;
   CIRP_ANALYZER_INFO *analyzer;
+  struct timespec cur_time;
 
   writer = &Repl_Info->writer_info;
   analyzer = &Repl_Info->analyzer_info;
@@ -1547,6 +1551,11 @@ cirp_anlz_log_commit (void)
     {
       GOTO_EXIT_ON_ERROR;
     }
+
+  clock_gettime (CLOCK_REALTIME, &cur_time);
+  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_DELAY,
+		       timespec_to_msec (&cur_time)
+		       - tmp_analyzer_data.source_applied_time);
 
   return error;
 
@@ -2161,6 +2170,9 @@ analyzer_main (void *arg)
 	    }
 
 	  LSA_COPY (&analyzer->ct.current_lsa, &final_lsa);
+
+	  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID,
+			       final_lsa.pageid);
 
 	  /* a loop for each page */
 	  pg_ptr = &(log_buf->log_page);

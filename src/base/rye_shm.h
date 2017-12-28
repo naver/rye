@@ -43,7 +43,7 @@
 
 #define DEFAULT_RYE_SHM_KEY		((getuid() << 16) | 0x00001000)
 #define DEFUALT_SERVER_SHM_KEY_BASE		(0x00000100)
-#define DEFUALT_MONITOR_SERVER_SHM_KEY_BASE	(0x00000200)
+#define DEFUALT_MONITOR_SHM_KEY_BASE            (0x00000200)
 #define DEFUALT_BROKER_SHM_KEY_BASE		(0x00000300)
 
 #define RYE_SHM_MAGIC_STR_SIZE		(8)
@@ -82,7 +82,9 @@ enum _rye_shm_type
   RYE_SHM_TYPE_BROKER_GLOBAL,
   RYE_SHM_TYPE_BROKER_LOCAL,
   RYE_SHM_TYPE_MONITOR_SERVER,
-  RYE_SHM_TYPE_MAX = RYE_SHM_TYPE_MONITOR_SERVER
+  RYE_SHM_TYPE_MONITOR_REPL,
+  RYE_SHM_TYPE_MONITOR,
+  RYE_SHM_TYPE_MAX = RYE_SHM_TYPE_MONITOR
 };
 
 #define RYE_SHM_TYPE_NAME(type)                                                        \
@@ -91,7 +93,8 @@ enum _rye_shm_type
    (type) == RYE_SHM_TYPE_SERVER ? "RYE_SHM_TYPE_SERVER" :                             \
    (type) == RYE_SHM_TYPE_BROKER_GLOBAL ? "RYE_SHM_TYPE_BROKER_GLOBAL" :               \
    (type) == RYE_SHM_TYPE_BROKER_LOCAL ? "RYE_SHM_TYPE_BROKER_LOCAL" :                 \
-   (type) == RYE_SHM_TYPE_MONITOR_SERVER ? "RYE_SHM_TYPE_MONITOR_SERVER" : "UNKNOWN TYPE")
+   (type) == RYE_SHM_TYPE_MONITOR_SERVER ? "RYE_SHM_TYPE_MONITOR_SERVER" :             \
+   (type) == RYE_SHM_TYPE_MONITOR_REPL ? "RYE_SHM_TYPE_MONITOR_REPL" : "UNKNOWN TYPE")
 
 
 typedef struct _rye_shd_mgmt_table RYE_SHD_MGMT_TABLE;

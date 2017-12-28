@@ -1638,7 +1638,7 @@ csect_dump_statistics (FILE * fp)
   MONITOR_STATS stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
   MNT_SERVER_ITEM item, item_waits;
 
-  monitor_copy_global_stats (NULL, stats, MNT_SIZE_OF_SERVER_EXEC_STATS);
+  monitor_copy_global_stats (NULL, stats);
 
   fprintf (fp,
 	   "              CS Name   "

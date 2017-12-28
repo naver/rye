@@ -2708,19 +2708,16 @@ int
 logpb_prior_lsa_append_all_list (THREAD_ENTRY * thread_p)
 {
   LOG_PRIOR_NODE *prior_list;
-  INT64 current_size;
   UNUSED_VAR int rv;
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
   rv = pthread_mutex_lock (&log_Gl.prior_info.prior_lsa_mutex);
-  current_size = log_Gl.prior_info.list_size;
   prior_list = prior_lsa_remove_prior_list (thread_p);
   pthread_mutex_unlock (&log_Gl.prior_info.prior_lsa_mutex);
 
   if (prior_list != NULL)
     {
-      mnt_stats_counter (thread_p, MNT_STATS_PRIOR_LSA_LIST_SIZE, current_size / ONE_K);	/* kbytes */
       mnt_stats_counter (thread_p, MNT_STATS_PRIOR_LSA_LIST_REMOVED, 1);
 
       logpb_append_prior_lsa_list (thread_p, prior_list);

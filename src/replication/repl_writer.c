@@ -74,7 +74,7 @@ CIRP_LOGWR_GLOBAL cirpwr_Gl = {
   {'0'}
   ,
   /* host info */
-  PRM_NULL_NODE_INFO,
+  PRM_NODE_INFO_INITIALIZER,
   /* log_path */
   {'0'}
   ,
@@ -1734,7 +1734,7 @@ cirpwr_get_log_header ()
     -1, 0, false
   };
   OR_ALIGNED_BUF (OR_INT_SIZE * 2 + OR_INT64_SIZE) a_request;
-  OR_ALIGNED_BUF (OR_INT_SIZE * 5 + OR_INT64_SIZE) a_reply;
+  OR_ALIGNED_BUF (OR_INT_SIZE * 5 + OR_INT64_SIZE * 2) a_reply;
   char *request, *reply;
   char *ptr;
   char *logpg_area = NULL;
@@ -1828,7 +1828,7 @@ log_copier_main (void *arg)
   error = pthread_mutex_lock (&th_entry->th_lock);
   pthread_mutex_unlock (&th_entry->th_lock);
 
-  assert (th_entry->th_type == CIRP_THREAD_WRITER);
+  assert (th_entry->th_type == CIRP_THREAD_COPIER);
 
   snprintf (err_msg, sizeof (err_msg),
 	    "Writer Start: last_pageid(%lld)",
@@ -2135,7 +2135,7 @@ static int
 cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
 {
   OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 2) a_request;
-  OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 5) a_reply;
+  OR_ALIGNED_BUF (OR_INT64_SIZE * 2 + OR_INT_SIZE * 5) a_reply;
   char *request, *reply;
   char *ptr;
   LOG_PAGEID first_pageid_torecv;
@@ -2329,12 +2329,13 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
     case GET_NEXT_LOG_PAGES:
       {
 	int length;
-	INT64 pageid;
+	INT64 pageid, eof_pageid;
 	int num_page, file_status, server_status;
 	int data_recv_size;
 
 	ptr = or_unpack_int (ptr, &length);
 	ptr = or_unpack_int64 (ptr, &pageid);
+	ptr = or_unpack_int64 (ptr, &eof_pageid);
 	ptr = or_unpack_int (ptr, &num_page);
 	ptr = or_unpack_int (ptr, &file_status);
 	ptr = or_unpack_int (ptr, &server_status);
@@ -2372,6 +2373,10 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
 	pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
 	pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+
+	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_LAST_RECEIVED_PAGEID,
+			     cirpwr_Gl.last_received_pageid);
+	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_EOF_PAGEID, eof_pageid);
 
 	while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
 	       && REPL_NEED_SHUTDOWN () == false)
@@ -2495,6 +2500,8 @@ net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node)
     {
       return error;
     }
+  monitor_stats_gauge (MNT_RP_FLUSHER_ID, MNT_RP_LAST_FLUSHED_PAGEID,
+		       cirpwr_Gl.ha_info.last_flushed_pageid);
 
   if (cirpwr_Gl.action & CIRPWR_ACTION_FORCE_FLUSH)
     {
