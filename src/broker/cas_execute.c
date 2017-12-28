@@ -712,6 +712,7 @@ ux_prepare (char *sql_stmt, int flag, char auto_commit_mode,
   stmt_type = db_get_statement_type (session);
   if (db_is_select_for_update (session))
     {
+      assert (stmt_type == RYE_STMT_SELECT);
       stmt_type = RYE_STMT_SELECT_UPDATE;
     }
 

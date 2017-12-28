@@ -904,7 +904,7 @@ db_get_query_type_ptr (DB_QUERY_RESULT * result)
 RYE_STMT_TYPE
 db_get_statement_type (DB_SESSION * session)
 {
-  int stmt_type;
+  RYE_STMT_TYPE stmt_type;
 
   if (!session || !session->parser || !session->statement)
     {
