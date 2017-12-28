@@ -621,6 +621,13 @@ create_db_stats_info_for_repl (MONITOR_INFO * monitor)
   SET_DB_STATS_INFO (&db_stats[MNT_RP_REQUIRED_PAGEID],
 		     "ha", "required_pageid");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_DELAY], "ha", "delay");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_QUEUE_FULL], "ha", "queue_full");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_INSERT], "ha", "insert");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_UPDATE], "ha", "update");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_DELETE], "ha", "delete");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_DDL], "ha", "ddl");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_COMMIT], "ha", "commit");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_FAIL], "ha", "fail");
 
   return db_stats;
 }

@@ -150,7 +150,6 @@ struct catcls_table
 #define CT_AUTH_NAME		   "db_auth"
 #define CT_DATATYPE_NAME           "db_data_type"
 #define CT_INDEX_STATS_NAME        "db_index_stats"
-#define CT_LOG_WRITER_NAME         "db_log_writer"
 #define CT_LOG_ANALYZER_NAME       "db_log_analyzer"
 #define CT_LOG_APPLIER_NAME        "db_log_applier"
 #define CT_COLLATION_NAME          "db_collation"
@@ -196,7 +195,6 @@ extern CT_CLASS *ct_Classes[];
 
 
 extern CATCLS_TABLE table_IndexStats;
-extern CATCLS_TABLE table_LogWriter;
 extern CATCLS_TABLE table_LogAnalyzer;
 extern CATCLS_TABLE table_LogApplier;
 extern CATCLS_TABLE table_ShardGidSkey;

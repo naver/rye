@@ -367,7 +367,7 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
 
   if (LSA_ISNULL (&lowest_tran_start_lsa))
     {
-      LSA_COPY (&analyzer->ct.required_lsa, &analyzer->ct.current_lsa);
+      LSA_COPY (&analyzer->ct.required_lsa, &analyzer->current_lsa);
     }
   else
     {
@@ -395,8 +395,8 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
 		"required_lsa:%lld,%d ",
 		(long long) lowest_tran_start_lsa.pageid,
 		lowest_tran_start_lsa.offset,
-		(long long) analyzer->ct.current_lsa.pageid,
-		analyzer->ct.current_lsa.offset,
+		(long long) analyzer->current_lsa.pageid,
+		analyzer->current_lsa.offset,
 		(long long) analyzer->ct.required_lsa.pageid,
 		analyzer->ct.required_lsa.offset);
 
@@ -705,6 +705,7 @@ cirp_clear_analyzer (CIRP_ANALYZER_INFO * analyzer)
 
   memset (&analyzer->conn, 0, sizeof (CCI_CONN));
 
+  LSA_SET_NULL (&analyzer->current_lsa);
   memset (&analyzer->ct, 0, sizeof (CIRP_CT_LOG_ANALYZER));
 
   return NO_ERROR;
@@ -768,6 +769,7 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
 
   memset (&analyzer->conn, 0, sizeof (CCI_CONN));
 
+  LSA_SET_NULL (&analyzer->current_lsa);
   memset (&analyzer->ct, 0, sizeof (CIRP_CT_LOG_ANALYZER));
 
   assert (error == NO_ERROR);
@@ -884,20 +886,12 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	  return false;
 	}
 
-      if (catalog->copyarea_op != LC_FLUSH_HA_CATALOG_WRITER_UPDATE
-	  && catalog->copyarea_op != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+      if (catalog->copyarea_op != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	  && catalog->copyarea_op != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
 	{
 	  return false;
 	}
 
-      if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_WRITER_UPDATE
-	  && strncasecmp (catalog->class_name,
-			  CT_LOG_WRITER_NAME,
-			  strlen (CT_LOG_WRITER_NAME) != 0))
-	{
-	  return false;
-	}
       if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	  && strncasecmp (catalog->class_name,
 			  CT_LOG_ANALYZER_NAME,
@@ -998,7 +992,8 @@ cirp_anlz_assign_repl_item (int tranid, int rectype, LOG_LSA * commit_lsa)
       /* log item queue is full */
       if (error == ER_HA_JOB_QUEUE_FULL)
 	{
-	  analyzer->ct.queue_full++;
+	  monitor_stats_counter (MNT_RP_ANALYZER_ID, MNT_RP_QUEUE_FULL, 1);
+
 	  error = cirp_analyzer_wait_for_queue (tran->applier_index);
 	  if (error == NO_ERROR)
 	    {
@@ -1498,14 +1493,11 @@ static int
 cirp_anlz_log_commit (void)
 {
   int error = NO_ERROR;
-  CIRP_CT_LOG_WRITER tmp_writer_data;
   CIRP_CT_LOG_ANALYZER tmp_analyzer_data;
 
-  CIRP_WRITER_INFO *writer;
   CIRP_ANALYZER_INFO *analyzer;
   struct timespec cur_time;
 
-  writer = &Repl_Info->writer_info;
   analyzer = &Repl_Info->analyzer_info;
 
   error = cirp_anlz_update_progress_from_appliers (analyzer);
@@ -1513,19 +1505,6 @@ cirp_anlz_log_commit (void)
     {
       return error;
     }
-
-  error = pthread_mutex_lock (&writer->lock);
-  if (error != NO_ERROR)
-    {
-      error = ER_CSS_PTHREAD_MUTEX_LOCK;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-
-      return error;
-    }
-
-  memcpy (&tmp_writer_data, &writer->ct, sizeof (CIRP_CT_LOG_WRITER));
-
-  pthread_mutex_unlock (&writer->lock);
 
   error = pthread_mutex_lock (&analyzer->lock);
   if (error != NO_ERROR)
@@ -1539,12 +1518,6 @@ cirp_anlz_log_commit (void)
   memcpy (&tmp_analyzer_data, &analyzer->ct, sizeof (CIRP_CT_LOG_ANALYZER));
 
   pthread_mutex_unlock (&analyzer->lock);
-
-  error = rpct_update_log_writer (&analyzer->conn, &tmp_writer_data);
-  if (error != NO_ERROR)
-    {
-      GOTO_EXIT_ON_ERROR;
-    }
 
   error = rpct_update_log_analyzer (&analyzer->conn, &tmp_analyzer_data);
   if (error != NO_ERROR)
@@ -1967,15 +1940,15 @@ analyzer_main (void *arg)
 
       /* initialize */
       LSA_COPY (&final_lsa, &analyzer->ct.required_lsa);
-      LSA_COPY (&analyzer->ct.current_lsa, &final_lsa);
+      LSA_COPY (&analyzer->current_lsa, &final_lsa);
 
       snprintf (err_msg, sizeof (err_msg),
 		"All Agent Start. required_lsa: %lld|%d."
 		"current LSA: %lld|%d.",
 		(long long) analyzer->ct.required_lsa.pageid,
 		analyzer->ct.required_lsa.offset,
-		(long long) analyzer->ct.current_lsa.pageid,
-		analyzer->ct.current_lsa.offset);
+		(long long) analyzer->current_lsa.pageid,
+		analyzer->current_lsa.offset);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
@@ -2169,7 +2142,7 @@ analyzer_main (void *arg)
 	      GOTO_EXIT_ON_ERROR;
 	    }
 
-	  LSA_COPY (&analyzer->ct.current_lsa, &final_lsa);
+	  LSA_COPY (&analyzer->current_lsa, &final_lsa);
 
 	  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID,
 			       final_lsa.pageid);
@@ -2303,8 +2276,8 @@ analyzer_main (void *arg)
 		error,
 		(long long) analyzer->ct.required_lsa.pageid,
 		analyzer->ct.required_lsa.offset,
-		(long long) analyzer->ct.current_lsa.pageid,
-		analyzer->ct.current_lsa.offset);
+		(long long) analyzer->current_lsa.pageid,
+		analyzer->current_lsa.offset);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
 	      err_msg);
 
@@ -2323,8 +2296,8 @@ analyzer_main (void *arg)
 	    "current LSA: %lld|%d.",
 	    (long long) analyzer->ct.required_lsa.pageid,
 	    analyzer->ct.required_lsa.offset,
-	    (long long) analyzer->ct.current_lsa.pageid,
-	    analyzer->ct.current_lsa.offset);
+	    (long long) analyzer->current_lsa.pageid,
+	    analyzer->current_lsa.offset);
 
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE,
 	  1, err_msg);

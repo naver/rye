@@ -794,7 +794,6 @@ static int qexec_cast_ct_index_stats_to_idxkey (DB_IDXKEY * val,
 static int qexec_cast_ct_gid_skey_to_idxkey (DB_IDXKEY * val, void *ct_table);
 static int qexec_cast_ct_applier_to_idxkey (DB_IDXKEY * val, void *ct_table);
 static int qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table);
-static int qexec_cast_ct_writer_to_idxkey (DB_IDXKEY * val, void *ct_table);
 
 /*
  * Utility routines
@@ -7520,50 +7519,6 @@ qexec_insert_gid_skey_info (THREAD_ENTRY * thread_p,
 }
 
 /*
- * qexec_upsert_writer_info () -
- *    return: error code
- *
- *    pk(in):
- *    class_oid(in):
- *    hfid(in):
- *    analyzer(in):
- */
-int
-qexec_upsert_writer_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
-			  CIRP_CT_LOG_WRITER * writer)
-{
-  int error = NO_ERROR;
-
-  error = qexec_modify_catalog_table (thread_p, pk, writer,
-				      &table_LogWriter,
-				      CT_MODIFY_MODE_UPSERT);
-
-  return error;
-}
-
-/*
- * qexec_update_writer_info () -
- *    return: error code
- *
- *    pk(in):
- *    class_oid(in):
- *    hfid(in):
- *    applier(in):
- */
-int
-qexec_update_writer_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
-			  CIRP_CT_LOG_WRITER * writer)
-{
-  int error = NO_ERROR;
-
-  error = qexec_modify_catalog_table (thread_p, pk, writer,
-				      &table_LogWriter,
-				      CT_MODIFY_MODE_UPDATE);
-
-  return error;
-}
-
-/*
  * qexec_upsert_applier_info () -
  *    return: error code
  *
@@ -7792,14 +7747,8 @@ qexec_get_info_of_catalog_table (THREAD_ENTRY * thread_p,
   int error = NO_ERROR;
   bool has_mutex = false;
 
-  if (strncasecmp (table->name, CT_LOG_WRITER_NAME,
-		   strlen (CT_LOG_WRITER_NAME)) == 0)
-    {
-      ct_cache_info = &Writer_info;
-      tmp_cache.cast_func = qexec_cast_ct_writer_to_idxkey;
-    }
-  else if (strncasecmp (table->name, CT_LOG_ANALYZER_NAME,
-			strlen (CT_LOG_ANALYZER_NAME)) == 0)
+  if (strncasecmp (table->name, CT_LOG_ANALYZER_NAME,
+		   strlen (CT_LOG_ANALYZER_NAME)) == 0)
     {
       ct_cache_info = &Analyzer_info;
       tmp_cache.cast_func = qexec_cast_ct_analyzer_to_idxkey;
@@ -8032,15 +7981,6 @@ qexec_cast_ct_applier_to_idxkey (DB_IDXKEY * val, void *ct_table)
   bi = lsa_to_int64 (log_applier->committed_lsa);
   db_make_bigint (&val->vals[i++], bi);
 
-  db_make_bigint (&val->vals[i++], log_applier->master_last_commit_time);
-  db_make_bigint (&val->vals[i++], log_applier->repl_delay);
-  db_make_bigint (&val->vals[i++], log_applier->insert_count);
-  db_make_bigint (&val->vals[i++], log_applier->update_count);
-  db_make_bigint (&val->vals[i++], log_applier->delete_count);
-  db_make_bigint (&val->vals[i++], log_applier->schema_count);
-  db_make_bigint (&val->vals[i++], log_applier->commit_count);
-  db_make_bigint (&val->vals[i++], log_applier->fail_count);
-
   val->size = i;
 
   return NO_ERROR;
@@ -8074,56 +8014,11 @@ qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table)
       return error;
     }
 
-  bi = lsa_to_int64 (log_analyzer->current_lsa);
-  db_make_bigint (&val->vals[i++], bi);
   bi = lsa_to_int64 (log_analyzer->required_lsa);
   db_make_bigint (&val->vals[i++], bi);
 
-  db_make_bigint (&val->vals[i++], log_analyzer->start_time);
   db_make_bigint (&val->vals[i++], log_analyzer->source_applied_time);
   db_make_bigint (&val->vals[i++], log_analyzer->creation_time);
-
-  db_make_bigint (&val->vals[i++], log_analyzer->queue_full);
-
-  val->size = i;
-
-  return NO_ERROR;
-}
-
-/*
- * qexec_cast_ct_writer_to_idxkey
- *   return: error code
- *
- *   val(out):
- *   ct_table(in):
- */
-static int
-qexec_cast_ct_writer_to_idxkey (DB_IDXKEY * val, void *ct_table)
-{
-  CIRP_CT_LOG_WRITER *writer;
-  INT64 bi;
-  int i;
-  int error;
-
-  writer = (CIRP_CT_LOG_WRITER *) ct_table;
-
-  /* init parameter */
-  DB_IDXKEY_MAKE_NULL (val);
-
-  /* table_LogWriter column order */
-  i = 0;
-  error = rp_make_repl_host_key (&val->vals[i++], &writer->host_info);
-  if (error != NO_ERROR)
-    {
-      return error;
-    }
-
-  db_make_bigint (&val->vals[i++], writer->last_flushed_pageid);
-
-  db_make_bigint (&val->vals[i++], writer->last_received_time);
-
-  bi = lsa_to_int64 (writer->eof_lsa);
-  db_make_bigint (&val->vals[i++], bi);
 
   val->size = i;
 

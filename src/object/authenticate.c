@@ -139,7 +139,6 @@ const char *AU_DBA_USER_NAME = "DBA";
          || strcmp(name, CT_USER_NAME) == 0 \
          || strcmp(name, CT_COLLATION_NAME) == 0 \
          || strcmp(name, CT_INDEX_STATS_NAME) == 0 \
-         || strcmp(name, CT_LOG_WRITER_NAME) == 0 \
          || strcmp(name, CT_LOG_ANALYZER_NAME) == 0 \
          || strcmp(name, CT_LOG_APPLIER_NAME) == 0 \
          || strcmp(name, CT_ROOT_NAME) == 0 \

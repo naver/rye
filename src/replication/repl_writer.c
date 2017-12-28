@@ -351,8 +351,6 @@ cirp_init_writer (CIRP_WRITER_INFO * writer)
   cirpwr_change_copier_status (writer, CIRP_AGENT_INIT);
   cirpwr_change_writer_status (writer, CIRP_AGENT_INIT);
 
-  memset (&writer->ct, 0, sizeof (CIRP_CT_LOG_WRITER));
-
   assert (error == NO_ERROR);
   return error;
 
@@ -535,15 +533,12 @@ cirpwr_create_active_log (CCI_CONN * conn)
       ct.host_info = cirpwr_Gl.host_info;
 
       /* set first record */
-      LSA_COPY (&ct.current_lsa, &m_log_hdr->sof_lsa);
       LSA_COPY (&ct.required_lsa, &m_log_hdr->sof_lsa);
 
       gettimeofday (&current_time, NULL);
-      ct.start_time = timeval_to_msec (&current_time);
-      ct.source_applied_time = ct.start_time;
+      ct.source_applied_time = timeval_to_msec (&current_time);
 
       ct.creation_time = m_log_hdr->db_creation * 1000;
-      ct.queue_full = 0;
 
       error = rpct_insert_log_analyzer (conn, &ct);
       if (error != NO_ERROR)
@@ -1639,10 +1634,6 @@ cirpwr_write_log_pages (void)
   static struct timeval last_flush_time = { 0, 0 };
   INT64 diff_msec;
   LOG_HEADER *m_log_hdr;
-  bool has_writer_mutex = false;
-  CIRP_WRITER_INFO *writer = NULL;
-
-  writer = &Repl_Info->writer_info;
 
   assert (cirpwr_Gl.append_vdes != NULL_VOLDES);
 
@@ -1678,26 +1669,8 @@ cirpwr_write_log_pages (void)
       return error;
     }
 
-  error = pthread_mutex_lock (&writer->lock);
-  if (error != NO_ERROR)
-    {
-      error = ER_CSS_PTHREAD_MUTEX_LOCK;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-
-      GOTO_EXIT_ON_ERROR;
-    }
-  has_writer_mutex = true;
-
   assert (!LSA_ISNULL (&m_log_hdr->eof_lsa));
-  assert (writer->ct.last_flushed_pageid <= m_log_hdr->eof_lsa.pageid);
-
-  writer->ct.last_flushed_pageid = cirpwr_Gl.ha_info.last_flushed_pageid;
-  writer->ct.last_received_time = curtime.tv_sec;
-
-  LSA_COPY (&writer->ct.eof_lsa, &m_log_hdr->eof_lsa);
-
-  pthread_mutex_unlock (&writer->lock);
-  has_writer_mutex = false;
+  assert (cirpwr_Gl.ha_info.last_flushed_pageid <= m_log_hdr->eof_lsa.pageid);
 
   last_flush_time = curtime;
 
@@ -1706,11 +1679,6 @@ cirpwr_write_log_pages (void)
   return NO_ERROR;
 
 exit_on_error:
-  if (has_writer_mutex == true)
-    {
-      pthread_mutex_unlock (&writer->lock);
-    }
-
   if (error == NO_ERROR)
     {
       assert (false);

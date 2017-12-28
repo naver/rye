@@ -510,7 +510,8 @@ cirp_logpb_act_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr)
 
   if (act_log->log_hdr != NULL)
     {
-      cirp_logpb_decache_range (buf_mgr, act_log->log_hdr->eof_lsa.pageid,
+      cirp_logpb_decache_range (buf_mgr,
+				act_log->log_hdr->ha_info.last_flushed_pageid,
 				LOGPAGEID_MAX);
     }
 
