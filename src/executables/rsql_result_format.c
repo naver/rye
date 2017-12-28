@@ -582,7 +582,7 @@ double_to_string (double double_value, int field_width,
 					   COMMAS_OFFSET (commas,
 							  actual_fieldwidth)
 					   + 1);
-	  if (return_string == NULL);
+	  if (return_string == NULL)
 	  {
 	    return (NULL);
 	  }
@@ -594,7 +594,7 @@ double_to_string (double double_value, int field_width,
 					   COMMAS_OFFSET (commas,
 							  actual_fieldwidth)
 					   + 1);
-	  if (return_string == NULL);
+	  if (return_string == NULL)
 	  {
 	    return (NULL);
 	  }
