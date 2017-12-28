@@ -1017,7 +1017,10 @@ log_initialize_internal (THREAD_ENTRY * thread_p, const char *db_fullname,
        * page size
        */
       logpb_finalize_pool ();
-      fileio_dismount (thread_p, log_Gl.append.vdes);
+      if (log_Gl.append.vdes != NULL_VOLDES)
+	{
+	  fileio_dismount (thread_p, log_Gl.append.vdes);
+	}
       log_Gl.append.vdes = NULL_VOLDES;
 
       logtb_set_to_system_tran_index (thread_p);

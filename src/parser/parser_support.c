@@ -1049,32 +1049,7 @@ pt_is_inst_or_orderby_num_node (PARSER_CONTEXT * parser, PT_NODE * tree,
 int
 pt_is_ddl_statement (const PT_NODE * node)
 {
-  if (node)
-    {
-      /* refer do_replicate_schema ()
-       */
-      switch (node->node_type)
-	{
-	case PT_CREATE_ENTITY:
-	case PT_ALTER:
-	case PT_RENAME:
-	case PT_DROP:
-	case PT_CREATE_INDEX:
-	case PT_ALTER_INDEX:
-	case PT_DROP_INDEX:
-	case PT_CREATE_USER:
-	case PT_ALTER_USER:
-	case PT_DROP_USER:
-	case PT_GRANT:
-	case PT_REVOKE:
-	case PT_UPDATE_STATS:
-	  return true;
-	default:
-	  return false;
-	}
-    }
-
-  return false;
+  return STMT_TYPE_IS_DDL (pt_node_to_stmt_type (node));
 }
 
 #if defined (ENABLE_UNUSED_FUNCTION)

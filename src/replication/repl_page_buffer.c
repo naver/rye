@@ -234,6 +234,8 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
   char *current_ptr = (char *) io_pgptr;
   int error = NO_ERROR;
 
+  assert (vdes != NULL_VOLDES);
+
   if (lseek64 (vdes, offset, SEEK_SET) == -1)
     {
       error = ER_IO_READ;

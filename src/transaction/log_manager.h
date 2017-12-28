@@ -72,7 +72,7 @@
 
 #define LOGPB_ACTIVE_NPAGES      (log_Gl.hdr.npages)
 
-#define LOG_MAX_RECORD_LENGTH ((LOGPB_ACTIVE_NPAGES * LOG_PAGESIZE) / 2)
+#define LOG_MAX_RECORD_LENGTH (((long long) LOGPB_ACTIVE_NPAGES * LOG_PAGESIZE) / 2)
 
 typedef struct log_topop_range LOG_TOPOP_RANGE;
 struct log_topop_range

@@ -5529,7 +5529,7 @@ qo_find_node_indexes (QO_ENV * env, QO_NODE * nodep)
 
   indexp = class_infop->info[0].index;
 
-  /* allocate room for the compatible heirarchical indexex */
+  /* allocate room for the compatible hierarchical indexes */
   /* We'll go ahead and allocate room for each index in the top level
      class. This is the worst case situation and it simplifies the code
      a bit. */
@@ -6205,17 +6205,15 @@ qo_seg_width (QO_SEGMENT * seg)
       return sizeof (int);
     }
 
-  size = tp_domain_disk_size (domain);
-  switch (TP_DOMAIN_TYPE (domain))
+  if (pr_is_variable_type (TP_DOMAIN_TYPE (domain)))
     {
-    case DB_TYPE_VARBIT:
-    case DB_TYPE_VARCHAR:
-      /* do guessing for variable character type */
-      size = size * (2 / 3);
-      break;
-    default:
-      break;
+      size = (NOMINAL_OBJECT_SIZE * 2) / 3;	/* guessing */
     }
+  else
+    {
+      size = tp_domain_disk_size (domain);
+    }
+
   return MAX ((int) sizeof (int), size);
   /* for backward compatibility, at least sizeof(long) */
 }

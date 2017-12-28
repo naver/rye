@@ -6107,6 +6107,7 @@ tp_domain_disk_size (TP_DOMAIN * domain)
 
   if (domain->type->variable_p)
     {
+      assert (false);
       return -1;
     }
 
@@ -6126,6 +6127,8 @@ tp_domain_disk_size (TP_DOMAIN * domain)
     {
       size = domain->type->disksize;
     }
+
+  assert (size > 0 || (size == 0 && TP_DOMAIN_TYPE (domain) == DB_TYPE_NULL));
 
   return size;
 }

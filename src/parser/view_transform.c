@@ -4882,10 +4882,6 @@ mq_translate_helper (PARSER_CONTEXT * parser, PT_NODE * node)
 
   /* process FOR UPDATE clause */
   err = pt_for_update_prepare_query (parser, node);
-  if (err != NO_ERROR)
-    {
-      return NULL;
-    }
 
   /* restore link */
   if (node)
@@ -4893,7 +4889,7 @@ mq_translate_helper (PARSER_CONTEXT * parser, PT_NODE * node)
       node->next = next;
     }
 
-  if (pt_has_error (parser))
+  if (err != NO_ERROR || pt_has_error (parser))
     {
       goto exit_on_error;
     }

@@ -2511,9 +2511,9 @@ boot_get_host_name (void)
     {
       if (GETHOSTNAME (boot_Host_name, MAXHOSTNAMELEN) != 0)
 	{
-	  strcpy (boot_Host_name, boot_Client_id_unknown_string);
+	  STRNCPY (boot_Host_name, boot_Client_id_unknown_string,
+		   MAXHOSTNAMELEN);
 	}
-      boot_Host_name[MAXHOSTNAMELEN - 1] = '\0';	/* bullet proof */
     }
 
   return boot_Host_name;
