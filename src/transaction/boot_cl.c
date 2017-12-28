@@ -2335,7 +2335,6 @@ boot_define_catalog_table (void)
 {
   CATCLS_TABLE *ct_list[] = {
     &table_IndexStats,
-    &table_LogWriter,
     &table_LogAnalyzer,
     &table_LogApplier,
     &table_ShardGidSkey,

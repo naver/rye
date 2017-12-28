@@ -758,10 +758,6 @@ extern int qexec_insert_tuple_into_list (THREAD_ENTRY * thread_p,
 					 QFILE_TUPLE_RECORD * tplrec);
 extern int qexec_update_index_stats (THREAD_ENTRY * thread_p,
 				     CIRP_CT_INDEX_STATS * index_stats);
-extern int qexec_upsert_writer_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
-				     CIRP_CT_LOG_WRITER * writer);
-extern int qexec_update_writer_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
-				     CIRP_CT_LOG_WRITER * writer);
 extern int qexec_upsert_applier_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
 				      CIRP_CT_LOG_APPLIER * applier);
 extern int qexec_update_applier_info (THREAD_ENTRY * thread_p,

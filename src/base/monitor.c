@@ -967,6 +967,23 @@ monitor_create_repl_stats_meta (void)
   init_monitor_stats_info (info_p, MNT_RP_DELAY,
 			   "ha_delay_time", MONITOR_STATS_VALUE_GAUGE);
 
+  init_monitor_stats_info (info_p, MNT_RP_QUEUE_FULL,
+			   "ha_queue_full", MONITOR_STATS_VALUE_COUNTER);
+
+
+  init_monitor_stats_info (info_p, MNT_RP_INSERT,
+			   "ha_insert", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_UPDATE,
+			   "ha_update", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_DELETE,
+			   "ha_delete", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_DDL,
+			   "ha_ddl", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_COMMIT,
+			   "ha_commit", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_FAIL,
+			   "ha_fail", MONITOR_STATS_VALUE_COUNTER);
+
   return meta_p;
 }
 
