@@ -126,6 +126,7 @@ monitor_create_shm (const char *name, int num_monitors,
 
   strncpy (shm_p->name, name, SHM_NAME_SIZE);
   shm_p->name[SHM_NAME_SIZE - 1] = '\0';
+  shm_p->monitor_type = monitor_type;
   shm_p->num_stats = num_stats;
   shm_p->num_monitors = num_monitors;
 

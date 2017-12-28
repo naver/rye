@@ -2912,11 +2912,6 @@ thread_check_ha_delay_info_thread (void *arg_p)
 	  break;
 	}
 
-      if (error_code != NO_ERROR)
-	{
-	  continue;
-	}
-
       error_code = catcls_get_analyzer_info (tsd_ptr, &source_applied_time);
       if (error_code != NO_ERROR)
 	{
