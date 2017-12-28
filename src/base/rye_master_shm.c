@@ -441,8 +441,8 @@ rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type)
 	}
       else
 	{
-	  assert (type == RYE_SHM_TYPE_MONITOR_SERVER);
-	  key_offset = DEFUALT_MONITOR_SERVER_SHM_KEY_BASE;
+	  assert (type == RYE_SHM_TYPE_MONITOR);
+	  key_offset = DEFUALT_MONITOR_SHM_KEY_BASE;
 	}
       shm_key = (master_shm_key + key_offset + res_index);
 

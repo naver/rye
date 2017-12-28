@@ -139,7 +139,6 @@ const char *AU_DBA_USER_NAME = "DBA";
          || strcmp(name, CT_USER_NAME) == 0 \
          || strcmp(name, CT_COLLATION_NAME) == 0 \
          || strcmp(name, CT_INDEX_STATS_NAME) == 0 \
-         || strcmp(name, CT_LOG_WRITER_NAME) == 0 \
          || strcmp(name, CT_LOG_ANALYZER_NAME) == 0 \
          || strcmp(name, CT_LOG_APPLIER_NAME) == 0 \
          || strcmp(name, CT_ROOT_NAME) == 0 \
@@ -1646,11 +1645,11 @@ match_password (const char *user, const char *database)
   if (IS_ENCODED_SHA2_512 (database))
     {
       /* DB: SHA2 */
-      strcpy (buf2, database);
+      STRNCPY (buf2, database, AU_MAX_PASSWORD_BUF + 4);
       if (IS_ENCODED_ANY (user))
 	{
 	  /* USER:SHA2 */
-	  strcpy (buf1, Au_user_password);
+	  STRNCPY (buf1, Au_user_password, AU_MAX_PASSWORD_BUF + 4);
 	}
       else
 	{

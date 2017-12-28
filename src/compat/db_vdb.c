@@ -333,7 +333,7 @@ db_compile_statement_local (DB_SESSION * session)
   PARSER_CONTEXT *parser;
   PT_NODE *statement = NULL;
   DB_QUERY_TYPE *qtype;
-  int cmd_type;
+  RYE_STMT_TYPE stmt_type = RYE_STMT_UNKNOWN;
   int err;
 //  SERVER_INFO server_info;
   static long seed = 0;
@@ -380,9 +380,9 @@ db_compile_statement_local (DB_SESSION * session)
   pt_reset_error (parser);
 
   /* get type list describing the output columns titles of the given query */
-  cmd_type = pt_node_to_cmd_type (statement);
+  stmt_type = pt_node_to_stmt_type (statement);
   qtype = NULL;
-  if (cmd_type == RYE_STMT_SELECT)
+  if (stmt_type == RYE_STMT_SELECT)
     {
       qtype = pt_get_titles (parser, statement);
       /* to prevent a memory leak, register the query type list to session */
@@ -418,7 +418,7 @@ db_compile_statement_local (DB_SESSION * session)
   statement = session->statement;
 
   /* get type list describing the output columns titles of the given query */
-  if (cmd_type == RYE_STMT_SELECT)
+  if (stmt_type == RYE_STMT_SELECT)
     {
       /* for a select-type query of the form:
          SELECT * FROM class c
@@ -815,7 +815,7 @@ db_get_query_type_list (DB_SESSION * session)
 {
   PT_NODE *statement;
   DB_QUERY_TYPE *qtype;
-  int cmd_type;
+  RYE_STMT_TYPE cmd_type = RYE_STMT_UNKNOWN;
 
   /* obvious error checking - invalid parameter */
   if (!session || !session->parser)
@@ -843,7 +843,7 @@ db_get_query_type_list (DB_SESSION * session)
 
   /* make DB_QUERY_TYPE structure to return */
 
-  cmd_type = pt_node_to_cmd_type (statement);
+  cmd_type = pt_node_to_stmt_type (statement);
   if (cmd_type == RYE_STMT_SELECT)
     {
       PT_NODE *select_list = pt_get_select_list (session->parser, statement);
@@ -897,29 +897,29 @@ db_get_query_type_ptr (DB_QUERY_RESULT * result)
 
 /*
  * db_get_statement_type() - This function returns query statement node type
- * return : stmt's node type
+ * return : stmt's RYE_STMT_TYPE
  * session(in): contains the SQL query that has been compiled
  * stmt(in): statement id returned by a successful compilation
  */
-int
+RYE_STMT_TYPE
 db_get_statement_type (DB_SESSION * session)
 {
-  int retval;
+  RYE_STMT_TYPE stmt_type;
 
   if (!session || !session->parser || !session->statement)
     {
       er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS,
 	      0);
-      retval = er_errid ();
+      stmt_type = RYE_STMT_UNKNOWN;
     }
   else
     {
       assert (session->statement->next == NULL);
 
-      retval = pt_node_to_cmd_type (session->statement);
+      stmt_type = pt_node_to_stmt_type (session->statement);
     }
 
-  return retval;
+  return stmt_type;
 }
 
 /*
@@ -1266,7 +1266,7 @@ db_execute_and_keep_statement_local (DB_SESSION * session,
     }
 
   /* skip ddl execution in case of parameter or opt. level */
-  if (pt_is_ddl_statement (statement) == true)
+  if (pt_is_ddl_statement (statement))
     {
       if (prm_get_bool_value (PRM_ID_BLOCK_DDL_STATEMENT))
 	{
@@ -1323,7 +1323,7 @@ db_execute_and_keep_statement_local (DB_SESSION * session,
   if (result && !(err < 0))
     {
       qres = NULL;
-      stmt_type = pt_node_to_cmd_type (statement);
+      stmt_type = pt_node_to_stmt_type (statement);
 
       switch (stmt_type)
 	{
@@ -1433,7 +1433,7 @@ db_execute_and_keep_statement_local (DB_SESSION * session,
   assert (statement == session->statement);
   assert (session->statement->next == NULL);
 
-  if (pt_is_ddl_statement (statement) == true)
+  if (pt_is_ddl_statement (statement))
     {
       if (err == NO_ERROR)
 	{

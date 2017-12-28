@@ -1591,7 +1591,7 @@ logpb_initialize_header (struct log_header *loghdr,
   LSA_SET_NULL (&loghdr->bkup_level_lsa);
   if (prefix_logname != NULL)
     {
-      strcpy (loghdr->prefix_name, prefix_logname);
+      STRNCPY (loghdr->prefix_name, prefix_logname, MAXLOGNAME);
     }
   else
     {
@@ -2708,19 +2708,16 @@ int
 logpb_prior_lsa_append_all_list (THREAD_ENTRY * thread_p)
 {
   LOG_PRIOR_NODE *prior_list;
-  INT64 current_size;
   UNUSED_VAR int rv;
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
   rv = pthread_mutex_lock (&log_Gl.prior_info.prior_lsa_mutex);
-  current_size = log_Gl.prior_info.list_size;
   prior_list = prior_lsa_remove_prior_list (thread_p);
   pthread_mutex_unlock (&log_Gl.prior_info.prior_lsa_mutex);
 
   if (prior_list != NULL)
     {
-      mnt_stats_counter (thread_p, MNT_STATS_PRIOR_LSA_LIST_SIZE, current_size / ONE_K);	/* kbytes */
       mnt_stats_counter (thread_p, MNT_STATS_PRIOR_LSA_LIST_REMOVED, 1);
 
       logpb_append_prior_lsa_list (thread_p, prior_list);
@@ -3933,7 +3930,7 @@ logpb_recreate_volume_info (THREAD_ENTRY * thread_p)
 
   /* First the primary volume, then the rest of the volumes */
   next_volid = LOG_DBFIRST_VOLID;
-  strcpy (next_vol_fullname, log_Db_fullname);
+  STRNCPY (next_vol_fullname, log_Db_fullname, PATH_MAX);
 
   do
     {
@@ -5904,7 +5901,7 @@ logpb_initialize_log_names (THREAD_ENTRY * thread_p, const char *db_fullname,
   strcpy (log_Archive_path, log_Path);
 
   /* Save the log Prefix */
-  strcpy (log_Prefix, prefix_logname);
+  STRNCPY (log_Prefix, prefix_logname, PATH_MAX);
 
   /*
    * Build Name of log active

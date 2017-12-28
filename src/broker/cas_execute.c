@@ -194,7 +194,7 @@ static int sch_query_execute (T_SRV_HANDLE * srv_handle, char *sql_stmt,
 static bool check_auto_commit_after_fetch_done (T_SRV_HANDLE * srv_handle);
 
 static void update_query_execution_count (T_APPL_SERVER_INFO * as_info_p,
-					  char stmt_type);
+					  const RYE_STMT_TYPE stmt_type);
 static void update_repl_execution_count (T_APPL_SERVER_INFO * as_info_p,
 					 int insert_count, int update_count,
 					 int delete_count, int error_count);
@@ -204,7 +204,8 @@ static int set_host_variables (DB_SESSION * session, int num_bind,
 			       DB_VALUE * in_values);
 static char db_type_to_cas_type (int db_type);
 static void db_value_list_free (DB_VALUE * value_list, int num_values);
-static bool is_server_ro_tran_executable (char auto_commit, char stmt_type);
+static bool is_server_ro_tran_executable (char auto_commit,
+					  const RYE_STMT_TYPE stmt_type);
 static bool is_server_autocommit_executable (char auto_commit);
 
 static int ux_send_repl_ddl_tran (int num_item, void **obj_argv);
@@ -673,7 +674,7 @@ ux_prepare (char *sql_stmt, int flag, char auto_commit_mode,
   DB_SESSION *session = NULL;
   int srv_h_id = -1;
   int err_code;
-  char stmt_type;
+  RYE_STMT_TYPE stmt_type = RYE_STMT_UNKNOWN;
   T_QUERY_RESULT *q_result = NULL;
 
   srv_h_id = hm_new_srv_handle (&srv_handle, query_seq_num);
@@ -711,6 +712,7 @@ ux_prepare (char *sql_stmt, int flag, char auto_commit_mode,
   stmt_type = db_get_statement_type (session);
   if (db_is_select_for_update (session))
     {
+      assert (stmt_type == RYE_STMT_SELECT);
       stmt_type = RYE_STMT_SELECT_UPDATE;
     }
 
@@ -875,7 +877,7 @@ ux_execute (T_SRV_HANDLE * srv_handle, UNUSED_ARG char flag, int max_col_size,
   int n;
   DB_QUERY_RESULT *result = NULL;
   DB_SESSION *session;
-  int stmt_type;
+  RYE_STMT_TYPE stmt_type = RYE_STMT_UNKNOWN;
 
   hm_qresult_end (srv_handle, FALSE);
 
@@ -1031,7 +1033,7 @@ ux_execute_batch (T_SRV_HANDLE * srv_handle, int num_execution,
   const char *err_msg;
   DB_SESSION *session = NULL;
   DB_QUERY_RESULT *result;
-  int stmt_type = -1;
+  RYE_STMT_TYPE stmt_type = RYE_STMT_UNKNOWN;
   int i;
 
   if (srv_handle == NULL || srv_handle->schema_type >= CCI_SCH_FIRST)
@@ -1079,7 +1081,7 @@ ux_execute_batch (T_SRV_HANDLE * srv_handle, int num_execution,
 
       res_count = db_execute_and_keep_statement (session, &result);
 
-      if (stmt_type < 0)
+      if (stmt_type == RYE_STMT_UNKNOWN)
 	{
 	  stmt_type = db_get_statement_type (session);
 	}
@@ -2433,7 +2435,7 @@ static int
 prepare_column_list_info_set (DB_SESSION * session, T_QUERY_RESULT * q_result,
 			      T_NET_BUF * net_buf)
 {
-  char stmt_type = q_result->stmt_type;
+  RYE_STMT_TYPE stmt_type = q_result->stmt_type;
 
   if (IS_SELECT_QUERY (stmt_type))
     {
@@ -2576,7 +2578,7 @@ static int
 execute_info_set (T_SRV_HANDLE * srv_handle, T_NET_BUF * net_buf)
 {
   int tuple_count;
-  char stmt_type;
+  RYE_STMT_TYPE stmt_type = RYE_STMT_UNKNOWN;
   int num_col_info;
   int num_col_info_offset;
 
@@ -3022,7 +3024,8 @@ sch_query_execute (T_SRV_HANDLE * srv_handle, char *sql_stmt, int num_bind,
 		   DB_VALUE * bind_values)
 {
   DB_SESSION *session = NULL;
-  int error, num_result, stmt_type;
+  int error, num_result;
+  RYE_STMT_TYPE stmt_type = RYE_STMT_UNKNOWN;
   DB_QUERY_RESULT *result = NULL;
   T_QUERY_RESULT *q_result = NULL;
   int err_code;
@@ -3215,7 +3218,7 @@ schema_info_str (int schema_type)
 }
 
 bool
-ux_has_stmt_result_set (char stmt_type)
+ux_has_stmt_result_set (const RYE_STMT_TYPE stmt_type)
 {
   switch (stmt_type)
     {
@@ -3390,7 +3393,8 @@ reset_optimization_level_as_saved (void)
 }
 
 static void
-update_query_execution_count (T_APPL_SERVER_INFO * as_info_p, char stmt_type)
+update_query_execution_count (T_APPL_SERVER_INFO * as_info_p,
+			      const RYE_STMT_TYPE stmt_type)
 {
   assert (as_info_p != NULL);
 
@@ -3499,7 +3503,7 @@ db_value_list_free (DB_VALUE * value_list, int num_values)
 }
 
 static bool
-is_server_ro_tran_executable (char auto_commit, char stmt_type)
+is_server_ro_tran_executable (char auto_commit, const RYE_STMT_TYPE stmt_type)
 {
   if (auto_commit
       && stmt_type == RYE_STMT_SELECT && db_is_server_in_tran () == false)
@@ -3687,8 +3691,7 @@ net_arg_get_repl_item (CIRP_REPL_ITEM * item, int arg_idx, void **obj_argv)
       catalog->copyarea_op = tmp_int;
       net_arg_get_recdes (&catalog->recdes, obj_argv[arg_idx++]);
       assert (catalog->recdes != NULL);
-      assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_WRITER_UPDATE
-	      || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+      assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	      || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE);
 
       LSA_SET_NULL (&catalog->lsa);

@@ -582,10 +582,10 @@ double_to_string (double double_value, int field_width,
 					   COMMAS_OFFSET (commas,
 							  actual_fieldwidth)
 					   + 1);
-	  if (return_string == NULL);
-	  {
-	    return (NULL);
-	  }
+	  if (return_string == NULL)
+	    {
+	      return (NULL);
+	    }
 	  (void) strcpy (return_string, numeric_conversion_string);
 	}
       else
@@ -594,10 +594,10 @@ double_to_string (double double_value, int field_width,
 					   COMMAS_OFFSET (commas,
 							  actual_fieldwidth)
 					   + 1);
-	  if (return_string == NULL);
-	  {
-	    return (NULL);
-	  }
+	  if (return_string == NULL)
+	    {
+	      return (NULL);
+	    }
 	  if (actual_fieldwidth <= overall_fieldwidth)
 	    {
 	      return_string =

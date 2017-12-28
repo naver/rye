@@ -45,32 +45,23 @@ enum _cirp_agent_status
   CIRP_AGENT_DEAD
 };
 
-typedef struct _cirp_stats CIRP_STATS;
-struct _cirp_stats
-{
-  unsigned long insert;
-  unsigned long update;
-  unsigned long delete;
-  unsigned long schema;
-  unsigned long fail;
-  unsigned long commit;
-};
-
 typedef enum _cirp_thread_type CIRP_THREAD_TYPE;
 enum _cirp_thread_type
 {
-  CIRP_THREAD_WRITER,
+  CIRP_THREAD_COPIER,
   CIRP_THREAD_FLUSHER,
   CIRP_THREAD_ANALYZER,
   CIRP_THREAD_APPLIER,
-  CIRP_THREAD_HEALTH_CHEKER,
-  CIRP_THREAD_COPY_ARCHIVE
+  CIRP_THREAD_HEALTH_CHEKER
 };
 
 typedef struct
 {
   char *log_path;
   char *db_name;
+  char *local_dbname;
+  char *peer_host_name;
+  int port_id;
 } REPL_ARGUMENT;
 
 typedef struct cirp_thread_entry CIRP_THREAD_ENTRY;
@@ -91,15 +82,6 @@ struct cirp_ct_log_applier
   int id;
 
   LOG_LSA committed_lsa;	/* last committed commit log lsa */
-  INT64 master_last_commit_time;	/* Time in Milli seconds */
-  INT64 repl_delay;
-
-  INT64 insert_count;
-  INT64 update_count;
-  INT64 delete_count;
-  INT64 schema_count;
-  INT64 commit_count;
-  INT64 fail_count;
 };
 
 typedef struct cirp_ct_log_analyzer CIRP_CT_LOG_ANALYZER;
@@ -107,24 +89,10 @@ struct cirp_ct_log_analyzer
 {
   PRM_NODE_INFO host_info;
 
-  LOG_LSA current_lsa;
   LOG_LSA required_lsa;
 
-  INT64 start_time;		/* analyzer start time, Time in Milli seconds */
   INT64 source_applied_time;	/* Time in Milli seconds */
   INT64 creation_time;		/* Time in Milli seconds */
-
-  INT64 queue_full;
-};
-
-typedef struct cirp_ct_log_writer CIRP_CT_LOG_WRITER;
-struct cirp_ct_log_writer
-{
-  PRM_NODE_INFO host_info;
-
-  INT64 last_flushed_pageid;
-  INT64 last_received_time;	/* Time in Milli seconds */
-  LOG_LSA eof_lsa;		/* eof lsa of active log header */
 };
 
 typedef struct cirp_writer_info CIRP_WRITER_INFO;
@@ -140,8 +108,6 @@ struct cirp_writer_info
 
   CIRP_AGENT_STATUS writer_status;
   CIRP_AGENT_STATUS copier_status;
-
-  CIRP_CT_LOG_WRITER ct;
 };
 
 typedef struct _cirp_q_item CIRP_Q_ITEM;
@@ -202,6 +168,7 @@ struct _cirp_analyzer_info
   CIRP_BUF_MGR buf_mgr;
   CCI_CONN conn;
 
+  LOG_LSA current_lsa;
   CIRP_CT_LOG_ANALYZER ct;
 };
 
@@ -221,9 +188,6 @@ struct _cirp_applier_info
   int num_unflushed;
   CIRP_REPL_ITEM *head;
   CIRP_REPL_ITEM *tail;
-
-  /* not cumulative, transaction commit will reset it */
-  CIRP_STATS stats;
 
   /* transaction queue */
   CIRP_TRAN_Q logq;
@@ -250,6 +214,12 @@ struct _cirp_repl_info
   int num_applier;
   CIRP_APPLIER_INFO applier_info[1];
 };
+
+#define MNT_RP_COPIER_ID                1
+#define MNT_RP_FLUSHER_ID               2
+#define MNT_RP_ANALYZER_ID              3
+#define MNT_RP_HEALTH_CHEKER_ID         4
+#define MNT_RP_APPLIER_BASE_ID          5
 
 #define RP_SET_AGENT_NEED_RESTART() (rp_set_agent_need_restart (ARG_FILE_LINE))
 #define RP_SET_AGENT_NEED_SHUTDOWN() (rp_set_agent_need_shutdown (ARG_FILE_LINE))

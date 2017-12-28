@@ -38,9 +38,17 @@
 
 typedef enum
 {
-  MONITOR_TYPE_COLLECTOR,
-  MONITOR_TYPE_VIEWER,
-} MONITOR_TYPE;;
+  MNT_DUMP_TYPE_NORMAL,
+  MNT_DUMP_TYPE_CSV_DATA,
+  MNT_DUMP_TYPE_CSV_HEADER
+} MONITOR_DUMP_TYPE;
+
+typedef enum
+{
+  MONITOR_TYPE_UNKNOWN,
+  MONITOR_TYPE_SERVER,
+  MONITOR_TYPE_REPL,
+} MONITOR_TYPE;
 
 typedef enum
 {
@@ -53,7 +61,6 @@ typedef enum
 typedef struct
 {
   const char *name;
-  int level;
   MONITOR_STATS_VALUE_TYPE value_type;
 } MONITOR_STATS_INFO;
 
@@ -65,9 +72,19 @@ typedef struct
 
 typedef struct
 {
+  MONITOR_TYPE monitor_type;
+  int num_stats;
+
+  MONITOR_STATS_INFO info[1];
+} MONITOR_STATS_META;
+
+typedef struct
+{
   RYE_SHM_HEADER shm_header;
 
   char name[SHM_NAME_SIZE];
+
+  MONITOR_TYPE monitor_type;
   int num_stats;
   int num_monitors;
 
@@ -77,17 +94,14 @@ typedef struct
 typedef struct
 {
   int shm_key;
-  RYE_SHM_TYPE shm_type;
-  MONITOR_TYPE type;
 
-  int num_stats;
-  MONITOR_STATS_INFO *info;
+  MONITOR_STATS_META *meta;
 
-  RYE_MONITOR_SHM *data;
+  RYE_MONITOR_SHM *monitor_shm;
 } MONITOR_INFO;
 
 
-#define MONITOR_SUFFIX_SERVER "_svr"
+#define MONITOR_SUFFIX "_mnt"
 
 
 #if defined(X86)
@@ -110,14 +124,37 @@ typedef struct
         ((TYPE) == MONITOR_STATS_VALUE_COUNTER_WITH_TIME)
 
 
-extern void monitor_make_server_name (char *monitor_name,
-				      const char *db_name);
+/* repl monitor items */
+typedef enum
+{
+  MNT_RP_LAST_RECEIVED_PAGEID,
+  MNT_RP_LAST_FLUSHED_PAGEID,
+  MNT_RP_EOF_PAGEID,
+
+  MNT_RP_CURRENT_PAGEID,
+  MNT_RP_REQUIRED_PAGEID,
+  MNT_RP_DELAY,
+  MNT_RP_QUEUE_FULL,
+
+  MNT_RP_INSERT,
+  MNT_RP_UPDATE,
+  MNT_RP_DELETE,
+  MNT_RP_DDL,
+  MNT_RP_COMMIT,
+  MNT_RP_FAIL,
+
+  MNT_SIZE_OF_REPL_EXEC_STATS
+} MNT_REPL_ITEM;
+
+extern void monitor_make_name (char *monitor_name, const char *name);
+extern void monitor_make_repl_name (char *monitor_name, const char *db_name);
 
 /******************************************************************
  * MONITOR COLLECTOR
  ******************************************************************/
-extern int monitor_create_collector (const char *name, int num_thread,
-				     RYE_SHM_TYPE shm_type);
+extern int monitor_create_collector (const char *name, int num_monitors,
+				     MONITOR_TYPE monitor_type);
+extern void monitor_final_collector (void);
 extern void monitor_stats_counter (int mnt_id, int item, INT64 value);
 extern void monitor_stats_counter_with_time (int mnt_id, int item,
 					     INT64 value, UINT64 start_time);
@@ -131,35 +168,34 @@ extern INT64 monitor_get_stats (int mnt_id, int item);
  * MONITOR VIEWER
  ******************************************************************/
 
-extern MONITOR_INFO *monitor_create_viewer_from_name (const char *name,
-						      RYE_SHM_TYPE shm_type);
-extern MONITOR_INFO *monitor_create_viewer_from_key (int shm_key,
-						     RYE_SHM_TYPE shm_type);
+extern MONITOR_INFO *monitor_create_viewer_from_name (const char *name);
+extern MONITOR_INFO *monitor_create_viewer_from_key (int shm_key);
+extern void monitor_final_viewer (MONITOR_INFO * monitor_info);
 extern bool monitor_stats_is_cumulative (MONITOR_INFO * monitor_info,
 					 int item);
 extern bool monitor_stats_is_collecting_time (MONITOR_INFO * monitor_info,
 					      int item);
 extern int monitor_copy_stats (MONITOR_INFO * monitor,
-			       MONITOR_STATS * to_stats, int num_stats,
-			       int mnt_id);
+			       MONITOR_STATS * to_stats, int mnt_id);
 extern int monitor_copy_global_stats (MONITOR_INFO * monitor,
-				      MONITOR_STATS * to_stats,
-				      int num_stats);
+				      MONITOR_STATS * to_stats);
 extern void monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
 					  char *buffer, int buf_size,
 					  MONITOR_STATS * stats,
-					  int num_stats, const char *header,
-					  const char *tail,
+					  MONITOR_DUMP_TYPE dump_type,
 					  const char *substr);
-extern void monitor_dump_stats (MONITOR_INFO * monitor, FILE * stream,
-				MONITOR_STATS * stats, int num_stats,
-				const char *header, const char *tail,
-				const char *substr);
+extern void monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
+				MONITOR_STATS * cur_stats,
+				MONITOR_STATS * old_stats, int cumulative,
+				MONITOR_DUMP_TYPE dump_type,
+				const char *substr,
+				void (*calc_func) (MONITOR_STATS * stats,
+						   int num_stats));
 extern int monitor_diff_stats (MONITOR_INFO * monitor,
 			       MONITOR_STATS * diff_stats,
 			       MONITOR_STATS * new_stats,
-			       MONITOR_STATS * old_stats, int num_stats);
+			       MONITOR_STATS * old_stats);
 
-extern int monitor_open_viewer_data (MONITOR_INFO * monitor, int num_stats);
-extern int monitor_close_viewer_data (MONITOR_INFO * monitor, int num_stats);
+extern int monitor_open_viewer_data (MONITOR_INFO * monitor);
+extern int monitor_close_viewer_data (MONITOR_INFO * monitor);
 #endif /* MONITOR_H_ */

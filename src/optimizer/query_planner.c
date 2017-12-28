@@ -466,7 +466,7 @@ qo_term_string (QO_TERM * term)
 {
   static char buf[257];
   char *p;
-  QO_ENV *env;
+  UNUSED_VAR QO_ENV *env;
   PT_NODE *conj, *saved_next = NULL;
 
   env = QO_TERM_ENV (term);
@@ -1441,7 +1441,7 @@ qo_index_scan_new (QO_INFO * info, QO_NODE * node,
   BITSET term_segs;
   BITSET remaining_terms;
   int first_seg;
-  bool first_col_present = false;
+  UNUSED_VAR bool first_col_present = false;
   PT_NODE *tree;
 
   assert (ni_entry != NULL);
@@ -2379,7 +2379,7 @@ qo_join_new (QO_INFO * info,
 {
   QO_PLAN *plan;
   QO_NODE *node;
-  PT_NODE *spec;
+  UNUSED_VAR PT_NODE *spec;
   BITSET sarg_out_terms;
 
   QO_ASSERT (info->env, outer != NULL);
@@ -3739,7 +3739,7 @@ qo_alloc_info (QO_PLANNER * planner,
 	       BITSET * nodes, BITSET * terms, double cardinality)
 {
   QO_INFO *info;
-  int i;
+  UNUSED_VAR int i;
 
   info = (QO_INFO *) malloc (sizeof (QO_INFO));
   if (info == NULL)
@@ -4763,7 +4763,7 @@ planner_visit_node (QO_PLANNER * planner,
   QO_INFO *tail_info = (QO_INFO *) NULL;
   QO_INFO *new_info = (QO_INFO *) NULL;
   int i, j;
-  bool check_afj_terms = false;
+  UNUSED_VAR bool check_afj_terms = false;
   BITSET_ITERATOR bi, bj;
   BITSET nl_join_terms;		/* nested-loop join terms */
   BITSET duj_terms;		/* during join terms */
@@ -5770,7 +5770,7 @@ qo_generate_seq_scan (QO_INFO * infop, QO_NODE * nodep)
 {
   int n;
   QO_PLAN *planp;
-  bool plan_created = false;
+  UNUSED_VAR bool plan_created = false;
 
   planp = qo_seq_scan_new (infop, nodep);
 
@@ -7149,7 +7149,8 @@ qo_between_selectivity (QO_ENV * env, PT_NODE * pt_expr)
 static double
 qo_range_selectivity (QO_ENV * env, PT_NODE * pt_expr)
 {
-  PT_NODE *lhs, *arg1, *arg2;
+  PT_NODE *lhs, *arg1;
+  UNUSED_VAR PT_NODE *arg2;
   double total_selectivity, selectivity;
   int lhs_icard, rhs_icard, icard;
   PT_NODE *range_node;
@@ -8160,7 +8161,7 @@ qo_validate_index_for_groupby (QO_ENV * env, QO_NODE_INDEX_ENTRY * ni_entryp)
 {
   bool key_notnull = false;	/* init */
   QO_INDEX_ENTRY *index_entryp;
-  QO_CLASS_INFO_ENTRY *index_class;
+  UNUSED_VAR QO_CLASS_INFO_ENTRY *index_class;
 
   PT_NODE *groupby_expr = NULL;
 
