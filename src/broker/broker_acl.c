@@ -476,7 +476,11 @@ remove_duplicate_ip_info (ACL_IP_INFO * acl_ip_info, int num_acl_ip_info)
     {
       for (j = 0; j < i; j++)
 	{
-	  int iplen = MIN (acl_ip_info[i].ip_len, acl_ip_info[j].ip_len);
+	  int iplen;
+
+	  iplen = MIN (acl_ip_info[i].ip_len, acl_ip_info[j].ip_len);
+	  assert (iplen <= ACL_IP_BYTE_COUNT);
+
 	  if (memcmp (acl_ip_info[i].ip_addr, acl_ip_info[j].ip_addr,
 		      iplen) == 0)
 	    {
@@ -702,6 +706,7 @@ br_acl_conf_read_ip_addr (ACL_IP_INFO * ip_info, char *linebuf,
       return -1;
     }
 
+  assert (iplen <= ACL_IP_BYTE_COUNT);
   ip_info->ip_len = iplen;
   ip_info->ip_last_access_time = 0;
 
@@ -803,8 +808,11 @@ print_acl_ip_addr (char *str, ACL_IP_INFO * acl_ip_info)
   int len;
   int i;
 
+  assert (acl_ip_info != NULL);
+  assert (acl_ip_info->ip_len <= ACL_IP_BYTE_COUNT);
+
   len = 0;
-  for (i = 0; i < acl_ip_info->ip_len; i++)
+  for (i = 0; i < acl_ip_info->ip_len && i < ACL_IP_BYTE_COUNT; i++)
     {
       len += sprintf (str + len, "%d%s",
 		      acl_ip_info->ip_addr[i], ((i != 3) ? "." : ""));
@@ -854,7 +862,7 @@ br_acl_dump (FILE * fp, BR_ACL_INFO * acl_info)
 
 	  (void) er_datetime (&time_val, str, sizeof (str));
 
-	  len += sprintf (line_buf + len, "%s", str);
+	  sprintf (line_buf + len, "%s", str);
 	}
 
       fprintf (fp, "%s\n", line_buf);

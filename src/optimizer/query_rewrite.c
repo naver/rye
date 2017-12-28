@@ -1243,8 +1243,8 @@ qo_reduce_order_by (PARSER_CONTEXT * parser, PT_NODE * node)
 		  PT_NODE *ord_num, *ins_num;
 
 		  /* generate orderby_num(), inst_num() */
-	        ord_num = parser_new_node (parser, PT_EXPR);
-	        ins_num = parser_new_node (parser, PT_EXPR);
+		  ord_num = parser_new_node (parser, PT_EXPR);
+		  ins_num = parser_new_node (parser, PT_EXPR);
 
 		  if (ord_num == NULL || ins_num == NULL)
 		    {
@@ -2062,7 +2062,7 @@ qo_rewrite_like_terms (PARSER_CONTEXT * parser, PT_NODE ** cnf_list)
 	  PT_NODE *pattern = NULL;
 	  PT_NODE *escape = NULL;
 	  PT_NODE *arg2 = NULL;
-	  PT_TYPE_ENUM pattern_type, escape_type = PT_TYPE_NONE;
+	  UNUSED_VAR PT_TYPE_ENUM pattern_type, escape_type = PT_TYPE_NONE;
 
 	  if (!PT_IS_EXPR_NODE_WITH_OPERATOR (crt_expr, PT_LIKE))
 	    {
@@ -3479,7 +3479,7 @@ qo_rewrite_subqueries (PARSER_CONTEXT * parser, PT_NODE * node, void *arg,
   int *idx = (int *) arg;
   bool do_rewrite;
   PT_NODE *save_next, *arg1_next, *new_attr_next, *tmp;
-  PT_OP_TYPE saved_op_type;
+  UNUSED_VAR PT_OP_TYPE saved_op_type;
 
   if (node->node_type != PT_SELECT)
     {
@@ -3573,7 +3573,7 @@ qo_rewrite_subqueries (PARSER_CONTEXT * parser, PT_NODE * node, void *arg,
 		  tmp = parser_new_node (parser, PT_EXPR);
 		  if (tmp == NULL)
 		    {
-	           cnf_node->next = save_next;       /* restore link */
+		      cnf_node->next = save_next;	/* restore link */
 
 		      PT_INTERNAL_ERROR (parser, "allocate new node");
 		      return NULL;
@@ -3850,8 +3850,8 @@ qo_optimize_queries (PARSER_CONTEXT * parser, PT_NODE * node,
 		  can_move = (info.base_count == 0);
 
 		  /* cleanup */
-		  info.select_stack =
-		    pt_pointer_stack_pop (parser, info.select_stack, NULL);
+		  (void) pt_pointer_stack_pop (parser, info.select_stack,
+					       NULL);
 		}
 
 	      /* Not found aggregate function in cnf node and no ROLLUP clause.

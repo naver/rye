@@ -2539,7 +2539,7 @@ pt_check_create_view (PARSER_CONTEXT * parser, PT_NODE * stmt)
   PT_NODE **qry_specs_ptr = NULL;
   PT_NODE *crt_qry = NULL;
   PT_NODE **prev_qry_link_ptr = NULL;
-  PT_NODE **attr_def_list_ptr = NULL;
+  UNUSED_VAR PT_NODE **attr_def_list_ptr = NULL;
   PT_NODE *prev_qry;
   const char *name = NULL;
   int attr_count = 0;
@@ -3623,6 +3623,10 @@ pt_semantic_check_local (PARSER_CONTEXT * parser, PT_NODE * node,
       if (node)
 	{
 	  node = pt_semantic_type (parser, node, info);
+	  if (node == NULL || pt_has_error (parser))
+	    {
+	      break;
+	    }
 	}
 
       /* try to coerce insert_values into types indicated
@@ -3631,7 +3635,8 @@ pt_semantic_check_local (PARSER_CONTEXT * parser, PT_NODE * node,
 	{
 	  pt_coerce_insert_values (parser, node);
 	}
-      if (pt_has_error (parser))
+
+      if (node == NULL || pt_has_error (parser))
 	{
 	  break;
 	}

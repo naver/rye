@@ -949,7 +949,7 @@ db_months_between (const DB_VALUE * start_mon,
   double result_double;
   int start_month, start_day, start_year;
   int end_month, end_day, end_year;
-  DB_DATE *start_date, *end_date;
+  UNUSED_VAR DB_DATE *start_date, *end_date;
 
   assert (start_mon != (DB_VALUE *) NULL);
   assert (end_mon != (DB_VALUE *) NULL);
@@ -1944,7 +1944,7 @@ db_get_datetime_from_dbvalue (const DB_VALUE * src_date,
 			      int *hour, int *minute, int *second,
 			      int *millisecond, const char **endp)
 {
-  PT_TYPE_ENUM arg_type = PT_TYPE_NONE;
+  DB_TYPE arg_type = DB_TYPE_NULL;
 
   if (DB_IS_NULL (src_date))
     {
@@ -2980,7 +2980,8 @@ db_hex (const DB_VALUE * param, DB_VALUE * result)
   else if (TP_IS_NUMERIC_TYPE (param_type))
     {
       DB_VALUE param_db_bigint;
-      TP_DOMAIN *domain, *param_domain;
+      TP_DOMAIN *domain;
+      UNUSED_VAR TP_DOMAIN *param_domain;
       UINT64 param_bigint;
 
       DB_MAKE_NULL (&param_db_bigint);
@@ -3569,7 +3570,10 @@ exit_on_error:
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
     }
 
-  DB_MAKE_NULL (result_numbered_ip);
+  if (result_numbered_ip != NULL)
+    {
+      DB_MAKE_NULL (result_numbered_ip);
+    }
 
   if (local_ipstring != NULL)
     {
@@ -3710,7 +3714,10 @@ exit_on_error:
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
     }
 
-  DB_MAKE_NULL (result_ip_string);
+  if (result_ip_string != NULL)
+    {
+      DB_MAKE_NULL (result_ip_string);
+    }
 
   /* arg clear tmp **********************************************************
    */

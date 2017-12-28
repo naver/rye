@@ -582,7 +582,7 @@ db_restart (const char *program, UNUSED_ARG int print_version,
       return error;
     }
 
-  strncpy (db_Program_name, program, PATH_MAX);
+  STRNCPY (db_Program_name, program, PATH_MAX);
   db_Database_name[0] = '\0';
 
   /* authorization will need to access the database and call some db_

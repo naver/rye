@@ -424,6 +424,7 @@ hb_register_to_master (CSS_CONN_ENTRY * conn, HB_PROC_TYPE type)
   if (proc_id == NULL)
     {
       er_log_debug (ARG_FILE_LINE, "not defined env(%s). \n", HB_PROC_ID_STR);
+      free_and_init (hbp_register);
       return (ER_FAILED);
     }
   parse_int (&hbp_register->pid, proc_id, 10);

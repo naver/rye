@@ -3672,7 +3672,7 @@ fileio_get_primitive_way_max (const char *path_p,
 	}
     }
 
-  strncpy (last_guess_path, new_guess_path, PATH_MAX);
+  STRNCPY (last_guess_path, new_guess_path, PATH_MAX);
 
   if (vol_fd != NULL_VOLDES)
     {
@@ -4266,7 +4266,7 @@ fileio_cache (VOLID vol_id, const char *vol_label_p, int vol_fd,
 	  sys_vol_info_p->vdes = vol_fd;
 	  sys_vol_info_p->lockf_type = lockf_type;
 	  sys_vol_info_p->next = NULL;
-	  strncpy (sys_vol_info_p->vlabel, vol_label_p, PATH_MAX);
+	  STRNCPY (sys_vol_info_p->vlabel, vol_label_p, PATH_MAX);
 	  fileio_Sys_vol_info_header.num_vols++;
 	}
 

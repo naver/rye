@@ -308,11 +308,12 @@ public class LocalMgmt
 	    throw JciException.createJciException(null, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
 	}
 
-	byte[] res = new byte[strsize - 1];
-	instream.read(res, 0, res.length);
-	instream.read();
+	byte[] res = new byte[strsize];
+	if (instream.read(res, 0, res.length) < res.length) {
+	    throw JciException.createJciException(null, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
+	}
 
-	return new String(res, RyeDriver.sysCharset);
+	return new String(res, 0, res.length - 1, RyeDriver.sysCharset);
     }
 
     private RyeConnectionUrl makeRyeConnectionUrlForException()
