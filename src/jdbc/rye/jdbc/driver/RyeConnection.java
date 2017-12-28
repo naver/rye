@@ -270,7 +270,7 @@ public class RyeConnection implements Connection
 	statements = null;
     }
 
-    public synchronized boolean isClosed() throws SQLException
+    public boolean isClosed() throws SQLException
     {
 	return is_closed;
     }
@@ -634,7 +634,7 @@ public class RyeConnection implements Connection
 	return jciCon.getTraceShardConnection();
     }
 
-    public ShardAdmin getShardAdmin()
+    public ShardAdmin getShardAdmin() throws RyeException
     {
 	return jciCon.getShardAdmin();
     }

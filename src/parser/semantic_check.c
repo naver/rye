@@ -2539,7 +2539,7 @@ pt_check_create_view (PARSER_CONTEXT * parser, PT_NODE * stmt)
   PT_NODE **qry_specs_ptr = NULL;
   PT_NODE *crt_qry = NULL;
   PT_NODE **prev_qry_link_ptr = NULL;
-  PT_NODE **attr_def_list_ptr = NULL;
+  UNUSED_VAR PT_NODE **attr_def_list_ptr = NULL;
   PT_NODE *prev_qry;
   const char *name = NULL;
   int attr_count = 0;
@@ -2958,8 +2958,8 @@ pt_check_shard_key (PARSER_CONTEXT * parser, PT_NODE * node)
     {
       /* is impossible */
       PT_ERRORf (parser, node,
-                 "check syntax at %s, expecting 'SHARD BY' expression.",
-                 pt_short_print (parser, node));
+		 "check syntax at %s, expecting 'SHARD BY' expression.",
+		 pt_short_print (parser, node));
       return;
     }
 
@@ -3623,6 +3623,10 @@ pt_semantic_check_local (PARSER_CONTEXT * parser, PT_NODE * node,
       if (node)
 	{
 	  node = pt_semantic_type (parser, node, info);
+	  if (node == NULL || pt_has_error (parser))
+	    {
+	      break;
+	    }
 	}
 
       /* try to coerce insert_values into types indicated
@@ -3631,7 +3635,8 @@ pt_semantic_check_local (PARSER_CONTEXT * parser, PT_NODE * node,
 	{
 	  pt_coerce_insert_values (parser, node);
 	}
-      if (pt_has_error (parser))
+
+      if (node == NULL || pt_has_error (parser))
 	{
 	  break;
 	}
@@ -5651,12 +5656,12 @@ pt_check_path_eq (PARSER_CONTEXT * parser, const PT_NODE * p,
 {
   PT_NODE_TYPE n;
 
-  if (!p && !q)
+  if (p == NULL && q == NULL)
     {
       return 0;
     }
 
-  if (!p || !q)
+  if (p == NULL || q == NULL)
     {
       return 1;
     }
@@ -5702,13 +5707,13 @@ pt_check_path_eq (PARSER_CONTEXT * parser, const PT_NODE * p,
        * That even allows us to use this very function to
        * implement recognition of common path expressions.
        */
-      if (!p->info.dot.arg2 || !q->info.dot.arg2)
+      if (p->info.dot.arg2 == NULL || q->info.dot.arg2 == NULL)
 	{
 	  return 1;
 	}
 
-      if (!p->info.dot.arg2->node_type == PT_NAME
-	  || !q->info.dot.arg2->node_type == PT_NAME)
+      if (p->info.dot.arg2->node_type != PT_NAME
+	  || q->info.dot.arg2->node_type != PT_NAME)
 	{
 	  return 1;
 	}

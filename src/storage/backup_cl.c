@@ -68,7 +68,8 @@ static void bk_verbose_backup_info (BK_BACKUP_SESSION * session,
 static int bk_finish_backup_session (BK_BACKUP_SESSION * session_p);
 
 int
-bk_run_backup (char *db_name, char *db_host, const char *backup_path,
+bk_run_backup (char *db_name, const PRM_NODE_INFO * db_host_info,
+	       const char *backup_path,
 	       const char *backup_verbose_file_path, int num_threads,
 	       int do_compress, int sleep_msecs,
 	       int delete_unneeded_logarchives, bool force_overwrite,
@@ -116,7 +117,7 @@ bk_run_backup (char *db_name, char *db_host, const char *backup_path,
   session.sleep_msecs = sleep_msecs;
   session.bkuphdr->make_slave = make_slave;
   session.bkuphdr->server_state = server_state;
-  strcpy (session.bkuphdr->db_host, db_host);
+  session.bkuphdr->db_host_info = *db_host_info;
 
   /*
    * Check for existing backup volumes in this location, and warn
@@ -636,6 +637,7 @@ bk_write_backup (BK_BACKUP_SESSION * session_p, ssize_t to_write_nbytes,
 	}
       else
 	{
+	  assert (session_p->bkuphdr->zip_method == BK_ZIP_NONE_METHOD);
 	  buffer_p = session_p->bkup.buffer;
 	}
 

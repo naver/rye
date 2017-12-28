@@ -673,6 +673,14 @@ er_init (const char *msglog_filename, int exit_ask)
       er_init_fmt (&er_Fmt_list[i]);
     }
 
+  /*
+   * Message catalog may be initialized by msgcat_init() during bootstrap.
+   * But, try once more to call msgcat_init() because there could be
+   * an exception case that get here before bootstrap.
+   */
+  status = msgcat_init ();
+  assert (status == NO_ERROR);
+
   msg_catd = msgcat_get_descriptor (MSGCAT_CATALOG_RYE);
   if (msg_catd != NULL)
     {
@@ -830,14 +838,6 @@ er_init (const char *msglog_filename, int exit_ask)
     {
       er_Accesslog_fh = stderr;
     }
-
-  /*
-   * Message catalog may be initialized by msgcat_init() during bootstrap.
-   * But, try once more to call msgcat_init() because there could be
-   * an exception case that get here before bootstrap.
-   */
-  status = msgcat_init ();
-  assert (status == NO_ERROR);
 
   (void) pthread_once (&er_Key_once, er_initialize_key);
 

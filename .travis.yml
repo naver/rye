@@ -18,8 +18,8 @@ addons:
     project:
       name: "naver/rye"
       description: "Build submitted via Travis CI"
-#   notification_email: dl_oss_rye@navercorp.com
-    build_command_prepend: "./autogen.sh; rm -rf Release64; mkdir Release64; cd Release64; ../configure"
+    notification_email: dl_oss_rye@navercorp.com
+    build_command_prepend: "bash ./build.sh -m release -t x86_64 prepare; cd build_x86_64_release; ../configure" # TODO - refer build.sh usage
     build_command:   "make"
     branch_pattern: coverity_scan
 
@@ -29,14 +29,21 @@ before_install:
 install: true
 
 script:
-  - if [[ "${COVERITY_SCAN_BRANCH}" == 1 ]];
-      then
-        echo "Don't build on coverty_scan branch.";
-        exit 0;
-    fi
+#  - if [[ "${COVERITY_SCAN_BRANCH}" == 1 ]];
+#      then
+#        echo "Don't build on coverty_scan branch.";
+#        exit 0;
+#    fi
 
 # Build only
   - bash ./build.sh -m release -t x86_64 build
+# Install
+  - if [[ "${COVERITY_SCAN_BRANCH}" != 1 ]];
+      then
+        cd build_x86_64_release;
+        make install;
+    fi
+
 #  - ./autogen.sh
 #  - rm -rf Release64
 #  - mkdir Release64

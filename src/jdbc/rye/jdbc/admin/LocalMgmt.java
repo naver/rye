@@ -21,7 +21,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 package rye.jdbc.admin;
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import rye.jdbc.driver.RyeConnectionUrl;
+import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeErrorCode;
 import rye.jdbc.driver.RyeException;
 import rye.jdbc.jci.BrokerHandler;
@@ -43,13 +44,18 @@ public class LocalMgmt
     private final static int DEFAULT_TIMEOUT = 600 * 1000;
     private final static int RES_INT_SIZE = 4;
 
-    private final int timeout = DEFAULT_TIMEOUT;
+    private static final int timeout = DEFAULT_TIMEOUT;
     private final JciConnectionInfo conInfo;
     private final ArrayList<JciConnectionInfo> conInfoList;
 
     public LocalMgmt(String localMgmtHost, int localMgmtPort) throws SQLException
     {
-	conInfo = new JciConnectionInfo(localMgmtHost, localMgmtPort, "rw");
+	this(new JciConnectionInfo(localMgmtHost, localMgmtPort, "rw"));
+    }
+
+    public LocalMgmt(JciConnectionInfo conInfo) throws SQLException
+    {
+	this.conInfo = conInfo;
 
 	conInfoList = new ArrayList<JciConnectionInfo>();
 	conInfoList.add(conInfo);
@@ -89,7 +95,9 @@ public class LocalMgmt
 		ByteArrayInputStream instream = new ByteArrayInputStream(resultmsg, offset, mgmtInfoSize);
 		offset += mgmtInfoSize;
 
-		shardMgmtInfo[i] = new ShardMgmtInfo(unpackString(instream), conInfo.getHostname(), unpackInt(instream));
+		String dbname = unpackString(instream);
+		int port = unpackInt(instream);
+		shardMgmtInfo[i] = new ShardMgmtInfo(dbname, new NodeAddress(conInfo.getHostname(), port));
 	    }
 
 	    return shardMgmtInfo;
@@ -258,7 +266,22 @@ public class LocalMgmt
 		return null;
 	    }
 	    else {
-		return new String(confValue, 0, confValue.length - 1);
+		return new String(confValue, 0, confValue.length - 1, RyeDriver.sysCharset);
+	    }
+	} catch (JciException e) {
+	    throw RyeException.createRyeException(makeRyeConnectionUrlForException(), e);
+	}
+    }
+
+    void deleteTmpFile(String file) throws SQLException
+    {
+	try {
+	    byte[] sendMsg = Protocol.mgmtRequestMsg(Protocol.BRREQ_OP_CODE_RM_TMP_FILE, file);
+
+	    BrokerResponse brRes = BrokerHandler.mgmtRequest(null, conInfo, sendMsg, timeout, true);
+	    int result = brRes.getResultCode();
+	    if (result < 0) {
+		throw new JciException(result);
 	    }
 	} catch (JciException e) {
 	    throw RyeException.createRyeException(makeRyeConnectionUrlForException(), e);
@@ -272,7 +295,9 @@ public class LocalMgmt
 	}
 
 	byte[] res = new byte[RES_INT_SIZE];
-	instream.read(res, 0, res.length);
+	if (instream.read(res, 0, res.length) < res.length) {
+	    throw JciException.createJciException(null, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
+	}
 	return JciUtil.bytes2int(res, 0);
     }
 
@@ -283,11 +308,12 @@ public class LocalMgmt
 	    throw JciException.createJciException(null, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
 	}
 
-	byte[] res = new byte[strsize - 1];
-	instream.read(res, 0, res.length);
-	instream.read();
+	byte[] res = new byte[strsize];
+	if (instream.read(res, 0, res.length) < res.length) {
+	    throw JciException.createJciException(null, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
+	}
 
-	return new String(res);
+	return new String(res, 0, res.length - 1, RyeDriver.sysCharset);
     }
 
     private RyeConnectionUrl makeRyeConnectionUrlForException()

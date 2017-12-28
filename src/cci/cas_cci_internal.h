@@ -37,6 +37,7 @@
 
 #include "cas_cci.h"
 #include "repl_page_buffer.h"
+#include "cci_handle_mng.h"
 
 #define IS_CCI_NO_ERROR(ERRCODE)	((ERRCODE) >= 0)
 
@@ -105,12 +106,15 @@ extern int cci_mgmt_sync_shard_mgmt_info (const char *hostname,
 					  int *server_mode, int timeout_msec);
 extern int cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 				    const char *hostname, int mgmt_port,
-				    int launch_proc_id, bool wait_child,
+				    int launch_proc_id,
+				    bool recv_stdout, bool wait_child,
 				    int argc, const char **argv, int num_env,
 				    const char **envp, int timeout_msec);
 extern int cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 					 int timeout_msec);
 extern int cc_mgmt_count_launch_process (void);
+extern int cci_mgmt_connect_db_server (const T_HOST_INFO * host,
+				       const char *dbname, int timeout_msec);
 
 extern int cci_host_str_to_addr (const char *host_str,
 				 unsigned char *ip_addr);
@@ -126,8 +130,8 @@ extern void cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY
 				      CCI_DB_GET_STRING db_get_string_func);
 extern int cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head,
 			       int num_items);
-extern int cci_notify_ha_agent_state (CCI_CONN * conn, const char *host_ip,
-				      int state);
+extern int cci_notify_ha_agent_state (CCI_CONN * conn, in_addr_t ip,
+				      int port, int state);
 extern int cci_change_dbuser (CCI_CONN * conn, const char *user,
 			      const char *passwd);
 

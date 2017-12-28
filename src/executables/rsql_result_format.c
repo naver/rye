@@ -578,10 +578,11 @@ double_to_string (double double_value, int field_width,
 
       if (field_width == 0)
 	{
-	  if ((return_string = (char *) malloc (actual_fieldwidth +
-						COMMAS_OFFSET (commas,
-							       actual_fieldwidth)
-						+ 1)) == NULL)
+	  return_string = (char *) malloc (actual_fieldwidth +
+					   COMMAS_OFFSET (commas,
+							  actual_fieldwidth)
+					   + 1);
+	  if (return_string == NULL)
 	    {
 	      return (NULL);
 	    }
@@ -589,10 +590,11 @@ double_to_string (double double_value, int field_width,
 	}
       else
 	{
-	  if ((return_string = (char *) malloc (overall_fieldwidth +
-						COMMAS_OFFSET (commas,
-							       actual_fieldwidth)
-						+ 1)) == NULL)
+	  return_string = (char *) malloc (overall_fieldwidth +
+					   COMMAS_OFFSET (commas,
+							  actual_fieldwidth)
+					   + 1);
+	  if (return_string == NULL)
 	    {
 	      return (NULL);
 	    }
@@ -606,6 +608,7 @@ double_to_string (double double_value, int field_width,
 	      if (actual_fieldwidth >= ONE_K)
 		{
 		  assert (false);
+		  free_and_init (return_string);
 		  return NULL;
 		}
 	      return_string[overall_fieldwidth] =

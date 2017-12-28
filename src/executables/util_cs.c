@@ -58,6 +58,7 @@
 #include "heartbeat.h"
 #include "connection_support.h"
 #include "backup_cl.h"
+#include "monitor.h"
 
 #define PASSBUF_SIZE 12
 #define SPACEDB_NUM_VOL_PURPOSE 5
@@ -111,19 +112,21 @@ static bool check_client_alive (void);
 static int spacedb_get_size_str (char *buf, UINT64 num_pages,
 				 T_SPACEDB_SIZE_UNIT size_unit);
 #if defined (CS_MODE)
-static void print_timestamp (FILE * outfp);
 static int print_tran_entry (const ONE_TRAN_INFO * tran_info,
 			     TRANDUMP_LEVEL dump_level);
 static int tranlist_cmp_f (const void *p1, const void *p2);
 #endif
 
 static HA_STATE
-connect_db (const char *db, const char *host)
+connect_db (const char *db, const PRM_NODE_INFO * node_info)
 {
   int error;
-  char dbname[MAXHOSTNAMELEN + MAX_DBNAME_SIZE + 2];
+  char dbname[MAX_NODE_INFO_STR_LEN + MAX_DBNAME_SIZE + 2];
+  char host_str[MAX_NODE_INFO_STR_LEN];
 
-  sprintf (dbname, "%s@%s", db, host);
+  prm_node_info_to_str (host_str, sizeof (host_str), node_info);
+
+  sprintf (dbname, "%s@%s", db, host_str);
   boot_clear_host_connected ();
 
   error = db_restart ("backupdb", TRUE, dbname);
@@ -136,7 +139,7 @@ connect_db (const char *db, const char *host)
 }
 
 static int
-find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
+find_connect_host_index (const char *dbname, const PRM_NODE_LIST * node_list,
 			 HA_STATE expect_server_state)
 {
   int i;
@@ -146,9 +149,9 @@ find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
   db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
   db_login ("DBA", NULL);
 
-  for (i = 0; i < num_hosts; i++)
+  for (i = 0; i < node_list->num_nodes; i++)
     {
-      server_state = connect_db (dbname, hosts[i]);
+      server_state = connect_db (dbname, &node_list->nodes[i]);
       if (server_state == expect_server_state)
 	{
 	  db_shutdown ();
@@ -162,72 +165,66 @@ find_connect_host_index (const char *dbname, char **hosts, int num_hosts,
 }
 
 static int
-find_connect_server (char *db_name, char *db_host, const char *database_name,
+find_connect_server (char *db_name, PRM_NODE_INFO * db_host,
+		     const char *database_name,
 		     BACKUPDB_CONNECT_ORDER c_order)
 {
-  char **ha_hosts = NULL;
-  int num_ha_hosts = 0;
   char *ptr;
-  int idx;
+  int idx = -1;
+  PRM_NODE_LIST node_list;
 
-  ptr = strstr (database_name, "@");
-  if (ptr != NULL)
+  memset (&node_list, 0, sizeof (node_list));
+
+  strcpy (db_name, database_name);
+  ptr = strstr (db_name, "@");
+  if (ptr == NULL)
     {
-      strncpy (db_name, database_name, ptr - database_name);
-      ha_hosts = cfg_get_hosts (ptr + 1, &num_ha_hosts, false);
+      prm_get_ha_node_list (&node_list);
     }
   else
     {
-      strcpy (db_name, database_name);
-      ha_hosts = cfg_get_hosts_from_prm (&num_ha_hosts);
+      prm_split_node_str (&node_list, ptr + 1, false);
+      *ptr = '\0';
     }
 
   if (c_order == BACKUPDB_SLAVE_MASTER)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_SLAVE);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_SLAVE);
       if (idx < 0)
 	{
-	  idx = find_connect_host_index (db_name, ha_hosts,
-					 num_ha_hosts, HA_STATE_MASTER);
+	  idx =
+	    find_connect_host_index (db_name, &node_list, HA_STATE_MASTER);
 	}
     }
   else if (c_order == BACKUPDB_MASTER_SLAVE)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_MASTER);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_MASTER);
       if (idx < 0)
 	{
-	  idx = find_connect_host_index (db_name, ha_hosts,
-					 num_ha_hosts, HA_STATE_SLAVE);
+	  idx = find_connect_host_index (db_name, &node_list, HA_STATE_SLAVE);
 	}
     }
   else if (c_order == BACKUPDB_SLAVE_ONLY)
     {
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_SLAVE);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_SLAVE);
     }
   else
     {
       assert (c_order == BACKUPDB_MASTER_ONLY);
-      idx = find_connect_host_index (db_name, ha_hosts, num_ha_hosts,
-				     HA_STATE_MASTER);
+      idx = find_connect_host_index (db_name, &node_list, HA_STATE_MASTER);
     }
 
   if (idx >= 0)
     {
-      strcpy (db_host, ha_hosts[idx]);
+      *db_host = node_list.nodes[idx];
     }
   else
     {
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
 					     MSGCAT_UTIL_SET_BACKUPDB,
 					     BACKUPDB_NOT_FOUND_HOST));
-      cfg_free_hosts (ha_hosts);
       return -1;
     }
-
-  cfg_free_hosts (ha_hosts);
 
   return 0;
 }
@@ -257,7 +254,8 @@ backupdb (UTIL_FUNCTION_ARG * arg)
   char backup_path_buf[PATH_MAX];
   HA_STATE server_state;
   char db_name[MAX_DBNAME_SIZE];
-  char db_host[MAXHOSTNAMELEN];
+  char db_host_str[MAX_NODE_INFO_STR_LEN];
+  PRM_NODE_INFO db_host_info;
   char db_fullname[MAXHOSTNAMELEN + MAX_DBNAME_SIZE];
   BACKUPDB_CONNECT_ORDER c_order = BACKUPDB_SLAVE_MASTER;
 
@@ -376,12 +374,14 @@ backupdb (UTIL_FUNCTION_ARG * arg)
 	}
     }
 
-  if (find_connect_server (db_name, db_host, database_name, c_order) < 0)
+  if (find_connect_server (db_name, &db_host_info, database_name,
+			   c_order) < 0)
     {
       goto error_exit;
     }
 
-  sprintf (db_fullname, "%s@%s", db_name, db_host);
+  prm_node_info_to_str (db_host_str, sizeof (db_host_str), &db_host_info);
+  sprintf (db_fullname, "%s@%s", db_name, db_host_str);
 
   AU_DISABLE_PASSWORDS ();
   db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
@@ -417,7 +417,7 @@ backupdb (UTIL_FUNCTION_ARG * arg)
       css_register_check_client_alive_fn (check_client_alive);
       server_state = db_get_server_state ();
 
-      if (bk_run_backup (db_name, db_host, backup_path,
+      if (bk_run_backup (db_name, &db_host_info, backup_path,
 			 backup_verbose_file, backup_num_threads,
 			 compress_flag, sleep_msecs,
 			 remove_log_archives, force_overwrite,
@@ -2045,9 +2045,8 @@ tranlist (UTIL_FUNCTION_ARG * arg)
       goto error_exit;
     }
 
-  error =
-    db_restart_ex (arg->command_name, database_name, username, password, NULL,
-		   BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
+  error = db_restart_ex (arg->command_name, database_name, username, password,
+			 BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
   if (error != NO_ERROR)
     {
       char msg_buf[64];
@@ -2072,10 +2071,9 @@ tranlist (UTIL_FUNCTION_ARG * arg)
 	    }
 	  password = passbuf;
 
-	  error =
-	    db_restart_ex (arg->command_name, database_name, username,
-			   password, NULL,
-			   BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
+	  error = db_restart_ex (arg->command_name, database_name,
+				 username, password,
+				 BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
 	}
 
       if (error != NO_ERROR)
@@ -2699,21 +2697,6 @@ error_exit:
   return EXIT_FAILURE;
 }
 
-#if defined (CS_MODE)
-static void
-print_timestamp (FILE * outfp)
-{
-  time_t tloc;
-  struct tm tmloc;
-  char str[80];
-
-  tloc = time (NULL);
-  utility_localtime (&tloc, &tmloc);
-  strftime (str, 80, "%a %B %d %H:%M:%S %Z %Y", &tmloc);
-  fprintf (outfp, "\n\t%s\n", str);
-}
-#endif
-
 /*
  * statdump() - statdump main routine
  *   return: EXIT_SUCCESS/EXIT_FAILURE
@@ -2726,13 +2709,31 @@ statdump (UTIL_FUNCTION_ARG * arg)
   char er_msg_file[PATH_MAX];
   const char *database_name;
   const char *output_file = NULL;
+  const char *output_type = NULL;
   int interval;
   bool cumulative;
   const char *substr;
   FILE *outfp = NULL;
-  const char *local_db_name = NULL;
-  char tmp_dbname[ONE_K];
+  char local_db_name[ONE_K], name[ONE_K];
+  char hostname[MAX_NODE_INFO_STR_LEN];
+  char *ptr;
+  bool is_header_printed;
 
+  char monitor_name[ONE_K];
+
+  MONITOR_DUMP_TYPE dump_type = MNT_DUMP_TYPE_NORMAL;
+
+  MONITOR_INFO *server_monitor = NULL;
+  MONITOR_STATS server_cur_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+  MONITOR_STATS server_old_stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
+
+  MONITOR_INFO *repl_monitor[PRM_MAX_HA_NODE_LIST];
+  PRM_NODE_LIST node_list = PRM_NODE_LIST_INITIALIZER;
+  MONITOR_STATS *repl_cur_stats[PRM_MAX_HA_NODE_LIST];
+  MONITOR_STATS *repl_old_stats[PRM_MAX_HA_NODE_LIST];
+  int repl_stats_size;
+
+  int i;
 
   if (utility_get_option_string_table_size (arg_map) != 1)
     {
@@ -2748,6 +2749,8 @@ statdump (UTIL_FUNCTION_ARG * arg)
 
   output_file = utility_get_option_string_value (arg_map,
 						 STATDUMP_OUTPUT_FILE_S, 0);
+  output_type = utility_get_option_string_value (arg_map,
+						 STATDUMP_OUTPUT_TYPE_S, 0);
   interval = utility_get_option_int_value (arg_map, STATDUMP_INTERVAL_S);
   if (interval < 0)
     {
@@ -2778,14 +2781,35 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	}
     }
 
+  if (output_type == NULL)
+    {
+      dump_type = MNT_DUMP_TYPE_NORMAL;
+    }
+  else if (strcasecmp (output_type, "csv") == 0)
+    {
+      dump_type = MNT_DUMP_TYPE_CSV_DATA;
+    }
+
   if (check_database_name (database_name) != NO_ERROR)
     {
       goto error_exit;
     }
 
+  snprintf (local_db_name, sizeof (local_db_name), "%s", database_name);
+  ptr = strchr (local_db_name, '@');
+  if (ptr != NULL)
+    {
+      if (strcmp (ptr + 1, "localhost") != 0)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("%s\n", "Invalid host name");
+	  goto error_exit;
+	}
+      *ptr = '\0';
+    }
+
   /* error message log file */
   snprintf (er_msg_file, sizeof (er_msg_file) - 1,
-	    "%s_%s.err", database_name, arg->command_name);
+	    "%s_%s.err", local_db_name, arg->command_name);
   er_init (er_msg_file, ER_EXIT_DEFAULT);
 
   if (lang_init () != NO_ERROR)
@@ -2793,35 +2817,64 @@ statdump (UTIL_FUNCTION_ARG * arg)
       goto error_exit;
     }
 
-  strncpy (tmp_dbname, database_name, sizeof (tmp_dbname));
-  tmp_dbname[sizeof (tmp_dbname) - 1] = '\0';
+  sysprm_load_and_init (NULL);
 
-  char *p = strchr (tmp_dbname, '@');
-  if (p == NULL || strcmp (p + 1, "localhost") == 0)
+
+  monitor_make_name (monitor_name, local_db_name);
+  server_monitor = monitor_create_viewer_from_name (monitor_name);
+  if (server_monitor == NULL)
     {
-      if (p)
+      PRINT_AND_LOG_ERR_MSG ("Not found shm name(%s) of monitor\n",
+			     monitor_name);
+
+      goto error_exit;
+    }
+  memset (server_cur_stats, 0, sizeof (server_cur_stats));
+  memset (server_old_stats, 0, sizeof (server_old_stats));
+
+  prm_get_ha_node_list (&node_list);
+
+  for (i = 0; i < node_list.num_nodes; i++)
+    {
+      repl_monitor[i] = NULL;
+      repl_old_stats[i] = NULL;
+      repl_cur_stats[i] = NULL;
+
+      if (prm_is_myself_node_info (&node_list.nodes[i]))
 	{
-	  *p = '\0';
+	  continue;
 	}
 
-      sysprm_load_and_init (NULL);
+      prm_node_info_to_str (hostname, sizeof (hostname), &node_list.nodes[i]);
+      /* db_name@host_ip:port_id */
+      snprintf (name, sizeof (name), "%s@%s", local_db_name, hostname);
 
-      local_db_name = tmp_dbname;
-    }
-
-  if (local_db_name == NULL)
-    {
-      AU_DISABLE_PASSWORDS ();
-      db_set_client_type (BOOT_CLIENT_READ_ONLY_ADMIN_UTILITY);
-      db_login ("DBA", NULL);
-
-      if (db_restart (arg->command_name, TRUE, database_name) != NO_ERROR)
+      monitor_make_name (monitor_name, name);
+      repl_monitor[i] = monitor_create_viewer_from_name (monitor_name);
+      if (repl_monitor[i] == NULL)
 	{
-	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+	  PRINT_AND_LOG_ERR_MSG ("Not found shm name(%s) of monitor\n",
+				 monitor_name);
 	  goto error_exit;
 	}
 
-      histo_start (true);
+      repl_stats_size =
+	sizeof (MONITOR_STATS) * repl_monitor[i]->meta->num_stats;
+      repl_cur_stats[i] = (MONITOR_STATS *) malloc (repl_stats_size);
+      if (repl_cur_stats[i] == NULL)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("Out of virtual memory\n");
+	  goto error_exit;
+	}
+      memset (repl_cur_stats[i], 0, repl_stats_size);
+
+      repl_old_stats[i] = (MONITOR_STATS *) malloc (repl_stats_size);
+      if (repl_old_stats[i] == NULL)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("Out of virtual memory\n");
+	  goto error_exit;
+	}
+      memset (repl_old_stats[i], 0, repl_stats_size);
     }
 
   if (interval > 0)
@@ -2830,10 +2883,72 @@ statdump (UTIL_FUNCTION_ARG * arg)
       os_set_signal_handler (SIGINT, intr_handler);
     }
 
+  is_header_printed = false;
   do
     {
-      print_timestamp (outfp);
-      histo_print_global_stats (outfp, cumulative, substr, local_db_name);
+      if (dump_type == MNT_DUMP_TYPE_CSV_DATA && is_header_printed == false)
+	{
+	  monitor_dump_stats (outfp, server_monitor, NULL, NULL, cumulative,
+			      MNT_DUMP_TYPE_CSV_HEADER, substr, NULL);
+
+	  for (i = 0; i < node_list.num_nodes; i++)
+	    {
+	      if (repl_monitor[i] == NULL)
+		{
+		  continue;
+		}
+	      monitor_dump_stats (outfp, repl_monitor[i], NULL, NULL,
+				  cumulative, MNT_DUMP_TYPE_CSV_HEADER,
+				  substr, NULL);
+	    }
+	  is_header_printed = true;
+	}
+
+      /* server statdump */
+      if (monitor_copy_global_stats (server_monitor,
+				     server_cur_stats) != NO_ERROR)
+	{
+	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+	  continue;
+	}
+      monitor_dump_stats (outfp, server_monitor, server_cur_stats,
+			  server_old_stats, cumulative,
+			  dump_type, substr, mnt_calc_hit_ratio);
+      memcpy (server_old_stats, server_cur_stats, sizeof (server_cur_stats));
+      monitor_close_viewer_data (server_monitor);
+
+      /* repl statdump */
+      for (i = 0; i < node_list.num_nodes; i++)
+	{
+	  if (repl_monitor[i] == NULL)
+	    {
+	      continue;
+	    }
+
+	  if (monitor_copy_global_stats (repl_monitor[i],
+					 repl_cur_stats[i]) != NO_ERROR)
+	    {
+	      PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+	      continue;
+	    }
+	}
+
+      for (i = 0; i < node_list.num_nodes; i++)
+	{
+	  if (repl_monitor[i] == NULL)
+	    {
+	      continue;
+	    }
+	  monitor_dump_stats (outfp, repl_monitor[i],
+			      repl_cur_stats[i], repl_old_stats[i],
+			      cumulative, dump_type, substr, NULL);
+	  memcpy (repl_old_stats[i], repl_cur_stats[i],
+		  sizeof (MONITOR_STATS) * MNT_SIZE_OF_REPL_EXEC_STATS);
+
+	  monitor_close_viewer_data (repl_monitor[i]);
+	}
+
+      fprintf (outfp, "\n");
       fflush (outfp);
       sleep (interval);
     }
@@ -2863,6 +2978,25 @@ error_exit:
   if (outfp != stdout && outfp != NULL)
     {
       fclose (outfp);
+    }
+  if (server_monitor != NULL)
+    {
+      monitor_final_viewer (server_monitor);
+    }
+  for (i = 0; i < node_list.num_nodes; i++)
+    {
+      if (repl_monitor[i] != NULL)
+	{
+	  monitor_final_viewer (repl_monitor[i]);
+	}
+      if (repl_old_stats[i] != NULL)
+	{
+	  free_and_init (repl_old_stats[i]);
+	}
+      if (repl_cur_stats[i] != NULL)
+	{
+	  free_and_init (repl_cur_stats[i]);
+	}
     }
   return EXIT_FAILURE;
 #else /* CS_MODE */

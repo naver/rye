@@ -53,8 +53,7 @@
 #include "object_representation.h"
 #include "rye_server_shm.h"
 
-#define IS_MASTER_SOCKET_FD(FD)         \
-      ((FD) == css_Master_socket_fd[0] || (FD) == css_Master_socket_fd[1])
+#define IS_MASTER_SOCKET_FD(FD)		((FD) == css_Master_socket_fd)
 
 #define HA_SERVER_FORMAT_STRING " HA-Server %s (rel %s, pid %d, nodeid %d)\n"
 #define HA_REPL_FORMAT_STRING " HA-Repl %s (rel %s, pid %d, nodeid %d)\n"
@@ -499,6 +498,7 @@ css_process_ha_ping_host_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   reply = (char *) malloc (reply_size);
   if (reply == NULL)
     {
+      free_and_init (ping_host_info);
       return CANT_ALLOC_BUFFER;
     }
 
@@ -549,6 +549,7 @@ css_process_ha_node_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   reply = (char *) malloc (reply_size);
   if (reply == NULL)
     {
+      free_and_init (node_info);
       return CANT_ALLOC_BUFFER;
     }
 
@@ -599,6 +600,7 @@ css_process_ha_process_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   reply = (char *) malloc (reply_size);
   if (reply == NULL)
     {
+      free_and_init (process_info);
       return CANT_ALLOC_BUFFER;
     }
 
@@ -646,6 +648,7 @@ css_process_ha_admin_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   reply = (char *) malloc (reply_size);
   if (reply == NULL)
     {
+      free_and_init (admin_info);
       return CANT_ALLOC_BUFFER;
     }
 
@@ -1301,10 +1304,9 @@ css_process_kill_master (void)
 {
   char sock_path[PATH_MAX];
 
-  css_shutdown_socket (css_Master_socket_fd[0]);
-  css_shutdown_socket (css_Master_socket_fd[1]);
+  css_shutdown_socket (css_Master_socket_fd);
 
-  css_get_master_domain_path (sock_path, PATH_MAX);
+  css_get_master_domain_path (sock_path, PATH_MAX, false);
   unlink (sock_path);
 
   hb_resource_shutdown_and_cleanup ();
@@ -1382,11 +1384,9 @@ css_master_request_handler (SOCKET_QUEUE_ENTRY * sock_ent)
 
   conn = sock_ent->conn_ptr;
 
-  css_error = css_receive_request (conn, &recv_packet);
-  if (css_error != NO_ERRORS)
+  if (css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "receive error request. (error:%d). \n", css_error);
+      er_log_debug (ARG_FILE_LINE, "receive error request.\n");
 
       hb_cleanup_conn_and_start_process (conn);
       return;

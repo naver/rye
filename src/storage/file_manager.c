@@ -3385,7 +3385,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 
 				  pgbuf_invalidate_temporary_file
 				    (allocset->volid, batch_firstid,
-				     batch_ndealloc, true);
+				     batch_ndealloc);
 
 				  /* Start again */
 				  batch_firstid = *aid_ptr;
@@ -3406,7 +3406,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 
 		      pgbuf_invalidate_temporary_file (allocset->volid,
 						       batch_firstid,
-						       batch_ndealloc, true);
+						       batch_ndealloc);
 		    }
 
 		  /* Get next page in the allocation set */
@@ -3458,8 +3458,8 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
       pb_invalid_temp_called = true;
       if (!out_of_range)
 	{
-	  if ((file_type == FILE_TMP || file_type == FILE_QUERY_AREA)
-	      && file_tmpfile_cache_put (thread_p, vfid, file_type))
+	  assert (file_type == FILE_TMP || file_type == FILE_QUERY_AREA);
+	  if (file_tmpfile_cache_put (thread_p, vfid, file_type))
 	    {
 	      pgbuf_unfix_and_init (thread_p, fhdr_pgptr);
 
@@ -3607,7 +3607,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 				{
 				  pgbuf_invalidate_temporary_file
 				    (allocset->volid, batch_firstid,
-				     batch_ndealloc, false);
+				     batch_ndealloc);
 				}
 
 			      (void) disk_dealloc_page (thread_p,
@@ -3636,7 +3636,7 @@ file_destroy (THREAD_ENTRY * thread_p, const VFID * vfid)
 		    {
 		      pgbuf_invalidate_temporary_file (allocset->volid,
 						       batch_firstid,
-						       batch_ndealloc, false);
+						       batch_ndealloc);
 		    }
 
 		  (void) disk_dealloc_page (thread_p, allocset->volid,
@@ -13415,7 +13415,7 @@ file_print_name_of_class (THREAD_ENTRY * thread_p, FILE * fp,
       class_name_p = heap_get_class_name (thread_p, class_oid_p);
       fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s)\n",
 	       class_oid_p->volid, class_oid_p->pageid, class_oid_p->slotid,
-	       (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*");
+	       (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*");
       if (class_name_p)
 	{
 	  free_and_init (class_name_p);
@@ -13438,7 +13438,7 @@ file_print_class_name_of_instance (THREAD_ENTRY * thread_p, FILE * fp,
       class_name_p = heap_get_class_name_of_instance (thread_p, inst_oid_p);
       fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s)\n",
 	       inst_oid_p->volid, inst_oid_p->pageid, inst_oid_p->slotid,
-	       (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*");
+	       (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*");
       if (class_name_p)
 	{
 	  free_and_init (class_name_p);
@@ -13462,7 +13462,7 @@ file_print_name_of_class_with_attrid (THREAD_ENTRY * thread_p, FILE * fp,
       class_name_p = heap_get_class_name (thread_p, class_oid_p);
       fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s), ATTRID: %2d\n",
 	       class_oid_p->volid, class_oid_p->pageid, class_oid_p->slotid,
-	       (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*", attr_id);
+	       (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*", attr_id);
       if (class_name_p)
 	{
 	  free_and_init (class_name_p);
@@ -13529,7 +13529,7 @@ file_print_class_name_index_name_with_attrid (THREAD_ENTRY * thread_p,
   /* print */
   fprintf (fp, "CLASS_OID:%2d|%4d|%2d (%s), %s, ATTRID: %2d",
 	   class_oid_p->volid, class_oid_p->pageid, class_oid_p->slotid,
-	   (class_name_p == NULL) ? "*UNKNOWN-CLASS*" : class_name_p,
+	   (class_name_p == NULL) ? "*UNKNOWN-TABLE*" : class_name_p,
 	   (index_name_p == NULL) ? "*UNKNOWN-INDEX*" : index_name_p,
 	   attr_id);
 

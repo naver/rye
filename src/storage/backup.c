@@ -493,7 +493,9 @@ bk_allocate_node (BK_QUEUE * queue_p, BK_BACKUP_HEADER * backup_header_p)
 	  goto exit_on_error;
 	}
       break;
+
     default:
+      assert (backup_header_p->zip_method == BK_ZIP_NONE_METHOD);
       break;
     }
 

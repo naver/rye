@@ -46,8 +46,8 @@ import rye.jdbc.jci.RyeCommandType;
 
 public class RyeStatement implements Statement
 {
-    protected RyeConnection con;
-    protected JciConnection jciCon;
+    protected final RyeConnection con;
+    protected final JciConnection jciCon;
     protected JciStatement jciStmt;
     protected boolean completed;
     protected RyeResultSet result_set;
@@ -243,8 +243,6 @@ public class RyeStatement implements Statement
 		    complete();
 		    is_closed = true;
 		    con.removeStatement(this);
-
-		    con = null;
 		}
 	    }
 	} catch (NullPointerException e) {
@@ -552,12 +550,7 @@ public class RyeStatement implements Statement
     protected void checkIsOpen() throws SQLException
     {
 	if (is_closed) {
-	    if (con != null) {
-		throw con.createRyeException(RyeErrorCode.ER_STATEMENT_CLOSED, null);
-	    }
-	    else {
-		throw RyeException.createRyeException(jciCon, RyeErrorCode.ER_STATEMENT_CLOSED, null);
-	    }
+	    throw con.createRyeException(RyeErrorCode.ER_STATEMENT_CLOSED, null);
 	}
     }
 

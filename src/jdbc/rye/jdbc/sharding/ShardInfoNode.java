@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import rye.jdbc.driver.ConnectionProperties;
+import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeErrorCode;
 import rye.jdbc.driver.RyeException;
 import rye.jdbc.jci.InputBuffer;
@@ -164,11 +165,17 @@ class ShardInfoNode
 			sb.append(",");
 		    }
 
-		    sb.append(conInfo.getHostname());
+		    sb.append(conInfo.getHostAddress().getHostAddress());
 		    sb.append(":");
 		    sb.append(conInfo.getPort());
 		}
-		strHostInfo = sb.toString();
+
+		if (sb == null) {
+		    strHostInfo = "";
+		}
+		else {
+		    strHostInfo = sb.toString();
+		}
 	    }
 
 	    return (String.format("%d %s %s", nodeId.getNodeId(), strHostInfo, dbname));
@@ -194,7 +201,7 @@ class ShardInfoNode
     ShardInfoNode(byte[] netStream, ShardInfo shardInfo) throws JciException, RyeException
     {
 	// unpacking message
-	InputBuffer in = new InputBuffer(netStream);
+	InputBuffer in = new InputBuffer(netStream, RyeDriver.sysCharset);
 
 	long version = in.readLong();
 	int count = in.readInt();

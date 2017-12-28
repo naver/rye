@@ -233,7 +233,7 @@ abstract class RyeResultSetBase implements ResultSet
 	}
 
 	if (value instanceof String) {
-	    ByteArrayInputStream stream = new ByteArrayInputStream(((String) value).getBytes());
+	    ByteArrayInputStream stream = new ByteArrayInputStream(((String) value).getBytes(RyeDriver.charsetAscii));
 	    return stream;
 	}
 	else {

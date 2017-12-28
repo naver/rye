@@ -40,7 +40,7 @@ import rye.jdbc.jci.Protocol;
 public class RyeCommand
 {
     private static final String[] emptyStringArray = {};
-    private final int DEFAULT_TIMEOUT = 600 * 1000;
+    private static final int DEFAULT_TIMEOUT = 600 * 1000;
 
     private final JciConnectionInfo conInfo;
     private int timeout = DEFAULT_TIMEOUT;
@@ -51,11 +51,16 @@ public class RyeCommand
 
     public RyeCommand(String localMgmtHost, int localMgmtPort) throws RyeException
     {
-	conInfo = new JciConnectionInfo(localMgmtHost, localMgmtPort, null);
+	this(new JciConnectionInfo(localMgmtHost, localMgmtPort, null));
+    }
+
+    public RyeCommand(JciConnectionInfo conInfo) throws RyeException
+    {
+	this.conInfo = conInfo;
 	protocolCommand = new Integer(Protocol.MGMT_LAUNCH_PROCESS_RYE_COMMAND);
     }
 
-    public int exec(String[] args) throws RyeException
+    public int exec(int flag, String[] args) throws RyeException
     {
 	if (args == null || args.length == 0) {
 	    throw RyeException.createRyeException((RyeConnectionUrl) null, RyeErrorCode.ER_INVALID_ARGUMENT, null);
@@ -64,7 +69,8 @@ public class RyeCommand
 	try {
 	    String[] env = emptyStringArray;
 
-	    byte[] sendMsg = Protocol.mgmtRequestMsg(Protocol.BRREQ_OP_CODE_LAUNCH_PROCESS, protocolCommand, args, env);
+	    byte[] sendMsg = Protocol.mgmtRequestMsg(Protocol.BRREQ_OP_CODE_LAUNCH_PROCESS, protocolCommand,
+			    new Integer(flag), args, env);
 
 	    BrokerResponse brRes = BrokerHandler.mgmtRequest(null, conInfo, sendMsg, timeout, true);
 	    int result = brRes.getResultCode();

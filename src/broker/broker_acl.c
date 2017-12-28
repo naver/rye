@@ -31,7 +31,6 @@
 #include "broker_acl.h"
 #include "cas_error.h"
 #include "broker_util.h"
-#include "broker_filename.h"
 #include "error_manager.h"
 
 #define ADMIN_ERR_MSG_SIZE	1024
@@ -89,7 +88,7 @@ br_acl_init_shm (T_SHM_APPL_SERVER * shm_appl, T_BROKER_INFO * br_info_p,
       return -1;
     }
 
-  memcpy (shm_appl->local_ip_addr, shm_br->my_ip_addr, 4);
+  shm_appl->local_ip = shm_br->my_ip;
 
   return 0;
 }
@@ -362,12 +361,12 @@ br_acl_check_right (T_SHM_APPL_SERVER * shm_appl,
 
   if (memcmp (address, local_Host, sizeof (local_Host)) == 0 ||
       (shm_appl != NULL &&
-       memcmp (shm_appl->local_ip_addr, address, ACL_IP_BYTE_COUNT) == 0))
+       memcmp (&shm_appl->local_ip, address, ACL_IP_BYTE_COUNT) == 0))
     {
       memcpy (test_addr[test_addr_count++], local_Host, ACL_IP_BYTE_COUNT);
       if (shm_appl != NULL)
 	{
-	  memcpy (test_addr[test_addr_count++], shm_appl->local_ip_addr,
+	  memcpy (test_addr[test_addr_count++], &shm_appl->local_ip,
 		  ACL_IP_BYTE_COUNT);
 	}
     }
@@ -477,7 +476,11 @@ remove_duplicate_ip_info (ACL_IP_INFO * acl_ip_info, int num_acl_ip_info)
     {
       for (j = 0; j < i; j++)
 	{
-	  int iplen = MIN (acl_ip_info[i].ip_len, acl_ip_info[j].ip_len);
+	  int iplen;
+
+	  iplen = MIN (acl_ip_info[i].ip_len, acl_ip_info[j].ip_len);
+	  assert (iplen <= ACL_IP_BYTE_COUNT);
+
 	  if (memcmp (acl_ip_info[i].ip_addr, acl_ip_info[j].ip_addr,
 		      iplen) == 0)
 	    {
@@ -703,6 +706,7 @@ br_acl_conf_read_ip_addr (ACL_IP_INFO * ip_info, char *linebuf,
       return -1;
     }
 
+  assert (iplen <= ACL_IP_BYTE_COUNT);
   ip_info->ip_len = iplen;
   ip_info->ip_last_access_time = 0;
 
@@ -804,8 +808,11 @@ print_acl_ip_addr (char *str, ACL_IP_INFO * acl_ip_info)
   int len;
   int i;
 
+  assert (acl_ip_info != NULL);
+  assert (acl_ip_info->ip_len <= ACL_IP_BYTE_COUNT);
+
   len = 0;
-  for (i = 0; i < acl_ip_info->ip_len; i++)
+  for (i = 0; i < acl_ip_info->ip_len && i < ACL_IP_BYTE_COUNT; i++)
     {
       len += sprintf (str + len, "%d%s",
 		      acl_ip_info->ip_addr[i], ((i != 3) ? "." : ""));
@@ -855,7 +862,7 @@ br_acl_dump (FILE * fp, BR_ACL_INFO * acl_info)
 
 	  (void) er_datetime (&time_val, str, sizeof (str));
 
-	  len += sprintf (line_buf + len, "%s", str);
+	  sprintf (line_buf + len, "%s", str);
 	}
 
       fprintf (fp, "%s\n", line_buf);

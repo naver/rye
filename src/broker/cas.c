@@ -45,12 +45,11 @@
 #include "cas_net_buf.h"
 #include "cas_log.h"
 #include "cas_util.h"
-#include "broker_filename.h"
 #include "cas_execute.h"
 #include "connection_support.h"
 #include "perf_monitor.h"
-
-#include "broker_recv_fd.h"
+#include "boot_cl.h"
+#include "tcp.h"
 
 #include "broker_shm.h"
 #include "broker_util.h"
@@ -94,6 +93,8 @@ static int net_read_int_keep_con_auto (SOCKET clt_sock_fd,
 static int net_read_header_keep_con_on (SOCKET clt_sock_fd,
 					MSG_HEADER * client_msg_header);
 static bool check_client_alive (void);
+static bool check_server_alive (const char *db_name,
+				const PRM_NODE_INFO * node_info);
 
 static int query_Sequence_num = 0;
 
@@ -359,7 +360,7 @@ cas_main (void)
 #endif
   char port_name[BROKER_PATH_MAX];
   struct timeval broker_recv_time;
-  int client_ip_addr;
+  in_addr_t client_ip_addr;
   FN_RETURN fn_ret = FN_KEEP_CONN;
   char client_ip_str[16];
   bool is_new_connection;
@@ -438,9 +439,9 @@ cas_main (void)
 
       net_timeout_set (NET_MIN_TIMEOUT);
 
-      client_Sock_fd =
-	recv_client_fd_from_broker (br_sock_fd, &client_ip_addr,
-				    &broker_recv_time);
+      client_Sock_fd = recv_client_fd_from_broker (br_sock_fd,
+						   (int *) &client_ip_addr,
+						   &broker_recv_time);
       RYE_CLOSE_SOCKET (br_sock_fd);
       if (client_Sock_fd == -1)
 	{
@@ -453,16 +454,12 @@ cas_main (void)
 
       if (as_Info->cas_err_log_reset == CAS_LOG_RESET_REOPEN)
 	{
-	  set_rye_file (FID_LOG_DIR, shm_Appl->log_dir,
-			shm_Appl->broker_name);
-
 	  er_stack_clearall ();
 	  er_clear ();
 	  as_Info->cas_err_log_reset = 0;
 	}
 
-      ut_get_ipv4_string (client_ip_str, sizeof (client_ip_str),
-			  (unsigned char *) (&client_ip_addr));
+      css_ip_to_str (client_ip_str, sizeof (client_ip_str), client_ip_addr);
       cas_sql_log_write_and_end (0, "CLIENT IP %s", client_ip_str);
 
       unset_hang_check_time ();
@@ -492,6 +489,8 @@ cas_main (void)
 	{
 	  char *db_err_msg = NULL;
 	  struct timeval cas_start_time;
+	  char connected_node_str[MAX_NODE_INFO_STR_LEN];
+	  PRM_NODE_INFO connected_node;
 
 	  gettimeofday (&cas_start_time, NULL);
 
@@ -627,12 +626,14 @@ cas_main (void)
 			      db_connect_msg->db_user, type);
 	    }
 
+	  connected_node = boot_get_host_connected ();
+	  prm_node_info_to_str (connected_node_str,
+				sizeof (connected_node_str), &connected_node);
 	  cas_sql_log_write_and_end (0, "connect db %s user %s url %s"
 				     " connected host %s",
 				     db_connect_msg->db_name,
 				     db_connect_msg->db_user,
-				     db_connect_msg->url,
-				     db_get_host_connected ());
+				     db_connect_msg->url, connected_node_str);
 
 	  as_Info->cur_keep_con = shm_Appl->keep_connection;
 
@@ -712,7 +713,7 @@ cas_main (void)
 
       if (as_Info->con_status != CON_STATUS_CLOSE_AND_CONNECT)
 	{
-	  memset (as_Info->cas_clt_ip, 0x0, sizeof (as_Info->cas_clt_ip));
+	  as_Info->cas_clt_ip_addr = 0;
 	  as_Info->cas_clt_port = 0;
 	  as_Info->client_version[0] = '\0';
 	}
@@ -886,7 +887,7 @@ recv_client_fd_from_broker (SOCKET br_sock_fd, int *client_ip_addr,
       return -1;
     }
 
-  client_sock_fd = recv_fd (br_sock_fd, client_ip_addr, broker_recv_time);
+  client_sock_fd = css_recv_fd (br_sock_fd, client_ip_addr, broker_recv_time);
   if (client_sock_fd == -1)
     {
       cas_sql_log_write_and_end (0, "HANDSHAKE ERROR recv_fd %d",
@@ -989,40 +990,38 @@ check_client_alive ()
   return ret;
 }
 
-bool
-check_server_alive (const char *db_name, const char *db_host)
+static bool
+check_server_alive (const char *db_name, const PRM_NODE_INFO * node_info)
 {
   int i, u_index;
-  char *unusable_db_name;
-  char *unusable_db_host;
-  const char *check_db_host = db_host;
-  const char *check_db_name = db_name;
 
   if (as_Info != NULL && shm_Appl != NULL && shm_Appl->monitor_server_flag)
     {
       /* if db_name is NULL, use the CAS shared memory */
       if (db_name == NULL)
 	{
-	  check_db_name = as_Info->database_name;
+	  db_name = as_Info->database_name;
 	}
-
-      /* if db_host is NULL, use the CAS shared memory */
-      if (db_host == NULL)
+      /* if node_info is NULL, use the CAS shared memory */
+      if (node_info == NULL)
 	{
-	  check_db_host = as_Info->database_host;
+	  node_info = &as_Info->db_node;
 	}
 
       u_index = shm_Appl->unusable_databases_seq % 2;
 
       for (i = 0; i < shm_Appl->unusable_databases_cnt[u_index]; i++)
 	{
+	  const char *unusable_db_name;
+	  const PRM_NODE_INFO *unusable_db_host;
+
 	  unusable_db_name =
 	    shm_Appl->unusable_databases[u_index][i].database_name;
 	  unusable_db_host =
-	    shm_Appl->unusable_databases[u_index][i].database_host;
+	    &shm_Appl->unusable_databases[u_index][i].db_node;
 
-	  if (strcmp (unusable_db_name, check_db_name) == 0
-	      && strcmp (unusable_db_host, check_db_host) == 0)
+	  if (strcmp (unusable_db_name, db_name) == 0 &&
+	      prm_is_same_node (unusable_db_host, node_info) == true)
 	    {
 	      return false;
 	    }
@@ -1470,15 +1469,13 @@ exit_on_end:
 static int
 cas_init ()
 {
-  char buf[BROKER_PATH_MAX];
-  char db_err_log_file[BROKER_PATH_MAX];
+  char filename[BROKER_PATH_MAX];
+  char err_log_file[BROKER_PATH_MAX];
 
   if (cas_init_shm () < 0)
     {
       return -1;
     }
-
-  set_rye_file (FID_LOG_DIR, shm_Appl->log_dir, shm_Appl->broker_name);
 
   as_pid_file_create (shm_Appl->broker_name, as_Info->as_id);
 
@@ -1486,12 +1483,12 @@ cas_init ()
   css_register_check_client_alive_fn (check_client_alive);
   css_register_server_timeout_fn (set_hang_check_time);
 
-  sprintf (db_err_log_file, "%s%s_%d.err",
-	   get_rye_file (FID_ERR_LOG_DIR, buf, BROKER_PATH_MAX),
-	   shm_Appl->broker_name, shm_As_index + 1);
+  snprintf (filename, sizeof (filename),
+	    "%s_%d.err", shm_Appl->broker_name, shm_As_index + 1);
+  envvar_ryelog_broker_errorlog_file (err_log_file, sizeof (err_log_file),
+				      shm_Appl->broker_name, filename);
 
-  (void) er_init (db_err_log_file,
-		  prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
+  (void) er_init (err_log_file, prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
 
   if (lang_init () != NO_ERROR)
     {

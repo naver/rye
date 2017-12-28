@@ -760,6 +760,7 @@ fileio_unlock_la_dbname (int *lockf_vdes, char *db_name, bool clear_owner)
   return result;
 }
 
+#if 0
 static void
 fileio_check_lockby_file (char *name_info_lock_p)
 {
@@ -803,6 +804,7 @@ fileio_check_lockby_file (char *name_info_lock_p)
 	}
     }
 }
+#endif
 
 /*
  * fileio_unlock () - UNLOCK A DATABASE VOLUME
@@ -843,13 +845,14 @@ fileio_unlock (const char *vol_label_p, int vol_fd,
        * Otherwise, we may remove the file when is locked by another process
        * Case of preemption and another process acquiring the lock.
        */
-
+#if 0
       if (lockf_type != FILEIO_LOCKF)
 	{
 	  assert (lockf_type == FILEIO_NOT_LOCKF);
 	  fileio_check_lockby_file (name_info_lock);
 	}
       else
+#endif
 	{
 	  (void) remove (name_info_lock);
 	  fileio_unlock_file (vol_fd, 0, SEEK_SET, 0);
@@ -857,6 +860,7 @@ fileio_unlock (const char *vol_label_p, int vol_fd,
     }
 }
 
+#if 0
 /*
  * fileio_get_lock () -
  *   return:
@@ -877,6 +881,7 @@ fileio_get_lock (int fd, const char *vol_label_p)
 
   return error;
 }
+#endif
 
 /*
  * fileio_get_lock_retry () -

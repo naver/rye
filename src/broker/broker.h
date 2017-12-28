@@ -29,6 +29,7 @@
 
 #include "cas_common.h"
 #include "broker_shm.h"
+#include "tcp.h"
 
 #define IS_NORMAL_BROKER_OPCODE(OPCODE)			\
 	((OPCODE) >= BRREQ_OP_CODE_MIN && (OPCODE) <= BRREQ_OP_CODE_MAX)
@@ -46,16 +47,13 @@
 #define BR_DEFAULT_WRITE_TIMEOUT	60
 #define BR_DEFAULT_READ_TIMEOUT		60
 
-#define IP_ADDR_STR_LEN		20
-
 /* structures for mgmt request values */
 typedef struct
 {
   int node_id;
   char local_dbname[SRV_CON_DBNAME_SIZE];
   char host_ip_str[IP_ADDR_STR_LEN];
-  int port;
-  in_addr_t host_ip_addr;
+  PRM_NODE_INFO host_info;
   HA_STATE_FOR_DRIVER ha_state;
   char host_name[SHM_NODE_INFO_STR_SIZE];	/* monitoring purpose */
 } T_SHARD_NODE_INFO;
@@ -137,6 +135,7 @@ typedef struct
 typedef struct
 {
   T_MGMT_LAUNCH_PROCESS_ID launch_process_id;
+  int flag;
   int argc;
   int num_env;
   char **argv;
@@ -177,6 +176,16 @@ typedef struct
 
 typedef struct
 {
+  const char *db_name;
+} T_MGMT_REQ_ARG_CONNECT_DB_SERVER;
+
+typedef struct
+{
+  const char *file;
+} T_MGMT_REQ_ARG_RM_TMP_FILE;
+
+typedef struct
+{
   const char *clt_dbname;
   void *alloc_buffer;
   union
@@ -197,6 +206,8 @@ typedef struct
     T_MGMT_REQ_ARG_UPDATE_CONF update_conf_arg;
     T_MGMT_REQ_ARG_GET_CONF get_conf_arg;
     T_MGMT_REQ_ARG_BR_ACL_RELOAD br_acl_reload_arg;
+    T_MGMT_REQ_ARG_CONNECT_DB_SERVER connect_db_server_arg;
+    T_MGMT_REQ_ARG_RM_TMP_FILE rm_tmp_file_arg;
     int dummy;
   } value;
 } T_MGMT_REQ_ARG;
@@ -211,7 +222,10 @@ typedef struct
   char buf[BROKER_RESPONSE_MAX_ADDITIONAL_MSG][MGMT_RESULT_MSG_MAX_SIZE];
 } T_MGMT_RESULT_MSG;
 
-extern SOCKET br_mgmt_accept (unsigned char *clt_ip_addr);
+extern SOCKET br_mgmt_accept (in_addr_t * clt_ip_addr);
+extern SOCKET br_accept_unix_domain (in_addr_t * clt_ip_addr,
+				     struct timeval *mgmt_recv_time,
+				     T_BROKER_REQUEST_MSG * br_req_msg);
 
 extern THREAD_FUNC shard_mgmt_receiver_thr_f (void *arg);
 extern THREAD_FUNC local_mgmt_receiver_thr_f (void *arg);
@@ -221,7 +235,7 @@ extern int shd_mg_init (int shard_mgmt_port, int local_mgmt_port,
 
 extern int br_read_broker_request_msg (SOCKET clt_sock_fd,
 				       T_BROKER_REQUEST_MSG * br_req_msg);
-extern SOCKET br_connect_srv (const char *br_name, bool is_mgmt,
+extern SOCKET br_connect_srv (bool is_mgmt, const T_BROKER_INFO * br_info,
 			      int as_index);
 extern void br_send_result_to_client (int sock, int err_code,
 				      const T_MGMT_RESULT_MSG * result_msg);
@@ -243,8 +257,9 @@ extern void br_mgmt_result_msg_reset (T_MGMT_RESULT_MSG * result_msg);
 extern int br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg,
 				   int msg_size, const void *msg);
 extern void br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
-				     const char *dbname, const char *host,
-				     int port, in_addr_t host_addr,
+				     const char *dbname,
+				     const char *host_ip_str,
+				     const PRM_NODE_INFO * host_info,
 				     HA_STATE_FOR_DRIVER ha_state,
 				     const char *host_name);
 extern void br_set_init_error (int err_code, int os_err_code);

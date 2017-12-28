@@ -273,7 +273,7 @@ btree_get_stats_with_AR_sampling (THREAD_ENTRY * thread_p,
       if (found)
 	{
 	  /* get header information (key_cnt) */
-	  ret = btree_read_node_header (BTS->C_page, &node_header);
+	  ret = btree_read_node_header (NULL, BTS->C_page, &node_header);
 	  if (ret != NO_ERROR)
 	    {
 	      assert_release (false);
@@ -557,7 +557,7 @@ btree_get_stats (THREAD_ENTRY * thread_p, OID * class_oid,
       GOTO_EXIT_ON_ERROR;
     }
 
-  if (btree_read_node_header (root_page_ptr, &root_header) != NO_ERROR)
+  if (btree_read_node_header (NULL, root_page_ptr, &root_header) != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
@@ -742,7 +742,7 @@ btree_find_AR_sampling_leaf (THREAD_ENTRY * thread_p, BTID * btid,
       goto error;
     }
 
-  if (btree_read_node_header (P_page, &node_header) != NO_ERROR)
+  if (btree_read_node_header (NULL, P_page, &node_header) != NO_ERROR)
     {
       goto error;
     }
@@ -795,13 +795,12 @@ btree_find_AR_sampling_leaf (THREAD_ENTRY * thread_p, BTID * btid,
 
       pgbuf_unfix_and_init (thread_p, P_page);
 
-      if (btree_read_node_header (C_page, &node_header) != NO_ERROR)
+      if (btree_read_node_header (NULL, C_page, &node_header) != NO_ERROR)
 	{
 	  goto error;
 	}
 
-      node_type =
-	node_header.node_level > 1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE;
+      node_type = BTREE_GET_NODE_TYPE (node_header.node_level);
       key_cnt = node_header.key_cnt;
 
       /* update Acceptance probability */
@@ -853,7 +852,7 @@ again:
       /* check if the current leaf page has valid slots */
       if (C_page != NULL)
 	{
-	  if (btree_read_node_header (C_page, &node_header) != NO_ERROR)
+	  if (btree_read_node_header (NULL, C_page, &node_header) != NO_ERROR)
 	    {
 	      goto error;
 	    }

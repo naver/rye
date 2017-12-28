@@ -56,6 +56,7 @@
 #include "connection_defs.h"
 #include "language_support.h"
 #include "broker_admin_pub.h"
+#include "tcp.h"
 
 #define		DEFAULT_CHECK_PERIOD		300	/* seconds */
 #define		MAX_APPL_NUM		100
@@ -263,7 +264,7 @@ static int get_char (void);
 static void print_usage (void);
 static int get_args (int argc, char *argv[], char *br_vector);
 static void print_job_queue (T_MAX_HEAP_NODE *);
-static void ip2str (unsigned char *ip, char *ip_str);
+static void ip2str (in_addr_t ip, char *ip_str);
 static void time2str (const time_t t, char *str);
 
 static void print_monitor_header ();
@@ -677,7 +678,7 @@ print_job_queue (T_MAX_HEAP_NODE * job_queue)
 	  first_flag = 0;
 	}
 
-      ip2str (item.ip_addr, ip_str);
+      ip2str (item.ip, ip_str);
       time2str (item.recv_time.tv_sec, time_str);
       sprintf (outbuf, "%5d%7d%17s%10s ",
 	       item.id, item.priority, ip_str, time_str);
@@ -689,8 +690,9 @@ print_job_queue (T_MAX_HEAP_NODE * job_queue)
 }
 
 static void
-ip2str (unsigned char *ip, char *ip_str)
+ip2str (in_addr_t ip_addr, char *ip_str)
 {
+  const unsigned char *ip = (const unsigned char *) &ip_addr;
   sprintf (ip_str, "%d.%d.%d.%d", (unsigned char) ip[0],
 	   (unsigned char) ip[1],
 	   (unsigned char) ip[2], (unsigned char) ip[3]);
@@ -796,9 +798,12 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 		   FIELD_T_TIME);
       if (as_info_p->database_name[0] != '\0')
 	{
+	  char hostname[MAX_NODE_INFO_STR_LEN];
+	  prm_node_info_to_str (hostname, sizeof (hostname),
+				&as_info_p->db_node);
 	  print_value (FIELD_DB_NAME, as_info_p->database_name,
 		       FIELD_T_STRING);
-	  print_value (FIELD_HOST, as_info_p->database_host, FIELD_T_STRING);
+	  print_value (FIELD_HOST, hostname, FIELD_T_STRING);
 	  print_value (FIELD_LAST_CONNECT_TIME,
 		       &(as_info_p->last_connect_time), FIELD_T_TIME);
 	}
@@ -809,10 +814,8 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 	  print_value (FIELD_LAST_CONNECT_TIME, "-", FIELD_T_STRING);
 	}
 
-      print_value (FIELD_CLIENT_IP,
-		   ut_get_ipv4_string (ip_str, sizeof (ip_str),
-				       as_info_p->cas_clt_ip),
-		   FIELD_T_STRING);
+      css_ip_to_str (ip_str, sizeof (ip_str), as_info_p->cas_clt_ip_addr);
+      print_value (FIELD_CLIENT_IP, ip_str, FIELD_T_STRING);
       print_value (FIELD_CLIENT_VERSION, as_info_p->client_version,
 		   FIELD_T_STRING);
 
@@ -869,6 +872,9 @@ local_mgmt_monitor (const T_SHM_LOCAL_MGMT_INFO * shm_info_p)
   str_out ("cancel:%d", shm_info_p->cancel_req_count);
   str_out ("%c", FIELD_DELIMITER);
   str_out ("admin_req:%d", shm_info_p->admin_req_count);
+  str_out ("%c", FIELD_DELIMITER);
+  str_out ("db_connect:%d(%d)",
+	   shm_info_p->db_connect_success, shm_info_p->db_connect_fail);
   print_newline ();
 
   str_out ("%s", indent1);
@@ -877,6 +883,8 @@ local_mgmt_monitor (const T_SHM_LOCAL_MGMT_INFO * shm_info_p)
 
   str_out ("%s", indent2);
   str_out ("admin_req:%d", shm_info_p->admin_req_queue.num_job);
+  str_out ("%c", FIELD_DELIMITER);
+  str_out ("db_connect_req:%d", shm_info_p->db_connect_req_queue.num_job);
   print_newline ();
 
   str_out ("%s", indent1);
@@ -995,7 +1003,8 @@ shard_mgmt_monitor (const T_SHM_SHARD_MGMT_INFO * shm_info_p)
       str_out ("id:%d %s:%d %s (%s:%s)",
 	       shm_info_p->shard_node_info[i].node_id,
 	       shm_info_p->shard_node_info[i].host_ip,
-	       shm_info_p->shard_node_info[i].port,
+	       PRM_NODE_INFO_GET_PORT (&shm_info_p->shard_node_info[i].
+				       host_info),
 	       shm_info_p->shard_node_info[i].local_dbname,
 	       shm_info_p->shard_node_info[i].host_name, ha_mode_str);
       print_newline ();
@@ -1041,7 +1050,10 @@ mgmt_monitor ()
 	}
 
       str_out ("%cPID=%d", FIELD_DELIMITER, br_info_p->broker_pid);
-      str_out ("%cPORT=%d", FIELD_DELIMITER, br_info_p->port);
+      if (br_info_p->broker_type == LOCAL_MGMT)
+	{
+	  str_out ("%cPORT=%d", FIELD_DELIMITER, br_info_p->port);
+	}
 
       if (br_info_p->broker_type == SHARD_MGMT)
 	{
@@ -1742,11 +1754,14 @@ unusable_databases_monitor (void)
 		  for (j = 0; j < shm_appl->unusable_databases_cnt[u_index];
 		       j++)
 		    {
+		      char host[MAX_NODE_INFO_STR_LEN];
+		      prm_node_info_to_str (host, sizeof (host),
+					    &shm_appl->
+					    unusable_databases[u_index][j].
+					    db_node);
 		      str_out ("%s@%s ",
 			       shm_appl->unusable_databases[u_index][j].
-			       database_name,
-			       shm_appl->unusable_databases[u_index][j].
-			       database_host);
+			       database_name, host);
 		    }
 		}
 	      print_newline ();

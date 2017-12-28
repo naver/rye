@@ -31,8 +31,8 @@
 package rye.jdbc.driver;
 
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -48,9 +48,16 @@ public class ConnectionProperties
 	EXCEPTION, ROUND, CONVERT_TO_NULL
     };
 
+    public enum CONNECTION_TYPE {
+	GLOBAL, LOCAL
+    };
+
     private static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull";
     private static final String ZERO_DATETIME_BEHAVIOR_EXCEPTION = "exception";
     private static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
+
+    private static final String CONNECTION_TYPE_GLOBAL = "global";
+    private static final String CONNECTION_TYPE_LOCAL = "local";
 
     private static final String[] booleanTrueValues = { "true", "yes", "on" };
     private static final String[] booleanFalseValues = { "false", "no", "off" };
@@ -58,7 +65,7 @@ public class ConnectionProperties
     public static final int MAX_QUERY_TIMEOUT = 2000000;
     public static final int MAX_CONNECT_TIMEOUT = 2000000;
 
-    private static final String DEFAULT_CHARSET = "utf-8";
+    private static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
 
     static ArrayList<Field> PROPERTY_LIST = new ArrayList<Field>();
     static {
@@ -100,6 +107,9 @@ public class ConnectionProperties
 
     private final ZeroDateTimeBehaviorConnectionProperty zeroDateTimeBehavior = new ZeroDateTimeBehaviorConnectionProperty(
 		    "zeroDateTimeBehavior");
+
+    private final ConnectionTypeConnectionProperty connectionType = new ConnectionTypeConnectionProperty(
+		    "connectionType");
 
     private final BooleanConnectionProperty useLazyConnection = new BooleanConnectionProperty("useLazyConnection",
 		    false);
@@ -211,7 +221,7 @@ public class ConnectionProperties
 	return logFile.stringValue;
     }
 
-    public String getCharset()
+    public Charset getCharset()
     {
 	return charSet.charset;
     }
@@ -239,6 +249,11 @@ public class ConnectionProperties
     public ZERO_DATE_BEHAVIOR getZeroDateTimeBehavior()
     {
 	return zeroDateTimeBehavior.zeroDateBehavior;
+    }
+
+    public CONNECTION_TYPE getConnectionType()
+    {
+	return connectionType.connType;
     }
 
     public boolean getUseLazyConnection()
@@ -410,7 +425,7 @@ public class ConnectionProperties
 
     private class CharSetConnectionProperty extends ConnectionProperty
     {
-	String charset = DEFAULT_CHARSET;
+	Charset charset = DEFAULT_CHARSET;
 
 	CharSetConnectionProperty(String propertyName)
 	{
@@ -419,20 +434,11 @@ public class ConnectionProperties
 
 	void setValue(Object o) throws SQLException
 	{
-	    if (o == null) {
+	    try {
+		this.charset = Charset.forName((String) o);
+	    } catch (Exception e) {
+		errorUncompatibleValue(o);
 	    }
-	    else if (o instanceof String) {
-		try {
-		    byte[] s = { 0 };
-		    new String(s, (String) o);
-
-		    this.charset = ((String) o);
-		    return;
-		} catch (UnsupportedEncodingException e) {
-		}
-	    }
-
-	    errorUncompatibleValue(o);
 	}
 
 	public String toString()
@@ -490,6 +496,49 @@ public class ConnectionProperties
 	    }
 
 	    return String.format("%s:%s=%s", this.getClass().getName(), this.getPropertyName(), behavior);
+	}
+    }
+
+    private class ConnectionTypeConnectionProperty extends ConnectionProperty
+    {
+	CONNECTION_TYPE connType = CONNECTION_TYPE.GLOBAL;
+
+	ConnectionTypeConnectionProperty(String propertyName)
+	{
+	    super(propertyName);
+	}
+
+	void setValue(Object o) throws SQLException
+	{
+	    if (o != null && o instanceof String) {
+		String str = ((String) o).trim().toLowerCase();
+		if (str.equals(CONNECTION_TYPE_GLOBAL)) {
+		    this.connType = CONNECTION_TYPE.GLOBAL;
+		    return;
+		}
+		if (str.equals(CONNECTION_TYPE_LOCAL)) {
+		    this.connType = CONNECTION_TYPE.LOCAL;
+		    return;
+		}
+	    }
+
+	    errorUncompatibleValue(o);
+	}
+
+	public String toString()
+	{
+	    String type = null;
+	    switch (this.connType)
+	    {
+	    case GLOBAL:
+		type = CONNECTION_TYPE_GLOBAL;
+		break;
+	    case LOCAL:
+		type = CONNECTION_TYPE_LOCAL;
+		break;
+	    }
+
+	    return String.format("%s:%s=%s", this.getClass().getName(), this.getPropertyName(), type);
 	}
     }
 }

@@ -103,6 +103,7 @@ BASE_SOURCES = \
 	$(BASE_DIR)/language_support.c \
 	$(BASE_DIR)/memory_hash.c \
 	$(BASE_DIR)/perf_monitor.c \
+	$(BASE_DIR)/monitor.c \
 	$(BASE_DIR)/ini_parser.c \
 	$(BASE_DIR)/system_parameter.c \
 	$(BASE_DIR)/ds_string_array.c \
@@ -244,8 +245,8 @@ libryecs_la_SOURCES = \
 	$(ES_SOURCES)
 
 libryecs_la_LDFLAGS = -version-number @LT_VERSION@
-libryecs_la_LIBADD = @EXT_LIBS@ @SYS_LIBS@ $(LIBADD_DL)
-libryecs_la_DEPENDENCIES = @EXT_LIBS@
+libryecs_la_LIBADD = @CCI_LIB@ @EXT_LIBS@ @SYS_LIBS@ $(LIBADD_DL)
+libryecs_la_DEPENDENCIES = @CCI_LIB@ @EXT_LIBS@
 libryecs_la_LINK = $(LINK)
 
 VERSIONED_FILES = \

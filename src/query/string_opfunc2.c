@@ -3465,7 +3465,6 @@ date_to_char (const DB_VALUE * src_value,
 	      tmp_int = (year / 100) + 1;
 	      sprintf (&result_buf[i], "%02d\n", tmp_int);
 	      i += 2;
-	      cur_format_str_ptr += 2;
 	      break;
 
 	    case DT_YYYY:

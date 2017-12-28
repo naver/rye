@@ -1570,9 +1570,6 @@ qmgr_set_xasl_trace (UNUSED_ARG THREAD_ENTRY * thread_p, QUERY_FLAG * flag_p)
   if (xasl_trace == true)
     {
       thread_trace_on (thread_p);
-#if defined (ENABLE_UNUSED_FUNCTION)
-      xmnt_server_start_stats (thread_p, false);
-#endif
 
       if (IS_XASL_TRACE_TEXT (*flag_p))
 	{
@@ -1835,13 +1832,6 @@ exit_on_error:
   if (list_id_p)
     {
       QFILE_FREE_AND_INIT_LIST_ID (list_id_p);
-    }
-
-  if (xasl_trace == true)
-    {
-#if defined (ENABLE_UNUSED_FUNCTION)
-      xmnt_server_stop_stats (thread_p);
-#endif
     }
 
   goto end;
@@ -3206,7 +3196,11 @@ qmgr_free_list_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id,
 
   qmgr_unlock_mutex (&tran_entry_p->lock);
 
+#if 1				/* TODO - need to fix temp file leak */
+  assert (rc == NO_ERROR || er_errid () != NO_ERROR);
+#else
   assert (rc == NO_ERROR);
+#endif
 
   return rc;
 }

@@ -333,7 +333,7 @@ public class JciNormalStatement extends JciStatement
 	    }
 
 	    boolean isFirstExecInTran = !jciCon.isActive();
-	    JciError uerror = new JciError(jciCon);
+	    JciError uerror = null;
 
 	    try {
 		batchResult = executeBatchInternal(queryTimeout, groupId, batchParameter);
@@ -502,7 +502,7 @@ public class JciNormalStatement extends JciStatement
 		inBuffer.readInt(); /* error indicator */
 		int srvErrCode = inBuffer.readInt();
 		int srvErrMsgSize = inBuffer.readInt();
-		String srvErrMsg = inBuffer.readString(srvErrMsgSize, RyeDriver.sysCharsetName);
+		String srvErrMsg = inBuffer.readString(srvErrMsgSize, RyeDriver.sysCharset);
 		batchResult.setResultError(i, srvErrCode, srvErrMsg);
 	    }
 	    else {
@@ -560,9 +560,13 @@ public class JciNormalStatement extends JciStatement
 	switch (columnType)
 	{
 	case RyeType.TYPE_VARCHAR:
-	    return inBuffer.readString(size, jciCon.getCharset());
+	    return inBuffer.readString(size);
 	case RyeType.TYPE_NUMERIC:
-	    return new BigDecimal(inBuffer.readString(size, RyeDriver.sysCharsetName));
+	    String tmp = inBuffer.readString(size, RyeDriver.sysCharset);
+	    if (tmp == null) {
+		throw JciException.createJciException(jciCon, RyeErrorCode.ER_ILLEGAL_DATA_SIZE);
+	    }
+	    return new BigDecimal(tmp);
 	case RyeType.TYPE_BIGINT:
 	    return new Long(inBuffer.readLong());
 	case RyeType.TYPE_INT:

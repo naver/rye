@@ -583,7 +583,7 @@ scan_alloc_iscan_oid_buf_list (void)
 {
   OID *oid_buf_p;
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   oid_buf_p = NULL;
@@ -617,7 +617,7 @@ static void
 scan_free_iscan_oid_buf_list (OID * oid_buf_p)
 {
 #if defined (SERVER_MODE)
-  int rv;
+  UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
   rv = pthread_mutex_lock (&scan_Iscan_oid_buf_list_mutex);
@@ -1084,7 +1084,8 @@ scan_dbvals_to_idxkey (THREAD_ENTRY * thread_p, DB_IDXKEY * retval,
   DB_VALUE *val = NULL;
   DB_TYPE col_type, val_type;
   int common_coll = -1;
-  int idx_ncols = 0, i;
+  UNUSED_VAR int idx_ncols = 0;
+  int i;
   REGU_VARIABLE_LIST operand;
   TP_DOMAIN *idx_dom = NULL;
 
@@ -1221,7 +1222,8 @@ scan_dbvals_to_idxkey (THREAD_ENTRY * thread_p, DB_IDXKEY * retval,
 	    {
 	      /* Coerce the value to index domain  */
 #if 1				/* TODO - at current, do not care ret value */
-	      ret = tp_value_coerce_strict (val, &(retval->vals[i]), idx_dom);
+	      (void) tp_value_coerce_strict (val, &(retval->vals[i]),
+					     idx_dom);
 #endif
 	    }
 	}
@@ -1445,6 +1447,13 @@ scan_regu_key_to_index_key (THREAD_ENTRY * thread_p,
 				 key_val_range->num_index_term, key_minmax);
     }
 
+  if (ret != NO_ERROR)
+    {
+      key_val_range->range = NA_NA;
+
+      return ret;
+    }
+
   if (key_ranges->key2)
     {
       assert (key_ranges->key2->type == TYPE_FUNC);
@@ -1513,6 +1522,13 @@ scan_regu_key_to_index_key (THREAD_ENTRY * thread_p,
 				     key_val_range->num_index_term,
 				     key_minmax);
 	}
+    }
+
+  if (ret != NO_ERROR)
+    {
+      key_val_range->range = NA_NA;
+
+      return ret;
     }
 
   if (key_val_range->range == EQ_NA)
@@ -3693,7 +3709,7 @@ scan_next_index_lookup_heap (THREAD_ENTRY * thread_p, SCAN_ID * scan_id,
 	  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 		  ER_LC_INCONSISTENT_BTREE_ENTRY_TYPE2, 11,
 		  (indx_name_p) ? indx_name_p : "*UNKNOWN-INDEX*",
-		  (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*",
+		  (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*",
 		  isidp->bt_scan.btid_int.cls_oid.volid,
 		  isidp->bt_scan.btid_int.cls_oid.pageid,
 		  isidp->bt_scan.btid_int.cls_oid.slotid,
@@ -3728,7 +3744,7 @@ scan_next_index_lookup_heap (THREAD_ENTRY * thread_p, SCAN_ID * scan_id,
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 		  ER_LC_INCONSISTENT_BTREE_ENTRY_TYPE2, 11,
 		  (indx_name_p) ? indx_name_p : "*UNKNOWN-INDEX*",
-		  (class_name_p) ? class_name_p : "*UNKNOWN-CLASS*",
+		  (class_name_p) ? class_name_p : "*UNKNOWN-TABLE*",
 		  isidp->bt_scan.btid_int.cls_oid.volid,
 		  isidp->bt_scan.btid_int.cls_oid.pageid,
 		  isidp->bt_scan.btid_int.cls_oid.slotid,

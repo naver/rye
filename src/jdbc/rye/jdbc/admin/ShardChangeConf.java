@@ -34,7 +34,7 @@ import rye.jdbc.sharding.ShardNodeInstance;
 class ShardChangeConf extends ShardCommand
 {
     private String[] globalDbnameArr;
-    private String shardMgmtHost;
+    private NodeAddress shardMgmtHost;
     private String[] dbaPasswordArr;
     private ArrayList<RyeConfValue> changeRyeConfList = null;
     private ShardMgmtInfo[] shardMgmtInfoArr;
@@ -57,6 +57,7 @@ class ShardChangeConf extends ShardCommand
     void getArgs(String[] optArgs, String[] args, PrintStream out) throws Exception
     {
 	String password = "";
+	int localMgmtPort = ShardCommand.DEFAULT_LOCAL_MGMT_PORT;
 
 	for (int i = 0; i < optArgs.length; i++) {
 	    String[] tmpArr = splitArgNameValue(optArgs[i]);
@@ -64,7 +65,8 @@ class ShardChangeConf extends ShardCommand
 	    String argValue = tmpArr[1];
 
 	    if (argName.equals("--local-mgmt-port")) {
-		if (setLocalMgmtPort(argValue) == false) {
+		localMgmtPort = Integer.parseInt(argValue);
+		if (localMgmtPort <= 0) {
 		    throw makeAdminRyeException(null, "invalid option value: %s", optArgs[i]);
 		}
 	    }
@@ -103,10 +105,7 @@ class ShardChangeConf extends ShardCommand
 	    throw makeAdminRyeException(null, "invalid global dbname '%s'", argGlobalDbname);
 	}
 
-	shardMgmtHost = argShardMgmtHost.trim().toLowerCase();
-	if (shardMgmtHost.length() == 0) {
-	    throw makeAdminRyeException(null, "invalid shard mgmt host '%s'", argShardMgmtHost);
-	}
+	shardMgmtHost = new NodeAddress(argShardMgmtHost.trim().toLowerCase(), localMgmtPort);
 
 	dbaPasswordArr = new String[globalDbnameArr.length];
 	for (int i = 0; i < dbaPasswordArr.length; i++) {
@@ -129,8 +128,8 @@ class ShardChangeConf extends ShardCommand
 
 	ShardMgmtInfo shardMgmtInfo = ShardMgmtInfo.find(shardMgmtInfoArr, globalDbname);
 
-	RyeConnection con = makeConnection(shardMgmtHost, shardMgmtInfo.getPort(), globalDbname, "dba", dbaPasswd,
-			"rw", "");
+	RyeConnection con = makeConnection(shardMgmtHost.getIpAddr(), shardMgmtInfo.getPort(), globalDbname, "dba",
+			dbaPasswd, "rw", null);
 
 	ShardAdmin shardAdmin = getShardAdmin(con, globalDbname, shardMgmtInfo);
 
@@ -170,6 +169,7 @@ class ShardChangeConf extends ShardCommand
 
 		}
 		res = false;
+		continue;
 	    }
 
 	    for (RyeConfValue ryeConfValue : changeRyeConfList) {

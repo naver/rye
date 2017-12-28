@@ -36,23 +36,26 @@
 #include "connection_defs.h"
 
 
-#define SHM_MAX_HA_NODE_LIST		(32)
+#define SHM_MAX_HA_NODE_LIST		(PRM_MAX_HA_NODE_LIST)
 #define SHM_MAX_REPL_COUNT              SHM_MAX_HA_NODE_LIST
-#define SHM_MAX_DB_SERVERS		(10)
+#define SHM_MAX_DB_SERVERS              (10)
+#define MAX_NUM_SHM		        (SHM_MAX_DB_SERVERS * 3)
 
-#define DEFAULT_RYE_SHM_KEY		((getuid() << 16) | 0x00000100)
-#define DEFUALT_BROKER_SHM_KEY_BASE	(0x00000100)
-#define DEFUALT_SERVER_SHM_KEY_BASE	(0x00000200)
+#define DEFAULT_RYE_SHM_KEY		((getuid() << 16) | 0x00001000)
+#define DEFUALT_SERVER_SHM_KEY_BASE		(0x00000100)
+#define DEFUALT_MONITOR_SHM_KEY_BASE            (0x00000200)
+#define DEFUALT_BROKER_SHM_KEY_BASE		(0x00000300)
 
 #define RYE_SHM_MAGIC_STR_SIZE		(8)
 #define RYE_SHM_MAGIC_STR		"RYE SHM"
-#define RYE_SHM_MAGIC_NUMBER            	(MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + PATCH_VERSION)
+#define RYE_SHM_MAGIC_NUMBER            (MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + PATCH_VERSION)
 
 #define RYE_SHD_MGMT_TABLE_SIZE		SHM_MAX_DB_SERVERS
 #define RYE_SHD_MGMT_TABLE_DBNAME_SIZE	(32)
 #define RYE_SHD_MGMT_INFO_MAX_COUNT	(4)
 
 #define SHM_DBNAME_SIZE			(32)
+#define SHM_NAME_SIZE                   (64)
 
 typedef enum _rye_shm_status RYE_SHM_STATUS;
 enum _rye_shm_status
@@ -64,6 +67,12 @@ enum _rye_shm_status
   RYE_SHM_MARK_DELETED
 };
 
+#define RYE_SHM_STATUS_NAME(status)                                              \
+  ((status) == RYE_SHM_UNKNOWN ? "RYE_SHM_UNKNOWN" :                             \
+   (status) == RYE_SHM_CREATED ? "RYE_SHM_CREATED" :                             \
+   (status) == RYE_SHM_INVALID ? "RYE_SHM_INVALID" :                             \
+   (status) == RYE_SHM_MARK_DELETED ? "RYE_SHM_MARK_DELETED" : "UNKNOWN STATUS")
+
 typedef enum _rye_shm_type RYE_SHM_TYPE;
 enum _rye_shm_type
 {
@@ -72,8 +81,18 @@ enum _rye_shm_type
   RYE_SHM_TYPE_SERVER,
   RYE_SHM_TYPE_BROKER_GLOBAL,
   RYE_SHM_TYPE_BROKER_LOCAL,
-  RYE_SHM_TYPE_MAX = RYE_SHM_TYPE_BROKER_LOCAL
+  RYE_SHM_TYPE_MONITOR,
+  RYE_SHM_TYPE_MAX = RYE_SHM_TYPE_MONITOR
 };
+
+#define RYE_SHM_TYPE_NAME(type)                                                        \
+  ((type) == RYE_SHM_TYPE_UNKNOWN ? "RYE_SHM_TYPE_UNKNOWN" :                           \
+   (type) == RYE_SHM_TYPE_MASTER ? "RYE_SHM_TYPE_MASTER" :                             \
+   (type) == RYE_SHM_TYPE_SERVER ? "RYE_SHM_TYPE_SERVER" :                             \
+   (type) == RYE_SHM_TYPE_BROKER_GLOBAL ? "RYE_SHM_TYPE_BROKER_GLOBAL" :               \
+   (type) == RYE_SHM_TYPE_BROKER_LOCAL ? "RYE_SHM_TYPE_BROKER_LOCAL" :                 \
+   (type) == RYE_SHM_TYPE_MONITOR ? "RYE_SHM_TYPE_MONITOR" : "UNKNOWN TYPE")
+
 
 typedef struct _rye_shd_mgmt_table RYE_SHD_MGMT_TABLE;
 struct _rye_shd_mgmt_table
@@ -83,8 +102,7 @@ struct _rye_shd_mgmt_table
   short nodeid;
   struct
   {
-    unsigned char ip_addr[4];
-    int port;
+    PRM_NODE_INFO node_info;
     int sync_time;
   } shd_mgmt_info[RYE_SHD_MGMT_INFO_MAX_COUNT];
 };
@@ -105,22 +123,21 @@ struct _rye_shm_ha_node
 {
   RYE_VERSION ha_node_version;
   bool is_localhost;
-  char host_name[MAXHOSTNAMELEN];
+  PRM_NODE_INFO node_info;
   HA_STATE node_state;
   unsigned short priority;
 };
 
-typedef struct _rye_shm_db_server_info RYE_SHM_DB_SERVER_INFO;
-struct _rye_shm_db_server_info
+typedef struct _rye_shm_info RYE_SHM_INFO;
+struct _rye_shm_info
 {
-  char dbname[SHM_DBNAME_SIZE];
+  char name[SHM_NAME_SIZE];
   int shm_key;
-  int pid;
-  int server_state;
+  RYE_SHM_TYPE type;
 };
 
 extern void *rye_shm_create (int shm_key, int size, RYE_SHM_TYPE shm_type);
-extern RYE_SHM_TYPE rye_shm_check_shm (int shm_key, int which_shm,
+extern RYE_SHM_TYPE rye_shm_check_shm (int shm_key, RYE_SHM_TYPE shm_type,
 				       bool check_status);
 extern bool rye_shm_is_used_key (int shm_key);
 extern void *rye_shm_attach (int shm_key, RYE_SHM_TYPE shm_type,
@@ -132,10 +149,6 @@ extern int rye_shm_mutex_init (pthread_mutex_t * mutex);
 extern int rye_shm_cond_init (pthread_cond_t * cond);
 #endif
 
-extern const char *rye_shm_type_to_string (RYE_SHM_TYPE shm_type);
-#if defined(RYE_SHM_UNUSED_FUNCTION)
-extern const char *rye_shm_status_to_string (RYE_SHM_STATUS shm_status);
-#endif
 
 
 

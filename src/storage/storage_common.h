@@ -35,6 +35,7 @@
 #include <stdio.h>
 
 #include "porting.h"
+#include "system_parameter.h"
 
 #include "dbdef.h"
 #include "dbtype.h"
@@ -264,7 +265,7 @@ typedef enum
   PAGE_BTREE_ROOT,		/* 13 b+tree index root page               */
   PAGE_BTREE,			/* 14 b+tree index page                    */
 
-  PAGE_LAST             /* 15 */
+  PAGE_LAST			/* 15 */
 } PAGE_TYPE;
 
 #define ISCAN_OID_BUFFER_SIZE \
@@ -469,7 +470,7 @@ struct bo_restart_arg
   bool make_slave;
 
   int server_state;
-  char db_host[MAXHOSTNAMELEN];
+  PRM_NODE_INFO db_host_info;
   LOG_LSA backuptime_lsa;	/* for HA apply */
   INT64 db_creation;		/* Database creation time */
 };

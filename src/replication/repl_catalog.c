@@ -32,6 +32,8 @@
 #include "schema_manager.h"
 #include "repl_page_buffer.h"
 #include "repl_applier.h"
+#include "system_parameter.h"
+#include "query_executor.h"
 
 #define REPL_CT_QRY_BUF_SIZE 	(ONE_K * 2)	/* 2048 */
 
@@ -51,10 +53,11 @@ static int cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * ct_data,
 
 /* applier */
 static int rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers,
-				     const char *host_ip);
+				     const PRM_NODE_INFO * host_info);
 static int rpct_get_log_applier (CCI_CONN * conn,
 				 CIRP_CT_LOG_APPLIER * ct_data,
-				 const char *host_ip, int applier_id);
+				 const PRM_NODE_INFO * host_info,
+				 int applier_id);
 static int cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
 					 CCI_CONN * conn, char *query);
 
@@ -73,18 +76,18 @@ static CIRP_REPL_ITEM *rp_make_repl_item_from_ct_applier (CIRP_CT_LOG_APPLIER
  *
  *   conn(in):
  *   ct_data(out):
- *   host_ip(in):
+ *   host_info(in):
  *   eof_lsa(in):
  *   current_time_in_msec(in):
  */
 int
 rpct_init_writer_info (CCI_CONN * conn, CIRP_CT_LOG_WRITER * ct_data,
-		       const char *host_ip, const LOG_LSA * eof_lsa,
-		       INT64 current_time_in_msec)
+		       const PRM_NODE_INFO * host_info,
+		       const LOG_LSA * eof_lsa, INT64 current_time_in_msec)
 {
   int error = NO_ERROR;
 
-  error = rpct_get_log_writer (ct_data, conn, host_ip);
+  error = rpct_get_log_writer (ct_data, conn, host_info);
   if (error != NO_ERROR && error != CCI_ER_NO_MORE_DATA)
     {
       REPL_SET_GENERIC_ERROR (error, "invalid repl catalog tables info.");
@@ -95,7 +98,7 @@ rpct_init_writer_info (CCI_CONN * conn, CIRP_CT_LOG_WRITER * ct_data,
   if (error == CCI_ER_NO_MORE_DATA)
     {
       /* insert new log writer info */
-      strncpy (ct_data->host_ip, host_ip, HOST_IP_SIZE - 1);
+      ct_data->host_info = *host_info;
 
       ct_data->last_flushed_pageid = NULL_PAGEID;
       LSA_COPY (&ct_data->eof_lsa, eof_lsa);
@@ -113,14 +116,15 @@ rpct_init_writer_info (CCI_CONN * conn, CIRP_CT_LOG_WRITER * ct_data,
  *
  *   log_writer(out):
  *   conn(in):
- *   host_ip(in):
+ *   host_info(in):
  */
 int
 rpct_get_log_writer (CIRP_CT_LOG_WRITER * log_writer, CCI_CONN * conn,
-		     const char *host_ip)
+		     const PRM_NODE_INFO * host_info)
 {
   int error = NO_ERROR;
   char query_buf[REPL_CT_QRY_BUF_SIZE];
+  char host_key_str[MAX_NODE_INFO_STR_LEN];
 
   int len;
   CATCLS_TABLE *table;
@@ -128,7 +132,8 @@ rpct_get_log_writer (CIRP_CT_LOG_WRITER * log_writer, CCI_CONN * conn,
 
   table = &table_LogWriter;
 
-  pk_array[0] = host_ip;
+  prm_node_info_to_str (host_key_str, sizeof (host_key_str), host_info);
+  pk_array[0] = host_key_str;
   len = cirp_make_select_query_with_pk (query_buf, sizeof (query_buf), table,
 					1, pk_array);
   if (len <= 0)
@@ -173,10 +178,9 @@ rpct_insert_log_writer (CCI_CONN * conn, CIRP_CT_LOG_WRITER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -240,10 +244,9 @@ rpct_update_log_writer (CCI_CONN * conn, CIRP_CT_LOG_WRITER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -294,21 +297,23 @@ exit_on_error:
  *
  *   conn(in):
  *   analyzer(out):
- *   host_ip(in):
+ *   host_info(in):
  */
 int
 rpct_get_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data,
-		       const char *host_ip)
+		       const PRM_NODE_INFO * host_info)
 {
   int error = NO_ERROR;
   char query_buf[REPL_CT_QRY_BUF_SIZE];
   int len;
   CATCLS_TABLE *table;
   const char *pk_array[1];
+  char host_key_str[MAX_NODE_INFO_STR_LEN];
 
   table = &table_LogAnalyzer;
 
-  pk_array[0] = host_ip;
+  prm_node_info_to_str (host_key_str, sizeof (host_key_str), host_info);
+  pk_array[0] = host_key_str;
   len = cirp_make_select_query_with_pk (query_buf, sizeof (query_buf), table,
 					1, pk_array);
   if (len <= 0)
@@ -351,10 +356,9 @@ rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -419,10 +423,9 @@ rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -475,13 +478,13 @@ exit_on_error:
  *   ct_data(out):
  *   conn(in):
  *   int num_appliers(in):
- *   host_ip(in):
+ *   host_info(in):
  *   eof_lsa(in):
  *   db_creation(in):
  *   current_time_in_msec(in):
  */
 int
-rpct_init_applier_info (CCI_CONN * conn, const char *host_ip,
+rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_info,
 			INT64 current_time_in_msec)
 {
   CIRP_APPLIER_INFO *applier = NULL;
@@ -496,7 +499,7 @@ rpct_init_applier_info (CCI_CONN * conn, const char *host_ip,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = rpct_get_num_log_applier (conn, &num_appliers, host_ip);
+  error = rpct_get_num_log_applier (conn, &num_appliers, host_info);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -516,7 +519,7 @@ rpct_init_applier_info (CCI_CONN * conn, const char *host_ip,
 	{
 	  applier = &Repl_Info->applier_info[i];
 
-	  strncpy (applier->ct.host_ip, host_ip, HOST_IP_SIZE - 1);
+	  applier->ct.host_info = *host_info;
 	  applier->ct.id = i + 1;
 
 	  LSA_SET_NULL (&applier->ct.committed_lsa);
@@ -554,7 +557,7 @@ rpct_init_applier_info (CCI_CONN * conn, const char *host_ip,
 	{
 	  applier = &Repl_Info->applier_info[i];
 
-	  error = rpct_get_log_applier (conn, &applier->ct, host_ip, i + 1);
+	  error = rpct_get_log_applier (conn, &applier->ct, host_info, i + 1);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -590,13 +593,13 @@ exit_on_error:
  *
  *   conn(in):
  *   ct_data(out):
- *   host_ip(in):
+ *   host_info(in):
  *   applier_id(in):
  */
 static int
 rpct_get_log_applier (CCI_CONN * conn,
 		      CIRP_CT_LOG_APPLIER * ct_data,
-		      const char *host_ip, int applier_id)
+		      const PRM_NODE_INFO * host_info, int applier_id)
 {
   int error = NO_ERROR;
   char query_buf[REPL_CT_QRY_BUF_SIZE];
@@ -604,10 +607,12 @@ rpct_get_log_applier (CCI_CONN * conn,
   CATCLS_TABLE *table;
   const char *pk_array[2];
   char id_buf[32];
+  char host_key_str[MAX_NODE_INFO_STR_LEN];
 
   table = &table_LogApplier;
 
-  pk_array[0] = host_ip;
+  prm_node_info_to_str (host_key_str, sizeof (host_key_str), host_info);
+  pk_array[0] = host_key_str;
   snprintf (id_buf, sizeof (id_buf), "%d", applier_id);
   pk_array[1] = id_buf;
   len = cirp_make_select_query_with_pk (query_buf, sizeof (query_buf),
@@ -642,11 +647,11 @@ exit_on_error:
  *
  *   conn(in):
  *   num_appliers(out):
- *   host_ip(in):
+ *   host_info(in):
  */
 static int
 rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers,
-			  const char *host_ip)
+			  const PRM_NODE_INFO * host_info)
 {
   int error = NO_ERROR;
   char query_buf[REPL_CT_QRY_BUF_SIZE];
@@ -656,6 +661,7 @@ rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers,
   CCI_STMT stmt;
   int ind;
   int n;
+  char host_key_str[MAX_NODE_INFO_STR_LEN];
 
   table = &table_LogApplier;
 
@@ -664,7 +670,9 @@ rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers,
 
   assert (strcasecmp (table->columns[0].name, "host_ip") == 0);
 
-  snprintf (cond, sizeof (cond), "%s='%s'", table->columns[0].name, host_ip);
+  prm_node_info_to_str (host_key_str, sizeof (host_key_str), host_info);
+  snprintf (cond, sizeof (cond), "%s='%s'",
+	    table->columns[0].name, host_key_str);
   len = cirp_make_count_all_query_with_cond (query_buf, sizeof (query_buf),
 					     table->name, cond);
   if (len <= 0)
@@ -732,10 +740,9 @@ rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -800,10 +807,9 @@ rpct_update_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  item = cirp_new_repl_catalog_item (&null_lsa);
-  if (item == NULL)
+  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  if (error != NO_ERROR)
     {
-      error = er_errid ();
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -1036,8 +1042,10 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
       GOTO_EXIT_ON_ERROR;
     }
   assert (ind >= 0 && str_value != NULL);
-  strncpy (applier->host_ip, str_value, sizeof (applier->host_ip));
-  applier->host_ip[sizeof (applier->host_ip) - 1] = '0';
+  if (rp_host_str_to_node_info (&applier->host_info, str_value) != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
   index++;
 
   bi = cci_get_bigint (&stmt, index, &ind);
@@ -1163,8 +1171,10 @@ cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
       GOTO_EXIT_ON_ERROR;
     }
   assert (ind >= 0 && str_value != NULL);
-  strncpy (applier->host_ip, str_value, sizeof (applier->host_ip));
-  applier->host_ip[sizeof (applier->host_ip) - 1] = '0';
+  if (rp_host_str_to_node_info (&applier->host_info, str_value) != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
   index++;
 
   applier->id = cci_get_int (&stmt, index, &ind);
@@ -1318,8 +1328,10 @@ cirp_get_writer_from_result (CIRP_CT_LOG_WRITER * writer,
       GOTO_EXIT_ON_ERROR;
     }
   assert (ind >= 0 && str_value != NULL);
-  strncpy (writer->host_ip, str_value, sizeof (writer->host_ip));
-  writer->host_ip[sizeof (writer->host_ip) - 1] = '0';
+  if (rp_host_str_to_node_info (&writer->host_info, str_value) != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
   index++;
 
   writer->last_flushed_pageid = cci_get_bigint (&stmt, index, &ind);
@@ -1406,7 +1418,11 @@ rpct_applier_to_catalog_item (RP_CATALOG_ITEM * catalog,
 
   /* make pkey idxkey */
   catalog->key.size = 2;
-  DB_MAKE_STRING (&catalog->key.vals[0], ct_data->host_ip);
+  error = rp_make_repl_host_key (&catalog->key.vals[0], &ct_data->host_info);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
   DB_MAKE_INT (&catalog->key.vals[1], ct_data->id);
 
   recdes->length = sizeof (CIRP_CT_LOG_APPLIER);
@@ -1458,7 +1474,11 @@ rpct_analyzer_to_catalog_item (RP_CATALOG_ITEM * catalog,
 
   /* make pkey idxkey */
   catalog->key.size = 1;
-  DB_MAKE_STRING (&catalog->key.vals[0], ct_data->host_ip);
+  error = rp_make_repl_host_key (&catalog->key.vals[0], &ct_data->host_info);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
 
   recdes->length = sizeof (CIRP_CT_LOG_ANALYZER);
   memcpy (recdes->data, (char *) ct_data, recdes->length);
@@ -1508,7 +1528,11 @@ rpct_writer_to_catalog_item (RP_CATALOG_ITEM * catalog,
 
   /* make pkey idxkey */
   catalog->key.size = 1;
-  DB_MAKE_STRING (&catalog->key.vals[0], ct_data->host_ip);
+  error = rp_make_repl_host_key (&catalog->key.vals[0], &ct_data->host_info);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
 
   recdes->length = sizeof (CIRP_CT_LOG_WRITER);
   memcpy (recdes->data, (char *) ct_data, recdes->length);

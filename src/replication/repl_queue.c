@@ -29,7 +29,6 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#include "repl_defs.h"
 #include "repl_queue.h"
 #include "error_manager.h"
 #include "system_parameter.h"
@@ -335,17 +334,15 @@ int
 cirp_pthread_cond_timedwait (pthread_cond_t * pcond, pthread_mutex_t * plock,
 			     int wakeup_interval)
 {
-  struct timeval now, tmp_timeval;
   struct timespec wakeup_time = {
     0, 0
   };
   int error = NO_ERROR;
   int rv;
 
-  gettimeofday (&now, NULL);
+  clock_gettime (CLOCK_REALTIME, &wakeup_time);
 
-  (void) timeval_add_msec (&tmp_timeval, &now, wakeup_interval);
-  (void) timeval_to_timespec (&wakeup_time, &tmp_timeval);
+  wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
 
   rv = pthread_cond_timedwait (pcond, plock, &wakeup_time);
 

@@ -36,6 +36,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "connection_defs.h"
+#include "connection_cl.h"
 #include "system_parameter.h"
 #include "cas_protocol.h"
 #include "cas_common.h"
@@ -43,25 +45,30 @@
 #include "broker.h"
 #include "cas_error.h"
 #include "broker_util.h"
-#include "broker_send_fd.h"
 #include "rye_master_shm.h"
-#include "broker_filename.h"
 #include "cas_cci_internal.h"
 #include "error_manager.h"
 #include "master_heartbeat.h"
 #include "dbi.h"
+#include "rye_server_shm.h"
+#include "tcp.h"
 
 #define LOCK_SHM() 	pthread_mutex_lock (&shm_Lock)
 #define UNLOCK_SHM() 	pthread_mutex_unlock (&shm_Lock)
+#define LOCK_CSS() 	pthread_mutex_lock (&css_Lock)
+#define UNLOCK_CSS() 	pthread_mutex_unlock (&css_Lock)
 static pthread_mutex_t shm_Lock;
+static pthread_mutex_t css_Lock;
 
 #define FORK_EXEC_ERROR	99
+
+#define FILE_SEND_MAX_SIZE	(256 * ONE_K)
 
 typedef struct local_mgmt_job T_LOCAL_MGMT_JOB;
 struct local_mgmt_job
 {
   int clt_sock_fd;
-  unsigned char clt_ip_addr[4];
+  in_addr_t clt_ip;
   union
   {
     T_BROKER_REQUEST_MSG *req_msg;
@@ -82,15 +89,17 @@ struct local_mgmt_job_queue
   T_SHM_MGMT_QUEUE_INFO *shm_queue_info;
 };
 
-static int local_mgmt_init_child_process_queue (void);
-static int local_mg_transfer_driver_req (SOCKET * clt_sock_fd,
-					 int clt_ip_addr,
-					 const T_BROKER_REQUEST_MSG *
-					 br_req_msg,
-					 const char *transfer_broker_name);
+static int local_mg_transfer_req (int target_broker_type,
+				  SOCKET * clt_sock_fd, in_addr_t clt_ip_addr,
+				  const T_BROKER_REQUEST_MSG * br_req_msg);
 
-static T_LOCAL_MGMT_JOB_QUEUE *local_mg_create_job_queue (void);
-static T_LOCAL_MGMT_JOB_QUEUE *local_mg_init_mgmt_job_queue (void);
+static T_LOCAL_MGMT_JOB_QUEUE *local_mg_create_job_queue (int num_workers,
+							  T_SHM_MGMT_QUEUE_INFO
+							  * shm_queue_info,
+							  THREAD_FUNC
+							  (*worker_func) (void
+									  *));
+static int local_mg_init_mgmt_job_queue (void);
 static THREAD_FUNC local_mg_child_process_waiter (void *arg);
 static THREAD_FUNC local_mg_admin_worker (void *arg);
 
@@ -99,9 +108,9 @@ static T_LOCAL_MGMT_JOB *local_mg_job_queue_remove (T_LOCAL_MGMT_JOB_QUEUE *
 						    job_queue);
 static int local_mg_job_queue_add (T_LOCAL_MGMT_JOB_QUEUE * job_queue,
 				   SOCKET * clt_sock_fd,
-				   const unsigned char *clt_ip_addr,
+				   in_addr_t clt_ip_addr,
 				   T_BROKER_REQUEST_MSG * req_msg,
-				   T_LOCAL_MGMT_CHILD_PROC_INFO * child_info,
+				   T_LOCAL_MGMT_CHILD_PROC_INFO ** child_info,
 				   bool need_mutex_lock);
 
 static void make_child_output_filename (char *infile, int infile_bufsize,
@@ -140,6 +149,12 @@ static int local_mg_get_conf (T_LOCAL_MGMT_JOB * job,
 static int local_mg_br_acl_reload (T_LOCAL_MGMT_JOB * job,
 				   const T_MGMT_REQ_ARG * req_arg,
 				   T_MGMT_RESULT_MSG * result_msg);
+static int local_mg_connect_db_server (T_LOCAL_MGMT_JOB * job,
+				       const T_MGMT_REQ_ARG * req_arg,
+				       T_MGMT_RESULT_MSG * result_msg);
+static int local_mg_rm_tmp_file (T_LOCAL_MGMT_JOB * job,
+				 const T_MGMT_REQ_ARG * req_arg,
+				 T_MGMT_RESULT_MSG * result_msg);
 static void shm_copy_child_process_info (void);
 static char *local_mgmt_pack_str (char *ptr, char *str, int len);
 static char *local_mgmt_pack_int (char *ptr, int value);
@@ -174,11 +189,18 @@ static T_LOCAL_MG_ADMIN_FUNC_TABLE local_Mg_admin_func_table[] = {
    "GET_CONF"},
   {BRREQ_OP_CODE_BR_ACL_RELOAD, local_mg_br_acl_reload,
    "BR_ACL_RELOAD"},
+  {BRREQ_OP_CODE_CONNECT_DB_SERVER, local_mg_connect_db_server,
+   "CONNECT_DB_SERVER"},
+  {BRREQ_OP_CODE_RM_TMP_FILE, local_mg_rm_tmp_file,
+   "RM_TMP_FILE"},
   {-1, NULL, NULL}
 };
 
+static T_LOCAL_MGMT_JOB_QUEUE *job_Q_mgmt;
+static T_LOCAL_MGMT_JOB_QUEUE *job_Q_connect_db;
+
 static T_SHM_LOCAL_MGMT_INFO *shm_Local_mgmt_info;
-static T_LOCAL_MGMT_JOB_QUEUE *child_Process_queue;
+static T_LOCAL_MGMT_JOB_QUEUE *job_Q_child_proc;
 static unsigned int child_Outfile_seq = 0;
 
 static struct _local_mgmt_server_info
@@ -189,30 +211,15 @@ static struct _local_mgmt_server_info
 int
 local_mgmt_init ()
 {
-  if (local_mgmt_init_child_process_queue () < 0)
+  if (local_mg_init_mgmt_job_queue () < 0)
     {
+      br_set_init_error (BR_ER_INIT_LOCAL_MGMT_INIT_FAIL, 0);
       return -1;
     }
 
   memset (&local_Mgmt_server_info, 0, sizeof (local_Mgmt_server_info));
   gethostname (local_Mgmt_server_info.hostname,
 	       sizeof (local_Mgmt_server_info.hostname) - 1);
-  return 0;
-}
-
-static int
-local_mgmt_init_child_process_queue ()
-{
-  pthread_t thr;
-
-  child_Process_queue = local_mg_create_job_queue ();
-  if (child_Process_queue == NULL)
-    {
-      return -1;
-    }
-
-  THREAD_BEGIN (thr, local_mg_child_process_waiter, NULL);
-
   return 0;
 }
 
@@ -223,8 +230,7 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
   T_BROKER_REQUEST_MSG *br_req_msg;
   int err_code = 0;
   ER_MSG_INFO *er_msg;
-  int clt_ip_addr;
-  T_LOCAL_MGMT_JOB_QUEUE *mgmt_job_queue;
+  in_addr_t clt_ip_addr;
 
   signal (SIGPIPE, SIG_IGN);
 
@@ -232,16 +238,6 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
   err_code = er_set_msg_info (er_msg);
   if (err_code != NO_ERROR)
     {
-      return NULL;
-    }
-
-  shm_Local_mgmt_info = &shm_Appl->info.local_mgmt_info;
-
-  mgmt_job_queue = local_mg_init_mgmt_job_queue ();
-  if (mgmt_job_queue == NULL)
-    {
-      br_Process_flag = 0;
-      br_set_init_error (BR_ER_INIT_LOCAL_MGMT_INIT_FAIL, 0);
       return NULL;
     }
 
@@ -256,7 +252,7 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
     {
       err_code = 0;
 
-      clt_sock_fd = br_mgmt_accept ((unsigned char *) &clt_ip_addr);
+      clt_sock_fd = br_mgmt_accept (&clt_ip_addr);
       if (IS_INVALID_SOCKET (clt_sock_fd))
 	{
 	  continue;
@@ -264,33 +260,37 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 
       if (br_read_broker_request_msg (clt_sock_fd, br_req_msg) < 0)
 	{
-	  shm_Local_mgmt_info->error_req_count++;
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->error_req_count, 1);
 	  err_code = CAS_ER_COMMUNICATION;
 	  goto end;
 	}
 
-      if (IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code))
+      if (IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code) ||
+	  IS_SHARD_MGMT_OPCODE (br_req_msg->op_code))
 	{
-	  const char *transfer_broker_name;
-	  transfer_broker_name =
-	    brreq_msg_unpack_port_name (br_req_msg, NULL, NULL);
+	  int target_broker_type = SHARD_MGMT;
+	  if (IS_NORMAL_BROKER_OPCODE (br_req_msg->op_code))
+	    {
+	      target_broker_type = NORMAL_BROKER;
+	    }
 
-	  err_code = local_mg_transfer_driver_req (&clt_sock_fd, clt_ip_addr,
-						   br_req_msg,
-						   transfer_broker_name);
+	  err_code = local_mg_transfer_req (target_broker_type,
+					    &clt_sock_fd, clt_ip_addr,
+					    br_req_msg);
 
 	  if (br_req_msg->op_code == BRREQ_OP_CODE_CAS_CONNECT)
 	    {
-	      shm_Local_mgmt_info->connect_req_count++;
-	    }
-	  else if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
-	    {
-	      shm_Local_mgmt_info->ping_req_count++;
+	      ATOMIC_INC_32 (&shm_Local_mgmt_info->connect_req_count, 1);
 	    }
 	  else if (br_req_msg->op_code == BRREQ_OP_CODE_QUERY_CANCEL)
 	    {
-	      shm_Local_mgmt_info->cancel_req_count++;
+	      ATOMIC_INC_32 (&shm_Local_mgmt_info->cancel_req_count, 1);
 	    }
+	}
+      else if (br_req_msg->op_code == BRREQ_OP_CODE_PING)
+	{
+	  br_send_result_to_client (clt_sock_fd, 0, NULL);
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->ping_req_count, 1);
 	}
       else if (IS_LOCAL_MGMT_OPCODE (br_req_msg->op_code))
 	{
@@ -302,17 +302,28 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 	    }
 	  else
 	    {
-	      err_code = local_mg_job_queue_add (mgmt_job_queue,
-						 &clt_sock_fd,
-						 (unsigned char *)
-						 &clt_ip_addr, clone_req_msg,
-						 NULL, true);
+	      if (br_req_msg->op_code == BRREQ_OP_CODE_CONNECT_DB_SERVER)
+		{
+		  err_code = local_mg_job_queue_add (job_Q_connect_db,
+						     &clt_sock_fd,
+						     clt_ip_addr,
+						     clone_req_msg, NULL,
+						     true);
+		}
+	      else
+		{
+		  err_code = local_mg_job_queue_add (job_Q_mgmt,
+						     &clt_sock_fd,
+						     clt_ip_addr,
+						     clone_req_msg, NULL,
+						     true);
+		}
 	    }
-	  shm_Local_mgmt_info->admin_req_count++;
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->admin_req_count, 1);
 	}
       else
 	{
-	  shm_Local_mgmt_info->error_req_count++;
+	  ATOMIC_INC_32 (&shm_Local_mgmt_info->error_req_count, 1);
 	  err_code = CAS_ER_COMMUNICATION;
 	}
 
@@ -332,28 +343,45 @@ local_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
 }
 
 static int
-local_mg_transfer_driver_req (SOCKET * clt_sock_fd, int clt_ip_addr,
-			      const T_BROKER_REQUEST_MSG * br_req_msg,
-			      const char *transfer_broker_name)
+local_mg_transfer_req (int target_broker_type, SOCKET * clt_sock_fd,
+		       in_addr_t clt_ip_addr,
+		       const T_BROKER_REQUEST_MSG * br_req_msg)
 {
   SOCKET br_sock_fd;
   int status;
   struct timeval recv_time;
-  const T_BROKER_INFO *br_info_service_broker;
+  const T_BROKER_INFO *br_info_service_broker = NULL;
 
   gettimeofday (&recv_time, NULL);
 
-  br_info_service_broker = ut_find_broker (shm_Br->br_info,
-					   shm_Br->num_broker,
-					   transfer_broker_name,
-					   NORMAL_BROKER);
+  if (target_broker_type == NORMAL_BROKER)
+    {
+      const char *transfer_broker_name;
+      transfer_broker_name = brreq_msg_unpack_port_name (br_req_msg,
+							 NULL, NULL);
+      br_info_service_broker = ut_find_broker (shm_Br->br_info,
+					       shm_Br->num_broker,
+					       transfer_broker_name,
+					       NORMAL_BROKER);
+    }
+  else if (target_broker_type == SHARD_MGMT)
+    {
+      T_MGMT_REQ_ARG req_arg;
+      if (br_mgmt_get_req_arg (&req_arg, br_req_msg) >= 0)
+	{
+	  br_info_service_broker = ut_find_shard_mgmt (shm_Br->br_info,
+						       shm_Br->num_broker,
+						       req_arg.clt_dbname);
+	  RYE_FREE_MEM (req_arg.alloc_buffer);
+	}
+    }
+
   if (br_info_service_broker == NULL)
     {
-      assert (false);
       return BR_ER_BROKER_NOT_FOUND;
     }
 
-  br_sock_fd = br_connect_srv (br_info_service_broker->name, true, -1);
+  br_sock_fd = br_connect_srv (true, br_info_service_broker, -1);
   if (IS_INVALID_SOCKET (br_sock_fd))
     {
       return BR_ER_BROKER_NOT_FOUND;
@@ -368,7 +396,7 @@ local_mg_transfer_driver_req (SOCKET * clt_sock_fd, int clt_ip_addr,
       return BR_ER_BROKER_NOT_FOUND;
     }
 
-  if (send_fd (br_sock_fd, *clt_sock_fd, clt_ip_addr, &recv_time) < 0)
+  if (css_transfer_fd (br_sock_fd, *clt_sock_fd, clt_ip_addr, &recv_time) < 0)
     {
       RYE_CLOSE_SOCKET (br_sock_fd);
       return BR_ER_BROKER_NOT_FOUND;
@@ -384,9 +412,12 @@ local_mg_transfer_driver_req (SOCKET * clt_sock_fd, int clt_ip_addr,
 }
 
 static T_LOCAL_MGMT_JOB_QUEUE *
-local_mg_create_job_queue ()
+local_mg_create_job_queue (int num_workers,
+			   T_SHM_MGMT_QUEUE_INFO * shm_queue_info,
+			   THREAD_FUNC (*worker_func) (void *))
 {
   T_LOCAL_MGMT_JOB_QUEUE *job_queue;
+  int i;
 
   job_queue = RYE_MALLOC (sizeof (T_LOCAL_MGMT_JOB_QUEUE));
 
@@ -400,59 +431,106 @@ local_mg_create_job_queue ()
 	  RYE_FREE_MEM (job_queue);
 	  return NULL;
 	}
+
+      job_queue->num_workers = num_workers;
+      job_queue->shm_queue_info = shm_queue_info;
+
+      for (i = 0; i < num_workers; i++)
+	{
+	  pthread_t worker_thr;
+	  THREAD_BEGIN (worker_thr, worker_func, job_queue);
+	}
     }
 
   return job_queue;
 }
 
-static T_LOCAL_MGMT_JOB_QUEUE *
+static int
 local_mg_init_mgmt_job_queue ()
 {
-  T_LOCAL_MGMT_JOB_QUEUE *mgmt_job_queue;
-  pthread_t mgmt_admin_worker;
-  int i;
-
   if (pthread_mutex_init (&shm_Lock, NULL) < 0)
     {
-      return NULL;
+      return -1;
     }
-
-  mgmt_job_queue = local_mg_create_job_queue ();
-  if (mgmt_job_queue == NULL)
+  if (pthread_mutex_init (&css_Lock, NULL) < 0)
     {
-      return NULL;
+      return -1;
     }
 
-  mgmt_job_queue->num_workers = 1;
-  mgmt_job_queue->shm_queue_info = &shm_Local_mgmt_info->admin_req_queue;
+  shm_Local_mgmt_info = &shm_Appl->info.local_mgmt_info;
 
-  for (i = 0; i < mgmt_job_queue->num_workers; i++)
+  job_Q_mgmt =
+    local_mg_create_job_queue (1, &shm_Local_mgmt_info->admin_req_queue,
+			       local_mg_admin_worker);
+  job_Q_connect_db =
+    local_mg_create_job_queue (1, &shm_Local_mgmt_info->db_connect_req_queue,
+			       local_mg_admin_worker);
+  job_Q_child_proc =
+    local_mg_create_job_queue (1, NULL, local_mg_child_process_waiter);
+
+  if (job_Q_mgmt == NULL || job_Q_connect_db == NULL ||
+      job_Q_child_proc == NULL)
     {
-      THREAD_BEGIN (mgmt_admin_worker, local_mg_admin_worker, mgmt_job_queue);
+      return -1;
     }
 
-  return mgmt_job_queue;
+  return 0;
 }
 
-static int
-read_outfile (const char *filename, char *result_buf, int result_buf_size)
+static char *
+read_outfile (const char *filename, int *size, bool allow_partial_read)
 {
-  int read_len = 0;
-  int fd;
+  int read_len = 0, n;
+  int fd = -1;
+  struct stat st;
+  char *contents = NULL;
+  int file_size = -1;
 
-  fd = open (filename, O_RDONLY);
+  if ((filename == NULL) || (filename[0] == '\0') ||
+      (stat (filename, &st) < 0) ||
+      (allow_partial_read == false && st.st_size > FILE_SEND_MAX_SIZE) ||
+      ((fd = open (filename, O_RDONLY)) < 0))
+    {
+      assert (0);
+    }
+  else
+    {
+      file_size = MIN (st.st_size, FILE_SEND_MAX_SIZE);
+      contents = RYE_MALLOC (file_size);
+      if (contents != NULL)
+	{
+	  while (read_len < file_size)
+	    {
+	      n = read (fd, contents + read_len, file_size - read_len);
+	      if (n < 0)
+		{
+		  if (allow_partial_read)
+		    {
+		      file_size = read_len;
+		    }
+		  break;
+		}
+	      read_len += n;
+	    }
+	}
+    }
+
   if (fd >= 0)
     {
-      read_len = read (fd, result_buf, result_buf_size - 1);
-      if (read_len < 0)
-	{
-	  read_len = 0;
-	}
-
       close (fd);
     }
 
-  return read_len;
+  if (file_size > 0 && contents != NULL && read_len == file_size)
+    {
+      *size = file_size;
+      return contents;
+    }
+  else
+    {
+      RYE_FREE_MEM (contents);
+      *size = 0;
+      return NULL;
+    }
 }
 
 static void
@@ -462,21 +540,30 @@ set_child_process_result (T_MGMT_RESULT_MSG * result_msg,
   char infile[BROKER_PATH_MAX];
   char outfile[BROKER_PATH_MAX];
   char errfile[BROKER_PATH_MAX];
-  char out_buf[MGMT_RESULT_MSG_MAX_SIZE];
+  char *out_buf;
   int out_len = 0;
-  char err_buf[MGMT_RESULT_MSG_MAX_SIZE];
+  char *err_buf;
   int err_len = 0;
+
+  if (child_proc_info->output_file_id <= 0)
+    {
+      /* no-result-receive mode */
+      return;
+    }
 
   make_child_output_filename (infile, sizeof (infile), false,
 			      outfile, sizeof (outfile),
 			      errfile, sizeof (errfile),
 			      child_proc_info->output_file_id);
 
-  out_len = read_outfile (outfile, out_buf, sizeof (out_buf));
-  err_len = read_outfile (errfile, err_buf, sizeof (err_buf));
+  out_buf = read_outfile (outfile, &out_len, true);
+  err_buf = read_outfile (errfile, &err_len, true);
 
   br_mgmt_result_msg_set (result_msg, out_len, out_buf);
   br_mgmt_result_msg_set (result_msg, err_len, err_buf);
+
+  RYE_FREE_MEM (out_buf);
+  RYE_FREE_MEM (err_buf);
 
   unlink (infile);
   unlink (outfile);
@@ -484,9 +571,9 @@ set_child_process_result (T_MGMT_RESULT_MSG * result_msg,
 }
 
 static THREAD_FUNC
-local_mg_child_process_waiter (UNUSED_ARG void *arg)
+local_mg_child_process_waiter (void *arg)
 {
-  T_LOCAL_MGMT_JOB_QUEUE *job_queue = child_Process_queue;
+  T_LOCAL_MGMT_JOB_QUEUE *job_queue = (T_LOCAL_MGMT_JOB_QUEUE *) arg;
   T_MGMT_RESULT_MSG result_msg;
   int error;
   ER_MSG_INFO *er_msg;
@@ -671,9 +758,9 @@ set_job_queue_job_count (T_LOCAL_MGMT_JOB_QUEUE * job_queue, int num_job)
 static int
 local_mg_job_queue_add (T_LOCAL_MGMT_JOB_QUEUE * job_queue,
 			SOCKET * clt_sock_fd,
-			const unsigned char *clt_ip_addr,
+			in_addr_t clt_ip_addr,
 			T_BROKER_REQUEST_MSG * req_msg,
-			T_LOCAL_MGMT_CHILD_PROC_INFO * child_info,
+			T_LOCAL_MGMT_CHILD_PROC_INFO ** child_info,
 			bool need_mutex_lock)
 {
   T_LOCAL_MGMT_JOB *job = NULL;
@@ -681,12 +768,16 @@ local_mg_job_queue_add (T_LOCAL_MGMT_JOB_QUEUE * job_queue,
   if (req_msg != NULL || child_info != NULL)
     {
       job = RYE_MALLOC (sizeof (T_LOCAL_MGMT_JOB));
-      if (job != NULL)
+      if (job == NULL)
+	{
+	  return BR_ER_NO_MORE_MEMORY;
+	}
+      else
 	{
 	  memset (job, 0, sizeof (T_LOCAL_MGMT_JOB));
 
 	  job->clt_sock_fd = *clt_sock_fd;
-	  memcpy (job->clt_ip_addr, clt_ip_addr, 4);
+	  job->clt_ip = clt_ip_addr;
 
 	  if (req_msg != NULL)
 	    {
@@ -694,13 +785,9 @@ local_mg_job_queue_add (T_LOCAL_MGMT_JOB_QUEUE * job_queue,
 	    }
 	  else
 	    {
-	      job->info.child_info = child_info;
+	      job->info.child_info = *child_info;
+	      *child_info = NULL;
 	    }
-	}
-
-      if (job == NULL)
-	{
-	  return BR_ER_NO_MORE_MEMORY;
 	}
     }
 
@@ -764,7 +851,7 @@ local_mg_job_queue_remove (T_LOCAL_MGMT_JOB_QUEUE * job_queue)
 static T_LOCAL_MGMT_JOB *
 local_mg_process_queue_remove_by_pid (int pid)
 {
-  T_LOCAL_MGMT_JOB_QUEUE *job_queue = child_Process_queue;
+  T_LOCAL_MGMT_JOB_QUEUE *job_queue = job_Q_child_proc;
   T_LOCAL_MGMT_JOB *job;
 
   if (job_queue->back->info.child_info->pid == pid)
@@ -849,15 +936,17 @@ local_mg_sync_shard_mgmt_info (T_LOCAL_MGMT_JOB * job,
 			       UNUSED_ARG T_MGMT_RESULT_MSG * result_msg)
 {
   HA_STATE server_state;
+  PRM_NODE_INFO shard_mgmt_node_info;
+
+  PRM_NODE_INFO_SET (&shard_mgmt_node_info,
+		     job->clt_ip, req_arg->value.shard_mgmt_info.port);
 
   rye_master_shm_add_shard_mgmt_info (req_arg->value.shard_mgmt_info.
 				      local_dbname,
 				      req_arg->value.shard_mgmt_info.
 				      global_dbname,
 				      req_arg->value.shard_mgmt_info.nodeid,
-				      job->clt_ip_addr,
-				      req_arg->value.shard_mgmt_info.port);
-
+				      &shard_mgmt_node_info);
 
   LOCK_SHM ();
 
@@ -869,9 +958,9 @@ local_mg_sync_shard_mgmt_info (T_LOCAL_MGMT_JOB * job,
 			  strlen (local_Mgmt_server_info.hostname) + 1,
 			  local_Mgmt_server_info.hostname);
 
-  if (rye_master_shm_get_server_state
-      (req_arg->value.shard_mgmt_info.local_dbname,
-       &server_state) == NO_ERROR)
+  if (rye_server_shm_get_state (&server_state,
+				req_arg->value.shard_mgmt_info.
+				local_dbname) == NO_ERROR)
     {
       int ha_state_for_driver;
 
@@ -928,7 +1017,7 @@ make_child_output_filename (char *infile, int infile_bufsize, bool mkinfile,
 {
   char dirname[BROKER_PATH_MAX];
 
-  get_rye_file (FID_CAS_TMP_DIR, dirname, BROKER_PATH_MAX);
+  envvar_tmpdir_file (dirname, BROKER_PATH_MAX, "");
 
   snprintf (infile, infile_bufsize, "%s/local_mgmt.%u.in", dirname, seq);
   if (mkinfile)
@@ -990,7 +1079,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
   argc = launch_arg->argc;
   argv[argc] = NULL;
 
-  ut_get_ipv4_string (caller_host, sizeof (caller_host), job->clt_ip_addr);
+  css_ip_to_str (caller_host, sizeof (caller_host), job->clt_ip);
 
   rye_root_dir = envvar_root ();
 
@@ -1024,13 +1113,20 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 
   signal (SIGCHLD, SIG_DFL);
 
-  pthread_mutex_lock (&child_Process_queue->lock);
+  pthread_mutex_lock (&job_Q_child_proc->lock);
 
-  if (child_Outfile_seq == 0)
+  if (MGMT_LUANCH_IS_FLAG_SET (launch_arg->flag, MGMT_LAUNCH_FLAG_NO_RESULT))
     {
-      child_Outfile_seq++;
+      child_info->output_file_id = 0;
     }
-  child_info->output_file_id = child_Outfile_seq++;
+  else
+    {
+      if (child_Outfile_seq == 0)
+	{
+	  child_Outfile_seq++;
+	}
+      child_info->output_file_id = child_Outfile_seq++;
+    }
 
   pid = fork ();
   if (pid == 0)
@@ -1043,7 +1139,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
       int fd_stderr = -1;
       char working_dir[BROKER_PATH_MAX];
 
-      get_rye_file (FID_CAS_TMP_DIR, working_dir, BROKER_PATH_MAX);
+      envvar_tmpdir_file (working_dir, BROKER_PATH_MAX, "");
       chdir (working_dir);
 
       for (i = 3; i < 256; i++)
@@ -1102,21 +1198,17 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
       copy_launch_proc_cmd (child_info->cmd, sizeof (child_info->cmd), argc,
 			    argv);
 
-      error = local_mg_job_queue_add (child_Process_queue,
-				      &job->clt_sock_fd, job->clt_ip_addr,
-				      NULL, child_info, false);
+      error = local_mg_job_queue_add (job_Q_child_proc,
+				      &job->clt_sock_fd, job->clt_ip,
+				      NULL, &child_info, false);
 
       shm_copy_child_process_info ();
     }
 
-  pthread_mutex_unlock (&child_Process_queue->lock);
+  pthread_mutex_unlock (&job_Q_child_proc->lock);
 
   RYE_FREE_MEM (argv);
-
-  if (error < 0)
-    {
-      RYE_FREE_MEM (child_info);
-    }
+  RYE_FREE_MEM (child_info);
 
   return error;
 }
@@ -1125,7 +1217,7 @@ static void
 shm_copy_child_process_info ()
 {
   int num_child = 0;
-  T_LOCAL_MGMT_JOB *job = child_Process_queue->back;
+  T_LOCAL_MGMT_JOB *job = job_Q_child_proc->back;
 
   while (job != NULL && num_child < SHM_MAX_CHILD_INFO)
     {
@@ -1221,12 +1313,6 @@ local_mg_num_shard_version_info (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
   return 0;
 }
 
-static char *
-get_rye_conf_path (char *path, size_t size)
-{
-  return envvar_confdir_file (path, size, sysprm_auto_conf_file_name);
-}
-
 static int
 local_mg_read_rye_file (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 			UNUSED_ARG const T_MGMT_REQ_ARG * req_arg,
@@ -1234,9 +1320,8 @@ local_mg_read_rye_file (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 {
   const T_MGMT_REQ_ARG_READ_RYE_FILE *arg_read_rye_file;
   char rye_file_path[PATH_MAX];
-  struct stat stat_buf;
   char *contents;
-  int file_size, read_len;
+  int file_size;
 
   arg_read_rye_file = &req_arg->value.read_rye_file_arg;
 
@@ -1244,27 +1329,17 @@ local_mg_read_rye_file (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 
   if (arg_read_rye_file->which_file == READ_RYE_FILE_RYE_CONF)
     {
-      get_rye_conf_path (rye_file_path, PATH_MAX);
+      envvar_rye_conf_file (rye_file_path, sizeof (rye_file_path));
     }
   else if (arg_read_rye_file->which_file == READ_RYE_FILE_BR_ACL)
     {
-      get_rye_file (FID_ACCESS_CONTROL_FILE, rye_file_path,
-		    sizeof (rye_file_path));
+      envvar_broker_acl_file (rye_file_path, sizeof (rye_file_path));
     }
 
-  if (rye_file_path[0] == '\0' || stat (rye_file_path, &stat_buf) < 0
-      || stat_buf.st_size <= 0)
+  contents = read_outfile (rye_file_path, &file_size, false);
+  if (contents == NULL)
     {
       return BR_ER_SEND_RYE_FILE;
-    }
-
-  file_size = stat_buf.st_size;
-  contents = RYE_MALLOC (file_size + 1);
-  read_len = read_outfile (rye_file_path, contents, file_size + 1);
-  if (read_len != file_size)
-    {
-      assert (false);
-      ;				/* TODO - avoid compile error */
     }
 
   br_mgmt_result_msg_set (result_msg, file_size, contents);
@@ -1283,10 +1358,15 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
   int fd;
   int write_len;
   char rye_conf_path[PATH_MAX];
+  int rye_port_id;
+  const char *rye_shm_key;
+
+  rye_port_id = prm_get_rye_port_id ();
+  rye_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
 
   arg_write_conf = &req_arg->value.write_rye_conf_arg;
 
-  if (get_rye_conf_path (rye_conf_path, PATH_MAX) == NULL)
+  if (envvar_rye_conf_file (rye_conf_path, sizeof (rye_conf_path)) == NULL)
     {
       return BR_ER_RYE_CONF;
     }
@@ -1303,13 +1383,26 @@ local_mg_write_rye_conf (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 
   if (write_len == arg_write_conf->size)
     {
-      return 0;
+      char buf[64];
+      int err = 0;
+
+      snprintf (buf, sizeof (buf), "%d", rye_port_id);
+      err = db_update_persist_conf_file ("server", "common",
+					 "rye_port_id", buf);
+      if (err == NO_ERROR)
+	{
+	  err = db_update_persist_conf_file ("server", "common",
+					     "rye_shm_key", rye_shm_key);
+	}
+
+      if (err == NO_ERROR)
+	{
+	  return 0;
+	}
     }
-  else
-    {
-      assert (0);
-      return BR_ER_RYE_CONF;
-    }
+
+  assert (0);
+  return BR_ER_RYE_CONF;
 }
 
 static int
@@ -1404,22 +1497,22 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 			UNUSED_ARG T_MGMT_RESULT_MSG * result_msg)
 {
   const T_MGMT_REQ_ARG_BR_ACL_RELOAD *arg_br_acl_reload;
-  char tmp_file[BROKER_PATH_MAX] = "";
-  int n;
+  char tmp_acl_filepath[BROKER_PATH_MAX] = "";
+  char tmp_filename[BROKER_PATH_MAX];
   int childpid;
 
   arg_br_acl_reload = &req_arg->value.br_acl_reload_arg;
 
-  get_rye_file (FID_CAS_TMP_DIR, tmp_file, sizeof (tmp_file));
-  n = strlen (tmp_file);
-  n +=
-    snprintf (tmp_file + n, sizeof (tmp_file) - n, "acl.tmp.%d", getpid ());
-  if (n >= (int) sizeof (tmp_file) - 1)
+  snprintf (tmp_filename, sizeof (tmp_filename), "acl.tmp.%d", getpid ());
+  envvar_tmpdir_file (tmp_acl_filepath, sizeof (tmp_acl_filepath),
+		      tmp_filename);
+
+  if (strlen (tmp_acl_filepath) >= (int) sizeof (tmp_acl_filepath) - 1)
     {
       return BR_ER_BR_ACL_RELOAD;
     }
 
-  if (file_write (tmp_file, arg_br_acl_reload->acl,
+  if (file_write (tmp_acl_filepath, arg_br_acl_reload->acl,
 		  arg_br_acl_reload->size) < 0)
     {
       return BR_ER_BR_ACL_RELOAD;
@@ -1432,6 +1525,7 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
     }
   else if (childpid == 0)
     {
+      int n;
       char rye_cmd[BROKER_PATH_MAX];
 
       for (n = 3; n < 256; n++)
@@ -1441,7 +1535,8 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 
       snprintf (rye_cmd, sizeof (rye_cmd), "%s/bin/rye", envvar_root ());
 
-      execl (rye_cmd, rye_cmd, "broker", "acl", "reload", tmp_file, NULL);
+      execl (rye_cmd, rye_cmd, "broker", "acl", "reload", tmp_acl_filepath,
+	     NULL);
 
       exit (-1);
     }
@@ -1454,8 +1549,72 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
 	  return BR_ER_BR_ACL_RELOAD;
 	}
 
+      unlink (tmp_acl_filepath);
+
       return (child_exit_status == 0 ? 0 : BR_ER_BR_ACL_RELOAD);
     }
+}
+
+static int
+local_mg_connect_db_server (T_LOCAL_MGMT_JOB * job,
+			    const T_MGMT_REQ_ARG * req_arg,
+			    UNUSED_ARG T_MGMT_RESULT_MSG * result_msg)
+{
+  const char *db_name;
+  PRM_NODE_INFO node_info = prm_get_myself_node_info ();
+  CSS_CONN_ENTRY *conn;
+  int status;
+
+  db_name = req_arg->value.connect_db_server_arg.db_name;
+  assert (db_name != NULL);
+
+  LOCK_CSS ();
+  conn = css_connect_to_rye_server (&node_info, db_name,
+				    SVR_CONNECT_TYPE_TRANSFER_CONN);
+  UNLOCK_CSS ();
+
+  if (conn == NULL)
+    {
+      return BR_ER_CONNECT_DB;
+    }
+
+  if (css_transfer_fd (conn->fd, job->clt_sock_fd, job->clt_ip, NULL) < 0)
+    {
+      ATOMIC_INC_32 (&shm_Local_mgmt_info->db_connect_fail, 1);
+      status = BR_ER_CONNECT_DB;
+    }
+  else
+    {
+      ATOMIC_INC_32 (&shm_Local_mgmt_info->db_connect_success, 1);
+      status = 0;
+    }
+
+  LOCK_CSS ();
+  css_free_conn (conn);
+  UNLOCK_CSS ();
+
+  return status;
+}
+
+static int
+local_mg_rm_tmp_file (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
+		      const T_MGMT_REQ_ARG * req_arg,
+		      UNUSED_ARG T_MGMT_RESULT_MSG * result_msg)
+{
+  const char *rm_file;
+  char filepath[BROKER_PATH_MAX];
+
+  rm_file = req_arg->value.rm_tmp_file_arg.file;
+  if (rm_file == NULL || rm_file[0] == '\0')
+    {
+      assert (0);
+      return BR_ER_INVALID_ARGUMENT;
+    }
+
+  envvar_tmpdir_file (filepath, sizeof (filepath), rm_file);
+  unlink (filepath);
+
+  return 0;
 }
 
 static int

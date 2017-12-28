@@ -115,15 +115,8 @@ extern int catcls_remove_entry (THREAD_ENTRY * thread_p, OID * class_oid);
 extern int catcls_get_db_collation (THREAD_ENTRY * thread_p,
 				    LANG_COLL_COMPAT ** db_collations,
 				    int *coll_cnt);
-extern int catcls_get_applier_info (THREAD_ENTRY * thread_p,
-				    INT64 * max_delay);
 extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
-				     INT64 * current_pageid,
-				     INT64 * required_pageid,
 				     INT64 * source_applied_time);
-extern int catcls_get_writer_info (THREAD_ENTRY * thread_p,
-				   INT64 * last_flushed_pageid,
-				   INT64 * eof_pageid);
 
 static int catcls_initialize_class_oid_to_oid_hash_table (THREAD_ENTRY *
 							  thread_p,
@@ -4016,192 +4009,19 @@ exit:
 }
 
 /*
- * catcls_get_applier_info () - get max log_record_time
- *                                            in db_ha_apply_info
- *
- *   return: NO_ERROR, or error code
- *
- *   thread_p(in)  : thread context
- *   max_delay(out):
- *
- */
-int
-catcls_get_applier_info (THREAD_ENTRY * thread_p, INT64 * max_delay)
-{
-  static OID class_oid = NULL_OID_INITIALIZER;
-  static int repl_delay_att_id = -1;
-  static HFID hfid = NULL_HFID_INITIALIZER;
-
-  OID inst_oid;
-  HEAP_CACHE_ATTRINFO attr_info;
-  HEAP_SCANCACHE scan_cache;
-  RECDES recdes = RECDES_INITIALIZER;
-  INT64 tmp_repl_delay = 0;
-  int error = NO_ERROR;
-  int i;
-  bool attr_info_inited = false;
-  bool scan_cache_inited = false;
-  int num_record = 0;
-
-  assert (max_delay != NULL);
-  *max_delay = 0;
-
-  OID_SET_NULL (&inst_oid);
-
-  if (OID_ISNULL (&class_oid))
-    {
-      error = catcls_find_class_oid_by_class_name (thread_p,
-						   CT_LOG_APPLIER_NAME,
-						   &class_oid);
-      if (error != NO_ERROR)
-	{
-	  goto exit;
-	}
-
-      if (OID_ISNULL (&class_oid))
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LC_UNKNOWN_CLASSNAME,
-		  1, CT_LOG_APPLIER_NAME);
-	  error = ER_LC_UNKNOWN_CLASSNAME;
-	  goto exit;
-	}
-    }
-
-  error = heap_attrinfo_start (thread_p, &class_oid, -1, NULL, &attr_info);
-  if (error != NO_ERROR)
-    {
-      goto exit;
-    }
-  attr_info_inited = true;
-
-  if (repl_delay_att_id == -1)
-    {
-      heap_scancache_quick_start (&scan_cache);
-      scan_cache_inited = true;
-
-      if (heap_get (thread_p, &class_oid, &recdes, &scan_cache, PEEK) !=
-	  S_SUCCESS)
-	{
-	  error = ER_FAILED;
-	  goto exit;
-	}
-
-      for (i = 0; i < attr_info.num_values; i++)
-	{
-	  const char *rec_attr_name_p = or_get_attrname (&recdes, i);
-	  if (rec_attr_name_p == NULL)
-	    {
-	      error = ER_FAILED;
-	      goto exit;
-	    }
-
-	  if (strcmp ("repl_delay", rec_attr_name_p) == 0)
-	    {
-	      repl_delay_att_id = i;
-	      break;
-	    }
-	}
-
-      if (repl_delay_att_id == -1)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
-	  error = ER_FAILED;
-	  goto exit;
-	}
-
-      heap_scancache_end (thread_p, &scan_cache);
-      scan_cache_inited = false;
-    }
-
-  if (HFID_IS_NULL (&hfid))
-    {
-      error = heap_get_hfid_from_class_oid (thread_p, &class_oid, &hfid);
-      if (error != NO_ERROR || HFID_IS_NULL (&hfid))
-	{
-	  error = ER_FAILED;
-	  goto exit;
-	}
-    }
-
-  error = heap_scancache_start (thread_p, &scan_cache, &hfid, NULL, true);
-  if (error != NO_ERROR)
-    {
-      goto exit;
-    }
-  scan_cache_inited = true;
-
-  while (heap_next (thread_p, &hfid, NULL, &inst_oid, &recdes,
-		    &scan_cache, PEEK) == S_SUCCESS)
-    {
-      HEAP_ATTRVALUE *heap_value = NULL;
-
-      if (heap_attrinfo_read_dbvalues (thread_p, &inst_oid,
-				       &recdes, &attr_info) != NO_ERROR)
-	{
-	  error = ER_FAILED;
-	  goto exit;
-	}
-
-      tmp_repl_delay = 0;
-      for (i = 0, heap_value = attr_info.values; i < attr_info.num_values;
-	   i++, heap_value++)
-	{
-	  if (heap_value->attrid == repl_delay_att_id)
-	    {
-	      tmp_repl_delay = DB_GET_BIGINT (&heap_value->dbvalue);
-
-	      break;
-	    }
-	}
-
-      if (tmp_repl_delay > *max_delay)
-	{
-	  *max_delay = tmp_repl_delay;
-	}
-
-      num_record++;
-    }
-
-exit:
-  if (scan_cache_inited == true)
-    {
-      (void) heap_scancache_end (thread_p, &scan_cache);
-      scan_cache_inited = false;
-    }
-
-  if (attr_info_inited == true)
-    {
-      heap_attrinfo_end (thread_p, &attr_info);
-      attr_info_inited = false;
-    }
-
-  if (error == NO_ERROR && num_record == 0)
-    {
-      error = ER_FAILED;
-    }
-
-  return error;
-}
-
-/*
  * catcls_get_analyzer_info () -
  *
  *   return: NO_ERROR, or error code
  *
  *   thread_p(in)  : thread context
- *   current_pageid(out):
- *   required_pageid(out):
  *   source_applied_time(out):
  *
  */
 int
 catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
-			  INT64 * current_pageid, INT64 * required_pageid,
 			  INT64 * source_applied_time)
 {
   static OID class_oid = NULL_OID_INITIALIZER;
-  static int current_lsa_att_id = NULL_ATTRID;
-  static int required_lsa_att_id = NULL_ATTRID;
   static int applied_time_att_id = NULL_ATTRID;
   static HFID hfid = NULL_HFID_INITIALIZER;
 
@@ -4209,16 +4029,13 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
   HEAP_CACHE_ATTRINFO attr_info;
   HEAP_SCANCACHE scan_cache;
   RECDES recdes = RECDES_INITIALIZER;
-  INT64 tmp_value = 0;
   int error = NO_ERROR;
   int i;
   bool attr_info_inited = false;
   bool scan_cache_inited = false;
   int num_record = 0;
 
-  assert (current_pageid != NULL && required_pageid != NULL
-	  && source_applied_time != NULL);
-  *current_pageid = *required_pageid = NULL_PAGEID;
+  assert (source_applied_time != NULL);
   *source_applied_time = 0;
 
   OID_SET_NULL (&inst_oid);
@@ -4249,8 +4066,7 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
     }
   attr_info_inited = true;
 
-  if (current_lsa_att_id == NULL_ATTRID || required_lsa_att_id == NULL_ATTRID
-      || applied_time_att_id == NULL_ATTRID)
+  if (applied_time_att_id == NULL_ATTRID)
     {
       heap_scancache_quick_start (&scan_cache);
       scan_cache_inited = true;
@@ -4271,30 +4087,18 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 	      goto exit;
 	    }
 
-	  if (strcmp ("current_lsa", rec_attr_name_p) == 0)
-	    {
-	      current_lsa_att_id = i;
-	    }
-	  else if (strcmp ("required_lsa", rec_attr_name_p) == 0)
-	    {
-	      required_lsa_att_id = i;
-	    }
-	  else if (strcmp ("source_applied_time", rec_attr_name_p) == 0)
+	  if (strcmp ("source_applied_time", rec_attr_name_p) == 0)
 	    {
 	      applied_time_att_id = i;
 	    }
 
-	  if (current_lsa_att_id != NULL_ATTRID
-	      && required_lsa_att_id != NULL_ATTRID
-	      && applied_time_att_id != NULL_ATTRID)
+	  if (applied_time_att_id != NULL_ATTRID)
 	    {
 	      break;
 	    }
 	}
 
-      if (current_lsa_att_id == NULL_ATTRID
-	  || required_lsa_att_id == NULL_ATTRID
-	  || applied_time_att_id == NULL_ATTRID)
+      if (applied_time_att_id == NULL_ATTRID)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 	  error = ER_FAILED;
@@ -4337,195 +4141,10 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
       for (i = 0, heap_value = attr_info.values; i < attr_info.num_values;
 	   i++, heap_value++)
 	{
-	  if (heap_value->attrid == current_lsa_att_id)
-	    {
-	      tmp_value = DB_GET_BIGINT (&heap_value->dbvalue);
-	      *current_pageid = tmp_value >> 15;
-	    }
-	  else if (heap_value->attrid == required_lsa_att_id)
-	    {
-	      tmp_value = DB_GET_BIGINT (&heap_value->dbvalue);
-	      *required_pageid = tmp_value >> 15;
-	    }
-	  else if (heap_value->attrid == applied_time_att_id)
+	  if (heap_value->attrid == applied_time_att_id)
 	    {
 	      *source_applied_time = DB_GET_BIGINT (&heap_value->dbvalue);
-	    }
-	}
-      num_record++;
-    }
-
-exit:
-  if (scan_cache_inited == true)
-    {
-      (void) heap_scancache_end (thread_p, &scan_cache);
-      scan_cache_inited = false;
-    }
-
-  if (attr_info_inited == true)
-    {
-      heap_attrinfo_end (thread_p, &attr_info);
-      attr_info_inited = false;
-    }
-
-  if (error == NO_ERROR && num_record == 0)
-    {
-      error = ER_FAILED;
-    }
-
-  return error;
-}
-
-/*
- * catcls_get_writer_info () -
- *
- *   return: NO_ERROR, or error code
- *
- *   thread_p(in)  : thread context
- *   last_flushed_pageid(out):
- *   eof_pageid(out):
- *
- */
-int
-catcls_get_writer_info (THREAD_ENTRY * thread_p,
-			INT64 * last_flushed_pageid, INT64 * eof_pageid)
-{
-  static OID class_oid = NULL_OID_INITIALIZER;
-  static int last_flushed_lsa_att_id = NULL_ATTRID;
-  static int eof_lsa_att_id = NULL_ATTRID;
-  static HFID hfid = NULL_HFID_INITIALIZER;
-
-  OID inst_oid;
-  HEAP_CACHE_ATTRINFO attr_info;
-  HEAP_SCANCACHE scan_cache;
-  RECDES recdes = RECDES_INITIALIZER;
-  INT64 tmp_value = 0;
-  int error = NO_ERROR;
-  int i;
-  bool attr_info_inited = false;
-  bool scan_cache_inited = false;
-  int num_record = 0;
-
-  assert (last_flushed_pageid != NULL && eof_pageid != NULL);
-  *last_flushed_pageid = *eof_pageid = NULL_PAGEID;
-
-  OID_SET_NULL (&inst_oid);
-
-  if (OID_ISNULL (&class_oid))
-    {
-      error = catcls_find_class_oid_by_class_name (thread_p,
-						   CT_LOG_WRITER_NAME,
-						   &class_oid);
-      if (error != NO_ERROR)
-	{
-	  goto exit;
-	}
-
-      if (OID_ISNULL (&class_oid))
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LC_UNKNOWN_CLASSNAME,
-		  1, CT_LOG_APPLIER_NAME);
-	  error = ER_LC_UNKNOWN_CLASSNAME;
-	  goto exit;
-	}
-    }
-
-  error = heap_attrinfo_start (thread_p, &class_oid, -1, NULL, &attr_info);
-  if (error != NO_ERROR)
-    {
-      goto exit;
-    }
-  attr_info_inited = true;
-
-  if (last_flushed_lsa_att_id == NULL_ATTRID || eof_lsa_att_id == NULL_ATTRID)
-    {
-      heap_scancache_quick_start (&scan_cache);
-      scan_cache_inited = true;
-
-      if (heap_get (thread_p, &class_oid, &recdes, &scan_cache, PEEK) !=
-	  S_SUCCESS)
-	{
-	  error = ER_FAILED;
-	  goto exit;
-	}
-
-      for (i = 0; i < attr_info.num_values; i++)
-	{
-	  const char *rec_attr_name_p = or_get_attrname (&recdes, i);
-	  if (rec_attr_name_p == NULL)
-	    {
-	      error = ER_FAILED;
-	      goto exit;
-	    }
-
-	  if (strcmp ("last_received_pageid", rec_attr_name_p) == 0)
-	    {
-	      last_flushed_lsa_att_id = i;
-	    }
-	  if (strcmp ("eof_lsa", rec_attr_name_p) == 0)
-	    {
-	      eof_lsa_att_id = i;
-	    }
-
-	  if (last_flushed_lsa_att_id != NULL_ATTRID
-	      && eof_lsa_att_id != NULL_ATTRID)
-	    {
 	      break;
-	    }
-	}
-
-      if (last_flushed_lsa_att_id == NULL_ATTRID
-	  || eof_lsa_att_id == NULL_ATTRID)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
-	  error = ER_FAILED;
-	  goto exit;
-	}
-
-      heap_scancache_end (thread_p, &scan_cache);
-      scan_cache_inited = false;
-    }
-
-  if (HFID_IS_NULL (&hfid))
-    {
-      error = heap_get_hfid_from_class_oid (thread_p, &class_oid, &hfid);
-      if (error != NO_ERROR || HFID_IS_NULL (&hfid))
-	{
-	  error = ER_FAILED;
-	  goto exit;
-	}
-    }
-
-  error = heap_scancache_start (thread_p, &scan_cache, &hfid, NULL, true);
-  if (error != NO_ERROR)
-    {
-      goto exit;
-    }
-  scan_cache_inited = true;
-
-  while (heap_next (thread_p, &hfid, NULL, &inst_oid, &recdes,
-		    &scan_cache, PEEK) == S_SUCCESS)
-    {
-      HEAP_ATTRVALUE *heap_value = NULL;
-
-      if (heap_attrinfo_read_dbvalues (thread_p, &inst_oid,
-				       &recdes, &attr_info) != NO_ERROR)
-	{
-	  error = ER_FAILED;
-	  goto exit;
-	}
-
-      for (i = 0, heap_value = attr_info.values; i < attr_info.num_values;
-	   i++, heap_value++)
-	{
-	  if (heap_value->attrid == last_flushed_lsa_att_id)
-	    {
-	      *last_flushed_pageid = DB_GET_BIGINT (&heap_value->dbvalue);
-	    }
-	  if (heap_value->attrid == eof_lsa_att_id)
-	    {
-	      tmp_value = DB_GET_BIGINT (&heap_value->dbvalue);
-	      *eof_pageid = tmp_value >> 15;
 	    }
 	}
       num_record++;

@@ -46,8 +46,7 @@ abstract public class Protocol
 
     /* normal broker request */
     public static final byte BRREQ_OP_CODE_CAS_CONNECT = 1;
-    public static final byte BRREQ_OP_CODE_PING = 2;
-    public static final byte BRREQ_OP_CODE_QUERY_CANCEL = 3;
+    public static final byte BRREQ_OP_CODE_QUERY_CANCEL = 2;
     /* local mgmt request */
     public static final byte BRREQ_OP_CODE_LAUNCH_PROCESS = 17;
     public static final byte BRREQ_OP_CODE_GET_SHARD_MGMT_INFO = 18;
@@ -58,6 +57,8 @@ abstract public class Protocol
     public static final byte BRREQ_OP_CODE_DELETE_CONF = 23;
     public static final byte BRREQ_OP_CODE_GET_CONF = 24;
     public static final byte BRREQ_OP_CODE_BR_ACL_RELOAD = 25;
+    public static final byte BRREQ_OP_CODE_PING = 27;
+    public static final byte BRREQ_OP_CODE_RM_TMP_FILE = 28;
 
     /* shard mgmt request */
     public static final byte BRREQ_OP_CODE_GET_SHARD_INFO = 64;
@@ -72,6 +73,7 @@ abstract public class Protocol
     public static final byte BRREQ_OP_CODE_REBALANCE_JOB_COUNT = 73;
     public static final byte BRREQ_OP_CODE_GC_START = 74;
     public static final byte BRREQ_OP_CODE_GC_END = 75;
+    public static final byte BRREQ_OP_CODE_PING_SHARD_MGMT = 76;
 
     public static final int READ_RYE_FILE_RYE_CONF = 1;
     public static final int READ_RYE_FILE_BR_ACL = 2;
@@ -87,6 +89,9 @@ abstract public class Protocol
 
     public static final int MGMT_LAUNCH_PROCESS_MIGRATOR = 1;
     public static final int MGMT_LAUNCH_PROCESS_RYE_COMMAND = 2;
+
+    public static final int MGMT_LAUNCH_FLAG_NO_FLAG = 0;
+    public static final int MGMT_LAUNCH_FLAG_NO_RESULT = 1;
 
     public static final int MGMT_LAUNCH_ERROR_EXEC_FAIL = -101;
     public static final int MGMT_LAUNCH_ERROR_ABNORMALLY_TERMINATED = -102;
@@ -264,7 +269,7 @@ abstract public class Protocol
 	    pos = JciUtil.int2bytes(0, msg, pos);
 	}
 	else {
-	    byte[] tmpBytes = portName.trim().toLowerCase().getBytes();
+	    byte[] tmpBytes = portName.trim().toLowerCase().getBytes(RyeDriver.sysCharset);
 	    msg = new byte[4 + tmpBytes.length + 1];
 	    pos = JciUtil.int2bytes(tmpBytes.length + 1, msg, pos);
 	    pos = JciUtil.copy_bytes(msg, pos, tmpBytes.length, tmpBytes);
@@ -306,7 +311,7 @@ abstract public class Protocol
 	    else if (argValue instanceof String || argValue instanceof byte[]) {
 		byte[] bStr;
 		if (argValue instanceof String) {
-		    bStr = ((String) argValue).getBytes();
+		    bStr = ((String) argValue).getBytes(RyeDriver.sysCharset);
 		}
 		else {
 		    bStr = ((byte[]) argValue);

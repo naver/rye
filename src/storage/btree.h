@@ -92,10 +92,6 @@ typedef enum
 enum
 { BTREE_COERCE_KEY_WITH_MIN_VALUE = 1, BTREE_COERCE_KEY_WITH_MAX_VALUE = 2 };
 
-#define BTREE_SET_UNIQUE_VIOLATION_ERROR(THREAD,KEY,OID,BTID) \
-		btree_set_error(THREAD, KEY, OID, BTID, \
-		ER_ERROR_SEVERITY, ER_BTREE_UNIQUE_FAILED, __FILE__, __LINE__)
-
 /* BTID_INT structure from btree_load.h */
 typedef struct btid_int BTID_INT;
 struct btid_int
@@ -251,10 +247,6 @@ extern DB_IDXKEY *btree_delete (THREAD_ENTRY * thread_p,
 				BTID_INT * btid, DB_IDXKEY * key);
 extern DB_IDXKEY *btree_insert (THREAD_ENTRY * thread_p,
 				BTID_INT * btid, DB_IDXKEY * key);
-#if 1				/* TODO - do not delete me */
-extern DB_IDXKEY *btree_insert_old (THREAD_ENTRY * thread_p,
-				    BTID_INT * btid, DB_IDXKEY * key);
-#endif
 extern int btree_update (THREAD_ENTRY * thread_p,
 			 BTID_INT * btid,
 			 DB_IDXKEY * old_key, DB_IDXKEY * new_key);
@@ -319,17 +311,16 @@ extern int btree_attrinfo_read_dbvalues (THREAD_ENTRY * thread_p,
 extern int btree_coerce_idxkey (DB_IDXKEY * key,
 				OR_INDEX * indexp, int num_term,
 				int key_minmax);
-extern int btree_set_error (THREAD_ENTRY * thread_p,
-			    const DB_IDXKEY * key, OID * obj_oid,
-			    BTID * btid, int severity, int err_id,
-			    const char *filename, int lineno);
+extern void btree_get_indexname_on_table (THREAD_ENTRY * thread_p,
+					  const BTID_INT * btid, char *buffer,
+					  const int buffer_len);
 
 extern bool btree_clear_key_value (bool * clear_flag, DB_IDXKEY * key);
 
 extern int btree_get_key_length (const DB_IDXKEY * key);
 extern int btree_get_oid_from_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 				   const DB_IDXKEY * key, OID * oid);
-extern int btree_read_node_header (PAGE_PTR pg_ptr,
+extern int btree_read_node_header (BTID_INT * btid, PAGE_PTR pg_ptr,
 				   BTREE_NODE_HEADER * header);
 extern void btree_read_fixed_portion_of_non_leaf_record (RECDES * rec,
 							 NON_LEAF_REC *
@@ -353,7 +344,7 @@ extern int btree_init_node_header (THREAD_ENTRY * thread_p,
 				   BTREE_NODE_HEADER * node_header);
 extern int btree_insert_node_header (THREAD_ENTRY * thread_p, PAGE_PTR pg_ptr,
 				     BTREE_NODE_HEADER * header);
-extern int btree_write_node_header (PAGE_PTR pg_ptr,
+extern int btree_write_node_header (BTID_INT * btid, PAGE_PTR pg_ptr,
 				    BTREE_NODE_HEADER * header);
 
 extern PAGE_PTR btree_get_new_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
@@ -387,10 +378,12 @@ extern void btree_write_fixed_portion_of_non_leaf_record (RECDES * rec,
 
 extern int btree_rv_save_keyval (BTID_INT * btid, const DB_IDXKEY * key,
 				 char *data, int *length);
-extern int btree_rv_util_save_page_records (PAGE_PTR page_ptr,
+extern int btree_rv_util_save_page_records (THREAD_ENTRY * thread_p,
+					    BTID_INT * btid,
+					    PAGE_PTR page_ptr,
 					    INT16 first_slotid, int rec_cnt,
 					    INT16 ins_slotid, char *data,
-					    int *length);
+					    const int data_len, int *length);
 
 #if !defined(NDEBUG)
 extern int btree_fence_check_key (THREAD_ENTRY * thread_p,

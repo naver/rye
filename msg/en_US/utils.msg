@@ -152,7 +152,7 @@ usage: %2$s heartbeat <command> [args]\n\
 \n\
 Available command:\n\
     start          [database-name]\n\
-    stop           [-h <hostname>] [-i] [database-name]\n\
+    stop           [-i] [database-name]\n\
     status         [-v]\n\
     reload\n
 28 Invalid command.\n
@@ -523,6 +523,7 @@ valid options:\n\
   -c, --cumulative             print cumulative stats\n\
   -i, --interval=S             print stats every S secs\n\
   -s, --substr=STRING          print stat item only that match the substring\n
+  -t, --output-type=STRING     print format(csv...); default: none\n
 
 $set 44 MSGCAT_UTIL_SET_APPLYINFO
 21 Enter DBA password:

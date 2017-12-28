@@ -254,9 +254,6 @@ static bool logpb_is_dirty (THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr);
 #if !defined(NDEBUG)
 static bool logpb_is_any_dirty (void);
 #endif /* !NDEBUG */
-#if defined(RYE_DEBUG)
-static bool logpb_is_any_fix (void);
-#endif /* RYE_DEBUG */
 static void logpb_dump_information (FILE * out_fp);
 static void logpb_dump_to_flush_page (FILE * out_fp);
 static void logpb_dump_pages (FILE * out_fp);
@@ -476,11 +473,6 @@ logpb_expand_pool (int num_new_buffers)
 	    }
 	  num_new_buffers = (int) (((float) log_Pb.num_buffers * expand_rate)
 				   + 0.9);
-#if defined(RYE_DEBUG)
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_BUFFER_POOL_TOO_SMALL, 2, log_Pb.num_buffers,
-		  num_new_buffers);
-#endif /* RYE_DEBUG */
 	}
       else
 	{
@@ -683,15 +675,7 @@ logpb_initialize_pool (THREAD_ENTRY * thread_p)
   pthread_mutex_init (&group_commit_info->gc_mutex, NULL);
 
   pthread_mutex_init (&writer_info->wr_list_mutex, NULL);
-
-  pthread_cond_init (&writer_info->flush_start_cond, NULL);
-  pthread_mutex_init (&writer_info->flush_start_mutex, NULL);
-
-  pthread_cond_init (&writer_info->flush_wait_cond, NULL);
-  pthread_mutex_init (&writer_info->flush_wait_mutex, NULL);
-
-  pthread_cond_init (&writer_info->flush_end_cond, NULL);
-  pthread_mutex_init (&writer_info->flush_end_mutex, NULL);
+  pthread_cond_init (&writer_info->wr_list_cond, NULL);
 
   return error_code;
 
@@ -731,17 +715,6 @@ logpb_finalize_pool (void)
       LSA_SET_NULL (&log_Gl.append.prev_lsa);
       /* copy log_Gl.append.prev_lsa to log_Gl.prior_info.prev_lsa */
       LOG_RESET_PREV_LSA (&log_Gl.append.prev_lsa);
-
-#if !defined(NDEBUG)
-#if defined(RYE_DEBUG)
-      if (logpb_is_any_dirty () == true || logpb_is_any_fix () == true)
-	{
-	  er_log_debug (ARG_FILE_LINE, "logpb_finalize_pool: Log Buffer"
-			" pool contains dirty or fixed pages at the end.\n");
-	  logpb_dump (stdout);
-	}
-#endif /* RYE_DEBUG */
-#endif
 
       /*
        * Remove hash table
@@ -1225,41 +1198,7 @@ logpb_is_any_dirty (void)
 
   return ret;
 }
-#endif /* !NDEBUG || RYE_DEBUG */
-
-#if defined(RYE_DEBUG)
-/*
- * logpb_is_any_fix - Find if any log buffer is fixed
- *
- * return:
- *
- * NOTE:Find if any buffer is fixed
- */
-static bool
-logpb_is_any_fix (void)
-{
-  register struct log_buffer *bufptr;	/* A log buffer */
-  int i;
-  bool ret;
-
-  csect_enter (NULL, CSECT_LOG_BUFFER, INF_WAIT);
-
-  ret = false;
-  for (i = 0; i < log_Pb.num_buffers; i++)
-    {
-      bufptr = LOGPB_FIND_BUFPTR (i);
-      if (bufptr->pageid != NULL_PAGEID && bufptr->fcnt != 0)
-	{
-	  ret = true;
-	  break;
-	}
-    }
-
-  csect_exit (CSECT_LOG_BUFFER);
-
-  return ret;
-}
-#endif /* RYE_DEBUG */
+#endif /* !NDEBUG */
 
 /*
  * logpb_flush_page - Flush a page of the active portion of the log to disk
@@ -1284,30 +1223,6 @@ logpb_flush_page (THREAD_ENTRY * thread_p, LOG_PAGE * log_pgptr,
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
   csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
-
-#if defined(RYE_DEBUG)
-  if (bufptr->pageid != LOGPB_HEADER_PAGE_ID
-      && (bufptr->pageid < LOGPB_NEXT_ARCHIVE_PAGE_ID
-	  || bufptr->pageid > LOGPB_LAST_ACTIVE_PAGE_ID))
-    {
-      csect_exit (CSECT_LOG_BUFFER);
-
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_FLUSHING_UNUPDATABLE,
-	      1, bufptr->pageid);
-      return ER_LOG_FLUSHING_UNUPDATABLE;
-    }
-  if (bufptr->phy_pageid == NULL_PAGEID
-      || bufptr->phy_pageid != logpb_to_physical_pageid (bufptr->pageid))
-    {
-      csect_exit (CSECT_LOG_BUFFER);
-
-      /* Bad physical log page for such logical page */
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_PAGE_CORRUPTED,
-	      1, bufptr->pageid);
-      logpb_fatal_error (thread_p, true, ARG_FILE_LINE, "logpb_flush_page");
-      return ER_LOG_PAGE_CORRUPTED;
-    }
-#endif /* RYE_DEBUG */
 
   if (bufptr->dirty == true)
     {
@@ -1638,12 +1553,10 @@ logpb_print_hash_entry (FILE * outfp, const void *key, void *ent,
  * NOTE:Initialize a log header structure.
  */
 int
-logpb_initialize_header (UNUSED_ARG THREAD_ENTRY * thread_p,
-			 struct log_header *loghdr,
+logpb_initialize_header (struct log_header *loghdr,
 			 const char *prefix_logname, DKNPAGES npages,
 			 INT64 * db_creation)
 {
-  assert (LOG_CS_OWN_WRITE_MODE (thread_p));
   assert (loghdr != NULL);
 
   strncpy (loghdr->log_magic, RYE_MAGIC_LOG_ACTIVE, RYE_MAGIC_MAX_LENGTH);
@@ -1756,7 +1669,7 @@ logpb_fetch_header_with_buffer (THREAD_ENTRY * thread_p,
       logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
 			 "log_fetch_hdr_with_buf");
       /* This statement should not be reached */
-      (void) logpb_initialize_header (thread_p, hdr, NULL, 0, NULL);
+      (void) logpb_initialize_header (hdr, NULL, 0, NULL);
       return;
     }
 
@@ -1780,17 +1693,6 @@ logpb_flush_header (THREAD_ENTRY * thread_p)
 {
   struct log_header *log_hdr;
 
-#if defined(RYE_DEBUG)
-  struct timeval start_time = {
-    0, 0
-  };
-  struct timeval end_time = {
-    0, 0
-  };
-
-  css_gettimeofday (&start_time, NULL);
-#endif /* RYE_DEBUG */
-
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
   assert (log_Gl.loghdr_pgptr != NULL);
 
@@ -1804,20 +1706,6 @@ logpb_flush_header (THREAD_ENTRY * thread_p)
 			    LOGPB_HEADER_PAGE_ID);
 
   log_Stat.flush_hdr_call_count++;
-
-#if defined(RYE_DEBUG)
-  gettimeofday (&end_time, NULL);
-  log_Stat.last_flush_hdr_sec_by_LFT = LOG_GET_ELAPSED_TIME (end_time,
-							     start_time);
-  log_Stat.total_flush_hdr_sec_by_LFT += log_Stat.last_flush_hdr_sec_by_LFT;
-
-  er_log_debug (ARG_FILE_LINE,
-		"log_flush_hdr: "
-		"call count(%ld) avg flush (%f) \n",
-		log_Stat.flush_hdr_call_count,
-		(double) log_Stat.total_flush_hdr_sec_by_LFT /
-		log_Stat.flush_hdr_call_count);
-#endif /* RYE_DEBUG */
 }
 
 /*
@@ -1901,34 +1789,6 @@ logpb_copy_page_from_log_buffer (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
 
   return ret_pgptr;
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * logpb_copy_page_from_file -
- *
- * return: Pointer to the page or NULL
- *
- */
-LOG_PAGE *
-logpb_copy_page_from_file (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
-			   LOG_PAGE * log_pgptr)
-{
-  LOG_PAGE *ret_pgptr = NULL;
-
-  assert (log_pgptr != NULL);
-  assert (pageid != NULL_PAGEID);
-  assert (pageid <= log_Gl.hdr.append_lsa.pageid);
-
-  LOG_CS_ENTER_READ_MODE (thread_p);
-  if (log_pgptr != NULL)
-    {
-      ret_pgptr = logpb_read_page_from_file (thread_p, pageid, log_pgptr);
-    }
-  LOG_CS_EXIT ();
-
-  return ret_pgptr;
-}
-#endif
 
 /*
  * logpb_copy_page - copy a exist_log page using local buffer
@@ -2494,19 +2354,6 @@ logpb_next_append_page (THREAD_ENTRY * thread_p,
 #if defined(SERVER_MODE)
   UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
-#if defined(RYE_DEBUG)
-  long commit_count = 0;
-  static struct timeval start_append_time = {
-    0, 0
-  };
-  struct timeval end_append_time = {
-    0, 0
-  };
-  static long prev_commit_count_in_append = 0;
-  double elapsed = 0;
-
-  gettimeofday (&end_append_time, NULL);
-#endif /* RYE_DEBUG */
   LOG_FLUSH_INFO *flush_info = &log_Gl.flush_info;
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
@@ -2596,23 +2443,6 @@ logpb_next_append_page (THREAD_ENTRY * thread_p,
       return;
     }
 
-#if defined(RYE_DEBUG)
-  {
-    log_Stat.last_append_pageid = log_Gl.hdr.append_lsa.pageid;
-
-    log_Stat.last_delayed_pageid = NULL_PAGEID;
-    if (log_Gl.append.delayed_free_log_pgptr != NULL)
-      {
-	struct log_buffer *delayed_bufptr;
-	delayed_bufptr =
-	  LOG_GET_LOG_BUFFER_PTR (log_Gl.append.delayed_free_log_pgptr);
-	log_Stat.last_delayed_pageid =
-	  log_Gl.append.delayed_free_log_pgptr->hdr.logical_pageid;
-	log_Stat.total_delayed_page_count++;
-      }
-  }
-#endif /* RYE_DEBUG */
-
   /*
    * Save this log append page as an active page to be flushed at a later
    * time if the page is modified (dirty).
@@ -2638,43 +2468,7 @@ logpb_next_append_page (THREAD_ENTRY * thread_p,
       logpb_flush_all_append_pages (thread_p);
     }
 
-#if defined(RYE_DEBUG)
-  if (start_append_time.tv_sec != 0 && start_append_time.tv_usec != 0)
-    {
-      elapsed = LOG_GET_ELAPSED_TIME (end_append_time, start_append_time);
-    }
-
-  log_Stat.use_append_page_sec = elapsed;
-  gettimeofday (&start_append_time, NULL);
-
-  commit_count = log_Stat.commit_count - prev_commit_count_in_append;
-
-  prev_commit_count_in_append = log_Stat.commit_count;
-
-  log_Stat.last_commit_count_while_using_a_page = commit_count;
-  log_Stat.total_commit_count_while_using_a_page +=
-    log_Stat.last_commit_count_while_using_a_page;
-#endif /* RYE_DEBUG */
-
   log_Stat.total_append_page_count++;
-
-#if defined(RYE_DEBUG)
-  er_log_debug (ARG_FILE_LINE,
-		"log_next_append_page: "
-		"new page id(%lld) delayed page id(%lld) "
-		"total_append_page_count(%ld) total_delayed_page_count(%ld) "
-		" num_toflush(%d) use_append_page_sec(%f) need_flush(%d) "
-		"commit_count(%ld) total_commit_count(%ld)\n",
-		(int) log_Stat.last_append_pageid,
-		(int) log_Stat.last_delayed_pageid,
-		log_Stat.total_append_page_count,
-		log_Stat.total_delayed_page_count,
-		flush_info->num_toflush,
-		log_Stat.use_append_page_sec,
-		need_flush,
-		log_Stat.last_commit_count_while_using_a_page,
-		log_Stat.total_commit_count_while_using_a_page);
-#endif /* RYE_DEBUG */
 }
 
 /*
@@ -2914,19 +2708,16 @@ int
 logpb_prior_lsa_append_all_list (THREAD_ENTRY * thread_p)
 {
   LOG_PRIOR_NODE *prior_list;
-  INT64 current_size;
   UNUSED_VAR int rv;
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
   rv = pthread_mutex_lock (&log_Gl.prior_info.prior_lsa_mutex);
-  current_size = log_Gl.prior_info.list_size;
   prior_list = prior_lsa_remove_prior_list (thread_p);
   pthread_mutex_unlock (&log_Gl.prior_info.prior_lsa_mutex);
 
   if (prior_list != NULL)
     {
-      mnt_stats_counter (thread_p, MNT_STATS_PRIOR_LSA_LIST_SIZE, current_size / ONE_K);	/* kbytes */
       mnt_stats_counter (thread_p, MNT_STATS_PRIOR_LSA_LIST_REMOVED, 1);
 
       logpb_append_prior_lsa_list (thread_p, prior_list);
@@ -2963,18 +2754,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
   bool need_flush = true;
   int error_code = NO_ERROR;
   int flush_page_count = 0;
-#if defined(RYE_DEBUG)
-  struct timeval start_time = {
-    0, 0
-  };
-  struct timeval end_time = {
-    0, 0
-  };
-  int dirty_page_count = 0;
-  int curr_flush_count = 0;
-  long commit_count = 0;
-  static long prev_commit_count_in_flush = 0;
-#endif /* RYE_DEBUG */
   bool hold_flush_mutex = false, hold_lpb_cs = false;
   LOG_FLUSH_INFO *flush_info = &log_Gl.flush_info;
 #if defined(SERVER_MODE)
@@ -3002,12 +2781,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
   UINT64 perf_start;
 
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
-
-#if defined(RYE_DEBUG)
-  er_log_debug (ARG_FILE_LINE, "logpb_flush_all_append_pages: start\n");
-
-  gettimeofday (&start_time, NULL);
-#endif /* RYE_DEBUG */
 
   rv = pthread_mutex_lock (&flush_info->flush_mutex);
   hold_flush_mutex = true;
@@ -3077,20 +2850,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
     }
 #endif /* SERVER_MODE */
 
-#if defined(RYE_DEBUG)
-  if (log_Gl.append.nxio_lsa.pageid !=
-      logpb_get_page_id (flush_info->toflush[0]))
-    {
-      er_log_debug (ARG_FILE_LINE,
-		    "logpb_flush_all_append_pages: SYSTEM ERROR\n "
-		    " NXIO_PAGE %d does not seem the same as next free"
-		    " append page %d to flush\n",
-		    log_Gl.append.nxio_lsa.pageid,
-		    logpb_get_page_id (flush_info->toflush[0]));
-      goto error;
-    }
-#endif /* RYE_DEBUG */
-
   /*
    * Add an end of log marker to detect the end of the log.
    * The marker should be added at the end of the log if there is not any
@@ -3108,18 +2867,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
        * the page. Then, restore the record back on the page and change
        * the current append log sequence address
        */
-
-#if defined(RYE_DEBUG)
-      if (logpb_get_page_id (log_Gl.append.delayed_free_log_pgptr)
-	  != log_Gl.append.prev_lsa.pageid)
-	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_WRONG_FORCE_DELAYED, 2,
-		  log_Gl.append.prev_lsa.pageid,
-		  logpb_get_page_id (log_Gl.append.delayed_free_log_pgptr));
-	  goto error;
-	}
-#endif /* RYE_DEBUG */
 
       tmp_eof = (LOG_RECORD_HEADER *) LOG_PREV_APPEND_PTR ();
       save_record = *tmp_eof;
@@ -3160,8 +2907,9 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
   assert (hold_flush_mutex == false);
   LOG_CS_DEMOTE (thread_p);
 
-  rv = pthread_mutex_lock (&writer_info->flush_start_mutex);
   rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+
+  writer_info->flush_completed = false;
 
   if (thread_p != NULL && thread_p->event_stats.trace_log_flush_time > 0)
     {
@@ -3187,12 +2935,7 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
       entry = entry->next;
     }
 
-  rv = pthread_mutex_lock (&writer_info->flush_wait_mutex);
-  writer_info->flush_completed = false;
-  rv = pthread_mutex_unlock (&writer_info->flush_wait_mutex);
-
   pthread_mutex_unlock (&writer_info->wr_list_mutex);
-  pthread_mutex_unlock (&writer_info->flush_start_mutex);
 #endif /* SERVER_MODE */
 
   idxflush = -1;
@@ -3205,11 +2948,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 
   csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
   hold_lpb_cs = true;
-
-#if defined(RYE_DEBUG)
-  log_scan_flush_info (log_dump_pageid);
-  er_log_debug (ARG_FILE_LINE, "\n");
-#endif /* RYE_DEBUG */
 
   /* Record number of writes in statistics */
   PERF_MON_GET_CURRENT_TIME (perf_start);
@@ -3263,21 +3001,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 	      else
 		{
 		  need_sync = true;
-#if defined(RYE_DEBUG)
-		  {
-		    int j;
-
-		    for (j = 0; j != i - idxflush; ++j)
-		      {
-			er_log_debug (ARG_FILE_LINE,
-				      "logpb_flush_all_append_pages: flush1 "
-				      "pageid(%lld)\n",
-				      (flush_info->toflush[idxflush])->
-				      hdr.logical_pageid + j);
-		      }
-		  }
-#endif /* RYE_DEBUG */
-
 		  /*
 		   * Start over the accumulation of pages
 		   */
@@ -3287,7 +3010,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 		}
 
 	      csect_enter (thread_p, CSECT_LOG_BUFFER, INF_WAIT);
-
 	      hold_lpb_cs = true;
 	    }
 	}
@@ -3332,19 +3054,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 	}
       else
 	{
-#if defined(RYE_DEBUG)
-	  {
-	    int j;
-
-	    for (j = 0; j != pageToFlush; ++j)
-	      {
-		er_log_debug (ARG_FILE_LINE,
-			      "logpb_flush_all_append_pages: flush2 pageid(%lld)\n",
-			      (flush_info->toflush[idxflush])->hdr.
-			      logical_pageid + j);
-	      }
-	  }
-#endif /* RYE_DEBUG */
 	  need_sync = true;
 	  flush_page_count += pageToFlush;
 	}
@@ -3377,11 +3086,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
       /*
        * Now flush and sync the first log append dirty page
        */
-#if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "logpb_flush_all_append_pages: flush3 pageid(%lld)\n",
-		    (flush_info->toflush[last_idxflush])->hdr.logical_pageid);
-#endif /* RYE_DEBUG */
 
       ++flush_page_count;
       if (logpb_writev_append_pages (thread_p,
@@ -3421,27 +3125,13 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
   for (i = 0; i < flush_info->num_toflush; i++)
     {
       bufptr = LOG_GET_LOG_BUFFER_PTR (flush_info->toflush[i]);
-#if defined(RYE_DEBUG)
-      if (bufptr->dirty)
-	{
-	  ++dirty_page_count;
-	}
-      flush_info->toflush[i] = NULL;
-#endif /* RYE_DEBUG */
       bufptr->dirty = false;
     }
-#if defined(RYE_DEBUG)
-  assert (flush_page_count == dirty_page_count);
-#endif /* RYE_DEBUG */
 
   csect_exit (CSECT_LOG_BUFFER);
   hold_lpb_cs = false;
 
 #if !defined(NDEBUG)
-#if defined(RYE_DEBUG)
-  assert (!logpb_is_any_dirty ());
-#endif /* RYE_DEBUG */
-
   if (prm_get_bool_value (PRM_ID_LOG_TRACE_DEBUG)
       && logpb_is_any_dirty () == true)
     {
@@ -3456,10 +3146,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
     {
       log_Stat.log_buffer_full_count++;
     }
-#if defined(RYE_DEBUG)
-  curr_flush_count = flush_info->num_toflush;
-#endif /* RYE_DEBUG */
-
 
   /*
    * Change the log sequence address to indicate the next append address to
@@ -3505,44 +3191,12 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
   log_Stat.last_flush_count_by_trans = flush_page_count;
   log_Stat.total_flush_count_by_trans += flush_page_count;
 
-#if defined(RYE_DEBUG)
-  gettimeofday (&end_time, NULL);
-
-  log_Stat.last_flush_sec_by_trans =
-    LOG_GET_ELAPSED_TIME (end_time, start_time);
-
-  log_Stat.total_flush_sec_by_trans += log_Stat.last_flush_sec_by_trans;
-
-  commit_count = log_Stat.commit_count - prev_commit_count_in_flush;
-  prev_commit_count_in_flush = log_Stat.commit_count;
-
-  log_Stat.last_commit_count_in_flush_pages = commit_count;
-  log_Stat.total_commit_count_in_flush_pages +=
-    log_Stat.last_commit_count_in_flush_pages;
-
-  er_log_debug (ARG_FILE_LINE,
-		"logpb_flush_all_append_pages: "
-		"flush page(%ld / %d / %ld)"
-		"avg flush count(%f), avg flush sec(%f)"
-		"commit count(%ld) avg commit count(%f)\n",
-		log_Stat.last_flush_count_by_trans,
-		dirty_page_count,
-		curr_flush_count,
-		(double) log_Stat.total_flush_count_by_trans /
-		log_Stat.flushall_append_pages_call_count,
-		log_Stat.total_flush_sec_by_trans /
-		log_Stat.flushall_append_pages_call_count,
-		commit_count,
-		log_Stat.total_commit_count_in_flush_pages /
-		log_Stat.flushall_append_pages_call_count);
-#endif /* RYE_DEBUG */
-
   pthread_mutex_unlock (&flush_info->flush_mutex);
   hold_flush_mutex = false;
 
 #if defined(SERVER_MODE)
   /* it sends signal to LWT to notify that flush is completed */
-  rv = pthread_mutex_lock (&writer_info->flush_wait_mutex);
+  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
   if (thread_p != NULL && thread_p->event_stats.trace_log_flush_time > 0)
     {
@@ -3550,30 +3204,20 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
     }
 
   writer_info->flush_completed = true;
-  rv = pthread_cond_broadcast (&writer_info->flush_wait_cond);
-
-  rv = pthread_mutex_unlock (&writer_info->flush_wait_mutex);
+  rv = pthread_cond_broadcast (&writer_info->wr_list_cond);
 
   /* It waits until all log writer threads are done */
-  rv = pthread_mutex_lock (&writer_info->flush_end_mutex);
-
-  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
-  entry = writer_info->writer_list;
-  while (entry != NULL)
+  while (logwr_find_entry_status (writer_info, LOGWR_STATUS_FETCH) != NULL
+	 && logwr_find_copy_completed_entry (writer_info) == NULL)
     {
-      if (entry->status == LOGWR_STATUS_FETCH)
-	break;
-      entry = entry->next;
-    }
-  pthread_mutex_unlock (&writer_info->wr_list_mutex);
+      struct timespec to;
 
-  if (entry != NULL)
-    {
-      rv = pthread_cond_wait (&writer_info->flush_end_cond,
-			      &writer_info->flush_end_mutex);
+      clock_gettime (CLOCK_REALTIME, &to);
+      to = timespec_add_msec (&to, 100);
+      rv = pthread_cond_timedwait (&writer_info->wr_list_cond,
+				   &writer_info->wr_list_mutex, &to);
     }
 
-  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
   writer_info->trace_last_writer = false;
 
   if (thread_p != NULL && thread_p->event_stats.trace_log_flush_time > 0)
@@ -3597,7 +3241,6 @@ logpb_flush_all_append_pages (THREAD_ENTRY * thread_p)
 
   pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
-  pthread_mutex_unlock (&writer_info->flush_end_mutex);
   assert (hold_flush_mutex == false);
   LOG_CS_PROMOTE (thread_p);
 #endif /* SERVER_MODE */
@@ -3646,12 +3289,6 @@ error:
 void
 logpb_flush_pages_direct (THREAD_ENTRY * thread_p)
 {
-#if defined(RYE_DEBUG)
-  er_log_debug (ARG_FILE_LINE,
-		"logpb_flush_pages_direct: "
-		"[%d]flush direct\n", (int) THREAD_ID ());
-#endif /* RYE_DEBUG */
-
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
   logpb_prior_lsa_append_all_list (thread_p);
@@ -3680,9 +3317,7 @@ logpb_flush_pages (THREAD_ENTRY * thread_p, UNUSED_ARG LOG_LSA * flush_lsa)
   LOG_CS_EXIT ();
 #else /* SERVER_MODE */
   UNUSED_VAR int rv;
-  struct timeval start_time = { 0, 0 };
-  struct timeval tmp_timeval = { 0, 0 };
-  struct timespec to = { 0, 0 };
+  struct timespec wakeup_time = { 0, 0 };
   int max_wait_time_in_msec = 1000;
   bool group_commit;
 
@@ -3726,10 +3361,9 @@ logpb_flush_pages (THREAD_ENTRY * thread_p, UNUSED_ARG LOG_LSA * flush_lsa)
 
       while (LSA_LT (&nxio_lsa, flush_lsa))
 	{
-	  gettimeofday (&start_time, NULL);
-	  (void) timeval_add_msec (&tmp_timeval, &start_time,
-				   max_wait_time_in_msec);
-	  (void) timeval_to_timespec (&to, &tmp_timeval);
+	  clock_gettime (CLOCK_REALTIME, &wakeup_time);
+	  wakeup_time =
+	    timespec_add_msec (&wakeup_time, max_wait_time_in_msec);
 
 	  rv = pthread_mutex_lock (&group_commit_info->gc_mutex);
 	  logpb_get_nxio_lsa (&nxio_lsa);
@@ -3742,7 +3376,8 @@ logpb_flush_pages (THREAD_ENTRY * thread_p, UNUSED_ARG LOG_LSA * flush_lsa)
 	  thread_wakeup_log_flush_thread ();
 
 	  (void) pthread_cond_timedwait (&group_commit_info->gc_cond,
-					 &group_commit_info->gc_mutex, &to);
+					 &group_commit_info->gc_mutex,
+					 &wakeup_time);
 	  pthread_mutex_unlock (&group_commit_info->gc_mutex);
 
 	  logpb_get_nxio_lsa (&nxio_lsa);
@@ -3811,16 +3446,6 @@ logpb_flush_log_for_wal (THREAD_ENTRY * thread_p, const LOG_LSA * lsa_ptr)
       LOG_CS_ENTER (thread_p);
       logpb_flush_pages_direct (thread_p);
       LOG_CS_EXIT ();
-
-#if defined(RYE_DEBUG)
-      if (logpb_need_wal (lsa_ptr)
-	  && !LSA_EQ (&log_Gl.rcv_phase_lsa, lsa_ptr))
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"log_wal: SYSTEM ERROR.. DUMP LOG BUFFER\n");
-	  logpb_dump (stdout);
-	}
-#endif /* RYE_DEBUG */
     }
 }
 
@@ -5175,20 +4800,6 @@ logpb_fetch_from_archive (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
 	    }
 	}
     }
-
-#if defined(RYE_DEBUG)
-  if (log_pgptr->hdr.logical_pageid != pageid)
-    {
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_PAGE_CORRUPTED,
-	      1, pageid);
-      logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
-			 "log_fetch_from_archive");
-
-      LOG_ARCHIVE_CS_EXIT ();
-
-      return NULL;
-    }
-#endif /* RYE_DEBUG */
 
   assert (log_pgptr != NULL && *ret_arv_num != -1 && arv_hdr != NULL);
   if (ret_arv_hdr != NULL)
@@ -6591,7 +6202,7 @@ logpb_checkpoint (THREAD_ENTRY * thread_p)
 	  LSA_COPY (&chkpt_one->savept_lsa, &act_tdes->savept_lsa);
 	  LSA_COPY (&chkpt_one->tail_topresult_lsa,
 		    &act_tdes->tail_topresult_lsa);
-	  strncpy (chkpt_one->user_name, act_tdes->client.db_user,
+	  STRNCPY (chkpt_one->user_name, act_tdes->client.db_user,
 		   LOG_USERNAME_MAX);
 	  ntrans++;
 	  if (act_tdes->topops.last >= 0
@@ -7046,419 +6657,6 @@ logpb_dump_checkpoint_topops (FILE * out_fp, int length, void *data)
     }
   (void) fprintf (out_fp, "\n");
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * logpb_start_where_path - Start where paths for copy/rename volumes
- *
- * return: NO_ERROR if all OK, ER status otherwise
- *
- *   to_db_fullname(in): Full name of the new database
- *
- * NOTE: Prepare variables to start finding paths for copying or
- *              renaming volumes.
- */
-static int
-logpb_start_where_path (const char *to_db_fullname)
-{
-  return NO_ERROR;
-}
-#endif
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * logpb_next_where_path - Find next path for copy/rename next volume
- *
- * return: NO_ERROR if all OK, ER status otherwise
- *
- *   to_db_fullname(in): Full name of the new database
- *   num_perm_vols(in): Number of permanent volumes in the database.
- *   volid(in): Next volume that must be processes.
- *   from_volname(in/out): Current name of volume.
- *   to_volname(in): New name to be used for the volume.
- *
- * NOTE: Get the name of next volume to be processed.
- */
-static int
-logpb_next_where_path (const char *to_db_fullname,
-		       int num_perm_vols,
-		       VOLID volid, char *from_volname, char *to_volname)
-{
-  const char *ext_name;
-  char ext_path[PATH_MAX];
-  const char *current_vlabel;
-  int from_volid;
-  char link_path[PATH_MAX];
-  struct stat stat_buf;
-  int error_code = NO_ERROR;
-  char format_string[64];
-
-  ext_name = fileio_get_base_file_name (to_db_fullname);
-
-  current_vlabel = fileio_get_volume_label (volid, PEEK);
-  sprintf (format_string, "%%d %%%ds %%%ds", PATH_MAX - 1, PATH_MAX - 1);
-
-  /*
-   * The decision is done consulting the arguments of the function
-   */
-
-  /*
-   * Primary volume must be identical to database name
-   */
-  if (volid == LOG_DBFIRST_VOLID)
-    {
-      strcpy (to_volname, to_db_fullname);
-    }
-  else
-    {
-      /*
-       * The volume is copied to the same place where the original volume
-       * resides
-       */
-      if (fileio_get_directory_path (ext_path, current_vlabel) == NULL)
-	{
-	  ext_path[0] = '\0';
-	}
-      fileio_make_volume_ext_name (to_volname, ext_path, ext_name, volid);
-    }
-  strcpy (from_volname, current_vlabel);
-
-  return NO_ERROR;
-}
-#endif
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * logpb_rename_all_volumes_files - Rename all volumes/files of the database
- *
- * return: NO_ERROR if all OK, ER status otherwise
- *
- *   num_perm_vols(in):
- *   to_db_fullname(in): New full name of the database
- *   to_logpath(in): Directory where the log volumes reside
- *   to_prefix_logname(in): New prefix name for log volumes. It is usually set
- *                      as database name. For example, if the value is equal to
- *                      "db", the names of the log volumes created are as
- *                      follow:
- *                      Active_log      = db_logactive
- *                      Archive_logs    = db_logarchive.0
- *                                        db_logarchive.1
- *                                             .
- *                                             .
- *                                             .
- *                                        db_logarchive.n
- *                      Log_information = db_loginfo
- *                      Database Backup = db_backup
- *
- * NOTE:All volumes/files of the database are renamed according to the
- *              new specifications. This function performs a soft rename, it
- *              will no copy files.
- *
- *              This function must be run offline. That is, it should not be
- *              run when there are multiusers in the system.
- */
-int
-logpb_rename_all_volumes_files (THREAD_ENTRY * thread_p, VOLID num_perm_vols,
-				const char *to_db_fullname,
-				const char *to_logpath,
-				const char *to_prefix_logname)
-{
-  char from_volname[PATH_MAX];	/* Name of new volume      */
-  char to_volname[PATH_MAX];	/* Name of "to" volume     */
-  FILE *to_volinfo_fp = NULL;	/* Pointer to new volinfo file
-				 */
-  VOLID volid;
-  FILE *fromfile_paths_fp = NULL;	/* Pointer to open file for
-					 * location of rename files
-					 */
-  int i;
-  const char *catmsg;
-
-  struct stat ext_path_stat;
-  struct stat vol_stat;
-  char real_pathbuf[PATH_MAX];
-  int error_code = NO_ERROR;
-
-  /*
-   * Make sure that the length name of the volumes are OK
-   */
-
-  error_code = logpb_verify_length (to_db_fullname, to_logpath,
-				    to_prefix_logname);
-  if (error_code != NO_ERROR)
-    {
-      /* Names are too long */
-      return error_code;
-    }
-
-  if (log_Gl.archive.vdes != NULL_VOLDES)
-    {
-      fileio_dismount (thread_p, log_Gl.archive.vdes);
-      log_Gl.archive.vdes = NULL_VOLDES;
-    }
-
-  /* Destroy temporary log archive */
-  fileio_unformat (thread_p, log_Name_bg_archive);
-  log_Gl.bg_archive_info.vdes = NULL_VOLDES;
-  /* Destroy temporary removed log archived */
-  fileio_unformat (thread_p, log_Name_removed_archive);
-
-  /*
-   * REMOVE ANY LOG ARCHIVES from present database
-   */
-
-  for (i = log_Gl.hdr.last_deleted_arv_num + 1; i < log_Gl.hdr.nxarv_num; i++)
-    {
-      fileio_make_log_archive_name (from_volname, log_Archive_path,
-				    log_Prefix, i);
-      /*
-       * Just to avoid the warning, the volume is check first
-       */
-      if (fileio_is_volume_exist (from_volname) == true)
-	{
-	  fileio_unformat (thread_p, from_volname);
-	}
-    }
-
-  /*
-   * RENAME LOG ACTIVE
-   */
-
-  /*
-   * Modify the name in the log header. Similar from log_create
-   */
-
-  log_Gl.hdr.nxarv_num = 0;
-  log_Gl.hdr.last_arv_num_for_syscrashes = -1;
-  log_Gl.hdr.last_deleted_arv_num = -1;
-  LSA_SET_NULL (&log_Gl.hdr.bkup_level_lsa);
-  strcpy (log_Gl.hdr.prefix_name, to_prefix_logname);
-
-  logpb_flush_pages_direct (thread_p);
-  logpb_flush_header (thread_p);
-
-  logpb_finalize_pool ();
-  fileio_dismount (thread_p, log_Gl.append.vdes);
-
-  fileio_make_log_active_name (to_volname, to_logpath, to_prefix_logname);
-  if (fileio_rename (LOG_DBLOG_ACTIVE_VOLID, log_Name_active, to_volname)
-      != NULL)
-    {
-      log_Gl.append.vdes =
-	fileio_mount (thread_p, to_db_fullname, to_volname,
-		      LOG_DBLOG_ACTIVE_VOLID, true, false);
-    }
-  else
-    {
-      log_Gl.append.vdes =
-	fileio_mount (thread_p, log_Db_fullname, log_Name_active,
-		      LOG_DBLOG_ACTIVE_VOLID, true, false);
-      error_code = ER_FAILED;
-      goto error;
-    }
-
-  /* Get the append page */
-  error_code = logpb_initialize_pool (thread_p);
-  if (error_code != NO_ERROR)
-    {
-      goto error;
-    }
-  if (logpb_fetch_start_append_page (thread_p) == NULL)
-    {
-      error_code = ER_FAILED;
-      goto error;
-    }
-
-  /*
-   * Create the DATABASE VOLUME INFORMATION file
-   */
-
-  /*
-   * Destroy the old VOLUME INFORMATION AND LOG INFORMATION. Then, create
-   * them back.
-   */
-  fileio_unformat (thread_p, log_Name_volinfo);
-  fileio_unformat (thread_p, log_Name_info);
-
-  error_code = logpb_create_volume_info (to_db_fullname);
-  if (error_code != NO_ERROR)
-    {
-      goto error;
-    }
-
-  fileio_make_log_info_name (to_volname, to_logpath, to_prefix_logname);
-  logpb_create_log_info (to_volname, to_db_fullname);
-
-  catmsg = msgcat_message (MSGCAT_CATALOG_RYE,
-			   MSGCAT_SET_LOG,
-			   MSGCAT_LOG_LOGINFO_COMMENT_FROM_RENAMED);
-  if (catmsg == NULL)
-    {
-      catmsg = "COMMENT: from renamed database = %s\n";
-    }
-  error_code = log_dump_log_info (to_volname, false, catmsg, log_Db_fullname);
-  if (error_code != NO_ERROR && error_code != ER_LOG_MOUNT_FAIL)
-    {
-      goto error;
-    }
-
-  catmsg = msgcat_message (MSGCAT_CATALOG_RYE,
-			   MSGCAT_SET_LOG, MSGCAT_LOG_LOGINFO_ACTIVE);
-  if (catmsg == NULL)
-    {
-      catmsg = "ACTIVE: %s %d pages\n";
-    }
-  error_code = log_dump_log_info (to_volname, false, catmsg,
-				  to_volname, LOGPB_ACTIVE_NPAGES + 1);
-  if (error_code != NO_ERROR && error_code != ER_LOG_MOUNT_FAIL)
-    {
-      goto error;
-    }
-
-  /*
-   * Add the log active to the volume information
-   */
-  fileio_make_log_active_name (to_volname, to_logpath, to_prefix_logname);
-  if (logpb_add_volume (to_db_fullname, LOG_DBLOG_ACTIVE_VOLID,
-			to_volname, DISK_UNKNOWN_PURPOSE)
-      != LOG_DBLOG_ACTIVE_VOLID)
-    {
-      error_code = ER_FAILED;
-      goto error;
-    }
-
-  if (fromfile_paths_fp != NULL)
-    {
-      fclose (fromfile_paths_fp);
-      fromfile_paths_fp = NULL;
-    }
-
-  /*
-   * Start the RENAMING all DATA VOLUMES
-   */
-
-  /*
-   * Prepare the where path for the volumes according to the input
-   */
-
-  error_code = logpb_start_where_path (to_db_fullname);
-  if (error_code != NO_ERROR)
-    {
-      goto error;
-    }
-
-  for (volid = LOG_DBFIRST_VOLID; volid < num_perm_vols; volid++)
-    {
-      /* Change the name of the volume */
-      error_code = logpb_next_where_path (to_db_fullname,
-					  num_perm_vols, volid, from_volname,
-					  to_volname);
-      if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
-
-      error_code = disk_set_creation (thread_p, volid, to_volname,
-				      &log_Gl.hdr.db_creation,
-				      &log_Gl.hdr.chkpt_lsa, true,
-				      DISK_DONT_FLUSH);
-      if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
-
-      /*
-       * We need to change the name of the volumes in our internal tables.
-       * That is, first volume points to second volume
-       *          second volume points to third volume
-       *          and so on..
-       *          last volume points to nobody
-       */
-
-      if (volid != LOG_DBFIRST_VOLID)
-	{
-	  error_code = disk_set_link (thread_p, volid - 1, to_volname, false,
-				      DISK_FLUSH);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error;
-	    }
-	}
-
-      /*
-       * Now flush every single page of this volume, dismount the volume, rename
-       * the volume, and mount the volume
-       */
-      logpb_flush_pages_direct (thread_p);
-      error_code = pgbuf_flush_all (thread_p, volid);
-      if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
-      if (fileio_synchronize (thread_p,
-			      fileio_get_volume_descriptor (volid),
-			      fileio_get_volume_label (volid, PEEK))
-	  == NULL_VOLDES)
-	{
-	  error_code = ER_FAILED;
-	  goto error;
-	}
-
-      (void) pgbuf_invalidate_all (thread_p, volid);
-
-      fileio_dismount (thread_p, fileio_get_volume_descriptor (volid));
-      if (fileio_rename (volid, from_volname, to_volname) != NULL)
-	{
-	  (void) fileio_mount (thread_p, to_db_fullname, to_volname,
-			       volid, false, false);
-	}
-      else
-	{
-	  (void) fileio_mount (thread_p, log_Db_fullname, from_volname,
-			       volid, false, false);
-	  error_code = ER_FAILED;
-	  goto error;
-	}
-
-      /* Write information about this volume in the volume information file */
-      if (logpb_add_volume (to_db_fullname, volid, to_volname,
-			    DISK_PERMVOL_GENERIC_PURPOSE) != volid)
-	{
-	  error_code = ER_FAILED;
-	  goto error;
-	}
-    }
-
-  if (fromfile_paths_fp != NULL)
-    {
-      fclose (fromfile_paths_fp);
-    }
-
-  /* Indicate the new names */
-  error_code =
-    logpb_initialize_log_names (thread_p, to_db_fullname, to_logpath,
-				to_prefix_logname);
-  return error_code;
-
-  /* ******* */
-error:
-  /* May need to rename some volumes back */
-
-  if (to_volinfo_fp != NULL)
-    {
-      fclose (to_volinfo_fp);
-    }
-
-  if (fromfile_paths_fp != NULL)
-    {
-      fclose (fromfile_paths_fp);
-    }
-
-  /* May need to rename back whatever was renamed */
-
-  return error_code;
-}
-#endif
 
 /*
  * logpb_delete - Delete all log files and database backups
@@ -7926,16 +7124,7 @@ logpb_fatal_error_internal (THREAD_ENTRY * thread_p, bool log_exit,
   fflush (stderr);
   fflush (stdout);
 
-#if defined(RYE_DEBUG)
-  fprintf (stderr,
-	   "\n--->>>\n*** LOG FATAL ERROR *** file %s - line %d\n",
-	   file_name, lineno);
-  /* Print out remainder of message */
-  vfprintf (stderr, fmt, ap);
-  fprintf (stderr, "\n");
-#else /* RYE_DEBUG */
   fprintf (stderr, "\n--->>>\n*** FATAL ERROR *** \n");
-#endif /* RYE_DEBUG */
 
   fprintf (stderr, "%s\n", er_msg ());
 
@@ -7980,37 +7169,6 @@ logpb_fatal_error_internal (THREAD_ENTRY * thread_p, bool log_exit,
 #endif /* NDEBUG */
     }
 }
-
-#if 0
-/*
- * LOG_DUMMY_FILLPAGE_FORARCHIVE isn't generated no more
- * (It was changed in logpb_archive_active_log)
- * so, this check is not required.
- */
-
-/*
- * logpb_must_archive_last_log_page - Log special record to arv current page
- *
- * return: NO_ERROR if all OK, ER_ status otherwise
- *
- * NOTE: When archiving the last log page, as is necessary during backups, must
- *   first append a new record on the last page that has no forward pointer.
- *   This insures that recovery will have to search explicitly for the next
- *   record forward when it is needed, otherwise we might find a "false" end
- *   and do an incomplete recovery by mistake.
- */
-static int
-logpb_must_archive_last_log_page (THREAD_ENTRY * thread_p)
-{
-  assert (LOG_CS_OWN_WRITE_MODE (thread_p));
-
-  log_append_empty_record (thread_p, LOG_DUMMY_FILLPAGE_FORARCHIVE, NULL);
-
-  logpb_flush_pages_direct (thread_p);
-
-  return NO_ERROR;
-}
-#endif
 
 /*
  * logpb_initialize_flush_info - initialize flush information
@@ -8104,15 +7262,7 @@ logpb_finalize_writer_info (void)
   pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
   pthread_mutex_destroy (&writer_info->wr_list_mutex);
-
-  pthread_mutex_destroy (&writer_info->flush_start_mutex);
-  pthread_cond_destroy (&writer_info->flush_start_cond);
-
-  pthread_mutex_destroy (&writer_info->flush_wait_mutex);
-  pthread_cond_destroy (&writer_info->flush_wait_cond);
-
-  pthread_mutex_destroy (&writer_info->flush_end_mutex);
-  pthread_cond_destroy (&writer_info->flush_end_cond);
+  pthread_cond_destroy (&writer_info->wr_list_cond);
 }
 
 /*
@@ -8164,5 +7314,5 @@ logpb_set_nxio_lsa (LOG_LSA * lsa)
   UINT64 tmp_int64;
 
   tmp_int64 = *((INT64 *) (lsa));
-  ATOMIC_TAS_64 ((INT64 *) (&log_Gl.append.nxio_lsa), tmp_int64);
+  tmp_int64 = ATOMIC_TAS_64 ((INT64 *) (&log_Gl.append.nxio_lsa), tmp_int64);
 }

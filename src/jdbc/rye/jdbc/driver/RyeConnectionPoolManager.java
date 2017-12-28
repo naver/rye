@@ -79,13 +79,19 @@ abstract class RyeConnectionPoolManager
 		    Context ctx = new InitialContext();
 		    cpds = (RyeConnectionPoolDataSource) ctx.lookup(dsName);
 		} catch (NamingException e) {
-		    throw RyeException.createRyeException((JciConnection) null, RyeErrorCode.ER_UNKNOWN, e.toString(), e);
+		    throw RyeException.createRyeException((JciConnection) null, RyeErrorCode.ER_UNKNOWN, e.toString(),
+				    e);
 		}
 
 		if (cpds != null) {
 		    poolDataSourceTable.put(dsName, cpds);
 		}
 	    }
+	}
+
+	if (cpds == null) {
+	    throw RyeException.createRyeException((JciConnection) null, RyeErrorCode.ER_UNKNOWN,
+			    "dataSource not found", null);
 	}
 
 	return cpds;

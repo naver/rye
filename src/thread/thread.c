@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <limits.h>
 
+#include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <assert.h>
@@ -231,15 +232,8 @@ static int thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason,
 				   bool had_mutex);
 static void thread_reset_nrequestors_of_log_flush_thread (void);
 
-extern int catcls_get_applier_info (THREAD_ENTRY * thread_p,
-				    INT64 * max_delay);
 extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
-				     INT64 * current_pageid,
-				     INT64 * required_pageid,
 				     INT64 * source_applied_time);
-extern int catcls_get_writer_info (THREAD_ENTRY * thread_p,
-				   INT64 * last_flushed_pageid,
-				   INT64 * eof_pageid);
 
 static int thread_create_thread_attr (pthread_attr_t * thread_attr);
 static int thread_destroy_thread_attr (pthread_attr_t * thread_attr);
@@ -507,19 +501,24 @@ server_stats_dump (FILE * fp)
 {
   int i;
   int indent = 2;
-  MNT_SERVER_EXEC_STATS stats;
+  int error = NO_ERROR;
+  MONITOR_STATS stats[MNT_SIZE_OF_SERVER_EXEC_STATS];
   MNT_SERVER_ITEM item_waits;
   UINT64 total_cs_waits_clock;
   UINT64 total_page_waits_clock;
 
-  svr_shm_copy_global_stats (&stats);
+  error = monitor_copy_global_stats (NULL, stats);
+  if (error < 0)
+    {
+      return ER_FAILED;
+    }
 
   total_cs_waits_clock = 0;
   for (i = 0; i < CSECT_LAST; i++)
     {
       item_waits = mnt_csect_type_to_server_item_waits (i);
 
-      total_cs_waits_clock += stats.acc_time[item_waits];
+      total_cs_waits_clock += stats[item_waits].acc_time;
     }
 
   fprintf (fp, "%*ccsect_wait total wait:%ld\n", indent, ' ',
@@ -530,12 +529,12 @@ server_stats_dump (FILE * fp)
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
 	       csect_get_cs_name (i),
-	       mnt_clock_to_time (stats.acc_time[item_waits]));
+	       mnt_clock_to_time (stats[item_waits].acc_time));
       /* keep out zero division */
       if (total_cs_waits_clock > 0)
 	{
 	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
+		   ((double) mnt_clock_to_time (stats[item_waits].acc_time) /
 		    total_cs_waits_clock) * 100);
 	}
       fprintf (fp, "\n");
@@ -546,7 +545,7 @@ server_stats_dump (FILE * fp)
     {
       item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
 
-      total_page_waits_clock += stats.acc_time[item_waits];
+      total_page_waits_clock += stats[item_waits].acc_time;
     }
 
   fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
@@ -557,12 +556,12 @@ server_stats_dump (FILE * fp)
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
 	       page_type_to_string (i),
-	       mnt_clock_to_time (stats.acc_time[item_waits]));
+	       mnt_clock_to_time (stats[item_waits].acc_time));
       /* keep out zero division */
       if (total_page_waits_clock > 0)
 	{
 	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats.acc_time[item_waits]) /
+		   ((double) mnt_clock_to_time (stats[item_waits].acc_time) /
 		    total_page_waits_clock) * 100);
 	}
       fprintf (fp, "\n");
@@ -1857,6 +1856,7 @@ thread_suspend_with_other_mutex (THREAD_ENTRY * thread_p,
     }
   else
     {
+      assert (to != NULL);
       r = pthread_cond_timedwait (&thread_p->wakeup_cond, mutex_p, to);
     }
 
@@ -2857,9 +2857,7 @@ static THREAD_RET_T THREAD_CALLING_CONVENTION
 thread_check_ha_delay_info_thread (void *arg_p)
 {
   THREAD_ENTRY *tsd_ptr;
-  struct timeval cur_time = { 0, 0 };
-  struct timeval tmp_time = { 0, 0 };
-  struct timespec wakeup_time = { 0, 0 };
+  struct timespec cur_time = { 0, 0 };
   int rv;
   int wakeup_interval = 1000;
   int error_code;
@@ -2867,8 +2865,6 @@ thread_check_ha_delay_info_thread (void *arg_p)
   int acceptable_delay;
   HA_STATE server_state;
 
-  INT64 last_flushed_pageid, eof_pageid;
-  INT64 current_pageid, required_pageid;
   INT64 source_applied_time;
   INT64 max_delay = 0;
 
@@ -2891,10 +2887,9 @@ thread_check_ha_delay_info_thread (void *arg_p)
     {
       er_clear ();
 
-      gettimeofday (&cur_time, NULL);
+      clock_gettime (CLOCK_REALTIME, &cur_time);
 
-      (void) timeval_add_msec (&tmp_time, &cur_time, wakeup_interval);
-      (void) timeval_to_timespec (&wakeup_time, &tmp_time);
+      cur_time = timespec_add_msec (&cur_time, wakeup_interval);
 
       rv = pthread_mutex_lock (&thread_Check_ha_delay_info_thread.lock);
       thread_Check_ha_delay_info_thread.is_running = false;
@@ -2904,7 +2899,7 @@ thread_check_ha_delay_info_thread (void *arg_p)
 	  rv =
 	    pthread_cond_timedwait (&thread_Check_ha_delay_info_thread.cond,
 				    &thread_Check_ha_delay_info_thread.lock,
-				    &wakeup_time);
+				    &cur_time);
 	}
       while (rv == 0 && tsd_ptr->shutdown == false);
 
@@ -2917,32 +2912,14 @@ thread_check_ha_delay_info_thread (void *arg_p)
 	  break;
 	}
 
-      error_code = catcls_get_writer_info (tsd_ptr, &last_flushed_pageid,
-					   &eof_pageid);
-      if (error_code != NO_ERROR)
-	{
-	  continue;
-	}
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_LAST_FLUSHED_PAGEID,
-		       last_flushed_pageid);
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_EOF_PAGEID, eof_pageid);
-
-      error_code = catcls_get_analyzer_info (tsd_ptr, &current_pageid,
-					     &required_pageid,
-					     &source_applied_time);
+      error_code = catcls_get_analyzer_info (tsd_ptr, &source_applied_time);
       if (error_code != NO_ERROR)
 	{
 	  continue;
 	}
 
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_CURRENT_PAGEID, current_pageid);
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REQUIRED_PAGEID,
-		       required_pageid);
-
-      gettimeofday (&cur_time, NULL);
-      max_delay = timeval_to_msec (&cur_time) - source_applied_time;
-      mnt_stats_gauge (tsd_ptr, MNT_STATS_HA_REPLICATION_DELAY, max_delay);
-
+      clock_gettime (CLOCK_REALTIME, &cur_time);
+      max_delay = timespec_to_msec (&cur_time) - source_applied_time;
 
       /* do its job */
       csect_enter (tsd_ptr, CSECT_HA_SERVER_STATE, INF_WAIT);
@@ -3271,9 +3248,8 @@ thread_log_flush_thread (void *arg_p)
   UNUSED_VAR int rv;
 
   struct timespec LFT_wakeup_time = { 0, 0 };
-  struct timeval wakeup_time = { 0, 0 };
-  struct timeval wait_time = { 0, 0 };
-  struct timeval tmp_timeval = { 0, 0 };
+  struct timespec wakeup_time = { 0, 0 };
+  struct timespec wait_time = { 0, 0 };
 
   int working_time, remained_time, total_elapsed_time, param_refresh_remained;
   int gc_interval, wakeup_interval;
@@ -3296,7 +3272,7 @@ thread_log_flush_thread (void *arg_p)
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
-  gettimeofday (&wakeup_time, NULL);
+  clock_gettime (CLOCK_REALTIME, &wakeup_time);
   total_elapsed_time = 0;
   param_refresh_remained = param_refresh_interval;
 
@@ -3316,13 +3292,12 @@ thread_log_flush_thread (void *arg_p)
 	  wakeup_interval = MIN (gc_interval, wakeup_interval);
 	}
 
-      gettimeofday (&wait_time, NULL);
-      working_time = (int) timeval_diff_in_msec (&wait_time, &wakeup_time);
+      clock_gettime (CLOCK_REALTIME, &wait_time);
+      working_time = (int) timespec_diff_in_msec (&wait_time, &wakeup_time);
       total_elapsed_time += working_time;
 
       remained_time = MAX ((int) (wakeup_interval - working_time), 0);
-      (void) timeval_add_msec (&tmp_timeval, &wait_time, remained_time);
-      (void) timeval_to_timespec (&LFT_wakeup_time, &tmp_timeval);
+      LFT_wakeup_time = timespec_add_msec (&wait_time, remained_time);
 
       rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
 
@@ -3338,8 +3313,8 @@ thread_log_flush_thread (void *arg_p)
 
       rv = pthread_mutex_unlock (&thread_Log_flush_thread.lock);
 
-      gettimeofday (&wakeup_time, NULL);
-      total_elapsed_time += timeval_diff_in_msec (&wakeup_time, &wait_time);
+      clock_gettime (CLOCK_REALTIME, &wakeup_time);
+      total_elapsed_time += timespec_diff_in_msec (&wakeup_time, &wait_time);
 
       if (tsd_ptr->shutdown)
 	{
@@ -3375,12 +3350,6 @@ thread_log_flush_thread (void *arg_p)
       pthread_cond_broadcast (&group_commit_info->gc_cond);
       thread_reset_nrequestors_of_log_flush_thread ();
       pthread_mutex_unlock (&group_commit_info->gc_mutex);
-
-#if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "thread_log_flush_thread: "
-		    "[%d]send signal - waiters\n", (int) THREAD_ID ());
-#endif /* RYE_DEBUG */
     }
 
   rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
@@ -3435,12 +3404,10 @@ thread_get_log_clock_msec (void)
 {
   struct timeval tv;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
   if (thread_Log_clock_thread.is_available == true)
     {
       return log_Clock_msec;
     }
-#endif
 
   gettimeofday (&tv, NULL);
 
@@ -3460,9 +3427,7 @@ thread_log_clock_thread (void *arg_p)
   UNUSED_VAR int rv = 0;
   struct timeval now;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
   assert (sizeof (log_Clock_msec) >= sizeof (now.tv_sec));
-#endif /* HAVE_ATOMIC_BUILTINS */
   tsd_ptr = (THREAD_ENTRY *) arg_p;
 
   /* wait until THREAD_CREATE() finishes */
@@ -3477,7 +3442,6 @@ thread_log_clock_thread (void *arg_p)
 
   while (!tsd_ptr->shutdown)
     {
-#if defined(HAVE_ATOMIC_BUILTINS)
       INT64 clock_milli_sec;
       er_clear ();
 
@@ -3486,38 +3450,6 @@ thread_log_clock_thread (void *arg_p)
       clock_milli_sec = (now.tv_sec * 1000LL) + (now.tv_usec / 1000LL);
       ATOMIC_TAS_64 (&log_Clock_msec, clock_milli_sec);
       thread_sleep (200);	/* 200 msec */
-#else /* HAVE_ATOMIC_BUILTINS */
-      int wakeup_interval = 1000;
-      struct timespec wakeup_time;
-      INT64 tmp_usec;
-
-      er_clear ();
-      gettimeofday (&now, NULL);
-      wakeup_time.tv_sec = now.tv_sec + (wakeup_interval / 1000);
-      tmp_usec = now.tv_usec + (wakeup_interval % 1000) * 1000;
-
-      if (tmp_usec >= 1000000)
-	{
-	  wakeup_time.tv_sec += 1;
-	  tmp_usec -= 1000000;
-	}
-      wakeup_time.tv_nsec = tmp_usec * 1000;
-
-      rv = pthread_mutex_lock (&thread_Log_clock_thread.lock);
-      thread_Log_clock_thread.is_running = false;
-
-      do
-	{
-	  rv = pthread_cond_timedwait (&thread_Log_clock_thread.cond,
-				       &thread_Log_clock_thread.lock,
-				       &wakeup_time);
-	}
-      while (rv == 0 && tsd_ptr->shutdown == false);
-
-      thread_Log_clock_thread.is_running = true;
-
-      pthread_mutex_unlock (&thread_Log_clock_thread.lock);
-#endif /* HAVE_ATOMIC_BUILTINS */
     }
 
   thread_Log_clock_thread.is_available = false;
@@ -4366,7 +4298,7 @@ thread_mnt_track_dump (THREAD_ENTRY * thread_p)
 
 void
 thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
-			  UINT64 exec_time)
+			  UINT64 start_time)
 {
   int tran_index;
   int i;
@@ -4380,8 +4312,8 @@ thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
 
   for (i = thread_p->mnt_track_top; i >= 0; i--)
     {
-      svr_shm_stats_counter_with_time (tran_index,
+      monitor_stats_counter_with_time (tran_index + 1,
 				       thread_p->mnt_track_stack[i].item,
-				       value, exec_time);
+				       value, start_time);
     }
 }

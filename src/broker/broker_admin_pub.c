@@ -54,11 +54,11 @@
 #include "broker_util.h"
 #include "broker_env_def.h"
 #include "broker_admin_pub.h"
-#include "broker_filename.h"
 #include "broker_acl.h"
 #include "chartype.h"
 #include "error_manager.h"
 #include "cas_error.h"
+#include "environment_variable.h"
 
 #include "dbdef.h"
 
@@ -81,7 +81,6 @@ static void as_inactivate (T_APPL_SERVER_INFO * as_info_p, char *broker_name);
 static void free_env (char **env, int env_num);
 static char **make_env (char *env_file, int *env_num);
 
-static int broker_create_dir (const char *new_dir);
 static void get_br_init_err_msg (char *msg_buf, int buf_size, int err_code,
 				 int os_err_code);
 static int admin_acl_test_cmd_internal (const char *acl_filename, int argc,
@@ -91,67 +90,25 @@ char admin_Err_msg[ADMIN_ERR_MSG_SIZE];
 #define SET_ADMIN_ERR_MSG(...)		\
 	snprintf (admin_Err_msg, sizeof(admin_Err_msg), __VA_ARGS__)
 
-static int
-broker_create_dir (const char *new_dir)
-{
-  char *p, path[BROKER_PATH_MAX];
-
-  if (new_dir == NULL)
-    return -1;
-
-  STRNCPY (path, new_dir, sizeof (path));
-  trim (path);
-
-  p = path;
-  if (path[0] == '/')
-    {
-      p = path + 1;
-    }
-
-  while (p != NULL)
-    {
-      p = strchr (p, '/');
-      if (p != NULL)
-	*p = '\0';
-      if (access (path, F_OK) < 0)
-	{
-	  if (mkdir (path, 0777) < 0)
-	    {
-	      return -1;
-	    }
-	}
-      if (p != NULL)
-	{
-	  *p = '/';
-	  p++;
-	}
-    }
-  return -1;
-}
-
 static void
-create_log_dir (const char *log_dir, const char *br_name, char broker_type)
+create_log_dir (const char *br_name, char broker_type)
 {
   char path[BROKER_PATH_MAX];
 
-  set_rye_file (FID_LOG_DIR, log_dir, br_name);
-
   if (broker_type == NORMAL_BROKER)
     {
-      get_rye_file (FID_SQL_LOG_DIR, path, BROKER_PATH_MAX);
-      broker_create_dir (path);
-      get_rye_file (FID_SLOW_LOG_DIR, path, BROKER_PATH_MAX);
-      broker_create_dir (path);
-      get_rye_file (FID_ERR_LOG_DIR, path, BROKER_PATH_MAX);
-      broker_create_dir (path);
+      envvar_ryelog_broker_sqllog_file (path, sizeof (path), br_name, NULL);
+      rye_mkdir (path, 0755);
+      envvar_ryelog_broker_slowlog_file (path, sizeof (path), br_name, NULL);
+      rye_mkdir (path, 0755);
+      envvar_ryelog_broker_errorlog_file (path, sizeof (path), br_name, NULL);
+      rye_mkdir (path, 0755);
     }
   else
     {
-      get_rye_file (FID_LOG_DIR, path, BROKER_PATH_MAX);
-      broker_create_dir (path);
+      envvar_ryelog_broker_file (path, sizeof (path), br_name, NULL);
+      rye_mkdir (path, 0755);
     }
-
-  rye_file_reset ();
 }
 
 int
@@ -183,10 +140,10 @@ admin_start_cmd (T_BROKER_INFO * br_info, int br_num, int shm_key_br_gl)
   memset (broker_started, 0, sizeof (bool) * br_num);
 
   chdir ("..");
-  broker_create_dir (get_rye_file (FID_VAR_DIR, path, BROKER_PATH_MAX));
-  broker_create_dir (get_rye_file (FID_CAS_TMP_DIR, path, BROKER_PATH_MAX));
-  broker_create_dir (get_rye_file (FID_AS_PID_DIR, path, BROKER_PATH_MAX));
-  broker_create_dir (get_rye_file (FID_SOCK_DIR, path, BROKER_PATH_MAX));
+  rye_mkdir (envvar_vardir_file (path, sizeof (path), ""), 0755);
+  rye_mkdir (envvar_tmpdir_file (path, sizeof (path), ""), 0755);
+  rye_mkdir (envvar_as_pid_dir_file (path, sizeof (path), ""), 0755);
+  rye_mkdir (envvar_socket_file (path, sizeof (path), ""), 0755);
 
 
   for (i = 0; i < br_num; i++)
@@ -204,8 +161,7 @@ admin_start_cmd (T_BROKER_INFO * br_info, int br_num, int shm_key_br_gl)
 	  return -1;
 	}
 
-      create_log_dir (br_info[i].log_dir, br_info[i].name,
-		      br_info[i].broker_type);
+      create_log_dir (br_info[i].name, br_info[i].broker_type);
 
       if (br_info[i].broker_type == SHARD_MGMT)
 	{
@@ -223,7 +179,7 @@ admin_start_cmd (T_BROKER_INFO * br_info, int br_num, int shm_key_br_gl)
       return -1;
     }
 
-  get_rye_file (FID_ACCESS_CONTROL_FILE, br_acl_file, sizeof (br_acl_file));
+  envvar_broker_acl_file (br_acl_file, sizeof (br_acl_file));
   if (br_acl_read_config_file (&br_acl_conf, br_acl_file, !has_shard_mgmt,
 			       admin_Err_msg) < 0)
     {
@@ -389,7 +345,7 @@ admin_on_cmd (int shm_key_br_gl, const char *broker_name)
       return -1;
     }
 
-  get_rye_file (FID_ACCESS_CONTROL_FILE, br_acl_file, sizeof (br_acl_file));
+  envvar_broker_acl_file (br_acl_file, sizeof (br_acl_file));
   if (br_acl_read_config_file
       (&br_acl_conf, br_acl_file, false, admin_Err_msg) < 0)
     {
@@ -631,8 +587,6 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
   T_SHM_BROKER *shm_br = NULL;
   T_SHM_APPL_SERVER *shm_as_p = NULL;
   T_BROKER_INFO *br_info_p = NULL;
-  char path_org[BROKER_PATH_MAX] = { 0, };
-  char path_new[BROKER_PATH_MAX] = { 0, };
 
   shm_br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, false);
   if (shm_br == NULL)
@@ -1087,27 +1041,18 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
     }
   else if (strcasecmp (conf_name, "PREFERRED_HOSTS") == 0)
     {
-      const char *host_name = conf_value;
-      int host_name_len = 0;
+      PRM_NODE_LIST node_list;
 
-      host_name_len = strlen (host_name);
+      memset (&node_list, 0, sizeof (node_list));
 
-      if (host_name_len >= BROKER_INFO_NAME_MAX
-	  || host_name_len >= SHM_APPL_SERVER_NAME_MAX)
+      if (prm_split_node_str (&node_list, conf_value, false) != NO_ERROR)
 	{
-	  SET_ADMIN_ERR_MSG ("The length of the host name is too long.");
+	  SET_ADMIN_ERR_MSG ("invalid value: %s", conf_value);
 	  goto set_conf_error;
 	}
 
-      if (strncasecmp (br_info_p->preferred_hosts, host_name, host_name_len)
-	  == 0)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", host_name);
-	  goto set_conf_error;
-	}
-
-      strncpy (br_info_p->preferred_hosts, host_name, host_name_len);
-      strncpy (shm_as_p->preferred_hosts, host_name, host_name_len);
+      br_info_p->preferred_hosts = node_list;
+      shm_as_p->preferred_hosts = node_list;
     }
   else if (strcasecmp (conf_name, "MAX_PREPARED_STMT_COUNT") == 0)
     {
@@ -1163,64 +1108,6 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       br_info_p->session_timeout = session_timeout;
       shm_as_p->session_timeout = session_timeout;
-    }
-  else if (strcasecmp (conf_name, "LOG_DIR") == 0)
-    {
-      const char *log_dir = conf_value;
-      int log_dir_len = 0;
-
-      if (log_dir != NULL)
-	{
-	  log_dir_len = strlen (log_dir);
-
-	  if (log_dir_len >= CONF_LOG_FILE_LEN)
-	    {
-	      SET_ADMIN_ERR_MSG ("The length of LOG_DIR is too long.");
-	      goto set_conf_error;
-	    }
-	}
-
-      ut_cd_root_dir ();	/* change the working directory to $RYE */
-
-      memset (path_org, 0x00, BROKER_PATH_MAX);
-      memset (path_new, 0x00, BROKER_PATH_MAX);
-
-      MAKE_FILEPATH (path_org, br_info_p->log_dir, BROKER_PATH_MAX);
-      MAKE_FILEPATH (path_new, log_dir, BROKER_PATH_MAX);
-
-      if (strcmp (path_org, path_new) == 0)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", log_dir);
-	  goto set_conf_error;
-	}
-
-      create_log_dir (path_new, br_info_p->name, br_info_p->broker_type);
-      if (access (path_new, F_OK) < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("cannot access the path : %s", path_new);
-	  goto set_conf_error;
-	}
-
-      ut_cd_work_dir ();	/* change the working directory to $RYE/bin */
-
-      if ((int) sizeof (br_info_p->log_dir) <= strlen (path_new) ||
-	  (int) sizeof (shm_as_p->log_dir) <= strlen (path_new))
-	{
-	  SET_ADMIN_ERR_MSG ("The length of LOG_DIR is too long.");
-	  goto set_conf_error;
-	}
-
-      strcpy (br_info_p->log_dir, path_new);
-      strcpy (shm_as_p->log_dir, path_new);
-
-      for (i = 0; i < shm_as_p->num_appl_server && i < APPL_SERVER_NUM_LIMIT;
-	   i++)
-	{
-	  shm_as_p->info.as_info[i].cas_log_reset = CAS_LOG_RESET_REOPEN;
-	  shm_as_p->info.as_info[i].cas_slow_log_reset = CAS_LOG_RESET_REOPEN;
-	  shm_as_p->info.as_info[i].cas_err_log_reset = CAS_LOG_RESET_REOPEN;
-	}
-      shm_as_p->broker_log_reset = 1;
     }
   else if (strcasecmp (conf_name, "ENABLE_MONITOR_SERVER") == 0)
     {
@@ -1399,7 +1286,7 @@ cp_acl_file (const char *new_acl_file)
     {
       return -1;
     }
-  get_rye_file (FID_ACCESS_CONTROL_FILE, acl_file, sizeof (acl_file));
+  envvar_broker_acl_file (acl_file, sizeof (acl_file));
 
   /* cpoy file */
   fd_src = open (new_acl_file, O_RDONLY);
@@ -1474,7 +1361,7 @@ admin_acl_reload_cmd (int shm_key_br_gl, const char *new_acl_file)
   BROKER_ACL_CONF br_acl_conf;
   int i;
 
-  get_rye_file (FID_ACCESS_CONTROL_FILE, br_acl_file, sizeof (br_acl_file));
+  envvar_broker_acl_file (br_acl_file, sizeof (br_acl_file));
 
   if (new_acl_file != NULL)
     {
@@ -1786,6 +1673,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
   const char *broker_exe_name;
   int broker_check_loop_count = 30;
   char br_index_env_str[32];
+  char broker_port_name[BROKER_PATH_MAX] = "";
 
   br_info->br_init_err.err_code = 1;	/* will be changed to 0 (success) or err code */
   br_info->br_init_err.os_err_code = 0;
@@ -1805,11 +1693,9 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
     }
   assert (shm_appl->num_appl_server <= APPL_SERVER_NUM_LIMIT);
 
-  if (br_info->broker_type == NORMAL_BROKER)
+  if (ut_get_broker_port_name (broker_port_name,
+			       sizeof (broker_port_name), br_info) == 0)
     {
-      char broker_port_name[BROKER_PATH_MAX];
-      ut_get_broker_port_name (broker_port_name, br_info->name,
-			       sizeof (broker_port_name));
       unlink (broker_port_name);
     }
 
@@ -1829,6 +1715,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
   if (pid == 0)
     {
       signal (SIGCHLD, SIG_DFL);
+      char argv0[PATH_MAX];
 
       br_info->broker_pid = getpid ();
 
@@ -1846,11 +1733,12 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
       putenv (br_index_env_str);
 
       broker_exe_name = NAME_CAS_BROKER;
+      ut_make_broker_process_name (argv0, sizeof (argv0), br_info);
 
       rye_shm_detach (shm_appl);
       rye_shm_detach (shm_br);
 
-      if (execle (broker_exe_name, broker_exe_name, NULL, environ) < 0)
+      if (execle (broker_exe_name, argv0, NULL, environ) < 0)
 	{
 	  br_info->broker_pid = 0;
 	  perror (broker_exe_name);
@@ -1924,8 +1812,7 @@ br_inactivate (T_BROKER_INFO * br_info)
 
   if (br_info->broker_pid)
     {
-      ut_kill_broker_process (br_info->broker_pid, br_info->broker_type,
-			      br_info->name);
+      ut_kill_broker_process (br_info);
 
       br_info->broker_pid = 0;
 
@@ -1976,7 +1863,6 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
   int i;
   char as_id_env_str[32];
 
-  char process_name[128];
   char port_name[BROKER_PATH_MAX];
 
   ut_get_as_port_name (port_name, br_info->name, as_index, BROKER_PATH_MAX);
@@ -1994,7 +1880,7 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
   as_info->cur_sql_log_mode = shm_appl->sql_log_mode;
   as_info->cur_slow_log_mode = shm_appl->slow_log_mode;
 
-  memset (&as_info->cas_clt_ip[0], 0x0, sizeof (as_info->cas_clt_ip));
+  as_info->cas_clt_ip_addr = 0;
   as_info->cas_clt_port = 0;
   as_info->client_version[0] = '\0';
 
@@ -2008,6 +1894,8 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
 
   if (pid == 0)
     {
+      char argv0[PATH_MAX];
+
       if (env != NULL)
 	{
 	  for (i = 0; i < env_num; i++)
@@ -2025,13 +1913,13 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
       strcpy (appl_name, shm_appl->appl_server_name);
 
 
-      snprintf (process_name, sizeof (process_name) - 1, "%s_%s_%d",
-		br_info->name, appl_name, as_index + 1);
+      ut_make_cas_process_name (argv0, sizeof (argv0), br_info->name,
+				as_index);
 
       rye_shm_detach (shm_appl);
       rye_shm_detach (shm_br);
 
-      if (execle (appl_name, process_name, NULL, environ) < 0)
+      if (execle (appl_name, argv0, NULL, environ) < 0)
 	{
 	  perror (appl_name);
 	}

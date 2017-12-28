@@ -1082,7 +1082,7 @@
 #define ER_QPROC_FUNCTION_ARG_ERROR                 -935
 #define ER_QPROC_OVERFLOW_EXP                       -936
 
-#define ER_INTERFACE_DBMS                           -937
+#define ER_INVCALID_ARGUMENT                        -937
 #define ER_INTERFACE_INVALID_ARGUMENT               -938
 #define ER_INTERFACE_TOO_MANY_CONNECTION            -939
 #define ER_INTERFACE_INVALID_HANDLE                 -940
@@ -1327,8 +1327,8 @@
 
 #define ER_ENCRYPTION_LIB_FAILED		    -1132
 
-#define ER_BTREE_CORRUPT_PREV_LINK                  -1135
-#define ER_BTREE_REPAIR_PREV_LINK                   -1136
+#define ER_BTREE_PAGE_CORRUPTED                     -1135
+#define ER_BTREE_REPAIR_PREV_LINK                   -1136 /* unused */
 
 #define ER_MAX_RECURSION_SQL_DEPTH                  -1137
 

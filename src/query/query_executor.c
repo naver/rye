@@ -969,7 +969,8 @@ qexec_upddel_add_unique_oid_to_ehid (THREAD_ENTRY * thread_p,
 				     XASL_STATE * xasl_state)
 {
   REGU_VARIABLE_LIST reg_var_list = NULL;
-  DB_VALUE *dbval = NULL, *orig_dbval = NULL;
+  DB_VALUE *dbval = NULL;
+  UNUSED_VAR DB_VALUE *orig_dbval = NULL;
   DB_TYPE typ;
   int ret = NO_ERROR, rem_cnt = 0;
   EHID *ehid = NULL;
@@ -2349,29 +2350,36 @@ qexec_ordby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes,
 		      /* I think this way is very inefficient. */
 		      tplrec.size = 0;
 		      tplrec.tpl = NULL;
-		      qfile_get_tuple (thread_p, page,
-				       page + key->s.original.offset, &tplrec,
-				       list_idp);
-		      data = tplrec.tpl;
-		      /* update orderby_num() in the tuple */
-		      for (i = 0;
-			   ordby_info && i < ordby_info->ordbynum_pos_cnt;
-			   i++)
+		      error = qfile_get_tuple (thread_p, page,
+					       page + key->s.original.offset,
+					       &tplrec, list_idp);
+		      if (error == NO_ERROR)
 			{
-			  QFILE_GET_TUPLE_VALUE_HEADER_POSITION (data,
-								 ordby_info->
-								 ordbynum_pos
-								 [i], tvalhp);
-			  (void)
-			    qdata_copy_db_value_to_tuple_value (ordby_info->
-								ordbynum_val,
-								tvalhp,
-								&tval_size);
+			  data = tplrec.tpl;
+			  /* update orderby_num() in the tuple */
+			  for (i = 0;
+			       ordby_info && i < ordby_info->ordbynum_pos_cnt;
+			       i++)
+			    {
+			      QFILE_GET_TUPLE_VALUE_HEADER_POSITION (data,
+								     ordby_info->
+								     ordbynum_pos
+								     [i],
+								     tvalhp);
+			      (void)
+				qdata_copy_db_value_to_tuple_value
+				(ordby_info->ordbynum_val, tvalhp,
+				 &tval_size);
+			    }
+			  error =
+			    qfile_add_tuple_to_list (thread_p,
+						     info->output_file, data);
 			}
-		      error =
-			qfile_add_tuple_to_list (thread_p, info->output_file,
-						 data);
-		      free_and_init (tplrec.tpl);
+
+		      if (tplrec.tpl != NULL)
+			{
+			  free_and_init (tplrec.tpl);
+			}
 		    }
 		  else
 		    {
@@ -3104,7 +3112,8 @@ qexec_gby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes, void *arg)
   char *data;
   PAGE_PTR page;
   VPID vpid;
-  int peek, rollup_level;
+  int peek;
+  UNUSED_VAR int rollup_level;
   QFILE_LIST_ID *list_idp;
 
   QFILE_TUPLE_RECORD dummy;
@@ -3181,6 +3190,10 @@ qexec_gby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes, void *arg)
 	      dummy.tpl = info->gby_rec.data;
 	      status =
 		qfile_get_tuple (thread_p, page, data, &dummy, list_idp);
+	      if (status != NO_ERROR)
+		{
+		  goto exit_on_error;
+		}
 
 	      if (dummy.tpl != info->gby_rec.data)
 		{
@@ -3191,10 +3204,6 @@ qexec_gby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes, void *arg)
 		   */
 		  info->gby_rec.area_size = dummy.size;
 		  info->gby_rec.data = dummy.tpl;
-		}
-	      if (status != NO_ERROR)
-		{
-		  goto exit_on_error;
 		}
 
 	      data = info->gby_rec.data;
@@ -5003,8 +5012,6 @@ qexec_execute_delete (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 	  oid = DB_GET_OID (valp);
 	  assert (!OID_ISNULL (oid));
 
-	  val_list = val_list->next;
-
 	  if (internal_class.class_oid == NULL)
 	    {
 	      /* find class HFID */
@@ -5552,7 +5559,7 @@ qexec_execute_insert (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
   bool scan_cache_inited = false;
   int force_count = 0;
   int no_default_expr = 0;
-  volatile int n_indexes = 0;
+  UNUSED_VAR volatile int n_indexes = 0;
   int error = 0;
   ODKU_INFO *odku_assignments = insert->odku;
 
@@ -6908,7 +6915,9 @@ qexec_check_modification (THREAD_ENTRY * thread_p,
       assert (query_p->xasl_ent != NULL);
 
       ent = query_p->xasl_ent;
+#if 1				/* TODO - may be wrong assert ?? */
       assert (ent->deletion_marker == false);
+#endif
 
       er_log_debug (ARG_FILE_LINE, "sql_user_text = %s\n",
 		    ent->sql_info.sql_user_text);
@@ -8004,6 +8013,7 @@ qexec_cast_ct_applier_to_idxkey (DB_IDXKEY * val, void *ct_table)
   CIRP_CT_LOG_APPLIER *log_applier;
   INT64 bi;
   int i;
+  int error;
 
   log_applier = (CIRP_CT_LOG_APPLIER *) ct_table;
 
@@ -8012,7 +8022,11 @@ qexec_cast_ct_applier_to_idxkey (DB_IDXKEY * val, void *ct_table)
 
   /* table_LogApplier column order */
   i = 0;
-  db_make_string (&val->vals[i++], log_applier->host_ip);
+  error = rp_make_repl_host_key (&val->vals[i++], &log_applier->host_info);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
   db_make_int (&val->vals[i++], log_applier->id);
 
   bi = lsa_to_int64 (log_applier->committed_lsa);
@@ -8045,6 +8059,7 @@ qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table)
   CIRP_CT_LOG_ANALYZER *log_analyzer;
   INT64 bi;
   int i;
+  int error;
 
   log_analyzer = (CIRP_CT_LOG_ANALYZER *) ct_table;
 
@@ -8053,7 +8068,11 @@ qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table)
 
   /* table_LogApplier column order */
   i = 0;
-  db_make_string (&val->vals[i++], log_analyzer->host_ip);
+  error = rp_make_repl_host_key (&val->vals[i++], &log_analyzer->host_info);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
 
   bi = lsa_to_int64 (log_analyzer->current_lsa);
   db_make_bigint (&val->vals[i++], bi);
@@ -8084,6 +8103,7 @@ qexec_cast_ct_writer_to_idxkey (DB_IDXKEY * val, void *ct_table)
   CIRP_CT_LOG_WRITER *writer;
   INT64 bi;
   int i;
+  int error;
 
   writer = (CIRP_CT_LOG_WRITER *) ct_table;
 
@@ -8092,7 +8112,11 @@ qexec_cast_ct_writer_to_idxkey (DB_IDXKEY * val, void *ct_table)
 
   /* table_LogWriter column order */
   i = 0;
-  db_make_string (&val->vals[i++], writer->host_ip);
+  error = rp_make_repl_host_key (&val->vals[i++], &writer->host_info);
+  if (error != NO_ERROR)
+    {
+      return error;
+    }
 
   db_make_bigint (&val->vals[i++], writer->last_flushed_pageid);
 
@@ -9004,7 +9028,7 @@ qexec_initialize_xasl_cache (THREAD_ENTRY * thread_p)
 int
 qexec_finalize_xasl_cache (THREAD_ENTRY * thread_p)
 {
-  int ret = NO_ERROR;
+  UNUSED_VAR int ret = NO_ERROR;
   int i;
 
   if (xasl_ent_cache.max_entries <= 0)
@@ -9544,7 +9568,7 @@ qexec_free_xasl_cache_clo (XASL_CACHE_CLONE * clo)
 static int
 qexec_append_LRU_xasl_cache_clo (XASL_CACHE_CLONE * clo)
 {
-  int ret = NO_ERROR;
+  UNUSED_VAR int ret = NO_ERROR;
 
   /* check the number of XASL cache clones */
   if (xasl_clo_cache.num >= xasl_clo_cache.max_clones)
@@ -9673,7 +9697,7 @@ qexec_free_xasl_cache_ent (THREAD_ENTRY * thread_p, void *data,
 			   UNUSED_ARG void *args)
 {
   /* this function should be called within CSECT_QP_XASL_CACHE */
-  int ret = NO_ERROR;
+  UNUSED_VAR int ret = NO_ERROR;
   POOLED_XASL_CACHE_ENTRY *pent;
   XASL_CACHE_ENTRY *ent = (XASL_CACHE_ENTRY *) data;
 
@@ -10503,7 +10527,7 @@ qexec_delete_xasl_cache_ent (THREAD_ENTRY * thread_p, void *data, void *args)
   int rc;
   const OID *o;
   int i;
-  int force_delete = 0;
+  UNUSED_VAR int force_delete = 0;
 
   if (args)
     {
@@ -10574,7 +10598,7 @@ qexec_delete_xasl_cache_ent (THREAD_ENTRY * thread_p, void *data, void *args)
       if (file_destroy (thread_p, &(ent->xasl_id.temp_vfid)) != NO_ERROR)
 	{
 	  er_log_debug (ARG_FILE_LINE,
-			"qexec_delete_xasl_cache_ent: fl_destroy failed for vfid { %d %d }\n",
+			"qexec_delete_xasl_cache_ent: file_destroy failed for vfid { %d %d }\n",
 			ent->xasl_id.temp_vfid.fileid,
 			ent->xasl_id.temp_vfid.volid);
 	}
@@ -11756,7 +11780,7 @@ qexec_groupby_index (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
   SCAN_CODE scan_code;
   QFILE_TUPLE_RECORD tuple_rec;
   REGU_VARIABLE_LIST regu_list;
-  int tuple_cnt = 0;
+  UNUSED_VAR int tuple_cnt = 0;
   struct timeval start, end;
 
   if (buildlist->groupby_list == NULL)
@@ -12640,6 +12664,12 @@ qexec_setup_topn_proc (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
       count++;
     }
 
+  if (count == 0)
+    {
+      error = ER_FAILED;
+      goto error_return;
+    }
+
   max_size = prm_get_bigint_value (PRM_ID_SORT_BUFFER_SIZE);
 
   top_n = (TOPN_TUPLES *) malloc (sizeof (TOPN_TUPLES));
@@ -12921,6 +12951,13 @@ qexec_topn_tuples_to_list_id (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
   ORDBYNUM_INFO ordby_info;
   DB_LOGICAL res = V_FALSE;
 
+  assert (xasl != NULL);
+  assert (xasl->topn_items != NULL);
+
+  assert (xasl->topn_items->heap != NULL);
+  assert (xasl->topn_items->sort_items != NULL);
+  assert (xasl->topn_items->values_count > 0);
+
   /* setup ordby_info so that we can evaluate the orderby_num() predicate */
   ordby_info.xasl_state = xasl_state;
   ordby_info.ordbynum_pred = xasl->ordbynum_pred;
@@ -12940,9 +12977,11 @@ qexec_topn_tuples_to_list_id (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
   bh_to_sorted_array (heap);
 
   /* dump all items in heap to listfile */
-  if (tpl_descr->f_valp == NULL && list_id->type_list.type_cnt > 0)
+  if (tpl_descr->f_valp == NULL)
     {
       size_t size = values_count * DB_SIZEOF (DB_VALUE *);
+
+      assert (list_id->type_list.type_cnt > 0);
 
       tpl_descr->f_valp = (DB_VALUE **) malloc (size);
       if (tpl_descr->f_valp == NULL)

@@ -426,24 +426,6 @@ net_server_init (void)
   req_p->processing_function = sqfile_get_list_file_page;
   req_p->name = "NET_SERVER_LS_GET_LIST_FILE_PAGE";
 
-  /* monitor */
-#if defined (ENABLE_UNUSED_FUNCTION)
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_START_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_start_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_START_STATS";
-
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_STOP_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_stop_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_STOP_STATS";
-#endif
-
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_COPY_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_copy_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_COPY_STATS";
-
   /* catalog */
   req_p = &net_Requests[NET_SERVER_CT_CAN_ACCEPT_NEW_REPR];
   req_p->action_attribute = (CHECK_DB_MODIFICATION | IN_TRANSACTION);
@@ -505,23 +487,10 @@ net_server_init (void)
   req_p->processing_function = slogwr_get_log_pages;
   req_p->name = "NET_SERVER_LOGWR_GET_LOG_PAGES";
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-  /* test */
-  req_p = &net_Requests[NET_SERVER_TEST_PERFORMANCE];
-  req_p->processing_function = stest_performance;
-  req_p->name = "NET_SERVER_TEST_PERFORMANCE";
-#endif
-
   /* shutdown */
   req_p = &net_Requests[NET_SERVER_SHUTDOWN];
   req_p->action_attribute = CHECK_AUTHORIZATION;
   req_p->name = "NET_SERVER_SHUTDOWN";
-
-  /* monitor */
-  req_p = &net_Requests[NET_SERVER_MNT_SERVER_COPY_GLOBAL_STATS];
-  req_p->action_attribute = CHECK_AUTHORIZATION;
-  req_p->processing_function = smnt_server_copy_global_stats;
-  req_p->name = "NET_SERVER_MNT_SERVER_COPY_GLOBAL_STATS";
 
   /* session state */
   req_p = &net_Requests[NET_SERVER_SES_CHECK_SESSION];
@@ -540,12 +509,6 @@ net_server_init (void)
   req_p = &net_Requests[NET_SERVER_ACL_RELOAD];
   req_p->processing_function = sacl_reload;
   req_p->name = "NET_SERVER_ACL_RELOAD";
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-  req_p = &net_Requests[NET_SERVER_LOGIN_USER];
-  req_p->processing_function = slogin_user;
-  req_p->name = "NET_SERVER_SET_USERNAME";
-#endif
 
   req_p = &net_Requests[NET_SERVER_LC_REPL_FORCE];
   req_p->action_attribute = (CHECK_DB_MODIFICATION | IN_TRANSACTION);
@@ -697,6 +660,7 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_CANT_ALLOC_BUFFER, 0);
       return_error_to_client (thread_p, rid);
+      css_send_abort_to_client (thread_p->conn_entry, rid);
       status = CSS_UNPLANNED_SHUTDOWN;
       goto end;
     }
@@ -705,6 +669,10 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
   if (request == NET_SERVER_PING_WITH_HANDSHAKE)
     {
       status = server_ping_with_handshake (thread_p, rid, buffer, size);
+      if (status != CSS_NO_ERRORS)
+	{
+	  css_send_abort_to_client (thread_p->conn_entry, rid);
+	}
       goto end;
     }
   else if (request == NET_SERVER_SHUTDOWN)
@@ -721,6 +689,7 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
       er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NET_UNKNOWN_SERVER_REQ,
 	      0);
       return_error_to_client (thread_p, rid);
+      css_send_abort_to_client (thread_p->conn_entry, rid);
       goto end;
     }
 #if defined(RYE_DEBUG)
@@ -956,9 +925,13 @@ loop:
 		  r =
 		    thread_wakeup_already_had_mutex (suspended_p,
 						     THREAD_RESUME_DUE_TO_INTERRUPT);
+		  if (r != NO_ERROR)
+		    {
+		      return r;
+		    }
 		}
-	      r = thread_unlock_entry (suspended_p);
 
+	      r = thread_unlock_entry (suspended_p);
 	      if (r != NO_ERROR)
 		{
 		  return r;
@@ -1016,8 +989,6 @@ int
 net_server_start (const char *server_name)
 {
   int error = NO_ERROR;
-  int name_length;
-  char *packed_name;
   int r, status = 0;
 
   /* open the system message catalog, before prm_ ?  */
@@ -1068,15 +1039,12 @@ net_server_start (const char *server_name)
     }
   else
     {
-      packed_name = css_pack_server_name (server_name, &name_length);
       r = css_init_job_queue ();
 
       if (r == NO_ERROR)
 	{
-	  r = css_init (packed_name, name_length,
-			prm_get_integer_value (PRM_ID_TCP_PORT_ID));
+	  r = css_init (server_name);
 	}
-      free_and_init (packed_name);
 
       if (r < 0)
 	{

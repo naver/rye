@@ -245,7 +245,7 @@ btree_get_subtree_capacity (THREAD_ENTRY * thread_p, BTID_INT * btid,
 
   free_space = spage_get_free_space (thread_p, pg_ptr);
 
-  if (btree_read_node_header (pg_ptr, &node_header) != NO_ERROR)
+  if (btree_read_node_header (NULL, pg_ptr, &node_header) != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
@@ -415,7 +415,7 @@ btree_index_capacity (THREAD_ENTRY * thread_p, OID * cls_oid,
       GOTO_EXIT_ON_ERROR;
     }
 
-  ret = btree_read_node_header (root, &root_header);
+  ret = btree_read_node_header (NULL, root, &root_header);
   if (ret != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -690,7 +690,7 @@ btree_dump_tree (THREAD_ENTRY * thread_p, FILE * fp, BTID_INT * btid,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = btree_read_node_header (p_pgptr, &node_header);
+  error = btree_read_node_header (NULL, p_pgptr, &node_header);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -743,7 +743,7 @@ btree_dump_subtree (THREAD_ENTRY * thread_p, FILE * fp, BTID_INT * btid,
   NON_LEAF_REC nleaf;
   int error = NO_ERROR;
 
-  error = btree_read_node_header (pg_ptr, &node_header);
+  error = btree_read_node_header (NULL, pg_ptr, &node_header);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -852,7 +852,7 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
   DB_IDXKEY_MAKE_NULL (&key);
 
   /* get the header record */
-  if (btree_read_node_header (page_ptr, &node_header) != NO_ERROR)
+  if (btree_read_node_header (NULL, page_ptr, &node_header) != NO_ERROR)
     {
       fprintf (fp,
 	       "btree_dump_page: invalid node header: VPID(%d,%d)\n",
@@ -862,8 +862,7 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
   key_cnt = node_header.key_cnt;
   assert_release (key_cnt >= 0);
-  node_type =
-    node_header.node_level > 1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE;
+  node_type = BTREE_GET_NODE_TYPE (node_header.node_level);
   VPID_COPY (&next_vpid, &node_header.next_vpid);
   VPID_COPY (&prev_vpid, &node_header.prev_vpid);
   btree_print_space (fp, n);
@@ -912,7 +911,7 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
       fprintf (fp, "INDEX %s ON CLASS %s (CLASS_OID:%2d|%4d|%2d) \n\n",
 	       (btname) ? btname : "*UNKNOWN-INDEX*",
-	       (class_name) ? class_name : "*UNKNOWN-CLASS*",
+	       (class_name) ? class_name : "*UNKNOWN-TABLE*",
 	       class_oid.volid, class_oid.pageid, class_oid.slotid);
 
       if (class_name)
@@ -989,17 +988,18 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 void
 btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
 {
-  BTREE_NODE_HEADER *node_header;
+  BTREE_NODE_HEADER *hdr;
+  short node_type;
 
-  node_header = (BTREE_NODE_HEADER *) data;
+  hdr = (BTREE_NODE_HEADER *) data;
+
+  node_type = BTREE_GET_NODE_TYPE (hdr->node_level);
 
   fprintf (fp,
 	   "\nNODE_TYPE: %s KEY_CNT: %4d "
 	   "NEXT_PAGEID: {%4d , %4d} \n\n",
-	   node_type_to_string (node_header->node_level >
-				1 ? BTREE_NON_LEAF_NODE : BTREE_LEAF_NODE),
-	   node_header->key_cnt, node_header->next_vpid.volid,
-	   node_header->next_vpid.pageid);
+	   node_type_to_string (node_type),
+	   hdr->key_cnt, hdr->next_vpid.volid, hdr->next_vpid.pageid);
 }
 
 static const char *

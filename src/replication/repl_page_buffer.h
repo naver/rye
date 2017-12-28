@@ -117,7 +117,7 @@ struct _cirp_log_buffer_msg
 
   char log_path[PATH_MAX];
   char prefix_name[PATH_MAX];
-  char host_name[PATH_MAX];
+  PRM_NODE_INFO host_info;
   char log_info_path[PATH_MAX];
 
   CIRP_ACT_LOG act_log;
@@ -160,7 +160,7 @@ extern int cirp_logpb_act_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr);
 extern int cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr,
 					  LOG_PAGEID req_pageid);
 
-extern RECDES *cirp_assign_recdes_from_pool (CIRP_BUF_MGR * buf_mgr);
+extern int rp_assign_recdes_from_pool (CIRP_BUF_MGR * buf_mgr, RECDES ** rec);
 extern int cirp_realloc_recdes_data (CIRP_BUF_MGR * buf_mgr,
 				     RECDES * recdes, int data_size);
 
@@ -226,11 +226,16 @@ extern int cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr,
 				  LOG_PAGEID log_pageid, PGLENGTH log_offset,
 				  LOG_PAGE * pgptr);
 
-extern CIRP_REPL_ITEM *cirp_make_repl_item_from_log (CIRP_BUF_MGR * buf_mgr,
-						     LOG_PAGE * log_pgptr,
-						     int log_type,
-						     const LOG_LSA * lsa);
+extern int rp_make_repl_schema_item_from_log (CIRP_BUF_MGR * buf_mgr,
+					      CIRP_REPL_ITEM * repl_item,
+					      LOG_PAGE * org_pgptr,
+					      const LOG_LSA * lsa);
+extern int rp_make_repl_data_item_from_log (CIRP_BUF_MGR * buf_mgr,
+					    CIRP_REPL_ITEM * repl_item,
+					    LOG_PAGE * org_pgptr,
+					    const LOG_LSA * lsa);
 extern int cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
 					   struct log_gid_bitmap_update *gbu,
-					   LOG_PAGE * pgptr, LOG_LSA * lsa);
+					   LOG_PAGE * pgptr,
+					   const LOG_LSA * lsa);
 #endif /* _REPL_PAGE_BUFFER_H_ */

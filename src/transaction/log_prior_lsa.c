@@ -665,6 +665,12 @@ prior_lsa_gen_undoredo_record_from_crumbs (THREAD_ENTRY * thread_p,
       error_code = prior_lsa_copy_undo_crumbs_to_node (node,
 						       num_ucrumbs, ucrumbs);
     }
+
+  if (error_code != NO_ERROR)
+    {
+      goto error;
+    }
+
   if (is_redo_zip)
     {
       undoredo->rlength = MAKE_ZIP_LEN (zip_redo->data_length);
@@ -678,6 +684,7 @@ prior_lsa_gen_undoredo_record_from_crumbs (THREAD_ENTRY * thread_p,
       error_code = prior_lsa_copy_redo_crumbs_to_node (node,
 						       num_rcrumbs, rcrumbs);
     }
+
   if (error_code != NO_ERROR)
     {
       goto error;
@@ -1351,6 +1358,7 @@ prior_lsa_alloc_and_copy_data (THREAD_ENTRY * thread_p,
 
   node->log_header.type = rec_type;
 
+  node->data_header_length = 0;
   node->data_header = NULL;
   node->ulength = 0;
   node->udata = NULL;
@@ -1634,7 +1642,7 @@ prior_lsa_next_record_internal (THREAD_ENTRY * thread_p,
 				int with_lock)
 {
   LOG_LSA start_lsa;
-  int rv;
+  UNUSED_VAR int rv;
 
   assert (tdes->tran_index != NULL_TRAN_INDEX);
   assert (tdes->trid != NULL_TRANID);
@@ -1676,6 +1684,7 @@ prior_lsa_next_record_internal (THREAD_ENTRY * thread_p,
     }
 
   log_Gl.prior_info.list_size += (sizeof (LOG_PRIOR_NODE) + node->data_header_length + node->ulength + node->rlength);	/* bytes */
+  mnt_stats_gauge (thread_p, MNT_STATS_PRIOR_LSA_LIST_SIZE, log_Gl.prior_info.list_size / ONE_K);	/* kbytes */
 
   if (with_lock == LOG_PRIOR_LSA_WITHOUT_LOCK)
     {
@@ -1748,7 +1757,7 @@ int
 prior_lsa_get_current_lsa (UNUSED_ARG THREAD_ENTRY * thread_p,
 			   LOG_LSA * current_lsa)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
   rv = pthread_mutex_lock (&log_Gl.prior_info.prior_lsa_mutex);
 

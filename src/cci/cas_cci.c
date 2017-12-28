@@ -54,6 +54,7 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 /************************************************************************
  * OTHER IMPORTED HEADER FILES                                          *
@@ -190,28 +191,6 @@ CCI_FREE_FUNCTION cci_free = free;
 /************************************************************************
  * IMPLEMENTATION OF INTERFACE FUNCTIONS                                *
  ************************************************************************/
-
-int
-get_elapsed_time (struct timeval *start_time)
-{
-  INT64 start_time_milli, end_time_milli;
-  struct timeval end_time;
-
-  assert (start_time);
-
-  if (start_time->tv_sec == 0 && start_time->tv_usec == 0)
-    {
-      return 0;
-    }
-
-  gettimeofday (&end_time, NULL);
-
-  start_time_milli =
-    start_time->tv_sec * 1000LL + start_time->tv_usec / 1000LL;
-  end_time_milli = end_time.tv_sec * 1000LL + end_time.tv_usec / 1000LL;
-
-  return (int) (end_time_milli - start_time_milli);
-}
 
 int
 cci_get_version_string (char *str, size_t len)
@@ -2473,7 +2452,8 @@ cci_mgmt_sync_shard_mgmt_info (const char *hostname, int mgmt_port,
 int
 cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 			 const char *hostname, int mgmt_port,
-			 int launch_proc_id, bool wait_child,
+			 int launch_proc_id,
+			 bool recv_stdout, bool wait_child,
 			 int argc, const char **argv,
 			 int num_env, const char **envp, int timeout_msec)
 {
@@ -2487,7 +2467,7 @@ cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
     }
 
   error = net_mgmt_launch_process_req (launch_result, &host_info,
-				       launch_proc_id,
+				       launch_proc_id, recv_stdout,
 				       (wait_child ? 1 : 0),
 				       argc, argv, num_env, envp,
 				       timeout_msec);
@@ -2500,6 +2480,13 @@ cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
 			      int timeout_msec)
 {
   return net_mgmt_wait_launch_process (launch_result, timeout_msec);
+}
+
+int
+cci_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname,
+			    int timeout_msec)
+{
+  return net_mgmt_connect_db_server (host, dbname, timeout_msec);
 }
 
 int
@@ -2561,7 +2548,7 @@ cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items)
 }
 
 int
-cci_notify_ha_agent_state (CCI_CONN * conn, const char *host_ip, int state)
+cci_notify_ha_agent_state (CCI_CONN * conn, in_addr_t ip, int port, int state)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
@@ -2579,7 +2566,7 @@ cci_notify_ha_agent_state (CCI_CONN * conn, const char *host_ip, int state)
 
   if (error == CCI_ER_NO_ERROR)
     {
-      error = qe_notify_ha_agent_state (con_handle, host_ip, state);
+      error = qe_notify_ha_agent_state (con_handle, ip, port, state);
     }
 
   CON_STMT_API_POST (conn, NULL, con_handle, error);
@@ -2644,7 +2631,9 @@ cas_connect_internal (T_CON_HANDLE * con_handle, int *connect)
   if (TIMEOUT_IS_SET (con_handle))
     {
       remained_time = (con_handle->current_timeout
-		       - get_elapsed_time (&con_handle->start_time));
+		       - (int) timeval_diff_in_msec (NULL,
+						     &con_handle->
+						     start_time));
       if (remained_time <= 0)
 	{
 	  return CCI_ER_LOGIN_TIMEOUT;
@@ -2969,7 +2958,7 @@ con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
     {
       assert (force_conn == false);
 
-      if (!con_handle->is_sharding_connection)
+      if (IS_CON_TYPE_LOCAL (con_handle))
 	{
 	  return con_stmt_api_post (conn, stmt, con_handle,
 				    CCI_ER_NOT_SHARDING_CONNECTION,

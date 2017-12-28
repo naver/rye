@@ -62,9 +62,6 @@ rye_broker_SOURCES = \
 	$(BROKER_DIR)/broker_shm.c \
 	$(BROKER_DIR)/broker_util.c \
 	$(BROKER_DIR)/broker_max_heap.c \
-	$(BROKER_DIR)/broker_send_fd.c \
-	$(BROKER_DIR)/broker_recv_fd.c \
-	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/shard_mgmt.c \
 	$(BROKER_DIR)/local_mgmt.c \
 	$(BROKER_DIR)/broker_log.c \
@@ -77,6 +74,7 @@ broker_monitor_npot_SOURCES = \
 	$(BASE_DIR)/rye_master_shm.c \
 	$(BASE_DIR)/rye_server_shm.c \
 	$(BASE_DIR)/perf_monitor.c \
+	$(BASE_DIR)/monitor.c \
 	$(BASE_DIR)/release_string.c \
 	$(BROKER_DIR)/broker_monitor_npot.c \
 	$(BROKER_DIR)/broker_shm.c
@@ -90,7 +88,6 @@ broker_changer_SOURCES = \
 	$(BROKER_DIR)/broker_config.c \
 	$(BROKER_DIR)/broker_util.c \
 	$(BROKER_DIR)/broker_max_heap.c \
-	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/broker_acl.c
 broker_changer_LDADD = @CS_LIB@
 
@@ -103,10 +100,8 @@ rye_cas_SOURCES = \
 	$(BROKER_DIR)/cas_execute.c \
 	$(BROKER_DIR)/cas_handle.c \
 	$(BROKER_DIR)/broker_util.c \
-	$(BROKER_DIR)/broker_recv_fd.c \
 	$(BROKER_DIR)/cas_log.c \
 	$(BROKER_DIR)/broker_shm.c \
-	$(BROKER_DIR)/broker_filename.c \
 	$(BROKER_DIR)/cas_error.c \
 	$(BROKER_DIR)/broker_acl.c \
 	$(BROKER_DIR)/cas_util.c 

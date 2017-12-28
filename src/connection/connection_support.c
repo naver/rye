@@ -55,6 +55,7 @@
 #include "server_support.h"
 #else
 #include "connection_cl.h"
+#include "client_support.h"
 #endif
 
 #if defined(CS_MODE)
@@ -65,6 +66,7 @@
 #include "heap_file.h"
 #include "dbval.h"
 #include "db_date.h"
+#include "heartbeat.h"
 
 #include "rye_server_shm.h"
 
@@ -420,6 +422,38 @@ css_set_net_header_ntoh (NET_HEADER * dest_p, NET_HEADER * src_p)
 }
 
 /*
+ * css_recv_command_packet () - "blocking" read for a new request
+ */
+int
+css_recv_command_packet (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet)
+{
+  int css_error;
+  CSS_NET_PACKET *tmp_recv_packet = NULL;
+
+  assert (recv_packet != NULL);
+
+  css_error = css_net_packet_recv (&tmp_recv_packet, conn, -1, 0);
+  if (css_error != NO_ERRORS)
+    {
+      return css_error;
+    }
+
+  if (tmp_recv_packet->header.packet_type != COMMAND_TYPE)
+    {
+      css_net_packet_free (tmp_recv_packet);
+      return WRONG_PACKET_TYPE;
+    }
+
+  *recv_packet = tmp_recv_packet;
+
+  er_log_debug (ARG_FILE_LINE,
+		"in css_recv_command_packet, received request: %d\n",
+		tmp_recv_packet->header.function_code);
+
+  return NO_ERRORS;
+}
+
+/*
  * css_send_data_packet() - transfer a data packet to the client.
  *   return: enum css_error_code (See connectino_defs.h)
  *   conn(in): connection entry
@@ -613,62 +647,6 @@ css_send_master_request (int request, CSS_NET_PACKET ** recv_packet,
 
 }
 #endif
-
-/*
- * css_ha_state_string
- */
-const char *
-css_ha_state_string (HA_STATE server_state)
-{
-  switch (server_state)
-    {
-    case HA_STATE_NA:
-      return "na";
-    case HA_STATE_UNKNOWN:
-      return HA_STATE_UNKNOWN_STR;
-    case HA_STATE_MASTER:
-      return HA_STATE_MASTER_STR;
-    case HA_STATE_TO_BE_MASTER:
-      return HA_STATE_TO_BE_MASTER_STR;
-    case HA_STATE_SLAVE:
-      return HA_STATE_SLAVE_STR;
-    case HA_STATE_TO_BE_SLAVE:
-      return HA_STATE_TO_BE_SLAVE_STR;
-    case HA_STATE_REPLICA:
-      return HA_STATE_REPLICA_STR;
-    case HA_STATE_DEAD:
-      return HA_STATE_DEAD_STR;
-    default:
-      assert (false);
-      break;
-    }
-
-  return "invalid";
-}
-
-/*
- * css_ha_applier_state_string
- */
-const char *
-css_ha_applier_state_string (HA_APPLY_STATE state)
-{
-  switch (state)
-    {
-    case HA_APPLY_STATE_NA:
-      return "na";
-    case HA_APPLY_STATE_UNREGISTERED:
-      return HA_APPLY_STATE_UNREGISTERED_STR;
-    case HA_APPLY_STATE_RECOVERING:
-      return HA_APPLY_STATE_RECOVERING_STR;
-    case HA_APPLY_STATE_WORKING:
-      return HA_APPLY_STATE_WORKING_STR;
-    case HA_APPLY_STATE_DONE:
-      return HA_APPLY_STATE_DONE_STR;
-    case HA_APPLY_STATE_ERROR:
-      return HA_APPLY_STATE_ERROR_STR;
-    }
-  return "invalid";
-}
 
 /*
  * css_ha_mode_string
@@ -970,9 +948,6 @@ css_trim_str (char *str)
 
 /*
  * css_send_magic () - send magic
- *
- *   return: void
- *   conn(in/out):
  */
 int
 css_send_magic (CSS_CONN_ENTRY * conn)
@@ -1026,10 +1001,7 @@ css_send_magic (CSS_CONN_ENTRY * conn)
 }
 
 /*
- * css_check_magic () - check magic
- *
- *   return: void
- *   conn(in/out):
+ * css_check_magic () - 
  */
 int
 css_check_magic (CSS_CONN_ENTRY * conn)
@@ -1046,15 +1018,13 @@ css_check_magic (CSS_CONN_ENTRY * conn)
 
   timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  if (css_net_packet_recv (&recv_packet, conn, timeout, 2,
-			   magic, sizeof (css_Net_magic),
-			   recv_ptr, recv_size) != NO_ERRORS)
+  css_errors = css_net_packet_recv (&recv_packet, conn, timeout, 2,
+				    magic, sizeof (css_Net_magic),
+				    recv_ptr, recv_size);
+  if (css_errors != NO_ERRORS)
     {
-      return ERROR_ON_READ;
+      return css_errors;
     }
-
-
-  css_errors = NO_ERRORS;
 
   if (css_net_packet_get_recv_size (recv_packet, 0) != sizeof (css_Net_magic)
       || memcmp (magic, css_Net_magic, sizeof (css_Net_magic)) != 0
@@ -1282,8 +1252,6 @@ css_net_packet_free (CSS_NET_PACKET * net_packet)
 
   if (net_packet)
     {
-      er_log_debug (ARG_FILE_LINE, "PACKET_FREE:%x", net_packet);
-
       for (i = 0; i < net_packet->header.num_buffers; i++)
 	{
 	  css_net_packet_buffer_free (net_packet, i, true);
@@ -1303,7 +1271,6 @@ css_net_packet_alloc (UNUSED_ARG CSS_CONN_ENTRY * conn,
     {
       tmp_net_packet->header = *net_header;
       memset (tmp_net_packet->buffer, 0, sizeof (tmp_net_packet->buffer));
-      er_log_debug (ARG_FILE_LINE, "PACKET_ALLOC:%x", tmp_net_packet);
     }
 
   return tmp_net_packet;
@@ -1564,4 +1531,169 @@ css_is_client_ro_tran (UNUSED_ARG THREAD_ENTRY * thread_p)
 #endif
 
   return false;
+}
+
+/*
+ * css_pack_server_name_for_hb_register () 
+ */
+static char *
+css_pack_server_name_for_hb_register (int *name_length, HB_PROC_TYPE type,
+				      const char *server_name,
+				      const char *log_path)
+{
+  char *packed_name = NULL;
+  const char *env_name = NULL;
+  char pid_string[16];
+  char *ptr;
+  int n_len, l_len, e_len, p_len;
+
+  *name_length = 0;
+
+  env_name = envvar_root ();
+
+  if (server_name == NULL || env_name == NULL)
+    {
+      return NULL;
+    }
+
+  snprintf (pid_string, sizeof (pid_string), "%d", getpid ());
+
+  n_len = strlen (server_name) + 1;
+  l_len = (log_path) ? strlen (log_path) + 1 : 0;
+  e_len = strlen (env_name) + 1;
+  p_len = strlen (pid_string) + 1;
+  *name_length = n_len + 1 + l_len + e_len + p_len;
+
+  packed_name = malloc (*name_length);
+  if (packed_name == NULL)
+    {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
+	      1, (*name_length));
+      return NULL;
+    }
+
+  ptr = packed_name;
+
+  if (type == HB_PTYPE_REPLICATION)
+    {
+      *ptr = MASTER_CONN_NAME_HA_REPL;
+    }
+  else if (type == HB_PTYPE_SERVER)
+    {
+      *ptr = MASTER_CONN_NAME_HA_SERVER;
+    }
+  else
+    {
+      assert (0);
+      free_and_init (packed_name);
+      return NULL;
+    }
+  ptr++;
+
+  memcpy (ptr, server_name, n_len);
+  ptr += n_len;
+
+  if (l_len)
+    {
+      *(ptr - 1) = ':';
+      memcpy (ptr, log_path, l_len);
+      ptr += l_len;
+    }
+
+  memcpy (ptr, env_name, e_len);
+  ptr += e_len;
+
+  memcpy (ptr, pid_string, p_len);
+  ptr += p_len;
+
+  return packed_name;
+}
+
+/*
+ * css_register_to_master () - register to the master 
+ */
+CSS_CONN_ENTRY *
+css_register_to_master (HB_PROC_TYPE type,
+			const char *server_name, const char *log_path)
+{
+  CSS_CONN_ENTRY *conn;
+  unsigned short rid;
+  int response;
+  int css_error;
+  char *packed_name = NULL;
+  int name_length;
+  PRM_NODE_INFO node_info = prm_get_myself_node_info ();
+
+  conn = css_make_conn (INVALID_SOCKET);
+  if (conn == NULL)
+    {
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			   ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
+			   server_name);
+      return NULL;
+    }
+
+  packed_name = css_pack_server_name_for_hb_register (&name_length,
+						      type,
+						      server_name, log_path);
+#if defined(SERVER_MODE)
+  css_error = css_common_connect_sr (conn, &rid, &node_info,
+				     SVR_CONNECT_TYPE_MASTER_HB_PROC,
+				     packed_name, name_length);
+  if (css_error == NO_ERRORS)
+    {
+      css_error = css_recv_data_packet_from_client (NULL, conn, rid, -1, 1,
+						    (char *) &response,
+						    sizeof (int));
+    }
+#else
+  css_error = css_common_connect_cl (&node_info, conn,
+				     SVR_CONNECT_TYPE_MASTER_HB_PROC,
+				     NULL, packed_name, name_length,
+				     0, &rid, true);
+  if (css_error == NO_ERRORS)
+    {
+      css_error = css_recv_data_from_server (NULL, conn, rid, -1, 1,
+					     (char *) &response,
+					     sizeof (int));
+    }
+#endif
+
+  free_and_init (packed_name);
+
+  if (css_error == NO_ERRORS)
+    {
+      response = ntohl (response);
+
+      er_log_debug (ARG_FILE_LINE,
+		    "css_register_to_master received %d as response from master\n",
+		    response);
+
+      switch (response)
+	{
+	case SERVER_ALREADY_EXISTS:
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+		  ERR_CSS_SERVER_ALREADY_EXISTS, 1, server_name);
+	  break;
+
+	case SERVER_REQUEST_ACCEPTED:
+	  response = 0;
+	  if (css_send_data_packet (conn, rid, 1, &response,
+				    sizeof (int)) == NO_ERRORS)
+	    {
+	      return conn;
+	    }
+	  else
+	    {
+	      er_set_with_oserror (ER_ERROR_SEVERITY,
+				   ARG_FILE_LINE,
+				   ERR_CSS_ERROR_DURING_SERVER_CONNECT,
+				   1, server_name);
+	    }
+	  break;
+	}
+    }
+
+  css_free_conn (conn);
+  return NULL;
 }

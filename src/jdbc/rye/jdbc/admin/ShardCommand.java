@@ -35,6 +35,7 @@ import rye.jdbc.driver.RyeCommand;
 import rye.jdbc.driver.RyeConnection;
 import rye.jdbc.driver.RyeDriver;
 import rye.jdbc.driver.RyeException;
+import rye.jdbc.jci.Protocol;
 import rye.jdbc.sharding.ShardAdmin;
 import rye.jdbc.sharding.ShardInfoManager;
 import rye.jdbc.sharding.ShardNodeInstance;
@@ -56,7 +57,6 @@ abstract class ShardCommand
 
     protected PrintStream errStream = null;
     protected PrintStream verboseOut = null;
-    private int localMgmtPort = DEFAULT_LOCAL_MGMT_PORT;
 
     ShardCommand()
     {
@@ -85,24 +85,6 @@ abstract class ShardCommand
     void setErrStream(PrintStream err)
     {
 	this.errStream = err;
-    }
-
-    protected boolean setLocalMgmtPort(String strValue)
-    {
-	int tmpPort = Integer.parseInt(strValue);
-
-	if (tmpPort <= 0) {
-	    return false;
-	}
-	else {
-	    localMgmtPort = tmpPort;
-	    return true;
-	}
-    }
-
-    protected int getLocalMgmtPort()
-    {
-	return this.localMgmtPort;
     }
 
     void printStatus(boolean printTime, String format, Object... args)
@@ -202,8 +184,8 @@ abstract class ShardCommand
 	return hostInfoArr;
     }
 
-    static NodeInfo[] getExistingNodeInfo(ShardAdmin shardAdmin, NodeInfo[] addDropNodeArr, NodeInfo[] prevNodeArr)
-		    throws Exception
+    static NodeInfo[] getExistingNodeInfo(ShardAdmin shardAdmin, NodeInfo[] addDropNodeArr, NodeInfo[] prevNodeArr,
+		    int localMgmtPort) throws Exception
     {
 	NodeInfo[] nodeInfoArr = new NodeInfo[addDropNodeArr.length];
 
@@ -214,7 +196,7 @@ abstract class ShardCommand
 		throw makeAdminRyeException(null, "nodeid '%d' is not found", nodeid);
 	    }
 
-	    nodeInfoArr[i] = NodeInfo.makeNodeInfo(nodeid, hostInfoArr);
+	    nodeInfoArr[i] = NodeInfo.makeNodeInfo(nodeid, hostInfoArr, localMgmtPort);
 	}
 
 	if (prevNodeArr != null) {
@@ -228,9 +210,9 @@ abstract class ShardCommand
 	return nodeInfoArr;
     }
 
-    ShardMgmtInfo[] getAllShardMgmtInfoFromLocalMgmt(String localMgmtHost) throws SQLException
+    ShardMgmtInfo[] getAllShardMgmtInfoFromLocalMgmt(NodeAddress localMgmtHost) throws SQLException
     {
-	LocalMgmt localMgmt = new LocalMgmt(localMgmtHost, localMgmtPort);
+	LocalMgmt localMgmt = new LocalMgmt(localMgmtHost.toJciConnectionInfo());
 	return localMgmt.getShardMgmtInfo();
     }
 
@@ -248,12 +230,19 @@ abstract class ShardCommand
     RyeConnection makeConnection(String brokerHost, int brokerPort, String dbName, String dbUser, String dbPassword,
 		    String portName, String urlProperty) throws SQLException
     {
-	String url = makeConnectionUrl(brokerHost, brokerPort, dbName, "", "", portName, urlProperty);
+	String url = makeConnectionUrl(brokerHost, brokerPort, dbName, "", "", portName, urlProperty, true);
+	return (RyeConnection) ryeDriver.connect(url, dbUser, dbPassword, shardInfoManager);
+    }
+
+    RyeConnection makeLocalConnection(String brokerHost, int brokerPort, String dbName, String dbUser,
+		    String dbPassword, String portName, String urlProperty) throws SQLException
+    {
+	String url = makeConnectionUrl(brokerHost, brokerPort, dbName, "", "", portName, urlProperty, false);
 	return (RyeConnection) ryeDriver.connect(url, dbUser, dbPassword, shardInfoManager);
     }
 
     private static String makeConnectionUrl(String brokerHost, int brokerPort, String dbName, String dbUser,
-		    String dbPassword, String portName, String urlProperty)
+		    String dbPassword, String portName, String urlProperty, boolean isGlobalConn)
     {
 	if (dbUser == null) {
 	    dbUser = "";
@@ -263,6 +252,12 @@ abstract class ShardCommand
 	}
 	if (urlProperty == null) {
 	    urlProperty = "";
+	}
+	if (isGlobalConn == false) {
+	    if (urlProperty.length() > 0) {
+		urlProperty = urlProperty + "&";
+	    }
+	    urlProperty = urlProperty + "connectionType=local";
 	}
 
 	return String.format("jdbc:rye://%s:%d/%s:%s:%s/%s?%s", brokerHost, brokerPort, dbName, dbUser, dbPassword,
@@ -308,11 +303,11 @@ abstract class ShardCommand
 	return sb.toString();
     }
 
-    void executeRyeCommand(int timeout, String hostname, String... args) throws SQLException
+    void executeRyeCommand(int timeout, NodeAddress host, int flag, String... args) throws SQLException
     {
 	if (verboseOut != null) {
 	    StringBuffer msg = new StringBuffer();
-	    msg.append(hostname);
+	    msg.append(host.toString());
 	    msg.append(":");
 	    for (int i = 0; i < args.length; i++) {
 		msg.append(' ');
@@ -321,11 +316,11 @@ abstract class ShardCommand
 	    printStatus(true, "%s\n", msg.toString());
 	}
 
-	RyeCommand ryeCommand = new RyeCommand(hostname, localMgmtPort);
+	RyeCommand ryeCommand = new RyeCommand(host.toJciConnectionInfo());
 	if (timeout != 0) {
 	    ryeCommand.setTimeout(timeout);
 	}
-	ryeCommand.exec(args);
+	ryeCommand.exec(flag, args);
 
 	int exitStatus = ryeCommand.getCommandExitStatus();
 
@@ -344,9 +339,9 @@ abstract class ShardCommand
 	    String cmdErrMsg = "";
 	    byte[] stderrMsg = ryeCommand.getCommandStderr();
 	    if (stderrMsg != null) {
-		cmdErrMsg = String.format("(%s)", (new String(stderrMsg)).trim());
+		cmdErrMsg = String.format("(%s)", (new String(stderrMsg, RyeDriver.sysCharset)).trim());
 	    }
-	    throw makeAdminRyeException(null, "%s: rye command fail: %s %s", hostname, command, cmdErrMsg);
+	    throw makeAdminRyeException(null, "%s: rye command fail: %s %s", host.toString(), command, cmdErrMsg);
 	}
     }
 
@@ -394,21 +389,22 @@ abstract class ShardCommand
 	String[] localDbname = nodeInfo.getLocalDbnameArr(globalDbname);
 
 	for (int i = 0; i < localDbname.length; i++) {
-	    testConnection(hosts[0].getIpAddr(), localMgmtPort, localDbname[i], "dba", "", "rw", "", true, 0);
+	    testLocalConnection(hosts[0], localDbname[i], "dba", "", "rw", true, 0);
 	}
     }
 
-    void testConnection(String host, int brokerPort, String dbname, String dbuser, String dbpasswd, String portName,
-		    String urlProperty, boolean checkMaster, int checkNodeid)
+    void testLocalConnection(NodeAddress host, String dbname, String dbuser, String dbpasswd, String portName,
+		    boolean checkMaster, int checkNodeid)
     {
 	int retryCount = 300;
 
-	printStatus(true, "%s:%s:%d connection test. check_master=%s, check_nodeid=%d ... ", host, dbname, brokerPort,
+	printStatus(true, "%s:%s connection test. check_master=%s, check_nodeid=%d ... ", host.toString(), dbname,
 			checkMaster, checkNodeid);
 
 	while (retryCount-- > 0) {
 	    try {
-		RyeConnection con = makeConnection(host, brokerPort, dbname, dbuser, dbpasswd, portName, urlProperty);
+		RyeConnection con = makeLocalConnection(host.getIpAddr(), host.getPort(), dbname, dbuser, dbpasswd,
+				portName, null);
 
 		int serverHaMode = con.getServerHaMode();
 		int serverNodeid = con.getStatusInfoServerNodeid();
@@ -443,6 +439,30 @@ abstract class ShardCommand
 	printStatus(false, "fail\n");
     }
 
+    void testGlobalConnection(NodeAddress host, String dbname)
+    {
+	int retryCount = 300;
+
+	printStatus(true, "%s:%s global connection test ... ", host.toString(), dbname);
+
+	try {
+	    while (retryCount-- > 0) {
+		boolean res = ShardAdmin.ping(host.toJciConnectionInfo(), dbname, 1000);
+		if (res == true) {
+		    printStatus(false, "OK\n");
+		    return;
+		}
+
+		try {
+		    Thread.sleep(1000);
+		} catch (Exception e) {
+		}
+	    }
+	} catch (SQLException e) {
+	}
+	printStatus(false, "fail\n");
+    }
+
     void checkNodeidInitialized(NodeInfo nodeInfo, String[] globalDbnameArr)
     {
 	String[] localDbname = nodeInfo.getLocalDbnameArr(globalDbnameArr);
@@ -450,7 +470,7 @@ abstract class ShardCommand
 	int checkNodeid = nodeInfo.getNodeid();
 
 	for (int j = 0; j < localDbname.length; j++) {
-	    testConnection(hosts[0].getIpAddr(), localMgmtPort, localDbname[j], "dba", "", "rw", "", true, checkNodeid);
+	    testLocalConnection(hosts[0], localDbname[j], "dba", "", "rw", true, checkNodeid);
 	}
     }
 
@@ -471,7 +491,7 @@ abstract class ShardCommand
     {
 	try {
 	    RyeConnection con = makeConnection(shardMgmt.getIpAddr(), shardMgmt.getPort(), globalDbname, "dba",
-			    dbaPasswd, "rw", "");
+			    dbaPasswd, "rw", null);
 	    ShardAdmin shardAdmin = con.getShardAdmin();
 	    for (int i = 0; i < 100; i++) {
 		if (hasNodeid(shardAdmin, checkNodeidArr)) {
@@ -576,19 +596,25 @@ abstract class ShardCommand
     {
 	for (int i = 0; i < localDbname.length; i++) {
 	    for (int j = 0; j < host.length; j++) {
-		makeSlaveDb(localDbname[i], host[j].getIpAddr());
+		makeSlaveDb(localDbname[i], host[j]);
 	    }
 	}
     }
 
-    private void makeSlaveDb(String dbname, String host) throws SQLException
+    private void makeSlaveDb(String dbname, NodeAddress host) throws SQLException
     {
 	printStatus(true, "make slave database %s@%s\n", dbname, host);
 
 	String bkvFile = String.format("%s_bkv000", dbname);
 
-	executeRyeCommand(-1, host, "rye", "backupdb", dbname, "-m");
-	executeRyeCommand(-1, host, "rye", "restoredb", dbname, "-m", "-B", bkvFile);
+	try {
+	    executeRyeCommand(-1, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "backupdb", dbname, "-m");
+	    executeRyeCommand(-1, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "restoredb", dbname, "-m", "-B",
+			    bkvFile);
+	} finally {
+	    LocalMgmt localMgmt = new LocalMgmt(host.toJciConnectionInfo());
+	    localMgmt.deleteTmpFile(bkvFile);
+	}
     }
 
     private void createDatabase(String[] localDbname, NodeAddress[] host, ArrayList<String> optionList)
@@ -596,12 +622,12 @@ abstract class ShardCommand
     {
 	for (int i = 0; i < localDbname.length; i++) {
 	    for (int j = 0; j < host.length; j++) {
-		createDatabase(localDbname[i], host[j].getIpAddr(), optionList);
+		createDatabase(localDbname[i], host[j], optionList);
 	    }
 	}
     }
 
-    private void createDatabase(String dbname, String host, ArrayList<String> optionList) throws SQLException
+    private void createDatabase(String dbname, NodeAddress host, ArrayList<String> optionList) throws SQLException
     {
 	int optSize = (optionList == null ? 0 : optionList.size());
 	String[] createdbCommand = new String[optSize + 3];
@@ -615,7 +641,7 @@ abstract class ShardCommand
 	    }
 	}
 
-	executeRyeCommand(-1, host, createdbCommand);
+	executeRyeCommand(-1, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, createdbCommand);
     }
 
     private void changeConfHaDbList(String[] localDbname, NodeAddress[] hosts) throws SQLException
@@ -623,7 +649,7 @@ abstract class ShardCommand
 	String dbnameList = concatStrArr(localDbname, ",", false);
 
 	for (int i = 0; i < hosts.length; i++) {
-	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].getIpAddr(), localMgmtPort);
+	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].getIpAddr(), hosts[i].getPort());
 	    changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_DB_LIST, dbnameList);
 	}
 
@@ -632,25 +658,25 @@ abstract class ShardCommand
     void changeConfHaNodeList(NodeAddress[] hosts, NodeAddress[] existingHosts, String haGroupId) throws SQLException
     {
 	// String hostList = AdminUtil.concatStrArr(NodeAddress.getHostnameArr(hosts), ":");
-	String hostList;
-	if (existingHosts == null) {
-	    hostList = concatStrArr(NodeAddress.getIpAddrArr(hosts), ":", false);
-	}
-	else {
-	    hostList = concatStrArr(NodeAddress.getIpAddrArr(existingHosts), ":", false) + ":"
-			    + concatStrArr(NodeAddress.getIpAddrArr(hosts), ":", false);
-	}
+	StringBuffer hostList = new StringBuffer();
+	String nodeDelimiter = ",";
 
-	String nodeListParamValue = String.format("%s@%s", haGroupId, hostList);
+	if (existingHosts != null) {
+	    hostList.append(concatStrArr(NodeAddress.getIpPortArr(existingHosts), nodeDelimiter, false));
+	    hostList.append(nodeDelimiter);
+	}
+	hostList.append(concatStrArr(NodeAddress.getIpPortArr(hosts), nodeDelimiter, false));
+
+	String nodeListParamValue = String.format("%s@%s", haGroupId, hostList.toString());
 
 	for (int i = 0; i < hosts.length; i++) {
-	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].getIpAddr(), localMgmtPort);
+	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].toJciConnectionInfo());
 	    changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_LIST, nodeListParamValue);
 	}
 
 	if (existingHosts != null) {
 	    for (int i = 0; i < existingHosts.length; i++) {
-		LocalMgmt localMgmt = new LocalMgmt(existingHosts[i].getIpAddr(), localMgmtPort);
+		LocalMgmt localMgmt = new LocalMgmt(existingHosts[i].toJciConnectionInfo());
 		changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_LIST, nodeListParamValue);
 	    }
 	}
@@ -661,21 +687,21 @@ abstract class ShardCommand
 	if (nodeInfoArr != null) {
 	    NodeAddress[] hostArr = NodeInfo.getDistinctHostArr(nodeInfoArr);
 	    for (int i = 0; i < hostArr.length; i++) {
-		hbRestart(hostArr[i].getIpAddr());
+		hbRestart(hostArr[i]);
 	    }
 	}
     }
 
-    private void hbRestart(String host) throws SQLException
+    private void hbRestart(NodeAddress host) throws SQLException
     {
 	printStatus(true, "%s: hb start \n", host);
 
 	try {
-	    executeRyeCommand(0, host, "rye", "heartbeat", "stop");
+	    executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_RESULT, "rye", "service", "restart");
 	} catch (SQLException e) {
 	}
 
-	executeRyeCommand(0, host, "rye", "heartbeat", "start");
+	// executeRyeCommand(0, host, "rye", "heartbeat", "start");
     }
 
     void hbStop(NodeInfo[] nodeInfoArr) throws SQLException
@@ -683,16 +709,16 @@ abstract class ShardCommand
 	if (nodeInfoArr != null) {
 	    NodeAddress[] hostArr = NodeInfo.getDistinctHostArr(nodeInfoArr);
 	    for (int i = 0; i < hostArr.length; i++) {
-		hbStop(hostArr[i].getIpAddr());
+		hbStop(hostArr[i]);
 	    }
 	}
     }
 
-    private void hbStop(String host) throws SQLException
+    private void hbStop(NodeAddress host) throws SQLException
     {
 	printStatus(true, "%s: hb stop\n", host);
 
-	executeRyeCommand(0, host, "rye", "heartbeat", "stop");
+	executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "heartbeat", "stop");
     }
 
     void hbReload(NodeInfo[] nodeInfoArr) throws SQLException
@@ -700,23 +726,22 @@ abstract class ShardCommand
 	if (nodeInfoArr != null) {
 	    NodeAddress[] hostArr = NodeInfo.getDistinctHostArr(nodeInfoArr);
 	    for (int i = 0; i < hostArr.length; i++) {
-		hbReload(hostArr[i].getIpAddr());
+		hbReload(hostArr[i]);
 	    }
 	}
     }
 
-    private void hbReload(String host) throws SQLException
+    private void hbReload(NodeAddress host) throws SQLException
     {
 	printStatus(true, "%s: hb reload \n", host);
 
-	executeRyeCommand(0, host, "rye", "heartbeat", "reload");
+	executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_FLAG, "rye", "heartbeat", "reload");
     }
 
     private void checkBrokerRunning(NodeAddress[] hostArr, String localDbname, String dbaPasswd) throws Exception
     {
 	for (int i = 0; i < hostArr.length; i++) {
-	    testConnection(hostArr[i].getIpAddr(), getLocalMgmtPort(), localDbname, "dba", dbaPasswd, "rw", "", false,
-			    0);
+	    testLocalConnection(hostArr[i], localDbname, "dba", dbaPasswd, "rw", false, 0);
 	}
     }
 
@@ -740,7 +765,7 @@ abstract class ShardCommand
     {
 	/* do not check rye command result. 'rye broker restart' command always returns error */
 	try {
-	    executeRyeCommand(0, host.getIpAddr(), "rye", "broker", "restart");
+	    executeRyeCommand(0, host, Protocol.MGMT_LAUNCH_FLAG_NO_RESULT, "rye", "broker", "restart");
 	} catch (SQLException e) {
 	}
     }
@@ -753,7 +778,7 @@ abstract class ShardCommand
 
 	NodeAddress[] hosts = nodeInfo.getHostArr();
 	for (int i = 0; i < hosts.length; i++) {
-	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].getIpAddr(), localMgmtPort);
+	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].toJciConnectionInfo());
 
 	    localMgmt.brokerAclReload(acl);
 	}
@@ -768,7 +793,7 @@ abstract class ShardCommand
 	NodeAddress[] hosts = nodeInfo.getHostArr();
 
 	for (int i = 0; i < hosts.length; i++) {
-	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].getIpAddr(), localMgmtPort);
+	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].toJciConnectionInfo());
 
 	    localMgmt.writeRyeConf(ryeConf);
 
@@ -787,7 +812,7 @@ abstract class ShardCommand
 		    throws SQLException
     {
 	for (int i = 0; i < hosts.length; i++) {
-	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].getIpAddr(), localMgmtPort);
+	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].toJciConnectionInfo());
 	    if (ryeConfList != null) {
 		for (RyeConfValue confValue : ryeConfList) {
 		    changeRyeConf(localMgmt, confValue);
@@ -819,17 +844,18 @@ abstract class ShardCommand
     private void checkLocalMgmtOccupied(NodeAddress[] hosts) throws SQLException
     {
 	for (int i = 0; i < hosts.length; i++) {
-	    printStatus(true, "check broker port %s:%d \n", hosts[i].getIpAddr(), localMgmtPort);
+	    printStatus(true, "check broker port %s \n", hosts[i].toString());
 
-	    if (isOccupiedLocalMgmt(hosts[i].getIpAddr()) == true) {
-		throw makeAdminRyeException(null, "node '%s' is in use", hosts[i].getOrgHostname());
+	    if (isOccupiedLocalMgmt(hosts[i]) == true) {
+		throw makeAdminRyeException(null, "node '%s:%d' is in use", hosts[i].getOrgHostname(),
+				hosts[i].getPort());
 	    }
 	}
     }
 
-    private boolean isOccupiedLocalMgmt(String host) throws SQLException
+    private boolean isOccupiedLocalMgmt(NodeAddress host) throws SQLException
     {
-	LocalMgmt localMgmt = new LocalMgmt(host, localMgmtPort);
+	LocalMgmt localMgmt = new LocalMgmt(host.toJciConnectionInfo());
 	int numShardVersionInfo = -1;
 	int retryCount = 20;
 
@@ -853,7 +879,8 @@ abstract class ShardCommand
 	return true;
     }
 
-    void verifyPassword(String shardMgmtHost, String[] globalDbnameArr, String[] dbaPasswordArr) throws SQLException
+    void verifyPassword(NodeAddress shardMgmtHost, String[] globalDbnameArr, String[] dbaPasswordArr)
+		    throws SQLException
     {
 	printStatus(true, "verify password\n");
 
@@ -861,15 +888,12 @@ abstract class ShardCommand
 
 	for (int i = 0; i < globalDbnameArr.length; i++) {
 	    String localDbname = NodeInfo.getLocalDbname(globalDbnameArr[i], FIRST_NODEID);
-	    verifyPassword(shardMgmtHost, localDbname, "dba", dbaPasswordArr[i]);
-	}
-    }
 
-    private void verifyPassword(String host, String dbname, String dbuser, String password) throws SQLException
-    {
-	String url = makeConnectionUrl(host, localMgmtPort, dbname, "", "", "rw", "");
-	RyeConnection con = (RyeConnection) ryeDriver.connect(url, dbuser, password, shardInfoManager);
-	con.close();
+	    RyeConnection con = makeLocalConnection(shardMgmtHost.getIpAddr(), shardMgmtHost.getPort(), localDbname,
+			    "dba", dbaPasswordArr[i], "rw", null);
+	    con.close();
+
+	}
     }
 
     static RyeException makeAdminRyeException(Throwable cause, String format, Object... args)
@@ -893,12 +917,12 @@ abstract class ShardCommand
 	return haNodeList.substring(0, idx);
     }
 
-    String makeRandomeId(int len)
+    String makeRandomId(int len)
     {
 	Random r = new Random();
-	byte[] b = new byte[len];
+	char[] b = new char[len];
 	for (int i = 0; i < len; i++) {
-	    b[i] = (byte) ('a' + r.nextInt(26));
+	    b[i] = (char) ('a' + r.nextInt(26));
 	}
 	return new String(b);
     }

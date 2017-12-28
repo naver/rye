@@ -1605,7 +1605,7 @@ heap_destroy (const HFID * hfid)
 #if defined(CS_MODE)
   int error = ER_NET_CLIENT_DATA_RECEIVE;
   int req_error;
-  char *ptr;
+  UNUSED_VAR char *ptr;
   OR_ALIGNED_BUF (OR_HFID_SIZE) a_request;
   char *request;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
@@ -1923,7 +1923,7 @@ log_checkpoint (void)
 {
 #if defined(CS_MODE)
   int req_error, chk_int;
-  char *ptr;
+  UNUSED_VAR char *ptr;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply;
 
@@ -1958,7 +1958,7 @@ void
 log_dump_stat (FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -2037,7 +2037,7 @@ tran_server_commit ()
 #if defined(CS_MODE)
   TRAN_STATE tran_state = TRAN_UNACTIVE_UNKNOWN;
   int req_error, tran_state_int;
-  char *ptr;
+  UNUSED_VAR char *ptr;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply;
 
@@ -2100,7 +2100,7 @@ tran_server_abort (void)
 #if defined(CS_MODE)
   TRAN_STATE tran_state = TRAN_UNACTIVE_UNKNOWN;
   int req_error, tran_state_int;
-  char *ptr;
+  UNUSED_VAR char *ptr;
   OR_ALIGNED_BUF (OR_INT_SIZE + OR_INT_SIZE) a_reply;
   char *reply;
 
@@ -2605,7 +2605,7 @@ void
 acl_dump (UNUSED_ARG FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -2629,7 +2629,7 @@ void
 lock_dump (FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -3314,7 +3314,7 @@ csession_end_session (SESSION_ID session_id)
   char *reply;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_request;
   char *request;
-  char *ptr;
+  UNUSED_VAR char *ptr;
 
   reply = OR_ALIGNED_BUF_START (a_reply);
   request = OR_ALIGNED_BUF_START (a_request);
@@ -3346,65 +3346,6 @@ csession_end_session (SESSION_ID session_id)
   return result;
 #endif
 }
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * clogin_user () - login user
- * return	  : error code or NO_ERROR
- * username (in) : name of the user
- */
-int
-clogin_user (const char *username)
-{
-#if defined (CS_MODE)
-  int req_error;
-  OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
-  char *request = NULL;
-  int username_len, req_len;
-
-  req_len = length_const_string (username, &username_len);
-
-  request = (char *) malloc (req_len);
-  if (request == NULL)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      req_len);
-      return ER_FAILED;
-    }
-
-  pack_const_string_with_length (request, username, username_len);
-
-  req_error = net_client_request (NET_SERVER_LOGIN_USER,
-				  NULL, 1, 1,
-				  request, req_len,
-				  OR_ALIGNED_BUF_START (a_reply),
-				  OR_ALIGNED_BUF_SIZE (a_reply));
-  if (request != NULL)
-    {
-      free_and_init (request);
-    }
-
-  if (req_error != NO_ERROR)
-    {
-      return ER_FAILED;
-    }
-
-  or_unpack_int (OR_ALIGNED_BUF_START (a_reply), &req_error);
-
-  return req_error;
-#else
-  int result = NO_ERROR;
-
-  ENTER_SERVER ();
-
-  result = xlogin_user (NULL, username);
-
-  EXIT_SERVER ();
-
-  return result;
-#endif
-}
-#endif
 
 /*
  * boot_get_server_state - get server's HA state
@@ -3449,7 +3390,7 @@ boot_get_server_state (void)
  */
 #if !defined(CS_MODE)
 int
-boot_notify_ha_apply_state (UNUSED_ARG const char *host_ip,
+boot_notify_ha_apply_state (UNUSED_ARG const PRM_NODE_INFO * node_info,
 			    UNUSED_ARG HA_APPLY_STATE state)
 {
   /* Cannot run in standalone mode */
@@ -3459,27 +3400,20 @@ boot_notify_ha_apply_state (UNUSED_ARG const char *host_ip,
 }
 #else /* CS_MODE */
 int
-boot_notify_ha_apply_state (const char *host_ip, HA_APPLY_STATE state)
+boot_notify_ha_apply_state (const PRM_NODE_INFO * node_info,
+			    HA_APPLY_STATE state)
 {
   int req_error, status = ER_FAILED;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply, *request, *ptr;
-  int request_size;
+  int request_size = OR_INT_SIZE * 3;
+  OR_ALIGNED_BUF (OR_INT_SIZE * 3) a_request;
 
   reply = OR_ALIGNED_BUF_START (a_reply);
+  request = OR_ALIGNED_BUF_START (a_request);
 
-  request_size = OR_INT_SIZE;
-  request_size += length_const_string (host_ip, NULL);
-
-  request = (char *) malloc (request_size);
-  if (request == NULL)
-    {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      request_size);
-      return ER_FAILED;
-    }
-
-  ptr = pack_const_string (request, host_ip);
+  ptr = or_pack_int (request, PRM_NODE_INFO_GET_IP (node_info));
+  ptr = or_pack_int (ptr, PRM_NODE_INFO_GET_PORT (node_info));
   ptr = or_pack_int (ptr, (int) state);
 
   req_error = net_client_request (NET_SERVER_BO_NOTIFY_HA_APPLY_STATE,
@@ -3490,8 +3424,6 @@ boot_notify_ha_apply_state (const char *host_ip, HA_APPLY_STATE state)
     {
       or_unpack_int (reply, &status);
     }
-
-  free_and_init (request);
 
   return status;
 }
@@ -4728,7 +4660,7 @@ void
 qmgr_dump_query_plans (FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -4881,178 +4813,6 @@ qmgr_sync_query (DB_QUERY_RESULT * query_result, int wait)
 }
 #endif
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * mnt_server_start_stats -
- *
- * return:
- *
- * NOTE:
- */
-int
-mnt_server_start_stats (bool for_all_trans)
-{
-#if defined(CS_MODE)
-  int status = ER_FAILED;
-  int req_error;
-  OR_ALIGNED_BUF (OR_INT_SIZE) a_request;
-  OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
-  char *request;
-  char *reply;
-
-  request = OR_ALIGNED_BUF_START (a_request);
-  reply = OR_ALIGNED_BUF_START (a_reply);
-
-  or_pack_int (request, for_all_trans);
-  req_error = net_client_request (NET_SERVER_MNT_SERVER_START_STATS,
-				  NULL, 1, 1,
-				  request, OR_ALIGNED_BUF_SIZE (a_request),
-				  reply, OR_ALIGNED_BUF_SIZE (a_reply));
-  if (!req_error)
-    {
-      or_unpack_int (reply, &status);
-    }
-
-  return (status);
-#else /* CS_MODE */
-  int success = ER_FAILED;
-
-  ENTER_SERVER ();
-
-  success = xmnt_server_start_stats (NULL, for_all_trans);
-
-  EXIT_SERVER ();
-
-  return success;
-#endif /* !CS_MODE */
-}
-#endif
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * mnt_server_stop_stats -
- *
- * return:
- *
- * NOTE:
- */
-int
-mnt_server_stop_stats (void)
-{
-#if defined(CS_MODE)
-  int req_error;
-  OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;	/* need dummy reply message */
-  char *reply;
-
-  reply = OR_ALIGNED_BUF_START (a_reply);
-
-  req_error = net_client_request (NET_SERVER_MNT_SERVER_STOP_STATS,
-				  NULL, 0, 1,
-				  reply, OR_ALIGNED_BUF_SIZE (a_reply));
-  if (!req_error)
-    {
-      return ER_FAILED;
-    }
-  return NO_ERROR;
-#else /* CS_MODE */
-
-  ENTER_SERVER ();
-
-  xmnt_server_stop_stats (NULL);
-
-  EXIT_SERVER ();
-  return NO_ERROR;
-#endif /* !CS_MODE */
-}
-#endif
-
-/*
- * mnt_server_copy_stats -
- *
- * return:
- *
- *   to_stats(in):
- *
- * NOTE:
- */
-int
-mnt_server_copy_stats (MNT_SERVER_EXEC_STATS * to_stats)
-{
-  int status = NO_ERROR;
-#if defined(CS_MODE)
-  int req_error;
-  OR_ALIGNED_BUF (STAT_SIZE_PACKED) a_reply;
-  char *reply;
-
-
-  reply = OR_ALIGNED_BUF_START (a_reply);
-
-  req_error = net_client_request (NET_SERVER_MNT_SERVER_COPY_STATS,
-				  NULL, 0, 1,
-				  reply, OR_ALIGNED_BUF_SIZE (a_reply));
-  if (!req_error)
-    {
-      net_unpack_stats (reply, to_stats);
-    }
-  else
-    {
-      status = ER_FAILED;
-    }
-#else /* CS_MODE */
-
-  ENTER_SERVER ();
-
-  xmnt_server_copy_stats (NULL, to_stats);
-
-  EXIT_SERVER ();
-#endif /* !CS_MODE */
-
-  return status;
-}
-
-/*
- * mnt_server_copy_global_stats -
- *
- * return:
- *
- *   to_stats(in):
- *
- * NOTE:
- */
-int
-mnt_server_copy_global_stats (MNT_SERVER_EXEC_STATS * to_stats)
-{
-  int status = NO_ERROR;
-#if defined(CS_MODE)
-  int req_error;
-  OR_ALIGNED_BUF (STAT_SIZE_PACKED) a_reply;
-  char *reply;
-
-  reply = OR_ALIGNED_BUF_START (a_reply);
-
-  req_error = net_client_request (NET_SERVER_MNT_SERVER_COPY_GLOBAL_STATS,
-				  NULL, 0, 1,
-				  reply, OR_ALIGNED_BUF_SIZE (a_reply));
-  if (!req_error)
-    {
-      net_unpack_stats (reply, to_stats);
-    }
-  else
-    {
-      status = ER_FAILED;
-    }
-#else /* CS_MODE */
-
-  ENTER_SERVER ();
-
-  xmnt_server_copy_global_stats (NULL, to_stats);
-
-  EXIT_SERVER ();
-#endif /* !CS_MODE */
-
-  return status;
-}
-
 /*
  * catalog_is_acceptable_new_representation -
  *
@@ -5191,7 +4951,7 @@ void
 thread_dump_cs_stat (UNUSED_ARG FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -5219,7 +4979,7 @@ void
 thread_dump_server_stat (UNUSED_ARG FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -5473,7 +5233,7 @@ void
 logtb_dump_trantable (FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -5840,7 +5600,7 @@ void
 sysprm_dump_server_parameters (FILE * outfp)
 {
 #if defined(CS_MODE)
-  int req_error;
+  UNUSED_VAR int req_error;
 
   if (outfp == NULL)
     {
@@ -6080,23 +5840,10 @@ histo_stop (void)
 }
 
 void
-histo_print (FILE * stream)
+histo_print (UNUSED_ARG FILE * stream)
 {
 #if defined (CS_MODE)
   net_histo_print (stream);
-#else /* CS_MODE */
-  mnt_print_stats (stream);
-#endif /* !CS_MODE */
-}
-
-void
-histo_print_global_stats (FILE * stream, bool cumulative, const char *substr,
-			  const char *db_name)
-{
-#if defined (CS_MODE)
-  net_histo_print_global_stats (stream, cumulative, substr, db_name);
-#else /* CS_MODE */
-  mnt_print_global_stats (stream, cumulative, substr, db_name);
 #endif /* !CS_MODE */
 }
 
@@ -6476,7 +6223,8 @@ logtb_block_globl_dml (UNUSED_ARG int start_or_end)
 #if defined(CS_MODE)
   OR_ALIGNED_BUF (OR_INT_SIZE) a_request;
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
-  char *request, *reply, *ptr;
+  char *request, *reply;
+  UNUSED_VAR char *ptr;
   int error;
 
   request = OR_ALIGNED_BUF_START (a_request);

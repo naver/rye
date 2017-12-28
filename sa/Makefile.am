@@ -105,6 +105,7 @@ BASE_SOURCES = \
 	$(BASE_DIR)/language_support.c \
 	$(BASE_DIR)/memory_hash.c \
 	$(BASE_DIR)/perf_monitor.c \
+	$(BASE_DIR)/monitor.c \
 	$(BASE_DIR)/ini_parser.c \
 	$(BASE_DIR)/system_parameter.c \
 	$(BASE_DIR)/ds_string_array.c \
@@ -230,6 +231,7 @@ TRANSACTION_SOURCES = \
 	$(TRANSACTION_DIR)/wait_for_graph.c 
 
 REPLICATION_SOURCES = \
+	$(REPLICATION_DIR)/repl_common.c \
 	$(REPLICATION_DIR)/repl_log.c
 
 SHARD_SOURCES = \

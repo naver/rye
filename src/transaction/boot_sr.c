@@ -64,6 +64,7 @@
 #include "language_support.h"
 #include "message_catalog.h"
 #include "perf_monitor.h"
+#include "monitor.h"
 #include "set_object.h"
 #include "object_domain.h"
 #include "environment_variable.h"
@@ -2626,7 +2627,7 @@ xboot_initialize_server (THREAD_ENTRY * thread_p,
   rootclass_hfid->hpgid = boot_Db_parm->rootclass_hfid.hpgid;
 
   /* print_version string */
-  strncpy (format, msgcat_message (MSGCAT_CATALOG_RYE,
+  STRNCPY (format, msgcat_message (MSGCAT_CATALOG_RYE,
 				   MSGCAT_SET_GENERAL,
 				   MSGCAT_GENERAL_DATABASE_INIT),
 	   BOOT_FORMAT_MAX_LENGTH);
@@ -2711,6 +2712,7 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
   TRAN_STATE tran_state = TRAN_UNACTIVE_UNKNOWN;
   LANG_COLL_COMPAT *db_collations = NULL;
   int db_coll_cnt;
+  char monitor_name[ONE_K];
 
   /* language data is loaded in context of server */
   if (lang_init () != NO_ERROR)
@@ -2850,7 +2852,15 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
    * svr_shm_initialize() destroy already created shared memory and recreate.
    * it is safe to call svr_shm_initialize() after volumes are mounted
    */
-  if (svr_shm_initialize (db_name, MAX_NTRANS, getpid ()) != NO_ERROR)
+  if (svr_shm_initialize (db_name) != NO_ERROR)
+    {
+      return ER_FAILED;
+    }
+
+  monitor_make_name (monitor_name, db_name);
+  if (monitor_create_collector (monitor_name,
+				MAX_NTRANS + 1,
+				MONITOR_TYPE_SERVER) != NO_ERROR)
     {
       return ER_FAILED;
     }
@@ -3165,7 +3175,8 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
   if (print_restart)
     {
       char format[BOOT_FORMAT_MAX_LENGTH];
-      strncpy (format, msgcat_message (MSGCAT_CATALOG_RYE,
+
+      STRNCPY (format, msgcat_message (MSGCAT_CATALOG_RYE,
 				       MSGCAT_SET_GENERAL,
 				       MSGCAT_GENERAL_DATABASE_INIT),
 	       BOOT_FORMAT_MAX_LENGTH);
@@ -3532,10 +3543,6 @@ xboot_unregister_client (THREAD_ENTRY * thread_p, int tran_index)
 	{
 	  (void) xtran_server_abort (thread_p);
 	}
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-      xmnt_server_stop_stats (thread_p);
-#endif
 
       /* Release the transaction index */
       logtb_release_tran_index (thread_p, tran_index);
@@ -3945,7 +3952,8 @@ boot_create_all_volumes (THREAD_ENTRY * thread_p,
   /* Create the needed files */
   if (file_tracker_create (thread_p, &boot_Db_parm->trk_vfid) == NULL
       || xheap_create (thread_p, &boot_Db_parm->hfid, NULL) != NO_ERROR
-      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid, NULL) != NO_ERROR
+      || xheap_create (thread_p, &boot_Db_parm->rootclass_hfid,
+		       NULL) != NO_ERROR
       || heap_assign_address (thread_p, &boot_Db_parm->rootclass_hfid,
 			      &boot_Db_parm->rootclass_oid, 0) != NO_ERROR)
     {

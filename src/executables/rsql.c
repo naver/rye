@@ -56,6 +56,7 @@
 #include "network_interface_cl.h"
 #include "utility.h"
 #include "connection_support.h"
+#include "boot_cl.h"
 
 /* input type specification for rsql_execute_statements() */
 enum
@@ -1223,7 +1224,7 @@ rsql_do_session_cmd (SESSION_CMD cmd, char *argument,
 
       if (db_restart_ex (UTIL_RSQL_NAME, rsql_arg->db_name,
 			 rsql_arg->user_name, rsql_arg->passwd,
-			 NULL, db_get_client_type ()) != NO_ERROR)
+			 db_get_client_type ()) != NO_ERROR)
 	{
 	  rsql_Error_code = RSQL_ERR_SQL_ERROR;
 	  rsql_display_rsql_err (0, 0);
@@ -1740,7 +1741,7 @@ rsql_read_file (const char *file_name)
    * We've successfully read the file, so remember its name for
    * subsequent reads.
    */
-  strncpy (current_file, p, sizeof (current_file));
+  STRNCPY (current_file, p, sizeof (current_file));
 
   if (rsql_edit_read_file (fp) == RSQL_FAILURE)
     {
@@ -1819,7 +1820,7 @@ rsql_write_file (const char *file_name, int append_flag)
    * We've successfully opened the file, so remember its name for
    * subsequent writes.
    */
-  strncpy (current_file, p, sizeof (current_file));
+  STRNCPY (current_file, p, sizeof (current_file));
 
   if (rsql_edit_write_file (fp) == RSQL_FAILURE)
     {
@@ -2353,65 +2354,38 @@ free_attr_spec (DB_QUERY_TYPE ** attr_spec)
 static void
 rsql_print_database (void)
 {
-  struct sockaddr_in sin;
   char *db_name;
-  const char *host_name;
-  char *pstr;
-  char converted_host_name[MAXHOSTNAMELEN + 1];
-  const char *ha_state;
-  int res;
+  PRM_NODE_INFO connected_node;
 
   db_name = db_get_database_name ();
-  host_name = db_get_host_connected ();
+  connected_node = boot_get_host_connected ();
 
-  if (db_name == NULL || host_name == NULL)
+  if (db_name == NULL ||
+      PRM_NODE_INFO_GET_IP (&connected_node) == INADDR_NONE)
     {
       fprintf (rsql_Error_fp, "\n\tNOT CONNECTED\n\n");
     }
   else
     {
-      sin.sin_family = AF_INET;
-      sin.sin_addr.s_addr = inet_addr (host_name);
+      char *pstr;
+      char converted_host_name[MAXHOSTNAMELEN + 1];
+      const char *ha_state;
 
-      res = getnameinfo ((struct sockaddr *) &sin, sizeof (sin),
-			 converted_host_name, sizeof (converted_host_name),
-			 NULL, 0, NI_NAMEREQD);
-      /*
-       * if it fails to resolves hostname,
-       * it will use db_get_host_connected()'s result.
-       */
-      if (res != 0)
-	{
-	  strncpy (converted_host_name, host_name, MAXHOSTNAMELEN);
-	  converted_host_name[MAXHOSTNAMELEN] = '\0';
-	}
+      prm_node_info_to_str (converted_host_name, sizeof (converted_host_name),
+			    &connected_node);
 
-      if (strcasecmp (converted_host_name, "localhost") == 0
-	  || strcasecmp (converted_host_name, "localhost.localdomain") == 0)
-	{
-	  if (GETHOSTNAME (converted_host_name, MAXHOSTNAMELEN) != 0)
-	    {
-	      strncpy (converted_host_name, host_name, MAXHOSTNAMELEN);
-	    }
-	}
-      converted_host_name[MAXHOSTNAMELEN] = '\0';
-
-      /*
-       * if there is hostname or ip address in db_name,
-       * it will only use db_name except for hostname or ip address.
-       */
       pstr = strchr (db_name, '@');
       if (pstr != NULL)
 	{
 	  *pstr = '\0';
 	}
 
-      ha_state = css_ha_state_string (db_get_server_state ());
+      ha_state = HA_STATE_NAME (db_get_server_state ());
       fprintf (rsql_Output_fp, "\n\t%s@%s [%s]\n\n", db_name,
 	       converted_host_name, ha_state);
-
-      db_ws_free (db_name);
     }
+
+  db_ws_free (db_name);
 }
 
 /*
@@ -2855,7 +2829,7 @@ rsql (const char *argv0, RSQL_ARGUMENT * rsql_arg)
     {
       strncat (rsql_Prompt, " ", avail_size);
     }
-  strncpy (rsql_Name, rsql_get_message (RSQL_NAME), sizeof (rsql_Name));
+  STRNCPY (rsql_Name, rsql_get_message (RSQL_NAME), sizeof (rsql_Name));
 
   /* it is necessary to be opening rsql_Input_fp at this point
    */
@@ -2911,7 +2885,7 @@ rsql (const char *argv0, RSQL_ARGUMENT * rsql_arg)
     {
       err_code = db_restart_ex (argv0, rsql_arg->db_name,
 				rsql_arg->user_name, rsql_arg->passwd,
-				NULL, client_type);
+				client_type);
       if (err_code != NO_ERROR)
 	{
 	  if (!rsql_Is_interactive || rsql_arg->passwd != NULL ||
@@ -2933,7 +2907,7 @@ rsql (const char *argv0, RSQL_ARGUMENT * rsql_arg)
 	  /* try again */
 	  err_code = db_restart_ex (argv0, rsql_arg->db_name,
 				    rsql_arg->user_name, rsql_arg->passwd,
-				    NULL, client_type);
+				    client_type);
 	  if (err_code != NO_ERROR)
 	    {
 	      rsql_Error_code = RSQL_ERR_SQL_ERROR;

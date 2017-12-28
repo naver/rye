@@ -30,7 +30,7 @@
 #include "connection_defs.h"
 #include "master_util.h"
 
-extern SOCKET css_Master_socket_fd[2];
+extern SOCKET css_Master_socket_fd;
 extern struct timeval *css_Master_timeout;
 extern int css_Master_timeout_value_in_seconds;
 extern int css_Master_timeout_value_in_microseconds;

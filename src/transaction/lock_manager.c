@@ -881,7 +881,7 @@ lock_alloc_resource (void)
   int count_try_alloc_entry;
   int count_try_alloc_table;
   LK_RES *res_ptr;
-  int rv;
+  UNUSED_VAR int rv;
 
   /* The caller is holding a hash mutex. The reason for holding
    * the hash mutex is to prevent other transactions from
@@ -989,7 +989,7 @@ try_alloc_table_again:
 static void
 lock_free_resource (UNUSED_ARG THREAD_ENTRY * thread_p, LK_RES * res_ptr)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
 #if defined(LK_DUMP)
   if (lk_Gl.dump_level >= 2)
@@ -1198,7 +1198,7 @@ lock_alloc_entry (void)
 static void
 lock_free_entry (LK_ENTRY * entry_ptr)
 {
-  int rv;
+  UNUSED_VAR int rv;
 
 #if defined(LK_DUMP)
   if (lk_Gl.dump_level >= 2)
@@ -1234,7 +1234,8 @@ lock_alloc_entry_block (void)
 {
   LK_ENTRY_BLOCK *entry_block;
   LK_ENTRY *entry_ptr = NULL;
-  int i, rv;
+  int i;
+  UNUSED_VAR int rv;
 
   /* The caller is holding a resource mutex */
 
@@ -1301,7 +1302,7 @@ lock_dealloc_resource (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
   unsigned int hash_index;
   LK_HASH *hash_anchor;
   LK_RES *prev, *curr;
-  int rv;
+  UNUSED_VAR int rv;
 
   /* The caller is holding a resource mutex, currently. */
   res_mutex_hold = true;
@@ -1444,7 +1445,7 @@ static void
 lock_insert_into_tran_hold_list (LK_ENTRY * entry_ptr)
 {
   LK_TRAN_LOCK *tran_lock;
-  int rv;
+  UNUSED_VAR int rv;
 
   /* The caller is holding a resource mutex */
 
@@ -1480,7 +1481,7 @@ static int
 lock_delete_from_tran_hold_list (LK_ENTRY * entry_ptr)
 {
   LK_TRAN_LOCK *tran_lock;
-  int rv;
+  UNUSED_VAR int rv;
   int error_code = NO_ERROR;
 
   /* The caller is holding a resource mutex */
@@ -1679,7 +1680,7 @@ lock_set_error_for_timeout (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr)
   LK_RES *res_ptr = NULL;
   int unit_size = LOG_USERNAME_MAX + MAXHOSTNAMELEN + PATH_MAX + 20 + 4;
   char *ptr;
-  int rv;
+  UNUSED_VAR int rv;
   bool free_mutex_flag = false;
   bool isdeadlock_timeout = false;
   int compat1, compat2;
@@ -2843,7 +2844,7 @@ lock_internal_perform_lock_object (THREAD_ENTRY * thread_p, int tran_index,
   LK_ENTRY *prev, *curr, *i;
   UNUSED_VAR bool lock_conversion = false;
   THREAD_ENTRY *thrd_entry;
-  int rv;
+  UNUSED_VAR int rv;
   int compat;
   DB_TYPE val_type;
   UINT64 perf_start;
@@ -3390,7 +3391,7 @@ lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
   LK_ENTRY *prev, *curr;
   LK_ENTRY *from_whom;
   LOCK mode;
-  int rv;
+  UNUSED_VAR int rv;
 
 #if defined(LK_DUMP)
   if (lk_Gl.dump_level >= 1)
@@ -5154,7 +5155,7 @@ lock_find_tran_hold_entry (UNUSED_ARG int tran_index,
   LK_HASH *hash_anchor;
   LK_RES *res_ptr;
   LK_ENTRY *entry_ptr;
-  int rv;
+  UNUSED_VAR int rv;
 
   hash_index = mht_get_hash_number (lk_Gl.obj_hash_size, val);
   hash_anchor = &lk_Gl.obj_hash_table[hash_index];
@@ -5208,7 +5209,7 @@ lock_has_xlock (UNUSED_ARG THREAD_ENTRY * thread_p)
 #else /* !SERVER_MODE */
   int tran_index;
   LK_TRAN_LOCK *tran_lock;
-  int rv;
+  UNUSED_VAR int rv;
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tran_lock = &lk_Gl.tran_lock_table[tran_index];
@@ -5239,7 +5240,7 @@ lock_get_current_lock (UNUSED_ARG THREAD_ENTRY * thread_p,
 #else
   LK_TRAN_LOCK *tran_lock;
   LK_ENTRY *lock_entry;
-  int rv;
+  UNUSED_VAR int rv;
   int tran_index;
   LOCK lock = NULL_LOCK;
 
@@ -5511,7 +5512,8 @@ lock_detect_local_deadlock (UNUSED_ARG THREAD_ENTRY * thread_p)
   LK_ENTRY *hi, *hj;
   LK_WFG_NODE *TWFG_node;
   LK_WFG_EDGE *TWFG_edge;
-  int i, rv;
+  int i;
+  UNUSED_VAR int rv;
   int compat1, compat2;
 #if defined (ENABLE_UNUSED_FUNCTION)
   FILE *log_fp;
@@ -5980,7 +5982,7 @@ xlock_dump (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG FILE * outfp)
   LK_HASH *hash_anchor;
   LK_RES *res_ptr;
   LK_RES *res_prev;
-  int rv;
+  UNUSED_VAR int rv;
   float lock_timeout_sec;
   char lock_timeout_string[64];
 
@@ -6155,7 +6157,7 @@ lock_clear_deadlock_victim (UNUSED_ARG int tran_index)
 #if !defined (SERVER_MODE)
   return;
 #else /* !SERVER_MODE */
-  int rv;
+  UNUSED_VAR int rv;
 
   /* communication with deadlock detector */
   if (lk_Gl.TWFG_node[tran_index].checked_by_deadlock_detector)
@@ -6452,7 +6454,8 @@ lock_event_log_blocking_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
 {
   LK_ENTRY *entry;
   LK_RES *res_ptr = NULL;
-  int compat1, compat2, rv, indent = 2;
+  int compat1, compat2, indent = 2;
+  UNUSED_VAR int rv;
 
   assert (csect_check_own (thread_p, CSECT_EVENT_LOG_FILE) == 1);
 
@@ -6574,7 +6577,7 @@ static void
 lock_event_set_tran_wait_entry (int tran_index, LK_ENTRY * entry)
 {
   LK_TRAN_LOCK *tran_lock;
-  int rv;
+  UNUSED_VAR int rv;
 
   tran_lock = &lk_Gl.tran_lock_table[tran_index];
   rv = pthread_mutex_lock (&tran_lock->hold_mutex);
@@ -6690,7 +6693,7 @@ lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
 	    {
 	      error = ER_LC_UNKNOWN_CLASSNAME;
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		      CT_SHARD_GID_SKEY_INFO_NAME);
+		      CT_LOG_APPLIER_NAME);
 
 	      return error;
 	    }

@@ -4936,9 +4936,8 @@ heap_find_slot_for_insert (THREAD_ENTRY * thread_p, const HFID * hfid,
   oid->volid = pgbuf_get_volume_id (pgptr);
   oid->pageid = pgbuf_get_page_id (pgptr);
 
-  /* find REC_DELETED_WILL_REUSE slot or add new slot */
-  /* slot_id == slot_num means add new slot */
-  slot_id = spage_find_free_slot (pgptr, NULL, slot_id);
+  /* add new slot */
+  slot_id = spage_find_free_slot (pgptr, NULL);
   oid->slotid = slot_id;
 
   if (slot_id == SP_ERROR)
@@ -5816,7 +5815,6 @@ try_again:
 	  goto error;
 	}
 
-
       /* Header of heap */
       vpid.volid = hfid->vfid.volid;
       vpid.pageid = hfid->hpgid;
@@ -6201,7 +6199,6 @@ try_again:
 
     case REC_NEWHOME:
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     default:
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HEAP_BAD_OBJECT_TYPE, 3,
 	      oid->volid, oid->pageid, oid->slotid);
@@ -6710,7 +6707,6 @@ try_again:
       break;
 
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     default:
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HEAP_BAD_OBJECT_TYPE, 3,
 	      oid->volid, oid->pageid, oid->slotid);
@@ -6862,7 +6858,6 @@ heap_flush (THREAD_ENTRY * thread_p, const OID * oid)
     case REC_HOME:
     case REC_NEWHOME:
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     default:
       break;
     }
@@ -7875,7 +7870,6 @@ try_again:
       break;
 
     case REC_MARKDELETED:
-    case REC_DELETED_WILL_REUSE:
     case REC_NEWHOME:
     default:
       scan = S_ERROR;
@@ -8376,7 +8370,6 @@ heap_next (THREAD_ENTRY * thread_p, const HFID * hfid, OID * class_oid,
 
 	case REC_NEWHOME:
 	case REC_MARKDELETED:
-	case REC_DELETED_WILL_REUSE:
 	default:
 	  /* This should never happen */
 	  scan = S_ERROR;
@@ -8961,7 +8954,6 @@ heap_get_capacity (THREAD_ENTRY * thread_p, const HFID * hfid,
 		       */
 		      sum_overhead += spage_get_record_length (pgptr, slotid);
 		      break;
-		    case REC_DELETED_WILL_REUSE:
 		    default:
 		      break;
 		    }
@@ -10656,7 +10648,9 @@ heap_attrinfo_transform_to_disk (THREAD_ENTRY * thread_p,
   OR_BUF orep, *buf;
   char *ptr_bound, *ptr_varvals;
   HEAP_ATTRVALUE *value;	/* Disk value Attr info for a particular attr */
+#if 0
   DB_VALUE temp_dbvalue;
+#endif
   PR_TYPE *pr_type;		/* Primitive type array function structure */
   unsigned int repid_bits;
   SCAN_CODE status;
@@ -10665,10 +10659,11 @@ heap_attrinfo_transform_to_disk (THREAD_ENTRY * thread_p,
   int expected_size, tmp;
   volatile int offset_size;
 
+  assert (attr_info != NULL);
   assert (shard_groupid != NULL_GROUPID);
 
   /* check to make sure the attr_info has been used, it should not be empty. */
-  if (attr_info->num_values == -1)
+  if (attr_info == NULL || attr_info->num_values == -1)
     {
       return S_ERROR;
     }
@@ -10825,12 +10820,14 @@ heap_attrinfo_transform_to_disk (THREAD_ENTRY * thread_p,
 		   *     advance to next attribute.
 		   *  2) and set the bound bit as unbound
 		   */
+#if 0
 		  db_value_domain_init (&temp_dbvalue,
 					value->last_attrepr->type,
 					value->last_attrepr->domain->
 					precision,
 					value->last_attrepr->domain->scale);
 		  dbvalue = &temp_dbvalue;
+#endif
 		  OR_CLEAR_BOUND_BIT (ptr_bound,
 				      value->last_attrepr->position);
 
@@ -12961,7 +12958,6 @@ heap_chkreloc_next (HEAP_CHKALL_RELOCOIDS * chk, PAGE_PTR pgptr)
 	  break;
 
 	case REC_MARKDELETED:
-	case REC_DELETED_WILL_REUSE:
 	default:
 	  break;
 	}
@@ -13261,7 +13257,7 @@ heap_rv_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int sp_success;
 
   slotid = rcv->offset;
-  recdes.type = *(INT16 *) (rcv->data);
+  recdes.type = *(const INT16 *) (rcv->data);
   recdes.data = (char *) (rcv->data) + sizeof (recdes.type) + sizeof (OID);
   recdes.length = rcv->length - sizeof (recdes.type) - sizeof (OID);
   recdes.area_size = recdes.length;
@@ -13364,7 +13360,7 @@ heap_rv_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   int sp_success;
 
   slotid = rcv->offset;
-  recdes.type = *(INT16 *) (rcv->data);
+  recdes.type = *(const INT16 *) (rcv->data);
   recdes.data = (char *) (rcv->data) + sizeof (recdes.type) + sizeof (OID);
   recdes.length = rcv->length - sizeof (recdes.type) - sizeof (OID);
   recdes.area_size = recdes.length;
@@ -13398,9 +13394,9 @@ heap_rv_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 int
 heap_rv_undo_create (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 {
-  HFID *hfid;
+  const HFID *hfid;
 
-  hfid = (HFID *) (rcv->data);
+  hfid = (const HFID *) (rcv->data);
 
   return xheap_destroy (thread_p, hfid);
 }
@@ -13645,16 +13641,16 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
   OR_CLASSREP **rep_all;
   int count, i;
   char *classname;
-  bool need_free_classname = false;
+  const char *print_classname;
 
   classname = heap_get_class_name (thread_p, class_oid);
   if (classname == NULL)
     {
-      classname = (char *) "unknown";
+      print_classname = "unknown";
     }
   else
     {
-      need_free_classname = true;
+      print_classname = classname;
     }
 
   heap_scancache_quick_start (&scan_cache);
@@ -13668,7 +13664,7 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
 	{
 	  fprintf (fp, "*** Dumping representations of class %s\n"
 		   "    Classname = %s, Class-OID = %d|%d|%d, #Repr = %d\n\n",
-		   classname, classname, (int) class_oid->volid,
+		   print_classname, print_classname, (int) class_oid->volid,
 		   class_oid->pageid, (int) class_oid->slotid, count);
 
 	  for (i = 0; i < count; i++)
@@ -13685,7 +13681,7 @@ heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp, OID * class_oid)
 
   heap_scancache_end (thread_p, &scan_cache);
 
-  if (need_free_classname)
+  if (classname != NULL)
     {
       free_and_init (classname);
     }

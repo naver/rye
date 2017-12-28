@@ -38,9 +38,10 @@
 #include "connection_support.h"
 #include "repl_common.h"
 #include "repl_log.h"
+#include "repl.h"
 #include "heartbeat.h"
 
-
+#if defined(CS_MODE) || defined(SERVER_MODE)
 static bool repl_Agent_need_restart = false;
 static bool repl_Agent_need_shutdown = false;
 
@@ -121,23 +122,33 @@ rp_need_shutdown (const char *file_name, int line)
 
 /*
  * cirp_new_repl_item_data()-
- *    return: repl_item
+ *    return: error code
  *
+ *    repl_item(out):
  *    lsa(in):
- *    target_lsa(in):
  */
-CIRP_REPL_ITEM *
-cirp_new_repl_item_data (const LOG_LSA * lsa, const LOG_LSA * target_lsa)
+int
+rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
 {
-  CIRP_REPL_ITEM *item;
-  RP_DATA_ITEM *data;
+  CIRP_REPL_ITEM *item = NULL;
+  RP_DATA_ITEM *data = NULL;
+  int error = NO_ERROR;
+
+  if (repl_item == NULL || lsa == NULL)
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid argument");
+      return error;
+    }
+  *repl_item = NULL;
 
   item = malloc (DB_SIZEOF (CIRP_REPL_ITEM));
   if (item == NULL)
     {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (CIRP_REPL_ITEM));
-      return NULL;
+	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      return error;
     }
 
   item->item_type = RP_ITEM_TYPE_DATA;
@@ -151,32 +162,46 @@ cirp_new_repl_item_data (const LOG_LSA * lsa, const LOG_LSA * target_lsa)
   DB_IDXKEY_MAKE_NULL (&data->key);
 
   LSA_COPY (&data->lsa, lsa);
-  LSA_COPY (&data->target_lsa, target_lsa);
+  LSA_SET_NULL (&data->target_lsa);
 
   data->recdes = NULL;
 
-  return item;
+  *repl_item = item;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
  * cirp_new_repl_item_ddl()-
- *    return: repl_item
+ *    return: error code
  *
+ *    repl_item(out):
  *    lsa(in):
  */
-CIRP_REPL_ITEM *
-cirp_new_repl_item_ddl (const LOG_LSA * lsa)
+int
+rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_DDL_ITEM *ddl;
+  int error = NO_ERROR;
 
+  if (repl_item == NULL || lsa == NULL)
+    {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid argument");
+      return error;
+    }
+  *repl_item = NULL;
 
   item = malloc (DB_SIZEOF (CIRP_REPL_ITEM));
   if (item == NULL)
     {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (CIRP_REPL_ITEM));
-      return NULL;
+	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      return error;
     }
 
   item->item_type = RP_ITEM_TYPE_DDL;
@@ -191,28 +216,42 @@ cirp_new_repl_item_ddl (const LOG_LSA * lsa)
   ddl->query = NULL;
   LSA_COPY (&ddl->lsa, lsa);
 
-  return item;
+  *repl_item = item;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
- * cirp_new_repl_catalog_item()-
- *    return: repl_item
+ * rp_new_repl_catalog_item()-
+ *    return: error code
  *
+ *    repl_item(out):
  *    lsa(in):
- *    target_lsa(in):
  */
-CIRP_REPL_ITEM *
-cirp_new_repl_catalog_item (const LOG_LSA * lsa)
+int
+rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_CATALOG_ITEM *catalog;
+  int error = NO_ERROR;
+
+  if (repl_item == NULL || lsa == NULL)
+    {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid argument");
+      return error;
+    }
+  *repl_item = NULL;
 
   item = malloc (DB_SIZEOF (CIRP_REPL_ITEM));
   if (item == NULL)
     {
+      error = ER_OUT_OF_VIRTUAL_MEMORY;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (CIRP_REPL_ITEM));
-      return NULL;
+	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      return error;
     }
 
   item->item_type = RP_ITEM_TYPE_CATALOG;
@@ -227,7 +266,10 @@ cirp_new_repl_catalog_item (const LOG_LSA * lsa)
 
   LSA_COPY (&catalog->lsa, lsa);
 
-  return item;
+  *repl_item = item;
+
+  assert (error == NO_ERROR);
+  return NO_ERROR;
 }
 
 /*
@@ -290,4 +332,53 @@ cirp_free_repl_item (CIRP_REPL_ITEM * item)
   free_and_init (item);
 
   return;
+}
+#endif /* CS_MODE || SERVER_MODE */
+
+/*
+ * rp_make_repl_host_key () -
+ *
+ *   return:
+ *   dbval(out):
+ *   node_info(in):
+ */
+int
+rp_make_repl_host_key (DB_VALUE * dbval, const PRM_NODE_INFO * node_info)
+{
+  char *host_key_str;
+
+  host_key_str = (char *) malloc (MAX_NODE_INFO_STR_LEN);
+  if (host_key_str == NULL)
+    {
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+	      ER_OUT_OF_VIRTUAL_MEMORY, 1, MAX_NODE_INFO_STR_LEN);
+      return ER_OUT_OF_VIRTUAL_MEMORY;
+    }
+  prm_node_info_to_str (host_key_str, MAX_NODE_INFO_STR_LEN, node_info);
+  db_make_string (dbval, host_key_str);
+  dbval->need_clear = true;
+
+  return NO_ERROR;
+}
+
+int
+rp_host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
+{
+  PRM_NODE_LIST node_list;
+
+  memset (&node_list, 0, sizeof (node_list));
+
+  if (host_str != NULL &&
+      prm_split_node_str (&node_list, host_str, false) == NO_ERROR &&
+      node_list.num_nodes >= 1)
+    {
+      *node_info = node_list.nodes[0];
+      return NO_ERROR;
+    }
+  else
+    {
+      PRM_NODE_INFO tmp_node_info = prm_get_null_node_info ();
+      *node_info = tmp_node_info;
+      return ER_FAILED;
+    }
 }

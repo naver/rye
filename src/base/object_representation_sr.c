@@ -226,17 +226,24 @@ orc_diskrep_from_record (UNUSED_ARG THREAD_ENTRY * thread_p, RECDES * record)
       if (or_att->is_fixed)
 	{
 	  att = att_fixed;
-	  att_fixed++;
 	}
       else
 	{
 	  att = att_variable;
-	  att_variable++;
 	}
 
       if (att == NULL)
 	{
 	  goto exit_on_error;
+	}
+
+      if (or_att->is_fixed)
+	{
+	  att_fixed++;
+	}
+      else
+	{
+	  att_variable++;
 	}
 
       att->type = or_att->type;
@@ -1301,7 +1308,8 @@ or_get_constraints (OR_INDEX ** or_index, int *n_constraints, RECDES * record,
   OR_BUF buf;
   char *start, *conset, *diskcon, *disk_con_att, *ptr;
   char *valptr, *valptr1, *valptr2;
-  int vallen, vallen1, vallen2;
+  int vallen, vallen1;
+  UNUSED_VAR int vallen2;
   char *btid_string;
   int num_cons, n_atts;
   int att_id;

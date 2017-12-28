@@ -53,6 +53,7 @@
 #include "repl_analyzer.h"
 #include "repl_applier.h"
 #include "repl_writer.h"
+#include "monitor.h"
 
 #include "fault_injection.h"
 
@@ -107,6 +108,7 @@ main (int argc, char *argv[])
   CIRP_THREAD_ENTRY analyzer_entry, health_entry;
   CIRP_THREAD_ENTRY *applier_entries = NULL;
   char prog_name[] = UTIL_REPL_NAME;
+  char monitor_name[ONE_K];
 
   REPL_ARGUMENT repl_arg;
   int option_index;
@@ -221,8 +223,15 @@ main (int argc, char *argv[])
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirpwr_initialize (repl_arg.db_name,
-			     repl_arg.log_path, repl_arg.mode);
+  monitor_make_name (monitor_name, repl_arg.db_name);
+  error = monitor_create_collector (monitor_name, num_applier + 3,
+				    MONITOR_TYPE_REPL);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  error = cirpwr_initialize (repl_arg.db_name, repl_arg.log_path);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -274,7 +283,7 @@ main (int argc, char *argv[])
     }
 
   error = cirp_init_thread_entry (&writer_entry, &repl_arg,
-				  CIRP_THREAD_WRITER, -1);
+				  CIRP_THREAD_COPIER, -1);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -367,6 +376,8 @@ main (int argc, char *argv[])
 
   cirpwr_finalize ();
 
+  monitor_final_collector ();
+
   assert (error == NO_ERROR);
   return EXIT_SUCCESS;
 
@@ -385,6 +396,8 @@ exit_on_error:
 
   cirpwr_finalize ();
 
+  monitor_final_collector ();
+
   return EXIT_FAILURE;
 }
 
@@ -399,8 +412,9 @@ cirp_init_repl_arg (REPL_ARGUMENT * repl_arg)
 {
   repl_arg->log_path = NULL;
   repl_arg->db_name = NULL;
-
-  repl_arg->mode = LOGWR_MODE_SYNC;
+  repl_arg->local_dbname = NULL;
+  repl_arg->peer_host_name = NULL;
+  repl_arg->port_id = -1;
 
   return;
 }
@@ -416,8 +430,6 @@ cirp_free_repl_arg (REPL_ARGUMENT * repl_arg)
 {
   RYE_FREE_MEM (repl_arg->log_path);
   RYE_FREE_MEM (repl_arg->db_name);
-
-  repl_arg->mode = -1;
 
   return;
 }
@@ -729,7 +741,7 @@ cirp_get_cci_connection (CCI_CONN * conn, const char *db_name)
     }
 
   snprintf (url, sizeof (url),
-	    "cci:rye://localhost:%d/%s/repl?error_on_server_restart=yes",
+	    "cci:rye://localhost:%d/%s/repl?error_on_server_restart=yes&connectionType=local",
 	    Repl_Info->broker_port, local_db_name);
 
   error = cci_connect (conn, url, "dba", Repl_Info->broker_key);
@@ -872,7 +884,6 @@ cirp_connect_to_master (const char *db_name, const char *log_path,
 			char **argv)
 {
   int error = NO_ERROR;
-  char executable_path[PATH_MAX];
 
   error = check_database_name (db_name);
   if (error != NO_ERROR)
@@ -884,10 +895,7 @@ cirp_connect_to_master (const char *db_name, const char *log_path,
   util_redirect_stdout_to_null ();
 #endif
 
-  /* save executable path */
-  (void) envvar_bindir_file (executable_path, PATH_MAX, UTIL_REPL_NAME);
-
-  hb_set_exec_path (executable_path);
+  hb_set_exec_path (UTIL_REPL_NAME);
   hb_set_argv (argv);
 
   /* initialize system parameters */
@@ -1140,7 +1148,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   INT64 current_time_in_msec;
   CIRP_WRITER_INFO *writer = NULL;
   LOG_HEADER *log_hdr = NULL;
-  char *host_ip = NULL;
+  const PRM_NODE_INFO *host_info = NULL;
 
   writer = &Repl_Info->writer_info;
 
@@ -1151,13 +1159,13 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
     }
   log_hdr = analyzer->buf_mgr.act_log.log_hdr;
 
-  host_ip = analyzer->buf_mgr.host_name;
+  host_info = &analyzer->buf_mgr.host_info;
 
   gettimeofday (&t, NULL);
   current_time_in_msec = timeval_to_msec (&t);
 
   /* get analyzer info */
-  error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_ip);
+  error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_info);
   if (error != NO_ERROR)
     {
       assert (error != CCI_ER_NO_MORE_DATA);
@@ -1193,7 +1201,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   analyzer->ct.start_time = current_time_in_msec;
 
   /* init writer info */
-  error = rpct_init_writer_info (&analyzer->conn, &writer->ct, host_ip,
+  error = rpct_init_writer_info (&analyzer->conn, &writer->ct, host_info,
 				 &log_hdr->eof_lsa, current_time_in_msec);
   if (error != NO_ERROR)
     {
@@ -1201,7 +1209,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
     }
 
   /* init applier info */
-  error = rpct_init_applier_info (&analyzer->conn, host_ip,
+  error = rpct_init_applier_info (&analyzer->conn, host_info,
 				  current_time_in_msec);
   if (error != NO_ERROR)
     {

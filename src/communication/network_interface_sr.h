@@ -193,18 +193,6 @@ extern void sqmgr_dump_query_plans (THREAD_ENTRY * thread_p, unsigned int rid,
 				    char *request, int reqlen);
 extern void sqmgr_get_query_info (THREAD_ENTRY * thread_p, unsigned int rid,
 				  char *request, int reqlen);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern void smnt_server_start_stats (THREAD_ENTRY * thread_p,
-				     unsigned int rid, char *request,
-				     int reqlen);
-extern void smnt_server_stop_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-				    char *request, int reqlen);
-#endif
-extern void smnt_server_copy_stats (THREAD_ENTRY * thread_p, unsigned int rid,
-				    char *request, int reqlen);
-extern void smnt_server_copy_global_stats (THREAD_ENTRY * thread_p,
-					   unsigned int rid, char *request,
-					   int reqlen);
 extern void sct_can_accept_new_repr (THREAD_ENTRY * thread_p,
 				     unsigned int rid, char *request,
 				     int reqlen);
@@ -212,8 +200,6 @@ extern int xs_receive_data_from_client (THREAD_ENTRY * thread_p,
 					char **area, int *datasize,
 					int timeout);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern void stest_performance (THREAD_ENTRY * thread_p, unsigned int rid,
-			       char *request, int reqlen);
 extern void slocator_assign_oid_batch (THREAD_ENTRY * thread_p,
 				       unsigned int rid, char *request,
 				       int reqlen);
@@ -241,14 +227,13 @@ extern void slogtb_dump_trantable (THREAD_ENTRY * thread_p, unsigned int rid,
 
 extern int xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
 					  char *logpb_area, int area_size,
+					  INT64 eof_pageid,
 					  INT64 first_pageid, int num_page,
 					  int file_status);
 extern int xlog_send_log_pages_to_migrator (THREAD_ENTRY * thread_p,
-					    char *logpg_area, int area_size,
-					    LOGWR_MODE mode);
+					    char *logpg_area, int area_size);
 extern int xlog_get_page_request_with_reply (THREAD_ENTRY * thread_p,
-					     LOG_PAGEID * fpageid_ptr,
-					     LOGWR_MODE * mode_ptr);
+					     LOG_PAGEID * fpageid_ptr);
 extern void sheap_get_class_num_objs_and_pages (THREAD_ENTRY * thread_p,
 						unsigned int rid,
 						char *request, int reqlen);
@@ -268,9 +253,8 @@ extern void sprm_server_dump_parameters (THREAD_ENTRY * thread_p,
 					 int reqlen);
 extern void srepl_set_info (THREAD_ENTRY * thread_p, unsigned int rid,
 			    char *request, int reqlen);
-extern void srepl_log_get_eof_lsa (THREAD_ENTRY * thread_p,
-				   unsigned int rid, char *request,
-				   int reqlen);
+extern void srepl_log_get_eof_lsa (THREAD_ENTRY * thread_p, unsigned int rid,
+				   char *request, int reqlen);
 extern void slogwr_get_log_pages (THREAD_ENTRY * thread_p, unsigned int rid,
 				  char *request, int reqlen);
 
@@ -288,10 +272,6 @@ extern void ssession_get_prepared_statement (THREAD_ENTRY * thread_p,
 extern void ssession_delete_prepared_statement (THREAD_ENTRY * thread_p,
 						unsigned int rid,
 						char *request, int reqlen);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern void slogin_user (THREAD_ENTRY * thread_p, unsigned int rid,
-			 char *request, int reqlen);
-#endif
 extern void sboot_get_locales_info (THREAD_ENTRY * thread_p, unsigned int rid,
 				    char *request, int reqlen);
 extern void slocator_lock_system_ddl_lock (THREAD_ENTRY * thread_p,

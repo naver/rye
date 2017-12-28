@@ -416,18 +416,6 @@ struct log_group_commit_info
 #define LOG_GROUP_COMMIT_INFO_INITIALIZER                     \
   {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER}
 
-typedef enum logwr_mode LOGWR_MODE;
-enum logwr_mode
-{
-  LOGWR_MODE_ASYNC = 1,
-  LOGWR_MODE_SEMISYNC,
-  LOGWR_MODE_SYNC
-};
-
-#define LOGWR_MODE_NAME(mode)                         \
-  ((mode) == LOGWR_MODE_SYNC ? "sync" :               \
-   (mode) == LOGWR_MODE_ASYNC ? "async" : "semisync")
-
 typedef enum logwr_status LOGWR_STATUS;
 enum logwr_status
 {
@@ -438,16 +426,22 @@ enum logwr_status
   LOGWR_STATUS_ERROR
 };
 
+#define LOGWR_STATUS_NAME(status)                         \
+  ((status) == LOGWR_STATUS_WAIT ? "wait" :               \
+   (status) == LOGWR_STATUS_FETCH ? "fetch" :             \
+   (status) == LOGWR_STATUS_DONE ? "done" :               \
+   (status) == LOGWR_STATUS_DELAY ? "delay" :             \
+   (status) == LOGWR_STATUS_ERROR ? "error" : "unknown")
+
+
+
 typedef struct logwr_entry LOGWR_ENTRY;
 struct logwr_entry
 {
   THREAD_ENTRY *thread_p;
   LOG_PAGEID fpageid;
-  LOGWR_MODE mode;
   LOGWR_STATUS status;
-  LOG_LSA eof_lsa;
   LOG_LSA last_sent_eof_lsa;
-  LOG_LSA tmp_last_sent_eof_lsa;
   INT64 start_copy_time;
   LOGWR_ENTRY *next;
 };
@@ -457,12 +451,7 @@ struct logwr_info
 {
   LOGWR_ENTRY *writer_list;
   pthread_mutex_t wr_list_mutex;
-  pthread_cond_t flush_start_cond;
-  pthread_mutex_t flush_start_mutex;
-  pthread_cond_t flush_wait_cond;
-  pthread_mutex_t flush_wait_mutex;
-  pthread_cond_t flush_end_cond;
-  pthread_mutex_t flush_end_mutex;
+  pthread_cond_t wr_list_cond;
   bool flush_completed;
 
   /* to measure the time spent by the last LWT delaying LFT */
@@ -474,9 +463,6 @@ struct logwr_info
 #define LOGWR_INFO_INITIALIZER                                 \
   {NULL,                                                       \
     PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER,       \
-    PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER,       \
-    PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER,       \
-    PTHREAD_MUTEX_INITIALIZER,                                 \
     false, false,                                              \
     LOG_CLIENTIDS_INITIALIZER,                                 \
     0                                                          \
@@ -1381,10 +1367,8 @@ extern LOG_PB_GLOBAL_DATA log_Pb;
 
 extern LOG_LOGGING_STAT log_Stat;
 
-#if defined(HAVE_ATOMIC_BUILTINS)
 /* Current time in seconds */
 extern UINT64 log_Clock_msec;
-#endif /* HAVE_ATOMIC_BUILTINS */
 
 /* Name of the database and logs */
 extern char log_Path[];
@@ -1413,8 +1397,7 @@ extern void logpb_free_without_mutex (LOG_PAGE * log_pgptr);
 extern LOG_PAGEID logpb_get_page_id (LOG_PAGE * log_pgptr);
 extern int logpb_print_hash_entry (FILE * outfp, const void *key,
 				   void *ent, void *ignore);
-extern int logpb_initialize_header (UNUSED_ARG THREAD_ENTRY * thread_p,
-				    struct log_header *loghdr,
+extern int logpb_initialize_header (struct log_header *loghdr,
 				    const char *prefix_logname,
 				    DKNPAGES npages, INT64 * db_creation);
 extern LOG_PAGE *logpb_create_header_page (THREAD_ENTRY * thread_p);
@@ -1429,11 +1412,6 @@ extern LOG_PAGE *logpb_fetch_page (THREAD_ENTRY * thread_p, LOG_PAGEID pageid,
 extern LOG_PAGE *logpb_copy_page_from_log_buffer (THREAD_ENTRY * thread_p,
 						  LOG_PAGEID pageid,
 						  LOG_PAGE * log_pgptr);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern LOG_PAGE *logpb_copy_page_from_file (THREAD_ENTRY * thread_p,
-					    LOG_PAGEID pageid,
-					    LOG_PAGE * log_pgptr);
-#endif
 extern LOG_PAGE *logpb_read_page_from_file (THREAD_ENTRY * thread_p,
 					    LOG_PAGEID pageid,
 					    LOG_PAGE * log_pgptr);

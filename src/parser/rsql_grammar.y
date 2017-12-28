@@ -6833,6 +6833,7 @@ opt_orderby_clause
 			int index_of_col;
 			char *n_str, *c_str;
 			bool is_col, is_alias;
+			int is_col_num, is_alias_num;
                         unsigned int save_custom;
 
                         save_custom = this_parser->custom_print;
@@ -6908,8 +6909,8 @@ opt_orderby_clause
 
 				    for (; order; order = order->next)
 				      {
-					is_alias = false;
-					is_col = false;
+                                        is_alias_num = 0;
+                                        is_col_num = 0;
 
 					n = order->info.sort_spec.expr;
 					if (n == NULL)
@@ -6931,17 +6932,28 @@ opt_orderby_clause
 					for (col = list, index_of_col = 1; col;
 					     col = col->next, index_of_col++)
 					  {
+					    is_alias = false;
+					    is_col = false;
+
 					    c_str = parser_print_tree (this_parser, col);
 					    if (c_str == NULL)
 					      {
 					        continue;
 					      }
 
-					    if ((col->alias_print
-						 && intl_identifier_casecmp (n_str, col->alias_print) == 0
-						 && (is_alias = true))
-						|| (intl_identifier_casecmp (n_str, c_str) == 0
-						    && (is_col = true)))
+					    if (col->alias_print
+						&& intl_identifier_casecmp (n_str, col->alias_print) == 0)
+                                              {
+                                                is_alias = true;
+                                                is_alias_num++;
+                                              }
+					    else if (intl_identifier_casecmp (n_str, c_str) == 0)
+					      {
+					        is_col = true;
+                                                is_col_num++;
+                                              }
+
+					    if (is_alias || is_col)
 					      {
 						if (found_star)
 						  {
@@ -6963,14 +6975,14 @@ opt_orderby_clause
 						parser_free_node (this_parser, order->info.sort_spec.expr);
 						order->info.sort_spec.expr = temp;
 
-						if (is_col == true && is_alias == true)
-						  {
-						    /* alias/col name ambiguity, raise error */
-						    PT_ERRORmf (this_parser, order, MSGCAT_SET_PARSER_SEMANTIC,
-								MSGCAT_SEMANTIC_AMBIGUOUS_COLUMN_IN_ORDERING,
-								n_str);
-						    break;
-						  }
+					        if (is_alias_num > 0 && is_col_num > 0)
+					          {
+					            /* alias/col name ambiguity, raise error */
+					            PT_ERRORmf (this_parser, order, MSGCAT_SET_PARSER_SEMANTIC,
+					  	        	MSGCAT_SEMANTIC_AMBIGUOUS_COLUMN_IN_ORDERING,
+						        	n_str);
+					            break;
+					          }
 					      }
 					  }
 				      }
