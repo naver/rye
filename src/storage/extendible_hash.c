@@ -5447,7 +5447,15 @@ ehash_dump_bucket (PAGE_PTR bucket_page_p, FILE * out_fp, DB_TYPE key_type)
     {
       fprintf (out_fp, "*   %2d", slot_id);
 
-      spage_get_record (bucket_page_p, slot_id, &recdes, PEEK);
+      recdes.data = NULL;
+      if (spage_get_record (bucket_page_p, slot_id, &recdes, PEEK) !=
+	  S_SUCCESS || recdes.data == NULL)
+	{
+//	  assert (false);
+	  fprintf (out_fp, "   ***CORRUPTED***   *\n");
+	  continue;
+	}
+
       bucket_record_p = (char *) recdes.data;
       bucket_record_p =
 	ehash_read_oid_from_record (bucket_record_p, &assoc_value);

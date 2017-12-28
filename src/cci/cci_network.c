@@ -1684,6 +1684,7 @@ static int
 net_send_stream (SOCKET sock_fd, const char *msg, int size)
 {
   int write_len;
+
   while (size > 0)
     {
       write_len = WRITE_TO_SOCKET (sock_fd, msg, size);

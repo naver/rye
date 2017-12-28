@@ -798,8 +798,7 @@ pt_new_query_result_descriptor (PARSER_CONTEXT * parser, PT_NODE * query)
 void
 pt_free_query_etc_area (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * query)
 {
-  if (query && query->etc
-      && pt_node_to_cmd_type (query) == RYE_STMT_SELECT)
+  if (query && query->etc && pt_node_to_stmt_type (query) == RYE_STMT_SELECT)
     {
       regu_free_listid ((QFILE_LIST_ID *) query->etc);
     }

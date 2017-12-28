@@ -464,7 +464,7 @@ ini_str_trim (const char *s)
       s++;
     }
   memset (result, 0, INI_BUFSIZ + 1);
-  strcpy (result, s);
+  STRNCPY (result, s, INI_BUFSIZ + 1);
   last = result + strlen (result);
   while (last > result)
     {

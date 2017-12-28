@@ -1121,6 +1121,8 @@ fileio_set_permission (const char *vol_label_p)
 void
 fileio_close (int vol_fd)
 {
+  assert (vol_fd != NULL_VOLDES);
+
   if (close (vol_fd) != 0)
     {
       er_set_with_oserror (ER_WARNING_SEVERITY, ARG_FILE_LINE,
@@ -1626,7 +1628,7 @@ fileio_unformat_and_rename (UNUSED_ARG THREAD_ENTRY * thread_p,
       /* if vol_label_p is a pointer of global vinfo->vlabel,
        * It can be reset in fileio_dismount
        */
-      strcpy (vlabel_p, vol_label_p);
+      STRNCPY (vlabel_p, vol_label_p, PATH_MAX);
       vol_label_p = vlabel_p;
       fileio_dismount (thread_p, vol_fd);
     }
@@ -1941,6 +1943,9 @@ fileio_dismount (THREAD_ENTRY * thread_p, int vol_fd)
 {
   const char *vlabel;
   FILEIO_LOCKF_TYPE lockf_type;
+
+  assert (vol_fd != NULL_VOLDES);
+
   /*
    * Make sure that all dirty pages of the volume are forced to disk. This
    * is needed since a close of a file and program exist, does not imply
@@ -4253,7 +4258,7 @@ fileio_cache (VOLID vol_id, const char *vol_label_p, int vol_fd,
 	      sys_vol_info_p->volid = vol_id;
 	      sys_vol_info_p->vdes = vol_fd;
 	      sys_vol_info_p->lockf_type = lockf_type;
-	      strncpy (sys_vol_info_p->vlabel, vol_label_p, PATH_MAX);
+	      STRNCPY (sys_vol_info_p->vlabel, vol_label_p, PATH_MAX);
 	      sys_vol_info_p->next = fileio_Sys_vol_info_header.anchor.next;
 	      fileio_Sys_vol_info_header.anchor.next = sys_vol_info_p;
 	      fileio_Sys_vol_info_header.num_vols++;

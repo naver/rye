@@ -3273,6 +3273,8 @@ hb_resource_job_confirm_start (HB_JOB_ARG * arg)
       return;
     }
 
+  hb_info_str[0] = '\0';	/* init */
+
   rv = pthread_mutex_lock (&hb_Resource->lock);
   proc = hb_return_proc_by_args (proc_arg->args);
   if (proc == NULL || proc->state == HB_PSTATE_DEREGISTERED)
@@ -3430,6 +3432,8 @@ hb_resource_job_sync_server_state (HB_JOB_ARG * arg)
   HB_PROC_ENTRY *proc;
   char hb_info_str[HB_INFO_STR_MAX];
   bool force = false;
+
+  hb_info_str[0] = '\0';	/* init */
 
   pthread_mutex_lock (&css_Master_socket_anchor_lock);
   pthread_mutex_lock (&hb_Resource->lock);

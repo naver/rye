@@ -1645,11 +1645,11 @@ match_password (const char *user, const char *database)
   if (IS_ENCODED_SHA2_512 (database))
     {
       /* DB: SHA2 */
-      strcpy (buf2, database);
+      STRNCPY (buf2, database, AU_MAX_PASSWORD_BUF + 4);
       if (IS_ENCODED_ANY (user))
 	{
 	  /* USER:SHA2 */
-	  strcpy (buf1, Au_user_password);
+	  STRNCPY (buf1, Au_user_password, AU_MAX_PASSWORD_BUF + 4);
 	}
       else
 	{

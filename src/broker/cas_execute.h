@@ -72,7 +72,7 @@ extern int ux_schema_info (int schema_type, char *table_name,
 			   char *column_name, T_NET_BUF * net_buf,
 			   unsigned int query_seq_num);
 
-extern bool ux_has_stmt_result_set (char stmt_type);
+extern bool ux_has_stmt_result_set (const RYE_STMT_TYPE stmt_type);
 
 /*****************************
   cas_error.c function list

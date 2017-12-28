@@ -3189,10 +3189,6 @@ qexec_gby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes, void *arg)
 	      dummy.tpl = info->gby_rec.data;
 	      status =
 		qfile_get_tuple (thread_p, page, data, &dummy, list_idp);
-	      if (status != NO_ERROR)
-		{
-		  goto exit_on_error;
-		}
 
 	      if (dummy.tpl != info->gby_rec.data)
 		{
@@ -3203,6 +3199,11 @@ qexec_gby_put_next (THREAD_ENTRY * thread_p, const RECDES * recdes, void *arg)
 		   */
 		  info->gby_rec.area_size = dummy.size;
 		  info->gby_rec.data = dummy.tpl;
+		}
+
+	      if (status != NO_ERROR)
+		{
+		  goto exit_on_error;
 		}
 
 	      data = info->gby_rec.data;

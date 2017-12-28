@@ -413,7 +413,7 @@ extern DB_MARKER *db_marker_next (DB_MARKER * marker);
 extern DB_DOMAIN *db_marker_domain (DB_MARKER * marker);
 #endif
 
-extern int db_get_statement_type (DB_SESSION * session);
+extern RYE_STMT_TYPE db_get_statement_type (DB_SESSION * session);
 
 extern int db_push_values (DB_SESSION * session, int count,
 			   DB_VALUE * in_values);

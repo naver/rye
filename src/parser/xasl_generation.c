@@ -12521,6 +12521,8 @@ pt_to_update_xasl (DB_SESSION * session, PT_NODE * statement,
     {
       assert (false);		/* is impossible */
       error = ER_FAILED;
+      pt_restore_assignment_links (statement->info.update.assignment, links,
+				   -1);
       goto cleanup;
     }
 

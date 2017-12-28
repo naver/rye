@@ -2243,7 +2243,7 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
   struct timespec wakeup_time;
   int wakeup_interval = 100;
   CSS_NET_PACKET *recv_packet;
-  RECV_Q_NODE *node;
+  RECV_Q_NODE *node = NULL;
 
   error = 0;
 
@@ -2289,6 +2289,8 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
       return error;
     }
 
+  assert (node != NULL);
+
   ptr = or_unpack_int (replybuf, &server_request_num);
   server_request = (QUERY_SERVER_REQUEST) server_request_num;
 
@@ -2316,13 +2318,11 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
 	    css_net_packet_free (recv_packet);
-	    if (node != NULL)
-	      {
-		pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-		Rye_queue_enqueue (cirpwr_Gl.free_list, node);
-		node = NULL;
-		pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-	      }
+	    assert (node != NULL);
+	    pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+	    Rye_queue_enqueue (cirpwr_Gl.free_list, node);
+	    node = NULL;
+	    pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
 	    return error;
 	  }

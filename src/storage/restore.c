@@ -140,7 +140,7 @@ bk_initialize_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
 {
   char orig_name[PATH_MAX];
 
-  strcpy (orig_name, backup_source_p);
+  STRNCPY (orig_name, backup_source_p, PATH_MAX);
   /* First, make sure the volume given exists and we can access it. */
   while (!fileio_is_volume_exist (backup_source_p))
     {
@@ -474,7 +474,7 @@ bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
 
 	  if (search_loop_count == 0)
 	    {
-	      strcpy (orig_name, session_p->bkup.vlabel);
+	      STRNCPY (orig_name, session_p->bkup.vlabel, PATH_MAX);
 	    }
 
 	  session_p->bkup.vdes =
