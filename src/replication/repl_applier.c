@@ -654,6 +654,12 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
 
       current_log_record = LOG_GET_LOG_RECORD_HEADER (current_log_page,
 						      &current_lsa);
+      if (!CIRP_IS_VALID_LOG_RECORD (buf_mgr, current_log_record))
+	{
+	  assert (false);
+	  REPL_SET_GENERIC_ERROR (error, "Invalid log record");
+	  GOTO_EXIT_ON_ERROR;
+	}
       if (current_log_record->trid != log_record->trid
 	  || current_log_record->type == LOG_DUMMY_OVF_RECORD)
 	{
@@ -820,8 +826,10 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
 	  return error;
 	}
       tmp_lrec = LOG_GET_LOG_RECORD_HEADER (pg, &lsa);
-      if (tmp_lrec->trid != lrec->trid)
+      if (tmp_lrec->trid != lrec->trid
+	  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, tmp_lrec))
 	{
+	  assert (false);
 	  error = ER_LOG_PAGE_CORRUPTED;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, lsa.pageid);
 	}
@@ -870,6 +878,12 @@ cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa, LOG_PAGE * org_pgptr,
 
   pg = org_pgptr;
   lrec = LOG_GET_LOG_RECORD_HEADER (pg, lsa);
+  if (!CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
+    {
+      assert (false);
+      REPL_SET_GENERIC_ERROR (error, "Invalid log record");
+      return error;
+    }
 
   error = cirp_get_log_data (buf_mgr, lrec, lsa, pg, 0, rcvindex,
 			     &logs, &rec_type, &recdes->data,
