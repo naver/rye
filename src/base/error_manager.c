@@ -2080,7 +2080,11 @@ _er_log_debug (const char *file_name, const int line_no, const char *fmt, ...)
 
   va_start (ap, fmt);
 
-  out = (er_Msglog_fh != NULL) ? er_Msglog_fh : stderr;
+  out = er_Msglog_fh;
+  if (out == NULL)
+    {
+      out = stderr;
+    }
 
   if (er_Msg != NULL)
     {

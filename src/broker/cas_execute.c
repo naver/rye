@@ -3691,8 +3691,7 @@ net_arg_get_repl_item (CIRP_REPL_ITEM * item, int arg_idx, void **obj_argv)
       catalog->copyarea_op = tmp_int;
       net_arg_get_recdes (&catalog->recdes, obj_argv[arg_idx++]);
       assert (catalog->recdes != NULL);
-      assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_WRITER_UPDATE
-	      || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+      assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	      || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE);
 
       LSA_SET_NULL (&catalog->lsa);

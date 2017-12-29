@@ -224,8 +224,9 @@ main (int argc, char *argv[])
     }
 
   monitor_make_name (monitor_name, repl_arg.db_name);
-  error = monitor_create_collector (monitor_name, num_applier + 3,
-				    MONITOR_TYPE_REPL);
+  error = monitor_create_collector (monitor_name,
+				    MNT_RP_APPLIER_BASE_ID
+				    + num_applier, MONITOR_TYPE_REPL);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1144,8 +1145,6 @@ int
 cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
 {
   int error = NO_ERROR;
-  struct timeval t;
-  INT64 current_time_in_msec;
   CIRP_WRITER_INFO *writer = NULL;
   LOG_HEADER *log_hdr = NULL;
   const PRM_NODE_INFO *host_info = NULL;
@@ -1160,9 +1159,6 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   log_hdr = analyzer->buf_mgr.act_log.log_hdr;
 
   host_info = &analyzer->buf_mgr.host_info;
-
-  gettimeofday (&t, NULL);
-  current_time_in_msec = timeval_to_msec (&t);
 
   /* get analyzer info */
   error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_info);
@@ -1198,19 +1194,9 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
       REPL_SET_GENERIC_ERROR (error, "db creation time is different.");
       return error;
     }
-  analyzer->ct.start_time = current_time_in_msec;
-
-  /* init writer info */
-  error = rpct_init_writer_info (&analyzer->conn, &writer->ct, host_info,
-				 &log_hdr->eof_lsa, current_time_in_msec);
-  if (error != NO_ERROR)
-    {
-      return error;
-    }
 
   /* init applier info */
-  error = rpct_init_applier_info (&analyzer->conn, host_info,
-				  current_time_in_msec);
+  error = rpct_init_applier_info (&analyzer->conn, host_info);
   if (error != NO_ERROR)
     {
       return error;

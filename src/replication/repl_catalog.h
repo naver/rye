@@ -43,26 +43,8 @@ extern int rpct_analyzer_to_catalog_item (RP_CATALOG_ITEM * catalog,
 					  RECDES * recdes,
 					  CIRP_CT_LOG_ANALYZER * ct_data);
 
-extern int rpct_init_writer_info (CCI_CONN * conn,
-				  CIRP_CT_LOG_WRITER * ct_data,
-				  const PRM_NODE_INFO * host_info,
-				  const LOG_LSA * eof_lsa,
-				  INT64 current_time_in_msec);
-extern int rpct_get_log_writer (CIRP_CT_LOG_WRITER * log_writer,
-				CCI_CONN * conn,
-				const PRM_NODE_INFO * host_info);
-extern int rpct_insert_log_writer (CCI_CONN * conn,
-				   CIRP_CT_LOG_WRITER * ct_data);
-extern int rpct_update_log_writer (CCI_CONN * conn,
-				   CIRP_CT_LOG_WRITER * ct_data);
-extern int rpct_writer_to_catalog_item (RP_CATALOG_ITEM * catalog,
-					RECDES * recdes,
-					CIRP_CT_LOG_WRITER * ct_data);
-
-
 extern int rpct_init_applier_info (CCI_CONN * conn,
-				   const PRM_NODE_INFO * host_ip,
-				   INT64 current_time_in_msec);
+				   const PRM_NODE_INFO * host_ip);
 extern int rpct_insert_log_applier (CCI_CONN * conn,
 				    CIRP_CT_LOG_APPLIER * ct_data);
 extern int rpct_update_log_applier (CCI_CONN * conn,

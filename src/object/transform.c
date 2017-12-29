@@ -431,47 +431,14 @@ CATCLS_CONSTRAINT cons_IndexStats[] = {
    }
 };
 
-CATCLS_COLUMN columns_LogWriter[] = {
-  {"host_ip", "varchar(20)"}
-  ,
-  {"last_received_pageid", "bigint"}
-  ,
-  {"last_received_time", "bigint"}
-  ,
-  {"eof_lsa", "bigint"}
-};
-CATCLS_CONSTRAINT cons_LogWriter[] = {
-  {
-   DB_CONSTRAINT_PRIMARY_KEY, NULL, {"host_ip", NULL}
-   }
-  ,
-  {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"last_received_pageid", NULL}
-   }
-  ,
-  {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"last_received_time", NULL}
-   }
-  ,
-  {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"eof_lsa", NULL}
-   }
-};
-
 CATCLS_COLUMN columns_LogAnalyzer[] = {
   {"host_ip", "varchar(20)"}
   ,
-  {"current_lsa", "bigint"}
-  ,
   {"required_lsa", "bigint"}
-  ,
-  {"start_time", "bigint"}
   ,
   {"source_applied_time", "bigint"}
   ,
   {"creation_time", "bigint"}
-  ,
-  {"queue_full", "bigint"}
 };
 CATCLS_CONSTRAINT cons_LogAnalyzer[] = {
   {
@@ -479,15 +446,7 @@ CATCLS_CONSTRAINT cons_LogAnalyzer[] = {
    }
   ,
   {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"current_lsa", NULL}
-   }
-  ,
-  {
    DB_CONSTRAINT_NOT_NULL, NULL, {"required_lsa", NULL}
-   }
-  ,
-  {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"start_time", NULL}
    }
   ,
   {
@@ -497,10 +456,6 @@ CATCLS_CONSTRAINT cons_LogAnalyzer[] = {
   {
    DB_CONSTRAINT_NOT_NULL, NULL, {"creation_time", NULL}
    }
-  ,
-  {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"queue_full", NULL}
-   }
 };
 
 CATCLS_COLUMN columns_LogApplier[] = {
@@ -509,22 +464,6 @@ CATCLS_COLUMN columns_LogApplier[] = {
   {"id", "int"}
   ,
   {"committed_lsa", "bigint"}
-  ,
-  {"master_last_commit_time", "bigint"}
-  ,
-  {"repl_delay", "bigint"}
-  ,
-  {"insert_count", "bigint"}
-  ,
-  {"update_count", "bigint"}
-  ,
-  {"delete_count", "bigint"}
-  ,
-  {"schema_count", "bigint"}
-  ,
-  {"commit_count", "bigint"}
-  ,
-  {"fail_count", "bigint"}
 };
 CATCLS_CONSTRAINT cons_LogApplier[] = {
   {
@@ -533,14 +472,6 @@ CATCLS_CONSTRAINT cons_LogApplier[] = {
   ,
   {
    DB_CONSTRAINT_NOT_NULL, NULL, {"committed_lsa", NULL}
-   }
-  ,
-  {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"master_last_commit_time", NULL}
-   }
-  ,
-  {
-   DB_CONSTRAINT_NOT_NULL, NULL, {"repl_delay", NULL}
    }
 };
 
@@ -576,14 +507,6 @@ CATCLS_TABLE table_IndexStats = {
   columns_IndexStats,
   (sizeof (cons_IndexStats) / sizeof (cons_IndexStats[0])),
   cons_IndexStats
-};
-
-CATCLS_TABLE table_LogWriter = {
-  CT_LOG_WRITER_NAME,
-  (sizeof (columns_LogWriter) / sizeof (columns_LogWriter[0])),
-  columns_LogWriter,
-  (sizeof (cons_LogWriter) / sizeof (cons_LogWriter[0])),
-  cons_LogWriter
 };
 
 CATCLS_TABLE table_LogAnalyzer = {
