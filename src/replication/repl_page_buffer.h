@@ -148,9 +148,11 @@ struct _cirp_log_buffer_msg
       || ((lsa)->pageid >= 0 && (lsa)->offset >= 0 && (lsa)->offset < CIRP_LOGAREA_SIZE(mgr)) )
 
 #define CIRP_IS_VALID_LOG_RECORD(mgr, lrec)                             \
-    (CIRP_IS_VALID_LSA((mgr), &((lrec)->prev_tranlsa))                  \
+    (lrec->type != LOG_END_OF_LOG                                       \
+      && CIRP_IS_VALID_LSA((mgr), &((lrec)->prev_tranlsa))              \
       && CIRP_IS_VALID_LSA((mgr), &((lrec)->back_lsa))                  \
       && CIRP_IS_VALID_LSA((mgr), &((lrec)->forw_lsa))                  \
+      && !LSA_ISNULL(&((lrec)->forw_lsa))                               \
       && ((lrec)->trid == NULL_TRANID || (lrec)->trid >= 0)             \
       && ((lrec)->type > LOG_SMALLER_LOGREC_TYPE && (lrec)->type < LOG_LARGER_LOGREC_TYPE))
 

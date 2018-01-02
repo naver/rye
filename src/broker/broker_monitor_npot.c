@@ -619,15 +619,20 @@ create_db_stats_info_for_repl (MONITOR_INFO * monitor)
 	monitor_stats_is_collecting_time (monitor, i);
     }
 
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_LAST_RECEIVED_PAGEID],
-		     "ha", "last_received_pageid");
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_LAST_FLUSHED_PAGEID],
-		     "ha", "last_flushed_pageid");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_EOF_PAGEID], "ha", "eof_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_GAP], "ha", "received_gab");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_PAGEID],
+		     "ha", "received_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_GAP], "ha", "flushed_gab");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_PAGEID],
+		     "ha", "flushed_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_CURRENT_GAP], "ha", "current_gap");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_CURRENT_PAGEID],
 		     "ha", "current_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_REQUIRED_GAP], "ha", "required_gap");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_REQUIRED_PAGEID],
 		     "ha", "required_pageid");
+
   SET_DB_STATS_INFO (&db_stats[MNT_RP_DELAY], "ha", "delay");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_QUEUE_FULL], "ha", "queue_full");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_INSERT], "ha", "insert");
