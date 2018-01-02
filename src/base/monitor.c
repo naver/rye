@@ -947,19 +947,29 @@ monitor_create_repl_stats_meta (void)
 
   info_p = meta_p->info;
 
-  init_monitor_stats_info (info_p, MNT_RP_LAST_RECEIVED_PAGEID,
-			   "ha_last_received_pageid",
-			   MONITOR_STATS_VALUE_GAUGE);
-
-  init_monitor_stats_info (info_p, MNT_RP_LAST_FLUSHED_PAGEID,
-			   "ha_last_flushed_pageid",
-			   MONITOR_STATS_VALUE_GAUGE);
-
   init_monitor_stats_info (info_p, MNT_RP_EOF_PAGEID,
 			   "ha_eof_pageid", MONITOR_STATS_VALUE_GAUGE);
 
+  init_monitor_stats_info (info_p, MNT_RP_RECEIVED_GAP,
+			   "ha_received_gap", MONITOR_STATS_VALUE_GAUGE);
+
+  init_monitor_stats_info (info_p, MNT_RP_RECEIVED_PAGEID,
+			   "ha_received_pageid", MONITOR_STATS_VALUE_GAUGE);
+
+  init_monitor_stats_info (info_p, MNT_RP_FLUSHED_GAP,
+			   "ha_flushed_gap", MONITOR_STATS_VALUE_GAUGE);
+
+  init_monitor_stats_info (info_p, MNT_RP_FLUSHED_PAGEID,
+			   "ha_flushed_pageid", MONITOR_STATS_VALUE_GAUGE);
+
+  init_monitor_stats_info (info_p, MNT_RP_CURRENT_GAP,
+			   "ha_current_gap", MONITOR_STATS_VALUE_GAUGE);
+
   init_monitor_stats_info (info_p, MNT_RP_CURRENT_PAGEID,
 			   "ha_current_pageid", MONITOR_STATS_VALUE_GAUGE);
+
+  init_monitor_stats_info (info_p, MNT_RP_REQUIRED_GAP,
+			   "ha_required_gap", MONITOR_STATS_VALUE_GAUGE);
 
   init_monitor_stats_info (info_p, MNT_RP_REQUIRED_PAGEID,
 			   "ha_required_pageid", MONITOR_STATS_VALUE_GAUGE);
@@ -1724,7 +1734,7 @@ monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
 		    void (*calc_func) (MONITOR_STATS * stats, int num_stats))
 {
   MONITOR_STATS *diff_stats = NULL;
-  char stat_buf[4 * ONE_K];
+  char stat_buf[16 * ONE_K];
   int num_stats;
 
   stat_buf[0] = '\0';

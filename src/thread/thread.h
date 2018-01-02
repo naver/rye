@@ -379,7 +379,9 @@ extern int thread_suspend_with_other_mutex (THREAD_ENTRY * p,
 					    int timeout, struct timespec *to,
 					    int suspended_reason);
 extern void thread_print_entry_info (THREAD_ENTRY * p);
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern void thread_dump_threads (void);
+#endif
 extern bool thread_get_check_interrupt (THREAD_ENTRY * thread_p);
 extern bool thread_get_check_groupid (THREAD_ENTRY * thread_p);
 extern bool thread_get_check_page_validation (THREAD_ENTRY * thread_p);
