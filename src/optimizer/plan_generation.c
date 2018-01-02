@@ -474,7 +474,7 @@ static XASL_NODE *
 add_sort_spec (QO_ENV * env, XASL_NODE * xasl, QO_PLAN * plan,
 	       DB_VALUE * ordby_val, UNUSED_ARG bool instnum_flag)
 {
-  QO_PLAN *subplan;
+  UNUSED_VAR QO_PLAN *subplan;
 
   subplan = plan->plan_un.sort.subplan;
 

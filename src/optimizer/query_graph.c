@@ -962,7 +962,7 @@ build_graph_for_entity (QO_ENV * env, PT_NODE * entity)
   PARSER_CONTEXT *parser;
   QO_NODE *node = NULL;
   PT_NODE *name, *attr, *attr_list;
-  QO_SEGMENT *seg;
+  UNUSED_VAR QO_SEGMENT *seg;
 
   parser = QO_ENV_PARSER (env);
 

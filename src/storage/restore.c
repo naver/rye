@@ -1559,14 +1559,12 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
 
   error_code = bk_get_backup_volume (thread_p, db_fullname,
 				     r_args->backuppath, from_volbackup);
-  if (error_code == ER_LOG_CANNOT_ACCESS_BACKUP)
+  if (error_code != NO_ERROR)
     {
-      error_expected = true;
-      LOG_CS_EXIT ();
-      goto error;
-    }
-  else if (error_code != NO_ERROR)
-    {
+      if (error_code == ER_LOG_CANNOT_ACCESS_BACKUP)
+	{
+	  error_expected = true;
+	}
       LOG_CS_EXIT ();
       goto error;
     }

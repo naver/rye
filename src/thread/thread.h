@@ -332,7 +332,9 @@ extern int thread_num_con_handler_threads (void);
 extern int thread_max_workers_by_queue_type (JOB_QUEUE_TYPE q_type);
 extern int thread_max_backup_readers (void);
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern int thread_get_client_id (THREAD_ENTRY * thread_p);
+#endif
 extern unsigned int thread_get_comm_request_id (THREAD_ENTRY * thread_p);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void thread_set_comm_request_id (unsigned int rid);
@@ -377,7 +379,9 @@ extern int thread_suspend_with_other_mutex (THREAD_ENTRY * p,
 					    int timeout, struct timespec *to,
 					    int suspended_reason);
 extern void thread_print_entry_info (THREAD_ENTRY * p);
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern void thread_dump_threads (void);
+#endif
 extern bool thread_get_check_interrupt (THREAD_ENTRY * thread_p);
 extern bool thread_get_check_groupid (THREAD_ENTRY * thread_p);
 extern bool thread_get_check_page_validation (THREAD_ENTRY * thread_p);
