@@ -389,6 +389,12 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
   monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID,
 		       analyzer->ct.required_lsa.pageid);
 
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_REQUIRED_GAP,
+		       monitor_get_stats (MNT_RP_ANALYZER_ID,
+					  MNT_RP_CURRENT_PAGEID)
+		       - monitor_get_stats (MNT_RP_ANALYZER_ID,
+					    MNT_RP_REQUIRED_PAGEID));
+
   er_log_debug (ARG_FILE_LINE,
 		"update progress:lowest_tran_start_lsa:%lld,%d, "
 		"current_lsa:%lld,%d, "
@@ -2147,6 +2153,12 @@ analyzer_main (void *arg)
 	  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID,
 			       final_lsa.pageid);
 
+	  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_CURRENT_GAP,
+			       monitor_get_stats (MNT_RP_COPIER_ID,
+						  MNT_RP_FLUSHED_PAGEID)
+			       - monitor_get_stats (MNT_RP_ANALYZER_ID,
+						    MNT_RP_CURRENT_PAGEID));
+
 	  /* a loop for each page */
 	  pg_ptr = &(log_buf->log_page);
 	  while (final_lsa.pageid == log_buf->pageid
@@ -2179,24 +2191,15 @@ analyzer_main (void *arg)
 		      <= log_hdr->ha_info.last_flushed_pageid);
 
 	      lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
-	      if (lrec->type == LOG_END_OF_LOG)
-		{
-		  analyzer->is_end_of_record = true;
-		  cirp_logpb_decache_range (buf_mgr, final_lsa.pageid,
-					    LOGPAGEID_MAX);
-		  break;
-		}
 	      if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
-		  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec)
-		  || LSA_ISNULL (&lrec->forw_lsa)
-		  || LSA_GT (&final_lsa, &lrec->forw_lsa))
+		  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
 		{
-		  assert (false);
 		  cirp_logpb_release (buf_mgr, log_buf->pageid);
 		  log_buf = NULL;
 
+		  /* may be log archived */
 		  error = ER_LOG_PAGE_CORRUPTED;
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+		  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
 			  error, 1, final_lsa.pageid);
 
 		  GOTO_EXIT_ON_ERROR;
