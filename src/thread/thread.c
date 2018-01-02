@@ -1910,6 +1910,7 @@ thread_sleep (double milliseconds)
   select (0, NULL, NULL, NULL, &to);
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * thread_get_client_id() - returns the unique client identifier
  *   return: returns the unique client identifier, on error, returns -1
@@ -1938,6 +1939,7 @@ thread_get_client_id (THREAD_ENTRY * thread_p)
       return NULL_CLIENT_ID;
     }
 }
+#endif
 
 /*
  * thread_get_comm_request_id() - returns the request id that started the current thread

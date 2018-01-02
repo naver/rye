@@ -332,7 +332,9 @@ extern int thread_num_con_handler_threads (void);
 extern int thread_max_workers_by_queue_type (JOB_QUEUE_TYPE q_type);
 extern int thread_max_backup_readers (void);
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern int thread_get_client_id (THREAD_ENTRY * thread_p);
+#endif
 extern unsigned int thread_get_comm_request_id (THREAD_ENTRY * thread_p);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void thread_set_comm_request_id (unsigned int rid);
