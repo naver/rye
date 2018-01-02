@@ -5069,10 +5069,6 @@ xlocator_find_lockhint_class_oids (THREAD_ENTRY * thread_p, int num_classes,
 		}
 	      else if (entry->action != LC_CLASSNAME_EXIST)
 		{
-#if 1				/* TODO - trace */
-		  assert (entry->action == LC_CLASSNAME_RESERVED);
-#endif
-
 		  /*
 		   * Do not know the fate of this entry until the transaction is
 		   * committed or aborted. Get the lock and retry later on.

@@ -1208,7 +1208,10 @@ try_again:
 	    }
 #endif /* NDEBUG */
 
-	  mnt_stats_counter (thread_p, MNT_STATS_SORT_IO_PAGES, 1);
+	  if (thread_get_sort_stats_active (thread_p))
+	    {
+	      mnt_stats_counter (thread_p, MNT_STATS_SORT_IO_PAGES, 1);
+	    }
 	}
       else
 	{
@@ -1235,7 +1238,10 @@ try_again:
 	      (void) fileio_initialize_res (thread_p, prv_p);
 	    }
 
-	  mnt_stats_counter (thread_p, MNT_STATS_SORT_DATA_PAGES, 1);
+	  if (thread_get_sort_stats_active (thread_p))
+	    {
+	      mnt_stats_counter (thread_p, MNT_STATS_SORT_DATA_PAGES, 1);
+	    }
 	}
       buf_lock_acquired = true;
     }
@@ -2837,7 +2843,10 @@ pgbuf_copy_to_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       pgptr = (PAGE_PTR) (&(bufptr->iopage_buffer->iopage.page[0]));
       memcpy (area, (char *) pgptr + start_offset, length);
 
-      mnt_stats_counter (thread_p, MNT_STATS_SORT_DATA_PAGES, 1);
+      if (thread_get_sort_stats_active (thread_p))
+	{
+	  mnt_stats_counter (thread_p, MNT_STATS_SORT_DATA_PAGES, 1);
+	}
 
       /* release BCB_mutex */
       pthread_mutex_unlock (&bufptr->BCB_mutex);

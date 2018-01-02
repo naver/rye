@@ -3466,6 +3466,8 @@ fetch_val_list (THREAD_ENTRY * thread_p, REGU_VARIABLE_LIST regu_list,
 	    }
 	  else
 	    {
+	      assert (false);	/* is impossible */
+
 	      if (pr_is_set_type
 		  (DB_VALUE_DOMAIN_TYPE (regup->value.vfetch_to)))
 		{
