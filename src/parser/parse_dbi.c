@@ -1663,6 +1663,7 @@ pt_db_to_type_enum (const DB_TYPE t)
       /*  ALL TYPES MUST GET HANDLED HERE! */
       assert (false);
     }
+
   return pt_type;
 }
 
@@ -1749,8 +1750,6 @@ pt_node_to_stmt_type (const PT_NODE * node)
     default:
       break;
     }
-
-  assert (false);
 
   return RYE_STMT_UNKNOWN;
 }
