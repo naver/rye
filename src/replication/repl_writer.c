@@ -1496,7 +1496,7 @@ cirpwr_archive_active_log (void)
 
   bg_arv_info = &cirpwr_Gl.bg_archive_info;
 
-  if (bg_arv_info->start_page_id >= cirpwr_Gl.last_arv_lpageid)
+  if (bg_arv_info->start_page_id > cirpwr_Gl.last_arv_lpageid)
     {
       /* archive file already created */
       assert ((cirpwr_Gl.ha_info.nxarv_pageid
