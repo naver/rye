@@ -289,8 +289,10 @@ extern FILEIO_LOCKF_TYPE fileio_unlock_la_dbname (int *lockf_vdes,
 						  char *db_name,
 						  bool clear_owner);
 #endif
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern int fileio_symlink (const char *src, const char *dest, int overwrite);
 extern int fileio_set_permission (const char *vlabel);
+#endif
 
 /* flush control related */
 extern int fileio_flush_control_initialize (void);

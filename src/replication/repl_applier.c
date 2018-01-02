@@ -656,7 +656,6 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
 						      &current_lsa);
       if (!CIRP_IS_VALID_LOG_RECORD (buf_mgr, current_log_record))
 	{
-	  assert (false);
 	  REPL_SET_GENERIC_ERROR (error, "Invalid log record");
 	  GOTO_EXIT_ON_ERROR;
 	}
@@ -829,7 +828,6 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
       if (tmp_lrec->trid != lrec->trid
 	  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, tmp_lrec))
 	{
-	  assert (false);
 	  error = ER_LOG_PAGE_CORRUPTED;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, lsa.pageid);
 	}
@@ -880,7 +878,6 @@ cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa, LOG_PAGE * org_pgptr,
   lrec = LOG_GET_LOG_RECORD_HEADER (pg, lsa);
   if (!CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
     {
-      assert (false);
       REPL_SET_GENERIC_ERROR (error, "Invalid log record");
       return error;
     }
@@ -2164,11 +2161,8 @@ applier_main (void *arg)
 			  <= log_hdr->ha_info.last_flushed_pageid);
 
 		  lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
-		  if (lrec->type == LOG_END_OF_LOG
-		      || !CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
-		      || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec)
-		      || LSA_ISNULL (&lrec->forw_lsa)
-		      || LSA_GT (&final_lsa, &lrec->forw_lsa))
+		  if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
+		      || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
 		    {
 		      assert (false);
 		      cirp_logpb_release (buf_mgr, log_buf->pageid);

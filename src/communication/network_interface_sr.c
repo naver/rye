@@ -4838,7 +4838,10 @@ sprm_server_get_force_parameters (THREAD_ENTRY * thread_p, unsigned int rid,
   ptr = or_pack_int (reply, area_size);
   ptr = or_pack_int (ptr, er_errid ());
 
-  (void) sysprm_pack_assign_values (area, change_values);
+  if (area != NULL)
+    {
+      (void) sysprm_pack_assign_values (area, change_values);
+    }
   css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 			    reply, OR_ALIGNED_BUF_SIZE (a_reply),
 			    area, area_size);

@@ -398,8 +398,8 @@ valid options:\n\
                                 7 dump catalog\n\
                                 8 dump log\n\
                                 9 dump heap\n\
-      --start_pageid=ID        start log page id for log dump;default: 0\n\
-      --num_pages=NUMBER       number of dump page for log dump; default: -1(all)\n\
+      --start-pageid=ID        start log page id for log dump;default: 0\n\
+      --num-pages=NUMBER       number of dump page for log dump; default: -1(all)\n\
   -o, --output-file=FILE       redirect output messages to FILE; default: none\n
 
 
