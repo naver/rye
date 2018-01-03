@@ -1546,6 +1546,42 @@ monitor_close_viewer_data (MONITOR_INFO * monitor)
 }
 
 /*
+ * monitor_get_name ()-
+ *   return:
+ *
+ *   monitor(in/out):
+ *   to_stats(out):
+ *   int mnt_id(in):
+ */
+const char *
+monitor_get_name (MONITOR_INFO * monitor)
+{
+  RYE_MONITOR_SHM *shm_p = NULL;
+
+  if (monitor == NULL)
+    {
+      shm_p = mntCollector->monitor_shm;
+    }
+  else
+    {
+      if (monitor_open_viewer_data (monitor) != NO_ERROR)
+	{
+	  return NULL;
+	}
+      shm_p = monitor->monitor_shm;
+    }
+
+  if (shm_p == NULL)
+    {
+      assert (false);
+
+      return ER_FAILED;
+    }
+
+  return shm_p->name;
+}
+
+/*
  * monitor_copy_stats ()-
  *   return:
  *
