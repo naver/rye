@@ -175,6 +175,7 @@ extern INT64 monitor_get_stats (int mnt_id, int item);
 extern MONITOR_INFO *monitor_create_viewer_from_name (const char *name);
 extern MONITOR_INFO *monitor_create_viewer_from_key (int shm_key);
 extern void monitor_final_viewer (MONITOR_INFO * monitor_info);
+extern const char *monitor_get_name (MONITOR_INFO * monitor);
 extern bool monitor_stats_is_cumulative (MONITOR_INFO * monitor_info,
 					 int item);
 extern bool monitor_stats_is_collecting_time (MONITOR_INFO * monitor_info,

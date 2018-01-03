@@ -102,6 +102,7 @@ typedef struct
   const char *pw;
 } T_TCP_SEND_CONNECT_INFO;
 
+static void print_usage (void);
 static int get_args (int argc, char *argv[]);
 static int set_my_hostname (void);
 static void npot_broker_monitor (T_SHM_INFO * shm_info,
@@ -153,6 +154,7 @@ static T_TCP_SEND_CONNECT_INFO *tcp_Send_connect_info = NULL;
 static int tcp_Send_fd = -1;
 static char tag_Service[64];
 static int repeat_Count = -1;
+static char *userName = NULL;
 
 int
 main (int argc, char *argv[])
@@ -165,6 +167,7 @@ main (int argc, char *argv[])
 
   if (get_args (argc, argv) < 0)
     {
+      print_usage ();
       return -1;
     }
 
@@ -213,7 +216,9 @@ main (int argc, char *argv[])
       shm_info = shm_Info_list;
       while (shm_info)
 	{
-	  if (shm_info->is_valid)
+	  if (shm_info->is_valid
+	      && (userName == NULL
+		  || strcmp (userName, shm_info->user_name) == 0))
 	    {
 	      if (shm_info->shm_type == RYE_SHM_TYPE_BROKER_GLOBAL)
 		{
@@ -246,7 +251,7 @@ get_args (int argc, char *argv[])
 {
   int opt;
 
-  while ((opt = getopt (argc, argv, "c:r:")) != -1)
+  while ((opt = getopt (argc, argv, "c:r:u:")) != -1)
     {
       switch (opt)
 	{
@@ -259,12 +264,24 @@ get_args (int argc, char *argv[])
 	case 'r':
 	  repeat_Count = atoi (optarg);
 	  break;
+	case 'u':
+	  userName = optarg;
+	  break;
 	default:
 	  return -1;
 	}
     }
 
   return 0;
+}
+
+static void
+print_usage (void)
+{
+  printf ("broker_monitor_npot [-c] [-r] [-u]\n");
+  printf ("\t-c connection url(default: stdout)\n");
+  printf ("\t-r repeat count(default: inf)\n");
+  printf ("\t-u user name(default:all user)\n");
 }
 
 static int
@@ -580,7 +597,7 @@ npot_print_cur_stats (MONITOR_INFO * monitor, T_DB_STATS_INFO * db_stats,
 
       print_monitor_item (db_stats[i].metric,
 			  db_stats[i].item, user_name,
-			  TAG_DB_NAME, monitor->meta->info[i].name,
+			  TAG_DB_NAME, monitor_get_name (monitor),
 			  check_time, cur_stats[i].value,
 			  cur_stats[i].acc_time,
 			  db_stats[i].is_cumulative,
