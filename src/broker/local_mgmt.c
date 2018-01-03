@@ -624,8 +624,6 @@ local_mg_child_process_waiter (void *arg)
 
 	  pthread_mutex_unlock (&job_queue->lock);
 
-	  assert (job);
-
 	  if (job != NULL && !IS_INVALID_SOCKET (job->clt_sock_fd))
 	    {
 	      int exit_status;
@@ -883,8 +881,6 @@ local_mg_process_queue_remove_by_pid (int pid)
 	  job = prev->next;
 	}
     }
-
-  assert (job != NULL);
 
   return job;
 }
