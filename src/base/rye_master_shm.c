@@ -622,9 +622,13 @@ rye_master_shm_dump (FILE * outfp)
   num_shm_keys = MIN (shm_master->num_shm, MAX_NUM_SHM);
   for (i = 0; i < num_shm_keys; i++)
     {
-      fprintf (outfp, "\tIndex:%-3d, type:%s, name:%s key:%08x\n",
+      fprintf (outfp, "\tIndex:%d, type:%s, name:%s key:%08x\n",
 	       i, RYE_SHM_TYPE_NAME (shm_master->shm_info[i].type),
 	       shm_master->shm_info[i].name, shm_master->shm_info[i].shm_key);
+      if (shm_master->shm_info[i].type == RYE_SHM_TYPE_SERVER)
+	{
+	  rye_server_shm_dump (outfp, shm_master->shm_info[i].shm_key);
+	}
     }
 
   num_hb_nodes = MIN (shm_master->num_ha_nodes, SHM_MAX_HA_NODE_LIST);
