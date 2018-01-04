@@ -1948,6 +1948,24 @@ analyzer_main (void *arg)
       LSA_COPY (&final_lsa, &analyzer->ct.required_lsa);
       LSA_COPY (&analyzer->current_lsa, &final_lsa);
 
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID,
+			   analyzer->current_lsa.pageid);
+
+      monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_CURRENT_GAP,
+			   monitor_get_stats (MNT_RP_FLUSHER_ID,
+					      MNT_RP_FLUSHED_PAGEID)
+			   - monitor_get_stats (MNT_RP_ANALYZER_ID,
+						MNT_RP_CURRENT_PAGEID));
+
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID,
+			   analyzer->ct.required_lsa.pageid);
+
+      monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_REQUIRED_GAP,
+			   monitor_get_stats (MNT_RP_ANALYZER_ID,
+					      MNT_RP_CURRENT_PAGEID)
+			   - monitor_get_stats (MNT_RP_ANALYZER_ID,
+						MNT_RP_REQUIRED_PAGEID));
+
       snprintf (err_msg, sizeof (err_msg),
 		"All Agent Start. required_lsa: %lld|%d."
 		"current LSA: %lld|%d.",
@@ -2154,7 +2172,7 @@ analyzer_main (void *arg)
 			       final_lsa.pageid);
 
 	  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_CURRENT_GAP,
-			       monitor_get_stats (MNT_RP_COPIER_ID,
+			       monitor_get_stats (MNT_RP_FLUSHER_ID,
 						  MNT_RP_FLUSHED_PAGEID)
 			       - monitor_get_stats (MNT_RP_ANALYZER_ID,
 						    MNT_RP_CURRENT_PAGEID));

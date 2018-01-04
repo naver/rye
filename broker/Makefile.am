@@ -76,6 +76,7 @@ broker_monitor_npot_SOURCES = \
 	$(BASE_DIR)/perf_monitor.c \
 	$(BASE_DIR)/monitor.c \
 	$(BASE_DIR)/release_string.c \
+	$(BASE_DIR)/ds_string_array.c \
 	$(BROKER_DIR)/broker_monitor_npot.c \
 	$(BROKER_DIR)/broker_shm.c
 broker_monitor_npot_LDADD = @CCI_LIB@

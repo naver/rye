@@ -131,6 +131,31 @@ Rye_str_array_find (RSTR_ARRAY array, const char *value)
 }
 
 /*
+ * Rye_str_array_find_substr () -
+ *    return:
+ *
+ *    array(in):
+ *    value(in):
+ */
+int
+Rye_str_array_find_substr (RSTR_ARRAY array, const char *substr)
+{
+  int i, found;
+
+  found = -1;
+  for (i = 0; array[i] != NULL; i++)
+    {
+      if (strstr (array[i], substr) != NULL)
+	{
+	  found = i;
+	  break;
+	}
+    }
+
+  return found;
+}
+
+/*
  * Rye_str_array_shuffle ()-
  *   return:
  *
