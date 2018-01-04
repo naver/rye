@@ -245,7 +245,7 @@ lsa_to_int64 (LOG_LSA lsa)
 {
   INT64 value;
 
-  value = lsa.pageid << 15 | lsa.offset;
+  value = lsa.pageid << LOG_LSA_OFFSET_BITS | lsa.offset;
 
   return value;
 }
@@ -256,7 +256,7 @@ int64_to_lsa (INT64 value)
   LOG_LSA lsa;
 
   lsa.offset = value & 0x0000000000007FFF;
-  lsa.pageid = (value & 0xFFFFFFFFFFFF8000) >> 15;
+  lsa.pageid = (value & 0xFFFFFFFFFFFF8000) >> LOG_LSA_OFFSET_BITS;
 
   return lsa;
 }
