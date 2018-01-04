@@ -178,11 +178,11 @@ struct qo_node_index_entry
 };
 
 /*
- *  Contains pointers to usable indexes which span class heirarchies.
+ *  Contains pointers to usable indexes which span class hierarchies.
  *  Each element in the array contains an index header which consists
  *  of statistical information and a pointer to a list of compatible
  *  index structures where each node of the list represents an index
- *  at each level in the class heirarchy.
+ *  at each level in the class hierarchy.
  */
 struct qo_node_index
 {

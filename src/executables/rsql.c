@@ -2113,7 +2113,7 @@ rsql_execute_statements (const RSQL_ARGUMENT * rsql_arg,
 	}
 
       attr_spec = db_get_query_type_list (session);
-      stmt_type = (RYE_STMT_TYPE) db_get_statement_type (session);
+      stmt_type = db_get_statement_type (session);
 
       db_session_set_groupid (session, rsql_arg->groupid);
       db_error = db_execute_and_keep_statement (session, &result);

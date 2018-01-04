@@ -3677,7 +3677,6 @@ xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area,
   const char *class_name;
   LC_FIND_CLASSNAME status;
   bool need_commit = false;
-  CIRP_CT_LOG_WRITER writer_info;
   CIRP_CT_LOG_ANALYZER analyzer_info;
   CIRP_CT_LOG_APPLIER applier_info;
 
@@ -3738,8 +3737,7 @@ xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area,
 	}
 
       if (force_scancache == NULL
-	  && (obj->operation != LC_FLUSH_HA_CATALOG_WRITER_UPDATE
-	      && obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+	  && (obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	      && obj->operation != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE))
 	{
 	  /* Initialize a modify scancache */
@@ -3760,8 +3758,7 @@ xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area,
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-      if (obj->operation != LC_FLUSH_HA_CATALOG_WRITER_UPDATE
-	  && obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+      if (obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	  && obj->operation != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
 	{
 	  error = locator_repl_prepare_force (thread_p, &shard_groupid, obj,
@@ -3860,15 +3857,6 @@ xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area,
 	      /* monitor */
 	      mnt_stats_counter (thread_p, MNT_STATS_QUERY_DELETES, 1);
 	    }
-	  break;
-	case LC_FLUSH_HA_CATALOG_WRITER_UPDATE:
-	  assert (strncasecmp (class_name, CT_LOG_WRITER_NAME,
-			       strlen (CT_LOG_WRITER_NAME)) == 0);
-	  assert (recdes.length == sizeof (CIRP_CT_LOG_WRITER));
-
-	  memcpy (&writer_info, recdes.data, sizeof (CIRP_CT_LOG_WRITER));
-	  error = qexec_upsert_writer_info (thread_p, &key, &writer_info);
-	  need_commit = true;
 	  break;
 	case LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE:
 	  assert (strncasecmp (class_name, CT_LOG_ANALYZER_NAME,
@@ -5081,10 +5069,6 @@ xlocator_find_lockhint_class_oids (THREAD_ENTRY * thread_p, int num_classes,
 		}
 	      else if (entry->action != LC_CLASSNAME_EXIST)
 		{
-#if 1				/* TODO - trace */
-		  assert (entry->action == LC_CLASSNAME_RESERVED);
-#endif
-
 		  /*
 		   * Do not know the fate of this entry until the transaction is
 		   * committed or aborted. Get the lock and retry later on.

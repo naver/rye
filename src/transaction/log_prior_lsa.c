@@ -665,6 +665,12 @@ prior_lsa_gen_undoredo_record_from_crumbs (THREAD_ENTRY * thread_p,
       error_code = prior_lsa_copy_undo_crumbs_to_node (node,
 						       num_ucrumbs, ucrumbs);
     }
+
+  if (error_code != NO_ERROR)
+    {
+      goto error;
+    }
+
   if (is_redo_zip)
     {
       undoredo->rlength = MAKE_ZIP_LEN (zip_redo->data_length);
@@ -678,6 +684,7 @@ prior_lsa_gen_undoredo_record_from_crumbs (THREAD_ENTRY * thread_p,
       error_code = prior_lsa_copy_redo_crumbs_to_node (node,
 						       num_rcrumbs, rcrumbs);
     }
+
   if (error_code != NO_ERROR)
     {
       goto error;
@@ -1677,6 +1684,7 @@ prior_lsa_next_record_internal (THREAD_ENTRY * thread_p,
     }
 
   log_Gl.prior_info.list_size += (sizeof (LOG_PRIOR_NODE) + node->data_header_length + node->ulength + node->rlength);	/* bytes */
+  mnt_stats_gauge (thread_p, MNT_STATS_PRIOR_LSA_LIST_SIZE, log_Gl.prior_info.list_size / ONE_K);	/* kbytes */
 
   if (with_lock == LOG_PRIOR_LSA_WITHOUT_LOCK)
     {

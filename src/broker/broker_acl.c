@@ -862,7 +862,7 @@ br_acl_dump (FILE * fp, BR_ACL_INFO * acl_info)
 
 	  (void) er_datetime (&time_val, str, sizeof (str));
 
-	  len += sprintf (line_buf + len, "%s", str);
+	  sprintf (line_buf + len, "%s", str);
 	}
 
       fprintf (fp, "%s\n", line_buf);

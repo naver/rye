@@ -1475,20 +1475,6 @@ locator_fun_get_all_mops (MOP class_mop,
 				      &nfetched, &last_oid, &fetch_area);
       if (error_code != NO_ERROR)
 	{
-	  /* There was a failure. Was the transaction aborted ? */
-	  if (er_errid () == ER_LK_UNILATERALLY_ABORTED)
-	    {
-	      (void) tran_abort_only_client (false);
-	    }
-	  if (fetch_area != NULL)
-	    {
-	      locator_free_copy_area (fetch_area);
-	    }
-	  if (keep_mops.list != NULL)
-	    {
-	      locator_free_list_mops (keep_mops.list);
-	      keep_mops.list = NULL;
-	    }
 	  break;
 	}
 
@@ -1535,8 +1521,31 @@ locator_fun_get_all_mops (MOP class_mop,
 	}
       error_code = locator_cache (fetch_area, class_mop, class_obj,
 				  locator_keep_mops, &keep_mops);
+      if (error_code != NO_ERROR)
+	{
+	  break;
+	}
+
       locator_free_copy_area (fetch_area);
     }				/* while */
+
+  if (error_code != NO_ERROR)
+    {
+      /* There was a failure. Was the transaction aborted ? */
+      if (er_errid () == ER_LK_UNILATERALLY_ABORTED)
+	{
+	  (void) tran_abort_only_client (false);
+	}
+      if (fetch_area != NULL)
+	{
+	  locator_free_copy_area (fetch_area);
+	}
+      if (keep_mops.list != NULL)
+	{
+	  locator_free_list_mops (keep_mops.list);
+	  keep_mops.list = NULL;
+	}
+    }
 
   if (keep_mops.list != NULL && keep_mops.lock == NULL_LOCK
       && locator_is_root (class_mop) && (lock == S_LOCK))

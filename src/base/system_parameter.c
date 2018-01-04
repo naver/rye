@@ -931,8 +931,8 @@ bool PRM_OPTIMIZER_ENABLE_AGGREGATE_OPTIMIZATION = true;
 static bool prm_optimizer_enable_aggregate_optimization_default = true;
 
 
-const char *PRM_FAULT_INJECTION = "none";
-static const char *prm_fault_injection_default = "none";
+const char *PRM_FAULT_INJECTION = NULL;
+static const char *prm_fault_injection_default = NULL;
 
 const char *PRM_RYE_SHM_KEY = "";
 static const char *prm_rye_shm_key_default = "";
@@ -1671,10 +1671,10 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_MODE,
 		     PRM_NAME_HA_MODE,
-		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FORCE_SERVER),
-		     PRM_KEYWORD,
-		     &prm_ha_mode_default, &PRM_HA_MODE, &prm_ha_mode_upper,
-		     &prm_ha_mode_lower);
+		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_FORCE_SERVER
+		      | PRM_RELOADABLE),
+		     PRM_KEYWORD, &prm_ha_mode_default,
+		     &PRM_HA_MODE, &prm_ha_mode_upper, &prm_ha_mode_lower);
 
   sysprm_init_param (PRM_ID_HA_NODE_LIST,
 		     PRM_NAME_HA_NODE_LIST,
@@ -1693,21 +1693,21 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_DB_LIST,
 		     PRM_NAME_HA_DB_LIST,
-		     (PRM_FOR_CLIENT | PRM_FOR_SERVER),
+		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_RELOADABLE),
 		     PRM_STRING,
 		     &prm_ha_db_list_default, &PRM_HA_DB_LIST, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_INIT_TIMER,
 		     PRM_NAME_HA_INIT_TIMER,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
-		     PRM_BIGINT,
-		     &prm_ha_init_timer_default, &PRM_HA_INIT_TIMER,
-		     &prm_ha_init_timer_upper, &prm_ha_init_timer_lower);
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT |
+		      PRM_RELOADABLE), PRM_BIGINT, &prm_ha_init_timer_default,
+		     &PRM_HA_INIT_TIMER, &prm_ha_init_timer_upper,
+		     &prm_ha_init_timer_lower);
 
   sysprm_init_param (PRM_ID_HA_HEARTBEAT_INTERVAL,
 		     PRM_NAME_HA_HEARTBEAT_INTERVAL,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
-		     PRM_BIGINT,
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT |
+		      PRM_RELOADABLE), PRM_BIGINT,
 		     &prm_ha_heartbeat_interval_default,
 		     &PRM_HA_HEARTBEAT_INTERVAL,
 		     &prm_ha_heartbeat_interval_upper,
@@ -1715,8 +1715,8 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_CALC_SCORE_INTERVAL,
 		     PRM_NAME_HA_CALC_SCORE_INTERVAL,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
-		     PRM_BIGINT,
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT |
+		      PRM_RELOADABLE), PRM_BIGINT,
 		     &prm_ha_calc_score_interval_default,
 		     &PRM_HA_CALC_SCORE_INTERVAL,
 		     &prm_ha_calc_score_interval_upper,
@@ -1724,8 +1724,8 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_FAILOVER_WAIT_TIME,
 		     PRM_NAME_HA_FAILOVER_WAIT_TIME,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
-		     PRM_BIGINT,
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT |
+		      PRM_RELOADABLE), PRM_BIGINT,
 		     &prm_ha_failover_wait_time_default,
 		     &PRM_HA_FAILOVER_WAIT_TIME,
 		     &prm_ha_failover_wait_time_upper,
@@ -1733,8 +1733,8 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_PROCESS_START_CONFIRM_INTERVAL,
 		     PRM_NAME_HA_PROCESS_START_CONFIRM_INTERVAL,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
-		     PRM_BIGINT,
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT |
+		      PRM_RELOADABLE), PRM_BIGINT,
 		     &prm_ha_process_start_confirm_interval_default,
 		     &PRM_HA_PROCESS_START_CONFIRM_INTERVAL,
 		     &prm_ha_process_start_confirm_interval_upper,
@@ -1742,8 +1742,8 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_PROCESS_DEREG_CONFIRM_INTERVAL,
 		     PRM_NAME_HA_PROCESS_DEREG_CONFIRM_INTERVAL,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
-		     PRM_BIGINT,
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT |
+		      PRM_RELOADABLE), PRM_BIGINT,
 		     &prm_ha_process_dereg_confirm_interval_default,
 		     &PRM_HA_PROCESS_DEREG_CONFIRM_INTERVAL,
 		     &prm_ha_process_dereg_confirm_interval_upper,
@@ -1751,22 +1751,22 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_MAX_PROCESS_START_CONFIRM,
 		     PRM_NAME_HA_MAX_PROCESS_START_CONFIRM,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN),
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_RELOADABLE),
 		     PRM_INTEGER,
 		     &prm_ha_max_process_start_confirm_default,
 		     &PRM_HA_MAX_PROCESS_START_CONFIRM, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_MAX_PROCESS_DEREG_CONFIRM,
 		     PRM_NAME_HA_MAX_PROCESS_DEREG_CONFIRM,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN),
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_RELOADABLE),
 		     PRM_INTEGER,
 		     &prm_ha_max_process_dereg_confirm_default,
 		     &PRM_HA_MAX_PROCESS_DEREG_CONFIRM, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_CHANGESLAVE_MAX_WAIT_TIME,
 		     PRM_NAME_HA_CHANGESLAVE_MAX_WAIT_TIME,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT),
-		     PRM_BIGINT,
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_TIME_UNIT |
+		      PRM_RELOADABLE), PRM_BIGINT,
 		     &prm_ha_changeslave_max_wait_time_default,
 		     &PRM_HA_CHANGESLAVE_MAX_WAIT_TIME,
 		     &prm_ha_changeslave_max_wait_time_upper,
@@ -1774,7 +1774,7 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF,
 		     PRM_NAME_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF,
-		     (PRM_FOR_CLIENT | PRM_TIME_UNIT),
+		     (PRM_FOR_CLIENT | PRM_TIME_UNIT | PRM_RELOADABLE),
 		     PRM_BIGINT,
 		     &prm_ha_unacceptable_proc_restart_timediff_default,
 		     &PRM_HA_UNACCEPTABLE_PROC_RESTART_TIMEDIFF, NULL, NULL);
@@ -1790,7 +1790,7 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_MAX_HEARTBEAT_GAP,
 		     PRM_NAME_HA_MAX_HEARTBEAT_GAP,
-		     (PRM_FOR_CLIENT | PRM_HIDDEN),
+		     (PRM_FOR_CLIENT | PRM_HIDDEN | PRM_RELOADABLE),
 		     PRM_INTEGER,
 		     &prm_ha_max_heartbeat_gap_default,
 		     &PRM_HA_MAX_HEARTBEAT_GAP, NULL, NULL);
@@ -1804,14 +1804,14 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_IGNORE_ERROR_LIST,
 		     PRM_NAME_HA_IGNORE_ERROR_LIST,
-		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE),
-		     PRM_INTEGER_LIST,
+		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_USER_CHANGE |
+		      PRM_RELOADABLE), PRM_INTEGER_LIST,
 		     &prm_ha_ignore_error_list_default,
 		     &PRM_HA_IGNORE_ERROR_LIST, NULL, NULL);
 
   sysprm_init_param (PRM_ID_HA_COPY_LOG_MAX_ARCHIVES,
 		     PRM_NAME_HA_COPY_LOG_MAX_ARCHIVES,
-		     (PRM_FOR_CLIENT),
+		     (PRM_FOR_CLIENT | PRM_RELOADABLE),
 		     PRM_INTEGER,
 		     &prm_ha_copy_log_max_archives_default,
 		     &PRM_HA_COPY_LOG_MAX_ARCHIVES,
@@ -1820,7 +1820,7 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_COPY_LOG_TIMEOUT,
 		     PRM_NAME_HA_COPY_LOG_TIMEOUT,
-		     (PRM_FOR_SERVER | PRM_RELOADABLE | PRM_TIME_UNIT),
+		     (PRM_FOR_SERVER | PRM_USER_CHANGE | PRM_TIME_UNIT),
 		     PRM_BIGINT,
 		     &prm_ha_copy_log_timeout_default,
 		     &PRM_HA_COPY_LOG_TIMEOUT, &prm_ha_copy_log_timeout_upper,
@@ -1828,7 +1828,7 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_REPLICA_DELAY,
 		     PRM_NAME_HA_REPLICA_DELAY,
-		     (PRM_FOR_CLIENT | PRM_TIME_UNIT),
+		     (PRM_FOR_CLIENT | PRM_TIME_UNIT | PRM_RELOADABLE),
 		     PRM_BIGINT,
 		     &prm_ha_replica_delay_default,
 		     &PRM_HA_REPLICA_DELAY,
@@ -1837,7 +1837,7 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_REPLICA_TIME_BOUND,
 		     PRM_NAME_HA_REPLICA_TIME_BOUND,
-		     (PRM_FOR_CLIENT),
+		     (PRM_FOR_CLIENT | PRM_RELOADABLE),
 		     PRM_STRING,
 		     &prm_ha_replica_time_bound_default,
 		     &PRM_HA_REPLICA_TIME_BOUND, NULL, NULL);
@@ -2151,7 +2151,7 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_MAX_LOG_APPLIER,
 		     PRM_NAME_HA_MAX_LOG_APPLIER,
-		     (PRM_FOR_CLIENT | PRM_FOR_SERVER),
+		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_RELOADABLE),
 		     PRM_INTEGER,
 		     &prm_ha_max_log_applier_default,
 		     &PRM_HA_MAX_LOG_APPLIER,
@@ -2186,7 +2186,7 @@ sysprm_initialize_prm_def ()
 
   sysprm_init_param (PRM_ID_HA_NODE_MYSELF,
 		     PRM_NAME_HA_NODE_MYSELF,
-		     (PRM_FOR_CLIENT | PRM_FOR_SERVER),
+		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_RELOADABLE),
 		     PRM_STRING,
 		     &prm_ha_node_myself_default, &PRM_HA_NODE_MYSELF, NULL,
 		     NULL);

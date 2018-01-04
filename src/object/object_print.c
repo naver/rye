@@ -392,7 +392,7 @@ obj_print_describe_domain (PARSER_CONTEXT * parser, PARSER_VARCHAR * buffer,
 	  break;
 
 	case DB_TYPE_SEQUENCE:
-	  strcpy (temp_buffer, temp_domain->type->name);
+	  STRNCPY (temp_buffer, temp_domain->type->name, 27);
 	  ustr_upper (temp_buffer);
 	  buffer = pt_append_nulstring (parser, buffer, temp_buffer);
 	  buffer = pt_append_nulstring (parser, buffer, " OF ");

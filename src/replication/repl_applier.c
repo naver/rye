@@ -43,6 +43,8 @@
 #include "repl.h"
 #include "repl_applier.h"
 
+#include "monitor.h"
+
 
 #define LA_MAX_NUM_UNCOMMITED_TRAN		((CIRP_TRAN_Q_SIZE)/2)
 
@@ -125,8 +127,7 @@ static int cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
 static int cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
 					 LOG_LSA * commit_lsa);
 static int cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data,
-					 LOG_LSA * committed_lsa,
-					 CIRP_STATS * stats);
+					 LOG_LSA * committed_lsa);
 static int cirp_applier_clear_repl_delay (CIRP_APPLIER_INFO * applier);
 static int cirp_get_applier_data (CIRP_APPLIER_INFO * applier,
 				  CIRP_CT_LOG_APPLIER * ct_data);
@@ -653,6 +654,11 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
 
       current_log_record = LOG_GET_LOG_RECORD_HEADER (current_log_page,
 						      &current_lsa);
+      if (!CIRP_IS_VALID_LOG_RECORD (buf_mgr, current_log_record))
+	{
+	  REPL_SET_GENERIC_ERROR (error, "Invalid log record");
+	  GOTO_EXIT_ON_ERROR;
+	}
       if (current_log_record->trid != log_record->trid
 	  || current_log_record->type == LOG_DUMMY_OVF_RECORD)
 	{
@@ -819,7 +825,8 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
 	  return error;
 	}
       tmp_lrec = LOG_GET_LOG_RECORD_HEADER (pg, &lsa);
-      if (tmp_lrec->trid != lrec->trid)
+      if (tmp_lrec->trid != lrec->trid
+	  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, tmp_lrec))
 	{
 	  error = ER_LOG_PAGE_CORRUPTED;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, lsa.pageid);
@@ -869,6 +876,11 @@ cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa, LOG_PAGE * org_pgptr,
 
   pg = org_pgptr;
   lrec = LOG_GET_LOG_RECORD_HEADER (pg, lsa);
+  if (!CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
+    {
+      REPL_SET_GENERIC_ERROR (error, "Invalid log record");
+      return error;
+    }
 
   error = cirp_get_log_data (buf_mgr, lrec, lsa, pg, 0, rcvindex,
 			     &logs, &rec_type, &recdes->data,
@@ -967,6 +979,9 @@ cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate)
 				  applier->num_unflushed);
       if (error < 0)
 	{
+	  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
+				 MNT_RP_FAIL, 1);
+
 	  REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
 				  applier->conn.err_buf.err_code,
 				  applier->conn.err_buf.err_msg);
@@ -1059,7 +1074,8 @@ cirp_apply_delete_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * data_item)
       GOTO_EXIT_ON_ERROR;
     }
 
-  applier->stats.delete++;
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
+			 MNT_RP_DELETE, 1);
 
   assert (error == NO_ERROR);
   return error;
@@ -1074,8 +1090,6 @@ exit_on_error:
 	  ER_HA_LA_FAILED_TO_APPLY_DELETE, 4, data_item->class_name, buf,
 	  error, "internal client error.");
   er_stack_pop ();
-
-  applier->stats.fail++;
 
   return error;
 }
@@ -1165,7 +1179,8 @@ cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
   item->recdes = recdes;
 
-  applier->stats.insert++;
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
+			 MNT_RP_INSERT, 1);
 
   cirp_logpb_release (buf_mgr, old_pageid);
 
@@ -1182,8 +1197,6 @@ exit_on_error:
 	  ER_HA_LA_FAILED_TO_APPLY_INSERT, 4, item->class_name, buf,
 	  error, "internal client error.");
   er_stack_pop ();
-
-  applier->stats.fail++;
 
   if (old_pageid != NULL_PAGEID)
     {
@@ -1272,7 +1285,8 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
   item->recdes = recdes;
 
-  applier->stats.update++;
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
+			 MNT_RP_UPDATE, 1);
 
   cirp_logpb_release (buf_mgr, old_pageid);
 
@@ -1288,8 +1302,6 @@ exit_on_error:
 	  ER_HA_LA_FAILED_TO_APPLY_UPDATE, 4, item->class_name, buf,
 	  error, "internal client error.");
   er_stack_pop ();
-
-  applier->stats.fail++;
 
   if (old_pageid != NULL_PAGEID)
     {
@@ -1318,7 +1330,8 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
 
   error = cirp_flush_repl_items (applier, false);
 
-  applier->stats.schema++;
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
+			 MNT_RP_DDL, 1);
 
   return error;
 }
@@ -1592,7 +1605,6 @@ cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
 			    LOG_LSA final_lsa, LOG_PAGE * pg_ptr)
 {
   int error = NO_ERROR;
-  time_t commit_time;
 
   assert_release (lrec->type != LOG_END_OF_LOG);
 
@@ -1606,15 +1618,6 @@ cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
   else if (lrec->type == LOG_COMMIT)
     {
       LSA_COPY (commit_lsa, &final_lsa);
-      error = cirp_log_get_eot_time (&applier->buf_mgr, &commit_time,
-				     pg_ptr, final_lsa);
-      if (error != NO_ERROR)
-	{
-	  return error;
-	}
-      assert (commit_time > 0);
-
-      applier->ct.master_last_commit_time = commit_time * 1000;
     }
 
   return error;
@@ -1723,9 +1726,10 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
       GOTO_EXIT_ON_ERROR;
     }
 
-  applier->stats.commit++;
-  error = cirp_applier_update_progress (&ct_data, commit_lsa,
-					&applier->stats);
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
+			 MNT_RP_COMMIT, 1);
+
+  error = cirp_applier_update_progress (&ct_data, commit_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1777,13 +1781,6 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
 
   applier->num_uncommitted_tran = 0;
 
-  applier->stats.insert = 0;
-  applier->stats.update = 0;
-  applier->stats.delete = 0;
-  applier->stats.schema = 0;
-  applier->stats.fail = 0;
-  applier->stats.commit = 0;
-
   assert (error == NO_ERROR);
   return error;
 
@@ -1804,28 +1801,12 @@ exit_on_error:
  *   return: error code
  *
  *   committed_lsa(in):
- *   stats(in):
  */
 static int
 cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data,
-			      LOG_LSA * committed_lsa, CIRP_STATS * stats)
+			      LOG_LSA * committed_lsa)
 {
-  struct timeval current_time;
-
   LSA_COPY (&ct_data->committed_lsa, committed_lsa);
-
-  ct_data->insert_count += stats->insert;
-  ct_data->update_count += stats->update;
-  ct_data->delete_count += stats->delete;
-  ct_data->schema_count += stats->schema;
-  ct_data->commit_count += stats->commit;
-  ct_data->fail_count += stats->fail;
-
-  /* update repl_delay */
-  gettimeofday (&current_time, NULL);
-  ct_data->repl_delay = timeval_to_msec (&current_time);
-  ct_data->repl_delay -= ct_data->master_last_commit_time;
-  assert (ct_data->repl_delay >= 0);
 
   return NO_ERROR;
 }
@@ -1848,7 +1829,6 @@ cirp_applier_clear_repl_delay (CIRP_APPLIER_INFO * applier)
 
       return error;
     }
-  applier->ct.repl_delay = 0;
 
   memcpy (&ct_data, &applier->ct, sizeof (CIRP_CT_LOG_APPLIER));
 
@@ -1934,8 +1914,6 @@ cirp_clear_applier (CIRP_APPLIER_INFO * applier)
   assert (applier->num_unflushed == 0);
 
   applier->num_uncommitted_tran = 0;
-
-  memset (&applier->stats, 0, sizeof (CIRP_STATS));
 
   memset (&applier->logq, 0, sizeof (CIRP_TRAN_Q));
 
@@ -2183,11 +2161,8 @@ applier_main (void *arg)
 			  <= log_hdr->ha_info.last_flushed_pageid);
 
 		  lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
-		  if (lrec->type == LOG_END_OF_LOG
-		      || !CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
-		      || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec)
-		      || LSA_ISNULL (&lrec->forw_lsa)
-		      || LSA_GT (&final_lsa, &lrec->forw_lsa))
+		  if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
+		      || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
 		    {
 		      assert (false);
 		      cirp_logpb_release (buf_mgr, log_buf->pageid);

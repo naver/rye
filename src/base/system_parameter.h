@@ -276,11 +276,15 @@ struct sysprm_assign_value
 	} while (0)
 #define PRM_NODE_INFO_GET_IP(NODE_INFO)		((NODE_INFO)->ip)
 #define PRM_NODE_INFO_GET_PORT(NODE_INFO)	((NODE_INFO)->port)
+
 typedef struct
 {
   in_addr_t ip;
   int port;
 } PRM_NODE_INFO;
+
+#define PRM_NODE_INFO_INITIALIZER    \
+  { INADDR_NONE, 0 }
 
 #define PRM_EMPTY_NODE_LIST	{ "", 0, { PRM_NULL_NODE_INFO } }
 typedef struct
@@ -289,6 +293,9 @@ typedef struct
   int num_nodes;
   PRM_NODE_INFO nodes[PRM_MAX_HA_NODE_LIST];
 } PRM_NODE_LIST;
+
+#define PRM_NODE_LIST_INITIALIZER    \
+  { "", 0, { PRM_NODE_INFO_INITIALIZER } }
 
 extern const char *prm_get_name (PARAM_ID prm_id);
 

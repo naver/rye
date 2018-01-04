@@ -368,8 +368,8 @@ db_time_format (const DB_VALUE * time_value, const DB_VALUE * format,
   sprintf (format_specifiers['l'], "%d", (h % 12 == 0) ? 12 : (h % 12));
 
   /* %p       AM or PM */
-  strcpy (format_specifiers['p'],
-	  (h > 11) ? lld->am_pm[PM_NAME] : lld->am_pm[AM_NAME]);
+  STRNCPY (format_specifiers['p'],
+	   (h > 11) ? lld->am_pm[PM_NAME] : lld->am_pm[AM_NAME], 64);
 
   /* %r       Time, 12-hour (hh:mm:ss followed by AM or PM) */
   sprintf (format_specifiers['r'], "%02d:%02d:%02d %s",
@@ -3465,7 +3465,6 @@ date_to_char (const DB_VALUE * src_value,
 	      tmp_int = (year / 100) + 1;
 	      sprintf (&result_buf[i], "%02d\n", tmp_int);
 	      i += 2;
-	      cur_format_str_ptr += 2;
 	      break;
 
 	    case DT_YYYY:
@@ -8032,7 +8031,7 @@ db_date_format (const DB_VALUE * date_value, const DB_VALUE * format,
   sprintf (format_specifiers['x'], "%04d", tx);
 
   /* %W       Weekday name (Sunday..Saturday) */
-  strcpy (format_specifiers['W'], lld->day_name[dow]);
+  STRNCPY (format_specifiers['W'], lld->day_name[dow], 64);
 
   /* %w       Day of the week (0=Sunday..6=Saturday) */
   sprintf (format_specifiers['w'], "%d", dow);

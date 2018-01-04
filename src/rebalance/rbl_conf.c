@@ -500,8 +500,10 @@ rbl_conf_get_repl_delay (CCI_CONN * conn)
   CCI_STMT stmt;
   int ind, error;
   INT64 max_delay = 0;
+  INT64 applied_time = 0;
+  struct timespec cur_time;
 
-  sprintf (sql, "SELECT max(repl_delay) FROM [%s]", CT_LOG_APPLIER_NAME);
+  sprintf (sql, "SELECT source_applied_time FROM [%s]", CT_LOG_ANALYZER_NAME);
 
   if (cci_prepare (conn, &stmt, sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
     {
@@ -525,13 +527,16 @@ rbl_conf_get_repl_delay (CCI_CONN * conn)
       goto error_exit;
     }
 
-  max_delay = cci_get_bigint (&stmt, 1, &ind);
+  applied_time = cci_get_bigint (&stmt, 1, &ind);
   if (stmt.err_buf.err_code != CCI_ER_NO_ERROR)
     {
       RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
 		 stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto error_exit;
     }
+
+  clock_gettime (CLOCK_REALTIME, &cur_time);
+  max_delay = timespec_to_msec (&cur_time) - applied_time;
 
   cci_close_req_handle (&stmt);
   cci_end_tran (conn, CCI_TRAN_COMMIT);

@@ -2807,8 +2807,7 @@ add_repl_item_ddl (T_NET_BUF * net_buf, RP_DDL_ITEM * ddl)
 static int
 add_repl_item_catalog (T_NET_BUF * net_buf, RP_CATALOG_ITEM * catalog)
 {
-  assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_WRITER_UPDATE
-	  || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+  assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	  || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE);
   assert (catalog->recdes != NULL);
   assert (!cci_db_idxkey_is_null (&catalog->key));

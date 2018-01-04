@@ -1427,8 +1427,14 @@ rbl_analyze_log_record (RBL_SYNC_CONTEXT * ctx, LOG_RECORD_HEADER * lrec)
 		}
 
 	      RBL_ASSERT (ovfl_rec->recdes.data != NULL);
+
+	      /* in case of overflow update, rcvindex is RVOVF_NEWPAGE_INSERT.
+	       * 3rd parameter of rbl_make_sql() should be RVOVF_PAGE_UPDATE 
+	       * that will generate REPLACE query
+	       */
 	      sql = rbl_make_sql (&ovfl_rec->recdes, &ovfl_rec->class_oid,
-				  redo.data.rcvindex);
+				  RVOVF_PAGE_UPDATE);
+
 	      mht_rem (ht_Tran_ovfl_rec, &lrec->trid, rbl_free_ovfl_data,
 		       NULL);
 

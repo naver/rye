@@ -954,8 +954,9 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   assert (P != NULL);
   assert (Q != NULL);
   assert (R != NULL);
-  assert (!VPID_ISNULL (P_vpid) && !VPID_ISNULL (Q_vpid)
-	  && !VPID_ISNULL (R_vpid));
+  assert (!VPID_ISNULL (P_vpid));
+  assert (!VPID_ISNULL (Q_vpid));
+  assert (!VPID_ISNULL (R_vpid));
 
   /* initializations */
   rec.area_size = DB_PAGESIZE;
@@ -1235,6 +1236,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
     {
       GOTO_EXIT_ON_ERROR;
     }
+
   /* log the new header record for redo purposes */
   LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, P, HEADER);
   log_append_redo_data (thread_p, RVBT_NDRECORD_UPD,

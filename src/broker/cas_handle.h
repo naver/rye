@@ -37,7 +37,7 @@ struct t_query_result
   int copied;
   int tuple_count;
   int num_column;
-  char stmt_type;
+  RYE_STMT_TYPE stmt_type;
   bool is_holdable;
 };
 

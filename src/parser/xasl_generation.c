@@ -6725,7 +6725,8 @@ static int
 pt_to_list_key (PARSER_CONTEXT * parser, PT_NODE ** term_exprs, int nterms,
 		KEY_INFO * key_infop)
 {
-  PT_NODE *lhs, *rhs, *elem, *tmp, **midxkey_list;
+  UNUSED_VAR PT_NODE *lhs, *rhs;
+  PT_NODE *elem, *tmp, **midxkey_list;
   PT_OP_TYPE op_type;
   REGU_VARIABLE **regu_var_list, *regu_var;
   int i, j, n_elem;
@@ -6817,9 +6818,8 @@ pt_to_list_key (PARSER_CONTEXT * parser, PT_NODE ** term_exprs, int nterms,
 	  if (!VALIDATE_REGU_KEY (regu_var))
 	    {
 	      /* correlated join index case swap LHS and RHS */
-	      tmp = rhs;
-	      rhs = lhs;
-	      lhs = tmp;
+	      lhs = term_exprs[i]->info.expr.arg2;
+	      rhs = term_exprs[i]->info.expr.arg1;
 
 	      /* try on RHS */
 	      regu_var = pt_to_regu_variable (parser, rhs, UNBOX_AS_VALUE);
@@ -6958,7 +6958,8 @@ pt_to_rangelist_key (PARSER_CONTEXT * parser,
 		     PT_NODE ** term_exprs, int nterms,
 		     KEY_INFO * key_infop, int rangelist_idx)
 {
-  PT_NODE *lhs, *rhs, *llim, *ulim, *elem, *tmp;
+  UNUSED_VAR PT_NODE *lhs;
+  PT_NODE *rhs, *llim, *ulim, *elem, *tmp;
   PT_NODE **midxkey_list1 = NULL, **midxkey_list2 = NULL;
   PT_OP_TYPE op_type;
   REGU_VARIABLE **regu_var_list1, **regu_var_list2, *regu_var;
@@ -7043,9 +7044,8 @@ pt_to_rangelist_key (PARSER_CONTEXT * parser,
 	  if (!VALIDATE_REGU_KEY (regu_var))
 	    {
 	      /* correlated join index case swap LHS and RHS */
-	      tmp = rhs;
-	      rhs = lhs;
-	      lhs = tmp;
+	      lhs = term_exprs[i]->info.expr.arg2;
+	      rhs = term_exprs[i]->info.expr.arg1;
 
 	      /* try on RHS */
 	      regu_var = pt_to_regu_variable (parser, rhs, UNBOX_AS_VALUE);
@@ -10112,7 +10112,7 @@ pt_plan_query (PARSER_CONTEXT * parser, PT_NODE * select_node)
 	      contextp->sql_plan_alloc_size = size;
 	    }
 
-	  strcat (contextp->sql_plan_text, sql_plan);
+	  strcat ((char *) (contextp->sql_plan_text), sql_plan);
 	}
     }
 
@@ -12521,6 +12521,8 @@ pt_to_update_xasl (DB_SESSION * session, PT_NODE * statement,
     {
       assert (false);		/* is impossible */
       error = ER_FAILED;
+      pt_restore_assignment_links (statement->info.update.assignment, links,
+				   -1);
       goto cleanup;
     }
 

@@ -3294,9 +3294,8 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
 						  start.tv_usec) / 1000;
 
 	  mnt_server_copy_stats (thread_p, current_stats);
-	  monitor_diff_stats (NULL, diff_stats, current_stats, base_stats,
-			      MNT_SIZE_OF_SERVER_EXEC_STATS);
-	  mnt_calc_hit_ratio (diff_stats);
+	  monitor_diff_stats (NULL, diff_stats, current_stats, base_stats);
+	  mnt_calc_hit_ratio (diff_stats, MNT_SIZE_OF_SERVER_EXEC_STATS);
 
 	  if (response_time >= trace_slow_msec)
 	    {
@@ -3431,8 +3430,7 @@ er_log_slow_query (THREAD_ENTRY * thread_p, EXECUTION_INFO * info,
   if (prm_get_bool_value (PRM_ID_SQL_TRACE_EXECUTION_PLAN) == true)
     {
       monitor_dump_stats_to_buffer (NULL, stat_buf, STATDUMP_BUF_SIZE,
-				    diff_stats, MNT_SIZE_OF_SERVER_EXEC_STATS,
-				    NULL, NULL, NULL);
+				    diff_stats, MNT_DUMP_TYPE_NORMAL, NULL);
     }
   else
     {
@@ -4496,10 +4494,10 @@ slogtb_dump_trantable (THREAD_ENTRY * thread_p, unsigned int rid,
 int
 xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
 			       char *logpg_area, int area_size,
-			       INT64 first_pageid, int num_page,
-			       int file_status)
+			       INT64 eof_pageid, INT64 first_pageid,
+			       int num_page, int file_status)
 {
-  OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 5) a_reply;
+  OR_ALIGNED_BUF (OR_INT64_SIZE * 2 + OR_INT_SIZE * 5) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
   unsigned int rid, rc;
   char *ptr;
@@ -4524,6 +4522,7 @@ xlog_send_log_pages_to_client (THREAD_ENTRY * thread_p,
   ptr = or_pack_int (reply, (int) GET_NEXT_LOG_PAGES);
   ptr = or_pack_int (ptr, area_size);
   ptr = or_pack_int64 (ptr, first_pageid);
+  ptr = or_pack_int64 (ptr, eof_pageid);
   ptr = or_pack_int (ptr, num_page);
   ptr = or_pack_int (ptr, file_status);
   ptr = or_pack_int (ptr, server_state);
@@ -4839,7 +4838,10 @@ sprm_server_get_force_parameters (THREAD_ENTRY * thread_p, unsigned int rid,
   ptr = or_pack_int (reply, area_size);
   ptr = or_pack_int (ptr, er_errid ());
 
-  (void) sysprm_pack_assign_values (area, change_values);
+  if (area != NULL)
+    {
+      (void) sysprm_pack_assign_values (area, change_values);
+    }
   css_send_reply_to_client (thread_p->conn_entry, rid, 2,
 			    reply, OR_ALIGNED_BUF_SIZE (a_reply),
 			    area, area_size);

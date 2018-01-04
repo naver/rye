@@ -139,7 +139,6 @@ const char *AU_DBA_USER_NAME = "DBA";
          || strcmp(name, CT_USER_NAME) == 0 \
          || strcmp(name, CT_COLLATION_NAME) == 0 \
          || strcmp(name, CT_INDEX_STATS_NAME) == 0 \
-         || strcmp(name, CT_LOG_WRITER_NAME) == 0 \
          || strcmp(name, CT_LOG_ANALYZER_NAME) == 0 \
          || strcmp(name, CT_LOG_APPLIER_NAME) == 0 \
          || strcmp(name, CT_ROOT_NAME) == 0 \
@@ -1646,11 +1645,11 @@ match_password (const char *user, const char *database)
   if (IS_ENCODED_SHA2_512 (database))
     {
       /* DB: SHA2 */
-      strcpy (buf2, database);
+      STRNCPY (buf2, database, AU_MAX_PASSWORD_BUF + 4);
       if (IS_ENCODED_ANY (user))
 	{
 	  /* USER:SHA2 */
-	  strcpy (buf1, Au_user_password);
+	  STRNCPY (buf1, Au_user_password, AU_MAX_PASSWORD_BUF + 4);
 	}
       else
 	{
@@ -2484,49 +2483,56 @@ au_revoke (MOP user, MOP class_mop, DB_AUTH type)
     }
 
   error = au_fetch_class_force (class_mop, &classobj, S_LOCK);
-  if (error == NO_ERROR)
+  if (error != NO_ERROR)
     {
-      if (classobj->owner == user)
-	{
-	  error = ER_AU_CANT_REVOKE_OWNER;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
-	  goto fail_end;
-	}
+      goto fail_end;
+    }
 
-      error = check_grant_option (class_mop, classobj, type);
-      if (error != NO_ERROR)
-	{
-	  goto fail_end;
-	}
+  if (classobj->owner == user)
+    {
+      error = ER_AU_CANT_REVOKE_OWNER;
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
+      goto fail_end;
+    }
+
+  error = check_grant_option (class_mop, classobj, type);
+  if (error != NO_ERROR)
+    {
+      goto fail_end;
+    }
+
 #if defined(SA_MODE)
-      if (catcls_Enable == true)
+  if (catcls_Enable == true)
 #endif /* SA_MODE */
+    {
+      auth = au_get_auth (user, class_mop);
+      if (auth == NULL)
 	{
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_ACCESS_ERROR, 2,
+		  "db_auth", AU_USER_CLASS_NAME);
+	  /* do not return error; go ahead */
+	}
+      else
+	{
+	  error = apply_auth_grants (auth, &bits);
+	  if (error != NO_ERROR)
+	    {
+	      goto fail_end;
+	    }
+	}
 
-	  auth = au_get_auth (user, class_mop);
-	  if (auth == NULL)
-	    {
-	      error = ER_AU_ACCESS_ERROR;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, "db_auth",
-		      AU_USER_CLASS_NAME);
-	    }
-	  else
-	    {
-	      error = apply_auth_grants (auth, &bits);
-	    }
-	  if ((bits & (int) type) == 0)
-	    {
-	      error = ER_AU_GRANT_NOT_FOUND;
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
-	    }
-	  else
-	    {
-	      error =
-		au_insert_update_auth (Au_user, user, class_mop, type, false);
+      if ((bits & (int) type) == 0)
+	{
+	  error = ER_AU_GRANT_NOT_FOUND;
+	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
+	}
+      else
+	{
+	  error =
+	    au_insert_update_auth (Au_user, user, class_mop, type, false);
 
-	      reset_cache_for_user_and_class (classobj);
-	      sm_bump_local_schema_version ();
-	    }
+	  reset_cache_for_user_and_class (classobj);
+	  sm_bump_local_schema_version ();
 	}
     }
 

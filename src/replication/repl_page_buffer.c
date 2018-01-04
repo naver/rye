@@ -234,6 +234,8 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
   char *current_ptr = (char *) io_pgptr;
   int error = NO_ERROR;
 
+  assert (vdes != NULL_VOLDES);
+
   if (lseek64 (vdes, offset, SEEK_SET) == -1)
     {
       error = ER_IO_READ;
@@ -510,7 +512,8 @@ cirp_logpb_act_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr)
 
   if (act_log->log_hdr != NULL)
     {
-      cirp_logpb_decache_range (buf_mgr, act_log->log_hdr->eof_lsa.pageid,
+      cirp_logpb_decache_range (buf_mgr,
+				act_log->log_hdr->ha_info.last_flushed_pageid,
 				LOGPAGEID_MAX);
     }
 

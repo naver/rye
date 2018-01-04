@@ -398,8 +398,8 @@ valid options:\n\
                                 7 dump catalog\n\
                                 8 dump log\n\
                                 9 dump heap\n\
-      --start_pageid=ID        start log page id for log dump;default: 0\n\
-      --num_pages=NUMBER       number of dump page for log dump; default: -1(all)\n\
+      --start-pageid=ID        start log page id for log dump;default: 0\n\
+      --num-pages=NUMBER       number of dump page for log dump; default: -1(all)\n\
   -o, --output-file=FILE       redirect output messages to FILE; default: none\n
 
 
@@ -523,6 +523,7 @@ valid options:\n\
   -c, --cumulative             print cumulative stats\n\
   -i, --interval=S             print stats every S secs\n\
   -s, --substr=STRING          print stat item only that match the substring\n
+  -t, --output-type=STRING     print format(csv...); default: none\n
 
 $set 44 MSGCAT_UTIL_SET_APPLYINFO
 21 Enter DBA password:

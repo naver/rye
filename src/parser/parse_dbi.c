@@ -1663,26 +1663,72 @@ pt_db_to_type_enum (const DB_TYPE t)
       /*  ALL TYPES MUST GET HANDLED HERE! */
       assert (false);
     }
+
   return pt_type;
 }
 
 /*
- * pt_node_to_cmd_type() - Convert node to RYE_STMT_TYPES
- *   return: one of the RYE_STMT_TYPES defined in dbi.h.
+ * pt_node_to_stmt_type() - Convert node to RYE_STMT_TYPE
+ *   return: one of the RYE_STMT_TYPE
  *   node(in):
  */
-int
-pt_node_to_cmd_type (PT_NODE * node)
+RYE_STMT_TYPE
+pt_node_to_stmt_type (const PT_NODE * node)
 {
   if (node == NULL)
     {
-      return -1;
+      return RYE_STMT_UNKNOWN;
     }
 
   switch (node->node_type)
     {
-    default:
-      return node->node_type;
+    case PT_ALTER:
+      return RYE_STMT_ALTER_CLASS;
+    case PT_ALTER_INDEX:
+      return RYE_STMT_ALTER_INDEX;
+    case PT_ALTER_USER:
+      return RYE_STMT_ALTER_USER;
+    case PT_ALTER_SERIAL:
+      return RYE_STMT_ALTER_SERIAL;
+    case PT_COMMIT_WORK:
+      return RYE_STMT_COMMIT_WORK;
+    case PT_CREATE_ENTITY:
+      return RYE_STMT_CREATE_CLASS;
+    case PT_CREATE_INDEX:
+      return RYE_STMT_CREATE_INDEX;
+    case PT_CREATE_USER:
+      return RYE_STMT_CREATE_USER;
+    case PT_CREATE_SERIAL:
+      return RYE_STMT_CREATE_SERIAL;
+    case PT_DROP:
+      return RYE_STMT_DROP_CLASS;
+    case PT_DROP_INDEX:
+      return RYE_STMT_DROP_INDEX;
+    case PT_DROP_USER:
+      return RYE_STMT_DROP_USER;
+    case PT_DROP_SERIAL:
+      return RYE_STMT_DROP_SERIAL;
+    case PT_RENAME:
+      return RYE_STMT_RENAME_CLASS;
+    case PT_ROLLBACK_WORK:
+      return RYE_STMT_ROLLBACK_WORK;
+    case PT_GRANT:
+      return RYE_STMT_GRANT;
+    case PT_REVOKE:
+      return RYE_STMT_REVOKE;
+    case PT_UPDATE_STATS:
+      return RYE_STMT_UPDATE_STATS;
+    case PT_INSERT:
+      return RYE_STMT_INSERT;
+    case PT_DIFFERENCE:
+    case PT_INTERSECTION:
+    case PT_UNION:
+    case PT_SELECT:
+      return RYE_STMT_SELECT;
+    case PT_UPDATE:
+      return RYE_STMT_UPDATE;
+    case PT_DELETE:
+      return RYE_STMT_DELETE;
     case PT_GET_XACTION:
       if (node->info.get_xaction.option == PT_ISOLATION_LEVEL)
 	{
@@ -1692,17 +1738,21 @@ pt_node_to_cmd_type (PT_NODE * node)
 	{
 	  return RYE_STMT_GET_TIMEOUT;
 	}
+    case PT_GET_OPT_LVL:
+      return RYE_STMT_GET_OPT_LVL;
+    case PT_SET_OPT_LVL:
+      return RYE_STMT_SET_OPT_LVL;
+    case PT_SET_SYS_PARAMS:
+      return RYE_STMT_SET_SYS_PARAMS;
+    case PT_SAVEPOINT:
+      return RYE_STMT_SAVEPOINT;
 
-    case PT_DIFFERENCE:
-    case PT_INTERSECTION:
-    case PT_UNION:
-    case PT_SELECT:
-      return RYE_STMT_SELECT;
+    default:
+      break;
     }
 
-  return -1;
+  return RYE_STMT_UNKNOWN;
 }
-
 
 /*
  * pt_bind_helper() -  annotate the PT_ type info of a node from a DB_VALUE

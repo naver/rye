@@ -1330,6 +1330,8 @@ shutdown:
       free_and_init (css_Master_server_name);
     }
 
+  monitor_final_collector ();
+
   return status;
 }
 
@@ -1391,7 +1393,7 @@ css_end_server_request (CSS_CONN_ENTRY * conn)
 }
 
 /*
- * css_set_client_version() - 
+ * css_set_client_version() -
  */
 void
 css_set_client_version (THREAD_ENTRY * thread_p, const RYE_VERSION * version)

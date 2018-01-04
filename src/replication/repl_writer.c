@@ -74,7 +74,7 @@ CIRP_LOGWR_GLOBAL cirpwr_Gl = {
   {'0'}
   ,
   /* host info */
-  PRM_NULL_NODE_INFO,
+  PRM_NODE_INFO_INITIALIZER,
   /* log_path */
   {'0'}
   ,
@@ -351,8 +351,6 @@ cirp_init_writer (CIRP_WRITER_INFO * writer)
   cirpwr_change_copier_status (writer, CIRP_AGENT_INIT);
   cirpwr_change_writer_status (writer, CIRP_AGENT_INIT);
 
-  memset (&writer->ct, 0, sizeof (CIRP_CT_LOG_WRITER));
-
   assert (error == NO_ERROR);
   return error;
 
@@ -535,15 +533,12 @@ cirpwr_create_active_log (CCI_CONN * conn)
       ct.host_info = cirpwr_Gl.host_info;
 
       /* set first record */
-      LSA_COPY (&ct.current_lsa, &m_log_hdr->sof_lsa);
       LSA_COPY (&ct.required_lsa, &m_log_hdr->sof_lsa);
 
       gettimeofday (&current_time, NULL);
-      ct.start_time = timeval_to_msec (&current_time);
-      ct.source_applied_time = ct.start_time;
+      ct.source_applied_time = timeval_to_msec (&current_time);
 
       ct.creation_time = m_log_hdr->db_creation * 1000;
-      ct.queue_full = 0;
 
       error = rpct_insert_log_analyzer (conn, &ct);
       if (error != NO_ERROR)
@@ -1501,7 +1496,7 @@ cirpwr_archive_active_log (void)
 
   bg_arv_info = &cirpwr_Gl.bg_archive_info;
 
-  if (bg_arv_info->start_page_id >= cirpwr_Gl.last_arv_lpageid)
+  if (bg_arv_info->start_page_id > cirpwr_Gl.last_arv_lpageid)
     {
       /* archive file already created */
       assert ((cirpwr_Gl.ha_info.nxarv_pageid
@@ -1639,10 +1634,6 @@ cirpwr_write_log_pages (void)
   static struct timeval last_flush_time = { 0, 0 };
   INT64 diff_msec;
   LOG_HEADER *m_log_hdr;
-  bool has_writer_mutex = false;
-  CIRP_WRITER_INFO *writer = NULL;
-
-  writer = &Repl_Info->writer_info;
 
   assert (cirpwr_Gl.append_vdes != NULL_VOLDES);
 
@@ -1678,26 +1669,8 @@ cirpwr_write_log_pages (void)
       return error;
     }
 
-  error = pthread_mutex_lock (&writer->lock);
-  if (error != NO_ERROR)
-    {
-      error = ER_CSS_PTHREAD_MUTEX_LOCK;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-
-      GOTO_EXIT_ON_ERROR;
-    }
-  has_writer_mutex = true;
-
   assert (!LSA_ISNULL (&m_log_hdr->eof_lsa));
-  assert (writer->ct.last_flushed_pageid <= m_log_hdr->eof_lsa.pageid);
-
-  writer->ct.last_flushed_pageid = cirpwr_Gl.ha_info.last_flushed_pageid;
-  writer->ct.last_received_time = curtime.tv_sec;
-
-  LSA_COPY (&writer->ct.eof_lsa, &m_log_hdr->eof_lsa);
-
-  pthread_mutex_unlock (&writer->lock);
-  has_writer_mutex = false;
+  assert (cirpwr_Gl.ha_info.last_flushed_pageid <= m_log_hdr->eof_lsa.pageid);
 
   last_flush_time = curtime;
 
@@ -1706,11 +1679,6 @@ cirpwr_write_log_pages (void)
   return NO_ERROR;
 
 exit_on_error:
-  if (has_writer_mutex == true)
-    {
-      pthread_mutex_unlock (&writer->lock);
-    }
-
   if (error == NO_ERROR)
     {
       assert (false);
@@ -1734,7 +1702,7 @@ cirpwr_get_log_header ()
     -1, 0, false
   };
   OR_ALIGNED_BUF (OR_INT_SIZE * 2 + OR_INT64_SIZE) a_request;
-  OR_ALIGNED_BUF (OR_INT_SIZE * 5 + OR_INT64_SIZE) a_reply;
+  OR_ALIGNED_BUF (OR_INT_SIZE * 5 + OR_INT64_SIZE * 2) a_reply;
   char *request, *reply;
   char *ptr;
   char *logpg_area = NULL;
@@ -1828,7 +1796,7 @@ log_copier_main (void *arg)
   error = pthread_mutex_lock (&th_entry->th_lock);
   pthread_mutex_unlock (&th_entry->th_lock);
 
-  assert (th_entry->th_type == CIRP_THREAD_WRITER);
+  assert (th_entry->th_type == CIRP_THREAD_COPIER);
 
   snprintf (err_msg, sizeof (err_msg),
 	    "Writer Start: last_pageid(%lld)",
@@ -2135,7 +2103,7 @@ static int
 cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
 {
   OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 2) a_request;
-  OR_ALIGNED_BUF (OR_INT64_SIZE + OR_INT_SIZE * 5) a_reply;
+  OR_ALIGNED_BUF (OR_INT64_SIZE * 2 + OR_INT_SIZE * 5) a_reply;
   char *request, *reply;
   char *ptr;
   LOG_PAGEID first_pageid_torecv;
@@ -2275,7 +2243,7 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
   struct timespec wakeup_time;
   int wakeup_interval = 100;
   CSS_NET_PACKET *recv_packet;
-  RECV_Q_NODE *node;
+  RECV_Q_NODE *node = NULL;
 
   error = 0;
 
@@ -2321,6 +2289,8 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
       return error;
     }
 
+  assert (node != NULL);
+
   ptr = or_unpack_int (replybuf, &server_request_num);
   server_request = (QUERY_SERVER_REQUEST) server_request_num;
 
@@ -2329,12 +2299,13 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
     case GET_NEXT_LOG_PAGES:
       {
 	int length;
-	INT64 pageid;
+	INT64 pageid, eof_pageid;
 	int num_page, file_status, server_status;
 	int data_recv_size;
 
 	ptr = or_unpack_int (ptr, &length);
 	ptr = or_unpack_int64 (ptr, &pageid);
+	ptr = or_unpack_int64 (ptr, &eof_pageid);
 	ptr = or_unpack_int (ptr, &num_page);
 	ptr = or_unpack_int (ptr, &file_status);
 	ptr = or_unpack_int (ptr, &server_status);
@@ -2347,13 +2318,11 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
 	    css_net_packet_free (recv_packet);
-	    if (node != NULL)
-	      {
-		pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-		Rye_queue_enqueue (cirpwr_Gl.free_list, node);
-		node = NULL;
-		pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-	      }
+	    assert (node != NULL);
+	    pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+	    Rye_queue_enqueue (cirpwr_Gl.free_list, node);
+	    node = NULL;
+	    pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
 	    return error;
 	  }
@@ -2372,6 +2341,16 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
 	recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
 	pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
 	pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+
+	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_EOF_PAGEID, eof_pageid);
+	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID,
+			     cirpwr_Gl.last_received_pageid);
+
+	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_GAP,
+			     monitor_get_stats (MNT_RP_COPIER_ID,
+						MNT_RP_EOF_PAGEID)
+			     - monitor_get_stats (MNT_RP_COPIER_ID,
+						  MNT_RP_RECEIVED_PAGEID));
 
 	while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
 	       && REPL_NEED_SHUTDOWN () == false)
@@ -2495,6 +2474,14 @@ net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node)
     {
       return error;
     }
+  monitor_stats_gauge (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID,
+		       cirpwr_Gl.ha_info.last_flushed_pageid);
+
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_FLUSHED_GAP,
+		       monitor_get_stats (MNT_RP_COPIER_ID,
+					  MNT_RP_RECEIVED_PAGEID)
+		       - monitor_get_stats (MNT_RP_COPIER_ID,
+					    MNT_RP_FLUSHED_PAGEID));
 
   if (cirpwr_Gl.action & CIRPWR_ACTION_FORCE_FLUSH)
     {

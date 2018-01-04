@@ -749,3 +749,63 @@ rye_server_shm_get_nodeid (short *nodeid, const char *dbname)
 
   return NO_ERROR;
 }
+
+/*
+ * rye_server_shm_dump ()-
+ *   return: error code
+ *
+ *   out_fp(out):
+ *   shm_key(in):
+ */
+int
+rye_server_shm_dump (FILE * out_fp, int shm_key)
+{
+  RYE_SERVER_SHM *shm_p;
+  int i, index;
+  char buf[256];
+
+  assert (rye_Server_shm == NULL);
+
+  if (out_fp == NULL)
+    {
+      assert (false);
+      return ER_FAILED;
+    }
+
+  shm_p = rye_shm_attach (shm_key, RYE_SHM_TYPE_SERVER, true);
+  if (shm_p == NULL)
+    {
+      return ER_FAILED;
+    }
+
+  /* shard info */
+  fprintf (out_fp, "\t\t node_id:%d, num_groupid:%d bitmap_size:%d\n",
+	   shm_p->shard_info.nodeid, shm_p->shard_info.num_groupid,
+	   shm_p->shard_info.groupid_bitmap_size);
+
+  /* ha info */
+  fprintf (out_fp, "\t\t state:%s, eof:%ld,%d, num_repl:%d\n",
+	   HA_STATE_NAME (shm_p->server_state),
+	   (long) shm_p->ha_info.eof_lsa.pageid,
+	   shm_p->ha_info.eof_lsa.offset, shm_p->ha_info.num_repl);
+
+  /* repl info */
+  index = 0;
+  for (i = 0; i < shm_p->ha_info.num_repl; i++)
+    {
+      if (shm_p->ha_info.repl_info[i].is_local_host == true)
+	{
+	  continue;
+	}
+      prm_node_info_to_str (buf, sizeof (buf),
+			    &shm_p->ha_info.repl_info[i].node_info);
+
+      fprintf (out_fp, "\t\t\t Repl:%d, node:%s, state:%s\n",
+	       index++, buf,
+	       HA_APPLY_STATE_NAME (shm_p->ha_info.repl_info[i].state));
+    }
+
+  rye_server_shm_detach (shm_p);
+
+  return NO_ERROR;
+}

@@ -248,12 +248,14 @@ static int fileio_initialize_volume_info_cache (void);
 static int fileio_max_permanent_volumes (int index, int num_permanent_volums);
 static int fileio_min_temporary_volumes (int index, int num_temp_volums,
 					 int num_volinfo_array);
+#if defined (ENABLE_UNUSED_FUNCTION)
 static FILEIO_SYSTEM_VOLUME_INFO *fileio_traverse_system_volume (THREAD_ENTRY
 								 * thread_p,
 								 SYS_VOLINFO_APPLY_FN
 								 apply_function,
 								 APPLY_ARG
 								 * arg);
+#endif
 static FILEIO_VOLUME_INFO *fileio_traverse_permanent_volume (THREAD_ENTRY *
 							     thread_p,
 							     VOLINFO_APPLY_FN
@@ -287,9 +289,11 @@ static bool fileio_is_system_volume_label_equal (THREAD_ENTRY * thread_p,
 						 FILEIO_SYSTEM_VOLUME_INFO *
 						 sys_vol_info_p,
 						 APPLY_ARG * arg);
+#if defined (ENABLE_UNUSED_FUNCTION)
 static bool fileio_synchronize_sys_volume (THREAD_ENTRY * thread_p,
 					   FILEIO_SYSTEM_VOLUME_INFO *
 					   vol_sys_info_p, APPLY_ARG * arg);
+#endif
 static bool fileio_synchronize_volume (THREAD_ENTRY * thread_p,
 				       FILEIO_VOLUME_INFO * vol_info_p,
 				       APPLY_ARG * arg);
@@ -1075,6 +1079,7 @@ fileio_open (const char *vol_label_p, int flags, int mode)
   return vol_fd;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * fileio_set_permission () -
  *   return:
@@ -1112,6 +1117,7 @@ fileio_set_permission (const char *vol_label_p)
 
   return error;
 }
+#endif
 
 /*
  * fileio_close () - Close the volume associated with the given volume descriptor
@@ -1121,6 +1127,8 @@ fileio_set_permission (const char *vol_label_p)
 void
 fileio_close (int vol_fd)
 {
+  assert (vol_fd != NULL_VOLDES);
+
   if (close (vol_fd) != 0)
     {
       er_set_with_oserror (ER_WARNING_SEVERITY, ARG_FILE_LINE,
@@ -1626,7 +1634,7 @@ fileio_unformat_and_rename (UNUSED_ARG THREAD_ENTRY * thread_p,
       /* if vol_label_p is a pointer of global vinfo->vlabel,
        * It can be reset in fileio_dismount
        */
-      strcpy (vlabel_p, vol_label_p);
+      STRNCPY (vlabel_p, vol_label_p, PATH_MAX);
       vol_label_p = vlabel_p;
       fileio_dismount (thread_p, vol_fd);
     }
@@ -1941,6 +1949,9 @@ fileio_dismount (THREAD_ENTRY * thread_p, int vol_fd)
 {
   const char *vlabel;
   FILEIO_LOCKF_TYPE lockf_type;
+
+  assert (vol_fd != NULL_VOLDES);
+
   /*
    * Make sure that all dirty pages of the volume are forced to disk. This
    * is needed since a close of a file and program exist, does not imply
@@ -1992,6 +2003,7 @@ fileio_min_temporary_volumes (int index, int num_temp_volums,
     }
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 static FILEIO_SYSTEM_VOLUME_INFO *
 fileio_traverse_system_volume (THREAD_ENTRY * thread_p,
 			       SYS_VOLINFO_APPLY_FN apply_function,
@@ -2015,6 +2027,7 @@ fileio_traverse_system_volume (THREAD_ENTRY * thread_p,
 
   return NULL;
 }
+#endif
 
 static FILEIO_VOLUME_INFO *
 fileio_traverse_permanent_volume (THREAD_ENTRY * thread_p,
@@ -2956,7 +2969,6 @@ fileio_synchronize_bg_archive_volume (THREAD_ENTRY * thread_p)
 					fileio_synchronize_sys_volume, &arg);
   return NO_ERROR;
 }
-#endif
 
 /*
  * fileio_synchronize_sys_volume () -
@@ -2996,6 +3008,7 @@ fileio_synchronize_sys_volume (THREAD_ENTRY * thread_p,
 
   return found;
 }
+#endif
 
 /*
  * fileio_synchronize_volume () -
@@ -3045,16 +3058,20 @@ fileio_synchronize_all (THREAD_ENTRY * thread_p, bool is_include)
   int success = NO_ERROR;
   APPLY_ARG arg = { 0 };
 
+  assert (is_include == false);
+
   arg.vol_id = NULL_VOLID;
 
   er_stack_push ();
 
+#if defined (ENABLE_UNUSED_FUNCTION)
   if (is_include)
     {
       (void) fileio_traverse_system_volume (thread_p,
 					    fileio_synchronize_sys_volume,
 					    &arg);
     }
+#endif
 
   (void) fileio_traverse_permanent_volume (thread_p,
 					   fileio_synchronize_volume, &arg);
@@ -4253,7 +4270,7 @@ fileio_cache (VOLID vol_id, const char *vol_label_p, int vol_fd,
 	      sys_vol_info_p->volid = vol_id;
 	      sys_vol_info_p->vdes = vol_fd;
 	      sys_vol_info_p->lockf_type = lockf_type;
-	      strncpy (sys_vol_info_p->vlabel, vol_label_p, PATH_MAX);
+	      STRNCPY (sys_vol_info_p->vlabel, vol_label_p, PATH_MAX);
 	      sys_vol_info_p->next = fileio_Sys_vol_info_header.anchor.next;
 	      fileio_Sys_vol_info_header.anchor.next = sys_vol_info_p;
 	      fileio_Sys_vol_info_header.num_vols++;
@@ -4756,6 +4773,7 @@ fileio_get_lockf_type (int vol_fd)
   return lockf_type;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * fileio_symlink () -
  *   return:
@@ -4780,3 +4798,4 @@ fileio_symlink (const char *src_p, const char *dest_p, int overwrite)
 
   return NO_ERROR;
 }
+#endif

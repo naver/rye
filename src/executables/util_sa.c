@@ -886,7 +886,6 @@ restoredb (UTIL_FUNCTION_ARG * arg)
 #if 1				/* TODO - fix me; convert host_name to host_ip */
       analyzer_info.host_info = restart_arg.db_host_info;
 #endif
-      analyzer_info.current_lsa = restart_arg.backuptime_lsa;
       analyzer_info.required_lsa = restart_arg.backuptime_lsa;
       analyzer_info.creation_time = restart_arg.db_creation * 1000;
 
