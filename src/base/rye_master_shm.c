@@ -31,6 +31,7 @@
 #include <assert.h>
 
 #include "rye_master_shm.h"
+#include "rye_server_shm.h"
 #include "error_manager.h"
 #include "system_parameter.h"
 #include "tcp.h"
