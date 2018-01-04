@@ -1575,7 +1575,7 @@ monitor_get_name (MONITOR_INFO * monitor)
     {
       assert (false);
 
-      return ER_FAILED;
+      return NULL;
     }
 
   return shm_p->name;
