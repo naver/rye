@@ -6874,6 +6874,19 @@ btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   return NO_ERROR;
 }
 
+#if 1
+void
+btree_rv_pagerec_dump (FILE * fp, UNUSED_ARG int length, void *data)
+{
+  const RECSET_HEADER *recset_header;
+
+  recset_header = (const RECSET_HEADER *) data;
+
+  fprintf (fp, " rec_cnt: %d , first_slotid: %d \n", 
+           recset_header->rec_cnt, recset_header->first_slotid);
+}
+#endif
+
 /*
  * btree_rv_newpage_redo_init_helper () -
  *   return: int
