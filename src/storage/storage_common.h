@@ -99,6 +99,9 @@ typedef INT32 GROUPID;		/* Shard group identifier */
 
 /* Log address structure */
 
+#define LOG_LSA_PAGEID_MASK 0xFFFFFFFFFFFF0000
+#define LOG_LSA_OFFSET_MASK 0x000000000000FFFF
+
 #define LOG_LSA_OFFSET_BITS 16
 
 typedef struct log_lsa LOG_LSA;	/* Log address identifier */
