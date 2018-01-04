@@ -991,6 +991,13 @@ btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
   BTREE_NODE_HEADER *hdr;
   short node_type;
 
+#if 1
+  if (length != sizeof (BTREE_NODE_HEADER))
+    {
+      return;
+    }
+#endif
+
   hdr = (BTREE_NODE_HEADER *) data;
 
   node_type = BTREE_GET_NODE_TYPE (hdr->node_level);
