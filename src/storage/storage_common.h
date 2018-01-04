@@ -99,11 +99,16 @@ typedef INT32 GROUPID;		/* Shard group identifier */
 
 /* Log address structure */
 
+#define LOG_LSA_PAGEID_MASK 0xFFFFFFFFFFFF0000
+#define LOG_LSA_OFFSET_MASK 0x000000000000FFFF
+
+#define LOG_LSA_OFFSET_BITS 16
+
 typedef struct log_lsa LOG_LSA;	/* Log address identifier */
 struct log_lsa
 {
-  INT64 pageid:49;		/* Log page identifier : 49 bits length */
-  INT64 offset:15;		/* Offset in page : 15 bits length */
+  INT64 pageid:48;		/* Log page identifier : 48 bits(6 bytes) length */
+  INT64 offset:16;		/* Offset in page : 16 bits(2 bytes) length */
 };
 
 #define LSA_COPY(lsa_ptr1, lsa_ptr2) *(lsa_ptr1) = *(lsa_ptr2)

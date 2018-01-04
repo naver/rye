@@ -46,6 +46,8 @@
 #include "rye_server_shm.h"
 #include "tcp.h"
 
+#include "ds_string_array.h"
+
 #define MONITOR_INTERVAL	10
 
 #define METRIC_PREFIX		"rye."
@@ -154,7 +156,12 @@ static T_TCP_SEND_CONNECT_INFO *tcp_Send_connect_info = NULL;
 static int tcp_Send_fd = -1;
 static char tag_Service[64];
 static int repeat_Count = -1;
+
+static char *printFilter = NULL;
 static char *userName = NULL;
+static char *metricFilter = NULL;
+static char *itemFilter = NULL;
+static char *dbnameFilter = NULL;
 
 int
 main (int argc, char *argv[])
@@ -249,9 +256,11 @@ main (int argc, char *argv[])
 static int
 get_args (int argc, char *argv[])
 {
+  RSTR_ARRAY filter_array = NULL;
+  int found = -1;
   int opt;
 
-  while ((opt = getopt (argc, argv, "c:r:u:")) != -1)
+  while ((opt = getopt (argc, argv, "c:r:u:f:")) != -1)
     {
       switch (opt)
 	{
@@ -264,12 +273,57 @@ get_args (int argc, char *argv[])
 	case 'r':
 	  repeat_Count = atoi (optarg);
 	  break;
-	case 'u':
-	  userName = optarg;
+	case 'f':
+	  printFilter = optarg;
 	  break;
 	default:
 	  return -1;
 	}
+    }
+
+  if (printFilter != NULL)
+    {
+      char buf[128];
+
+      filter_array = Rye_split_string (printFilter, ",");
+      if (filter_array == NULL)
+	{
+	  return -1;
+	}
+
+      snprintf (buf, sizeof (buf), "user=");
+      found = Rye_str_array_find_substr (filter_array, buf);
+      if (found != -1)
+	{
+	  userName = strstr (filter_array[found], "=");
+	  userName = strdup (userName + 1);
+	}
+
+      snprintf (buf, sizeof (buf), "metric=");
+      found = Rye_str_array_find_substr (filter_array, buf);
+      if (found != -1)
+	{
+	  metricFilter = strstr (filter_array[found], "=");
+	  metricFilter = strdup (metricFilter + 1);
+	}
+
+      snprintf (buf, sizeof (buf), "%s=", TAG_DB_NAME);
+      found = Rye_str_array_find_substr (filter_array, buf);
+      if (found != -1)
+	{
+	  dbnameFilter = strstr (filter_array[found], "=");
+	  dbnameFilter = strdup (dbnameFilter + 1);
+	}
+
+      snprintf (buf, sizeof (buf), "%s=", TAG_ITEM);
+      found = Rye_str_array_find_substr (filter_array, buf);
+      if (found != -1)
+	{
+	  itemFilter = strstr (filter_array[found], "=");
+	  itemFilter = strdup (itemFilter + 1);
+	}
+
+      Rye_str_array_free (filter_array);
     }
 
   return 0;
@@ -281,7 +335,8 @@ print_usage (void)
   printf ("broker_monitor_npot [-c] [-r] [-u]\n");
   printf ("\t-c connection url(default: stdout)\n");
   printf ("\t-r repeat count(default: inf)\n");
-  printf ("\t-u user name(default:all user)\n");
+  printf ("\t-f output filter(filters:user,metric,%s,%s"
+	  " ex:item=pageid,metric=ha)\n", TAG_DB_NAME, TAG_ITEM);
 }
 
 static int
@@ -637,10 +692,10 @@ create_db_stats_info_for_repl (MONITOR_INFO * monitor)
     }
 
   SET_DB_STATS_INFO (&db_stats[MNT_RP_EOF_PAGEID], "ha", "eof_pageid");
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_GAP], "ha", "received_gab");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_GAP], "ha", "received_gap");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_PAGEID],
 		     "ha", "received_pageid");
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_GAP], "ha", "flushed_gab");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_GAP], "ha", "flushed_gap");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_PAGEID],
 		     "ha", "flushed_pageid");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_CURRENT_GAP], "ha", "current_gap");
@@ -843,6 +898,26 @@ print_monitor_item (const char *metric_name, const char *item_name,
   char *value_p = NULL;
   char avg_time_buf[128];
   char *avg_time_p = NULL;
+
+  if (metricFilter != NULL && metric_name != NULL
+      && strstr (metric_name, metricFilter) == NULL)
+    {
+      return;
+    }
+
+  if (dbnameFilter != NULL && tag_broker_or_db != NULL
+      && broker_db_name != NULL
+      && strcmp (tag_broker_or_db, TAG_DB_NAME) == 0
+      && strstr (broker_db_name, dbnameFilter) == NULL)
+    {
+      return;
+    }
+
+  if (itemFilter != NULL && item_name != NULL
+      && strstr (item_name, itemFilter) == NULL)
+    {
+      return;
+    }
 
   if (is_cumulative_value && !is_rawdata_print)
     {

@@ -656,6 +656,27 @@ cirpwr_init_copy_log_info (void)
   cirpwr_Gl.last_received_pageid = cirpwr_Gl.ha_info.last_flushed_pageid;
   cirpwr_Gl.last_received_file_status = cirpwr_Gl.ha_info.file_status;
 
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_EOF_PAGEID,
+		       m_log_hdr->eof_lsa.pageid);
+
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID,
+		       cirpwr_Gl.last_received_pageid);
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_GAP,
+		       monitor_get_stats (MNT_RP_COPIER_ID,
+					  MNT_RP_EOF_PAGEID)
+		       - monitor_get_stats (MNT_RP_COPIER_ID,
+					    MNT_RP_RECEIVED_PAGEID));
+
+  monitor_stats_gauge (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID,
+		       cirpwr_Gl.ha_info.last_flushed_pageid);
+
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_FLUSHED_GAP,
+		       monitor_get_stats (MNT_RP_COPIER_ID,
+					  MNT_RP_RECEIVED_PAGEID)
+		       - monitor_get_stats (MNT_RP_FLUSHER_ID,
+					    MNT_RP_FLUSHED_PAGEID));
+
+
   cirpwr_Gl.action = CIRPWR_ACTION_NONE;
 
   vdes = fileio_format (NULL, cirpwr_Gl.db_name,
@@ -2480,7 +2501,7 @@ net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node)
   monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_FLUSHED_GAP,
 		       monitor_get_stats (MNT_RP_COPIER_ID,
 					  MNT_RP_RECEIVED_PAGEID)
-		       - monitor_get_stats (MNT_RP_COPIER_ID,
+		       - monitor_get_stats (MNT_RP_FLUSHER_ID,
 					    MNT_RP_FLUSHED_PAGEID));
 
   if (cirpwr_Gl.action & CIRPWR_ACTION_FORCE_FLUSH)

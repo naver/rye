@@ -155,6 +155,8 @@ static int local_mg_connect_db_server (T_LOCAL_MGMT_JOB * job,
 static int local_mg_rm_tmp_file (T_LOCAL_MGMT_JOB * job,
 				 const T_MGMT_REQ_ARG * req_arg,
 				 T_MGMT_RESULT_MSG * result_msg);
+static int run_child_process (T_LOCAL_MGMT_JOB * job, char *cmd, char **argv,
+			      int num_env, char **envp, bool send_outfile);
 static void shm_copy_child_process_info (void);
 static char *local_mgmt_pack_str (char *ptr, char *str, int len);
 static char *local_mgmt_pack_int (char *ptr, int value);
@@ -624,8 +626,6 @@ local_mg_child_process_waiter (void *arg)
 
 	  pthread_mutex_unlock (&job_queue->lock);
 
-	  assert (job);
-
 	  if (job != NULL && !IS_INVALID_SOCKET (job->clt_sock_fd))
 	    {
 	      int exit_status;
@@ -884,8 +884,6 @@ local_mg_process_queue_remove_by_pid (int pid)
 	}
     }
 
-  assert (job != NULL);
-
   return job;
 }
 
@@ -994,14 +992,14 @@ local_mg_sync_shard_mgmt_info (T_LOCAL_MGMT_JOB * job,
 }
 
 static void
-copy_launch_proc_cmd (char *buf, int bufsize, int argc, char **argv)
+copy_launch_proc_cmd (char *buf, int bufsize, char **argv)
 {
   int i, n;
 
   buf[bufsize - 1] = '\0';
   bufsize--;
 
-  for (i = 0; i < argc && bufsize > 0; i++)
+  for (i = 0; argv[i] != NULL && bufsize > 0; i++)
     {
       n = snprintf (buf, bufsize, "%s ", argv[i]);
       buf += n;
@@ -1042,7 +1040,6 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 #define MAX_APPEND_ARGS	2
   const T_MGMT_REQ_ARG_LAUNCH_PROCESS *launch_arg;
   char cmd[BROKER_PATH_MAX] = "";
-  int pid;
   char argv0[BROKER_PATH_MAX] = "";
   char **argv;
   int argc;
@@ -1050,24 +1047,17 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
   char migrator_mgmt_host_opt[] = "--mgmt-host";
   int error = 0;
   int i;
-  T_LOCAL_MGMT_CHILD_PROC_INFO *child_info = NULL;
   const char *rye_root_dir;
+  bool send_outfile;
 
   launch_arg = &req_arg->value.launch_process_arg;
 
   assert (launch_arg->argc > 0);
 
-  argv =
-    RYE_MALLOC (sizeof (char *) * (launch_arg->argc + 2 + MAX_APPEND_ARGS));
+  argv = RYE_MALLOC (sizeof (char *) *
+		     (launch_arg->argc + 2 + MAX_APPEND_ARGS));
   if (argv == NULL)
     {
-      return BR_ER_NO_MORE_MEMORY;
-    }
-
-  child_info = RYE_MALLOC (sizeof (T_LOCAL_MGMT_CHILD_PROC_INFO));
-  if (child_info == NULL)
-    {
-      RYE_FREE_MEM (argv);
       return BR_ER_NO_MORE_MEMORY;
     }
 
@@ -1104,7 +1094,6 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
   else
     {
       RYE_FREE_MEM (argv);
-      RYE_FREE_MEM (child_info);
       return BR_ER_LAUNCH_PROCESS;
     }
 
@@ -1113,13 +1102,40 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 
   signal (SIGCHLD, SIG_DFL);
 
-  pthread_mutex_lock (&job_Q_child_proc->lock);
-
   if (MGMT_LUANCH_IS_FLAG_SET (launch_arg->flag, MGMT_LAUNCH_FLAG_NO_RESULT))
     {
-      child_info->output_file_id = 0;
+      send_outfile = false;
     }
   else
+    {
+      send_outfile = true;
+    }
+
+  error = run_child_process (job, cmd, argv, launch_arg->num_env,
+			     launch_arg->envp, send_outfile);
+
+  RYE_FREE_MEM (argv);
+
+  return error;
+}
+
+static int
+run_child_process (T_LOCAL_MGMT_JOB * job, char *cmd, char **argv,
+		   int num_env, char **envp, bool send_outfile)
+{
+  T_LOCAL_MGMT_CHILD_PROC_INFO *child_info = NULL;
+  int error;
+  int pid;
+
+  child_info = RYE_MALLOC (sizeof (T_LOCAL_MGMT_CHILD_PROC_INFO));
+  if (child_info == NULL)
+    {
+      return BR_ER_NO_MORE_MEMORY;
+    }
+
+  pthread_mutex_lock (&job_Q_child_proc->lock);
+
+  if (send_outfile)
     {
       if (child_Outfile_seq == 0)
 	{
@@ -1127,16 +1143,15 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 	}
       child_info->output_file_id = child_Outfile_seq++;
     }
+  else
+    {
+      child_info->output_file_id = 0;
+    }
 
   pid = fork ();
   if (pid == 0)
     {
-      char child_infile[BROKER_PATH_MAX];
-      char child_outfile[BROKER_PATH_MAX];
-      char child_errfile[BROKER_PATH_MAX];
-      int fd_stdin = -1;
-      int fd_stdout = -1;
-      int fd_stderr = -1;
+      int i;
       char working_dir[BROKER_PATH_MAX];
 
       envvar_tmpdir_file (working_dir, BROKER_PATH_MAX, "");
@@ -1147,13 +1162,20 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 	  close (i);
 	}
 
-      for (i = 0; i < launch_arg->num_env; i++)
+      for (i = 0; i < num_env; i++)
 	{
-	  putenv (launch_arg->envp[i]);
+	  putenv (envp[i]);
 	}
 
       if (child_info->output_file_id > 0)
 	{
+	  char child_infile[BROKER_PATH_MAX];
+	  char child_outfile[BROKER_PATH_MAX];
+	  char child_errfile[BROKER_PATH_MAX];
+	  int fd_stdin = -1;
+	  int fd_stdout = -1;
+	  int fd_stderr = -1;
+
 	  make_child_output_filename (child_infile, sizeof (child_infile),
 				      true,
 				      child_outfile, sizeof (child_outfile),
@@ -1195,8 +1217,7 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
   else
     {
       child_info->pid = pid;
-      copy_launch_proc_cmd (child_info->cmd, sizeof (child_info->cmd), argc,
-			    argv);
+      copy_launch_proc_cmd (child_info->cmd, sizeof (child_info->cmd), argv);
 
       error = local_mg_job_queue_add (job_Q_child_proc,
 				      &job->clt_sock_fd, job->clt_ip,
@@ -1207,7 +1228,6 @@ local_mg_admin_launch_process (T_LOCAL_MGMT_JOB * job,
 
   pthread_mutex_unlock (&job_Q_child_proc->lock);
 
-  RYE_FREE_MEM (argv);
   RYE_FREE_MEM (child_info);
 
   return error;
@@ -1499,7 +1519,13 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
   const T_MGMT_REQ_ARG_BR_ACL_RELOAD *arg_br_acl_reload;
   char tmp_acl_filepath[BROKER_PATH_MAX] = "";
   char tmp_filename[BROKER_PATH_MAX];
-  int childpid;
+  char rye_cmd[BROKER_PATH_MAX];
+  char cmd_arg_broker[] = "broker";
+  char cmd_arg_acl[] = "acl";
+  char cmd_arg_reload[] = "reload";
+  char *argv[] = { rye_cmd, cmd_arg_broker, cmd_arg_acl, cmd_arg_reload,
+    tmp_acl_filepath, NULL
+  };
 
   arg_br_acl_reload = &req_arg->value.br_acl_reload_arg;
 
@@ -1518,41 +1544,9 @@ local_mg_br_acl_reload (UNUSED_ARG T_LOCAL_MGMT_JOB * job,
       return BR_ER_BR_ACL_RELOAD;
     }
 
-  childpid = fork ();
-  if (childpid < 0)
-    {
-      return BR_ER_BR_ACL_RELOAD;
-    }
-  else if (childpid == 0)
-    {
-      int n;
-      char rye_cmd[BROKER_PATH_MAX];
+  snprintf (rye_cmd, sizeof (rye_cmd), "%s/bin/rye", envvar_root ());
 
-      for (n = 3; n < 256; n++)
-	{
-	  close (n);
-	}
-
-      snprintf (rye_cmd, sizeof (rye_cmd), "%s/bin/rye", envvar_root ());
-
-      execl (rye_cmd, rye_cmd, "broker", "acl", "reload", tmp_acl_filepath,
-	     NULL);
-
-      exit (-1);
-    }
-  else
-    {
-      int child_exit_status;
-
-      if (waitpid (childpid, &child_exit_status, 0) < 0)
-	{
-	  return BR_ER_BR_ACL_RELOAD;
-	}
-
-      unlink (tmp_acl_filepath);
-
-      return (child_exit_status == 0 ? 0 : BR_ER_BR_ACL_RELOAD);
-    }
+  return run_child_process (job, rye_cmd, argv, 0, NULL, false);
 }
 
 static int
