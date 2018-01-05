@@ -6231,19 +6231,23 @@ run_rebalance_migrator (const T_GROUP_MIGRATION_INFO * mig_info,
 static void
 set_shm_migration_info (const T_MIGRATION_STATS * mig_stats)
 {
-  int i;
   int scheduled = 0;
   int running = 0;
   int complete = 0;
   int failed = 0;
 
-  for (i = 0; mig_stats[i].src_nodeid > 0; i++)
+  if (mig_stats != NULL)
     {
-      scheduled += mig_stats[i].count_scheduled;
-      running += (mig_stats[i].count_migrator_run +
-		  mig_stats[i].count_mig_started);
-      complete += mig_stats[i].count_complete;
-      failed += mig_stats[i].count_failed;
+      int i;
+
+      for (i = 0; mig_stats[i].src_nodeid > 0; i++)
+	{
+	  scheduled += mig_stats[i].count_scheduled;
+	  running += (mig_stats[i].count_migrator_run +
+		      mig_stats[i].count_mig_started);
+	  complete += mig_stats[i].count_complete;
+	  failed += mig_stats[i].count_failed;
+	}
     }
 
   shm_Shard_mgmt_info->rbl_scheduled_count = scheduled;
