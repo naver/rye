@@ -199,6 +199,14 @@ static int btree_save_range_search_result (THREAD_ENTRY * thread_p,
 static int btree_check_key_cnt (BTID_INT * btid, PAGE_PTR page_p,
 				short node_level, short key_cnt);
 
+#if !defined(NDEBUG)
+static int btree_fence_check_key (THREAD_ENTRY * thread_p,
+				  BTID_INT * btid,
+				  const DB_IDXKEY * left_key,
+				  const DB_IDXKEY * right_key,
+				  const bool with_eq);
+#endif
+
 /*
  * btree_clear_key_value () -
  *   return: cleared flag
@@ -1190,58 +1198,9 @@ btree_search_nonleaf_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
     }
 
 #if !defined(NDEBUG)
-  /* check left fence */
-  if (!DB_IDXKEY_IS_NULL (&(btid->left_fence)))
+  if (btree_fence_check_page (thread_p, btid, page_ptr) != NO_ERROR)
     {
-      mid = 1;			/* get the first key */
-      if (spage_get_record (page_ptr, mid, &rec, PEEK) != S_SUCCESS)
-	{
-	  goto exit_on_error;
-	}
-
-      btree_clear_key_value (&clear_key, &mid_key);
-
-      ret = btree_read_record (thread_p, btid, &rec, &mid_key,
-			       &non_leaf_rec, BTREE_NON_LEAF_NODE, &clear_key,
-			       PEEK_KEY_VALUE);
-      if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-
-      ret = btree_fence_check_key (thread_p, btid,
-				   &(btid->left_fence), &mid_key, false);
-      if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-    }
-
-  /* check right fence */
-  if (!DB_IDXKEY_IS_NULL (&(btid->right_fence)))
-    {
-      mid = key_cnt;		/* get the last key */
-      if (spage_get_record (page_ptr, mid, &rec, PEEK) != S_SUCCESS)
-	{
-	  goto exit_on_error;
-	}
-
-      btree_clear_key_value (&clear_key, &mid_key);
-
-      ret = btree_read_record (thread_p, btid, &rec, &mid_key,
-			       &non_leaf_rec, BTREE_NON_LEAF_NODE, &clear_key,
-			       PEEK_KEY_VALUE);
-      if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-
-      ret = btree_fence_check_key (thread_p, btid,
-				   &mid_key, &(btid->right_fence), true);
-      if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+      goto exit_on_error;
     }
 #endif
 
@@ -1353,15 +1312,6 @@ btree_search_nonleaf_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
 	  goto exit_on_error;
 	}
 
-      /* check iff narrow left fence */
-      ret =
-	btree_fence_check_key (thread_p, btid, &(btid->left_fence), &mid_key,
-			       false);
-      if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-
       (void) db_idxkey_clear (&(btid->left_fence));
 
       db_idxkey_clone (&mid_key, &(btid->left_fence));
@@ -1382,15 +1332,6 @@ btree_search_nonleaf_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
       ret = btree_read_record (thread_p, btid, &rec, &mid_key,
 			       &non_leaf_rec, BTREE_NON_LEAF_NODE, &clear_key,
 			       PEEK_KEY_VALUE);
-      if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-
-      /* check iff narrow right fence */
-      ret =
-	btree_fence_check_key (thread_p, btid, &mid_key, &(btid->right_fence),
-			       false);
       if (ret != NO_ERROR)
 	{
 	  goto exit_on_error;
@@ -1508,54 +1449,9 @@ btree_search_leaf_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
     }
 
 #if !defined(NDEBUG)
-  /* check left fence */
-  if (!DB_IDXKEY_IS_NULL (&(btid->left_fence)))
+  if (btree_fence_check_page (thread_p, btid, page_ptr) != NO_ERROR)
     {
-      mid = 1;			/* get the first key */
-      if (spage_get_record (page_ptr, mid, &rec, PEEK) != S_SUCCESS)
-	{
-	  goto exit_on_error;
-	}
-
-      btree_clear_key_value (&clear_key, &mid_key);
-
-      if (btree_read_record (thread_p, btid, &rec, &mid_key,
-			     NULL, BTREE_LEAF_NODE, &clear_key,
-			     PEEK_KEY_VALUE) != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-
-      if (btree_fence_check_key
-	  (thread_p, btid, &(btid->left_fence), &mid_key, false) != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-    }
-
-  /* check right fence */
-  if (!DB_IDXKEY_IS_NULL (&(btid->right_fence)))
-    {
-      mid = key_cnt;		/* get the last key */
-      if (spage_get_record (page_ptr, mid, &rec, PEEK) != S_SUCCESS)
-	{
-	  goto exit_on_error;
-	}
-
-      btree_clear_key_value (&clear_key, &mid_key);
-
-      if (btree_read_record (thread_p, btid, &rec, &mid_key,
-			     NULL, BTREE_LEAF_NODE, &clear_key,
-			     PEEK_KEY_VALUE) != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
-
-      if (btree_fence_check_key
-	  (thread_p, btid, &mid_key, &(btid->right_fence), true) != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+      goto exit_on_error;
     }
 #endif
 
@@ -8573,7 +8469,7 @@ btree_prepare_range_search (THREAD_ENTRY * thread_p, BTREE_SCAN * bts)
  *   right_key(in):
  *   with_eq(in);
  */
-int
+static int
 btree_fence_check_key (THREAD_ENTRY * thread_p,
 		       BTID_INT * btid,
 		       const DB_IDXKEY * left_key,
@@ -8634,5 +8530,133 @@ exit_on_error:
   er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 
   return ER_GENERIC_ERROR;
+}
+
+int
+btree_fence_check_page (THREAD_ENTRY * thread_p,
+			BTID_INT * btid, PAGE_PTR page_ptr)
+{
+  int key_cnt;
+  RECDES rec = RECDES_INITIALIZER;
+  NON_LEAF_REC non_leaf_rec;
+  BTREE_NODE_HEADER node_header;
+  bool clear_key;
+  DB_IDXKEY mid_key;
+  short node_type;
+
+  int ret = NO_ERROR;
+
+  clear_key = false;
+  DB_IDXKEY_MAKE_NULL (&mid_key);
+
+  /* read the node header */
+  ret = btree_read_node_header (btid, page_ptr, &node_header);
+  if (ret != NO_ERROR)
+    {
+      goto exit_on_error;
+    }
+
+  key_cnt = node_header.key_cnt;
+  if (key_cnt == 0)
+    {
+      btree_clear_key_value (&clear_key, &mid_key);
+
+      return NO_ERROR;
+    }
+
+  node_type = BTREE_GET_NODE_TYPE (node_header.node_level);
+
+  /* check left fence */
+  if (!DB_IDXKEY_IS_NULL (&(btid->left_fence)))
+    {
+      /* get the first key */
+      if (spage_get_record (page_ptr, 1, &rec, PEEK) != S_SUCCESS)
+	{
+	  goto exit_on_error;
+	}
+
+      btree_clear_key_value (&clear_key, &mid_key);
+
+      if (node_type == BTREE_NON_LEAF_NODE)
+	{
+	  ret = btree_read_record (thread_p, btid, &rec, &mid_key,
+				   &non_leaf_rec, BTREE_NON_LEAF_NODE,
+				   &clear_key, PEEK_KEY_VALUE);
+	}
+      else
+	{
+	  ret = btree_read_record (thread_p, btid, &rec, &mid_key,
+				   NULL, BTREE_LEAF_NODE, &clear_key,
+				   PEEK_KEY_VALUE);
+	}
+
+      if (ret != NO_ERROR)
+	{
+	  goto exit_on_error;
+	}
+
+      ret = btree_fence_check_key (thread_p, btid,
+				   &(btid->left_fence), &mid_key, false);
+      if (ret != NO_ERROR)
+	{
+	  goto exit_on_error;
+	}
+    }
+
+  /* check right fence */
+  if (!DB_IDXKEY_IS_NULL (&(btid->right_fence)))
+    {
+      /* get the last key */
+      if (spage_get_record (page_ptr, key_cnt, &rec, PEEK) != S_SUCCESS)
+	{
+	  goto exit_on_error;
+	}
+
+      btree_clear_key_value (&clear_key, &mid_key);
+
+      if (node_type == BTREE_NON_LEAF_NODE)
+	{
+	  ret = btree_read_record (thread_p, btid, &rec, &mid_key,
+				   &non_leaf_rec, BTREE_NON_LEAF_NODE,
+				   &clear_key, PEEK_KEY_VALUE);
+	}
+      else
+	{
+	  ret = btree_read_record (thread_p, btid, &rec, &mid_key,
+				   NULL, BTREE_LEAF_NODE, &clear_key,
+				   PEEK_KEY_VALUE);
+	}
+
+      if (ret != NO_ERROR)
+	{
+	  goto exit_on_error;
+	}
+
+      ret = btree_fence_check_key (thread_p, btid,
+				   &mid_key, &(btid->right_fence), true);
+      if (ret != NO_ERROR)
+	{
+	  goto exit_on_error;
+	}
+    }
+
+  btree_clear_key_value (&clear_key, &mid_key);
+
+  assert (ret == NO_ERROR);
+
+  return ret;
+
+exit_on_error:
+
+  assert (false);
+
+  if (ret == NO_ERROR)
+    {
+      ret = ER_FAILED;
+    }
+
+  btree_clear_key_value (&clear_key, &mid_key);
+
+  return ret;
 }
 #endif
