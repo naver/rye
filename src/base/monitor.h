@@ -137,6 +137,7 @@ typedef enum
   MNT_RP_CURRENT_PAGEID,
   MNT_RP_REQUIRED_GAP,
   MNT_RP_REQUIRED_PAGEID,
+  MNT_RP_APPLIED_TIME,
   MNT_RP_DELAY,
   MNT_RP_QUEUE_FULL,
 
@@ -193,9 +194,7 @@ extern void monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
 				MONITOR_STATS * cur_stats,
 				MONITOR_STATS * old_stats, int cumulative,
 				MONITOR_DUMP_TYPE dump_type,
-				const char *substr,
-				void (*calc_func) (MONITOR_STATS * stats,
-						   int num_stats));
+				const char *substr);
 extern int monitor_diff_stats (MONITOR_INFO * monitor,
 			       MONITOR_STATS * diff_stats,
 			       MONITOR_STATS * new_stats,
