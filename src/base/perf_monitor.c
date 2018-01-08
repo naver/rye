@@ -276,7 +276,7 @@ mnt_calc_hit_ratio (MONITOR_STATS * stats, int num_stats)
 MNT_SERVER_ITEM
 mnt_csect_type_to_server_item (const CSECT_TYPE ctype)
 {
-  assert (ctype < CSECT_LAST);
+  assert (ctype <= CSECT_LAST);
   switch (ctype)
     {
     case CSECT_ER_LOG_FILE:	/* 0 */
@@ -340,7 +340,7 @@ mnt_csect_type_to_server_item (const CSECT_TYPE ctype)
 MNT_SERVER_ITEM
 mnt_csect_type_to_server_item_waits (const CSECT_TYPE ctype)
 {
-  assert (ctype < CSECT_LAST);
+  assert (ctype <= CSECT_LAST);
   switch (ctype)
     {
     case CSECT_ER_LOG_FILE:	/* 0 */
