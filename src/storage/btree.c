@@ -6644,7 +6644,7 @@ btree_rv_noderec_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
     }
 
 #if !defined(NDEBUG)
-          (void) spage_check_num_slots (thread_p, recv->pgptr);
+//          (void) spage_check_num_slots (thread_p, recv->pgptr);
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
