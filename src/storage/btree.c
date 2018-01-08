@@ -6531,7 +6531,7 @@ btree_rv_nodehdr_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
     }
 
 #if !defined(NDEBUG)
-          (void) spage_check_num_slots (thread_p, recv->pgptr);
+//          (void) spage_check_num_slots (thread_p, recv->pgptr);
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6560,7 +6560,7 @@ btree_rv_nodehdr_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
     }
 
 #if !defined(NDEBUG)
-          (void) spage_check_num_slots (thread_p, recv->pgptr);
+//          (void) spage_check_num_slots (thread_p, recv->pgptr);
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6602,7 +6602,7 @@ btree_rv_noderec_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * recv)
     }
 
 #if !defined(NDEBUG)
-          (void) spage_check_num_slots (thread_p, recv->pgptr);
+//          (void) spage_check_num_slots (thread_p, recv->pgptr);
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6675,7 +6675,7 @@ btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
     }
 
 #if !defined(NDEBUG)
-          (void) spage_check_num_slots (thread_p, recv->pgptr);
+//          (void) spage_check_num_slots (thread_p, recv->pgptr);
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6753,7 +6753,7 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
     }				/* for */
 
 #if !defined(NDEBUG)
-          (void) spage_check_num_slots (thread_p, recv->pgptr);
+//          (void) spage_check_num_slots (thread_p, recv->pgptr);
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -6794,7 +6794,7 @@ btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv)
     }
 
 #if !defined(NDEBUG)
-          (void) spage_check_num_slots (thread_p, recv->pgptr);
+//          (void) spage_check_num_slots (thread_p, recv->pgptr);
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -8298,6 +8298,7 @@ btree_get_satisfied_key (THREAD_ENTRY * thread_p, BTREE_CHECK_KEY * key_check,
 	  c = ((c == DB_GT) ? DB_LT : (c == DB_LT) ? DB_GT : c);
 	}
 
+#if 0
       if (c != DB_LT)
 	{
 #if 1				/* TODO - trace */
@@ -8314,6 +8315,7 @@ btree_get_satisfied_key (THREAD_ENTRY * thread_p, BTREE_CHECK_KEY * key_check,
 
 	  GOTO_EXIT_ON_ERROR;
 	}
+#endif
     }
 
   btree_clear_key_value (&clear_save_key, &save_key);

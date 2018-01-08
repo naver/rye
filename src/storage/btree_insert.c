@@ -1061,16 +1061,19 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
     {
       if (spage_get_record (Q, mid_slot_id + 1, &trec, PEEK) != S_SUCCESS)
 	{
+          assert (false);
 	  ret = ER_FAILED;
 	  break;
 	}
       if (spage_insert_at (thread_p, R, i, &trec) != SP_SUCCESS)
 	{
+          assert (false);
 	  ret = ER_FAILED;
 	  break;
 	}
       if (spage_delete (thread_p, Q, mid_slot_id + 1) != mid_slot_id + 1)
 	{
+          assert (false);
 	  ret = ER_FAILED;
 	  break;
 	}
