@@ -47,6 +47,8 @@ AM_CPPFLAGS = @SRC_INC@ @EXT_INC@ \
 AM_CFLAGS = @CFLAGS@
 AM_CXXFLAGS = @CXXFLAGS@
 
+LIBS += @SYS_LIBS@ -lrt
+
 bin_PROGRAMS = rye_broker rye_cas broker_changer \
 	broker_log_top broker_monitor_npot
 

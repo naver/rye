@@ -2889,7 +2889,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
       if (dump_type == MNT_DUMP_TYPE_CSV_DATA && is_header_printed == false)
 	{
 	  monitor_dump_stats (outfp, server_monitor, NULL, NULL, cumulative,
-			      MNT_DUMP_TYPE_CSV_HEADER, substr, NULL);
+			      MNT_DUMP_TYPE_CSV_HEADER, substr);
 
 	  for (i = 0; i < node_list.num_nodes; i++)
 	    {
@@ -2899,7 +2899,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
 		}
 	      monitor_dump_stats (outfp, repl_monitor[i], NULL, NULL,
 				  cumulative, MNT_DUMP_TYPE_CSV_HEADER,
-				  substr, NULL);
+				  substr);
 	    }
 	  is_header_printed = true;
 	}
@@ -2911,9 +2911,9 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
 	  continue;
 	}
+      mnt_calc_hit_ratio (server_cur_stats, server_monitor->meta->num_stats);
       monitor_dump_stats (outfp, server_monitor, server_cur_stats,
-			  server_old_stats, cumulative,
-			  dump_type, substr, mnt_calc_hit_ratio);
+			  server_old_stats, cumulative, dump_type, substr);
       memcpy (server_old_stats, server_cur_stats, sizeof (server_cur_stats));
       monitor_close_viewer_data (server_monitor);
 
@@ -2941,7 +2941,7 @@ statdump (UTIL_FUNCTION_ARG * arg)
 	    }
 	  monitor_dump_stats (outfp, repl_monitor[i],
 			      repl_cur_stats[i], repl_old_stats[i],
-			      cumulative, dump_type, substr, NULL);
+			      cumulative, dump_type, substr);
 	  memcpy (repl_old_stats[i], repl_cur_stats[i],
 		  sizeof (MONITOR_STATS) * MNT_SIZE_OF_REPL_EXEC_STATS);
 

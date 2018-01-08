@@ -810,31 +810,11 @@ cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
       error = cirp_logpb_arv_log_fetch_hdr (buf_mgr, find_arv_num);
       if (error != NO_ERROR)
 	{
-	  if (error == ER_PB_BAD_PAGEID)
-	    {
-	      continue;
-	    }
-
-	  if (find_arv_num > arv_log->last_deleted_arv_num
-	      && find_arv_num < act_log->log_hdr->ha_info.nxarv_num)
-	    {
-	      cirp_logpb_validate_last_deleted_arv_num (buf_mgr);
-
-	      /* FIXME-notout: */
-	      left = MAX (0, arv_log->last_deleted_arv_num + 1);
-	      right = act_log->log_hdr->ha_info.nxarv_num - 1;
-	      find_arv_num = right;
-
-	      continue;
-	    }
-	  else
-	    {
-	      /* FIXME-notout: for debugging */
-	      assert (false);
-	    }
-
+	  error = ER_LOG_NOTIN_ARCHIVE;
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, pageid);
 	  return error;
 	}
+
       arv_log_hdr = buf_mgr->arv_log.log_hdr;
       assert (arv_log_hdr != NULL);
 
@@ -861,8 +841,9 @@ cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
 	 && left <= right
 	 && find_arv_num < act_log->log_hdr->ha_info.nxarv_num);
 
-  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_NOTIN_ARCHIVE, 1, pageid);
-  return ER_LOG_NOTIN_ARCHIVE;
+  error = ER_LOG_NOTIN_ARCHIVE;
+  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, pageid);
+  return error;
 }
 
 /*
