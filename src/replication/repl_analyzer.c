@@ -1495,7 +1495,7 @@ cirp_unlock_dbname (CIRP_ANALYZER_INFO * analyzer, bool clear_owner)
     {
       er_log_debug (ARG_FILE_LINE, "unlock_dbname(sleep 60secs)");
 
-      THREAD_SLEEP (60 * 1000);
+      THREAD_SLEEP (3 * 1000);
     }
 
   return error;
