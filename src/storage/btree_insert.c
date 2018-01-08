@@ -1078,12 +1078,20 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
   if (ret != NO_ERROR)
     {
+      assert (false);
       if (i > 1)
 	{
+#if 1 /* TODO - trace */
+          ret =
+            btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1, mid_slot_id + 1,
+                                             recset_data, IO_MAX_PAGE_SIZE,
+                                             &recset_length);
+#else
 	  ret =
 	    btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1, 1,
 					     recset_data, IO_MAX_PAGE_SIZE,
 					     &recset_length);
+#endif
 	  if (ret == NO_ERROR)
 	    {
 	      LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, Q, -1);

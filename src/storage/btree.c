@@ -599,6 +599,7 @@ btree_write_record (UNUSED_ARG THREAD_ENTRY * thread_p,
       if (DB_IS_NULL (&(key->vals[i])))
 	{
 	  assert (OR_MULTI_ATT_IS_UNBOUND (bound_bits, i));
+          assert ((node_type == BTREE_NON_LEAF_NODE) || (i < key->size - 1));
 	  continue;
 	}
 
@@ -6475,6 +6476,7 @@ btree_rv_save_keyval (BTID_INT * btid, const DB_IDXKEY * key,
       if (DB_IS_NULL (&(key->vals[i])))
 	{
 	  assert (OR_MULTI_ATT_IS_UNBOUND (bound_bits, i));
+	  assert (i < key->size - 1);
 
 	  continue;
 	}
@@ -6527,6 +6529,11 @@ btree_rv_nodehdr_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       return er_errid ();
     }
+
+#if !defined(NDEBUG)
+          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#endif
+
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
   return NO_ERROR;
@@ -6551,6 +6558,10 @@ btree_rv_nodehdr_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       ;				/* TODO - avoid compile error */
     }
+
+#if !defined(NDEBUG)
+          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
   return NO_ERROR;
@@ -6590,6 +6601,10 @@ btree_rv_noderec_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       return er_errid ();
     }
 
+#if !defined(NDEBUG)
+          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#endif
+
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
   return NO_ERROR;
@@ -6627,6 +6642,11 @@ btree_rv_noderec_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       return er_errid ();
     }
+
+#if !defined(NDEBUG)
+          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#endif
+
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
   return NO_ERROR;
@@ -6653,6 +6673,10 @@ btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       ;				/* TODO - avoid compile error */
     }
+
+#if !defined(NDEBUG)
+          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
@@ -6728,6 +6752,10 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	}			/* if */
     }				/* for */
 
+#if !defined(NDEBUG)
+          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#endif
+
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
   return NO_ERROR;
@@ -6764,6 +6792,10 @@ btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	  return er_errid ();
 	}
     }
+
+#if !defined(NDEBUG)
+          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
