@@ -322,7 +322,6 @@ mnt_csect_type_to_server_item (const CSECT_TYPE ctype)
     case CSECT_CSS_FREE_CONN:	/* 20 */
       return MNT_STATS_CSECT_CSS_FREE_CONN;
     case CSECT_UNKNOWN:	/* 21 */
-      assert (false);
       return MNT_STATS_CSECT_UNKNOWN;
     default:
       break;
@@ -387,7 +386,6 @@ mnt_csect_type_to_server_item_waits (const CSECT_TYPE ctype)
     case CSECT_CSS_FREE_CONN:	/* 20 */
       return MNT_STATS_CSECT_WAITS_CSS_FREE_CONN;
     case CSECT_UNKNOWN:	/* 21 */
-      assert (false);
       return MNT_STATS_CSECT_WAITS_UNKNOWN;
     default:
       break;
