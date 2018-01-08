@@ -265,7 +265,7 @@ spage_verify_header (PAGE_PTR page_p)
   if (sphdr->total_free < 0
       || sphdr->cont_free < 0
       || sphdr->cont_free > sphdr->total_free
-      || sphdr->offset_to_free_area >= DB_PAGESIZE
+      || sphdr->cont_free + sphdr->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * sphdr->num_slots >= DB_PAGESIZE
       || sphdr->num_records < 0
       || sphdr->num_slots < 0 || sphdr->num_records > sphdr->num_slots)
     {
@@ -1135,6 +1135,7 @@ spage_compact (PAGE_PTR page_p)
   int i, j;
 
   assert (page_p != NULL);
+  assert (spage_check (NULL, page_p) == NO_ERROR);
 
   page_header_p = (SPAGE_HEADER *) page_p;
   spage_verify_header (page_p);
@@ -1245,6 +1246,7 @@ spage_compact (PAGE_PTR page_p)
   page_header_p->offset_to_free_area = to_offset;
 
   spage_verify_header (page_p);
+  assert (spage_check (NULL, page_p) == NO_ERROR);
 
   /* The page is set dirty somewhere else */
   return NO_ERROR;
@@ -4412,7 +4414,7 @@ spage_check (THREAD_ENTRY * thread_p, PAGE_PTR page_p)
     {
       er_log_debug (ARG_FILE_LINE,
 		    "spage_check: Inconsistent page = %d of volume = %s.\n"
-		    " (cfree + foffset + SIZEOF(SPAGE_SLOT) * nslots) > "
+		    " (cont_free + foffset + SIZEOF(SPAGE_SLOT) * nslots) > "
 		    " DB_PAGESIZE\n (%d + %d + (%d * %d)) > %d\n %d > %d\n",
 		    pgbuf_get_page_id (page_p),
 		    pgbuf_get_volume_label (page_p), page_header_p->cont_free,

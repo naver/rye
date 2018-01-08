@@ -780,7 +780,11 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
 
       if (OR_MULTI_ATT_IS_UNBOUND (bound_bits, i))
 	{
-	  assert (node_type == BTREE_NON_LEAF_NODE);
+	  if (node_type == BTREE_LEAF_NODE)
+            {
+              assert (false);
+              goto exit_on_error;
+            }
 
 	  DB_MAKE_NULL (&(key->vals[i]));
 	}
