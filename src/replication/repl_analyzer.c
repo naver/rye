@@ -324,6 +324,7 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
   int error = NO_ERROR;
   CIRP_APPLIER_INFO *applier = NULL;
   INT64 source_applied_time;
+  struct timespec cur_time;
 
   for (i = 0; i < Repl_Info->num_applier; i++)
     {
@@ -384,6 +385,15 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
   if (source_applied_time > 0)
     {
       analyzer->ct.source_applied_time = source_applied_time;
+
+
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_APPLIED_TIME,
+			   source_applied_time);
+
+      clock_gettime (CLOCK_REALTIME, &cur_time);
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_DELAY,
+			   timespec_to_msec (&cur_time)
+			   - source_applied_time);
     }
 
   monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID,
@@ -1502,7 +1512,6 @@ cirp_anlz_log_commit (void)
   CIRP_CT_LOG_ANALYZER tmp_analyzer_data;
 
   CIRP_ANALYZER_INFO *analyzer;
-  struct timespec cur_time;
 
   analyzer = &Repl_Info->analyzer_info;
 
@@ -1530,11 +1539,6 @@ cirp_anlz_log_commit (void)
     {
       GOTO_EXIT_ON_ERROR;
     }
-
-  clock_gettime (CLOCK_REALTIME, &cur_time);
-  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_DELAY,
-		       timespec_to_msec (&cur_time)
-		       - tmp_analyzer_data.source_applied_time);
 
   return error;
 

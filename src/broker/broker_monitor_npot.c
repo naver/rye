@@ -622,6 +622,7 @@ npot_print_cur_stats (MONITOR_INFO * monitor, T_DB_STATS_INFO * db_stats,
   MONITOR_STATS *cur_stats = NULL;
   time_t check_time = time (NULL);
   int i, err, num_stats;
+  struct timespec cur_time;
 
   if (monitor == NULL || db_stats == NULL)
     {
@@ -648,6 +649,14 @@ npot_print_cur_stats (MONITOR_INFO * monitor, T_DB_STATS_INFO * db_stats,
       if (db_stats[i].metric == NULL)
 	{
 	  continue;
+	}
+      if (monitor->meta->monitor_type == MONITOR_TYPE_REPL
+	  && i == MNT_RP_DELAY)
+	{
+	  clock_gettime (CLOCK_REALTIME, &cur_time);
+
+	  cur_stats[i].value = (timespec_to_msec (&cur_time)
+				- cur_stats[MNT_RP_APPLIED_TIME].value);
 	}
 
       print_monitor_item (db_stats[i].metric,
@@ -705,6 +714,7 @@ create_db_stats_info_for_repl (MONITOR_INFO * monitor)
   SET_DB_STATS_INFO (&db_stats[MNT_RP_REQUIRED_PAGEID],
 		     "ha", "required_pageid");
 
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_APPLIED_TIME], "ha", "applied_time");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_DELAY], "ha", "delay");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_QUEUE_FULL], "ha", "queue_full");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_INSERT], "ha", "insert");
