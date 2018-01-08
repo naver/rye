@@ -265,7 +265,7 @@ spage_verify_header (PAGE_PTR page_p)
   if (sphdr->total_free < 0
       || sphdr->cont_free < 0
       || sphdr->cont_free > sphdr->total_free
-      || sphdr->cont_free + sphdr->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * sphdr->num_slots >= DB_PAGESIZE
+      || sphdr->cont_free + sphdr->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * sphdr->num_slots > DB_PAGESIZE
       || sphdr->num_records < 0
       || sphdr->num_slots < 0 || sphdr->num_records > sphdr->num_slots)
     {
