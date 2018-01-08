@@ -1135,7 +1135,9 @@ spage_compact (PAGE_PTR page_p)
   int i, j;
 
   assert (page_p != NULL);
+#if defined(SERVER_MODE)
   assert (spage_check (NULL, page_p) == NO_ERROR);
+#endif
 
   page_header_p = (SPAGE_HEADER *) page_p;
   spage_verify_header (page_p);
@@ -1246,7 +1248,9 @@ spage_compact (PAGE_PTR page_p)
   page_header_p->offset_to_free_area = to_offset;
 
   spage_verify_header (page_p);
+#if defined(SERVER_MODE)
   assert (spage_check (NULL, page_p) == NO_ERROR);
+#endif
 
   /* The page is set dirty somewhere else */
   return NO_ERROR;
@@ -1548,7 +1552,7 @@ spage_add_new_slot (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 				 page_header_p->num_slots - 1, false);
   spage_set_slot (last_slot_p, SPAGE_EMPTY_OFFSET, 0, REC_UNKNOWN);
 
-  spage_verify_header (page_p);
+//  spage_verify_header (page_p);
 
   return SP_SUCCESS;
 }
@@ -1631,7 +1635,7 @@ spage_take_slot_in_use (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
       page_header_p->num_slots += 1;
     }
 
-  spage_verify_header (page_p);
+//  spage_verify_header (page_p);
 
   return SP_SUCCESS;
 }
