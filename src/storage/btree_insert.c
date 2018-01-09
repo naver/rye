@@ -2559,9 +2559,9 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       goto error;
     }
 
-#if !defined(NDEBUG)		/* TODO -trace */
+#if !defined(NDEBUG)		/* TODO -trace; delete me */
   slot_id = slotid;
-  if (slot_id > 1)
+  if (strlen (rec.data) >= 15 && slot_id > 1)
     {
       mid = slot_id - 1;	/* get the left fence */
       if (spage_get_record (recv->pgptr, mid, &mid_rec, PEEK) != S_SUCCESS)
@@ -2570,7 +2570,7 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	  goto error;
 	}
 
-      assert (strcmp (mid_rec.data + 1, rec.data + 1) < 0);
+      assert (strcmp (mid_rec.data + 5, rec.data + 5) < 0);
     }
 
   if (slot_id < node_header.key_cnt)
@@ -2582,7 +2582,7 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	  goto error;
 	}
 
-      assert (strcmp (rec.data + 1, mid_rec.data + 1) < 0);
+      assert (strcmp (rec.data + 5, mid_rec.data + 5) < 0);
     }
 #endif
 
