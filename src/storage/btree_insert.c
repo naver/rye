@@ -1061,19 +1061,19 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
     {
       if (spage_get_record (Q, mid_slot_id + 1, &trec, PEEK) != S_SUCCESS)
 	{
-          assert (false);
+	  assert (false);
 	  ret = ER_FAILED;
 	  break;
 	}
       if (spage_insert_at (thread_p, R, i, &trec) != SP_SUCCESS)
 	{
-          assert (false);
+	  assert (false);
 	  ret = ER_FAILED;
 	  break;
 	}
       if (spage_delete (thread_p, Q, mid_slot_id + 1) != mid_slot_id + 1)
 	{
-          assert (false);
+	  assert (false);
 	  ret = ER_FAILED;
 	  break;
 	}
@@ -1084,11 +1084,12 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       assert (false);
       if (i > 1)
 	{
-#if 1 /* TODO - trace */
-          ret =
-            btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1, mid_slot_id + 1,
-                                             recset_data, IO_MAX_PAGE_SIZE,
-                                             &recset_length);
+#if 1				/* TODO - trace */
+	  ret =
+	    btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1,
+					     mid_slot_id + 1, recset_data,
+					     IO_MAX_PAGE_SIZE,
+					     &recset_length);
 #else
 	  ret =
 	    btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1, 1,
@@ -1996,11 +1997,9 @@ start_point:
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-#if !defined(NDEBUG)
-      (void) spage_check_num_slots (thread_p, P);
-      (void) spage_check_num_slots (thread_p, Q);
-      (void) spage_check_num_slots (thread_p, R);
-#endif
+      assert (spage_check (thread_p, P) == NO_ERROR);
+      assert (spage_check (thread_p, Q) == NO_ERROR);
+      assert (spage_check (thread_p, R) == NO_ERROR);
 
       log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
       top_op_active = 0;
@@ -2220,11 +2219,9 @@ start_point:
 	      GOTO_EXIT_ON_ERROR;
 	    }
 
-#if !defined(NDEBUG)
-	  (void) spage_check_num_slots (thread_p, P);
-	  (void) spage_check_num_slots (thread_p, Q);
-	  (void) spage_check_num_slots (thread_p, R);
-#endif
+	  assert (spage_check (thread_p, P) == NO_ERROR);
+	  assert (spage_check (thread_p, Q) == NO_ERROR);
+	  assert (spage_check (thread_p, R) == NO_ERROR);
 
 	  next_page = NULL;
 	  if (node_type == BTREE_LEAF_NODE)
@@ -2322,9 +2319,7 @@ start_point:
       GOTO_EXIT_ON_ERROR;
     }
 
-#if !defined(NDEBUG)
-  (void) spage_check_num_slots (thread_p, P);
-#endif
+  assert (spage_check (thread_p, P) == NO_ERROR);
 
   assert (top_op_active == 0);
   assert (Q == NULL);

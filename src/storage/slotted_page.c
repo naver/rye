@@ -216,7 +216,9 @@ static void spage_dump_slots (FILE * fp, const SPAGE_SLOT * sptr,
 static void spage_dump_record (FILE * Fp, PAGE_PTR page_p, PGSLOTID slot_id,
 			       SPAGE_SLOT * slot_p);
 
-static int spage_check (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);
+#if !defined(NDEBUG)
+static bool spage_check_num_slots (THREAD_ENTRY * thread_p, PAGE_PTR page_p);
+#endif
 
 static bool spage_is_unknown_slot (PGSLOTID slotid, SPAGE_HEADER * sphdr,
 				   SPAGE_SLOT * sptr);
@@ -265,9 +267,10 @@ spage_verify_header (PAGE_PTR page_p)
   if (sphdr->total_free < 0
       || sphdr->cont_free < 0
       || sphdr->cont_free > sphdr->total_free
-      || sphdr->cont_free + sphdr->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * sphdr->num_slots > DB_PAGESIZE
-      || sphdr->num_records < 0
-      || sphdr->num_slots < 0 || sphdr->num_records > sphdr->num_slots)
+      || sphdr->cont_free + sphdr->offset_to_free_area +
+      SSIZEOF (SPAGE_SLOT) * sphdr->num_slots > DB_PAGESIZE
+      || sphdr->num_records < 0 || sphdr->num_slots < 0
+      || sphdr->num_records > sphdr->num_slots)
     {
       spage_dump_header_to_string (header_info, sizeof (header_info), sphdr);
 
@@ -1277,7 +1280,7 @@ spage_find_free_slot (PAGE_PTR page_p, SPAGE_SLOT ** out_slot_p)
 
   slot_id = page_header_p->num_slots;
   slot_p -= slot_id;
-  assert (page_p + sizeof (SPAGE_HEADER) < slot_p);
+  assert (page_p + sizeof (SPAGE_HEADER) < (PAGE_PTR) slot_p);
 
   if (out_slot_p != NULL)
     {
@@ -4327,7 +4330,7 @@ spage_dump (THREAD_ENTRY * thread_p, FILE * fp, PAGE_PTR page_p,
  *   return: true/false
  *   ppage_p(in): Pointer to slotted page
  */
-bool
+static bool
 spage_check_num_slots (UNUSED_ARG THREAD_ENTRY * thread_p, PAGE_PTR page_p)
 {
   SPAGE_HEADER *page_header_p;
@@ -4353,7 +4356,6 @@ spage_check_num_slots (UNUSED_ARG THREAD_ENTRY * thread_p, PAGE_PTR page_p)
 
   return (page_header_p->num_records == nrecs) ? true : false;
 }
-#endif
 
 /*
  * spage_check () - Check consistency of page. This function is used for
@@ -4361,7 +4363,7 @@ spage_check_num_slots (UNUSED_ARG THREAD_ENTRY * thread_p, PAGE_PTR page_p)
  *   return: error code
  *   pgptr(in): Pointer to slotted page
  */
-static int
+int
 spage_check (THREAD_ENTRY * thread_p, PAGE_PTR page_p)
 {
   int ret = NO_ERROR;
@@ -4377,6 +4379,7 @@ spage_check (THREAD_ENTRY * thread_p, PAGE_PTR page_p)
 #endif
 
   assert (page_p != NULL);
+  assert (spage_check_num_slots (thread_p, page_p) == true);
 
   page_header_p = (SPAGE_HEADER *) page_p;
   SPAGE_VERIFY_HEADER (page_header_p);
@@ -4485,6 +4488,7 @@ spage_check (THREAD_ENTRY * thread_p, PAGE_PTR page_p)
 
   return ret;
 }
+#endif
 
 /*
  * spage_check_slot_owner () -

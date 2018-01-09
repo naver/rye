@@ -599,7 +599,7 @@ btree_write_record (UNUSED_ARG THREAD_ENTRY * thread_p,
       if (DB_IS_NULL (&(key->vals[i])))
 	{
 	  assert (OR_MULTI_ATT_IS_UNBOUND (bound_bits, i));
-          assert ((node_type == BTREE_NON_LEAF_NODE) || (i < key->size - 1));
+	  assert ((node_type == BTREE_NON_LEAF_NODE) || (i < key->size - 1));
 	  continue;
 	}
 
@@ -781,10 +781,10 @@ btree_read_record (UNUSED_ARG THREAD_ENTRY * thread_p, BTID_INT * btid,
       if (OR_MULTI_ATT_IS_UNBOUND (bound_bits, i))
 	{
 	  if (node_type == BTREE_LEAF_NODE)
-            {
-              assert (false);
-              goto exit_on_error;
-            }
+	    {
+	      assert (false);
+	      goto exit_on_error;
+	    }
 
 	  DB_MAKE_NULL (&(key->vals[i]));
 	}
@@ -3547,9 +3547,7 @@ btree_delete (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key)
 
   assert (node_header[i].node_level == 1);
 
-#if !defined(NDEBUG)
-  (void) spage_check_num_slots (thread_p, P);
-#endif
+  assert (spage_check (thread_p, P) == NO_ERROR);
 
   pgbuf_unfix_and_init (thread_p, P);
 
@@ -4192,9 +4190,7 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
   assert (Left == NULL);
   assert (next_page == NULL);
 
-#if !defined(NDEBUG)
-  (void) spage_check_num_slots (thread_p, P);
-#endif
+  assert (spage_check (thread_p, P) == NO_ERROR);
 
   pgbuf_unfix_and_init (thread_p, P);
 
