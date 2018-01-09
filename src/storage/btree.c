@@ -199,14 +199,6 @@ static int btree_save_range_search_result (THREAD_ENTRY * thread_p,
 static int btree_check_key_cnt (BTID_INT * btid, PAGE_PTR page_p,
 				short node_level, short key_cnt);
 
-#if !defined(NDEBUG)
-static int btree_fence_check_key (THREAD_ENTRY * thread_p,
-				  BTID_INT * btid,
-				  const DB_IDXKEY * left_key,
-				  const DB_IDXKEY * right_key,
-				  const bool with_eq);
-#endif
-
 /*
  * btree_clear_key_value () -
  *   return: cleared flag
@@ -1317,6 +1309,17 @@ btree_search_nonleaf_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
 	  goto exit_on_error;
 	}
 
+      /* check left fence */
+      if (!DB_IDXKEY_IS_NULL (&(btid->left_fence)))
+	{
+	  ret = btree_fence_check_key (thread_p, btid,
+				       &(btid->left_fence), &mid_key, false);
+	  if (ret != NO_ERROR)
+	    {
+	      goto exit_on_error;
+	    }
+	}
+
       (void) db_idxkey_clear (&(btid->left_fence));
 
       db_idxkey_clone (&mid_key, &(btid->left_fence));
@@ -1340,6 +1343,17 @@ btree_search_nonleaf_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
       if (ret != NO_ERROR)
 	{
 	  goto exit_on_error;
+	}
+
+      /* check right fence */
+      if (!DB_IDXKEY_IS_NULL (&(btid->right_fence)))
+	{
+	  ret = btree_fence_check_key (thread_p, btid,
+				       &mid_key, &(btid->right_fence), true);
+	  if (ret != NO_ERROR)
+	    {
+	      goto exit_on_error;
+	    }
 	}
 
       (void) db_idxkey_clear (&(btid->right_fence));
@@ -3546,8 +3560,6 @@ btree_delete (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key)
   assert (is_leaf_empty || (spage_number_of_records (P) > 1));
 
   assert (node_header[i].node_level == 1);
-
-  assert (spage_check (thread_p, P) == NO_ERROR);
 
   pgbuf_unfix_and_init (thread_p, P);
 
@@ -6530,10 +6542,6 @@ btree_rv_nodehdr_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       return er_errid ();
     }
 
-#if !defined(NDEBUG)
-//          (void) spage_check_num_slots (thread_p, recv->pgptr);
-#endif
-
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
   return NO_ERROR;
@@ -6558,10 +6566,6 @@ btree_rv_nodehdr_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       ;				/* TODO - avoid compile error */
     }
-
-#if !defined(NDEBUG)
-//          (void) spage_check_num_slots (thread_p, recv->pgptr);
-#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
   return NO_ERROR;
@@ -6601,10 +6605,6 @@ btree_rv_noderec_undoredo_update (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       return er_errid ();
     }
 
-#if !defined(NDEBUG)
-//          (void) spage_check_num_slots (thread_p, recv->pgptr);
-#endif
-
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
   return NO_ERROR;
@@ -6643,10 +6643,6 @@ btree_rv_noderec_redo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       return er_errid ();
     }
 
-#if !defined(NDEBUG)
-//          (void) spage_check_num_slots (thread_p, recv->pgptr);
-#endif
-
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
   return NO_ERROR;
@@ -6673,10 +6669,6 @@ btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       ;				/* TODO - avoid compile error */
     }
-
-#if !defined(NDEBUG)
-//          (void) spage_check_num_slots (thread_p, recv->pgptr);
-#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
@@ -6713,6 +6705,10 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   char *datap;
   int i, offset, wasted;
   int sp_success;
+#if !defined(NDEBUG)		/* TODO -trace */
+  RECDES mid_rec = RECDES_INITIALIZER;
+  INT16 slot_id, mid;
+#endif
 
   /* initialization */
   recset_header = (const RECSET_HEADER *) recv->data;
@@ -6750,11 +6746,23 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	  assert (false);
 	  goto error;
 	}			/* if */
-    }				/* for */
 
-#if !defined(NDEBUG)
-//          (void) spage_check_num_slots (thread_p, recv->pgptr);
+#if !defined(NDEBUG)		/* TODO -trace */
+      slot_id = recset_header->first_slotid + i;
+      if (slot_id > 1)
+	{
+	  mid = slot_id - 1;	/* get the left fence */
+	  if (spage_get_record (recv->pgptr, mid, &mid_rec, PEEK) !=
+	      S_SUCCESS)
+	    {
+	      assert (false);
+	      goto error;
+	    }
+
+	  assert (strcmp (mid_rec.data + 1, rec.data + 1) < 0);
+	}
 #endif
+    }				/* for */
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
@@ -6792,10 +6800,6 @@ btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	  return er_errid ();
 	}
     }
-
-#if !defined(NDEBUG)
-//          (void) spage_check_num_slots (thread_p, recv->pgptr);
-#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
@@ -8503,7 +8507,7 @@ btree_prepare_range_search (THREAD_ENTRY * thread_p, BTREE_SCAN * bts)
  *   right_key(in):
  *   with_eq(in);
  */
-static int
+int
 btree_fence_check_key (THREAD_ENTRY * thread_p,
 		       BTID_INT * btid,
 		       const DB_IDXKEY * left_key,

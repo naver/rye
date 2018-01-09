@@ -2163,14 +2163,18 @@ PGSLOTID
 spage_delete_for_recovery (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 			   PGSLOTID slot_id)
 {
+  PGSLOTID del_id;
+
   assert (page_p != NULL);
 
-  if (spage_delete (thread_p, page_p, slot_id) != slot_id)
+  del_id = spage_delete (thread_p, page_p, slot_id);
+
+  assert (spage_check (thread_p, page_p) == NO_ERROR);
+
+  if (del_id != slot_id)
     {
       return NULL_SLOTID;
     }
-
-  assert (spage_check (thread_p, page_p) == NO_ERROR);
 
   return slot_id;
 }

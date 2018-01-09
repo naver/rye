@@ -386,6 +386,11 @@ extern int btree_rv_util_save_page_records (THREAD_ENTRY * thread_p,
 					    const int data_len, int *length);
 
 #if !defined(NDEBUG)
+extern int btree_fence_check_key (THREAD_ENTRY * thread_p,
+				  BTID_INT * btid,
+				  const DB_IDXKEY * left_key,
+				  const DB_IDXKEY * right_key,
+				  const bool with_eq);
 extern int btree_fence_check_page (THREAD_ENTRY * thread_p,
 				   BTID_INT * btid, PAGE_PTR page_ptr);
 #endif

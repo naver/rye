@@ -114,6 +114,10 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
   int max_free;
 #if !defined(NDEBUG)
   int key_len;
+  bool clear_key;
+  INT16 mid = 0;
+  DB_IDXKEY mid_key;
+  int c;
 #endif
   RECDES rec = RECDES_INITIALIZER;
   char rec_buf[IO_MAX_PAGE_SIZE + BTREE_MAX_ALIGN];
@@ -132,6 +136,9 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
   key_len = btree_get_key_length (key);	/* TODO - */
 
   assert (BTREE_IS_VALID_KEY_LEN (key_len));
+
+  clear_key = false;
+  DB_IDXKEY_MAKE_NULL (&mid_key);
 #endif
 
   /* read the page header */
@@ -198,6 +205,54 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
       GOTO_EXIT_ON_ERROR;
     }
 
+#if !defined(NDEBUG)
+  if (slot_id > 1)
+    {
+      mid = slot_id - 1;	/* get the left fence */
+      if (spage_get_record (leaf_page, mid, &rec, PEEK) != S_SUCCESS)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
+
+      btree_clear_key_value (&clear_key, &mid_key);
+
+      ret = btree_read_record (thread_p, btid, &rec, &mid_key,
+			       NULL, BTREE_LEAF_NODE, &clear_key,
+			       PEEK_KEY_VALUE);
+      if (ret != NO_ERROR)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
+
+      c = btree_compare_key (thread_p, btid, &mid_key, key, NULL);
+      assert (c == DB_LT);
+    }
+
+  if (slot_id < node_header.key_cnt)
+    {
+      mid = slot_id + 1;	/* get the right fence */
+      if (spage_get_record (leaf_page, mid, &rec, PEEK) != S_SUCCESS)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
+
+      btree_clear_key_value (&clear_key, &mid_key);
+
+      ret = btree_read_record (thread_p, btid, &rec, &mid_key,
+			       NULL, BTREE_LEAF_NODE, &clear_key,
+			       PEEK_KEY_VALUE);
+      if (ret != NO_ERROR)
+	{
+	  GOTO_EXIT_ON_ERROR;
+	}
+
+      c = btree_compare_key (thread_p, btid, key, &mid_key, NULL);
+      assert (c == DB_LT);
+    }
+
+  btree_clear_key_value (&clear_key, &mid_key);
+#endif
+
   /* log the new record insertion and update to the header record for
    * undo/redo purposes.  This can be after the insert/update since we
    * still have the page pinned.
@@ -214,6 +269,10 @@ exit_on_error:
 
   ret = (ret == NO_ERROR
 	 && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+
+#if !defined(NDEBUG)
+  btree_clear_key_value (&clear_key, &mid_key);
+#endif
 
   goto end;
 }
@@ -1270,6 +1329,17 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       page_vpid = *Q_vpid;
 
 #if !defined(NDEBUG)
+      /* check right fence */
+      if (!DB_IDXKEY_IS_NULL (&(btid->right_fence)))
+	{
+	  ret = btree_fence_check_key (thread_p, btid,
+				       &mid_key, &(btid->right_fence), true);
+	  if (ret != NO_ERROR)
+	    {
+	      GOTO_EXIT_ON_ERROR;
+	    }
+	}
+
       (void) db_idxkey_clear (&(btid->right_fence));
 
       db_idxkey_clone (&mid_key, &(btid->right_fence));
@@ -1286,6 +1356,17 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       page_vpid = *R_vpid;
 
 #if !defined(NDEBUG)
+      /* check left fence */
+      if (!DB_IDXKEY_IS_NULL (&(btid->left_fence)))
+	{
+	  ret = btree_fence_check_key (thread_p, btid,
+				       &(btid->left_fence), &mid_key, false);
+	  if (ret != NO_ERROR)
+	    {
+	      GOTO_EXIT_ON_ERROR;
+	    }
+	}
+
       (void) db_idxkey_clear (&(btid->left_fence));
 
       db_idxkey_clone (&mid_key, &(btid->left_fence));
@@ -1353,6 +1434,10 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
   mnt_stats_counter_with_time (thread_p, MNT_STATS_BTREE_SPLITS, 1,
 			       perf_start);
 
+  assert (spage_check (thread_p, P) == NO_ERROR);
+  assert (spage_check (thread_p, Q) == NO_ERROR);
+  assert (spage_check (thread_p, R) == NO_ERROR);
+
   return ret;
 
 exit_on_error:
@@ -1366,6 +1451,10 @@ exit_on_error:
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
 	      "");
     }
+
+  assert (spage_check (thread_p, P) == NO_ERROR);
+  assert (spage_check (thread_p, Q) == NO_ERROR);
+  assert (spage_check (thread_p, R) == NO_ERROR);
 
   return ret;
 }
@@ -1707,6 +1796,17 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       page_vpid = *Q_vpid;
 
 #if !defined(NDEBUG)
+      /* check right fence */
+      if (!DB_IDXKEY_IS_NULL (&(btid->right_fence)))
+	{
+	  ret = btree_fence_check_key (thread_p, btid,
+				       &mid_key, &(btid->right_fence), true);
+	  if (ret != NO_ERROR)
+	    {
+	      GOTO_EXIT_ON_ERROR;
+	    }
+	}
+
       (void) db_idxkey_clear (&(btid->right_fence));
 
       db_idxkey_clone (&mid_key, &(btid->right_fence));
@@ -1723,6 +1823,17 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       page_vpid = *R_vpid;
 
 #if !defined(NDEBUG)
+      /* check left fence */
+      if (!DB_IDXKEY_IS_NULL (&(btid->left_fence)))
+	{
+	  ret = btree_fence_check_key (thread_p, btid,
+				       &(btid->left_fence), &mid_key, false);
+	  if (ret != NO_ERROR)
+	    {
+	      GOTO_EXIT_ON_ERROR;
+	    }
+	}
+
       (void) db_idxkey_clear (&(btid->left_fence));
 
       db_idxkey_clone (&mid_key, &(btid->left_fence));
@@ -1785,6 +1896,10 @@ exit_on_end:
 
   mnt_stats_counter_with_time (thread_p, MNT_STATS_BTREE_SPLITS, 1,
 			       perf_start);
+
+  assert (spage_check (thread_p, P) == NO_ERROR);
+  assert (spage_check (thread_p, Q) == NO_ERROR);
+  assert (spage_check (thread_p, R) == NO_ERROR);
 
   return ret;
 
@@ -1996,10 +2111,6 @@ start_point:
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
-
-      assert (spage_check (thread_p, P) == NO_ERROR);
-      assert (spage_check (thread_p, Q) == NO_ERROR);
-      assert (spage_check (thread_p, R) == NO_ERROR);
 
       log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
       top_op_active = 0;
@@ -2219,10 +2330,6 @@ start_point:
 	      GOTO_EXIT_ON_ERROR;
 	    }
 
-	  assert (spage_check (thread_p, P) == NO_ERROR);
-	  assert (spage_check (thread_p, Q) == NO_ERROR);
-	  assert (spage_check (thread_p, R) == NO_ERROR);
-
 	  next_page = NULL;
 	  if (node_type == BTREE_LEAF_NODE)
 	    {
@@ -2319,8 +2426,6 @@ start_point:
       GOTO_EXIT_ON_ERROR;
     }
 
-  assert (spage_check (thread_p, P) == NO_ERROR);
-
   assert (top_op_active == 0);
   assert (Q == NULL);
   assert (R == NULL);
@@ -2399,6 +2504,10 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   RECDES rec = RECDES_INITIALIZER;
   INT16 slotid;
   int sp_success;
+#if !defined(NDEBUG)		/* TODO -trace */
+  RECDES mid_rec = RECDES_INITIALIZER;
+  INT16 slot_id, mid;
+#endif
 
   if (btree_read_node_header (NULL, recv->pgptr, &node_header) != NO_ERROR)
     {
@@ -2449,6 +2558,33 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       goto error;
     }
+
+#if !defined(NDEBUG)		/* TODO -trace */
+  slot_id = slotid;
+  if (slot_id > 1)
+    {
+      mid = slot_id - 1;	/* get the left fence */
+      if (spage_get_record (recv->pgptr, mid, &mid_rec, PEEK) != S_SUCCESS)
+	{
+	  assert (false);
+	  goto error;
+	}
+
+      assert (strcmp (mid_rec.data + 1, rec.data + 1) < 0);
+    }
+
+  if (slot_id < node_header.key_cnt)
+    {
+      mid = slot_id + 1;	/* get the right fence */
+      if (spage_get_record (recv->pgptr, mid, &mid_rec, PEEK) != S_SUCCESS)
+	{
+	  assert (false);
+	  goto error;
+	}
+
+      assert (strcmp (rec.data + 1, mid_rec.data + 1) < 0);
+    }
+#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
