@@ -6747,6 +6747,7 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	  goto error;
 	}			/* if */
 
+#if 0
 #if !defined(NDEBUG)		/* TODO -trace; delete me */
       slot_id = recset_header->first_slotid + i;
       if (strlen (rec.data) >= 15 && rec.data[3] == '0' && rec.data[4] == '0'
@@ -6762,6 +6763,7 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 
 	  assert (strcmp (mid_rec.data + 2, rec.data + 2) < 0);
 	}
+#endif
 #endif
     }				/* for */
 

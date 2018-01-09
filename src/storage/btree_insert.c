@@ -2559,6 +2559,7 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       goto error;
     }
 
+#if 0
 #if !defined(NDEBUG)		/* TODO -trace; delete me */
   slot_id = slotid;
   if (strlen (rec.data) >= 15 && rec.data[3] == '0' && rec.data[4] == '0'
@@ -2585,6 +2586,7 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 
       assert (strcmp (rec.data + 2, mid_rec.data + 2) < 0);
     }
+#endif
 #endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
