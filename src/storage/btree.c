@@ -6705,9 +6705,11 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   char *datap;
   int i, offset, wasted;
   int sp_success;
+#if 0
 #if !defined(NDEBUG)		/* TODO -trace */
   RECDES mid_rec = RECDES_INITIALIZER;
   INT16 slot_id, mid;
+#endif
 #endif
 
   /* initialization */

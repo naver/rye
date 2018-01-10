@@ -2504,9 +2504,11 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   RECDES rec = RECDES_INITIALIZER;
   INT16 slotid;
   int sp_success;
+#if 0
 #if !defined(NDEBUG)		/* TODO -trace */
   RECDES mid_rec = RECDES_INITIALIZER;
   INT16 slot_id, mid;
+#endif
 #endif
 
   if (btree_read_node_header (NULL, recv->pgptr, &node_header) != NO_ERROR)

@@ -3148,6 +3148,40 @@ pgbuf_reset_temp_lsa (PAGE_PTR pgptr)
 #endif /* ENABLE_UNUSED_FUNCTION */
 
 /*
+ * pgbuf_get_vpid () - Find the latch mode associated with
+ *                     the passed buffer
+ *   return: void
+ *   pgptr(in): Page pointer
+ */
+PGBUF_LATCH_MODE
+pgbuf_get_latch_mode (PAGE_PTR pgptr, int *fcntp)
+{
+  PGBUF_BCB *bufptr;
+
+#if 0
+  if (pgbuf_get_check_page_validation (NULL, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+    {
+      if (pgbuf_is_valid_page_ptr (pgptr) == false)
+        {
+          VPID_SET_NULL (vpid);
+          return;
+        }
+    }
+#endif
+
+  /* NOTE: Does not need to hold BCB_mutex since the page is fixed */
+
+  CAST_PGPTR_TO_BFPTR (bufptr, pgptr);
+
+  if (fcntp != NULL)
+    {
+      *fcntp = bufptr->fcnt;
+    }
+
+  return bufptr->latch_mode;
+}
+
+/*
  * pgbuf_get_vpid () - Find the volume and page identifier associated with
  *                     the passed buffer
  *   return: void

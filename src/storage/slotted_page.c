@@ -1838,10 +1838,18 @@ spage_insert_data (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 		   RECDES * record_descriptor_p, void *slot_p)
 {
   SPAGE_SLOT *tmp_slot_p;
+#if !defined (NDEBUG)
+  int fcnt;
+#endif
 
   assert (page_p != NULL);
   assert (record_descriptor_p != NULL);
   assert (slot_p != NULL);
+
+#if !defined (NDEBUG)
+  assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+  assert (fcnt == 1);
+#endif
 
   if (record_descriptor_p->length < 0)
     {
@@ -1965,9 +1973,17 @@ spage_insert_for_recovery (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
   SPAGE_HEADER *page_header_p;
   SPAGE_SLOT *slot_p = NULL;
   int status;
+#if !defined (NDEBUG)
+  int fcnt;
+#endif
 
   assert (page_p != NULL);
   assert (record_descriptor_p != NULL);
+
+#if !defined (NDEBUG)
+  assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+  assert (fcnt == 1);
+#endif
 
   if (record_descriptor_p->length < 0)
     {
@@ -2079,8 +2095,16 @@ spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id)
   SPAGE_SLOT *slot_p;
   int waste;
   int free_space;
+#if !defined (NDEBUG)
+  int fcnt;
+#endif
 
   assert (page_p != NULL);
+
+#if !defined (NDEBUG)
+  assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+  assert (fcnt == 1);
+#endif
 
   page_header_p = (SPAGE_HEADER *) page_p;
   SPAGE_VERIFY_HEADER (page_header_p);
@@ -2282,6 +2306,14 @@ spage_update_record_in_place (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 			      const RECDES * record_descriptor_p, int space)
 {
   bool is_located_end;
+#if !defined (NDEBUG)
+  int fcnt;
+#endif
+
+#if !defined (NDEBUG)
+  assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+  assert (fcnt == 1);
+#endif
 
   SPAGE_VERIFY_HEADER (page_header_p);
 
@@ -2341,6 +2373,14 @@ spage_update_record_after_compact (PAGE_PTR page_p,
 				   int space, int old_waste, int new_waste)
 {
   int old_offset;
+#if !defined (NDEBUG)
+  int fcnt;
+#endif
+
+#if !defined (NDEBUG)
+  assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+  assert (fcnt == 1);
+#endif
 
   SPAGE_VERIFY_HEADER (page_header_p);
 
