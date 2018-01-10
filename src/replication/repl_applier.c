@@ -975,6 +975,8 @@ cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate)
 
   if (need_flush == true)
     {
+      assert (rp_is_valid_repl_item (applier->head));
+
       error = cci_send_repl_data (&applier->conn, applier->head,
 				  applier->num_unflushed);
       if (error < 0)

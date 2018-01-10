@@ -114,6 +114,7 @@ extern int rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item,
 				 const LOG_LSA * lsa);
 extern int rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item,
 				     const LOG_LSA * lsa);
+extern bool rp_is_valid_repl_item (CIRP_REPL_ITEM * item);
 
 extern int rp_make_repl_host_key (DB_VALUE * dbval,
 				  const PRM_NODE_INFO * node_info);
