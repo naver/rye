@@ -4435,6 +4435,10 @@ spage_check (THREAD_ENTRY * thread_p, PAGE_PTR page_p)
   assert (page_p != NULL);
   assert (spage_check_num_slots (thread_p, page_p) == true);
 
+#if 1 /* TODO - for repro */
+  return NO_ERROR;		/* nop */
+#endif
+
   page_header_p = (SPAGE_HEADER *) page_p;
   SPAGE_VERIFY_HEADER (page_header_p);
 

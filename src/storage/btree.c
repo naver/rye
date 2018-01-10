@@ -8522,6 +8522,10 @@ btree_fence_check_key (THREAD_ENTRY * thread_p,
   char left_str[LINE_MAX];
   char right_str[LINE_MAX];
 
+#if 1 /* for repro */
+  return NO_ERROR;
+#endif
+
   assert (left_key != NULL);
   assert (right_key != NULL);
 
@@ -8588,6 +8592,10 @@ btree_fence_check_page (THREAD_ENTRY * thread_p,
   short node_type;
 
   int ret = NO_ERROR;
+
+#if 1 /* for repro */
+  return NO_ERROR;
+#endif
 
   clear_key = false;
   DB_IDXKEY_MAKE_NULL (&mid_key);
