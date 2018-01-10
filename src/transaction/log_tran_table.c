@@ -1550,6 +1550,8 @@ logtb_initialize_tdes (LOG_TDES * tdes, int tran_index)
   LSA_SET_NULL (&tdes->topop_lsa);
   LSA_SET_NULL (&tdes->tail_topresult_lsa);
 
+  tdes->cs_topop.cs_index = CSECT_UNKNOWN; /* leave me as is */
+  tdes->cs_topop.name = NULL; /* leave me as is */
   csect_initialize_critical_section (&tdes->cs_topop);
 
   tdes->topops.stack = NULL;
