@@ -143,6 +143,7 @@ rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
     }
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE;
 
+  assert (rp_is_valid_repl_item (item));
   error = cci_send_repl_data (conn, item, 1);
   if (error < 0)
     {
@@ -210,6 +211,7 @@ rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
     }
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE;
 
+  assert (rp_is_valid_repl_item (item));
   error = cci_send_repl_data (conn, item, 1);
   if (error < 0)
     {
@@ -511,6 +513,7 @@ rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
     }
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_APPLIER_UPDATE;
 
+  assert (rp_is_valid_repl_item (item));
   error = cci_send_repl_data (conn, item, 1);
   if (error < 0)
     {
@@ -578,6 +581,7 @@ rpct_update_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
     }
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_APPLIER_UPDATE;
 
+  assert (rp_is_valid_repl_item (item));
   error = cci_send_repl_data (conn, item, 1);
   if (error < 0)
     {

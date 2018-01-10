@@ -863,71 +863,6 @@ cirp_anlz_is_any_applier_busy (void)
 }
 
 /*
- * rp_is_valid_repl_item ()-
- *   return:
- *
- *   item(in):
- */
-static bool
-rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
-{
-  RP_DATA_ITEM *data;
-  RP_CATALOG_ITEM *catalog;
-
-  switch (item->item_type)
-    {
-    case RP_ITEM_TYPE_DATA:
-      data = &item->info.data;
-      if (data->class_name == NULL || LSA_ISNULL (&data->lsa)
-	  || cci_db_idxkey_is_null (&data->key))
-	{
-	  return false;
-	}
-
-      if (data->rcv_index != RVREPL_DATA_INSERT
-	  && data->rcv_index != RVREPL_DATA_UPDATE
-	  && data->rcv_index != RVREPL_DATA_DELETE)
-	{
-	  return false;
-	}
-      break;
-    case RP_ITEM_TYPE_DDL:
-      break;
-    case RP_ITEM_TYPE_CATALOG:
-      catalog = &item->info.catalog;
-
-      if (catalog->class_name == NULL || LSA_ISNULL (&catalog->lsa)
-	  || cci_db_idxkey_is_null (&catalog->key))
-	{
-	  return false;
-	}
-
-      if (catalog->copyarea_op != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
-	  && catalog->copyarea_op != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
-	{
-	  return false;
-	}
-
-      if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
-	  && strncasecmp (catalog->class_name,
-			  CT_LOG_ANALYZER_NAME,
-			  strlen (CT_LOG_ANALYZER_NAME) != 0))
-	{
-	  return false;
-	}
-      if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE
-	  && strncasecmp (catalog->class_name,
-			  CT_LOG_APPLIER_NAME,
-			  strlen (CT_LOG_APPLIER_NAME) != 0))
-	{
-	  return false;
-	}
-    }
-
-  return true;
-}
-
-/*
  * cirp_anlz_assign_repl_item () -
  *   return: error code
  *
@@ -1669,6 +1604,7 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
       || LSA_GT (&lrec->prev_tranlsa, &final)
       || LSA_GT (&lrec->back_lsa, &final))
     {
+      assert (false);
       if (lrec->type != LOG_END_OF_LOG)
 	{
 	  error = ER_HA_LA_INVALID_REPL_LOG_RECORD;
@@ -2089,6 +2025,8 @@ analyzer_main (void *arg)
 	      assert (error != NO_ERROR && log_buf == NULL);
 	      if (error == NO_ERROR)
 		{
+		  assert (false);
+
 		  error = ER_GENERIC_ERROR;
 		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
 			  1, "Invalid return value");
@@ -2124,52 +2062,6 @@ analyzer_main (void *arg)
 	    }
 	  retry_count = 0;
 
-	  /* check it and verify it */
-	  if (log_buf->log_page.hdr.logical_pageid != final_lsa.pageid)
-	    {
-	      assert (false);
-
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HA_LA_INVALID_REPL_LOG_PAGEID_OFFSET, 10,
-		      log_buf->log_page.hdr.logical_pageid,
-		      log_buf->log_page.hdr.offset,
-		      final_lsa.pageid, final_lsa.offset,
-		      log_hdr->append_lsa.pageid,
-		      log_hdr->append_lsa.offset,
-		      log_hdr->eof_lsa.pageid,
-		      log_hdr->eof_lsa.offset,
-		      log_hdr->ha_info.file_status,
-		      analyzer->is_end_of_record);
-
-	      cirp_logpb_release (buf_mgr, log_buf->pageid);
-	      log_buf = NULL;
-
-	      GOTO_EXIT_ON_ERROR;
-	    }
-
-	  if (log_buf->log_page.hdr.offset < 0)
-	    {
-	      /* we get invalid page */
-	      assert (false);
-
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HA_LA_INVALID_REPL_LOG_PAGEID_OFFSET, 10,
-		      log_buf->log_page.hdr.logical_pageid,
-		      log_buf->log_page.hdr.offset,
-		      final_lsa.pageid, final_lsa.offset,
-		      log_hdr->append_lsa.pageid,
-		      log_hdr->append_lsa.offset,
-		      log_hdr->eof_lsa.pageid,
-		      log_hdr->eof_lsa.offset,
-		      log_hdr->ha_info.file_status,
-		      analyzer->is_end_of_record);
-
-	      cirp_logpb_release (buf_mgr, log_buf->pageid);
-	      log_buf = NULL;
-
-	      GOTO_EXIT_ON_ERROR;
-	    }
-
 	  LSA_COPY (&analyzer->current_lsa, &final_lsa);
 
 	  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID,
@@ -2201,18 +2093,19 @@ analyzer_main (void *arg)
 
 		  final_lsa.offset = log_buf->log_page.hdr.offset;
 		}
+	      assert (final_lsa.pageid
+		      <= log_hdr->ha_info.last_flushed_pageid);
+
+	      lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
 
 	      /* check for end of log */
-	      if (LSA_GE (&final_lsa, &log_hdr->eof_lsa))
+	      if (LSA_GE (&final_lsa, &log_hdr->eof_lsa)
+		  || lrec->type == LOG_END_OF_LOG)
 		{
 		  analyzer->is_end_of_record = true;
 		  break;
 		}
 
-	      assert (final_lsa.pageid
-		      <= log_hdr->ha_info.last_flushed_pageid);
-
-	      lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
 	      if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
 		  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
 		{
