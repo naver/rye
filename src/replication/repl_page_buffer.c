@@ -254,6 +254,8 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
 	  /*
 	   * This is an end of file.
 	   */
+	  assert (false);
+
 	  error = ER_PB_BAD_PAGEID;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, pageid, vname);
 
@@ -261,6 +263,8 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
 	}
       else if (nbytes < 0)
 	{
+	  assert (false);
+
 	  if (errno == EINTR)
 	    {
 	      continue;
@@ -280,6 +284,8 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
 
   if (remain_bytes > 0)
     {
+      assert (false);
+
       error = ER_IO_READ;
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 			   error, 2, pageid, vname);
@@ -725,6 +731,8 @@ cirp_logpb_arv_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr, int arv_num)
 					     buf_mgr->db_logpagesize);
   if (error != NO_ERROR)
     {
+      assert (false);
+
       if (error == ER_PB_BAD_PAGEID)
 	{
 	  goto error_rtn;
@@ -1256,25 +1264,17 @@ cirp_logpb_fetch_from_archive (CIRP_BUF_MGR * buf_mgr,
     {
       return error;
     }
-  assert (arv_num >= 0);
+
+  if (arv_log->vdes == NULL_VOLDES || arv_num < 0
+      || arv_log->arv_num != arv_num)
+    {
+      assert (false);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+      return error;
+    }
 
 retry:
-  if (arv_log->arv_num != arv_num)
-    {
-      (void) cirp_logpb_arv_log_close (buf_mgr);
-    }
-
-  if (arv_log->vdes == NULL_VOLDES)
-    {
-      error = cirp_logpb_arv_log_fetch_hdr (buf_mgr, arv_num);
-      if (error != NO_ERROR)
-	{
-	  if (error == ER_PB_BAD_PAGEID)
-	    {
-	      goto retry;
-	    }
-	}
-    }
   assert (arv_log->path[0] != '\0' && arv_log->vdes != NULL_VOLDES);
 
   phy_pageid = pageid - arv_log->log_hdr->fpageid + 1;
@@ -1287,6 +1287,8 @@ retry:
 					     buf_mgr->db_logpagesize);
   if (error != NO_ERROR)
     {
+      assert (false);
+
       if (error == ER_PB_BAD_PAGEID)
 	{
 	  cirp_logpb_arv_log_close (buf_mgr);
@@ -1731,7 +1733,6 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
 
 	  return error;
 	}
-      assert (logpb->log_page.hdr.logical_pageid == pageid);
 
       (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
 
@@ -1747,18 +1748,18 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
     }
   else
     {
-      if (logpb->log_page.hdr.logical_pageid != pageid)
-	{
-	  assert (false);
-
-	  (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
-	  cirp_logpb_clear_logpb (logpb);
-
-	  REPL_SET_GENERIC_ERROR (error, "Invalid log page");
-	  return error;
-	}
-
       logpb->num_fixed++;
+    }
+
+  if (logpb->log_page.hdr.logical_pageid != pageid)
+    {
+      assert (false);
+
+      (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
+      cirp_logpb_clear_logpb (logpb);
+
+      REPL_SET_GENERIC_ERROR (error, "Invalid log page");
+      return error;
     }
 
 #if !defined(NDEBUG)
@@ -1815,6 +1816,7 @@ cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr,
 
       if (error == NO_ERROR)
 	{
+	  assert (false);
 	  error = ER_FAILED;
 	}
       return error;
@@ -2422,6 +2424,7 @@ cirp_init_recdes_pool (CIRP_BUF_MGR * buf_mgr, int page_size, int num_recdes)
     }
   else if (pool->db_page_size != page_size || pool->num_recdes != num_recdes)
     {
+      assert (false);
       cirp_clear_recdes_pool (buf_mgr);
 
       return cirp_init_recdes_pool (buf_mgr, page_size, num_recdes);
