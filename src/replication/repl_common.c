@@ -41,6 +41,10 @@
 #include "repl.h"
 #include "heartbeat.h"
 
+#include "transform.h"
+
+#include "cas_cci_internal.h"
+
 #if defined(CS_MODE) || defined(SERVER_MODE)
 static bool repl_Agent_need_restart = false;
 static bool repl_Agent_need_shutdown = false;
@@ -334,6 +338,82 @@ cirp_free_repl_item (CIRP_REPL_ITEM * item)
   return;
 }
 #endif /* CS_MODE || SERVER_MODE */
+
+/*
+ * rp_is_valid_repl_item ()-
+ *   return:
+ *
+ *   item(in):
+ */
+bool
+rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
+{
+  RP_DATA_ITEM *data;
+  RP_DDL_ITEM *ddl;
+  RP_CATALOG_ITEM *catalog;
+
+  while (item != NULL)
+    {
+      switch (item->item_type)
+	{
+	case RP_ITEM_TYPE_DATA:
+	  data = &item->info.data;
+	  if (data->class_name == NULL || LSA_ISNULL (&data->lsa)
+	      || cci_db_idxkey_is_null (&data->key))
+	    {
+	      return false;
+	    }
+
+	  if (data->rcv_index != RVREPL_DATA_INSERT
+	      && data->rcv_index != RVREPL_DATA_UPDATE
+	      && data->rcv_index != RVREPL_DATA_DELETE)
+	    {
+	      return false;
+	    }
+	  break;
+	case RP_ITEM_TYPE_DDL:
+	  ddl = &item->info.ddl;
+	  if (ddl->query == NULL || ddl->db_user == NULL
+	      || LSA_ISNULL (&ddl->lsa))
+	    {
+	      return false;
+	    }
+	  break;
+	case RP_ITEM_TYPE_CATALOG:
+	  catalog = &item->info.catalog;
+
+	  if (catalog->class_name == NULL
+	      || cci_db_idxkey_is_null (&catalog->key))
+	    {
+	      return false;
+	    }
+
+	  if (catalog->copyarea_op != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+	      && catalog->copyarea_op != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
+	    {
+	      return false;
+	    }
+
+	  if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+	      && strncasecmp (catalog->class_name,
+			      CT_LOG_ANALYZER_NAME,
+			      strlen (CT_LOG_ANALYZER_NAME) != 0))
+	    {
+	      return false;
+	    }
+	  if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE
+	      && strncasecmp (catalog->class_name,
+			      CT_LOG_APPLIER_NAME,
+			      strlen (CT_LOG_APPLIER_NAME) != 0))
+	    {
+	      return false;
+	    }
+	}
+      item = item->next;
+    }
+
+  return true;
+}
 
 /*
  * rp_make_repl_host_key () -
