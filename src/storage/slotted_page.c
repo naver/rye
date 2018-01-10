@@ -1848,7 +1848,9 @@ spage_insert_data (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 
 #if !defined (NDEBUG)
   assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+#if defined(SERVER_MODE)
   assert (fcnt == 1);
+#endif
 #endif
 
   if (record_descriptor_p->length < 0)
@@ -1982,7 +1984,9 @@ spage_insert_for_recovery (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 
 #if !defined (NDEBUG)
   assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+#if defined(SERVER_MODE)
   assert (fcnt == 1);
+#endif
 #endif
 
   if (record_descriptor_p->length < 0)
@@ -2103,7 +2107,9 @@ spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id)
 
 #if !defined (NDEBUG)
   assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+#if defined(SERVER_MODE)
   assert (fcnt == 1);
+#endif
 #endif
 
   page_header_p = (SPAGE_HEADER *) page_p;
@@ -2312,7 +2318,9 @@ spage_update_record_in_place (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 
 #if !defined (NDEBUG)
   assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+#if defined(SERVER_MODE)
   assert (fcnt == 1);
+#endif
 #endif
 
   SPAGE_VERIFY_HEADER (page_header_p);
@@ -2379,7 +2387,9 @@ spage_update_record_after_compact (PAGE_PTR page_p,
 
 #if !defined (NDEBUG)
   assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
+#if defined(SERVER_MODE)
   assert (fcnt == 1);
+#endif
 #endif
 
   SPAGE_VERIFY_HEADER (page_header_p);
