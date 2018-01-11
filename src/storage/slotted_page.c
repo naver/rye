@@ -4445,6 +4445,10 @@ spage_check_num_slots (UNUSED_ARG THREAD_ENTRY * thread_p, PAGE_PTR page_p)
   SPAGE_SLOT *slot_p;
   int i, nrecs;
 
+#if !defined(SERVER_MODE)
+  return true;
+#endif
+
   assert (page_p != NULL);
 
   page_header_p = (SPAGE_HEADER *) page_p;
