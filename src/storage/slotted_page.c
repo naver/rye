@@ -1514,8 +1514,6 @@ spage_shift_slot_up (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 
   spage_set_slot (slot_p, SPAGE_EMPTY_OFFSET, 0, REC_UNKNOWN);
 
-  assert (spage_check_num_slots (NULL, page_p) == true);
-
   SPAGE_VERIFY_HEADER (page_header_p);
 }
 
@@ -3969,9 +3967,20 @@ static SCAN_CODE
 spage_get_record_data (PAGE_PTR page_p, SPAGE_SLOT * slot_p,
 		       RECDES * record_descriptor_p, int is_peeking)
 {
+#if !defined(NDEBUG) /* TODO - delete me */
+  SPAGE_HEADER *page_header_p;
+#endif
+
   assert (page_p != NULL);
   assert (slot_p != NULL);
   assert (record_descriptor_p != NULL);
+
+#if !defined(NDEBUG) /* TODO - delete me */
+  page_header_p = (SPAGE_HEADER *) page_p;
+
+  assert (slot_p->offset_to_record + slot_p->record_length +
+SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots <= DB_PAGESIZE);
+#endif
 
   /*
    * If peeking, the address of the data in the descriptor is set to the
