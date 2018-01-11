@@ -1870,6 +1870,7 @@ int
 spage_insert_data (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 		   RECDES * record_descriptor_p, void *slot_p)
 {
+  SPAGE_HEADER *page_header_p;
   SPAGE_SLOT *tmp_slot_p;
 #if !defined (NDEBUG)
   int fcnt;
@@ -1886,6 +1887,8 @@ spage_insert_data (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 #endif
 #endif
 
+  page_header_p = (SPAGE_HEADER *) page_p;
+
   if (record_descriptor_p->length < 0)
     {
       assert (false);
@@ -1896,7 +1899,7 @@ spage_insert_data (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
   if (record_descriptor_p->type != REC_ASSIGN_ADDRESS)
     {
       if (tmp_slot_p->offset_to_record + record_descriptor_p->length
-	  > DB_PAGESIZE)
+          + SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots > DB_PAGESIZE)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 	  assert_release (false);
@@ -1908,7 +1911,8 @@ spage_insert_data (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
     }
   else
     {
-      if (tmp_slot_p->offset_to_record + SSIZEOF (TRANID) > DB_PAGESIZE)
+      if (tmp_slot_p->offset_to_record + SSIZEOF (TRANID) +
+          SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots > DB_PAGESIZE)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 	  assert_release (false);
@@ -2049,8 +2053,8 @@ spage_insert_for_recovery (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
     {
       if (record_descriptor_p->type != REC_ASSIGN_ADDRESS)
 	{
-	  if (slot_p->offset_to_record + record_descriptor_p->length
-	      > DB_PAGESIZE)
+	  if (slot_p->offset_to_record + record_descriptor_p->length +
+              SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots > DB_PAGESIZE)
 	    {
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
 		      "");
@@ -2371,7 +2375,8 @@ spage_update_record_in_place (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
   is_located_end = spage_is_record_located_at_end (page_header_p, slot_p);
 
   slot_p->record_length = record_descriptor_p->length;
-  if (slot_p->offset_to_record + record_descriptor_p->length > DB_PAGESIZE)
+  if (slot_p->offset_to_record + record_descriptor_p->length +
+      SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots > DB_PAGESIZE)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert_release (false);
@@ -2481,8 +2486,8 @@ spage_update_record_after_compact (PAGE_PTR page_p,
   /* Now update the record */
   spage_set_slot (slot_p, page_header_p->offset_to_free_area,
 		  record_descriptor_p->length, slot_p->record_type);
-  if (page_header_p->offset_to_free_area + record_descriptor_p->length
-      > DB_PAGESIZE)
+  if (page_header_p->offset_to_free_area + record_descriptor_p->length +
+      SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots > DB_PAGESIZE)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       assert_release (false);
@@ -4008,7 +4013,8 @@ SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots <= DB_PAGESIZE);
 	  return S_DOESNT_FIT;
 	}
 
-      if (slot_p->offset_to_record + slot_p->record_length > DB_PAGESIZE)
+      if (slot_p->offset_to_record + slot_p->record_length +
+          SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots > DB_PAGESIZE)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 	  assert_release (false);
