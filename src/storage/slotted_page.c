@@ -60,10 +60,7 @@
     assert ((sphdr)->num_records <= (sphdr)->num_slots);	\
   } while (0)
 
-enum
-{
-  SPAGE_EMPTY_OFFSET = 0	/* uninitialized offset */
-};
+#define SPAGE_EMPTY_OFFSET 0	/* uninitialized offset */
 
 typedef struct spage_header SPAGE_HEADER;
 struct spage_header
@@ -1241,7 +1238,8 @@ spage_compact (PAGE_PTR page_p)
 	  else
 	    {
 	      /* Move the record */
-	      if (to_offset + slot_array[i]->record_length > DB_PAGESIZE)
+	      if (to_offset + slot_array[i]->record_length +
+                  SSIZEOF (SPAGE_SLOT) * page_header_p->num_slots > DB_PAGESIZE)
 		{
 		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
 			  1, "");
@@ -1452,6 +1450,7 @@ spage_find_empty_slot (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
     }
   else
     {
+      assert (false); /* is impossible */
       /* We already know that there is total space available since the slot is
          reused and the space was checked above */
       if (spage_has_enough_contiguous_space (page_p, page_header_p,
@@ -4719,6 +4718,7 @@ spage_find_slot (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 
   if (is_unknown_slot_check)
     {
+      /* defense code */
       if (page_header_p->anchor_type == UNANCHORED_KEEP_SEQUENCE_BTREE
 	  && slot_id == 0)
 	{
@@ -4807,7 +4807,10 @@ spage_has_enough_contiguous_space (PAGE_PTR page_p,
   err = spage_compact (page_p);
   assert_release (err == NO_ERROR);
 
+  assert (spage_has_enough_total_space (NULL, page_p, page_header_p,
+      space) == true);
   assert (spage_check_num_slots (NULL, page_p) == true);
+
   return (err == NO_ERROR);
 }
 
