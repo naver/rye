@@ -7200,6 +7200,8 @@ btree_rv_undoredo_copy_page (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 {
   (void) memcpy (recv->pgptr, recv->data, DB_PAGESIZE);
 
+  assert (spage_check (thread_p, recv->pgptr) == NO_ERROR);
+
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
   return NO_ERROR;
 }
