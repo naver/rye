@@ -280,6 +280,8 @@ spage_verify_header (PAGE_PTR page_p)
 	      header_info);
       assert (false);
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 }
 
 /*
@@ -584,6 +586,8 @@ spage_save_space (THREAD_ENTRY * thread_p, SPAGE_HEADER * page_header_p,
   assert (head_p->total_saved >= 0);
   assert (entry_p->saved >= 0);
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   SPAGE_SAVING_UNLOCK ();
 
   return NO_ERROR;
@@ -632,6 +636,8 @@ spage_get_total_saved_spaces (THREAD_ENTRY * thread_p,
       total_saved =
 	spage_get_saved_spaces (thread_p, page_header_p, page_p, &dummy);
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return total_saved;
 }
@@ -711,6 +717,8 @@ spage_get_saved_spaces (THREAD_ENTRY * thread_p, SPAGE_HEADER * page_header_p,
       *saved_by_other_trans = total_saved - my_saved_space;
       assert (*saved_by_other_trans >= 0);
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return total_saved;
 }
@@ -858,6 +866,8 @@ spage_number_of_records (PAGE_PTR page_p)
   page_header_p = (SPAGE_HEADER *) page_p;
   SPAGE_VERIFY_HEADER (page_header_p);
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return page_header_p->num_records;
 }
 
@@ -876,6 +886,8 @@ spage_number_of_slots (PAGE_PTR page_p)
 
   page_header_p = (SPAGE_HEADER *) page_p;
   SPAGE_VERIFY_HEADER (page_header_p);
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return page_header_p->num_slots;
 }
@@ -905,6 +917,8 @@ spage_get_free_space (THREAD_ENTRY * thread_p, PAGE_PTR page_p)
       free_space = 0;
     }
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return free_space;
 }
 
@@ -933,6 +947,8 @@ spage_get_free_space_without_saving (UNUSED_ARG THREAD_ENTRY * thread_p,
       assert (false);
       free_space = 0;
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return free_space;
 }
@@ -983,6 +999,8 @@ spage_max_space_for_new_record (THREAD_ENTRY * thread_p, PAGE_PTR page_p)
     {
       total_free = 0;
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return total_free;
 }
@@ -1046,6 +1064,9 @@ spage_collect_statistics (PAGE_PTR page_p,
   *npages = pages;
   *nrecords = records;
   *rec_length = length;
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
 }
 
 /*
@@ -1097,6 +1118,9 @@ spage_initialize (THREAD_ENTRY * thread_p, PAGE_PTR page_p, INT16 slot_type,
 						 alignment);
 
   page_header_p->alignment = alignment;
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   pgbuf_set_dirty (thread_p, page_p, DONT_FREE);
 }
 
@@ -1295,6 +1319,8 @@ spage_find_free_slot (PAGE_PTR page_p, SPAGE_SLOT ** out_slot_p)
       return SP_ERROR;
     }
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return slot_id;
 }
 
@@ -1320,6 +1346,8 @@ spage_check_space (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
     {
       return SP_ERROR;
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return SP_SUCCESS;
 }
@@ -1449,6 +1477,8 @@ spage_find_empty_slot (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
   *out_space_p = space;
   *out_slot_id_p = slot_id;
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   /* The page is set dirty somewhere else */
   return SP_SUCCESS;
 }
@@ -1484,6 +1514,8 @@ spage_shift_slot_up (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 
   spage_set_slot (slot_p, SPAGE_EMPTY_OFFSET, 0, REC_UNKNOWN);
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   SPAGE_VERIFY_HEADER (page_header_p);
 }
 
@@ -1515,6 +1547,8 @@ spage_shift_slot_down (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
     }
 
   spage_set_slot (last_slot_p, SPAGE_EMPTY_OFFSET, 0, REC_UNKNOWN);
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   SPAGE_VERIFY_HEADER (page_header_p);
 }
@@ -1777,6 +1811,8 @@ spage_insert (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
       status = spage_insert_data (thread_p, page_p,
 				  record_descriptor_p, slot_p);
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return status;
 }
@@ -2293,6 +2329,8 @@ spage_check_updatable (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
       *out_new_waste_p = new_waste;
     }
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return SP_SUCCESS;
 }
 
@@ -2578,6 +2616,8 @@ spage_is_updatable (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
       return false;
     }
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return true;
 }
 
@@ -2616,6 +2656,9 @@ spage_update_record_type (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
     }
 
   slot_p->record_type = record_type;
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   pgbuf_set_dirty (thread_p, page_p, DONT_FREE);
 }
 
@@ -3781,6 +3824,9 @@ spage_search_record (PAGE_PTR page_p, PGSLOTID * out_slot_id_p,
       record_descriptor_p->length = 0;
       return S_END;
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
 }
 
 /*
@@ -3968,6 +4014,8 @@ spage_get_record_data (PAGE_PTR page_p, SPAGE_SLOT * slot_p,
   record_descriptor_p->length = slot_p->record_length;
   record_descriptor_p->type = slot_p->record_type;
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return S_SUCCESS;
 }
 
@@ -4000,6 +4048,8 @@ spage_get_record_length (PAGE_PTR page_p, PGSLOTID slot_id)
       return -1;
     }
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return slot_p->record_length;
 }
 
@@ -4030,6 +4080,8 @@ spage_get_space_for_record (PAGE_PTR page_p, PGSLOTID slot_id)
       assert (false);
       return -1;
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return (slot_p->record_length
 	  + DB_WASTED_ALIGN (slot_p->record_length, page_header_p->alignment)
@@ -4066,6 +4118,8 @@ spage_get_record_type (PAGE_PTR page_p, PGSLOTID slot_id)
       assert (false);		/* is impossible */
       return REC_UNKNOWN;
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return slot_p->record_type;
 }
@@ -4571,6 +4625,8 @@ spage_check_slot_owner (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
   tranid = logtb_find_current_tranid (thread_p);
   slot_p = spage_find_slot (page_p, page_header_p, slot_id, false);
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
+
   return (*(TRANID *) (page_p + slot_p->offset_to_record) == tranid);
 }
 
@@ -4662,9 +4718,12 @@ spage_find_slot (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 
       if (spage_is_unknown_slot (slot_id, page_header_p, slot_p))
 	{
+  assert (spage_check_num_slots (NULL, page_p) == true);
 	  return NULL;
 	}
     }
+
+  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return slot_p;
 }
@@ -4703,10 +4762,12 @@ spage_has_enough_total_space (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
 	}
       assert (total_saved >= 0);
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
       return (space <= (page_header_p->total_free - total_saved));
     }
   else
     {
+  assert (spage_check_num_slots (NULL, page_p) == true);
       return (space <= page_header_p->total_free);
     }
 }
@@ -4730,12 +4791,14 @@ spage_has_enough_contiguous_space (PAGE_PTR page_p,
 
   if (space <= page_header_p->cont_free)
     {
+  assert (spage_check_num_slots (NULL, page_p) == true);
       return true;
     }
 
   err = spage_compact (page_p);
   assert_release (err == NO_ERROR);
 
+  assert (spage_check_num_slots (NULL, page_p) == true);
   return (err == NO_ERROR);
 }
 
