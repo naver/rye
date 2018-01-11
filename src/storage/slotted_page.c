@@ -4715,19 +4715,15 @@ spage_find_slot (PAGE_PTR page_p, SPAGE_HEADER * page_header_p,
 	{
 	  if (slot_p->record_length != sizeof (BTREE_NODE_HEADER))
 	    {
-	      assert_release (false);	/* is impossible */
 	      return NULL;
 	    }
 	}
 
       if (spage_is_unknown_slot (slot_id, page_header_p, slot_p))
 	{
-  assert (spage_check_num_slots (NULL, page_p) == true);
 	  return NULL;
 	}
     }
-
-  assert (spage_check_num_slots (NULL, page_p) == true);
 
   return slot_p;
 }
