@@ -1552,6 +1552,17 @@ hb_cluster_job_changemode_force (HB_JOB_ARG * arg)
   pthread_mutex_lock (&css_Master_socket_anchor_lock);
   pthread_mutex_lock (&hb_Resource->lock);
 
+#if !defined(NDEBUG)
+  if (hb_Resource->procs)
+    {
+      hb_help_sprint_processes_info (hb_info_str, HB_INFO_STR_MAX);
+      er_log_debug (ARG_FILE_LINE, "%s", hb_info_str);
+
+      hb_help_sprint_nodes_info (hb_info_str, HB_INFO_STR_MAX);
+      er_log_debug (ARG_FILE_LINE, "%s", hb_info_str);
+    }
+#endif
+
   for (proc = hb_Resource->procs; proc; proc = proc->next)
     {
       if (proc->type != HB_PTYPE_SERVER
@@ -1560,7 +1571,9 @@ hb_cluster_job_changemode_force (HB_JOB_ARG * arg)
 	  continue;
 	}
 
-      if (hb_Resource->node_state != proc->server_state)
+      if (hb_Resource->node_state == HA_STATE_TO_BE_SLAVE
+	  || hb_Resource->node_state == HA_STATE_TO_BE_MASTER
+	  || hb_Resource->node_state != proc->server_state)
 	{
 	  if ((hb_Resource->node_state == HA_STATE_SLAVE
 	       && proc->server_state == HA_STATE_TO_BE_SLAVE)
@@ -1580,15 +1593,21 @@ hb_cluster_job_changemode_force (HB_JOB_ARG * arg)
 		  /* TODO : if error */
 		}
 	    }
+
 	  change_server_state = true;
 	}
     }
 
+#if !defined(NDEBUG)
   if (hb_Resource->procs)
     {
       hb_help_sprint_processes_info (hb_info_str, HB_INFO_STR_MAX);
       er_log_debug (ARG_FILE_LINE, "%s", hb_info_str);
+
+      hb_help_sprint_nodes_info (hb_info_str, HB_INFO_STR_MAX);
+      er_log_debug (ARG_FILE_LINE, "%s", hb_info_str);
     }
+#endif
 
   pthread_mutex_unlock (&hb_Resource->lock);
   pthread_mutex_unlock (&css_Master_socket_anchor_lock);
@@ -7041,7 +7060,7 @@ hb_help_sprint_processes_info (char *buffer, int max_length)
   p += snprintf (p, MAX ((last - p), 0), "=============================="
 		 "==================================================\n");
   p += snprintf (p, MAX ((last - p), 0), " * state : %s \n",
-		 HA_STATE_NAME (hb_Cluster->node_state));
+		 HA_STATE_NAME (hb_Resource->node_state));
   p += snprintf (p, MAX ((last - p), 0), "------------------------------"
 		 "--------------------------------------------------\n");
   p += snprintf (p, MAX ((last - p), 0), "%-10s %-22s %-15s %-10s %-15s\n",
