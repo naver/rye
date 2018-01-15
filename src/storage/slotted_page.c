@@ -2141,7 +2141,8 @@ spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR page_p, PGSLOTID slot_id)
 
   assert (pgbuf_get_latch_mode (page_p, &fcnt) == PGBUF_LATCH_WRITE);
 #if defined(SERVER_MODE)
-  assert (fcnt == 1);
+//  assert (fcnt == 1);
+  assert (fcnt <= 2); /* TODO - refer heap_update () -> heap_delete_internal () */
 #endif
 
   page_header_p = (SPAGE_HEADER *) page_p;

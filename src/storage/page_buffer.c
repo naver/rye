@@ -1012,6 +1012,8 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   FILEIO_PAGE_RESERVED *prv_p;
   int buf_lock_acquired;
   int wait_msecs;
+  PAGE_TYPE pself;
+
 #if defined(SERVER_MODE)
   UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
@@ -1255,8 +1257,6 @@ try_again:
     }
   else
     {
-      PAGE_TYPE pself;
-
       pself = pgbuf_get_page_ptype (thread_p, pgptr);
 
       if (pself == PAGE_UNKNOWN)
@@ -7535,12 +7535,10 @@ pgbuf_check_page_ptype_internal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
     }
 
 #if 1				/* TODO - do not delete me */
-#if defined(NDEBUG)
   if (log_is_in_crash_recovery ())
     {
       return true;
     }
-#endif
 #endif
 
   if (thread_p == NULL)
