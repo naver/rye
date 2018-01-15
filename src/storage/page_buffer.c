@@ -7534,7 +7534,7 @@ pgbuf_check_page_ptype_internal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
       return false;
     }
 
-#if 0				/* TODO - do not delete me */
+#if 1				/* TODO - do not delete me */
 #if defined(NDEBUG)
   if (log_is_in_crash_recovery ())
     {
