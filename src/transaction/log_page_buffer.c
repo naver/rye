@@ -78,6 +78,8 @@
 #include "event_log.h"
 #include "rye_server_shm.h"
 
+#include "fault_injection.h"
+
 #if !defined(SERVER_MODE)
 #define pthread_mutex_init(a, b)
 #define pthread_mutex_destroy(a)
@@ -147,6 +149,7 @@ static int rv;
 #define LOG_APPEND_SETDIRTY_ADD_ALIGN(thread_p, add)                                    \
   do {                                                                        \
     log_Gl.hdr.append_lsa.offset += (add);                                    \
+    assert (log_Gl.hdr.append_lsa.offset >= 0);                               \
     LOG_APPEND_ALIGN((thread_p), LOG_SET_DIRTY);                                          \
   } while(0)
 
@@ -3571,6 +3574,8 @@ logpb_append_data (THREAD_ENTRY * thread_p, int length, const char *data)
       /* Does data fit completely in current page ? */
       if ((ptr + length) >= last_ptr)
 	{
+	  FI_SET (thread_p, FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT, 1);
+
 	  while (length > 0)
 	    {
 	      if (ptr >= last_ptr)

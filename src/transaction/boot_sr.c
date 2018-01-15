@@ -3430,6 +3430,10 @@ xboot_register_client (THREAD_ENTRY * thread_p,
   if (tran_index != NULL_TRAN_INDEX)
     {
 #if defined (SERVER_MODE)
+#if 0				/* TODO: happy */
+      assert (css_find_conn_by_tran_index (tran_index) == NULL);
+#endif
+
       thread_p->conn_entry->tran_index = tran_index;
 #endif /* SERVER_MODE */
       if (logtb_start_transaction_if_needed (thread_p) == NULL_TRANID)

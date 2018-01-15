@@ -647,6 +647,8 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
 
 	  if (error == NO_ERROR)
 	    {
+	      assert (false);
+
 	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	    }
 	  GOTO_EXIT_ON_ERROR;
@@ -819,6 +821,8 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
 
 	  if (error == NO_ERROR)
 	    {
+	      assert (false);
+
 	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	    }
 
@@ -838,10 +842,12 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
 				     rec_type,
 				     &recdes->data, &recdes->length);
 	}
-      cirp_logpb_release (buf_mgr, lsa.pageid);
+      cirp_logpb_release (buf_mgr, pg->hdr.logical_pageid);
     }
   else
     {
+      assert (false);
+
       error = ER_LOG_PAGE_CORRUPTED;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, lsa.pageid);
     }
@@ -975,6 +981,8 @@ cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate)
 
   if (need_flush == true)
     {
+      assert (rp_is_valid_repl_item (applier->head));
+
       error = cci_send_repl_data (&applier->conn, applier->head,
 				  applier->num_unflushed);
       if (error < 0)
@@ -1110,7 +1118,7 @@ static int
 cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 {
   int error = NO_ERROR;
-  LOG_PAGE *pgptr;
+  LOG_PAGE *pgptr = NULL;
   unsigned int rcvindex;
   RECDES *recdes;
   LOG_PAGEID old_pageid = NULL_PAGEID;
@@ -1136,6 +1144,8 @@ cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
       if (error == NO_ERROR)
 	{
+	  assert (false);
+
 	  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	}
 
@@ -1182,7 +1192,7 @@ cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
   monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
 			 MNT_RP_INSERT, 1);
 
-  cirp_logpb_release (buf_mgr, old_pageid);
+  cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
 
   assert (error == NO_ERROR);
   return error;
@@ -1198,9 +1208,9 @@ exit_on_error:
 	  error, "internal client error.");
   er_stack_pop ();
 
-  if (old_pageid != NULL_PAGEID)
+  if (pgptr != NULL)
     {
-      cirp_logpb_release (buf_mgr, old_pageid);
+      cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
     }
 
   return error;
@@ -1248,6 +1258,8 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
       if (error == NO_ERROR)
 	{
+	  assert (false);
+
 	  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 	}
 
@@ -1288,7 +1300,7 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
   monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
 			 MNT_RP_UPDATE, 1);
 
-  cirp_logpb_release (buf_mgr, old_pageid);
+  cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
 
   return error;
 
@@ -1303,9 +1315,9 @@ exit_on_error:
 	  error, "internal client error.");
   er_stack_pop ();
 
-  if (old_pageid != NULL_PAGEID)
+  if (pgptr != NULL)
     {
-      cirp_logpb_release (buf_mgr, old_pageid);
+      cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
     }
 
   return error;
@@ -2134,9 +2146,10 @@ applier_main (void *arg)
 						  final_lsa.pageid);
 	      if (error != NO_ERROR || log_buf == NULL)
 		{
-		  assert (false);
 		  if (error == NO_ERROR)
 		    {
+		      assert (false);
+
 		      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 		    }
 		  GOTO_EXIT_ON_ERROR;

@@ -54,6 +54,19 @@ static FI_TEST_ITEM *fi_code_item (THREAD_ENTRY * thread_p,
 static FI_TEST_ITEM fi_Test_items[FI_TEST_END];
 static bool fi_hasalready_Initiated = false;
 
+
+static void
+fi_init_test_item (FI_TEST_CODE test_code, const char *name,
+		   FI_HANDLER_FUNC func)
+{
+  FI_TEST_ITEM *fi_item;
+
+  fi_item = &fi_Test_items[test_code];
+  fi_item->name = name;
+  fi_item->func = func;
+  fi_item->state = FI_INIT_STATE;
+}
+
 /*
  * fi_init -
  *
@@ -63,107 +76,68 @@ static bool fi_hasalready_Initiated = false;
 void
 fi_init (void)
 {
-  FI_TEST_ITEM *fi_item;
+  fi_init_test_item (FI_TEST_FILE_MANAGER_FILE_DESTROY_ERROR1,
+		     "fi_file_destroy_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_FILE_MANAGER_FILE_DESTROY_ERROR1];
-  fi_item->name = "fi_file_destroy_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_OVF_FILE_UPDATE_ERROR1,
+		     "fi_ovf_file_update_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_OVF_FILE_UPDATE_ERROR1];
-  fi_item->name = "fi_ovf_file_update_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_HEAP_CREATE_ERROR1,
+		     "fi_heap_create_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_HEAP_CREATE_ERROR1];
-  fi_item->name = "fi_heap_create_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_RANDOM_EXIT,
+		     "fi_btree_random_exit", fi_handler_random_exit);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_RANDOM_EXIT];
-  fi_item->name = "fi_btree_random_exit";
-  fi_item->func = fi_handler_random_exit;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_LOG_MANAGER_RANDOM_EXIT_AT_RUN_POSTPONE,
+		     "fi_run_postpone_random_exit", fi_handler_random_exit);
 
-  fi_item = &fi_Test_items[FI_TEST_LOG_MANAGER_RANDOM_EXIT_AT_RUN_POSTPONE];
-  fi_item->name = "fi_run_postpone_random_exit";
-  fi_item->func = fi_handler_random_exit;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT,
+		     "fi_doesnt_fit_exit", fi_handler_random_exit);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_SPLIT_ERROR1];
-  fi_item->name = "fi_btree_split_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_SPLIT_ERROR1,
+		     "fi_btree_split_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_ROOT_SPLIT_ERROR1];
-  fi_item->name = "fi_btree_root_split_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ROOT_SPLIT_ERROR1,
+		     "fi_btree_root_split_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR1];
-  fi_item->name = "fi_btree_add_index_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR1,
+		     "fi_btree_add_index_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR2];
-  fi_item->name = "fi_btree_add_index_error_2";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR2,
+		     "fi_btree_add_index_error_2", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR1];
-  fi_item->name = "fi_btree_alloc_page_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR1,
+		     "fi_btree_alloc_page_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR2];
-  fi_item->name = "fi_btree_alloc_page_error_2";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR2,
+		     "fi_btree_alloc_page_error_2", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR3];
-  fi_item->name = "fi_btree_alloc_page_error_3";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR3,
+		     "fi_btree_alloc_page_error_3", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_MERGE_ERROR1];
-  fi_item->name = "fi_btree_merge_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_MERGE_ERROR1,
+		     "fi_btree_merge_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_DELETE_INDEX_ERROR1];
-  fi_item->name = "fi_btree_delete_index_error_1";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_DELETE_INDEX_ERROR1,
+		     "fi_btree_delete_index_error_1", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_BTREE_MANAGER_DELETE_INDEX_ERROR2];
-  fi_item->name = "fi_btree_delete_index_error_2";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_DELETE_INDEX_ERROR2,
+		     "fi_btree_delete_index_error_2", fi_handler_random_fail);
 
-  fi_item = &fi_Test_items[FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE];
-  fi_item->name = "fi_hb_slow_heartbeat_message";
-  fi_item->func = fi_handler_random_sleep;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE,
+		     "fi_hb_slow_heartbeat_message", fi_handler_random_sleep);
 
-  fi_item = &fi_Test_items[FI_TEST_HB_SLOW_DISK];
-  fi_item->name = "fi_hb_slow_disk";
-  fi_item->func = fi_handler_random_success;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_HB_SLOW_DISK,
+		     "fi_hb_slow_disk", fi_handler_random_success);
 
-  fi_item = &fi_Test_items[FI_TEST_HB_SLOW_PING_HOST];
-  fi_item->name = "fi_hb_slow_ping_host";
-  fi_item->func = fi_handler_random_success;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_HB_SLOW_PING_HOST,
+		     "fi_hb_slow_ping_host", fi_handler_random_success);
 
-  fi_item = &fi_Test_items[FI_TEST_REPL_RANDOM_EXIT];
-  fi_item->name = "fi_repl_random_exit";
-  fi_item->func = fi_handler_random_exit;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_REPL_RANDOM_EXIT,
+		     "fi_repl_random_exit", fi_handler_random_exit);
 
-  fi_item = &fi_Test_items[FI_TEST_REPL_RANDOM_FAIL];
-  fi_item->name = "fi_repl_random_fail";
-  fi_item->func = fi_handler_random_fail;
-  fi_item->state = FI_INIT_STATE;
+  fi_init_test_item (FI_TEST_REPL_RANDOM_FAIL,
+		     "fi_repl_random_fail", fi_handler_random_fail);
 
 
   fi_hasalready_Initiated = true;

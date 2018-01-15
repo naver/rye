@@ -3361,9 +3361,13 @@ thread_log_flush_thread (void *arg_p)
 	  param_refresh_remained = param_refresh_interval;
 	}
 
+      FI_RESET (tsd_ptr, FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT);
+
       LOG_CS_ENTER (tsd_ptr);
       logpb_flush_pages_direct (tsd_ptr);
       LOG_CS_EXIT ();
+
+      FI_TEST_ARG_INT (tsd_ptr, FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT, 1000, 1);
 
       log_Stat.gc_flush_count++;
       total_elapsed_time = 0;
