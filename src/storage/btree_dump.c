@@ -76,8 +76,6 @@ static void btree_dump_non_leaf_record (THREAD_ENTRY * thread_p, FILE * fp,
 					BTID_INT * btid, RECDES * rec, int n,
 					int print_key);
 
-static const char *node_type_to_string (short node_type);
-
 #if 1				/* defined(ENABLE_UNUSED_FUNCTION) */
 static int btree_dump_subtree (THREAD_ENTRY * thread_p, FILE * fp,
 			       BTID_INT * btid, PAGE_PTR pg_ptr,
@@ -926,12 +924,12 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
   /* output header information */
   fprintf (fp,
-	   "--- Page_Id: {%d , %d} Node_Type: %s Level: %d Key_Cnt: %d Next_Page_Id: "
-	   "{%d , %d} Prev_Page_Id: {%d , %d} Used: %d ---\n\n",
+	   "--- Page_Id: {%d , %d} Node_Type: %s Level: %d Key_Cnt: %d Prev_Page_Id: "
+	   "{%d , %d} Next_Page_Id: {%d , %d} Used: %d ---\n\n",
 	   pg_vpid->volid, pg_vpid->pageid,
-	   node_type_to_string (node_type), node_header.node_level, key_cnt,
-	   next_vpid.volid, next_vpid.pageid,
+	   btree_node_type_to_string (node_type), node_header.node_level, key_cnt,
 	   prev_vpid.volid, prev_vpid.pageid,
+           next_vpid.volid, next_vpid.pageid,
 	   DB_PAGESIZE - spage_get_free_space (thread_p, page_ptr));
   fflush (fp);
 
@@ -977,8 +975,8 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
 }
 
-static const char *
-node_type_to_string (short node_type)
+const char *
+btree_node_type_to_string (short node_type)
 {
   return (node_type == BTREE_LEAF_NODE) ? "LEAF" : "NON_LEAF";
 }

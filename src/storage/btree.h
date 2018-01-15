@@ -267,6 +267,7 @@ extern int btree_dump_tree (THREAD_ENTRY * thread_p, FILE * fp,
 extern void btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 			     BTID_INT * btid, PAGE_PTR page_ptr,
 			     VPID * pg_vpid, int n, bool dump_key);
+extern const char *btree_node_type_to_string (short node_type);
 
 /* Recovery routines */
 extern int btree_rv_nodehdr_redo_insert (THREAD_ENTRY * thread_p,

@@ -6688,7 +6688,7 @@ btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
   fprintf (fp,
 	   "\nNODE_TYPE: %s NODE_LEVEL: %2d KEY_CNT: %4d "
 	   "PREV_PAGEID: {%4d , %4d} NEXT_PAGEID: {%4d , %4d} \n\n",
-	   node_type_to_string (node_type), hdr->node_level, hdr->key_cnt,
+	   btree_node_type_to_string (node_type), hdr->node_level, hdr->key_cnt,
 	   hdr->prev_vpid.volid, hdr->prev_vpid.pageid,
 	   hdr->next_vpid.volid, hdr->next_vpid.pageid);
 }
