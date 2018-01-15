@@ -2452,17 +2452,15 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		  if (RCV_IS_NEWPG_LOG (undoredo->data.rcvindex))
 		    {
 		      ptype = rv_rcvindex_page_type (undoredo->data.rcvindex);
-		      rcv.pgptr =
-			pgbuf_fix_newpg (thread_p, &rcv_vpid, ptype);
 		    }
 		  else
 		    {
-		      rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
-					     PGBUF_LATCH_WRITE,
-					     PGBUF_UNCONDITIONAL_LATCH,
-					     PAGE_UNKNOWN);
+		      ptype = PAGE_UNKNOWN;
 		    }
 
+		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
+					 PGBUF_LATCH_WRITE,
+					 PGBUF_UNCONDITIONAL_LATCH, ptype);
 		  if (rcv.pgptr == NULL)
 		    {
 		      break;
@@ -2640,17 +2638,15 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		  if (RCV_IS_NEWPG_LOG (redo->data.rcvindex))
 		    {
 		      ptype = rv_rcvindex_page_type (redo->data.rcvindex);
-		      rcv.pgptr =
-			pgbuf_fix_newpg (thread_p, &rcv_vpid, ptype);
 		    }
 		  else
 		    {
-		      rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
-					     PGBUF_LATCH_WRITE,
-					     PGBUF_UNCONDITIONAL_LATCH,
-					     PAGE_UNKNOWN);
+		      ptype = PAGE_UNKNOWN;
 		    }
 
+		  rcv.pgptr = pgbuf_fix (thread_p, &rcv_vpid, OLD_PAGE,
+					 PGBUF_LATCH_WRITE,
+					 PGBUF_UNCONDITIONAL_LATCH, ptype);
 		  if (rcv.pgptr == NULL)
 		    {
 		      break;

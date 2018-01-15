@@ -76,8 +76,6 @@ static void btree_dump_non_leaf_record (THREAD_ENTRY * thread_p, FILE * fp,
 					BTID_INT * btid, RECDES * rec, int n,
 					int print_key);
 
-static const char *node_type_to_string (short node_type);
-
 #if 1				/* defined(ENABLE_UNUSED_FUNCTION) */
 static int btree_dump_subtree (THREAD_ENTRY * thread_p, FILE * fp,
 			       BTID_INT * btid, PAGE_PTR pg_ptr,
@@ -926,12 +924,12 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
   /* output header information */
   fprintf (fp,
-	   "--- Page_Id: {%d , %d} Node_Type: %s Level: %d Key_Cnt: %d Next_Page_Id: "
-	   "{%d , %d} Prev_Page_Id: {%d , %d} Used: %d ---\n\n",
+	   "--- Page_Id: {%d , %d} Node_Type: %s Level: %d Key_Cnt: %d Prev_Page_Id: "
+	   "{%d , %d} Next_Page_Id: {%d , %d} Used: %d ---\n\n",
 	   pg_vpid->volid, pg_vpid->pageid,
-	   node_type_to_string (node_type), node_header.node_level, key_cnt,
-	   next_vpid.volid, next_vpid.pageid,
+	   btree_node_type_to_string (node_type), node_header.node_level, key_cnt,
 	   prev_vpid.volid, prev_vpid.pageid,
+           next_vpid.volid, next_vpid.pageid,
 	   DB_PAGESIZE - spage_get_free_space (thread_p, page_ptr));
   fflush (fp);
 
@@ -977,33 +975,8 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
 }
 
-/*
- * btree_rv_nodehdr_dump () - Dump node header recovery information
- *   return: int
- *   length(in): Length of Recovery Data
- *   data(in): The data being logged
- *
- * Note: Dump node header recovery information
- */
-void
-btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
-{
-  BTREE_NODE_HEADER *hdr;
-  short node_type;
-
-  hdr = (BTREE_NODE_HEADER *) data;
-
-  node_type = BTREE_GET_NODE_TYPE (hdr->node_level);
-
-  fprintf (fp,
-	   "\nNODE_TYPE: %s KEY_CNT: %4d "
-	   "NEXT_PAGEID: {%4d , %4d} \n\n",
-	   node_type_to_string (node_type),
-	   hdr->key_cnt, hdr->next_vpid.volid, hdr->next_vpid.pageid);
-}
-
-static const char *
-node_type_to_string (short node_type)
+const char *
+btree_node_type_to_string (short node_type)
 {
   return (node_type == BTREE_LEAF_NODE) ? "LEAF" : "NON_LEAF";
 }
