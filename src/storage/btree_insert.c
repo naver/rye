@@ -211,6 +211,7 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
       mid = slot_id - 1;	/* get the left fence */
       if (spage_get_record (leaf_page, mid, &rec, PEEK) != S_SUCCESS)
 	{
+	  assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -234,6 +235,7 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
       mid = slot_id + 1;	/* get the right fence */
       if (spage_get_record (leaf_page, mid, &rec, PEEK) != S_SUCCESS)
 	{
+	  assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -1332,6 +1334,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 				       &mid_key, &(btid->right_fence), true);
 	  if (ret != NO_ERROR)
 	    {
+	      assert (false);
 	      GOTO_EXIT_ON_ERROR;
 	    }
 	}
@@ -1343,6 +1346,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
       if (btree_fence_check_page (thread_p, btid, Q) != NO_ERROR)
 	{
+	  assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 #endif
@@ -1359,6 +1363,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 				       &(btid->left_fence), &mid_key, false);
 	  if (ret != NO_ERROR)
 	    {
+	      assert (false);
 	      GOTO_EXIT_ON_ERROR;
 	    }
 	}
@@ -1370,6 +1375,7 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
       if (btree_fence_check_page (thread_p, btid, R) != NO_ERROR)
 	{
+	  assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 #endif
@@ -1799,6 +1805,7 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 				       &mid_key, &(btid->right_fence), true);
 	  if (ret != NO_ERROR)
 	    {
+              assert (false);
 	      GOTO_EXIT_ON_ERROR;
 	    }
 	}
@@ -1810,6 +1817,7 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
       if (btree_fence_check_page (thread_p, btid, Q) != NO_ERROR)
 	{
+          assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 #endif
@@ -1826,6 +1834,7 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 				       &(btid->left_fence), &mid_key, false);
 	  if (ret != NO_ERROR)
 	    {
+              assert (false);
 	      GOTO_EXIT_ON_ERROR;
 	    }
 	}
@@ -1837,6 +1846,7 @@ btree_split_root (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
 
       if (btree_fence_check_page (thread_p, btid, R) != NO_ERROR)
 	{
+          assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 #endif
