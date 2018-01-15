@@ -542,8 +542,8 @@ rv_init_rvfuns (void)
   rv_fun->recv_string = "RVBT_NDRECORD_UPD";
   rv_fun->undofun = btree_rv_noderec_undoredo_update;
   rv_fun->redofun = btree_rv_noderec_undoredo_update;
-  rv_fun->dump_undofun = NULL;
-  rv_fun->dump_redofun = NULL;
+  rv_fun->dump_undofun = btree_rv_nodehdr_dump;
+  rv_fun->dump_redofun = btree_rv_nodehdr_dump;
 
   rv_fun = &RV_fun[RVBT_NDRECORD_INS];
   rv_fun->recv_index = RVBT_NDRECORD_INS;
@@ -575,7 +575,7 @@ rv_init_rvfuns (void)
   rv_fun->undofun = btree_rv_pagerec_insert;
   rv_fun->redofun = btree_rv_pagerec_delete;
   rv_fun->dump_undofun = NULL;
-  rv_fun->dump_redofun = NULL;
+  rv_fun->dump_redofun = btree_rv_pagerec_dump;
 
   rv_fun = &RV_fun[RVBT_GET_NEWROOT];
   rv_fun->recv_index = RVBT_GET_NEWROOT;

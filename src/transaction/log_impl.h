@@ -160,6 +160,7 @@
 #define LOG_READ_ADD_ALIGN(thread_p, add, lsa, log_pgptr)                               \
   do {                                                                        \
     (lsa)->offset += (add);                                                   \
+    assert ((lsa)->offset >= 0);                               \
     LOG_READ_ALIGN((thread_p), (lsa), (log_pgptr));                                       \
   } while(0)
 

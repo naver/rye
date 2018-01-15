@@ -32,6 +32,7 @@ extern RSTR_ARRAY Rye_split_string (const char *str, const char *delim);
 extern void Rye_str_array_free (RSTR_ARRAY array);
 extern int Rye_str_array_get_length (RSTR_ARRAY array);
 extern int Rye_str_array_find (RSTR_ARRAY array, const char *value);
+extern int Rye_str_array_find_substr (RSTR_ARRAY array, const char *substr);
 extern void Rye_str_array_shuffle (RSTR_ARRAY array);
 
 #endif /* DS_STRING_ARRAY_H_ */

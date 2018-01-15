@@ -974,6 +974,9 @@ monitor_create_repl_stats_meta (void)
   init_monitor_stats_info (info_p, MNT_RP_REQUIRED_PAGEID,
 			   "ha_required_pageid", MONITOR_STATS_VALUE_GAUGE);
 
+  init_monitor_stats_info (info_p, MNT_RP_APPLIED_TIME,
+			   "ha_applied_time", MONITOR_STATS_VALUE_GAUGE);
+
   init_monitor_stats_info (info_p, MNT_RP_DELAY,
 			   "ha_delay_time", MONITOR_STATS_VALUE_GAUGE);
 
@@ -1575,7 +1578,7 @@ monitor_get_name (MONITOR_INFO * monitor)
     {
       assert (false);
 
-      return ER_FAILED;
+      return NULL;
     }
 
   return shm_p->name;
@@ -1766,8 +1769,7 @@ void
 monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
 		    MONITOR_STATS * cur_stats, MONITOR_STATS * old_stats,
 		    int cumulative, MONITOR_DUMP_TYPE dump_type,
-		    const char *substr,
-		    void (*calc_func) (MONITOR_STATS * stats, int num_stats))
+		    const char *substr)
 {
   MONITOR_STATS *diff_stats = NULL;
   char stat_buf[16 * ONE_K];
@@ -1795,10 +1797,6 @@ monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
 
       if (cumulative)
 	{
-	  if (calc_func != NULL)
-	    {
-	      calc_func (cur_stats, num_stats);
-	    }
 	  monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
 					cur_stats, dump_type, substr);
 	}
@@ -1818,10 +1816,6 @@ monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
 	      return;
 	    }
 
-	  if (calc_func != NULL)
-	    {
-	      calc_func (diff_stats, num_stats);
-	    }
 	  monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
 					diff_stats, dump_type, substr);
 	}

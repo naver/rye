@@ -2483,8 +2483,10 @@ thread_deadlock_detect_thread (void *arg_p)
   tsd_ptr->type = TT_DAEMON;
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
 
+  rv = pthread_mutex_lock (&thread_Deadlock_detect_thread.lock);
   thread_Deadlock_detect_thread.is_available = true;
   thread_Deadlock_detect_thread.is_running = true;
+  pthread_mutex_unlock (&thread_Deadlock_detect_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -2592,8 +2594,11 @@ thread_session_control_thread (void *arg_p)
   thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
   tsd_ptr->type = TT_DAEMON;
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+
+  rv = pthread_mutex_lock (&thread_Session_control_thread.lock);
   thread_Session_control_thread.is_available = true;
   thread_Session_control_thread.is_running = true;
+  pthread_mutex_unlock (&thread_Session_control_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -2616,6 +2621,7 @@ thread_session_control_thread (void *arg_p)
 
       session_remove_expired_sessions (&timeout);
     }
+
   rv = pthread_mutex_lock (&thread_Session_control_thread.lock);
   thread_Session_control_thread.is_available = false;
   thread_Session_control_thread.is_running = false;
@@ -2666,8 +2672,11 @@ thread_checkpoint_thread (void *arg_p)
   thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
   tsd_ptr->type = TT_DAEMON;
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+
+  rv = pthread_mutex_lock (&thread_Checkpoint_thread.lock);
   thread_Checkpoint_thread.is_available = true;
   thread_Checkpoint_thread.is_running = true;
+  pthread_mutex_unlock (&thread_Checkpoint_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -2743,8 +2752,10 @@ thread_purge_archive_logs_thread (void *arg_p)
   tsd_ptr->type = TT_DAEMON;
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
 
+  rv = pthread_mutex_lock (&thread_Purge_archive_logs_thread.lock);
   thread_Purge_archive_logs_thread.is_available = true;
   thread_Purge_archive_logs_thread.is_running = true;
+  pthread_mutex_unlock (&thread_Purge_archive_logs_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -2812,6 +2823,7 @@ thread_purge_archive_logs_thread (void *arg_p)
 	}
 
     }
+
   rv = pthread_mutex_lock (&thread_Purge_archive_logs_thread.lock);
   thread_Purge_archive_logs_thread.is_available = false;
   thread_Purge_archive_logs_thread.is_running = false;
@@ -2882,8 +2894,10 @@ thread_check_ha_delay_info_thread (void *arg_p)
   tsd_ptr->type = TT_DAEMON;	/* daemon thread */
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
 
+  rv = pthread_mutex_lock (&thread_Check_ha_delay_info_thread.lock);
   thread_Check_ha_delay_info_thread.is_running = true;
   thread_Check_ha_delay_info_thread.is_available = true;
+  pthread_mutex_unlock (&thread_Check_ha_delay_info_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -3020,8 +3034,10 @@ thread_page_flush_thread (void *arg_p)
   tsd_ptr->type = TT_DAEMON;	/* daemon thread */
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
 
+  rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
   thread_Page_flush_thread.is_running = true;
   thread_Page_flush_thread.is_available = true;
+  pthread_mutex_unlock (&thread_Page_flush_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -3271,8 +3287,10 @@ thread_log_flush_thread (void *arg_p)
   tsd_ptr->type = TT_DAEMON;	/* daemon thread */
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
 
+  rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
   thread_Log_flush_thread.is_available = true;
   thread_Log_flush_thread.is_running = true;
+  pthread_mutex_unlock (&thread_Log_flush_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -3343,9 +3361,13 @@ thread_log_flush_thread (void *arg_p)
 	  param_refresh_remained = param_refresh_interval;
 	}
 
+      FI_RESET (tsd_ptr, FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT);
+
       LOG_CS_ENTER (tsd_ptr);
       logpb_flush_pages_direct (tsd_ptr);
       LOG_CS_EXIT ();
+
+      FI_TEST_ARG_INT (tsd_ptr, FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT, 1000, 1);
 
       log_Stat.gc_flush_count++;
       total_elapsed_time = 0;
@@ -3441,8 +3463,11 @@ thread_log_clock_thread (void *arg_p)
   thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
   tsd_ptr->type = TT_DAEMON;
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+
+  rv = pthread_mutex_lock (&thread_Log_clock_thread.lock);
   thread_Log_clock_thread.is_available = true;
   thread_Log_clock_thread.is_running = true;
+  pthread_mutex_unlock (&thread_Log_clock_thread.lock);
 
   while (!tsd_ptr->shutdown)
     {
@@ -3456,8 +3481,10 @@ thread_log_clock_thread (void *arg_p)
       thread_sleep (200);	/* 200 msec */
     }
 
+  rv = pthread_mutex_lock (&thread_Log_clock_thread.lock);
   thread_Log_clock_thread.is_available = false;
   thread_Log_clock_thread.is_running = false;
+  pthread_mutex_unlock (&thread_Log_clock_thread.lock);
 
   er_stack_clearall ();
   er_clear ();
@@ -3648,8 +3675,11 @@ thread_heap_bestspace_thread (void *arg_p)
   thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
   tsd_ptr->type = TT_DAEMON;
   tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+
+  rv = pthread_mutex_lock (&thread_Heap_bestspace_thread.lock);
   thread_Heap_bestspace_thread.is_available = true;
   thread_Heap_bestspace_thread.is_running = true;
+  pthread_mutex_unlock (&thread_Heap_bestspace_thread.lock);
 
   logtb_set_to_system_tran_index (tsd_ptr);
 
@@ -3721,8 +3751,10 @@ thread_heap_bestspace_thread (void *arg_p)
 	}
     }
 
+  rv = pthread_mutex_lock (&thread_Heap_bestspace_thread.lock);
   thread_Heap_bestspace_thread.is_available = false;
   thread_Heap_bestspace_thread.is_running = false;
+  pthread_mutex_unlock (&thread_Heap_bestspace_thread.lock);
 
   er_stack_clearall ();
   er_clear ();

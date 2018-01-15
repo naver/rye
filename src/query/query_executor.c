@@ -6915,8 +6915,8 @@ qexec_check_modification (THREAD_ENTRY * thread_p,
       assert (query_p->xasl_ent != NULL);
 
       ent = query_p->xasl_ent;
-#if 1				/* TODO - may be wrong assert ?? */
-//      assert (ent->deletion_marker == false);
+#if 0				/* TODO - may be wrong assert ?? */
+      assert (ent->deletion_marker == false);
 #endif
 
       er_log_debug (ARG_FILE_LINE, "sql_user_text = %s\n",

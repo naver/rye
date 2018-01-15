@@ -412,7 +412,14 @@ xts_save_aggregate_type (const AGGREGATE_TYPE * aggregate)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -481,7 +488,14 @@ xts_save_function_type (const FUNCTION_TYPE * function)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -550,7 +564,14 @@ xts_save_srlist_id (const QFILE_SORTED_LIST_ID * sort_list_id)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -619,7 +640,14 @@ xts_save_list_id (const QFILE_LIST_ID * list_id)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -688,7 +716,14 @@ xts_save_arith_type (const ARITH_TYPE * arithmetic)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -757,7 +792,14 @@ xts_save_indx_info (const INDX_INFO * indx_info)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -826,7 +868,14 @@ xts_save_outptr_list (const OUTPTR_LIST * outptr_list)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -895,7 +944,14 @@ xts_save_pred_expr (const PRED_EXPR * pred_expr)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -964,7 +1020,14 @@ xts_save_regu_variable (const REGU_VARIABLE * regu_var)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   /*
    * OR_VALUE_ALIGNED_SIZE may reserve more bytes
@@ -1049,7 +1112,14 @@ xts_save_sort_list (const SORT_LIST * sort_list)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -1118,7 +1188,14 @@ xts_save_val_list (const VAL_LIST * val_list)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -1187,7 +1264,14 @@ xts_save_db_value (const DB_VALUE * value)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -1256,7 +1340,13 @@ xts_save_xasl_node (const XASL_NODE * xasl)
       goto end;
     }
 
-  assert (buf <= buf_p + size);
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   /*
    * OR_DOUBLE_ALIGNED_SIZE may reserve more bytes
@@ -1341,7 +1431,14 @@ xts_save_cache_attrinfo (const HEAP_CACHE_ATTRINFO * attrinfo)
       offset = ER_FAILED;
       goto end;
     }
-  assert (buf <= buf_p + size);
+
+  /* bound check */
+  if (buf > buf_p + size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[offset], buf_p, size);
 
@@ -2162,6 +2259,14 @@ xts_save_upddel_class_info (const UPDDEL_CLASS_INFO * upd_cls)
       goto end;
     }
 
+  /* bound check */
+  if (ptr - buf > size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
+
   memcpy (&xts_Stream_buffer[offset], buf, size);
 
 end:
@@ -2233,6 +2338,15 @@ xts_save_update_assignment_array (const UPDATE_ASSIGNMENT * assigns,
 	  goto end;
 	}
     }
+
+  /* bound check */
+  if (ptr - buf > size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
+
   memcpy (&xts_Stream_buffer[offset], buf, size);
 
 end:
@@ -2322,6 +2436,14 @@ xts_save_odku_info (const ODKU_INFO * odku_info)
       offset = 0;
     }
   ptr = or_pack_int (ptr, offset);
+
+  /* bound check */
+  if (ptr - buf > size)
+    {
+      assert (false);
+      offset = ER_FAILED;
+      goto end;
+    }
 
   memcpy (&xts_Stream_buffer[return_offset], buf, size);
   offset = return_offset;
