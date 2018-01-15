@@ -977,38 +977,6 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 
 }
 
-/*
- * btree_rv_nodehdr_dump () - Dump node header recovery information
- *   return: int
- *   length(in): Length of Recovery Data
- *   data(in): The data being logged
- *
- * Note: Dump node header recovery information
- */
-void
-btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
-{
-  BTREE_NODE_HEADER *hdr;
-  short node_type;
-
-#if 1
-  if (length != sizeof (BTREE_NODE_HEADER))
-    {
-      return;
-    }
-#endif
-
-  hdr = (BTREE_NODE_HEADER *) data;
-
-  node_type = BTREE_GET_NODE_TYPE (hdr->node_level);
-
-  fprintf (fp,
-	   "\nNODE_TYPE: %s KEY_CNT: %4d "
-	   "NEXT_PAGEID: {%4d , %4d} \n\n",
-	   node_type_to_string (node_type),
-	   hdr->key_cnt, hdr->next_vpid.volid, hdr->next_vpid.pageid);
-}
-
 static const char *
 node_type_to_string (short node_type)
 {

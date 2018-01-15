@@ -6661,6 +6661,39 @@ btree_rv_nodehdr_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 }
 
 /*
+ * btree_rv_nodehdr_dump () - Dump node header recovery information
+ *   return: int
+ *   length(in): Length of Recovery Data
+ *   data(in): The data being logged
+ *
+ * Note: Dump node header recovery information
+ */
+void
+btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
+{
+  BTREE_NODE_HEADER *hdr;
+  short node_type;
+
+#if 1
+  if (length != sizeof (BTREE_NODE_HEADER))
+    {
+      return;
+    }
+#endif
+
+  hdr = (BTREE_NODE_HEADER *) data;
+
+  node_type = BTREE_GET_NODE_TYPE (hdr->node_level);
+
+  fprintf (fp,
+	   "\nNODE_TYPE: %s NODE_LEVEL: %2d KEY_CNT: %4d "
+	   "PREV_PAGEID: {%4d , %4d} NEXT_PAGEID: {%4d , %4d} \n\n",
+	   node_type_to_string (node_type), hdr->node_level, hdr->key_cnt,
+	   hdr->prev_vpid.volid, hdr->prev_vpid.pageid,
+	   hdr->next_vpid.volid, hdr->next_vpid.pageid);
+}
+
+/*
  * btree_rv_noderec_undoredo_update () - Recover an update to a node record. used either
  *                         for undo or redo
  *   return:
@@ -6874,7 +6907,6 @@ btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   return NO_ERROR;
 }
 
-#if 1
 void
 btree_rv_pagerec_dump (FILE * fp, UNUSED_ARG int length, void *data)
 {
@@ -6882,10 +6914,9 @@ btree_rv_pagerec_dump (FILE * fp, UNUSED_ARG int length, void *data)
 
   recset_header = (const RECSET_HEADER *) data;
 
-  fprintf (fp, " rec_cnt: %d , first_slotid: %d \n", 
-           recset_header->rec_cnt, recset_header->first_slotid);
+  fprintf (fp, " rec_cnt: %d , first_slotid: %d \n",
+	   recset_header->rec_cnt, recset_header->first_slotid);
 }
-#endif
 
 /*
  * btree_rv_newpage_redo_init_helper () -
