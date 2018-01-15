@@ -927,6 +927,7 @@ loop:
 						     THREAD_RESUME_DUE_TO_INTERRUPT);
 		  if (r != NO_ERROR)
 		    {
+		      (void) thread_unlock_entry (suspended_p);
 		      return r;
 		    }
 		}
