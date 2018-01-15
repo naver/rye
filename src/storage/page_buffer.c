@@ -3147,8 +3147,9 @@ pgbuf_reset_temp_lsa (PAGE_PTR pgptr)
 }
 #endif /* ENABLE_UNUSED_FUNCTION */
 
+#if !defined (NDEBUG)
 /*
- * pgbuf_get_vpid () - Find the latch mode associated with
+ * pgbuf_get_latch_mode () - Find the latch mode associated with
  *                     the passed buffer
  *   return: void
  *   pgptr(in): Page pointer
@@ -3162,10 +3163,10 @@ pgbuf_get_latch_mode (PAGE_PTR pgptr, int *fcntp)
   if (pgbuf_get_check_page_validation (NULL, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
-        {
-          VPID_SET_NULL (vpid);
-          return;
-        }
+	{
+	  VPID_SET_NULL (vpid);
+	  return;
+	}
     }
 #endif
 
@@ -3180,6 +3181,7 @@ pgbuf_get_latch_mode (PAGE_PTR pgptr, int *fcntp)
 
   return bufptr->latch_mode;
 }
+#endif
 
 /*
  * pgbuf_get_vpid () - Find the volume and page identifier associated with
@@ -7617,7 +7619,6 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   /* Check iff is not initialized yet */
   if (LSA_ISNULL (&(prv_p->lsa)))
     {
-//      assert (log_is_in_crash_recovery ());
       return true;		/* nop */
     }
 #endif

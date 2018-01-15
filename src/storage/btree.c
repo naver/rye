@@ -6599,8 +6599,8 @@ btree_rv_nodehdr_dump (FILE * fp, UNUSED_ARG int length, void *data)
   fprintf (fp,
 	   "\nNODE_TYPE: %s NODE_LEVEL: %2d KEY_CNT: %4d "
 	   "PREV_PAGEID: {%4d , %4d} NEXT_PAGEID: {%4d , %4d} \n\n",
-	   btree_node_type_to_string (node_type), hdr->node_level, hdr->key_cnt,
-	   hdr->prev_vpid.volid, hdr->prev_vpid.pageid,
+	   btree_node_type_to_string (node_type), hdr->node_level,
+	   hdr->key_cnt, hdr->prev_vpid.volid, hdr->prev_vpid.pageid,
 	   hdr->next_vpid.volid, hdr->next_vpid.pageid);
 }
 
@@ -6738,12 +6738,6 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   char *datap;
   int i, offset, wasted;
   int sp_success;
-#if 0
-#if !defined(NDEBUG)		/* TODO -trace */
-  RECDES mid_rec = RECDES_INITIALIZER;
-  INT16 slot_id, mid;
-#endif
-#endif
 
   /* initialization */
   recset_header = (const RECSET_HEADER *) recv->data;
@@ -6781,25 +6775,6 @@ btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 	  assert (false);
 	  goto error;
 	}			/* if */
-
-#if 0
-#if !defined(NDEBUG)		/* TODO -trace; delete me */
-      slot_id = recset_header->first_slotid + i;
-      if (strlen (rec.data) >= 15 && rec.data[3] == '0' && rec.data[4] == '0'
-          && slot_id > 1)
-	{
-	  mid = slot_id - 1;	/* get the left fence */
-	  if (spage_get_record (recv->pgptr, mid, &mid_rec, PEEK) !=
-	      S_SUCCESS)
-	    {
-	      assert (false);
-	      goto error;
-	    }
-
-	  assert (strcmp (mid_rec.data + 2, rec.data + 2) < 0);
-	}
-#endif
-#endif
     }				/* for */
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
@@ -8290,21 +8265,11 @@ btree_get_satisfied_key (THREAD_ENTRY * thread_p, BTREE_CHECK_KEY * key_check,
   RECDES rec = RECDES_INITIALIZER;
   bool is_key_range_satisfied;	/* Does current key satisfy range */
   bool is_key_filter_satisfied;	/* Does current key satisfy filter */
-#if !defined(NDEBUG)
-  int c;
-  bool clear_save_key;
-  DB_IDXKEY save_key;
-#endif
   int error = NO_ERROR;
 
   assert (bts != NULL);
   assert (btrs_helper != NULL);
   assert (key_check != NULL);
-
-#if !defined(NDEBUG)
-  clear_save_key = false;
-  DB_IDXKEY_MAKE_NULL (&save_key);
-#endif
 
   *key_check = BTREE_KEY_ERROR;
 
@@ -8324,11 +8289,6 @@ btree_get_satisfied_key (THREAD_ENTRY * thread_p, BTREE_CHECK_KEY * key_check,
       GOTO_EXIT_ON_ERROR;
     }
 
-#if !defined(NDEBUG)
-  db_idxkey_clone (&bts->cur_key, &save_key);
-  clear_save_key = true;
-#endif
-
   btree_clear_key_value (&bts->clear_cur_key, &bts->cur_key);
 
   error =
@@ -8339,42 +8299,6 @@ btree_get_satisfied_key (THREAD_ENTRY * thread_p, BTREE_CHECK_KEY * key_check,
     {
       GOTO_EXIT_ON_ERROR;
     }
-
-#if !defined(NDEBUG)
-  if (!DB_IDXKEY_IS_NULL (&save_key))
-    {
-      /* save_key < cur_key */
-      c =
-	btree_compare_key (thread_p, &bts->btid_int, &save_key, &bts->cur_key,
-			   NULL);
-
-      if (bts->use_desc_index)
-	{
-	  c = ((c == DB_GT) ? DB_LT : (c == DB_LT) ? DB_GT : c);
-	}
-
-#if 0
-      if (c != DB_LT)
-	{
-#if 1				/* TODO - trace */
-	  db_idxkey_print (&save_key);
-	  fprintf (stdout, "\t");
-	  db_idxkey_print (&bts->cur_key);
-	  fprintf (stdout, "\n");
-	  fflush (stdout);
-#endif
-
-	  assert (false);
-
-	  error = ER_FAILED;
-
-	  GOTO_EXIT_ON_ERROR;
-	}
-#endif
-    }
-
-  btree_clear_key_value (&clear_save_key, &save_key);
-#endif
 
   /* apply key range and key filter to the new key value */
   is_key_range_satisfied = is_key_filter_satisfied = false;
@@ -8435,10 +8359,6 @@ exit_on_error:
     {
       error = ER_FAILED;
     }
-
-#if !defined(NDEBUG)
-  btree_clear_key_value (&clear_save_key, &save_key);
-#endif
 
   return error;
 }
@@ -8568,10 +8488,6 @@ btree_fence_check_key (THREAD_ENTRY * thread_p,
   char left_str[LINE_MAX];
   char right_str[LINE_MAX];
 
-#if 1 /* for repro */
-  return NO_ERROR;
-#endif
-
   assert (left_key != NULL);
   assert (right_key != NULL);
 
@@ -8638,10 +8554,6 @@ btree_fence_check_page (THREAD_ENTRY * thread_p,
   short node_type;
 
   int ret = NO_ERROR;
-
-#if 1 /* for repro */
-  return NO_ERROR;
-#endif
 
   clear_key = false;
   DB_IDXKEY_MAKE_NULL (&mid_key);

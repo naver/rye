@@ -267,7 +267,9 @@ extern const LOG_LSA *pgbuf_set_lsa (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 extern void pgbuf_reset_temp_lsa (PAGE_PTR pgptr);
 #endif /* ENABLE_UNUSED_FUNCTION */
 
+#if !defined (NDEBUG)
 extern PGBUF_LATCH_MODE pgbuf_get_latch_mode (PAGE_PTR pgptr, int *fcntp);
+#endif
 
 extern void pgbuf_get_vpid (PAGE_PTR pgptr, VPID * vpid);
 extern VPID *pgbuf_get_vpid_ptr (PAGE_PTR pgptr);

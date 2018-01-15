@@ -221,6 +221,7 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			       PEEK_KEY_VALUE);
       if (ret != NO_ERROR)
 	{
+	  assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -243,6 +244,7 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			       PEEK_KEY_VALUE);
       if (ret != NO_ERROR)
 	{
+	  assert (false);
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -1143,18 +1145,12 @@ btree_split_node (THREAD_ENTRY * thread_p, BTID_INT * btid, PAGE_PTR P,
       assert (false);
       if (i > 1)
 	{
-#if 1				/* TODO - trace */
 	  ret =
 	    btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1,
 					     mid_slot_id + 1, recset_data,
 					     IO_MAX_PAGE_SIZE,
 					     &recset_length);
-#else
-	  ret =
-	    btree_rv_util_save_page_records (thread_p, btid, R, 1, i - 1, 1,
-					     recset_data, IO_MAX_PAGE_SIZE,
-					     &recset_length);
-#endif
+	  assert (ret == NO_ERROR);
 	  if (ret == NO_ERROR)
 	    {
 	      LOG_ADDR_SET (&addr, &btid->sys_btid->vfid, Q, -1);
@@ -2504,12 +2500,6 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
   RECDES rec = RECDES_INITIALIZER;
   INT16 slotid;
   int sp_success;
-#if 0
-#if !defined(NDEBUG)		/* TODO -trace */
-  RECDES mid_rec = RECDES_INITIALIZER;
-  INT16 slot_id, mid;
-#endif
-#endif
 
   if (btree_read_node_header (NULL, recv->pgptr, &node_header) != NO_ERROR)
     {
@@ -2560,36 +2550,6 @@ btree_rv_leafrec_redo_insert_key (THREAD_ENTRY * thread_p, LOG_RCV * recv)
       assert (false);
       goto error;
     }
-
-#if 0
-#if !defined(NDEBUG)		/* TODO -trace; delete me */
-  slot_id = slotid;
-  if (strlen (rec.data) >= 15 && rec.data[3] == '0' && rec.data[4] == '0'
-      && slot_id > 1)
-    {
-      mid = slot_id - 1;	/* get the left fence */
-      if (spage_get_record (recv->pgptr, mid, &mid_rec, PEEK) != S_SUCCESS)
-	{
-	  assert (false);
-	  goto error;
-	}
-
-      assert (strcmp (mid_rec.data + 2, rec.data + 2) < 0);
-    }
-
-  if (slot_id < node_header.key_cnt)
-    {
-      mid = slot_id + 1;	/* get the right fence */
-      if (spage_get_record (recv->pgptr, mid, &mid_rec, PEEK) != S_SUCCESS)
-	{
-	  assert (false);
-	  goto error;
-	}
-
-      assert (strcmp (rec.data + 2, mid_rec.data + 2) < 0);
-    }
-#endif
-#endif
 
   pgbuf_set_dirty (thread_p, recv->pgptr, DONT_FREE);
 
