@@ -7583,7 +7583,7 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   /* Check iff is not initialized yet */
   if (LSA_ISNULL (&(prv_p->lsa)))
     {
-      assert (log_is_in_crash_recovery ());
+//      assert (log_is_in_crash_recovery ());
       return true;		/* nop */
     }
 #endif
