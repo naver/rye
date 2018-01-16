@@ -1012,6 +1012,8 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   FILEIO_PAGE_RESERVED *prv_p;
   int buf_lock_acquired;
   int wait_msecs;
+  PAGE_TYPE pself;
+
 #if defined(SERVER_MODE)
   UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
@@ -1255,8 +1257,6 @@ try_again:
     }
   else
     {
-      PAGE_TYPE pself;
-
       pself = pgbuf_get_page_ptype (thread_p, pgptr);
 
       if (pself == PAGE_UNKNOWN)
@@ -3146,6 +3146,42 @@ pgbuf_reset_temp_lsa (PAGE_PTR pgptr)
   LSA_SET_INIT_TEMP (&bufptr->iopage_buffer->iopage.prv.lsa);
 }
 #endif /* ENABLE_UNUSED_FUNCTION */
+
+#if !defined (NDEBUG)
+/*
+ * pgbuf_get_latch_mode () - Find the latch mode associated with
+ *                     the passed buffer
+ *   return: void
+ *   pgptr(in): Page pointer
+ */
+PGBUF_LATCH_MODE
+pgbuf_get_latch_mode (PAGE_PTR pgptr, int *fcntp)
+{
+  PGBUF_BCB *bufptr;
+
+#if 0
+  if (pgbuf_get_check_page_validation (NULL, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+    {
+      if (pgbuf_is_valid_page_ptr (pgptr) == false)
+	{
+	  VPID_SET_NULL (vpid);
+	  return;
+	}
+    }
+#endif
+
+  /* NOTE: Does not need to hold BCB_mutex since the page is fixed */
+
+  CAST_PGPTR_TO_BFPTR (bufptr, pgptr);
+
+  if (fcntp != NULL)
+    {
+      *fcntp = bufptr->fcnt;
+    }
+
+  return bufptr->latch_mode;
+}
+#endif
 
 /*
  * pgbuf_get_vpid () - Find the volume and page identifier associated with
@@ -7498,13 +7534,11 @@ pgbuf_check_page_ptype_internal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
       return false;
     }
 
-#if 0				/* TODO - do not delete me */
-#if defined(NDEBUG)
+#if 1				/* TODO - do not delete me */
   if (log_is_in_crash_recovery ())
     {
       return true;
     }
-#endif
 #endif
 
   if (thread_p == NULL)
@@ -7583,7 +7617,6 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   /* Check iff is not initialized yet */
   if (LSA_ISNULL (&(prv_p->lsa)))
     {
-//      assert (log_is_in_crash_recovery ());
       return true;		/* nop */
     }
 #endif
