@@ -114,10 +114,6 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
   int max_free;
 #if !defined(NDEBUG)
   int key_len;
-  bool clear_key;
-  INT16 mid = 0;
-  DB_IDXKEY mid_key;
-  int c;
 #endif
   RECDES rec = RECDES_INITIALIZER;
   char rec_buf[IO_MAX_PAGE_SIZE + BTREE_MAX_ALIGN];
@@ -136,9 +132,6 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
   key_len = btree_get_key_length (key);	/* TODO - */
 
   assert (BTREE_IS_VALID_KEY_LEN (key_len));
-
-  clear_key = false;
-  DB_IDXKEY_MAKE_NULL (&mid_key);
 #endif
 
   /* read the page header */
@@ -205,58 +198,6 @@ btree_insert_new_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
       GOTO_EXIT_ON_ERROR;
     }
 
-#if !defined(NDEBUG)
-  if (slot_id > 1)
-    {
-      mid = slot_id - 1;	/* get the left fence */
-      if (spage_get_record (leaf_page, mid, &rec, PEEK) != S_SUCCESS)
-	{
-	  assert (false);
-	  GOTO_EXIT_ON_ERROR;
-	}
-
-      btree_clear_key_value (&clear_key, &mid_key);
-
-      ret = btree_read_record (thread_p, btid, &rec, &mid_key,
-			       NULL, BTREE_LEAF_NODE, &clear_key,
-			       PEEK_KEY_VALUE);
-      if (ret != NO_ERROR)
-	{
-	  assert (false);
-	  GOTO_EXIT_ON_ERROR;
-	}
-
-      c = btree_compare_key (thread_p, btid, &mid_key, key, NULL);
-      assert (c == DB_LT);
-    }
-
-  if (slot_id < node_header.key_cnt)
-    {
-      mid = slot_id + 1;	/* get the right fence */
-      if (spage_get_record (leaf_page, mid, &rec, PEEK) != S_SUCCESS)
-	{
-	  assert (false);
-	  GOTO_EXIT_ON_ERROR;
-	}
-
-      btree_clear_key_value (&clear_key, &mid_key);
-
-      ret = btree_read_record (thread_p, btid, &rec, &mid_key,
-			       NULL, BTREE_LEAF_NODE, &clear_key,
-			       PEEK_KEY_VALUE);
-      if (ret != NO_ERROR)
-	{
-	  assert (false);
-	  GOTO_EXIT_ON_ERROR;
-	}
-
-      c = btree_compare_key (thread_p, btid, key, &mid_key, NULL);
-      assert (c == DB_LT);
-    }
-
-  btree_clear_key_value (&clear_key, &mid_key);
-#endif
-
   /* log the new record insertion and update to the header record for
    * undo/redo purposes.  This can be after the insert/update since we
    * still have the page pinned.
@@ -273,10 +214,6 @@ exit_on_error:
 
   ret = (ret == NO_ERROR
 	 && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
-
-#if !defined(NDEBUG)
-  btree_clear_key_value (&clear_key, &mid_key);
-#endif
 
   goto end;
 }
