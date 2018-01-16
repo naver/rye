@@ -54,7 +54,7 @@
     assert ((sphdr)->total_free >= 0);				\
     assert ((sphdr)->cont_free >= 0);				\
     assert ((sphdr)->cont_free <= (sphdr)->total_free);		\
-    assert ((sphdr)->cont_free + (sphdr)->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * (sphdr)->num_slots < DB_PAGESIZE);	\
+    assert ((sphdr)->cont_free + (sphdr)->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * (sphdr)->num_slots <= DB_PAGESIZE);	\
     assert ((sphdr)->num_records >= 0);				\
     assert ((sphdr)->num_slots >= 0);				\
     assert ((sphdr)->num_records <= (sphdr)->num_slots);	\
