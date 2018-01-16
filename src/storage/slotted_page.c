@@ -54,7 +54,7 @@
     assert ((sphdr)->total_free >= 0);				\
     assert ((sphdr)->cont_free >= 0);				\
     assert ((sphdr)->cont_free <= (sphdr)->total_free);		\
-    assert ((sphdr)->cont_free + (sphdr)->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * (sphdr)->num_slots <= DB_PAGESIZE);	\
+    assert ((sphdr)->cont_free + (sphdr)->offset_to_free_area + SSIZEOF (SPAGE_SLOT) * (sphdr)->num_records <= DB_PAGESIZE);	\
     assert ((sphdr)->num_records >= 0);				\
     assert ((sphdr)->num_slots >= 0);				\
     assert ((sphdr)->num_records <= (sphdr)->num_slots);	\
@@ -4455,7 +4455,7 @@ spage_check_num_slots (UNUSED_ARG THREAD_ENTRY * thread_p, PAGE_PTR page_p)
   SPAGE_VERIFY_HEADER (page_header_p);
 
 #if 1
-  return NO_ERROR;
+  return true;
 #endif
 
   slot_p = spage_find_slot (page_p, page_header_p, 0, false);
