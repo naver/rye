@@ -2465,6 +2465,12 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
+
+                  if (RCV_IS_NEWPG_LOG (undoredo->data.rcvindex))
+                    {
+		      assert (ptype != PAGE_UNKNOWN);
+                      (void) pgbuf_set_page_ptype (thread_p, rcv.pgptr, ptype); /* reset */
+                    }
 		}
 
 	      if (rcv.pgptr != NULL)
@@ -2651,6 +2657,13 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		    {
 		      break;
 		    }
+
+                  if (RCV_IS_NEWPG_LOG (redo->data.rcvindex))
+                    {
+		      assert (ptype != PAGE_UNKNOWN);
+                      (void) pgbuf_set_page_ptype (thread_p, rcv.pgptr, ptype); /* reset */
+                    }
+
 		}
 
 	      if (rcv.pgptr != NULL)
