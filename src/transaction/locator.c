@@ -712,8 +712,9 @@ locator_send_copy_area (LC_COPYAREA * copyarea, char **contents_ptr,
     DB_ALIGN (LC_AREA_ONEOBJ_PACKED_SIZE, MAX_ALIGNMENT) * mobjs->num_objs;
   *desc_ptr = (char *) malloc (*desc_length);
 
-  if (!*desc_ptr)
+  if (*desc_ptr == NULL)
     {
+      assert (false);
       *desc_length = 0;
       return 0;
     }
@@ -794,6 +795,7 @@ locator_recv_allocate_copyarea (int num_objs,
   copyarea = locator_allocate_copy_area_by_length (length);
   if (copyarea == NULL)
     {
+      assert (false);
       *contents_ptr = NULL;
     }
   else
@@ -804,6 +806,7 @@ locator_recv_allocate_copyarea (int num_objs,
       *packed_desc = (char *) malloc (packed_desc_length);
       if (*packed_desc == NULL)
 	{
+	  assert (false);
 	  locator_free_copy_area (copyarea);
 	  copyarea = NULL;
 	  *contents_ptr = NULL;
@@ -1118,7 +1121,6 @@ locator_allocate_lockset_by_length (int length)
 
   return locator_allocate_lockset (max_reqobjs, NULL_LOCK, NULL_LOCK, true);
 }
-#endif
 
 /*
  * locator_reallocate_lockset: reallocate a lockset area for requesting objects
@@ -1174,6 +1176,7 @@ locator_reallocate_lockset (LC_LOCKSET * lockset, int max_reqobjs)
 
   return lockset;
 }
+#endif
 
 /*
  * locator_free_lockset : free a lockset area
@@ -1795,6 +1798,7 @@ locator_initialize_lockhint (LC_LOCKHINT * lockhint, int length,
   return NO_ERROR;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * locator_reallocate_lockhint: reallocate a lockhint area for prelocking and
  *                     prefetching classes during parsing
@@ -1832,6 +1836,7 @@ locator_reallocate_lockhint (LC_LOCKHINT * lockhint, int max_classes)
 
   return lockhint;
 }
+#endif
 
 /*
  * locator_free_lockhint : free a lockhint area
