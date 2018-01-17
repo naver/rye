@@ -1705,6 +1705,7 @@ log_append_undoredo_data (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 					redo_length, redo_data);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -1814,6 +1815,7 @@ log_append_undo_data (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 					length, data, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -1927,6 +1929,7 @@ log_append_redo_data (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 					0, NULL, length, data);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -2497,6 +2500,7 @@ log_append_dboutside_redo (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 					0, NULL, length, data);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -2612,6 +2616,7 @@ log_append_postpone (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 					0, NULL, length, data);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -2704,6 +2709,7 @@ log_append_run_postpone (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 					    length, data, 0, NULL);
       if (node == NULL)
 	{
+	  assert (false);
 	  return;
 	}
 
@@ -2789,6 +2795,7 @@ log_append_compensate (THREAD_ENTRY * thread_p,
 					length, data, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -2848,6 +2855,7 @@ log_append_logical_compensate (THREAD_ENTRY * thread_p, LOG_RCVINDEX rcvindex,
 					rcvindex, NULL, 0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -2898,6 +2906,7 @@ log_append_empty_record (THREAD_ENTRY * thread_p, LOG_RECTYPE logrec_type,
 					0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -2954,6 +2963,7 @@ log_append_del_ovfl_record (THREAD_ENTRY * thread_p, OID * class_oid,
 
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -2988,6 +2998,7 @@ log_append_ha_server_state (THREAD_ENTRY * thread_p, int state)
 					0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -3120,6 +3131,7 @@ log_skip_logging_set_lsa (THREAD_ENTRY * thread_p, LOG_DATA_ADDR * addr)
 					0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -3215,6 +3227,7 @@ log_append_savepoint (THREAD_ENTRY * thread_p, const char *savept_name)
 					0, (const char *) NULL);
   if (node == NULL)
     {
+      assert (false);
       return NULL;
     }
 
@@ -3828,6 +3841,7 @@ log_append_commit_postpone (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 					0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -3872,6 +3886,7 @@ log_append_topope_commit_postpone (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 					0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return;
     }
 
@@ -4952,6 +4967,7 @@ log_complete_topop (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 					0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       return state;
     }
 
