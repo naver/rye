@@ -618,6 +618,7 @@ lock_initialize_tran_lock_table (void)
     (LK_TRAN_LOCK *) malloc (SIZEOF_LK_TRAN_LOCK * lk_Gl.num_trans);
   if (lk_Gl.tran_lock_table == (LK_TRAN_LOCK *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, (SIZEOF_LK_TRAN_LOCK * lk_Gl.num_trans));
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -666,6 +667,7 @@ lock_initialize_object_hash_table (void)
     (LK_HASH *) malloc (SIZEOF_LK_HASH * lk_Gl.obj_hash_size);
   if (lk_Gl.obj_hash_table == (LK_HASH *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, (SIZEOF_LK_HASH * lk_Gl.obj_hash_size));
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -706,6 +708,7 @@ lock_initialize_object_lock_res_list (void)
   res_block = (LK_RES_BLOCK *) malloc (SIZEOF_LK_RES_BLOCK);
   if (res_block == (LK_RES_BLOCK *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, SIZEOF_LK_RES_BLOCK);
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -717,6 +720,7 @@ lock_initialize_object_lock_res_list (void)
   res_block->block = (LK_RES *) malloc (SIZEOF_LK_RES * res_block->count);
   if (res_block->block == (LK_RES *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, (SIZEOF_LK_RES * res_block->count));
       free_and_init (res_block);
@@ -769,6 +773,7 @@ lock_initialize_object_lock_entry_list (void)
   entry_block = (LK_ENTRY_BLOCK *) malloc (SIZEOF_LK_ENTRY_BLOCK);
   if (entry_block == (LK_ENTRY_BLOCK *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, SIZEOF_LK_ENTRY_BLOCK);
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -781,6 +786,7 @@ lock_initialize_object_lock_entry_list (void)
     (LK_ENTRY *) malloc (SIZEOF_LK_ENTRY * entry_block->count);
   if (entry_block->block == (LK_ENTRY *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, (SIZEOF_LK_ENTRY * entry_block->count));
       free_and_init (entry_block);
@@ -831,6 +837,7 @@ lock_initialize_deadlock_detection (void)
     (LK_WFG_NODE *) malloc (SIZEOF_LK_WFG_NODE * lk_Gl.num_trans);
   if (lk_Gl.TWFG_node == (LK_WFG_NODE *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 	      1, (SIZEOF_LK_WFG_NODE * lk_Gl.num_trans));
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -1041,6 +1048,7 @@ lock_alloc_resource_block (void)
   res_block = (LK_RES_BLOCK *) malloc (SIZEOF_LK_RES_BLOCK);
   if (res_block == (LK_RES_BLOCK *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
 	      (SIZEOF_LK_RES_BLOCK));
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -1050,6 +1058,7 @@ lock_alloc_resource_block (void)
   res_block->block = (LK_RES *) malloc (SIZEOF_LK_RES * res_block->count);
   if (res_block->block == (LK_RES *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
 	      (SIZEOF_LK_RES * res_block->count));
       free_and_init (res_block);
@@ -1243,6 +1252,7 @@ lock_alloc_entry_block (void)
   entry_block = (LK_ENTRY_BLOCK *) malloc (SIZEOF_LK_ENTRY_BLOCK);
   if (entry_block == (LK_ENTRY_BLOCK *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
 	      (SIZEOF_LK_ENTRY_BLOCK));
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -1253,6 +1263,7 @@ lock_alloc_entry_block (void)
     (LK_ENTRY *) malloc (SIZEOF_LK_ENTRY * entry_block->count);
   if (entry_block->block == (LK_ENTRY *) NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
 	      (SIZEOF_LK_ENTRY * entry_block->count));
       free_and_init (entry_block);
@@ -2900,6 +2911,7 @@ start:
       res_ptr = lock_alloc_resource ();
       if (res_ptr == (LK_RES *) NULL)
 	{
+	  assert (false);
 	  pthread_mutex_unlock (&hash_anchor->hash_mutex);
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE,
 		  1, "lock resource entry");
@@ -2916,6 +2928,7 @@ start:
       entry_ptr = lock_alloc_entry ();
       if (entry_ptr == (LK_ENTRY *) NULL)
 	{
+	  assert (false);
 	  pthread_mutex_unlock (&res_ptr->res_mutex);
 	  pthread_mutex_unlock (&hash_anchor->hash_mutex);
 	  lock_free_resource (thread_p, res_ptr);
@@ -3012,6 +3025,7 @@ start:
 	  entry_ptr = lock_alloc_entry ();
 	  if (entry_ptr == (LK_ENTRY *) NULL)
 	    {
+	      assert (false);
 	      pthread_mutex_unlock (&res_ptr->res_mutex);
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE,
 		      1, "lock heap entry");
@@ -3057,6 +3071,7 @@ start:
 		  entry_ptr = lock_alloc_entry ();
 		  if (entry_ptr == (LK_ENTRY *) NULL)
 		    {
+		      assert (false);
 		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 			      ER_LK_ALLOC_RESOURCE, 1, "lock heap entry");
 		      return LK_NOTGRANTED_DUE_ERROR;
@@ -3138,6 +3153,7 @@ start:
       entry_ptr = lock_alloc_entry ();
       if (entry_ptr == (LK_ENTRY *) NULL)
 	{
+	  assert (false);
 	  pthread_mutex_unlock (&res_ptr->res_mutex);
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE,
 		  1, "lock heap entry");
@@ -3686,6 +3702,7 @@ lock_add_WFG_edge (int from_tran_index, int to_tran_index,
 	    (LK_WFG_EDGE *) malloc (SIZEOF_LK_WFG_EDGE * lk_Gl.max_TWFG_edge);
 	  if (lk_Gl.TWFG_edge == (LK_WFG_EDGE *) NULL)
 	    {
+	      assert (false);
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
 		      (SIZEOF_LK_WFG_EDGE * lk_Gl.max_TWFG_edge));
@@ -3880,6 +3897,7 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
       tran_index_set = (int *) malloc (sizeof (int) * num_WFG_nodes);
       if (tran_index_set == NULL)
 	{
+	  assert (false);
 	  num_WFG_nodes = 20;
 	  tran_index_set = &tran_index_area[0];
 	}
@@ -4829,6 +4847,7 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
     (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockset->num_reqobjs);
   if (cls_lockinfo == (LK_LOCKINFO *) NULL)
     {
+      assert (false);
       return LK_NOTGRANTED_DUE_ERROR;
     }
 
@@ -4836,6 +4855,7 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
     (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockset->num_reqobjs);
   if (ins_lockinfo == (LK_LOCKINFO *) NULL)
     {
+      assert (false);
       free_and_init (cls_lockinfo);
       return LK_NOTGRANTED_DUE_ERROR;
     }
@@ -4999,6 +5019,7 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
     (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockhint->num_classes);
   if (cls_lockinfo == (LK_LOCKINFO *) NULL)
     {
+      assert (false);
       return LK_NOTGRANTED_DUE_ERROR;
     }
 
@@ -6290,9 +6311,9 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
 
   buf_size = holder_number * HOLDER_ENTRY_LENGTH + 1;
   buf = (char *) malloc (sizeof (char) * buf_size);
-
   if (buf == NULL)
     {
+      assert (false);
       pthread_mutex_unlock (&res->res_mutex);
 
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,

@@ -393,6 +393,7 @@ logpb_unfix_page (struct log_buffer *bufptr)
   bufptr->fcnt--;
   if (bufptr->fcnt < 0)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_FREEING_TOO_MUCH, 0);
       bufptr->fcnt = 0;
     }
@@ -514,6 +515,7 @@ logpb_expand_pool (int num_new_buffers)
       area = (struct log_bufarea *) malloc (size);
       if (area == NULL)
 	{
+	  assert (false);
 	  csect_exit (CSECT_LOG_BUFFER);
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
 		  1, size);
@@ -526,6 +528,7 @@ logpb_expand_pool (int num_new_buffers)
 						    sizeof (*log_Pb.pool));
       if (buffer_pool == NULL)
 	{
+	  assert (false);
 	  free_and_init (area);
 
 	  csect_exit (CSECT_LOG_BUFFER);
@@ -2179,27 +2182,26 @@ logpb_find_header_parameters (THREAD_ENTRY * thread_p,
 
   if (IO_PAGESIZE != *io_page_size || LOG_PAGESIZE != *log_page_size)
     {
-      if (db_set_page_size (*io_page_size, *log_page_size) != NO_ERROR)
+      assert (false);		/* TODO - trace */
+
+      error_code = db_set_page_size (*io_page_size, *log_page_size);
+      if (error_code != NO_ERROR)
 	{
-	  error_code = ER_FAILED;
 	  goto error;
 	}
-      else
-	{
-	  error_code = sysprm_reload_and_init (NULL);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error;
-	    }
 
-	  error_code =
-	    logtb_define_trantable_log_latch (thread_p,
-					      log_Gl.trantable.
-					      num_total_indices);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error;
-	    }
+      error_code = sysprm_reload_and_init (NULL);
+      if (error_code != NO_ERROR)
+	{
+	  goto error;
+	}
+
+      error_code =
+	logtb_define_trantable_log_latch (thread_p,
+					  log_Gl.trantable.num_total_indices);
+      if (error_code != NO_ERROR)
+	{
+	  goto error;
 	}
     }
 
@@ -6093,6 +6095,7 @@ logpb_checkpoint (THREAD_ENTRY * thread_p)
 					0, NULL, 0, NULL);
   if (node == NULL)
     {
+      assert (false);
       LOG_CS_EXIT ();
 
       mnt_stats_event_off (thread_p, MNT_STATS_LOG_CHECKPOINTS);
@@ -6324,6 +6327,7 @@ logpb_checkpoint (THREAD_ENTRY * thread_p)
 					(char *) chkpt_topops);
   if (node == NULL)
     {
+      assert (false);
       free_and_init (chkpt_trans);
 
       if (chkpt_topops != NULL)
@@ -6790,6 +6794,7 @@ logpb_delete (THREAD_ENTRY * thread_p, VOLID num_perm_vols,
 	  else if (loghdr->db_iopagesize != IO_PAGESIZE
 		   || loghdr->db_logpagesize != LOG_PAGESIZE)
 	    {
+	      assert (false);	/* TODO - trace */
 	      /* Pagesize is incorrect,...reset it and call again... */
 	      if (db_set_page_size (loghdr->db_iopagesize,
 				    loghdr->db_logpagesize) != NO_ERROR)
