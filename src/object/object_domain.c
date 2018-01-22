@@ -488,7 +488,7 @@ tp_final (void)
   TP_DOMAIN *dlist, *d, *next, *prev;
   int i;
 
-  if (tp_Domain_is_initalized == false)
+  if (tp_Domain_is_initialized == false)
     {
       return;
     }
