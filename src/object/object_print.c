@@ -2366,6 +2366,165 @@ help_sprint_idxkey (const DB_IDXKEY * key, char *buffer, int max_length)
   return length;
 }
 
+/*
+ * help_dump_idxkey ()-
+ *   return: error code
+ *
+ *   buffer(out):
+ *   buf_len(in):
+ *   key(in):
+ */
+int
+help_dump_value (char *buffer, int buf_len, const DB_VALUE * value)
+{
+  OID *oid;
+  DB_TYPE type;
+  int len = -1;
+
+  type = DB_VALUE_TYPE (value);
+  switch (type)
+    {
+    case DB_TYPE_NULL:
+      len = snprintf (buffer, buf_len, "NULL");
+      break;
+    case DB_TYPE_INTEGER:
+      len = snprintf (buffer, buf_len, "%d", value->data.i);
+      break;
+    case DB_TYPE_DOUBLE:
+      len = snprintf (buffer, buf_len, "%f", value->data.d);
+      break;
+    case DB_TYPE_VARCHAR:
+      len = snprintf (buffer, buf_len, "%s", value->data.ch.buf);
+      break;
+    case DB_TYPE_OBJECT:
+    case DB_TYPE_OID:
+      oid = (OID *) db_get_oid (value);
+      if (oid == NULL)
+	{
+	  break;
+	}
+      len = snprintf (buffer, buf_len, "%d|%d|%d|%d",
+		      oid->groupid, oid->volid, oid->pageid, oid->slotid);
+      break;
+    case DB_TYPE_TIME:
+      len = db_time_to_string (buffer, buf_len, db_get_time (value));
+      break;
+    case DB_TYPE_DATE:
+      len = db_date_to_string (buffer, buf_len, db_get_date (value));
+      break;
+    case DB_TYPE_NUMERIC:
+      {
+	char numeric_buffer[82];
+
+	numeric_db_value_to_string (numeric_buffer, value);
+	len = snprintf (buffer, buf_len, "%s", numeric_buffer);
+      }
+      break;
+    case DB_TYPE_BIGINT:
+      len = snprintf (buffer, buf_len, "%ld", value->data.bigint);
+      break;
+    case DB_TYPE_DATETIME:
+      len = db_datetime_to_string (buffer, buf_len, DB_GET_DATETIME (value));
+      break;
+
+    case DB_TYPE_VARBIT:
+    case DB_TYPE_SEQUENCE:
+    case DB_TYPE_VARIABLE:
+    case DB_TYPE_SUB:
+    case DB_TYPE_RESULTSET:
+    case DB_TYPE_TABLE:
+    default:
+      len = snprintf (buffer, buf_len, "type:%d", (int) type);
+      break;
+    }
+
+  return len;
+}
+
+/*
+ * help_dump_idxkey ()-
+ *   return: error code
+ *
+ *   buffer(out):
+ *   buf_len(in):
+ *   key(in):
+ */
+int
+help_dump_idxkey (char *buffer, int buf_len, const DB_IDXKEY * key)
+{
+  RYE_STRING r_str;
+  DB_TYPE type;
+  int i, err;
+  char val_buf[ONE_K];
+
+  if (buffer == NULL || buf_len <= 0 || key == NULL)
+    {
+      assert (false);
+      return ER_FAILED;
+    }
+
+  if (rye_init_string_with_buffer (&r_str, buffer, buf_len) < 0)
+    {
+      assert (false);
+      return ER_FAILED;
+    }
+
+  if (DB_IDXKEY_IS_NULL (key))
+    {
+      rye_append_string (&r_str, "NULL");
+    }
+  else
+    {
+      rye_append_string (&r_str, "{");
+      for (i = 0; i < key->size; i++)
+	{
+	  if (i != 0)
+	    {
+	      rye_append_string (&r_str, ", ");
+	    }
+
+	  err = help_dump_value (val_buf, sizeof (val_buf), &key->vals[i]);
+	  if (err < 0)
+	    {
+	      return ER_FAILED;
+	    }
+
+	  type = DB_VALUE_TYPE (&key->vals[i]);
+	  switch (type)
+	    {
+	    case DB_TYPE_VARCHAR:
+	      err = rye_append_format_string (&r_str, "'%s'", val_buf);
+	      break;
+	    case DB_TYPE_OBJECT:
+	    case DB_TYPE_OID:
+	      err = rye_append_format_string (&r_str, "OID[%s]", val_buf);
+	      break;
+	    case DB_TYPE_TIME:
+	      err = rye_append_format_string (&r_str, "time '%s'", val_buf);
+	      break;
+	    case DB_TYPE_DATE:
+	      err = rye_append_format_string (&r_str, "date '%s'", val_buf);
+	      break;
+	    case DB_TYPE_DATETIME:
+	      err =
+		rye_append_format_string (&r_str, "datetime '%s'", val_buf);
+	      break;
+	    default:
+	      err = rye_append_string (&r_str, val_buf);
+	      break;
+	    }
+
+	  if (err < 0)
+	    {
+	      return ER_FAILED;
+	    }
+	}
+      rye_append_string (&r_str, "}");
+    }
+
+  return NO_ERROR;
+}
+
 #if defined(RYE_DEBUG)
 /*
  * dbg_value() -  This is primarily for debugging

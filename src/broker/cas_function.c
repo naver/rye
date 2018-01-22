@@ -1465,17 +1465,20 @@ FN_RETURN
 fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf,
 		   UNUSED_ARG T_REQ_INFO * req_info)
 {
-#define REPL_DATA_NUM_ARGS 4
-#define REPL_DATA_NUM_ITEM_ARGS 4
+#define REPL_DATA_NUM_ARGS 5
 
-  int num_items, tran_type;
+  int num_items;
+  RP_TRAN_TYPE tran_type;
+  int tmp_int;
+  int applier_id, tran_id;
   int arg_idx = 0;
   void **obj_argv;
-  char *note = NULL;
-  int note_len;
   int error = 0;
   int autocommit_mode = FALSE;
   struct timeval start_time;
+#if !defined(NDEBUG)
+  char buffer[ONE_K];
+#endif
 
   gettimeofday (&start_time, NULL);
 
@@ -1486,21 +1489,23 @@ fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf,
       goto error_exit;
     }
 
-  net_arg_get_str (&note, &note_len, argv[arg_idx++]);
+  net_arg_get_int (&applier_id, argv[arg_idx++]);
+  net_arg_get_int (&tran_id, argv[arg_idx++]);
   net_arg_get_int (&autocommit_mode, argv[arg_idx++]);
-  net_arg_get_int (&tran_type, argv[arg_idx++]);
+  net_arg_get_int (&tmp_int, argv[arg_idx++]);
+  tran_type = (RP_TRAN_TYPE) tmp_int;
   net_arg_get_int (&num_items, argv[arg_idx++]);
 
   if (autocommit_mode == FALSE
       || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
     {
       cas_sql_log_write_with_ts (&start_time, 0,
-				 "send_repl_data:tran_type:%d, num items:%d, note:%s",
-				 tran_type, num_items,
-				 (note == NULL ? "" : note));
+				 "send_repl_data(%d):tran_id(%d), tran_type(%s), num items(%d)",
+				 applier_id, tran_id,
+				 RP_TRAN_TYPE_NAME (tran_type), num_items);
     }
 
-  obj_argv = argv + REPL_DATA_NUM_ARGS;
+  obj_argv = argv + arg_idx;
   error = ux_send_repl_data (tran_type, num_items, obj_argv);
   if (error < 0)
     {
@@ -1516,6 +1521,10 @@ fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf,
       || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
     {
       cas_sql_log_write (0, "send_repl_data success");
+#if !defined(NDEBUG)
+      dump_repl_data (buffer, sizeof (buffer), num_items, obj_argv);
+      cas_sql_log_write (0, buffer);
+#endif
     }
 
   return FN_KEEP_CONN;
@@ -1534,13 +1543,16 @@ error_exit:
       && as_Info->cur_sql_log_mode != SQL_LOG_MODE_ALL)
     {
       cas_sql_log_write_with_ts (&start_time, 0,
-				 "send_repl_data:tran_type:%d, num items:%d, note:%s",
-				 tran_type, num_items,
-				 (note == NULL ? "" : note));
+				 "send_repl_data:tran_type:%d, num items:%d",
+				 tran_type, num_items);
     }
 
   NET_BUF_ERR_SET (net_buf);
   cas_sql_log_write (0, "send_repl_data (error:%d)", err_Info.err_number);
+#if !defined(NDEBUG)
+  dump_repl_data (buffer, sizeof (buffer), num_items, obj_argv);
+  cas_sql_log_write (0, buffer);
+#endif
 
   return FN_KEEP_CONN;
 }

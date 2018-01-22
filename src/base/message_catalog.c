@@ -303,7 +303,6 @@ msgcat_init (void)
   return NO_ERROR;
 }
 
-#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * msgcat_final - finalize message catalog module
  *   return: NO_ERROR or ER_FAILED
@@ -329,7 +328,6 @@ msgcat_final (void)
 
   return rc;
 }
-#endif
 
 /*
  * msgcat_message -
@@ -450,7 +448,6 @@ msgcat_gets (MSG_CATD msg_catd, int set_id, int msg_id, const char *s)
   return catgets (catd, set_id, msg_id, s);
 }
 
-#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * msgcat_close - close a message catalog
  *   return: NO_ERROR or ER_FAILED
@@ -473,4 +470,3 @@ msgcat_close (MSG_CATD msg_catd)
 
   return NO_ERROR;
 }
-#endif

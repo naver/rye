@@ -770,6 +770,7 @@ extern int db_idxkey_clone (const DB_IDXKEY * src, DB_IDXKEY * dest);
 extern int db_idxkey_clear (DB_IDXKEY * key);
 extern void db_idxkey_print (const DB_IDXKEY * key);
 extern bool db_idxkey_is_null (const DB_IDXKEY * key);
+extern bool db_idxkey_has_null (const DB_IDXKEY * key);
 extern int db_make_null_nargs (int nargs, ...);
 extern int db_idxkey_make_null (DB_IDXKEY * key);
 

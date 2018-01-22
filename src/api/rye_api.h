@@ -106,6 +106,44 @@ typedef enum
   RYE_MAX_STMT_TYPE = RYE_STMT_UNKNOWN
 } RYE_STMT_TYPE;
 
+#define RYE_STMT_TYPE_NAME(type)                                         \
+  ((type) == RYE_STMT_ALTER_CLASS ? "RYE_STMT_ALTER_CLASS" :             \
+   (type) == RYE_STMT_ALTER_SERIAL ? "RYE_STMT_ALTER_SERIAL" :           \
+   (type) == RYE_STMT_COMMIT_WORK ? "RYE_STMT_COMMIT_WORK" :             \
+   (type) == RYE_STMT_REGISTER_DATABASE ? "RYE_STMT_REGISTER_DATABASE" : \
+   (type) == RYE_STMT_CREATE_CLASS ? "RYE_STMT_CREATE_CLASS" :           \
+   (type) == RYE_STMT_CREATE_INDEX ? "RYE_STMT_CREATE_INDEX" :           \
+   (type) == RYE_STMT_CREATE_SERIAL ? "RYE_STMT_CREATE_SERIAL" :         \
+   (type) == RYE_STMT_DROP_DATABASE ? "RYE_STMT_DROP_DATABASE" :         \
+   (type) == RYE_STMT_DROP_CLASS ? "RYE_STMT_DROP_CLASS" :               \
+   (type) == RYE_STMT_DROP_INDEX ? "RYE_STMT_DROP_INDEX" :               \
+   (type) == RYE_STMT_DROP_LABEL ? "RYE_STMT_DROP_LABEL" :               \
+   (type) == RYE_STMT_DROP_SERIAL ? "RYE_STMT_DROP_SERIAL" :             \
+   (type) == RYE_STMT_RENAME_CLASS ? "RYE_STMT_RENAME_CLASS" :           \
+   (type) == RYE_STMT_ROLLBACK_WORK ? "RYE_STMT_ROLLBACK_WORK" :         \
+   (type) == RYE_STMT_GRANT ? "RYE_STMT_GRANT" :                         \
+   (type) == RYE_STMT_REVOKE ? "RYE_STMT_REVOKE" :                       \
+   (type) == RYE_STMT_INSERT ? "RYE_STMT_INSERT" :                       \
+   (type) == RYE_STMT_SELECT ? "RYE_STMT_SELECT" :                       \
+   (type) == RYE_STMT_UPDATE ? "RYE_STMT_UPDATE" :                       \
+   (type) == RYE_STMT_DELETE ? "RYE_STMT_DELETE" :                       \
+   (type) == RYE_STMT_GET_ISO_LVL ? "RYE_STMT_GET_ISO_LVL" :             \
+   (type) == RYE_STMT_GET_TIMEOUT ? "RYE_STMT_GET_TIMEOUT" :             \
+   (type) == RYE_STMT_GET_OPT_LVL ? "RYE_STMT_GET_OPT_LVL" :             \
+   (type) == RYE_STMT_SET_OPT_LVL ? "RYE_STMT_SET_OPT_LVL" :             \
+   (type) == RYE_STMT_SCOPE ? "RYE_STMT_SCOPE" :                         \
+   (type) == RYE_STMT_SAVEPOINT ? "RYE_STMT_SAVEPOINT" :                 \
+   (type) == RYE_STMT_ON_LDB ? "RYE_STMT_ON_LDB" :                       \
+   (type) == RYE_STMT_GET_LDB ? "RYE_STMT_GET_LDB" :                     \
+   (type) == RYE_STMT_SET_LDB ? "RYE_STMT_SET_LDB" :                     \
+   (type) == RYE_STMT_CREATE_USER ? "RYE_STMT_CREATE_USER" :             \
+   (type) == RYE_STMT_DROP_USER ? "RYE_STMT_DROP_USER" :                 \
+   (type) == RYE_STMT_ALTER_USER ? "RYE_STMT_ALTER_USER" :               \
+   (type) == RYE_STMT_SET_SYS_PARAMS ? "RYE_STMT_SET_SYS_PARAMS" :       \
+   (type) == RYE_STMT_ALTER_INDEX ? "RYE_STMT_ALTER_INDEX" :             \
+   (type) == RYE_STMT_SELECT_UPDATE ? "RYE_STMT_SELECT_UPDATE" :         \
+   (type) == RYE_STMT_UNKNOWN ? "RYE_STMT_UNKNOWN" : "invalid")
+
 #define STMT_TYPE_IS_DDL(type)                          \
         (((type) == RYE_STMT_CREATE_CLASS)           \
           || ((type) == RYE_STMT_ALTER_CLASS)        \

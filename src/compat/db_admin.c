@@ -77,6 +77,8 @@ static int db_Delayed_hosts_count = 0;
 static int db_Reconnect_reason = 0;
 static bool db_Ignore_repl_delay = false;
 
+static bool db_is_Initialized = false;
+
 static int fetch_set_internal (DB_SET * set, int quit_on_error);
 void sigfpe_handler (int sig);
 
@@ -488,6 +490,79 @@ bool
 db_get_ignore_repl_delay (void)
 {
   return db_Ignore_repl_delay;
+}
+
+/*
+ * db_initialize ()-
+ *    retrun: error code
+ */
+int
+db_initialize (void)
+{
+  int error = NO_ERROR;
+
+  if (db_is_Initialized == true)
+    {
+      return NO_ERROR;
+    }
+
+  error = sysprm_load_and_init (NULL);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  error = msgcat_init ();
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  error = er_init (NULL, ER_EXIT_DEFAULT);
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+  error = lang_init ();
+  if (error != NO_ERROR)
+    {
+      GOTO_EXIT_ON_ERROR;
+    }
+
+  db_is_Initialized = true;
+
+  return NO_ERROR;
+
+exit_on_error:
+  tp_final ();
+  sysprm_final ();
+  msgcat_final ();
+  lang_final ();
+
+  return error;
+}
+
+/*
+ * db_finalize ()
+ *   return: NO_ERROR
+ *
+ */
+int
+db_finalize (void)
+{
+  tp_final ();
+
+  sysprm_final ();
+
+  msgcat_final ();
+
+  lang_final ();
+#if defined (ENABLE_UNUSED_FUNCTION)
+  /* adj_arrays & lex buffers in the cnv formatting library. */
+  cnv_cleanup ();
+#endif
+
+  db_is_Initialized = false;
+
+  return NO_ERROR;
 }
 
 /*

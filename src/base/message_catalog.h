@@ -85,9 +85,7 @@
 
 /* functions for use of system message catalog */
 extern int msgcat_init (void);
-#if defined(ENABLE_UNUSED_FUNCTION)
 extern int msgcat_final (void);
-#endif
 extern char *msgcat_message (int, int, int);
 
 /* message catalog description  */
@@ -100,9 +98,8 @@ typedef struct msg_catd
 /* base functions for message catalog support */
 extern MSG_CATD msgcat_open (const char *);
 extern MSG_CATD msgcat_get_descriptor (int cat_id);
-extern char *msgcat_gets (MSG_CATD, int, int, const char *);
-#if defined(ENABLE_UNUSED_FUNCTION)
-extern int msgcat_close (MSG_CATD);
-#endif
+extern char *msgcat_gets (MSG_CATD msg_catd, int set_id, int msg_id,
+			  const char *s);
+extern int msgcat_close (MSG_CATD msg_catd);
 
 #endif /* _MESSAGE_CATALOG_H_ */

@@ -87,7 +87,7 @@ static int transfer_bit_string (char *buf, int *xflen,
 				const DB_VALUE * src, const DB_TYPE_C c_type);
 #endif
 static int coerce_char_to_dbvalue_numeric (DB_VALUE * value, char *buf,
-				   const int buflen);
+					   const int buflen);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int coerce_numeric_to_dbvalue (DB_VALUE * value, char *buf,
 				      const DB_TYPE_C c_type);
@@ -861,6 +861,30 @@ db_idxkey_is_null (const DB_IDXKEY * key)
   return (key->size == 0);
 }
 
+/*
+ * db_idxkey_has_null() -
+ * return :
+ * key(in) :
+ */
+bool
+db_idxkey_has_null (const DB_IDXKEY * key)
+{
+  int i;
+
+  CHECK_1ARG_TRUE (key);
+  assert (key != NULL);
+
+  for (i = 0; i < key->size; i++)
+    {
+      if (db_value_is_null (&(key->vals[i])) == true)
+	{
+	  return true;
+	}
+    }
+
+  return false;
+}
+
 #if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * db_value_eh_key() -
@@ -962,7 +986,7 @@ db_value_alter_type (DB_VALUE * value, const DB_TYPE type)
  */
 int
 db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type, void *input,
-	      const int input_length)
+		      const int input_length)
 {
   int error_code = NO_ERROR;
   int status = C_TO_VALUE_NOERROR;
@@ -981,7 +1005,8 @@ db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type, void *input,
   switch (c_type)
     {
     case DB_TYPE_C_VARCHAR:
-      status = coerce_char_to_dbvalue_numeric (value, (char *) input, input_length);
+      status =
+	coerce_char_to_dbvalue_numeric (value, (char *) input, input_length);
       break;
 
     default:

@@ -129,10 +129,12 @@ rp_need_shutdown (const char *file_name, int line)
  *    return: error code
  *
  *    repl_item(out):
+ *    tran_id(in):
  *    lsa(in):
  */
 int
-rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
+rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
+		       const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   RP_DATA_ITEM *data = NULL;
@@ -156,6 +158,8 @@ rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
     }
 
   item->item_type = RP_ITEM_TYPE_DATA;
+  item->tran_id = tran_id;
+  LSA_COPY (&item->lsa, lsa);
   item->next = NULL;
 
   data = &item->info.data;
@@ -165,7 +169,6 @@ rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
   data->class_name = NULL;
   DB_IDXKEY_MAKE_NULL (&data->key);
 
-  LSA_COPY (&data->lsa, lsa);
   LSA_SET_NULL (&data->target_lsa);
 
   data->recdes = NULL;
@@ -181,10 +184,12 @@ rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
  *    return: error code
  *
  *    repl_item(out):
+ *    tran_id(in):
  *    lsa(in):
  */
 int
-rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
+rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
+		      const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_DDL_ITEM *ddl;
@@ -209,6 +214,8 @@ rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
     }
 
   item->item_type = RP_ITEM_TYPE_DDL;
+  item->tran_id = tran_id;
+  LSA_COPY (&item->lsa, lsa);
   item->next = NULL;
 
 
@@ -218,7 +225,6 @@ rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
   ddl->ddl_type = REPL_BLOCKED_DDL;
   ddl->db_user = NULL;
   ddl->query = NULL;
-  LSA_COPY (&ddl->lsa, lsa);
 
   *repl_item = item;
 
@@ -231,10 +237,12 @@ rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
  *    return: error code
  *
  *    repl_item(out):
+ *    tran_id(in):
  *    lsa(in):
  */
 int
-rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
+rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
+			  const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_CATALOG_ITEM *catalog;
@@ -259,6 +267,8 @@ rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
     }
 
   item->item_type = RP_ITEM_TYPE_CATALOG;
+  item->tran_id = tran_id;
+  LSA_COPY (&item->lsa, lsa);
   item->next = NULL;
 
   catalog = &item->info.catalog;
@@ -267,8 +277,6 @@ rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, const LOG_LSA * lsa)
   catalog->class_name = NULL;
   DB_IDXKEY_MAKE_NULL (&catalog->key);
   catalog->recdes = NULL;
-
-  LSA_COPY (&catalog->lsa, lsa);
 
   *repl_item = item;
 
@@ -358,7 +366,7 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	{
 	case RP_ITEM_TYPE_DATA:
 	  data = &item->info.data;
-	  if (data->class_name == NULL || LSA_ISNULL (&data->lsa)
+	  if (data->class_name == NULL || LSA_ISNULL (&item->lsa)
 	      || cci_db_idxkey_is_null (&data->key))
 	    {
 	      return false;
@@ -374,7 +382,7 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	case RP_ITEM_TYPE_DDL:
 	  ddl = &item->info.ddl;
 	  if (ddl->query == NULL || ddl->db_user == NULL
-	      || LSA_ISNULL (&ddl->lsa))
+	      || LSA_ISNULL (&item->lsa))
 	    {
 	      return false;
 	    }

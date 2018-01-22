@@ -3026,7 +3026,6 @@ rp_make_repl_schema_item_from_log (CIRP_BUF_MGR * buf_mgr,
     }
 
   ddl = &repl_item->info.ddl;
-  assert (LSA_EQ (lsa, &ddl->lsa));
 
   ptr = or_unpack_int (area, &tmp);
   ddl->stmt_type = tmp;

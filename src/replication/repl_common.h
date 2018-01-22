@@ -38,6 +38,11 @@ enum _rp_tran_type
   RP_TRAN_TYPE_DATA
 };
 
+#define RP_TRAN_TYPE_NAME(type)                                         \
+  ((type) == RP_TRAN_TYPE_CATALOG ? "RP_TRAN_TYPE_CATALOG" :            \
+   (type) == RP_TRAN_TYPE_DDL ? "RP_TRAN_TYPE_DDL" :                    \
+   (type) == RP_TRAN_TYPE_DATA ? "RP_TRAN_TYPE_DATA" : "invalid")
+
 typedef enum _rp_item_type RP_ITEM_TYPE;
 enum _rp_item_type
 {
@@ -53,8 +58,6 @@ struct _rp_ddl_item
   int ddl_type;			/* REPL_NON_BLOCKED_DDL or REPL_BLOCKED_DDL */
   char *db_user;
   char *query;			/* SQL string */
-
-  LOG_LSA lsa;			/* the LSA of the replication log record */
 };
 
 typedef struct _rp_catalog_item RP_CATALOG_ITEM;
@@ -64,8 +67,6 @@ struct _rp_catalog_item
   char *class_name;
   DB_IDXKEY key;		/* PK */
   RECDES *recdes;
-
-  LOG_LSA lsa;			/* the LSA of current */
 };
 
 typedef struct rp_data_item RP_DATA_ITEM;
@@ -76,7 +77,6 @@ struct rp_data_item
   char *class_name;
   DB_IDXKEY key;		/* PK */
 
-  LOG_LSA lsa;			/* the LSA of the replication log record */
   LOG_LSA target_lsa;		/* the LSA of the target log record */
   RECDES *recdes;
 };
@@ -93,6 +93,8 @@ typedef struct cirp_repl_item CIRP_REPL_ITEM;
 struct cirp_repl_item
 {
   CIRP_REPL_ITEM *next;
+  TRANID tran_id;
+  LOG_LSA lsa;			/* the LSA of the replication log record */
   RP_ITEM_TYPE item_type;
 
   RP_ITEM_INFO info;
@@ -109,11 +111,11 @@ extern bool rp_need_shutdown (const char *file_name, int line);
 
 extern void cirp_free_repl_item (CIRP_REPL_ITEM * item);
 extern int rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item,
-				  const LOG_LSA * lsa);
+				  TRANID tran_id, const LOG_LSA * lsa);
 extern int rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item,
-				 const LOG_LSA * lsa);
+				 TRANID tran_id, const LOG_LSA * lsa);
 extern int rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item,
-				     const LOG_LSA * lsa);
+				     TRANID tran_id, const LOG_LSA * lsa);
 extern bool rp_is_valid_repl_item (CIRP_REPL_ITEM * item);
 
 extern int rp_make_repl_host_key (DB_VALUE * dbval,

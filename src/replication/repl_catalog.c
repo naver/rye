@@ -127,7 +127,7 @@ rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  error = rp_new_repl_catalog_item (&item, NULL_TRANID, &null_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -144,7 +144,7 @@ rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE;
 
   assert (rp_is_valid_repl_item (item));
-  error = cci_send_repl_data (conn, item, 1);
+  error = cci_send_repl_data (conn, item, 1, -1);
   if (error < 0)
     {
       REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
@@ -195,7 +195,7 @@ rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  error = rp_new_repl_catalog_item (&item, NULL_TRANID, &null_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -212,7 +212,7 @@ rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE;
 
   assert (rp_is_valid_repl_item (item));
-  error = cci_send_repl_data (conn, item, 1);
+  error = cci_send_repl_data (conn, item, 1, -1);
   if (error < 0)
     {
       REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
@@ -497,7 +497,7 @@ rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  error = rp_new_repl_catalog_item (&item, NULL_TRANID, &null_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -514,7 +514,7 @@ rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_APPLIER_UPDATE;
 
   assert (rp_is_valid_repl_item (item));
-  error = cci_send_repl_data (conn, item, 1);
+  error = cci_send_repl_data (conn, item, 1, -1);
   if (error < 0)
     {
       REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
@@ -565,7 +565,7 @@ rpct_update_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
 
   LSA_SET_NULL (&null_lsa);
 
-  error = rp_new_repl_catalog_item (&item, &null_lsa);
+  error = rp_new_repl_catalog_item (&item, NULL_TRANID, &null_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -582,7 +582,7 @@ rpct_update_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
   item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_APPLIER_UPDATE;
 
   assert (rp_is_valid_repl_item (item));
-  error = cci_send_repl_data (conn, item, 1);
+  error = cci_send_repl_data (conn, item, 1, -1);
   if (error < 0)
     {
       REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",

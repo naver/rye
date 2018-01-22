@@ -1093,6 +1093,46 @@ rye_init_string (RYE_STRING * buffer, int max_size)
 }
 
 /*
+ * rye_init_string_with_buffer () -
+ *    return: 0: SUCCESS, -1: ERROR
+ *
+ *    buffer(out):
+ *    max_size(in):
+ */
+int
+rye_init_string_with_buffer (RYE_STRING * str, char *buffer,
+			     int buffer_length)
+{
+  if (str == NULL || buffer == NULL || buffer_length < 1)
+    {
+      return -1;
+    }
+
+  buffer[0] = '\0';
+
+  str->buffer = buffer;
+  str->max_length = buffer_length;
+  str->length = 0;
+
+  return buffer_length;
+}
+
+/*
+ * rye_clear_string () -
+ *
+ */
+void
+rye_clear_string (RYE_STRING * buffer)
+{
+  if (buffer == NULL)
+    {
+      return;
+    }
+  buffer->buffer[0] = '\0';
+  buffer->length = 0;
+}
+
+/*
  * rye_free_string () -
  *
  */

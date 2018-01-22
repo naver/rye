@@ -231,6 +231,8 @@ TP_DOMAIN tp_VarBit_domain = { NULL, NULL, &tp_VarBit,
   DOMAIN_INIT2 (0)
 };
 
+static bool tp_Domain_is_initialized = false;
+
 /* These must be in DB_TYPE order */
 static TP_DOMAIN *tp_Domains[] = {
   &tp_Null_domain,
@@ -436,6 +438,10 @@ tp_init (void)
   TP_DOMAIN *d;
   int i;
 
+  if (tp_Domain_is_initialized == true)
+    {
+      return;
+    }
   /*
    * Make sure the next pointer on all the built-in domains is clear.
    * Also make sure the built-in domain numbers are assigned consistently.
@@ -456,6 +462,7 @@ tp_init (void)
       /* ! need to be adding this to the corresponding list */
     }
 
+  tp_Domain_is_initialized = true;
 }
 
 /*
@@ -480,6 +487,11 @@ tp_final (void)
 {
   TP_DOMAIN *dlist, *d, *next, *prev;
   int i;
+
+  if (tp_Domain_is_initalized == false)
+    {
+      return;
+    }
 
   /*
    * Make sure the next pointer on all the built-in domains is clear.
@@ -515,6 +527,7 @@ tp_final (void)
 	}
     }
 
+  tp_Domain_is_initialized = false;
 }
 
 /*

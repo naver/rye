@@ -90,19 +90,8 @@ static const int LOG_TOPOPS_STACK_INCREMENT = 3;	/* No more than 3 nested
 							 * top system operations
 							 */
 static const char *log_Client_id_unknown_string = "(unknown)";
-static BOOT_CLIENT_CREDENTIAL log_Client_credential = {
-  BOOT_CLIENT_SYSTEM_INTERNAL,	/* client_type */
-  NULL,				/* client_info */
-  NULL,				/* db_name */
-  NULL,				/* db_user */
-  NULL,				/* db_password */
-  (char *) "(system)",		/* program_name */
-  NULL,				/* login_name */
-  NULL,				/* host_name */
-  NULL,				/* preferred_hosts */
-  0,				/* connect_order */
-  -1				/* process_id */
-};
+static BOOT_CLIENT_CREDENTIAL log_Client_credential =
+  BOOT_CLIENT_CREDENTIAL_INITIALIZER;
 
 static int block_Global_dml = false;
 
@@ -885,7 +874,7 @@ logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
   int visited_loop_start_pos;
   LOG_TDES *tdes;		/* Transaction descriptor */
   int tran_index;		/* The assigned index */
-  UNUSED_VAR int save_tran_index;		/* Save as a good index to assign */
+  UNUSED_VAR int save_tran_index;	/* Save as a good index to assign */
   int assigned_tran_indics, total_tran_indices;
 
 #if defined(SERVER_MODE)
@@ -1550,8 +1539,8 @@ logtb_initialize_tdes (LOG_TDES * tdes, int tran_index)
   LSA_SET_NULL (&tdes->topop_lsa);
   LSA_SET_NULL (&tdes->tail_topresult_lsa);
 
-  tdes->cs_topop.cs_index = CSECT_UNKNOWN; /* leave me as is */
-  tdes->cs_topop.name = NULL; /* leave me as is */
+  tdes->cs_topop.cs_index = CSECT_UNKNOWN;	/* leave me as is */
+  tdes->cs_topop.name = NULL;	/* leave me as is */
   csect_initialize_critical_section (&tdes->cs_topop);
 
   tdes->topops.stack = NULL;

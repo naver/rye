@@ -2797,10 +2797,8 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
       return ER_PRM_CONFLICT_EXISTS_ON_MULTIPLE_SECTIONS;
     }
 
-#if defined(ENABLE_UNUSED_FUNCTION)
   /* reinit msg catalog to reflect PRM_MAX_THREADS */
   msgcat_final ();
-#endif
   if (msgcat_init () != NO_ERROR)
     {
       return ER_BO_CANNOT_ACCESS_MESSAGE_CATALOG;
@@ -3643,14 +3641,10 @@ boot_server_all_finalize (THREAD_ENTRY * thread_p)
   locator_free_areas ();
   set_final ();
   sysprm_final ();
-#if defined(ENABLE_UNUSED_FUNCTION)
   msgcat_final ();
-#endif
   er_stack_clearall ();
   er_clear ();
-#if 0
   lang_final ();
-#endif
   css_free_accessible_ip_info ();
   event_log_final ();
 #endif /* SERVER_MODE */

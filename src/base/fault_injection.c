@@ -534,7 +534,7 @@ fi_handler_random_exit (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
 #endif
   if ((r % mod_factor) == 0)
     {
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 	      ER_FAULT_INJECTION, 1, "fault injection: random exit");
 
       _exit (0);

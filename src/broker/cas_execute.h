@@ -29,6 +29,7 @@
 #include "cas.h"
 #include "cas_net_buf.h"
 #include "cas_handle.h"
+#include "repl_common.h"
 
 #define ERROR_INFO_SET(ERR_CODE, ERR_INDICATOR)\
 	error_info_set(ERR_CODE, ERR_INDICATOR, __FILE__, __LINE__)
@@ -105,11 +106,15 @@ extern void reset_optimization_level_as_saved (void);
 extern int get_tuple_count (T_SRV_HANDLE * srv_handle);
 
 extern const char *schema_info_str (int schema_type);
+extern int dump_repl_data (char *buf, int buf_len, int num_items,
+			   void **obj_argv);
+
 extern int ux_update_group_id (int migrator_id, int group_id, int target,
 			       int on_off);
 extern int ux_insert_gid_removed_info (int group_id);
 extern int ux_delete_gid_removed_info (int group_id);
 extern int ux_delete_gid_skey_info (int group_id);
 extern int ux_block_globl_dml (int start_or_end);
-extern int ux_send_repl_data (int tran_type, int num_items, void **obj_argv);
+extern int ux_send_repl_data (RP_TRAN_TYPE tran_type, int num_items,
+			      void **obj_argv);
 #endif /* _CAS_EXECUTE_H_ */
