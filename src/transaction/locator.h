@@ -348,9 +348,9 @@ extern LC_LOCKSET *locator_allocate_lockset (int max_reqobjs,
 					     int quit_on_errors);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern LC_LOCKSET *locator_allocate_lockset_by_length (int length);
-#endif
 extern LC_LOCKSET *locator_reallocate_lockset (LC_LOCKSET * lockset,
 					       int max_reqobjs);
+#endif
 extern void locator_free_lockset (LC_LOCKSET * lockset);
 extern LC_LOCKSET *locator_allocate_and_unpack_lockset (char *unpacked,
 							int unpacked_size,
@@ -363,8 +363,10 @@ extern int locator_unpack_lockset (LC_LOCKSET * lockset, bool unpack_classes,
 				   bool unpack_objects);
 extern LC_LOCKHINT *locator_allocate_lockhint (int max_classes,
 					       int quit_on_errors);
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern LC_LOCKHINT *locator_reallocate_lockhint (LC_LOCKHINT * lockhint,
 						 int max_classes);
+#endif
 extern void locator_free_lockhint (LC_LOCKHINT * lockhint);
 extern int locator_pack_lockhint (LC_LOCKHINT * lockhint, bool pack_classes);
 extern int

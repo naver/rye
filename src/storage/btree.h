@@ -267,6 +267,7 @@ extern int btree_dump_tree (THREAD_ENTRY * thread_p, FILE * fp,
 extern void btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 			     BTID_INT * btid, PAGE_PTR page_ptr,
 			     VPID * pg_vpid, int n, bool dump_key);
+extern const char *btree_node_type_to_string (short node_type);
 
 /* Recovery routines */
 extern int btree_rv_nodehdr_redo_insert (THREAD_ENTRY * thread_p,
@@ -283,6 +284,7 @@ extern int btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p,
 extern void btree_rv_noderec_dump_slot_id (FILE * fp, int length, void *data);
 extern int btree_rv_pagerec_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv);
 extern int btree_rv_pagerec_delete (THREAD_ENTRY * thread_p, LOG_RCV * recv);
+extern void btree_rv_pagerec_dump (FILE * fp, int length, void *data);
 extern int btree_rv_newroot_redo_init (THREAD_ENTRY * thread_p,
 				       LOG_RCV * recv);
 extern int btree_rv_newpage_redo_init (THREAD_ENTRY * thread_p,
@@ -391,6 +393,8 @@ extern int btree_fence_check_key (THREAD_ENTRY * thread_p,
 				  const DB_IDXKEY * left_key,
 				  const DB_IDXKEY * right_key,
 				  const bool with_eq);
+extern int btree_fence_check_page (THREAD_ENTRY * thread_p,
+				   BTID_INT * btid, PAGE_PTR page_ptr);
 #endif
 
 #endif /* _BTREE_H_ */

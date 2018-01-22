@@ -854,10 +854,10 @@ boot_remove_useless_path_separator (const char *path, char *new_path)
 
   /*
    * Before transform.
-   *   / h o m e 3 / / w o r k / c u b r i d / / / w o r k /
+   *   / h o m e 3 / / w o r k / r y e / / / w o r k /
    *
    * After transform.
-   *   / h o m e 3   / w o r k / c u b r i d     / w o r k
+   *   / h o m e 3   / w o r k / r y e     / w o r k
    */
 
   /* Consume the preceding continuous slash chars. */
@@ -1647,13 +1647,17 @@ boot_add_temp_volume (THREAD_ENTRY * thread_p, DKNPAGES min_npages)
 DKNPAGES
 boot_get_temp_temp_vol_max_npages (void)
 {
-  if (prm_get_bigint_value (PRM_ID_BOSR_MAXTMP_SIZE) < 0)
+  INT64 temp_file_max_size;
+
+  temp_file_max_size = prm_get_bigint_value (PRM_ID_BOSR_MAXTMP_SIZE);
+
+  if (temp_file_max_size < 0)
     {
       return (DKNPAGES) (((20LL * 1024LL * 1024LL * 1024LL) / IO_PAGESIZE));
     }
   else
     {
-      return prm_get_bigint_value (PRM_ID_BOSR_MAXTMP_SIZE) / IO_PAGESIZE;
+      return temp_file_max_size / IO_PAGESIZE;
     }
 }
 
