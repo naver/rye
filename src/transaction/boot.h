@@ -156,10 +156,22 @@ struct boot_client_credential
   const char *program_name;	/* PATH_MAX */
   const char *login_name;	/* L_cuserid */
   const char *host_name;	/* MAXHOSTNAMELEN */
-  PRM_NODE_LIST preferred_nodes;	/* LINE_MAX */
+  PRM_NODE_LIST preferred_nodes;
   bool connect_order_random;
   int process_id;
 };
+
+#define BOOT_CLIENT_CREDENTIAL_INITIALIZER                      \
+  {                                                                                  \
+     /* client_type, client_info */                             \
+     BOOT_CLIENT_SYSTEM_INTERNAL, NULL,                         \
+     /* db_name, db_user, db_password */                        \
+     NULL, NULL, NULL,                                          \
+     /* program_name, login_name, host_name */                  \
+     (char *) "(system)", NULL, NULL,                           \
+     /* preferred_nodes, connect_order_random, process_id */    \
+     PRM_NODE_LIST_INITIALIZER,  false,  -1                     \
+  }
 
 typedef struct boot_db_path_info BOOT_DB_PATH_INFO;
 struct boot_db_path_info

@@ -920,6 +920,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
    * may need domains.
    */
   tp_init ();
+
   error_code = ws_init ();
   if (error_code != NO_ERROR)
     {
@@ -1059,17 +1060,6 @@ error:
       er_log_debug (ARG_FILE_LINE, "boot_shutdown_client: "
 		    "unregister client { tran %d }\n", tm_Tran_index);
       boot_shutdown_client ();
-    }
-  else
-    {
-      /* msgcat_final (); */
-#if 0
-      lang_final ();
-#endif
-
-#if 0
-      sysprm_final ();
-#endif
     }
 
   return error_code;
@@ -1234,21 +1224,11 @@ boot_client_all_finalize (void)
       au_final ();
       sm_final ();
       ws_final ();
-      tp_final ();
 
       locator_free_areas ();
-#if 0
-      sysprm_final ();
-#endif
 
-#if defined(ENABLE_UNUSED_FUNCTION)
-      msgcat_final ();
-#endif
       er_stack_clearall ();
       er_clear ();
-#if 0
-      lang_final ();
-#endif
 
 #if defined (ENABLE_UNUSED_FUNCTION)
       /* adj_arrays & lex buffers in the cnv formatting library. */

@@ -1835,6 +1835,8 @@ hb_cluster_request_heartbeat_to_all (void)
       node->heartbeat_gap++;
     }
 
+  FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE, 3000, 0);
+
   return;
 }
 
@@ -4473,10 +4475,6 @@ hb_thread_cluster_reader (UNUSED_ARG void *arg)
 	      hb_cluster_receive_heartbeat (aligned_buffer, len, &from,
 					    from_len);
 	    }
-
-	  error =
-	    FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE, 5000,
-			     0);
 	}
     }
 

@@ -5766,7 +5766,7 @@ sysprm_final (void)
 
   if (prm_Def_is_initialized == false)
     {
-      sysprm_initialize_prm_def ();
+      return;
     }
 
   for (i = 0; i < NUM_PRM; i++)
@@ -5788,6 +5788,8 @@ sysprm_final (void)
       /* reset all flags */
       prm->flag = PRM_EMPTY_FLAG;
     }
+
+  prm_Def_is_initialized = false;
 }
 
 /*

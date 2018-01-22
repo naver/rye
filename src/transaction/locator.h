@@ -109,6 +109,15 @@ typedef enum
   LC_FLUSH_HA_CATALOG_APPLIER_UPDATE
 } LC_COPYAREA_OPERATION;
 
+#define LC_COPYAREA_OPERATION_NAME(op)                                 \
+  ((op) == LC_FETCH ? "fetch" :                                        \
+   (op) == LC_FETCH_DELETED ? "deleted" :                              \
+   (op) == LC_FLUSH_INSERT ? "insert" :                                \
+   (op) == LC_FLUSH_DELETE ? "delete" :                                \
+   (op) == LC_FLUSH_UPDATE ? "update" :                                \
+   (op) == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE ? "analyzer_update" :   \
+   (op) == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE ? "applier_update" : "invalid")
+
 typedef struct lc_copyarea_oneobj LC_COPYAREA_ONEOBJ;
 struct lc_copyarea_oneobj
 {

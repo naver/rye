@@ -2514,7 +2514,8 @@ cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY pack_idxkey_func,
 }
 
 int
-cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items)
+cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items,
+		    int applier_id)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
@@ -2531,14 +2532,14 @@ cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items)
       retry = true;
     }
 
-  error = qe_send_repl_data (con_handle, head, num_items);
+  error = qe_send_repl_data (con_handle, head, num_items, applier_id);
 
   if (retry && IS_ER_COMMUNICATION (error))
     {
       error = reset_connect (con_handle, NULL);
       if (error == CCI_ER_NO_ERROR)
 	{
-	  error = qe_send_repl_data (con_handle, head, num_items);
+	  error = qe_send_repl_data (con_handle, head, num_items, applier_id);
 	}
     }
 

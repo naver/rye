@@ -108,6 +108,7 @@ extern int numeric_db_value_coerce_from_num (DB_VALUE * src,
 extern int numeric_db_value_coerce_from_num_strict (DB_VALUE * src,
 						    DB_VALUE * dest);
 extern char *numeric_db_value_print (DB_VALUE * val);
+extern char *numeric_db_value_to_string (char *buf, const DB_VALUE * val);
 
 /* Testing Routines */
 extern bool numeric_db_value_is_zero (const DB_VALUE * arg);

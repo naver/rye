@@ -60,9 +60,9 @@
 typedef struct cirp_tran CIRP_TRAN;
 struct cirp_tran
 {
-  int tranid;
+  TRANID tranid;
   LOG_LSA tran_start_lsa;
-  LOG_LSA tran_end_lsa;		/* LOG_UNLOCK_COMMIT */
+  LOG_LSA tran_end_lsa;		/* commit lsa */
   LOG_LSA repl_start_lsa;
   int applier_index;
   CIRP_REPL_ITEM *repl_item;
@@ -95,7 +95,7 @@ static bool cirp_anlz_is_any_applier_busy (void);
 static int cirp_anlz_assign_repl_item (int tranid, int rectype,
 				       LOG_LSA * commit_lsa);
 static CIRP_TRAN *cirp_find_tran (int tranid);
-static int cirp_add_tran (CIRP_TRAN ** tran, int tranid);
+static int cirp_add_tran (CIRP_TRAN ** tran, int tranid, LOG_LSA * start_lsa);
 static int cirp_anlz_get_applier_index (int *index,
 					const DB_VALUE * shard_key,
 					int num_appliers);
@@ -262,6 +262,8 @@ cirp_find_lowest_tran_start_lsa (UNUSED_ARG const void *key,
   tran = (CIRP_TRAN *) data;
   lowest_tran_start_lsa = (LOG_LSA *) args;
 
+  assert (!LSA_ISNULL (&tran->tran_start_lsa));
+
   if (LSA_ISNULL (lowest_tran_start_lsa)
       || LSA_GT (lowest_tran_start_lsa, &tran->tran_start_lsa))
     {
@@ -406,7 +408,7 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
 					    MNT_RP_REQUIRED_PAGEID));
 
   er_log_debug (ARG_FILE_LINE,
-		"update progress:lowest_tran_start_lsa:%lld,%d, "
+		"Analyzer: update progress:lowest_tran_start_lsa:%lld,%d, "
 		"current_lsa:%lld,%d, "
 		"required_lsa:%lld,%d ",
 		(long long) lowest_tran_start_lsa.pageid,
@@ -1007,6 +1009,7 @@ cirp_find_tran (int tranid)
  *
  *   tran(out): pointer to the target apply list
  *   tranid(in): the target transaction id
+ *   start_lsa(in):
  *
  * Note:
  *     When we apply the transaction logs to the slave, we have to take them
@@ -1018,7 +1021,7 @@ cirp_find_tran (int tranid)
  *     items to the slave orderly.
  */
 static int
-cirp_add_tran (CIRP_TRAN ** tran, int tranid)
+cirp_add_tran (CIRP_TRAN ** tran, int tranid, LOG_LSA * start_lsa)
 {
   CIRP_TRAN *new_tran = NULL;
   int error = NO_ERROR;
@@ -1053,6 +1056,7 @@ cirp_add_tran (CIRP_TRAN ** tran, int tranid)
 
   cirp_init_tran (new_tran);
   new_tran->tranid = tranid;
+  LSA_COPY (&new_tran->tran_start_lsa, start_lsa);
 
   if (mht_put (Repl_Info->analyzer_info.tran_table,
 	       &new_tran->tranid, new_tran) == NULL)
@@ -1127,7 +1131,7 @@ rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
   CIRP_REPL_ITEM *item = NULL;
   int error = NO_ERROR;
 
-  error = rp_new_repl_item_ddl (&item, lsa);
+  error = rp_new_repl_item_ddl (&item, tran->tranid, lsa);
   if (error != NO_ERROR)
     {
       return error;
@@ -1168,7 +1172,7 @@ rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
   RP_DATA_ITEM *data_item = NULL;
   int error = NO_ERROR;
 
-  error = rp_new_repl_item_data (&item, lsa);
+  error = rp_new_repl_item_data (&item, tran->tranid, lsa);
   if (error != NO_ERROR)
     {
       return error;
@@ -1243,7 +1247,7 @@ rp_set_gid_bitmap_log (CIRP_TRAN * tran, const LOG_LSA * lsa)
   RP_DDL_ITEM *ddl_item = NULL;
   int error = NO_ERROR;
 
-  error = rp_new_repl_item_ddl (&item, lsa);
+  error = rp_new_repl_item_ddl (&item, tran->tranid, lsa);
   if (error != NO_ERROR)
     {
       return error;
@@ -1600,58 +1604,44 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
   analyzer = &Repl_Info->analyzer_info;
   buf_mgr = &analyzer->buf_mgr;
 
-  if (lrec->trid == NULL_TRANID
+  if (lrec->type == LOG_END_OF_LOG
+      || lrec->trid == NULL_TRANID
       || LSA_GT (&lrec->prev_tranlsa, &final)
-      || LSA_GT (&lrec->back_lsa, &final))
+      || LSA_GT (&lrec->back_lsa, &final)
+      || !CIRP_IS_VALID_LSA (buf_mgr, &final)
+      || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
     {
       assert (false);
-      if (lrec->type != LOG_END_OF_LOG)
-	{
-	  error = ER_HA_LA_INVALID_REPL_LOG_RECORD;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 10,
-		  final.pageid, final.offset,
-		  lrec->forw_lsa.pageid, lrec->forw_lsa.offset,
-		  lrec->back_lsa.pageid, lrec->back_lsa.offset,
-		  lrec->trid,
-		  lrec->prev_tranlsa.pageid, lrec->prev_tranlsa.offset,
-		  lrec->type);
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+      error = ER_HA_LA_INVALID_REPL_LOG_RECORD;
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+	      error, 10,
+	      final.pageid, final.offset,
+	      lrec->forw_lsa.pageid, lrec->forw_lsa.offset,
+	      lrec->back_lsa.pageid, lrec->back_lsa.offset,
+	      lrec->trid,
+	      lrec->prev_tranlsa.pageid, lrec->prev_tranlsa.offset,
+	      lrec->type);
+
+      GOTO_EXIT_ON_ERROR;
     }
 
-  if ((lrec->type != LOG_END_OF_LOG
-       && lrec->type != LOG_DUMMY_HA_SERVER_STATE)
-      && (lrec->trid != LOG_SYSTEM_TRANID)
-      && (LSA_ISNULL (&lrec->prev_tranlsa)))
+  if (lrec->type != LOG_DUMMY_HA_SERVER_STATE
+      && lrec->trid != LOG_SYSTEM_TRANID && LSA_ISNULL (&lrec->prev_tranlsa))
     {
-      error = cirp_add_tran (&tran, lrec->trid);
+      error = cirp_add_tran (&tran, lrec->trid, &final);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
 
       assert (LSA_ISNULL (&tran->repl_start_lsa));
-      assert (LSA_ISNULL (&tran->tran_start_lsa));
       assert (LSA_ISNULL (&tran->tran_end_lsa));
-
-      LSA_COPY (&tran->tran_start_lsa, &final);
     }
 
   analyzer->is_end_of_record = false;
   switch (lrec->type)
     {
-    case LOG_END_OF_LOG:
-      assert (false);
-
-      analyzer->is_end_of_record = true;
-
-      error = ER_INTERRUPTED;
-
-      GOTO_EXIT_ON_ERROR;
-      break;
-
     case LOG_REPLICATION_DATA:
     case LOG_REPLICATION_SCHEMA:
     case LOG_DUMMY_UPDATE_GID_BITMAP:
@@ -1689,18 +1679,6 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
     case LOG_ABORT:
       cirp_free_tran_by_tranid (analyzer, lrec->trid);
 
-      break;
-
-    case LOG_DUMMY_CRASH_RECOVERY:
-      snprintf (buffer, sizeof (buffer),
-		"process log record (type:%d). "
-		"skip this log record. LSA: %lld|%d",
-		lrec->type, (long long int) final.pageid, final.offset);
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	      ER_HA_GENERIC_ERROR, 1, buffer);
-      break;
-
-    case LOG_END_CHKPT:
       break;
 
     case LOG_DUMMY_HA_SERVER_STATE:
@@ -1753,29 +1731,6 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
     default:
       break;
     }				/* switch(lrec->type) */
-
-  /*
-   * if this is the final record of the archive log..
-   * we have to fetch the next page. So, increase the pageid,
-   * but we don't know the exact offset of the next record.
-   * the offset would be adjusted after getting the next log page
-   */
-  if (lrec->forw_lsa.pageid == -1
-      || lrec->type <= LOG_SMALLER_LOGREC_TYPE
-      || lrec->type >= LOG_LARGER_LOGREC_TYPE)
-    {
-      error = ER_HA_LA_INVALID_REPL_LOG_RECORD;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error, 10,
-	      final.pageid, final.offset,
-	      lrec->forw_lsa.pageid, lrec->forw_lsa.offset,
-	      lrec->back_lsa.pageid, lrec->back_lsa.offset,
-	      lrec->trid,
-	      lrec->prev_tranlsa.pageid, lrec->prev_tranlsa.offset,
-	      lrec->type);
-
-      GOTO_EXIT_ON_ERROR;
-    }
 
   assert (error == NO_ERROR);
   return error;
