@@ -125,13 +125,13 @@ fi_init (void)
 		     "fi_btree_delete_index_error_2", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE,
-		     "fi_hb_slow_heartbeat_message", fi_handler_random_sleep);
+		     "fi_hb_slow_heartbeat_message", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_HB_SLOW_DISK,
-		     "fi_hb_slow_disk", fi_handler_random_success);
+		     "fi_hb_slow_disk", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_HB_SLOW_PING_HOST,
-		     "fi_hb_slow_ping_host", fi_handler_random_success);
+		     "fi_hb_slow_ping_host", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_REPL_RANDOM_EXIT,
 		     "fi_repl_random_exit", fi_handler_random_exit);

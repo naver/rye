@@ -1069,7 +1069,7 @@ health_check_main (void *arg)
 			Repl_Info->max_mem_size);
 	}
 
-      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL, 60, 0) != NO_ERROR)
+      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL, 10, 0) != NO_ERROR)
 	{
 	  RP_SET_AGENT_NEED_RESTART ();
 	}

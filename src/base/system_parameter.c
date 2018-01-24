@@ -2506,6 +2506,38 @@ sysprm_set_repl_er_log_file (const char *db_name)
 }
 
 /*
+ * sysprm_set_master_er_log_file -
+ *   return: void
+ *
+ */
+void
+sysprm_set_master_er_log_file (void)
+{
+  static const char *suffix = "_master";
+  char hostname[MAXHOSTNAMELEN];
+  char error_log_name[PATH_MAX];
+  SYSPRM_PARAM *er_log_file;
+
+  er_log_file = prm_find (PRM_NAME_ER_LOG_FILE, NULL);
+  if (er_log_file == NULL || PRM_IS_SET (er_log_file->flag))
+    {
+      return;
+    }
+
+  if (GETHOSTNAME (hostname, MAXHOSTNAMELEN) == 0)
+    {
+      /* css_gethostname won't null-terminate if the name is
+       * overlong.  Put in a guaranteed null-terminator of our
+       * own so that strcat doesn't go wild.
+       */
+      hostname[MAXHOSTNAMELEN] = '\0';
+    }
+
+  snprintf (error_log_name, PATH_MAX - 1, "%s%s.err", hostname, suffix);
+  prm_set (er_log_file, error_log_name, true);
+}
+
+/*
  * sysprm_load_and_init_internal - Read system parameters from the init files
  *   return: NO_ERROR or ER_FAILED
  *   db_name(in): database name
