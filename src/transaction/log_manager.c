@@ -7385,7 +7385,8 @@ log_run_postpone_op (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
       pgbuf_unfix (thread_p, rcv.pgptr);
     }
 
-  FI_TEST (thread_p, FI_TEST_LOG_MANAGER_RANDOM_EXIT_AT_RUN_POSTPONE, 0);
+  FI_TEST_ARG_INT (thread_p, FI_TEST_LOG_MANAGER_RANDOM_EXIT_AT_RUN_POSTPONE,
+		   100, 0);
 
   return NO_ERROR;
 }
