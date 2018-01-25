@@ -381,8 +381,7 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	  break;
 	case RP_ITEM_TYPE_DDL:
 	  ddl = &item->info.ddl;
-	  if (ddl->query == NULL || ddl->db_user == NULL
-	      || LSA_ISNULL (&item->lsa))
+	  if (LSA_ISNULL (&item->lsa))
 	    {
 	      return false;
 	    }
