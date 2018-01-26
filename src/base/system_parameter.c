@@ -2530,7 +2530,7 @@ sysprm_set_master_er_log_file (void)
        * overlong.  Put in a guaranteed null-terminator of our
        * own so that strcat doesn't go wild.
        */
-      hostname[MAXHOSTNAMELEN] = '\0';
+      hostname[MAXHOSTNAMELEN - 1] = '\0';
     }
 
   snprintf (error_log_name, PATH_MAX - 1, "%s%s.err", hostname, suffix);
