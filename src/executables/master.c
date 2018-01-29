@@ -753,9 +753,6 @@ int
 main (int argc, char **argv)
 {
   CSS_CONN_ENTRY *conn;
-  static const char *suffix = "_master.err";
-  char hostname[MAXHOSTNAMELEN + sizeof (suffix)];
-  char *errlog = NULL;
   int status = EXIT_SUCCESS;
   const char *msg_format;
 
@@ -764,34 +761,10 @@ main (int argc, char **argv)
       return EXIT_FAILURE;
     }
 
-  if (GETHOSTNAME (hostname, MAXHOSTNAMELEN) == 0)
+  sysprm_set_master_er_log_file ();
+  if (db_initialize () != NO_ERROR)
     {
-      /* css_gethostname won't null-terminate if the name is
-       * overlong.  Put in a guaranteed null-terminator of our
-       * own so that strcat doesn't go wild.
-       */
-      hostname[MAXHOSTNAMELEN] = '\0';
-      strcat (hostname, suffix);
-      errlog = hostname;
-    }
-
-  if (sysprm_load_and_init (NULL) != NO_ERROR)
-    {
-      PRINT_AND_LOG_ERR_MSG ("Failed to initialize system parameters.\n");
-      status = EXIT_FAILURE;
-      goto cleanup;
-    }
-
-  if (er_init (errlog, ER_EXIT_DEFAULT) != NO_ERROR)
-    {
-      PRINT_AND_LOG_ERR_MSG ("Failed to initialize error manager.\n");
-      status = EXIT_FAILURE;
-      goto cleanup;
-    }
-
-  if (lang_init () != NO_ERROR)
-    {
-      PRINT_AND_LOG_ERR_MSG ("Failed to initialize lang manager.\n");
+      PRINT_AND_LOG_ERR_MSG ("Failed to initialize.\n");
       status = EXIT_FAILURE;
       goto cleanup;
     }
@@ -820,10 +793,6 @@ main (int argc, char **argv)
   TPRINTF (msgcat_message (MSGCAT_CATALOG_UTILS,
 			   MSGCAT_UTIL_SET_MASTER, MASTER_MSG_STARTING), 0);
 
-#if defined(ENABLE_UNUSED_FUNCTION)
-  /* close the message catalog and let the master daemon reopen. */
-  (void) msgcat_final ();
-#endif
   er_stack_clearall ();
   er_clear ();
 
@@ -880,11 +849,9 @@ main (int argc, char **argv)
 
 cleanup:
 
-#if defined(ENABLE_UNUSED_FUNCTION)
-  msgcat_final ();
-#endif
-
   master_shm_final ();
+
+  db_finalize ();
 
   return status;
 }

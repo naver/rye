@@ -3882,18 +3882,11 @@ numeric_db_value_coerce_from_num_strict (DB_VALUE * src, DB_VALUE * dest)
 char *
 numeric_db_value_print (DB_VALUE * val)
 {
-  char temp[80];
-  int nbuf;
-  int temp_size;
-  int i;
-  bool found_first_non_zero = false;
-  int scale = DB_VALUE_SCALE (val);
-
 #if defined(SERVER_MODE)
   THREAD_ENTRY *th_entry;
   char *buf;
 #else /* SERVER_MODE */
-  static char buf[sizeof (temp) + 2];
+  static char buf[80 + 2];
 #endif /* SERVER_MODE */
 
 
@@ -3904,8 +3897,29 @@ numeric_db_value_print (DB_VALUE * val)
     {
       return NULL;
     }
-
 #endif /* SERVER_MODE */
+
+  return numeric_db_value_to_string (buf, val);
+}
+
+/*
+ * numeric_db_value_to_string () -
+ *   return: a static character buffer that contains the numeric printed in an
+ *           ASCII format.
+ *   buf(out):
+ *   val(in): DB_VALUE of type numeric to print
+ *
+ * Note: returns the null-terminated string form of val
+ */
+char *
+numeric_db_value_to_string (char *buf, const DB_VALUE * val)
+{
+  char temp[80];
+  int nbuf;
+  int temp_size;
+  int i;
+  bool found_first_non_zero = false;
+  int scale = DB_VALUE_SCALE (val);
 
   if (DB_IS_NULL (val))
     {

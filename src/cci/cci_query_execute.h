@@ -270,7 +270,8 @@ extern int qe_block_global_dml (T_CON_HANDLE * con_handle, bool start_or_end);
 extern int qe_get_server_mode (T_CON_HANDLE * con_handle, int *mode,
 			       unsigned int *master_addr);
 extern int qe_send_repl_data (T_CON_HANDLE * con_handle,
-			      CIRP_REPL_ITEM * head, int num_items);
+			      CIRP_REPL_ITEM * head, int num_items,
+			      int applier_id);
 extern int qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
 				     in_addr_t ip, int port, int state);
 extern int qe_change_dbuser (T_CON_HANDLE * con_handle, const char *user,

@@ -47,6 +47,9 @@
 enum
 { DB_NO_OIDS = 0, DB_ROW_OIDS };
 
+extern int db_initialize (void);
+extern int db_finalize (void);
+
 /* Memory reclamation functions */
 extern void db_objlist_free (DB_OBJLIST * list);
 extern void db_string_free (char *string);

@@ -119,7 +119,7 @@ static int cirp_apply_schema_log (CIRP_APPLIER_INFO * applier,
 
 static int rp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
 				    LOG_PAGE * log_pgptr, int log_type,
-				    LOG_LSA * final_lsa);
+				    LOG_LSA * final_lsa, TRANID tran_id);
 static int cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
 				       LOG_LSA * commit_lsa,
 				       LOG_RECORD_HEADER * lrec,
@@ -128,7 +128,6 @@ static int cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
 					 LOG_LSA * commit_lsa);
 static int cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data,
 					 LOG_LSA * committed_lsa);
-static int cirp_applier_clear_repl_delay (CIRP_APPLIER_INFO * applier);
 static int cirp_get_applier_data (CIRP_APPLIER_INFO * applier,
 				  CIRP_CT_LOG_APPLIER * ct_data);
 static int cirp_set_applier_data (CIRP_APPLIER_INFO * applier,
@@ -137,9 +136,11 @@ static int cirp_change_applier_status (CIRP_APPLIER_INFO * applier,
 				       CIRP_AGENT_STATUS status);
 static int rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier,
 				      LOG_PAGE * log_pgptr,
+				      TRANID tran_id,
 				      const LOG_LSA * final_lsa);
 static int rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
 				    LOG_PAGE * log_pgptr,
+				    TRANID tran_id,
 				    const LOG_LSA * final_lsa);
 static int rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier,
 					  LOG_PAGE * log_pgptr,
@@ -958,6 +959,11 @@ cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate)
     {
       return NO_ERROR;
     }
+  if (applier->head == NULL || applier->tail == NULL)
+    {
+      assert (false);
+      return NO_ERROR;
+    }
 
   if ((applier->head->item_type == RP_ITEM_TYPE_DDL
        && applier->num_unflushed != 2)
@@ -984,7 +990,7 @@ cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate)
       assert (rp_is_valid_repl_item (applier->head));
 
       error = cci_send_repl_data (&applier->conn, applier->head,
-				  applier->num_unflushed);
+				  applier->num_unflushed, applier->ct.id);
       if (error < 0)
 	{
 	  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
@@ -1354,16 +1360,18 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
  *
  *   applier(in/out):
  *   log_pgptr(in):
+ *   tran_id(in):
  *   final_lsa(in):
  */
 static int
 rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier,
-			   LOG_PAGE * log_pgptr, const LOG_LSA * final_lsa)
+			   LOG_PAGE * log_pgptr, TRANID tran_id,
+			   const LOG_LSA * final_lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   int error = NO_ERROR;
 
-  error = rp_new_repl_item_ddl (&item, final_lsa);
+  error = rp_new_repl_item_ddl (&item, tran_id, final_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1412,17 +1420,19 @@ exit_on_error:
  *
  *   applier(in/out):
  *   log_pgptr(in):
+ *   tran_id(in):
  *   final_lsa(in):
  */
 static int
 rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
-			 LOG_PAGE * log_pgptr, const LOG_LSA * final_lsa)
+			 LOG_PAGE * log_pgptr, TRANID tran_id,
+			 const LOG_LSA * final_lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   RP_DATA_ITEM *data = NULL;
   int error = NO_ERROR;
 
-  error = rp_new_repl_item_data (&item, final_lsa);
+  error = rp_new_repl_item_data (&item, tran_id, final_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1456,8 +1466,8 @@ rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
 			      "rp_appl_apply_repl_item : rcv_index %d "
 			      "lsa(%lld,%d) target lsa(%lld,%d)\n",
 			      data->rcv_index,
-			      (long long) data->lsa.pageid,
-			      data->lsa.offset,
+			      (long long) item->lsa.pageid,
+			      item->lsa.offset,
 			      (long long) data->target_lsa.pageid,
 			      data->target_lsa.offset);
     }
@@ -1546,11 +1556,12 @@ exit_on_error:
  *    log_pgptr(in):
  *    log_type(in):
  *    final_lsa(in):
+ *    trid(in):
  */
 static int
 rp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
 			 LOG_PAGE * log_pgptr, int log_type,
-			 LOG_LSA * final_lsa)
+			 LOG_LSA * final_lsa, TRANID tran_id)
 {
   int error = NO_ERROR;
 
@@ -1561,14 +1572,16 @@ rp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
   switch (log_type)
     {
     case LOG_REPLICATION_SCHEMA:
-      error = rp_appl_apply_schema_item (applier, log_pgptr, final_lsa);
+      error = rp_appl_apply_schema_item (applier, log_pgptr,
+					 tran_id, final_lsa);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
       break;
     case LOG_REPLICATION_DATA:
-      error = rp_appl_apply_data_item (applier, log_pgptr, final_lsa);
+      error = rp_appl_apply_data_item (applier, log_pgptr,
+				       tran_id, final_lsa);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -1625,7 +1638,7 @@ cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
       || lrec->type == LOG_DUMMY_UPDATE_GID_BITMAP)
     {
       error = rp_appl_apply_repl_item (applier, pg_ptr, lrec->type,
-				       &final_lsa);
+				       &final_lsa, lrec->trid);
     }
   else if (lrec->type == LOG_COMMIT)
     {
@@ -1723,6 +1736,8 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
   CIRP_REPL_ITEM *item;
   RP_CATALOG_ITEM *catalog;
   RECDES *recdes;
+  LOG_LSA tran_start, tran_end;
+  TRANID tran_id = NULL_TRANID;
 
   if (LSA_ISNULL (commit_lsa))
     {
@@ -1747,7 +1762,7 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = rp_new_repl_catalog_item (&item, commit_lsa);
+  error = rp_new_repl_catalog_item (&item, NULL_TRANID, commit_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1775,6 +1790,12 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
       GOTO_EXIT_ON_ERROR;
     }
 
+  assert (applier->head != NULL && applier->tail != NULL);
+
+  LSA_COPY (&tran_start, &applier->head->lsa);
+  LSA_COPY (&tran_end, &applier->tail->lsa);
+  tran_id = applier->head->tran_id;
+
   /* server side auto commit */
   error = cirp_flush_repl_items (applier, true);
   if (error != NO_ERROR)
@@ -1787,6 +1808,12 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
     {
       GOTO_EXIT_ON_ERROR;
     }
+
+  er_log_debug (ARG_FILE_LINE,
+		"Applier-%d tran_id:%d, tran start:%ld,%d, tran end:%ld, %d, commit:%ld,%d",
+		applier->ct.id, tran_id, tran_start.pageid,
+		tran_start.offset, tran_end.pageid, tran_end.offset,
+		commit_lsa->pageid, commit_lsa->offset);
 
   /* update boundary so that committed items can be dismissed */
   cirp_applier_clear_committed_item (applier);
@@ -1821,37 +1848,6 @@ cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data,
   LSA_COPY (&ct_data->committed_lsa, committed_lsa);
 
   return NO_ERROR;
-}
-
-/*
- * cirp_applier_clear_repl_delay () -
- *   return: error code
- */
-static int
-cirp_applier_clear_repl_delay (CIRP_APPLIER_INFO * applier)
-{
-  CIRP_CT_LOG_APPLIER ct_data;
-  int error = NO_ERROR;
-
-  error = pthread_mutex_lock (&applier->lock);
-  if (error != NO_ERROR)
-    {
-      error = ER_CSS_PTHREAD_MUTEX_LOCK;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-
-      return error;
-    }
-
-  memcpy (&ct_data, &applier->ct, sizeof (CIRP_CT_LOG_APPLIER));
-
-  pthread_mutex_unlock (&applier->lock);
-
-  error = rpct_update_log_applier (&applier->conn, &ct_data);
-
-  /* update boundary so that committed items can be dismissed */
-  cirp_applier_clear_committed_item (applier);
-
-  return error;
 }
 
 /*
@@ -2055,7 +2051,7 @@ applier_main (void *arg)
       LSA_SET_NULL (&final_lsa);
 
       snprintf (err_msg, sizeof (err_msg),
-		"Applier-%d Start: committed_lsa(%lld,%d)", applier_index,
+		"Applier-%d Start: committed_lsa(%lld,%d)", applier->ct.id,
 		(long long) applier->ct.committed_lsa.pageid,
 		applier->ct.committed_lsa.offset);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
@@ -2073,13 +2069,6 @@ applier_main (void *arg)
 	  if (repl_log_item == NULL)
 	    {
 	      /* queue is empty */
-
-	      /* server side auto commit */
-	      error = cirp_applier_clear_repl_delay (applier);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
 	      error = cirp_applier_wait_for_queue (applier);
 	      if (error != NO_ERROR)
 		{
@@ -2096,23 +2085,33 @@ applier_main (void *arg)
 	      assert (false);
 
 	      REPL_SET_GENERIC_ERROR (error, "Invalid REPL_ITEM("
-				      "tran_start(%lld, %lld), committed_lsa(%lld,%lld), "
-				      "repl_start_lsa(%lld, %lld)",
-				      (long long) repl_log_item->
-				      tran_start_lsa.pageid,
-				      (long long) repl_log_item->
-				      tran_start_lsa.offset,
-				      (long long) repl_log_item->
-				      committed_lsa.pageid,
-				      (long long) repl_log_item->
-				      committed_lsa.offset,
-				      (long long) repl_log_item->
-				      repl_start_lsa.pageid,
-				      (long long) repl_log_item->
-				      repl_start_lsa.offset);
+				      "tran_start(%ld, %d), committed_lsa(%ld,%d), "
+				      "repl_start_lsa(%ld, %d)",
+				      (long) repl_log_item->tran_start_lsa.
+				      pageid,
+				      repl_log_item->tran_start_lsa.offset,
+				      (long) repl_log_item->committed_lsa.
+				      pageid,
+				      repl_log_item->committed_lsa.offset,
+				      (long) repl_log_item->repl_start_lsa.
+				      pageid,
+				      repl_log_item->repl_start_lsa.offset);
 
 	      GOTO_EXIT_ON_ERROR;
 	    }
+
+	  er_log_debug (ARG_FILE_LINE, "Applier-%d queue item tran_id:%d,"
+			"tran_start(%ld, %d), repl_start_lsa(%ld,%d), "
+			"committed_lsa(%ld, %d), applier committed_lsa(%ld, %d)",
+			applier->ct.id, repl_log_item->trid,
+			(long) repl_log_item->tran_start_lsa.pageid,
+			repl_log_item->tran_start_lsa.offset,
+			(long) repl_log_item->repl_start_lsa.pageid,
+			repl_log_item->repl_start_lsa.offset,
+			(long) repl_log_item->committed_lsa.pageid,
+			repl_log_item->committed_lsa.offset,
+			(long) applier->ct.committed_lsa.pageid,
+			applier->ct.committed_lsa.offset);
 
 	  if (LSA_LE (&repl_log_item->committed_lsa,
 		      &applier->ct.committed_lsa))
@@ -2248,7 +2247,7 @@ applier_main (void *arg)
 
       snprintf (err_msg, sizeof (err_msg),
 		"Applier-%d Retry(ERROR:%d): committed_lsa(%lld,%d)",
-		applier_index, error,
+		applier->ct.id, error,
 		(long long) applier->ct.committed_lsa.pageid,
 		applier->ct.committed_lsa.offset);
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
@@ -2265,7 +2264,7 @@ applier_main (void *arg)
   cirp_change_applier_status (applier, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
-	    "Applier-%d Exit: committed_lsa(%lld,%d)", applier_index,
+	    "Applier-%d Exit: committed_lsa(%lld,%d)", applier->ct.id,
 	    (long long) applier->ct.committed_lsa.pageid,
 	    applier->ct.committed_lsa.offset);
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,

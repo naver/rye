@@ -165,6 +165,10 @@ extern PARSER_VARCHAR *describe_idxkey (const PARSER_CONTEXT * inparser,
 extern void help_fprint_idxkey (FILE * fp, const DB_IDXKEY * key);
 extern int help_sprint_idxkey (const DB_IDXKEY * key, char *buffer,
 			       int max_length);
+extern int help_dump_value (char *buffer, int buf_len,
+			    const DB_VALUE * value);
+extern int help_dump_idxkey (char *buffer, int buf_len,
+			     const DB_IDXKEY * key);
 
 #if defined(RYE_DEBUG)
 extern char *dbg_value (const DB_VALUE * value);

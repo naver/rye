@@ -1149,7 +1149,7 @@ cirpwr_writev_append_pages (LOG_PAGE ** to_flush, DKNPAGES npages)
 		cirpwr_Gl.bg_archive_info.current_page_id, fpageid,
 		phy_pageid, npages);
 
-  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 10000, 0);
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 1000, 0);
 
   /* 2. active write */
   phy_pageid = cirpwr_to_physical_pageid (fpageid);
@@ -1682,7 +1682,7 @@ cirpwr_write_log_pages (void)
       GOTO_EXIT_ON_ERROR;
     }
 
-  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 1000, 0);
+  FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 500, 0);
 
   error = cirpwr_flush_header_page ();
   if (error != NO_ERROR)

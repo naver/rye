@@ -2773,6 +2773,7 @@ add_arg_idxkey (T_NET_BUF * net_buf, DB_IDXKEY * idxkey)
 
       return err_code;
     }
+
   ADD_ARG_STR (net_buf, buf, size);
 
   FREE_MEM (buf);
@@ -2853,13 +2854,12 @@ add_repl_item_data (T_NET_BUF * net_buf, RP_DATA_ITEM * data)
 
 int
 qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
-		   int num_items)
+		   int num_items, int applier_id)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_SEND_REPL_DATA;
   int err_code = CCI_ER_NO_ERROR;
   CIRP_REPL_ITEM *item;
-  char note[ONE_K];
   int item_count;
 
   if (IS_INVALID_SOCKET (con_handle->sock_fd))
@@ -2867,13 +2867,18 @@ qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
       con_handle->con_status = CCI_CON_STATUS_OUT_TRAN;
       return CCI_ER_COMMUNICATION;
     }
+  if (head == NULL)
+    {
+      assert (false);
+      return CCI_ER_INVALID_ARGS;
+    }
 
   net_buf_init (&net_buf);
 
   net_buf_cp_str (&net_buf, &func_code, 1);
 
-  snprintf (note, sizeof (note), "start repl transaction");
-  ADD_ARG_STR (&net_buf, note, strlen (note) + 1);
+  ADD_ARG_INT (&net_buf, applier_id);
+  ADD_ARG_INT (&net_buf, (int) head->tran_id);
   ADD_ARG_INT (&net_buf, con_handle->autocommit_mode);
   switch (head->item_type)
     {

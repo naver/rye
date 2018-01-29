@@ -2747,18 +2747,6 @@ rsql_exit_cleanup ()
       db_end_session ();
       db_shutdown ();
     }
-
-#if 0
-  /* Note that this closes a global resource, the "kernel" message catalog.
-   * This is ok for the Unix implementation as the entire process is about
-   * to exit.  For the Windows implementation, it happens to be ok since
-   * the test driver application that calls rsql() won't use this catalog.
-   * If this ever changes however, we'll probably have to maintain some sort
-   * of internal reference counter on this catalog so that it won't be freed
-   * until all the nested users close it.
-   */
-  lang_final ();
-#endif
 }
 
 /*

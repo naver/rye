@@ -286,7 +286,10 @@ extern int str_to_int64 (INT64 * ret_p, char **end_p, const char *str_p,
 extern int str_to_uint64 (UINT64 * ret_p, char **end_p, const char *str_p,
 			  int base);
 extern int rye_init_string (RYE_STRING * buffer, int max_size);
+extern int rye_init_string_with_buffer (RYE_STRING * str, char *buffer,
+					int buffer_length);
 extern void rye_free_string (RYE_STRING * buffer);
+extern void rye_clear_string (RYE_STRING * buffer);
 extern int rye_append_string (RYE_STRING * buffer, const char *src);
 extern char **rye_split_string (RYE_STRING * buffer, const char *delim);
 extern int rye_append_format_string (RYE_STRING * buffer,

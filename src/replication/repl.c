@@ -168,27 +168,8 @@ main (int argc, char *argv[])
   (void) os_set_signal_handler (SIGTERM, rp_signal_handler);
   (void) os_set_signal_handler (SIGPIPE, SIG_IGN);
 
-  /* init client */
-  error = msgcat_init ();
-  if (error != NO_ERROR)
-    {
-      GOTO_EXIT_ON_ERROR;
-    }
-
-  error = sysprm_load_and_init (repl_arg.db_name);
-  if (error != NO_ERROR)
-    {
-      GOTO_EXIT_ON_ERROR;
-    }
-
   sysprm_set_repl_er_log_file (repl_arg.db_name);
-  error = er_init (NULL, ER_EXIT_DEFAULT);
-  if (error != NO_ERROR)
-    {
-      GOTO_EXIT_ON_ERROR;
-    }
-
-  error = lang_init ();
+  error = db_initialize ();
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -379,6 +360,8 @@ main (int argc, char *argv[])
 
   monitor_final_collector ();
 
+  db_finalize ();
+
   assert (error == NO_ERROR);
   return EXIT_SUCCESS;
 
@@ -398,6 +381,8 @@ exit_on_error:
   cirpwr_finalize ();
 
   monitor_final_collector ();
+
+  db_finalize ();
 
   return EXIT_FAILURE;
 }
@@ -1084,8 +1069,7 @@ health_check_main (void *arg)
 			Repl_Info->max_mem_size);
 	}
 
-      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL,
-			   1000, 0) != NO_ERROR)
+      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL, 10, 0) != NO_ERROR)
 	{
 	  RP_SET_AGENT_NEED_RESTART ();
 	}
@@ -1145,11 +1129,8 @@ int
 cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
 {
   int error = NO_ERROR;
-  CIRP_WRITER_INFO *writer = NULL;
   LOG_HEADER *log_hdr = NULL;
   const PRM_NODE_INFO *host_info = NULL;
-
-  writer = &Repl_Info->writer_info;
 
   error = cirp_logpb_act_log_fetch_hdr (&analyzer->buf_mgr);
   if (error != NO_ERROR)
