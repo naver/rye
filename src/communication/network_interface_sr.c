@@ -3085,6 +3085,10 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   UINT64 old_expand_clock, new_expand_clock;
 
   EXECUTION_INFO info = { NULL, NULL, NULL };
+
+  assert (css_find_conn_by_tran_index
+	  (logtb_get_current_tran_index (thread_p)) != NULL);
+
   trace_slow_msec = prm_get_bigint_value (PRM_ID_SQL_TRACE_SLOW);
   trace_ioread = prm_get_integer_value (PRM_ID_SQL_TRACE_IOREADS);
 

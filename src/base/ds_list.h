@@ -47,7 +47,9 @@ struct _rye_singly_linked_lists
 
 extern RSList *Rye_slist_alloc (void);
 extern void Rye_slist_clear (RSList * list);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void Rye_slist_free (RSList * list);
+#endif
 extern void Rye_slist_free_full (RSList * list, Rye_func free_func);
 extern void *Rye_slist_get_head (RSList * list);
 extern void *Rye_slist_get_tail (RSList * list);

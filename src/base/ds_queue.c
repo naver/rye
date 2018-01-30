@@ -47,6 +47,7 @@ Rye_queue_new (void)
   return new_queue;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * Rye_queue_free -
  *   return:
@@ -64,6 +65,7 @@ Rye_queue_free (RQueue * queue)
 
   Rye_slist_free (&queue->list);
 }
+#endif
 
 /*
  * Rye_queue_free_full -

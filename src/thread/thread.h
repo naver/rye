@@ -378,8 +378,8 @@ extern int thread_suspend_with_other_mutex (THREAD_ENTRY * p,
 					    pthread_mutex_t * mutexp,
 					    int timeout, struct timespec *to,
 					    int suspended_reason);
-extern void thread_print_entry_info (THREAD_ENTRY * p);
 #if defined (ENABLE_UNUSED_FUNCTION)
+extern void thread_print_entry_info (THREAD_ENTRY * p);
 extern void thread_dump_threads (void);
 #endif
 extern bool thread_get_check_interrupt (THREAD_ENTRY * thread_p);

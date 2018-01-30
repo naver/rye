@@ -46,10 +46,13 @@ static void (*css_Previous_sigpipe_handler) (int sig_no) = NULL;
 int css_Errno = 0;
 CSS_MAP_ENTRY *css_Client_anchor;
 
+#if 0
 static void css_internal_server_shutdown (void);
+#endif
 static void css_handle_pipe_shutdown (int sig);
 static void css_set_pipe_signal (void);
 
+#if 0
 /*
  * css_internal_server_shutdown() -
  *   return:
@@ -59,6 +62,7 @@ css_internal_server_shutdown (void)
 {
   syslog (LOG_ALERT, "Lost connection to server\n");
 }
+#endif
 
 /*
  * css_handle_pipe_shutdown() -
@@ -68,6 +72,7 @@ css_internal_server_shutdown (void)
 static void
 css_handle_pipe_shutdown (int sig)
 {
+#if 0
   CSS_CONN_ENTRY *conn;
   CSS_MAP_ENTRY *entry;
 
@@ -90,6 +95,14 @@ css_handle_pipe_shutdown (int sig)
 	  (*css_Previous_sigpipe_handler) (sig);
 	}
     }
+#else
+  /* Avoid an infinite loop by checking if the previous handle is myself */
+  if (css_Previous_sigpipe_handler != NULL
+      && css_Previous_sigpipe_handler != css_handle_pipe_shutdown)
+    {
+      (*css_Previous_sigpipe_handler) (sig);
+    }
+#endif
 }
 
 /*
@@ -151,6 +164,7 @@ css_client_init (const char *server_name, const PRM_NODE_INFO * node_info)
   return error;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * css_send_error_to_server() - send an error buffer to the server
  *   return:
@@ -185,6 +199,7 @@ css_send_error_to_server (char *host, unsigned int eid,
   css_Errno = SERVER_WAS_NOT_FOUND;
   return css_Errno;
 }
+#endif
 
 /*
  * css_send_data_to_server_v () - send a data buffer to the server

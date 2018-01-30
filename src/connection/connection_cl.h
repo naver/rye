@@ -34,7 +34,9 @@ extern void css_shutdown_conn (CSS_CONN_ENTRY * conn);
 extern CSS_CONN_ENTRY *css_make_conn (SOCKET fd);
 extern void css_free_conn (CSS_CONN_ENTRY * conn);
 
+#if 0
 extern CSS_CONN_ENTRY *css_find_exception_conn (void);
+#endif
 
 extern CSS_CONN_ENTRY *css_connect_to_rye_server (const PRM_NODE_INFO * node,
 						  const char *server_name,
@@ -57,7 +59,9 @@ extern bool css_does_master_exist (void);
 extern int css_send_close_request (CSS_CONN_ENTRY * conn);
 
 extern int css_test_for_open_conn (CSS_CONN_ENTRY * conn);
+#if !defined(SERVER_MODE)
 extern CSS_CONN_ENTRY *css_find_conn_from_fd (SOCKET fd);
+#endif
 extern unsigned short css_get_request_id (CSS_CONN_ENTRY * conn);
 
 extern int css_common_connect_cl (const PRM_NODE_INFO * node_info,

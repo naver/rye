@@ -1468,7 +1468,7 @@ fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf,
 #define REPL_DATA_NUM_ARGS 5
 
   int num_items;
-  RP_TRAN_TYPE tran_type;
+  RP_TRAN_TYPE tran_type = -1;	/* TODO - */
   int tmp_int;
   int applier_id, tran_id;
   int arg_idx = 0;

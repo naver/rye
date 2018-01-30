@@ -66,8 +66,10 @@ extern int css_increment_num_conn (BOOT_CLIENT_TYPE client_type);
 extern void css_decrement_num_conn (BOOT_CLIENT_TYPE client_type);
 
 extern void css_free_conn (CSS_CONN_ENTRY * conn);
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern void css_print_conn_entry_info (CSS_CONN_ENTRY * p);
 extern void css_print_conn_list (void);
+#endif
 extern CSS_CONN_ENTRY *css_find_conn_by_tran_index (int tran_index);
 extern int css_get_session_ids_for_active_connections (SESSION_ID ** ids,
 						       int *count);
@@ -102,7 +104,9 @@ extern int css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
 					     CSS_CONN_ENTRY * conn, int rid,
 					     int timeout, int num_buffers,
 					     ...);
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern int css_find_dupliated_conn (int conn_idx);
+#endif
 
 extern int css_common_connect_sr (CSS_CONN_ENTRY * conn,
 				  unsigned short *rid,

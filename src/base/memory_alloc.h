@@ -157,8 +157,10 @@ extern void db_ostk_free (HL_HEAPID heap_id, void *ptr);
 #endif
 
 extern HL_HEAPID db_create_private_heap (void);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void db_clear_private_heap (THREAD_ENTRY * thread_p,
 				   HL_HEAPID heap_id);
+#endif
 extern void db_destroy_private_heap (HL_HEAPID heap_id);
 extern void db_reset_private_heap (THREAD_ENTRY * thread_p);
 extern void *db_private_alloc (void *thrd, size_t size);
@@ -168,7 +170,9 @@ extern void db_private_free (void *thrd, void *ptr);
 extern HL_HEAPID db_create_fixed_heap (int req_size, int recs_per_chunk);
 extern void db_destroy_fixed_heap (HL_HEAPID heap_id);
 extern void *db_fixed_alloc (HL_HEAPID heap_id, size_t size);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void db_fixed_free (HL_HEAPID heap_id, void *ptr);
+#endif
 
 #if defined(SA_MODE)
 typedef struct private_malloc_header_s PRIVATE_MALLOC_HEADER;

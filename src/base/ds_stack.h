@@ -34,7 +34,9 @@ struct _rye_stack
 };
 
 extern RStack *Rye_stack_new (void);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void Rye_stack_free (RStack * stack);
+#endif
 extern void Rye_stack_free_full (RStack * stack, Rye_func free_func);
 extern RSNode *Rye_stack_push (RStack * stack, void *data);
 extern void *Rye_stack_pop (RStack * stack);
