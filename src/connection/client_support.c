@@ -164,6 +164,7 @@ css_client_init (const char *server_name, const PRM_NODE_INFO * node_info)
   return error;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * css_send_error_to_server() - send an error buffer to the server
  *   return:
@@ -198,6 +199,7 @@ css_send_error_to_server (char *host, unsigned int eid,
   css_Errno = SERVER_WAS_NOT_FOUND;
   return css_Errno;
 }
+#endif
 
 /*
  * css_send_data_to_server_v () - send a data buffer to the server

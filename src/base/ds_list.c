@@ -60,6 +60,7 @@ Rye_slist_clear (RSList * list)
   list->count = 0;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * Rye_slist_free -
  *   return:
@@ -81,6 +82,7 @@ Rye_slist_free (RSList * list)
 
   Rye_slist_clear (list);
 }
+#endif
 
 /*
  * Rye_slist_free_full -
