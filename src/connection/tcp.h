@@ -42,7 +42,9 @@ extern void css_get_server_domain_path (char *path_buf, int buf_len,
 
 extern int css_tcp_master_open (SOCKET * sockfd);
 extern bool css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern bool css_tcp_master_datagram (char *pathname, SOCKET * sockfd);
+#endif
 extern SOCKET css_master_accept (SOCKET sockfd);
 extern SOCKET css_recv_fd (SOCKET fd, int *int_val,
 			   struct timeval *recv_time);

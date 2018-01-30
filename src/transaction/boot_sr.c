@@ -2351,6 +2351,8 @@ xboot_initialize_server (THREAD_ENTRY * thread_p,
   assert (client_credential != NULL);
   assert (db_path_info != NULL);
 
+  assert (er_get_msglog_filename () != NULL);
+
 #if defined(SERVER_MODE)
   /* Should not called in SERVER_MODE */
   assert (false);

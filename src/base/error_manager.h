@@ -212,9 +212,11 @@ extern PTR_FNERLOG er_fnerlog (int severity, PTR_FNERLOG new_fnlog);
 extern void er_clear (void);
 extern void er_set (int severity, const char *file_name, const int line_no,
 		    int err_id, int num_args, ...);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void er_set_with_file (int severity, const char *file_name,
 			      const int line_no, int err_id, FILE * fp,
 			      int num_args, ...);
+#endif
 extern void er_set_with_oserror (int severity, const char *file_name,
 				 const int line_no, int err_id, int num_args,
 				 ...);
@@ -232,7 +234,9 @@ extern const char *er_file_line (int *line_no);
 extern const char *er_msg (void);
 extern void er_all (int *err_id, int *severity, int *nlevels,
 		    int *line_no, const char **file_name, const char **msg);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void er_print (void);
+#endif
 
 extern void _er_log_debug (const char *file_name, const int line_no,
 			   const char *fmt, ...);

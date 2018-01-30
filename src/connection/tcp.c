@@ -528,6 +528,7 @@ css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd)
   return true;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * css_tcp_master_datagram() - master side of the datagram interface
  *   return:
@@ -624,6 +625,7 @@ css_tcp_master_datagram (char *path_name, SOCKET * sockfd)
 
   return true;
 }
+#endif
 
 /*
  * css_open_new_socket_from_master() - the message interface to the master
