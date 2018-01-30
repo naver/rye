@@ -55,7 +55,9 @@ struct css_job_entry
 	} while (0)
 
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void css_block_all_active_conn (unsigned short stop_phase);
+#endif
 extern void css_wakeup_all_jobq_waiters (void);
 
 extern void *css_oob_handler_thread (void *arg);
@@ -67,7 +69,9 @@ extern unsigned int css_send_abort_to_client (CSS_CONN_ENTRY * conn,
 extern int css_init (const char *server_name);
 extern void css_set_client_version (THREAD_ENTRY * thread_p,
 				    const RYE_VERSION * version);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void css_end_server_request (CSS_CONN_ENTRY * conn);
+#endif
 extern bool css_is_shutdown_timeout_expired (void);
 
 extern bool css_is_ha_repl_delayed (void);

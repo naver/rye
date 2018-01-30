@@ -1318,6 +1318,7 @@ thread_finalize_entry (THREAD_ENTRY * entry_p)
   return error;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * thread_print_entry_info() -
  *   return: void
@@ -1338,6 +1339,7 @@ thread_print_entry_info (THREAD_ENTRY * thread_p)
 
   fflush (stderr);
 }
+#endif
 
 /*
  * Thread entry related functions
