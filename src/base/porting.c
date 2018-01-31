@@ -1056,10 +1056,12 @@ str_to_uint64 (UINT64 * ret_p, char **end_p, const char *str_p, int base)
       return -1;
     }
 
+#if 0
   if (*end_p == str_p)
     {
       return -1;
     }
+#endif
 
   *ret_p = val;
 
