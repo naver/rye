@@ -39,6 +39,7 @@
 #include "porting.h"
 #include "error_code.h"
 #include "utility.h"
+#include "ds_string_array.h"
 #include "system_parameter.h"
 #include "environment_variable.h"
 #include "tcp.h"
@@ -232,38 +233,7 @@ util_arm_signal_handlers (SIG_HANDLER sigint_handler,
 char **
 util_split_string (const char *str, const char *delim)
 {
-  char *o;
-  char *save = NULL, *v;
-  char **r = NULL;
-  int count = 1;
-
-  if (str == NULL)
-    {
-      return NULL;
-    }
-
-  o = strdup (str);
-  if (o == NULL)
-    {
-      return NULL;
-    }
-
-  for (v = strtok_r (o, delim, &save);
-       v != NULL; v = strtok_r (NULL, delim, &save))
-    {
-      r = (char **) realloc (r, sizeof (char *) * (count + 1));
-      if (r == NULL)
-	{
-	  free (o);
-	  return NULL;
-	}
-      r[count - 1] = strdup (v);
-      r[count] = NULL;
-      count++;
-    }
-
-  free (o);
-  return r;
+  return Rye_split_string (str, delim);
 }
 
 void

@@ -3963,7 +3963,7 @@ logpb_recreate_volume_info (THREAD_ENTRY * thread_p)
 
   /* ****** */
 error:
-  (void) remove (log_Name_volinfo);
+  (void) rye_remove_files (log_Name_volinfo);
   return error_code;
 }
 

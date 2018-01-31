@@ -173,12 +173,12 @@ extern "C"
   extern int os_rename_file (const char *src_path, const char *dest_path);
 
 /* os_send_kill() - send the KILL signal to ourselves */
-#define os_send_kill() os_send_signal(SIGKILL)
+#define os_send_kill(pid) os_send_signal(pid, SIGKILL)
   typedef void (*SIGNAL_HANDLER_FUNCTION) (int sig_no);
   extern SIGNAL_HANDLER_FUNCTION os_set_signal_handler (const int sig_no,
 							SIGNAL_HANDLER_FUNCTION
 							sig_handler);
-  extern void os_send_signal (const int sig_no);
+  extern int os_send_signal (const int pid, const int sig_no);
 
 
 #define THREAD_RET_T void*
@@ -250,8 +250,10 @@ extern INT64 timeval_diff_in_msec (const struct timeval *end_time,
 				   const struct timeval *start_time);
 extern struct timeval timeval_add_msec (const struct timeval *start_time,
 					int add_msec);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern int timeval_to_timespec (struct timespec *to,
 				const struct timeval *from);
+#endif
 extern INT64 timeval_to_msec (const struct timeval *val);
 
 extern struct timespec timespec_add_msec (const struct timespec *start_time,
@@ -289,12 +291,18 @@ extern int rye_init_string (RYE_STRING * buffer, int max_size);
 extern int rye_init_string_with_buffer (RYE_STRING * str, char *buffer,
 					int buffer_length);
 extern void rye_free_string (RYE_STRING * buffer);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void rye_clear_string (RYE_STRING * buffer);
+#endif
 extern int rye_append_string (RYE_STRING * buffer, const char *src);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern char **rye_split_string (RYE_STRING * buffer, const char *delim);
+#endif
 extern int rye_append_format_string (RYE_STRING * buffer,
 				     const char *format, ...);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void rye_free_string_array (char **array);
+#endif
 extern size_t str_append (char *dst, size_t dst_length, const char *src,
 			  size_t max_src_length);
 extern char *get_random_string (char *rand_string, int len);

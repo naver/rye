@@ -3319,11 +3319,23 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
   errno = 0;
   if (num_is_signed)
     {
-      base10 = (UINT64) strtoll (num_p_str, NULL, from_base_int);
+      INT64 tmp_bi;
+
+      if (str_to_int64 (&tmp_bi, NULL, num_p_str, from_base_int) != 0)
+	{
+	  error_status = ER_OBJ_INVALID_ARGUMENTS;
+	  goto exit_on_error;
+	}
+
+      base10 = (UINT64) tmp_bi;	/* TODO - */
     }
   else
     {
-      base10 = (UINT64) strtoull (num_p_str, NULL, from_base_int);
+      if (str_to_uint64 (&base10, NULL, num_p_str, from_base_int) != 0)
+	{
+	  error_status = ER_OBJ_INVALID_ARGUMENTS;
+	  goto exit_on_error;
+	}
     }
 
   /* compute signed part of number */

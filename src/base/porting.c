@@ -587,13 +587,14 @@ os_set_signal_handler (const int sig_no, SIGNAL_HANDLER_FUNCTION sig_handler)
 
 /*
  * os_send_signal() - send the signal to ourselves
- *   return: none
- *   signo(in): signal number to send
+ *   return: int
+ *   pid(in):
+ *   sig_no(in): signal number to send
  */
-void
-os_send_signal (const int sig_no)
+int
+os_send_signal (const int pid, const int sig_no)
 {
-  kill (getpid (), sig_no);
+  return kill (pid, sig_no);
 }
 
 /*
@@ -603,8 +604,8 @@ os_send_signal (const int sig_no)
  *
  */
 INT64
-timeval_diff_in_msec (const struct timeval *end_time,
-		      const struct timeval *start_time)
+timeval_diff_in_msec (const struct timeval * end_time,
+		      const struct timeval * start_time)
 {
   INT64 msec;
   struct timeval end_time_value;
@@ -648,6 +649,7 @@ timeval_add_msec (const struct timeval *start_time, int add_msec)
   return added_time;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * timeval_to_timespec -
  *   return: 0
@@ -666,6 +668,7 @@ timeval_to_timespec (struct timespec *to, const struct timeval *from)
 
   return 0;
 }
+#endif
 
 /*
  * timeval_to_msec -
@@ -1117,6 +1120,7 @@ rye_init_string_with_buffer (RYE_STRING * str, char *buffer,
   return buffer_length;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * rye_clear_string () -
  *
@@ -1131,6 +1135,7 @@ rye_clear_string (RYE_STRING * buffer)
   buffer->buffer[0] = '\0';
   buffer->length = 0;
 }
+#endif
 
 /*
  * rye_free_string () -
@@ -1213,6 +1218,7 @@ rye_append_format_string (RYE_STRING * buffer, const char *format, ...)
   return 0;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * rye_split_string ()-
  *   return: char** is null terminated char* array;
@@ -1274,6 +1280,7 @@ rye_free_string_array (char **array)
     }
   free (array);
 }
+#endif
 
 /*
  * str_append () -

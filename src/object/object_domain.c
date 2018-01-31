@@ -3620,16 +3620,13 @@ tp_atobi (const DB_VALUE * src, DB_BIGINT * num_value,
 	  str[n_digits] = '\0';
 	}
 
-      errno = 0;
-      bigint = strtoll (strp, &p, 10);
-
-      if (errno == ERANGE)
+      if (str_to_int64 (&bigint, &p, strp, 10) == 0)
 	{
-	  *data_stat = DATA_STATUS_TRUNCATED;
+	  *data_stat = DATA_STATUS_OK;
 	}
       else
 	{
-	  *data_stat = DATA_STATUS_OK;
+	  *data_stat = DATA_STATUS_TRUNCATED;
 	}
 
       /* round number if a '5' or greater digit was found after the decimal point */

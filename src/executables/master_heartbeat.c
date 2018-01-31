@@ -437,8 +437,7 @@ hb_add_timeval (struct timeval *tv_p, unsigned int msec)
       return;
     }
 
-  tv_p->tv_sec += (msec / 1000);
-  tv_p->tv_usec += ((msec % 1000) * 1000);
+  *tv_p = timeval_add_msec (tv_p, msec);
 }
 
 /*
@@ -1448,7 +1447,7 @@ hb_cluster_job_failback (HB_JOB_ARG * arg)
 	  assert (proc->pid > 0);
 	  if (proc->pid > 0)
 	    {
-	      kill (proc->pid, SIGKILL);
+	      os_send_kill (proc->pid);
 	    }
 	}
       proc = proc->next;
@@ -2707,7 +2706,8 @@ hb_resource_job_confirm_cleanup_all (HB_JOB_ARG * arg)
 
 	  proc_next = proc->next;
 
-	  if (proc->pid > 0 && (kill (proc->pid, 0) == 0 || errno != ESRCH))
+	  if (proc->pid > 0
+	      && (os_send_signal (proc->pid, 0) == 0 || errno != ESRCH))
 	    {
 	      snprintf (error_string, LINE_MAX, "(pid: %d, args:%s)",
 			proc->pid, proc->args);
@@ -2726,7 +2726,7 @@ hb_resource_job_confirm_cleanup_all (HB_JOB_ARG * arg)
 			  error_string);
 		}
 
-	      kill (proc->pid, SIGKILL);
+	      os_send_kill (proc->pid);
 	    }
 
 	  hb_Resource->num_procs--;
@@ -2747,7 +2747,8 @@ hb_resource_job_confirm_cleanup_all (HB_JOB_ARG * arg)
 
       if (proc->type != HB_PTYPE_SERVER)
 	{
-	  if (proc->pid <= 0 || (kill (proc->pid, 0) != 0 && errno == ESRCH))
+	  if (proc->pid <= 0
+	      || (os_send_signal (proc->pid, 0) != 0 && errno == ESRCH))
 	    {
 	      hb_Resource->num_procs--;
 	      hb_remove_proc (proc);
@@ -2755,12 +2756,13 @@ hb_resource_job_confirm_cleanup_all (HB_JOB_ARG * arg)
 	    }
 	  else
 	    {
-	      kill (proc->pid, SIGTERM);
+	      os_send_signal (proc->pid, SIGTERM);
 	    }
 	}
       else
 	{
-	  if (proc->pid <= 0 || (kill (proc->pid, 0) != 0 && errno == ESRCH))
+	  if (proc->pid <= 0
+	      || (os_send_signal (proc->pid, 0) != 0 && errno == ESRCH))
 	    {
 	      hb_Resource->num_procs--;
 	      hb_remove_proc (proc);
@@ -2911,7 +2913,8 @@ hb_resource_job_proc_start (HB_JOB_ARG * arg)
   if (proc->being_shutdown)
     {
       assert (proc_arg->pid > 0);
-      if (proc_arg->pid <= 0 || (kill (proc_arg->pid, 0) && errno == ESRCH))
+      if (proc_arg->pid <= 0
+	  || (os_send_signal (proc_arg->pid, 0) && errno == ESRCH))
 	{
 	  proc->being_shutdown = false;
 	}
@@ -3054,9 +3057,10 @@ hb_resource_demote_start_shutdown_server_proc (void)
 	{
 	  /* terminate a hang server process immediately */
 	  assert (proc->pid > 0);
-	  if (proc->pid > 0 && (kill (proc->pid, 0) == 0 || errno != ESRCH))
+	  if (proc->pid > 0
+	      && (os_send_signal (proc->pid, 0) == 0 || errno != ESRCH))
 	    {
-	      kill (proc->pid, SIGKILL);
+	      os_send_kill (proc->pid);
 	    }
 	  continue;
 	}
@@ -3127,7 +3131,8 @@ hb_resource_demote_kill_server_proc (void)
 	}
 
       assert (proc->pid > 0);
-      if (proc->pid > 0 && (kill (proc->pid, 0) == 0 || errno != ESRCH))
+      if (proc->pid > 0
+	  && (os_send_signal (proc->pid, 0) == 0 || errno != ESRCH))
 	{
 	  snprintf (error_string, LINE_MAX, "(pid: %d, args:%s)",
 		    proc->pid, proc->args);
@@ -3136,7 +3141,7 @@ hb_resource_demote_kill_server_proc (void)
 		  "No response to shutdown request. Process killed",
 		  error_string);
 
-	  kill (proc->pid, SIGKILL);
+	  os_send_kill (proc->pid);
 	}
     }
 }
@@ -3362,7 +3367,7 @@ hb_resource_job_confirm_start (HB_JOB_ARG * arg)
     }
 
   assert (proc->pid > 0);
-  rv = kill (proc->pid, 0);
+  rv = os_send_signal (proc->pid, 0);
   if (rv != 0)
     {
       pthread_mutex_unlock (&hb_Resource->lock);
@@ -4037,7 +4042,8 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 
       /* restarted by heartbeat */
       proc_state = HB_PSTATE_NOT_REGISTERED;
-      if (proc->pid != (int) proc_reg->pid || kill (proc->pid, 0) != 0)
+      if (proc->pid != (int) proc_reg->pid
+	  || os_send_signal (proc->pid, 0) != 0)
 	{
 	  error = ER_FAILED;
 	  GOTO_EXIT_ON_ERROR;
@@ -4174,7 +4180,8 @@ hb_resource_sync_server_state (HB_PROC_ENTRY * proc, bool force)
   if (sig)
     {
       assert (proc->pid > 0);
-      if (proc->pid > 0 && (kill (proc->pid, 0) == 0 || errno != ESRCH))
+      if (proc->pid > 0
+	  && (os_send_signal (proc->pid, 0) == 0 || errno != ESRCH))
 	{
 	  snprintf (error_string, sizeof (error_string),
 		    "process does not respond for a long time. kill pid %d signal %d.",
@@ -4182,7 +4189,7 @@ hb_resource_sync_server_state (HB_PROC_ENTRY * proc, bool force)
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 		  ER_HB_PROCESS_EVENT, 2, "Process failure detected",
 		  error_string);
-	  kill (proc->pid, sig);
+	  os_send_signal (proc->pid, sig);
 	}
       return ER_FAILED;
     }
@@ -5417,7 +5424,7 @@ hb_resource_cleanup (void)
     {
       if (proc->conn && proc->pid > 0)
 	{
-	  kill (proc->pid, SIGKILL);
+	  os_send_kill (proc->pid);
 	}
     }
 
@@ -6151,7 +6158,7 @@ hb_kill_process (pid_t * pids, int count)
 	{
 	  if (pids[j] > 0)
 	    {
-	      error = kill (pids[j], signum);
+	      error = os_send_signal (pids[j], signum);
 	      if (error != 0 && errno == ESRCH)
 		{
 		  pids[j] = 0;
@@ -6174,7 +6181,7 @@ hb_kill_process (pid_t * pids, int count)
     {
       if (pids[j] > 0)
 	{
-	  kill (pids[j], SIGKILL);
+	  os_send_kill (pids[j]);
 	}
     }
 
@@ -6761,7 +6768,7 @@ hb_repl_stop (void)
 	      assert (proc->pid > 0);
 
 	      if (proc->pid > 0
-		  && (kill (proc->pid, 0) == 0 || errno != ESRCH))
+		  && (os_send_signal (proc->pid, 0) == 0 || errno != ESRCH))
 		{
 		  snprintf (error_string, LINE_MAX, "(pid: %d, args:%s)",
 			    proc->pid, proc->args);
@@ -6770,7 +6777,7 @@ hb_repl_stop (void)
 			  "Immediate shutdown requested. Process killed",
 			  error_string);
 
-		  kill (proc->pid, sig);
+		  os_send_signal (proc->pid, sig);
 		  found_ha_proc = true;
 		}
 	      else
@@ -7238,8 +7245,8 @@ hb_get_deactivating_server_count (void)
 	{
 	  if (hb_Deactivate_info.server_pid_list[i] > 0)
 	    {
-	      if (kill (hb_Deactivate_info.server_pid_list[i], 0) != 0
-		  && errno == ESRCH)
+	      if (os_send_signal (hb_Deactivate_info.server_pid_list[i], 0) !=
+		  0 && errno == ESRCH)
 		{
 		  /* server was terminated */
 		  hb_Deactivate_info.server_pid_list[i] = 0;
