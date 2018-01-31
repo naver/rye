@@ -976,6 +976,11 @@ str_to_uint32 (unsigned int *ret_p, char **end_p, const char *str_p, int base)
   *ret_p = 0;
   *end_p = NULL;
 
+  if (*str_p == '\0')
+    {
+      return 0;			/* nop */
+    }
+
   errno = 0;
   val = strtoul (str_p, end_p, base);
 
@@ -985,6 +990,16 @@ str_to_uint32 (unsigned int *ret_p, char **end_p, const char *str_p, int base)
     }
 
   if (*end_p == str_p)
+    {
+      return -1;
+    }
+
+
+  if (**end_p == '\0' || **end_p == '.' || isspace ((int) **end_p))
+    {
+      ;				/* OK - go ahead */
+    }
+  else
     {
       return -1;
     }
@@ -1015,6 +1030,11 @@ str_to_int64 (INT64 * ret_p, char **end_p, const char *str_p, int base)
   *ret_p = 0;
   *end_p = NULL;
 
+  if (*str_p == '\0')
+    {
+      return 0;			/* nop */
+    }
+
   errno = 0;
   val = strtoll (str_p, end_p, base);
 
@@ -1025,6 +1045,15 @@ str_to_int64 (INT64 * ret_p, char **end_p, const char *str_p, int base)
     }
 
   if (*end_p == str_p)
+    {
+      return -1;
+    }
+
+  if (**end_p == '\0' || **end_p == '.' || isspace ((int) **end_p))
+    {
+      ;				/* OK - go ahead */
+    }
+  else
     {
       return -1;
     }
