@@ -3627,10 +3627,10 @@ tp_atobi (const DB_VALUE * src, DB_BIGINT * num_value,
 	}
       else
 	{
-	  *data_stat = DATA_STATUS_TRUNCATED;
+	  *data_stat = DATA_STATUS_NOT_CONSUMED;
 	  if (errno == ERANGE)
 	    {
-	      *data_stat = DATA_STATUS_NOT_CONSUMED;
+	      *data_stat = DATA_STATUS_TRUNCATED;
 	    }
 	}
 
@@ -4883,6 +4883,12 @@ tp_value_coerce_internal (const DB_VALUE * src, DB_VALUE * dest,
 		status = DOMAIN_OVERFLOW;
 		break;
 	      }
+	    else if (data_stat != DATA_STATUS_OK)
+	      {
+		status = DOMAIN_INCOMPATIBLE;	/* conversion error */
+		break;
+	      }
+
 	    db_make_bigint (target, num_value);
 	    break;
 	  }
