@@ -3196,6 +3196,7 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
   /* auxiliary variables */
   UINT64 base10 = 0;
   int from_base_int = 0, to_base_int = 0, i = 0;
+  char *end_p;
 
   assert (num != result);
   assert (from_base != result);
@@ -3321,7 +3322,7 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
     {
       INT64 tmp_bi;
 
-      if (str_to_int64 (&tmp_bi, NULL, num_p_str, from_base_int) != 0)
+      if (str_to_int64 (&tmp_bi, &end_p, num_p_str, from_base_int) != 0)
 	{
 	  error_status = ER_OBJ_INVALID_ARGUMENTS;
 	  goto exit_on_error;
@@ -3331,7 +3332,7 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
     }
   else
     {
-      if (str_to_uint64 (&base10, NULL, num_p_str, from_base_int) != 0)
+      if (str_to_uint64 (&base10, &end_p, num_p_str, from_base_int) != 0)
 	{
 	  error_status = ER_OBJ_INVALID_ARGUMENTS;
 	  goto exit_on_error;

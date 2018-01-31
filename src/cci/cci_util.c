@@ -127,8 +127,11 @@ ut_str_to_bigint (const char *str, INT64 * value)
 
   if (str_to_int64 (&bi_val, &end_p, str, 10) == 0)
     {
-      *value = bi_val;
-      return 0;
+      if (*end_p == '\0' || *end_p == '.' || isspace ((int) *end_p))
+ 	{
+ 	  *value = bi_val;		
+ 	  return 0;		
+ 	}
     }
 
   return (CCI_ER_TYPE_CONVERSION);
