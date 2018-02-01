@@ -204,7 +204,7 @@ client_capabilities (void)
   int capabilities = 0;
 
   capabilities |= NET_CAP_INTERRUPT_ENABLED;
-  if (db_Disable_modifications > 0)
+  if (db_is_modification_disabled () == true)
     {
       capabilities |= NET_CAP_UPDATE_DISABLED;
     }

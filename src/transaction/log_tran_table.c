@@ -966,21 +966,37 @@ logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
   return tran_index;
 }
 
-int
+/*
+ * logtb_is_tran_modification_disabled -
+ *   return:
+ */
+bool
 logtb_is_tran_modification_disabled (THREAD_ENTRY * thread_p)
 {
   LOG_TDES *tdes;
   int tran_index;
+  bool is_allowed_modification = true;
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = LOG_FIND_TDES (tran_index);
 
   if (tdes == NULL)
     {
-      return db_Disable_modifications;
+      is_allowed_modification = db_is_Allowed_Modification;
+    }
+  else
+    {
+      is_allowed_modification = tdes->is_allowed_modification;
     }
 
-  return tdes->disable_modifications;
+  if (is_allowed_modification == true)
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
 }
 
 /*
@@ -1463,7 +1479,7 @@ logtb_clear_tdes (THREAD_ENTRY * thread_p, LOG_TDES * tdes)
   tdes->num_exec_queries = 0;
   tdes->suppress_replication = 0;
 
-  tdes->disable_modifications = 0;
+  tdes->is_allowed_modification = true;
 
   tdes->tran_group_id = NULL_GROUPID;	/* init */
 
@@ -1562,7 +1578,7 @@ logtb_initialize_tdes (LOG_TDES * tdes, int tran_index)
   tdes->tran_start_time = 0;
   XASL_ID_SET_NULL (&tdes->xasl_id);
   tdes->waiting_for_res = NULL;
-  tdes->disable_modifications = db_Disable_modifications;
+  tdes->is_allowed_modification = db_is_Allowed_Modification;
   tdes->tran_abort_reason = TRAN_NORMAL;
   tdes->num_exec_queries = 0;
 
@@ -1600,11 +1616,11 @@ logtb_start_transaction_if_needed (THREAD_ENTRY * thread_p)
       trid = logtb_get_new_tran_id (thread_p, tdes);
       if (BOOT_WRITE_ON_STANDY_CLIENT_TYPE (tdes->client.client_type))
 	{
-	  tdes->disable_modifications = 0;
+	  tdes->is_allowed_modification = true;
 	}
       else
 	{
-	  tdes->disable_modifications = db_Disable_modifications;
+	  tdes->is_allowed_modification = db_is_Allowed_Modification;
 	}
     }
   else
@@ -1926,11 +1942,7 @@ logtb_find_current_ha_status (UNUSED_ARG THREAD_ENTRY * thread_p)
   const char *status = NULL;
 
 #if defined(SERVER_MODE)
-//  csect_enter (thread_p, CSECT_HA_SERVER_STATE, INF_WAIT);
-
   status = HA_STATE_NAME (svr_shm_get_server_state ());
-
-//  csect_exit (CSECT_HA_SERVER_STATE);
 #else
   status = HA_STATE_NAME (HA_STATE_NA);
 #endif
@@ -3208,10 +3220,10 @@ logtb_has_updated (THREAD_ENTRY * thread_p)
 void
 logtb_disable_update (UNUSED_ARG THREAD_ENTRY * thread_p)
 {
-  db_Disable_modifications = 1;
+  db_is_Allowed_Modification = false;
   er_log_debug (ARG_FILE_LINE,
-		"logtb_disable_update: db_Disable_modifications = %d\n",
-		db_Disable_modifications);
+		"logtb_disable_update: db_is_Allowed_Modification = %d\n",
+		db_is_Allowed_Modification);
 }
 
 /*
@@ -3221,10 +3233,10 @@ logtb_disable_update (UNUSED_ARG THREAD_ENTRY * thread_p)
 void
 logtb_enable_update (UNUSED_ARG THREAD_ENTRY * thread_p)
 {
-  db_Disable_modifications = 0;
+  db_is_Allowed_Modification = true;
   er_log_debug (ARG_FILE_LINE,
-		"logtb_enable_update: db_Disable_modifications = %d\n",
-		db_Disable_modifications);
+		"logtb_enable_update: db_is_Allowed_Modification = %d\n",
+		db_is_Allowed_Modification);
 }
 
 /*

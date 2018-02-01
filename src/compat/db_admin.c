@@ -749,7 +749,8 @@ db_shutdown (void)
   db_Connect_status = DB_CONNECTION_STATUS_NOT_CONNECTED;
   db_Program_name[0] = '\0';
   (void) os_set_signal_handler (SIGFPE, prev_sigfpe_handler);
-  db_Disable_modifications = 0;
+
+  db_enable_modification ();
 
   db_free_execution_plan ();
 
@@ -772,31 +773,46 @@ db_ping_server (UNUSED_ARG int client_val, UNUSED_ARG int *server_val)
  * db_disable_modification - Disable database modification operation
  *   return: error code
  *
- * NOTE: This function will change 'db_Disable_modifications'.
+ * NOTE: This function will change 'db_is_Allowed_Modification'.
  */
 int
 db_disable_modification (void)
 {
-  /*CHECK_CONNECT_ERROR (); */
-  db_Disable_modifications++;
+  db_is_Allowed_Modification = false;
+
   return NO_ERROR;
 }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * db_enable_modification - Enable database modification operation
  *   return: error code
  *
- * NOTE: This function will change 'db_Disable_modifications'.
+ * NOTE: This function will change 'db_is_Allowed_Modification'.
  */
 int
 db_enable_modification (void)
 {
-  /*CHECK_CONNECT_ERROR (); */
-  db_Disable_modifications--;
+  db_is_Allowed_Modification = true;
+
   return NO_ERROR;
 }
-#endif
+
+/*
+ * db_is_modification_disabled -
+ *   return:
+ */
+bool
+db_is_modification_disabled (void)
+{
+  if (db_is_Allowed_Modification == true)
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+}
 
 /*
  * db_end_session - end current session

@@ -3415,8 +3415,6 @@ hb_resource_job_confirm_start (HB_JOB_ARG * arg)
 
   pthread_mutex_unlock (&hb_Resource->lock);
 
-  shm_master_update_server_state (proc);
-
   hb_help_sprint_processes_info (hb_info_str, HB_INFO_STR_MAX);
   er_log_debug (ARG_FILE_LINE, "%s", hb_info_str);
 
@@ -4111,8 +4109,6 @@ hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
 
   pthread_mutex_unlock (&hb_Resource->lock);
 
-  shm_master_update_server_state (proc);
-
   if (job_arg != NULL)
     {
       error = hb_resource_job_queue (HB_RJOB_PROC_START, job_arg,
@@ -4279,8 +4275,6 @@ hb_resource_receive_changemode (CSS_CONN_ENTRY * conn, int server_state)
 
   pthread_mutex_unlock (&hb_Resource->lock);
   pthread_mutex_unlock (&hb_Cluster->lock);
-
-  shm_master_update_server_state (proc);
 
   return;
 }

@@ -229,7 +229,8 @@ server_capabilities (void)
       capabilities |= NET_CAP_INTERRUPT_ENABLED;
     }
 
-  if (db_Disable_modifications > 0 || server_state == HA_STATE_TO_BE_SLAVE)
+  if (db_is_Allowed_Modification == false
+      || server_state == HA_STATE_TO_BE_SLAVE)
     {
       capabilities |= NET_CAP_UPDATE_DISABLED;
     }

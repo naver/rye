@@ -520,8 +520,9 @@ log_does_allow_replication (void)
 
 #elif defined(SERVER_MODE)	/* CS_MODE */
   static int ha_mode = -1;
-  HA_STATE server_state;
+  THREAD_ENTRY *thread_p = NULL;
   int client_type;
+  bool mod_disabled = false;
 
   /* check iff the first time */
   if (ha_mode < 0)
@@ -537,13 +538,12 @@ log_does_allow_replication (void)
       return false;
     }
 
-  server_state = svr_shm_get_server_state ();
-  if (server_state != HA_STATE_MASTER && server_state != HA_STATE_TO_BE_SLAVE)
+  thread_p = thread_get_thread_entry_info ();
+  mod_disabled = logtb_is_tran_modification_disabled (thread_p);
+  if (mod_disabled == true)
     {
       return false;
     }
-
-  assert (db_Disable_modifications == 0);
 
   return true;
 #else /* SERVER_MODE */

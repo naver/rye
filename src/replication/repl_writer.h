@@ -114,6 +114,7 @@ extern int cirpwr_write_log_pages (void);
 extern void *log_copier_main (void *arg);
 extern void *log_writer_main (void *arg);
 
+extern bool rpwr_recv_queue_is_empty (void);
 extern CIRP_AGENT_STATUS cirpwr_get_copier_status (CIRP_WRITER_INFO *
 						   writer_info);
 extern CIRP_AGENT_STATUS cirpwr_get_writer_status (CIRP_WRITER_INFO *
