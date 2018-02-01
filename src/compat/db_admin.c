@@ -770,51 +770,6 @@ db_ping_server (UNUSED_ARG int client_val, UNUSED_ARG int *server_val)
 }
 
 /*
- * db_disable_modification - Disable database modification operation
- *   return: error code
- *
- * NOTE: This function will change 'db_is_Allowed_Modification'.
- */
-int
-db_disable_modification (void)
-{
-  db_is_Allowed_Modification = false;
-
-  return NO_ERROR;
-}
-
-/*
- * db_enable_modification - Enable database modification operation
- *   return: error code
- *
- * NOTE: This function will change 'db_is_Allowed_Modification'.
- */
-int
-db_enable_modification (void)
-{
-  db_is_Allowed_Modification = true;
-
-  return NO_ERROR;
-}
-
-/*
- * db_is_modification_disabled -
- *   return:
- */
-bool
-db_is_modification_disabled (void)
-{
-  if (db_is_Allowed_Modification == true)
-    {
-      return false;
-    }
-  else
-    {
-      return true;
-    }
-}
-
-/*
  * db_end_session - end current session
  *   return: error code
  *

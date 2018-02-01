@@ -519,17 +519,8 @@ log_does_allow_replication (void)
   return true;
 
 #elif defined(SERVER_MODE)	/* CS_MODE */
-  static int ha_mode = -1;
   THREAD_ENTRY *thread_p = NULL;
   int client_type;
-  bool mod_disabled = false;
-
-  /* check iff the first time */
-  if (ha_mode < 0)
-    {
-      ha_mode = prm_get_integer_value (PRM_ID_HA_MODE);
-      assert (ha_mode != HA_MODE_OFF);
-    }
 
   client_type = logtb_find_current_client_type (NULL);
   if (client_type == BOOT_CLIENT_LOG_COPIER
@@ -539,13 +530,8 @@ log_does_allow_replication (void)
     }
 
   thread_p = thread_get_thread_entry_info ();
-  mod_disabled = logtb_is_tran_modification_disabled (thread_p);
-  if (mod_disabled == true)
-    {
-      return false;
-    }
 
-  return true;
+  return logtb_tran_is_allowed_modification (thread_p);
 #else /* SERVER_MODE */
 
   return false;

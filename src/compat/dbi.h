@@ -70,9 +70,6 @@ extern int db_find_or_create_session (const char *db_user,
 				      const char *program_name);
 extern int db_shutdown (void);
 extern int db_ping_server (int client_val, int *server_val);
-extern int db_disable_modification (void);
-extern int db_enable_modification (void);
-extern bool db_is_modification_disabled (void);
 extern int db_commit_transaction (void);
 extern int db_abort_transaction (void);
 extern int db_commit_is_needed (void);

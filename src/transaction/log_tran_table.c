@@ -967,11 +967,11 @@ logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
 }
 
 /*
- * logtb_is_tran_modification_disabled -
+ * logtb_tran_is_allowed_modification -
  *   return:
  */
 bool
-logtb_is_tran_modification_disabled (THREAD_ENTRY * thread_p)
+logtb_tran_is_allowed_modification (THREAD_ENTRY * thread_p)
 {
   LOG_TDES *tdes;
   int tran_index;
@@ -982,21 +982,14 @@ logtb_is_tran_modification_disabled (THREAD_ENTRY * thread_p)
 
   if (tdes == NULL)
     {
-      is_allowed_modification = db_is_Allowed_Modification;
+      is_allowed_modification = db_is_allowed_modification ();
     }
   else
     {
       is_allowed_modification = tdes->is_allowed_modification;
     }
 
-  if (is_allowed_modification == true)
-    {
-      return false;
-    }
-  else
-    {
-      return true;
-    }
+  return is_allowed_modification;
 }
 
 /*
@@ -1578,7 +1571,7 @@ logtb_initialize_tdes (LOG_TDES * tdes, int tran_index)
   tdes->tran_start_time = 0;
   XASL_ID_SET_NULL (&tdes->xasl_id);
   tdes->waiting_for_res = NULL;
-  tdes->is_allowed_modification = db_is_Allowed_Modification;
+  tdes->is_allowed_modification = db_is_allowed_modification ();
   tdes->tran_abort_reason = TRAN_NORMAL;
   tdes->num_exec_queries = 0;
 
@@ -1620,7 +1613,7 @@ logtb_start_transaction_if_needed (THREAD_ENTRY * thread_p)
 	}
       else
 	{
-	  tdes->is_allowed_modification = db_is_Allowed_Modification;
+	  tdes->is_allowed_modification = db_is_allowed_modification ();
 	}
     }
   else
@@ -3211,32 +3204,6 @@ logtb_has_updated (THREAD_ENTRY * thread_p)
     {
       return false;
     }
-}
-
-/*
- * logtb_disable_update -
- *   return: none
- */
-void
-logtb_disable_update (UNUSED_ARG THREAD_ENTRY * thread_p)
-{
-  db_is_Allowed_Modification = false;
-  er_log_debug (ARG_FILE_LINE,
-		"logtb_disable_update: db_is_Allowed_Modification = %d\n",
-		db_is_Allowed_Modification);
-}
-
-/*
- * logtb_enable_update -
- *   return: none
- */
-void
-logtb_enable_update (UNUSED_ARG THREAD_ENTRY * thread_p)
-{
-  db_is_Allowed_Modification = true;
-  er_log_debug (ARG_FILE_LINE,
-		"logtb_enable_update: db_is_Allowed_Modification = %d\n",
-		db_is_Allowed_Modification);
 }
 
 /*

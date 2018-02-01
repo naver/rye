@@ -239,11 +239,6 @@
 #define LOG_CHECK_RBL_MIGRATOR(thread_p) (0)
 #endif /* !SERVER_MODE */
 
-#if !defined(_DB_IS_ALLOWED_MODIFICATION_)
-#define _DB_IS_ALLOWED_MODIFICATION_
-extern bool db_is_Allowed_Modification;
-#endif /* _DB_IS_ALLOWED_MODIFICATION_ */
-
 #ifndef CHECK_MODIFICATION_NO_RETURN
 #if defined (SA_MODE)
 #define CHECK_MODIFICATION_NO_RETURN(thread_p, error) \
@@ -252,13 +247,9 @@ extern bool db_is_Allowed_Modification;
 #define CHECK_MODIFICATION_NO_RETURN(thread_p, error)                             \
   do                                                                              \
     {                                                                             \
-      bool mod_disabled;                                                          \
-      mod_disabled = logtb_is_tran_modification_disabled (thread_p);              \
-      if (mod_disabled == true)                                                   \
+      if (logtb_tran_is_allowed_modification (thread_p) == false)                 \
         {                                                                         \
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DB_NO_MODIFICATIONS, 0);   \
-  	  er_log_debug (ARG_FILE_LINE, "tdes->disable_modification = %d\n",       \
-  		        mod_disabled);                                            \
 	  error = ER_DB_NO_MODIFICATIONS;                                         \
         }                                                                         \
       else                                                                        \
@@ -1637,8 +1628,6 @@ extern bool logtb_is_current_system_tran (THREAD_ENTRY * thread_p);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern bool logtb_istran_finished (THREAD_ENTRY * thread_p, TRANID trid);
 #endif
-extern void logtb_disable_update (THREAD_ENTRY * thread_p);
-extern void logtb_enable_update (THREAD_ENTRY * thread_p);
 extern void logtb_set_to_system_tran_index (THREAD_ENTRY * thread_p);
 extern void logtb_set_current_tran_index (THREAD_ENTRY * thread_p,
 					  int tran_index);
@@ -1651,7 +1640,7 @@ extern int logtb_find_smallest_begin_lsa_without_ddl_tran (THREAD_ENTRY *
 							   LOG_LSA * min_lsa,
 							   bool *
 							   exists_ddl_tran);
-extern bool logtb_is_tran_modification_disabled (THREAD_ENTRY * thread_p);
+extern bool logtb_tran_is_allowed_modification (THREAD_ENTRY * thread_p);
 extern void logtb_get_commit_lsa (LOG_LSA * commit_lsa_p);
 extern void logtb_set_commit_lsa (LOG_LSA * lsa);
 extern int logtb_commit_lsa (THREAD_ENTRY * thread_p);

@@ -55,11 +55,6 @@ extern SESSION_ID db_Session_id;
 
 extern int db_Row_count;
 
-#if !defined(_DB_IS_ALLOWED_MODIFICATION_)
-#define _DB_IS_ALLOWED_MODIFICATION_
-extern bool db_is_Allowed_Modification;
-#endif /* _DB_IS_ALLOWED_MODIFICATION_ */
-
 #if !defined(SERVER_MODE)
 extern int db_Client_type;
 
@@ -124,7 +119,7 @@ extern char db_Program_name[];
 
 /* CHECK MODIFICATION */
 #define CHECK_MODIFICATION_AND_RETURN_EXPR(return_expr_)                     \
-  if (db_is_Allowed_Modification == false) {                                 \
+  if (db_is_allowed_modification () == false) {                              \
     er_set(ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DB_NO_MODIFICATIONS, 0);     \
     return (return_expr_);                                                   \
   }

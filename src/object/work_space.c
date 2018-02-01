@@ -174,7 +174,7 @@ static void ws_insert_mop_on_hash_link_with_position (MOP mop, int slot,
 void
 ws_abort_transaction (void)
 {
-  if (db_is_Allowed_Modification == false)
+  if (db_is_allowed_modification () == false)
     {
       if (er_errid () != ER_OUT_OF_VIRTUAL_MEMORY)
 	{
