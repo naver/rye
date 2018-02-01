@@ -946,10 +946,12 @@ str_to_int32 (int *ret_p, char **end_p, const char *str_p, int base)
       return -1;
     }
 
+#if 0
   if (*end_p == str_p)
     {
       return -1;
     }
+#endif
 
   /* Long is 8 bytes and int is 4 bytes in Linux 64bit, so the
    * additional check of integer range is necessary.
@@ -984,10 +986,12 @@ str_to_uint32 (unsigned int *ret_p, char **end_p, const char *str_p, int base)
       return -1;
     }
 
+#if 0
   if (*end_p == str_p)
     {
       return -1;
     }
+#endif
 
   /* Long is 8 bytes and int is 4 bytes in Linux 64bit, so the
    * additional check of integer range is necessary.
