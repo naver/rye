@@ -254,10 +254,20 @@ class ShardInit extends ShardCommand
     private void createShardMgmt(NodeAddress host, String[] localDbname) throws SQLException
     {
 	String dbnameList = concatStrArr(localDbname, ",", false);
+	String numMigrator = RyeConfValue.DEFAULT_VALUE_SHARD_MGMT_NUM_MIGRATOR;
+
+	for (RyeConfValue ryeConf : changeRyeConf) {
+	    if (ryeConf.getKeyName().equals(RyeConfValue.KEY_SHARD_MGMT_NUM_MIGRATOR)) {
+		numMigrator = ryeConf.getValue();
+	    }
+	}
 
 	LocalMgmt localMgmt = new LocalMgmt(host.toJciConnectionInfo());
 
-	changeRyeConf(localMgmt, new RyeBrokerShardmgmtConfValue("shard_mgmt_metadb", dbnameList));
-	changeRyeConf(localMgmt, new RyeBrokerShardmgmtConfValue("shard_mgmt_num_migrator", "10"));
+	changeRyeConf(localMgmt, new RyeBrokerShardmgmtConfValue(RyeConfValue.KEY_SHARD_MGMT_METADB, dbnameList),
+			RyeConfValue.CHANGE_CONF_ENABLE_ALL);
+	changeRyeConf(localMgmt,
+			new RyeBrokerShardmgmtConfValue(RyeConfValue.KEY_SHARD_MGMT_NUM_MIGRATOR, numMigrator),
+			RyeConfValue.CHANGE_CONF_ENABLE_ALL);
     }
 }

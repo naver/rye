@@ -328,35 +328,7 @@ log_rv_undo_record (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
 	      return;
 	    }
 
-#if defined(RYE_DEBUG)
-	  {
-	    LOG_LSA check_tail_lsa;
-
-	    LSA_COPY (&check_tail_lsa, &tdes->last_lsa);
-	    (void) (*RV_fun[rcvindex].undofun) (rcv);
-
-	    /*
-	     * Make sure that a CLR was logged.
-	     *
-	     * If we do not log anything and the logical undo_nxlsa is not the
-	     * tail, give a warning.. unless it is a temporary file deletion.
-	     *
-	     * WARNING: the if condition is different from the one of normal
-	     *          rollback.
-	     */
-
-	    if (LSA_EQ (&check_tail_lsa, &tdes->last_lsa)
-		&& !LSA_EQ (rcv_undo_lsa, &tdes->last_lsa)
-		&& rcvindex != RVFL_CREATE_TMPFILE)
-	      {
-		er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			ER_LOG_MISSING_COMPENSATING_RECORD, 1,
-			rv_rcvindex_string (rcvindex));
-	      }
-	  }
-#else /* RYE_DEBUG */
 	  (void) (*RV_fun[rcvindex].undofun) (thread_p, rcv);
-#endif /* RYE_DEBUG */
 	  log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
 	  tdes->state = save_state;
 	  /*
@@ -1860,12 +1832,6 @@ log_rv_analysis_record (THREAD_ENTRY * thread_p, LOG_RECTYPE log_type,
     case LOG_SMALLER_LOGREC_TYPE:
     case LOG_LARGER_LOGREC_TYPE:
     default:
-#if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "log_recovery_analysis: Unknown record"
-		    " type = %d (%s) ... May be a system error\n",
-		    log_rtype, log_to_string (log_rtype));
-#endif /* RYE_DEBUG */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_PAGE_CORRUPTED,
 	      1, log_lsa->pageid);
       break;
@@ -2466,11 +2432,11 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		      break;
 		    }
 
-                  if (RCV_IS_NEWPG_LOG (undoredo->data.rcvindex))
-                    {
+		  if (RCV_IS_NEWPG_LOG (undoredo->data.rcvindex))
+		    {
 		      assert (ptype != PAGE_UNKNOWN);
-                      (void) pgbuf_set_page_ptype (thread_p, rcv.pgptr, ptype); /* reset */
-                    }
+		      (void) pgbuf_set_page_ptype (thread_p, rcv.pgptr, ptype);	/* reset */
+		    }
 		}
 
 	      if (rcv.pgptr != NULL)
@@ -2658,11 +2624,11 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 		      break;
 		    }
 
-                  if (RCV_IS_NEWPG_LOG (redo->data.rcvindex))
-                    {
+		  if (RCV_IS_NEWPG_LOG (redo->data.rcvindex))
+		    {
 		      assert (ptype != PAGE_UNKNOWN);
-                      (void) pgbuf_set_page_ptype (thread_p, rcv.pgptr, ptype); /* reset */
-                    }
+		      (void) pgbuf_set_page_ptype (thread_p, rcv.pgptr, ptype);	/* reset */
+		    }
 
 		}
 
@@ -3036,11 +3002,6 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 	    case LOG_SMALLER_LOGREC_TYPE:
 	    case LOG_LARGER_LOGREC_TYPE:
 	    default:
-#if defined(RYE_DEBUG)
-	      er_log_debug (ARG_FILE_LINE, "log_recovery_redo: Unknown record"
-			    " type = %d (%s)... May be a system error",
-			    log_rec->type, log_to_string (log_rec->type));
-#endif /* RYE_DEBUG */
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_PAGE_CORRUPTED,
 		      1, log_lsa.pageid);
 	      if (LSA_EQ (&lsa, &log_lsa))
@@ -3544,15 +3505,6 @@ log_recovery_undo (THREAD_ENTRY * thread_p)
 	    case LOG_DUMMY_FILLPAGE_FORARCHIVE:	/* for backward compatibility */
 	    case LOG_END_OF_LOG:
 	      /* This looks like a system error in the analysis phase */
-#if defined(RYE_DEBUG)
-	      er_log_debug (ARG_FILE_LINE,
-			    "log_recovery_undo: SYSTEM ERROR for"
-			    " log located at %lld|%d,"
-			    " Bad log_rectype = %d\n (%s).\n",
-			    (long long int) log_lsa.pageid,
-			    log_lsa.offset, log_rec->type,
-			    log_to_string (log_rec->type));
-#endif /* RYE_DEBUG */
 	      /* Remove the transaction from the recovery process */
 	      (void) log_complete (thread_p, tdes, LOG_ABORT,
 				   LOG_DONT_NEED_NEWTRID);
@@ -3563,12 +3515,6 @@ log_recovery_undo (THREAD_ENTRY * thread_p)
 	    case LOG_SMALLER_LOGREC_TYPE:
 	    case LOG_LARGER_LOGREC_TYPE:
 	    default:
-#if defined(RYE_DEBUG)
-	      er_log_debug (ARG_FILE_LINE,
-			    "log_recovery_undo: Unknown record"
-			    " type = %d (%s)\n ... May be a system error",
-			    log_rec->type, log_to_string (log_rec->type));
-#endif /* RYE_DEBUG */
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 		      ER_LOG_PAGE_CORRUPTED, 1, log_lsa.pageid);
 

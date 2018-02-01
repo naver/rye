@@ -72,8 +72,10 @@ ut_timeval_diff (struct timeval *start, struct timeval *end, int *res_sec,
 {
   int sec, msec;
 
-  assert (start != NULL && end != NULL && res_sec != NULL
-	  && res_msec != NULL);
+  assert (start != NULL);
+  assert (end != NULL);
+  assert (res_sec != NULL);
+  assert (res_msec != NULL);
 
   sec = end->tv_sec - start->tv_sec;
   msec = (end->tv_usec / 1000) - (start->tv_usec / 1000);
@@ -93,7 +95,9 @@ ut_check_timeout (struct timeval *start_time, struct timeval *end_time,
   struct timeval cur_time;
   int diff_msec;
 
-  assert (start_time != NULL && res_sec != NULL && res_msec != NULL);
+  assert (start_time != NULL);
+  assert (res_sec != NULL);
+  assert (res_msec != NULL);
 
   if (end_time == NULL)
     {

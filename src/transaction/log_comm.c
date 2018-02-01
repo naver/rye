@@ -519,16 +519,8 @@ log_does_allow_replication (void)
   return true;
 
 #elif defined(SERVER_MODE)	/* CS_MODE */
-  static int ha_mode = -1;
-  HA_STATE server_state;
+  THREAD_ENTRY *thread_p = NULL;
   int client_type;
-
-  /* check iff the first time */
-  if (ha_mode < 0)
-    {
-      ha_mode = prm_get_integer_value (PRM_ID_HA_MODE);
-      assert (ha_mode != HA_MODE_OFF);
-    }
 
   client_type = logtb_find_current_client_type (NULL);
   if (client_type == BOOT_CLIENT_LOG_COPIER
@@ -537,15 +529,9 @@ log_does_allow_replication (void)
       return false;
     }
 
-  server_state = svr_shm_get_server_state ();
-  if (server_state != HA_STATE_MASTER && server_state != HA_STATE_TO_BE_SLAVE)
-    {
-      return false;
-    }
+  thread_p = thread_get_thread_entry_info ();
 
-  assert (db_Disable_modifications == 0);
-
-  return true;
+  return logtb_tran_is_allowed_modification (thread_p);
 #else /* SERVER_MODE */
 
   return false;

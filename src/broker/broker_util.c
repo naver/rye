@@ -55,19 +55,19 @@ ut_kill_process (int pid)
     {
       for (i = 0; i < 10; i++)
 	{
-	  if (kill (pid, SIGTERM) < 0)
+	  if (os_send_signal (pid, SIGTERM) < 0)
 	    {
 	      return 0;
 	    }
 	  THREAD_SLEEP (30);
-	  if (kill (pid, 0) < 0)
+	  if (os_send_signal (pid, 0) < 0)
 	    {
 	      break;
 	    }
 	}
       if (i >= 10)
 	{
-	  kill (pid, SIGKILL);
+	  os_send_kill (pid);
 	}
     }
 
@@ -179,7 +179,7 @@ ut_is_appl_server_ready (int pid, char *ready_flag)
 	}
       else
 	{
-	  if (kill (pid, 0) == 0)
+	  if (os_send_signal (pid, 0) == 0)
 	    {
 	      THREAD_SLEEP (10);
 	      continue;

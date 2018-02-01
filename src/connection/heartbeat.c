@@ -221,7 +221,7 @@ hb_thread_master_reader (UNUSED_ARG void *arg)
       THREAD_SLEEP (1000);
 
       /* is it ok? */
-      kill (getpid (), SIGTERM);
+      os_send_signal (getpid (), SIGTERM);
     }
 
   return (THREAD_RET_T) 0;

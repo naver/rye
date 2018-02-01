@@ -699,6 +699,7 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 
       log_append_redo_data (thread_p, RVOVF_PAGE_UPDATE, &addr,
 			    copy_length + hdr_length, (char *) addr.pgptr);
+      pgbuf_set_dirty (thread_p, addr.pgptr, DONT_FREE);
 
       if (length > 0)
 	{
@@ -710,9 +711,6 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 				    addr_vpid_ptr, NULL, NULL) == NULL)
 		{
 		  error = er_errid ();
-
-		  pgbuf_set_dirty (thread_p, addr.pgptr, FREE);
-		  addr.pgptr = NULL;
 
 		  GOTO_EXIT_ON_ERROR;
 		}
@@ -751,8 +749,8 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 		  GOTO_EXIT_ON_ERROR;
 		}
 	    }
-	  pgbuf_set_dirty (thread_p, addr.pgptr, FREE);
-	  addr.pgptr = NULL;
+
+	  pgbuf_unfix_and_init (thread_p, addr.pgptr);
 	}
       else
 	{
@@ -774,8 +772,7 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 	      /* This is part of rest part */
 	      VPID_SET_NULL (&rest_parts->next_vpid);
 	    }
-	  pgbuf_set_dirty (thread_p, addr.pgptr, FREE);
-	  addr.pgptr = NULL;
+	  pgbuf_unfix_and_init (thread_p, addr.pgptr);
 
 	  while (!(VPID_ISNULL (&next_vpid)))
 	    {

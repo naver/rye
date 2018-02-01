@@ -1627,14 +1627,14 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
       if (new_server_state == HA_STATE_MASTER)
 	{
 	  er_log_debug (ARG_FILE_LINE, "css_change_ha_server_state: "
-			"logtb_enable_update() \n");
-	  logtb_enable_update (thread_p);
+			"db_enable_modification() \n");
+	  db_enable_modification ();
 	}
       else if (new_server_state == HA_STATE_SLAVE)
 	{
 	  er_log_debug (ARG_FILE_LINE, "css_change_ha_server_state: "
-			"logtb_disable_update() \n");
-	  logtb_disable_update (thread_p);
+			"db_disable_modification() \n");
+	  db_disable_modification ();
 	}
 
       svr_shm_set_server_state (new_server_state);
