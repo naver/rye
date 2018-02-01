@@ -3,7 +3,7 @@
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -102,6 +102,7 @@ db_fixed_alloc (HL_HEAPID heap_id, size_t size)
   return ptr;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * db_fixed_free () - call free function for the fixed heap
  *   return:
@@ -116,3 +117,4 @@ db_fixed_free (HL_HEAPID heap_id, void *ptr)
       hl_fixed_free (heap_id, ptr);
     }
 }
+#endif

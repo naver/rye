@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <assert.h>
 #include "error_code.h"
 #include "util_support.h"
 #include "utility.h"
@@ -115,6 +116,8 @@ utility_load_symbol (DSO_HANDLE library_handle, DSO_HANDLE * symbol_handle,
 {
   (*symbol_handle) = dlsym (library_handle, symbol_name);
 
+  assert ((*symbol_handle) != 0);
+
   return (*symbol_handle) == 0 ? ER_GENERIC_ERROR : NO_ERROR;
 }
 
@@ -154,6 +157,8 @@ util_get_option_name (GETOPT_LONG * option, int option_value)
 	}
     }
 
+  assert (false);		/* TODO - trace */
+
   /* unreachable code */
   return "";
 }
@@ -172,6 +177,7 @@ util_parse_argument (UTIL_MAP * util_map, int argc, char **argv)
   int option_value;
   int option_index;
   char option_string[64];
+  const char *option_name;
   GETOPT_LONG *option = util_map->getopt_long;
 
   utility_make_getopt_optstring (option, option_string);
@@ -185,21 +191,27 @@ util_parse_argument (UTIL_MAP * util_map, int argc, char **argv)
 	{
 	  break;
 	}
-      else if (option_value == '?' || option_value == ':')
+
+      if (option_value == '?' || option_value == ':')
 	{
 	  status = ER_FAILED;
 	  return status;
 	}
+
+      option_name = util_get_option_name (option, option_value);
+
       status = util_put_option_value (util_map, option_value, optarg);
       if (status != NO_ERROR)
 	{
-	  fprintf (stderr, "invalid '--%s' option value: %s\n",
-		   util_get_option_name (option, option_value), optarg);
+	  fprintf (stderr, "invalid '--%s' option value: %s\n", option_name,
+		   optarg);
+
 	  return ER_FAILED;
 	}
     }
 
   status = util_parse_string_table (util_map, optind, argc, argv);
+
   return status;
 }
 

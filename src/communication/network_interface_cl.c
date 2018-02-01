@@ -56,9 +56,6 @@
 #include "connection_support.h"
 #include "backup_cl.h"
 
-/*
- * Use db_clear_private_heap instead of db_destroy_private_heap
- */
 #define ENTER_SERVER() \
   do \
     { \

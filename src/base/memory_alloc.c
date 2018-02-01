@@ -280,6 +280,7 @@ db_create_private_heap (void)
   return heap_id;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * db_clear_private_heap () - clear a thread specific heap
  *   return:
@@ -302,6 +303,7 @@ db_clear_private_heap (UNUSED_ARG THREAD_ENTRY * thread_p, HL_HEAPID heap_id)
       hl_clear_lea_heap (heap_id);
     }
 }
+#endif
 
 /*
  * db_destroy_private_heap () - destroy a thread specific heap

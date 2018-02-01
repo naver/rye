@@ -197,6 +197,7 @@ css_free_conn (CSS_CONN_ENTRY * conn)
   css_dealloc_conn (conn);
 }
 
+#if 0
 /*
  * css_find_exception_conn () -
  *   return:
@@ -206,7 +207,9 @@ css_find_exception_conn (void)
 {
   return NULL;
 }
+#endif
 
+#if !defined(SERVER_MODE)
 /*
  * css_find_conn_from_fd () - find the connection associated with the current
  *                            socket descriptor
@@ -228,6 +231,7 @@ css_find_conn_from_fd (SOCKET fd)
 
   return NULL;
 }
+#endif
 
 /*
  * css_get_request_id () - return the next valid request id

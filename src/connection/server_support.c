@@ -633,8 +633,8 @@ css_process_connect_request (CSS_CONN_ENTRY * conn, in_addr_t clt_ip_addr)
 
   if (conn_type == SVR_CONNECT_TYPE_TO_SERVER)
     {
-      if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == true &&
-	  css_check_accessibility (clt_ip_addr) != NO_ERROR)
+      if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == true
+	  && css_check_accessibility (clt_ip_addr) != NO_ERROR)
 	{
 	  css_send_new_client_response (conn, SERVER_INACCESSIBLE_IP,
 					rid, true);
@@ -1007,6 +1007,7 @@ css_oob_handler_thread (void *arg)
   return NULL;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * css_block_all_active_conn() - Before shutdown, stop all server thread
  *   return:
@@ -1040,6 +1041,7 @@ css_block_all_active_conn (unsigned short stop_phase)
 
   csect_exit (CSECT_CSS_ACTIVE_CONN);
 }
+#endif
 
 /*
  * css_internal_request_handler() -
@@ -1381,6 +1383,7 @@ css_send_abort_to_client (CSS_CONN_ENTRY * conn, unsigned int eid)
   return (rc == NO_ERRORS) ? 0 : rc;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * css_end_server_request() - terminates the request from the client
  *   return:
@@ -1391,6 +1394,7 @@ css_end_server_request (CSS_CONN_ENTRY * conn)
 {
   conn->status = CONN_CLOSING;
 }
+#endif
 
 /*
  * css_set_client_version() -

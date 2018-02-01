@@ -213,7 +213,9 @@ struct lang_locale_data
   char number_decimal_sym;
   char number_group_sym;
 
+#if defined(ENABLE_UNUSED_FUNCTION)
   UNICODE_NORMALIZATION unicode_norm;
+#endif
 
   const char *checksum;
 
@@ -317,10 +319,10 @@ extern "C"
 #if defined (ENABLE_UNUSED_FUNCTION)
   extern INTL_CODESET lang_charset_rye_name_to_id (const char *name);
   extern const char *lang_charset_introducer (const INTL_CODESET codeset);
-#endif
 
   extern UNICODE_NORMALIZATION *lang_get_generic_unicode_norm (void);
   extern void lang_set_generic_unicode_norm (UNICODE_NORMALIZATION * norm);
+#endif
   extern int lang_check_coll_compat (const LANG_COLL_COMPAT * coll_array,
 				     const int coll_cnt,
 				     const char *client_text,

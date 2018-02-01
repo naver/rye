@@ -121,7 +121,11 @@ ini_table_new (int size)
   /* If no size was specified, allocate space for 128 */
   if (size < 128)
     {
+#if !defined(NDEBUG)
+      size = 1;			/* TODO - for code coverage */
+#else
       size = 128;
+#endif
     }
 
   ini = (INI_TABLE *) calloc (1, sizeof (INI_TABLE));

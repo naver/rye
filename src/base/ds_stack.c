@@ -48,6 +48,7 @@ Rye_stack_new (void)
   return new_stack;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * Rye_stack_free -
  *   return:
@@ -65,6 +66,7 @@ Rye_stack_free (RStack * stack)
 
   Rye_slist_free (&stack->list);
 }
+#endif
 
 /*
  * Rye_stack_free_full -

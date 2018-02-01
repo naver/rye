@@ -90,8 +90,10 @@ static LANG_COLLATION *lang_collations[LANG_MAX_COLLATIONS] = { NULL };
 
 static int lang_count_collations = 0;
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /* normalization data */
 static UNICODE_NORMALIZATION *generic_unicode_norm = NULL;
+#endif
 
 static const DB_CHARSET lang_Db_charsets[] = {
 #if 1
@@ -180,7 +182,9 @@ static void lang_free_collations (void);
 #define LANG_COLL_NO_EXP 0, NULL, NULL, NULL
 #define LANG_COLL_NO_CONTR NULL, 0, 0, NULL, 0, 0
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 #define LANG_NO_NORMALIZATION {NULL, 0, NULL, NULL, 0}
+#endif
 
 static unsigned int lang_weight_EN_cs[LANG_CHAR_COUNT_EN];
 static unsigned int lang_next_alpha_char_EN_cs[LANG_CHAR_COUNT_EN];
@@ -416,6 +420,9 @@ set_current_locale (void)
 {
   bool found = false;
 
+  assert (lang_Loc_charset == INTL_CODESET_UTF8);
+  assert (strcmp (lang_get_codeset_name (lang_Loc_charset), "utf8") == 0);
+
   lang_get_lang_id_from_name (lang_Lang_name, &lang_Lang_id);
 
   for (lang_Loc_data = lang_loaded_locales[lang_Lang_id];
@@ -499,6 +506,8 @@ lang_set_charset_lang (void)
 static void
 set_default_lang (void)
 {
+  assert (false);
+
   lang_Lang_id = INTL_LANG_ENGLISH;
   strncpy (lang_Loc_name, LANG_NAME_DEFAULT, sizeof (lang_Loc_name));
   strncpy (lang_Lang_name, LANG_NAME_DEFAULT, sizeof (lang_Lang_name));
@@ -928,7 +937,9 @@ lang_final (void)
   lang_free_locales ();
   lang_free_collations ();
 
+#if defined(ENABLE_UNUSED_FUNCTION)
   lang_set_generic_unicode_norm (NULL);
+#endif
 
   lang_builtin_initialized = false;
   lang_Initialized = false;
@@ -2471,7 +2482,9 @@ static LANG_LOCALE_DATA lc_English_utf8 = {
   NULL,
   '.',
   ',',
+#if defined(ENABLE_UNUSED_FUNCTION)
   LANG_NO_NORMALIZATION,
+#endif
   "945bead220ece6f4d020403835308785",
   lang_initloc_en_utf8,
   false
@@ -2527,7 +2540,9 @@ static LANG_LOCALE_DATA lc_Korean_utf8 = {
   NULL,
   '.',
   ',',
+#if defined(ENABLE_UNUSED_FUNCTION)
   LANG_NO_NORMALIZATION,
+#endif
   "802cff8e10d857952241d19b50a13a27",
   lang_initloc_ko_utf8,
   false
@@ -2553,6 +2568,7 @@ lang_free_locales (void)
   lang_count_locales = 0;
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * lang_get_generic_unicode_norm - gets the global unicode
  *		    normalization structure
@@ -2573,6 +2589,7 @@ lang_set_generic_unicode_norm (UNICODE_NORMALIZATION * norm)
 {
   generic_unicode_norm = norm;
 }
+#endif
 
 /*
  * lang_free_collations - frees all collation data
