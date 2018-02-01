@@ -178,7 +178,7 @@ class ShardChangeConf extends ShardCommand
 				    ryeConfValue.getSectName(), ryeConfValue.getKeyName());
 		}
 		try {
-		    changeRyeConf(localMgmt, ryeConfValue);
+		    changeRyeConf(localMgmt, ryeConfValue, RyeConfValue.CHANGE_CONF_DISABLE_AUTO_GEN_PARAM);
 
 		    if (verboseOut != null) {
 			verboseOut.printf("success%n");

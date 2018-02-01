@@ -650,7 +650,7 @@ abstract class ShardCommand
 
 	for (int i = 0; i < hosts.length; i++) {
 	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].getIpAddr(), hosts[i].getPort());
-	    changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_DB_LIST, dbnameList);
+	    changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_DB_LIST, dbnameList, RyeConfValue.CHANGE_CONF_ENABLE_ALL);
 	}
 
     }
@@ -671,13 +671,15 @@ abstract class ShardCommand
 
 	for (int i = 0; i < hosts.length; i++) {
 	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].toJciConnectionInfo());
-	    changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_LIST, nodeListParamValue);
+	    changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_LIST, nodeListParamValue,
+			    RyeConfValue.CHANGE_CONF_ENABLE_ALL);
 	}
 
 	if (existingHosts != null) {
 	    for (int i = 0; i < existingHosts.length; i++) {
 		LocalMgmt localMgmt = new LocalMgmt(existingHosts[i].toJciConnectionInfo());
-		changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_LIST, nodeListParamValue);
+		changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_LIST, nodeListParamValue,
+				RyeConfValue.CHANGE_CONF_ENABLE_ALL);
 	    }
 	}
     }
@@ -815,23 +817,27 @@ abstract class ShardCommand
 	    LocalMgmt localMgmt = new LocalMgmt(hosts[i].toJciConnectionInfo());
 	    if (ryeConfList != null) {
 		for (RyeConfValue confValue : ryeConfList) {
-		    changeRyeConf(localMgmt, confValue);
+		    changeRyeConf(localMgmt, confValue, RyeConfValue.CHANGE_CONF_ENABLE_NORMAL);
 		}
 	    }
 	    if (setHaNodeMyself) {
-		changeRyeServerConf(localMgmt, "ha_node_myself", hosts[i].getIpAddr());
+		changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_MYSELF, hosts[i].getIpAddr(),
+				RyeConfValue.CHANGE_CONF_ENABLE_ALL);
 	    }
 	}
     }
 
-    private void changeRyeServerConf(LocalMgmt localMgmt, String key, String value) throws SQLException
+    private void changeRyeServerConf(LocalMgmt localMgmt, String key, String value, byte changeConfMode)
+		    throws SQLException
     {
-	changeRyeConf(localMgmt, new RyeServerConfValue(key, value));
+	changeRyeConf(localMgmt, new RyeServerConfValue(key, value), changeConfMode);
     }
 
-    void changeRyeConf(LocalMgmt localMgmt, RyeConfValue ryeConfValue) throws SQLException
+    void changeRyeConf(LocalMgmt localMgmt, RyeConfValue ryeConfValue, byte changeConfMode) throws SQLException
     {
-	localMgmt.updateConf(ryeConfValue);
+	if (ryeConfValue.isChangeable(changeConfMode)) {
+	    localMgmt.updateConf(ryeConfValue);
+	}
     }
 
     void checkLocalMgmtOccupied(NodeInfo[] addNode) throws SQLException
