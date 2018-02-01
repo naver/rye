@@ -70,10 +70,6 @@ extern int db_find_or_create_session (const char *db_user,
 				      const char *program_name);
 extern int db_shutdown (void);
 extern int db_ping_server (int client_val, int *server_val);
-extern int db_disable_modification (void);
-#if defined (ENABLE_UNUSED_FUNCTION)
-extern int db_enable_modification (void);
-#endif
 extern int db_commit_transaction (void);
 extern int db_abort_transaction (void);
 extern int db_commit_is_needed (void);

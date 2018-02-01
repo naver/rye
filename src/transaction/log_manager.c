@@ -5909,11 +5909,8 @@ log_dump_record (THREAD_ENTRY * thread_p, FILE * out_fp,
  *
  * return: nothing
  *
- *   isforward(in): Dump the log forward ?
  *   start_logpageid(in): Start dumping the log at this location
  *   dump_npages(in): Number of pages to dump
- *   desired_tranid(in): Dump entries of only this transaction. If NULL_TRANID,
- *                     dump all.
  *
  * NOTE: Dump a set of log records stored in "dump_npages" starting at
  *              page "start_logpageid" forward (or backward) according to the
@@ -5925,11 +5922,11 @@ log_dump_record (THREAD_ENTRY * thread_p, FILE * out_fp,
  *              This function is used for debugging purposes.
  */
 void
-xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp, int isforward,
-	   LOG_PAGEID start_logpageid, DKNPAGES dump_npages,
-	   TRANID desired_tranid)
+xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp,
+	   LOG_PAGEID start_logpageid, DKNPAGES dump_npages)
 {
   LOG_LSA lsa;			/* LSA of log record to dump */
+  LOG_LSA dump_end_lsa;
   char log_pgbuf[IO_MAX_PAGE_SIZE + MAX_ALIGNMENT], *aligned_log_pgbuf;
   LOG_PAGE *log_pgptr = NULL;	/* Log page pointer where
 				 * LSA is located
@@ -5965,38 +5962,26 @@ xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp, int isforward,
   lsa.pageid = start_logpageid;
   lsa.offset = NULL_OFFSET;
 
-  if (isforward != false)
+  if (lsa.pageid < 0)
     {
-      /* Forward */
-      if (lsa.pageid < 0)
-	{
-	  lsa.pageid = 0;
-	}
-      else if (lsa.pageid > log_Gl.hdr.append_lsa.pageid
-	       && LOG_ISRESTARTED ())
-	{
-	  lsa.pageid = log_Gl.hdr.append_lsa.pageid;
-	}
+      lsa.pageid = 0;
     }
-  else
+  else if (lsa.pageid > log_Gl.hdr.append_lsa.pageid && LOG_ISRESTARTED ())
     {
-      /* Backward */
-      if (lsa.pageid < 0 || lsa.pageid > log_Gl.hdr.append_lsa.pageid)
-	{
-	  log_find_end_log (thread_p, &lsa);
-	}
+      lsa.pageid = log_Gl.hdr.append_lsa.pageid;
     }
 
-  if (dump_npages > LOGPB_ACTIVE_NPAGES || dump_npages < 0)
+  if (dump_npages < 0)
     {
       dump_npages = LOGPB_ACTIVE_NPAGES;
     }
+  dump_end_lsa.pageid = lsa.pageid + dump_npages;
+  dump_end_lsa.offset = lsa.offset;
 
   fprintf (out_fp,
-	   "\n START DUMPING LOG_RECORDS: %s, start_logpageid = %lld,\n"
-	   " Num_pages_to_dump = %d, desired_tranid = %d\n",
-	   (isforward ? "Forward" : "Backward"),
-	   (long long int) start_logpageid, dump_npages, desired_tranid);
+	   "\n START DUMPING LOG_RECORDS: start_logpageid = %lld,\n"
+	   " Num_pages_to_dump = %d\n",
+	   (long long int) start_logpageid, dump_npages);
 
   LOG_CS_EXIT ();
 
@@ -6011,7 +5996,7 @@ xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp, int isforward,
     }
 
   /* Start dumping all log records following the given direction */
-  while (!LSA_ISNULL (&lsa) && dump_npages-- > 0)
+  while (!LSA_ISNULL (&lsa) && LSA_LT (&lsa, &dump_end_lsa))
     {
       if ((logpb_fetch_page (thread_p, lsa.pageid, log_pgptr)) == NULL)
 	{
@@ -6040,7 +6025,6 @@ xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp, int isforward,
 	    {
 	      /* We need to dump one more page */
 	      lsa.pageid--;
-	      dump_npages++;
 	    }
 	  continue;
 	}
@@ -6075,49 +6059,34 @@ xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp, int isforward,
 	  }
 
 	  /* Find the next log record to dump .. after current one is dumped */
-	  if (isforward != false)
+	  if (LSA_ISNULL (&log_rec->forw_lsa) && type != LOG_END_OF_LOG)
 	    {
-	      if (LSA_ISNULL (&log_rec->forw_lsa) && type != LOG_END_OF_LOG)
+	      if (log_startof_nxrec (thread_p, &lsa, false) == NULL)
 		{
-		  if (log_startof_nxrec (thread_p, &lsa, false) == NULL)
-		    {
-		      fprintf (out_fp, "\n****\n");
-		      fprintf (out_fp,
-			       "log_dump: Problems finding next record. BYE\n");
-		      fprintf (out_fp, "\n****\n");
-		      break;
-		    }
-		}
-	      else
-		{
-		  LSA_COPY (&lsa, &log_rec->forw_lsa);
-		}
-	      /*
-	       * If the next page is NULL_PAGEID and the current page is an archive
-	       * page, this is not the end, this situation happens when an incomplete
-	       * log record was archived.
-	       * Note that we have to set lsa.pageid here since the log_lsa.pageid value
-	       * can be changed (e.g., the log record is stored in an archive page
-	       * and in an active page. Later, we try to modify it whenever is
-	       * possible.
-	       */
-	      if (LSA_ISNULL (&lsa)
-		  && logpb_is_page_in_archive (log_lsa.pageid))
-		{
-		  lsa.pageid = log_lsa.pageid + 1;
+		  fprintf (out_fp, "\n****\n");
+		  fprintf (out_fp,
+			   "log_dump: Problems finding next record. BYE\n");
+		  fprintf (out_fp, "\n****\n");
+		  break;
 		}
 	    }
 	  else
 	    {
-	      LSA_COPY (&lsa, &log_rec->back_lsa);
+	      LSA_COPY (&lsa, &log_rec->forw_lsa);
 	    }
-
-	  if (desired_tranid != NULL_TRANID
-	      && desired_tranid != log_rec->trid
-	      && log_rec->type != LOG_END_OF_LOG)
+	  /*
+	   * If the next page is NULL_PAGEID and the current page is an archive
+	   * page, this is not the end, this situation happens when an incomplete
+	   * log record was archived.
+	   * Note that we have to set lsa.pageid here since the log_lsa.pageid value
+	   * can be changed (e.g., the log record is stored in an archive page
+	   * and in an active page. Later, we try to modify it whenever is
+	   * possible.
+	   */
+	  if (LSA_ISNULL (&lsa) && logpb_is_page_in_archive (log_lsa.pageid))
 	    {
-	      /* Don't dump this log record... */
-	      continue;
+	      assert (false);
+	      lsa.pageid = log_lsa.pageid + 1;
 	    }
 
 	  fprintf (out_fp, "\nLSA = %3lld|%3d, Forw log = %3lld|%3d,"

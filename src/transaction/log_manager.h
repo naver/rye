@@ -244,8 +244,7 @@ extern int log_get_next_nested_top (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 /*
  * FOR DEBUGGING
  */
-extern void xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp, int isforward,
-		       LOG_PAGEID start_logpageid, DKNPAGES dump_npages,
-		       TRANID desired_tranid);
+extern void xlog_dump (THREAD_ENTRY * thread_p, FILE * out_fp,
+		       LOG_PAGEID start_logpageid, DKNPAGES dump_npages);
 
 #endif /* _LOG_MANAGER_H_ */

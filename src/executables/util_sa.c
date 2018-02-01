@@ -1083,7 +1083,7 @@ diagdb (UTIL_FUNCTION_ARG * arg)
 						  DIAG_NUM_LOG_PAGES_S);
 
       fprintf (outfp, "\n*** DUMP OF LOG ***\n");
-      xlog_dump (NULL, outfp, 1, start_logpageid, dump_npages, -1);
+      xlog_dump (NULL, outfp, start_logpageid, dump_npages);
     }
 
   if (diag == DIAGDUMP_ALL || diag == DIAGDUMP_HEAP)

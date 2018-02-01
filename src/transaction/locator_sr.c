@@ -3196,7 +3196,11 @@ locator_update_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
        */
       if (log_does_allow_replication () == true)
 	{
-	  repl_add_update_lsa (thread_p, oid);
+	  error = repl_add_update_lsa (thread_p, oid);
+	  if (error != NO_ERROR)
+	    {
+	      goto exit_on_error;
+	    }
 	}
     }
 
@@ -4487,10 +4491,6 @@ locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
       else
 	{
 	  key_ins_del = btree_delete (thread_p, &btid_int, &key);
-
-#if 0				/* TODO - trace */
-	  btree_dump_tree (thread_p, stdout, &btid_int, 0, 1);
-#endif
 	}
 
       /*
@@ -4515,6 +4515,10 @@ locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
 					LOG_REPLICATION_SCHEMA,
 					is_insert ? RVREPL_DATA_INSERT :
 					RVREPL_DATA_DELETE, &key);
+	  if (error_code != NO_ERROR)
+	    {
+	      goto error;
+	    }
 	}
 
       db_idxkey_clear (&key);
@@ -4782,6 +4786,10 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
       error_code = repl_log_insert (thread_p, class_oid, inst_oid,
 				    LOG_REPLICATION_DATA,
 				    RVREPL_DATA_UPDATE, &old_key);
+      if (error_code != NO_ERROR)
+	{
+	  goto error;
+	}
 
       db_idxkey_clear (&old_key);
     }
