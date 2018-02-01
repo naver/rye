@@ -1649,7 +1649,7 @@ fileio_unformat_and_rename (UNUSED_ARG THREAD_ENTRY * thread_p,
 
   if (new_label_p == NULL)
     {
-      (void) remove (vol_label_p);
+      (void) rye_remove_files (vol_label_p);
     }
   else
     {
@@ -3387,7 +3387,7 @@ fileio_get_number_of_partition_free_pages (const char *path_p,
 							      page_size);
 	  /* Close the file and remove it */
 	  fileio_close (vol_fd);
-	  (void) remove (path_p);
+	  (void) rye_remove_files (path_p);
 	}
       else
 	{
@@ -3529,7 +3529,7 @@ fileio_check_file_exist (char *name_p, char *new_guess_path_p, int check_size,
 	  if (vol_fd != NULL_VOLDES)
 	    {
 	      fileio_close (vol_fd);
-	      (void) remove (new_guess_path_p);
+	      (void) rye_remove_files (new_guess_path_p);
 	    }
 	  *tmp_name_p = 'x';
 	}
@@ -3760,7 +3760,7 @@ fileio_get_primitive_way_max (const char *path_p,
   /* The length has been found */
   if (is_remove == true)
     {
-      (void) remove (last_guess_path);
+      (void) rye_remove_files (last_guess_path);
     }
 
   name_p = strrchr (last_guess_path, '/');
@@ -3777,7 +3777,7 @@ fileio_get_primitive_way_max (const char *path_p,
 error:
   if (is_remove == true)
     {
-      (void) remove (last_guess_path);
+      (void) rye_remove_files (last_guess_path);
     }
 
   max_name_size = -1;

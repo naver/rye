@@ -3621,15 +3621,17 @@ tp_atobi (const DB_VALUE * src, DB_BIGINT * num_value,
 	}
 
       errno = 0;
-      bigint = strtoll (strp, &p, 10);
-
-      if (errno == ERANGE)
+      if (str_to_int64 (&bigint, &p, strp, 10) == 0)
 	{
-	  *data_stat = DATA_STATUS_TRUNCATED;
+	  *data_stat = DATA_STATUS_OK;
 	}
       else
 	{
-	  *data_stat = DATA_STATUS_OK;
+	  *data_stat = DATA_STATUS_NOT_CONSUMED;
+	  if (errno == ERANGE)
+	    {
+	      *data_stat = DATA_STATUS_TRUNCATED;
+	    }
 	}
 
       /* round number if a '5' or greater digit was found after the decimal point */
@@ -4881,6 +4883,12 @@ tp_value_coerce_internal (const DB_VALUE * src, DB_VALUE * dest,
 		status = DOMAIN_OVERFLOW;
 		break;
 	      }
+	    else if (data_stat != DATA_STATUS_OK)
+	      {
+		status = DOMAIN_INCOMPATIBLE;	/* conversion error */
+		break;
+	      }
+
 	    db_make_bigint (target, num_value);
 	    break;
 	  }
