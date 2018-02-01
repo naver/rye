@@ -114,7 +114,7 @@ static int fileio_lock_region (int fd, int cmd, int type, off_t offset,
 static bool
 fileio_is_terminated_process (int pid)
 {
-  if (kill (pid, 0) == -1)
+  if (os_send_signal (pid, 0) == -1)
     {
       return true;
     }
@@ -854,7 +854,7 @@ fileio_unlock (const char *vol_label_p, int vol_fd,
       else
 #endif
 	{
-	  (void) remove (name_info_lock);
+	  (void) rye_remove_files (name_info_lock);
 	  fileio_unlock_file (vol_fd, 0, SEEK_SET, 0);
 	}
     }

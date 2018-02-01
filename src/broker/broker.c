@@ -199,15 +199,19 @@ main ()
 
   if (shm_Br->br_info[br_Index].broker_type == LOCAL_MGMT)
     {
-      snprintf (broker_err_file, sizeof (broker_err_file), "broker.local_mgmt.err");
+      snprintf (broker_err_file, sizeof (broker_err_file),
+		"broker.local_mgmt.err");
     }
   else if (shm_Br->br_info[br_Index].broker_type == SHARD_MGMT)
     {
-      snprintf (broker_err_file, sizeof (broker_err_file), "broker.shard_mgmt.%s.err", shm_Br->br_info[br_Index].shard_global_dbname);
+      snprintf (broker_err_file, sizeof (broker_err_file),
+		"broker.shard_mgmt.%s.err",
+		shm_Br->br_info[br_Index].shard_global_dbname);
     }
   else
     {
-      snprintf (broker_err_file, sizeof (broker_err_file), "broker.%s.err", shm_Br->br_info[br_Index].name);
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.%s.err",
+		shm_Br->br_info[br_Index].name);
     }
 
   er_init (broker_err_file, ER_EXIT_DEFAULT);
@@ -506,7 +510,7 @@ receiver_thr_f (UNUSED_ARG void *arg)
 	      client_ip_addr)
 	    {
 	      ret_code = 0;
-	      kill (cas_pid, SIGUSR1);
+	      os_send_signal (cas_pid, SIGUSR1);
 	    }
 
 	  br_send_result_to_client (clt_sock_fd, ret_code, NULL);
@@ -1467,7 +1471,7 @@ cas_monitor_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
 
   if (restart_flag)
     {
-      if (kill (as_info_p->pid, 0) < 0)
+      if (os_send_signal (as_info_p->pid, 0) < 0)
 	{
 	  restart_appl_server (as_info_p, br_index, as_index);
 	  as_info_p->uts_status = UTS_STATUS_IDLE;
@@ -1892,7 +1896,7 @@ find_idle_cas (void)
 	}
       if (shm_Appl->info.as_info[i].uts_status == UTS_STATUS_IDLE)
 	{
-	  if (kill (shm_Appl->info.as_info[i].pid, 0) == 0)
+	  if (os_send_signal (shm_Appl->info.as_info[i].pid, 0) == 0)
 	    {
 	      idle_cas_id = i;
 	      wait_cas_id = -1;

@@ -1492,8 +1492,7 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 #if 1				/* TODO - ksseo */
       if (LOG_ISRESTARTED ())
 	{
-	  assert (log_Gl.rcv_phase == LOG_RECOVERY_REDO_PHASE
-		  || pgbuf_is_lsa_temporary (pgptr)
+	  assert (pgbuf_is_lsa_temporary (pgptr)
 		  || pgbuf_find_thrd_holder (thread_p, bufptr) != NULL);
 	}
 #else /* TODO:[happy:remove "#if 0" when postpone op. bug fixed] */
