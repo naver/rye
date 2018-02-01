@@ -3196,7 +3196,6 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
   /* auxiliary variables */
   UINT64 base10 = 0;
   int from_base_int = 0, to_base_int = 0, i = 0;
-  char *end_p;
 
   assert (num != result);
   assert (from_base != result);
@@ -3317,34 +3316,14 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
     }
 
   /* convert from string to INT64/UINT64 */
-//  errno = 0;
+  errno = 0;
   if (num_is_signed)
     {
-      INT64 tmp_bi;
-
-#if 1 /* TODO - fix me later */
-      (void) str_to_int64 (&tmp_bi, &end_p, num_p_str, from_base_int);
-#else
-      if (str_to_int64 (&tmp_bi, &end_p, num_p_str, from_base_int) != 0)
-	{
-	  error_status = ER_OBJ_INVALID_ARGUMENTS;
-	  goto exit_on_error;
-	}
-#endif
-
-      base10 = (UINT64) tmp_bi;	/* TODO - */
+      base10 = (UINT64) strtoll (num_p_str, NULL, from_base_int);
     }
   else
     {
-#if 1 /* TODO - fix me later */
-      (void) str_to_uint64 (&base10, &end_p, num_p_str, from_base_int);
-#else
-      if (str_to_uint64 (&base10, &end_p, num_p_str, from_base_int) != 0)
-	{
-	  error_status = ER_OBJ_INVALID_ARGUMENTS;
-	  goto exit_on_error;
-	}
-#endif
+      base10 = (UINT64) strtoull (num_p_str, NULL, from_base_int);
     }
 
   /* compute signed part of number */
