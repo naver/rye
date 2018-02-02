@@ -145,7 +145,6 @@ typedef enum tp_domain_status
  */
 typedef enum tp_match
 {
-  TP_ANY_MATCH,			/* Any coercible domain matches. */
   TP_EXACT_MATCH,		/* Domain must match exactly.  */
   TP_STR_MATCH,			/* "String" domains match subject to length
 				 * constraints and fixed/varying types, i.e., a
@@ -315,7 +314,7 @@ extern int tp_domain_compatible (const TP_DOMAIN * dom1,
 
 extern TP_DOMAIN *tp_domain_select (const TP_DOMAIN * domain_list,
 				    const DB_VALUE * value,
-				    int allow_coercion, TP_MATCH exact_match);
+				    TP_MATCH exact_match);
 
 extern TP_DOMAIN_STATUS tp_domain_check (const TP_DOMAIN * domain,
 					 const DB_VALUE * value,
