@@ -296,83 +296,6 @@ static TP_DOMAIN *tp_Domains[] = {
   NULL
 };
 
-static TP_DOMAIN *tp_Bigint_conv[] = {
-  &tp_Bigint_domain, &tp_Integer_domain,
-  &tp_Double_domain, &tp_Numeric_domain, &tp_Time_domain, NULL
-};
-
-static TP_DOMAIN *tp_Integer_conv[] = {
-  &tp_Integer_domain, &tp_Bigint_domain,
-  &tp_Double_domain, &tp_Numeric_domain, &tp_Time_domain, NULL
-};
-
-
-static TP_DOMAIN *tp_Double_conv[] = {
-  &tp_Double_domain, &tp_Numeric_domain, &tp_Bigint_domain,
-  &tp_Integer_domain, &tp_Time_domain, NULL
-};
-
-static TP_DOMAIN *tp_Numeric_conv[] = {
-  &tp_Numeric_domain, &tp_Double_domain, &tp_Bigint_domain,
-  &tp_Integer_domain, &tp_Time_domain, NULL
-};
-
-static TP_DOMAIN *tp_String_conv[] = {
-  &tp_String_domain,
-  &tp_Datetime_domain, &tp_Time_domain,
-  &tp_Date_domain, NULL
-};
-
-static TP_DOMAIN *tp_VarBit_conv[] = {
-  &tp_VarBit_domain, NULL
-};
-
-static TP_DOMAIN *tp_Sequence_conv[] = {
-  &tp_Sequence_domain, NULL,
-};
-
-/*
- * tp_Domain_conversion_matrix
- *    This is the matrix of conversion rules.  It is used primarily
- *    in the coercion of sets.
- */
-
-TP_DOMAIN **tp_Domain_conversion_matrix[] = {
-  NULL,				/* DB_TYPE_NULL */
-  tp_Integer_conv,
-  NULL,				/* DB_TYPE_FLOAT *//* unused */
-  tp_Double_conv,
-  tp_String_conv,
-  NULL,				/* DB_TYPE_OBJECT */
-  NULL,
-  NULL,
-  tp_Sequence_conv,
-  NULL,				/* DB_TYPE_ELO *//* unused */
-  NULL,				/* DB_TYPE_TIME */
-  NULL,				/* DB_TYPE_TIMESTAMP *//* unused */
-  NULL,				/* DB_TYPE_DATE */
-  NULL,				/* DB_TYPE_MONETARY *//* unused */
-  NULL,				/* DB_TYPE_VARIABLE */
-  NULL,				/* DB_TYPE_SUBSTRUCTURE */
-  NULL,				/* DB_TYPE_POINTER */
-  NULL,				/* DB_TYPE_ERROR */
-  NULL,				/* DB_TYPE_SHORT *//* unused */
-  NULL,				/* DB_TYPE_VOBJ *//* unused */
-  NULL,				/* DB_TYPE_OID */
-  NULL,				/* DB_TYPE_DB_VALUE *//* unused */
-  tp_Numeric_conv,		/* DB_TYPE_NUMERIC */
-  NULL,				/* DB_TYPE_BIT *//* unused */
-  tp_VarBit_conv,		/* DB_TYPE_VARBIT */
-  NULL,				/* DB_TYPE_CHAR *//* unused */
-  NULL,				/* DB_TYPE_NCHAR *//* unused */
-  NULL,				/* DB_TYPE_VARNCHAR *//* unused */
-  NULL,				/* DB_TYPE_RESULTSET */
-  NULL,				/* DB_TYPE_IDXKEY *//* unused */
-  NULL,				/* DB_TYPE_TABLE */
-  tp_Bigint_conv,		/* DB_TYPE_BIGINT */
-  NULL				/* DB_TYPE_DATETIME */
-};
-
 #if defined (SERVER_MODE)
 /* lock for domain list cache */
 static pthread_mutex_t tp_domain_cache_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -2849,9 +2772,6 @@ tp_domain_compatible (const TP_DOMAIN * src, const TP_DOMAIN * dest)
  * Note:
  *    This operation is used for basic domain compatibility checking
  *    as well as value coercion.
- *    If the allow_coercion flag is on, the tp_Domain_conversion_matrix
- *    will be consulted to find an appropriate domain in the case
- *    where there is no exact match.
  *    If an appropriate domain could not be found, NULL is returned.
  *
  *    This is known not to work correctly for nested set domains.  In order
