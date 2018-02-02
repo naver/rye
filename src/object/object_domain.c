@@ -1031,17 +1031,13 @@ tp_domain_match_internal (const TP_DOMAIN * dom1, const TP_DOMAIN * dom2,
       return 1;
     }
 
-  if ((TP_DOMAIN_TYPE (dom1) != TP_DOMAIN_TYPE (dom2))
-      && (exact != TP_STR_MATCH
-	  || !ARE_COMPARABLE (TP_DOMAIN_TYPE (dom1), TP_DOMAIN_TYPE (dom2))))
+  if (TP_DOMAIN_TYPE (dom1) != TP_DOMAIN_TYPE (dom2))
     {
       return 0;
     }
 
   /*
-   * At this point, either dom1 and dom2 have exactly the same type, or
-   * exact_match is TP_STR_MATCH and dom1 and dom2 are a char/varchar
-   * (nchar/varnchar, bit/varbit) pair.
+   * At this point, either dom1 and dom2 have exactly the same type
    */
 
   /* could use the new is_parameterized flag to avoid the switch ? */
@@ -1234,6 +1230,8 @@ tp_domain_match_internal (const TP_DOMAIN * dom1, const TP_DOMAIN * dom2,
 	   * provided the actual value is within the destination domain
 	   * tolerance.
 	   */
+	  assert (false);
+
 	  match = 1;
 	}
       break;
@@ -1324,10 +1322,7 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
       return domain;
     }
 
-  if ((TP_DOMAIN_TYPE (domain) != TP_DOMAIN_TYPE (transient))
-      && (exact != TP_STR_MATCH
-	  || !ARE_COMPARABLE (TP_DOMAIN_TYPE (domain),
-			      TP_DOMAIN_TYPE (transient))))
+  if (TP_DOMAIN_TYPE (domain) != TP_DOMAIN_TYPE (transient))
     {
       return NULL;
     }
@@ -1335,9 +1330,7 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
   *ins_pos = domain;
 
   /*
-   * At this point, either domain and transient have exactly the same type, or
-   * exact_match is TP_STR_MATCH and domain and transient are a char/varchar
-   * (nchar/varnchar, bit/varbit) pair.
+   * At this point, either domain and transient have exactly the same type
    */
 
   /* could use the new is_parameterized flag to avoid the switch ? */
@@ -1362,11 +1355,6 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
 
       while (domain)
 	{
-	  /*
-	   * if "exact" is zero, we should be checking the subclass hierarchy
-	   * of domain to see id transient is in it !
-	   */
-
 	  /* Always prefer comparison of MOPs */
 	  if (domain->class_mop != NULL && transient->class_mop != NULL)
 	    {
@@ -2857,7 +2845,6 @@ tp_domain_compatible (const TP_DOMAIN * src, const TP_DOMAIN * dest)
  *    return: domain
  *    domain_list(in): list of possible domains
  *    value(in): value of interest
- *    allow_coercion(in): non-zero if coercion will be allowed
  *    exact_match(in): controls tolerance permitted during match
  * Note:
  *    This operation is used for basic domain compatibility checking
@@ -2877,14 +2864,11 @@ tp_domain_compatible (const TP_DOMAIN * src, const TP_DOMAIN * dest)
  */
 TP_DOMAIN *
 tp_domain_select (const TP_DOMAIN * domain_list,
-		  const DB_VALUE * value,
-		  int allow_coercion, TP_MATCH exact_match)
+		  const DB_VALUE * value, TP_MATCH exact_match)
 {
   TP_DOMAIN *best, *d;
-  TP_DOMAIN **others;
   DB_TYPE vtype;
   UNUSED_VAR DB_VALUE temp;
-  int i;
 
   best = NULL;
 
@@ -3044,25 +3028,6 @@ tp_domain_select (const TP_DOMAIN * domain_list,
 	}
     }
 
-  if (best == NULL && allow_coercion)
-    {
-      others = tp_Domain_conversion_matrix[vtype];
-      if (others != NULL)
-	{
-	  for (i = 0; others[i] != NULL && best == NULL; i++)
-	    {
-	      for (d = (TP_DOMAIN *) domain_list; d != NULL && best == NULL;
-		   d = d->next)
-		{
-		  if (d->type == others[i]->type)
-		    {
-		      best = d;
-		    }
-		}
-	    }
-	}
-    }
-
   return best;
 }
 
@@ -3090,6 +3055,8 @@ tp_domain_check (const TP_DOMAIN * domain,
   TP_DOMAIN_STATUS status;
   TP_DOMAIN *d;
 
+  assert (exact_match == TP_EXACT_MATCH);
+
   if (domain == NULL)
     {
       status = DOMAIN_COMPATIBLE;
@@ -3099,7 +3066,7 @@ tp_domain_check (const TP_DOMAIN * domain,
 #if 1				/* TODO - trace */
       assert (domain->next == NULL);
 #endif
-      d = tp_domain_select (domain, value, 0, exact_match);
+      d = tp_domain_select (domain, value, exact_match);
       if (d == NULL)
 	{
 	  status = DOMAIN_INCOMPATIBLE;
