@@ -1056,6 +1056,10 @@ tp_domain_match_internal (const TP_DOMAIN * dom1, const TP_DOMAIN * dom2,
 		  for (d1 = dom1->setdomain, d2 = dom2->setdomain;
 		       d1 != NULL && d2 != NULL; d1 = d1->next, d2 = d2->next)
 		    {
+#if 1				/* remove nested set */
+		      assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (d1)));
+		      assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (d2)));
+#endif
 		      if (!tp_domain_match (d1, d2, exact))
 			{
 			  match = 0;
@@ -1250,12 +1254,106 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
       return NULL;
     }
 
-  *ins_pos = domain;
-
   /*
    * At this point, either domain and transient have exactly the same type
    */
 
+  *ins_pos = domain;
+
+  while (domain != NULL)
+    {
+      match = tp_domain_match_internal (domain, transient, exact, true);
+      if (match)
+	{
+	  return domain;	/* found */
+	}
+
+      switch (TP_DOMAIN_TYPE (domain))
+	{
+	case DB_TYPE_NULL:
+	case DB_TYPE_INTEGER:
+	case DB_TYPE_BIGINT:
+	case DB_TYPE_DOUBLE:
+	case DB_TYPE_TIME:
+	case DB_TYPE_DATETIME:
+	case DB_TYPE_DATE:
+	  assert (false);
+	  domain = NULL;	/* give up */
+	  break;
+
+	case DB_TYPE_OBJECT:
+	case DB_TYPE_SUB:
+	case DB_TYPE_VARIABLE:
+	case DB_TYPE_SEQUENCE:
+	  *ins_pos = domain;
+	  domain = domain->next_list;
+	  break;
+
+	case DB_TYPE_VARCHAR:
+	case DB_TYPE_VARBIT:
+	  /* check for descending order */
+	  if (domain->precision < transient->precision)
+	    {
+	      domain = NULL;	/* not found */
+	    }
+	  else
+	    {
+	      *ins_pos = domain;
+	      domain = domain->next_list;
+	    }
+	  break;
+
+	case DB_TYPE_NUMERIC:
+	  assert (domain->precision != transient->precision
+		  || domain->scale != transient->scale);
+	  /*
+	   * The first domain is a default domain for numeric type,
+	   * actually NUMERIC(15,0)
+	   */
+          assert (DB_DOUBLE_DECIMAL_PRECISION == 15);
+          assert (DB_DEFAULT_NUMERIC_SCALE == 0);
+	  if (domain->precision == DB_DOUBLE_DECIMAL_PRECISION
+	      || domain->scale == DB_DEFAULT_NUMERIC_SCALE)
+	    {
+	      *ins_pos = domain;
+	      domain = domain->next_list;
+	    }
+	  else
+	    {
+              /*
+	       * The other domains for numeric values are sorted
+	       * by descending order of precision and scale.
+	       */
+	      if ((domain->precision < transient->precision)
+		  || ((domain->precision == transient->precision)
+		      && (domain->scale < transient->scale)))
+		{
+		  domain = NULL;	/* not found */
+		}
+	      else
+		{
+		  *ins_pos = domain;
+		  domain = domain->next_list;
+		}
+	    }
+	  break;
+
+	case DB_TYPE_OID:
+	case DB_TYPE_RESULTSET:
+	case DB_TYPE_TABLE:
+	  assert (false);
+	  domain = NULL;	/* give up */
+	  break;
+
+	  /* don't have a default so we make sure to add clauses for all types */
+	}
+    }				/* while */
+
+  /* not found */
+
+  return NULL;
+
+#if 0
   /* could use the new is_parameterized flag to avoid the switch ? */
   switch (TP_DOMAIN_TYPE (domain))
     {
@@ -1385,8 +1483,9 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
 	      }
 #else /* #if 1 */
 	    if (domain->setdomain == transient->setdomain)
-	      match = 1;
-
+	      {
+		match = 1;
+	      }
 	    else
 	      {
 		int dsize;
@@ -1604,6 +1703,7 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
     }
 
   return (match ? domain : NULL);
+#endif
 }
 
 #if !defined (SERVER_MODE)
