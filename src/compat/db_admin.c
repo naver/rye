@@ -273,7 +273,7 @@ db_add_volume (DBDEF_VOL_EXT_INFO * ext_info)
 
   assert (ext_info != NULL);
 
-  if (Au_dba_user != NULL && !au_is_dba_group_member (Au_user))
+  if (au_get_dba_user () != NULL && !au_is_dba_group_member (au_get_user ()))
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1,
 	      "db_add_volume");
@@ -1344,7 +1344,7 @@ db_get_user_and_host_name (void)
 DB_OBJECT *
 db_get_user (void)
 {
-  return Au_user;
+  return au_get_user ();
 }
 
 /*
@@ -1765,8 +1765,8 @@ db_set_system_parameters (char *prm_names, int len, const char *data,
   /* validate changes */
   rc = sysprm_validate_change_parameters (data, persist, true, &assignments);
   /* If a server parameter is changed, user must belong to DBA group */
-  if (rc == PRM_ERR_NOT_FOR_CLIENT && Au_dba_user != NULL
-      && !au_is_dba_group_member (Au_user))
+  if (rc == PRM_ERR_NOT_FOR_CLIENT && au_get_dba_user () != NULL
+      && !au_is_dba_group_member (au_get_user ()))
     {
       /* user is not authorized to do the changes */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1,

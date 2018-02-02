@@ -44,6 +44,7 @@
 #endif
 #include "log_comm.h"
 #include "parser.h"
+#include "repl_common.h"
 
 /* GLOBAL STATE */
 #define DB_CONNECTION_STATUS_NOT_CONNECTED      0

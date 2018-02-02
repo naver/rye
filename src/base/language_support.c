@@ -1524,14 +1524,14 @@ lang_db_put_charset (void)
 
   AU_DISABLE (au_save);
   db_make_string (&value, lang_get_lang_name_from_id (server_lang));
-  if (db_put_internal (Au_root, "lang", &value) != NO_ERROR)
+  if (db_put_internal (au_get_root (), "lang", &value) != NO_ERROR)
     {
       /* Error Setting the language */
       assert (false);
     }
 
   db_make_int (&value, (int) server_codeset);
-  if (db_put_internal (Au_root, "charset", &value) != NO_ERROR)
+  if (db_put_internal (au_get_root (), "charset", &value) != NO_ERROR)
     {
       /* Error Setting the nchar codeset */
       assert (false);
