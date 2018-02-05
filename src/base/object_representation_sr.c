@@ -255,7 +255,6 @@ orc_diskrep_from_record (UNUSED_ARG THREAD_ENTRY * thread_p, RECDES * record)
       att->default_expr = or_att->default_value.default_expr;
       or_att->default_value.value = NULL;
       att->classoid = or_att->classoid;
-      assert (OID_ISNULL (&att->classoid));
 
       DATA_INIT (&att->unused_min_value, att->type);
       DATA_INIT (&att->unused_max_value, att->type);
@@ -1182,7 +1181,6 @@ or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length,
       att->current_default_value.value = NULL;
       OR_GET_OID (ptr + ORC_ATT_CLASS_OFFSET, &oid);
       att->classoid = oid;
-      assert (OID_ISNULL (&att->classoid));
 
       /* get the btree index id if an index has been assigned */
       or_get_att_index (ptr + ORC_ATT_INDEX_OFFSET, &att->index);
