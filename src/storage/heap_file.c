@@ -2310,8 +2310,7 @@ search_begin:
       /* if all cache entry is busy, allocate memory for repr. */
       if (cache_entry == NULL)
 	{
-	  RECDES peek_recdes = RECDES_INITIALIZER;
-	  HEAP_SCANCACHE scan_cache;
+	  peek_recdes.data = NULL;
 
 	  heap_scancache_quick_start (&scan_cache);
 	  if (heap_get (thread_p, class_oid, &peek_recdes, &scan_cache,
@@ -2340,6 +2339,8 @@ search_begin:
 	}
 
       /* New cache entry is acquired. Load class_oid classrepr info. on it */
+
+      peek_recdes.data = NULL;
 
       heap_scancache_quick_start (&scan_cache);
       if (heap_get (thread_p, class_oid, &peek_recdes, &scan_cache, PEEK)
@@ -2495,6 +2496,7 @@ search_begin:
       if (repr == NULL)
 	{
 	  /* load repr. info. for reprid of class_oid */
+	  peek_recdes.data = NULL;
 
 	  heap_scancache_quick_start (&scan_cache);
 	  if (heap_get (thread_p, class_oid, &peek_recdes, &scan_cache,
