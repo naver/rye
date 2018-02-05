@@ -13305,9 +13305,16 @@ int
 heap_rv_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
 {
   INT16 slotid;
+  PGSLOTID ret_slotid;
 
   slotid = rcv->offset;
-  (void) spage_delete_for_recovery (thread_p, rcv->pgptr, slotid);
+  ret_slotid = spage_delete_for_recovery (thread_p, rcv->pgptr, slotid);
+  if (ret_slotid == NULL_SLOTID)
+    {
+      assert (false);
+      ;				/* TODO - avoid compile error */
+    }
+
   pgbuf_set_dirty (thread_p, rcv->pgptr, DONT_FREE);
 
   return NO_ERROR;

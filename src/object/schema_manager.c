@@ -1125,6 +1125,10 @@ domain_search (MOP dclass_mop, MOP class_mop)
 {
   int ok = 0;
 
+#if 1				/* TODO - trace */
+  assert (false);
+#endif
+
   if (dclass_mop == class_mop)
     {
       ok = 1;
@@ -1147,6 +1151,10 @@ int
 sm_check_object_domain (TP_DOMAIN * domain, MOP object)
 {
   int ok;
+
+#if 1				/* TODO - trace */
+  assert (false);
+#endif
 
   ok = 0;
   if (domain->type == tp_Type_object)
@@ -4980,7 +4988,7 @@ update_class (SM_TEMPLATE * template_, MOP * classmop)
 	}
 
       class_->class_type = flat->class_type;
-      class_->owner = Au_user;	/* remember the owner id */
+      class_->owner = au_get_user ();	/* remember the owner id */
 
       /* NOTE: Garbage collection can occur in the following function
          as a result of the allocation of the class MOP.  We must

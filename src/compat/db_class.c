@@ -266,8 +266,7 @@ drop_internal (MOP class_, const char *name)
 
 /*
  * db_drop_attribute_internal() - This function removes instance
- *    attributes from a class. The attribute is consequently dropped from any
- *    subclasses, as well.
+ *    attributes from a class.
  * return : error code
  * class(in): class or instance
  * name(in) : attribute name

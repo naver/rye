@@ -1176,7 +1176,7 @@ rsql_do_session_cmd (SESSION_CMD cmd, char *argument,
       break;
 
     case S_CMD_CHECKPOINT:
-      if (au_is_dba_group_member (Au_user))
+      if (au_is_dba_group_member (au_get_user ()))
 	{
 	  db_checkpoint ();
 	  if (db_error_code () != NO_ERROR)
@@ -1196,7 +1196,7 @@ rsql_do_session_cmd (SESSION_CMD cmd, char *argument,
       break;
 
     case S_CMD_KILLTRAN:
-      if (au_is_dba_group_member (Au_user))
+      if (au_is_dba_group_member (au_get_user ()))
 	{
 	  rsql_killtran ((argument[0] == '\0') ? NULL : argument);
 	}
@@ -1232,7 +1232,7 @@ rsql_do_session_cmd (SESSION_CMD cmd, char *argument,
 	}
       else
 	{
-	  if (au_is_dba_group_member (Au_user))
+	  if (au_is_dba_group_member (au_get_user ()))
 	    {
 	      au_disable ();
 	    }
@@ -2903,9 +2903,9 @@ rsql (const char *argv0, RSQL_ARGUMENT * rsql_arg)
 	    }
 	}
 
-      assert (Au_user != NULL);
+      assert (au_get_user () != NULL);
 
-      if (au_is_dba_group_member (Au_user))
+      if (au_is_dba_group_member (au_get_user ()))
 	{
 	  au_disable ();
 	}
