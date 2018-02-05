@@ -95,10 +95,10 @@ extern bool catcls_Enable;
  * Authorization Class Names
  */
 const char *AU_ROOT_CLASS_NAME = CT_ROOT_NAME;
-const char *AU_USER_CLASS_NAME = CT_USER_NAME;
+static const char *AU_USER_CLASS_NAME = CT_USER_NAME;
 const char *AU_GRANT_CLASS_NAME = "db_grant";
 const char *AU_AUTH_NAME = CT_AUTH_NAME;
-const char *AU_PUBLIC_USER_NAME = "PUBLIC";
+static const char *AU_PUBLIC_USER_NAME = "PUBLIC";
 const char *AU_DBA_USER_NAME = "DBA";
 
 
@@ -260,7 +260,7 @@ struct class_auth
  * This is cached here after the database is restarted so we don't
  * have to keep looking for it.
  */
-MOP Au_root = NULL;
+static MOP Au_root = NULL;
 
 /*
  * Au_disable
@@ -293,8 +293,8 @@ static int Au_ignore_passwords = 0;
  * grants to PUBLIC are visible to everyone.  The DBA is automatically
  * a member of all groups/users and hence will have all permissions.
  */
-MOP Au_public_user = NULL;
-MOP Au_dba_user = NULL;
+static MOP Au_public_user = NULL;
+static MOP Au_dba_user = NULL;
 
 /*
  * Au_user
@@ -303,7 +303,7 @@ MOP Au_dba_user = NULL;
  * logged in user.  Can be overridden in special cases to change
  * system authorizations.
  */
-MOP Au_user = NULL;
+static MOP Au_user = NULL;
 
 /*
  * Au_user_name, Au_user_password(SHA2_512)
@@ -4163,7 +4163,17 @@ au_enable (int save)
 }
 
 /*
- * au_public_user
+ * au_get_root
+ *   return: Au_root
+ */
+MOP
+au_get_root (void)
+{
+  return Au_root;
+}
+
+/*
+ * au_get_public_user
  *   return: Au_public_user
  */
 MOP
@@ -4173,13 +4183,23 @@ au_get_public_user (void)
 }
 
 /*
- * au_public_user
- *   return: Au_public_user
+ * au_get_dba_user
+ *   return: Au_dba_user
  */
 MOP
 au_get_dba_user (void)
 {
   return Au_dba_user;
+}
+
+/*
+ * au_get_user
+ *   return: Au_user
+ */
+MOP
+au_get_user (void)
+{
+  return Au_user;
 }
 
 const char *

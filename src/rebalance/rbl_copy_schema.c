@@ -413,7 +413,8 @@ rbl_user_def_sql (CCI_CONN * conn)
   DB_MAKE_NULL (&pass_val);
   error = NO_ERROR;
 
-  sprintf (buf, "SELECT name, password FROM [%s];", AU_USER_CLASS_NAME);
+  sprintf (buf, "SELECT name, password FROM [%s];",
+	   au_get_user_class_name ());
 
   error = db_execute (buf, &query_result, &query_error);
   if (error < 0)

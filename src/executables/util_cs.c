@@ -2083,7 +2083,7 @@ tranlist (UTIL_FUNCTION_ARG * arg)
 	}
     }
 
-  if (!au_is_dba_group_member (Au_user))
+  if (!au_is_dba_group_member (au_get_user ()))
     {
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
 					     MSGCAT_UTIL_SET_TRANLIST,

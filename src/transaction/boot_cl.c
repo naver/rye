@@ -720,7 +720,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
       else if (cli_cred->db_user[0] == '\0')
 	{
 	  free_and_init (db_user_alloced);
-	  cli_cred->db_user = AU_PUBLIC_USER_NAME;
+	  cli_cred->db_user = au_get_public_user_name ();
 	}
     }
   /* Get the login name, host, and process identifier */
@@ -1001,7 +1001,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
     {
       assert (cli_cred->db_user != NULL);
       assert (cli_cred->db_user != boot_Client_no_user_string);
-      assert (cli_cred->db_user != AU_PUBLIC_USER_NAME);
+      assert (cli_cred->db_user != au_get_public_user_name ());
       free_and_init (db_user_alloced);
       cli_cred->db_user = NULL;
     }
@@ -1043,7 +1043,7 @@ error:
     {
       assert (cli_cred->db_user != NULL);
       assert (cli_cred->db_user != boot_Client_no_user_string);
-      assert (cli_cred->db_user != AU_PUBLIC_USER_NAME);
+      assert (cli_cred->db_user != au_get_public_user_name ());
       free_and_init (db_user_alloced);
       cli_cred->db_user = NULL;
     }
@@ -1465,7 +1465,8 @@ boot_define_class (MOP class_mop)
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, "owner", AU_USER_CLASS_NAME, NULL);
+  error_code =
+    smt_add_attribute (def, "owner", au_get_user_class_name (), NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1532,7 +1533,7 @@ boot_define_class (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1637,7 +1638,7 @@ boot_define_attribute (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1758,7 +1759,7 @@ boot_define_domain (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1824,7 +1825,7 @@ boot_define_query_spec (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1923,7 +1924,7 @@ boot_define_index (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -2007,7 +2008,7 @@ boot_define_index_key (MOP class_mop)
       return error_code;
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -2112,7 +2113,7 @@ boot_define_data_type (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -2289,7 +2290,7 @@ boot_define_collations (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = au_change_owner (class_mop, Au_dba_user);
+  error_code = au_change_owner (class_mop, au_get_dba_user ());
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -2387,7 +2388,7 @@ boot_define_catalog_table (void)
 	  goto end;
 	}
 
-      error_code = au_change_owner (class_mop, Au_dba_user);
+      error_code = au_change_owner (class_mop, au_get_dba_user ());
       if (error_code != NO_ERROR)
 	{
 	  goto end;
