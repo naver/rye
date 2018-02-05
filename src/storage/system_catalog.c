@@ -5139,11 +5139,18 @@ int
 catalog_rv_insert_undo (THREAD_ENTRY * thread_p, LOG_RCV * recv_p)
 {
   PGSLOTID slot_id;
+  PGSLOTID ret_slotid;
 
   catalog_clear_hash_table ();
 
   slot_id = recv_p->offset;
-  (void) spage_delete_for_recovery (thread_p, recv_p->pgptr, slot_id);
+  ret_slotid = spage_delete_for_recovery (thread_p, recv_p->pgptr, slot_id);
+  if (ret_slotid == NULL_SLOTID)
+    {
+      assert (false);
+      ;				/* TODO - avoid compile error */
+    }
+
   pgbuf_set_dirty (thread_p, recv_p->pgptr, DONT_FREE);
 
   return NO_ERROR;

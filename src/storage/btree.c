@@ -2273,7 +2273,7 @@ btree_check_by_btid (THREAD_ENTRY * thread_p, BTID * btid)
       fd = (char *) malloc (fd_size);
       if (fd == NULL)
 	{
-          assert (false);
+	  assert (false);
 	  fd = area;
 	  fd_size = FILE_DUMP_DES_AREA_SIZE;
 	}
@@ -3724,7 +3724,7 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
   d = 0;
   exp_size = 10;
 #if !defined(NDEBUG)
-  exp_size = 1; /* for code coverage */
+  exp_size = 1;			/* for code coverage */
 #endif
 
   del_vpid_size = exp_size;	/* guess */
@@ -5028,8 +5028,10 @@ btree_coerce_idxkey (DB_IDXKEY * key,
     {
       /* something wrong with making search key in query optimizer */
       assert (false);
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
-      fprintf (stderr, "Error: btree_coerce_idxkey (ssize %d, dsize %d, num_term %d)\n",
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
+	      "");
+      fprintf (stderr,
+	       "Error: btree_coerce_idxkey (ssize %d, dsize %d, num_term %d)\n",
 	       ssize, dsize, num_term);
       return ER_GENERIC_ERROR;
     }
@@ -5075,7 +5077,7 @@ btree_coerce_idxkey (DB_IDXKEY * key,
       dp_type = indexp->atts[i]->type;
       if (dp_type == DB_TYPE_OBJECT)
 	{
-          assert (false);
+	  assert (false);
 	  dp_type = DB_TYPE_OID;
 	}
 
@@ -6095,7 +6097,7 @@ btree_dump_curr_key (THREAD_ENTRY * thread_p, INDX_SCAN_ID * iscan_id)
        * join index scan with always-true condition.
        * example: SELECT ... FROM X inner join Y on 1 = 1;
        */
-#if 1 /* TODO - trace */
+#if 1				/* TODO - trace */
       assert (false);
 #endif
       attr_info = iscan_id->pred_attrs.attr_cache;
@@ -6704,11 +6706,11 @@ int
 btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 {
   INT16 slotid;
-  PGSLOTID pg_slotid;
+  PGSLOTID ret_slotid;
 
   slotid = recv->offset;
-  pg_slotid = spage_delete_for_recovery (thread_p, recv->pgptr, slotid);
-  if (pg_slotid == NULL_SLOTID)
+  ret_slotid = spage_delete_for_recovery (thread_p, recv->pgptr, slotid);
+  if (ret_slotid == NULL_SLOTID)
     {
       assert (false);
       ;				/* TODO - avoid compile error */
@@ -7302,7 +7304,7 @@ error:
 int
 btree_rv_nop (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG LOG_RCV * recv)
 {
-  assert (false); /* TODO - trace */
+  assert (false);		/* TODO - trace */
 
   return NO_ERROR;
 }
@@ -7763,7 +7765,7 @@ btree_range_opt_check_add_index_key (THREAD_ENTRY * thread_p,
       curr_item = (RANGE_OPT_ITEM *) malloc (sizeof (RANGE_OPT_ITEM));
       if (curr_item == NULL)
 	{
-          assert (false);
+	  assert (false);
 	  if (new_key_value != NULL)
 	    {
 	      free_and_init (new_key_value);
@@ -7793,7 +7795,7 @@ btree_range_opt_check_add_index_key (THREAD_ENTRY * thread_p,
 				   sizeof (TP_DOMAIN *));
 	  if (multi_range_opt->sort_col_dom == NULL)
 	    {
-              assert (false);
+	      assert (false);
 	      goto exit;
 	    }
 
@@ -8032,7 +8034,7 @@ btree_range_search (THREAD_ENTRY * thread_p, UNUSED_ARG BTID * btid,
       /* check range */
       if (!BTREE_VALID_RANGE (key_val_range->range))
 	{
-          assert (false); /* TODO - trace */
+	  assert (false);	/* TODO - trace */
 	  error = ER_BTREE_INVALID_RANGE;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
