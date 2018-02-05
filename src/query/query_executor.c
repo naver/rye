@@ -5613,7 +5613,7 @@ qexec_execute_insert (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 
   if (insert->has_uniques && (insert->do_replace || odku_assignments != NULL))
     {
-      if (heap_attrinfo_start_with_index (thread_p, &class_oid, NULL,
+      if (heap_attrinfo_start_with_index (thread_p, &class_oid,
 					  &index_attr_info, &idx_info) < 0)
 	{
 	  QEXEC_GOTO_EXIT_ON_ERROR;

@@ -458,6 +458,7 @@ catalog_get_disk_attribute (DISK_ATTR * attr_p, char *rec_p)
   attr_p->default_expr = DB_DEFAULT_NONE;
 
   OR_GET_OID (rec_p + CATALOG_DISK_ATTR_CLASSOID_OFF, &attr_p->classoid);
+  assert (OID_ISNULL (&attr_p->classoid));
 
   memset (&(attr_p->unused_min_value), 0, sizeof (DB_DATA));
   memset (&(attr_p->unused_max_value), 0, sizeof (DB_DATA));
@@ -509,6 +510,8 @@ catalog_get_btree_statistics (BTREE_STATS * stat_p, char *rec_p)
 static void
 catalog_put_disk_attribute (char *rec_p, DISK_ATTR * attr_p)
 {
+  assert (OID_ISNULL (&attr_p->classoid));
+
   OR_PUT_INT (rec_p + CATALOG_DISK_ATTR_ID_OFF, attr_p->id);
   OR_PUT_INT (rec_p + CATALOG_DISK_ATTR_LOCATION_OFF, attr_p->location);
   OR_PUT_INT (rec_p + CATALOG_DISK_ATTR_TYPE_OFF, attr_p->type);
@@ -4724,6 +4727,8 @@ catalog_dump_disk_attribute (FILE * out_fp, DISK_ATTR * attr_p)
       break;
     }
 
+  assert (OID_ISNULL (&attr_p->classoid));
+
   fprintf (out_fp, " Location: %d \n", attr_p->location);
   fprintf (out_fp, " Source Class_Id: { %d , %d , %d } \n",
 	   attr_p->classoid.volid, attr_p->classoid.pageid,
@@ -5244,7 +5249,7 @@ catalog_get_index_info (THREAD_ENTRY * thread_p, OID * class_oid,
     }
 
   cls_rep =
-    heap_classrepr_get (thread_p, class_oid, NULL, 0, &idx_cache, true);
+    heap_classrepr_get (thread_p, class_oid, NULL_REPRID, &idx_cache, true);
   if (cls_rep == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_UNEXPECTED, 0);

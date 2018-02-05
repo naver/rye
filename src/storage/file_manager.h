@@ -44,7 +44,9 @@ typedef enum
   FILE_BTREE,
   FILE_EXTENDIBLE_HASH,
   FILE_EXTENDIBLE_HASH_DIRECTORY,
+#if defined(ENABLE_UNUSED_FUNCTION)
   FILE_LONGDATA,
+#endif
   FILE_CATALOG,
   FILE_QUERY_AREA,
   FILE_TMP,
@@ -109,12 +111,14 @@ struct file_ehash_des
   int attr_id;
 };
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /* LO file descriptor */
 typedef struct file_lo_des FILE_LO_DES;
 struct file_lo_des
 {
   OID oid;
 };
+#endif
 
 /*
  * Description of allocated sectors and pages for a volume. Note that the same
