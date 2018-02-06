@@ -2006,6 +2006,20 @@ log_recovery_analysis (THREAD_ENTRY * thread_p, LOG_LSA * start_lsa,
 	  /* Find the log record */
 	  log_lsa.offset = lsa.offset;
 	  log_rec = LOG_GET_LOG_RECORD_HEADER (log_page_p, &log_lsa);
+	  if (!LOG_IS_VALID_LOG_RECORD (&log_lsa, log_rec))
+	    {
+	      /* It seems to be a system error. Maybe a loop in the log */
+	      er_log_debug (ARG_FILE_LINE,
+			    "log_recovery_analysis: ** System error:"
+			    " It seems to be a loop in the log\n."
+			    " Current log_rec at %ld|%d. Next log_rec at %ld|%d\n",
+			    (long) log_lsa.pageid, log_lsa.offset,
+			    (long) lsa.pageid, lsa.offset);
+	      logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
+				 "log_recovery_analysis");
+	      LSA_SET_NULL (&lsa);
+	      break;
+	    }
 
 	  tran_id = log_rec->trid;
 	  log_rtype = log_rec->type;
@@ -2031,24 +2045,6 @@ log_recovery_analysis (THREAD_ENTRY * thread_p, LOG_LSA * start_lsa,
 	  if (LSA_ISNULL (&lsa) && logpb_is_page_in_archive (log_lsa.pageid))
 	    {
 	      lsa.pageid = log_lsa.pageid + 1;
-	    }
-
-	  if (!LSA_ISNULL (&lsa) && log_lsa.pageid != NULL_PAGEID
-	      && (lsa.pageid < log_lsa.pageid
-		  || (lsa.pageid == log_lsa.pageid
-		      && lsa.offset <= log_lsa.offset)))
-	    {
-	      /* It seems to be a system error. Maybe a loop in the log */
-	      er_log_debug (ARG_FILE_LINE,
-			    "log_recovery_analysis: ** System error:"
-			    " It seems to be a loop in the log\n."
-			    " Current log_rec at %lld|%d. Next log_rec at %lld|%d\n",
-			    (long long int) log_lsa.pageid, log_lsa.offset,
-			    (long long int) lsa.pageid, lsa.offset);
-	      logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
-				 "log_recovery_analysis");
-	      LSA_SET_NULL (&lsa);
-	      break;
 	    }
 
 	  if (LSA_ISNULL (&lsa) && log_rtype != LOG_END_OF_LOG
@@ -2332,6 +2328,20 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 	  /* Find the log record */
 	  log_lsa.offset = lsa.offset;
 	  log_rec = LOG_GET_LOG_RECORD_HEADER (log_pgptr, &log_lsa);
+	  if (!LOG_IS_VALID_LOG_RECORD (&log_lsa, log_rec))
+	    {
+	      /* It seems to be a system error. Maybe a loop in the log */
+	      er_log_debug (ARG_FILE_LINE,
+			    "log_recovery_redo: ** System error:"
+			    " It seems to be a loop in the log\n."
+			    " Current log_rec at %lld|%d. Next log_rec at %lld|%d\n",
+			    (long long int) log_lsa.pageid, log_lsa.offset,
+			    (long long int) lsa.pageid, lsa.offset);
+	      logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
+				 "log_recovery_redo");
+	      LSA_SET_NULL (&lsa);
+	      break;
+	    }
 
 	  /* Get the address of next log record to scan */
 	  LSA_COPY (&lsa, &log_rec->forw_lsa);
@@ -2348,24 +2358,6 @@ log_recovery_redo (THREAD_ENTRY * thread_p, const LOG_LSA * start_redolsa,
 	  if (LSA_ISNULL (&lsa) && logpb_is_page_in_archive (log_lsa.pageid))
 	    {
 	      lsa.pageid = log_lsa.pageid + 1;
-	    }
-
-	  if (!LSA_ISNULL (&lsa) && log_lsa.pageid != NULL_PAGEID
-	      && (lsa.pageid < log_lsa.pageid
-		  || (lsa.pageid == log_lsa.pageid
-		      && lsa.offset <= log_lsa.offset)))
-	    {
-	      /* It seems to be a system error. Maybe a loop in the log */
-	      er_log_debug (ARG_FILE_LINE,
-			    "log_recovery_redo: ** System error:"
-			    " It seems to be a loop in the log\n."
-			    " Current log_rec at %lld|%d. Next log_rec at %lld|%d\n",
-			    (long long int) log_lsa.pageid, log_lsa.offset,
-			    (long long int) lsa.pageid, lsa.offset);
-	      logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
-				 "log_recovery_redo");
-	      LSA_SET_NULL (&lsa);
-	      break;
 	    }
 
 	  switch (log_rec->type)

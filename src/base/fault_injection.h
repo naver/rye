@@ -42,6 +42,14 @@
 #define FI_TEST_ARRAY(th, num_entries, entries) fi_test_array(th, num_entries, entries)
 #define FI_TEST_ARG(th, code, arg, state) fi_test(th, code, arg, state)
 #define FI_TEST_ARG_INT(th, code, arg, state) fi_test_arg_int(th, code, arg, state)
+#define FI_TEST_ARG_INT2(th, code, arg1, arg2, state)    \
+  do {                                                   \
+    FI_ARG_SLEEP arg;                                    \
+                                                         \
+    arg.mod_factor = arg1;                               \
+    arg.sleep_time = arg2;                               \
+    fi_test(th, code, &arg, state);                      \
+  } while (0)
 #define FI_TEST_ARRAY_ARG_INT(th, num_entries, entries) fi_test_array_arg_int(th, num_entries, entries)
 #else
 #define FI_INIT()
@@ -53,6 +61,7 @@
 #define FI_TEST_ARRAY(th, num_entries, entries) (NO_ERROR)
 #define FI_TEST_ARG(th, code, arg, state) (NO_ERROR)
 #define FI_TEST_ARG_INT(th, code, arg, state) (NO_ERROR)
+#define FI_TEST_ARG_INT2(th, code, arg1, arg2, state)
 #define FI_TEST_ARRAY_ARG_INT(th, num_entries, entries) (NO_ERROR)
 #endif
 
@@ -136,6 +145,14 @@ struct fi_test_entry_arg_int
   int arg;
   int state;
 };
+
+typedef struct fi_arg_sleep FI_ARG_SLEEP;
+struct fi_arg_sleep
+{
+  int mod_factor;
+  int sleep_time;
+};
+
 
 extern void fi_init (void);
 extern int fi_thread_init (THREAD_ENTRY * thread_p);

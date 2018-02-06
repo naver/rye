@@ -6885,10 +6885,7 @@ hb_check_ping (const char *host)
   HB_NODE_ENTRY *node;
   PRM_NODE_INFO node_info;
 
-  if (FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_PING_HOST, 3, 0) != NO_ERROR)
-    {
-      return HB_PING_FAILURE;
-    }
+  FI_TEST_ARG_INT2 (NULL, FI_TEST_HB_SLOW_PING_HOST, 100, 30 * ONE_SEC, 0);
 
   /* If host_p is in the cluster node, then skip to check */
 

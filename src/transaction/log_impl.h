@@ -176,6 +176,24 @@
     }                                                                         \
   while(0)
 
+#define LOG_IS_VALID_LSA(lsa)                                                                \
+  ( ((lsa)->pageid == LOGPB_HEADER_PAGE_ID)                                                  \
+      || LSA_ISNULL(lsa)                                                                     \
+      || ((lsa)->pageid >= 0 && (lsa)->offset >= 0 && (lsa)->offset < LOGAREA_SIZE) )
+
+#define LOG_IS_VALID_LOG_RECORD(start_lsa, lrec)                                                 \
+    ((lrec->type == LOG_END_OF_LOG)                                                              \
+      || (LOG_IS_VALID_LSA(&((lrec)->prev_tranlsa))                                              \
+          && LOG_IS_VALID_LSA(&((lrec)->back_lsa))                                               \
+          && LOG_IS_VALID_LSA(&((lrec)->forw_lsa))                                               \
+          && !LSA_ISNULL(&((lrec)->forw_lsa))                                                    \
+          && LSA_LT(start_lsa, &((lrec)->forw_lsa))                                              \
+          && LSA_GT(start_lsa, &((lrec)->prev_tranlsa))                                          \
+          && LSA_GT(start_lsa, &((lrec)->back_lsa))                                              \
+          && ((lrec)->trid == NULL_TRANID || (lrec)->trid >= 0)                                  \
+          && ((lrec)->type > LOG_SMALLER_LOGREC_TYPE && (lrec)->type < LOG_LARGER_LOGREC_TYPE)))
+
+
 
 #define LOG_SYSTEM_TRAN_INDEX 0	/* The recovery system transaction index */
 #define LOG_SYSTEM_TRANID     0	/* The recovery system transaction       */

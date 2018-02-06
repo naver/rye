@@ -125,13 +125,13 @@ fi_init (void)
 		     "fi_btree_delete_index_error_2", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE,
-		     "fi_hb_slow_heartbeat_message", fi_handler_random_fail);
+		     "fi_hb_slow_heartbeat_message", fi_handler_random_sleep);
 
   fi_init_test_item (FI_TEST_HB_SLOW_DISK,
 		     "fi_hb_slow_disk", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_HB_SLOW_PING_HOST,
-		     "fi_hb_slow_ping_host", fi_handler_random_fail);
+		     "fi_hb_slow_ping_host", fi_handler_random_sleep);
 
   fi_init_test_item (FI_TEST_REPL_RANDOM_EXIT,
 		     "fi_repl_random_exit", fi_handler_random_exit);
@@ -621,15 +621,16 @@ fi_handler_random_sleep (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
 {
   static bool init = false;
   int r;
-  int mod_factor;
+  FI_ARG_SLEEP arg_sleep;
 
   if (arg == NULL)
     {
-      mod_factor = 20000;
+      arg_sleep.mod_factor = 20000;
+      arg_sleep.sleep_time = 10 * ONE_SEC;
     }
   else
     {
-      mod_factor = *((int *) arg);
+      arg_sleep = *((FI_ARG_SLEEP *) arg);
     }
 
   if (init == false)
@@ -638,12 +639,13 @@ fi_handler_random_sleep (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
       init = true;
     }
 
-  r = rand () % mod_factor;
-
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	  ER_FAULT_INJECTION, 1, "fault injection: random sleep");
-
-  THREAD_SLEEP (r);
+  r = rand () % arg_sleep.mod_factor;
+  if (r == 0)
+    {
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
+	      ER_FAULT_INJECTION, 1, "fault injection: random sleep");
+      THREAD_SLEEP (arg_sleep.sleep_time);
+    }
 
   return NO_ERROR;
 }
