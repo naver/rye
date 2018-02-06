@@ -1095,6 +1095,10 @@ file_new_destroy_all_tmp (THREAD_ENTRY * thread_p)
   int tran_index;
   int ret = NO_ERROR;
 
+#if 1
+  assert (false); /* TODO - trace */
+#endif
+
   delete_list = NULL;
 
   if (csect_enter (thread_p, CSECT_FILE_NEWFILE, INF_WAIT) != NO_ERROR)
@@ -2504,6 +2508,7 @@ file_calculate_offset (INT16 start_offset, int size, int nelements,
   int idx;
 
   offset = start_offset + (size * nelements);
+  assert (offset < DB_PAGESIZE); /* TODO - trace */
 
   if (offset < DB_PAGESIZE)
     {
@@ -2572,6 +2577,8 @@ file_create_tmp_internal (THREAD_ENTRY * thread_p, VFID * vfid,
   bool old_val;
 #endif /* SERVER_MODE */
 
+  assert (file_type == FILE_TMP || file_type == FILE_QUERY_AREA);
+
   /* Start a TOP SYSTEM OPERATION.
      This top system operation will be either ABORTED (case of failure) or
      COMMITTED, so that the new file becomes kind of permanent. */
@@ -2590,7 +2597,7 @@ file_create_tmp_internal (THREAD_ENTRY * thread_p, VFID * vfid,
     {
       log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
 
-
+#if 0
       if (file_type != FILE_TMP && file_type != FILE_QUERY_AREA)
 	{
 	  addr.vfid = NULL;
@@ -2604,6 +2611,7 @@ file_create_tmp_internal (THREAD_ENTRY * thread_p, VFID * vfid,
 	  logpb_flush_pages_direct (thread_p);
 	  LOG_CS_EXIT ();
 	}
+#endif
     }
   else
     {
@@ -4609,6 +4617,7 @@ file_find_nthpages (THREAD_ENTRY * thread_p, const VFID * vfid,
 	    }
 	  if (num_returned < 0)
 	    {
+	      assert (false); /* TODO - trace */
 	      total_returned = num_returned;
 	      pgbuf_unfix_and_init (thread_p, allocset_pgptr);
 	      VPID_SET_NULL (nth_vpids);
@@ -12284,6 +12293,10 @@ file_rv_undo_create_tmp (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   FILE_HEADER *fhdr;
   int ret = NO_ERROR;
 
+#if 1
+  assert (false); /* not used */
+#endif
+
   vfid = (const VFID *) rcv->data;
 
   if (fileio_get_volume_descriptor (vfid->volid) == NULL_VOLDES
@@ -12352,6 +12365,10 @@ void
 file_rv_dump_create_tmp (FILE * fp, UNUSED_ARG int length_ignore, void *data)
 {
   VFID *vfid;
+
+#if 1
+  assert (false); /* not used */
+#endif
 
   vfid = (VFID *) data;
   (void) fprintf (fp, "Undo creation of Tmp vfid: %d|%d\n",
