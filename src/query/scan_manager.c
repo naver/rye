@@ -2140,7 +2140,6 @@ scan_init_scan_id (SCAN_ID * scan_id, int fixed,
   scan_id->fetch_type = fetch_type;
   scan_id->single_fetched = false;
   scan_id->null_fetched = false;
-  scan_id->qualification = QPROC_QUALIFIED;
 
   /* value list and descriptor */
   scan_id->val_list = val_list;	/* points to the XASL tree */
@@ -3279,42 +3278,9 @@ scan_next_heap_scan (THREAD_ENTRY * thread_p, SCAN_ID * scan_id)
 	  return S_ERROR;
 	}
 
-      if (scan_id->qualification == QPROC_QUALIFIED)
+      if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
 	{
-	  if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
-	    {
-	      continue;		/* not qualified, continue to the next tuple */
-	    }
-	}
-      else if (scan_id->qualification == QPROC_NOT_QUALIFIED)
-	{
-	  if (ev_res != V_FALSE)	/* V_TRUE || V_UNKNOWN */
-	    {
-	      continue;		/* qualified, continue to the next tuple */
-	    }
-	}
-      else if (scan_id->qualification == QPROC_QUALIFIED_OR_NOT)
-	{
-	  if (ev_res == V_TRUE)
-	    {
-	      scan_id->qualification = QPROC_QUALIFIED;
-	    }
-	  else if (ev_res == V_FALSE)
-	    {
-	      scan_id->qualification = QPROC_NOT_QUALIFIED;
-	    }
-	  else			/* V_UNKNOWN */
-	    {
-	      /* nop */
-	      ;
-	    }
-	}
-      else
-	{			/* invalid value; the same as QPROC_QUALIFIED */
-	  if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
-	    {
-	      continue;		/* not qualified, continue to the next tuple */
-	    }
+	  continue;		/* not qualified, continue to the next tuple */
 	}
 
       scan_id->stats.qualified_rows++;
@@ -3774,49 +3740,7 @@ scan_next_index_lookup_heap (THREAD_ENTRY * thread_p, SCAN_ID * scan_id,
       return S_ERROR;
     }
 
-  if (scan_id->qualification == QPROC_QUALIFIED)
-    {
-      if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
-	{
-	  return S_DOESNT_EXIST;	/* not qualified, continue to the next tuple */
-	}
-    }
-  else if (scan_id->qualification == QPROC_NOT_QUALIFIED)
-    {
-      if (ev_res != V_FALSE)	/* V_TRUE || V_UNKNOWN */
-	{
-	  return S_DOESNT_EXIST;	/* qualified, continue to the next tuple */
-	}
-    }
-  else if (scan_id->qualification == QPROC_QUALIFIED_OR_NOT)
-    {
-      if (ev_res == V_TRUE)
-	{
-	  scan_id->qualification = QPROC_QUALIFIED;
-	}
-      else if (ev_res == V_FALSE)
-	{
-	  scan_id->qualification = QPROC_NOT_QUALIFIED;
-	}
-      else			/* V_UNKNOWN */
-	{
-	  /* nop */
-	  ;
-	}
-    }
-  else
-    {				/* invalid value; the same as QPROC_QUALIFIED */
-      if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
-	{
-	  return S_DOESNT_EXIST;	/* not qualified, continue to the next tuple */
-	}
-    }
-
-  if (ev_res == V_ERROR)
-    {
-      return S_ERROR;
-    }
-  else if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
+  if (ev_res != V_TRUE)		/* V_FALSE || V_UNKNOWN */
     {
       return S_DOESNT_EXIST;	/* not qualified, continue to the next tuple */
     }
@@ -3895,48 +3819,16 @@ scan_next_list_scan (THREAD_ENTRY * thread_p, SCAN_ID * scan_id)
 						     llsidp->
 						     scan_pred.pred_expr,
 						     scan_id->vd, NULL);
-	  if (ev_res == V_ERROR)
-	    {
-	      return S_ERROR;
-	    }
 	}
 
-      if (scan_id->qualification == QPROC_QUALIFIED)
+      if (ev_res == V_ERROR)
 	{
-	  if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
-	    {
-	      continue;		/* not qualified, continue to the next tuple */
-	    }
+	  return S_ERROR;
 	}
-      else if (scan_id->qualification == QPROC_NOT_QUALIFIED)
+
+      if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
 	{
-	  if (ev_res != V_FALSE)	/* V_TRUE || V_UNKNOWN */
-	    {
-	      continue;		/* qualified, continue to the next tuple */
-	    }
-	}
-      else if (scan_id->qualification == QPROC_QUALIFIED_OR_NOT)
-	{
-	  if (ev_res == V_TRUE)
-	    {
-	      scan_id->qualification = QPROC_QUALIFIED;
-	    }
-	  else if (ev_res == V_FALSE)
-	    {
-	      scan_id->qualification = QPROC_NOT_QUALIFIED;
-	    }
-	  else			/* V_UNKNOWN */
-	    {
-	      /* nop */
-	      ;
-	    }
-	}
-      else
-	{			/* invalid value; the same as QPROC_QUALIFIED */
-	  if (ev_res != V_TRUE)	/* V_FALSE || V_UNKNOWN */
-	    {
-	      continue;		/* not qualified, continue to the next tuple */
-	    }
+	  continue;		/* not qualified, continue to the next tuple */
 	}
 
       scan_id->stats.qualified_rows++;
