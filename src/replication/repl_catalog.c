@@ -255,6 +255,7 @@ int
 rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_info)
 {
   CIRP_APPLIER_INFO *applier = NULL;
+  CIRP_CT_LOG_APPLIER ct;
   int num_appliers;
   int i;
   int error = NO_ERROR;
@@ -314,11 +315,12 @@ rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_info)
 	{
 	  applier = &Repl_Info->applier_info[i];
 
-	  error = rpct_get_log_applier (conn, &applier->ct, host_info, i + 1);
+	  error = rpct_get_log_applier (conn, &ct, host_info, i + 1);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
 	    }
+	  applier->ct = ct;
 	}
     }
 
@@ -695,7 +697,7 @@ exit_on_error:
  *    query(in):
  */
 static int
-cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
+cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * analyzer,
 			       CCI_CONN * conn, char *query)
 {
   int index;
@@ -733,7 +735,7 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
       GOTO_EXIT_ON_ERROR;
     }
   assert (ind >= 0 && str_value != NULL);
-  if (rp_host_str_to_node_info (&applier->host_info, str_value) != NO_ERROR)
+  if (rp_host_str_to_node_info (&analyzer->host_info, str_value) != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
@@ -745,10 +747,17 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
       GOTO_EXIT_ON_ERROR;
     }
   assert (ind >= 0);
-  applier->required_lsa = int64_to_lsa (bi);
+  analyzer->required_lsa = int64_to_lsa (bi);
+  if (!LSA_ISNULL (&analyzer->required_lsa)
+      && (analyzer->required_lsa.pageid < 0
+	  || analyzer->required_lsa.offset < 0))
+    {
+      assert (false);
+      GOTO_EXIT_ON_ERROR;
+    }
   index++;
 
-  applier->source_applied_time = cci_get_bigint (&stmt, index, &ind);
+  analyzer->source_applied_time = cci_get_bigint (&stmt, index, &ind);
   if (stmt.err_buf.err_code < 0)
     {
       GOTO_EXIT_ON_ERROR;
@@ -756,7 +765,7 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
   assert (ind >= 0);
   index++;
 
-  applier->creation_time = cci_get_bigint (&stmt, index, &ind);
+  analyzer->creation_time = cci_get_bigint (&stmt, index, &ind);
   if (stmt.err_buf.err_code < 0)
     {
       GOTO_EXIT_ON_ERROR;
@@ -858,6 +867,13 @@ cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
     }
   assert (ind >= 0);
   applier->committed_lsa = int64_to_lsa (bi);
+  if (!LSA_ISNULL (&applier->committed_lsa)
+      && (applier->committed_lsa.pageid < 0
+	  || applier->committed_lsa.offset < 0))
+    {
+      assert (false);
+      GOTO_EXIT_ON_ERROR;
+    }
   index++;
 
   assert (cci_fetch_next (&stmt) == CCI_ER_NO_MORE_DATA);
