@@ -5613,7 +5613,7 @@ qexec_execute_insert (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 
   if (insert->has_uniques && (insert->do_replace || odku_assignments != NULL))
     {
-      if (heap_attrinfo_start_with_index (thread_p, &class_oid, NULL,
+      if (heap_attrinfo_start_with_index (thread_p, &class_oid,
 					  &index_attr_info, &idx_info) < 0)
 	{
 	  QEXEC_GOTO_EXIT_ON_ERROR;
@@ -7980,6 +7980,16 @@ qexec_cast_ct_applier_to_idxkey (DB_IDXKEY * val, void *ct_table)
   db_make_int (&val->vals[i++], log_applier->id);
 
   bi = lsa_to_int64 (log_applier->committed_lsa);
+  if (!LSA_ISNULL (&log_applier->committed_lsa) && bi < 0)
+    {
+      assert (false);
+      error = ER_GENERIC_ERROR;
+
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid required_lsa");
+
+      return error;
+    }
   db_make_bigint (&val->vals[i++], bi);
 
   val->size = i;
@@ -8016,6 +8026,16 @@ qexec_cast_ct_analyzer_to_idxkey (DB_IDXKEY * val, void *ct_table)
     }
 
   bi = lsa_to_int64 (log_analyzer->required_lsa);
+  if (!LSA_ISNULL (&log_analyzer->required_lsa) && bi < 0)
+    {
+      assert (false);
+      error = ER_GENERIC_ERROR;
+
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid required_lsa");
+
+      return error;
+    }
   db_make_bigint (&val->vals[i++], bi);
 
   db_make_bigint (&val->vals[i++], log_analyzer->source_applied_time);

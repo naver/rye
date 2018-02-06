@@ -2352,7 +2352,7 @@ scan_open_index_scan (THREAD_ENTRY * thread_p, SCAN_ID * scan_id,
   /* get class representation of the index */
   COPY_OID (&(BTS->btid_int.cls_oid), cls_oid);
   BTS->btid_int.classrepr =
-    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL_REPRID,
 			&(BTS->btid_int.classrepr_cache_idx), true);
   if (BTS->btid_int.classrepr == NULL)
     {

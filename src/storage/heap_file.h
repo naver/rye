@@ -190,7 +190,7 @@ extern int heap_classrepr_decache_and_lock (THREAD_ENTRY * thread_p,
 extern int heap_classrepr_unlock_class (const OID * class_oid);
 extern OR_CLASSREP *heap_classrepr_get (THREAD_ENTRY * thread_p,
 					OID * class_oid,
-					RECDES * class_recdes, REPR_ID reprid,
+					REPR_ID reprid,
 					int *idx_incache,
 					bool use_last_reprid);
 extern int heap_classrepr_free (OR_CLASSREP * classrep, int *idx_incache);
@@ -294,9 +294,9 @@ extern char *heap_get_class_name (THREAD_ENTRY * thread_p,
 extern char *heap_get_class_name_alloc_if_diff (THREAD_ENTRY * thread_p,
 						const OID * class_oid,
 						char *guess_classname);
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern char *heap_get_class_name_of_instance (THREAD_ENTRY * thread_p,
 					      const OID * inst_oid);
-#if defined (ENABLE_UNUSED_FUNCTION)
 extern char *heap_get_class_name_with_is_class (THREAD_ENTRY * thread_p,
 						const OID * oid,
 						int *isclass);
@@ -329,7 +329,6 @@ extern SCAN_CODE heap_attrinfo_transform_to_disk (THREAD_ENTRY * thread_p,
 						  int shard_groupid);
 extern int heap_attrinfo_start_with_index (THREAD_ENTRY * thread_p,
 					   OID * class_oid,
-					   RECDES * class_recdes,
 					   HEAP_CACHE_ATTRINFO * attr_info,
 					   HEAP_IDX_ELEMENTS_INFO * idx_info);
 extern int heap_attrinfo_start_with_btid (THREAD_ENTRY * thread_p,

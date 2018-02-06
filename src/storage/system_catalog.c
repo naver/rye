@@ -5244,7 +5244,7 @@ catalog_get_index_info (THREAD_ENTRY * thread_p, OID * class_oid,
     }
 
   cls_rep =
-    heap_classrepr_get (thread_p, class_oid, NULL, 0, &idx_cache, true);
+    heap_classrepr_get (thread_p, class_oid, NULL_REPRID, &idx_cache, true);
   if (cls_rep == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_UNEXPECTED, 0);
