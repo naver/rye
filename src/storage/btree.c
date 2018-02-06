@@ -1934,7 +1934,7 @@ xbtree_find_unique (THREAD_ENTRY * thread_p, OID * class_oid, BTID * btid,
   /* get class representation of the index */
   COPY_OID (&(BTS->btid_int.cls_oid), class_oid);
   BTS->btid_int.classrepr =
-    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL_REPRID,
 			&(BTS->btid_int.classrepr_cache_idx), true);
   if (BTS->btid_int.classrepr == NULL)
     {
@@ -2327,8 +2327,7 @@ btree_get_pkey_btid (THREAD_ENTRY * thread_p, OID * cls_oid, BTID * pkey_btid)
   BTID_SET_NULL (pkey_btid);
 
   cls_repr =
-    heap_classrepr_get (thread_p, cls_oid, NULL, NULL_REPRID, &cache_idx,
-			true);
+    heap_classrepr_get (thread_p, cls_oid, NULL_REPRID, &cache_idx, true);
   if (cls_repr == NULL)
     {
       assert (er_errid () != NO_ERROR);
@@ -6198,7 +6197,7 @@ btree_find_min_or_max_key (THREAD_ENTRY * thread_p, OID * class_oid,
   /* get class representation of the index */
   COPY_OID (&(BTS->btid_int.cls_oid), class_oid);
   BTS->btid_int.classrepr =
-    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL_REPRID,
 			&(BTS->btid_int.classrepr_cache_idx), true);
   if (BTS->btid_int.classrepr == NULL)
     {
@@ -6971,7 +6970,7 @@ btree_rv_read_keyval_info_nocopy (THREAD_ENTRY * thread_p,
   /* get class representation of the index */
   assert (!OID_ISNULL (&(btid->cls_oid)));
   btid->classrepr =
-    heap_classrepr_get (thread_p, &(btid->cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(btid->cls_oid), NULL_REPRID,
 			&(btid->classrepr_cache_idx), true);
   if (btid->classrepr == NULL)
     {

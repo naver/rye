@@ -4433,7 +4433,7 @@ locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
    *  Populate the index_attrinfo structure.
    *  Return the number of indexed attributes found.
    */
-  num_found = heap_attrinfo_start_with_index (thread_p, class_oid, NULL,
+  num_found = heap_attrinfo_start_with_index (thread_p, class_oid,
 					      &index_attrinfo, &idx_info);
   num_btids = idx_info.num_btids;
 
@@ -4592,7 +4592,7 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
   DB_IDXKEY_MAKE_NULL (&new_key);
   DB_IDXKEY_MAKE_NULL (&old_key);
 
-  new_num_found = heap_attrinfo_start_with_index (thread_p, class_oid, NULL,
+  new_num_found = heap_attrinfo_start_with_index (thread_p, class_oid,
 						  &space_attrinfo[0],
 						  &new_idx_info);
   num_btids = new_idx_info.num_btids;
@@ -4602,7 +4602,7 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
     }
   new_attrinfo = &space_attrinfo[0];
 
-  old_num_found = heap_attrinfo_start_with_index (thread_p, class_oid, NULL,
+  old_num_found = heap_attrinfo_start_with_index (thread_p, class_oid,
 						  &space_attrinfo[1],
 						  &old_idx_info);
   old_num_btids = old_idx_info.num_btids;

@@ -500,9 +500,11 @@ file_descriptor_dump_multi_page_object_heap (FILE * fp,
 					     ovf_hfile_des_p);
 static void file_print_name_of_class (THREAD_ENTRY * thread_p, FILE * fp,
 				      const OID * class_oid_p);
+#if defined(ENABLE_UNUSED_FUNCTION)
 static void file_print_class_name_of_instance (THREAD_ENTRY * thread_p,
 					       FILE * fp,
 					       const OID * inst_oid_p);
+#endif
 static void file_print_name_of_class_with_attrid (THREAD_ENTRY * thread_p,
 						  FILE * fp,
 						  const OID * class_oid_p,
@@ -1287,8 +1289,10 @@ file_type_to_string (FILE_TYPE fstruct_type)
       return "HASH";
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
       return "HASH_DIRECTORY";
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
       return "LONGDATA";
+#endif
     case FILE_CATALOG:
       return "CATALOG";
     case FILE_QUERY_AREA:
@@ -1319,7 +1323,9 @@ file_get_primary_vol_purpose (const FILE_TYPE ftype)
     case FILE_CATALOG:
     case FILE_EXTENDIBLE_HASH:
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
+#endif
       purpose = DISK_PERMVOL_DATA_PURPOSE;
       break;
 
@@ -1363,7 +1369,9 @@ file_get_disk_page_type (const FILE_TYPE ftype)
     case FILE_CATALOG:
     case FILE_EXTENDIBLE_HASH:
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
+#endif
       page_type = DISK_PAGE_DATA_TYPE;
       break;
 
@@ -13294,8 +13302,10 @@ file_descriptor_get_length (const FILE_TYPE file_type)
     case FILE_EXTENDIBLE_HASH:
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
       return sizeof (FILE_EHASH_DES);
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
       return sizeof (FILE_LO_DES);
+#endif
     case FILE_TRACKER:
     case FILE_CATALOG:
     case FILE_QUERY_AREA:
@@ -13368,6 +13378,8 @@ file_descriptor_dump (THREAD_ENTRY * thread_p, FILE * fp,
 					      ext_hash_des_p->attr_id);
 	break;
       }
+
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
       {
 	const FILE_LO_DES *lo_des_p;
@@ -13377,6 +13389,8 @@ file_descriptor_dump (THREAD_ENTRY * thread_p, FILE * fp,
 	file_print_class_name_of_instance (thread_p, fp, &lo_des_p->oid);
 	break;
       }
+#endif
+
     case FILE_CATALOG:
     case FILE_QUERY_AREA:
     case FILE_TMP:
@@ -13427,6 +13441,7 @@ file_print_name_of_class (THREAD_ENTRY * thread_p, FILE * fp,
     }
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 static void
 file_print_class_name_of_instance (THREAD_ENTRY * thread_p, FILE * fp,
 				   const OID * inst_oid_p)
@@ -13449,6 +13464,7 @@ file_print_class_name_of_instance (THREAD_ENTRY * thread_p, FILE * fp,
       fprintf (fp, "\n");
     }
 }
+#endif
 
 static void
 file_print_name_of_class_with_attrid (THREAD_ENTRY * thread_p, FILE * fp,
