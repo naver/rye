@@ -2572,7 +2572,9 @@ file_create_tmp_internal (THREAD_ENTRY * thread_p, VFID * vfid,
 			  const FILE_TYPE file_type, INT32 exp_numpages,
 			  const void *file_des)
 {
+#if 0
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;	/* address of logging data */
+#endif
 #if defined(SERVER_MODE)
   bool old_val;
 #endif /* SERVER_MODE */
