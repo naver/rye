@@ -691,6 +691,7 @@ do_alter (PARSER_CONTEXT * parser, PT_NODE * alter)
 	{
 	  PT_NODE *crt_result = NULL;
 
+	  assert (false); /* is impossible */
 	  crt_clause->next = NULL;
 	  crt_result = pt_compile (parser, crt_clause);
 	  crt_clause->next = save_next;
