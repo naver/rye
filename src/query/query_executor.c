@@ -11464,16 +11464,19 @@ qexec_gby_start_group (THREAD_ENTRY * thread_p,
 	{
 	  if (gbstate->current_key.area_size < recdes->length)
 	    {
-	      void *tmp;
+	      int new_size;
+	      void *new_tmp;
 
-	      tmp = realloc (gbstate->current_key.data, recdes->area_size);
-	      if (tmp == NULL)
+	      new_size = recdes->length;
+	      new_tmp = realloc (gbstate->current_key.data, new_size);
+	      if (new_tmp == NULL)
 		{
 		  QEXEC_GOTO_EXIT_ON_ERROR;
 		}
-	      gbstate->current_key.data = (char *) tmp;
-	      gbstate->current_key.area_size = recdes->area_size;
+	      gbstate->current_key.data = (char *) new_tmp;
+	      gbstate->current_key.area_size = new_size;
 	    }
+
 	  memcpy (gbstate->current_key.data, recdes->data, recdes->length);
 	  gbstate->current_key.length = recdes->length;
 	}
