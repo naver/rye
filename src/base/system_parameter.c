@@ -451,11 +451,7 @@ static int int_list_initial[1] = { 0 };
  * Upper and lower bounds for the parameters
  */
 bool PRM_ER_LOG_DEBUG = false;
-#if !defined(NDEBUG)
-static bool prm_er_log_debug_default = true;
-#else /* !NDEBUG */
 static bool prm_er_log_debug_default = false;
-#endif /* !NDEBUG */
 
 int PRM_ER_LOG_LEVEL = ER_SYNTAX_ERROR_SEVERITY;
 static int prm_er_log_level_default = ER_SYNTAX_ERROR_SEVERITY;
