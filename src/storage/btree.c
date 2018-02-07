@@ -3721,9 +3721,10 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 
   /* init */
   d = 0;
-  exp_size = 10;
 #if !defined(NDEBUG)
   exp_size = 1;			/* for code coverage */
+#else
+  exp_size = 10;
 #endif
 
   del_vpid_size = exp_size;	/* guess */
