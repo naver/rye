@@ -11471,6 +11471,9 @@ qexec_gby_start_group (THREAD_ENTRY * thread_p,
 	      new_tmp = realloc (gbstate->current_key.data, new_size);
 	      if (new_tmp == NULL)
 		{
+		  assert (false);
+		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			  ER_OUT_OF_VIRTUAL_MEMORY, 1, new_size);
 		  QEXEC_GOTO_EXIT_ON_ERROR;
 		}
 	      gbstate->current_key.data = (char *) new_tmp;
