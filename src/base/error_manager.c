@@ -1276,6 +1276,8 @@ er_set_internal (int severity, const char *file_name, const int line_no,
   assert (err_id != ER_WS_CORRUPTED);
   assert (err_id != ER_LK_UNILATERALLY_ABORTED);
   assert (err_id != ER_SP_UNKNOWN_SLOTID);
+  assert (err_id != ER_FILE_FTB_LOOP);
+  assert (err_id != ER_FILE_TABLE_CORRUPTED);
 #endif
 
   /* check iff unused error code */

@@ -57,13 +57,6 @@ typedef enum
 
 typedef enum
 {
-  QPROC_QUALIFIED = 0,		/* fetch a qualified item; default */
-  QPROC_NOT_QUALIFIED,		/* fetch a not-qualified item */
-  QPROC_QUALIFIED_OR_NOT	/* fetch either a qualified or not-qualified item */
-} QPROC_QUALIFICATION;
-
-typedef enum
-{
   QPROC_TPLDESCR_SUCCESS = 1,	/* success generating tuple descriptor */
   QPROC_TPLDESCR_FAILURE = 0,	/* error, give up */
   QPROC_TPLDESCR_RETRY_SET_TYPE = -1,	/* error, retry for SET data-type */

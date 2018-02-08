@@ -209,9 +209,6 @@ struct scan_id_struct
 				   item already fetched. */
   int null_fetched;		/* if true, null-padding scan item
 				   already fetched. used in outer join */
-  QPROC_QUALIFICATION qualification;	/* see QPROC_QUALIFICATION;
-					   used for both input and output
-					   parameter */
   VAL_LIST *val_list;		/* value list */
   VAL_DESCR *vd;		/* value descriptor */
   union

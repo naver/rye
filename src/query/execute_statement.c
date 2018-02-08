@@ -1861,6 +1861,7 @@ do_execute_update (DB_SESSION * session, PT_NODE * statement)
          e.g. false where or not prepared correctly */
       if (statement->xasl_id == NULL)
 	{
+	  assert (false); /* TODO - trace */
 	  statement->etc = NULL;
 	  err = NO_ERROR;
 	  continue;		/* continue to next UPDATE statement */
@@ -2233,6 +2234,7 @@ do_execute_delete (DB_SESSION * session, PT_NODE * statement)
          e.g. false where or not prepared correctly */
       if (statement->xasl_id == NULL)
 	{
+	  assert (false); /* TODO - trace */
 	  statement->etc = NULL;
 	  err = NO_ERROR;
 	  continue;		/* continue to next DELETE statement */
@@ -3548,6 +3550,7 @@ do_execute_insert (DB_SESSION * session, PT_NODE * statement)
 
   if (statement->xasl_id == NULL)
     {
+      assert (false); /* TODO - trace */
       /* check if it is not necessary to execute this statement */
       if (qo_need_skip_execution ())
 	{
@@ -3814,6 +3817,7 @@ do_execute_select (DB_SESSION * session, PT_NODE * statement)
      e.g. false where or not prepared correctly */
   if (statement->xasl_id == NULL)
     {
+      assert (false); /* TODO - trace */
       statement->etc = NULL;
       return NO_ERROR;
     }
