@@ -4349,7 +4349,7 @@ hb_resource_get_server_eof (void)
       return;
     }
 
-  if (FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_DISK, 2, 0) != NO_ERROR)
+  if (FI_TEST_ARG_INT (NULL, FI_TEST_HB_DISK_FAIL, 2, 0) != NO_ERROR)
     {
       return;
     }
@@ -4467,17 +4467,14 @@ hb_thread_cluster_reader (UNUSED_ARG void *arg)
 	  from_len = sizeof (from);
 	  len = recvfrom (sfd, (void *) aligned_buffer, HB_BUFFER_SZ,
 			  0, (struct sockaddr *) &from, &from_len);
-
-	  if (FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE,
-			       10, 0) != NO_ERROR)
-	    {
-	      len = -1;
-	    }
 	  if (len > 0)
 	    {
 	      hb_cluster_receive_heartbeat (aligned_buffer, len, &from,
 					    from_len);
 	    }
+
+	  FI_TEST_ARG_INT2 (NULL, FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE,
+			    3 * 120, 30 * ONE_SEC, 0);
 	}
     }
 
@@ -6885,10 +6882,7 @@ hb_check_ping (const char *host)
   HB_NODE_ENTRY *node;
   PRM_NODE_INFO node_info;
 
-  if (FI_TEST_ARG_INT (NULL, FI_TEST_HB_SLOW_PING_HOST, 3, 0) != NO_ERROR)
-    {
-      return HB_PING_FAILURE;
-    }
+  FI_TEST_ARG_INT2 (NULL, FI_TEST_HB_SLOW_PING_HOST, 100, 30 * ONE_SEC, 0);
 
   /* If host_p is in the cluster node, then skip to check */
 

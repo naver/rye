@@ -9499,6 +9499,7 @@ pt_to_buildlist_proc (PARSER_CONTEXT * parser, PT_NODE * select_node,
 	    pt_to_corr_subquery_list (parser,
 				      select_node->info.query.q.select.having,
 				      0);
+	  assert (buildlist->eptr_list == NULL);	/* TODO - trace */
 
 	  /* otherwise should be run once, at beginning.
 	     these have already been put on the aptr list above */
