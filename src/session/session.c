@@ -990,6 +990,7 @@ session_load_query_entry_info (THREAD_ENTRY * thread_p,
 	}
       sentry_p = sentry_p->next;
     }
+
   return ER_FAILED;
 }
 

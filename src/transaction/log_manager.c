@@ -244,7 +244,9 @@ static void log_rollback (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
 			  const LOG_LSA * upto_lsa_ptr);
 static int log_run_postpone_op (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
 				LOG_PAGE * log_pgptr);
+#if defined (ENABLE_UNUSED_FUNCTION)
 static void log_find_end_log (THREAD_ENTRY * thread_p, LOG_LSA * end_lsa);
+#endif
 static TRAN_STATE log_complete_topop (THREAD_ENTRY * thread_p,
 				      LOG_TDES * tdes,
 				      LOG_RESULT_TOPOP result);
@@ -7360,6 +7362,7 @@ log_run_postpone_op (THREAD_ENTRY * thread_p, LOG_LSA * log_lsa,
   return NO_ERROR;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * log_find_end_log - FIND END OF LOG
  *
@@ -7474,6 +7477,7 @@ error:
   LSA_SET_NULL (end_lsa);
   return;
 }
+#endif
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 /*

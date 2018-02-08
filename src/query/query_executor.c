@@ -623,7 +623,7 @@ static int qexec_execute_update (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 static int qexec_execute_delete (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 				 XASL_STATE * xasl_state);
 static int qexec_execute_insert (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
-				 XASL_STATE * xasl_state, bool skip_aptr);
+				 XASL_STATE * xasl_state);
 static int qexec_end_buildvalueblock_iterations (THREAD_ENTRY * thread_p,
 						 XASL_NODE * xasl,
 						 XASL_STATE * xasl_state,
@@ -2763,14 +2763,10 @@ qexec_orderby_distinct_by_sorting (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
     {
       ls_flag = ((option == Q_DISTINCT) ? QFILE_FLAG_DISTINCT
 		 : QFILE_FLAG_ALL);
+
       /* If this is the top most XASL, then the list file to be open will be
          the last result file.
          (Note that 'order by' is the last processing.) */
-      if (XASL_IS_FLAGED (xasl, XASL_TOP_MOST_XASL)
-	  && XASL_IS_FLAGED (xasl, XASL_TO_BE_CACHED))
-	{
-	  QFILE_SET_FLAG (ls_flag, QFILE_FLAG_RESULT_FILE);
-	}
 
       limit = NO_SORT_LIMIT;
       if (qexec_fill_sort_limit (thread_p, xasl, xasl_state, &limit)
@@ -2899,7 +2895,10 @@ qexec_initialize_groupby_state (GROUPBY_STATE * gbstate,
 				QFILE_TUPLE_VALUE_TYPE_LIST * type_list,
 				QFILE_TUPLE_RECORD * tplrec)
 {
+  int area_size = 0;
+
   assert (groupby_list != NULL);
+  assert (eptr_list == NULL);	/* TODO - trace */
 
   gbstate->state = NO_ERROR;
 
@@ -2941,12 +2940,18 @@ qexec_initialize_groupby_state (GROUPBY_STATE * gbstate,
       return NULL;
     }
 
-  gbstate->current_key.data = (char *) malloc (DB_PAGESIZE);
+#if !defined(NDEBUG)
+  area_size = 10;		/* for code coverage */
+#else
+  area_size = DB_PAGESIZE;
+#endif
+
+  gbstate->current_key.data = (char *) malloc (area_size);
   if (gbstate->current_key.data == NULL)
     {
       return NULL;
     }
-  gbstate->current_key.area_size = DB_PAGESIZE;
+  gbstate->current_key.area_size = area_size;
 
   gbstate->output_tplrec = tplrec;
 
@@ -3378,14 +3383,6 @@ qexec_groupby (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
        to be the last result file. */
 
     QFILE_SET_FLAG (ls_flag, QFILE_FLAG_ALL);
-    if (XASL_IS_FLAGED (xasl, XASL_TOP_MOST_XASL)
-	&& XASL_IS_FLAGED (xasl, XASL_TO_BE_CACHED)
-	&& (xasl->orderby_list == NULL
-	    || XASL_IS_FLAGED (xasl, XASL_SKIP_ORDERBY_LIST))
-	&& xasl->option != Q_DISTINCT)
-      {
-	QFILE_SET_FLAG (ls_flag, QFILE_FLAG_RESULT_FILE);
-      }
 
     output_list_id = qfile_open_list (thread_p, &output_type_list,
 				      buildlist->after_groupby_list,
@@ -4723,11 +4720,6 @@ qexec_execute_update (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 		       specp->fixed_scan,
 		       &specp->s_id, xasl_state->query_id, false) != NO_ERROR)
     {
-      if (savepoint_used)
-	{
-	  xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ABORT, &lsa);
-	}
-
       QEXEC_GOTO_EXIT_ON_ERROR;
     }
 
@@ -5530,7 +5522,7 @@ exit_on_error:
  */
 static int
 qexec_execute_insert (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
-		      XASL_STATE * xasl_state, bool skip_aptr)
+		      XASL_STATE * xasl_state)
 {
   INSERT_PROC_NODE *insert = &xasl->proc.insert;
   SCAN_CODE xb_scan;
@@ -5576,14 +5568,11 @@ qexec_execute_insert (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
   aptr = xasl->aptr_list;
   val_no = insert->no_vals;
 
-  if (!skip_aptr)
+  if (aptr
+      && qexec_execute_mainblock (thread_p, aptr, xasl_state) != NO_ERROR)
     {
-      if (aptr
-	  && qexec_execute_mainblock (thread_p, aptr, xasl_state) != NO_ERROR)
-	{
-	  qexec_failure_line (__LINE__, xasl_state);
-	  return ER_FAILED;
-	}
+      qexec_failure_line (__LINE__, xasl_state);
+      return ER_FAILED;
     }
 
   /* This guarantees that the result list file will have a type list.
@@ -5822,10 +5811,6 @@ qexec_execute_insert (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 			   &specp->s_id, xasl_state->query_id,
 			   false) != NO_ERROR)
 	{
-	  if (savepoint_used)
-	    {
-	      xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ABORT, &lsa);
-	    }
 	  qexec_failure_line (__LINE__, xasl_state);
 	  QEXEC_GOTO_EXIT_ON_ERROR;
 	}
@@ -6373,15 +6358,6 @@ qexec_start_mainblock_iterations (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 
 
 	    QFILE_SET_FLAG (ls_flag, QFILE_FLAG_ALL);
-	    if (XASL_IS_FLAGED (xasl, XASL_TOP_MOST_XASL)
-		&& XASL_IS_FLAGED (xasl, XASL_TO_BE_CACHED)
-		&& buildlist->groupby_list == NULL
-		&& (xasl->orderby_list == NULL
-		    || XASL_IS_FLAGED (xasl, XASL_SKIP_ORDERBY_LIST))
-		&& xasl->option != Q_DISTINCT)
-	      {
-		QFILE_SET_FLAG (ls_flag, QFILE_FLAG_RESULT_FILE);
-	      }
 
 	    t_list_id = qfile_open_list (thread_p, &type_list,
 					 xasl->after_iscan_list,
@@ -6552,14 +6528,7 @@ qexec_end_buildvalueblock_iterations (THREAD_ENTRY * thread_p,
      And, the top most XASL is the other condition for the list file
      to be the last result file. */
   QFILE_SET_FLAG (ls_flag, QFILE_FLAG_ALL);
-  if (XASL_IS_FLAGED (xasl, XASL_TOP_MOST_XASL) &&
-      XASL_IS_FLAGED (xasl, XASL_TO_BE_CACHED) &&
-      (xasl->orderby_list == NULL ||
-       XASL_IS_FLAGED (xasl, XASL_SKIP_ORDERBY_LIST)) &&
-      xasl->option != Q_DISTINCT)
-    {
-      QFILE_SET_FLAG (ls_flag, QFILE_FLAG_RESULT_FILE);
-    }
+
   t_list_id =
     qfile_open_list (thread_p, &type_list, NULL, xasl_state->query_id,
 		     ls_flag);
@@ -6739,14 +6708,6 @@ qexec_end_mainblock_iterations (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
          (Note that only one that can have 'group by' is BUILDLIST_PROC type.)
          And, the top most XASL is the other condition for the list file
          to be the last result file. */
-
-      if (XASL_IS_FLAGED (xasl, XASL_TOP_MOST_XASL)
-	  && XASL_IS_FLAGED (xasl, XASL_TO_BE_CACHED)
-	  && (xasl->orderby_list == NULL
-	      || XASL_IS_FLAGED (xasl, XASL_SKIP_ORDERBY_LIST)))
-	{
-	  QFILE_SET_FLAG (ls_flag, QFILE_FLAG_RESULT_FILE);
-	}
 
       t_list_id = qfile_combine_two_list (thread_p,
 					  xasl->proc.union_.left->list_id,
@@ -7021,7 +6982,7 @@ qexec_execute_mainblock_internal (THREAD_ENTRY * thread_p, XASL_NODE * xasl,
 	  return error;
 	}
 
-      error = qexec_execute_insert (thread_p, xasl, xasl_state, false);
+      error = qexec_execute_insert (thread_p, xasl, xasl_state);
       if (error != NO_ERROR)
 	{
 	  return error;
@@ -7541,6 +7502,7 @@ qexec_upsert_applier_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
   return error;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * qexec_update_applier_info () -
  *    return: error code
@@ -7562,6 +7524,7 @@ qexec_update_applier_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
 
   return error;
 }
+#endif
 
 /*
  * qexec_upsert_analyzer_info () -
@@ -7585,6 +7548,7 @@ qexec_upsert_analyzer_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
   return error;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * qexec_update_analyzer_info () -
  *    return: error code
@@ -7606,6 +7570,7 @@ qexec_update_analyzer_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
 
   return error;
 }
+#endif
 
 /*
  * qexec_modify_catalog_table () -
@@ -11499,16 +11464,22 @@ qexec_gby_start_group (THREAD_ENTRY * thread_p,
 	{
 	  if (gbstate->current_key.area_size < recdes->length)
 	    {
-	      void *tmp;
+	      int new_size;
+	      void *new_tmp;
 
-	      tmp = realloc (gbstate->current_key.data, recdes->area_size);
-	      if (tmp == NULL)
+	      new_size = recdes->length;
+	      new_tmp = realloc (gbstate->current_key.data, new_size);
+	      if (new_tmp == NULL)
 		{
+		  assert (false);
+		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+			  ER_OUT_OF_VIRTUAL_MEMORY, 1, new_size);
 		  QEXEC_GOTO_EXIT_ON_ERROR;
 		}
-	      gbstate->current_key.data = (char *) tmp;
-	      gbstate->current_key.area_size = recdes->area_size;
+	      gbstate->current_key.data = (char *) new_tmp;
+	      gbstate->current_key.area_size = new_size;
 	    }
+
 	  memcpy (gbstate->current_key.data, recdes->data, recdes->length);
 	  gbstate->current_key.length = recdes->length;
 	}

@@ -802,7 +802,7 @@ qmgr_initialize_tran_entry (QMGR_TRAN_ENTRY * tran_entry_p)
 int
 qmgr_allocate_tran_entries (UNUSED_ARG THREAD_ENTRY * thread_p, int count)
 {
-  QMGR_TRAN_ENTRY *tran_entry_p;
+  QMGR_TRAN_ENTRY *tran_entry_p, *tmp_entry_p;
   int i;
 
 #if defined (SERVER_MODE)
@@ -847,15 +847,16 @@ qmgr_allocate_tran_entries (UNUSED_ARG THREAD_ENTRY * thread_p, int count)
       return NO_ERROR;
     }
 
-  qmgr_Query_table.tran_entries_p =
+  tmp_entry_p =
     (QMGR_TRAN_ENTRY *) realloc (qmgr_Query_table.tran_entries_p,
 				 count * sizeof (QMGR_TRAN_ENTRY));
-  if (qmgr_Query_table.tran_entries_p == NULL)
+  if (tmp_entry_p == NULL)
     {
       csect_exit (CSECT_QPROC_QUERY_TABLE);
       return ER_FAILED;
     }
 
+  qmgr_Query_table.tran_entries_p = tmp_entry_p;
   tran_entry_p =
     (QMGR_TRAN_ENTRY *) qmgr_Query_table.tran_entries_p +
     qmgr_Query_table.num_trans;
@@ -1283,6 +1284,7 @@ xqmgr_prepare_query (THREAD_ENTRY * thread_p,
     }
   else
     {
+      assert (false);
       class_oid_list_p = NULL;
       tcard_list_p = NULL;
     }
@@ -1624,7 +1626,7 @@ xqmgr_execute_query (THREAD_ENTRY * thread_p,
   QMGR_TRAN_ENTRY *tran_entry_p;
   QFILE_LIST_ID *list_id_p;
   XASL_CACHE_CLONE *cache_clone_p;
-  bool xasl_trace;
+  UNUSED_ARG bool xasl_trace;
 
   assert (xasl_id_p != NULL);
 
