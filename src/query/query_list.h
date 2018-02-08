@@ -632,7 +632,9 @@ struct qfile_list_scan_id
 /* list file flag; denoting type and/or operation of the list file */
 enum
 {
-  QFILE_FLAG_RESULT_FILE = 0x0001,
+#if 0
+  QFILE_FLAG_RESULT_FILE = 0x0001,	/* reserved */
+#endif
   QFILE_FLAG_UNION = 0x0010,
   QFILE_FLAG_INTERSECT = 0x0020,
   QFILE_FLAG_DIFFERENCE = 0x0040,

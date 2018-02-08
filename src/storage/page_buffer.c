@@ -1065,6 +1065,7 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   /* Do a simple check in non debugging mode */
   if (vpid->pageid < 0)
     {
+      assert (false);
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_PB_BAD_PAGEID, 2,
 	      vpid->pageid, fileio_get_volume_label (vpid->volid, PEEK));
       return NULL;
