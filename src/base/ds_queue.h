@@ -36,7 +36,9 @@ struct _rye_queue
 };
 
 extern RQueue *Rye_queue_new (void);
+#if defined(ENABLE_UNUSED_FUNCTION)
 extern void Rye_queue_free (RQueue * queue);
+#endif
 extern void Rye_queue_free_full (RQueue * queue, Rye_func free_func);
 extern void *Rye_queue_get_first (RQueue * queue);
 extern RSNode *Rye_queue_enqueue (RQueue * queue, void *data);

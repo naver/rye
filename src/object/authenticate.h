@@ -41,10 +41,10 @@
 
 extern const char *AU_ROOT_CLASS_NAME;
 extern const char *AU_OLD_ROOT_CLASS_NAME;
-extern const char *AU_USER_CLASS_NAME;
+// extern const char *AU_USER_CLASS_NAME;
 extern const char *AU_AUTH_CLASS_NAME;
 extern const char *AU_GRANT_CLASS_NAME;
-extern const char *AU_PUBLIC_USER_NAME;
+//extern const char *AU_PUBLIC_USER_NAME;
 extern const char *AU_DBA_USER_NAME;
 
 /*
@@ -86,8 +86,11 @@ extern const char *AU_DBA_USER_NAME;
 
 int au_disable (void);
 void au_enable (int save);
+
+MOP au_get_root (void);
 MOP au_get_public_user (void);
 MOP au_get_dba_user (void);
+MOP au_get_user (void);
 
 #define AU_DISABLE(save) \
   do \
@@ -133,10 +136,6 @@ MOP au_get_dba_user (void);
 /*
  * Global Variables
  */
-extern MOP Au_root;
-extern MOP Au_user;
-extern MOP Au_dba_user;
-extern MOP Au_public_user;
 extern int Au_disable;
 
 

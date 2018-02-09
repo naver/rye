@@ -255,6 +255,7 @@ int
 rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_info)
 {
   CIRP_APPLIER_INFO *applier = NULL;
+  CIRP_CT_LOG_APPLIER ct;
   int num_appliers;
   int i;
   int error = NO_ERROR;
@@ -314,11 +315,12 @@ rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_info)
 	{
 	  applier = &Repl_Info->applier_info[i];
 
-	  error = rpct_get_log_applier (conn, &applier->ct, host_info, i + 1);
+	  error = rpct_get_log_applier (conn, &ct, host_info, i + 1);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
 	    }
+	  applier->ct = ct;
 	}
     }
 
@@ -547,74 +549,6 @@ exit_on_error:
 }
 
 /*
- * rpct_update_log_applier () -
- *   returns  : error code, if execution failed
- *              number of affected objects, if a success
- *
- *   conn(in):
- *   ct_data(in):
- */
-int
-rpct_update_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
-{
-  CIRP_CT_LOG_APPLIER tmp_rec;
-  CIRP_REPL_ITEM *item = NULL;
-  int error = NO_ERROR;
-  LOG_LSA null_lsa;
-  RECDES recdes;
-
-  LSA_SET_NULL (&null_lsa);
-
-  error = rp_new_repl_catalog_item (&item, NULL_TRANID, &null_lsa);
-  if (error != NO_ERROR)
-    {
-      GOTO_EXIT_ON_ERROR;
-    }
-
-  recdes.area_size = sizeof (CIRP_CT_LOG_APPLIER);
-  recdes.data = (char *) (&tmp_rec);
-  error = rpct_applier_to_catalog_item (&item->info.catalog, &recdes,
-					ct_data);
-  if (error != NO_ERROR)
-    {
-      GOTO_EXIT_ON_ERROR;
-    }
-  item->info.catalog.copyarea_op = LC_FLUSH_HA_CATALOG_APPLIER_UPDATE;
-
-  assert (rp_is_valid_repl_item (item));
-  error = cci_send_repl_data (conn, item, 1, -1);
-  if (error < 0)
-    {
-      REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
-			      conn->err_buf.err_code, conn->err_buf.err_msg);
-
-      GOTO_EXIT_ON_ERROR;
-    }
-
-  cirp_free_repl_item (item);
-  item = NULL;
-
-  assert (error == NO_ERROR);
-  return error;
-
-exit_on_error:
-  if (error == NO_ERROR)
-    {
-      assert (false);
-
-      REPL_SET_GENERIC_ERROR (error, "Invalid error code");
-    }
-
-  if (item != NULL)
-    {
-      cirp_free_repl_item (item);
-      item = NULL;
-    }
-
-  return error;
-}
-
-/*
  * cirp_make_select_query_with_pk ()
  *   return: query length
  *
@@ -763,7 +697,7 @@ exit_on_error:
  *    query(in):
  */
 static int
-cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
+cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * analyzer,
 			       CCI_CONN * conn, char *query)
 {
   int index;
@@ -801,7 +735,7 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
       GOTO_EXIT_ON_ERROR;
     }
   assert (ind >= 0 && str_value != NULL);
-  if (rp_host_str_to_node_info (&applier->host_info, str_value) != NO_ERROR)
+  if (rp_host_str_to_node_info (&analyzer->host_info, str_value) != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
@@ -813,10 +747,17 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
       GOTO_EXIT_ON_ERROR;
     }
   assert (ind >= 0);
-  applier->required_lsa = int64_to_lsa (bi);
+  analyzer->required_lsa = int64_to_lsa (bi);
+  if (!LSA_ISNULL (&analyzer->required_lsa)
+      && (analyzer->required_lsa.pageid < 0
+	  || analyzer->required_lsa.offset < 0))
+    {
+      assert (false);
+      GOTO_EXIT_ON_ERROR;
+    }
   index++;
 
-  applier->source_applied_time = cci_get_bigint (&stmt, index, &ind);
+  analyzer->source_applied_time = cci_get_bigint (&stmt, index, &ind);
   if (stmt.err_buf.err_code < 0)
     {
       GOTO_EXIT_ON_ERROR;
@@ -824,7 +765,7 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * applier,
   assert (ind >= 0);
   index++;
 
-  applier->creation_time = cci_get_bigint (&stmt, index, &ind);
+  analyzer->creation_time = cci_get_bigint (&stmt, index, &ind);
   if (stmt.err_buf.err_code < 0)
     {
       GOTO_EXIT_ON_ERROR;
@@ -926,6 +867,13 @@ cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
     }
   assert (ind >= 0);
   applier->committed_lsa = int64_to_lsa (bi);
+  if (!LSA_ISNULL (&applier->committed_lsa)
+      && (applier->committed_lsa.pageid < 0
+	  || applier->committed_lsa.offset < 0))
+    {
+      assert (false);
+      GOTO_EXIT_ON_ERROR;
+    }
   index++;
 
   assert (cci_fetch_next (&stmt) == CCI_ER_NO_MORE_DATA);

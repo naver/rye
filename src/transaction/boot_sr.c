@@ -2351,6 +2351,8 @@ xboot_initialize_server (THREAD_ENTRY * thread_p,
   assert (client_credential != NULL);
   assert (db_path_info != NULL);
 
+  assert (er_get_msglog_filename () != NULL);
+
 #if defined(SERVER_MODE)
   /* Should not called in SERVER_MODE */
   assert (false);
@@ -2710,6 +2712,7 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
   RECDES recdes = RECDES_INITIALIZER;
 #if defined(SERVER_MODE)
   int common_ha_mode;
+  const char *common_ha_mode_str;
 #endif
   int error_code = NO_ERROR;
   char *prev_err_msg;
@@ -2791,12 +2794,13 @@ boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
       return ER_BO_CANT_LOAD_SYSPRM;
     }
 
+  common_ha_mode_str = css_ha_mode_string (common_ha_mode);
   if (common_ha_mode != prm_get_integer_value (PRM_ID_HA_MODE))
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 	      ER_PRM_CONFLICT_EXISTS_ON_MULTIPLE_SECTIONS, 6, "rye.conf",
 	      "common", prm_get_name (PRM_ID_HA_MODE),
-	      css_ha_mode_string (common_ha_mode), db_name,
+	      common_ha_mode_str, db_name,
 	      css_ha_mode_string (prm_get_integer_value (PRM_ID_HA_MODE)));
       return ER_PRM_CONFLICT_EXISTS_ON_MULTIPLE_SECTIONS;
     }

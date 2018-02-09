@@ -660,6 +660,7 @@ css_free_conn (CSS_CONN_ENTRY * conn)
   csect_exit (CSECT_CSS_ACTIVE_CONN);
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 /*
  * css_print_conn_entry_info() - print connection entry information to stderr
  *   return: void
@@ -707,6 +708,7 @@ css_print_conn_list (void)
       csect_exit (CSECT_CSS_ACTIVE_CONN);
     }
 }
+#endif
 
 /*
  * css_common_connect_sr() - actually try to make a connection to a server.
@@ -1118,6 +1120,7 @@ css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
   return css_error;
 }
 
+#if defined (ENABLE_UNUSED_FUNCTION)
 int
 css_find_dupliated_conn (int conn_idx)
 {
@@ -1138,3 +1141,4 @@ css_find_dupliated_conn (int conn_idx)
 
   return -1;
 }
+#endif

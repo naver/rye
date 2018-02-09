@@ -883,9 +883,7 @@ restoredb (UTIL_FUNCTION_ARG * arg)
 
       memset (&analyzer_info, 0, sizeof (CIRP_CT_LOG_ANALYZER));
 
-#if 1				/* TODO - fix me; convert host_name to host_ip */
       analyzer_info.host_info = restart_arg.db_host_info;
-#endif
       analyzer_info.required_lsa = restart_arg.backuptime_lsa;
       analyzer_info.creation_time = restart_arg.db_creation * 1000;
 
@@ -1083,7 +1081,7 @@ diagdb (UTIL_FUNCTION_ARG * arg)
 						  DIAG_NUM_LOG_PAGES_S);
 
       fprintf (outfp, "\n*** DUMP OF LOG ***\n");
-      xlog_dump (NULL, outfp, 1, start_logpageid, dump_npages, -1);
+      xlog_dump (NULL, outfp, start_logpageid, dump_npages);
     }
 
   if (diag == DIAGDUMP_ALL || diag == DIAGDUMP_HEAP)

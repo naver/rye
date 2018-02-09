@@ -57,7 +57,7 @@ typedef enum
   RVDK_RESET_BOOT_HFID = 9,
   RVDK_LINK_PERM_VOLEXT = 10,
 
-  RVFL_CREATE_TMPFILE = 11,
+  RVFL_CREATE_TMPFILE = 11, /* not used */
   RVFL_FTAB_CHAIN = 12,
   RVFL_IDSTABLE = 13,
   /* Never use this recovery index anymore. Only for backward compatibility */
@@ -123,7 +123,7 @@ typedef enum
   RVBT_KEYVAL_INSERT = 68,
   RVBT_KEYVAL_DELETE = 69,
   RVBT_COPYPAGE = 70,
-  RVBT_NOOP = 71,
+  RVBT_NOOP = 71, /* not used */
   RVBT_INS_PGRECORDS = 72,
   RVBT_CREATE_INDEX = 73,
 

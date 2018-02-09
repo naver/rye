@@ -1083,6 +1083,7 @@ er_set (int severity, const char *file_name, const int line_no, int err_id,
   va_end (ap);
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * er_set_with_file - Set an error and print file contents into
  *                    the error log file
@@ -1112,6 +1113,7 @@ er_set_with_file (int severity, const char *file_name, const int line_no,
 			  false, fp, &ap);
   va_end (ap);
 }
+#endif
 
 /*
  * er_set_with_oserror - Set an error and include the OS last error
@@ -1274,6 +1276,8 @@ er_set_internal (int severity, const char *file_name, const int line_no,
   assert (err_id != ER_WS_CORRUPTED);
   assert (err_id != ER_LK_UNILATERALLY_ABORTED);
   assert (err_id != ER_SP_UNKNOWN_SLOTID);
+  assert (err_id != ER_FILE_FTB_LOOP);
+  assert (err_id != ER_FILE_TABLE_CORRUPTED);
 #endif
 
   /* check iff unused error code */
@@ -1990,6 +1994,7 @@ er_all (int *err_id, int *severity, int *n_levels, int *line_no,
   *error_msg = er_msg ();
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * er_print - Print current error message to stdout
  *   return: none
@@ -2023,6 +2028,7 @@ er_print (void)
 	   ER_ERROR_WARNING_STRING (severity), err_id, tran_index, msg);
   fflush (stdout);
 }
+#endif
 
 /*
  * er_log_debug - Print debugging message to the log file

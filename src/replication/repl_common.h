@@ -123,4 +123,10 @@ extern int rp_make_repl_host_key (DB_VALUE * dbval,
 extern int rp_host_str_to_node_info (PRM_NODE_INFO * node_info,
 				     const char *key_str);
 
+
+extern int db_disable_modification (void);
+extern int db_enable_modification (void);
+extern bool db_is_allowed_modification (void);
+
+
 #endif /* REPL_LOG_COMMON_H_ */

@@ -500,9 +500,11 @@ file_descriptor_dump_multi_page_object_heap (FILE * fp,
 					     ovf_hfile_des_p);
 static void file_print_name_of_class (THREAD_ENTRY * thread_p, FILE * fp,
 				      const OID * class_oid_p);
+#if defined(ENABLE_UNUSED_FUNCTION)
 static void file_print_class_name_of_instance (THREAD_ENTRY * thread_p,
 					       FILE * fp,
 					       const OID * inst_oid_p);
+#endif
 static void file_print_name_of_class_with_attrid (THREAD_ENTRY * thread_p,
 						  FILE * fp,
 						  const OID * class_oid_p,
@@ -1093,6 +1095,10 @@ file_new_destroy_all_tmp (THREAD_ENTRY * thread_p)
   int tran_index;
   int ret = NO_ERROR;
 
+#if 1
+  assert (false); /* TODO - trace */
+#endif
+
   delete_list = NULL;
 
   if (csect_enter (thread_p, CSECT_FILE_NEWFILE, INF_WAIT) != NO_ERROR)
@@ -1287,8 +1293,10 @@ file_type_to_string (FILE_TYPE fstruct_type)
       return "HASH";
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
       return "HASH_DIRECTORY";
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
       return "LONGDATA";
+#endif
     case FILE_CATALOG:
       return "CATALOG";
     case FILE_QUERY_AREA:
@@ -1319,7 +1327,9 @@ file_get_primary_vol_purpose (const FILE_TYPE ftype)
     case FILE_CATALOG:
     case FILE_EXTENDIBLE_HASH:
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
+#endif
       purpose = DISK_PERMVOL_DATA_PURPOSE;
       break;
 
@@ -1363,7 +1373,9 @@ file_get_disk_page_type (const FILE_TYPE ftype)
     case FILE_CATALOG:
     case FILE_EXTENDIBLE_HASH:
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
+#endif
       page_type = DISK_PAGE_DATA_TYPE;
       break;
 
@@ -2496,6 +2508,7 @@ file_calculate_offset (INT16 start_offset, int size, int nelements,
   int idx;
 
   offset = start_offset + (size * nelements);
+  assert (offset < DB_PAGESIZE); /* TODO - trace */
 
   if (offset < DB_PAGESIZE)
     {
@@ -2559,10 +2572,14 @@ file_create_tmp_internal (THREAD_ENTRY * thread_p, VFID * vfid,
 			  const FILE_TYPE file_type, INT32 exp_numpages,
 			  const void *file_des)
 {
+#if 0
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;	/* address of logging data */
+#endif
 #if defined(SERVER_MODE)
   bool old_val;
 #endif /* SERVER_MODE */
+
+  assert (file_type == FILE_TMP || file_type == FILE_QUERY_AREA);
 
   /* Start a TOP SYSTEM OPERATION.
      This top system operation will be either ABORTED (case of failure) or
@@ -2582,7 +2599,7 @@ file_create_tmp_internal (THREAD_ENTRY * thread_p, VFID * vfid,
     {
       log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
 
-
+#if 0
       if (file_type != FILE_TMP && file_type != FILE_QUERY_AREA)
 	{
 	  addr.vfid = NULL;
@@ -2596,6 +2613,7 @@ file_create_tmp_internal (THREAD_ENTRY * thread_p, VFID * vfid,
 	  logpb_flush_pages_direct (thread_p);
 	  LOG_CS_EXIT ();
 	}
+#endif
     }
   else
     {
@@ -4601,6 +4619,7 @@ file_find_nthpages (THREAD_ENTRY * thread_p, const VFID * vfid,
 	    }
 	  if (num_returned < 0)
 	    {
+	      assert (false); /* TODO - trace */
 	      total_returned = num_returned;
 	      pgbuf_unfix_and_init (thread_p, allocset_pgptr);
 	      VPID_SET_NULL (nth_vpids);
@@ -12276,6 +12295,10 @@ file_rv_undo_create_tmp (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   FILE_HEADER *fhdr;
   int ret = NO_ERROR;
 
+#if 1
+  assert (false); /* not used */
+#endif
+
   vfid = (const VFID *) rcv->data;
 
   if (fileio_get_volume_descriptor (vfid->volid) == NULL_VOLDES
@@ -12344,6 +12367,10 @@ void
 file_rv_dump_create_tmp (FILE * fp, UNUSED_ARG int length_ignore, void *data)
 {
   VFID *vfid;
+
+#if 1
+  assert (false); /* not used */
+#endif
 
   vfid = (VFID *) data;
   (void) fprintf (fp, "Undo creation of Tmp vfid: %d|%d\n",
@@ -13294,8 +13321,10 @@ file_descriptor_get_length (const FILE_TYPE file_type)
     case FILE_EXTENDIBLE_HASH:
     case FILE_EXTENDIBLE_HASH_DIRECTORY:
       return sizeof (FILE_EHASH_DES);
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
       return sizeof (FILE_LO_DES);
+#endif
     case FILE_TRACKER:
     case FILE_CATALOG:
     case FILE_QUERY_AREA:
@@ -13368,6 +13397,8 @@ file_descriptor_dump (THREAD_ENTRY * thread_p, FILE * fp,
 					      ext_hash_des_p->attr_id);
 	break;
       }
+
+#if defined(ENABLE_UNUSED_FUNCTION)
     case FILE_LONGDATA:
       {
 	const FILE_LO_DES *lo_des_p;
@@ -13377,6 +13408,8 @@ file_descriptor_dump (THREAD_ENTRY * thread_p, FILE * fp,
 	file_print_class_name_of_instance (thread_p, fp, &lo_des_p->oid);
 	break;
       }
+#endif
+
     case FILE_CATALOG:
     case FILE_QUERY_AREA:
     case FILE_TMP:
@@ -13427,6 +13460,7 @@ file_print_name_of_class (THREAD_ENTRY * thread_p, FILE * fp,
     }
 }
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 static void
 file_print_class_name_of_instance (THREAD_ENTRY * thread_p, FILE * fp,
 				   const OID * inst_oid_p)
@@ -13449,6 +13483,7 @@ file_print_class_name_of_instance (THREAD_ENTRY * thread_p, FILE * fp,
       fprintf (fp, "\n");
     }
 }
+#endif
 
 static void
 file_print_name_of_class_with_attrid (THREAD_ENTRY * thread_p, FILE * fp,

@@ -1934,7 +1934,7 @@ xbtree_find_unique (THREAD_ENTRY * thread_p, OID * class_oid, BTID * btid,
   /* get class representation of the index */
   COPY_OID (&(BTS->btid_int.cls_oid), class_oid);
   BTS->btid_int.classrepr =
-    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL_REPRID,
 			&(BTS->btid_int.classrepr_cache_idx), true);
   if (BTS->btid_int.classrepr == NULL)
     {
@@ -2273,6 +2273,7 @@ btree_check_by_btid (THREAD_ENTRY * thread_p, BTID * btid)
       fd = (char *) malloc (fd_size);
       if (fd == NULL)
 	{
+	  assert (false);
 	  fd = area;
 	  fd_size = FILE_DUMP_DES_AREA_SIZE;
 	}
@@ -2326,8 +2327,7 @@ btree_get_pkey_btid (THREAD_ENTRY * thread_p, OID * cls_oid, BTID * pkey_btid)
   BTID_SET_NULL (pkey_btid);
 
   cls_repr =
-    heap_classrepr_get (thread_p, cls_oid, NULL, NULL_REPRID, &cache_idx,
-			true);
+    heap_classrepr_get (thread_p, cls_oid, NULL_REPRID, &cache_idx, true);
   if (cls_repr == NULL)
     {
       assert (er_errid () != NO_ERROR);
@@ -3466,6 +3466,7 @@ btree_delete (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key)
 				  (root_level + 2));
   if (node_header == NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
 	      sizeof (BTREE_NODE_HEADER) * (root_level + 2));
       goto error;
@@ -3474,6 +3475,7 @@ btree_delete (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key)
   node_used = (int *) malloc (sizeof (int) * (root_level + 2));
   if (node_used == NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
 	      sizeof (int) * (root_level + 2));
       goto error;
@@ -3719,7 +3721,11 @@ btree_merge_level (THREAD_ENTRY * thread_p, BTID_INT * btid, DB_IDXKEY * key,
 
   /* init */
   d = 0;
+#if !defined(NDEBUG)
+  exp_size = 1;			/* for code coverage */
+#else
   exp_size = 10;
+#endif
 
   del_vpid_size = exp_size;	/* guess */
   del_vpid = (VPID *) malloc (sizeof (VPID) * del_vpid_size);
@@ -5021,10 +5027,13 @@ btree_coerce_idxkey (DB_IDXKEY * key,
   if (ssize < 0 || dsize < 2 || dsize < ssize || ssize > num_term)
     {
       /* something wrong with making search key in query optimizer */
-      err = ER_GENERIC_ERROR;
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, err, 1, "");
-
-      return err;
+      assert (false);
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
+	      "");
+      fprintf (stderr,
+	       "Error: btree_coerce_idxkey (ssize %d, dsize %d, num_term %d)\n",
+	       ssize, dsize, num_term);
+      return ER_GENERIC_ERROR;
     }
 
   if (ssize == dsize)
@@ -5068,6 +5077,7 @@ btree_coerce_idxkey (DB_IDXKEY * key,
       dp_type = indexp->atts[i]->type;
       if (dp_type == DB_TYPE_OBJECT)
 	{
+	  assert (false);
 	  dp_type = DB_TYPE_OID;
 	}
 
@@ -6087,6 +6097,9 @@ btree_dump_curr_key (THREAD_ENTRY * thread_p, INDX_SCAN_ID * iscan_id)
        * join index scan with always-true condition.
        * example: SELECT ... FROM X inner join Y on 1 = 1;
        */
+#if 1				/* TODO - trace */
+      assert (false);
+#endif
       attr_info = iscan_id->pred_attrs.attr_cache;
       regu_list = iscan_id->scan_pred.regu_list;
       assert_release (attr_info != NULL);
@@ -6185,7 +6198,7 @@ btree_find_min_or_max_key (THREAD_ENTRY * thread_p, OID * class_oid,
   /* get class representation of the index */
   COPY_OID (&(BTS->btid_int.cls_oid), class_oid);
   BTS->btid_int.classrepr =
-    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(BTS->btid_int.cls_oid), NULL_REPRID,
 			&(BTS->btid_int.classrepr_cache_idx), true);
   if (BTS->btid_int.classrepr == NULL)
     {
@@ -6693,11 +6706,11 @@ int
 btree_rv_noderec_undo_insert (THREAD_ENTRY * thread_p, LOG_RCV * recv)
 {
   INT16 slotid;
-  PGSLOTID pg_slotid;
+  PGSLOTID ret_slotid;
 
   slotid = recv->offset;
-  pg_slotid = spage_delete_for_recovery (thread_p, recv->pgptr, slotid);
-  if (pg_slotid == NULL_SLOTID)
+  ret_slotid = spage_delete_for_recovery (thread_p, recv->pgptr, slotid);
+  if (ret_slotid == NULL_SLOTID)
     {
       assert (false);
       ;				/* TODO - avoid compile error */
@@ -6958,7 +6971,7 @@ btree_rv_read_keyval_info_nocopy (THREAD_ENTRY * thread_p,
   /* get class representation of the index */
   assert (!OID_ISNULL (&(btid->cls_oid)));
   btid->classrepr =
-    heap_classrepr_get (thread_p, &(btid->cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(btid->cls_oid), NULL_REPRID,
 			&(btid->classrepr_cache_idx), true);
   if (btid->classrepr == NULL)
     {
@@ -7291,6 +7304,8 @@ error:
 int
 btree_rv_nop (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG LOG_RCV * recv)
 {
+  assert (false);		/* TODO - trace */
+
   return NO_ERROR;
 }
 
@@ -7665,6 +7680,7 @@ btree_range_opt_check_add_index_key (THREAD_ENTRY * thread_p,
     (DB_VALUE *) malloc (multi_range_opt->no_attrs * sizeof (DB_VALUE));
   if (new_key_value == NULL)
     {
+      assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
 	      sizeof (DB_VALUE *) * multi_range_opt->no_attrs);
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -7749,6 +7765,7 @@ btree_range_opt_check_add_index_key (THREAD_ENTRY * thread_p,
       curr_item = (RANGE_OPT_ITEM *) malloc (sizeof (RANGE_OPT_ITEM));
       if (curr_item == NULL)
 	{
+	  assert (false);
 	  if (new_key_value != NULL)
 	    {
 	      free_and_init (new_key_value);
@@ -7778,6 +7795,7 @@ btree_range_opt_check_add_index_key (THREAD_ENTRY * thread_p,
 				   sizeof (TP_DOMAIN *));
 	  if (multi_range_opt->sort_col_dom == NULL)
 	    {
+	      assert (false);
 	      goto exit;
 	    }
 
@@ -8016,6 +8034,7 @@ btree_range_search (THREAD_ENTRY * thread_p, UNUSED_ARG BTID * btid,
       /* check range */
       if (!BTREE_VALID_RANGE (key_val_range->range))
 	{
+	  assert (false);	/* TODO - trace */
 	  error = ER_BTREE_INVALID_RANGE;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 

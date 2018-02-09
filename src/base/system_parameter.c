@@ -451,11 +451,7 @@ static int int_list_initial[1] = { 0 };
  * Upper and lower bounds for the parameters
  */
 bool PRM_ER_LOG_DEBUG = false;
-#if !defined(NDEBUG)
-static bool prm_er_log_debug_default = true;
-#else /* !NDEBUG */
 static bool prm_er_log_debug_default = false;
-#endif /* !NDEBUG */
 
 int PRM_ER_LOG_LEVEL = ER_SYNTAX_ERROR_SEVERITY;
 static int prm_er_log_level_default = ER_SYNTAX_ERROR_SEVERITY;
@@ -2503,6 +2499,38 @@ sysprm_set_repl_er_log_file (const char *db_name)
 		log_tm_p->tm_min);
       prm_set (er_log_file, error_log_name, true);
     }
+}
+
+/*
+ * sysprm_set_master_er_log_file -
+ *   return: void
+ *
+ */
+void
+sysprm_set_master_er_log_file (void)
+{
+  static const char *suffix = "_master";
+  char hostname[MAXHOSTNAMELEN];
+  char error_log_name[PATH_MAX];
+  SYSPRM_PARAM *er_log_file;
+
+  er_log_file = prm_find (PRM_NAME_ER_LOG_FILE, NULL);
+  if (er_log_file == NULL || PRM_IS_SET (er_log_file->flag))
+    {
+      return;
+    }
+
+  if (GETHOSTNAME (hostname, MAXHOSTNAMELEN) == 0)
+    {
+      /* css_gethostname won't null-terminate if the name is
+       * overlong.  Put in a guaranteed null-terminator of our
+       * own so that strcat doesn't go wild.
+       */
+      hostname[MAXHOSTNAMELEN - 1] = '\0';
+    }
+
+  snprintf (error_log_name, PATH_MAX - 1, "%s%s.err", hostname, suffix);
+  prm_set (er_log_file, error_log_name, true);
 }
 
 /*

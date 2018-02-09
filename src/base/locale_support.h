@@ -524,6 +524,7 @@ struct text_conversion_prm
   char conv_file[PATH_MAX];
 };
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 #define UNICODE_NORMALIZATION_DECORATOR "std"
 
 typedef struct unicode_normalization UNICODE_NORMALIZATION;
@@ -537,6 +538,7 @@ struct unicode_normalization
 
   bool do_not_save;
 };
+#endif
 
 #define CAL_SIMPLE_DATE_FORMAT_SIZE  30
 #define CAL_COMP_DATE_FORMAT_SIZE  48
@@ -552,6 +554,7 @@ struct locale_collation
 				 * processed */
 };
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 typedef struct locale_data LOCALE_DATA;
 struct locale_data
 {
@@ -597,8 +600,10 @@ struct locale_data
   /* file path for Unicode data (if 'alphabet_mode' == 1) */
   char unicode_data_file[PATH_MAX];
 
+#if defined(ENABLE_UNUSED_FUNCTION)
   /* normalization */
   UNICODE_NORMALIZATION unicode_normalization;
+#endif
 
   /* console text conversion */
   TEXT_CONVERSION txt_conv;
@@ -640,6 +645,7 @@ struct locale_data
 
   LDML_CONTEXT ldml_context;
 };
+#endif
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 #ifdef __cplusplus
@@ -647,8 +653,10 @@ extern "C"
 {
 #endif
 
+#if defined(ENABLE_UNUSED_FUNCTION)
   void locale_init_data (LOCALE_DATA * ld, const char *locale_name);
   void locale_destroy_data (LOCALE_DATA * ld);
+#endif
   void locale_destroy_alphabet_data (const ALPHABET_DATA * a);
   void locale_destroy_normalization_data (UNICODE_NORMALIZATION * norm);
   int locale_get_cfg_locales (LOCALE_FILE ** p_locale_files,
@@ -656,12 +664,14 @@ extern "C"
   int locale_check_and_set_default_files (LOCALE_FILE * lf,
 					  bool is_lang_init);
   int locale_prepare_C_file (void);
+#if defined(ENABLE_UNUSED_FUNCTION)
   int locale_compile_locale (LOCALE_FILE * lf, LOCALE_DATA * ld,
 			     bool is_verbose);
   void locale_mark_duplicate_collations (LOCALE_DATA ** ld, int start_index,
 					 int end_index, bool is_verbose);
   int locale_save_all_to_C_file (LOCALE_DATA ** ld, int start_index,
 				 int end_index, LOCALE_FILE * lf);
+#endif
   int locale_dump (void *data, LOCALE_FILE * lf,
 		   int dl_settings, int start_value, int end_value);
   int locale_dump_lib_collations (void *lib_handle, const LOCALE_FILE * lf,
@@ -672,6 +682,6 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-#endif /* ENABLE_UNUSED_FUNCTION */
+#endif				/* ENABLE_UNUSED_FUNCTION */
 
 #endif				/* _LOCALE_SUPPORT_H_ */

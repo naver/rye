@@ -424,7 +424,7 @@ btree_index_capacity (THREAD_ENTRY * thread_p, OID * cls_oid,
   /* get class representation of the index */
   COPY_OID (&(btid_int.cls_oid), cls_oid);
   btid_int.classrepr =
-    heap_classrepr_get (thread_p, &(btid_int.cls_oid), NULL, 0,
+    heap_classrepr_get (thread_p, &(btid_int.cls_oid), NULL_REPRID,
 			&(btid_int.classrepr_cache_idx), true);
   if (btid_int.classrepr == NULL)
     {
@@ -927,10 +927,10 @@ btree_dump_page (THREAD_ENTRY * thread_p, FILE * fp,
 	   "--- Page_Id: {%d , %d} Node_Type: %s Level: %d Key_Cnt: %d Prev_Page_Id: "
 	   "{%d , %d} Next_Page_Id: {%d , %d} Used: %d ---\n\n",
 	   pg_vpid->volid, pg_vpid->pageid,
-	   btree_node_type_to_string (node_type), node_header.node_level, key_cnt,
-	   prev_vpid.volid, prev_vpid.pageid,
-           next_vpid.volid, next_vpid.pageid,
-	   DB_PAGESIZE - spage_get_free_space (thread_p, page_ptr));
+	   btree_node_type_to_string (node_type), node_header.node_level,
+	   key_cnt, prev_vpid.volid, prev_vpid.pageid, next_vpid.volid,
+	   next_vpid.pageid, DB_PAGESIZE - spage_get_free_space (thread_p,
+								 page_ptr));
   fflush (fp);
 
   if (key_cnt < 0)

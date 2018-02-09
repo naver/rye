@@ -273,7 +273,7 @@ db_add_volume (DBDEF_VOL_EXT_INFO * ext_info)
 
   assert (ext_info != NULL);
 
-  if (Au_dba_user != NULL && !au_is_dba_group_member (Au_user))
+  if (au_get_dba_user () != NULL && !au_is_dba_group_member (au_get_user ()))
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1,
 	      "db_add_volume");
@@ -749,7 +749,8 @@ db_shutdown (void)
   db_Connect_status = DB_CONNECTION_STATUS_NOT_CONNECTED;
   db_Program_name[0] = '\0';
   (void) os_set_signal_handler (SIGFPE, prev_sigfpe_handler);
-  db_Disable_modifications = 0;
+
+  db_enable_modification ();
 
   db_free_execution_plan ();
 
@@ -767,36 +768,6 @@ db_ping_server (UNUSED_ARG int client_val, UNUSED_ARG int *server_val)
 #endif /* CS_MODE */
   return error;
 }
-
-/*
- * db_disable_modification - Disable database modification operation
- *   return: error code
- *
- * NOTE: This function will change 'db_Disable_modifications'.
- */
-int
-db_disable_modification (void)
-{
-  /*CHECK_CONNECT_ERROR (); */
-  db_Disable_modifications++;
-  return NO_ERROR;
-}
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-/*
- * db_enable_modification - Enable database modification operation
- *   return: error code
- *
- * NOTE: This function will change 'db_Disable_modifications'.
- */
-int
-db_enable_modification (void)
-{
-  /*CHECK_CONNECT_ERROR (); */
-  db_Disable_modifications--;
-  return NO_ERROR;
-}
-#endif
 
 /*
  * db_end_session - end current session
@@ -1373,7 +1344,7 @@ db_get_user_and_host_name (void)
 DB_OBJECT *
 db_get_user (void)
 {
-  return Au_user;
+  return au_get_user ();
 }
 
 /*
@@ -1794,8 +1765,8 @@ db_set_system_parameters (char *prm_names, int len, const char *data,
   /* validate changes */
   rc = sysprm_validate_change_parameters (data, persist, true, &assignments);
   /* If a server parameter is changed, user must belong to DBA group */
-  if (rc == PRM_ERR_NOT_FOR_CLIENT && Au_dba_user != NULL
-      && !au_is_dba_group_member (Au_user))
+  if (rc == PRM_ERR_NOT_FOR_CLIENT && au_get_dba_user () != NULL
+      && !au_is_dba_group_member (au_get_user ()))
     {
       /* user is not authorized to do the changes */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1,

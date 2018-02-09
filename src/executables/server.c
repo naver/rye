@@ -139,7 +139,7 @@ crash_handler (int signo, siginfo_t * siginfo, UNUSED_ARG void *dummyp)
       ppid = getppid ();
       while (1)
 	{
-	  if (kill (ppid, 0) < 0)
+	  if (os_send_signal (ppid, 0) < 0)
 	    {
 	      break;
 	    }

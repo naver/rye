@@ -4924,7 +4924,7 @@ or_get_set (OR_BUF * buf, TP_DOMAIN * domain)
 	}
     }
 
-  /* sets are always paded, cosume the padding */
+  /* sets are always paded, consume the padding */
   length = (int) (buf->ptr - set_start);
   bits = length & 3;
   if (bits)

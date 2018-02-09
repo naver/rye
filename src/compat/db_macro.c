@@ -76,7 +76,6 @@ int db_Connect_status = DB_CONNECTION_STATUS_CONNECTED;
 int db_Connect_status = DB_CONNECTION_STATUS_NOT_CONNECTED;
 int db_Client_type = BOOT_CLIENT_DEFAULT;
 #endif
-int db_Disable_modifications = 0;
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int transfer_string (char *dst, int *xflen, int *outlen,

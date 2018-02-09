@@ -1253,7 +1253,7 @@ qfile_finalize (void)
  *   type_list(in/out): type list for the list file to be created
  *   sort_list(in): sort info for the list file to be created
  *   query_id(in): query id associated with this list file
- *   flag(in): {QFILE_FLAG_RESULT_FILE, QFILE_FLAG_DISTINCT, QFILE_FLAG_ALL}
+ *   flag(in): {QFILE_FLAG_DISTINCT, QFILE_FLAG_ALL}
  *             whether to do 'all' or 'distinct' operation
  *
  * Note: A list file is created by using the specified type list and

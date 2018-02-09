@@ -250,6 +250,7 @@ css_return_open_entry (char *host, CSS_MAP_ENTRY ** anchor)
   return (NULL);
 }
 
+#if 0
 /*
  * css_return_entry_from_conn() - check the queue based on a conn_ptr
  *   return: the entry if it exists, or NULL
@@ -271,3 +272,4 @@ css_return_entry_from_conn (CSS_CONN_ENTRY * conn, CSS_MAP_ENTRY * anchor)
 
   return (NULL);
 }
+#endif

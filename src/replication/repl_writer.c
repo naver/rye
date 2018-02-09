@@ -1958,6 +1958,30 @@ log_copier_main (void *arg)
 }
 
 /*
+ * rpwr_recv_queue_is_empty ()-
+ *   return: true or false
+ *
+ */
+bool
+rpwr_recv_queue_is_empty (void)
+{
+  RECV_Q_NODE *node = NULL;
+
+  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+  node = (RECV_Q_NODE *) Rye_queue_get_first (cirpwr_Gl.recv_log_queue);
+  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+
+  if (node == NULL)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+/*
  * log_writer_main -
  *
  * return: NO_ERROR if successful, error_code otherwise

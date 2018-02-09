@@ -1069,7 +1069,7 @@ health_check_main (void *arg)
 			Repl_Info->max_mem_size);
 	}
 
-      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL, 60, 0) != NO_ERROR)
+      if (FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_FAIL, 10, 0) != NO_ERROR)
 	{
 	  RP_SET_AGENT_NEED_RESTART ();
 	}
@@ -1131,6 +1131,7 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   int error = NO_ERROR;
   LOG_HEADER *log_hdr = NULL;
   const PRM_NODE_INFO *host_info = NULL;
+  CIRP_CT_LOG_ANALYZER ct;
 
   error = cirp_logpb_act_log_fetch_hdr (&analyzer->buf_mgr);
   if (error != NO_ERROR)
@@ -1142,13 +1143,14 @@ cirp_get_repl_info_from_catalog (CIRP_ANALYZER_INFO * analyzer)
   host_info = &analyzer->buf_mgr.host_info;
 
   /* get analyzer info */
-  error = rpct_get_log_analyzer (&analyzer->conn, &analyzer->ct, host_info);
+  error = rpct_get_log_analyzer (&analyzer->conn, &ct, host_info);
   if (error != NO_ERROR)
     {
       assert (error != CCI_ER_NO_MORE_DATA);
 
       return error;
     }
+  analyzer->ct = ct;
 
   assert (analyzer->q_applied_time == NULL);
 

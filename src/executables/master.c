@@ -155,7 +155,7 @@ css_master_timeout (void)
   pthread_mutex_lock (&css_Master_socket_anchor_lock);
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
-      if (kill (temp->pid, 0) && errno == ESRCH)
+      if (os_send_signal (temp->pid, 0) && errno == ESRCH)
 	{
 	  hb_cleanup_conn_and_start_process (temp->conn_ptr);
 
@@ -753,8 +753,6 @@ int
 main (int argc, char **argv)
 {
   CSS_CONN_ENTRY *conn;
-  static const char *suffix = "_master.err";
-  char hostname[MAXHOSTNAMELEN + sizeof (suffix)];
   int status = EXIT_SUCCESS;
   const char *msg_format;
 
@@ -763,16 +761,7 @@ main (int argc, char **argv)
       return EXIT_FAILURE;
     }
 
-  if (GETHOSTNAME (hostname, MAXHOSTNAMELEN) == 0)
-    {
-      /* css_gethostname won't null-terminate if the name is
-       * overlong.  Put in a guaranteed null-terminator of our
-       * own so that strcat doesn't go wild.
-       */
-      hostname[MAXHOSTNAMELEN] = '\0';
-      strcat (hostname, suffix);
-    }
-
+  sysprm_set_master_er_log_file ();
   if (db_initialize () != NO_ERROR)
     {
       PRINT_AND_LOG_ERR_MSG ("Failed to initialize.\n");

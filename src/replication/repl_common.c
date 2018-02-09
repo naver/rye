@@ -45,6 +45,12 @@
 
 #include "cas_cci_internal.h"
 
+/*
+ *
+ */
+static bool db_is_Allowed_Modification = true;
+
+
 #if defined(CS_MODE) || defined(SERVER_MODE)
 static bool repl_Agent_need_restart = false;
 static bool repl_Agent_need_shutdown = false;
@@ -381,8 +387,7 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	  break;
 	case RP_ITEM_TYPE_DDL:
 	  ddl = &item->info.ddl;
-	  if (ddl->query == NULL || ddl->db_user == NULL
-	      || LSA_ISNULL (&item->lsa))
+	  if (LSA_ISNULL (&item->lsa))
 	    {
 	      return false;
 	    }
@@ -469,4 +474,43 @@ rp_host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
       *node_info = tmp_node_info;
       return ER_FAILED;
     }
+}
+
+
+/*
+ * db_disable_modification - Disable database modification operation
+ *   return: error code
+ *
+ * NOTE: This function will change 'db_is_Allowed_Modification'.
+ */
+int
+db_disable_modification (void)
+{
+  db_is_Allowed_Modification = false;
+
+  return NO_ERROR;
+}
+
+/*
+ * db_enable_modification - Enable database modification operation
+ *   return: error code
+ *
+ * NOTE: This function will change 'db_is_Allowed_Modification'.
+ */
+int
+db_enable_modification (void)
+{
+  db_is_Allowed_Modification = true;
+
+  return NO_ERROR;
+}
+
+/*
+ * db_is_allowed_modification -
+ *   return:
+ */
+bool
+db_is_allowed_modification (void)
+{
+  return db_is_Allowed_Modification;
 }

@@ -39,7 +39,6 @@
 static int fi_handler_random_exit (THREAD_ENTRY * thread_p, void *arg);
 static int fi_handler_random_fail (THREAD_ENTRY * thread_p, void *arg);
 static int fi_handler_random_sleep (THREAD_ENTRY * thread_p, void *arg);
-static int fi_handler_random_success (THREAD_ENTRY * thread_p, void *arg);
 
 static FI_TEST_ITEM *fi_code_item (THREAD_ENTRY * thread_p,
 				   FI_TEST_CODE code);
@@ -127,11 +126,11 @@ fi_init (void)
   fi_init_test_item (FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE,
 		     "fi_hb_slow_heartbeat_message", fi_handler_random_sleep);
 
-  fi_init_test_item (FI_TEST_HB_SLOW_DISK,
-		     "fi_hb_slow_disk", fi_handler_random_success);
+  fi_init_test_item (FI_TEST_HB_DISK_FAIL,
+		     "fi_hb_disk_fail", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_HB_SLOW_PING_HOST,
-		     "fi_hb_slow_ping_host", fi_handler_random_success);
+		     "fi_hb_slow_ping_host", fi_handler_random_sleep);
 
   fi_init_test_item (FI_TEST_REPL_RANDOM_EXIT,
 		     "fi_repl_random_exit", fi_handler_random_exit);
@@ -582,54 +581,20 @@ fi_handler_random_fail (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
 }
 
 static int
-fi_handler_random_success (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
-{
-  static bool init = false;
-  int r;
-  int mod_factor;
-
-  if (arg == NULL)
-    {
-      mod_factor = 20000;
-    }
-  else
-    {
-      mod_factor = *((int *) arg);
-    }
-
-  if (init == false)
-    {
-      srand (time (NULL));
-      init = true;
-    }
-
-  r = rand ();
-
-  if (mod_factor == 0 || ((r % mod_factor) == 0))
-    {
-      return NO_ERROR;
-    }
-
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	  ER_FAULT_INJECTION, 1, "fault injection: random success");
-
-  return ER_FAULT_INJECTION;
-}
-
-static int
 fi_handler_random_sleep (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
 {
   static bool init = false;
   int r;
-  int mod_factor;
+  FI_ARG_SLEEP arg_sleep;
 
   if (arg == NULL)
     {
-      mod_factor = 20000;
+      arg_sleep.mod_factor = 20000;
+      arg_sleep.sleep_time = 10 * ONE_SEC;
     }
   else
     {
-      mod_factor = *((int *) arg);
+      arg_sleep = *((FI_ARG_SLEEP *) arg);
     }
 
   if (init == false)
@@ -638,12 +603,13 @@ fi_handler_random_sleep (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
       init = true;
     }
 
-  r = rand () % mod_factor;
-
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	  ER_FAULT_INJECTION, 1, "fault injection: random sleep");
-
-  THREAD_SLEEP (r);
+  r = rand () % arg_sleep.mod_factor;
+  if (r == 0)
+    {
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
+	      ER_FAULT_INJECTION, 1, "fault injection: random sleep");
+      THREAD_SLEEP (arg_sleep.sleep_time);
+    }
 
   return NO_ERROR;
 }

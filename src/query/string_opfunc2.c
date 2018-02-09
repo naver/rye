@@ -8310,6 +8310,7 @@ db_str_to_date (const DB_VALUE * str, const DB_VALUE * format,
   /* start main body ********************************************************
    */
 
+  assert (lang_charset_name (INTL_CODESET_UTF8) != NULL);
   assert (DB_VALUE_TYPE (date_lang) == DB_TYPE_INTEGER);
   date_lang_id = lang_get_lang_id_from_flag (DB_GET_INT (date_lang), &dummy,
 					     &dummy);

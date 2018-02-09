@@ -795,7 +795,7 @@ css_process_shutdown (UNUSED_ARG CSS_CONN_ENTRY * conn,
 	  assert (false);
 
 	  /* Normal rye_server no longer exists. */
-	  kill (temp->pid, SIGKILL);
+	  os_send_kill (temp->pid);
 	}
     }
 

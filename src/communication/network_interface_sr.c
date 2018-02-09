@@ -229,7 +229,8 @@ server_capabilities (void)
       capabilities |= NET_CAP_INTERRUPT_ENABLED;
     }
 
-  if (db_Disable_modifications > 0 || server_state == HA_STATE_TO_BE_SLAVE)
+  if (db_is_allowed_modification () == false
+      || server_state == HA_STATE_TO_BE_SLAVE)
     {
       capabilities |= NET_CAP_UPDATE_DISABLED;
     }
@@ -3085,6 +3086,10 @@ sqmgr_execute_query (THREAD_ENTRY * thread_p, unsigned int rid,
   UINT64 old_expand_clock, new_expand_clock;
 
   EXECUTION_INFO info = { NULL, NULL, NULL };
+
+  assert (css_find_conn_by_tran_index
+	  (logtb_get_current_tran_index (thread_p)) != NULL);
+
   trace_slow_msec = prm_get_bigint_value (PRM_ID_SQL_TRACE_SLOW);
   trace_ioread = prm_get_integer_value (PRM_ID_SQL_TRACE_IOREADS);
 

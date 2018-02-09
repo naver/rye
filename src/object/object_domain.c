@@ -296,83 +296,6 @@ static TP_DOMAIN *tp_Domains[] = {
   NULL
 };
 
-static TP_DOMAIN *tp_Bigint_conv[] = {
-  &tp_Bigint_domain, &tp_Integer_domain,
-  &tp_Double_domain, &tp_Numeric_domain, &tp_Time_domain, NULL
-};
-
-static TP_DOMAIN *tp_Integer_conv[] = {
-  &tp_Integer_domain, &tp_Bigint_domain,
-  &tp_Double_domain, &tp_Numeric_domain, &tp_Time_domain, NULL
-};
-
-
-static TP_DOMAIN *tp_Double_conv[] = {
-  &tp_Double_domain, &tp_Numeric_domain, &tp_Bigint_domain,
-  &tp_Integer_domain, &tp_Time_domain, NULL
-};
-
-static TP_DOMAIN *tp_Numeric_conv[] = {
-  &tp_Numeric_domain, &tp_Double_domain, &tp_Bigint_domain,
-  &tp_Integer_domain, &tp_Time_domain, NULL
-};
-
-static TP_DOMAIN *tp_String_conv[] = {
-  &tp_String_domain,
-  &tp_Datetime_domain, &tp_Time_domain,
-  &tp_Date_domain, NULL
-};
-
-static TP_DOMAIN *tp_VarBit_conv[] = {
-  &tp_VarBit_domain, NULL
-};
-
-static TP_DOMAIN *tp_Sequence_conv[] = {
-  &tp_Sequence_domain, NULL,
-};
-
-/*
- * tp_Domain_conversion_matrix
- *    This is the matrix of conversion rules.  It is used primarily
- *    in the coercion of sets.
- */
-
-TP_DOMAIN **tp_Domain_conversion_matrix[] = {
-  NULL,				/* DB_TYPE_NULL */
-  tp_Integer_conv,
-  NULL,				/* DB_TYPE_FLOAT *//* unused */
-  tp_Double_conv,
-  tp_String_conv,
-  NULL,				/* DB_TYPE_OBJECT */
-  NULL,
-  NULL,
-  tp_Sequence_conv,
-  NULL,				/* DB_TYPE_ELO *//* unused */
-  NULL,				/* DB_TYPE_TIME */
-  NULL,				/* DB_TYPE_TIMESTAMP *//* unused */
-  NULL,				/* DB_TYPE_DATE */
-  NULL,				/* DB_TYPE_MONETARY *//* unused */
-  NULL,				/* DB_TYPE_VARIABLE */
-  NULL,				/* DB_TYPE_SUBSTRUCTURE */
-  NULL,				/* DB_TYPE_POINTER */
-  NULL,				/* DB_TYPE_ERROR */
-  NULL,				/* DB_TYPE_SHORT *//* unused */
-  NULL,				/* DB_TYPE_VOBJ *//* unused */
-  NULL,				/* DB_TYPE_OID */
-  NULL,				/* DB_TYPE_DB_VALUE *//* unused */
-  tp_Numeric_conv,		/* DB_TYPE_NUMERIC */
-  NULL,				/* DB_TYPE_BIT *//* unused */
-  tp_VarBit_conv,		/* DB_TYPE_VARBIT */
-  NULL,				/* DB_TYPE_CHAR *//* unused */
-  NULL,				/* DB_TYPE_NCHAR *//* unused */
-  NULL,				/* DB_TYPE_VARNCHAR *//* unused */
-  NULL,				/* DB_TYPE_RESULTSET */
-  NULL,				/* DB_TYPE_IDXKEY *//* unused */
-  NULL,				/* DB_TYPE_TABLE */
-  tp_Bigint_conv,		/* DB_TYPE_BIGINT */
-  NULL				/* DB_TYPE_DATETIME */
-};
-
 #if defined (SERVER_MODE)
 /* lock for domain list cache */
 static pthread_mutex_t tp_domain_cache_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -488,7 +411,7 @@ tp_final (void)
   TP_DOMAIN *dlist, *d, *next, *prev;
   int i;
 
-  if (tp_Domain_is_initalized == false)
+  if (tp_Domain_is_initialized == false)
     {
       return;
     }
@@ -1031,17 +954,13 @@ tp_domain_match_internal (const TP_DOMAIN * dom1, const TP_DOMAIN * dom2,
       return 1;
     }
 
-  if ((TP_DOMAIN_TYPE (dom1) != TP_DOMAIN_TYPE (dom2))
-      && (exact != TP_STR_MATCH
-	  || !ARE_COMPARABLE (TP_DOMAIN_TYPE (dom1), TP_DOMAIN_TYPE (dom2))))
+  if (TP_DOMAIN_TYPE (dom1) != TP_DOMAIN_TYPE (dom2))
     {
       return 0;
     }
 
   /*
-   * At this point, either dom1 and dom2 have exactly the same type, or
-   * exact_match is TP_STR_MATCH and dom1 and dom2 are a char/varchar
-   * (nchar/varnchar, bit/varbit) pair.
+   * At this point, either dom1 and dom2 have exactly the same type
    */
 
   /* could use the new is_parameterized flag to avoid the switch ? */
@@ -1137,6 +1056,10 @@ tp_domain_match_internal (const TP_DOMAIN * dom1, const TP_DOMAIN * dom2,
 		  for (d1 = dom1->setdomain, d2 = dom2->setdomain;
 		       d1 != NULL && d2 != NULL; d1 = d1->next, d2 = d2->next)
 		    {
+#if 1				/* remove nested set */
+		      assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (d1)));
+		      assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (d2)));
+#endif
 		      if (!tp_domain_match (d1, d2, exact))
 			{
 			  match = 0;
@@ -1234,6 +1157,8 @@ tp_domain_match_internal (const TP_DOMAIN * dom1, const TP_DOMAIN * dom2,
 	   * provided the actual value is within the destination domain
 	   * tolerance.
 	   */
+	  assert (false);
+
 	  match = 1;
 	}
       break;
@@ -1324,10 +1249,7 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
       return domain;
     }
 
-  if ((TP_DOMAIN_TYPE (domain) != TP_DOMAIN_TYPE (transient))
-      && (exact != TP_STR_MATCH
-	  || !ARE_COMPARABLE (TP_DOMAIN_TYPE (domain),
-			      TP_DOMAIN_TYPE (transient))))
+  if (TP_DOMAIN_TYPE (domain) != TP_DOMAIN_TYPE (transient))
     {
       return NULL;
     }
@@ -1335,364 +1257,101 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
   *ins_pos = domain;
 
   /*
-   * At this point, either domain and transient have exactly the same type, or
-   * exact_match is TP_STR_MATCH and domain and transient are a char/varchar
-   * (nchar/varnchar, bit/varbit) pair.
+   * At this point, either domain and transient have exactly the same type
    */
 
-  /* could use the new is_parameterized flag to avoid the switch ? */
-  switch (TP_DOMAIN_TYPE (domain))
+  while (domain != NULL)
     {
-
-    case DB_TYPE_NULL:
-    case DB_TYPE_INTEGER:
-    case DB_TYPE_BIGINT:
-    case DB_TYPE_DOUBLE:
-    case DB_TYPE_TIME:
-    case DB_TYPE_DATETIME:
-    case DB_TYPE_DATE:
-      /*
-       * these domains have no parameters
-       */
-      match = 1;
-      break;
-
-    case DB_TYPE_OBJECT:
-    case DB_TYPE_SUB:
-
-      while (domain)
+      match = tp_domain_match_internal (domain, transient, exact, true);
+      if (match)
 	{
-	  /*
-	   * if "exact" is zero, we should be checking the subclass hierarchy
-	   * of domain to see id transient is in it !
-	   */
-
-	  /* Always prefer comparison of MOPs */
-	  if (domain->class_mop != NULL && transient->class_mop != NULL)
-	    {
-	      match = (domain->class_mop == transient->class_mop);
-	    }
-	  else if (domain->class_mop == NULL && transient->class_mop == NULL)
-	    {
-	      match = OID_EQ (&domain->class_oid, &transient->class_oid);
-	    }
-	  else
-	    {
-	      /*
-	       * We have a mixture of OID & MOPS, it probably isn't necessary
-	       * to be this general but try to avoid assuming the class OIDs
-	       * have been set when there is a MOP present.
-	       */
-	      if (domain->class_mop != NULL)
-		{
-		  match = OID_EQ (WS_OID (domain->class_mop),
-				  &transient->class_oid);
-		}
-	    }
-
-	  if (match == 0 && exact == TP_SET_MATCH
-	      && domain->class_mop == NULL && OID_ISNULL (&domain->class_oid))
-	    {
-	      match = 1;
-	    }
-
-	  if (match)
-	    {
-	      break;
-	    }
-
-	  *ins_pos = domain;
-	  domain = domain->next_list;
+	  return domain;	/* found */
 	}
-      break;
 
-    case DB_TYPE_VARIABLE:
-    case DB_TYPE_SEQUENCE:
-      {
-	int dsize2;
-
-	dsize2 = tp_domain_size (transient->setdomain);
-	while (domain)
-	  {
-#if 1				/* remove nested set */
-	    assert (domain->next == NULL);
-#endif
-
-#if 1
-	    /* >>>>> NEED MORE CONSIDERATION <<<<<
-	     * do not check order
-	     * must be rollback with tp_domain_add()
-	     */
-	    if (domain->setdomain == transient->setdomain)
-	      {
-		match = 1;
-	      }
-	    else
-	      {
-		int dsize1;
-
-		/*
-		 * don't bother comparing the lists unless the sizes are the
-		 * same
-		 */
-		dsize1 = tp_domain_size (domain->setdomain);
-		if (dsize1 > dsize2)
-		  {
-		    break;
-		  }
-
-		if (dsize1 == dsize2)
-		  {
-
-		    /* handle the simple single domain case quickly */
-		    if (dsize1 == 1)
-		      {
-			match = tp_domain_match (domain->setdomain,
-						 transient->setdomain, exact);
-		      }
-		    else
-		      {
-			TP_DOMAIN *d1, *d2;
-
-			match = 1;
-			for (d1 = domain->setdomain, d2 =
-			     transient->setdomain; d1 != NULL && d2 != NULL;
-			     d1 = d1->next, d2 = d2->next)
-			  {
-#if 1				/* remove nested set */
-			    assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (d1)));
-			    assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (d2)));
-#endif
-			    if (!tp_domain_match (d1, d2, exact))
-			      {
-				match = 0;
-				break;	/* immediately exit for loop */
-			      }
-			  }	/* for */
-		      }
-		  }		/* if (dsize1 == dsize2) */
-	      }
-#else /* #if 1 */
-	    if (domain->setdomain == transient->setdomain)
-	      match = 1;
-
-	    else
-	      {
-		int dsize;
-
-		/*
-		 * don't bother comparing the lists unless the sizes are the
-		 * same
-		 */
-		dsize = tp_domain_size (domain->setdomain);
-		if (dsize == tp_domain_size (transient->setdomain))
-		  {
-
-		    /* handle the simple single domain case quickly */
-		    if (dsize == 1)
-		      {
-			match = tp_domain_match (domain->setdomain,
-						 transient->setdomain, exact);
-		      }
-		    else
-		      {
-			TP_DOMAIN *d1, *d2;
-
-			/* clear the visited flag of second subdomain list */
-			for (d2 = transient->setdomain; d2 != NULL;
-			     d2 = d2->next)
-			  {
-			    d2->is_visited = 0;
-			  }
-
-			match = 1;
-			for (d1 = domain->setdomain;
-			     d1 != NULL && match; d1 = d1->next)
-			  {
-			    for (d2 = transient->setdomain; d2 != NULL;
-				 d2 = d2->next)
-			      {
-				if (!d2->is_visited
-				    && tp_domain_match (d1, d2, exact))
-				  {
-				    break;
-				  }
-			      }
-			    /* did we find the domain in the other list ? */
-			    if (d2 != NULL)
-			      {
-				d2->is_visited = 1;
-			      }
-			    else
-			      {
-				match = 0;
-			      }
-			  }
-		      }
-		  }
-	      }
-#endif /* #if 1 */
-
-	    if (match)
-	      {
-		break;
-	      }
-
-	    *ins_pos = domain;
-	    domain = domain->next_list;
-	  }
-      }
-      break;
-
-    case DB_TYPE_VARCHAR:
-      while (domain)
+      switch (TP_DOMAIN_TYPE (domain))
 	{
-	  if (exact == TP_EXACT_MATCH || exact == TP_SET_MATCH)
-	    {
-	      /* check for descending order */
-	      if (domain->precision < transient->precision)
-		{
-		  break;
-		}
-
-	      match = ((domain->precision == transient->precision)
-		       && (domain->collation_id == transient->collation_id));
-	    }
-	  else if (exact == TP_STR_MATCH)
-	    {
-	      /*
-	       * Allow the match if the precisions would allow us to reuse the
-	       * string without modification.
-	       */
-	      match = ((domain->precision >= transient->precision)
-		       && (domain->collation_id == transient->collation_id));
-	    }
-	  else
-	    {
-	      /*
-	       * Allow matches regardless of precision, let the actual length
-	       * of the value determine if it can be assigned.  This is
-	       * important for literal strings as their precision will be the
-	       * maximum but they can still be assigned to domains with a
-	       * smaller precision provided the actual value is within the
-	       * destination domain tolerance.
-	       */
-	      match = (domain->collation_id == transient->collation_id);
-	    }
-
-	  if (match)
-	    {
-	      break;
-	    }
-
-	  *ins_pos = domain;
-	  domain = domain->next_list;
-	}
-      break;
-
-    case DB_TYPE_VARBIT:
-      while (domain)
-	{
-	  if (exact == TP_EXACT_MATCH || exact == TP_SET_MATCH)
-	    {
-	      /* check for descending order */
-	      if (domain->precision < transient->precision)
-		{
-		  break;
-		}
-
-	      match = (domain->precision == transient->precision);
-	    }
-	  else if (exact == TP_STR_MATCH)
-	    {
-	      /*
-	       * Allow the match if the precisions would allow us to reuse the
-	       * string without modification.
-	       */
-	      match = (domain->precision >= transient->precision);
-	    }
-	  else
-	    {
-	      /*
-	       * Allow matches regardless of precision, let the actual length
-	       * of the value determine if it can be assigned.  This is
-	       * important for literal strings as their precision will be the
-	       * maximum but they can still be assigned to domains with a
-	       * smaller precision provided the actual value is within the
-	       * destination domain tolerance.
-	       */
-	      match = 1;
-	    }
-
-	  if (match)
-	    {
-	      break;
-	    }
-
-	  *ins_pos = domain;
-	  domain = domain->next_list;
-	}
-      break;
-
-    case DB_TYPE_NUMERIC:
-      /*
-       * The first domain is a default domain for numeric type,
-       * actually NUMERIC(15,0). We try to match it first.
-       */
-      if ((transient->precision == domain->precision)
-	  && (transient->scale == domain->scale))
-	{
-	  match = 1;
+	case DB_TYPE_NULL:
+	case DB_TYPE_INTEGER:
+	case DB_TYPE_BIGINT:
+	case DB_TYPE_DOUBLE:
+	case DB_TYPE_TIME:
+	case DB_TYPE_DATETIME:
+	case DB_TYPE_DATE:
+	  assert (false);
+	  domain = NULL;	/* give up */
 	  break;
-	}
 
-      domain = domain->next_list;
-      while (domain)
-	{
-	  /*
-	   * The other domains for numeric values are sorted
-	   * by descending order of precision and scale.
-	   */
-	  if ((domain->precision < transient->precision)
-	      || ((domain->precision == transient->precision)
-		  && (domain->scale < transient->scale)))
-	    {
-	      break;
-	    }
-
-	  /*
-	   * note that we never allow inexact matches here because
-	   * the mr_setmem_numeric function is not currently able
-	   * to perform the deferred coercion.
-	   */
-	  match = ((domain->precision == transient->precision)
-		   && (domain->scale == transient->scale));
-	  if (match)
-	    {
-	      break;
-	    }
-
+	case DB_TYPE_OBJECT:
+	case DB_TYPE_SUB:
+	case DB_TYPE_VARIABLE:
+	case DB_TYPE_SEQUENCE:
 	  *ins_pos = domain;
 	  domain = domain->next_list;
+	  break;
+
+	case DB_TYPE_VARCHAR:
+	case DB_TYPE_VARBIT:
+	  /* check for descending order */
+	  if (domain->precision < transient->precision)
+	    {
+	      domain = NULL;	/* not found */
+	    }
+	  else
+	    {
+	      *ins_pos = domain;
+	      domain = domain->next_list;
+	    }
+	  break;
+
+	case DB_TYPE_NUMERIC:
+	  assert (domain->precision != transient->precision
+		  || domain->scale != transient->scale);
+	  /*
+	   * The first domain is a default domain for numeric type,
+	   * actually NUMERIC(15,0)
+	   */
+          assert (DB_DOUBLE_DECIMAL_PRECISION == 15);
+          assert (DB_DEFAULT_NUMERIC_SCALE == 0);
+	  if (domain->precision == DB_DOUBLE_DECIMAL_PRECISION
+	      || domain->scale == DB_DEFAULT_NUMERIC_SCALE)
+	    {
+	      *ins_pos = domain;
+	      domain = domain->next_list;
+	    }
+	  else
+	    {
+              /*
+	       * The other domains for numeric values are sorted
+	       * by descending order of precision and scale.
+	       */
+	      if ((domain->precision < transient->precision)
+		  || ((domain->precision == transient->precision)
+		      && (domain->scale < transient->scale)))
+		{
+		  domain = NULL;	/* not found */
+		}
+	      else
+		{
+		  *ins_pos = domain;
+		  domain = domain->next_list;
+		}
+	    }
+	  break;
+
+	case DB_TYPE_OID:
+	case DB_TYPE_RESULTSET:
+	case DB_TYPE_TABLE:
+	  assert (false);
+	  domain = NULL;	/* give up */
+	  break;
+
+	  /* don't have a default so we make sure to add clauses for all types */
 	}
-      break;
+    }				/* while */
 
-    case DB_TYPE_OID:
-      /*
-       * These are internal domains, they shouldn't be seen, in case they are,
-       * just let them match without parameters.
-       */
-      match = 1;
-      break;
+  /* not found */
 
-    case DB_TYPE_RESULTSET:
-    case DB_TYPE_TABLE:
-      break;
-
-      /* don't have a default so we make sure to add clauses for all types */
-    }
-
-  return (match ? domain : NULL);
+  return NULL;
 }
 
 #if !defined (SERVER_MODE)
@@ -2857,14 +2516,10 @@ tp_domain_compatible (const TP_DOMAIN * src, const TP_DOMAIN * dest)
  *    return: domain
  *    domain_list(in): list of possible domains
  *    value(in): value of interest
- *    allow_coercion(in): non-zero if coercion will be allowed
  *    exact_match(in): controls tolerance permitted during match
  * Note:
  *    This operation is used for basic domain compatibility checking
  *    as well as value coercion.
- *    If the allow_coercion flag is on, the tp_Domain_conversion_matrix
- *    will be consulted to find an appropriate domain in the case
- *    where there is no exact match.
  *    If an appropriate domain could not be found, NULL is returned.
  *
  *    This is known not to work correctly for nested set domains.  In order
@@ -2877,14 +2532,11 @@ tp_domain_compatible (const TP_DOMAIN * src, const TP_DOMAIN * dest)
  */
 TP_DOMAIN *
 tp_domain_select (const TP_DOMAIN * domain_list,
-		  const DB_VALUE * value,
-		  int allow_coercion, TP_MATCH exact_match)
+		  const DB_VALUE * value, TP_MATCH exact_match)
 {
   TP_DOMAIN *best, *d;
-  TP_DOMAIN **others;
   DB_TYPE vtype;
   UNUSED_VAR DB_VALUE temp;
-  int i;
 
   best = NULL;
 
@@ -3044,25 +2696,6 @@ tp_domain_select (const TP_DOMAIN * domain_list,
 	}
     }
 
-  if (best == NULL && allow_coercion)
-    {
-      others = tp_Domain_conversion_matrix[vtype];
-      if (others != NULL)
-	{
-	  for (i = 0; others[i] != NULL && best == NULL; i++)
-	    {
-	      for (d = (TP_DOMAIN *) domain_list; d != NULL && best == NULL;
-		   d = d->next)
-		{
-		  if (d->type == others[i]->type)
-		    {
-		      best = d;
-		    }
-		}
-	    }
-	}
-    }
-
   return best;
 }
 
@@ -3090,6 +2723,8 @@ tp_domain_check (const TP_DOMAIN * domain,
   TP_DOMAIN_STATUS status;
   TP_DOMAIN *d;
 
+  assert (exact_match == TP_EXACT_MATCH);
+
   if (domain == NULL)
     {
       status = DOMAIN_COMPATIBLE;
@@ -3099,7 +2734,7 @@ tp_domain_check (const TP_DOMAIN * domain,
 #if 1				/* TODO - trace */
       assert (domain->next == NULL);
 #endif
-      d = tp_domain_select (domain, value, 0, exact_match);
+      d = tp_domain_select (domain, value, exact_match);
       if (d == NULL)
 	{
 	  status = DOMAIN_INCOMPATIBLE;
@@ -3621,15 +3256,17 @@ tp_atobi (const DB_VALUE * src, DB_BIGINT * num_value,
 	}
 
       errno = 0;
-      bigint = strtoll (strp, &p, 10);
-
-      if (errno == ERANGE)
+      if (str_to_int64 (&bigint, &p, strp, 10) == 0)
 	{
-	  *data_stat = DATA_STATUS_TRUNCATED;
+	  *data_stat = DATA_STATUS_OK;
 	}
       else
 	{
-	  *data_stat = DATA_STATUS_OK;
+	  *data_stat = DATA_STATUS_NOT_CONSUMED;
+	  if (errno == ERANGE)
+	    {
+	      *data_stat = DATA_STATUS_TRUNCATED;
+	    }
 	}
 
       /* round number if a '5' or greater digit was found after the decimal point */
@@ -4881,6 +4518,12 @@ tp_value_coerce_internal (const DB_VALUE * src, DB_VALUE * dest,
 		status = DOMAIN_OVERFLOW;
 		break;
 	      }
+	    else if (data_stat != DATA_STATUS_OK)
+	      {
+		status = DOMAIN_INCOMPATIBLE;	/* conversion error */
+		break;
+	      }
+
 	    db_make_bigint (target, num_value);
 	    break;
 	  }

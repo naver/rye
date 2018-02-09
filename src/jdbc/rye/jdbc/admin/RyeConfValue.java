@@ -30,19 +30,35 @@ import rye.jdbc.driver.RyeException;
 
 public class RyeConfValue
 {
+    static final byte CHANGE_CONF_DISABLE_AUTO_GEN_PARAM = 0x01;
+    static final byte CHANGE_CONF_DISABLE_SHARD_MGMT_PARAM = 0x02;
+    static final byte CHANGE_CONF_ENABLE_ALL = 0;
+    static final byte CHANGE_CONF_ENABLE_NORMAL = CHANGE_CONF_DISABLE_AUTO_GEN_PARAM
+		    | CHANGE_CONF_DISABLE_SHARD_MGMT_PARAM;
+
     static final String PROC_BROKER = "broker";
     static final String SECT_SHARD_MGMT = "shard_mgmt";
     static final String PROC_SERVER = "server";
     static final String SECT_COMMON = "common";
     static final String KEY_HA_NODE_LIST = "ha_node_list";
     static final String KEY_HA_DB_LIST = "ha_db_list";
+    static final String KEY_HA_NODE_MYSELF = "ha_node_myself";
 
-    static final String[] builtinBrokers = { "broker", SECT_SHARD_MGMT, "rw", "ro", "so", "repl" };
+    static final String KEY_SHARD_MGMT_METADB = "shard_mgmt_metadb";
+    static final String KEY_SHARD_MGMT_NUM_MIGRATOR = "shard_mgmt_num_migrator";
+    static final String DEFAULT_VALUE_SHARD_MGMT_NUM_MIGRATOR = "10";
+
+    private static final String[] AUTO_GEN_PARAM = { KEY_HA_NODE_LIST, KEY_HA_DB_LIST, KEY_HA_NODE_MYSELF,
+		    KEY_SHARD_MGMT_METADB, "rye_port_id", "rye_shm_key" };
+
+    protected static final String[] builtinBrokers = { "broker", SECT_SHARD_MGMT, "rw", "ro", "so", "repl" };
 
     private final String procName;
     private final String sectName;
     private final String keyName;
     private final String value;
+    private final boolean isShardMgmtParam;
+    private final boolean isAutoGenParam;
 
     RyeConfValue(String procName, String sectName, String keyName, String value) throws RyeException
     {
@@ -50,10 +66,20 @@ public class RyeConfValue
 			|| keyName.length() == 0 || value == null || value.length() == 0) {
 	    throw RyeException.createRyeException((RyeConnectionUrl) null, RyeErrorCode.ER_INVALID_ARGUMENT, null);
 	}
-	this.procName = procName;
-	this.sectName = sectName;
-	this.keyName = keyName;
+	this.procName = procName.toLowerCase();
+	this.sectName = sectName.toLowerCase();
+	this.keyName = keyName.toLowerCase();
 	this.value = value;
+
+	isShardMgmtParam = (this.procName.equals(PROC_BROKER) && this.sectName.equals(SECT_SHARD_MGMT));
+
+	boolean isAutoGen = false;
+	for (int i = 0; i < AUTO_GEN_PARAM.length; i++) {
+	    if (this.keyName.equals(AUTO_GEN_PARAM[i])) {
+		isAutoGen = true;
+	    }
+	}
+	this.isAutoGenParam = isAutoGen;
     }
 
     String getProcName()
@@ -74,6 +100,17 @@ public class RyeConfValue
     String getValue()
     {
 	return value;
+    }
+
+    boolean isChangeable(byte changeMode)
+    {
+	if ((changeMode & CHANGE_CONF_DISABLE_SHARD_MGMT_PARAM) != 0 && this.isShardMgmtParam) {
+	    return false;
+	}
+	if ((changeMode & CHANGE_CONF_DISABLE_AUTO_GEN_PARAM) != 0 && this.isAutoGenParam) {
+	    return false;
+	}
+	return true;
     }
 
     protected static String[] splitParam(String param) throws RyeException

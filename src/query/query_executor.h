@@ -525,7 +525,9 @@ struct xasl_node
 #define XASL_SKIP_ORDERBY_LIST     2	/* skip sorting for orderby_list ? */
 #define XASL_ZERO_CORR_LEVEL       4	/* is zero-level uncorrelated subquery ? */
 #define XASL_TOP_MOST_XASL         8	/* this is a top most XASL */
-#define XASL_TO_BE_CACHED         16	/* the result will be cached */
+#if 0
+#define XASL_TO_BE_CACHED         16	/* reserved */	/* the result will be cached */
+#endif
 #define XASL_TO_CATALOG_TABLE   32	/* is DML to system catalog table */
 #define	XASL_TO_SHARD_TABLE	  64	/* is DML to shard table */
 #if 0
@@ -760,12 +762,14 @@ extern int qexec_update_index_stats (THREAD_ENTRY * thread_p,
 				     CIRP_CT_INDEX_STATS * index_stats);
 extern int qexec_upsert_applier_info (THREAD_ENTRY * thread_p, DB_IDXKEY * pk,
 				      CIRP_CT_LOG_APPLIER * applier);
+#if defined (ENABLE_UNUSED_FUNCTION)
 extern int qexec_update_applier_info (THREAD_ENTRY * thread_p,
 				      DB_IDXKEY * pk,
 				      CIRP_CT_LOG_APPLIER * applier_info);
 extern int qexec_update_analyzer_info (THREAD_ENTRY * thread_p,
 				       DB_IDXKEY * pk,
 				       CIRP_CT_LOG_ANALYZER * analyzer);
+#endif
 extern int qexec_upsert_analyzer_info (THREAD_ENTRY * thread_p,
 				       DB_IDXKEY * pk,
 				       CIRP_CT_LOG_ANALYZER * analyzer);

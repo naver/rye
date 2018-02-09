@@ -1963,7 +1963,10 @@ analyzer_main (void *arg)
 	  /* check for end of log */
 	  if (LSA_GE (&final_lsa, &log_hdr->eof_lsa))
 	    {
-	      analyzer->is_end_of_record = true;
+	      if (rpwr_recv_queue_is_empty () == true)
+		{
+		  analyzer->is_end_of_record = true;
+		}
 	      if (++eof_busy_wait_count > EOF_MAX_BUSY_WAIT)
 		{
 		  eof_busy_wait_count = 0;
@@ -2057,7 +2060,10 @@ analyzer_main (void *arg)
 	      if (LSA_GE (&final_lsa, &log_hdr->eof_lsa)
 		  || lrec->type == LOG_END_OF_LOG)
 		{
-		  analyzer->is_end_of_record = true;
+		  if (rpwr_recv_queue_is_empty () == true)
+		    {
+		      analyzer->is_end_of_record = true;
+		    }
 		  break;
 		}
 
