@@ -1303,6 +1303,8 @@ db_execute_and_keep_statement_local (DB_SESSION * session,
   /* now, execute the statement */
   err = do_execute_statement (session, statement);
 
+  assert (statement->etc == NULL);
+
   if (err < 0)
     {
       /* Do not override original error id with */

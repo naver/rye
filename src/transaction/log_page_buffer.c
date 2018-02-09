@@ -633,6 +633,7 @@ logpb_initialize_pool (THREAD_ENTRY * thread_p)
     }
   else
     {
+      assert (false);		/* TODO - trace */
       log_Pb.log_zip_support = false;
     }
 
@@ -930,6 +931,8 @@ logpb_replace (THREAD_ENTRY * thread_p, bool * retry)
        * aborted at the same time or it is likely that there is a bug in the
        * system (e.g., buffer are not being freed).
        */
+      assert (false);		/* TODO - trace */
+
       csect_exit (CSECT_LOG_BUFFER);
 
       error_code = logpb_expand_pool (-1);

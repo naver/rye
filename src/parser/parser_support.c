@@ -87,8 +87,13 @@ struct pt_host_vars
 
 int qp_Packing_er_code = NO_ERROR;
 
-static const int PACKING_MMGR_CHUNK_SIZE = 1024;
+#if !defined(NDEBUG)
+static const int PACKING_MMGR_CHUNK_SIZE = 4;	/* for code coverage */
+static const int PACKING_MMGR_BLOCK_SIZE = 1;	/* for code coverage */
+#else
+static const int PACKING_MMGR_CHUNK_SIZE = ONE_K;
 static const int PACKING_MMGR_BLOCK_SIZE = 10;
+#endif
 
 static int packing_heap_num_slot = 0;
 static HL_HEAPID *packing_heap = NULL;
@@ -697,6 +702,7 @@ pt_find_spec_in_statement (PARSER_CONTEXT * parser, const PT_NODE * stmt,
   switch (stmt->node_type)
     {
     case PT_SPEC:
+      assert (false);		/* TODO - trace */
       spec = pt_find_spec (parser, stmt, name);
       break;
 
@@ -709,6 +715,7 @@ pt_find_spec_in_statement (PARSER_CONTEXT * parser, const PT_NODE * stmt,
       break;
 
     default:
+      assert (false);		/* TODO - trace */
       break;
     }
 
@@ -771,6 +778,7 @@ pt_find_aggregate_names (PARSER_CONTEXT * parser, PT_NODE * tree,
       break;
 
     case PT_DOT_:
+      assert (false);		/* TODO - trace */
       node = tree->info.dot.arg2;
       break;
 
@@ -973,6 +981,7 @@ pt_has_non_idx_sarg_coll_pre (UNUSED_ARG PARSER_CONTEXT * parser,
 
       if (!lang_coll->options.allow_index_opt)
 	{
+	  assert (false);	/* TODO - trace */
 	  *mark = 1;
 	  *continue_walk = PT_STOP_WALK;
 	}
@@ -3114,8 +3123,11 @@ regu_varptr_array_alloc (int size)
 {
   REGU_VARIABLE **ptr;
 
-  if (size == 0)
-    return NULL;
+  if (size <= 0)
+    {
+      assert (false);
+      return NULL;
+    }
 
   ptr = (REGU_VARIABLE **) pt_alloc_packing_buf (sizeof (REGU_VARIABLE *) *
 						 size);
@@ -3221,8 +3233,11 @@ regu_outlistptr_array_alloc (int size)
 {
   OUTPTR_LIST **ptr;
 
-  if (size == 0)
-    return NULL;
+  if (size <= 0)
+    {
+      assert (false);
+      return NULL;
+    }
 
   ptr = (OUTPTR_LIST **) pt_alloc_packing_buf (sizeof (OUTPTR_LIST *) * size);
   if (ptr == NULL)
@@ -3793,8 +3808,11 @@ regu_keyrange_array_alloc (int size)
   KEY_RANGE *ptr;
   int i;
 
-  if (size == 0)
-    return NULL;
+  if (size <= 0)
+    {
+      assert (false);		/* TODO - trace */
+      return NULL;
+    }
 
   ptr = (KEY_RANGE *) pt_alloc_packing_buf (sizeof (KEY_RANGE) * size);
   if (ptr == NULL)
@@ -4175,8 +4193,11 @@ regu_int_array_alloc (int size)
   int *ptr;
   int i;
 
-  if (size == 0)
-    return NULL;
+  if (size <= 0)
+    {
+      assert (false);		/* TODO - trace */
+      return NULL;
+    }
 
   ptr = (int *) pt_alloc_packing_buf (sizeof (int) * size);
   if (ptr == NULL)
@@ -4327,8 +4348,9 @@ regu_oid_array_alloc (int size)
   OID *ptr;
   int i;
 
-  if (size == 0)
+  if (size <= 0)
     {
+      assert (false);		/* TODO - trace */
       return NULL;
     }
 
@@ -4488,8 +4510,9 @@ regu_update_assignment_array_alloc (int size)
   UPDATE_ASSIGNMENT *ptr;
   int i;
 
-  if (size == 0)
+  if (size <= 0)
     {
+      assert (false);		/* TODO - trace */
       return NULL;
     }
 
@@ -4552,11 +4575,10 @@ pt_alloc_packing_buf (int size)
     }
   else if (packing_heap_num_slot == packing_level - 1)
     {
-      packing_heap_num_slot += PACKING_MMGR_BLOCK_SIZE;
-
       tmp_heap = (HL_HEAPID *) realloc (packing_heap,
-					packing_heap_num_slot
-					* sizeof (HL_HEAPID));
+					(packing_heap_num_slot +
+					 PACKING_MMGR_BLOCK_SIZE) *
+					sizeof (HL_HEAPID));
       if (tmp_heap == NULL)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -4564,6 +4586,8 @@ pt_alloc_packing_buf (int size)
 		  PACKING_MMGR_BLOCK_SIZE * sizeof (HL_HEAPID));
 	  return NULL;
 	}
+
+      packing_heap_num_slot += PACKING_MMGR_BLOCK_SIZE;
 
       packing_heap = tmp_heap;
 
