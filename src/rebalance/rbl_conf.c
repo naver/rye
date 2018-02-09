@@ -556,10 +556,10 @@ int
 rbl_conf_check_repl_delay (CCI_CONN * conn)
 {
   INT64 delay;
-  int max_delay_msec;
+  INT64 max_delay_msec;
   int retry = 0;
 
-  max_delay_msec = prm_get_integer_value (PRM_ID_MIGRATOR_MAX_REPL_DELAY);
+  max_delay_msec = prm_get_bigint_value (PRM_ID_MIGRATOR_MAX_REPL_DELAY);
 
   while (true)
     {
@@ -569,7 +569,7 @@ rbl_conf_check_repl_delay (CCI_CONN * conn)
 	  return ER_FAILED;
 	}
 
-      RBL_DEBUG (ARG_FILE_LINE, "Replication delay: %ld, %d\n",
+      RBL_DEBUG (ARG_FILE_LINE, "Replication delay: %ld, %ld\n",
 		 delay, max_delay_msec);
 
       if (delay <= max_delay_msec)
