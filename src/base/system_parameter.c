@@ -951,7 +951,7 @@ static int prm_max_copylog_conns_upper = 64;
 INT64 PRM_MIGRATOR_MAX_REPL_DELAY = 3 * ONE_SEC;
 static INT64 prm_migrator_max_repl_delay_default = 3 * ONE_SEC;
 static INT64 prm_migrator_max_repl_delay_lower = 0;
-static INT64 prm_migrator_max_repl_delay_upper = INT_MAX * ONE_SEC;
+static INT64 prm_migrator_max_repl_delay_upper = (INT64) INT_MAX * ONE_SEC;
 
 static unsigned int prm_Ha_node_myself_ip = INADDR_NONE;
 
