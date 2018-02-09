@@ -87,11 +87,10 @@ struct pt_host_vars
 
 int qp_Packing_er_code = NO_ERROR;
 
+static const int PACKING_MMGR_CHUNK_SIZE = ONE_K;
 #if !defined(NDEBUG)
-static const int PACKING_MMGR_CHUNK_SIZE = 4;	/* for code coverage */
 static const int PACKING_MMGR_BLOCK_SIZE = 1;	/* for code coverage */
 #else
-static const int PACKING_MMGR_CHUNK_SIZE = ONE_K;
 static const int PACKING_MMGR_BLOCK_SIZE = 10;
 #endif
 
@@ -4193,9 +4192,10 @@ regu_int_array_alloc (int size)
   int *ptr;
   int i;
 
+  assert (size >= 0);         /* TODO - trace */
+
   if (size <= 0)
     {
-      assert (false);		/* TODO - trace */
       return NULL;
     }
 

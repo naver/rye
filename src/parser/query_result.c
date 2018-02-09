@@ -818,7 +818,6 @@ pt_free_query_etc_area (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * query)
 {
   if (query && query->etc && pt_node_to_stmt_type (query) == RYE_STMT_SELECT)
     {
-      assert (false);		/* TODO - trace */
       regu_free_listid ((QFILE_LIST_ID *) query->etc);
     }
 }
