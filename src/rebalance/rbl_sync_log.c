@@ -1429,7 +1429,7 @@ rbl_analyze_log_record (RBL_SYNC_CONTEXT * ctx, LOG_RECORD_HEADER * lrec)
 	      RBL_ASSERT (ovfl_rec->recdes.data != NULL);
 
 	      /* in case of overflow update, rcvindex is RVOVF_NEWPAGE_INSERT.
-	       * 3rd parameter of rbl_make_sql() should be RVOVF_PAGE_UPDATE 
+	       * 3rd parameter of rbl_make_sql() should be RVOVF_PAGE_UPDATE
 	       * that will generate REPLACE query
 	       */
 	      sql = rbl_make_sql (&ovfl_rec->recdes, &ovfl_rec->class_oid,
@@ -1651,10 +1651,11 @@ rbl_sync_log (RBL_SYNC_CONTEXT * ctx)
 int
 rbl_sync_check_delay (RBL_SYNC_CONTEXT * ctx)
 {
-  int run_time, lps, max_delay_msec;
+  int run_time, lps;
+  INT64 max_delay_msec;
   int retry = 0;
 
-  max_delay_msec = prm_get_integer_value (PRM_ID_MIGRATOR_MAX_REPL_DELAY);
+  max_delay_msec = prm_get_bigint_value (PRM_ID_MIGRATOR_MAX_REPL_DELAY);
 
   while (true)
     {
