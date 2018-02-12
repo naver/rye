@@ -69,11 +69,6 @@ struct pt_bind_names_arg
   SEMANTIC_CHK_INFO *sc_info;
 };
 
-enum
-{
-  REQUIRE_ALL_MATCH = false,
-  DISCARD_NO_MATCH = true
-};
 
 static const char *CPTR_PT_NAME_IN_GROUP_HAVING = "name_in_group_having";
 
@@ -127,7 +122,7 @@ static int pt_must_have_exposed_name (PARSER_CONTEXT * parser, PT_NODE * p);
 static PT_NODE *pt_object_to_data_type (PARSER_CONTEXT * parser,
 					PT_NODE * class_list);
 static int pt_resolve_hint_args (PARSER_CONTEXT * parser, PT_NODE ** arg_list,
-				 PT_NODE * spec_list, bool discard_no_match);
+				 PT_NODE * spec_list);
 static int pt_resolve_hint (PARSER_CONTEXT * parser, PT_NODE * node);
 static PT_NODE *pt_find_outer_entity_in_scopes (PARSER_CONTEXT * parser,
 						SCOPES * scopes,
@@ -2193,7 +2188,8 @@ pt_domain_to_data_type (PARSER_CONTEXT * parser, DB_DOMAIN * domain)
 
     case PT_TYPE_OBJECT:
       /* get the object */
-      if (!(result = parser_new_node (parser, PT_DATA_TYPE)))
+      result = parser_new_node (parser, PT_DATA_TYPE);
+      if (result == NULL)
 	{
 	  return NULL;
 	}
@@ -2262,7 +2258,8 @@ pt_domain_to_data_type (PARSER_CONTEXT * parser, DB_DOMAIN * domain)
       break;
 
     default:
-      if (!(result = parser_new_node (parser, PT_DATA_TYPE)))
+      result = parser_new_node (parser, PT_DATA_TYPE);
+      if (result == NULL)
 	{
 	  return NULL;
 	}
@@ -3438,11 +3435,10 @@ pt_resolve_star (PARSER_CONTEXT * parser, PT_NODE * from, PT_NODE * attr)
  *   parser(in):
  *   arg_list(in/out):
  *   spec_list(in):
- *   discard_no_match(in): remove unmatched node from arg_list
  */
 static int
 pt_resolve_hint_args (PARSER_CONTEXT * parser, PT_NODE ** arg_list,
-		      PT_NODE * spec_list, bool discard_no_match)
+		      PT_NODE * spec_list)
 {
 
   PT_NODE *arg, *spec, *range, *prev, *tmp;
@@ -3482,32 +3478,11 @@ pt_resolve_hint_args (PARSER_CONTEXT * parser, PT_NODE ** arg_list,
       /* not found */
       if (spec == NULL)
 	{
-	  if (discard_no_match)
-	    {
-	      tmp = arg;
-	      arg = arg->next;
-	      tmp->next = NULL;
-	      parser_free_node (parser, tmp);
+	  goto exit_on_error;
+	}
 
-	      if (prev == NULL)
-		{
-		  *arg_list = arg;
-		}
-	      else
-		{
-		  prev->next = arg;
-		}
-	    }
-	  else
-	    {
-	      goto exit_on_error;
-	    }
-	}
-      else
-	{
-	  prev = arg;
-	  arg = arg->next;
-	}
+      prev = arg;
+      arg = arg->next;
     }
 
   return NO_ERROR;
@@ -3573,8 +3548,7 @@ pt_resolve_hint (PARSER_CONTEXT * parser, PT_NODE * node)
 #if 0				/* TEMPORARY COMMENTED CODE: DO NOT REMOVE ME !!! */
   if (hint & PT_HINT_ORDERED)
     {
-      if (pt_resolve_hint_args (parser, ordered, spec_list,
-				REQUIRE_ALL_MATCH) != NO_ERROR)
+      if (pt_resolve_hint_args (parser, ordered, spec_list) != NO_ERROR)
 	{
 	  goto exit_on_error;
 	}
@@ -3589,8 +3563,7 @@ pt_resolve_hint (PARSER_CONTEXT * parser, PT_NODE * node)
 
   if (hint & PT_HINT_USE_NL)
     {
-      if (pt_resolve_hint_args (parser, use_nl, spec_list,
-				REQUIRE_ALL_MATCH) != NO_ERROR)
+      if (pt_resolve_hint_args (parser, use_nl, spec_list) != NO_ERROR)
 	{
 	  goto exit_on_error;
 	}
@@ -3598,8 +3571,7 @@ pt_resolve_hint (PARSER_CONTEXT * parser, PT_NODE * node)
 
   if (hint & PT_HINT_USE_IDX)
     {
-      if (pt_resolve_hint_args (parser, use_idx, spec_list,
-				REQUIRE_ALL_MATCH) != NO_ERROR)
+      if (pt_resolve_hint_args (parser, use_idx, spec_list) != NO_ERROR)
 	{
 	  goto exit_on_error;
 	}
