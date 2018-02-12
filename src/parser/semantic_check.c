@@ -2126,6 +2126,8 @@ pt_check_vclass_query_spec (PARSER_CONTEXT * parser, PT_NODE * qry,
   PT_NODE *columns, *col, *attr;
   int col_count, attr_count;
 
+  assert (do_semantic_check == false);
+
   if (!pt_is_query (qry))
     {
       return NULL;
@@ -5822,6 +5824,7 @@ pt_check_sub_insert (PARSER_CONTEXT * parser, PT_NODE * node,
   switch (node->node_type)
     {
     case PT_INSERT:
+      assert (false);
       /* continue to checks */
       *continue_walk = PT_LIST_WALK;
       break;
