@@ -1151,6 +1151,8 @@ pt_to_pred_expr_local_with_arg (PARSER_CONTEXT * parser, PT_NODE * node,
 	  PT_NODE *arg2;
 	  bool is_logical = false;
 
+	  assert (false);	/* TODO - trace */
+
 	  /* we may have type_enum set to PT_TYPE_LOGICAL by type checking,
 	     if this is the case set it to PT_TYPE_INTEGER to avoid
 	     recursion */
@@ -1647,12 +1649,14 @@ pt_make_identity_offsets (PT_NODE * attr_list)
   int *offsets;
   int num_attrs, i;
 
-  if ((num_attrs = pt_length_of_list (attr_list)) == 0)
+  num_attrs = pt_length_of_list (attr_list);
+  if (num_attrs == 0)
     {
       return NULL;
     }
 
-  if ((offsets = (int *) malloc ((num_attrs + 1) * sizeof (int))) == NULL)
+  offsets = (int *) malloc ((num_attrs + 1) * sizeof (int));
+  if (offsets == NULL)
     {
       return NULL;
     }
@@ -1706,12 +1710,15 @@ pt_split_attrs (PARSER_CONTEXT * parser, TABLE_INFO * table_info,
     return 1;			/* nothing to do */
 
   num_attrs = pt_length_of_list (attr_list);
-  if ((*pred_offsets = (int *) malloc (num_attrs * sizeof (int))) == NULL)
+
+  *pred_offsets = (int *) malloc (num_attrs * sizeof (int));
+  if (*pred_offsets == NULL)
     {
       goto exit_on_error;
     }
 
-  if ((*rest_offsets = (int *) malloc (num_attrs * sizeof (int))) == NULL)
+  *rest_offsets = (int *) malloc (num_attrs * sizeof (int));
+  if (*rest_offsets == NULL)
     {
       goto exit_on_error;
     }
@@ -2166,6 +2173,7 @@ pt_make_val_list (UNUSED_ARG PARSER_CONTEXT * parser,
 	    }
 	  else
 	    {
+	      assert (false);
 	      value_list = NULL;
 	      break;
 	    }
@@ -2216,6 +2224,7 @@ pt_clone_val_list (PARSER_CONTEXT * parser, PT_NODE * attribute_list)
 	    }
 	  else
 	    {
+	      assert (false);
 	      value_list = NULL;
 	      break;
 	    }
@@ -2438,6 +2447,7 @@ pt_to_aggregate_node (PARSER_CONTEXT * parser, PT_NODE * tree,
 		    }
 		  else
 		    {
+		      assert (false);	/* TODO - trace */
 		      db_value_domain_init (sep_val,
 					    pt_node_to_db_type (tree),
 					    DB_DEFAULT_PRECISION,
@@ -2619,6 +2629,7 @@ pt_to_aggregate_node (PARSER_CONTEXT * parser, PT_NODE * tree,
        * resolved. Convert it to a name so that we can use it to get
        * the correct list position later.
        */
+      assert (false);		/* TODO - trace */
       PT_NODE *next = tree->next;
       tree = tree->info.dot.arg2;
       tree->next = next;
@@ -3002,6 +3013,7 @@ pt_pop_symbol_info (PARSER_CONTEXT * parser)
     }
   else
     {
+      assert (false);		/* TODO - trace */
       if (!pt_has_error (parser))
 	{
 	  PT_INTERNAL_ERROR (parser, "generate");
@@ -3415,6 +3427,7 @@ pt_to_pos_descr (PARSER_CONTEXT * parser, QFILE_TUPLE_VALUE_POSITION * pos_p,
     case PT_UNION:
     case PT_INTERSECTION:
     case PT_DIFFERENCE:
+      assert (false);		/* TODO - trace */
       pt_to_pos_descr (parser, pos_p, node, root->info.query.q.union_.arg1,
 		       referred_node);
       break;
@@ -4450,6 +4463,8 @@ pt_make_empty_string (PARSER_CONTEXT * parser, PT_TYPE_ENUM e)
 {
   PT_NODE *empty_str;
 
+  assert (e == PT_TYPE_VARCHAR);
+
   empty_str = parser_new_node (parser, PT_VALUE);
   if (empty_str == NULL)
     {
@@ -4535,6 +4550,7 @@ pt_to_regu_variable (PARSER_CONTEXT * parser, PT_NODE * node, UNBOX unbox)
 	   * return the regu variable for the right most name in the
 	   * path expression.
 	   */
+	  assert (false);	/* TODO - trace */
 	  switch (node->info.dot.arg2->info.name.meta_class)
 	    {
 	    case PT_NORMAL:
@@ -4652,6 +4668,7 @@ pt_to_regu_variable (PARSER_CONTEXT * parser, PT_NODE * node, UNBOX unbox)
 		else
 		  {
 		    /* is view column */
+		    assert (false);	/* TODO - trace */
 		    r2 = NULL;
 		  }
 	      }
@@ -6110,6 +6127,8 @@ static DB_VALUE *
 pt_regu_to_dbvalue (PARSER_CONTEXT * parser, REGU_VARIABLE * regu)
 {
   DB_VALUE *val = NULL;
+
+  assert (regu->type == TYPE_CONSTANT);	/* TODO - trace */
 
   if (regu->type == TYPE_CONSTANT)
     {
@@ -7707,6 +7726,7 @@ pt_to_index_info (PARSER_CONTEXT * parser, DB_OBJECT * class_,
       qo_check_coll_optimization (index_entryp, &collation_opt);
 
       indx_infop->coverage = collation_opt.allow_index_opt;
+      assert (indx_infop->coverage == 1);	/* TODO - trace */
     }
 
   indx_infop->class_oid = class_->ws_oid;
@@ -8775,6 +8795,7 @@ pt_to_outlist (PARSER_CONTEXT * parser, PT_NODE * node_list, UNBOX unbox)
 		    }
 		  else
 		    {
+		      assert (false);	/* TODO - trace */
 		      srlist_id = regu_srlistid_alloc ();
 		      if (srlist_id == NULL)
 			{
@@ -13181,6 +13202,8 @@ pt_to_pos_descr_groupby (PARSER_CONTEXT * parser,
   PT_NODE *temp;
   char *node_str = NULL;
   int i;
+
+  assert (node->node_type == PT_NAME);	/* TODO - trace */
 
   pos_p->pos_no = -1;		/* init */
 

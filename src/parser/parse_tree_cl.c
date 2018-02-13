@@ -2282,6 +2282,7 @@ pt_print_and_list (PARSER_CONTEXT * parser, const PT_NODE * p)
 }
 
 
+#if defined(ENABLE_UNUSED_FUNCTION)
 /*
  * pt_print_query_spec_no_list() - prints query specifications
  *                                 with NA placeholders
@@ -2302,6 +2303,7 @@ pt_print_query_spec_no_list (PARSER_CONTEXT * parser, const PT_NODE * node)
 
   return result;
 }
+#endif
 
 /*
  * pt_short_print() - Short print (for error messages)
