@@ -988,8 +988,10 @@ typedef enum
 
 typedef enum
 {
+#if 0
   PT_RANGE_MERGE,
   PT_RANGE_INTERSECTION,
+#endif
   PT_REDUCE_COMP_PAIR_TERMS
 } PT_COMP_TO_BETWEEN_OP_CODE_TYPE;
 

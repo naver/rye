@@ -529,12 +529,16 @@ mq_union_bump_correlation (PARSER_CONTEXT * parser, PT_NODE * left,
 			   PT_NODE * right)
 {
   if (left->info.query.correlation_level)
-    left = mq_bump_correlation_level (parser, left, 1,
-				      left->info.query.correlation_level);
+    {
+      left = mq_bump_correlation_level (parser, left, 1,
+					left->info.query.correlation_level);
+    }
 
   if (right->info.query.correlation_level)
-    right = mq_bump_correlation_level (parser, right, 1,
-				       right->info.query.correlation_level);
+    {
+      right = mq_bump_correlation_level (parser, right, 1,
+					 right->info.query.correlation_level);
+    }
 
   return pt_union (parser, left, right);
 }
@@ -6182,7 +6186,7 @@ mq_class_lambda (PARSER_CONTEXT * parser, PT_NODE * statement,
 {
   PT_NODE *spec;
   PT_NODE **specptr = NULL;
-  PT_NODE **where_part = NULL, **where_part_ex = NULL;
+  PT_NODE **where_part = NULL;
   PT_NODE *newspec = NULL;
   PT_NODE *oldnext = NULL;
   PT_NODE *assign, *result;
@@ -6458,18 +6462,6 @@ mq_class_lambda (PARSER_CONTEXT * parser, PT_NODE * statement,
       *where_part =
 	parser_append_node (parser_copy_tree_list (parser, class_where_part),
 			    *where_part);
-      /* class where part of merge insert clause */
-      if (where_part_ex)
-	{
-	  if ((*where_part_ex) && (*where_part_ex)->node_type == PT_EXPR)
-	    {
-	      (*where_part_ex)->info.expr.paren_type = 1;
-	    }
-	  *where_part_ex =
-	    parser_append_node (parser_copy_tree_list (parser,
-						       class_where_part),
-				*where_part_ex);
-	}
     }
 
   if (specptr)
@@ -7101,6 +7093,7 @@ mq_translate_value (PARSER_CONTEXT * parser, PT_NODE * value)
       && class_->node_type == PT_NAME
       && db_is_vclass (class_->info.name.db_object))
     {
+      assert (false);
       real_object = value->info.value.data_value.op;
       if (real_object)
 	{

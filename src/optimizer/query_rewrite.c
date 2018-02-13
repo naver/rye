@@ -929,8 +929,9 @@ qo_reduce_order_by_for (PARSER_CONTEXT * parser, PT_NODE * node)
   if (node->info.query.orderby_for)
     {
       /* generate orderby_num(), groupby_num() */
-      if (!(ord_num = parser_new_node (parser, PT_EXPR))
-	  || !(grp_num = parser_new_node (parser, PT_FUNCTION)))
+      ord_num = parser_new_node (parser, PT_EXPR);
+      grp_num = parser_new_node (parser, PT_FUNCTION);
+      if (ord_num == NULL || grp_num == NULL)
 	{
 	  if (ord_num)
 	    {
@@ -1298,8 +1299,9 @@ qo_reduce_order_by (PARSER_CONTEXT * parser, PT_NODE * node)
 		  grp_num = NULL;
 
 		  /* generate orderby_num(), groupby_num() */
-		  if (!(ord_num = parser_new_node (parser, PT_EXPR))
-		      || !(grp_num = parser_new_node (parser, PT_FUNCTION)))
+		  ord_num = parser_new_node (parser, PT_EXPR);
+		  grp_num = parser_new_node (parser, PT_FUNCTION);
+		  if (ord_num == NULL || grp_num == NULL)
 		    {
 		      if (ord_num)
 			{

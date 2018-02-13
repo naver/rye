@@ -6891,6 +6891,7 @@ qo_check_coll_optimization (QO_INDEX_ENTRY * ent, COLL_OPT * collation_opt)
 
 	      if (!(lang_coll->options.allow_index_opt))
 		{
+		  assert (false);	/* TODO - trace */
 		  collation_opt->allow_index_opt = false;
 		  return;
 		}
