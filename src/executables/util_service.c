@@ -147,8 +147,7 @@ static void util_service_version (void);
 static int load_properties (void);
 static ARG_TYPE parse_arg (UTIL_ARG_MAP_T * option, const char *arg);
 static int process_service (int command_type);
-static int process_server (int command_type, int argc, char **argv,
-			   bool show_usage);
+static int process_server (int command_type);
 static int process_broker (int command_type, int argc, char **argv);
 static int process_heartbeat (int command_type, int argc, char **argv);
 static int process_heartbeat_start (HA_CONF * ha_conf, int argc, char **argv);
@@ -838,7 +837,7 @@ process_service (int command_type)
 	char arg0[] = "-b";
 	char *args[] = { arg0 };
 
-	(void) process_server (command_type, 0, NULL, false);
+	(void) process_server (command_type);
 	(void) process_broker (command_type, 1, args);
 	(void) process_heartbeat (command_type, 0, NULL);
 
@@ -863,32 +862,13 @@ process_service (int command_type)
  *      command_type(in):
  *      argc(in):
  *      argv(in) :
- *      show_usage(in):
  *
  * NOTE:
  */
 static int
-process_server (int command_type, int argc, char **argv, bool show_usage)
+process_server (int command_type)
 {
-  char buf[4096];
   int status = NO_ERROR;
-
-  memset (buf, '\0', sizeof (buf));
-
-  /* A string is copyed because strtok_r() modify an original string. */
-  if (argc != 0)
-    {
-      strncpy (buf, argv[0], sizeof (buf) - 1);
-    }
-
-  if (command_type != ARG_CMD_STATUS && strlen (buf) == 0)
-    {
-      if (show_usage)
-	{
-	  util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_CMD);
-	}
-      return ER_ARG_OUT_OF_RANGE;
-    }
 
   switch (command_type)
     {
@@ -904,49 +884,6 @@ process_server (int command_type, int argc, char **argv, bool show_usage)
 	  print_message (stdout, MSGCAT_UTIL_GENERIC_NOT_RUNNING_1S,
 			 PRINT_MASTER_NAME);
 	}
-      break;
-    case ARG_CMD_ACCESS_CONTROL:
-      {
-	if (argc != 2)
-	  {
-	    status = ER_ARG_OUT_OF_RANGE;
-	    if (show_usage)
-	      {
-		util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_CMD);
-	      }
-	    break;
-	  }
-
-	if (strcasecmp (argv[0], "reload") == 0)
-	  {
-	    char argv0[] = UTIL_RYE_NAME;
-	    char argv1[] = UTIL_OPTION_ACLDB;
-	    char argv2[] = ACLDB_RELOAD;
-	    char *args[] = { argv0, argv1, argv2, argv[1], NULL };
-
-	    status = util_admin (DIM (args) - 1, args, NULL);
-	    print_result (PRINT_SERVER_NAME, status, command_type);
-	  }
-	else if (strcasecmp (argv[0], "status") == 0)
-	  {
-	    char argv0[] = UTIL_RYE_NAME;
-	    char argv1[] = UTIL_OPTION_ACLDB;
-	    char *args[] = { argv0, argv1, argv[1], NULL };
-
-	    status = util_admin (DIM (args) - 1, args, NULL);
-	  }
-	else
-	  {
-	    status = ER_ARG_OUT_OF_RANGE;
-	    if (show_usage)
-	      {
-		util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_CMD);
-	      }
-
-	    break;
-	  }
-      }
-
       break;
     default:
       status = ER_ARG_OUT_OF_RANGE;

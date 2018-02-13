@@ -50,19 +50,13 @@ typedef enum
   MSGCAT_UTIL_SET_COMMDB = 15,
   MSGCAT_UTIL_SET_ADDVOLDB = 17,
   MSGCAT_UTIL_SET_SPACEDB = 19,
-  MSGCAT_UTIL_SET_MIGDB = 23,
   MSGCAT_UTIL_SET_DIAGDB = 24,
   MSGCAT_UTIL_SET_LOCKDB = 25,
   MSGCAT_UTIL_SET_KILLTRAN = 26,
   MSGCAT_UTIL_SET_PLANDUMP = 37,
   MSGCAT_UTIL_SET_PARAMDUMP = 38,
-  MSGCAT_UTIL_SET_COPYLOGDB = 40,
-  MSGCAT_UTIL_SET_APPLYLOGDB = 41,
   MSGCAT_UTIL_SET_STATDUMP = 43,
-  MSGCAT_UTIL_SET_APPLYINFO = 44,
-  MSGCAT_UTIL_SET_ACLDB = 45,
   MSGCAT_UTIL_SET_TRANLIST = 46,
-  MSGCAT_UTIL_SET_ANALYZELOGDB = 47
 } MSGCAT_UTIL_SET;
 
 /* Message id in the set MSGCAT_UTIL_SET_GENERIC */
@@ -276,36 +270,6 @@ typedef enum
   PLANDUMP_MSG_USAGE = 60
 } MSGCAT_PLANDUMP_MSG;
 
-/* Message id in the set MSGCAT_UTIL_SET_MIGDB */
-typedef enum
-{
-  MIGDB_MSG_TEMPORARY_CLASS_OID = 1,
-  MIGDB_MSG_CANT_PRINT_ELO = 2,
-  MIGDB_MSG_CANT_ACCESS_LO = 3,
-  MIGDB_MSG_CANT_OPEN_LO_FILE = 4,
-  MIGDB_MSG_READ_ERROR = 5,
-  MIGDB_MSG_WRITE_ERROR = 6,
-  MIGDB_MSG_CANT_OPEN_ELO = 7,
-  MIGDB_MSG_FH_HASH_FILENAME = 9,
-  MIGDB_MSG_FH_NAME = 10,
-  MIGDB_MSG_FH_SIZE = 11,
-  MIGDB_MSG_FH_PAGE_SIZE = 12,
-  MIGDB_MSG_FH_DATA_SIZE = 13,
-  MIGDB_MSG_FH_ENTRY_SIZE = 14,
-  MIGDB_MSG_FH_ENTRIES_PER_PAGE = 15,
-  MIGDB_MSG_FH_CACHED_PAGES = 16,
-  MIGDB_MSG_FH_NUM_ENTRIES = 17,
-  MIGDB_MSG_FH_NUM_COLLISIONS = 18,
-  MIGDB_MSG_FH_HASH_FILENAME2 = 19,
-  MIGDB_MSG_FH_NEXT_OVERFLOW_ENTRY = 20,
-  MIGDB_MSG_FH_KEY_TYPE = 21,
-  MIGDB_MSG_FH_PAGE_HEADERS = 22,
-  MIGDB_MSG_FH_LAST_PAGE_HEADER = 23,
-  MIGDB_MSG_FH_FREE_PAGE_HEADER = 24,
-  MIGDB_MSG_FH_PAGE_BITMAP = 25,
-  MIGDB_MSG_FH_PAGE_BITMAP_SIZE = 26
-} MSGCAT_MIGDB_MSG;
-
 /* Message id in the set MSGCAT_UTIL_SET_PARAMDUMP */
 typedef enum
 {
@@ -317,27 +281,6 @@ typedef enum
   PARAMDUMP_MSG_USAGE = 60
 } MSGCAT_PARAMDUMP_MSG;
 
-/* Message id in the set MSGCAT_UTIL_SET_COPYLOGDB */
-typedef enum
-{
-  COPYLOGDB_MSG_BAD_MODE = 11,
-  COPYLOGDB_MSG_DBA_PASSWORD = 21,
-  COPYLOGDB_MSG_NOT_HA_MODE = 22,
-  COPYLOGDB_MSG_HA_NOT_SUPPORT = 58,
-  COPYLOGDB_MSG_NOT_IN_STANDALONE = 59,
-  COPYLOGDB_MSG_USAGE = 60
-} MSGCAT_COPYLOGDB_MSG;
-
-/* Message id in the set MSGCAT_UTIL_SET_APPLYLOGDB */
-typedef enum
-{
-  APPLYLOGDB_MSG_DBA_PASSWORD = 21,
-  APPLYLOGDB_MSG_NOT_HA_MODE = 22,
-  APPLYLOGDB_MSG_HA_NOT_SUPPORT = 58,
-  APPLYLOGDB_MSG_NOT_IN_STANDALONE = 59,
-  APPLYLOGDB_MSG_USAGE = 60
-} MSGCAT_APPLYLOGDB_MSG;
-
 /* Message id in the set MSGCAT_UTIL_SET_STATMDUMP */
 typedef enum
 {
@@ -346,33 +289,6 @@ typedef enum
   STATDUMP_MSG_NOT_IN_STANDALONE = 59,
   STATDUMP_MSG_USAGE = 60
 } MSGCAT_STATDUMP_MSG;
-
-/* Message id in the set MSGCAT_UTIL_SET_APPLYINFO */
-typedef enum
-{
-  APPLYINFO_MSG_DBA_PASSWORD = 21,
-  APPLYINFO_MSG_NOT_HA_MODE = 22,
-  APPLYINFO_MSG_HA_NOT_SUPPORT = 58,
-  APPLYINFO_MSG_NOT_IN_STANDALONE = 59,
-  APPLYINFO_MSG_USAGE = 60
-} MSGCAT_APPLYINFO_MSG;
-
-/* Message id in the set MSGCAT_UTIL_SET_ACLDB */
-typedef enum
-{
-  ACLDB_MSG_NOT_IN_STANDALONE = 59,
-  ACLDB_MSG_USAGE = 60
-} MSGCAT_ACLDB_MSG;
-
-/* Message id in the set MSGCAT_UTIL_SET_ANALYZELOGDB */
-typedef enum
-{
-  ANALYZELOGDB_MSG_DBA_PASSWORD = 21,
-  ANALYZELOGDB_MSG_NOT_HA_MODE = 22,
-  ANALYZELOGDB_MSG_HA_NOT_SUPPORT = 58,
-  ANALYZELOGDB_MSG_NOT_IN_STANDALONE = 59,
-  ANALYZELOGDB_MSG_USAGE = 60
-} MSGCAT_ANALYZELOGDB_MSG;
 
 typedef void *DSO_HANDLE;
 
@@ -390,10 +306,6 @@ typedef enum
   PLANDUMP,
   PARAMDUMP,
   STATDUMP,
-  COPYLOGDB,
-  APPLYLOGDB,
-  APPLYINFO,
-  ACLDB,
   TRANLIST,
   ANALYZELOGDB
 } UTIL_INDEX;
@@ -500,8 +412,6 @@ typedef struct _ha_config
 #define CHECK_SERVER            "Server"
 #define CHECK_HA_SERVER         "HA-Server"
 
-#define ACLDB_RELOAD            "-r"
-
 #define MASK_ALL                0xFF
 #define MASK_SERVICE            0x01
 #define MASK_SERVER             0x02
@@ -524,7 +434,6 @@ typedef struct _ha_config
 #define UTIL_OPTION_PLANDUMP                    "plandump"
 #define UTIL_OPTION_PARAMDUMP                   "paramdump"
 #define UTIL_OPTION_STATDUMP                    "statdump"
-#define UTIL_OPTION_ACLDB			"acldb"
 
 /* createdb option list */
 #define CREATE_REPLACE_S                        'r'
@@ -728,10 +637,6 @@ typedef struct _ha_config
 #define STATDUMP_OUTPUT_TYPE_S                  't'
 #define STATDUMP_OUTPUT_TYPE_L                  "output-type"
 
-/* acl option list */
-#define ACLDB_RELOAD_S                          'r'
-#define ACLDB_RELOAD_L				"reload"
-
 #define VERSION_S                               20000
 #define VERSION_L                               "version"
 
@@ -847,6 +752,5 @@ extern int restoredb (UTIL_FUNCTION_ARG * arg_map);
 extern int diagdb (UTIL_FUNCTION_ARG * arg_map);
 extern int paramdump (UTIL_FUNCTION_ARG * arg_map);
 extern int statdump (UTIL_FUNCTION_ARG * arg_map);
-extern int acldb (UTIL_FUNCTION_ARG * arg_map);
 
 #endif /* _UTILITY_H_ */
