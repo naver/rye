@@ -240,7 +240,7 @@ pt_report_to_ersys (const PARSER_CONTEXT * parser,
 {
   PT_NODE *error_node;
   int err;
-  char buf[1000];
+  char buf[ONE_K];
 
   error_node = parser->error_msgs;
   if (error_node && error_node->node_type == PT_ZZ_ERROR_MSG)
@@ -255,18 +255,25 @@ pt_report_to_ersys (const PARSER_CONTEXT * parser,
 		      2, error_node->info.error_msg.error_message, "");
 	      break;
 	    case PT_SEMANTIC:
-	    default:
 	      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE, ER_PT_SEMANTIC,
 		      2, error_node->info.error_msg.error_message, "");
 	      break;
 	    case PT_EXECUTION:
+	      assert (false);	/* TODO - trace */
 	      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE, ER_PT_EXECUTE,
+		      2, error_node->info.error_msg.error_message, "");
+	      break;
+	    default:
+	      assert (false);	/* TODO - trace */
+	      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE, ER_PT_SEMANTIC,
 		      2, error_node->info.error_msg.error_message, "");
 	      break;
 	    }
 	}
       return;
     }
+
+  assert (false);		/* TODO - trace */
 
   /* a system error reporting error messages */
   sprintf (buf, "Internal error- reporting %s error.",
@@ -324,7 +331,6 @@ pt_report_to_ersys_with_statement (PARSER_CONTEXT * parser,
 		      stmt_string);
 	      break;
 	    case PT_SEMANTIC:
-	    default:
 	      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE, ER_PT_SEMANTIC,
 		      2, error_node->info.error_msg.error_message,
 		      stmt_string);
@@ -334,10 +340,18 @@ pt_report_to_ersys_with_statement (PARSER_CONTEXT * parser,
 		      2, error_node->info.error_msg.error_message,
 		      stmt_string);
 	      break;
+	    default:
+	      assert (false);	/* TODO - trace */
+	      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE, ER_PT_SEMANTIC,
+		      2, error_node->info.error_msg.error_message,
+		      stmt_string);
+	      break;
 	    }
 	}
       return;
     }
+
+  assert (false);		/* TODO - trace */
 
   /* a system error reporting error messages */
   sprintf (buf, "Internal error- reporting %s error.",
@@ -414,8 +428,10 @@ pt_get_select_list (PARSER_CONTEXT * parser, PT_NODE * query)
 static PT_NODE *
 pt_get_from_list (const PARSER_CONTEXT * parser, const PT_NODE * query)
 {
-  if (!query)
-    return NULL;
+  if (query == NULL)
+    {
+      return NULL;
+    }
 
   switch (query->node_type)
     {
@@ -725,10 +741,12 @@ pt_new_query_result_descriptor (PARSER_CONTEXT * parser, PT_NODE * query)
   switch (query->node_type)
     {
     default:
+      assert (false);		/* TODO - trace */
       return NULL;
       break;
 
     case PT_INSERT:
+      assert (false);		/* TODO - trace */
       degree = 1;
       break;
 

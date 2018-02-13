@@ -4931,6 +4931,8 @@ pt_comp_to_between_op (PT_OP_TYPE left,
 {
   size_t i;
 
+  assert (type == PT_REDUCE_COMP_PAIR_TERMS);
+
   for (i = 0; i < COMPARE_BETWEEN_OPERATOR_COUNT; i++)
     {
       if (left == pt_Compare_between_operator_table[i].left
@@ -4942,6 +4944,7 @@ pt_comp_to_between_op (PT_OP_TYPE left,
 	}
     }
 
+#if 0
   if (type == PT_RANGE_INTERSECTION)
     {				/* range intersection */
       if ((left == PT_GE && right == PT_EQ)
@@ -4951,6 +4954,7 @@ pt_comp_to_between_op (PT_OP_TYPE left,
 	  return 0;
 	}
     }
+#endif
 
   return -1;
 }

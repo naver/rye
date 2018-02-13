@@ -149,8 +149,10 @@ extern "C"
   extern PARSER_VARCHAR *pt_print_db_value (PARSER_CONTEXT * parser,
 					    const struct db_value *val);
 
+#if defined(ENABLE_UNUSED_FUNCTION)
   extern char *pt_print_query_spec_no_list (PARSER_CONTEXT * parser,
 					    const PT_NODE * node);
+#endif
 
   extern PT_NODE *pt_compile (PARSER_CONTEXT * parser, PT_NODE * statement);
 
