@@ -60,7 +60,6 @@ typedef enum
   MSGCAT_UTIL_SET_APPLYLOGDB = 41,
   MSGCAT_UTIL_SET_STATDUMP = 43,
   MSGCAT_UTIL_SET_APPLYINFO = 44,
-  MSGCAT_UTIL_SET_ACLDB = 45,
   MSGCAT_UTIL_SET_TRANLIST = 46,
   MSGCAT_UTIL_SET_ANALYZELOGDB = 47
 } MSGCAT_UTIL_SET;
@@ -357,13 +356,6 @@ typedef enum
   APPLYINFO_MSG_USAGE = 60
 } MSGCAT_APPLYINFO_MSG;
 
-/* Message id in the set MSGCAT_UTIL_SET_ACLDB */
-typedef enum
-{
-  ACLDB_MSG_NOT_IN_STANDALONE = 59,
-  ACLDB_MSG_USAGE = 60
-} MSGCAT_ACLDB_MSG;
-
 /* Message id in the set MSGCAT_UTIL_SET_ANALYZELOGDB */
 typedef enum
 {
@@ -393,7 +385,6 @@ typedef enum
   COPYLOGDB,
   APPLYLOGDB,
   APPLYINFO,
-  ACLDB,
   TRANLIST,
   ANALYZELOGDB
 } UTIL_INDEX;
@@ -500,8 +491,6 @@ typedef struct _ha_config
 #define CHECK_SERVER            "Server"
 #define CHECK_HA_SERVER         "HA-Server"
 
-#define ACLDB_RELOAD            "-r"
-
 #define MASK_ALL                0xFF
 #define MASK_SERVICE            0x01
 #define MASK_SERVER             0x02
@@ -524,7 +513,6 @@ typedef struct _ha_config
 #define UTIL_OPTION_PLANDUMP                    "plandump"
 #define UTIL_OPTION_PARAMDUMP                   "paramdump"
 #define UTIL_OPTION_STATDUMP                    "statdump"
-#define UTIL_OPTION_ACLDB			"acldb"
 
 /* createdb option list */
 #define CREATE_REPLACE_S                        'r'
@@ -728,10 +716,6 @@ typedef struct _ha_config
 #define STATDUMP_OUTPUT_TYPE_S                  't'
 #define STATDUMP_OUTPUT_TYPE_L                  "output-type"
 
-/* acl option list */
-#define ACLDB_RELOAD_S                          'r'
-#define ACLDB_RELOAD_L				"reload"
-
 #define VERSION_S                               20000
 #define VERSION_L                               "version"
 
@@ -847,6 +831,5 @@ extern int restoredb (UTIL_FUNCTION_ARG * arg_map);
 extern int diagdb (UTIL_FUNCTION_ARG * arg_map);
 extern int paramdump (UTIL_FUNCTION_ARG * arg_map);
 extern int statdump (UTIL_FUNCTION_ARG * arg_map);
-extern int acldb (UTIL_FUNCTION_ARG * arg_map);
 
 #endif /* _UTILITY_H_ */

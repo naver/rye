@@ -49,7 +49,6 @@ $       38      paramdump
 $       39      changemode
 $       43      statdump
 $       44      applyinfo
-$       45      acldb
 $       46      tranlist
 $       47      prefetchlogdb
 
@@ -70,7 +69,6 @@ usage: %2$s <utility-name> [args]\n\
 Type '%3$s <utility-name>' for help on a specific utility.\n\
 \n\
 Available admin utility-name:\n\
-    acldb\n\
     addvoldb\n\
     applyinfo\n\
     backupdb\n\
@@ -541,15 +539,6 @@ valid options:\n\
   -p, --page=ID               page id; default : 0\n\
   -v, --verbose               enable verbose status messages; default : disable\n\
   -i, --interval=S            print information every S secs\n
-
-$set 45 MSGCAT_UTIL_SET_ACLDB
-59 acldb cannot run as standalone mode.\n
-60 \
-acldb: Display or reload access control setting of the database.\n\
-usage: %1$s acldb [OPTION] database-name\n\
-\n\
-valid options:\n\
-  -r, --reload       reload ip control file\n
 
 $set 46 MSGCAT_UTIL_SET_TRANLIST
 20 Enter %1$s password: 
