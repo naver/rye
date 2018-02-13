@@ -663,6 +663,9 @@ cirp_final_analyzer (CIRP_ANALYZER_INFO * analyzer)
 
   cirp_logpb_final (&analyzer->buf_mgr);
 
+  analyzer->deleted_arv_info.last_arv_deleted_time = 0;
+  analyzer->deleted_arv_info.last_deleted_arv_num = NULL_ARV_NUM;
+
   pthread_mutex_destroy (&analyzer->lock);
 
   return NO_ERROR;
@@ -775,6 +778,8 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
     {
       GOTO_EXIT_ON_ERROR;
     }
+  analyzer->deleted_arv_info.last_arv_deleted_time = 0;
+  analyzer->deleted_arv_info.last_deleted_arv_num = NULL_ARV_NUM;
 
   error = cirp_check_duplicated (&analyzer->log_path_lockf_vdes,
 				 log_path, analyzer->buf_mgr.prefix_name);
@@ -1985,9 +1990,7 @@ analyzer_main (void *arg)
 		{
 		  assert (false);
 
-		  error = ER_GENERIC_ERROR;
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-			  1, "Invalid return value");
+		  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
 		}
 
 	      /* request page is greater then last_flushed_pageid.(in log_header) */

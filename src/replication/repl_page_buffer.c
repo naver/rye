@@ -39,8 +39,6 @@
 #include "repl.h"
 
 
-#define ARV_NUM_INITIAL_VAL	(-1)
-
 /* static functions */
 static LOG_PHY_PAGEID cirp_to_phy_pageid (CIRP_BUF_MGR * buf_mgr,
 					  LOG_PAGEID logical_pageid);
@@ -80,9 +78,6 @@ static int cirp_logpb_remove_archive_log_internal (CIRP_BUF_MGR *
 						   int last_arv_num,
 						   int max_arv_cnt_to_delete);
 
-static void cirp_logpb_validate_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr);
-
-
 static void cirp_logpb_cache_final (CIRP_BUF_MGR * buf_mgr);
 static int cirp_logpb_cache_init (CIRP_BUF_MGR * buf_mgr);
 
@@ -106,6 +101,9 @@ static int cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr,
 static void cirp_clear_recdes_pool (CIRP_BUF_MGR * buf_mgr);
 static int cirp_init_recdes_pool (CIRP_BUF_MGR * buf_mgr, int page_size,
 				  int num_recdes);
+
+static int rp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr);
+
 
 
 /*
@@ -561,7 +559,6 @@ cirp_logpb_arv_log_final (CIRP_BUF_MGR * buf_mgr)
     {
       free_and_init (arv_log->hdr_page);
     }
-  arv_log->last_deleted_arv_num = ARV_NUM_INITIAL_VAL - 1;
 
   return;
 }
@@ -578,12 +575,10 @@ cirp_logpb_arv_log_init (CIRP_BUF_MGR * buf_mgr)
 
   arv_log = &buf_mgr->arv_log;
 
-  assert (arv_log->arv_num == ARV_NUM_INITIAL_VAL
+  assert (arv_log->arv_num == NULL_ARV_NUM
 	  && arv_log->path[0] == '\0'
 	  && arv_log->vdes == NULL_VOLDES
-	  && arv_log->hdr_page == NULL
-	  && arv_log->log_hdr == NULL
-	  && arv_log->last_deleted_arv_num == (ARV_NUM_INITIAL_VAL - 1));
+	  && arv_log->hdr_page == NULL && arv_log->log_hdr == NULL);
 
   arv_log->hdr_page = (LOG_PAGE *) malloc (IO_MAX_PAGE_SIZE);
   if (arv_log->hdr_page == NULL)
@@ -608,7 +603,7 @@ cirp_logpb_arv_log_close (CIRP_BUF_MGR * buf_mgr)
 
   arv_log = &buf_mgr->arv_log;
 
-  arv_log->arv_num = ARV_NUM_INITIAL_VAL;
+  arv_log->arv_num = NULL_ARV_NUM;
   arv_log->path[0] = '\0';
   if (arv_log->vdes != NULL_VOLDES)
     {
@@ -775,37 +770,35 @@ static int
 cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
 					  int *arv_num, LOG_PAGEID pageid)
 {
+  CIRP_ANALYZER_INFO *analyzer = NULL;
   int error;
   DKNPAGES npages;
   LOG_PAGEID fpageid;
   CIRP_ACT_LOG *act_log = NULL;
-  CIRP_ARV_LOG *arv_log = NULL;
   struct log_arv_header *arv_log_hdr = NULL;
   int left, right;
   int find_arv_num;
 
+  analyzer = &Repl_Info->analyzer_info;
   act_log = &buf_mgr->act_log;
-  arv_log = &buf_mgr->arv_log;
 
-  if (arv_log->last_deleted_arv_num < ARV_NUM_INITIAL_VAL)
-    {
-      cirp_logpb_validate_last_deleted_arv_num (buf_mgr);
-      if (arv_log->last_deleted_arv_num < ARV_NUM_INITIAL_VAL)
-	{
-	  assert (false);
-
-	  /* FIXME-notout: error logging */
-	  return ER_FAILED;
-	}
-    }
-
-  if (*arv_num > ARV_NUM_INITIAL_VAL)
+  if (*arv_num > NULL_ARV_NUM)
     {
       find_arv_num = right = left = *arv_num;
     }
   else
     {
-      left = MAX (0, arv_log->last_deleted_arv_num + 1);
+      if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
+	{
+	  left = 0;
+	}
+      else
+	{
+	  assert (analyzer->deleted_arv_info.last_deleted_arv_num >= 0);
+
+	  left = analyzer->deleted_arv_info.last_deleted_arv_num + 1;
+	}
+
       right = act_log->log_hdr->ha_info.nxarv_num - 1;
       find_arv_num = right;
     }
@@ -815,6 +808,10 @@ cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
       error = cirp_logpb_arv_log_fetch_hdr (buf_mgr, find_arv_num);
       if (error != NO_ERROR)
 	{
+	  if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
+	    {
+	      rp_logpb_find_last_deleted_arv_num (buf_mgr);
+	    }
 	  error = ER_LOG_NOTIN_ARCHIVE;
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, pageid);
 	  return error;
@@ -869,7 +866,7 @@ cirp_logpb_arv_log_find_arv_num (CIRP_BUF_MGR * buf_mgr, int *arv_num,
 
   assert (buf_mgr->act_log.log_hdr != NULL);
 
-  *arv_num = ARV_NUM_INITIAL_VAL;
+  *arv_num = NULL_ARV_NUM;
 
   if (buf_mgr->arv_log.log_hdr != NULL)
     {
@@ -905,10 +902,10 @@ retry_search:
     {
       if (error == ER_LOG_NOTIN_ARCHIVE)
 	{
-	  if (*arv_num != ARV_NUM_INITIAL_VAL)
+	  if (*arv_num != NULL_ARV_NUM)
 	    {
 	      /* binary search */
-	      *arv_num = ARV_NUM_INITIAL_VAL;
+	      *arv_num = NULL_ARV_NUM;
 	      goto retry_search;
 	    }
 	  else
@@ -960,23 +957,31 @@ cirp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr)
 }
 
 /*
- * cirp_logpb_validate_last_deleted_arv_num()-
+ * rp_logpb_find_last_deleted_arv_num()-
  *    return:
  */
-static void
-cirp_logpb_validate_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr)
+static int
+rp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr)
 {
-  int arv_num;
-  CIRP_ARV_LOG *arv_log = &buf_mgr->arv_log;
+  int arv_num = NULL_ARV_NUM;
+  CIRP_ANALYZER_INFO *analyzer = NULL;
 
-  arv_num = cirp_logpb_find_last_deleted_arv_num (buf_mgr);
-  assert (arv_num >= ARV_NUM_INITIAL_VAL);
-  if (arv_num > arv_log->last_deleted_arv_num)
+  analyzer = &Repl_Info->analyzer_info;
+
+  pthread_mutex_lock (&analyzer->lock);
+
+  if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
     {
-      arv_log->last_deleted_arv_num = arv_num;
+      arv_num = cirp_logpb_find_last_deleted_arv_num (buf_mgr);
+      if (arv_num != NULL_ARV_NUM)
+	{
+	  analyzer->deleted_arv_info.last_deleted_arv_num = arv_num;
+	}
     }
 
-  return;
+  pthread_mutex_unlock (&analyzer->lock);
+
+  return analyzer->deleted_arv_info.last_deleted_arv_num;
 }
 
 /*
@@ -1006,7 +1011,7 @@ cirp_logpb_remove_archive_log_internal (CIRP_BUF_MGR * buf_mgr,
   if (first_arv_num > last_arv_num)
     {
       assert (false);
-      return buf_mgr->arv_log.last_deleted_arv_num;
+      return NULL_ARV_NUM;
     }
 
   for (i = first_arv_num; i <= last_arv_num; i++)
@@ -1053,9 +1058,9 @@ int
 cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
 {
   int error = NO_ERROR;
+  CIRP_ANALYZER_INFO *analyzer = NULL;
   CIRP_ACT_LOG *act_log = NULL;
-  CIRP_ARV_LOG *arv_log = NULL;
-  int req_arv_num = ARV_NUM_INITIAL_VAL;
+  int req_arv_num = NULL_ARV_NUM;
   int first_arv_num, last_arv_num;
   int last_deleted_arv_num;
   int max_arv_cnt_to_delete;
@@ -1065,8 +1070,8 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
   int rm_arv_intv_in_secs;
   int max_archives;
 
+  analyzer = &Repl_Info->analyzer_info;
   act_log = &buf_mgr->act_log;
-  arv_log = &buf_mgr->arv_log;
 
   if (act_log->log_hdr == NULL)
     {
@@ -1093,7 +1098,7 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
       return error;
     }
 
-  if (buf_mgr->last_nxarv_num == ARV_NUM_INITIAL_VAL)
+  if (buf_mgr->last_nxarv_num == NULL_ARV_NUM)
     {
       buf_mgr->last_nxarv_num = act_log->log_hdr->ha_info.nxarv_num;
     }
@@ -1109,7 +1114,7 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
     }
   else
     {
-      timediff = now - buf_mgr->last_arv_deleted_time;
+      timediff = now - analyzer->deleted_arv_info.last_arv_deleted_time;
       if (timediff > rm_arv_intv_in_secs)
 	{
 	  max_arv_cnt_to_delete = 1;
@@ -1119,11 +1124,6 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
   if (max_arv_cnt_to_delete == 0)
     {
       return NO_ERROR;
-    }
-
-  if (arv_log->last_deleted_arv_num < ARV_NUM_INITIAL_VAL)
-    {
-      cirp_logpb_validate_last_deleted_arv_num (buf_mgr);
     }
 
   if (CIRP_LOG_IS_IN_ARCHIVE (buf_mgr, req_pageid))
@@ -1144,31 +1144,47 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
     }
   assert (req_arv_num >= 0);
 
-  cnt_curr_archives = (act_log->log_hdr->ha_info.nxarv_num
-		       - arv_log->last_deleted_arv_num - 1);
-  cnt_remain_archives = MAX (max_archives,
-			     act_log->log_hdr->ha_info.nxarv_num
-			     - req_arv_num);
+  if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
+    {
+      cnt_curr_archives = act_log->log_hdr->ha_info.nxarv_num;
+      cnt_remain_archives = MAX (max_archives,
+				 act_log->log_hdr->ha_info.nxarv_num
+				 - req_arv_num);
+
+      first_arv_num = 0;
+      last_arv_num = (act_log->log_hdr->ha_info.nxarv_num - 1
+		      - cnt_remain_archives);
+    }
+  else
+    {
+      cnt_curr_archives = (act_log->log_hdr->ha_info.nxarv_num
+			   - analyzer->deleted_arv_info.last_deleted_arv_num -
+			   1);
+      cnt_remain_archives =
+	MAX (max_archives, act_log->log_hdr->ha_info.nxarv_num - req_arv_num);
+
+      first_arv_num = analyzer->deleted_arv_info.last_deleted_arv_num + 1;
+      last_arv_num = (act_log->log_hdr->ha_info.nxarv_num - 1
+		      - cnt_remain_archives);
+    }
   if (cnt_curr_archives <= cnt_remain_archives)
     {
       return NO_ERROR;
     }
 
-  first_arv_num = arv_log->last_deleted_arv_num + 1;
-  last_arv_num = (act_log->log_hdr->ha_info.nxarv_num - 1
-		  - cnt_remain_archives);
   assert (first_arv_num <= last_arv_num);
 
   last_deleted_arv_num = cirp_logpb_remove_archive_log_internal (buf_mgr,
 								 first_arv_num,
 								 last_arv_num,
 								 max_arv_cnt_to_delete);
-  assert (last_deleted_arv_num >= arv_log->last_deleted_arv_num);
-  if (last_deleted_arv_num > arv_log->last_deleted_arv_num)
+  assert (last_deleted_arv_num >=
+	  analyzer->deleted_arv_info.last_deleted_arv_num);
+  if (last_deleted_arv_num > analyzer->deleted_arv_info.last_deleted_arv_num)
     {
-      arv_log->last_deleted_arv_num = last_deleted_arv_num;
+      analyzer->deleted_arv_info.last_deleted_arv_num = last_deleted_arv_num;
       buf_mgr->last_nxarv_num = act_log->log_hdr->ha_info.nxarv_num;
-      buf_mgr->last_arv_deleted_time = now;
+      analyzer->deleted_arv_info.last_arv_deleted_time = now;
     }
 
   return NO_ERROR;
@@ -2021,8 +2037,7 @@ cirp_logpb_common_final (CIRP_BUF_MGR * buf_mgr)
   buf_mgr->host_info = prm_get_null_node_info ();
   buf_mgr->log_info_path[0] = '\0';
 
-  buf_mgr->last_nxarv_num = ARV_NUM_INITIAL_VAL;
-  buf_mgr->last_arv_deleted_time = 0;
+  buf_mgr->last_nxarv_num = NULL_ARV_NUM;
 
   return;
 }
@@ -2053,7 +2068,6 @@ cirp_logpb_init_buffer_manager (CIRP_BUF_MGR * buf_mgr)
   buf_mgr->arv_log.vdes = NULL_VOLDES;
   buf_mgr->arv_log.hdr_page = NULL;
   buf_mgr->arv_log.log_hdr = NULL;
-  buf_mgr->arv_log.last_deleted_arv_num = ARV_NUM_INITIAL_VAL - 1;
 
   buf_mgr->cache.hash_table = NULL;
   buf_mgr->cache.num_buffer = 0;
@@ -2066,8 +2080,7 @@ cirp_logpb_init_buffer_manager (CIRP_BUF_MGR * buf_mgr)
   buf_mgr->undo_unzip = NULL;
   buf_mgr->redo_unzip = NULL;
 
-  buf_mgr->last_nxarv_num = ARV_NUM_INITIAL_VAL;
-  buf_mgr->last_arv_deleted_time = 0;
+  buf_mgr->last_nxarv_num = NULL_ARV_NUM;
 
   return NO_ERROR;
 }
@@ -2099,8 +2112,7 @@ cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr, const char *db_name,
   fileio_make_log_info_name (buf_mgr->log_info_path, log_path,
 			     buf_mgr->prefix_name);
 
-  buf_mgr->last_nxarv_num = ARV_NUM_INITIAL_VAL;
-  buf_mgr->last_arv_deleted_time = 0;
+  buf_mgr->last_nxarv_num = NULL_ARV_NUM;
 
   return NO_ERROR;
 }
