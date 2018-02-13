@@ -52,6 +52,8 @@
 #define NULL_OFFSET (-1)	/* Value of an invalid offset */
 #define NULL_FILEID (-1)	/* Value of an invalid file identifier */
 
+#define NULL_ARV_NUM (-1)
+
 
 #define VOLID_MAX       SHRT_MAX
 #define PAGEID_MAX      INT_MAX

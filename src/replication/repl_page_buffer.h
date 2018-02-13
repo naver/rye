@@ -70,7 +70,12 @@ struct _cirp_arv_log
 
   LOG_PAGE *hdr_page;
   struct log_arv_header *log_hdr;
+};
 
+typedef struct _rp_deleted_arv_info RP_DELETED_ARV_INFO;
+struct _rp_deleted_arv_info
+{
+  time_t last_arv_deleted_time;
   int last_deleted_arv_num;
 };
 
@@ -131,7 +136,6 @@ struct _cirp_log_buffer_msg
   LOG_ZIP *redo_unzip;
 
   int last_nxarv_num;
-  time_t last_arv_deleted_time;
 
   /* recdes pool */
   CIRP_RECDES_POOL la_recdes_pool;
@@ -240,4 +244,5 @@ extern int cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
 					   struct log_gid_bitmap_update *gbu,
 					   LOG_PAGE * pgptr,
 					   const LOG_LSA * lsa);
+
 #endif /* _REPL_PAGE_BUFFER_H_ */

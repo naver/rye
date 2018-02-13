@@ -166,6 +166,7 @@ struct _cirp_analyzer_info
   int db_lockf_vdes;
 
   CIRP_BUF_MGR buf_mgr;
+  RP_DELETED_ARV_INFO deleted_arv_info;
   CCI_CONN conn;
 
   LOG_LSA current_lsa;
