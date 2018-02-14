@@ -306,8 +306,7 @@ typedef enum
   PLANDUMP,
   PARAMDUMP,
   STATDUMP,
-  TRANLIST,
-  ANALYZELOGDB
+  TRANLIST
 } UTIL_INDEX;
 
 typedef enum
