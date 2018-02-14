@@ -472,9 +472,6 @@ addvoldb (UTIL_FUNCTION_ARG * arg)
   const char *volext_npages_string = NULL;
   const char *volext_size_str = NULL;
   const char *volext_max_writesize_in_sec_str = NULL;
-#if defined (ENABLE_UNUSED_FUNCTION)
-  char real_volext_path_buf[PATH_MAX];
-#endif
   bool sa_mode;
   DBDEF_VOL_EXT_INFO ext_info;
 
@@ -531,27 +528,8 @@ addvoldb (UTIL_FUNCTION_ARG * arg)
       ext_info.max_writesize_in_sec = 0;
     }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-  ext_info.name = utility_get_option_string_value (arg_map,
-						   ADDVOL_VOLUME_NAME_S, 0);
-  ext_info.path = utility_get_option_string_value (arg_map,
-						   ADDVOL_FILE_PATH_S, 0);
-  if (ext_info.path != NULL)
-    {
-      memset (real_volext_path_buf, 0, sizeof (real_volext_path_buf));
-      if (realpath (ext_info.path, real_volext_path_buf) != NULL)
-	{
-	  ext_info.path = real_volext_path_buf;
-	}
-    }
-#endif
   ext_info.fullname = NULL;
   assert (ext_info.fullname == NULL);
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-  ext_info.comments = utility_get_option_string_value (arg_map,
-						       ADDVOL_COMMENT_S, 0);
-#endif
 
   volext_string_purpose = utility_get_option_string_value (arg_map,
 							   ADDVOL_PURPOSE_S,
@@ -1410,10 +1388,6 @@ lockdb (UTIL_FUNCTION_ARG * arg)
       PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
       goto error_exit;
     }
-
-#if 0				/* unused */
-  db_set_isolation (TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE);
-#endif
 
   lock_dump (outfp);
   db_shutdown ();

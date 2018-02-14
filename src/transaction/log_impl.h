@@ -47,6 +47,13 @@
 #include "connection_globals.h"
 #include "backup.h"
 
+/* for code coverage */
+#if !defined(NDEBUG)
+#define START_LOG_PAGEID (INT_MAX-100)
+#else
+#define START_LOG_PAGEID (0)
+#endif
+
 #define NUM_NORMAL_TRANS (prm_get_integer_value (PRM_ID_MAX_CLIENTS))
 #define NUM_SYSTEM_TRANS 1
 #define NUM_NON_SYSTEM_TRANS (css_get_max_conn ())

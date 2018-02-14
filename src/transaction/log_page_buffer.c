@@ -1588,7 +1588,7 @@ logpb_initialize_header (struct log_header *loghdr,
   loghdr->avg_nlocks = LOG_ESTIMATE_NOBJ_LOCKS;
   loghdr->npages = npages - 1;	/* Hdr pg is stolen */
   loghdr->db_charset = lang_charset ();
-  loghdr->fpageid = 0;
+  loghdr->fpageid = START_LOG_PAGEID;
   loghdr->append_lsa.pageid = loghdr->fpageid;
   loghdr->append_lsa.offset = 0;
   LSA_COPY (&loghdr->chkpt_lsa, &loghdr->append_lsa);
@@ -2245,7 +2245,7 @@ logpb_fetch_start_append_page (THREAD_ENTRY * thread_p)
   assert (LOG_CS_OWN_WRITE_MODE (thread_p));
 
   /* detect empty log (page and offset of zero) */
-  if ((log_Gl.hdr.append_lsa.pageid == 0)
+  if ((log_Gl.hdr.append_lsa.pageid == START_LOG_PAGEID)
       && (log_Gl.hdr.append_lsa.offset == 0))
     {
       flag = NEW_PAGE;
@@ -2430,7 +2430,8 @@ logpb_next_append_page (THREAD_ENTRY * thread_p,
   if (LOGPB_IS_FIRST_PHYSICAL_PAGE (log_Gl.hdr.append_lsa.pageid))
     {
       log_Gl.hdr.fpageid = log_Gl.hdr.append_lsa.pageid;
-      assert (log_Gl.hdr.fpageid % LOGPB_ACTIVE_NPAGES == 0);
+      assert ((log_Gl.hdr.fpageid - START_LOG_PAGEID) % LOGPB_ACTIVE_NPAGES ==
+	      0);
 
       /* Flush the header to save updates by archiving. */
       logpb_flush_header (thread_p);
