@@ -2430,7 +2430,8 @@ logpb_next_append_page (THREAD_ENTRY * thread_p,
   if (LOGPB_IS_FIRST_PHYSICAL_PAGE (log_Gl.hdr.append_lsa.pageid))
     {
       log_Gl.hdr.fpageid = log_Gl.hdr.append_lsa.pageid;
-      assert (log_Gl.hdr.fpageid % LOGPB_ACTIVE_NPAGES == 0);
+      assert ((log_Gl.hdr.fpageid - START_LOG_PAGEID) % LOGPB_ACTIVE_NPAGES ==
+	      0);
 
       /* Flush the header to save updates by archiving. */
       logpb_flush_header (thread_p);
