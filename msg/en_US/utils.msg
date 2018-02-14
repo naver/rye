@@ -58,7 +58,6 @@ Type '%3$s <utility-name>' for help on a specific utility.\n\
 \n\
 Available admin utility-name:\n\
     addvoldb\n\
-    applyinfo\n\
     backupdb\n\
     createdb\n\
     deletedb\n\
@@ -67,7 +66,6 @@ Available admin utility-name:\n\
     lockdb\n\
     paramdump\n\
     plandump\n\
-    prefetchlogdb\n\
     restoredb\n\
     spacedb\n\
     statdump\n\
@@ -96,7 +94,6 @@ Available service's utilities:\n\
 \n\
 Available administrator's utilities:\n\
     addvoldb\n\
-    applyinfo\n\
     backupdb\n\
     createdb\n\
     deletedb\n\
