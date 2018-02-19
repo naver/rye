@@ -306,6 +306,10 @@ stx_map_stream_to_xasl (THREAD_ENTRY * thread_p, XASL_NODE ** xasl_tree,
   int header_size;
   int offset;
   int i;
+#if defined(SERVER_MODE)
+  HL_HEAPID pri_heap_id = 0;
+#endif
+  int errcode = NO_ERROR;
 
   if (!xasl_tree || !xasl_stream || xasl_stream_size <= 0)
     {
@@ -314,7 +318,8 @@ stx_map_stream_to_xasl (THREAD_ENTRY * thread_p, XASL_NODE ** xasl_tree,
 
 #if defined(SERVER_MODE)
   (void) css_set_private_heap (thread_p, db_create_private_heap ());
-  if (css_get_private_heap (thread_p) == 0)
+  pri_heap_id = css_get_private_heap (thread_p);
+  if (pri_heap_id == 0)
     {
       return ER_CSS_ALLOC;
     }
@@ -346,7 +351,7 @@ stx_map_stream_to_xasl (THREAD_ENTRY * thread_p, XASL_NODE ** xasl_tree,
   *xasl_tree = xasl;
 
 #if defined(SERVER_MODE)
-  xasl->private_heap_id = css_get_private_heap (thread_p);
+  xasl->private_heap_id = pri_heap_id;
   assert (xasl->private_heap_id != 0);
 #endif /* SERVER_MODE */
 
@@ -398,7 +403,16 @@ end:
   stx_set_xasl_unpack_info_ptr (thread_p, NULL);
 #endif /* SERVER_MODE */
 
-  return stx_get_xasl_errcode (thread_p);
+  errcode = stx_get_xasl_errcode(thread_p);
+#if defined (SERVER_MODE)
+  if (errcode != NO_ERROR)
+    {
+      assert (pri_heap_id != 0);
+      db_destroy_private_heap(pri_heap_id);
+    }
+#endif  /* SERVER_MODE */
+
+  return errcode;
 }
 
 #if defined (SERVER_MODE)
@@ -4289,6 +4303,8 @@ stx_get_xasl_errcode (UNUSED_ARG THREAD_ENTRY * thread_p)
 static void
 stx_set_xasl_errcode (UNUSED_ARG THREAD_ENTRY * thread_p, int errcode)
 {
+  assert (errcode == NO_ERROR); /* TODO - trace */
+
 #if defined(SERVER_MODE)
   if (thread_p == NULL)
     {

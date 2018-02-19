@@ -7304,8 +7304,6 @@ error:
 int
 btree_rv_nop (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG LOG_RCV * recv)
 {
-  assert (false);		/* TODO - trace */
-
   return NO_ERROR;
 }
 
