@@ -25,33 +25,20 @@ $ The following set numbers have been assigned:
 $
 $       1       generic
 $       2       backupdb
-$       3       copydb
 $       4       createdb
 $       6       deletedb
 $       9       master
-$       10      optimizedb
 $       11      restoredb
-$       14      compactdb
 $       15      commdb
-$       16      pathdb
 $       17      addvoldb
-$       18      checkdb
 $       19      spacedb
-$       20      estimatedb_data
-$       21      estimatedb_index
-$       22      installdb
-$       23      migdb
 $       24      diagdb
 $       25      lockdb
 $       26      killtran
 $       37      plandump
 $       38      paramdump
-$       39      changemode
 $       43      statdump
-$       44      applyinfo
-$       45      acldb
 $       46      tranlist
-$       47      prefetchlogdb
 
 $set 1 MSGCAT_UTIL_SET_GENERIC
 1 Invalid length or character '%1$c' in database name '%2$s'\n
@@ -70,9 +57,7 @@ usage: %2$s <utility-name> [args]\n\
 Type '%3$s <utility-name>' for help on a specific utility.\n\
 \n\
 Available admin utility-name:\n\
-    acldb\n\
     addvoldb\n\
-    applyinfo\n\
     backupdb\n\
     createdb\n\
     deletedb\n\
@@ -81,7 +66,6 @@ Available admin utility-name:\n\
     lockdb\n\
     paramdump\n\
     plandump\n\
-    prefetchlogdb\n\
     restoredb\n\
     spacedb\n\
     statdump\n\
@@ -110,7 +94,6 @@ Available service's utilities:\n\
 \n\
 Available administrator's utilities:\n\
     addvoldb\n\
-    applyinfo\n\
     backupdb\n\
     createdb\n\
     deletedb\n\
@@ -351,35 +334,6 @@ valid options:\n\
 
 
 
-$set 23 MSGCAT_UTIL_SET_MIGDB
-1 Temporary table OID\n
-2 Can't print elo values\n
-3 Error accessing long object for migration\n
-4 Error opening output file for long object migration \n
-5 Read error\n
-6 Write error\n
-7 Error opening ELO input file "%1$s"\n
-8 TABLES:
-9 hash filename
-10 Name:                         %1$s\n
-11 Size:                         %1$d\n
-12 Page size:                    %1$d\n
-13 Data size:                    %1$d\n
-14 Entry size:                   %1$d\n
-15 Entries per page:             %1$d\n
-16 Cached pages:                 %1$d\n
-17 Number of entries:            %1$d\n
-18 Number of collisions:         %1$d\n
-19 Hash filename:                %1$s\n
-20 Next overflow entry:          %1$d\n
-21 Key type:                     %1$s\n
-22 Address of page headers:      %1$x\n
-23 Address of last page header:  %1$x\n
-24 Address of free page header:  %1$x\n
-25 Address of page bitmap:       %1$x\n
-26 Page bitmap size:             %1$d\n
-
-
 $set 24 MSGCAT_UTIL_SET_DIAGDB
 15 Couldn't open output file '%1$s'\n
 60 \
@@ -441,34 +395,6 @@ valid options:\n\
   -f, --force                        kill the transaction without a prompt for verification\n
 
 
-$set 31 MSGCAT_UTIL_SET_MIGRATE
-1 database-name
-2 required argument, no default
-3 compatibility-check
-4 compatibility check only
-5 backup-destination
-6 a directory path or device for the destination of the backup volumes
-20 database '%1$s' does not exist.
-21 '%1$s' can't be migrated to %2$s, because its DB version is too low.\n
-22 '%1$s' don't need to be migrated.\n
-23 '%1$s' needs to be migrated.\n
-24 Backup is recommended after migration. Do you want to back up your database now? (y/n):
-25 We recommend to back up your new database with backupdb command after migration.
-26 \n*** WARNING: Backup your database before you start migrating to %1$s ***\n\nTo recover errors which might be occurred during migration, we strongly recommend to back up your database.\nHave you already backed up your database? (y/n):
-27 \n1. Run backupdb \n2. Enter the new backup path for the new database.(current path: %1$s)\n3. Exit \n
-28 \nThe new backup path for the database:
-29 \nMigration and backup have been successfully completed.
-30 Backup failed. Please, retry to back up your database.
-31 \n\n*** WARNING : Once the migration is completed, you cannot restore the database with the former backup volumes.\nNotice that the previous version of backup files can be restored only on the corresponding version of restoredb.\nPlease, check the former backup volumes is securely kept.\n
-
-$set 34 MSGCAT_UTIL_SET_LOADJAVA
-1 database-name
-2 required argument, no default
-3 java-class-file
-4 required argument, no default
-5 force-overwrite
-6 overwrite class file if exist, default no
-
 $set 37 MSGCAT_UTIL_SET_PLANDUMP
 15 Cannot open output file '%1$s'\n
 59 plandump cannot run as standalone mode.\n
@@ -496,20 +422,6 @@ valid options:\n\
   -S, --SA-mode                stand-alone mode execution\n\
   -C, --CS-mode                client-server mode execution\n
 
-
-$set 40 MSGCAT_UTIL_SET_COPYLOGDB
-11 Wrong value \"%1$s\" for the copylogdb's running mode.\n
-21 Enter DBA password:
-22 The server was not configured for HA.\n
-58 HA feature is not supported in this platform.\n
-59 copylogdb cannot run as standalone mode.\n
-
-$set 41 MSGCAT_UTIL_SET_APPLYLOGDB
-21 Enter DBA password:
-22 The server was not configured for HA.\n
-58 HA feature is not supported in this platform.\n
-59 applylogdb cannot run as standalone mode.\n
-
 $set 43 MSGCAT_UTIL_SET_STATDUMP
 11 Cannot open output file '%1$s'\n
 12 Cannot open rye_server shared memory.\n
@@ -524,32 +436,6 @@ valid options:\n\
   -i, --interval=S             print stats every S secs\n\
   -s, --substr=STRING          print stat item only that match the substring\n
   -t, --output-type=STRING     print format(csv...); default: none\n
-
-$set 44 MSGCAT_UTIL_SET_APPLYINFO
-21 Enter DBA password:
-22 The server was not configured for HA.\n
-58 HA feature is not supported in this platform.\n
-59 applyinfo cannot run as standalone mode.\n
-60 \
-applyinfo: display Rye HA Apply information.\n\
-usage: %1$s applyinfo [OPTION] database-name\n\
-\n\
-valid options:\n\
-  -r, --remote-host-name      remote host name; display remote node's active log information \n\
-  -a, --applied-info 	      display applied information \n\
-  -L, --copied-log-path=PATH  path of copied log volumes; display copied log information \n\
-  -p, --page=ID               page id; default : 0\n\
-  -v, --verbose               enable verbose status messages; default : disable\n\
-  -i, --interval=S            print information every S secs\n
-
-$set 45 MSGCAT_UTIL_SET_ACLDB
-59 acldb cannot run as standalone mode.\n
-60 \
-acldb: Display or reload access control setting of the database.\n\
-usage: %1$s acldb [OPTION] database-name\n\
-\n\
-valid options:\n\
-  -r, --reload       reload ip control file\n
 
 $set 46 MSGCAT_UTIL_SET_TRANLIST
 20 Enter %1$s password: 
@@ -578,9 +464,3 @@ valid options:\n\
   -s, --summary                print summarized information of transaction\n\
       --sort-key=COLUMN_NUMBER column number to be sorted\n\
       --reverse                reverse the sort result\n
-
-$set 47 MSGCAT_UTIL_SET_PREFETCHLOGDB
-22 The server was not configured for HA.\n
-23 Prefetch feature is disabled.\n
-58 HA feature is not supported in this platform.\n
-59 prefetchlogdb cannot run as standalone mode.\n

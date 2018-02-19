@@ -38,7 +38,6 @@
 #include "schema_manager.h"
 #include "parser.h"
 #include "class_object.h"
-#include "load_object.h"
 #include "cas_cci_internal.h"
 #include "rbl_conf.h"
 #include "rbl_copy_schema.h"

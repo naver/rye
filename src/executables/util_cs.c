@@ -472,9 +472,6 @@ addvoldb (UTIL_FUNCTION_ARG * arg)
   const char *volext_npages_string = NULL;
   const char *volext_size_str = NULL;
   const char *volext_max_writesize_in_sec_str = NULL;
-#if defined (ENABLE_UNUSED_FUNCTION)
-  char real_volext_path_buf[PATH_MAX];
-#endif
   bool sa_mode;
   DBDEF_VOL_EXT_INFO ext_info;
 
@@ -531,27 +528,8 @@ addvoldb (UTIL_FUNCTION_ARG * arg)
       ext_info.max_writesize_in_sec = 0;
     }
 
-#if defined (ENABLE_UNUSED_FUNCTION)
-  ext_info.name = utility_get_option_string_value (arg_map,
-						   ADDVOL_VOLUME_NAME_S, 0);
-  ext_info.path = utility_get_option_string_value (arg_map,
-						   ADDVOL_FILE_PATH_S, 0);
-  if (ext_info.path != NULL)
-    {
-      memset (real_volext_path_buf, 0, sizeof (real_volext_path_buf));
-      if (realpath (ext_info.path, real_volext_path_buf) != NULL)
-	{
-	  ext_info.path = real_volext_path_buf;
-	}
-    }
-#endif
   ext_info.fullname = NULL;
   assert (ext_info.fullname == NULL);
-
-#if defined (ENABLE_UNUSED_FUNCTION)
-  ext_info.comments = utility_get_option_string_value (arg_map,
-						       ADDVOL_COMMENT_S, 0);
-#endif
 
   volext_string_purpose = utility_get_option_string_value (arg_map,
 							   ADDVOL_PURPOSE_S,
@@ -1341,90 +1319,6 @@ error_exit:
 }
 
 /*
- * acldb() -
- *   return: EXIT_SUCCESS/EXIT_FAILURE
- */
-int
-acldb (UTIL_FUNCTION_ARG * arg)
-{
-#if defined (CS_MODE)
-  UTIL_ARG_MAP *arg_map = arg->arg_map;
-  char er_msg_file[PATH_MAX];
-  const char *database_name;
-  bool reload;
-  int ret_code = EXIT_SUCCESS;
-
-  if (utility_get_option_string_table_size (arg_map) != 1)
-    {
-      goto print_acl_usage;
-    }
-
-  reload = utility_get_option_bool_value (arg_map, ACLDB_RELOAD_S);
-
-  database_name = utility_get_option_string_value (arg_map,
-						   OPTION_STRING_TABLE, 0);
-  if (database_name == NULL)
-    {
-      goto print_acl_usage;
-    }
-
-  if (check_database_name (database_name))
-    {
-      goto error_exit;
-    }
-
-  /* error message log file */
-  sprintf (er_msg_file, "%s_%s.err", database_name, arg->command_name);
-  er_init (er_msg_file, ER_EXIT_DEFAULT);
-
-  if (lang_init () != NO_ERROR)
-    {
-      goto error_exit;
-    }
-
-  /* should have little copyright herald message ? */
-  AU_DISABLE_PASSWORDS ();
-  db_set_client_type (BOOT_CLIENT_READ_WRITE_ADMIN_UTILITY);
-  db_login ("DBA", NULL);
-
-  if (db_restart (arg->command_name, TRUE, database_name) != NO_ERROR)
-    {
-      fprintf (stderr, "%s\n", db_error_string (3));
-      goto error_exit;
-    }
-
-  if (reload)
-    {
-      ret_code = acl_reload ();
-      if (ret_code != NO_ERROR)
-	{
-	  fprintf (stderr, "%s\n", db_error_string (3));
-	}
-    }
-  else
-    {
-      acl_dump (stdout);
-    }
-  db_shutdown ();
-
-  return ret_code;
-
-print_acl_usage:
-  fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_ACLDB, ACLDB_MSG_USAGE),
-	   basename (arg->argv0));
-error_exit:
-  return EXIT_FAILURE;
-#else /* CS_MODE */
-  fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_ACLDB,
-				   ACLDB_MSG_NOT_IN_STANDALONE),
-	   basename (arg->argv0));
-  return EXIT_FAILURE;
-#endif /* !CS_MODE */
-}
-
-/*
  * lockdb() - lockdb main routine
  *   return: EXIT_SUCCESS/EXIT_FAILURE
  */
@@ -1494,10 +1388,6 @@ lockdb (UTIL_FUNCTION_ARG * arg)
       PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
       goto error_exit;
     }
-
-#if 0				/* unused */
-  db_set_isolation (TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE);
-#endif
 
   lock_dump (outfp);
   db_shutdown ();

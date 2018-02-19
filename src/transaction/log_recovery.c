@@ -3836,7 +3836,7 @@ log_recovery_resetlog (THREAD_ENTRY * thread_p, LOG_LSA * new_append_lsa,
 
   if (LSA_ISNULL (new_append_lsa))
     {
-      log_Gl.hdr.append_lsa.pageid = 0;
+      log_Gl.hdr.append_lsa.pageid = START_LOG_PAGEID;
       log_Gl.hdr.append_lsa.offset = 0;
       LOG_RESET_APPEND_LSA (&log_Gl.hdr.append_lsa);
     }

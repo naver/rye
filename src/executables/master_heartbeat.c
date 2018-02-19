@@ -324,14 +324,6 @@ static bool css_Master_er_log_enabled = true;
 	"   Server %s (pid %d, state %s_and_%s)\n"
 #define HA_COPYLOG_PATH_FORMAT_STRING \
         "   Log-path (pid %d, %s)\n"
-#define HA_COPYLOG_PROCESS_FORMAT_STRING \
-	"       Copylogdb (state %s)\n"
-#define HA_APPLYLOG_PROCESS_FORMAT_STRING        \
-	"       Applylogdb (state %s)\n"
-#define HA_APPLYLOG_FORMAT_STRING        \
-        "       Applylogdb (count: %d)\n"
-#define HA_ANALYZELOG_PROCESS_FORMAT_STRING        \
-        "       Analyzelogdb (state %s)\n"
 #define HA_REPLICATION_PROCESS_FORMAT_STRING        \
         "   HA %s (pid %d, log-path %s, state %s)\n"
 #define HA_PROCESS_EXEC_PATH_FORMAT_STRING       \

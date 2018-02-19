@@ -217,17 +217,6 @@ static GETOPT_LONG ua_Lock_Option[] = {
   {0, 0, 0, 0}
 };
 
-static UTIL_ARG_MAP ua_Acl_Option_Map[] = {
-  {OPTION_STRING_TABLE, {0}, {0}},
-  {ACLDB_RELOAD_S, {ARG_BOOLEAN}, {0}},
-  {0, {0}, {0}}
-};
-
-static GETOPT_LONG ua_Acl_Option[] = {
-  {ACLDB_RELOAD_L, 0, 0, ACLDB_RELOAD_S},
-  {0, 0, 0, 0}
-};
-
 static UTIL_ARG_MAP ua_Diag_Option_Map[] = {
   {OPTION_STRING_TABLE, {0}, {0}},
   {DIAG_DUMP_TYPE_S, {ARG_INTEGER}, {-1}},
@@ -370,8 +359,6 @@ static UTIL_MAP ua_Utility_Map[] = {
    ua_Paramdump_Option, ua_Paramdump_Option_Map},
   {STATDUMP, CS_ONLY, 1, UTIL_OPTION_STATDUMP, "statdump",
    ua_Statdump_Option, ua_Statdump_Option_Map},
-  {ACLDB, CS_ONLY, 1, UTIL_OPTION_ACLDB, "acldb",
-   ua_Acl_Option, ua_Acl_Option_Map},
   {TRANLIST, CS_ONLY, 1, UTIL_OPTION_TRANLIST, "tranlist",
    ua_Tranlist_Option, ua_Tranlist_Option_Map},
   {-1, -1, 0, 0, 0, 0, 0}
