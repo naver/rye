@@ -7395,6 +7395,7 @@ static void
 pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 {
   FILEIO_PAGE_RESERVED *prv_p;
+  bool is_first = false;
 
   if (bufptr == NULL || VPID_ISNULL (&bufptr->vpid))
     {
@@ -7411,10 +7412,24 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   prv_p = &(bufptr->iopage_buffer->iopage.prv);
 
   /* Check iff is the first time */
-  if (prv_p->pageid == NULL_PAGEID && prv_p->volid == NULL_VOLID)
+#if 1
+  if (LSA_ISNULL (&(prv_p->lsa)))
     {
-      assert (LSA_ISNULL (&(prv_p->lsa)));
+      is_first = true;
+    }
+  else if (prv_p->ptype == PAGE_UNKNOWN)
+    {
+      if (!LOG_ISRESTARTED ())
+	{
+	  assert (log_Gl.rcv_phase == LOG_RECOVERY_REDO_PHASE);
+	  is_first = true;
+	}
+    }
+#endif
 
+  /* Check iff is not initialized yet */
+  if (is_first)
+    {
       (void) fileio_initialize_res (thread_p, prv_p);
 
       /* Set Page identifier */
@@ -7613,17 +7628,30 @@ pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   assert (prv_p->p_reserve_3 == 0);
 #endif
 
+  if (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid)
+      && VOLID_EQ (bufptr->vpid.volid, prv_p->volid))
+    {
+      return true;
+    }
+
 #if 1
   /* Check iff is not initialized yet */
   if (LSA_ISNULL (&(prv_p->lsa)))
     {
       return true;		/* nop */
     }
+  else if (prv_p->ptype == PAGE_UNKNOWN)
+    {
+      if (!LOG_ISRESTARTED ())
+	{
+	  assert (log_Gl.rcv_phase == LOG_RECOVERY_REDO_PHASE);
+	  return true;		/* nop */
+	}
+    }
 #endif
 
   assert (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid));
   assert (VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
 
-  return (PAGEID_EQ (bufptr->vpid.pageid, prv_p->pageid)
-	  && VOLID_EQ (bufptr->vpid.volid, prv_p->volid));
+  return false;
 }
