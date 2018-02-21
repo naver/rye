@@ -129,8 +129,8 @@ fi_init (void)
   fi_init_test_item (FI_TEST_HB_DISK_FAIL,
 		     "fi_hb_disk_fail", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_HB_SLOW_PING_HOST,
-		     "fi_hb_slow_ping_host", fi_handler_random_sleep);
+  fi_init_test_item (FI_TEST_HB_PING_HOST_FAIL,
+		     "fi_hb_ping_host_fail", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_REPL_RANDOM_EXIT,
 		     "fi_repl_random_exit", fi_handler_random_exit);
