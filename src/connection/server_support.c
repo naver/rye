@@ -1453,29 +1453,29 @@ css_transit_ha_server_state (UNUSED_ARG THREAD_ENTRY * thread_p,
    * -------------------------------------------------------------------------------
    *                | UNKNOWN  MASTER        TO_BE_MASTER  SLAVE        TO_BE_SLAVE
    * -------------------------------------------------------------------------------
-   *  UNKNOWN       | UNKNOWN  MASTER        TO_BE_MASTER  SLAVE        TO_BE_SLAVE
-   *  MASTER        | N/A      MASTER        N/A           TO_BE_SLAVE  TO_BE_SLAVE
-   *  TO_BE_MASTER  | N/A      MASTER        TO_BE_MASTER  N/A          N/A
+   *  UNKNOWN       | UNKNOWN  MASTER        N/A           SLAVE        N/A
+   *  MASTER        | N/A      MASTER        N/A           TO_BE_SLAVE  N/A
+   *  TO_BE_MASTER  | N/A      MASTER        N/A           N/A          N/A
    *  SLAVE         | N/A      TO_BE_MASTER  N/A           SLAVE        N/A
-   *  TO_BE_SLAVE   | N/A      N/A           N/A           SLAVE        TO_BE_SLAVE
+   *  TO_BE_SLAVE   | N/A      N/A           N/A           SLAVE        N/A
    * --------------------------------------------------------------------------------------------
    */
   static HA_STATE server_State_Comp[5][5] = {
     /* UNKNOWN */
-    {HA_STATE_UNKNOWN, HA_STATE_MASTER, HA_STATE_MASTER, HA_STATE_SLAVE,
-     HA_STATE_SLAVE},
+    {HA_STATE_UNKNOWN, HA_STATE_MASTER, HA_STATE_NA, HA_STATE_SLAVE,
+     HA_STATE_NA},
     /* MASTER */
     {HA_STATE_NA, HA_STATE_MASTER, HA_STATE_NA, HA_STATE_TO_BE_SLAVE,
-     HA_STATE_TO_BE_SLAVE},
+     HA_STATE_NA},
     /* TO_BE_MASTER */
-    {HA_STATE_NA, HA_STATE_MASTER, HA_STATE_TO_BE_MASTER, HA_STATE_NA,
+    {HA_STATE_NA, HA_STATE_MASTER, HA_STATE_NA, HA_STATE_NA,
      HA_STATE_NA},
     /* SLAVE */
     {HA_STATE_NA, HA_STATE_TO_BE_MASTER, HA_STATE_NA, HA_STATE_SLAVE,
      HA_STATE_NA},
     /* TO_BE_SLAVE */
     {HA_STATE_NA, HA_STATE_NA, HA_STATE_NA, HA_STATE_SLAVE,
-     HA_STATE_TO_BE_SLAVE}
+     HA_STATE_NA}
   };
 
   if ((curr_server_state < HA_STATE_UNKNOWN

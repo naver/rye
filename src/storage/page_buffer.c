@@ -7395,6 +7395,7 @@ static void
 pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
 {
   FILEIO_PAGE_RESERVED *prv_p;
+  bool is_first = false;
 
   if (bufptr == NULL || VPID_ISNULL (&bufptr->vpid))
     {
@@ -7411,10 +7412,24 @@ pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr)
   prv_p = &(bufptr->iopage_buffer->iopage.prv);
 
   /* Check iff is the first time */
-  if (prv_p->pageid == NULL_PAGEID && prv_p->volid == NULL_VOLID)
+#if 1
+  if (LSA_ISNULL (&(prv_p->lsa)))
     {
-      assert (LSA_ISNULL (&(prv_p->lsa)));
+      is_first = true;
+    }
+  else if (prv_p->ptype == PAGE_UNKNOWN)
+    {
+      if (!LOG_ISRESTARTED ())
+	{
+	  assert (log_Gl.rcv_phase == LOG_RECOVERY_REDO_PHASE);
+	  is_first = true;
+	}
+    }
+#endif
 
+  /* Check iff is not initialized yet */
+  if (is_first)
+    {
       (void) fileio_initialize_res (thread_p, prv_p);
 
       /* Set Page identifier */
