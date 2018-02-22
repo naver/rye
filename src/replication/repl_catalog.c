@@ -310,6 +310,10 @@ rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_info)
 
 	  GOTO_EXIT_ON_ERROR;
 	}
+#if !defined(NDEBUG)
+      /* suppress valgrind UMW error */
+      memset (&ct, 0, sizeof (ct));
+#endif
       /* get new log appliers info */
       for (i = 0; i < Repl_Info->num_applier; i++)
 	{

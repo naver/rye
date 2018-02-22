@@ -2757,13 +2757,17 @@ add_arg_idxkey (T_NET_BUF * net_buf, DB_IDXKEY * idxkey)
   char *buf = NULL;
   int err_code = CCI_ER_NO_ERROR;
 
-  size = cci_or_db_idxkey_size (idxkey) + MAX_ALIGNMENT;
+  size = cci_or_db_idxkey_size (idxkey);
   buf = (char *) MALLOC (size);
   if (buf == NULL)
     {
       err_code = CCI_ER_NO_MORE_MEMORY;
       return err_code;
     }
+#if !defined(NDEBUG)
+  /* suppress valgrind UMW error */
+  memset (buf, 0, size);
+#endif
 
   /* pk_buf is  MAX_ALIGNMENT */
   if (cci_or_pack_db_idxkey (buf, idxkey) == NULL)
