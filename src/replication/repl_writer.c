@@ -1543,6 +1543,7 @@ cirpwr_archive_active_log (void)
     }
 
   arv_hdr_pgptr = (LOG_PAGE *) PTR_ALIGN (log_pgbuf, MAX_ALIGNMENT);
+  memset (arv_hdr_pgptr, 0, LOG_PAGESIZE);
 
   arv_hdr_pgptr->hdr.logical_pageid = LOGPB_HEADER_PAGE_ID;
   arv_hdr_pgptr->hdr.offset = NULL_OFFSET;
