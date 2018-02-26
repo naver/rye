@@ -2597,6 +2597,7 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
 
   pgptr = org_pgptr;
 
+  t_length = length;
   /* filter the record type */
   /* NOTES : in case of overflow page, we don't need to fetch the rectype */
   if (rec_type != NULL)
@@ -2621,7 +2622,7 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
 	  rec_length -= copy_length;
 	  area_offset += copy_length;
 	  log_offset += copy_length;
-	  length -= copy_length;
+	  t_length -= copy_length;
 	}
 
       /* skip class_oid */
@@ -2648,13 +2649,11 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
 
 	  rec_length -= copy_length;
 	  log_offset += copy_length;
-	  length -= copy_length;
+	  t_length -= copy_length;
 	}
     }
 
   area_offset = 0;
-  t_length = length;
-
   /* The log data is not contiguous */
   while (t_length > 0)
     {
@@ -2681,6 +2680,11 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
       log_offset += copy_length;
     }
   assert (error == NO_ERROR && pgptr != NULL);
+
+#if !defined(NDEBUG)
+  /* suppress valgrind UMW error */
+  memset (area + area_offset, 0, length - area_offset);
+#endif
 
   if (pgptr != org_pgptr)
     {
