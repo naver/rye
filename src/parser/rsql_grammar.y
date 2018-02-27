@@ -4715,7 +4715,7 @@ view_attr_def
                             node->type_enum = typ = TO_NUMBER (CONTAINER_AT_0 ($2));
                             node->data_type = dt = CONTAINER_AT_1 ($2);
                             node->info.attr_def.attr_name = $1;
-                            if (typ == DB_TYPE_VARCHAR && dt)
+                            if (typ == PT_TYPE_VARCHAR && dt)
                               {
                                 node->info.attr_def.size_constraint = dt->info.data_type.precision;
                               }
@@ -4886,7 +4886,7 @@ attr_def_one
 			    node->type_enum = typ = TO_NUMBER (CONTAINER_AT_0 ($2));
 			    node->data_type = dt = CONTAINER_AT_1 ($2);
 			    node->info.attr_def.attr_name = $1;
-			    if (typ == DB_TYPE_VARCHAR && dt)
+			    if (typ == PT_TYPE_VARCHAR && dt)
                               {
 			        node->info.attr_def.size_constraint = dt->info.data_type.precision;
                               }
