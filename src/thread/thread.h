@@ -83,7 +83,9 @@ typedef int (*CSS_THREAD_FN) (THREAD_ENTRY * thrd, CSS_THREAD_ARG);
 
 enum
 { TS_DEAD = 0, TS_FREE, TS_RUN, TS_WAIT, TS_CHECK };
-enum
+
+typedef enum thread_resume_status THREAD_RESUME_STATUS;
+enum thread_resume_status
 { THREAD_RESUME_NONE = 0,
   THREAD_RESUME_DUE_TO_INTERRUPT = 1,
   THREAD_RESUME_DUE_TO_SHUTDOWN = 2,
@@ -110,6 +112,7 @@ enum
   THREAD_LOGWR_SUSPENDED = 23,
   THREAD_LOGWR_RESUMED = 24
 };
+
 enum
 { TT_MASTER, TT_CON_HANDLER, TT_WORKER, TT_DAEMON, TT_NONE };
 
