@@ -320,6 +320,7 @@ csect_wait_on_writer_queue (THREAD_ENTRY * thread_p,
 			    int timeout, struct timespec *to)
 {
   THREAD_ENTRY *prev_thread_p = NULL;
+  THREAD_RESUME_STATUS resume_status = THREAD_RESUME_NONE;
   int err = NO_ERROR;
 
   thread_p->next_wait_thrd = NULL;
@@ -350,7 +351,9 @@ csect_wait_on_writer_queue (THREAD_ENTRY * thread_p,
 					     timeout, to,
 					     THREAD_CSECT_WRITER_SUSPENDED);
 
-      if (DOES_THREAD_RESUME_DUE_TO_SHUTDOWN (thread_p))
+      resume_status = thread_p->resume_status;
+      if (resume_status == THREAD_RESUME_DUE_TO_INTERRUPT
+	  && thread_p->interrupted == true)
 	{
 	  /* check if i'm in the queue */
 	  prev_thread_p = cs_ptr->waiting_writers_queue;
@@ -383,7 +386,7 @@ csect_wait_on_writer_queue (THREAD_ENTRY * thread_p,
 	   *    and there's not me in the writers Q.
 	   */
 	}
-      else if (thread_p->resume_status != THREAD_CSECT_WRITER_RESUMED)
+      else if (resume_status != THREAD_CSECT_WRITER_RESUMED)
 	{
 	  assert (0);
 	}
@@ -400,6 +403,7 @@ csect_wait_on_promoter_queue (THREAD_ENTRY * thread_p,
 			      int timeout, struct timespec *to)
 {
   THREAD_ENTRY *prev_thread_p = NULL;
+  THREAD_RESUME_STATUS resume_status = THREAD_RESUME_NONE;
   int err = NO_ERROR;
 
   thread_p->next_wait_thrd = NULL;
@@ -430,7 +434,9 @@ csect_wait_on_promoter_queue (THREAD_ENTRY * thread_p,
 					     timeout, to,
 					     THREAD_CSECT_PROMOTER_SUSPENDED);
 
-      if (DOES_THREAD_RESUME_DUE_TO_SHUTDOWN (thread_p))
+      resume_status = thread_p->resume_status;
+      if (resume_status == THREAD_RESUME_DUE_TO_INTERRUPT
+	  && thread_p->interrupted == true)
 	{
 	  /* check if i'm in the queue */
 	  prev_thread_p = cs_ptr->waiting_promoters_queue;
@@ -463,7 +469,7 @@ csect_wait_on_promoter_queue (THREAD_ENTRY * thread_p,
 	   *    and there's not me in the promoters Q.
 	   */
 	}
-      else if (thread_p->resume_status != THREAD_CSECT_PROMOTER_RESUMED)
+      else if (resume_status != THREAD_CSECT_PROMOTER_RESUMED)
 	{
 	  assert (0);
 	}

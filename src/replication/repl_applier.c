@@ -294,8 +294,8 @@ cirp_get_zipped_data (CIRP_BUF_MGR * buf_mgr, char *undo_data,
 	  redo_length = redo_unzip_data->data_length;
 
 	  (void) log_diff (undo_length,
-			   undo_unzip_data->
-			   log_data, redo_length, redo_unzip_data->log_data);
+			   undo_unzip_data->log_data, redo_length,
+			   redo_unzip_data->log_data);
 	}
       else
 	{
@@ -757,6 +757,10 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
       RYE_FREE_MEM (ovf_list_data->data);
       RYE_FREE_MEM (ovf_list_data);
     }
+#if !defined(NDEBUG)
+  /* suppress valgrind UMW error */
+  memset (recdes->data + copyed_len, 0, length - copyed_len);
+#endif
 
   recdes->length = length;
 
@@ -2087,14 +2091,14 @@ applier_main (void *arg)
 	      REPL_SET_GENERIC_ERROR (error, "Invalid REPL_ITEM("
 				      "tran_start(%ld, %d), committed_lsa(%ld,%d), "
 				      "repl_start_lsa(%ld, %d)",
-				      (long) repl_log_item->tran_start_lsa.
-				      pageid,
+				      (long) repl_log_item->
+				      tran_start_lsa.pageid,
 				      repl_log_item->tran_start_lsa.offset,
-				      (long) repl_log_item->committed_lsa.
-				      pageid,
+				      (long) repl_log_item->
+				      committed_lsa.pageid,
 				      repl_log_item->committed_lsa.offset,
-				      (long) repl_log_item->repl_start_lsa.
-				      pageid,
+				      (long) repl_log_item->
+				      repl_start_lsa.pageid,
 				      repl_log_item->repl_start_lsa.offset);
 
 	      GOTO_EXIT_ON_ERROR;

@@ -182,12 +182,15 @@ extern unsigned int db_on_server;
   0				/* is_visited */
 
 TP_DOMAIN tp_Null_domain = { NULL, NULL, &tp_Null, DOMAIN_INIT };
+
 TP_DOMAIN tp_Integer_domain = { NULL, NULL, &tp_Integer,
   DOMAIN_INIT4 (DB_INTEGER_PRECISION, 0)
 };
+
 TP_DOMAIN tp_Bigint_domain = { NULL, NULL, &tp_Bigint,
   DOMAIN_INIT4 (DB_BIGINT_PRECISION, 0)
 };
+
 TP_DOMAIN tp_Double_domain = { NULL, NULL, &tp_Double,
   DOMAIN_INIT4 (DB_DOUBLE_DECIMAL_PRECISION, 0)
 };
@@ -205,9 +208,11 @@ TP_DOMAIN tp_Sequence_domain = {
 TP_DOMAIN tp_Time_domain = { NULL, NULL, &tp_Time,
   DOMAIN_INIT4 (DB_TIME_PRECISION, 0)
 };
+
 TP_DOMAIN tp_Date_domain = { NULL, NULL, &tp_Date,
   DOMAIN_INIT4 (DB_DATE_PRECISION, 0)
 };
+
 TP_DOMAIN tp_Datetime_domain = { NULL, NULL, &tp_Datetime,
   DOMAIN_INIT4 (DB_DATETIME_PRECISION, DB_DATETIME_DECIMAL_SCALE)
 };
@@ -296,10 +301,8 @@ static TP_DOMAIN *tp_Domains[] = {
   NULL
 };
 
-#if defined (SERVER_MODE)
 /* lock for domain list cache */
 static pthread_mutex_t tp_domain_cache_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif /* SERVER_MODE */
 
 static void domain_init (TP_DOMAIN * domain, DB_TYPE typeid_);
 static int tp_domain_size_internal (const TP_DOMAIN * domain);
@@ -1310,8 +1313,8 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
 	   * The first domain is a default domain for numeric type,
 	   * actually NUMERIC(15,0)
 	   */
-          assert (DB_DOUBLE_DECIMAL_PRECISION == 15);
-          assert (DB_DEFAULT_NUMERIC_SCALE == 0);
+	  assert (DB_DOUBLE_DECIMAL_PRECISION == 15);
+	  assert (DB_DEFAULT_NUMERIC_SCALE == 0);
 	  if (domain->precision == DB_DOUBLE_DECIMAL_PRECISION
 	      || domain->scale == DB_DEFAULT_NUMERIC_SCALE)
 	    {
@@ -1320,7 +1323,7 @@ tp_is_domain_cached (TP_DOMAIN * dlist, TP_DOMAIN * transient, TP_MATCH exact,
 	    }
 	  else
 	    {
-              /*
+	      /*
 	       * The other domains for numeric values are sorted
 	       * by descending order of precision and scale.
 	       */
@@ -1670,9 +1673,7 @@ tp_domain_cache (TP_DOMAIN * transient)
 {
   TP_DOMAIN *domain, *dlist;
   TP_DOMAIN *ins_pos = NULL;
-#if defined (SERVER_MODE)
   UNUSED_VAR int rv;
-#endif /* SERVER_MODE */
 
   /* guard against a bad transient domain */
   if (transient == NULL || transient->type == NULL)
@@ -1719,7 +1720,6 @@ tp_domain_cache (TP_DOMAIN * transient)
   /*
    * second search stage: LOCK
    */
-#if defined (SERVER_MODE)
   rv = pthread_mutex_lock (&tp_domain_cache_lock);	/* LOCK */
 
   /* locate the root of the cache list for domains of this type */
@@ -1742,7 +1742,6 @@ tp_domain_cache (TP_DOMAIN * transient)
 	  return domain;
 	}
     }
-#endif /* SERVER_MODE */
 
   /*
    * We couldn't find one, install the transient domain that was passed in.
@@ -1777,9 +1776,7 @@ tp_domain_cache (TP_DOMAIN * transient)
     }
 #endif
 
-#if defined (SERVER_MODE)
   pthread_mutex_unlock (&tp_domain_cache_lock);
-#endif /* SERVER_MODE */
 
   return domain;
 }
