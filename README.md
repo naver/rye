@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/naver/rye.svg?branch=master)](https://travis-ci.org/naver/rye)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/14194/badge.svg)](https://scan.coverity.com/projects/naver-rye)
 [![Coverage Status](https://coveralls.io/repos/github/naver/rye/badge.svg?branch=master)](https://coveralls.io/github/naver/rye?branch=master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b176ed8900494f0d836030798aa47699)](https://www.codacy.com/app/kyungsik.seo/rye?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=naver/rye&amp;utm_campaign=Badge_Grade)
+
 ### RYE: Native Sharding RDBMS 
 Scalability problems in relational databases are perceived as a major disadvantage.
 Sharding is one of the solutions to overcome the scalability problems,

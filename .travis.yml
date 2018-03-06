@@ -54,6 +54,7 @@ script:
 notifications:
   email:
     - dl_oss_rye@navercorp.com
+  slack: naver-paas-rye:r6unVRd61PSdLd51vQUdS2BP
 
 # blocklist
 #branches:

@@ -205,24 +205,31 @@ new_block (long n)
 static DB_VALUE *
 realloc_block (DB_VALUE * in_block, long n)
 {
-  COL_BLOCK *block;
+  COL_BLOCK *block, *tmp;
 
   if (in_block)
     {
       block = BLOCK_START (in_block);
-      block = (COL_BLOCK *) realloc (block, COLBLOCKSIZE (n));
-      assert (block != NULL);	/* TODO - realloc failure */
+      tmp = (COL_BLOCK *) realloc (block, COLBLOCKSIZE (n));
+      if (tmp == NULL)
+	{
+	  assert (false);	/* TODO - realloc failure */
+	  return NULL;
+	}
+      block = tmp;
     }
   else
     {
       return new_block (n);
     }
+
   if (block)
     {
       block->count = n;
       block->next = NULL;
       return &(block->val[0]);
     }
+
   return NULL;
 }
 
