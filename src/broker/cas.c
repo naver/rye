@@ -396,6 +396,7 @@ cas_main (void)
 
   if (lang_init () != NO_ERROR)
     {
+      RYE_FREE_MEM (net_buf.data);
       return -1;
     }
 
@@ -1307,14 +1308,12 @@ process_request (SOCKET sock_fd, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 			"[preffunc : %d, recvfunc : %d], [REQ: %d, REQ: %d], "
 			"[JID : %d] \n", func_code - 1,
 			prev_Cas_info[CAS_STATUS_INFO_IDX_STATUS],
-			client_msg_header.
-			info_ptr[CAS_STATUS_INFO_IDX_STATUS],
+			client_msg_header.info_ptr
+			[CAS_STATUS_INFO_IDX_STATUS],
 			prev_Cas_info[CAS_INFO_RESERVED_1],
-			client_msg_header.
-			info_ptr[CAS_INFO_RESERVED_1],
+			client_msg_header.info_ptr[CAS_INFO_RESERVED_1],
 			prev_Cas_info[CAS_INFO_RESERVED_2],
-			client_msg_header.
-			info_ptr[CAS_INFO_RESERVED_2],
+			client_msg_header.info_ptr[CAS_INFO_RESERVED_2],
 			client_msg_header.info_ptr[CAS_INFO_RESERVED_3]);
 	}
     }
