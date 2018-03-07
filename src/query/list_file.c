@@ -1137,7 +1137,14 @@ qfile_load_xasl (THREAD_ENTRY * thread_p, const XASL_ID * xasl_id_p,
     }
 
   *size_p = QFILE_GET_XASL_PAGE_SIZE (cur_page_p);
-  if (*size_p <= 0 || (*xasl_p = (char *) malloc (*size_p)) == NULL)
+  if (*size_p <= 0)
+    {
+      pgbuf_unfix_and_init (thread_p, cur_page_p);
+      return 0;
+    }
+
+  *xasl_p = (char *) malloc (*size_p);
+  if (*xasl_p == NULL)
     {
       pgbuf_unfix_and_init (thread_p, cur_page_p);
       return 0;
