@@ -2448,7 +2448,6 @@ do_copy_indexes (PARSER_CONTEXT * parser, MOP classmop, SM_CLASS * src_class)
   char *new_cons_name = NULL;
   SM_CONSTRAINT_INFO *index_save_info = NULL;
   DB_CONSTRAINT_TYPE constraint_type;
-  int free_constraint = 0;
 
   assert (src_class != NULL);
 
@@ -2482,11 +2481,6 @@ do_copy_indexes (PARSER_CONTEXT * parser, MOP classmop, SM_CLASS * src_class)
       if (new_cons_name != NULL && new_cons_name != c->name)
 	{
 	  free_and_init (new_cons_name);
-	}
-
-      if (free_constraint)
-	{
-	  sm_free_constraint_info (&index_save_info);
 	}
 
       if (error != NO_ERROR)
