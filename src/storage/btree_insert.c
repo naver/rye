@@ -642,7 +642,9 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
   if (node_type == BTREE_LEAF_NODE)
     {
       ent_size = LEAFENTSZ (key_len);
+#if 0
       tot_rec += ent_size;
+#endif
 
       mid_size = btree_split_find_pivot (tot_rec, ent_size, &split_info);
     }
@@ -740,7 +742,9 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
     {
       (*mid_slot)++;
     }
+  assert (*mid_slot < n);
 
+#if 0
   if (node_type == BTREE_LEAF_NODE && (*mid_slot) == (slot_id - 1))
     {
       /* the new key is the split key */
@@ -749,6 +753,7 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
       m_clear_key = false;
     }
   else
+#endif
     {
       /* the split key is one of the keys on the page */
       if (spage_get_record (page_ptr, *mid_slot, &rec, PEEK) != S_SUCCESS)
