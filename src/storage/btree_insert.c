@@ -547,7 +547,6 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
   int n, i, mid_size;
   bool m_clear_key = false, n_clear_key = false;
   DB_IDXKEY next_key, prefix_key;
-  bool found;
   BTREE_NODE_HEADER node_header;
   NON_LEAF_REC nleaf_pnt;
   BTREE_NODE_SPLIT_INFO split_info;
@@ -616,10 +615,9 @@ btree_find_split_point (THREAD_ENTRY * thread_p,
   /* find the slot position of the key if it is to be located in the page */
   if (node_type == BTREE_LEAF_NODE)
     {
-      found = btree_search_leaf_page (thread_p, btid, page_ptr,
+      (void) btree_search_leaf_page (thread_p, btid, page_ptr,
 				      key, &slot_id, NULL);
-      assert (found == false);
-      if (slot_id == NULL_SLOTID || found == true)	/* leaf search failed */
+      if (slot_id == NULL_SLOTID)	/* leaf search failed */
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
