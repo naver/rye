@@ -1275,7 +1275,7 @@ er_set_internal (int severity, const char *file_name, const int line_no,
 #if 1				/* TODO - trace */
   assert (err_id != ER_WS_CORRUPTED);
   assert (err_id != ER_LK_UNILATERALLY_ABORTED);
-  assert (err_id != ER_SP_UNKNOWN_SLOTID);
+//  assert (err_id != ER_SP_UNKNOWN_SLOTID); /* refer catalog_get_class_info */
   assert (err_id != ER_FILE_FTB_LOOP);
   assert (err_id != ER_FILE_TABLE_CORRUPTED);
 #endif
