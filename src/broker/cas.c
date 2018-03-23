@@ -259,7 +259,7 @@ cas_send_connect_reply_to_driver (SOCKET client_sock_fd,
   net_buf_cp_short (net_buf, PATCH_VERSION);
   net_buf_cp_short (net_buf, BUILD_SEQ);
   net_buf_cp_int (net_buf, shm_As_index + 1, NULL);
-  net_buf_cp_int (net_buf, getpid (), NULL);
+  net_buf_cp_int (net_buf, as_Info->pid, NULL);
   net_buf_cp_int (net_buf, DRIVER_SESSION_SIZE, NULL);
   net_buf_cp_str (net_buf, sessid, DRIVER_SESSION_SIZE);
   net_buf_cp_byte (net_buf, CAS_DBMS_RYE);
