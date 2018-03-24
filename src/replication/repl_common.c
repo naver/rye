@@ -363,7 +363,6 @@ bool
 rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 {
   RP_DATA_ITEM *data;
-  RP_DDL_ITEM *ddl;
   RP_CATALOG_ITEM *catalog;
 
   while (item != NULL)
@@ -373,7 +372,7 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	case RP_ITEM_TYPE_DATA:
 	  data = &item->info.data;
 	  if (data->class_name == NULL || LSA_ISNULL (&item->lsa)
-	      || cci_db_idxkey_is_null (&data->key))
+	      || cci_db_idxkey_has_null (&data->key))
 	    {
 	      return false;
 	    }
@@ -386,7 +385,6 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	    }
 	  break;
 	case RP_ITEM_TYPE_DDL:
-	  ddl = &item->info.ddl;
 	  if (LSA_ISNULL (&item->lsa))
 	    {
 	      return false;
@@ -396,7 +394,7 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
 	  catalog = &item->info.catalog;
 
 	  if (catalog->class_name == NULL
-	      || cci_db_idxkey_is_null (&catalog->key))
+	      || cci_db_idxkey_has_null (&catalog->key))
 	    {
 	      return false;
 	    }

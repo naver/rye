@@ -527,6 +527,8 @@ db_initialize (void)
       GOTO_EXIT_ON_ERROR;
     }
 
+  tp_init ();
+
   db_is_Initialized = true;
 
   return NO_ERROR;
