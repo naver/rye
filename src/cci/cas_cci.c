@@ -2503,12 +2503,12 @@ cci_host_str_to_addr (const char *host_str, unsigned char *ip_addr)
 
 void
 cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY pack_idxkey_func,
-			  CCI_DB_IDXKEY_IS_NULL idxkey_is_null_func,
+			  CCI_DB_IDXKEY_HAS_NULL idxkey_has_null_func,
 			  CCI_OR_DB_IDXKEY_SIZE idxkey_size_func,
 			  CCI_DB_GET_STRING db_get_string_func)
 {
   cci_or_pack_db_idxkey = pack_idxkey_func;
-  cci_db_idxkey_is_null = idxkey_is_null_func;
+  cci_db_idxkey_has_null = idxkey_has_null_func;
   cci_or_db_idxkey_size = idxkey_size_func;
   cci_db_get_string = db_get_string_func;
 }
@@ -2633,8 +2633,7 @@ cas_connect_internal (T_CON_HANDLE * con_handle, int *connect)
     {
       remained_time = (con_handle->current_timeout
 		       - (int) timeval_diff_in_msec (NULL,
-						     &con_handle->
-						     start_time));
+						     &con_handle->start_time));
       if (remained_time <= 0)
 	{
 	  return CCI_ER_LOGIN_TIMEOUT;
