@@ -489,8 +489,8 @@ ux_database_connect (const char *db_name, const char *db_user,
 
       db_set_preferred_hosts (&shm_Appl->preferred_hosts);
       db_set_connect_order_random (shm_Appl->connect_order_random);
-      db_set_max_num_delayed_hosts_lookup (shm_Appl->
-					   max_num_delayed_hosts_lookup);
+      db_set_max_num_delayed_hosts_lookup
+	(shm_Appl->max_num_delayed_hosts_lookup);
 
       if (client_type == BOOT_CLIENT_REPL_BROKER)
 	{
@@ -3679,7 +3679,11 @@ net_arg_get_repl_item (CIRP_REPL_ITEM * item, int arg_idx, void **obj_argv)
       data->rcv_index = (LOG_RCVINDEX) tmp_int;
       net_arg_get_recdes (&data->recdes, obj_argv[arg_idx++]);
 
-      assert (db_idxkey_has_null (&data->key) == false);
+      if (db_idxkey_has_null (&data->key) == true)
+	{
+	  assert (false);
+	  return CAS_ER_ARGS;
+	}
       assert ((data->recdes == NULL && data->rcv_index == RVREPL_DATA_DELETE)
 	      || (data->recdes != NULL
 		  && data->rcv_index != RVREPL_DATA_DELETE));
@@ -3695,7 +3699,11 @@ net_arg_get_repl_item (CIRP_REPL_ITEM * item, int arg_idx, void **obj_argv)
       catalog->copyarea_op = tmp_int;
       net_arg_get_recdes (&catalog->recdes, obj_argv[arg_idx++]);
 
-      assert (db_idxkey_has_null (&catalog->key) == false);
+      if (db_idxkey_has_null (&catalog->key) == true)
+	{
+	  assert (false);
+	  return CAS_ER_ARGS;
+	}
       assert (catalog->recdes != NULL);
       assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	      || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE);
@@ -3733,6 +3741,7 @@ ux_send_repl_data_tran (int num_items, void **obj_argv)
       arg_idx = net_arg_get_repl_item (&item, arg_idx, obj_argv);
       if (arg_idx < 0)
 	{
+	  assert (false);	/* is impossible */
 	  error = ERROR_INFO_SET (CAS_ER_ARGS, CAS_ERROR_INDICATOR);
 	  break;
 	}
@@ -3979,7 +3988,6 @@ dump_repl_data (char *buf, int buf_len, int num_items, void **obj_argv)
   int i, arg_idx;
   int error = 0;
   char key_buffer[ONE_K];
-  int j;
 
   r_str = &rye_string;
 
@@ -3995,6 +4003,7 @@ dump_repl_data (char *buf, int buf_len, int num_items, void **obj_argv)
       arg_idx = net_arg_get_repl_item (&item, arg_idx, obj_argv);
       if (arg_idx < 0)
 	{
+	  assert (false);	/* is impossible */
 	  break;
 	}
 
@@ -4004,18 +4013,11 @@ dump_repl_data (char *buf, int buf_len, int num_items, void **obj_argv)
 	  rye_append_format_string (r_str,
 				    "user:%s, stmt_type:%s, query:%s, ",
 				    item.info.ddl.db_user,
-				    RYE_STMT_TYPE_NAME (item.info.ddl.
-							stmt_type),
+				    RYE_STMT_TYPE_NAME (item.info.
+							ddl.stmt_type),
 				    item.info.ddl.query);
 	  break;
 	case RP_ITEM_TYPE_DATA:
-
-	  for (j = 0; j < item.info.data.key.size; j++)
-	    {
-	      THREAD_WAIT (DB_IS_NULL (&item.info.data.key.vals[j]),
-			   "FAIL!!!");
-	    }
-
 	  help_dump_idxkey (key_buffer, sizeof (key_buffer),
 			    &item.info.data.key);
 	  rye_append_format_string (r_str,
@@ -4027,21 +4029,14 @@ dump_repl_data (char *buf, int buf_len, int num_items, void **obj_argv)
 
 	  break;
 	case RP_ITEM_TYPE_CATALOG:
-	  for (j = 0; j < item.info.catalog.key.size; j++)
-	    {
-	      THREAD_WAIT (DB_IS_NULL (&item.info.catalog.key.vals[j]),
-			   "FAIL");
-	    }
-
 	  help_dump_idxkey (key_buffer, sizeof (key_buffer),
 			    &item.info.catalog.key);
 	  rye_append_format_string (r_str,
 				    "table_name:%s, pk:%s, copyarea_op:%s, ",
 				    item.info.catalog.class_name,
 				    key_buffer,
-				    LC_COPYAREA_OPERATION_NAME (item.info.
-								catalog.
-								copyarea_op));
+				    LC_COPYAREA_OPERATION_NAME (item.
+								info.catalog.copyarea_op));
 
 	  db_idxkey_clear (&item.info.catalog.key);
 

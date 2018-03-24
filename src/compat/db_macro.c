@@ -873,6 +873,11 @@ db_idxkey_has_null (const DB_IDXKEY * key)
   CHECK_1ARG_TRUE (key);
   assert (key != NULL);
 
+  if (db_idxkey_is_null (key) == true)
+    {
+      return true;
+    }
+
   for (i = 0; i < key->size; i++)
     {
       if (db_value_is_null (&(key->vals[i])) == true)

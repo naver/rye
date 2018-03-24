@@ -56,12 +56,12 @@ typedef struct
 
 /* client function for replication */
 typedef char *(*CCI_OR_PACK_DB_IDXKEY) (char *, DB_IDXKEY *);
-typedef bool (*CCI_DB_IDXKEY_IS_NULL) (const DB_IDXKEY *);
+typedef bool (*CCI_DB_IDXKEY_HAS_NULL) (const DB_IDXKEY *);
 typedef int (*CCI_OR_DB_IDXKEY_SIZE) (DB_IDXKEY * key);
 typedef char *(*CCI_DB_GET_STRING) (const DB_VALUE *);
 
 CCI_OR_PACK_DB_IDXKEY cci_or_pack_db_idxkey;
-CCI_DB_IDXKEY_IS_NULL cci_db_idxkey_is_null;
+CCI_DB_IDXKEY_HAS_NULL cci_db_idxkey_has_null;
 CCI_OR_DB_IDXKEY_SIZE cci_or_db_idxkey_size;
 CCI_DB_GET_STRING cci_db_get_string;
 
@@ -123,7 +123,7 @@ extern int cci_get_server_mode (CCI_CONN * conn, int *server_mode,
 				unsigned int *master_addr);
 extern void cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY
 				      pack_idxkey_func,
-				      CCI_DB_IDXKEY_IS_NULL
+				      CCI_DB_IDXKEY_HAS_NULL
 				      idxkey_is_null_func,
 				      CCI_OR_DB_IDXKEY_SIZE
 				      idxkey_size_func,

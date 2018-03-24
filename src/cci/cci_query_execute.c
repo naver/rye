@@ -875,8 +875,8 @@ qe_close_req_handle_internal (T_REQ_HANDLE * req_handle,
       con_handle->deferred_close_handle_list = new_deferred_close_handle_list;
     }
 
-  con_handle->deferred_close_handle_list[con_handle->
-					 deferred_close_handle_count++] =
+  con_handle->
+    deferred_close_handle_list[con_handle->deferred_close_handle_count++] =
     req_handle->server_handle_id;
 
   return err_code;
@@ -1097,8 +1097,8 @@ qe_get_data (T_REQ_HANDLE * req_handle, int col_no,
     return CCI_ER_INVALID_CURSOR_POS;
 
   col_value_p =
-    req_handle->tuple_value[req_handle->cur_fetch_tuple_index].
-    column_ptr[col_no - 1];
+    req_handle->tuple_value[req_handle->
+			    cur_fetch_tuple_index].column_ptr[col_no - 1];
 
   db_type = CCI_GET_RESULT_INFO_TYPE (req_handle->col_info, col_no);
 
@@ -2815,7 +2815,7 @@ add_repl_item_catalog (T_NET_BUF * net_buf, RP_CATALOG_ITEM * catalog)
   assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
 	  || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE);
   assert (catalog->recdes != NULL);
-  assert (!cci_db_idxkey_is_null (&catalog->key));
+  assert (cci_db_idxkey_has_null (&catalog->key) == false);
 
   ADD_ARG_STR (net_buf, catalog->class_name,
 	       strlen (catalog->class_name) + 1);
@@ -2836,7 +2836,7 @@ add_repl_item_data (T_NET_BUF * net_buf, RP_DATA_ITEM * data)
   assert (data->rcv_index == RVREPL_DATA_INSERT
 	  || data->rcv_index == RVREPL_DATA_UPDATE
 	  || data->rcv_index == RVREPL_DATA_DELETE);
-  assert (!cci_db_idxkey_is_null (&data->key));
+  assert (cci_db_idxkey_has_null (&data->key) == false);
 
   ADD_ARG_STR (net_buf, data->class_name, strlen (data->class_name) + 1);
   ADD_ARG_IDXKEY (net_buf, &data->key);
