@@ -913,9 +913,8 @@ cirpwr_set_hdr_and_flush_info (void)
     {
       cirpwr_Gl.action |= CIRPWR_ACTION_ARCHIVING;
       cirpwr_Gl.last_arv_lpageid = m_log_hdr->nxarv_pageid - 1;
-
-      assert (cirpwr_Gl.last_arv_lpageid + 1 == fpageid);
     }
+  assert (cirpwr_Gl.last_arv_lpageid <= ha_info->last_flushed_pageid);
 
   /*
    * LWT sets the archiving flag at the time when it sends new active page
@@ -1017,10 +1016,11 @@ cirpwr_copy_all_omitted_pages (LOG_PAGEID fpageid)
 	}
 
       phy_pageid = (LOG_PHY_PAGEID) (pageid -
-				     cirpwr_Gl.bg_archive_info.
-				     start_page_id + 1);
-      if (fileio_write (NULL, cirpwr_Gl.bg_archive_info.vdes, log_pgptr,
-			phy_pageid, LOG_PAGESIZE) == NULL)
+				     cirpwr_Gl.bg_archive_info.start_page_id +
+				     1);
+      if (fileio_write
+	  (NULL, cirpwr_Gl.bg_archive_info.vdes, log_pgptr, phy_pageid,
+	   LOG_PAGESIZE) == NULL)
 	{
 	  error = er_errid ();
 	  if (error == ER_IO_WRITE_OUT_OF_SPACE)
@@ -1440,8 +1440,7 @@ cirpwr_flush_header_page (void)
   er_log_debug (ARG_FILE_LINE,
 		"cirpwr_flush_header_page, ha_server_state=%s, ha_file_status=%s\n"
 		"last_flushed_pageid(%lld), nxarv_pageid(%lld), nxarv_num(%d)\n",
-		HA_STATE_NAME (cirpwr_Gl.ha_info.
-			       server_state),
+		HA_STATE_NAME (cirpwr_Gl.ha_info.server_state),
 		css_ha_filestat_string (cirpwr_Gl.ha_info.file_status),
 		(long long) cirpwr_Gl.ha_info.last_flushed_pageid,
 		(long long) cirpwr_Gl.ha_info.nxarv_pageid,
