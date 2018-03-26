@@ -914,7 +914,9 @@ cirpwr_set_hdr_and_flush_info (void)
       cirpwr_Gl.action |= CIRPWR_ACTION_ARCHIVING;
       cirpwr_Gl.last_arv_lpageid = m_log_hdr->nxarv_pageid - 1;
     }
-  assert (cirpwr_Gl.last_arv_lpageid <= ha_info->last_flushed_pageid);
+  assert (cirpwr_Gl.last_arv_lpageid < 0
+	  || ha_info->last_flushed_pageid < 0
+	  || cirpwr_Gl.last_arv_lpageid <= ha_info->last_flushed_pageid);
 
   /*
    * LWT sets the archiving flag at the time when it sends new active page
