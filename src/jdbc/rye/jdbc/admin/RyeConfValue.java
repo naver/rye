@@ -43,13 +43,14 @@ public class RyeConfValue
     static final String KEY_HA_NODE_LIST = "ha_node_list";
     static final String KEY_HA_DB_LIST = "ha_db_list";
     static final String KEY_HA_NODE_MYSELF = "ha_node_myself";
+    static final String KEY_HA_NODE_MYSELF_PORT = "ha_node_myself_port";
 
     static final String KEY_SHARD_MGMT_METADB = "shard_mgmt_metadb";
     static final String KEY_SHARD_MGMT_NUM_MIGRATOR = "shard_mgmt_num_migrator";
     static final String DEFAULT_VALUE_SHARD_MGMT_NUM_MIGRATOR = "10";
 
     private static final String[] AUTO_GEN_PARAM = { KEY_HA_NODE_LIST, KEY_HA_DB_LIST, KEY_HA_NODE_MYSELF,
-		    KEY_SHARD_MGMT_METADB, "rye_port_id", "rye_shm_key" };
+		    KEY_HA_NODE_MYSELF_PORT, KEY_SHARD_MGMT_METADB, "rye_port_id", "rye_shm_key" };
 
     protected static final String[] builtinBrokers = { "broker", SECT_SHARD_MGMT, "rw", "ro", "so", "repl" };
 
