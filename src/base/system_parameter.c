@@ -7631,7 +7631,7 @@ prm_split_node_str_internal (PRM_NODE_LIST * node_list,
       p = strchr (list_pp[i], ':');
       if (p == NULL)
 	{
-	  port = prm_get_rye_port_id ();
+	  port = prm_get_ha_node_myself_port ();
 	}
       else
 	{
@@ -7654,7 +7654,7 @@ prm_split_node_str_internal (PRM_NODE_LIST * node_list,
 
       if (ip == inet_addr ("127.0.0.1"))
 	{
-	  ip = prm_Ha_node_myself_ip;
+	  ip = prm_get_ha_node_myself ();
 	}
 
       PRM_NODE_INFO_SET (&node_list->nodes[node_list->num_nodes], ip, port);
