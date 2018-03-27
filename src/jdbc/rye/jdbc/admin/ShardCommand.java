@@ -823,6 +823,8 @@ abstract class ShardCommand
 	    if (setHaNodeMyself) {
 		changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_MYSELF, hosts[i].getIpAddr(),
 				RyeConfValue.CHANGE_CONF_ENABLE_ALL);
+		changeRyeServerConf(localMgmt, RyeConfValue.KEY_HA_NODE_MYSELF_PORT, Integer.toString(hosts[i].getPort()),
+				RyeConfValue.CHANGE_CONF_ENABLE_ALL);
 	    }
 	}
     }

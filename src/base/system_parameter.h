@@ -225,9 +225,10 @@ enum param_id
   PRM_ID_MAX_COPYLOG_CONNECTIONS,
   PRM_ID_MIGRATOR_MAX_REPL_DELAY,
   PRM_ID_HA_NODE_MYSELF,
+  PRM_ID_HA_NODE_MYSELF_PORT,
 
   /* change PRM_LAST_ID when adding new system parameters */
-  PRM_LAST_ID = PRM_ID_HA_NODE_MYSELF
+  PRM_LAST_ID = PRM_ID_HA_NODE_MYSELF_PORT
 };
 
 /*
@@ -403,7 +404,6 @@ extern int sysprm_set_error (SYSPRM_ERR rc, const char *data);
 
 extern void prm_get_ha_node_list (PRM_NODE_LIST * cp_node_list);
 extern void prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list);
-extern unsigned int prm_get_ha_node_myself (void);
 extern PRM_NODE_INFO prm_get_null_node_info (void);
 extern PRM_NODE_INFO prm_get_myself_node_info (void);
 extern void prm_node_info_to_str (char *buf, int size,

@@ -204,3 +204,6 @@ oss_rye ( dl_oss_rye@navercorp.com )
 
 ### Reference
 
+* [DEVIEW 2017 Day2, 2-3. RYE, 샤딩을 지원하는 오픈소스 관계형 DBMS](https://deview.kr/2017/schedule/185)
+* [SlideShare link](https://www.slideshare.net/deview/223rye-dbms)
+* [NAVER TV link](http://tv.naver.com/v/2302946)

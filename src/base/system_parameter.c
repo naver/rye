@@ -348,6 +348,7 @@ typedef enum
 #define PRM_NAME_MAX_COPYLOG_CONNECTIONS "max_copylogdb_connections"
 #define PRM_NAME_MIGRATOR_MAX_REPL_DELAY "migrator_max_repl_delay"
 #define PRM_NAME_HA_NODE_MYSELF "ha_node_myself"
+#define PRM_NAME_HA_NODE_MYSELF_PORT "ha_node_myself_port"
 
 /*
  * Note about ERROR_LIST and INTEGER_LIST type
@@ -958,6 +959,10 @@ static unsigned int prm_Ha_node_myself_ip = INADDR_NONE;
 const char *PRM_HA_NODE_MYSELF = NULL;
 static const char *prm_ha_node_myself_default = NULL;
 
+static int ha_Node_myself_port = 0;
+static int PRM_HA_NODE_MYSELF_PORT = 0;
+static int prm_ha_node_myself_port_default = 0;
+
 typedef struct sysprm_param SYSPRM_PARAM;
 struct sysprm_param
 {
@@ -1185,6 +1190,7 @@ static void sysprm_init_param (PARAM_ID param_id, const char *name,
 static int prm_call_post_assign_fn (SYSPRM_PARAM * prm);
 static int prm_node_list_post_assign (SYSPRM_PARAM * prm);
 static int prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm);
+static int prm_ha_node_myself_port_post_assign (SYSPRM_PARAM * prm);
 static int prm_split_node_str_internal (PRM_NODE_LIST * node_list,
 					const char *node_list_str,
 					bool include_local_host);
@@ -2186,12 +2192,20 @@ sysprm_initialize_prm_def ()
 		     PRM_STRING,
 		     &prm_ha_node_myself_default, &PRM_HA_NODE_MYSELF, NULL,
 		     NULL);
+  sysprm_init_param (PRM_ID_HA_NODE_MYSELF_PORT,
+		     PRM_NAME_HA_NODE_MYSELF_PORT,
+		     (PRM_FOR_CLIENT | PRM_FOR_SERVER | PRM_RELOADABLE),
+		     PRM_INTEGER,
+		     &prm_ha_node_myself_port_default,
+		     &PRM_HA_NODE_MYSELF_PORT, NULL, NULL);
 
   sysprm_set_post_assign_fn (PRM_ID_HA_NODE_LIST, prm_node_list_post_assign);
   sysprm_set_post_assign_fn (PRM_ID_HA_REPLICA_LIST,
 			     prm_node_list_post_assign);
   sysprm_set_post_assign_fn (PRM_ID_HA_NODE_MYSELF,
 			     prm_ha_node_myself_post_assign);
+  sysprm_set_post_assign_fn (PRM_ID_HA_NODE_MYSELF_PORT,
+			     prm_ha_node_myself_port_post_assign);
 
   prm_Def_is_initialized = true;
 }
@@ -7369,10 +7383,16 @@ prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list)
   *cp_node_list = prm_Ha_replica_list;
 }
 
-unsigned int
+static unsigned int
 prm_get_ha_node_myself ()
 {
   return prm_Ha_node_myself_ip;
+}
+
+static int
+prm_get_ha_node_myself_port ()
+{
+  return ha_Node_myself_port;
 }
 
 PRM_NODE_INFO
@@ -7387,7 +7407,7 @@ prm_get_myself_node_info ()
 {
   PRM_NODE_INFO node_info;
   PRM_NODE_INFO_SET (&node_info, prm_get_ha_node_myself (),
-		     prm_get_rye_port_id ());
+		     prm_get_ha_node_myself_port ());
   return node_info;
 }
 
@@ -7470,6 +7490,23 @@ prm_ha_node_myself_post_assign (SYSPRM_PARAM * prm)
     }
 
   prm_Ha_node_myself_ip = ip;
+  return PRM_ERR_NO_ERROR;
+}
+
+static int
+prm_ha_node_myself_port_post_assign (SYSPRM_PARAM * prm)
+{
+  int int_value;
+  assert (prm->param_id == PRM_ID_HA_NODE_MYSELF_PORT);
+
+  int_value = prm_get_integer_value (prm->param_id);
+  if (int_value <= 0)
+    {
+      int_value = prm_get_integer_value (PRM_ID_RYE_PORT_ID);
+    }
+
+  assert (int_value > 0);
+  ha_Node_myself_port = int_value;
   return PRM_ERR_NO_ERROR;
 }
 

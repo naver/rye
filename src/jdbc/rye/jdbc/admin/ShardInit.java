@@ -256,9 +256,11 @@ class ShardInit extends ShardCommand
 	String dbnameList = concatStrArr(localDbname, ",", false);
 	String numMigrator = RyeConfValue.DEFAULT_VALUE_SHARD_MGMT_NUM_MIGRATOR;
 
-	for (RyeConfValue ryeConf : changeRyeConf) {
-	    if (ryeConf.getKeyName().equals(RyeConfValue.KEY_SHARD_MGMT_NUM_MIGRATOR)) {
-		numMigrator = ryeConf.getValue();
+	if (changeRyeConf != null) {
+	    for (RyeConfValue ryeConf : changeRyeConf) {
+		if (ryeConf.getKeyName().equals(RyeConfValue.KEY_SHARD_MGMT_NUM_MIGRATOR)) {
+		    numMigrator = ryeConf.getValue();
+		}
 	    }
 	}
 
