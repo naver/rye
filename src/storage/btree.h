@@ -228,9 +228,8 @@ struct recset_header
 
 extern void btree_scan_clear_key (BTREE_SCAN * btree_scan);
 
-extern int btree_get_stats (THREAD_ENTRY * thread_p,
-			    OID * class_oid, BTREE_STATS * stat_info,
-			    bool with_fullscan);
+extern int btree_get_stats (THREAD_ENTRY * thread_p, OID * class_oid,
+			    BTREE_STATS * stat_info, bool with_fullscan);
 
 extern int btree_get_pkey_btid (THREAD_ENTRY * thread_p, OID * cls_oid,
 				BTID * pkey_btid);
@@ -240,15 +239,14 @@ extern DISK_ISVALID btree_check_by_class_oid (THREAD_ENTRY * thread_p,
 extern DISK_ISVALID btree_check_all (THREAD_ENTRY * thread_p);
 #endif
 
-extern PAGE_PTR btree_get_next_page (THREAD_ENTRY * thread_p,
-				     BTID_INT * btid, PAGE_PTR page_p);
+extern PAGE_PTR btree_get_next_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
+				     PAGE_PTR page_p);
 
-extern DB_IDXKEY *btree_delete (THREAD_ENTRY * thread_p,
-				BTID_INT * btid, DB_IDXKEY * key);
-extern DB_IDXKEY *btree_insert (THREAD_ENTRY * thread_p,
-				BTID_INT * btid, DB_IDXKEY * key);
-extern int btree_update (THREAD_ENTRY * thread_p,
-			 BTID_INT * btid,
+extern DB_IDXKEY *btree_delete (THREAD_ENTRY * thread_p, BTID_INT * btid,
+				DB_IDXKEY * key);
+extern DB_IDXKEY *btree_insert (THREAD_ENTRY * thread_p, BTID_INT * btid,
+				DB_IDXKEY * key);
+extern int btree_update (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			 DB_IDXKEY * old_key, DB_IDXKEY * new_key);
 extern int btree_find_min_or_max_key (THREAD_ENTRY * thread_p,
 				      OID * class_oid, BTID * btid,
@@ -310,9 +308,8 @@ extern int btree_attrinfo_read_dbvalues (THREAD_ENTRY * thread_p,
 					 const DB_IDXKEY * curr_key,
 					 OR_CLASSREP * classrepr, int indx_id,
 					 HEAP_CACHE_ATTRINFO * attr_info);
-extern int btree_coerce_idxkey (DB_IDXKEY * key,
-				OR_INDEX * indexp, int num_term,
-				int key_minmax);
+extern int btree_coerce_idxkey (DB_IDXKEY * key, OR_INDEX * indexp,
+				int num_term, int key_minmax);
 extern void btree_get_indexname_on_table (THREAD_ENTRY * thread_p,
 					  const BTID_INT * btid, char *buffer,
 					  const int buffer_len);
@@ -328,8 +325,7 @@ extern void btree_read_fixed_portion_of_non_leaf_record (RECDES * rec,
 							 NON_LEAF_REC *
 							 nlf_rec);
 extern int btree_read_record (THREAD_ENTRY * thread_p, BTID_INT * btid,
-			      RECDES * Rec, DB_IDXKEY * key,
-			      void *rec_header,
+			      RECDES * Rec, DB_IDXKEY * key, void *rec_header,
 			      int node_type, bool * clear_key, int copy);
 extern int btree_write_record (THREAD_ENTRY * thread_p, BTID_INT * btid,
 			       void *node_rec, const DB_IDXKEY * key,
@@ -360,11 +356,10 @@ extern PAGE_PTR btree_pgbuf_fix (THREAD_ENTRY * thread_p, const VFID * vfid,
 
 extern int btree_search_nonleaf_page (THREAD_ENTRY * thread_p,
 				      BTID_INT * btid, PAGE_PTR page_ptr,
-				      const DB_IDXKEY * key,
-				      INT16 * slot_id, VPID * child_vpid);
+				      const DB_IDXKEY * key, INT16 * slot_id,
+				      VPID * child_vpid);
 extern bool btree_search_leaf_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
-				    PAGE_PTR page_ptr,
-				    const DB_IDXKEY * key,
+				    PAGE_PTR page_ptr, const DB_IDXKEY * key,
 				    INT16 * slot_id,
 				    int *max_diff_column_index);
 
@@ -393,8 +388,8 @@ extern int btree_fence_check_key (THREAD_ENTRY * thread_p,
 				  const DB_IDXKEY * left_key,
 				  const DB_IDXKEY * right_key,
 				  const bool with_eq);
-extern int btree_fence_check_page (THREAD_ENTRY * thread_p,
-				   BTID_INT * btid, PAGE_PTR page_ptr);
+extern int btree_fence_check_page (THREAD_ENTRY * thread_p, BTID_INT * btid,
+				   PAGE_PTR page_ptr);
 #endif
 
 #endif /* _BTREE_H_ */

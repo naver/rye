@@ -217,8 +217,8 @@ extern DISK_ISVALID disk_isvalid_page (THREAD_ENTRY * thread_p, INT16 volid,
 extern int disk_set_creation (THREAD_ENTRY * thread_p, INT16 volid,
 			      const char *new_vol_fullname,
 			      const INT64 * new_dbcreation,
-			      const LOG_LSA * new_chkptlsa,
-			      bool logchange, DISK_FLUSH_TYPE flush_page);
+			      const LOG_LSA * new_chkptlsa, bool logchange,
+			      DISK_FLUSH_TYPE flush_page);
 #endif
 extern int disk_set_link (THREAD_ENTRY * thread_p, INT16 volid);
 extern int disk_set_checkpoint (THREAD_ENTRY * thread_p, INT16 volid,

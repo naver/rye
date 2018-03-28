@@ -113,8 +113,8 @@ xstats_update_statistics (THREAD_ENTRY * thread_p, OID * class_id_p,
 
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
 	  ER_LOG_STARTED_TO_UPDATE_STATISTICS, 4,
-	  class_name ? class_name : "*UNKNOWN-TABLE*",
-	  class_id_p->volid, class_id_p->pageid, class_id_p->slotid);
+	  class_name ? class_name : "*UNKNOWN-TABLE*", class_id_p->volid,
+	  class_id_p->pageid, class_id_p->slotid);
 
   /* if class information was not obtained */
   if (cls_info_p->hfid.vfid.fileid < 0 || cls_info_p->hfid.vfid.volid < 0)
@@ -202,9 +202,9 @@ xstats_update_statistics (THREAD_ENTRY * thread_p, OID * class_id_p,
 	    MAX (btree_stats_p->keys, cls_info_p->tot_objects);
 
 	  assert (index_name == NULL);
-	  if (heap_get_indexname_of_btid (thread_p,
-					  class_id_p, &btree_stats_p->btid,
-					  &index_name) != NO_ERROR)
+	  if (heap_get_indexname_of_btid
+	      (thread_p, class_id_p, &btree_stats_p->btid,
+	       &index_name) != NO_ERROR)
 	    {
 	      index_name = NULL;
 	    }
@@ -350,8 +350,8 @@ xstats_update_all_statistics (THREAD_ENTRY * thread_p, bool update_stats,
   ehash_map (thread_p, &catalog_Id.xhid, stats_get_class_list,
 	     (void *) &class_id_list_p);
 
-  for (class_id_item_p = class_id_list_p;
-       class_id_item_p->next != NULL; class_id_item_p = class_id_item_p->next)
+  for (class_id_item_p = class_id_list_p; class_id_item_p->next != NULL;
+       class_id_item_p = class_id_item_p->next)
     {
       class_id.volid = class_id_item_p->class_id.volid;
       class_id.pageid = class_id_item_p->class_id.pageid;
@@ -524,9 +524,8 @@ xstats_get_statistics_from_server (THREAD_ENTRY * thread_p, OID * class_id_p,
       /* use estimates from the heap since it is likely that its estimates
        * are more accurate than the ones gathered at update statistics time
        */
-      if (heap_estimate_num_objects (thread_p,
-				     &(cls_info_p->hfid),
-				     &estimated_nobjs) != NO_ERROR)
+      if (heap_estimate_num_objects
+	  (thread_p, &(cls_info_p->hfid), &estimated_nobjs) != NO_ERROR)
 	{
 	  catalog_free_representation (disk_repr_p);
 	  catalog_free_class_info (cls_info_p);
@@ -593,8 +592,8 @@ xstats_get_statistics_from_server (THREAD_ENTRY * thread_p, OID * class_id_p,
 	    root_page.volid = btree_stats_p->btid.vfid.volid;
 	    root_page.pageid = btree_stats_p->btid.root_pageid;
 
-	    assert (pgbuf_is_valid_page (thread_p, &root_page, false,
-					 NULL, NULL) == DISK_VALID);
+	    assert (pgbuf_is_valid_page
+		    (thread_p, &root_page, false, NULL, NULL) == DISK_VALID);
 	  }
 #endif
 	  ptr = or_pack_btid (ptr, &btree_stats_p->btid);
@@ -621,8 +620,10 @@ xstats_get_statistics_from_server (THREAD_ENTRY * thread_p, OID * class_id_p,
 
 	  if (npages > btree_stats_p->pages)
 	    {
-	      ptr = or_pack_int (ptr, (btree_stats_p->leafs +
-				       (npages - btree_stats_p->pages)));
+	      ptr =
+		or_pack_int (ptr,
+			     (btree_stats_p->leafs +
+			      (npages - btree_stats_p->pages)));
 
 	      ptr = or_pack_int (ptr, npages);
 	    }

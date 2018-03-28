@@ -189,16 +189,14 @@ extern int heap_classrepr_decache_and_lock (THREAD_ENTRY * thread_p,
 					    const OID * class_oid);
 extern int heap_classrepr_unlock_class (const OID * class_oid);
 extern OR_CLASSREP *heap_classrepr_get (THREAD_ENTRY * thread_p,
-					OID * class_oid,
-					REPR_ID reprid,
+					OID * class_oid, REPR_ID reprid,
 					int *idx_incache,
 					bool use_last_reprid);
 extern int heap_classrepr_free (OR_CLASSREP * classrep, int *idx_incache);
 extern void heap_classrepr_dump_all (THREAD_ENTRY * thread_p, FILE * fp,
 				     OID * class_oid);
-extern bool
-heap_classrepr_has_cache_entry (THREAD_ENTRY * thread_p,
-				const OID * class_oid);
+extern bool heap_classrepr_has_cache_entry (THREAD_ENTRY * thread_p,
+					    const OID * class_oid);
 #ifdef DEBUG_CLASSREPR_CACHE
 extern int heap_classrepr_dump_anyfixed (void);
 #endif /* DEBUG_CLASSREPR_CACHE */
@@ -348,12 +346,10 @@ extern HEAP_ATTRVALUE *heap_attrvalue_locate (ATTR_ID attrid,
 extern OR_ATTRIBUTE *heap_locate_last_attrepr (ATTR_ID attrid,
 					       HEAP_CACHE_ATTRINFO *
 					       attr_info);
-extern int heap_attrvalue_get_key (THREAD_ENTRY * thread_p,
-				   int btid_index,
+extern int heap_attrvalue_get_key (THREAD_ENTRY * thread_p, int btid_index,
 				   HEAP_CACHE_ATTRINFO * idx_attrinfo,
-				   const OID * inst_oid,
-				   RECDES * recdes, BTID * btid,
-				   DB_IDXKEY * key);
+				   const OID * inst_oid, RECDES * recdes,
+				   BTID * btid, DB_IDXKEY * key);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern BTID *heap_indexinfo_get_btid (int btid_index,
@@ -363,9 +359,8 @@ extern int heap_indexinfo_get_num_attrs (int btid_index,
 extern int heap_indexinfo_get_attrids (int btid_index,
 				       HEAP_CACHE_ATTRINFO * attrinfo,
 				       ATTR_ID * attrids);
-extern int heap_get_index_with_name (THREAD_ENTRY * thread_p,
-				     OID * class_oid, const char *index_name,
-				     BTID * btid);
+extern int heap_get_index_with_name (THREAD_ENTRY * thread_p, OID * class_oid,
+				     const char *index_name, BTID * btid);
 #endif
 extern int heap_get_indexname_of_btid (THREAD_ENTRY * thread_p,
 				       OID * class_oid, BTID * btid,
@@ -460,8 +455,7 @@ extern int heap_ovf_get_capacity (THREAD_ENTRY * thread_p,
 				  int *ovf_num_pages, int *ovf_overhead,
 				  int *ovf_free_space);
 extern PAGE_PTR heap_pgbuf_fix (THREAD_ENTRY * thread_p, const HFID * hfid,
-				const VPID * vpid,
-				int requestmode,
+				const VPID * vpid, int requestmode,
 				PGBUF_LATCH_CONDITION condition,
 				const PAGE_TYPE ptype);
 extern bool heap_is_big_length (int length);

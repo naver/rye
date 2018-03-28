@@ -292,8 +292,8 @@ vfid_to_string (char *buf, int buf_size, VFID * vfid)
 char *
 hfid_to_string (char *buf, int buf_size, HFID * hfid)
 {
-  snprintf (buf, buf_size, "(%d|%d|%d)", hfid->vfid.volid,
-	    hfid->vfid.fileid, hfid->hpgid);
+  snprintf (buf, buf_size, "(%d|%d|%d)", hfid->vfid.volid, hfid->vfid.fileid,
+	    hfid->hpgid);
   buf[buf_size - 1] = 0;
   return buf;
 }
@@ -302,8 +302,8 @@ hfid_to_string (char *buf, int buf_size, HFID * hfid)
 char *
 btid_to_string (char *buf, int buf_size, BTID * btid)
 {
-  snprintf (buf, buf_size, "%d|%d|%d", btid->vfid.volid,
-	    btid->vfid.fileid, btid->root_pageid);
+  snprintf (buf, buf_size, "%d|%d|%d", btid->vfid.volid, btid->vfid.fileid,
+	    btid->root_pageid);
   buf[buf_size - 1] = 0;
   return buf;
 }

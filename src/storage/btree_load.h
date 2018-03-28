@@ -89,8 +89,8 @@ struct btree_node
 };
 
 extern int btree_compare_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
-			      const DB_IDXKEY * key1,
-			      const DB_IDXKEY * key2, int *start_colp);
+			      const DB_IDXKEY * key1, const DB_IDXKEY * key2,
+			      int *start_colp);
 /* Recovery routines */
 extern int btree_rv_undo_create_index (THREAD_ENTRY * thread_p,
 				       LOG_RCV * rcv);

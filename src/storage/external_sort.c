@@ -265,8 +265,8 @@ static int sort_get_num_file_contents (FILE_CONTENTS * file_contents);
 static void sort_print_file_contents (const FILE_CONTENTS * file_contents);
 #endif /* RYE_DEBUG */
 
-static void sort_spage_initialize
-  (PAGE_PTR pgptr, INT16 slots_type, INT16 alignment);
+static void sort_spage_initialize (PAGE_PTR pgptr, INT16 slots_type,
+				   INT16 alignment);
 
 static INT16 sort_spage_get_numrecs (PAGE_PTR pgptr);
 static int sort_spage_insert (INT16 * slotid, PAGE_PTR pgptr,
@@ -412,8 +412,8 @@ sort_spage_compact (PAGE_PTR pgptr)
   sortptr = (SLOT **) calloc ((unsigned) sphdr->nrecs, sizeof (SLOT *));
   if (sortptr == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, sphdr->nrecs * sizeof (SLOT *));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      sphdr->nrecs * sizeof (SLOT *));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -427,8 +427,8 @@ sort_spage_compact (PAGE_PTR pgptr)
 	}
     }
 
-  qsort ((void *) sortptr, (size_t) sphdr->nrecs,
-	 (size_t) sizeof (SLOT *), sort_spage_offsetcmp);
+  qsort ((void *) sortptr, (size_t) sphdr->nrecs, (size_t) sizeof (SLOT *),
+	 sort_spage_offsetcmp);
 
   to_offset = sizeof (SLOTTED_PAGE_HEADER);
   for (i = 0; i < sphdr->nrecs; i++)
@@ -453,8 +453,8 @@ sort_spage_compact (PAGE_PTR pgptr)
   /* Make sure that the next inserted record will be aligned */
   to_offset = DB_ALIGN (to_offset, sphdr->alignment);
 
-  sphdr->cfree = sphdr->tfree = (DB_PAGESIZE - to_offset -
-				 sphdr->nslots * sizeof (SLOT));
+  sphdr->cfree = sphdr->tfree =
+    (DB_PAGESIZE - to_offset - sphdr->nslots * sizeof (SLOT));
   sphdr->foffset = to_offset;
   free_and_init (sortptr);
 
@@ -532,8 +532,8 @@ sort_spage_find_free (SLOT ** out_sptr, INT16 * out_slotid, INT16 * out_space,
 	    {			/* impossible case */
 	      assert (false);
 
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-		      1, "");
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
+		      "");
 	      return ER_GENERIC_ERROR;
 	    }
 	}
@@ -607,8 +607,9 @@ sort_spage_insert (INT16 * slotid, PAGE_PTR pgptr, RECDES * recdes)
 
   assert (recdes->type == REC_HOME || recdes->type == REC_BIGONE);
 
-  error = sort_spage_find_free (&sptr, slotid, &used_space,
-				pgptr, recdes->length, recdes->type);
+  error =
+    sort_spage_find_free (&sptr, slotid, &used_space, pgptr, recdes->length,
+			  recdes->type);
   if (error != NO_ERROR)
     {
       return error;
@@ -731,15 +732,16 @@ sort_spage_dump_sptr (SLOT * sptr, INT16 nslots, INT16 alignment)
       (void) fprintf (stdout, "\nSlot-id = %2d, offset = %4d, type = %s",
 		      i, sptr->roffset,
 		      ((sptr->rtype == REC_HOME) ? "HOME" :
-		       (sptr->rtype == REC_BIGONE) ? "BIGONE" :
+		       (sptr->rtype ==
+			REC_BIGONE) ? "BIGONE" :
 		       "UNKNOWN-BY-CURRENT-MODULE"));
 
       if (sptr->roffset != NULL_OFFSET)
 	{
 	  total_length_records += sptr->rlength;
 	  waste = DB_WASTED_ALIGN (sptr->rlength, alignment);
-	  (void) fprintf (stdout, ", length = %4d, waste = %d",
-			  sptr->rlength, waste);
+	  (void) fprintf (stdout, ", length = %4d, waste = %d", sptr->rlength,
+			  waste);
 	}
       (void) fprintf (stdout, "\n");
     }
@@ -768,8 +770,8 @@ sort_spage_dump_hdr (SLOTTED_PAGE_HEADER * sphdr)
 		  spage_waste_align);
 
   (void) fprintf (stdout, "TOTAL FREE AREA = %d, CONTIGUOUS FREE AREA = %d,"
-		  " FREE SPACE OFFSET = %d,\n",
-		  sphdr->tfree, sphdr->cfree, sphdr->foffset);
+		  " FREE SPACE OFFSET = %d,\n", sphdr->tfree, sphdr->cfree,
+		  sphdr->foffset);
 }
 
 /*
@@ -797,8 +799,9 @@ sort_spage_dump (PAGE_PTR pgptr, int rec_p)
 
   sptr = (SLOT *) ((char *) pgptr + DB_PAGESIZE - sizeof (SLOT));
 
-  used_length = (sizeof (SLOTTED_PAGE_HEADER) + sphdr->waste_align +
-		 sizeof (SLOT) * sphdr->nslots);
+  used_length =
+    (sizeof (SLOTTED_PAGE_HEADER) + sphdr->waste_align +
+     sizeof (SLOT) * sphdr->nslots);
   used_length += sort_spage_dump_sptr (sptr, sphdr->nslots, sphdr->alignment);
 
   if (rec_p)
@@ -830,13 +833,12 @@ sort_spage_dump (PAGE_PTR pgptr, int rec_p)
     {
       (void) fprintf (stdout, "sort_spage_dump: Inconsistent page \n"
 		      " (Used_space + tfree > DB_PAGESIZE\n (%d + %d) > %d \n "
-		      " %d > %d\n",
-		      used_length, sphdr->tfree, DB_PAGESIZE,
+		      " %d > %d\n", used_length, sphdr->tfree, DB_PAGESIZE,
 		      used_length + sphdr->tfree, DB_PAGESIZE);
     }
 
-  if ((sphdr->cfree + sphdr->foffset +
-       sizeof (SLOT) * sphdr->nslots) > DB_PAGESIZE)
+  if ((sphdr->cfree + sphdr->foffset + sizeof (SLOT) * sphdr->nslots) >
+      DB_PAGESIZE)
     {
       (void) fprintf (stdout,
 		      "sort_spage_dump: Inconsistent page\n"
@@ -1180,8 +1182,9 @@ sort_run_merge (char **low, char **high, SORT_STACK * st_p,
       /* STEP 3: reconfig SORT_STACK */
       st_p->top--;
       left_srun_p->low_high = dest_low_high;
-      left_srun_p->start = right_srun_p->start -
-	(left_srun_p->stop - left_srun_p->start + 1) + dup_num;
+      left_srun_p->start =
+	right_srun_p->start - (left_srun_p->stop - left_srun_p->start + 1) +
+	dup_num;
       left_srun_p->stop = right_srun_p->stop;
 
     }
@@ -1338,8 +1341,8 @@ sort_run_sort (char ***base, long limit, long sort_numrecs, char **otherbase,
   sort_run_find (src, &src_top, st_p, limit, compare, comp_arg, option);
   if (st_p->srun[st_p->top].stop != limit - 1)
     {
-      printf ("Inconsistent sort, %ld %ld %ld\n",
-	      st_p->srun[st_p->top].start, st_p->srun[st_p->top].stop, limit);
+      printf ("Inconsistent sort, %ld %ld %ld\n", st_p->srun[st_p->top].start,
+	      st_p->srun[st_p->top].stop, limit);
     }
 #endif /* RYE_DEBUG */
 
@@ -1437,14 +1440,14 @@ sort_listfile (THREAD_ENTRY * thread_p, INT16 volid, int est_inp_pg_cnt,
 
   if (sort_param.internal_memory == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (sort_param.tot_buffers * DB_PAGESIZE));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      (sort_param.tot_buffers * DB_PAGESIZE));
       thread_set_sort_stats_active (thread_p, false);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
-  sort_param.half_files = sort_get_num_half_tmpfiles (sort_param.tot_buffers,
-						      input_pages);
+  sort_param.half_files =
+    sort_get_num_half_tmpfiles (sort_param.tot_buffers, input_pages);
   sort_param.tot_tempfiles = sort_param.half_files << 1;
   sort_param.in_half = 0;
 
@@ -1610,8 +1613,8 @@ sort_inphase_sort (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
   sort_param->tot_runs = 0;
   out_curfile = sort_param->in_half;
 
-  output_buffer = sort_param->internal_memory +
-    (sort_param->tot_buffers - 1) * DB_PAGESIZE;
+  output_buffer =
+    sort_param->internal_memory + (sort_param->tot_buffers - 1) * DB_PAGESIZE;
 
   numrecs = 0;
   sort_numrecs = 0;
@@ -1783,8 +1786,8 @@ sort_inphase_sort (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
 	      if (status != SORT_SUCCESS)
 		{
 		  /* Obtaining the long record has failed */
-		  if (status == SORT_REC_DOESNT_FIT ||
-		      status == SORT_NOMORE_RECS)
+		  if (status == SORT_REC_DOESNT_FIT
+		      || status == SORT_NOMORE_RECS)
 		    {
 		      /* This should never happen */
 		      error = ER_GENERIC_ERROR;
@@ -1875,8 +1878,9 @@ sort_inphase_sort (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
 	  index_buff--;		/* must keep track because index_buff is used to
 				   detect when sort buffer is full */
 
-	  item_ptr += DB_ALIGN (temp_recdes.length, MAX_ALIGNMENT)
-	    + SORT_RECORD_LENGTH_SIZE;
+	  item_ptr +=
+	    DB_ALIGN (temp_recdes.length,
+		      MAX_ALIGNMENT) + SORT_RECORD_LENGTH_SIZE;
 	  break;
 
 	default:
@@ -1893,8 +1897,9 @@ sort_inphase_sort (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
          in the internal memory */
 
       index_area++;
-      error = sort_run_sort (&index_area, numrecs, sort_numrecs, index_buff,
-			     compare, comp_arg, option, &numrecs);
+      error =
+	sort_run_sort (&index_area, numrecs, sort_numrecs, index_buff,
+		       compare, comp_arg, option, &numrecs);
       if (error != NO_ERROR)
 	{
 	  goto exit_on_error;
@@ -1925,8 +1930,9 @@ sort_inphase_sort (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
 	      temp_recdes.data = index_area[i];
 	      temp_recdes.length = SORT_RECORD_LENGTH (index_area[i]);
 
-	      error = (*sort_param->put_fn) (thread_p, &temp_recdes,
-					     sort_param->put_arg);
+	      error =
+		(*sort_param->put_fn) (thread_p, &temp_recdes,
+				       sort_param->put_arg);
 	      if (error != NO_ERROR)
 		{
 		  if (error == SORT_PUT_STOP)
@@ -1948,8 +1954,9 @@ sort_inphase_sort (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
 	      temp_recdes.data = saved_index_area[i];
 	      temp_recdes.length = SORT_RECORD_LENGTH (saved_index_area[i]);
 
-	      error = (*sort_param->put_fn) (thread_p, &temp_recdes,
-					     sort_param->put_arg);
+	      error =
+		(*sort_param->put_fn) (thread_p, &temp_recdes,
+				       sort_param->put_arg);
 	      if (error != NO_ERROR)
 		{
 		  if (error == SORT_PUT_STOP)
@@ -2040,8 +2047,9 @@ sort_run_flush (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
      if not, create it now. */
   if (sort_param->temp[out_file].volid == NULL_VOLID)
     {
-      if (sort_add_new_file (thread_p, &sort_param->temp[out_file],
-			     sort_param->tmp_file_pgs, false) != NO_ERROR)
+      if (sort_add_new_file
+	  (thread_p, &sort_param->temp[out_file], sort_param->tmp_file_pgs,
+	   false) != NO_ERROR)
 	{
 	  sort_return_used_resources (thread_p, sort_param);
 	  return er_errid ();
@@ -2091,8 +2099,9 @@ sort_run_flush (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
 	  if (slotid == NULL_SLOTID)
 	    {
 	      /* Output buffer is full */
-	      error = sort_write_area (thread_p, &sort_param->temp[out_file],
-				       cur_page[out_file], 1, output_buffer);
+	      error =
+		sort_write_area (thread_p, &sort_param->temp[out_file],
+				 cur_page[out_file], 1, output_buffer);
 	      if (error != NO_ERROR)
 		{
 		  return (error);
@@ -2120,8 +2129,9 @@ sort_run_flush (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
   if (sort_spage_get_numrecs (output_buffer))
     {
       /* Flush the partially full output page */
-      error = sort_write_area (thread_p, &sort_param->temp[out_file],
-			       cur_page[out_file], 1, output_buffer);
+      error =
+	sort_write_area (thread_p, &sort_param->temp[out_file],
+			 cur_page[out_file], 1, output_buffer);
       if (error != NO_ERROR)
 	{
 	  return (error);
@@ -2133,8 +2143,8 @@ sort_run_flush (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param,
     }
 
   /* Record the insertion of the new pages of the file to global parameters */
-  if (sort_run_add_new (&sort_param->file_contents[out_file],
-			run_size) != NO_ERROR)
+  if (sort_run_add_new (&sort_param->file_contents[out_file], run_size) !=
+      NO_ERROR)
     {
       return er_errid ();
     }
@@ -2334,19 +2344,20 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	}
 
       /* Distribute the internal memory to the input and output sections */
-      in_sectsize = sort_find_inbuf_size (sort_param->tot_buffers,
-					  act_infiles);
+      in_sectsize =
+	sort_find_inbuf_size (sort_param->tot_buffers, act_infiles);
       out_sectsize = sort_param->tot_buffers - in_sectsize * act_infiles;
 
       /* Set the address of each input section */
       for (i = 0; i < act_infiles; i++)
 	{
-	  in_sectaddr[i] = sort_param->internal_memory +
-	    (i * in_sectsize * DB_PAGESIZE);
+	  in_sectaddr[i] =
+	    sort_param->internal_memory + (i * in_sectsize * DB_PAGESIZE);
 	}
 
       /* Set the address of output section */
-      out_sectaddr = sort_param->internal_memory +
+      out_sectaddr =
+	sort_param->internal_memory +
 	(act_infiles * in_sectsize * DB_PAGESIZE);
 
       cur_outfile = out_half;
@@ -2484,12 +2495,14 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		      /* Set the address of each input section */
 		      for (i = 0; i < act_infiles; i++)
 			{
-			  in_sectaddr[i] = sort_param->internal_memory +
+			  in_sectaddr[i] =
+			    sort_param->internal_memory +
 			    (i * in_sectsize * DB_PAGESIZE);
 			}
 
 		      /* Set the address of output section */
-		      out_sectaddr = sort_param->internal_memory +
+		      out_sectaddr =
+			sort_param->internal_memory +
 			(act_infiles * in_sectsize * DB_PAGESIZE);
 		    }
 		}
@@ -2511,8 +2524,8 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		}
 
 	      error = sort_read_area (thread_p, &sort_param->temp[big_index],
-				      cur_page[big_index],
-				      read_pages, in_sectaddr[i]);
+				      cur_page[big_index], read_pages,
+				      in_sectaddr[i]);
 	      if (error != NO_ERROR)
 		{
 		  goto bailout;
@@ -2522,8 +2535,8 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      cur_page[big_index] += read_pages;
 
 	      first_run = sort_param->file_contents[big_index].first_run;
-	      sort_param->file_contents[big_index].num_pages[first_run]
-		-= read_pages;
+	      sort_param->file_contents[big_index].num_pages[first_run] -=
+		read_pages;
 
 	      /* Initialize input variables */
 	      in_cur_bufaddr[i] = in_sectaddr[i];
@@ -2532,9 +2545,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      act_slot[i] = 0;
 	      last_slot[i] = sort_spage_get_numrecs (in_cur_bufaddr[i]);
 
-	      if (sort_spage_get_record (in_cur_bufaddr[i], act_slot[i],
-					 &smallest_elem_ptr[i],
-					 PEEK) != S_SUCCESS)
+	      if (sort_spage_get_record
+		  (in_cur_bufaddr[i], act_slot[i], &smallest_elem_ptr[i],
+		   PEEK) != S_SUCCESS)
 		{
 		  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
 			  ER_SORT_TEMP_PAGE_CORRUPTED, 0);
@@ -2545,8 +2558,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      /* If this is a long record retrieve it */
 	      if (smallest_elem_ptr[i].type == REC_BIGONE)
 		{
-		  if (sort_retrieve_longrec (thread_p, &smallest_elem_ptr[i],
-					     &long_recdes[i]) == NULL)
+		  if (sort_retrieve_longrec
+		      (thread_p, &smallest_elem_ptr[i],
+		       &long_recdes[i]) == NULL)
 		    {
 		      error = er_errid ();
 		      goto bailout;
@@ -2574,12 +2588,12 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		{
 		  /* compare s, p */
 		  data1 = (smallest_elem_ptr[s->rec_pos].type == REC_BIGONE) ?
-		    &(long_recdes[s->rec_pos].data) :
-		    &(smallest_elem_ptr[s->rec_pos].data);
+		    &(long_recdes[s->rec_pos].
+		      data) : &(smallest_elem_ptr[s->rec_pos].data);
 
 		  data2 = (smallest_elem_ptr[p->rec_pos].type == REC_BIGONE) ?
-		    &(long_recdes[p->rec_pos].data) :
-		    &(smallest_elem_ptr[p->rec_pos].data);
+		    &(long_recdes[p->rec_pos].
+		      data) : &(smallest_elem_ptr[p->rec_pos].data);
 
 		  cmp = (*compare) (data1, data2, compare_arg);
 		  if (cmp > 0)
@@ -2598,12 +2612,12 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      p = s->next;
 
 	      data1 = (smallest_elem_ptr[s->rec_pos].type == REC_BIGONE) ?
-		&(long_recdes[s->rec_pos].data) :
-		&(smallest_elem_ptr[s->rec_pos].data);
+		&(long_recdes[s->rec_pos].
+		  data) : &(smallest_elem_ptr[s->rec_pos].data);
 
 	      data2 = (smallest_elem_ptr[p->rec_pos].type == REC_BIGONE) ?
-		&(long_recdes[p->rec_pos].data) :
-		&(smallest_elem_ptr[p->rec_pos].data);
+		&(long_recdes[p->rec_pos].
+		  data) : &(smallest_elem_ptr[p->rec_pos].data);
 
 	      cmp = (*compare) (data1, data2, compare_arg);
 	      if (cmp == 0)
@@ -2634,8 +2648,8 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      /* if this is a long record, retrieve it */
 	      if (last_elem_ptr.type == REC_BIGONE)
 		{
-		  if (sort_retrieve_longrec (thread_p, &last_elem_ptr,
-					     &last_long_recdes) == NULL)
+		  if (sort_retrieve_longrec
+		      (thread_p, &last_elem_ptr, &last_long_recdes) == NULL)
 		    {
 		      error = er_errid ();
 		      goto bailout;
@@ -2643,12 +2657,14 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		}
 
 	      /* STEP 2: compare last, p */
-	      data1 = (last_elem_ptr.type == REC_BIGONE) ?
-		&(last_long_recdes.data) : &(last_elem_ptr.data);
+	      data1 =
+		(last_elem_ptr.type ==
+		 REC_BIGONE) ? &(last_long_recdes.data) : &(last_elem_ptr.
+							    data);
 
 	      data2 = (smallest_elem_ptr[p->rec_pos].type == REC_BIGONE) ?
-		&(long_recdes[p->rec_pos].data) :
-		&(smallest_elem_ptr[p->rec_pos].data);
+		&(long_recdes[p->rec_pos].
+		  data) : &(smallest_elem_ptr[p->rec_pos].data);
 
 	      last_elem_cmp = (*compare) (data1, data2, compare_arg);
 	    }
@@ -2685,9 +2701,10 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		      /* Obtain the output record for this temporary record */
 		      if (smallest_elem_ptr[min].type == REC_BIGONE)
 			{
-			  error = (*sort_param->put_fn) (thread_p,
-							 &long_recdes[min],
-							 sort_param->put_arg);
+			  error =
+			    (*sort_param->put_fn) (thread_p,
+						   &long_recdes[min],
+						   sort_param->put_arg);
 			  if (error != NO_ERROR)
 			    {
 			      goto bailout;
@@ -2699,10 +2716,10 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			    (SORT_REC *) (smallest_elem_ptr[min].data);
 			  /* cut-off link used in Internal Sort */
 			  sort_rec->next = NULL;
-			  error = (*sort_param->put_fn) (thread_p,
-							 &smallest_elem_ptr
-							 [min],
-							 sort_param->put_arg);
+			  error =
+			    (*sort_param->put_fn) (thread_p,
+						   &smallest_elem_ptr[min],
+						   sort_param->put_arg);
 			  if (error != NO_ERROR)
 			    {
 			      goto bailout;
@@ -2714,8 +2731,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		      /* OUTPUT THE MINIMUM RECORD TO THE OUTPUT AREA */
 
 		      /* Insert this record to the output area */
-		      error = sort_spage_insert (&slotid, out_cur_bufaddr,
-						 &smallest_elem_ptr[min]);
+		      error =
+			sort_spage_insert (&slotid, out_cur_bufaddr,
+					   &smallest_elem_ptr[min]);
 		      if (error != NO_ERROR)
 			{
 			  goto bailout;
@@ -2730,10 +2748,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			       * so insert the new record there */
 			      out_cur_bufaddr += DB_PAGESIZE;
 
-			      error = sort_spage_insert (&slotid,
-							 out_cur_bufaddr,
-							 &smallest_elem_ptr
-							 [min]);
+			      error =
+				sort_spage_insert (&slotid, out_cur_bufaddr,
+						   &smallest_elem_ptr[min]);
 			      if (error != NO_ERROR || slotid == NULL_SLOTID)
 				{
 				  /*
@@ -2781,10 +2798,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 							 MAX_ALIGNMENT);
 				}
 
-			      error = sort_spage_insert (&slotid,
-							 out_cur_bufaddr,
-							 &smallest_elem_ptr
-							 [min]);
+			      error =
+				sort_spage_insert (&slotid, out_cur_bufaddr,
+						   &smallest_elem_ptr[min]);
 			      if (error != NO_ERROR || slotid == NULL_SLOTID)
 				{
 				  /*
@@ -2819,17 +2835,15 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		  if (++in_act_bufno[min] < in_last_buf[min])
 		    {
 		      /* Switch to the next page in the input buffer */
-		      in_cur_bufaddr[min] = in_sectaddr[min] +
-			in_act_bufno[min] * DB_PAGESIZE;
+		      in_cur_bufaddr[min] =
+			in_sectaddr[min] + in_act_bufno[min] * DB_PAGESIZE;
 		    }
 		  else
 		    {		/* The input section is finished */
 		      big_index = sort_param->in_half + min;
-		      if (sort_param->
-			  file_contents[big_index].num_pages[sort_param->
-							     file_contents
-							     [big_index].
-							     first_run])
+		      if (sort_param->file_contents[big_index].
+			  num_pages[sort_param->file_contents[big_index].
+				    first_run])
 			{
 			  /* There are still some pages in the current input
 			     run */
@@ -2837,11 +2851,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			  in_cur_bufaddr[min] = in_sectaddr[min];
 
 			  read_pages =
-			    sort_param->
-			    file_contents[big_index].num_pages[sort_param->
-							       file_contents
-							       [big_index].
-							       first_run];
+			    sort_param->file_contents[big_index].
+			    num_pages[sort_param->file_contents[big_index].
+				      first_run];
 			  if (in_sectsize < read_pages)
 			    {
 			      read_pages = in_sectsize;
@@ -2864,12 +2876,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			  cur_page[big_index] += read_pages;
 
 			  in_act_bufno[min] = 0;
-			  sort_param->
-			    file_contents[big_index].num_pages[sort_param->
-							       file_contents
-							       [big_index].
-							       first_run] -=
-			    read_pages;
+			  sort_param->file_contents[big_index].
+			    num_pages[sort_param->file_contents[big_index].
+				      first_run] -= read_pages;
 			}
 		      else
 			{
@@ -2897,8 +2906,8 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		}
 
 	      if (sort_spage_get_record (in_cur_bufaddr[min], act_slot[min],
-					 &smallest_elem_ptr[min], PEEK)
-		  != S_SUCCESS)
+					 &smallest_elem_ptr[min],
+					 PEEK) != S_SUCCESS)
 		{
 		  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
 			  ER_SORT_TEMP_PAGE_CORRUPTED, 0);
@@ -2949,13 +2958,17 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		      /* compare s, p */
 		      data1 =
 			(smallest_elem_ptr[s->rec_pos].type ==
-			 REC_BIGONE) ? &(long_recdes[s->rec_pos].data) :
-			&(smallest_elem_ptr[s->rec_pos].data);
+			 REC_BIGONE) ? &(long_recdes[s->rec_pos].
+					 data) : &(smallest_elem_ptr[s->
+								     rec_pos].
+						   data);
 
 		      data2 =
 			(smallest_elem_ptr[p->rec_pos].type ==
-			 REC_BIGONE) ? &(long_recdes[p->rec_pos].data) :
-			&(smallest_elem_ptr[p->rec_pos].data);
+			 REC_BIGONE) ? &(long_recdes[p->rec_pos].
+					 data) : &(smallest_elem_ptr[p->
+								     rec_pos].
+						   data);
 
 		      cmp = (*compare) (data1, data2, compare_arg);
 		      if (cmp > 0)
@@ -3004,10 +3017,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			  /* if this is a long record, retrieve it */
 			  if (last_elem_ptr.type == REC_BIGONE)
 			    {
-			      if (sort_retrieve_longrec (thread_p,
-							 &last_elem_ptr,
-							 &last_long_recdes) ==
-				  NULL)
+			      if (sort_retrieve_longrec
+				  (thread_p, &last_elem_ptr,
+				   &last_long_recdes) == NULL)
 				{
 				  error = er_errid ();
 				  goto bailout;
@@ -3015,13 +3027,17 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			    }
 
 			  /* STEP 2: compare last, p */
-			  data1 = (last_elem_ptr.type == REC_BIGONE) ?
-			    &(last_long_recdes.data) : &(last_elem_ptr.data);
+			  data1 =
+			    (last_elem_ptr.type ==
+			     REC_BIGONE) ? &(last_long_recdes.
+					     data) : &(last_elem_ptr.data);
 
 			  data2 =
 			    (smallest_elem_ptr[p->rec_pos].type ==
-			     REC_BIGONE) ? &(long_recdes[p->rec_pos].data) :
-			    &(smallest_elem_ptr[p->rec_pos].data);
+			     REC_BIGONE) ? &(long_recdes[p->rec_pos].
+					     data) : &(smallest_elem_ptr[p->
+									 rec_pos].
+						       data);
 
 			  last_elem_cmp =
 			    (*compare) (data1, data2, compare_arg);
@@ -3060,8 +3076,9 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 
 	  /* Add a new node to the file_contents list of the current output
 	     file */
-	  if (sort_run_add_new (&sort_param->file_contents[cur_outfile],
-				out_runsize) != NO_ERROR)
+	  if (sort_run_add_new
+	      (&sort_param->file_contents[cur_outfile],
+	       out_runsize) != NO_ERROR)
 	    {
 	      error = er_errid ();
 	      goto bailout;
@@ -3244,19 +3261,20 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	}
 
       /* Distribute the internal memory to the input and output sections */
-      in_sectsize = sort_find_inbuf_size (sort_param->tot_buffers,
-					  act_infiles);
+      in_sectsize =
+	sort_find_inbuf_size (sort_param->tot_buffers, act_infiles);
       out_sectsize = sort_param->tot_buffers - in_sectsize * act_infiles;
 
       /* Set the address of each input section */
       for (i = 0; i < act_infiles; i++)
 	{
-	  in_sectaddr[i] = sort_param->internal_memory +
-	    (i * in_sectsize * DB_PAGESIZE);
+	  in_sectaddr[i] =
+	    sort_param->internal_memory + (i * in_sectsize * DB_PAGESIZE);
 	}
 
       /* Set the address of output section */
-      out_sectaddr = sort_param->internal_memory +
+      out_sectaddr =
+	sort_param->internal_memory +
 	(act_infiles * in_sectsize * DB_PAGESIZE);
 
       cur_outfile = out_half;
@@ -3396,12 +3414,14 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		      /* Set the address of each input section */
 		      for (i = 0; i < act_infiles; i++)
 			{
-			  in_sectaddr[i] = sort_param->internal_memory +
+			  in_sectaddr[i] =
+			    sort_param->internal_memory +
 			    (i * in_sectsize * DB_PAGESIZE);
 			}
 
 		      /* Set the address of output section */
-		      out_sectaddr = sort_param->internal_memory +
+		      out_sectaddr =
+			sort_param->internal_memory +
 			(act_infiles * in_sectsize * DB_PAGESIZE);
 		    }
 		}
@@ -3423,8 +3443,8 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		}
 
 	      error = sort_read_area (thread_p, &sort_param->temp[big_index],
-				      cur_page[big_index],
-				      read_pages, in_sectaddr[i]);
+				      cur_page[big_index], read_pages,
+				      in_sectaddr[i]);
 	      if (error != NO_ERROR)
 		{
 		  goto bailout;
@@ -3434,8 +3454,8 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      cur_page[big_index] += read_pages;
 
 	      first_run = sort_param->file_contents[big_index].first_run;
-	      sort_param->file_contents[big_index].num_pages[first_run]
-		-= read_pages;
+	      sort_param->file_contents[big_index].num_pages[first_run] -=
+		read_pages;
 
 	      /* Initialize input variables */
 	      in_cur_bufaddr[i] = in_sectaddr[i];
@@ -3444,9 +3464,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      act_slot[i] = 0;
 	      last_slot[i] = sort_spage_get_numrecs (in_cur_bufaddr[i]);
 
-	      if (sort_spage_get_record (in_cur_bufaddr[i], act_slot[i],
-					 &smallest_elem_ptr[i],
-					 PEEK) != S_SUCCESS)
+	      if (sort_spage_get_record
+		  (in_cur_bufaddr[i], act_slot[i], &smallest_elem_ptr[i],
+		   PEEK) != S_SUCCESS)
 		{
 		  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
 			  ER_SORT_TEMP_PAGE_CORRUPTED, 0);
@@ -3483,12 +3503,12 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		  do_swap = false;
 
 		  data1 = (smallest_elem_ptr[s->rec_pos].type == REC_BIGONE) ?
-		    &(long_recdes[s->rec_pos].data) :
-		    &(smallest_elem_ptr[s->rec_pos].data);
+		    &(long_recdes[s->rec_pos].
+		      data) : &(smallest_elem_ptr[s->rec_pos].data);
 
 		  data2 = (smallest_elem_ptr[p->rec_pos].type == REC_BIGONE) ?
-		    &(long_recdes[p->rec_pos].data) :
-		    &(smallest_elem_ptr[p->rec_pos].data);
+		    &(long_recdes[p->rec_pos].
+		      data) : &(smallest_elem_ptr[p->rec_pos].data);
 
 		  if ((*compare) (data1, data2, compare_arg) > 0)
 		    {
@@ -3535,12 +3555,14 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		}
 
 	      /* STEP 2: compare last, p */
-	      data1 = (last_elem_ptr.type == REC_BIGONE) ?
-		&(last_long_recdes.data) : &(last_elem_ptr.data);
+	      data1 =
+		(last_elem_ptr.type ==
+		 REC_BIGONE) ? &(last_long_recdes.data) : &(last_elem_ptr.
+							    data);
 
 	      data2 = (smallest_elem_ptr[p->rec_pos].type == REC_BIGONE) ?
-		&(long_recdes[p->rec_pos].data) :
-		&(smallest_elem_ptr[p->rec_pos].data);
+		&(long_recdes[p->rec_pos].
+		  data) : &(smallest_elem_ptr[p->rec_pos].data);
 
 	      if ((*compare) (data1, data2, compare_arg) <= 0)
 		{
@@ -3574,9 +3596,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		  /* Obtain the output record for this temporary record */
 		  if (smallest_elem_ptr[min].type == REC_BIGONE)
 		    {
-		      error = (*sort_param->put_fn) (thread_p,
-						     &long_recdes[min],
-						     sort_param->put_arg);
+		      error =
+			(*sort_param->put_fn) (thread_p, &long_recdes[min],
+					       sort_param->put_arg);
 		      if (error != NO_ERROR)
 			{
 			  goto bailout;
@@ -3587,9 +3609,10 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		      sort_rec = (SORT_REC *) (smallest_elem_ptr[min].data);
 		      /* cut-off link used in Internal Sort */
 		      sort_rec->next = NULL;
-		      error = (*sort_param->put_fn) (thread_p,
-						     &smallest_elem_ptr[min],
-						     sort_param->put_arg);
+		      error =
+			(*sort_param->put_fn) (thread_p,
+					       &smallest_elem_ptr[min],
+					       sort_param->put_arg);
 		      if (error != NO_ERROR)
 			{
 			  goto bailout;
@@ -3601,8 +3624,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		  /* OUTPUT THE MINIMUM RECORD TO THE OUTPUT AREA */
 
 		  /* Insert this record to the output area */
-		  error = sort_spage_insert (&slotid, out_cur_bufaddr,
-					     &smallest_elem_ptr[min]);
+		  error =
+		    sort_spage_insert (&slotid, out_cur_bufaddr,
+				       &smallest_elem_ptr[min]);
 		  if (error != NO_ERROR)
 		    {
 		      goto bailout;
@@ -3617,8 +3641,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			     so insert the new record there */
 			  out_cur_bufaddr += DB_PAGESIZE;
 
-			  error = sort_spage_insert (&slotid, out_cur_bufaddr,
-						     &smallest_elem_ptr[min]);
+			  error =
+			    sort_spage_insert (&slotid, out_cur_bufaddr,
+					       &smallest_elem_ptr[min]);
 			  if (error != NO_ERROR || slotid == NULL_SLOTID)
 			    {
 			      /*
@@ -3662,8 +3687,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 						     MAX_ALIGNMENT);
 			    }
 
-			  error = sort_spage_insert (&slotid, out_cur_bufaddr,
-						     &smallest_elem_ptr[min]);
+			  error =
+			    sort_spage_insert (&slotid, out_cur_bufaddr,
+					       &smallest_elem_ptr[min]);
 			  if (error != NO_ERROR || slotid == NULL_SLOTID)
 			    {
 			      /*
@@ -3691,8 +3717,8 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		  if (++in_act_bufno[min] < in_last_buf[min])
 		    {
 		      /* Switch to the next page in the input buffer */
-		      in_cur_bufaddr[min] = in_sectaddr[min] +
-			in_act_bufno[min] * DB_PAGESIZE;
+		      in_cur_bufaddr[min] =
+			in_sectaddr[min] + in_act_bufno[min] * DB_PAGESIZE;
 		    }
 		  else
 		    {
@@ -3700,8 +3726,8 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		      big_index = sort_param->in_half + min;
 		      first_run =
 			sort_param->file_contents[big_index].first_run;
-		      if (sort_param->
-			  file_contents[big_index].num_pages[first_run])
+		      if (sort_param->file_contents[big_index].
+			  num_pages[first_run])
 			{
 			  /* There are still some pages in the current input
 			     run */
@@ -3709,11 +3735,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			  in_cur_bufaddr[min] = in_sectaddr[min];
 
 			  read_pages =
-			    sort_param->
-			    file_contents[big_index].num_pages[sort_param->
-							       file_contents
-							       [big_index].
-							       first_run];
+			    sort_param->file_contents[big_index].
+			    num_pages[sort_param->file_contents[big_index].
+				      first_run];
 			  if (in_sectsize < read_pages)
 			    {
 			      read_pages = in_sectsize;
@@ -3738,9 +3762,8 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			  in_act_bufno[min] = 0;
 			  first_run =
 			    sort_param->file_contents[big_index].first_run;
-			  sort_param->
-			    file_contents[big_index].num_pages[first_run] -=
-			    read_pages;
+			  sort_param->file_contents[big_index].
+			    num_pages[first_run] -= read_pages;
 			}
 		      else
 			{
@@ -3770,8 +3793,8 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 		}
 
 	      if (sort_spage_get_record (in_cur_bufaddr[min], act_slot[min],
-					 &smallest_elem_ptr[min], PEEK)
-		  != S_SUCCESS)
+					 &smallest_elem_ptr[min],
+					 PEEK) != S_SUCCESS)
 		{
 		  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
 			  ER_SORT_TEMP_PAGE_CORRUPTED, 0);
@@ -3782,9 +3805,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 	      /* If this is a long record retrieve it */
 	      if (smallest_elem_ptr[min].type == REC_BIGONE)
 		{
-		  if (sort_retrieve_longrec (thread_p,
-					     &smallest_elem_ptr[min],
-					     &long_recdes[min]) == NULL)
+		  if (sort_retrieve_longrec
+		      (thread_p, &smallest_elem_ptr[min],
+		       &long_recdes[min]) == NULL)
 		    {
 		      error = er_errid ();
 		      goto bailout;
@@ -3812,13 +3835,17 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 
 		      data1 =
 			(smallest_elem_ptr[s->rec_pos].type ==
-			 REC_BIGONE) ? &(long_recdes[s->rec_pos].data) :
-			&(smallest_elem_ptr[s->rec_pos].data);
+			 REC_BIGONE) ? &(long_recdes[s->rec_pos].
+					 data) : &(smallest_elem_ptr[s->
+								     rec_pos].
+						   data);
 
 		      data2 =
 			(smallest_elem_ptr[p->rec_pos].type ==
-			 REC_BIGONE) ? &(long_recdes[p->rec_pos].data) :
-			&(smallest_elem_ptr[p->rec_pos].data);
+			 REC_BIGONE) ? &(long_recdes[p->rec_pos].
+					 data) : &(smallest_elem_ptr[p->
+								     rec_pos].
+						   data);
 
 		      if ((*compare) (data1, data2, compare_arg) > 0)
 			{
@@ -3871,14 +3898,17 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 			    }
 
 			  /* STEP 2: compare last, p */
-			  data1 = (last_elem_ptr.type == REC_BIGONE) ?
-			    &(last_long_recdes.data) : &(last_elem_ptr.data);
+			  data1 =
+			    (last_elem_ptr.type ==
+			     REC_BIGONE) ? &(last_long_recdes.
+					     data) : &(last_elem_ptr.data);
 
 			  data2 =
 			    (smallest_elem_ptr[p->rec_pos].type ==
-			     REC_BIGONE) ?
-			    &(long_recdes[p->rec_pos].data) :
-			    &(smallest_elem_ptr[p->rec_pos].data);
+			     REC_BIGONE) ? &(long_recdes[p->rec_pos].
+					     data) : &(smallest_elem_ptr[p->
+									 rec_pos].
+						       data);
 
 			  if ((*compare) (data1, data2, compare_arg) <= 0)
 			    {
@@ -3918,8 +3948,9 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
 
 	  /* Add a new node to the file_contents list of the current output
 	     file */
-	  if (sort_run_add_new (&sort_param->file_contents[cur_outfile],
-				out_runsize) != NO_ERROR)
+	  if (sort_run_add_new
+	      (&sort_param->file_contents[cur_outfile],
+	       out_runsize) != NO_ERROR)
 	    {
 	      error = er_errid ();
 	      goto bailout;
@@ -4351,8 +4382,7 @@ sort_checkalloc_numpages_of_outfiles (THREAD_ENTRY * thread_p,
 	  if (alloc_pages > 0)
 	    {
 	      (void) file_alloc_pages_as_noncontiguous (thread_p,
-							&sort_param->
-							temp[i],
+							&sort_param->temp[i],
 							&new_vpid, &nthpg,
 							alloc_pages, NULL,
 							NULL, NULL, NULL);
@@ -4472,8 +4502,10 @@ sort_run_add_new (FILE_CONTENTS * file_contents, int num_pages)
      of the list; expand the dynamic array. */
   if (file_contents->last_run >= file_contents->num_slots)
     {
-      new_total_elements = ((int) (((float) file_contents->num_slots *
-				    SORT_EXPAND_DYN_ARRAY_RATIO) + 0.5));
+      new_total_elements =
+	((int)
+	 (((float) file_contents->num_slots * SORT_EXPAND_DYN_ARRAY_RATIO) +
+	  0.5));
       file_contents->num_pages =
 	(int *) realloc (file_contents->num_pages,
 			 new_total_elements * sizeof (int));

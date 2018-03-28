@@ -144,9 +144,8 @@ static int catcls_get_or_value_from_query_spec (THREAD_ENTRY * thread_p,
 static int catcls_get_subset (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
 			      int expected_size, OR_VALUE * value_p,
 			      CREADER reader, DB_VALUE * pkey_val);
-static int catcls_get_constraints (THREAD_ENTRY * thread_p,
-				   OR_BUF * buf_p, OR_VALUE * value_p,
-				   DB_VALUE * pkey_vals);
+static int catcls_get_constraints (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
+				   OR_VALUE * value_p, DB_VALUE * pkey_vals);
 static int catcls_get_constraints_atts (THREAD_ENTRY * thread_p,
 					OR_BUF * buf_p, OR_VALUE * value_p,
 					DB_VALUE * pkey_vals);
@@ -527,9 +526,9 @@ catcls_expand_or_value_by_def (OR_VALUE * value_p, CT_CLASS * def_p)
       for (i = 0; i < n_attrs; i++)
 	{
 	  attrs_p[i].id.attrid = att_def_p[i].id;
-	  error = db_value_domain_init (&attrs_p[i].value, att_def_p[i].type,
-					DB_DEFAULT_PRECISION,
-					DB_DEFAULT_SCALE);
+	  error =
+	    db_value_domain_init (&attrs_p[i].value, att_def_p[i].type,
+				  DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 	  if (error != NO_ERROR)
 	    {
 	      return error;
@@ -557,8 +556,9 @@ catcls_guess_record_length (OR_VALUE * value_p)
   attrs_p = value_p->sub.value;
   n_attrs = value_p->sub.count;
 
-  length = OR_HEADER_SIZE + OR_VAR_TABLE_SIZE (n_attrs)
-    + OR_BOUND_BIT_BYTES (n_attrs);
+  length =
+    OR_HEADER_SIZE + OR_VAR_TABLE_SIZE (n_attrs) +
+    OR_BOUND_BIT_BYTES (n_attrs);
 
   for (i = 0; i < n_attrs; i++)
     {
@@ -595,8 +595,8 @@ catcls_find_class_oid_by_class_name (THREAD_ENTRY * thread_p,
 
   if (status == LC_CLASSNAME_ERROR)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-	      ER_LC_UNKNOWN_CLASSNAME, 1, name_p);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LC_UNKNOWN_CLASSNAME, 1,
+	      name_p);
       return ER_FAILED;
     }
   else if (status == LC_CLASSNAME_DELETED)
@@ -707,8 +707,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   goto exit_on_end;
@@ -731,9 +731,8 @@ catcls_find_oid_by_class_name (THREAD_ENTRY * thread_p, const char *name_p,
   DB_IDXKEY_MAKE_NULL (&class_name_key);
 
   error = db_make_varchar (&(class_name_key.vals[0]),
-			   DB_MAX_IDENTIFIER_LENGTH,
-			   (char *) name_p, strlen (name_p),
-			   LANG_SYS_COLLATION);
+			   DB_MAX_IDENTIFIER_LENGTH, (char *) name_p,
+			   strlen (name_p), LANG_SYS_COLLATION);
   if (error != NO_ERROR)
     {
       return error;
@@ -741,8 +740,9 @@ catcls_find_oid_by_class_name (THREAD_ENTRY * thread_p, const char *name_p,
 
   class_name_key.size = 1;
 
-  error = xbtree_find_unique (thread_p, &ct_Class.classoid, &catcls_Btid,
-			      &class_name_key, oid_p);
+  error =
+    xbtree_find_unique (thread_p, &ct_Class.classoid, &catcls_Btid,
+			&class_name_key, oid_p);
   if (error == BTREE_ERROR_OCCURRED)
     {
       error = er_errid ();
@@ -883,8 +883,8 @@ catcls_convert_attr_id_to_name (THREAD_ENTRY * thread_p, OR_BUF * orbuf_p,
     }
 
   error = catcls_get_subset (thread_p, buf_p,
-			     vars[ORC_ATTRIBUTES_INDEX].length,
-			     id_val_p, catcls_get_or_value_from_attrid, NULL);
+			     vars[ORC_ATTRIBUTES_INDEX].length, id_val_p,
+			     catcls_get_or_value_from_attrid, NULL);
   if (error != NO_ERROR)
     {
       free_and_init (vars);
@@ -897,8 +897,8 @@ catcls_convert_attr_id_to_name (THREAD_ENTRY * thread_p, OR_BUF * orbuf_p,
     {
       index_atts = indexes[i].sub.value;
 
-      for (keys = (index_atts[5]).sub.value,
-	   j = 0; j < (index_atts[5]).sub.count; j++)
+      for (keys = (index_atts[5]).sub.value, j = 0;
+	   j < (index_atts[5]).sub.count; j++)
 	{
 	  key_atts = keys[j].sub.value;
 
@@ -1010,10 +1010,10 @@ catcls_get_or_value_from_class (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
   db_string_truncate (attr_val_p, DB_MAX_IDENTIFIER_LENGTH);
 
   /* (class_of) */
-  error = catcls_find_class_oid_by_class_name (thread_p,
-					       DB_GET_STRING (&attrs[6].
-							      value),
-					       &class_oid);
+  error =
+    catcls_find_class_oid_by_class_name (thread_p,
+					 DB_GET_STRING (&attrs[6].value),
+					 &class_oid);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1059,8 +1059,8 @@ catcls_get_or_value_from_class (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
 
   /* constraints */
   error = catcls_get_subset (thread_p, buf_p,
-			     vars[ORC_CONSTRAINTS_INDEX].length,
-			     &attrs[10], catcls_get_constraints, &key_value);
+			     vars[ORC_CONSTRAINTS_INDEX].length, &attrs[10],
+			     catcls_get_constraints, &key_value);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1088,8 +1088,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (vars)
@@ -1246,8 +1246,8 @@ catcls_get_or_value_from_attribute (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
 		vars[ORC_ATT_PROPERTIES_INDEX].length, true);
   att_props = DB_GET_SEQUENCE (&val);
   attr_val_p = &attrs[7].value;
-  if (att_props != NULL &&
-      classobj_get_prop (att_props, "default_expr", &default_expr) > 0)
+  if (att_props != NULL
+      && classobj_get_prop (att_props, "default_expr", &default_expr) > 0)
     {
       char *str_val;
 
@@ -1259,8 +1259,8 @@ catcls_get_or_value_from_attribute (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
 	  pr_clear_value (&val);
 
 	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, strlen ("UNIX_TIMESTAMP") + 1);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+		  strlen ("UNIX_TIMESTAMP") + 1);
 	  GOTO_EXIT_ON_ERROR;
 	}
 
@@ -1326,8 +1326,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (vars)
@@ -1394,8 +1394,9 @@ catcls_get_or_value_from_attrid (UNUSED_ARG THREAD_ENTRY * thread_p,
   db_string_truncate (attr_val, DB_MAX_IDENTIFIER_LENGTH);
 
   /* go to the end */
-  or_advance (buf, (int) (start_ptr - buf->ptr)
-	      + (vars[(size - 1)].offset + vars[(size - 1)].length));
+  or_advance (buf,
+	      (int) (start_ptr - buf->ptr) + (vars[(size - 1)].offset +
+					      vars[(size - 1)].length));
 
   if (vars)
     {
@@ -1411,8 +1412,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (vars)
@@ -1523,9 +1524,9 @@ catcls_get_or_value_from_domain (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
 	{
 	  /* if self reference for example, "class x (a x)"
 	     set an invalid data type, and fill its value later */
-	  error = db_value_domain_init (attr_val_p, DB_TYPE_VARIABLE,
-					DB_DEFAULT_PRECISION,
-					DB_DEFAULT_SCALE);
+	  error =
+	    db_value_domain_init (attr_val_p, DB_TYPE_VARIABLE,
+				  DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -1558,8 +1559,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (domain_class_name)
@@ -1638,8 +1639,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (vars)
@@ -1703,9 +1704,8 @@ catcls_get_subset (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
  *   value(in):
  */
 static int
-catcls_get_constraints (THREAD_ENTRY * thread_p,
-			OR_BUF * buf_p, OR_VALUE * value_p,
-			DB_VALUE * pkey_vals)
+catcls_get_constraints (THREAD_ENTRY * thread_p, OR_BUF * buf_p,
+			OR_VALUE * value_p, DB_VALUE * pkey_vals)
 {
   OR_VALUE *attrs, *cons_atts;
   DB_VALUE *attr_val_p;
@@ -1755,8 +1755,8 @@ catcls_get_constraints (THREAD_ENTRY * thread_p,
 
   attr_val_p = &attrs[3].value;
   db_make_int (attr_val_p,
-	       SM_IS_CONSTRAINT_UNIQUE_FAMILY (DB_GET_INT (&tmp_val))
-	       ? 1 : 0);
+	       SM_IS_CONSTRAINT_UNIQUE_FAMILY (DB_GET_INT (&tmp_val)) ? 1 :
+	       0);
 
   attr_val_p = &attrs[6].value;
   db_make_int (attr_val_p,
@@ -1817,8 +1817,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   return error;
@@ -1904,8 +1904,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   return error;
@@ -2016,8 +2016,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (repr_p)
@@ -2066,8 +2066,9 @@ catcls_expand_or_value_by_repr (OR_VALUE * value_p, OID * class_oid_p,
   for (i = 0; i < n_fixed; i++)
     {
       attrs[i].id.attrid = fixed_p[i].id;
-      error = db_value_domain_init (&attrs[i].value, fixed_p[i].type,
-				    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      error =
+	db_value_domain_init (&attrs[i].value, fixed_p[i].type,
+			      DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       if (error != NO_ERROR)
 	{
 	  return error;
@@ -2078,8 +2079,9 @@ catcls_expand_or_value_by_repr (OR_VALUE * value_p, OID * class_oid_p,
   for (i = 0; i < n_variable; i++)
     {
       var_attrs[i].id.attrid = variable_p[i].id;
-      error = db_value_domain_init (&var_attrs[i].value, variable_p[i].type,
-				    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      error =
+	db_value_domain_init (&var_attrs[i].value, variable_p[i].type,
+			      DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       if (error != NO_ERROR)
 	{
 	  return error;
@@ -2143,8 +2145,8 @@ catcls_expand_or_value_by_subset (THREAD_ENTRY * thread_p, OR_VALUE * value_p)
  *   rep(in):
  */
 static int
-catcls_put_or_value_into_buffer (OR_VALUE * value_p,
-				 OR_BUF * buf_p, UNUSED_ARG OID * class_oid_p,
+catcls_put_or_value_into_buffer (OR_VALUE * value_p, OR_BUF * buf_p,
+				 UNUSED_ARG OID * class_oid_p,
 				 DISK_REPR * repr_p)
 {
   OR_VALUE *attrs, *var_attrs;
@@ -2264,8 +2266,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (bound_bits)
@@ -2419,8 +2421,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (vars)
@@ -2444,17 +2446,16 @@ exit_on_error:
  *   class_oid(in):
  */
 static int
-catcls_put_or_value_into_record (THREAD_ENTRY * thread_p,
-				 OR_VALUE * value_p, RECDES * record_p,
-				 OID * class_oid_p)
+catcls_put_or_value_into_record (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
+				 RECDES * record_p, OID * class_oid_p)
 {
   OR_BUF *buf_p, repr_buffer;
   DISK_REPR *repr_p = NULL;
   REPR_ID repr_id;
   int error = NO_ERROR;
 
-  error = catalog_get_last_representation_id (thread_p, class_oid_p,
-					      &repr_id);
+  error =
+    catalog_get_last_representation_id (thread_p, class_oid_p, &repr_id);
   if (error != NO_ERROR)
     {
       return error;
@@ -2472,8 +2473,8 @@ catcls_put_or_value_into_record (THREAD_ENTRY * thread_p,
   buf_p = &repr_buffer;
   or_init (buf_p, record_p->data, record_p->length);
 
-  error = catcls_put_or_value_into_buffer (value_p, buf_p,
-					   class_oid_p, repr_p);
+  error =
+    catcls_put_or_value_into_buffer (value_p, buf_p, class_oid_p, repr_p);
   if (error != NO_ERROR)
     {
       catalog_free_representation (repr_p);
@@ -2492,8 +2493,8 @@ catcls_put_or_value_into_record (THREAD_ENTRY * thread_p,
  *   record(in):
  */
 static OR_VALUE *
-catcls_get_or_value_from_class_record (THREAD_ENTRY *
-				       thread_p, RECDES * record_p)
+catcls_get_or_value_from_class_record (THREAD_ENTRY * thread_p,
+				       RECDES * record_p)
 {
   OR_VALUE *value_p = NULL;
   OR_BUF *buf_p, repr_buffer;
@@ -2526,8 +2527,8 @@ catcls_get_or_value_from_class_record (THREAD_ENTRY *
  *   class_oid(in):
  */
 static OR_VALUE *
-catcls_get_or_value_from_record (THREAD_ENTRY * thread_p,
-				 RECDES * record_p, OID * class_oid_p)
+catcls_get_or_value_from_record (THREAD_ENTRY * thread_p, RECDES * record_p,
+				 OID * class_oid_p)
 {
   OR_VALUE *value_p = NULL;
   OR_BUF *buf_p, repr_buffer;
@@ -2581,8 +2582,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (value_p)
@@ -2655,8 +2656,9 @@ catcls_insert_subset (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 
   for (i = 0; i < n_subset; i++)
     {
-      error = catcls_insert_instance (thread_p, &subset_p[i], &oid,
-				      root_oid_p, class_oid_p, hfid_p, &scan);
+      error =
+	catcls_insert_instance (thread_p, &subset_p[i], &oid, root_oid_p,
+				class_oid_p, hfid_p, &scan);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -2684,8 +2686,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (oid_set_p)
@@ -2783,8 +2785,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (is_scan_inited)
@@ -2825,8 +2827,8 @@ catcls_update_subset (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
   bool is_scan_inited = false;
   int error = NO_ERROR;
 
-  if ((value_p->sub.count > 0) &&
-      ((old_value_p->sub.count < 0) || DB_IS_NULL (&old_value_p->value)))
+  if ((value_p->sub.count > 0)
+      && ((old_value_p->sub.count < 0) || DB_IS_NULL (&old_value_p->value)))
     {
       old_oid_set_p = set_create_sequence (0);
       db_make_sequence (&old_value_p->value, old_oid_set_p);
@@ -2887,8 +2889,9 @@ catcls_update_subset (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 	}
 
       oid_p = DB_PULL_OID (&oid_val);
-      error = catcls_update_instance (thread_p, &subset_p[i], oid_p,
-				      class_oid_p, hfid_p, &scan);
+      error =
+	catcls_update_instance (thread_p, &subset_p[i], oid_p, class_oid_p,
+				hfid_p, &scan);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -2909,14 +2912,15 @@ catcls_update_subset (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 	  if (DB_VALUE_TYPE (&oid_val) != DB_TYPE_OID)
 	    {
 	      error = ER_GENERIC_ERROR;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		      1, "Invalid type");
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+		      "Invalid type");
 	      GOTO_EXIT_ON_ERROR;
 	    }
 
 	  oid_p = DB_PULL_OID (&oid_val);
-	  error = catcls_delete_instance (thread_p, oid_p, class_oid_p,
-					  hfid_p, &scan);
+	  error =
+	    catcls_delete_instance (thread_p, oid_p, class_oid_p, hfid_p,
+				    &scan);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -2943,9 +2947,9 @@ catcls_update_subset (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 
       for (i = n_min_subset, oid_p = &tmp_oid; i < n_subset; i++)
 	{
-	  error = catcls_insert_instance (thread_p, &subset_p[i], oid_p,
-					  &root_oid, class_oid_p, hfid_p,
-					  &scan);
+	  error =
+	    catcls_insert_instance (thread_p, &subset_p[i], oid_p, &root_oid,
+				    class_oid_p, hfid_p, &scan);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -2973,8 +2977,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (is_scan_inited)
@@ -3014,8 +3018,9 @@ catcls_insert_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 
   record.data = NULL;
 
-  error = heap_assign_address_with_class_oid (thread_p, hfid_p, class_oid_p,
-					      oid_p, 0);
+  error =
+    heap_assign_address_with_class_oid (thread_p, hfid_p, class_oid_p, oid_p,
+					0);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3031,8 +3036,8 @@ catcls_insert_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
       if (IS_SUBSET (attrs[i]))
 	{
 	  /* set backward oid */
-	  for (subset_p = attrs[i].sub.value,
-	       j = 0; j < attrs[i].sub.count; j++)
+	  for (subset_p = attrs[i].sub.value, j = 0; j < attrs[i].sub.count;
+	       j++)
 	    {
 	      /* assume that the attribute values of xxx are ordered by
 	         { class_of, xxx_name, xxx_type, from_xxx_name, ... } */
@@ -3087,8 +3092,8 @@ catcls_insert_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = catcls_put_or_value_into_record (thread_p, value_p, &record,
-					   class_oid_p);
+  error =
+    catcls_put_or_value_into_record (thread_p, value_p, &record, class_oid_p);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3101,15 +3106,16 @@ catcls_insert_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
   assert (oid_p->groupid == GLOBAL_GROUPID);
 
   /* for replication */
-  error = locator_add_or_remove_index (thread_p, &record, oid_p, class_oid_p,
-				       true, false, false, hfid_p);
+  error =
+    locator_add_or_remove_index (thread_p, &record, oid_p, class_oid_p, true,
+				 false, false, hfid_p);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
-  if (heap_update (thread_p, hfid_p, class_oid_p, oid_p, &record,
-		   &old, scan_p) == NULL)
+  if (heap_update
+      (thread_p, hfid_p, class_oid_p, oid_p, &record, &old, scan_p) == NULL)
     {
       error = er_errid ();
       GOTO_EXIT_ON_ERROR;
@@ -3126,8 +3132,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (record.data)
@@ -3185,8 +3191,9 @@ catcls_delete_instance (THREAD_ENTRY * thread_p, OID * oid_p,
     }
 
   /* for replication */
-  error = locator_add_or_remove_index (thread_p, &record, oid_p, class_oid_p,
-				       false, false, false, hfid_p);
+  error =
+    locator_add_or_remove_index (thread_p, &record, oid_p, class_oid_p, false,
+				 false, false, hfid_p);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3209,8 +3216,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (value_p)
@@ -3254,8 +3261,8 @@ catcls_update_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
       GOTO_EXIT_ON_ERROR;
     }
 
-  old_value_p = catcls_get_or_value_from_record (thread_p, &old_record,
-						 class_oid_p);
+  old_value_p =
+    catcls_get_or_value_from_record (thread_p, &old_record, class_oid_p);
   if (old_value_p == NULL)
     {
       error = er_errid ();
@@ -3269,14 +3276,14 @@ catcls_update_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
     }
 
   /* update old_value */
-  for (attrs = value_p->sub.value, old_attrs = old_value_p->sub.value,
-       i = 0; i < value_p->sub.count; i++)
+  for (attrs = value_p->sub.value, old_attrs = old_value_p->sub.value, i = 0;
+       i < value_p->sub.count; i++)
     {
       if (IS_SUBSET (attrs[i]))
 	{
 	  /* set backward oid */
-	  for (subset_p = attrs[i].sub.value,
-	       j = 0; j < attrs[i].sub.count; j++)
+	  for (subset_p = attrs[i].sub.value, j = 0; j < attrs[i].sub.count;
+	       j++)
 	    {
 	      /* assume that the attribute values of xxx are ordered by
 	         { class_of, xxx_name, xxx_type, from_xxx_name, ... } */
@@ -3299,8 +3306,8 @@ catcls_update_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 		}
 	    }
 
-	  error = catcls_update_subset (thread_p, &attrs[i], &old_attrs[i],
-					&uflag);
+	  error =
+	    catcls_update_subset (thread_p, &attrs[i], &old_attrs[i], &uflag);
 	  if (error != NO_ERROR)
 	    {
 	      GOTO_EXIT_ON_ERROR;
@@ -3308,15 +3315,16 @@ catcls_update_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 	}
       else
 	{
-	  rc = tp_value_compare (&old_attrs[i].value, &attrs[i].value,
-				 1, 1, NULL);
+	  rc =
+	    tp_value_compare (&old_attrs[i].value, &attrs[i].value, 1, 1,
+			      NULL);
 	  assert (rc != DB_UNK);
 	  if (rc != DB_EQ)
 	    {
 	      assert (DB_IS_NULL (&old_attrs[i].value)
 		      || DB_IS_NULL (&attrs[i].value)
-		      || (db_value_type (&old_attrs[i].value)
-			  == db_value_type (&attrs[i].value)));
+		      || (db_value_type (&old_attrs[i].value) ==
+			  db_value_type (&attrs[i].value)));
 
 	      pr_clear_value (&old_attrs[i].value);
 	      pr_clone_value (&attrs[i].value, &old_attrs[i].value);
@@ -3339,23 +3347,26 @@ catcls_update_instance (THREAD_ENTRY * thread_p, OR_VALUE * value_p,
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-      error = catcls_put_or_value_into_record (thread_p, old_value_p,
-					       &record, class_oid_p);
+      error =
+	catcls_put_or_value_into_record (thread_p, old_value_p, &record,
+					 class_oid_p);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
 
       /* give up setting updated attr info */
-      error = locator_update_index (thread_p, &record, &old_record, NULL, 0,
-				    oid_p, class_oid_p, false, false);
+      error =
+	locator_update_index (thread_p, &record, &old_record, NULL, 0, oid_p,
+			      class_oid_p, false, false);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
 
-      if (heap_update (thread_p, hfid_p, class_oid_p, oid_p, &record, &old,
-		       scan_p) == NULL)
+      if (heap_update
+	  (thread_p, hfid_p, class_oid_p, oid_p, &record, &old,
+	   scan_p) == NULL)
 	{
 	  error = er_errid ();
 	  GOTO_EXIT_ON_ERROR;
@@ -3375,8 +3386,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (record.data)
@@ -3455,8 +3466,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (is_scan_inited)
@@ -3509,8 +3520,8 @@ catcls_delete_catalog_classes (THREAD_ENTRY * thread_p, const char *name_p,
     }
 
   hfid_p = &cls_info_p->hfid;
-  error = heap_scancache_start_modify (thread_p, &scan, hfid_p, 0,
-				       ct_class_oid_p);
+  error =
+    heap_scancache_start_modify (thread_p, &scan, hfid_p, 0, ct_class_oid_p);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3518,8 +3529,8 @@ catcls_delete_catalog_classes (THREAD_ENTRY * thread_p, const char *name_p,
 
   is_scan_inited = true;
 
-  error = catcls_delete_instance (thread_p, &oid, ct_class_oid_p,
-				  hfid_p, &scan);
+  error =
+    catcls_delete_instance (thread_p, &oid, ct_class_oid_p, hfid_p, &scan);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -3552,8 +3563,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "Invalid error code");
     }
 
   if (is_scan_inited)
@@ -3644,8 +3655,8 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+	      "invalid error code");
     }
 
   if (is_scan_inited)
@@ -3701,8 +3712,8 @@ catcls_compile_catalog_classes (THREAD_ENTRY * thread_p)
       class_name_p = ct_Classes[c]->name;
       class_oid_p = &ct_Classes[c]->classoid;
 
-      if (catcls_find_class_oid_by_class_name (thread_p, class_name_p,
-					       class_oid_p) != NO_ERROR)
+      if (catcls_find_class_oid_by_class_name
+	  (thread_p, class_name_p, class_oid_p) != NO_ERROR)
 	{
 	  return ER_FAILED;
 	}
@@ -3753,9 +3764,8 @@ catcls_compile_catalog_classes (THREAD_ENTRY * thread_p)
       return ER_FAILED;
     }
 
-  if (catcls_initialize_class_oid_to_oid_hash_table (thread_p,
-						     CATCLS_OID_TABLE_SIZE) !=
-      NO_ERROR)
+  if (catcls_initialize_class_oid_to_oid_hash_table
+      (thread_p, CATCLS_OID_TABLE_SIZE) != NO_ERROR)
     {
       assert (false);
       return ER_FAILED;
@@ -3792,8 +3802,8 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
   int error = NO_ERROR;
   int att_id_cnt = 0;
   int max_coll_cnt;
-  int coll_id_att_id = -1, coll_name_att_id = -1, charset_id_att_id = -1,
-    checksum_att_id = -1;
+  int coll_id_att_id = -1, coll_name_att_id = -1, charset_id_att_id =
+    -1, checksum_att_id = -1;
   int alloc_size;
   bool attr_info_inited = false;
   bool scan_cache_inited = false;
@@ -3808,8 +3818,8 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
   OID_SET_NULL (&class_oid);
   OID_SET_NULL (&inst_oid);
 
-  error = catcls_find_class_oid_by_class_name (thread_p, class_name,
-					       &class_oid);
+  error =
+    catcls_find_class_oid_by_class_name (thread_p, class_name, &class_oid);
   if (error != NO_ERROR)
     {
       goto exit;
@@ -3817,8 +3827,8 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
 
   if (OID_ISNULL (&class_oid))
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LC_UNKNOWN_CLASSNAME,
-	      1, class_name);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LC_UNKNOWN_CLASSNAME, 1,
+	      class_name);
       error = ER_LC_UNKNOWN_CLASSNAME;
       goto exit;
     }
@@ -3910,14 +3920,15 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
     }
 
   *coll_cnt = 0;
-  while (heap_next (thread_p, &hfid, NULL, &inst_oid, &recdes,
-		    &scan_cache, PEEK) == S_SUCCESS)
+  while (heap_next
+	 (thread_p, &hfid, NULL, &inst_oid, &recdes, &scan_cache,
+	  PEEK) == S_SUCCESS)
     {
       HEAP_ATTRVALUE *heap_value = NULL;
       LANG_COLL_COMPAT *curr_coll;
 
-      if (heap_attrinfo_read_dbvalues (thread_p, &inst_oid, &recdes,
-				       &attr_info) != NO_ERROR)
+      if (heap_attrinfo_read_dbvalues
+	  (thread_p, &inst_oid, &recdes, &attr_info) != NO_ERROR)
 	{
 	  error = ER_FAILED;
 	  goto exit;
@@ -3939,13 +3950,13 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
       curr_coll = &((*db_collations)[(*coll_cnt)++]);
       memset (curr_coll, 0, sizeof (LANG_COLL_COMPAT));
 
-      for (i = 0, heap_value = attr_info.values;
-	   i < attr_info.num_values; i++, heap_value++)
+      for (i = 0, heap_value = attr_info.values; i < attr_info.num_values;
+	   i++, heap_value++)
 	{
 	  if (heap_value->attrid == coll_id_att_id)
 	    {
-	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue))
-		      == DB_TYPE_INTEGER);
+	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue)) ==
+		      DB_TYPE_INTEGER);
 
 	      curr_coll->coll_id = DB_GET_INTEGER (&heap_value->dbvalue);
 	    }
@@ -3954,8 +3965,8 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
 	      char *lang_str = NULL;
 	      int lang_str_len;
 
-	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue))
-		      == DB_TYPE_VARCHAR);
+	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue)) ==
+		      DB_TYPE_VARCHAR);
 
 	      lang_str = DB_GET_STRING (&heap_value->dbvalue);
 	      lang_str_len = (lang_str != NULL) ? strlen (lang_str) : 0;
@@ -3967,8 +3978,8 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
 	    }
 	  else if (heap_value->attrid == charset_id_att_id)
 	    {
-	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue))
-		      == DB_TYPE_INTEGER);
+	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue)) ==
+		      DB_TYPE_INTEGER);
 
 	      curr_coll->codeset =
 		(INTL_CODESET) DB_GET_INTEGER (&heap_value->dbvalue);
@@ -3978,8 +3989,8 @@ catcls_get_db_collation (THREAD_ENTRY * thread_p,
 	      char *checksum_str = NULL;
 	      int str_len;
 
-	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue))
-		      == DB_TYPE_VARCHAR);
+	      assert (DB_VALUE_DOMAIN_TYPE (&(heap_value->dbvalue)) ==
+		      DB_TYPE_VARCHAR);
 
 	      checksum_str = DB_GET_STRING (&heap_value->dbvalue);
 	      str_len = (checksum_str != NULL) ? strlen (checksum_str) : 0;
@@ -4042,9 +4053,9 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
 
   if (OID_ISNULL (&class_oid))
     {
-      error = catcls_find_class_oid_by_class_name (thread_p,
-						   CT_LOG_ANALYZER_NAME,
-						   &class_oid);
+      error =
+	catcls_find_class_oid_by_class_name (thread_p, CT_LOG_ANALYZER_NAME,
+					     &class_oid);
       if (error != NO_ERROR)
 	{
 	  goto exit;
@@ -4126,13 +4137,14 @@ catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
     }
   scan_cache_inited = true;
 
-  while (heap_next (thread_p, &hfid, NULL, &inst_oid, &recdes,
-		    &scan_cache, PEEK) == S_SUCCESS)
+  while (heap_next
+	 (thread_p, &hfid, NULL, &inst_oid, &recdes, &scan_cache,
+	  PEEK) == S_SUCCESS)
     {
       HEAP_ATTRVALUE *heap_value = NULL;
 
-      if (heap_attrinfo_read_dbvalues (thread_p, &inst_oid,
-				       &recdes, &attr_info) != NO_ERROR)
+      if (heap_attrinfo_read_dbvalues
+	  (thread_p, &inst_oid, &recdes, &attr_info) != NO_ERROR)
 	{
 	  error = ER_FAILED;
 	  goto exit;

@@ -56,8 +56,8 @@ stats_get_statistics (OID * class_oid_p, unsigned int time_stamp)
   char *buffer_p;
   int length;
 
-  buffer_p = stats_get_statistics_from_server (class_oid_p,
-					       time_stamp, &length);
+  buffer_p =
+    stats_get_statistics_from_server (class_oid_p, time_stamp, &length);
   if (buffer_p)
     {
       stats_p = stats_client_unpack_statistics (buffer_p);

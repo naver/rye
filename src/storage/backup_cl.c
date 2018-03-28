@@ -126,8 +126,8 @@ bk_run_backup (char *db_name, const PRM_NODE_INFO * db_host_info,
   if (force_overwrite == false
       && fileio_is_volume_exist (session.bkup.vlabel))
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_BO_VOLUME_EXISTS, 1, session.bkup.vlabel);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_VOLUME_EXISTS, 1,
+	      session.bkup.vlabel);
 
       goto error_exit;
     }
@@ -135,8 +135,9 @@ bk_run_backup (char *db_name, const PRM_NODE_INFO * db_host_info,
   does_unformat_bk = true;
 
   /* receive backup header from server */
-  error = bk_prepare_backup (num_threads, do_compress,
-			     sleep_msecs, make_slave, &session);
+  error =
+    bk_prepare_backup (num_threads, do_compress, sleep_msecs, make_slave,
+		       &session);
   if (error != NO_ERROR)
     {
       goto error_exit;
@@ -243,8 +244,7 @@ bk_verbose_backup_info (BK_BACKUP_SESSION * session, char *db_name,
 
   if (session->sleep_msecs > 0)
     {
-      fprintf (session->verbose_fp,
-	       "- sleep %d millisecond per 1M read.\n\n",
+      fprintf (session->verbose_fp, "- sleep %d millisecond per 1M read.\n\n",
 	       session->sleep_msecs);
     }
 
@@ -323,8 +323,9 @@ bk_create_backup_volume (const char *db_name, const char *vol_label_p)
          opening backup volume */
       if (atleast_npages > 0 && S_ISREG (stbuf.st_mode))
 	{
-	  num_free = fileio_get_number_of_partition_free_pages (vol_label_p,
-								IO_PAGESIZE);
+	  num_free =
+	    fileio_get_number_of_partition_free_pages (vol_label_p,
+						       IO_PAGESIZE);
 	  if (num_free < atleast_npages)
 	    {
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -423,9 +424,8 @@ bk_write_backup_end_time_to_header (BK_BACKUP_SESSION * session_p)
 
   if (first_bkvol_name == NULL)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_IO_MOUNT_FAIL, 1,
-			   "(backup volume name is null)");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL,
+			   1, "(backup volume name is null)");
       return ER_IO_MOUNT_FAIL;
     }
 
@@ -451,8 +451,8 @@ bk_write_backup_end_time_to_header (BK_BACKUP_SESSION * session_p)
 	       sizeof (LOG_LSA));
       if (nbytes != sizeof (LOG_LSA))
 	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_IO_WRITE, 2, 1, first_bkvol_name);
+	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_WRITE,
+			       2, 1, first_bkvol_name);
 	  fileio_close (vdes);
 	  return ER_IO_WRITE;
 	}
@@ -463,8 +463,8 @@ bk_write_backup_end_time_to_header (BK_BACKUP_SESSION * session_p)
 	       sizeof (INT64));
       if (nbytes != sizeof (INT64))
 	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_IO_WRITE, 2, 1, first_bkvol_name);
+	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_WRITE,
+			       2, 1, first_bkvol_name);
 	  fileio_close (vdes);
 	  return ER_IO_WRITE;
 	}
@@ -501,8 +501,9 @@ bk_finish_backup_session (BK_BACKUP_SESSION * session_p)
       memset (session_p->bkup.buffer, '\0', session_p->bkup.iosize);
       memcpy (session_p->bkup.buffer, &end_page, nbytes);
 
-      if (bk_write_backup (session_p, session_p->bkup.iosize,
-			   session_p->bkup.iosize) != NO_ERROR)
+      if (bk_write_backup
+	  (session_p, session_p->bkup.iosize,
+	   session_p->bkup.iosize) != NO_ERROR)
 	{
 	  return ER_FAILED;
 	}
@@ -627,8 +628,8 @@ bk_write_backup (BK_BACKUP_SESSION * session_p, ssize_t to_write_nbytes,
     {
       if (session_p->bkuphdr->zip_method == BK_ZIP_LZO1X_METHOD)
 	{
-	  if (bk_decompress (session_p, unzip_nbytes,
-			     &to_write_nbytes) != NO_ERROR)
+	  if (bk_decompress (session_p, unzip_nbytes, &to_write_nbytes) !=
+	      NO_ERROR)
 	    {
 	      return ER_FAILED;
 	    }
@@ -665,9 +666,9 @@ bk_write_backup (BK_BACKUP_SESSION * session_p, ssize_t to_write_nbytes,
 	      er_set_with_oserror (ER_ERROR_SEVERITY,
 				   ARG_FILE_LINE,
 				   ER_IO_WRITE, 2,
-				   CEIL_PTVDIV
-				   (session_p->bkup.voltotalio,
-				    IO_PAGESIZE), session_p->bkup.vlabel);
+				   CEIL_PTVDIV (session_p->bkup.voltotalio,
+						IO_PAGESIZE),
+				   session_p->bkup.vlabel);
 	      return ER_FAILED;
 	    }
 	}
@@ -680,8 +681,9 @@ bk_write_backup (BK_BACKUP_SESSION * session_p, ssize_t to_write_nbytes,
     }
   while (to_write_nbytes > 0);
 
-  write_npages = (int) CEIL_PTVDIV (session_p->bkup.voltotalio,
-				    session_p->bkuphdr->bkpagesize);
+  write_npages =
+    (int) CEIL_PTVDIV (session_p->bkup.voltotalio,
+		       session_p->bkuphdr->bkpagesize);
   if (session_p->verbose_fp && session_p->dbfile.bk_npages >= 25
       && write_npages >= session_p->dbfile.check_npages)
     {
@@ -712,9 +714,8 @@ bk_start_vol_in_backup (BK_BACKUP_SESSION * session, int vol_type)
   session->dbfile.nbytes = header->nbytes;
 
   vol_npages = (int) CEIL_PTVDIV (session->dbfile.nbytes, IO_PAGESIZE);
-  session->dbfile.bk_npages = (int) CEIL_PTVDIV (session->dbfile.nbytes,
-						 session->bkuphdr->
-						 bkpagesize);
+  session->dbfile.bk_npages =
+    (int) CEIL_PTVDIV (session->dbfile.nbytes, session->bkuphdr->bkpagesize);
   session->dbfile.check_ratio = 1;
   session->dbfile.check_npages =
     (int) (((float) session->dbfile.bk_npages / 25.0) *
@@ -735,8 +736,8 @@ bk_start_vol_in_backup (BK_BACKUP_SESSION * session, int vol_type)
 
       if (vol_type == 0)
 	{
-	  if (envvar_db_dir (path, PATH_MAX,
-			     session->bkuphdr->db_name) == NULL)
+	  if (envvar_db_dir (path, PATH_MAX, session->bkuphdr->db_name) ==
+	      NULL)
 	    {
 	      assert (false);
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -746,8 +747,8 @@ bk_start_vol_in_backup (BK_BACKUP_SESSION * session, int vol_type)
 	}
       else
 	{
-	  if (envvar_db_log_dir (path, PATH_MAX,
-				 session->bkuphdr->db_name) == NULL)
+	  if (envvar_db_log_dir (path, PATH_MAX, session->bkuphdr->db_name) ==
+	      NULL)
 	    {
 	      assert (false);
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -765,8 +766,8 @@ bk_start_vol_in_backup (BK_BACKUP_SESSION * session, int vol_type)
 
       COMPOSE_FULL_NAME (fullpath, sizeof (fullpath), path, vol_name);
 
-      session->bkup.vdes = bk_create_backup_volume (session->bkuphdr->db_name,
-						    fullpath);
+      session->bkup.vdes =
+	bk_create_backup_volume (session->bkuphdr->db_name, fullpath);
       if (session->bkup.vdes == NULL_VOLDES)
 	{
 	  assert (0);

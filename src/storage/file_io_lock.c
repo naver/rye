@@ -134,8 +134,8 @@ fileio_is_terminated_process (int pid)
  *
  */
 FILEIO_LOCKF_TYPE
-fileio_lock (const char *db_full_name_p, const char *vol_label_p,
-	     int vol_fd, bool dowait)
+fileio_lock (const char *db_full_name_p, const char *vol_label_p, int vol_fd,
+	     bool dowait)
 {
   FILE *fp;
   char name_info_lock[PATH_MAX];
@@ -232,8 +232,9 @@ again:
 	    }
 	}
 
-      if (fp == NULL || fscanf (fp, format_string, user, &pid, host,
-				&tmp_lock_time) != 4)
+      if (fp == NULL
+	  || fscanf (fp, format_string, user, &pid, host,
+		     &tmp_lock_time) != 4)
 	{
 	  strcpy (user, "???");
 	  strcpy (host, "???");
@@ -320,8 +321,8 @@ again:
 #if defined(RYE_DEBUG)
       er_log_debug (ARG_FILE_LINE, "io_lock: WARNING ignoring a run away"
 		    " lock on volume = %s\n. locked daemon may not be"
-		    " working right.\n UNIX error = %s",
-		    vol_label_p, strerror (lockf_errno));
+		    " working right.\n UNIX error = %s", vol_label_p,
+		    strerror (lockf_errno));
 #endif /* RYE_DEBUG */
     }
 
@@ -340,8 +341,8 @@ again:
 	  strcpy (login_name, "???");
 	}
 
-      (void) fprintf (fp, "%s %d %s %ld", login_name, (int) GETPID (),
-		      host, time (NULL));
+      (void) fprintf (fp, "%s %d %s %ld", login_name, (int) GETPID (), host,
+		      time (NULL));
       (void) fclose (fp);
     }
   else
@@ -417,8 +418,8 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
    *       the lock. This is important to avoid a possible synchronization
    *       problem with this secundary technique
    */
-  sprintf (format_string, "%%%ds %%d %%%ds %%lld",
-	   FILEIO_USER_NAME_SIZE - 1, MAXHOSTNAMELEN - 1);
+  sprintf (format_string, "%%%ds %%d %%%ds %%lld", FILEIO_USER_NAME_SIZE - 1,
+	   MAXHOSTNAMELEN - 1);
 
   while (retry == true && fileio_lock_file_write (vol_fd, 0, SEEK_SET, 0) < 0)
     {
@@ -446,8 +447,8 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
 	}
 
       if (fp == NULL
-	  || fscanf (fp, format_string, user, &pid,
-		     host, &tmp_lock_time) != 4)
+	  || fscanf (fp, format_string, user, &pid, host,
+		     &tmp_lock_time) != 4)
 	{
 	  strcpy (user, "???");
 	  strcpy (host, "???");
@@ -466,8 +467,8 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
 #if defined(RYE_DEBUG)
       er_log_debug (ARG_FILE_LINE, "io_lock: WARNING ignoring a run away"
 		    " lock on volume = %s\n. locked daemon may not be"
-		    " working right.\n UNIX error = %s",
-		    lock_path_p, strerror (lockf_errno));
+		    " working right.\n UNIX error = %s", lock_path_p,
+		    strerror (lockf_errno));
 #endif /* RYE_DEBUG */
 
       memset (io_timeval, 0, sizeof (io_timeval));
@@ -504,8 +505,8 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
 	  strcpy (login_name, "???");
 	}
 
-      (void) fprintf (fp, "%s %d %s %ld",
-		      login_name, (int) GETPID (), host, time (NULL));
+      (void) fprintf (fp, "%s %d %s %ld", login_name, (int) GETPID (), host,
+		      time (NULL));
       fflush (fp);
 
       (void) fclose (fp);
@@ -599,9 +600,8 @@ fileio_lock_la_dbname (int *lockf_vdes, char *db_name, char *log_path)
 	      er_log_debug (ARG_FILE_LINE, "db_name(%s,%s), log_path(%s,%s)",
 			    db_name, tmp_db_name, log_path, tmp_log_path);
 
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_IO_MOUNT_LOCKED, 6, lock_path, db_name, "-", pid,
-		      "-", "-");
+	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_LOCKED, 6,
+		      lock_path, db_name, "-", pid, "-", "-");
 
 	      fclose (fp);
 
@@ -875,8 +875,8 @@ fileio_get_lock (int fd, const char *vol_label_p)
   if (fileio_lock_file_read (fd, 0, SEEK_SET, 0) < 0)
     {
       error = ER_IO_GET_LOCK_FAIL;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 2, vol_label_p, fd);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
+			   vol_label_p, fd);
     }
 
   return error;
@@ -924,8 +924,8 @@ again:
   if (retry == false)
     {
       error = ER_IO_GET_LOCK_FAIL;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 2, vol_label_p, fd);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
+			   vol_label_p, fd);
     }
 
   return error;
@@ -978,8 +978,8 @@ fileio_make_volume_lock_name (char *vol_lock_name_p,
  *   len(in):
  */
 static int
-fileio_lock_region (int fd, int cmd, int type, off_t offset,
-		    int whence, off_t len)
+fileio_lock_region (int fd, int cmd, int type, off_t offset, int whence,
+		    off_t len)
 {
   struct flock lock;
 

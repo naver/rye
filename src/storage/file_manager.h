@@ -409,15 +409,15 @@ extern int file_rv_allocset_undoredo_sectortab (THREAD_ENTRY * thread_p,
 extern void file_rv_allocset_dump_sectortab (FILE * fp, int length_ignore,
 					     void *data);
 
-extern int
-file_rv_descriptor_undoredo_firstrest_nextvpid (THREAD_ENTRY * thread_p,
-						LOG_RCV * rcv);
+extern int file_rv_descriptor_undoredo_firstrest_nextvpid (THREAD_ENTRY *
+							   thread_p,
+							   LOG_RCV * rcv);
 extern void file_rv_descriptor_dump_firstrest_nextvpid (FILE * fp,
 							int length_ignore,
 							void *data);
-extern int
-file_rv_descriptor_undoredo_nrest_nextvpid (THREAD_ENTRY * thread_p,
-					    LOG_RCV * rcv);
+extern int file_rv_descriptor_undoredo_nrest_nextvpid (THREAD_ENTRY *
+						       thread_p,
+						       LOG_RCV * rcv);
 extern void file_rv_descriptor_dump_nrest_nextvpid (FILE * fp,
 						    int length_ignore,
 						    void *data);

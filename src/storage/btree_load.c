@@ -47,8 +47,8 @@
  *
  */
 int
-xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid,
-		  OID * class_oid, HFID * hfid)
+xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
+		  HFID * hfid)
 {
   int status = NO_ERROR;
   SCAN_CODE scan_result;
@@ -116,16 +116,16 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid,
   }
 #endif /* SERVER_MODE */
 
-  error = heap_scancache_start (thread_p, &hfscan_cache, hfid,
-				class_oid, true);
+  error =
+    heap_scancache_start (thread_p, &hfscan_cache, hfid, class_oid, true);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
   VPID_SET_NULL (&hfscan_cache.last_vpid);
-  if (file_find_last_page (thread_p, &hfid->vfid,
-			   &hfscan_cache.last_vpid) == NULL)
+  if (file_find_last_page (thread_p, &hfid->vfid, &hfscan_cache.last_vpid) ==
+      NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
@@ -139,8 +139,9 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid,
   btid_int.sys_btid = btid;
   COPY_OID (&(btid_int.cls_oid), class_oid);
 
-  index_id = heap_attrinfo_start_with_btid (thread_p, class_oid,
-					    btid_int.sys_btid, &attr_info);
+  index_id =
+    heap_attrinfo_start_with_btid (thread_p, class_oid, btid_int.sys_btid,
+				   &attr_info);
   if (index_id < 0)
     {
       error = index_id;
@@ -167,21 +168,22 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid,
   btid_int.indx_id = index_id;
 
   OID_SET_NULL (&cur_oid);
-  while ((scan_result = heap_next (thread_p, hfid, class_oid,
-				   &cur_oid, &peek_rec,
-				   &hfscan_cache, PEEK)) == S_SUCCESS)
+  while ((scan_result =
+	  heap_next (thread_p, hfid, class_oid, &cur_oid, &peek_rec,
+		     &hfscan_cache, PEEK)) == S_SUCCESS)
     {
-      error = heap_attrinfo_read_dbvalues (thread_p, &cur_oid, &peek_rec,
-					   &attr_info);
+      error =
+	heap_attrinfo_read_dbvalues (thread_p, &cur_oid, &peek_rec,
+				     &attr_info);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
 	}
 
       assert (DB_IDXKEY_IS_NULL (&key));
-      error = heap_attrvalue_get_key (thread_p, index_id,
-				      &attr_info, &cur_oid, &peek_rec,
-				      btid, &key);
+      error =
+	heap_attrvalue_get_key (thread_p, index_id, &attr_info, &cur_oid,
+				&peek_rec, btid, &key);
       if (error != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -295,6 +297,6 @@ btree_rv_dump_create_index (FILE * fp, UNUSED_ARG int length_ignore,
   VFID *vfid;
 
   vfid = (VFID *) data;
-  (void) fprintf (fp, "Undo creation of Index vfid: %d|%d\n",
-		  vfid->volid, vfid->fileid);
+  (void) fprintf (fp, "Undo creation of Index vfid: %d|%d\n", vfid->volid,
+		  vfid->fileid);
 }

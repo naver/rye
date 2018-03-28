@@ -120,9 +120,9 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
   vpid.pageid = hfid->hpgid;
 
   mode = (docreate == true ? PGBUF_LATCH_WRITE : PGBUF_LATCH_READ);
-  addr_hdr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, mode,
-				   PGBUF_UNCONDITIONAL_LATCH,
-				   PAGE_HEAP_HEADER);
+  addr_hdr.pgptr =
+    heap_pgbuf_fix (thread_p, hfid, &vpid, mode, PGBUF_UNCONDITIONAL_LATCH,
+		    PAGE_HEAP_HEADER);
   if (addr_hdr.pgptr == NULL)
     {
       /* something went wrong, return */
@@ -131,8 +131,9 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   /* Peek the header record */
 
-  if (spage_get_record (addr_hdr.pgptr, HEAP_HEADER_AND_CHAIN_SLOTID,
-			&hdr_recdes, PEEK) != S_SUCCESS)
+  if (spage_get_record
+      (addr_hdr.pgptr, HEAP_HEADER_AND_CHAIN_SLOTID, &hdr_recdes,
+       PEEK) != S_SUCCESS)
     {
       pgbuf_unfix_and_init (thread_p, addr_hdr.pgptr);
       return NULL;
@@ -170,8 +171,9 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
 	  /* Initialize description of overflow heap file */
 	  HFID_COPY (&hfdes_ovf.hfid, hfid);
 
-	  if (file_create (thread_p, ovf_vfid, 3, FILE_MULTIPAGE_OBJECT_HEAP,
-			   &hfdes_ovf, NULL, 0) != NULL)
+	  if (file_create
+	      (thread_p, ovf_vfid, 3, FILE_MULTIPAGE_OBJECT_HEAP, &hfdes_ovf,
+	       NULL, 0) != NULL)
 	    {
 	      /* Log undo, then redo */
 	      log_append_undo_data (thread_p, RVHF_STATS, &addr_hdr,
@@ -228,8 +230,8 @@ heap_ovf_insert (THREAD_ENTRY * thread_p, const HFID * hfid, OID * ovf_oid,
 			 &status);
 
   if (heap_ovf_find_vfid (thread_p, hfid, &ovf_vfid, true) == NULL
-      || overflow_insert (thread_p, &ovf_vfid, &ovf_vpid, recdes,
-			  NULL, class_oid) == NULL)
+      || overflow_insert (thread_p, &ovf_vfid, &ovf_vpid, recdes, NULL,
+			  class_oid) == NULL)
     {
       goto exit_on_error;
     }

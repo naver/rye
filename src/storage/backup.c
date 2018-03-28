@@ -155,9 +155,8 @@ bk_initialize_backup_thread (BK_BACKUP_SESSION * session_p,
  *   return: error code
  */
 int
-bk_init_backup_buffer (BK_BACKUP_SESSION * session,
-		       const char *db_name, const char *backup_path,
-		       int do_compress)
+bk_init_backup_buffer (BK_BACKUP_SESSION * session, const char *db_name,
+		       const char *backup_path, int do_compress)
 {
   int vol_fd;
   struct stat stbuf;
@@ -182,8 +181,9 @@ bk_init_backup_buffer (BK_BACKUP_SESSION * session,
        * If the backup_destination does not exist, try to create it to make
        * sure that we can write at this backup destination.
        */
-      vol_fd = fileio_open (backup_path, FILEIO_DISK_FORMAT_MODE,
-			    FILEIO_DISK_PROTECTION_MODE);
+      vol_fd =
+	fileio_open (backup_path, FILEIO_DISK_FORMAT_MODE,
+		     FILEIO_DISK_PROTECTION_MODE);
       if (vol_fd == NULL_VOLDES)
 	{
 	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
@@ -202,15 +202,15 @@ bk_init_backup_buffer (BK_BACKUP_SESSION * session,
        * databasename.bkLvNNN (Unix). In this case, we may destroy any previous
        * backup in this directory.
        */
-      bk_make_backup_name (session->bkup.name, db_name,
-			   backup_path, BK_INITIAL_BACKUP_UNITS);
+      bk_make_backup_name (session->bkup.name, db_name, backup_path,
+			   BK_INITIAL_BACKUP_UNITS);
     }
 
   buf_size = stbuf.st_blksize;
   /* User may override the default size by specifying a multiple of the
      natural block size for the device. */
-  session->bkup.iosize = buf_size *
-    prm_get_integer_value (PRM_ID_IO_BACKUP_NBUFFERS);
+  session->bkup.iosize =
+    buf_size * prm_get_integer_value (PRM_ID_IO_BACKUP_NBUFFERS);
 
   /*
    * Initialize backup device related information.
@@ -286,8 +286,8 @@ error:
  *   sleep_msecs(in): sleep interval in msecs
  */
 int
-bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p,
-			   int num_threads, int sleep_msecs)
+bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p, int num_threads,
+			   int sleep_msecs)
 {
   int size;
   int io_page_size;
@@ -302,8 +302,9 @@ bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p,
   io_page_size = IO_PAGESIZE;
   io_page_size *= FILEIO_FULL_LEVEL_EXP;
 
-  size = MAX (io_page_size + BK_BACKUP_PAGE_OVERHEAD,
-	      BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE);
+  size =
+    MAX (io_page_size + BK_BACKUP_PAGE_OVERHEAD,
+	 BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE);
 
   session_p->dbfile.area = (BK_BACKUP_PAGE *) malloc (size);
   if (session_p->dbfile.area == NULL)

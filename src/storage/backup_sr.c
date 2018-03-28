@@ -64,13 +64,12 @@ static ssize_t bk_read_backup (THREAD_ENTRY * thread_p,
 static int bk_compress_backup_node (BK_NODE * node,
 				    BK_BACKUP_HEADER * backup_hdr);
 static int bk_write_backup_node (THREAD_ENTRY * thread_p,
-				 BK_BACKUP_SESSION * session,
-				 BK_NODE * node,
+				 BK_BACKUP_SESSION * session, BK_NODE * node,
 				 BK_BACKUP_HEADER * backup_hdr);
 static int bk_send_backup (THREAD_ENTRY * thread_p,
 			   BK_BACKUP_SESSION * session_p,
-			   BK_PACKET_TYPE packet_type,
-			   char *buffer_p, int nbytes, int unzip_bytes);
+			   BK_PACKET_TYPE packet_type, char *buffer_p,
+			   int nbytes, int unzip_bytes);
 static void bk_finalize_backup_thread (BK_BACKUP_SESSION * session_p);
 static int bk_read_backup_volume (THREAD_ENTRY * thread_p,
 				  BK_BACKUP_SESSION * session);
@@ -113,22 +112,22 @@ bk_finalize_backup_thread (BK_BACKUP_SESSION * session_p)
   rv = pthread_mutex_destroy (&tp->mtx);
   if (rv != 0)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_CSS_PTHREAD_MUTEX_DESTROY, 0);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_DESTROY,
+	      0);
     }
 
   rv = pthread_cond_destroy (&tp->rcv);
   if (rv != 0)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_CSS_PTHREAD_COND_DESTROY, 0);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_DESTROY,
+	      0);
     }
 
   rv = pthread_cond_destroy (&tp->wcv);
   if (rv != 0)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_CSS_PTHREAD_COND_DESTROY, 0);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_DESTROY,
+	      0);
     }
 
   while (qp->size > 0)
@@ -304,8 +303,9 @@ bk_write_backup_node (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p,
       break;
     }
 
-  if (bk_send_backup (thread_p, session_p, BK_PACKET_DATA, buffer_p, nbytes,
-		      node_p->nread) != NO_ERROR)
+  if (bk_send_backup
+      (thread_p, session_p, BK_PACKET_DATA, buffer_p, nbytes,
+       node_p->nread) != NO_ERROR)
     {
       goto exit_on_error;
     }
@@ -350,17 +350,18 @@ bk_send_backup (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p,
   ptr = or_pack_int (reply, packet_type);
   ptr = or_pack_int (ptr, unzip_bytes);
 
-  error = css_send_reply_to_client (thread_p->conn_entry,
-				    session_p->rid, 1, reply,
-				    OR_ALIGNED_BUF_SIZE (a_reply));
+  error =
+    css_send_reply_to_client (thread_p->conn_entry, session_p->rid, 1, reply,
+			      OR_ALIGNED_BUF_SIZE (a_reply));
   if (error != NO_ERROR)
     {
       return ER_FAILED;
     }
 
   /* send the data */
-  error = css_send_reply_to_client (thread_p->conn_entry,
-				    session_p->rid, 1, buffer_p, nbytes);
+  error =
+    css_send_reply_to_client (thread_p->conn_entry, session_p->rid, 1,
+			      buffer_p, nbytes);
   if (error != NO_ERROR)
     {
       return ER_FAILED;
@@ -623,8 +624,9 @@ bk_write_backup_volume (THREAD_ENTRY * thread_p,
 	    }
 	  else
 	    {
-	      rv = bk_write_backup_node (thread_p, session_p, node_p,
-					 backup_header_p);
+	      rv =
+		bk_write_backup_node (thread_p, session_p, node_p,
+				      backup_header_p);
 	      if (rv != NO_ERROR)
 		{
 		  thread_info_p->io_type = FILEIO_ERROR_INTERRUPT;
@@ -675,8 +677,8 @@ exit_on_error:
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTED, 0);
 	  break;
 	default:		/* give up to handle this case */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_DBBACKUP_FAIL, 1, backup_header_p->db_name);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_DBBACKUP_FAIL, 1,
+		  backup_header_p->db_name);
 	  break;
 	}
     }
@@ -701,8 +703,8 @@ exit_on_error:
 static int
 bk_start_backup_thread (THREAD_ENTRY * thread_p,
 			BK_BACKUP_SESSION * session_p,
-			BK_THREAD_INFO * thread_info_p,
-			int from_npages, BK_QUEUE * queue_p)
+			BK_THREAD_INFO * thread_info_p, int from_npages,
+			BK_QUEUE * queue_p)
 {
   CSS_CONN_ENTRY *conn_p;
 //  int conn_index;
@@ -771,8 +773,8 @@ bk_start_backup_thread (THREAD_ENTRY * thread_p,
 static int
 bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 			   BK_BACKUP_SESSION * session_p,
-			   const char *from_vol_label_p,
-			   VOLID from_vol_id, PAGEID last_page)
+			   const char *from_vol_label_p, VOLID from_vol_id,
+			   PAGEID last_page)
 {
   struct stat from_stbuf;
   int from_npages, npages;
@@ -824,8 +826,8 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 
   if (fstat (session_p->dbfile.vdes, &from_stbuf) == -1)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_IO_MOUNT_FAIL, 1, session_p->dbfile.vlabel);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL,
+			   1, session_p->dbfile.vlabel);
       goto error;
     }
 
@@ -846,13 +848,15 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
   /* set the number divied by backup pagesize */
   if (last_page >= 0 && last_page < npages)
     {
-      from_npages = CEIL_PTVDIV ((last_page + 1) * IO_PAGESIZE,
-				 backup_header_p->bkpagesize);
+      from_npages =
+	CEIL_PTVDIV ((last_page + 1) * IO_PAGESIZE,
+		     backup_header_p->bkpagesize);
     }
   else
     {
-      from_npages = (int) CEIL_PTVDIV (session_p->dbfile.nbytes,
-				       backup_header_p->bkpagesize);
+      from_npages =
+	(int) CEIL_PTVDIV (session_p->dbfile.nbytes,
+			   backup_header_p->bkpagesize);
     }
 
   /* Write a backup file header which identifies this volume/file on the
@@ -883,8 +887,8 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
 			   MSGCAT_FILEIO_BKUP_FILE),
 	   file_header_p->vlabel, file_header_p->volid,
-	   file_header_p->nbytes,
-	   CEIL_PTVDIV (file_header_p->nbytes, IO_PAGESIZE));
+	   file_header_p->nbytes, CEIL_PTVDIV (file_header_p->nbytes,
+					       IO_PAGESIZE));
   fprintf (stdout, "\n");
 #endif /* RYE_DEBUG */
 
@@ -894,10 +898,10 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
   queue_p = &thread_info_p->io_queue;
   /* set the number of activated read threads */
   thread_info_p->act_r_threads = MAX (thread_info_p->num_threads - 1, 0);
-  thread_info_p->act_r_threads = MIN (thread_info_p->act_r_threads,
-				      from_npages);
-  thread_info_p->act_r_threads = MIN (thread_info_p->act_r_threads,
-				      thread_max_backup_readers ());
+  thread_info_p->act_r_threads =
+    MIN (thread_info_p->act_r_threads, from_npages);
+  thread_info_p->act_r_threads =
+    MIN (thread_info_p->act_r_threads, thread_max_backup_readers ());
 
 #if 1				/* TODO - */
   /* at here, disable multi-thread usage for fast Vol copy */
@@ -910,8 +914,9 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 #if 1
       assert (false);		/* not permit */
 #endif
-      if (bk_start_backup_thread (thread_p, session_p, thread_info_p,
-				  from_npages, queue_p) != NO_ERROR)
+      if (bk_start_backup_thread
+	  (thread_p, session_p, thread_info_p, from_npages,
+	   queue_p) != NO_ERROR)
 	{
 	  goto error;
 	}
@@ -939,8 +944,8 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 	  save_area_p = session_p->dbfile.area;	/* save link */
 	  session_p->dbfile.area = node_p->area;
 	  node_p->pageid = page_id;
-	  node_p->nread = bk_read_backup (thread_p, session_p,
-					  node_p->pageid);
+	  node_p->nread =
+	    bk_read_backup (thread_p, session_p, node_p->pageid);
 	  session_p->dbfile.area = save_area_p;	/* restore link */
 	  if (node_p->nread == -1)
 	    {
@@ -976,8 +981,9 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 	      goto error;
 	    }
 
-	  rv = bk_write_backup_node (thread_p, session_p, node_p,
-				     backup_header_p);
+	  rv =
+	    bk_write_backup_node (thread_p, session_p, node_p,
+				  backup_header_p);
 	  if (rv != NO_ERROR)
 	    {
 	      goto error;
@@ -1003,8 +1009,7 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
       node_p->nread = backup_header_p->bkpagesize + BK_BACKUP_PAGE_OVERHEAD;
       memset (&node_p->area->iopage, '\0', backup_header_p->bkpagesize);
       (void) fileio_initialize_res (thread_p, &(node_p->area->iopage.prv));
-      BK_SET_BACKUP_PAGE_ID (node_p->area,
-			     BK_BACKUP_FILE_END_PAGE_ID,
+      BK_SET_BACKUP_PAGE_ID (node_p->area, BK_BACKUP_FILE_END_PAGE_ID,
 			     backup_header_p->bkpagesize);
 
 #if defined(RYE_DEBUG)
@@ -1022,8 +1027,8 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
 	  goto error;
 	}
 
-      rv = bk_write_backup_node (thread_p, session_p, node_p,
-				 backup_header_p);
+      rv =
+	bk_write_backup_node (thread_p, session_p, node_p, backup_header_p);
       if (rv != NO_ERROR)
 	{
 	  goto error;
@@ -1048,8 +1053,8 @@ bk_backup_volume_internal (THREAD_ENTRY * thread_p,
   ptr = or_pack_int (reply, BK_PACKET_VOL_END);
   ptr = or_pack_int (ptr, 0);	/* dummy unzip_bytes */
 
-  css_send_reply_to_client (thread_p->conn_entry, session_p->rid, 1,
-			    reply, OR_ALIGNED_BUF_SIZE (a_reply));
+  css_send_reply_to_client (thread_p->conn_entry, session_p->rid, 1, reply,
+			    OR_ALIGNED_BUF_SIZE (a_reply));
 
   return NO_ERROR;
 
@@ -1084,8 +1089,8 @@ error:
  *       the whole volume/file is backed up.
  */
 static ssize_t
-bk_read_backup (THREAD_ENTRY * thread_p,
-		BK_BACKUP_SESSION * session_p, int page_id)
+bk_read_backup (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p,
+		int page_id)
 {
   int io_page_size = session_p->bkuphdr->bkpagesize;
   ssize_t nread, nbytes;
@@ -1099,8 +1104,8 @@ bk_read_backup (THREAD_ENTRY * thread_p,
   fprintf (stdout, "bk_read_backup: %d\t%d,\t%d\n",
 	   ((BK_BACKUP_PAGE *) (session_p->dbfile.area))->iopageid,
 	   *(PAGEID *) (((char *) (session_p->dbfile.area)) +
-			offsetof (BK_BACKUP_PAGE,
-				  iopage) + io_page_size), io_page_size);
+			offsetof (BK_BACKUP_PAGE, iopage) + io_page_size),
+	   io_page_size);
 #endif
 
   buffer_p = (char *) &session_p->dbfile.area->iopage;
@@ -1115,8 +1120,8 @@ bk_read_backup (THREAD_ENTRY * thread_p,
 	    {
 	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 				   ER_IO_READ, 2,
-				   BK_GET_BACKUP_PAGE_ID
-				   (session_p->dbfile.area),
+				   BK_GET_BACKUP_PAGE_ID (session_p->dbfile.
+							  area),
 				   session_p->dbfile.vlabel);
 	      return -1;
 	    }
@@ -1236,8 +1241,8 @@ bk_logpb_backup_for_volume (THREAD_ENTRY * thread_p, VOLID volid,
    * backup every page, but for temporary volumes we only need the system
    * pages.
    */
-  if (xdisk_get_purpose_and_sys_lastpage (thread_p, volid, &volpurpose,
-					  &vol_sys_lastpage) == NULL_VOLID)
+  if (xdisk_get_purpose_and_sys_lastpage
+      (thread_p, volid, &volpurpose, &vol_sys_lastpage) == NULL_VOLID)
     {
       error_code = ER_FAILED;
       return error_code;
@@ -1338,8 +1343,7 @@ error:
 
 int
 xbk_prepare_backup (THREAD_ENTRY * thread_p, int num_threads,
-		    int do_compress,
-		    int sleep_msecs, int make_slave,
+		    int do_compress, int sleep_msecs, int make_slave,
 		    BK_BACKUP_SESSION * session)
 {
   LOG_LSA chkpt_lsa;		/* Checkpoint address where the
@@ -1459,8 +1463,8 @@ loop:
       goto error;
     }
 
-  if (bk_init_backup_header (session->bkuphdr, &chkpt_lsa,
-			     do_compress, make_slave) != NO_ERROR)
+  if (bk_init_backup_header
+      (session->bkuphdr, &chkpt_lsa, do_compress, make_slave) != NO_ERROR)
     {
       goto error;
     }
@@ -1557,8 +1561,8 @@ xbk_backup_volume (THREAD_ENTRY * thread_p, int rid, int buf_size)
   ptr = or_pack_int (reply, BK_PACKET_VOLS_BACKUP_END);
   ptr = or_pack_int (ptr, 0);	/* dummy unzip_bytes */
 
-  css_send_reply_to_client (thread_p->conn_entry, session->rid, 1,
-			    reply, OR_ALIGNED_BUF_SIZE (a_reply));
+  css_send_reply_to_client (thread_p->conn_entry, session->rid, 1, reply,
+			    OR_ALIGNED_BUF_SIZE (a_reply));
 
   return NO_ERROR;
 
@@ -1609,9 +1613,10 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
 
   if (last_arv_needed >= session->first_arv_needed)
     {
-      error_code = bk_backup_needed_archive_logs (thread_p, session,
-						  session->first_arv_needed,
-						  last_arv_needed);
+      error_code =
+	bk_backup_needed_archive_logs (thread_p, session,
+				       session->first_arv_needed,
+				       last_arv_needed);
       if (error_code != NO_ERROR)
 	{
 	  goto error;
@@ -1656,8 +1661,8 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
 	}
     }
 
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_LOG_BACKUP_CS_ENTER,
-	  1, log_Name_active);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_LOG_BACKUP_CS_ENTER, 1,
+	  log_Name_active);
 
   LOG_CS_ENTER (thread_p);
 
@@ -1670,9 +1675,9 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
     {
       LOG_CS_EXIT ();
 
-      error_code = bk_backup_needed_archive_logs (thread_p, session,
-						  last_arv_needed + 1,
-						  log_Gl.hdr.nxarv_num - 1);
+      error_code =
+	bk_backup_needed_archive_logs (thread_p, session, last_arv_needed + 1,
+				       log_Gl.hdr.nxarv_num - 1);
       if (error_code != NO_ERROR)
 	{
 	  goto error;
@@ -1710,16 +1715,16 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
   if (error_code != NO_ERROR)
     {
       LOG_CS_EXIT ();
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_BACKUP_CS_EXIT, 1, log_Name_active);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_LOG_BACKUP_CS_EXIT,
+	      1, log_Name_active);
       goto error;
     }
 
   if (delete_unneeded_logarchives != false)
     {
-      catmsg = msgcat_message (MSGCAT_CATALOG_RYE,
-			       MSGCAT_SET_LOG,
-			       MSGCAT_LOG_DATABASE_BACKUP_WAS_TAKEN);
+      catmsg =
+	msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOG,
+			MSGCAT_LOG_DATABASE_BACKUP_WAS_TAKEN);
       assert (catmsg != NULL);
 
       if (catmsg)
@@ -1730,8 +1735,8 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
 
   LOG_CS_EXIT ();
 
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_LOG_BACKUP_CS_EXIT,
-	  1, log_Name_active);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_LOG_BACKUP_CS_EXIT, 1,
+	  log_Name_active);
 
   session->bkuphdr->end_time = (INT64) time (NULL);
   assert (session->bkuphdr->end_time > 0);
@@ -1743,8 +1748,8 @@ xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size,
   ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
   ptr = or_pack_int64 (ptr, session->bkuphdr->end_time);
 
-  css_send_reply_to_client (thread_p->conn_entry, session->rid, 1,
-			    reply, OR_ALIGNED_BUF_SIZE (a_reply));
+  css_send_reply_to_client (thread_p->conn_entry, session->rid, 1, reply,
+			    OR_ALIGNED_BUF_SIZE (a_reply));
 
   bk_finalize_backup_thread (session);
   bk_abort_backup_server (session);
@@ -1775,8 +1780,8 @@ error:
  */
 static int
 bk_backup_needed_archive_logs (THREAD_ENTRY * thread_p,
-			       BK_BACKUP_SESSION * session,
-			       int first_arv_num, int last_arv_num)
+			       BK_BACKUP_SESSION * session, int first_arv_num,
+			       int last_arv_num)
 {
   int i;
   char logarv_name[PATH_MAX];	/* Archive name               */
@@ -1791,8 +1796,9 @@ bk_backup_needed_archive_logs (THREAD_ENTRY * thread_p,
       fileio_make_log_archive_name (logarv_name, log_Archive_path, log_Prefix,
 				    i);
 
-      error_code = bk_backup_volume_internal (thread_p, session, logarv_name,
-					      LOG_DBLOG_ARCHIVE_VOLID, -1);
+      error_code =
+	bk_backup_volume_internal (thread_p, session, logarv_name,
+				   LOG_DBLOG_ARCHIVE_VOLID, -1);
     }
 
   return error_code;

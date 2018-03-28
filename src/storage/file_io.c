@@ -253,8 +253,8 @@ static FILEIO_SYSTEM_VOLUME_INFO *fileio_traverse_system_volume (THREAD_ENTRY
 								 * thread_p,
 								 SYS_VOLINFO_APPLY_FN
 								 apply_function,
-								 APPLY_ARG
-								 * arg);
+								 APPLY_ARG *
+								 arg);
 #endif
 static FILEIO_VOLUME_INFO *fileio_traverse_permanent_volume (THREAD_ENTRY *
 							     thread_p,
@@ -370,8 +370,8 @@ fileio_compensate_flush (UNUSED_ARG THREAD_ENTRY * thread_p,
   need_sync = false;
 
   flushed_page_count = fileio_increase_flushed_page_count (npage);
-  if (flushed_page_count
-      > (prm_get_bigint_value (PRM_ID_PB_SYNC_ON_FLUSH_SIZE) / IO_PAGESIZE))
+  if (flushed_page_count >
+      (prm_get_bigint_value (PRM_ID_PB_SYNC_ON_FLUSH_SIZE) / IO_PAGESIZE))
     {
       need_sync = true;
       fileio_Flushed_page_count = 0;
@@ -592,8 +592,8 @@ fileio_flush_control_add_tokens (UNUSED_ARG THREAD_ENTRY * thread_p,
   if (prm_get_bool_value (PRM_ID_ADAPTIVE_FLUSH_CONTROL) == true)
     {
       max_Flush_pages_per_sec += fileio_flush_control_get_desired_rate (tb);
-      max_Flush_pages_per_sec = MAX (FILEIO_MIN_FLUSH_PAGES_PER_SEC,
-				     max_Flush_pages_per_sec);
+      max_Flush_pages_per_sec =
+	MAX (FILEIO_MIN_FLUSH_PAGES_PER_SEC, max_Flush_pages_per_sec);
     }
   else if (max_Flush_pages_per_sec !=
 	   (int) prm_get_bigint_value (PRM_ID_MAX_FLUSH_SIZE_PER_SECOND) /
@@ -604,8 +604,8 @@ fileio_flush_control_add_tokens (UNUSED_ARG THREAD_ENTRY * thread_p,
 	IO_PAGESIZE;
     }
 
-  gen_tokens = (int) ((double) max_Flush_pages_per_sec / 1000000.0
-		      * (double) diff_usec);
+  gen_tokens =
+    (int) ((double) max_Flush_pages_per_sec / 1000000.0 * (double) diff_usec);
   gen_tokens = MAX (FILEIO_MIN_FLUSH_PAGES_PER_SEC, gen_tokens);
 
   *token_gen = gen_tokens;
@@ -648,8 +648,8 @@ fileio_flush_control_get_desired_rate (TOKEN_BUCKET * tb)
 	}
       else
 	{
-	  return ((fc_Stats.num_pages + fc_Stats.num_log_pages)
-		  - fc_Stats.num_tokens);
+	  return ((fc_Stats.num_pages + fc_Stats.num_log_pages) -
+		  fc_Stats.num_tokens);
 	}
     }
 }
@@ -674,8 +674,8 @@ fileio_initialize_volume_info_cache (void)
   if (fileio_Vol_info_header.volinfo == NULL)
     {
       n = (VOLID_MAX - 1) / FILEIO_VOLINFO_INCREMENT + 1;
-      fileio_Vol_info_header.volinfo = (FILEIO_VOLUME_INFO **)
-	malloc (sizeof (FILEIO_VOLUME_INFO *) * n);
+      fileio_Vol_info_header.volinfo =
+	(FILEIO_VOLUME_INFO **) malloc (sizeof (FILEIO_VOLUME_INFO *) * n);
       if (fileio_Vol_info_header.volinfo == NULL)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
@@ -726,8 +726,9 @@ fileio_allocate_and_initialize_volume_info (FILEIO_VOLUME_HEADER * header_p,
   int i;
 
   header_p->volinfo[idx] = NULL;
-  vol_info_p = (FILEIO_VOLUME_INFO *) malloc (sizeof (FILEIO_VOLUME_INFO) *
-					      FILEIO_VOLINFO_INCREMENT);
+  vol_info_p =
+    (FILEIO_VOLUME_INFO *) malloc (sizeof (FILEIO_VOLUME_INFO) *
+				   FILEIO_VOLINFO_INCREMENT);
   if (vol_info_p == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
@@ -770,8 +771,9 @@ fileio_expand_permanent_volume_info (FILEIO_VOLUME_HEADER * header_p,
   to_idx = (volid + 1) / FILEIO_VOLINFO_INCREMENT;
 
   /* check if to_idx chunks are used for temp volume information */
-  if (to_idx >= (header_p->num_volinfo_array - 1
-		 - header_p->max_temp_vols / FILEIO_VOLINFO_INCREMENT))
+  if (to_idx >=
+      (header_p->num_volinfo_array - 1 -
+       header_p->max_temp_vols / FILEIO_VOLINFO_INCREMENT))
     {
       pthread_mutex_unlock (&header_p->mutex);
       return -1;
@@ -779,8 +781,8 @@ fileio_expand_permanent_volume_info (FILEIO_VOLUME_HEADER * header_p,
 
   for (; from_idx <= to_idx; from_idx++)
     {
-      if (fileio_allocate_and_initialize_volume_info (header_p, from_idx)
-	  != NO_ERROR)
+      if (fileio_allocate_and_initialize_volume_info (header_p, from_idx) !=
+	  NO_ERROR)
 	{
 	  pthread_mutex_unlock (&header_p->mutex);
 	  return -1;
@@ -813,10 +815,12 @@ fileio_expand_temporary_volume_info (FILEIO_VOLUME_HEADER * header_p,
 
   pthread_mutex_lock (&header_p->mutex);
 
-  from_idx = header_p->num_volinfo_array - 1
-    - (header_p->max_temp_vols / FILEIO_VOLINFO_INCREMENT);
-  to_idx = header_p->num_volinfo_array - 1
-    - ((LOG_MAX_DBVOLID - volid) / FILEIO_VOLINFO_INCREMENT);
+  from_idx =
+    header_p->num_volinfo_array - 1 -
+    (header_p->max_temp_vols / FILEIO_VOLINFO_INCREMENT);
+  to_idx =
+    header_p->num_volinfo_array - 1 -
+    ((LOG_MAX_DBVOLID - volid) / FILEIO_VOLINFO_INCREMENT);
 
   /* check if to_idx chunks are used for perm. volume information */
   if (to_idx <= (header_p->max_perm_vols - 1) / FILEIO_VOLINFO_INCREMENT)
@@ -827,15 +831,15 @@ fileio_expand_temporary_volume_info (FILEIO_VOLUME_HEADER * header_p,
 
   for (; from_idx >= to_idx; from_idx--)
     {
-      if (fileio_allocate_and_initialize_volume_info (header_p, from_idx)
-	  != NO_ERROR)
+      if (fileio_allocate_and_initialize_volume_info (header_p, from_idx) !=
+	  NO_ERROR)
 	{
 	  pthread_mutex_unlock (&header_p->mutex);
 	  return -1;
 	}
 
-      header_p->max_temp_vols = (header_p->num_volinfo_array - from_idx)
-	* FILEIO_VOLINFO_INCREMENT;
+      header_p->max_temp_vols =
+	(header_p->num_volinfo_array - from_idx) * FILEIO_VOLINFO_INCREMENT;
     }
 
   pthread_mutex_unlock (&header_p->mutex);
@@ -1031,8 +1035,8 @@ fileio_alloc_io_page (THREAD_ENTRY * thread_p)
   malloc_io_pgptr = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
   if (malloc_io_pgptr == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, IO_PAGESIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      IO_PAGESIZE);
       return NULL;
     }
 
@@ -1095,8 +1099,8 @@ fileio_set_permission (const char *vol_label_p)
   if (stat (vol_label_p, &buf) < 0)
     {
       error = ER_IO_CANNOT_GET_PERMISSION;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 1, vol_label_p);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+			   vol_label_p);
       return error;
     }
 
@@ -1110,8 +1114,8 @@ fileio_set_permission (const char *vol_label_p)
   if (chmod (vol_label_p, mode) < 0)
     {
       error = ER_IO_CANNOT_CHANGE_PERMISSION;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 1, vol_label_p);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
+			   vol_label_p);
       return error;
     }
 
@@ -1177,8 +1181,8 @@ fileio_create (THREAD_ENTRY * thread_p, const char *db_full_name_p,
 	{
 	  /* The volume (file) already exist. Make sure that nobody is using it
 	     before the old one is destroyed */
-	  lockf_type = fileio_lock (db_full_name_p, vol_label_p, tmp_vol_desc,
-				    false);
+	  lockf_type =
+	    fileio_lock (db_full_name_p, vol_label_p, tmp_vol_desc, false);
 	  if (lockf_type == FILEIO_NOT_LOCKF)
 	    {
 	      /* Volume seems to be mounted by someone else */
@@ -1212,8 +1216,8 @@ fileio_create (THREAD_ENTRY * thread_p, const char *db_full_name_p,
     {
       if (is_do_lock == true)
 	{
-	  lockf_type = fileio_lock (db_full_name_p, vol_label_p, vol_fd,
-				    false);
+	  lockf_type =
+	    fileio_lock (db_full_name_p, vol_label_p, vol_fd, false);
 
 	  if (lockf_type == FILEIO_NOT_LOCKF)
 	    {
@@ -1318,8 +1322,8 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
     }
   else
     {
-      max_npages = fileio_get_number_of_partition_free_pages (vol_label_p,
-							      page_size);
+      max_npages =
+	fileio_get_number_of_partition_free_pages (vol_label_p, page_size);
     }
 
   offset = FILEIO_GET_FILE_SIZE (page_size, npages - 1);
@@ -1334,8 +1338,8 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
       if (offset < npages)
 	{
 	  /* Overflow */
-	  offset = FILEIO_GET_FILE_SIZE (page_size,
-					 VOL_MAX_NPAGES (page_size));
+	  offset =
+	    FILEIO_GET_FILE_SIZE (page_size, VOL_MAX_NPAGES (page_size));
 	}
 
       if (max_npages >= 0)
@@ -1356,13 +1360,14 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
   io_page_p = fileio_alloc_io_page (thread_p);
   if (io_page_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, page_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      page_size);
       return NULL_VOLDES;
     }
 
-  vol_fd = fileio_create (thread_p, db_full_name_p, vol_label_p, vol_id,
-			  is_do_lock, is_do_sync);
+  vol_fd =
+    fileio_create (thread_p, db_full_name_p, vol_label_p, vol_id, is_do_lock,
+		   is_do_sync);
   if (vol_fd != NULL_VOLDES)
     {
       /* initialize the pages of the volume */
@@ -1379,8 +1384,9 @@ fileio_format (THREAD_ENTRY * thread_p, const char *db_full_name_p,
 	  /* It is likely that we run of space. The partition where the volume
 	     was created has been used since we checked above. */
 
-	  max_npages = fileio_get_number_of_partition_free_pages (vol_label_p,
-								  page_size);
+	  max_npages =
+	    fileio_get_number_of_partition_free_pages (vol_label_p,
+						       page_size);
 
 	  fileio_dismount (thread_p, vol_fd);
 	  fileio_unformat (thread_p, vol_label_p);
@@ -1455,14 +1461,14 @@ fileio_expand (THREAD_ENTRY * thread_p, VOLID vol_id, DKNPAGES npages_toadd,
   er_log_debug (ARG_FILE_LINE, "fileio_expand: start, npages_toadd = %d\n",
 		npages_toadd);
 
-  max_npages = fileio_get_number_of_partition_free_pages (vol_label_p,
-							  IO_PAGESIZE);
+  max_npages =
+    fileio_get_number_of_partition_free_pages (vol_label_p, IO_PAGESIZE);
 
   /* Find the offset to the end of the file, then add the given number of
      pages */
   start_offset = lseek (vol_fd, 0, SEEK_END);
-  last_offset = start_offset +
-    FILEIO_GET_FILE_SIZE (IO_PAGESIZE, npages_toadd - 1);
+  last_offset =
+    start_offset + FILEIO_GET_FILE_SIZE (IO_PAGESIZE, npages_toadd - 1);
 
   /*
    * Make sure that there is enough pages on the given partition before we
@@ -1474,8 +1480,8 @@ fileio_expand (THREAD_ENTRY * thread_p, VOLID vol_id, DKNPAGES npages_toadd,
       if (last_offset < npages_toadd)
 	{
 	  /* Overflow */
-	  last_offset = FILEIO_GET_FILE_SIZE (IO_PAGESIZE,
-					      VOL_MAX_NPAGES (IO_PAGESIZE));
+	  last_offset =
+	    FILEIO_GET_FILE_SIZE (IO_PAGESIZE, VOL_MAX_NPAGES (IO_PAGESIZE));
 	}
       if (npages_toadd > max_npages && max_npages >= 0)
 	{
@@ -1525,12 +1531,11 @@ fileio_expand (THREAD_ENTRY * thread_p, VOLID vol_id, DKNPAGES npages_toadd,
     {
       /* It is likely that we run of space. The partition where the volume was
          created has been used since we checked above. */
-      max_npages = fileio_get_number_of_partition_free_pages (vol_label_p,
-							      IO_PAGESIZE);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_EXPAND_OUT_OF_SPACE,
-	      5, vol_label_p, npages_toadd, last_offset / 1024,
-	      max_npages, FILEIO_GET_FILE_SIZE (IO_PAGESIZE / 1024,
-						max_npages));
+      max_npages =
+	fileio_get_number_of_partition_free_pages (vol_label_p, IO_PAGESIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_EXPAND_OUT_OF_SPACE, 5,
+	      vol_label_p, npages_toadd, last_offset / 1024, max_npages,
+	      FILEIO_GET_FILE_SIZE (IO_PAGESIZE / 1024, max_npages));
     }
 
   er_log_debug (ARG_FILE_LINE, "fileio_expand: end, npages_toadd = %d\n",
@@ -1721,8 +1726,8 @@ fileio_copy_volume (THREAD_ENTRY * thread_p, int from_vol_desc,
   malloc_io_page_p = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
   if (malloc_io_page_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, IO_PAGESIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      IO_PAGESIZE);
       goto error;
     }
 
@@ -1746,16 +1751,18 @@ fileio_copy_volume (THREAD_ENTRY * thread_p, int from_vol_desc,
          Just like if this was a formatted volume */
       for (page_id = 0; page_id < npages; page_id++)
 	{
-	  if (fileio_read (thread_p, from_vol_desc, malloc_io_page_p, page_id,
-			   IO_PAGESIZE) == NULL)
+	  if (fileio_read
+	      (thread_p, from_vol_desc, malloc_io_page_p, page_id,
+	       IO_PAGESIZE) == NULL)
 	    {
 	      goto error;
 	    }
 	  else
 	    {
 	      LSA_SET_NULL (&malloc_io_page_p->prv.lsa);
-	      if (fileio_write (thread_p, to_vol_desc, malloc_io_page_p,
-				page_id, IO_PAGESIZE) == NULL)
+	      if (fileio_write
+		  (thread_p, to_vol_desc, malloc_io_page_p, page_id,
+		   IO_PAGESIZE) == NULL)
 		{
 		  goto error;
 		}
@@ -1804,19 +1811,20 @@ fileio_reset_volume (THREAD_ENTRY * thread_p, int vol_fd, const char *vlabel,
   malloc_io_page_p = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
   if (malloc_io_page_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, IO_PAGESIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      IO_PAGESIZE);
       return ER_FAILED;
     }
 
   for (page_id = 0; page_id < npages; page_id++)
     {
-      if (fileio_read (thread_p, vol_fd, malloc_io_page_p, page_id,
-		       IO_PAGESIZE) != NULL)
+      if (fileio_read
+	  (thread_p, vol_fd, malloc_io_page_p, page_id, IO_PAGESIZE) != NULL)
 	{
 	  LSA_COPY (&malloc_io_page_p->prv.lsa, reset_lsa_p);
-	  if (fileio_write (thread_p, vol_fd, malloc_io_page_p, page_id,
-			    IO_PAGESIZE) == NULL)
+	  if (fileio_write
+	      (thread_p, vol_fd, malloc_io_page_p, page_id,
+	       IO_PAGESIZE) == NULL)
 	    {
 	      success = ER_FAILED;
 	      break;
@@ -1879,8 +1887,8 @@ start:
   vol_fd = fileio_open (vol_label_p, O_RDWR | o_sync, 0600);
   if (vol_fd == NULL_VOLDES)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_IO_MOUNT_FAIL, 1, vol_label_p);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL,
+			   1, vol_label_p);
       return NULL_VOLDES;
     }
 
@@ -1916,8 +1924,8 @@ start:
 	      return NULL_VOLDES;
 	    }
 
-	  if (last_modification_time != stat_buf.st_mtime ||
-	      last_size != stat_buf.st_size)
+	  if (last_modification_time != stat_buf.st_mtime
+	      || last_size != stat_buf.st_size)
 	    {
 	      /* somebody changed the file before the file lock was acquired */
 	      fileio_dismount (thread_p, vol_fd);
@@ -1991,8 +1999,9 @@ static int
 fileio_min_temporary_volumes (int index, int num_temp_volums,
 			      int num_volinfo_array)
 {
-  if (index > (num_volinfo_array - 1 -
-	       (num_temp_volums - 1) / FILEIO_VOLINFO_INCREMENT))
+  if (index >
+      (num_volinfo_array - 1 -
+       (num_temp_volums - 1) / FILEIO_VOLINFO_INCREMENT))
     {
       return 0;
     }
@@ -2072,11 +2081,12 @@ fileio_traverse_temporary_volume (THREAD_ENTRY * thread_p,
 
   for (i = header_p->num_volinfo_array - 1;
        i > (header_p->num_volinfo_array - 1
-	    - (num_temp_vols + FILEIO_VOLINFO_INCREMENT - 1) /
-	    FILEIO_VOLINFO_INCREMENT); i--)
+	    - (num_temp_vols + FILEIO_VOLINFO_INCREMENT -
+	       1) / FILEIO_VOLINFO_INCREMENT); i--)
     {
-      min_j = fileio_min_temporary_volumes (i, num_temp_vols,
-					    header_p->num_volinfo_array);
+      min_j =
+	fileio_min_temporary_volumes (i, num_temp_vols,
+				      header_p->num_volinfo_array);
 
       for (j = FILEIO_VOLINFO_INCREMENT - 1; j >= min_j; j--)
 	{
@@ -2182,8 +2192,8 @@ fileio_dismount_all (THREAD_ENTRY * thread_p)
 
   for (i = vol_header_p->num_volinfo_array - 1;
        i > (vol_header_p->num_volinfo_array - 1
-	    - (num_temp_vols + FILEIO_VOLINFO_INCREMENT - 1) /
-	    FILEIO_VOLINFO_INCREMENT); i--)
+	    - (num_temp_vols + FILEIO_VOLINFO_INCREMENT -
+	       1) / FILEIO_VOLINFO_INCREMENT); i--)
     {
       if (vol_header_p->volinfo)
 	{
@@ -2242,11 +2252,12 @@ fileio_map_mounted (THREAD_ENTRY * thread_p,
   num_temp_vols = LOG_MAX_DBVOLID - header_p->next_temp_volid;
   for (i = header_p->num_volinfo_array - 1;
        i > (header_p->num_volinfo_array - 1
-	    - (num_temp_vols + FILEIO_VOLINFO_INCREMENT - 1) /
-	    FILEIO_VOLINFO_INCREMENT); i--)
+	    - (num_temp_vols + FILEIO_VOLINFO_INCREMENT -
+	       1) / FILEIO_VOLINFO_INCREMENT); i--)
     {
-      min_j = fileio_min_temporary_volumes (i, num_temp_vols,
-					    header_p->num_volinfo_array);
+      min_j =
+	fileio_min_temporary_volumes (i, num_temp_vols,
+				      header_p->num_volinfo_array);
 
       for (j = FILEIO_VOLINFO_INCREMENT - 1; j >= min_j; j--)
 	{
@@ -2313,8 +2324,8 @@ fileio_is_system_volume_label_equal (UNUSED_ARG THREAD_ENTRY * thread_p,
 				     FILEIO_SYSTEM_VOLUME_INFO *
 				     sys_vol_info_p, APPLY_ARG * arg)
 {
-  return (util_compare_filepath (sys_vol_info_p->vlabel,
-				 arg->vol_label) == 0);
+  return (util_compare_filepath (sys_vol_info_p->vlabel, arg->vol_label) ==
+	  0);
 }
 
 /*
@@ -2842,8 +2853,9 @@ fileio_writev (THREAD_ENTRY * thread_p, int vol_fd, void **io_page_array,
 
   for (i = 0; i < npages; i++)
     {
-      if (fileio_write (thread_p, vol_fd, io_page_array[i], start_page_id + i,
-			page_size) == NULL)
+      if (fileio_write
+	  (thread_p, vol_fd, io_page_array[i], start_page_id + i,
+	   page_size) == NULL)
 	{
 	  return NULL;
 	}
@@ -2921,8 +2933,8 @@ fileio_synchronize (UNUSED_ARG THREAD_ENTRY * thread_p, int vol_fd,
 
   if (ret != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_SYNC,
-			   1, (vlabel ? vlabel : "Unknown"));
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_SYNC, 1,
+			   (vlabel ? vlabel : "Unknown"));
       return NULL_VOLDES;
     }
   else
@@ -3114,8 +3126,8 @@ fileio_read_user_area (THREAD_ENTRY * thread_p, int vol_fd, PAGEID page_id,
   io_page_p = (FILEIO_PAGE *) malloc (IO_PAGESIZE);
   if (io_page_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, IO_PAGESIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      IO_PAGESIZE);
       return NULL;
     }
 
@@ -3217,8 +3229,9 @@ fileio_write_user_area (THREAD_ENTRY * thread_p, int vol_fd, PAGEID page_id,
   if (S_ISREG (stat_buf.st_mode))	/* regular file */
     {
       /* Find the offset intop the user area on the desired page */
-      offset = (FILEIO_GET_FILE_SIZE (IO_PAGESIZE, page_id)
-		+ offsetof (FILEIO_PAGE, page));
+      offset =
+	(FILEIO_GET_FILE_SIZE (IO_PAGESIZE, page_id) +
+	 offsetof (FILEIO_PAGE, page));
 
       /* Add the starting offset */
       offset += start_offset;
@@ -3303,8 +3316,8 @@ fileio_write_user_area (THREAD_ENTRY * thread_p, int vol_fd, PAGEID page_id,
 		{
 		  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
 				       ER_IO_WRITE, 2, page_id,
-				       fileio_get_volume_label_by_fd
-				       (vol_fd, PEEK));
+				       fileio_get_volume_label_by_fd (vol_fd,
+								      PEEK));
 		}
 
 	      if (io_page_p != NULL)
@@ -3368,8 +3381,8 @@ fileio_get_number_of_partition_free_pages (const char *path_p,
   if (rye_mkdir (dir, 0777) != true)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_IO_MOUNT_FAIL, 1, path_p);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL,
+			   1, path_p);
       assert (npages == -1);
       return npages;
     }
@@ -3377,14 +3390,15 @@ fileio_get_number_of_partition_free_pages (const char *path_p,
   if (statfs (path_p, &buf) == -1)
     {
       if (errno == ENOENT
-	  && ((vol_fd = fileio_open (path_p, FILEIO_DISK_FORMAT_MODE,
-				     FILEIO_DISK_PROTECTION_MODE)) !=
-	      NULL_VOLDES))
+	  &&
+	  ((vol_fd =
+	    fileio_open (path_p, FILEIO_DISK_FORMAT_MODE,
+			 FILEIO_DISK_PROTECTION_MODE)) != NULL_VOLDES))
 	{
 	  /* The given file did not exist. We create it for temporary
 	     consumption then it is removed */
-	  npages = fileio_get_number_of_partition_free_pages (path_p,
-							      page_size);
+	  npages =
+	    fileio_get_number_of_partition_free_pages (path_p, page_size);
 	  /* Close the file and remove it */
 	  fileio_close (vol_fd);
 	  (void) rye_remove_files (path_p);
@@ -3517,8 +3531,9 @@ fileio_check_file_exist (char *name_p, char *new_guess_path_p, int check_size,
   vol_fd = fileio_open (new_guess_path_p, O_RDONLY, 0);
   if (vol_fd == NULL_VOLDES)
     {
-      vol_fd = fileio_open (new_guess_path_p, FILEIO_DISK_FORMAT_MODE,
-			    FILEIO_DISK_PROTECTION_MODE);
+      vol_fd =
+	fileio_open (new_guess_path_p, FILEIO_DISK_FORMAT_MODE,
+		     FILEIO_DISK_PROTECTION_MODE);
       if (vol_fd == NULL_VOLDES && errno == ENAMETOOLONG)
 	{
 	  *max_name_size_p = check_size + 1;
@@ -3548,8 +3563,8 @@ fileio_check_file_exist (char *name_p, char *new_guess_path_p, int check_size,
 
 static char *
 fileio_check_file_is_same (char *name_p, char *new_guess_path_p,
-			   int check_size,
-			   int *max_name_size_p, struct stat *buf)
+			   int check_size, int *max_name_size_p,
+			   struct stat *buf)
 {
   char *tmp_name_p;
 
@@ -3583,8 +3598,7 @@ fileio_check_file_is_same (char *name_p, char *new_guess_path_p,
  *       determine using pathconf.
  */
 static int
-fileio_get_primitive_way_max (const char *path_p,
-			      long int *file_name_max_p,
+fileio_get_primitive_way_max (const char *path_p, long int *file_name_max_p,
 			      long int *path_name_max_p)
 {
   static char last_guess_path[PATH_MAX] = { '\0' };
@@ -3675,14 +3689,16 @@ fileio_get_primitive_way_max (const char *path_p,
 	  if (max_name_size > 257 && check256 == 1)
 	    {
 	      check256 = 0;
-	      name_p = fileio_check_file_exist (name_p, new_guess_path, 256,
-						&max_name_size);
+	      name_p =
+		fileio_check_file_exist (name_p, new_guess_path, 256,
+					 &max_name_size);
 	    }
 	  else if (max_name_size > 15 && check14 == 1)
 	    {
 	      check14 = 0;
-	      name_p = fileio_check_file_exist (name_p, new_guess_path, 14,
-						&max_name_size);
+	      name_p =
+		fileio_check_file_exist (name_p, new_guess_path, 14,
+					 &max_name_size);
 	    }
 	  *name_p-- = '\0';
 	  max_name_size--;
@@ -3727,16 +3743,18 @@ fileio_get_primitive_way_max (const char *path_p,
 	  if (max_name_size > 257 && check256 == 1)
 	    {
 	      check256 = 0;
-	      name_p = fileio_check_file_is_same (name_p, new_guess_path, 256,
-						  &max_name_size, buf);
+	      name_p =
+		fileio_check_file_is_same (name_p, new_guess_path, 256,
+					   &max_name_size, buf);
 	      /* Check if the name with 257 is the same. If it is advance the
 	         to 256 */
 	    }
 	  else if (max_name_size > 15 && check14 == 1)
 	    {
 	      check14 = 0;
-	      name_p = fileio_check_file_is_same (name_p, new_guess_path, 14,
-						  &max_name_size, buf);
+	      name_p =
+		fileio_check_file_is_same (name_p, new_guess_path, 14,
+					   &max_name_size, buf);
 	    }
 	}
       else
@@ -3814,8 +3832,8 @@ error:
  *       time for both filename and pathname.
  */
 int
-fileio_get_max_name (const char *given_path_p,
-		     long int *file_name_max_p, long int *path_name_max_p)
+fileio_get_max_name (const char *given_path_p, long int *file_name_max_p,
+		     long int *path_name_max_p)
 {
   char new_path[PATH_MAX];
   const char *path_p;
@@ -3997,8 +4015,8 @@ fileio_make_volume_ext_name (char *vol_ext_full_name_p,
 
   if (vol_id == 0)
     {
-      sprintf (vol_ext_full_name_p, "%s%s%s",
-	       ext_path_p, FILEIO_PATH_SEPARATOR (ext_path_p), ext_name_p);
+      sprintf (vol_ext_full_name_p, "%s%s%s", ext_path_p,
+	       FILEIO_PATH_SEPARATOR (ext_path_p), ext_name_p);
     }
   else
     {
@@ -4025,8 +4043,8 @@ fileio_make_volume_ext_given_name (char *vol_ext_full_name_p,
 				   const char *ext_path_p,
 				   const char *ext_name_p)
 {
-  sprintf (vol_ext_full_name_p, "%s%s%s",
-	   ext_path_p, FILEIO_PATH_SEPARATOR (ext_path_p), ext_name_p);
+  sprintf (vol_ext_full_name_p, "%s%s%s", ext_path_p,
+	   FILEIO_PATH_SEPARATOR (ext_path_p), ext_name_p);
 }
 #endif
 
@@ -4047,9 +4065,8 @@ fileio_make_volume_temp_name (char *vol_tmp_full_name_p,
 			      const char *tmp_path_p, const char *tmp_name_p,
 			      VOLID vol_id)
 {
-  sprintf (vol_tmp_full_name_p, "%s%c%s%s%03d",
-	   tmp_path_p, PATH_SEPARATOR, tmp_name_p, FILEIO_VOLTMP_PREFIX,
-	   vol_id);
+  sprintf (vol_tmp_full_name_p, "%s%c%s%s%03d", tmp_path_p, PATH_SEPARATOR,
+	   tmp_name_p, FILEIO_VOLTMP_PREFIX, vol_id);
 }
 
 /*
@@ -4213,10 +4230,12 @@ fileio_cache (VOLID vol_id, const char *vol_label_p, int vol_fd,
       else
 	{
 	  /* volid is the next temp volume id */
-	  i = (fileio_Vol_info_header.num_volinfo_array - 1
-	       - (LOG_MAX_DBVOLID - vol_id) / FILEIO_VOLINFO_INCREMENT);
-	  j = (FILEIO_VOLINFO_INCREMENT - 1
-	       - (LOG_MAX_DBVOLID - vol_id) % FILEIO_VOLINFO_INCREMENT);
+	  i =
+	    (fileio_Vol_info_header.num_volinfo_array - 1 -
+	     (LOG_MAX_DBVOLID - vol_id) / FILEIO_VOLINFO_INCREMENT);
+	  j =
+	    (FILEIO_VOLINFO_INCREMENT - 1 -
+	     (LOG_MAX_DBVOLID - vol_id) % FILEIO_VOLINFO_INCREMENT);
 	  if (((LOG_MAX_DBVOLID - vol_id) >=
 	       fileio_Vol_info_header.max_temp_vols)
 	      && fileio_expand_temporary_volume_info (&fileio_Vol_info_header,
@@ -4256,7 +4275,8 @@ fileio_cache (VOLID vol_id, const char *vol_label_p, int vol_fd,
       pthread_mutex_lock (&fileio_Sys_vol_info_header.mutex);
       if (fileio_Sys_vol_info_header.anchor.vdes != NULL_VOLDES)
 	{
-	  sys_vol_info_p = (FILEIO_SYSTEM_VOLUME_INFO *)
+	  sys_vol_info_p =
+	    (FILEIO_SYSTEM_VOLUME_INFO *)
 	    malloc (sizeof (FILEIO_SYSTEM_VOLUME_INFO));
 	  if (sys_vol_info_p == NULL)
 	    {
@@ -4315,8 +4335,8 @@ fileio_decache (THREAD_ENTRY * thread_p, int vol_fd)
 	NULL);
        (sys_vol_info_p != NULL
 	&& sys_vol_info_p->vdes != NULL_VOLDES);
-       prev_sys_vol_info_p = sys_vol_info_p,
-       sys_vol_info_p = sys_vol_info_p->next)
+       prev_sys_vol_info_p = sys_vol_info_p, sys_vol_info_p =
+       sys_vol_info_p->next)
     {
       if (sys_vol_info_p->vdes == vol_fd)
 	{
@@ -4446,10 +4466,14 @@ fileio_get_volume_label (VOLID vol_id, bool is_peek)
 	      return NULL;
 	    }
 
-	  i = fileio_Vol_info_header.num_volinfo_array - 1
-	    - (LOG_MAX_DBVOLID - vol_id) / FILEIO_VOLINFO_INCREMENT;
-	  j = FILEIO_VOLINFO_INCREMENT - 1
-	    - (LOG_MAX_DBVOLID - vol_id) % FILEIO_VOLINFO_INCREMENT;
+	  i =
+	    fileio_Vol_info_header.num_volinfo_array - 1 - (LOG_MAX_DBVOLID -
+							    vol_id) /
+	    FILEIO_VOLINFO_INCREMENT;
+	  j =
+	    FILEIO_VOLINFO_INCREMENT - 1 - (LOG_MAX_DBVOLID -
+					    vol_id) %
+	    FILEIO_VOLINFO_INCREMENT;
 	}
       vol_info_p = &fileio_Vol_info_header.volinfo[i][j];
       vol_label_p = (char *) vol_info_p->vlabel;
@@ -4650,10 +4674,14 @@ fileio_get_volume_descriptor (VOLID vol_id)
 	    {
 	      return NULL_VOLDES;
 	    }
-	  i = fileio_Vol_info_header.num_volinfo_array - 1
-	    - (LOG_MAX_DBVOLID - vol_id) / FILEIO_VOLINFO_INCREMENT;
-	  j = FILEIO_VOLINFO_INCREMENT - 1
-	    - (LOG_MAX_DBVOLID - vol_id) % FILEIO_VOLINFO_INCREMENT;
+	  i =
+	    fileio_Vol_info_header.num_volinfo_array - 1 - (LOG_MAX_DBVOLID -
+							    vol_id) /
+	    FILEIO_VOLINFO_INCREMENT;
+	  j =
+	    FILEIO_VOLINFO_INCREMENT - 1 - (LOG_MAX_DBVOLID -
+					    vol_id) %
+	    FILEIO_VOLINFO_INCREMENT;
 	}
       vol_info_p = &fileio_Vol_info_header.volinfo[i][j];
       vol_fd = vol_info_p->vdes;
@@ -4791,8 +4819,8 @@ fileio_symlink (const char *src_p, const char *dest_p, int overwrite)
 
   if (symlink (src_p, dest_p) == -1)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_BO_CANNOT_CREATE_LINK, 2, src_p, dest_p);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_CANNOT_CREATE_LINK, 2,
+	      src_p, dest_p);
       return ER_FAILED;
     }
 

@@ -190,8 +190,8 @@ btree_get_stats_key (THREAD_ENTRY * thread_p, BTREE_STATS_ENV * env)
       assert (clear_key == false);
 
       ret = btree_read_record (thread_p, &BTS->btid_int, &rec,
-			       &key_value, NULL,
-			       BTREE_LEAF_NODE, &clear_key, PEEK_KEY_VALUE);
+			       &key_value, NULL, BTREE_LEAF_NODE, &clear_key,
+			       PEEK_KEY_VALUE);
       if (ret != NO_ERROR)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -260,10 +260,9 @@ btree_get_stats_with_AR_sampling (THREAD_ENTRY * thread_p,
 	  break;		/* found all samples */
 	}
 
-      BTS->C_page = btree_find_AR_sampling_leaf (thread_p,
-						 BTS->btid_int.sys_btid,
-						 &BTS->C_vpid,
-						 stat_info, &found);
+      BTS->C_page =
+	btree_find_AR_sampling_leaf (thread_p, BTS->btid_int.sys_btid,
+				     &BTS->C_vpid, stat_info, &found);
       if (BTS->C_page == NULL)
 	{
 	  GOTO_EXIT_ON_ERROR;
@@ -299,9 +298,9 @@ btree_get_stats_with_AR_sampling (THREAD_ENTRY * thread_p,
 		    }
 
 		  /* get the next index record */
-		  ret = btree_find_next_record (thread_p,
-						BTS, BTS->use_desc_index,
-						NULL);
+		  ret =
+		    btree_find_next_record (thread_p, BTS,
+					    BTS->use_desc_index, NULL);
 		  if (ret != NO_ERROR)
 		    {
 		      GOTO_EXIT_ON_ERROR;
@@ -734,9 +733,8 @@ btree_find_AR_sampling_leaf (THREAD_ENTRY * thread_p, BTID * btid,
   P_vpid.volid = btid->vfid.volid;
   P_vpid.pageid = btid->root_pageid;
   P_page =
-    btree_pgbuf_fix (thread_p, &(btid->vfid), &P_vpid,
-		     PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-		     PAGE_BTREE_ROOT);
+    btree_pgbuf_fix (thread_p, &(btid->vfid), &P_vpid, PGBUF_LATCH_READ,
+		     PGBUF_UNCONDITIONAL_LATCH, PAGE_BTREE_ROOT);
   if (P_page == NULL)
     {
       goto error;
@@ -751,9 +749,9 @@ btree_find_AR_sampling_leaf (THREAD_ENTRY * thread_p, BTID * btid,
   node_type = BTREE_NON_LEAF_NODE;
   key_cnt = node_header.key_cnt;
 
-  est_page_size = (int) (DB_PAGESIZE - (spage_header_size () +
-					NODE_HEADER_SIZE +
-					spage_slot_size ()));
+  est_page_size =
+    (int) (DB_PAGESIZE -
+	   (spage_header_size () + NODE_HEADER_SIZE + spage_slot_size ()));
   assert (est_page_size > 0);
 
   while (node_type == BTREE_NON_LEAF_NODE)
@@ -785,9 +783,8 @@ btree_find_AR_sampling_leaf (THREAD_ENTRY * thread_p, BTID * btid,
       btree_read_fixed_portion_of_non_leaf_record (&rec, &nleaf);
       C_vpid = nleaf.pnt;
       C_page =
-	btree_pgbuf_fix (thread_p, &(btid->vfid), &C_vpid,
-			 PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH,
-			 PAGE_BTREE);
+	btree_pgbuf_fix (thread_p, &(btid->vfid), &C_vpid, PGBUF_LATCH_READ,
+			 PGBUF_UNCONDITIONAL_LATCH, PAGE_BTREE);
       if (C_page == NULL)
 	{
 	  goto error;

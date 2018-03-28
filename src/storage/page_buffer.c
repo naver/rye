@@ -493,12 +493,11 @@ static PGBUF_BCB *pgbuf_allocate_bcb (THREAD_ENTRY * thread_p,
 				      const VPID * src_vpid,
 				      const char *caller_file,
 				      int caller_line);
-static int pgbuf_victimize_bcb (THREAD_ENTRY * thread_p,
-				PGBUF_BCB * bufptr,
+static int pgbuf_victimize_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
 				const char *caller_file, int caller_line);
 static int pgbuf_flush_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
-			    int synchronous,
-			    const char *caller_file, int caller_line);
+			    int synchronous, const char *caller_file,
+			    int caller_line);
 #else /* NDEBUG */
 static PGBUF_BCB *pgbuf_allocate_bcb (THREAD_ENTRY * thread_p,
 				      const VPID * src_vpid);
@@ -590,8 +589,8 @@ static int pgbuf_compare_victim_list (const void *p1, const void *p2);
 static void pgbuf_set_bcb_page_vpid (THREAD_ENTRY * thread_p,
 				     PGBUF_BCB * bufptr);
 static bool pgbuf_check_page_ptype_internal (THREAD_ENTRY * thread_p,
-					     PAGE_PTR pgptr,
-					     PAGE_TYPE ptype, bool no_error);
+					     PAGE_PTR pgptr, PAGE_TYPE ptype,
+					     bool no_error);
 static bool pgbuf_check_bcb_page_vpid (THREAD_ENTRY * thread_p,
 				       PGBUF_BCB * bufptr);
 /*
@@ -728,8 +727,9 @@ pgbuf_initialize (void)
   if (pgbuf_Pool.victim_cand_list == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (pgbuf_Pool.num_buffers *
-		  sizeof (PGBUF_VICTIM_CANDIDATE_LIST)));
+	      1,
+	      (pgbuf_Pool.num_buffers *
+	       sizeof (PGBUF_VICTIM_CANDIDATE_LIST)));
       goto error;
     }
 
@@ -871,8 +871,9 @@ pgbuf_fix_with_retry (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
   int i = 0;
   bool noretry = false;
 
-  while ((pgptr = pgbuf_fix (thread_p, vpid, newpg, mode,
-			     PGBUF_UNCONDITIONAL_LATCH, ptype)) == NULL)
+  while ((pgptr =
+	  pgbuf_fix (thread_p, vpid, newpg, mode, PGBUF_UNCONDITIONAL_LATCH,
+		     ptype)) == NULL)
     {
       switch (er_errid ())
 	{
@@ -891,8 +892,8 @@ pgbuf_fix_with_retry (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
 
       if (noretry || i > retry)
 	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_PAGE_LATCH_ABORTED, 2, vpid->volid, vpid->pageid);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_PAGE_LATCH_ABORTED, 2,
+		  vpid->volid, vpid->pageid);
 	  break;
 	}
     }
@@ -922,8 +923,9 @@ pgbuf_fix_without_validation_debug (THREAD_ENTRY * thread_p,
     thread_set_check_page_validation (thread_p, false);
 #endif /* SERVER_MODE */
 
-  pgptr = pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition,
-			   ptype, caller_file, caller_line);
+  pgptr =
+    pgbuf_fix_debug (thread_p, vpid, newpg, request_mode, condition, ptype,
+		     caller_file, caller_line);
 
 #if defined(SERVER_MODE)
   rv = thread_set_check_page_validation (thread_p, old_check_page_validation);
@@ -945,8 +947,8 @@ pgbuf_fix_without_validation_release (THREAD_ENTRY * thread_p,
 #endif /* SERVER_MODE */
 
 #if defined(SERVER_MODE)
-  old_check_page_validation = thread_set_check_page_validation (thread_p,
-								false);
+  old_check_page_validation =
+    thread_set_check_page_validation (thread_p, false);
 #endif /* SERVER_MODE */
 
   pgptr =
@@ -970,17 +972,16 @@ pgbuf_fix_newpg_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
   assert (ptype != PAGE_UNKNOWN);
 
   return pgbuf_fix_debug (thread_p, vpid, NEW_PAGE,
-			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			  ptype, caller_file, caller_line);
+			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, ptype,
+			  caller_file, caller_line);
 }
 #else /* NDEBUG */
 PAGE_PTR
 pgbuf_fix_newpg_release (THREAD_ENTRY * thread_p, const VPID * vpid,
 			 UNUSED_ARG const PAGE_TYPE ptype)
 {
-  return pgbuf_fix_release (thread_p, vpid, NEW_PAGE,
-			    PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			    ptype);
+  return pgbuf_fix_release (thread_p, vpid, NEW_PAGE, PGBUF_LATCH_WRITE,
+			    PGBUF_UNCONDITIONAL_LATCH, ptype);
 }
 #endif /* NDEBUG */
 
@@ -1051,12 +1052,12 @@ pgbuf_fix_release (THREAD_ENTRY * thread_p, const VPID * vpid, int newpg,
       return NULL;
     }
 
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_FETCH))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_FETCH))
     {
       /* Make sure that the page has been allocated (i.e., is a valid page) */
-      if (pgbuf_is_valid_page (thread_p, vpid, false,
-			       NULL, NULL) != DISK_VALID)
+      if (pgbuf_is_valid_page (thread_p, vpid, false, NULL, NULL) !=
+	  DISK_VALID)
 	{
 	  return NULL;
 	}
@@ -1092,8 +1093,8 @@ try_again:
   if (thread_get_check_interrupt (thread_p) == true)
 #endif /* SERVER_MODE */
     {
-      if (logtb_is_interrupted (thread_p, true,
-				&pgbuf_Pool.check_for_interrupts) == true)
+      if (logtb_is_interrupted
+	  (thread_p, true, &pgbuf_Pool.check_for_interrupts) == true)
 	{
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTED, 0);
 	  return NULL;
@@ -1284,11 +1285,12 @@ try_again:
   /* Latch Pass */
 #if !defined (NDEBUG)
   if (pgbuf_latch_bcb_upon_fix (thread_p, bufptr, request_mode,
-				buf_lock_acquired, condition,
-				caller_file, caller_line) != NO_ERROR)
+				buf_lock_acquired, condition, caller_file,
+				caller_line) != NO_ERROR)
 #else /* NDEBUG */
-  if (pgbuf_latch_bcb_upon_fix (thread_p, bufptr, request_mode,
-				buf_lock_acquired, condition) != NO_ERROR)
+  if (pgbuf_latch_bcb_upon_fix
+      (thread_p, bufptr, request_mode, buf_lock_acquired,
+       condition) != NO_ERROR)
 #endif /* NDEBUG */
     {
       /* bufptr->BCB_mutex has been released,
@@ -1412,8 +1414,8 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 #if !defined (NDEBUG)
   assert (pgptr != NULL);
 
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_FREE))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_FREE))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -1445,8 +1447,7 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
     {
       er_log_debug (ARG_FILE_LINE, "pgbuf_unfix: WARNING: No logging on"
 		    " dirty pageid = %d of Volume = %s.\n Recovery problems"
-		    " may happen\n",
-		    bufptr->vpid.pageid,
+		    " may happen\n", bufptr->vpid.pageid,
 		    fileio_get_volume_label (bufptr->vpid.volid, PEEK));
       /*
        * Do not give warnings on this page any longer. Set the LSA of the
@@ -1460,8 +1461,9 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
     }
 
   /* Check for over runs */
-  if (memcmp (PGBUF_FIND_BUFFER_GUARD (bufptr), pgbuf_Guard,
-	      sizeof (pgbuf_Guard)) != 0)
+  if (memcmp
+      (PGBUF_FIND_BUFFER_GUARD (bufptr), pgbuf_Guard,
+       sizeof (pgbuf_Guard)) != 0)
     {
       er_log_debug (ARG_FILE_LINE, "pgbuf_unfix: SYSTEM ERROR"
 		    "buffer of pageid = %d|%d has been OVER RUN",
@@ -1530,8 +1532,8 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
    * since its operations and their implications are very expensive.
    * Too much I/O
    */
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       /*
        * Check if the content of the page is consistent and then scramble
@@ -1559,8 +1561,8 @@ pgbuf_unfix (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 		{
 		  /* flush the page with PGBUF_LATCH_FLUSH mode */
 #if !defined(NDEBUG)
-		  (void) pgbuf_flush_bcb (thread_p, bufptr, true,
-					  caller_file, caller_line);
+		  (void) pgbuf_flush_bcb (thread_p, bufptr, true, caller_file,
+					  caller_line);
 #else /* NDEBUG */
 		  (void) pgbuf_flush_bcb (thread_p, bufptr, true);
 #endif /* NDEBUG */
@@ -1722,8 +1724,8 @@ pgbuf_unfix_all (UNUSED_ARG THREAD_ENTRY * thread_p)
 #if defined(RYE_DEBUG)
 	  consistent = pgbuf_is_consistent (bufptr, 0);
 	  consistent_str = ((consistent == PGBUF_CONTENT_GOOD) ? "GOOD" :
-			    (consistent == PGBUF_CONTENT_BAD) ? "BAD" :
-			    "LIKELY BAD");
+			    (consistent ==
+			     PGBUF_CONTENT_BAD) ? "BAD" : "LIKELY BAD");
 #else /* RYE_DEBUG */
 	  consistent_str = "UNKNOWN";
 #endif /* RYE_DEBUG */
@@ -1791,8 +1793,8 @@ pgbuf_invalidate (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
   UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_FETCH))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_FETCH))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -1816,11 +1818,12 @@ pgbuf_invalidate (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 
       /* If the page has been fixed more than one time, just unfix it. */
 #if !defined(NDEBUG)
-      if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr, holder_status,
-					caller_file, caller_line) != NO_ERROR)
+      if (pgbuf_unlatch_bcb_upon_unfix
+	  (thread_p, bufptr, holder_status, caller_file,
+	   caller_line) != NO_ERROR)
 #else /* NDEBUG */
-      if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr,
-					holder_status) != NO_ERROR)
+      if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr, holder_status) !=
+	  NO_ERROR)
 #endif /* NDEBUG */
 	{
 	  return ER_FAILED;
@@ -1854,11 +1857,11 @@ pgbuf_invalidate (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
   holder_status = pgbuf_unlatch_thrd_holder (thread_p, bufptr);
 
 #if !defined(NDEBUG)
-  if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr, holder_status,
-				    caller_file, caller_line) != NO_ERROR)
+  if (pgbuf_unlatch_bcb_upon_unfix
+      (thread_p, bufptr, holder_status, caller_file, caller_line) != NO_ERROR)
 #else /* NDEBUG */
-  if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr,
-				    holder_status) != NO_ERROR)
+  if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr, holder_status) !=
+      NO_ERROR)
 #endif /* NDEBUG */
     {
       return ER_FAILED;
@@ -2019,8 +2022,8 @@ pgbuf_invalidate_all (THREAD_ENTRY * thread_p, VOLID volid)
 	{
 	  temp_vpid = bufptr->vpid;
 #if !defined(NDEBUG)
-	  if (pgbuf_flush_bcb (thread_p, bufptr, true,
-			       caller_file, caller_line) != NO_ERROR)
+	  if (pgbuf_flush_bcb
+	      (thread_p, bufptr, true, caller_file, caller_line) != NO_ERROR)
 #else /* NDEBUG */
 	  if (pgbuf_flush_bcb (thread_p, bufptr, true) != NO_ERROR)
 #endif /* NDEBUG */
@@ -2087,8 +2090,8 @@ pgbuf_flush (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, int free_page)
   UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -2119,11 +2122,12 @@ pgbuf_flush (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, int free_page)
       holder_status = pgbuf_unlatch_thrd_holder (thread_p, bufptr);
 
 #if !defined(NDEBUG)
-      if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr, holder_status,
-					caller_file, caller_line) != NO_ERROR)
+      if (pgbuf_unlatch_bcb_upon_unfix
+	  (thread_p, bufptr, holder_status, caller_file,
+	   caller_line) != NO_ERROR)
 #else /* NDEBUG */
-      if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr,
-					holder_status) != NO_ERROR)
+      if (pgbuf_unlatch_bcb_upon_unfix (thread_p, bufptr, holder_status) !=
+	  NO_ERROR)
 #endif /* NDEBUG */
 	{
 	  return NULL;
@@ -2156,8 +2160,8 @@ pgbuf_flush_with_wal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
   UNUSED_VAR int rv;
 #endif /* SERVER_MODE */
 
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_FETCH))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_FETCH))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -2218,8 +2222,9 @@ pgbuf_flush_all_helper (THREAD_ENTRY * thread_p, VOLID volid,
       rv = pthread_mutex_lock (&bufptr->BCB_mutex);
       /* flush condition check */
       if ((bufptr->dirty == false)
-	  || (is_unfixed_only && bufptr->fcnt > 0)
-	  || (volid != NULL_VOLID && volid != bufptr->vpid.volid))
+	  || (is_unfixed_only && bufptr->fcnt > 0) || (volid != NULL_VOLID
+						       && volid !=
+						       bufptr->vpid.volid))
 	{
 	  pthread_mutex_unlock (&bufptr->BCB_mutex);
 	  continue;
@@ -2263,8 +2268,8 @@ int
 pgbuf_flush_all_debug (THREAD_ENTRY * thread_p, VOLID volid,
 		       const char *caller_file, int caller_line)
 {
-  return pgbuf_flush_all_helper (thread_p, volid, false, false,
-				 caller_file, caller_line);
+  return pgbuf_flush_all_helper (thread_p, volid, false, false, caller_file,
+				 caller_line);
 }
 #else /* NDEBUG */
 int
@@ -2289,8 +2294,8 @@ int
 pgbuf_flush_all_unfixed_debug (THREAD_ENTRY * thread_p, VOLID volid,
 			       const char *caller_file, int caller_line)
 {
-  return pgbuf_flush_all_helper (thread_p, volid, true, false,
-				 caller_file, caller_line);
+  return pgbuf_flush_all_helper (thread_p, volid, true, false, caller_file,
+				 caller_line);
 }
 #else /* NDEBUG */
 int
@@ -2320,8 +2325,8 @@ pgbuf_flush_all_unfixed_and_set_lsa_as_null_debug (THREAD_ENTRY * thread_p,
 						   const char *caller_file,
 						   int caller_line)
 {
-  return pgbuf_flush_all_helper (thread_p, volid, true, true,
-				 caller_file, caller_line);
+  return pgbuf_flush_all_helper (thread_p, volid, true, true, caller_file,
+				 caller_line);
 }
 #else /* NDEBUG */
 int
@@ -2413,8 +2418,8 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
 
   victim_cand_list = pgbuf_Pool.victim_cand_list;
 
-  lru_idx = ((pgbuf_Pool.last_flushed_LRU_list_idx + 1)
-	     % pgbuf_Pool.num_LRU_list);
+  lru_idx =
+    ((pgbuf_Pool.last_flushed_LRU_list_idx + 1) % pgbuf_Pool.num_LRU_list);
   start_lru_idx = lru_idx;
 
   victim_cand_count = 0;
@@ -2478,8 +2483,9 @@ pgbuf_flush_victim_candidate (THREAD_ENTRY * thread_p, float flush_ratio)
 	      || bufptr->dirty == false
 	      || bufptr->zone != PGBUF_LRU_2_ZONE
 	      || bufptr->latch_mode != PGBUF_NO_LATCH
-	      || !(LSA_EQ (&bufptr->oldest_unflush_lsa,
-			   &victim_cand_list[i].recLSA))
+	      ||
+	      !(LSA_EQ
+		(&bufptr->oldest_unflush_lsa, &victim_cand_list[i].recLSA))
 	      || bufptr->avoid_victim == true)
 	    {
 	      pthread_mutex_unlock (&bufptr->BCB_mutex);
@@ -2665,8 +2671,9 @@ pgbuf_flush_checkpoint (THREAD_ENTRY * thread_p,
 	      vpid = bufptr->vpid;
 	      pthread_mutex_unlock (&bufptr->BCB_mutex);
 
-	      pgptr = pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
-				 PGBUF_UNCONDITIONAL_LATCH, PAGE_UNKNOWN);
+	      pgptr =
+		pgbuf_fix (thread_p, &vpid, OLD_PAGE, PGBUF_LATCH_READ,
+			   PGBUF_UNCONDITIONAL_LATCH, PAGE_UNKNOWN);
 	      if (pgptr == NULL
 		  || pgbuf_flush_with_wal (thread_p, pgptr) == NULL)
 		{
@@ -2791,8 +2798,9 @@ pgbuf_copy_to_area (THREAD_ENTRY * thread_p, const VPID * vpid,
       /* The page is not on the buffer pool. Do we want to cache the page ? */
       if (do_fetch == true)
 	{
-	  pgptr = pgbuf_fix (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			     PGBUF_UNCONDITIONAL_LATCH, PAGE_AREA);
+	  pgptr =
+	    pgbuf_fix (thread_p, vpid, OLD_PAGE, PGBUF_LATCH_READ,
+		       PGBUF_UNCONDITIONAL_LATCH, PAGE_AREA);
 	  if (pgptr != NULL)
 	    {
 	      memcpy (area, (char *) pgptr + start_offset, length);
@@ -2811,11 +2819,11 @@ pgbuf_copy_to_area (THREAD_ENTRY * thread_p, const VPID * vpid,
 	   * Do not cache the page in the page buffer pool.
 	   * Read the needed portion of the page directly from disk
 	   */
-	  if (pgbuf_get_check_page_validation (thread_p,
-					       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+	  if (pgbuf_get_check_page_validation
+	      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
 	    {
-	      if (pgbuf_is_valid_page (thread_p, vpid, false
-				       NULL, NULL) != DISK_VALID)
+	      if (pgbuf_is_valid_page (thread_p, vpid, false NULL, NULL) !=
+		  DISK_VALID)
 		{
 		  return NULL;
 		}
@@ -2915,11 +2923,11 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
 	  /* Do not cache the page in the page buffer pool.
 	   * Write the desired portion of the page directly to disk
 	   */
-	  if (pgbuf_get_check_page_validation (thread_p,
-					       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+	  if (pgbuf_get_check_page_validation
+	      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
 	    {
-	      if (pgbuf_is_valid_page (thread_p, vpid, false
-				       NULL, NULL) != DISK_VALID)
+	      if (pgbuf_is_valid_page (thread_p, vpid, false NULL, NULL) !=
+		  DISK_VALID)
 		{
 		  return NULL;
 		}
@@ -2929,8 +2937,9 @@ pgbuf_copy_from_area (THREAD_ENTRY * thread_p, const VPID * vpid,
 	  PERF_MON_GET_CURRENT_TIME (perf_start);
 
 	  vol_fd = fileio_get_volume_descriptor (vpid->volid);
-	  if (fileio_write_user_area (thread_p, vol_fd, vpid->pageid,
-				      start_offset, length, area) == NULL)
+	  if (fileio_write_user_area
+	      (thread_p, vol_fd, vpid->pageid, start_offset, length,
+	       area) == NULL)
 	    {
 	      area = NULL;
 	    }
@@ -2979,8 +2988,8 @@ pgbuf_set_dirty (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, int free_page)
 {
   PGBUF_BCB *bufptr;
 
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -2996,8 +3005,8 @@ pgbuf_set_dirty (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, int free_page)
   if (bufptr->vpid.pageid == 0)
     {
       DISK_VAR_HEADER *vhdr = (DISK_VAR_HEADER *) pgptr;
-      if (strncmp (vhdr->magic, RYE_MAGIC_DATABASE_VOLUME,
-		   RYE_MAGIC_MAX_LENGTH) != 0)
+      if (strncmp
+	  (vhdr->magic, RYE_MAGIC_DATABASE_VOLUME, RYE_MAGIC_MAX_LENGTH) != 0)
 	{
 	  assert (0);
 	}
@@ -3052,8 +3061,8 @@ pgbuf_set_lsa (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 {
   PGBUF_BCB *bufptr;
 
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -3360,8 +3369,8 @@ pgbuf_cache_permanent_volume_for_temporary (VOLID volid)
       if (area == NULL)
 	{
 	  pthread_mutex_unlock (&pgbuf_Pool.volinfo_mutex);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OUT_OF_VIRTUAL_MEMORY, 1, nbytes);
+	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
+		  1, nbytes);
 	  return;
 	}
       pgbuf_Pool.permvols_tmparea_volids = (VOLID *) area;
@@ -3563,8 +3572,8 @@ pgbuf_initialize_bcb_table (void)
   pgbuf_Pool.BCB_table = (PGBUF_BCB *) malloc (alloc_size);
   if (pgbuf_Pool.BCB_table == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, alloc_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      alloc_size);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -3573,8 +3582,8 @@ pgbuf_initialize_bcb_table (void)
   pgbuf_Pool.iopage_table = (PGBUF_IOPAGE_BUFFER *) malloc (alloc_size);
   if (pgbuf_Pool.iopage_table == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, alloc_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      alloc_size);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -3646,8 +3655,8 @@ pgbuf_initialize_hash_table (void)
     (PGBUF_BUFFER_HASH *) malloc (hashsize * PGBUF_BUFFER_HASH_SIZE);
   if (pgbuf_Pool.buf_hash_table == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (hashsize * PGBUF_BUFFER_HASH_SIZE));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      (hashsize * PGBUF_BUFFER_HASH_SIZE));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -3684,8 +3693,8 @@ pgbuf_initialize_lock_table (void)
   pgbuf_Pool.buf_lock_table = (PGBUF_BUFFER_LOCK *) malloc (alloc_size);
   if (pgbuf_Pool.buf_lock_table == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, alloc_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      alloc_size);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -3775,12 +3784,13 @@ pgbuf_initialize_thrd_holder (void)
   thrd_num_total = 1;
 #endif /* !SERVER_MODE */
 
-  pgbuf_Pool.thrd_holder_info = (PGBUF_HOLDER_ANCHOR *)
-    malloc (thrd_num_total * PGBUF_HOLDER_ANCHOR_SIZE);
+  pgbuf_Pool.thrd_holder_info =
+    (PGBUF_HOLDER_ANCHOR *) malloc (thrd_num_total *
+				    PGBUF_HOLDER_ANCHOR_SIZE);
   if (pgbuf_Pool.thrd_holder_info == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, thrd_num_total * PGBUF_HOLDER_ANCHOR_SIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
+	      thrd_num_total * PGBUF_HOLDER_ANCHOR_SIZE);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -4378,8 +4388,9 @@ do_block:
 #endif /* SERVER_MODE */
 
 #if !defined(NDEBUG)
-      if (pgbuf_block_bcb (thread_p, bufptr, request_mode, request_fcnt,
-			   caller_file, caller_line) != NO_ERROR)
+      if (pgbuf_block_bcb
+	  (thread_p, bufptr, request_mode, request_fcnt, caller_file,
+	   caller_line) != NO_ERROR)
 #else /* NDEBUG */
       if (pgbuf_block_bcb (thread_p, bufptr, request_mode, request_fcnt) !=
 	  NO_ERROR)
@@ -4527,8 +4538,8 @@ pgbuf_unlatch_bcb_upon_unfix (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
       if (bufptr->next_wait_thrd != NULL)
 	{
 #if !defined(NDEBUG)
-	  if (pgbuf_wakeup_bcb (thread_p, bufptr,
-				caller_file, caller_line) != NO_ERROR)
+	  if (pgbuf_wakeup_bcb (thread_p, bufptr, caller_file, caller_line) !=
+	      NO_ERROR)
 #else /* NDEBUG */
 	  if (pgbuf_wakeup_bcb (thread_p, bufptr) != NO_ERROR)
 #endif /* NDEBUG */
@@ -4680,8 +4691,9 @@ pgbuf_block_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
       PERF_MON_GET_CURRENT_TIME (perf_start);
 
 #if !defined(NDEBUG)
-      error = pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry,
-				 caller_file, caller_line);
+      error =
+	pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry, caller_file,
+			   caller_line);
 #else /* NDEBUG */
       error = pgbuf_timed_sleep (thread_p, bufptr, cur_thrd_entry);
 #endif /* NDEBUG */
@@ -4717,8 +4729,7 @@ pgbuf_timed_sleep_error_handling (UNUSED_ARG THREAD_ENTRY * thread_p,
 				  UNUSED_ARG int caller_line)
 #else /* NDEBUG */
 static int
-pgbuf_timed_sleep_error_handling (THREAD_ENTRY * thread_p,
-				  PGBUF_BCB * bufptr,
+pgbuf_timed_sleep_error_handling (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
 				  THREAD_ENTRY * thrd_entry)
 #endif				/* NDEBUG */
 {
@@ -4805,8 +4816,8 @@ pgbuf_timed_sleep_error_handling (THREAD_ENTRY * thread_p,
 #if !defined(NDEBUG)
 static int
 pgbuf_timed_sleep (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
-		   THREAD_ENTRY * thrd_entry,
-		   const char *caller_file, int caller_line)
+		   THREAD_ENTRY * thrd_entry, const char *caller_file,
+		   int caller_line)
 #else /* NDEBUG */
 static int
 pgbuf_timed_sleep (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
@@ -4851,8 +4862,9 @@ try_again:
 
   PERF_MON_GET_CURRENT_TIME (perf_start);
 
-  r = pthread_cond_timedwait (&thrd_entry->wakeup_cond,
-			      &thrd_entry->th_entry_lock, &to);
+  r =
+    pthread_cond_timedwait (&thrd_entry->wakeup_cond,
+			    &thrd_entry->th_entry_lock, &to);
 
   mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LATCH_WAITS, 1,
 			       perf_start);
@@ -4872,9 +4884,9 @@ try_again:
       thread_unlock_entry (thrd_entry);
 
 #if !defined(NDEBUG)
-      if (pgbuf_timed_sleep_error_handling (thread_p, bufptr, thrd_entry,
-					    caller_file, caller_line)
-	  == NO_ERROR)
+      if (pgbuf_timed_sleep_error_handling
+	  (thread_p, bufptr, thrd_entry, caller_file,
+	   caller_line) == NO_ERROR)
 #else /* NDEBUG */
       if (pgbuf_timed_sleep_error_handling (thread_p, bufptr, thrd_entry) ==
 	  NO_ERROR)
@@ -4911,9 +4923,9 @@ try_again:
       thread_unlock_entry (thrd_entry);
 
 #if !defined(NDEBUG)
-      if (pgbuf_timed_sleep_error_handling (thread_p, bufptr, thrd_entry,
-					    caller_file, caller_line) ==
-	  NO_ERROR)
+      if (pgbuf_timed_sleep_error_handling
+	  (thread_p, bufptr, thrd_entry, caller_file,
+	   caller_line) == NO_ERROR)
 #else /* NDEBUG */
       if (pgbuf_timed_sleep_error_handling (thread_p, bufptr, thrd_entry) ==
 	  NO_ERROR)
@@ -4937,9 +4949,8 @@ er_set_return:
   /* error setting */
   if (old_wait_msecs == LK_INFINITE_WAIT)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_PAGE_LATCH_TIMEDOUT, 2, bufptr->vpid.volid,
-	      bufptr->vpid.pageid);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_PAGE_LATCH_TIMEDOUT, 2,
+	      bufptr->vpid.volid, bufptr->vpid.pageid);
 
       pthread_mutex_unlock (&bufptr->BCB_mutex);
       if (logtb_is_current_active (thread_p) == true)
@@ -4962,8 +4973,8 @@ er_set_return:
 #endif
 
 	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LK_UNILATERALLY_ABORTED, 4,
-		  tran_index, client_user_name, client_host_name, client_pid);
+		  ER_LK_UNILATERALLY_ABORTED, 4, tran_index, client_user_name,
+		  client_host_name, client_pid);
 	}
       else
 	{
@@ -4979,9 +4990,8 @@ er_set_return:
     }
   else if (old_wait_msecs > 0)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_PAGE_LATCH_TIMEDOUT, 2, bufptr->vpid.volid,
-	      bufptr->vpid.pageid);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_PAGE_LATCH_TIMEDOUT, 2,
+	      bufptr->vpid.volid, bufptr->vpid.pageid);
 
       pthread_mutex_unlock (&bufptr->BCB_mutex);
 
@@ -5574,16 +5584,16 @@ pgbuf_allocate_bcb (THREAD_ENTRY * thread_p, const VPID * src_vpid)
 	       * that is, invalid BCB list is empty,
 	       * allocate a BCB from the bottom of LRU list
 	       */
-	      bufptr = pgbuf_get_victim_from_lru_list (thread_p, &vpid,
-						       check_count);
+	      bufptr =
+		pgbuf_get_victim_from_lru_list (thread_p, &vpid, check_count);
 	      if (bufptr != NULL)
 		{
 		  /* the caller is holding bufptr->BCB_mutex. */
 
 #if !defined(NDEBUG)
-		  if (pgbuf_victimize_bcb (thread_p, bufptr,
-					   caller_file,
-					   caller_line) != NO_ERROR)
+		  if (pgbuf_victimize_bcb
+		      (thread_p, bufptr, caller_file,
+		       caller_line) != NO_ERROR)
 #else /* NDEBUG */
 		  if (pgbuf_victimize_bcb (thread_p, bufptr) != NO_ERROR)
 #endif /* NDEBUG */
@@ -5611,8 +5621,8 @@ pgbuf_allocate_bcb (THREAD_ENTRY * thread_p, const VPID * src_vpid)
       if (thread_get_check_interrupt (thread_p) == true)
 #endif /* SERVER_MODE */
 	{
-	  if (logtb_is_interrupted (thread_p, true,
-				    &pgbuf_Pool.check_for_interrupts) == true)
+	  if (logtb_is_interrupted
+	      (thread_p, true, &pgbuf_Pool.check_for_interrupts) == true)
 	    {
 	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTED, 0);
 	      return NULL;
@@ -5779,8 +5789,8 @@ pgbuf_invalidate_bcb (PGBUF_BCB * bufptr)
  */
 #if !defined(NDEBUG)
 static int
-pgbuf_flush_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr,
-		 int synchronous, const char *caller_file, int caller_line)
+pgbuf_flush_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr, int synchronous,
+		 const char *caller_file, int caller_line)
 #else /* NDEBUG */
 static int
 pgbuf_flush_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr, int synchronous)
@@ -5847,9 +5857,9 @@ pgbuf_flush_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr, int synchronous)
 		    {
 		      /* wake up blocked threads(or transactions). */
 #if !defined(NDEBUG)
-		      if (pgbuf_wakeup_bcb (thread_p, bufptr,
-					    caller_file,
-					    caller_line) != NO_ERROR)
+		      if (pgbuf_wakeup_bcb
+			  (thread_p, bufptr, caller_file,
+			   caller_line) != NO_ERROR)
 #else /* NDEBUG */
 		      if (pgbuf_wakeup_bcb (thread_p, bufptr) != NO_ERROR)
 #endif /* NDEBUG */
@@ -5872,8 +5882,9 @@ pgbuf_flush_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr, int synchronous)
 		{
 		  /* wake up blocked threads(or transactions) */
 #if !defined(NDEBUG)
-		  if (pgbuf_wakeup_bcb (thread_p, bufptr,
-					caller_file, caller_line) != NO_ERROR)
+		  if (pgbuf_wakeup_bcb
+		      (thread_p, bufptr, caller_file,
+		       caller_line) != NO_ERROR)
 #else /* NDEBUG */
 		  if (pgbuf_wakeup_bcb (thread_p, bufptr) != NO_ERROR)
 #endif /* NDEBUG */
@@ -5934,8 +5945,9 @@ pgbuf_flush_bcb (THREAD_ENTRY * thread_p, PGBUF_BCB * bufptr, int synchronous)
 	{
 	  /* After releasing bufptr->BCB_mutex, the caller sleeps. */
 #if !defined(NDEBUG)
-	  if (pgbuf_block_bcb (thread_p, bufptr, PGBUF_LATCH_FLUSH, 0,
-			       caller_file, caller_line) != NO_ERROR)
+	  if (pgbuf_block_bcb
+	      (thread_p, bufptr, PGBUF_LATCH_FLUSH, 0, caller_file,
+	       caller_line) != NO_ERROR)
 #else /* NDEBUG */
 	  if (pgbuf_block_bcb (thread_p, bufptr, PGBUF_LATCH_FLUSH, 0) !=
 	      NO_ERROR)
@@ -6905,17 +6917,17 @@ pgbuf_dump (void)
 	    (bufptr->latch_mode == PGBUF_LATCH_FLUSH) ? "Flush" :
 	    (bufptr->latch_mode == PGBUF_LATCH_VICTIM) ? "Victim" :
 	    (bufptr->latch_mode == PGBUF_LATCH_FLUSH_INVALID) ? "FlushInv" :
-	    (bufptr->latch_mode == PGBUF_LATCH_VICTIM_INVALID) ? "VictimInv" :
-	    "Fault";
+	    (bufptr->latch_mode ==
+	     PGBUF_LATCH_VICTIM_INVALID) ? "VictimInv" : "Fault";
 
 	  zone_str = ((bufptr->zone == PGBUF_LRU_1_ZONE) ? "LRU_1_Zone" :
 		      (bufptr->zone == PGBUF_LRU_2_ZONE) ? "LRU_2_Zone" :
-		      (bufptr->zone == PGBUF_INVALID_ZONE) ? "INVALID_Zone" :
-		      "VOID_Zone");
+		      (bufptr->zone ==
+		       PGBUF_INVALID_ZONE) ? "INVALID_Zone" : "VOID_Zone");
 
 	  consistent_str = ((consistent == PGBUF_CONTENT_GOOD) ? "GOOD" :
-			    (consistent == PGBUF_CONTENT_BAD) ? "BAD" :
-			    "LIKELY BAD");
+			    (consistent ==
+			     PGBUF_CONTENT_BAD) ? "BAD" : "LIKELY BAD");
 
 	  fprintf (stdout, "%4d %5d %6d %4d %9s %1d %1d %1d %11s"
 		   " %lld|%4d %10s %p %p-%p\n",
@@ -6933,7 +6945,8 @@ pgbuf_dump (void)
       pthread_mutex_unlock (&bufptr->BCB_mutex);
     }
 
-  (void) fprintf (stdout, "Number of fetched buffers = %d\n"
+  (void) fprintf (stdout,
+		  "Number of fetched buffers = %d\n"
 		  "Number of dirty buffers = %d\n", nfetched, ndirty);
 }
 
@@ -6963,8 +6976,9 @@ pgbuf_is_consistent (const PGBUF_BCB * bufptr, int likely_bad_after_fixcnt)
   FILEIO_PAGE *malloc_io_pgptr;
 
   /* the caller is holding bufptr->BCB_mutex */
-  if (memcmp (PGBUF_FIND_BUFFER_GUARD (bufptr), pgbuf_Guard,
-	      sizeof (pgbuf_Guard)) != 0)
+  if (memcmp
+      (PGBUF_FIND_BUFFER_GUARD (bufptr), pgbuf_Guard,
+       sizeof (pgbuf_Guard)) != 0)
     {
       er_log_debug (ARG_FILE_LINE, "SYSTEM ERROR"
 		    "buffer of pageid = %d|%d has been OVER RUN",
@@ -6997,8 +7011,9 @@ pgbuf_is_consistent (const PGBUF_BCB * bufptr, int likely_bad_after_fixcnt)
 			 bufptr->iopage_buffer->iopage.page,
 			 DB_PAGESIZE) != 0)
 	    {
-	      consistent = ((bufptr->dirty == true) ?
-			    PGBUF_CONTENT_GOOD : PGBUF_CONTENT_BAD);
+	      consistent =
+		((bufptr->dirty ==
+		  true) ? PGBUF_CONTENT_GOOD : PGBUF_CONTENT_BAD);
 
 	      /* If fix count is greater than likely_bad_after_fixcnt,
 	         the function cannot state that the page is bad */
@@ -7010,8 +7025,9 @@ pgbuf_is_consistent (const PGBUF_BCB * bufptr, int likely_bad_after_fixcnt)
 	    }
 	  else
 	    {
-	      consistent = ((bufptr->dirty == true) ?
-			    PGBUF_CONTENT_LIKELY_BAD : PGBUF_CONTENT_GOOD);
+	      consistent =
+		((bufptr->dirty ==
+		  true) ? PGBUF_CONTENT_LIKELY_BAD : PGBUF_CONTENT_GOOD);
 	    }
 	}
       free_and_init (malloc_io_pgptr);
@@ -7027,8 +7043,8 @@ pgbuf_is_consistent (const PGBUF_BCB * bufptr, int likely_bad_after_fixcnt)
 	  /* The page should be scrambled, otherwise some one step on it */
 	  for (i = 0; i < DB_PAGESIZE; i++)
 	    {
-	      if (bufptr->iopage_buffer->iopage.page[i]
-		  != MEM_REGION_SCRAMBLE_MARK)
+	      if (bufptr->iopage_buffer->iopage.page[i] !=
+		  MEM_REGION_SCRAMBLE_MARK)
 		{
 		  /* The page has been stepped by someone */
 		  consistent = PGBUF_CONTENT_BAD;
@@ -7215,7 +7231,8 @@ pgbuf_add_fixed_at (PGBUF_HOLDER * holder, const char *caller_file,
   if (holder->fix_count > 5)
     {
       assert (false);
-      er_log_debug (ARG_FILE_LINE, "pgbuf_add_fixed_at: WARNING "
+      er_log_debug (ARG_FILE_LINE,
+		    "pgbuf_add_fixed_at: WARNING "
 		    "fix_count = %d is too many.", holder->fix_count);
     }
 #endif
@@ -7260,8 +7277,9 @@ pgbuf_sleep (THREAD_ENTRY * thread_p, pthread_mutex_t * mutex_p)
     {
       pthread_mutex_unlock (mutex_p);
 
-      r = thread_suspend_wakeup_and_unlock_entry (thread_p,
-						  THREAD_PGBUF_SUSPENDED);
+      r =
+	thread_suspend_wakeup_and_unlock_entry (thread_p,
+						THREAD_PGBUF_SUSPENDED);
     }
 
   return r;
@@ -7360,8 +7378,8 @@ pgbuf_get_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
     }
 
 #if 0
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -7466,8 +7484,8 @@ pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
     }
 
 #if 0
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{
@@ -7562,8 +7580,8 @@ pgbuf_check_page_ptype_internal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
     }
 
 #if 0
-  if (pgbuf_get_check_page_validation (thread_p,
-				       PGBUF_DEBUG_PAGE_VALIDATION_ALL))
+  if (pgbuf_get_check_page_validation
+      (thread_p, PGBUF_DEBUG_PAGE_VALIDATION_ALL))
     {
       if (pgbuf_is_valid_page_ptr (pgptr) == false)
 	{

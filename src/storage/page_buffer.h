@@ -110,8 +110,8 @@ extern PAGE_PTR pgbuf_fix_with_retry (THREAD_ENTRY * thread_p,
 #define pgbuf_flush(thread_p, pgptr, free_page) \
 	pgbuf_flush_debug(thread_p, pgptr, free_page, __FILE__, __LINE__)
 extern PAGE_PTR pgbuf_flush_debug (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-				   int free_page,
-				   const char *caller_file, int caller_line);
+				   int free_page, const char *caller_file,
+				   int caller_line);
 
 #define pgbuf_fix(thread_p, vpid, newpg, requestmode, condition, ptype) \
         pgbuf_fix_debug(thread_p, vpid, newpg, requestmode, condition, ptype, \
@@ -119,8 +119,8 @@ extern PAGE_PTR pgbuf_flush_debug (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 extern PAGE_PTR pgbuf_fix_debug (THREAD_ENTRY * thread_p, const VPID * vpid,
 				 int newpg, PGBUF_LATCH_MODE requestmode,
 				 PGBUF_LATCH_CONDITION condition,
-				 PAGE_TYPE ptype,
-				 const char *caller_file, int caller_line);
+				 PAGE_TYPE ptype, const char *caller_file,
+				 int caller_line);
 
 #define pgbuf_fix_newpg(thread_p, vpid, ptype) \
         pgbuf_fix_newpg_debug(thread_p, vpid, ptype, __FILE__, __LINE__)
@@ -303,8 +303,8 @@ extern PAGE_TYPE pgbuf_get_page_ptype (THREAD_ENTRY * thread_p,
 				       PAGE_PTR pgptr);
 extern void pgbuf_set_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
 				  PAGE_TYPE ptype);
-extern bool pgbuf_check_page_ptype (THREAD_ENTRY * thread_p,
-				    PAGE_PTR pgptr, PAGE_TYPE ptype);
+extern bool pgbuf_check_page_ptype (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
+				    PAGE_TYPE ptype);
 #if 0
 extern bool pgbuf_check_page_type_no_error (THREAD_ENTRY * thread_p,
 					    PAGE_PTR pgptr, PAGE_TYPE ptype);

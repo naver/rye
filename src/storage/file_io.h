@@ -241,8 +241,7 @@ extern const char *fileio_rename (VOLID volid, const char *old_vlabel,
 				  const char *new_vlabel);
 extern bool fileio_is_volume_exist (const char *vlabel);
 extern int fileio_find_volume_descriptor_with_label (const char *vol_label_p);
-extern int fileio_get_max_name (const char *path,
-				long int *filename_max,
+extern int fileio_get_max_name (const char *path, long int *filename_max,
 				long int *pathname_max);
 extern const char *fileio_get_base_file_name (const char *fullname);
 extern char *fileio_get_directory_path (char *path, const char *fullname);
