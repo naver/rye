@@ -53,9 +53,9 @@ dynload_remove_temporary_file (void)
     {
       int ret = access (dynload_Temporary_filename, R_OK);
       if (ret == 0)
-	{
-	  unlink (dynload_Temporary_filename);
-	}
+        {
+          unlink (dynload_Temporary_filename);
+        }
     }
 }
 
@@ -93,10 +93,9 @@ main (void)
 {
   dynload_install_handlers ();
 
-  while (read (0, dynload_Temporary_filename,
-	       sizeof (dynload_Temporary_filename)) != 0)
+  while (read (0, dynload_Temporary_filename, sizeof (dynload_Temporary_filename)) != 0)
     {
-      ;				/* it reads from PIPE until the parent is ended */
+      ;                         /* it reads from PIPE until the parent is ended */
     }
 
   dynload_remove_temporary_file ();

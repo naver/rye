@@ -37,14 +37,14 @@
  */
 /* #include "config-int.h" */
 #ifdef _MSC_VER
-# if _MSC_VER < 1600		/* Visual C++ versions previous to Visual Studio 2010 */
+#if _MSC_VER < 1600             /* Visual C++ versions previous to Visual Studio 2010 */
 typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
-# else
-#  include <stdint.h>
-# endif
 #else
-# include <stdint.h>
+#include <stdint.h>
+#endif
+#else
+#include <stdint.h>
 #endif
 
 #include "ieeefp.h"
@@ -91,7 +91,7 @@ extern "C"
 #ifdef Unsigned_Shifts
 #define Sign_Extend(a,b) if (b < 0) a |= (uint32_t)0xffff0000;
 #else
-#define Sign_Extend(a,b)	/*no-op */
+#define Sign_Extend(a,b)        /*no-op */
 #endif
 
 #if defined(IEEE_8087) + defined(IEEE_MC68k) + defined(VAX) + defined(IBM) != 1
@@ -143,7 +143,7 @@ extern "C"
 #define P    	    24
 #define Bias 	    127
 #if 0
-#define IEEE_Arith		/* it is, but the code doesn't handle IEEE singles yet */
+#define IEEE_Arith              /* it is, but the code doesn't handle IEEE singles yet */
 #endif
 #define Emin        (-126)
 #define Exp_1       ((uint32_t)0x3f800000L)
@@ -197,7 +197,7 @@ extern "C"
 #define Tiny1 1
 #define Quick_max 14
 #define Int_max 14
-#define Infinite(x) (word0(x) == ((uint32_t)0x7ff00000L))	/* sufficient test for here */
+#define Infinite(x) (word0(x) == ((uint32_t)0x7ff00000L))       /* sufficient test for here */
 #endif
 
 #else
@@ -213,7 +213,7 @@ extern "C"
 #define Bias 65
 #define Exp_1  ((uint32_t)0x41000000L)
 #define Exp_11 ((uint32_t)0x41000000L)
-#define Ebits 8			/* exponent has 7 bits, but 8 is the right value in b2d */
+#define Ebits 8                 /* exponent has 7 bits, but 8 is the right value in b2d */
 #define Frac_mask  ((uint32_t)0xffffffL)
 #define Frac_mask1 ((uint32_t)0xffffffL)
 #define Bletch 4
@@ -227,7 +227,7 @@ extern "C"
 #define Tiny1 0
 #define Quick_max 14
 #define Int_max 15
-#else				/* VAX */
+#else                           /* VAX */
 #define Exp_shift  23
 #define Exp_shift1 7
 #define Exp_msk1    0x80
@@ -315,7 +315,7 @@ extern "C"
 #define _VOID void
 #ifndef _EXFUN
 #define	_EXFUN(name, proto)		name proto
-#endif				/* !EXFUN */
+#endif                          /* !EXFUN */
 #define	_DEFUN(name, arglist, args)	name(args)
 #define	_DEFUN_VOID(name)		name(_NOARGS)
 #define _CAST_VOID (void)
@@ -363,35 +363,27 @@ extern "C"
 #define _dtoa_r _Jv_dtoa_r
 #define _strtod_r _Jv_strtod_r
 
-  extern double _EXFUN (_strtod_r,
-			(struct _Jv_reent * ptr, const char *s00, char **se));
+  extern double _EXFUN (_strtod_r, (struct _Jv_reent * ptr, const char *s00, char **se));
   extern char *_EXFUN (_dtoa_r,
-		       (struct _Jv_reent * ptr, double d, int mode,
-			int ndigits, int *decpt, int *sign, char **rve,
-			int float_type));
+                       (struct _Jv_reent * ptr, double d, int mode,
+                        int ndigits, int *decpt, int *sign, char **rve, int float_type));
   extern void _EXFUN (_dtoa,
-		      (double d, int mode, int ndigits, int *decpt, int *sign,
-		       char **rve, char *buf, int float_type));
+                      (double d, int mode, int ndigits, int *decpt, int *sign, char **rve, char *buf, int float_type));
 
   double _EXFUN (ulp, (double x));
   double _EXFUN (b2d, (_Jv_Bigint * a, int *e));
   _Jv_Bigint *_EXFUN (Balloc, (struct _Jv_reent * p, int k));
   void _EXFUN (Bfree, (struct _Jv_reent * p, _Jv_Bigint * v));
-  _Jv_Bigint *_EXFUN (multadd,
-		      (struct _Jv_reent * p, _Jv_Bigint *, int, int));
-  _Jv_Bigint *_EXFUN (s2b,
-		      (struct _Jv_reent *, const char *, int, int,
-		       unsigned long));
+  _Jv_Bigint *_EXFUN (multadd, (struct _Jv_reent * p, _Jv_Bigint *, int, int));
+  _Jv_Bigint *_EXFUN (s2b, (struct _Jv_reent *, const char *, int, int, unsigned long));
   _Jv_Bigint *_EXFUN (i2b, (struct _Jv_reent *, int));
   _Jv_Bigint *_EXFUN (mult, (struct _Jv_reent *, _Jv_Bigint *, _Jv_Bigint *));
   _Jv_Bigint *_EXFUN (pow5mult, (struct _Jv_reent *, _Jv_Bigint *, int k));
   int _EXFUN (hi0bits, (unsigned long));
   int _EXFUN (lo0bits, (unsigned long *));
-  _Jv_Bigint *_EXFUN (d2b,
-		      (struct _Jv_reent * p, double d, int *e, int *bits));
+  _Jv_Bigint *_EXFUN (d2b, (struct _Jv_reent * p, double d, int *e, int *bits));
   _Jv_Bigint *_EXFUN (lshift, (struct _Jv_reent * p, _Jv_Bigint * b, int k));
-  _Jv_Bigint *_EXFUN (diff,
-		      (struct _Jv_reent * p, _Jv_Bigint * a, _Jv_Bigint * b));
+  _Jv_Bigint *_EXFUN (diff, (struct _Jv_reent * p, _Jv_Bigint * a, _Jv_Bigint * b));
   int _EXFUN (cmp, (_Jv_Bigint * a, _Jv_Bigint * b));
 
   double _EXFUN (ratio, (_Jv_Bigint * a, _Jv_Bigint * b));
@@ -411,4 +403,4 @@ extern "C"
 }
 #endif
 
-#endif				/* __CLASSPATH_MPREC_H__ */
+#endif                          /* __CLASSPATH_MPREC_H__ */

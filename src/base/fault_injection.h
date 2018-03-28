@@ -157,17 +157,12 @@ struct fi_arg_sleep
 extern void fi_init (void);
 extern int fi_thread_init (THREAD_ENTRY * thread_p);
 extern int fi_set (THREAD_ENTRY * thread_p, FI_TEST_CODE code, int state);
-extern int fi_set_force (THREAD_ENTRY * thread_p, FI_TEST_CODE code,
-			 int state);
+extern int fi_set_force (THREAD_ENTRY * thread_p, FI_TEST_CODE code, int state);
 extern void fi_reset (THREAD_ENTRY * thread_p, FI_TEST_CODE code);
-extern int fi_test (THREAD_ENTRY * thread_p, FI_TEST_CODE code, void *arg,
-		    int state);
-extern int fi_test_array (THREAD_ENTRY * thread_p, int num_entries,
-			  FI_TEST_ENTRY * entries);
-extern int fi_test_array_arg_int (THREAD_ENTRY * thread_p, int num_entries,
-				  FI_TEST_ENTRY_ARG_INT * entries);
-extern int fi_test_arg_int (THREAD_ENTRY * thread_p, FI_TEST_CODE code,
-			    int arg, int state);
+extern int fi_test (THREAD_ENTRY * thread_p, FI_TEST_CODE code, void *arg, int state);
+extern int fi_test_array (THREAD_ENTRY * thread_p, int num_entries, FI_TEST_ENTRY * entries);
+extern int fi_test_array_arg_int (THREAD_ENTRY * thread_p, int num_entries, FI_TEST_ENTRY_ARG_INT * entries);
+extern int fi_test_arg_int (THREAD_ENTRY * thread_p, FI_TEST_CODE code, int arg, int state);
 extern int fi_state (THREAD_ENTRY * thread_p, FI_TEST_CODE code);
 extern bool fi_test_on (THREAD_ENTRY * thread_p, FI_TEST_CODE code);
 

@@ -157,15 +157,12 @@ extern void monitor_make_repl_name (char *monitor_name, const char *db_name);
 /******************************************************************
  * MONITOR COLLECTOR
  ******************************************************************/
-extern int monitor_create_collector (const char *name, int num_monitors,
-				     MONITOR_TYPE monitor_type);
+extern int monitor_create_collector (const char *name, int num_monitors, MONITOR_TYPE monitor_type);
 extern void monitor_final_collector (void);
 extern void monitor_stats_counter (int mnt_id, int item, INT64 value);
-extern void monitor_stats_counter_with_time (int mnt_id, int item,
-					     INT64 value, UINT64 start_time);
+extern void monitor_stats_counter_with_time (int mnt_id, int item, INT64 value, UINT64 start_time);
 extern void monitor_stats_gauge (int mnt_id, int item, INT64 value);
-extern INT64 monitor_get_stats_with_time (UINT64 * acc_time, int mnt_id,
-					  int item);
+extern INT64 monitor_get_stats_with_time (UINT64 * acc_time, int mnt_id, int item);
 extern INT64 monitor_get_stats (int mnt_id, int item);
 
 
@@ -177,28 +174,19 @@ extern MONITOR_INFO *monitor_create_viewer_from_name (const char *name);
 extern MONITOR_INFO *monitor_create_viewer_from_key (int shm_key);
 extern void monitor_final_viewer (MONITOR_INFO * monitor_info);
 extern const char *monitor_get_name (MONITOR_INFO * monitor);
-extern bool monitor_stats_is_cumulative (MONITOR_INFO * monitor_info,
-					 int item);
-extern bool monitor_stats_is_collecting_time (MONITOR_INFO * monitor_info,
-					      int item);
-extern int monitor_copy_stats (MONITOR_INFO * monitor,
-			       MONITOR_STATS * to_stats, int mnt_id);
-extern int monitor_copy_global_stats (MONITOR_INFO * monitor,
-				      MONITOR_STATS * to_stats);
+extern bool monitor_stats_is_cumulative (MONITOR_INFO * monitor_info, int item);
+extern bool monitor_stats_is_collecting_time (MONITOR_INFO * monitor_info, int item);
+extern int monitor_copy_stats (MONITOR_INFO * monitor, MONITOR_STATS * to_stats, int mnt_id);
+extern int monitor_copy_global_stats (MONITOR_INFO * monitor, MONITOR_STATS * to_stats);
 extern void monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
-					  char *buffer, int buf_size,
-					  MONITOR_STATS * stats,
-					  MONITOR_DUMP_TYPE dump_type,
-					  const char *substr);
+                                          char *buffer, int buf_size,
+                                          MONITOR_STATS * stats, MONITOR_DUMP_TYPE dump_type, const char *substr);
 extern void monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
-				MONITOR_STATS * cur_stats,
-				MONITOR_STATS * old_stats, int cumulative,
-				MONITOR_DUMP_TYPE dump_type,
-				const char *substr);
+                                MONITOR_STATS * cur_stats,
+                                MONITOR_STATS * old_stats, int cumulative,
+                                MONITOR_DUMP_TYPE dump_type, const char *substr);
 extern int monitor_diff_stats (MONITOR_INFO * monitor,
-			       MONITOR_STATS * diff_stats,
-			       MONITOR_STATS * new_stats,
-			       MONITOR_STATS * old_stats);
+                               MONITOR_STATS * diff_stats, MONITOR_STATS * new_stats, MONITOR_STATS * old_stats);
 
 extern int monitor_open_viewer_data (MONITOR_INFO * monitor);
 extern int monitor_close_viewer_data (MONITOR_INFO * monitor);

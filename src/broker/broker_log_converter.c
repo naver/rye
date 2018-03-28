@@ -40,12 +40,10 @@
 #include "broker_log_util.h"
 
 static int get_args (int argc, char *argv[]);
-static int open_file (char *infilename, char *outfilename, FILE ** infp,
-		      FILE ** outfp);
+static int open_file (char *infilename, char *outfilename, FILE ** infp, FILE ** outfp);
 static int log_converter (FILE * infp, FILE * outfp);
 static void close_file (FILE * infp, FILE * outfp);
-static int log_bind_value (const char *str, int bind_len, int lineno,
-			   FILE * outfp);
+static int log_bind_value (const char *str, int bind_len, int lineno, FILE * outfp);
 
 static char add_query_info = 0;
 static char add_query_id = 0;
@@ -61,18 +59,18 @@ main (int argc, char *argv[])
 
   if ((start_arg = get_args (argc, argv)) < 0)
     {
-    return -1;
+      return -1;
     }
 
   infilename = argv[start_arg];
   if (start_arg + 1 <= argc)
     {
-    outfilename = argv[start_arg + 1];
+      outfilename = argv[start_arg + 1];
     }
 
   if (open_file (infilename, outfilename, &infp, &outfp) < 0)
     {
-    return -1;
+      return -1;
     }
 
   res = log_converter (infp, outfp);
@@ -107,88 +105,87 @@ log_converter (FILE * infp, FILE * outfp)
   while (1)
     {
       if (ut_get_line (infp, linebuf_tstr, NULL, NULL) < 0)
-	{
-	  fprintf (stderr, "malloc error\n");
-	  goto error;
-	}
+        {
+          fprintf (stderr, "malloc error\n");
+          goto error;
+        }
       if (t_string_len (linebuf_tstr) <= 0)
-	break;
+        break;
       linebuf = t_string_str (linebuf_tstr);
       lineno++;
 
       if (linebuf[strlen (linebuf) - 1] == '\n')
-	linebuf[strlen (linebuf) - 1] = '\0';
+        linebuf[strlen (linebuf) - 1] = '\0';
 
       if (is_cas_log (linebuf))
-	{
-	  if (query_flag)
-	    {
-	      fprintf (outfp, "\n");
-	      fprintf (outfp, "P %d %d\n", exec_h_id, prepare_flag);
-	    }
-	  query_flag = 0;
+        {
+          if (query_flag)
+            {
+              fprintf (outfp, "\n");
+              fprintf (outfp, "P %d %d\n", exec_h_id, prepare_flag);
+            }
+          query_flag = 0;
 
-	  msg_p = get_msg_start_ptr (linebuf);
-	  if (strncmp (msg_p, "execute", 7) == 0)
-	    {
-	      msg_p = ut_get_execute_type (msg_p, &prepare_flag,
-					   &execute_flag);
-	      if (msg_p == NULL)
-		{
-		  in_execute = 0;
-		  continue;
-		}
-	      if (strncmp (msg_p, "srv_h_id ", 9) == 0)
-		{
-		  char *endp;
-		  int result = 0;
+          msg_p = get_msg_start_ptr (linebuf);
+          if (strncmp (msg_p, "execute", 7) == 0)
+            {
+              msg_p = ut_get_execute_type (msg_p, &prepare_flag, &execute_flag);
+              if (msg_p == NULL)
+                {
+                  in_execute = 0;
+                  continue;
+                }
+              if (strncmp (msg_p, "srv_h_id ", 9) == 0)
+                {
+                  char *endp;
+                  int result = 0;
 
-		  in_execute = 1;
-		  msg_p += 9;
+                  in_execute = 1;
+                  msg_p += 9;
 
-		  result = str_to_int32 (&exec_h_id, &endp, msg_p, 10);
-		  if (result != 0)
-		    {
-		      in_execute = 0;
-		      continue;
-		    }
-		  msg_p = endp + 1;
+                  result = str_to_int32 (&exec_h_id, &endp, msg_p, 10);
+                  if (result != 0)
+                    {
+                      in_execute = 0;
+                      continue;
+                    }
+                  msg_p = endp + 1;
 
-		  fprintf (outfp, "Q ");
-		  if (add_query_info == 1 && prepare_flag != 0x40)
-		    {
-		      fprintf (outfp, "/* %s */ ", infilename);
-		    }
-		  if (add_query_id == 1)
-		    {
-		      fprintf (outfp, "/* QUERY_ID %d */ ", query_id++);
-		    }
+                  fprintf (outfp, "Q ");
+                  if (add_query_info == 1 && prepare_flag != 0x40)
+                    {
+                      fprintf (outfp, "/* %s */ ", infilename);
+                    }
+                  if (add_query_id == 1)
+                    {
+                      fprintf (outfp, "/* QUERY_ID %d */ ", query_id++);
+                    }
 
-		  fprintf (outfp, "%s%c", msg_p, CAS_RUN_NEW_LINE_CHAR);
-		  query_flag = 1;
-		}
-	      else
-		{
-		  if (in_execute == 1)
-		    {
-		      fprintf (outfp, "E %d %d\n", exec_h_id, execute_flag);
-		      fprintf (outfp, "C %d\n", exec_h_id);
-		      fprintf (outfp, "T\n");
-		    }
-		  in_execute = 0;
-		}
-	    }
-	  else if (strncmp (msg_p, "bind ", 5) == 0)
-	    {
-	      bind_len = t_string_bind_len (linebuf_tstr);
-	      if (log_bind_value (msg_p, bind_len, lineno, outfp) < 0)
-		goto error;
-	    }
-	}
+                  fprintf (outfp, "%s%c", msg_p, CAS_RUN_NEW_LINE_CHAR);
+                  query_flag = 1;
+                }
+              else
+                {
+                  if (in_execute == 1)
+                    {
+                      fprintf (outfp, "E %d %d\n", exec_h_id, execute_flag);
+                      fprintf (outfp, "C %d\n", exec_h_id);
+                      fprintf (outfp, "T\n");
+                    }
+                  in_execute = 0;
+                }
+            }
+          else if (strncmp (msg_p, "bind ", 5) == 0)
+            {
+              bind_len = t_string_bind_len (linebuf_tstr);
+              if (log_bind_value (msg_p, bind_len, lineno, outfp) < 0)
+                goto error;
+            }
+        }
       else if (query_flag)
-	{
-	  fprintf (outfp, "%s%c ", linebuf, CAS_RUN_NEW_LINE_CHAR);
-	}
+        {
+          fprintf (outfp, "%s%c ", linebuf, CAS_RUN_NEW_LINE_CHAR);
+        }
     }
 
   RYE_FREE_MEM (linebuf_tstr);
@@ -210,10 +207,10 @@ open_file (char *infilename, char *outfilename, FILE ** infp, FILE ** outfp)
     {
       *infp = fopen (infilename, "r");
       if (*infp == NULL)
-	{
-	  fprintf (stderr, "fopen error[%s]\n", infilename);
-	  return -1;
-	}
+        {
+          fprintf (stderr, "fopen error[%s]\n", infilename);
+          return -1;
+        }
     }
 
   if (outfilename == NULL)
@@ -224,10 +221,10 @@ open_file (char *infilename, char *outfilename, FILE ** infp, FILE ** outfp)
     {
       *outfp = fopen (outfilename, "w");
       if (*outfp == NULL)
-	{
-	  fprintf (stderr, "fopen error[%s]\n", outfilename);
-	  return -1;
-	}
+        {
+          fprintf (stderr, "fopen error[%s]\n", outfilename);
+          return -1;
+        }
     }
 
   return 0;
@@ -284,44 +281,44 @@ log_bind_value (const char *str, int bind_len, int lineno, FILE * outfp)
   if (q == NULL)
     {
       if (strcmp (p, "NULL") == 0)
-	{
-	  value_p = "";
-	}
+        {
+          value_p = "";
+        }
       else
-	{
-	  fprintf (stderr, "log error [line:%d]\n", lineno);
-	  return -1;
-	}
+        {
+          fprintf (stderr, "log error [line:%d]\n", lineno);
+          return -1;
+        }
     }
   else
     {
       if (bind_len > 0)
-	{
-	  r = strchr (q, ')');
-	  if (r == NULL)
-	    {
-	      fprintf (stderr, "log error [line:%d]\n", lineno);
-	      return -1;
-	    }
-	  *q = '\0';
-	  *r = '\0';
-	  value_p = r + 1;
-	}
+        {
+          r = strchr (q, ')');
+          if (r == NULL)
+            {
+              fprintf (stderr, "log error [line:%d]\n", lineno);
+              return -1;
+            }
+          *q = '\0';
+          *r = '\0';
+          value_p = r + 1;
+        }
       else
-	{
-	  *q = '\0';
-	  value_p = q + 1;
-	}
+        {
+          *q = '\0';
+          value_p = q + 1;
+        }
     }
 
   type = -1;
   for (i = 0; i < typetable_size && typetable[i].typestr != NULL; i++)
     {
       if (strcmp (p, typetable[i].typestr) == 0)
-	{
-	  type = typetable[i].u_type;
-	  break;
-	}
+        {
+          type = typetable[i].u_type;
+          break;
+        }
     }
 
   if (type < 0)
@@ -334,9 +331,9 @@ log_bind_value (const char *str, int bind_len, int lineno, FILE * outfp)
     {
       fprintf (outfp, "B %d %d ", type, bind_len);
       if (bind_len > 1)
-	{
-	  fwrite (value_p, bind_len - 1, 1, outfp);
-	}
+        {
+          fwrite (value_p, bind_len - 1, 1, outfp);
+        }
       fwrite ("\n", 1, 1, outfp);
     }
   else
@@ -354,16 +351,16 @@ get_args (int argc, char *argv[])
   while ((c = getopt (argc, argv, "iq")) != EOF)
     {
       switch (c)
-	{
-	case 'q':
-	  add_query_info = 1;
-	  break;
-	case 'i':
-	  add_query_id = 1;
-	  break;
-	default:
-	  goto usage;
-	}
+        {
+        case 'q':
+          add_query_info = 1;
+          break;
+        case 'i':
+          add_query_id = 1;
+          break;
+        default:
+          goto usage;
+        }
     }
 
   if (optind + 1 >= argc)
@@ -373,9 +370,7 @@ get_args (int argc, char *argv[])
 
 usage:
   fprintf (stderr,
-	   "usage : %s [OPTION] infile outfile\n"
-	   "\n"
-	   "valid options:\n"
-	   "  -i   add a unique id to each query as a comment.\n", argv[0]);
+           "usage : %s [OPTION] infile outfile\n"
+           "\n" "valid options:\n" "  -i   add a unique id to each query as a comment.\n", argv[0]);
   return -1;
 }

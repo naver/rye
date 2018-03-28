@@ -192,10 +192,10 @@ conf_file_has_been_loaded (const char *conf_path)
   for (i = 0; i < MAX_NUM_OF_CONF_FILE_LOADED; i++)
     {
       if (conf_File_loaded[i] == NULL)
-	{
-	  conf_File_loaded[i] = strdup (conf_path);
-	  return;
-	}
+        {
+          conf_File_loaded[i] = strdup (conf_path);
+          return;
+        }
     }
 }
 
@@ -215,13 +215,13 @@ check_port_number (T_BROKER_INFO * br_info, int num_brs)
   for (i = 0; i < num_brs; i++)
     {
       for (j = i + 1; j < num_brs; j++)
-	{
-	  if (br_info[i].port > 0 && br_info[i].port == br_info[j].port)
-	    {
-	      printf ("duplicated port number %d\n", br_info[i].port);
-	      error_flag = TRUE;
-	    }
-	}
+        {
+          if (br_info[i].port > 0 && br_info[i].port == br_info[j].port)
+            {
+              printf ("duplicated port number %d\n", br_info[i].port);
+              error_flag = TRUE;
+            }
+        }
     }
 
   if (error_flag == TRUE)
@@ -267,9 +267,9 @@ get_conf_value (const char *string, T_CONF_TABLE * conf_table)
   for (i = 0; conf_table[i].conf_str != NULL; i++)
     {
       if (strcasecmp (string, conf_table[i].conf_str) == 0)
-	{
-	  return conf_table[i].conf_value;
-	}
+        {
+          return conf_table[i].conf_value;
+        }
     }
   return -1;
 }
@@ -282,16 +282,15 @@ get_conf_string (int value, T_CONF_TABLE * conf_table)
   for (i = 0; conf_table[i].conf_str != NULL; i++)
     {
       if (conf_table[i].conf_value == value)
-	{
-	  return conf_table[i].conf_str;
-	}
+        {
+          return conf_table[i].conf_str;
+        }
     }
   return NULL;
 }
 
 static int
-set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
-		 T_BROKER_TYPE broker_type, const char *sec_name, int *lineno)
+set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini, T_BROKER_TYPE broker_type, const char *sec_name, int *lineno)
 {
   const char *tmp_str;
   float tmp_float;
@@ -299,8 +298,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 
   memset (&preferred_hosts, 0, sizeof (preferred_hosts));
 
-  tmp_str = ini_getstr (ini, sec_name, "CCI_DEFAULT_AUTOCOMMIT", "ON",
-			lineno);
+  tmp_str = ini_getstr (ini, sec_name, "CCI_DEFAULT_AUTOCOMMIT", "ON", lineno);
   br_info->cci_default_autocommit = conf_get_value_table_on_off (tmp_str);
   if (br_info->cci_default_autocommit < 0)
     {
@@ -314,51 +312,41 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "APPL_SERVER",
-			DEFAULT_APPL_SERVER, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "APPL_SERVER", DEFAULT_APPL_SERVER, lineno);
   br_info->appl_server = get_conf_value (tmp_str, tbl_appl_server);
   if (br_info->appl_server < 0)
     {
       return -1;
     }
 
-  br_info->appl_server_min_num = ini_getuint (ini, sec_name,
-					      "MIN_NUM_APPL_SERVER",
-					      DEFAULT_AS_MIN_NUM, lineno);
+  br_info->appl_server_min_num = ini_getuint (ini, sec_name, "MIN_NUM_APPL_SERVER", DEFAULT_AS_MIN_NUM, lineno);
   br_info->appl_server_num = br_info->appl_server_min_num;
   if (br_info->appl_server_min_num > APPL_SERVER_NUM_LIMIT)
     {
       return -1;
     }
 
-  br_info->appl_server_max_num = ini_getuint (ini, sec_name,
-					      "MAX_NUM_APPL_SERVER",
-					      DEFAULT_AS_MAX_NUM, lineno);
+  br_info->appl_server_max_num = ini_getuint (ini, sec_name, "MAX_NUM_APPL_SERVER", DEFAULT_AS_MAX_NUM, lineno);
   if (br_info->appl_server_max_num > APPL_SERVER_NUM_LIMIT)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "APPL_SERVER_MAX_SIZE",
-			DEFAULT_SERVER_MAX_SIZE, lineno);
-  br_info->appl_server_max_size =
-    (int) ut_size_string_to_kbyte (tmp_str, "M");
+  tmp_str = ini_getstr (ini, sec_name, "APPL_SERVER_MAX_SIZE", DEFAULT_SERVER_MAX_SIZE, lineno);
+  br_info->appl_server_max_size = (int) ut_size_string_to_kbyte (tmp_str, "M");
   if (br_info->appl_server_max_size < 0)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "APPL_SERVER_MAX_SIZE_HARD_LIMIT",
-			DEFAULT_SERVER_HARD_LIMIT, lineno);
-  br_info->appl_server_hard_limit =
-    (int) ut_size_string_to_kbyte (tmp_str, "M");
+  tmp_str = ini_getstr (ini, sec_name, "APPL_SERVER_MAX_SIZE_HARD_LIMIT", DEFAULT_SERVER_HARD_LIMIT, lineno);
+  br_info->appl_server_hard_limit = (int) ut_size_string_to_kbyte (tmp_str, "M");
   if (br_info->appl_server_hard_limit <= 0)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "SESSION_TIMEOUT",
-			DEFAULT_SESSION_TIMEOUT, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "SESSION_TIMEOUT", DEFAULT_SESSION_TIMEOUT, lineno);
   br_info->session_timeout = (int) ut_time_string_to_sec (tmp_str, "sec");
   if (br_info->session_timeout < 0)
     {
@@ -366,9 +354,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
     }
 
   br_info->max_prepared_stmt_count = ini_getint (ini, sec_name,
-						 "MAX_PREPARED_STMT_COUNT",
-						 DEFAULT_CAS_MAX_PREPARED_STMT,
-						 lineno);
+                                                 "MAX_PREPARED_STMT_COUNT", DEFAULT_CAS_MAX_PREPARED_STMT, lineno);
   if (br_info->max_prepared_stmt_count < 1)
     {
       return -1;
@@ -381,20 +367,17 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "SOURCE_ENV",
-			DEFAULT_EMPTY_STRING, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "SOURCE_ENV", DEFAULT_EMPTY_STRING, lineno);
   STRNCPY (br_info->source_env, tmp_str, CONF_LOG_FILE_LEN);
 
-  tmp_str = ini_getstr (ini, sec_name, "SQL_LOG",
-			DEFAULT_SQL_LOG_MODE, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "SQL_LOG", DEFAULT_SQL_LOG_MODE, lineno);
   br_info->sql_log_mode = conf_get_value_sql_log_mode (tmp_str);
   if (br_info->sql_log_mode < 0)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "BROKER_LOG",
-			DEFAULT_BROKER_LOG_MODE, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "BROKER_LOG", DEFAULT_BROKER_LOG_MODE, lineno);
   br_info->broker_log_mode = conf_get_value_broker_log_mode (tmp_str);
   if (br_info->broker_log_mode < 0)
     {
@@ -408,26 +391,21 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "SQL_LOG_MAX_SIZE",
-			DEFAULT_SQL_LOG_MAX_SIZE, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "SQL_LOG_MAX_SIZE", DEFAULT_SQL_LOG_MAX_SIZE, lineno);
   br_info->sql_log_max_size = (int) ut_size_string_to_kbyte (tmp_str, "K");
-  if (br_info->sql_log_max_size < 0 ||
-      br_info->sql_log_max_size > MAX_SQL_LOG_MAX_SIZE)
+  if (br_info->sql_log_max_size < 0 || br_info->sql_log_max_size > MAX_SQL_LOG_MAX_SIZE)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "BROKER_LOG_MAX_SIZE",
-			DEFAULT_BROKER_LOG_MAX_SIZE, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "BROKER_LOG_MAX_SIZE", DEFAULT_BROKER_LOG_MAX_SIZE, lineno);
   br_info->broker_log_max_size = (int) ut_size_string_to_kbyte (tmp_str, "K");
-  if (br_info->broker_log_max_size < 0 ||
-      br_info->broker_log_max_size > MAX_SQL_LOG_MAX_SIZE)
+  if (br_info->broker_log_max_size < 0 || br_info->broker_log_max_size > MAX_SQL_LOG_MAX_SIZE)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "LONG_QUERY_TIME",
-			DEFAULT_LONG_QUERY_TIME, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "LONG_QUERY_TIME", DEFAULT_LONG_QUERY_TIME, lineno);
   tmp_float = (float) ut_time_string_to_sec (tmp_str, "sec");
   if (tmp_float < 0 || tmp_float > LONG_QUERY_TIME_LIMIT)
     {
@@ -436,8 +414,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
   /* change float to msec */
   br_info->long_query_time = (int) (tmp_float * 1000.0);
 
-  tmp_str = ini_getstr (ini, sec_name, "LONG_TRANSACTION_TIME",
-			DEFAULT_LONG_TRANSACTION_TIME, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "LONG_TRANSACTION_TIME", DEFAULT_LONG_TRANSACTION_TIME, lineno);
   tmp_float = (float) ut_time_string_to_sec (tmp_str, "sec");
   if (tmp_float < 0 || tmp_float > LONG_TRANSACTION_TIME_LIMIT)
     {
@@ -455,11 +432,9 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
     }
 
   br_info->job_queue_size = ini_getuint_max (ini, sec_name, "JOB_QUEUE_SIZE",
-					     DEFAULT_JOB_QUEUE_SIZE,
-					     JOB_QUEUE_MAX_SIZE, lineno);
+                                             DEFAULT_JOB_QUEUE_SIZE, JOB_QUEUE_MAX_SIZE, lineno);
 
-  tmp_str = ini_getstr (ini, sec_name, "TIME_TO_KILL",
-			DEFAULT_TIME_TO_KILL, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "TIME_TO_KILL", DEFAULT_TIME_TO_KILL, lineno);
   br_info->time_to_kill = (int) ut_time_string_to_sec (tmp_str, "sec");
   if (br_info->time_to_kill < 0)
     {
@@ -473,20 +448,16 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "ACCESS_LOG_MAX_SIZE",
-			DEFAULT_ACCESS_LOG_MAX_SIZE, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "ACCESS_LOG_MAX_SIZE", DEFAULT_ACCESS_LOG_MAX_SIZE, lineno);
   br_info->access_log_max_size = (int) ut_size_string_to_kbyte (tmp_str, "K");
-  if (br_info->access_log_max_size < 0 ||
-      br_info->access_log_max_size > MAX_ACCESS_LOG_MAX_SIZE)
+  if (br_info->access_log_max_size < 0 || br_info->access_log_max_size > MAX_ACCESS_LOG_MAX_SIZE)
     {
       return -1;
     }
 
-  br_info->max_string_length = ini_getint (ini, sec_name, "MAX_STRING_LENGTH",
-					   -1, lineno);
+  br_info->max_string_length = ini_getint (ini, sec_name, "MAX_STRING_LENGTH", -1, lineno);
 
-  tmp_str = ini_getstr (ini, sec_name, "KEEP_CONNECTION",
-			DEFAULT_KEEP_CONNECTION, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "KEEP_CONNECTION", DEFAULT_KEEP_CONNECTION, lineno);
   br_info->keep_connection = conf_get_value_keep_con (tmp_str);
   if (br_info->keep_connection < 0)
     {
@@ -514,8 +485,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "PREFERRED_HOSTS",
-			DEFAULT_EMPTY_STRING, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "PREFERRED_HOSTS", DEFAULT_EMPTY_STRING, lineno);
   if (prm_split_node_str (&preferred_hosts, tmp_str, false) != NO_ERROR)
     {
       return -1;
@@ -530,27 +500,22 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
     }
 
   br_info->max_num_delayed_hosts_lookup =
-    ini_getint (ini, sec_name, "MAX_NUM_DELAYED_HOSTS_LOOKUP",
-		DEFAULT_MAX_NUM_DELAYED_HOSTS_LOOKUP, lineno);
-  if (br_info->max_num_delayed_hosts_lookup <
-      DEFAULT_MAX_NUM_DELAYED_HOSTS_LOOKUP)
+    ini_getint (ini, sec_name, "MAX_NUM_DELAYED_HOSTS_LOOKUP", DEFAULT_MAX_NUM_DELAYED_HOSTS_LOOKUP, lineno);
+  if (br_info->max_num_delayed_hosts_lookup < DEFAULT_MAX_NUM_DELAYED_HOSTS_LOOKUP)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "RECONNECT_TIME",
-			DEFAULT_RECONNECT_TIME, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "RECONNECT_TIME", DEFAULT_RECONNECT_TIME, lineno);
   br_info->cas_rctime = (int) ut_time_string_to_sec (tmp_str, "sec");
   if (br_info->cas_rctime < 0)
     {
       return -1;
     }
 
-  tmp_str = ini_getstr (ini, sec_name, "MAX_QUERY_TIMEOUT",
-			DEFAULT_MAX_QUERY_TIMEOUT, lineno);
+  tmp_str = ini_getstr (ini, sec_name, "MAX_QUERY_TIMEOUT", DEFAULT_MAX_QUERY_TIMEOUT, lineno);
   br_info->query_timeout = (int) ut_time_string_to_sec (tmp_str, "sec");
-  if (br_info->query_timeout < 0 ||
-      br_info->query_timeout > MAX_QUERY_TIMEOUT_LIMIT)
+  if (br_info->query_timeout < 0 || br_info->query_timeout > MAX_QUERY_TIMEOUT_LIMIT)
     {
       return -1;
     }
@@ -587,7 +552,7 @@ set_broker_conf (T_BROKER_INFO * br_info, INI_TABLE * ini,
 
 static void
 tune_builtin_broker_conf (T_BROKER_INFO * br_info, int num_brs, int mgmt_port,
-			  const T_SHARD_MGMT_CONFIG * shard_mgmt_config)
+                          const T_SHARD_MGMT_CONFIG * shard_mgmt_config)
 {
   T_BROKER_INFO *tmp_br_info;
   int i, metadb_idx;
@@ -596,9 +561,9 @@ tune_builtin_broker_conf (T_BROKER_INFO * br_info, int num_brs, int mgmt_port,
   for (i = 0; i < num_brs; i++)
     {
       if (br_info[i].broker_type != SHARD_MGMT)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       tmp_br_info = &br_info[i];
 
       tmp_br_info->appl_server_min_num = 0;
@@ -606,34 +571,32 @@ tune_builtin_broker_conf (T_BROKER_INFO * br_info, int num_brs, int mgmt_port,
       tmp_br_info->appl_server_max_num = 0;
       tmp_br_info->shard_mgmt_num_migrator = shard_mgmt_config->num_migrator;
       if (metadb_idx < shard_mgmt_config->num_metadb)
-	{
-	  int len;
+        {
+          int len;
 
-	  tmp_br_info->port = mgmt_port;
-	  strncpy (tmp_br_info->shard_metadb,
-		   shard_mgmt_config->metadb[metadb_idx],
-		   sizeof (tmp_br_info->shard_metadb));
-	  metadb_idx++;
+          tmp_br_info->port = mgmt_port;
+          strncpy (tmp_br_info->shard_metadb,
+                   shard_mgmt_config->metadb[metadb_idx], sizeof (tmp_br_info->shard_metadb));
+          metadb_idx++;
 
-	  STRNCPY (tmp_br_info->shard_global_dbname,
-		   tmp_br_info->shard_metadb,
-		   sizeof (tmp_br_info->shard_global_dbname));
-	  len = MAX (0, strlen (tmp_br_info->shard_global_dbname) - 1);
-	  tmp_br_info->shard_global_dbname[len] = '\0';	/* rm nodeid */
-	}
+          STRNCPY (tmp_br_info->shard_global_dbname,
+                   tmp_br_info->shard_metadb, sizeof (tmp_br_info->shard_global_dbname));
+          len = MAX (0, strlen (tmp_br_info->shard_global_dbname) - 1);
+          tmp_br_info->shard_global_dbname[len] = '\0'; /* rm nodeid */
+        }
       else
-	{
-	  assert (0);
-	  tmp_br_info->service_flag = OFF;
-	}
+        {
+          assert (0);
+          tmp_br_info->service_flag = OFF;
+        }
     }
 
   for (i = 0; i < num_brs; i++)
     {
       if (br_info[i].broker_type != LOCAL_MGMT)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       tmp_br_info = &br_info[i];
 
       tmp_br_info->appl_server_min_num = 0;
@@ -642,8 +605,7 @@ tune_builtin_broker_conf (T_BROKER_INFO * br_info, int num_brs, int mgmt_port,
       tmp_br_info->port = mgmt_port;
     }
 
-  tmp_br_info = ut_find_broker (br_info, num_brs, BR_SHARD_MGMT_NAME,
-				NORMAL_BROKER);
+  tmp_br_info = ut_find_broker (br_info, num_brs, BR_SHARD_MGMT_NAME, NORMAL_BROKER);
   if (tmp_br_info != NULL)
     {
       tmp_br_info->access_mode = get_conf_value ("RW", tbl_access_mode);
@@ -652,25 +614,20 @@ tune_builtin_broker_conf (T_BROKER_INFO * br_info, int num_brs, int mgmt_port,
       tmp_br_info->appl_server_max_num = SHARD_MGMT_MAX_APPL_SERVER;
     }
 
-  tmp_br_info = ut_find_broker (br_info, num_brs, BR_RW_BROKER_NAME,
-				NORMAL_BROKER);
+  tmp_br_info = ut_find_broker (br_info, num_brs, BR_RW_BROKER_NAME, NORMAL_BROKER);
   tmp_br_info->access_mode = get_conf_value ("RW", tbl_access_mode);
 
-  tmp_br_info = ut_find_broker (br_info, num_brs, BR_RO_BROKER_NAME,
-				NORMAL_BROKER);
+  tmp_br_info = ut_find_broker (br_info, num_brs, BR_RO_BROKER_NAME, NORMAL_BROKER);
   tmp_br_info->access_mode = get_conf_value ("RO", tbl_access_mode);
 
-  tmp_br_info = ut_find_broker (br_info, num_brs, BR_SO_BROKER_NAME,
-				NORMAL_BROKER);
+  tmp_br_info = ut_find_broker (br_info, num_brs, BR_SO_BROKER_NAME, NORMAL_BROKER);
   tmp_br_info->access_mode = get_conf_value ("SO", tbl_access_mode);
-  tmp_br_info = ut_find_broker (br_info, num_brs, BR_REPL_BROKER_NAME,
-				NORMAL_BROKER);
+  tmp_br_info = ut_find_broker (br_info, num_brs, BR_REPL_BROKER_NAME, NORMAL_BROKER);
   tmp_br_info->access_mode = get_conf_value ("REPL", tbl_access_mode);
 }
 
 static int
-get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl,
-			   int *mgmt_port, char *admin_log_file, int *lineno)
+get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl, int *mgmt_port, char *admin_log_file, int *lineno)
 {
   const char *ini_string;
   char path_buff[BROKER_PATH_MAX];
@@ -681,14 +638,12 @@ get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl,
   parse_int (&default_shm_key, str_shm_key, 16);
   default_shm_key += DEFUALT_BROKER_SHM_KEY_BASE;
 
-  *shm_key_br_gl = ini_gethex (ini, BROKER_SECTION_NAME, "BROKER_SHM_KEY",
-			       default_shm_key, lineno);
+  *shm_key_br_gl = ini_gethex (ini, BROKER_SECTION_NAME, "BROKER_SHM_KEY", default_shm_key, lineno);
   *mgmt_port = prm_get_rye_port_id ();
 
   if (admin_log_file != NULL)
     {
-      ini_string = ini_getstr (ini, BROKER_SECTION_NAME, "ADMIN_LOG_FILE",
-			       DEFAULT_ADMIN_LOG_FILE, lineno);
+      ini_string = ini_getstr (ini, BROKER_SECTION_NAME, "ADMIN_LOG_FILE", DEFAULT_ADMIN_LOG_FILE, lineno);
 
       (void) envvar_ryelogdir_file (path_buff, BROKER_PATH_MAX, ini_string);
       MAKE_FILEPATH (admin_log_file, path_buff, BROKER_PATH_MAX);
@@ -698,8 +653,7 @@ get_broker_section_params (INI_TABLE * ini, int *shm_key_br_gl,
 }
 
 static int
-get_shard_mgmt_config (T_SHARD_MGMT_CONFIG * shard_mgmt_config,
-		       INI_TABLE * ini)
+get_shard_mgmt_config (T_SHARD_MGMT_CONFIG * shard_mgmt_config, INI_TABLE * ini)
 {
   bool error_flag = false;
   int lineno = 0;
@@ -708,17 +662,14 @@ get_shard_mgmt_config (T_SHARD_MGMT_CONFIG * shard_mgmt_config,
   int num_metadb;
 
   shard_mgmt_config->num_migrator = ini_getint (ini, SHARD_MGMT_SECTION_NAME,
-						"SHARD_MGMT_NUM_MIGRATOR",
-						DEFAULT_SHARD_MGMT_NUM_MIGRATOR,
-						&lineno);
+                                                "SHARD_MGMT_NUM_MIGRATOR", DEFAULT_SHARD_MGMT_NUM_MIGRATOR, &lineno);
   if (shard_mgmt_config->num_migrator <= 0)
     {
       PRINT_CONF_ERROR ("config error, invalid SHARD_MGMT_NUM_MIGRATOR\n");
       error_flag = true;
     }
 
-  tmp_str = ini_getstr (ini, SHARD_MGMT_SECTION_NAME,
-			"SHARD_MGMT_METADB", "", &lineno);
+  tmp_str = ini_getstr (ini, SHARD_MGMT_SECTION_NAME, "SHARD_MGMT_METADB", "", &lineno);
   metadb = util_split_string (tmp_str, ",");
   if (metadb == NULL)
     {
@@ -729,50 +680,50 @@ get_shard_mgmt_config (T_SHARD_MGMT_CONFIG * shard_mgmt_config,
     {
       int i;
       for (i = 0; metadb[i] != NULL; i++)
-	{
-	}
+        {
+        }
       num_metadb = i;
 
       /* remove invalid metadb name */
       for (i = num_metadb - 1; i >= 0; i--)
-	{
-	  trim (metadb[i]);
+        {
+          trim (metadb[i]);
 
-	  if (metadb[i] == NULL || metadb[i][0] == '\0')
-	    {
-	      num_metadb--;
-	      if (metadb[i])
-		{
-		  free (metadb[i]);
-		}
-	      metadb[i] = metadb[num_metadb];
-	      metadb[num_metadb] = NULL;
-	    }
-	  else if (strlen (metadb[i]) >= SRV_CON_DBNAME_SIZE)
-	    {
-	      PRINT_CONF_ERROR ("config error, invalid SHARD_MGMT_METADB\n");
-	      error_flag = true;
-	    }
-	}
+          if (metadb[i] == NULL || metadb[i][0] == '\0')
+            {
+              num_metadb--;
+              if (metadb[i])
+                {
+                  free (metadb[i]);
+                }
+              metadb[i] = metadb[num_metadb];
+              metadb[num_metadb] = NULL;
+            }
+          else if (strlen (metadb[i]) >= SRV_CON_DBNAME_SIZE)
+            {
+              PRINT_CONF_ERROR ("config error, invalid SHARD_MGMT_METADB\n");
+              error_flag = true;
+            }
+        }
 
       if (num_metadb > 0)
-	{
-	  shard_mgmt_config->num_metadb = num_metadb;
-	  shard_mgmt_config->metadb = metadb;
-	}
+        {
+          shard_mgmt_config->num_metadb = num_metadb;
+          shard_mgmt_config->metadb = metadb;
+        }
       else
-	{
-	  PRINT_CONF_ERROR ("config error, invalid SHARD_MGMT_METADB\n");
-	  error_flag = true;
-	}
+        {
+          PRINT_CONF_ERROR ("config error, invalid SHARD_MGMT_METADB\n");
+          error_flag = true;
+        }
     }
 
   if (error_flag)
     {
       if (metadb)
-	{
-	  util_free_string_array (metadb);
-	}
+        {
+          util_free_string_array (metadb);
+        }
       shard_mgmt_config->num_metadb = 0;
       shard_mgmt_config->metadb = NULL;
       return -1;
@@ -784,15 +735,13 @@ get_shard_mgmt_config (T_SHARD_MGMT_CONFIG * shard_mgmt_config,
 }
 
 static T_BUILTIN_BROKER *
-make_builtin_broker_info (int *num_builtin_brokers,
-			  const T_SHARD_MGMT_CONFIG * shard_mgmt_config)
+make_builtin_broker_info (int *num_builtin_brokers, const T_SHARD_MGMT_CONFIG * shard_mgmt_config)
 {
   int i, num_brokers;
   T_BUILTIN_BROKER *brokers;
 
   num_brokers = NUM_BUILTIN_BROKERS + shard_mgmt_config->num_metadb;
-  brokers =
-    (T_BUILTIN_BROKER *) malloc (sizeof (T_BUILTIN_BROKER) * num_brokers);
+  brokers = (T_BUILTIN_BROKER *) malloc (sizeof (T_BUILTIN_BROKER) * num_brokers);
   if (brokers == NULL)
     {
       return NULL;
@@ -802,27 +751,20 @@ make_builtin_broker_info (int *num_builtin_brokers,
   if (shard_mgmt_config->has_shard_mgmt)
     {
       for (i = 0; i < shard_mgmt_config->num_metadb; i++)
-	{
-	  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_SHARD_MGMT_NAME,
-			      SHARD_MGMT);
-	}
+        {
+          SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_SHARD_MGMT_NAME, SHARD_MGMT);
+        }
     }
 
-  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_LOCAL_MGMT_NAME,
-		      LOCAL_MGMT);
+  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_LOCAL_MGMT_NAME, LOCAL_MGMT);
   if (shard_mgmt_config->has_shard_mgmt)
     {
-      SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_SHARD_MGMT_NAME,
-			  NORMAL_BROKER);
+      SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_SHARD_MGMT_NAME, NORMAL_BROKER);
     }
-  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_RW_BROKER_NAME,
-		      NORMAL_BROKER);
-  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_RO_BROKER_NAME,
-		      NORMAL_BROKER);
-  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_SO_BROKER_NAME,
-		      NORMAL_BROKER);
-  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_REPL_BROKER_NAME,
-		      NORMAL_BROKER);
+  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_RW_BROKER_NAME, NORMAL_BROKER);
+  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_RO_BROKER_NAME, NORMAL_BROKER);
+  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_SO_BROKER_NAME, NORMAL_BROKER);
+  SET_BUILTIN_BROKER (&brokers[num_brokers++], BR_REPL_BROKER_NAME, NORMAL_BROKER);
 
   *num_builtin_brokers = num_brokers;
   return brokers;
@@ -841,9 +783,8 @@ make_builtin_broker_info (int *num_builtin_brokers,
  */
 static int
 broker_config_read_internal (const char *conf_file,
-			     T_BROKER_INFO * br_info, int *num_broker,
-			     int *broker_shm_key, char *admin_log_file,
-			     char admin_flag)
+                             T_BROKER_INFO * br_info, int *num_broker,
+                             int *broker_shm_key, char *admin_log_file, char admin_flag)
 {
   int num_brs = 0;
   int i;
@@ -855,7 +796,7 @@ broker_config_read_internal (const char *conf_file,
   int errcode = 0;
   T_SHARD_MGMT_CONFIG shard_mgmt_config = INIT_SHARD_MGMT_CONFIG;
 
-#if 1				/* #955 set PERSIST */
+#if 1                           /* #955 set PERSIST */
   ini = ini_table_new (0);
   if (ini == NULL)
     {
@@ -875,8 +816,7 @@ broker_config_read_internal (const char *conf_file,
 #endif
 
   /* get [broker] section vars */
-  if (get_broker_section_params (ini, &shm_key_br_gl, &mgmt_port,
-				 admin_log_file, &lineno) < 0)
+  if (get_broker_section_params (ini, &shm_key_br_gl, &mgmt_port, admin_log_file, &lineno) < 0)
     {
       goto conf_error;
     }
@@ -884,9 +824,9 @@ broker_config_read_internal (const char *conf_file,
   if (ini_findsec (ini, SHARD_MGMT_SECTION_NAME))
     {
       if (get_shard_mgmt_config (&shard_mgmt_config, ini) < 0)
-	{
-	  goto conf_error;
-	}
+        {
+          goto conf_error;
+        }
     }
 
   if (br_info != NULL)
@@ -895,28 +835,24 @@ broker_config_read_internal (const char *conf_file,
       int num_builtin_brokers;
       int i;
 
-      builtin_brokers = make_builtin_broker_info (&num_builtin_brokers,
-						  &shard_mgmt_config);
+      builtin_brokers = make_builtin_broker_info (&num_builtin_brokers, &shard_mgmt_config);
       if (builtin_brokers == NULL)
-	{
-	  PRINT_CONF_ERROR ("config error: memory allocation failure\n");
-	  goto conf_error;
-	}
+        {
+          PRINT_CONF_ERROR ("config error: memory allocation failure\n");
+          goto conf_error;
+        }
 
       for (i = 0; i < num_builtin_brokers; i++)
-	{
-	  STRNCPY (br_info[num_brs].name, builtin_brokers[i].broker_name,
-		   sizeof (br_info[num_brs].name));
-	  if (set_broker_conf (&br_info[num_brs], NULL,
-			       builtin_brokers[i].broker_type, "",
-			       &lineno) < 0)
-	    {
-	      free (builtin_brokers);
-	      errcode = PARAM_BAD_VALUE;
-	      goto conf_error;
-	    }
-	  num_brs++;
-	}
+        {
+          STRNCPY (br_info[num_brs].name, builtin_brokers[i].broker_name, sizeof (br_info[num_brs].name));
+          if (set_broker_conf (&br_info[num_brs], NULL, builtin_brokers[i].broker_type, "", &lineno) < 0)
+            {
+              free (builtin_brokers);
+              errcode = PARAM_BAD_VALUE;
+              goto conf_error;
+            }
+          num_brs++;
+        }
 
       free (builtin_brokers);
     }
@@ -928,47 +864,43 @@ broker_config_read_internal (const char *conf_file,
 
       sec_name = ini_getsecname (ini, i, &lineno);
       if (sec_name == NULL
-	  || strcasecmp (sec_name, BROKER_SECTION_NAME) == 0
-	  || strcasecmp (sec_name, SHARD_MGMT_SECTION_NAME) == 0)
-	{
-	  continue;
-	}
+          || strcasecmp (sec_name, BROKER_SECTION_NAME) == 0 || strcasecmp (sec_name, SHARD_MGMT_SECTION_NAME) == 0)
+        {
+          continue;
+        }
 
       /* sec_name : broker_name */
       if ((strlen (sec_name)) >= BROKER_NAME_LEN)
-	{
-	  errcode = SECTION_NAME_TOO_LONG;
-	  goto conf_error;
-	}
+        {
+          errcode = SECTION_NAME_TOO_LONG;
+          goto conf_error;
+        }
 
-      tmp_br_info = ut_find_broker (br_info, num_brs, sec_name,
-				    NORMAL_BROKER);
+      tmp_br_info = ut_find_broker (br_info, num_brs, sec_name, NORMAL_BROKER);
       if (tmp_br_info == NULL)
-	{
-	  if (num_brs >= MAX_BROKER_NUM)
-	    {
-	      errcode = PARAM_BAD_RANGE;
-	      goto conf_error;
-	    }
+        {
+          if (num_brs >= MAX_BROKER_NUM)
+            {
+              errcode = PARAM_BAD_RANGE;
+              goto conf_error;
+            }
 
-	  tmp_br_info = &br_info[num_brs];
-	  num_brs++;
+          tmp_br_info = &br_info[num_brs];
+          num_brs++;
 
-	  strcpy (tmp_br_info->name, sec_name);
-	}
+          strcpy (tmp_br_info->name, sec_name);
+        }
 
-      if (set_broker_conf (tmp_br_info, ini, NORMAL_BROKER, sec_name,
-			   &lineno) < 0)
-	{
-	  errcode = PARAM_BAD_VALUE;
-	  goto conf_error;
-	}
+      if (set_broker_conf (tmp_br_info, ini, NORMAL_BROKER, sec_name, &lineno) < 0)
+        {
+          errcode = PARAM_BAD_VALUE;
+          goto conf_error;
+        }
     }
 
   if (admin_flag && br_info != NULL)
     {
-      tune_builtin_broker_conf (br_info, num_brs, mgmt_port,
-				&shard_mgmt_config);
+      tune_builtin_broker_conf (br_info, num_brs, mgmt_port, &shard_mgmt_config);
     }
 
   SHARD_MGMT_CONFIG_FREE (&shard_mgmt_config);
@@ -998,22 +930,22 @@ broker_config_read_internal (const char *conf_file,
     {
 #if 0
       if (check_port_number (br_info, num_brs) < 0)
-	{
-	  goto conf_error;
-	}
+        {
+          goto conf_error;
+        }
 #endif
 
       for (i = 0; i < num_brs; i++)
-	{
-	  if (br_info[i].source_env[0] != '\0')
-	    {
-	      dir_repath (br_info[i].source_env, CONF_LOG_FILE_LEN);
-	    }
-	}
+        {
+          if (br_info[i].source_env[0] != '\0')
+            {
+              dir_repath (br_info[i].source_env, CONF_LOG_FILE_LEN);
+            }
+        }
       if (admin_log_file != NULL)
-	{
-	  dir_repath (admin_log_file, CONF_LOG_FILE_LEN);
-	}
+        {
+          dir_repath (admin_log_file, CONF_LOG_FILE_LEN);
+        }
     }
 
   if (num_broker != NULL)
@@ -1031,8 +963,7 @@ broker_config_read_internal (const char *conf_file,
   return 0;
 
 conf_error:
-  PRINT_CONF_ERROR ("Line %d in config file %s : %s\n", lineno, conf_file,
-		    tbl_conf_err_msg[errcode]);
+  PRINT_CONF_ERROR ("Line %d in config file %s : %s\n", lineno, conf_file, tbl_conf_err_msg[errcode]);
 
   SHARD_MGMT_CONFIG_FREE (&shard_mgmt_config);
 
@@ -1056,8 +987,7 @@ conf_error:
  */
 int
 broker_config_read (T_BROKER_INFO * br_info,
-		    int *num_broker, int *broker_shm_key,
-		    char *admin_log_file, char admin_flag)
+                    int *num_broker, int *broker_shm_key, char *admin_log_file, char admin_flag)
 {
   int err = 0;
   char conf_file_path[BROKER_PATH_MAX];
@@ -1069,9 +999,7 @@ broker_config_read (T_BROKER_INFO * br_info,
 
   envvar_rye_conf_file (conf_file_path, sizeof (conf_file_path));
 
-  err = broker_config_read_internal (conf_file_path, br_info,
-				     num_broker, broker_shm_key,
-				     admin_log_file, admin_flag);
+  err = broker_config_read_internal (conf_file_path, br_info, num_broker, broker_shm_key, admin_log_file, admin_flag);
 
   return err;
 }
@@ -1082,14 +1010,12 @@ broker_config_read (T_BROKER_INFO * br_info,
  *   fp(in):
  */
 void
-broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
-		    int num_broker, int broker_shm_key)
+broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info, int num_broker, int broker_shm_key)
 {
   int i;
   const char *tmp_str;
 
-  if (br_info == NULL || num_broker <= 0 || num_broker > MAX_BROKER_NUM
-      || broker_shm_key <= 0)
+  if (br_info == NULL || num_broker <= 0 || num_broker > MAX_BROKER_NUM || broker_shm_key <= 0)
     return;
 
   fprintf (fp, "#\n# rye-auto.conf\n#\n\n");
@@ -1098,9 +1024,9 @@ broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
   for (i = 0; i < MAX_NUM_OF_CONF_FILE_LOADED; i++)
     {
       if (conf_File_loaded[i] != NULL)
-	{
-	  fprintf (fp, "# %s\n", conf_File_loaded[i]);
-	}
+        {
+          fprintf (fp, "# %s\n", conf_File_loaded[i]);
+        }
     }
 
   fprintf (fp, "\n# broker parameters\n");
@@ -1113,137 +1039,121 @@ broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
       fprintf (fp, "[%s]\n", br_info[i].name);
       tmp_str = get_conf_string (br_info[i].service_flag, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "SERVICE\t\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "SERVICE\t\t\t=%s\n", tmp_str);
+        }
       tmp_str = get_conf_string (br_info[i].appl_server, tbl_appl_server);
       if (tmp_str)
-	{
-	  fprintf (fp, "APPL_SERVER\t\t=%s\n", tmp_str);
-	}
-      fprintf (fp, "MIN_NUM_APPL_SERVER\t=%d\n",
-	       br_info[i].appl_server_min_num);
-      fprintf (fp, "MAX_NUM_APPL_SERVER\t=%d\n",
-	       br_info[i].appl_server_max_num);
-      fprintf (fp, "APPL_SERVER_MAX_SIZE\t=%d\n",
-	       br_info[i].appl_server_max_size / ONE_K);
+        {
+          fprintf (fp, "APPL_SERVER\t\t=%s\n", tmp_str);
+        }
+      fprintf (fp, "MIN_NUM_APPL_SERVER\t=%d\n", br_info[i].appl_server_min_num);
+      fprintf (fp, "MAX_NUM_APPL_SERVER\t=%d\n", br_info[i].appl_server_max_num);
+      fprintf (fp, "APPL_SERVER_MAX_SIZE\t=%d\n", br_info[i].appl_server_max_size / ONE_K);
       fprintf (fp, "SESSION_TIMEOUT\t\t=%d\n", br_info[i].session_timeout);
       tmp_str = get_conf_string (br_info[i].log_backup, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "LOG_BACKUP\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "LOG_BACKUP\t\t=%s\n", tmp_str);
+        }
       fprintf (fp, "SOURCE_ENV\t\t=%s\n", br_info[i].source_env);
       tmp_str = get_conf_string (br_info[i].sql_log_mode, tbl_sql_log_mode);
       if (tmp_str)
-	{
-	  fprintf (fp, "SQL_LOG\t\t\t=%s\n", tmp_str);
-	}
-      tmp_str =
-	get_conf_string (br_info[i].broker_log_mode, tbl_broker_log_mode);
+        {
+          fprintf (fp, "SQL_LOG\t\t\t=%s\n", tmp_str);
+        }
+      tmp_str = get_conf_string (br_info[i].broker_log_mode, tbl_broker_log_mode);
       if (tmp_str)
-	{
-	  fprintf (fp, "BROKER_LOG\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "BROKER_LOG\t\t=%s\n", tmp_str);
+        }
       tmp_str = get_conf_string (br_info[i].slow_log_mode, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "SLOW_LOG\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "SLOW_LOG\t\t=%s\n", tmp_str);
+        }
       fprintf (fp, "SQL_LOG_MAX_SIZE\t=%d\n", br_info[i].sql_log_max_size);
-      fprintf (fp, "BROKER_LOG_MAX_SIZE\t=%d\n",
-	       br_info[i].broker_log_max_size);
-      fprintf (fp, "LONG_QUERY_TIME\t\t=%.2f\n",
-	       (br_info[i].long_query_time / 1000.0));
-      fprintf (fp, "LONG_TRANSACTION_TIME\t=%.2f\n",
-	       (br_info[i].long_transaction_time / 1000.0));
+      fprintf (fp, "BROKER_LOG_MAX_SIZE\t=%d\n", br_info[i].broker_log_max_size);
+      fprintf (fp, "LONG_QUERY_TIME\t\t=%.2f\n", (br_info[i].long_query_time / 1000.0));
+      fprintf (fp, "LONG_TRANSACTION_TIME\t=%.2f\n", (br_info[i].long_transaction_time / 1000.0));
       tmp_str = get_conf_string (br_info[i].auto_add_appl_server, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "AUTO_ADD_APPL_SERVER\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "AUTO_ADD_APPL_SERVER\t=%s\n", tmp_str);
+        }
       fprintf (fp, "JOB_QUEUE_SIZE\t\t=%d\n", br_info[i].job_queue_size);
       fprintf (fp, "TIME_TO_KILL\t\t=%d\n", br_info[i].time_to_kill);
       tmp_str = get_conf_string (br_info[i].access_log, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "ACCESS_LOG\t\t=%s\n", tmp_str);
-	}
-      fprintf (fp, "ACCESS_LOG_MAX_SIZE\t=%d\n",
-	       (br_info[i].access_log_max_size));
+        {
+          fprintf (fp, "ACCESS_LOG\t\t=%s\n", tmp_str);
+        }
+      fprintf (fp, "ACCESS_LOG_MAX_SIZE\t=%d\n", (br_info[i].access_log_max_size));
       fprintf (fp, "MAX_STRING_LENGTH\t=%d\n", br_info[i].max_string_length);
-      tmp_str =
-	get_conf_string (br_info[i].keep_connection, tbl_keep_connection);
+      tmp_str = get_conf_string (br_info[i].keep_connection, tbl_keep_connection);
       if (tmp_str)
-	{
-	  fprintf (fp, "KEEP_CONNECTION\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "KEEP_CONNECTION\t\t=%s\n", tmp_str);
+        }
       tmp_str = get_conf_string (br_info[i].statement_pooling, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "STATEMENT_POOLING\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "STATEMENT_POOLING\t=%s\n", tmp_str);
+        }
       tmp_str = get_conf_string (br_info[i].access_mode, tbl_access_mode);
       if (tmp_str)
-	{
-	  fprintf (fp, "ACCESS_MODE\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "ACCESS_MODE\t\t=%s\n", tmp_str);
+        }
       tmp_str = get_conf_string (br_info[i].connect_order_random, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "CONNECT_ORDER\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "CONNECT_ORDER\t\t=%s\n", tmp_str);
+        }
 
-      fprintf (fp, "MAX_NUM_DELAYED_HOSTS_LOOKUP\t=%d\n",
-	       br_info[i].max_num_delayed_hosts_lookup);
+      fprintf (fp, "MAX_NUM_DELAYED_HOSTS_LOOKUP\t=%d\n", br_info[i].max_num_delayed_hosts_lookup);
 
       fprintf (fp, "RECONNECT_TIME\t\t=%d\n", br_info[i].cas_rctime);
 
       tmp_str = get_conf_string (br_info[i].replica_only_flag, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "REPLICA_ONLY\t\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "REPLICA_ONLY\t\t=%s\n", tmp_str);
+        }
 
       fprintf (fp, "MAX_QUERY_TIMEOUT\t=%d\n", br_info[i].query_timeout);
 
       tmp_str = get_conf_string (br_info[i].monitor_hang_flag, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "ENABLE_MONITOR_HANG\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "ENABLE_MONITOR_HANG\t=%s\n", tmp_str);
+        }
       tmp_str = get_conf_string (br_info[i].monitor_server_flag, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "ENABLE_MONITOR_SERVER\t=%s\n", tmp_str);
-	}
-      fprintf (fp, "REJECTED_CLIENTS_COUNT\t=%d\n",
-	       br_info[i].reject_client_count);
+        {
+          fprintf (fp, "ENABLE_MONITOR_SERVER\t=%s\n", tmp_str);
+        }
+      fprintf (fp, "REJECTED_CLIENTS_COUNT\t=%d\n", br_info[i].reject_client_count);
 
       fprintf (fp, "BROKER_PORT\t\t\t=%d\n", br_info[i].port);
       fprintf (fp, "APPL_SERVER_NUM\t\t=%d\n", br_info[i].appl_server_num);
-      fprintf (fp, "APPL_SERVER_MAX_SIZE_HARD_LIMIT\t=%d\n",
-	       br_info[i].appl_server_hard_limit / ONE_K);
-      fprintf (fp, "MAX_PREPARED_STMT_COUNT\t=%d\n",
-	       br_info[i].max_prepared_stmt_count);
-      fprintf (fp, "PREFERRED_HOSTS\t\t=%d\n",
-	       br_info[i].preferred_hosts.num_nodes);
+      fprintf (fp, "APPL_SERVER_MAX_SIZE_HARD_LIMIT\t=%d\n", br_info[i].appl_server_hard_limit / ONE_K);
+      fprintf (fp, "MAX_PREPARED_STMT_COUNT\t=%d\n", br_info[i].max_prepared_stmt_count);
+      fprintf (fp, "PREFERRED_HOSTS\t\t=%d\n", br_info[i].preferred_hosts.num_nodes);
 
-      tmp_str =
-	get_conf_string (br_info[i].cci_default_autocommit, tbl_on_off);
+      tmp_str = get_conf_string (br_info[i].cci_default_autocommit, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "CCI_DEFAULT_AUTOCOMMIT\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "CCI_DEFAULT_AUTOCOMMIT\t=%s\n", tmp_str);
+        }
 
-      fprintf (fp, "MONITOR_HANG_INTERVAL\t=%d\n",
-	       br_info[i].monitor_hang_interval);
+      fprintf (fp, "MONITOR_HANG_INTERVAL\t=%d\n", br_info[i].monitor_hang_interval);
       fprintf (fp, "HANG_TIMEOUT\t\t=%d\n", br_info[i].hang_timeout);
       tmp_str = get_conf_string (br_info[i].reject_client_flag, tbl_on_off);
       if (tmp_str)
-	{
-	  fprintf (fp, "REJECT_CLIENT_FLAG\t=%s\n", tmp_str);
-	}
+        {
+          fprintf (fp, "REJECT_CLIENT_FLAG\t=%s\n", tmp_str);
+        }
 
       fprintf (fp, "\n");
     }

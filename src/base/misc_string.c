@@ -60,32 +60,32 @@ ustr_casestr (const char *s1, const char *s2)
   while (len1 >= len2)
     {
       while (tolower (*s1) != c)
-	{
-	  if (--len1 < len2)
-	    return NULL;
-	  s1++;
-	}
+        {
+          if (--len1 < len2)
+            return NULL;
+          s1++;
+        }
 
       p1 = s1;
       p2 = s2;
       while (tolower (*p1) == tolower (*p2))
-	{
-	  p1++;
-	  p2++;
-	  if (!*p2)
-	    return (char *) s1;
-	}
+        {
+          p1++;
+          p2++;
+          if (!*p2)
+            return (char *) s1;
+        }
 
       if (p1 == s1)
-	{
-	  len1--;
-	  s1--;
-	}
+        {
+          len1--;
+          s1--;
+        }
       else
-	{
-	  len1 -= (p1 - s1) + 1;
-	  s1 += (p1 - s1) + 1;
-	}
+        {
+          len1 -= (p1 - s1) + 1;
+          s1 += (p1 - s1) + 1;
+        }
     }
   return NULL;
 }

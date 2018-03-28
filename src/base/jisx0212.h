@@ -38,6 +38,7 @@ static const unsigned short jisx0212_2uni_page22[81] = {
   0xfffd, 0xfffd, 0x00ba, 0x00aa, 0x00a9, 0x00ae, 0x2122, 0x00a4,
   0x2116,
 };
+
 static const unsigned short jisx0212_2uni_page26[188] = {
   /* 0x26 */
   0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd,
@@ -66,6 +67,7 @@ static const unsigned short jisx0212_2uni_page26[188] = {
   0xfffd, 0x0452, 0x0453, 0x0454, 0x0455, 0x0456, 0x0457, 0x0458,
   0x0459, 0x045a, 0x045b, 0x045c, 0x045e, 0x045f,
 };
+
 static const unsigned short jisx0212_2uni_page29[275] = {
   /* 0x29 */
   0x00c6, 0x0110, 0xfffd, 0x0126, 0xfffd, 0x0132, 0xfffd, 0x0141,
@@ -106,6 +108,7 @@ static const unsigned short jisx0212_2uni_page29[275] = {
   0x016b, 0x0173, 0x016f, 0x0169, 0x01d8, 0x01dc, 0x01da, 0x01d6,
   0x0175, 0x00fd, 0x00ff, 0x0177, 0x017a, 0x017e, 0x017c,
 };
+
 static const unsigned short jisx0212_2uni_page30[5801] = {
   /* 0x30 */
   0x4e02, 0x4e04, 0x4e05, 0x4e0c, 0x4e12, 0x4e1f, 0x4e23, 0x4e24,
@@ -916,56 +919,55 @@ static int
 jisx0212_mbtowc (ucs4_t * pwc, const unsigned char *s, int n)
 {
   unsigned char c1 = s[0];
-  if ((c1 == 0x22) || (c1 >= 0x26 && c1 <= 0x27)
-      || (c1 >= 0x29 && c1 <= 0x2b) || (c1 >= 0x30 && c1 <= 0x6d))
+  if ((c1 == 0x22) || (c1 >= 0x26 && c1 <= 0x27) || (c1 >= 0x29 && c1 <= 0x2b) || (c1 >= 0x30 && c1 <= 0x6d))
     {
       if (n >= 2)
-	{
-	  unsigned char c2 = s[1];
+        {
+          unsigned char c2 = s[1];
 
-	  if (c2 >= 0x21 && c2 < 0x7f)
-	    {
-	      unsigned int i = 94 * (c1 - 0x21) + (c2 - 0x21);
-	      unsigned short wc = 0xfffd;
+          if (c2 >= 0x21 && c2 < 0x7f)
+            {
+              unsigned int i = 94 * (c1 - 0x21) + (c2 - 0x21);
+              unsigned short wc = 0xfffd;
 
-	      if (i < 470)
-		{
-		  if (i < 175)
-		    {
-		      wc = jisx0212_2uni_page22[i - 94];
-		    }
-		}
-	      else if (i < 752)
-		{
-		  if (i < 658)
-		    {
-		      wc = jisx0212_2uni_page26[i - 470];
-		    }
-		}
-	      else if (i < 1410)
-		{
-		  if (i < 1027)
-		    {
-		      wc = jisx0212_2uni_page29[i - 752];
-		    }
-		}
-	      else
-		{
-		  if (i < 7211)
-		    {
-		      wc = jisx0212_2uni_page30[i - 1410];
-		    }
-		}
+              if (i < 470)
+                {
+                  if (i < 175)
+                    {
+                      wc = jisx0212_2uni_page22[i - 94];
+                    }
+                }
+              else if (i < 752)
+                {
+                  if (i < 658)
+                    {
+                      wc = jisx0212_2uni_page26[i - 470];
+                    }
+                }
+              else if (i < 1410)
+                {
+                  if (i < 1027)
+                    {
+                      wc = jisx0212_2uni_page29[i - 752];
+                    }
+                }
+              else
+                {
+                  if (i < 7211)
+                    {
+                      wc = jisx0212_2uni_page30[i - 1410];
+                    }
+                }
 
-	      if (wc != 0xfffd)
-		{
-		  *pwc = (ucs4_t) wc;
-		  return 2;
-		}
-	    }
+              if (wc != 0xfffd)
+                {
+                  *pwc = (ucs4_t) wc;
+                  return 2;
+                }
+            }
 
-	  return RET_ILSEQ;
-	}
+          return RET_ILSEQ;
+        }
 
       return RET_TOOFEW;
     }
@@ -1760,10 +1762,12 @@ static const Summary16 jisx0212_uni2indx_page00[70] = {
   {237, 0xdffc}, {250, 0x0000}, {250, 0x0000}, {250, 0x0000},
   {250, 0x0000}, {250, 0xdffc},
 };
+
 static const Summary16 jisx0212_uni2indx_page21[3] = {
   /* 0x2100 */
   {263, 0x0000}, {263, 0x0040}, {264, 0x0004},
 };
+
 static const Summary16 jisx0212_uni2indx_page4e[1307] = {
   /* 0x4e00 */
   {265, 0x1034}, {269, 0x8004}, {271, 0xc918}, {277, 0x0021},
@@ -2175,6 +2179,7 @@ static const Summary16 jisx0212_uni2indx_page4e[1307] = {
   {6029, 0x00fa}, {6035, 0x65e8}, {6043, 0xe300}, {6048, 0x242b},
   {6054, 0x8000}, {6055, 0x40d7}, {6062, 0x002e},
 };
+
 static const Summary16 jisx0212_uni2indx_pageff[6] = {
   /* 0xff00 */
   {6066, 0x0000}, {6066, 0x0000}, {6066, 0x0000}, {6066, 0x0000},
@@ -2189,45 +2194,45 @@ jisx0212_wctomb (unsigned char *r, ucs4_t wc, int n)
       const Summary16 *summary = NULL;
 
       if (wc >= 0x0000 && wc < 0x0460)
-	{
-	  summary = &jisx0212_uni2indx_page00[(wc >> 4)];
-	}
+        {
+          summary = &jisx0212_uni2indx_page00[(wc >> 4)];
+        }
       else if (wc >= 0x2100 && wc < 0x2130)
-	{
-	  summary = &jisx0212_uni2indx_page21[(wc >> 4) - 0x210];
-	}
+        {
+          summary = &jisx0212_uni2indx_page21[(wc >> 4) - 0x210];
+        }
       else if (wc >= 0x4e00 && wc < 0x9fb0)
-	{
-	  summary = &jisx0212_uni2indx_page4e[(wc >> 4) - 0x4e0];
-	}
+        {
+          summary = &jisx0212_uni2indx_page4e[(wc >> 4) - 0x4e0];
+        }
       else if (wc >= 0xff00 && wc < 0xff60)
-	{
-	  summary = &jisx0212_uni2indx_pageff[(wc >> 4) - 0xff0];
-	}
+        {
+          summary = &jisx0212_uni2indx_pageff[(wc >> 4) - 0xff0];
+        }
 
       if (summary)
-	{
-	  unsigned short used = summary->used;
-	  unsigned int i = wc & 0x0f;
+        {
+          unsigned short used = summary->used;
+          unsigned int i = wc & 0x0f;
 
-	  if (used & ((unsigned short) 1 << i))
-	    {
-	      unsigned short c;
+          if (used & ((unsigned short) 1 << i))
+            {
+              unsigned short c;
 
-	      /* Keep in `used' only the bits 0..i-1. */
-	      used &= ((unsigned short) 1 << i) - 1;
-	      /* Add `summary->indx' and the number of bits set in `used' */
-	      used = (used & 0x5555) + ((used & 0xaaaa) >> 1);
-	      used = (used & 0x3333) + ((used & 0xcccc) >> 2);
-	      used = (used & 0x0f0f) + ((used & 0xf0f0) >> 4);
-	      used = (used & 0x00ff) + (used >> 8);
-	      c = jisx0212_2charset[summary->indx + used];
-	      r[0] = (c >> 8);
-	      r[1] = (c & 0xff);
+              /* Keep in `used' only the bits 0..i-1. */
+              used &= ((unsigned short) 1 << i) - 1;
+              /* Add `summary->indx' and the number of bits set in `used' */
+              used = (used & 0x5555) + ((used & 0xaaaa) >> 1);
+              used = (used & 0x3333) + ((used & 0xcccc) >> 2);
+              used = (used & 0x0f0f) + ((used & 0xf0f0) >> 4);
+              used = (used & 0x00ff) + (used >> 8);
+              c = jisx0212_2charset[summary->indx + used];
+              r[0] = (c >> 8);
+              r[1] = (c & 0xff);
 
-	      return 2;
-	    }
-	}
+              return 2;
+            }
+        }
 
       return RET_ILUNI;
     }

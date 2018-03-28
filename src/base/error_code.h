@@ -699,7 +699,7 @@
 
 #define ER_QSTR_BAD_SRC_CODESET			    -619
 #define ER_QSTR_BAD_DEST_CODESET		    -620
-#define ER_QSTR_INVALID_DATA_TYPE		    -621	/* unused */
+#define ER_QSTR_INVALID_DATA_TYPE		    -621        /* unused */
 #define ER_QSTR_INCOMPATIBLE_CODE_SETS		    -622
 #define ER_QSTR_INVALID_ESCAPE_SEQUENCE             -623
 #define ER_QSTR_INVALID_ESCAPE_CHARACTER            -624
@@ -913,7 +913,7 @@
 
 #define ER_QPROC_NO_TABLE_FUNCTIONS                 -770
 #define ER_QPROC_INVALID_PARAMETER		    -771
-#if 0				/* unused */
+#if 0                           /* unused */
 #define ER_QPROC_DB_SERIAL_NOT_FOUND	            -772
 #define ER_QPROC_SERIAL_NOT_FOUND	            -773
 #define ER_QPROC_SERIAL_ALREADY_EXIST		    -774
@@ -1328,7 +1328,7 @@
 #define ER_ENCRYPTION_LIB_FAILED		    -1132
 
 #define ER_BTREE_PAGE_CORRUPTED                     -1135
-#define ER_BTREE_REPAIR_PREV_LINK                   -1136 /* unused */
+#define ER_BTREE_REPAIR_PREV_LINK                   -1136       /* unused */
 
 #define ER_MAX_RECURSION_SQL_DEPTH                  -1137
 

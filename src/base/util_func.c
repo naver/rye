@@ -89,10 +89,10 @@ hashpjw (const char *s)
       g = (h & 0xf0000000);
 
       if (g != 0)
-	{
-	  h ^= g >> 24;
-	  h ^= g;
-	}
+        {
+          h ^= g >> 24;
+          h ^= g;
+        }
     }
   return h;
 }
@@ -176,18 +176,18 @@ util_disarm_signal_handlers (void)
     {
       user_interrupt_handler = NULL;
       if (os_set_signal_handler (SIGINT, SIG_IGN) != SIG_IGN)
-	{
-	  (void) os_set_signal_handler (SIGINT, SIG_DFL);
-	}
+        {
+          (void) os_set_signal_handler (SIGINT, SIG_DFL);
+        }
     }
 
   if (user_quit_handler != NULL)
     {
       user_quit_handler = NULL;
       if (os_set_signal_handler (SIGQUIT, SIG_IGN) != SIG_IGN)
-	{
-	  (void) os_set_signal_handler (SIGQUIT, SIG_DFL);
-	}
+        {
+          (void) os_set_signal_handler (SIGQUIT, SIG_DFL);
+        }
     }
 }
 
@@ -199,8 +199,7 @@ util_disarm_signal_handlers (void)
  *   sigquit_handler(in): SIGQUIT signal handler
  */
 void
-util_arm_signal_handlers (SIG_HANDLER sigint_handler,
-			  SIG_HANDLER sigquit_handler)
+util_arm_signal_handlers (SIG_HANDLER sigint_handler, SIG_HANDLER sigquit_handler)
 {
   /* first disarm any existing handlers */
   util_disarm_signal_handlers ();
@@ -208,20 +207,20 @@ util_arm_signal_handlers (SIG_HANDLER sigint_handler,
   if (sigint_handler != NULL)
     {
       if (os_set_signal_handler (SIGINT, SIG_IGN) != SIG_IGN)
-	{
-	  (void) os_set_signal_handler (SIGINT, system_interrupt_handler);
-	  user_interrupt_handler = sigint_handler;
-	}
+        {
+          (void) os_set_signal_handler (SIGINT, system_interrupt_handler);
+          user_interrupt_handler = sigint_handler;
+        }
     }
 
   if (sigquit_handler != NULL)
     {
       /* Is this kind of test necessary for the quit signal ? */
       if (os_set_signal_handler (SIGQUIT, SIG_IGN) != SIG_IGN)
-	{
-	  (void) os_set_signal_handler (SIGQUIT, system_quit_handler);
-	  user_quit_handler = sigquit_handler;
-	}
+        {
+          (void) os_set_signal_handler (SIGQUIT, system_quit_handler);
+          user_quit_handler = sigquit_handler;
+        }
     }
 }
 #endif
@@ -284,53 +283,53 @@ util_str_to_time_since_epoch (char *str)
   while (status == NO_ERROR && token != NULL)
     {
       switch (date_index)
-	{
-	case 0:		/* year */
-	  time_data.tm_year = atoi (token) - 1900;
-	  if (time_data.tm_year < 0)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 1:		/* month */
-	  time_data.tm_mon = atoi (token) - 1;
-	  if (time_data.tm_mon < 0 || time_data.tm_mon > 11)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 2:		/* month-day */
-	  time_data.tm_mday = atoi (token);
-	  if (time_data.tm_mday < 1 || time_data.tm_mday > 31)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 3:		/* hour */
-	  time_data.tm_hour = atoi (token);
-	  if (time_data.tm_hour < 0 || time_data.tm_hour > 23)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 4:		/* minute */
-	  time_data.tm_min = atoi (token);
-	  if (time_data.tm_min < 0 || time_data.tm_min > 59)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 5:		/* second */
-	  time_data.tm_sec = atoi (token);
-	  if (time_data.tm_sec < 0 || time_data.tm_sec > 59)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	default:
-	  status = ER_GENERIC_ERROR;
-	  break;
-	}
+        {
+        case 0:                /* year */
+          time_data.tm_year = atoi (token) - 1900;
+          if (time_data.tm_year < 0)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 1:                /* month */
+          time_data.tm_mon = atoi (token) - 1;
+          if (time_data.tm_mon < 0 || time_data.tm_mon > 11)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 2:                /* month-day */
+          time_data.tm_mday = atoi (token);
+          if (time_data.tm_mday < 1 || time_data.tm_mday > 31)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 3:                /* hour */
+          time_data.tm_hour = atoi (token);
+          if (time_data.tm_hour < 0 || time_data.tm_hour > 23)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 4:                /* minute */
+          time_data.tm_min = atoi (token);
+          if (time_data.tm_min < 0 || time_data.tm_min > 59)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 5:                /* second */
+          time_data.tm_sec = atoi (token);
+          if (time_data.tm_sec < 0 || time_data.tm_sec > 59)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        default:
+          status = ER_GENERIC_ERROR;
+          break;
+        }
       date_index++;
       token = strtok_r (NULL, delim, &save_ptr);
     }
@@ -450,25 +449,25 @@ util_log_write_command (int argc, char *argv[])
     {
       str_len = strlen (argv[i]);
       if (str_len > remained_buf_length)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       strcpy (p, argv[i]);
       remained_buf_length -= str_len;
       p += str_len;
       if (i < argc - 1 && remained_buf_length > 0)
-	{
-	  /* add white space */
-	  *p = ' ';
-	  p++;
-	  remained_buf_length--;
-	}
+        {
+          /* add white space */
+          *p = ' ';
+          p++;
+          remained_buf_length--;
+        }
       else if (i == argc - 1 && remained_buf_length > 0)
-	{
-	  *p = '\n';
-	  p++;
-	  remained_buf_length--;
-	}
+        {
+          *p = '\n';
+          p++;
+          remained_buf_length--;
+        }
     }
 
   return util_log_write_internal (command_buf, NULL);
@@ -505,9 +504,9 @@ util_log_write_internal (const char *msg, const char *prefix_str)
     {
       n = snprintf (p, len, "%s%s", (prefix_str ? prefix_str : ""), msg);
       if (n >= len)
-	{
-	  p[len - 1] = '\0';
-	}
+        {
+          p[len - 1] = '\0';
+        }
     }
 
   fp = util_log_file_fopen (util_Log_filename);
@@ -577,9 +576,9 @@ util_log_file_fopen (const char *path)
     {
       fseek (fp, 0, SEEK_END);
       if (ftell (fp) > prm_get_bigint_value (PRM_ID_ER_LOG_SIZE))
-	{
-	  fp = util_log_file_backup (fp, path);
-	}
+        {
+          fp = util_log_file_backup (fp, path);
+        }
     }
 
   return fp;
@@ -625,18 +624,18 @@ retry:
   if (fp != NULL)
     {
       if (lockf (fileno (fp), F_TLOCK, 0) < 0)
-	{
-	  fclose (fp);
+        {
+          fclose (fp);
 
-	  if (retry_count < MAX_RETRY_COUNT)
-	    {
-	      THREAD_SLEEP (100);
-	      retry_count++;
-	      goto retry;
-	    }
+          if (retry_count < MAX_RETRY_COUNT)
+            {
+              THREAD_SLEEP (100);
+              retry_count++;
+              goto retry;
+            }
 
-	  return NULL;
-	}
+          return NULL;
+        }
     }
 
   return fp;

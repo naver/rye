@@ -64,7 +64,7 @@
 #define OR_PTR_ALIGNED_SIZE     (OR_PTR_SIZE + MAX_ALIGNMENT)
 #define OR_VALUE_ALIGNED_SIZE(value)   \
   (or_db_value_size (value) + MAX_ALIGNMENT)
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
 #define OR_IDXKEY_ALIGNED_SIZE(idxkey)   \
   (or_db_idxkey_size (idxkey) + MAX_ALIGNMENT)
 #endif
@@ -129,12 +129,12 @@
 #define OR_MAX_BYTE 127
 #define OR_MIN_BYTE -128
 
-#define OR_MAX_SHORT_UNSIGNED 65535	/* 0xFFFF */
-#define OR_MAX_SHORT 32767	/* 0x7FFF */
-#define OR_MIN_SHORT -32768	/* 0x8000 */
+#define OR_MAX_SHORT_UNSIGNED 65535     /* 0xFFFF */
+#define OR_MAX_SHORT 32767      /* 0x7FFF */
+#define OR_MIN_SHORT -32768     /* 0x8000 */
 
-#define OR_MAX_INT 2147483647	/* 0x7FFFFFFF */
-#define OR_MIN_INT -2147483648	/* 0x80000000 */
+#define OR_MAX_INT 2147483647   /* 0x7FFFFFFF */
+#define OR_MIN_INT -2147483648  /* 0x80000000 */
 
 /* OVERFLOW CHECK MACROS */
 
@@ -183,8 +183,8 @@
      memcpy(ptr, &packed_value, OR_DOUBLE_SIZE); \
    } while (0)
 
-#define OR_GET_BIG_VAR_OFFSET(ptr) 	OR_GET_INT(ptr)	/* 4byte */
-#define OR_PUT_BIG_VAR_OFFSET(ptr, val)	OR_PUT_INT(ptr, val);	/* 4byte */
+#define OR_GET_BIG_VAR_OFFSET(ptr) 	OR_GET_INT(ptr) /* 4byte */
+#define OR_PUT_BIG_VAR_OFFSET(ptr, val)	OR_PUT_INT(ptr, val);   /* 4byte */
 
 #define OR_PUT_OFFSET(ptr, val) \
   OR_PUT_OFFSET_INTERNAL(ptr, val, BIG_VAR_OFFSET_SIZE)
@@ -452,15 +452,15 @@
    OR_VAR_TABLE_ELEMENT_OFFSET_INTERNAL(table, (index), offset_size))
 
 /* OBJECT HEADER LAYOUT */
-#define OR_HEADER_SIZE  8	/* two integers */
-#define OR_REP_OFFSET   0	/* rep id */
-#define OR_GRPID_OFFSET 4	/* shard group id */
+#define OR_HEADER_SIZE  8       /* two integers */
+#define OR_REP_OFFSET   0       /* rep id */
+#define OR_GRPID_OFFSET 4       /* shard group id */
 
 /* high bit of the repid word is reserved for the bound bit flag,
    need to keep representations from going negative ! */
 #define OR_BOUND_BIT_FLAG   0x80000000
 
-#define BIG_VAR_OFFSET_SIZE OR_INT_SIZE	/* 4byte */
+#define BIG_VAR_OFFSET_SIZE OR_INT_SIZE /* 4byte */
 
 /* 01 stand for 1byte, 10-> 2byte, 11-> 4byte  */
 #define OR_OFFSET_SIZE_FLAG 0x60000000
@@ -700,7 +700,7 @@
 #define ORC_ATT_COUNT_OFFSET            36
 
 #define ORC_CLASS_VAR_ATT_COUNT         7
-#define ORC_NAME_INDEX 			0	/* ORC_NAME_INDEX should be 0 */
+#define ORC_NAME_INDEX 			0       /* ORC_NAME_INDEX should be 0 */
 #define ORC_OWNER_NAME_INDEX		1
 #define ORC_LOADER_COMMANDS_INDEX       2
 #define ORC_REPRESENTATIONS_INDEX	3
@@ -712,7 +712,7 @@
 #define ORC_ATT_ID_OFFSET		0
 #define ORC_ATT_TYPE_OFFSET		4
 #define ORC_ATT_DEF_ORDER_OFFSET	12
-#define ORC_ATT_CLASS_OFFSET		16	/* OR_OID_SIZE */
+#define ORC_ATT_CLASS_OFFSET		16      /* OR_OID_SIZE */
 #define ORC_ATT_FLAG_OFFSET             28
 #define ORC_ATT_INDEX_OFFSET		32
 
@@ -920,12 +920,10 @@ extern char *or_pack_time (char *ptr, DB_TIME time);
 extern char *or_pack_date (char *ptr, DB_DATE date);
 extern char *or_pack_short (char *ptr, short number);
 #endif
-extern char *or_pack_string_with_null_padding (char *ptr, const char *stream,
-					       size_t len);
+extern char *or_pack_string_with_null_padding (char *ptr, const char *stream, size_t len);
 extern char *or_pack_stream (char *ptr, const char *stream, size_t len);
 extern char *or_pack_string (char *ptr, const char *string);
-extern char *or_pack_string_with_length (char *ptr, const char *string,
-					 int length);
+extern char *or_pack_string_with_length (char *ptr, const char *string, int length);
 extern char *or_pack_errcode (char *ptr, int error);
 extern char *or_pack_oid (char *ptr, const OID * oid);
 extern char *or_pack_loid (char *ptr, const LOID * loid);
@@ -937,8 +935,7 @@ extern char *or_pack_recdes (char *buf, RECDES * recdes);
 #endif
 extern char *or_pack_log_lsa (char *ptr, const LOG_LSA * lsa);
 extern char *or_unpack_log_lsa (char *ptr, LOG_LSA * lsa);
-extern char *or_unpack_set (char *ptr, SETOBJ ** set,
-			    struct tp_domain *domain);
+extern char *or_unpack_set (char *ptr, SETOBJ ** set, struct tp_domain *domain);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern char *or_unpack_setref (char *ptr, DB_SET ** ref);
 #endif
@@ -993,10 +990,8 @@ extern char *or_unpack_listid (char *ptr, void **listid_ptr);
 extern char *or_unpack_unbound_listid (char *ptr, void **listid_ptr);
 extern char *or_unpack_lock (char *ptr, LOCK * lock);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern char *or_unpack_string_array (char *buffer, char ***string_array,
-				     int *cnt);
-extern char *or_unpack_db_value_array (char *buffer, DB_VALUE ** val,
-				       int *count);
+extern char *or_unpack_string_array (char *buffer, char ***string_array, int *cnt);
+extern char *or_unpack_db_value_array (char *buffer, DB_VALUE ** val, int *count);
 #endif
 extern char *or_pack_ptr (char *ptr, UINTPTR ptrval);
 extern char *or_unpack_ptr (char *ptr, UINTPTR * ptrval);
@@ -1031,8 +1026,7 @@ extern int or_packed_recdesc_length (int length);
 extern int or_listid_length (const void *listid);
 extern int or_set_node_length (void *set_node_ptr);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern int or_packed_string_array_length (int count,
-					  const char **string_array);
+extern int or_packed_string_array_length (int count, const char **string_array);
 extern int or_packed_db_value_array_length (int count, DB_VALUE * val);
 
 extern void or_encode (char *buffer, const char *source, int size);
@@ -1066,8 +1060,7 @@ extern int or_put_loid (OR_BUF * buf, LOID * loid);
 extern int or_put_varbit (OR_BUF * buf, char *string, int bitlen);
 extern int or_packed_put_varbit (OR_BUF * buf, char *string, int bitlen);
 extern int or_put_varchar (OR_BUF * buf, char *string, int charlen);
-extern int or_packed_put_varchar (OR_BUF * buf, const char *string,
-				  int charlen);
+extern int or_packed_put_varchar (OR_BUF * buf, const char *string, int charlen);
 extern int or_put_align32 (OR_BUF * buf);
 extern int or_put_offset (OR_BUF * buf, int num);
 extern int or_put_offset_internal (OR_BUF * buf, int num, int offset_size);
@@ -1117,42 +1110,31 @@ extern int or_get_varbit_length (OR_BUF * buf, int *intval);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern char *or_unpack_var_table (char *ptr, int nvars, OR_VARINFO * vars);
 #endif
-extern OR_VARINFO *or_get_var_table (OR_BUF * buf, int nvars,
-				     char *(*allocator) (int));
+extern OR_VARINFO *or_get_var_table (OR_BUF * buf, int nvars, char *(*allocator) (int));
 
-extern OR_VARINFO *or_get_var_table_internal (OR_BUF * buf, int nvars,
-					      char *(*allocator) (int),
-					      int offset_size);
+extern OR_VARINFO *or_get_var_table_internal (OR_BUF * buf, int nvars, char *(*allocator) (int), int offset_size);
 
 /* DOMAIN functions */
 extern int or_packed_domain_size (struct tp_domain *domain);
-extern char *or_pack_domain (char *ptr, struct tp_domain *domain,
-			     int is_null);
-extern char *or_unpack_domain (char *ptr, struct tp_domain **domain_ptr,
-			       int *is_null);
-extern int or_put_domain (OR_BUF * buf, struct tp_domain *domain,
-			  int is_null);
-extern struct tp_domain *or_get_domain (OR_BUF * buf, struct tp_domain *dom,
-					int *is_null);
+extern char *or_pack_domain (char *ptr, struct tp_domain *domain, int is_null);
+extern char *or_unpack_domain (char *ptr, struct tp_domain **domain_ptr, int *is_null);
+extern int or_put_domain (OR_BUF * buf, struct tp_domain *domain, int is_null);
+extern struct tp_domain *or_get_domain (OR_BUF * buf, struct tp_domain *dom, int *is_null);
 extern int or_put_sub_domain (OR_BUF * buf);
 
 /* SET functions */
 extern void or_packed_set_info (DB_TYPE set_type,
-				struct tp_domain *domain,
-				int include_domain,
-				int *bound_bits,
-				int *offset_table,
-				int *element_tags, int *element_size);
+                                struct tp_domain *domain,
+                                int include_domain,
+                                int *bound_bits, int *offset_table, int *element_tags, int *element_size);
 
 extern int or_put_set_header (OR_BUF * buf, DB_TYPE set_type,
-			      int size, int domain, int bound_bits,
-			      int offset_table, int element_tags,
-			      int common_sub_header);
+                              int size, int domain, int bound_bits,
+                              int offset_table, int element_tags, int common_sub_header);
 
 extern int or_get_set_header (OR_BUF * buf, DB_TYPE * set_type,
-			      int *size, int *domain,
-			      int *bound_bits, int *offset_table,
-			      int *element_tags, int *common_sub_header);
+                              int *size, int *domain,
+                              int *bound_bits, int *offset_table, int *element_tags, int *common_sub_header);
 
 extern int or_skip_set_header (OR_BUF * buf);
 
@@ -1161,17 +1143,13 @@ extern int or_packed_set_length (SETOBJ * set, int include_domain);
 extern void or_put_set (OR_BUF * buf, SETOBJ * set, int include_domain);
 
 extern SETOBJ *or_get_set (OR_BUF * buf, struct tp_domain *domain);
-extern int or_disk_set_size (OR_BUF * buf, struct tp_domain *domain,
-			     DB_TYPE * set_type);
+extern int or_disk_set_size (OR_BUF * buf, struct tp_domain *domain, DB_TYPE * set_type);
 
 /* DB_VALUE functions */
-extern int or_packed_value_size (const DB_VALUE * value,
-				 int collapse_null, int include_domain);
+extern int or_packed_value_size (const DB_VALUE * value, int collapse_null, int include_domain);
 
-extern int or_put_value (OR_BUF * buf, const DB_VALUE * value,
-			 int collapse_null, int include_domain);
+extern int or_put_value (OR_BUF * buf, const DB_VALUE * value, int collapse_null, int include_domain);
 
-extern int or_get_value (OR_BUF * buf, DB_VALUE * value,
-			 struct tp_domain *domain, int expected, bool copy);
+extern int or_get_value (OR_BUF * buf, DB_VALUE * value, struct tp_domain *domain, int expected, bool copy);
 
 #endif /* _OBJECT_REPRESENTATION_H_ */

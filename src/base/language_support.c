@@ -80,8 +80,7 @@ extern TEXT_CONVERSION con_iso_8859_1_conv;
 extern TEXT_CONVERSION con_iso_8859_9_conv;
 
 /* all loaded locales */
-static LANG_LOCALE_DATA *lang_loaded_locales[LANG_MAX_LOADED_LOCALES] =
-  { NULL };
+static LANG_LOCALE_DATA *lang_loaded_locales[LANG_MAX_LOADED_LOCALES] = { NULL };
 
 static int lang_count_locales = 0;
 
@@ -112,61 +111,41 @@ static int set_current_locale (void);
 static void set_default_lang (void);
 static void lang_free_locales (void);
 static LANG_LOCALE_DATA *find_lang_locale_data (const char *name,
-						const INTL_CODESET codeset,
-						LANG_LOCALE_DATA **
-						last_lang_locale);
+                                                const INTL_CODESET codeset, LANG_LOCALE_DATA ** last_lang_locale);
 static int register_lang_locale_data (LANG_LOCALE_DATA * lld);
 static void free_lang_locale_data (LANG_LOCALE_DATA * lld);
 static int register_collation (LANG_COLLATION * coll);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-static bool lang_is_codeset_allowed (const INTL_LANG intl_id,
-				     const INTL_CODESET codeset);
-static int lang_get_builtin_lang_id_from_name (const char *lang_name,
-					       INTL_LANG * lang_id);
+static bool lang_is_codeset_allowed (const INTL_LANG intl_id, const INTL_CODESET codeset);
+static int lang_get_builtin_lang_id_from_name (const char *lang_name, INTL_LANG * lang_id);
 static INTL_CODESET lang_get_default_codeset (const INTL_LANG intl_id);
 #endif
 
 static int lang_fastcmp_byte (const LANG_COLLATION * lang_coll,
-			      const unsigned char *string1,
-			      const int size1,
-			      const unsigned char *string2, const int size2);
+                              const unsigned char *string1,
+                              const int size1, const unsigned char *string2, const int size2);
 static int lang_strcmp_utf8 (const LANG_COLLATION * lang_coll,
-			     const unsigned char *str1, const int size1,
-			     const unsigned char *str2, const int size2);
+                             const unsigned char *str1, const int size1, const unsigned char *str2, const int size2);
 static int lang_strmatch_utf8 (const LANG_COLLATION * lang_coll,
-			       bool is_match,
-			       const unsigned char *str1, int size1,
-			       const unsigned char *str2, int size2,
-			       const unsigned char *escape,
-			       const bool has_last_escape,
-			       int *str1_match_size);
+                               bool is_match,
+                               const unsigned char *str1, int size1,
+                               const unsigned char *str2, int size2,
+                               const unsigned char *escape, const bool has_last_escape, int *str1_match_size);
 static unsigned int lang_get_w_first_el (const COLL_DATA * coll,
-					 const unsigned char *str,
-					 const int str_size,
-					 unsigned char **next_char);
+                                         const unsigned char *str, const int str_size, unsigned char **next_char);
 static COLL_CONTRACTION *lang_get_contr_for_string (const COLL_DATA *
-						    coll_data,
-						    const unsigned char *str,
-						    const int str_size,
-						    unsigned int cp);
-static int lang_str_utf8_trail_zero_weights (const LANG_COLLATION * lang_coll,
-					     const unsigned char *str,
-					     int size);
+                                                    coll_data,
+                                                    const unsigned char *str, const int str_size, unsigned int cp);
+static int lang_str_utf8_trail_zero_weights (const LANG_COLLATION * lang_coll, const unsigned char *str, int size);
 static int lang_next_coll_char_utf8 (const LANG_COLLATION * lang_coll,
-				     const unsigned char *seq, const int size,
-				     unsigned char *next_seq, int *len_next);
+                                     const unsigned char *seq, const int size, unsigned char *next_seq, int *len_next);
 static int lang_split_key_utf8 (const LANG_COLLATION * lang_coll,
-				const bool is_desc,
-				const unsigned char *str1, const int size1,
-				const unsigned char *str2, const int size2,
-				unsigned char **key, int *byte_size);
-static unsigned int lang_mht2str_byte (const LANG_COLLATION * lang_coll,
-				       const unsigned char *str,
-				       const int size);
-static unsigned int lang_mht2str_utf8 (const LANG_COLLATION * lang_coll,
-				       const unsigned char *str,
-				       const int size);
+                                const bool is_desc,
+                                const unsigned char *str1, const int size1,
+                                const unsigned char *str2, const int size2, unsigned char **key, int *byte_size);
+static unsigned int lang_mht2str_byte (const LANG_COLLATION * lang_coll, const unsigned char *str, const int size);
+static unsigned int lang_mht2str_utf8 (const LANG_COLLATION * lang_coll, const unsigned char *str, const int size);
 static void lang_init_coll_en_ci (LANG_COLLATION * lang_coll);
 static void lang_init_coll_utf8_en_cs (LANG_COLLATION * lang_coll);
 static void lang_free_collations (void);
@@ -296,8 +275,7 @@ lang_init_builtin (void)
     }
 
   /* built-in collations : order of registration should match colation ID */
-  for (i = 0; i < (int) (sizeof (built_in_collations)
-			 / sizeof (built_in_collations[0])); i++)
+  for (i = 0; i < (int) (sizeof (built_in_collations) / sizeof (built_in_collations[0])); i++)
     {
       (void) register_collation (built_in_collations[i]);
     }
@@ -379,29 +357,28 @@ lang_init_console_txt_conv (void)
       /* supported system identifiers for conversion are separated by
        * comma */
       do
-	{
-	  found_token = strstr (conv_sys_ids, sys_id);
-	  if (found_token == NULL)
-	    {
-	      break;
-	    }
+        {
+          found_token = strstr (conv_sys_ids, sys_id);
+          if (found_token == NULL)
+            {
+              break;
+            }
 
-	  if (found_token + strlen (sys_id) >= conv_sys_end
-	      || *(found_token + strlen (sys_id)) == ','
-	      || *(found_token + strlen (sys_id)) == ' ')
-	    {
-	      if (lang_Loc_data->txt_conv->init_conv_func != NULL)
-		{
-		  lang_Loc_data->txt_conv->init_conv_func ();
-		}
-	      console_conv = lang_Loc_data->txt_conv;
-	      break;
-	    }
-	  else
-	    {
-	      conv_sys_ids = conv_sys_ids + strlen (sys_id);
-	    }
-	}
+          if (found_token + strlen (sys_id) >= conv_sys_end
+              || *(found_token + strlen (sys_id)) == ',' || *(found_token + strlen (sys_id)) == ' ')
+            {
+              if (lang_Loc_data->txt_conv->init_conv_func != NULL)
+                {
+                  lang_Loc_data->txt_conv->init_conv_func ();
+                }
+              console_conv = lang_Loc_data->txt_conv;
+              break;
+            }
+          else
+            {
+              conv_sys_ids = conv_sys_ids + strlen (sys_id);
+            }
+        }
       while (conv_sys_ids < conv_sys_end);
     }
 }
@@ -430,27 +407,26 @@ set_current_locale (void)
     {
       assert (lang_Loc_data != NULL);
 
-      if (lang_Loc_data->codeset == lang_Loc_charset
-	  && strcasecmp (lang_Lang_name, lang_Loc_data->lang_name) == 0)
-	{
-	  found = true;
-	  break;
-	}
+      if (lang_Loc_data->codeset == lang_Loc_charset && strcasecmp (lang_Lang_name, lang_Loc_data->lang_name) == 0)
+        {
+          found = true;
+          break;
+        }
     }
 
   if (!found)
     {
       char err_msg[ER_MSG_SIZE];
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       assert (false);
 #endif
 
       lang_Init_w_error = true;
       snprintf (err_msg, sizeof (err_msg) - 1,
-		"Locale %s.%s was not loaded.\n"
-		" %s not found in rye_locales.txt", lang_Lang_name,
-		lang_get_codeset_name (lang_Loc_charset), lang_Lang_name);
+                "Locale %s.%s was not loaded.\n"
+                " %s not found in rye_locales.txt", lang_Lang_name,
+                lang_get_codeset_name (lang_Loc_charset), lang_Lang_name);
       LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
       set_default_lang ();
     }
@@ -535,10 +511,10 @@ lang_locales_count (bool check_codeset)
     {
       LANG_LOCALE_DATA *lld = lang_loaded_locales[i];
       do
-	{
-	  count++;
-	  lld = lld->next_lld;
-	}
+        {
+          count++;
+          lld = lld->next_lld;
+        }
       while (lld != NULL);
     }
 
@@ -560,16 +536,14 @@ register_collation (LANG_COLLATION * coll)
 
   id = coll->coll.coll_id;
 
-  if (id < ((coll->built_in) ? 0 : LANG_MAX_BUILTIN_COLLATIONS)
-      || id >= LANG_MAX_COLLATIONS)
+  if (id < ((coll->built_in) ? 0 : LANG_MAX_BUILTIN_COLLATIONS) || id >= LANG_MAX_COLLATIONS)
     {
       char err_msg[ER_MSG_SIZE];
       snprintf (err_msg, sizeof (err_msg) - 1,
-		"Invalid collation numeric identifier : %d"
-		" for collation '%s'. Expecting greater than %d and lower "
-		"than %d.", id, coll->coll.coll_name,
-		((coll->built_in) ? 0 : LANG_MAX_BUILTIN_COLLATIONS),
-		LANG_MAX_COLLATIONS);
+                "Invalid collation numeric identifier : %d"
+                " for collation '%s'. Expecting greater than %d and lower "
+                "than %d.", id, coll->coll.coll_name,
+                ((coll->built_in) ? 0 : LANG_MAX_BUILTIN_COLLATIONS), LANG_MAX_COLLATIONS);
       LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
       return ER_LOC_INIT;
     }
@@ -580,10 +554,9 @@ register_collation (LANG_COLLATION * coll)
     {
       char err_msg[ER_MSG_SIZE];
       snprintf (err_msg, sizeof (err_msg) - 1,
-		"Invalid collation numeric identifier : %d for collation '%s'"
-		". This id is already used by collation '%s'",
-		id, coll->coll.coll_name,
-		lang_collations[id]->coll.coll_name);
+                "Invalid collation numeric identifier : %d for collation '%s'"
+                ". This id is already used by collation '%s'",
+                id, coll->coll.coll_name, lang_collations[id]->coll.coll_name);
       LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
       return ER_LOC_INIT;
     }
@@ -621,13 +594,12 @@ lang_is_coll_name_allowed (const char *name)
       return false;
     }
 
-  for (i = 0; i < (int) (sizeof (built_in_collations)
-			 / sizeof (built_in_collations[0])); i++)
+  for (i = 0; i < (int) (sizeof (built_in_collations) / sizeof (built_in_collations[0])); i++)
     {
       if (strcasecmp (built_in_collations[i]->coll.coll_name, name) == 0)
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
 
   return true;
@@ -685,9 +657,9 @@ lang_get_collation_by_name (const char *coll_name)
   for (i = 0; i < LANG_MAX_COLLATIONS; i++)
     {
       if (strcmp (coll_name, lang_collations[i]->coll.coll_name) == 0)
-	{
-	  return lang_collations[i];
-	}
+        {
+          return lang_collations[i];
+        }
     }
 
   return NULL;
@@ -749,8 +721,7 @@ lang_user_alphabet_w_coll (const int collation_id)
  *		       found
  */
 static LANG_LOCALE_DATA *
-find_lang_locale_data (const char *name, const INTL_CODESET codeset,
-		       LANG_LOCALE_DATA ** last_lang_locale)
+find_lang_locale_data (const char *name, const INTL_CODESET codeset, LANG_LOCALE_DATA ** last_lang_locale)
 {
   LANG_LOCALE_DATA *first_lang_locale = NULL;
   LANG_LOCALE_DATA *curr_lang_locale;
@@ -762,25 +733,24 @@ find_lang_locale_data (const char *name, const INTL_CODESET codeset,
   for (i = 0; i < lang_count_locales; i++)
     {
       if (strcasecmp (lang_loaded_locales[i]->lang_name, name) == 0)
-	{
-	  first_lang_locale = lang_loaded_locales[i];
-	  break;
-	}
+        {
+          first_lang_locale = lang_loaded_locales[i];
+          break;
+        }
     }
 
-  for (curr_lang_locale = first_lang_locale; curr_lang_locale != NULL;
-       curr_lang_locale = curr_lang_locale->next_lld)
+  for (curr_lang_locale = first_lang_locale; curr_lang_locale != NULL; curr_lang_locale = curr_lang_locale->next_lld)
     {
       if (codeset == curr_lang_locale->codeset)
-	{
-	  found_lang_locale = curr_lang_locale;
-	}
+        {
+          found_lang_locale = curr_lang_locale;
+        }
 
       if (curr_lang_locale->next_lld == NULL)
-	{
-	  *last_lang_locale = curr_lang_locale;
-	  break;
-	}
+        {
+          *last_lang_locale = curr_lang_locale;
+          break;
+        }
     }
 
   return found_lang_locale;
@@ -799,21 +769,19 @@ register_lang_locale_data (LANG_LOCALE_DATA * lld)
 
   assert (lld != NULL);
 
-  found_lang_locale = find_lang_locale_data (lld->lang_name, lld->codeset,
-					     &last_lang_locale);
+  found_lang_locale = find_lang_locale_data (lld->lang_name, lld->codeset, &last_lang_locale);
 
   assert (found_lang_locale == NULL);
 
   if (!lld->is_user_data)
     {
       /* make a copy of built-in */
-      LANG_LOCALE_DATA *new_lld =
-	(LANG_LOCALE_DATA *) malloc (sizeof (LANG_LOCALE_DATA));
+      LANG_LOCALE_DATA *new_lld = (LANG_LOCALE_DATA *) malloc (sizeof (LANG_LOCALE_DATA));
       if (new_lld == NULL)
-	{
-	  LOG_LOCALE_ERROR ("memory allocation failed", ER_LOC_INIT, false);
-	  return ER_LOC_INIT;
-	}
+        {
+          LOG_LOCALE_ERROR ("memory allocation failed", ER_LOC_INIT, false);
+          return ER_LOC_INIT;
+        }
 
       memcpy (new_lld, lld, sizeof (LANG_LOCALE_DATA));
       lld = new_lld;
@@ -837,11 +805,10 @@ register_lang_locale_data (LANG_LOCALE_DATA * lld)
       lld->initloc (lld);
 
       /* init default collation */
-      if (lld->default_lang_coll != NULL
-	  && lld->default_lang_coll->init_coll != NULL)
-	{
-	  lld->default_lang_coll->init_coll (lld->default_lang_coll);
-	}
+      if (lld->default_lang_coll != NULL && lld->default_lang_coll->init_coll != NULL)
+        {
+          lld->default_lang_coll->init_coll (lld->default_lang_coll);
+        }
     }
 
   return NO_ERROR;
@@ -869,10 +836,10 @@ free_lang_locale_data (LANG_LOCALE_DATA * lld)
        * They can't be deallocated.
        */
       if (lld->txt_conv != NULL && lld->txt_conv->init_conv_func == NULL)
-	{
-	  free (lld->txt_conv);
-	  lld->txt_conv = NULL;
-	}
+        {
+          free (lld->txt_conv);
+          lld->txt_conv = NULL;
+        }
     }
 
   free (lld);
@@ -970,12 +937,12 @@ lang_check_identifier (const char *name, int length)
     {
       ok = true;
       for (i = 0; i < length && ok; i++)
-	{
-	  if (!char_isalnum (name[i]) && name[i] != '_')
-	    {
-	      ok = false;
-	    }
-	}
+        {
+          if (!char_isalnum (name[i]) && name[i] != '_')
+            {
+              ok = false;
+            }
+        }
     }
 
   return (ok);
@@ -1029,13 +996,13 @@ lang_get_specific_locale (const INTL_LANG lang)
       LANG_LOCALE_DATA *curr_lang_locale;
 
       for (curr_lang_locale = first_lang_locale; curr_lang_locale != NULL;
-	   curr_lang_locale = curr_lang_locale->next_lld)
-	{
-	  if (curr_lang_locale->codeset == INTL_CODESET_UTF8)
-	    {
-	      return curr_lang_locale;
-	    }
-	}
+           curr_lang_locale = curr_lang_locale->next_lld)
+        {
+          if (curr_lang_locale->codeset == INTL_CODESET_UTF8)
+            {
+              return curr_lang_locale;
+            }
+        }
     }
 
   return NULL;
@@ -1076,8 +1043,7 @@ lang_get_first_locale_for_lang (const INTL_LANG lang)
  *  Note : INTL_LANG_ENGLISH is returned if name is not a valid language name
  */
 static int
-lang_get_builtin_lang_id_from_name (const char *lang_name,
-				    INTL_LANG * lang_id)
+lang_get_builtin_lang_id_from_name (const char *lang_name, INTL_LANG * lang_id)
 {
   int i;
 
@@ -1085,15 +1051,13 @@ lang_get_builtin_lang_id_from_name (const char *lang_name,
 
   *lang_id = INTL_LANG_ENGLISH;
 
-  for (i = 0; i < (int) (sizeof (builtin_langs) / sizeof (LANG_DEFAULTS));
-       i++)
+  for (i = 0; i < (int) (sizeof (builtin_langs) / sizeof (LANG_DEFAULTS)); i++)
     {
-      if (strncasecmp (lang_name, builtin_langs[i].lang_name,
-		       strlen (builtin_langs[i].lang_name)) == 0)
-	{
-	  *lang_id = builtin_langs[i].lang;
-	  return 0;
-	}
+      if (strncasecmp (lang_name, builtin_langs[i].lang_name, strlen (builtin_langs[i].lang_name)) == 0)
+        {
+          *lang_id = builtin_langs[i].lang;
+          return 0;
+        }
     }
 
   assert (*lang_id < INTL_LANG_USER_DEF_START);
@@ -1125,11 +1089,11 @@ lang_get_lang_id_from_name (const char *lang_name, INTL_LANG * lang_id)
       assert (lang_loaded_locales[i] != NULL);
 
       if (strcasecmp (lang_name, lang_loaded_locales[i]->lang_name) == 0)
-	{
-	  assert (i == (int) lang_loaded_locales[i]->lang_id);
-	  *lang_id = lang_loaded_locales[i]->lang_id;
-	  return 0;
-	}
+        {
+          assert (i == (int) lang_loaded_locales[i]->lang_id);
+          *lang_id = lang_loaded_locales[i]->lang_id;
+          return 0;
+        }
     }
 
   return 1;
@@ -1170,8 +1134,7 @@ lang_get_lang_name_from_id (const INTL_LANG lang_id)
  *	   If lang_str cannot be solved, the language is assumed English.
  */
 int
-lang_set_flag_from_lang (const char *lang_str, bool has_user_format,
-			 bool has_user_lang, int *flag)
+lang_set_flag_from_lang (const char *lang_str, bool has_user_format, bool has_user_lang, int *flag)
 {
   INTL_LANG lang = INTL_LANG_ENGLISH;
   int status = 0;
@@ -1180,17 +1143,16 @@ lang_set_flag_from_lang (const char *lang_str, bool has_user_format,
     {
       status = lang_get_lang_id_from_name (lang_str, &lang);
       if (status != 0)
-	{
-	  assert (lang == INTL_LANG_ENGLISH);
-	  return status;	/* error */
-	}
+        {
+          assert (lang == INTL_LANG_ENGLISH);
+          return status;        /* error */
+        }
     }
 
-  status =
-    lang_set_flag_from_lang_id (lang, has_user_format, has_user_lang, flag);
+  status = lang_set_flag_from_lang_id (lang, has_user_format, has_user_lang, flag);
   if (status != 0)
     {
-      return status;		/* error */
+      return status;            /* error */
     }
 
   return 0;
@@ -1214,8 +1176,7 @@ lang_set_flag_from_lang (const char *lang_str, bool has_user_format,
  *  Note : function is used in context of some date-string functions.
  */
 int
-lang_set_flag_from_lang_id (const INTL_LANG lang, bool has_user_format,
-			    bool has_user_lang, int *flag)
+lang_set_flag_from_lang_id (const INTL_LANG lang, bool has_user_format, bool has_user_lang, int *flag)
 {
   int lang_val = (int) lang;
 
@@ -1247,8 +1208,7 @@ lang_set_flag_from_lang_id (const INTL_LANG lang, bool has_user_format,
  *  Note : function is used in context of some date-string functions.
  */
 INTL_LANG
-lang_get_lang_id_from_flag (const int flag, bool * has_user_format,
-			    bool * has_user_lang)
+lang_get_lang_id_from_flag (const int flag, bool * has_user_format, bool * has_user_lang)
 {
   int lang_val;
 
@@ -1298,30 +1258,30 @@ lang_date_format_parse (const INTL_LANG lang_id, const DB_TYPE type)
   do
     {
       switch (type)
-	{
-	case DB_TYPE_TIME:
-	  format = lld->time_format;
-	  break;
-	case DB_TYPE_DATE:
-	  format = lld->date_format;
-	  break;
-	case DB_TYPE_DATETIME:
-	  format = lld->datetime_format;
-	  break;
-	default:
-	  break;
-	}
+        {
+        case DB_TYPE_TIME:
+          format = lld->time_format;
+          break;
+        case DB_TYPE_DATE:
+          format = lld->date_format;
+          break;
+        case DB_TYPE_DATETIME:
+          format = lld->datetime_format;
+          break;
+        default:
+          break;
+        }
 
       if (lld->codeset == INTL_CODESET_UTF8)
-	{
-	  first_valid_format = format;
-	  break;
-	}
+        {
+          first_valid_format = format;
+          break;
+        }
 
       if (first_valid_format == NULL)
-	{
-	  first_valid_format = format;
-	}
+        {
+          first_valid_format = format;
+        }
 
       lld = lld->next_lld;
     }
@@ -1346,10 +1306,10 @@ lang_get_default_codeset (const INTL_LANG intl_id)
   for (i = 0; i < sizeof (builtin_langs) / sizeof (LANG_DEFAULTS); i++)
     {
       if (intl_id == builtin_langs[i].lang)
-	{
-	  codeset = builtin_langs[i].codeset;
-	  break;
-	}
+        {
+          codeset = builtin_langs[i].codeset;
+          break;
+        }
     }
   return codeset;
 }
@@ -1368,11 +1328,10 @@ lang_is_codeset_allowed (const INTL_LANG intl_id, const INTL_CODESET codeset)
 
   for (i = 0; i < sizeof (builtin_langs) / sizeof (LANG_DEFAULTS); i++)
     {
-      if (intl_id == builtin_langs[i].lang &&
-	  codeset == builtin_langs[i].codeset)
-	{
-	  return true;
-	}
+      if (intl_id == builtin_langs[i].lang && codeset == builtin_langs[i].codeset)
+        {
+          return true;
+        }
     }
   return false;
 }
@@ -1434,9 +1393,9 @@ lang_charset_name (const INTL_CODESET codeset)
   for (i = 0; lang_Db_charsets[i].charset_id != INTL_CODESET_NONE; i++)
     {
       if (codeset == lang_Db_charsets[i].charset_id)
-	{
-	  return lang_Db_charsets[i].charset_name;
-	}
+        {
+          return lang_Db_charsets[i].charset_name;
+        }
     }
 
   return NULL;
@@ -1459,9 +1418,9 @@ lang_charset_rye_name (const INTL_CODESET codeset)
   for (i = 0; lang_Db_charsets[i].charset_id != INTL_CODESET_NONE; i++)
     {
       if (codeset == lang_Db_charsets[i].charset_id)
-	{
-	  return lang_Db_charsets[i].charset_rye_name;
-	}
+        {
+          return lang_Db_charsets[i].charset_rye_name;
+        }
     }
 
   return NULL;
@@ -1476,8 +1435,7 @@ lang_charset_rye_name (const INTL_CODESET codeset)
  * return:
  */
 int
-lang_get_charset_env_string (char *buf, int buf_size, const char *lang_name,
-			     const INTL_CODESET codeset)
+lang_get_charset_env_string (char *buf, int buf_size, const char *lang_name, const INTL_CODESET codeset)
 {
   if (buf == NULL)
     {
@@ -1491,8 +1449,7 @@ lang_get_charset_env_string (char *buf, int buf_size, const char *lang_name,
     }
   else
     {
-      snprintf (buf, buf_size, "%s.%s", lang_name,
-		lang_charset_rye_name (codeset));
+      snprintf (buf, buf_size, "%s.%s", lang_name, lang_charset_rye_name (codeset));
     }
 
   return NO_ERROR;
@@ -1558,10 +1515,10 @@ lang_charset_name_to_id (const char *name, INTL_CODESET * codeset)
   for (i = 0; lang_Db_charsets[i].charset_id != INTL_CODESET_NONE; i++)
     {
       if (strcmp (lang_Db_charsets[i].charset_name, name) == 0)
-	{
-	  *codeset = lang_Db_charsets[i].charset_id;
-	  return NO_ERROR;
-	}
+        {
+          *codeset = lang_Db_charsets[i].charset_id;
+          return NO_ERROR;
+        }
     }
 
   return ER_FAILED;
@@ -1649,9 +1606,9 @@ lang_charset_introducer (const INTL_CODESET codeset)
   for (i = 0; lang_Db_charsets[i].charset_id != INTL_CODESET_NONE; i++)
     {
       if (codeset == lang_Db_charsets[i].charset_id)
-	{
-	  return lang_Db_charsets[i].introducer;
-	}
+        {
+          return lang_Db_charsets[i].introducer;
+        }
     }
 
   return NULL;
@@ -1672,11 +1629,9 @@ lang_charset_introducer (const INTL_CODESET codeset)
  */
 static int
 lang_strcmp_utf8 (const LANG_COLLATION * lang_coll,
-		  const unsigned char *str1, const int size1,
-		  const unsigned char *str2, const int size2)
+                  const unsigned char *str1, const int size1, const unsigned char *str2, const int size2)
 {
-  return lang_strmatch_utf8 (lang_coll, false, str1, size1, str2, size2,
-			     NULL, false, NULL);
+  return lang_strmatch_utf8 (lang_coll, false, str1, size1, str2, size2, NULL, false, NULL);
 }
 
 /*
@@ -1697,10 +1652,9 @@ lang_strcmp_utf8 (const LANG_COLLATION * lang_coll,
  */
 static int
 lang_strmatch_utf8 (const LANG_COLLATION * lang_coll, bool is_match,
-		    const unsigned char *str1, int size1,
-		    const unsigned char *str2, int size2,
-		    const unsigned char *escape, const bool has_last_escape,
-		    int *str1_match_size)
+                    const unsigned char *str1, int size1,
+                    const unsigned char *str2, int size2,
+                    const unsigned char *escape, const bool has_last_escape, int *str1_match_size)
 {
   const unsigned char *str1_end;
   const unsigned char *str2_end;
@@ -1722,38 +1676,37 @@ lang_strmatch_utf8 (const LANG_COLLATION * lang_coll, bool is_match,
       cp1 = intl_utf8_to_cp (str1, str1_end - str1, &str1_next);
       cp2 = intl_utf8_to_cp (str2, str2_end - str2, &str2_next);
 
-      if (is_match && escape != NULL
-	  && memcmp (str2, escape, str2_next - str2) == 0)
-	{
-	  if (!(has_last_escape && str2_next >= str2_end))
-	    {
-	      str2 = str2_next;
-	      cp2 = intl_utf8_to_cp (str2, str2_end - str2, &str2_next);
-	    }
-	}
+      if (is_match && escape != NULL && memcmp (str2, escape, str2_next - str2) == 0)
+        {
+          if (!(has_last_escape && str2_next >= str2_end))
+            {
+              str2 = str2_next;
+              cp2 = intl_utf8_to_cp (str2, str2_end - str2, &str2_next);
+            }
+        }
 
       if (cp1 < (unsigned int) alpha_cnt)
-	{
-	  w_cp1 = weight_ptr[cp1];
-	}
+        {
+          w_cp1 = weight_ptr[cp1];
+        }
       else
-	{
-	  w_cp1 = cp1;
-	}
+        {
+          w_cp1 = cp1;
+        }
 
       if (cp2 < (unsigned int) alpha_cnt)
-	{
-	  w_cp2 = weight_ptr[cp2];
-	}
+        {
+          w_cp2 = weight_ptr[cp2];
+        }
       else
-	{
-	  w_cp2 = cp2;
-	}
+        {
+          w_cp2 = cp2;
+        }
 
       if (w_cp1 != w_cp2)
-	{
-	  return (w_cp1 < w_cp2) ? (-1) : 1;
-	}
+        {
+          return (w_cp1 < w_cp2) ? (-1) : 1;
+        }
 
       str1 = str1_next;
       str2 = str2_next;
@@ -1777,30 +1730,28 @@ lang_strmatch_utf8 (const LANG_COLLATION * lang_coll, bool is_match,
   else if (size2 > 0)
     {
       if (is_match)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
-      if (lang_str_utf8_trail_zero_weights (lang_coll, str2, str2_end - str2)
-	  != 0)
-	{
-	  return -1;
-	}
+      if (lang_str_utf8_trail_zero_weights (lang_coll, str2, str2_end - str2) != 0)
+        {
+          return -1;
+        }
     }
   else
     {
       assert (size1 > 0);
 
       if (is_match)
-	{
-	  return 0;
-	}
+        {
+          return 0;
+        }
 
-      if (lang_str_utf8_trail_zero_weights (lang_coll, str1, str1_end - str1)
-	  != 0)
-	{
-	  return 1;
-	}
+      if (lang_str_utf8_trail_zero_weights (lang_coll, str1, str1_end - str1) != 0)
+        {
+          return 1;
+        }
     }
 
   return 0;
@@ -1828,8 +1779,7 @@ lang_strmatch_utf8 (const LANG_COLLATION * lang_coll, bool is_match,
  *   size(in):
  */
 static unsigned int
-lang_mht2str_utf8 (const LANG_COLLATION * lang_coll,
-		   const unsigned char *str, const int size)
+lang_mht2str_utf8 (const LANG_COLLATION * lang_coll, const unsigned char *str, const int size)
 {
   const unsigned char *str_end;
   unsigned char *str_next;
@@ -1848,32 +1798,30 @@ lang_mht2str_utf8 (const LANG_COLLATION * lang_coll,
       cp = intl_utf8_to_cp (str, str_end - str, &str_next);
 
       if (cp < (unsigned int) alpha_cnt)
-	{
-	  COLL_CONTRACTION *contr = NULL;
+        {
+          COLL_CONTRACTION *contr = NULL;
 
-	  if (coll->count_contr > 0
-	      && str_end - str >= coll->contr_min_size
-	      && cp >= coll->cp_first_contr_offset
-	      && cp < (coll->cp_first_contr_offset +
-		       coll->cp_first_contr_count)
-	      && ((contr =
-		   lang_get_contr_for_string (coll, str,
-					      str_end - str, cp)) != NULL))
-	    {
-	      assert (contr != NULL);
+          if (coll->count_contr > 0
+              && str_end - str >= coll->contr_min_size
+              && cp >= coll->cp_first_contr_offset
+              && cp < (coll->cp_first_contr_offset +
+                       coll->cp_first_contr_count)
+              && ((contr = lang_get_contr_for_string (coll, str, str_end - str, cp)) != NULL))
+            {
+              assert (contr != NULL);
 
-	      w = contr->wv;
-	      str_next = (unsigned char *) str + contr->size;
-	    }
-	  else
-	    {
-	      w = weight_ptr[cp];
-	    }
-	}
+              w = contr->wv;
+              str_next = (unsigned char *) str + contr->size;
+            }
+          else
+            {
+              w = weight_ptr[cp];
+            }
+        }
       else
-	{
-	  w = cp;
-	}
+        {
+          w = cp;
+        }
 
       ADD_TO_HASH (pseudo_key, w);
 
@@ -1897,9 +1845,7 @@ lang_mht2str_utf8 (const LANG_COLLATION * lang_coll,
  *
  */
 static unsigned int
-lang_get_w_first_el (const COLL_DATA * coll,
-		     const unsigned char *str, const int str_size,
-		     unsigned char **next_char)
+lang_get_w_first_el (const COLL_DATA * coll, const unsigned char *str, const int str_size, unsigned char **next_char)
 {
   unsigned int cp, w;
   const int alpha_cnt = coll->w_count;
@@ -1915,22 +1861,21 @@ lang_get_w_first_el (const COLL_DATA * coll,
       COLL_CONTRACTION *contr = NULL;
 
       if (coll->count_contr > 0
-	  && str_size >= coll->contr_min_size
-	  && cp >= coll->cp_first_contr_offset
-	  && cp < (coll->cp_first_contr_offset
-		   + coll->cp_first_contr_count)
-	  && ((contr = lang_get_contr_for_string (coll, str, str_size, cp))
-	      != NULL))
-	{
-	  assert (contr != NULL);
+          && str_size >= coll->contr_min_size
+          && cp >= coll->cp_first_contr_offset
+          && cp < (coll->cp_first_contr_offset
+                   + coll->cp_first_contr_count)
+          && ((contr = lang_get_contr_for_string (coll, str, str_size, cp)) != NULL))
+        {
+          assert (contr != NULL);
 
-	  w = contr->wv;
-	  *next_char = (unsigned char *) str + contr->size;
-	}
+          w = contr->wv;
+          *next_char = (unsigned char *) str + contr->size;
+        }
       else
-	{
-	  w = weight_ptr[cp];
-	}
+        {
+          w = weight_ptr[cp];
+        }
     }
   else
     {
@@ -1952,9 +1897,7 @@ lang_get_w_first_el (const COLL_DATA * coll,
  *
  */
 static COLL_CONTRACTION *
-lang_get_contr_for_string (const COLL_DATA * coll_data,
-			   const unsigned char *str, const int str_size,
-			   unsigned int cp)
+lang_get_contr_for_string (const COLL_DATA * coll_data, const unsigned char *str, const int str_size, unsigned int cp)
 {
   const int *first_contr;
   int contr_id;
@@ -1982,22 +1925,22 @@ lang_get_contr_for_string (const COLL_DATA * coll_data,
   do
     {
       if ((int) contr->size > str_size)
-	{
-	  cmp = memcmp (contr->c_buf, str, str_size);
-	  if (cmp == 0)
-	    {
-	      cmp = 1;
-	    }
-	}
+        {
+          cmp = memcmp (contr->c_buf, str, str_size);
+          if (cmp == 0)
+            {
+              cmp = 1;
+            }
+        }
       else
-	{
-	  cmp = memcmp (contr->c_buf, str, contr->size);
-	}
+        {
+          cmp = memcmp (contr->c_buf, str, contr->size);
+        }
 
       if (cmp >= 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       assert (cmp < 0);
 
@@ -2025,8 +1968,7 @@ lang_get_contr_for_string (const COLL_DATA * coll_data,
  *   size(in):
  */
 static int
-lang_str_utf8_trail_zero_weights (const LANG_COLLATION * lang_coll,
-				  const unsigned char *str, int size)
+lang_str_utf8_trail_zero_weights (const LANG_COLLATION * lang_coll, const unsigned char *str, int size)
 {
   unsigned char *str_next;
   unsigned int cp;
@@ -2035,11 +1977,10 @@ lang_str_utf8_trail_zero_weights (const LANG_COLLATION * lang_coll,
     {
       cp = intl_utf8_to_cp (str, size, &str_next);
 
-      if (cp >= (unsigned int) lang_coll->coll.w_count
-	  || lang_coll->coll.weights[cp] != 0)
-	{
-	  return 1;
-	}
+      if (cp >= (unsigned int) lang_coll->coll.w_count || lang_coll->coll.weights[cp] != 0)
+        {
+          return 1;
+        }
       size -= str_next - str;
       str = str_next;
     }
@@ -2063,8 +2004,7 @@ lang_str_utf8_trail_zero_weights (const LANG_COLLATION * lang_coll,
  */
 static int
 lang_next_coll_char_utf8 (const LANG_COLLATION * lang_coll,
-			  const unsigned char *seq, const int size,
-			  unsigned char *next_seq, int *len_next)
+                          const unsigned char *seq, const int size, unsigned char *next_seq, int *len_next)
 {
   unsigned int cp_alpha_char, cp_next_alpha_char;
   const int alpha_cnt = lang_coll->coll.w_count;
@@ -2110,9 +2050,8 @@ lang_next_coll_char_utf8 (const LANG_COLLATION * lang_coll,
  */
 static int
 lang_split_key_utf8 (const LANG_COLLATION * lang_coll, const bool is_desc,
-		     const unsigned char *str1, const int size1,
-		     const unsigned char *str2, const int size2,
-		     unsigned char **key, int *byte_size)
+                     const unsigned char *str1, const int size1,
+                     const unsigned char *str2, const int size2, unsigned char **key, int *byte_size)
 {
   const unsigned char *str1_end, *str2_end;
   const unsigned char *str1_begin, *str2_begin;
@@ -2135,85 +2074,82 @@ lang_split_key_utf8 (const LANG_COLLATION * lang_coll, const bool is_desc,
       w2 = lang_get_w_first_el (coll, str2, str2_end - str2, &str2_next);
 
       if (w1 == 0xffffffff || w2 == 0xffffffff)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QSTR_BAD_SRC_CODESET,
-		  0);
-	  return ER_QSTR_BAD_SRC_CODESET;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QSTR_BAD_SRC_CODESET, 0);
+          return ER_QSTR_BAD_SRC_CODESET;
+        }
 
       if (w1 != w2)
-	{
-	  assert ((!is_desc && w1 < w2) || (is_desc && w1 > w2));
-	  break;
-	}
+        {
+          assert ((!is_desc && w1 < w2) || (is_desc && w1 > w2));
+          break;
+        }
 
       str1 = str1_next;
       str2 = str2_next;
     }
 
   if (!is_desc)
-    {				/* normal index */
+    {                           /* normal index */
       bool string2_has_one_more_char = false;
 
       if (str1 < str1_end)
-	{
-	  /* check if in string2 there is one more character (or contraction)
-	   * after common part */
-	  if (str2 < str2_end)
-	    {
-	      w2 = lang_get_w_first_el (coll, str2, str2_end - str2,
-					&str2_next);
-	      assert (w2 != 0);
-	      if (str2_next == str2_end)
-		{
-		  string2_has_one_more_char = true;
-		}
-	    }
-	}
+        {
+          /* check if in string2 there is one more character (or contraction)
+           * after common part */
+          if (str2 < str2_end)
+            {
+              w2 = lang_get_w_first_el (coll, str2, str2_end - str2, &str2_next);
+              assert (w2 != 0);
+              if (str2_next == str2_end)
+                {
+                  string2_has_one_more_char = true;
+                }
+            }
+        }
 
       if (str1 == str1_end || string2_has_one_more_char)
-	{
-	  *key = (unsigned char *) str1_begin;
-	  key_size = size1;
-	}
+        {
+          *key = (unsigned char *) str1_begin;
+          key_size = size1;
+        }
       else
-	{
-	  assert (str2 < str2_end);
+        {
+          assert (str2 < str2_end);
 
-	  *key = (unsigned char *) str2_begin;
+          *key = (unsigned char *) str2_begin;
 
-	  /* common part plus one more character (or more, if last unit is a
-	   * contraction) from string2 */
-	  key_size = str2_next - str2_begin;
-	  assert (key_size <= size2);
-	}
+          /* common part plus one more character (or more, if last unit is a
+           * contraction) from string2 */
+          key_size = str2_next - str2_begin;
+          assert (key_size <= size2);
+        }
     }
   else
-    {				/* desc domain */
+    {                           /* desc domain */
       if (str1 == str1_end)
-	{
-	  /* actually, this could happen only when string1 == string2 */
-	  *key = (unsigned char *) str1_begin;
-	  key_size = size1;
-	}
+        {
+          /* actually, this could happen only when string1 == string2 */
+          *key = (unsigned char *) str1_begin;
+          key_size = size1;
+        }
       else
-	{
-	  assert (str1 < str1_end);
-	  *key = (unsigned char *) str1_begin;
+        {
+          assert (str1 < str1_end);
+          *key = (unsigned char *) str1_begin;
 
-	  /* common part plus one more non-zero weight collation unit */
-	  do
-	    {
-	      w1 = lang_get_w_first_el (coll, str1, str1_end - str1,
-					&str1_next);
-	      str1 = str1_next;
-	    }
-	  while (w1 == 0 && str1 < str1_end);
+          /* common part plus one more non-zero weight collation unit */
+          do
+            {
+              w1 = lang_get_w_first_el (coll, str1, str1_end - str1, &str1_next);
+              str1 = str1_next;
+            }
+          while (w1 == 0 && str1 < str1_end);
 
-	  key_size = str1_next - str1_begin;
+          key_size = str1_next - str1_begin;
 
-	  assert (key_size <= size1);
-	}
+          assert (key_size <= size1);
+        }
     }
 
   *byte_size = key_size;
@@ -2382,8 +2318,7 @@ lang_initloc_en_utf8 (LANG_LOCALE_DATA * ld)
  */
 static int
 lang_fastcmp_byte (const LANG_COLLATION * lang_coll,
-		   const unsigned char *string1, const int size1,
-		   const unsigned char *string2, const int size2)
+                   const unsigned char *string1, const int size1, const unsigned char *string2, const int size2)
 {
   int cmp, i, size;
 
@@ -2391,8 +2326,7 @@ lang_fastcmp_byte (const LANG_COLLATION * lang_coll,
   for (cmp = 0, i = 0; cmp == 0 && i < size; i++)
     {
       /* compare weights of the two chars */
-      cmp = lang_coll->coll.weights[*string1++] -
-	lang_coll->coll.weights[*string2++];
+      cmp = lang_coll->coll.weights[*string1++] - lang_coll->coll.weights[*string2++];
     }
   if (cmp != 0 || size1 == size2)
     {
@@ -2403,25 +2337,25 @@ lang_fastcmp_byte (const LANG_COLLATION * lang_coll,
     {
       size = size2 - size1;
       for (i = 0; i < size && cmp == 0; i++)
-	{
-	  /* ignore tailing white spaces */
-	  if (lang_coll->coll.weights[*string2++])
-	    {
-	      return -1;
-	    }
-	}
+        {
+          /* ignore tailing white spaces */
+          if (lang_coll->coll.weights[*string2++])
+            {
+              return -1;
+            }
+        }
     }
   else
     {
       size = size1 - size2;
       for (i = 0; i < size && cmp == 0; i++)
-	{
-	  /* ignore trailing white spaces */
-	  if (lang_coll->coll.weights[*string1++])
-	    {
-	      return 1;
-	    }
-	}
+        {
+          /* ignore trailing white spaces */
+          if (lang_coll->coll.weights[*string1++])
+            {
+              return 1;
+            }
+        }
     }
 
   return cmp;
@@ -2436,8 +2370,7 @@ lang_fastcmp_byte (const LANG_COLLATION * lang_coll,
  *
  */
 static unsigned int
-lang_mht2str_byte (const LANG_COLLATION * lang_coll,
-		   const unsigned char *str, const int size)
+lang_mht2str_byte (const LANG_COLLATION * lang_coll, const unsigned char *str, const int size)
 {
   const unsigned char *str_end = str + size;
   unsigned int pseudo_key = 0;
@@ -2464,9 +2397,9 @@ static LANG_LOCALE_DATA lc_English_utf8 = {
    lang_upper_EN,
    false},
   &coll_utf8_en_ci,
-  &con_iso_8859_1_conv,		/* text conversion */
+  &con_iso_8859_1_conv,         /* text conversion */
   false,
-  NULL,				/* time, date, date-time, timestamp format */
+  NULL,                         /* time, date, date-time, timestamp format */
   NULL,
   NULL,
   NULL,
@@ -2521,10 +2454,10 @@ static LANG_LOCALE_DATA lc_Korean_utf8 = {
    lang_upper_EN, false},
   {ALPHABET_ASCII, INTL_CODESET_UTF8, LANG_CHAR_COUNT_EN, 1, lang_lower_EN, 1,
    lang_upper_EN, false},
-  &coll_utf8_ko_cs,		/* collation */
-  NULL,				/* console text conversion */
+  &coll_utf8_ko_cs,             /* collation */
+  NULL,                         /* console text conversion */
   false,
-  NULL,				/* time, date, date-time, timestamp format */
+  NULL,                         /* time, date, date-time, timestamp format */
   NULL,
   NULL,
   NULL,
@@ -2607,9 +2540,9 @@ lang_free_collations (void)
     {
       assert (lang_collations[i] != NULL);
       if (!(lang_collations[i]->built_in))
-	{
-	  free (lang_collations[i]);
-	}
+        {
+          free (lang_collations[i]);
+        }
       lang_collations[i] = NULL;
     }
 
@@ -2630,8 +2563,7 @@ lang_free_collations (void)
  */
 int
 lang_check_coll_compat (const LANG_COLL_COMPAT * coll_array,
-			const int coll_cnt, const char *client_text,
-			const char *server_text)
+                        const int coll_cnt, const char *client_text, const char *server_text)
 {
   char err_msg[ER_MSG_SIZE];
   int i;
@@ -2645,9 +2577,9 @@ lang_check_coll_compat (const LANG_COLL_COMPAT * coll_array,
   if (lang_count_collations != coll_cnt)
     {
       snprintf (err_msg, sizeof (err_msg) - 1,
-		"Number of collations do not match : "
-		"%s has %d collations, %s has %d collations",
-		client_text, lang_count_collations, server_text, coll_cnt);
+                "Number of collations do not match : "
+                "%s has %d collations, %s has %d collations",
+                client_text, lang_count_collations, server_text, coll_cnt);
       er_status = ER_LOC_INIT;
       LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
       goto exit;
@@ -2665,52 +2597,47 @@ lang_check_coll_compat (const LANG_COLL_COMPAT * coll_array,
       lc = lang_get_collation (ref_c->coll_id);
 
       if (lc->coll.coll_id != ref_c->coll_id)
-	{
-	  snprintf (err_msg, sizeof (err_msg) - 1,
-		    "Collation '%s' with id %d from %s not found with the "
-		    "same id on %s", ref_c->coll_name, ref_c->coll_id,
-		    server_text, client_text);
-	  er_status = ER_LOC_INIT;
-	  LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	  goto exit;
-	}
+        {
+          snprintf (err_msg, sizeof (err_msg) - 1,
+                    "Collation '%s' with id %d from %s not found with the "
+                    "same id on %s", ref_c->coll_name, ref_c->coll_id, server_text, client_text);
+          er_status = ER_LOC_INIT;
+          LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+          goto exit;
+        }
 
       if (strcmp (lc->coll.coll_name, ref_c->coll_name))
-	{
-	  snprintf (err_msg, sizeof (err_msg) - 1,
-		    "Names of collation with id %d do not match : "
-		    "on %s, is '%s'; on %s, is '%s'",
-		    ref_c->coll_id, client_text, ref_c->coll_name,
-		    server_text, lc->coll.coll_name);
-	  er_status = ER_LOC_INIT;
-	  LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	  goto exit;
-	}
+        {
+          snprintf (err_msg, sizeof (err_msg) - 1,
+                    "Names of collation with id %d do not match : "
+                    "on %s, is '%s'; on %s, is '%s'",
+                    ref_c->coll_id, client_text, ref_c->coll_name, server_text, lc->coll.coll_name);
+          er_status = ER_LOC_INIT;
+          LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+          goto exit;
+        }
 
       if (lc->codeset != ref_c->codeset)
-	{
-	  snprintf (err_msg, sizeof (err_msg) - 1,
-		    "Codesets of collation '%s' with id %d do not match : "
-		    "on %s, codeset is %d; on %s, codeset is %d",
-		    ref_c->coll_name, ref_c->coll_id,
-		    client_text, ref_c->codeset, server_text, lc->codeset);
-	  er_status = ER_LOC_INIT;
-	  LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	  goto exit;
-	}
+        {
+          snprintf (err_msg, sizeof (err_msg) - 1,
+                    "Codesets of collation '%s' with id %d do not match : "
+                    "on %s, codeset is %d; on %s, codeset is %d",
+                    ref_c->coll_name, ref_c->coll_id, client_text, ref_c->codeset, server_text, lc->codeset);
+          er_status = ER_LOC_INIT;
+          LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+          goto exit;
+        }
 
       if (strcasecmp (lc->coll.checksum, ref_c->checksum))
-	{
-	  snprintf (err_msg, sizeof (err_msg) - 1,
-		    "Collation '%s' with id %d has changed : "
-		    "on %s, checksum is '%s'; on %s, checksum is '%s'",
-		    ref_c->coll_name, ref_c->coll_id,
-		    client_text, ref_c->checksum,
-		    server_text, lc->coll.checksum);
-	  er_status = ER_LOC_INIT;
-	  LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	  goto exit;
-	}
+        {
+          snprintf (err_msg, sizeof (err_msg) - 1,
+                    "Collation '%s' with id %d has changed : "
+                    "on %s, checksum is '%s'; on %s, checksum is '%s'",
+                    ref_c->coll_name, ref_c->coll_id, client_text, ref_c->checksum, server_text, lc->coll.checksum);
+          er_status = ER_LOC_INIT;
+          LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+          goto exit;
+        }
     }
 exit:
   return er_status;
@@ -2728,8 +2655,7 @@ exit:
  */
 int
 lang_check_locale_compat (const LANG_LOCALE_COMPAT * loc_array,
-			  const int loc_cnt, const char *client_text,
-			  const char *server_text)
+                          const int loc_cnt, const char *client_text, const char *server_text)
 {
   char err_msg[ER_MSG_SIZE];
   int i, j;
@@ -2745,50 +2671,46 @@ lang_check_locale_compat (const LANG_LOCALE_COMPAT * loc_array,
       const LANG_LOCALE_COMPAT *ref_loc = NULL;
 
       do
-	{
-	  bool ref_found = false;
+        {
+          bool ref_found = false;
 
-	  for (j = 0; j < loc_cnt; j++)
-	    {
-	      ref_loc = &(loc_array[j]);
+          for (j = 0; j < loc_cnt; j++)
+            {
+              ref_loc = &(loc_array[j]);
 
-	      if (lld->codeset == ref_loc->codeset &&
-		  strcasecmp (lld->lang_name, ref_loc->lang_name) == 0)
-		{
-		  ref_found = true;
-		  break;
-		}
-	    }
+              if (lld->codeset == ref_loc->codeset && strcasecmp (lld->lang_name, ref_loc->lang_name) == 0)
+                {
+                  ref_found = true;
+                  break;
+                }
+            }
 
-	  if (!ref_found)
-	    {
-	      snprintf (err_msg, sizeof (err_msg) - 1,
-			"Locale '%s' with codeset %d loaded by %s "
-			"not found on %s",
-			lld->lang_name, lld->codeset, client_text,
-			server_text);
-	      er_status = ER_LOC_INIT;
-	      LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	      goto exit;
-	    }
+          if (!ref_found)
+            {
+              snprintf (err_msg, sizeof (err_msg) - 1,
+                        "Locale '%s' with codeset %d loaded by %s "
+                        "not found on %s", lld->lang_name, lld->codeset, client_text, server_text);
+              er_status = ER_LOC_INIT;
+              LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+              goto exit;
+            }
 
-	  assert (ref_found);
+          assert (ref_found);
 
-	  if (strcasecmp (ref_loc->checksum, lld->checksum))
-	    {
-	      snprintf (err_msg, sizeof (err_msg) - 1,
-			"Locale '%s' with codeset %d has changed : "
-			"on %s, checksum is '%s'; on %s, checksum is '%s'",
-			ref_loc->lang_name, ref_loc->codeset,
-			server_text, ref_loc->checksum,
-			client_text, lld->checksum);
-	      er_status = ER_LOC_INIT;
-	      LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	      goto exit;
-	    }
-	  lld = lld->next_lld;
+          if (strcasecmp (ref_loc->checksum, lld->checksum))
+            {
+              snprintf (err_msg, sizeof (err_msg) - 1,
+                        "Locale '%s' with codeset %d has changed : "
+                        "on %s, checksum is '%s'; on %s, checksum is '%s'",
+                        ref_loc->lang_name, ref_loc->codeset,
+                        server_text, ref_loc->checksum, client_text, lld->checksum);
+              er_status = ER_LOC_INIT;
+              LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+              goto exit;
+            }
+          lld = lld->next_lld;
 
-	}
+        }
       while (lld != NULL);
     }
 
@@ -2802,48 +2724,43 @@ lang_check_locale_compat (const LANG_LOCALE_COMPAT * loc_array,
       ref_loc = &(loc_array[j]);
 
       for (i = 0; i < lang_count_locales && !loc_found; i++)
-	{
-	  lld = lang_loaded_locales[i];
+        {
+          lld = lang_loaded_locales[i];
 
-	  do
-	    {
-	      if (lld->codeset == ref_loc->codeset &&
-		  strcasecmp (lld->lang_name, ref_loc->lang_name) == 0)
-		{
-		  loc_found = true;
-		  break;
-		}
-	      lld = lld->next_lld;
-	    }
-	  while (lld != NULL);
-	}
+          do
+            {
+              if (lld->codeset == ref_loc->codeset && strcasecmp (lld->lang_name, ref_loc->lang_name) == 0)
+                {
+                  loc_found = true;
+                  break;
+                }
+              lld = lld->next_lld;
+            }
+          while (lld != NULL);
+        }
 
       if (!loc_found)
-	{
-	  snprintf (err_msg, sizeof (err_msg) - 1,
-		    "Locale '%s' with codeset %d defined on %s "
-		    "is not loaded by %s",
-		    ref_loc->lang_name, ref_loc->codeset, server_text,
-		    client_text);
-	  er_status = ER_LOC_INIT;
-	  LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	  goto exit;
-	}
+        {
+          snprintf (err_msg, sizeof (err_msg) - 1,
+                    "Locale '%s' with codeset %d defined on %s "
+                    "is not loaded by %s", ref_loc->lang_name, ref_loc->codeset, server_text, client_text);
+          er_status = ER_LOC_INIT;
+          LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+          goto exit;
+        }
 
       assert (loc_found && lld != NULL);
 
       if (strcasecmp (ref_loc->checksum, lld->checksum))
-	{
-	  snprintf (err_msg, sizeof (err_msg) - 1,
-		    "Locale '%s' with codeset %d has changed : "
-		    "on %s, checksum is '%s'; on %s, checksum is '%s'",
-		    ref_loc->lang_name, ref_loc->codeset,
-		    server_text, ref_loc->checksum,
-		    client_text, lld->checksum);
-	  er_status = ER_LOC_INIT;
-	  LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
-	  goto exit;
-	}
+        {
+          snprintf (err_msg, sizeof (err_msg) - 1,
+                    "Locale '%s' with codeset %d has changed : "
+                    "on %s, checksum is '%s'; on %s, checksum is '%s'",
+                    ref_loc->lang_name, ref_loc->codeset, server_text, ref_loc->checksum, client_text, lld->checksum);
+          er_status = ER_LOC_INIT;
+          LOG_LOCALE_ERROR (err_msg, ER_LOC_INIT, false);
+          goto exit;
+        }
     }
 
 exit:

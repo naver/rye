@@ -47,8 +47,7 @@ UINT64
 br_msg_protocol_version (const RYE_VERSION * version)
 {
   return (((UINT64) (version->major) << 48) |
-	  ((UINT64) (version->minor) << 32) |
-	  ((UINT64) (version->patch) << 16) | ((UINT64) (version->build)));
+          ((UINT64) (version->minor) << 32) | ((UINT64) (version->patch) << 16) | ((UINT64) (version->build)));
 }
 
 T_BROKER_REQUEST_MSG *
@@ -57,11 +56,9 @@ brreq_msg_alloc (int opcode_msg_size)
   T_BROKER_REQUEST_MSG *tmp_ptr;
 
 #ifdef CCI
-  tmp_ptr = (T_BROKER_REQUEST_MSG *) MALLOC (sizeof (T_BROKER_REQUEST_MSG)
-					     + opcode_msg_size);
+  tmp_ptr = (T_BROKER_REQUEST_MSG *) MALLOC (sizeof (T_BROKER_REQUEST_MSG) + opcode_msg_size);
 #else
-  tmp_ptr = (T_BROKER_REQUEST_MSG *) RYE_MALLOC (sizeof (T_BROKER_REQUEST_MSG)
-						 + opcode_msg_size);
+  tmp_ptr = (T_BROKER_REQUEST_MSG *) RYE_MALLOC (sizeof (T_BROKER_REQUEST_MSG) + opcode_msg_size);
 #endif
 
   if (tmp_ptr)
@@ -94,8 +91,7 @@ brreq_msg_clone (const T_BROKER_REQUEST_MSG * org_msg)
       clone_msg->clt_type = org_msg->clt_type;
       clone_msg->op_code = org_msg->op_code;
       clone_msg->op_code_msg_size = org_msg->op_code_msg_size;
-      memcpy (clone_msg->msg_buffer, org_msg->msg_buffer,
-	      BRREQ_MSG_SIZE + org_msg->op_code_msg_size);
+      memcpy (clone_msg->msg_buffer, org_msg->msg_buffer, BRREQ_MSG_SIZE + org_msg->op_code_msg_size);
     }
   return clone_msg;
 }
@@ -125,8 +121,7 @@ brreq_msg_unpack (T_BROKER_REQUEST_MSG * srv_con_msg)
 }
 
 char *
-brreq_msg_pack (T_BROKER_REQUEST_MSG * srv_con_msg, char clt_type,
-		char op_code, int op_code_msg_size)
+brreq_msg_pack (T_BROKER_REQUEST_MSG * srv_con_msg, char clt_type, char op_code, int op_code_msg_size)
 {
   char *ptr = srv_con_msg->msg_buffer;
 
@@ -150,7 +145,7 @@ brreq_msg_pack (T_BROKER_REQUEST_MSG * srv_con_msg, char clt_type,
 
 void
 brres_msg_pack (T_BROKER_RESPONSE_NET_MSG * res_msg, int result_code,
-		int num_additional_msg, const int *additional_msg_size)
+                int num_additional_msg, const int *additional_msg_size)
 {
   int i;
   char *ptr = res_msg->msg_buffer;
@@ -158,7 +153,7 @@ brres_msg_pack (T_BROKER_RESPONSE_NET_MSG * res_msg, int result_code,
   memset (res_msg, 0, sizeof (T_BROKER_RESPONSE_NET_MSG));
 
 
-  ptr = br_msg_pack_int (ptr, BROKER_RESPONSE_MSG_SIZE);	/* msg size */
+  ptr = br_msg_pack_int (ptr, BROKER_RESPONSE_MSG_SIZE);        /* msg size */
 
   ptr = br_msg_pack_short (ptr, (short) MAJOR_VERSION);
   ptr = br_msg_pack_short (ptr, (short) MINOR_VERSION);
@@ -182,8 +177,7 @@ brres_msg_pack (T_BROKER_RESPONSE_NET_MSG * res_msg, int result_code,
 }
 
 int
-brres_msg_unpack (T_BROKER_RESPONSE * res, const char *msg_buffer,
-		  int msg_size)
+brres_msg_unpack (T_BROKER_RESPONSE * res, const char *msg_buffer, int msg_size)
 {
   int i;
   const char *ptr = msg_buffer;
@@ -249,8 +243,7 @@ brreq_msg_pack_port_name (char *ptr, const char *port_name)
 }
 
 const char *
-brreq_msg_unpack_port_name (const T_BROKER_REQUEST_MSG * brreq_msg,
-			    const char **ret_msg_ptr, int *ret_msg_remain)
+brreq_msg_unpack_port_name (const T_BROKER_REQUEST_MSG * brreq_msg, const char **ret_msg_ptr, int *ret_msg_remain)
 {
   int port_name_len;
   const char *port_name;

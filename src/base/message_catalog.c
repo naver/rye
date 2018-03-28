@@ -80,14 +80,14 @@ struct nls_cat_hdr
 
 struct nls_set_hdr
 {
-  INT32 _setno;			/* set number: 0 < x <= NL_SETMAX */
-  INT32 _nmsgs;			/* number of messages in the set  */
-  INT32 _index;			/* index of first msg_hdr in msg_hdr table */
+  INT32 _setno;                 /* set number: 0 < x <= NL_SETMAX */
+  INT32 _nmsgs;                 /* number of messages in the set  */
+  INT32 _index;                 /* index of first msg_hdr in msg_hdr table */
 };
 
 struct nls_msg_hdr
 {
-  INT32 _msgno;			/* msg number: 0 < x <= NL_MSGMAX */
+  INT32 _msgno;                 /* msg number: 0 < x <= NL_MSGMAX */
   INT32 _msglen;
   INT32 _offset;
 };
@@ -131,8 +131,7 @@ catgets (nl_catd catd, int set_id, int msg_id, const char *s)
     }
 
   cat_hdr = (struct nls_cat_hdr *) catd->_data;
-  set_hdr = (struct nls_set_hdr *) (void *) ((char *) catd->_data
-					     + sizeof (struct nls_cat_hdr));
+  set_hdr = (struct nls_set_hdr *) (void *) ((char *) catd->_data + sizeof (struct nls_cat_hdr));
 
   /* binary search, see knuth algorithm b */
   l = 0;
@@ -143,48 +142,44 @@ catgets (nl_catd catd, int set_id, int msg_id, const char *s)
       r = set_id - ntohl ((UINT32) set_hdr[i]._setno);
 
       if (r == 0)
-	{
-	  msg_hdr = (struct nls_msg_hdr *)
-	    (void *) ((char *) catd->_data +
-		      sizeof (struct nls_cat_hdr) +
-		      ntohl ((UINT32) cat_hdr->_msg_hdr_offset));
+        {
+          msg_hdr = (struct nls_msg_hdr *)
+            (void *) ((char *) catd->_data + sizeof (struct nls_cat_hdr) + ntohl ((UINT32) cat_hdr->_msg_hdr_offset));
 
-	  l = ntohl ((UINT32) set_hdr[i]._index);
-	  u = l + ntohl ((UINT32) set_hdr[i]._nmsgs) - 1;
-	  while (l <= u)
-	    {
-	      i = (l + u) / 2;
-	      r = msg_id - ntohl ((UINT32) msg_hdr[i]._msgno);
-	      if (r == 0)
-		{
-		  return ((char *) catd->_data +
-			  sizeof (struct nls_cat_hdr) +
-			  ntohl ((UINT32)
-				 cat_hdr->_msg_txt_offset) +
-			  ntohl ((UINT32) msg_hdr[i]._offset));
-		}
-	      else if (r < 0)
-		{
-		  u = i - 1;
-		}
-	      else
-		{
-		  l = i + 1;
-		}
-	    }
+          l = ntohl ((UINT32) set_hdr[i]._index);
+          u = l + ntohl ((UINT32) set_hdr[i]._nmsgs) - 1;
+          while (l <= u)
+            {
+              i = (l + u) / 2;
+              r = msg_id - ntohl ((UINT32) msg_hdr[i]._msgno);
+              if (r == 0)
+                {
+                  return ((char *) catd->_data +
+                          sizeof (struct nls_cat_hdr) +
+                          ntohl ((UINT32) cat_hdr->_msg_txt_offset) + ntohl ((UINT32) msg_hdr[i]._offset));
+                }
+              else if (r < 0)
+                {
+                  u = i - 1;
+                }
+              else
+                {
+                  l = i + 1;
+                }
+            }
 
-	  /* not found */
-	  goto notfound;
+          /* not found */
+          goto notfound;
 
-	}
+        }
       else if (r < 0)
-	{
-	  u = i - 1;
-	}
+        {
+          u = i - 1;
+        }
       else
-	{
-	  l = i + 1;
-	}
+        {
+          l = i + 1;
+        }
     }
 
 notfound:
@@ -291,13 +286,13 @@ msgcat_init (void)
   for (i = 0; i < MSGCAT_SYSTEM_DIM; i++)
     {
       if (msgcat_System[i].msg_catd == NULL)
-	{
-	  msgcat_System[i].msg_catd = msgcat_open (msgcat_System[i].name);
-	  if (msgcat_System[i].msg_catd == NULL)
-	    {
-	      return ER_FAILED;
-	    }
-	}
+        {
+          msgcat_System[i].msg_catd = msgcat_open (msgcat_System[i].name);
+          if (msgcat_System[i].msg_catd == NULL)
+            {
+              return ER_FAILED;
+            }
+        }
     }
 
   return NO_ERROR;
@@ -317,13 +312,13 @@ msgcat_final (void)
   for (i = 0; i < MSGCAT_SYSTEM_DIM; i++)
     {
       if (msgcat_System[i].msg_catd != NULL)
-	{
-	  if (msgcat_close (msgcat_System[i].msg_catd) != NO_ERROR)
-	    {
-	      rc = ER_FAILED;
-	    }
-	  msgcat_System[i].msg_catd = NULL;
-	}
+        {
+          if (msgcat_close (msgcat_System[i].msg_catd) != NO_ERROR)
+            {
+              rc = ER_FAILED;
+            }
+          msgcat_System[i].msg_catd = NULL;
+        }
     }
 
   return rc;
@@ -351,12 +346,11 @@ msgcat_message (int cat_id, int set_id, int msg_id)
 
   if (msgcat_System[cat_id].msg_catd == NULL)
     {
-      msgcat_System[cat_id].msg_catd =
-	msgcat_open (msgcat_System[cat_id].name);
+      msgcat_System[cat_id].msg_catd = msgcat_open (msgcat_System[cat_id].name);
       if (msgcat_System[cat_id].msg_catd == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   msg = msgcat_gets (msgcat_System[cat_id].msg_catd, set_id, msg_id, NULL);
@@ -364,9 +358,8 @@ msgcat_message (int cat_id, int set_id, int msg_id)
     {
       assert (false);
       fprintf (stderr,
-	       "Cannot find message id %d in set id %d from the file %s(%s).",
-	       msg_id, set_id, msgcat_System[cat_id].name,
-	       msgcat_System[cat_id].msg_catd->file);
+               "Cannot find message id %d in set id %d from the file %s(%s).",
+               msg_id, set_id, msgcat_System[cat_id].name, msgcat_System[cat_id].msg_catd->file);
       /* to protect the error of copying NULL pointer, return empty string ("")
        * rather than NULL */
       return empty;
@@ -403,8 +396,7 @@ msgcat_open (const char *name)
   msg_catd = (MSG_CATD) malloc (sizeof (*msg_catd));
   if (msg_catd == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      sizeof (*msg_catd));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (*msg_catd));
       catclose (catd);
       return NULL;
     }

@@ -100,64 +100,48 @@ typedef struct
  * EXPORTED FUNCTION PROTOTYPES						*
  ************************************************************************/
 
-extern int net_connect_srv (T_CON_HANDLE * con_handle, int host_id,
-			    int login_timeout);
-extern int net_send_msg (const T_CON_HANDLE * con_handle, char *msg,
-			 int size);
+extern int net_connect_srv (T_CON_HANDLE * con_handle, int host_id, int login_timeout);
+extern int net_send_msg (const T_CON_HANDLE * con_handle, char *msg, int size);
 extern int net_recv_msg (T_CON_HANDLE * con_handle, T_NET_RES ** net_res);
-extern int net_recv_msg_timeout (T_CON_HANDLE * con_handle,
-				 T_NET_RES ** net_res, int timeout);
+extern int net_recv_msg_timeout (T_CON_HANDLE * con_handle, T_NET_RES ** net_res, int timeout);
 extern int net_cancel_request (const T_CON_HANDLE * con_handle);
 extern int net_check_cas_request (T_CON_HANDLE * con_handle);
-extern bool net_check_broker_alive (const T_HOST_INFO * host,
-				    const char *port_name, int timeout_msec);
+extern bool net_check_broker_alive (const T_HOST_INFO * host, const char *port_name, int timeout_msec);
 
 extern int net_res_to_byte (char *value, T_NET_RES * net_res);
 extern int net_res_to_int (int *value, T_NET_RES * net_res);
 extern int net_res_to_short (short *value, T_NET_RES * net_res);
-extern int net_res_to_str (char **str_ptr, int *str_size,
-			   T_NET_RES * net_res);
+extern int net_res_to_str (char **str_ptr, int *str_size, T_NET_RES * net_res);
 extern char *net_res_cur_ptr (T_NET_RES * net_res);
 
 extern int net_shard_get_info (const T_HOST_INFO * host,
-			       const char *dbname, int64_t node_version,
-			       int64_t gid_version, int64_t clt_created_at,
-			       int timeout_msec,
-			       CCI_SHARD_NODE_INFO ** node_info,
-			       CCI_SHARD_GROUPID_INFO ** groupid_info,
-			       int64_t * created_at);
+                               const char *dbname, int64_t node_version,
+                               int64_t gid_version, int64_t clt_created_at,
+                               int timeout_msec,
+                               CCI_SHARD_NODE_INFO ** node_info,
+                               CCI_SHARD_GROUPID_INFO ** groupid_info, int64_t * created_at);
 extern int net_shard_init (int groupid_count, int init_num_nodes,
-			   const char **init_nodes,
-			   const T_CON_HANDLE * con_handle);
-extern int net_shard_node_req (char opcode, const char *node_arg,
-			       const T_CON_HANDLE * con_handle);
+                           const char **init_nodes, const T_CON_HANDLE * con_handle);
+extern int net_shard_node_req (char opcode, const char *node_arg, const T_CON_HANDLE * con_handle);
 extern int net_shard_migration_req (char opcode, SOCKET * sock_fd,
-				    int groupid, int dest_nodeid,
-				    int num_shard_keys,
-				    const T_CON_HANDLE * con_handle);
-extern int net_shard_ddl_gc_req (char opcode, SOCKET * sock_fd,
-				 const T_CON_HANDLE * con_handle);
+                                    int groupid, int dest_nodeid, int num_shard_keys, const T_CON_HANDLE * con_handle);
+extern int net_shard_ddl_gc_req (char opcode, SOCKET * sock_fd, const T_CON_HANDLE * con_handle);
 extern int net_mgmt_shard_mgmt_info_req (const T_HOST_INFO * host,
-					 const char *local_dbname,
-					 const char *global_dbname,
-					 int nodeid, int port,
-					 int64_t nodeid_ver,
-					 int64_t groupid_ver,
-					 char *server_name_buf,
-					 int server_name_buf_size,
-					 int *server_mode, int timeout_msec);
+                                         const char *local_dbname,
+                                         const char *global_dbname,
+                                         int nodeid, int port,
+                                         int64_t nodeid_ver,
+                                         int64_t groupid_ver,
+                                         char *server_name_buf,
+                                         int server_name_buf_size, int *server_mode, int timeout_msec);
 extern int net_mgmt_launch_process_req (T_CCI_LAUNCH_RESULT * launch_result,
-					const T_HOST_INFO * host,
-					int launch_proc,
-					bool recv_stdout, bool wait_child,
-					int argc, const char **argv,
-					int num_env, const char **envp,
-					int timeout_msec);
+                                        const T_HOST_INFO * host,
+                                        int launch_proc,
+                                        bool recv_stdout, bool wait_child,
+                                        int argc, const char **argv, int num_env, const char **envp, int timeout_msec);
 extern int net_mgmt_count_launch_process (void);
-extern int net_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_res,
-					 int poll_timeout);
-extern int net_mgmt_connect_db_server (const T_HOST_INFO * host,
-				       const char *dbname, int timeout_msec);
+extern int net_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_res, int poll_timeout);
+extern int net_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname, int timeout_msec);
 
 
 /************************************************************************

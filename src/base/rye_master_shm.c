@@ -83,9 +83,7 @@ master_shm_initialize (void)
       return error;
     }
 
-  shm_p = (RYE_SHM_MASTER *) rye_shm_create (shm_key,
-					     sizeof (RYE_SHM_MASTER),
-					     RYE_SHM_TYPE_MASTER);
+  shm_p = (RYE_SHM_MASTER *) rye_shm_create (shm_key, sizeof (RYE_SHM_MASTER), RYE_SHM_TYPE_MASTER);
   if (shm_p == NULL)
     {
       error = ER_GENERIC_ERROR;
@@ -130,8 +128,7 @@ master_shm_final (void)
  *   return: error code
  */
 int
-master_shm_set_node_state (const PRM_NODE_INFO * node_info,
-			   unsigned short node_state)
+master_shm_set_node_state (const PRM_NODE_INFO * node_info, unsigned short node_state)
 {
   int i;
 
@@ -143,12 +140,11 @@ master_shm_set_node_state (const PRM_NODE_INFO * node_info,
 
   for (i = 0; i < rye_Master_shm->num_ha_nodes; i++)
     {
-      if (prm_is_same_node (&rye_Master_shm->ha_nodes[i].node_info,
-			    node_info) == true)
-	{
-	  rye_Master_shm->ha_nodes[i].node_state = node_state;
-	  break;
-	}
+      if (prm_is_same_node (&rye_Master_shm->ha_nodes[i].node_info, node_info) == true)
+        {
+          rye_Master_shm->ha_nodes[i].node_state = node_state;
+          break;
+        }
     }
 
   return NO_ERROR;
@@ -159,8 +155,7 @@ master_shm_set_node_state (const PRM_NODE_INFO * node_info,
  *   return: error code
  */
 int
-master_shm_set_node_version (const PRM_NODE_INFO * node_info,
-			     const RYE_VERSION * node_version)
+master_shm_set_node_version (const PRM_NODE_INFO * node_info, const RYE_VERSION * node_version)
 {
   int i;
 
@@ -172,12 +167,11 @@ master_shm_set_node_version (const PRM_NODE_INFO * node_info,
 
   for (i = 0; i < rye_Master_shm->num_ha_nodes; i++)
     {
-      if (prm_is_same_node (&rye_Master_shm->ha_nodes[i].node_info,
-			    node_info) == true)
-	{
-	  rye_Master_shm->ha_nodes[i].ha_node_version = *node_version;
-	  break;
-	}
+      if (prm_is_same_node (&rye_Master_shm->ha_nodes[i].node_info, node_info) == true)
+        {
+          rye_Master_shm->ha_nodes[i].ha_node_version = *node_version;
+          break;
+        }
     }
 
   return NO_ERROR;
@@ -199,8 +193,7 @@ master_shm_reset_hb_nodes (RYE_SHM_HA_NODE * nodes, int num_nodes)
       return ER_FAILED;
     }
 
-  memcpy (rye_Master_shm->ha_nodes, nodes,
-	  sizeof (RYE_SHM_HA_NODE) * num_nodes);
+  memcpy (rye_Master_shm->ha_nodes, nodes, sizeof (RYE_SHM_HA_NODE) * num_nodes);
   rye_Master_shm->num_ha_nodes = num_nodes;
   rye_Master_shm->ha_node_reset_time = time (NULL);
 
@@ -213,9 +206,7 @@ master_shm_reset_hb_nodes (RYE_SHM_HA_NODE * nodes, int num_nodes)
  */
 int
 master_shm_get_shard_mgmt_info (const char *local_dbname,
-				char *global_dbname,
-				short *nodeid,
-				PRM_NODE_INFO * shard_mgmt_node_info)
+                                char *global_dbname, short *nodeid, PRM_NODE_INFO * shard_mgmt_node_info)
 {
   int i, rv;
   int error = ER_FAILED;
@@ -236,47 +227,39 @@ master_shm_get_shard_mgmt_info (const char *local_dbname,
   for (i = 0; i < RYE_SHD_MGMT_TABLE_SIZE; i++)
     {
       if (rye_Master_shm->shd_mgmt_table[i].local_dbname[0] == '\0')
-	{
-	  break;
-	}
-      else
-	if (strcmp
-	    (local_dbname,
-	     rye_Master_shm->shd_mgmt_table[i].local_dbname) == 0)
-	{
-	  /* choose most recently updated shard mgmt info */
-	  int j, recent = 0;
-	  RYE_SHD_MGMT_TABLE *shd_mgmt_entry;
+        {
+          break;
+        }
+      else if (strcmp (local_dbname, rye_Master_shm->shd_mgmt_table[i].local_dbname) == 0)
+        {
+          /* choose most recently updated shard mgmt info */
+          int j, recent = 0;
+          RYE_SHD_MGMT_TABLE *shd_mgmt_entry;
 
-	  shd_mgmt_entry = &rye_Master_shm->shd_mgmt_table[i];
+          shd_mgmt_entry = &rye_Master_shm->shd_mgmt_table[i];
 
-	  for (j = 0; j < RYE_SHD_MGMT_INFO_MAX_COUNT; j++)
-	    {
-	      if (PRM_NODE_INFO_GET_PORT
-		  (&shd_mgmt_entry->shd_mgmt_info[j].node_info) == 0)
-		{
-		  break;
-		}
-	      else if (shd_mgmt_entry->shd_mgmt_info[j].sync_time >
-		       shd_mgmt_entry->shd_mgmt_info[recent].sync_time)
-		{
-		  recent = j;
-		}
-	    }
+          for (j = 0; j < RYE_SHD_MGMT_INFO_MAX_COUNT; j++)
+            {
+              if (PRM_NODE_INFO_GET_PORT (&shd_mgmt_entry->shd_mgmt_info[j].node_info) == 0)
+                {
+                  break;
+                }
+              else if (shd_mgmt_entry->shd_mgmt_info[j].sync_time > shd_mgmt_entry->shd_mgmt_info[recent].sync_time)
+                {
+                  recent = j;
+                }
+            }
 
-	  if (PRM_NODE_INFO_GET_PORT
-	      (&shd_mgmt_entry->shd_mgmt_info[recent].node_info) != 0)
-	    {
-	      strncpy (global_dbname, shd_mgmt_entry->global_dbname,
-		       RYE_SHD_MGMT_TABLE_DBNAME_SIZE);
-	      *nodeid = shd_mgmt_entry->nodeid;
-	      *shard_mgmt_node_info =
-		shd_mgmt_entry->shd_mgmt_info[recent].node_info;
-	      error = NO_ERROR;
-	    }
+          if (PRM_NODE_INFO_GET_PORT (&shd_mgmt_entry->shd_mgmt_info[recent].node_info) != 0)
+            {
+              strncpy (global_dbname, shd_mgmt_entry->global_dbname, RYE_SHD_MGMT_TABLE_DBNAME_SIZE);
+              *nodeid = shd_mgmt_entry->nodeid;
+              *shard_mgmt_node_info = shd_mgmt_entry->shd_mgmt_info[recent].node_info;
+              error = NO_ERROR;
+            }
 
-	  break;
-	}
+          break;
+        }
     }
 
   pthread_mutex_unlock (&rye_Master_shm->lock);
@@ -309,8 +292,7 @@ rye_master_shm_attach ()
     }
   parse_int (&shm_key, str_shm_key, 16);
 
-  shm_p = (RYE_SHM_MASTER *) rye_shm_attach (shm_key, RYE_SHM_TYPE_MASTER,
-					     false);
+  shm_p = (RYE_SHM_MASTER *) rye_shm_attach (shm_key, RYE_SHM_TYPE_MASTER, false);
   if (shm_p == NULL)
     {
       return NULL;
@@ -330,10 +312,10 @@ rye_master_shm_attach ()
       THREAD_SLEEP (3 * 1000);
       rv = pthread_mutex_lock (&shm_p->lock);
       if (rv != 0)
-	{
-	  rye_shm_detach (shm_p);
-	  return NULL;
-	}
+        {
+          rye_shm_detach (shm_p);
+          return NULL;
+        }
     }
   pthread_mutex_unlock (&shm_p->lock);
 
@@ -402,10 +384,10 @@ rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type)
   for (i = 0; i < num_shm; i++)
     {
       if (strcmp (master_shm->shm_info[i].name, name) == 0)
-	{
-	  res_index = i;
-	  break;
-	}
+        {
+          res_index = i;
+          break;
+        }
     }
 
   if (res_index >= 0)
@@ -424,27 +406,26 @@ rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type)
       int key_offset;
 
       if (master_shm->num_shm >= MAX_NUM_SHM)
-	{
-	  assert (false);
+        {
+          assert (false);
 
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-		  1, "too many databases in master shm");
-	  return -1;
-	}
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "too many databases in master shm");
+          return -1;
+        }
       res_index = master_shm->num_shm;
 
       str_shm_key = prm_get_string_value (PRM_ID_RYE_SHM_KEY);
       parse_int (&master_shm_key, str_shm_key, 16);
 
       if (type == RYE_SHM_TYPE_SERVER)
-	{
-	  key_offset = DEFUALT_SERVER_SHM_KEY_BASE;
-	}
+        {
+          key_offset = DEFUALT_SERVER_SHM_KEY_BASE;
+        }
       else
-	{
-	  assert (type == RYE_SHM_TYPE_MONITOR);
-	  key_offset = DEFUALT_MONITOR_SHM_KEY_BASE;
-	}
+        {
+          assert (type == RYE_SHM_TYPE_MONITOR);
+          key_offset = DEFUALT_MONITOR_SHM_KEY_BASE;
+        }
       shm_key = (master_shm_key + key_offset + res_index);
 
       shm_info_p = &(master_shm->shm_info[res_index]);
@@ -473,8 +454,7 @@ rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type)
  *   max_nodes(in):
  */
 int
-rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes, int *num_nodes,
-			     int max_nodes)
+rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes, int *num_nodes, int max_nodes)
 {
   RYE_SHM_MASTER *master_shm;
   int i;
@@ -517,8 +497,7 @@ rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes, int *num_nodes,
  *   host(in):
  */
 int
-rye_master_shm_get_node_state (HA_STATE * node_state,
-			       const PRM_NODE_INFO * node_info)
+rye_master_shm_get_node_state (HA_STATE * node_state, const PRM_NODE_INFO * node_info)
 {
   RYE_SHM_MASTER *master_shm;
   int i;
@@ -539,11 +518,10 @@ rye_master_shm_get_node_state (HA_STATE * node_state,
 
   for (i = 0; i < master_shm->num_ha_nodes; i++)
     {
-      if (prm_is_same_node (&master_shm->ha_nodes[i].node_info,
-			    node_info) == true)
-	{
-	  *node_state = master_shm->ha_nodes[i].node_state;
-	}
+      if (prm_is_same_node (&master_shm->ha_nodes[i].node_info, node_info) == true)
+        {
+          *node_state = master_shm->ha_nodes[i].node_state;
+        }
     }
 
   rye_master_shm_detach (master_shm);
@@ -561,38 +539,33 @@ dump_shard_mgmt_info (FILE * outfp, RYE_SHM_MASTER * rye_shm)
   for (i = 0; i < RYE_SHD_MGMT_TABLE_SIZE; i++)
     {
       if (rye_shm->shd_mgmt_table[i].local_dbname[0] == '\0')
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       fprintf (outfp, "\t%s     nodeid:%d of %s\n",
-	       rye_shm->shd_mgmt_table[i].local_dbname,
-	       rye_shm->shd_mgmt_table[i].nodeid,
-	       rye_shm->shd_mgmt_table[i].global_dbname);
+               rye_shm->shd_mgmt_table[i].local_dbname,
+               rye_shm->shd_mgmt_table[i].nodeid, rye_shm->shd_mgmt_table[i].global_dbname);
 
       for (j = 0; j < RYE_SHD_MGMT_INFO_MAX_COUNT; j++)
-	{
-	  struct timeval time_val;
-	  char time_array[256];
-	  char node_str[MAX_NODE_INFO_STR_LEN];
+        {
+          struct timeval time_val;
+          char time_array[256];
+          char node_str[MAX_NODE_INFO_STR_LEN];
 
-	  if (PRM_NODE_INFO_GET_PORT
-	      (&rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].node_info) == 0)
-	    {
-	      break;
-	    }
+          if (PRM_NODE_INFO_GET_PORT (&rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].node_info) == 0)
+            {
+              break;
+            }
 
-	  time_val.tv_sec =
-	    rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].sync_time;
-	  time_val.tv_usec = 0;
+          time_val.tv_sec = rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].sync_time;
+          time_val.tv_usec = 0;
 
-	  (void) er_datetime (&time_val, time_array, sizeof (time_array));
+          (void) er_datetime (&time_val, time_array, sizeof (time_array));
 
-	  prm_node_info_to_str (node_str, sizeof (node_str),
-				&rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].
-				node_info);
-	  fprintf (outfp, "\t\t%s %s\n", node_str, time_array);
-	}
+          prm_node_info_to_str (node_str, sizeof (node_str), &rye_shm->shd_mgmt_table[i].shd_mgmt_info[j].node_info);
+          fprintf (outfp, "\t\t%s %s\n", node_str, time_array);
+        }
     }
 }
 
@@ -611,8 +584,7 @@ rye_master_shm_dump (FILE * outfp)
   shm_master = rye_master_shm_attach ();
   if (shm_master == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-	      1, "shm open error:shm key info");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "shm open error:shm key info");
 
       return ER_GENERIC_ERROR;
     }
@@ -624,12 +596,12 @@ rye_master_shm_dump (FILE * outfp)
   for (i = 0; i < num_shm_keys; i++)
     {
       fprintf (outfp, "\tIndex:%d, type:%s, name:%s key:%08x\n",
-	       i, RYE_SHM_TYPE_NAME (shm_master->shm_info[i].type),
-	       shm_master->shm_info[i].name, shm_master->shm_info[i].shm_key);
+               i, RYE_SHM_TYPE_NAME (shm_master->shm_info[i].type),
+               shm_master->shm_info[i].name, shm_master->shm_info[i].shm_key);
       if (shm_master->shm_info[i].type == RYE_SHM_TYPE_SERVER)
-	{
-	  rye_server_shm_dump (outfp, shm_master->shm_info[i].shm_key);
-	}
+        {
+          rye_server_shm_dump (outfp, shm_master->shm_info[i].shm_key);
+        }
     }
 
   num_hb_nodes = MIN (shm_master->num_ha_nodes, SHM_MAX_HA_NODE_LIST);
@@ -637,11 +609,9 @@ rye_master_shm_dump (FILE * outfp)
   for (i = 0; i < num_hb_nodes; i++)
     {
       char host[MAX_NODE_INFO_STR_LEN];
-      prm_node_info_to_str (host, sizeof (host),
-			    &shm_master->ha_nodes[i].node_info);
+      prm_node_info_to_str (host, sizeof (host), &shm_master->ha_nodes[i].node_info);
       fprintf (outfp, "\t%s:node_state=%s priority=%d\n",
-	       host, HA_STATE_NAME (shm_master->ha_nodes[i].node_state),
-	       shm_master->ha_nodes[i].priority);
+               host, HA_STATE_NAME (shm_master->ha_nodes[i].node_state), shm_master->ha_nodes[i].priority);
     }
 
   dump_shard_mgmt_info (outfp, shm_master);
@@ -661,62 +631,53 @@ rye_master_shm_dump (FILE * outfp)
  */
 static void
 set_shard_mgmt_info (RYE_SHD_MGMT_TABLE * shd_mgmt_table_entry,
-		     const char *local_dbname,
-		     const char *global_dbname,
-		     short nodeid, const PRM_NODE_INFO * shard_mgmt_node_info)
+                     const char *local_dbname,
+                     const char *global_dbname, short nodeid, const PRM_NODE_INFO * shard_mgmt_node_info)
 {
   int i;
   int set_index = 0;
 
-  if (shd_mgmt_table_entry->nodeid != nodeid ||
-      strcmp (shd_mgmt_table_entry->global_dbname, global_dbname) != 0)
+  if (shd_mgmt_table_entry->nodeid != nodeid || strcmp (shd_mgmt_table_entry->global_dbname, global_dbname) != 0)
     {
       memset (shd_mgmt_table_entry, 0, sizeof (RYE_SHD_MGMT_TABLE));
 
-      strncpy (shd_mgmt_table_entry->global_dbname, global_dbname,
-	       RYE_SHD_MGMT_TABLE_DBNAME_SIZE - 1);
+      strncpy (shd_mgmt_table_entry->global_dbname, global_dbname, RYE_SHD_MGMT_TABLE_DBNAME_SIZE - 1);
       shd_mgmt_table_entry->nodeid = nodeid;
     }
 
   if (shd_mgmt_table_entry->local_dbname[0] == '\0')
     {
-      strncpy (shd_mgmt_table_entry->local_dbname, local_dbname,
-	       RYE_SHD_MGMT_TABLE_DBNAME_SIZE - 1);
+      strncpy (shd_mgmt_table_entry->local_dbname, local_dbname, RYE_SHD_MGMT_TABLE_DBNAME_SIZE - 1);
     }
 
   for (i = 0; i < RYE_SHD_MGMT_INFO_MAX_COUNT; i++)
     {
-      if (PRM_NODE_INFO_GET_PORT
-	  (&shd_mgmt_table_entry->shd_mgmt_info[i].node_info) == 0)
-	{
-	  /* shard mgmt info not found. */
-	  set_index = i;
-	  break;
-	}
+      if (PRM_NODE_INFO_GET_PORT (&shd_mgmt_table_entry->shd_mgmt_info[i].node_info) == 0)
+        {
+          /* shard mgmt info not found. */
+          set_index = i;
+          break;
+        }
+      else if (prm_is_same_node (&shd_mgmt_table_entry->shd_mgmt_info[i].node_info, shard_mgmt_node_info) == true)
+        {
+          /* shard mgmt info exists. */
+          set_index = i;
+          break;
+        }
       else
-	if (prm_is_same_node
-	    (&shd_mgmt_table_entry->shd_mgmt_info[i].node_info,
-	     shard_mgmt_node_info) == true)
-	{
-	  /* shard mgmt info exists. */
-	  set_index = i;
-	  break;
-	}
-      else
-	{
-	  /* if there is no room to save current shard mgmt info,
-	     oldest shard mgmt info will be removed */
-	  if (shd_mgmt_table_entry->shd_mgmt_info[i].sync_time <
-	      shd_mgmt_table_entry->shd_mgmt_info[set_index].sync_time)
-	    {
-	      set_index = i;
-	    }
-	}
+        {
+          /* if there is no room to save current shard mgmt info,
+             oldest shard mgmt info will be removed */
+          if (shd_mgmt_table_entry->shd_mgmt_info[i].sync_time <
+              shd_mgmt_table_entry->shd_mgmt_info[set_index].sync_time)
+            {
+              set_index = i;
+            }
+        }
 
     }
 
-  shd_mgmt_table_entry->shd_mgmt_info[set_index].node_info =
-    *shard_mgmt_node_info;
+  shd_mgmt_table_entry->shd_mgmt_info[set_index].node_info = *shard_mgmt_node_info;
   shd_mgmt_table_entry->shd_mgmt_info[set_index].sync_time = time (NULL);
 }
 
@@ -726,10 +687,7 @@ set_shard_mgmt_info (RYE_SHD_MGMT_TABLE * shd_mgmt_table_entry,
  */
 int
 rye_master_shm_add_shard_mgmt_info (const char *local_dbname,
-				    const char *global_dbname,
-				    short nodeid,
-				    const PRM_NODE_INFO *
-				    shard_mgmt_node_info)
+                                    const char *global_dbname, short nodeid, const PRM_NODE_INFO * shard_mgmt_node_info)
 {
   int i, rv;
   RYE_SHM_MASTER *rye_shm;
@@ -752,13 +710,12 @@ rye_master_shm_add_shard_mgmt_info (const char *local_dbname,
   for (i = 0; i < RYE_SHD_MGMT_TABLE_SIZE; i++)
     {
       if (rye_shm->shd_mgmt_table[i].local_dbname[0] == '\0' ||
-	  strcmp (local_dbname, rye_shm->shd_mgmt_table[i].local_dbname) == 0)
-	{
-	  set_shard_mgmt_info (&rye_shm->shd_mgmt_table[i], local_dbname,
-			       global_dbname, nodeid, shard_mgmt_node_info);
-	  error = NO_ERROR;
-	  break;
-	}
+          strcmp (local_dbname, rye_shm->shd_mgmt_table[i].local_dbname) == 0)
+        {
+          set_shard_mgmt_info (&rye_shm->shd_mgmt_table[i], local_dbname, global_dbname, nodeid, shard_mgmt_node_info);
+          error = NO_ERROR;
+          break;
+        }
     }
 
   pthread_mutex_unlock (&rye_shm->lock);
@@ -792,12 +749,11 @@ rye_master_shm_get_shm_key (const char *name, RYE_SHM_TYPE type)
   num_shm = MIN (shm_master->num_shm, MAX_NUM_SHM);
   for (i = 0; i < num_shm; i++)
     {
-      if (strcmp (shm_master->shm_info[i].name, name) == 0
-	  && shm_master->shm_info[i].type == type)
-	{
-	  server_shm_key = shm_master->shm_info[i].shm_key;
-	  break;
-	}
+      if (strcmp (shm_master->shm_info[i].name, name) == 0 && shm_master->shm_info[i].type == type)
+        {
+          server_shm_key = shm_master->shm_info[i].shm_key;
+          break;
+        }
     }
 
   rye_master_shm_detach (shm_master);

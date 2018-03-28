@@ -57,25 +57,19 @@ typedef struct
 } BROKER_ACL_CONF;
 
 extern int br_acl_init_shm (T_SHM_APPL_SERVER * shm_as_cp,
-			    T_BROKER_INFO * br_info_p,
-			    T_SHM_BROKER * shm_br, char *admin_err_msg,
-			    const BROKER_ACL_CONF * br_acl_conf);
+                            T_BROKER_INFO * br_info_p,
+                            T_SHM_BROKER * shm_br, char *admin_err_msg, const BROKER_ACL_CONF * br_acl_conf);
 extern int br_acl_set_shm (T_SHM_APPL_SERVER * shm_appl,
-			   BR_ACL_INFO * ret_acl_info,
-			   const BROKER_ACL_CONF * br_acl_conf,
-			   const char *broker_name, char *admin_err_msg);
+                           BR_ACL_INFO * ret_acl_info,
+                           const BROKER_ACL_CONF * br_acl_conf, const char *broker_name, char *admin_err_msg);
 extern int br_acl_read_config_file (BROKER_ACL_CONF * br_acl_conf,
-				    const char *filename,
-				    bool make_default_acl_file,
-				    char *admin_err_msg);
+                                    const char *filename, bool make_default_acl_file, char *admin_err_msg);
 
 extern int br_acl_check_right (T_SHM_APPL_SERVER * shm_as_p,
-			       BR_ACL_INFO * acl_info, int num_acl_info,
-			       const char *dbname, const char *dbuser,
-			       unsigned char *address);
+                               BR_ACL_INFO * acl_info, int num_acl_info,
+                               const char *dbname, const char *dbuser, unsigned char *address);
 extern void br_acl_dump (FILE * fp, BR_ACL_INFO * acl_list);
 extern int br_acl_conf_read_ip_addr (ACL_IP_INFO * ip_info, char *linebuf,
-				     char *admin_err_msg,
-				     const char *err_line_info);
+                                     char *admin_err_msg, const char *err_line_info);
 
 #endif /* _BROKER_ACL_H_ */

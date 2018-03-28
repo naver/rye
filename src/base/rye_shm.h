@@ -137,11 +137,9 @@ struct _rye_shm_info
 };
 
 extern void *rye_shm_create (int shm_key, int size, RYE_SHM_TYPE shm_type);
-extern RYE_SHM_TYPE rye_shm_check_shm (int shm_key, RYE_SHM_TYPE shm_type,
-				       bool check_status);
+extern RYE_SHM_TYPE rye_shm_check_shm (int shm_key, RYE_SHM_TYPE shm_type, bool check_status);
 extern bool rye_shm_is_used_key (int shm_key);
-extern void *rye_shm_attach (int shm_key, RYE_SHM_TYPE shm_type,
-			     bool is_monitoring);
+extern void *rye_shm_attach (int shm_key, RYE_SHM_TYPE shm_type, bool is_monitoring);
 extern int rye_shm_detach (void *shm_p);
 extern int rye_shm_destroy (int shm_key);
 extern int rye_shm_mutex_init (pthread_mutex_t * mutex);

@@ -79,26 +79,19 @@ typedef enum
 } T_CAS_LOG_BACKUP_TYPE;
 
 static void cas_log_write_v (T_CAS_LOG_TYPE cas_log_type, int flag,
-			     struct timeval *log_time,
-			     unsigned int seq_num, const char *fmt,
-			     va_list ap);
+                             struct timeval *log_time, unsigned int seq_num, const char *fmt, va_list ap);
 static T_CAS_LOG_HANDLE *get_cas_log_handle (T_CAS_LOG_TYPE cas_log_type);
 static void cas_log_open (T_CAS_LOG_HANDLE * log_handle);
 static void cas_log_close (T_CAS_LOG_HANDLE * log_handle);
 
-static void cas_log_handle_init (T_CAS_LOG_HANDLE * log_handle,
-				 T_CAS_LOG_TYPE cas_log_type, int capacity);
-static void cas_log_handle_vprint (T_CAS_LOG_HANDLE * log_handle,
-				   const char *format, va_list ap);
+static void cas_log_handle_init (T_CAS_LOG_HANDLE * log_handle, T_CAS_LOG_TYPE cas_log_type, int capacity);
+static void cas_log_handle_vprint (T_CAS_LOG_HANDLE * log_handle, const char *format, va_list ap);
 
 static void cas_sql_log_query_cancel (void);
-static void make_cas_log_filename (T_CAS_LOG_TYPE cas_log_type,
-				   char *filename_buf, size_t buf_size);
-static void cas_log_backup (T_CAS_LOG_HANDLE * log_handle,
-			    T_CAS_LOG_BACKUP_TYPE cas_log_backup_type);
+static void make_cas_log_filename (T_CAS_LOG_TYPE cas_log_type, char *filename_buf, size_t buf_size);
+static void cas_log_backup (T_CAS_LOG_HANDLE * log_handle, T_CAS_LOG_BACKUP_TYPE cas_log_backup_type);
 
-static void cas_log_handle_reset (T_CAS_LOG_HANDLE * log_handle,
-				  FILE * log_fp);
+static void cas_log_handle_reset (T_CAS_LOG_HANDLE * log_handle, FILE * log_fp);
 
 bool sql_log_Notice_mode_flush = false;
 
@@ -110,8 +103,7 @@ static INT64 query_Cancel_time = 0;
 static T_CAS_LOG_HANDLE cas_Log_handle_arr[CAS_LOG_TYPE_MAX + 1];
 
 void
-cas_log_init (T_SHM_APPL_SERVER * shm_p, T_APPL_SERVER_INFO * as_info_p,
-	      int id)
+cas_log_init (T_SHM_APPL_SERVER * shm_p, T_APPL_SERVER_INFO * as_info_p, int id)
 {
   int i;
 
@@ -124,13 +116,13 @@ cas_log_init (T_SHM_APPL_SERVER * shm_p, T_APPL_SERVER_INFO * as_info_p,
       int capacity;
 
       if (i == CAS_LOG_SQL_LOG || i == CAS_LOG_SLOW_LOG)
-	{
-	  capacity = 160 * ONE_K;
-	}
+        {
+          capacity = 160 * ONE_K;
+        }
       else
-	{
-	  capacity = 8 * ONE_K;
-	}
+        {
+          capacity = 8 * ONE_K;
+        }
 
       cas_log_handle_init (&cas_Log_handle_arr[i], i, capacity);
     }
@@ -152,9 +144,9 @@ cas_sql_log_reset ()
       cas_log_close (log_handle);
 
       if ((as_info->cas_log_reset & CAS_LOG_RESET_REMOVE) != 0)
-	{
-	  unlink (log_handle->log_filepath);
-	}
+        {
+          unlink (log_handle->log_filepath);
+        }
 
       cas_log_open (log_handle);
 
@@ -172,9 +164,9 @@ cas_slow_log_reset ()
       cas_log_close (log_handle);
 
       if ((as_info->cas_slow_log_reset & CAS_LOG_RESET_REMOVE) != 0)
-	{
-	  unlink (log_handle->log_filepath);
-	}
+        {
+          unlink (log_handle->log_filepath);
+        }
 
       cas_log_open (log_handle);
 
@@ -197,8 +189,7 @@ get_cas_log_handle (T_CAS_LOG_TYPE cas_log_type)
 }
 
 static void
-cas_log_handle_init (T_CAS_LOG_HANDLE * log_handle,
-		     T_CAS_LOG_TYPE cas_log_type, int capacity)
+cas_log_handle_init (T_CAS_LOG_HANDLE * log_handle, T_CAS_LOG_TYPE cas_log_type, int capacity)
 {
   memset (log_handle, 0, sizeof (T_CAS_LOG_HANDLE));
 
@@ -219,23 +210,21 @@ cas_log_handle_reset (T_CAS_LOG_HANDLE * log_handle, FILE * log_fp)
 }
 
 static void
-cas_log_handle_check_flush (T_CAS_LOG_HANDLE * log_handle, bool force_flush,
-			    int add_size)
+cas_log_handle_check_flush (T_CAS_LOG_HANDLE * log_handle, bool force_flush, int add_size)
 {
   if (!CAS_LOG_IS_CLOSED (log_handle))
     {
       if (log_handle->cur_pos + add_size >= log_handle->capacity)
-	{
-	  sql_log_Notice_mode_flush = true;
-	  force_flush = true;
-	}
+        {
+          sql_log_Notice_mode_flush = true;
+          force_flush = true;
+        }
 
       if (force_flush)
-	{
-	  fwrite (log_handle->log_buffer, log_handle->cur_pos, 1,
-		  log_handle->log_fp);
-	  cas_log_handle_reset (log_handle, log_handle->log_fp);
-	}
+        {
+          fwrite (log_handle->log_buffer, log_handle->cur_pos, 1, log_handle->log_fp);
+          cas_log_handle_reset (log_handle, log_handle->log_fp);
+        }
     }
 }
 
@@ -279,8 +268,7 @@ cas_log_handle_print (T_CAS_LOG_HANDLE * log_handle, const char *format, ...)
 }
 
 static void
-cas_log_handle_vprint (T_CAS_LOG_HANDLE * log_handle, const char *format,
-		       va_list ap)
+cas_log_handle_vprint (T_CAS_LOG_HANDLE * log_handle, const char *format, va_list ap)
 {
   va_list ap_copy;
   int len;
@@ -290,7 +278,7 @@ cas_log_handle_vprint (T_CAS_LOG_HANDLE * log_handle, const char *format,
   va_copy (ap_copy, ap);
 
   len = vsnprintf (log_handle->log_buffer + log_handle->cur_pos,
-		   log_handle->capacity - log_handle->cur_pos, format, ap);
+                   log_handle->capacity - log_handle->cur_pos, format, ap);
 
   if (len < log_handle->capacity - log_handle->cur_pos)
     {
@@ -301,15 +289,14 @@ cas_log_handle_vprint (T_CAS_LOG_HANDLE * log_handle, const char *format,
       cas_log_handle_check_flush (log_handle, true, 0);
 
       if (len >= log_handle->capacity)
-	{
-	  vfprintf (log_handle->log_fp, format, ap_copy);
-	}
+        {
+          vfprintf (log_handle->log_fp, format, ap_copy);
+        }
       else
-	{
-	  len = vsnprintf (log_handle->log_buffer, log_handle->capacity,
-			   format, ap_copy);
-	  log_handle->cur_pos = len;
-	}
+        {
+          len = vsnprintf (log_handle->log_buffer, log_handle->capacity, format, ap_copy);
+          log_handle->cur_pos = len;
+        }
     }
 
   va_end (ap_copy);
@@ -329,8 +316,7 @@ cas_log_file_size (T_CAS_LOG_HANDLE * log_handle)
 }
 
 static void
-make_cas_log_filename (T_CAS_LOG_TYPE cas_log_type, char *filename_buf,
-		       size_t buf_size)
+make_cas_log_filename (T_CAS_LOG_TYPE cas_log_type, char *filename_buf, size_t buf_size)
 {
   char tmp_filename[BROKER_PATH_MAX];
 
@@ -338,36 +324,30 @@ make_cas_log_filename (T_CAS_LOG_TYPE cas_log_type, char *filename_buf,
 
   if (cas_log_type == CAS_LOG_SQL_LOG)
     {
-      snprintf (tmp_filename, sizeof (tmp_filename),
-		"%s_%d.sql.log", shm_appl->broker_name, cas_id);
-      envvar_ryelog_broker_sqllog_file (filename_buf, buf_size,
-					shm_appl->broker_name, tmp_filename);
+      snprintf (tmp_filename, sizeof (tmp_filename), "%s_%d.sql.log", shm_appl->broker_name, cas_id);
+      envvar_ryelog_broker_sqllog_file (filename_buf, buf_size, shm_appl->broker_name, tmp_filename);
     }
   else if (cas_log_type == CAS_LOG_SLOW_LOG)
     {
-      snprintf (tmp_filename, sizeof (tmp_filename),
-		"%s_%d.slow.log", shm_appl->broker_name, cas_id);
-      envvar_ryelog_broker_slowlog_file (filename_buf, buf_size,
-					 shm_appl->broker_name, tmp_filename);
+      snprintf (tmp_filename, sizeof (tmp_filename), "%s_%d.slow.log", shm_appl->broker_name, cas_id);
+      envvar_ryelog_broker_slowlog_file (filename_buf, buf_size, shm_appl->broker_name, tmp_filename);
     }
   else if (IS_CAS_LOG_ACCESS_LOG (cas_log_type))
     {
       const char *denied_file_postfix;
 
       if (cas_log_type == CAS_LOG_DENIED_ACCESS_LOG)
-	{
-	  denied_file_postfix = ACCESS_LOG_DENIED_FILENAME_POSTFIX;
-	}
+        {
+          denied_file_postfix = ACCESS_LOG_DENIED_FILENAME_POSTFIX;
+        }
       else
-	{
-	  denied_file_postfix = "";
-	}
+        {
+          denied_file_postfix = "";
+        }
 
       snprintf (tmp_filename, sizeof (tmp_filename), "%s%s%s",
-		shm_appl->broker_name,
-		ACCESS_LOG_FILENAME_POSTFIX, denied_file_postfix);
-      envvar_ryelog_broker_file (filename_buf, buf_size,
-				 shm_appl->broker_name, tmp_filename);
+                shm_appl->broker_name, ACCESS_LOG_FILENAME_POSTFIX, denied_file_postfix);
+      envvar_ryelog_broker_file (filename_buf, buf_size, shm_appl->broker_name, tmp_filename);
     }
   else
     {
@@ -380,20 +360,18 @@ static void
 cas_log_open (T_CAS_LOG_HANDLE * log_handle)
 {
   if (log_handle->capacity > 0 && CAS_LOG_IS_CLOSED (log_handle) &&
-      (IS_CAS_LOG_WRITE_MODE (log_handle->cas_log_type) ||
-       IS_CAS_LOG_ACCESS_LOG (log_handle->cas_log_type)))
+      (IS_CAS_LOG_WRITE_MODE (log_handle->cas_log_type) || IS_CAS_LOG_ACCESS_LOG (log_handle->cas_log_type)))
     {
       FILE *log_fp;
 
-      make_cas_log_filename (log_handle->cas_log_type,
-			     log_handle->log_filepath, BROKER_PATH_MAX);
+      make_cas_log_filename (log_handle->cas_log_type, log_handle->log_filepath, BROKER_PATH_MAX);
 
       /* note: in "a+" mode, output is always appended */
       log_fp = fopen (log_handle->log_filepath, "a");
       if (log_fp != NULL)
-	{
-	  setbuf (log_fp, NULL);
-	}
+        {
+          setbuf (log_fp, NULL);
+        }
 
       cas_log_handle_reset (log_handle, log_fp);
     }
@@ -411,8 +389,7 @@ cas_log_close (T_CAS_LOG_HANDLE * log_handle)
 }
 
 static void
-cas_log_backup (T_CAS_LOG_HANDLE * log_handle,
-		T_CAS_LOG_BACKUP_TYPE cas_log_backup_type)
+cas_log_backup (T_CAS_LOG_HANDLE * log_handle, T_CAS_LOG_BACKUP_TYPE cas_log_backup_type)
 {
   char backup_filepath[BROKER_PATH_MAX];
   char *filepath;
@@ -430,14 +407,13 @@ cas_log_backup (T_CAS_LOG_HANDLE * log_handle,
       time_t cur_time = time (NULL);
 
       if (localtime_r (&cur_time, &ct) == NULL)
-	{
-	  return;
-	}
+        {
+          return;
+        }
 
       snprintf (backup_filepath, BROKER_PATH_MAX,
-		"%s.%04d%02d%02d%02d%02d%02d", filepath,
-		ct.tm_year + 1900, ct.tm_mon + 1, ct.tm_mday,
-		ct.tm_hour, ct.tm_min, ct.tm_sec);
+                "%s.%04d%02d%02d%02d%02d%02d", filepath,
+                ct.tm_year + 1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);
     }
   else
     {
@@ -460,37 +436,35 @@ cas_sql_log_end (bool flush, int run_time_sec, int run_time_msec)
   if (!CAS_LOG_IS_CLOSED (log_handle))
     {
       if (flush)
-	{
-	  long file_size;
+        {
+          long file_size;
 
-	  if (run_time_sec >= 0 || run_time_msec >= 0)
-	    {
-	      cas_sql_log_write (0, "*** elapsed time %d.%03d\n",
-				 run_time_sec, run_time_msec);
-	    }
+          if (run_time_sec >= 0 || run_time_msec >= 0)
+            {
+              cas_sql_log_write (0, "*** elapsed time %d.%03d\n", run_time_sec, run_time_msec);
+            }
 
-	  cas_log_handle_check_flush (log_handle, true, 0);
+          cas_log_handle_check_flush (log_handle, true, 0);
 
-	  file_size = cas_log_file_size (log_handle);
+          file_size = cas_log_file_size (log_handle);
 
-	  if ((file_size / 1000) > shm_appl->sql_log_max_size)
-	    {
-	      cas_log_close (log_handle);
-	      cas_log_backup (log_handle, CAS_LOG_BACKUP_BAK);
-	      cas_log_open (log_handle);
-	    }
-	}
+          if ((file_size / 1000) > shm_appl->sql_log_max_size)
+            {
+              cas_log_close (log_handle);
+              cas_log_backup (log_handle, CAS_LOG_BACKUP_BAK);
+              cas_log_open (log_handle);
+            }
+        }
       else
-	{
-	  cas_log_handle_reset (log_handle, log_handle->log_fp);
-	}
+        {
+          cas_log_handle_reset (log_handle, log_handle->log_fp);
+        }
     }
 }
 
 void
 cas_log_write (T_CAS_LOG_TYPE cas_log_type, int flag,
-	       struct timeval *log_time, unsigned int seq_num,
-	       const char *fmt, ...)
+               struct timeval *log_time, unsigned int seq_num, const char *fmt, ...)
 {
   va_list ap;
 
@@ -501,8 +475,7 @@ cas_log_write (T_CAS_LOG_TYPE cas_log_type, int flag,
 
 static void
 cas_log_write_v (T_CAS_LOG_TYPE cas_log_type, int flag,
-		 struct timeval *log_time, unsigned int seq_num,
-		 const char *fmt, va_list ap)
+                 struct timeval *log_time, unsigned int seq_num, const char *fmt, va_list ap)
 {
   T_CAS_LOG_HANDLE *log_handle = get_cas_log_handle (cas_log_type);
 
@@ -522,49 +495,48 @@ cas_log_write_v (T_CAS_LOG_TYPE cas_log_type, int flag,
       assert (n > 0);
 
       if (flag & CAS_LOG_FLAG_PRINT_HEADER)
-	{
-	  cas_log_handle_puts (log_handle, timebuf, n);
-	  cas_log_handle_print (log_handle, " (%u) ", seq_num);
-	}
+        {
+          cas_log_handle_puts (log_handle, timebuf, n);
+          cas_log_handle_print (log_handle, " (%u) ", seq_num);
+        }
 
       cas_log_handle_vprint (log_handle, fmt, ap);
 
       if (flag & (CAS_LOG_FLAG_PRINT_NL | CAS_LOG_FLAG_LOG_END))
-	{
-	  cas_log_handle_putc (log_handle, '\n');
-	}
+        {
+          cas_log_handle_putc (log_handle, '\n');
+        }
 
-      if (cas_log_type == CAS_LOG_SQL_LOG &&
-	  as_info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
-	{
-	  cas_log_handle_check_flush (log_handle, true, 0);
-	}
+      if (cas_log_type == CAS_LOG_SQL_LOG && as_info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
+        {
+          cas_log_handle_check_flush (log_handle, true, 0);
+        }
 
       if (flag & CAS_LOG_FLAG_LOG_END)
-	{
-	  if (cas_log_type == CAS_LOG_SQL_LOG)
-	    {
-	      cas_sql_log_end (true, -1, -1);
-	    }
-	  else if (cas_log_type == CAS_LOG_SLOW_LOG)
-	    {
-	      cas_slow_log_end ();
-	    }
-	  else if (IS_CAS_LOG_ACCESS_LOG (cas_log_type))
-	    {
-	      long file_size;
+        {
+          if (cas_log_type == CAS_LOG_SQL_LOG)
+            {
+              cas_sql_log_end (true, -1, -1);
+            }
+          else if (cas_log_type == CAS_LOG_SLOW_LOG)
+            {
+              cas_slow_log_end ();
+            }
+          else if (IS_CAS_LOG_ACCESS_LOG (cas_log_type))
+            {
+              long file_size;
 
-	      cas_log_handle_check_flush (log_handle, true, 0);
+              cas_log_handle_check_flush (log_handle, true, 0);
 
-	      file_size = cas_log_file_size (log_handle);
-	      cas_log_close (log_handle);
+              file_size = cas_log_file_size (log_handle);
+              cas_log_close (log_handle);
 
-	      if ((file_size / ONE_K) > shm_appl->access_log_max_size)
-		{
-		  cas_log_backup (log_handle, CAS_LOG_BACKUP_DATE);
-		}
-	    }
-	}
+              if ((file_size / ONE_K) > shm_appl->access_log_max_size)
+                {
+                  cas_log_backup (log_handle, CAS_LOG_BACKUP_DATE);
+                }
+            }
+        }
     }
 }
 
@@ -590,15 +562,13 @@ cas_sql_log_query_cancel ()
       query_Cancel_time = 0;
 
       cas_log_write (CAS_LOG_SQL_LOG,
-		     CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL,
-		     &tv, 0, "query_cancel client ip %s port %u",
-		     ip_str, as_info->cas_clt_port);
+                     CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL,
+                     &tv, 0, "query_cancel client ip %s port %u", ip_str, as_info->cas_clt_port);
     }
 }
 
 void
-cas_log_write_string (T_CAS_LOG_TYPE cas_log_type, char *value,
-		      int size, bool print_nl)
+cas_log_write_string (T_CAS_LOG_TYPE cas_log_type, char *value, int size, bool print_nl)
 {
   T_CAS_LOG_HANDLE *log_handle = get_cas_log_handle (cas_log_type);
 
@@ -609,15 +579,15 @@ cas_log_write_string (T_CAS_LOG_TYPE cas_log_type, char *value,
       cas_log_handle_puts (log_handle, value, size);
 
       if (print_nl)
-	{
-	  cas_log_handle_putc (log_handle, '\n');
-	}
+        {
+          cas_log_handle_putc (log_handle, '\n');
+        }
     }
 }
 
 int
 cas_access_log (struct timeval *start_time, int as_index, in_addr_t client_ip,
-		char *dbname, char *dbuser, ACCESS_LOG_TYPE log_type)
+                char *dbname, char *dbuser, ACCESS_LOG_TYPE log_type)
 {
   char clt_ip_str[16];
   T_CAS_LOG_TYPE cas_log_type;
@@ -640,10 +610,9 @@ cas_access_log (struct timeval *start_time, int as_index, in_addr_t client_ip,
   css_ip_to_str (clt_ip_str, sizeof (clt_ip_str), client_ip);
 
   cas_log_write (cas_log_type,
-		 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_LOG_END,
-		 start_time, db_get_session_id (),
-		 "%d %s %s %s %s",
-		 as_index + 1, clt_ip_str, dbname, dbuser, access_type_str);
+                 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_LOG_END,
+                 start_time, db_get_session_id (),
+                 "%d %s %s %s %s", as_index + 1, clt_ip_str, dbname, dbuser, access_type_str);
 
   return 0;
 }
@@ -663,10 +632,10 @@ cas_slow_log_end ()
       cas_log_handle_check_flush (log_handle, true, 0);
 
       if ((cur_file_pos / 1000) > shm_appl->sql_log_max_size)
-	{
-	  cas_log_close (log_handle);
-	  cas_log_backup (log_handle, CAS_LOG_BACKUP_BAK);
-	  cas_log_open (log_handle);
-	}
+        {
+          cas_log_close (log_handle);
+          cas_log_backup (log_handle, CAS_LOG_BACKUP_BAK);
+          cas_log_open (log_handle);
+        }
     }
 }

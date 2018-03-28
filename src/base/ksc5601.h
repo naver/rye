@@ -181,6 +181,7 @@ static const unsigned short ksc5601_2uni_page21[1115] = {
   0x0447, 0x0448, 0x0449, 0x044a, 0x044b, 0x044c, 0x044d, 0x044e,
   0x044f,
 };
+
 static const unsigned short ksc5601_2uni_page30[2350] = {
   /* 0x30 */
   0xac00, 0xac01, 0xac04, 0xac07, 0xac08, 0xac09, 0xac0a, 0xac10,
@@ -508,6 +509,7 @@ static const unsigned short ksc5601_2uni_page30[2350] = {
   0xd76c, 0xd770, 0xd774, 0xd77c, 0xd77d, 0xd781, 0xd788, 0xd789,
   0xd78c, 0xd790, 0xd798, 0xd799, 0xd79b, 0xd79d,
 };
+
 static const unsigned short ksc5601_2uni_page4a[4888] = {
   /* 0x4a */
   0x4f3d, 0x4f73, 0x5047, 0x50f9, 0x52a0, 0x53ef, 0x5475, 0x54e5,
@@ -1192,49 +1194,48 @@ ksc5601_mbtowc (ucs4_t * pwc, const unsigned char *s, int n)
 {
   unsigned char c1 = s[0];
 
-  if ((c1 >= 0x21 && c1 <= 0x2c)
-      || (c1 >= 0x30 && c1 <= 0x48) || (c1 >= 0x4a && c1 <= 0x7d))
+  if ((c1 >= 0x21 && c1 <= 0x2c) || (c1 >= 0x30 && c1 <= 0x48) || (c1 >= 0x4a && c1 <= 0x7d))
     {
       if (n >= 2)
-	{
-	  unsigned char c2 = s[1];
+        {
+          unsigned char c2 = s[1];
 
-	  if (c2 >= 0x21 && c2 < 0x7f)
-	    {
-	      unsigned int i = 94 * (c1 - 0x21) + (c2 - 0x21);
-	      unsigned short wc = 0xfffd;
+          if (c2 >= 0x21 && c2 < 0x7f)
+            {
+              unsigned int i = 94 * (c1 - 0x21) + (c2 - 0x21);
+              unsigned short wc = 0xfffd;
 
-	      if (i < 1410)
-		{
-		  if (i < 1115)
-		    {
-		      wc = ksc5601_2uni_page21[i];
-		    }
-		}
-	      else if (i < 3854)
-		{
-		  if (i < 3760)
-		    {
-		      wc = ksc5601_2uni_page30[i - 1410];
-		    }
-		}
-	      else
-		{
-		  if (i < 8742)
-		    {
-		      wc = ksc5601_2uni_page4a[i - 3854];
-		    }
-		}
+              if (i < 1410)
+                {
+                  if (i < 1115)
+                    {
+                      wc = ksc5601_2uni_page21[i];
+                    }
+                }
+              else if (i < 3854)
+                {
+                  if (i < 3760)
+                    {
+                      wc = ksc5601_2uni_page30[i - 1410];
+                    }
+                }
+              else
+                {
+                  if (i < 8742)
+                    {
+                      wc = ksc5601_2uni_page4a[i - 3854];
+                    }
+                }
 
-	      if (wc != 0xfffd)
-		{
-		  *pwc = (ucs4_t) wc;
-		  return 2;
-		}
-	    }
+              if (wc != 0xfffd)
+                {
+                  *pwc = (ucs4_t) wc;
+                  return 2;
+                }
+            }
 
-	  return RET_ILSEQ;
-	}
+          return RET_ILSEQ;
+        }
       return RET_TOOFEW;
     }
   return RET_ILSEQ;
@@ -2297,6 +2298,7 @@ static const Summary16 ksc5601_uni2indx_page00[70] = {
   {105, 0x0002}, {106, 0xffff}, {122, 0xffff}, {138, 0xffff},
   {154, 0xffff}, {170, 0x0002},
 };
+
 static const Summary16 ksc5601_uni2indx_page20[103] = {
   /* 0x2000 */
   {171, 0x0000}, {171, 0x3320}, {176, 0x0063}, {180, 0x080d},
@@ -2332,6 +2334,7 @@ static const Summary16 ksc5601_uni2indx_page20[103] = {
   {451, 0xc060}, {455, 0x5000}, {457, 0x0000}, {457, 0x0000},
   {457, 0x0005}, {459, 0x0000}, {459, 0x37bb},
 };
+
 static const Summary16 ksc5601_uni2indx_page30[62] = {
   /* 0x3000 */
   {470, 0xff0f}, {482, 0x003b}, {487, 0x0000}, {487, 0x0000},
@@ -2354,6 +2357,7 @@ static const Summary16 ksc5601_uni2indx_page30[62] = {
   {809, 0xff1f}, {822, 0xffff}, {838, 0xffff}, {854, 0xffff},
   {870, 0x87ff}, {882, 0x3949},
 };
+
 static const Summary16 ksc5601_uni2indx_page4e[1306] = {
   /* 0x4e00 */
   {889, 0x2f8b}, {898, 0x4372}, {905, 0x2000}, {906, 0x0b04},
@@ -2765,6 +2769,7 @@ static const Summary16 ksc5601_uni2indx_page4e[1306] = {
   {5495, 0x4c00}, {5498, 0x8004}, {5500, 0x1482}, {5504, 0x0080},
   {5505, 0x2000}, {5506, 0x1021},
 };
+
 static const Summary16 ksc5601_uni2indx_pageac[698] = {
   /* 0xac00 */
   {5509, 0x0793}, {5516, 0x3eff}, {5529, 0xb011}, {5534, 0x1303},
@@ -2986,6 +2991,7 @@ static const Summary16 ksc5601_uni2indx_pageac[698] = {
   {7830, 0x0290}, {7833, 0x03d3}, {7840, 0x122b}, {7846, 0x3011},
   {7850, 0x1302}, {7854, 0x2b01},
 };
+
 static const Summary16 ksc5601_uni2indx_pagef9[17] = {
   /* 0xf900 */
   {7859, 0xffff}, {7875, 0xffff}, {7891, 0xffff}, {7907, 0xffff},
@@ -2995,6 +3001,7 @@ static const Summary16 ksc5601_uni2indx_pagef9[17] = {
   /* 0xfa00 */
   {8115, 0x0fff},
 };
+
 static const Summary16 ksc5601_uni2indx_pageff[15] = {
   /* 0xff00 */
   {8127, 0xfffe}, {8142, 0xffff}, {8158, 0xffff}, {8174, 0xffff},
@@ -3011,57 +3018,57 @@ ksc5601_wctomb (unsigned char *r, ucs4_t wc, int n)
       const Summary16 *summary = NULL;
 
       if (wc >= 0x0000 && wc < 0x0460)
-	{
-	  summary = &ksc5601_uni2indx_page00[(wc >> 4)];
-	}
+        {
+          summary = &ksc5601_uni2indx_page00[(wc >> 4)];
+        }
       else if (wc >= 0x2000 && wc < 0x2670)
-	{
-	  summary = &ksc5601_uni2indx_page20[(wc >> 4) - 0x200];
-	}
+        {
+          summary = &ksc5601_uni2indx_page20[(wc >> 4) - 0x200];
+        }
       else if (wc >= 0x3000 && wc < 0x33e0)
-	{
-	  summary = &ksc5601_uni2indx_page30[(wc >> 4) - 0x300];
-	}
+        {
+          summary = &ksc5601_uni2indx_page30[(wc >> 4) - 0x300];
+        }
       else if (wc >= 0x4e00 && wc < 0x9fa0)
-	{
-	  summary = &ksc5601_uni2indx_page4e[(wc >> 4) - 0x4e0];
-	}
+        {
+          summary = &ksc5601_uni2indx_page4e[(wc >> 4) - 0x4e0];
+        }
       else if (wc >= 0xac00 && wc < 0xd7a0)
-	{
-	  summary = &ksc5601_uni2indx_pageac[(wc >> 4) - 0xac0];
-	}
+        {
+          summary = &ksc5601_uni2indx_pageac[(wc >> 4) - 0xac0];
+        }
       else if (wc >= 0xf900 && wc < 0xfa10)
-	{
-	  summary = &ksc5601_uni2indx_pagef9[(wc >> 4) - 0xf90];
-	}
+        {
+          summary = &ksc5601_uni2indx_pagef9[(wc >> 4) - 0xf90];
+        }
       else if (wc >= 0xff00 && wc < 0xfff0)
-	{
-	  summary = &ksc5601_uni2indx_pageff[(wc >> 4) - 0xff0];
-	}
+        {
+          summary = &ksc5601_uni2indx_pageff[(wc >> 4) - 0xff0];
+        }
 
       if (summary)
-	{
-	  unsigned short used = summary->used;
-	  unsigned int i = wc & 0x0f;
+        {
+          unsigned short used = summary->used;
+          unsigned int i = wc & 0x0f;
 
-	  if (used & ((unsigned short) 1 << i))
-	    {
-	      unsigned short c;
+          if (used & ((unsigned short) 1 << i))
+            {
+              unsigned short c;
 
-	      /* Keep in `used' only the bits 0..i-1. */
-	      used &= ((unsigned short) 1 << i) - 1;
-	      /* Add `summary->indx' and the number of bits set in `used'. */
-	      used = (used & 0x5555) + ((used & 0xaaaa) >> 1);
-	      used = (used & 0x3333) + ((used & 0xcccc) >> 2);
-	      used = (used & 0x0f0f) + ((used & 0xf0f0) >> 4);
-	      used = (used & 0x00ff) + (used >> 8);
-	      c = ksc5601_2charset[summary->indx + used];
-	      r[0] = (c >> 8);
-	      r[1] = (c & 0xff);
+              /* Keep in `used' only the bits 0..i-1. */
+              used &= ((unsigned short) 1 << i) - 1;
+              /* Add `summary->indx' and the number of bits set in `used'. */
+              used = (used & 0x5555) + ((used & 0xaaaa) >> 1);
+              used = (used & 0x3333) + ((used & 0xcccc) >> 2);
+              used = (used & 0x0f0f) + ((used & 0xf0f0) >> 4);
+              used = (used & 0x00ff) + (used >> 8);
+              c = ksc5601_2charset[summary->indx + used];
+              r[0] = (c >> 8);
+              r[1] = (c & 0xff);
 
-	      return 2;
-	    }
-	}
+              return 2;
+            }
+        }
 
       return RET_ILUNI;
     }

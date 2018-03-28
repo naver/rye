@@ -290,8 +290,7 @@ struct shard_mgmt_job_queue
   pthread_mutex_t lock;
   pthread_cond_t cond;
     THREAD_FUNC (*thr_func) (void *);
-    T_THR_FUNC_RES (*job_func) (const T_SHARD_MGMT_JOB *,
-				T_SHD_MG_COMPENSATION_JOB **);
+    T_THR_FUNC_RES (*job_func) (const T_SHARD_MGMT_JOB *, T_SHD_MG_COMPENSATION_JOB **);
   T_SHARD_JOB_QUEUE *secondary_job_queue;
   T_SHARD_MGMT_JOB *front;
   T_SHARD_MGMT_JOB *back;
@@ -319,7 +318,7 @@ typedef struct
   int node_status;
   int64_t created_at;
   char *buf;
-} T_SHARD_DB_REC;		/* shard_db table record */
+} T_SHARD_DB_REC;               /* shard_db table record */
 
 #define SHARD_DB_REC_INIT_VALUE { NULL, 0, 1, 0, 0, 0, 0, 		\
 				  SHARD_DB_NODE_STATUS_ALL_VALID, 0, NULL}
@@ -369,7 +368,7 @@ typedef struct
   T_DB_GROUPID_INFO *db_groupid_info;
   T_DB_NODE_INFO *db_node_info;
   pthread_mutex_t mutex;
-  bool locked;			/* for debug */
+  bool locked;                  /* for debug */
 } T_DB_SHARD_INFO;
 
 typedef struct
@@ -457,65 +456,48 @@ static void shd_mg_migration_handler_wakeup (void);
 static int read_next_request (T_SHARD_MGMT_JOB * job);
 static int do_compensation_job (T_SHD_MG_COMPENSATION_JOB * compensation_job);
 
-static T_THR_FUNC_RES shd_mg_func_shard_info (const T_SHARD_MGMT_JOB *,
-					      T_SHD_MG_COMPENSATION_JOB **);
-static T_THR_FUNC_RES shd_mg_func_admin (const T_SHARD_MGMT_JOB * job,
-					 T_SHD_MG_COMPENSATION_JOB **);
-static void shd_mg_func_sync_local_mgmt (T_LOCAL_MGMT_SYNC_INFO * sync_info,
-					 bool force);
+static T_THR_FUNC_RES shd_mg_func_shard_info (const T_SHARD_MGMT_JOB *, T_SHD_MG_COMPENSATION_JOB **);
+static T_THR_FUNC_RES shd_mg_func_admin (const T_SHARD_MGMT_JOB * job, T_SHD_MG_COMPENSATION_JOB **);
+static void shd_mg_func_sync_local_mgmt (T_LOCAL_MGMT_SYNC_INFO * sync_info, bool force);
 
 static int set_admin_compensation_job (T_SHD_MG_COMPENSATION_JOB ** out,
-				       const T_SHARD_MGMT_JOB * job,
-				       const T_MGMT_REQ_ARG * req_arg);
+                                       const T_SHARD_MGMT_JOB * job, const T_MGMT_REQ_ARG * req_arg);
 static int admin_shard_init_command (T_THR_FUNC_RES * thr_func_res,
-				     CCI_CONN *, const T_SHARD_DB_REC *,
-				     const T_MGMT_REQ_ARG *,
-				     const T_SHARD_MGMT_JOB * job);
+                                     CCI_CONN *, const T_SHARD_DB_REC *,
+                                     const T_MGMT_REQ_ARG *, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_node_add (T_THR_FUNC_RES * thr_func_res, CCI_CONN *,
-			    const T_SHARD_DB_REC *, const T_MGMT_REQ_ARG *,
-			    const T_SHARD_MGMT_JOB * job);
+                            const T_SHARD_DB_REC *, const T_MGMT_REQ_ARG *, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_node_drop (T_THR_FUNC_RES * thr_func_res, CCI_CONN *,
-			     const T_SHARD_DB_REC *, const T_MGMT_REQ_ARG *,
-			     const T_SHARD_MGMT_JOB * job);
+                             const T_SHARD_DB_REC *, const T_MGMT_REQ_ARG *, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_migration_start (T_THR_FUNC_RES * thr_func_res, CCI_CONN *,
-				   const T_SHARD_DB_REC *,
-				   const T_MGMT_REQ_ARG *,
-				   const T_SHARD_MGMT_JOB * job);
+                                   const T_SHARD_DB_REC *, const T_MGMT_REQ_ARG *, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_migration_end (T_THR_FUNC_RES * thr_func_res,
-				 CCI_CONN * conn,
-				 const T_SHARD_DB_REC * shard_db_rec,
-				 const T_MGMT_REQ_ARG * req_arg,
-				 const T_SHARD_MGMT_JOB * job);
+                                 CCI_CONN * conn,
+                                 const T_SHARD_DB_REC * shard_db_rec,
+                                 const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_migration_fail (CCI_CONN * conn, const void *arg);
 static int shd_mg_migration_end_internal (CCI_CONN * conn,
-					  const T_MGMT_REQ_ARG_SHARD_MIGRATION
-					  * mig_arg, int64_t next_gid_ver);
+                                          const T_MGMT_REQ_ARG_SHARD_MIGRATION * mig_arg, int64_t next_gid_ver);
 static int shd_mg_ddl_start (T_THR_FUNC_RES * thr_func_res, CCI_CONN * conn,
-			     const T_SHARD_DB_REC * shard_db_rec,
-			     const T_MGMT_REQ_ARG * req_arg,
-			     const T_SHARD_MGMT_JOB * job);
+                             const T_SHARD_DB_REC * shard_db_rec,
+                             const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_ddl_end (T_THR_FUNC_RES * thr_func_res, CCI_CONN * conn,
-			   const T_SHARD_DB_REC * shard_db_rec,
-			   const T_MGMT_REQ_ARG * req_arg,
-			   const T_SHARD_MGMT_JOB * job);
+                           const T_SHARD_DB_REC * shard_db_rec,
+                           const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_gc_start (T_THR_FUNC_RES * thr_func_res, CCI_CONN * conn,
-			    const T_SHARD_DB_REC * shard_db_rec,
-			    const T_MGMT_REQ_ARG * req_arg,
-			    const T_SHARD_MGMT_JOB * job);
+                            const T_SHARD_DB_REC * shard_db_rec,
+                            const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_gc_end (T_THR_FUNC_RES * thr_func_res, CCI_CONN * conn,
-			  const T_SHARD_DB_REC * shard_db_rec,
-			  const T_MGMT_REQ_ARG * req_arg,
-			  const T_SHARD_MGMT_JOB * job);
+                          const T_SHARD_DB_REC * shard_db_rec,
+                          const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_rebalance_req (T_THR_FUNC_RES * thr_func_res,
-				 CCI_CONN * conn,
-				 const T_SHARD_DB_REC * shard_db_rec,
-				 const T_MGMT_REQ_ARG * req_arg,
-				 const T_SHARD_MGMT_JOB * job);
+                                 CCI_CONN * conn,
+                                 const T_SHARD_DB_REC * shard_db_rec,
+                                 const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_rebalance_job_count (T_THR_FUNC_RES * thr_func_res,
-				       CCI_CONN * conn,
-				       const T_SHARD_DB_REC * shard_db_rec,
-				       const T_MGMT_REQ_ARG * req_arg,
-				       const T_SHARD_MGMT_JOB * job);
+                                       CCI_CONN * conn,
+                                       const T_SHARD_DB_REC * shard_db_rec,
+                                       const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job);
 static int shd_mg_ddl_fail (CCI_CONN * conn, const void *arg);
 static int shd_mg_ddl_end_internal (CCI_CONN * conn);
 static int shd_mg_gc_fail (CCI_CONN * conn, const void *arg);
@@ -525,129 +507,87 @@ static void set_migrator_dba_passwd (const char *dba_passwd);
 static bool is_expired_request (time_t request_time, int timeout_sec);
 static int change_shrad_db_node_status (CCI_CONN * conn, int node_status);
 static int node_add_commit_and_migration (CCI_CONN * conn,
-					  bool * commit_success,
-					  const char *global_dbname,
-					  int src_nodeid,
-					  const T_SHARD_NODE_INFO * dest_node,
-					  const T_SHARD_NODE_INFO *
-					  run_node_info,
-					  bool schema_migration,
-					  bool is_slave_mode_mig,
-					  T_SHARD_DB_REC * new_shard_db_rec);
+                                          bool * commit_success,
+                                          const char *global_dbname,
+                                          int src_nodeid,
+                                          const T_SHARD_NODE_INFO * dest_node,
+                                          const T_SHARD_NODE_INFO *
+                                          run_node_info,
+                                          bool schema_migration,
+                                          bool is_slave_mode_mig, T_SHARD_DB_REC * new_shard_db_rec);
 static int delete_shard_node_table (CCI_CONN * conn,
-				    const T_SHARD_NODE_INFO * drop_node,
-				    int *drop_all_nodeid,
-				    int64_t next_node_ver);
-static int update_shard_node_table_status (CCI_CONN * conn,
-					   const T_SHARD_NODE_INFO *
-					   node_info, int node_status);
+                                    const T_SHARD_NODE_INFO * drop_node, int *drop_all_nodeid, int64_t next_node_ver);
+static int update_shard_node_table_status (CCI_CONN * conn, const T_SHARD_NODE_INFO * node_info, int node_status);
 static int insert_shard_node_table (CCI_CONN * conn,
-				    const T_SHARD_NODE_INFO * add_node,
-				    int node_status, int64_t next_node_ver);
+                                    const T_SHARD_NODE_INFO * add_node, int node_status, int64_t next_node_ver);
 static int insert_shard_groupid_table (CCI_CONN * conn, int all_groupid_count,
-				       int init_num_node,
-				       const int *init_nodeid_arr,
-				       int64_t init_gid_ver);
+                                       int init_num_node, const int *init_nodeid_arr, int64_t init_gid_ver);
 
-static void shd_job_add_internal (T_SHARD_JOB_QUEUE * job_queue,
-				  T_SHARD_MGMT_JOB * job, bool is_retry);
+static void shd_job_add_internal (T_SHARD_JOB_QUEUE * job_queue, T_SHARD_MGMT_JOB * job, bool is_retry);
 static int shd_mg_sync_local_mgmt_job_add (void);
-static int shd_mg_job_queue_add (int clt_sock_fd,
-				 in_addr_t clt_ip_addr,
-				 const T_BROKER_REQUEST_MSG * req_msg);
-static T_SHARD_MGMT_JOB *shd_mg_job_queue_remove_all (T_SHARD_JOB_QUEUE *
-						      job_queue);
-static void set_job_queue_job_count (T_SHARD_JOB_QUEUE * job_queue,
-				     int num_job);
+static int shd_mg_job_queue_add (int clt_sock_fd, in_addr_t clt_ip_addr, const T_BROKER_REQUEST_MSG * req_msg);
+static T_SHARD_MGMT_JOB *shd_mg_job_queue_remove_all (T_SHARD_JOB_QUEUE * job_queue);
+static void set_job_queue_job_count (T_SHARD_JOB_QUEUE * job_queue, int num_job);
 static void free_mgmt_job (T_SHARD_MGMT_JOB * job);
 static T_SHARD_MGMT_JOB *make_new_mgmt_job (int clt_sock_fd,
-					    in_addr_t clt_ip_addr,
-					    const T_BROKER_REQUEST_MSG *
-					    req_msg);
-static T_SHARD_JOB_QUEUE *find_shard_job_queue (T_JOB_QUEUE_TYPE
-						job_queue_type);
+                                            in_addr_t clt_ip_addr, const T_BROKER_REQUEST_MSG * req_msg);
+static T_SHARD_JOB_QUEUE *find_shard_job_queue (T_JOB_QUEUE_TYPE job_queue_type);
 
-static int sync_node_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
-			   bool admin_mode);
-static int sync_groupid_info (CCI_CONN * conn,
-			      T_SHARD_DB_REC * shard_db_rec, bool admin_mode);
-static void get_info_last_ver (CCI_CONN * conn,
-			       T_SHARD_DB_REC * shard_db_rec,
-			       bool admin_mode);
+static int sync_node_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec, bool admin_mode);
+static int sync_groupid_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec, bool admin_mode);
+static void get_info_last_ver (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec, bool admin_mode);
 
-static int connect_metadb (CCI_CONN * conn, int cci_autocommit,
-			   const char *db_user, const char *db_passwd);
+static int connect_metadb (CCI_CONN * conn, int cci_autocommit, const char *db_user, const char *db_passwd);
 static int select_all_db_info (CCI_CONN * conn_arg);
 static T_DB_GROUPID_INFO *select_all_gid_info (CCI_CONN * conn_arg);
 static T_DB_NODE_INFO *select_all_node_info (CCI_CONN * conn_arg);
 static T_SHARD_NODE_INFO *find_node_info (T_DB_NODE_INFO * db_node_info,
-					  const T_SHARD_NODE_INFO * find_node,
-					  bool * exist_same_node);
+                                          const T_SHARD_NODE_INFO * find_node, bool * exist_same_node);
 static int find_min_node_id (T_DB_NODE_INFO * db_node_info);
-static int check_nodeid_in_use (int nodeid,
-				const T_DB_GROUPID_INFO * db_groupid_info);
+static int check_nodeid_in_use (int nodeid, const T_DB_GROUPID_INFO * db_groupid_info);
 
 static T_DB_NODE_INFO *db_node_info_alloc (int node_info_count);
 static void db_node_info_free (T_DB_NODE_INFO * node_info);
-static int clone_db_node_info (T_DB_NODE_INFO ** ret_db_node_info,
-			       const T_DB_NODE_INFO * src_db_node_info);
+static int clone_db_node_info (T_DB_NODE_INFO ** ret_db_node_info, const T_DB_NODE_INFO * src_db_node_info);
 static T_DB_GROUPID_INFO *db_groupid_info_alloc (int gid_info_count);
 static void db_groupid_info_free (T_DB_GROUPID_INFO * db_groupid_info);
 
 static void send_info_msg_to_client (int sock_fd, int err_code,
-				     const char *shard_info_hdr,
-				     int shard_into_hdr_size,
-				     const char *node_info,
-				     int node_info_size,
-				     const char *groupid_info,
-				     int groupid_info_size,
-				     const char *node_state,
-				     int node_state_size);
+                                     const char *shard_info_hdr,
+                                     int shard_into_hdr_size,
+                                     const char *node_info,
+                                     int node_info_size,
+                                     const char *groupid_info,
+                                     int groupid_info_size, const char *node_state, int node_state_size);
 static T_INFO_NET_STREAM *make_node_info_net_stream (T_DB_NODE_INFO *);
 static T_INFO_NET_STREAM *make_node_state_net_stream (T_DB_NODE_INFO *);
-static T_INFO_NET_STREAM *make_groupid_info_net_stream (T_DB_GROUPID_INFO *,
-							int64_t clt_ver);
+static T_INFO_NET_STREAM *make_groupid_info_net_stream (T_DB_GROUPID_INFO *, int64_t clt_ver);
 
-static int admin_query_execute_array (CCI_CONN * conn, int num_sql,
-				      const T_SQL_AND_PARAM * sql_and_param);
+static int admin_query_execute_array (CCI_CONN * conn, int num_sql, const T_SQL_AND_PARAM * sql_and_param);
 static int admin_query_execute (CCI_CONN * conn, bool do_prepare,
-				CCI_STMT * stmt, const char *sql,
-				int num_bind,
-				const T_BIND_PARAM * bind_param);
+                                CCI_STMT * stmt, const char *sql, int num_bind, const T_BIND_PARAM * bind_param);
 
-static void make_query_create_global_table (T_SQL_AND_PARAM * sql_and_param,
-					    const T_TABLE_DEF * table);
-static void make_query_create_index (T_SQL_AND_PARAM * sql_and_param,
-				     const T_INDEX_DEF * index_def);
+static void make_query_create_global_table (T_SQL_AND_PARAM * sql_and_param, const T_TABLE_DEF * table);
+static void make_query_create_index (T_SQL_AND_PARAM * sql_and_param, const T_INDEX_DEF * index_def);
 static void make_query_create_user (T_SQL_AND_PARAM * sql_and_param);
-static void make_query_change_owner (T_SQL_AND_PARAM * sql_and_param,
-				     const T_TABLE_DEF * table);
-static void make_query_node_drop (T_SQL_AND_PARAM * sql_and_param,
-				  const T_SHARD_NODE_INFO * node_info);
-static void make_query_node_drop_all (T_SQL_AND_PARAM * sql_and_param,
-				      int *nodeid);
+static void make_query_change_owner (T_SQL_AND_PARAM * sql_and_param, const T_TABLE_DEF * table);
+static void make_query_node_drop (T_SQL_AND_PARAM * sql_and_param, const T_SHARD_NODE_INFO * node_info);
+static void make_query_node_drop_all (T_SQL_AND_PARAM * sql_and_param, int *nodeid);
 static void make_query_insert_shard_db (T_SQL_AND_PARAM * sql_and_param,
-					const int *shard_db_id,
-					const T_SHARD_DB_REC * shard_db_rec);
+                                        const int *shard_db_id, const T_SHARD_DB_REC * shard_db_rec);
 static void make_query_update_groupid (T_SQL_AND_PARAM * sql_and_param,
-				       const int *groupid, const int *nodeid,
-				       const int64_t * version);
-static void make_query_incr_last_groupid (T_SQL_AND_PARAM * sql_and_param,
-					  const int64_t * next_gid_ver);
+                                       const int *groupid, const int *nodeid, const int64_t * version);
+static void make_query_incr_last_groupid (T_SQL_AND_PARAM * sql_and_param, const int64_t * next_gid_ver);
 static void make_update_query_migration_start (T_SQL_AND_PARAM *
-					       sql_and_param,
-					       const int64_t * cur_ts,
-					       const int *next_status,
-					       const int *mig_groupid,
-					       const int *src_nodeid,
-					       const int *dest_nodeid,
-					       const int *cur_status);
+                                               sql_and_param,
+                                               const int64_t * cur_ts,
+                                               const int *next_status,
+                                               const int *mig_groupid,
+                                               const int *src_nodeid, const int *dest_nodeid, const int *cur_status);
 static void make_update_query_migration_end (T_SQL_AND_PARAM * sql_and_param,
-					     const int *next_status,
-					     const int64_t * cur_ts,
-					     const int *num_shard_keys,
-					     const int *groupid,
-					     const int *cur_status);
+                                             const int *next_status,
+                                             const int64_t * cur_ts,
+                                             const int *num_shard_keys, const int *groupid, const int *cur_status);
 
 static void make_query_incr_mig_req_count (T_SQL_AND_PARAM * sql_and_param);
 static void make_query_decr_mig_req_count (T_SQL_AND_PARAM * sql_and_param);
@@ -656,50 +596,38 @@ static void make_query_decr_ddl_req_count (T_SQL_AND_PARAM * sql_and_param);
 static void make_query_incr_gc_req_count (T_SQL_AND_PARAM * sql_and_param);
 static void make_query_decr_gc_req_count (T_SQL_AND_PARAM * sql_and_param);
 static void make_query_insert_shard_node (T_SQL_AND_PARAM * sql_and_param,
-					  const T_SHARD_NODE_INFO * node_info,
-					  const int *node_status,
-					  const int64_t * node_version);
-static void make_query_incr_node_ver (T_SQL_AND_PARAM * sql_and_param,
-				      const int64_t * next_node_ver);
+                                          const T_SHARD_NODE_INFO * node_info,
+                                          const int *node_status, const int64_t * node_version);
+static void make_query_incr_node_ver (T_SQL_AND_PARAM * sql_and_param, const int64_t * next_node_ver);
 
 static const char *admin_command_str (const T_SHD_MG_COMPENSATION_JOB *);
 
 static int make_rebalance_info (T_GROUP_MIGRATION_INFO ** ret_mig_info,
-				bool empty_node,
-				int rbl_src_count, const int *rbl_src_node,
-				int rbl_dest_count, const int *rbl_dest_node,
-				const T_DB_NODE_INFO * db_node_info,
-				const T_DB_GROUPID_INFO * db_groupid_info);
+                                bool empty_node,
+                                int rbl_src_count, const int *rbl_src_node,
+                                int rbl_dest_count, const int *rbl_dest_node,
+                                const T_DB_NODE_INFO * db_node_info, const T_DB_GROUPID_INFO * db_groupid_info);
 static int64_t make_cur_ts_bigint (void);
 static int shd_mg_run_migration (void);
 static void init_drand48_buffer (struct drand48_data *rand_buf);
 static int launch_migrator_process (const char *global_dbname, int groupid,
-				    int src_nodeid,
-				    const T_SHARD_NODE_INFO * dest_node_info,
-				    const T_SHARD_NODE_INFO * run_node_info,
-				    bool schema_migration,
-				    bool is_slave_mode_mig,
-				    T_CCI_LAUNCH_RESULT * launch_res);
-static bool is_existing_nodeid (const T_DB_NODE_INFO * db_node_info,
-				int target_nodeid);
+                                    int src_nodeid,
+                                    const T_SHARD_NODE_INFO * dest_node_info,
+                                    const T_SHARD_NODE_INFO * run_node_info,
+                                    bool schema_migration, bool is_slave_mode_mig, T_CCI_LAUNCH_RESULT * launch_res);
+static bool is_existing_nodeid (const T_DB_NODE_INFO * db_node_info, int target_nodeid);
 static const T_SHARD_NODE_INFO *find_node_info_by_nodeid (const T_DB_NODE_INFO
-							  * db_node_info,
-							  int target_nodeid,
-							  HA_STATE_FOR_DRIVER
-							  ha_state,
-							  struct drand48_data
-							  *rand_buf);
+                                                          * db_node_info,
+                                                          int target_nodeid,
+                                                          HA_STATE_FOR_DRIVER ha_state, struct drand48_data *rand_buf);
 static void select_migration_node (const T_SHARD_NODE_INFO ** run_mig_node,
-				   const T_SHARD_NODE_INFO ** dest_node_info,
-				   bool * is_slave_mode_mig,
-				   const T_DB_NODE_INFO * db_node_info,
-				   int mig_src_nodeid, int mig_dest_nodeid,
-				   struct drand48_data *rand_buf);
-static const T_GROUPID_INFO *find_groupid_info (const T_DB_GROUPID_INFO *
-						db_groupid_info, int groupid);
+                                   const T_SHARD_NODE_INFO ** dest_node_info,
+                                   bool * is_slave_mode_mig,
+                                   const T_DB_NODE_INFO * db_node_info,
+                                   int mig_src_nodeid, int mig_dest_nodeid, struct drand48_data *rand_buf);
+static const T_GROUPID_INFO *find_groupid_info (const T_DB_GROUPID_INFO * db_groupid_info, int groupid);
 static int check_incomplete_node (CCI_CONN * conn);
-static int check_rebalance_job (CCI_CONN * conn, bool include_fail_job,
-				bool rm_prev_job);
+static int check_rebalance_job (CCI_CONN * conn, bool include_fail_job, bool rm_prev_job);
 static int64_t get_next_version (const T_SHARD_DB_REC * shard_db_rec);
 
 /* static varriables */
@@ -733,8 +661,7 @@ static struct _shard_mgmt_server_info
 typedef struct
 {
   int opcode;
-  int (*func) (T_THR_FUNC_RES *, CCI_CONN *, const T_SHARD_DB_REC *,
-	       const T_MGMT_REQ_ARG *, const T_SHARD_MGMT_JOB *);
+  int (*func) (T_THR_FUNC_RES *, CCI_CONN *, const T_SHARD_DB_REC *, const T_MGMT_REQ_ARG *, const T_SHARD_MGMT_JOB *);
   bool need_sync_dbinfo;
   const char *log_msg;
 } T_SHD_MG_ADMIN_FUNC_TABLE;
@@ -767,16 +694,14 @@ static T_SHD_MG_ADMIN_FUNC_TABLE shd_Mg_admin_func_table[] = {
  * shd_mg_init - initialize shard mgmt threads, job queue, db connect info.
 */
 int
-shd_mg_init (int shard_mgmt_port, int local_mgmt_port,
-	     const char *shard_metadb)
+shd_mg_init (int shard_mgmt_port, int local_mgmt_port, const char *shard_metadb)
 {
   shm_Br_info = &shm_Br->br_info[br_Index];
   shm_Shard_mgmt_info = &shm_Appl->info.shard_mgmt_info;
 
   sprintf (local_Mgmt_connect_url,
-	   "cci:rye://localhost:%d/%s:dba/%s?query_timeout=%d&connectionType=local",
-	   local_mgmt_port, shard_metadb, BR_SHARD_MGMT_NAME,
-	   CCI_QUERY_TIMEOUT);
+           "cci:rye://localhost:%d/%s:dba/%s?query_timeout=%d&connectionType=local",
+           local_mgmt_port, shard_metadb, BR_SHARD_MGMT_NAME, CCI_QUERY_TIMEOUT);
 
   if (shd_mg_init_sync_data () < 0)
     {
@@ -795,8 +720,7 @@ shd_mg_init (int shard_mgmt_port, int local_mgmt_port,
 
   memset (&shard_Mgmt_server_info, 0, sizeof (shard_Mgmt_server_info));
 
-  gethostname (shard_Mgmt_server_info.hostname,
-	       sizeof (shard_Mgmt_server_info.hostname) - 1);
+  gethostname (shard_Mgmt_server_info.hostname, sizeof (shard_Mgmt_server_info.hostname) - 1);
 
   shard_Mgmt_server_info.pid = getpid ();
   shard_Mgmt_server_info.port = shard_mgmt_port;
@@ -840,41 +764,40 @@ shard_mgmt_receiver_thr_f (UNUSED_ARG void *arg)
     {
       err_code = 0;
 
-      clt_sock_fd = br_accept_unix_domain (&clt_ip_addr, &recv_time,
-					   br_req_msg);
+      clt_sock_fd = br_accept_unix_domain (&clt_ip_addr, &recv_time, br_req_msg);
 
       if (IS_INVALID_SOCKET (clt_sock_fd))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (br_req_msg->op_code == BRREQ_OP_CODE_PING_SHARD_MGMT)
-	{
-	  br_send_result_to_client (clt_sock_fd, 0, NULL);
-	  shm_Br_info->ping_req_count++;
-	  continue;
-	}
+        {
+          br_send_result_to_client (clt_sock_fd, 0, NULL);
+          shm_Br_info->ping_req_count++;
+          continue;
+        }
 
       if (!IS_SHARD_MGMT_OPCODE (br_req_msg->op_code))
-	{
-	  err_code = BR_ER_NOT_SHARD_MGMT_OPCODE;
-	  goto end;
-	}
+        {
+          err_code = BR_ER_NOT_SHARD_MGMT_OPCODE;
+          goto end;
+        }
 
       err_code = shd_mg_job_queue_add (clt_sock_fd, clt_ip_addr, br_req_msg);
       if (err_code < 0)
-	{
-	  goto end;
-	}
+        {
+          goto end;
+        }
 
     end:
       if (err_code < 0)
-	{
-	  br_send_result_to_client (clt_sock_fd, err_code, NULL);
-	  shm_Br_info->connect_fail_count++;
+        {
+          br_send_result_to_client (clt_sock_fd, err_code, NULL);
+          shm_Br_info->connect_fail_count++;
 
-	  RYE_CLOSE_SOCKET (clt_sock_fd);
-	}
+          RYE_CLOSE_SOCKET (clt_sock_fd);
+        }
     }
 
   brreq_msg_free (br_req_msg);
@@ -912,8 +835,7 @@ shd_mg_init_job_queue ()
   int idx;
   T_SHARD_JOB_QUEUE *secondary_job_queue;
 
-  memset (shard_Job_queue, 0,
-	  sizeof (T_SHARD_JOB_QUEUE) * NUM_SHARD_JOB_QUEUE);
+  memset (shard_Job_queue, 0, sizeof (T_SHARD_JOB_QUEUE) * NUM_SHARD_JOB_QUEUE);
 
   idx = 0;
 
@@ -922,8 +844,7 @@ shd_mg_init_job_queue ()
   shard_Job_queue[idx].thr_func = shd_mg_worker_thr;
   shard_Job_queue[idx].job_func = shd_mg_func_shard_info;
   shard_Job_queue[idx].secondary_job_queue = NULL;
-  shard_Job_queue[idx].shm_queue_info =
-    &shm_Shard_mgmt_info->get_info_req_queue;
+  shard_Job_queue[idx].shm_queue_info = &shm_Shard_mgmt_info->get_info_req_queue;
   idx++;
 
   secondary_job_queue = &shard_Job_queue[idx];
@@ -932,8 +853,7 @@ shd_mg_init_job_queue ()
   shard_Job_queue[idx].thr_func = shd_mg_worker_thr;
   shard_Job_queue[idx].job_func = shd_mg_func_admin;
   shard_Job_queue[idx].secondary_job_queue = secondary_job_queue;
-  shard_Job_queue[idx].shm_queue_info =
-    &shm_Shard_mgmt_info->wait_job_req_queue;
+  shard_Job_queue[idx].shm_queue_info = &shm_Shard_mgmt_info->wait_job_req_queue;
   idx++;
 
   shard_Job_queue[idx].job_queue_type = JOB_QUEUE_TYPE_ADMIN;
@@ -971,13 +891,13 @@ shd_mg_init_job_queue ()
   for (idx = 0; idx < NUM_SHARD_JOB_QUEUE; idx++)
     {
       if (pthread_mutex_init (&shard_Job_queue[idx].lock, NULL) < 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
       if (pthread_cond_init (&shard_Job_queue[idx].cond, NULL) < 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
 
   return 0;
@@ -1000,8 +920,7 @@ shd_mg_init_worker ()
       num_workers += shard_Job_queue[i].num_workers;
     }
 
-  shard_Mgmt_worker_arg =
-    RYE_MALLOC (sizeof (T_SHARD_MGMT_WORKER_ARG) * num_workers);
+  shard_Mgmt_worker_arg = RYE_MALLOC (sizeof (T_SHARD_MGMT_WORKER_ARG) * num_workers);
   if (shard_Mgmt_worker_arg == NULL)
     {
       return -1;
@@ -1013,15 +932,14 @@ shd_mg_init_worker ()
       T_SHARD_MGMT_WORKER_ARG *arg_p;
 
       for (j = 0; j < shard_Job_queue[i].num_workers; j++)
-	{
-	  arg_p = &shard_Mgmt_worker_arg[idx++];
+        {
+          arg_p = &shard_Mgmt_worker_arg[idx++];
 
-	  arg_p->job_queue = &shard_Job_queue[i];
-	  arg_p->is_running = false;
+          arg_p->job_queue = &shard_Job_queue[i];
+          arg_p->is_running = false;
 
-	  THREAD_BEGIN (shard_mgmt_worker, shard_Job_queue[i].thr_func,
-			arg_p);
-	}
+          THREAD_BEGIN (shard_mgmt_worker, shard_Job_queue[i].thr_func, arg_p);
+        }
     }
 
   while (num_workers != num_running_worker)
@@ -1031,12 +949,12 @@ shd_mg_init_worker ()
       num_running_worker = 0;
 
       for (i = 0; i < NUM_SHARD_JOB_QUEUE; i++)
-	{
-	  if (shard_Mgmt_worker_arg[i].is_running)
-	    {
-	      num_running_worker++;
-	    }
-	}
+        {
+          if (shard_Mgmt_worker_arg[i].is_running)
+            {
+              num_running_worker++;
+            }
+        }
     }
 
   return 0;
@@ -1070,90 +988,88 @@ shd_mg_worker_thr (void *arg)
   while (true)
     {
       if (job_queue->job_queue_type == JOB_QUEUE_TYPE_WAIT_JOB)
-	{
-	  THREAD_SLEEP (100);
-	}
+        {
+          THREAD_SLEEP (100);
+        }
 
       pthread_mutex_lock (&job_queue->lock);
 
       job = shd_mg_job_queue_remove_all (job_queue);
       if (job == NULL)
-	{
-	  pthread_cond_wait (&job_queue->cond, &job_queue->lock);
-	}
+        {
+          pthread_cond_wait (&job_queue->cond, &job_queue->lock);
+        }
 
       pthread_mutex_unlock (&job_queue->lock);
 
       if (job == NULL)
-	{
-	  (*job_queue->job_func) (NULL, NULL);
-	  continue;
-	}
+        {
+          (*job_queue->job_func) (NULL, NULL);
+          continue;
+        }
 
       while (job != NULL)
-	{
-	  T_SHARD_MGMT_JOB *next_job = job->next;
-	  bool job_remove_flag = false;
+        {
+          T_SHARD_MGMT_JOB *next_job = job->next;
+          bool job_remove_flag = false;
 
-	  if (job->req_msg == NULL)
-	    {
-	      /* wait ddl_end or migration_end request */
-	      assert (job->compensation_job != NULL);
+          if (job->req_msg == NULL)
+            {
+              /* wait ddl_end or migration_end request */
+              assert (job->compensation_job != NULL);
 
-	      if (read_next_request (job) < 0)
-		{
-		  if (do_compensation_job (job->compensation_job) < 0)
-		    {
-		      assert (0);
-		    }
-		  else
-		    {
-		      job_remove_flag = true;
-		    }
+              if (read_next_request (job) < 0)
+                {
+                  if (do_compensation_job (job->compensation_job) < 0)
+                    {
+                      assert (0);
+                    }
+                  else
+                    {
+                      job_remove_flag = true;
+                    }
 
-		  br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-				"%s NET_ERROR",
-				admin_command_str (job->compensation_job));
-		}
-	    }
+                  br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
+                                "%s NET_ERROR", admin_command_str (job->compensation_job));
+                }
+            }
 
-	  if (job_remove_flag == false && job->req_msg != NULL)
-	    {
-	      T_SHD_MG_COMPENSATION_JOB *compensation_job = NULL;
+          if (job_remove_flag == false && job->req_msg != NULL)
+            {
+              T_SHD_MG_COMPENSATION_JOB *compensation_job = NULL;
 
-	      thr_func_res = (*job_queue->job_func) (job, &compensation_job);
+              thr_func_res = (*job_queue->job_func) (job, &compensation_job);
 
-	      if (thr_func_res == THR_FUNC_COMPLETE)
-		{
-		  assert (compensation_job == NULL);
-		  job_remove_flag = true;
-		}
-	      else if (thr_func_res == THR_FUNC_COMPLETE_AND_WAIT_NEXT)
-		{
-		  assert (compensation_job != NULL);
-		  RYE_FREE_MEM (job->req_msg);
-		  job->compensation_job = compensation_job;
-		}
-	      else
-		{
-		  assert (thr_func_res == THR_FUNC_NEED_QUEUEING);
-		  assert (compensation_job == NULL);
-		}
-	    }
+              if (thr_func_res == THR_FUNC_COMPLETE)
+                {
+                  assert (compensation_job == NULL);
+                  job_remove_flag = true;
+                }
+              else if (thr_func_res == THR_FUNC_COMPLETE_AND_WAIT_NEXT)
+                {
+                  assert (compensation_job != NULL);
+                  RYE_FREE_MEM (job->req_msg);
+                  job->compensation_job = compensation_job;
+                }
+              else
+                {
+                  assert (thr_func_res == THR_FUNC_NEED_QUEUEING);
+                  assert (compensation_job == NULL);
+                }
+            }
 
-	  if (job_remove_flag)
-	    {
-	      RYE_CLOSE_SOCKET (job->clt_sock_fd);
-	      free_mgmt_job (job);
-	    }
-	  else
-	    {
-	      shd_job_add_internal (job_queue->secondary_job_queue, job,
-				    true);
-	    }
+          if (job_remove_flag)
+            {
+              RYE_CLOSE_SOCKET (job->clt_sock_fd);
+              free_mgmt_job (job);
+            }
+          else
+            {
+              shd_job_add_internal (job_queue->secondary_job_queue, job, true);
+            }
 
-	  job = next_job;
-	}
+          job = next_job;
+        }
     }
 
   return NULL;
@@ -1170,11 +1086,9 @@ set_shm_shard_node_info (const T_LOCAL_MGMT_SYNC_INFO * sync_info)
       return;
     }
 
-  assert (SHM_SHARD_NODE_INFO_MAX >=
-	  sync_info->db_node_info->node_info_count);
+  assert (SHM_SHARD_NODE_INFO_MAX >= sync_info->db_node_info->node_info_count);
 
-  node_count = MIN (SHM_SHARD_NODE_INFO_MAX,
-		    sync_info->db_node_info->node_info_count);
+  node_count = MIN (SHM_SHARD_NODE_INFO_MAX, sync_info->db_node_info->node_info_count);
 
   shm_Shard_mgmt_info->last_sync_time = sync_info->last_sync_time;
   shm_Shard_mgmt_info->num_shard_node_info = node_count;
@@ -1189,20 +1103,17 @@ set_shm_shard_node_info (const T_LOCAL_MGMT_SYNC_INFO * sync_info)
 
       shm_node_info->node_id = src_node_info->node_id;
       shm_node_info->host_info = src_node_info->host_info;
-      STRNCPY (shm_node_info->local_dbname, src_node_info->local_dbname,
-	       sizeof (shm_node_info->local_dbname));
-      STRNCPY (shm_node_info->host_ip, src_node_info->host_ip_str,
-	       sizeof (shm_node_info->host_ip));
+      STRNCPY (shm_node_info->local_dbname, src_node_info->local_dbname, sizeof (shm_node_info->local_dbname));
+      STRNCPY (shm_node_info->host_ip, src_node_info->host_ip_str, sizeof (shm_node_info->host_ip));
 
       if (src_node_info->host_name[0] == '\0')
-	{
-	  strcpy (shm_node_info->host_name, "-");
-	}
+        {
+          strcpy (shm_node_info->host_name, "-");
+        }
       else
-	{
-	  STRNCPY (shm_node_info->host_name, src_node_info->host_name,
-		   sizeof (shm_node_info->host_name));
-	}
+        {
+          STRNCPY (shm_node_info->host_name, src_node_info->host_name, sizeof (shm_node_info->host_name));
+        }
       shm_node_info->ha_state = src_node_info->ha_state;
     }
 }
@@ -1241,27 +1152,27 @@ shd_mg_sync_local_mgmt_thr (void *arg)
 
       job = shd_mg_job_queue_remove_all (job_queue);
       if (job == NULL)
-	{
-	  struct timespec ts;
-	  struct timeval tv;
+        {
+          struct timespec ts;
+          struct timeval tv;
 
-	  gettimeofday (&tv, NULL);
-	  ts.tv_sec = tv.tv_sec + 3;
-	  ts.tv_nsec = tv.tv_usec * 1000;
+          gettimeofday (&tv, NULL);
+          ts.tv_sec = tv.tv_sec + 3;
+          ts.tv_nsec = tv.tv_usec * 1000;
 
-	  pthread_cond_timedwait (&job_queue->cond, &job_queue->lock, &ts);
-	}
+          pthread_cond_timedwait (&job_queue->cond, &job_queue->lock, &ts);
+        }
 
       pthread_mutex_unlock (&job_queue->lock);
 
       shd_mg_func_sync_local_mgmt (&sync_info, (job == NULL ? false : true));
 
       while (job != NULL)
-	{
-	  T_SHARD_MGMT_JOB *next_job = job->next;
-	  free_mgmt_job (job);
-	  job = next_job;
-	}
+        {
+          T_SHARD_MGMT_JOB *next_job = job->next;
+          free_mgmt_job (job);
+          job = next_job;
+        }
 
       set_shm_shard_node_info (&sync_info);
     }
@@ -1299,24 +1210,23 @@ shd_mg_migration_handler_thr (void *arg)
       pthread_mutex_lock (&job_queue->lock);
 
       if (job_queue->num_job == 0)
-	{
-	  if (num_waiting_gid == 0)
-	    {
-	      pthread_cond_wait (&job_queue->cond, &job_queue->lock);
-	    }
-	  else
-	    {
-	      struct timespec ts;
-	      struct timeval tv;
+        {
+          if (num_waiting_gid == 0)
+            {
+              pthread_cond_wait (&job_queue->cond, &job_queue->lock);
+            }
+          else
+            {
+              struct timespec ts;
+              struct timeval tv;
 
-	      gettimeofday (&tv, NULL);
-	      ts.tv_sec = tv.tv_sec + 60;
-	      ts.tv_nsec = tv.tv_usec * 1000;
+              gettimeofday (&tv, NULL);
+              ts.tv_sec = tv.tv_sec + 60;
+              ts.tv_nsec = tv.tv_usec * 1000;
 
-	      pthread_cond_timedwait (&job_queue->cond, &job_queue->lock,
-				      &ts);
-	    }
-	}
+              pthread_cond_timedwait (&job_queue->cond, &job_queue->lock, &ts);
+            }
+        }
 
       set_job_queue_job_count (job_queue, 0);
 
@@ -1351,38 +1261,35 @@ shd_mg_migrator_wait_thr (void *arg)
       shm_Shard_mgmt_info->running_migrator_count = wait_count;
 
       if (wait_count > 0)
-	{
-	  int error;
-	  T_CCI_LAUNCH_RESULT launch_res = CCI_LAUNCH_RESULT_INITIALIZER;
+        {
+          int error;
+          T_CCI_LAUNCH_RESULT launch_res = CCI_LAUNCH_RESULT_INITIALIZER;
 
-	  error = cci_mgmt_wait_launch_process (&launch_res, 1000);
-	  if (IS_CCI_NO_ERROR (error))
-	    {
-	      const char *success_fail;
-	      const char *migrator_msg;
+          error = cci_mgmt_wait_launch_process (&launch_res, 1000);
+          if (IS_CCI_NO_ERROR (error))
+            {
+              const char *success_fail;
+              const char *migrator_msg;
 
-	      if (launch_res.exit_status == 0)
-		{
-		  success_fail = "success";
-		  migrator_msg =
-		    (launch_res.stdout_size > 0 ? launch_res.stdout_buf : "");
-		}
-	      else
-		{
-		  success_fail = "fail";
-		  migrator_msg =
-		    (launch_res.stderr_size > 0 ? launch_res.stderr_buf : "");
-		}
-	      br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
-			    "exit migrator %s %s: status:%d (%s)",
-			    launch_res.userdata, success_fail,
-			    launch_res.exit_status, migrator_msg);
-	    }
-	}
+              if (launch_res.exit_status == 0)
+                {
+                  success_fail = "success";
+                  migrator_msg = (launch_res.stdout_size > 0 ? launch_res.stdout_buf : "");
+                }
+              else
+                {
+                  success_fail = "fail";
+                  migrator_msg = (launch_res.stderr_size > 0 ? launch_res.stderr_buf : "");
+                }
+              br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
+                            "exit migrator %s %s: status:%d (%s)",
+                            launch_res.userdata, success_fail, launch_res.exit_status, migrator_msg);
+            }
+        }
       else
-	{
-	  THREAD_SLEEP (1000);
-	}
+        {
+          THREAD_SLEEP (1000);
+        }
     }
 
   return NULL;
@@ -1393,8 +1300,7 @@ shd_mg_migration_handler_wakeup ()
 {
   pthread_mutex_lock (&shard_Job_queue_migration_handler->lock);
 
-  set_job_queue_job_count (shard_Job_queue_migration_handler,
-			   shard_Job_queue_migration_handler->num_job + 1);
+  set_job_queue_job_count (shard_Job_queue_migration_handler, shard_Job_queue_migration_handler->num_job + 1);
 
   pthread_cond_signal (&shard_Job_queue_migration_handler->cond);
 
@@ -1422,21 +1328,21 @@ read_next_request (T_SHARD_MGMT_JOB * job)
 
       n = poll (&po, 1, 0);
       if (n == 1)
-	{
-	  if (po.revents & POLLERR || po.revents & POLLHUP)
-	    {
-	      return -1;
-	    }
-	  else if (po.revents & POLLIN)
-	    {
-	      char buf[1];
-	      n = recv (job->clt_sock_fd, buf, 1, MSG_PEEK | MSG_DONTWAIT);
-	      if (n <= 0)
-		{
-		  return -1;
-		}
-	    }
-	}
+        {
+          if (po.revents & POLLERR || po.revents & POLLHUP)
+            {
+              return -1;
+            }
+          else if (po.revents & POLLIN)
+            {
+              char buf[1];
+              n = recv (job->clt_sock_fd, buf, 1, MSG_PEEK | MSG_DONTWAIT);
+              if (n <= 0)
+                {
+                  return -1;
+                }
+            }
+        }
 
       return 0;
     }
@@ -1468,8 +1374,7 @@ do_compensation_job (T_SHD_MG_COMPENSATION_JOB * compensation_job)
   CCI_CONN conn;
   int res;
 
-  if (connect_metadb (&conn, CCI_AUTOCOMMIT_FALSE, shard_Mgmt_db_user,
-		      shard_Mgmt_db_passwd) < 0)
+  if (connect_metadb (&conn, CCI_AUTOCOMMIT_FALSE, shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
     {
       return -1;
     }
@@ -1483,8 +1388,7 @@ do_compensation_job (T_SHD_MG_COMPENSATION_JOB * compensation_job)
 }
 
 static bool
-check_client_dbname (const char *clt_dbname,
-		     const T_SHARD_DB_REC * shard_db_rec)
+check_client_dbname (const char *clt_dbname, const T_SHARD_DB_REC * shard_db_rec)
 {
   if (clt_dbname == NULL || shard_db_rec->global_dbname == NULL)
     {
@@ -1505,8 +1409,7 @@ check_client_dbname (const char *clt_dbname,
  * shd_mg_func_shard_info - shard mgmt worker thread's job function
 */
 static T_THR_FUNC_RES
-shd_mg_func_shard_info (const T_SHARD_MGMT_JOB * job,
-			UNUSED_ARG T_SHD_MG_COMPENSATION_JOB ** comp_job)
+shd_mg_func_shard_info (const T_SHARD_MGMT_JOB * job, UNUSED_ARG T_SHD_MG_COMPENSATION_JOB ** comp_job)
 {
   const T_INFO_NET_STREAM *net_stream_node_info = NULL;
   const T_INFO_NET_STREAM *net_stream_node_state = NULL;
@@ -1540,9 +1443,7 @@ shd_mg_func_shard_info (const T_SHARD_MGMT_JOB * job,
 
   if (br_mgmt_get_req_arg (&req_arg, job->req_msg) < 0)
     {
-      send_info_msg_to_client (job->clt_sock_fd,
-			       BR_ER_COMMUNICATION, NULL, 0, NULL, 0, NULL, 0,
-			       NULL, 0);
+      send_info_msg_to_client (job->clt_sock_fd, BR_ER_COMMUNICATION, NULL, 0, NULL, 0, NULL, 0, NULL, 0);
       return thr_func_res;
     }
 
@@ -1573,95 +1474,81 @@ shd_mg_func_shard_info (const T_SHARD_MGMT_JOB * job,
   node_state_msg_size = 0;
   err = 0;
 
-  check_dbname_res = check_client_dbname (clt_dbname,
-					  &db_Sync_info.shard_db_rec);
+  check_dbname_res = check_client_dbname (clt_dbname, &db_Sync_info.shard_db_rec);
   if (check_dbname_res == true)
     {
-      if (db_Shard_info.db_node_info != NULL &&
-	  db_Shard_info.db_node_info->node_info_ver > clt_node_ver)
-	{
-	  svr_node_ver = db_Shard_info.db_node_info->node_info_ver;
+      if (db_Shard_info.db_node_info != NULL && db_Shard_info.db_node_info->node_info_ver > clt_node_ver)
+        {
+          svr_node_ver = db_Shard_info.db_node_info->node_info_ver;
 
-	  net_stream_node_info =
-	    make_node_info_net_stream (db_Shard_info.db_node_info);
-	  if (net_stream_node_info == NULL)
-	    {
-	      err = BR_ER_SHARD_INFO_NOT_AVAILABLE;
-	    }
-	  else
-	    {
-	      node_info_msg = net_stream_node_info->buf;
-	      node_info_msg_size = net_stream_node_info->size;
-	    }
-	}
+          net_stream_node_info = make_node_info_net_stream (db_Shard_info.db_node_info);
+          if (net_stream_node_info == NULL)
+            {
+              err = BR_ER_SHARD_INFO_NOT_AVAILABLE;
+            }
+          else
+            {
+              node_info_msg = net_stream_node_info->buf;
+              node_info_msg_size = net_stream_node_info->size;
+            }
+        }
 
-      if (db_Shard_info.db_groupid_info != NULL &&
-	  db_Shard_info.db_groupid_info->gid_info_ver > clt_groupid_ver)
-	{
-	  svr_groupid_ver = db_Shard_info.db_groupid_info->gid_info_ver;
+      if (db_Shard_info.db_groupid_info != NULL && db_Shard_info.db_groupid_info->gid_info_ver > clt_groupid_ver)
+        {
+          svr_groupid_ver = db_Shard_info.db_groupid_info->gid_info_ver;
 
-	  net_stream_gid_info =
-	    make_groupid_info_net_stream (db_Shard_info.db_groupid_info,
-					  clt_groupid_ver);
-	  if (net_stream_gid_info == NULL)
-	    {
-	      err = BR_ER_SHARD_INFO_NOT_AVAILABLE;
-	    }
-	  else
-	    {
-	      gid_info_msg = net_stream_gid_info->buf;
-	      gid_info_msg_size = net_stream_gid_info->size;
-	    }
-	}
+          net_stream_gid_info = make_groupid_info_net_stream (db_Shard_info.db_groupid_info, clt_groupid_ver);
+          if (net_stream_gid_info == NULL)
+            {
+              err = BR_ER_SHARD_INFO_NOT_AVAILABLE;
+            }
+          else
+            {
+              gid_info_msg = net_stream_gid_info->buf;
+              gid_info_msg_size = net_stream_gid_info->size;
+            }
+        }
 
-      net_stream_node_state =
-	make_node_state_net_stream (db_Shard_info.db_node_info);
+      net_stream_node_state = make_node_state_net_stream (db_Shard_info.db_node_info);
       if (net_stream_node_state != NULL)
-	{
-	  node_state_msg = net_stream_node_state->buf;
-	  node_state_msg_size = net_stream_node_state->size;
-	}
+        {
+          node_state_msg = net_stream_node_state->buf;
+          node_state_msg_size = net_stream_node_state->size;
+        }
     }
 
   if (err < 0)
     {
-      send_info_msg_to_client (job->clt_sock_fd, err, NULL, 0, NULL, 0,
-			       NULL, 0, NULL, 0);
+      send_info_msg_to_client (job->clt_sock_fd, err, NULL, 0, NULL, 0, NULL, 0, NULL, 0);
     }
   else
     {
       char shard_info_hdr[sizeof (int64_t)];
 
-      br_mgmt_net_add_int64 (shard_info_hdr,
-			     db_Sync_info.shard_db_rec.created_at);
+      br_mgmt_net_add_int64 (shard_info_hdr, db_Sync_info.shard_db_rec.created_at);
 
       send_info_msg_to_client (job->clt_sock_fd, err,
-			       shard_info_hdr, sizeof (shard_info_hdr),
-			       node_info_msg, node_info_msg_size,
-			       gid_info_msg, gid_info_msg_size,
-			       node_state_msg, node_state_msg_size);
+                               shard_info_hdr, sizeof (shard_info_hdr),
+                               node_info_msg, node_info_msg_size,
+                               gid_info_msg, gid_info_msg_size, node_state_msg, node_state_msg_size);
     }
 
   UNLOCK_DB_SHARD_INFO ();
 
   if (err < 0)
     {
-      br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr, "GET_SHARD_INFO:%d",
-		    err);
+      br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr, "GET_SHARD_INFO:%d", err);
     }
   else
     {
-      if (svr_created_at != clt_created_at ||
-	  svr_node_ver > clt_node_ver || svr_groupid_ver > clt_groupid_ver)
-	{
-	  br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-			"created_at: %ld -> %ld, node ver: %ld -> %ld, GID ver: %ld -> %ld",
-			clt_created_at, svr_created_at,
-			req_arg.value.get_info_arg.clt_node_ver,
-			svr_node_ver,
-			req_arg.value.get_info_arg.clt_groupid_ver,
-			svr_groupid_ver);
-	}
+      if (svr_created_at != clt_created_at || svr_node_ver > clt_node_ver || svr_groupid_ver > clt_groupid_ver)
+        {
+          br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
+                        "created_at: %ld -> %ld, node ver: %ld -> %ld, GID ver: %ld -> %ld",
+                        clt_created_at, svr_created_at,
+                        req_arg.value.get_info_arg.clt_node_ver,
+                        svr_node_ver, req_arg.value.get_info_arg.clt_groupid_ver, svr_groupid_ver);
+        }
     }
 
   RYE_FREE_MEM (req_arg.alloc_buffer);
@@ -1673,8 +1560,7 @@ shd_mg_func_shard_info (const T_SHARD_MGMT_JOB * job,
  * shd_mg_func_admin - shard mgmt worker thread's job function
 */
 static T_THR_FUNC_RES
-shd_mg_func_admin (const T_SHARD_MGMT_JOB * job,
-		   T_SHD_MG_COMPENSATION_JOB ** compensation_job)
+shd_mg_func_admin (const T_SHARD_MGMT_JOB * job, T_SHD_MG_COMPENSATION_JOB ** compensation_job)
 {
   T_BROKER_REQUEST_MSG *brreq_msg;
   int res = 0;
@@ -1703,9 +1589,9 @@ shd_mg_func_admin (const T_SHARD_MGMT_JOB * job,
   for (i = 0; shd_Mg_admin_func_table[i].func != NULL; i++)
     {
       if (shd_Mg_admin_func_table[i].opcode == brreq_msg->op_code)
-	{
-	  admin_func_table = &shd_Mg_admin_func_table[i];
-	}
+        {
+          admin_func_table = &shd_Mg_admin_func_table[i];
+        }
     }
 
   if (admin_func_table == NULL)
@@ -1735,8 +1621,7 @@ shd_mg_func_admin (const T_SHARD_MGMT_JOB * job,
       db_passwd = shard_Mgmt_db_passwd;
     }
 
-  if (connect_metadb (&conn_handle, CCI_AUTOCOMMIT_FALSE,
-		      db_user, db_passwd) < 0)
+  if (connect_metadb (&conn_handle, CCI_AUTOCOMMIT_FALSE, db_user, db_passwd) < 0)
     {
       res = BR_ER_METADB;
       goto admin_func_end;
@@ -1745,18 +1630,17 @@ shd_mg_func_admin (const T_SHARD_MGMT_JOB * job,
 
   if (admin_func_table->need_sync_dbinfo)
     {
-      if (sync_node_info (conn, &shard_db_rec, true) < 0 ||
-	  sync_groupid_info (conn, NULL, false) < 0)
-	{
-	  res = BR_ER_METADB;
-	  goto admin_func_end;
-	}
+      if (sync_node_info (conn, &shard_db_rec, true) < 0 || sync_groupid_info (conn, NULL, false) < 0)
+        {
+          res = BR_ER_METADB;
+          goto admin_func_end;
+        }
 
       if (check_client_dbname (req_arg.clt_dbname, &shard_db_rec) == false)
-	{
-	  res = BR_ER_DBNAME_MISMATCHED;
-	  goto admin_func_end;
-	}
+        {
+          res = BR_ER_DBNAME_MISMATCHED;
+          goto admin_func_end;
+        }
     }
   else
     {
@@ -1765,8 +1649,7 @@ shd_mg_func_admin (const T_SHARD_MGMT_JOB * job,
       UNLOCK_DB_SHARD_INFO ();
     }
 
-  res = (*admin_func_table->func) (&thr_func_res, conn, &shard_db_rec,
-				   &req_arg, job);
+  res = (*admin_func_table->func) (&thr_func_res, conn, &shard_db_rec, &req_arg, job);
 
 admin_func_end:
 
@@ -1774,9 +1657,9 @@ admin_func_end:
     {
       res = set_admin_compensation_job (compensation_job, job, &req_arg);
       if (res < 0)
-	{
-	  thr_func_res = THR_FUNC_COMPLETE;
-	}
+        {
+          thr_func_res = THR_FUNC_COMPLETE;
+        }
     }
 
   if (conn != NULL)
@@ -1785,23 +1668,21 @@ admin_func_end:
       cci_disconnect (conn);
     }
 
-  if (thr_func_res == THR_FUNC_COMPLETE ||
-      thr_func_res == THR_FUNC_COMPLETE_AND_WAIT_NEXT)
+  if (thr_func_res == THR_FUNC_COMPLETE || thr_func_res == THR_FUNC_COMPLETE_AND_WAIT_NEXT)
     {
       br_send_result_to_client (job->clt_sock_fd, res, NULL);
 
       if (admin_func_table != NULL)
-	{
-	  int elapsed;
-	  gettimeofday (&admin_end_time, NULL);
+        {
+          int elapsed;
+          gettimeofday (&admin_end_time, NULL);
 
-	  elapsed = (admin_end_time.tv_sec - admin_start_time.tv_sec) * 1000 +
-	    (admin_end_time.tv_usec - admin_start_time.tv_usec) / 1000;
+          elapsed = (admin_end_time.tv_sec - admin_start_time.tv_sec) * 1000 +
+            (admin_end_time.tv_usec - admin_start_time.tv_usec) / 1000;
 
-	  br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-			"[%s] error: %d time: %d ms",
-			admin_func_table->log_msg, res, elapsed);
-	}
+          br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
+                        "[%s] error: %d time: %d ms", admin_func_table->log_msg, res, elapsed);
+        }
     }
 
   if (res >= 0)
@@ -1816,8 +1697,7 @@ admin_func_end:
 
 static int
 set_admin_compensation_job (T_SHD_MG_COMPENSATION_JOB ** out,
-			    const T_SHARD_MGMT_JOB * job,
-			    const T_MGMT_REQ_ARG * req_arg)
+                            const T_SHARD_MGMT_JOB * job, const T_MGMT_REQ_ARG * req_arg)
 {
   T_BROKER_REQUEST_MSG *brreq_msg;
   T_SHD_MG_COMPENSATION_JOB *compensation_job;
@@ -1843,18 +1723,16 @@ set_admin_compensation_job (T_SHD_MG_COMPENSATION_JOB ** out,
     }
   else if (brreq_msg->op_code == BRREQ_OP_CODE_MIGRATION_START)
     {
-      compensation_job->arg =
-	RYE_MALLOC (sizeof (T_MGMT_REQ_ARG_SHARD_MIGRATION));
+      compensation_job->arg = RYE_MALLOC (sizeof (T_MGMT_REQ_ARG_SHARD_MIGRATION));
       if (compensation_job->arg == NULL)
-	{
-	  RYE_FREE_MEM (compensation_job);
-	  return BR_ER_NO_MORE_MEMORY;
-	}
+        {
+          RYE_FREE_MEM (compensation_job);
+          return BR_ER_NO_MORE_MEMORY;
+        }
 
       compensation_job->func = shd_mg_migration_fail;
       compensation_job->next_req_opcode = BRREQ_OP_CODE_MIGRATION_END;
-      memcpy (compensation_job->arg, &req_arg->value.migration_arg,
-	      sizeof (T_MGMT_REQ_ARG_SHARD_MIGRATION));
+      memcpy (compensation_job->arg, &req_arg->value.migration_arg, sizeof (T_MGMT_REQ_ARG_SHARD_MIGRATION));
     }
   else
     {
@@ -1868,8 +1746,7 @@ set_admin_compensation_job (T_SHD_MG_COMPENSATION_JOB ** out,
 }
 
 static int
-make_distinct_node_array (int **distinct_node_array,
-			  int num_nodes, const T_SHARD_NODE_INFO * node_info)
+make_distinct_node_array (int **distinct_node_array, int num_nodes, const T_SHARD_NODE_INFO * node_info)
 {
   int *distinct_arr;
   int distinct_count = 0;
@@ -1887,22 +1764,22 @@ make_distinct_node_array (int **distinct_node_array,
       int nodeid = node_info[i].node_id;
 
       if (nodeid <= 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       for (j = 0; j < distinct_count; j++)
-	{
-	  if (distinct_arr[j] == nodeid)
-	    {
-	      found = true;
-	      break;
-	    }
-	}
+        {
+          if (distinct_arr[j] == nodeid)
+            {
+              found = true;
+              break;
+            }
+        }
       if (found == false)
-	{
-	  distinct_arr[distinct_count++] = nodeid;
-	}
+        {
+          distinct_arr[distinct_count++] = nodeid;
+        }
     }
 
   if (distinct_count == 0)
@@ -1916,10 +1793,9 @@ make_distinct_node_array (int **distinct_node_array,
 
 static int
 admin_shard_init_command (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-			  CCI_CONN * conn,
-			  UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
-			  const T_MGMT_REQ_ARG * req_arg,
-			  UNUSED_ARG const T_SHARD_MGMT_JOB * job)
+                          CCI_CONN * conn,
+                          UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
+                          const T_MGMT_REQ_ARG * req_arg, UNUSED_ARG const T_SHARD_MGMT_JOB * job)
 {
   int64_t next_node_ver = 1;
   int init_node_count;
@@ -1947,8 +1823,7 @@ admin_shard_init_command (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   init_node_count = init_shard_arg->init_num_node;
 
   init_node_count = make_distinct_node_array (&init_nodeid_arr,
-					      init_shard_arg->init_num_node,
-					      init_shard_arg->init_node);
+                                              init_shard_arg->init_num_node, init_shard_arg->init_node);
   if (init_node_count <= 0)
     {
       return BR_ER_INVALID_ARGUMENT;
@@ -1961,8 +1836,7 @@ admin_shard_init_command (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
   for (i = 0; i < (int) DIM (create_tables); i++)
     {
-      make_query_create_global_table (&sql_and_param[num_sql++],
-				      create_tables[i]);
+      make_query_create_global_table (&sql_and_param[num_sql++], create_tables[i]);
       make_query_change_owner (&sql_and_param[num_sql++], create_tables[i]);
 
       assert (MAX_COLUMNS >= create_tables[i]->num_columns);
@@ -1973,8 +1847,7 @@ admin_shard_init_command (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
       make_query_create_index (&sql_and_param[num_sql++], &shard_indexes[i]);
     }
 
-  make_query_insert_shard_db (&sql_and_param[num_sql++], &shard_db_id,
-			      &init_shard_db_rec);
+  make_query_insert_shard_db (&sql_and_param[num_sql++], &shard_db_id, &init_shard_db_rec);
 
   assert ((int) DIM (sql_and_param) >= num_sql);
   if (admin_query_execute_array (conn, num_sql, sql_and_param) < 0)
@@ -1984,9 +1857,8 @@ admin_shard_init_command (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
     }
 
   if (insert_shard_groupid_table (conn,
-				  init_shard_db_rec.groupid_count,
-				  init_node_count, init_nodeid_arr,
-				  init_shard_db_rec.gid_info_last_ver) < 0)
+                                  init_shard_db_rec.groupid_count,
+                                  init_node_count, init_nodeid_arr, init_shard_db_rec.gid_info_last_ver) < 0)
     {
       RYE_FREE_MEM (init_nodeid_arr);
       return BR_ER_METADB;
@@ -1997,12 +1869,10 @@ admin_shard_init_command (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   next_node_ver = 1;
   for (i = 0; i < init_shard_arg->init_num_node; i++)
     {
-      if (insert_shard_node_table (conn, &init_shard_arg->init_node[i],
-				   ADD_NODE_STATUS_COMPLETE,
-				   next_node_ver) < 0)
-	{
-	  return BR_ER_METADB;
-	}
+      if (insert_shard_node_table (conn, &init_shard_arg->init_node[i], ADD_NODE_STATUS_COMPLETE, next_node_ver) < 0)
+        {
+          return BR_ER_METADB;
+        }
 
       /* all nodes should have different node version for node ordering */
       next_node_ver++;
@@ -2015,9 +1885,8 @@ admin_shard_init_command (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
 static int
 shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-		 CCI_CONN * conn,
-		 const T_SHARD_DB_REC * shard_db_rec,
-		 const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job)
+                 CCI_CONN * conn,
+                 const T_SHARD_DB_REC * shard_db_rec, const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job)
 {
   T_SHARD_NODE_INFO add_node;
   const T_SHARD_NODE_INFO *org_add_node;
@@ -2052,13 +1921,11 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
   COPY_GLOBAL_DBNAME (global_dbname);
 
-  existing_node = find_node_info (db_Shard_info.db_node_info, org_add_node,
-				  &exist_same_node);
+  existing_node = find_node_info (db_Shard_info.db_node_info, org_add_node, &exist_same_node);
 
   mig_src_nodeid = find_min_node_id (db_Shard_info.db_node_info);
   select_migration_node (&run_mig_node, NULL, &is_slave_mode_mig,
-			 db_Shard_info.db_node_info, mig_src_nodeid,
-			 org_add_node->node_id, NULL);
+                         db_Shard_info.db_node_info, mig_src_nodeid, org_add_node->node_id, NULL);
 
   if (run_mig_node != NULL)
     {
@@ -2093,9 +1960,9 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   else
     {
       if (run_mig_node == NULL)
-	{
-	  run_mig_node = &add_node;
-	}
+        {
+          run_mig_node = &add_node;
+        }
 
       add_node_status = ADD_NODE_STATUS_REQUESTED;
       next_node_ver = 0;
@@ -2104,36 +1971,32 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   if (add_node_status != ADD_NODE_STATUS_COMPLETE)
     {
       /* change shard_db node_status */
-      error = change_shrad_db_node_status (conn,
-					   SHARD_DB_NODE_STATUS_EXIST_INVALID);
+      error = change_shrad_db_node_status (conn, SHARD_DB_NODE_STATUS_EXIST_INVALID);
       if (error < 0)
-	{
-	  goto node_add_fail;
-	}
+        {
+          goto node_add_fail;
+        }
 
       /* schema migration */
       error = node_add_commit_and_migration (conn, &commit_success,
-					     global_dbname, mig_src_nodeid,
-					     &add_node, run_mig_node, true,
-					     is_slave_mode_mig,
-					     &copy_shard_db_rec);
+                                             global_dbname, mig_src_nodeid,
+                                             &add_node, run_mig_node, true, is_slave_mode_mig, &copy_shard_db_rec);
 
 
       br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-		    "[NODE-ADD %d:%s:%s:%d] migration schema: error=%d",
-		    add_node.node_id, add_node.local_dbname,
-		    add_node.host_ip_str,
-		    PRM_NODE_INFO_GET_PORT (&add_node.host_info), error);
+                    "[NODE-ADD %d:%s:%s:%d] migration schema: error=%d",
+                    add_node.node_id, add_node.local_dbname,
+                    add_node.host_ip_str, PRM_NODE_INFO_GET_PORT (&add_node.host_info), error);
 
       if (commit_success)
-	{
-	  shard_db_node_status = SHARD_DB_NODE_STATUS_EXIST_INVALID;
-	}
+        {
+          shard_db_node_status = SHARD_DB_NODE_STATUS_EXIST_INVALID;
+        }
 
       if (error < 0)
-	{
-	  goto node_add_fail;
-	}
+        {
+          goto node_add_fail;
+        }
 
       add_node_status = ADD_NODE_STATUS_SCHEMA_COMPLETE;
 
@@ -2143,8 +2006,7 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   assert (next_node_ver > 0);
 
   /* insert node info */
-  error = insert_shard_node_table (conn, org_add_node, add_node_status,
-				   next_node_ver);
+  error = insert_shard_node_table (conn, org_add_node, add_node_status, next_node_ver);
   if (error < 0)
     {
       goto node_add_fail;
@@ -2154,53 +2016,47 @@ shd_mg_node_add (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   if (add_node_status != ADD_NODE_STATUS_COMPLETE)
     {
       error = node_add_commit_and_migration (conn, &commit_success,
-					     global_dbname, mig_src_nodeid,
-					     &add_node, run_mig_node, false,
-					     is_slave_mode_mig,
-					     &copy_shard_db_rec);
+                                             global_dbname, mig_src_nodeid,
+                                             &add_node, run_mig_node, false, is_slave_mode_mig, &copy_shard_db_rec);
 
       br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-		    "[NODE-ADD %d:%s:%s:%d] migration global table: error=%d",
-		    add_node.node_id, add_node.local_dbname,
-		    add_node.host_ip_str,
-		    PRM_NODE_INFO_GET_PORT (&add_node.host_info), error);
+                    "[NODE-ADD %d:%s:%s:%d] migration global table: error=%d",
+                    add_node.node_id, add_node.local_dbname,
+                    add_node.host_ip_str, PRM_NODE_INFO_GET_PORT (&add_node.host_info), error);
 
       if (commit_success)
-	{
-	  del_node_info = org_add_node;
-	}
+        {
+          del_node_info = org_add_node;
+        }
 
       if (error < 0)
-	{
-	  goto node_add_fail;
-	}
+        {
+          goto node_add_fail;
+        }
 
-      error = update_shard_node_table_status (conn, org_add_node,
-					      ADD_NODE_STATUS_COMPLETE);
+      error = update_shard_node_table_status (conn, org_add_node, ADD_NODE_STATUS_COMPLETE);
       if (error < 0)
-	{
-	  goto node_add_fail;
-	}
+        {
+          goto node_add_fail;
+        }
     }
 
   /* restore shard_db node_status */
   if (shard_db_node_status != SHARD_DB_NODE_STATUS_ALL_VALID)
     {
-      error = change_shrad_db_node_status (conn,
-					   SHARD_DB_NODE_STATUS_ALL_VALID);
+      error = change_shrad_db_node_status (conn, SHARD_DB_NODE_STATUS_ALL_VALID);
       if (error < 0)
-	{
-	  goto node_add_fail;
-	}
+        {
+          goto node_add_fail;
+        }
     }
 
   shd_mg_sync_local_mgmt_job_add ();
 
   br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-		"[NODE-ADD %d:%s:%s:%d] complete",
-		org_add_node->node_id, org_add_node->local_dbname,
-		org_add_node->host_ip_str,
-		PRM_NODE_INFO_GET_PORT (&org_add_node->host_info));
+                "[NODE-ADD %d:%s:%s:%d] complete",
+                org_add_node->node_id, org_add_node->local_dbname,
+                org_add_node->host_ip_str, PRM_NODE_INFO_GET_PORT (&org_add_node->host_info));
   return 0;
 
 node_add_fail:
@@ -2209,42 +2065,38 @@ node_add_fail:
   if (shard_db_node_status != SHARD_DB_NODE_STATUS_ALL_VALID)
     {
       if (del_node_info != NULL)
-	{
-	  if (sync_node_info (conn, &copy_shard_db_rec, true) < 0)
-	    {
-	      fail_recovery_error = -1;
-	    }
-	  else
-	    {
-	      next_node_ver = get_next_version (shard_db_rec);
+        {
+          if (sync_node_info (conn, &copy_shard_db_rec, true) < 0)
+            {
+              fail_recovery_error = -1;
+            }
+          else
+            {
+              next_node_ver = get_next_version (shard_db_rec);
 
-	      if (delete_shard_node_table (conn, del_node_info, NULL,
-					   next_node_ver) < 0)
-		{
-		  fail_recovery_error = -1;
-		}
-	    }
-	}
+              if (delete_shard_node_table (conn, del_node_info, NULL, next_node_ver) < 0)
+                {
+                  fail_recovery_error = -1;
+                }
+            }
+        }
 
-      if (fail_recovery_error == 0 &&
-	  change_shrad_db_node_status (conn,
-				       SHARD_DB_NODE_STATUS_ALL_VALID) < 0)
-	{
-	  fail_recovery_error = -1;
-	}
+      if (fail_recovery_error == 0 && change_shrad_db_node_status (conn, SHARD_DB_NODE_STATUS_ALL_VALID) < 0)
+        {
+          fail_recovery_error = -1;
+        }
 
       if (fail_recovery_error == 0)
-	{
-	  cci_end_tran (conn, CCI_TRAN_COMMIT);
-	}
+        {
+          cci_end_tran (conn, CCI_TRAN_COMMIT);
+        }
     }
 
   br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
-		"[NODE-ADD %d:%s:%s:%d] fail: error=%d,%d",
-		org_add_node->node_id, org_add_node->local_dbname,
-		org_add_node->host_ip_str,
-		PRM_NODE_INFO_GET_PORT (&org_add_node->host_info),
-		error, fail_recovery_error);
+                "[NODE-ADD %d:%s:%s:%d] fail: error=%d,%d",
+                org_add_node->node_id, org_add_node->local_dbname,
+                org_add_node->host_ip_str,
+                PRM_NODE_INFO_GET_PORT (&org_add_node->host_info), error, fail_recovery_error);
 
   return error;
 }
@@ -2255,8 +2107,7 @@ change_shrad_db_node_status (CCI_CONN * conn, int node_status)
   T_SQL_AND_PARAM sql_and_param;
 
   sprintf (sql_and_param.sql, "UPDATE %s SET %s = %d WHERE %s = %d",
-	   TABLE_SHARD_DB, COL_SHARD_DB_NODE_STATUS, node_status,
-	   COL_SHARD_DB_ID, SHARD_DB_ID_VALUE);
+           TABLE_SHARD_DB, COL_SHARD_DB_NODE_STATUS, node_status, COL_SHARD_DB_ID, SHARD_DB_ID_VALUE);
 
   sql_and_param.num_bind = 0;
   sql_and_param.check_affected_rows = true;
@@ -2271,11 +2122,10 @@ change_shrad_db_node_status (CCI_CONN * conn, int node_status)
 
 static int
 node_add_commit_and_migration (CCI_CONN * conn, bool * commit_success,
-			       const char *global_dbname, int src_nodeid,
-			       const T_SHARD_NODE_INFO * dest_node_info,
-			       const T_SHARD_NODE_INFO * run_node_info,
-			       bool schema_migration, bool is_slave_mode_mig,
-			       T_SHARD_DB_REC * new_shard_db_rec)
+                               const char *global_dbname, int src_nodeid,
+                               const T_SHARD_NODE_INFO * dest_node_info,
+                               const T_SHARD_NODE_INFO * run_node_info,
+                               bool schema_migration, bool is_slave_mode_mig, T_SHARD_DB_REC * new_shard_db_rec)
 {
   T_CCI_LAUNCH_RESULT launch_res = CCI_LAUNCH_RESULT_INITIALIZER;
   int error;
@@ -2303,57 +2153,52 @@ node_add_commit_and_migration (CCI_CONN * conn, bool * commit_success,
        * wait until drivers sync new node info
        */
       while (sleep_time > 0)
-	{
-	  sleep_time = sleep (sleep_time);
-	}
+        {
+          sleep_time = sleep (sleep_time);
+        }
     }
 
   error = launch_migrator_process (global_dbname, 0, src_nodeid,
-				   dest_node_info, run_node_info,
-				   schema_migration, is_slave_mode_mig,
-				   &launch_res);
+                                   dest_node_info, run_node_info, schema_migration, is_slave_mode_mig, &launch_res);
   if (error < 0)
     {
       br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
-		    "migrator fail: %s migration, "
-		    "src_node=%d, dest_node = %d, cci error = %d",
-		    (schema_migration ? "schema" : "global table"),
-		    src_nodeid, dest_node_info->node_id, error);
+                    "migrator fail: %s migration, "
+                    "src_node=%d, dest_node = %d, cci error = %d",
+                    (schema_migration ? "schema" : "global table"), src_nodeid, dest_node_info->node_id, error);
       if (schema_migration)
-	{
-	  return BR_ER_SCHEMA_MIGRATION_FAIL;
-	}
+        {
+          return BR_ER_SCHEMA_MIGRATION_FAIL;
+        }
       else
-	{
-	  return BR_ER_GLOBAL_TABLE_MIGRATION_FAIL;
-	}
+        {
+          return BR_ER_GLOBAL_TABLE_MIGRATION_FAIL;
+        }
     }
 
   if (launch_res.exit_status == 0)
     {
       br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
-		    "exit migrator success: %s migration, "
-		    "src_node=%d, dest_node = %d, "
-		    "migrator@%s:%d exit status:%d (%s)",
-		    (schema_migration ? "schema" : "global table"),
-		    src_nodeid, dest_node_info->node_id,
-		    run_node_info->host_ip_str,
-		    PRM_NODE_INFO_GET_PORT (&run_node_info->host_info),
-		    launch_res.exit_status,
-		    launch_res.stdout_size > 0 ? launch_res.stdout_buf : "");
+                    "exit migrator success: %s migration, "
+                    "src_node=%d, dest_node = %d, "
+                    "migrator@%s:%d exit status:%d (%s)",
+                    (schema_migration ? "schema" : "global table"),
+                    src_nodeid, dest_node_info->node_id,
+                    run_node_info->host_ip_str,
+                    PRM_NODE_INFO_GET_PORT (&run_node_info->host_info),
+                    launch_res.exit_status, launch_res.stdout_size > 0 ? launch_res.stdout_buf : "");
     }
   else
     {
       br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
-		    "exit migrator fail: %s migration, "
-		    "src_node=%d, dest_node = %d, "
-		    "migrator@%s:%d exit status:%d (%s)",
-		    (schema_migration ? "schema" : "global table"),
-		    src_nodeid, dest_node_info->node_id,
-		    run_node_info->host_ip_str,
-		    PRM_NODE_INFO_GET_PORT (&run_node_info->host_info),
-		    launch_res.exit_status,
-		    launch_res.stderr_size > 0 ? launch_res.stderr_buf : "");
+                    "exit migrator fail: %s migration, "
+                    "src_node=%d, dest_node = %d, "
+                    "migrator@%s:%d exit status:%d (%s)",
+                    (schema_migration ? "schema" : "global table"),
+                    src_nodeid, dest_node_info->node_id,
+                    run_node_info->host_ip_str,
+                    PRM_NODE_INFO_GET_PORT (&run_node_info->host_info),
+                    launch_res.exit_status, launch_res.stderr_size > 0 ? launch_res.stderr_buf : "");
       return BR_ER_SCHEMA_MIGRATION_FAIL;
     }
 
@@ -2368,16 +2213,14 @@ node_add_commit_and_migration (CCI_CONN * conn, bool * commit_success,
 }
 
 static int
-insert_shard_node_table (CCI_CONN * conn, const T_SHARD_NODE_INFO * add_node,
-			 int node_status, int64_t next_node_ver)
+insert_shard_node_table (CCI_CONN * conn, const T_SHARD_NODE_INFO * add_node, int node_status, int64_t next_node_ver)
 {
   T_SQL_AND_PARAM sql_and_param[2];
   int num_query = 0;
 
   assert (next_node_ver > 0);
 
-  make_query_insert_shard_node (&sql_and_param[num_query++], add_node,
-				&node_status, &next_node_ver);
+  make_query_insert_shard_node (&sql_and_param[num_query++], add_node, &node_status, &next_node_ver);
   make_query_incr_node_ver (&sql_and_param[num_query++], &next_node_ver);
 
   if (admin_query_execute_array (conn, num_query, sql_and_param) < 0)
@@ -2389,29 +2232,21 @@ insert_shard_node_table (CCI_CONN * conn, const T_SHARD_NODE_INFO * add_node,
 }
 
 static int
-update_shard_node_table_status (CCI_CONN * conn,
-				const T_SHARD_NODE_INFO * node_info,
-				int node_status)
+update_shard_node_table_status (CCI_CONN * conn, const T_SHARD_NODE_INFO * node_info, int node_status)
 {
   T_SQL_AND_PARAM sql_and_param;
   int num_param = 0;
 
   sprintf (sql_and_param.sql,
-	   "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
-	   TABLE_SHARD_NODE, COL_SHARD_NODE_STATUS,
-	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
-	   COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
+           "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
+           TABLE_SHARD_NODE, COL_SHARD_NODE_STATUS,
+           COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME, COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
 
-  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT,
-		  &node_status);
-  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT,
-		  &node_info->node_id);
-  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_VARCHAR,
-		  node_info->local_dbname);
-  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_VARCHAR,
-		  node_info->host_ip_str);
-  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT,
-		  &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
+  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT, &node_status);
+  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT, &node_info->node_id);
+  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_VARCHAR, node_info->local_dbname);
+  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_VARCHAR, node_info->host_ip_str);
+  SET_BIND_PARAM (num_param++, sql_and_param.bind_param, CCI_TYPE_INT, &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
 
   sql_and_param.num_bind = num_param;
   sql_and_param.check_affected_rows = true;
@@ -2426,10 +2261,8 @@ update_shard_node_table_status (CCI_CONN * conn,
 
 static int
 shd_mg_node_drop (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-		  CCI_CONN * conn,
-		  const T_SHARD_DB_REC * shard_db_rec,
-		  const T_MGMT_REQ_ARG * req_arg,
-		  const T_SHARD_MGMT_JOB * job)
+                  CCI_CONN * conn,
+                  const T_SHARD_DB_REC * shard_db_rec, const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job)
 {
   T_SHARD_NODE_INFO drop_node_arg;
   T_SHARD_NODE_INFO *drop_node;
@@ -2458,23 +2291,20 @@ shd_mg_node_drop (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
   if (drop_all_nodeid > 0)
     {
-      error = check_nodeid_in_use (drop_all_nodeid,
-				   db_Shard_info.db_groupid_info);
+      error = check_nodeid_in_use (drop_all_nodeid, db_Shard_info.db_groupid_info);
     }
   else
     {
       const T_SHARD_NODE_INFO *exist_node_info;
-      exist_node_info = find_node_info (db_Shard_info.db_node_info,
-					drop_node, &exist_same_node);
+      exist_node_info = find_node_info (db_Shard_info.db_node_info, drop_node, &exist_same_node);
       if (exist_node_info == NULL)
-	{
-	  error = BR_ER_NODE_INFO_NOT_EXIST;
-	}
+        {
+          error = BR_ER_NODE_INFO_NOT_EXIST;
+        }
       else if (exist_same_node == false)
-	{
-	  error = check_nodeid_in_use (drop_node->node_id,
-				       db_Shard_info.db_groupid_info);
-	}
+        {
+          error = check_nodeid_in_use (drop_node->node_id, db_Shard_info.db_groupid_info);
+        }
     }
 
   UNLOCK_DB_SHARD_INFO ();
@@ -2491,22 +2321,19 @@ shd_mg_node_drop (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
   next_node_ver = get_next_version (shard_db_rec);
 
-  if (delete_shard_node_table (conn, drop_node, &drop_all_nodeid,
-			       next_node_ver) < 0)
+  if (delete_shard_node_table (conn, drop_node, &drop_all_nodeid, next_node_ver) < 0)
     {
       if (drop_all_nodeid > 0)
-	{
-	  br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
-			"[NODE-DROP-ALL %d] fail", drop_all_nodeid);
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr, "[NODE-DROP-ALL %d] fail", drop_all_nodeid);
+        }
       else
-	{
-	  br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
-			"[NODE-DROP %d:%s:%s:%d] fail",
-			drop_node->node_id, drop_node->local_dbname,
-			drop_node->host_ip_str,
-			PRM_NODE_INFO_GET_PORT (&drop_node->host_info));
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
+                        "[NODE-DROP %d:%s:%s:%d] fail",
+                        drop_node->node_id, drop_node->local_dbname,
+                        drop_node->host_ip_str, PRM_NODE_INFO_GET_PORT (&drop_node->host_info));
+        }
       return BR_ER_METADB;
     }
 
@@ -2514,23 +2341,21 @@ shd_mg_node_drop (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
   if (drop_all_nodeid > 0)
     {
-      br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-		    "[NODE-DROP-ALL %d] complete", drop_all_nodeid);
+      br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr, "[NODE-DROP-ALL %d] complete", drop_all_nodeid);
     }
   else
     {
       br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-		    "[NODE-DROP %d:%s:%s:%d] complete",
-		    drop_node->node_id, drop_node->local_dbname,
-		    drop_node->host_ip_str,
-		    PRM_NODE_INFO_GET_PORT (&drop_node->host_info));
+                    "[NODE-DROP %d:%s:%s:%d] complete",
+                    drop_node->node_id, drop_node->local_dbname,
+                    drop_node->host_ip_str, PRM_NODE_INFO_GET_PORT (&drop_node->host_info));
     }
   return 0;
 }
 
 static int
 delete_shard_node_table (CCI_CONN * conn, const T_SHARD_NODE_INFO * drop_node,
-			 int *drop_all_nodeid, int64_t next_node_ver)
+                         int *drop_all_nodeid, int64_t next_node_ver)
 {
   T_SQL_AND_PARAM sql_and_param[2];
 
@@ -2555,13 +2380,11 @@ delete_shard_node_table (CCI_CONN * conn, const T_SHARD_NODE_INFO * drop_node,
 
 static int
 shd_mg_migration_start (T_THR_FUNC_RES * thr_func_res,
-			CCI_CONN * conn,
-			const T_SHARD_DB_REC * shard_db_rec,
-			const T_MGMT_REQ_ARG * req_arg,
-			const T_SHARD_MGMT_JOB * job)
+                        CCI_CONN * conn,
+                        const T_SHARD_DB_REC * shard_db_rec,
+                        const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job)
 {
-  const T_MGMT_REQ_ARG_SHARD_MIGRATION *mig_arg =
-    &req_arg->value.migration_arg;
+  const T_MGMT_REQ_ARG_SHARD_MIGRATION *mig_arg = &req_arg->value.migration_arg;
   int mig_groupid = mig_arg->mig_groupid;
   int dest_nodeid = mig_arg->dest_nodeid;
   int cur_status = GROUP_MIGRATION_STATUS_MIGRATOR_RUN;
@@ -2577,70 +2400,63 @@ shd_mg_migration_start (T_THR_FUNC_RES * thr_func_res,
       LOCK_DB_SHARD_INFO ();
 
       if (true)
-	{
-	  const T_GROUPID_INFO *src_gid_info;
+        {
+          const T_GROUPID_INFO *src_gid_info;
 
-	  src_gid_info = find_groupid_info (db_Shard_info.db_groupid_info,
-					    mig_groupid);
-	  if (is_existing_nodeid (db_Shard_info.db_node_info, dest_nodeid))
-	    {
-	      exists_dest_node_info = true;
-	    }
-	  else
-	    {
-	      assert (false);
-	    }
+          src_gid_info = find_groupid_info (db_Shard_info.db_groupid_info, mig_groupid);
+          if (is_existing_nodeid (db_Shard_info.db_node_info, dest_nodeid))
+            {
+              exists_dest_node_info = true;
+            }
+          else
+            {
+              assert (false);
+            }
 
-	  if (src_gid_info != NULL)
-	    {
-	      src_nodeid = src_gid_info->nodeid;
-	    }
-	}
+          if (src_gid_info != NULL)
+            {
+              src_nodeid = src_gid_info->nodeid;
+            }
+        }
 
       UNLOCK_DB_SHARD_INFO ();
 
-      if (src_nodeid == 0 || src_nodeid == dest_nodeid ||
-	  exists_dest_node_info == false)
-	{
-	  br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
-			"migration_start: groupid:%d src_nodeid = %d, dest_nodeid = %d\n",
-			mig_groupid, src_nodeid, dest_nodeid);
-	  return BR_ER_MIGRATION_INVALID_NODEID;
-	}
+      if (src_nodeid == 0 || src_nodeid == dest_nodeid || exists_dest_node_info == false)
+        {
+          br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
+                        "migration_start: groupid:%d src_nodeid = %d, dest_nodeid = %d\n",
+                        mig_groupid, src_nodeid, dest_nodeid);
+          return BR_ER_MIGRATION_INVALID_NODEID;
+        }
 
       make_update_query_migration_start (&sql_and_param[0], &cur_ts,
-					 &next_status,
-					 &mig_groupid, &src_nodeid,
-					 &dest_nodeid, &cur_status);
+                                         &next_status, &mig_groupid, &src_nodeid, &dest_nodeid, &cur_status);
       make_query_incr_mig_req_count (&sql_and_param[1]);
 
       if (admin_query_execute_array (conn, 2, sql_and_param) < 0)
-	{
-	  br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
-			"migration_start fail: groupid: %d nodeid: %d -> %d\n",
-			mig_groupid, src_nodeid, dest_nodeid);
-	  return BR_ER_METADB;
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
+                        "migration_start fail: groupid: %d nodeid: %d -> %d\n", mig_groupid, src_nodeid, dest_nodeid);
+          return BR_ER_METADB;
+        }
 
       br_log_write (BROKER_LOG_NOTICE, job->clt_ip_addr,
-		    "migration_start: groupid: %d nodeid: %d -> %d\n",
-		    mig_groupid, src_nodeid, dest_nodeid);
+                    "migration_start: groupid: %d nodeid: %d -> %d\n", mig_groupid, src_nodeid, dest_nodeid);
 
       *thr_func_res = THR_FUNC_COMPLETE_AND_WAIT_NEXT;
     }
   else
     {
       if (is_expired_request (job->request_time, mig_arg->timeout_sec))
-	{
-	  br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
-			"migration_start request timeout(%d)",
-			mig_arg->timeout_sec);
-	  return BR_ER_REQUEST_TIMEOUT;
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
+                        "migration_start request timeout(%d)", mig_arg->timeout_sec);
+          return BR_ER_REQUEST_TIMEOUT;
+        }
       else
-	{
-	  *thr_func_res = THR_FUNC_NEED_QUEUEING;
-	}
+        {
+          *thr_func_res = THR_FUNC_NEED_QUEUEING;
+        }
     }
 
   return 0;
@@ -2651,21 +2467,18 @@ get_next_version (const T_SHARD_DB_REC * shard_db_rec)
 {
   int64_t cur_last_ver;
 
-  cur_last_ver = MAX (shard_db_rec->gid_info_last_ver,
-		      shard_db_rec->node_info_last_ver);
+  cur_last_ver = MAX (shard_db_rec->gid_info_last_ver, shard_db_rec->node_info_last_ver);
 
   return (cur_last_ver + 1);
 }
 
 static int
 shd_mg_migration_end (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-		      CCI_CONN * conn,
-		      const T_SHARD_DB_REC * shard_db_rec,
-		      const T_MGMT_REQ_ARG * req_arg,
-		      UNUSED_ARG const T_SHARD_MGMT_JOB * job)
+                      CCI_CONN * conn,
+                      const T_SHARD_DB_REC * shard_db_rec,
+                      const T_MGMT_REQ_ARG * req_arg, UNUSED_ARG const T_SHARD_MGMT_JOB * job)
 {
-  const T_MGMT_REQ_ARG_SHARD_MIGRATION *mig_arg =
-    &req_arg->value.migration_arg;
+  const T_MGMT_REQ_ARG_SHARD_MIGRATION *mig_arg = &req_arg->value.migration_arg;
   int64_t next_gid_ver;
 
   next_gid_ver = get_next_version (shard_db_rec);
@@ -2680,9 +2493,7 @@ shd_mg_migration_fail (CCI_CONN * conn, const void *arg)
 }
 
 static int
-shd_mg_migration_end_internal (CCI_CONN * conn,
-			       const T_MGMT_REQ_ARG_SHARD_MIGRATION * mig_arg,
-			       int64_t next_gid_ver)
+shd_mg_migration_end_internal (CCI_CONN * conn, const T_MGMT_REQ_ARG_SHARD_MIGRATION * mig_arg, int64_t next_gid_ver)
 {
   T_SQL_AND_PARAM sql_and_param[4];
   int num_sql = 0;
@@ -2699,33 +2510,29 @@ shd_mg_migration_end_internal (CCI_CONN * conn,
       cur_status = GROUP_MIGRATION_STATUS_MIGRATION_STARTED;
 
       make_update_query_migration_end (&sql_and_param[num_sql++],
-				       &next_status, &cur_ts,
-				       &mig_arg->num_shard_keys,
-				       &mig_arg->mig_groupid, &cur_status);
+                                       &next_status, &cur_ts,
+                                       &mig_arg->num_shard_keys, &mig_arg->mig_groupid, &cur_status);
       make_query_update_groupid (&sql_and_param[num_sql++],
-				 &mig_arg->mig_groupid, &mig_arg->dest_nodeid,
-				 &next_gid_ver);
+                                 &mig_arg->mig_groupid, &mig_arg->dest_nodeid, &next_gid_ver);
       make_query_incr_last_groupid (&sql_and_param[num_sql++], &next_gid_ver);
     }
   else
     {
       next_status = GROUP_MIGRATION_STATUS_FAILED;
       make_update_query_migration_end (&sql_and_param[num_sql++],
-				       &next_status, &cur_ts,
-				       &mig_arg->num_shard_keys,
-				       &mig_arg->mig_groupid, NULL);
+                                       &next_status, &cur_ts, &mig_arg->num_shard_keys, &mig_arg->mig_groupid, NULL);
     }
 
   if (admin_query_execute_array (conn, num_sql, sql_and_param) < 0)
     {
       cci_end_tran (conn, CCI_TRAN_ROLLBACK);
       if (next_gid_ver > 0)
-	{
-	  if (shd_mg_migration_end_internal (conn, mig_arg, 0) == 0)
-	    {
-	      cci_end_tran (conn, CCI_TRAN_COMMIT);
-	    }
-	}
+        {
+          if (shd_mg_migration_end_internal (conn, mig_arg, 0) == 0)
+            {
+              cci_end_tran (conn, CCI_TRAN_COMMIT);
+            }
+        }
       error = BR_ER_METADB;
     }
 
@@ -2741,10 +2548,8 @@ shd_mg_migration_end_internal (CCI_CONN * conn,
 
 static int
 shd_mg_ddl_start (T_THR_FUNC_RES * thr_func_res,
-		  CCI_CONN * conn,
-		  const T_SHARD_DB_REC * shard_db_rec,
-		  const T_MGMT_REQ_ARG * req_arg,
-		  const T_SHARD_MGMT_JOB * job)
+                  CCI_CONN * conn,
+                  const T_SHARD_DB_REC * shard_db_rec, const T_MGMT_REQ_ARG * req_arg, const T_SHARD_MGMT_JOB * job)
 {
   T_SQL_AND_PARAM sql_and_param[1];
 
@@ -2757,24 +2562,22 @@ shd_mg_ddl_start (T_THR_FUNC_RES * thr_func_res,
     {
       make_query_incr_ddl_req_count (&sql_and_param[0]);
       if (admin_query_execute_array (conn, 1, sql_and_param) < 0)
-	{
-	  return BR_ER_METADB;
-	}
+        {
+          return BR_ER_METADB;
+        }
     }
   else
     {
-      if (is_expired_request (job->request_time,
-			      req_arg->value.ddl_arg.timeout_sec))
-	{
-	  shd_mg_ddl_fail (conn, NULL);
-	  cci_end_tran (conn, CCI_TRAN_COMMIT);
+      if (is_expired_request (job->request_time, req_arg->value.ddl_arg.timeout_sec))
+        {
+          shd_mg_ddl_fail (conn, NULL);
+          cci_end_tran (conn, CCI_TRAN_COMMIT);
 
-	  br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
-			"ddl_start request timeout(%d)",
-			req_arg->value.ddl_arg.timeout_sec);
+          br_log_write (BROKER_LOG_ERROR, job->clt_ip_addr,
+                        "ddl_start request timeout(%d)", req_arg->value.ddl_arg.timeout_sec);
 
-	  return BR_ER_REQUEST_TIMEOUT;
-	}
+          return BR_ER_REQUEST_TIMEOUT;
+        }
     }
 
   if (shard_db_rec->mig_req_count > 0)
@@ -2791,10 +2594,9 @@ shd_mg_ddl_start (T_THR_FUNC_RES * thr_func_res,
 
 static int
 shd_mg_ddl_end (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-		CCI_CONN * conn,
-		UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
-		UNUSED_ARG const T_MGMT_REQ_ARG * req_arg,
-		UNUSED_ARG const T_SHARD_MGMT_JOB * job)
+                CCI_CONN * conn,
+                UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
+                UNUSED_ARG const T_MGMT_REQ_ARG * req_arg, UNUSED_ARG const T_SHARD_MGMT_JOB * job)
 {
   return (shd_mg_ddl_end_internal (conn));
 }
@@ -2821,10 +2623,9 @@ shd_mg_ddl_end_internal (CCI_CONN * conn)
 
 static int
 shd_mg_gc_start (T_THR_FUNC_RES * thr_func_res,
-		 CCI_CONN * conn,
-		 const T_SHARD_DB_REC * shard_db_rec,
-		 UNUSED_ARG const T_MGMT_REQ_ARG * req_arg,
-		 UNUSED_ARG const T_SHARD_MGMT_JOB * job)
+                 CCI_CONN * conn,
+                 const T_SHARD_DB_REC * shard_db_rec,
+                 UNUSED_ARG const T_MGMT_REQ_ARG * req_arg, UNUSED_ARG const T_SHARD_MGMT_JOB * job)
 {
   T_SQL_AND_PARAM sql_and_param[1];
 
@@ -2842,9 +2643,9 @@ shd_mg_gc_start (T_THR_FUNC_RES * thr_func_res,
     {
       make_query_incr_gc_req_count (&sql_and_param[0]);
       if (admin_query_execute_array (conn, 1, sql_and_param) < 0)
-	{
-	  return BR_ER_METADB;
-	}
+        {
+          return BR_ER_METADB;
+        }
     }
 
   *thr_func_res = THR_FUNC_COMPLETE_AND_WAIT_NEXT;
@@ -2854,10 +2655,9 @@ shd_mg_gc_start (T_THR_FUNC_RES * thr_func_res,
 
 static int
 shd_mg_gc_end (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-	       CCI_CONN * conn,
-	       UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
-	       UNUSED_ARG const T_MGMT_REQ_ARG * req_arg,
-	       UNUSED_ARG const T_SHARD_MGMT_JOB * job)
+               CCI_CONN * conn,
+               UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
+               UNUSED_ARG const T_MGMT_REQ_ARG * req_arg, UNUSED_ARG const T_SHARD_MGMT_JOB * job)
 {
   return (shd_mg_gc_end_internal (conn));
 }
@@ -2889,8 +2689,7 @@ check_incomplete_node (CCI_CONN * conn)
   char sql[SQL_BUF_SIZE];
   int res;
 
-  sprintf (sql, "SELECT 1 FROM %s WHERE %s <> %d",
-	   TABLE_SHARD_NODE, COL_SHARD_NODE_STATUS, ADD_NODE_STATUS_COMPLETE);
+  sprintf (sql, "SELECT 1 FROM %s WHERE %s <> %d", TABLE_SHARD_NODE, COL_SHARD_NODE_STATUS, ADD_NODE_STATUS_COMPLETE);
 
   res = admin_query_execute (conn, true, NULL, sql, 0, NULL);
 
@@ -2930,16 +2729,15 @@ check_rebalance_job (CCI_CONN * conn, bool ignore_fail_job, bool rm_prev_job)
     }
 
   APPEND_QUERY_STR (p,
-		    "SELECT 1 FROM %s WHERE %s > 0 AND %s NOT IN (%d, %d) ",
-		    TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
-		    COL_SHARD_MIGRATION_STATUS, status_val1, status_val2);
+                    "SELECT 1 FROM %s WHERE %s > 0 AND %s NOT IN (%d, %d) ",
+                    TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
+                    COL_SHARD_MIGRATION_STATUS, status_val1, status_val2);
 
   APPEND_QUERY_STR (p, " LIMIT 1 ");
 
   assert ((int) DIM (bind_param) >= num_bind_param);
 
-  res = admin_query_execute (conn, true, NULL, sql,
-			     num_bind_param, bind_param);
+  res = admin_query_execute (conn, true, NULL, sql, num_bind_param, bind_param);
 
   if (res < 0)
     {
@@ -2953,14 +2751,14 @@ check_rebalance_job (CCI_CONN * conn, bool ignore_fail_job, bool rm_prev_job)
   if (rm_prev_job)
     {
       sprintf (sql, "DELETE FROM %s WHERE %s > 0 AND %s IN (%d, %d) ",
-	       TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
-	       COL_SHARD_MIGRATION_STATUS, status_val1, status_val2);
+               TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
+               COL_SHARD_MIGRATION_STATUS, status_val1, status_val2);
 
       res = admin_query_execute (conn, true, NULL, sql, 0, NULL);
       if (res < 0)
-	{
-	  return BR_ER_METADB;
-	}
+        {
+          return BR_ER_METADB;
+        }
     }
 
   return 0;
@@ -2981,8 +2779,7 @@ mig_info_sort_func (const void *arg1, const void *arg2)
 }
 
 static void
-shuffle_and_sort_migration_info (int mig_count,
-				 T_GROUP_MIGRATION_INFO * mig_info)
+shuffle_and_sort_migration_info (int mig_count, T_GROUP_MIGRATION_INFO * mig_info)
 {
   struct drand48_data rand_buf;
   int i, idx;
@@ -3011,16 +2808,14 @@ shuffle_and_sort_migration_info (int mig_count,
       mig_info[i].mig_order = i + 1;
     }
 
-  qsort (mig_info, mig_count, sizeof (T_GROUP_MIGRATION_INFO),
-	 mig_info_sort_func);
+  qsort (mig_info, mig_count, sizeof (T_GROUP_MIGRATION_INFO), mig_info_sort_func);
 }
 
 static int
 shd_mg_rebalance_req (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-		      CCI_CONN * conn,
-		      const T_SHARD_DB_REC * shard_db_rec,
-		      const T_MGMT_REQ_ARG * req_arg,
-		      UNUSED_ARG const T_SHARD_MGMT_JOB * job)
+                      CCI_CONN * conn,
+                      const T_SHARD_DB_REC * shard_db_rec,
+                      const T_MGMT_REQ_ARG * req_arg, UNUSED_ARG const T_SHARD_MGMT_JOB * job)
 {
   int mig_count = 0;
   T_GROUP_MIGRATION_INFO *mig_info = NULL;
@@ -3049,12 +2844,10 @@ shd_mg_rebalance_req (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   LOCK_DB_SHARD_INFO ();
 
   mig_count = make_rebalance_info (&mig_info, rbl_req_arg->empty_node,
-				   rbl_req_arg->num_src_nodes,
-				   rbl_req_arg->src_nodeid,
-				   rbl_req_arg->num_dest_nodes,
-				   rbl_req_arg->dest_nodeid,
-				   db_Shard_info.db_node_info,
-				   db_Shard_info.db_groupid_info);
+                                   rbl_req_arg->num_src_nodes,
+                                   rbl_req_arg->src_nodeid,
+                                   rbl_req_arg->num_dest_nodes,
+                                   rbl_req_arg->dest_nodeid, db_Shard_info.db_node_info, db_Shard_info.db_groupid_info);
 
   UNLOCK_DB_SHARD_INFO ();
 
@@ -3080,65 +2873,56 @@ shd_mg_rebalance_req (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
       shuffle_and_sort_migration_info (mig_count, mig_info);
 
       sprintf (sql,
-	       "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-	       "        VALUES (?,  ?,  ?,  ?,  ?,  ?,  ?,  ?,  ?,  ? ) ",
-	       TABLE_SHARD_MIGRATION,
-	       COL_SHARD_MIGRATION_GROUPID, COL_SHARD_MIGRATION_MGMT_HOST,
-	       COL_SHARD_MIGRATION_MGMT_PID, COL_SHARD_MIGRATION_SRC_NODEID,
-	       COL_SHARD_MIGRATION_DEST_NODEID, COL_SHARD_MIGRATION_STATUS,
-	       COL_SHARD_MIGRATION_MIG_ORDER, COL_SHARD_MIGRATION_MODIFIED_AT,
-	       COL_SHARD_MIGRATION_RUN_TIME, COL_SHARD_MIGRATION_SHARD_KEYS);
+               "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+               "        VALUES (?,  ?,  ?,  ?,  ?,  ?,  ?,  ?,  ?,  ? ) ",
+               TABLE_SHARD_MIGRATION,
+               COL_SHARD_MIGRATION_GROUPID, COL_SHARD_MIGRATION_MGMT_HOST,
+               COL_SHARD_MIGRATION_MGMT_PID, COL_SHARD_MIGRATION_SRC_NODEID,
+               COL_SHARD_MIGRATION_DEST_NODEID, COL_SHARD_MIGRATION_STATUS,
+               COL_SHARD_MIGRATION_MIG_ORDER, COL_SHARD_MIGRATION_MODIFIED_AT,
+               COL_SHARD_MIGRATION_RUN_TIME, COL_SHARD_MIGRATION_SHARD_KEYS);
 
       error = cci_prepare (conn, &stmt, sql, 0);
       if (error < 0)
-	{
-	  BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			    conn->err_buf.err_msg, sql);
-	  mig_count = 0;
-	}
+        {
+          BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, sql);
+          mig_count = 0;
+        }
 
       for (i = 0; i < mig_count; i++)
-	{
-	  int num_bind = 0;
+        {
+          int num_bind = 0;
 
-	  if (mig_info[i].groupid <= 0 ||
-	      mig_info[i].src_nodeid <= 0 ||
-	      mig_info[i].dest_nodeid <= 0 ||
-	      mig_info[i].src_nodeid == mig_info[i].dest_nodeid)
-	    {
-	      assert (false);
-	      continue;
-	    }
+          if (mig_info[i].groupid <= 0 ||
+              mig_info[i].src_nodeid <= 0 ||
+              mig_info[i].dest_nodeid <= 0 || mig_info[i].src_nodeid == mig_info[i].dest_nodeid)
+            {
+              assert (false);
+              continue;
+            }
 
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-			  &mig_info[i].groupid);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
-			  mgmt_hostname);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mgmt_pid);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-			  &mig_info[i].src_nodeid);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-			  &mig_info[i].dest_nodeid);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mig_status);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-			  &mig_info[i].mig_order);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &cur_ts);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &run_time);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-			  &num_shard_keys);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mig_info[i].groupid);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR, mgmt_hostname);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mgmt_pid);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mig_info[i].src_nodeid);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mig_info[i].dest_nodeid);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mig_status);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mig_info[i].mig_order);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &cur_ts);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &run_time);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &num_shard_keys);
 
-	  assert (COL_COUNT_SHARD_MIGRATION == num_bind);
+          assert (COL_COUNT_SHARD_MIGRATION == num_bind);
 
-	  res = admin_query_execute (conn, false, &stmt, sql,
-				     num_bind, bind_param);
-	  if (res < 0)
-	    {
-	      error = res;
-	      break;
-	    }
+          res = admin_query_execute (conn, false, &stmt, sql, num_bind, bind_param);
+          if (res < 0)
+            {
+              error = res;
+              break;
+            }
 
-	  assert (res == 1);
-	}
+          assert (res == 1);
+        }
     }
 
   RYE_FREE_MEM (mig_info);
@@ -3159,10 +2943,9 @@ shd_mg_rebalance_req (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
 
 static int
 shd_mg_rebalance_job_count (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
-			    CCI_CONN * conn,
-			    UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
-			    const T_MGMT_REQ_ARG * req_arg,
-			    UNUSED_ARG const T_SHARD_MGMT_JOB * job)
+                            CCI_CONN * conn,
+                            UNUSED_ARG const T_SHARD_DB_REC * shard_db_rec,
+                            const T_MGMT_REQ_ARG * req_arg, UNUSED_ARG const T_SHARD_MGMT_JOB * job)
 {
   char sql[SQL_BUF_SIZE];
   CCI_STMT stmt;
@@ -3174,45 +2957,40 @@ shd_mg_rebalance_job_count (UNUSED_ARG T_THR_FUNC_RES * thr_func_res,
   if (job_count_arg->job_type == MGMT_REBALANCE_JOB_COUNT_TYPE_COMPLETE)
     {
       sprintf (sql,
-	       "SELECT count(*) FROM %s WHERE %s > 0 AND %s = %d ",
-	       TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
-	       COL_SHARD_MIGRATION_STATUS, GROUP_MIGRATION_STATUS_COMPLETE);
+               "SELECT count(*) FROM %s WHERE %s > 0 AND %s = %d ",
+               TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
+               COL_SHARD_MIGRATION_STATUS, GROUP_MIGRATION_STATUS_COMPLETE);
     }
   else if (job_count_arg->job_type == MGMT_REBALANCE_JOB_COUNT_TYPE_FAILED)
     {
       sprintf (sql,
-	       "SELECT count(*) FROM %s WHERE %s > 0 AND %s = %d ",
-	       TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
-	       COL_SHARD_MIGRATION_STATUS, GROUP_MIGRATION_STATUS_FAILED);
+               "SELECT count(*) FROM %s WHERE %s > 0 AND %s = %d ",
+               TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
+               COL_SHARD_MIGRATION_STATUS, GROUP_MIGRATION_STATUS_FAILED);
     }
   else
     {
       sprintf (sql,
-	       "SELECT count(*) FROM %s WHERE %s > 0 AND %s NOT IN (%d, %d) ",
-	       TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
-	       COL_SHARD_MIGRATION_STATUS,
-	       GROUP_MIGRATION_STATUS_COMPLETE,
-	       GROUP_MIGRATION_STATUS_FAILED);
+               "SELECT count(*) FROM %s WHERE %s > 0 AND %s NOT IN (%d, %d) ",
+               TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID,
+               COL_SHARD_MIGRATION_STATUS, GROUP_MIGRATION_STATUS_COMPLETE, GROUP_MIGRATION_STATUS_FAILED);
     }
 
   if (cci_prepare (conn, &stmt, sql, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			conn->err_buf.err_msg, sql);
+      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, sql);
       return BR_ER_METADB;
     }
 
   if (cci_execute (&stmt, 0, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("execute", stmt.err_buf.err_code,
-			stmt.err_buf.err_msg, sql);
+      BR_LOG_CCI_ERROR ("execute", stmt.err_buf.err_code, stmt.err_buf.err_msg, sql);
       return BR_ER_METADB;
     }
 
   if (cci_fetch_next (&stmt) < 0)
     {
-      BR_LOG_CCI_ERROR ("execute", stmt.err_buf.err_code,
-			stmt.err_buf.err_msg, sql);
+      BR_LOG_CCI_ERROR ("execute", stmt.err_buf.err_code, stmt.err_buf.err_msg, sql);
       return BR_ER_METADB;
     }
 
@@ -3235,7 +3013,7 @@ set_migrator_dba_passwd (const char *dba_passwd)
   else
     {
       STRNCPY (shard_Mgmt_server_info.migrator_dba_passwd, dba_passwd,
-	       sizeof (shard_Mgmt_server_info.migrator_dba_passwd));
+               sizeof (shard_Mgmt_server_info.migrator_dba_passwd));
     }
 
 }
@@ -3243,14 +3021,12 @@ set_migrator_dba_passwd (const char *dba_passwd)
 static bool
 is_expired_request (time_t request_time, int timeout_sec)
 {
-  return ((timeout_sec > 0) &&
-	  ((int) (time (NULL) - request_time) > timeout_sec));
+  return ((timeout_sec > 0) && ((int) (time (NULL) - request_time) > timeout_sec));
 }
 
 static int
 insert_shard_groupid_table (CCI_CONN * conn, int all_groupid_count,
-			    int init_num_node, const int *init_nodeid_arr,
-			    int64_t init_gid_ver)
+                            int init_num_node, const int *init_nodeid_arr, int64_t init_gid_ver)
 {
   CCI_STMT stmt;
   int nodeid;
@@ -3276,14 +3052,11 @@ insert_shard_groupid_table (CCI_CONN * conn, int all_groupid_count,
   next_nodeid_incr = shard_groupid_count;
 
   sprintf (sql, "INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)",
-	   TABLE_SHARD_GROUPID,
-	   COL_SHARD_GROUPID_GROUPID, COL_SHARD_GROUPID_NODEID,
-	   COL_SHARD_GROUPID_VERSION);
+           TABLE_SHARD_GROUPID, COL_SHARD_GROUPID_GROUPID, COL_SHARD_GROUPID_NODEID, COL_SHARD_GROUPID_VERSION);
 
   if (cci_prepare (conn, &stmt, sql, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			conn->err_buf.err_msg, sql);
+      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, sql);
       return BR_ER_METADB;
     }
 
@@ -3298,35 +3071,32 @@ insert_shard_groupid_table (CCI_CONN * conn, int all_groupid_count,
 
       assert (COL_COUNT_SHARD_GROUPID == num_bind);
 
-      error = admin_query_execute (conn, false, &stmt, sql,
-				   num_bind, bind_param);
+      error = admin_query_execute (conn, false, &stmt, sql, num_bind, bind_param);
       if (error < 0)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       else if (error == 0)
-	{
-	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "%s: affected row = 0",
-			sql);
-	  return BR_ER_METADB;
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "%s: affected row = 0", sql);
+          return BR_ER_METADB;
+        }
 
       if (i >= next_nodeid_incr)
-	{
-	  if (init_nodeid_arr_idx < init_num_node)
-	    {
-	      nodeid = init_nodeid_arr[init_nodeid_arr_idx++];
-	      next_nodeid_incr += shard_groupid_count;
-	    }
-	}
+        {
+          if (init_nodeid_arr_idx < init_num_node)
+            {
+              nodeid = init_nodeid_arr[init_nodeid_arr_idx++];
+              next_nodeid_incr += shard_groupid_count;
+            }
+        }
     }
 
   return 0;
 }
 
 static void
-make_query_create_global_table (T_SQL_AND_PARAM * sql_and_param,
-				const T_TABLE_DEF * table)
+make_query_create_global_table (T_SQL_AND_PARAM * sql_and_param, const T_TABLE_DEF * table)
 {
   int i;
   char *p = sql_and_param->sql;
@@ -3339,27 +3109,27 @@ make_query_create_global_table (T_SQL_AND_PARAM * sql_and_param,
     {
       APPEND_QUERY_STR (p, " %s ", table->columns[i].name);
       switch (table->columns[i].type)
-	{
-	case COLUMN_TYPE_INT:
-	  APPEND_QUERY_STR (p, " INT ");
-	  break;
-	case COLUMN_TYPE_STRING:
-	  APPEND_QUERY_STR (p, " STRING ");
-	  break;
-	case COLUMN_TYPE_BIGINT:
-	  APPEND_QUERY_STR (p, " BIGINT ");
-	  break;
-	case COLUMN_TYPE_DATETIME:
-	  APPEND_QUERY_STR (p, " DATETIME ");
-	  break;
-	default:
-	  break;
-	}
+        {
+        case COLUMN_TYPE_INT:
+          APPEND_QUERY_STR (p, " INT ");
+          break;
+        case COLUMN_TYPE_STRING:
+          APPEND_QUERY_STR (p, " STRING ");
+          break;
+        case COLUMN_TYPE_BIGINT:
+          APPEND_QUERY_STR (p, " BIGINT ");
+          break;
+        case COLUMN_TYPE_DATETIME:
+          APPEND_QUERY_STR (p, " DATETIME ");
+          break;
+        default:
+          break;
+        }
       APPEND_QUERY_STR (p, " NOT NULL, ");
       if (table->columns[i].is_pk)
-	{
-	  pk[num_pk++] = table->columns[i].name;
-	}
+        {
+          pk[num_pk++] = table->columns[i].name;
+        }
     }
 
   APPEND_QUERY_STR (p, " PRIMARY KEY( ");
@@ -3367,9 +3137,9 @@ make_query_create_global_table (T_SQL_AND_PARAM * sql_and_param,
   for (i = 0; i < num_pk; i++)
     {
       if (i != 0)
-	{
-	  APPEND_QUERY_STR (p, ", ");
-	}
+        {
+          APPEND_QUERY_STR (p, ", ");
+        }
 
       APPEND_QUERY_STR (p, "%s", pk[i]);
     }
@@ -3381,22 +3151,20 @@ make_query_create_global_table (T_SQL_AND_PARAM * sql_and_param,
 }
 
 static void
-make_query_create_index (T_SQL_AND_PARAM * sql_and_param,
-			 const T_INDEX_DEF * index_def)
+make_query_create_index (T_SQL_AND_PARAM * sql_and_param, const T_INDEX_DEF * index_def)
 {
   char *p = sql_and_param->sql;
   int i;
 
   APPEND_QUERY_STR (p, "CREATE %s INDEX %s on %s (",
-		    (index_def->is_unique ? "UNIQUE" : ""),
-		    index_def->index_name, index_def->table_name);
+                    (index_def->is_unique ? "UNIQUE" : ""), index_def->index_name, index_def->table_name);
 
   for (i = 0; index_def->column_name[i] != NULL; i++)
     {
       if (i != 0)
-	{
-	  APPEND_QUERY_STR (p, ", ");
-	}
+        {
+          APPEND_QUERY_STR (p, ", ");
+        }
 
       APPEND_QUERY_STR (p, "%s", index_def->column_name[i]);
     }
@@ -3410,19 +3178,16 @@ make_query_create_index (T_SQL_AND_PARAM * sql_and_param,
 static void
 make_query_create_user (T_SQL_AND_PARAM * sql_and_param)
 {
-  sprintf (sql_and_param->sql, "CREATE USER %s PASSWORD '%s'",
-	   shard_Mgmt_db_user, shard_Mgmt_db_passwd);
+  sprintf (sql_and_param->sql, "CREATE USER %s PASSWORD '%s'", shard_Mgmt_db_user, shard_Mgmt_db_passwd);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = false;
 }
 
 static void
-make_query_change_owner (T_SQL_AND_PARAM * sql_and_param,
-			 const T_TABLE_DEF * table)
+make_query_change_owner (T_SQL_AND_PARAM * sql_and_param, const T_TABLE_DEF * table)
 {
-  sprintf (sql_and_param->sql, "ALTER TABLE %s OWNER TO %s",
-	   table->table_name, shard_Mgmt_db_user);
+  sprintf (sql_and_param->sql, "ALTER TABLE %s OWNER TO %s", table->table_name, shard_Mgmt_db_user);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = false;
@@ -3430,41 +3195,30 @@ make_query_change_owner (T_SQL_AND_PARAM * sql_and_param,
 
 static void
 make_query_insert_shard_db (T_SQL_AND_PARAM * sql_and_param,
-			    const int *shard_db_id,
-			    const T_SHARD_DB_REC * shard_db_rec)
+                            const int *shard_db_id, const T_SHARD_DB_REC * shard_db_rec)
 {
   T_BIND_PARAM *bind_param = sql_and_param->bind_param;
   int num_bind = 0;
 
   sprintf (sql_and_param->sql,
-	   "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-	   "        VALUES (?,  ?,  ?,  ?,  ?,  ?,  ?,  ?, ?, ?)",
-	   TABLE_SHARD_DB,
-	   COL_SHARD_DB_ID, COL_SHARD_DB_DB_NAME,
-	   COL_SHARD_DB_GROUPID_COUNT, COL_SHARD_DB_GROUPID_LAST_VER,
-	   COL_SHARD_DB_NODE_LAST_VER, COL_SHARD_DB_MIG_REQ_COUNT,
-	   COL_SHARD_DB_DDL_REQ_COUNT, COL_SHARD_DB_GC_REQ_COUNT,
-	   COL_SHARD_DB_NODE_STATUS, COL_SHARD_DB_CREATED_AT);
+           "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+           "        VALUES (?,  ?,  ?,  ?,  ?,  ?,  ?,  ?, ?, ?)",
+           TABLE_SHARD_DB,
+           COL_SHARD_DB_ID, COL_SHARD_DB_DB_NAME,
+           COL_SHARD_DB_GROUPID_COUNT, COL_SHARD_DB_GROUPID_LAST_VER,
+           COL_SHARD_DB_NODE_LAST_VER, COL_SHARD_DB_MIG_REQ_COUNT,
+           COL_SHARD_DB_DDL_REQ_COUNT, COL_SHARD_DB_GC_REQ_COUNT, COL_SHARD_DB_NODE_STATUS, COL_SHARD_DB_CREATED_AT);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, shard_db_id);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
-		  shard_db_rec->global_dbname);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		  &shard_db_rec->groupid_count);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT,
-		  &shard_db_rec->gid_info_last_ver);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT,
-		  &shard_db_rec->node_info_last_ver);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		  &shard_db_rec->mig_req_count);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		  &shard_db_rec->ddl_req_count);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		  &shard_db_rec->gc_req_count);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		  &shard_db_rec->node_status);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT,
-		  &shard_db_rec->created_at);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR, shard_db_rec->global_dbname);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &shard_db_rec->groupid_count);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &shard_db_rec->gid_info_last_ver);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &shard_db_rec->node_info_last_ver);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &shard_db_rec->mig_req_count);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &shard_db_rec->ddl_req_count);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &shard_db_rec->gc_req_count);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &shard_db_rec->node_status);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &shard_db_rec->created_at);
 
   assert (num_bind == COL_COUNT_SHARD_DB);
 
@@ -3474,12 +3228,10 @@ make_query_insert_shard_db (T_SQL_AND_PARAM * sql_and_param,
 
 static void
 make_update_query_migration_start (T_SQL_AND_PARAM * sql_and_param,
-				   const int64_t * cur_ts,
-				   const int *next_status,
-				   const int *mig_groupid,
-				   const int *src_nodeid,
-				   const int *dest_nodeid,
-				   const int *cur_status)
+                                   const int64_t * cur_ts,
+                                   const int *next_status,
+                                   const int *mig_groupid,
+                                   const int *src_nodeid, const int *dest_nodeid, const int *cur_status)
 {
   T_BIND_PARAM *bind_param = sql_and_param->bind_param;
   const char *hostname = shard_Mgmt_server_info.hostname;
@@ -3487,12 +3239,12 @@ make_update_query_migration_start (T_SQL_AND_PARAM * sql_and_param,
   int num_bind = 0;
 
   sprintf (sql_and_param->sql,
-	   "UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
-	   TABLE_SHARD_MIGRATION,
-	   COL_SHARD_MIGRATION_MGMT_HOST, COL_SHARD_MIGRATION_MGMT_PID,
-	   COL_SHARD_MIGRATION_MODIFIED_AT, COL_SHARD_MIGRATION_STATUS,
-	   COL_SHARD_MIGRATION_GROUPID, COL_SHARD_MIGRATION_SRC_NODEID,
-	   COL_SHARD_MIGRATION_DEST_NODEID, COL_SHARD_MIGRATION_STATUS);
+           "UPDATE %s SET %s = ?, %s = ?, %s = ?, %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
+           TABLE_SHARD_MIGRATION,
+           COL_SHARD_MIGRATION_MGMT_HOST, COL_SHARD_MIGRATION_MGMT_PID,
+           COL_SHARD_MIGRATION_MODIFIED_AT, COL_SHARD_MIGRATION_STATUS,
+           COL_SHARD_MIGRATION_GROUPID, COL_SHARD_MIGRATION_SRC_NODEID,
+           COL_SHARD_MIGRATION_DEST_NODEID, COL_SHARD_MIGRATION_STATUS);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR, hostname);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, pid);
@@ -3509,42 +3261,33 @@ make_update_query_migration_start (T_SQL_AND_PARAM * sql_and_param,
 
 static void
 make_update_query_migration_end (T_SQL_AND_PARAM * sql_and_param,
-				 const int *next_status,
-				 const int64_t * cur_ts,
-				 const int *num_shard_keys,
-				 const int *groupid, const int *cur_status)
+                                 const int *next_status,
+                                 const int64_t * cur_ts,
+                                 const int *num_shard_keys, const int *groupid, const int *cur_status)
 {
   char *p = sql_and_param->sql;
   int num_bind = 0;
 
   APPEND_QUERY_STR (p,
-		    "UPDATE %s SET %s = ?, %s = ?, %s = ? - %s, %s = ? WHERE %s = ?",
-		    TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_STATUS,
-		    COL_SHARD_MIGRATION_MODIFIED_AT,
-		    COL_SHARD_MIGRATION_RUN_TIME,
-		    COL_SHARD_MIGRATION_MODIFIED_AT,
-		    COL_SHARD_MIGRATION_SHARD_KEYS,
-		    COL_SHARD_MIGRATION_GROUPID);
+                    "UPDATE %s SET %s = ?, %s = ?, %s = ? - %s, %s = ? WHERE %s = ?",
+                    TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_STATUS,
+                    COL_SHARD_MIGRATION_MODIFIED_AT,
+                    COL_SHARD_MIGRATION_RUN_TIME,
+                    COL_SHARD_MIGRATION_MODIFIED_AT, COL_SHARD_MIGRATION_SHARD_KEYS, COL_SHARD_MIGRATION_GROUPID);
   if (cur_status != NULL)
     {
       APPEND_QUERY_STR (p, " AND %s = ?", COL_SHARD_MIGRATION_STATUS);
     }
 
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param,
-		  CCI_TYPE_INT, next_status);
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param,
-		  CCI_TYPE_BIGINT, cur_ts);
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param,
-		  CCI_TYPE_BIGINT, cur_ts);
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param,
-		  CCI_TYPE_INT, num_shard_keys);
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param,
-		  CCI_TYPE_INT, groupid);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT, next_status);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT, cur_ts);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT, cur_ts);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT, num_shard_keys);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT, groupid);
 
   if (cur_status != NULL)
     {
-      SET_BIND_PARAM (num_bind++, sql_and_param->bind_param,
-		      CCI_TYPE_INT, cur_status);
+      SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT, cur_status);
     }
 
   sql_and_param->num_bind = num_bind;
@@ -3553,27 +3296,21 @@ make_update_query_migration_end (T_SQL_AND_PARAM * sql_and_param,
 
 static void
 make_query_insert_shard_node (T_SQL_AND_PARAM * sql_and_param,
-			      const T_SHARD_NODE_INFO * node_info,
-			      const int *node_status,
-			      const int64_t * node_version)
+                              const T_SHARD_NODE_INFO * node_info, const int *node_status, const int64_t * node_version)
 {
   T_BIND_PARAM *bind_param = sql_and_param->bind_param;
   int num_bind = 0;
 
   sprintf (sql_and_param->sql,
-	   "INSERT INTO %s (%s, %s, %s, %s, %s, %s) values (?, ?, ?, ?, ?, ?)",
-	   TABLE_SHARD_NODE,
-	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME, COL_SHARD_NODE_HOST,
-	   COL_SHARD_NODE_PORT, COL_SHARD_NODE_STATUS,
-	   COL_SHARD_NODE_VERSION);
+           "INSERT INTO %s (%s, %s, %s, %s, %s, %s) values (?, ?, ?, ?, ?, ?)",
+           TABLE_SHARD_NODE,
+           COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME, COL_SHARD_NODE_HOST,
+           COL_SHARD_NODE_PORT, COL_SHARD_NODE_STATUS, COL_SHARD_NODE_VERSION);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &node_info->node_id);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
-		  node_info->local_dbname);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
-		  node_info->host_ip_str);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		  &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR, node_info->local_dbname);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR, node_info->host_ip_str);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, node_status);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, node_version);
 
@@ -3584,25 +3321,19 @@ make_query_insert_shard_node (T_SQL_AND_PARAM * sql_and_param,
 }
 
 static void
-make_query_node_drop (T_SQL_AND_PARAM * sql_and_param,
-		      const T_SHARD_NODE_INFO * node_info)
+make_query_node_drop (T_SQL_AND_PARAM * sql_and_param, const T_SHARD_NODE_INFO * node_info)
 {
   T_BIND_PARAM *bind_param = sql_and_param->bind_param;
   int num_bind = 0;
 
   sprintf (sql_and_param->sql,
-	   "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
-	   TABLE_SHARD_NODE,
-	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
-	   COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
+           "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
+           TABLE_SHARD_NODE, COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME, COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &node_info->node_id);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
-		  node_info->local_dbname);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR,
-		  node_info->host_ip_str);
-  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		  &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR, node_info->local_dbname);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_VARCHAR, node_info->host_ip_str);
+  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &PRM_NODE_INFO_GET_PORT (&node_info->host_info));
 
   sql_and_param->num_bind = num_bind;
   sql_and_param->check_affected_rows = true;
@@ -3614,8 +3345,7 @@ make_query_node_drop_all (T_SQL_AND_PARAM * sql_and_param, int *nodeid)
   T_BIND_PARAM *bind_param = sql_and_param->bind_param;
   int num_bind = 0;
 
-  sprintf (sql_and_param->sql, "DELETE FROM %s WHERE %s = ?",
-	   TABLE_SHARD_NODE, COL_SHARD_NODE_NODEID);
+  sprintf (sql_and_param->sql, "DELETE FROM %s WHERE %s = ?", TABLE_SHARD_NODE, COL_SHARD_NODE_NODEID);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, nodeid);
 
@@ -3627,8 +3357,7 @@ static void
 make_query_incr_mig_req_count (T_SQL_AND_PARAM * sql_and_param)
 {
   sprintf (sql_and_param->sql, "UPDATE %s SET %s = %s + 1 ",
-	   TABLE_SHARD_DB,
-	   COL_SHARD_DB_MIG_REQ_COUNT, COL_SHARD_DB_MIG_REQ_COUNT);
+           TABLE_SHARD_DB, COL_SHARD_DB_MIG_REQ_COUNT, COL_SHARD_DB_MIG_REQ_COUNT);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = true;
@@ -3638,8 +3367,7 @@ static void
 make_query_decr_mig_req_count (T_SQL_AND_PARAM * sql_and_param)
 {
   sprintf (sql_and_param->sql, "UPDATE %s SET %s = %s - 1 ",
-	   TABLE_SHARD_DB,
-	   COL_SHARD_DB_MIG_REQ_COUNT, COL_SHARD_DB_MIG_REQ_COUNT);
+           TABLE_SHARD_DB, COL_SHARD_DB_MIG_REQ_COUNT, COL_SHARD_DB_MIG_REQ_COUNT);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = true;
@@ -3649,8 +3377,7 @@ static void
 make_query_incr_ddl_req_count (T_SQL_AND_PARAM * sql_and_param)
 {
   sprintf (sql_and_param->sql, "UPDATE %s SET %s = %s + 1 ",
-	   TABLE_SHARD_DB,
-	   COL_SHARD_DB_DDL_REQ_COUNT, COL_SHARD_DB_DDL_REQ_COUNT);
+           TABLE_SHARD_DB, COL_SHARD_DB_DDL_REQ_COUNT, COL_SHARD_DB_DDL_REQ_COUNT);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = true;
@@ -3660,8 +3387,7 @@ static void
 make_query_decr_ddl_req_count (T_SQL_AND_PARAM * sql_and_param)
 {
   sprintf (sql_and_param->sql, "UPDATE %s SET %s = %s - 1 ",
-	   TABLE_SHARD_DB,
-	   COL_SHARD_DB_DDL_REQ_COUNT, COL_SHARD_DB_DDL_REQ_COUNT);
+           TABLE_SHARD_DB, COL_SHARD_DB_DDL_REQ_COUNT, COL_SHARD_DB_DDL_REQ_COUNT);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = true;
@@ -3671,8 +3397,7 @@ static void
 make_query_incr_gc_req_count (T_SQL_AND_PARAM * sql_and_param)
 {
   sprintf (sql_and_param->sql, "UPDATE %s SET %s = %s + 1 ",
-	   TABLE_SHARD_DB,
-	   COL_SHARD_DB_GC_REQ_COUNT, COL_SHARD_DB_GC_REQ_COUNT);
+           TABLE_SHARD_DB, COL_SHARD_DB_GC_REQ_COUNT, COL_SHARD_DB_GC_REQ_COUNT);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = true;
@@ -3682,8 +3407,7 @@ static void
 make_query_decr_gc_req_count (T_SQL_AND_PARAM * sql_and_param)
 {
   sprintf (sql_and_param->sql, "UPDATE %s SET %s = %s - 1 ",
-	   TABLE_SHARD_DB,
-	   COL_SHARD_DB_GC_REQ_COUNT, COL_SHARD_DB_GC_REQ_COUNT);
+           TABLE_SHARD_DB, COL_SHARD_DB_GC_REQ_COUNT, COL_SHARD_DB_GC_REQ_COUNT);
 
   sql_and_param->num_bind = 0;
   sql_and_param->check_affected_rows = true;
@@ -3691,53 +3415,42 @@ make_query_decr_gc_req_count (T_SQL_AND_PARAM * sql_and_param)
 
 static void
 make_query_update_groupid (T_SQL_AND_PARAM * sql_and_param,
-			   const int *groupid, const int *nodeid,
-			   const int64_t * version)
+                           const int *groupid, const int *nodeid, const int64_t * version)
 {
   int num_bind = 0;
 
   sprintf (sql_and_param->sql, "UPDATE %s SET %s = ? , %s = ? WHERE %s = ?",
-	   TABLE_SHARD_GROUPID, COL_SHARD_GROUPID_NODEID,
-	   COL_SHARD_GROUPID_VERSION, COL_SHARD_GROUPID_GROUPID);
+           TABLE_SHARD_GROUPID, COL_SHARD_GROUPID_NODEID, COL_SHARD_GROUPID_VERSION, COL_SHARD_GROUPID_GROUPID);
 
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT,
-		  nodeid);
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT,
-		  version);
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT,
-		  groupid);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT, nodeid);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT, version);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_INT, groupid);
 
   sql_and_param->num_bind = num_bind;
   sql_and_param->check_affected_rows = true;
 }
 
 static void
-make_query_incr_last_groupid (T_SQL_AND_PARAM * sql_and_param,
-			      const int64_t * next_gid_ver)
+make_query_incr_last_groupid (T_SQL_AND_PARAM * sql_and_param, const int64_t * next_gid_ver)
 {
   int num_bind = 0;
 
-  sprintf (sql_and_param->sql, "UPDATE %s SET %s = ? ",
-	   TABLE_SHARD_DB, COL_SHARD_DB_GROUPID_LAST_VER);
+  sprintf (sql_and_param->sql, "UPDATE %s SET %s = ? ", TABLE_SHARD_DB, COL_SHARD_DB_GROUPID_LAST_VER);
 
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT,
-		  next_gid_ver);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT, next_gid_ver);
 
   sql_and_param->num_bind = num_bind;
   sql_and_param->check_affected_rows = true;
 }
 
 static void
-make_query_incr_node_ver (T_SQL_AND_PARAM * sql_and_param,
-			  const int64_t * next_node_ver)
+make_query_incr_node_ver (T_SQL_AND_PARAM * sql_and_param, const int64_t * next_node_ver)
 {
   int num_bind = 0;
 
-  sprintf (sql_and_param->sql, "UPDATE %s SET %s = ?",
-	   TABLE_SHARD_DB, COL_SHARD_DB_NODE_LAST_VER);
+  sprintf (sql_and_param->sql, "UPDATE %s SET %s = ?", TABLE_SHARD_DB, COL_SHARD_DB_NODE_LAST_VER);
 
-  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT,
-		  next_node_ver);
+  SET_BIND_PARAM (num_bind++, sql_and_param->bind_param, CCI_TYPE_BIGINT, next_node_ver);
 
   sql_and_param->num_bind = num_bind;
   sql_and_param->check_affected_rows = true;
@@ -3750,9 +3463,9 @@ check_fetch_indicator (const int *ind, int count)
   for (i = 0; i < count; i++)
     {
       if (ind[i] < 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
 
   return 0;
@@ -3784,8 +3497,7 @@ shd_mg_sync_local_mgmt_job_add ()
  * shd_mg_job_queue_add -
 */
 static int
-shd_mg_job_queue_add (int clt_sock_fd, in_addr_t clt_ip_addr,
-		      const T_BROKER_REQUEST_MSG * req_msg)
+shd_mg_job_queue_add (int clt_sock_fd, in_addr_t clt_ip_addr, const T_BROKER_REQUEST_MSG * req_msg)
 {
   T_SHARD_JOB_QUEUE *job_queue;
   T_SHARD_MGMT_JOB *job;
@@ -3795,8 +3507,7 @@ shd_mg_job_queue_add (int clt_sock_fd, in_addr_t clt_ip_addr,
     {
       job_queue_type = JOB_QUEUE_TYPE_GET_INFO;
     }
-  else if (req_msg->op_code == BRREQ_OP_CODE_MIGRATION_END ||
-	   req_msg->op_code == BRREQ_OP_CODE_DDL_END)
+  else if (req_msg->op_code == BRREQ_OP_CODE_MIGRATION_END || req_msg->op_code == BRREQ_OP_CODE_DDL_END)
     {
       /* migration_end, ddl_end request will be processed in
        * migration_start, ddl_start function */
@@ -3825,8 +3536,7 @@ shd_mg_job_queue_add (int clt_sock_fd, in_addr_t clt_ip_addr,
 }
 
 static void
-shd_job_add_internal (T_SHARD_JOB_QUEUE * job_queue,
-		      T_SHARD_MGMT_JOB * job, bool is_retry)
+shd_job_add_internal (T_SHARD_JOB_QUEUE * job_queue, T_SHARD_MGMT_JOB * job, bool is_retry)
 {
   pthread_mutex_lock (&job_queue->lock);
 
@@ -3835,19 +3545,19 @@ shd_job_add_internal (T_SHARD_JOB_QUEUE * job_queue,
       job->next = NULL;
       job->is_retry = is_retry;
       if (is_retry == false)
-	{
-	  job->request_time = time (NULL);
-	}
+        {
+          job->request_time = time (NULL);
+        }
 
       if (job_queue->front == NULL)
-	{
-	  job_queue->front = job_queue->back = job;
-	}
+        {
+          job_queue->front = job_queue->back = job;
+        }
       else
-	{
-	  job_queue->front->next = job;
-	  job_queue->front = job;
-	}
+        {
+          job_queue->front->next = job;
+          job_queue->front = job;
+        }
 
       set_job_queue_job_count (job_queue, job_queue->num_job + 1);
     }
@@ -3904,8 +3614,7 @@ free_mgmt_job (T_SHARD_MGMT_JOB * job)
  * make_new_mgmt_job -
 */
 static T_SHARD_MGMT_JOB *
-make_new_mgmt_job (int clt_sock_fd, in_addr_t clt_ip_addr,
-		   const T_BROKER_REQUEST_MSG * req_msg)
+make_new_mgmt_job (int clt_sock_fd, in_addr_t clt_ip_addr, const T_BROKER_REQUEST_MSG * req_msg)
 {
   T_SHARD_MGMT_JOB *job;
 
@@ -3919,10 +3628,10 @@ make_new_mgmt_job (int clt_sock_fd, in_addr_t clt_ip_addr,
 
       job->req_msg = brreq_msg_clone (req_msg);
       if (job->req_msg == NULL)
-	{
-	  RYE_FREE_MEM (job);
-	  return NULL;
-	}
+        {
+          RYE_FREE_MEM (job);
+          return NULL;
+        }
       job->next = NULL;
     }
 
@@ -3940,9 +3649,9 @@ find_shard_job_queue (T_JOB_QUEUE_TYPE job_queue_type)
   for (i = 0; i < NUM_SHARD_JOB_QUEUE; i++)
     {
       if (shard_Job_queue[i].job_queue_type == job_queue_type)
-	{
-	  return (&shard_Job_queue[i]);
-	}
+        {
+          return (&shard_Job_queue[i]);
+        }
     }
 
   return NULL;
@@ -3952,8 +3661,7 @@ find_shard_job_queue (T_JOB_QUEUE_TYPE job_queue_type)
  * sync_node_info
 */
 static int
-sync_node_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
-		bool admin_mode)
+sync_node_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec, bool admin_mode)
 {
   int64_t node_info_last_ver;
   T_DB_NODE_INFO *new_node_info = NULL;
@@ -3972,27 +3680,26 @@ sync_node_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
     {
       LOCK_DB_SHARD_INFO ();
 
-      if (db_Shard_info.db_node_info == NULL ||
-	  node_info_last_ver > db_Shard_info.db_node_info->node_info_ver)
-	{
-	  UNLOCK_DB_SHARD_INFO ();
+      if (db_Shard_info.db_node_info == NULL || node_info_last_ver > db_Shard_info.db_node_info->node_info_ver)
+        {
+          UNLOCK_DB_SHARD_INFO ();
 
-	  new_node_info = select_all_node_info (conn);
+          new_node_info = select_all_node_info (conn);
 
-	  LOCK_DB_SHARD_INFO ();
+          LOCK_DB_SHARD_INFO ();
 
-	  if (new_node_info != NULL)
-	    {
-	      db_node_info_free (db_Shard_info.db_node_info);
+          if (new_node_info != NULL)
+            {
+              db_node_info_free (db_Shard_info.db_node_info);
 
-	      new_node_info->node_info_ver = node_info_last_ver;
-	      db_Shard_info.db_node_info = new_node_info;
-	    }
-	}
+              new_node_info->node_info_ver = node_info_last_ver;
+              db_Shard_info.db_node_info = new_node_info;
+            }
+        }
       else
-	{
-	  new_node_info = db_Shard_info.db_node_info;
-	}
+        {
+          new_node_info = db_Shard_info.db_node_info;
+        }
 
       UNLOCK_DB_SHARD_INFO ();
     }
@@ -4004,8 +3711,7 @@ sync_node_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
  * sync_groupid_info
 */
 static int
-sync_groupid_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
-		   bool admin_mode)
+sync_groupid_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec, bool admin_mode)
 {
   int64_t gid_info_last_ver = -1;
   T_SHARD_DB_REC tmp_shard_db_rec;
@@ -4024,28 +3730,27 @@ sync_groupid_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
     {
       LOCK_DB_SHARD_INFO ();
 
-      if (db_Shard_info.db_groupid_info == NULL ||
-	  gid_info_last_ver > db_Shard_info.db_groupid_info->gid_info_ver)
-	{
-	  UNLOCK_DB_SHARD_INFO ();
+      if (db_Shard_info.db_groupid_info == NULL || gid_info_last_ver > db_Shard_info.db_groupid_info->gid_info_ver)
+        {
+          UNLOCK_DB_SHARD_INFO ();
 
-	  new_gid_info = select_all_gid_info (conn);
+          new_gid_info = select_all_gid_info (conn);
 
-	  LOCK_DB_SHARD_INFO ();
+          LOCK_DB_SHARD_INFO ();
 
-	  if (new_gid_info != NULL)
-	    {
-	      db_groupid_info_free (db_Shard_info.db_groupid_info);
+          if (new_gid_info != NULL)
+            {
+              db_groupid_info_free (db_Shard_info.db_groupid_info);
 
-	      new_gid_info->gid_info_ver = gid_info_last_ver;
-	      db_Shard_info.db_groupid_info = new_gid_info;
+              new_gid_info->gid_info_ver = gid_info_last_ver;
+              db_Shard_info.db_groupid_info = new_gid_info;
 
-	    }
-	}
+            }
+        }
       else
-	{
-	  new_gid_info = db_Shard_info.db_groupid_info;
-	}
+        {
+          new_gid_info = db_Shard_info.db_groupid_info;
+        }
 
       UNLOCK_DB_SHARD_INFO ();
     }
@@ -4057,13 +3762,11 @@ sync_groupid_info (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
  * get_info_last_ver
 */
 static void
-get_info_last_ver (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
-		   bool admin_mode)
+get_info_last_ver (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec, bool admin_mode)
 {
   int res = 0;
 
-  if (admin_mode ||
-      time (NULL) - db_Sync_info.last_check_time > SHARD_DB_CHECK_INTERVAL)
+  if (admin_mode || time (NULL) - db_Sync_info.last_check_time > SHARD_DB_CHECK_INTERVAL)
     {
       res = select_all_db_info (conn);
     }
@@ -4071,20 +3774,20 @@ get_info_last_ver (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
   if (shard_db_rec)
     {
       if (admin_mode)
-	{
-	  if (res == 0)
-	    {
-	      *shard_db_rec = db_Sync_info.shard_db_rec;
-	    }
-	  else
-	    {
-	      memset (shard_db_rec, 0, sizeof (T_SHARD_DB_REC));
-	    }
-	}
+        {
+          if (res == 0)
+            {
+              *shard_db_rec = db_Sync_info.shard_db_rec;
+            }
+          else
+            {
+              memset (shard_db_rec, 0, sizeof (T_SHARD_DB_REC));
+            }
+        }
       else
-	{
-	  *shard_db_rec = db_Sync_info.shard_db_rec;
-	}
+        {
+          *shard_db_rec = db_Sync_info.shard_db_rec;
+        }
     }
 }
 
@@ -4092,24 +3795,22 @@ get_info_last_ver (CCI_CONN * conn, T_SHARD_DB_REC * shard_db_rec,
  * connect_metadb
 */
 static int
-connect_metadb (CCI_CONN * conn, int cci_autocommit_mode,
-		const char *db_user, const char *db_passwd)
+connect_metadb (CCI_CONN * conn, int cci_autocommit_mode, const char *db_user, const char *db_passwd)
 {
   static int print_cci_error = 1;
 
   if (cci_connect (conn, local_Mgmt_connect_url, db_user, db_passwd) < 0)
     {
       if (print_cci_error > 0 || strcmp (db_user, SHARD_MGMT_DB_USER) != 0)
-	{
-	  BR_LOG_CCI_ERROR ("connect", conn->err_buf.err_code,
-			    conn->err_buf.err_msg, NULL);
-	}
+        {
+          BR_LOG_CCI_ERROR ("connect", conn->err_buf.err_code, conn->err_buf.err_msg, NULL);
+        }
 
       if (print_cci_error == 1)
-	{
-	  /* prevent too many connection error logs */
-	  print_cci_error = 0;
-	}
+        {
+          /* prevent too many connection error logs */
+          print_cci_error = 0;
+        }
       return -1;
     }
 
@@ -4117,8 +3818,7 @@ connect_metadb (CCI_CONN * conn, int cci_autocommit_mode,
 
   if (cci_set_autocommit (conn, cci_autocommit_mode) < 0)
     {
-      BR_LOG_CCI_ERROR ("set_autocommit", conn->err_buf.err_code,
-			conn->err_buf.err_msg, NULL);
+      BR_LOG_CCI_ERROR ("set_autocommit", conn->err_buf.err_code, conn->err_buf.err_msg, NULL);
       cci_disconnect (conn);
       return -1;
     }
@@ -4145,11 +3845,10 @@ select_all_db_info (CCI_CONN * conn_arg)
   if (conn_arg == NULL)
     {
       conn = &tmp_conn;
-      if (connect_metadb (conn, CCI_AUTOCOMMIT_TRUE,
-			  shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
-	{
-	  return -1;
-	}
+      if (connect_metadb (conn, CCI_AUTOCOMMIT_TRUE, shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
+        {
+          return -1;
+        }
     }
   else
     {
@@ -4157,20 +3856,18 @@ select_all_db_info (CCI_CONN * conn_arg)
     }
 
   sprintf (query,
-	   " SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s "
-	   " FROM %s "
-	   " WHERE %s = %d FOR UPDATE",
-	   COL_SHARD_DB_DB_NAME, COL_SHARD_DB_GROUPID_COUNT,
-	   COL_SHARD_DB_GROUPID_LAST_VER, COL_SHARD_DB_NODE_LAST_VER,
-	   COL_SHARD_DB_MIG_REQ_COUNT, COL_SHARD_DB_DDL_REQ_COUNT,
-	   COL_SHARD_DB_GC_REQ_COUNT, COL_SHARD_DB_NODE_STATUS,
-	   COL_SHARD_DB_CREATED_AT,
-	   TABLE_SHARD_DB, COL_SHARD_DB_ID, SHARD_DB_ID_VALUE);
+           " SELECT %s, %s, %s, %s, %s, %s, %s, %s, %s "
+           " FROM %s "
+           " WHERE %s = %d FOR UPDATE",
+           COL_SHARD_DB_DB_NAME, COL_SHARD_DB_GROUPID_COUNT,
+           COL_SHARD_DB_GROUPID_LAST_VER, COL_SHARD_DB_NODE_LAST_VER,
+           COL_SHARD_DB_MIG_REQ_COUNT, COL_SHARD_DB_DDL_REQ_COUNT,
+           COL_SHARD_DB_GC_REQ_COUNT, COL_SHARD_DB_NODE_STATUS,
+           COL_SHARD_DB_CREATED_AT, TABLE_SHARD_DB, COL_SHARD_DB_ID, SHARD_DB_ID_VALUE);
 
   if (cci_prepare (conn, &stmt, query, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			conn->err_buf.err_msg, query);
+      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, query);
       goto select_all_db_info_end;
     }
 
@@ -4183,8 +3880,7 @@ select_all_db_info (CCI_CONN * conn_arg)
 
   if (cci_fetch_next (&stmt) < 0)
     {
-      BR_LOG_CCI_ERROR ("fetch_next", stmt.err_buf.err_code,
-			stmt.err_buf.err_msg, query);
+      BR_LOG_CCI_ERROR ("fetch_next", stmt.err_buf.err_code, stmt.err_buf.err_msg, query);
       goto select_all_db_info_end;
     }
 
@@ -4206,8 +3902,7 @@ select_all_db_info (CCI_CONN * conn_arg)
       goto select_all_db_info_end;
     }
 
-  if (db_Sync_info.shard_db_rec.global_dbname != NULL &&
-      strcmp (tmp_p, db_Sync_info.shard_db_rec.global_dbname) == 0)
+  if (db_Sync_info.shard_db_rec.global_dbname != NULL && strcmp (tmp_p, db_Sync_info.shard_db_rec.global_dbname) == 0)
     {
       shard_db_rec.global_dbname = db_Sync_info.shard_db_rec.global_dbname;;
       shard_db_rec.buf = db_Sync_info.shard_db_rec.buf;
@@ -4217,17 +3912,15 @@ select_all_db_info (CCI_CONN * conn_arg)
       RYE_ALLOC_COPY_STR (shard_db_rec.buf, tmp_p);
       shard_db_rec.global_dbname = shard_db_rec.buf;
       if (shard_db_rec.global_dbname == NULL)
-	{
-	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail [%s]",
-			query);
-	  goto select_all_db_info_end;
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail [%s]", query);
+          goto select_all_db_info_end;
+        }
 
-      if (strcmp (shm_Br_info->shard_global_dbname,
-		  shard_db_rec.global_dbname) != 0)
-	{
-	  assert (0);
-	}
+      if (strcmp (shm_Br_info->shard_global_dbname, shard_db_rec.global_dbname) != 0)
+        {
+          assert (0);
+        }
     }
 
   if (shard_db_rec.buf != db_Sync_info.shard_db_rec.buf)
@@ -4244,16 +3937,16 @@ select_all_db_info (CCI_CONN * conn_arg)
   err = 0;
 
   br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
-		"shard_db info: dbname=%s, groupid_count=%d, "
-		"gid_info_last_ver=%d, node_info_last_ver=%d, "
-		"mig_req_count=%d, ddl_req_count=%d, gc_req_count=%d, "
-		"created_at=%ld\n",
-		shard_db_rec.global_dbname,
-		shard_db_rec.groupid_count,
-		shard_db_rec.gid_info_last_ver,
-		shard_db_rec.node_info_last_ver,
-		shard_db_rec.mig_req_count, shard_db_rec.ddl_req_count,
-		shard_db_rec.gc_req_count, shard_db_rec.created_at);
+                "shard_db info: dbname=%s, groupid_count=%d, "
+                "gid_info_last_ver=%d, node_info_last_ver=%d, "
+                "mig_req_count=%d, ddl_req_count=%d, gc_req_count=%d, "
+                "created_at=%ld\n",
+                shard_db_rec.global_dbname,
+                shard_db_rec.groupid_count,
+                shard_db_rec.gid_info_last_ver,
+                shard_db_rec.node_info_last_ver,
+                shard_db_rec.mig_req_count, shard_db_rec.ddl_req_count,
+                shard_db_rec.gc_req_count, shard_db_rec.created_at);
 
 select_all_db_info_end:
 
@@ -4283,11 +3976,10 @@ select_all_gid_info (CCI_CONN * conn_arg)
   if (conn_arg == NULL)
     {
       conn = &tmp_conn;
-      if (connect_metadb (conn, CCI_AUTOCOMMIT_TRUE,
-			  shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
-	{
-	  return NULL;
-	}
+      if (connect_metadb (conn, CCI_AUTOCOMMIT_TRUE, shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
+        {
+          return NULL;
+        }
     }
   else
     {
@@ -4295,13 +3987,11 @@ select_all_gid_info (CCI_CONN * conn_arg)
     }
 
   sprintf (query, "SELECT %s, %s, %s FROM %s",
-	   COL_SHARD_GROUPID_GROUPID, COL_SHARD_GROUPID_NODEID,
-	   COL_SHARD_GROUPID_VERSION, TABLE_SHARD_GROUPID);
+           COL_SHARD_GROUPID_GROUPID, COL_SHARD_GROUPID_NODEID, COL_SHARD_GROUPID_VERSION, TABLE_SHARD_GROUPID);
 
   if (cci_prepare (conn, &stmt, query, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			conn->err_buf.err_msg, query);
+      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, query);
       goto select_all_gid_info_end;
     }
 
@@ -4315,8 +4005,7 @@ select_all_gid_info (CCI_CONN * conn_arg)
   db_groupid_info = db_groupid_info_alloc (res);
   if (db_groupid_info == NULL)
     {
-      br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail: [%s]",
-		    query);
+      br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail: [%s]", query);
       goto select_all_gid_info_end;
     }
 
@@ -4327,17 +4016,16 @@ select_all_gid_info (CCI_CONN * conn_arg)
 
       err = cci_fetch_next (&stmt);
       if (err == CCI_ER_NO_MORE_DATA)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       if (err < 0)
-	{
-	  BR_LOG_CCI_ERROR ("fetch_next", stmt.err_buf.err_code,
-			    stmt.err_buf.err_msg, query);
-	  db_groupid_info_free (db_groupid_info);
-	  db_groupid_info = NULL;
-	  goto select_all_gid_info_end;
-	}
+        {
+          BR_LOG_CCI_ERROR ("fetch_next", stmt.err_buf.err_code, stmt.err_buf.err_msg, query);
+          db_groupid_info_free (db_groupid_info);
+          db_groupid_info = NULL;
+          goto select_all_gid_info_end;
+        }
 
       memset (ind, 0, sizeof (ind));
 
@@ -4346,11 +4034,11 @@ select_all_gid_info (CCI_CONN * conn_arg)
       db_groupid_info->gid_info[row].ver = cci_get_bigint (&stmt, 3, &ind[2]);
 
       if (check_fetch_indicator (ind, DIM (ind)) < 0)
-	{
-	  db_groupid_info_free (db_groupid_info);
-	  db_groupid_info = NULL;
-	  goto select_all_gid_info_end;
-	}
+        {
+          db_groupid_info_free (db_groupid_info);
+          db_groupid_info = NULL;
+          goto select_all_gid_info_end;
+        }
 
       row++;
     }
@@ -4385,11 +4073,10 @@ select_all_node_info (CCI_CONN * conn_arg)
   if (conn_arg == NULL)
     {
       conn = &tmp_conn;
-      if (connect_metadb (conn, CCI_AUTOCOMMIT_TRUE,
-			  shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
-	{
-	  return NULL;
-	}
+      if (connect_metadb (conn, CCI_AUTOCOMMIT_TRUE, shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
+        {
+          return NULL;
+        }
     }
   else
     {
@@ -4397,17 +4084,15 @@ select_all_node_info (CCI_CONN * conn_arg)
     }
 
   sprintf (query,
-	   "SELECT %s, %s, %s, %s FROM %s WHERE %s <> %d ORDER BY %s, %s",
-	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
-	   COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT,
-	   TABLE_SHARD_NODE,
-	   COL_SHARD_NODE_STATUS, ADD_NODE_STATUS_REQUESTED,
-	   COL_SHARD_NODE_NODEID, COL_SHARD_NODE_VERSION);
+           "SELECT %s, %s, %s, %s FROM %s WHERE %s <> %d ORDER BY %s, %s",
+           COL_SHARD_NODE_NODEID, COL_SHARD_NODE_DBNAME,
+           COL_SHARD_NODE_HOST, COL_SHARD_NODE_PORT,
+           TABLE_SHARD_NODE,
+           COL_SHARD_NODE_STATUS, ADD_NODE_STATUS_REQUESTED, COL_SHARD_NODE_NODEID, COL_SHARD_NODE_VERSION);
 
   if (cci_prepare (conn, &stmt, query, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			conn->err_buf.err_msg, query);
+      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, query);
       goto select_all_node_info_end;
     }
 
@@ -4421,8 +4106,7 @@ select_all_node_info (CCI_CONN * conn_arg)
   node_info = db_node_info_alloc (res);
   if (node_info == NULL)
     {
-      br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail: [%s]",
-		    query);
+      br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "malloc fail: [%s]", query);
       goto select_all_node_info_end;
     }
 
@@ -4439,16 +4123,16 @@ select_all_node_info (CCI_CONN * conn_arg)
 
       err = cci_fetch_next (&stmt);
       if (err == CCI_ER_NO_MORE_DATA)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       if (err < 0)
-	{
-	  BR_LOG_CCI_ERROR ("fetch_next", err, stmt.err_buf.err_msg, query);
-	  db_node_info_free (node_info);
-	  node_info = NULL;
-	  goto select_all_node_info_end;
-	}
+        {
+          BR_LOG_CCI_ERROR ("fetch_next", err, stmt.err_buf.err_msg, query);
+          db_node_info_free (node_info);
+          node_info = NULL;
+          goto select_all_node_info_end;
+        }
 
       memset (ind, 0, sizeof (ind));
 
@@ -4457,25 +4141,23 @@ select_all_node_info (CCI_CONN * conn_arg)
       tmp_host = cci_get_string (&stmt, 3, &ind[2]);
       tmp_port = cci_get_int (&stmt, 4, &ind[3]);
 
-      if (check_fetch_indicator (ind, DIM (ind)) < 0 ||
-	  ((tmp_host_addr = inet_addr (tmp_host)) == INADDR_NONE))
-	{
-	  db_node_info_free (node_info);
-	  node_info = NULL;
-	  goto select_all_node_info_end;
-	}
+      if (check_fetch_indicator (ind, DIM (ind)) < 0 || ((tmp_host_addr = inet_addr (tmp_host)) == INADDR_NONE))
+        {
+          db_node_info_free (node_info);
+          node_info = NULL;
+          goto select_all_node_info_end;
+        }
 
       if (tmp_port <= 0)
-	{
-	  assert (0);
-	  tmp_port = shard_Mgmt_server_info.local_mgmt_port;
-	}
+        {
+          assert (0);
+          tmp_port = shard_Mgmt_server_info.local_mgmt_port;
+        }
 
       PRM_NODE_INFO_SET (&tmp_host_info, tmp_host_addr, tmp_port);
 
       br_copy_shard_node_info (&node_info->node_info[row], tmp_nodeid,
-			       tmp_dbname, tmp_host, &tmp_host_info,
-			       HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
+                               tmp_dbname, tmp_host, &tmp_host_info, HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
       row++;
     }
 
@@ -4500,17 +4182,16 @@ find_min_node_id (T_DB_NODE_INFO * db_node_info)
   for (i = 0; i < db_node_info->node_info_count; i++)
     {
       if (min_nodeid == 0 || db_node_info->node_info[i].node_id < min_nodeid)
-	{
-	  min_nodeid = db_node_info->node_info[i].node_id;
-	}
+        {
+          min_nodeid = db_node_info->node_info[i].node_id;
+        }
     }
 
   return min_nodeid;
 }
 
 static T_SHARD_NODE_INFO *
-find_node_info (T_DB_NODE_INFO * db_node_info,
-		const T_SHARD_NODE_INFO * find_node, bool * exist_same_node)
+find_node_info (T_DB_NODE_INFO * db_node_info, const T_SHARD_NODE_INFO * find_node, bool * exist_same_node)
 {
   int i;
   T_SHARD_NODE_INFO *node_found = NULL;
@@ -4525,19 +4206,18 @@ find_node_info (T_DB_NODE_INFO * db_node_info,
   for (i = 0; i < db_node_info->node_info_count; i++)
     {
       if (find_node->node_id == db_node_info->node_info[i].node_id)
-	{
-	  if (strcmp (find_node->local_dbname,
-		      db_node_info->node_info[i].local_dbname) == 0 &&
-	      prm_is_same_node (&db_node_info->node_info[i].host_info,
-				&find_node->host_info) == true)
-	    {
-	      node_found = &db_node_info->node_info[i];
-	    }
-	  else
-	    {
-	      *exist_same_node = true;
-	    }
-	}
+        {
+          if (strcmp (find_node->local_dbname,
+                      db_node_info->node_info[i].local_dbname) == 0 &&
+              prm_is_same_node (&db_node_info->node_info[i].host_info, &find_node->host_info) == true)
+            {
+              node_found = &db_node_info->node_info[i];
+            }
+          else
+            {
+              *exist_same_node = true;
+            }
+        }
     }
 
   return node_found;
@@ -4547,8 +4227,7 @@ static const T_GROUPID_INFO *
 find_groupid_info (const T_DB_GROUPID_INFO * db_groupid_info, int groupid)
 {
   if (db_groupid_info != NULL &&
-      db_groupid_info->group_id_count >= groupid &&
-      db_groupid_info->gid_info[groupid - 1].gid == groupid)
+      db_groupid_info->group_id_count >= groupid && db_groupid_info->gid_info[groupid - 1].gid == groupid)
     {
       return (&db_groupid_info->gid_info[groupid - 1]);
     }
@@ -4571,9 +4250,9 @@ check_nodeid_in_use (int nodeid, const T_DB_GROUPID_INFO * db_groupid_info)
   for (i = 0; i < db_groupid_info->group_id_count; i++)
     {
       if (db_groupid_info->gid_info[i].nodeid == nodeid)
-	{
-	  return BR_ER_NODE_IN_USE;
-	}
+        {
+          return BR_ER_NODE_IN_USE;
+        }
     }
 
   return 0;
@@ -4588,8 +4267,7 @@ db_node_info_alloc (int node_info_count)
   T_DB_NODE_INFO *node_info;
   int alloc_size;
 
-  alloc_size = sizeof (T_DB_NODE_INFO) +
-    sizeof (T_SHARD_NODE_INFO) * node_info_count;
+  alloc_size = sizeof (T_DB_NODE_INFO) + sizeof (T_SHARD_NODE_INFO) * node_info_count;
 
   node_info = RYE_MALLOC (alloc_size);
   if (node_info == NULL)
@@ -4620,8 +4298,7 @@ db_node_info_free (T_DB_NODE_INFO * node_info)
 }
 
 static int
-clone_db_node_info (T_DB_NODE_INFO ** ret_db_node_info,
-		    const T_DB_NODE_INFO * src_node_info)
+clone_db_node_info (T_DB_NODE_INFO ** ret_db_node_info, const T_DB_NODE_INFO * src_node_info)
 {
   T_DB_NODE_INFO *db_node_info = NULL;
   int i;
@@ -4640,12 +4317,11 @@ clone_db_node_info (T_DB_NODE_INFO ** ret_db_node_info,
   for (i = 0; i < src_node_info->node_info_count; i++)
     {
       br_copy_shard_node_info (&db_node_info->node_info[i],
-			       src_node_info->node_info[i].node_id,
-			       src_node_info->node_info[i].local_dbname,
-			       src_node_info->node_info[i].host_ip_str,
-			       &src_node_info->node_info[i].host_info,
-			       src_node_info->node_info[i].ha_state,
-			       src_node_info->node_info[i].host_name);
+                               src_node_info->node_info[i].node_id,
+                               src_node_info->node_info[i].local_dbname,
+                               src_node_info->node_info[i].host_ip_str,
+                               &src_node_info->node_info[i].host_info,
+                               src_node_info->node_info[i].ha_state, src_node_info->node_info[i].host_name);
     }
 
   *ret_db_node_info = db_node_info;
@@ -4661,8 +4337,7 @@ db_groupid_info_alloc (int gid_info_count)
   T_DB_GROUPID_INFO *db_groupid_info;
   int alloc_size;
 
-  alloc_size = (sizeof (T_DB_GROUPID_INFO) +
-		sizeof (T_GROUPID_INFO) * gid_info_count);
+  alloc_size = (sizeof (T_DB_GROUPID_INFO) + sizeof (T_GROUPID_INFO) * gid_info_count);
 
   db_groupid_info = RYE_MALLOC (alloc_size);
   if (db_groupid_info == NULL)
@@ -4697,10 +4372,9 @@ db_groupid_info_free (T_DB_GROUPID_INFO * db_groupid_info)
 */
 static void
 send_info_msg_to_client (int sock_fd, int err_code,
-			 const char *shard_info_hdr, int shard_info_hdr_size,
-			 const char *node_info, int node_info_size,
-			 const char *groupid_info, int groupid_info_size,
-			 const char *node_state, int node_state_size)
+                         const char *shard_info_hdr, int shard_info_hdr_size,
+                         const char *node_info, int node_info_size,
+                         const char *groupid_info, int groupid_info_size, const char *node_state, int node_state_size)
 {
   T_BROKER_RESPONSE_NET_MSG res_msg;
   int info_size[4];
@@ -4712,29 +4386,23 @@ send_info_msg_to_client (int sock_fd, int err_code,
 
   brres_msg_pack (&res_msg, err_code, 4, info_size);
 
-  br_write_nbytes_to_client (sock_fd, res_msg.msg_buffer,
-			     res_msg.msg_buffer_size,
-			     BR_DEFAULT_WRITE_TIMEOUT);
+  br_write_nbytes_to_client (sock_fd, res_msg.msg_buffer, res_msg.msg_buffer_size, BR_DEFAULT_WRITE_TIMEOUT);
 
   if (shard_info_hdr_size > 0)
     {
-      br_write_nbytes_to_client (sock_fd, shard_info_hdr, shard_info_hdr_size,
-				 BR_DEFAULT_WRITE_TIMEOUT);
+      br_write_nbytes_to_client (sock_fd, shard_info_hdr, shard_info_hdr_size, BR_DEFAULT_WRITE_TIMEOUT);
     }
   if (node_info_size > 0)
     {
-      br_write_nbytes_to_client (sock_fd, node_info, node_info_size,
-				 BR_DEFAULT_WRITE_TIMEOUT);
+      br_write_nbytes_to_client (sock_fd, node_info, node_info_size, BR_DEFAULT_WRITE_TIMEOUT);
     }
   if (groupid_info_size > 0)
     {
-      br_write_nbytes_to_client (sock_fd, groupid_info, groupid_info_size,
-				 BR_DEFAULT_WRITE_TIMEOUT);
+      br_write_nbytes_to_client (sock_fd, groupid_info, groupid_info_size, BR_DEFAULT_WRITE_TIMEOUT);
     }
   if (node_state_size > 0)
     {
-      br_write_nbytes_to_client (sock_fd, node_state, node_state_size,
-				 BR_DEFAULT_WRITE_TIMEOUT);
+      br_write_nbytes_to_client (sock_fd, node_state, node_state_size, BR_DEFAULT_WRITE_TIMEOUT);
     }
 }
 
@@ -4757,23 +4425,23 @@ make_node_info_net_stream (T_DB_NODE_INFO * db_node_info)
       int i, size;
       char *ptr;
 
-      size = (sizeof (int) +	/* node info count */
-	      sizeof (int64_t));	/* node info version */
+      size = (sizeof (int) +    /* node info count */
+              sizeof (int64_t));        /* node info version */
       for (i = 0; i < db_node_info->node_info_count; i++)
-	{
-	  size += (sizeof (short) + sizeof (int) * 3 +	/* node id, port, length * 2 */
-		   strlen (db_node_info->node_info[i].local_dbname) + 1 +
-		   strlen (db_node_info->node_info[i].host_ip_str) + 1);
-	}
+        {
+          size += (sizeof (short) + sizeof (int) * 3 +  /* node id, port, length * 2 */
+                   strlen (db_node_info->node_info[i].local_dbname) + 1 +
+                   strlen (db_node_info->node_info[i].host_ip_str) + 1);
+        }
 
       net_stream->size = size;
       net_stream->buf = RYE_MALLOC (size);
 
       if (net_stream->buf == NULL)
-	{
-	  net_stream->size = 0;
-	  return NULL;
-	}
+        {
+          net_stream->size = 0;
+          return NULL;
+        }
 
       ptr = net_stream->buf;
 
@@ -4781,17 +4449,14 @@ make_node_info_net_stream (T_DB_NODE_INFO * db_node_info)
       ptr = br_mgmt_net_add_int (ptr, db_node_info->node_info_count);
 
       for (i = 0; i < db_node_info->node_info_count; i++)
-	{
-	  T_SHARD_NODE_INFO *shard_node_info = &db_node_info->node_info[i];
+        {
+          T_SHARD_NODE_INFO *shard_node_info = &db_node_info->node_info[i];
 
-	  ptr = br_mgmt_net_add_short (ptr, shard_node_info->node_id);
-	  ptr = br_mgmt_net_add_string (ptr, shard_node_info->local_dbname);
-	  ptr = br_mgmt_net_add_string (ptr, shard_node_info->host_ip_str);
-	  ptr =
-	    br_mgmt_net_add_int (ptr,
-				 PRM_NODE_INFO_GET_PORT (&shard_node_info->
-							 host_info));
-	}
+          ptr = br_mgmt_net_add_short (ptr, shard_node_info->node_id);
+          ptr = br_mgmt_net_add_string (ptr, shard_node_info->local_dbname);
+          ptr = br_mgmt_net_add_string (ptr, shard_node_info->host_ip_str);
+          ptr = br_mgmt_net_add_int (ptr, PRM_NODE_INFO_GET_PORT (&shard_node_info->host_info));
+        }
     }
 
   return net_stream;
@@ -4814,35 +4479,35 @@ make_node_state_net_stream (T_DB_NODE_INFO * db_node_info)
       int i;
       char *ptr;
 
-      size = (sizeof (int));	/* count */
+      size = (sizeof (int));    /* count */
       for (i = 0; i < db_node_info->node_info_count; i++)
-	{
-	  size += (1 + sizeof (int) +	/* state, host len */
-		   strlen (db_node_info->node_info[i].host_ip_str) + 1);
-	}
+        {
+          size += (1 + sizeof (int) +   /* state, host len */
+                   strlen (db_node_info->node_info[i].host_ip_str) + 1);
+        }
 
       net_stream->size = size;
       net_stream->buf = RYE_MALLOC (size);
 
       if (net_stream->buf == NULL)
-	{
-	  net_stream->size = 0;
-	  return NULL;
-	}
+        {
+          net_stream->size = 0;
+          return NULL;
+        }
 
       ptr = net_stream->buf;
 
       ptr = br_mgmt_net_add_int (ptr, db_node_info->node_info_count);
 
       for (i = 0; i < db_node_info->node_info_count; i++)
-	{
-	  T_SHARD_NODE_INFO *shard_node_info = &db_node_info->node_info[i];
+        {
+          T_SHARD_NODE_INFO *shard_node_info = &db_node_info->node_info[i];
 
-	  ptr = br_mgmt_net_add_string (ptr, shard_node_info->host_ip_str);
+          ptr = br_mgmt_net_add_string (ptr, shard_node_info->host_ip_str);
 
-	  *ptr = shard_node_info->ha_state;
-	  ptr++;
-	}
+          *ptr = shard_node_info->ha_state;
+          ptr++;
+        }
     }
 
   return net_stream;
@@ -4852,8 +4517,7 @@ make_node_state_net_stream (T_DB_NODE_INFO * db_node_info)
  * make_groupid_info_net_stream
 */
 static T_INFO_NET_STREAM *
-make_groupid_info_net_stream (T_DB_GROUPID_INFO * db_groupid_info,
-			      int64_t clt_groupid_ver)
+make_groupid_info_net_stream (T_DB_GROUPID_INFO * db_groupid_info, int64_t clt_groupid_ver)
 {
   T_INFO_NET_STREAM *net_stream;
 
@@ -4866,103 +4530,93 @@ make_groupid_info_net_stream (T_DB_GROUPID_INFO * db_groupid_info,
     {
       net_stream = &db_groupid_info->net_stream_all_info;
       if (net_stream->buf == NULL)
-	{
-	  int i, size;
-	  char *ptr;
+        {
+          int i, size;
+          char *ptr;
 
-	  size = sizeof (int64_t) + sizeof (int) + 1;	/* last version, num gid */
-	  size += (sizeof (short) * db_groupid_info->group_id_count);
+          size = sizeof (int64_t) + sizeof (int) + 1;   /* last version, num gid */
+          size += (sizeof (short) * db_groupid_info->group_id_count);
 
-	  net_stream->size = size;
-	  net_stream->buf = RYE_MALLOC (size);
+          net_stream->size = size;
+          net_stream->buf = RYE_MALLOC (size);
 
-	  if (net_stream->buf == NULL)
-	    {
-	      net_stream->size = 0;
-	      return NULL;
-	    }
+          if (net_stream->buf == NULL)
+            {
+              net_stream->size = 0;
+              return NULL;
+            }
 
-	  ptr = net_stream->buf;
+          ptr = net_stream->buf;
 
-	  ptr = br_mgmt_net_add_int64 (ptr, db_groupid_info->gid_info_ver);
-	  ptr = br_mgmt_net_add_int (ptr, db_groupid_info->group_id_count);
+          ptr = br_mgmt_net_add_int64 (ptr, db_groupid_info->gid_info_ver);
+          ptr = br_mgmt_net_add_int (ptr, db_groupid_info->group_id_count);
 
-	  *ptr = BR_RES_SHARD_INFO_ALL;
-	  ptr++;
+          *ptr = BR_RES_SHARD_INFO_ALL;
+          ptr++;
 
-	  for (i = 0; i < db_groupid_info->group_id_count; i++)
-	    {
-	      ptr =
-		br_mgmt_net_add_short (ptr,
-				       db_groupid_info->gid_info[i].nodeid);
-	    }
-	}
+          for (i = 0; i < db_groupid_info->group_id_count; i++)
+            {
+              ptr = br_mgmt_net_add_short (ptr, db_groupid_info->gid_info[i].nodeid);
+            }
+        }
     }
   else
     {
       net_stream = &db_groupid_info->net_stream_partial_info;
       if (db_groupid_info->net_stream_partial_info_clt_ver != clt_groupid_ver)
-	{
-	  char *net_buf;
-	  char *ptr;
-	  char *ptr_changed_count;
-	  int i, alloc_size;
-	  int changed_count;
+        {
+          char *net_buf;
+          char *ptr;
+          char *ptr_changed_count;
+          int i, alloc_size;
+          int changed_count;
 
-	  alloc_size = sizeof (int64_t) + sizeof (int) + 1 + sizeof (int);
-	  alloc_size += ((sizeof (short) + sizeof (int)) *
-			 db_groupid_info->group_id_count);
+          alloc_size = sizeof (int64_t) + sizeof (int) + 1 + sizeof (int);
+          alloc_size += ((sizeof (short) + sizeof (int)) * db_groupid_info->group_id_count);
 
-	  net_buf = RYE_MALLOC (alloc_size);
-	  if (net_buf == NULL)
-	    {
-	      return NULL;
-	    }
+          net_buf = RYE_MALLOC (alloc_size);
+          if (net_buf == NULL)
+            {
+              return NULL;
+            }
 
-	  ptr = net_buf;
+          ptr = net_buf;
 
-	  ptr = br_mgmt_net_add_int64 (ptr, db_groupid_info->gid_info_ver);
-	  ptr = br_mgmt_net_add_int (ptr, db_groupid_info->group_id_count);
+          ptr = br_mgmt_net_add_int64 (ptr, db_groupid_info->gid_info_ver);
+          ptr = br_mgmt_net_add_int (ptr, db_groupid_info->group_id_count);
 
-	  *ptr = BR_RES_SHARD_INFO_CHANGED_ONLY;
-	  ptr++;
+          *ptr = BR_RES_SHARD_INFO_CHANGED_ONLY;
+          ptr++;
 
-	  ptr_changed_count = ptr;
-	  ptr += sizeof (int);
-	  changed_count = 0;
+          ptr_changed_count = ptr;
+          ptr += sizeof (int);
+          changed_count = 0;
 
-	  for (i = 0; i < db_groupid_info->group_id_count; i++)
-	    {
-	      if (db_groupid_info->gid_info[i].ver > clt_groupid_ver)
-		{
-		  ptr =
-		    br_mgmt_net_add_int (ptr,
-					 db_groupid_info->gid_info[i].gid);
-		  ptr =
-		    br_mgmt_net_add_short (ptr,
-					   db_groupid_info->gid_info[i].
-					   nodeid);
-		  changed_count++;
-		}
-	    }
+          for (i = 0; i < db_groupid_info->group_id_count; i++)
+            {
+              if (db_groupid_info->gid_info[i].ver > clt_groupid_ver)
+                {
+                  ptr = br_mgmt_net_add_int (ptr, db_groupid_info->gid_info[i].gid);
+                  ptr = br_mgmt_net_add_short (ptr, db_groupid_info->gid_info[i].nodeid);
+                  changed_count++;
+                }
+            }
 
-	  br_mgmt_net_add_int (ptr_changed_count, changed_count);
+          br_mgmt_net_add_int (ptr_changed_count, changed_count);
 
-	  RYE_FREE_MEM (db_groupid_info->net_stream_partial_info.buf);
+          RYE_FREE_MEM (db_groupid_info->net_stream_partial_info.buf);
 
-	  db_groupid_info->net_stream_partial_info.buf = net_buf;
-	  db_groupid_info->net_stream_partial_info.size =
-	    (int) (ptr - net_buf);
-	  db_groupid_info->net_stream_partial_info_clt_ver = clt_groupid_ver;
-	}
+          db_groupid_info->net_stream_partial_info.buf = net_buf;
+          db_groupid_info->net_stream_partial_info.size = (int) (ptr - net_buf);
+          db_groupid_info->net_stream_partial_info_clt_ver = clt_groupid_ver;
+        }
     }
 
   return net_stream;
 }
 
 static int
-admin_query_execute_array (CCI_CONN * conn, int num_sql,
-			   const T_SQL_AND_PARAM * sql_and_param)
+admin_query_execute_array (CCI_CONN * conn, int num_sql, const T_SQL_AND_PARAM * sql_and_param)
 {
   int i;
 
@@ -4973,18 +4627,16 @@ admin_query_execute_array (CCI_CONN * conn, int num_sql,
       assert (MAX_BIND_VALUES >= sql_and_param[i].num_bind);
 
       res = admin_query_execute (conn, true, NULL, sql_and_param[i].sql,
-				 sql_and_param[i].num_bind,
-				 sql_and_param[i].bind_param);
+                                 sql_and_param[i].num_bind, sql_and_param[i].bind_param);
       if (res < 0)
-	{
-	  return res;
-	}
+        {
+          return res;
+        }
       else if (sql_and_param[i].check_affected_rows && res == 0)
-	{
-	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
-			"%s: affected row = 0", sql_and_param[i].sql);
-	  return BR_ER_METADB;
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, INADDR_NONE, "%s: affected row = 0", sql_and_param[i].sql);
+          return BR_ER_METADB;
+        }
     }
 
   return 0;
@@ -4992,8 +4644,7 @@ admin_query_execute_array (CCI_CONN * conn, int num_sql,
 
 static int
 admin_query_execute (CCI_CONN * conn, bool do_prepare,
-		     CCI_STMT * stmt_arg, const char *sql,
-		     int num_bind, const T_BIND_PARAM * bind_param)
+                     CCI_STMT * stmt_arg, const char *sql, int num_bind, const T_BIND_PARAM * bind_param)
 {
   CCI_STMT stmt_local;
   CCI_STMT *stmt;
@@ -5014,22 +4665,19 @@ admin_query_execute (CCI_CONN * conn, bool do_prepare,
   if (do_prepare)
     {
       if (cci_prepare (conn, stmt, sql, 0) < 0)
-	{
-	  BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			    conn->err_buf.err_msg, sql);
-	  return -1;
-	}
+        {
+          BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, sql);
+          return -1;
+        }
     }
 
   for (i = 0; i < num_bind; i++)
     {
-      if (cci_bind_param (stmt, bind_param[i].index, bind_param[i].a_type,
-			  bind_param[i].value, bind_param[i].flag) < 0)
-	{
-	  BR_LOG_CCI_ERROR ("bind", stmt->err_buf.err_code,
-			    stmt->err_buf.err_msg, sql);
-	  return -1;
-	}
+      if (cci_bind_param (stmt, bind_param[i].index, bind_param[i].a_type, bind_param[i].value, bind_param[i].flag) < 0)
+        {
+          BR_LOG_CCI_ERROR ("bind", stmt->err_buf.err_code, stmt->err_buf.err_msg, sql);
+          return -1;
+        }
     }
 
   res = cci_execute (stmt, 0, 0);
@@ -5063,9 +4711,9 @@ admin_command_str (const T_SHD_MG_COMPENSATION_JOB * compensation_job)
   for (i = 0; shd_Mg_admin_func_table[i].func != NULL; i++)
     {
       if (shd_Mg_admin_func_table[i].opcode == opcode)
-	{
-	  return shd_Mg_admin_func_table[i].log_msg;
-	}
+        {
+          return shd_Mg_admin_func_table[i].log_msg;
+        }
     }
 
   return "UNKNOWN_OPCODE";
@@ -5090,26 +4738,23 @@ shd_mg_propagate_shard_mgmt_port (T_LOCAL_MGMT_SYNC_INFO * sync_info)
       int ha_state;
 
       err = cci_mgmt_sync_shard_mgmt_info (shard_node_info->host_ip_str,
-					   PRM_NODE_INFO_GET_PORT
-					   (&shard_node_info->host_info),
-					   shard_node_info->local_dbname,
-					   sync_info->global_dbname,
-					   shard_node_info->node_id,
-					   shard_Mgmt_server_info.port,
-					   db_node_info->node_info_ver,
-					   sync_info->groupid_version,
-					   server_name, sizeof (server_name),
-					   &ha_state,
-					   LOCAL_MGMT_REQ_TIMEOUT_MSEC);
+                                           PRM_NODE_INFO_GET_PORT
+                                           (&shard_node_info->host_info),
+                                           shard_node_info->local_dbname,
+                                           sync_info->global_dbname,
+                                           shard_node_info->node_id,
+                                           shard_Mgmt_server_info.port,
+                                           db_node_info->node_info_ver,
+                                           sync_info->groupid_version,
+                                           server_name, sizeof (server_name), &ha_state, LOCAL_MGMT_REQ_TIMEOUT_MSEC);
       if (err < 0)
-	{
-	  ;			/* TODO - avoid compile error */
-	}
+        {
+          ;                     /* TODO - avoid compile error */
+        }
 
       shard_node_info->ha_state = ha_state;
 
-      STRNCPY (shard_node_info->host_name, server_name,
-	       sizeof (shard_node_info->host_name));
+      STRNCPY (shard_node_info->host_name, server_name, sizeof (shard_node_info->host_name));
     }
 
   LOCK_DB_SHARD_INFO ();
@@ -5119,8 +4764,7 @@ shd_mg_propagate_shard_mgmt_port (T_LOCAL_MGMT_SYNC_INFO * sync_info)
 
   for (i = 0; i < db_Shard_info.db_node_info->node_info_count; i++)
     {
-      db_Shard_info.db_node_info->node_info[i].ha_state =
-	HA_STATE_FOR_DRIVER_UNKNOWN;
+      db_Shard_info.db_node_info->node_info[i].ha_state = HA_STATE_FOR_DRIVER_UNKNOWN;
     }
 
   for (i = 0; i < db_node_info->node_info_count; i++)
@@ -5128,16 +4772,12 @@ shd_mg_propagate_shard_mgmt_port (T_LOCAL_MGMT_SYNC_INFO * sync_info)
       T_SHARD_NODE_INFO *cp_dest_node;
       bool exist_same_node = false;
 
-      cp_dest_node = find_node_info (db_Shard_info.db_node_info,
-				     &db_node_info->node_info[i],
-				     &exist_same_node);
+      cp_dest_node = find_node_info (db_Shard_info.db_node_info, &db_node_info->node_info[i], &exist_same_node);
       if (cp_dest_node != NULL)
-	{
-	  cp_dest_node->ha_state = db_node_info->node_info[i].ha_state;
-	  STRNCPY (cp_dest_node->host_name,
-		   db_node_info->node_info[i].host_name,
-		   sizeof (cp_dest_node->host_name));
-	}
+        {
+          cp_dest_node->ha_state = db_node_info->node_info[i].ha_state;
+          STRNCPY (cp_dest_node->host_name, db_node_info->node_info[i].host_name, sizeof (cp_dest_node->host_name));
+        }
     }
   UNLOCK_DB_SHARD_INFO ();
 
@@ -5163,13 +4803,11 @@ shd_mg_func_sync_local_mgmt (T_LOCAL_MGMT_SYNC_INFO * sync_info, bool force)
   else
     {
       if (sync_info->global_dbname == NULL ||
-	  strcmp (sync_info->global_dbname,
-		  db_Sync_info.shard_db_rec.global_dbname) != 0)
-	{
-	  RYE_FREE_MEM (sync_info->global_dbname);
-	  RYE_ALLOC_COPY_STR (sync_info->global_dbname,
-			      db_Sync_info.shard_db_rec.global_dbname);
-	}
+          strcmp (sync_info->global_dbname, db_Sync_info.shard_db_rec.global_dbname) != 0)
+        {
+          RYE_FREE_MEM (sync_info->global_dbname);
+          RYE_ALLOC_COPY_STR (sync_info->global_dbname, db_Sync_info.shard_db_rec.global_dbname);
+        }
     }
 
   if (sync_info->global_dbname == NULL)
@@ -5180,29 +4818,25 @@ shd_mg_func_sync_local_mgmt (T_LOCAL_MGMT_SYNC_INFO * sync_info, bool force)
   else
     {
       if (db_Shard_info.db_node_info != NULL)
-	{
-	  if (sync_info->db_node_info == NULL ||
-	      sync_info->db_node_info->node_info_ver !=
-	      db_Shard_info.db_node_info->node_info_ver)
-	    {
-	      db_node_info_free (sync_info->db_node_info);
+        {
+          if (sync_info->db_node_info == NULL ||
+              sync_info->db_node_info->node_info_ver != db_Shard_info.db_node_info->node_info_ver)
+            {
+              db_node_info_free (sync_info->db_node_info);
 
-	      if (clone_db_node_info (&sync_info->db_node_info,
-				      db_Shard_info.db_node_info) < 0)
-		{
-		  sync_info->db_node_info = NULL;
-		}
-	    }
-	}
+              if (clone_db_node_info (&sync_info->db_node_info, db_Shard_info.db_node_info) < 0)
+                {
+                  sync_info->db_node_info = NULL;
+                }
+            }
+        }
 
-      sync_info->groupid_version =
-	db_Sync_info.shard_db_rec.gid_info_last_ver;
+      sync_info->groupid_version = db_Sync_info.shard_db_rec.gid_info_last_ver;
     }
 
   UNLOCK_DB_SHARD_INFO ();
 
-  if (sync_info->db_node_info != NULL &&
-      (force || time (NULL) - sync_info->last_sync_time > 30))
+  if (sync_info->db_node_info != NULL && (force || time (NULL) - sync_info->last_sync_time > 30))
     {
       shd_mg_propagate_shard_mgmt_port (sync_info);
     }
@@ -5221,17 +4855,16 @@ is_rebalance_node (int target_nodeid, int node_count, const int *rbl_node)
   for (i = 0; i < node_count; i++)
     {
       if (target_nodeid > 0 && target_nodeid == rbl_node[i])
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
 }
 
 static int
-calc_rebalance_count (int node_count, T_REBALANCE_AMOUNT * rbl_amount,
-		      bool empty_node)
+calc_rebalance_count (int node_count, T_REBALANCE_AMOUNT * rbl_amount, bool empty_node)
 {
   float sum;
   int migration_count;
@@ -5249,18 +4882,18 @@ calc_start:
   for (i = 0; i < node_count; i++)
     {
       if (rbl_amount[i].nodeid > 0)
-	{
-	  sum += rbl_amount[i].count;
+        {
+          sum += rbl_amount[i].count;
 
-	  if (rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
-	    {
-	      rbl_src_node_count++;
-	    }
-	  else if (rbl_amount[i].type == RBL_NODE_TYPE_DEST)
-	    {
-	      rbl_dest_node_count++;
-	    }
-	}
+          if (rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
+            {
+              rbl_src_node_count++;
+            }
+          else if (rbl_amount[i].type == RBL_NODE_TYPE_DEST)
+            {
+              rbl_dest_node_count++;
+            }
+        }
     }
 
   if (rbl_src_node_count == 0 || rbl_dest_node_count == 0)
@@ -5273,14 +4906,13 @@ calc_start:
   if (empty_node)
     {
       for (i = 0; i < node_count; i++)
-	{
-	  if (rbl_amount[i].nodeid > 0 &&
-	      rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
-	    {
-	      rbl_amount[i].mig_count = rbl_amount[i].count;
-	      migration_count += rbl_amount[i].count;
-	    }
-	}
+        {
+          if (rbl_amount[i].nodeid > 0 && rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
+            {
+              rbl_amount[i].mig_count = rbl_amount[i].count;
+              migration_count += rbl_amount[i].count;
+            }
+        }
     }
   else
     {
@@ -5289,26 +4921,25 @@ calc_start:
       avg = sum / (rbl_src_node_count + rbl_dest_node_count) + 0.5;
 
       for (i = 0; i < node_count; i++)
-	{
-	  int avail_count;
+        {
+          int avail_count;
 
-	  if (rbl_amount[i].nodeid > 0 &&
-	      rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
-	    {
-	      avail_count = rbl_amount[i].count - avg;
-	      if (avail_count > 0)
-		{
-		  rbl_amount[i].mig_count = avail_count;
-		  migration_count += avail_count;
-		}
-	      else
-		{
-		  rbl_amount[i].nodeid = 0;
-		  rbl_amount[i].type = RBL_NODE_TYPE_UNKNOWN;
-		  goto calc_start;
-		}
-	    }
-	}
+          if (rbl_amount[i].nodeid > 0 && rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
+            {
+              avail_count = rbl_amount[i].count - avg;
+              if (avail_count > 0)
+                {
+                  rbl_amount[i].mig_count = avail_count;
+                  migration_count += avail_count;
+                }
+              else
+                {
+                  rbl_amount[i].nodeid = 0;
+                  rbl_amount[i].type = RBL_NODE_TYPE_UNKNOWN;
+                  goto calc_start;
+                }
+            }
+        }
     }
 
   mig_dest_count = migration_count / rbl_dest_node_count;
@@ -5316,25 +4947,23 @@ calc_start:
 
   for (i = 0; i < node_count; i++)
     {
-      if (rbl_amount[i].nodeid > 0 &&
-	  rbl_amount[i].type == RBL_NODE_TYPE_DEST)
-	{
-	  rbl_amount[i].mig_count = mig_dest_count;
-	  mig_src_remain -= mig_dest_count;
-	}
+      if (rbl_amount[i].nodeid > 0 && rbl_amount[i].type == RBL_NODE_TYPE_DEST)
+        {
+          rbl_amount[i].mig_count = mig_dest_count;
+          mig_src_remain -= mig_dest_count;
+        }
     }
 
   while (mig_src_remain > 0)
     {
       for (i = 0; i < node_count && mig_src_remain > 0; i++)
-	{
-	  if (rbl_amount[i].nodeid > 0 &&
-	      rbl_amount[i].type == RBL_NODE_TYPE_DEST)
-	    {
-	      rbl_amount[i].mig_count += 1;
-	      mig_src_remain -= 1;
-	    }
-	}
+        {
+          if (rbl_amount[i].nodeid > 0 && rbl_amount[i].type == RBL_NODE_TYPE_DEST)
+            {
+              rbl_amount[i].mig_count += 1;
+              mig_src_remain -= 1;
+            }
+        }
     }
 
   return migration_count;
@@ -5342,69 +4971,63 @@ calc_start:
 
 static void
 set_rebalance_node_type (int node_count, T_REBALANCE_AMOUNT * rbl_amount,
-			 int rbl_src_count, const int *rbl_src_node,
-			 int rbl_dest_count, const int *rbl_dest_node)
+                         int rbl_src_count, const int *rbl_src_node, int rbl_dest_count, const int *rbl_dest_node)
 {
   int i;
 
   if (rbl_src_count == 0)
     {
       for (i = 0; i < node_count; i++)
-	{
-	  if (is_rebalance_node (rbl_amount[i].nodeid, rbl_dest_count,
-				 rbl_dest_node))
-	    {
-	      rbl_amount[i].type = RBL_NODE_TYPE_DEST;
-	    }
-	  else
-	    {
-	      rbl_amount[i].type = RBL_NODE_TYPE_SOURCE;
-	    }
-	}
+        {
+          if (is_rebalance_node (rbl_amount[i].nodeid, rbl_dest_count, rbl_dest_node))
+            {
+              rbl_amount[i].type = RBL_NODE_TYPE_DEST;
+            }
+          else
+            {
+              rbl_amount[i].type = RBL_NODE_TYPE_SOURCE;
+            }
+        }
     }
   else if (rbl_dest_count == 0)
     {
       for (i = 0; i < node_count; i++)
-	{
-	  if (is_rebalance_node (rbl_amount[i].nodeid, rbl_src_count,
-				 rbl_src_node))
-	    {
-	      rbl_amount[i].type = RBL_NODE_TYPE_SOURCE;
-	    }
-	  else
-	    {
-	      rbl_amount[i].type = RBL_NODE_TYPE_DEST;
-	    }
-	}
+        {
+          if (is_rebalance_node (rbl_amount[i].nodeid, rbl_src_count, rbl_src_node))
+            {
+              rbl_amount[i].type = RBL_NODE_TYPE_SOURCE;
+            }
+          else
+            {
+              rbl_amount[i].type = RBL_NODE_TYPE_DEST;
+            }
+        }
     }
   else
     {
       for (i = 0; i < node_count; i++)
-	{
-	  if (is_rebalance_node (rbl_amount[i].nodeid, rbl_src_count,
-				 rbl_src_node))
-	    {
-	      rbl_amount[i].type = RBL_NODE_TYPE_SOURCE;
-	    }
-	  else if (is_rebalance_node (rbl_amount[i].nodeid, rbl_dest_count,
-				      rbl_dest_node))
-	    {
-	      rbl_amount[i].type = RBL_NODE_TYPE_DEST;
-	    }
-	  else
-	    {
-	      rbl_amount[i].nodeid = 0;	/* unknown type. ignore node id */
-	    }
-	}
+        {
+          if (is_rebalance_node (rbl_amount[i].nodeid, rbl_src_count, rbl_src_node))
+            {
+              rbl_amount[i].type = RBL_NODE_TYPE_SOURCE;
+            }
+          else if (is_rebalance_node (rbl_amount[i].nodeid, rbl_dest_count, rbl_dest_node))
+            {
+              rbl_amount[i].type = RBL_NODE_TYPE_DEST;
+            }
+          else
+            {
+              rbl_amount[i].nodeid = 0; /* unknown type. ignore node id */
+            }
+        }
     }
 }
 
 static int
 get_groupid_count (T_REBALANCE_AMOUNT * rbl_amount,
-		   const T_DB_NODE_INFO * db_node_info,
-		   const T_DB_GROUPID_INFO * db_groupid_info,
-		   int rbl_src_count, const int *rbl_src_node,
-		   int rbl_dest_count, const int *rbl_dest_node)
+                   const T_DB_NODE_INFO * db_node_info,
+                   const T_DB_GROUPID_INFO * db_groupid_info,
+                   int rbl_src_count, const int *rbl_src_node, int rbl_dest_count, const int *rbl_dest_node)
 {
   int node_count = 0;
   int i, j;
@@ -5414,27 +5037,27 @@ get_groupid_count (T_REBALANCE_AMOUNT * rbl_amount,
     {
       bool found = false;
       for (j = 0; j < node_count; j++)
-	{
-	  if (db_groupid_info->gid_info[i].nodeid == rbl_amount[j].nodeid)
-	    {
-	      rbl_amount[j].count++;
-	      found = true;
-	      break;
-	    }
-	}
+        {
+          if (db_groupid_info->gid_info[i].nodeid == rbl_amount[j].nodeid)
+            {
+              rbl_amount[j].count++;
+              found = true;
+              break;
+            }
+        }
 
       if (found == false)
-	{
-	  if (node_count >= db_node_info->node_info_count)
-	    {
-	      assert (false);
-	      return BR_ER_SHARD_INFO_NOT_AVAILABLE;
-	    }
+        {
+          if (node_count >= db_node_info->node_info_count)
+            {
+              assert (false);
+              return BR_ER_SHARD_INFO_NOT_AVAILABLE;
+            }
 
-	  rbl_amount[node_count].nodeid = db_groupid_info->gid_info[i].nodeid;
-	  rbl_amount[node_count].count = 1;
-	  node_count++;
-	}
+          rbl_amount[node_count].nodeid = db_groupid_info->gid_info[i].nodeid;
+          rbl_amount[node_count].count = 1;
+          node_count++;
+        }
     }
 
   /* add rbl_dest_nodeid if not included */
@@ -5442,38 +5065,36 @@ get_groupid_count (T_REBALANCE_AMOUNT * rbl_amount,
     {
       bool found = false;
       for (j = 0; j < node_count; j++)
-	{
-	  if (rbl_dest_node[i] == rbl_amount[j].nodeid)
-	    {
-	      found = true;
-	      break;
-	    }
-	}
+        {
+          if (rbl_dest_node[i] == rbl_amount[j].nodeid)
+            {
+              found = true;
+              break;
+            }
+        }
 
       if (found == false)
-	{
-	  if (node_count >= db_node_info->node_info_count)
-	    {
-	      assert (false);
-	      return BR_ER_SHARD_INFO_NOT_AVAILABLE;
-	    }
+        {
+          if (node_count >= db_node_info->node_info_count)
+            {
+              assert (false);
+              return BR_ER_SHARD_INFO_NOT_AVAILABLE;
+            }
 
-	  rbl_amount[node_count].nodeid = rbl_dest_node[i];
-	  rbl_amount[node_count].count = 0;
-	  node_count++;
-	}
+          rbl_amount[node_count].nodeid = rbl_dest_node[i];
+          rbl_amount[node_count].count = 0;
+          node_count++;
+        }
     }
 
   /* exclude nodeid if the node id is neither src node nor dest node */
   for (i = 0; i < node_count; i++)
     {
       if (!is_rebalance_node (rbl_amount[i].nodeid, rbl_src_count,
-			      rbl_src_node) &&
-	  !is_rebalance_node (rbl_amount[i].nodeid, rbl_dest_count,
-			      rbl_dest_node))
-	{
-	  rbl_amount[i].nodeid = 0;
-	}
+                              rbl_src_node) && !is_rebalance_node (rbl_amount[i].nodeid, rbl_dest_count, rbl_dest_node))
+        {
+          rbl_amount[i].nodeid = 0;
+        }
     }
 
   return node_count;
@@ -5481,28 +5102,26 @@ get_groupid_count (T_REBALANCE_AMOUNT * rbl_amount,
 
 static int
 set_mig_info_src_nodeid (T_GROUP_MIGRATION_INFO * mig_info, int offset,
-			 int mig_src_nodeid, int mig_count,
-			 const T_DB_GROUPID_INFO * db_groupid_info)
+                         int mig_src_nodeid, int mig_count, const T_DB_GROUPID_INFO * db_groupid_info)
 {
   int i;
 
   for (i = 0; i < db_groupid_info->group_id_count && mig_count > 0; i++)
     {
       if (db_groupid_info->gid_info[i].nodeid == mig_src_nodeid)
-	{
-	  mig_info[offset].groupid = db_groupid_info->gid_info[i].gid;
-	  mig_info[offset].src_nodeid = mig_src_nodeid;
-	  offset++;
-	  mig_count--;
-	}
+        {
+          mig_info[offset].groupid = db_groupid_info->gid_info[i].gid;
+          mig_info[offset].src_nodeid = mig_src_nodeid;
+          offset++;
+          mig_count--;
+        }
     }
 
   return offset;
 }
 
 static int
-set_mig_info_dest_nodeid (T_GROUP_MIGRATION_INFO * mig_info, int offset,
-			  int mig_dest_nodeid, int mig_count)
+set_mig_info_dest_nodeid (T_GROUP_MIGRATION_INFO * mig_info, int offset, int mig_dest_nodeid, int mig_count)
 {
   int i;
 
@@ -5516,10 +5135,9 @@ set_mig_info_dest_nodeid (T_GROUP_MIGRATION_INFO * mig_info, int offset,
 
 static int
 make_rebalance_info (T_GROUP_MIGRATION_INFO ** ret_mig_info, bool empty_node,
-		     int rbl_src_count, const int *rbl_src_node,
-		     int rbl_dest_count, const int *rbl_dest_node,
-		     const T_DB_NODE_INFO * db_node_info,
-		     const T_DB_GROUPID_INFO * db_groupid_info)
+                     int rbl_src_count, const int *rbl_src_node,
+                     int rbl_dest_count, const int *rbl_dest_node,
+                     const T_DB_NODE_INFO * db_node_info, const T_DB_GROUPID_INFO * db_groupid_info)
 {
   T_REBALANCE_AMOUNT *rbl_amount;
   int node_count;
@@ -5535,42 +5153,37 @@ make_rebalance_info (T_GROUP_MIGRATION_INFO ** ret_mig_info, bool empty_node,
   for (i = 0; i < rbl_src_count; i++)
     {
       if (is_existing_nodeid (db_node_info, rbl_src_node[i]) == false)
-	{
-	  return BR_ER_NODE_INFO_NOT_EXIST;
-	}
+        {
+          return BR_ER_NODE_INFO_NOT_EXIST;
+        }
     }
   for (i = 0; i < rbl_dest_count; i++)
     {
       if (is_existing_nodeid (db_node_info, rbl_dest_node[i]) == false)
-	{
-	  return BR_ER_NODE_INFO_NOT_EXIST;
-	}
+        {
+          return BR_ER_NODE_INFO_NOT_EXIST;
+        }
     }
 
 
-  rbl_amount = RYE_MALLOC (sizeof (T_REBALANCE_AMOUNT) *
-			   db_node_info->node_info_count);
+  rbl_amount = RYE_MALLOC (sizeof (T_REBALANCE_AMOUNT) * db_node_info->node_info_count);
   if (rbl_amount == NULL)
     {
       return BR_ER_NO_MORE_MEMORY;
     }
 
-  memset (rbl_amount, 0,
-	  sizeof (T_REBALANCE_AMOUNT) * db_node_info->node_info_count);
+  memset (rbl_amount, 0, sizeof (T_REBALANCE_AMOUNT) * db_node_info->node_info_count);
 
   node_count = get_groupid_count (rbl_amount,
-				  db_node_info, db_groupid_info,
-				  rbl_src_count, rbl_src_node,
-				  rbl_dest_count, rbl_dest_node);
+                                  db_node_info, db_groupid_info,
+                                  rbl_src_count, rbl_src_node, rbl_dest_count, rbl_dest_node);
   if (node_count < 0)
     {
       RYE_FREE_MEM (rbl_amount);
       return node_count;
     }
 
-  set_rebalance_node_type (node_count, rbl_amount,
-			   rbl_src_count, rbl_src_node,
-			   rbl_dest_count, rbl_dest_node);
+  set_rebalance_node_type (node_count, rbl_amount, rbl_src_count, rbl_src_node, rbl_dest_count, rbl_dest_node);
 
   migration_count = calc_rebalance_count (node_count, rbl_amount, empty_node);
 
@@ -5586,28 +5199,23 @@ make_rebalance_info (T_GROUP_MIGRATION_INFO ** ret_mig_info, bool empty_node,
   offset = 0;
   for (i = 0; i < node_count; i++)
     {
-      if (rbl_amount[i].nodeid > 0
-	  && rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
-	{
-	  offset = set_mig_info_src_nodeid (mig_info, offset,
-					    rbl_amount[i].nodeid,
-					    MIN (migration_count - offset,
-						 rbl_amount[i].mig_count),
-					    db_groupid_info);
-	}
+      if (rbl_amount[i].nodeid > 0 && rbl_amount[i].type == RBL_NODE_TYPE_SOURCE)
+        {
+          offset = set_mig_info_src_nodeid (mig_info, offset,
+                                            rbl_amount[i].nodeid,
+                                            MIN (migration_count - offset, rbl_amount[i].mig_count), db_groupid_info);
+        }
     }
 
   offset = 0;
   for (i = 0; i < node_count; i++)
     {
-      if (rbl_amount[i].nodeid > 0
-	  && rbl_amount[i].type == RBL_NODE_TYPE_DEST)
-	{
-	  offset = set_mig_info_dest_nodeid (mig_info, offset,
-					     rbl_amount[i].nodeid,
-					     MIN (migration_count - offset,
-						  rbl_amount[i].mig_count));
-	}
+      if (rbl_amount[i].nodeid > 0 && rbl_amount[i].type == RBL_NODE_TYPE_DEST)
+        {
+          offset = set_mig_info_dest_nodeid (mig_info, offset,
+                                             rbl_amount[i].nodeid,
+                                             MIN (migration_count - offset, rbl_amount[i].mig_count));
+        }
     }
 
   RYE_FREE_MEM (rbl_amount);
@@ -5650,23 +5258,22 @@ get_migration_stats (CCI_CONN * conn, T_MIGRATION_STATS ** ret_stats)
   int num_bind = 0;
 
   sprintf (sql,
-	   "SELECT %s, "
-	   "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
-	   "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
-	   "   SUM(CASE WHEN %s = ? AND %s < (? - ?) THEN 1 ELSE 0 END), "
-	   "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
-	   "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
-	   "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
-	   "   COUNT(*) "
-	   "FROM %s GROUP BY %s",
-	   COL_SHARD_MIGRATION_SRC_NODEID,
-	   COL_SHARD_MIGRATION_STATUS,
-	   COL_SHARD_MIGRATION_STATUS,
-	   COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT,
-	   COL_SHARD_MIGRATION_STATUS,
-	   COL_SHARD_MIGRATION_STATUS,
-	   COL_SHARD_MIGRATION_STATUS,
-	   TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID);
+           "SELECT %s, "
+           "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
+           "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
+           "   SUM(CASE WHEN %s = ? AND %s < (? - ?) THEN 1 ELSE 0 END), "
+           "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
+           "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
+           "   SUM(CASE WHEN %s = ? THEN 1 ELSE 0 END), "
+           "   COUNT(*) "
+           "FROM %s GROUP BY %s",
+           COL_SHARD_MIGRATION_SRC_NODEID,
+           COL_SHARD_MIGRATION_STATUS,
+           COL_SHARD_MIGRATION_STATUS,
+           COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT,
+           COL_SHARD_MIGRATION_STATUS,
+           COL_SHARD_MIGRATION_STATUS,
+           COL_SHARD_MIGRATION_STATUS, TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &status_scheduled);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &status_migrator_run);
@@ -5702,13 +5309,13 @@ get_migration_stats (CCI_CONN * conn, T_MIGRATION_STATS ** ret_stats)
       int run_mig;
 
       if (cci_fetch_next (&stmt) < 0)
-	{
-	  for (; i < res; i++)
-	    {
-	      memset (&stats[i], 0, sizeof (T_MIGRATION_STATS));
-	    }
-	  break;
-	}
+        {
+          for (; i < res; i++)
+            {
+              memset (&stats[i], 0, sizeof (T_MIGRATION_STATS));
+            }
+          break;
+        }
 
       stats[i].src_nodeid = cci_get_int (&stmt, 1, &ind);
       stats[i].count_scheduled = cci_get_int (&stmt, 2, &ind);
@@ -5719,14 +5326,11 @@ get_migration_stats (CCI_CONN * conn, T_MIGRATION_STATS ** ret_stats)
       stats[i].count_failed = cci_get_int (&stmt, 7, &ind);
       stats[i].count_all = cci_get_int (&stmt, 8, &ind);
 
-      num_waiting_gid += (stats[i].count_scheduled +
-			  stats[i].count_migrator_run +
-			  stats[i].count_mig_started);
+      num_waiting_gid += (stats[i].count_scheduled + stats[i].count_migrator_run + stats[i].count_mig_started);
 
       assert (stats[i].count_all ==
-	      (stats[i].count_scheduled + stats[i].count_migrator_run +
-	       stats[i].count_mig_started + stats[i].count_complete +
-	       stats[i].count_failed));
+              (stats[i].count_scheduled + stats[i].count_migrator_run +
+               stats[i].count_mig_started + stats[i].count_complete + stats[i].count_failed));
 
       run_mig = shm_Br_info->shard_mgmt_num_migrator;
       run_mig -= (stats[i].count_migrator_run + stats[i].count_mig_started);
@@ -5743,8 +5347,7 @@ get_migration_stats (CCI_CONN * conn, T_MIGRATION_STATS ** ret_stats)
 }
 
 static int
-update_status_expired_migrator (CCI_CONN * conn,
-				const T_MIGRATION_STATS * mig_stats)
+update_status_expired_migrator (CCI_CONN * conn, const T_MIGRATION_STATS * mig_stats)
 {
   T_BIND_PARAM bind_param[5];
   int64_t cur_ts = make_cur_ts_bigint ();
@@ -5766,12 +5369,11 @@ update_status_expired_migrator (CCI_CONN * conn,
     }
 
   sprintf (update_sql,
-	   "UPDATE %s SET %s = ?, %s = ? "
-	   "WHERE %s > 0 and %s = ? and %s < (? - ?) ",
-	   TABLE_SHARD_MIGRATION,
-	   COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT,
-	   COL_SHARD_MIGRATION_SRC_NODEID,
-	   COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT);
+           "UPDATE %s SET %s = ?, %s = ? "
+           "WHERE %s > 0 and %s = ? and %s < (? - ?) ",
+           TABLE_SHARD_MIGRATION,
+           COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT,
+           COL_SHARD_MIGRATION_SRC_NODEID, COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT);
 
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &next_status);
   SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &cur_ts);
@@ -5781,8 +5383,7 @@ update_status_expired_migrator (CCI_CONN * conn,
 
   assert ((int) DIM (bind_param) >= num_bind);
 
-  res = admin_query_execute (conn, true, NULL, update_sql,
-			     num_bind, bind_param);
+  res = admin_query_execute (conn, true, NULL, update_sql, num_bind, bind_param);
 
   assert (res < 0 || sum_expired_migrator <= res);
 
@@ -5792,8 +5393,7 @@ update_status_expired_migrator (CCI_CONN * conn,
 }
 
 static int
-change_db_migration_status (CCI_CONN * conn, T_MIGRATION_STATS * mig_stats,
-			    T_GROUP_MIGRATION_INFO ** ret_mig_info)
+change_db_migration_status (CCI_CONN * conn, T_MIGRATION_STATS * mig_stats, T_GROUP_MIGRATION_INFO ** ret_mig_info)
 {
   int i;
   char select_sql[SQL_BUF_SIZE];
@@ -5825,26 +5425,22 @@ change_db_migration_status (CCI_CONN * conn, T_MIGRATION_STATS * mig_stats,
   memset (mig_info, 0, sizeof (T_GROUP_MIGRATION_INFO) * mig_info_count);
 
   sprintf (select_sql,
-	   "SELECT %s, %s FROM %s WHERE %s = ? and %s = ? LIMIT ? FOR UPDATE",
-	   COL_SHARD_MIGRATION_GROUPID, COL_SHARD_MIGRATION_DEST_NODEID,
-	   TABLE_SHARD_MIGRATION,
-	   COL_SHARD_MIGRATION_SRC_NODEID, COL_SHARD_MIGRATION_STATUS);
+           "SELECT %s, %s FROM %s WHERE %s = ? and %s = ? LIMIT ? FOR UPDATE",
+           COL_SHARD_MIGRATION_GROUPID, COL_SHARD_MIGRATION_DEST_NODEID,
+           TABLE_SHARD_MIGRATION, COL_SHARD_MIGRATION_SRC_NODEID, COL_SHARD_MIGRATION_STATUS);
   sprintf (update_sql, "UPDATE %s SET %s = ?, %s = ? WHERE %s = ?  ",
-	   TABLE_SHARD_MIGRATION,
-	   COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT,
-	   COL_SHARD_MIGRATION_GROUPID);
+           TABLE_SHARD_MIGRATION,
+           COL_SHARD_MIGRATION_STATUS, COL_SHARD_MIGRATION_MODIFIED_AT, COL_SHARD_MIGRATION_GROUPID);
 
   if (cci_prepare (conn, &select_stmt, select_sql, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			conn->err_buf.err_msg, select_sql);
+      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, select_sql);
       RYE_FREE_MEM (mig_info);
       return BR_ER_METADB;
     }
   if (cci_prepare (conn, &update_stmt, update_sql, 0) < 0)
     {
-      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code,
-			conn->err_buf.err_msg, update_sql);
+      BR_LOG_CCI_ERROR ("prepare", conn->err_buf.err_code, conn->err_buf.err_msg, update_sql);
       RYE_FREE_MEM (mig_info);
       return BR_ER_METADB;
     }
@@ -5860,70 +5456,67 @@ change_db_migration_status (CCI_CONN * conn, T_MIGRATION_STATS * mig_stats,
       run_migration = mig_stats[i].run_migration;
 
       if (run_migration <= 0 || mig_stats[i].count_scheduled <= 0)
-	{
-	  mig_stats[i].run_migration = 0;
-	  continue;
-	}
+        {
+          mig_stats[i].run_migration = 0;
+          continue;
+        }
 
-      SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT,
-		      &mig_stats[i].src_nodeid);
+      SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &mig_stats[i].src_nodeid);
       SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &cur_status);
       SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &run_migration);
 
       assert ((int) DIM (bind_param) >= num_bind);
 
-      res = admin_query_execute (conn, false, &select_stmt, select_sql,
-				 num_bind, bind_param);
+      res = admin_query_execute (conn, false, &select_stmt, select_sql, num_bind, bind_param);
       if (res < 0)
-	{
-	  RYE_FREE_MEM (mig_info);
-	  return res;
-	}
+        {
+          RYE_FREE_MEM (mig_info);
+          return res;
+        }
 
       for (tuple_idx = 0; tuple_idx < run_migration; tuple_idx++)
-	{
-	  int ind;
-	  int next_status = GROUP_MIGRATION_STATUS_MIGRATOR_RUN;
-	  int groupid, dest_nodeid;
-	  int64_t cur_ts = make_cur_ts_bigint ();
-	  int num_bind = 0;
+        {
+          int ind;
+          int next_status = GROUP_MIGRATION_STATUS_MIGRATOR_RUN;
+          int groupid, dest_nodeid;
+          int64_t cur_ts = make_cur_ts_bigint ();
+          int num_bind = 0;
 
-	  if (cci_fetch_next (&select_stmt) < 0)
-	    {
-	      break;
-	    }
-	  groupid = cci_get_int (&select_stmt, 1, &ind);
-	  dest_nodeid = cci_get_int (&select_stmt, 2, &ind);
+          if (cci_fetch_next (&select_stmt) < 0)
+            {
+              break;
+            }
+          groupid = cci_get_int (&select_stmt, 1, &ind);
+          dest_nodeid = cci_get_int (&select_stmt, 2, &ind);
 
-	  mig_info[mig_info_count].groupid = groupid;
-	  mig_info[mig_info_count].dest_nodeid = dest_nodeid;
-	  mig_info[mig_info_count].src_nodeid = mig_stats[i].src_nodeid;
+          mig_info[mig_info_count].groupid = groupid;
+          mig_info[mig_info_count].dest_nodeid = dest_nodeid;
+          mig_info[mig_info_count].src_nodeid = mig_stats[i].src_nodeid;
 
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &next_status);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &cur_ts);
-	  SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &groupid);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &next_status);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_BIGINT, &cur_ts);
+          SET_BIND_PARAM (num_bind++, bind_param, CCI_TYPE_INT, &groupid);
 
-	  assert ((int) DIM (bind_param) >= num_bind);
+          assert ((int) DIM (bind_param) >= num_bind);
 
-	  res = admin_query_execute (conn, false, &update_stmt, update_sql,
-				     num_bind, bind_param);
-	  if (res < 0)
-	    {
-	      RYE_FREE_MEM (mig_info);
-	      return res;
-	    }
-	  else if (res == 0)
-	    {
-	      assert (false);
-	      break;
-	    }
-	  else
-	    {
-	      mig_info_count++;
-	    }
-	}
+          res = admin_query_execute (conn, false, &update_stmt, update_sql, num_bind, bind_param);
+          if (res < 0)
+            {
+              RYE_FREE_MEM (mig_info);
+              return res;
+            }
+          else if (res == 0)
+            {
+              assert (false);
+              break;
+            }
+          else
+            {
+              mig_info_count++;
+            }
+        }
 
-      mig_stats[i].run_migration = tuple_idx;	/* real count of mig run */
+      mig_stats[i].run_migration = tuple_idx;   /* real count of mig run */
     }
 
   *ret_mig_info = mig_info;
@@ -5933,8 +5526,7 @@ change_db_migration_status (CCI_CONN * conn, T_MIGRATION_STATS * mig_stats,
 static bool
 is_existing_nodeid (const T_DB_NODE_INFO * db_node_info, int target_nodeid)
 {
-  if (find_node_info_by_nodeid (db_node_info, target_nodeid,
-				HA_STATE_FOR_DRIVER_UNKNOWN, NULL) == NULL)
+  if (find_node_info_by_nodeid (db_node_info, target_nodeid, HA_STATE_FOR_DRIVER_UNKNOWN, NULL) == NULL)
     {
       return false;
     }
@@ -5946,8 +5538,7 @@ is_existing_nodeid (const T_DB_NODE_INFO * db_node_info, int target_nodeid)
 
 static const T_SHARD_NODE_INFO *
 find_node_info_by_nodeid (const T_DB_NODE_INFO * db_node_info,
-			  int target_nodeid, HA_STATE_FOR_DRIVER ha_state,
-			  struct drand48_data *rand_buf)
+                          int target_nodeid, HA_STATE_FOR_DRIVER ha_state, struct drand48_data *rand_buf)
 {
 #define TARGET_NODE_FIND_MAX 4
   int i;
@@ -5962,50 +5553,49 @@ find_node_info_by_nodeid (const T_DB_NODE_INFO * db_node_info,
   for (i = 0; i < db_node_info->node_info_count; i++)
     {
       if (db_node_info->node_info[i].node_id == target_nodeid)
-	{
-	  HA_STATE_FOR_DRIVER node_ha_state;
+        {
+          HA_STATE_FOR_DRIVER node_ha_state;
 
-	  switch (db_node_info->node_info[i].ha_state)
-	    {
-	    case HA_STATE_FOR_DRIVER_MASTER:
-	    case HA_STATE_FOR_DRIVER_TO_BE_MASTER:
-	      node_ha_state = HA_STATE_FOR_DRIVER_MASTER;
-	      break;
-	    case HA_STATE_FOR_DRIVER_SLAVE:
-	    case HA_STATE_FOR_DRIVER_TO_BE_SLAVE:
-	    case HA_STATE_FOR_DRIVER_REPLICA:
-	      node_ha_state = HA_STATE_FOR_DRIVER_SLAVE;
-	      break;
-	    case HA_STATE_FOR_DRIVER_UNKNOWN:
-	    default:
-	      node_ha_state = HA_STATE_FOR_DRIVER_UNKNOWN;
-	      break;
-	    }
+          switch (db_node_info->node_info[i].ha_state)
+            {
+            case HA_STATE_FOR_DRIVER_MASTER:
+            case HA_STATE_FOR_DRIVER_TO_BE_MASTER:
+              node_ha_state = HA_STATE_FOR_DRIVER_MASTER;
+              break;
+            case HA_STATE_FOR_DRIVER_SLAVE:
+            case HA_STATE_FOR_DRIVER_TO_BE_SLAVE:
+            case HA_STATE_FOR_DRIVER_REPLICA:
+              node_ha_state = HA_STATE_FOR_DRIVER_SLAVE;
+              break;
+            case HA_STATE_FOR_DRIVER_UNKNOWN:
+            default:
+              node_ha_state = HA_STATE_FOR_DRIVER_UNKNOWN;
+              break;
+            }
 
-	  if (ha_state == HA_STATE_FOR_DRIVER_UNKNOWN ||
-	      ha_state == node_ha_state)
-	    {
-	      target_nodes[num_found++] = &db_node_info->node_info[i];
-	      if (num_found == TARGET_NODE_FIND_MAX)
-		{
-		  break;
-		}
-	    }
-	}
+          if (ha_state == HA_STATE_FOR_DRIVER_UNKNOWN || ha_state == node_ha_state)
+            {
+              target_nodes[num_found++] = &db_node_info->node_info[i];
+              if (num_found == TARGET_NODE_FIND_MAX)
+                {
+                  break;
+                }
+            }
+        }
     }
 
   if (num_found > 0)
     {
       if (rand_buf == NULL)
-	{
-	  return target_nodes[0];
-	}
+        {
+          return target_nodes[0];
+        }
       else
-	{
-	  double r;
-	  drand48_r (rand_buf, &r);
-	  return target_nodes[(int) (num_found * r)];
-	}
+        {
+          double r;
+          drand48_r (rand_buf, &r);
+          return target_nodes[(int) (num_found * r)];
+        }
     }
   else
     {
@@ -6015,41 +5605,29 @@ find_node_info_by_nodeid (const T_DB_NODE_INFO * db_node_info,
 
 static void
 select_migration_node (const T_SHARD_NODE_INFO ** run_mig_node,
-		       const T_SHARD_NODE_INFO ** dest_node_info,
-		       bool * is_slave_mode_mig,
-		       const T_DB_NODE_INFO * db_node_info,
-		       int mig_src_nodeid, int mig_dest_nodeid,
-		       struct drand48_data *rand_buf)
+                       const T_SHARD_NODE_INFO ** dest_node_info,
+                       bool * is_slave_mode_mig,
+                       const T_DB_NODE_INFO * db_node_info,
+                       int mig_src_nodeid, int mig_dest_nodeid, struct drand48_data *rand_buf)
 {
-  *run_mig_node = find_node_info_by_nodeid (db_node_info,
-					    mig_src_nodeid,
-					    HA_STATE_FOR_DRIVER_SLAVE,
-					    rand_buf);
+  *run_mig_node = find_node_info_by_nodeid (db_node_info, mig_src_nodeid, HA_STATE_FOR_DRIVER_SLAVE, rand_buf);
   if (*run_mig_node != NULL)
     {
       if (dest_node_info != NULL)
-	{
-	  *dest_node_info = find_node_info_by_nodeid (db_node_info,
-						      mig_dest_nodeid,
-						      HA_STATE_FOR_DRIVER_UNKNOWN,
-						      NULL);
-	}
+        {
+          *dest_node_info = find_node_info_by_nodeid (db_node_info, mig_dest_nodeid, HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
+        }
 
       *is_slave_mode_mig = true;
 
       return;
     }
 
-  *run_mig_node = find_node_info_by_nodeid (db_node_info,
-					    mig_src_nodeid,
-					    HA_STATE_FOR_DRIVER_MASTER, NULL);
+  *run_mig_node = find_node_info_by_nodeid (db_node_info, mig_src_nodeid, HA_STATE_FOR_DRIVER_MASTER, NULL);
 
   if (dest_node_info != NULL)
     {
-      *dest_node_info = find_node_info_by_nodeid (db_node_info,
-						  mig_dest_nodeid,
-						  HA_STATE_FOR_DRIVER_UNKNOWN,
-						  NULL);
+      *dest_node_info = find_node_info_by_nodeid (db_node_info, mig_dest_nodeid, HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
     }
 
   *is_slave_mode_mig = false;
@@ -6065,11 +5643,10 @@ init_drand48_buffer (struct drand48_data *rand_buf)
 
 static int
 launch_migrator_process (const char *global_dbname, int groupid,
-			 int src_nodeid,
-			 const T_SHARD_NODE_INFO * dest_node_info,
-			 const T_SHARD_NODE_INFO * run_node_info,
-			 bool schema_migration, bool is_slave_mode_mig,
-			 T_CCI_LAUNCH_RESULT * launch_res)
+                         int src_nodeid,
+                         const T_SHARD_NODE_INFO * dest_node_info,
+                         const T_SHARD_NODE_INFO * run_node_info,
+                         bool schema_migration, bool is_slave_mode_mig, T_CCI_LAUNCH_RESULT * launch_res)
 {
   int argc;
   const char *argv[20];
@@ -6082,7 +5659,7 @@ launch_migrator_process (const char *global_dbname, int groupid,
   int timeout_msec;
   int num_env = 0;
   const char *envp[1];
-  char dba_passwd_env[SRV_CON_DBPASSWD_SIZE + 10];	/* PASSWD=xxx */
+  char dba_passwd_env[SRV_CON_DBPASSWD_SIZE + 10];      /* PASSWD=xxx */
 
   sprintf (src_nodeid_str, "%d", src_nodeid);
   sprintf (dest_nodeid_str, "%d", dest_node_info->node_id);
@@ -6090,7 +5667,7 @@ launch_migrator_process (const char *global_dbname, int groupid,
 
   /* rye_migrator arguments. -h option will be set by local_mgmt */
   argc = 0;
-  argv[argc++] = "";		/* command name. local mgmt overwrites */
+  argv[argc++] = "";            /* command name. local mgmt overwrites */
   argv[argc++] = "--mgmt-port";
   argv[argc++] = shard_Mgmt_server_info.port_str;
   argv[argc++] = "--mgmt-dbname";
@@ -6104,8 +5681,7 @@ launch_migrator_process (const char *global_dbname, int groupid,
 
   if (schema_migration)
     {
-      sprintf (dest_port_str, "%d",
-	       PRM_NODE_INFO_GET_PORT (&dest_node_info->host_info));
+      sprintf (dest_port_str, "%d", PRM_NODE_INFO_GET_PORT (&dest_node_info->host_info));
 
       argv[argc++] = "--copy-schema";
       argv[argc++] = "--dst-host";
@@ -6137,8 +5713,7 @@ launch_migrator_process (const char *global_dbname, int groupid,
 
   assert ((int) DIM (argv) >= argc);
 
-  snprintf (dba_passwd_env, sizeof (dba_passwd_env), "PASSWD=%s",
-	    shard_Mgmt_server_info.migrator_dba_passwd);
+  snprintf (dba_passwd_env, sizeof (dba_passwd_env), "PASSWD=%s", shard_Mgmt_server_info.migrator_dba_passwd);
   envp[num_env++] = dba_passwd_env;
 
   assert ((int) DIM (envp) >= num_env);
@@ -6146,18 +5721,15 @@ launch_migrator_process (const char *global_dbname, int groupid,
   sprintf (launch_res->userdata, "%d", groupid);
 
   error = cci_mgmt_launch_process (launch_res, run_node_info->host_ip_str,
-				   PRM_NODE_INFO_GET_PORT (&run_node_info->
-							   host_info),
-				   MGMT_LAUNCH_PROCESS_MIGRATOR,
-				   true, wait_child,
-				   argc, argv, num_env, envp, timeout_msec);
+                                   PRM_NODE_INFO_GET_PORT (&run_node_info->host_info),
+                                   MGMT_LAUNCH_PROCESS_MIGRATOR,
+                                   true, wait_child, argc, argv, num_env, envp, timeout_msec);
   return error;
 }
 
 static int
 run_rebalance_migrator (const T_GROUP_MIGRATION_INFO * mig_info,
-			const T_DB_NODE_INFO * db_node_info,
-			const char *global_dbname)
+                        const T_DB_NODE_INFO * db_node_info, const char *global_dbname)
 {
   int i, error;
   struct drand48_data rand_buf;
@@ -6171,58 +5743,53 @@ run_rebalance_migrator (const T_GROUP_MIGRATION_INFO * mig_info,
   for (i = 0; mig_info[i].groupid > 0; i++)
     {
       if (mig_info[i].src_nodeid <= 0 || mig_info[i].dest_nodeid <= 0 ||
-	  mig_info[i].src_nodeid == mig_info[i].dest_nodeid)
-	{
-	  assert (0);
-	  continue;
-	}
+          mig_info[i].src_nodeid == mig_info[i].dest_nodeid)
+        {
+          assert (0);
+          continue;
+        }
 
       select_migration_node (&run_node_info, &dest_node_info,
-			     &is_slave_mode_mig, db_node_info,
-			     mig_info[i].src_nodeid, mig_info[i].dest_nodeid,
-			     &rand_buf);
+                             &is_slave_mode_mig, db_node_info,
+                             mig_info[i].src_nodeid, mig_info[i].dest_nodeid, &rand_buf);
       if (run_node_info == NULL || dest_node_info == NULL)
-	{
-	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
-			"run migrator fail: cannot select migrator host. (groupid=%d, src_node=%d, dest_node = %d) selected node : %d",
-			mig_info[i].groupid, mig_info[i].src_nodeid,
-			mig_info[i].dest_nodeid,
-			(run_node_info == NULL ? 0 : run_node_info->node_id));
-	  continue;
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
+                        "run migrator fail: cannot select migrator host. (groupid=%d, src_node=%d, dest_node = %d) selected node : %d",
+                        mig_info[i].groupid, mig_info[i].src_nodeid,
+                        mig_info[i].dest_nodeid, (run_node_info == NULL ? 0 : run_node_info->node_id));
+          continue;
+        }
 
       error = launch_migrator_process (global_dbname, mig_info[i].groupid,
-				       mig_info[i].src_nodeid, dest_node_info,
-				       run_node_info, false,
-				       is_slave_mode_mig, &launch_res);
+                                       mig_info[i].src_nodeid, dest_node_info,
+                                       run_node_info, false, is_slave_mode_mig, &launch_res);
 
       if (error < 0)
-	{
-	  br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
-			"run migrator fail: groupid=%d, src_node=%d, dest_node = %d",
-			mig_info[i].groupid, mig_info[i].src_nodeid,
-			mig_info[i].dest_nodeid);
-	}
+        {
+          br_log_write (BROKER_LOG_ERROR, INADDR_NONE,
+                        "run migrator fail: groupid=%d, src_node=%d, dest_node = %d",
+                        mig_info[i].groupid, mig_info[i].src_nodeid, mig_info[i].dest_nodeid);
+        }
       else
-	{
-	  const char *ha_mode_str;
-	  if (run_node_info->ha_state == HA_STATE_FOR_DRIVER_MASTER ||
-	      run_node_info->ha_state == HA_STATE_FOR_DRIVER_TO_BE_MASTER)
-	    {
-	      ha_mode_str = "master";
-	    }
-	  else
-	    {
-	      ha_mode_str = "slave";
-	    }
+        {
+          const char *ha_mode_str;
+          if (run_node_info->ha_state == HA_STATE_FOR_DRIVER_MASTER ||
+              run_node_info->ha_state == HA_STATE_FOR_DRIVER_TO_BE_MASTER)
+            {
+              ha_mode_str = "master";
+            }
+          else
+            {
+              ha_mode_str = "slave";
+            }
 
-	  br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
-			"run migrator: groupid=%d, src_node=%d, dest_node = %d "
-			"- running on %s (nodeid:%d, %s)",
-			mig_info[i].groupid, mig_info[i].src_nodeid,
-			mig_info[i].dest_nodeid, run_node_info->host_name,
-			run_node_info->node_id, ha_mode_str);
-	}
+          br_log_write (BROKER_LOG_NOTICE, INADDR_NONE,
+                        "run migrator: groupid=%d, src_node=%d, dest_node = %d "
+                        "- running on %s (nodeid:%d, %s)",
+                        mig_info[i].groupid, mig_info[i].src_nodeid,
+                        mig_info[i].dest_nodeid, run_node_info->host_name, run_node_info->node_id, ha_mode_str);
+        }
     }
 
   return 0;
@@ -6241,13 +5808,12 @@ set_shm_migration_info (const T_MIGRATION_STATS * mig_stats)
       int i;
 
       for (i = 0; mig_stats[i].src_nodeid > 0; i++)
-	{
-	  scheduled += mig_stats[i].count_scheduled;
-	  running += (mig_stats[i].count_migrator_run +
-		      mig_stats[i].count_mig_started);
-	  complete += mig_stats[i].count_complete;
-	  failed += mig_stats[i].count_failed;
-	}
+        {
+          scheduled += mig_stats[i].count_scheduled;
+          running += (mig_stats[i].count_migrator_run + mig_stats[i].count_mig_started);
+          complete += mig_stats[i].count_complete;
+          failed += mig_stats[i].count_failed;
+        }
     }
 
   shm_Shard_mgmt_info->rbl_scheduled_count = scheduled;
@@ -6290,8 +5856,7 @@ shd_mg_run_migration ()
       return error;
     }
 
-  if (connect_metadb (&conn, CCI_AUTOCOMMIT_FALSE, shard_Mgmt_db_user,
-		      shard_Mgmt_db_passwd) < 0)
+  if (connect_metadb (&conn, CCI_AUTOCOMMIT_FALSE, shard_Mgmt_db_user, shard_Mgmt_db_passwd) < 0)
     {
       db_node_info_free (cp_node_info);
       return BR_ER_METADB;
@@ -6310,10 +5875,10 @@ shd_mg_run_migration ()
     {
       mig_info_count = change_db_migration_status (&conn, stats, &mig_info);
       if (mig_info_count < 0)
-	{
-	  error = mig_info_count;
-	  goto run_migration_error;
-	}
+        {
+          error = mig_info_count;
+          goto run_migration_error;
+        }
 
       update_status_expired_migrator (&conn, stats);
     }

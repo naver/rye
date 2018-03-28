@@ -55,7 +55,7 @@ typedef struct
   char host_ip_str[IP_ADDR_STR_LEN];
   PRM_NODE_INFO host_info;
   HA_STATE_FOR_DRIVER ha_state;
-  char host_name[SHM_NODE_INFO_STR_SIZE];	/* monitoring purpose */
+  char host_name[SHM_NODE_INFO_STR_SIZE];       /* monitoring purpose */
 } T_SHARD_NODE_INFO;
 
 typedef struct
@@ -224,44 +224,34 @@ typedef struct
 
 extern SOCKET br_mgmt_accept (in_addr_t * clt_ip_addr);
 extern SOCKET br_accept_unix_domain (in_addr_t * clt_ip_addr,
-				     struct timeval *mgmt_recv_time,
-				     T_BROKER_REQUEST_MSG * br_req_msg);
+                                     struct timeval *mgmt_recv_time, T_BROKER_REQUEST_MSG * br_req_msg);
 
 extern THREAD_FUNC shard_mgmt_receiver_thr_f (void *arg);
 extern THREAD_FUNC local_mgmt_receiver_thr_f (void *arg);
 extern int local_mgmt_init (void);
-extern int shd_mg_init (int shard_mgmt_port, int local_mgmt_port,
-			const char *shard_metadb);
+extern int shd_mg_init (int shard_mgmt_port, int local_mgmt_port, const char *shard_metadb);
 
-extern int br_read_broker_request_msg (SOCKET clt_sock_fd,
-				       T_BROKER_REQUEST_MSG * br_req_msg);
-extern SOCKET br_connect_srv (bool is_mgmt, const T_BROKER_INFO * br_info,
-			      int as_index);
-extern void br_send_result_to_client (int sock, int err_code,
-				      const T_MGMT_RESULT_MSG * result_msg);
-extern int br_write_nbytes_to_client (SOCKET sock_fd, const char *buf,
-				      int size, int timeout_sec);
-extern int br_read_nbytes_from_client (SOCKET sock_fd, char *buf, int size,
-				       int timeout_sec);
+extern int br_read_broker_request_msg (SOCKET clt_sock_fd, T_BROKER_REQUEST_MSG * br_req_msg);
+extern SOCKET br_connect_srv (bool is_mgmt, const T_BROKER_INFO * br_info, int as_index);
+extern void br_send_result_to_client (int sock, int err_code, const T_MGMT_RESULT_MSG * result_msg);
+extern int br_write_nbytes_to_client (SOCKET sock_fd, const char *buf, int size, int timeout_sec);
+extern int br_read_nbytes_from_client (SOCKET sock_fd, char *buf, int size, int timeout_sec);
 
 extern char *br_mgmt_net_add_int64 (char *net_stream, int64_t value);
 extern char *br_mgmt_net_add_int (char *net_stream, int value);
 extern char *br_mgmt_net_add_short (char *net_stream, short value);
 extern char *br_mgmt_net_add_string (char *net_stream, const char *value);
 
-extern int br_mgmt_get_req_arg (T_MGMT_REQ_ARG * req_arg,
-				const T_BROKER_REQUEST_MSG * brreq_msg);
+extern int br_mgmt_get_req_arg (T_MGMT_REQ_ARG * req_arg, const T_BROKER_REQUEST_MSG * brreq_msg);
 
 extern void br_mgmt_result_msg_init (T_MGMT_RESULT_MSG * result_msg);
 extern void br_mgmt_result_msg_reset (T_MGMT_RESULT_MSG * result_msg);
-extern int br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg,
-				   int msg_size, const void *msg);
+extern int br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg, int msg_size, const void *msg);
 extern void br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
-				     const char *dbname,
-				     const char *host_ip_str,
-				     const PRM_NODE_INFO * host_info,
-				     HA_STATE_FOR_DRIVER ha_state,
-				     const char *host_name);
+                                     const char *dbname,
+                                     const char *host_ip_str,
+                                     const PRM_NODE_INFO * host_info,
+                                     HA_STATE_FOR_DRIVER ha_state, const char *host_name);
 extern void br_set_init_error (int err_code, int os_err_code);
 
 extern int br_Process_flag;

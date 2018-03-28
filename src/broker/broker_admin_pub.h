@@ -42,15 +42,12 @@ extern int admin_on_cmd (int, const char *);
 extern int admin_off_cmd (int, const char *);
 extern int admin_reset_cmd (int, const char *);
 extern int admin_info_cmd (int);
-extern int admin_conf_change (int, const char *, const char *, const char *,
-			      int);
+extern int admin_conf_change (int, const char *, const char *, const char *, int);
 extern int admin_acl_status_cmd (int shm_key_br_gl, const char *broker_name);
 extern int admin_acl_reload_cmd (int shm_key_br_gl, const char *new_acl_file);
 extern int admin_acl_test_cmd (int argc, char **argv);
 extern int admin_get_broker_key_and_portid (char **broker_key, int *port,
-					    int shm_key_br_gl,
-					    const char *broker_name,
-					    char broker_type);
+                                            int shm_key_br_gl, const char *broker_name, char broker_type);
 
 
 void admin_init_env (void);

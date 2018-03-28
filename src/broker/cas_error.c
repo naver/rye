@@ -44,33 +44,25 @@
 static bool server_aborted = false;
 
 void
-err_msg_set (T_NET_BUF * net_buf,
-	     UNUSED_ARG const char *file, UNUSED_ARG int line)
+err_msg_set (T_NET_BUF * net_buf, UNUSED_ARG const char *file, UNUSED_ARG int line)
 {
-  if ((err_Info.err_indicator != CAS_ERROR_INDICATOR)
-      && (err_Info.err_indicator != DBMS_ERROR_INDICATOR))
+  if ((err_Info.err_indicator != CAS_ERROR_INDICATOR) && (err_Info.err_indicator != DBMS_ERROR_INDICATOR))
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "invalid internal error info : file %s line %d", file,
-		    line);
+      er_log_debug (ARG_FILE_LINE, "invalid internal error info : file %s line %d", file, line);
       return;
     }
 
   if (net_buf != NULL)
     {
-      net_buf_error_msg_set (net_buf, err_Info.err_indicator,
-			     err_Info.err_number, err_Info.err_string);
-      er_log_debug (ARG_FILE_LINE,
-		    "err_msg_set: err_code %d file %s line %d",
-		    err_Info.err_number, file, line);
+      net_buf_error_msg_set (net_buf, err_Info.err_indicator, err_Info.err_number, err_Info.err_string);
+      er_log_debug (ARG_FILE_LINE, "err_msg_set: err_code %d file %s line %d", err_Info.err_number, file, line);
     }
   if (err_Info.err_indicator == CAS_ERROR_INDICATOR)
     {
       return;
     }
 
-  if ((net_buf == NULL)
-      && (err_Info.err_number == ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED))
+  if ((net_buf == NULL) && (err_Info.err_number == ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED))
     {
       set_server_aborted (true);
     }
@@ -91,22 +83,17 @@ err_msg_set (T_NET_BUF * net_buf,
 int
 error_info_set (int err_number, int err_indicator, const char *file, int line)
 {
-  return error_info_set_with_msg (err_number, err_indicator, NULL, false,
-				  file, line);
+  return error_info_set_with_msg (err_number, err_indicator, NULL, false, file, line);
 }
 
 int
-error_info_set_force (int err_number, int err_indicator, const char *file,
-		      int line)
+error_info_set_force (int err_number, int err_indicator, const char *file, int line)
 {
-  return error_info_set_with_msg (err_number, err_indicator, NULL, true, file,
-				  line);
+  return error_info_set_with_msg (err_number, err_indicator, NULL, true, file, line);
 }
 
 int
-error_info_set_with_msg (int err_number, int err_indicator,
-			 const char *err_msg, bool force, const char *file,
-			 int line)
+error_info_set_with_msg (int err_number, int err_indicator, const char *err_msg, bool force, const char *file, int line)
 {
   const char *tmp_err_msg;
 
@@ -114,13 +101,11 @@ error_info_set_with_msg (int err_number, int err_indicator,
 
   if ((!force) && (err_Info.err_indicator != ERROR_INDICATOR_UNSET))
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "ERROR_INFO_SET reset error info : err_code %d",
-		    err_Info.err_number);
+      er_log_debug (ARG_FILE_LINE, "ERROR_INFO_SET reset error info : err_code %d", err_Info.err_number);
       return err_Info.err_indicator;
     }
 
-  if ((err_indicator == DBMS_ERROR_INDICATOR) && (err_number == -1))	/* might be connection error */
+  if ((err_indicator == DBMS_ERROR_INDICATOR) && (err_number == -1))    /* might be connection error */
     {
       err_Info.err_number = er_errid ();
     }

@@ -262,7 +262,7 @@ typedef struct sysprm_assign_value SYSPRM_ASSIGN_VALUE;
 struct sysprm_assign_value
 {
   PARAM_ID prm_id;
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   bool persist;
 #endif
   SYSPRM_VALUE value;
@@ -322,27 +322,20 @@ extern int sysprm_load_and_init_client (const char *db_name);
 extern int sysprm_reload_and_init (const char *db_name);
 extern void sysprm_final (void);
 extern void sysprm_dump_parameters (FILE * fp);
-extern int sysprm_dump_persist_conf_file (FILE * fp, const char *proc_name,
-					  const char *sect_name);
+extern int sysprm_dump_persist_conf_file (FILE * fp, const char *proc_name, const char *sect_name);
 extern void sysprm_set_er_log_file (const char *base_db_name);
 extern void sysprm_set_repl_er_log_file (const char *db_name);
 extern void sysprm_set_master_er_log_file (void);
 extern void sysprm_dump_server_parameters (FILE * fp);
-extern int sysprm_obtain_parameters (char *data,
-				     SYSPRM_ASSIGN_VALUE ** prm_values);
-extern int sysprm_change_server_parameters (const SYSPRM_ASSIGN_VALUE *
-					    assignments);
-extern int sysprm_obtain_server_parameters (SYSPRM_ASSIGN_VALUE **
-					    prm_values_ptr);
-extern int sysprm_get_force_server_parameters (SYSPRM_ASSIGN_VALUE **
-					       change_values);
+extern int sysprm_obtain_parameters (char *data, SYSPRM_ASSIGN_VALUE ** prm_values);
+extern int sysprm_change_server_parameters (const SYSPRM_ASSIGN_VALUE * assignments);
+extern int sysprm_obtain_server_parameters (SYSPRM_ASSIGN_VALUE ** prm_values_ptr);
+extern int sysprm_get_force_server_parameters (SYSPRM_ASSIGN_VALUE ** change_values);
 extern void sysprm_tune_client_parameters (void);
 
 #if !defined (CS_MODE)
-extern void xsysprm_change_server_parameters (const SYSPRM_ASSIGN_VALUE *
-					      assignments);
-extern void xsysprm_obtain_server_parameters (SYSPRM_ASSIGN_VALUE *
-					      prm_values);
+extern void xsysprm_change_server_parameters (const SYSPRM_ASSIGN_VALUE * assignments);
+extern void xsysprm_obtain_server_parameters (SYSPRM_ASSIGN_VALUE * prm_values);
 extern SYSPRM_ASSIGN_VALUE *xsysprm_get_force_server_parameters (void);
 extern void xsysprm_dump_server_parameters (FILE * fp);
 #endif /* !CS_MODE */
@@ -356,30 +349,18 @@ extern int sysprm_get_range (const char *pname, void *min, void *max);
 extern int prm_get_rye_port_id (void);
 extern bool prm_get_commit_on_shutdown (void);
 
-extern char *sysprm_pack_assign_values (char *ptr,
-					const SYSPRM_ASSIGN_VALUE *
-					assign_values);
-extern int sysprm_packed_assign_values_length (const SYSPRM_ASSIGN_VALUE *
-					       assign_values, int offset);
-extern char *sysprm_unpack_assign_values (char *ptr,
-					  SYSPRM_ASSIGN_VALUE **
-					  assign_values_ptr);
-extern void sysprm_free_assign_values (SYSPRM_ASSIGN_VALUE **
-				       assign_values_ptr);
+extern char *sysprm_pack_assign_values (char *ptr, const SYSPRM_ASSIGN_VALUE * assign_values);
+extern int sysprm_packed_assign_values_length (const SYSPRM_ASSIGN_VALUE * assign_values, int offset);
+extern char *sysprm_unpack_assign_values (char *ptr, SYSPRM_ASSIGN_VALUE ** assign_values_ptr);
+extern void sysprm_free_assign_values (SYSPRM_ASSIGN_VALUE ** assign_values_ptr);
 extern int sysprm_change_persist_conf_file (const char *proc_name,
-					    const char *sect_name,
-					    const char *key, const char *val);
-extern int sysprm_change_parameter_values (const SYSPRM_ASSIGN_VALUE *
-					   assignments, bool check,
-					   bool set_flag);
+                                            const char *sect_name, const char *key, const char *val);
+extern int sysprm_change_parameter_values (const SYSPRM_ASSIGN_VALUE * assignments, bool check, bool set_flag);
 extern int sysprm_get_persist_conf (char *value, int max_size,
-				    const char *proc_name,
-				    const char *sect_name,
-				    const char *key_name);
+                                    const char *proc_name, const char *sect_name, const char *key_name);
 
 
-int prm_read_and_parse_server_persist_conf_file (const char *sect_name,
-						 const bool reload);
+int prm_read_and_parse_server_persist_conf_file (const char *sect_name, const bool reload);
 int prm_read_and_parse_broker_persist_conf_file (INI_TABLE * ini);
 
 #if !defined (SERVER_MODE)
@@ -387,33 +368,25 @@ int prm_read_and_parse_broker_persist_conf_file (INI_TABLE * ini);
 extern char *sysprm_print_parameters_for_qry_string (void);
 #endif
 extern SYSPRM_ERR sysprm_validate_change_parameters (const char *data,
-						     const bool persist,
-						     const bool check,
-						     SYSPRM_ASSIGN_VALUE **
-						     assignments_ptr);
+                                                     const bool persist,
+                                                     const bool check, SYSPRM_ASSIGN_VALUE ** assignments_ptr);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void sysprm_init_intl_param (void);
 #endif
 #endif /* !SERVER_MODE */
 
-extern int sysprm_print_assign_values (SYSPRM_ASSIGN_VALUE * prm_values,
-				       char *buffer, int length);
-extern int sysprm_print_assign_names (char *buffer, int length,
-				      SYSPRM_ASSIGN_VALUE * prm_values);
+extern int sysprm_print_assign_values (SYSPRM_ASSIGN_VALUE * prm_values, char *buffer, int length);
+extern int sysprm_print_assign_names (char *buffer, int length, SYSPRM_ASSIGN_VALUE * prm_values);
 extern int sysprm_set_error (SYSPRM_ERR rc, const char *data);
 
 extern void prm_get_ha_node_list (PRM_NODE_LIST * cp_node_list);
 extern void prm_get_ha_replica_list (PRM_NODE_LIST * cp_node_list);
 extern PRM_NODE_INFO prm_get_null_node_info (void);
 extern PRM_NODE_INFO prm_get_myself_node_info (void);
-extern void prm_node_info_to_str (char *buf, int size,
-				  const PRM_NODE_INFO * node_info);
+extern void prm_node_info_to_str (char *buf, int size, const PRM_NODE_INFO * node_info);
 
-extern int prm_split_node_str (PRM_NODE_LIST * node_list,
-			       const char *node_list_str,
-			       bool include_local_host);
+extern int prm_split_node_str (PRM_NODE_LIST * node_list, const char *node_list_str, bool include_local_host);
 extern bool prm_is_myself_node_info (const PRM_NODE_INFO * node_info);
-extern bool prm_is_same_node (const PRM_NODE_INFO * node1,
-			      const PRM_NODE_INFO * node2);
+extern bool prm_is_same_node (const PRM_NODE_INFO * node1, const PRM_NODE_INFO * node2);
 
 #endif /* _SYSTEM_PARAMETER_H_ */

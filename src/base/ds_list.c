@@ -101,9 +101,9 @@ Rye_slist_free_full (RSList * list, Rye_func free_func)
     {
       next = current->next;
       if (current->data != NULL && free_func != NULL)
-	{
-	  free_func (current->data, NULL);
-	}
+        {
+          free_func (current->data, NULL);
+        }
       free (current);
       current = next;
     }
@@ -309,9 +309,9 @@ Rye_slist_foreach (RSList * list, Rye_func func, void *user_data)
     {
       ret = (*func) (current->data, user_data);
       if (ret < 0)
-	{
-	  return ret;
-	}
+        {
+          return ret;
+        }
       current = current->next;
     }
 

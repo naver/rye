@@ -60,27 +60,18 @@ extern int ut_set_keepalive (int sock);
 
 extern void as_pid_file_create (char *br_name, int as_index);
 
-extern void ut_get_as_pid_name (char *pid_name, char *br_name, int as_index,
-				int len);
+extern void ut_get_as_pid_name (char *pid_name, char *br_name, int as_index, int len);
 
 extern float ut_get_avg_from_array (int array[], int size);
 extern bool ut_is_appl_server_ready (int pid, char *ready_flag);
-extern int ut_get_broker_port_name (char *port_name, size_t len,
-				    const T_BROKER_INFO * br_info);
-extern void ut_get_as_port_name (char *port_name, const char *broker_name,
-				 int as_id, int len);
+extern int ut_get_broker_port_name (char *port_name, size_t len, const T_BROKER_INFO * br_info);
+extern void ut_get_as_port_name (char *port_name, const char *broker_name, int as_id, int len);
 
-extern double ut_size_string_to_kbyte (const char *size_str,
-				       const char *default_unit);
-extern double ut_time_string_to_sec (const char *time_str,
-				     const char *default_unit);
-extern T_BROKER_INFO *ut_find_broker (T_BROKER_INFO * br_info, int num_brs,
-				      const char *brname, char broker_type);
-extern T_BROKER_INFO *ut_find_shard_mgmt (T_BROKER_INFO * br_info,
-					  int num_brs, const char *dbname);
-extern void ut_make_broker_process_name (char *buf, size_t size,
-					 const T_BROKER_INFO * br_info);
-extern void ut_make_cas_process_name (char *buf, size_t size,
-				      const char *broker_name, int as_index);
+extern double ut_size_string_to_kbyte (const char *size_str, const char *default_unit);
+extern double ut_time_string_to_sec (const char *time_str, const char *default_unit);
+extern T_BROKER_INFO *ut_find_broker (T_BROKER_INFO * br_info, int num_brs, const char *brname, char broker_type);
+extern T_BROKER_INFO *ut_find_shard_mgmt (T_BROKER_INFO * br_info, int num_brs, const char *dbname);
+extern void ut_make_broker_process_name (char *buf, size_t size, const T_BROKER_INFO * br_info);
+extern void ut_make_cas_process_name (char *buf, size_t size, const char *broker_name, int as_index);
 
 #endif /* _BROKER_UTIL_H_ */

@@ -65,75 +65,58 @@ CCI_DB_IDXKEY_HAS_NULL cci_db_idxkey_has_null;
 CCI_OR_DB_IDXKEY_SIZE cci_or_db_idxkey_size;
 CCI_DB_GET_STRING cci_db_get_string;
 
-extern int cci_update_db_group_id (CCI_CONN * conn, int migrator_id,
-				   int group_id, int target, bool on_off);
+extern int cci_update_db_group_id (CCI_CONN * conn, int migrator_id, int group_id, int target, bool on_off);
 extern int cci_insert_gid_removed_info (CCI_CONN * conn, int group_id);
 extern int cci_delete_gid_removed_info (CCI_CONN * conn, int group_id);
 extern int cci_delete_gid_skey_info (CCI_CONN * conn, int group_id);
 extern int cci_block_global_dml (CCI_CONN * conn, bool start_or_end);
-extern int cci_execute_with_gid (CCI_STMT * stmt, char flag, int max_col_size,
-				 int gid);
+extern int cci_execute_with_gid (CCI_STMT * stmt, char flag, int max_col_size, int gid);
 
 extern int cci_shard_get_info (CCI_CONN * conn,
-			       CCI_SHARD_NODE_INFO ** node_info,
-			       CCI_SHARD_GROUPID_INFO ** groupid_info);
+                               CCI_SHARD_NODE_INFO ** node_info, CCI_SHARD_GROUPID_INFO ** groupid_info);
 extern int cci_shard_node_info_free (CCI_SHARD_NODE_INFO * ptr);
 extern int cci_shard_group_info_free (CCI_SHARD_GROUPID_INFO * ptr);
 #if defined(CCI_SHARD_ADMIN)
-extern int cci_shard_init (CCI_CONN * conn, int groupid_count,
-			   int init_num_nodes, const char **init_nodes);
+extern int cci_shard_init (CCI_CONN * conn, int groupid_count, int init_num_nodes, const char **init_nodes);
 extern int cci_shard_add_node (CCI_CONN * conn, const char *node_arg);
 extern int cci_shard_drop_node (CCI_CONN * conn, const char *node_arg);
 extern int cci_shard_ddl_start (CCI_CONN * conn);
 extern int cci_shard_ddl_end (CCI_CONN * conn);
 #endif
-extern int cci_shard_migration_start (CCI_CONN * conn, int groupid,
-				      int dest_nodeid);
-extern int cci_shard_migration_end (CCI_CONN * conn, int groupid,
-				    int dest_nodeid, int num_shard_keys);
+extern int cci_shard_migration_start (CCI_CONN * conn, int groupid, int dest_nodeid);
+extern int cci_shard_migration_end (CCI_CONN * conn, int groupid, int dest_nodeid, int num_shard_keys);
 extern int cci_shard_gc_start (CCI_CONN * conn);
 extern int cci_shard_gc_end (CCI_CONN * conn);
 extern int cci_mgmt_sync_shard_mgmt_info (const char *hostname,
-					  int mgmt_port,
-					  const char *local_dbname,
-					  const char *global_dbname,
-					  int nodeid,
-					  int shard_mgmt_port,
-					  int64_t nodeid_version,
-					  int64_t groupid_version,
-					  char *server_name_buf,
-					  int server_name_buf_size,
-					  int *server_mode, int timeout_msec);
+                                          int mgmt_port,
+                                          const char *local_dbname,
+                                          const char *global_dbname,
+                                          int nodeid,
+                                          int shard_mgmt_port,
+                                          int64_t nodeid_version,
+                                          int64_t groupid_version,
+                                          char *server_name_buf,
+                                          int server_name_buf_size, int *server_mode, int timeout_msec);
 extern int cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
-				    const char *hostname, int mgmt_port,
-				    int launch_proc_id,
-				    bool recv_stdout, bool wait_child,
-				    int argc, const char **argv, int num_env,
-				    const char **envp, int timeout_msec);
-extern int cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
-					 int timeout_msec);
+                                    const char *hostname, int mgmt_port,
+                                    int launch_proc_id,
+                                    bool recv_stdout, bool wait_child,
+                                    int argc, const char **argv, int num_env, const char **envp, int timeout_msec);
+extern int cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result, int timeout_msec);
 extern int cc_mgmt_count_launch_process (void);
-extern int cci_mgmt_connect_db_server (const T_HOST_INFO * host,
-				       const char *dbname, int timeout_msec);
+extern int cci_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname, int timeout_msec);
 
-extern int cci_host_str_to_addr (const char *host_str,
-				 unsigned char *ip_addr);
+extern int cci_host_str_to_addr (const char *host_str, unsigned char *ip_addr);
 extern int cci_server_shard_nodeid (CCI_CONN * conn);
-extern int cci_get_server_mode (CCI_CONN * conn, int *server_mode,
-				unsigned int *master_addr);
+extern int cci_get_server_mode (CCI_CONN * conn, int *server_mode, unsigned int *master_addr);
 extern void cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY
-				      pack_idxkey_func,
-				      CCI_DB_IDXKEY_HAS_NULL
-				      idxkey_is_null_func,
-				      CCI_OR_DB_IDXKEY_SIZE
-				      idxkey_size_func,
-				      CCI_DB_GET_STRING db_get_string_func);
-extern int cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head,
-			       int num_items, int applier_id);
-extern int cci_notify_ha_agent_state (CCI_CONN * conn, in_addr_t ip,
-				      int port, int state);
-extern int cci_change_dbuser (CCI_CONN * conn, const char *user,
-			      const char *passwd);
+                                      pack_idxkey_func,
+                                      CCI_DB_IDXKEY_HAS_NULL
+                                      idxkey_is_null_func,
+                                      CCI_OR_DB_IDXKEY_SIZE idxkey_size_func, CCI_DB_GET_STRING db_get_string_func);
+extern int cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items, int applier_id);
+extern int cci_notify_ha_agent_state (CCI_CONN * conn, in_addr_t ip, int port, int state);
+extern int cci_change_dbuser (CCI_CONN * conn, const char *user, const char *passwd);
 
 
 #endif /* _CAS_CCI_INTERNAL_H_ */

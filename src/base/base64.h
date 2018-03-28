@@ -34,11 +34,7 @@ enum
 };
 
 
-extern int
-base64_encode (const unsigned char *src, int src_len,
-	       unsigned char **dest, int *dest_len);
-extern int
-base64_decode (const unsigned char *src, int src_len,
-	       unsigned char **dest, int *dest_len);
+extern int base64_encode (const unsigned char *src, int src_len, unsigned char **dest, int *dest_len);
+extern int base64_decode (const unsigned char *src, int src_len, unsigned char **dest, int *dest_len);
 
 #endif

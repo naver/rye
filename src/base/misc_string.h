@@ -46,4 +46,4 @@ extern "C"
 }
 #endif
 
-#endif				/* _MISC_STRING_H_ */
+#endif                          /* _MISC_STRING_H_ */

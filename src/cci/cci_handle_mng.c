@@ -77,7 +77,7 @@
 #define UNREACHABLE_HOST_MAX_COUNT	MAX_CON_HANDLE
 typedef struct
 {
-  T_HOST_INFO host;		/* host info (ip, port) */
+  T_HOST_INFO host;             /* host info (ip, port) */
   char *port_name;
 } T_UNREACHABLE_HOST;
 
@@ -95,23 +95,19 @@ T_MUTEX port_name_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
  ************************************************************************/
 
 static int init_con_handle (T_CON_HANDLE * con_handle, int con_id,
-			    T_ALTER_HOST * alter_hosts,
-			    const char *server_list, const char *port_name,
-			    const char *db_name, const char *db_user,
-			    const char *db_passwd, const char *property_str,
-			    const T_CON_PROPERTY * con_property);
-static int new_req_handle_id (T_CON_HANDLE * con_handle,
-			      T_REQ_HANDLE ** ret_req_handle);
+                            T_ALTER_HOST * alter_hosts,
+                            const char *server_list, const char *port_name,
+                            const char *db_name, const char *db_user,
+                            const char *db_passwd, const char *property_str, const T_CON_PROPERTY * con_property);
+static int new_req_handle_id (T_CON_HANDLE * con_handle, T_REQ_HANDLE ** ret_req_handle);
 static void con_handle_content_free (T_CON_HANDLE * con_handle);
-static int hm_handle_id_compare (CCI_HANDLE_ID * handle1,
-				 CCI_HANDLE_ID * handle2);
+static int hm_handle_id_compare (CCI_HANDLE_ID * handle1, CCI_HANDLE_ID * handle2);
 static bool hm_is_null_handle_id (CCI_HANDLE_ID * handle_id);
 static int64_t hm_con_handle_req_id_seq_next (T_CON_HANDLE * con_handle);
 static int64_t hm_con_id_seq_next (void);
 static void hm_set_null_handle_id (CCI_HANDLE_ID * handle_id);
 
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-hm_thread_health_checker (void *arg);
+static THREAD_RET_T THREAD_CALLING_CONVENTION hm_thread_health_checker (void *arg);
 
 /************************************************************************
  * INTERFACE VARIABLES							*
@@ -142,9 +138,9 @@ con_port_name_cache_put (const char *port_name)
   for (i = 0; i < port_name_cache_count; i++)
     {
       if (strcmp (port_name, port_name_cache[i]) == 0)
-	{
-	  return port_name_cache[i];
-	}
+        {
+          return port_name_cache[i];
+        }
     }
 
   /* cache not found */
@@ -152,23 +148,23 @@ con_port_name_cache_put (const char *port_name)
   if (port_name_cache_count < PORT_NAME_CACHE_MAX)
     {
       for (i = 0; i < port_name_cache_count; i++)
-	{
-	  if (strcmp (port_name, port_name_cache[i]) == 0)
-	    {
-	      cached_port_name = port_name_cache[i];
-	      break;
-	    }
-	}
+        {
+          if (strcmp (port_name, port_name_cache[i]) == 0)
+            {
+              cached_port_name = port_name_cache[i];
+              break;
+            }
+        }
 
       if (cached_port_name == NULL)
-	{
-	  cached_port_name = strdup (port_name);
-	  if (cached_port_name != NULL)
-	    {
-	      port_name_cache[port_name_cache_count] = cached_port_name;
-	      port_name_cache_count++;
-	    }
-	}
+        {
+          cached_port_name = strdup (port_name);
+          if (cached_port_name != NULL)
+            {
+              port_name_cache[port_name_cache_count] = cached_port_name;
+              port_name_cache_count++;
+            }
+        }
     }
   MUTEX_UNLOCK (port_name_cache_mutex);
 
@@ -177,12 +173,10 @@ con_port_name_cache_put (const char *port_name)
 
 static bool
 unreachable_host_compare (const T_UNREACHABLE_HOST * unreachable_host,
-			  const T_HOST_INFO * host_info,
-			  const char *port_name)
+                          const T_HOST_INFO * host_info, const char *port_name)
 {
   if (memcmp (unreachable_host->host.ip_addr, host_info->ip_addr, 4) == 0
-      && unreachable_host->host.port == host_info->port
-      && strcmp (unreachable_host->port_name, port_name) == 0)
+      && unreachable_host->host.port == host_info->port && strcmp (unreachable_host->port_name, port_name) == 0)
     {
       return true;
     }
@@ -210,11 +204,10 @@ con_is_unreachable_host (const T_CON_HANDLE * con_handle, int host_id)
   for (i = 0; i < count; i++)
     {
       tmp_unreachable_host = unreachable_host[i];
-      if (unreachable_host_compare
-	  (&tmp_unreachable_host, host_info, port_name) == true)
-	{
-	  return true;
-	}
+      if (unreachable_host_compare (&tmp_unreachable_host, host_info, port_name) == true)
+        {
+          return true;
+        }
     }
 
   return false;
@@ -230,19 +223,17 @@ con_unreachable_host_add (const T_CON_HANDLE * con_handle, int host_id)
 
   MUTEX_LOCK (unreachable_host_mutex);
 
-  if (con_is_unreachable_host (con_handle, host_id) == false &&
-      unreachable_host_count < UNREACHABLE_HOST_MAX_COUNT)
+  if (con_is_unreachable_host (con_handle, host_id) == false && unreachable_host_count < UNREACHABLE_HOST_MAX_COUNT)
     {
       T_UNREACHABLE_HOST tmp_unreachable_host;
 
       tmp_unreachable_host.host = con_handle->alter_hosts->host_info[host_id];
-      tmp_unreachable_host.port_name =
-	con_port_name_cache_put (con_handle->port_name);
+      tmp_unreachable_host.port_name = con_port_name_cache_put (con_handle->port_name);
 
       if (tmp_unreachable_host.port_name != NULL)
-	{
-	  unreachable_host[unreachable_host_count++] = tmp_unreachable_host;
-	}
+        {
+          unreachable_host[unreachable_host_count++] = tmp_unreachable_host;
+        }
     }
 
   MUTEX_UNLOCK (unreachable_host_mutex);
@@ -252,8 +243,7 @@ con_unreachable_host_add (const T_CON_HANDLE * con_handle, int host_id)
  * health_checker thread
  */
 static void
-con_unreachable_host_remove (const T_HOST_INFO * host_info,
-			     const char *port_name)
+con_unreachable_host_remove (const T_HOST_INFO * host_info, const char *port_name)
 {
   int i;
 
@@ -261,13 +251,12 @@ con_unreachable_host_remove (const T_HOST_INFO * host_info,
 
   for (i = 0; i < unreachable_host_count; i++)
     {
-      if (unreachable_host_compare
-	  (&unreachable_host[i], host_info, port_name) == true)
-	{
-	  unreachable_host[i] = unreachable_host[unreachable_host_count - 1];
-	  unreachable_host_count--;
-	  break;
-	}
+      if (unreachable_host_compare (&unreachable_host[i], host_info, port_name) == true)
+        {
+          unreachable_host[i] = unreachable_host[unreachable_host_count - 1];
+          unreachable_host_count--;
+          break;
+        }
     }
 
   MUTEX_UNLOCK (unreachable_host_mutex);
@@ -286,10 +275,9 @@ hm_con_handle_table_init ()
 
 T_CON_HANDLE *
 hm_con_handle_alloc (T_ALTER_HOST * alter_hosts,
-		     const char *server_list, const char *port_name,
-		     const char *db_name, const char *db_user,
-		     const char *db_passwd, const char *property_str,
-		     const T_CON_PROPERTY * con_property)
+                     const char *server_list, const char *port_name,
+                     const char *db_name, const char *db_user,
+                     const char *db_passwd, const char *property_str, const T_CON_PROPERTY * con_property)
 {
   int i, handle_id;
   T_CON_HANDLE *con_handle = NULL;
@@ -300,19 +288,19 @@ hm_con_handle_alloc (T_ALTER_HOST * alter_hosts,
       handle_id = i + 1;
 
       if (con_handle == NULL)
-	{
-	  con_handle = (T_CON_HANDLE *) MALLOC (sizeof (T_CON_HANDLE));
-	  con_handle_table[i] = con_handle;
-	  break;
-	}
+        {
+          con_handle = (T_CON_HANDLE *) MALLOC (sizeof (T_CON_HANDLE));
+          con_handle_table[i] = con_handle;
+          break;
+        }
       else if (hm_is_null_handle_id (&con_handle->con_handle_id))
-	{
-	  break;
-	}
+        {
+          break;
+        }
       else
-	{
-	  con_handle = NULL;
-	}
+        {
+          con_handle = NULL;
+        }
     }
 
   if (con_handle == NULL)
@@ -321,14 +309,12 @@ hm_con_handle_alloc (T_ALTER_HOST * alter_hosts,
     }
 
   if (init_con_handle (con_handle, handle_id, alter_hosts, server_list,
-		       port_name, db_name, db_user, db_passwd,
-		       property_str, con_property) < 0)
+                       port_name, db_name, db_user, db_passwd, property_str, con_property) < 0)
     {
       return NULL;
     }
 
-  hm_set_handle_id (&con_handle->con_handle_id,
-		    handle_id, hm_con_id_seq_next ());
+  hm_set_handle_id (&con_handle->con_handle_id, handle_id, hm_con_id_seq_next ());
 
   return con_handle;
 }
@@ -356,8 +342,7 @@ hm_con_handle_free (T_CON_HANDLE * con_handle)
 }
 
 int
-hm_req_handle_alloc (T_CON_HANDLE * con_handle,
-		     T_REQ_HANDLE ** ret_req_handle)
+hm_req_handle_alloc (T_CON_HANDLE * con_handle, T_REQ_HANDLE ** ret_req_handle)
 {
   int req_handle_id;
   T_REQ_HANDLE *req_handle = NULL;
@@ -374,15 +359,14 @@ hm_req_handle_alloc (T_CON_HANDLE * con_handle,
     {
       req_handle = (T_REQ_HANDLE *) MALLOC (sizeof (T_REQ_HANDLE));
       if (req_handle == NULL)
-	{
-	  return CCI_ER_NO_MORE_MEMORY;
-	}
+        {
+          return CCI_ER_NO_MORE_MEMORY;
+        }
     }
 
   memset (req_handle, 0, sizeof (T_REQ_HANDLE));
 
-  hm_set_handle_id (&req_handle->req_handle_id, req_handle_id,
-		    hm_con_handle_req_id_seq_next (con_handle));
+  hm_set_handle_id (&req_handle->req_handle_id, req_handle_id, hm_con_handle_req_id_seq_next (con_handle));
 
   req_handle->query_timeout = con_handle->con_property.query_timeout;
 
@@ -394,8 +378,7 @@ hm_req_handle_alloc (T_CON_HANDLE * con_handle,
 }
 
 T_CCI_ERROR_CODE
-hm_get_connection (CCI_HANDLE_ID * conn_handle_id,
-		   T_CON_HANDLE ** ret_con_handle, bool force)
+hm_get_connection (CCI_HANDLE_ID * conn_handle_id, T_CON_HANDLE ** ret_con_handle, bool force)
 {
   int connection_id;
   T_CON_HANDLE *con_handle;
@@ -408,8 +391,7 @@ hm_get_connection (CCI_HANDLE_ID * conn_handle_id,
     }
 
   con_handle = con_handle_table[connection_id - 1];
-  if (con_handle == NULL ||
-      hm_handle_id_compare (conn_handle_id, &con_handle->con_handle_id) != 0)
+  if (con_handle == NULL || hm_handle_id_compare (conn_handle_id, &con_handle->con_handle_id) != 0)
     {
       return CCI_ER_CON_HANDLE;
     }
@@ -417,18 +399,18 @@ hm_get_connection (CCI_HANDLE_ID * conn_handle_id,
   if (force == false)
     {
       while (__sync_bool_compare_and_swap (&con_handle->lock, 0, 1) == false)
-	{
-	}
+        {
+        }
 
       if (con_handle->used)
-	{
-	  con_handle->lock = 0;
-	  return CCI_ER_USED_CONNECTION;
-	}
+        {
+          con_handle->lock = 0;
+          return CCI_ER_USED_CONNECTION;
+        }
       else
-	{
-	  con_handle->used = true;
-	}
+        {
+          con_handle->used = true;
+        }
 
       con_handle->lock = 0;
     }
@@ -439,8 +421,7 @@ hm_get_connection (CCI_HANDLE_ID * conn_handle_id,
 }
 
 T_CCI_ERROR_CODE
-hm_get_statement (CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
-		  T_REQ_HANDLE ** ret_req_handle)
+hm_get_statement (CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle, T_REQ_HANDLE ** ret_req_handle)
 {
   int statement_id;
   T_CON_HANDLE *con_handle = NULL;
@@ -461,9 +442,7 @@ hm_get_statement (CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
     }
 
   req_handle = con_handle->req_handle_table[statement_id - 1];
-  if (req_handle == NULL ||
-      hm_handle_id_compare (&stmt->stmt_handle_id,
-			    &req_handle->req_handle_id) != 0)
+  if (req_handle == NULL || hm_handle_id_compare (&stmt->stmt_handle_id, &req_handle->req_handle_id) != 0)
     {
       goto req_handle_err;
     }
@@ -498,9 +477,9 @@ hm_req_handle_free_all (T_CON_HANDLE * con_handle)
     {
       req_handle = con_handle->req_handle_table[i];
       if (req_handle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       hm_req_handle_free (con_handle, req_handle);
     }
@@ -516,14 +495,14 @@ hm_req_handle_free_all_unholdable (T_CON_HANDLE * con_handle)
     {
       req_handle = con_handle->req_handle_table[i];
       if (req_handle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if ((req_handle->prepare_flag & CCI_PREPARE_HOLDABLE) != 0)
-	{
-	  /* do not free holdable req_handles */
-	  continue;
-	}
+        {
+          /* do not free holdable req_handles */
+          continue;
+        }
 
       hm_req_handle_free (con_handle, req_handle);
     }
@@ -539,15 +518,14 @@ hm_req_handle_close_all_resultsets (T_CON_HANDLE * con_handle)
     {
       req_handle = con_handle->req_handle_table[i];
       if (req_handle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      if ((req_handle->prepare_flag & CCI_PREPARE_HOLDABLE) != 0
-	  && !req_handle->is_from_current_transaction)
-	{
-	  continue;
-	}
+      if ((req_handle->prepare_flag & CCI_PREPARE_HOLDABLE) != 0 && !req_handle->is_from_current_transaction)
+        {
+          continue;
+        }
 
       req_handle->is_closed = 1;
     }
@@ -563,16 +541,16 @@ hm_req_handle_close_all_unholdable_resultsets (T_CON_HANDLE * con_handle)
     {
       req_handle = con_handle->req_handle_table[i];
       if (req_handle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if ((req_handle->prepare_flag & CCI_PREPARE_HOLDABLE) != 0)
-	{
-	  /* skip holdable req_handles */
-	  req_handle->is_from_current_transaction = 0;
-	  continue;
-	}
+        {
+          /* skip holdable req_handles */
+          req_handle->is_from_current_transaction = 0;
+          continue;
+        }
 
       req_handle->is_closed = 1;
     }
@@ -583,10 +561,8 @@ hm_req_handle_fetch_buf_free (T_REQ_HANDLE * req_handle)
 {
   int fetched_tuple;
 
-  fetched_tuple = req_handle->fetched_tuple_end -
-    req_handle->fetched_tuple_begin + 1;
-  TUPLE_VALUE_FREE (req_handle->tuple_value,
-		    fetched_tuple, req_handle->num_col_info);
+  fetched_tuple = req_handle->fetched_tuple_end - req_handle->fetched_tuple_begin + 1;
+  TUPLE_VALUE_FREE (req_handle->tuple_value, fetched_tuple, req_handle->num_col_info);
 
   FREE_MEM (req_handle->net_res);
   req_handle->fetched_tuple_begin = req_handle->fetched_tuple_end = 0;
@@ -625,15 +601,15 @@ hm_invalidate_all_req_handle (T_CON_HANDLE * con_handle)
   for (i = 0; i < con_handle->max_req_handle; ++i)
     {
       if (count == con_handle->req_handle_count)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       curr_req_handle = con_handle->req_handle_table[i];
       if (curr_req_handle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       curr_req_handle->valid = 0;
       ++count;
@@ -710,26 +686,25 @@ hm_get_con_handle_holdable (T_CON_HANDLE * con_handle)
   if (con_handle->is_holdable)
     {
       if (IS_CAS_HOLDABLE_RESULT (con_handle))
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
 }
 
 int
-hm_get_req_handle_holdable (T_CON_HANDLE * con_handle,
-			    T_REQ_HANDLE * req_handle)
+hm_get_req_handle_holdable (T_CON_HANDLE * con_handle, T_REQ_HANDLE * req_handle)
 {
   assert (con_handle != NULL && req_handle != NULL);
 
   if ((req_handle->prepare_flag & CCI_PREPARE_HOLDABLE) != 0)
     {
       if (IS_CAS_HOLDABLE_RESULT (con_handle))
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
@@ -745,20 +720,18 @@ hm_check_rc_time (T_CON_HANDLE * con_handle)
       return;
     }
 
-  if (con_handle->alter_hosts->cur_id > 0 &&
-      con_handle->con_property.rc_time > 0)
+  if (con_handle->alter_hosts->cur_id > 0 && con_handle->con_property.rc_time > 0)
     {
       cur_time = time (NULL);
       failure_time = con_handle->last_failure_time;
-      if (failure_time > 0 &&
-	  con_handle->con_property.rc_time < (cur_time - failure_time))
-	{
-	  if (con_is_unreachable_host (con_handle, 0) == false)
-	    {
-	      con_handle->force_failback = true;
-	      con_handle->last_failure_time = 0;
-	    }
-	}
+      if (failure_time > 0 && con_handle->con_property.rc_time < (cur_time - failure_time))
+        {
+          if (con_is_unreachable_host (con_handle, 0) == false)
+            {
+              con_handle->force_failback = true;
+              con_handle->last_failure_time = 0;
+            }
+        }
     }
 }
 
@@ -787,9 +760,7 @@ hm_create_health_check_th (void)
       assert (false);
       return;
     }
-  rv =
-    pthread_create (&health_check_th, &thread_attr, hm_thread_health_checker,
-		    (void *) NULL);
+  rv = pthread_create (&health_check_th, &thread_attr, hm_thread_health_checker, (void *) NULL);
   if (rv != 0)
     {
       assert (false);
@@ -816,8 +787,7 @@ hm_set_conn_handle_id (CCI_CONN * conn, const T_CON_HANDLE * con_handle)
 }
 
 void
-hm_set_stmt_handle_id (CCI_STMT * stmt, const T_CON_HANDLE * con_handle,
-		       const T_REQ_HANDLE * req_handle)
+hm_set_stmt_handle_id (CCI_STMT * stmt, const T_CON_HANDLE * con_handle, const T_REQ_HANDLE * req_handle)
 {
   if (stmt == NULL)
     {
@@ -912,33 +882,33 @@ make_con_logger (const T_CON_PROPERTY * con_property, int con_id)
       char path[PATH_MAX];
 
       if (file == NULL)
-	{
-	  if (base == NULL)
-	    {
-	      snprintf (path, PATH_MAX, "cci_%04d.log", con_id);
-	    }
-	  else
-	    {
-	      snprintf (path, PATH_MAX, "%s/cci_%04d.log", base, con_id);
-	    }
-	}
+        {
+          if (base == NULL)
+            {
+              snprintf (path, PATH_MAX, "cci_%04d.log", con_id);
+            }
+          else
+            {
+              snprintf (path, PATH_MAX, "%s/cci_%04d.log", base, con_id);
+            }
+        }
       else
-	{
-	  if (base == NULL)
-	    {
-	      snprintf (path, PATH_MAX, "%s", file);
-	    }
-	  else
-	    {
-	      snprintf (path, PATH_MAX, "%s/%s", base, file);
-	    }
-	}
+        {
+          if (base == NULL)
+            {
+              snprintf (path, PATH_MAX, "%s", file);
+            }
+          else
+            {
+              snprintf (path, PATH_MAX, "%s/%s", base, file);
+            }
+        }
 
       logger = cci_log_get (path);
       if (logger != NULL)
-	{
-	  cci_log_set_level (logger, CCI_LOG_LEVEL_DEBUG);
-	}
+        {
+          cci_log_set_level (logger, CCI_LOG_LEVEL_DEBUG);
+        }
 
       return logger;
     }
@@ -950,11 +920,10 @@ make_con_logger (const T_CON_PROPERTY * con_property, int con_id)
 
 static int
 init_con_handle (T_CON_HANDLE * con_handle, int con_id,
-		 T_ALTER_HOST * alter_hosts, const char *server_list,
-		 const char *port_name, const char *db_name,
-		 const char *db_user, const char *db_passwd,
-		 const char *property_str,
-		 const T_CON_PROPERTY * con_property)
+                 T_ALTER_HOST * alter_hosts, const char *server_list,
+                 const char *port_name, const char *db_name,
+                 const char *db_user, const char *db_passwd,
+                 const char *property_str, const T_CON_PROPERTY * con_property)
 {
   memset (con_handle, 0, sizeof (T_CON_HANDLE));
 
@@ -968,8 +937,7 @@ init_con_handle (T_CON_HANDLE * con_handle, int con_id,
   ALLOC_COPY_STR (con_handle->db_user, db_user);
   ALLOC_COPY_STR (con_handle->db_passwd, db_passwd);
   ut_make_url (con_handle->url_for_logging, SRV_CON_URL_SIZE,
-	       server_list, db_name, db_user, "********",
-	       port_name, property_str);
+               server_list, db_name, db_user, "********", port_name, property_str);
   con_handle->sock_fd = -1;
   con_handle->isolation_level = CCI_TRAN_UNKNOWN_ISOLATION;
   con_handle->lock_timeout = CCI_LOCK_TIMEOUT_DEFAULT;
@@ -979,8 +947,7 @@ init_con_handle (T_CON_HANDLE * con_handle, int con_id,
   con_handle->autocommit_mode = CCI_AUTOCOMMIT_TRUE;
 
   con_handle->max_req_handle = REQ_HANDLE_ALLOC_SIZE;
-  con_handle->req_handle_table = (T_REQ_HANDLE **)
-    MALLOC (sizeof (T_REQ_HANDLE *) * con_handle->max_req_handle);
+  con_handle->req_handle_table = (T_REQ_HANDLE **) MALLOC (sizeof (T_REQ_HANDLE *) * con_handle->max_req_handle);
   if (con_handle->req_handle_table == NULL)
     {
       FREE_MEM (con_handle->server_list);
@@ -991,8 +958,7 @@ init_con_handle (T_CON_HANDLE * con_handle, int con_id,
       return CCI_ER_NO_MORE_MEMORY;
     }
 
-  con_handle->stmt_pool = cci_mht_create (0, 1000, cci_mht_5strhash,
-					  cci_mht_strcasecmpeq);
+  con_handle->stmt_pool = cci_mht_create (0, 1000, cci_mht_5strhash, cci_mht_strcasecmpeq);
   if (con_handle->stmt_pool == NULL)
     {
       FREE_MEM (con_handle->server_list);
@@ -1003,8 +969,7 @@ init_con_handle (T_CON_HANDLE * con_handle, int con_id,
       return CCI_ER_NO_MORE_MEMORY;
     }
 
-  memset (con_handle->req_handle_table,
-	  0, sizeof (T_REQ_HANDLE *) * con_handle->max_req_handle);
+  memset (con_handle->req_handle_table, 0, sizeof (T_REQ_HANDLE *) * con_handle->max_req_handle);
   con_handle->req_handle_count = 0;
   con_handle->open_prepared_statement_count = 0;
 
@@ -1017,11 +982,8 @@ init_con_handle (T_CON_HANDLE * con_handle, int con_id,
   con_handle->start_time.tv_usec = 0;
   con_handle->current_timeout = 0;
 
-  con_handle->deferred_max_close_handle_count =
-    DEFERRED_CLOSE_HANDLE_ALLOC_SIZE;
-  con_handle->deferred_close_handle_list =
-    (int *) MALLOC (sizeof (int) *
-		    con_handle->deferred_max_close_handle_count);
+  con_handle->deferred_max_close_handle_count = DEFERRED_CLOSE_HANDLE_ALLOC_SIZE;
+  con_handle->deferred_close_handle_list = (int *) MALLOC (sizeof (int) * con_handle->deferred_max_close_handle_count);
   con_handle->deferred_close_handle_count = 0;
 
   con_handle->is_holdable = 1;
@@ -1043,8 +1005,7 @@ hm_req_handle_table_expand (T_CON_HANDLE * con_handle)
 
   new_max_req_handle = con_handle->max_req_handle + REQ_HANDLE_ALLOC_SIZE;
   new_req_handle_table = (T_REQ_HANDLE **)
-    REALLOC (con_handle->req_handle_table,
-	     sizeof (T_REQ_HANDLE *) * new_max_req_handle);
+    REALLOC (con_handle->req_handle_table, sizeof (T_REQ_HANDLE *) * new_max_req_handle);
   if (new_req_handle_table == NULL)
     {
       return CCI_ER_NO_MORE_MEMORY;
@@ -1052,8 +1013,7 @@ hm_req_handle_table_expand (T_CON_HANDLE * con_handle)
 
   handle_id = con_handle->max_req_handle + 1;
 
-  memset (new_req_handle_table + con_handle->max_req_handle, 0,
-	  REQ_HANDLE_ALLOC_SIZE * sizeof (T_REQ_HANDLE *));
+  memset (new_req_handle_table + con_handle->max_req_handle, 0, REQ_HANDLE_ALLOC_SIZE * sizeof (T_REQ_HANDLE *));
 
   con_handle->max_req_handle = new_max_req_handle;
   con_handle->req_handle_table = new_req_handle_table;
@@ -1072,12 +1032,11 @@ new_req_handle_id (T_CON_HANDLE * con_handle, T_REQ_HANDLE ** ret_req_handle)
       T_REQ_HANDLE *req_handle;
 
       req_handle = con_handle->req_handle_table[i];
-      if (req_handle == NULL ||
-	  hm_is_null_handle_id (&req_handle->req_handle_id))
-	{
-	  *ret_req_handle = req_handle;
-	  return (i + 1);
-	}
+      if (req_handle == NULL || hm_is_null_handle_id (&req_handle->req_handle_id))
+        {
+          *ret_req_handle = req_handle;
+          return (i + 1);
+        }
     }
 
   handle_id = hm_req_handle_table_expand (con_handle);
@@ -1124,21 +1083,20 @@ hm_thread_health_checker (UNUSED_ARG void *arg)
     {
       start_time = time (NULL);
       for (i = 0; i < unreachable_host_count; i++)
-	{
-	  host_info = &unreachable_host[i].host;
-	  port_name = unreachable_host[i].port_name;
+        {
+          host_info = &unreachable_host[i].host;
+          port_name = unreachable_host[i].port_name;
 
-	  if (net_check_broker_alive (host_info, port_name,
-				      BROKER_HEALTH_CHECK_TIMEOUT))
-	    {
-	      con_unreachable_host_remove (host_info, port_name);
-	    }
-	}
+          if (net_check_broker_alive (host_info, port_name, BROKER_HEALTH_CHECK_TIMEOUT))
+            {
+              con_unreachable_host_remove (host_info, port_name);
+            }
+        }
       elapsed_time = time (NULL) - start_time;
       if (elapsed_time < MONITORING_INTERVAL)
-	{
-	  SLEEP_MILISEC (MONITORING_INTERVAL - elapsed_time, 0);
-	}
+        {
+          SLEEP_MILISEC (MONITORING_INTERVAL - elapsed_time, 0);
+        }
     }
   return (THREAD_RET_T) 0;
 }

@@ -87,15 +87,12 @@ extern void net_buf_destroy (T_NET_BUF * net_buf);
 extern int net_buf_cp_byte (T_NET_BUF * net_buf, char ch);
 extern int net_buf_cp_str (T_NET_BUF * net_buf, const char *buf, int size);
 extern int net_buf_cp_int (T_NET_BUF * net_buf, int value, int *begin_offset);
-extern void net_buf_overwrite_int (T_NET_BUF * net_buf, int offset,
-				   int value);
-extern int net_buf_cp_bigint (T_NET_BUF * net_buf, DB_BIGINT value,
-			      int *begin_offset);
+extern void net_buf_overwrite_int (T_NET_BUF * net_buf, int offset, int value);
+extern int net_buf_cp_bigint (T_NET_BUF * net_buf, DB_BIGINT value, int *begin_offset);
 extern int net_buf_cp_double (T_NET_BUF * net_buf, double value);
 extern int net_buf_cp_short (T_NET_BUF * net_buf, short value);
 
-extern void net_buf_error_msg_set (T_NET_BUF * net_buf, int errindicator,
-				   int errcode, char *errstr);
+extern void net_buf_error_msg_set (T_NET_BUF * net_buf, int errindicator, int errcode, char *errstr);
 
 #ifndef BYTE_ORDER_BIG_ENDIAN
 extern INT64 net_htoni64 (INT64 from);
@@ -103,8 +100,7 @@ extern float net_htonf (float from);
 extern double net_htond (double from);
 #endif
 
-extern void net_buf_column_info_set (T_NET_BUF * net_buf, char ut,
-				     short scale, int prec, const char *name);
+extern void net_buf_column_info_set (T_NET_BUF * net_buf, char ut, short scale, int prec, const char *name);
 
 extern void net_arg_get_size (int *size, void *arg);
 extern void net_arg_get_bigint (DB_BIGINT * value, void *arg);
@@ -116,7 +112,6 @@ extern void net_arg_get_str (char **value, int *size, void *arg);
 extern void net_arg_get_date (short *year, short *mon, short *day, void *arg);
 extern void net_arg_get_time (short *hh, short *mm, short *ss, void *arg);
 extern void net_arg_get_datetime (short *yr, short *mon, short *day,
-				  short *hh, short *mm, short *ss, short *ms,
-				  void *arg);
+                                  short *hh, short *mm, short *ss, short *ms, void *arg);
 
 #endif /* _CAS_NET_BUF_H_ */

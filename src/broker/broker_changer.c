@@ -53,8 +53,7 @@ main (int argc, char *argv[])
 
   if (argc < 4)
     {
-      printf ("%s <broker-name> [<cas-number>] <conf-name> <conf-value>\n",
-	      argv[0]);
+      printf ("%s <broker-name> [<cas-number>] <conf-name> <conf-value>\n", argv[0]);
       return -1;
     }
 
@@ -66,8 +65,7 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  (void) er_init (prm_get_string_value (PRM_ID_ER_LOG_FILE),
-		  prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
+  (void) er_init (prm_get_string_value (PRM_ID_ER_LOG_FILE), prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
 
   if (lang_init () != NO_ERROR)
     {
@@ -86,10 +84,10 @@ main (int argc, char *argv[])
       result = parse_int (&as_number, argv[2], 10);
 
       if (result != 0 || as_number < 0)
-	{
-	  printf ("Invalid cas number\n");
-	  return -1;
-	}
+        {
+          printf ("Invalid cas number\n");
+          return -1;
+        }
 
       conf_name = argv[3];
       conf_value = argv[4];
@@ -102,8 +100,7 @@ main (int argc, char *argv[])
 
   admin_Err_msg[0] = '\0';
 
-  if (admin_conf_change (shm_key_br_gl,
-			 br_name, conf_name, conf_value, as_number) < 0)
+  if (admin_conf_change (shm_key_br_gl, br_name, conf_name, conf_value, as_number) < 0)
     {
       printf ("%s\n", admin_Err_msg);
       return -1;

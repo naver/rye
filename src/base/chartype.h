@@ -61,4 +61,4 @@ extern "C"
 }
 #endif
 
-#endif				/* _CHARTYPE_H_ */
+#endif                          /* _CHARTYPE_H_ */
