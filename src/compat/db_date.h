@@ -35,8 +35,7 @@ extern void db_date_locale_init (void);
 
 /* DB_DATE functions */
 extern int db_date_encode (DB_DATE * date, int month, int day, int year);
-extern void db_date_decode (const DB_DATE * date, int *monthp,
-			    int *dayp, int *yearp);
+extern void db_date_decode (const DB_DATE * date, int *monthp, int *dayp, int *yearp);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int db_date_weekday (DB_DATE * date);
 #endif
@@ -45,73 +44,54 @@ extern int db_date_to_string (char *buf, int bufsize, DB_DATE * date);
 extern bool db_string_check_explicit_date (const char *str, int str_len);
 #endif
 extern int db_string_to_date (const char *buf, DB_DATE * date);
-extern int db_string_to_date_ex (const char *buf, int str_len,
-				 DB_DATE * date);
+extern int db_string_to_date_ex (const char *buf, int str_len, DB_DATE * date);
 extern int db_date_parse_date (char const *str, int str_len, DB_DATE * date);
 
 /* DB_DATETIME functions */
 extern int db_datetime_encode (DB_DATETIME * datetime, int month, int day,
-			       int year, int hour, int minute, int second,
-			       int millisecond);
+                               int year, int hour, int minute, int second, int millisecond);
 extern int db_datetime_decode (const DB_DATETIME * datetime, int *month,
-			       int *day, int *year, int *hour, int *minute,
-			       int *second, int *millisecond);
-extern int db_datetime_to_string (char *buf, int bufsize,
-				  DB_DATETIME * datetime);
+                               int *day, int *year, int *hour, int *minute, int *second, int *millisecond);
+extern int db_datetime_to_string (char *buf, int bufsize, DB_DATETIME * datetime);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int db_datetime_to_string2 (char *buf, int bufsize,
-				   DB_DATETIME * datetime);
+extern int db_datetime_to_string2 (char *buf, int bufsize, DB_DATETIME * datetime);
 #endif
 extern int db_string_to_datetime (const char *str, DB_DATETIME * datetime);
-extern int db_string_to_datetime_ex (const char *str, int str_len,
-				     DB_DATETIME * datetime);
+extern int db_string_to_datetime_ex (const char *str, int str_len, DB_DATETIME * datetime);
 extern int db_date_parse_datetime_parts (char const *str, int str_len,
-					 DB_DATETIME * date,
-					 bool * is_explicit_time,
-					 char const **endp);
-extern int db_date_parse_datetime (char const *str, int str_len,
-				   DB_DATETIME * datetime);
-extern int db_subtract_int_from_datetime (DB_DATETIME * dt1, DB_BIGINT i2,
-					  DB_DATETIME * result_datetime);
-extern int db_add_int_to_datetime (DB_DATETIME * datetime, DB_BIGINT i2,
-				   DB_DATETIME * result_datetime);
+                                         DB_DATETIME * date, bool * is_explicit_time, char const **endp);
+extern int db_date_parse_datetime (char const *str, int str_len, DB_DATETIME * datetime);
+extern int db_subtract_int_from_datetime (DB_DATETIME * dt1, DB_BIGINT i2, DB_DATETIME * result_datetime);
+extern int db_add_int_to_datetime (DB_DATETIME * datetime, DB_BIGINT i2, DB_DATETIME * result_datetime);
 
 /* DB_TIME functions */
-extern int db_time_encode (DB_TIME * timeval,
-			   int hour, int minute, int second);
-extern void db_time_decode (DB_TIME * timeval, int *hourp,
-			    int *minutep, int *secondp);
+extern int db_time_encode (DB_TIME * timeval, int hour, int minute, int second);
+extern void db_time_decode (DB_TIME * timeval, int *hourp, int *minutep, int *secondp);
 extern int db_time_to_string (char *buf, int bufsize, DB_TIME * dbtime);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern bool db_string_check_explicit_time (const char *str, int str_len);
 #endif
 extern int db_string_to_time (const char *buf, DB_TIME * dbtime);
-extern int db_string_to_time_ex (const char *buf, int buf_len,
-				 DB_TIME * dbtime);
-extern int db_date_parse_time (char const *str, int str_len, DB_TIME * time,
-			       int *milisec);
+extern int db_string_to_time_ex (const char *buf, int buf_len, DB_TIME * dbtime);
+extern int db_date_parse_time (char const *str, int str_len, DB_TIME * time, int *milisec);
 
 /* Unix-like functions */
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern time_t db_mktime (DB_DATE * date, DB_TIME * timeval);
-extern int db_strftime (char *s, int smax, const char *fmt,
-			DB_DATE * date, DB_TIME * timeval);
-extern void db_localtime (time_t * epoch_time,
-			  DB_DATE * date, DB_TIME * timeval);
+extern int db_strftime (char *s, int smax, const char *fmt, DB_DATE * date, DB_TIME * timeval);
+extern void db_localtime (time_t * epoch_time, DB_DATE * date, DB_TIME * timeval);
 #endif
 extern int db_localdatetime (time_t * epoch_time, DB_DATETIME * datetime);
 
 /* generic calculation functions */
 extern int julian_encode (int m, int d, int y);
-extern void julian_decode (int jul, int *monthp, int *dayp,
-			   int *yearp, int *weekp);
+extern void julian_decode (int jul, int *monthp, int *dayp, int *yearp, int *weekp);
 extern int day_of_week (int jul_day);
 extern bool is_leap_year (int year);
 extern int time_encode (int hour, int minute, int second);
 extern void time_decode (int timeval, int *hourp, int *minutep, int *secondp);
 
-extern int db_tm_encode (struct tm *c_time_struct,
-			 DB_DATE * date, DB_TIME * timeval);
+extern int db_tm_encode (struct tm *c_time_struct, DB_DATE * date, DB_TIME * timeval);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int db_timeval_encode (struct timeval *tm, DB_DATETIME * datetime);
 #endif
@@ -119,7 +99,6 @@ extern int db_get_day_of_year (int year, int month, int day);
 extern int db_get_day_of_week (int year, int month, int day);
 extern int db_get_week_of_year (int year, int month, int day, int mode);
 extern int db_check_time_date_format (const char *format_s);
-extern int db_add_weeks_and_days_to_date (int *day, int *month, int *year,
-					  int weeks, int day_week);
+extern int db_add_weeks_and_days_to_date (int *day, int *month, int *year, int weeks, int day_week);
 
 #endif /* _DB_DATE_H_ */

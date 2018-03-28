@@ -61,8 +61,7 @@ enum net_req_act
   IN_TRANSACTION = 0x0008,
   OUT_TRANSACTION = 0x0010,
 };
-typedef void (*net_server_func) (THREAD_ENTRY * thrd, unsigned int rid,
-				 char *request, int reqlen);
+typedef void (*net_server_func) (THREAD_ENTRY * thrd, unsigned int rid, char *request, int reqlen);
 struct net_request
 {
   int action_attribute;
@@ -572,25 +571,22 @@ net_server_histo_print (void)
   float avg_response_time, avg_client_time;
 
   fprintf (stdout, "\nHistogram of client requests:\n");
-  fprintf (stdout, "%-31s %6s  %10s %10s , %10s \n",
-	   "Name", "Rcount", "Sent size", "Recv size", "Server time");
+  fprintf (stdout, "%-31s %6s  %10s %10s , %10s \n", "Name", "Rcount", "Sent size", "Recv size", "Server time");
 
   for (i = 0; i < DIM (net_Requests); i++)
     {
       if (net_Requests[i].request_count)
-	{
-	  found = 1;
-	  server_time = ((float) net_Requests[i].elapsed_time / 1000000 /
-			 (float) (net_Requests[i].request_count));
-	  fprintf (stdout, "%-29s %6d X %10d+%10d b, %10.6f s\n",
-		   net_Requests[i].name, net_Requests[i].request_count,
-		   net_Requests[i].total_size_sent,
-		   net_Requests[i].total_size_received, server_time);
-	  total_requests += net_Requests[i].request_count;
-	  total_size_sent += net_Requests[i].total_size_sent;
-	  total_size_received += net_Requests[i].total_size_received;
-	  total_server_time += (server_time * net_Requests[i].request_count);
-	}
+        {
+          found = 1;
+          server_time = ((float) net_Requests[i].elapsed_time / 1000000 / (float) (net_Requests[i].request_count));
+          fprintf (stdout, "%-29s %6d X %10d+%10d b, %10.6f s\n",
+                   net_Requests[i].name, net_Requests[i].request_count,
+                   net_Requests[i].total_size_sent, net_Requests[i].total_size_received, server_time);
+          total_requests += net_Requests[i].request_count;
+          total_size_sent += net_Requests[i].total_size_sent;
+          total_size_received += net_Requests[i].total_size_received;
+          total_server_time += (server_time * net_Requests[i].request_count);
+        }
     }
 
   if (!found)
@@ -599,18 +595,14 @@ net_server_histo_print (void)
     }
   else
     {
+      fprintf (stdout, "-------------------------------------------------------------" "--------------\n");
       fprintf (stdout,
-	       "-------------------------------------------------------------"
-	       "--------------\n");
-      fprintf (stdout,
-	       "Totals:                       %6d X %10d+%10d b  "
-	       "%10.6f s\n", total_requests, total_size_sent,
-	       total_size_received, total_server_time);
+               "Totals:                       %6d X %10d+%10d b  "
+               "%10.6f s\n", total_requests, total_size_sent, total_size_received, total_server_time);
       avg_response_time = total_server_time / total_requests;
       avg_client_time = 0.0;
       fprintf (stdout, "\n Average server response time = %6.6f secs \n"
-	       " Average time between client requests = %6.6f secs \n",
-	       avg_response_time, avg_client_time);
+               " Average time between client requests = %6.6f secs \n", avg_response_time, avg_client_time);
     }
 }
 
@@ -640,8 +632,7 @@ net_server_histo_add_entry (int request, int data_sent)
  *   buffer(in): argument buffer
  */
 int
-net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
-		    int size, char *buffer)
+net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request, int size, char *buffer)
 {
   net_server_func func;
   int status = CSS_NO_ERRORS;
@@ -649,11 +640,11 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
   CSS_CONN_ENTRY *conn;
   int popped = NO_ERROR;
 
-  popped = NO_ERROR;		/* init */
+  popped = NO_ERROR;            /* init */
   while (popped == NO_ERROR)
     {
       thread_mnt_track_pop (thread_p, &popped);
-      assert (popped == ER_FAILED);	/* mnt_track stack must be empty */
+      assert (popped == ER_FAILED);     /* mnt_track stack must be empty */
     }
 
   if (buffer == NULL && size > 0)
@@ -670,9 +661,9 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
     {
       status = server_ping_with_handshake (thread_p, rid, buffer, size);
       if (status != CSS_NO_ERRORS)
-	{
-	  css_send_abort_to_client (thread_p->conn_entry, rid);
-	}
+        {
+          css_send_abort_to_client (thread_p->conn_entry, rid);
+        }
       goto end;
     }
   else if (request == NET_SERVER_SHUTDOWN)
@@ -683,11 +674,9 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
       goto end;
     }
 
-  if (request <= NET_SERVER_REQUEST_START
-      || request >= NET_SERVER_REQUEST_END)
+  if (request <= NET_SERVER_REQUEST_START || request >= NET_SERVER_REQUEST_END)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NET_UNKNOWN_SERVER_REQ,
-	      0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NET_UNKNOWN_SERVER_REQ, 0);
       return_error_to_client (thread_p, rid);
       css_send_abort_to_client (thread_p->conn_entry, rid);
       goto end;
@@ -705,11 +694,9 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
     }
 
   if ((svr_shm_get_server_state () == HA_STATE_MASTER)
-      && (logtb_find_current_client_type (thread_p)
-	  == BOOT_CLIENT_SLAVE_ONLY_BROKER))
+      && (logtb_find_current_client_type (thread_p) == BOOT_CLIENT_SLAVE_ONLY_BROKER))
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
-	      "active && slave only broker: reset connection\n");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "active && slave only broker: reset connection\n");
       return_error_to_client (thread_p, rid);
       css_send_abort_to_client (thread_p->conn_entry, rid);
 
@@ -721,39 +708,37 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
     {
       bool check = true;
 
-      if (request == NET_SERVER_TM_SERVER_COMMIT
-	  && !logtb_has_updated (thread_p))
-	{
-	  check = false;
-	}
+      if (request == NET_SERVER_TM_SERVER_COMMIT && !logtb_has_updated (thread_p))
+        {
+          check = false;
+        }
 
       /* check if DB modification is allowed */
       if (check == true)
-	{
-	  CHECK_MODIFICATION_NO_RETURN (thread_p, error_code);
-	  if (error_code != NO_ERROR)
-	    {
-	      er_log_debug (ARG_FILE_LINE,
-			    "net_server_request(): CHECK_DB_MODIFICATION error"
-			    " request %s\n", net_Requests[request].name);
-	      return_error_to_client (thread_p, rid);
-	      css_send_abort_to_client (conn, rid);
-	      goto end;
-	    }
-	}
+        {
+          CHECK_MODIFICATION_NO_RETURN (thread_p, error_code);
+          if (error_code != NO_ERROR)
+            {
+              er_log_debug (ARG_FILE_LINE,
+                            "net_server_request(): CHECK_DB_MODIFICATION error"
+                            " request %s\n", net_Requests[request].name);
+              return_error_to_client (thread_p, rid);
+              css_send_abort_to_client (conn, rid);
+              goto end;
+            }
+        }
     }
   if (net_Requests[request].action_attribute & CHECK_AUTHORIZATION)
     {
       if (!logtb_am_i_dba_client (thread_p))
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"net_server_request(): CHECK_AUTHORIZATION error"
-			" request %s\n", net_Requests[request].name);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1, "");
-	  return_error_to_client (thread_p, rid);
-	  css_send_abort_to_client (conn, rid);
-	  goto end;
-	}
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "net_server_request(): CHECK_AUTHORIZATION error" " request %s\n", net_Requests[request].name);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1, "");
+          return_error_to_client (thread_p, rid);
+          css_send_abort_to_client (conn, rid);
+          goto end;
+        }
     }
   if (net_Requests[request].action_attribute & IN_TRANSACTION)
     {
@@ -770,10 +755,10 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
   if (func)
     {
       if ((net_Requests[request].action_attribute & IN_TRANSACTION)
-	  || (net_Requests[request].action_attribute & OUT_TRANSACTION))
-	{
-	  logtb_start_transaction_if_needed (thread_p);
-	}
+          || (net_Requests[request].action_attribute & OUT_TRANSACTION))
+        {
+          logtb_start_transaction_if_needed (thread_p);
+        }
 
       FI_INIT_THREAD (thread_p);
 
@@ -786,11 +771,11 @@ net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request,
 
 end:
 
-  popped = NO_ERROR;		/* init */
+  popped = NO_ERROR;            /* init */
   while (popped == NO_ERROR)
     {
       thread_mnt_track_pop (thread_p, &popped);
-      assert (popped == ER_FAILED);	/* mnt_track stack must be empty */
+      assert (popped == ER_FAILED);     /* mnt_track stack must be empty */
     }
 
   db_reset_private_heap (thread_p);
@@ -805,8 +790,7 @@ end:
  *   arg(in): transaction id
  */
 int
-net_server_conn_down (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg,
-		      bool interrupt_only)
+net_server_conn_down (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg, bool interrupt_only)
 {
   int tran_index;
   CSS_CONN_ENTRY *conn_p;
@@ -820,9 +804,9 @@ net_server_conn_down (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg,
     {
       thread_p = thread_get_thread_entry_info ();
       if (thread_p == NULL)
-	{
-	  return 0;
-	}
+        {
+          return 0;
+        }
     }
 
 //  local_tran_index = thread_p->tran_index;
@@ -846,110 +830,104 @@ loop:
   if (prev_thrd_cnt > 0)
     {
       if (tran_index == NULL_TRAN_INDEX)
-	{
-	  /* the connected client does not yet finished boot_client_register */
-	  thread_sleep (50);	/* 50 msec */
-	  tran_index = conn_p->tran_index;
-	}
-      if (!logtb_is_interrupted_tran (thread_p, false, &continue_check,
-				      tran_index))
-	{
-	  logtb_set_tran_index_interrupt (thread_p, tran_index, true);
-	}
+        {
+          /* the connected client does not yet finished boot_client_register */
+          thread_sleep (50);    /* 50 msec */
+          tran_index = conn_p->tran_index;
+        }
+      if (!logtb_is_interrupted_tran (thread_p, false, &continue_check, tran_index))
+        {
+          logtb_set_tran_index_interrupt (thread_p, tran_index, true);
+        }
 
       /* never try to wake non TRAN_ACTIVE state trans.
        * note that non-TRAN_ACTIVE trans will not be interrupted.
        */
-      if (logtb_is_interrupted_tran (thread_p, false, &continue_check,
-				     tran_index))
-	{
-	  suspended_p =
-	    thread_find_entry_by_tran_index_except_me (tran_index);
-	  if (suspended_p != NULL)
-	    {
-	      int r;
-	      bool wakeup_now;
+      if (logtb_is_interrupted_tran (thread_p, false, &continue_check, tran_index))
+        {
+          suspended_p = thread_find_entry_by_tran_index_except_me (tran_index);
+          if (suspended_p != NULL)
+            {
+              int r;
+              bool wakeup_now;
 
-	      r = thread_lock_entry (suspended_p);
-	      if (r != NO_ERROR)
-		{
-		  return r;
-		}
+              r = thread_lock_entry (suspended_p);
+              if (r != NO_ERROR)
+                {
+                  return r;
+                }
 
-	      switch (suspended_p->resume_status)
-		{
-		case THREAD_CSECT_READER_SUSPENDED:
-		case THREAD_CSECT_WRITER_SUSPENDED:
-		case THREAD_CSECT_PROMOTER_SUSPENDED:
-		case THREAD_LOCK_SUSPENDED:
-		case THREAD_PGBUF_SUSPENDED:
-		case THREAD_JOB_QUEUE_SUSPENDED:
-		  /* never try to wake thread up while the thread is waiting
-		   * for a critical section or a lock.
-		   */
-		  wakeup_now = false;
-		  break;
-		case THREAD_CSS_QUEUE_SUSPENDED:
-		case THREAD_QMGR_ACTIVE_QRY_SUSPENDED:
-		case THREAD_QMGR_MEMBUF_PAGE_SUSPENDED:
-		case THREAD_HEAP_CLSREPR_SUSPENDED:
-		case THREAD_LOGWR_SUSPENDED:
-		  wakeup_now = true;
-		  break;
+              switch (suspended_p->resume_status)
+                {
+                case THREAD_CSECT_READER_SUSPENDED:
+                case THREAD_CSECT_WRITER_SUSPENDED:
+                case THREAD_CSECT_PROMOTER_SUSPENDED:
+                case THREAD_LOCK_SUSPENDED:
+                case THREAD_PGBUF_SUSPENDED:
+                case THREAD_JOB_QUEUE_SUSPENDED:
+                  /* never try to wake thread up while the thread is waiting
+                   * for a critical section or a lock.
+                   */
+                  wakeup_now = false;
+                  break;
+                case THREAD_CSS_QUEUE_SUSPENDED:
+                case THREAD_QMGR_ACTIVE_QRY_SUSPENDED:
+                case THREAD_QMGR_MEMBUF_PAGE_SUSPENDED:
+                case THREAD_HEAP_CLSREPR_SUSPENDED:
+                case THREAD_LOGWR_SUSPENDED:
+                  wakeup_now = true;
+                  break;
 
-		case THREAD_RESUME_NONE:
-		case THREAD_RESUME_DUE_TO_INTERRUPT:
-		case THREAD_RESUME_DUE_TO_SHUTDOWN:
-		case THREAD_PGBUF_RESUMED:
-		case THREAD_JOB_QUEUE_RESUMED:
-		case THREAD_CSECT_READER_RESUMED:
-		case THREAD_CSECT_WRITER_RESUMED:
-		case THREAD_CSECT_PROMOTER_RESUMED:
-		case THREAD_CSS_QUEUE_RESUMED:
-		case THREAD_QMGR_ACTIVE_QRY_RESUMED:
-		case THREAD_QMGR_MEMBUF_PAGE_RESUMED:
-		case THREAD_HEAP_CLSREPR_RESUMED:
-		case THREAD_LOCK_RESUMED:
-		case THREAD_LOGWR_RESUMED:
-		  /* thread is in resumed status, we don't need to wake up */
-		  wakeup_now = false;
-		  break;
-		default:
-		  assert (false);
-		  wakeup_now = false;
-		  break;
-		}
+                case THREAD_RESUME_NONE:
+                case THREAD_RESUME_DUE_TO_INTERRUPT:
+                case THREAD_RESUME_DUE_TO_SHUTDOWN:
+                case THREAD_PGBUF_RESUMED:
+                case THREAD_JOB_QUEUE_RESUMED:
+                case THREAD_CSECT_READER_RESUMED:
+                case THREAD_CSECT_WRITER_RESUMED:
+                case THREAD_CSECT_PROMOTER_RESUMED:
+                case THREAD_CSS_QUEUE_RESUMED:
+                case THREAD_QMGR_ACTIVE_QRY_RESUMED:
+                case THREAD_QMGR_MEMBUF_PAGE_RESUMED:
+                case THREAD_HEAP_CLSREPR_RESUMED:
+                case THREAD_LOCK_RESUMED:
+                case THREAD_LOGWR_RESUMED:
+                  /* thread is in resumed status, we don't need to wake up */
+                  wakeup_now = false;
+                  break;
+                default:
+                  assert (false);
+                  wakeup_now = false;
+                  break;
+                }
 
-	      if (wakeup_now == true)
-		{
-		  r =
-		    thread_wakeup_already_had_mutex (suspended_p,
-						     THREAD_RESUME_DUE_TO_INTERRUPT);
-		  if (r != NO_ERROR)
-		    {
-		      (void) thread_unlock_entry (suspended_p);
-		      return r;
-		    }
-		}
+              if (wakeup_now == true)
+                {
+                  r = thread_wakeup_already_had_mutex (suspended_p, THREAD_RESUME_DUE_TO_INTERRUPT);
+                  if (r != NO_ERROR)
+                    {
+                      (void) thread_unlock_entry (suspended_p);
+                      return r;
+                    }
+                }
 
-	      r = thread_unlock_entry (suspended_p);
-	      if (r != NO_ERROR)
-		{
-		  return r;
-		}
-	    }
-	}
+              r = thread_unlock_entry (suspended_p);
+              if (r != NO_ERROR)
+                {
+                  return r;
+                }
+            }
+        }
     }
 
-  while ((thrd_cnt = thread_has_threads (thread_p, tran_index, client_id))
-	 >= prev_thrd_cnt && thrd_cnt > 0)
+  while ((thrd_cnt = thread_has_threads (thread_p, tran_index, client_id)) >= prev_thrd_cnt && thrd_cnt > 0)
     {
       /* Some threads may wait for data from the m-driver.
        * It's possible from the fact that css_server_thread() is responsible
        * for receiving every data from which is sent by a client and all
        * m-drivers. We must have chance to receive data from them.
        */
-      thread_sleep (50);	/* 50 msec */
+      thread_sleep (50);        /* 50 msec */
     }
 
   if (thrd_cnt > 0)
@@ -1043,20 +1021,20 @@ net_server_start (const char *server_name)
       r = css_init_job_queue ();
 
       if (r == NO_ERROR)
-	{
-	  r = css_init (server_name);
-	}
+        {
+          r = css_init (server_name);
+        }
 
       if (r < 0)
-	{
-	  error = er_errid ();
+        {
+          error = er_errid ();
 
-	  if (error == NO_ERROR)
-	    {
-	      error = ER_NET_NO_MASTER;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	    }
-	}
+          if (error == NO_ERROR)
+            {
+              error = ER_NET_NO_MASTER;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+            }
+        }
 
       (void) xboot_shutdown_server (NULL);
 

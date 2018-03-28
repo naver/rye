@@ -65,13 +65,14 @@
 #include "rye_master_shm.h"
 #include "rye_server_shm.h"
 
-#define CSS_WAIT_COUNT 5	/* # of retry to connect to master */
+#define CSS_WAIT_COUNT 5        /* # of retry to connect to master */
 #define CSS_GOING_DOWN_IMMEDIATELY "Server going down immediately"
 
 #define SockError    -1
 
 static struct timeval css_Shutdown_timeout = { 0, 0 };
-static char *css_Master_server_name = NULL;	/* database identifier */
+
+static char *css_Master_server_name = NULL;     /* database identifier */
 static CSS_CONN_ENTRY *css_Master_conn;
 static IP_INFO *css_Server_accessible_ip_info;
 static char *ip_list_file_name = NULL;
@@ -117,13 +118,10 @@ static void css_empty_job_queue (void);
 static void css_setup_server_loop (void);
 static int css_check_conn (CSS_CONN_ENTRY * p);
 static void css_set_shutdown_timeout (INT64 timeout);
-static int css_get_master_request (CSS_CONN_ENTRY * conn,
-				   CSS_NET_PACKET ** recv_packet);
-static void css_process_connect_request (CSS_CONN_ENTRY * conn,
-					 in_addr_t clt_addr);
+static int css_get_master_request (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet);
+static void css_process_connect_request (CSS_CONN_ENTRY * conn, in_addr_t clt_addr);
 static int css_process_master_request (CSS_CONN_ENTRY * conn);
-static void css_process_change_server_ha_mode_request (char *data,
-						       int datasize);
+static void css_process_change_server_ha_mode_request (char *data, int datasize);
 
 static void css_close_connection_to_master (void);
 static void css_close_server_listen_socket (void);
@@ -135,17 +133,12 @@ static int css_epoll_init (void);
 static int css_epoll_ctl (int epoll_fd, int epoll_op, CSS_CONN_ENTRY * conn);
 
 static void css_job_entry_list_init (CSS_JOB_ENTRY_LIST * ptr);
-static void css_job_entry_list_add (CSS_JOB_ENTRY_LIST * ptr,
-				    CSS_JOB_ENTRY * item);
+static void css_job_entry_list_add (CSS_JOB_ENTRY_LIST * ptr, CSS_JOB_ENTRY * item);
 static CSS_JOB_ENTRY *css_job_entry_list_remove (CSS_JOB_ENTRY_LIST * ptr);
 static int css_job_entry_add (JOB_QUEUE * job_queue, CSS_JOB_ENTRY * new_job);
-static int css_job_entry_get (JOB_QUEUE * job_queue,
-			      CSS_JOB_ENTRY * job_entry);
-static int css_con_close_handler (THREAD_ENTRY * thread_p,
-				  CSS_THREAD_ARG arg);
-static void css_send_new_client_response (CSS_CONN_ENTRY * conn, int reason,
-					  unsigned short rid,
-					  bool send_error);
+static int css_job_entry_get (JOB_QUEUE * job_queue, CSS_JOB_ENTRY * job_entry);
+static int css_con_close_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg);
+static void css_send_new_client_response (CSS_CONN_ENTRY * conn, int reason, unsigned short rid, bool send_error);
 
 
 /*
@@ -170,18 +163,16 @@ css_init_job_queue (void)
 
       r = pthread_mutex_init (&qptr->job_lock, NULL);
       if (r != 0)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_CSS_PTHREAD_MUTEX_INIT, 0);
-	  return ER_CSS_PTHREAD_MUTEX_INIT;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_INIT, 0);
+          return ER_CSS_PTHREAD_MUTEX_INIT;
+        }
       r = pthread_cond_init (&qptr->job_cond, NULL);
       if (r != 0)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_CSS_PTHREAD_COND_INIT, 0);
-	  return ER_CSS_PTHREAD_COND_INIT;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_INIT, 0);
+          return ER_CSS_PTHREAD_COND_INIT;
+        }
 
 
       css_job_entry_list_init (&qptr->job_list);
@@ -211,16 +202,13 @@ css_job_queue_check (FILE * out_fp)
       q_ptr = &css_Job_queue[q_type];
 
       if (out_fp != NULL)
-	{
-	  fprintf (out_fp,
-		   "JQ(%d) : "
-		   "run_threads = %d, "
-		   "num_job = %d, "
-		   "num_requests = %ld, "
-		   "\n",
-		   q_type, q_ptr->num_run_threads,
-		   q_ptr->num_job, q_ptr->num_requests);
-	}
+        {
+          fprintf (out_fp,
+                   "JQ(%d) : "
+                   "run_threads = %d, "
+                   "num_job = %d, "
+                   "num_requests = %ld, " "\n", q_type, q_ptr->num_run_threads, q_ptr->num_job, q_ptr->num_requests);
+        }
     }
 
   if (out_fp != NULL)
@@ -373,12 +361,11 @@ css_job_entry_add (JOB_QUEUE * job_queue, CSS_JOB_ENTRY * new_job)
     {
       job_entry_p = (CSS_JOB_ENTRY *) malloc (sizeof (CSS_JOB_ENTRY));
       if (job_entry_p == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (CSS_JOB_ENTRY));
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (CSS_JOB_ENTRY));
 
-	  return ER_FAILED;
-	}
+          return ER_FAILED;
+        }
     }
 
   *job_entry_p = *new_job;
@@ -408,15 +395,15 @@ css_empty_job_queue ()
       pthread_mutex_lock (&css_Job_queue[q_type].job_lock);
 
       do
-	{
-	  p = css_job_entry_list_remove (&css_Job_queue[q_type].job_list);
-	  if (p == NULL)
-	    {
-	      break;
-	    }
+        {
+          p = css_job_entry_list_remove (&css_Job_queue[q_type].job_list);
+          if (p == NULL)
+            {
+              break;
+            }
 
-	  css_job_entry_list_add (&css_Job_queue[q_type].free_list, p);
-	}
+          css_job_entry_list_add (&css_Job_queue[q_type].free_list, p);
+        }
       while (p != NULL);
 
       pthread_mutex_unlock (&css_Job_queue[q_type].job_lock);
@@ -440,15 +427,15 @@ css_final_job_queue (void)
       pthread_mutex_lock (&css_Job_queue[q_type].job_lock);
 
       do
-	{
-	  p = css_job_entry_list_remove (&css_Job_queue[q_type].free_list);
-	  if (p == NULL)
-	    {
-	      break;
-	    }
+        {
+          p = css_job_entry_list_remove (&css_Job_queue[q_type].free_list);
+          if (p == NULL)
+            {
+              break;
+            }
 
-	  free_and_init (p);
-	}
+          free_and_init (p);
+        }
       while (p != NULL);
 
       pthread_mutex_unlock (&css_Job_queue[q_type].job_lock);
@@ -519,46 +506,40 @@ css_setup_server_loop (void)
       /* select() sets timeout value to 0 or waited time */
       r = poll (po, nfds, 5000);
       if (r < 0)
-	{
-	  if (css_check_conn (css_Master_conn) < 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (css_check_conn (css_Master_conn) < 0)
+            {
+              break;
+            }
+        }
       else if (r > 0)
-	{
-	  if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HB_PROCESS_EVENT, 2,
-		      "Error on master connection", "");
-	      break;
-	    }
-	  else if (po[1].revents & POLLERR || po[1].revents & POLLHUP)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HB_PROCESS_EVENT, 2,
-		      "Error on server connection", "");
-	      break;
-	    }
+        {
+          if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_PROCESS_EVENT, 2, "Error on master connection", "");
+              break;
+            }
+          else if (po[1].revents & POLLERR || po[1].revents & POLLHUP)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_PROCESS_EVENT, 2, "Error on server connection", "");
+              break;
+            }
 
-	  if (po[0].revents & POLLIN)
-	    {
-	      run_code = css_process_master_request (css_Master_conn);
-	      if (run_code == 0)
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_HB_PROCESS_EVENT, 2,
-			  "Disconnected with the rye_master and will shut itself down",
-			  "");
-		}
-	    }
+          if (po[0].revents & POLLIN)
+            {
+              run_code = css_process_master_request (css_Master_conn);
+              if (run_code == 0)
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                          ER_HB_PROCESS_EVENT, 2, "Disconnected with the rye_master and will shut itself down", "");
+                }
+            }
 
-	  if (po[1].revents & POLLIN)
-	    {
-	      css_process_connect_request (NULL, INADDR_NONE);
-	    }
-	}
+          if (po[1].revents & POLLIN)
+            {
+              css_process_connect_request (NULL, INADDR_NONE);
+            }
+        }
     }
 
   css_close_connection_to_master ();
@@ -609,19 +590,18 @@ css_process_connect_request (CSS_CONN_ENTRY * conn, in_addr_t clt_ip_addr)
       SOCKET cli_fd = css_master_accept (css_Listen_conn->fd);
 
       if (IS_INVALID_SOCKET (cli_fd))
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
       conn = css_make_conn (cli_fd);
       if (conn == NULL)
-	{
-	  css_shutdown_socket (cli_fd);
-	  goto error;
-	}
+        {
+          css_shutdown_socket (cli_fd);
+          goto error;
+        }
     }
 
-  if (css_check_magic (conn) != NO_ERRORS ||
-      css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
+  if (css_check_magic (conn) != NO_ERRORS || css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
     {
       goto error;
     }
@@ -633,26 +613,23 @@ css_process_connect_request (CSS_CONN_ENTRY * conn, in_addr_t clt_ip_addr)
 
   if (conn_type == SVR_CONNECT_TYPE_TO_SERVER)
     {
-      if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == true
-	  && css_check_accessibility (clt_ip_addr) != NO_ERROR)
-	{
-	  css_send_new_client_response (conn, SERVER_INACCESSIBLE_IP,
-					rid, true);
-	}
+      if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == true && css_check_accessibility (clt_ip_addr) != NO_ERROR)
+        {
+          css_send_new_client_response (conn, SERVER_INACCESSIBLE_IP, rid, true);
+        }
       else
-	{
-	  CSS_JOB_ENTRY job_entry;
+        {
+          CSS_JOB_ENTRY job_entry;
 
-	  css_send_new_client_response (conn, SERVER_CONNECTED, rid, false);
+          css_send_new_client_response (conn, SERVER_CONNECTED, rid, false);
 
-	  css_insert_into_active_conn_list (conn);
-	  CSS_JOB_ENTRY_SET (job_entry, conn, css_internal_request_handler,
-			     conn);
-	  if (css_add_to_job_queue (JOB_QUEUE_CLIENT, &job_entry) == NO_ERROR)
-	    {
-	      return;
-	    }
-	}
+          css_insert_into_active_conn_list (conn);
+          CSS_JOB_ENTRY_SET (job_entry, conn, css_internal_request_handler, conn);
+          if (css_add_to_job_queue (JOB_QUEUE_CLIENT, &job_entry) == NO_ERROR)
+            {
+              return;
+            }
+        }
     }
   else if (conn_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
     {
@@ -664,12 +641,12 @@ css_process_connect_request (CSS_CONN_ENTRY * conn, in_addr_t clt_ip_addr)
 
       recv_fd = css_recv_fd (conn->fd, (int *) &clt_ip_addr, NULL);
       if (recv_fd != INVALID_SOCKET)
-	{
-	  css_shutdown_socket (conn->fd);
-	  conn->fd = recv_fd;
-	  css_process_connect_request (conn, clt_ip_addr);
-	  return;
-	}
+        {
+          css_shutdown_socket (conn->fd);
+          conn->fd = recv_fd;
+          css_process_connect_request (conn, clt_ip_addr);
+          return;
+        }
     }
   else
     {
@@ -687,8 +664,7 @@ error:
  * css_send_new_client_response () -
  */
 static void
-css_send_new_client_response (CSS_CONN_ENTRY * conn, int reason,
-			      unsigned short rid, bool send_error)
+css_send_new_client_response (CSS_CONN_ENTRY * conn, int reason, unsigned short rid, bool send_error)
 {
   reason = htonl (reason);
   css_send_data_packet (conn, rid, 1, (char *) &reason, (int) sizeof (int));
@@ -781,15 +757,13 @@ css_process_change_server_ha_mode_request (char *data, int datasize)
 
   if (css_change_ha_server_state (thread_p, server_state, force) != NO_ERROR)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ERROR_FROM_SERVER,
-	      1, "Cannot change server HA mode");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ERROR_FROM_SERVER, 1, "Cannot change server HA mode");
     }
 
   server_state = htonl ((int) svr_shm_get_server_state ());
 
   css_send_heartbeat_request (css_Master_conn, MASTER_CHANGE_SERVER_STATE,
-			      1, (char *) &server_state,
-			      sizeof (server_state));
+                              1, (char *) &server_state, sizeof (server_state));
 }
 
 /*
@@ -832,9 +806,9 @@ css_is_shutdown_timeout_expired (void)
   if (css_Shutdown_timeout.tv_sec != 0 && gettimeofday (&timeout, NULL) == 0)
     {
       if (css_Shutdown_timeout.tv_sec <= timeout.tv_sec)
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
@@ -868,7 +842,7 @@ css_connection_handler_thread (void *arg_p)
 
   thread_set_thread_entry_info (tsd_ptr);
 
-  tsd_ptr->type = TT_CON_HANDLER;	/* server thread */
+  tsd_ptr->type = TT_CON_HANDLER;       /* server thread */
   tsd_ptr->conn_entry = NULL;
   tsd_ptr->tran_index = -1;
   tsd_ptr->status = TS_RUN;
@@ -886,70 +860,65 @@ css_connection_handler_thread (void *arg_p)
       int check_time;
 
       check_time = time (NULL);
-      n = epoll_wait (epoll_info->epoll_fd, event, EPOLL_MAX_EVENTS,
-		      poll_timeout);
+      n = epoll_wait (epoll_info->epoll_fd, event, EPOLL_MAX_EVENTS, poll_timeout);
       if (n < 0)
-	{
-	  if (errno == EINTR)
-	    {
-	      continue;
-	    }
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_SYSTEM_CALL, 1, "epoll_wait()");
-	  break;
-	}
+        {
+          if (errno == EINTR)
+            {
+              continue;
+            }
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SYSTEM_CALL, 1, "epoll_wait()");
+          break;
+        }
 
       for (i = 0; i < n; i++)
-	{
-	  bool conn_err_flag = false;
-	  CSS_CONN_ENTRY *conn = NULL;
+        {
+          bool conn_err_flag = false;
+          CSS_CONN_ENTRY *conn = NULL;
 
-	  conn = (CSS_CONN_ENTRY *) event[i].data.ptr;
-	  if (conn != NULL && conn->epoll_check_err &&
-	      check_time > conn->epoll_check_time)
-	    {
-	      if (event[i].events & EPOLLERR || event[i].events & EPOLLHUP)
-		{
-		  conn_err_flag = true;
-		}
-	      else if (event[i].events & EPOLLIN)
-		{
-		  char buf[1];
-		  int r;
+          conn = (CSS_CONN_ENTRY *) event[i].data.ptr;
+          if (conn != NULL && conn->epoll_check_err && check_time > conn->epoll_check_time)
+            {
+              if (event[i].events & EPOLLERR || event[i].events & EPOLLHUP)
+                {
+                  conn_err_flag = true;
+                }
+              else if (event[i].events & EPOLLIN)
+                {
+                  char buf[1];
+                  int r;
 
-		  r = recv (conn->fd, buf, 1, MSG_PEEK | MSG_DONTWAIT);
-		  if (r <= 0)
-		    {
-		      conn_err_flag = true;
-		    }
-		}
+                  r = recv (conn->fd, buf, 1, MSG_PEEK | MSG_DONTWAIT);
+                  if (r <= 0)
+                    {
+                      conn_err_flag = true;
+                    }
+                }
 
-	      if (conn_err_flag)
-		{
-		  conn->con_close_handler_activated = true;
+              if (conn_err_flag)
+                {
+                  conn->con_close_handler_activated = true;
 
-		  if (conn->status == CONN_OPEN)
-		    {
-		      css_epoll_del_conn (conn);
+                  if (conn->status == CONN_OPEN)
+                    {
+                      css_epoll_del_conn (conn);
 
-		      CSS_JOB_ENTRY_SET (new_job, conn,
-					 css_con_close_handler, conn);
+                      CSS_JOB_ENTRY_SET (new_job, conn, css_con_close_handler, conn);
 
-		      if (css_add_to_job_queue (JOB_QUEUE_CLOSE, &new_job) !=
-			  NO_ERROR)
-			{
-			  assert (false);
+                      if (css_add_to_job_queue (JOB_QUEUE_CLOSE, &new_job) != NO_ERROR)
+                        {
+                          assert (false);
 
-			  net_server_conn_down (tsd_ptr, conn, true);
-			}
-		    }
-		  else
-		    {
-		      conn->con_close_handler_activated = false;
-		    }
-		}
-	    }
-	}
+                          net_server_conn_down (tsd_ptr, conn, true);
+                        }
+                    }
+                  else
+                    {
+                      conn->con_close_handler_activated = false;
+                    }
+                }
+            }
+        }
 
       thread_sleep (100);
     }
@@ -1028,15 +997,15 @@ css_block_all_active_conn (unsigned short stop_phase)
   for (conn = css_Active_conn_anchor; conn != NULL; conn = conn->next)
     {
       if (conn->stop_phase != stop_phase)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       css_end_server_request (conn);
       if (!IS_INVALID_SOCKET (conn->fd) && conn->fd != css_Master_conn->fd)
-	{
-	  conn->stop_talk = true;
-	  logtb_set_tran_index_interrupt (NULL, conn->tran_index, 1);
-	}
+        {
+          conn->stop_talk = true;
+          logtb_set_tran_index_interrupt (NULL, conn->tran_index, 1);
+        }
     }
 
   csect_exit (CSECT_CSS_ACTIVE_CONN);
@@ -1101,39 +1070,39 @@ css_internal_request_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg)
       po[0].revents = 0;
       n = poll (po, 1, 1000);
       if (n == 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       else if (n < 0)
-	{
-	  if (errno == EINTR)
-	    {
-	      continue;
-	    }
-	  break;
-	}
+        {
+          if (errno == EINTR)
+            {
+              continue;
+            }
+          break;
+        }
       else
-	{
-	  if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
+            {
+              break;
+            }
+        }
 
 
       recv_packet = NULL;
       if (css_recv_command_packet (conn, &recv_packet) != NO_ERRORS)
-	{
-	  conn->status = CONN_CLOSING;
-	  break;
-	}
+        {
+          conn->status = CONN_CLOSING;
+          break;
+        }
 
       if (recv_packet->header.packet_type != COMMAND_TYPE)
-	{
-	  css_net_packet_free (recv_packet);
-	  conn->status = CONN_CLOSING;
-	  break;
-	}
+        {
+          css_net_packet_free (recv_packet);
+          conn->status = CONN_CLOSING;
+          break;
+        }
 
       pthread_mutex_lock (&thread_p->tran_index_lock);
       thread_p->tran_index = recv_packet->header.tran_index;
@@ -1146,15 +1115,14 @@ css_internal_request_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg)
 
       size = css_net_packet_get_recv_size (recv_packet, 0);
       if (size > 0)
-	{
-	  buffer = css_net_packet_get_buffer (recv_packet, 0, -1, false);
-	}
+        {
+          buffer = css_net_packet_get_buffer (recv_packet, 0, -1, false);
+        }
 
       /* 1. change thread's transaction id to this connection's */
       thread_p->recv_packet = recv_packet;
 
-      assert (conn->tran_index == -1 ||
-	      conn->tran_index == recv_packet->header.tran_index);
+      assert (conn->tran_index == -1 || conn->tran_index == recv_packet->header.tran_index);
 
       conn->tran_index = recv_packet->header.tran_index;
 
@@ -1250,11 +1218,10 @@ css_init (const char *server_name)
   if (status != NO_ERROR)
     {
       if (status == ER_CSS_PTHREAD_CREATE)
-	{
-	  /* thread creation error */
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_THREAD_STACK,
-		  1, thread_num_total_threads ());
-	}
+        {
+          /* thread creation error */
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_THREAD_STACK, 1, thread_num_total_threads ());
+        }
       return ER_FAILED;
     }
 
@@ -1266,9 +1233,9 @@ css_init (const char *server_name)
 
       css_get_server_domain_path (pname, sizeof (pname), server_name);
       if (css_tcp_setup_server_datagram (pname, &socket_fd) == false)
-	{
-	  goto shutdown;
-	}
+        {
+          goto shutdown;
+        }
       css_Listen_conn = css_make_conn (socket_fd);
 
       /* insert conn into active conn list */
@@ -1279,10 +1246,10 @@ css_init (const char *server_name)
 
       status = hb_register_to_master (css_Master_conn, HB_PTYPE_SERVER);
       if (status != NO_ERROR)
-	{
-	  fprintf (stderr, "failed to heartbeat register.\n");
-	  goto shutdown;
-	}
+        {
+          fprintf (stderr, "failed to heartbeat register.\n");
+          goto shutdown;
+        }
 
       css_setup_server_loop ();
 
@@ -1312,10 +1279,10 @@ shutdown:
       assert (LSA_LT (&log_Gl.append.nxio_lsa, &log_Gl.prior_info.prior_lsa));
       node = log_Gl.prior_info.prior_list_header;
       while (node != NULL)
-	{
-	  assert (node->log_header.trid == LOG_SYSTEM_TRANID);
-	  node = node->next;
-	}
+        {
+          assert (node->log_header.trid == LOG_SYSTEM_TRANID);
+          node = node->next;
+        }
     }
   pthread_mutex_unlock (&log_Gl.prior_info.prior_lsa_mutex);
 #endif
@@ -1338,8 +1305,7 @@ shutdown:
 }
 
 int
-css_send_reply_to_client (CSS_CONN_ENTRY * conn, unsigned int eid,
-			  int num_buffers, ...)
+css_send_reply_to_client (CSS_CONN_ENTRY * conn, unsigned int eid, int num_buffers, ...)
 {
   int css_error;
   va_list args;
@@ -1348,8 +1314,7 @@ css_send_reply_to_client (CSS_CONN_ENTRY * conn, unsigned int eid,
 
   va_start (args, num_buffers);
 
-  css_error = css_send_data_packet_v (conn, CSS_RID_FROM_EID (eid),
-				      num_buffers, args);
+  css_error = css_send_data_packet_v (conn, CSS_RID_FROM_EID (eid), num_buffers, args);
 
   va_end (args);
 
@@ -1439,9 +1404,7 @@ css_unset_ha_repl_delayed (void)
  *
  */
 static HA_STATE
-css_transit_ha_server_state (UNUSED_ARG THREAD_ENTRY * thread_p,
-			     HA_STATE curr_server_state,
-			     HA_STATE req_server_state)
+css_transit_ha_server_state (UNUSED_ARG THREAD_ENTRY * thread_p, HA_STATE curr_server_state, HA_STATE req_server_state)
 {
   /*
    *
@@ -1480,8 +1443,7 @@ css_transit_ha_server_state (UNUSED_ARG THREAD_ENTRY * thread_p,
 
   if ((curr_server_state < HA_STATE_UNKNOWN
        || curr_server_state > HA_STATE_TO_BE_SLAVE)
-      || (req_server_state < HA_STATE_UNKNOWN
-	  || req_server_state > HA_STATE_TO_BE_SLAVE))
+      || (req_server_state < HA_STATE_UNKNOWN || req_server_state > HA_STATE_TO_BE_SLAVE))
     {
       return HA_STATE_NA;
     }
@@ -1495,8 +1457,7 @@ css_transit_ha_server_state (UNUSED_ARG THREAD_ENTRY * thread_p,
  *   whence(in): 0: others, 1: register_client, 2: unregister_client
  */
 int
-css_check_ha_server_state_for_client (UNUSED_ARG THREAD_ENTRY * thread_p,
-				      UNUSED_ARG int whence)
+css_check_ha_server_state_for_client (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG int whence)
 {
 #define FROM_OTHERS             0
 #define FROM_REGISTER_CLIENT    1
@@ -1527,23 +1488,19 @@ css_check_ha_server_state_for_client (UNUSED_ARG THREAD_ENTRY * thread_p,
  *   force(in): force to change
  */
 int
-css_change_ha_server_state (THREAD_ENTRY * thread_p,
-			    HA_STATE req_server_state, bool force)
+css_change_ha_server_state (THREAD_ENTRY * thread_p, HA_STATE req_server_state, bool force)
 {
   HA_STATE curr_server_state, new_server_state;
   int error = NO_ERROR;
   bool need_change_server_state = false;
 
-  assert (req_server_state >= HA_STATE_UNKNOWN
-	  && req_server_state <= HA_STATE_DEAD);
+  assert (req_server_state >= HA_STATE_UNKNOWN && req_server_state <= HA_STATE_DEAD);
 
   curr_server_state = svr_shm_get_server_state ();
   er_log_debug (ARG_FILE_LINE,
-		"css_change_ha_server_state: ha_server_state %s "
-		"state %s %s \n",
-		HA_STATE_NAME (curr_server_state),
-		HA_STATE_NAME (req_server_state),
-		(force ? "force" : "no_force"));
+                "css_change_ha_server_state: ha_server_state %s "
+                "state %s %s \n",
+                HA_STATE_NAME (curr_server_state), HA_STATE_NAME (req_server_state), (force ? "force" : "no_force"));
 
   if (req_server_state == curr_server_state)
     {
@@ -1568,15 +1525,13 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
       return NO_ERROR;
     }
 
-  new_server_state = css_transit_ha_server_state (thread_p, curr_server_state,
-						  req_server_state);
+  new_server_state = css_transit_ha_server_state (thread_p, curr_server_state, req_server_state);
   if (new_server_state == HA_STATE_NA)
     {
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "Invalid req_server_state");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid req_server_state");
       csect_exit (CSECT_HA_SERVER_STATE);
 
       return error;
@@ -1591,27 +1546,26 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
 
     case HA_STATE_MASTER:
       if (curr_server_state == HA_STATE_TO_BE_MASTER)
-	{
-	  /* If log appliers have changed their state to done,
-	   * go directly to active mode */
-	  if (force == false && svr_shm_check_repl_done () == false)
-	    {
-	      need_change_server_state = false;
-	    }
-	}
+        {
+          /* If log appliers have changed their state to done,
+           * go directly to active mode */
+          if (force == false && svr_shm_check_repl_done () == false)
+            {
+              need_change_server_state = false;
+            }
+        }
       break;
 
     case HA_STATE_SLAVE:
       if (curr_server_state == HA_STATE_TO_BE_SLAVE)
-	{
-	  if (force == false
-	      && logtb_count_active_write_clients (thread_p) > 0)
-	    {
-	      need_change_server_state = false;
-	    }
+        {
+          if (force == false && logtb_count_active_write_clients (thread_p) > 0)
+            {
+              need_change_server_state = false;
+            }
 
-	  logtb_shutdown_write_normal_clients (thread_p, force);
-	}
+          logtb_shutdown_write_normal_clients (thread_p, force);
+        }
       break;
 
     default:
@@ -1625,26 +1579,23 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
   if (need_change_server_state == true)
     {
       if (new_server_state == HA_STATE_MASTER)
-	{
-	  er_log_debug (ARG_FILE_LINE, "css_change_ha_server_state: "
-			"db_enable_modification() \n");
-	  db_enable_modification ();
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "css_change_ha_server_state: " "db_enable_modification() \n");
+          db_enable_modification ();
+        }
       else if (new_server_state == HA_STATE_SLAVE)
-	{
-	  er_log_debug (ARG_FILE_LINE, "css_change_ha_server_state: "
-			"db_disable_modification() \n");
-	  db_disable_modification ();
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "css_change_ha_server_state: " "db_disable_modification() \n");
+          db_disable_modification ();
+        }
 
       svr_shm_set_server_state (new_server_state);
 
       /* append a dummy log record for LFT to wake LWTs up */
       log_append_ha_server_state (thread_p, new_server_state);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_CSS_SERVER_HA_MODE_CHANGE, 2,
-	      HA_STATE_NAME (curr_server_state),
-	      HA_STATE_NAME (svr_shm_get_server_state ()));
+              ER_CSS_SERVER_HA_MODE_CHANGE, 2,
+              HA_STATE_NAME (curr_server_state), HA_STATE_NAME (svr_shm_get_server_state ()));
     }
 
   csect_exit (CSECT_HA_SERVER_STATE);
@@ -1658,20 +1609,15 @@ css_change_ha_server_state (THREAD_ENTRY * thread_p,
  *   state(in): new state to be recorded
  */
 int
-css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
-			   const PRM_NODE_INFO * node_info,
-			   HA_APPLY_STATE state)
+css_notify_ha_apply_state (THREAD_ENTRY * thread_p, const PRM_NODE_INFO * node_info, HA_APPLY_STATE state)
 {
   int error = NO_ERROR;
   char host[MAX_NODE_INFO_STR_LEN];
 
-  assert (state >= HA_APPLY_STATE_UNREGISTERED
-	  && state <= HA_APPLY_STATE_ERROR);
+  assert (state >= HA_APPLY_STATE_UNREGISTERED && state <= HA_APPLY_STATE_ERROR);
 
   prm_node_info_to_str (host, sizeof (host), node_info);
-  er_log_debug (ARG_FILE_LINE,
-		"css_notify_ha_apply_state: node %s state %s\n",
-		host, HA_APPLY_STATE_NAME (state));
+  er_log_debug (ARG_FILE_LINE, "css_notify_ha_apply_state: node %s state %s\n", host, HA_APPLY_STATE_NAME (state));
 
   error = csect_enter (thread_p, CSECT_HA_SERVER_STATE, INF_WAIT);
   if (error != NO_ERROR)
@@ -1715,8 +1661,7 @@ css_check_accessibility (in_addr_t clt_ip)
     {
       char ip_str[32];
       css_ip_to_str (ip_str, sizeof (ip_str), clt_ip);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_INACCESSIBLE_IP, 1, ip_str);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INACCESSIBLE_IP, 1, ip_str);
 
       return ER_INACCESSIBLE_IP;
     }
@@ -1729,8 +1674,7 @@ css_check_accessibility (in_addr_t clt_ip)
     {
       char ip_str[32];
       css_ip_to_str (ip_str, sizeof (ip_str), clt_ip);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_INACCESSIBLE_IP, 1, ip_str);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INACCESSIBLE_IP, 1, ip_str);
     }
 
   return err_code;
@@ -1748,18 +1692,14 @@ css_set_accessible_ip_info ()
       return NO_ERROR;
     }
 
-  if (prm_get_string_value (PRM_ID_ACCESS_IP_CONTROL_FILE)[0] ==
-      PATH_SEPARATOR)
+  if (prm_get_string_value (PRM_ID_ACCESS_IP_CONTROL_FILE)[0] == PATH_SEPARATOR)
     {
-      ip_list_file_name =
-	(char *) prm_get_string_value (PRM_ID_ACCESS_IP_CONTROL_FILE);
+      ip_list_file_name = (char *) prm_get_string_value (PRM_ID_ACCESS_IP_CONTROL_FILE);
     }
   else
     {
       ip_list_file_name =
-	envvar_confdir_file (ip_file_real_path, PATH_MAX,
-			     prm_get_string_value
-			     (PRM_ID_ACCESS_IP_CONTROL_FILE));
+        envvar_confdir_file (ip_file_real_path, PATH_MAX, prm_get_string_value (PRM_ID_ACCESS_IP_CONTROL_FILE));
     }
 
   ret_val = css_read_ip_info (&tmp_accessible_ip_info, ip_list_file_name);
@@ -1768,9 +1708,9 @@ css_set_accessible_ip_info ()
       csect_enter (NULL, CSECT_ACL, INF_WAIT);
 
       if (css_Server_accessible_ip_info != NULL)
-	{
-	  css_free_accessible_ip_info ();
-	}
+        {
+          css_free_accessible_ip_info ();
+        }
       css_Server_accessible_ip_info = tmp_accessible_ip_info;
 
       csect_exit (CSECT_ACL);
@@ -1800,13 +1740,10 @@ xacl_dump (THREAD_ENTRY * thread_p, FILE * outfp)
       outfp = stdout;
     }
 
-  fprintf (outfp, "access_ip_control=%s\n",
-	   (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) ? "yes" : "no"));
-  fprintf (outfp, "access_ip_control_file=%s\n",
-	   (ip_list_file_name != NULL) ? ip_list_file_name : "NULL");
+  fprintf (outfp, "access_ip_control=%s\n", (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) ? "yes" : "no"));
+  fprintf (outfp, "access_ip_control_file=%s\n", (ip_list_file_name != NULL) ? ip_list_file_name : "NULL");
 
-  if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == false
-      || css_Server_accessible_ip_info == NULL)
+  if (prm_get_bool_value (PRM_ID_ACCESS_IP_CONTROL) == false || css_Server_accessible_ip_info == NULL)
     {
       return;
     }
@@ -1817,19 +1754,15 @@ xacl_dump (THREAD_ENTRY * thread_p, FILE * outfp)
     {
       int address_index = i * IP_BYTE_COUNT;
 
-      for (j = 0;
-	   j < css_Server_accessible_ip_info->
-	   address_list[address_index]; j++)
-	{
-	  fprintf (outfp, "%d%s",
-		   css_Server_accessible_ip_info->
-		   address_list[address_index + j + 1],
-		   ((j != 3) ? "." : ""));
-	}
+      for (j = 0; j < css_Server_accessible_ip_info->address_list[address_index]; j++)
+        {
+          fprintf (outfp, "%d%s",
+                   css_Server_accessible_ip_info->address_list[address_index + j + 1], ((j != 3) ? "." : ""));
+        }
       if (j != 4)
-	{
-	  fprintf (outfp, "*");
-	}
+        {
+          fprintf (outfp, "*");
+        }
       fprintf (outfp, "\n");
     }
 
@@ -1874,8 +1807,7 @@ css_epoll_init ()
   css_Epoll_info = malloc (size);
   if (css_Epoll_info == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -1883,12 +1815,11 @@ css_epoll_init ()
     {
       css_Epoll_info[i].epoll_fd = epoll_create (100);
       if (css_Epoll_info[i].epoll_fd < 0)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_SYSTEM_CALL, 1, "epoll_create()");
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SYSTEM_CALL, 1, "epoll_create()");
 
-	  return ER_SYSTEM_CALL;
-	}
+          return ER_SYSTEM_CALL;
+        }
 
       css_Epoll_info[i].count = 0;
       css_Epoll_info[i].shutdown = false;
@@ -1917,8 +1848,7 @@ css_epoll_ctl (int epoll_fd, int epoll_op, CSS_CONN_ENTRY * conn)
 
       sprintf (buf, "epoll_ctl(%d)", epoll_op);
 
-      er_set_with_oserror (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-			   ER_SYSTEM_CALL, 1, buf);
+      er_set_with_oserror (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_SYSTEM_CALL, 1, buf);
       return ER_SYSTEM_CALL;
     }
 
@@ -1954,9 +1884,9 @@ css_epoll_add_conn (CSS_CONN_ENTRY * conn)
   for (i = 1; i < num_con_handlers; i++)
     {
       if (css_Epoll_info[min_index].count > css_Epoll_info[i].count)
-	{
-	  min_index = i;
-	}
+        {
+          min_index = i;
+        }
     }
 
   css_Epoll_info[min_index].count++;
@@ -1986,8 +1916,7 @@ css_epoll_del_conn (CSS_CONN_ENTRY * conn)
       css_Epoll_info[index].count = MAX (css_Epoll_info[index].count, 0);
     }
 
-  return (css_epoll_ctl (css_Epoll_info[index].epoll_fd, EPOLL_CTL_DEL,
-			 conn));
+  return (css_epoll_ctl (css_Epoll_info[index].epoll_fd, EPOLL_CTL_DEL, conn));
 }
 
 /*

@@ -60,6 +60,5 @@ extern const char *rbl_Err_msg[];
 
 extern void rbl_error_log_init (const char *prefix, char *dbname, int id);
 extern void rbl_error_log_final (bool remove_log_file);
-extern void rbl_error_log (int severity, const char *file_name,
-			   const int line_no, const char *fmt, ...);
+extern void rbl_error_log (int severity, const char *file_name, const int line_no, const char *fmt, ...);
 #endif /* RBL_ERROR_LOG_H_ */

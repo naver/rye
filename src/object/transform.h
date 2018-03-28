@@ -43,7 +43,7 @@ typedef struct tf_meta_attribute
   const char *domain_string;
   int substructure;
   int id;
-  void *extended_domain;	/* filled in on the client side */
+  void *extended_domain;        /* filled in on the client side */
 } META_ATTRIBUTE;
 
 typedef struct tf_meta_class
@@ -85,7 +85,7 @@ struct catcls_constraint
 {
   DB_CONSTRAINT_TYPE type;
   const char *name;
-  const char *atts[MAX_INDEX_KEY_LIST_NUM + 1];	/* +1 is end of atts */
+  const char *atts[MAX_INDEX_KEY_LIST_NUM + 1]; /* +1 is end of atts */
 };
 
 typedef struct catcls_table CATCLS_TABLE;

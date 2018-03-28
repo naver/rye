@@ -69,15 +69,13 @@ rbl_execute_ddl (CCI_CONN * conn, char *ddl_sql)
 
   if (cci_prepare (conn, &stmt, ddl_sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return RBL_CCI_ERROR;
     }
 
   if (cci_execute (&stmt, 0, 0) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       cci_close_req_handle (&stmt);
       return RBL_CCI_ERROR;
     }
@@ -116,14 +114,11 @@ rbl_datetype_def_sql (DB_DOMAIN * domain, FILE * fp)
       /* fall through */
     case DB_TYPE_VARBIT:
       precision = db_domain_precision (domain);
-      fprintf (fp, "(%d)",
-	       precision == TP_FLOATING_PRECISION_VALUE
-	       ? DB_MAX_STRING_LENGTH : precision);
+      fprintf (fp, "(%d)", precision == TP_FLOATING_PRECISION_VALUE ? DB_MAX_STRING_LENGTH : precision);
       break;
 
     case DB_TYPE_NUMERIC:
-      fprintf (fp, "(%d,%d)",
-	       db_domain_precision (domain), db_domain_scale (domain));
+      fprintf (fp, "(%d,%d)", db_domain_precision (domain), db_domain_scale (domain));
       break;
 
     default:
@@ -132,8 +127,7 @@ rbl_datetype_def_sql (DB_DOMAIN * domain, FILE * fp)
 
   if (has_collation)
     {
-      (void) fprintf (fp, " COLLATE %s",
-		      lang_get_collation_name (domain->collation_id));
+      (void) fprintf (fp, " COLLATE %s", lang_get_collation_name (domain->collation_id));
     }
 }
 
@@ -154,32 +148,31 @@ rbl_column_def_sql (DB_ATTRIBUTE * att, FILE * fp)
   rbl_datetype_def_sql (db_attribute_domain (att), fp);
 
   default_value = db_attribute_default (att);
-  if ((default_value != NULL && !DB_IS_NULL (default_value))
-      || att->default_value.default_expr != DB_DEFAULT_NONE)
+  if ((default_value != NULL && !DB_IS_NULL (default_value)) || att->default_value.default_expr != DB_DEFAULT_NONE)
     {
       fprintf (fp, " DEFAULT ");
 
       switch (att->default_value.default_expr)
-	{
-	case DB_DEFAULT_SYSDATE:
-	  fprintf (fp, "SYS_DATE");
-	  break;
-	case DB_DEFAULT_SYSDATETIME:
-	  fprintf (fp, "SYS_DATETIME");
-	  break;
-	case DB_DEFAULT_UNIX_TIMESTAMP:
-	  fprintf (fp, "UNIX_TIMESTAMP()");
-	  break;
-	case DB_DEFAULT_USER:
-	  fprintf (fp, "USER()");
-	  break;
-	case DB_DEFAULT_CURR_USER:
-	  fprintf (fp, "CURRENT_USER");
-	  break;
-	default:
-	  db_value_fprint (fp, default_value);
-	  break;
-	}
+        {
+        case DB_DEFAULT_SYSDATE:
+          fprintf (fp, "SYS_DATE");
+          break;
+        case DB_DEFAULT_SYSDATETIME:
+          fprintf (fp, "SYS_DATETIME");
+          break;
+        case DB_DEFAULT_UNIX_TIMESTAMP:
+          fprintf (fp, "UNIX_TIMESTAMP()");
+          break;
+        case DB_DEFAULT_USER:
+          fprintf (fp, "USER()");
+          break;
+        case DB_DEFAULT_CURR_USER:
+          fprintf (fp, "CURRENT_USER");
+          break;
+        default:
+          db_value_fprint (fp, default_value);
+          break;
+        }
     }
 
   if (db_attribute_is_non_null (att))
@@ -201,56 +194,54 @@ rbl_index_def_sql (MOP class_, FILE * fp)
   const char *name;
   const int *asc_desc;
 
-  for (constraint = db_get_constraints (class_);
-       constraint != NULL; constraint = db_constraint_next (constraint))
+  for (constraint = db_get_constraints (class_); constraint != NULL; constraint = db_constraint_next (constraint))
     {
       if (db_constraint_type (constraint) == DB_CONSTRAINT_NOT_NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       atts = db_constraint_attributes (constraint);
 
       if (num_printed > 0)
-	{
-	  (void) fprintf (fp, ",\n");
-	}
+        {
+          (void) fprintf (fp, ",\n");
+        }
 
       if (constraint->type == SM_CONSTRAINT_PRIMARY_KEY)
-	{
-	  (void) fprintf (fp,
-			  " CONSTRAINT [%s] PRIMARY KEY(", constraint->name);
-	}
+        {
+          (void) fprintf (fp, " CONSTRAINT [%s] PRIMARY KEY(", constraint->name);
+        }
       else if (constraint->type == SM_CONSTRAINT_UNIQUE)
-	{
-	  (void) fprintf (fp, " CONSTRAINT [%s] UNIQUE(", constraint->name);
-	}
+        {
+          (void) fprintf (fp, " CONSTRAINT [%s] UNIQUE(", constraint->name);
+        }
       else if (constraint->type == SM_CONSTRAINT_INDEX)
-	{
-	  (void) fprintf (fp, " INDEX [%s] (", constraint->name);
-	}
+        {
+          (void) fprintf (fp, " INDEX [%s] (", constraint->name);
+        }
 
       asc_desc = db_constraint_asc_desc (constraint);
 
       for (att = atts; *att != NULL; att++)
-	{
-	  name = db_attribute_name (*att);
-	  if (att != atts)
-	    {
-	      fprintf (fp, ", ");
-	    }
+        {
+          name = db_attribute_name (*att);
+          if (att != atts)
+            {
+              fprintf (fp, ", ");
+            }
 
-	  fprintf (fp, "[%s]", name);
+          fprintf (fp, "[%s]", name);
 
-	  if (asc_desc)
-	    {
-	      if (*asc_desc == 1)
-		{
-		  fprintf (fp, "%s", " DESC");
-		}
-	      asc_desc++;
-	    }
-	}
+          if (asc_desc)
+            {
+              if (*asc_desc == 1)
+                {
+                  fprintf (fp, "%s", " DESC");
+                }
+              asc_desc++;
+            }
+        }
       (void) fprintf (fp, ")");
 
       ++num_printed;
@@ -300,8 +291,7 @@ rbl_table_def_sql (MOP cls_mop, CCI_CONN * conn, bool is_view)
     }
   else
     {
-      fprintf (fp, "CREATE %s TABLE [%s] (",
-	       sm_is_shard_table (cls_mop) ? "SHARD" : "GLOBAL", name);
+      fprintf (fp, "CREATE %s TABLE [%s] (", sm_is_shard_table (cls_mop) ? "SHARD" : "GLOBAL", name);
     }
 
   if (au_fetch_class_force (cls_mop, &class_, S_LOCK) != NO_ERROR)
@@ -309,14 +299,13 @@ rbl_table_def_sql (MOP cls_mop, CCI_CONN * conn, bool is_view)
       return ER_FAILED;
     }
 
-  for (att = class_->ordered_attributes, c = 0; att != NULL;
-       att = att->order_link, c++)
+  for (att = class_->ordered_attributes, c = 0; att != NULL; att = att->order_link, c++)
     {
       rbl_column_def_sql (att, fp);
       if (!is_view || c < class_->att_count - 1)
-	{
-	  fprintf (fp, ",\n");
-	}
+        {
+          fprintf (fp, ",\n");
+        }
     }
 
   rbl_index_def_sql (cls_mop, fp);
@@ -330,11 +319,11 @@ rbl_table_def_sql (MOP cls_mop, CCI_CONN * conn, bool is_view)
   else
     {
       if (sm_is_shard_table (cls_mop))
-	{
-	  shard_key_att = classobj_find_shard_key_column (class_);
+        {
+          shard_key_att = classobj_find_shard_key_column (class_);
 
-	  fprintf (fp, " SHARD BY [%s]", shard_key_att->name);
-	}
+          fprintf (fp, " SHARD BY [%s]", shard_key_att->name);
+        }
     }
 
   port_close_memstream (fp, &ptr, &sizeloc);
@@ -383,13 +372,11 @@ rbl_table_owner_sql (MOP class_, CCI_CONN * conn, bool is_view)
 
   if (is_view)
     {
-      sprintf (sql, "ALTER VIEW [%s] OWNER TO %s",
-	       classname, DB_GET_STRING (&value));
+      sprintf (sql, "ALTER VIEW [%s] OWNER TO %s", classname, DB_GET_STRING (&value));
     }
   else
     {
-      sprintf (sql, "ALTER TABLE [%s] OWNER TO %s",
-	       classname, DB_GET_STRING (&value));
+      sprintf (sql, "ALTER TABLE [%s] OWNER TO %s", classname, DB_GET_STRING (&value));
     }
 
   db_value_clear (&value);
@@ -412,8 +399,7 @@ rbl_user_def_sql (CCI_CONN * conn)
   DB_MAKE_NULL (&pass_val);
   error = NO_ERROR;
 
-  sprintf (buf, "SELECT name, password FROM [%s];",
-	   au_get_user_class_name ());
+  sprintf (buf, "SELECT name, password FROM [%s];", au_get_user_class_name ());
 
   error = db_execute (buf, &query_result, &query_error);
   if (error < 0)
@@ -425,67 +411,65 @@ rbl_user_def_sql (CCI_CONN * conn)
     {
       error = db_query_get_tuple_value (query_result, 0, &name_val);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       RBL_ASSERT (!DB_IS_NULL (&name_val));
       user_name = db_get_string (&name_val);
       if (user_name == NULL)
-	{
-	  RBL_ASSERT (false);
-	  goto error_exit;
-	}
+        {
+          RBL_ASSERT (false);
+          goto error_exit;
+        }
 
       if (!strcasecmp (user_name, "SHARD_MANAGEMENT"))
-	{
-	  db_value_clear (&name_val);
-	  continue;
-	}
+        {
+          db_value_clear (&name_val);
+          continue;
+        }
 
       error = db_query_get_tuple_value (query_result, 1, &pass_val);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       if (!DB_IS_NULL (&pass_val))
-	{
-	  password = db_get_string (&pass_val);
-	}
+        {
+          password = db_get_string (&pass_val);
+        }
 
       if (!strcasecmp (user_name, "DBA") || !strcasecmp (user_name, "PUBLIC"))
-	{
-	  if (!DB_IS_NULL (&pass_val))
-	    {
-	      sprintf (buf, "ALTER USER [%s] PASSWORD '%s' ENCRYPT",
-		       user_name, password);
-	    }
-	  else
-	    {
-	      db_value_clear (&name_val);
-	      db_value_clear (&pass_val);
-	      continue;
-	    }
-	}
+        {
+          if (!DB_IS_NULL (&pass_val))
+            {
+              sprintf (buf, "ALTER USER [%s] PASSWORD '%s' ENCRYPT", user_name, password);
+            }
+          else
+            {
+              db_value_clear (&name_val);
+              db_value_clear (&pass_val);
+              continue;
+            }
+        }
       else
-	{
-	  if (DB_IS_NULL (&pass_val))
-	    {
-	      sprintf (buf, "CREATE USER [%s]", user_name);
-	    }
-	  else
-	    {
-	      sprintf (buf, "CREATE USER [%s] PASSWORD '%s' ENCRYPT",
-		       user_name, password);
-	    }
-	}
+        {
+          if (DB_IS_NULL (&pass_val))
+            {
+              sprintf (buf, "CREATE USER [%s]", user_name);
+            }
+          else
+            {
+              sprintf (buf, "CREATE USER [%s] PASSWORD '%s' ENCRYPT", user_name, password);
+            }
+        }
 
       error = rbl_execute_ddl (conn, buf);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       db_value_clear (&name_val);
       db_value_clear (&pass_val);
@@ -530,8 +514,7 @@ rbl_grant_def_sql (MOP cls_mop, CCI_CONN * conn)
   DB_MAKE_NULL (&user_val);
   error = NO_ERROR;
 
-  sprintf (buf, "SELECT * FROM [%s] WHERE table_name = '%s';",
-	   CT_AUTH_NAME, classname);
+  sprintf (buf, "SELECT * FROM [%s] WHERE table_name = '%s';", CT_AUTH_NAME, classname);
 
   error = db_execute (buf, &query_result, &query_error);
   if (error < 0)
@@ -543,9 +526,9 @@ rbl_grant_def_sql (MOP cls_mop, CCI_CONN * conn)
     {
       error = db_query_get_tuple_value (query_result, 0, &user_val);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       RBL_ASSERT (!DB_IS_NULL (&user_val));
       user_name = db_get_string (&user_val);
@@ -560,9 +543,9 @@ rbl_grant_def_sql (MOP cls_mop, CCI_CONN * conn)
 
       fp = port_open_memstream (&ptr, &sizeloc);
       if (fp == NULL)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       fprintf (fp, "GRANT");
       GRANT_STR (fp, sel, " SELECT");
@@ -578,9 +561,9 @@ rbl_grant_def_sql (MOP cls_mop, CCI_CONN * conn)
       free (ptr);
 
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       db_value_clear (&user_val);
     }
@@ -604,8 +587,7 @@ rbl_is_shard_mgmt_table (MOP cls_mop)
 
   if (strcasecmp (t_name, "shard_db") == 0
       || strcasecmp (t_name, "shard_node") == 0
-      || strcasecmp (t_name, "shard_groupid") == 0
-      || strcasecmp (t_name, "shard_migration") == 0)
+      || strcasecmp (t_name, "shard_groupid") == 0 || strcasecmp (t_name, "shard_migration") == 0)
     {
       return true;
     }
@@ -641,63 +623,61 @@ rbl_copy_schema (void)
   /* table */
   for (t = classes; t != NULL; t = t->next)
     {
-      if (sm_is_system_table (t->op) || db_is_vclass (t->op)
-	  || rbl_is_shard_mgmt_table (t->op))
-	{
-	  continue;
-	}
+      if (sm_is_system_table (t->op) || db_is_vclass (t->op) || rbl_is_shard_mgmt_table (t->op))
+        {
+          continue;
+        }
 
       error = rbl_table_def_sql (t->op, conn, false);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       error = rbl_table_owner_sql (t->op, conn, false);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       error = rbl_grant_def_sql (t->op, conn);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
     }
 
   /* view */
   for (t = classes; t != NULL; t = t->next)
     {
       if (sm_is_system_table (t->op) || !db_is_vclass (t->op))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       error = rbl_table_def_sql (t->op, conn, true);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       error = rbl_table_owner_sql (t->op, conn, true);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       error = rbl_grant_def_sql (t->op, conn);
       if (error != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
     }
 
   error = cci_block_global_dml (conn, true);
   if (error < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       goto error_exit;
     }
   cci_end_tran (conn, CCI_TRAN_COMMIT);

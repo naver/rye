@@ -113,19 +113,19 @@ struct qo_summary
 
 typedef struct
 {
-  int leafs;			/* number of leaf pages including overflow pages */
-  int pages;			/* number of total pages */
-  int height;			/* the height of the B+tree */
-  int pkeys_size;		/* pkeys array size */
-  int *pkeys;			/* partial keys info
-				   for example: index (a, b, ..., x)
-				   pkeys[0]          -> # of {a}
-				   pkeys[1]          -> # of {a, b}
-				   ...
-				   pkeys[key_size-1] -> # of {a, b, ..., x}
-				 */
-#if 0				/* TODO - currently unused */
-  INT64 tot_free_space;		/* Total free space in index leaf pages */
+  int leafs;                    /* number of leaf pages including overflow pages */
+  int pages;                    /* number of total pages */
+  int height;                   /* the height of the B+tree */
+  int pkeys_size;               /* pkeys array size */
+  int *pkeys;                   /* partial keys info
+                                   for example: index (a, b, ..., x)
+                                   pkeys[0]          -> # of {a}
+                                   pkeys[1]          -> # of {a, b}
+                                   ...
+                                   pkeys[key_size-1] -> # of {a, b, ..., x}
+                                 */
+#if 0                           /* TODO - currently unused */
+  INT64 tot_free_space;         /* Total free space in index leaf pages */
 #endif
 } QO_ATTR_CUM_STATS;
 
@@ -173,9 +173,7 @@ extern bool qo_plan_multi_range_opt (QO_PLAN * plan);
  */
 extern int qo_xasl_get_num_terms (QO_XASL_INDEX_INFO * info);
 extern PT_NODE **qo_xasl_get_terms (QO_XASL_INDEX_INFO *);
-extern PT_NODE *qo_check_nullable_expr (PARSER_CONTEXT * parser,
-					PT_NODE * node, void *arg,
-					int *continue_walk);
+extern PT_NODE *qo_check_nullable_expr (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk);
 extern PT_NODE *mq_optimize (PARSER_CONTEXT * parser, PT_NODE * statement);
 
 #if 0
@@ -188,26 +186,17 @@ extern unsigned char qo_type_qualifiers[];
 
 extern double qo_expr_selectivity (QO_ENV * env, PT_NODE * pt_expr);
 
-extern QO_LIMIT_INFO *qo_get_key_limit_from_instnum (PARSER_CONTEXT * parser,
-						     QO_PLAN * plan,
-						     XASL_NODE * xasl);
+extern QO_LIMIT_INFO *qo_get_key_limit_from_instnum (PARSER_CONTEXT * parser, QO_PLAN * plan, XASL_NODE * xasl);
 
 extern QO_LIMIT_INFO *qo_get_key_limit_from_ordbynum (PARSER_CONTEXT * parser,
-						      QO_PLAN * plan,
-						      XASL_NODE * xasl,
-						      bool ignore_lower);
+                                                      QO_PLAN * plan, XASL_NODE * xasl, bool ignore_lower);
 
 extern bool qo_check_iscan_for_multi_range_opt (QO_PLAN * plan);
 extern bool qo_check_join_for_multi_range_opt (QO_PLAN * plan);
-extern int qo_find_subplan_using_multi_range_opt (QO_PLAN * plan,
-						  QO_PLAN ** result);
+extern int qo_find_subplan_using_multi_range_opt (QO_PLAN * plan, QO_PLAN ** result);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern void qo_top_plan_print_json (PARSER_CONTEXT * parser,
-				    XASL_NODE * xasl, PT_NODE * select,
-				    QO_PLAN * plan);
-extern void qo_top_plan_print_text (PARSER_CONTEXT * parser,
-				    XASL_NODE * xasl, PT_NODE * select,
-				    QO_PLAN * plan);
+extern void qo_top_plan_print_json (PARSER_CONTEXT * parser, XASL_NODE * xasl, PT_NODE * select, QO_PLAN * plan);
+extern void qo_top_plan_print_text (PARSER_CONTEXT * parser, XASL_NODE * xasl, PT_NODE * select, QO_PLAN * plan);
 #endif
 
 extern double qo_plan_cost (QO_PLAN *);

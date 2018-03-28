@@ -35,13 +35,10 @@
 #include "cas_cci.h"
 
 extern void *analyzer_main (void *arg);
-extern int cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
-			       const char *database_name,
-			       const char *log_path);
+extern int cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer, const char *database_name, const char *log_path);
 extern int cirp_final_analyzer (CIRP_ANALYZER_INFO * analyzer);
 extern int cirp_clear_analyzer (CIRP_ANALYZER_INFO * analyzer);
 
-extern CIRP_AGENT_STATUS cirp_get_analyzer_status (CIRP_ANALYZER_INFO *
-						   analyzer);
+extern CIRP_AGENT_STATUS cirp_get_analyzer_status (CIRP_ANALYZER_INFO * analyzer);
 
 #endif /* _REPL_ANALYZER_H_ */

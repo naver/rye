@@ -59,8 +59,7 @@ extern bool locator_is_root (MOP mop);
 extern bool locator_is_class (MOP mop);
 extern MOBJ locator_fetch_class (MOP class_mop, LOCK lock);
 extern MOBJ locator_fetch_instance (MOP mop);
-extern MOBJ locator_fetch_set (int num_mops, MOP * mop_set, LOCK lock,
-			       int quit_on_errors);
+extern MOBJ locator_fetch_set (int num_mops, MOP * mop_set, LOCK lock, int quit_on_errors);
 extern int locator_flush_class (MOP class_mop);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int locator_flush_and_decache_instance (MOP mop);
@@ -76,30 +75,20 @@ extern void locator_remove_instance (MOP mop);
 extern MOBJ locator_update_instance (MOP mop);
 extern MOBJ locator_update_class (MOP mop);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int locator_update_tree_classes (MOP * classes_mop_set,
-					int num_classes);
+extern int locator_update_tree_classes (MOP * classes_mop_set, int num_classes);
 #endif
-extern MOBJ locator_prepare_rename_class (MOP class_mop,
-					  const char *old_classname,
-					  const char *new_classname);
+extern MOBJ locator_prepare_rename_class (MOP class_mop, const char *old_classname, const char *new_classname);
 extern OID *locator_assign_permanent_oid (MOP mop);
 extern MOP locator_find_class (const char *classname, LOCK lock);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern LC_FIND_CLASSNAME locator_find_query_class (const char *classname,
-						   DB_FETCH_MODE purpose,
-						   MOP * class_mop);
+extern LC_FIND_CLASSNAME locator_find_query_class (const char *classname, DB_FETCH_MODE purpose, MOP * class_mop);
 #endif
 extern LC_FIND_CLASSNAME locator_lockhint_classes (int num_classes,
-						   const char
-						   **many_classnames,
-						   LOCK * many_locks,
-						   int quit_on_errors);
+                                                   const char **many_classnames, LOCK * many_locks, int quit_on_errors);
 extern LIST_MOPS *locator_get_all_mops (MOP class_mop, LOCK lock);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern LIST_MOPS *locator_get_all_class_mops (LOCK lock,
-					      int (*fun) (MOBJ class_obj));
-extern LIST_MOPS *locator_get_all_nested_mops (MOP mop, int prune_level,
-					       DB_FETCH_MODE inst_purpose);
+extern LIST_MOPS *locator_get_all_class_mops (LOCK lock, int (*fun) (MOBJ class_obj));
+extern LIST_MOPS *locator_get_all_nested_mops (MOP mop, int prune_level, DB_FETCH_MODE inst_purpose);
 #endif
 extern void locator_free_list_mops (LIST_MOPS * mops);
 extern void locator_set_sig_interrupt (int set);
@@ -109,10 +98,8 @@ extern MOBJ locator_has_heap (MOP class_mop);
 #if defined (ENABLE_UNUSED_FUNCTION)
 typedef void (*LC_OIDMAP_CALLBACK) (LC_OIDMAP * map);
 
-extern LC_OIDMAP *locator_add_oidset_object (LC_OIDSET * oidset,
-					     DB_OBJECT * obj);
-extern int locator_assign_oidset (LC_OIDSET * oidset,
-				  LC_OIDMAP_CALLBACK callback);
+extern LC_OIDMAP *locator_add_oidset_object (LC_OIDSET * oidset, DB_OBJECT * obj);
+extern int locator_assign_oidset (LC_OIDSET * oidset, LC_OIDMAP_CALLBACK callback);
 extern int locator_assign_all_permanent_oids (void);
 
 #endif

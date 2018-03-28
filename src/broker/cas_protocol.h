@@ -37,7 +37,7 @@ extern "C"
 #define BRREQ_MSG_SIZE				20
 #define BRREQ_MSG_MAGIC_LEN			4
 #define BRREQ_MSG_MAGIC_STR			"RYE\001"
-#define BRREQ_OP_CODE_MSG_MAX_SIZE		0x7fff	/* short int */
+#define BRREQ_OP_CODE_MSG_MAX_SIZE		0x7fff  /* short int */
 
 /* db_name used by client's broker health checker */
 #define HEALTH_CHECK_DUMMY_DB "___health_check_dummy_db___"
@@ -321,28 +321,20 @@ extern "C"
 
   extern UINT64 br_msg_protocol_version (const RYE_VERSION * ver);
   extern T_BROKER_REQUEST_MSG *brreq_msg_alloc (int opcode_msg_size);
-  extern T_BROKER_REQUEST_MSG *brreq_msg_clone (const T_BROKER_REQUEST_MSG *
-						org_msg);
+  extern T_BROKER_REQUEST_MSG *brreq_msg_clone (const T_BROKER_REQUEST_MSG * org_msg);
 
   extern void brreq_msg_free (T_BROKER_REQUEST_MSG * ptr);
   extern int brreq_msg_unpack (T_BROKER_REQUEST_MSG * srv_con_msg);
-  extern char *brreq_msg_pack (T_BROKER_REQUEST_MSG * srv_con_msg,
-			       char clt_type, char op_code,
-			       int op_code_msg_size);
+  extern char *brreq_msg_pack (T_BROKER_REQUEST_MSG * srv_con_msg, char clt_type, char op_code, int op_code_msg_size);
   extern void brres_msg_pack (T_BROKER_RESPONSE_NET_MSG * res_msg,
-			      int result_code, int num_additional_msg,
-			      const int *addtional_msg_size);
-  extern int brres_msg_unpack (T_BROKER_RESPONSE * res,
-			       const char *msg_buffer, int msg_size);
+                              int result_code, int num_additional_msg, const int *addtional_msg_size);
+  extern int brres_msg_unpack (T_BROKER_RESPONSE * res, const char *msg_buffer, int msg_size);
   extern void cas_status_info_init (char *info_ptr);
 
-  extern int brreq_msg_normal_broker_opcode_msg_size (const char *port_name,
-						      int add_size);
+  extern int brreq_msg_normal_broker_opcode_msg_size (const char *port_name, int add_size);
   extern char *brreq_msg_pack_port_name (char *ptr, const char *port_name);
   extern const char *brreq_msg_unpack_port_name (const T_BROKER_REQUEST_MSG *
-						 brreq_msg,
-						 const char **ret_msg_ptr,
-						 int *ret_msg_remain);
+                                                 brreq_msg, const char **ret_msg_ptr, int *ret_msg_remain);
   extern char *br_msg_pack_int (char *ptr, int value);
   extern char *br_msg_pack_short (char *ptr, short value);
   extern char *br_msg_pack_str (char *ptr, const char *str, int size);
@@ -353,4 +345,4 @@ extern "C"
 }
 #endif
 
-#endif				/* _CAS_PROTOCOL_H_ */
+#endif                          /* _CAS_PROTOCOL_H_ */

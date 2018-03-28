@@ -204,10 +204,8 @@ typedef enum
 extern int net_server_start (const char *name);
 
 #if defined(SERVER_MODE)
-extern int net_server_conn_down (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg,
-				 bool force);
-extern int net_server_request (THREAD_ENTRY * thread_p, unsigned int rid,
-			       int request, int size, char *buffer);
+extern int net_server_conn_down (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg, bool force);
+extern int net_server_request (THREAD_ENTRY * thread_p, unsigned int rid, int request, int size, char *buffer);
 
 #endif
 

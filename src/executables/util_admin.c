@@ -365,8 +365,7 @@ static UTIL_MAP ua_Utility_Map[] = {
 };
 
 static bool is_util_cs_mode (int utility_index);
-static int util_get_utility_index (int *utility_index,
-				   const char *utility_name);
+static int util_get_utility_index (int *utility_index, const char *utility_name);
 static void print_admin_usage (char *argv0);
 static void print_admin_version (char *argv0);
 
@@ -383,8 +382,8 @@ print_admin_usage (char *argv0)
   const char *exec_name;
   exec_name = basename (argv0);
   fprintf (stderr,
-	   utility_get_generic_message (MSGCAT_UTIL_GENERIC_ADMIN_USAGE),
-	   PRODUCT_STRING, exec_name, exec_name, exec_name);
+           utility_get_generic_message (MSGCAT_UTIL_GENERIC_ADMIN_USAGE),
+           PRODUCT_STRING, exec_name, exec_name, exec_name);
 }
 
 /*
@@ -400,8 +399,7 @@ print_admin_version (char *argv0)
   const char *exec_name;
 
   exec_name = basename (argv0);
-  fprintf (stderr, utility_get_generic_message (MSGCAT_UTIL_GENERIC_VERSION),
-	   exec_name, PRODUCT_STRING);
+  fprintf (stderr, utility_get_generic_message (MSGCAT_UTIL_GENERIC_VERSION), exec_name, PRODUCT_STRING);
 }
 
 /*
@@ -427,14 +425,12 @@ util_admin (int argc, char *argv[], bool * is_cs_mode)
       return NO_ERROR;
     }
 
-  if (argc < 2 ||
-      util_get_utility_index (&utility_index, argv[1]) != NO_ERROR)
+  if (argc < 2 || util_get_utility_index (&utility_index, argv[1]) != NO_ERROR)
     {
       goto print_usage;
     }
 
-  if (util_parse_argument (&ua_Utility_Map[utility_index], argc - 1, &argv[1])
-      != NO_ERROR)
+  if (util_parse_argument (&ua_Utility_Map[utility_index], argc - 1, &argv[1]) != NO_ERROR)
     {
       is_valid_arg = false;
       argc = 2;
@@ -448,8 +444,7 @@ util_admin (int argc, char *argv[], bool * is_cs_mode)
     }
 
 
-  status = utility_load_symbol (NULL, &symbol_handle,
-				ua_Utility_Map[utility_index].function_name);
+  status = utility_load_symbol (NULL, &symbol_handle, ua_Utility_Map[utility_index].function_name);
   if (status == NO_ERROR)
     {
       UTIL_FUNCTION_ARG util_func_arg;
@@ -497,19 +492,19 @@ is_util_cs_mode (int utility_index)
       return true;
     case SA_CS:
       {
-	int i;
-	for (i = 0; arg_map[i].arg_ch; i++)
-	  {
-	    int key = arg_map[i].arg_ch;
-	    if ((key == 'C') && arg_map[i].arg_value.p != NULL)
-	      {
-		return true;
-	      }
-	    if ((key == 'S') && arg_map[i].arg_value.p != NULL)
-	      {
-		return false;
-	      }
-	  }
+        int i;
+        for (i = 0; arg_map[i].arg_ch; i++)
+          {
+            int key = arg_map[i].arg_ch;
+            if ((key == 'C') && arg_map[i].arg_value.p != NULL)
+              {
+                return true;
+              }
+            if ((key == 'S') && arg_map[i].arg_value.p != NULL)
+              {
+                return false;
+              }
+          }
       }
     }
   return true;
@@ -527,10 +522,10 @@ util_get_utility_index (int *utility_index, const char *utility_name)
   for (i = 0, *utility_index = -1; ua_Utility_Map[i].utility_index != -1; i++)
     {
       if (strcasecmp (ua_Utility_Map[i].utility_name, utility_name) == 0)
-	{
-	  *utility_index = ua_Utility_Map[i].utility_index;
-	  break;
-	}
+        {
+          *utility_index = ua_Utility_Map[i].utility_index;
+          break;
+        }
     }
 
   return *utility_index == -1 ? ER_GENERIC_ERROR : NO_ERROR;

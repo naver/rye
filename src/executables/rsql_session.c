@@ -55,8 +55,8 @@
 /* session command table */
 typedef struct
 {
-  const char *text;		/* lower case cmd name */
-  SESSION_CMD cmd_no;		/* command number */
+  const char *text;             /* lower case cmd name */
+  SESSION_CMD cmd_no;           /* command number */
   unsigned int flags;
 } SESSION_CMD_TABLE;
 
@@ -128,10 +128,10 @@ static SESSION_CMD_TABLE rsql_Session_cmd_table[] = {
 SESSION_CMD
 rsql_get_session_cmd_no (const char *input)
 {
-  int i;			/* loop counter */
-  int input_cmd_length;		/* input command length */
-  int num_matches = 0;		/* # of matched commands */
-  int matched_index = -1;	/* last matched entry index */
+  int i;                        /* loop counter */
+  int input_cmd_length;         /* input command length */
+  int num_matches = 0;          /* # of matched commands */
+  int matched_index = -1;       /* last matched entry index */
 
   if (*input == '\0')
     {
@@ -144,35 +144,33 @@ rsql_get_session_cmd_no (const char *input)
   matched_index = -1;
   for (i = 0; i < (int) DIM (rsql_Session_cmd_table); i++)
     {
-      if (strncasecmp
-	  (input, rsql_Session_cmd_table[i].text, input_cmd_length) == 0)
-	{
-	  int ses_cmd_length;
+      if (strncasecmp (input, rsql_Session_cmd_table[i].text, input_cmd_length) == 0)
+        {
+          int ses_cmd_length;
 
-	  ses_cmd_length = strlen (rsql_Session_cmd_table[i].text);
-	  if (ses_cmd_length == input_cmd_length)
-	    {
-	      return (rsql_Session_cmd_table[i].cmd_no);
-	    }
-	  num_matches++;
-	  matched_index = i;
-	}
+          ses_cmd_length = strlen (rsql_Session_cmd_table[i].text);
+          if (ses_cmd_length == input_cmd_length)
+            {
+              return (rsql_Session_cmd_table[i].cmd_no);
+            }
+          num_matches++;
+          matched_index = i;
+        }
     }
   if (num_matches != 1)
     {
-      rsql_Error_code = (num_matches > 1) ? RSQL_ERR_SESS_CMD_AMBIGUOUS :
-	RSQL_ERR_SESS_CMD_NOT_FOUND;
+      rsql_Error_code = (num_matches > 1) ? RSQL_ERR_SESS_CMD_AMBIGUOUS : RSQL_ERR_SESS_CMD_NOT_FOUND;
       return S_CMD_UNKNOWN;
     }
 #if defined (CS_MODE)
   if (rsql_Session_cmd_table[matched_index].flags & CMD_CHECK_CONNECT)
     {
       if (db_Connect_status != DB_CONNECTION_STATUS_CONNECTED)
-	{
-	  rsql_Error_code = RSQL_ERR_SQL_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_NO_CONNECT, 0);
-	  return (-1);
-	}
+        {
+          rsql_Error_code = RSQL_ERR_SQL_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_NO_CONNECT, 0);
+          return (-1);
+        }
     }
 #endif
 
@@ -187,15 +185,12 @@ void
 rsql_help_menu (void)
 {
   if (rsql_append_more_line (0, msgcat_message (MSGCAT_CATALOG_RSQL,
-						MSGCAT_RSQL_SET_RSQL,
-						RSQL_HELP_SESSION_CMD_TEXT))
-      == RSQL_FAILURE)
+                                                MSGCAT_RSQL_SET_RSQL, RSQL_HELP_SESSION_CMD_TEXT)) == RSQL_FAILURE)
     {
       goto error;
     }
   rsql_display_more_lines (msgcat_message (MSGCAT_CATALOG_RSQL,
-					   MSGCAT_RSQL_SET_RSQL,
-					   RSQL_HELP_SESSION_CMD_TITLE_TEXT));
+                                           MSGCAT_RSQL_SET_RSQL, RSQL_HELP_SESSION_CMD_TITLE_TEXT));
 
   rsql_free_more_lines ();
   return;
@@ -234,10 +229,10 @@ rsql_help_schema (const char *class_name)
       strcpy (fixed_class_name, class_name);
       /* check that both lower and upper case are not truncated */
       if (intl_identifier_fix (fixed_class_name, -1) != NO_ERROR)
-	{
-	  rsql_Error_code = RSQL_ERR_TOO_LONG_LINE;
-	  goto error;
-	}
+        {
+          rsql_Error_code = RSQL_ERR_TOO_LONG_LINE;
+          goto error;
+        }
       class_name = fixed_class_name;
     }
 
@@ -249,39 +244,31 @@ rsql_help_schema (const char *class_name)
     }
 
   snprintf (class_title, (2 * DB_MAX_IDENTIFIER_LENGTH + 2),
-	    msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
-			    RSQL_HELP_CLASS_HEAD_TEXT),
-	    class_schema->class_type);
+            msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
+                            RSQL_HELP_CLASS_HEAD_TEXT), class_schema->class_type);
   APPEND_HEAD_LINE (class_title);
   APPEND_MORE_LINE (5, class_schema->name);
 
-  APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL,
-				    MSGCAT_RSQL_SET_RSQL,
-				    RSQL_HELP_ATTRIBUTE_HEAD_TEXT));
+  APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_HELP_ATTRIBUTE_HEAD_TEXT));
   if (class_schema->attributes == NULL)
     {
-      APPEND_MORE_LINE (5, msgcat_message (MSGCAT_CATALOG_RSQL,
-					   MSGCAT_RSQL_SET_RSQL,
-					   RSQL_HELP_NONE_TEXT));
+      APPEND_MORE_LINE (5, msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_HELP_NONE_TEXT));
     }
   else
     {
       for (line_ptr = class_schema->attributes; *line_ptr != NULL; line_ptr++)
-	{
-	  APPEND_MORE_LINE (5, *line_ptr);
-	}
+        {
+          APPEND_MORE_LINE (5, *line_ptr);
+        }
     }
 
   if (class_schema->constraints != NULL)
     {
-      APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL,
-					MSGCAT_RSQL_SET_RSQL,
-					RSQL_HELP_CONSTRAINT_HEAD_TEXT));
-      for (line_ptr = class_schema->constraints; *line_ptr != NULL;
-	   line_ptr++)
-	{
-	  APPEND_MORE_LINE (5, *line_ptr);
-	}
+      APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_HELP_CONSTRAINT_HEAD_TEXT));
+      for (line_ptr = class_schema->constraints; *line_ptr != NULL; line_ptr++)
+        {
+          APPEND_MORE_LINE (5, *line_ptr);
+        }
     }
 
   if (class_schema->object_id != NULL)
@@ -292,26 +279,20 @@ rsql_help_schema (const char *class_name)
 
   if (class_schema->shard_by != NULL)
     {
-      APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL,
-					MSGCAT_RSQL_SET_RSQL,
-					RSQL_HELP_SHARD_SPEC_HEAD_TEXT));
+      APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_HELP_SHARD_SPEC_HEAD_TEXT));
       APPEND_MORE_LINE (5, class_schema->shard_by);
     }
 
   if (class_schema->query_spec != NULL)
     {
-      APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL,
-					MSGCAT_RSQL_SET_RSQL,
-					RSQL_HELP_QUERY_SPEC_HEAD_TEXT));
+      APPEND_HEAD_LINE (msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_HELP_QUERY_SPEC_HEAD_TEXT));
       for (line_ptr = class_schema->query_spec; *line_ptr != NULL; line_ptr++)
-	{
-	  APPEND_MORE_LINE (5, *line_ptr);
-	}
+        {
+          APPEND_MORE_LINE (5, *line_ptr);
+        }
     }
 
-  rsql_display_more_lines (msgcat_message (MSGCAT_CATALOG_RSQL,
-					   MSGCAT_RSQL_SET_RSQL,
-					   RSQL_HELP_SCHEMA_TITLE_TEXT));
+  rsql_display_more_lines (msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_HELP_SCHEMA_TITLE_TEXT));
 
   obj_print_help_free_class (class_schema);
   rsql_free_more_lines ();
@@ -351,7 +332,7 @@ void
 rsql_help_info (const char *command, int aucommit_flag)
 {
   char *dup = NULL, *tok, *save;
-  FILE *p_stream;		/* pipe stream to pager */
+  FILE *p_stream;               /* pipe stream to pager */
   void (*rsql_intr_save) (int sig);
   void (*rsql_pipe_save) (int sig);
 
@@ -385,24 +366,22 @@ rsql_help_info (const char *command, int aucommit_flag)
       p_stream = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
       help_print_info (command, p_stream);
       if (aucommit_flag)
-	{
-	  result = db_commit_transaction ();
-	}
+        {
+          result = db_commit_transaction ();
+        }
       rsql_pclose (p_stream, rsql_Output_fp);
       if (aucommit_flag)
-	{
-	  if (result != NO_ERROR)
-	    {
-	      rsql_display_rsql_err (0, 0);
-	      rsql_check_server_down ();
-	    }
-	  else
-	    {
-	      rsql_display_msg (msgcat_message (MSGCAT_CATALOG_RSQL,
-						MSGCAT_RSQL_SET_RSQL,
-						RSQL_STAT_COMMITTED_TEXT));
-	    }
-	}
+        {
+          if (result != NO_ERROR)
+            {
+              rsql_display_rsql_err (0, 0);
+              rsql_check_server_down ();
+            }
+          else
+            {
+              rsql_display_msg (msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_STAT_COMMITTED_TEXT));
+            }
+        }
 
       signal (SIGINT, rsql_intr_save);
       signal (SIGPIPE, rsql_pipe_save);
@@ -434,7 +413,7 @@ rsql_killtran (const char *argument)
 {
   TRANS_INFO *info = NULL;
   int tran_index = -1, i;
-  FILE *p_stream;		/* pipe stream to pager */
+  FILE *p_stream;               /* pipe stream to pager */
 
   if (argument)
     {
@@ -458,13 +437,13 @@ rsql_killtran (const char *argument)
 
       fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_TITLE_TEXT));
       for (i = 0; i < info->num_trans; i++)
-	{
-	  fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_FORMAT),
-		   info->tran[i].tran_index,
-		   tran_get_tranlist_state_name (info->tran[i].state),
-		   info->tran[i].db_user, info->tran[i].host_name,
-		   info->tran[i].process_id, info->tran[i].program_name);
-	}
+        {
+          fprintf (p_stream, rsql_get_message (RSQL_KILLTRAN_FORMAT),
+                   info->tran[i].tran_index,
+                   tran_get_tranlist_state_name (info->tran[i].state),
+                   info->tran[i].db_user, info->tran[i].host_name,
+                   info->tran[i].process_id, info->tran[i].program_name);
+        }
 
       rsql_pclose (p_stream, rsql_Output_fp);
     }
@@ -472,35 +451,30 @@ rsql_killtran (const char *argument)
     {
       /* kill transaction */
       for (i = 0; i < info->num_trans; i++)
-	{
-	  if (info->tran[i].tran_index == tran_index)
-	    {
-	      fprintf (rsql_Output_fp,
-		       rsql_get_message (RSQL_KILLTRAN_TITLE_TEXT));
-	      fprintf (rsql_Output_fp,
-		       rsql_get_message (RSQL_KILLTRAN_FORMAT),
-		       info->tran[i].tran_index,
-		       tran_get_tranlist_state_name (info->tran[i].state),
-		       info->tran[i].db_user, info->tran[i].host_name,
-		       info->tran[i].process_id, info->tran[i].program_name);
+        {
+          if (info->tran[i].tran_index == tran_index)
+            {
+              fprintf (rsql_Output_fp, rsql_get_message (RSQL_KILLTRAN_TITLE_TEXT));
+              fprintf (rsql_Output_fp,
+                       rsql_get_message (RSQL_KILLTRAN_FORMAT),
+                       info->tran[i].tran_index,
+                       tran_get_tranlist_state_name (info->tran[i].state),
+                       info->tran[i].db_user, info->tran[i].host_name,
+                       info->tran[i].process_id, info->tran[i].program_name);
 
-	      if (thread_kill_tran_index (info->tran[i].tran_index,
-					  info->tran[i].db_user,
-					  info->tran[i].host_name,
-					  info->tran[i].process_id) ==
-		  NO_ERROR)
-		{
-		  rsql_display_msg (rsql_get_message
-				    (RSQL_STAT_KILLTRAN_TEXT));
-		}
-	      else
-		{
-		  rsql_display_msg (rsql_get_message
-				    (RSQL_STAT_KILLTRAN_FAIL_TEXT));
-		}
-	      break;
-	    }
-	}
+              if (thread_kill_tran_index (info->tran[i].tran_index,
+                                          info->tran[i].db_user,
+                                          info->tran[i].host_name, info->tran[i].process_id) == NO_ERROR)
+                {
+                  rsql_display_msg (rsql_get_message (RSQL_STAT_KILLTRAN_TEXT));
+                }
+              else
+                {
+                  rsql_display_msg (rsql_get_message (RSQL_STAT_KILLTRAN_FAIL_TEXT));
+                }
+              break;
+            }
+        }
     }
 
   if (info)

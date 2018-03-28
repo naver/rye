@@ -46,7 +46,7 @@ enum boot_client_type
   BOOT_CLIENT_RW_BROKER_REPLICA_ONLY = 12,
   BOOT_CLIENT_RO_BROKER_REPLICA_ONLY = 13,
   BOOT_CLIENT_SO_BROKER_REPLICA_ONLY = 14,
-  BOOT_CLIENT_ADMIN_RSQL_WOS = 15,	/* admin rsql that can write on slave */
+  BOOT_CLIENT_ADMIN_RSQL_WOS = 15,      /* admin rsql that can write on slave */
   BOOT_CLIENT_RBL_MIGRATOR = 17,
   BOOT_CLIENT_REPL_BROKER = 18,
   BOOT_CLIENT_CREATEDB = 19,
@@ -149,13 +149,13 @@ typedef struct boot_client_credential BOOT_CLIENT_CREDENTIAL;
 struct boot_client_credential
 {
   BOOT_CLIENT_TYPE client_type;
-  const char *client_info;	/* DB_MAX_IDENTIFIER_LENGTH */
-  const char *db_name;		/* DB_MAX_IDENTIFIER_LENGTH */
-  const char *db_user;		/* DB_MAX_USER_LENGTH */
-  const char *db_password;	/* DB_MAX_PASSWORD_LENGTH */
-  const char *program_name;	/* PATH_MAX */
-  const char *login_name;	/* L_cuserid */
-  const char *host_name;	/* MAXHOSTNAMELEN */
+  const char *client_info;      /* DB_MAX_IDENTIFIER_LENGTH */
+  const char *db_name;          /* DB_MAX_IDENTIFIER_LENGTH */
+  const char *db_user;          /* DB_MAX_USER_LENGTH */
+  const char *db_password;      /* DB_MAX_PASSWORD_LENGTH */
+  const char *program_name;     /* PATH_MAX */
+  const char *login_name;       /* L_cuserid */
+  const char *host_name;        /* MAXHOSTNAMELEN */
   PRM_NODE_LIST preferred_nodes;
   bool connect_order_random;
   int process_id;
@@ -182,8 +182,8 @@ struct boot_db_path_info
 typedef struct boot_server_credential BOOT_SERVER_CREDENTIAL;
 struct boot_server_credential
 {
-  const char *db_full_name;	/* PATH_MAX */
-  const char *host_name;	/* MAXHOSTNAMELEN */
+  const char *db_full_name;     /* PATH_MAX */
+  const char *host_name;        /* MAXHOSTNAMELEN */
   int process_id;
   OID root_class_oid;
   HFID root_class_hfid;

@@ -71,12 +71,12 @@ typedef enum
   DISK_PERMVOL_GENERIC_PURPOSE = 2,
   DISK_PERMVOL_TEMP_PURPOSE = 3,
 
-  DISK_TEMPVOL_TEMP_PURPOSE = 4,	/* internal use only */
-  DISK_UNKNOWN_PURPOSE = 5,	/* internal use only: Does not mean anything */
-  DISK_EITHER_TEMP_PURPOSE = 6	/* internal use only:
-				 * Either pervol_temp or tempvol_tmp.. Used
-				 * only to select a volume
-				 */
+  DISK_TEMPVOL_TEMP_PURPOSE = 4,        /* internal use only */
+  DISK_UNKNOWN_PURPOSE = 5,     /* internal use only: Does not mean anything */
+  DISK_EITHER_TEMP_PURPOSE = 6  /* internal use only:
+                                 * Either pervol_temp or tempvol_tmp.. Used
+                                 * only to select a volume
+                                 */
 } DB_VOLPURPOSE;
 
 
@@ -84,11 +84,11 @@ typedef enum
 typedef enum
 {
 
-  DB_UNK = -2,			/* unknown                              */
-  DB_LT = -1,			/* canonical less than                 */
-  DB_EQ = 0,			/* equal                                */
-  DB_GT = 1,			/* canonical greater than,             */
-  DB_NE = 2			/* not equal because types incomparable */
+  DB_UNK = -2,                  /* unknown                              */
+  DB_LT = -1,                   /* canonical less than                 */
+  DB_EQ = 0,                    /* equal                                */
+  DB_GT = 1,                    /* canonical greater than,             */
+  DB_NE = 2                     /* not equal because types incomparable */
 } DB_VALUE_COMPARE_RESULT;
 
 /* Authorization type identifier constants.  The numeric values of these
@@ -139,8 +139,8 @@ typedef struct db_query_error DB_QUERY_ERROR;
 struct db_query_error
 {
 
-  int err_lineno;		/* Line number where error occurred */
-  int err_posno;		/* Position number where error occurred */
+  int err_lineno;               /* Line number where error occurred */
+  int err_posno;                /* Position number where error occurred */
 };
 
 /* RSQL/API INTERFACE */
@@ -161,12 +161,12 @@ struct db_shardkey_info
 typedef struct db_session DB_SESSION;
 struct db_session
 {
-  char stage;			/* statements' stage */
-  int line_offset;		/* amount to add to parsers line number */
-  int column_offset;		/* amount to add to parsers column number   */
-  PARSER_CONTEXT *parser;	/* handle to parser context structure */
-  DB_QUERY_TYPE *type_list;	/* for storing "nice" column headings */
-  DB_NODE *statement;		/* statement to be processed in this session */
+  char stage;                   /* statements' stage */
+  int line_offset;              /* amount to add to parsers line number */
+  int column_offset;            /* amount to add to parsers column number   */
+  PARSER_CONTEXT *parser;       /* handle to parser context structure */
+  DB_QUERY_TYPE *type_list;     /* for storing "nice" column headings */
+  DB_NODE *statement;           /* statement to be processed in this session */
 
   /* shard info */
   int groupid;
@@ -241,15 +241,15 @@ typedef enum
   TR_EVENT_STATEMENT_DELETE = 3,
   TR_EVENT_INSERT = 4,
   TR_EVENT_STATEMENT_INSERT = 5,
-  TR_EVENT_ALTER = 6,		/* currently unsupported */
-  TR_EVENT_DROP = 7,		/* currently unsupported */
+  TR_EVENT_ALTER = 6,           /* currently unsupported */
+  TR_EVENT_DROP = 7,            /* currently unsupported */
   TR_MAX_CLASS_TRIGGERS = TR_EVENT_DROP + 1,
 
   /* user cache events */
   TR_EVENT_COMMIT = 8,
   TR_EVENT_ROLLBACK = 9,
-  TR_EVENT_ABORT = 10,		/* currently unsupported */
-  TR_EVENT_TIMEOUT = 11,	/* currently unsupported */
+  TR_EVENT_ABORT = 10,          /* currently unsupported */
+  TR_EVENT_TIMEOUT = 11,        /* currently unsupported */
 
   /* default */
   TR_EVENT_NULL = 12,
@@ -273,11 +273,11 @@ typedef enum
 /* These define the possible trigger action types. */
 typedef enum
 {
-  TR_ACT_NULL = 0,		/* no action */
-  TR_ACT_EXPRESSION = 1,	/* complex expression */
-  TR_ACT_REJECT = 2,		/* REJECT action */
-  TR_ACT_INVALIDATE = 3,	/* INVALIDATE TRANSACTION action */
-  TR_ACT_PRINT = 4		/* PRINT action */
+  TR_ACT_NULL = 0,              /* no action */
+  TR_ACT_EXPRESSION = 1,        /* complex expression */
+  TR_ACT_REJECT = 2,            /* REJECT action */
+  TR_ACT_INVALIDATE = 3,        /* INVALIDATE TRANSACTION action */
+  TR_ACT_PRINT = 4              /* PRINT action */
 } DB_TRIGGER_ACTION;
 
 /* This is the generic pointer to database objects.  An object may be
@@ -366,27 +366,27 @@ typedef unsigned int SESSION_ID;
 typedef struct session_key SESSION_KEY;
 struct session_key
 {
-  SESSION_ID id;		/* hash key for a session. */
-  int fd;			/* the socket(file) descriptor of
-				 * the associated connection.
-				 */
+  SESSION_ID id;                /* hash key for a session. */
+  int fd;                       /* the socket(file) descriptor of
+                                 * the associated connection.
+                                 */
 };
 
 typedef struct dbdef_vol_ext_info DBDEF_VOL_EXT_INFO;
 struct dbdef_vol_ext_info
 {
-  const char *fullname;		/* Name of the volume extension
-				 * If NULL, system generates one like "db".ext"volid" where
-				 * "db" is the database name and "volid" is the volume
-				 * identifier to be assigned to the volume extension. */
-  int max_npages;		/* Maximum pages of this volume */
-  int extend_npages;		/* Number of pages to extend - used for generic volume only */
-  int max_writesize_in_sec;	/* the amount of volume written per second */
-  DB_VOLPURPOSE purpose;	/* The purpose of the volume extension. One of the following:
-				 * - DISK_PERMVOL_DATA_PURPOSE,
-				 * - DISK_PERMVOL_INDEX_PURPOSE,
-				 * - DISK_PERMVOL_GENERIC_PURPOSE,
-				 * - DISK_PERMVOL_TEMP_PURPOSE, */
+  const char *fullname;         /* Name of the volume extension
+                                 * If NULL, system generates one like "db".ext"volid" where
+                                 * "db" is the database name and "volid" is the volume
+                                 * identifier to be assigned to the volume extension. */
+  int max_npages;               /* Maximum pages of this volume */
+  int extend_npages;            /* Number of pages to extend - used for generic volume only */
+  int max_writesize_in_sec;     /* the amount of volume written per second */
+  DB_VOLPURPOSE purpose;        /* The purpose of the volume extension. One of the following:
+                                 * - DISK_PERMVOL_DATA_PURPOSE,
+                                 * - DISK_PERMVOL_INDEX_PURPOSE,
+                                 * - DISK_PERMVOL_GENERIC_PURPOSE,
+                                 * - DISK_PERMVOL_TEMP_PURPOSE, */
   bool overwrite;
 };
 

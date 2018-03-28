@@ -621,7 +621,7 @@ rv_init_rvfuns (void)
   rv_fun->recv_index = RVBT_COPYPAGE;
   rv_fun->recv_string = "RVBT_COPYPAGE";
   rv_fun->undofun = btree_rv_undoredo_copy_page;
-  rv_fun->redofun = NULL;	/* btree_rv_undoredo_copy_page */
+  rv_fun->redofun = NULL;       /* btree_rv_undoredo_copy_page */
   rv_fun->dump_undofun = NULL;
   rv_fun->dump_redofun = NULL;
 

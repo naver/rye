@@ -70,23 +70,22 @@ envvar_prefix (void)
     {
       envvar_Root = getenv (envvar_Prefix_name);
       if (envvar_Root != NULL)
-	{
-	  if (access (envvar_Root, F_OK) != 0)
-	    {
-	      fprintf (stderr, env_msg[ENV_INVALID_DIR],
-		       envvar_Prefix_name, envvar_Root);
-	      fflush (stderr);
-	      exit (1);
-	    }
+        {
+          if (access (envvar_Root, F_OK) != 0)
+            {
+              fprintf (stderr, env_msg[ENV_INVALID_DIR], envvar_Prefix_name, envvar_Root);
+              fflush (stderr);
+              exit (1);
+            }
 
-	  envvar_Prefix = envvar_Prefix_name;
-	}
+          envvar_Prefix = envvar_Prefix_name;
+        }
       else
-	{
-	  fprintf (stderr, env_msg[ENV_DONT_EXISTS_ROOT], envvar_Prefix_name);
-	  fflush (stderr);
-	  exit (1);
-	}
+        {
+          fprintf (stderr, env_msg[ENV_DONT_EXISTS_ROOT], envvar_Prefix_name);
+          fflush (stderr);
+          exit (1);
+        }
     }
 
   return envvar_Prefix;
@@ -170,8 +169,7 @@ envvar_bindir_file (char *path, size_t size, const char *filename)
 }
 
 char *
-envvar_localedir_file (char *path, size_t size, const char *langpath,
-		       const char *filename)
+envvar_localedir_file (char *path, size_t size, const char *langpath, const char *filename)
 {
   assert (filename != NULL);
   snprintf (path, size, "%s/msg/%s/%s", envvar_root (), langpath, filename);
@@ -198,8 +196,7 @@ envvar_confdir_file (char *path, size_t size, const char *filename)
 }
 
 static char *
-envvar_confdir_file_with_dir (char *path, size_t size,
-			      const char *dirname, const char *filename)
+envvar_confdir_file_with_dir (char *path, size_t size, const char *dirname, const char *filename)
 {
   char dirpath[PATH_MAX];
 
@@ -274,8 +271,7 @@ envvar_ryelogdir_file (char *path, size_t size, const char *filename)
 }
 
 static char *
-envvar_ryelog_broker_subdir_file (char *path, size_t size, const char *dir1,
-				  const char *dir2, const char *filename)
+envvar_ryelog_broker_subdir_file (char *path, size_t size, const char *dir1, const char *dir2, const char *filename)
 {
   char broker_log_dir[PATH_MAX];
   int n;
@@ -295,33 +291,27 @@ envvar_ryelog_broker_subdir_file (char *path, size_t size, const char *dir1,
 }
 
 void
-envvar_ryelog_broker_file (char *path, size_t size, const char *br_name,
-			   const char *filename)
+envvar_ryelog_broker_file (char *path, size_t size, const char *br_name, const char *filename)
 {
   envvar_ryelog_broker_subdir_file (path, size, br_name, NULL, filename);
 }
 
 void
-envvar_ryelog_broker_sqllog_file (char *path, size_t size,
-				  const char *br_name, const char *filename)
+envvar_ryelog_broker_sqllog_file (char *path, size_t size, const char *br_name, const char *filename)
 {
   envvar_ryelog_broker_subdir_file (path, size, br_name, "sql_log", filename);
 }
 
 void
-envvar_ryelog_broker_slowlog_file (char *path, size_t size,
-				   const char *br_name, const char *filename)
+envvar_ryelog_broker_slowlog_file (char *path, size_t size, const char *br_name, const char *filename)
 {
-  envvar_ryelog_broker_subdir_file (path, size, br_name, "slow_log",
-				    filename);
+  envvar_ryelog_broker_subdir_file (path, size, br_name, "slow_log", filename);
 }
 
 void
-envvar_ryelog_broker_errorlog_file (char *path, size_t size,
-				    const char *br_name, const char *filename)
+envvar_ryelog_broker_errorlog_file (char *path, size_t size, const char *br_name, const char *filename)
 {
-  envvar_ryelog_broker_subdir_file (path, size, br_name, "error_log",
-				    filename);
+  envvar_ryelog_broker_subdir_file (path, size, br_name, "error_log", filename);
 }
 
 void

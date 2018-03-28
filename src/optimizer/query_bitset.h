@@ -38,7 +38,7 @@
 #define NELEMENTS 64
 
 #define _LOG2_WORDSIZE	5
-#define _WORDSIZE	32	/* Number of bits in BITSET_CARRIER */
+#define _WORDSIZE	32      /* Number of bits in BITSET_CARRIER */
 #define _MASK		((1L << _LOG2_WORDSIZE) - 1)
 #define _WORD(x)	((x) >> _LOG2_WORDSIZE)
 #define _BIT(x)		((x) & _MASK)

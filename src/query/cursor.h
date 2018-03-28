@@ -49,52 +49,47 @@ typedef enum
   C_AFTER
 } CURSOR_POSITION;
 
-typedef struct cursor_id CURSOR_ID;	/* Cursor Identifier */
+typedef struct cursor_id CURSOR_ID;     /* Cursor Identifier */
 struct cursor_id
 {
-  QUERY_ID query_id;		/* Query id for this cursor */
-  QFILE_LIST_ID list_id;	/* List file identifier */
-  CURSOR_POSITION position;	/* Cursor position */
-  VPID current_vpid;		/* Current real page identifier */
-  VPID next_vpid;		/* Next page identifier */
-  VPID header_vpid;		/* Header page identifier in buffer area */
-  int on_overflow;		/* cursor buffer has an overflow page */
-  int tuple_no;			/* Tuple position number */
-  QFILE_TUPLE_RECORD tuple_record;	/* Tuple descriptor */
-  char *buffer;			/* Current page */
+  QUERY_ID query_id;            /* Query id for this cursor */
+  QFILE_LIST_ID list_id;        /* List file identifier */
+  CURSOR_POSITION position;     /* Cursor position */
+  VPID current_vpid;            /* Current real page identifier */
+  VPID next_vpid;               /* Next page identifier */
+  VPID header_vpid;             /* Header page identifier in buffer area */
+  int on_overflow;              /* cursor buffer has an overflow page */
+  int tuple_no;                 /* Tuple position number */
+  QFILE_TUPLE_RECORD tuple_record;      /* Tuple descriptor */
+  char *buffer;                 /* Current page */
   char *buffer_area;
   int buffer_filled_size;
-  int buffer_tuple_count;	/* Tuple count in current page */
-  int current_tuple_no;		/* Tuple position in current page */
-  int current_tuple_offset;	/* Tuple offset in current page */
-  char *current_tuple_p;	/* Current tuple */
-  int current_tuple_length;	/* Current tuple length */
-  int current_tuple_value_index;	/* Current tplvalue index within current_tuple_p */
-  char *current_tuple_value_p;	/* Current tplvalue pointer within current_tuple_p */
-  bool is_copy_tuple_value;	/* get tplvalue: true  = copy(default),
-				 *               false = peek */
+  int buffer_tuple_count;       /* Tuple count in current page */
+  int current_tuple_no;         /* Tuple position in current page */
+  int current_tuple_offset;     /* Tuple offset in current page */
+  char *current_tuple_p;        /* Current tuple */
+  int current_tuple_length;     /* Current tuple length */
+  int current_tuple_value_index;        /* Current tplvalue index within current_tuple_p */
+  char *current_tuple_value_p;  /* Current tplvalue pointer within current_tuple_p */
+  bool is_copy_tuple_value;     /* get tplvalue: true  = copy(default),
+                                 *               false = peek */
 };
 
-extern int cursor_copy_list_id (QFILE_LIST_ID * dest_list_id,
-				const QFILE_LIST_ID * src_list_id);
+extern int cursor_copy_list_id (QFILE_LIST_ID * dest_list_id, const QFILE_LIST_ID * src_list_id);
 extern void cursor_free_list_id (QFILE_LIST_ID * list_id, bool self);
-extern int cursor_fetch_page_having_tuple (CURSOR_ID * cursor_id,
-					   VPID * vpid,
-					   int position, int offset);
+extern int cursor_fetch_page_having_tuple (CURSOR_ID * cursor_id, VPID * vpid, int position, int offset);
 #if defined (RYE_DEBUG)
 extern void cursor_print_list (QUERY_ID query_id, QFILE_LIST_ID * list_id);
 #endif
 extern bool cursor_open (CURSOR_ID * cursor_id, QFILE_LIST_ID * list_id);
 extern int cursor_next_tuple (CURSOR_ID * cursor_id);
-extern int cursor_get_tuple_value_list (CURSOR_ID * cursor_id,
-					int size, DB_VALUE * value_list);
+extern int cursor_get_tuple_value_list (CURSOR_ID * cursor_id, int size, DB_VALUE * value_list);
 extern void cursor_close (CURSOR_ID * cursor_id);
 extern bool cursor_set_copy_tuple_value (CURSOR_ID * cursor_id, bool copy);
 extern void cursor_free (CURSOR_ID * cursor_id);
 extern int cursor_prev_tuple (CURSOR_ID * cursor_id);
 extern int cursor_first_tuple (CURSOR_ID * cursor_id);
 extern int cursor_last_tuple (CURSOR_ID * cursor_id);
-extern int cursor_get_tuple_value (CURSOR_ID * result,
-				   int index, DB_VALUE * value);
+extern int cursor_get_tuple_value (CURSOR_ID * result, int index, DB_VALUE * value);
 
 #endif /* _CURSOR_H_ */

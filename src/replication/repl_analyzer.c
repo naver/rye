@@ -62,7 +62,7 @@ struct cirp_tran
 {
   TRANID tranid;
   LOG_LSA tran_start_lsa;
-  LOG_LSA tran_end_lsa;		/* commit lsa */
+  LOG_LSA tran_end_lsa;         /* commit lsa */
   LOG_LSA repl_start_lsa;
   int applier_index;
   CIRP_REPL_ITEM *repl_item;
@@ -84,48 +84,33 @@ struct _cirp_tran_committed_array
    )
 
 static void cirp_init_tran (CIRP_TRAN * tran);
-static int cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO *
-						    analyzer);
-static void cirp_free_tran_by_tranid (CIRP_ANALYZER_INFO * analyzer,
-				      int tranid);
-static int cirp_change_state (CIRP_ANALYZER_INFO * analyzer,
-			      HA_STATE curr_node_state);
+static int cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer);
+static void cirp_free_tran_by_tranid (CIRP_ANALYZER_INFO * analyzer, int tranid);
+static int cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state);
 
 static bool cirp_anlz_is_any_applier_busy (void);
-static int cirp_anlz_assign_repl_item (int tranid, int rectype,
-				       LOG_LSA * commit_lsa);
+static int cirp_anlz_assign_repl_item (int tranid, int rectype, LOG_LSA * commit_lsa);
 static CIRP_TRAN *cirp_find_tran (int tranid);
 static int cirp_add_tran (CIRP_TRAN ** tran, int tranid, LOG_LSA * start_lsa);
-static int cirp_anlz_get_applier_index (int *index,
-					const DB_VALUE * shard_key,
-					int num_appliers);
-static int cirp_check_duplicated (int *lockf_vdes, const char *logpath,
-				  const char *dbname);
+static int cirp_anlz_get_applier_index (int *index, const DB_VALUE * shard_key, int num_appliers);
+static int cirp_check_duplicated (int *lockf_vdes, const char *logpath, const char *dbname);
 
-static int rp_set_repl_log (LOG_PAGE * log_pgptr, int log_type, int tranid,
-			    const LOG_LSA * lsa);
+static int rp_set_repl_log (LOG_PAGE * log_pgptr, int log_type, int tranid, const LOG_LSA * lsa);
 
 static int cirp_lock_dbname (CIRP_ANALYZER_INFO * analyzer);
-static int cirp_unlock_dbname (CIRP_ANALYZER_INFO * analyzer,
-			       bool clear_owner);
+static int cirp_unlock_dbname (CIRP_ANALYZER_INFO * analyzer, bool clear_owner);
 
 static int cirp_anlz_log_commit (void);
 static int cirp_delay_replica (time_t eot_time);
-static int cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
-				    LOG_LSA final, LOG_PAGE * pg_ptr);
+static int cirp_analyze_log_record (LOG_RECORD_HEADER * lrec, LOG_LSA final, LOG_PAGE * pg_ptr);
 static int cirp_find_committed_tran (const void *key, void *data, void *args);
 static int cirp_free_tran (const void *key, void *data, void *args);
-static int cirp_find_lowest_tran_start_lsa (const void *key, void *data,
-					    void *args);
-static INT64 rp_get_source_applied_time (RQueue * q_applied_time,
-					 LOG_LSA * required_lsa);
+static int cirp_find_lowest_tran_start_lsa (const void *key, void *data, void *args);
+static INT64 rp_get_source_applied_time (RQueue * q_applied_time, LOG_LSA * required_lsa);
 static int rp_applied_time_node_free (void *node, UNUSED_ARG void *data);
-static int cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
-					CIRP_AGENT_STATUS status);
-static int rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
-			      LOG_PAGE * log_pgptr, const LOG_LSA * lsa);
-static int rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
-			    LOG_PAGE * log_pgptr, const LOG_LSA * lsa);
+static int cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer, CIRP_AGENT_STATUS status);
+static int rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran, LOG_PAGE * log_pgptr, const LOG_LSA * lsa);
+static int rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran, LOG_PAGE * log_pgptr, const LOG_LSA * lsa);
 static int rp_set_gid_bitmap_log (CIRP_TRAN * tran, const LOG_LSA * lsa);
 
 /*
@@ -154,8 +139,7 @@ cirp_get_analyzer_status (CIRP_ANALYZER_INFO * analyzer)
  *    status(in):
  */
 static int
-cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer,
-			     CIRP_AGENT_STATUS status)
+cirp_change_analyzer_status (CIRP_ANALYZER_INFO * analyzer, CIRP_AGENT_STATUS status)
 {
   pthread_mutex_lock (&analyzer->lock);
   analyzer->status = status;
@@ -229,16 +213,15 @@ cirp_find_committed_tran (UNUSED_ARG const void *key, void *data, void *args)
 
   if (tran->tranid > 0
       && tran->applier_index == committed_tran->applier_index
-      && !LSA_ISNULL (&tran->tran_end_lsa)
-      && LSA_LE (&tran->tran_end_lsa, &committed_tran->lowest_committed_lsa))
+      && !LSA_ISNULL (&tran->tran_end_lsa) && LSA_LE (&tran->tran_end_lsa, &committed_tran->lowest_committed_lsa))
     {
       committed_tran->tran_ids[committed_tran->num_tran] = tran->tranid;
       committed_tran->num_tran++;
 
       if (committed_tran->num_tran >= MAX_COMMITTED_ARRAY)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
   return NO_ERROR;
@@ -253,8 +236,7 @@ cirp_find_committed_tran (UNUSED_ARG const void *key, void *data, void *args)
  *    args(out): LOG_LSA type
  */
 static int
-cirp_find_lowest_tran_start_lsa (UNUSED_ARG const void *key,
-				 void *data, void *args)
+cirp_find_lowest_tran_start_lsa (UNUSED_ARG const void *key, void *data, void *args)
 {
   CIRP_TRAN *tran;
   LOG_LSA *lowest_tran_start_lsa;
@@ -264,8 +246,7 @@ cirp_find_lowest_tran_start_lsa (UNUSED_ARG const void *key,
 
   assert (!LSA_ISNULL (&tran->tran_start_lsa));
 
-  if (LSA_ISNULL (lowest_tran_start_lsa)
-      || LSA_GT (lowest_tran_start_lsa, &tran->tran_start_lsa))
+  if (LSA_ISNULL (lowest_tran_start_lsa) || LSA_GT (lowest_tran_start_lsa, &tran->tran_start_lsa))
     {
       LSA_COPY (lowest_tran_start_lsa, &tran->tran_start_lsa);
     }
@@ -296,9 +277,9 @@ rp_get_source_applied_time (RQueue * q_applied_time, LOG_LSA * required_lsa)
     {
       node = (RP_APPLIED_TIME_NODE *) Rye_queue_get_first (q_applied_time);
       if (node == NULL || LSA_GT (&node->applied_lsa, required_lsa))
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       node = Rye_queue_dequeue (q_applied_time);
       assert (node != NULL && LSA_LE (&node->applied_lsa, required_lsa));
@@ -333,36 +314,32 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
       applier = &Repl_Info->applier_info[i];
       error = cirp_appl_get_committed_lsa (applier, &applier_committed_lsa);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       if (LSA_ISNULL (&applier_committed_lsa))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       do
-	{
-	  committed_tran.num_tran = 0;
-	  committed_tran.applier_index = i;
-	  LSA_COPY (&committed_tran.lowest_committed_lsa,
-		    &applier_committed_lsa);
-	  (void) mht_map (analyzer->tran_table,
-			  cirp_find_committed_tran, &committed_tran);
+        {
+          committed_tran.num_tran = 0;
+          committed_tran.applier_index = i;
+          LSA_COPY (&committed_tran.lowest_committed_lsa, &applier_committed_lsa);
+          (void) mht_map (analyzer->tran_table, cirp_find_committed_tran, &committed_tran);
 
-	  for (j = 0; j < committed_tran.num_tran; j++)
-	    {
-	      mht_rem (analyzer->tran_table, &committed_tran.tran_ids[j],
-		       cirp_free_tran, NULL);
-	    }
-	}
+          for (j = 0; j < committed_tran.num_tran; j++)
+            {
+              mht_rem (analyzer->tran_table, &committed_tran.tran_ids[j], cirp_free_tran, NULL);
+            }
+        }
       while (committed_tran.num_tran >= MAX_COMMITTED_ARRAY);
     }
 
   LSA_SET_NULL (&lowest_tran_start_lsa);
-  error = mht_map (analyzer->tran_table,
-		   cirp_find_lowest_tran_start_lsa, &lowest_tran_start_lsa);
+  error = mht_map (analyzer->tran_table, cirp_find_lowest_tran_start_lsa, &lowest_tran_start_lsa);
   if (error != NO_ERROR)
     {
       return error;
@@ -376,47 +353,39 @@ cirp_anlz_update_progress_from_appliers (CIRP_ANALYZER_INFO * analyzer)
     {
       assert (LSA_LE (&analyzer->ct.required_lsa, &lowest_tran_start_lsa));
       if (LSA_LE (&analyzer->ct.required_lsa, &lowest_tran_start_lsa))
-	{
-	  LSA_COPY (&analyzer->ct.required_lsa, &lowest_tran_start_lsa);
-	}
+        {
+          LSA_COPY (&analyzer->ct.required_lsa, &lowest_tran_start_lsa);
+        }
     }
 
-  source_applied_time = rp_get_source_applied_time (analyzer->q_applied_time,
-						    &analyzer->ct.
-						    required_lsa);
+  source_applied_time = rp_get_source_applied_time (analyzer->q_applied_time, &analyzer->ct.required_lsa);
   if (source_applied_time > 0)
     {
       analyzer->ct.source_applied_time = source_applied_time;
 
 
-      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_APPLIED_TIME,
-			   source_applied_time);
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_APPLIED_TIME, source_applied_time);
 
       clock_gettime (CLOCK_REALTIME, &cur_time);
-      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_DELAY,
-			   timespec_to_msec (&cur_time)
-			   - source_applied_time);
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_DELAY, timespec_to_msec (&cur_time) - source_applied_time);
     }
 
-  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID,
-		       analyzer->ct.required_lsa.pageid);
+  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID, analyzer->ct.required_lsa.pageid);
 
   monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_REQUIRED_GAP,
-		       monitor_get_stats (MNT_RP_ANALYZER_ID,
-					  MNT_RP_CURRENT_PAGEID)
-		       - monitor_get_stats (MNT_RP_ANALYZER_ID,
-					    MNT_RP_REQUIRED_PAGEID));
+                       monitor_get_stats (MNT_RP_ANALYZER_ID,
+                                          MNT_RP_CURRENT_PAGEID)
+                       - monitor_get_stats (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID));
 
   er_log_debug (ARG_FILE_LINE,
-		"Analyzer: update progress:lowest_tran_start_lsa:%lld,%d, "
-		"current_lsa:%lld,%d, "
-		"required_lsa:%lld,%d ",
-		(long long) lowest_tran_start_lsa.pageid,
-		lowest_tran_start_lsa.offset,
-		(long long) analyzer->current_lsa.pageid,
-		analyzer->current_lsa.offset,
-		(long long) analyzer->ct.required_lsa.pageid,
-		analyzer->ct.required_lsa.offset);
+                "Analyzer: update progress:lowest_tran_start_lsa:%lld,%d, "
+                "current_lsa:%lld,%d, "
+                "required_lsa:%lld,%d ",
+                (long long) lowest_tran_start_lsa.pageid,
+                lowest_tran_start_lsa.offset,
+                (long long) analyzer->current_lsa.pageid,
+                analyzer->current_lsa.offset,
+                (long long) analyzer->ct.required_lsa.pageid, analyzer->ct.required_lsa.offset);
 
   assert (error == NO_ERROR);
   return error;
@@ -469,13 +438,11 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
       char host_str[MAX_NODE_INFO_STR_LEN];
       prm_node_info_to_str (host_str, sizeof (host_str), &buf_mgr->host_info);
       snprintf (buffer, ONE_K,
-		"change the state of HA Node (%s@%s) from '%s' to '%s'",
-		buf_mgr->prefix_name, host_str,
-		HA_STATE_NAME (analyzer->last_node_state),
-		HA_STATE_NAME (curr_node_state));
+                "change the state of HA Node (%s@%s) from '%s' to '%s'",
+                buf_mgr->prefix_name, host_str,
+                HA_STATE_NAME (analyzer->last_node_state), HA_STATE_NAME (curr_node_state));
 
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	      ER_HA_GENERIC_ERROR, 1, buffer);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1, buffer);
     }
 
   analyzer->last_node_state = curr_node_state;
@@ -483,92 +450,87 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
   analyzer->last_is_end_of_record = analyzer->is_end_of_record;
 
   /* check log file status */
-  if (analyzer->is_end_of_record == true
-      && (log_hdr->ha_info.file_status == LOG_HA_FILESTAT_SYNCHRONIZED))
+  if (analyzer->is_end_of_record == true && (log_hdr->ha_info.file_status == LOG_HA_FILESTAT_SYNCHRONIZED))
     {
       /* check server's state with log header */
       switch (curr_node_state)
-	{
-	case HA_STATE_MASTER:
-	case HA_STATE_TO_BE_SLAVE:
-	case HA_STATE_TO_BE_MASTER:
-	  if (analyzer->apply_state != HA_APPLY_STATE_WORKING)
-	    {
-	      /* notify to slave db */
-	      new_state = HA_APPLY_STATE_WORKING;
-	    }
-	  break;
+        {
+        case HA_STATE_MASTER:
+        case HA_STATE_TO_BE_SLAVE:
+        case HA_STATE_TO_BE_MASTER:
+          if (analyzer->apply_state != HA_APPLY_STATE_WORKING)
+            {
+              /* notify to slave db */
+              new_state = HA_APPLY_STATE_WORKING;
+            }
+          break;
 
-	case HA_STATE_UNKNOWN:
-	case HA_STATE_DEAD:
-	case HA_STATE_SLAVE:
-	  if (analyzer->apply_state != HA_APPLY_STATE_DONE)
-	    {
-	      /* wait until transactions are all committed */
-	      error = cci_get_server_mode (&analyzer->conn,
-					   &server_mode, NULL);
-	      if (error < 0)
-		{
-		  REPL_SET_GENERIC_ERROR (error, "CCI ERROR(%d), %s",
-					  analyzer->conn.err_buf.err_code,
-					  analyzer->conn.err_buf.err_msg);
+        case HA_STATE_UNKNOWN:
+        case HA_STATE_DEAD:
+        case HA_STATE_SLAVE:
+          if (analyzer->apply_state != HA_APPLY_STATE_DONE)
+            {
+              /* wait until transactions are all committed */
+              error = cci_get_server_mode (&analyzer->conn, &server_mode, NULL);
+              if (error < 0)
+                {
+                  REPL_SET_GENERIC_ERROR (error, "CCI ERROR(%d), %s",
+                                          analyzer->conn.err_buf.err_code, analyzer->conn.err_buf.err_msg);
 
-		  GOTO_EXIT_ON_ERROR;
-		}
+                  GOTO_EXIT_ON_ERROR;
+                }
 
-	      if (server_mode == HA_STATE_TO_BE_MASTER)
-		{
-		  while (cirp_anlz_is_any_applier_busy () == true)
-		    {
-		      if (rp_need_restart () == true)
-			{
-			  REPL_SET_GENERIC_ERROR (error, "need_restart");
-			  GOTO_EXIT_ON_ERROR;
-			}
-		      THREAD_SLEEP (10);
-		    }
-		}
+              if (server_mode == HA_STATE_TO_BE_MASTER)
+                {
+                  while (cirp_anlz_is_any_applier_busy () == true)
+                    {
+                      if (rp_need_restart () == true)
+                        {
+                          REPL_SET_GENERIC_ERROR (error, "need_restart");
+                          GOTO_EXIT_ON_ERROR;
+                        }
+                      THREAD_SLEEP (10);
+                    }
+                }
 
-	      /* notify to slave db */
-	      new_state = HA_APPLY_STATE_DONE;
-	    }
-	  break;
-	default:
-	  assert (false);
-	  REPL_SET_GENERIC_ERROR (error, "BUG. Unknown HA_STATE");
-	  GOTO_EXIT_ON_ERROR;
-	}
+              /* notify to slave db */
+              new_state = HA_APPLY_STATE_DONE;
+            }
+          break;
+        default:
+          assert (false);
+          REPL_SET_GENERIC_ERROR (error, "BUG. Unknown HA_STATE");
+          GOTO_EXIT_ON_ERROR;
+        }
     }
   else
     {
       switch (curr_node_state)
-	{
-	case HA_STATE_MASTER:
-	case HA_STATE_TO_BE_SLAVE:
-	  if (analyzer->apply_state != HA_APPLY_STATE_WORKING
-	      && analyzer->apply_state != HA_APPLY_STATE_RECOVERING)
-	    {
-	      new_state = HA_APPLY_STATE_RECOVERING;
-	    }
-	  break;
-	case HA_STATE_UNKNOWN:
-	case HA_STATE_SLAVE:
-	case HA_STATE_DEAD:
-	  if (analyzer->apply_state != HA_APPLY_STATE_DONE
-	      && analyzer->apply_state != HA_APPLY_STATE_RECOVERING)
-	    {
-	      new_state = HA_APPLY_STATE_RECOVERING;
-	    }
-	  break;
-	case HA_STATE_TO_BE_MASTER:
-	  /* no op. */
-	  new_state = HA_APPLY_STATE_NA;
-	  break;
-	default:
-	  assert (false);
-	  REPL_SET_GENERIC_ERROR (error, "BUG. Unknown HA_STATE");
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+        case HA_STATE_MASTER:
+        case HA_STATE_TO_BE_SLAVE:
+          if (analyzer->apply_state != HA_APPLY_STATE_WORKING && analyzer->apply_state != HA_APPLY_STATE_RECOVERING)
+            {
+              new_state = HA_APPLY_STATE_RECOVERING;
+            }
+          break;
+        case HA_STATE_UNKNOWN:
+        case HA_STATE_SLAVE:
+        case HA_STATE_DEAD:
+          if (analyzer->apply_state != HA_APPLY_STATE_DONE && analyzer->apply_state != HA_APPLY_STATE_RECOVERING)
+            {
+              new_state = HA_APPLY_STATE_RECOVERING;
+            }
+          break;
+        case HA_STATE_TO_BE_MASTER:
+          /* no op. */
+          new_state = HA_APPLY_STATE_NA;
+          break;
+        default:
+          assert (false);
+          REPL_SET_GENERIC_ERROR (error, "BUG. Unknown HA_STATE");
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   if (analyzer->apply_state != new_state && new_state != HA_APPLY_STATE_NA)
@@ -576,35 +538,29 @@ cirp_change_state (CIRP_ANALYZER_INFO * analyzer, HA_STATE curr_node_state)
       /* force commit when state is changing */
       error = cirp_anlz_log_commit ();
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       error =
-	cci_notify_ha_agent_state (&analyzer->conn,
-				   PRM_NODE_INFO_GET_IP (&analyzer->ct.
-							 host_info),
-				   PRM_NODE_INFO_GET_PORT (&analyzer->ct.
-							   host_info),
-				   new_state);
+        cci_notify_ha_agent_state (&analyzer->conn,
+                                   PRM_NODE_INFO_GET_IP (&analyzer->ct.host_info),
+                                   PRM_NODE_INFO_GET_PORT (&analyzer->ct.host_info), new_state);
       if (error != NO_ERROR)
-	{
-	  error = ER_HA_LA_FAILED_TO_CHANGE_STATE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
-		  HA_APPLY_STATE_NAME (analyzer->apply_state),
-		  HA_APPLY_STATE_NAME (new_state));
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = ER_HA_LA_FAILED_TO_CHANGE_STATE;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
+                  HA_APPLY_STATE_NAME (analyzer->apply_state), HA_APPLY_STATE_NAME (new_state));
+          GOTO_EXIT_ON_ERROR;
+        }
 
       snprintf (buffer, sizeof (buffer),
-		"change log apply state from '%s' to '%s'. "
-		"last required_lsa: %lld|%lld",
-		HA_APPLY_STATE_NAME (analyzer->apply_state),
-		HA_APPLY_STATE_NAME (new_state),
-		(long long) analyzer->ct.required_lsa.pageid,
-		(long long) analyzer->ct.required_lsa.offset);
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	      ER_HA_GENERIC_ERROR, 1, buffer);
+                "change log apply state from '%s' to '%s'. "
+                "last required_lsa: %lld|%lld",
+                HA_APPLY_STATE_NAME (analyzer->apply_state),
+                HA_APPLY_STATE_NAME (new_state),
+                (long long) analyzer->ct.required_lsa.pageid, (long long) analyzer->ct.required_lsa.offset);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1, buffer);
 
       analyzer->apply_state = new_state;
     }
@@ -719,8 +675,7 @@ cirp_clear_analyzer (CIRP_ANALYZER_INFO * analyzer)
 
   if (analyzer->q_applied_time != NULL)
     {
-      Rye_queue_free_full (analyzer->q_applied_time,
-			   rp_applied_time_node_free);
+      Rye_queue_free_full (analyzer->q_applied_time, rp_applied_time_node_free);
       free_and_init (analyzer->q_applied_time);
     }
 
@@ -740,8 +695,7 @@ cirp_clear_analyzer (CIRP_ANALYZER_INFO * analyzer)
  *   log_path(in):
  */
 int
-cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
-		    const char *database_name, const char *log_path)
+cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer, const char *database_name, const char *log_path)
 {
   int error = NO_ERROR;
 
@@ -765,8 +719,7 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
     }
 
   analyzer->tran_table = mht_create ("Analyzer Transaction Table",
-				     LA_TRAN_TABLE_MHT_SIZE,
-				     mht_numhash, mht_compare_ints_are_equal);
+                                     LA_TRAN_TABLE_MHT_SIZE, mht_numhash, mht_compare_ints_are_equal);
   if (analyzer->tran_table == NULL)
     {
       error = er_errid ();
@@ -781,8 +734,7 @@ cirp_init_analyzer (CIRP_ANALYZER_INFO * analyzer,
   analyzer->deleted_arv_info.last_arv_deleted_time = 0;
   analyzer->deleted_arv_info.last_deleted_arv_num = NULL_ARV_NUM;
 
-  error = cirp_check_duplicated (&analyzer->log_path_lockf_vdes,
-				 log_path, analyzer->buf_mgr.prefix_name);
+  error = cirp_check_duplicated (&analyzer->log_path_lockf_vdes, log_path, analyzer->buf_mgr.prefix_name);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -815,30 +767,25 @@ exit_on_error:
  *    dbname(in):
  */
 static int
-cirp_check_duplicated (int *lockf_vdes, const char *logpath,
-		       const char *dbname)
+cirp_check_duplicated (int *lockf_vdes, const char *logpath, const char *dbname)
 {
   char lock_path[PATH_MAX];
   FILEIO_LOCKF_TYPE lockf_type = FILEIO_NOT_LOCKF;
 
-  sprintf (lock_path, "%s%s%s%s", logpath,
-	   FILEIO_PATH_SEPARATOR (logpath), dbname, LA_LOCK_SUFFIX);
+  sprintf (lock_path, "%s%s%s%s", logpath, FILEIO_PATH_SEPARATOR (logpath), dbname, LA_LOCK_SUFFIX);
 
   *lockf_vdes = fileio_open (lock_path, O_RDWR | O_CREAT, 0644);
   if (*lockf_vdes == NULL_VOLDES)
     {
-      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)",
-		    lock_path);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_IO_MOUNT_FAIL, 1, lock_path);
+      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)", lock_path);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, lock_path);
       return ER_IO_MOUNT_FAIL;
     }
 
   lockf_type = fileio_lock_la_log_path (dbname, lock_path, *lockf_vdes);
   if (lockf_type == FILEIO_NOT_LOCKF)
     {
-      er_log_debug (ARG_FILE_LINE, "unable to wlock lock_file (%s)",
-		    lock_path);
+      er_log_debug (ARG_FILE_LINE, "unable to wlock lock_file (%s)", lock_path);
       fileio_close (*lockf_vdes);
       *lockf_vdes = NULL_VOLDES;
       return ER_FAILED;
@@ -860,11 +807,10 @@ cirp_anlz_is_any_applier_busy (void)
   for (i = GLOBAL_APPLIER_INDEX; i < Repl_Info->num_applier; i++)
     {
       if (cirp_analyzer_is_applier_busy (i) == true)
-	{
-	  er_log_debug (ARG_FILE_LINE, "cirp_anlz_is_any_applier_busy: "
-			"applier %d is busy", i);
-	  return true;
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "cirp_anlz_is_any_applier_busy: " "applier %d is busy", i);
+          return true;
+        }
     }
   return false;
 }
@@ -895,8 +841,7 @@ cirp_anlz_assign_repl_item (int tranid, int rectype, LOG_LSA * commit_lsa)
       return NO_ERROR;
     }
 
-  if (rectype == LOG_ABORT
-      || (rectype == LOG_COMMIT && LSA_ISNULL (&tran->repl_start_lsa)))
+  if (rectype == LOG_ABORT || (rectype == LOG_COMMIT && LSA_ISNULL (&tran->repl_start_lsa)))
     {
       cirp_free_tran_by_tranid (analyzer, tranid);
 
@@ -916,49 +861,45 @@ cirp_anlz_assign_repl_item (int tranid, int rectype, LOG_LSA * commit_lsa)
   wait_tran_commit = false;
   if (RP_IS_BLOCKED_ITEM (tran->repl_item))
     {
-      assert (tran->applier_index == DDL_APPLIER_INDEX
-	      || tran->applier_index == GLOBAL_APPLIER_INDEX);
+      assert (tran->applier_index == DDL_APPLIER_INDEX || tran->applier_index == GLOBAL_APPLIER_INDEX);
 
       wait_tran_commit = true;
 
       /* wait until previous transactions are all committed */
       while (cirp_anlz_is_any_applier_busy () == true)
-	{
-	  if (rp_need_restart () == true)
-	    {
-	      REPL_SET_GENERIC_ERROR (error, "need_restart");
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  THREAD_SLEEP (10);
-	}
+        {
+          if (rp_need_restart () == true)
+            {
+              REPL_SET_GENERIC_ERROR (error, "need_restart");
+              GOTO_EXIT_ON_ERROR;
+            }
+          THREAD_SLEEP (10);
+        }
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"push an item (tranid: %d) to applier %d,tran_start(%lld,%d)"
-		"wait_tran_commit:%d",
-		tran->tranid, tran->applier_index,
-		(long long) tran->tran_start_lsa.pageid,
-		tran->tran_start_lsa.offset, wait_tran_commit);
+                "push an item (tranid: %d) to applier %d,tran_start(%lld,%d)"
+                "wait_tran_commit:%d",
+                tran->tranid, tran->applier_index,
+                (long long) tran->tran_start_lsa.pageid, tran->tran_start_lsa.offset, wait_tran_commit);
 
   do
     {
       error = cirp_analyzer_item_push (tran->applier_index,
-				       tran->tranid,
-				       &tran->tran_start_lsa,
-				       commit_lsa, &tran->repl_start_lsa);
+                                       tran->tranid, &tran->tran_start_lsa, commit_lsa, &tran->repl_start_lsa);
 
       /* log item queue is full */
       if (error == ER_HA_JOB_QUEUE_FULL)
-	{
-	  monitor_stats_counter (MNT_RP_ANALYZER_ID, MNT_RP_QUEUE_FULL, 1);
+        {
+          monitor_stats_counter (MNT_RP_ANALYZER_ID, MNT_RP_QUEUE_FULL, 1);
 
-	  error = cirp_analyzer_wait_for_queue (tran->applier_index);
-	  if (error == NO_ERROR)
-	    {
-	      /* goto item push */
-	      error = ER_HA_JOB_QUEUE_FULL;
-	    }
-	}
+          error = cirp_analyzer_wait_for_queue (tran->applier_index);
+          if (error == NO_ERROR)
+            {
+              /* goto item push */
+              error = ER_HA_JOB_QUEUE_FULL;
+            }
+        }
     }
   while (error == ER_HA_JOB_QUEUE_FULL);
 
@@ -970,19 +911,17 @@ cirp_anlz_assign_repl_item (int tranid, int rectype, LOG_LSA * commit_lsa)
   if (wait_tran_commit == true)
     {
       /* wait until current transaction is committed */
-      error = cirp_analyzer_wait_tran_commit (tran->applier_index,
-					      &tran->repl_start_lsa);
+      error = cirp_analyzer_wait_tran_commit (tran->applier_index, &tran->repl_start_lsa);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"assign an item (tranid: %d) to applier %d,tran_start(%lld,%d)",
-		tran->tranid, tran->applier_index,
-		(long long) tran->tran_start_lsa.pageid,
-		tran->tran_start_lsa.offset);
+                "assign an item (tranid: %d) to applier %d,tran_start(%lld,%d)",
+                tran->tranid, tran->applier_index,
+                (long long) tran->tran_start_lsa.pageid, tran->tran_start_lsa.offset);
 
   assert (error == NO_ERROR);
   return error;
@@ -1063,8 +1002,7 @@ cirp_add_tran (CIRP_TRAN ** tran, int tranid, LOG_LSA * start_lsa)
   new_tran->tranid = tranid;
   LSA_COPY (&new_tran->tran_start_lsa, start_lsa);
 
-  if (mht_put (Repl_Info->analyzer_info.tran_table,
-	       &new_tran->tranid, new_tran) == NULL)
+  if (mht_put (Repl_Info->analyzer_info.tran_table, &new_tran->tranid, new_tran) == NULL)
     {
       error = er_errid ();
 
@@ -1102,8 +1040,7 @@ exit_on_error:
  *   num_appliers(in):
  */
 static int
-cirp_anlz_get_applier_index (int *index, const DB_VALUE * shard_key,
-			     int num_appliers)
+cirp_anlz_get_applier_index (int *index, const DB_VALUE * shard_key, int num_appliers)
 {
   if (db_value_type (shard_key) != DB_TYPE_VARCHAR)
     {
@@ -1130,8 +1067,7 @@ cirp_anlz_get_applier_index (int *index, const DB_VALUE * shard_key,
  *   lsa(in):
  */
 static int
-rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
-		   LOG_PAGE * log_pgptr, const LOG_LSA * lsa)
+rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran, LOG_PAGE * log_pgptr, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   int error = NO_ERROR;
@@ -1153,8 +1089,7 @@ rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
   tran->repl_item = item;
   tran->applier_index = DDL_APPLIER_INDEX;
 
-  er_log_debug (ARG_FILE_LINE, "make schema: lsa(%ld,%ld), query(%s)",
-		lsa->pageid, lsa->offset, item->info.ddl.query);
+  er_log_debug (ARG_FILE_LINE, "make schema: lsa(%ld,%ld), query(%s)", lsa->pageid, lsa->offset, item->info.ddl.query);
 
   assert (error == NO_ERROR);
   return NO_ERROR;
@@ -1170,8 +1105,7 @@ rp_set_schema_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
  *   lsa(in):
  */
 static int
-rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
-		 LOG_PAGE * log_pgptr, const LOG_LSA * lsa)
+rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran, LOG_PAGE * log_pgptr, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   RP_DATA_ITEM *data_item = NULL;
@@ -1199,39 +1133,32 @@ rp_set_data_log (CIRP_BUF_MGR * buf_mgr, CIRP_TRAN * tran,
 
   if (data_item->groupid == GLOBAL_GROUPID)
     {
-      if (strcasecmp (data_item->class_name,
-		      CT_SHARD_GID_SKEY_INFO_NAME) == 0)
-	{
-	  /* PK -> (group_id, shard_key) */
-	  data_item->groupid = DB_GET_INTEGER (&(data_item->key.vals[0]));
-	  error = cirp_anlz_get_applier_index (&tran->applier_index,
-					       &(data_item->key.vals[1]),
-					       Repl_Info->num_applier);
-	  if (error != NO_ERROR)
-	    {
-	      return error;
-	    }
+      if (strcasecmp (data_item->class_name, CT_SHARD_GID_SKEY_INFO_NAME) == 0)
+        {
+          /* PK -> (group_id, shard_key) */
+          data_item->groupid = DB_GET_INTEGER (&(data_item->key.vals[0]));
+          error = cirp_anlz_get_applier_index (&tran->applier_index, &(data_item->key.vals[1]), Repl_Info->num_applier);
+          if (error != NO_ERROR)
+            {
+              return error;
+            }
 
-	  assert (DDL_APPLIER_INDEX < tran->applier_index
-		  && tran->applier_index < Repl_Info->num_applier);
-	}
+          assert (DDL_APPLIER_INDEX < tran->applier_index && tran->applier_index < Repl_Info->num_applier);
+        }
       else
-	{
-	  tran->applier_index = GLOBAL_APPLIER_INDEX;
-	}
+        {
+          tran->applier_index = GLOBAL_APPLIER_INDEX;
+        }
     }
   else
     {
       /* PK -> (shard_key, ... ) */
-      error = cirp_anlz_get_applier_index (&tran->applier_index,
-					   &(data_item->key.vals[0]),
-					   Repl_Info->num_applier);
+      error = cirp_anlz_get_applier_index (&tran->applier_index, &(data_item->key.vals[0]), Repl_Info->num_applier);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
-      assert (DDL_APPLIER_INDEX < tran->applier_index
-	      && tran->applier_index < Repl_Info->num_applier);
+        {
+          return error;
+        }
+      assert (DDL_APPLIER_INDEX < tran->applier_index && tran->applier_index < Repl_Info->num_applier);
     }
 
   assert (error == NO_ERROR);
@@ -1286,8 +1213,7 @@ rp_set_gid_bitmap_log (CIRP_TRAN * tran, const LOG_LSA * lsa)
  *     inserted REPLICAION LOG records to the slave.
  */
 static int
-rp_set_repl_log (LOG_PAGE * log_pgptr,
-		 int log_type, int tranid, const LOG_LSA * lsa)
+rp_set_repl_log (LOG_PAGE * log_pgptr, int log_type, int tranid, const LOG_LSA * lsa)
 {
   CIRP_TRAN *tran = NULL;
   CIRP_BUF_MGR *buf_mgr = NULL;
@@ -1298,8 +1224,7 @@ rp_set_repl_log (LOG_PAGE * log_pgptr,
   tran = cirp_find_tran (tranid);
   if (tran == NULL)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "fail to find out %d transaction in apply list", tranid);
+      er_log_debug (ARG_FILE_LINE, "fail to find out %d transaction in apply list", tranid);
       return NO_ERROR;
     }
 
@@ -1317,23 +1242,23 @@ rp_set_repl_log (LOG_PAGE * log_pgptr,
     case LOG_REPLICATION_SCHEMA:
       error = rp_set_schema_log (buf_mgr, tran, log_pgptr, lsa);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       break;
     case LOG_REPLICATION_DATA:
       error = rp_set_data_log (buf_mgr, tran, log_pgptr, lsa);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       break;
     case LOG_DUMMY_UPDATE_GID_BITMAP:
       error = rp_set_gid_bitmap_log (tran, lsa);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       break;
 
     default:
@@ -1347,12 +1272,10 @@ rp_set_repl_log (LOG_PAGE * log_pgptr,
   LSA_COPY (&tran->repl_start_lsa, lsa);
 
   er_log_debug (ARG_FILE_LINE, "set repl log: index:%d,"
-		"tran_start_lsa:%lld,%d, repl_start_lsa:%lld,%d",
-		tran->applier_index,
-		(long long) tran->tran_start_lsa.pageid,
-		tran->tran_start_lsa.offset,
-		(long long) tran->repl_start_lsa.pageid,
-		tran->repl_start_lsa.offset);
+                "tran_start_lsa:%lld,%d, repl_start_lsa:%lld,%d",
+                tran->applier_index,
+                (long long) tran->tran_start_lsa.pageid,
+                tran->tran_start_lsa.offset, (long long) tran->repl_start_lsa.pageid, tran->repl_start_lsa.offset);
 
   assert (error == NO_ERROR);
   return error;
@@ -1378,17 +1301,15 @@ cirp_lock_dbname (CIRP_ANALYZER_INFO * analyzer)
   while (rp_need_restart () == false)
     {
       result = fileio_lock_la_dbname (&analyzer->db_lockf_vdes,
-				      analyzer->buf_mgr.prefix_name,
-				      analyzer->buf_mgr.log_path);
+                                      analyzer->buf_mgr.prefix_name, analyzer->buf_mgr.log_path);
       if (result == FILEIO_LOCKF)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       THREAD_SLEEP (1000);
     }
 
-  assert (rp_need_restart () == true
-	  || analyzer->db_lockf_vdes != NULL_VOLDES);
+  assert (rp_need_restart () == true || analyzer->db_lockf_vdes != NULL_VOLDES);
 
   if (result != FILEIO_LOCKF)
     {
@@ -1422,9 +1343,7 @@ cirp_unlock_dbname (CIRP_ANALYZER_INFO * analyzer, bool clear_owner)
       return NO_ERROR;
     }
 
-  result = fileio_unlock_la_dbname (&analyzer->db_lockf_vdes,
-				    analyzer->buf_mgr.prefix_name,
-				    clear_owner);
+  result = fileio_unlock_la_dbname (&analyzer->db_lockf_vdes, analyzer->buf_mgr.prefix_name, clear_owner);
   if (result == FILEIO_LOCKF)
     {
       error = er_errid ();
@@ -1522,14 +1441,12 @@ cirp_delay_replica (time_t eot_time)
 
   if (replica_delay < 0)
     {
-      replica_delay =
-	prm_get_bigint_value (PRM_ID_HA_REPLICA_DELAY) / ONE_SEC;
+      replica_delay = prm_get_bigint_value (PRM_ID_HA_REPLICA_DELAY) / ONE_SEC;
     }
 
   if (replica_time_bound_str == (void *) -1)
     {
-      replica_time_bound_str =
-	prm_get_string_value (PRM_ID_HA_REPLICA_TIME_BOUND);
+      replica_time_bound_str = prm_get_string_value (PRM_ID_HA_REPLICA_TIME_BOUND);
     }
 
   if (ha_mode == HA_MODE_REPLICA)
@@ -1537,42 +1454,39 @@ cirp_delay_replica (time_t eot_time)
       assert (false);
 
       if (replica_time_bound_str != NULL)
-	{
-	  if (replica_time_bound == -1)
-	    {
-	      replica_time_bound =
-		util_str_to_time_since_epoch (replica_time_bound_str);
-	      assert (replica_time_bound != 0);
-	    }
+        {
+          if (replica_time_bound == -1)
+            {
+              replica_time_bound = util_str_to_time_since_epoch (replica_time_bound_str);
+              assert (replica_time_bound != 0);
+            }
 
-	  if (eot_time >= replica_time_bound)
-	    {
-	      error = cirp_anlz_log_commit ();
-	      if (error != NO_ERROR)
-		{
-		  return error;
-		}
+          if (eot_time >= replica_time_bound)
+            {
+              error = cirp_anlz_log_commit ();
+              if (error != NO_ERROR)
+                {
+                  return error;
+                }
 
-	      snprintf (buffer, sizeof (buffer),
-			"applylogdb paused since it reached "
-			"a log record committed on master at %s or later.\n"
-			"Adjust or remove %s and restart applylogdb to resume",
-			replica_time_bound_str,
-			prm_get_name (PRM_ID_HA_REPLICA_TIME_BOUND));
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HA_GENERIC_ERROR, 1, buffer);
+              snprintf (buffer, sizeof (buffer),
+                        "applylogdb paused since it reached "
+                        "a log record committed on master at %s or later.\n"
+                        "Adjust or remove %s and restart applylogdb to resume",
+                        replica_time_bound_str, prm_get_name (PRM_ID_HA_REPLICA_TIME_BOUND));
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1, buffer);
 
-	      /* applylogdb waits indefinitely */
-	      select (0, NULL, NULL, NULL, NULL);
-	    }
-	}
+              /* applylogdb waits indefinitely */
+              select (0, NULL, NULL, NULL, NULL);
+            }
+        }
       else if (replica_delay > 0)
-	{
-	  while ((time (NULL) - eot_time) < replica_delay)
-	    {
-	      THREAD_SLEEP (100);
-	    }
-	}
+        {
+          while ((time (NULL) - eot_time) < replica_delay)
+            {
+              THREAD_SLEEP (100);
+            }
+        }
     }
 
   return NO_ERROR;
@@ -1587,8 +1501,7 @@ cirp_delay_replica (time_t eot_time)
  *    pgptr(in):
  */
 static int
-cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
-			 LOG_LSA final, LOG_PAGE * pg_ptr)
+cirp_analyze_log_record (LOG_RECORD_HEADER * lrec, LOG_LSA final, LOG_PAGE * pg_ptr)
 {
   CIRP_TRAN *tran = NULL;
   int error = NO_ERROR;
@@ -1597,8 +1510,7 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
   CIRP_BUF_MGR *buf_mgr = NULL;
   CIRP_ANALYZER_INFO *analyzer;
 
-  if (lrec == NULL || pg_ptr == NULL
-      || final.pageid != pg_ptr->hdr.logical_pageid)
+  if (lrec == NULL || pg_ptr == NULL || final.pageid != pg_ptr->hdr.logical_pageid)
     {
       assert (false);
 
@@ -1613,32 +1525,28 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
       || lrec->trid == NULL_TRANID
       || LSA_GT (&lrec->prev_tranlsa, &final)
       || LSA_GT (&lrec->back_lsa, &final)
-      || !CIRP_IS_VALID_LSA (buf_mgr, &final)
-      || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
+      || !CIRP_IS_VALID_LSA (buf_mgr, &final) || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
     {
       assert (false);
 
       error = ER_HA_LA_INVALID_REPL_LOG_RECORD;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error, 10,
-	      final.pageid, final.offset,
-	      lrec->forw_lsa.pageid, lrec->forw_lsa.offset,
-	      lrec->back_lsa.pageid, lrec->back_lsa.offset,
-	      lrec->trid,
-	      lrec->prev_tranlsa.pageid, lrec->prev_tranlsa.offset,
-	      lrec->type);
+              error, 10,
+              final.pageid, final.offset,
+              lrec->forw_lsa.pageid, lrec->forw_lsa.offset,
+              lrec->back_lsa.pageid, lrec->back_lsa.offset,
+              lrec->trid, lrec->prev_tranlsa.pageid, lrec->prev_tranlsa.offset, lrec->type);
 
       GOTO_EXIT_ON_ERROR;
     }
 
-  if (lrec->type != LOG_DUMMY_HA_SERVER_STATE
-      && lrec->trid != LOG_SYSTEM_TRANID && LSA_ISNULL (&lrec->prev_tranlsa))
+  if (lrec->type != LOG_DUMMY_HA_SERVER_STATE && lrec->trid != LOG_SYSTEM_TRANID && LSA_ISNULL (&lrec->prev_tranlsa))
     {
       error = cirp_add_tran (&tran, lrec->trid, &final);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       assert (LSA_ISNULL (&tran->repl_start_lsa));
       assert (LSA_ISNULL (&tran->tran_end_lsa));
@@ -1653,32 +1561,32 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
       /* add the replication log to the target transaction */
       error = rp_set_repl_log (pg_ptr, lrec->type, lrec->trid, &final);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       break;
 
     case LOG_COMMIT:
       /* apply the replication log to the slave */
       error = cirp_log_get_eot_time (buf_mgr, &eot_time, pg_ptr, final);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       assert (eot_time > 0);
 
       /* in case of delayed/time-bound replication */
       error = cirp_delay_replica (eot_time);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       error = cirp_anlz_assign_repl_item (lrec->trid, LOG_COMMIT, &final);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       break;
 
     case LOG_ABORT:
@@ -1688,54 +1596,48 @@ cirp_analyze_log_record (LOG_RECORD_HEADER * lrec,
 
     case LOG_DUMMY_HA_SERVER_STATE:
       {
-	struct log_ha_server_state state;
-	RP_APPLIED_TIME_NODE *node;
+        struct log_ha_server_state state;
+        RP_APPLIED_TIME_NODE *node;
 
-	error = cirp_log_get_ha_server_state (&state, pg_ptr, final);
-	if (error != NO_ERROR)
-	  {
-	    GOTO_EXIT_ON_ERROR;
-	  }
-	node =
-	  (RP_APPLIED_TIME_NODE *) malloc (sizeof (RP_APPLIED_TIME_NODE));
-	if (node == NULL)
-	  {
-	    error = ER_OUT_OF_VIRTUAL_MEMORY;
-	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		    1, sizeof (RP_APPLIED_TIME_NODE));
-	    GOTO_EXIT_ON_ERROR;
-	  }
-	node->applied_time = state.at_time;
-	LSA_COPY (&node->applied_lsa, &final);
+        error = cirp_log_get_ha_server_state (&state, pg_ptr, final);
+        if (error != NO_ERROR)
+          {
+            GOTO_EXIT_ON_ERROR;
+          }
+        node = (RP_APPLIED_TIME_NODE *) malloc (sizeof (RP_APPLIED_TIME_NODE));
+        if (node == NULL)
+          {
+            error = ER_OUT_OF_VIRTUAL_MEMORY;
+            er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (RP_APPLIED_TIME_NODE));
+            GOTO_EXIT_ON_ERROR;
+          }
+        node->applied_time = state.at_time;
+        LSA_COPY (&node->applied_lsa, &final);
 
-	Rye_queue_enqueue (analyzer->q_applied_time, node);
+        Rye_queue_enqueue (analyzer->q_applied_time, node);
 
-	if (state.server_state != HA_STATE_SLAVE
-	    && state.server_state != HA_STATE_MASTER
-	    && state.server_state != HA_STATE_TO_BE_SLAVE)
-	  {
-	    if (Repl_Info->analyzer_info.db_lockf_vdes != NULL_VOLDES)
-	      {
-		char host_str[MAX_NODE_INFO_STR_LEN];
-		prm_node_info_to_str (host_str, sizeof (host_str),
-				      &buf_mgr->host_info);
-		snprintf (buffer, sizeof (buffer),
-			  "the state of HA server (%s@%s) is changed to %s",
-			  buf_mgr->prefix_name, host_str,
-			  HA_STATE_NAME (state.server_state));
+        if (state.server_state != HA_STATE_SLAVE
+            && state.server_state != HA_STATE_MASTER && state.server_state != HA_STATE_TO_BE_SLAVE)
+          {
+            if (Repl_Info->analyzer_info.db_lockf_vdes != NULL_VOLDES)
+              {
+                char host_str[MAX_NODE_INFO_STR_LEN];
+                prm_node_info_to_str (host_str, sizeof (host_str), &buf_mgr->host_info);
+                snprintf (buffer, sizeof (buffer),
+                          "the state of HA server (%s@%s) is changed to %s",
+                          buf_mgr->prefix_name, host_str, HA_STATE_NAME (state.server_state));
 
-		er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-			ER_NOTIFY_MESSAGE, 1, buffer);
+                er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, buffer);
 
-		analyzer->is_role_changed = true;
-	      }
-	  }
+                analyzer->is_role_changed = true;
+              }
+          }
       }
       break;
 
     default:
       break;
-    }				/* switch(lrec->type) */
+    }                           /* switch(lrec->type) */
 
   assert (error == NO_ERROR);
   return error;
@@ -1818,12 +1720,11 @@ analyzer_main (void *arg)
   while (REPL_NEED_SHUTDOWN () == false)
     {
       if (rp_check_appliers_status (CIRP_AGENT_INIT) == false)
-	{
-	  THREAD_SLEEP (100);
-	  continue;
-	}
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	      "All Agent Stopped");
+        {
+          THREAD_SLEEP (100);
+          continue;
+        }
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, "All Agent Stopped");
 
       rp_disconnect_agents ();
 
@@ -1831,57 +1732,51 @@ analyzer_main (void *arg)
 
       error = cirp_connect_agents (th_entry->arg->db_name);
       if (error != NO_ERROR)
-	{
-	  THREAD_SLEEP (1000);
-	  continue;
-	}
+        {
+          THREAD_SLEEP (1000);
+          continue;
+        }
 
       /* find out the last log applied LSA */
       error = cirp_get_repl_info_from_catalog (analyzer);
       if (error != NO_ERROR)
-	{
-	  THREAD_SLEEP (1000);
-	  continue;
-	}
+        {
+          THREAD_SLEEP (1000);
+          continue;
+        }
 
       /* initialize */
       LSA_COPY (&final_lsa, &analyzer->ct.required_lsa);
       LSA_COPY (&analyzer->current_lsa, &final_lsa);
 
-      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID,
-			   analyzer->current_lsa.pageid);
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID, analyzer->current_lsa.pageid);
 
       monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_CURRENT_GAP,
-			   monitor_get_stats (MNT_RP_FLUSHER_ID,
-					      MNT_RP_FLUSHED_PAGEID)
-			   - monitor_get_stats (MNT_RP_ANALYZER_ID,
-						MNT_RP_CURRENT_PAGEID));
+                           monitor_get_stats (MNT_RP_FLUSHER_ID,
+                                              MNT_RP_FLUSHED_PAGEID)
+                           - monitor_get_stats (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID));
 
-      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID,
-			   analyzer->ct.required_lsa.pageid);
+      monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID, analyzer->ct.required_lsa.pageid);
 
       monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_REQUIRED_GAP,
-			   monitor_get_stats (MNT_RP_ANALYZER_ID,
-					      MNT_RP_CURRENT_PAGEID)
-			   - monitor_get_stats (MNT_RP_ANALYZER_ID,
-						MNT_RP_REQUIRED_PAGEID));
+                           monitor_get_stats (MNT_RP_ANALYZER_ID,
+                                              MNT_RP_CURRENT_PAGEID)
+                           - monitor_get_stats (MNT_RP_ANALYZER_ID, MNT_RP_REQUIRED_PAGEID));
 
       snprintf (err_msg, sizeof (err_msg),
-		"All Agent Start. required_lsa: %lld|%d."
-		"current LSA: %lld|%d.",
-		(long long) analyzer->ct.required_lsa.pageid,
-		analyzer->ct.required_lsa.offset,
-		(long long) analyzer->current_lsa.pageid,
-		analyzer->current_lsa.offset);
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	      err_msg);
+                "All Agent Start. required_lsa: %lld|%d."
+                "current LSA: %lld|%d.",
+                (long long) analyzer->ct.required_lsa.pageid,
+                analyzer->ct.required_lsa.offset,
+                (long long) analyzer->current_lsa.pageid, analyzer->current_lsa.offset);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
       error = rp_start_all_applier ();
       if (error != NO_ERROR)
-	{
-	  THREAD_SLEEP (1000);
-	  continue;
-	}
+        {
+          THREAD_SLEEP (1000);
+          continue;
+        }
 
       /* decache all */
       cirp_logpb_decache_range (buf_mgr, 0, LOGPAGEID_MAX);
@@ -1891,261 +1786,241 @@ analyzer_main (void *arg)
       retry_count = 0;
       /* start loop analyzation */
       while (!LSA_ISNULL (&final_lsa) && rp_need_restart () == false)
-	{
-	  /* check and change state */
-	  error = rye_master_shm_get_node_state (&curr_node_state,
-						 &analyzer->ct.host_info);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  if (curr_node_state == HA_STATE_NA)
-	    {
-	      THREAD_SLEEP (100);
-	      continue;
-	    }
+        {
+          /* check and change state */
+          error = rye_master_shm_get_node_state (&curr_node_state, &analyzer->ct.host_info);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+          if (curr_node_state == HA_STATE_NA)
+            {
+              THREAD_SLEEP (100);
+              continue;
+            }
 
-	  error = cirp_change_state (analyzer, curr_node_state);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
+          error = cirp_change_state (analyzer, curr_node_state);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  /* release all page buffers */
-	  cirp_logpb_release_all (buf_mgr, NULL_PAGEID);
+          /* release all page buffers */
+          cirp_logpb_release_all (buf_mgr, NULL_PAGEID);
 
-	  /* don't move cirp_logpb_act_log_fetch_hdr ()
-	   * and another function don't call cirp_logpb_act_log_fetch_hdr() */
-	  error = cirp_logpb_act_log_fetch_hdr (buf_mgr);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  log_hdr = buf_mgr->act_log.log_hdr;
+          /* don't move cirp_logpb_act_log_fetch_hdr ()
+           * and another function don't call cirp_logpb_act_log_fetch_hdr() */
+          error = cirp_logpb_act_log_fetch_hdr (buf_mgr);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+          log_hdr = buf_mgr->act_log.log_hdr;
 
-	  if (log_hdr->ha_info.last_flushed_pageid <= 0)
-	    {
-	      er_log_debug (ARG_FILE_LINE,
-			    "Wait: received log page from rye_server."
-			    "(last_flushed_pageid:%lld, final:%lld)",
-			    (long long) log_hdr->ha_info.
-			    last_flushed_pageid,
-			    (long long) final_lsa.pageid);
-	      THREAD_SLEEP (50);
-	      continue;
-	    }
+          if (log_hdr->ha_info.last_flushed_pageid <= 0)
+            {
+              er_log_debug (ARG_FILE_LINE,
+                            "Wait: received log page from rye_server."
+                            "(last_flushed_pageid:%lld, final:%lld)",
+                            (long long) log_hdr->ha_info.last_flushed_pageid, (long long) final_lsa.pageid);
+              THREAD_SLEEP (50);
+              continue;
+            }
 
-	  /* check log hdr's master state */
-	  if (analyzer->apply_state == HA_APPLY_STATE_DONE
-	      && (curr_node_state != HA_STATE_MASTER)
-	      && (curr_node_state != HA_STATE_TO_BE_SLAVE))
-	    {
-	      /* if there's no replication log to be applied,
-	       * we should release dbname lock */
-	      error = cirp_unlock_dbname (analyzer, true);
-	      assert (error == NO_ERROR);
+          /* check log hdr's master state */
+          if (analyzer->apply_state == HA_APPLY_STATE_DONE
+              && (curr_node_state != HA_STATE_MASTER) && (curr_node_state != HA_STATE_TO_BE_SLAVE))
+            {
+              /* if there's no replication log to be applied,
+               * we should release dbname lock */
+              error = cirp_unlock_dbname (analyzer, true);
+              assert (error == NO_ERROR);
 
-	      if (curr_node_state != HA_STATE_UNKNOWN)
-		{
-		  er_log_debug (ARG_FILE_LINE,
-				"lowest required page id is %lld",
-				(long long int) analyzer->ct.
-				required_lsa.pageid);
+              if (curr_node_state != HA_STATE_UNKNOWN)
+                {
+                  er_log_debug (ARG_FILE_LINE,
+                                "lowest required page id is %lld", (long long int) analyzer->ct.required_lsa.pageid);
 
-		  error = cirp_anlz_log_commit ();
-		  if (error != NO_ERROR)
-		    {
-		      GOTO_EXIT_ON_ERROR;
-		    }
-		}
+                  error = cirp_anlz_log_commit ();
+                  if (error != NO_ERROR)
+                    {
+                      GOTO_EXIT_ON_ERROR;
+                    }
+                }
 
-	      analyzer->apply_state = HA_APPLY_STATE_RECOVERING;
+              analyzer->apply_state = HA_APPLY_STATE_RECOVERING;
 
-	      THREAD_SLEEP (50);
-	      continue;
-	    }
+              THREAD_SLEEP (50);
+              continue;
+            }
 
-	  /* check for end of log */
-	  if (LSA_GE (&final_lsa, &log_hdr->eof_lsa))
-	    {
-	      if (rpwr_recv_queue_is_empty () == true)
-		{
-		  analyzer->is_end_of_record = true;
-		}
-	      if (++eof_busy_wait_count > EOF_MAX_BUSY_WAIT)
-		{
-		  eof_busy_wait_count = 0;
-		  THREAD_SLEEP (50);
-		}
-	      continue;
-	    }
+          /* check for end of log */
+          if (LSA_GE (&final_lsa, &log_hdr->eof_lsa))
+            {
+              if (rpwr_recv_queue_is_empty () == true)
+                {
+                  analyzer->is_end_of_record = true;
+                }
+              if (++eof_busy_wait_count > EOF_MAX_BUSY_WAIT)
+                {
+                  eof_busy_wait_count = 0;
+                  THREAD_SLEEP (50);
+                }
+              continue;
+            }
 
-	  /* get the target page from log */
-	  error = cirp_logpb_get_page_buffer (buf_mgr, &log_buf,
-					      final_lsa.pageid);
-	  if (error != NO_ERROR || log_buf == NULL)
-	    {
-	      assert (error != NO_ERROR && log_buf == NULL);
-	      if (error == NO_ERROR)
-		{
-		  assert (false);
+          /* get the target page from log */
+          error = cirp_logpb_get_page_buffer (buf_mgr, &log_buf, final_lsa.pageid);
+          if (error != NO_ERROR || log_buf == NULL)
+            {
+              assert (error != NO_ERROR && log_buf == NULL);
+              if (error == NO_ERROR)
+                {
+                  assert (false);
 
-		  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
-		}
+                  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+                }
 
-	      /* request page is greater then last_flushed_pageid.(in log_header) */
-	      if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)
-		{
-		  er_log_debug (ARG_FILE_LINE,
-				"requested pageid (%lld) is greater than "
-				"last received pageid (%lld) in log header",
-				(long long) final_lsa.pageid,
-				(long long) log_hdr->ha_info.
-				last_flushed_pageid);
-		  /*
-		   * does not received log page from rye_server
-		   * or active log was archived.
-		   */
-		  er_log_debug (ARG_FILE_LINE,
-				"but retry again...(pageid:%lld)",
-				(long long int) final_lsa.pageid);
-		  THREAD_SLEEP (50 + (retry_count * 50));
+              /* request page is greater then last_flushed_pageid.(in log_header) */
+              if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)
+                {
+                  er_log_debug (ARG_FILE_LINE,
+                                "requested pageid (%lld) is greater than "
+                                "last received pageid (%lld) in log header",
+                                (long long) final_lsa.pageid, (long long) log_hdr->ha_info.last_flushed_pageid);
+                  /*
+                   * does not received log page from rye_server
+                   * or active log was archived.
+                   */
+                  er_log_debug (ARG_FILE_LINE, "but retry again...(pageid:%lld)", (long long int) final_lsa.pageid);
+                  THREAD_SLEEP (50 + (retry_count * 50));
 
-		  if (retry_count++ < LA_GET_PAGE_RETRY_COUNT)
-		    {
-		      error = NO_ERROR;
-		      er_clear ();
-		      continue;
-		    }
-		}
+                  if (retry_count++ < LA_GET_PAGE_RETRY_COUNT)
+                    {
+                      error = NO_ERROR;
+                      er_clear ();
+                      continue;
+                    }
+                }
 
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  retry_count = 0;
+              GOTO_EXIT_ON_ERROR;
+            }
+          retry_count = 0;
 
-	  LSA_COPY (&analyzer->current_lsa, &final_lsa);
+          LSA_COPY (&analyzer->current_lsa, &final_lsa);
 
-	  monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID,
-			       final_lsa.pageid);
+          monitor_stats_gauge (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID, final_lsa.pageid);
 
-	  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_CURRENT_GAP,
-			       monitor_get_stats (MNT_RP_FLUSHER_ID,
-						  MNT_RP_FLUSHED_PAGEID)
-			       - monitor_get_stats (MNT_RP_ANALYZER_ID,
-						    MNT_RP_CURRENT_PAGEID));
+          monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_CURRENT_GAP,
+                               monitor_get_stats (MNT_RP_FLUSHER_ID,
+                                                  MNT_RP_FLUSHED_PAGEID)
+                               - monitor_get_stats (MNT_RP_ANALYZER_ID, MNT_RP_CURRENT_PAGEID));
 
-	  /* a loop for each page */
-	  pg_ptr = &(log_buf->log_page);
-	  while (final_lsa.pageid == log_buf->pageid
-		 && analyzer->is_role_changed == false
-		 && rp_need_restart () == false)
-	    {
-	      /* adjust the offset when the offset is 0.
-	       * If we read final log record from the archive,
-	       * we don't know the exact offset of the next record,
-	       * In this case, we set the offset as 0, increase the pageid.
-	       * So, before getting the log record, check the offset and
-	       * adjust it
-	       */
-	      if (final_lsa.offset == 0 || final_lsa.offset == NULL_OFFSET)
-		{
-		  assert (final_lsa.offset == 0);
-		  assert (log_buf->log_page.hdr.offset == 0);
+          /* a loop for each page */
+          pg_ptr = &(log_buf->log_page);
+          while (final_lsa.pageid == log_buf->pageid
+                 && analyzer->is_role_changed == false && rp_need_restart () == false)
+            {
+              /* adjust the offset when the offset is 0.
+               * If we read final log record from the archive,
+               * we don't know the exact offset of the next record,
+               * In this case, we set the offset as 0, increase the pageid.
+               * So, before getting the log record, check the offset and
+               * adjust it
+               */
+              if (final_lsa.offset == 0 || final_lsa.offset == NULL_OFFSET)
+                {
+                  assert (final_lsa.offset == 0);
+                  assert (log_buf->log_page.hdr.offset == 0);
 
-		  final_lsa.offset = log_buf->log_page.hdr.offset;
-		}
-	      assert (final_lsa.pageid
-		      <= log_hdr->ha_info.last_flushed_pageid);
+                  final_lsa.offset = log_buf->log_page.hdr.offset;
+                }
+              assert (final_lsa.pageid <= log_hdr->ha_info.last_flushed_pageid);
 
-	      lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
+              lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
 
-	      /* check for end of log */
-	      if (LSA_GE (&final_lsa, &log_hdr->eof_lsa)
-		  || lrec->type == LOG_END_OF_LOG)
-		{
-		  if (rpwr_recv_queue_is_empty () == true)
-		    {
-		      analyzer->is_end_of_record = true;
-		    }
-		  break;
-		}
+              /* check for end of log */
+              if (LSA_GE (&final_lsa, &log_hdr->eof_lsa) || lrec->type == LOG_END_OF_LOG)
+                {
+                  if (rpwr_recv_queue_is_empty () == true)
+                    {
+                      analyzer->is_end_of_record = true;
+                    }
+                  break;
+                }
 
-	      if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
-		  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
-		{
-		  cirp_logpb_release (buf_mgr, log_buf->pageid);
-		  log_buf = NULL;
+              if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa) || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
+                {
+                  cirp_logpb_release (buf_mgr, log_buf->pageid);
+                  log_buf = NULL;
 
-		  /* may be log archived */
-		  error = ER_LOG_PAGE_CORRUPTED;
-		  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-			  error, 1, final_lsa.pageid);
+                  /* may be log archived */
+                  error = ER_LOG_PAGE_CORRUPTED;
+                  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 1, final_lsa.pageid);
 
-		  GOTO_EXIT_ON_ERROR;
-		}
+                  GOTO_EXIT_ON_ERROR;
+                }
 
-	      /* process the log record */
-	      error = cirp_analyze_log_record (lrec, final_lsa, pg_ptr);
-	      if (error != NO_ERROR)
-		{
-		  if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)
-		    {
-		      /*
-		       * does not received log page from rye_server
-		       * or active log was archived.
-		       */
-		      break;
-		    }
+              /* process the log record */
+              error = cirp_analyze_log_record (lrec, final_lsa, pg_ptr);
+              if (error != NO_ERROR)
+                {
+                  if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)
+                    {
+                      /*
+                       * does not received log page from rye_server
+                       * or active log was archived.
+                       */
+                      break;
+                    }
 
-		  assert (error != ER_LOG_PAGE_CORRUPTED);
+                  assert (error != ER_LOG_PAGE_CORRUPTED);
 
-		  cirp_logpb_release (buf_mgr, log_buf->pageid);
-		  log_buf = NULL;
+                  cirp_logpb_release (buf_mgr, log_buf->pageid);
+                  log_buf = NULL;
 
-		  GOTO_EXIT_ON_ERROR;
-		}
+                  GOTO_EXIT_ON_ERROR;
+                }
 
-	      /* set the next record */
-	      LSA_COPY (&final_lsa, &lrec->forw_lsa);
-	    }			/* a loop for each page */
-	  assert (error == NO_ERROR || error == ER_HA_LOG_PAGE_DOESNOT_EXIST);
-	  error = NO_ERROR;
-	  er_clear ();
+              /* set the next record */
+              LSA_COPY (&final_lsa, &lrec->forw_lsa);
+            }                   /* a loop for each page */
+          assert (error == NO_ERROR || error == ER_HA_LOG_PAGE_DOESNOT_EXIST);
+          error = NO_ERROR;
+          er_clear ();
 
-	  cirp_logpb_release (buf_mgr, log_buf->pageid);
-	  log_buf = NULL;
+          cirp_logpb_release (buf_mgr, log_buf->pageid);
+          log_buf = NULL;
 
-	  /* commit */
-	  gettimeofday (&current_time, NULL);
-	  diff_msec = timeval_diff_in_msec (&current_time, &commit_time);
-	  if (diff_msec > 1000 || analyzer->is_role_changed == true)
-	    {
-	      error = cirp_anlz_log_commit ();
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
-	      if (analyzer->is_role_changed == true)
-		{
-		  error = cirp_unlock_dbname (analyzer, true);
-		  if (error != NO_ERROR)
-		    {
-		      GOTO_EXIT_ON_ERROR;
-		    }
-		}
+          /* commit */
+          gettimeofday (&current_time, NULL);
+          diff_msec = timeval_diff_in_msec (&current_time, &commit_time);
+          if (diff_msec > 1000 || analyzer->is_role_changed == true)
+            {
+              error = cirp_anlz_log_commit ();
+              if (error != NO_ERROR)
+                {
+                  GOTO_EXIT_ON_ERROR;
+                }
+              if (analyzer->is_role_changed == true)
+                {
+                  error = cirp_unlock_dbname (analyzer, true);
+                  if (error != NO_ERROR)
+                    {
+                      GOTO_EXIT_ON_ERROR;
+                    }
+                }
 
-	      error = cirp_logpb_remove_archive_log (buf_mgr,
-						     analyzer->ct.
-						     required_lsa.pageid);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
+              error = cirp_logpb_remove_archive_log (buf_mgr, analyzer->ct.required_lsa.pageid);
+              if (error != NO_ERROR)
+                {
+                  GOTO_EXIT_ON_ERROR;
+                }
 
-	      commit_time = current_time;
-	    }
+              commit_time = current_time;
+            }
 
-	}			/* end loop analyzation   */
+        }                       /* end loop analyzation   */
 
       /* Fall through */
       assert (error == NO_ERROR);
@@ -2153,15 +2028,13 @@ analyzer_main (void *arg)
     exit_on_error:
 
       snprintf (err_msg, sizeof (err_msg),
-		"Analyzer Retry(ERROR:%d). required_lsa: %lld|%d."
-		"current LSA: %lld|%d.",
-		error,
-		(long long) analyzer->ct.required_lsa.pageid,
-		analyzer->ct.required_lsa.offset,
-		(long long) analyzer->current_lsa.pageid,
-		analyzer->current_lsa.offset);
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	      err_msg);
+                "Analyzer Retry(ERROR:%d). required_lsa: %lld|%d."
+                "current LSA: %lld|%d.",
+                error,
+                (long long) analyzer->ct.required_lsa.pageid,
+                analyzer->ct.required_lsa.offset,
+                (long long) analyzer->current_lsa.pageid, analyzer->current_lsa.offset);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
       RP_SET_AGENT_NEED_RESTART ();
 
@@ -2174,15 +2047,12 @@ analyzer_main (void *arg)
   cirp_change_analyzer_status (analyzer, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
-	    "Analyzer Exit. required_lsa: %lld|%d."
-	    "current LSA: %lld|%d.",
-	    (long long) analyzer->ct.required_lsa.pageid,
-	    analyzer->ct.required_lsa.offset,
-	    (long long) analyzer->current_lsa.pageid,
-	    analyzer->current_lsa.offset);
+            "Analyzer Exit. required_lsa: %lld|%d."
+            "current LSA: %lld|%d.",
+            (long long) analyzer->ct.required_lsa.pageid,
+            analyzer->ct.required_lsa.offset, (long long) analyzer->current_lsa.pageid, analyzer->current_lsa.offset);
 
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE,
-	  1, err_msg);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
   free_and_init (th_er_msg_info);
 

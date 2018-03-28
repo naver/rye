@@ -267,10 +267,9 @@ db_get_attribute (DB_OBJECT * obj, const char *name)
     {
       att = classobj_find_attribute (class_->attributes, name);
       if (att == NULL)
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  ER_OBJ_INVALID_ATTRIBUTE, 1, name);
-	}
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ATTRIBUTE, 1, name);
+        }
     }
 
   return ((DB_ATTRIBUTE *) att);
@@ -329,10 +328,9 @@ db_get_attributes (DB_OBJECT * obj)
       /* atts = class_->attributes; */
       atts = class_->ordered_attributes;
       if (atts == NULL)
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_NO_COMPONENTS,
-		  0);
-	}
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_NO_COMPONENTS, 0);
+        }
     }
 
   return ((DB_ATTRIBUTE *) atts);
@@ -497,15 +495,13 @@ db_attribute_is_unique (DB_ATTRIBUTE * attribute)
     {
       SM_CONSTRAINT *con;
 
-      for (con = attribute->constraints;
-	   con != NULL && !status; con = con->next)
-	{
-	  if (con->type == SM_CONSTRAINT_UNIQUE
-	      || con->type == SM_CONSTRAINT_PRIMARY_KEY)
-	    {
-	      status = 1;
-	    }
-	}
+      for (con = attribute->constraints; con != NULL && !status; con = con->next)
+        {
+          if (con->type == SM_CONSTRAINT_UNIQUE || con->type == SM_CONSTRAINT_PRIMARY_KEY)
+            {
+              status = 1;
+            }
+        }
     }
 
   return (status);
@@ -526,14 +522,13 @@ db_attribute_is_primary_key (DB_ATTRIBUTE * attribute)
     {
       SM_CONSTRAINT *con;
 
-      for (con = attribute->constraints;
-	   con != NULL && !status; con = con->next)
-	{
-	  if (con->type == SM_CONSTRAINT_PRIMARY_KEY)
-	    {
-	      status = 1;
-	    }
-	}
+      for (con = attribute->constraints; con != NULL && !status; con = con->next)
+        {
+          if (con->type == SM_CONSTRAINT_PRIMARY_KEY)
+            {
+              status = 1;
+            }
+        }
     }
 
   return (status);
@@ -574,14 +569,13 @@ db_attribute_is_indexed (DB_ATTRIBUTE * attribute)
     {
       SM_CONSTRAINT *con;
 
-      for (con = attribute->constraints;
-	   con != NULL && !status; con = con->next)
-	{
-	  if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type))
-	    {
-	      status = 1;
-	    }
-	}
+      for (con = attribute->constraints; con != NULL && !status; con = con->next)
+        {
+          if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type))
+            {
+              status = 1;
+            }
+        }
     }
 
   return (status);
@@ -614,10 +608,9 @@ db_get_constraints (DB_OBJECT * obj)
     {
       constraints = class_->constraints;
       if (constraints == NULL)
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_NO_COMPONENTS,
-		  0);
-	}
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_NO_COMPONENTS, 0);
+        }
     }
 
   return ((DB_CONSTRAINT *) constraints);
@@ -656,25 +649,25 @@ db_constraint_type (const DB_CONSTRAINT * constraint)
   if (constraint != NULL)
     {
       if (constraint->type == SM_CONSTRAINT_UNIQUE)
-	{
-	  type = DB_CONSTRAINT_UNIQUE;
-	}
+        {
+          type = DB_CONSTRAINT_UNIQUE;
+        }
       else if (constraint->type == SM_CONSTRAINT_INDEX)
-	{
-	  type = DB_CONSTRAINT_INDEX;
-	}
+        {
+          type = DB_CONSTRAINT_INDEX;
+        }
       else if (constraint->type == SM_CONSTRAINT_NOT_NULL)
-	{
-	  type = DB_CONSTRAINT_NOT_NULL;
-	}
+        {
+          type = DB_CONSTRAINT_NOT_NULL;
+        }
       else if (constraint->type == SM_CONSTRAINT_PRIMARY_KEY)
-	{
-	  type = DB_CONSTRAINT_PRIMARY_KEY;
-	}
+        {
+          type = DB_CONSTRAINT_PRIMARY_KEY;
+        }
       else
-	{
-	  assert (false);
-	}
+        {
+          assert (false);
+        }
     }
 
   return (type);
@@ -765,8 +758,7 @@ db_constraint_index (DB_CONSTRAINT * constraint, BTID * index)
  * npages(out): number of pages in this classmop
  */
 int
-db_get_class_num_objs_and_pages (DB_OBJECT * classmop, int approximation,
-				 int64_t * nobjs, int *npages)
+db_get_class_num_objs_and_pages (DB_OBJECT * classmop, int approximation, int64_t * nobjs, int *npages)
 {
   HFID *hfid;
   int error;
@@ -782,8 +774,7 @@ db_get_class_num_objs_and_pages (DB_OBJECT * classmop, int approximation,
       return ER_FAILED;
     }
 
-  error =
-    heap_get_class_num_objects_pages (hfid, approximation, nobjs, npages);
+  error = heap_get_class_num_objects_pages (hfid, approximation, nobjs, npages);
 
   return error;
 }

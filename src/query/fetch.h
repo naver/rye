@@ -32,17 +32,13 @@
 #include "query_evaluator.h"
 
 extern int fetch_peek_dbval (THREAD_ENTRY * thread_p,
-			     REGU_VARIABLE * regu_var, VAL_DESCR * vd,
-			     OID * obj_oid, QFILE_TUPLE tpl,
-			     DB_VALUE ** peek_dbval);
+                             REGU_VARIABLE * regu_var, VAL_DESCR * vd,
+                             OID * obj_oid, QFILE_TUPLE tpl, DB_VALUE ** peek_dbval);
 extern int fetch_copy_dbval (THREAD_ENTRY * thread_p,
-			     REGU_VARIABLE * regu_var, VAL_DESCR * vd,
-			     OID * obj_oid, QFILE_TUPLE tpl,
-			     DB_VALUE * dbval);
+                             REGU_VARIABLE * regu_var, VAL_DESCR * vd,
+                             OID * obj_oid, QFILE_TUPLE tpl, DB_VALUE * dbval);
 extern int fetch_val_list (THREAD_ENTRY * thread_p,
-			   REGU_VARIABLE_LIST regu_list, VAL_DESCR * vd,
-			   OID * obj_oid, QFILE_TUPLE tpl,
-			   QFILE_TUPLE_VALUE_TYPE_LIST * tpl_type_list,
-			   int peek);
+                           REGU_VARIABLE_LIST regu_list, VAL_DESCR * vd,
+                           OID * obj_oid, QFILE_TUPLE tpl, QFILE_TUPLE_VALUE_TYPE_LIST * tpl_type_list, int peek);
 
 #endif /* _FETCH_H_ */

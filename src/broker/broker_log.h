@@ -30,8 +30,7 @@
 #include "broker_shm.h"
 
 extern void br_log_init (T_SHM_APPL_SERVER * shm_p);
-extern void br_log_write (T_BROKER_LOG_SEVERITY severity,
-			  in_addr_t clt_ip, const char *fmt, ...);
+extern void br_log_write (T_BROKER_LOG_SEVERITY severity, in_addr_t clt_ip, const char *fmt, ...);
 extern void br_log_check (void);
 extern int br_log_hang_time (void);
 

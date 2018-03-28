@@ -95,9 +95,8 @@ static void cci_reg_free (void *dummy, void *p);
 
 char *
 ut_make_url (char *buf, int bufsize,
-	     const char *server_list, const char *dbname,
-	     const char *dbuser, const char *dbpasswd,
-	     const char *port_name, const char *property)
+             const char *server_list, const char *dbname,
+             const char *dbuser, const char *dbpasswd, const char *port_name, const char *property)
 {
   if (dbuser == NULL)
     {
@@ -113,8 +112,7 @@ ut_make_url (char *buf, int bufsize,
     }
 
   snprintf (buf, bufsize, "%s%s/%s:%s:%s/%s?%s",
-	    RYE_URL_HEADER, server_list, dbname, dbuser, dbpasswd,
-	    port_name, property);
+            RYE_URL_HEADER, server_list, dbname, dbuser, dbpasswd, port_name, property);
 
   return buf;
 }
@@ -128,10 +126,10 @@ ut_str_to_bigint (const char *str, INT64 * value)
   if (str_to_int64 (&bi_val, &end_p, str, 10) == 0)
     {
       if (*end_p == '\0' || *end_p == '.' || isspace ((int) *end_p))
- 	{
- 	  *value = bi_val;		
- 	  return 0;		
- 	}
+        {
+          *value = bi_val;
+          return 0;
+        }
     }
 
   return (CCI_ER_TYPE_CONVERSION);
@@ -178,23 +176,20 @@ ut_double_to_str (double value, char *str, int size)
 }
 
 void
-ut_datetime_to_str (T_CCI_DATETIME * value, T_CCI_TYPE type, char *str,
-		    int size)
+ut_datetime_to_str (T_CCI_DATETIME * value, T_CCI_TYPE type, char *str, int size)
 {
   if (type == CCI_TYPE_DATE)
     {
-      snprintf (str, size, "%04d-%02d-%02d", value->yr, value->mon,
-		value->day);
+      snprintf (str, size, "%04d-%02d-%02d", value->yr, value->mon, value->day);
     }
   else if (type == CCI_TYPE_TIME)
     {
       snprintf (str, size, "%02d:%02d:%02d", value->hh, value->mm, value->ss);
     }
   else
-    {				/* type == CCI_TYPE_DATETIME */
+    {                           /* type == CCI_TYPE_DATETIME */
       snprintf (str, size, "%04d-%02d-%02d %02d:%02d:%02d.%03d",
-		value->yr, value->mon, value->day,
-		value->hh, value->mm, value->ss, value->ms);
+                value->yr, value->mon, value->day, value->hh, value->mm, value->ss, value->ms);
     }
 }
 
@@ -207,31 +202,31 @@ ut_bit_to_str (char *bit_str, int bit_size, char *str, int str_size)
   for (i = 0; i < bit_size; i++)
     {
       if (2 * i + 1 >= str_size)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       ch = bit_str[i];
 
       c = (ch >> 4) & 0x0f;
       if (c <= 9)
-	{
-	  str[2 * i] = c + '0';
-	}
+        {
+          str[2 * i] = c + '0';
+        }
       else
-	{
-	  str[2 * i] = c - 10 + 'A';
-	}
+        {
+          str[2 * i] = c - 10 + 'A';
+        }
 
       c = ch & 0x0f;
       if (c <= 9)
-	{
-	  str[2 * i + 1] = c + '0';
-	}
+        {
+          str[2 * i + 1] = c + '0';
+        }
       else
-	{
-	  str[2 * i + 1] = c - 10 + 'A';
-	}
+        {
+          str[2 * i + 1] = c - 10 + 'A';
+        }
     }
   str[2 * i] = 0;
 }
@@ -272,8 +267,7 @@ char *
 ut_host_info_to_str (char *buf, const T_HOST_INFO * host_info)
 {
   sprintf (buf, "%d.%d.%d.%d:%d",
-	   host_info->ip_addr[0], host_info->ip_addr[1],
-	   host_info->ip_addr[2], host_info->ip_addr[3], host_info->port);
+           host_info->ip_addr[0], host_info->ip_addr[1], host_info->ip_addr[2], host_info->ip_addr[3], host_info->port);
   return buf;
 }
 
@@ -282,8 +276,7 @@ ut_cur_host_info_to_str (char *buf, const T_CON_HANDLE * con_handle)
 {
   int cur_id = con_handle->alter_hosts->cur_id;
 
-  return ut_host_info_to_str (buf,
-			      &con_handle->alter_hosts->host_info[cur_id]);
+  return ut_host_info_to_str (buf, &con_handle->alter_hosts->host_info[cur_id]);
 }
 
 void
@@ -297,7 +290,7 @@ ut_tolower (char *str)
   for (p = str; *p; p++)
     {
       if (*p >= 'A' && *p <= 'Z')
-	*p = *p - 'A' + 'a';
+        *p = *p - 'A' + 'a';
     }
 }
 
@@ -316,61 +309,61 @@ is_float_str (const char *str)
     {
       ch = *p;
       switch (state)
-	{
-	case 0:
-	  if (ch == '+' || ch == '-')
-	    state = 1;
-	  else if (ch == '.')
-	    state = 3;
-	  else if (ch >= '0' && ch <= '9')
-	    state = 2;
-	  else
-	    state = -1;
-	  break;
-	case 1:
-	  if (ch >= '0' && ch <= '9')
-	    state = 2;
-	  else
-	    state = -1;
-	  break;
-	case 2:
-	  if (ch == '.')
-	    state = 3;
-	  else if (ch == 'e' || ch == 'E')
-	    state = 4;
-	  else if (ch >= '0' && ch <= '9')
-	    state = 2;
-	  else
-	    state = -1;
-	  break;
-	case 3:
-	  if (ch >= '0' && ch <= '9')
-	    state = 5;
-	  else
-	    state = -1;
-	  break;
-	case 4:
-	  if (ch == '+' || ch == '-' || (ch >= '0' && ch <= '9'))
-	    state = 6;
-	  else
-	    state = -1;
-	  break;
-	case 5:
-	  if (ch == 'e' || ch == 'E')
-	    state = 4;
-	  else if (ch >= '0' && ch <= '9')
-	    state = 5;
-	  else
-	    state = -1;
-	  break;
-	case 6:
-	  if (ch >= '0' && ch <= '9')
-	    state = 6;
-	  else
-	    state = -1;
-	default:
-	  break;
-	}
+        {
+        case 0:
+          if (ch == '+' || ch == '-')
+            state = 1;
+          else if (ch == '.')
+            state = 3;
+          else if (ch >= '0' && ch <= '9')
+            state = 2;
+          else
+            state = -1;
+          break;
+        case 1:
+          if (ch >= '0' && ch <= '9')
+            state = 2;
+          else
+            state = -1;
+          break;
+        case 2:
+          if (ch == '.')
+            state = 3;
+          else if (ch == 'e' || ch == 'E')
+            state = 4;
+          else if (ch >= '0' && ch <= '9')
+            state = 2;
+          else
+            state = -1;
+          break;
+        case 3:
+          if (ch >= '0' && ch <= '9')
+            state = 5;
+          else
+            state = -1;
+          break;
+        case 4:
+          if (ch == '+' || ch == '-' || (ch >= '0' && ch <= '9'))
+            state = 6;
+          else
+            state = -1;
+          break;
+        case 5:
+          if (ch == 'e' || ch == 'E')
+            state = 4;
+          else if (ch >= '0' && ch <= '9')
+            state = 5;
+          else
+            state = -1;
+          break;
+        case 6:
+          if (ch >= '0' && ch <= '9')
+            state = 6;
+          else
+            state = -1;
+        default:
+          break;
+        }
     }
 
   if (state == 2 || state == 5 || state == 6)
@@ -413,15 +406,14 @@ cci_url_match (const char *src, char *token[])
   cub_regset_realloc (cci_reg_realloc);
   cub_regset_free (cci_reg_free);
 
-  error = cub_regcomp (&regex, RYE_URL_PATTERN,
-		       CUB_REG_EXTENDED | CUB_REG_ICASE);
+  error = cub_regcomp (&regex, RYE_URL_PATTERN, CUB_REG_EXTENDED | CUB_REG_ICASE);
   if (error != CUB_REG_OKAY)
     {
       /* should not reach on this */
       cub_regerror (error, &regex, b, 256);
       fprintf (stderr, "cub_regcomp : %s\n", b);
       cub_regfree (&regex);
-      return CCI_ER_INVALID_URL;	/* pattern compilation error */
+      return CCI_ER_INVALID_URL;        /* pattern compilation error */
     }
 
   len = strlen (src);
@@ -429,7 +421,7 @@ cci_url_match (const char *src, char *token[])
   if (error == CUB_REG_NOMATCH)
     {
       cub_regfree (&regex);
-      return CCI_ER_INVALID_URL;	/* invalid url */
+      return CCI_ER_INVALID_URL;        /* invalid url */
     }
   if (error != CUB_REG_OKAY)
     {
@@ -437,13 +429,13 @@ cci_url_match (const char *src, char *token[])
       cub_regerror (error, &regex, b, 256);
       fprintf (stderr, "cub_regcomp : %s\n", b);
       cub_regfree (&regex);
-      return CCI_ER_INVALID_URL;	/* regexec error */
+      return CCI_ER_INVALID_URL;        /* regexec error */
     }
 
   if (match[0].rm_eo - match[0].rm_so != len)
     {
       cub_regfree (&regex);
-      return CCI_ER_INVALID_URL;	/* invalid url */
+      return CCI_ER_INVALID_URL;        /* invalid url */
     }
 
   for (i = 0; match_idx[i] != -1; i++)
@@ -455,18 +447,18 @@ cci_url_match (const char *src, char *token[])
   for (i = 0; match_idx[i] != -1; i++)
     {
       if (match[match_idx[i]].rm_so == -1)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       const char *t = src + match[match_idx[i]].rm_so;
       size_t n = match[match_idx[i]].rm_eo - match[match_idx[i]].rm_so;
       token[i] = MALLOC (n + 1);
       if (token[i] == NULL)
-	{
-	  error = CCI_ER_NO_MORE_MEMORY;	/* out of memory */
-	  break;
-	}
+        {
+          error = CCI_ER_NO_MORE_MEMORY;        /* out of memory */
+          break;
+        }
       strncpy (token[i], t, n);
       token[i][n] = '\0';
     }
@@ -475,9 +467,9 @@ cci_url_match (const char *src, char *token[])
     {
       /* free allocated memory when error was CCI_ER_NO_MORE_MEMORY */
       for (i = 0; match_idx[i] != -1 && match[match_idx[i]].rm_so != -1; i++)
-	{
-	  FREE_MEM (token[i]);
-	}
+        {
+          FREE_MEM (token[i]);
+        }
     }
 
   cub_regfree (&regex);

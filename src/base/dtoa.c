@@ -54,7 +54,7 @@ _DEFUN (quorem, (b, S), _Jv_Bigint * b _AND _Jv_Bigint * S)
   sxe = sx + --n;
   bx = b->_x;
   bxe = bx + n;
-  q = *bxe / (*sxe + 1);	/* ensure q <= true quotient */
+  q = *bxe / (*sxe + 1);        /* ensure q <= true quotient */
 #ifdef DEBUG
   /*debug */ if (q > 9)
     /*debug */ Bug ("oversized quotient in quorem");
@@ -64,36 +64,36 @@ _DEFUN (quorem, (b, S), _Jv_Bigint * b _AND _Jv_Bigint * S)
       borrow = 0;
       carry = 0;
       do
-	{
+        {
 #ifdef Pack_32
-	  si = *sx++;
-	  ys = (si & 0xffff) * q + carry;
-	  zs = (si >> 16) * q + (ys >> 16);
-	  carry = zs >> 16;
-	  y = (*bx & 0xffff) - (ys & 0xffff) + borrow;
-	  borrow = y >> 16;
-	  Sign_Extend (borrow, y);
-	  z = (*bx >> 16) - (zs & 0xffff) + borrow;
-	  borrow = z >> 16;
-	  Sign_Extend (borrow, z);
-	  Storeinc (bx, z, y);
+          si = *sx++;
+          ys = (si & 0xffff) * q + carry;
+          zs = (si >> 16) * q + (ys >> 16);
+          carry = zs >> 16;
+          y = (*bx & 0xffff) - (ys & 0xffff) + borrow;
+          borrow = y >> 16;
+          Sign_Extend (borrow, y);
+          z = (*bx >> 16) - (zs & 0xffff) + borrow;
+          borrow = z >> 16;
+          Sign_Extend (borrow, z);
+          Storeinc (bx, z, y);
 #else
-	  ys = *sx++ * q + carry;
-	  carry = ys >> 16;
-	  y = *bx - (ys & 0xffff) + borrow;
-	  borrow = y >> 16;
-	  Sign_Extend (borrow, y);
-	  *bx++ = y & 0xffff;
+          ys = *sx++ * q + carry;
+          carry = ys >> 16;
+          y = *bx - (ys & 0xffff) + borrow;
+          borrow = y >> 16;
+          Sign_Extend (borrow, y);
+          *bx++ = y & 0xffff;
 #endif
-	}
+        }
       while (sx <= sxe);
       if (!*bxe)
-	{
-	  bx = b->_x;
-	  while (--bxe > bx && !*bxe)
-	    --n;
-	  b->_wds = n;
-	}
+        {
+          bx = b->_x;
+          while (--bxe > bx && !*bxe)
+            --n;
+          b->_wds = n;
+        }
     }
   if (cmp (b, S) >= 0)
     {
@@ -103,37 +103,37 @@ _DEFUN (quorem, (b, S), _Jv_Bigint * b _AND _Jv_Bigint * S)
       bx = b->_x;
       sx = S->_x;
       do
-	{
+        {
 #ifdef Pack_32
-	  si = *sx++;
-	  ys = (si & 0xffff) + carry;
-	  zs = (si >> 16) + (ys >> 16);
-	  carry = zs >> 16;
-	  y = (*bx & 0xffff) - (ys & 0xffff) + borrow;
-	  borrow = y >> 16;
-	  Sign_Extend (borrow, y);
-	  z = (*bx >> 16) - (zs & 0xffff) + borrow;
-	  borrow = z >> 16;
-	  Sign_Extend (borrow, z);
-	  Storeinc (bx, z, y);
+          si = *sx++;
+          ys = (si & 0xffff) + carry;
+          zs = (si >> 16) + (ys >> 16);
+          carry = zs >> 16;
+          y = (*bx & 0xffff) - (ys & 0xffff) + borrow;
+          borrow = y >> 16;
+          Sign_Extend (borrow, y);
+          z = (*bx >> 16) - (zs & 0xffff) + borrow;
+          borrow = z >> 16;
+          Sign_Extend (borrow, z);
+          Storeinc (bx, z, y);
 #else
-	  ys = *sx++ + carry;
-	  carry = ys >> 16;
-	  y = *bx - (ys & 0xffff) + borrow;
-	  borrow = y >> 16;
-	  Sign_Extend (borrow, y);
-	  *bx++ = y & 0xffff;
+          ys = *sx++ + carry;
+          carry = ys >> 16;
+          y = *bx - (ys & 0xffff) + borrow;
+          borrow = y >> 16;
+          Sign_Extend (borrow, y);
+          *bx++ = y & 0xffff;
 #endif
-	}
+        }
       while (sx <= sxe);
       bx = b->_x;
       bxe = bx + n;
       if (!*bxe)
-	{
-	  while (--bxe > bx && !*bxe)
-	    --n;
-	  b->_wds = n;
-	}
+        {
+          while (--bxe > bx && !*bxe)
+            --n;
+          b->_wds = n;
+        }
     }
   return q;
 }
@@ -196,12 +196,9 @@ print (_Jv_Bigint * b)
 
 char *
 _DEFUN (_dtoa_r,
-	(ptr, _d, mode, ndigits, decpt, sign, rve, float_type),
-	struct _Jv_reent *ptr _AND
-	double _d _AND
-	int mode _AND
-	int ndigits _AND
-	int *decpt _AND int *sign _AND char **rve _AND int float_type)
+        (ptr, _d, mode, ndigits, decpt, sign, rve, float_type),
+        struct _Jv_reent *ptr _AND
+        double _d _AND int mode _AND int ndigits _AND int *decpt _AND int *sign _AND char **rve _AND int float_type)
 {
   /*
      float_type == 0 for double precision, 1 for float.
@@ -242,8 +239,7 @@ _DEFUN (_dtoa_r,
      to hold the suppressed trailing zeros.
    */
 
-  int bbits, b2, b5, be, dig, i, ieps, ilim0, j, j1, k, k0,
-    k_check, leftright, m2, m5, s2, s5, try_quick;
+  int bbits, b2, b5, be, dig, i, ieps, ilim0, j, j1, k, k0, k_check, leftright, m2, m5, s2, s5, try_quick;
   int ilim = 0, ilim1 = 0, spec_case = 0;
   union double_union d, d2, eps;
   long L;
@@ -271,7 +267,7 @@ _DEFUN (_dtoa_r,
     {
       /* set sign for everything, including 0's and NaNs */
       *sign = 1;
-      word0 (d) &= ~Sign_bit;	/* clear sign bit */
+      word0 (d) &= ~Sign_bit;   /* clear sign bit */
     }
   else
     *sign = 0;
@@ -287,27 +283,27 @@ _DEFUN (_dtoa_r,
       *decpt = 9999;
       s =
 #ifdef IEEE_Arith
-	!word1 (d) && !(word0 (d) & 0xfffff) ? infinity_p :
+        !word1 (d) && !(word0 (d) & 0xfffff) ? infinity_p :
 #endif
-	NaN_p;
+        NaN_p;
       if (rve)
-	*rve =
+        *rve =
 #ifdef IEEE_Arith
-	  s[3] ? s + 8 :
+          s[3] ? s + 8 :
 #endif
-	  s + 3;
+          s + 3;
       return s;
     }
 #endif
 #ifdef IBM
-  d.d += 0;			/* normalize */
+  d.d += 0;                     /* normalize */
 #endif
   if (!d.d)
     {
       *decpt = 1;
-      s = zero_p;		/* "0" */
+      s = zero_p;               /* "0" */
       if (rve)
-	*rve = s + 1;
+        *rve = s + 1;
       return s;
     }
 
@@ -323,7 +319,7 @@ _DEFUN (_dtoa_r,
       word0 (d2) |= Exp_11;
 #ifdef IBM
       if (j = 11 - hi0bits (word0 (d2) & Frac_mask))
-	d2.d /= 1 << j;
+        d2.d /= 1 << j;
 #endif
 
       /* log(x) ~=~ log(1.5) + (x-1.5)/1.5
@@ -361,25 +357,22 @@ _DEFUN (_dtoa_r,
       /* d is denormalized */
 
       i = bbits + be + (Bias + (P - 1) - 1);
-      x = i > 32 ? word0 (d) << (64 - i) | word1 (d) >> (i - 32)
-	: word1 (d) << (32 - i);
+      x = i > 32 ? word0 (d) << (64 - i) | word1 (d) >> (i - 32) : word1 (d) << (32 - i);
       d2.d = x;
-      word0 (d2) -= 31 * Exp_msk1;	/* adjust exponent */
+      word0 (d2) -= 31 * Exp_msk1;      /* adjust exponent */
       i -= (Bias + (P - 1) - 1) + 1;
       denorm = 1;
     }
 #endif
-  ds =
-    (d2.d - 1.5) * 0.289529654602168 + 0.1760912590558 +
-    i * 0.301029995663981;
+  ds = (d2.d - 1.5) * 0.289529654602168 + 0.1760912590558 + i * 0.301029995663981;
   k = (int) ds;
   if (ds < 0. && ds != k)
-    k--;			/* want k = floor(ds) */
+    k--;                        /* want k = floor(ds) */
   k_check = 1;
   if (k >= 0 && k <= Ten_pmax)
     {
       if (d.d < tens[k])
-	k--;
+        k--;
       k_check = 0;
     }
   j = bbits - i - 1;
@@ -427,7 +420,7 @@ _DEFUN (_dtoa_r,
       /* no break */
     case 4:
       if (ndigits <= 0)
-	ndigits = 1;
+        ndigits = 1;
       ilim = ilim1 = i = ndigits;
       break;
     case 3:
@@ -438,11 +431,10 @@ _DEFUN (_dtoa_r,
       ilim = i;
       ilim1 = i - 1;
       if (i <= 0)
-	i = 1;
+        i = 1;
     }
   j = sizeof (unsigned long);
-  for (ptr->_result_k = 0;
-       (int) (sizeof (_Jv_Bigint) - sizeof (unsigned long)) + j <= i; j <<= 1)
+  for (ptr->_result_k = 0; (int) (sizeof (_Jv_Bigint) - sizeof (unsigned long)) + j <= i; j <<= 1)
     ptr->_result_k++;
   ptr->_result = Balloc (ptr, ptr->_result_k);
   s = s0 = (char *) ptr->_result;
@@ -455,104 +447,104 @@ _DEFUN (_dtoa_r,
       d2.d = d.d;
       k0 = k;
       ilim0 = ilim;
-      ieps = 2;			/* conservative */
+      ieps = 2;                 /* conservative */
       if (k > 0)
-	{
-	  ds = tens[k & 0xf];
-	  j = k >> 4;
-	  if (j & Bletch)
-	    {
-	      /* prevent overflows */
-	      j &= Bletch - 1;
-	      d.d /= bigtens[n_bigtens - 1];
-	      ieps++;
-	    }
-	  for (; j; j >>= 1, i++)
-	    if (j & 1)
-	      {
-		ieps++;
-		ds *= bigtens[i];
-	      }
-	  d.d /= ds;
-	}
+        {
+          ds = tens[k & 0xf];
+          j = k >> 4;
+          if (j & Bletch)
+            {
+              /* prevent overflows */
+              j &= Bletch - 1;
+              d.d /= bigtens[n_bigtens - 1];
+              ieps++;
+            }
+          for (; j; j >>= 1, i++)
+            if (j & 1)
+              {
+                ieps++;
+                ds *= bigtens[i];
+              }
+          d.d /= ds;
+        }
       else if ((j1 = -k))
-	{
-	  d.d *= tens[j1 & 0xf];
-	  for (j = j1 >> 4; j; j >>= 1, i++)
-	    if (j & 1)
-	      {
-		ieps++;
-		d.d *= bigtens[i];
-	      }
-	}
+        {
+          d.d *= tens[j1 & 0xf];
+          for (j = j1 >> 4; j; j >>= 1, i++)
+            if (j & 1)
+              {
+                ieps++;
+                d.d *= bigtens[i];
+              }
+        }
       if (k_check && d.d < 1. && ilim > 0)
-	{
-	  if (ilim1 <= 0)
-	    goto fast_failed;
-	  ilim = ilim1;
-	  k--;
-	  d.d *= 10.;
-	  ieps++;
-	}
+        {
+          if (ilim1 <= 0)
+            goto fast_failed;
+          ilim = ilim1;
+          k--;
+          d.d *= 10.;
+          ieps++;
+        }
       eps.d = ieps * d.d + 7.;
       word0 (eps) -= (P - 1) * Exp_msk1;
       if (ilim == 0)
-	{
-	  S = mhi = 0;
-	  d.d -= 5.;
-	  if (d.d > eps.d)
-	    goto one_digit;
-	  if (d.d < -eps.d)
-	    goto no_digits;
-	  goto fast_failed;
-	}
+        {
+          S = mhi = 0;
+          d.d -= 5.;
+          if (d.d > eps.d)
+            goto one_digit;
+          if (d.d < -eps.d)
+            goto no_digits;
+          goto fast_failed;
+        }
 #ifndef No_leftright
       if (leftright)
-	{
-	  /* Use Steele & White method of only
-	   * generating digits needed.
-	   */
-	  eps.d = 0.5 / tens[ilim - 1] - eps.d;
-	  for (i = 0;;)
-	    {
-	      L = (long) d.d;
-	      d.d -= L;
-	      *s++ = '0' + (int) L;
-	      if (d.d < eps.d)
-		goto ret1;
-	      if (1. - d.d < eps.d)
-		goto bump_up;
-	      if (++i >= ilim)
-		break;
-	      eps.d *= 10.;
-	      d.d *= 10.;
-	    }
-	}
+        {
+          /* Use Steele & White method of only
+           * generating digits needed.
+           */
+          eps.d = 0.5 / tens[ilim - 1] - eps.d;
+          for (i = 0;;)
+            {
+              L = (long) d.d;
+              d.d -= L;
+              *s++ = '0' + (int) L;
+              if (d.d < eps.d)
+                goto ret1;
+              if (1. - d.d < eps.d)
+                goto bump_up;
+              if (++i >= ilim)
+                break;
+              eps.d *= 10.;
+              d.d *= 10.;
+            }
+        }
       else
-	{
+        {
 #endif
-	  /* Generate ilim digits, then fix them up. */
-	  eps.d *= tens[ilim - 1];
-	  for (i = 1;; i++, d.d *= 10.)
-	    {
-	      L = (long) d.d;
-	      d.d -= L;
-	      *s++ = '0' + (int) L;
-	      if (i == ilim)
-		{
-		  if (d.d > 0.5 + eps.d)
-		    goto bump_up;
-		  else if (d.d < 0.5 - eps.d)
-		    {
-		      while (*--s == '0');
-		      s++;
-		      goto ret1;
-		    }
-		  break;
-		}
-	    }
+          /* Generate ilim digits, then fix them up. */
+          eps.d *= tens[ilim - 1];
+          for (i = 1;; i++, d.d *= 10.)
+            {
+              L = (long) d.d;
+              d.d -= L;
+              *s++ = '0' + (int) L;
+              if (i == ilim)
+                {
+                  if (d.d > 0.5 + eps.d)
+                    goto bump_up;
+                  else if (d.d < 0.5 - eps.d)
+                    {
+                      while (*--s == '0');
+                      s++;
+                      goto ret1;
+                    }
+                  break;
+                }
+            }
 #ifndef No_leftright
-	}
+        }
 #endif
     fast_failed:
       s = s0;
@@ -568,45 +560,45 @@ _DEFUN (_dtoa_r,
       /* Yes. */
       ds = tens[k];
       if (ndigits < 0 && ilim <= 0)
-	{
-	  S = mhi = 0;
-	  if (ilim < 0 || d.d <= 5 * ds)
-	    goto no_digits;
-	  goto one_digit;
-	}
+        {
+          S = mhi = 0;
+          if (ilim < 0 || d.d <= 5 * ds)
+            goto no_digits;
+          goto one_digit;
+        }
       for (i = 1;; i++)
-	{
-	  L = (long) (d.d / ds);
-	  d.d -= L * ds;
+        {
+          L = (long) (d.d / ds);
+          d.d -= L * ds;
 #ifdef Check_FLT_ROUNDS
-	  /* If FLT_ROUNDS == 2, L will usually be high by 1 */
-	  if (d.d < 0)
-	    {
-	      L--;
-	      d.d += ds;
-	    }
+          /* If FLT_ROUNDS == 2, L will usually be high by 1 */
+          if (d.d < 0)
+            {
+              L--;
+              d.d += ds;
+            }
 #endif
-	  *s++ = '0' + (int) L;
-	  if (i == ilim)
-	    {
-	      d.d += d.d;
-	      if (d.d > ds || (d.d == ds && L & 1))
-		{
-		bump_up:
-		  while (*--s == '9')
-		    if (s == s0)
-		      {
-			k++;
-			*s = '0';
-			break;
-		      }
-		  ++*s++;
-		}
-	      break;
-	    }
-	  if (!(d.d *= 10.))
-	    break;
-	}
+          *s++ = '0' + (int) L;
+          if (i == ilim)
+            {
+              d.d += d.d;
+              if (d.d > ds || (d.d == ds && L & 1))
+                {
+                bump_up:
+                  while (*--s == '9')
+                    if (s == s0)
+                      {
+                        k++;
+                        *s = '0';
+                        break;
+                      }
+                  ++*s++;
+                }
+              break;
+            }
+          if (!(d.d *= 10.))
+            break;
+        }
       goto ret1;
     }
 
@@ -616,34 +608,34 @@ _DEFUN (_dtoa_r,
   if (leftright)
     {
       if (mode < 2)
-	{
-	  i =
+        {
+          i =
 #ifndef Sudden_Underflow
-	    denorm ? be + (Bias + (P - 1) - 1 + 1) :
+            denorm ? be + (Bias + (P - 1) - 1 + 1) :
 #endif
 #ifdef IBM
-	    1 + 4 * P - 3 - bbits + ((bbits + be - 1) & 3);
+            1 + 4 * P - 3 - bbits + ((bbits + be - 1) & 3);
 #else
-	    1 + P - bbits;
+            1 + P - bbits;
 #endif
-	}
+        }
       else
-	{
-	  j = ilim - 1;
-	  if (m5 >= j)
-	    m5 -= j;
-	  else
-	    {
-	      s5 += j -= m5;
-	      b5 += j;
-	      m5 = 0;
-	    }
-	  if ((i = ilim) < 0)
-	    {
-	      m2 -= i;
-	      i = 0;
-	    }
-	}
+        {
+          j = ilim - 1;
+          if (m5 >= j)
+            m5 -= j;
+          else
+            {
+              s5 += j -= m5;
+              b5 += j;
+              m5 = 0;
+            }
+          if ((i = ilim) < 0)
+            {
+              m2 -= i;
+              i = 0;
+            }
+        }
       b2 += i;
       s2 += i;
       mhi = i2b (ptr, 1);
@@ -658,19 +650,19 @@ _DEFUN (_dtoa_r,
   if (b5 > 0)
     {
       if (leftright)
-	{
-	  if (m5 > 0)
-	    {
-	      mhi = pow5mult (ptr, mhi, m5);
-	      b1 = mult (ptr, mhi, b);
-	      Bfree (ptr, b);
-	      b = b1;
-	    }
-	  if ((j = b5 - m5))
-	    b = pow5mult (ptr, b, j);
-	}
+        {
+          if (m5 > 0)
+            {
+              mhi = pow5mult (ptr, mhi, m5);
+              b1 = mult (ptr, mhi, b);
+              Bfree (ptr, b);
+              b = b1;
+            }
+          if ((j = b5 - m5))
+            b = pow5mult (ptr, b, j);
+        }
       else
-	b = pow5mult (ptr, b, b5);
+        b = pow5mult (ptr, b, b5);
     }
   S = i2b (ptr, 1);
   if (s5 > 0)
@@ -682,17 +674,17 @@ _DEFUN (_dtoa_r,
     {
       if (!word1 (d) && !(word0 (d) & Bndry_mask)
 #ifndef Sudden_Underflow
-	  && word0 (d) & Exp_mask
+          && word0 (d) & Exp_mask
 #endif
-	)
-	{
-	  /* The special case */
-	  b2 += Log2P;
-	  s2 += Log2P;
-	  spec_case = 1;
-	}
+        )
+        {
+          /* The special case */
+          b2 += Log2P;
+          s2 += Log2P;
+          spec_case = 1;
+        }
       else
-	spec_case = 0;
+        spec_case = 0;
     }
 
   /* Arrange for convenient computation of quotients:
@@ -731,23 +723,23 @@ _DEFUN (_dtoa_r,
   if (k_check)
     {
       if (cmp (b, S) < 0)
-	{
-	  k--;
-	  b = multadd (ptr, b, 10, 0);	/* we botched the k estimate */
-	  if (leftright)
-	    mhi = multadd (ptr, mhi, 10, 0);
-	  ilim = ilim1;
-	}
+        {
+          k--;
+          b = multadd (ptr, b, 10, 0);  /* we botched the k estimate */
+          if (leftright)
+            mhi = multadd (ptr, mhi, 10, 0);
+          ilim = ilim1;
+        }
     }
   if (ilim <= 0 && mode > 2)
     {
       if (ilim < 0 || cmp (b, S = multadd (ptr, S, 5, 0)) <= 0)
-	{
-	  /* no digits, fcvt style */
-	no_digits:
-	  k = -1 - ndigits;
-	  goto ret;
-	}
+        {
+          /* no digits, fcvt style */
+        no_digits:
+          k = -1 - ndigits;
+          goto ret;
+        }
     one_digit:
       *s++ = '1';
       k++;
@@ -756,11 +748,11 @@ _DEFUN (_dtoa_r,
   if (leftright)
     {
       if (m2 > 0)
-	mhi = lshift (ptr, mhi, m2);
+        mhi = lshift (ptr, mhi, m2);
 
       /* Single precision case, */
       if (float_type)
-	mhi = lshift (ptr, mhi, 29);
+        mhi = lshift (ptr, mhi, 29);
 
       /* Compute mlo -- check for special case
        * that d is a normalized power of 2.
@@ -768,82 +760,82 @@ _DEFUN (_dtoa_r,
 
       mlo = mhi;
       if (spec_case)
-	{
-	  mhi = Balloc (ptr, mhi->_k);
-	  Bcopy (mhi, mlo);
-	  mhi = lshift (ptr, mhi, Log2P);
-	}
+        {
+          mhi = Balloc (ptr, mhi->_k);
+          Bcopy (mhi, mlo);
+          mhi = lshift (ptr, mhi, Log2P);
+        }
 
       for (i = 1;; i++)
-	{
-	  dig = quorem (b, S) + '0';
-	  /* Do we yet have the shortest decimal string
-	   * that will round to d?
-	   */
-	  j = cmp (b, mlo);
-	  delta = diff (ptr, S, mhi);
-	  j1 = delta->_sign ? 1 : cmp (b, delta);
-	  Bfree (ptr, delta);
+        {
+          dig = quorem (b, S) + '0';
+          /* Do we yet have the shortest decimal string
+           * that will round to d?
+           */
+          j = cmp (b, mlo);
+          delta = diff (ptr, S, mhi);
+          j1 = delta->_sign ? 1 : cmp (b, delta);
+          Bfree (ptr, delta);
 #ifndef ROUND_BIASED
-	  if (j1 == 0 && !mode && !(word1 (d) & 1))
-	    {
-	      if (dig == '9')
-		goto round_9_up;
-	      if (j > 0)
-		dig++;
-	      *s++ = dig;
-	      goto ret;
-	    }
+          if (j1 == 0 && !mode && !(word1 (d) & 1))
+            {
+              if (dig == '9')
+                goto round_9_up;
+              if (j > 0)
+                dig++;
+              *s++ = dig;
+              goto ret;
+            }
 #endif
-	  if (j < 0 || (j == 0 && !mode
+          if (j < 0 || (j == 0 && !mode
 #ifndef ROUND_BIASED
-			&& !(word1 (d) & 1)
+                        && !(word1 (d) & 1)
 #endif
-	      ))
-	    {
-	      if (j1 > 0)
-		{
-		  b = lshift (ptr, b, 1);
-		  j1 = cmp (b, S);
-		  if ((j1 > 0 || (j1 == 0 && dig & 1)) && dig++ == '9')
-		    goto round_9_up;
-		}
-	      *s++ = dig;
-	      goto ret;
-	    }
-	  if (j1 > 0)
-	    {
-	      if (dig == '9')
-		{		/* possible if i == 1 */
-		round_9_up:
-		  *s++ = '9';
-		  goto roundoff;
-		}
-	      *s++ = dig + 1;
-	      goto ret;
-	    }
-	  *s++ = dig;
-	  if (i == ilim)
-	    break;
-	  b = multadd (ptr, b, 10, 0);
-	  if (mlo == mhi)
-	    {
-	      mlo = mhi = multadd (ptr, mhi, 10, 0);
-	    }
-	  else
-	    {
-	      mlo = multadd (ptr, mlo, 10, 0);
-	      mhi = multadd (ptr, mhi, 10, 0);
-	    }
-	}
+              ))
+            {
+              if (j1 > 0)
+                {
+                  b = lshift (ptr, b, 1);
+                  j1 = cmp (b, S);
+                  if ((j1 > 0 || (j1 == 0 && dig & 1)) && dig++ == '9')
+                    goto round_9_up;
+                }
+              *s++ = dig;
+              goto ret;
+            }
+          if (j1 > 0)
+            {
+              if (dig == '9')
+                {               /* possible if i == 1 */
+                round_9_up:
+                  *s++ = '9';
+                  goto roundoff;
+                }
+              *s++ = dig + 1;
+              goto ret;
+            }
+          *s++ = dig;
+          if (i == ilim)
+            break;
+          b = multadd (ptr, b, 10, 0);
+          if (mlo == mhi)
+            {
+              mlo = mhi = multadd (ptr, mhi, 10, 0);
+            }
+          else
+            {
+              mlo = multadd (ptr, mlo, 10, 0);
+              mhi = multadd (ptr, mhi, 10, 0);
+            }
+        }
     }
   else
     for (i = 1;; i++)
       {
-	*s++ = dig = quorem (b, S) + '0';
-	if (i >= ilim)
-	  break;
-	b = multadd (ptr, b, 10, 0);
+        *s++ = dig = quorem (b, S) + '0';
+        if (i >= ilim)
+          break;
+        b = multadd (ptr, b, 10, 0);
       }
 
   /* Round off last digit */
@@ -854,12 +846,12 @@ _DEFUN (_dtoa_r,
     {
     roundoff:
       while (*--s == '9')
-	if (s == s0)
-	  {
-	    k++;
-	    *s++ = '1';
-	    goto ret;
-	  }
+        if (s == s0)
+          {
+            k++;
+            *s++ = '1';
+            goto ret;
+          }
       ++*s++;
     }
   else
@@ -872,9 +864,9 @@ ret:
   if (mhi)
     {
       if (mlo && mlo != mhi)
-	{
-	  Bfree (ptr, mlo);
-	}
+        {
+          Bfree (ptr, mlo);
+        }
       Bfree (ptr, mhi);
     }
 ret1:
@@ -902,12 +894,9 @@ free_Bigints (struct _Jv_Bigint *p)
 
 _VOID
 _DEFUN (_dtoa,
-	(_d, mode, ndigits, decpt, sign, rve, buf, float_type),
-	double _d _AND
-	int mode _AND
-	int ndigits _AND
-	int *decpt _AND
-	int *sign _AND char **rve _AND char *buf _AND int float_type)
+        (_d, mode, ndigits, decpt, sign, rve, buf, float_type),
+        double _d _AND
+        int mode _AND int ndigits _AND int *decpt _AND int *sign _AND char **rve _AND char *buf _AND int float_type)
 {
   struct _Jv_reent reent;
   char *p;

@@ -53,15 +53,14 @@ Rye_split_string (const char *str, const char *delim)
       return NULL;
     }
 
-  for (v = strtok_r (o, delim, &save);
-       v != NULL; v = strtok_r (NULL, delim, &save))
+  for (v = strtok_r (o, delim, &save); v != NULL; v = strtok_r (NULL, delim, &save))
     {
       r = (char **) realloc (r, sizeof (char *) * (count + 1));
       if (r == NULL)
-	{
-	  free (o);
-	  return NULL;
-	}
+        {
+          free (o);
+          return NULL;
+        }
       r[count - 1] = strdup (v);
       r[count] = NULL;
       count++;
@@ -121,10 +120,10 @@ Rye_str_array_find (RSTR_ARRAY array, const char *value)
   for (i = 0; array[i] != NULL; i++)
     {
       if (strcasecmp (array[i], value) == 0)
-	{
-	  found = i;
-	  break;
-	}
+        {
+          found = i;
+          break;
+        }
     }
 
   return found;
@@ -146,10 +145,10 @@ Rye_str_array_find_substr (RSTR_ARRAY array, const char *substr)
   for (i = 0; array[i] != NULL; i++)
     {
       if (strstr (array[i], substr) != NULL)
-	{
-	  found = i;
-	  break;
-	}
+        {
+          found = i;
+          break;
+        }
     }
 
   return found;

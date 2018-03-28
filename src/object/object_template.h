@@ -41,8 +41,8 @@
 typedef struct obj_tempassign
 {
 
-  struct obj_template *obj;	/* if new object assignment */
-  DB_VALUE *variable;		/* if non-object assignment */
+  struct obj_template *obj;     /* if new object assignment */
+  DB_VALUE *variable;           /* if non-object assignment */
 
   /*
    * cache of attribute definition, must be verified as part
@@ -73,8 +73,8 @@ typedef struct obj_template
   SM_CLASS *class_;
 
   /* class cache validation info */
-  int tran_id;			/* transaction id at the time the template was created */
-  unsigned int schema_id;	/* schema counter at the time the template was created */
+  int tran_id;                  /* transaction id at the time the template was created */
+  unsigned int schema_id;       /* schema counter at the time the template was created */
 
   /* template assignment vector */
   OBJ_TEMPASSIGN **assignments;
@@ -103,26 +103,19 @@ extern OBJ_TEMPLATE *obt_edit_object (MOP object);
 extern int obt_quit (OBJ_TEMPLATE * template_ptr);
 
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern int obt_set (OBJ_TEMPLATE * template_ptr, const char *attname,
-		    DB_VALUE * value);
+extern int obt_set (OBJ_TEMPLATE * template_ptr, const char *attname, DB_VALUE * value);
 #endif
 extern void obt_set_label (OBJ_TEMPLATE * template_ptr, DB_VALUE * label);
 extern int obt_update (OBJ_TEMPLATE * template_ptr, MOP * newobj);
-extern int obt_assign (OBJ_TEMPLATE * template_ptr, SM_ATTRIBUTE * att,
-		       DB_VALUE * value);
+extern int obt_assign (OBJ_TEMPLATE * template_ptr, SM_ATTRIBUTE * att, DB_VALUE * value);
 
 /* UTILITY FUNCTIONS */
 
-extern DB_VALUE *obt_check_assignment (SM_ATTRIBUTE * att,
-				       DB_VALUE * proposed_value,
-				       unsigned force_check_not_null);
-extern int obt_update_internal (OBJ_TEMPLATE * template_ptr, MOP * newobj,
-				int check_non_null);
+extern DB_VALUE *obt_check_assignment (SM_ATTRIBUTE * att, DB_VALUE * proposed_value, unsigned force_check_not_null);
+extern int obt_update_internal (OBJ_TEMPLATE * template_ptr, MOP * newobj, int check_non_null);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int obt_find_attribute (OBJ_TEMPLATE * template_ptr,
-			       const char *name, SM_ATTRIBUTE ** attp);
-extern int obt_desc_set (OBJ_TEMPLATE * template_ptr, SM_DESCRIPTOR * desc,
-			 DB_VALUE * value);
+extern int obt_find_attribute (OBJ_TEMPLATE * template_ptr, const char *name, SM_ATTRIBUTE ** attp);
+extern int obt_desc_set (OBJ_TEMPLATE * template_ptr, SM_DESCRIPTOR * desc, DB_VALUE * value);
 #endif
 extern int obt_check_missing_assignments (OBJ_TEMPLATE * template_ptr);
 #if defined(ENABLE_UNUSED_FUNCTION)

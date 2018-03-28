@@ -42,7 +42,7 @@
 #include "schema_manager.h"
 #include "system_parameter.h"
 #include "dbdef.h"
-#include "db.h"			/* for db_Connect_status */
+#include "db.h"                 /* for db_Connect_status */
 #include "porting.h"
 #include "network_interface_cl.h"
 
@@ -109,8 +109,7 @@ tran_cache_tran_settings (int tran_index, int lock_timeout)
  * Note: Retrieve transaction settings.
  */
 void
-tran_get_tran_settings (int *lock_wait_in_msecs,
-			TRAN_ISOLATION * tran_isolation)
+tran_get_tran_settings (int *lock_wait_in_msecs, TRAN_ISOLATION * tran_isolation)
 {
   *lock_wait_in_msecs = TM_TRAN_WAIT_MSECS ();
   /* lock timeout in milliseconds */ ;
@@ -168,14 +167,13 @@ tran_reset_isolation (TRAN_ISOLATION isolation)
   if (isolation != TRAN_DEFAULT_ISOLATION)
     {
       error_code = ER_LOG_INVALID_ISOLATION_LEVEL;
-      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error_code, 2, TRAN_DEFAULT_ISOLATION, TRAN_DEFAULT_ISOLATION);
+      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2, TRAN_DEFAULT_ISOLATION, TRAN_DEFAULT_ISOLATION);
       return error_code;
     }
 
   assert (isolation == TRAN_DEFAULT_ISOLATION);
 
-#if 0				/* unused */
+#if 0                           /* unused */
   error_code = log_reset_isolation (isolation);
 #endif
 
@@ -222,9 +220,9 @@ tran_commit ()
       /* Flush virtual objects first so that locator_all_flush doesn't see any */
       error_code = locator_all_flush ();
       if (error_code != NO_ERROR)
-	{
-	  return error_code;
-	}
+        {
+          return error_code;
+        }
     }
 
   /* Clear all the queries */
@@ -248,17 +246,16 @@ tran_commit ()
       /* The commit failed */
       error_code = er_errid ();
 #if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "tran_commit: Unable to commit. Transaction was aborted\n");
+      er_log_debug (ARG_FILE_LINE, "tran_commit: Unable to commit. Transaction was aborted\n");
 #endif /* RYE_DEBUG */
       break;
 
     case TRAN_UNACTIVE_UNKNOWN:
       if (!BOOT_IS_CLIENT_RESTARTED ())
-	{
-	  error_code = er_errid ();
-	  break;
-	}
+        {
+          error_code = er_errid ();
+          break;
+        }
       /* Fall Thru */
     case TRAN_RECOVERY:
     case TRAN_ACTIVE:
@@ -267,9 +264,7 @@ tran_commit ()
     default:
       error_code = er_errid ();
 #if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "tran_commit: Unknown commit state = %s at client\n",
-		    log_state_string (state));
+      er_log_debug (ARG_FILE_LINE, "tran_commit: Unknown commit state = %s at client\n", log_state_string (state));
 #endif /* RYE_DEBUG */
       break;
     }
@@ -333,10 +328,10 @@ tran_abort (void)
 
     case TRAN_UNACTIVE_UNKNOWN:
       if (!BOOT_IS_CLIENT_RESTARTED ())
-	{
-	  error_cod = er_errid ();
-	  break;
-	}
+        {
+          error_cod = er_errid ();
+          break;
+        }
       /* Fall Thru */
     case TRAN_RECOVERY:
     case TRAN_ACTIVE:
@@ -347,8 +342,7 @@ tran_abort (void)
     default:
       error_cod = er_errid ();
 #if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE, "tran_abort: Unknown abort state = %s\n",
-		    log_state_string (state));
+      er_log_debug (ARG_FILE_LINE, "tran_abort: Unknown abort state = %s\n", log_state_string (state));
 #endif /* RYE_DEBUG */
       break;
     }
@@ -375,7 +369,7 @@ tran_unilaterally_abort (void)
   char host[MAXHOSTNAMELEN];
   int pid;
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (false);
 #endif
 
@@ -391,8 +385,7 @@ tran_unilaterally_abort (void)
     }
   pid = getpid ();
 
-  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	  ER_LK_UNILATERALLY_ABORTED, 4, tm_Tran_index, user_name, host, pid);
+  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_UNILATERALLY_ABORTED, 4, tm_Tran_index, user_name, host, pid);
 
   error_code = tran_abort ();
 
@@ -421,11 +414,10 @@ tran_abort_only_client (bool is_server_down)
   if (!BOOT_IS_CLIENT_RESTARTED ())
     {
       if (is_server_down)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED, 0);
-	  return ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED, 0);
+          return ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED;
+        }
 
       return NO_ERROR;
     }
@@ -442,8 +434,7 @@ tran_abort_only_client (bool is_server_down)
     }
   else
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED, 0);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED, 0);
       return ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED;
     }
 
@@ -514,14 +505,14 @@ tran_start_topop (void)
     {
       error_code = locator_all_flush ();
       if (error_code != NO_ERROR)
-	{
+        {
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE,
-			"tran_start_topop: Unable to start a top operation. \n %s",
-			" Flush failed.\nerrmsg = %s\n", er_msg ());
+          er_log_debug (ARG_FILE_LINE,
+                        "tran_start_topop: Unable to start a top operation. \n %s",
+                        " Flush failed.\nerrmsg = %s\n", er_msg ());
 #endif /* RYE_DEBUG */
-	  goto end;
-	}
+          goto end;
+        }
     }
 
   if (tran_server_start_topop (&topop_lsa) != NO_ERROR)
@@ -545,14 +536,14 @@ tran_end_topop_commit (void)
     {
       error_code = locator_all_flush ();
       if (error_code != NO_ERROR)
-	{
+        {
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE,
-			"tm_end_topop_commit: Unable to finish a nested top oper. Flush failed.\nerrmsg = %s\n",
-			er_msg ());
+          er_log_debug (ARG_FILE_LINE,
+                        "tm_end_topop_commit: Unable to finish a nested top oper. Flush failed.\nerrmsg = %s\n",
+                        er_msg ());
 #endif /* RYE_DEBUG */
-	  goto end;
-	}
+          goto end;
+        }
     }
 
   state = tran_server_end_topop (LOG_RESULT_TOPOP_COMMIT, &topop_lsa);
@@ -561,8 +552,7 @@ tran_end_topop_commit (void)
       error_code = er_errid ();
 #if defined(RYE_DEBUG)
       er_log_debug (ARG_FILE_LINE,
-		    "tran_end_topop_commit: oper failed with state = %s at client.\n",
-		    log_state_string (state));
+                    "tran_end_topop_commit: oper failed with state = %s at client.\n", log_state_string (state));
 #endif /* RYE_DEBUG */
     }
 
@@ -587,8 +577,7 @@ tran_end_topop_abort (void)
       error_code = er_errid ();
 #if defined(RYE_DEBUG)
       er_log_debug (ARG_FILE_LINE,
-		    "tran_end_topop_abort: oper failed with state = %s at client.\n",
-		    log_state_string (state));
+                    "tran_end_topop_abort: oper failed with state = %s at client.\n", log_state_string (state));
 #endif /* RYE_DEBUG */
     }
 
@@ -629,14 +618,13 @@ tran_end_topop (LOG_RESULT_TOPOP result)
     default:
       state = tran_server_end_topop (result, &topop_lsa);
       if (state != TRAN_ACTIVE)
-	{
-	  error_code = er_errid ();
+        {
+          error_code = er_errid ();
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE,
-			"tran_end_topop: oper failed with state = %s at client.\n",
-			log_state_string (state));
+          er_log_debug (ARG_FILE_LINE,
+                        "tran_end_topop: oper failed with state = %s at client.\n", log_state_string (state));
 #endif /* RYE_DEBUG */
-	}
+        }
       break;
     }
 
@@ -713,9 +701,9 @@ tran_free_list_upto_savepoint (const char *savept_name)
   for (sp = user_savepoint_list; sp && !found; sp = sp->next)
     {
       if (intl_mbs_casecmp (sp->name, savept_name) == 0)
-	{
-	  found = true;
-	}
+        {
+          found = true;
+        }
     }
 
   /* not 'found' is not necessarily an error.  We may be rolling back to a
@@ -730,17 +718,17 @@ tran_free_list_upto_savepoint (const char *savept_name)
   if (found == true)
     {
       for (sp = user_savepoint_list; sp;)
-	{
-	  if (intl_mbs_casecmp (sp->name, savept_name) == 0)
-	    {
-	      break;
-	    }
+        {
+          if (intl_mbs_casecmp (sp->name, savept_name) == 0)
+            {
+              break;
+            }
 
-	  temp = sp;
-	  sp = sp->next;
-	  db_ws_free ((char *) temp->name);
-	  db_ws_free (temp);
-	}
+          temp = sp;
+          sp = sp->next;
+          db_ws_free ((char *) temp->name);
+          db_ws_free (temp);
+        }
       user_savepoint_list = sp;
     }
 }
@@ -808,8 +796,7 @@ tran_system_savepoint (const char *savept_name)
  *              transaction can have.
  */
 int
-tran_savepoint_internal (const char *savept_name,
-			 SAVEPOINT_TYPE savepoint_type)
+tran_savepoint_internal (const char *savept_name, SAVEPOINT_TYPE savepoint_type)
 {
   LOG_LSA savept_lsa;
   int error_code = NO_ERROR;
@@ -821,14 +808,14 @@ tran_savepoint_internal (const char *savept_name,
     {
       error_code = locator_all_flush ();
       if (error_code != NO_ERROR)
-	{
+        {
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE,
-			"tran_savepoint_internal: Unable to start a top operation\n Flush failed.\nerrmsg = %s",
-			er_msg ());
+          er_log_debug (ARG_FILE_LINE,
+                        "tran_savepoint_internal: Unable to start a top operation\n Flush failed.\nerrmsg = %s",
+                        er_msg ());
 #endif /* RYE_DEBUG */
-	  return error_code;
-	}
+          return error_code;
+        }
     }
 
   if (tran_server_savepoint (savept_name, &savept_lsa) != NO_ERROR)
@@ -842,9 +829,9 @@ tran_savepoint_internal (const char *savept_name,
     {
       error_code = tran_add_savepoint (savept_name);
       if (error_code != NO_ERROR)
-	{
-	  return error_code;
-	}
+        {
+          return error_code;
+        }
     }
 
   return error_code;
@@ -862,8 +849,7 @@ tran_savepoint_internal (const char *savept_name,
 int
 tran_abort_upto_system_savepoint (const char *savepoint_name)
 {
-  return tran_internal_abort_upto_savepoint (savepoint_name,
-					     SYSTEM_SAVEPOINT);
+  return tran_internal_abort_upto_savepoint (savepoint_name, SYSTEM_SAVEPOINT);
 }
 #endif
 
@@ -915,8 +901,7 @@ tran_abort_upto_user_savepoint (const char *savepoint_name)
  *              that need to be accessed in the future.
  */
 int
-tran_internal_abort_upto_savepoint (const char *savepoint_name,
-				    SAVEPOINT_TYPE savepoint_type)
+tran_internal_abort_upto_savepoint (const char *savepoint_name, SAVEPOINT_TYPE savepoint_type)
 {
   int error_code = NO_ERROR;
   LOG_LSA savept_lsa;
@@ -944,25 +929,24 @@ tran_internal_abort_upto_savepoint (const char *savepoint_name,
     {
       error_code = er_errid ();
       if (savepoint_type == SYSTEM_SAVEPOINT && state == TRAN_UNACTIVE_UNKNOWN
-	  && error_code != NO_ERROR && !tran_has_updated ())
-	{
-	  assert (false);	/* is impossible */
+          && error_code != NO_ERROR && !tran_has_updated ())
+        {
+          assert (false);       /* is impossible */
 
-	  /*
-	   * maybe transaction has been unilaterally aborted by the system
-	   * and ER_LK_UNILATERALLY_ABORTED was overwritten by a consecutive error.
-	   */
-	  (void) tran_unilaterally_abort ();
-	}
+          /*
+           * maybe transaction has been unilaterally aborted by the system
+           * and ER_LK_UNILATERALLY_ABORTED was overwritten by a consecutive error.
+           */
+          (void) tran_unilaterally_abort ();
+        }
 
 #if defined(RYE_DEBUG)
-      if (error_code != ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED &&
-	  error_code != ER_NET_SERVER_CRASHED)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"tran_abort_upto_savepoint: oper failed with state = %s %s",
-			log_state_string (state), " at client.\n");
-	}
+      if (error_code != ER_TM_SERVER_DOWN_UNILATERALLY_ABORTED && error_code != ER_NET_SERVER_CRASHED)
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "tran_abort_upto_savepoint: oper failed with state = %s %s",
+                        log_state_string (state), " at client.\n");
+        }
 #endif /* RYE_DEBUG */
     }
 

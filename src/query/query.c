@@ -41,8 +41,7 @@
 #include "network_interface_cl.h"
 #include "transaction_cl.h"
 
-static int evaluate_shard_key (PARSER_CONTEXT * parser, PT_NODE * node,
-			       int coll_id, DB_VALUE * val);
+static int evaluate_shard_key (PARSER_CONTEXT * parser, PT_NODE * node, int coll_id, DB_VALUE * val);
 
 /*
  * prepare_query () - Prepares a query for later (and repetitive)
@@ -72,22 +71,19 @@ prepare_query (COMPILE_CONTEXT * context, XASL_STREAM * stream)
   stream->xasl_id = (XASL_ID *) malloc (sizeof (XASL_ID));
   if (stream->xasl_id == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (XASL_ID));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (XASL_ID));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
   /* send XASL stream to the server and get XASL_ID */
-  if (qmgr_prepare_query (context, stream,
-			  ws_identifier (db_get_user ())) == NULL)
+  if (qmgr_prepare_query (context, stream, ws_identifier (db_get_user ())) == NULL)
     {
       free_and_init (stream->xasl_id);
       return ((ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
     }
 
   /* if the query is not found in the cache */
-  if (stream->xasl_stream == NULL && stream->xasl_id &&
-      XASL_ID_IS_NULL (stream->xasl_id))
+  if (stream->xasl_stream == NULL && stream->xasl_id && XASL_ID_IS_NULL (stream->xasl_id))
     {
       free_and_init (stream->xasl_id);
     }
@@ -98,8 +94,7 @@ prepare_query (COMPILE_CONTEXT * context, XASL_STREAM * stream)
 }
 
 static int
-evaluate_shard_key (PARSER_CONTEXT * parser, PT_NODE * node, int coll_id,
-		    DB_VALUE * val)
+evaluate_shard_key (PARSER_CONTEXT * parser, PT_NODE * node, int coll_id, DB_VALUE * val)
 {
   DB_VALUE *tmp_val = NULL;
 
@@ -107,7 +102,7 @@ evaluate_shard_key (PARSER_CONTEXT * parser, PT_NODE * node, int coll_id,
 
   if (node->node_type != PT_VALUE && node->node_type != PT_HOST_VAR)
     {
-      assert (false);		/* is impossible */
+      assert (false);           /* is impossible */
       goto exit_on_error;
     }
 
@@ -119,28 +114,27 @@ evaluate_shard_key (PARSER_CONTEXT * parser, PT_NODE * node, int coll_id,
 
       (void) db_value_clone (tmp_val, val);
 
-#if 1				/* TODO - do not delete me; need for rsql */
+#if 1                           /* TODO - do not delete me; need for rsql */
       if (!TP_IS_CHAR_TYPE (DB_VALUE_DOMAIN_TYPE (val)))
-	{
-	  dom = db_type_to_db_domain (DB_TYPE_VARCHAR);
-	  if (dom == NULL)
-	    {
-	      assert (false);	/* is impossible */
-	      goto exit_on_error;
-	    }
+        {
+          dom = db_type_to_db_domain (DB_TYPE_VARCHAR);
+          if (dom == NULL)
+            {
+              assert (false);   /* is impossible */
+              goto exit_on_error;
+            }
 
-	  /* the domains don't match, must attempt coercion */
-	  dom_status = tp_value_coerce (val, val, dom);
-	  if (dom_status != DOMAIN_COMPATIBLE)
-	    {
-	      assert (false);	/* is impossible */
-	      (void) tp_domain_status_er_set (dom_status, ARG_FILE_LINE,
-					      val, dom);
-	      assert (er_errid () != NO_ERROR);
+          /* the domains don't match, must attempt coercion */
+          dom_status = tp_value_coerce (val, val, dom);
+          if (dom_status != DOMAIN_COMPATIBLE)
+            {
+              assert (false);   /* is impossible */
+              (void) tp_domain_status_er_set (dom_status, ARG_FILE_LINE, val, dom);
+              assert (er_errid () != NO_ERROR);
 
-	      goto exit_on_error;
-	    }
-	}
+              goto exit_on_error;
+            }
+        }
 #endif
 
       db_string_put_cs_and_collation (val, coll_id);
@@ -167,8 +161,7 @@ exit_on_error:
  *   flag(in)   : flag to determine if this is an asynchronous query
  */
 int
-execute_query (DB_SESSION * session, PT_NODE * statement,
-	       QFILE_LIST_ID ** list_idp, QUERY_FLAG flag)
+execute_query (DB_SESSION * session, PT_NODE * statement, QFILE_LIST_ID ** list_idp, QUERY_FLAG flag)
 {
   int ret = NO_ERROR;
   PARSER_CONTEXT *parser;
@@ -200,10 +193,9 @@ execute_query (DB_SESSION * session, PT_NODE * statement,
   /* defense code; check iff is DDL */
   if (pt_is_ddl_statement (statement))
     {
-      assert (false);		/* currently, is impossible */
-      ret = ER_GENERIC_ERROR;	/* TODO - */
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 1,
-	      "execute_query(): Not permit DDL statement");
+      assert (false);           /* currently, is impossible */
+      ret = ER_GENERIC_ERROR;   /* TODO - */
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 1, "execute_query(): Not permit DDL statement");
 
       db_value_clear (shard_key);
 
@@ -220,96 +212,93 @@ execute_query (DB_SESSION * session, PT_NODE * statement,
 
       /* defense code */
       if (session->shardkeys == NULL)
-	{
-	  assert (false);	/* is impossible */
-	  db_value_clear (shard_key);
+        {
+          assert (false);       /* is impossible */
+          db_value_clear (shard_key);
 
-	  ret = ER_SHARD_NO_SHARD_KEY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
+          ret = ER_SHARD_NO_SHARD_KEY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
 
-	  return ret;
-	}
+          return ret;
+        }
 
-      if (evaluate_shard_key (parser, session->shardkeys[0].value,
-			      session->shardkey_coll_id,
-			      shard_key) != NO_ERROR)
-	{
-	  db_value_clear (shard_key);
+      if (evaluate_shard_key (parser, session->shardkeys[0].value, session->shardkey_coll_id, shard_key) != NO_ERROR)
+        {
+          db_value_clear (shard_key);
 
-	  ret = ER_SHARD_NO_SHARD_KEY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
+          ret = ER_SHARD_NO_SHARD_KEY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
 
-	  return ret;		/* error */
-	}
+          return ret;           /* error */
+        }
 
       i = 1;
 
-#if 1				/* TODO - do not delete me; need for rsql */
+#if 1                           /* TODO - do not delete me; need for rsql */
       if (session->num_shardkeys > 1)
-	{
-	  DB_VALUE prev_key_val;
+        {
+          DB_VALUE prev_key_val;
 
-	  DB_MAKE_NULL (&prev_key_val);
+          DB_MAKE_NULL (&prev_key_val);
 
-	  for (; i < session->num_shardkeys; i++)
-	    {
-	      db_value_clear (&prev_key_val);
-	      db_value_clone (shard_key, &prev_key_val);
-	      db_value_clear (shard_key);
+          for (; i < session->num_shardkeys; i++)
+            {
+              db_value_clear (&prev_key_val);
+              db_value_clone (shard_key, &prev_key_val);
+              db_value_clear (shard_key);
 
-	      if (evaluate_shard_key (parser, session->shardkeys[i].value,
-				      session->shardkey_coll_id,
-				      shard_key) != NO_ERROR)
-		{
-		  break;	/* error */
-		}
+              if (evaluate_shard_key (parser, session->shardkeys[i].value,
+                                      session->shardkey_coll_id, shard_key) != NO_ERROR)
+                {
+                  break;        /* error */
+                }
 
-	      if (db_value_compare (shard_key, &prev_key_val) != DB_EQ)
-		{
-		  break;	/* error */
-		}
-	    }
+              if (db_value_compare (shard_key, &prev_key_val) != DB_EQ)
+                {
+                  break;        /* error */
+                }
+            }
 
-	  db_value_clear (&prev_key_val);
-	}
+          db_value_clear (&prev_key_val);
+        }
 #endif
 
       /* check iff has only one shardkey */
       if (i == session->num_shardkeys)
-	{
-	  /* found only one shard key */
+        {
+          /* found only one shard key */
 
-	  if (shard_key == NULL || DB_IS_NULL (shard_key))
-	    {
-	      db_value_clear (shard_key);
+          if (shard_key == NULL || DB_IS_NULL (shard_key))
+            {
+              db_value_clear (shard_key);
 
-	      ret = ER_SHARD_NO_SHARD_KEY;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
+              ret = ER_SHARD_NO_SHARD_KEY;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
 
-	      return ret;
-	    }
-	}
+              return ret;
+            }
+        }
       else
-	{
-	  /* found another shard keys; is error or all-shard SQL */
+        {
+          /* found another shard keys; is error or all-shard SQL */
 
-	  db_value_clear (shard_key);
+          db_value_clear (shard_key);
 
-	  if (session->shardkey_required)
-	    {
-	      /* is DML */
-	      ret = ER_SHARD_CANT_ASSIGN_TWO_SHARD_KEY_A_STMT;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
+          if (session->shardkey_required)
+            {
+              /* is DML */
+              ret = ER_SHARD_CANT_ASSIGN_TWO_SHARD_KEY_A_STMT;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ret, 0);
 
-	      return ret;
-	    }
-	  else
-	    {
-	      /* is not DML */
-	      assert (DB_IS_NULL (shard_key));
-	      shard_key = NULL;
-	    }
-	}
+              return ret;
+            }
+          else
+            {
+              /* is not DML */
+              assert (DB_IS_NULL (shard_key));
+              shard_key = NULL;
+            }
+        }
     }
   else
     {
@@ -331,11 +320,10 @@ execute_query (DB_SESSION * session, PT_NODE * statement,
 
   *list_idp =
     qmgr_execute_query (statement->xasl_id, &parser->query_id,
-			parser->host_var_count,
-			parser->host_variables, flag,
-			tran_get_query_timeout (),
-			shard_key != NULL ? session->groupid : GLOBAL_GROUPID,
-			shard_key, &qe_status_flag);
+                        parser->host_var_count,
+                        parser->host_variables, flag,
+                        tran_get_query_timeout (),
+                        shard_key != NULL ? session->groupid : GLOBAL_GROUPID, shard_key, &qe_status_flag);
 
   db_value_clear (shard_key);
 

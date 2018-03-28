@@ -32,13 +32,13 @@
 typedef struct ini_table INI_TABLE;
 struct ini_table
 {
-  int size;			/* storage size */
-  int n;			/* number of entries in INI_TABLE */
-  int nsec;			/* number of sector in INI_TABLE */
-  char **key;			/* list of string keys */
-  char **val;			/* list of string values */
-  int *lineno;			/* list of lineno values for keys */
-  unsigned int *hash;		/* list of hash values for keys */
+  int size;                     /* storage size */
+  int n;                        /* number of entries in INI_TABLE */
+  int nsec;                     /* number of sector in INI_TABLE */
+  char **key;                   /* list of string keys */
+  char **val;                   /* list of string values */
+  int *lineno;                  /* list of lineno values for keys */
+  unsigned int *hash;           /* list of hash values for keys */
 };
 
 extern char *ini_str_lower (const char *s);
@@ -47,8 +47,7 @@ extern char *ini_str_trim (const char *s);
 extern INI_TABLE *ini_parser_load (const char *ininame);
 #endif
 extern INI_TABLE *ini_table_new (int size);
-extern int ini_table_set (INI_TABLE * ini, const char *key, const char *val,
-			  const int lineno);
+extern int ini_table_set (INI_TABLE * ini, const char *key, const char *val, const int lineno);
 extern void ini_parser_free (INI_TABLE * ini);
 
 extern int ini_findsec (INI_TABLE * ini, const char *sec);
@@ -58,22 +57,15 @@ extern int ini_hassec (const char *key);
 extern int ini_seccmp (const char *key1, const char *key2);
 #endif
 
-extern const char *ini_getstr (INI_TABLE * ini, const char *sec,
-			       const char *key, const char *def, int *lineno);
-extern int ini_getint (INI_TABLE * ini, const char *sec, const char *key,
-		       int def, int *lineno);
-extern int ini_getuint (INI_TABLE * ini, const char *sec, const char *key,
-			int def, int *lineno);
+extern const char *ini_getstr (INI_TABLE * ini, const char *sec, const char *key, const char *def, int *lineno);
+extern int ini_getint (INI_TABLE * ini, const char *sec, const char *key, int def, int *lineno);
+extern int ini_getuint (INI_TABLE * ini, const char *sec, const char *key, int def, int *lineno);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern int ini_getuint_min (INI_TABLE * ini, const char *sec, const char *key,
-			    int def, int min, int *lineno);
+extern int ini_getuint_min (INI_TABLE * ini, const char *sec, const char *key, int def, int min, int *lineno);
 #endif
-extern int ini_getuint_max (INI_TABLE * ini, const char *sec, const char *key,
-			    int def, int max, int *lineno);
-extern int ini_gethex (INI_TABLE * ini, const char *sec, const char *key,
-		       int def, int *lineno);
+extern int ini_getuint_max (INI_TABLE * ini, const char *sec, const char *key, int def, int max, int *lineno);
+extern int ini_gethex (INI_TABLE * ini, const char *sec, const char *key, int def, int *lineno);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern float ini_getfloat (INI_TABLE * ini, const char *sec, const char *key,
-			   float def, int *lineno);
+extern float ini_getfloat (INI_TABLE * ini, const char *sec, const char *key, float def, int *lineno);
 #endif
 #endif /* _INI_PARSER_H_ */

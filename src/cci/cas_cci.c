@@ -138,31 +138,23 @@ static int cas_connect_internal (T_CON_HANDLE * con_handle, int *connect);
 static const char *cci_get_err_msg_internal (int error);
 
 static T_CON_HANDLE *get_new_connection (T_ALTER_HOST * alter_hosts,
-					 const char *server_list,
-					 const char *port_name,
-					 const char *dbname,
-					 const char *dbuser,
-					 const char *dbpasswd,
-					 const char *property_str,
-					 const T_CON_PROPERTY * con_property);
-static void set_error_buffer (T_CCI_ERROR * err_buf_p,
-			      int error, const char *message, ...);
-static void copy_error_buffer (T_CCI_ERROR * dest_err_buf_p,
-			       const T_CCI_ERROR * src_err_buf_p);
+                                         const char *server_list,
+                                         const char *port_name,
+                                         const char *dbname,
+                                         const char *dbuser,
+                                         const char *dbpasswd,
+                                         const char *property_str, const T_CON_PROPERTY * con_property);
+static void set_error_buffer (T_CCI_ERROR * err_buf_p, int error, const char *message, ...);
+static void copy_error_buffer (T_CCI_ERROR * dest_err_buf_p, const T_CCI_ERROR * src_err_buf_p);
 static int cci_end_tran_internal (T_CON_HANDLE * con_handle, char type);
-static void get_last_error (const T_CON_HANDLE * con_handle,
-			    T_CCI_ERROR * dest_err_buf);
+static void get_last_error (const T_CON_HANDLE * con_handle, T_CCI_ERROR * dest_err_buf);
 static int con_api_pre (CCI_CONN * conn, CCI_STMT * stmt,
-			T_CON_HANDLE ** ret_con_handle, int flag,
-			const char *func_name);
+                        T_CON_HANDLE ** ret_con_handle, int flag, const char *func_name);
 static int stmt_api_pre (CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
-			 T_REQ_HANDLE ** ret_req_handle,
-			 const char *func_name);
+                         T_REQ_HANDLE ** ret_req_handle, const char *func_name);
 static int con_stmt_api_post (CCI_CONN * conn, CCI_STMT * stmt,
-			      T_CON_HANDLE * con_handle, int error,
-			      const char *func_name);
-static int cci_execute_internal (CCI_STMT * stmt, char flag,
-				 int max_col_size, int gid);
+                              T_CON_HANDLE * con_handle, int error, const char *func_name);
+static int cci_execute_internal (CCI_STMT * stmt, char flag, int max_col_size, int gid);
 
 /************************************************************************
  * INTERFACE VARIABLES                                                  *
@@ -222,7 +214,7 @@ cci_get_version (int *major, int *minor, int *patch)
 
 static int
 cci_connect_internal (CCI_CONN * conn, const char *url, const char *user,
-		      const char *pass, T_CON_HANDLE ** ret_con_handle)
+                      const char *pass, T_CON_HANDLE ** ret_con_handle)
 {
   char *token[MAX_URL_MATCH_COUNT] = { NULL };
   int error = CCI_ER_NO_ERROR;
@@ -298,8 +290,7 @@ cci_connect_internal (CCI_CONN * conn, const char *url, const char *user,
       return error;
     }
 
-  error = cci_url_get_althosts (&alter_hosts, url_server_info,
-				con_property.load_balance);
+  error = cci_url_get_althosts (&alter_hosts, url_server_info, con_property.load_balance);
   if (error < 0)
     {
       con_property_free (&con_property);
@@ -317,16 +308,15 @@ cci_connect_internal (CCI_CONN * conn, const char *url, const char *user,
   MUTEX_UNLOCK (health_check_th_mutex);
 
   con_handle = get_new_connection (alter_hosts, url_server_info,
-				   url_port_name, url_dbname, user, pass,
-				   url_property, &con_property);
+                                   url_port_name, url_dbname, user, pass, url_property, &con_property);
   if (con_handle == NULL)
     {
       FREE_MEM (alter_hosts);
 
       for (i = 0; i < MAX_URL_MATCH_COUNT; i++)
-	{
-	  FREE_MEM (token[i]);
-	}
+        {
+          FREE_MEM (token[i]);
+        }
 
       con_property_free (&con_property);
       set_error_buffer (&conn->err_buf, CCI_ER_CON_HANDLE, NULL);
@@ -369,8 +359,7 @@ ret:
 }
 
 int
-cci_connect (CCI_CONN * conn, char *url, const char *user,
-	     const char *password)
+cci_connect (CCI_CONN * conn, char *url, const char *user, const char *password)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error;
@@ -458,13 +447,13 @@ cci_end_tran_internal (T_CON_HANDLE * con_handle, char type)
        * closed or freed
        */
       if (IS_CAS_STATEMENT_POOLING (con_handle))
-	{
-	  hm_req_handle_close_all_resultsets (con_handle);
-	}
+        {
+          hm_req_handle_close_all_resultsets (con_handle);
+        }
       else
-	{
-	  hm_req_handle_free_all (con_handle);
-	}
+        {
+          hm_req_handle_free_all (con_handle);
+        }
     }
 
   if (IS_OUT_TRAN (con_handle))
@@ -534,8 +523,7 @@ reset_connect (T_CON_HANDLE * con_handle, T_REQ_HANDLE * req_handle)
  * after the last failure of a host is over rc_time.
  */
 int
-cci_prepare (CCI_CONN * conn, CCI_STMT * stmt, const char *sql_stmt,
-	     char flag)
+cci_prepare (CCI_CONN * conn, CCI_STMT * stmt, const char *sql_stmt, char flag)
 {
   int error = CCI_ER_NO_ERROR;
   T_CON_HANDLE *con_handle = NULL;
@@ -559,8 +547,7 @@ cci_prepare (CCI_CONN * conn, CCI_STMT * stmt, const char *sql_stmt,
 
   if (con_handle->con_property.log_trace_api)
     {
-      CCI_LOGF_DEBUG (con_handle->con_logger, "FLAG[%d],SQL[%s]", flag,
-		      sql_stmt);
+      CCI_LOGF_DEBUG (con_handle->con_logger, "FLAG[%d],SQL[%s]", flag, sql_stmt);
     }
 
   error = hm_req_handle_alloc (con_handle, &req_handle);
@@ -569,8 +556,7 @@ cci_prepare (CCI_CONN * conn, CCI_STMT * stmt, const char *sql_stmt,
       goto prepare_error;
     }
 
-  if (IS_OUT_TRAN (con_handle) && IS_FORCE_FAILBACK (con_handle)
-      && !IS_INVALID_SOCKET (con_handle->sock_fd))
+  if (IS_OUT_TRAN (con_handle) && IS_FORCE_FAILBACK (con_handle) && !IS_INVALID_SOCKET (con_handle->sock_fd))
     {
       hm_force_close_connection (con_handle);
     }
@@ -581,18 +567,18 @@ cci_prepare (CCI_CONN * conn, CCI_STMT * stmt, const char *sql_stmt,
   error = qe_prepare (req_handle, con_handle, sql_stmt, flag, 0);
 
   while ((retry_count-- > 0)
-	 && (IS_OUT_TRAN (con_handle) || is_first_prepare_in_tran)
-	 && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
+         && (IS_OUT_TRAN (con_handle) || is_first_prepare_in_tran)
+         && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
     {
       if (NEED_TO_RECONNECT (con_handle, error))
-	{
-	  /* Finally, reset_connect will return ER_TIMEOUT */
-	  error = reset_connect (con_handle, req_handle);
-	  if (error != CCI_ER_NO_ERROR)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* Finally, reset_connect will return ER_TIMEOUT */
+          error = reset_connect (con_handle, req_handle);
+          if (error != CCI_ER_NO_ERROR)
+            {
+              break;
+            }
+        }
 
       error = qe_prepare (req_handle, con_handle, sql_stmt, flag, 0);
     }
@@ -619,8 +605,7 @@ prepare_error:
       req_handle = NULL;
     }
 
-  if (error == CCI_ER_QUERY_TIMEOUT &&
-      con_handle->con_property.disconnect_on_query_timeout)
+  if (error == CCI_ER_QUERY_TIMEOUT && con_handle->con_property.disconnect_on_query_timeout)
     {
       CLOSE_SOCKET (con_handle->sock_fd);
       con_handle->sock_fd = INVALID_SOCKET;
@@ -713,21 +698,20 @@ cci_get_result_info (CCI_STMT * stmt, T_CCI_STMT_TYPE * cmd_type, int *num)
   switch (req_handle->handle_type)
     {
     case HANDLE_PREPARE:
-      if (req_handle->stmt_type == CCI_STMT_SELECT
-	  || req_handle->stmt_type == CCI_STMT_SELECT_UPDATE)
-	{
-	  if (num)
-	    {
-	      *num = req_handle->num_col_info;
-	    }
-	  col_info = req_handle->col_info;
-	}
+      if (req_handle->stmt_type == CCI_STMT_SELECT || req_handle->stmt_type == CCI_STMT_SELECT_UPDATE)
+        {
+          if (num)
+            {
+              *num = req_handle->num_col_info;
+            }
+          col_info = req_handle->col_info;
+        }
       break;
     case HANDLE_SCHEMA_INFO:
       if (num)
-	{
-	  *num = req_handle->num_col_info;
-	}
+        {
+          *num = req_handle->num_col_info;
+        }
       col_info = req_handle->col_info;
       break;
     default:
@@ -740,8 +724,7 @@ cci_get_result_info (CCI_STMT * stmt, T_CCI_STMT_TYPE * cmd_type, int *num)
 }
 
 int
-cci_bind_param (CCI_STMT * stmt, int index, T_CCI_TYPE a_type,
-		const void *value, char flag)
+cci_bind_param (CCI_STMT * stmt, int index, T_CCI_TYPE a_type, const void *value, char flag)
 {
   int error;
   T_CON_HANDLE *con_handle = NULL;
@@ -753,8 +736,7 @@ cci_bind_param (CCI_STMT * stmt, int index, T_CCI_TYPE a_type,
       return error;
     }
 
-  error = qe_bind_param (req_handle, index, a_type, value,
-			 UNMEASURED_LENGTH, flag);
+  error = qe_bind_param (req_handle, index, a_type, value, UNMEASURED_LENGTH, flag);
 
   CON_STMT_API_POST (NULL, stmt, con_handle, error);
 
@@ -762,8 +744,7 @@ cci_bind_param (CCI_STMT * stmt, int index, T_CCI_TYPE a_type,
 }
 
 int
-cci_bind_param_ex (CCI_STMT * stmt, int index, T_CCI_TYPE a_type,
-		   const void *value, int length, char flag)
+cci_bind_param_ex (CCI_STMT * stmt, int index, T_CCI_TYPE a_type, const void *value, int length, char flag)
 {
   int error;
   T_CON_HANDLE *con_handle = NULL;
@@ -803,8 +784,7 @@ cci_bind_param_array_size (CCI_STMT * stmt, int array_size)
 }
 
 int
-cci_bind_param_array (CCI_STMT * stmt, int index, T_CCI_TYPE a_type,
-		      const void *value, int *null_ind)
+cci_bind_param_array (CCI_STMT * stmt, int index, T_CCI_TYPE a_type, const void *value, int *null_ind)
 {
   T_CON_HANDLE *con_handle = NULL;
   T_REQ_HANDLE *req_handle = NULL;
@@ -869,12 +849,10 @@ cci_execute_internal (CCI_STMT * stmt, char flag, int max_col_size, int gid)
 
   if (con_handle->con_property.log_trace_api)
     {
-      CCI_LOGF_DEBUG (con_handle->con_logger, "FLAG[%d], MAX_COL_SIZE[%d]",
-		      flag, max_col_size);
+      CCI_LOGF_DEBUG (con_handle->con_logger, "FLAG[%d], MAX_COL_SIZE[%d]", flag, max_col_size);
     }
 
-  if (IS_OUT_TRAN (con_handle) && IS_FORCE_FAILBACK (con_handle)
-      && !IS_INVALID_SOCKET (con_handle->sock_fd))
+  if (IS_OUT_TRAN (con_handle) && IS_FORCE_FAILBACK (con_handle) && !IS_INVALID_SOCKET (con_handle->sock_fd))
     {
       hm_force_close_connection (con_handle);
     }
@@ -882,8 +860,7 @@ cci_execute_internal (CCI_STMT * stmt, char flag, int max_col_size, int gid)
 
   if (IS_CAS_STATEMENT_POOLING (con_handle) && req_handle->valid == false)
     {
-      error = qe_prepare (req_handle, con_handle, req_handle->sql_text,
-			  req_handle->prepare_flag, 1);
+      error = qe_prepare (req_handle, con_handle, req_handle->sql_text, req_handle->prepare_flag, 1);
     }
 
   is_first_exec_in_tran = IS_OUT_TRAN (con_handle);
@@ -893,25 +870,24 @@ cci_execute_internal (CCI_STMT * stmt, char flag, int max_col_size, int gid)
       error = qe_execute (req_handle, con_handle, flag, max_col_size, gid);
     }
   while ((retry_count-- > 0)
-	 && (IS_OUT_TRAN (con_handle) || is_first_exec_in_tran)
-	 && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
+         && (IS_OUT_TRAN (con_handle) || is_first_exec_in_tran)
+         && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
     {
       if (NEED_TO_RECONNECT (con_handle, error))
-	{
-	  /* Finally, reset_connect will return ER_TIMEOUT */
-	  error = reset_connect (con_handle, req_handle);
-	  if (error != CCI_ER_NO_ERROR)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* Finally, reset_connect will return ER_TIMEOUT */
+          error = reset_connect (con_handle, req_handle);
+          if (error != CCI_ER_NO_ERROR)
+            {
+              break;
+            }
+        }
 
-      error = qe_prepare (req_handle, con_handle, req_handle->sql_text,
-			  req_handle->prepare_flag, 1);
+      error = qe_prepare (req_handle, con_handle, req_handle->sql_text, req_handle->prepare_flag, 1);
       if (error < 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       error = qe_execute (req_handle, con_handle, flag, max_col_size, gid);
     }
@@ -920,24 +896,21 @@ cci_execute_internal (CCI_STMT * stmt, char flag, int max_col_size, int gid)
      the error, CAS_ER_STMT_POOLING, is returned.
      In this case, prepare and execute have to be executed again.
    */
-  while (error == CAS_ER_STMT_POOLING
-	 && IS_CAS_STATEMENT_POOLING (con_handle))
+  while (error == CAS_ER_STMT_POOLING && IS_CAS_STATEMENT_POOLING (con_handle))
     {
       req_handle_content_free (req_handle, 1);
-      error = qe_prepare (req_handle, con_handle, req_handle->sql_text,
-			  req_handle->prepare_flag, 1);
+      error = qe_prepare (req_handle, con_handle, req_handle->sql_text, req_handle->prepare_flag, 1);
       if (error < 0)
-	{
-	  goto execute_end;
-	}
+        {
+          goto execute_end;
+        }
       error = qe_execute (req_handle, con_handle, flag, max_col_size, gid);
     }
 
 execute_end:
   RESET_START_TIME (con_handle);
 
-  if (error == CCI_ER_QUERY_TIMEOUT &&
-      con_handle->con_property.disconnect_on_query_timeout)
+  if (error == CCI_ER_QUERY_TIMEOUT && con_handle->con_property.disconnect_on_query_timeout)
     {
       hm_force_close_connection (con_handle);
     }
@@ -954,18 +927,17 @@ execute_end:
       gettimeofday (&et, NULL);
       elapsed = ELAPSED_MSECS (et, st);
       if (elapsed > con_handle->con_property.slow_query_threshold_millis)
-	{
-	  char svr_info_buf[256];
+        {
+          char svr_info_buf[256];
 
-	  CCI_LOGF_DEBUG (con_handle->con_logger, "[CONHANDLE - %d:%d] "
-			  "[CAS INFO - %s, %d, %d] "
-			  "[SLOW QUERY - ELAPSED : %d] [SQL - %s]",
-			  con_handle->con_handle_id.id,
-			  con_handle->con_handle_id.id_seq,
-			  ut_cur_host_info_to_str (svr_info_buf, con_handle),
-			  CON_CAS_ID (con_handle), CON_CAS_PID (con_handle),
-			  elapsed, req_handle->sql_text);
-	}
+          CCI_LOGF_DEBUG (con_handle->con_logger, "[CONHANDLE - %d:%d] "
+                          "[CAS INFO - %s, %d, %d] "
+                          "[SLOW QUERY - ELAPSED : %d] [SQL - %s]",
+                          con_handle->con_handle_id.id,
+                          con_handle->con_handle_id.id_seq,
+                          ut_cur_host_info_to_str (svr_info_buf, con_handle),
+                          CON_CAS_ID (con_handle), CON_CAS_PID (con_handle), elapsed, req_handle->sql_text);
+        }
     }
 
   CON_STMT_API_POST (NULL, stmt, con_handle, error);
@@ -1015,8 +987,7 @@ cci_execute_batch (CCI_STMT * stmt, T_CCI_QUERY_RESULT ** qr)
 
   *qr = NULL;
 
-  if (IS_OUT_TRAN (con_handle) && IS_FORCE_FAILBACK (con_handle)
-      && !IS_INVALID_SOCKET (con_handle->sock_fd))
+  if (IS_OUT_TRAN (con_handle) && IS_FORCE_FAILBACK (con_handle) && !IS_INVALID_SOCKET (con_handle->sock_fd))
     {
       hm_force_close_connection (con_handle);
     }
@@ -1024,8 +995,7 @@ cci_execute_batch (CCI_STMT * stmt, T_CCI_QUERY_RESULT ** qr)
 
   if (IS_CAS_STATEMENT_POOLING (con_handle) && req_handle->valid == false)
     {
-      error = qe_prepare (req_handle, con_handle, req_handle->sql_text,
-			  req_handle->prepare_flag, 1);
+      error = qe_prepare (req_handle, con_handle, req_handle->sql_text, req_handle->prepare_flag, 1);
     }
 
   is_first_exec_in_tran = IS_OUT_TRAN (con_handle);
@@ -1035,47 +1005,43 @@ cci_execute_batch (CCI_STMT * stmt, T_CCI_QUERY_RESULT ** qr)
       error = qe_execute_batch (req_handle, con_handle, qr);
     }
   while ((retry_count-- > 0)
-	 && (IS_OUT_TRAN (con_handle) || is_first_exec_in_tran)
-	 && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
+         && (IS_OUT_TRAN (con_handle) || is_first_exec_in_tran)
+         && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
     {
       if (NEED_TO_RECONNECT (con_handle, error))
-	{
-	  /* Finally, reset_connect will return ER_TIMEOUT */
-	  error = reset_connect (con_handle, req_handle);
-	  if (error != CCI_ER_NO_ERROR)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* Finally, reset_connect will return ER_TIMEOUT */
+          error = reset_connect (con_handle, req_handle);
+          if (error != CCI_ER_NO_ERROR)
+            {
+              break;
+            }
+        }
 
-      error = qe_prepare (req_handle, con_handle, req_handle->sql_text,
-			  req_handle->prepare_flag, 1);
+      error = qe_prepare (req_handle, con_handle, req_handle->sql_text, req_handle->prepare_flag, 1);
       if (error < 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       error = qe_execute_batch (req_handle, con_handle, qr);
     }
 
-  while (error == CAS_ER_STMT_POOLING
-	 && IS_CAS_STATEMENT_POOLING (con_handle))
+  while (error == CAS_ER_STMT_POOLING && IS_CAS_STATEMENT_POOLING (con_handle))
     {
       req_handle_content_free (req_handle, 1);
-      error = qe_prepare (req_handle, con_handle, req_handle->sql_text,
-			  req_handle->prepare_flag, 1);
+      error = qe_prepare (req_handle, con_handle, req_handle->sql_text, req_handle->prepare_flag, 1);
       if (error < 0)
-	{
-	  goto execute_end;
-	}
+        {
+          goto execute_end;
+        }
       error = qe_execute_batch (req_handle, con_handle, qr);
     }
 
 execute_end:
   RESET_START_TIME (con_handle);
 
-  if (error == CCI_ER_QUERY_TIMEOUT &&
-      con_handle->con_property.disconnect_on_query_timeout)
+  if (error == CCI_ER_QUERY_TIMEOUT && con_handle->con_property.disconnect_on_query_timeout)
     {
       hm_force_close_connection (con_handle);
     }
@@ -1104,19 +1070,17 @@ cci_get_db_parameter (CCI_CONN * conn, T_CCI_DB_PARAM param_name, void *value)
     }
 
   error = qe_get_db_parameter (con_handle, param_name, value);
-  while ((retry_count-- > 0)
-	 && IS_OUT_TRAN (con_handle)
-	 && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
+  while ((retry_count-- > 0) && IS_OUT_TRAN (con_handle) && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
     {
       if (NEED_TO_RECONNECT (con_handle, error))
-	{
-	  /* Finally, reset_connect will return ER_TIMEOUT */
-	  error = reset_connect (con_handle, NULL);
-	  if (error != CCI_ER_NO_ERROR)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* Finally, reset_connect will return ER_TIMEOUT */
+          error = reset_connect (con_handle, NULL);
+          if (error != CCI_ER_NO_ERROR)
+            {
+              break;
+            }
+        }
 
       error = qe_get_db_parameter (con_handle, param_name, value);
     }
@@ -1127,8 +1091,7 @@ cci_get_db_parameter (CCI_CONN * conn, T_CCI_DB_PARAM param_name, void *value)
 }
 
 long
-cci_escape_string (CCI_CONN * conn, char *to, const char *from,
-		   unsigned long length)
+cci_escape_string (CCI_CONN * conn, char *to, const char *from, unsigned long length)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = CCI_ER_NO_ERROR;
@@ -1138,9 +1101,9 @@ cci_escape_string (CCI_CONN * conn, char *to, const char *from,
   if (to == NULL || from == NULL)
     {
       if (conn != NULL)
-	{
-	  set_error_buffer (&conn->err_buf, CCI_ER_INVALID_ARGS, NULL);
-	}
+        {
+          set_error_buffer (&conn->err_buf, CCI_ER_INVALID_ARGS, NULL);
+        }
       return CCI_ER_INVALID_ARGS;
     }
 
@@ -1153,17 +1116,17 @@ cci_escape_string (CCI_CONN * conn, char *to, const char *from,
   for (i = 0; i < length; i++)
     {
       if (from[i] == '\'')
-	{
-	  /* single-quote is converted to two-single-quote */
-	  *(target_ptr) = '\'';
-	  *(target_ptr + 1) = '\'';
-	  target_ptr += 2;
-	}
+        {
+          /* single-quote is converted to two-single-quote */
+          *(target_ptr) = '\'';
+          *(target_ptr + 1) = '\'';
+          target_ptr += 2;
+        }
       else
-	{
-	  *(target_ptr) = from[i];
-	  target_ptr++;
-	}
+        {
+          *(target_ptr) = from[i];
+          target_ptr++;
+        }
     }
 
   /* terminating NULL char */
@@ -1194,9 +1157,9 @@ cci_close_query_result (CCI_STMT * stmt)
   if (IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
     {
       if (IS_OUT_TRAN (con_handle))
-	{
-	  error = CCI_ER_NO_ERROR;
-	}
+        {
+          error = CCI_ER_NO_ERROR;
+        }
     }
 
   if (error == CCI_ER_NO_ERROR)
@@ -1222,17 +1185,16 @@ cci_close_req_handle (CCI_STMT * stmt)
       return error;
     }
 
-  if (req_handle->handle_type == HANDLE_PREPARE
-      || req_handle->handle_type == HANDLE_SCHEMA_INFO)
+  if (req_handle->handle_type == HANDLE_PREPARE || req_handle->handle_type == HANDLE_SCHEMA_INFO)
     {
       error = qe_close_req_handle (req_handle, con_handle);
       if (IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
-	{
-	  if (IS_OUT_TRAN (con_handle))
-	    {
-	      error = CCI_ER_NO_ERROR;
-	    }
-	}
+        {
+          if (IS_OUT_TRAN (con_handle))
+            {
+              error = CCI_ER_NO_ERROR;
+            }
+        }
     }
   else
     {
@@ -1325,8 +1287,7 @@ cci_fetch_last (CCI_STMT * stmt)
 }
 
 static int
-cci_get_data (CCI_STMT * stmt, int col_no, int a_type, void *value,
-	      int *indicator)
+cci_get_data (CCI_STMT * stmt, int col_no, int a_type, void *value, int *indicator)
 {
   T_REQ_HANDLE *req_handle = NULL;
   T_CON_HANDLE *con_handle = NULL;
@@ -1444,8 +1405,7 @@ cci_get_bit (CCI_STMT * stmt, int col_idx, int *indicator)
 }
 
 int
-cci_schema_info (CCI_CONN * conn, CCI_STMT * stmt, T_CCI_SCH_TYPE type,
-		 char *arg1, char *arg2, int flag)
+cci_schema_info (CCI_CONN * conn, CCI_STMT * stmt, T_CCI_SCH_TYPE type, char *arg1, char *arg2, int flag)
 {
   T_CON_HANDLE *con_handle = NULL;
   T_REQ_HANDLE *req_handle = NULL;
@@ -1466,24 +1426,20 @@ cci_schema_info (CCI_CONN * conn, CCI_STMT * stmt, T_CCI_SCH_TYPE type,
       goto ret;
     }
 
-  error = qe_schema_info (req_handle, con_handle, (int) type, arg1, arg2,
-			  flag);
-  while ((retry_count-- > 0)
-	 && IS_OUT_TRAN (con_handle)
-	 && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
+  error = qe_schema_info (req_handle, con_handle, (int) type, arg1, arg2, flag);
+  while ((retry_count-- > 0) && IS_OUT_TRAN (con_handle) && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
     {
       if (NEED_TO_RECONNECT (con_handle, error))
-	{
-	  /* Finally, reset_connect will return ER_TIMEOUT */
-	  error = reset_connect (con_handle, NULL);
-	  if (error != CCI_ER_NO_ERROR)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* Finally, reset_connect will return ER_TIMEOUT */
+          error = reset_connect (con_handle, NULL);
+          if (error != CCI_ER_NO_ERROR)
+            {
+              break;
+            }
+        }
 
-      error = qe_schema_info (req_handle, con_handle, (int) type, arg1, arg2,
-			      flag);
+      error = qe_schema_info (req_handle, con_handle, (int) type, arg1, arg2, flag);
     }
 
   if (error < 0)
@@ -1511,8 +1467,7 @@ cci_set_autocommit (CCI_CONN * conn, CCI_AUTOCOMMIT_MODE autocommit_mode)
       return error;
     }
 
-  if (autocommit_mode != con_handle->autocommit_mode
-      && IS_IN_TRAN (con_handle))
+  if (autocommit_mode != con_handle->autocommit_mode && IS_IN_TRAN (con_handle))
     {
       error = qe_end_tran (con_handle, CCI_TRAN_COMMIT);
     }
@@ -1615,19 +1570,17 @@ cci_get_db_version (CCI_CONN * conn, char *out_buf, int buf_size)
   SET_START_TIME_FOR_QUERY (con_handle, NULL);
 
   error = qe_get_db_version (con_handle, out_buf, buf_size);
-  while ((retry_count-- > 0)
-	 && IS_OUT_TRAN (con_handle)
-	 && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
+  while ((retry_count-- > 0) && IS_OUT_TRAN (con_handle) && IS_ER_TO_RECONNECT (error, con_handle->err_buf.err_code))
     {
       if (NEED_TO_RECONNECT (con_handle, error))
-	{
-	  /* Finally, reset_connect will return ER_TIMEOUT */
-	  error = reset_connect (con_handle, NULL);
-	  if (error != CCI_ER_NO_ERROR)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* Finally, reset_connect will return ER_TIMEOUT */
+          error = reset_connect (con_handle, NULL);
+          if (error != CCI_ER_NO_ERROR)
+            {
+              break;
+            }
+        }
 
       error = qe_get_db_version (con_handle, out_buf, buf_size);
     }
@@ -1920,7 +1873,7 @@ cci_get_err_msg_internal (int error)
     case CCI_ER_INVALID_LOB_READ_POS:
       return "Invalid lob read position";
 
-#if 0				/* unused */
+#if 0                           /* unused */
     case CCI_ER_INVALID_LOB_HANDLE:
       return "Invalid lob handle";
 #endif
@@ -2051,25 +2004,24 @@ cci_get_error_msg (int error, T_CCI_ERROR * cci_err, char *buf, int bufsize)
   else
     {
       if ((error < CCI_ER_DBMS) && (error > CCI_ER_END))
-	{
-	  snprintf (buf, bufsize, "CCI Error : %s", err_msg);
-	}
+        {
+          snprintf (buf, bufsize, "CCI Error : %s", err_msg);
+        }
       else if ((error < CAS_ER_DBMS) && (error >= CAS_ER_LAST))
-	{
-	  snprintf (buf, bufsize, "Rye CAS Error : %s", err_msg);
-	}
+        {
+          snprintf (buf, bufsize, "Rye CAS Error : %s", err_msg);
+        }
       if ((error == CCI_ER_DBMS) || (error == CAS_ER_DBMS))
-	{
-	  if (cci_err == NULL)
-	    {
-	      snprintf (buf, bufsize, "%s ", err_msg);
-	    }
-	  else
-	    {
-	      snprintf (buf, bufsize, "%s : (%d) %s", err_msg,
-			cci_err->err_code, cci_err->err_msg);
-	    }
-	}
+        {
+          if (cci_err == NULL)
+            {
+              snprintf (buf, bufsize, "%s ", err_msg);
+            }
+          else
+            {
+              snprintf (buf, bufsize, "%s : (%d) %s", err_msg, cci_err->err_code, cci_err->err_msg);
+            }
+        }
     }
 
   return 0;
@@ -2123,8 +2075,7 @@ cci_server_shard_nodeid (CCI_CONN * conn)
 }
 
 int
-cci_shard_get_info (CCI_CONN * conn, CCI_SHARD_NODE_INFO ** node_info,
-		    CCI_SHARD_GROUPID_INFO ** groupid_info)
+cci_shard_get_info (CCI_CONN * conn, CCI_SHARD_NODE_INFO ** node_info, CCI_SHARD_GROUPID_INFO ** groupid_info)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
@@ -2139,9 +2090,8 @@ cci_shard_get_info (CCI_CONN * conn, CCI_SHARD_NODE_INFO ** node_info,
     }
 
   error = net_shard_get_info (&con_handle->alter_hosts->host_info[0],
-			      con_handle->db_name, 0, 0, 0,
-			      con_handle->con_property.query_timeout,
-			      node_info, groupid_info, NULL);
+                              con_handle->db_name, 0, 0, 0,
+                              con_handle->con_property.query_timeout, node_info, groupid_info, NULL);
 
   CON_STMT_API_POST (conn, NULL, con_handle, error);
 
@@ -2164,8 +2114,7 @@ cci_shard_group_info_free (CCI_SHARD_GROUPID_INFO * groupid_info)
 
 #if defined(CCI_SHARD_ADMIN)
 int
-cci_shard_init (CCI_CONN * conn, int groupid_count, int init_num_nodes,
-		const char **init_nodes)
+cci_shard_init (CCI_CONN * conn, int groupid_count, int init_num_nodes, const char **init_nodes)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
@@ -2176,8 +2125,7 @@ cci_shard_init (CCI_CONN * conn, int groupid_count, int init_num_nodes,
       return error;
     }
 
-  error = net_shard_init (groupid_count, init_num_nodes, init_nodes,
-			  con_handle);
+  error = net_shard_init (groupid_count, init_num_nodes, init_nodes, con_handle);
 
   CON_STMT_API_POST (conn, NULL, con_handle, error);
 
@@ -2242,8 +2190,7 @@ cci_shard_migration_start (CCI_CONN * conn, int groupid, int dest_nodeid)
   if (con_handle->shard_admin_sock_fd == INVALID_SOCKET)
     {
       error = net_shard_migration_req (BRREQ_OP_CODE_MIGRATION_START,
-				       &con_handle->shard_admin_sock_fd,
-				       groupid, dest_nodeid, 0, con_handle);
+                                       &con_handle->shard_admin_sock_fd, groupid, dest_nodeid, 0, con_handle);
     }
   else
     {
@@ -2256,8 +2203,7 @@ cci_shard_migration_start (CCI_CONN * conn, int groupid, int dest_nodeid)
 }
 
 int
-cci_shard_migration_end (CCI_CONN * conn, int groupid, int dest_nodeid,
-			 int num_shard_keys)
+cci_shard_migration_end (CCI_CONN * conn, int groupid, int dest_nodeid, int num_shard_keys)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
@@ -2275,9 +2221,8 @@ cci_shard_migration_end (CCI_CONN * conn, int groupid, int dest_nodeid,
   else
     {
       error = net_shard_migration_req (BRREQ_OP_CODE_MIGRATION_END,
-				       &con_handle->shard_admin_sock_fd,
-				       groupid, dest_nodeid, num_shard_keys,
-				       con_handle);
+                                       &con_handle->shard_admin_sock_fd,
+                                       groupid, dest_nodeid, num_shard_keys, con_handle);
 
       CLOSE_SOCKET (con_handle->shard_admin_sock_fd);
       con_handle->shard_admin_sock_fd = INVALID_SOCKET;
@@ -2303,9 +2248,7 @@ cci_shard_ddl_start (CCI_CONN * conn)
 
   if (con_handle->shard_admin_sock_fd == INVALID_SOCKET)
     {
-      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_DDL_START,
-				    &con_handle->shard_admin_sock_fd,
-				    con_handle);
+      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_DDL_START, &con_handle->shard_admin_sock_fd, con_handle);
     }
   else
     {
@@ -2337,9 +2280,7 @@ cci_shard_ddl_end (CCI_CONN * conn)
     }
   else
     {
-      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_DDL_END,
-				    &con_handle->shard_admin_sock_fd,
-				    con_handle);
+      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_DDL_END, &con_handle->shard_admin_sock_fd, con_handle);
 
       CLOSE_SOCKET (con_handle->shard_admin_sock_fd);
       con_handle->shard_admin_sock_fd = INVALID_SOCKET;
@@ -2365,9 +2306,7 @@ cci_shard_gc_start (CCI_CONN * conn)
 
   if (con_handle->shard_admin_sock_fd == INVALID_SOCKET)
     {
-      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_GC_START,
-				    &con_handle->shard_admin_sock_fd,
-				    con_handle);
+      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_GC_START, &con_handle->shard_admin_sock_fd, con_handle);
     }
   else
     {
@@ -2397,9 +2336,7 @@ cci_shard_gc_end (CCI_CONN * conn)
     }
   else
     {
-      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_GC_END,
-				    &con_handle->shard_admin_sock_fd,
-				    con_handle);
+      error = net_shard_ddl_gc_req (BRREQ_OP_CODE_GC_END, &con_handle->shard_admin_sock_fd, con_handle);
 
       CLOSE_SOCKET (con_handle->shard_admin_sock_fd);
       con_handle->shard_admin_sock_fd = INVALID_SOCKET;
@@ -2412,13 +2349,11 @@ cci_shard_gc_end (CCI_CONN * conn)
 
 int
 cci_mgmt_sync_shard_mgmt_info (const char *hostname, int mgmt_port,
-			       const char *local_dbname,
-			       const char *global_dbname,
-			       int nodeid, int shard_mgmt_port,
-			       int64_t nodeid_ver, int64_t groupid_ver,
-			       char *server_name_buf,
-			       int server_name_buf_size,
-			       int *server_mode, int timeout_msec)
+                               const char *local_dbname,
+                               const char *global_dbname,
+                               int nodeid, int shard_mgmt_port,
+                               int64_t nodeid_ver, int64_t groupid_ver,
+                               char *server_name_buf, int server_name_buf_size, int *server_mode, int timeout_msec)
 {
   T_HOST_INFO host_info;
   int error;
@@ -2439,11 +2374,10 @@ cci_mgmt_sync_shard_mgmt_info (const char *hostname, int mgmt_port,
     }
 
   error = net_mgmt_shard_mgmt_info_req (&host_info, local_dbname,
-					global_dbname, nodeid,
-					shard_mgmt_port,
-					nodeid_ver, groupid_ver,
-					server_name_buf, server_name_buf_size,
-					server_mode, timeout_msec);
+                                        global_dbname, nodeid,
+                                        shard_mgmt_port,
+                                        nodeid_ver, groupid_ver,
+                                        server_name_buf, server_name_buf_size, server_mode, timeout_msec);
 
 
   return error;
@@ -2451,11 +2385,10 @@ cci_mgmt_sync_shard_mgmt_info (const char *hostname, int mgmt_port,
 
 int
 cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
-			 const char *hostname, int mgmt_port,
-			 int launch_proc_id,
-			 bool recv_stdout, bool wait_child,
-			 int argc, const char **argv,
-			 int num_env, const char **envp, int timeout_msec)
+                         const char *hostname, int mgmt_port,
+                         int launch_proc_id,
+                         bool recv_stdout, bool wait_child,
+                         int argc, const char **argv, int num_env, const char **envp, int timeout_msec)
 {
   T_HOST_INFO host_info;
   int error;
@@ -2467,24 +2400,20 @@ cci_mgmt_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
     }
 
   error = net_mgmt_launch_process_req (launch_result, &host_info,
-				       launch_proc_id, recv_stdout,
-				       (wait_child ? 1 : 0),
-				       argc, argv, num_env, envp,
-				       timeout_msec);
+                                       launch_proc_id, recv_stdout,
+                                       (wait_child ? 1 : 0), argc, argv, num_env, envp, timeout_msec);
 
   return error;
 }
 
 int
-cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result,
-			      int timeout_msec)
+cci_mgmt_wait_launch_process (T_CCI_LAUNCH_RESULT * launch_result, int timeout_msec)
 {
   return net_mgmt_wait_launch_process (launch_result, timeout_msec);
 }
 
 int
-cci_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname,
-			    int timeout_msec)
+cci_mgmt_connect_db_server (const T_HOST_INFO * host, const char *dbname, int timeout_msec)
 {
   return net_mgmt_connect_db_server (host, dbname, timeout_msec);
 }
@@ -2503,9 +2432,8 @@ cci_host_str_to_addr (const char *host_str, unsigned char *ip_addr)
 
 void
 cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY pack_idxkey_func,
-			  CCI_DB_IDXKEY_HAS_NULL idxkey_has_null_func,
-			  CCI_OR_DB_IDXKEY_SIZE idxkey_size_func,
-			  CCI_DB_GET_STRING db_get_string_func)
+                          CCI_DB_IDXKEY_HAS_NULL idxkey_has_null_func,
+                          CCI_OR_DB_IDXKEY_SIZE idxkey_size_func, CCI_DB_GET_STRING db_get_string_func)
 {
   cci_or_pack_db_idxkey = pack_idxkey_func;
   cci_db_idxkey_has_null = idxkey_has_null_func;
@@ -2514,8 +2442,7 @@ cci_set_client_functions (CCI_OR_PACK_DB_IDXKEY pack_idxkey_func,
 }
 
 int
-cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items,
-		    int applier_id)
+cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items, int applier_id)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
@@ -2538,9 +2465,9 @@ cci_send_repl_data (CCI_CONN * conn, CIRP_REPL_ITEM * head, int num_items,
     {
       error = reset_connect (con_handle, NULL);
       if (error == CCI_ER_NO_ERROR)
-	{
-	  error = qe_send_repl_data (con_handle, head, num_items, applier_id);
-	}
+        {
+          error = qe_send_repl_data (con_handle, head, num_items, applier_id);
+        }
     }
 
   CON_STMT_API_POST (conn, NULL, con_handle, error);
@@ -2631,23 +2558,21 @@ cas_connect_internal (T_CON_HANDLE * con_handle, int *connect)
 
   if (TIMEOUT_IS_SET (con_handle))
     {
-      remained_time = (con_handle->current_timeout
-		       - (int) timeval_diff_in_msec (NULL,
-						     &con_handle->start_time));
+      remained_time = (con_handle->current_timeout - (int) timeval_diff_in_msec (NULL, &con_handle->start_time));
       if (remained_time <= 0)
-	{
-	  return CCI_ER_LOGIN_TIMEOUT;
-	}
+        {
+          return CCI_ER_LOGIN_TIMEOUT;
+        }
     }
 
   if (net_check_cas_request (con_handle) != 0)
     {
       if (!IS_INVALID_SOCKET (con_handle->sock_fd))
-	{
-	  CLOSE_SOCKET (con_handle->sock_fd);
-	  con_handle->sock_fd = INVALID_SOCKET;
-	  con_handle->con_status = CCI_CON_STATUS_OUT_TRAN;
-	}
+        {
+          CLOSE_SOCKET (con_handle->sock_fd);
+          con_handle->sock_fd = INVALID_SOCKET;
+          con_handle->con_status = CCI_CON_STATUS_OUT_TRAN;
+        }
     }
 
   if (!IS_INVALID_SOCKET (con_handle->sock_fd))
@@ -2658,38 +2583,36 @@ cas_connect_internal (T_CON_HANDLE * con_handle, int *connect)
   do
     {
       for (i = 0; i < con_handle->alter_hosts->count; i++)
-	{
-	  /* if all hosts turn out to be unreachable,
-	   *  ignore host reachability and try one more time
-	   */
-	  if (con_is_unreachable_host (con_handle, i) == false || retry)
-	    {
-	      error = net_connect_srv (con_handle, i, remained_time);
-	      if (error == CCI_ER_NO_ERROR)
-		{
-		  *connect = 1;
-		  return CCI_ER_NO_ERROR;
-		}
+        {
+          /* if all hosts turn out to be unreachable,
+           *  ignore host reachability and try one more time
+           */
+          if (con_is_unreachable_host (con_handle, i) == false || retry)
+            {
+              error = net_connect_srv (con_handle, i, remained_time);
+              if (error == CCI_ER_NO_ERROR)
+                {
+                  *connect = 1;
+                  return CCI_ER_NO_ERROR;
+                }
 
-	      if (error == CCI_ER_SERVER_RESTARTED)
-		{
-		  return error;
-		}
+              if (error == CCI_ER_SERVER_RESTARTED)
+                {
+                  return error;
+                }
 
-	      if (error == CCI_ER_COMMUNICATION
-		  || error == CCI_ER_CONNECT
-		  || error == CCI_ER_LOGIN_TIMEOUT
-		  || error == BR_ER_FREE_SERVER)
-		{
-		  con_unreachable_host_add (con_handle, i);
-		}
-	      else
-		{
-		  break;
-		}
-	    }
-	  con_handle->last_failure_time = time (NULL);
-	}
+              if (error == CCI_ER_COMMUNICATION
+                  || error == CCI_ER_CONNECT || error == CCI_ER_LOGIN_TIMEOUT || error == BR_ER_FREE_SERVER)
+                {
+                  con_unreachable_host_add (con_handle, i);
+                }
+              else
+                {
+                  break;
+                }
+            }
+          con_handle->last_failure_time = time (NULL);
+        }
       retry++;
     }
   while (retry < 2);
@@ -2704,10 +2627,9 @@ cas_connect_internal (T_CON_HANDLE * con_handle, int *connect)
 
 static T_CON_HANDLE *
 get_new_connection (T_ALTER_HOST * alter_hosts,
-		    const char *server_list, const char *port_name,
-		    const char *db_name, const char *db_user,
-		    const char *dbpasswd, const char *property_str,
-		    const T_CON_PROPERTY * con_property)
+                    const char *server_list, const char *port_name,
+                    const char *db_name, const char *db_user,
+                    const char *dbpasswd, const char *property_str, const T_CON_PROPERTY * con_property)
 {
   T_CON_HANDLE *con_handle;
 
@@ -2720,8 +2642,7 @@ get_new_connection (T_ALTER_HOST * alter_hosts,
     }
 
   con_handle = hm_con_handle_alloc (alter_hosts, server_list, port_name,
-				    db_name, db_user, dbpasswd,
-				    property_str, con_property);
+                                    db_name, db_user, dbpasswd, property_str, con_property);
 
   MUTEX_UNLOCK (con_handle_table_mutex);
 
@@ -2736,13 +2657,10 @@ get_new_connection (T_ALTER_HOST * alter_hosts,
 
 int
 cci_set_allocators (CCI_MALLOC_FUNCTION malloc_func,
-		    CCI_FREE_FUNCTION free_func,
-		    CCI_REALLOC_FUNCTION realloc_func,
-		    CCI_CALLOC_FUNCTION calloc_func)
+                    CCI_FREE_FUNCTION free_func, CCI_REALLOC_FUNCTION realloc_func, CCI_CALLOC_FUNCTION calloc_func)
 {
   /* none or all should be set */
-  if (malloc_func == NULL && free_func == NULL
-      && realloc_func == NULL && calloc_func == NULL)
+  if (malloc_func == NULL && free_func == NULL && realloc_func == NULL && calloc_func == NULL)
     {
       /* use default allocators */
       cci_malloc = malloc;
@@ -2750,8 +2668,7 @@ cci_set_allocators (CCI_MALLOC_FUNCTION malloc_func,
       cci_realloc = realloc;
       cci_calloc = calloc;
     }
-  else if (malloc_func == NULL || free_func == NULL
-	   || realloc_func == NULL || calloc_func == NULL)
+  else if (malloc_func == NULL || free_func == NULL || realloc_func == NULL || calloc_func == NULL)
     {
       return CCI_ER_NOT_IMPLEMENTED;
     }
@@ -2768,32 +2685,28 @@ cci_set_allocators (CCI_MALLOC_FUNCTION malloc_func,
 }
 
 static void
-set_error_buffer (T_CCI_ERROR * err_buf_p,
-		  int error, const char *message, ...)
+set_error_buffer (T_CCI_ERROR * err_buf_p, int error, const char *message, ...)
 {
   /* don't overwrite when err_buf->error is not equal CCI_ER_NO_ERROR */
-  if (error < 0 && err_buf_p != NULL
-      && err_buf_p->err_code == CCI_ER_NO_ERROR)
+  if (error < 0 && err_buf_p != NULL && err_buf_p->err_code == CCI_ER_NO_ERROR)
     {
       err_buf_p->err_code = error;
 
       /* Find error message from catalog when you don't give specific message */
       if (message == NULL)
-	{
-	  cci_get_err_msg (error, err_buf_p->err_msg,
-			   sizeof (err_buf_p->err_msg));
-	}
+        {
+          cci_get_err_msg (error, err_buf_p->err_msg, sizeof (err_buf_p->err_msg));
+        }
       else
-	{
-	  va_list args;
+        {
+          va_list args;
 
-	  va_start (args, message);
+          va_start (args, message);
 
-	  vsnprintf (err_buf_p->err_msg,
-		     sizeof (err_buf_p->err_msg), message, args);
+          vsnprintf (err_buf_p->err_msg, sizeof (err_buf_p->err_msg), message, args);
 
-	  va_end (args);
-	}
+          va_end (args);
+        }
     }
 }
 
@@ -2812,17 +2725,15 @@ get_last_error (const T_CON_HANDLE * con_handle, T_CCI_ERROR * dest_err_buf)
       return;
     }
 
-  if (con_handle->err_buf.err_code != CCI_ER_NO_ERROR
-      && con_handle->err_buf.err_msg[0] != '\0')
+  if (con_handle->err_buf.err_code != CCI_ER_NO_ERROR && con_handle->err_buf.err_msg[0] != '\0')
     {
       char svr_info_buf[256];
 
       dest_err_buf->err_code = con_handle->err_buf.err_code;
       snprintf (dest_err_buf->err_msg, sizeof (dest_err_buf->err_msg),
-		"%s[%s-%s,%d,%d].",
-		con_handle->err_buf.err_msg, info_type,
-		ut_cur_host_info_to_str (svr_info_buf, con_handle),
-		CON_CAS_ID (con_handle), CON_CAS_PID (con_handle));
+                "%s[%s-%s,%d,%d].",
+                con_handle->err_buf.err_msg, info_type,
+                ut_cur_host_info_to_str (svr_info_buf, con_handle), CON_CAS_ID (con_handle), CON_CAS_PID (con_handle));
     }
   else
     {
@@ -2833,8 +2744,7 @@ get_last_error (const T_CON_HANDLE * con_handle, T_CCI_ERROR * dest_err_buf)
 }
 
 static void
-copy_error_buffer (T_CCI_ERROR * dest_err_buf_p,
-		   const T_CCI_ERROR * src_err_buf_p)
+copy_error_buffer (T_CCI_ERROR * dest_err_buf_p, const T_CCI_ERROR * src_err_buf_p)
 {
   if (dest_err_buf_p != NULL && src_err_buf_p != NULL)
     {
@@ -2868,15 +2778,14 @@ cci_get_cas_info (CCI_CONN * conn, char *info_buf, int buf_length)
   else
     {
       snprintf (info_buf, buf_length - 1, "%s,%d,%d",
-		ut_cur_host_info_to_str (svr_info_buf, con_handle),
-		CON_CAS_ID (con_handle), CON_CAS_PID (con_handle));
+                ut_cur_host_info_to_str (svr_info_buf, con_handle), CON_CAS_ID (con_handle), CON_CAS_PID (con_handle));
 
       info_buf[buf_length - 1] = '\0';
 
       if (con_handle->con_property.log_trace_api)
-	{
-	  CCI_LOGF_DEBUG (con_handle->con_logger, "[%s]", info_buf);
-	}
+        {
+          CCI_LOGF_DEBUG (con_handle->con_logger, "[%s]", info_buf);
+        }
 
       error = CCI_ER_NO_ERROR;
     }
@@ -2914,8 +2823,7 @@ cci_change_dbuser (CCI_CONN * conn, const char *user, const char *passwd)
 }
 
 static int
-con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
-	     int flag, const char *func_name)
+con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle, int flag, const char *func_name)
 {
   int error;
   T_CON_HANDLE *con_handle;
@@ -2933,9 +2841,9 @@ con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
   if (flag_init_stmt)
     {
       if (stmt == NULL)
-	{
-	  return CCI_ER_INVALID_ARGS;
-	}
+        {
+          return CCI_ER_INVALID_ARGS;
+        }
       reset_error_buffer (&stmt->err_buf);
     }
 
@@ -2945,9 +2853,9 @@ con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
   if (error != CCI_ER_NO_ERROR)
     {
       if (flag_init_stmt)
-	{
-	  set_error_buffer (&stmt->err_buf, error, NULL);
-	}
+        {
+          set_error_buffer (&stmt->err_buf, error, NULL);
+        }
       set_error_buffer (&conn->err_buf, error, NULL);
       return error;
     }
@@ -2959,16 +2867,13 @@ con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
       assert (force_conn == false);
 
       if (IS_CON_TYPE_LOCAL (con_handle))
-	{
-	  return con_stmt_api_post (conn, stmt, con_handle,
-				    CCI_ER_NOT_SHARDING_CONNECTION,
-				    func_name);
-	}
+        {
+          return con_stmt_api_post (conn, stmt, con_handle, CCI_ER_NOT_SHARDING_CONNECTION, func_name);
+        }
       if (strcmp (con_handle->db_user, "dba") != 0)
-	{
-	  return con_stmt_api_post (conn, stmt, con_handle,
-				    CCI_ER_SHARD_NOT_ALLOWED_USER, func_name);
-	}
+        {
+          return con_stmt_api_post (conn, stmt, con_handle, CCI_ER_SHARD_NOT_ALLOWED_USER, func_name);
+        }
     }
 
   reset_error_buffer (&con_handle->err_buf);
@@ -2978,8 +2883,7 @@ con_api_pre (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
 }
 
 static int
-stmt_api_pre (CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
-	      T_REQ_HANDLE ** ret_req_handle, const char *func_name)
+stmt_api_pre (CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle, T_REQ_HANDLE ** ret_req_handle, const char *func_name)
 {
   int error;
   T_CON_HANDLE *con_handle = NULL;
@@ -3009,24 +2913,22 @@ stmt_api_pre (CCI_STMT * stmt, T_CON_HANDLE ** ret_con_handle,
 }
 
 static int
-con_stmt_api_post (CCI_CONN * conn, CCI_STMT * stmt,
-		   T_CON_HANDLE * con_handle, int error,
-		   const char *func_name)
+con_stmt_api_post (CCI_CONN * conn, CCI_STMT * stmt, T_CON_HANDLE * con_handle, int error, const char *func_name)
 {
   if (con_handle != NULL)
     {
       if (error < 0)
-	{
-	  set_error_buffer (&con_handle->err_buf, error, NULL);
-	  if (conn != NULL)
-	    {
-	      get_last_error (con_handle, &conn->err_buf);
-	    }
-	  if (stmt != NULL)
-	    {
-	      get_last_error (con_handle, &stmt->err_buf);
-	    }
-	}
+        {
+          set_error_buffer (&con_handle->err_buf, error, NULL);
+          if (conn != NULL)
+            {
+              get_last_error (con_handle, &conn->err_buf);
+            }
+          if (stmt != NULL)
+            {
+              get_last_error (con_handle, &stmt->err_buf);
+            }
+        }
 
       con_handle->used = false;
     }
@@ -3044,8 +2946,7 @@ con_stmt_api_post (CCI_CONN * conn, CCI_STMT * stmt,
  *   group_id (in):
  */
 int
-cci_update_db_group_id (CCI_CONN * conn, int migrator_id,
-			int group_id, int target, bool on_off)
+cci_update_db_group_id (CCI_CONN * conn, int migrator_id, int group_id, int target, bool on_off)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = 0;
@@ -3063,8 +2964,7 @@ cci_update_db_group_id (CCI_CONN * conn, int migrator_id,
 
   if (error == CCI_ER_NO_ERROR)
     {
-      error = qe_update_db_group_id (con_handle, migrator_id, group_id,
-				     target, on_off);
+      error = qe_update_db_group_id (con_handle, migrator_id, group_id, target, on_off);
     }
 
   CON_STMT_API_POST (conn, NULL, con_handle, error);
@@ -3196,8 +3096,7 @@ cci_block_global_dml (CCI_CONN * conn, bool start_or_end)
 }
 
 int
-cci_get_server_mode (CCI_CONN * conn, int *server_mode,
-		     unsigned int *master_addr)
+cci_get_server_mode (CCI_CONN * conn, int *server_mode, unsigned int *master_addr)
 {
   T_CON_HANDLE *con_handle = NULL;
   int error = CCI_ER_NO_ERROR;

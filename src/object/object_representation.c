@@ -53,15 +53,11 @@ static TP_DOMAIN *unpack_domain (OR_BUF * buf, int *is_null);
 #if defined(ENABLE_UNUSED_FUNCTION)
 static char *unpack_str_array (char *buffer, char ***string_array, int count);
 #endif
-static int or_put_varchar_internal (OR_BUF * buf, const char *string,
-				    int charlen, int align);
+static int or_put_varchar_internal (OR_BUF * buf, const char *string, int charlen, int align);
 static int or_varbit_length_internal (int bitlen, int align);
 static int or_varchar_length_internal (int charlen, int align);
-static int or_put_varbit_internal (OR_BUF * buf, char *string, int bitlen,
-				   int align);
-static char *or_unpack_var_table_internal (char *ptr, int nvars,
-					   OR_VARINFO * vars,
-					   int offset_size);
+static int or_put_varbit_internal (OR_BUF * buf, char *string, int bitlen, int align);
+static char *or_unpack_var_table_internal (char *ptr, int nvars, OR_VARINFO * vars, int offset_size);
 
 /*
  * classobj_get_prop - searches a property list for a value with the given name
@@ -95,34 +91,33 @@ classobj_get_prop (DB_SEQ * properties, const char *name, DB_VALUE * pvalue)
     {
       error = set_get_element (properties, i, &value);
       if (error != NO_ERROR)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR ||
-	  DB_GET_STRING (&value) == NULL)
-	{
-	  error = ER_SM_INVALID_PROPERTY;
-	}
+      if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR || DB_GET_STRING (&value) == NULL)
+        {
+          error = ER_SM_INVALID_PROPERTY;
+        }
       else
-	{
-	  tmp_str = DB_GET_STRING (&value);
-	  if (tmp_str && strcmp (name, tmp_str) == 0)
-	    {
-	      if ((i + 1) >= max)
-		{
-		  error = ER_SM_INVALID_PROPERTY;
-		}
-	      else
-		{
-		  error = set_get_element (properties, i + 1, pvalue);
-		  if (error == NO_ERROR)
-		    {
-		      found = i + 1;
-		    }
-		}
-	    }
-	}
+        {
+          tmp_str = DB_GET_STRING (&value);
+          if (tmp_str && strcmp (name, tmp_str) == 0)
+            {
+              if ((i + 1) >= max)
+                {
+                  error = ER_SM_INVALID_PROPERTY;
+                }
+              else
+                {
+                  error = set_get_element (properties, i + 1, pvalue);
+                  if (error == NO_ERROR)
+                    {
+                      found = i + 1;
+                    }
+                }
+            }
+        }
       pr_clear_value (&value);
     }
 
@@ -364,21 +359,20 @@ or_grp_id (const RECDES * record)
       grpid = OR_GET_GRPID (record->data);
     }
 
-#if 0				/* TODO - for debugging */
+#if 0                           /* TODO - for debugging */
 #if !defined(NDEBUG)
   if (grpid < 0)
     {
       int x = 1, y = 1;
 
       while (x > 0)
-	{
-	  fprintf (stdout, "=== or_grp_id(): invalid grpid = %d === \n",
-		   grpid);
+        {
+          fprintf (stdout, "=== or_grp_id(): invalid grpid = %d === \n", grpid);
 #if defined (SERVER_MODE)
-	  thread_sleep (1000);	/* 1000 msec */
+          thread_sleep (1000);  /* 1000 msec */
 #endif
-	  x = y;
-	}
+          x = y;
+        }
     }
 #endif
 #endif
@@ -736,8 +730,7 @@ or_packed_put_varchar (OR_BUF * buf, const char *string, int charlen)
 }
 
 static int
-or_put_varchar_internal (OR_BUF * buf, const char *string,
-			 int charlen, int align)
+or_put_varchar_internal (OR_BUF * buf, const char *string, int charlen, int align)
 {
   int net_charlen;
   char *start;
@@ -754,10 +747,10 @@ or_put_varchar_internal (OR_BUF * buf, const char *string,
       rc = or_put_byte (buf, 0xFF);
 
       if (rc == NO_ERROR)
-	{
-	  OR_PUT_INT (&net_charlen, charlen);
-	  rc = or_put_data (buf, (char *) &net_charlen, OR_INT_SIZE);
-	}
+        {
+          OR_PUT_INT (&net_charlen, charlen);
+          rc = or_put_data (buf, (char *) &net_charlen, OR_INT_SIZE);
+        }
     }
   if (rc != NO_ERROR)
     {
@@ -776,9 +769,9 @@ or_put_varchar_internal (OR_BUF * buf, const char *string,
       /* kludge, temporary NULL terminator */
       rc = or_put_byte (buf, 0);
       if (rc != NO_ERROR)
-	{
-	  return rc;
-	}
+        {
+          return rc;
+        }
 
       /* round up to a word boundary */
       rc = or_put_align32 (buf);
@@ -823,9 +816,9 @@ or_packed_get_varchar (OR_BUF * buf, int *length_ptr)
 
       /* return the length */
       if (length_ptr != NULL)
-	{
-	  *length_ptr = charlen;
-	}
+        {
+          *length_ptr = charlen;
+        }
 
       /* round up to a word boundary */
       rc = or_get_align32 (buf);
@@ -886,9 +879,9 @@ or_skip_varchar_remainder (OR_BUF * buf, int charlen, int align)
     {
       rc = or_advance (buf, charlen + 1);
       if (rc == NO_ERROR)
-	{
-	  rc = or_get_align32 (buf);
-	}
+        {
+          rc = or_get_align32 (buf);
+        }
     }
   else
     {
@@ -1019,32 +1012,32 @@ or_put_varbit_internal (OR_BUF * buf, char *string, int bitlen, int align)
 
       /* store the size prefix */
       if (bitlen < 0xFF)
-	{
-	  or_put_byte (buf, bitlen);
-	}
+        {
+          or_put_byte (buf, bitlen);
+        }
       else
-	{
-	  or_put_byte (buf, 0xFF);
-	  OR_PUT_INT (&net_bitlen, bitlen);
-	  or_put_data (buf, (char *) &net_bitlen, OR_INT_SIZE);
-	}
+        {
+          or_put_byte (buf, 0xFF);
+          OR_PUT_INT (&net_bitlen, bitlen);
+          or_put_data (buf, (char *) &net_bitlen, OR_INT_SIZE);
+        }
 
       /* store the string bytes */
       or_put_data (buf, string, bytelen);
 
       if (align == INT_ALIGNMENT)
-	{
-	  /* round up to a word boundary */
-	  or_put_align32 (buf);
-	}
+        {
+          /* round up to a word boundary */
+          or_put_align32 (buf);
+        }
     }
   else
     {
       if (valid_buf)
-	{
-	  memcpy (&buf->env, &save_buf, sizeof (save_buf));
-	  _longjmp (buf->env, status);
-	}
+        {
+          memcpy (&buf->env, &save_buf, sizeof (save_buf));
+          _longjmp (buf->env, status);
+        }
     }
 
   if (valid_buf)
@@ -1594,20 +1587,19 @@ or_put_oid (OR_BUF * buf, const OID * oid)
   else
     {
       if (oid == NULL)
-	{
-	  OR_PUT_NULL_OID (buf->ptr);
-	}
+        {
+          OR_PUT_NULL_OID (buf->ptr);
+        }
       else
-	{
-	  /* Cannot allow any temp oid's to be written */
-	  if (OID_ISTEMP (oid))
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
-		      "");
-	      or_abort (buf);
-	    }
-	  OR_PUT_OID (buf->ptr, oid);
-	}
+        {
+          /* Cannot allow any temp oid's to be written */
+          if (OID_ISTEMP (oid))
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+              or_abort (buf);
+            }
+          OR_PUT_OID (buf->ptr, oid);
+        }
       buf->ptr += OR_OID_SIZE;
     }
   return NO_ERROR;
@@ -1655,13 +1647,13 @@ or_put_loid (OR_BUF * buf, LOID * loid)
   else
     {
       if (loid == NULL)
-	{
-	  OR_PUT_NULL_LOID (buf->ptr);
-	}
+        {
+          OR_PUT_NULL_LOID (buf->ptr);
+        }
       else
-	{
-	  OR_PUT_LOID (buf->ptr, loid);
-	}
+        {
+          OR_PUT_LOID (buf->ptr, loid);
+        }
       buf->ptr += OR_LOID_SIZE;
     }
   return NO_ERROR;
@@ -1769,10 +1761,10 @@ or_put_string (OR_BUF * buf, char *str)
       /* PAD */
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	  rc = or_pad (buf, pad);
-	}
+        {
+          pad = 4 - bits;
+          rc = or_pad (buf, pad);
+        }
     }
   return rc;
 }
@@ -1797,9 +1789,9 @@ or_length_string (char *string)
       len = strlen (string) + 1;
       bits = len & 3;
       if (bits)
-	{
-	  len += 4 - bits;
-	}
+        {
+          len += 4 - bits;
+        }
     }
   return len;
 }
@@ -1827,19 +1819,19 @@ or_put_binary (OR_BUF * buf, DB_BINARY * binary)
       pad = 0;
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       header = binary->length | (pad << OR_BINARY_PAD_SHIFT);
       rc = or_put_int (buf, header);
       if (rc == NO_ERROR)
-	{
-	  rc = or_put_data (buf, (char *) binary->data, binary->length);
-	  if (rc == NO_ERROR)
-	    {
-	      rc = or_pad (buf, pad);
-	    }
-	}
+        {
+          rc = or_put_data (buf, (char *) binary->data, binary->length);
+          if (rc == NO_ERROR)
+            {
+              rc = or_pad (buf, pad);
+            }
+        }
     }
   return rc;
 }
@@ -1862,12 +1854,12 @@ or_length_binary (DB_BINARY * binary)
   len = 0;
   if (binary != NULL && binary->length < OR_BINARY_MAX_LENGTH)
     {
-      len = binary->length + OR_INT_SIZE;	/* always a header word for sizes */
+      len = binary->length + OR_INT_SIZE;       /* always a header word for sizes */
       bits = len & 3;
       if (bits)
-	{
-	  len += 4 - bits;
-	}
+        {
+          len += 4 - bits;
+        }
     }
   return len;
 }
@@ -1977,8 +1969,7 @@ or_unpack_var_table (char *ptr, int nvars, OR_VARINFO * vars)
  *    structures that will be filled in.
  */
 static char *
-or_unpack_var_table_internal (char *ptr, int nvars, OR_VARINFO * vars,
-			      int offset_size)
+or_unpack_var_table_internal (char *ptr, int nvars, OR_VARINFO * vars, int offset_size)
 {
   int i, offset, offset2;
 
@@ -2016,8 +2007,7 @@ or_unpack_var_table_internal (char *ptr, int nvars, OR_VARINFO * vars,
 OR_VARINFO *
 or_get_var_table (OR_BUF * buf, int nvars, char *(*allocator) (int))
 {
-  return or_get_var_table_internal (buf, nvars, allocator,
-				    BIG_VAR_OFFSET_SIZE);
+  return or_get_var_table_internal (buf, nvars, allocator, BIG_VAR_OFFSET_SIZE);
 }
 
 /*
@@ -2029,8 +2019,7 @@ or_get_var_table (OR_BUF * buf, int nvars, char *(*allocator) (int))
  *    allocator(in): allocator for return value allocation
  */
 OR_VARINFO *
-or_get_var_table_internal (OR_BUF * buf, int nvars, char *(*allocator) (int),
-			   int offset_size)
+or_get_var_table_internal (OR_BUF * buf, int nvars, char *(*allocator) (int), int offset_size)
 {
   OR_VARINFO *vars;
   int length;
@@ -2404,9 +2393,9 @@ or_unpack_int_array (char *ptr, int n, int **number_array)
     {
       ASSERT_ALIGN (ptr, INT_ALIGNMENT);
       for (i = 0; i < n; i++)
-	{
-	  ptr = or_unpack_int (ptr, &(*number_array)[i]);
-	}
+        {
+          ptr = or_unpack_int (ptr, &(*number_array)[i]);
+        }
     }
   else
     {
@@ -2783,13 +2772,13 @@ or_pack_string (char *ptr, const char *string)
       len = strlen (string) + 1;
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       OR_PUT_INT (ptr, len + pad);
       ptr += OR_INT_SIZE;
       (void) memcpy (ptr, string, len);
@@ -2815,7 +2804,7 @@ or_pack_string_with_null_padding (char *ptr, const char *string, size_t len)
 
   ret_ptr = or_pack_stream (ptr, string, len + 1);
 
-  ptr[OR_INT_SIZE + len] = '\0';	/* NULL Padding */
+  ptr[OR_INT_SIZE + len] = '\0';        /* NULL Padding */
 
   return ret_ptr;
 }
@@ -2842,13 +2831,13 @@ or_pack_stream (char *ptr, const char *stream, size_t len)
     {
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       OR_PUT_INT (ptr, len + pad);
       ptr += OR_INT_SIZE;
       memcpy (ptr, stream, len);
@@ -2883,13 +2872,13 @@ or_pack_string_with_length (char *ptr, const char *string, int length)
       len = length + 1;
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       OR_PUT_INT (ptr, len + pad);
       ptr += OR_INT_SIZE;
       (void) memcpy (ptr, string, len);
@@ -2926,15 +2915,15 @@ or_unpack_string (char *ptr, char **string)
       new_ = (char *) malloc (length);
       /* need to handle allocation errors */
       if (new_ == NULL)
-	{
-	  assert (false);
-	  ptr += length;
-	}
+        {
+          assert (false);
+          ptr += length;
+        }
       else
-	{
-	  (void) memcpy (new_, ptr, length);
-	  ptr += length;
-	}
+        {
+          (void) memcpy (new_, ptr, length);
+          ptr += length;
+        }
       *string = new_;
     }
   return ptr;
@@ -2992,16 +2981,15 @@ or_unpack_string_alloc (char *ptr, char **string)
       new_ = (char *) malloc (length * sizeof (char));
       /* need to handle allocation errors */
       if (new_ == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OUT_OF_VIRTUAL_MEMORY, 1, (length * sizeof (char)));
-	  ptr += length;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (length * sizeof (char)));
+          ptr += length;
+        }
       else
-	{
-	  (void) memcpy (new_, ptr, length);
-	  ptr += length;
-	}
+        {
+          (void) memcpy (new_, ptr, length);
+          ptr += length;
+        }
       *string = new_;
     }
   return ptr;
@@ -3055,30 +3043,30 @@ or_packed_string_length (const char *string, int *strlenp)
   if (string != NULL)
     {
       if (strlenp != NULL)
-	{
-	  len = (*strlenp = strlen (string)) + 1;
-	}
+        {
+          len = (*strlenp = strlen (string)) + 1;
+        }
       else
-	{
-	  len = strlen (string) + 1;
-	}
+        {
+          len = strlen (string) + 1;
+        }
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       total += len + pad;
     }
   else
     {
       if (strlenp != NULL)
-	{
-	  *strlenp = 0;
-	}
+        {
+          *strlenp = 0;
+        }
     }
   return total;
 }
@@ -3100,13 +3088,13 @@ or_packed_stream_length (size_t len)
     {
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       total += len + pad;
     }
   return total;
@@ -3139,13 +3127,13 @@ or_pack_bool_array (char *ptr, const bool * bools, int size)
     {
       bits = size & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       OR_PUT_INT (ptr, size + pad);
       ptr += OR_INT_SIZE;
       (void) memcpy (ptr, bools, size);
@@ -3177,13 +3165,13 @@ or_packed_bool_array_length (const bool * bools, int size)
     {
       bits = size & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       total += (size + pad);
     }
 
@@ -3208,13 +3196,13 @@ or_align_length (int length)
       len = length + 1;
       bits = len & 3;
       if (bits)
-	{
-	  pad = 4 - bits;
-	}
+        {
+          pad = 4 - bits;
+        }
       else
-	{
-	  pad = 0;
-	}
+        {
+          pad = 0;
+        }
       total += len + pad;
     }
 
@@ -3273,12 +3261,12 @@ or_decode (const char *buffer, char *dest, int size)
 
 /* note that this leaves room for only 63 type codes */
 #define OR_DOMAIN_TYPE_MASK		(0x3F)
-#define OR_DOMAIN_NEXT_FLAG		(0x80)	/* domain following this one */
+#define OR_DOMAIN_NEXT_FLAG		(0x80)  /* domain following this one */
 
-#define OR_DOMAIN_NULL_FLAG		(0x40)	/* is a tagged NULL value */
+#define OR_DOMAIN_NULL_FLAG		(0x40)  /* is a tagged NULL value */
 
-#define OR_DOMAIN_SET_DOMAIN_FLAG	(0x100)	/* for set types */
-#define OR_DOMAIN_BUILTIN_FLAG		(0x100)	/* for NULL type only */
+#define OR_DOMAIN_SET_DOMAIN_FLAG	(0x100) /* for set types */
+#define OR_DOMAIN_BUILTIN_FLAG		(0x100) /* for NULL type only */
 
 #define OR_DOMAIN_SCALE_MASK		(0xFF00)
 #define OR_DOMAIN_SCALE_SHIFT		(8)
@@ -3292,7 +3280,7 @@ or_decode (const char *buffer, char *dest, int size)
 #define OR_DOMAIN_PRECISION_MAX		(0xFFFF)
 
 #define OR_DOMAIN_COLLATION_MASK	(0x000000FF)
-#if 0				/* unused */
+#if 0                           /* unused */
 #define OR_DOMAIN_COLL_ENFORCE_FLAG	(0x80000000)
 #define OR_DOMAIN_COLL_LEAVE_FLAG	(0x40000000)
 #endif
@@ -3336,66 +3324,65 @@ or_packed_domain_size (TP_DOMAIN * domain)
       id = TP_DOMAIN_TYPE (d);
 
       switch (id)
-	{
-	case DB_TYPE_NUMERIC:
-	  precision = d->precision;
-	  scale = d->scale;
-	  /*
-	   * Safe guard for floating precision caused by incorrect type setting
-	   */
-	  if (precision <= TP_FLOATING_PRECISION_VALUE)
-	    {
-	      precision = DB_MAX_NUMERIC_PRECISION;
-	    }
-	  break;
+        {
+        case DB_TYPE_NUMERIC:
+          precision = d->precision;
+          scale = d->scale;
+          /*
+           * Safe guard for floating precision caused by incorrect type setting
+           */
+          if (precision <= TP_FLOATING_PRECISION_VALUE)
+            {
+              precision = DB_MAX_NUMERIC_PRECISION;
+            }
+          break;
 
-	case DB_TYPE_VARCHAR:
-	  /* collation id */
-	  size += OR_INT_SIZE;
-	case DB_TYPE_VARBIT:
-	  /*
-	   * Hack, if the precision is -1, it is a special value indicating
-	   * either the maximum precision for the varying types or a floating
-	   * precision for the fixed types.
-	   */
-	  if (d->precision != TP_FLOATING_PRECISION_VALUE)
-	    {
-	      precision = d->precision;
-	    }
+        case DB_TYPE_VARCHAR:
+          /* collation id */
+          size += OR_INT_SIZE;
+        case DB_TYPE_VARBIT:
+          /*
+           * Hack, if the precision is -1, it is a special value indicating
+           * either the maximum precision for the varying types or a floating
+           * precision for the fixed types.
+           */
+          if (d->precision != TP_FLOATING_PRECISION_VALUE)
+            {
+              precision = d->precision;
+            }
 
-	  /*
-	   * Kludge, for temporary backward compatibility, treat varchar
-	   * types with the maximum precision as above. Need to change ourselves
-	   * to use -1 consistently for this after which this little
-	   * chunk of code can be removed.
-	   */
-	  if ((id == DB_TYPE_VARCHAR
-	       && d->precision == DB_MAX_VARCHAR_PRECISION)
-	      || (id == DB_TYPE_VARBIT
-		  && d->precision == DB_MAX_VARBIT_PRECISION))
-	    {
-	      precision = 0;
-	    }
-	  break;
+          /*
+           * Kludge, for temporary backward compatibility, treat varchar
+           * types with the maximum precision as above. Need to change ourselves
+           * to use -1 consistently for this after which this little
+           * chunk of code can be removed.
+           */
+          if ((id == DB_TYPE_VARCHAR
+               && d->precision == DB_MAX_VARCHAR_PRECISION)
+              || (id == DB_TYPE_VARBIT && d->precision == DB_MAX_VARBIT_PRECISION))
+            {
+              precision = 0;
+            }
+          break;
 
-	default:
-	  break;
-	}
+        default:
+          break;
+        }
 
       if (precision >= OR_DOMAIN_PRECISION_MAX)
-	{
-	  size += OR_INT_SIZE;
-	}
+        {
+          size += OR_INT_SIZE;
+        }
 
       if (scale >= OR_DOMAIN_SCALE_MAX)
-	{
-	  size += OR_INT_SIZE;
-	}
+        {
+          size += OR_INT_SIZE;
+        }
 
       if (d->setdomain != NULL)
-	{
-	  size += or_packed_domain_size (d->setdomain);
-	}
+        {
+          size += or_packed_domain_size (d->setdomain);
+        }
     }
 
   return size;
@@ -3438,12 +3425,12 @@ or_put_domain (OR_BUF * buf, TP_DOMAIN * domain, int is_null)
   if (domain->built_in_index)
     {
       carrier =
-	(DB_TYPE_NULL & OR_DOMAIN_TYPE_MASK) | OR_DOMAIN_BUILTIN_FLAG |
-	(domain->built_in_index << OR_DOMAIN_PRECISION_SHIFT);
+        (DB_TYPE_NULL & OR_DOMAIN_TYPE_MASK) | OR_DOMAIN_BUILTIN_FLAG |
+        (domain->built_in_index << OR_DOMAIN_PRECISION_SHIFT);
       if (is_null)
-	{
-	  carrier |= OR_DOMAIN_NULL_FLAG;
-	}
+        {
+          carrier |= OR_DOMAIN_NULL_FLAG;
+        }
       return (or_put_int (buf, carrier));
     }
 
@@ -3460,13 +3447,13 @@ or_put_domain (OR_BUF * buf, TP_DOMAIN * domain, int is_null)
        */
       carrier = id & OR_DOMAIN_TYPE_MASK;
       if (d->next != NULL)
-	{
-	  carrier |= OR_DOMAIN_NEXT_FLAG;
-	}
+        {
+          carrier |= OR_DOMAIN_NEXT_FLAG;
+        }
       if (is_null)
-	{
-	  carrier |= OR_DOMAIN_NULL_FLAG;
-	}
+        {
+          carrier |= OR_DOMAIN_NULL_FLAG;
+        }
 
       precision = 0;
       scale = 0;
@@ -3476,133 +3463,130 @@ or_put_domain (OR_BUF * buf, TP_DOMAIN * domain, int is_null)
       has_collation = false;
 
       switch (id)
-	{
-	case DB_TYPE_NUMERIC:
-	  /* second byte contains scale, third & fourth bytes have precision */
+        {
+        case DB_TYPE_NUMERIC:
+          /* second byte contains scale, third & fourth bytes have precision */
 
-	  /* safe guard for scale */
-	  scale = d->scale;
-	  if (scale <= DB_DEFAULT_SCALE)
-	    {
-	      scale = 0;
-	    }
+          /* safe guard for scale */
+          scale = d->scale;
+          if (scale <= DB_DEFAULT_SCALE)
+            {
+              scale = 0;
+            }
 
-	  if (scale < OR_DOMAIN_SCALE_MAX)
-	    {
-	      carrier |= scale << OR_DOMAIN_SCALE_SHIFT;
-	    }
-	  else
-	    {
-	      carrier |= OR_DOMAIN_SCALE_MAX << OR_DOMAIN_SCALE_SHIFT;
-	      extended_scale = d->scale;
-	    }
-	  /* handle all precisions the same way at the end */
-	  precision = d->precision;
-	  /*
-	   * Safe guard for floating precision caused by incorrect type setting
-	   */
-	  if (precision <= TP_FLOATING_PRECISION_VALUE)
-	    {
-	      precision = DB_MAX_NUMERIC_PRECISION;
-	    }
-	  break;
+          if (scale < OR_DOMAIN_SCALE_MAX)
+            {
+              carrier |= scale << OR_DOMAIN_SCALE_SHIFT;
+            }
+          else
+            {
+              carrier |= OR_DOMAIN_SCALE_MAX << OR_DOMAIN_SCALE_SHIFT;
+              extended_scale = d->scale;
+            }
+          /* handle all precisions the same way at the end */
+          precision = d->precision;
+          /*
+           * Safe guard for floating precision caused by incorrect type setting
+           */
+          if (precision <= TP_FLOATING_PRECISION_VALUE)
+            {
+              precision = DB_MAX_NUMERIC_PRECISION;
+            }
+          break;
 
-	case DB_TYPE_VARCHAR:
-	  has_collation = true;
-	case DB_TYPE_VARBIT:
-	  carrier |= ((int) INTL_CODESET_UTF8) << OR_DOMAIN_CODSET_SHIFT;
+        case DB_TYPE_VARCHAR:
+          has_collation = true;
+        case DB_TYPE_VARBIT:
+          carrier |= ((int) INTL_CODESET_UTF8) << OR_DOMAIN_CODSET_SHIFT;
 
-	  /*
-	   * Hack, if the precision is our special maximum/floating indicator,
-	   * store a zero in the precision field of the carrier.
-	   */
-	  if (d->precision != TP_FLOATING_PRECISION_VALUE)
-	    {
-	      precision = d->precision;
-	    }
+          /*
+           * Hack, if the precision is our special maximum/floating indicator,
+           * store a zero in the precision field of the carrier.
+           */
+          if (d->precision != TP_FLOATING_PRECISION_VALUE)
+            {
+              precision = d->precision;
+            }
 
-	  /*
-	   * Kludge, for temporary backward compatibility, treat varchar
-	   * types with the maximum precision as the -1 case.  See commentary
-	   * in or_packed_domain_size above.
-	   */
-	  if ((id == DB_TYPE_VARCHAR
-	       && d->precision == DB_MAX_VARCHAR_PRECISION)
-	      || (id == DB_TYPE_VARBIT
-		  && d->precision == DB_MAX_VARBIT_PRECISION))
-	    {
-	      precision = 0;
-	    }
-	  break;
+          /*
+           * Kludge, for temporary backward compatibility, treat varchar
+           * types with the maximum precision as the -1 case.  See commentary
+           * in or_packed_domain_size above.
+           */
+          if ((id == DB_TYPE_VARCHAR
+               && d->precision == DB_MAX_VARCHAR_PRECISION)
+              || (id == DB_TYPE_VARBIT && d->precision == DB_MAX_VARBIT_PRECISION))
+            {
+              precision = 0;
+            }
+          break;
 
-	case DB_TYPE_SEQUENCE:
-	case DB_TYPE_TABLE:
-	  /*
-	   * we need to recursively store the sub-domains following this one,
-	   * since sets can have empty domains we need a flag to indicate this.
-	   */
-	  if (d->setdomain != NULL)
-	    {
-	      carrier |= OR_DOMAIN_SET_DOMAIN_FLAG;
-	      has_subdomain = 1;
-	    }
-	  break;
+        case DB_TYPE_SEQUENCE:
+        case DB_TYPE_TABLE:
+          /*
+           * we need to recursively store the sub-domains following this one,
+           * since sets can have empty domains we need a flag to indicate this.
+           */
+          if (d->setdomain != NULL)
+            {
+              carrier |= OR_DOMAIN_SET_DOMAIN_FLAG;
+              has_subdomain = 1;
+            }
+          break;
 
-	default:
-	  break;
-	}
+        default:
+          break;
+        }
 
       /* handle the precision if this type wanted one */
       if (precision)
-	{
-	  if (precision < OR_DOMAIN_PRECISION_MAX)
-	    {
-	      carrier |= precision << OR_DOMAIN_PRECISION_SHIFT;
-	    }
-	  else
-	    {
-	      carrier |=
-		(unsigned int) OR_DOMAIN_PRECISION_MAX <<
-		OR_DOMAIN_PRECISION_SHIFT;
-	      extended_precision = precision;
-	    }
-	}
+        {
+          if (precision < OR_DOMAIN_PRECISION_MAX)
+            {
+              carrier |= precision << OR_DOMAIN_PRECISION_SHIFT;
+            }
+          else
+            {
+              carrier |= (unsigned int) OR_DOMAIN_PRECISION_MAX << OR_DOMAIN_PRECISION_SHIFT;
+              extended_precision = precision;
+            }
+        }
 
       /* store the first word */
       rc = or_put_int (buf, carrier);
       if (rc != NO_ERROR)
-	{
-	  return rc;
-	}
+        {
+          return rc;
+        }
 
       if (has_collation)
-	{
-	  collation_storage = d->collation_id;
-	  rc = or_put_int (buf, collation_storage);
-	  if (rc != NO_ERROR)
-	    {
-	      return rc;
-	    }
-	}
+        {
+          collation_storage = d->collation_id;
+          rc = or_put_int (buf, collation_storage);
+          if (rc != NO_ERROR)
+            {
+              return rc;
+            }
+        }
 
       /* do we require any extended precision words ? */
       if (extended_precision)
-	{
-	  rc = or_put_int (buf, extended_precision);
-	  if (rc != NO_ERROR)
-	    {
-	      return rc;
-	    }
-	}
+        {
+          rc = or_put_int (buf, extended_precision);
+          if (rc != NO_ERROR)
+            {
+              return rc;
+            }
+        }
 
       if (extended_scale)
-	{
-	  rc = or_put_int (buf, extended_scale);
-	  if (rc != NO_ERROR)
-	    {
-	      return rc;
-	    }
-	}
+        {
+          rc = or_put_int (buf, extended_scale);
+          if (rc != NO_ERROR)
+            {
+              return rc;
+            }
+        }
 
       /*
        * Recurse on the sub domains if necessary, note that we don't
@@ -3610,13 +3594,13 @@ or_put_domain (OR_BUF * buf, TP_DOMAIN * domain, int is_null)
        * top level domain.
        */
       if (has_subdomain)
-	{
-	  rc = or_put_domain (buf, d->setdomain, 0);
-	  if (rc != NO_ERROR)
-	    {
-	      return rc;
-	    }
-	}
+        {
+          rc = or_put_domain (buf, d->setdomain, 0);
+          if (rc != NO_ERROR)
+            {
+              return rc;
+            }
+        }
     }
   return rc;
 }
@@ -3632,8 +3616,7 @@ static TP_DOMAIN *
 unpack_domain_2 (OR_BUF * buf, int *is_null)
 {
   TP_DOMAIN *domain, *last, *d;
-  unsigned int carrier, precision, scale,
-    has_setdomain, collation_id, collation_storage;
+  unsigned int carrier, precision, scale, has_setdomain, collation_id, collation_storage;
   bool more, auto_precision, has_collation;
   DB_TYPE type;
   int index;
@@ -3647,168 +3630,162 @@ unpack_domain_2 (OR_BUF * buf, int *is_null)
 
       carrier = or_get_int (buf, &rc);
       if (rc != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       type = (DB_TYPE) (carrier & OR_DOMAIN_TYPE_MASK);
 
       /* check for the special NULL bit */
       if (is_null != NULL)
-	{
-	  *is_null = ((carrier & OR_DOMAIN_NULL_FLAG) != 0);
-	}
+        {
+          *is_null = ((carrier & OR_DOMAIN_NULL_FLAG) != 0);
+        }
 
       /* Hack, check for references to built-in domains. */
       if (type == DB_TYPE_NULL && (carrier & OR_DOMAIN_BUILTIN_FLAG))
-	{
-	  index =
-	    (carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT;
-	  /*
-	   * Recall that the built-in domain indexes are 1 based rather
-	   * than zero based, must adjust prior to indexing the table.
-	   */
-	  if (index < 1)
-	    {
-	      goto error;
-	    }
+        {
+          index = (carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT;
+          /*
+           * Recall that the built-in domain indexes are 1 based rather
+           * than zero based, must adjust prior to indexing the table.
+           */
+          if (index < 1)
+            {
+              goto error;
+            }
 
-	  domain = tp_domain_resolve_default (index - 1);
-	  /* stop the loop */
-	  more = false;
-	}
+          domain = tp_domain_resolve_default (index - 1);
+          /* stop the loop */
+          more = false;
+        }
       else
-	{
-	  /* unpack a real domain */
+        {
+          /* unpack a real domain */
 
-	  more = (carrier & OR_DOMAIN_NEXT_FLAG) ? true : false;
-	  precision = 0;
-	  scale = 0;
-	  has_setdomain = 0;
-	  auto_precision = false;
-	  has_collation = false;
+          more = (carrier & OR_DOMAIN_NEXT_FLAG) ? true : false;
+          precision = 0;
+          scale = 0;
+          has_setdomain = 0;
+          auto_precision = false;
+          has_collation = false;
 
-	  switch (type)
-	    {
-	    case DB_TYPE_INTEGER:
-	    case DB_TYPE_BIGINT:
-	    case DB_TYPE_DOUBLE:
-	    case DB_TYPE_DATE:
-	    case DB_TYPE_TIME:
-	    case DB_TYPE_DATETIME:
-	      precision = tp_get_fixed_precision (type);
-	      break;
+          switch (type)
+            {
+            case DB_TYPE_INTEGER:
+            case DB_TYPE_BIGINT:
+            case DB_TYPE_DOUBLE:
+            case DB_TYPE_DATE:
+            case DB_TYPE_TIME:
+            case DB_TYPE_DATETIME:
+              precision = tp_get_fixed_precision (type);
+              break;
 
-	    case DB_TYPE_NUMERIC:
-	      precision =
-		(carrier & OR_DOMAIN_PRECISION_MASK) >>
-		OR_DOMAIN_PRECISION_SHIFT;
-	      scale =
-		(carrier & OR_DOMAIN_SCALE_MASK) >> OR_DOMAIN_SCALE_SHIFT;
-	      break;
+            case DB_TYPE_NUMERIC:
+              precision = (carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT;
+              scale = (carrier & OR_DOMAIN_SCALE_MASK) >> OR_DOMAIN_SCALE_SHIFT;
+              break;
 
-	    case DB_TYPE_VARCHAR:
-	      has_collation = true;
-	    case DB_TYPE_VARBIT:
-	      precision =
-		(carrier & OR_DOMAIN_PRECISION_MASK) >>
-		OR_DOMAIN_PRECISION_SHIFT;
+            case DB_TYPE_VARCHAR:
+              has_collation = true;
+            case DB_TYPE_VARBIT:
+              precision = (carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT;
 
-	      if (precision == 0)
-		{
-		  precision = TP_FLOATING_PRECISION_VALUE;
-		  auto_precision = true;
+              if (precision == 0)
+                {
+                  precision = TP_FLOATING_PRECISION_VALUE;
+                  auto_precision = true;
 
-		  if (type == DB_TYPE_VARCHAR)
-		    {
-		      precision = DB_MAX_VARCHAR_PRECISION;
-		    }
-		  else if (type == DB_TYPE_VARBIT)
-		    {
-		      precision = DB_MAX_VARBIT_PRECISION;
-		    }
-		}
-	      break;
+                  if (type == DB_TYPE_VARCHAR)
+                    {
+                      precision = DB_MAX_VARCHAR_PRECISION;
+                    }
+                  else if (type == DB_TYPE_VARBIT)
+                    {
+                      precision = DB_MAX_VARBIT_PRECISION;
+                    }
+                }
+              break;
 
-	    case DB_TYPE_SEQUENCE:
-	    case DB_TYPE_TABLE:
-	      has_setdomain = carrier & OR_DOMAIN_SET_DOMAIN_FLAG;
-	      break;
+            case DB_TYPE_SEQUENCE:
+            case DB_TYPE_TABLE:
+              has_setdomain = carrier & OR_DOMAIN_SET_DOMAIN_FLAG;
+              break;
 
-	    default:
-	      break;
-	    }
+            default:
+              break;
+            }
 
-	  if (has_collation)
-	    {
-	      collation_storage = or_get_int (buf, &rc);
-	      if (rc != NO_ERROR)
-		{
-		  goto error;
-		}
-	      collation_id = collation_storage & OR_DOMAIN_COLLATION_MASK;
-	    }
-	  else
-	    {
-	      collation_id = 0;
-	    }
+          if (has_collation)
+            {
+              collation_storage = or_get_int (buf, &rc);
+              if (rc != NO_ERROR)
+                {
+                  goto error;
+                }
+              collation_id = collation_storage & OR_DOMAIN_COLLATION_MASK;
+            }
+          else
+            {
+              collation_id = 0;
+            }
 
-	  /* do we have an extra precision word ? */
-	  if (precision == OR_DOMAIN_PRECISION_MAX && !auto_precision)
-	    {
-	      precision = or_get_int (buf, &rc);
-	    }
+          /* do we have an extra precision word ? */
+          if (precision == OR_DOMAIN_PRECISION_MAX && !auto_precision)
+            {
+              precision = or_get_int (buf, &rc);
+            }
 
-	  if (rc != NO_ERROR)
-	    {
-	      goto error;
-	    }
+          if (rc != NO_ERROR)
+            {
+              goto error;
+            }
 
-	  /* do we have an extra scale word ? */
-	  if (scale == OR_DOMAIN_SCALE_MAX)
-	    {
-	      scale = or_get_int (buf, &rc);
-	    }
+          /* do we have an extra scale word ? */
+          if (scale == OR_DOMAIN_SCALE_MAX)
+            {
+              scale = or_get_int (buf, &rc);
+            }
 
-	  if (rc != NO_ERROR)
-	    {
-	      goto error;
-	    }
+          if (rc != NO_ERROR)
+            {
+              goto error;
+            }
 
-	  /* start building a transient domain */
-	  d = tp_domain_construct (type, NULL, precision, scale, NULL);
-	  if (d == NULL)
-	    {
-	      goto error;
-	    }
+          /* start building a transient domain */
+          d = tp_domain_construct (type, NULL, precision, scale, NULL);
+          if (d == NULL)
+            {
+              goto error;
+            }
 
-	  if (last == NULL)
-	    {
-	      domain = last = d;
-	    }
-	  else
-	    {
-	      last->next = d;
-	      last = last->next;
-	    }
+          if (last == NULL)
+            {
+              domain = last = d;
+            }
+          else
+            {
+              last->next = d;
+              last = last->next;
+            }
 
-	  /* store the codset if we had one */
-	  d->collation_id = collation_id;
+          /* store the codset if we had one */
+          d->collation_id = collation_id;
 
-	  /*
-	   * Recurse to get set sub-domains if there are any, note that
-	   * we don't pass the is_null flag down here since NULLness only
-	   * applies to the top level domain.
-	   */
-	  if (has_setdomain)
-	    {
-	      d->setdomain = unpack_domain_2 (buf, NULL);
-	      if (d->setdomain == NULL)
-		{
-		  goto error;
-		}
-	    }
-	}
+          /*
+           * Recurse to get set sub-domains if there are any, note that
+           * we don't pass the is_null flag down here since NULLness only
+           * applies to the top level domain.
+           */
+          if (has_setdomain)
+            {
+              d->setdomain = unpack_domain_2 (buf, NULL);
+              if (d->setdomain == NULL)
+                {
+                  goto error;
+                }
+            }
+        }
     }
 
   return domain;
@@ -3818,10 +3795,10 @@ error:
     {
       TP_DOMAIN *td, *next;
       for (td = domain, next = NULL; td != NULL; td = next)
-	{
-	  next = td->next;
-	  tp_domain_free (td);
-	}
+        {
+          next = td->next;
+          tp_domain_free (td);
+        }
     }
   return NULL;
 }
@@ -3858,219 +3835,214 @@ unpack_domain (OR_BUF * buf, int *is_null)
     {
       carrier = or_get_int (buf, &rc);
       if (rc != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       type = (DB_TYPE) (carrier & OR_DOMAIN_TYPE_MASK);
 
       /* check for the special NULL bit */
       if (is_null != NULL)
-	{
-	  *is_null = ((carrier & OR_DOMAIN_NULL_FLAG) != 0);
-	}
+        {
+          *is_null = ((carrier & OR_DOMAIN_NULL_FLAG) != 0);
+        }
 
       /* Hack, check for references to built-in domains. */
       if (type == DB_TYPE_NULL && (carrier & OR_DOMAIN_BUILTIN_FLAG))
-	{
-	  index =
-	    (carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT;
-	  /* Recall that the builtin domain indexes are 1 based rather than zero
-	   * based,
-	   * must adjust prior to indexing the table.
-	   */
-	  domain = tp_domain_resolve_default (index - 1);
-	  if (domain == NULL)
-	    {
-	      goto error;
-	    }
+        {
+          index = (carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT;
+          /* Recall that the builtin domain indexes are 1 based rather than zero
+           * based,
+           * must adjust prior to indexing the table.
+           */
+          domain = tp_domain_resolve_default (index - 1);
+          if (domain == NULL)
+            {
+              goto error;
+            }
 
-	  /* stop the loop */
-	  more = false;
-	}
+          /* stop the loop */
+          more = false;
+        }
       else
-	{
-	  /* unpack a real domain */
-	  more = (carrier & OR_DOMAIN_NEXT_FLAG) ? true : false;
+        {
+          /* unpack a real domain */
+          more = (carrier & OR_DOMAIN_NEXT_FLAG) ? true : false;
 
-	  collation_id = 0;
+          collation_id = 0;
 
-	  switch (type)		/* try to find */
-	    {
-	    case DB_TYPE_INTEGER:
-	    case DB_TYPE_BIGINT:
-	    case DB_TYPE_DOUBLE:
-	    case DB_TYPE_DATE:
-	    case DB_TYPE_TIME:
-	    case DB_TYPE_DATETIME:
-	      precision = tp_get_fixed_precision (type);
+          switch (type)         /* try to find */
+            {
+            case DB_TYPE_INTEGER:
+            case DB_TYPE_BIGINT:
+            case DB_TYPE_DOUBLE:
+            case DB_TYPE_DATE:
+            case DB_TYPE_TIME:
+            case DB_TYPE_DATETIME:
+              precision = tp_get_fixed_precision (type);
 
-	    case DB_TYPE_NULL:
-#if 1				/* TODO - trace */
-	      assert (false);
-	      goto error;
+            case DB_TYPE_NULL:
+#if 1                           /* TODO - trace */
+              assert (false);
+              goto error;
 #else
-	      dom = tp_domain_resolve_default (type);
+              dom = tp_domain_resolve_default (type);
 #endif
-	      break;
+              break;
 
-	    case DB_TYPE_NUMERIC:
-	      /* get precision and scale */
-	      precision = (carrier & OR_DOMAIN_PRECISION_MASK)
-		>> OR_DOMAIN_PRECISION_SHIFT;
-	      scale = (carrier & OR_DOMAIN_SCALE_MASK)
-		>> OR_DOMAIN_SCALE_SHIFT;
-	      /* do we have an extra precision word ? */
-	      if (precision == OR_DOMAIN_PRECISION_MAX)
-		{
-		  precision = or_get_int (buf, &rc);
-		  if (rc != NO_ERROR)
-		    {
-		      goto error;
-		    }
-		}
-	      /* do we have an extra scale word ? */
-	      if (scale == OR_DOMAIN_SCALE_MAX)
-		{
-		  scale = or_get_int (buf, &rc);
-		  if (rc != NO_ERROR)
-		    {
-		      goto error;
-		    }
-		}
-	      dom = tp_domain_find_numeric (type, precision, scale);
-	      break;
+            case DB_TYPE_NUMERIC:
+              /* get precision and scale */
+              precision = (carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT;
+              scale = (carrier & OR_DOMAIN_SCALE_MASK) >> OR_DOMAIN_SCALE_SHIFT;
+              /* do we have an extra precision word ? */
+              if (precision == OR_DOMAIN_PRECISION_MAX)
+                {
+                  precision = or_get_int (buf, &rc);
+                  if (rc != NO_ERROR)
+                    {
+                      goto error;
+                    }
+                }
+              /* do we have an extra scale word ? */
+              if (scale == OR_DOMAIN_SCALE_MAX)
+                {
+                  scale = or_get_int (buf, &rc);
+                  if (rc != NO_ERROR)
+                    {
+                      goto error;
+                    }
+                }
+              dom = tp_domain_find_numeric (type, precision, scale);
+              break;
 
-	    case DB_TYPE_VARCHAR:
-	      collation_storage = or_get_int (buf, &rc);
-	      if (rc != NO_ERROR)
-		{
-		  goto error;
-		}
-	      collation_id = collation_storage & OR_DOMAIN_COLLATION_MASK;
+            case DB_TYPE_VARCHAR:
+              collation_storage = or_get_int (buf, &rc);
+              if (rc != NO_ERROR)
+                {
+                  goto error;
+                }
+              collation_id = collation_storage & OR_DOMAIN_COLLATION_MASK;
 
-	    case DB_TYPE_VARBIT:
-	      precision = ((carrier & OR_DOMAIN_PRECISION_MASK)
-			   >> OR_DOMAIN_PRECISION_SHIFT);
-	      /* do we have an extra precision word ? */
-	      if (precision == OR_DOMAIN_PRECISION_MAX)
-		{
-		  precision = or_get_int (buf, &rc);
-		  if (rc != NO_ERROR)
-		    {
-		      goto error;
-		    }
-		}
-	      if (precision == 0)
-		{
-		  /*
-		   * Kludge, restore maximum precision for the types that
-		   * aren't yet prepared for a -1.  This can be removed
-		   * eventually, see commentary in the or_put_domain.
-		   */
-		  if (type == DB_TYPE_VARCHAR)
-		    {
-		      precision = DB_MAX_VARCHAR_PRECISION;
-		    }
-		  else if (type == DB_TYPE_VARBIT)
-		    {
-		      precision = DB_MAX_VARBIT_PRECISION;
-		    }
-		  else
-		    {
-		      precision = TP_FLOATING_PRECISION_VALUE;
-		    }
-		}
-	      dom = tp_domain_find_charbit (type, collation_id, precision);
-	      break;
+            case DB_TYPE_VARBIT:
+              precision = ((carrier & OR_DOMAIN_PRECISION_MASK) >> OR_DOMAIN_PRECISION_SHIFT);
+              /* do we have an extra precision word ? */
+              if (precision == OR_DOMAIN_PRECISION_MAX)
+                {
+                  precision = or_get_int (buf, &rc);
+                  if (rc != NO_ERROR)
+                    {
+                      goto error;
+                    }
+                }
+              if (precision == 0)
+                {
+                  /*
+                   * Kludge, restore maximum precision for the types that
+                   * aren't yet prepared for a -1.  This can be removed
+                   * eventually, see commentary in the or_put_domain.
+                   */
+                  if (type == DB_TYPE_VARCHAR)
+                    {
+                      precision = DB_MAX_VARCHAR_PRECISION;
+                    }
+                  else if (type == DB_TYPE_VARBIT)
+                    {
+                      precision = DB_MAX_VARBIT_PRECISION;
+                    }
+                  else
+                    {
+                      precision = TP_FLOATING_PRECISION_VALUE;
+                    }
+                }
+              dom = tp_domain_find_charbit (type, collation_id, precision);
+              break;
 
-	    case DB_TYPE_OBJECT:
-#if 1				/* TODO - trace */
-	      assert (false);
-	      goto error;
+            case DB_TYPE_OBJECT:
+#if 1                           /* TODO - trace */
+              assert (false);
+              goto error;
 #else
-	      OID_SET_NULL (&class_oid);
-	      class_mop = NULL;
-	      dom = tp_domain_find_object (type, &class_oid, class_mop);
+              OID_SET_NULL (&class_oid);
+              class_mop = NULL;
+              dom = tp_domain_find_object (type, &class_oid, class_mop);
 #endif
-	      break;
+              break;
 
-	    case DB_TYPE_SEQUENCE:
-	    case DB_TYPE_TABLE:
-	      if (carrier & OR_DOMAIN_SET_DOMAIN_FLAG)
-		{
-		  /* has setdomain */
-		  setdomain = unpack_domain_2 (buf, NULL);
-		  if (setdomain == NULL)
-		    {
-		      goto error;
-		    }
-		}
-	      else
-		{
-		  goto error;
-		}
+            case DB_TYPE_SEQUENCE:
+            case DB_TYPE_TABLE:
+              if (carrier & OR_DOMAIN_SET_DOMAIN_FLAG)
+                {
+                  /* has setdomain */
+                  setdomain = unpack_domain_2 (buf, NULL);
+                  if (setdomain == NULL)
+                    {
+                      goto error;
+                    }
+                }
+              else
+                {
+                  goto error;
+                }
 
-	      dom = tp_domain_find_set (type, setdomain);
-	      if (dom)
-		{
-		  for (td = setdomain, next = NULL; td != NULL; td = next)
-		    {
-		      next = td->next;
-		      tp_domain_free (td);
-		    }
-		}
-	      break;
+              dom = tp_domain_find_set (type, setdomain);
+              if (dom)
+                {
+                  for (td = setdomain, next = NULL; td != NULL; td = next)
+                    {
+                      next = td->next;
+                      tp_domain_free (td);
+                    }
+                }
+              break;
 
-	    default:
-	      break;
-	    }
+            default:
+              break;
+            }
 
-	  if (dom == NULL)
-	    {
-	      /* not found. need to construct one */
-	      dom =
-		tp_domain_construct (type, NULL, precision, scale, setdomain);
-	      if (dom == NULL)
-		{
-		  goto error;
-		}
+          if (dom == NULL)
+            {
+              /* not found. need to construct one */
+              dom = tp_domain_construct (type, NULL, precision, scale, setdomain);
+              if (dom == NULL)
+                {
+                  goto error;
+                }
 
-	      switch (type)
-		{
-		case DB_TYPE_VARCHAR:
-		  dom->collation_id = collation_id;
-		case DB_TYPE_VARBIT:
-		  break;
-		case DB_TYPE_OBJECT:
-#if 1				/* TODO - trace */
-		  assert (false);
-		  goto error;
+              switch (type)
+                {
+                case DB_TYPE_VARCHAR:
+                  dom->collation_id = collation_id;
+                case DB_TYPE_VARBIT:
+                  break;
+                case DB_TYPE_OBJECT:
+#if 1                           /* TODO - trace */
+                  assert (false);
+                  goto error;
 #else
-		  COPY_OID (&dom->class_oid, &class_oid);
+                  COPY_OID (&dom->class_oid, &class_oid);
 #if !defined (SERVER_MODE)
-		  dom->class_mop = class_mop;
+                  dom->class_mop = class_mop;
 #endif /* !SERVER_MODE */
 #endif
-		  break;
+                  break;
 
-		default:
-		  break;
-		}
+                default:
+                  break;
+                }
 
-	      dom = tp_domain_cache (dom);
-	    }
+              dom = tp_domain_cache (dom);
+            }
 
-	  if (last == NULL)
-	    {
-	      domain = last = dom;
-	    }
-	  else
-	    {
-	      last->next = dom;
-	      last = last->next;
-	    }
-	}
+          if (last == NULL)
+            {
+              domain = last = dom;
+            }
+          else
+            {
+              last->next = dom;
+              last = last->next;
+            }
+        }
     }
 
   return domain;
@@ -4079,10 +4051,10 @@ error:
   if (domain != NULL)
     {
       for (td = domain, next = NULL; td != NULL; td = next)
-	{
-	  next = td->next;
-	  tp_domain_free (td);
-	}
+        {
+          next = td->next;
+          tp_domain_free (td);
+        }
     }
   return NULL;
 }
@@ -4105,22 +4077,22 @@ or_get_domain (OR_BUF * buf, TP_DOMAIN * caller_dom, int *is_null)
 
       domain = unpack_domain_2 (buf, is_null);
       if (tp_domain_match (domain, caller_dom, TP_SET_MATCH))
-	{
-	  tp_domain_free (domain);
-	  domain = caller_dom;
-	}
+        {
+          tp_domain_free (domain);
+          domain = caller_dom;
+        }
       else if (domain != NULL && !domain->is_cached)
-	{
-	  domain = tp_domain_cache (domain);
-	}
+        {
+          domain = tp_domain_cache (domain);
+        }
     }
   else
     {
       domain = unpack_domain (buf, is_null);
       if (domain != NULL && !domain->is_cached)
-	{
-	  domain = tp_domain_cache (domain);
-	}
+        {
+          domain = tp_domain_cache (domain);
+        }
     }
   return domain;
 }
@@ -4230,10 +4202,9 @@ or_put_sub_domain (OR_BUF * buf)
  */
 void
 or_packed_set_info (UNUSED_ARG DB_TYPE set_type,
-		    TP_DOMAIN * domain,
-		    UNUSED_ARG int include_domain,
-		    int *bound_bits,
-		    int *offset_table, int *element_tags, int *element_size)
+                    TP_DOMAIN * domain,
+                    UNUSED_ARG int include_domain,
+                    int *bound_bits, int *offset_table, int *element_tags, int *element_size)
 {
   TP_DOMAIN *element_domain;
   int homogeneous;
@@ -4261,24 +4232,24 @@ or_packed_set_info (UNUSED_ARG DB_TYPE set_type,
     {
       element_domain = domain->setdomain;
       if (element_domain != NULL && element_domain->next == NULL)
-	{
-	  /* set can contain only one type of thing */
-	  homogeneous = 1;
-	  /* returns -1 if this is a variable width thing */
-	  *element_size = tp_domain_disk_size (element_domain);
-	}
+        {
+          /* set can contain only one type of thing */
+          homogeneous = 1;
+          /* returns -1 if this is a variable width thing */
+          *element_size = tp_domain_disk_size (element_domain);
+        }
     }
 
   if (homogeneous)
     {
       if (*element_size >= 0)
-	{
-	  *bound_bits = 1;
-	}
+        {
+          *bound_bits = 1;
+        }
       else
-	{
-	  *offset_table = 1;
-	}
+        {
+          *offset_table = 1;
+        }
     }
   else
     {
@@ -4291,7 +4262,7 @@ or_packed_set_info (UNUSED_ARG DB_TYPE set_type,
    * from the set, but we'll allow it and assume that it will be passed
    * to the or_get_set function.
    */
-  *element_tags = !homogeneous;	/* || !include_domain */
+  *element_tags = !homogeneous; /* || !include_domain */
 
   /*
    * If we have to have element tags, then don't bother with a bound
@@ -4322,8 +4293,7 @@ or_packed_set_info (UNUSED_ARG DB_TYPE set_type,
  */
 int
 or_put_set_header (OR_BUF * buf, DB_TYPE set_type, int size,
-		   int domain, int bound_bits,
-		   int offset_table, int element_tags, int common_sub_header)
+                   int domain, int bound_bits, int offset_table, int element_tags, int common_sub_header)
 {
   unsigned int header;
   int rc = NO_ERROR;
@@ -4375,8 +4345,7 @@ or_put_set_header (OR_BUF * buf, DB_TYPE set_type, int size,
  */
 int
 or_get_set_header (OR_BUF * buf, DB_TYPE * set_type, int *size,
-		   int *domain, int *bound_bits,
-		   int *offset_table, int *element_tags, int *common_sub)
+                   int *domain, int *bound_bits, int *offset_table, int *element_tags, int *common_sub)
 {
   unsigned int header;
   int rc = NO_ERROR;
@@ -4390,9 +4359,9 @@ or_get_set_header (OR_BUF * buf, DB_TYPE * set_type, int *size,
       *offset_table = ((header & OR_SET_VARIABLE_BIT) != 0);
       *element_tags = ((header & OR_SET_TAG_BIT) != 0);
       if (common_sub != NULL)
-	{
-	  *common_sub = ((header & OR_SET_COMMON_SUB_BIT) != 0);
-	}
+        {
+          *common_sub = ((header & OR_SET_COMMON_SUB_BIT) != 0);
+        }
       *size = or_get_int (buf, &rc);
     }
   return rc;
@@ -4414,8 +4383,7 @@ or_skip_set_header (OR_BUF * buf)
   int count, length, rc = NO_ERROR;
   int domain, bound_bits, offset_table, element_tags, sub_header;
 
-  or_get_set_header (buf, &set_type, &count, &domain, &bound_bits,
-		     &offset_table, &element_tags, &sub_header);
+  or_get_set_header (buf, &set_type, &count, &domain, &bound_bits, &offset_table, &element_tags, &sub_header);
 
   if (offset_table)
     {
@@ -4483,9 +4451,7 @@ or_packed_set_length (SETOBJ * set, int include_domain)
   set_domain = setobj_domain (set);
 
   /* Determine storage characteristics based on the domain */
-  or_packed_set_info (set_type, set_domain, include_domain,
-		      &bound_bits, &offset_table, &element_tags,
-		      &element_size);
+  or_packed_set_info (set_type, set_domain, include_domain, &bound_bits, &offset_table, &element_tags, &element_size);
 
   len = OR_SET_HEADER_SIZE;
 
@@ -4516,27 +4482,27 @@ or_packed_set_length (SETOBJ * set, int include_domain)
     {
 
       for (i = 0; i < set_size; i++)
-	{
-	  error = setobj_get_element_ptr (set, i, &value);
+        {
+          error = setobj_get_element_ptr (set, i, &value);
 
-	  /* Second argument indicates whether to "collapse_null" values into
-	   * nothing.
-	   *   - can do this only if there is an offset table.
-	   * Third argument indicates whether or not to include the domain which
-	   *   - we do if the values are tagged.
-	   * Fourth argument indicates the desire to pack class OIDs which we
-	   * never do since these are tag domains.
-	   */
-	  len += or_packed_value_size (value, offset_table, element_tags);
-	  if (offset_table)
-	    {
-	      bits = len & 3;
-	      if (bits)
-		{
-		  len += (4 - bits);
-		}
-	    }
-	}
+          /* Second argument indicates whether to "collapse_null" values into
+           * nothing.
+           *   - can do this only if there is an offset table.
+           * Third argument indicates whether or not to include the domain which
+           *   - we do if the values are tagged.
+           * Fourth argument indicates the desire to pack class OIDs which we
+           * never do since these are tag domains.
+           */
+          len += or_packed_value_size (value, offset_table, element_tags);
+          if (offset_table)
+            {
+              bits = len & 3;
+              if (bits)
+                {
+                  len += (4 - bits);
+                }
+            }
+        }
     }
 
   /* always pad out a packed set to a word boundary */
@@ -4587,15 +4553,11 @@ or_put_set (OR_BUF * buf, SETOBJ * set, int include_domain)
 
   /* determine storage characteristics based on the domain */
   set_start = buf->ptr;
-  or_packed_set_info (set_type, set_domain, include_domain,
-		      &bound_bits, &offset_table, &element_tags,
-		      &element_size);
+  or_packed_set_info (set_type, set_domain, include_domain, &bound_bits, &offset_table, &element_tags, &element_size);
 
   or_put_set_header (buf,
-		     set_domain ? TP_DOMAIN_TYPE (set_domain) : set_type,
-		     set_size,
-		     include_domain,
-		     bound_bits, offset_table, element_tags, 0);
+                     set_domain ? TP_DOMAIN_TYPE (set_domain) : set_type,
+                     set_size, include_domain, bound_bits, offset_table, element_tags, 0);
 
 
   /* reserve space for the offset table or bound bit vector if necessary */
@@ -4605,17 +4567,17 @@ or_put_set (OR_BUF * buf, SETOBJ * set, int include_domain)
   if (set_size)
     {
       if (offset_table)
-	{
-	  offset_ptr = buf->ptr;
-	  len = OR_VAR_TABLE_SIZE (set_size);
-	  or_advance (buf, len);
-	}
+        {
+          offset_ptr = buf->ptr;
+          len = OR_VAR_TABLE_SIZE (set_size);
+          or_advance (buf, len);
+        }
       else if (bound_bits)
-	{
-	  bound_ptr = buf->ptr;
-	  len = OR_BOUND_BIT_BYTES (set_size);
-	  or_advance (buf, len);
-	}
+        {
+          bound_ptr = buf->ptr;
+          len = OR_BOUND_BIT_BYTES (set_size);
+          or_advance (buf, len);
+        }
     }
 
   /* write the domain if necessary, don't include the class OID */
@@ -4635,87 +4597,87 @@ or_put_set (OR_BUF * buf, SETOBJ * set, int include_domain)
 
       /* iterate over the values */
       for (i = 0; i < set_size; i++)
-	{
-	  error = setobj_get_element_ptr (set, i, &value);
+        {
+          error = setobj_get_element_ptr (set, i, &value);
 
-	  /*
-	   * make an entry in the offset table or bound bit array if we
-	   * have them
-	   */
-	  is_null = 0;
-	  if (offset_ptr != NULL)
-	    {
-	      /* offset table entry */
-	      OR_PUT_OFFSET (offset_ptr, offset);
-	      offset_ptr += BIG_VAR_OFFSET_SIZE;
-	    }
-	  else if (bound_ptr != NULL)
-	    {
-	      bit = i & 0x1F;
-	      if (value != NULL && DB_VALUE_TYPE (value) != DB_TYPE_NULL)
-		{
-		  bound_word |= 1L << bit;
-		}
-	      else
-		{
-		  is_null = 1;
-		}
-	      if (bit == 0x1F)
-		{
-		  OR_PUT_INT (bound_ptr, bound_word);
-		  bound_ptr += OR_INT_SIZE;
-		  bound_word = 0;
-		}
-	    }
+          /*
+           * make an entry in the offset table or bound bit array if we
+           * have them
+           */
+          is_null = 0;
+          if (offset_ptr != NULL)
+            {
+              /* offset table entry */
+              OR_PUT_OFFSET (offset_ptr, offset);
+              offset_ptr += BIG_VAR_OFFSET_SIZE;
+            }
+          else if (bound_ptr != NULL)
+            {
+              bit = i & 0x1F;
+              if (value != NULL && DB_VALUE_TYPE (value) != DB_TYPE_NULL)
+                {
+                  bound_word |= 1L << bit;
+                }
+              else
+                {
+                  is_null = 1;
+                }
+              if (bit == 0x1F)
+                {
+                  OR_PUT_INT (bound_ptr, bound_word);
+                  bound_ptr += OR_INT_SIZE;
+                  bound_word = 0;
+                }
+            }
 
-	  /*
-	   * Write the value.  Be careful with NULLs in fixed width sets, need
-	   * to leave space.
-	   */
-	  element_start = buf->ptr;
+          /*
+           * Write the value.  Be careful with NULLs in fixed width sets, need
+           * to leave space.
+           */
+          element_start = buf->ptr;
 
-	  if (bound_ptr != NULL && is_null)
-	    {
-	      /*
-	       * Could just use or_advance here but lets be nice and
-	       * zero out the space for debugging.
-	       */
-	      or_pad (buf, element_size);
-	    }
-	  else
-	    {
-	      /* Third argument indicates whether to "collapse_null" values
-	       * into nothing.
-	       *   - can do this only if there is an offset table.
-	       * Fourth argument indicates whether or not to include the
-	       * domain which we do if the values are tagged.
-	       */
-	      or_put_value (buf, value, offset_table, element_tags);
-	    }
+          if (bound_ptr != NULL && is_null)
+            {
+              /*
+               * Could just use or_advance here but lets be nice and
+               * zero out the space for debugging.
+               */
+              or_pad (buf, element_size);
+            }
+          else
+            {
+              /* Third argument indicates whether to "collapse_null" values
+               * into nothing.
+               *   - can do this only if there is an offset table.
+               * Fourth argument indicates whether or not to include the
+               * domain which we do if the values are tagged.
+               */
+              or_put_value (buf, value, offset_table, element_tags);
+            }
 
-	  if (offset_table)
-	    {
-	      length = CAST_BUFLEN (buf->ptr - element_start);
-	      bits = length & 3;
-	      if (bits)
-		{
-		  or_pad (buf, 4 - bits);
-		}
-	    }
+          if (offset_table)
+            {
+              length = CAST_BUFLEN (buf->ptr - element_start);
+              bits = length & 3;
+              if (bits)
+                {
+                  or_pad (buf, 4 - bits);
+                }
+            }
 
-	  offset += (int) (buf->ptr - element_start);
-	}
+          offset += (int) (buf->ptr - element_start);
+        }
 
       /* store the ending offset in the table if we're using one */
       if (offset_ptr != NULL)
-	{
-	  OR_PUT_OFFSET (offset_ptr, offset);
-	}
+        {
+          OR_PUT_OFFSET (offset_ptr, offset);
+        }
 
       if (bound_ptr != NULL && bit != 0x1f)
-	{
-	  OR_PUT_INT (bound_ptr, bound_word);
-	}
+        {
+          OR_PUT_INT (bound_ptr, bound_word);
+        }
     }
 
   /* always pad out a packed set to a word boundary */
@@ -4760,9 +4722,7 @@ or_get_set (OR_BUF * buf, TP_DOMAIN * domain)
   set_start = buf->ptr;
 
   /* read the set header and decompose the various flags */
-  or_get_set_header (buf, &set_type, &size,
-		     &has_domain, &bound_bits, &offset_table,
-		     &element_tags, NULL);
+  or_get_set_header (buf, &set_type, &size, &has_domain, &bound_bits, &offset_table, &element_tags, NULL);
 
   set = setobj_create (set_type, size);
   if (set == NULL)
@@ -4800,7 +4760,7 @@ or_get_set (OR_BUF * buf, TP_DOMAIN * domain)
 
   if (has_domain)
     {
-      (void) or_get_int (buf, &rc);	/* skip the domain size */
+      (void) or_get_int (buf, &rc);     /* skip the domain size */
       /* the domain returned here will be cached */
       setobj_put_domain (set, or_get_domain (buf, domain, NULL));
       /* If this is stored and the caller has supplied one as an argument to
@@ -4816,8 +4776,7 @@ or_get_set (OR_BUF * buf, TP_DOMAIN * domain)
   fixed_element_size = -1;
   set_domain = setobj_domain (set);
 
-  if (set_domain != NULL && set_domain->setdomain != NULL
-      && set_domain->setdomain->next == NULL)
+  if (set_domain != NULL && set_domain->setdomain != NULL && set_domain->setdomain->next == NULL)
     {
       /* we only have one possible element domain */
       fixed_element_size = tp_domain_disk_size (set_domain->setdomain);
@@ -4828,100 +4787,98 @@ or_get_set (OR_BUF * buf, TP_DOMAIN * domain)
     {
       /* read the first offset or bound word */
       if (offset_table)
-	{
-	  offset = OR_GET_OFFSET (offset_ptr);
-	  offset_ptr += BIG_VAR_OFFSET_SIZE;
-	}
+        {
+          offset = OR_GET_OFFSET (offset_ptr);
+          offset_ptr += BIG_VAR_OFFSET_SIZE;
+        }
       else if (bound_bits)
-	{
-	  bound_word = OR_GET_INT (bound_ptr);
-	}
+        {
+          bound_word = OR_GET_INT (bound_ptr);
+        }
 
       /* loop over each element */
       for (i = 0; i < size; i++)
-	{
+        {
 
-	  /* determine the length of the element if there is an offset table */
-	  element_size = -1;
-	  if (offset_ptr != NULL)
-	    {
-	      offset2 = OR_GET_OFFSET (offset_ptr);
-	      offset_ptr += BIG_VAR_OFFSET_SIZE;
-	      element_size = offset2 - offset;
-	      offset = offset2;
-	    }
-	  else if (bound_ptr != NULL)
-	    {
-	      element_size = fixed_element_size;	/* this must be fixed width! */
-	      bit = i & 0x1F;
-	      if ((bound_word & (1L << bit)) == 0)
-		{
-		  element_size = 0;	/* its NULL */
-		}
-	      if (bit == 0x1F)
-		{
-		  bound_ptr += OR_INT_SIZE;
-		  bound_word = OR_GET_INT (bound_ptr);
-		}
-	    }
+          /* determine the length of the element if there is an offset table */
+          element_size = -1;
+          if (offset_ptr != NULL)
+            {
+              offset2 = OR_GET_OFFSET (offset_ptr);
+              offset_ptr += BIG_VAR_OFFSET_SIZE;
+              element_size = offset2 - offset;
+              offset = offset2;
+            }
+          else if (bound_ptr != NULL)
+            {
+              element_size = fixed_element_size;        /* this must be fixed width! */
+              bit = i & 0x1F;
+              if ((bound_word & (1L << bit)) == 0)
+                {
+                  element_size = 0;     /* its NULL */
+                }
+              if (bit == 0x1F)
+                {
+                  bound_ptr += OR_INT_SIZE;
+                  bound_word = OR_GET_INT (bound_ptr);
+                }
+            }
 
-	  /*
-	     8 element_size will now be 0 if NULL, the true size, or -1 if
-	     * variable or unknown.
-	   */
+          /*
+             8 element_size will now be 0 if NULL, the true size, or -1 if
+             * variable or unknown.
+           */
 
-	  /* Read the element. */
-	  if (element_size == 0)
-	    {
-	      /*
-	       * we have to initlaize the domain too, since a set can
-	       * have several possible domains, just pick the first one.
-	       * Actually,for wildcard sets, we won't have a domain to select.
-	       * Since I guess the NULL "domain" can logically be a part of all
-	       * sets, initialize the domain for NULL.
-	       */
-	      db_value_domain_init (&value, DB_TYPE_NULL,
-				    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
-	      db_make_null (&value);
-	      /*
-	       * if this is a fixed width element array, skip over the null
-	       * data
-	       */
-	      if (bound_ptr != NULL)
-		{
-		  or_advance (buf, fixed_element_size);
-		}
-	    }
-	  else
-	    {
-	      /*
-	       * read a packed value, pass the domain only if the
-	       * values are not tagged already tagged.
-	       */
-	      if (element_tags)
-		{
-		  or_get_value (buf, &value, NULL, element_size, true);
-		}
-	      else
-		{
-		  or_get_value (buf, &value, element_domain, element_size,
-				true);
-		}
-	    }
+          /* Read the element. */
+          if (element_size == 0)
+            {
+              /*
+               * we have to initlaize the domain too, since a set can
+               * have several possible domains, just pick the first one.
+               * Actually,for wildcard sets, we won't have a domain to select.
+               * Since I guess the NULL "domain" can logically be a part of all
+               * sets, initialize the domain for NULL.
+               */
+              db_value_domain_init (&value, DB_TYPE_NULL, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+              db_make_null (&value);
+              /*
+               * if this is a fixed width element array, skip over the null
+               * data
+               */
+              if (bound_ptr != NULL)
+                {
+                  or_advance (buf, fixed_element_size);
+                }
+            }
+          else
+            {
+              /*
+               * read a packed value, pass the domain only if the
+               * values are not tagged already tagged.
+               */
+              if (element_tags)
+                {
+                  or_get_value (buf, &value, NULL, element_size, true);
+                }
+              else
+                {
+                  or_get_value (buf, &value, element_domain, element_size, true);
+                }
+            }
 
-	  /*
-	   * This setobj interface function passes "ownership" of the memory
-	   * of value to the set. value need not be cleared after this call,
-	   * as its internal memory pointers are copied directly to the set
-	   * This function should only be used in construction of internal
-	   * setobj structure from temporary DB_VALUE's.
-	   */
-	  if (setobj_put_value (set, i, &value) != NO_ERROR)
-	    {
-	      /* PR9043 if value not added to set, clear it */
-	      pr_clear_value (&value);
-	    }
-	}
+          /*
+           * This setobj interface function passes "ownership" of the memory
+           * of value to the set. value need not be cleared after this call,
+           * as its internal memory pointers are copied directly to the set
+           * This function should only be used in construction of internal
+           * setobj structure from temporary DB_VALUE's.
+           */
+          if (setobj_put_value (set, i, &value) != NO_ERROR)
+            {
+              /* PR9043 if value not added to set, clear it */
+              pr_clear_value (&value);
+            }
+        }
     }
 
   /* sets are always paded, consume the padding */
@@ -4962,8 +4919,7 @@ or_disk_set_size (OR_BUF * buf, TP_DOMAIN * set_domain, DB_TYPE * set_type)
   set_start = buf->ptr;
 
   /* read the set header and decompose the various flags */
-  or_get_set_header (buf, &disk_set_type, &size, &has_domain, &bound_bits,
-		     &offset_table, &element_tags, NULL);
+  or_get_set_header (buf, &disk_set_type, &size, &has_domain, &bound_bits, &offset_table, &element_tags, NULL);
 
   if (set_type)
     {
@@ -4989,7 +4945,7 @@ or_disk_set_size (OR_BUF * buf, TP_DOMAIN * set_domain, DB_TYPE * set_type)
 
   if (has_domain)
     {
-      (void) or_get_int (buf, &rc);	/* skip the domain size */
+      (void) or_get_int (buf, &rc);     /* skip the domain size */
       /* we have to unpack the domain */
       set_domain = or_get_domain (buf, set_domain, NULL);
     }
@@ -5000,8 +4956,7 @@ or_disk_set_size (OR_BUF * buf, TP_DOMAIN * set_domain, DB_TYPE * set_type)
    */
   element_domain = NULL;
   fixed_element_size = -1;
-  if (set_domain != NULL && set_domain->setdomain != NULL
-      && set_domain->setdomain->next == NULL)
+  if (set_domain != NULL && set_domain->setdomain != NULL && set_domain->setdomain->next == NULL)
     {
       /* we only have one possible element domain */
       fixed_element_size = tp_domain_disk_size (set_domain->setdomain);
@@ -5012,87 +4967,86 @@ or_disk_set_size (OR_BUF * buf, TP_DOMAIN * set_domain, DB_TYPE * set_type)
     {
       /* read the first offset or bound word */
       if (offset_table)
-	{
-	  offset = OR_GET_OFFSET (offset_ptr);
-	  offset_ptr += BIG_VAR_OFFSET_SIZE;
-	}
+        {
+          offset = OR_GET_OFFSET (offset_ptr);
+          offset_ptr += BIG_VAR_OFFSET_SIZE;
+        }
       else if (bound_bits)
-	{
-	  bound_word = OR_GET_INT (bound_ptr);
-	}
+        {
+          bound_word = OR_GET_INT (bound_ptr);
+        }
 
       /* loop over each element */
       for (i = 0; i < size; i++)
-	{
-	  /* determine the length of the element if there is an offset table */
-	  element_size = -1;
-	  if (offset_ptr != NULL)
-	    {
-	      offset2 = OR_GET_OFFSET (offset_ptr);
-	      offset_ptr += BIG_VAR_OFFSET_SIZE;
-	      element_size = offset2 - offset;
-	      offset = offset2;
-	    }
-	  else if (bound_ptr != NULL)
-	    {
-	      element_size = fixed_element_size;	/* this must be fixed width! */
-	      bit = i & 0x1F;
-	      if ((bound_word & (1L << bit)) == 0)
-		{
-		  element_size = 0;	/* its NULL */
-		}
+        {
+          /* determine the length of the element if there is an offset table */
+          element_size = -1;
+          if (offset_ptr != NULL)
+            {
+              offset2 = OR_GET_OFFSET (offset_ptr);
+              offset_ptr += BIG_VAR_OFFSET_SIZE;
+              element_size = offset2 - offset;
+              offset = offset2;
+            }
+          else if (bound_ptr != NULL)
+            {
+              element_size = fixed_element_size;        /* this must be fixed width! */
+              bit = i & 0x1F;
+              if ((bound_word & (1L << bit)) == 0)
+                {
+                  element_size = 0;     /* its NULL */
+                }
 
-	      if (bit == 0x1F)
-		{
-		  bound_ptr += OR_INT_SIZE;
-		  bound_word = OR_GET_INT (bound_ptr);
-		}
-	    }
+              if (bit == 0x1F)
+                {
+                  bound_ptr += OR_INT_SIZE;
+                  bound_word = OR_GET_INT (bound_ptr);
+                }
+            }
 
-	  /*
-	   * element_size will now be 0 if NULL, the true size, or -1 if
-	   * variable or unknown.
-	   */
+          /*
+           * element_size will now be 0 if NULL, the true size, or -1 if
+           * variable or unknown.
+           */
 
-	  /*
-	   * Skip the element, we may have to actually unpack the element
-	   * to do this (if the size is variable), but no storage should be
-	   * allocated.
-	   */
-	  if (element_size == 0)
-	    {
-	      /*
-	       * if this is a fixed width element array, skip over the null
-	       * data
-	       */
-	      if (bound_ptr != NULL)
-		{
-		  or_advance (buf, fixed_element_size);
-		}
-	    }
-	  else if (element_size != -1)
-	    {
-	      /* in this case we can simply skip the element */
-	      or_advance (buf, element_size);
-	    }
-	  else
-	    {
-	      /* skip a packed value, pass the domain only if the
-	       * values are not already tagged.  The NULL db_value tells
-	       * the routine to skip the value rather than actually unpack
-	       * it into a db_value container.
-	       */
-	      if (element_tags)
-		{
-		  or_get_value (buf, NULL, NULL, element_size, true);
-		}
-	      else
-		{
-		  or_get_value (buf, NULL, element_domain, element_size,
-				true);
-		}
-	    }
-	}
+          /*
+           * Skip the element, we may have to actually unpack the element
+           * to do this (if the size is variable), but no storage should be
+           * allocated.
+           */
+          if (element_size == 0)
+            {
+              /*
+               * if this is a fixed width element array, skip over the null
+               * data
+               */
+              if (bound_ptr != NULL)
+                {
+                  or_advance (buf, fixed_element_size);
+                }
+            }
+          else if (element_size != -1)
+            {
+              /* in this case we can simply skip the element */
+              or_advance (buf, element_size);
+            }
+          else
+            {
+              /* skip a packed value, pass the domain only if the
+               * values are not already tagged.  The NULL db_value tells
+               * the routine to skip the value rather than actually unpack
+               * it into a db_value container.
+               */
+              if (element_tags)
+                {
+                  or_get_value (buf, NULL, NULL, element_size, true);
+                }
+              else
+                {
+                  or_get_value (buf, NULL, element_domain, element_size, true);
+                }
+            }
+        }
     }
 
   /* sets are always paded, consume the padding */
@@ -5124,8 +5078,7 @@ or_disk_set_size (OR_BUF * buf, TP_DOMAIN * set_domain, DB_TYPE * set_type)
  *    include_domain(in): non-zero to include a domain tag
  */
 int
-or_packed_value_size (const DB_VALUE * value, int collapse_null,
-		      int include_domain)
+or_packed_value_size (const DB_VALUE * value, int collapse_null, int include_domain)
 {
   PR_TYPE *type;
   TP_DOMAIN *domain;
@@ -5151,42 +5104,42 @@ or_packed_value_size (const DB_VALUE * value, int collapse_null,
   if (DB_VALUE_TYPE (value) == DB_TYPE_NULL)
     {
       if (!collapse_null || include_domain)
-	{
-	  domain = tp_domain_resolve_value (value);
-	  if (domain != NULL)
-	    {
-	      size = or_packed_domain_size (domain);
-	    }
-	  else
-	    {
-	      size = or_packed_domain_size (&tp_Null_domain);
-	    }
-	}
+        {
+          domain = tp_domain_resolve_value (value);
+          if (domain != NULL)
+            {
+              size = or_packed_domain_size (domain);
+            }
+          else
+            {
+              size = or_packed_domain_size (&tp_Null_domain);
+            }
+        }
     }
   else
     {
       if (include_domain)
-	{
-	  domain = tp_domain_resolve_value (value);
-	  if (domain != NULL)
-	    {
-	      size = or_packed_domain_size (domain);
-	    }
-	  else
-	    {
-	      /* shouldn't get here ! */
-	      size = or_packed_domain_size (&tp_Null_domain);
-	      return size;
-	    }
-	}
+        {
+          domain = tp_domain_resolve_value (value);
+          if (domain != NULL)
+            {
+              size = or_packed_domain_size (domain);
+            }
+          else
+            {
+              /* shouldn't get here ! */
+              size = or_packed_domain_size (&tp_Null_domain);
+              return size;
+            }
+        }
       if (type->data_lengthval == NULL)
-	{
-	  size += type->disksize;
-	}
+        {
+          size += type->disksize;
+        }
       else
-	{
-	  size += (*(type->data_lengthval)) (value, 1);
-	}
+        {
+          size += (*(type->data_lengthval)) (value, 1);
+        }
     }
 
   /* Values must as a unit be aligned to a word boundary.  We can't do this
@@ -5197,9 +5150,9 @@ or_packed_value_size (const DB_VALUE * value, int collapse_null,
     {
       bits = size & 3;
       if (bits)
-	{
-	  size += (4 - bits);
-	}
+        {
+          size += (4 - bits);
+        }
     }
 
   return size;
@@ -5215,8 +5168,7 @@ or_packed_value_size (const DB_VALUE * value, int collapse_null,
  *    include_domain(in): non-zero to include a domain tag
  */
 int
-or_put_value (OR_BUF * buf, const DB_VALUE * value,
-	      int collapse_null, int include_domain)
+or_put_value (OR_BUF * buf, const DB_VALUE * value, int collapse_null, int include_domain)
 {
   PR_TYPE *type;
   TP_DOMAIN *domain;
@@ -5242,43 +5194,43 @@ or_put_value (OR_BUF * buf, const DB_VALUE * value,
   if (DB_VALUE_TYPE (value) == DB_TYPE_NULL)
     {
       if (!collapse_null || include_domain)
-	{
-	  domain = tp_domain_resolve_value (value);
-	  if (domain != NULL)
-	    {
-	      rc = or_put_domain (buf, domain, 1);
-	    }
-	  else
-	    {
-	      /* shouldn't get here */
-	      rc = or_put_domain (buf, &tp_Null_domain, 1);
-	    }
-	}
+        {
+          domain = tp_domain_resolve_value (value);
+          if (domain != NULL)
+            {
+              rc = or_put_domain (buf, domain, 1);
+            }
+          else
+            {
+              /* shouldn't get here */
+              rc = or_put_domain (buf, &tp_Null_domain, 1);
+            }
+        }
     }
   else
     {
       if (include_domain)
-	{
-	  domain = tp_domain_resolve_value (value);
-	  if (domain != NULL)
-	    {
-	      rc = or_put_domain (buf, domain, 0);
-	    }
-	  else
-	    {
-	      /* shouldn't get here */
-	      assert (false);
+        {
+          domain = tp_domain_resolve_value (value);
+          if (domain != NULL)
+            {
+              rc = or_put_domain (buf, domain, 0);
+            }
+          else
+            {
+              /* shouldn't get here */
+              assert (false);
 
-	      rc = or_put_domain (buf, &tp_Null_domain, 1);
-	      return NO_ERROR;
-	    }
-	}
+              rc = or_put_domain (buf, &tp_Null_domain, 1);
+              return NO_ERROR;
+            }
+        }
       /* probably should blow off writing the value if we couldn't determine the
        * domain ? */
       if (rc == NO_ERROR)
-	{
-	  rc = (*(type->data_writeval)) (buf, value);
-	}
+        {
+          rc = (*(type->data_writeval)) (buf, value);
+        }
     }
 
   /*
@@ -5289,14 +5241,14 @@ or_put_value (OR_BUF * buf, const DB_VALUE * value,
   if (rc == NO_ERROR)
     {
       if (include_domain)
-	{
-	  length = (int) (buf->ptr - start);
-	  bits = length & 3;
-	  if (bits)
-	    {
-	      rc = or_pad (buf, 4 - bits);
-	    }
-	}
+        {
+          length = (int) (buf->ptr - start);
+          bits = length & 3;
+          if (bits)
+            {
+              rc = or_pad (buf, 4 - bits);
+            }
+        }
     }
   return rc;
 }
@@ -5327,8 +5279,7 @@ or_put_value (OR_BUF * buf, const DB_VALUE * value,
  *
  */
 int
-or_get_value (OR_BUF * buf, DB_VALUE * value, TP_DOMAIN * domain,
-	      int expected, bool copy)
+or_get_value (OR_BUF * buf, DB_VALUE * value, TP_DOMAIN * domain, int expected, bool copy)
 {
   char *start;
   int is_null, total, pad;
@@ -5360,11 +5311,11 @@ or_get_value (OR_BUF * buf, DB_VALUE * value, TP_DOMAIN * domain,
     {
       domain = or_get_domain (buf, NULL, &is_null);
       if (expected >= 0)
-	{
-	  /* reduce the expected size by the amount consumed with the domain tag */
-	  expected -= CAST_BUFLEN (buf->ptr - start);
-	  start = buf->ptr;
-	}
+        {
+          /* reduce the expected size by the amount consumed with the domain tag */
+          expected -= CAST_BUFLEN (buf->ptr - start);
+          start = buf->ptr;
+        }
     }
 
   if (domain == NULL)
@@ -5377,39 +5328,36 @@ or_get_value (OR_BUF * buf, DB_VALUE * value, TP_DOMAIN * domain,
   else
     {
       if (value)
-	{
-	  tp_init_value_domain (domain, value);
-	}
+        {
+          tp_init_value_domain (domain, value);
+        }
 
       if (is_null && value)
-	{
-	  /* this was a tagged NULL value, restore the domain but set the null flag */
-	  db_value_put_null (value);
-	  if (TP_IS_CHAR_TYPE (TP_DOMAIN_TYPE (domain)))
-	    {
-	      db_string_put_cs_and_collation (value,
-					      TP_DOMAIN_COLLATION (domain));
-	    }
-	}
+        {
+          /* this was a tagged NULL value, restore the domain but set the null flag */
+          db_value_put_null (value);
+          if (TP_IS_CHAR_TYPE (TP_DOMAIN_TYPE (domain)))
+            {
+              db_string_put_cs_and_collation (value, TP_DOMAIN_COLLATION (domain));
+            }
+        }
       else
-	{
-	  if (value)
-	    {
-	      (*(domain->type->data_readval)) (buf, value, domain, expected,
-					       copy);
-	    }
-	  else
-	    {
-	      /* the NULL value, will cause readval to skip the value */
-	      (*(domain->type->data_readval)) (buf, NULL, domain, expected,
-					       false);
-	    }
+        {
+          if (value)
+            {
+              (*(domain->type->data_readval)) (buf, value, domain, expected, copy);
+            }
+          else
+            {
+              /* the NULL value, will cause readval to skip the value */
+              (*(domain->type->data_readval)) (buf, NULL, domain, expected, false);
+            }
 
-	  if (rc != NO_ERROR)
-	    {
-	      return rc;
-	    }
-	}
+          if (rc != NO_ERROR)
+            {
+              return rc;
+            }
+        }
     }
 
   /* Consume any padding bytes that may be left over.
@@ -5426,7 +5374,7 @@ or_get_value (OR_BUF * buf, DB_VALUE * value, TP_DOMAIN * domain,
   else if (expected < 0)
     {
       if (total & 3)
-	pad = 4 - (total & 3);
+        pad = 4 - (total & 3);
     }
   if (pad > 0)
     {
@@ -5513,8 +5461,7 @@ or_unpack_recdes (char *buf, RECDES ** recdes)
   tmp_recdes = (RECDES *) malloc (sizeof (RECDES) + length);
   if (tmp_recdes == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, sizeof (RECDES) + length);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (RECDES) + length);
       return NULL;
     }
 
@@ -5598,13 +5545,12 @@ or_unpack_listid (char *ptr, void **listid_ptr)
 
   if (count > 0)
     {
-      listid->type_list.domp =
-	(TP_DOMAIN **) malloc (sizeof (TP_DOMAIN *) * count);
+      listid->type_list.domp = (TP_DOMAIN **) malloc (sizeof (TP_DOMAIN *) * count);
 
       if (listid->type_list.domp == NULL)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
 
   for (i = 0; i < count; i++)
@@ -5645,8 +5591,7 @@ or_unpack_unbound_listid (char *ptr, void **listid_ptr)
   listid = (QFILE_LIST_ID *) malloc (sizeof (QFILE_LIST_ID));
   if (listid == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, sizeof (QFILE_LIST_ID));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (QFILE_LIST_ID));
       goto error;
     }
   QFILE_CLEAR_LIST_ID (listid);
@@ -5690,15 +5635,13 @@ or_unpack_unbound_listid (char *ptr, void **listid_ptr)
 
   if (count > 0)
     {
-      listid->type_list.domp =
-	(TP_DOMAIN **) malloc (sizeof (TP_DOMAIN *) * count);
+      listid->type_list.domp = (TP_DOMAIN **) malloc (sizeof (TP_DOMAIN *) * count);
 
       if (listid->type_list.domp == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, (sizeof (TP_DOMAIN *) * count));
-	  goto error;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (sizeof (TP_DOMAIN *) * count));
+          goto error;
+        }
     }
 
   for (i = 0; i < count; i++)
@@ -5762,7 +5705,7 @@ or_listid_length (const void *listid_ptr)
       length += or_packed_domain_size (listid->type_list.domp[i]);
     }
 
-  length += OR_PTR_SIZE /* query_id */  + OR_PTR_SIZE;	/* tfile_vfid */
+  length += OR_PTR_SIZE /* query_id */  + OR_PTR_SIZE;  /* tfile_vfid */
   return length;
 }
 

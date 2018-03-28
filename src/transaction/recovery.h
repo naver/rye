@@ -57,7 +57,7 @@ typedef enum
   RVDK_RESET_BOOT_HFID = 9,
   RVDK_LINK_PERM_VOLEXT = 10,
 
-  RVFL_CREATE_TMPFILE = 11, /* not used */
+  RVFL_CREATE_TMPFILE = 11,     /* not used */
   RVFL_FTAB_CHAIN = 12,
   RVFL_IDSTABLE = 13,
   /* Never use this recovery index anymore. Only for backward compatibility */
@@ -156,16 +156,16 @@ typedef enum
  */
 typedef struct log_rcv LOG_RCV;
 struct log_rcv
-{				/* Recovery information */
-  PAGE_PTR pgptr;		/* Page to recover. Page should not be free by recovery
-				   functions, however it should be set dirty whenever is
-				   needed
-				 */
-  PGLENGTH offset;		/* Offset/slot of data in the above page to recover */
-  int length;			/* Length of data */
-  const char *data;		/* Replacement data. Pointer becomes invalid once the
-				   recovery of the data is finished
-				 */
+{                               /* Recovery information */
+  PAGE_PTR pgptr;               /* Page to recover. Page should not be free by recovery
+                                   functions, however it should be set dirty whenever is
+                                   needed
+                                 */
+  PGLENGTH offset;              /* Offset/slot of data in the above page to recover */
+  int length;                   /* Length of data */
+  const char *data;             /* Replacement data. Pointer becomes invalid once the
+                                   recovery of the data is finished
+                                 */
 };
 
 /*
@@ -174,7 +174,7 @@ struct log_rcv
 
 struct rvfun
 {
-  LOG_RCVINDEX recv_index;	/* For verification   */
+  LOG_RCVINDEX recv_index;      /* For verification   */
   const char *recv_string;
   int (*undofun) (THREAD_ENTRY * thread_p, LOG_RCV * logrcv);
   int (*redofun) (THREAD_ENTRY * thread_p, LOG_RCV * logrcv);

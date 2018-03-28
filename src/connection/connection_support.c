@@ -99,25 +99,19 @@ CSS_CHECK_CLIENT_ALIVE_FN css_check_client_alive_fn = NULL;
 
 #if !defined(SERVER_MODE)
 static int css_sprintf_conn_infoids (SOCKET fd, const char **client_user_name,
-				     const char **client_host_name,
-				     int *client_pid);
+                                     const char **client_host_name, int *client_pid);
 #endif
-static int css_vector_send (SOCKET fd, struct iovec *vec[], int *len,
-			    int bytes_written, int timeout);
+static int css_vector_send (SOCKET fd, struct iovec *vec[], int *len, int bytes_written, int timeout);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static void css_set_io_vector (struct iovec *vec1_p, struct iovec *vec2_p,
-			       const char *buff, int len, int *templen);
+static void css_set_io_vector (struct iovec *vec1_p, struct iovec *vec2_p, const char *buff, int len, int *templen);
 #endif
 static int css_send_io_vector (CSS_CONN_ENTRY * conn, struct iovec *vec_p,
-			       ssize_t total_len, int vector_length,
-			       int timeout);
-static int css_vector_recv (SOCKET fd, struct iovec *vec, int vec_count,
-			    int nbytes, int timeout);
+                               ssize_t total_len, int vector_length, int timeout);
+static int css_vector_recv (SOCKET fd, struct iovec *vec, int vec_count, int nbytes, int timeout);
 
 static void css_set_net_header (NET_HEADER * header_p, char packet_type,
-				short function_code, int request_id,
-				CSS_CONN_ENTRY * conn,
-				int num_buffers, int *buffer_sizes);
+                                short function_code, int request_id,
+                                CSS_CONN_ENTRY * conn, int num_buffers, int *buffer_sizes);
 static void css_set_net_header_hton (NET_HEADER * dest_p, NET_HEADER * src_p);
 static void css_set_net_header_ntoh (NET_HEADER * dest_p, NET_HEADER * src_p);
 
@@ -125,21 +119,16 @@ static void css_set_net_header_ntoh (NET_HEADER * dest_p, NET_HEADER * src_p);
 static char *css_trim_str (char *str);
 #endif
 
-static int css_net_packet_send (CSS_CONN_ENTRY * conn,
-				CSS_NET_PACKET * send_packet);
+static int css_net_packet_send (CSS_CONN_ENTRY * conn, CSS_NET_PACKET * send_packet);
 
 
-static CSS_NET_PACKET *css_net_packet_alloc (CSS_CONN_ENTRY * conn,
-					     NET_HEADER * net_header);
-static void css_net_packet_buffer_free (CSS_NET_PACKET * net_packet,
-					int idx, bool free_mem);
-static char *css_net_packet_buffer_alloc (CSS_NET_PACKET * net_packet,
-					  int idx, int size);
+static CSS_NET_PACKET *css_net_packet_alloc (CSS_CONN_ENTRY * conn, NET_HEADER * net_header);
+static void css_net_packet_buffer_free (CSS_NET_PACKET * net_packet, int idx, bool free_mem);
+static char *css_net_packet_buffer_alloc (CSS_NET_PACKET * net_packet, int idx, int size);
 
 #if !defined(SERVER_MODE)
 static int
-css_sprintf_conn_infoids (SOCKET fd, const char **client_user_name,
-			  const char **client_host_name, int *client_pid)
+css_sprintf_conn_infoids (SOCKET fd, const char **client_user_name, const char **client_host_name, int *client_pid)
 {
   CSS_CONN_ENTRY *conn;
   static char user_name[L_cuserid] = { '\0' };
@@ -152,14 +141,14 @@ css_sprintf_conn_infoids (SOCKET fd, const char **client_user_name,
   if (conn != NULL && conn->tran_index != -1)
     {
       if (getuserid (user_name, L_cuserid) == NULL)
-	{
-	  strcpy (user_name, "");
-	}
+        {
+          strcpy (user_name, "");
+        }
 
       if (GETHOSTNAME (host_name, MAXHOSTNAMELEN) != 0)
-	{
-	  strcpy (host_name, "???");
-	}
+        {
+          strcpy (host_name, "???");
+        }
 
       pid = getpid ();
 
@@ -182,16 +171,13 @@ css_set_networking_error (SOCKET fd)
   int client_pid;
   int client_tranindex;
 
-  client_tranindex = css_sprintf_conn_infoids (fd, &client_user_name,
-					       &client_host_name,
-					       &client_pid);
+  client_tranindex = css_sprintf_conn_infoids (fd, &client_user_name, &client_host_name, &client_pid);
 
   if (client_tranindex != -1)
     {
       er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_RECV_OR_SEND, 5, fd,
-			   client_tranindex, client_user_name,
-			   client_host_name, client_pid);
+                           ER_CSS_RECV_OR_SEND, 5, fd,
+                           client_tranindex, client_user_name, client_host_name, client_pid);
     }
 }
 #endif
@@ -206,8 +192,7 @@ css_set_networking_error (SOCKET fd)
  *   timeout(in): timeout value in milli-seconds
  */
 static int
-css_vector_send (SOCKET fd, struct iovec *vec[], int *len, int bytes_written,
-		 int timeout)
+css_vector_send (SOCKET fd, struct iovec *vec[], int *len, int bytes_written, int timeout)
 {
   int i, n;
   struct pollfd po[1] = { {0, 0, 0} };
@@ -222,20 +207,19 @@ css_vector_send (SOCKET fd, struct iovec *vec[], int *len, int bytes_written,
   if (bytes_written > 0)
     {
 #ifdef RYE_DEBUG
-      er_log_debug (ARG_FILE_LINE,
-		    "css_vector_send: retry called for %d\n", bytes_written);
+      er_log_debug (ARG_FILE_LINE, "css_vector_send: retry called for %d\n", bytes_written);
 #endif
       for (i = 0; i < *len; i++)
-	{
-	  if ((*vec)[i].iov_len <= (size_t) bytes_written)
-	    {
-	      bytes_written -= (*vec)[i].iov_len;
-	    }
-	  else
-	    {
-	      break;
-	    }
-	}
+        {
+          if ((*vec)[i].iov_len <= (size_t) bytes_written)
+            {
+              bytes_written -= (*vec)[i].iov_len;
+            }
+          else
+            {
+              break;
+            }
+        }
       (*vec)[i].iov_len -= bytes_written;
       (*vec)[i].iov_base = ((char *) ((*vec)[i].iov_base)) + bytes_written;
 
@@ -250,58 +234,56 @@ css_vector_send (SOCKET fd, struct iovec *vec[], int *len, int bytes_written,
       po[0].revents = 0;
       n = poll (po, 1, timeout);
       if (n < 0)
-	{
-	  if (errno == EINTR)
-	    {
-	      continue;
-	    }
-	  return -1;
-	}
+        {
+          if (errno == EINTR)
+            {
+              continue;
+            }
+          return -1;
+        }
       else if (n == 0)
-	{
-	  /* 0 means it timed out and no fd is changed. */
-	  errno = ETIMEDOUT;
-	  return -1;
-	}
+        {
+          /* 0 means it timed out and no fd is changed. */
+          errno = ETIMEDOUT;
+          return -1;
+        }
       else
-	{
-	  if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	    {
-	      errno = EINVAL;
-	      return -1;
-	    }
-	}
+        {
+          if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
+            {
+              errno = EINVAL;
+              return -1;
+            }
+        }
 
     write_again:
       n = writev (fd, *vec, *len);
       if (n > 0)
-	{
-	  return n;
-	}
+        {
+          return n;
+        }
       else if (n == 0)
-	{
-	  return 0;		/* ??? */
-	}
+        {
+          return 0;             /* ??? */
+        }
       else
-	{
-	  if (errno == EINTR)
-	    {
-	      goto write_again;
-	    }
-	  if (errno == EAGAIN)
-	    {
-	      continue;
-	    }
+        {
+          if (errno == EINTR)
+            {
+              goto write_again;
+            }
+          if (errno == EAGAIN)
+            {
+              continue;
+            }
 #if !defined (SERVER_MODE)
-	  css_set_networking_error (fd);
+          css_set_networking_error (fd);
 #endif /* !SERVER_MODE */
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE,
-			"css_vector_send: returning error n %d, errno %d\n",
-			n, errno);
+          er_log_debug (ARG_FILE_LINE, "css_vector_send: returning error n %d, errno %d\n", n, errno);
 #endif
-	  return n;		/* error, return < 0 */
-	}
+          return n;             /* error, return < 0 */
+        }
     }
 
   return -1;
@@ -309,8 +291,7 @@ css_vector_send (SOCKET fd, struct iovec *vec[], int *len, int bytes_written,
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 static void
-css_set_io_vector (struct iovec *vec1_p, struct iovec *vec2_p,
-		   const char *buff, int len, int *templen)
+css_set_io_vector (struct iovec *vec1_p, struct iovec *vec2_p, const char *buff, int len, int *templen)
 {
   *templen = htonl (len);
   vec1_p->iov_base = (caddr_t) templen;
@@ -330,8 +311,7 @@ css_set_io_vector (struct iovec *vec1_p, struct iovec *vec2_p,
  *   timeout(in): timeout value in milli-seconds
  */
 static int
-css_send_io_vector (CSS_CONN_ENTRY * conn, struct iovec *vec_p,
-		    ssize_t total_len, int vector_length, int timeout)
+css_send_io_vector (CSS_CONN_ENTRY * conn, struct iovec *vec_p, ssize_t total_len, int vector_length, int timeout)
 {
   int rc;
 
@@ -340,10 +320,10 @@ css_send_io_vector (CSS_CONN_ENTRY * conn, struct iovec *vec_p,
     {
       rc = css_vector_send (conn->fd, &vec_p, &vector_length, rc, timeout);
       if (rc < 0)
-	{
-	  css_shutdown_conn (conn);
-	  return ERROR_ON_WRITE;
-	}
+        {
+          css_shutdown_conn (conn);
+          return ERROR_ON_WRITE;
+        }
       total_len -= rc;
     }
 
@@ -352,8 +332,7 @@ css_send_io_vector (CSS_CONN_ENTRY * conn, struct iovec *vec_p,
 
 static void
 css_set_net_header (NET_HEADER * header_p, char packet_type,
-		    short function_code, int request_id,
-		    CSS_CONN_ENTRY * conn, int num_buffers, int *buffer_sizes)
+                    short function_code, int request_id, CSS_CONN_ENTRY * conn, int num_buffers, int *buffer_sizes)
 {
   int i;
 
@@ -447,8 +426,7 @@ css_recv_command_packet (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet)
   *recv_packet = tmp_recv_packet;
 
   er_log_debug (ARG_FILE_LINE,
-		"in css_recv_command_packet, received request: %d\n",
-		tmp_recv_packet->header.function_code);
+                "in css_recv_command_packet, received request: %d\n", tmp_recv_packet->header.function_code);
 
   return NO_ERRORS;
 }
@@ -462,8 +440,7 @@ css_recv_command_packet (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet)
  *   ...(in): buffer ptrs and buffer sizes for data will be sent
  */
 int
-css_send_data_packet (CSS_CONN_ENTRY * conn, unsigned short rid,
-		      int num_buffers, ...)
+css_send_data_packet (CSS_CONN_ENTRY * conn, unsigned short rid, int num_buffers, ...)
 {
   va_list args;
   int rc;
@@ -478,8 +455,7 @@ css_send_data_packet (CSS_CONN_ENTRY * conn, unsigned short rid,
 }
 
 int
-css_send_data_packet_v (CSS_CONN_ENTRY * conn, unsigned short rid,
-			int num_buffers, va_list data_args)
+css_send_data_packet_v (CSS_CONN_ENTRY * conn, unsigned short rid, int num_buffers, va_list data_args)
 {
   int i;
   CSS_NET_PACKET send_packet;
@@ -498,23 +474,20 @@ css_send_data_packet_v (CSS_CONN_ENTRY * conn, unsigned short rid,
       buffer_sizes[i] = va_arg (data_args, int);
     }
 
-  css_set_net_header (&(send_packet.header), DATA_TYPE, 0, rid,
-		      conn, num_buffers, buffer_sizes);
+  css_set_net_header (&(send_packet.header), DATA_TYPE, 0, rid, conn, num_buffers, buffer_sizes);
 
   return (css_net_packet_send (conn, &send_packet));
 }
 
 int
-css_send_command_packet (CSS_CONN_ENTRY * conn, int request,
-			 unsigned short *request_id, int num_buffers, ...)
+css_send_command_packet (CSS_CONN_ENTRY * conn, int request, unsigned short *request_id, int num_buffers, ...)
 {
   va_list args;
   int rc;
 
   va_start (args, num_buffers);
 
-  rc =
-    css_send_command_packet_v (conn, request, request_id, num_buffers, args);
+  rc = css_send_command_packet_v (conn, request, request_id, num_buffers, args);
 
   va_end (args);
 
@@ -523,8 +496,7 @@ css_send_command_packet (CSS_CONN_ENTRY * conn, int request,
 
 int
 css_send_command_packet_v (CSS_CONN_ENTRY * conn, int request,
-			   unsigned short *request_id,
-			   int num_buffers, va_list data_args)
+                           unsigned short *request_id, int num_buffers, va_list data_args)
 {
   int rc;
   int i;
@@ -556,8 +528,7 @@ css_send_command_packet_v (CSS_CONN_ENTRY * conn, int request,
       buffer_sizes[i] = va_arg (data_args, int);
     }
 
-  css_set_net_header (&(send_packet.header), COMMAND_TYPE, request, rid,
-		      conn, num_buffers, buffer_sizes);
+  css_set_net_header (&(send_packet.header), COMMAND_TYPE, request, rid, conn, num_buffers, buffer_sizes);
 
   rc = css_net_packet_send (conn, &send_packet);
 
@@ -575,8 +546,7 @@ css_send_abort_packet (CSS_CONN_ENTRY * conn, unsigned short rid)
       return (CONNECTION_CLOSED);
     }
 
-  css_set_net_header (&(send_packet.header), ABORT_TYPE, 0, rid,
-		      conn, 0, NULL);
+  css_set_net_header (&(send_packet.header), ABORT_TYPE, 0, rid, conn, 0, NULL);
 
   return (css_net_packet_send (conn, &send_packet));
 }
@@ -592,15 +562,13 @@ css_send_close_packet (CSS_CONN_ENTRY * conn, unsigned short rid)
       return (CONNECTION_CLOSED);
     }
 
-  css_set_net_header (&(send_packet.header), CLOSE_TYPE, 0, rid,
-		      conn, 0, NULL);
+  css_set_net_header (&(send_packet.header), CLOSE_TYPE, 0, rid, conn, 0, NULL);
 
   return (css_net_packet_send (conn, &send_packet));
 }
 
 int
-css_send_error_packet (CSS_CONN_ENTRY * conn, unsigned short rid,
-		       const char *buffer, int buffer_size)
+css_send_error_packet (CSS_CONN_ENTRY * conn, unsigned short rid, const char *buffer, int buffer_size)
 {
   CSS_NET_PACKET send_packet;
   int buffer_sizes[1];
@@ -613,8 +581,7 @@ css_send_error_packet (CSS_CONN_ENTRY * conn, unsigned short rid,
   send_packet.buffer[0].data_ptr = buffer;
   buffer_sizes[0] = buffer_size;
 
-  css_set_net_header (&(send_packet.header), ERROR_TYPE, 0, rid,
-		      conn, 1, buffer_sizes);
+  css_set_net_header (&(send_packet.header), ERROR_TYPE, 0, rid, conn, 1, buffer_sizes);
 
   return (css_net_packet_send (conn, &send_packet));
 }
@@ -641,8 +608,7 @@ css_register_check_client_alive_fn (CSS_CHECK_CLIENT_ALIVE_FN callback_fn)
 
 #if 0
 int
-css_send_master_request (int request, CSS_NET_PACKET ** recv_packet,
-			 int num_send_buffers, int num_recv_buffers, ...)
+css_send_master_request (int request, CSS_NET_PACKET ** recv_packet, int num_send_buffers, int num_recv_buffers, ...)
 {
 
 }
@@ -657,7 +623,7 @@ css_ha_mode_string (HA_MODE mode)
   switch (mode)
     {
     case HA_MODE_OFF:
-      assert (false);		/* is impossible */
+      assert (false);           /* is impossible */
       return HA_MODE_OFF_STR;
     case HA_MODE_FAIL_OVER:
     case HA_MODE_FAIL_BACK:
@@ -710,15 +676,14 @@ css_check_ip (IP_INFO * ip_info, unsigned char *address)
       int address_index = i * IP_BYTE_COUNT;
 
       if (ip_info->address_list[address_index] == 0)
-	{
-	  return NO_ERROR;
-	}
+        {
+          return NO_ERROR;
+        }
       else if (memcmp ((void *) &ip_info->address_list[address_index + 1],
-		       (void *) address,
-		       ip_info->address_list[address_index]) == 0)
-	{
-	  return NO_ERROR;
-	}
+                       (void *) address, ip_info->address_list[address_index]) == 0)
+        {
+          return NO_ERROR;
+        }
     }
 
   return ER_INACCESSIBLE_IP;
@@ -756,8 +721,7 @@ css_read_ip_info (IP_INFO ** out_ip_info, char *filename)
 
   if (fd_ip_list == NULL)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_OPEN_ACCESS_LIST_FILE, 1, filename);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OPEN_ACCESS_LIST_FILE, 1, filename);
       return ER_OPEN_ACCESS_LIST_FILE;
     }
 
@@ -766,21 +730,18 @@ css_read_ip_info (IP_INFO ** out_ip_info, char *filename)
   ip_info = (IP_INFO *) malloc (sizeof (IP_INFO));
   if (ip_info == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, sizeof (IP_INFO));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (IP_INFO));
       fclose (fd_ip_list);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
   ip_info->num_list = 0;
   ip_address_list_buffer_size = INITIAL_IP_NUM * IP_BYTE_COUNT;
-  ip_info->address_list =
-    (unsigned char *) malloc (ip_address_list_buffer_size);
+  ip_info->address_list = (unsigned char *) malloc (ip_address_list_buffer_size);
 
   if (ip_info->address_list == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, ip_address_list_buffer_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, ip_address_list_buffer_size);
       goto error;
     }
 
@@ -793,101 +754,91 @@ css_read_ip_info (IP_INFO ** out_ip_info, char *filename)
 
       p = strchr (buf, '#');
       if (p != NULL)
-	{
-	  *p = '\0';
-	}
+        {
+          *p = '\0';
+        }
 
       css_trim_str (buf);
       if (buf[0] == '\0')
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       assert (strlen (buf) > 0);
 
-      if (is_current_db_section == false &&
-	  strncmp (buf, "[@", 2) == 0 && buf[strlen (buf) - 1] == ']')
-	{
-	  buf[strlen (buf) - 1] = '\0';
-	  if (strcasecmp (dbname, buf + 2) == 0)
-	    {
-	      is_current_db_section = true;
-	      continue;
-	    }
-	}
+      if (is_current_db_section == false && strncmp (buf, "[@", 2) == 0 && buf[strlen (buf) - 1] == ']')
+        {
+          buf[strlen (buf) - 1] = '\0';
+          if (strcasecmp (dbname, buf + 2) == 0)
+            {
+              is_current_db_section = true;
+              continue;
+            }
+        }
 
       if (is_current_db_section == false)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (strncmp (buf, "[@", 2) == 0 && buf[strlen (buf) - 1] == ']')
-	{
-	  buf[strlen (buf) - 1] = '\0';
-	  if (strcasecmp (dbname, buf + 2) != 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          buf[strlen (buf) - 1] = '\0';
+          if (strcasecmp (dbname, buf + 2) != 0)
+            {
+              break;
+            }
+        }
 
       token = strtok_r (buf, ".", &save);
 
       address_index = ip_info->num_list * IP_BYTE_COUNT;
 
       if (address_index >= ip_address_list_buffer_size)
-	{
-	  ip_address_list_buffer_size *= 2;
-	  ip_info->address_list =
-	    (unsigned char *) realloc (ip_info->address_list,
-				       ip_address_list_buffer_size);
-	  if (ip_info->address_list == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      ip_address_list_buffer_size);
-	      goto error;
-	    }
-	}
+        {
+          ip_address_list_buffer_size *= 2;
+          ip_info->address_list = (unsigned char *) realloc (ip_info->address_list, ip_address_list_buffer_size);
+          if (ip_info->address_list == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, ip_address_list_buffer_size);
+              goto error;
+            }
+        }
 
       for (i = 0; i < 4; i++)
-	{
-	  if (token == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_INVALID_ACCESS_IP_CONTROL_FILE_FORMAT, 1, filename);
-	      goto error;
-	    }
+        {
+          if (token == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INVALID_ACCESS_IP_CONTROL_FILE_FORMAT, 1, filename);
+              goto error;
+            }
 
-	  if (strcmp (token, "*") == 0)
-	    {
-	      break;
-	    }
-	  else
-	    {
-	      int adr = 0, result;
+          if (strcmp (token, "*") == 0)
+            {
+              break;
+            }
+          else
+            {
+              int adr = 0, result;
 
-	      result = parse_int (&adr, token, 10);
+              result = parse_int (&adr, token, 10);
 
-	      if (result != 0 || adr > 255 || adr < 0)
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_INVALID_ACCESS_IP_CONTROL_FILE_FORMAT, 1,
-			  filename);
-		  goto error;
-		}
+              if (result != 0 || adr > 255 || adr < 0)
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INVALID_ACCESS_IP_CONTROL_FILE_FORMAT, 1, filename);
+                  goto error;
+                }
 
-	      ip_info->address_list[address_index + 1 + i] =
-		(unsigned char) adr;
-	    }
+              ip_info->address_list[address_index + 1 + i] = (unsigned char) adr;
+            }
 
-	  token = strtok_r (NULL, ".", &save);
+          token = strtok_r (NULL, ".", &save);
 
-	  if (i == 3 && token != NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_INVALID_ACCESS_IP_CONTROL_FILE_FORMAT, 1, filename);
-	      goto error;
-	    }
-	}
+          if (i == 3 && token != NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INVALID_ACCESS_IP_CONTROL_FILE_FORMAT, 1, filename);
+              goto error;
+            }
+        }
       ip_info->address_list[address_index] = i;
       ip_info->num_list++;
     }
@@ -914,8 +865,7 @@ css_trim_str (char *str)
       return (str);
     }
 
-  for (s = str; *s != '\0' && (*s == ' ' || *s == '\t' || *s == '\n' || *s
-			       == '\r'); s++)
+  for (s = str; *s != '\0' && (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'); s++)
     {
       ;
     }
@@ -969,9 +919,7 @@ css_send_magic (CSS_CONN_ENTRY * conn)
 
   or_pack_version (send_ptr, &my_version);
 
-  css_errors = css_send_data_packet (conn, 0, 2,
-				     css_Net_magic, sizeof (css_Net_magic),
-				     send_ptr, send_buf_size);
+  css_errors = css_send_data_packet (conn, 0, 2, css_Net_magic, sizeof (css_Net_magic), send_ptr, send_buf_size);
   if (css_errors != NO_ERRORS)
     {
       return css_errors;
@@ -979,8 +927,7 @@ css_send_magic (CSS_CONN_ENTRY * conn)
 
   timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  if (css_net_packet_recv (&recv_packet, conn, timeout, 1,
-			   recv_ptr, recv_buf_size) != NO_ERRORS)
+  if (css_net_packet_recv (&recv_packet, conn, timeout, 1, recv_ptr, recv_buf_size) != NO_ERRORS)
     {
       return ERROR_ON_READ;
     }
@@ -1018,9 +965,7 @@ css_check_magic (CSS_CONN_ENTRY * conn)
 
   timeout = prm_get_integer_value (PRM_ID_TCP_CONNECTION_TIMEOUT) * 1000;
 
-  css_errors = css_net_packet_recv (&recv_packet, conn, timeout, 2,
-				    magic, sizeof (css_Net_magic),
-				    recv_ptr, recv_size);
+  css_errors = css_net_packet_recv (&recv_packet, conn, timeout, 2, magic, sizeof (css_Net_magic), recv_ptr, recv_size);
   if (css_errors != NO_ERRORS)
     {
       return css_errors;
@@ -1044,17 +989,17 @@ css_check_magic (CSS_CONN_ENTRY * conn)
       or_unpack_version (recv_ptr, peer_version);
 
       if (my_version.major != peer_version->major)
-	{
-	  css_errors = NOT_COMPATIBLE_VERSION;
-	}
+        {
+          css_errors = NOT_COMPATIBLE_VERSION;
+        }
 
       ptr = or_pack_int (send_ptr, css_errors);
       ptr = or_pack_version (ptr, &my_version);
 
       if (css_send_data_packet (conn, 0, 1, send_ptr, send_size) != NO_ERRORS)
-	{
-	  css_errors = ERROR_ON_WRITE;
-	}
+        {
+          css_errors = ERROR_ON_WRITE;
+        }
     }
 
   css_net_packet_free (recv_packet);
@@ -1089,18 +1034,15 @@ css_net_packet_send (CSS_CONN_ENTRY * conn, CSS_NET_PACKET * send_packet)
 
   for (i = 0; i < send_packet->header.num_buffers; i++)
     {
-      IO_VECTOR_SET_PTR (iovp++, send_packet->buffer[i].data_ptr,
-			 send_packet->header.buffer_sizes[i]);
+      IO_VECTOR_SET_PTR (iovp++, send_packet->buffer[i].data_ptr, send_packet->header.buffer_sizes[i]);
       total_len += send_packet->header.buffer_sizes[i];
     }
 
-  return (css_send_io_vector (conn, iov, total_len,
-			      send_packet->header.num_buffers + 1, -1));
+  return (css_send_io_vector (conn, iov, total_len, send_packet->header.num_buffers + 1, -1));
 }
 
 int
-css_net_packet_recv (CSS_NET_PACKET ** recv_packet, CSS_CONN_ENTRY * conn,
-		     int timeout, int num_buffers, ...)
+css_net_packet_recv (CSS_NET_PACKET ** recv_packet, CSS_CONN_ENTRY * conn, int timeout, int num_buffers, ...)
 {
   va_list args;
   int rc;
@@ -1113,7 +1055,7 @@ css_net_packet_recv (CSS_NET_PACKET ** recv_packet, CSS_CONN_ENTRY * conn,
 
 int
 css_net_packet_recv_v (CSS_NET_PACKET ** recv_packet, CSS_CONN_ENTRY * conn,
-		       int timeout, int num_buffers, va_list data_args)
+                       int timeout, int num_buffers, va_list data_args)
 {
   int nbytes;
   int i;
@@ -1146,27 +1088,26 @@ css_net_packet_recv_v (CSS_NET_PACKET ** recv_packet, CSS_CONN_ENTRY * conn,
   assert (num_buffers <= CSS_NET_PACKET_MAX_BUFFERS);
 
   /* get buffer pointer and size supplied by caller function */
-  if (net_header.packet_type == COMMAND_TYPE ||
-      net_header.packet_type == DATA_TYPE)
+  if (net_header.packet_type == COMMAND_TYPE || net_header.packet_type == DATA_TYPE)
     {
       for (i = 0; i < num_buffers; i++)
-	{
-	  arg_buffers[i] = va_arg (data_args, char *);
-	  arg_buffer_sizes[i] = va_arg (data_args, int);
-	}
+        {
+          arg_buffers[i] = va_arg (data_args, char *);
+          arg_buffer_sizes[i] = va_arg (data_args, int);
+        }
       for (; i < CSS_NET_PACKET_MAX_BUFFERS; i++)
-	{
-	  arg_buffers[i] = NULL;
-	  arg_buffer_sizes[i] = 0;
-	}
+        {
+          arg_buffers[i] = NULL;
+          arg_buffer_sizes[i] = 0;
+        }
     }
   else
     {
       for (i = 0; i < CSS_NET_PACKET_MAX_BUFFERS; i++)
-	{
-	  arg_buffers[i] = NULL;
-	  arg_buffer_sizes[i] = 0;
-	}
+        {
+          arg_buffers[i] = NULL;
+          arg_buffer_sizes[i] = 0;
+        }
     }
 
   tmp_recv_packet = css_net_packet_alloc (conn, &net_header);
@@ -1184,55 +1125,49 @@ css_net_packet_recv_v (CSS_NET_PACKET ** recv_packet, CSS_CONN_ENTRY * conn,
       char *iov_ptr;
 
       for (i = 0; i < net_header.num_buffers; i++)
-	{
-	  if (net_header.buffer_sizes[i] == 0)
-	    {
-	      arg_buffers[i] = NULL;
-	      iov_ptr = NULL;
-	    }
-	  else if (arg_buffers[i] != NULL &&
-		   (arg_buffer_sizes[i] < 0 ||
-		    arg_buffer_sizes[i] >= net_header.buffer_sizes[i]))
-	    {
-	      /* receive data to arg buffer if arg buffer has sufficient room */
-	      iov_ptr = arg_buffers[i];
-	    }
-	  else
-	    {
-	      css_net_packet_buffer_alloc (tmp_recv_packet, i,
-					   net_header.buffer_sizes[i]);
-	      if (tmp_recv_packet->buffer[i].data_ptr == NULL)
-		{
-		  css_net_packet_free (tmp_recv_packet);
-		  return CANT_ALLOC_BUFFER;
-		}
+        {
+          if (net_header.buffer_sizes[i] == 0)
+            {
+              arg_buffers[i] = NULL;
+              iov_ptr = NULL;
+            }
+          else if (arg_buffers[i] != NULL &&
+                   (arg_buffer_sizes[i] < 0 || arg_buffer_sizes[i] >= net_header.buffer_sizes[i]))
+            {
+              /* receive data to arg buffer if arg buffer has sufficient room */
+              iov_ptr = arg_buffers[i];
+            }
+          else
+            {
+              css_net_packet_buffer_alloc (tmp_recv_packet, i, net_header.buffer_sizes[i]);
+              if (tmp_recv_packet->buffer[i].data_ptr == NULL)
+                {
+                  css_net_packet_free (tmp_recv_packet);
+                  return CANT_ALLOC_BUFFER;
+                }
 
-	      iov_ptr = (char *) tmp_recv_packet->buffer[i].data_ptr;
-	    }
+              iov_ptr = (char *) tmp_recv_packet->buffer[i].data_ptr;
+            }
 
-	  IO_VECTOR_SET_PTR (iovp++, iov_ptr, net_header.buffer_sizes[i]);
-	  total_read += net_header.buffer_sizes[i];
-	}
+          IO_VECTOR_SET_PTR (iovp++, iov_ptr, net_header.buffer_sizes[i]);
+          total_read += net_header.buffer_sizes[i];
+        }
 
-      nbytes = css_vector_recv (conn->fd, iov, net_header.num_buffers,
-				total_read, timeout);
+      nbytes = css_vector_recv (conn->fd, iov, net_header.num_buffers, total_read, timeout);
       if (nbytes < 0 || nbytes != total_read)
-	{
-	  css_net_packet_free (tmp_recv_packet);
-	  return ERROR_WHEN_READING_SIZE;
-	}
+        {
+          css_net_packet_free (tmp_recv_packet);
+          return ERROR_WHEN_READING_SIZE;
+        }
     }
 
   /* fill arg buffer if arg buffer is not used to receive data */
   for (i = 0; i < net_header.num_buffers; i++)
     {
-      if (arg_buffers[i] != NULL &&
-	  arg_buffer_sizes[i] >= 0 &&
-	  arg_buffer_sizes[i] < net_header.buffer_sizes[i])
-	{
-	  memcpy (arg_buffers[i], tmp_recv_packet->buffer[i].data_ptr,
-		  arg_buffer_sizes[i]);
-	}
+      if (arg_buffers[i] != NULL && arg_buffer_sizes[i] >= 0 && arg_buffer_sizes[i] < net_header.buffer_sizes[i])
+        {
+          memcpy (arg_buffers[i], tmp_recv_packet->buffer[i].data_ptr, arg_buffer_sizes[i]);
+        }
     }
 
   conn->is_server_in_tran = net_header.is_server_in_tran;
@@ -1253,16 +1188,15 @@ css_net_packet_free (CSS_NET_PACKET * net_packet)
   if (net_packet)
     {
       for (i = 0; i < net_packet->header.num_buffers; i++)
-	{
-	  css_net_packet_buffer_free (net_packet, i, true);
-	}
+        {
+          css_net_packet_buffer_free (net_packet, i, true);
+        }
       free (net_packet);
     }
 }
 
 static CSS_NET_PACKET *
-css_net_packet_alloc (UNUSED_ARG CSS_CONN_ENTRY * conn,
-		      NET_HEADER * net_header)
+css_net_packet_alloc (UNUSED_ARG CSS_CONN_ENTRY * conn, NET_HEADER * net_header)
 {
   CSS_NET_PACKET *tmp_net_packet;
 
@@ -1283,8 +1217,7 @@ css_net_packet_alloc (UNUSED_ARG CSS_CONN_ENTRY * conn,
  *		      css_net_packet_get_buffer()
  */
 static void
-css_net_packet_buffer_free (CSS_NET_PACKET * net_packet, int idx,
-			    bool free_mem)
+css_net_packet_buffer_free (CSS_NET_PACKET * net_packet, int idx, bool free_mem)
 {
   if (free_mem == true && net_packet->buffer[idx].data_ptr != NULL)
     {
@@ -1301,20 +1234,17 @@ css_net_packet_buffer_alloc (CSS_NET_PACKET * net_packet, int idx, int size)
 }
 
 char *
-css_net_packet_get_buffer (CSS_NET_PACKET * net_packet, int index,
-			   int expected_size, bool reset_ptr)
+css_net_packet_get_buffer (CSS_NET_PACKET * net_packet, int index, int expected_size, bool reset_ptr)
 {
   char *ptr;
 
   assert (index < CSS_NET_PACKET_MAX_BUFFERS);
 
-  if (net_packet->header.num_buffers <= index ||
-      net_packet->header.buffer_sizes[index] <= 0)
+  if (net_packet->header.num_buffers <= index || net_packet->header.buffer_sizes[index] <= 0)
     {
       return NULL;
     }
-  else if (expected_size >= 0 &&
-	   net_packet->header.buffer_sizes[index] < expected_size)
+  else if (expected_size >= 0 && net_packet->header.buffer_sizes[index] < expected_size)
     {
       assert (false);
       return NULL;
@@ -1345,8 +1275,7 @@ css_net_packet_get_recv_size (CSS_NET_PACKET * net_packet, int index)
 
 
 static int
-css_vector_recv (SOCKET fd, struct iovec *vec, int vec_count, int nbytes,
-		 int timeout)
+css_vector_recv (SOCKET fd, struct iovec *vec, int vec_count, int nbytes, int timeout)
 {
   int nleft, n;
 
@@ -1380,135 +1309,133 @@ css_vector_recv (SOCKET fd, struct iovec *vec, int vec_count, int nbytes,
       po[0].revents = 0;
       n = poll (po, 1, time_unit);
       if (n == 0)
-	{
-	  if (timeout > elapsed)
-	    {
+        {
+          if (timeout > elapsed)
+            {
 #if defined (CS_MODE)
-	      if (CHECK_SERVER_IS_ALIVE ())
-		{
-		  if (css_peer_alive (fd, time_unit) == false)
-		    {
-		      return -1;
-		    }
+              if (CHECK_SERVER_IS_ALIVE ())
+                {
+                  if (css_peer_alive (fd, time_unit) == false)
+                    {
+                      return -1;
+                    }
 
-		  if (css_check_server_alive_fn != NULL)
-		    {
-		      if (css_check_server_alive_fn (NULL, NULL) == false)
-			{
-			  return -1;
-			}
-		    }
-		}
-	      if (css_check_client_alive_fn != NULL)
-		{
-		  if (css_check_client_alive_fn () == false)
-		    {
-		      return -1;
-		    }
-		}
+                  if (css_check_server_alive_fn != NULL)
+                    {
+                      if (css_check_server_alive_fn (NULL, NULL) == false)
+                        {
+                          return -1;
+                        }
+                    }
+                }
+              if (css_check_client_alive_fn != NULL)
+                {
+                  if (css_check_client_alive_fn () == false)
+                    {
+                      return -1;
+                    }
+                }
 #endif /* CS_MODE */
-	      elapsed += time_unit;
-	      continue;
-	    }
-	  else
-	    {
-	      return -1;
-	    }
-	}
+              elapsed += time_unit;
+              continue;
+            }
+          else
+            {
+              return -1;
+            }
+        }
       else if (n < 0)
-	{
-	  if (errno == EINTR)
-	    {
+        {
+          if (errno == EINTR)
+            {
 #if !defined (SERVER_MODE)
-	      if (css_server_timeout_fn != NULL)
-		{
-		  css_server_timeout_fn ();
-		}
-	      if (css_check_client_alive_fn != NULL)
-		{
-		  if (css_check_client_alive_fn () == false)
-		    {
-		      return -1;
-		    }
-		}
+              if (css_server_timeout_fn != NULL)
+                {
+                  css_server_timeout_fn ();
+                }
+              if (css_check_client_alive_fn != NULL)
+                {
+                  if (css_check_client_alive_fn () == false)
+                    {
+                      return -1;
+                    }
+                }
 #endif /* !SERVER_MODE */
-	      continue;
-	    }
-	  return -1;
-	}
+              continue;
+            }
+          return -1;
+        }
       else
-	{
-	  if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	    {
-	      errno = EINVAL;
-	      return -1;
-	    }
-	}
+        {
+          if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
+            {
+              errno = EINVAL;
+              return -1;
+            }
+        }
 
     read_again:
       n = readv (fd, vec, vec_count);
 
       if (n == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (n < 0)
-	{
-	  if (errno == EAGAIN)
-	    {
-	      continue;
-	    }
-	  if (errno == EINTR)
-	    {
+        {
+          if (errno == EAGAIN)
+            {
+              continue;
+            }
+          if (errno == EINTR)
+            {
 #if !defined (SERVER_MODE)
-	      if (css_check_client_alive_fn != NULL)
-		{
-		  if (css_check_client_alive_fn () == false)
-		    {
-		      return -1;
-		    }
-		}
+              if (css_check_client_alive_fn != NULL)
+                {
+                  if (css_check_client_alive_fn () == false)
+                    {
+                      return -1;
+                    }
+                }
 #endif /* !SERVER_MODE */
-	      goto read_again;
-	    }
+              goto read_again;
+            }
 
 #if !defined (SERVER_MODE)
-	  css_set_networking_error (fd);
+          css_set_networking_error (fd);
 #endif /* !SERVER_MODE */
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE,
-			"css_vector_recv: returning error n %d, errno %d\n",
-			n, errno);
+          er_log_debug (ARG_FILE_LINE, "css_vector_recv: returning error n %d, errno %d\n", n, errno);
 #endif
-	  return n;		/* error, return < 0 */
-	}
+          return n;             /* error, return < 0 */
+        }
       nleft -= n;
 
       if (nleft > 0)
-	{
-	  int i;
-	  for (i = 0; i < vec_count; i++)
-	    {
-	      if (vec[i].iov_len <= (size_t) n)
-		{
-		  n -= vec[i].iov_len;
-		}
-	      else
-		{
-		  break;
-		}
-	    }
-	  vec[i].iov_len -= n;
-	  vec[i].iov_base = ((char *) (vec[i].iov_base)) + n;
+        {
+          int i;
+          for (i = 0; i < vec_count; i++)
+            {
+              if (vec[i].iov_len <= (size_t) n)
+                {
+                  n -= vec[i].iov_len;
+                }
+              else
+                {
+                  break;
+                }
+            }
+          vec[i].iov_len -= n;
+          vec[i].iov_base = ((char *) (vec[i].iov_base)) + n;
 
-	  vec += i;
-	  vec_count -= i;
-	}
+          vec += i;
+          vec_count -= i;
+        }
     }
   while (nleft > 0);
 
-  return (nbytes - nleft);	/*  return >= 0 */
+  return (nbytes - nleft);      /*  return >= 0 */
 }
 
 bool
@@ -1520,11 +1447,10 @@ css_is_client_ro_tran (UNUSED_ARG THREAD_ENTRY * thread_p)
       thread_p = thread_get_thread_entry_info ();
     }
 
-  if (thread_p != NULL && thread_p->conn_entry != NULL
-      && thread_p->tran_index != LOG_SYSTEM_TRAN_INDEX)
+  if (thread_p != NULL && thread_p->conn_entry != NULL && thread_p->tran_index != LOG_SYSTEM_TRAN_INDEX)
     {
       assert (thread_p->tran_index == LOG_SYSTEM_TRAN_INDEX
-	      || thread_p->tran_index == thread_p->conn_entry->tran_index);
+              || thread_p->tran_index == thread_p->conn_entry->tran_index);
 
       return thread_p->conn_entry->is_client_ro_tran;
     }
@@ -1538,8 +1464,7 @@ css_is_client_ro_tran (UNUSED_ARG THREAD_ENTRY * thread_p)
  */
 static char *
 css_pack_server_name_for_hb_register (int *name_length, HB_PROC_TYPE type,
-				      const char *server_name,
-				      const char *log_path)
+                                      const char *server_name, const char *log_path)
 {
   char *packed_name = NULL;
   const char *env_name = NULL;
@@ -1567,8 +1492,7 @@ css_pack_server_name_for_hb_register (int *name_length, HB_PROC_TYPE type,
   packed_name = malloc (*name_length);
   if (packed_name == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (*name_length));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (*name_length));
       return NULL;
     }
 
@@ -1613,8 +1537,7 @@ css_pack_server_name_for_hb_register (int *name_length, HB_PROC_TYPE type,
  * css_register_to_master () - register to the master 
  */
 CSS_CONN_ENTRY *
-css_register_to_master (HB_PROC_TYPE type,
-			const char *server_name, const char *log_path)
+css_register_to_master (HB_PROC_TYPE type, const char *server_name, const char *log_path)
 {
   CSS_CONN_ENTRY *conn;
   unsigned short rid;
@@ -1627,35 +1550,23 @@ css_register_to_master (HB_PROC_TYPE type,
   conn = css_make_conn (INVALID_SOCKET);
   if (conn == NULL)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-			   server_name);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1, server_name);
       return NULL;
     }
 
-  packed_name = css_pack_server_name_for_hb_register (&name_length,
-						      type,
-						      server_name, log_path);
+  packed_name = css_pack_server_name_for_hb_register (&name_length, type, server_name, log_path);
 #if defined(SERVER_MODE)
-  css_error = css_common_connect_sr (conn, &rid, &node_info,
-				     SVR_CONNECT_TYPE_MASTER_HB_PROC,
-				     packed_name, name_length);
+  css_error = css_common_connect_sr (conn, &rid, &node_info, SVR_CONNECT_TYPE_MASTER_HB_PROC, packed_name, name_length);
   if (css_error == NO_ERRORS)
     {
-      css_error = css_recv_data_packet_from_client (NULL, conn, rid, -1, 1,
-						    (char *) &response,
-						    sizeof (int));
+      css_error = css_recv_data_packet_from_client (NULL, conn, rid, -1, 1, (char *) &response, sizeof (int));
     }
 #else
   css_error = css_common_connect_cl (&node_info, conn,
-				     SVR_CONNECT_TYPE_MASTER_HB_PROC,
-				     NULL, packed_name, name_length,
-				     0, &rid, true);
+                                     SVR_CONNECT_TYPE_MASTER_HB_PROC, NULL, packed_name, name_length, 0, &rid, true);
   if (css_error == NO_ERRORS)
     {
-      css_error = css_recv_data_from_server (NULL, conn, rid, -1, 1,
-					     (char *) &response,
-					     sizeof (int));
+      css_error = css_recv_data_from_server (NULL, conn, rid, -1, 1, (char *) &response, sizeof (int));
     }
 #endif
 
@@ -1665,33 +1576,27 @@ css_register_to_master (HB_PROC_TYPE type,
     {
       response = ntohl (response);
 
-      er_log_debug (ARG_FILE_LINE,
-		    "css_register_to_master received %d as response from master\n",
-		    response);
+      er_log_debug (ARG_FILE_LINE, "css_register_to_master received %d as response from master\n", response);
 
       switch (response)
-	{
-	case SERVER_ALREADY_EXISTS:
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ERR_CSS_SERVER_ALREADY_EXISTS, 1, server_name);
-	  break;
+        {
+        case SERVER_ALREADY_EXISTS:
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_SERVER_ALREADY_EXISTS, 1, server_name);
+          break;
 
-	case SERVER_REQUEST_ACCEPTED:
-	  response = 0;
-	  if (css_send_data_packet (conn, rid, 1, &response,
-				    sizeof (int)) == NO_ERRORS)
-	    {
-	      return conn;
-	    }
-	  else
-	    {
-	      er_set_with_oserror (ER_ERROR_SEVERITY,
-				   ARG_FILE_LINE,
-				   ERR_CSS_ERROR_DURING_SERVER_CONNECT,
-				   1, server_name);
-	    }
-	  break;
-	}
+        case SERVER_REQUEST_ACCEPTED:
+          response = 0;
+          if (css_send_data_packet (conn, rid, 1, &response, sizeof (int)) == NO_ERRORS)
+            {
+              return conn;
+            }
+          else
+            {
+              er_set_with_oserror (ER_ERROR_SEVERITY,
+                                   ARG_FILE_LINE, ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1, server_name);
+            }
+          break;
+        }
     }
 
   css_free_conn (conn);

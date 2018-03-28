@@ -115,10 +115,8 @@ static int init_inet_socket (void);
 static int init_unix_socket (const T_BROKER_INFO * br_info);
 static int broker_init_shm (void);
 
-static void cas_monitor_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
-				int as_index, int *busy_uts);
-static void psize_check_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
-				int as_index);
+static void cas_monitor_worker (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index, int *busy_uts);
+static void psize_check_worker (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index);
 
 static THREAD_FUNC receiver_thr_f (void *arg);
 static THREAD_FUNC dispatch_thr_f (void *arg);
@@ -127,12 +125,9 @@ static THREAD_FUNC cas_monitor_thr_f (void *arg);
 static THREAD_FUNC hang_check_thr_f (void *arg);
 static THREAD_FUNC server_monitor_thr_f (void *arg);
 
-static int run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
-			    int as_index);
-static int stop_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
-			     int as_index);
-static void restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
-				 int as_index);
+static int run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index);
+static int stop_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index);
+static void restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index);
 
 static int find_idle_cas (void);
 static int find_drop_as_index (void);
@@ -140,17 +135,12 @@ static int find_add_as_index (void);
 static bool broker_add_new_cas (void);
 static bool broker_drop_one_cas_by_time_to_kill (void);
 
-static void check_cas_log (const char *br_name,
-			   T_APPL_SERVER_INFO * as_info_p, int as_index);
-static void get_as_sql_log_filename (char *log_filename, size_t buf_size,
-				     const char *broker_name, int as_index);
-static void get_as_slow_log_filename (char *log_filename, size_t buf_size,
-				      const char *broker_name, int as_index);
+static void check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p, int as_index);
+static void get_as_sql_log_filename (char *log_filename, size_t buf_size, const char *broker_name, int as_index);
+static void get_as_slow_log_filename (char *log_filename, size_t buf_size, const char *broker_name, int as_index);
 
 static int add_db_server_check_list (T_DB_SERVER * list_p,
-				     int check_list_cnt,
-				     const char *db_name,
-				     const PRM_NODE_INFO * db_host);
+                                     int check_list_cnt, const char *db_name, const PRM_NODE_INFO * db_host);
 
 T_SHM_BROKER *shm_Br = NULL;
 int br_Index = -1;
@@ -199,19 +189,16 @@ main ()
 
   if (shm_Br->br_info[br_Index].broker_type == LOCAL_MGMT)
     {
-      snprintf (broker_err_file, sizeof (broker_err_file),
-		"broker.local_mgmt.err");
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.local_mgmt.err");
     }
   else if (shm_Br->br_info[br_Index].broker_type == SHARD_MGMT)
     {
       snprintf (broker_err_file, sizeof (broker_err_file),
-		"broker.shard_mgmt.%s.err",
-		shm_Br->br_info[br_Index].shard_global_dbname);
+                "broker.shard_mgmt.%s.err", shm_Br->br_info[br_Index].shard_global_dbname);
     }
   else
     {
-      snprintf (broker_err_file, sizeof (broker_err_file), "broker.%s.err",
-		shm_Br->br_info[br_Index].name);
+      snprintf (broker_err_file, sizeof (broker_err_file), "broker.%s.err", shm_Br->br_info[br_Index].name);
     }
 
   er_init (broker_err_file, ER_EXIT_DEFAULT);
@@ -227,8 +214,7 @@ main ()
   signal (SIGCHLD, SIG_IGN);
   signal (SIGPIPE, SIG_IGN);
 
-  cci_set_client_functions (or_pack_db_idxkey, db_idxkey_is_null,
-			    or_db_idxkey_size, db_get_string);
+  cci_set_client_functions (or_pack_db_idxkey, db_idxkey_is_null, or_db_idxkey_size, db_get_string);
 
   pthread_cond_init (&clt_Table_cond, NULL);
   pthread_mutex_init (&clt_Table_mutex, NULL);
@@ -238,16 +224,16 @@ main ()
   if (shm_Br->br_info[br_Index].broker_type == LOCAL_MGMT)
     {
       if (init_inet_socket () == -1)
-	{
-	  goto error1;
-	}
+        {
+          goto error1;
+        }
     }
   else
     {
       if (init_unix_socket (&shm_Br->br_info[br_Index]) < 0)
-	{
-	  goto error1;
-	}
+        {
+          goto error1;
+        }
     }
 
   br_log_init (shm_Appl);
@@ -264,19 +250,16 @@ main ()
   if (shm_Br->br_info[br_Index].broker_type == SHARD_MGMT)
     {
       T_BROKER_INFO *local_mgmt_br_info;
-      local_mgmt_br_info = ut_find_broker (shm_Br->br_info,
-					   shm_Br->num_broker,
-					   BR_LOCAL_MGMT_NAME, LOCAL_MGMT);
+      local_mgmt_br_info = ut_find_broker (shm_Br->br_info, shm_Br->num_broker, BR_LOCAL_MGMT_NAME, LOCAL_MGMT);
 
       if (local_mgmt_br_info == NULL ||
-	  shd_mg_init (shm_Br->br_info[br_Index].port,
-		       local_mgmt_br_info->port,
-		       shm_Br->br_info[br_Index].shard_metadb) < 0)
-	{
-	  br_set_init_error (BR_ER_INIT_SHARD_MGMT_INIT_FAIL, 0);
-	  RYE_CLOSE_SOCKET (br_Listen_sock_fd);
-	  goto error1;
-	}
+          shd_mg_init (shm_Br->br_info[br_Index].port,
+                       local_mgmt_br_info->port, shm_Br->br_info[br_Index].shard_metadb) < 0)
+        {
+          br_set_init_error (BR_ER_INIT_SHARD_MGMT_INIT_FAIL, 0);
+          RYE_CLOSE_SOCKET (br_Listen_sock_fd);
+          goto error1;
+        }
 
       THREAD_BEGIN (receiver_thread, shard_mgmt_receiver_thr_f, NULL);
     }
@@ -288,15 +271,15 @@ main ()
       signal (SIGCHLD, SIG_DFL);
 
       if (local_mgmt_init () < 0)
-	{
-	  br_set_init_error (BR_ER_INIT_LOCAL_MGMT_INIT_FAIL, 0);
-	  goto error1;
-	}
+        {
+          br_set_init_error (BR_ER_INIT_LOCAL_MGMT_INIT_FAIL, 0);
+          goto error1;
+        }
 
       for (i = 0; i < num_mgmt_thr; i++)
-	{
-	  THREAD_BEGIN (receiver_thread, local_mgmt_receiver_thr_f, NULL);
-	}
+        {
+          THREAD_BEGIN (receiver_thread, local_mgmt_receiver_thr_f, NULL);
+        }
     }
   else
     {
@@ -314,11 +297,10 @@ main ()
   if (br_Process_flag)
     {
       if (shm_Br && br_Index >= 0)
-	{
-	  assert (br_Init_error.err_code == 0);
-	  memset (&shm_Br->br_info[br_Index].br_init_err, 0,
-		  sizeof (T_BR_INIT_ERROR));
-	}
+        {
+          assert (br_Init_error.err_code == 0);
+          memset (&shm_Br->br_info[br_Index].br_init_err, 0, sizeof (T_BR_INIT_ERROR));
+        }
     }
 
   while (br_Process_flag)
@@ -326,12 +308,12 @@ main ()
       THREAD_SLEEP (100);
 
       if (shm_Br->br_info[br_Index].auto_add_appl_server == OFF)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       broker_drop_one_cas_by_time_to_kill ();
-    }				/* end of while (br_Process_flag) */
+    }                           /* end of while (br_Process_flag) */
 
 error1:
   if (shm_Br && br_Index >= 0)
@@ -354,8 +336,7 @@ cleanup (int signo)
 }
 
 void
-br_send_result_to_client (int sock_fd, int err_code,
-			  const T_MGMT_RESULT_MSG * result_msg)
+br_send_result_to_client (int sock_fd, int err_code, const T_MGMT_RESULT_MSG * result_msg)
 {
   T_BROKER_RESPONSE_NET_MSG res_msg;
 
@@ -365,23 +346,18 @@ br_send_result_to_client (int sock_fd, int err_code,
     }
   else
     {
-      brres_msg_pack (&res_msg, err_code, result_msg->num_msg,
-		      result_msg->msg_size);
+      brres_msg_pack (&res_msg, err_code, result_msg->num_msg, result_msg->msg_size);
     }
-  br_write_nbytes_to_client (sock_fd, res_msg.msg_buffer,
-			     res_msg.msg_buffer_size,
-			     BR_DEFAULT_WRITE_TIMEOUT);
+  br_write_nbytes_to_client (sock_fd, res_msg.msg_buffer, res_msg.msg_buffer_size, BR_DEFAULT_WRITE_TIMEOUT);
 
   if (result_msg != NULL)
     {
       int i;
 
       for (i = 0; i < result_msg->num_msg; i++)
-	{
-	  br_write_nbytes_to_client (sock_fd, result_msg->msg[i],
-				     result_msg->msg_size[i],
-				     BR_DEFAULT_WRITE_TIMEOUT);
-	}
+        {
+          br_write_nbytes_to_client (sock_fd, result_msg->msg[i], result_msg->msg_size[i], BR_DEFAULT_WRITE_TIMEOUT);
+        }
     }
 }
 
@@ -414,8 +390,7 @@ receiver_thr_f (UNUSED_ARG void *arg)
   signal (SIGPIPE, SIG_IGN);
 
   timeout = 5;
-  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-		  (char *) &timeout, sizeof (timeout)) < 0)
+  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, (char *) &timeout, sizeof (timeout)) < 0)
     {
       // assert (0);
     }
@@ -429,101 +404,99 @@ receiver_thr_f (UNUSED_ARG void *arg)
 
   while (br_Process_flag)
     {
-      clt_sock_fd = br_accept_unix_domain (&client_ip_addr, &mgmt_recv_time,
-					   br_req_msg);
+      clt_sock_fd = br_accept_unix_domain (&client_ip_addr, &mgmt_recv_time, br_req_msg);
 
       if (IS_INVALID_SOCKET (clt_sock_fd))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (br_req_msg->op_code == BRREQ_OP_CODE_CAS_CONNECT)
-	{
-	  if (job_queue[0].id == job_queue_size)
-	    {
-	      br_send_result_to_client (clt_sock_fd, BR_ER_FREE_SERVER, NULL);
-	      RYE_CLOSE_SOCKET (clt_sock_fd);
-	      shm_Br->br_info[br_Index].connect_fail_count++;
-	      continue;
-	    }
+        {
+          if (job_queue[0].id == job_queue_size)
+            {
+              br_send_result_to_client (clt_sock_fd, BR_ER_FREE_SERVER, NULL);
+              RYE_CLOSE_SOCKET (clt_sock_fd);
+              shm_Br->br_info[br_Index].connect_fail_count++;
+              continue;
+            }
 
-	  if (max_Open_fd < clt_sock_fd)
-	    {
-	      max_Open_fd = clt_sock_fd;
-	    }
+          if (max_Open_fd < clt_sock_fd)
+            {
+              max_Open_fd = clt_sock_fd;
+            }
 
-	  job_count = (job_count >= JOB_COUNT_MAX) ? 1 : job_count + 1;
-	  new_job.id = job_count;
-	  new_job.clt_sock_fd = clt_sock_fd;
-	  new_job.recv_time = mgmt_recv_time;
-	  new_job.priority = 0;
-	  new_job.port = ntohs (0);
-	  new_job.ip = client_ip_addr;
-	  new_job.clt_type = br_req_msg->clt_type;
-	  new_job.clt_version = br_req_msg->clt_version;
+          job_count = (job_count >= JOB_COUNT_MAX) ? 1 : job_count + 1;
+          new_job.id = job_count;
+          new_job.clt_sock_fd = clt_sock_fd;
+          new_job.recv_time = mgmt_recv_time;
+          new_job.priority = 0;
+          new_job.port = ntohs (0);
+          new_job.ip = client_ip_addr;
+          new_job.clt_type = br_req_msg->clt_type;
+          new_job.clt_version = br_req_msg->clt_version;
 
-	  while (1)
-	    {
-	      pthread_mutex_lock (&clt_Table_mutex);
-	      if (max_heap_insert (job_queue, job_queue_size, &new_job) < 0)
-		{
-		  pthread_mutex_unlock (&clt_Table_mutex);
-		  THREAD_SLEEP (100);
-		}
-	      else
-		{
-		  pthread_cond_signal (&clt_Table_cond);
-		  pthread_mutex_unlock (&clt_Table_mutex);
-		  break;
-		}
-	    }
-	}
+          while (1)
+            {
+              pthread_mutex_lock (&clt_Table_mutex);
+              if (max_heap_insert (job_queue, job_queue_size, &new_job) < 0)
+                {
+                  pthread_mutex_unlock (&clt_Table_mutex);
+                  THREAD_SLEEP (100);
+                }
+              else
+                {
+                  pthread_cond_signal (&clt_Table_cond);
+                  pthread_mutex_unlock (&clt_Table_mutex);
+                  break;
+                }
+            }
+        }
       else if (br_req_msg->op_code == BRREQ_OP_CODE_QUERY_CANCEL)
-	{
-	  int ret_code = CAS_ER_QUERY_CANCEL;
+        {
+          int ret_code = CAS_ER_QUERY_CANCEL;
 
-	  int cas_id, cas_pid;
-	  const char *cancel_msg;
-	  int msg_remain;
+          int cas_id, cas_pid;
+          const char *cancel_msg;
+          int msg_remain;
 
-	  brreq_msg_unpack_port_name (br_req_msg, &cancel_msg, &msg_remain);
+          brreq_msg_unpack_port_name (br_req_msg, &cancel_msg, &msg_remain);
 
-	  if (cancel_msg == NULL || msg_remain < 8)
-	    {
-	      cas_id = -1;
-	      cas_pid = -1;
-	    }
-	  else
-	    {
-	      memcpy ((char *) &cas_id, cancel_msg, 4);
-	      memcpy ((char *) &cas_pid, cancel_msg + 4, 4);
-	      cas_id = ntohl (cas_id) - 1;
-	      cas_pid = ntohl (cas_pid);
-	    }
+          if (cancel_msg == NULL || msg_remain < 8)
+            {
+              cas_id = -1;
+              cas_pid = -1;
+            }
+          else
+            {
+              memcpy ((char *) &cas_id, cancel_msg, 4);
+              memcpy ((char *) &cas_pid, cancel_msg + 4, 4);
+              cas_id = ntohl (cas_id) - 1;
+              cas_pid = ntohl (cas_pid);
+            }
 
-	  if (cas_id >= 0 &&
-	      cas_id < shm_Br->br_info[br_Index].appl_server_max_num &&
-	      shm_Appl->info.as_info[cas_id].service_flag == SERVICE_ON &&
-	      shm_Appl->info.as_info[cas_id].pid == cas_pid &&
-	      shm_Appl->info.as_info[cas_id].uts_status == UTS_STATUS_BUSY &&
-	      shm_Appl->info.as_info[cas_id].cas_clt_ip_addr ==
-	      client_ip_addr)
-	    {
-	      ret_code = 0;
-	      os_send_signal (cas_pid, SIGUSR1);
-	    }
+          if (cas_id >= 0 &&
+              cas_id < shm_Br->br_info[br_Index].appl_server_max_num &&
+              shm_Appl->info.as_info[cas_id].service_flag == SERVICE_ON &&
+              shm_Appl->info.as_info[cas_id].pid == cas_pid &&
+              shm_Appl->info.as_info[cas_id].uts_status == UTS_STATUS_BUSY &&
+              shm_Appl->info.as_info[cas_id].cas_clt_ip_addr == client_ip_addr)
+            {
+              ret_code = 0;
+              os_send_signal (cas_pid, SIGUSR1);
+            }
 
-	  br_send_result_to_client (clt_sock_fd, ret_code, NULL);
+          br_send_result_to_client (clt_sock_fd, ret_code, NULL);
 
-	  RYE_CLOSE_SOCKET (clt_sock_fd);
-	  shm_Br->br_info[br_Index].cancel_req_count++;
-	}
+          RYE_CLOSE_SOCKET (clt_sock_fd);
+          shm_Br->br_info[br_Index].cancel_req_count++;
+        }
       else
-	{
-	  br_send_result_to_client (clt_sock_fd, CAS_ER_COMMUNICATION, NULL);
-	  RYE_CLOSE_SOCKET (clt_sock_fd);
-	  shm_Br->br_info[br_Index].connect_fail_count++;
-	}
+        {
+          br_send_result_to_client (clt_sock_fd, CAS_ER_COMMUNICATION, NULL);
+          RYE_CLOSE_SOCKET (clt_sock_fd);
+          shm_Br->br_info[br_Index].connect_fail_count++;
+        }
     }
 
   brreq_msg_free (br_req_msg);
@@ -532,13 +505,11 @@ receiver_thr_f (UNUSED_ARG void *arg)
 }
 
 int
-br_read_broker_request_msg (SOCKET clt_sock_fd,
-			    T_BROKER_REQUEST_MSG * br_req_msg)
+br_read_broker_request_msg (SOCKET clt_sock_fd, T_BROKER_REQUEST_MSG * br_req_msg)
 {
   char *msg_buffer = br_req_msg->msg_buffer;
 
-  if (br_read_nbytes_from_client (clt_sock_fd, msg_buffer, BRREQ_MSG_SIZE,
-				  BR_DEFAULT_READ_TIMEOUT) < 0)
+  if (br_read_nbytes_from_client (clt_sock_fd, msg_buffer, BRREQ_MSG_SIZE, BR_DEFAULT_READ_TIMEOUT) < 0)
     {
       return -1;
     }
@@ -549,8 +520,7 @@ br_read_broker_request_msg (SOCKET clt_sock_fd,
     }
 
   if (br_read_nbytes_from_client (clt_sock_fd, br_req_msg->op_code_msg,
-				  br_req_msg->op_code_msg_size,
-				  BR_DEFAULT_READ_TIMEOUT) < 0)
+                                  br_req_msg->op_code_msg_size, BR_DEFAULT_READ_TIMEOUT) < 0)
     {
       return -1;
     }
@@ -582,38 +552,38 @@ dispatch_thr_f (UNUSED_ARG void *arg)
   while (br_Process_flag)
     {
       for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
-	{
-	  if (shm_Appl->info.as_info[i].service_flag == SERVICE_OFF)
-	    {
-	      if (shm_Appl->info.as_info[i].uts_status == UTS_STATUS_IDLE)
-		shm_Appl->info.as_info[i].service_flag = SERVICE_OFF_ACK;
-	    }
-	}
+        {
+          if (shm_Appl->info.as_info[i].service_flag == SERVICE_OFF)
+            {
+              if (shm_Appl->info.as_info[i].uts_status == UTS_STATUS_IDLE)
+                shm_Appl->info.as_info[i].service_flag = SERVICE_OFF_ACK;
+            }
+        }
 
       pthread_mutex_lock (&clt_Table_mutex);
       if (max_heap_delete (job_queue, &cur_job) < 0)
-	{
-	  struct timespec ts;
-	  struct timeval tv;
-	  int r;
+        {
+          struct timespec ts;
+          struct timeval tv;
+          int r;
 
-	  gettimeofday (&tv, NULL);
-	  ts.tv_sec = tv.tv_sec;
-	  ts.tv_nsec = (tv.tv_usec + 30000) * 1000;
-	  if (ts.tv_nsec > 1000000000)
-	    {
-	      ts.tv_sec += 1;
-	      ts.tv_nsec -= 1000000000;
-	    }
-	  r = pthread_cond_timedwait (&clt_Table_cond, &clt_Table_mutex, &ts);
-	  if (r != 0)
-	    {
-	      pthread_mutex_unlock (&clt_Table_mutex);
-	      continue;
-	    }
-	  r = max_heap_delete (job_queue, &cur_job);
-	  assert (r == 0);
-	}
+          gettimeofday (&tv, NULL);
+          ts.tv_sec = tv.tv_sec;
+          ts.tv_nsec = (tv.tv_usec + 30000) * 1000;
+          if (ts.tv_nsec > 1000000000)
+            {
+              ts.tv_sec += 1;
+              ts.tv_nsec -= 1000000000;
+            }
+          r = pthread_cond_timedwait (&clt_Table_cond, &clt_Table_mutex, &ts);
+          if (r != 0)
+            {
+              pthread_mutex_unlock (&clt_Table_mutex);
+              continue;
+            }
+          r = max_heap_delete (job_queue, &cur_job);
+          assert (r == 0);
+        }
 
       hold_Job = 1;
       max_heap_incr_priority (job_queue);
@@ -621,24 +591,24 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 
     retry:
       while (1)
-	{
-	  as_index = find_idle_cas ();
-	  if (as_index < 0)
-	    {
-	      if (broker_add_new_cas ())
-		{
-		  continue;
-		}
-	      else
-		{
-		  THREAD_SLEEP (30);
-		}
-	    }
-	  else
-	    {
-	      break;
-	    }
-	}
+        {
+          as_index = find_idle_cas ();
+          if (as_index < 0)
+            {
+              if (broker_add_new_cas ())
+                {
+                  continue;
+                }
+              else
+                {
+                  THREAD_SLEEP (30);
+                }
+            }
+          else
+            {
+              break;
+            }
+        }
 
       hold_Job = 0;
 
@@ -649,62 +619,51 @@ dispatch_thr_f (UNUSED_ARG void *arg)
       shm_Appl->info.as_info[as_index].cas_clt_ip_addr = cur_job.ip;
       shm_Appl->info.as_info[as_index].cas_clt_port = cur_job.port;
 
-      srv_sock_fd = br_connect_srv (false, &shm_Br->br_info[br_Index],
-				    as_index);
+      srv_sock_fd = br_connect_srv (false, &shm_Br->br_info[br_Index], as_index);
 
       if (!IS_INVALID_SOCKET (srv_sock_fd))
-	{
-	  in_addr_t ip_addr;
-	  int ret_val;
-	  int con_status, uts_status;
+        {
+          in_addr_t ip_addr;
+          int ret_val;
+          int con_status, uts_status;
 
-	  con_status = htonl (shm_Appl->info.as_info[as_index].con_status);
+          con_status = htonl (shm_Appl->info.as_info[as_index].con_status);
 
-	  if (br_write_nbytes_to_client (srv_sock_fd, (char *) &con_status,
-					 sizeof (int),
-					 BR_SOCKET_TIMEOUT_SEC) < 0)
-	    {
-	      RYE_CLOSE_SOCKET (srv_sock_fd);
-	      goto retry;
-	    }
+          if (br_write_nbytes_to_client (srv_sock_fd, (char *) &con_status, sizeof (int), BR_SOCKET_TIMEOUT_SEC) < 0)
+            {
+              RYE_CLOSE_SOCKET (srv_sock_fd);
+              goto retry;
+            }
 
-	  ret_val = br_read_nbytes_from_client (srv_sock_fd,
-						(char *) &con_status,
-						sizeof (int),
-						BR_SOCKET_TIMEOUT_SEC);
-	  if ((ret_val < 0) || ntohl (con_status) != CON_STATUS_IN_TRAN)
-	    {
-	      RYE_CLOSE_SOCKET (srv_sock_fd);
-	      goto retry;
-	    }
+          ret_val = br_read_nbytes_from_client (srv_sock_fd, (char *) &con_status, sizeof (int), BR_SOCKET_TIMEOUT_SEC);
+          if ((ret_val < 0) || ntohl (con_status) != CON_STATUS_IN_TRAN)
+            {
+              RYE_CLOSE_SOCKET (srv_sock_fd);
+              goto retry;
+            }
 
-	  ip_addr = cur_job.ip;
-	  ret_val =
-	    css_transfer_fd (srv_sock_fd, cur_job.clt_sock_fd, ip_addr,
-			     &cur_job.recv_time);
-	  if (ret_val > 0)
-	    {
-	      ret_val = br_read_nbytes_from_client (srv_sock_fd,
-						    (char *) &uts_status,
-						    sizeof (int),
-						    BR_SOCKET_TIMEOUT_SEC);
-	    }
-	  RYE_CLOSE_SOCKET (srv_sock_fd);
+          ip_addr = cur_job.ip;
+          ret_val = css_transfer_fd (srv_sock_fd, cur_job.clt_sock_fd, ip_addr, &cur_job.recv_time);
+          if (ret_val > 0)
+            {
+              ret_val = br_read_nbytes_from_client (srv_sock_fd,
+                                                    (char *) &uts_status, sizeof (int), BR_SOCKET_TIMEOUT_SEC);
+            }
+          RYE_CLOSE_SOCKET (srv_sock_fd);
 
-	  if (ret_val < 0)
-	    {
-	      br_send_result_to_client (cur_job.clt_sock_fd,
-					BR_ER_FREE_SERVER, NULL);
-	    }
-	  else
-	    {
-	      shm_Appl->info.as_info[as_index].num_request++;
-	    }
-	}
+          if (ret_val < 0)
+            {
+              br_send_result_to_client (cur_job.clt_sock_fd, BR_ER_FREE_SERVER, NULL);
+            }
+          else
+            {
+              shm_Appl->info.as_info[as_index].num_request++;
+            }
+        }
       else
-	{
-	  goto retry;
-	}
+        {
+          goto retry;
+        }
 
       RYE_CLOSE_SOCKET (cur_job.clt_sock_fd);
     }
@@ -713,9 +672,7 @@ dispatch_thr_f (UNUSED_ARG void *arg)
 }
 
 SOCKET
-br_accept_unix_domain (in_addr_t * clt_ip_addr,
-		       struct timeval * mgmt_recv_time,
-		       T_BROKER_REQUEST_MSG * br_req_msg)
+br_accept_unix_domain (in_addr_t * clt_ip_addr, struct timeval * mgmt_recv_time, T_BROKER_REQUEST_MSG * br_req_msg)
 {
   int mgmt_sockfd;
   struct sockaddr_in clt_sock_addr;
@@ -727,15 +684,13 @@ br_accept_unix_domain (in_addr_t * clt_ip_addr,
   assert (br_type == NORMAL_BROKER || br_type == SHARD_MGMT);
 
   clt_sock_addr_len = sizeof (clt_sock_addr);
-  mgmt_sockfd = accept (br_Listen_sock_fd, (struct sockaddr *) &clt_sock_addr,
-			&clt_sock_addr_len);
+  mgmt_sockfd = accept (br_Listen_sock_fd, (struct sockaddr *) &clt_sock_addr, &clt_sock_addr_len);
   if (IS_INVALID_SOCKET (mgmt_sockfd))
     {
       return INVALID_SOCKET;
     }
 
-  if (shm_Br->br_info[br_Index].monitor_hang_flag
-      && shm_Br->br_info[br_Index].reject_client_flag)
+  if (shm_Br->br_info[br_Index].monitor_hang_flag && shm_Br->br_info[br_Index].reject_client_flag)
     {
       shm_Br->br_info[br_Index].reject_client_count++;
       RYE_CLOSE_SOCKET (mgmt_sockfd);
@@ -752,8 +707,7 @@ br_accept_unix_domain (in_addr_t * clt_ip_addr,
       return INVALID_SOCKET;
     }
 
-  clt_sock_fd = css_recv_fd (mgmt_sockfd, (int *) clt_ip_addr,
-			     mgmt_recv_time);
+  clt_sock_fd = css_recv_fd (mgmt_sockfd, (int *) clt_ip_addr, mgmt_recv_time);
   if (clt_sock_fd < 0)
     {
       RYE_CLOSE_SOCKET (mgmt_sockfd);
@@ -761,8 +715,7 @@ br_accept_unix_domain (in_addr_t * clt_ip_addr,
       return INVALID_SOCKET;
     }
 
-  br_write_nbytes_to_client (mgmt_sockfd, (char *) &one, sizeof (one),
-			     BR_SOCKET_TIMEOUT_SEC);
+  br_write_nbytes_to_client (mgmt_sockfd, (char *) &one, sizeof (one), BR_SOCKET_TIMEOUT_SEC);
   RYE_CLOSE_SOCKET (mgmt_sockfd);
 
   if (fcntl (clt_sock_fd, F_SETFL, FNDELAY) < 0)
@@ -772,8 +725,7 @@ br_accept_unix_domain (in_addr_t * clt_ip_addr,
       return INVALID_SOCKET;
     }
 
-  setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-	      sizeof (one));
+  setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof (one));
   ut_set_keepalive (clt_sock_fd);
 
   return clt_sock_fd;
@@ -788,8 +740,7 @@ br_mgmt_accept (in_addr_t * clt_ip_addr)
   int one = 1;
 
   clt_sock_addr_len = sizeof (clt_sock_addr);
-  clt_sock_fd = accept (br_Listen_sock_fd, (struct sockaddr *) &clt_sock_addr,
-			&clt_sock_addr_len);
+  clt_sock_fd = accept (br_Listen_sock_fd, (struct sockaddr *) &clt_sock_addr, &clt_sock_addr_len);
   if (IS_INVALID_SOCKET (clt_sock_fd))
     {
       return INVALID_SOCKET;
@@ -803,8 +754,7 @@ br_mgmt_accept (in_addr_t * clt_ip_addr)
       return INVALID_SOCKET;
     }
 
-  if (setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-		  sizeof (one)) < 0)
+  if (setsockopt (clt_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof (one)) < 0)
     {
       assert (0);
     }
@@ -833,8 +783,7 @@ init_inet_socket (void)
       br_set_init_error (BR_ER_INIT_CANT_CREATE_SOCKET, errno);
       return (-1);
     }
-  if ((setsockopt (br_Listen_sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-		   sizeof (one))) < 0)
+  if ((setsockopt (br_Listen_sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof (one))) < 0)
     {
       br_set_init_error (BR_ER_INIT_CANT_CREATE_SOCKET, errno);
       return (-1);
@@ -847,8 +796,7 @@ init_inet_socket (void)
   n = INADDR_ANY;
   memcpy (&sock_addr.sin_addr, &n, sizeof (int));
 
-  if (bind (br_Listen_sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len)
-      < 0)
+  if (bind (br_Listen_sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len) < 0)
     {
       br_set_init_error (BR_ER_INIT_CANT_BIND, errno);
       return (-1);
@@ -860,8 +808,7 @@ init_inet_socket (void)
       return (-1);
     }
 
-  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-		  (char *) &timeout, sizeof (timeout)) < 0)
+  if (setsockopt (br_Listen_sock_fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, (char *) &timeout, sizeof (timeout)) < 0)
     {
       assert (0);
     }
@@ -883,8 +830,7 @@ init_unix_socket (const T_BROKER_INFO * br_info)
       br_set_init_error (BR_ER_INIT_CANT_CREATE_SOCKET, errno);
       return INVALID_SOCKET;
     }
-  if ((setsockopt (br_Listen_sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-		   sizeof (one))) < 0)
+  if ((setsockopt (br_Listen_sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof (one))) < 0)
     {
       br_set_init_error (BR_ER_INIT_CANT_CREATE_SOCKET, errno);
       RYE_CLOSE_SOCKET (br_Listen_sock_fd);
@@ -894,19 +840,16 @@ init_unix_socket (const T_BROKER_INFO * br_info)
   memset (&sock_addr, 0, sizeof (struct sockaddr_un));
   sock_addr.sun_family = AF_UNIX;
 
-  if (ut_get_broker_port_name (sock_addr.sun_path,
-			       sizeof (sock_addr.sun_path), br_info) < 0)
+  if (ut_get_broker_port_name (sock_addr.sun_path, sizeof (sock_addr.sun_path), br_info) < 0)
     {
       br_set_init_error (BR_ER_INIT_CANT_CREATE_SOCKET, 0);
       RYE_CLOSE_SOCKET (br_Listen_sock_fd);
       return -1;
     }
 
-  sock_addr_len =
-    strlen (sock_addr.sun_path) + sizeof (sock_addr.sun_family) + 1;
+  sock_addr_len = strlen (sock_addr.sun_path) + sizeof (sock_addr.sun_family) + 1;
 
-  if (bind (br_Listen_sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len)
-      < 0)
+  if (bind (br_Listen_sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len) < 0)
     {
       br_set_init_error (BR_ER_INIT_CANT_BIND, 0);
       RYE_CLOSE_SOCKET (br_Listen_sock_fd);
@@ -944,8 +887,7 @@ broker_add_new_cas (void)
       return false;
     }
 
-  pid = run_appl_server (&(shm_Appl->info.as_info[add_as_index]), br_Index,
-			 add_as_index);
+  pid = run_appl_server (&(shm_Appl->info.as_info[add_as_index]), br_Index, add_as_index);
   if (pid <= 0)
     {
       return false;
@@ -953,8 +895,7 @@ broker_add_new_cas (void)
 
   pthread_mutex_lock (&broker_Shm_mutex);
   shm_Appl->info.as_info[add_as_index].pid = pid;
-  shm_Appl->info.as_info[add_as_index].psize =
-    (int) (os_get_mem_size (pid, MEM_VSIZE) / ONE_K);
+  shm_Appl->info.as_info[add_as_index].psize = (int) (os_get_mem_size (pid, MEM_VSIZE) / ONE_K);
   shm_Appl->info.as_info[add_as_index].psize_time = time (NULL);
   shm_Appl->info.as_info[add_as_index].uts_status = UTS_STATUS_IDLE;
   shm_Appl->info.as_info[add_as_index].service_flag = SERVICE_ON;
@@ -983,8 +924,7 @@ broker_drop_one_cas_by_time_to_kill (void)
   wait_job_cnt = shm_Appl->job_queue[0].id + hold_Job;
   wait_job_cnt -= (cur_appl_server_num - num_Busy_uts);
 
-  if (cur_appl_server_num <= shm_Br->br_info[br_Index].appl_server_min_num
-      || wait_job_cnt > 0)
+  if (cur_appl_server_num <= shm_Br->br_info[br_Index].appl_server_min_num || wait_job_cnt > 0)
     {
       return false;
     }
@@ -1007,10 +947,9 @@ broker_drop_one_cas_by_time_to_kill (void)
       /* do nothing */
     }
   else if (drop_as_info->cur_keep_con == KEEP_CON_AUTO
-	   && drop_as_info->uts_status == UTS_STATUS_BUSY
-	   && drop_as_info->con_status == CON_STATUS_OUT_TRAN
-	   && time (NULL) - drop_as_info->last_access_time >
-	   shm_Br->br_info[br_Index].time_to_kill)
+           && drop_as_info->uts_status == UTS_STATUS_BUSY
+           && drop_as_info->con_status == CON_STATUS_OUT_TRAN
+           && time (NULL) - drop_as_info->last_access_time > shm_Br->br_info[br_Index].time_to_kill)
     {
       drop_as_info->con_status = CON_STATUS_CLOSE;
     }
@@ -1058,25 +997,24 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
     {
       pthread_mutex_lock (&run_Appl_mutex);
       if (run_Appl_server_flag)
-	{
-	  pthread_mutex_unlock (&run_Appl_mutex);
-	  THREAD_SLEEP (100);
-	  continue;
-	}
+        {
+          pthread_mutex_unlock (&run_Appl_mutex);
+          THREAD_SLEEP (100);
+          continue;
+        }
       else
-	{
-	  run_Appl_server_flag = 1;
-	  pthread_mutex_unlock (&run_Appl_mutex);
-	  break;
-	}
+        {
+          run_Appl_server_flag = 1;
+          pthread_mutex_unlock (&run_Appl_mutex);
+          break;
+        }
     }
 
   as_info_p->service_ready_flag = FALSE;
 
   signal (SIGCHLD, SIG_IGN);
 
-  ut_get_as_port_name (path, shm_Br->br_info[br_index].name, as_index,
-		       BROKER_PATH_MAX);
+  ut_get_as_port_name (path, shm_Br->br_info[br_index].name, as_index, BROKER_PATH_MAX);
   unlink (path);
 
   pid = fork ();
@@ -1086,21 +1024,19 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
       signal (SIGCHLD, SIG_DFL);
 
       for (i = 3; i <= max_Open_fd; i++)
-	{
-	  close (i);
-	}
+        {
+          close (i);
+        }
       strcpy (appl_name, shm_Appl->appl_server_name);
 
       sprintf (appl_server_shm_key_env_str, "%s=%d", APPL_SERVER_SHM_KEY_STR,
-	       shm_Br->br_info[br_index].appl_server_shm_key);
+               shm_Br->br_info[br_index].appl_server_shm_key);
       putenv (appl_server_shm_key_env_str);
 
-      snprintf (as_id_env_str, sizeof (as_id_env_str),
-		"%s=%d", AS_ID_ENV_STR, as_index);
+      snprintf (as_id_env_str, sizeof (as_id_env_str), "%s=%d", AS_ID_ENV_STR, as_index);
       putenv (as_id_env_str);
 
-      ut_make_cas_process_name (argv0, sizeof (argv0),
-				shm_Br->br_info[br_index].name, as_index);
+      ut_make_cas_process_name (argv0, sizeof (argv0), shm_Br->br_info[br_index].name, as_index);
 
       execle (appl_name, argv0, NULL, environ);
 
@@ -1136,8 +1072,7 @@ run_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 static int
 stop_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 {
-  ut_kill_as_process (as_info_p->pid, shm_Br->br_info[br_index].name,
-		      as_index);
+  ut_kill_as_process (as_info_p->pid, shm_Br->br_info[br_index].name, as_index);
 
   as_info_p->pid = 0;
   as_info_p->last_access_time = time (NULL);
@@ -1156,14 +1091,12 @@ stop_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
  * Note: inactivate and activate CAS
  */
 static void
-restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
-		     int as_index)
+restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 {
   int new_pid;
   int r;
 
-  as_info_p->psize = (int) (os_get_mem_size (as_info_p->pid,
-					     MEM_VSIZE) / ONE_K);
+  as_info_p->psize = (int) (os_get_mem_size (as_info_p->pid, MEM_VSIZE) / ONE_K);
   if (as_info_p->psize > 1)
     {
       as_info_p->psize_time = time (NULL);
@@ -1174,42 +1107,39 @@ restart_appl_server (T_APPL_SERVER_INFO * as_info_p, int br_index,
       FILE *fp;
       int old_pid;
 
-      ut_get_as_pid_name (pid_file_name, shm_Br->br_info[br_index].name,
-			  as_index, BROKER_PATH_MAX);
+      ut_get_as_pid_name (pid_file_name, shm_Br->br_info[br_index].name, as_index, BROKER_PATH_MAX);
 
       fp = fopen (pid_file_name, "r");
       if (fp)
-	{
-	  r = fscanf (fp, "%d", &old_pid);
-	  if (r != 1)
-	    {
-	      assert (false);
-	      ;			/* TODO - avoid compile error */
-	    }
+        {
+          r = fscanf (fp, "%d", &old_pid);
+          if (r != 1)
+            {
+              assert (false);
+              ;                 /* TODO - avoid compile error */
+            }
 
-	  fclose (fp);
+          fclose (fp);
 
-	  as_info_p->psize = (int) (os_get_mem_size (old_pid,
-						     MEM_VSIZE) / ONE_K);
-	  if (as_info_p->psize > 1)
-	    {
-	      as_info_p->pid = old_pid;
-	      as_info_p->psize_time = time (NULL);
-	    }
-	  else
-	    {
-	      unlink (pid_file_name);
-	    }
-	}
+          as_info_p->psize = (int) (os_get_mem_size (old_pid, MEM_VSIZE) / ONE_K);
+          if (as_info_p->psize > 1)
+            {
+              as_info_p->pid = old_pid;
+              as_info_p->psize_time = time (NULL);
+            }
+          else
+            {
+              unlink (pid_file_name);
+            }
+        }
     }
 
   if (as_info_p->psize <= 0)
     {
       if (as_info_p->pid > 0)
-	{
-	  ut_kill_as_process (as_info_p->pid, shm_Br->br_info[br_index].name,
-			      as_index);
-	}
+        {
+          ut_kill_as_process (as_info_p->pid, shm_Br->br_info[br_index].name, as_index);
+        }
 
       new_pid = run_appl_server (as_info_p, br_index, as_index);
       as_info_p->pid = new_pid;
@@ -1234,13 +1164,13 @@ retry_poll:
   if (nfound < 0)
     {
       if (errno == EINTR)
-	{
-	  goto retry_poll;
-	}
+        {
+          goto retry_poll;
+        }
       else
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
   else if (nfound == 0)
     {
@@ -1249,13 +1179,13 @@ retry_poll:
   else
     {
       if (po[0].revents & POLLIN)
-	{
-	  read_len = READ_FROM_SOCKET (sock_fd, buf, size);
-	}
+        {
+          read_len = READ_FROM_SOCKET (sock_fd, buf, size);
+        }
       else if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
 
   if (read_len <= 0)
@@ -1287,13 +1217,13 @@ retry_poll:
   if (nfound < 0)
     {
       if (errno == EINTR)
-	{
-	  goto retry_poll;
-	}
+        {
+          goto retry_poll;
+        }
       else
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
   else if (nfound == 0)
     {
@@ -1302,13 +1232,13 @@ retry_poll:
   else
     {
       if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
       else if (po[0].revents & POLLOUT)
-	{
-	  write_len = WRITE_TO_SOCKET (sock_fd, buf, size);
-	}
+        {
+          write_len = WRITE_TO_SOCKET (sock_fd, buf, size);
+        }
     }
 
   if (write_len <= 0)
@@ -1320,8 +1250,7 @@ retry_poll:
 }
 
 int
-br_write_nbytes_to_client (SOCKET sock_fd, const char *buf, int size,
-			   int timeout_sec)
+br_write_nbytes_to_client (SOCKET sock_fd, const char *buf, int size, int timeout_sec)
 {
   int write_len;
 
@@ -1330,9 +1259,9 @@ br_write_nbytes_to_client (SOCKET sock_fd, const char *buf, int size,
       write_len = write_to_client (sock_fd, buf, size, timeout_sec);
 
       if (write_len <= 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
       buf += write_len;
       size -= write_len;
@@ -1342,8 +1271,7 @@ br_write_nbytes_to_client (SOCKET sock_fd, const char *buf, int size,
 }
 
 int
-br_read_nbytes_from_client (SOCKET sock_fd, char *buf, int size,
-			    int timeout_sec)
+br_read_nbytes_from_client (SOCKET sock_fd, char *buf, int size, int timeout_sec)
 {
   int read_len;
 
@@ -1351,9 +1279,9 @@ br_read_nbytes_from_client (SOCKET sock_fd, char *buf, int size,
     {
       read_len = read_from_client (sock_fd, buf, size, timeout_sec);
       if (read_len <= 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
       buf += read_len;
       size -= read_len;
@@ -1384,44 +1312,37 @@ retry:
 
   if (is_mgmt)
     {
-      if (ut_get_broker_port_name (sock_addr.sun_path,
-				   sizeof (sock_addr.sun_path), br_info) < 0)
-	{
-	  assert (0);
-	}
+      if (ut_get_broker_port_name (sock_addr.sun_path, sizeof (sock_addr.sun_path), br_info) < 0)
+        {
+          assert (0);
+        }
     }
   else
     {
-      ut_get_as_port_name (sock_addr.sun_path, br_info->name, as_index,
-			   sizeof (sock_addr.sun_path));
+      ut_get_as_port_name (sock_addr.sun_path, br_info->name, as_index, sizeof (sock_addr.sun_path));
     }
 
-  sock_addr_len =
-    strlen (sock_addr.sun_path) + sizeof (sock_addr.sun_family) + 1;
+  sock_addr_len = strlen (sock_addr.sun_path) + sizeof (sock_addr.sun_family) + 1;
 
-  if (connect (srv_sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len) <
-      0)
+  if (connect (srv_sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len) < 0)
     {
       if (!is_mgmt && retry_count < 1)
-	{
-	  int new_pid;
+        {
+          int new_pid;
 
-	  ut_kill_as_process (shm_Appl->info.as_info[as_index].pid,
-			      shm_Br->br_info[br_Index].name, as_index);
+          ut_kill_as_process (shm_Appl->info.as_info[as_index].pid, shm_Br->br_info[br_Index].name, as_index);
 
-	  new_pid = run_appl_server (&(shm_Appl->info.as_info[as_index]),
-				     br_Index, as_index);
-	  shm_Appl->info.as_info[as_index].pid = new_pid;
-	  retry_count++;
-	  RYE_CLOSE_SOCKET (srv_sock_fd);
-	  goto retry;
-	}
+          new_pid = run_appl_server (&(shm_Appl->info.as_info[as_index]), br_Index, as_index);
+          shm_Appl->info.as_info[as_index].pid = new_pid;
+          retry_count++;
+          RYE_CLOSE_SOCKET (srv_sock_fd);
+          goto retry;
+        }
       RYE_CLOSE_SOCKET (srv_sock_fd);
       return INVALID_SOCKET;
     }
 
-  if (setsockopt (srv_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one,
-		  sizeof (one)) < 0)
+  if (setsockopt (srv_sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof (one)) < 0)
     {
       // assert (0);
     }
@@ -1440,8 +1361,7 @@ retry:
  * Note: monitoring CAS
  */
 static void
-cas_monitor_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
-		    int as_index, int *busy_uts)
+cas_monitor_worker (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index, int *busy_uts)
 {
   int new_pid;
   int restart_flag = OFF;
@@ -1472,10 +1392,10 @@ cas_monitor_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
   if (restart_flag)
     {
       if (os_send_signal (as_info_p->pid, 0) < 0)
-	{
-	  restart_appl_server (as_info_p, br_index, as_index);
-	  as_info_p->uts_status = UTS_STATUS_IDLE;
-	}
+        {
+          restart_appl_server (as_info_p, br_index, as_index);
+          as_info_p->uts_status = UTS_STATUS_IDLE;
+        }
     }
 
   if (as_info_p->uts_status == UTS_STATUS_RESTART)
@@ -1506,10 +1426,9 @@ cas_monitor_thr_f (UNUSED_ARG void *ar)
     {
       tmp_num_busy_uts = 0;
       for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
-	{
-	  cas_monitor_worker (&(shm_Appl->info.as_info[i]), br_Index,
-			      i, &tmp_num_busy_uts);
-	}
+        {
+          cas_monitor_worker (&(shm_Appl->info.as_info[i]), br_Index, i, &tmp_num_busy_uts);
+        }
 
       num_Busy_uts = tmp_num_busy_uts;
       shm_Br->br_info[br_Index].num_busy_count = num_Busy_uts;
@@ -1520,19 +1439,16 @@ cas_monitor_thr_f (UNUSED_ARG void *ar)
 }
 
 static int
-add_db_server_check_list (T_DB_SERVER * list_p,
-			  int check_list_cnt, const char *db_name,
-			  const PRM_NODE_INFO * db_node)
+add_db_server_check_list (T_DB_SERVER * list_p, int check_list_cnt, const char *db_name, const PRM_NODE_INFO * db_node)
 {
   int i;
 
   for (i = 0; i < check_list_cnt && i < UNUSABLE_DATABASE_MAX; i++)
     {
-      if (strcmp (db_name, list_p[i].database_name) == 0
-	  && prm_is_same_node (db_node, &list_p[i].db_node) == true)
-	{
-	  return check_list_cnt;
-	}
+      if (strcmp (db_name, list_p[i].database_name) == 0 && prm_is_same_node (db_node, &list_p[i].db_node) == true)
+        {
+          return check_list_cnt;
+        }
     }
 
   if (i == UNUSABLE_DATABASE_MAX)
@@ -1574,15 +1490,13 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
   while (br_Process_flag)
     {
       if (!shm_Appl->monitor_server_flag
-	  || shm_Br->br_info[br_Index].appl_server != APPL_SERVER_CAS
-	  || check_list == NULL)
-	{
-	  shm_Appl->unusable_databases_seq = 0;
-	  memset (shm_Appl->unusable_databases_cnt, 0,
-		  sizeof (shm_Appl->unusable_databases_cnt));
-	  THREAD_SLEEP (MONITOR_SERVER_INTERVAL * 1000);
-	  continue;
-	}
+          || shm_Br->br_info[br_Index].appl_server != APPL_SERVER_CAS || check_list == NULL)
+        {
+          shm_Appl->unusable_databases_seq = 0;
+          memset (shm_Appl->unusable_databases_cnt, 0, sizeof (shm_Appl->unusable_databases_cnt));
+          THREAD_SLEEP (MONITOR_SERVER_INTERVAL * 1000);
+          continue;
+        }
 
       prm_get_ha_node_list (&ha_node_list);
 
@@ -1591,76 +1505,64 @@ server_monitor_thr_f (UNUSED_ARG void *arg)
       u_index = shm_Appl->unusable_databases_seq % 2;
 
       for (i = 0; i < shm_Appl->unusable_databases_cnt[u_index]; i++)
-	{
-	  unusable_db_name =
-	    shm_Appl->unusable_databases[u_index][i].database_name;
-	  unusable_db_node = shm_Appl->unusable_databases[u_index][i].db_node;
+        {
+          unusable_db_name = shm_Appl->unusable_databases[u_index][i].database_name;
+          unusable_db_node = shm_Appl->unusable_databases[u_index][i].db_node;
 
-	  check_list_cnt = add_db_server_check_list (check_list,
-						     check_list_cnt,
-						     unusable_db_name,
-						     &unusable_db_node);
-	}
+          check_list_cnt = add_db_server_check_list (check_list, check_list_cnt, unusable_db_name, &unusable_db_node);
+        }
 
       for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
-	{
-	  as_info_p = &(shm_Appl->info.as_info[i]);
-	  if (as_info_p->uts_status == UTS_STATUS_BUSY)
-	    {
-	      strncpy (busy_cas_db_name, as_info_p->database_name,
-		       SRV_CON_DBNAME_SIZE - 1);
+        {
+          as_info_p = &(shm_Appl->info.as_info[i]);
+          if (as_info_p->uts_status == UTS_STATUS_BUSY)
+            {
+              strncpy (busy_cas_db_name, as_info_p->database_name, SRV_CON_DBNAME_SIZE - 1);
 
-	      if (busy_cas_db_name[0] != '\0')
-		{
-		  PRM_NODE_LIST preferred_hosts;
+              if (busy_cas_db_name[0] != '\0')
+                {
+                  PRM_NODE_LIST preferred_hosts;
 
-		  preferred_hosts = shm_Appl->preferred_hosts;
-		  for (j = 0; j < preferred_hosts.num_nodes; j++)
-		    {
-		      check_list_cnt =
-			add_db_server_check_list (check_list, check_list_cnt,
-						  busy_cas_db_name,
-						  &preferred_hosts.nodes[j]);
-		    }
+                  preferred_hosts = shm_Appl->preferred_hosts;
+                  for (j = 0; j < preferred_hosts.num_nodes; j++)
+                    {
+                      check_list_cnt =
+                        add_db_server_check_list (check_list, check_list_cnt,
+                                                  busy_cas_db_name, &preferred_hosts.nodes[j]);
+                    }
 
-		  for (j = 0; j < ha_node_list.num_nodes; j++)
-		    {
-		      check_list_cnt =
-			add_db_server_check_list (check_list,
-						  check_list_cnt,
-						  busy_cas_db_name,
-						  &ha_node_list.nodes[j]);
-		    }
-		}
-	    }
-	}
+                  for (j = 0; j < ha_node_list.num_nodes; j++)
+                    {
+                      check_list_cnt =
+                        add_db_server_check_list (check_list, check_list_cnt, busy_cas_db_name, &ha_node_list.nodes[j]);
+                    }
+                }
+            }
+        }
 
       /* 2. check server state */
       for (i = 0; i < check_list_cnt; i++)
-	{
-	  HA_STATE node_state = HA_STATE_UNKNOWN;
+        {
+          HA_STATE node_state = HA_STATE_UNKNOWN;
 
-	  rye_master_shm_get_node_state (&node_state, &check_list[i].db_node);
-	  check_list[i].server_state = node_state;
-	}
+          rye_master_shm_get_node_state (&node_state, &check_list[i].db_node);
+          check_list[i].server_state = node_state;
+        }
 
       /* 3. record server state to the shared memory */
       cnt = 0;
       u_index = (shm_Appl->unusable_databases_seq + 1) % 2;
 
       for (i = 0; i < check_list_cnt; i++)
-	{
-	  if (check_list[i].server_state == HA_STATE_UNKNOWN
-	      || check_list[i].server_state == HA_STATE_NA)
-	    {
-	      strncpy (shm_Appl->unusable_databases[u_index][cnt].
-		       database_name, check_list[i].database_name,
-		       SRV_CON_DBNAME_SIZE - 1);
-	      shm_Appl->unusable_databases[u_index][cnt].db_node =
-		check_list[i].db_node;
-	      cnt++;
-	    }
-	}
+        {
+          if (check_list[i].server_state == HA_STATE_UNKNOWN || check_list[i].server_state == HA_STATE_NA)
+            {
+              strncpy (shm_Appl->unusable_databases[u_index][cnt].database_name, check_list[i].database_name,
+                       SRV_CON_DBNAME_SIZE - 1);
+              shm_Appl->unusable_databases[u_index][cnt].db_node = check_list[i].db_node;
+              cnt++;
+            }
+        }
 
       shm_Appl->unusable_databases_cnt[u_index] = cnt;
       shm_Appl->unusable_databases_seq++;
@@ -1705,8 +1607,7 @@ hang_check_thr_f (UNUSED_ARG void *ar)
   cur_hang_count = 0;
   cur_index = 0;
   avg_hang_count = 0.0;
-  collect_count_interval =
-    br_info_p->monitor_hang_interval / NUM_COLLECT_COUNT_PER_INTVL;
+  collect_count_interval = br_info_p->monitor_hang_interval / NUM_COLLECT_COUNT_PER_INTVL;
 
   while (br_Process_flag)
     {
@@ -1714,51 +1615,46 @@ hang_check_thr_f (UNUSED_ARG void *ar)
       cas_hang = false;
 
       if (br_log_hang_time () > br_info_p->hang_timeout)
-	{
-	  br_log_hang = true;
-	}
+        {
+          br_log_hang = true;
+        }
 
       if (shm_Br->br_info[br_Index].monitor_hang_flag)
-	{
-	  cur_time = time (NULL);
+        {
+          cur_time = time (NULL);
 
-	  for (i = 0; i < br_info_p->appl_server_max_num; i++)
-	    {
-	      as_info_p = &(shm_Appl->info.as_info[i]);
+          for (i = 0; i < br_info_p->appl_server_max_num; i++)
+            {
+              as_info_p = &(shm_Appl->info.as_info[i]);
 
-	      if ((as_info_p->service_flag != SERVICE_ON)
-		  || as_info_p->claimed_alive_time == 0)
-		{
-		  continue;
-		}
-	      if ((br_info_p->hang_timeout <
-		   cur_time - as_info_p->claimed_alive_time))
-		{
-		  cur_hang_count++;
-		}
-	    }
+              if ((as_info_p->service_flag != SERVICE_ON) || as_info_p->claimed_alive_time == 0)
+                {
+                  continue;
+                }
+              if ((br_info_p->hang_timeout < cur_time - as_info_p->claimed_alive_time))
+                {
+                  cur_hang_count++;
+                }
+            }
 
-	  hang_count[cur_index] = cur_hang_count;
+          hang_count[cur_index] = cur_hang_count;
 
-	  avg_hang_count =
-	    ut_get_avg_from_array (hang_count, NUM_COLLECT_COUNT_PER_INTVL);
+          avg_hang_count = ut_get_avg_from_array (hang_count, NUM_COLLECT_COUNT_PER_INTVL);
 
-	  cas_hang =
-	    (avg_hang_count >=
-	     (float) br_info_p->appl_server_num * HANG_COUNT_THRESHOLD_RATIO);
+          cas_hang = (avg_hang_count >= (float) br_info_p->appl_server_num * HANG_COUNT_THRESHOLD_RATIO);
 
-	  cur_index = (cur_index + 1) % NUM_COLLECT_COUNT_PER_INTVL;
-	  cur_hang_count = 0;
-	}
+          cur_index = (cur_index + 1) % NUM_COLLECT_COUNT_PER_INTVL;
+          cur_hang_count = 0;
+        }
 
       if (br_log_hang || cas_hang)
-	{
-	  br_info_p->reject_client_flag = 1;
-	}
+        {
+          br_info_p->reject_client_flag = 1;
+        }
       else
-	{
-	  br_info_p->reject_client_flag = 0;
-	}
+        {
+          br_info_p->reject_client_flag = 0;
+        }
 
       THREAD_SLEEP (collect_count_interval * 1000);
     }
@@ -1776,16 +1672,14 @@ hang_check_thr_f (UNUSED_ARG void *ar)
  * Note: check cas psize and cas log
  */
 static void
-psize_check_worker (T_APPL_SERVER_INFO * as_info_p, int br_index,
-		    int as_index)
+psize_check_worker (T_APPL_SERVER_INFO * as_info_p, int br_index, int as_index)
 {
   if (as_info_p->service_flag != SERVICE_ON)
     {
       return;
     }
 
-  as_info_p->psize = (int) (os_get_mem_size (as_info_p->pid,
-					     MEM_VSIZE) / ONE_K);
+  as_info_p->psize = (int) (os_get_mem_size (as_info_p->pid, MEM_VSIZE) / ONE_K);
 
   check_cas_log (shm_Br->br_info[br_index].name, as_info_p, as_index);
 }
@@ -1810,9 +1704,9 @@ psize_check_thr_f (UNUSED_ARG void *ar)
       br_log_check ();
 
       for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
-	{
-	  psize_check_worker (&(shm_Appl->info.as_info[i]), br_Index, i);
-	}
+        {
+          psize_check_worker (&(shm_Appl->info.as_info[i]), br_Index, i);
+        }
 
       THREAD_SLEEP (1000);
     }
@@ -1829,8 +1723,7 @@ psize_check_thr_f (UNUSED_ARG void *ar)
  * Note: check cas log and recreate
  */
 static void
-check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p,
-	       int as_index)
+check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p, int as_index)
 {
   char log_filename[BROKER_PATH_MAX];
 
@@ -1841,36 +1734,34 @@ check_cas_log (const char *br_name, T_APPL_SERVER_INFO * as_info_p,
 
   if (as_info_p->cur_sql_log_mode != SQL_LOG_MODE_NONE)
     {
-      get_as_sql_log_filename (log_filename, sizeof (log_filename), br_name,
-			       as_index);
+      get_as_sql_log_filename (log_filename, sizeof (log_filename), br_name, as_index);
 
       if (access (log_filename, F_OK) < 0)
-	{
-	  FILE *fp;
-	  fp = fopen (log_filename, "a");
-	  if (fp != NULL)
-	    {
-	      fclose (fp);
-	    }
-	  as_info_p->cas_log_reset = CAS_LOG_RESET_REOPEN;
-	}
+        {
+          FILE *fp;
+          fp = fopen (log_filename, "a");
+          if (fp != NULL)
+            {
+              fclose (fp);
+            }
+          as_info_p->cas_log_reset = CAS_LOG_RESET_REOPEN;
+        }
     }
 
   if (as_info_p->cur_slow_log_mode != SLOW_LOG_MODE_OFF)
     {
-      get_as_slow_log_filename (log_filename, sizeof (log_filename), br_name,
-				as_index);
+      get_as_slow_log_filename (log_filename, sizeof (log_filename), br_name, as_index);
 
       if (access (log_filename, F_OK) < 0)
-	{
-	  FILE *fp;
-	  fp = fopen (log_filename, "a");
-	  if (fp != NULL)
-	    {
-	      fclose (fp);
-	    }
-	  as_info_p->cas_slow_log_reset = CAS_LOG_RESET_REOPEN;
-	}
+        {
+          FILE *fp;
+          fp = fopen (log_filename, "a");
+          if (fp != NULL)
+            {
+              fclose (fp);
+            }
+          as_info_p->cas_slow_log_reset = CAS_LOG_RESET_REOPEN;
+        }
     }
 }
 
@@ -1891,58 +1782,52 @@ find_idle_cas (void)
   for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
     {
       if (shm_Appl->info.as_info[i].service_flag != SERVICE_ON)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if (shm_Appl->info.as_info[i].uts_status == UTS_STATUS_IDLE)
-	{
-	  if (os_send_signal (shm_Appl->info.as_info[i].pid, 0) == 0)
-	    {
-	      idle_cas_id = i;
-	      wait_cas_id = -1;
-	      break;
-	    }
-	  else
-	    {
-	      shm_Appl->info.as_info[i].uts_status = UTS_STATUS_RESTART;
-	      continue;
-	    }
-	}
+        {
+          if (os_send_signal (shm_Appl->info.as_info[i].pid, 0) == 0)
+            {
+              idle_cas_id = i;
+              wait_cas_id = -1;
+              break;
+            }
+          else
+            {
+              shm_Appl->info.as_info[i].uts_status = UTS_STATUS_RESTART;
+              continue;
+            }
+        }
       if (shm_Br->br_info[br_Index].appl_server_num ==
-	  shm_Br->br_info[br_Index].appl_server_max_num
-	  && shm_Appl->info.as_info[i].uts_status == UTS_STATUS_BUSY
-	  && shm_Appl->info.as_info[i].cur_keep_con == KEEP_CON_AUTO
-	  && shm_Appl->info.as_info[i].con_status == CON_STATUS_OUT_TRAN
-	  && shm_Appl->info.as_info[i].num_holdable_results < 1
-	  && shm_Appl->info.as_info[i].cas_change_mode ==
-	  CAS_CHANGE_MODE_AUTO)
-	{
-	  time_t wait_time =
-	    cur_time - shm_Appl->info.as_info[i].last_access_time;
-	  if (wait_time > max_wait_time || wait_cas_id == -1)
-	    {
-	      max_wait_time = wait_time;
-	      wait_cas_id = i;
-	    }
-	}
+          shm_Br->br_info[br_Index].appl_server_max_num
+          && shm_Appl->info.as_info[i].uts_status == UTS_STATUS_BUSY
+          && shm_Appl->info.as_info[i].cur_keep_con == KEEP_CON_AUTO
+          && shm_Appl->info.as_info[i].con_status == CON_STATUS_OUT_TRAN
+          && shm_Appl->info.as_info[i].num_holdable_results < 1
+          && shm_Appl->info.as_info[i].cas_change_mode == CAS_CHANGE_MODE_AUTO)
+        {
+          time_t wait_time = cur_time - shm_Appl->info.as_info[i].last_access_time;
+          if (wait_time > max_wait_time || wait_cas_id == -1)
+            {
+              max_wait_time = wait_time;
+              wait_cas_id = i;
+            }
+        }
     }
 
   if (wait_cas_id >= 0)
     {
-      CON_STATUS_LOCK (&(shm_Appl->info.as_info[wait_cas_id]),
-		       CON_STATUS_LOCK_BROKER);
+      CON_STATUS_LOCK (&(shm_Appl->info.as_info[wait_cas_id]), CON_STATUS_LOCK_BROKER);
       if (shm_Appl->info.as_info[wait_cas_id].con_status ==
-	  CON_STATUS_OUT_TRAN
-	  && shm_Appl->info.as_info[wait_cas_id].num_holdable_results < 1
-	  && shm_Appl->info.as_info[wait_cas_id].cas_change_mode ==
-	  CAS_CHANGE_MODE_AUTO)
-	{
-	  idle_cas_id = wait_cas_id;
-	  shm_Appl->info.as_info[wait_cas_id].con_status =
-	    CON_STATUS_CLOSE_AND_CONNECT;
-	}
-      CON_STATUS_UNLOCK (&(shm_Appl->info.as_info[wait_cas_id]),
-			 CON_STATUS_LOCK_BROKER);
+          CON_STATUS_OUT_TRAN
+          && shm_Appl->info.as_info[wait_cas_id].num_holdable_results < 1
+          && shm_Appl->info.as_info[wait_cas_id].cas_change_mode == CAS_CHANGE_MODE_AUTO)
+        {
+          idle_cas_id = wait_cas_id;
+          shm_Appl->info.as_info[wait_cas_id].con_status = CON_STATUS_CLOSE_AND_CONNECT;
+        }
+      CON_STATUS_UNLOCK (&(shm_Appl->info.as_info[wait_cas_id]), CON_STATUS_LOCK_BROKER);
     }
 
   if (idle_cas_id < 0)
@@ -1967,14 +1852,13 @@ find_drop_as_index (void)
   if (IS_NOT_APPL_SERVER_TYPE_CAS (shm_Br->br_info[br_Index].appl_server))
     {
       drop_as_index = shm_Br->br_info[br_Index].appl_server_num - 1;
-      wait_time =
-	time (NULL) - shm_Appl->info.as_info[drop_as_index].last_access_time;
+      wait_time = time (NULL) - shm_Appl->info.as_info[drop_as_index].last_access_time;
       if (shm_Appl->info.as_info[drop_as_index].uts_status == UTS_STATUS_IDLE
-	  && wait_time > shm_Br->br_info[br_Index].time_to_kill)
-	{
-	  pthread_mutex_unlock (&broker_Shm_mutex);
-	  return drop_as_index;
-	}
+          && wait_time > shm_Br->br_info[br_Index].time_to_kill)
+        {
+          pthread_mutex_unlock (&broker_Shm_mutex);
+          return drop_as_index;
+        }
       pthread_mutex_unlock (&broker_Shm_mutex);
       return -1;
     }
@@ -1986,35 +1870,33 @@ find_drop_as_index (void)
   for (i = shm_Br->br_info[br_Index].appl_server_max_num - 1; i >= 0; i--)
     {
       if (shm_Appl->info.as_info[i].service_flag != SERVICE_ON)
-	continue;
+        continue;
 
       wait_time = time (NULL) - shm_Appl->info.as_info[i].last_access_time;
 
       if (shm_Appl->info.as_info[i].uts_status == UTS_STATUS_IDLE)
-	{
-	  if (wait_time > shm_Br->br_info[br_Index].time_to_kill)
-	    {
-	      drop_as_index = i;
-	      break;
-	    }
-	  else
-	    {
-	      exist_idle_cas = 1;
-	      drop_as_index = -1;
-	    }
-	}
+        {
+          if (wait_time > shm_Br->br_info[br_Index].time_to_kill)
+            {
+              drop_as_index = i;
+              break;
+            }
+          else
+            {
+              exist_idle_cas = 1;
+              drop_as_index = -1;
+            }
+        }
 
       if (shm_Appl->info.as_info[i].uts_status == UTS_STATUS_BUSY
-	  && shm_Appl->info.as_info[i].con_status == CON_STATUS_OUT_TRAN
-	  && shm_Appl->info.as_info[i].num_holdable_results < 1
-	  && shm_Appl->info.as_info[i].cas_change_mode == CAS_CHANGE_MODE_AUTO
-	  && wait_time > max_wait_time
-	  && wait_time > shm_Br->br_info[br_Index].time_to_kill
-	  && exist_idle_cas == 0)
-	{
-	  max_wait_time = wait_time;
-	  drop_as_index = i;
-	}
+          && shm_Appl->info.as_info[i].con_status == CON_STATUS_OUT_TRAN
+          && shm_Appl->info.as_info[i].num_holdable_results < 1
+          && shm_Appl->info.as_info[i].cas_change_mode == CAS_CHANGE_MODE_AUTO
+          && wait_time > max_wait_time && wait_time > shm_Br->br_info[br_Index].time_to_kill && exist_idle_cas == 0)
+        {
+          max_wait_time = wait_time;
+          drop_as_index = i;
+        }
     }
 
   pthread_mutex_unlock (&broker_Shm_mutex);
@@ -2030,12 +1912,11 @@ find_add_as_index ()
   pthread_mutex_lock (&broker_Shm_mutex);
   for (i = 0; i < shm_Br->br_info[br_Index].appl_server_max_num; i++)
     {
-      if (shm_Appl->info.as_info[i].service_flag == SERVICE_OFF_ACK
-	  && current_Dropping_as_index != i)
-	{
-	  pthread_mutex_unlock (&broker_Shm_mutex);
-	  return i;
-	}
+      if (shm_Appl->info.as_info[i].service_flag == SERVICE_OFF_ACK && current_Dropping_as_index != i)
+        {
+          pthread_mutex_unlock (&broker_Shm_mutex);
+          return i;
+        }
     }
 
   pthread_mutex_unlock (&broker_Shm_mutex);
@@ -2055,8 +1936,7 @@ broker_init_shm (void)
       goto return_error;
     }
   parse_int (&master_shm_key, p, 10);
-  BROKER_ERR ("<BROKER> MASTER_SHM_KEY_ENV_STR:[%d:%x]\n", master_shm_key,
-	      master_shm_key);
+  BROKER_ERR ("<BROKER> MASTER_SHM_KEY_ENV_STR:[%d:%x]\n", master_shm_key, master_shm_key);
 
   shm_Br = rye_shm_attach (master_shm_key, RYE_SHM_TYPE_BROKER_GLOBAL, false);
   if (shm_Br == NULL)
@@ -2080,8 +1960,7 @@ broker_init_shm (void)
   br_Info_p = &shm_Br->br_info[br_Index];
 
   as_shm_key = br_Info_p->appl_server_shm_key;
-  BROKER_ERR ("<BROKER> APPL_SERVER_SHM_KEY_STR:[%d:%x]\n", as_shm_key,
-	      as_shm_key);
+  BROKER_ERR ("<BROKER> APPL_SERVER_SHM_KEY_STR:[%d:%x]\n", as_shm_key, as_shm_key);
 
   shm_Appl = rye_shm_attach (as_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, false);
   if (shm_Appl == NULL)
@@ -2097,28 +1976,22 @@ return_error:
 }
 
 static void
-get_as_sql_log_filename (char *log_filename, size_t buf_size,
-			 const char *broker_name, int as_index)
+get_as_sql_log_filename (char *log_filename, size_t buf_size, const char *broker_name, int as_index)
 {
   char filename[BROKER_PATH_MAX];
 
-  snprintf (filename, sizeof (filename), "%s_%d.sql.log",
-	    broker_name, as_index + 1);
+  snprintf (filename, sizeof (filename), "%s_%d.sql.log", broker_name, as_index + 1);
 
-  envvar_ryelog_broker_sqllog_file (log_filename, buf_size, broker_name,
-				    filename);
+  envvar_ryelog_broker_sqllog_file (log_filename, buf_size, broker_name, filename);
 }
 
 static void
-get_as_slow_log_filename (char *log_filename, size_t buf_size,
-			  const char *broker_name, int as_index)
+get_as_slow_log_filename (char *log_filename, size_t buf_size, const char *broker_name, int as_index)
 {
   char tmp_filename[BROKER_PATH_MAX];
 
-  snprintf (tmp_filename, sizeof (tmp_filename), "%s_%d.slow.log",
-	    broker_name, as_index + 1);
-  envvar_ryelog_broker_slowlog_file (log_filename, buf_size, broker_name,
-				     tmp_filename);
+  snprintf (tmp_filename, sizeof (tmp_filename), "%s_%d.slow.log", broker_name, as_index + 1);
+  envvar_ryelog_broker_slowlog_file (log_filename, buf_size, broker_name, tmp_filename);
 }
 
 /*
@@ -2221,8 +2094,7 @@ br_mgmt_read_req_arg_type (char *type, const char *ptr, int *remain_size)
 }
 
 static const char *
-br_mgmt_read_req_arg_int64 (int64_t * value, const char *ptr,
-			    int *remain_size)
+br_mgmt_read_req_arg_int64 (int64_t * value, const char *ptr, int *remain_size)
 {
   int64_t tmp_value;
 
@@ -2260,8 +2132,7 @@ br_mgmt_read_req_arg_int (int *value, const char *ptr, int *remain_size)
 }
 
 static const char *
-br_mgmt_read_req_arg_string (const char **value, const char *ptr,
-			     int *remain_size)
+br_mgmt_read_req_arg_string (const char **value, const char *ptr, int *remain_size)
 {
   int size;
 
@@ -2282,8 +2153,7 @@ br_mgmt_read_req_arg_string (const char **value, const char *ptr,
 }
 
 static const char *
-br_mgmt_read_req_arg_str_arr (int *num_values, const char ***value,
-			      const char *ptr, int *remain_size)
+br_mgmt_read_req_arg_str_arr (int *num_values, const char ***value, const char *ptr, int *remain_size)
 {
   int i;
   const char **str_arr;
@@ -2294,8 +2164,7 @@ br_mgmt_read_req_arg_str_arr (int *num_values, const char ***value,
       return NULL;
     }
 
-  str_arr =
-    (const char **) RYE_MALLOC (sizeof (const char *) * (*num_values));
+  str_arr = (const char **) RYE_MALLOC (sizeof (const char *) * (*num_values));
   if (str_arr == NULL)
     {
       return NULL;
@@ -2318,8 +2187,7 @@ br_mgmt_read_req_arg_str_arr (int *num_values, const char ***value,
 }
 
 static const char *
-br_mgmt_read_req_arg_int_arr (int *num_values, int **value,
-			      const char *ptr, int *remain_size)
+br_mgmt_read_req_arg_int_arr (int *num_values, int **value, const char *ptr, int *remain_size)
 {
   int i;
   int *int_arr;
@@ -2404,9 +2272,7 @@ typedef struct
 #define MGMT_ARG_INT_ARR_SIZE(PTR)	((PTR)->v.int_arr.num_values)
 #define MGMT_ARG_INT_ARR_VALUE(PTR)	((PTR)->v.int_arr.values)
 
-typedef int (*T_REQ_ARG_READ_FUNC) (T_MGMT_REQ_ARG * req_arg,
-				    int num_args,
-				    const T_MGMT_REQ_ARG_CONTAINER * args);
+typedef int (*T_REQ_ARG_READ_FUNC) (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
 
 typedef struct
 {
@@ -2416,53 +2282,26 @@ typedef struct
   T_REQ_ARG_READ_FUNC func;
 } T_REQ_ARG_READ_FUNC_TABLE;
 
-static int req_arg_get_shard_info (T_MGMT_REQ_ARG * req_arg, int num_args,
-				   const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_shard_init (T_MGMT_REQ_ARG * req_arg, int num_args,
-			       const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_node_add (T_MGMT_REQ_ARG * req_arg, int num_args,
-			     const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_node_drop (T_MGMT_REQ_ARG * req_arg, int num_args,
-			      const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_migration_start_end (T_MGMT_REQ_ARG * req_arg,
-					int num_args,
-					const T_MGMT_REQ_ARG_CONTAINER *
-					args);
-static int req_arg_ddl_start_end (T_MGMT_REQ_ARG * req_arg, int num_args,
-				  const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_gc_start_end (T_MGMT_REQ_ARG * req_arg, int num_args,
-				 const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg, int num_args,
-				  const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_rebalance_job_count (T_MGMT_REQ_ARG * req_arg,
-					int num_args,
-					const T_MGMT_REQ_ARG_CONTAINER *
-					args);
-static int req_arg_ping_shard_mgmt (T_MGMT_REQ_ARG * req_arg,
-				    int num_args,
-				    const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_sync_shard_mgmt_info (T_MGMT_REQ_ARG * req_arg,
-					 int num_args,
-					 const T_MGMT_REQ_ARG_CONTAINER *
-					 args);
-static int req_arg_launch_process (T_MGMT_REQ_ARG * req_arg, int num_args,
-				   const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_read_rye_file (T_MGMT_REQ_ARG * req_arg, int num_args,
-				  const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_write_rye_conf (T_MGMT_REQ_ARG * req_arg, int num_args,
-				   const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_update_conf (T_MGMT_REQ_ARG * req_arg, int num_args,
-				const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_get_conf (T_MGMT_REQ_ARG * req_arg, int num_args,
-			     const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg, int num_args,
-				  const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg, int num_args,
-				      const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_rm_tmp_file (T_MGMT_REQ_ARG * req_arg, int num_args,
-				const T_MGMT_REQ_ARG_CONTAINER * args);
-static int req_arg_get_no_arg (T_MGMT_REQ_ARG * req_arg, int num_args,
-			       const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_get_shard_info (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_shard_init (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_node_add (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_node_drop (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_migration_start_end (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_ddl_start_end (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_gc_start_end (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_rebalance_job_count (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_ping_shard_mgmt (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_sync_shard_mgmt_info (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_launch_process (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_read_rye_file (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_write_rye_conf (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_update_conf (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_get_conf (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_rm_tmp_file (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
+static int req_arg_get_no_arg (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args);
 
 static T_REQ_ARG_READ_FUNC_TABLE req_Arg_read_func_table[] = {
   {BRREQ_OP_CODE_GET_SHARD_INFO, req_arg_get_shard_info},
@@ -2500,9 +2339,7 @@ host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
 
   memset (&node_list, 0, sizeof (node_list));
 
-  if (host_str != NULL &&
-      prm_split_node_str (&node_list, host_str, false) == NO_ERROR &&
-      node_list.num_nodes >= 1)
+  if (host_str != NULL && prm_split_node_str (&node_list, host_str, false) == NO_ERROR && node_list.num_nodes >= 1)
     {
       *node_info = node_list.nodes[0];
       return NO_ERROR;
@@ -2539,15 +2376,13 @@ node_arg_str_to_node_info (T_SHARD_NODE_INFO * node_info, const char *arg_str)
 
   if (local_dbname == NULL || host_str == NULL ||
       strlen (local_dbname) >= SRV_CON_DBNAME_SIZE ||
-      str_to_int (&node_id, str_id) < 0 ||
-      host_str_to_node_info (&host_info, host_str) != NO_ERROR)
+      str_to_int (&node_id, str_id) < 0 || host_str_to_node_info (&host_info, host_str) != NO_ERROR)
     {
       error = -1;
       goto end;
     }
 
-  br_copy_shard_node_info (node_info, node_id, local_dbname, NULL, &host_info,
-			   HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
+  br_copy_shard_node_info (node_info, node_id, local_dbname, NULL, &host_info, HA_STATE_FOR_DRIVER_UNKNOWN, NULL);
 
 end:
   RYE_FREE_MEM (cp_arg_str);
@@ -2555,8 +2390,7 @@ end:
 }
 
 static int
-check_mgmt_req_arg (int num_args, const T_MGMT_REQ_ARG_CONTAINER * args,
-		    int expect_args, ...)
+check_mgmt_req_arg (int num_args, const T_MGMT_REQ_ARG_CONTAINER * args, int expect_args, ...)
 {
   va_list ap;
   int i;
@@ -2574,10 +2408,10 @@ check_mgmt_req_arg (int num_args, const T_MGMT_REQ_ARG_CONTAINER * args,
       int arg_type = va_arg (ap, int);
 
       if (arg_type != args[i].arg_type)
-	{
-	  error = -1;
-	  break;
-	}
+        {
+          error = -1;
+          break;
+        }
     }
 
   va_end (ap);
@@ -2586,14 +2420,12 @@ check_mgmt_req_arg (int num_args, const T_MGMT_REQ_ARG_CONTAINER * args,
 }
 
 static int
-req_arg_get_shard_info (T_MGMT_REQ_ARG * req_arg,
-			int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_get_shard_info (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_SHARD_INFO *get_info_arg = &req_arg->value.get_info_arg;
 
   if (check_mgmt_req_arg (num_args, args, 4, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_INT64, MGMT_REQ_ARG_INT64,
-			  MGMT_REQ_ARG_INT64) < 0)
+                          MGMT_REQ_ARG_INT64, MGMT_REQ_ARG_INT64, MGMT_REQ_ARG_INT64) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2607,8 +2439,7 @@ req_arg_get_shard_info (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_shard_init (T_MGMT_REQ_ARG * req_arg,
-		    int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_shard_init (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_SHARD_INIT *init_arg = &req_arg->value.init_shard_arg;
   int i;
@@ -2616,8 +2447,7 @@ req_arg_shard_init (T_MGMT_REQ_ARG * req_arg,
   const char **init_nodes;
 
   if (check_mgmt_req_arg (num_args, args, 4, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_STR_ARRAY) < 0)
+                          MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT, MGMT_REQ_ARG_STR_ARRAY) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2635,8 +2465,7 @@ req_arg_shard_init (T_MGMT_REQ_ARG * req_arg,
 
   req_arg->clt_dbname = init_arg->global_dbname;
 
-  req_arg->alloc_buffer = RYE_MALLOC (sizeof (T_SHARD_NODE_INFO) *
-				      num_init_nodes);
+  req_arg->alloc_buffer = RYE_MALLOC (sizeof (T_SHARD_NODE_INFO) * num_init_nodes);
   if (req_arg->alloc_buffer == NULL)
     {
       return BR_ER_NO_MORE_MEMORY;
@@ -2647,25 +2476,22 @@ req_arg_shard_init (T_MGMT_REQ_ARG * req_arg,
 
   for (i = 0; i < num_init_nodes; i++)
     {
-      if (node_arg_str_to_node_info (&init_arg->init_node[i],
-				     init_nodes[i]) < 0)
-	{
-	  return BR_ER_INVALID_ARGUMENT;
-	}
+      if (node_arg_str_to_node_info (&init_arg->init_node[i], init_nodes[i]) < 0)
+        {
+          return BR_ER_INVALID_ARGUMENT;
+        }
     }
 
   return 0;
 }
 
 static int
-req_arg_node_add (T_MGMT_REQ_ARG * req_arg,
-		  int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_node_add (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   const char *node_info;
   T_MGMT_REQ_ARG_SHARD_NODE_ADD *node_add_arg = &req_arg->value.node_add_arg;
 
-  if (check_mgmt_req_arg (num_args, args, 3, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR) < 0)
+  if (check_mgmt_req_arg (num_args, args, 3, MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2683,8 +2509,7 @@ req_arg_node_add (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_node_drop (T_MGMT_REQ_ARG * req_arg,
-		   int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_node_drop (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   const char *node_info;
   T_MGMT_REQ_ARG_SHARD_NODE_DROP *node_drop_arg;
@@ -2692,8 +2517,7 @@ req_arg_node_drop (T_MGMT_REQ_ARG * req_arg,
   node_drop_arg = &req_arg->value.node_drop_arg;
 
   if (check_mgmt_req_arg (num_args, args, 4, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_STR) < 0)
+                          MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT, MGMT_REQ_ARG_STR) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2705,31 +2529,26 @@ req_arg_node_drop (T_MGMT_REQ_ARG * req_arg,
 
   if (node_drop_arg->drop_all_nodeid > 0)
     {
-      memset (&node_drop_arg->node_info, 0,
-	      sizeof (node_drop_arg->node_info));
+      memset (&node_drop_arg->node_info, 0, sizeof (node_drop_arg->node_info));
     }
   else
     {
-      if (node_arg_str_to_node_info (&node_drop_arg->node_info,
-				     node_info) < 0)
-	{
-	  return BR_ER_INVALID_ARGUMENT;
-	}
+      if (node_arg_str_to_node_info (&node_drop_arg->node_info, node_info) < 0)
+        {
+          return BR_ER_INVALID_ARGUMENT;
+        }
     }
 
   return 0;
 }
 
 static int
-req_arg_migration_start_end (T_MGMT_REQ_ARG * req_arg,
-			     int num_args,
-			     const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_migration_start_end (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_SHARD_MIGRATION *mig_arg = &req_arg->value.migration_arg;
 
   if (check_mgmt_req_arg (num_args, args, 5, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT) < 0)
+                          MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2744,13 +2563,11 @@ req_arg_migration_start_end (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_ddl_start_end (T_MGMT_REQ_ARG * req_arg,
-		       int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_ddl_start_end (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_SHARD_DDL *ddl_arg = &req_arg->value.ddl_arg;
 
-  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_INT) < 0)
+  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2762,13 +2579,11 @@ req_arg_ddl_start_end (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_gc_start_end (T_MGMT_REQ_ARG * req_arg,
-		      int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_gc_start_end (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_SHARD_GC *gc_arg = &req_arg->value.gc_arg;
 
-  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_INT) < 0)
+  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2780,8 +2595,7 @@ req_arg_gc_start_end (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg,
-		       int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_REBALANCE_REQ *arg = &req_arg->value.rebalance_req_arg;
   int i;
@@ -2793,9 +2607,8 @@ req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg,
   const int *dest_nodes;
 
   if (check_mgmt_req_arg (num_args, args, 6, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT_ARRAY,
-			  MGMT_REQ_ARG_INT_ARRAY) < 0)
+                          MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT,
+                          MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT_ARRAY, MGMT_REQ_ARG_INT_ARRAY) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2809,19 +2622,15 @@ req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg,
   num_dest_nodes = MGMT_ARG_INT_ARR_SIZE (&args[5]);
   dest_nodes = MGMT_ARG_INT_ARR_VALUE (&args[5]);
 
-  if (num_src_nodes < 0 || num_dest_nodes < 0 ||
-      (num_src_nodes + num_dest_nodes == 0))
+  if (num_src_nodes < 0 || num_dest_nodes < 0 || (num_src_nodes + num_dest_nodes == 0))
     {
       return BR_ER_INVALID_ARGUMENT;
     }
 
-  assert (rebalance_type == BRREQ_REBALANCE_TYPE_EMPTY_NODE ||
-	  rebalance_type == BRREQ_REBALANCE_TYPE_REBALANCE);
-  arg->empty_node =
-    (rebalance_type == BRREQ_REBALANCE_TYPE_EMPTY_NODE ? true : false);
+  assert (rebalance_type == BRREQ_REBALANCE_TYPE_EMPTY_NODE || rebalance_type == BRREQ_REBALANCE_TYPE_REBALANCE);
+  arg->empty_node = (rebalance_type == BRREQ_REBALANCE_TYPE_EMPTY_NODE ? true : false);
 
-  req_arg->alloc_buffer = RYE_MALLOC (sizeof (int) *
-				      (num_src_nodes + num_dest_nodes));
+  req_arg->alloc_buffer = RYE_MALLOC (sizeof (int) * (num_src_nodes + num_dest_nodes));
   if (req_arg->alloc_buffer == NULL)
     {
       return BR_ER_NO_MORE_MEMORY;
@@ -2832,17 +2641,17 @@ req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg,
   for (i = 0; i < num_src_nodes; i++)
     {
       if (src_nodes[i] <= 0)
-	{
-	  return BR_ER_INVALID_ARGUMENT;
-	}
+        {
+          return BR_ER_INVALID_ARGUMENT;
+        }
       nodes_ptr[i] = src_nodes[i];
     }
   for (i = 0; i < num_dest_nodes; i++)
     {
       if (dest_nodes[i] <= 0)
-	{
-	  return BR_ER_INVALID_ARGUMENT;
-	}
+        {
+          return BR_ER_INVALID_ARGUMENT;
+        }
       nodes_ptr[num_src_nodes + i] = dest_nodes[i];
     }
 
@@ -2863,24 +2672,20 @@ req_arg_rebalance_req (T_MGMT_REQ_ARG * req_arg,
     }
   else
     {
-      arg->dest_nodeid = (int *) (((char *) req_arg->alloc_buffer) +
-				  (sizeof (int) * num_src_nodes));
+      arg->dest_nodeid = (int *) (((char *) req_arg->alloc_buffer) + (sizeof (int) * num_src_nodes));
     }
 
   return 0;
 }
 
 static int
-req_arg_rebalance_job_count (T_MGMT_REQ_ARG * req_arg,
-			     int num_args,
-			     const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_rebalance_job_count (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_REBALANCE_JOB_COUNT *job_count;
 
   job_count = &req_arg->value.rebalance_job_count;
 
-  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_INT) < 0)
+  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2892,8 +2697,7 @@ req_arg_rebalance_job_count (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_ping_shard_mgmt (T_MGMT_REQ_ARG * req_arg,
-			 int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_ping_shard_mgmt (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   if (check_mgmt_req_arg (num_args, args, 1, MGMT_REQ_ARG_STR) < 0)
     {
@@ -2906,16 +2710,13 @@ req_arg_ping_shard_mgmt (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_sync_shard_mgmt_info (T_MGMT_REQ_ARG * req_arg,
-			      int num_args,
-			      const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_sync_shard_mgmt_info (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_SHARD_MGMT_INFO *info = &req_arg->value.shard_mgmt_info;
 
   if (check_mgmt_req_arg (num_args, args, 6, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT64,
-			  MGMT_REQ_ARG_INT64, MGMT_REQ_ARG_STR) < 0)
+                          MGMT_REQ_ARG_STR, MGMT_REQ_ARG_INT,
+                          MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT64, MGMT_REQ_ARG_INT64, MGMT_REQ_ARG_STR) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2932,8 +2733,7 @@ req_arg_sync_shard_mgmt_info (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
-			int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_launch_process (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_LAUNCH_PROCESS *launch_arg;
   int launch_proc_id = -1;
@@ -2949,8 +2749,7 @@ req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
   launch_arg = &req_arg->value.launch_process_arg;
 
   if (check_mgmt_req_arg (num_args, args, 4,
-			  MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_STR_ARRAY, MGMT_REQ_ARG_STR_ARRAY) < 0)
+                          MGMT_REQ_ARG_INT, MGMT_REQ_ARG_INT, MGMT_REQ_ARG_STR_ARRAY, MGMT_REQ_ARG_STR_ARRAY) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -2969,8 +2768,7 @@ req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
       return BR_ER_INVALID_ARGUMENT;
     }
 
-  alloc_buffer =
-    (const char **) RYE_MALLOC (sizeof (char *) * (argc + num_env));
+  alloc_buffer = (const char **) RYE_MALLOC (sizeof (char *) * (argc + num_env));
   if (alloc_buffer == NULL)
     {
       return BR_ER_NO_MORE_MEMORY;
@@ -2992,8 +2790,7 @@ req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
   launch_arg->argc = argc;
   launch_arg->argv = (char **) req_arg->alloc_buffer;
   launch_arg->num_env = num_env;
-  launch_arg->envp =
-    (char **) (((char *) req_arg->alloc_buffer) + envp_offset);
+  launch_arg->envp = (char **) (((char *) req_arg->alloc_buffer) + envp_offset);
   launch_arg->launch_process_id = launch_proc_id;
   launch_arg->flag = flag;
 
@@ -3001,8 +2798,7 @@ req_arg_launch_process (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_read_rye_file (T_MGMT_REQ_ARG * req_arg,
-		       int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_read_rye_file (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_READ_RYE_FILE *arg_read_rye_file;
 
@@ -3019,15 +2815,13 @@ req_arg_read_rye_file (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_write_rye_conf (T_MGMT_REQ_ARG * req_arg,
-			int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_write_rye_conf (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_WRITE_RYE_CONF *arg_rye_conf;
 
   arg_rye_conf = &req_arg->value.write_rye_conf_arg;
 
-  if (check_mgmt_req_arg (num_args, args, 2,
-			  MGMT_REQ_ARG_INT, MGMT_REQ_ARG_STR) < 0)
+  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_INT, MGMT_REQ_ARG_STR) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -3044,16 +2838,14 @@ req_arg_write_rye_conf (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_update_conf (T_MGMT_REQ_ARG * req_arg,
-		     int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_update_conf (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_UPDATE_CONF *update_conf_arg;
 
   update_conf_arg = &req_arg->value.update_conf_arg;
 
   if (check_mgmt_req_arg (num_args, args, 4, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_STR) < 0)
+                          MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -3067,8 +2859,7 @@ req_arg_update_conf (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_get_conf (T_MGMT_REQ_ARG * req_arg,
-		  int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_get_conf (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_GET_CONF *get_conf_arg;
   int num_part;
@@ -3076,8 +2867,7 @@ req_arg_get_conf (T_MGMT_REQ_ARG * req_arg,
   get_conf_arg = &req_arg->value.get_conf_arg;
 
   if (check_mgmt_req_arg (num_args, args, 4, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR,
-			  MGMT_REQ_ARG_STR) < 0)
+                          MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR, MGMT_REQ_ARG_STR) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -3101,8 +2891,7 @@ req_arg_get_conf (T_MGMT_REQ_ARG * req_arg,
     }
 
   if ((get_conf_arg->proc_name == NULL) ||
-      (num_part >= 2 && get_conf_arg->sect_name == NULL) ||
-      (num_part >= 3 && get_conf_arg->key == NULL))
+      (num_part >= 2 && get_conf_arg->sect_name == NULL) || (num_part >= 3 && get_conf_arg->key == NULL))
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -3111,15 +2900,13 @@ req_arg_get_conf (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg,
-		       int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_BR_ACL_RELOAD *br_acl_reload_arg;
 
   br_acl_reload_arg = &req_arg->value.br_acl_reload_arg;
 
-  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_INT,
-			  MGMT_REQ_ARG_STR) < 0)
+  if (check_mgmt_req_arg (num_args, args, 2, MGMT_REQ_ARG_INT, MGMT_REQ_ARG_STR) < 0)
     {
       return BR_ER_INVALID_ARGUMENT;
     }
@@ -3136,9 +2923,7 @@ req_arg_br_acl_reload (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg,
-			   int num_args,
-			   const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_CONNECT_DB_SERVER *connect_db_server_arg;
 
@@ -3155,8 +2940,7 @@ req_arg_connect_db_server (T_MGMT_REQ_ARG * req_arg,
 }
 
 static int
-req_arg_rm_tmp_file (T_MGMT_REQ_ARG * req_arg, int num_args,
-		     const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_rm_tmp_file (T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   T_MGMT_REQ_ARG_RM_TMP_FILE *rm_tmp_file_arg;
 
@@ -3173,8 +2957,7 @@ req_arg_rm_tmp_file (T_MGMT_REQ_ARG * req_arg, int num_args,
 }
 
 static int
-req_arg_get_no_arg (UNUSED_ARG T_MGMT_REQ_ARG * req_arg,
-		    int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
+req_arg_get_no_arg (UNUSED_ARG T_MGMT_REQ_ARG * req_arg, int num_args, const T_MGMT_REQ_ARG_CONTAINER * args)
 {
   if (check_mgmt_req_arg (num_args, args, 0) < 0)
     {
@@ -3185,8 +2968,7 @@ req_arg_get_no_arg (UNUSED_ARG T_MGMT_REQ_ARG * req_arg,
 }
 
 int
-br_mgmt_get_req_arg (T_MGMT_REQ_ARG * req_arg,
-		     const T_BROKER_REQUEST_MSG * brreq_msg)
+br_mgmt_get_req_arg (T_MGMT_REQ_ARG * req_arg, const T_BROKER_REQUEST_MSG * brreq_msg)
 {
   int opcode;
   const char *ptr;
@@ -3207,9 +2989,9 @@ br_mgmt_get_req_arg (T_MGMT_REQ_ARG * req_arg,
   for (i = 0; req_Arg_read_func_table[i].func != NULL; i++)
     {
       if (req_Arg_read_func_table[i].opcode == opcode)
-	{
-	  req_arg_read_func = req_Arg_read_func_table[i].func;
-	}
+        {
+          req_arg_read_func = req_Arg_read_func_table[i].func;
+        }
     }
 
   if (req_arg_read_func == NULL)
@@ -3232,46 +3014,40 @@ br_mgmt_get_req_arg (T_MGMT_REQ_ARG * req_arg,
 
   for (i = 0; i < num_args && error == 0; i++)
     {
-      ptr = br_mgmt_read_req_arg_type (&arg_container[i].arg_type,
-				       ptr, &msg_size);
+      ptr = br_mgmt_read_req_arg_type (&arg_container[i].arg_type, ptr, &msg_size);
       switch (arg_container[i].arg_type)
-	{
-	case MGMT_REQ_ARG_INT:
-	  ptr = br_mgmt_read_req_arg_int (&arg_container[i].v.int_val,
-					  ptr, &msg_size);
-	  break;
-	case MGMT_REQ_ARG_INT64:
-	  ptr = br_mgmt_read_req_arg_int64 (&arg_container[i].v.int64_val,
-					    ptr, &msg_size);
-	  break;
-	case MGMT_REQ_ARG_STR:
-	  ptr = br_mgmt_read_req_arg_string (&arg_container[i].v.str_val,
-					     ptr, &msg_size);
-	  break;
-	case MGMT_REQ_ARG_STR_ARRAY:
-	  {
-	    int num_str = 0;
-	    const char **values = NULL;
-	    ptr = br_mgmt_read_req_arg_str_arr (&num_str, &values,
-						ptr, &msg_size);
-	    arg_container[i].v.str_arr.num_str = num_str;
-	    arg_container[i].v.str_arr.values = values;
-	  }
-	  break;
-	case MGMT_REQ_ARG_INT_ARRAY:
-	  {
-	    int num_values = 0;
-	    int *values = NULL;
-	    ptr = br_mgmt_read_req_arg_int_arr (&num_values, &values,
-						ptr, &msg_size);
-	    arg_container[i].v.int_arr.num_values = num_values;
-	    arg_container[i].v.int_arr.values = values;
-	  }
-	  break;
-	default:
-	  error = BR_ER_INVALID_ARGUMENT;
-	  break;
-	}
+        {
+        case MGMT_REQ_ARG_INT:
+          ptr = br_mgmt_read_req_arg_int (&arg_container[i].v.int_val, ptr, &msg_size);
+          break;
+        case MGMT_REQ_ARG_INT64:
+          ptr = br_mgmt_read_req_arg_int64 (&arg_container[i].v.int64_val, ptr, &msg_size);
+          break;
+        case MGMT_REQ_ARG_STR:
+          ptr = br_mgmt_read_req_arg_string (&arg_container[i].v.str_val, ptr, &msg_size);
+          break;
+        case MGMT_REQ_ARG_STR_ARRAY:
+          {
+            int num_str = 0;
+            const char **values = NULL;
+            ptr = br_mgmt_read_req_arg_str_arr (&num_str, &values, ptr, &msg_size);
+            arg_container[i].v.str_arr.num_str = num_str;
+            arg_container[i].v.str_arr.values = values;
+          }
+          break;
+        case MGMT_REQ_ARG_INT_ARRAY:
+          {
+            int num_values = 0;
+            int *values = NULL;
+            ptr = br_mgmt_read_req_arg_int_arr (&num_values, &values, ptr, &msg_size);
+            arg_container[i].v.int_arr.num_values = num_values;
+            arg_container[i].v.int_arr.values = values;
+          }
+          break;
+        default:
+          error = BR_ER_INVALID_ARGUMENT;
+          break;
+        }
     }
 
   if (arg_container[num_args - 1].arg_type != MGMT_REQ_ARG_INT ||
@@ -3294,16 +3070,16 @@ br_mgmt_get_req_arg (T_MGMT_REQ_ARG * req_arg,
   if (arg_container != NULL)
     {
       for (i = 0; i < num_args; i++)
-	{
-	  if (arg_container[i].arg_type == MGMT_REQ_ARG_STR_ARRAY)
-	    {
-	      RYE_FREE_MEM (arg_container[i].v.str_arr.values);
-	    }
-	  else if (arg_container[i].arg_type == MGMT_REQ_ARG_INT_ARRAY)
-	    {
-	      RYE_FREE_MEM (arg_container[i].v.int_arr.values);
-	    }
-	}
+        {
+          if (arg_container[i].arg_type == MGMT_REQ_ARG_STR_ARRAY)
+            {
+              RYE_FREE_MEM (arg_container[i].v.str_arr.values);
+            }
+          else if (arg_container[i].arg_type == MGMT_REQ_ARG_INT_ARRAY)
+            {
+              RYE_FREE_MEM (arg_container[i].v.int_arr.values);
+            }
+        }
       RYE_FREE_MEM (arg_container);
     }
 
@@ -3324,11 +3100,10 @@ br_mgmt_result_msg_reset (T_MGMT_RESULT_MSG * result_msg)
 
   for (i = 0; i < BROKER_RESPONSE_MAX_ADDITIONAL_MSG; i++)
     {
-      if (result_msg->msg[i] != NULL &&
-	  result_msg->msg[i] != result_msg->buf[i])
-	{
-	  RYE_FREE_MEM (result_msg->msg[i]);
-	}
+      if (result_msg->msg[i] != NULL && result_msg->msg[i] != result_msg->buf[i])
+        {
+          RYE_FREE_MEM (result_msg->msg[i]);
+        }
 
       result_msg->msg[i] = result_msg->buf[i];
     }
@@ -3337,8 +3112,7 @@ br_mgmt_result_msg_reset (T_MGMT_RESULT_MSG * result_msg)
 }
 
 int
-br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg, int msg_size,
-			const void *msg)
+br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg, int msg_size, const void *msg)
 {
   int index = result_msg->num_msg;
 
@@ -3348,9 +3122,9 @@ br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg, int msg_size,
     {
       result_msg->msg[index] = RYE_MALLOC (msg_size);
       if (result_msg->msg[index] == NULL)
-	{
-	  return BR_ER_NO_MORE_MEMORY;
-	}
+        {
+          return BR_ER_NO_MORE_MEMORY;
+        }
     }
 
   memcpy (result_msg->msg[index], msg, msg_size);
@@ -3362,9 +3136,8 @@ br_mgmt_result_msg_set (T_MGMT_RESULT_MSG * result_msg, int msg_size,
 
 void
 br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
-			 const char *dbname, const char *host_ip_str,
-			 const PRM_NODE_INFO * host_info,
-			 HA_STATE_FOR_DRIVER ha_state, const char *host_name)
+                         const char *dbname, const char *host_ip_str,
+                         const PRM_NODE_INFO * host_info, HA_STATE_FOR_DRIVER ha_state, const char *host_name)
 {
   node->node_id = node_id;
 
@@ -3375,8 +3148,7 @@ br_copy_shard_node_info (T_SHARD_NODE_INFO * node, int node_id,
   node->host_info = *host_info;
   if (host_ip_str == NULL)
     {
-      css_ip_to_str (node->host_ip_str, sizeof (node->host_ip_str),
-		     PRM_NODE_INFO_GET_IP (host_info));
+      css_ip_to_str (node->host_ip_str, sizeof (node->host_ip_str), PRM_NODE_INFO_GET_IP (host_info));
     }
   else
     {

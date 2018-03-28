@@ -61,8 +61,7 @@ typedef struct pr_type
   void (*initval) (DB_VALUE * value, int precision, int scale);
   int (*setmem) (void *memptr, struct tp_domain * domain, DB_VALUE * value);
   /* zero to avoid copying if possible */
-  int (*getmem) (void *memptr, struct tp_domain * domain,
-		 DB_VALUE * value, bool copy);
+  int (*getmem) (void *memptr, struct tp_domain * domain, DB_VALUE * value, bool copy);
   /* set DB_VALUE from DB_VALUE */
   int (*setval) (DB_VALUE * dest, const DB_VALUE * src, bool copy);
   /* return memory size */
@@ -70,16 +69,13 @@ typedef struct pr_type
   /* return DB_VALUE size */
   int (*data_lengthval) (const DB_VALUE * value, int disk);
   /* write disk rep from memory */
-  void (*data_writemem) (OR_BUF * buf, void *memptr,
-			 struct tp_domain * domain);
+  void (*data_writemem) (OR_BUF * buf, void *memptr, struct tp_domain * domain);
   /* read disk rep to memory */
-  void (*data_readmem) (OR_BUF * buf, void *memptr, struct tp_domain * domain,
-			int size);
+  void (*data_readmem) (OR_BUF * buf, void *memptr, struct tp_domain * domain, int size);
   /* write disk rep from DB_VALUE */
   int (*data_writeval) (OR_BUF * buf, const DB_VALUE * value);
   /* read disk rep to DB_VALUE */
-  int (*data_readval) (OR_BUF * buf, DB_VALUE * value,
-		       struct tp_domain * domain, int size, bool copy);
+  int (*data_readval) (OR_BUF * buf, DB_VALUE * value, struct tp_domain * domain, int size, bool copy);
   /* btree memory size */
   int (*index_lengthmem) (void *memptr, struct tp_domain * domain);
   /* return DB_VALUE size */
@@ -88,20 +84,15 @@ typedef struct pr_type
   int (*index_writeval) (OR_BUF * buf, const DB_VALUE * value);
   /* read btree rep to DB_VALUE */
   int (*index_readval) (OR_BUF * buf, DB_VALUE * value,
-			int precision, int scale, int collation_id, int size,
-			bool copy);
+                        int precision, int scale, int collation_id, int size, bool copy);
   /* btree value compare */
-  int (*index_cmpdisk) (void *memptr1, void *memptr2,
-			int precision, int scale, int collation_id);
+  int (*index_cmpdisk) (void *memptr1, void *memptr2, int precision, int scale, int collation_id);
   /* free memory for swap or GC */
   void (*freemem) (void *memptr);
   /* memory value compare */
-  int (*data_cmpdisk) (void *memptr1, void *memptr2,
-		       struct tp_domain * domain,
-		       int do_coercion, int total_order);
+  int (*data_cmpdisk) (void *memptr1, void *memptr2, struct tp_domain * domain, int do_coercion, int total_order);
   /* db value compare */
-  int (*cmpval) (DB_VALUE * value, DB_VALUE * value2, int do_coercion,
-		 int total_order, int collation);
+  int (*cmpval) (DB_VALUE * value, DB_VALUE * value2, int do_coercion, int total_order, int collation);
 } PR_TYPE, *PRIM;
 
 
@@ -131,7 +122,7 @@ extern PR_TYPE tp_Bigint;
 extern PR_TYPE *tp_Type_null;
 extern PR_TYPE *tp_Type_integer;
 extern PR_TYPE *tp_Type_double;
-extern PR_TYPE *tp_Type_string;	/* TODO - */
+extern PR_TYPE *tp_Type_string; /* TODO - */
 extern PR_TYPE *tp_Type_error;
 extern PR_TYPE *tp_Type_pointer;
 extern PR_TYPE *tp_Type_oid;
@@ -276,8 +267,7 @@ extern int pr_clear_idxkey (DB_VALUE * var, TP_DOMAIN * dom);
 /* Special transformation functions */
 
 extern int pr_idxkey_compare (const DB_IDXKEY * key1,
-			      const DB_IDXKEY * key2,
-			      const int num_index_term, int *start_colp);
+                              const DB_IDXKEY * key2, const int num_index_term, int *start_colp);
 extern int pr_idxkey_init_boundbits (char *bufptr, int n_atts);
 extern int pr_index_writeval_disk_size (const DB_VALUE * value);
 extern int pr_data_writeval_disk_size (DB_VALUE * value);

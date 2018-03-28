@@ -94,25 +94,20 @@ enum mht_put_opt
  */
 
 static unsigned int mht_1str_pseudo_key (const void *key, int key_size);
-static unsigned int mht_3str_pseudo_key (const void *key, int key_size,
-					 const unsigned int max_value);
+static unsigned int mht_3str_pseudo_key (const void *key, int key_size, const unsigned int max_value);
 static unsigned int mht_4str_pseudo_key (const void *key, int key_size);
 static unsigned int mht_5str_pseudo_key (const void *key, int key_size);
 
 static unsigned int mht_calculate_htsize (unsigned int ht_size);
 static int mht_rehash (MHT_TABLE * ht);
 
-static const void *mht_put_internal (MHT_TABLE * ht, const void *key,
-				     void *data, MHT_PUT_OPT opt);
-static const void *mht_put2_internal (MHT_TABLE * ht, const void *key,
-				      void *data, MHT_PUT_OPT opt);
+static const void *mht_put_internal (MHT_TABLE * ht, const void *key, void *data, MHT_PUT_OPT opt);
+static const void *mht_put2_internal (MHT_TABLE * ht, const void *key, void *data, MHT_PUT_OPT opt);
 
-static unsigned int mht_get_shiftmult32 (unsigned int key,
-					 const unsigned int ht_size);
+static unsigned int mht_get_shiftmult32 (unsigned int key, const unsigned int ht_size);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static unsigned int mht_get32_next_power_of_2 (unsigned int const ht_size);
-static unsigned int mht_get_linear_hash32 (const unsigned int key,
-					   const unsigned int ht_size);
+static unsigned int mht_get_linear_hash32 (const unsigned int key, const unsigned int ht_size);
 #endif /* ENABLE_UNUSED_FUNCTION */
 
 /*
@@ -139,26 +134,26 @@ mht_1str_pseudo_key (const void *key, int key_size)
   for (pseudo_key = 0;; byte_p++)
     {
       if (key_size == -1)
-	{
-	  if (!(*byte_p))
-	    {
-	      break;
-	    }
-	}
+        {
+          if (!(*byte_p))
+            {
+              break;
+            }
+        }
       else
-	{
-	  if (key_size <= 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (key_size <= 0)
+            {
+              break;
+            }
+        }
 
       pseudo_key = (pseudo_key << 5) - pseudo_key + *byte_p;
 
       if (key_size > 0)
-	{
-	  key_size--;
-	}
+        {
+          key_size--;
+        }
     }
 
   return pseudo_key;
@@ -187,32 +182,32 @@ mht_2str_pseudo_key (const void *key, int key_size)
   for (pseudo_key = 0;; byte_p++)
     {
       if (key_size == -1)
-	{
-	  if (!(*byte_p))
-	    {
-	      break;
-	    }
-	}
+        {
+          if (!(*byte_p))
+            {
+              break;
+            }
+        }
       else
-	{
-	  if (key_size <= 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (key_size <= 0)
+            {
+              break;
+            }
+        }
 
       pseudo_key = (pseudo_key << 4) + *byte_p;
       i = pseudo_key & 0xf0000000;
       if (i != 0)
-	{
-	  pseudo_key ^= i >> 24;
-	  pseudo_key ^= i;
-	}
+        {
+          pseudo_key ^= i >> 24;
+          pseudo_key ^= i;
+        }
 
       if (key_size > 0)
-	{
-	  key_size--;
-	}
+        {
+          key_size--;
+        }
     }
 
   return pseudo_key;
@@ -231,8 +226,7 @@ mht_2str_pseudo_key (const void *key, int key_size)
  *       the range. This prime number is usually the hash table size.
  */
 static unsigned int
-mht_3str_pseudo_key (const void *key, int key_size,
-		     const unsigned int max_value)
+mht_3str_pseudo_key (const void *key, int key_size, const unsigned int max_value)
 {
   unsigned const char *byte_p = (unsigned char *) key;
   unsigned int pseudo_key = 0;
@@ -242,26 +236,26 @@ mht_3str_pseudo_key (const void *key, int key_size,
   for (pseudo_key = 0;; byte_p++)
     {
       if (key_size == -1)
-	{
-	  if (!(*byte_p))
-	    {
-	      break;
-	    }
-	}
+        {
+          if (!(*byte_p))
+            {
+              break;
+            }
+        }
       else
-	{
-	  if (key_size <= 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (key_size <= 0)
+            {
+              break;
+            }
+        }
 
       pseudo_key = (pseudo_key * 32 + *byte_p++) % max_value;
 
       if (key_size > 0)
-	{
-	  key_size--;
-	}
+        {
+          key_size--;
+        }
     }
 
   return pseudo_key;
@@ -323,9 +317,9 @@ mht_4str_pseudo_key (const void *key, int key_size)
   if (key_size == -1)
     {
       if (*byte_p)
-	{
-	  byte_p++;
-	}
+        {
+          byte_p++;
+        }
     }
   else if (key_size > 0)
     {
@@ -336,19 +330,19 @@ mht_4str_pseudo_key (const void *key, int key_size)
   for (;; byte_p++)
     {
       if (key_size == -1)
-	{
-	  if (!(*byte_p))
-	    {
-	      break;
-	    }
-	}
+        {
+          if (!(*byte_p))
+            {
+              break;
+            }
+        }
       else
-	{
-	  if (key_size <= 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (key_size <= 0)
+            {
+              break;
+            }
+        }
 
       /*
        * Each of the following hash values,
@@ -360,9 +354,9 @@ mht_4str_pseudo_key (const void *key, int key_size)
       byte4 = tbl[byte4 ^ *byte_p];
 
       if (key_size > 0)
-	{
-	  key_size--;
-	}
+        {
+          key_size--;
+        }
     }
 
   /* Concatenate all the values */
@@ -391,22 +385,22 @@ mht_5str_pseudo_key (const void *key, int key_size)
     {
       int c;
       while ((c = *(k + i++)) != 0)
-	{
-	  hash = ((hash << 5) + hash) + c;	/* hash * 33 + c */
-	}
+        {
+          hash = ((hash << 5) + hash) + c;      /* hash * 33 + c */
+        }
     }
   else
     {
       for (; i < key_size; i++)
-	{
-	  hash = ((hash << 5) + hash) + *(k + i);
-	}
+        {
+          hash = ((hash << 5) + hash) + *(k + i);
+        }
     }
 
   hash += ~(hash << 9);
-  hash ^= ((hash >> 14) | (i << 18));	/* >>> */
+  hash ^= ((hash >> 14) | (i << 18));   /* >>> */
   hash += (hash << 4);
-  hash ^= ((hash >> 10) | (i << 22));	/* >>> */
+  hash ^= ((hash >> 10) | (i << 22));   /* >>> */
 
   return hash;
 }
@@ -596,82 +590,80 @@ mht_valhash (const void *key, const unsigned int ht_size)
   if (key != NULL)
     {
       switch (db_value_type (val))
-	{
-	case DB_TYPE_NULL:
-	  hash = 0;
-	  break;
-	case DB_TYPE_INTEGER:
-	  hash = (unsigned int) DB_GET_INTEGER (val);
-	  break;
-	case DB_TYPE_BIGINT:
-	  {
-	    DB_BIGINT bigint;
-	    unsigned int x, y;
+        {
+        case DB_TYPE_NULL:
+          hash = 0;
+          break;
+        case DB_TYPE_INTEGER:
+          hash = (unsigned int) DB_GET_INTEGER (val);
+          break;
+        case DB_TYPE_BIGINT:
+          {
+            DB_BIGINT bigint;
+            unsigned int x, y;
 
-	    bigint = db_get_bigint (val);
-	    x = bigint >> 32;
-	    y = (unsigned int) bigint;
-	    hash = x ^ y;
-	    break;
-	  }
-	case DB_TYPE_DOUBLE:
-	  hash = (unsigned int) db_get_double (val);
-	  break;
-	case DB_TYPE_NUMERIC:
-	  hash = mht_1str_pseudo_key (db_pull_numeric (val), -1);
-	  break;
-	case DB_TYPE_VARCHAR:
-	  hash = mht_1str_pseudo_key (db_pull_string (val),
-				      DB_GET_STRING_SIZE (val));
-	  break;
-	case DB_TYPE_VARBIT:
-	  hash = mht_1str_pseudo_key (db_pull_varbit (val, &t_n), -1);
-	  break;
-	case DB_TYPE_TIME:
-	  hash = (unsigned int) *(db_get_time (val));
-	  break;
-	case DB_TYPE_DATETIME:
-	  {
-	    DB_DATETIME *datetime;
-	    datetime = db_get_datetime (val);
-	    hash = (unsigned int) (datetime->date ^ datetime->time);
-	  }
-	  break;
-	case DB_TYPE_DATE:
-	  hash = (unsigned int) *(db_get_date (val));
-	  break;
-	case DB_TYPE_SEQUENCE:
-	  db_make_null (&t_val);
-	  {
-	    DB_SET *set;
-	    set = db_get_set (val);
-	    if (set_get_element (set, 0, &t_val) == NO_ERROR)
-	      {
-		hash = mht_valhash (&t_val, ht_size);
-		(void) pr_clear_value (&t_val);
-		t_n = set_size (set);
-		if ((t_n > 0)
-		    && set_get_element (set, t_n - 1, &t_val) == NO_ERROR)
-		  {
-		    hash += mht_valhash (&t_val, ht_size);
-		    (void) pr_clear_value (&t_val);
-		  }
-	      }
-	  }
-	  break;
-	case DB_TYPE_OBJECT:
-	  hash = GET_PTR_FOR_HASH (db_get_object (val));
-	  break;
-	case DB_TYPE_OID:
-	  hash = (unsigned int) OID_PSEUDO_KEY (db_pull_oid (val));
-	  break;
-	case DB_TYPE_SUB:
-	case DB_TYPE_RESULTSET:
-	case DB_TYPE_TABLE:
-	default:
-	  hash = GET_PTR_FOR_HASH (val);
-	  break;
-	}
+            bigint = db_get_bigint (val);
+            x = bigint >> 32;
+            y = (unsigned int) bigint;
+            hash = x ^ y;
+            break;
+          }
+        case DB_TYPE_DOUBLE:
+          hash = (unsigned int) db_get_double (val);
+          break;
+        case DB_TYPE_NUMERIC:
+          hash = mht_1str_pseudo_key (db_pull_numeric (val), -1);
+          break;
+        case DB_TYPE_VARCHAR:
+          hash = mht_1str_pseudo_key (db_pull_string (val), DB_GET_STRING_SIZE (val));
+          break;
+        case DB_TYPE_VARBIT:
+          hash = mht_1str_pseudo_key (db_pull_varbit (val, &t_n), -1);
+          break;
+        case DB_TYPE_TIME:
+          hash = (unsigned int) *(db_get_time (val));
+          break;
+        case DB_TYPE_DATETIME:
+          {
+            DB_DATETIME *datetime;
+            datetime = db_get_datetime (val);
+            hash = (unsigned int) (datetime->date ^ datetime->time);
+          }
+          break;
+        case DB_TYPE_DATE:
+          hash = (unsigned int) *(db_get_date (val));
+          break;
+        case DB_TYPE_SEQUENCE:
+          db_make_null (&t_val);
+          {
+            DB_SET *set;
+            set = db_get_set (val);
+            if (set_get_element (set, 0, &t_val) == NO_ERROR)
+              {
+                hash = mht_valhash (&t_val, ht_size);
+                (void) pr_clear_value (&t_val);
+                t_n = set_size (set);
+                if ((t_n > 0) && set_get_element (set, t_n - 1, &t_val) == NO_ERROR)
+                  {
+                    hash += mht_valhash (&t_val, ht_size);
+                    (void) pr_clear_value (&t_val);
+                  }
+              }
+          }
+          break;
+        case DB_TYPE_OBJECT:
+          hash = GET_PTR_FOR_HASH (db_get_object (val));
+          break;
+        case DB_TYPE_OID:
+          hash = (unsigned int) OID_PSEUDO_KEY (db_pull_oid (val));
+          break;
+        case DB_TYPE_SUB:
+        case DB_TYPE_RESULTSET:
+        case DB_TYPE_TABLE:
+        default:
+          hash = GET_PTR_FOR_HASH (val);
+          break;
+        }
     }
 
   return hash % ht_size;
@@ -715,8 +707,7 @@ mht_compare_logpageids_are_equal (const void *key1, const void *key2)
 int
 mht_compare_identifiers_equal (const void *key1, const void *key2)
 {
-  return ((intl_identifier_casecmp ((const char *) key1,
-				    (const char *) key2)) == 0);
+  return ((intl_identifier_casecmp ((const char *) key1, (const char *) key2)) == 0);
 }
 
 /*
@@ -760,9 +751,7 @@ mht_compare_dbvalues_are_equal (const void *key1, const void *key2)
       return 1;
     }
 
-  c =
-    tp_value_compare ((DB_VALUE *) key1, (DB_VALUE *) key2, 0, 1,
-		      &can_compare);
+  c = tp_value_compare ((DB_VALUE *) key1, (DB_VALUE *) key2, 0, 1, &can_compare);
   assert (can_compare == true);
 
   return (c == DB_EQ);
@@ -804,45 +793,45 @@ static const unsigned int mht_Primes[NPRIMES] = {
 static unsigned int
 mht_calculate_htsize (unsigned int ht_size)
 {
-  int left, right, middle;	/* indices for binary search */
+  int left, right, middle;      /* indices for binary search */
 
   if (ht_size > mht_Primes[NPRIMES - 1])
     {
       /* get a power of two */
       if (!((ht_size & (ht_size - 1)) == 0))
-	{
-	  /* Turn off some bits but the left most one */
-	  while (!(ht_size & (ht_size - 1)))
-	    {
-	      ht_size &= (ht_size - 1);
-	    }
-	  ht_size <<= 1;
-	}
+        {
+          /* Turn off some bits but the left most one */
+          while (!(ht_size & (ht_size - 1)))
+            {
+              ht_size &= (ht_size - 1);
+            }
+          ht_size <<= 1;
+        }
     }
   else
     {
       /* we can assign a primary number; binary search */
       for (middle = 0, left = 0, right = NPRIMES - 1; left <= right;)
-	{
-	  middle = CEIL_PTVDIV ((left + right), 2);
-	  if (ht_size == mht_Primes[middle])
-	    {
-	      break;
-	    }
-	  else if (ht_size > mht_Primes[middle])
-	    {
-	      left = middle + 1;
-	    }
-	  else
-	    {
-	      right = middle - 1;
-	    }
-	}
+        {
+          middle = CEIL_PTVDIV ((left + right), 2);
+          if (ht_size == mht_Primes[middle])
+            {
+              break;
+            }
+          else if (ht_size > mht_Primes[middle])
+            {
+              left = middle + 1;
+            }
+          else
+            {
+              right = middle - 1;
+            }
+        }
       /* If we didn't find the size, get the larger size and not the small one */
       if (ht_size > mht_Primes[middle] && middle < (NPRIMES - 1))
-	{
-	  middle++;
-	}
+        {
+          middle++;
+        }
       ht_size = mht_Primes[middle];
     }
 
@@ -867,11 +856,11 @@ mht_calculate_htsize (unsigned int ht_size)
  */
 MHT_TABLE *
 mht_create (const char *name, int est_size,
-	    unsigned int (*hash_func) (const void *key, unsigned int ht_size),
-	    int (*cmp_func) (const void *key1, const void *key2))
+            unsigned int (*hash_func) (const void *key, unsigned int ht_size),
+            int (*cmp_func) (const void *key1, const void *key2))
 {
   MHT_TABLE *ht;
-  HENTRY_PTR *hvector;		/* Entries of hash table         */
+  HENTRY_PTR *hvector;          /* Entries of hash table         */
   unsigned int ht_estsize;
   unsigned int size;
 
@@ -889,19 +878,16 @@ mht_create (const char *name, int est_size,
   ht = (MHT_TABLE *) malloc (DB_SIZEOF (MHT_TABLE));
   if (ht == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (MHT_TABLE));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (MHT_TABLE));
 
       return NULL;
     }
 
   /* Initialize the chunky memory manager */
-  ht->heap_id = db_create_fixed_heap (DB_SIZEOF (HENTRY),
-				      MAX (2, ht_estsize / 2 + 1));
+  ht->heap_id = db_create_fixed_heap (DB_SIZEOF (HENTRY), MAX (2, ht_estsize / 2 + 1));
   if (ht->heap_id == 0)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (HENTRY));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (HENTRY));
 
       free_and_init (ht);
       return NULL;
@@ -912,8 +898,7 @@ mht_create (const char *name, int est_size,
   hvector = (HENTRY_PTR *) malloc (size);
   if (hvector == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
 
       db_destroy_fixed_heap (ht->heap_id);
       free_and_init (ht);
@@ -956,10 +941,10 @@ mht_create (const char *name, int est_size,
 static int
 mht_rehash (MHT_TABLE * ht)
 {
-  HENTRY_PTR *new_hvector;	/* New entries of hash table       */
-  HENTRY_PTR *hvector;		/* Entries of hash table           */
-  HENTRY_PTR hentry;		/* A hash table entry. linked list */
-  HENTRY_PTR next_hentry = NULL;	/* Next element in linked list     */
+  HENTRY_PTR *new_hvector;      /* New entries of hash table       */
+  HENTRY_PTR *hvector;          /* Entries of hash table           */
+  HENTRY_PTR hentry;            /* A hash table entry. linked list */
+  HENTRY_PTR next_hentry = NULL;        /* Next element in linked list     */
   float rehash_factor;
   unsigned int hash;
   unsigned int est_size;
@@ -968,8 +953,7 @@ mht_rehash (MHT_TABLE * ht)
 
   /* Find an estimated size for hash table entries */
 
-  rehash_factor = (float) (1.0 +
-			   ((float) ht->ncollisions / (float) ht->nentries));
+  rehash_factor = (float) (1.0 + ((float) ht->ncollisions / (float) ht->nentries));
   if (MHT_REHASH_FACTOR > rehash_factor)
     {
       est_size = (unsigned int) (ht->size * MHT_REHASH_FACTOR);
@@ -986,8 +970,7 @@ mht_rehash (MHT_TABLE * ht)
   new_hvector = (HENTRY_PTR *) malloc (size);
   if (new_hvector == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -995,28 +978,27 @@ mht_rehash (MHT_TABLE * ht)
   memset (new_hvector, 0x00, size);
 
   /* Now rehash the current entries onto the vector of hash entries table */
-  for (ht->ncollisions = 0, hvector = ht->table, i = 0; i < ht->size;
-       hvector++, i++)
+  for (ht->ncollisions = 0, hvector = ht->table, i = 0; i < ht->size; hvector++, i++)
     {
       /* Go over each linked list */
       for (hentry = *hvector; hentry != NULL; hentry = next_hentry)
-	{
-	  next_hentry = hentry->next;
+        {
+          next_hentry = hentry->next;
 
-	  hash = (*ht->hash_func) (hentry->key, est_size);
-	  if (hash >= est_size)
-	    {
-	      hash %= est_size;
-	    }
+          hash = (*ht->hash_func) (hentry->key, est_size);
+          if (hash >= est_size)
+            {
+              hash %= est_size;
+            }
 
-	  /* Link the new entry with any previous elements */
-	  hentry->next = new_hvector[hash];
-	  if (hentry->next != NULL)
-	    {
-	      ht->ncollisions++;
-	    }
-	  new_hvector[hash] = hentry;
-	}
+          /* Link the new entry with any previous elements */
+          hentry->next = new_hvector[hash];
+          if (hentry->next != NULL)
+            {
+              ht->ncollisions++;
+            }
+          new_hvector[hash] = hentry;
+        }
     }
 
   /* Now move to new vector of entries */
@@ -1057,13 +1039,11 @@ mht_destroy (MHT_TABLE * ht)
  *   func_args(in): removal function arguments
  */
 int
-mht_clear (MHT_TABLE * ht,
-	   int (*rem_func) (const void *key, void *data, void *args),
-	   void *func_args)
+mht_clear (MHT_TABLE * ht, int (*rem_func) (const void *key, void *data, void *args), void *func_args)
 {
-  HENTRY_PTR *hvector;		/* Entries of hash table           */
-  HENTRY_PTR hentry;		/* A hash table entry. linked list */
-  HENTRY_PTR next_hentry = NULL;	/* Next element in linked list     */
+  HENTRY_PTR *hvector;          /* Entries of hash table           */
+  HENTRY_PTR hentry;            /* A hash table entry. linked list */
+  HENTRY_PTR next_hentry = NULL;        /* Next element in linked list     */
   unsigned int i, error_code;
 
   assert (ht != NULL);
@@ -1076,26 +1056,26 @@ mht_clear (MHT_TABLE * ht,
     {
       /* Go over the linked list for this hash table entry */
       for (hentry = *hvector; hentry != NULL; hentry = next_hentry)
-	{
-	  /* free */
-	  if (rem_func)
-	    {
-	      error_code = (*rem_func) (hentry->key, hentry->data, func_args);
-	      if (error_code != NO_ERROR)
-		{
-		  return error_code;
-		}
+        {
+          /* free */
+          if (rem_func)
+            {
+              error_code = (*rem_func) (hentry->key, hentry->data, func_args);
+              if (error_code != NO_ERROR)
+                {
+                  return error_code;
+                }
 
-	      hentry->key = NULL;
-	      hentry->data = NULL;
-	    }
+              hentry->key = NULL;
+              hentry->data = NULL;
+            }
 
-	  next_hentry = hentry->next;
-	  /* Save the entries for future insertions */
-	  ht->nprealloc_entries++;
-	  hentry->next = ht->prealloc_entries;
-	  ht->prealloc_entries = hentry;
-	}
+          next_hentry = hentry->next;
+          /* Save the entries for future insertions */
+          ht->nprealloc_entries++;
+          hentry->next = ht->prealloc_entries;
+          ht->prealloc_entries = hentry;
+        }
       *hvector = NULL;
     }
 
@@ -1126,11 +1106,10 @@ mht_clear (MHT_TABLE * ht,
  */
 int
 mht_dump (FILE * out_fp, const MHT_TABLE * ht, const int print_id_opt,
-	  int (*print_func) (FILE * fp, const void *key, void *data,
-			     void *args), void *func_args)
+          int (*print_func) (FILE * fp, const void *key, void *data, void *args), void *func_args)
 {
-  HENTRY_PTR *hvector;		/* Entries of hash table           */
-  HENTRY_PTR hentry;		/* A hash table entry. linked list */
+  HENTRY_PTR *hvector;          /* Entries of hash table           */
+  HENTRY_PTR hentry;            /* A hash table entry. linked list */
   unsigned int i;
   int cont = TRUE;
 
@@ -1142,38 +1121,33 @@ mht_dump (FILE * out_fp, const MHT_TABLE * ht, const int print_id_opt,
     }
 
   fprintf (out_fp,
-	   "HTABLE NAME = %s, SIZE = %d, REHASH_AT = %d,\n"
-	   "NENTRIES = %d, NPREALLOC = %d, NCOLLISIONS = %d\n\n",
-	   ht->name, ht->size, ht->rehash_at, ht->nentries,
-	   ht->nprealloc_entries, ht->ncollisions);
+           "HTABLE NAME = %s, SIZE = %d, REHASH_AT = %d,\n"
+           "NENTRIES = %d, NPREALLOC = %d, NCOLLISIONS = %d\n\n",
+           ht->name, ht->size, ht->rehash_at, ht->nentries, ht->nprealloc_entries, ht->ncollisions);
 
   if (print_id_opt)
     {
       /* Need to print the index vector id. Therefore, scan the whole table */
       for (hvector = ht->table, i = 0; i < ht->size; hvector++, i++)
-	{
-	  if (*hvector != NULL)
-	    {
-	      fprintf (out_fp, "HASH AT %d\n", i);
-	      /* Go over the linked list */
-	      for (hentry = *hvector; cont == TRUE && hentry != NULL;
-		   hentry = hentry->next)
-		{
-		  cont =
-		    (*print_func) (out_fp, hentry->key, hentry->data,
-				   func_args);
-		}
-	    }
-	}
+        {
+          if (*hvector != NULL)
+            {
+              fprintf (out_fp, "HASH AT %d\n", i);
+              /* Go over the linked list */
+              for (hentry = *hvector; cont == TRUE && hentry != NULL; hentry = hentry->next)
+                {
+                  cont = (*print_func) (out_fp, hentry->key, hentry->data, func_args);
+                }
+            }
+        }
     }
   else
     {
       /* Quick scan by following only the active entries */
-      for (hentry = ht->act_head; cont == TRUE && hentry != NULL;
-	   hentry = hentry->act_next)
-	{
-	  cont = (*print_func) (out_fp, hentry->key, hentry->data, func_args);
-	}
+      for (hentry = ht->act_head; cont == TRUE && hentry != NULL; hentry = hentry->act_next)
+        {
+          cont = (*print_func) (out_fp, hentry->key, hentry->data, func_args);
+        }
     }
 
   return (cont);
@@ -1216,12 +1190,12 @@ mht_get (MHT_TABLE * ht, const void *key)
   for (hentry = ht->table[hash]; hentry != NULL; hentry = hentry->next)
     {
       if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	{
-	  mht_adjust_lru_list (ht, hentry);
+        {
+          mht_adjust_lru_list (ht, hentry);
 
-	  /* return value */
-	  return hentry->data;
-	}
+          /* return value */
+          return hentry->data;
+        }
     }
   return NULL;
 }
@@ -1239,16 +1213,16 @@ mht_adjust_lru_list (MHT_TABLE * ht, HENTRY_PTR hentry)
   if (ht && hentry && ht->build_lru_list && ht->lru_tail != hentry)
     {
       if (ht->lru_head == hentry)
-	{
-	  ht->lru_head = hentry->lru_next;
-	}
+        {
+          ht->lru_head = hentry->lru_next;
+        }
 
       /* unlink */
       hentry->lru_next->lru_prev = hentry->lru_prev;
       if (hentry->lru_prev)
-	{
-	  hentry->lru_prev->lru_next = hentry->lru_next;
-	}
+        {
+          hentry->lru_prev->lru_next = hentry->lru_next;
+        }
 
       /* add at end */
       ht->lru_tail->lru_next = hentry;
@@ -1297,23 +1271,23 @@ mht_get2 (const MHT_TABLE * ht, const void *key, void **last)
   for (hentry = ht->table[hash]; hentry != NULL; hentry = hentry->next)
     {
       if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	{
-	  if (last == NULL)
-	    {
-	      return hentry->data;
-	    }
-	  else if (*((HENTRY_PTR *) last) == NULL)
-	    {
-	      *((HENTRY_PTR *) last) = hentry;
-	      return hentry->data;
-	    }
-	  else if (*((HENTRY_PTR *) last) == hentry)
-	    {
-	      /* found the last result; go forward one more step to get next
-	         the above 'if' will be true when the next one is found */
-	      *((HENTRY_PTR *) last) = NULL;
-	    }
-	}
+        {
+          if (last == NULL)
+            {
+              return hentry->data;
+            }
+          else if (*((HENTRY_PTR *) last) == NULL)
+            {
+              *((HENTRY_PTR *) last) = hentry;
+              return hentry->data;
+            }
+          else if (*((HENTRY_PTR *) last) == hentry)
+            {
+              /* found the last result; go forward one more step to get next
+                 the above 'if' will be true when the next one is found */
+              *((HENTRY_PTR *) last) = NULL;
+            }
+        }
     }
 
   return NULL;
@@ -1336,8 +1310,7 @@ mht_get2 (const MHT_TABLE * ht, const void *key, void **last)
  *                                  even if there is an etnry with the same key
  */
 static const void *
-mht_put_internal (MHT_TABLE * ht, const void *key, void *data,
-		  MHT_PUT_OPT opt)
+mht_put_internal (MHT_TABLE * ht, const void *key, void *data, MHT_PUT_OPT opt)
 {
   unsigned int hash;
   HENTRY_PTR hentry;
@@ -1358,18 +1331,18 @@ mht_put_internal (MHT_TABLE * ht, const void *key, void *data,
     {
       /* Now search the linked list.. Is there any entry with the given key ? */
       for (hentry = ht->table[hash]; hentry != NULL; hentry = hentry->next)
-	{
-	  if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	    {
-	      /* Replace the old data with the new one */
-	      if (!(opt & MHT_OPT_KEEP_KEY))
-		{
-		  hentry->key = key;
-		}
-	      hentry->data = data;
-	      return key;
-	    }
-	}
+        {
+          if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
+            {
+              /* Replace the old data with the new one */
+              if (!(opt & MHT_OPT_KEEP_KEY))
+                {
+                  hentry->key = key;
+                }
+              hentry->data = data;
+              return key;
+            }
+        }
     }
 
   /* This is a new entry */
@@ -1383,11 +1356,10 @@ mht_put_internal (MHT_TABLE * ht, const void *key, void *data,
     {
       hentry = (HENTRY_PTR) db_fixed_alloc (ht->heap_id, DB_SIZEOF (HENTRY));
       if (hentry == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, DB_SIZEOF (HENTRY));
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (HENTRY));
+          return NULL;
+        }
     }
 
   if (ht->build_lru_list)
@@ -1396,14 +1368,14 @@ mht_put_internal (MHT_TABLE * ht, const void *key, void *data,
       hentry->lru_next = NULL;
       hentry->lru_prev = ht->lru_tail;
       if (ht->lru_tail)
-	{
-	  ht->lru_tail->lru_next = hentry;
-	}
+        {
+          ht->lru_tail->lru_next = hentry;
+        }
       ht->lru_tail = hentry;
       if (ht->lru_head == NULL)
-	{
-	  ht->lru_head = hentry;
-	}
+        {
+          ht->lru_head = hentry;
+        }
     }
 
   /*
@@ -1443,9 +1415,9 @@ mht_put_internal (MHT_TABLE * ht, const void *key, void *data,
   if (ht->nentries > ht->rehash_at && ht->ncollisions > (ht->nentries * 0.05))
     {
       if (mht_rehash (ht) < 0)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   return key;
@@ -1505,8 +1477,7 @@ mht_put (MHT_TABLE * ht, const void *key, void *data)
  *                                  even if there is an etnry with the same key
  */
 static const void *
-mht_put2_internal (MHT_TABLE * ht, const void *key, void *data,
-		   MHT_PUT_OPT opt)
+mht_put2_internal (MHT_TABLE * ht, const void *key, void *data, MHT_PUT_OPT opt)
 {
   unsigned int hash;
   HENTRY_PTR hentry;
@@ -1527,20 +1498,19 @@ mht_put2_internal (MHT_TABLE * ht, const void *key, void *data,
     {
       /* now search the linked list */
       for (hentry = ht->table[hash]; hentry != NULL; hentry = hentry->next)
-	{
-	  if ((hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	      && hentry->data == data)
-	    {
-	      /* We found the existing entry.
-	         Replace the old data with the new one. */
-	      if (!(opt & MHT_OPT_KEEP_KEY))
-		{
-		  hentry->key = key;
-		}
-	      hentry->data = data;
-	      return key;
-	    }
-	}
+        {
+          if ((hentry->key == key || (*ht->cmp_func) (hentry->key, key)) && hentry->data == data)
+            {
+              /* We found the existing entry.
+                 Replace the old data with the new one. */
+              if (!(opt & MHT_OPT_KEEP_KEY))
+                {
+                  hentry->key = key;
+                }
+              hentry->data = data;
+              return key;
+            }
+        }
     }
 
   /* get new entry */
@@ -1554,9 +1524,9 @@ mht_put2_internal (MHT_TABLE * ht, const void *key, void *data,
     {
       hentry = (HENTRY_PTR) db_fixed_alloc (ht->heap_id, DB_SIZEOF (HENTRY));
       if (hentry == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   if (ht->build_lru_list)
@@ -1565,14 +1535,14 @@ mht_put2_internal (MHT_TABLE * ht, const void *key, void *data,
       hentry->lru_next = NULL;
       hentry->lru_prev = ht->lru_tail;
       if (ht->lru_tail)
-	{
-	  ht->lru_tail->lru_next = hentry;
-	}
+        {
+          ht->lru_tail->lru_next = hentry;
+        }
       ht->lru_tail = hentry;
       if (ht->lru_head == NULL)
-	{
-	  ht->lru_head = hentry;
-	}
+        {
+          ht->lru_head = hentry;
+        }
     }
 
   /* link the new entry to the double link list of active entries */
@@ -1659,9 +1629,7 @@ mht_put2 (MHT_TABLE * ht, const void *key, void *data)
  *       and the given args, in order to delete the data and key
  */
 int
-mht_rem (MHT_TABLE * ht, const void *key,
-	 int (*rem_func) (const void *key, void *data, void *args),
-	 void *func_args)
+mht_rem (MHT_TABLE * ht, const void *key, int (*rem_func) (const void *key, void *data, void *args), void *func_args)
 {
   unsigned int hash;
   HENTRY_PTR prev_hentry;
@@ -1681,94 +1649,93 @@ mht_rem (MHT_TABLE * ht, const void *key,
     }
 
   /* Now search the linked list.. Is there any entry with the given key ? */
-  for (hentry = ht->table[hash], prev_hentry = NULL;
-       hentry != NULL; prev_hentry = hentry, hentry = hentry->next)
+  for (hentry = ht->table[hash], prev_hentry = NULL; hentry != NULL; prev_hentry = hentry, hentry = hentry->next)
     {
       if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	{
-	  /*
-	   * We found the entry
-	   * Call "rem_func" (if any) to delete the data and key
-	   * Delete the node from the double link list of active entries.
-	   * Then delete the node from the hash table.
-	   */
+        {
+          /*
+           * We found the entry
+           * Call "rem_func" (if any) to delete the data and key
+           * Delete the node from the double link list of active entries.
+           * Then delete the node from the hash table.
+           */
 
-	  if (rem_func)
-	    {
-	      error_code = (*rem_func) (hentry->key, hentry->data, func_args);
-	      if (error_code != NO_ERROR)
-		{
-		  return error_code;
-		}
-	    }
+          if (rem_func)
+            {
+              error_code = (*rem_func) (hentry->key, hentry->data, func_args);
+              if (error_code != NO_ERROR)
+                {
+                  return error_code;
+                }
+            }
 
-	  if (ht->build_lru_list)
-	    {
-	      /* remove from LRU list */
-	      if (ht->lru_head == ht->lru_tail)
-		{
-		  ht->lru_head = ht->lru_tail = NULL;
-		}
-	      else if (ht->lru_head == hentry)
-		{
-		  ht->lru_head = hentry->lru_next;
-		  hentry->lru_next->lru_prev = NULL;
-		}
-	      else if (ht->lru_tail == hentry)
-		{
-		  ht->lru_tail = hentry->lru_prev;
-		  hentry->lru_prev->lru_next = NULL;
-		}
-	      else
-		{
-		  hentry->lru_prev->lru_next = hentry->lru_next;
-		  hentry->lru_next->lru_prev = hentry->lru_prev;
-		}
-	    }
+          if (ht->build_lru_list)
+            {
+              /* remove from LRU list */
+              if (ht->lru_head == ht->lru_tail)
+                {
+                  ht->lru_head = ht->lru_tail = NULL;
+                }
+              else if (ht->lru_head == hentry)
+                {
+                  ht->lru_head = hentry->lru_next;
+                  hentry->lru_next->lru_prev = NULL;
+                }
+              else if (ht->lru_tail == hentry)
+                {
+                  ht->lru_tail = hentry->lru_prev;
+                  hentry->lru_prev->lru_next = NULL;
+                }
+              else
+                {
+                  hentry->lru_prev->lru_next = hentry->lru_next;
+                  hentry->lru_next->lru_prev = hentry->lru_prev;
+                }
+            }
 
-	  /* Remove from double link list of active entries */
-	  if (ht->act_head == ht->act_tail)
-	    {
-	      /* Single active element */
-	      ht->act_head = ht->act_tail = NULL;
-	    }
-	  else if (ht->act_head == hentry)
-	    {
-	      /* Deleting from the head */
-	      ht->act_head = hentry->act_next;
-	      hentry->act_next->act_prev = NULL;
-	    }
-	  else if (ht->act_tail == hentry)
-	    {
-	      /* Deleting from the tail */
-	      ht->act_tail = hentry->act_prev;
-	      hentry->act_prev->act_next = NULL;
-	    }
-	  else
-	    {
-	      /* Deleting from the middle */
-	      hentry->act_prev->act_next = hentry->act_next;
-	      hentry->act_next->act_prev = hentry->act_prev;
-	    }
+          /* Remove from double link list of active entries */
+          if (ht->act_head == ht->act_tail)
+            {
+              /* Single active element */
+              ht->act_head = ht->act_tail = NULL;
+            }
+          else if (ht->act_head == hentry)
+            {
+              /* Deleting from the head */
+              ht->act_head = hentry->act_next;
+              hentry->act_next->act_prev = NULL;
+            }
+          else if (ht->act_tail == hentry)
+            {
+              /* Deleting from the tail */
+              ht->act_tail = hentry->act_prev;
+              hentry->act_prev->act_next = NULL;
+            }
+          else
+            {
+              /* Deleting from the middle */
+              hentry->act_prev->act_next = hentry->act_next;
+              hentry->act_next->act_prev = hentry->act_prev;
+            }
 
-	  /* Remove from the hash */
-	  if (prev_hentry != NULL)
-	    {
-	      prev_hentry->next = hentry->next;
-	      ht->ncollisions--;
-	    }
-	  else if ((ht->table[hash] = hentry->next) != NULL)
-	    {
-	      ht->ncollisions--;
-	    }
-	  ht->nentries--;
-	  /* Save the entry for future insertions */
-	  ht->nprealloc_entries++;
-	  hentry->next = ht->prealloc_entries;
-	  ht->prealloc_entries = hentry;
+          /* Remove from the hash */
+          if (prev_hentry != NULL)
+            {
+              prev_hentry->next = hentry->next;
+              ht->ncollisions--;
+            }
+          else if ((ht->table[hash] = hentry->next) != NULL)
+            {
+              ht->ncollisions--;
+            }
+          ht->nentries--;
+          /* Save the entry for future insertions */
+          ht->nprealloc_entries++;
+          hentry->next = ht->prealloc_entries;
+          ht->prealloc_entries = hentry;
 
-	  return NO_ERROR;
-	}
+          return NO_ERROR;
+        }
     }
 
   return ER_FAILED;
@@ -1789,8 +1756,7 @@ mht_rem (MHT_TABLE * ht, const void *key,
  */
 int
 mht_rem2 (MHT_TABLE * ht, const void *key, const void *data,
-	  int (*rem_func) (const void *key, void *data, void *args),
-	  void *func_args)
+          int (*rem_func) (const void *key, void *data, void *args), void *func_args)
 {
   unsigned int hash;
   HENTRY_PTR prev_hentry;
@@ -1808,89 +1774,87 @@ mht_rem2 (MHT_TABLE * ht, const void *key, const void *data,
     }
 
   /* now search the linked list */
-  for (hentry = ht->table[hash], prev_hentry = NULL;
-       hentry != NULL; prev_hentry = hentry, hentry = hentry->next)
+  for (hentry = ht->table[hash], prev_hentry = NULL; hentry != NULL; prev_hentry = hentry, hentry = hentry->next)
     {
-      if ((hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	  && hentry->data == data)
-	{
-	  /*
-	   * We found the entry.
-	   * Call "fun" (if any) to delete the data and key.
-	   * Delete the node from the double link list of active entries.
-	   * Then delete the node from the hash table.
-	   */
-	  if (rem_func)
-	    {
-	      error_code = (*rem_func) (hentry->key, hentry->data, func_args);
-	      if (error_code != NO_ERROR)
-		{
-		  return error_code;
-		}
-	    }
+      if ((hentry->key == key || (*ht->cmp_func) (hentry->key, key)) && hentry->data == data)
+        {
+          /*
+           * We found the entry.
+           * Call "fun" (if any) to delete the data and key.
+           * Delete the node from the double link list of active entries.
+           * Then delete the node from the hash table.
+           */
+          if (rem_func)
+            {
+              error_code = (*rem_func) (hentry->key, hentry->data, func_args);
+              if (error_code != NO_ERROR)
+                {
+                  return error_code;
+                }
+            }
 
-	  if (ht->build_lru_list)
-	    {
-	      /* remove from LRU list */
-	      if (ht->lru_head == ht->lru_tail)
-		{
-		  ht->lru_head = ht->lru_tail = NULL;
-		}
-	      else if (ht->lru_head == hentry)
-		{
-		  ht->lru_head = hentry->lru_next;
-		  hentry->lru_next->lru_prev = NULL;
-		}
-	      else if (ht->lru_tail == hentry)
-		{
-		  ht->lru_tail = hentry->lru_prev;
-		  hentry->lru_prev->lru_next = NULL;
-		}
-	      else
-		{
-		  hentry->lru_prev->lru_next = hentry->lru_next;
-		  hentry->lru_next->lru_prev = hentry->lru_prev;
-		}
-	    }
+          if (ht->build_lru_list)
+            {
+              /* remove from LRU list */
+              if (ht->lru_head == ht->lru_tail)
+                {
+                  ht->lru_head = ht->lru_tail = NULL;
+                }
+              else if (ht->lru_head == hentry)
+                {
+                  ht->lru_head = hentry->lru_next;
+                  hentry->lru_next->lru_prev = NULL;
+                }
+              else if (ht->lru_tail == hentry)
+                {
+                  ht->lru_tail = hentry->lru_prev;
+                  hentry->lru_prev->lru_next = NULL;
+                }
+              else
+                {
+                  hentry->lru_prev->lru_next = hentry->lru_next;
+                  hentry->lru_next->lru_prev = hentry->lru_prev;
+                }
+            }
 
-	  /* remove from double link list of active entries */
-	  if (ht->act_head == ht->act_tail)
-	    {
-	      ht->act_head = ht->act_tail = NULL;
-	    }
-	  else if (ht->act_head == hentry)
-	    {
-	      ht->act_head = hentry->act_next;
-	      hentry->act_next->act_prev = NULL;
-	    }
-	  else if (ht->act_tail == hentry)
-	    {
-	      ht->act_tail = hentry->act_prev;
-	      hentry->act_prev->act_next = NULL;
-	    }
-	  else
-	    {
-	      hentry->act_prev->act_next = hentry->act_next;
-	      hentry->act_next->act_prev = hentry->act_prev;
-	    }
-	  /* remove from the hash */
-	  if (prev_hentry != NULL)
-	    {
-	      prev_hentry->next = hentry->next;
-	      ht->ncollisions--;
-	    }
-	  else if ((ht->table[hash] = hentry->next) != NULL)
-	    {
-	      ht->ncollisions--;
-	    }
-	  ht->nentries--;
-	  /* save the entry for future insertions */
-	  ht->nprealloc_entries++;
-	  hentry->next = ht->prealloc_entries;
-	  ht->prealloc_entries = hentry;
+          /* remove from double link list of active entries */
+          if (ht->act_head == ht->act_tail)
+            {
+              ht->act_head = ht->act_tail = NULL;
+            }
+          else if (ht->act_head == hentry)
+            {
+              ht->act_head = hentry->act_next;
+              hentry->act_next->act_prev = NULL;
+            }
+          else if (ht->act_tail == hentry)
+            {
+              ht->act_tail = hentry->act_prev;
+              hentry->act_prev->act_next = NULL;
+            }
+          else
+            {
+              hentry->act_prev->act_next = hentry->act_next;
+              hentry->act_next->act_prev = hentry->act_prev;
+            }
+          /* remove from the hash */
+          if (prev_hentry != NULL)
+            {
+              prev_hentry->next = hentry->next;
+              ht->ncollisions--;
+            }
+          else if ((ht->table[hash] = hentry->next) != NULL)
+            {
+              ht->ncollisions--;
+            }
+          ht->nentries--;
+          /* save the entry for future insertions */
+          ht->nprealloc_entries++;
+          hentry->next = ht->prealloc_entries;
+          ht->prealloc_entries = hentry;
 
-	  return NO_ERROR;
-	}
+          return NO_ERROR;
+        }
     }
 
   return ER_FAILED;
@@ -1913,9 +1877,7 @@ mht_rem2 (MHT_TABLE * ht, const void *key, const void *data,
  *       the mapping is stopped.
  */
 int
-mht_map (const MHT_TABLE * ht,
-	 int (*map_func) (const void *key, void *data, void *args),
-	 void *func_args)
+mht_map (const MHT_TABLE * ht, int (*map_func) (const void *key, void *data, void *args), void *func_args)
 {
   HENTRY_PTR hentry;
   HENTRY_PTR next;
@@ -1929,9 +1891,9 @@ mht_map (const MHT_TABLE * ht,
       next = hentry->act_next;
       error_code = (*map_func) (hentry->key, hentry->data, func_args);
       if (error_code != NO_ERROR)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   return (error_code);
@@ -1948,8 +1910,7 @@ mht_map (const MHT_TABLE * ht,
  */
 int
 mht_map_no_key (THREAD_ENTRY * thread_p, const MHT_TABLE * ht,
-		int (*map_func) (THREAD_ENTRY * thread_p, void *data,
-				 void *args), void *func_args)
+                int (*map_func) (THREAD_ENTRY * thread_p, void *data, void *args), void *func_args)
 {
   HENTRY_PTR hentry;
   HENTRY_PTR next;
@@ -1963,9 +1924,9 @@ mht_map_no_key (THREAD_ENTRY * thread_p, const MHT_TABLE * ht,
       next = hentry->act_next;
       error_code = (*map_func) (thread_p, hentry->data, func_args);
       if (error_code != NO_ERROR)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   return (error_code);
@@ -2005,124 +1966,120 @@ mht_get_hash_number (const int ht_size, const DB_VALUE * val)
   else
     {
       switch (db_value_type (val))
-	{
-	case DB_TYPE_INTEGER:
-	  hashcode = mht_get_shiftmult32 (val->data.i, ht_size);
-	  break;
-	case DB_TYPE_BIGINT:
-	  {
-	    DB_BIGINT bigint;
-	    unsigned int x, y;
+        {
+        case DB_TYPE_INTEGER:
+          hashcode = mht_get_shiftmult32 (val->data.i, ht_size);
+          break;
+        case DB_TYPE_BIGINT:
+          {
+            DB_BIGINT bigint;
+            unsigned int x, y;
 
-	    bigint = db_get_bigint (val);
-	    x = bigint >> 32;
-	    y = (unsigned int) bigint;
-	    hashcode = mht_get_shiftmult32 (x ^ y, ht_size);
-	    break;
-	  }
-	  break;
-	case DB_TYPE_DOUBLE:
-	  {
-	    unsigned int *x, y, z;
-	    x = (unsigned int *) &val->data.d;
-	    y = (x[0]) & 0xFFFFFFF0;
-	    z = (x[1]) & 0xFFFFFFF0;
-	    hashcode = mht_get_shiftmult32 (y ^ z, ht_size);
-	  }
-	  break;
-	case DB_TYPE_NUMERIC:
-	  {
-	    unsigned int *buf = (unsigned int *) val->data.num.d.buf;
-	    hashcode = mht_get_shiftmult32 (buf[0] ^ buf[1] ^ buf[2] ^ buf[3],
-					    ht_size);
-	  }
-	  break;
-	case DB_TYPE_DATE:
-	  hashcode = mht_get_shiftmult32 (val->data.date, ht_size);
-	  break;
-	case DB_TYPE_TIME:
-	  hashcode = mht_get_shiftmult32 (val->data.time, ht_size);
-	  break;
-	case DB_TYPE_DATETIME:
-	  hashcode = mht_get_shiftmult32 (val->data.datetime.date ^
-					  val->data.datetime.time, ht_size);
-	  break;
-	case DB_TYPE_OID:
-	  {
-	    unsigned int x =
-	      (val->data.oid.volid << 16) | (val->data.oid.slotid);
-	    unsigned int y = val->data.oid.pageid;
+            bigint = db_get_bigint (val);
+            x = bigint >> 32;
+            y = (unsigned int) bigint;
+            hashcode = mht_get_shiftmult32 (x ^ y, ht_size);
+            break;
+          }
+          break;
+        case DB_TYPE_DOUBLE:
+          {
+            unsigned int *x, y, z;
+            x = (unsigned int *) &val->data.d;
+            y = (x[0]) & 0xFFFFFFF0;
+            z = (x[1]) & 0xFFFFFFF0;
+            hashcode = mht_get_shiftmult32 (y ^ z, ht_size);
+          }
+          break;
+        case DB_TYPE_NUMERIC:
+          {
+            unsigned int *buf = (unsigned int *) val->data.num.d.buf;
+            hashcode = mht_get_shiftmult32 (buf[0] ^ buf[1] ^ buf[2] ^ buf[3], ht_size);
+          }
+          break;
+        case DB_TYPE_DATE:
+          hashcode = mht_get_shiftmult32 (val->data.date, ht_size);
+          break;
+        case DB_TYPE_TIME:
+          hashcode = mht_get_shiftmult32 (val->data.time, ht_size);
+          break;
+        case DB_TYPE_DATETIME:
+          hashcode = mht_get_shiftmult32 (val->data.datetime.date ^ val->data.datetime.time, ht_size);
+          break;
+        case DB_TYPE_OID:
+          {
+            unsigned int x = (val->data.oid.volid << 16) | (val->data.oid.slotid);
+            unsigned int y = val->data.oid.pageid;
 
-	    hashcode = mht_get_shiftmult32 (x ^ y, ht_size);
-	  }
-	  break;
-	case DB_TYPE_VARCHAR:
-	case DB_TYPE_VARBIT:
-	  ptr = db_get_string (val);
-	  if (ptr)
-	    {
+            hashcode = mht_get_shiftmult32 (x ^ y, ht_size);
+          }
+          break;
+        case DB_TYPE_VARCHAR:
+        case DB_TYPE_VARBIT:
+          ptr = db_get_string (val);
+          if (ptr)
+            {
 
-	      len = db_get_string_size (val);
-	      if (len < 0)
-		{
-		  len = strlen (ptr);
-		}
+              len = db_get_string_size (val);
+              if (len < 0)
+                {
+                  len = strlen (ptr);
+                }
 
-	      i = len;
-	      for (i--; i && ptr[i]; i--)
-		{
-		  /* only the trailing ASCII space is ignored;
-		   * the hashing for other characters depend on collation */
-		  if (ptr[i] != 0x20)
-		    {
-		      break;
-		    }
-		}
-	      i++;
-	    }
-	  if (!ptr || ptr[0] == 0 || i <= 0)
-	    {
-	      hashcode = 0;
-	    }
-	  else
-	    {
-	      hashcode = MHT2STR_COLL (db_get_string_collation (val), ptr, i);
-	      hashcode %= ht_size;
-	    }
-	  break;
-	case DB_TYPE_SEQUENCE:
-	  {
-	    int size = val->data.set->disk_size / 4;
-	    unsigned int x = 0;
-	    int i;
+              i = len;
+              for (i--; i && ptr[i]; i--)
+                {
+                  /* only the trailing ASCII space is ignored;
+                   * the hashing for other characters depend on collation */
+                  if (ptr[i] != 0x20)
+                    {
+                      break;
+                    }
+                }
+              i++;
+            }
+          if (!ptr || ptr[0] == 0 || i <= 0)
+            {
+              hashcode = 0;
+            }
+          else
+            {
+              hashcode = MHT2STR_COLL (db_get_string_collation (val), ptr, i);
+              hashcode %= ht_size;
+            }
+          break;
+        case DB_TYPE_SEQUENCE:
+          {
+            int size = val->data.set->disk_size / 4;
+            unsigned int x = 0;
+            int i;
 
-	    for (i = 0; i < size; i++)
-	      {
-		x ^= (unsigned int) (val->data.set->disk_set[i * 4]);
-	      }
+            for (i = 0; i < size; i++)
+              {
+                x ^= (unsigned int) (val->data.set->disk_set[i * 4]);
+              }
 
-	    hashcode = mht_get_shiftmult32 (x, ht_size);
-	  }
-	  break;
+            hashcode = mht_get_shiftmult32 (x, ht_size);
+          }
+          break;
 
-	default:		/* impossible */
-	  /*
-	   * TODO this is actually possible. See the QA scenario:
-	   * sql/_01_object/_09_partition/_006_prunning/cases/1093.sql
-	   * select * from hash_test where test_int = round(11.57);
-	   * The value has type DB_TYPE_DOUBLE in this case.
-	   */
-	  er_log_debug (ARG_FILE_LINE, "mht_get_hash_number: ERROR type = %d"
-			" is Unsupported partition column type.",
-			db_value_type (val));
+        default:               /* impossible */
+          /*
+           * TODO this is actually possible. See the QA scenario:
+           * sql/_01_object/_09_partition/_006_prunning/cases/1093.sql
+           * select * from hash_test where test_int = round(11.57);
+           * The value has type DB_TYPE_DOUBLE in this case.
+           */
+          er_log_debug (ARG_FILE_LINE, "mht_get_hash_number: ERROR type = %d"
+                        " is Unsupported partition column type.", db_value_type (val));
 #if defined(NDEBUG)
-	  hashcode = 0;
+          hashcode = 0;
 #else /* NDEBUG */
-	  /* debugging purpose */
-	  abort ();
+          /* debugging purpose */
+          abort ();
 #endif /* NDEBUG */
-	  break;
-	}
+          break;
+        }
     }
 
   return hashcode;
@@ -2157,9 +2114,9 @@ mht_get32_next_power_of_2 (const unsigned int ht_size)
       mapsave = map;
       map = (map << (1 << mi)) & mapsave;
       if ((map & ht_size) == 0)
-	{
-	  map = (map ^ 0xffffffff) & mapsave;
-	}
+        {
+          map = (map ^ 0xffffffff) & mapsave;
+        }
     }
 
   if (ht_size == map)
@@ -2184,7 +2141,7 @@ mht_get32_next_power_of_2 (const unsigned int ht_size)
 static unsigned int
 mht_get_shiftmult32 (unsigned int key, const unsigned int ht_size)
 {
-  unsigned int c2 = 0x27d4eb2d;	/* a prime or an odd constant */
+  unsigned int c2 = 0x27d4eb2d; /* a prime or an odd constant */
 
   key = (key ^ 61) ^ (key >> 16);
   key += (key << 3);
@@ -2212,13 +2169,13 @@ mht_get_linear_hash32 (const unsigned int key, const unsigned int ht_size)
   for (ret = key & (np - 1); ret >= ht_size; ret &= (np - 1))
     {
       if (np % 2)
-	{
-	  np = np / 2 + 1;
-	}
+        {
+          np = np / 2 + 1;
+        }
       else
-	{
-	  np = np / 2;
-	}
+        {
+          np = np / 2;
+        }
     }
   return ret;
 }

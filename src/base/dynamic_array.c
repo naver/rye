@@ -134,9 +134,9 @@ da_destroy (dynamic_array * da)
   if (da)
     {
       if (da->array)
-	{
-	  free (da->array);
-	}
+        {
+          free (da->array);
+        }
       free (da);
     }
 

@@ -66,7 +66,7 @@
 #define CNV_ERR_BAD_SEC           CO_CODE( CO_MODULE_CNV, 34)
 #define CNV_ERR_BAD_MSEC          CO_CODE( CO_MODULE_CNV, 35)
 #define CNV_ERR_BAD_AM_PM         CO_CODE( CO_MODULE_CNV, 36)
-#if 1				/* unused */
+#if 1                           /* unused */
 #define CNV_ERR_BAD_TIMESTAMP         CO_CODE( CO_MODULE_CNV, 37)
 #define CNV_ERR_TIMESTAMP_UNDERFLOW   CO_CODE( CO_MODULE_CNV, 38)
 #define CNV_ERR_TIMESTAMP_OVERFLOW    CO_CODE( CO_MODULE_CNV, 39)
@@ -149,7 +149,7 @@
   "Format error -- missing or invalid millisecond (%%%s)."
 #define CNV_ER_FMT_BAD_AM_PM \
   "Format error -- missing or invalid AM/PM (%%%s)."
-#if 0				/* unused */
+#if 0                           /* unused */
 #define CNV_ER_FMT_BAD_TIMESTAMP \
   "Format error -- missing or invalid timestamp (%%%s)."
 #define CNV_ER_FMT_TIMESTAMP_UNDERFLOW \

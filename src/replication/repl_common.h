@@ -54,10 +54,10 @@ enum _rp_item_type
 typedef struct _rp_ddl_item RP_DDL_ITEM;
 struct _rp_ddl_item
 {
-  RYE_STMT_TYPE stmt_type;	/* Statement Type */
-  int ddl_type;			/* REPL_NON_BLOCKED_DDL or REPL_BLOCKED_DDL */
+  RYE_STMT_TYPE stmt_type;      /* Statement Type */
+  int ddl_type;                 /* REPL_NON_BLOCKED_DDL or REPL_BLOCKED_DDL */
   char *db_user;
-  char *query;			/* SQL string */
+  char *query;                  /* SQL string */
 };
 
 typedef struct _rp_catalog_item RP_CATALOG_ITEM;
@@ -65,7 +65,7 @@ struct _rp_catalog_item
 {
   int copyarea_op;
   char *class_name;
-  DB_IDXKEY key;		/* PK */
+  DB_IDXKEY key;                /* PK */
   RECDES *recdes;
 };
 
@@ -75,9 +75,9 @@ struct rp_data_item
   LOG_RCVINDEX rcv_index;
   int groupid;
   char *class_name;
-  DB_IDXKEY key;		/* PK */
+  DB_IDXKEY key;                /* PK */
 
-  LOG_LSA target_lsa;		/* the LSA of the target log record */
+  LOG_LSA target_lsa;           /* the LSA of the target log record */
   RECDES *recdes;
 };
 
@@ -94,7 +94,7 @@ struct cirp_repl_item
 {
   CIRP_REPL_ITEM *next;
   TRANID tran_id;
-  LOG_LSA lsa;			/* the LSA of the replication log record */
+  LOG_LSA lsa;                  /* the LSA of the replication log record */
   RP_ITEM_TYPE item_type;
 
   RP_ITEM_INFO info;
@@ -110,18 +110,13 @@ extern bool rp_need_restart (void);
 extern bool rp_need_shutdown (const char *file_name, int line);
 
 extern void cirp_free_repl_item (CIRP_REPL_ITEM * item);
-extern int rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item,
-				  TRANID tran_id, const LOG_LSA * lsa);
-extern int rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item,
-				 TRANID tran_id, const LOG_LSA * lsa);
-extern int rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item,
-				     TRANID tran_id, const LOG_LSA * lsa);
+extern int rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, TRANID tran_id, const LOG_LSA * lsa);
+extern int rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, TRANID tran_id, const LOG_LSA * lsa);
+extern int rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, TRANID tran_id, const LOG_LSA * lsa);
 extern bool rp_is_valid_repl_item (CIRP_REPL_ITEM * item);
 
-extern int rp_make_repl_host_key (DB_VALUE * dbval,
-				  const PRM_NODE_INFO * node_info);
-extern int rp_host_str_to_node_info (PRM_NODE_INFO * node_info,
-				     const char *key_str);
+extern int rp_make_repl_host_key (DB_VALUE * dbval, const PRM_NODE_INFO * node_info);
+extern int rp_host_str_to_node_info (PRM_NODE_INFO * node_info, const char *key_str);
 
 
 extern int db_disable_modification (void);

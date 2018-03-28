@@ -74,18 +74,13 @@ struct repl_info_schema
 
 #if defined(SERVER_MODE) || defined(SA_MODE)
 /* for replication, declare replication log dump function */
-extern void log_repl_data_dump (FILE * out_fp, UNUSED_ARG int length,
-				void *data);
-extern void log_repl_schema_dump (FILE * out_fp, UNUSED_ARG int length,
-				  void *data);
+extern void log_repl_data_dump (FILE * out_fp, UNUSED_ARG int length, void *data);
+extern void log_repl_schema_dump (FILE * out_fp, UNUSED_ARG int length, void *data);
 extern void repl_log_send (void);
-extern int repl_add_update_lsa (THREAD_ENTRY * thread_p,
-				const OID * inst_oid);
+extern int repl_add_update_lsa (THREAD_ENTRY * thread_p, const OID * inst_oid);
 extern int repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
-			    const OID * inst_oid, LOG_RECTYPE log_type,
-			    LOG_RCVINDEX rcvindex, DB_IDXKEY * key);
-extern int repl_log_insert_schema (THREAD_ENTRY * thread_p,
-				   REPL_INFO_SCHEMA * repl_schema);
+                            const OID * inst_oid, LOG_RECTYPE log_type, LOG_RCVINDEX rcvindex, DB_IDXKEY * key);
+extern int repl_log_insert_schema (THREAD_ENTRY * thread_p, REPL_INFO_SCHEMA * repl_schema);
 extern int repl_log_abort_after_lsa (LOG_TDES * tdes, LOG_LSA * start_lsa);
 #endif /* SERVER_MODE || SA_MODE */
 

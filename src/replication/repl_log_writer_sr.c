@@ -40,20 +40,14 @@
 #define LOGWR_THREAD_SUSPEND_TIMEOUT 	10
 
 static int logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
-					LOGWR_INFO * writer_info,
-					THREAD_ENTRY * thread_p,
-					LOG_PAGEID fpageid);
+                                        LOGWR_INFO * writer_info, THREAD_ENTRY * thread_p, LOG_PAGEID fpageid);
 static int logwr_pack_log_pages (THREAD_ENTRY * thread_p, char *logpg_area,
-				 LOG_ZIP * zip_logpg, int *logpg_used_size,
-				 int *status, LOGWR_ENTRY * entry,
-				 INT64 * eof_pageid, INT64 * send_pageid,
-				 int *num_page,
-				 LOG_HA_FILESTAT * file_status);
+                                 LOG_ZIP * zip_logpg, int *logpg_used_size,
+                                 int *status, LOGWR_ENTRY * entry,
+                                 INT64 * eof_pageid, INT64 * send_pageid, int *num_page, LOG_HA_FILESTAT * file_status);
 static void logwr_write_start (LOGWR_INFO * writer_info, LOGWR_ENTRY * entry);
-static void logwr_write_end (THREAD_ENTRY * thread_p,
-			     LOGWR_INFO * writer_info, LOGWR_ENTRY * entry);
-static void logwr_unregister_writer_entry (LOGWR_INFO * writer_info,
-					   LOGWR_ENTRY * wr_entry);
+static void logwr_write_end (THREAD_ENTRY * thread_p, LOGWR_INFO * writer_info, LOGWR_ENTRY * entry);
+static void logwr_unregister_writer_entry (LOGWR_INFO * writer_info, LOGWR_ENTRY * wr_entry);
 
 
 /*
@@ -70,8 +64,7 @@ static void logwr_unregister_writer_entry (LOGWR_INFO * writer_info,
  */
 static int
 logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
-			     LOGWR_INFO * writer_info,
-			     THREAD_ENTRY * thread_p, LOG_PAGEID fpageid)
+                             LOGWR_INFO * writer_info, THREAD_ENTRY * thread_p, LOG_PAGEID fpageid)
 {
   LOGWR_ENTRY *entry;
 
@@ -81,9 +74,9 @@ logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
   while (entry)
     {
       if (entry->thread_p == thread_p)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       entry = entry->next;
     }
 
@@ -91,11 +84,10 @@ logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
     {
       entry = malloc (sizeof (LOGWR_ENTRY));
       if (entry == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, sizeof (LOGWR_ENTRY));
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (LOGWR_ENTRY));
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
 
       entry->thread_p = thread_p;
       entry->fpageid = fpageid;
@@ -111,10 +103,10 @@ logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
     {
       entry->fpageid = fpageid;
       if (entry->status == LOGWR_STATUS_DONE)
-	{
-	  entry->status = LOGWR_STATUS_WAIT;
-	  entry->start_copy_time = 0;
-	}
+        {
+          entry->status = LOGWR_STATUS_WAIT;
+          entry->start_copy_time = 0;
+        }
     }
 
   *wr_entry_p = entry;
@@ -126,8 +118,7 @@ logwr_register_writer_entry (LOGWR_ENTRY ** wr_entry_p,
  * logwr_unregister_writer_entry
  */
 static void
-logwr_unregister_writer_entry (LOGWR_INFO * writer_info,
-			       LOGWR_ENTRY * wr_entry)
+logwr_unregister_writer_entry (LOGWR_INFO * writer_info, LOGWR_ENTRY * wr_entry)
 {
   LOGWR_ENTRY *entry, *prev_entry;
 
@@ -135,18 +126,18 @@ logwr_unregister_writer_entry (LOGWR_INFO * writer_info,
   while (entry)
     {
       if (entry == wr_entry)
-	{
-	  if (entry == writer_info->writer_list)
-	    {
-	      writer_info->writer_list = entry->next;
-	    }
-	  else
-	    {
-	      prev_entry->next = entry->next;
-	    }
-	  free_and_init (entry);
-	  break;
-	}
+        {
+          if (entry == writer_info->writer_list)
+            {
+              writer_info->writer_list = entry->next;
+            }
+          else
+            {
+              prev_entry->next = entry->next;
+            }
+          free_and_init (entry);
+          break;
+        }
 
       prev_entry = entry;
       entry = entry->next;
@@ -172,10 +163,9 @@ logwr_unregister_writer_entry (LOGWR_INFO * writer_info,
  */
 static int
 logwr_pack_log_pages (THREAD_ENTRY * thread_p,
-		      char *logpg_area, LOG_ZIP * zip_logpg,
-		      int *logpg_used_size, int *status, LOGWR_ENTRY * entry,
-		      INT64 * eof_pageid, INT64 * send_pageid, int *num_page,
-		      LOG_HA_FILESTAT * file_status)
+                      char *logpg_area, LOG_ZIP * zip_logpg,
+                      int *logpg_used_size, int *status, LOGWR_ENTRY * entry,
+                      INT64 * eof_pageid, INT64 * send_pageid, int *num_page, LOG_HA_FILESTAT * file_status)
 {
   LOG_PAGEID fpageid, lpageid, pageid;
   char *p;
@@ -205,69 +195,67 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
       /* Find the first pageid to be packed */
       fpageid = entry->fpageid;
       if (fpageid <= 0)
-	{
-	  /* In case of first request(copy archive) from the log writer,
-	     pack all archive pages to be flushed until now */
-	  fpageid = -fpageid;
-	  if (logpb_is_page_in_archive (fpageid))
-	    {
-	      if (logpb_fetch_from_archive (thread_p, fpageid, NULL, NULL,
-					    &arvhdr, false) == NULL)
-		{
-		  error_code = ER_FAILED;
-		  LOG_CS_EXIT ();
-		  goto error;
-		}
-	      fpageid = arvhdr.fpageid;
-	      log_Gl.hdr.ha_info.nxarv_num = arvhdr.arv_num;
-	      log_Gl.hdr.ha_info.nxarv_pageid = fpageid;
-	    }
-	  else
-	    {
-	      fpageid = log_Gl.hdr.nxarv_pageid;
-	      log_Gl.hdr.ha_info.nxarv_num = log_Gl.hdr.nxarv_num;
-	      log_Gl.hdr.ha_info.nxarv_pageid = fpageid;
-	    }
-	}
+        {
+          /* In case of first request(copy archive) from the log writer,
+             pack all archive pages to be flushed until now */
+          fpageid = -fpageid;
+          if (logpb_is_page_in_archive (fpageid))
+            {
+              if (logpb_fetch_from_archive (thread_p, fpageid, NULL, NULL, &arvhdr, false) == NULL)
+                {
+                  error_code = ER_FAILED;
+                  LOG_CS_EXIT ();
+                  goto error;
+                }
+              fpageid = arvhdr.fpageid;
+              log_Gl.hdr.ha_info.nxarv_num = arvhdr.arv_num;
+              log_Gl.hdr.ha_info.nxarv_pageid = fpageid;
+            }
+          else
+            {
+              fpageid = log_Gl.hdr.nxarv_pageid;
+              log_Gl.hdr.ha_info.nxarv_num = log_Gl.hdr.nxarv_num;
+              log_Gl.hdr.ha_info.nxarv_pageid = fpageid;
+            }
+        }
 
       /* Find the last pageid which is bounded by several limitations */
       if (!logpb_is_page_in_archive (fpageid))
-	{
-	  lpageid = eof_lsa.pageid;
-	}
+        {
+          lpageid = eof_lsa.pageid;
+        }
       else
-	{
-	  /* If the fpageid is in archive log,
-	     fetch the page and the header page in the archive */
+        {
+          /* If the fpageid is in archive log,
+             fetch the page and the header page in the archive */
 
-	  if (logpb_fetch_from_archive (thread_p, fpageid, NULL, NULL,
-					&arvhdr, false) == NULL)
-	    {
-	      error_code = ER_FAILED;
-	      LOG_CS_EXIT ();
-	      goto error;
-	    }
+          if (logpb_fetch_from_archive (thread_p, fpageid, NULL, NULL, &arvhdr, false) == NULL)
+            {
+              error_code = ER_FAILED;
+              LOG_CS_EXIT ();
+              goto error;
+            }
 
-	  /* Reset the lpageid with the last pageid in the archive */
-	  lpageid = arvhdr.fpageid + arvhdr.npages - 1;
-	  assert (lpageid < eof_lsa.pageid);
+          /* Reset the lpageid with the last pageid in the archive */
+          lpageid = arvhdr.fpageid + arvhdr.npages - 1;
+          assert (lpageid < eof_lsa.pageid);
 
-	  if (fpageid == arvhdr.fpageid)
-	    {
-	      ha_file_status = LOG_HA_FILESTAT_ARCHIVED;
-	    }
-	}
+          if (fpageid == arvhdr.fpageid)
+            {
+              ha_file_status = LOG_HA_FILESTAT_ARCHIVED;
+            }
+        }
 
       /* Pack the pages which can be in the page area of Log Writer */
       if ((lpageid - fpageid + 1) > (LOGWR_COPY_LOG_BUFFER_NPAGES - 1))
-	{
-	  lpageid = fpageid + (LOGWR_COPY_LOG_BUFFER_NPAGES - 1) - 1;
-	}
+        {
+          lpageid = fpageid + (LOGWR_COPY_LOG_BUFFER_NPAGES - 1) - 1;
+        }
       if (lpageid == eof_lsa.pageid)
-	{
-	  ha_file_status = LOG_HA_FILESTAT_SYNCHRONIZED;
-	  LSA_COPY (&entry->last_sent_eof_lsa, &eof_lsa);
-	}
+        {
+          ha_file_status = LOG_HA_FILESTAT_SYNCHRONIZED;
+          LSA_COPY (&entry->last_sent_eof_lsa, &eof_lsa);
+        }
     }
 
   /* Set the server status on the header information */
@@ -299,18 +287,17 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
   if (!is_hdr_page_only)
     {
       for (pageid = fpageid; pageid >= 0 && pageid <= lpageid; pageid++)
-	{
-	  log_pgptr = (LOG_PAGE *) p;
-	  if (logpb_copy_page_from_log_buffer
-	      (thread_p, pageid, log_pgptr) == NULL)
-	    {
-	      error_code = ER_FAILED;
-	      goto error;
-	    }
+        {
+          log_pgptr = (LOG_PAGE *) p;
+          if (logpb_copy_page_from_log_buffer (thread_p, pageid, log_pgptr) == NULL)
+            {
+              error_code = ER_FAILED;
+              goto error;
+            }
 
-	  assert (pageid == (log_pgptr->hdr.logical_pageid));
-	  p += LOG_PAGESIZE;
-	}
+          assert (pageid == (log_pgptr->hdr.logical_pageid));
+          p += LOG_PAGESIZE;
+        }
     }
 
   *logpg_used_size = area_size = (int) (p - logpg_area);
@@ -322,24 +309,22 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
       is_zipped = log_zip (zip_logpg, *logpg_used_size, logpg_area);
 
       if (is_zipped)
-	{
-	  area_size = zip_logpg->data_length;
-	  assert (area_size > 0);
+        {
+          area_size = zip_logpg->data_length;
+          assert (area_size > 0);
 
-	  er_log_debug (ARG_FILE_LINE,
-			"logwr_pack_log_pages, LZO %d -> %d (%5.2f%%)\n",
-			*logpg_used_size, area_size,
-			((double) area_size / *logpg_used_size) * 100);
+          er_log_debug (ARG_FILE_LINE,
+                        "logwr_pack_log_pages, LZO %d -> %d (%5.2f%%)\n",
+                        *logpg_used_size, area_size, ((double) area_size / *logpg_used_size) * 100);
 
-	  *logpg_used_size = MAKE_ZIP_LEN (area_size);
-	  memcpy (logpg_area, zip_logpg->log_data, area_size);
-	}
+          *logpg_used_size = MAKE_ZIP_LEN (area_size);
+          memcpy (logpg_area, zip_logpg->log_data, area_size);
+        }
       else
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"logwr_pack_log_pages, LZO %d -> %d (100.00%)\n",
-			*logpg_used_size, *logpg_used_size);
-	}
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "logwr_pack_log_pages, LZO %d -> %d (100.00%)\n", *logpg_used_size, *logpg_used_size);
+        }
     }
 
   /* In case that EOL exists at lpageid */
@@ -369,13 +354,11 @@ logwr_pack_log_pages (THREAD_ENTRY * thread_p,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"logwr_pack_log_pages, fpageid(%lld), lpageid(%lld), "
-		"num_pages(%lld), status:%s, fa_file_status:%s, "
-		"send eof(%ld,%d)\n",
-		fpageid, lpageid, num_logpgs,
-		LOGWR_STATUS_NAME (*status),
-		LOG_HA_FILESTAT_NAME (ha_file_status),
-		eof_lsa.pageid, eof_lsa.offset);
+                "logwr_pack_log_pages, fpageid(%lld), lpageid(%lld), "
+                "num_pages(%lld), status:%s, fa_file_status:%s, "
+                "send eof(%ld,%d)\n",
+                fpageid, lpageid, num_logpgs,
+                LOGWR_STATUS_NAME (*status), LOG_HA_FILESTAT_NAME (ha_file_status), eof_lsa.pageid, eof_lsa.offset);
 
   return NO_ERROR;
 
@@ -403,8 +386,7 @@ logwr_write_start (LOGWR_INFO * writer_info, LOGWR_ENTRY * entry)
       return;
     }
 
-  if (entry->status == LOGWR_STATUS_FETCH
-      && writer_info->trace_last_writer == true)
+  if (entry->status == LOGWR_STATUS_FETCH && writer_info->trace_last_writer == true)
     {
       entry->start_copy_time = thread_get_log_clock_msec ();
     }
@@ -418,8 +400,7 @@ logwr_write_start (LOGWR_INFO * writer_info, LOGWR_ENTRY * entry)
  *    entry(in/out):
  */
 static void
-logwr_write_end (THREAD_ENTRY * thread_p, LOGWR_INFO * writer_info,
-		 LOGWR_ENTRY * entry)
+logwr_write_end (THREAD_ENTRY * thread_p, LOGWR_INFO * writer_info, LOGWR_ENTRY * entry)
 {
   if (entry == NULL)
     {
@@ -427,16 +408,13 @@ logwr_write_end (THREAD_ENTRY * thread_p, LOGWR_INFO * writer_info,
       return;
     }
 
-  if (entry->status == LOGWR_STATUS_FETCH
-      && writer_info->trace_last_writer == true)
+  if (entry->status == LOGWR_STATUS_FETCH && writer_info->trace_last_writer == true)
     {
       assert (entry->start_copy_time > 0);
 
-      writer_info->last_writer_elapsed_time =
-	thread_get_log_clock_msec () - entry->start_copy_time;
+      writer_info->last_writer_elapsed_time = thread_get_log_clock_msec () - entry->start_copy_time;
 
-      logtb_get_current_client_ids (thread_p,
-				    &writer_info->last_writer_client_info);
+      logtb_get_current_client_ids (thread_p, &writer_info->last_writer_client_info);
     }
 
   return;
@@ -454,8 +432,7 @@ logwr_write_end (THREAD_ENTRY * thread_p, LOGWR_INFO * writer_info,
  * Note:
  */
 int
-xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
-		      bool compressed_protocol)
+xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid, bool compressed_protocol)
 {
   LOGWR_ENTRY *entry = NULL;
   char *logpg_area;
@@ -471,8 +448,7 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
   LOG_HA_FILESTAT ha_file_status = LOG_HA_FILESTAT_CLEAR;
 
   logpg_used_size = 0;
-  logpg_area =
-    (char *) malloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE));
+  logpg_area = (char *) malloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE));
   if (logpg_area == NULL)
     {
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -481,13 +457,12 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
   /* compressed_protocol is passed by client */
   if (compressed_protocol)
     {
-      zip_logpg =
-	log_zip_alloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE), true);
+      zip_logpg = log_zip_alloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE), true);
       if (zip_logpg == NULL)
-	{
-	  free_and_init (logpg_area);
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          free_and_init (logpg_area);
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
     }
   else
     {
@@ -505,107 +480,95 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
       /* Register the writer at the list and wait until LFT start to work */
       rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
-      error_code = logwr_register_writer_entry (&entry, writer_info, thread_p,
-						first_pageid);
+      error_code = logwr_register_writer_entry (&entry, writer_info, thread_p, first_pageid);
       if (error_code != NO_ERROR)
-	{
-	  pthread_mutex_unlock (&writer_info->wr_list_mutex);
-	  status = LOGWR_STATUS_ERROR;
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          pthread_mutex_unlock (&writer_info->wr_list_mutex);
+          status = LOGWR_STATUS_ERROR;
+          GOTO_EXIT_ON_ERROR;
+        }
       er_log_debug (ARG_FILE_LINE,
-		    "[tid:%ld] xlogwr_get_log_pages, fpageid(%lld),"
-		    " entry->statue(%s), comprssed_protocol(%d)\n",
-		    thread_p->tid, first_pageid,
-		    LOGWR_STATUS_NAME (entry->status), compressed_protocol);
+                    "[tid:%ld] xlogwr_get_log_pages, fpageid(%lld),"
+                    " entry->statue(%s), comprssed_protocol(%d)\n",
+                    thread_p->tid, first_pageid, LOGWR_STATUS_NAME (entry->status), compressed_protocol);
 
       assert (entry->status == LOGWR_STATUS_DELAY
-	      || entry->status == LOGWR_STATUS_WAIT
-	      || entry->status == LOGWR_STATUS_FETCH);
+              || entry->status == LOGWR_STATUS_WAIT || entry->status == LOGWR_STATUS_FETCH);
       if (entry->status == LOGWR_STATUS_WAIT)
-	{
-	  rv = thread_suspend_with_other_mutex (thread_p,
-						&writer_info->
-						wr_list_mutex, INF_WAIT,
-						NULL, THREAD_LOGWR_SUSPENDED);
-	  if (rv != NO_ERROR
-	      || thread_p->resume_status != THREAD_LOGWR_RESUMED)
-	    {
-	      pthread_mutex_unlock (&writer_info->wr_list_mutex);
+        {
+          rv = thread_suspend_with_other_mutex (thread_p,
+                                                &writer_info->wr_list_mutex, INF_WAIT, NULL, THREAD_LOGWR_SUSPENDED);
+          if (rv != NO_ERROR || thread_p->resume_status != THREAD_LOGWR_RESUMED)
+            {
+              pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
-	      error_code = (rv != NO_ERROR) ? rv : ER_FAILED;
-	      status = LOGWR_STATUS_ERROR;
-	      GOTO_EXIT_ON_ERROR;
-	    }
+              error_code = (rv != NO_ERROR) ? rv : ER_FAILED;
+              status = LOGWR_STATUS_ERROR;
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  if (entry->status != LOGWR_STATUS_FETCH)
-	    {
-	      pthread_mutex_unlock (&writer_info->wr_list_mutex);
-	      continue;
-	    }
+          if (entry->status != LOGWR_STATUS_FETCH)
+            {
+              pthread_mutex_unlock (&writer_info->wr_list_mutex);
+              continue;
+            }
 
-	  logwr_write_start (writer_info, entry);
-	}
+          logwr_write_start (writer_info, entry);
+        }
 
       pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
       /* Send the log pages to be flushed until now */
       error_code = logwr_pack_log_pages (thread_p, logpg_area, zip_logpg,
-					 &logpg_used_size, &status, entry,
-					 &eof_pageid, &send_pageid,
-					 &send_num_page, &ha_file_status);
+                                         &logpg_used_size, &status, entry,
+                                         &eof_pageid, &send_pageid, &send_num_page, &ha_file_status);
       if (error_code != NO_ERROR)
-	{
-	  error_code = ER_HA_LW_FAILED_GET_LOG_PAGE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error_code, 1, first_pageid);
+        {
+          error_code = ER_HA_LW_FAILED_GET_LOG_PAGE;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, first_pageid);
 
-	  status = LOGWR_STATUS_ERROR;
-	  GOTO_EXIT_ON_ERROR;
-	}
+          status = LOGWR_STATUS_ERROR;
+          GOTO_EXIT_ON_ERROR;
+        }
 
       /* wait until LFT finishes flushing */
       rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
-      while (entry->status == LOGWR_STATUS_FETCH
-	     && writer_info->flush_completed == false)
-	{
-	  rv = pthread_cond_wait (&writer_info->wr_list_cond,
-				  &writer_info->wr_list_mutex);
-	}
+      while (entry->status == LOGWR_STATUS_FETCH && writer_info->flush_completed == false)
+        {
+          rv = pthread_cond_wait (&writer_info->wr_list_cond, &writer_info->wr_list_mutex);
+        }
 
       pthread_mutex_unlock (&writer_info->wr_list_mutex);
 
       error_code = xlog_send_log_pages_to_client (thread_p, logpg_area,
-						  logpg_used_size,
-						  eof_pageid, send_pageid,
-						  send_num_page,
-						  ha_file_status);
+                                                  logpg_used_size,
+                                                  eof_pageid, send_pageid, send_num_page, ha_file_status);
       if (error_code != NO_ERROR)
-	{
-	  status = LOGWR_STATUS_ERROR;
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          status = LOGWR_STATUS_ERROR;
+          GOTO_EXIT_ON_ERROR;
+        }
 
       /* Get the next request from the client and reset the arguments */
       error_code = xlog_get_page_request_with_reply (thread_p, &next_fpageid);
       if (error_code != NO_ERROR)
-	{
-	  status = LOGWR_STATUS_ERROR;
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          status = LOGWR_STATUS_ERROR;
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if (status == LOGWR_STATUS_DONE)
-	{
-	  rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
+        {
+          rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
-	  entry->status = status;
-	  logwr_write_end (thread_p, writer_info, entry);
+          entry->status = status;
+          logwr_write_end (thread_p, writer_info, entry);
 
-	  pthread_cond_signal (&writer_info->wr_list_cond);
+          pthread_cond_signal (&writer_info->wr_list_cond);
 
-	  pthread_mutex_unlock (&writer_info->wr_list_mutex);
-	}
+          pthread_mutex_unlock (&writer_info->wr_list_mutex);
+        }
 
       /* Reset the arguments for the next request */
       first_pageid = next_fpageid;
@@ -616,9 +579,7 @@ xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
 exit_on_error:
   assert (error_code != NO_ERROR);
 
-  er_log_debug (ARG_FILE_LINE,
-		"[tid:%ld] xlogwr_get_log_pages, error(%d)\n",
-		thread_p->tid, error_code);
+  er_log_debug (ARG_FILE_LINE, "[tid:%ld] xlogwr_get_log_pages, error(%d)\n", thread_p->tid, error_code);
 
   if (entry != NULL)
     {
@@ -662,9 +623,9 @@ logwr_get_min_copied_fpageid (void)
   while (entry)
     {
       if (min_fpageid > entry->fpageid)
-	{
-	  min_fpageid = entry->fpageid;
-	}
+        {
+          min_fpageid = entry->fpageid;
+        }
       entry = entry->next;
       num_entries++;
     }
@@ -697,12 +658,11 @@ logwr_find_copy_completed_entry (LOGWR_INFO * writer_info)
   while (entry != NULL)
     {
       if ((entry->status == LOGWR_STATUS_WAIT
-	   || entry->status == LOGWR_STATUS_DONE)
-	  && LSA_GE (&entry->last_sent_eof_lsa, eof))
-	{
-	  found_entry = entry;
-	  break;
-	}
+           || entry->status == LOGWR_STATUS_DONE) && LSA_GE (&entry->last_sent_eof_lsa, eof))
+        {
+          found_entry = entry;
+          break;
+        }
       entry = entry->next;
     }
 
@@ -726,10 +686,10 @@ logwr_find_entry_status (LOGWR_INFO * writer_info, LOGWR_STATUS status)
   while (entry != NULL)
     {
       if (entry->status == status)
-	{
-	  found_entry = entry;
-	  break;
-	}
+        {
+          found_entry = entry;
+          break;
+        }
       entry = entry->next;
     }
 
@@ -748,8 +708,7 @@ logwr_find_entry_status (LOGWR_INFO * writer_info, LOGWR_STATUS status)
  * Note:
  */
 int
-xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
-			 bool compressed_protocol)
+xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid, bool compressed_protocol)
 {
   LOGWR_ENTRY *entry = NULL;
   char *logpg_area;
@@ -761,25 +720,23 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
   LOGWR_INFO *writer_info = &log_Gl.writer_info;
 
   logpg_used_size = 0;
-  logpg_area =
-    (char *) malloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE));
+  logpg_area = (char *) malloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE));
   if (logpg_area == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      (LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE));
+              (LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
   /* compressed_protocol is passed by client */
   if (compressed_protocol)
     {
-      zip_logpg =
-	log_zip_alloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE), true);
+      zip_logpg = log_zip_alloc ((LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE), true);
       if (zip_logpg == NULL)
-	{
-	  free_and_init (logpg_area);
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          free_and_init (logpg_area);
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
     }
   else
     {
@@ -792,14 +749,13 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"[tid:%ld] xmigrator_get_log_pages, fpageid(%lld), compressed_protocol(%d)\n",
-		thread_p->tid, first_pageid, compressed_protocol);
+                "[tid:%ld] xmigrator_get_log_pages, fpageid(%lld), compressed_protocol(%d)\n",
+                thread_p->tid, first_pageid, compressed_protocol);
 
   /* Register the writer at the list and wait until LFT start to work */
   rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
 
-  error_code = logwr_register_writer_entry (&entry, writer_info, thread_p,
-					    first_pageid);
+  error_code = logwr_register_writer_entry (&entry, writer_info, thread_p, first_pageid);
   if (error_code != NO_ERROR)
     {
       pthread_mutex_unlock (&writer_info->wr_list_mutex);
@@ -824,8 +780,7 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
 
   /* Send the log pages to be flushed until now */
   error_code = logwr_pack_log_pages (thread_p, logpg_area, zip_logpg,
-				     &logpg_used_size, &status, entry,
-				     NULL, NULL, NULL, NULL);
+                                     &logpg_used_size, &status, entry, NULL, NULL, NULL, NULL);
   if (error_code != NO_ERROR)
     {
       error_code = ER_HA_LW_FAILED_GET_LOG_PAGE;
@@ -835,8 +790,7 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
       goto error;
     }
 
-  error_code = xlog_send_log_pages_to_migrator (thread_p, logpg_area,
-						logpg_used_size);
+  error_code = xlog_send_log_pages_to_migrator (thread_p, logpg_area, logpg_used_size);
   if (error_code != NO_ERROR)
     {
       status = LOGWR_STATUS_ERROR;
@@ -858,9 +812,7 @@ xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid,
 
 error:
 
-  er_log_debug (ARG_FILE_LINE,
-		"[tid:%ld] xmigrator_get_log_pages, error(%d)\n",
-		thread_p->tid, error_code);
+  er_log_debug (ARG_FILE_LINE, "[tid:%ld] xmigrator_get_log_pages, error(%d)\n", thread_p->tid, error_code);
 
   rv = pthread_mutex_lock (&writer_info->wr_list_mutex);
   logwr_unregister_writer_entry (writer_info, entry);

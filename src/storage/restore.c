@@ -68,54 +68,38 @@
 #include "boot_sr.h"
 
 static BK_BACKUP_SESSION *bk_start_restore (THREAD_ENTRY * thread_p,
-					    const char *db_fullname,
-					    char *backup_source,
-					    INT64 match_dbcreation,
-					    PGLENGTH * db_iopagesize,
-					    RYE_VERSION * bkup_version,
-					    BK_BACKUP_SESSION * session,
-					    bool authenticate,
-					    INT64 match_bkupcreation,
-					    const char
-					    *restore_verbose_file_path);
-static int bk_finish_restore (THREAD_ENTRY * thread_p,
-			      BK_BACKUP_SESSION * session);
-static void bk_abort_restore (THREAD_ENTRY * thread_p,
-			      BK_BACKUP_SESSION * session);
+                                            const char *db_fullname,
+                                            char *backup_source,
+                                            INT64 match_dbcreation,
+                                            PGLENGTH * db_iopagesize,
+                                            RYE_VERSION * bkup_version,
+                                            BK_BACKUP_SESSION * session,
+                                            bool authenticate,
+                                            INT64 match_bkupcreation, const char *restore_verbose_file_path);
+static int bk_finish_restore (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session);
+static void bk_abort_restore (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session);
 static int bk_get_next_restore_file (THREAD_ENTRY * thread_p,
-				     BK_BACKUP_SESSION * session,
-				     char *filename, VOLID * volid);
+                                     BK_BACKUP_SESSION * session, char *filename, VOLID * volid);
 static int bk_restore_volume (THREAD_ENTRY * thread_p,
-			      BK_BACKUP_SESSION * session, char *to_vlabel,
-			      char *verbose_to_vlabel, char *prev_vlabel);
-static int bk_skip_restore_volume (THREAD_ENTRY * thread_p,
-				   BK_BACKUP_SESSION * session);
+                              BK_BACKUP_SESSION * session, char *to_vlabel, char *verbose_to_vlabel, char *prev_vlabel);
+static int bk_skip_restore_volume (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session);
 
 static BK_BACKUP_SESSION
   * bk_initialize_restore (THREAD_ENTRY * thread_p,
-			   const char *db_fullname, char *backup_src,
-			   BK_BACKUP_SESSION * session,
-			   const char *restore_verbose_file_path);
-static int bk_read_restore (THREAD_ENTRY * thread_p,
-			    BK_BACKUP_SESSION * session, int toread_nbytes);
-static void *bk_write_restore (THREAD_ENTRY * thread_p,
-			       int vdes, void *io_pgptr, VOLID volid,
-			       PAGEID pageid);
+                           const char *db_fullname, char *backup_src,
+                           BK_BACKUP_SESSION * session, const char *restore_verbose_file_path);
+static int bk_read_restore (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session, int toread_nbytes);
+static void *bk_write_restore (THREAD_ENTRY * thread_p, int vdes, void *io_pgptr, VOLID volid, PAGEID pageid);
 static int bk_read_restore_header (BK_BACKUP_SESSION * session);
 
 static BK_BACKUP_SESSION
   * bk_continue_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
-			 INT64 db_creation,
-			 BK_BACKUP_SESSION * session, bool first_time,
-			 bool authenticate, INT64 match_bkupcreation);
+                         INT64 db_creation,
+                         BK_BACKUP_SESSION * session, bool first_time, bool authenticate, INT64 match_bkupcreation);
 static int bk_fill_hole_during_restore (THREAD_ENTRY * thread_p,
-					int *next_pageid, int stop_pageid,
-					BK_BACKUP_SESSION * session);
-static int bk_decompress_restore_volume (THREAD_ENTRY * thread_p,
-					 BK_BACKUP_SESSION * session,
-					 int nbytes);
-static int logpb_check_stop_at_time (BK_BACKUP_SESSION * session,
-				     time_t stop_at, time_t backup_time);
+                                        int *next_pageid, int stop_pageid, BK_BACKUP_SESSION * session);
+static int bk_decompress_restore_volume (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session, int nbytes);
+static int logpb_check_stop_at_time (BK_BACKUP_SESSION * session, time_t stop_at, time_t backup_time);
 
 /*
  * bk_initialize_restore () - Initialize the restore session structure with the given
@@ -133,10 +117,8 @@ static int logpb_check_stop_at_time (BK_BACKUP_SESSION * session,
  */
 static BK_BACKUP_SESSION *
 bk_initialize_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
-		       const char *db_full_name_p,
-		       char *backup_source_p,
-		       BK_BACKUP_SESSION * session_p,
-		       const char *restore_verbose_file_path)
+                       const char *db_full_name_p,
+                       char *backup_source_p, BK_BACKUP_SESSION * session_p, const char *restore_verbose_file_path)
 {
   char orig_name[PATH_MAX];
 
@@ -144,14 +126,12 @@ bk_initialize_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
   /* First, make sure the volume given exists and we can access it. */
   while (!fileio_is_volume_exist (backup_source_p))
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_IO_MOUNT_FAIL, 1, backup_source_p);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, backup_source_p);
       fprintf (stdout, "%s\n", er_msg ());
       return NULL;
     }
 
-  if (bk_init_backup_buffer (session_p, db_full_name_p, backup_source_p,
-			     0) != NO_ERROR)
+  if (bk_init_backup_buffer (session_p, db_full_name_p, backup_source_p, 0) != NO_ERROR)
     {
       return NULL;
     }
@@ -165,13 +145,11 @@ bk_initialize_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       session_p->verbose_fp = fopen (restore_verbose_file_path, "w");
       if (session_p->verbose_fp == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_IO_CANNOT_OPEN_VERBOSE_FILE, 1,
-		  restore_verbose_file_path);
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_CANNOT_OPEN_VERBOSE_FILE, 1, restore_verbose_file_path);
 
-	  return NULL;
-	}
+          return NULL;
+        }
 
       setbuf (session_p->verbose_fp, NULL);
     }
@@ -189,8 +167,7 @@ bk_initialize_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
  *   session(in/out): The session array
  */
 static void
-bk_abort_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
-		  BK_BACKUP_SESSION * session_p)
+bk_abort_restore (UNUSED_ARG THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p)
 {
   bk_abort_backup_client (session_p, false);
   bk_abort_backup_server (session_p);
@@ -207,8 +184,7 @@ bk_abort_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
  *       about how the final block is repeated at the start of the new volumes.
  */
 static int
-bk_read_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
-		 BK_BACKUP_SESSION * session_p, int to_read_nbytes)
+bk_read_restore (UNUSED_ARG THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p, int to_read_nbytes)
 {
   ssize_t nbytes;
   char *buffer_p;
@@ -221,62 +197,58 @@ bk_read_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
   while (to_read_nbytes > 0 && is_end_of_backup == false)
     {
       if (session_p->bkup.count <= 0)
-	{
-	  /*
-	   * Read and buffer another backup page from the backup volume.
-	   * Note that a backup page is not necessarily the same size as the
-	   * database page.
-	   */
+        {
+          /*
+           * Read and buffer another backup page from the backup volume.
+           * Note that a backup page is not necessarily the same size as the
+           * database page.
+           */
 #if 0
-	restart_newvol:
+        restart_newvol:
 #endif
-	  is_need_next_vol = false;
-	  session_p->bkup.ptr = session_p->bkup.buffer;
-	  session_p->bkup.count = session_p->bkup.iosize;
-	  while (session_p->bkup.count > 0)
-	    {
-	      /* Read a backup I/O page. */
-	      nbytes = read (session_p->bkup.vdes, session_p->bkup.ptr,
-			     session_p->bkup.count);
-	      if (nbytes <= 0)
-		{
-		  switch (errno)
-		    {
-		    case EINTR:
-		    case EAGAIN:
-		      continue;
-		    default:
-		      er_set_with_oserror (ER_ERROR_SEVERITY,
-					   ARG_FILE_LINE,
-					   ER_IO_READ, 2,
-					   CEIL_PTVDIV
-					   (session_p->bkup.voltotalio,
-					    IO_PAGESIZE),
-					   session_p->bkup.vlabel);
-		      return ER_FAILED;
-		    }
-		}
-	      else
-		{
-		  /* Increase the amount of read bytes */
-		  session_p->bkup.ptr += nbytes;
-		  session_p->bkup.count -= nbytes;
-		  session_p->bkup.voltotalio += nbytes;
-		}
-	    }
+          is_need_next_vol = false;
+          session_p->bkup.ptr = session_p->bkup.buffer;
+          session_p->bkup.count = session_p->bkup.iosize;
+          while (session_p->bkup.count > 0)
+            {
+              /* Read a backup I/O page. */
+              nbytes = read (session_p->bkup.vdes, session_p->bkup.ptr, session_p->bkup.count);
+              if (nbytes <= 0)
+                {
+                  switch (errno)
+                    {
+                    case EINTR:
+                    case EAGAIN:
+                      continue;
+                    default:
+                      er_set_with_oserror (ER_ERROR_SEVERITY,
+                                           ARG_FILE_LINE,
+                                           ER_IO_READ, 2,
+                                           CEIL_PTVDIV
+                                           (session_p->bkup.voltotalio, IO_PAGESIZE), session_p->bkup.vlabel);
+                      return ER_FAILED;
+                    }
+                }
+              else
+                {
+                  /* Increase the amount of read bytes */
+                  session_p->bkup.ptr += nbytes;
+                  session_p->bkup.count -= nbytes;
+                  session_p->bkup.voltotalio += nbytes;
+                }
+            }
 
-	  /* Increase the buffered information */
-	  session_p->bkup.ptr = session_p->bkup.buffer;
-	  session_p->bkup.count =
-	    session_p->bkup.iosize - session_p->bkup.count;
-	}
+          /* Increase the buffered information */
+          session_p->bkup.ptr = session_p->bkup.buffer;
+          session_p->bkup.count = session_p->bkup.iosize - session_p->bkup.count;
+        }
 
       /* Now copy the desired bytes */
       nbytes = session_p->bkup.count;
       if (nbytes > to_read_nbytes)
-	{
-	  nbytes = to_read_nbytes;
-	}
+        {
+          nbytes = to_read_nbytes;
+        }
       memcpy (buffer_p, session_p->bkup.ptr, nbytes);
       session_p->bkup.count -= nbytes;
       to_read_nbytes -= nbytes;
@@ -322,31 +294,27 @@ bk_read_restore_header (BK_BACKUP_SESSION * session_p)
     {
       nbytes = read (session_p->bkup.vdes, buffer_p, to_read_nbytes);
       if (nbytes == -1)
-	{
-	  if (errno == EINTR)
-	    {
-	      continue;
-	    }
-	  else
-	    {
-	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				   ER_IO_READ, 2,
-				   CEIL_PTVDIV (session_p->bkup.voltotalio,
-						IO_PAGESIZE),
-				   session_p->bkup.vlabel);
-	      return ER_FAILED;
-	    }
-	}
+        {
+          if (errno == EINTR)
+            {
+              continue;
+            }
+          else
+            {
+              er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                                   ER_IO_READ, 2,
+                                   CEIL_PTVDIV (session_p->bkup.voltotalio, IO_PAGESIZE), session_p->bkup.vlabel);
+              return ER_FAILED;
+            }
+        }
       else if (nbytes == 0)
-	{
-	  /* EOF should not happen when reading the header. */
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_IO_READ, 2,
-			       CEIL_PTVDIV (session_p->bkup.voltotalio,
-					    IO_PAGESIZE),
-			       session_p->bkup.vlabel);
-	  return ER_FAILED;
-	}
+        {
+          /* EOF should not happen when reading the header. */
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                               ER_IO_READ, 2,
+                               CEIL_PTVDIV (session_p->bkup.voltotalio, IO_PAGESIZE), session_p->bkup.vlabel);
+          return ER_FAILED;
+        }
       to_read_nbytes -= nbytes;
       session_p->bkup.voltotalio += nbytes;
       buffer_p += nbytes;
@@ -379,29 +347,25 @@ bk_read_restore_header (BK_BACKUP_SESSION * session_p)
  */
 static BK_BACKUP_SESSION *
 bk_start_restore (THREAD_ENTRY * thread_p,
-		  const char *db_full_name_p,
-		  char *backup_source_p,
-		  INT64 match_db_creation_time,
-		  PGLENGTH * db_io_page_size_p,
-		  RYE_VERSION * bkdb_version,
-		  BK_BACKUP_SESSION * session_p,
-		  bool is_authenticate,
-		  INT64 match_backup_creation_time,
-		  const char *restore_verbose_file_path)
+                  const char *db_full_name_p,
+                  char *backup_source_p,
+                  INT64 match_db_creation_time,
+                  PGLENGTH * db_io_page_size_p,
+                  RYE_VERSION * bkdb_version,
+                  BK_BACKUP_SESSION * session_p,
+                  bool is_authenticate, INT64 match_backup_creation_time, const char *restore_verbose_file_path)
 {
   BK_BACKUP_SESSION *temp_session_p;
 
   /* Initialize the session array and open the backup source device. */
-  if (bk_initialize_restore (thread_p, boot_db_name (), backup_source_p,
-			     session_p, restore_verbose_file_path) == NULL)
+  if (bk_initialize_restore (thread_p, boot_db_name (), backup_source_p, session_p, restore_verbose_file_path) == NULL)
     {
       return NULL;
     }
 
   temp_session_p = bk_continue_restore (thread_p, db_full_name_p,
-					match_db_creation_time, session_p,
-					true, is_authenticate,
-					match_backup_creation_time);
+                                        match_db_creation_time, session_p,
+                                        true, is_authenticate, match_backup_creation_time);
   if (temp_session_p != NULL)
     {
       *db_io_page_size_p = session_p->bkuphdr->db_iopagesize;
@@ -430,11 +394,10 @@ bk_start_restore (THREAD_ENTRY * thread_p,
  */
 static BK_BACKUP_SESSION *
 bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
-		     const char *db_full_name_p,
-		     INT64 db_creation_time,
-		     BK_BACKUP_SESSION * session_p,
-		     bool is_first_time,
-		     bool is_authenticate, INT64 match_backup_creation_time)
+                     const char *db_full_name_p,
+                     INT64 db_creation_time,
+                     BK_BACKUP_SESSION * session_p,
+                     bool is_first_time, bool is_authenticate, INT64 match_backup_creation_time)
 {
   BK_BACKUP_HEADER *backup_header_p;
   int unit_num = BK_INITIAL_BACKUP_UNITS;
@@ -458,157 +421,137 @@ bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
       is_need_retry = false;
       /* Have to locate and open the desired volume */
       while (session_p->bkup.vdes == NULL_VOLDES)
-	{
+        {
 
-	  /* If the name chosen is a actually a directory, then append
-	     correct backup volume name here. */
-	  exists = stat (session_p->bkup.vlabel, &stbuf) != -1;
-	  if (exists && S_ISDIR (stbuf.st_mode))
-	    {
-	      db_nopath_name_p = fileio_get_base_file_name (db_full_name_p);
-	      strcpy (copy_name, session_p->bkup.vlabel);
-	      bk_make_backup_name (session_p->bkup.name,
-				   db_nopath_name_p, copy_name, unit_num);
-	      session_p->bkup.vlabel = session_p->bkup.name;
-	    }
+          /* If the name chosen is a actually a directory, then append
+             correct backup volume name here. */
+          exists = stat (session_p->bkup.vlabel, &stbuf) != -1;
+          if (exists && S_ISDIR (stbuf.st_mode))
+            {
+              db_nopath_name_p = fileio_get_base_file_name (db_full_name_p);
+              strcpy (copy_name, session_p->bkup.vlabel);
+              bk_make_backup_name (session_p->bkup.name, db_nopath_name_p, copy_name, unit_num);
+              session_p->bkup.vlabel = session_p->bkup.name;
+            }
 
-	  if (search_loop_count == 0)
-	    {
-	      STRNCPY (orig_name, session_p->bkup.vlabel, PATH_MAX);
-	    }
+          if (search_loop_count == 0)
+            {
+              STRNCPY (orig_name, session_p->bkup.vlabel, PATH_MAX);
+            }
 
-	  session_p->bkup.vdes =
-	    fileio_open (session_p->bkup.vlabel, O_RDONLY, 0);
-	  if (session_p->bkup.vdes == NULL_VOLDES)
-	    {
-	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				   ER_IO_MOUNT_FAIL, 1,
-				   session_p->bkup.vlabel);
-	      fprintf (stdout, "%s\n", er_msg ());
-	      return NULL;
-	    }
-	  search_loop_count++;
-	}
+          session_p->bkup.vdes = fileio_open (session_p->bkup.vlabel, O_RDONLY, 0);
+          if (session_p->bkup.vdes == NULL_VOLDES)
+            {
+              er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, session_p->bkup.vlabel);
+              fprintf (stdout, "%s\n", er_msg ());
+              return NULL;
+            }
+          search_loop_count++;
+        }
 
       /* Read description of the backup file. */
       if (bk_read_restore_header (session_p) != NO_ERROR)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_NOT_A_BACKUP,
-		  1, session_p->bkup.vlabel);
-	  is_need_retry = true;
-	  goto retry_newvol;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_NOT_A_BACKUP, 1, session_p->bkup.vlabel);
+          is_need_retry = true;
+          goto retry_newvol;
+        }
 
       backup_header_p = session_p->bkuphdr;
 
       /* Always check for a valid magic number, regardless of whether
          we need to check other authentications. */
       if (strcmp (backup_header_p->bk_magic, RYE_MAGIC_DATABASE_BACKUP) != 0)
-	{
-	  if (is_first_time)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_IO_NOT_A_BACKUP, 1, session_p->bkup.vlabel);
-	      return NULL;
-	    }
-	  else
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_BK_MAGIC_MISMATCH, 1, session_p->bkup.vlabel);
-	    }
-	}
+        {
+          if (is_first_time)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_NOT_A_BACKUP, 1, session_p->bkup.vlabel);
+              return NULL;
+            }
+          else
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BK_MAGIC_MISMATCH, 1, session_p->bkup.vlabel);
+            }
+        }
 
       /* Should check the release version before we do anything */
-      if (is_first_time &&
-	  rel_is_log_compatible (&backup_header_p->bk_db_version) != true)
-	{
-	  char bkdb_release[REL_MAX_VERSION_LENGTH];
-	  /*
-	   * First time this database is restarted using the current version of
-	   * Rye. Recovery should be done using the old version of the
-	   * system
-	   */
-	  rel_version_to_string (&backup_header_p->bk_db_version,
-				 bkdb_release, sizeof (bkdb_release));
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_RECOVER_ON_OLD_RELEASE, 2,
-		  bkdb_release, rel_version_string ());
-	  return NULL;
-	}
+      if (is_first_time && rel_is_log_compatible (&backup_header_p->bk_db_version) != true)
+        {
+          char bkdb_release[REL_MAX_VERSION_LENGTH];
+          /*
+           * First time this database is restarted using the current version of
+           * Rye. Recovery should be done using the old version of the
+           * system
+           */
+          rel_version_to_string (&backup_header_p->bk_db_version, bkdb_release, sizeof (bkdb_release));
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                  ER_LOG_RECOVER_ON_OLD_RELEASE, 2, bkdb_release, rel_version_string ());
+          return NULL;
+        }
 
       if (is_authenticate)
-	{
-	  /* Test the timestamp of when the backup was taken. */
-	  if (match_backup_creation_time != 0
-	      && difftime ((time_t) match_backup_creation_time,
-			   (time_t) backup_header_p->start_time))
-	    {
-	      char save_time1[64];
+        {
+          /* Test the timestamp of when the backup was taken. */
+          if (match_backup_creation_time != 0
+              && difftime ((time_t) match_backup_creation_time, (time_t) backup_header_p->start_time))
+            {
+              char save_time1[64];
 
-	      fileio_ctime (&match_backup_creation_time, io_timeval);
-	      strcpy (save_time1, io_timeval);
+              fileio_ctime (&match_backup_creation_time, io_timeval);
+              strcpy (save_time1, io_timeval);
 
-	      fileio_ctime (&backup_header_p->start_time, io_timeval);
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_BK_BACKUP_TIME_MISMATCH, 3,
-		      session_p->bkup.vlabel, save_time1, io_timeval);
-	    }
+              fileio_ctime (&backup_header_p->start_time, io_timeval);
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_BK_BACKUP_TIME_MISMATCH, 3, session_p->bkup.vlabel, save_time1, io_timeval);
+            }
 
-	  /* Should this one be treated as fatal? */
-	  expect_page_id = (is_first_time) ?
-	    BK_BACKUP_START_PAGE_ID : BK_BACKUP_VOL_CONT_PAGE_ID;
-	  if (backup_header_p->iopageid != expect_page_id)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_BK_MAGIC_MISMATCH, 1, session_p->bkup.vlabel);
-	    }
+          /* Should this one be treated as fatal? */
+          expect_page_id = (is_first_time) ? BK_BACKUP_START_PAGE_ID : BK_BACKUP_VOL_CONT_PAGE_ID;
+          if (backup_header_p->iopageid != expect_page_id)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BK_MAGIC_MISMATCH, 1, session_p->bkup.vlabel);
+            }
 
-	  /* NOTE: This could mess with restoring to a new location */
-	  if (strcmp (backup_header_p->db_name, boot_db_name ()) != 0
-	      || (db_creation_time > 0
-		  && difftime ((time_t) db_creation_time,
-			       (time_t) backup_header_p->db_creation)))
-	    {
-	      if (is_first_time)
-		{
-		  char save_time1[64];
-		  char save_time2[64];
+          /* NOTE: This could mess with restoring to a new location */
+          if (strcmp (backup_header_p->db_name, boot_db_name ()) != 0
+              || (db_creation_time > 0 && difftime ((time_t) db_creation_time, (time_t) backup_header_p->db_creation)))
+            {
+              if (is_first_time)
+                {
+                  char save_time1[64];
+                  char save_time2[64];
 
-		  fileio_ctime (&backup_header_p->db_creation, io_timeval);
-		  strcpy (save_time1, io_timeval);
+                  fileio_ctime (&backup_header_p->db_creation, io_timeval);
+                  strcpy (save_time1, io_timeval);
 
-		  fileio_ctime (&db_creation_time, io_timeval);
-		  strcpy (save_time2, io_timeval);
+                  fileio_ctime (&db_creation_time, io_timeval);
+                  strcpy (save_time2, io_timeval);
 
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_IO_NOT_A_BACKUP_OF_GIVEN_DATABASE, 5,
-			  session_p->bkup.vlabel,
-			  backup_header_p->db_name, save_time1,
-			  db_full_name_p, save_time2);
-		  return NULL;
-		}
-	      else
-		{
-		  fileio_ctime (&backup_header_p->db_creation, io_timeval);
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_BK_DB_MISMATCH, 3, session_p->bkup.vlabel,
-			  backup_header_p->db_name, io_timeval);
-		}
-	    }
-	}
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                          ER_IO_NOT_A_BACKUP_OF_GIVEN_DATABASE, 5,
+                          session_p->bkup.vlabel, backup_header_p->db_name, save_time1, db_full_name_p, save_time2);
+                  return NULL;
+                }
+              else
+                {
+                  fileio_ctime (&backup_header_p->db_creation, io_timeval);
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                          ER_BK_DB_MISMATCH, 3, session_p->bkup.vlabel, backup_header_p->db_name, io_timeval);
+                }
+            }
+        }
       /* Passed all tests above */
       break;
     retry_newvol:
       is_original_header = false;
       /* close it, in case it was opened previously */
       if (session_p->bkup.vdes != NULL_VOLDES)
-	{
-	  fileio_close (session_p->bkup.vdes);
-	  session_p->bkup.vdes = NULL_VOLDES;
-	}
+        {
+          fileio_close (session_p->bkup.vdes);
+          session_p->bkup.vdes = NULL_VOLDES;
+        }
 
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_CANNOT_ACCESS_BACKUP, 1, session_p->bkup.vlabel);
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_CANNOT_ACCESS_BACKUP, 1, session_p->bkup.vlabel);
       return NULL;
     }
   while (is_need_retry);
@@ -621,14 +564,12 @@ bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
    */
   if (backup_header_p->bkup_iosize > session_p->bkup.iosize)
     {
-      session_p->bkup.buffer =
-	(char *) realloc (session_p->bkup.buffer,
-			  backup_header_p->bkup_iosize);
+      session_p->bkup.buffer = (char *) realloc (session_p->bkup.buffer, backup_header_p->bkup_iosize);
       if (session_p->bkup.buffer == NULL)
-	{
-	  return NULL;
-	}
-      session_p->bkup.ptr = session_p->bkup.buffer;	/* reinit in case it moved */
+        {
+          return NULL;
+        }
+      session_p->bkup.ptr = session_p->bkup.buffer;     /* reinit in case it moved */
     }
   /* Always use the saved size from the backup to restore with */
   session_p->bkup.iosize = backup_header_p->bkup_iosize;
@@ -637,22 +578,20 @@ bk_continue_restore (UNUSED_ARG THREAD_ENTRY * thread_p,
   if (is_first_time)
     {
       if (backup_header_p->db_iopagesize > IO_PAGESIZE)
-	{
-	  int io_pagesize, size;
-	  io_pagesize = backup_header_p->db_iopagesize;
-	  io_pagesize *= FILEIO_FULL_LEVEL_EXP;
+        {
+          int io_pagesize, size;
+          io_pagesize = backup_header_p->db_iopagesize;
+          io_pagesize *= FILEIO_FULL_LEVEL_EXP;
 
-	  size = MAX (io_pagesize + BK_BACKUP_PAGE_OVERHEAD,
-		      BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE);
-	  free_and_init (session_p->dbfile.area);
-	  session_p->dbfile.area = (BK_BACKUP_PAGE *) malloc (size);
-	  if (session_p->dbfile.area == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
-	      return NULL;
-	    }
-	}
+          size = MAX (io_pagesize + BK_BACKUP_PAGE_OVERHEAD, BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE);
+          free_and_init (session_p->dbfile.area);
+          session_p->dbfile.area = (BK_BACKUP_PAGE *) malloc (size);
+          if (session_p->dbfile.area == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+              return NULL;
+            }
+        }
     }
 
   return session_p;
@@ -683,8 +622,7 @@ bk_finish_restore (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p)
  *                   specified in the database-loc-file
  */
 int
-bk_list_restore (THREAD_ENTRY * thread_p,
-		 const char *db_full_name_p, char *backup_source_p)
+bk_list_restore (THREAD_ENTRY * thread_p, const char *db_full_name_p, char *backup_source_p)
 {
   BK_BACKUP_SESSION backup_session;
   BK_BACKUP_SESSION *session_p = &backup_session;
@@ -701,86 +639,68 @@ bk_list_restore (THREAD_ENTRY * thread_p,
   char db_host_str[MAX_NODE_INFO_STR_LEN];
 
   if (bk_start_restore (thread_p, db_full_name_p, backup_source_p,
-			db_creation_time, &db_iopagesize,
-			&bkup_version, session_p, false, 0, NULL) == NULL)
+                        db_creation_time, &db_iopagesize, &bkup_version, session_p, false, 0, NULL) == NULL)
     {
       /* Cannot access backup file.. Restore from backup is cancelled */
       if (er_errid () == ER_GENERIC_ERROR)
-	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_CANNOT_ACCESS_BACKUP, 1, backup_source_p);
-	}
+        {
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_CANNOT_ACCESS_BACKUP, 1, backup_source_p);
+        }
       return ER_FAILED;
     }
 
   /* First backup header was just read */
   backup_header_p = session_p->bkuphdr;
   /* this check is probably redundant */
-  if (backup_header_p->iopageid != BK_BACKUP_START_PAGE_ID
-      && backup_header_p->iopageid != BK_BACKUP_VOL_CONT_PAGE_ID)
+  if (backup_header_p->iopageid != BK_BACKUP_START_PAGE_ID && backup_header_p->iopageid != BK_BACKUP_VOL_CONT_PAGE_ID)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_NOT_A_BACKUP, 1,
-	      session_p->bkup.vlabel);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_NOT_A_BACKUP, 1, session_p->bkup.vlabel);
       goto error;
     }
 
   /* Show the backup volume header information. */
-  fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR));
+  fprintf (stdout, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO, MSGCAT_FILEIO_BKUP_HDR));
 
   tmp_time = (time_t) backup_header_p->db_creation;
   (void) ctime_r (&tmp_time, time_val);
   fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_DBINFO),
-	   backup_header_p->db_name,
-	   time_val, backup_header_p->db_iopagesize);
+           msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                           MSGCAT_FILEIO_BKUP_HDR_DBINFO),
+           backup_header_p->db_name, time_val, backup_header_p->db_iopagesize);
   fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_LEVEL),
-	   0, bk_get_backup_level_string (),
-	   (long long int) -1, -1, backup_header_p->chkpt_lsa.pageid,
-	   backup_header_p->chkpt_lsa.offset);
+           msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                           MSGCAT_FILEIO_BKUP_HDR_LEVEL), 0,
+           bk_get_backup_level_string (), (long long int) -1, -1,
+           backup_header_p->chkpt_lsa.pageid, backup_header_p->chkpt_lsa.offset);
 
   tmp_time = (time_t) backup_header_p->start_time;
   (void) ctime_r (&tmp_time, time_val);
+  fprintf (stdout, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO, MSGCAT_FILEIO_BKUP_HDR_TIME), time_val, 1);
+  rel_version_to_string (&backup_header_p->bk_db_version, bkup_db_release, sizeof (bkup_db_release));
   fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_TIME), time_val, 1);
-  rel_version_to_string (&backup_header_p->bk_db_version,
-			 bkup_db_release, sizeof (bkup_db_release));
+           msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                           MSGCAT_FILEIO_BKUP_HDR_RELEASES), bkup_db_release, backup_header_p->bk_db_version.major);
   fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_RELEASES),
-	   bkup_db_release, backup_header_p->bk_db_version.major);
+           msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                           MSGCAT_FILEIO_BKUP_HDR_BKUP_PAGESIZE), backup_header_p->bkpagesize);
   fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_BKUP_PAGESIZE),
-	   backup_header_p->bkpagesize);
-  fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_ZIP_INFO),
-	   backup_header_p->zip_method,
-	   bk_get_zip_method_string (backup_header_p->zip_method),
-	   backup_header_p->zip_level,
-	   bk_get_zip_level_string (backup_header_p->zip_level));
-  fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_INC_ACTIVELOG), "YES");
+           msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                           MSGCAT_FILEIO_BKUP_HDR_ZIP_INFO),
+           backup_header_p->zip_method,
+           bk_get_zip_method_string (backup_header_p->zip_method),
+           backup_header_p->zip_level, bk_get_zip_level_string (backup_header_p->zip_level));
+  fprintf (stdout, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO, MSGCAT_FILEIO_BKUP_HDR_INC_ACTIVELOG), "YES");
 
   assert (!LSA_ISNULL (&(backup_header_p->backuptime_lsa)));
   assert (backup_header_p->end_time > 0);
 
-  prm_node_info_to_str (db_host_str, sizeof (db_host_str),
-			&backup_header_p->db_host_info);
+  prm_node_info_to_str (db_host_str, sizeof (db_host_str), &backup_header_p->db_host_info);
   fprintf (stdout,
-	   msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			   MSGCAT_FILEIO_BKUP_HDR_HOST_INFO),
-	   db_host_str, backup_header_p->server_state,
-	   backup_header_p->backuptime_lsa.pageid,
-	   backup_header_p->backuptime_lsa.offset,
-	   backup_header_p->make_slave ? "YES" : "NO");
+           msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                           MSGCAT_FILEIO_BKUP_HDR_HOST_INFO), db_host_str,
+           backup_header_p->server_state,
+           backup_header_p->backuptime_lsa.pageid,
+           backup_header_p->backuptime_lsa.offset, backup_header_p->make_slave ? "YES" : "NO");
 
   fprintf (stdout, "\n");
 
@@ -791,47 +711,41 @@ bk_list_restore (THREAD_ENTRY * thread_p,
 
   /* Start reading information of every database volumes/files of the
      database which is in backup. */
-  file_header_p =
-    (BK_VOL_HEADER_IN_BACKUP *) (&session_p->dbfile.area->iopage);
+  file_header_p = (BK_VOL_HEADER_IN_BACKUP *) (&session_p->dbfile.area->iopage);
   while (true)
     {
       nbytes = BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE;
       if (bk_read_restore (thread_p, session_p, nbytes) != NO_ERROR)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_IO_RESTORE_READ_ERROR, 1, 1);
-	  goto error;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_RESTORE_READ_ERROR, 1, 1);
+          goto error;
+        }
 
-      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) ==
-	  BK_BACKUP_END_PAGE_ID)
-	{
-	  break;
-	}
+      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) == BK_BACKUP_END_PAGE_ID)
+        {
+          break;
+        }
 
-      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) !=
-	  BK_BACKUP_FILE_START_PAGE_ID)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_IO_BKUP_DATABASE_VOLUME_OR_FILE_EXPECTED, 0);
-	  goto error;
-	}
+      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) != BK_BACKUP_FILE_START_PAGE_ID)
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_BKUP_DATABASE_VOLUME_OR_FILE_EXPECTED, 0);
+          goto error;
+        }
 
       fprintf (stdout,
-	       msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			       MSGCAT_FILEIO_BKUP_FILE),
-	       file_header_p->vlabel, file_header_p->volid,
-	       file_header_p->nbytes,
-	       CEIL_PTVDIV (file_header_p->nbytes, IO_PAGESIZE));
+               msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                               MSGCAT_FILEIO_BKUP_FILE),
+               file_header_p->vlabel, file_header_p->volid,
+               file_header_p->nbytes, CEIL_PTVDIV (file_header_p->nbytes, IO_PAGESIZE));
       session_p->dbfile.volid = file_header_p->volid;
       session_p->dbfile.nbytes = file_header_p->nbytes;
       STRNCPY (file_name, file_header_p->vlabel, PATH_MAX);
       session_p->dbfile.vlabel = file_name;
       /* Read all file pages until the end of the file */
       if (bk_skip_restore_volume (thread_p, session_p) != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
 
   fprintf (stdout, "\n");
@@ -852,8 +766,7 @@ error:
  */
 int
 bk_get_backup_volume (UNUSED_ARG THREAD_ENTRY * thread_p,
-		      UNUSED_ARG const char *db_fullname,
-		      const char *user_backuppath, char *from_volbackup)
+                      UNUSED_ARG const char *db_fullname, const char *user_backuppath, char *from_volbackup)
 {
 
   assert (user_backuppath != NULL);
@@ -874,21 +787,17 @@ bk_get_backup_volume (UNUSED_ARG THREAD_ENTRY * thread_p,
  *   vol_nbytes(out): Nbytes of the database volume/file to restore
  */
 static int
-bk_get_next_restore_file (THREAD_ENTRY * thread_p,
-			  BK_BACKUP_SESSION * session_p,
-			  char *file_name_p, VOLID * vol_id_p)
+bk_get_next_restore_file (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p, char *file_name_p, VOLID * vol_id_p)
 {
   BK_VOL_HEADER_IN_BACKUP *file_header_p;
   int nbytes;
 
   /* Read the next database volume and/or file to restore. */
-  file_header_p =
-    (BK_VOL_HEADER_IN_BACKUP *) (&session_p->dbfile.area->iopage);
+  file_header_p = (BK_VOL_HEADER_IN_BACKUP *) (&session_p->dbfile.area->iopage);
   nbytes = BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE;
   if (bk_read_restore (thread_p, session_p, nbytes) != NO_ERROR)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_IO_RESTORE_READ_ERROR, 1, 1);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_RESTORE_READ_ERROR, 1, 1);
       return -1;
     }
 
@@ -897,8 +806,7 @@ bk_get_next_restore_file (THREAD_ENTRY * thread_p,
       return 0;
     }
 
-  if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) !=
-      BK_BACKUP_FILE_START_PAGE_ID)
+  if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) != BK_BACKUP_FILE_START_PAGE_ID)
     {
       return -1;
     }
@@ -926,15 +834,14 @@ bk_get_next_restore_file (THREAD_ENTRY * thread_p,
  */
 static int
 bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
-			     int stop_page_id, BK_BACKUP_SESSION * session_p)
+                             int stop_page_id, BK_BACKUP_SESSION * session_p)
 {
   FILEIO_PAGE *io_pgptr = NULL;
 
   io_pgptr = fileio_alloc_io_page (thread_p);
   if (io_pgptr == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, IO_PAGESIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_PAGESIZE);
       return ER_FAILED;
     }
 
@@ -947,13 +854,11 @@ bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
        */
 
       if (bk_write_restore (thread_p, session_p->dbfile.vdes,
-			    io_pgptr, session_p->dbfile.volid,
-			    *next_page_id_p) == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_IO_RESTORE_READ_ERROR, 1, 1);
-	  return ER_FAILED;
-	}
+                            io_pgptr, session_p->dbfile.volid, *next_page_id_p) == NULL)
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_RESTORE_READ_ERROR, 1, 1);
+          return ER_FAILED;
+        }
       *next_page_id_p += 1;
     }
 
@@ -973,8 +878,7 @@ bk_fill_hole_during_restore (THREAD_ENTRY * thread_p, int *next_page_id_p,
  *   nbytes(in): Number of bytes to read
  */
 static int
-bk_decompress_restore_volume (THREAD_ENTRY * thread_p,
-			      BK_BACKUP_SESSION * session_p, int nbytes)
+bk_decompress_restore_volume (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p, int nbytes)
 {
   int error = NO_ERROR;
   BK_THREAD_INFO *thread_info_p;
@@ -994,99 +898,92 @@ bk_decompress_restore_volume (THREAD_ENTRY * thread_p,
     {
     case BK_ZIP_NONE_METHOD:
       if (bk_read_restore (thread_p, session_p, nbytes) != NO_ERROR)
-	{
-	  error = ER_IO_RESTORE_READ_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
-	  goto exit_on_error;
-	}
+        {
+          error = ER_IO_RESTORE_READ_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
+          goto exit_on_error;
+        }
       break;
 
     case BK_ZIP_LZO1X_METHOD:
       {
-	int rv;
-	/* alloc queue node */
-	node = bk_allocate_node (queue_p, backup_header_p);
-	if (node == NULL)
-	  {
-	    goto exit_on_error;
-	  }
+        int rv;
+        /* alloc queue node */
+        node = bk_allocate_node (queue_p, backup_header_p);
+        if (node == NULL)
+          {
+            goto exit_on_error;
+          }
 
-	save_area_p = session_p->dbfile.area;	/* save link */
-	session_p->dbfile.area = (BK_BACKUP_PAGE *) node->zip_page;
+        save_area_p = session_p->dbfile.area;   /* save link */
+        session_p->dbfile.area = (BK_BACKUP_PAGE *) node->zip_page;
 
-	rv = bk_read_restore (thread_p, session_p, sizeof (lzo_uint));
-	session_p->dbfile.area = save_area_p;	/* restore link */
-	if (rv != NO_ERROR)
-	  {
-	    error = ER_IO_RESTORE_READ_ERROR;
-	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
-	    goto exit_on_error;
-	  }
+        rv = bk_read_restore (thread_p, session_p, sizeof (lzo_uint));
+        session_p->dbfile.area = save_area_p;   /* restore link */
+        if (rv != NO_ERROR)
+          {
+            error = ER_IO_RESTORE_READ_ERROR;
+            er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
+            goto exit_on_error;
+          }
 
-	/* sanity check of the size values */
-	if (node->zip_page->buf_len > (size_t) nbytes
-	    || node->zip_page->buf_len == 0)
-	  {
-	    error = ER_IO_LZO_COMPRESS_FAIL;	/* may be compress fail */
-	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 4,
-		    backup_header_p->zip_method,
-		    bk_get_zip_method_string
-		    (backup_header_p->zip_method), backup_header_p->zip_level,
-		    bk_get_zip_level_string (backup_header_p->zip_level));
+        /* sanity check of the size values */
+        if (node->zip_page->buf_len > (size_t) nbytes || node->zip_page->buf_len == 0)
+          {
+            error = ER_IO_LZO_COMPRESS_FAIL;    /* may be compress fail */
+            er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 4,
+                    backup_header_p->zip_method,
+                    bk_get_zip_method_string
+                    (backup_header_p->zip_method), backup_header_p->zip_level,
+                    bk_get_zip_level_string (backup_header_p->zip_level));
 #if defined(RYE_DEBUG)
-	    fprintf (stdout, "bk_decompress_restore_volume: "
-		     "block size error - data corrupted\n");
+            fprintf (stdout, "bk_decompress_restore_volume: " "block size error - data corrupted\n");
 #endif /* RYE_DEBUG */
-	    goto exit_on_error;
-	  }
-	else if (node->zip_page->buf_len < (size_t) nbytes)
-	  {
-	    /* read compressed block data */
-	    lzo_uint unzip_len;
+            goto exit_on_error;
+          }
+        else if (node->zip_page->buf_len < (size_t) nbytes)
+          {
+            /* read compressed block data */
+            lzo_uint unzip_len;
 
-	    save_area_p = session_p->dbfile.area;	/* save link */
-	    session_p->dbfile.area = (BK_BACKUP_PAGE *) node->zip_page->buf;
+            save_area_p = session_p->dbfile.area;       /* save link */
+            session_p->dbfile.area = (BK_BACKUP_PAGE *) node->zip_page->buf;
 
-	    rv = bk_read_restore (thread_p, session_p,
-				  node->zip_page->buf_len);
-	    session_p->dbfile.area = save_area_p;	/* restore link */
-	    if (rv != NO_ERROR)
-	      {
-		error = ER_IO_RESTORE_READ_ERROR;
-		er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
-		goto exit_on_error;
-	      }
+            rv = bk_read_restore (thread_p, session_p, node->zip_page->buf_len);
+            session_p->dbfile.area = save_area_p;       /* restore link */
+            if (rv != NO_ERROR)
+              {
+                error = ER_IO_RESTORE_READ_ERROR;
+                er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
+                goto exit_on_error;
+              }
 
-	    /* decompress - use safe decompressor as data might be corrupted
-	       during a file transfer */
-	    unzip_len = nbytes;
-	    rv = lzo1x_decompress_safe (node->zip_page->buf,
-					node->zip_page->buf_len,
-					(lzo_bytep) session_p->dbfile.area,
-					&unzip_len, NULL);
-	    if (rv != LZO_E_OK || unzip_len != (size_t) nbytes)
-	      {
-		error = ER_IO_LZO_DECOMPRESS_FAIL;
-		er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+            /* decompress - use safe decompressor as data might be corrupted
+               during a file transfer */
+            unzip_len = nbytes;
+            rv = lzo1x_decompress_safe (node->zip_page->buf,
+                                        node->zip_page->buf_len, (lzo_bytep) session_p->dbfile.area, &unzip_len, NULL);
+            if (rv != LZO_E_OK || unzip_len != (size_t) nbytes)
+              {
+                error = ER_IO_LZO_DECOMPRESS_FAIL;
+                er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 #if defined(RYE_DEBUG)
-		fprintf (stdout, "bk_decompress_restore_volume: "
-			 "compressed data violation\n");
+                fprintf (stdout, "bk_decompress_restore_volume: " "compressed data violation\n");
 #endif /* RYE_DEBUG */
-		goto exit_on_error;
-	      }
-	  }
-	else
-	  {
-	    /* no compressed block */
-	    rv = bk_read_restore (thread_p, session_p,
-				  node->zip_page->buf_len);
-	    if (rv != NO_ERROR)
-	      {
-		error = ER_IO_RESTORE_READ_ERROR;
-		er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
-		goto exit_on_error;
-	      }
-	  }
+                goto exit_on_error;
+              }
+          }
+        else
+          {
+            /* no compressed block */
+            rv = bk_read_restore (thread_p, session_p, node->zip_page->buf_len);
+            if (rv != NO_ERROR)
+              {
+                error = ER_IO_RESTORE_READ_ERROR;
+                er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, 1);
+                goto exit_on_error;
+              }
+          }
 
       }
       break;
@@ -1125,10 +1022,8 @@ exit_on_error:
  */
 static int
 bk_restore_volume (THREAD_ENTRY * thread_p,
-		   BK_BACKUP_SESSION * session_p,
-		   char *to_vol_label_p,
-		   char *verbose_to_vol_label_p,
-		   UNUSED_ARG char *prev_vol_label_p)
+                   BK_BACKUP_SESSION * session_p,
+                   char *to_vol_label_p, char *verbose_to_vol_label_p, UNUSED_ARG char *prev_vol_label_p)
 {
   int next_page_id = 0;
   INT64 total_nbytes = 0;
@@ -1153,19 +1048,17 @@ bk_restore_volume (THREAD_ENTRY * thread_p,
   if (io_Bkuptrace_debug > 0)
     {
       fprintf (stdout,
-	       msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
-			       MSGCAT_FILEIO_BKUP_FILE),
-	       session_p->dbfile.vlabel, session_p->dbfile.volid,
-	       session_p->dbfile.nbytes,
-	       CEIL_PTVDIV (session_p->dbfile.nbytes, IO_PAGESIZE));
+               msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_IO,
+                               MSGCAT_FILEIO_BKUP_FILE),
+               session_p->dbfile.vlabel, session_p->dbfile.volid,
+               session_p->dbfile.nbytes, CEIL_PTVDIV (session_p->dbfile.nbytes, IO_PAGESIZE));
       fprintf (stdout, "\n");
     }
 #endif /* RYE_DEBUG */
 
   if (session_p->verbose_fp)
     {
-      fprintf (session_p->verbose_fp, " %-28s | %10d | ",
-	       fileio_get_base_file_name (verbose_to_vol_label_p), npages);
+      fprintf (session_p->verbose_fp, " %-28s | %10d | ", fileio_get_base_file_name (verbose_to_vol_label_p), npages);
       check_ratio = 1;
       check_npages = (int) (((float) npages / 25.0) * check_ratio);
     }
@@ -1179,16 +1072,14 @@ bk_restore_volume (THREAD_ENTRY * thread_p,
   if (!fileio_is_volume_exist (session_p->dbfile.vlabel))
     {
       session_p->dbfile.vdes = fileio_format (thread_p, NULL,
-					      session_p->dbfile.vlabel,
-					      session_p->dbfile.volid, npages,
-					      false, false, false,
-					      IO_PAGESIZE, 0, false);
+                                              session_p->dbfile.vlabel,
+                                              session_p->dbfile.volid, npages,
+                                              false, false, false, IO_PAGESIZE, 0, false);
     }
   else
     {
       session_p->dbfile.vdes =
-	fileio_mount (thread_p, NULL, session_p->dbfile.vlabel,
-		      session_p->dbfile.volid, false, false);
+        fileio_mount (thread_p, NULL, session_p->dbfile.vlabel, session_p->dbfile.volid, false, false);
     }
 
   if (session_p->dbfile.vdes == NULL_VOLDES)
@@ -1197,95 +1088,82 @@ bk_restore_volume (THREAD_ENTRY * thread_p,
     }
 
   /* Read all file pages until the end of the volume/file. */
-  from_npages = (int) CEIL_PTVDIV (session_p->dbfile.nbytes,
-				   backup_header_p->bkpagesize);
+  from_npages = (int) CEIL_PTVDIV (session_p->dbfile.nbytes, backup_header_p->bkpagesize);
   nbytes = BK_RESTORE_DBVOLS_IO_PAGE_SIZE (session_p);
 
   while (true)
     {
-      if (bk_decompress_restore_volume (thread_p, session_p,
-					nbytes) != NO_ERROR)
-	{
-	  goto error;
-	}
+      if (bk_decompress_restore_volume (thread_p, session_p, nbytes) != NO_ERROR)
+        {
+          goto error;
+        }
 
-      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) ==
-	  BK_BACKUP_FILE_END_PAGE_ID)
-	{
-	  /*
-	   * End of File marker in backup, but may not be true end of file being
-	   * restored so we have to continue filling in pages until the
-	   * restored volume is finished.
-	   */
-	  if (next_page_id < npages)
-	    {
-	      if (bk_fill_hole_during_restore (thread_p, &next_page_id,
-					       npages, session_p) != NO_ERROR)
-		{
-		  goto error;
-		}
-	    }
-	  break;
-	}
+      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) == BK_BACKUP_FILE_END_PAGE_ID)
+        {
+          /*
+           * End of File marker in backup, but may not be true end of file being
+           * restored so we have to continue filling in pages until the
+           * restored volume is finished.
+           */
+          if (next_page_id < npages)
+            {
+              if (bk_fill_hole_during_restore (thread_p, &next_page_id, npages, session_p) != NO_ERROR)
+                {
+                  goto error;
+                }
+            }
+          break;
+        }
 
       if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) > from_npages)
-	{
-	  /* Too many pages for this volume according to the file header */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_IO_RESTORE_PAGEID_OUTOF_BOUNDS, 4, 1,
-		  BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area),
-		  from_npages, session_p->dbfile.volid);
-	  goto error;
-	}
+        {
+          /* Too many pages for this volume according to the file header */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                  ER_IO_RESTORE_PAGEID_OUTOF_BOUNDS, 4, 1,
+                  BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area), from_npages, session_p->dbfile.volid);
+          goto error;
+        }
 
 #if defined(RYE_DEBUG)
       fprintf (stdout, "bk_restore_volume: %d\t%d,\t%d\n",
-	       ((BK_BACKUP_PAGE *) (session_p->dbfile.area))->iopageid,
-	       *(PAGEID *) (((char *) (session_p->dbfile.area)) +
-			    offsetof (BK_BACKUP_PAGE,
-				      iopage) + backup_header_p->bkpagesize),
-	       backup_header_p->bkpagesize);
+               ((BK_BACKUP_PAGE *) (session_p->dbfile.area))->iopageid,
+               *(PAGEID *) (((char *) (session_p->dbfile.area)) +
+                            offsetof (BK_BACKUP_PAGE,
+                                      iopage) + backup_header_p->bkpagesize), backup_header_p->bkpagesize);
 #endif
 
       /* Check for holes and fill them (only for full backup level) */
       if (next_page_id < BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area))
-	{
-	  if (bk_fill_hole_during_restore (thread_p, &next_page_id,
-					   session_p->dbfile.
-					   area->iopageid,
-					   session_p) != NO_ERROR)
-	    {
-	      goto error;
-	    }
-	}
+        {
+          if (bk_fill_hole_during_restore (thread_p, &next_page_id,
+                                           session_p->dbfile.area->iopageid, session_p) != NO_ERROR)
+            {
+              goto error;
+            }
+        }
 
       buffer_p = (char *) &session_p->dbfile.area->iopage;
       for (i = 0; i < unit && next_page_id < npages; i++)
-	{
-	  if (bk_write_restore (thread_p, session_p->dbfile.vdes,
-				buffer_p + i * IO_PAGESIZE,
-				session_p->dbfile.volid,
-				next_page_id) == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_IO_RESTORE_READ_ERROR, 1, 1);
-	      goto error;
-	    }
+        {
+          if (bk_write_restore (thread_p, session_p->dbfile.vdes,
+                                buffer_p + i * IO_PAGESIZE, session_p->dbfile.volid, next_page_id) == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_RESTORE_READ_ERROR, 1, 1);
+              goto error;
+            }
 
-	  next_page_id += 1;
-	  total_nbytes += IO_PAGESIZE;
-	  if (session_p->verbose_fp
-	      && npages >= 25 && next_page_id >= check_npages)
-	    {
-	      fprintf (session_p->verbose_fp, "#");
-	      check_ratio++;
-	      check_npages = (int) (((float) npages / 25.0) * check_ratio);
-	    }
-	}
+          next_page_id += 1;
+          total_nbytes += IO_PAGESIZE;
+          if (session_p->verbose_fp && npages >= 25 && next_page_id >= check_npages)
+            {
+              fprintf (session_p->verbose_fp, "#");
+              check_ratio++;
+              check_npages = (int) (((float) npages / 25.0) * check_ratio);
+            }
+        }
     }
 
-  if (total_nbytes > session_p->dbfile.nbytes
-      && session_p->dbfile.volid < LOG_DBFIRST_VOLID)
+  if (total_nbytes > session_p->dbfile.nbytes && session_p->dbfile.volid < LOG_DBFIRST_VOLID)
     {
       (void) ftruncate (session_p->dbfile.vdes, session_p->dbfile.nbytes);
     }
@@ -1306,19 +1184,18 @@ bk_restore_volume (THREAD_ENTRY * thread_p,
   if (session_p->verbose_fp)
     {
       if (next_page_id < 25)
-	{
-	  fprintf (session_p->verbose_fp,
-		   "######################### | done\n");
-	}
+        {
+          fprintf (session_p->verbose_fp, "######################### | done\n");
+        }
       else
-	{
-	  while (check_ratio <= 25)
-	    {
-	      fprintf (session_p->verbose_fp, "#");
-	      check_ratio++;
-	    }
-	  fprintf (session_p->verbose_fp, " | done\n");
-	}
+        {
+          while (check_ratio <= 25)
+            {
+              fprintf (session_p->verbose_fp, "#");
+              check_ratio++;
+            }
+          fprintf (session_p->verbose_fp, " | done\n");
+        }
     }
 
   return NO_ERROR;
@@ -1351,11 +1228,9 @@ error:
  */
 static void *
 bk_write_restore (THREAD_ENTRY * thread_p,
-		  UNUSED_ARG int vol_fd, void *io_page_p,
-		  UNUSED_ARG VOLID vol_id, PAGEID page_id)
+                  UNUSED_ARG int vol_fd, void *io_page_p, UNUSED_ARG VOLID vol_id, PAGEID page_id)
 {
-  if (fileio_write (thread_p, vol_fd, io_page_p, page_id, IO_PAGESIZE)
-      == NULL)
+  if (fileio_write (thread_p, vol_fd, io_page_p, page_id, IO_PAGESIZE) == NULL)
     {
       return NULL;
     }
@@ -1374,8 +1249,7 @@ bk_write_restore (THREAD_ENTRY * thread_p,
  *       next backup meta-data.
  */
 static int
-bk_skip_restore_volume (THREAD_ENTRY * thread_p,
-			BK_BACKUP_SESSION * session_p)
+bk_skip_restore_volume (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p)
 {
   int nbytes;
 #if defined(RYE_DEBUG)
@@ -1386,26 +1260,23 @@ bk_skip_restore_volume (THREAD_ENTRY * thread_p,
   nbytes = BK_RESTORE_DBVOLS_IO_PAGE_SIZE (session_p);
   while (true)
     {
-      if (bk_decompress_restore_volume (thread_p, session_p,
-					nbytes) != NO_ERROR)
-	{
-	  goto error;
-	}
+      if (bk_decompress_restore_volume (thread_p, session_p, nbytes) != NO_ERROR)
+        {
+          goto error;
+        }
 
-      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) ==
-	  BK_BACKUP_FILE_END_PAGE_ID)
-	{
-	  /* End of FILE */
-	  break;
-	}
+      if (BK_GET_BACKUP_PAGE_ID (session_p->dbfile.area) == BK_BACKUP_FILE_END_PAGE_ID)
+        {
+          /* End of FILE */
+          break;
+        }
 
 #if defined(RYE_DEBUG)
       fprintf (stdout, "bk_skip_restore_volume: %d\t%d,\t%d\n",
-	       ((BK_BACKUP_PAGE *) (session_p->dbfile.area))->iopageid,
-	       *(PAGEID *) (((char *) (session_p->dbfile.area)) +
-			    offsetof (BK_BACKUP_PAGE,
-				      iopage) + backup_header_p->bkpagesize),
-	       backup_header_p->bkpagesize);
+               ((BK_BACKUP_PAGE *) (session_p->dbfile.area))->iopageid,
+               *(PAGEID *) (((char *) (session_p->dbfile.area)) +
+                            offsetof (BK_BACKUP_PAGE,
+                                      iopage) + backup_header_p->bkpagesize), backup_header_p->bkpagesize);
 #endif
     }
 
@@ -1434,8 +1305,7 @@ error:
  *   backup_time(in):
  */
 static int
-logpb_check_stop_at_time (UNUSED_ARG BK_BACKUP_SESSION * session,
-			  time_t stop_at, time_t backup_time)
+logpb_check_stop_at_time (UNUSED_ARG BK_BACKUP_SESSION * session, time_t stop_at, time_t backup_time)
 {
   char ctime_buf1[CTIME_MAX], ctime_buf2[CTIME_MAX];
 
@@ -1444,13 +1314,11 @@ logpb_check_stop_at_time (UNUSED_ARG BK_BACKUP_SESSION * session,
       ctime_r (&stop_at, ctime_buf1);
       ctime_r (&backup_time, ctime_buf2);
 
-      ctime_buf1[MAX (strlen (ctime_buf1) - 1, 0)] = '\0';	/* strip '\n' */
+      ctime_buf1[MAX (strlen (ctime_buf1) - 1, 0)] = '\0';      /* strip '\n' */
       ctime_buf2[MAX (strlen (ctime_buf2) - 1, 0)] = '\0';
 
       fprintf (stdout, msgcat_message (MSGCAT_CATALOG_RYE,
-				       MSGCAT_SET_LOG,
-				       MSGCAT_LOG_UPTODATE_ERROR),
-	       ctime_buf1, ctime_buf2);
+                                       MSGCAT_SET_LOG, MSGCAT_LOG_UPTODATE_ERROR), ctime_buf1, ctime_buf2);
 
       return ER_FAILED;
     }
@@ -1487,21 +1355,20 @@ logpb_check_stop_at_time (UNUSED_ARG BK_BACKUP_SESSION * session,
  */
 int
 bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
-	    const char *logpath, const char *prefix_logname,
-	    BO_RESTART_ARG * r_args)
+            const char *logpath, const char *prefix_logname, BO_RESTART_ARG * r_args)
 {
   BK_BACKUP_SESSION session_storage;
   BK_BACKUP_SESSION *session = NULL;
-  char to_volname[PATH_MAX];	/* Name of a volume (TO)      */
-  char verbose_to_volname[PATH_MAX];	/* Printable name of a volume (TO) */
-  char prev_volname[PATH_MAX];	/* Name of a prev volume (TO) */
-  char from_volbackup[PATH_MAX];	/* Name of the backup volume
-					 * (FROM)
-					 */
+  char to_volname[PATH_MAX];    /* Name of a volume (TO)      */
+  char verbose_to_volname[PATH_MAX];    /* Printable name of a volume (TO) */
+  char prev_volname[PATH_MAX];  /* Name of a prev volume (TO) */
+  char from_volbackup[PATH_MAX];        /* Name of the backup volume
+                                         * (FROM)
+                                         */
   VOLID to_volid;
-  FILE *backup_volinfo_fp = NULL;	/* Pointer to backup
-					 * information/directory file
-					 */
+  FILE *backup_volinfo_fp = NULL;       /* Pointer to backup
+                                         * information/directory file
+                                         */
   int another_vol;
   INT64 db_creation;
   INT64 bkup_match_time = 0;
@@ -1511,12 +1378,12 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   PGLENGTH bkdb_iopagesize;
   RYE_VERSION bkdb_version;
   bool error_expected = false;
-  bool restore_in_progress = false;	/* true if any vols restored */
+  bool restore_in_progress = false;     /* true if any vols restored */
   int lgat_vdes = NULL_VOLDES;
   time_t restore_start_time, restore_end_time;
   char time_val[CTIME_MAX];
   int loop_cnt = 0;
-  char lgat_tmpname[PATH_MAX];	/* active log temp name */
+  char lgat_tmpname[PATH_MAX];  /* active log temp name */
   struct stat stat_buf;
   int error_code = NO_ERROR, success = NO_ERROR;
   bool printtoc;
@@ -1531,9 +1398,8 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   LOG_CS_ENTER (thread_p);
 
   if (logpb_find_header_parameters (thread_p, db_fullname, logpath,
-				    prefix_logname, &db_iopagesize,
-				    &log_page_size, &db_creation,
-				    &db_version, &dummy) == -1)
+                                    prefix_logname, &db_iopagesize,
+                                    &log_page_size, &db_creation, &db_version, &dummy) == -1)
     {
       db_iopagesize = IO_PAGESIZE;
       log_page_size = LOG_PAGESIZE;
@@ -1547,24 +1413,22 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
    */
   if (fileio_is_volume_exist (log_Name_active))
     {
-      lgat_vdes = fileio_mount (thread_p, db_fullname, log_Name_active,
-				LOG_DBLOG_ACTIVE_VOLID, true, false);
+      lgat_vdes = fileio_mount (thread_p, db_fullname, log_Name_active, LOG_DBLOG_ACTIVE_VOLID, true, false);
       if (lgat_vdes == NULL_VOLDES)
-	{
-	  error_code = ER_FAILED;
-	  LOG_CS_EXIT ();
-	  goto error;
-	}
+        {
+          error_code = ER_FAILED;
+          LOG_CS_EXIT ();
+          goto error;
+        }
     }
 
-  error_code = bk_get_backup_volume (thread_p, db_fullname,
-				     r_args->backuppath, from_volbackup);
+  error_code = bk_get_backup_volume (thread_p, db_fullname, r_args->backuppath, from_volbackup);
   if (error_code != NO_ERROR)
     {
       if (error_code == ER_LOG_CANNOT_ACCESS_BACKUP)
-	{
-	  error_expected = true;
-	}
+        {
+          error_expected = true;
+        }
       LOG_CS_EXIT ();
       goto error;
     }
@@ -1573,17 +1437,14 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
 
   printtoc = (r_args->printtoc) ? false : true;
   if (bk_start_restore (thread_p, db_fullname, from_volbackup,
-			db_creation, &bkdb_iopagesize,
-			&bkdb_version, &session_storage,
-			printtoc, bkup_match_time,
-			r_args->verbose_file) == NULL)
+                        db_creation, &bkdb_iopagesize,
+                        &bkdb_version, &session_storage, printtoc, bkup_match_time, r_args->verbose_file) == NULL)
     {
       /* Cannot access backup file.. Restore from backup is cancelled */
       if (er_errid () == ER_GENERIC_ERROR)
-	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_CANNOT_ACCESS_BACKUP, 1, from_volbackup);
-	}
+        {
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_CANNOT_ACCESS_BACKUP, 1, from_volbackup);
+        }
       error_code = ER_LOG_CANNOT_ACCESS_BACKUP;
       LOG_CS_EXIT ();
       goto error;
@@ -1601,24 +1462,23 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   else if (r_args->stopat > 0)
     {
       if (session->bkuphdr->end_time > 0)
-	{
-	  backup_time = session->bkuphdr->end_time;
-	}
+        {
+          backup_time = session->bkuphdr->end_time;
+        }
       else
-	{
-	  assert (false);
-	  backup_time = session->bkuphdr->start_time;
-	}
+        {
+          assert (false);
+          backup_time = session->bkuphdr->start_time;
+        }
 
-      error_code = logpb_check_stop_at_time (session, r_args->stopat,
-					     (time_t) backup_time);
+      error_code = logpb_check_stop_at_time (session, r_args->stopat, (time_t) backup_time);
       if (error_code != NO_ERROR)
-	{
-	  (void) bk_finish_restore (thread_p, session);
+        {
+          (void) bk_finish_restore (thread_p, session);
 
-	  LOG_CS_EXIT ();
-	  goto error;
-	}
+          LOG_CS_EXIT ();
+          goto error;
+        }
     }
 
   if (db_iopagesize != bkdb_iopagesize)
@@ -1630,24 +1490,24 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
        * restore process.
        */
       if (log_Gl.append.vdes == NULL_VOLDES)
-	{
-	  /*
-	   * Reset the page size
-	   */
-	  if (db_set_page_size (bkdb_iopagesize, log_page_size) != NO_ERROR)
-	    {
-	      error_code = ER_FAILED;
-	      LOG_CS_EXIT ();
-	      goto error;
-	    }
+        {
+          /*
+           * Reset the page size
+           */
+          if (db_set_page_size (bkdb_iopagesize, log_page_size) != NO_ERROR)
+            {
+              error_code = ER_FAILED;
+              LOG_CS_EXIT ();
+              goto error;
+            }
 
-	  error_code = logtb_define_trantable_log_latch (thread_p, -1);
-	  if (error_code != NO_ERROR)
-	    {
-	      LOG_CS_EXIT ();
-	      goto error;
-	    }
-	}
+          error_code = logtb_define_trantable_log_latch (thread_p, -1);
+          if (error_code != NO_ERROR)
+            {
+              LOG_CS_EXIT ();
+              goto error;
+            }
+        }
     }
 
   /* Can this be moved to restore_continue? */
@@ -1658,12 +1518,10 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
   if (compat != REL_COMPATIBLE)
     {
       char bkdb_release[REL_MAX_VERSION_LENGTH];
-      rel_version_to_string (&bkdb_version, bkdb_release,
-			     sizeof (bkdb_release));
+      rel_version_to_string (&bkdb_version, bkdb_release, sizeof (bkdb_release));
       /* Database is incompatible with current release */
       error_code = ER_LOG_BKUP_INCOMPATIBLE;
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
-	      bkdb_release, rel_version_string ());
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2, bkdb_release, rel_version_string ());
       LOG_CS_EXIT ();
       goto error;
     }
@@ -1675,71 +1533,61 @@ bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
 
   if (session->verbose_fp)
     {
-      fprintf (session->verbose_fp,
-	       "\n[ Database(%s) Restore start ]\n\n", boot_db_name ());
+      fprintf (session->verbose_fp, "\n[ Database(%s) Restore start ]\n\n", boot_db_name ());
 
       restore_start_time = time (NULL);
       (void) ctime_r (&restore_start_time, time_val);
       fprintf (session->verbose_fp, "- restore start time: %s\n", time_val);
-      fprintf (session->verbose_fp,
-	       " step %1d) restore using backup data\n", ++loop_cnt);
+      fprintf (session->verbose_fp, " step %1d) restore using backup data\n", ++loop_cnt);
       fprintf (session->verbose_fp, "\n");
 
-      fprintf (session->verbose_fp,
-	       "- restore progress status (backup data)\n");
-      fprintf (session->verbose_fp,
-	       " -----------------------------------------------------------------------------\n");
-      fprintf (session->verbose_fp,
-	       " volume name                  | # of pages |  restore progress status  | done \n");
-      fprintf (session->verbose_fp,
-	       " -----------------------------------------------------------------------------\n");
+      fprintf (session->verbose_fp, "- restore progress status (backup data)\n");
+      fprintf (session->verbose_fp, " -----------------------------------------------------------------------------\n");
+      fprintf (session->verbose_fp, " volume name                  | # of pages |  restore progress status  | done \n");
+      fprintf (session->verbose_fp, " -----------------------------------------------------------------------------\n");
     }
 
   while (success == NO_ERROR)
     {
-      another_vol =
-	bk_get_next_restore_file (thread_p, session, to_volname, &to_volid);
+      another_vol = bk_get_next_restore_file (thread_p, session, to_volname, &to_volid);
       if (another_vol == 1)
-	{
-	  if (session->verbose_fp)
-	    {
-	      strcpy (verbose_to_volname, to_volname);
-	    }
+        {
+          if (session->verbose_fp)
+            {
+              strcpy (verbose_to_volname, to_volname);
+            }
 
-	  if (to_volid == LOG_DBLOG_ACTIVE_VOLID)
-	    {
-	      /* rename _lgat to _lgat_tmp name */
-	      fileio_make_log_active_temp_name (lgat_tmpname, to_volname);
-	      strcpy (to_volname, lgat_tmpname);
-	    }
+          if (to_volid == LOG_DBLOG_ACTIVE_VOLID)
+            {
+              /* rename _lgat to _lgat_tmp name */
+              fileio_make_log_active_temp_name (lgat_tmpname, to_volname);
+              strcpy (to_volname, lgat_tmpname);
+            }
 
-	  restore_in_progress = true;
+          restore_in_progress = true;
 
-	  success = bk_restore_volume (thread_p, session,
-				       to_volname, verbose_to_volname,
-				       prev_volname);
-	}
+          success = bk_restore_volume (thread_p, session, to_volname, verbose_to_volname, prev_volname);
+        }
       else if (another_vol == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       else
-	{
-	  success = ER_FAILED;
-	  break;
-	}
+        {
+          success = ER_FAILED;
+          break;
+        }
     }
 
   if (session->verbose_fp)
     {
       fprintf (session->verbose_fp,
-	       " -----------------------------------------------------------------------------\n\n");
+               " -----------------------------------------------------------------------------\n\n");
     }
 
 end:
   /* rename logactive tmp to logactive */
-  if (stat (log_Name_active, &stat_buf) != 0
-      && stat (lgat_tmpname, &stat_buf) == 0)
+  if (stat (log_Name_active, &stat_buf) != 0 && stat (lgat_tmpname, &stat_buf) == 0)
     {
       rename (lgat_tmpname, log_Name_active);
     }
@@ -1754,13 +1602,12 @@ end:
   if (session != NULL)
     {
       if (session->verbose_fp)
-	{
-	  restore_end_time = time (NULL);
-	  (void) ctime_r (&restore_end_time, time_val);
-	  fprintf (session->verbose_fp, "- restore end time: %s\n", time_val);
-	  fprintf (session->verbose_fp,
-		   "[ Database(%s) Restore end ]\n", boot_db_name ());
-	}
+        {
+          restore_end_time = time (NULL);
+          (void) ctime_r (&restore_end_time, time_val);
+          fprintf (session->verbose_fp, "- restore end time: %s\n", time_val);
+          fprintf (session->verbose_fp, "[ Database(%s) Restore end ]\n", boot_db_name ());
+        }
 
       error_code = bk_finish_restore (thread_p, session);
     }
@@ -1786,14 +1633,12 @@ error:
        * they succeed.
        */
       fprintf (stdout,
-	       msgcat_message (MSGCAT_CATALOG_RYE,
-			       MSGCAT_SET_LOG,
-			       MSGCAT_LOG_READ_ERROR_DURING_RESTORE),
-	       session->bkup.name, BK_INITIAL_BACKUP_UNITS, to_volname,
-	       session->dbfile.volid);
+               msgcat_message (MSGCAT_CATALOG_RYE,
+                               MSGCAT_SET_LOG,
+                               MSGCAT_LOG_READ_ERROR_DURING_RESTORE),
+               session->bkup.name, BK_INITIAL_BACKUP_UNITS, to_volname, session->dbfile.volid);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MAYNEED_MEDIA_RECOVERY,
-	      1, from_volbackup);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MAYNEED_MEDIA_RECOVERY, 1, from_volbackup);
       error_code = ER_LOG_MAYNEED_MEDIA_RECOVERY;
     }
 

@@ -52,7 +52,6 @@ struct rbl_copy_context
   struct timeval start_time;
 };
 
-extern int rbl_init_copy_context (RBL_COPY_CONTEXT * ctx, int gid,
-				  bool run_slave);
+extern int rbl_init_copy_context (RBL_COPY_CONTEXT * ctx, int gid, bool run_slave);
 extern int rbl_copy_group_data (RBL_COPY_CONTEXT * ctx);
 #endif /* RBL_MOVE_GROUP_H_ */

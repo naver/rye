@@ -75,8 +75,7 @@ static DEC_STRING powers_of_2[DB_NUMERIC_BUF_SIZE * 16];
 #if !defined(SERVER_MODE)
 static bool initialized_2 = false;
 #endif
-static unsigned char powers_of_10[TWICE_NUM_MAX_PREC +
-				  1][DB_NUMERIC_BUF_SIZE];
+static unsigned char powers_of_10[TWICE_NUM_MAX_PREC + 1][DB_NUMERIC_BUF_SIZE];
 #if !defined(SERVER_MODE)
 static bool initialized_10 = false;
 #endif
@@ -94,6 +93,7 @@ static double numeric_Upper_limit[10] = {
   (double) DB_INT32_MAX / 1e8,
   (double) DB_INT32_MAX / 1e9
 };
+
 static double numeric_Pow_of_10[10] = {
   1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9
 };
@@ -110,15 +110,13 @@ FP_VALUE_TYPE;
 
 static bool numeric_is_negative (DB_C_NUMERIC arg);
 static void numeric_copy (DB_C_NUMERIC dest, DB_C_NUMERIC source);
-static void numeric_copy_long (DB_C_NUMERIC dest, DB_C_NUMERIC source,
-			       bool is_long_num);
+static void numeric_copy_long (DB_C_NUMERIC dest, DB_C_NUMERIC source, bool is_long_num);
 static void numeric_increase (DB_C_NUMERIC answer);
 static void numeric_increase_long (DB_C_NUMERIC answer, bool is_long_num);
 static void numeric_decrease (DB_C_NUMERIC answer);
 static void numeric_zero (DB_C_NUMERIC answer, int size);
 static void numeric_init_dec_str (DEC_STRING * answer);
-static void numeric_add_dec_str (DEC_STRING * arg1,
-				 DEC_STRING * arg2, DEC_STRING * answer);
+static void numeric_add_dec_str (DEC_STRING * arg1, DEC_STRING * arg2, DEC_STRING * answer);
 static void numeric_init_pow_of_2_helper (void);
 #if defined(SERVER_MODE)
 static void numeric_init_pow_of_2 (void);
@@ -130,75 +128,46 @@ static void numeric_init_pow_of_10 (void);
 #endif
 static DB_C_NUMERIC numeric_get_pow_of_10 (int exp);
 static void numeric_double_shift_bit (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2,
-				      int numbits,
-				      DB_C_NUMERIC lsb, DB_C_NUMERIC msb,
-				      bool is_long_num);
+                                      int numbits, DB_C_NUMERIC lsb, DB_C_NUMERIC msb, bool is_long_num);
 static int numeric_compare_pos (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2);
 static void numeric_negate (DB_C_NUMERIC answer);
 static void numeric_negate_long (DB_C_NUMERIC answer, bool is_long_num);
-static void numeric_shift_byte (DB_C_NUMERIC arg,
-				int numbytes, DB_C_NUMERIC answer,
-				int length);
+static void numeric_shift_byte (DB_C_NUMERIC arg, int numbytes, DB_C_NUMERIC answer, int length);
 static bool numeric_is_zero (DB_C_NUMERIC arg);
 static bool numeric_is_long (DB_C_NUMERIC arg);
 static bool numeric_is_bigint (DB_C_NUMERIC arg);
 static bool numeric_is_bit_set (DB_C_NUMERIC arg, int pos);
 static bool numeric_overflow (DB_C_NUMERIC arg, int exp);
-static void numeric_add (DB_C_NUMERIC arg1,
-			 DB_C_NUMERIC arg2, DB_C_NUMERIC answer, int size);
-static void numeric_sub (DB_C_NUMERIC arg1,
-			 DB_C_NUMERIC arg2, DB_C_NUMERIC answer, int size);
-static void numeric_mul (DB_C_NUMERIC a1,
-			 DB_C_NUMERIC a2,
-			 bool * positive_flag, DB_C_NUMERIC answer);
+static void numeric_add (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer, int size);
+static void numeric_sub (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer, int size);
+static void numeric_mul (DB_C_NUMERIC a1, DB_C_NUMERIC a2, bool * positive_flag, DB_C_NUMERIC answer);
 static void numeric_long_div (DB_C_NUMERIC a1, DB_C_NUMERIC a2,
-			      DB_C_NUMERIC answer, DB_C_NUMERIC remainder,
-			      bool is_long_num);
-static void numeric_div (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2,
-			 DB_C_NUMERIC answer, DB_C_NUMERIC remainder);
+                              DB_C_NUMERIC answer, DB_C_NUMERIC remainder, bool is_long_num);
+static void numeric_div (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer, DB_C_NUMERIC remainder);
 static int numeric_compare (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2);
 static int numeric_scale_by_ten (DB_C_NUMERIC arg, bool is_long_num);
-static int numeric_scale_dec (const DB_C_NUMERIC arg,
-			      int dscale, DB_C_NUMERIC answer);
-static int numeric_scale_dec_long (DB_C_NUMERIC answer, int dscale,
-				   bool is_long_num);
+static int numeric_scale_dec (const DB_C_NUMERIC arg, int dscale, DB_C_NUMERIC answer);
+static int numeric_scale_dec_long (DB_C_NUMERIC answer, int dscale, bool is_long_num);
 static int numeric_common_prec_scale (const DB_VALUE * dbv1,
-				      const DB_VALUE * dbv2,
-				      DB_VALUE * dbv1_common,
-				      DB_VALUE * dbv2_common);
+                                      const DB_VALUE * dbv2, DB_VALUE * dbv1_common, DB_VALUE * dbv2_common);
 static int numeric_prec_scale_when_overflow (const DB_VALUE * dbv1,
-					     const DB_VALUE * dbv2,
-					     DB_VALUE * dbv1_common,
-					     DB_VALUE * dbv2_common);
-static void numeric_coerce_big_num_to_dec_str (unsigned char *num,
-					       char *dec_str);
+                                             const DB_VALUE * dbv2, DB_VALUE * dbv1_common, DB_VALUE * dbv2_common);
+static void numeric_coerce_big_num_to_dec_str (unsigned char *num, char *dec_str);
 static int numeric_get_msb_for_dec (int src_prec, int src_scale,
-				    unsigned char *src, int *dest_prec,
-				    int *dest_scale, DB_C_NUMERIC dest);
+                                    unsigned char *src, int *dest_prec, int *dest_scale, DB_C_NUMERIC dest);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static int numeric_fast_convert (double adouble, int dst_scale,
-				 DB_C_NUMERIC num, int *prec, int *scale);
+static int numeric_fast_convert (double adouble, int dst_scale, DB_C_NUMERIC num, int *prec, int *scale);
 #endif
 static FP_VALUE_TYPE get_fp_value_type (double d);
-static int numeric_internal_real_to_num (double adouble,
-					 int dst_scale,
-					 DB_C_NUMERIC num, int *prec,
-					 int *scale);
+static int numeric_internal_real_to_num (double adouble, int dst_scale, DB_C_NUMERIC num, int *prec, int *scale);
 static void numeric_get_integral_part (const DB_C_NUMERIC num,
-				       const int src_prec,
-				       const int src_scale,
-				       const int dst_prec, DB_C_NUMERIC dest);
+                                       const int src_prec, const int src_scale, const int dst_prec, DB_C_NUMERIC dest);
 static void numeric_get_fractional_part (const DB_C_NUMERIC num,
-					 const int src_scale,
-					 const int dst_prec,
-					 DB_C_NUMERIC dest);
-static bool numeric_is_fraction_part_zero (const DB_C_NUMERIC num,
-					   const int scale);
+                                         const int src_scale, const int dst_prec, DB_C_NUMERIC dest);
+static bool numeric_is_fraction_part_zero (const DB_C_NUMERIC num, const int scale);
 static bool numeric_is_longnum_value (DB_C_NUMERIC arg);
-static int numeric_longnum_to_shortnum (DB_C_NUMERIC answer,
-					DB_C_NUMERIC long_arg);
-static void numeric_shortnum_to_longnum (DB_C_NUMERIC long_answer,
-					 DB_C_NUMERIC arg);
+static int numeric_longnum_to_shortnum (DB_C_NUMERIC answer, DB_C_NUMERIC long_arg);
+static void numeric_shortnum_to_longnum (DB_C_NUMERIC long_answer, DB_C_NUMERIC arg);
 static int get_significant_digit (DB_BIGINT i);
 /*
  * numeric_is_negative () -
@@ -240,15 +209,15 @@ numeric_copy_long (DB_C_NUMERIC dest, DB_C_NUMERIC source, bool is_long_num)
   if (dest != source)
     {
       if (source == NULL || dest == NULL)
-	{
-	  assert (0);
-	  return;
-	}
+        {
+          assert (0);
+          return;
+        }
 
       if (is_long_num)
-	{
-	  num_cnt = DB_LONG_NUMERIC_MULTIPLIER;
-	}
+        {
+          num_cnt = DB_LONG_NUMERIC_MULTIPLIER;
+        }
       memcpy (dest, source, DB_NUMERIC_BUF_SIZE * num_cnt);
     }
 }
@@ -328,7 +297,7 @@ numeric_decrease (DB_C_NUMERIC answer)
 static void
 numeric_zero (DB_C_NUMERIC answer, int size)
 {
-  memset (answer, 0, size);	/* sizeof(answer[0]) == 1 */
+  memset (answer, 0, size);     /* sizeof(answer[0]) == 1 */
 }
 
 /*
@@ -376,8 +345,7 @@ numeric_init_dec_str (DEC_STRING * answer)
  */
 
 static void
-numeric_add_dec_str (DEC_STRING * arg1, DEC_STRING * arg2,
-		     DEC_STRING * answer)
+numeric_add_dec_str (DEC_STRING * arg1, DEC_STRING * arg2, DEC_STRING * answer)
 {
   unsigned int answer_bit = 0;
   int digit;
@@ -390,22 +358,22 @@ numeric_add_dec_str (DEC_STRING * arg1, DEC_STRING * arg2,
       arg2_dec = arg2->digits[digit];
 
       if (arg1_dec == -1)
-	{
-	  arg1_dec = 0;
+        {
+          arg1_dec = 0;
 
-	  if (answer_bit < 10)
-	    {
-	      break;		/* pass through the leftmost digits */
-	    }
-	}
+          if (answer_bit < 10)
+            {
+              break;            /* pass through the leftmost digits */
+            }
+        }
 
       if (arg2_dec == -1)
-	{
-	  /* is not first element */
-	  assert (digit < TWICE_NUM_MAX_PREC - 1);
+        {
+          /* is not first element */
+          assert (digit < TWICE_NUM_MAX_PREC - 1);
 
-	  arg2_dec = 0;
-	}
+          arg2_dec = 0;
+        }
 
       assert (arg1_dec >= 0);
       assert (arg2_dec >= 0);
@@ -433,8 +401,7 @@ numeric_init_pow_of_2_helper (void)
   for (i = 1; i < DB_NUMERIC_BUF_SIZE * 16; i++)
     {
       numeric_init_dec_str (&(powers_of_2[i]));
-      numeric_add_dec_str (&(powers_of_2[i - 1]), &(powers_of_2[i - 1]),
-			   &(powers_of_2[i]));
+      numeric_add_dec_str (&(powers_of_2[i - 1]), &(powers_of_2[i - 1]), &(powers_of_2[i]));
     }
 }
 
@@ -461,7 +428,7 @@ numeric_init_pow_of_2 (void)
 static DEC_STRING *
 numeric_get_pow_of_2 (int exp)
 {
-  assert (exp < (int) (DB_NUMERIC_BUF_SIZE * 16 - 3));	/* exp < 253 */
+  assert (exp < (int) (DB_NUMERIC_BUF_SIZE * 16 - 3));  /* exp < 253 */
 
 #if !defined(SERVER_MODE)
   /*  If this is the first time to call this routine, initialize  */
@@ -564,12 +531,11 @@ numeric_init_power_value_string (void)
  */
 static void
 numeric_double_shift_bit (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2,
-			  int numbits, DB_C_NUMERIC lsb, DB_C_NUMERIC msb,
-			  bool is_long_num)
+                          int numbits, DB_C_NUMERIC lsb, DB_C_NUMERIC msb, bool is_long_num)
 {
   /* the largest buf size of DB_C_NUMERIC */
   unsigned char local_arg1[DB_NUMERIC_BUF_SIZE * DB_LONG_NUMERIC_MULTIPLIER];
-  unsigned char local_arg2[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char local_arg2[DB_NUMERIC_BUF_SIZE];        /* copy of a DB_C_NUMERIC */
   unsigned int digit;
   unsigned int buf_size;
 
@@ -589,20 +555,16 @@ numeric_double_shift_bit (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2,
   /*  Loop through all but last word of msb shifting bits  */
   for (digit = 0; digit < DB_NUMERIC_BUF_SIZE - 1; digit++)
     {
-      msb[digit] = (local_arg2[digit] << numbits) |
-	(local_arg2[digit + 1] >> (8 - numbits));
+      msb[digit] = (local_arg2[digit] << numbits) | (local_arg2[digit + 1] >> (8 - numbits));
     }
 
   /*  Do last word of msb separately using upper word of lsb  */
-  msb[DB_NUMERIC_BUF_SIZE - 1] =
-    (local_arg2[DB_NUMERIC_BUF_SIZE - 1] << numbits) |
-    (local_arg1[0] >> (8 - numbits));
+  msb[DB_NUMERIC_BUF_SIZE - 1] = (local_arg2[DB_NUMERIC_BUF_SIZE - 1] << numbits) | (local_arg1[0] >> (8 - numbits));
 
   /*  Loop through all but last word of lsb shifting bits  */
   for (digit = 0; digit < buf_size - 1; digit++)
     {
-      lsb[digit] = (local_arg1[digit] << numbits) |
-	(local_arg1[digit + 1] >> (8 - numbits));
+      lsb[digit] = (local_arg1[digit] << numbits) | (local_arg1[digit + 1] >> (8 - numbits));
     }
 
   /*  Do last word of lsb separately.  */
@@ -630,9 +592,9 @@ numeric_compare_pos (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2)
   for (digit = 0; digit < DB_NUMERIC_BUF_SIZE; digit++)
     {
       if (arg1[digit] != arg2[digit])
-	{
-	  return (arg1[digit] > arg2[digit]) ? 1 : (-1);
-	}
+        {
+          return (arg1[digit] > arg2[digit]) ? 1 : (-1);
+        }
     }
 
   /*  If all bytes have been compared, then args are equal  */
@@ -699,8 +661,7 @@ numeric_negate_long (DB_C_NUMERIC answer, bool is_long_num)
  *       are zero filled.
  */
 static void
-numeric_shift_byte (DB_C_NUMERIC arg,
-		    int numbytes, DB_C_NUMERIC answer, int length)
+numeric_shift_byte (DB_C_NUMERIC arg, int numbytes, DB_C_NUMERIC answer, int length)
 {
   int digit;
   int first;
@@ -712,13 +673,13 @@ numeric_shift_byte (DB_C_NUMERIC arg,
   for (digit = 0; digit < length; digit++)
     {
       if (first <= digit && digit <= last)
-	{
-	  answer[digit] = arg[digit - first];
-	}
+        {
+          answer[digit] = arg[digit - first];
+        }
       else
-	{
-	  answer[digit] = 0;
-	}
+        {
+          answer[digit] = 0;
+        }
     }
 }
 
@@ -741,9 +702,9 @@ numeric_is_zero (DB_C_NUMERIC arg)
   for (digit = 0; digit < DB_NUMERIC_BUF_SIZE; digit++)
     {
       if (arg[digit] != 0)
-	{
-	  return (false);
-	}
+        {
+          return (false);
+        }
     }
 
   return (true);
@@ -776,9 +737,9 @@ numeric_is_long (DB_C_NUMERIC arg)
   for (digit = 1; digit < DB_NUMERIC_BUF_SIZE - sizeof (int); digit++)
     {
       if (arg[digit] != pad)
-	{
-	  return (false);
-	}
+        {
+          return (false);
+        }
     }
 
   return (arg[digit] & 0x80) == (pad & 0x80) ? true : false;
@@ -811,9 +772,9 @@ numeric_is_bigint (DB_C_NUMERIC arg)
   for (digit = 1; digit < DB_NUMERIC_BUF_SIZE - sizeof (DB_BIGINT); digit++)
     {
       if (arg[digit] != pad)
-	{
-	  return (false);
-	}
+        {
+          return (false);
+        }
     }
 
   return (arg[digit] & 0x80) == (pad & 0x80) ? true : false;
@@ -844,19 +805,17 @@ numeric_is_bit_set (DB_C_NUMERIC arg, int pos)
 static bool
 numeric_overflow (DB_C_NUMERIC arg, int exp)
 {
-  unsigned char narg[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char narg[DB_NUMERIC_BUF_SIZE];      /* copy of a DB_C_NUMERIC */
 
   if (numeric_is_negative (arg))
     {
       numeric_copy (narg, arg);
       numeric_negate (narg);
-      return (numeric_compare_pos (narg, numeric_get_pow_of_10 (exp)) >=
-	      0) ? true : false;
+      return (numeric_compare_pos (narg, numeric_get_pow_of_10 (exp)) >= 0) ? true : false;
     }
   else
     {
-      return (numeric_compare_pos (arg, numeric_get_pow_of_10 (exp)) >=
-	      0) ? true : false;
+      return (numeric_compare_pos (arg, numeric_get_pow_of_10 (exp)) >= 0) ? true : false;
     }
 }
 
@@ -872,8 +831,7 @@ numeric_overflow (DB_C_NUMERIC arg, int exp)
  *       that arg1 and arg2 have the same scaling.
  */
 static void
-numeric_add (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer,
-	     int size)
+numeric_add (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer, int size)
 {
   unsigned int answer_bit = 0;
   int digit;
@@ -898,10 +856,9 @@ numeric_add (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer,
  *       It assumes that arg1 and arg2 have the same scaling.
  */
 static void
-numeric_sub (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer,
-	     int size)
+numeric_sub (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer, int size)
 {
-  unsigned char neg_arg2[2 * DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char neg_arg2[2 * DB_NUMERIC_BUF_SIZE];      /* copy of a DB_C_NUMERIC */
 
   /*  Make arg2 negative (use 2's complement)  */
   numeric_copy (neg_arg2, arg2);
@@ -923,18 +880,17 @@ numeric_sub (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer,
  * Note: This routine multiplies two numerics and returns the results.
  */
 static void
-numeric_mul (DB_C_NUMERIC a1,
-	     DB_C_NUMERIC a2, bool * positive_ans, DB_C_NUMERIC answer)
+numeric_mul (DB_C_NUMERIC a1, DB_C_NUMERIC a2, bool * positive_ans, DB_C_NUMERIC answer)
 {
   unsigned int answer_bit;
   int digit1;
   int digit2;
   int shift;
-  unsigned char temp_term[2 * DB_NUMERIC_BUF_SIZE];	/* copy of DB_C_NUMERIC */
-  unsigned char temp_arg1[2 * DB_NUMERIC_BUF_SIZE];	/* copy of DB_C_NUMERIC */
-  unsigned char temp_arg2[2 * DB_NUMERIC_BUF_SIZE];	/* copy of DB_C_NUMERIC */
-  unsigned char arg1[DB_NUMERIC_BUF_SIZE];	/* copy of DB_C_NUMERIC */
-  unsigned char arg2[DB_NUMERIC_BUF_SIZE];	/* copy of DB_C_NUMERIC */
+  unsigned char temp_term[2 * DB_NUMERIC_BUF_SIZE];     /* copy of DB_C_NUMERIC */
+  unsigned char temp_arg1[2 * DB_NUMERIC_BUF_SIZE];     /* copy of DB_C_NUMERIC */
+  unsigned char temp_arg2[2 * DB_NUMERIC_BUF_SIZE];     /* copy of DB_C_NUMERIC */
+  unsigned char arg1[DB_NUMERIC_BUF_SIZE];      /* copy of DB_C_NUMERIC */
+  unsigned char arg2[DB_NUMERIC_BUF_SIZE];      /* copy of DB_C_NUMERIC */
 
   /*  Initialize the answer  */
   numeric_zero (answer, 2 * DB_NUMERIC_BUF_SIZE);
@@ -971,24 +927,22 @@ numeric_mul (DB_C_NUMERIC a1,
   for (digit2 = (2 * DB_NUMERIC_BUF_SIZE) - 1; digit2 >= 0; digit2--)
     {
       if (temp_arg2[digit2] != 0)
-	{
-	  answer_bit = 0;
-	  numeric_shift_byte (arg1, shift, temp_arg1,
-			      2 * DB_NUMERIC_BUF_SIZE);
+        {
+          answer_bit = 0;
+          numeric_shift_byte (arg1, shift, temp_arg1, 2 * DB_NUMERIC_BUF_SIZE);
 
-	  /*  Loop through the 8-bit digits of temp_arg1  */
-	  for (digit1 = (2 * DB_NUMERIC_BUF_SIZE - 1); digit1 >= 0; digit1--)
-	    {
-	      /* the unsigned int casts are necessary here to avoid 16 bit integer
-	       * overflow during the multiplication on PC's
-	       */
-	      answer_bit = ((unsigned int) temp_arg1[digit1] *
-			    (unsigned int) temp_arg2[digit2]) +
-		(unsigned int) CARRYOVER (answer_bit);
-	      temp_term[digit1] = GET_LOWER_BYTE (answer_bit);
-	    }
-	  numeric_add (temp_term, answer, answer, 2 * DB_NUMERIC_BUF_SIZE);
-	}
+          /*  Loop through the 8-bit digits of temp_arg1  */
+          for (digit1 = (2 * DB_NUMERIC_BUF_SIZE - 1); digit1 >= 0; digit1--)
+            {
+              /* the unsigned int casts are necessary here to avoid 16 bit integer
+               * overflow during the multiplication on PC's
+               */
+              answer_bit = ((unsigned int) temp_arg1[digit1] *
+                            (unsigned int) temp_arg2[digit2]) + (unsigned int) CARRYOVER (answer_bit);
+              temp_term[digit1] = GET_LOWER_BYTE (answer_bit);
+            }
+          numeric_add (temp_term, answer, answer, 2 * DB_NUMERIC_BUF_SIZE);
+        }
       shift++;
     }
 }
@@ -1008,16 +962,14 @@ numeric_mul (DB_C_NUMERIC a1,
  *       Only a1(the dividend) and answer(the quotient) can be long numeric.
  */
 static void
-numeric_long_div (DB_C_NUMERIC a1, DB_C_NUMERIC a2,
-		  DB_C_NUMERIC answer, DB_C_NUMERIC remainder,
-		  bool is_long_num)
+numeric_long_div (DB_C_NUMERIC a1, DB_C_NUMERIC a2, DB_C_NUMERIC answer, DB_C_NUMERIC remainder, bool is_long_num)
 {
   unsigned int nbit, total_bit;
   unsigned int buf_size;
   /* the largest buf size for DB_C_NUMERIC */
   unsigned char arg1[DB_LONG_NUMERIC_MULTIPLIER * DB_NUMERIC_BUF_SIZE];
-  unsigned char arg2[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
-  unsigned char neg_arg2[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char arg2[DB_NUMERIC_BUF_SIZE];      /* copy of a DB_C_NUMERIC */
+  unsigned char neg_arg2[DB_NUMERIC_BUF_SIZE];  /* copy of a DB_C_NUMERIC */
   int neg_sign = 0;
   int neg_remainder = false;
 
@@ -1065,16 +1017,15 @@ numeric_long_div (DB_C_NUMERIC a1, DB_C_NUMERIC a2,
     /*****  DON'T DO THIS ONE BIT AT A TIME.                            *****/
   for (nbit = 0; nbit < total_bit; nbit++)
     {
-      numeric_double_shift_bit (answer, remainder, 1, answer, remainder,
-				is_long_num);
+      numeric_double_shift_bit (answer, remainder, 1, answer, remainder, is_long_num);
 
       /* If remainder >= arg2, subtract arg2 from remainder and increment
        * the answer.  */
       if (numeric_compare_pos (remainder, arg2) >= 0)
-	{
-	  numeric_add (remainder, neg_arg2, remainder, DB_NUMERIC_BUF_SIZE);
-	  answer[buf_size - 1] += 1;
-	}
+        {
+          numeric_add (remainder, neg_arg2, remainder, DB_NUMERIC_BUF_SIZE);
+          answer[buf_size - 1] += 1;
+        }
     }
 
   /*  If the sign is negative,  negate the answer  */
@@ -1109,8 +1060,7 @@ numeric_long_div (DB_C_NUMERIC a1, DB_C_NUMERIC a2,
  *       d) Otherwise, perform long division
  */
 static void
-numeric_div (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2,
-	     DB_C_NUMERIC answer, DB_C_NUMERIC remainder)
+numeric_div (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2, DB_C_NUMERIC answer, DB_C_NUMERIC remainder)
 {
   /* Case 1 - arg2 = 0 */
   if (numeric_is_zero (arg2))
@@ -1171,33 +1121,33 @@ numeric_is_longnum_value (DB_C_NUMERIC arg)
   if (numeric_is_negative (arg))
     {
       for (i = 0; i < total_nums; i++)
-	{
-	  if (arg[i] != 0xff)
-	    {
-	      return true;
-	    }
-	}
+        {
+          if (arg[i] != 0xff)
+            {
+              return true;
+            }
+        }
 
       if (!(arg[i] & 0x80))
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
 
     }
   else
     {
       for (i = 0; i < total_nums; i++)
-	{
-	  if (arg[i] != 0)
-	    {
-	      return true;
-	    }
-	}
+        {
+          if (arg[i] != 0)
+            {
+              return true;
+            }
+        }
 
       if (arg[i] & 0x80)
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
@@ -1222,15 +1172,13 @@ numeric_shortnum_to_longnum (DB_C_NUMERIC long_answer, DB_C_NUMERIC arg)
   for (i = 0; i < DB_LONG_NUMERIC_MULTIPLIER - 1; i++)
     {
       if (is_negative)
-	{
-	  numeric_negative_one (long_answer + i * DB_NUMERIC_BUF_SIZE,
-				DB_NUMERIC_BUF_SIZE);
-	}
+        {
+          numeric_negative_one (long_answer + i * DB_NUMERIC_BUF_SIZE, DB_NUMERIC_BUF_SIZE);
+        }
       else
-	{
-	  numeric_zero (long_answer + i * DB_NUMERIC_BUF_SIZE,
-			DB_NUMERIC_BUF_SIZE);
-	}
+        {
+          numeric_zero (long_answer + i * DB_NUMERIC_BUF_SIZE, DB_NUMERIC_BUF_SIZE);
+        }
     }
   numeric_copy (long_answer + i * DB_NUMERIC_BUF_SIZE, arg);
 }
@@ -1253,9 +1201,7 @@ numeric_longnum_to_shortnum (DB_C_NUMERIC answer, DB_C_NUMERIC long_arg)
       return ER_NUM_OVERFLOW;
     }
 
-  numeric_copy (answer,
-		long_arg + (DB_LONG_NUMERIC_MULTIPLIER -
-			    1) * DB_NUMERIC_BUF_SIZE);
+  numeric_copy (answer, long_arg + (DB_LONG_NUMERIC_MULTIPLIER - 1) * DB_NUMERIC_BUF_SIZE);
   return NO_ERROR;
 }
 
@@ -1276,33 +1222,33 @@ numeric_compare (DB_C_NUMERIC arg1, DB_C_NUMERIC arg2)
 {
   unsigned char narg1[DB_NUMERIC_BUF_SIZE];
   unsigned char narg2[DB_NUMERIC_BUF_SIZE];
-  int arg1_sign, arg2_sign;	/* 0 if positive */
+  int arg1_sign, arg2_sign;     /* 0 if positive */
 
   arg1_sign = numeric_is_negative (arg1) ? 1 : 0;
   arg2_sign = numeric_is_negative (arg2) ? 1 : 0;
 
   if (arg1_sign < arg2_sign)
-    {				/* arg1 >= 0, arg2 < 0 */
+    {                           /* arg1 >= 0, arg2 < 0 */
       return (1);
     }
   else if (arg1_sign > arg2_sign)
-    {				/* arg1 < 0, arg2 >= 0 */
+    {                           /* arg1 < 0, arg2 >= 0 */
       return (-1);
     }
   else
     {
       if (arg1_sign == 0)
-	{			/* arg1 >= 0, arg2 >= 0 */
-	  return numeric_compare_pos (arg1, arg2);
-	}
+        {                       /* arg1 >= 0, arg2 >= 0 */
+          return numeric_compare_pos (arg1, arg2);
+        }
       else
-	{			/* arg1 < 0, arg2 < 0 */
-	  numeric_copy (narg1, arg1);	/* need copy? */
-	  numeric_negate (narg1);
-	  numeric_copy (narg2, arg2);	/* need copy? */
-	  numeric_negate (narg2);
-	  return -numeric_compare_pos (narg1, narg2);
-	}
+        {                       /* arg1 < 0, arg2 < 0 */
+          numeric_copy (narg1, arg1);   /* need copy? */
+          numeric_negate (narg1);
+          numeric_copy (narg2, arg2);   /* need copy? */
+          numeric_negate (narg2);
+          return -numeric_compare_pos (narg1, narg2);
+        }
     }
 }
 
@@ -1397,13 +1343,13 @@ numeric_scale_dec_long (DB_C_NUMERIC answer, int dscale, bool is_long_num)
   if (dscale >= 0)
     {
       for (loop = 0; loop < dscale && ret == NO_ERROR; loop++)
-	{
-	  ret = numeric_scale_by_ten (answer, is_long_num);
-	}
+        {
+          ret = numeric_scale_by_ten (answer, is_long_num);
+        }
       if (ret != NO_ERROR)
-	{
-	  return ret;
-	}
+        {
+          return ret;
+        }
     }
 
   return ret;
@@ -1424,11 +1370,10 @@ numeric_scale_dec_long (DB_C_NUMERIC answer, int dscale, bool is_long_num)
  *       when an error occurs.
  */
 static int
-numeric_common_prec_scale (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
-			   DB_VALUE * dbv1_common, DB_VALUE * dbv2_common)
+numeric_common_prec_scale (const DB_VALUE * dbv1, const DB_VALUE * dbv2, DB_VALUE * dbv1_common, DB_VALUE * dbv2_common)
 {
   int error = NO_ERROR;
-  unsigned char temp[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char temp[DB_NUMERIC_BUF_SIZE];      /* copy of a DB_C_NUMERIC */
   int scale1, scale2;
   int prec1, prec2;
   int cprec;
@@ -1442,15 +1387,11 @@ numeric_common_prec_scale (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   if (scale1 == scale2)
     {
       cprec = MAX (prec1, prec2);
-      error =
-	DB_MAKE_NUMERIC (dbv1_common, db_locate_numeric (dbv1), cprec,
-			 scale1);
+      error = DB_MAKE_NUMERIC (dbv1_common, db_locate_numeric (dbv1), cprec, scale1);
       if (error == NO_ERROR)
-	{
-	  error =
-	    DB_MAKE_NUMERIC (dbv2_common, db_locate_numeric (dbv2), cprec,
-			     scale2);
-	}
+        {
+          error = DB_MAKE_NUMERIC (dbv2_common, db_locate_numeric (dbv2), cprec, scale2);
+        }
     }
 
   /* Otherwise scale and reset the numbers */
@@ -1459,36 +1400,32 @@ numeric_common_prec_scale (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
       scale_diff = scale2 - scale1;
       prec1 = scale_diff + prec1;
       if (prec1 > DB_MAX_NUMERIC_PRECISION)
-	{
-	  return ER_NUM_OVERFLOW;	/* is used as ER_WARNING_SEVERITY */
-	}
+        {
+          return ER_NUM_OVERFLOW;       /* is used as ER_WARNING_SEVERITY */
+        }
       numeric_scale_dec (db_locate_numeric (dbv1), scale_diff, temp);
       cprec = MAX (prec1, prec2);
       error = DB_MAKE_NUMERIC (dbv1_common, temp, cprec, scale2);
       if (error == NO_ERROR)
-	{
-	  error =
-	    DB_MAKE_NUMERIC (dbv2_common, db_locate_numeric (dbv2), cprec,
-			     scale2);
-	}
+        {
+          error = DB_MAKE_NUMERIC (dbv2_common, db_locate_numeric (dbv2), cprec, scale2);
+        }
     }
   else
     {
       scale_diff = scale1 - scale2;
       prec2 = scale_diff + prec2;
       if (prec2 > DB_MAX_NUMERIC_PRECISION)
-	{
-	  return ER_NUM_OVERFLOW;	/* is used as ER_WARNING_SEVERITY */
-	}
+        {
+          return ER_NUM_OVERFLOW;       /* is used as ER_WARNING_SEVERITY */
+        }
       numeric_scale_dec (db_locate_numeric (dbv2), scale_diff, temp);
       cprec = MAX (prec1, prec2);
       error = DB_MAKE_NUMERIC (dbv2_common, temp, cprec, scale1);
       if (error == NO_ERROR)
-	{
-	  error =
-	    DB_MAKE_NUMERIC (dbv1_common, db_locate_numeric (dbv1), cprec,
-			     scale1);
-	}
+        {
+          error = DB_MAKE_NUMERIC (dbv1_common, db_locate_numeric (dbv1), cprec, scale1);
+        }
     }
 
   return error;
@@ -1504,9 +1441,7 @@ numeric_common_prec_scale (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
  */
 static int
 numeric_prec_scale_when_overflow (const DB_VALUE * dbv1,
-				  const DB_VALUE * dbv2,
-				  DB_VALUE * dbv1_common,
-				  DB_VALUE * dbv2_common)
+                                  const DB_VALUE * dbv2, DB_VALUE * dbv1_common, DB_VALUE * dbv2_common)
 {
   int prec1, scale1, prec2, scale2;
   int prec, scale;
@@ -1572,20 +1507,19 @@ numeric_coerce_big_num_to_dec_str (unsigned char *num, char *dec_str)
   for (i = 0; i < DB_NUMERIC_BUF_SIZE * 16; i++)
     {
       if (numeric_is_bit_set (num, i))
-	{
-	  bit_value =
-	    numeric_get_pow_of_2 ((DB_NUMERIC_BUF_SIZE * 16) - i - 1);
-	  numeric_add_dec_str (bit_value, &result, &result);
-	}
+        {
+          bit_value = numeric_get_pow_of_2 ((DB_NUMERIC_BUF_SIZE * 16) - i - 1);
+          numeric_add_dec_str (bit_value, &result, &result);
+        }
     }
 
   /*  Convert result into ASCII array */
   for (i = 0; i < TWICE_NUM_MAX_PREC; i++)
     {
       if (result.digits[i] == -1)
-	{
-	  result.digits[i] = 0;
-	}
+        {
+          result.digits[i] = 0;
+        }
       assert (result.digits[i] >= 0);
 
       *dec_str = result.digits[i] + '0';
@@ -1615,9 +1549,7 @@ numeric_coerce_big_num_to_dec_str (unsigned char *num, char *dec_str)
  */
 static int
 numeric_get_msb_for_dec (int src_prec,
-			 int src_scale,
-			 unsigned char *src,
-			 int *dest_prec, int *dest_scale, DB_C_NUMERIC dest)
+                         int src_scale, unsigned char *src, int *dest_prec, int *dest_scale, DB_C_NUMERIC dest)
 {
   int ret = NO_ERROR;
   char dec_digits[TWICE_NUM_MAX_PREC + 2];
@@ -1642,18 +1574,18 @@ numeric_get_msb_for_dec (int src_prec,
        * and return
        */
       if (numeric_is_zero (src) && src[DB_NUMERIC_BUF_SIZE] <= 0x7F)
-	{
-	  numeric_copy (dest, &(src[DB_NUMERIC_BUF_SIZE]));
-	  *dest_prec = DB_MAX_NUMERIC_PRECISION;
-	  *dest_scale = src_scale;
-	}
+        {
+          numeric_copy (dest, &(src[DB_NUMERIC_BUF_SIZE]));
+          *dest_prec = DB_MAX_NUMERIC_PRECISION;
+          *dest_scale = src_scale;
+        }
       else
-	{
-	  /* Can't truncate answer - expected results must maintain
-	   * the proper amount of scaling
-	   */
-	  return (ER_NUM_OVERFLOW);
-	}
+        {
+          /* Can't truncate answer - expected results must maintain
+           * the proper amount of scaling
+           */
+          return (ER_NUM_OVERFLOW);
+        }
     }
 
   /* Case 2:  The scale of the source overflows.
@@ -1699,13 +1631,12 @@ numeric_get_msb_for_dec (int src_prec,
  *
  */
 int
-numeric_db_value_add (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
-		      DB_VALUE * answer)
+numeric_db_value_add (const DB_VALUE * dbv1, const DB_VALUE * dbv2, DB_VALUE * answer)
 {
   DB_VALUE dbv1_common, dbv2_common;
   int ret = NO_ERROR;
   unsigned int prec;
-  unsigned char temp[DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
+  unsigned char temp[DB_NUMERIC_BUF_SIZE];      /* Copy of a DB_C_NUMERIC */
 
   /* Check for bad inputs */
   if (answer == NULL)
@@ -1726,8 +1657,7 @@ numeric_db_value_add (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   /* Check for NULL values */
   if (DB_IS_NULL (dbv1) || DB_IS_NULL (dbv2))
     {
-      db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       return NO_ERROR;
     }
 
@@ -1735,12 +1665,11 @@ numeric_db_value_add (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   ret = numeric_common_prec_scale (dbv1, dbv2, &dbv1_common, &dbv2_common);
   if (ret == ER_NUM_OVERFLOW)
     {
-      ret = numeric_prec_scale_when_overflow (dbv1, dbv2,
-					      &dbv1_common, &dbv2_common);
+      ret = numeric_prec_scale_when_overflow (dbv1, dbv2, &dbv1_common, &dbv2_common);
       if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
   else if (ret != NO_ERROR)
     {
@@ -1748,8 +1677,7 @@ numeric_db_value_add (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
     }
 
   /* Perform the addition */
-  numeric_add (db_locate_numeric (&dbv1_common),
-	       db_locate_numeric (&dbv2_common), temp, DB_NUMERIC_BUF_SIZE);
+  numeric_add (db_locate_numeric (&dbv1_common), db_locate_numeric (&dbv2_common), temp, DB_NUMERIC_BUF_SIZE);
   /*
    * Update the domin information of the answer. Check to see if precision
    * needs to be updated due to carry
@@ -1758,15 +1686,15 @@ numeric_db_value_add (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   if (numeric_overflow (temp, prec))
     {
       if (prec < DB_MAX_NUMERIC_PRECISION)
-	{
-	  prec++;
-	}
+        {
+          prec++;
+        }
       else
-	{
-	  ret = ER_NUM_OVERFLOW;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NUM_OVERFLOW, 0);
-	  goto exit_on_error;
-	}
+        {
+          ret = ER_NUM_OVERFLOW;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NUM_OVERFLOW, 0);
+          goto exit_on_error;
+        }
     }
 
   ret = DB_MAKE_NUMERIC (answer, temp, prec, DB_VALUE_SCALE (&dbv1_common));
@@ -1775,11 +1703,9 @@ numeric_db_value_add (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
 
 exit_on_error:
 
-  db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+  db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -1800,13 +1726,12 @@ exit_on_error:
  * The answer is set to a NULL-valued DB_C_NUMERIC's when an error occurs.
  */
 int
-numeric_db_value_sub (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
-		      DB_VALUE * answer)
+numeric_db_value_sub (const DB_VALUE * dbv1, const DB_VALUE * dbv2, DB_VALUE * answer)
 {
   DB_VALUE dbv1_common, dbv2_common;
   int ret = NO_ERROR;
   unsigned int prec;
-  unsigned char temp[DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
+  unsigned char temp[DB_NUMERIC_BUF_SIZE];      /* Copy of a DB_C_NUMERIC */
 
   /* Check for bad inputs */
   if (answer == NULL)
@@ -1827,8 +1752,7 @@ numeric_db_value_sub (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   /* Check for NULL values */
   if (DB_IS_NULL (dbv1) || DB_IS_NULL (dbv2))
     {
-      db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       return NO_ERROR;
     }
 
@@ -1836,12 +1760,11 @@ numeric_db_value_sub (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   ret = numeric_common_prec_scale (dbv1, dbv2, &dbv1_common, &dbv2_common);
   if (ret == ER_NUM_OVERFLOW)
     {
-      ret = numeric_prec_scale_when_overflow (dbv1, dbv2,
-					      &dbv1_common, &dbv2_common);
+      ret = numeric_prec_scale_when_overflow (dbv1, dbv2, &dbv1_common, &dbv2_common);
       if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
   else if (ret != NO_ERROR)
     {
@@ -1849,8 +1772,7 @@ numeric_db_value_sub (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
     }
 
   /* Perform the subtraction */
-  numeric_sub (db_locate_numeric (&dbv1_common),
-	       db_locate_numeric (&dbv2_common), temp, DB_NUMERIC_BUF_SIZE);
+  numeric_sub (db_locate_numeric (&dbv1_common), db_locate_numeric (&dbv2_common), temp, DB_NUMERIC_BUF_SIZE);
   /*
    * Update the domin information of the answer. Check to see if precision
    * needs to be updated due to carry
@@ -1859,15 +1781,15 @@ numeric_db_value_sub (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   if (numeric_overflow (temp, prec))
     {
       if (prec < DB_MAX_NUMERIC_PRECISION)
-	{
-	  prec++;
-	}
+        {
+          prec++;
+        }
       else
-	{
-	  ret = ER_NUM_OVERFLOW;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NUM_OVERFLOW, 0);
-	  goto exit_on_error;
-	}
+        {
+          ret = ER_NUM_OVERFLOW;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NUM_OVERFLOW, 0);
+          goto exit_on_error;
+        }
     }
 
   ret = DB_MAKE_NUMERIC (answer, temp, prec, DB_VALUE_SCALE (&dbv1_common));
@@ -1876,11 +1798,9 @@ numeric_db_value_sub (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
 
 exit_on_error:
 
-  db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+  db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -1902,15 +1822,14 @@ exit_on_error:
  * The answer is set to a NULL-valued DB_C_NUMERIC's when an error occurs.
  */
 int
-numeric_db_value_mul (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
-		      DB_VALUE * answer)
+numeric_db_value_mul (const DB_VALUE * dbv1, const DB_VALUE * dbv2, DB_VALUE * answer)
 {
   int ret = NO_ERROR;
   int prec;
   int scale;
   bool positive_ans;
-  unsigned char temp[2 * DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
-  unsigned char result[DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
+  unsigned char temp[2 * DB_NUMERIC_BUF_SIZE];  /* Copy of a DB_C_NUMERIC */
+  unsigned char result[DB_NUMERIC_BUF_SIZE];    /* Copy of a DB_C_NUMERIC */
 
   /* Check for bad inputs */
   if (answer == NULL)
@@ -1931,14 +1850,12 @@ numeric_db_value_mul (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   /* Check for NULL values */
   if (DB_IS_NULL (dbv1) || DB_IS_NULL (dbv2))
     {
-      db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       return NO_ERROR;
     }
 
   /* Perform the multiplication */
-  numeric_mul (db_locate_numeric (dbv1), db_locate_numeric (dbv2),
-	       &positive_ans, temp);
+  numeric_mul (db_locate_numeric (dbv1), db_locate_numeric (dbv2), &positive_ans, temp);
   /* Check for overflow.  Reset precision & scale if necessary */
   prec = DB_VALUE_PRECISION (dbv1) + DB_VALUE_PRECISION (dbv2) + 1;
   scale = DB_VALUE_SCALE (dbv1) + DB_VALUE_SCALE (dbv2);
@@ -1960,11 +1877,9 @@ numeric_db_value_mul (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
 
 exit_on_error:
 
-  db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+  db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -1986,19 +1901,16 @@ exit_on_error:
  * The answer is set to a NULL-valued DB_C_NUMERIC's when an error occurs.
  */
 int
-numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
-		      DB_VALUE * answer)
+numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2, DB_VALUE * answer)
 {
   int prec;
   int max_scale, scale1, scale2;
-  unsigned char long_dbv1_copy[DB_LONG_NUMERIC_MULTIPLIER *
-			       DB_NUMERIC_BUF_SIZE];
-  unsigned char long_temp_quo[DB_LONG_NUMERIC_MULTIPLIER *
-			      DB_NUMERIC_BUF_SIZE];
-  unsigned char dbv1_copy[DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
-  unsigned char dbv2_copy[DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
-  unsigned char temp_quo[DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
-  unsigned char temp_rem[DB_NUMERIC_BUF_SIZE];	/* Copy of a DB_C_NUMERIC */
+  unsigned char long_dbv1_copy[DB_LONG_NUMERIC_MULTIPLIER * DB_NUMERIC_BUF_SIZE];
+  unsigned char long_temp_quo[DB_LONG_NUMERIC_MULTIPLIER * DB_NUMERIC_BUF_SIZE];
+  unsigned char dbv1_copy[DB_NUMERIC_BUF_SIZE]; /* Copy of a DB_C_NUMERIC */
+  unsigned char dbv2_copy[DB_NUMERIC_BUF_SIZE]; /* Copy of a DB_C_NUMERIC */
+  unsigned char temp_quo[DB_NUMERIC_BUF_SIZE];  /* Copy of a DB_C_NUMERIC */
+  unsigned char temp_rem[DB_NUMERIC_BUF_SIZE];  /* Copy of a DB_C_NUMERIC */
   int scale, scaleup = 0;
   int ret = NO_ERROR;
   DB_C_NUMERIC divisor_p;
@@ -2022,8 +1934,7 @@ numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   /* Check for NULL values */
   if (DB_IS_NULL (dbv1) || DB_IS_NULL (dbv2))
     {
-      db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       return NO_ERROR;
     }
 
@@ -2040,9 +1951,9 @@ numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
       scaleup = (max_scale + scale2) - scale1;
       ret = numeric_scale_dec_long (long_dbv1_copy, scaleup, true);
       if (ret != NO_ERROR)
-	{			/* overflow */
-	  goto exit_on_error;
-	}
+        {                       /* overflow */
+          goto exit_on_error;
+        }
     }
 
   /*
@@ -2064,16 +1975,16 @@ numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
       new_scale = scale + scale_delta;
       new_prec = prec + scale_delta;
       if (new_prec > DB_MAX_NUMERIC_PRECISION)
-	{
-	  new_scale -= (new_prec - DB_MAX_NUMERIC_PRECISION);
-	  new_prec = DB_MAX_NUMERIC_PRECISION;
-	}
+        {
+          new_scale -= (new_prec - DB_MAX_NUMERIC_PRECISION);
+          new_prec = DB_MAX_NUMERIC_PRECISION;
+        }
 
       ret = numeric_scale_dec_long (long_dbv1_copy, new_scale - scale, true);
       if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       scale = new_scale;
       prec = new_prec;
@@ -2082,13 +1993,12 @@ numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   if (numeric_is_longnum_value (long_dbv1_copy))
     {
       /* only the dividend and quotient maybe long numeric, divisor must be numeric */
-      numeric_long_div (long_dbv1_copy, db_locate_numeric (dbv2),
-			long_temp_quo, temp_rem, true);
+      numeric_long_div (long_dbv1_copy, db_locate_numeric (dbv2), long_temp_quo, temp_rem, true);
       ret = numeric_longnum_to_shortnum (temp_quo, long_temp_quo);
       if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
   else
     {
@@ -2125,28 +2035,28 @@ numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   if (numeric_compare (temp_rem, divisor_p) >= 0)
     {
       if (numeric_is_negative (temp_quo))
-	{
-	  /* for negative number */
-	  numeric_decrease (temp_quo);
-	}
+        {
+          /* for negative number */
+          numeric_decrease (temp_quo);
+        }
       else
-	{
-	  numeric_increase (temp_quo);
-	}
+        {
+          numeric_increase (temp_quo);
+        }
     }
 
   if (numeric_overflow (temp_quo, prec))
     {
       if (prec < DB_MAX_NUMERIC_PRECISION)
-	{
-	  prec++;
-	}
+        {
+          prec++;
+        }
       else
-	{
-	  ret = ER_NUM_OVERFLOW;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NUM_OVERFLOW, 0);
-	  goto exit_on_error;
-	}
+        {
+          ret = ER_NUM_OVERFLOW;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_NUM_OVERFLOW, 0);
+          goto exit_on_error;
+        }
     }
 
   ret = DB_MAKE_NUMERIC (answer, temp_quo, prec, scale);
@@ -2155,11 +2065,9 @@ numeric_db_value_div (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
 
 exit_on_error:
 
-  db_value_domain_init (answer, DB_TYPE_NUMERIC,
-			DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+  db_value_domain_init (answer, DB_TYPE_NUMERIC, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -2221,8 +2129,7 @@ numeric_db_value_is_positive (const DB_VALUE * dbvalue)
   int ret;
 
   /* Check for bad inputs */
-  if (dbvalue == NULL || DB_VALUE_TYPE (dbvalue) != DB_TYPE_NUMERIC
-      || DB_IS_NULL (dbvalue))
+  if (dbvalue == NULL || DB_VALUE_TYPE (dbvalue) != DB_TYPE_NUMERIC || DB_IS_NULL (dbvalue))
     {
       return ER_OBJ_INVALID_ARGUMENTS;
     }
@@ -2251,8 +2158,7 @@ numeric_db_value_is_positive (const DB_VALUE * dbvalue)
  *           1   if    dbv1 > dbv2.
  */
 int
-numeric_db_value_compare (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
-			  DB_VALUE * answer)
+numeric_db_value_compare (const DB_VALUE * dbv1, const DB_VALUE * dbv2, DB_VALUE * answer)
 {
   int ret = NO_ERROR;
   int prec1 = 0, prec2 = 0, scale1 = 0, scale2 = 0;
@@ -2278,8 +2184,7 @@ numeric_db_value_compare (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   /* Check for NULL values */
   if (DB_IS_NULL (dbv1) || DB_IS_NULL (dbv2))
     {
-      db_value_domain_init (answer, DB_TYPE_INTEGER,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (answer, DB_TYPE_INTEGER, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       return NO_ERROR;
     }
 
@@ -2291,8 +2196,7 @@ numeric_db_value_compare (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
   if (prec1 == prec2 && scale1 == scale2)
     {
       /* Simple case. Just compare two numbers. */
-      cmp_rez = numeric_compare (db_locate_numeric (dbv1),
-				 db_locate_numeric (dbv2));
+      cmp_rez = numeric_compare (db_locate_numeric (dbv1), db_locate_numeric (dbv2));
       DB_MAKE_INTEGER (answer, cmp_rez);
       return NO_ERROR;
     }
@@ -2301,77 +2205,71 @@ numeric_db_value_compare (const DB_VALUE * dbv1, const DB_VALUE * dbv2,
       DB_VALUE dbv1_common, dbv2_common;
 
       /* First try to coerce to common prec/scale numbers and compare. */
-      ret = numeric_common_prec_scale (dbv1, dbv2,
-				       &dbv1_common, &dbv2_common);
+      ret = numeric_common_prec_scale (dbv1, dbv2, &dbv1_common, &dbv2_common);
       if (ret == NO_ERROR)
-	{
-	  cmp_rez = numeric_compare (db_locate_numeric (&dbv1_common),
-				     db_locate_numeric (&dbv2_common));
-	  DB_MAKE_INTEGER (answer, cmp_rez);
-	  return NO_ERROR;
-	}
+        {
+          cmp_rez = numeric_compare (db_locate_numeric (&dbv1_common), db_locate_numeric (&dbv2_common));
+          DB_MAKE_INTEGER (answer, cmp_rez);
+          return NO_ERROR;
+        }
       else if (ret == ER_NUM_OVERFLOW)
-	{
-	  /* For example, if we want to compare a NUMERIC(31,2) with a
-	   * NUMERIC(21, 14) the common precision and scale is (43, 14)
-	   * which is an overflow.
-	   * To avoid this issue we compare the integral parts and
-	   * the fractional parts of dbv1 and dbv2 separately.
-	   */
-	  unsigned char num1_integ[DB_NUMERIC_BUF_SIZE];
-	  unsigned char num2_integ[DB_NUMERIC_BUF_SIZE];
-	  unsigned char num1_frac[DB_NUMERIC_BUF_SIZE];
-	  unsigned char num2_frac[DB_NUMERIC_BUF_SIZE];
+        {
+          /* For example, if we want to compare a NUMERIC(31,2) with a
+           * NUMERIC(21, 14) the common precision and scale is (43, 14)
+           * which is an overflow.
+           * To avoid this issue we compare the integral parts and
+           * the fractional parts of dbv1 and dbv2 separately.
+           */
+          unsigned char num1_integ[DB_NUMERIC_BUF_SIZE];
+          unsigned char num2_integ[DB_NUMERIC_BUF_SIZE];
+          unsigned char num1_frac[DB_NUMERIC_BUF_SIZE];
+          unsigned char num2_frac[DB_NUMERIC_BUF_SIZE];
 
-	  er_clear ();		/* reset ER_NUM_OVERFLOW */
+          er_clear ();          /* reset ER_NUM_OVERFLOW */
 
-	  if (prec1 - scale1 < prec2 - scale2)
-	    {
-	      prec_common = prec2 - scale2;
-	    }
-	  else
-	    {
-	      prec_common = prec1 - scale1;
-	    }
+          if (prec1 - scale1 < prec2 - scale2)
+            {
+              prec_common = prec2 - scale2;
+            }
+          else
+            {
+              prec_common = prec1 - scale1;
+            }
 
-	  if (scale1 > scale2)
-	    {
-	      scale_common = scale1;
-	    }
-	  else
-	    {
-	      scale_common = scale2;
-	    }
+          if (scale1 > scale2)
+            {
+              scale_common = scale1;
+            }
+          else
+            {
+              scale_common = scale2;
+            }
 
-	  /* first compare integral parts */
-	  numeric_get_integral_part (db_locate_numeric (dbv1), prec1, scale1,
-				     prec_common, num1_integ);
-	  numeric_get_integral_part (db_locate_numeric (dbv2), prec2, scale2,
-				     prec_common, num2_integ);
-	  cmp_rez = numeric_compare (num1_integ, num2_integ);
-	  if (cmp_rez != 0)
-	    {
-	      /* if the integral parts differ, we don't need to compare fractional
-	         parts */
-	      DB_MAKE_INT (answer, cmp_rez);
-	      return NO_ERROR;
-	    }
+          /* first compare integral parts */
+          numeric_get_integral_part (db_locate_numeric (dbv1), prec1, scale1, prec_common, num1_integ);
+          numeric_get_integral_part (db_locate_numeric (dbv2), prec2, scale2, prec_common, num2_integ);
+          cmp_rez = numeric_compare (num1_integ, num2_integ);
+          if (cmp_rez != 0)
+            {
+              /* if the integral parts differ, we don't need to compare fractional
+                 parts */
+              DB_MAKE_INT (answer, cmp_rez);
+              return NO_ERROR;
+            }
 
-	  /* the integral parts are equal, now compare fractional parts */
-	  numeric_get_fractional_part (db_locate_numeric (dbv1), scale1,
-				       scale_common, num1_frac);
-	  numeric_get_fractional_part (db_locate_numeric (dbv2), scale2,
-				       scale_common, num2_frac);
+          /* the integral parts are equal, now compare fractional parts */
+          numeric_get_fractional_part (db_locate_numeric (dbv1), scale1, scale_common, num1_frac);
+          numeric_get_fractional_part (db_locate_numeric (dbv2), scale2, scale_common, num2_frac);
 
-	  /* compare fractional parts and return the result */
-	  cmp_rez = numeric_compare (num1_frac, num2_frac);
-	  DB_MAKE_INT (answer, cmp_rez);
-	}
+          /* compare fractional parts and return the result */
+          cmp_rez = numeric_compare (num1_frac, num2_frac);
+          DB_MAKE_INT (answer, cmp_rez);
+        }
       else
-	{
-	  DB_MAKE_NULL (answer);
-	  return ER_FAILED;
-	}
+        {
+          DB_MAKE_NULL (answer);
+          return ER_FAILED;
+        }
     }
 
   return NO_ERROR;
@@ -2463,24 +2361,24 @@ numeric_coerce_num_to_int (DB_C_NUMERIC arg, int *answer)
   for (digit = DB_NUMERIC_BUF_SIZE - 5; digit >= 1; digit--)
     {
       if (arg[digit] != pad)
-	{
-	  if (pad == 0xff)
-	    {
-	      *answer = ~0;
-	    }
-	  else
-	    {
-	      *answer = ~0 >> 1;
-	    }
-	  return;
-	}
+        {
+          if (pad == 0xff)
+            {
+              *answer = ~0;
+            }
+          else
+            {
+              *answer = ~0 >> 1;
+            }
+          return;
+        }
     }
 
   /* Copy the lower 32 bits into answer */
   *answer = ((arg[DB_NUMERIC_BUF_SIZE - 1]) +
-	     (((unsigned int) (arg[DB_NUMERIC_BUF_SIZE - 2])) << 8) +
-	     (((unsigned int) (arg[DB_NUMERIC_BUF_SIZE - 3])) << 16) +
-	     (((unsigned int) (arg[DB_NUMERIC_BUF_SIZE - 4])) << 24));
+             (((unsigned int) (arg[DB_NUMERIC_BUF_SIZE - 2])) << 8) +
+             (((unsigned int) (arg[DB_NUMERIC_BUF_SIZE - 3])) << 16) +
+             (((unsigned int) (arg[DB_NUMERIC_BUF_SIZE - 4])) << 24));
 }
 
 /*
@@ -2511,25 +2409,24 @@ numeric_coerce_num_to_bigint (DB_C_NUMERIC arg, int scale, DB_BIGINT * answer)
     {
       numeric_div (arg, numeric_get_pow_of_10 (scale), zero_scale_arg, rem);
       if (!numeric_is_negative (zero_scale_arg))
-	{
-	  numeric_negate (rem);
-	}
+        {
+          numeric_negate (rem);
+        }
 
       /* round */
-      numeric_add (numeric_get_pow_of_10 (scale), rem, tmp,
-		   DB_NUMERIC_BUF_SIZE);
+      numeric_add (numeric_get_pow_of_10 (scale), rem, tmp, DB_NUMERIC_BUF_SIZE);
       numeric_add (tmp, rem, tmp, DB_NUMERIC_BUF_SIZE);
       if (numeric_is_negative (tmp) || numeric_is_zero (tmp))
-	{
-	  if (numeric_is_negative (zero_scale_arg))
-	    {
-	      numeric_decrease (zero_scale_arg);
-	    }
-	  else
-	    {
-	      numeric_increase (zero_scale_arg);
-	    }
-	}
+        {
+          if (numeric_is_negative (zero_scale_arg))
+            {
+              numeric_decrease (zero_scale_arg);
+            }
+          else
+            {
+              numeric_increase (zero_scale_arg);
+            }
+        }
     }
   else
     {
@@ -2548,8 +2445,7 @@ numeric_coerce_num_to_bigint (DB_C_NUMERIC arg, int scale, DB_BIGINT * answer)
 #if OR_BYTE_ORDER == OR_LITTLE_ENDIAN
       ptr[i] = zero_scale_arg[DB_NUMERIC_BUF_SIZE - (i + 1)];
 #else
-      ptr[sizeof (DB_BIGINT) - (i + 1)] =
-	zero_scale_arg[DB_NUMERIC_BUF_SIZE - (i + 1)];
+      ptr[sizeof (DB_BIGINT) - (i + 1)] = zero_scale_arg[DB_NUMERIC_BUF_SIZE - (i + 1)];
 #endif
     }
 
@@ -2568,7 +2464,7 @@ numeric_coerce_num_to_bigint (DB_C_NUMERIC arg, int scale, DB_BIGINT * answer)
 void
 numeric_coerce_dec_str_to_num (const char *dec_str, DB_C_NUMERIC result)
 {
-  unsigned char big_chunk[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char big_chunk[DB_NUMERIC_BUF_SIZE]; /* copy of a DB_C_NUMERIC */
   int ntot_digits;
   int ndigits;
   int dec_dig;
@@ -2599,16 +2495,15 @@ numeric_coerce_dec_str_to_num (const char *dec_str, DB_C_NUMERIC result)
       temp_buffer[ndigits] = '\0';
       chunk_value = (int) atol (temp_buffer);
       if (chunk_value != 0)
-	{
-	  numeric_coerce_int_to_num (chunk_value, big_chunk);
-	  /* Scale the number if not first time through */
-	  if (dec_dig != ntot_digits - 1)
-	    {
-	      numeric_scale_dec (big_chunk, ntot_digits - dec_dig - 1,
-				 big_chunk);
-	    }
-	  numeric_add (big_chunk, result, result, DB_NUMERIC_BUF_SIZE);
-	}
+        {
+          numeric_coerce_int_to_num (chunk_value, big_chunk);
+          /* Scale the number if not first time through */
+          if (dec_dig != ntot_digits - 1)
+            {
+              numeric_scale_dec (big_chunk, ntot_digits - dec_dig - 1, big_chunk);
+            }
+          numeric_add (big_chunk, result, result, DB_NUMERIC_BUF_SIZE);
+        }
     }
 
   /* If negative, negate the result */
@@ -2630,7 +2525,7 @@ numeric_coerce_dec_str_to_num (const char *dec_str, DB_C_NUMERIC result)
 void
 numeric_coerce_num_to_dec_str (DB_C_NUMERIC num, char *dec_str)
 {
-  unsigned char local_num[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char local_num[DB_NUMERIC_BUF_SIZE]; /* copy of a DB_C_NUMERIC */
   DEC_STRING *bit_value;
   DEC_STRING result;
   unsigned int i, j;
@@ -2649,28 +2544,26 @@ numeric_coerce_num_to_dec_str (DB_C_NUMERIC num, char *dec_str)
   for (i = 0; i < DB_NUMERIC_BUF_SIZE * 8; i += 8)
     {
       if (local_num[i / 8] == 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       for (j = 0; j < 8; j++)
-	{
-	  if (numeric_is_bit_set (local_num, i + j))
-	    {
-	      bit_value =
-		numeric_get_pow_of_2 ((DB_NUMERIC_BUF_SIZE * 8) - (i + j) -
-				      1);
-	      numeric_add_dec_str (bit_value, &result, &result);
-	    }
-	}
+        {
+          if (numeric_is_bit_set (local_num, i + j))
+            {
+              bit_value = numeric_get_pow_of_2 ((DB_NUMERIC_BUF_SIZE * 8) - (i + j) - 1);
+              numeric_add_dec_str (bit_value, &result, &result);
+            }
+        }
     }
 
   /*  Convert result into ASCII array */
   for (i = 0; i < TWICE_NUM_MAX_PREC; i++)
     {
       if (result.digits[i] == -1)
-	{
-	  result.digits[i] = 0;
-	}
+        {
+          result.digits[i] = 0;
+        }
       assert (result.digits[i] >= 0);
 
       *dec_str = result.digits[i] + '0';
@@ -2693,7 +2586,7 @@ numeric_coerce_num_to_dec_str (DB_C_NUMERIC num, char *dec_str)
 void
 numeric_coerce_num_to_double (DB_C_NUMERIC num, int scale, double *adouble)
 {
-  char num_string[TWICE_NUM_MAX_PREC + 2];	/* 2: Sign, Null terminate */
+  char num_string[TWICE_NUM_MAX_PREC + 2];      /* 2: Sign, Null terminate */
 
   /* Convert the numeric to a decimal string */
   numeric_coerce_num_to_dec_str (num, num_string);
@@ -2721,15 +2614,13 @@ numeric_coerce_num_to_double (DB_C_NUMERIC num, int scale, double *adouble)
  *   scale(in)  :
  */
 static int
-numeric_fast_convert (double adouble,
-		      int dst_scale, DB_C_NUMERIC num, int *prec, int *scale)
+numeric_fast_convert (double adouble, int dst_scale, DB_C_NUMERIC num, int *prec, int *scale)
 {
 
 
   double scaled_double;
   int scaled_int, estimated_precision;
-  scaled_double =
-    (adouble * numeric_Pow_of_10[dst_scale]) + (adouble < 0.0 ? -0.5 : 0.5);
+  scaled_double = (adouble * numeric_Pow_of_10[dst_scale]) + (adouble < 0.0 ? -0.5 : 0.5);
   scaled_int = (int) scaled_double;
   num[DB_NUMERIC_BUF_SIZE - 1] = (scaled_int >> 0) & 0xff;
   num[DB_NUMERIC_BUF_SIZE - 2] = (scaled_int >> 8) & 0xff;
@@ -2817,8 +2708,7 @@ numeric_fast_convert (double adouble,
  */
 static void
 numeric_get_integral_part (const DB_C_NUMERIC num, const int src_prec,
-			   const int src_scale, const int dst_prec,
-			   DB_C_NUMERIC dest)
+                           const int src_scale, const int dst_prec, DB_C_NUMERIC dest)
 {
   char dec_str[DB_MAX_NUMERIC_PRECISION * 4];
   char new_dec_num[DB_MAX_NUMERIC_PRECISION + 1];
@@ -2870,8 +2760,7 @@ numeric_get_integral_part (const DB_C_NUMERIC num, const int src_prec,
  *	  which contains the fractional part of a numeric
  */
 static void
-numeric_get_fractional_part (const DB_C_NUMERIC num, const int src_scale,
-			     const int dst_scale, DB_C_NUMERIC dest)
+numeric_get_fractional_part (const DB_C_NUMERIC num, const int src_scale, const int dst_scale, DB_C_NUMERIC dest)
 {
   char dec_str[DB_MAX_NUMERIC_PRECISION * 4];
   char new_dec_num[DB_MAX_NUMERIC_PRECISION + 1];
@@ -2925,9 +2814,9 @@ numeric_is_fraction_part_zero (const DB_C_NUMERIC num, const int scale)
   for (i = 0; i < scale; i++)
     {
       if (dec_str[len - scale + i] != '0')
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
   return true;
 }
@@ -2942,9 +2831,7 @@ numeric_is_fraction_part_zero (const DB_C_NUMERIC num, const int scale)
  *   scale(in)  :
  */
 int
-numeric_internal_double_to_num (double adouble,
-				int dst_scale,
-				DB_C_NUMERIC num, int *prec, int *scale)
+numeric_internal_double_to_num (double adouble, int dst_scale, DB_C_NUMERIC num, int *prec, int *scale)
 {
   return numeric_internal_real_to_num (adouble, dst_scale, num, prec, scale);
 }
@@ -2985,12 +2872,9 @@ get_fp_value_type (double d)
  * scale(out):	    resulting scale of the converted value
  */
 static int
-numeric_internal_real_to_num (double adouble, int dst_scale,
-			      DB_C_NUMERIC num, int *prec, int *scale)
+numeric_internal_real_to_num (double adouble, int dst_scale, DB_C_NUMERIC num, int *prec, int *scale)
 {
-  char
-    numeric_str[MAX
-		(TP_DOUBLE_AS_CHAR_LENGTH + 1, DB_MAX_NUMERIC_PRECISION + 4)];
+  char numeric_str[MAX (TP_DOUBLE_AS_CHAR_LENGTH + 1, DB_MAX_NUMERIC_PRECISION + 4)];
   int i = 0;
 
   switch (get_fp_value_type (adouble))
@@ -3004,9 +2888,9 @@ numeric_internal_real_to_num (double adouble, int dst_scale,
       *prec = dst_scale ? dst_scale : 1;
 
       while (i < *prec)
-	{
-	  numeric_str[i++] = '0';
-	}
+        {
+          numeric_str[i++] = '0';
+        }
       numeric_str[i] = '\0';
 
       numeric_coerce_dec_str_to_num (numeric_str, num);
@@ -3015,149 +2899,145 @@ numeric_internal_real_to_num (double adouble, int dst_scale,
       /* compare against pow(10, DB_MAX_NUMERIC_PRECISION) to check for
        * overflow/underflow before actual conversion */
       if (NUMERIC_ABS (adouble) > DB_NUMERIC_OVERFLOW_LIMIT)
-	{
-	  return ER_NUM_OVERFLOW;
-	}
+        {
+          return ER_NUM_OVERFLOW;
+        }
       else
-	{
-	  if (NUMERIC_ABS (adouble) < DB_NUMERIC_UNDERFLOW_LIMIT)
-	    {
-	      /* the floating-point number underflows any possible Rye
-	       * NUMERIC domain type, so just return 0 with no other
-	       * conversion */
-	      *scale = dst_scale;
-	      *prec = dst_scale ? dst_scale : 1;
+        {
+          if (NUMERIC_ABS (adouble) < DB_NUMERIC_UNDERFLOW_LIMIT)
+            {
+              /* the floating-point number underflows any possible Rye
+               * NUMERIC domain type, so just return 0 with no other
+               * conversion */
+              *scale = dst_scale;
+              *prec = dst_scale ? dst_scale : 1;
 
-	      while (i < *prec)
-		{
-		  numeric_str[i++] = '0';
-		}
-	      numeric_str[i] = '\0';
+              while (i < *prec)
+                {
+                  numeric_str[i++] = '0';
+                }
+              numeric_str[i] = '\0';
 
-	      numeric_coerce_dec_str_to_num ("0", num);
-	      return NO_ERROR;
-	    }
-	  else
-	    {
-	      /* adouble might fit into a Rye NUMERIC domain type with
-	       * sufficient precision.
-	       * Invoke _dtoa() to get the sequence of digits and the
-	       * decimal point position
-	       */
-	      int decpt, sign;
-	      char *rve;
-	      int ndigits;
+              numeric_coerce_dec_str_to_num ("0", num);
+              return NO_ERROR;
+            }
+          else
+            {
+              /* adouble might fit into a Rye NUMERIC domain type with
+               * sufficient precision.
+               * Invoke _dtoa() to get the sequence of digits and the
+               * decimal point position
+               */
+              int decpt, sign;
+              char *rve;
+              int ndigits;
 
-	      _dtoa (adouble, 0, TP_DOUBLE_MANTISA_DECIMAL_PRECISION,
-		     &decpt, &sign, &rve, numeric_str + 1, 0);
+              _dtoa (adouble, 0, TP_DOUBLE_MANTISA_DECIMAL_PRECISION, &decpt, &sign, &rve, numeric_str + 1, 0);
 
-	      numeric_str[TP_DOUBLE_MANTISA_DECIMAL_PRECISION + 1] = '\0';
+              numeric_str[TP_DOUBLE_MANTISA_DECIMAL_PRECISION + 1] = '\0';
 
-	      /* shift the digits in the sequence to make room for and
-	       * to reach the decimal point */
-	      ndigits = strlen (numeric_str + 1);
+              /* shift the digits in the sequence to make room for and
+               * to reach the decimal point */
+              ndigits = strlen (numeric_str + 1);
 
-	      if (decpt <= 0)
-		{
-		  char *dst, *src;
+              if (decpt <= 0)
+                {
+                  char *dst, *src;
 
-		  dst = MIN (numeric_str + 1 + ndigits - decpt,
-			     numeric_str + sizeof (numeric_str) / sizeof
-			     (numeric_str[0]) - 1);
-		  src = dst + decpt;
+                  dst = MIN (numeric_str + 1 + ndigits - decpt,
+                             numeric_str + sizeof (numeric_str) / sizeof (numeric_str[0]) - 1);
+                  src = dst + decpt;
 
-		  *prec = MIN (DB_MAX_NUMERIC_PRECISION, -decpt + ndigits);
-		  *scale = *prec;
+                  *prec = MIN (DB_MAX_NUMERIC_PRECISION, -decpt + ndigits);
+                  *scale = *prec;
 
-		  /* actually rounding should also be performed if value
-		   * gets truncated. */
-		  *dst = '\0';
-		  dst--;
-		  src--;
+                  /* actually rounding should also be performed if value
+                   * gets truncated. */
+                  *dst = '\0';
+                  dst--;
+                  src--;
 
-		  /* shift all digits in the string */
-		  while (src >= numeric_str + 1)
-		    {
-		      *dst = *src;
-		      dst--;
-		      src--;
-		    }
+                  /* shift all digits in the string */
+                  while (src >= numeric_str + 1)
+                    {
+                      *dst = *src;
+                      dst--;
+                      src--;
+                    }
 
-		  /* prepend 0s from right to left until the decimal
-		   * point position is reached */
-		  while (dst > numeric_str)
-		    {
-		      *dst-- = '0';
-		    }
-		}
-	      else
-		{
-		  /* the numer is greater than 1, either insert the
-		   * decimal point at the correct position in the digits
-		   * sequence, or append 0s to the digits from left to
-		   * right until the decimal point is reached. */
+                  /* prepend 0s from right to left until the decimal
+                   * point position is reached */
+                  while (dst > numeric_str)
+                    {
+                      *dst-- = '0';
+                    }
+                }
+              else
+                {
+                  /* the numer is greater than 1, either insert the
+                   * decimal point at the correct position in the digits
+                   * sequence, or append 0s to the digits from left to
+                   * right until the decimal point is reached. */
 
-		  if (decpt > DB_MAX_NUMERIC_PRECISION)
-		    {
-		      /* should not happen since overflow has been
-		       * checked for previously */
-		      return ER_NUM_OVERFLOW;
-		    }
-		  else
-		    {
-		      if (decpt < ndigits)
-			{
-			  *prec = ndigits;
-			  *scale = ndigits - decpt;
-			}
-		      else
-			{
-			  /* append 0s to the digits sequence until the
-			   * decimal point is reached */
+                  if (decpt > DB_MAX_NUMERIC_PRECISION)
+                    {
+                      /* should not happen since overflow has been
+                       * checked for previously */
+                      return ER_NUM_OVERFLOW;
+                    }
+                  else
+                    {
+                      if (decpt < ndigits)
+                        {
+                          *prec = ndigits;
+                          *scale = ndigits - decpt;
+                        }
+                      else
+                        {
+                          /* append 0s to the digits sequence until the
+                           * decimal point is reached */
 
-			  char
-			    *dst = numeric_str + 1 + decpt,
-			    *src = numeric_str + 1 + ndigits;
+                          char *dst = numeric_str + 1 + decpt, *src = numeric_str + 1 + ndigits;
 
-			  while (src != dst)
-			    {
-			      *src++ = '0';
-			    }
+                          while (src != dst)
+                            {
+                              *src++ = '0';
+                            }
 
-			  *src = '\0';
+                          *src = '\0';
 
-			  *prec = decpt;
-			  *scale = 0;
-			}
-		    }
-		}
+                          *prec = decpt;
+                          *scale = 0;
+                        }
+                    }
+                }
 
-	      /* append zeroes until dst_scale is reached */
-	      while (*prec < DB_MAX_NUMERIC_PRECISION && *scale < dst_scale)
-		{
-		  numeric_str[1 + *prec] = '0';
-		  (*prec)++;
-		  (*scale)++;
-		}
+              /* append zeroes until dst_scale is reached */
+              while (*prec < DB_MAX_NUMERIC_PRECISION && *scale < dst_scale)
+                {
+                  numeric_str[1 + *prec] = '0';
+                  (*prec)++;
+                  (*scale)++;
+                }
 
-	      numeric_str[1 + *prec] = '\0';
+              numeric_str[1 + *prec] = '\0';
 
-	      /* The number without sign is now written in decimal
-	       * in numeric_str */
+              /* The number without sign is now written in decimal
+               * in numeric_str */
 
-	      if (sign)
-		{
-		  numeric_str[0] = '-';
-		  numeric_coerce_dec_str_to_num (numeric_str, num);
-		}
-	      else
-		{
-		  numeric_coerce_dec_str_to_num (numeric_str + 1, num);
-		}
+              if (sign)
+                {
+                  numeric_str[0] = '-';
+                  numeric_coerce_dec_str_to_num (numeric_str, num);
+                }
+              else
+                {
+                  numeric_coerce_dec_str_to_num (numeric_str + 1, num);
+                }
 
-	      return NO_ERROR;
-	    }
-	}
+              return NO_ERROR;
+            }
+        }
       break;
     }
 }
@@ -3177,8 +3057,7 @@ numeric_internal_real_to_num (double adouble, int dst_scale,
  *     about the scale of the destination.
  */
 int
-numeric_coerce_double_to_num (double adouble,
-			      DB_C_NUMERIC num, int *prec, int *scale)
+numeric_coerce_double_to_num (double adouble, DB_C_NUMERIC num, int *prec, int *scale)
 {
   /*
    *   return numeric_internal_double_to_num(adouble, DB_MAX_NUMERIC_PRECISION,
@@ -3199,8 +3078,7 @@ numeric_coerce_double_to_num (double adouble,
  *	 grouping symbols.
  */
 int
-numeric_coerce_string_to_num (const char *astring, int astring_length,
-			      DB_VALUE * result)
+numeric_coerce_string_to_num (const char *astring, int astring_length, DB_VALUE * result)
 {
   char num_string[TWICE_NUM_MAX_PREC + 1];
   unsigned char num[DB_NUMERIC_BUF_SIZE];
@@ -3223,99 +3101,98 @@ numeric_coerce_string_to_num (const char *astring, int astring_length,
     {
       skip_size = 1;
       if (astring[i] == '.')
-	{
-	  leading_zeroes = false;
-	  decimal_part = true;
-	  scale = astring_length - (i + 1);
-	}
+        {
+          leading_zeroes = false;
+          decimal_part = true;
+          scale = astring_length - (i + 1);
+        }
       else if (leading_zeroes)
-	{			/* Look for 1st digit between 1 & 9 */
-	  if (astring[i] >= '1' && astring[i] <= '9')
-	    {
-	      leading_zeroes = false;
-	      num_string[prec] = astring[i];
-	      if (++prec > DB_MAX_NUMERIC_PRECISION)
-		{
-		  break;
-		}
-	    }
-	  else if (astring[i] == '+' || astring[i] == '-')
-	    {			/* sign found */
-	      if (!sign_found)
-		{
-		  sign_found = true;
-		  if (astring[i] == '-')
-		    {
-		      negate_value = true;
-		    }
-		}
-	      else
-		{		/* Duplicate sign characters */
-		  ret = DOMAIN_INCOMPATIBLE;
-		}
-	    }
-	  else if (astring[i] == '0')
-	    {
-	      /* leading pad '0' found */
-	      pad_character_zero = true;
-	    }
-	  else if (intl_is_space (astring + i, NULL, &skip_size))
-	    {
-	      /* Just skip this.  OK to have leading spaces */
-	      ;
-	    }
-	  else
-	    {
-	      /*  Stray Non-numeric compatible character */
-	      ret = DOMAIN_INCOMPATIBLE;
-	    }
-	}
+        {                       /* Look for 1st digit between 1 & 9 */
+          if (astring[i] >= '1' && astring[i] <= '9')
+            {
+              leading_zeroes = false;
+              num_string[prec] = astring[i];
+              if (++prec > DB_MAX_NUMERIC_PRECISION)
+                {
+                  break;
+                }
+            }
+          else if (astring[i] == '+' || astring[i] == '-')
+            {                   /* sign found */
+              if (!sign_found)
+                {
+                  sign_found = true;
+                  if (astring[i] == '-')
+                    {
+                      negate_value = true;
+                    }
+                }
+              else
+                {               /* Duplicate sign characters */
+                  ret = DOMAIN_INCOMPATIBLE;
+                }
+            }
+          else if (astring[i] == '0')
+            {
+              /* leading pad '0' found */
+              pad_character_zero = true;
+            }
+          else if (intl_is_space (astring + i, NULL, &skip_size))
+            {
+              /* Just skip this.  OK to have leading spaces */
+              ;
+            }
+          else
+            {
+              /*  Stray Non-numeric compatible character */
+              ret = DOMAIN_INCOMPATIBLE;
+            }
+        }
       else
-	{
-	  /* Only space character should be allowed on trailer.
-	   * If the first space character is shown after digits,
-	   * we consider it as the beginning of trailer.
-	   */
-	  if (trailing_spaces
-	      && !intl_is_space (astring + i, NULL, &skip_size))
-	    {
-	      ret = DOMAIN_INCOMPATIBLE;
-	    }
-	  else if (intl_is_space (astring + i, NULL, &skip_size))
-	    {
-	      if (!trailing_spaces)
-		{
-		  trailing_spaces = true;
-		}
-	      /* Decrease scale if decimal part exists. */
-	      scale -= skip_size;
-	      if (scale < 0)
-		{
-		  scale = 0;
-		}
-	    }
-	  else if (astring[i] == ',')
-	    {
-	      /* Accept ',' character on integer part. */
-	      if (decimal_part)
-		{
-		  ret = DOMAIN_INCOMPATIBLE;
-		}
-	    }
-	  else if (astring[i] >= '0' && astring[i] <= '9')
-	    {
-	      num_string[prec] = astring[i];
-	      if (++prec > DB_MAX_NUMERIC_PRECISION)
-		{
-		  break;
-		}
-	    }
-	  else
-	    {
-	      /* Characters excluding digit, space and comma are not acceptable. */
-	      ret = DOMAIN_INCOMPATIBLE;
-	    }
-	}
+        {
+          /* Only space character should be allowed on trailer.
+           * If the first space character is shown after digits,
+           * we consider it as the beginning of trailer.
+           */
+          if (trailing_spaces && !intl_is_space (astring + i, NULL, &skip_size))
+            {
+              ret = DOMAIN_INCOMPATIBLE;
+            }
+          else if (intl_is_space (astring + i, NULL, &skip_size))
+            {
+              if (!trailing_spaces)
+                {
+                  trailing_spaces = true;
+                }
+              /* Decrease scale if decimal part exists. */
+              scale -= skip_size;
+              if (scale < 0)
+                {
+                  scale = 0;
+                }
+            }
+          else if (astring[i] == ',')
+            {
+              /* Accept ',' character on integer part. */
+              if (decimal_part)
+                {
+                  ret = DOMAIN_INCOMPATIBLE;
+                }
+            }
+          else if (astring[i] >= '0' && astring[i] <= '9')
+            {
+              num_string[prec] = astring[i];
+              if (++prec > DB_MAX_NUMERIC_PRECISION)
+                {
+                  break;
+                }
+            }
+          else
+            {
+              /* Characters excluding digit, space and comma are not acceptable. */
+              ret = DOMAIN_INCOMPATIBLE;
+            }
+        }
     }
 
   if (ret != NO_ERROR)
@@ -3356,12 +3233,9 @@ numeric_coerce_string_to_num (const char *astring, int astring_length,
 
 exit_on_error:
 
-  db_value_domain_init (result, DB_TYPE_NUMERIC,
-			DB_DEFAULT_NUMERIC_PRECISION,
-			DB_DEFAULT_NUMERIC_SCALE);
+  db_value_domain_init (result, DB_TYPE_NUMERIC, DB_DEFAULT_NUMERIC_PRECISION, DB_DEFAULT_NUMERIC_SCALE);
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -3378,10 +3252,7 @@ exit_on_error:
  */
 int
 numeric_coerce_num_to_num (DB_C_NUMERIC src_num,
-			   int src_prec,
-			   int src_scale,
-			   int dest_prec, int dest_scale,
-			   DB_C_NUMERIC dest_num)
+                           int src_prec, int src_scale, int dest_prec, int dest_scale, DB_C_NUMERIC dest_num)
 {
   int ret = NO_ERROR;
   char num_string[DB_MAX_NUMERIC_PRECISION * 4];
@@ -3422,24 +3293,23 @@ numeric_coerce_num_to_num (DB_C_NUMERIC src_num,
   numeric_coerce_num_to_dec_str (dest_num, num_string);
   /* Scale the number */
   if (src_scale < dest_scale)
-    {				/* add trailing zeroes */
+    {                           /* add trailing zeroes */
       scale_diff = dest_scale - src_scale;
       orig_length = strlen (num_string);
       for (i = 0; i < scale_diff; i++)
-	{
-	  num_string[orig_length + i] = '0';
-	}
+        {
+          num_string[orig_length + i] = '0';
+        }
       num_string[orig_length + scale_diff] = '\0';
     }
   else if (dest_scale < src_scale)
-    {				/* Truncate and prepare for rounding */
+    {                           /* Truncate and prepare for rounding */
       scale_diff = src_scale - dest_scale;
       orig_length = strlen (num_string);
-      if (num_string[orig_length - scale_diff] >= '5'
-	  && num_string[orig_length - scale_diff] <= '9')
-	{
-	  round_up = true;
-	}
+      if (num_string[orig_length - scale_diff] >= '5' && num_string[orig_length - scale_diff] <= '9')
+        {
+          round_up = true;
+        }
       num_string[orig_length - scale_diff] = '\0';
     }
 
@@ -3451,10 +3321,10 @@ numeric_coerce_num_to_num (DB_C_NUMERIC src_num,
   for (i = 0, len = strlen (num_string) - dest_prec; i < len; i++)
     {
       if (num_string[i] >= '1' && num_string[i] <= '9')
-	{
-	  ret = ER_NUM_OVERFLOW;
-	  goto exit_on_error;
-	}
+        {
+          ret = ER_NUM_OVERFLOW;
+          goto exit_on_error;
+        }
     }
 
   /* only when all number are 9, round up will led overflow. */
@@ -3462,18 +3332,18 @@ numeric_coerce_num_to_num (DB_C_NUMERIC src_num,
     {
       bool is_all_nine = true;
       for (len = strlen (num_string), i = len - dest_prec; i < len; i++)
-	{
-	  if (num_string[i] != '9')
-	    {
-	      is_all_nine = false;
-	      break;
-	    }
-	}
+        {
+          if (num_string[i] != '9')
+            {
+              is_all_nine = false;
+              break;
+            }
+        }
       if (is_all_nine)
-	{
-	  ret = ER_NUM_OVERFLOW;
-	  goto exit_on_error;
-	}
+        {
+          ret = ER_NUM_OVERFLOW;
+          goto exit_on_error;
+        }
     }
 
   /* Convert scaled string into destination */
@@ -3494,8 +3364,7 @@ numeric_coerce_num_to_num (DB_C_NUMERIC src_num,
 
 exit_on_error:
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -3533,11 +3402,10 @@ get_significant_digit (DB_BIGINT i)
  * amount necessary in order to preserve as much data as possible.
  */
 int
-numeric_db_value_coerce_to_num (DB_VALUE * src, DB_VALUE * dest,
-				DB_DATA_STATUS * data_status)
+numeric_db_value_coerce_to_num (DB_VALUE * src, DB_VALUE * dest, DB_DATA_STATUS * data_status)
 {
   int ret = NO_ERROR;
-  unsigned char num[DB_NUMERIC_BUF_SIZE];	/* copy of a DB_C_NUMERIC */
+  unsigned char num[DB_NUMERIC_BUF_SIZE];       /* copy of a DB_C_NUMERIC */
   int precision, scale;
   const int desired_precision = DB_VALUE_PRECISION (dest);
   const int desired_scale = DB_VALUE_SCALE (dest);
@@ -3553,38 +3421,37 @@ numeric_db_value_coerce_to_num (DB_VALUE * src, DB_VALUE * dest,
     {
     case DB_TYPE_DOUBLE:
       {
-	double adouble = DB_GET_DOUBLE (src);
-	ret = numeric_internal_double_to_num (adouble, desired_scale, num,
-					      &precision, &scale);
-	break;
+        double adouble = DB_GET_DOUBLE (src);
+        ret = numeric_internal_double_to_num (adouble, desired_scale, num, &precision, &scale);
+        break;
       }
 
     case DB_TYPE_INTEGER:
       {
-	int anint = DB_GET_INT (src);
+        int anint = DB_GET_INT (src);
 
-	numeric_coerce_int_to_num (anint, num);
-	precision = get_significant_digit (anint);
-	scale = 0;
-	break;
+        numeric_coerce_int_to_num (anint, num);
+        precision = get_significant_digit (anint);
+        scale = 0;
+        break;
       }
 
     case DB_TYPE_BIGINT:
       {
-	DB_BIGINT bigint = DB_GET_BIGINT (src);
+        DB_BIGINT bigint = DB_GET_BIGINT (src);
 
-	numeric_coerce_bigint_to_num (bigint, num);
-	precision = get_significant_digit (bigint);
-	scale = 0;
-	break;
+        numeric_coerce_bigint_to_num (bigint, num);
+        precision = get_significant_digit (bigint);
+        scale = 0;
+        break;
       }
 
     case DB_TYPE_NUMERIC:
       {
-	numeric_copy (num, db_locate_numeric (src));
-	precision = DB_VALUE_PRECISION (src);
-	scale = DB_VALUE_SCALE (src);
-	break;
+        numeric_copy (num, db_locate_numeric (src));
+        precision = DB_VALUE_PRECISION (src);
+        scale = DB_VALUE_SCALE (src);
+        break;
       }
 
     default:
@@ -3598,18 +3465,17 @@ numeric_db_value_coerce_to_num (DB_VALUE * src, DB_VALUE * dest,
       /* Make the intermediate value */
       ret = DB_MAKE_NUMERIC (dest, num, precision, scale);
       if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       ret = numeric_coerce_num_to_num (db_locate_numeric (dest),
-				       DB_VALUE_PRECISION (dest),
-				       DB_VALUE_SCALE (dest),
-				       desired_precision, desired_scale, num);
+                                       DB_VALUE_PRECISION (dest),
+                                       DB_VALUE_SCALE (dest), desired_precision, desired_scale, num);
       if (ret != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       ret = DB_MAKE_NUMERIC (dest, num, desired_precision, desired_scale);
     }
@@ -3628,8 +3494,7 @@ exit_on_error:
       *data_status = DATA_STATUS_TRUNCATED;
     }
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -3643,9 +3508,7 @@ exit_on_error:
  * numerical type.
  */
 int
-numeric_db_value_coerce_from_num (DB_VALUE * src,
-				  DB_VALUE * dest,
-				  DB_DATA_STATUS * data_status)
+numeric_db_value_coerce_from_num (DB_VALUE * src, DB_VALUE * dest, DB_DATA_STATUS * data_status)
 {
   int ret = NO_ERROR;
 
@@ -3659,122 +3522,116 @@ numeric_db_value_coerce_from_num (DB_VALUE * src,
     {
     case DB_TYPE_DOUBLE:
       {
-	double adouble;
-	numeric_coerce_num_to_double (db_locate_numeric (src),
-				      DB_VALUE_SCALE (src), &adouble);
-	if (OR_CHECK_DOUBLE_OVERFLOW (adouble))
-	  {
-	    ret = ER_NUM_OVERFLOW;
-	    goto exit_on_error;
-	  }
-	DB_MAKE_DOUBLE (dest, adouble);
-	break;
+        double adouble;
+        numeric_coerce_num_to_double (db_locate_numeric (src), DB_VALUE_SCALE (src), &adouble);
+        if (OR_CHECK_DOUBLE_OVERFLOW (adouble))
+          {
+            ret = ER_NUM_OVERFLOW;
+            goto exit_on_error;
+          }
+        DB_MAKE_DOUBLE (dest, adouble);
+        break;
       }
 
     case DB_TYPE_INTEGER:
       {
-	double adouble;
-	numeric_coerce_num_to_double (db_locate_numeric (src),
-				      DB_VALUE_SCALE (src), &adouble);
-	if (OR_CHECK_INT_OVERFLOW (adouble))
-	  {
-	    ret = ER_NUM_OVERFLOW;
-	    goto exit_on_error;
-	  }
-	DB_MAKE_INTEGER (dest, (int) ROUND (adouble));
-	break;
+        double adouble;
+        numeric_coerce_num_to_double (db_locate_numeric (src), DB_VALUE_SCALE (src), &adouble);
+        if (OR_CHECK_INT_OVERFLOW (adouble))
+          {
+            ret = ER_NUM_OVERFLOW;
+            goto exit_on_error;
+          }
+        DB_MAKE_INTEGER (dest, (int) ROUND (adouble));
+        break;
       }
 
     case DB_TYPE_BIGINT:
       {
-	DB_BIGINT bint;
+        DB_BIGINT bint;
 
-	ret = numeric_coerce_num_to_bigint (db_locate_numeric (src),
-					    DB_VALUE_SCALE (src), &bint);
-	if (ret != NO_ERROR)
-	  {
-	    goto exit_on_error;
-	  }
+        ret = numeric_coerce_num_to_bigint (db_locate_numeric (src), DB_VALUE_SCALE (src), &bint);
+        if (ret != NO_ERROR)
+          {
+            goto exit_on_error;
+          }
 
-	DB_MAKE_BIGINT (dest, bint);
-	break;
+        DB_MAKE_BIGINT (dest, bint);
+        break;
       }
 
     case DB_TYPE_NUMERIC:
       {
-	ret = numeric_db_value_coerce_to_num (src, dest, data_status);
-	break;
+        ret = numeric_db_value_coerce_to_num (src, dest, data_status);
+        break;
       }
 
     case DB_TYPE_VARCHAR:
       {
-	char *return_string = NULL;
-	char *temp_str;
-	int size = 0;
+        char *return_string = NULL;
+        char *temp_str;
+        int size = 0;
 
-	temp_str = numeric_db_value_print (src);
-	size = strlen (temp_str);
-	return_string = (char *) malloc (size + 1);
-	if (return_string == NULL)
-	  {
-	    return er_errid ();
-	  }
+        temp_str = numeric_db_value_print (src);
+        size = strlen (temp_str);
+        return_string = (char *) malloc (size + 1);
+        if (return_string == NULL)
+          {
+            return er_errid ();
+          }
 
-	strcpy (return_string, temp_str);
-	DB_MAKE_VARCHAR (dest, size, return_string, size, LANG_SYS_COLLATION);
-	dest->need_clear = true;
-	break;
+        strcpy (return_string, temp_str);
+        DB_MAKE_VARCHAR (dest, size, return_string, size, LANG_SYS_COLLATION);
+        dest->need_clear = true;
+        break;
       }
 
     case DB_TYPE_TIME:
       {
-	double adouble;
-	DB_TIME v_time;
-	int hour, minute, second;
-	numeric_coerce_num_to_double (db_locate_numeric (src),
-				      DB_VALUE_SCALE (src), &adouble);
-	v_time = (int) (adouble + 0.5) % SECONDS_IN_A_DAY;
-	db_time_decode (&v_time, &hour, &minute, &second);
-	DB_MAKE_TIME (dest, hour, minute, second);
-	break;
+        double adouble;
+        DB_TIME v_time;
+        int hour, minute, second;
+        numeric_coerce_num_to_double (db_locate_numeric (src), DB_VALUE_SCALE (src), &adouble);
+        v_time = (int) (adouble + 0.5) % SECONDS_IN_A_DAY;
+        db_time_decode (&v_time, &hour, &minute, &second);
+        DB_MAKE_TIME (dest, hour, minute, second);
+        break;
       }
 
     case DB_TYPE_DATE:
       {
-	double adouble;
-	DB_DATE v_date;
-	int year, month, day;
-	numeric_coerce_num_to_double (db_locate_numeric (src),
-				      DB_VALUE_SCALE (src), &adouble);
-	v_date = (DB_DATE) (adouble);
-	db_date_decode (&v_date, &month, &day, &year);
-	DB_MAKE_DATE (dest, month, day, year);
-	break;
+        double adouble;
+        DB_DATE v_date;
+        int year, month, day;
+        numeric_coerce_num_to_double (db_locate_numeric (src), DB_VALUE_SCALE (src), &adouble);
+        v_date = (DB_DATE) (adouble);
+        db_date_decode (&v_date, &month, &day, &year);
+        DB_MAKE_DATE (dest, month, day, year);
+        break;
       }
 
     case DB_TYPE_DATETIME:
       {
-	DB_BIGINT bi, tmp_bi;
-	DB_DATETIME v_datetime;
+        DB_BIGINT bi, tmp_bi;
+        DB_DATETIME v_datetime;
 
-	ret = numeric_coerce_num_to_bigint (db_locate_numeric (src),
-					    DB_VALUE_SCALE (src), &bi);
-	if (ret == NO_ERROR)
-	  {
-	    /* make datetime value from interval value */
-	    tmp_bi = (DB_BIGINT) (bi / MILLISECONDS_OF_ONE_DAY);
-	    if (OR_CHECK_INT_OVERFLOW (tmp_bi))
-	      {
-		ret = ER_NUM_OVERFLOW;
-	      }
-	    else
-	      {
-		v_datetime.date = (int) tmp_bi;
-		v_datetime.time = (int) (bi % MILLISECONDS_OF_ONE_DAY);
-		db_make_datetime (dest, &v_datetime);
-	      }
-	  }
-	break;
+        ret = numeric_coerce_num_to_bigint (db_locate_numeric (src), DB_VALUE_SCALE (src), &bi);
+        if (ret == NO_ERROR)
+          {
+            /* make datetime value from interval value */
+            tmp_bi = (DB_BIGINT) (bi / MILLISECONDS_OF_ONE_DAY);
+            if (OR_CHECK_INT_OVERFLOW (tmp_bi))
+              {
+                ret = ER_NUM_OVERFLOW;
+              }
+            else
+              {
+                v_datetime.date = (int) tmp_bi;
+                v_datetime.time = (int) (bi % MILLISECONDS_OF_ONE_DAY);
+                db_make_datetime (dest, &v_datetime);
+              }
+          }
+        break;
       }
 
     default:
@@ -3786,8 +3643,7 @@ numeric_db_value_coerce_from_num (DB_VALUE * src,
 
 exit_on_error:
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -3808,59 +3664,54 @@ numeric_db_value_coerce_from_num_strict (DB_VALUE * src, DB_VALUE * dest)
     {
     case DB_TYPE_DOUBLE:
       {
-	double adouble;
-	numeric_coerce_num_to_double (db_locate_numeric (src),
-				      DB_VALUE_SCALE (src), &adouble);
-	if (OR_CHECK_DOUBLE_OVERFLOW (adouble))
-	  {
-	    return ER_FAILED;
-	  }
-	DB_MAKE_DOUBLE (dest, adouble);
-	break;
+        double adouble;
+        numeric_coerce_num_to_double (db_locate_numeric (src), DB_VALUE_SCALE (src), &adouble);
+        if (OR_CHECK_DOUBLE_OVERFLOW (adouble))
+          {
+            return ER_FAILED;
+          }
+        DB_MAKE_DOUBLE (dest, adouble);
+        break;
       }
 
     case DB_TYPE_INTEGER:
       {
-	double adouble;
-	numeric_coerce_num_to_double (db_locate_numeric (src),
-				      DB_VALUE_SCALE (src), &adouble);
-	if (OR_CHECK_INT_OVERFLOW (adouble))
-	  {
-	    return ER_FAILED;
-	  }
-	if (!numeric_is_fraction_part_zero (db_locate_numeric (src),
-					    DB_VALUE_SCALE (src)))
-	  {
-	    return ER_FAILED;
-	  }
-	DB_MAKE_INTEGER (dest, (int) (adouble));
-	break;
+        double adouble;
+        numeric_coerce_num_to_double (db_locate_numeric (src), DB_VALUE_SCALE (src), &adouble);
+        if (OR_CHECK_INT_OVERFLOW (adouble))
+          {
+            return ER_FAILED;
+          }
+        if (!numeric_is_fraction_part_zero (db_locate_numeric (src), DB_VALUE_SCALE (src)))
+          {
+            return ER_FAILED;
+          }
+        DB_MAKE_INTEGER (dest, (int) (adouble));
+        break;
       }
 
     case DB_TYPE_BIGINT:
       {
-	DB_BIGINT bint;
+        DB_BIGINT bint;
 
-	ret = numeric_coerce_num_to_bigint (db_locate_numeric (src),
-					    DB_VALUE_SCALE (src), &bint);
-	if (ret != NO_ERROR)
-	  {
-	    return ER_FAILED;
-	  }
+        ret = numeric_coerce_num_to_bigint (db_locate_numeric (src), DB_VALUE_SCALE (src), &bint);
+        if (ret != NO_ERROR)
+          {
+            return ER_FAILED;
+          }
 
-	if (!numeric_is_fraction_part_zero (db_locate_numeric (src),
-					    DB_VALUE_SCALE (src)))
-	  {
-	    return ER_FAILED;
-	  }
-	DB_MAKE_BIGINT (dest, bint);
-	break;
+        if (!numeric_is_fraction_part_zero (db_locate_numeric (src), DB_VALUE_SCALE (src)))
+          {
+            return ER_FAILED;
+          }
+        DB_MAKE_BIGINT (dest, bint);
+        break;
       }
 
     case DB_TYPE_NUMERIC:
       {
-	ret = qdata_coerce_dbval_to_numeric (src, dest);
-	break;
+        ret = qdata_coerce_dbval_to_numeric (src, dest);
+        break;
       }
 
     default:
@@ -3937,30 +3788,30 @@ numeric_db_value_to_string (char *buf, const DB_VALUE * val)
     {
       /* Add the negative sign */
       if (temp[i] == '-')
-	{
-	  buf[nbuf] = '-';
-	  nbuf++;
-	}
+        {
+          buf[nbuf] = '-';
+          nbuf++;
+        }
 
       /* Add decimal point */
       if (i == temp_size - scale)
-	{
-	  buf[nbuf] = '.';
-	  nbuf++;
-	}
+        {
+          buf[nbuf] = '.';
+          nbuf++;
+        }
 
       /* Check to see if the first significant digit has been found */
       if (!found_first_non_zero && temp[i] >= '1' && temp[i] <= '9')
-	{
-	  found_first_non_zero = true;
-	}
+        {
+          found_first_non_zero = true;
+        }
 
       /* Remove leading zeroes */
       if (found_first_non_zero || i >= temp_size - scale - 1)
-	{
-	  buf[nbuf] = temp[i];
-	  nbuf++;
-	}
+        {
+          buf[nbuf] = temp[i];
+          nbuf++;
+        }
     }
 
   /* Null terminate */
@@ -3982,7 +3833,7 @@ numeric_db_value_to_string (char *buf, const DB_VALUE * val)
 bool
 numeric_db_value_is_zero (const DB_VALUE * arg)
 {
-  if (DB_IS_NULL (arg))		/* NULL values are not 0 */
+  if (DB_IS_NULL (arg))         /* NULL values are not 0 */
     {
       return false;
     }

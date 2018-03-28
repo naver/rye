@@ -83,27 +83,26 @@ db_create_vclass (const char *name)
     {
       type = pr_find_type (name);
       if (type != NULL || pt_is_reserved_word (name))
-	{
-	  error = ER_SM_CLASS_WITH_PRIM_NAME;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_SM_CLASS_WITH_PRIM_NAME, 1, name);
-	}
+        {
+          error = ER_SM_CLASS_WITH_PRIM_NAME;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SM_CLASS_WITH_PRIM_NAME, 1, name);
+        }
       else
-	{
-	  def = smt_def_typed_class (name, SM_VCLASS_CT);
-	  if (def == NULL)
-	    {
-	      error = er_errid ();
-	    }
-	  else
-	    {
-	      error = smt_finish_class (def, &virtual_class);
-	      if (error)
-		{
-		  smt_quit (def);
-		}
-	    }
-	}
+        {
+          def = smt_def_typed_class (name, SM_VCLASS_CT);
+          if (def == NULL)
+            {
+              error = er_errid ();
+            }
+          else
+            {
+              error = smt_finish_class (def, &virtual_class);
+              if (error)
+                {
+                  smt_quit (def);
+                }
+            }
+        }
     }
 
   return (virtual_class);
@@ -133,25 +132,25 @@ db_add_query_spec (MOP vclass, const char *query)
     {
       def = smt_edit_class_mop_with_lock (vclass, X_LOCK);
       if (def == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  error = smt_add_query_spec (def, query);
-	  if (error)
-	    {
-	      smt_quit (def);
-	    }
-	  else
-	    {
-	      error = smt_finish_class (def, &newmop);
-	      if (error)
-		{
-		  smt_quit (def);
-		}
-	    }
-	}
+        {
+          error = smt_add_query_spec (def, query);
+          if (error)
+            {
+              smt_quit (def);
+            }
+          else
+            {
+              error = smt_finish_class (def, &newmop);
+              if (error)
+                {
+                  smt_quit (def);
+                }
+            }
+        }
     }
 
   return (error);

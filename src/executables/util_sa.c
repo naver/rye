@@ -76,8 +76,7 @@ extern int log_default_input_for_archive_log_location;
 extern int catcls_compile_catalog_classes (THREAD_ENTRY * thread_p);
 
 static int parse_up_to_date (const char *up_to_date, struct tm *time_date);
-static int print_backup_info (const char *database_name,
-			      BO_RESTART_ARG * restart_arg);
+static int print_backup_info (const char *database_name, BO_RESTART_ARG * restart_arg);
 
 static void
 make_valid_page_size (int *v)
@@ -105,9 +104,9 @@ make_valid_page_size (int *v)
   if ((*v & (*v - 1)) != 0)
     {
       while (pow_size < *v)
-	{
-	  pow_size *= 2;
-	}
+        {
+          pow_size *= 2;
+        }
       *v = pow_size;
     }
 
@@ -141,19 +140,18 @@ createdb (UTIL_FUNCTION_ARG * arg)
   int db_volume_pages;
   int db_page_size;
   INT64 db_volume_size;
-  const INT64 db_volume_size_default = 512ULL * ONE_M;	/* 512M */
+  const INT64 db_volume_size_default = 512ULL * ONE_M;  /* 512M */
   int log_volume_pages;
   INT64 log_volume_size;
-  const INT64 log_volume_size_default = 256ULL * ONE_M;	/* 256M */
-  const INT64 log_volume_size_lower = 20ULL * ONE_M;	/* 20M */
-  const INT64 log_volume_size_upper = 512ULL * ONE_M;	/* 512M */
+  const INT64 log_volume_size_default = 256ULL * ONE_M; /* 256M */
+  const INT64 log_volume_size_lower = 20ULL * ONE_M;    /* 20M */
+  const INT64 log_volume_size_upper = 512ULL * ONE_M;   /* 512M */
   const char *db_volume_str;
   const char *log_volume_str;
 
   char required_size[16];
 
-  database_name = utility_get_option_string_value (arg_map,
-						   OPTION_STRING_TABLE, 0);
+  database_name = utility_get_option_string_value (arg_map, OPTION_STRING_TABLE, 0);
   if (database_name == 0 || database_name[0] == 0)
     {
       goto print_create_usage;
@@ -165,13 +163,10 @@ createdb (UTIL_FUNCTION_ARG * arg)
       goto error_exit;
     }
 
-  output_file_name = utility_get_option_string_value (arg_map,
-						      CREATE_OUTPUT_FILE_S,
-						      0);
+  output_file_name = utility_get_option_string_value (arg_map, CREATE_OUTPUT_FILE_S, 0);
   program_name = arg->command_name;
 #if defined (ENABLE_UNUSED_FUNCTION)
-  volume_path = utility_get_option_string_value (arg_map,
-						 CREATE_FILE_PATH_S, 0);
+  volume_path = utility_get_option_string_value (arg_map, CREATE_FILE_PATH_S, 0);
   log_path = utility_get_option_string_value (arg_map, CREATE_LOG_PATH_S, 0);
 #endif
 
@@ -180,15 +175,10 @@ createdb (UTIL_FUNCTION_ARG * arg)
 #if defined (ENABLE_UNUSED_FUNCTION)
   comment = utility_get_option_string_value (arg_map, CREATE_COMMENT_S, 0);
 #endif
-  init_file_name =
-    utility_get_option_string_value (arg_map,
-				     CREATE_RSQL_INITIALIZATION_FILE_S, 0);
+  init_file_name = utility_get_option_string_value (arg_map, CREATE_RSQL_INITIALIZATION_FILE_S, 0);
 #if defined (ENABLE_UNUSED_FUNCTION)
-  volume_spec_file_name =
-    utility_get_option_string_value (arg_map, CREATE_MORE_VOLUME_FILE_S, 0);
-  user_define_file_name =
-    utility_get_option_string_value (arg_map, CREATE_USER_DEFINITION_FILE_S,
-				     0);
+  volume_spec_file_name = utility_get_option_string_value (arg_map, CREATE_MORE_VOLUME_FILE_S, 0);
+  user_define_file_name = utility_get_option_string_value (arg_map, CREATE_USER_DEFINITION_FILE_S, 0);
 #endif
   assert (volume_spec_file_name == NULL);
 //  assert (user_define_file_name == NULL);
@@ -197,24 +187,20 @@ createdb (UTIL_FUNCTION_ARG * arg)
 
   make_valid_page_size (&db_page_size);
 
-  db_volume_str = utility_get_option_string_value (arg_map,
-						   CREATE_DB_VOLUME_SIZE_S,
-						   0);
+  db_volume_str = utility_get_option_string_value (arg_map, CREATE_DB_VOLUME_SIZE_S, 0);
   if (db_volume_str == NULL)
     {
-      db_volume_size = db_volume_size_default;	/* 512M */
+      db_volume_size = db_volume_size_default;  /* 512M */
     }
   else
     {
-      if (util_size_string_to_byte (&db_volume_size,
-				    db_volume_str) != NO_ERROR)
-	{
-	  PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-						 MSGCAT_UTIL_SET_CREATEDB,
-						 CREATEDB_MSG_INVALID_SIZE),
-				 CREATE_DB_VOLUME_SIZE_L, db_volume_str);
-	  goto error_exit;
-	}
+      if (util_size_string_to_byte (&db_volume_size, db_volume_str) != NO_ERROR)
+        {
+          PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
+                                                 MSGCAT_UTIL_SET_CREATEDB,
+                                                 CREATEDB_MSG_INVALID_SIZE), CREATE_DB_VOLUME_SIZE_L, db_volume_str);
+          goto error_exit;
+        }
     }
 
 #if defined (ENABLE_UNUSED_FUNCTION)
@@ -231,29 +217,24 @@ createdb (UTIL_FUNCTION_ARG * arg)
 
 //  db_volume_size = (UINT64) db_volume_pages *(UINT64) db_page_size;
 
-  log_volume_str = utility_get_option_string_value (arg_map,
-						    CREATE_LOG_VOLUME_SIZE_S,
-						    0);
+  log_volume_str = utility_get_option_string_value (arg_map, CREATE_LOG_VOLUME_SIZE_S, 0);
   if (log_volume_str == NULL)
     {
-      log_volume_size = log_volume_size_default;	/* 256M */
+      log_volume_size = log_volume_size_default;        /* 256M */
     }
   else
     {
-      if (util_size_string_to_byte (&log_volume_size,
-				    log_volume_str) != NO_ERROR)
-	{
-	  PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-						 MSGCAT_UTIL_SET_CREATEDB,
-						 CREATEDB_MSG_INVALID_SIZE),
-				 CREATE_LOG_VOLUME_SIZE_L, log_volume_str);
-	  goto error_exit;
-	}
+      if (util_size_string_to_byte (&log_volume_size, log_volume_str) != NO_ERROR)
+        {
+          PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
+                                                 MSGCAT_UTIL_SET_CREATEDB,
+                                                 CREATEDB_MSG_INVALID_SIZE), CREATE_LOG_VOLUME_SIZE_L, log_volume_str);
+          goto error_exit;
+        }
     }
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-  log_volume_pages = utility_get_option_int_value (arg_map,
-						   CREATE_LOG_PAGE_COUNT_S);
+  log_volume_pages = utility_get_option_int_value (arg_map, CREATE_LOG_PAGE_COUNT_S);
   if (log_volume_pages != -1)
     {
       util_print_deprecated ("--" CREATE_LOG_PAGE_COUNT_L);
@@ -281,85 +262,74 @@ createdb (UTIL_FUNCTION_ARG * arg)
   if (output_file == NULL)
     {
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-					     MSGCAT_UTIL_SET_CREATEDB,
-					     CREATEDB_MSG_BAD_OUTPUT),
-			     output_file_name);
+                                             MSGCAT_UTIL_SET_CREATEDB, CREATEDB_MSG_BAD_OUTPUT), output_file_name);
       goto error_exit;
     }
 
-  if (sysprm_check_range (prm_get_name (PRM_ID_DB_VOLUME_SIZE),
-			  &db_volume_size) != NO_ERROR)
+  if (sysprm_check_range (prm_get_name (PRM_ID_DB_VOLUME_SIZE), &db_volume_size) != NO_ERROR)
     {
       INT64 min, max;
       char min_buf[64], max_buf[64], vol_buf[64];
 
-      if (sysprm_get_range (prm_get_name (PRM_ID_DB_VOLUME_SIZE), &min, &max)
-	  != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+      if (sysprm_get_range (prm_get_name (PRM_ID_DB_VOLUME_SIZE), &min, &max) != NO_ERROR)
+        {
+          goto error_exit;
+        }
       util_byte_to_size_string (min_buf, 64, min);
       util_byte_to_size_string (max_buf, 64, max);
       if (db_volume_str != NULL)
-	{
-	  int len;
-	  len = strlen (db_volume_str);
-	  if (char_isdigit (db_volume_str[len - 1]))
-	    {
-	      snprintf (vol_buf, 64, "%sB", db_volume_str);
-	    }
-	  else
-	    {
-	      snprintf (vol_buf, 64, "%s", db_volume_str);
-	    }
-	}
+        {
+          int len;
+          len = strlen (db_volume_str);
+          if (char_isdigit (db_volume_str[len - 1]))
+            {
+              snprintf (vol_buf, 64, "%sB", db_volume_str);
+            }
+          else
+            {
+              snprintf (vol_buf, 64, "%s", db_volume_str);
+            }
+        }
       else
-	{
-	  util_byte_to_size_string (vol_buf, 64, db_volume_size);
-	}
-      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				       MSGCAT_UTIL_SET_CREATEDB,
-				       CREATEDB_MSG_FAILURE));
+        {
+          util_byte_to_size_string (vol_buf, 64, db_volume_size);
+        }
+      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_CREATEDB, CREATEDB_MSG_FAILURE));
 
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-					     MSGCAT_UTIL_SET_CREATEDB,
-					     CREATEDB_MSG_BAD_RANGE),
-			     prm_get_name (PRM_ID_DB_VOLUME_SIZE), vol_buf,
-			     min_buf, max_buf);
+                                             MSGCAT_UTIL_SET_CREATEDB,
+                                             CREATEDB_MSG_BAD_RANGE),
+                             prm_get_name (PRM_ID_DB_VOLUME_SIZE), vol_buf, min_buf, max_buf);
       goto error_exit;
     }
 
-  if (!(log_volume_size_lower <= log_volume_size
-	&& log_volume_size <= log_volume_size_upper))
+  if (!(log_volume_size_lower <= log_volume_size && log_volume_size <= log_volume_size_upper))
     {
       char min_buf[64], max_buf[64], vol_buf[64];
 
       util_byte_to_size_string (min_buf, 64, log_volume_size_lower);
       util_byte_to_size_string (max_buf, 64, log_volume_size_upper);
       if (log_volume_str != NULL)
-	{
-	  int len;
-	  len = strlen (log_volume_str);
-	  if (char_isdigit (log_volume_str[len - 1]))
-	    {
-	      snprintf (vol_buf, 64, "%sB", log_volume_str);
-	    }
-	  else
-	    {
-	      snprintf (vol_buf, 64, "%s", log_volume_str);
-	    }
-	}
+        {
+          int len;
+          len = strlen (log_volume_str);
+          if (char_isdigit (log_volume_str[len - 1]))
+            {
+              snprintf (vol_buf, 64, "%sB", log_volume_str);
+            }
+          else
+            {
+              snprintf (vol_buf, 64, "%s", log_volume_str);
+            }
+        }
       else
-	{
-	  util_byte_to_size_string (vol_buf, 64, log_volume_size);
-	}
-      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				       MSGCAT_UTIL_SET_CREATEDB,
-				       CREATEDB_MSG_FAILURE));
+        {
+          util_byte_to_size_string (vol_buf, 64, log_volume_size);
+        }
+      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_CREATEDB, CREATEDB_MSG_FAILURE));
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-					     MSGCAT_UTIL_SET_CREATEDB,
-					     CREATEDB_MSG_BAD_RANGE),
-			     "log_volume_size", vol_buf, min_buf, max_buf);
+                                             MSGCAT_UTIL_SET_CREATEDB,
+                                             CREATEDB_MSG_BAD_RANGE), "log_volume_size", vol_buf, min_buf, max_buf);
 
       goto error_exit;
     }
@@ -371,30 +341,25 @@ createdb (UTIL_FUNCTION_ARG * arg)
     {
       user_define_file = fopen (user_define_file_name, "r");
       if (user_define_file == NULL)
-	{
-	  PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-						 MSGCAT_UTIL_SET_CREATEDB,
-						 CREATEDB_MSG_BAD_USERFILE),
-				 user_define_file_name);
-	  goto error_exit;
-	}
+        {
+          PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
+                                                 MSGCAT_UTIL_SET_CREATEDB,
+                                                 CREATEDB_MSG_BAD_USERFILE), user_define_file_name);
+          goto error_exit;
+        }
     }
 #endif
 
-  util_byte_to_size_string (er_msg_file, sizeof (er_msg_file),
-			    db_volume_size);
+  util_byte_to_size_string (er_msg_file, sizeof (er_msg_file), db_volume_size);
   /* total amount of disk space of database is
    * db volume size + log_volume_size + temp_log_volume_size */
-  util_byte_to_size_string (required_size, sizeof (required_size),
-			    db_volume_size + (log_volume_size * 2));
+  util_byte_to_size_string (required_size, sizeof (required_size), db_volume_size + (log_volume_size * 2));
   fprintf (output_file,
-	   msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_CREATEDB,
-			   CREATEDB_MSG_CREATING),
-	   er_msg_file, "UTF-8", required_size);
+           msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_CREATEDB,
+                           CREATEDB_MSG_CREATING), er_msg_file, "UTF-8", required_size);
 
   /* error message log file */
-  snprintf (er_msg_file, sizeof (er_msg_file) - 1,
-	    "%s_%s.err", database_name, arg->command_name);
+  snprintf (er_msg_file, sizeof (er_msg_file) - 1, "%s_%s.err", database_name, arg->command_name);
   er_init (er_msg_file, ER_EXIT_DEFAULT);
 
   if (lang_init () != NO_ERROR)
@@ -410,19 +375,16 @@ createdb (UTIL_FUNCTION_ARG * arg)
 
   db_login ("DBA", NULL);
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   assert (host_name == NULL);
 #endif
   status = db_init (program_name, true, database_name,
-		    host_name, overwrite,
-		    volume_spec_file_name, db_volume_pages, db_page_size,
-		    log_volume_pages, db_page_size);
+                    host_name, overwrite,
+                    volume_spec_file_name, db_volume_pages, db_page_size, log_volume_pages, db_page_size);
 
   if (status != NO_ERROR)
     {
-      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				       MSGCAT_UTIL_SET_CREATEDB,
-				       CREATEDB_MSG_FAILURE));
+      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_CREATEDB, CREATEDB_MSG_FAILURE));
       PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
       goto error_exit;
     }
@@ -440,8 +402,7 @@ createdb (UTIL_FUNCTION_ARG * arg)
     {
       tf_compile_meta_classes ();
     }
-  if ((catcls_Enable != true)
-      && (catcls_compile_catalog_classes (NULL) != NO_ERROR))
+  if ((catcls_Enable != true) && (catcls_compile_catalog_classes (NULL) != NO_ERROR))
     {
       assert (false);
       util_log_write_errstr ("%s\n", db_error_string (3));
@@ -451,14 +412,14 @@ createdb (UTIL_FUNCTION_ARG * arg)
   if (catcls_Enable == true)
     {
       if (sm_force_write_all_classes () != NO_ERROR)
-	{
-	  util_log_write_errstr ("%s\n", db_error_string (3));
-	  db_shutdown ();
-	  goto error_exit;
-	}
+        {
+          util_log_write_errstr ("%s\n", db_error_string (3));
+          db_shutdown ();
+          goto error_exit;
+        }
     }
   if (sm_update_all_catalog_statistics (true /* update_stats */ ,
-					STATS_WITH_FULLSCAN) != NO_ERROR)
+                                        STATS_WITH_FULLSCAN) != NO_ERROR)
     {
       util_log_write_errstr ("%s\n", db_error_string (3));
       db_shutdown ();
@@ -473,14 +434,13 @@ createdb (UTIL_FUNCTION_ARG * arg)
   if (user_define_file != NULL)
     {
       if (parse_user_define_file (user_define_file, output_file) != NO_ERROR)
-	{
-	  PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-						 MSGCAT_UTIL_SET_CREATEDB,
-						 CREATEDB_MSG_BAD_USERFILE),
-				 user_define_file_name);
-	  db_shutdown ();
-	  goto error_exit;
-	}
+        {
+          PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
+                                                 MSGCAT_UTIL_SET_CREATEDB,
+                                                 CREATEDB_MSG_BAD_USERFILE), user_define_file_name);
+          db_shutdown ();
+          goto error_exit;
+        }
       fclose (user_define_file);
     }
 #endif
@@ -508,9 +468,7 @@ createdb (UTIL_FUNCTION_ARG * arg)
 
 print_create_usage:
   fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_CREATEDB,
-				   CREATEDB_MSG_USAGE),
-	   basename (arg->argv0));
+                                   MSGCAT_UTIL_SET_CREATEDB, CREATEDB_MSG_USAGE), basename (arg->argv0));
   util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_ARGUMENT);
 
 error_exit:
@@ -543,18 +501,14 @@ deletedb (UTIL_FUNCTION_ARG * arg)
   const char *database_name;
   bool force_delete;
 
-  database_name = utility_get_option_string_value (arg_map,
-						   OPTION_STRING_TABLE, 0);
+  database_name = utility_get_option_string_value (arg_map, OPTION_STRING_TABLE, 0);
   if (database_name == NULL)
     {
       goto print_delete_usage;
     }
 
-  output_file_name = utility_get_option_string_value (arg_map,
-						      DELETE_OUTPUT_FILE_S,
-						      0);
-  force_delete = utility_get_option_bool_value (arg_map,
-						DELETE_DELETE_BACKUP_S);
+  output_file_name = utility_get_option_string_value (arg_map, DELETE_OUTPUT_FILE_S, 0);
+  force_delete = utility_get_option_bool_value (arg_map, DELETE_DELETE_BACKUP_S);
 
   if (utility_get_option_string_table_size (arg_map) != 1)
     {
@@ -562,8 +516,7 @@ deletedb (UTIL_FUNCTION_ARG * arg)
     }
 
   /* error message log file */
-  snprintf (er_msg_file, sizeof (er_msg_file) - 1,
-	    "%s_%s.err", database_name, arg->command_name);
+  snprintf (er_msg_file, sizeof (er_msg_file) - 1, "%s_%s.err", database_name, arg->command_name);
   er_init (er_msg_file, ER_EXIT_DEFAULT);
 
   if (lang_init () != NO_ERROR)
@@ -588,9 +541,8 @@ deletedb (UTIL_FUNCTION_ARG * arg)
   if (output_file == NULL)
     {
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-					     MSGCAT_UTIL_SET_GENERIC,
-					     MSGCAT_UTIL_GENERIC_BAD_OUTPUT_FILE),
-			     output_file_name);
+                                             MSGCAT_UTIL_SET_GENERIC,
+                                             MSGCAT_UTIL_GENERIC_BAD_OUTPUT_FILE), output_file_name);
 
       goto error_exit;
     }
@@ -617,9 +569,7 @@ deletedb (UTIL_FUNCTION_ARG * arg)
 
 print_delete_usage:
   fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_DELETEDB,
-				   DELETEDB_MSG_USAGE),
-	   basename (arg->argv0));
+                                   MSGCAT_UTIL_SET_DELETEDB, DELETEDB_MSG_USAGE), basename (arg->argv0));
   util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_ARGUMENT);
 
 error_exit:
@@ -653,53 +603,53 @@ parse_up_to_date (const char *date_string, struct tm *time_data)
   while (status == NO_ERROR && token != NULL)
     {
       switch (date_index)
-	{
-	case 0:		/* year */
-	  time_data->tm_year = atoi (token) - 1900;
-	  if (time_data->tm_year < 0)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 1:		/* month */
-	  time_data->tm_mon = atoi (token) - 1;
-	  if (time_data->tm_mon < 0 || time_data->tm_mon > 11)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 2:		/* day */
-	  time_data->tm_mday = atoi (token);
-	  if (time_data->tm_mday < 1 || time_data->tm_mday > 31)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 3:		/* hour */
-	  time_data->tm_hour = atoi (token);
-	  if (time_data->tm_hour < 0 || time_data->tm_hour > 23)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 4:		/* minute */
-	  time_data->tm_min = atoi (token);
-	  if (time_data->tm_min < 0 || time_data->tm_min > 59)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	case 5:		/* second */
-	  time_data->tm_sec = atoi (token);
-	  if (time_data->tm_sec < 0 || time_data->tm_sec > 59)
-	    {
-	      status = ER_GENERIC_ERROR;
-	    }
-	  break;
-	default:
-	  status = ER_GENERIC_ERROR;
-	  break;
-	}
+        {
+        case 0:                /* year */
+          time_data->tm_year = atoi (token) - 1900;
+          if (time_data->tm_year < 0)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 1:                /* month */
+          time_data->tm_mon = atoi (token) - 1;
+          if (time_data->tm_mon < 0 || time_data->tm_mon > 11)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 2:                /* day */
+          time_data->tm_mday = atoi (token);
+          if (time_data->tm_mday < 1 || time_data->tm_mday > 31)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 3:                /* hour */
+          time_data->tm_hour = atoi (token);
+          if (time_data->tm_hour < 0 || time_data->tm_hour > 23)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 4:                /* minute */
+          time_data->tm_min = atoi (token);
+          if (time_data->tm_min < 0 || time_data->tm_min > 59)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        case 5:                /* second */
+          time_data->tm_sec = atoi (token);
+          if (time_data->tm_sec < 0 || time_data->tm_sec > 59)
+            {
+              status = ER_GENERIC_ERROR;
+            }
+          break;
+        default:
+          status = ER_GENERIC_ERROR;
+          break;
+        }
 
       date_index++;
       token = strtok_r (NULL, delim, &save_ptr);
@@ -725,11 +675,9 @@ print_backup_info (const char *database_name, BO_RESTART_ARG * restart_arg)
       goto exit;
     }
 
-  COMPOSE_FULL_NAME (BO_DB_FULLNAME, sizeof (BO_DB_FULLNAME),
-		     pathname, database_name);
+  COMPOSE_FULL_NAME (BO_DB_FULLNAME, sizeof (BO_DB_FULLNAME), pathname, database_name);
 
-  error_code = bk_get_backup_volume (NULL, BO_DB_FULLNAME,
-				     restart_arg->backuppath, from_volbackup);
+  error_code = bk_get_backup_volume (NULL, BO_DB_FULLNAME, restart_arg->backuppath, from_volbackup);
   if (error_code != NO_ERROR)
     {
       goto exit;
@@ -758,22 +706,15 @@ restoredb (UTIL_FUNCTION_ARG * arg)
   bool partial_recovery;
   BO_RESTART_ARG restart_arg;
 
-  database_name = utility_get_option_string_value (arg_map,
-						   OPTION_STRING_TABLE, 0);
-  up_to_date = utility_get_option_string_value (arg_map,
-						RESTORE_UP_TO_DATE_S, 0);
-  partial_recovery = utility_get_option_bool_value (arg_map,
-						    RESTORE_PARTIAL_RECOVERY_S);
-  restart_arg.printtoc = utility_get_option_bool_value (arg_map,
-							RESTORE_LIST_S);
+  database_name = utility_get_option_string_value (arg_map, OPTION_STRING_TABLE, 0);
+  up_to_date = utility_get_option_string_value (arg_map, RESTORE_UP_TO_DATE_S, 0);
+  partial_recovery = utility_get_option_bool_value (arg_map, RESTORE_PARTIAL_RECOVERY_S);
+  restart_arg.printtoc = utility_get_option_bool_value (arg_map, RESTORE_LIST_S);
   restart_arg.stopat = -1;
-  restart_arg.backuppath =
-    utility_get_option_string_value (arg_map, RESTORE_BACKUP_FILE_PATH_S, 0);
-  restart_arg.verbose_file =
-    utility_get_option_string_value (arg_map, RESTORE_OUTPUT_FILE_S, 0);
+  restart_arg.backuppath = utility_get_option_string_value (arg_map, RESTORE_BACKUP_FILE_PATH_S, 0);
+  restart_arg.verbose_file = utility_get_option_string_value (arg_map, RESTORE_OUTPUT_FILE_S, 0);
   restart_arg.restore_upto_backuptime = false;
-  restart_arg.make_slave = utility_get_option_bool_value (arg_map,
-							  RESTORE_MAKE_SLAVE_S);
+  restart_arg.make_slave = utility_get_option_bool_value (arg_map, RESTORE_MAKE_SLAVE_S);
 
   if (utility_get_option_string_table_size (arg_map) != 1)
     {
@@ -783,57 +724,53 @@ restoredb (UTIL_FUNCTION_ARG * arg)
   if (restart_arg.backuppath == NULL)
     {
       PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-					     MSGCAT_UTIL_SET_RESTOREDB,
-					     RESTOREDB_MSG_NO_BACKUP_FILE));
+                                             MSGCAT_UTIL_SET_RESTOREDB, RESTOREDB_MSG_NO_BACKUP_FILE));
       goto error_exit;
     }
 
   if (restart_arg.make_slave == true)
     {
       if (up_to_date != NULL && strlen (up_to_date) > 0)
-	{
-	  if (strcasecmp (up_to_date, "backuptime") == 0)
-	    {
-	      ;			/* nop */
-	    }
-	  else
-	    {
-	      goto print_restore_usage;
-	    }
-	}
+        {
+          if (strcasecmp (up_to_date, "backuptime") == 0)
+            {
+              ;                 /* nop */
+            }
+          else
+            {
+              goto print_restore_usage;
+            }
+        }
 
       restart_arg.restore_upto_backuptime = true;
     }
   else if (up_to_date != NULL && strlen (up_to_date) > 0)
     {
       if (strcasecmp (up_to_date, "backuptime") == 0)
-	{
-	  restart_arg.restore_upto_backuptime = true;
-	}
+        {
+          restart_arg.restore_upto_backuptime = true;
+        }
       else
-	{
-	  status = parse_up_to_date (up_to_date, &time_data);
-	  restart_arg.stopat = mktime (&time_data);
-	  if (status != NO_ERROR || restart_arg.stopat < 0)
-	    {
-	      PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-						     MSGCAT_UTIL_SET_RESTOREDB,
-						     RESTOREDB_MSG_BAD_DATE));
-	      goto error_exit;
-	    }
-	}
+        {
+          status = parse_up_to_date (up_to_date, &time_data);
+          restart_arg.stopat = mktime (&time_data);
+          if (status != NO_ERROR || restart_arg.stopat < 0)
+            {
+              PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
+                                                     MSGCAT_UTIL_SET_RESTOREDB, RESTOREDB_MSG_BAD_DATE));
+              goto error_exit;
+            }
+        }
     }
   else
     {
       restart_arg.stopat = time (NULL);
     }
 
-  assert ((restart_arg.restore_upto_backuptime == false
-	   && restart_arg.stopat > 0) || (restart_arg.stopat == -1));
+  assert ((restart_arg.restore_upto_backuptime == false && restart_arg.stopat > 0) || (restart_arg.stopat == -1));
 
   /* error message log file */
-  snprintf (er_msg_file, sizeof (er_msg_file) - 1,
-	    "%s_%s.err", database_name, arg->command_name);
+  snprintf (er_msg_file, sizeof (er_msg_file) - 1, "%s_%s.err", database_name, arg->command_name);
   er_init (er_msg_file, ER_EXIT_DEFAULT);
 
   if (lang_init () != NO_ERROR)
@@ -845,13 +782,11 @@ restoredb (UTIL_FUNCTION_ARG * arg)
     {
       error_code = print_backup_info (database_name, &restart_arg);
       if (error_code != NO_ERROR)
-	{
-	  PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
-	  fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-					   MSGCAT_UTIL_SET_RESTOREDB,
-					   RESTOREDB_MSG_FAILURE));
-	  goto error_exit;
-	}
+        {
+          PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
+          fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_RESTOREDB, RESTOREDB_MSG_FAILURE));
+          goto error_exit;
+        }
 
       return EXIT_SUCCESS;
     }
@@ -867,16 +802,13 @@ restoredb (UTIL_FUNCTION_ARG * arg)
   if (status == NULL_TRAN_INDEX)
     {
       PRINT_AND_LOG_ERR_MSG ("%s\n", db_error_string (3));
-      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				       MSGCAT_UTIL_SET_RESTOREDB,
-				       RESTOREDB_MSG_FAILURE));
+      fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_RESTOREDB, RESTOREDB_MSG_FAILURE));
       goto error_exit;
     }
 
   assert (!LSA_ISNULL (&(restart_arg.backuptime_lsa)));
 
-  if (restart_arg.make_slave == true
-      && restart_arg.server_state == HA_STATE_MASTER)
+  if (restart_arg.make_slave == true && restart_arg.server_state == HA_STATE_MASTER)
     {
       CIRP_CT_LOG_ANALYZER analyzer_info;
       DB_IDXKEY key;
@@ -890,26 +822,25 @@ restoredb (UTIL_FUNCTION_ARG * arg)
       /* make pkey idxkey */
       DB_IDXKEY_MAKE_NULL (&key);
       key.size = 1;
-      error_code = rp_make_repl_host_key (&key.vals[0],
-					  &analyzer_info.host_info);
+      error_code = rp_make_repl_host_key (&key.vals[0], &analyzer_info.host_info);
       if (error_code != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
       error_code = qexec_upsert_analyzer_info (NULL, &key, &analyzer_info);
       if (error_code != NO_ERROR)
-	{
-	  db_idxkey_clear (&key);
+        {
+          db_idxkey_clear (&key);
 
-	  goto error_exit;
-	}
+          goto error_exit;
+        }
       db_idxkey_clear (&key);
 
       if (tran_server_commit () != TRAN_UNACTIVE_COMMITTED)
-	{
-	  error_code = er_errid ();
-	  goto error_exit;
-	}
+        {
+          error_code = er_errid ();
+          goto error_exit;
+        }
     }
 
   boot_shutdown_server ();
@@ -918,9 +849,7 @@ restoredb (UTIL_FUNCTION_ARG * arg)
 
 print_restore_usage:
   fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_RESTOREDB,
-				   RESTOREDB_MSG_USAGE),
-	   basename (arg->argv0));
+                                   MSGCAT_UTIL_SET_RESTOREDB, RESTOREDB_MSG_USAGE), basename (arg->argv0));
   util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_ARGUMENT);
 
 error_exit:
@@ -964,14 +893,12 @@ diagdb (UTIL_FUNCTION_ARG * arg)
 
   diag = utility_get_option_int_value (arg_map, DIAG_DUMP_TYPE_S);
 
-  if (diag != DIAGDUMP_LOG
-      && utility_get_option_string_table_size (arg_map) != 1)
+  if (diag != DIAGDUMP_LOG && utility_get_option_string_table_size (arg_map) != 1)
     {
       goto print_diag_usage;
     }
 
-  output_file = utility_get_option_string_value (arg_map,
-						 DIAG_OUTPUT_FILE_S, 0);
+  output_file = utility_get_option_string_value (arg_map, DIAG_OUTPUT_FILE_S, 0);
   if (output_file == NULL)
     {
       outfp = stdout;
@@ -980,13 +907,11 @@ diagdb (UTIL_FUNCTION_ARG * arg)
     {
       outfp = fopen (output_file, "w");
       if (outfp == NULL)
-	{
-	  PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
-						 MSGCAT_UTIL_SET_DIAGDB,
-						 DIAGDB_MSG_BAD_OUTPUT),
-				 output_file);
-	  goto error_exit;
-	}
+        {
+          PRINT_AND_LOG_ERR_MSG (msgcat_message (MSGCAT_CATALOG_UTILS,
+                                                 MSGCAT_UTIL_SET_DIAGDB, DIAGDB_MSG_BAD_OUTPUT), output_file);
+          goto error_exit;
+        }
     }
 
   if (check_database_name (db_name))
@@ -995,8 +920,7 @@ diagdb (UTIL_FUNCTION_ARG * arg)
     }
 
   /* error message log file */
-  snprintf (er_msg_file, sizeof (er_msg_file) - 1,
-	    "%s_%s.err", db_name, arg->command_name);
+  snprintf (er_msg_file, sizeof (er_msg_file) - 1, "%s_%s.err", db_name, arg->command_name);
   er_init (er_msg_file, ER_EXIT_DEFAULT);
 
   if (lang_init () != NO_ERROR)
@@ -1075,10 +999,8 @@ diagdb (UTIL_FUNCTION_ARG * arg)
       LOG_PAGEID start_logpageid;
       DKNPAGES dump_npages;
 
-      start_logpageid = utility_get_option_bigint_value (arg_map,
-							 DIAG_START_LOG_PAGEID_S);
-      dump_npages = utility_get_option_int_value (arg_map,
-						  DIAG_NUM_LOG_PAGES_S);
+      start_logpageid = utility_get_option_bigint_value (arg_map, DIAG_START_LOG_PAGEID_S);
+      dump_npages = utility_get_option_int_value (arg_map, DIAG_NUM_LOG_PAGES_S);
 
       fprintf (outfp, "\n*** DUMP OF LOG ***\n");
       xlog_dump (NULL, outfp, start_logpageid, dump_npages);
@@ -1088,8 +1010,7 @@ diagdb (UTIL_FUNCTION_ARG * arg)
     {
       bool dump_records;
       /* this dumps the contents of all heaps */
-      dump_records =
-	utility_get_option_bool_value (arg_map, DIAG_DUMP_RECORDS_S);
+      dump_records = utility_get_option_bool_value (arg_map, DIAG_DUMP_RECORDS_S);
       fprintf (outfp, "\n*** DUMP OF ALL HEAPS ***\n");
       heap_dump_all (NULL, outfp, dump_records);
     }
@@ -1105,8 +1026,7 @@ diagdb (UTIL_FUNCTION_ARG * arg)
 
 print_diag_usage:
   fprintf (stderr, msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_DIAGDB, DIAGDB_MSG_USAGE),
-	   basename (arg->argv0));
+                                   MSGCAT_UTIL_SET_DIAGDB, DIAGDB_MSG_USAGE), basename (arg->argv0));
   util_log_write_errid (MSGCAT_UTIL_GENERIC_INVALID_ARGUMENT);
 
 error_exit:

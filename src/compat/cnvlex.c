@@ -155,7 +155,7 @@ void free (void *);
 #define YY_END_OF_BUFFER_CHAR 0
 
 #ifndef YY_BUF_SIZE
-#define YY_BUF_SIZE (YY_READ_BUF_SIZE * 2)	/* size of default input buffer */
+#define YY_BUF_SIZE (YY_READ_BUF_SIZE * 2)      /* size of default input buffer */
 #endif
 
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
@@ -291,8 +291,8 @@ struct yy_buffer_state
 {
   FILE *yy_input_file;
 
-  YY_CHAR *yy_ch_buf;		/* input buffer */
-  YY_CHAR *yy_buf_pos;		/* current position in input buffer */
+  YY_CHAR *yy_ch_buf;           /* input buffer */
+  YY_CHAR *yy_buf_pos;          /* current position in input buffer */
 
   /* size of input buffer in bytes, not including room for EOB characters */
   int yy_buf_size;
@@ -300,7 +300,7 @@ struct yy_buffer_state
   /* number of characters read into yy_ch_buf, not including EOB characters */
   int yy_n_chars;
 
-  int yy_eof_status;		/* whether we've seen an EOF on this buffer */
+  int yy_eof_status;            /* whether we've seen an EOF on this buffer */
 #define EOF_NOT_SEEN 0
   /* "pending" happens when the EOF has been seen but there's still
    * some text process
@@ -321,7 +321,7 @@ static YY_BUFFER_STATE yy_current_buffer;
 /* yy_hold_char holds the character lost when yytext is formed */
 static YY_CHAR yy_hold_char;
 
-static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+static int yy_n_chars;          /* number of characters read into yy_ch_buf */
 
 
 
@@ -743,8 +743,8 @@ static YY_CHAR *yy_last_accepting_cpos;
  */
 /* points to current character in buffer */
 static YY_CHAR *yy_c_buf_p = (YY_CHAR *) 0;
-static int yy_init = 1;		/* whether we need to initialize */
-static int yy_start = 0;	/* start state number */
+static int yy_init = 1;         /* whether we need to initialize */
+static int yy_start = 0;        /* start state number */
 
 /* flag which is used to allow yywrap()'s to do buffer switches
  * instead of setting up a fresh yyin.  A bit of a hack ...
@@ -752,8 +752,7 @@ static int yy_start = 0;	/* start state number */
 static int yy_did_buffer_switch_on_eof;
 
 static yy_state_type yy_get_previous_state YY_PROTO ((void));
-static yy_state_type yy_try_NUL_trans
-YY_PROTO ((yy_state_type current_state));
+static yy_state_type yy_try_NUL_trans YY_PROTO ((yy_state_type current_state));
 static int yy_get_next_buffer YY_PROTO ((void));
 static void yyunput YY_PROTO ((YY_CHAR c, YY_CHAR * buf_ptr));
 void yyrestart YY_PROTO ((FILE * input_file));
@@ -787,9 +786,9 @@ YY_DECL
        */
       int i;
       for (i = yyleng - 1; i >= 0; --i)
-	{
-	  unput (yytext[i]);
-	}
+        {
+          unput (yytext[i]);
+        }
       cnv_fmt__next -= yyleng;
       cnv_fmt__unlex = 0;
     }
@@ -801,25 +800,25 @@ YY_DECL
       YY_USER_INIT;
 
       if (!yy_start)
-	yy_start = 1;		/* first start state */
+        yy_start = 1;           /* first start state */
 
       if (!yyin)
-	yyin = stdin;
+        yyin = stdin;
 
       if (!yyout)
-	yyout = stdout;
+        yyout = stdout;
 
       if (yy_current_buffer)
-	yy_init_buffer (yy_current_buffer, yyin);
+        yy_init_buffer (yy_current_buffer, yyin);
       else
-	yy_current_buffer = yy_create_buffer (yyin, YY_BUF_SIZE);
+        yy_current_buffer = yy_create_buffer (yyin, YY_BUF_SIZE);
 
       yy_load_buffer_state ();
 
       yy_init = 0;
     }
 
-  while (1)			/* loops until end-of-file is reached */
+  while (1)                     /* loops until end-of-file is reached */
     {
       yy_cp = yy_c_buf_p;
 
@@ -834,22 +833,22 @@ YY_DECL
       yy_current_state = yy_start;
     yy_match:
       do
-	{
-	  register YY_CHAR yy_c = yy_ec[*yy_cp];
-	  if (yy_accept[yy_current_state])
-	    {
-	      yy_last_accepting_state = yy_current_state;
-	      yy_last_accepting_cpos = yy_cp;
-	    }
-	  while (yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state)
-	    {
-	      yy_current_state = yy_def[yy_current_state];
-	      if (yy_current_state >= 353)
-		yy_c = yy_meta[yy_c];
-	    }
-	  yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	  ++yy_cp;
-	}
+        {
+          register YY_CHAR yy_c = yy_ec[*yy_cp];
+          if (yy_accept[yy_current_state])
+            {
+              yy_last_accepting_state = yy_current_state;
+              yy_last_accepting_cpos = yy_cp;
+            }
+          while (yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state)
+            {
+              yy_current_state = yy_def[yy_current_state];
+              if (yy_current_state >= 353)
+                yy_c = yy_meta[yy_c];
+            }
+          yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
+          ++yy_cp;
+        }
       while (yy_current_state != 352);
       yy_cp = yy_last_accepting_cpos;
       yy_current_state = yy_last_accepting_state;
@@ -860,629 +859,627 @@ YY_DECL
       YY_DO_BEFORE_ACTION;
       YY_USER_ACTION;
 
-    do_action:			/* this label is used only to access EOF actions */
+    do_action:                 /* this label is used only to access EOF actions */
 
 
       switch (yy_act)
-	{
-	case 0:		/* must backtrack */
-	  /* undo the effects of YY_DO_BEFORE_ACTION */
-	  *yy_cp = yy_hold_char;
-	  yy_cp = yy_last_accepting_cpos;
-	  yy_current_state = yy_last_accepting_state;
-	  goto yy_find_action;
+        {
+        case 0:                /* must backtrack */
+          /* undo the effects of YY_DO_BEFORE_ACTION */
+          *yy_cp = yy_hold_char;
+          yy_cp = yy_last_accepting_cpos;
+          yy_current_state = yy_last_accepting_state;
+          goto yy_find_action;
 
-	case 1:
-	  {
-	    DB_FMT_LEX_RETURN (FT_MINUS);
-	  }
-	  YY_BREAK case 2:
-	  {
-	    DB_FMT_LEX_RETURN (FT_PLUS);
-	  }
-	  YY_BREAK case 3:
-	  {
-	    DB_FMT_LEX_RETURN (FT_DECIMAL);
-	  }
-	  YY_BREAK case 4:
-	  {
-	    DB_FMT_LEX_RETURN (FT_CURRENCY);
-	  }
-	  YY_BREAK case 5:
-	  {
-	    DB_FMT_LEX_RETURN (FT_CURRENCY);
-	  }
-	  YY_BREAK case 6:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_THOUSANDS);
-	  }
-	  YY_BREAK case 7:
-	  {
-	    /* Number with no leading or trailing zeroes. */
-	    DB_FMT_LEX_RETURN (FT_NUMBER);
-	  }
-	  YY_BREAK case 8:
-	  {
-	    DB_FMT_LEX_RETURN (FT_STARS);
-	  }
-	  YY_BREAK case 9:
-	  {
-	    DB_FMT_LEX_RETURN (FT_ZEROES);
-	  }
-	  YY_BREAK case 10:
-	  {
-	    DB_FMT_LEX_RETURN (FT_TIME_DIGITS_0);
-	  }
-	  YY_BREAK case 11:
-	  {
-	    DB_FMT_LEX_RETURN (FT_TIME_DIGITS_BLANK);
-	  }
-	  YY_BREAK case 12:
-	  {
-	    DB_FMT_LEX_RETURN (FT_TIME_DIGITS);
-	  }
-	  YY_BREAK case 13:
-	  {
-	    DB_FMT_LEX_RETURN (FT_TIME_DIGITS_ANY);
-	  }
-	  YY_BREAK case 14:
-	  {
-	    DB_FMT_LEX_RETURN (FT_DATE_SEPARATOR);
-	  }
-	  YY_BREAK case 15:
-	  {
-	    DB_FMT_LEX_RETURN (FT_TIME_SEPARATOR);
-	  }
-	  YY_BREAK case 16:
-	  {
-	    DB_FMT_LEX_RETURN (FT_LOCAL_DATE_SEPARATOR);
-	  }
-	  YY_BREAK case 17:
-	  {
-	    token->value = 0;
-	    DB_FMT_LEX_RETURN (FT_AM_PM);
-	  }
-	  YY_BREAK case 18:
-	  {
-	    token->value = 1;
-	    DB_FMT_LEX_RETURN (FT_AM_PM);
-	  }
-	  YY_BREAK case 19:
-	  {
-	    token->value = 0;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
-	  }
-	  YY_BREAK case 20:
-	  {
-	    token->value = 1;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
-	  }
-	  YY_BREAK case 21:
-	  {
-	    token->value = 2;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
-	  }
-	  YY_BREAK case 22:
-	  {
-	    token->value = 3;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
-	  }
-	  YY_BREAK case 23:
-	  {
-	    token->value = 4;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
-	  }
-	  YY_BREAK case 24:
-	  {
-	    token->value = 5;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
-	  }
-	  YY_BREAK case 25:
-	  {
-	    token->value = 6;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
-	  }
-	  YY_BREAK case 26:
-	  {
-	    token->value = 0;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 27:
-	  {
-	    token->value = 1;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 28:
-	  {
-	    token->value = 2;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 29:
-	  {
-	    token->value = 3;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 30:
-	  {
-	    token->value = 4;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 31:
-	  {
-	    token->value = 5;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 32:
-	  {
-	    token->value = 6;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 33:
-	  {
-	    token->value = 1;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 34:
-	  {
-	    token->value = 2;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 35:
-	  {
-	    token->value = 3;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 36:
-	  {
-	    token->value = 4;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 37:
-	  {
-	    token->value = 5;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 38:
-	  {
-	    token->value = 6;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 39:
-	  {
-	    token->value = 7;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 40:
-	  {
-	    token->value = 8;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 41:
-	  {
-	    token->value = 9;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 42:
-	  {
-	    token->value = 10;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 43:
-	  {
-	    token->value = 11;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 44:
-	  {
-	    token->value = 12;
-	    DB_FMT_LEX_RETURN (FT_MONTH_LONG);
-	  }
-	  YY_BREAK case 45:
-	  {
-	    token->value = 1;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 46:
-	  {
-	    token->value = 2;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 47:
-	  {
-	    token->value = 3;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 48:
-	  {
-	    token->value = 4;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 49:
-	  {
-	    token->value = 5;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 50:
-	  {
-	    token->value = 6;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 51:
-	  {
-	    token->value = 7;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 52:
-	  {
-	    token->value = 8;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 53:
-	  {
-	    token->value = 9;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 54:
-	  {
-	    token->value = 10;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 55:
-	  {
-	    token->value = 11;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 56:
-	  {
-	    token->value = 12;
-	    DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 57:
-	  {
-	    DB_FMT_LEX_RETURN (FT_NUMBER);
-	  }
-	  YY_BREAK case 58:
-	  {
-	    DB_FMT_LEX_RETURN (FT_PATTERN);
-	  }
-	  YY_BREAK case 59:
-	  {
-	    /* Escaped X is treated like a pattern char. */
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_PATTERN);
-	  }
-	  YY_BREAK case 60:
-	  {
-	    DB_FMT_LEX_RETURN (FT_PATTERN);
-	  }
-	  YY_BREAK case 61:
-	  {
-	    /* Escaped % is treated like a pattern char. */
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_PATTERN);
-	  }
-	  YY_BREAK case 62:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_DATE);
-	  }
-	  YY_BREAK case 63:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_YEAR);
-	  }
-	  YY_BREAK case 64:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_MONTH);
-	  }
-	  YY_BREAK case 65:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_MONTHDAY);
-	  }
-	  YY_BREAK case 66:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 67:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_HOUR);
-	  }
-	  YY_BREAK case 68:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_MINUTE);
-	  }
-	  YY_BREAK case 69:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_SECOND);
-	  }
-	  YY_BREAK case 70:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_AM_PM);
-	  }
-	  YY_BREAK case 71:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_ZONE);
-	  }
-	  YY_BREAK case 72:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_TIME);
-	  }
-	  YY_BREAK case 73:
-	  {
-	    int csize = mblen (token->text, token->length);
-	      token->text += csize;
-	      token->length -= csize;
-	      DB_FMT_LEX_RETURN (FT_TIMESTAMP);
-	  }
-	  YY_BREAK case 74:
-	  {
-	    DB_FMT_LEX_RETURN (FT_DATE_FORMAT);
-	  }
-	  YY_BREAK case 75:
-	  {
-	    DB_FMT_LEX_RETURN (FT_FLOAT_FORMAT);
-	  }
-	  YY_BREAK case 76:
-	  {
-	    DB_FMT_LEX_RETURN (FT_INTEGER_FORMAT);
-	  }
-	  YY_BREAK case 77:
-	  {
-	    DB_FMT_LEX_RETURN (FT_INTEGER_FORMAT);
-	  }
-	  YY_BREAK case 78:
-	  {
-	    DB_FMT_LEX_RETURN (FT_MONETARY_FORMAT);
-	  }
-	  YY_BREAK case 79:
-	  {
-	    DB_FMT_LEX_RETURN (FT_TIME_FORMAT);
-	  }
-	  YY_BREAK case 80:
-	  {
-	    DB_FMT_LEX_RETURN (FT_DATETIME_FORMAT);
-	  }
-	  YY_BREAK case 81:
-	  {
-	    DB_FMT_LEX_RETURN (FT_BIT_STRING_FORMAT);
-	  }
-	  YY_BREAK case 82:
-	  {
-	    DB_FMT_LEX_RETURN (FT_BINARY_DIGITS);
-	  }
-	  YY_BREAK case 83:
-	  {
-	    DB_FMT_LEX_RETURN (FT_HEX_DIGITS);
-	  }
-	  YY_BREAK case 84:
-	  {
-	    DB_FMT_LEX_RETURN (FT_BINARY_DIGITS);
-	  }
-	  YY_BREAK case 85:
-	  {
-	    DB_FMT_LEX_RETURN (FT_HEX_DIGITS);
-	  }
-	  YY_BREAK case 86:
-	  {
-	    token->value = 0;
-	    DB_FMT_LEX_RETURN (FT_AM_PM);
-	  }
-	  YY_BREAK case 87:
-	  {
-	    token->value = 1;
-	    DB_FMT_LEX_RETURN (FT_AM_PM);
-	  }
-	  YY_BREAK case 88:
-	  {
-	    token->value = 0;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 89:
-	  {
-	    token->value = 1;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 90:
-	  {
-	    token->value = 2;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 91:
-	  {
-	    token->value = 3;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 92:
-	  {
-	    token->value = 4;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 93:
-	  {
-	    token->value = 5;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 94:
-	  {
-	    token->value = 6;
-	    DB_FMT_LEX_RETURN (FT_WEEKDAY);
-	  }
-	  YY_BREAK case 95:
-	  {
-	    DB_FMT_LEX_RETURN (FT_UNKNOWN);
-	  }
-	  YY_BREAK case YY_STATE_EOF (INITIAL):case
-	    YY_STATE_EOF (SC_US_ENG_NUMBER):case
-	    YY_STATE_EOF (SC_KO_KR_NUMBER):case
-	    YY_STATE_EOF (SC_US_ENG_TIME):case
-	    YY_STATE_EOF (SC_KO_KR_TIME):case
-	    YY_STATE_EOF (SC_BIT_STRING):case
-	    YY_STATE_EOF (SC_INTEGER_FORMAT):case
-	    YY_STATE_EOF (SC_TIME_FORMAT):case
-	    YY_STATE_EOF (SC_BIT_STRING_FORMAT):case
-	    YY_STATE_EOF (SC_VALIDATE_DATE_FORMAT):case
-	    YY_STATE_EOF (SC_VALIDATE_FLOAT_FORMAT):case
-	    YY_STATE_EOF (SC_VALIDATE_INTEGER_FORMAT):case
-	    YY_STATE_EOF (SC_VALIDATE_TIME_FORMAT):case
-	    YY_STATE_EOF (SC_VALIDATE_DATETIME_FORMAT):case
-	    YY_STATE_EOF (SC_VALIDATE_BIT_STRING_FORMAT):
-	  {
-	    cnv_fmt__next = cnv_fmt__input;
-	    token->type = FT_NONE;
-	    token->text = token->raw_text = cnv_fmt__input;
-	    token->length = 0;
-	    yyterminate ();
-	  }
-	  YY_BREAK case 97:ECHO;
-	  YY_BREAK case YY_END_OF_BUFFER:
-	  {
-	    /* amount of text matched not including the EOB char */
-	    int yy_amount_of_matched_text = yy_cp - yytext - 1;
+        case 1:
+          {
+            DB_FMT_LEX_RETURN (FT_MINUS);
+          }
+          YY_BREAK case 2:
+          {
+            DB_FMT_LEX_RETURN (FT_PLUS);
+          }
+          YY_BREAK case 3:
+          {
+            DB_FMT_LEX_RETURN (FT_DECIMAL);
+          }
+          YY_BREAK case 4:
+          {
+            DB_FMT_LEX_RETURN (FT_CURRENCY);
+          }
+          YY_BREAK case 5:
+          {
+            DB_FMT_LEX_RETURN (FT_CURRENCY);
+          }
+          YY_BREAK case 6:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_THOUSANDS);
+          }
+          YY_BREAK case 7:
+          {
+            /* Number with no leading or trailing zeroes. */
+            DB_FMT_LEX_RETURN (FT_NUMBER);
+          }
+          YY_BREAK case 8:
+          {
+            DB_FMT_LEX_RETURN (FT_STARS);
+          }
+          YY_BREAK case 9:
+          {
+            DB_FMT_LEX_RETURN (FT_ZEROES);
+          }
+          YY_BREAK case 10:
+          {
+            DB_FMT_LEX_RETURN (FT_TIME_DIGITS_0);
+          }
+          YY_BREAK case 11:
+          {
+            DB_FMT_LEX_RETURN (FT_TIME_DIGITS_BLANK);
+          }
+          YY_BREAK case 12:
+          {
+            DB_FMT_LEX_RETURN (FT_TIME_DIGITS);
+          }
+          YY_BREAK case 13:
+          {
+            DB_FMT_LEX_RETURN (FT_TIME_DIGITS_ANY);
+          }
+          YY_BREAK case 14:
+          {
+            DB_FMT_LEX_RETURN (FT_DATE_SEPARATOR);
+          }
+          YY_BREAK case 15:
+          {
+            DB_FMT_LEX_RETURN (FT_TIME_SEPARATOR);
+          }
+          YY_BREAK case 16:
+          {
+            DB_FMT_LEX_RETURN (FT_LOCAL_DATE_SEPARATOR);
+          }
+          YY_BREAK case 17:
+          {
+            token->value = 0;
+            DB_FMT_LEX_RETURN (FT_AM_PM);
+          }
+          YY_BREAK case 18:
+          {
+            token->value = 1;
+            DB_FMT_LEX_RETURN (FT_AM_PM);
+          }
+          YY_BREAK case 19:
+          {
+            token->value = 0;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
+          }
+          YY_BREAK case 20:
+          {
+            token->value = 1;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
+          }
+          YY_BREAK case 21:
+          {
+            token->value = 2;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
+          }
+          YY_BREAK case 22:
+          {
+            token->value = 3;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
+          }
+          YY_BREAK case 23:
+          {
+            token->value = 4;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
+          }
+          YY_BREAK case 24:
+          {
+            token->value = 5;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
+          }
+          YY_BREAK case 25:
+          {
+            token->value = 6;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY_LONG);
+          }
+          YY_BREAK case 26:
+          {
+            token->value = 0;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 27:
+          {
+            token->value = 1;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 28:
+          {
+            token->value = 2;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 29:
+          {
+            token->value = 3;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 30:
+          {
+            token->value = 4;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 31:
+          {
+            token->value = 5;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 32:
+          {
+            token->value = 6;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 33:
+          {
+            token->value = 1;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 34:
+          {
+            token->value = 2;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 35:
+          {
+            token->value = 3;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 36:
+          {
+            token->value = 4;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 37:
+          {
+            token->value = 5;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 38:
+          {
+            token->value = 6;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 39:
+          {
+            token->value = 7;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 40:
+          {
+            token->value = 8;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 41:
+          {
+            token->value = 9;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 42:
+          {
+            token->value = 10;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 43:
+          {
+            token->value = 11;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 44:
+          {
+            token->value = 12;
+            DB_FMT_LEX_RETURN (FT_MONTH_LONG);
+          }
+          YY_BREAK case 45:
+          {
+            token->value = 1;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 46:
+          {
+            token->value = 2;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 47:
+          {
+            token->value = 3;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 48:
+          {
+            token->value = 4;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 49:
+          {
+            token->value = 5;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 50:
+          {
+            token->value = 6;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 51:
+          {
+            token->value = 7;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 52:
+          {
+            token->value = 8;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 53:
+          {
+            token->value = 9;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 54:
+          {
+            token->value = 10;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 55:
+          {
+            token->value = 11;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 56:
+          {
+            token->value = 12;
+            DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 57:
+          {
+            DB_FMT_LEX_RETURN (FT_NUMBER);
+          }
+          YY_BREAK case 58:
+          {
+            DB_FMT_LEX_RETURN (FT_PATTERN);
+          }
+          YY_BREAK case 59:
+          {
+            /* Escaped X is treated like a pattern char. */
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_PATTERN);
+          }
+          YY_BREAK case 60:
+          {
+            DB_FMT_LEX_RETURN (FT_PATTERN);
+          }
+          YY_BREAK case 61:
+          {
+            /* Escaped % is treated like a pattern char. */
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_PATTERN);
+          }
+          YY_BREAK case 62:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_DATE);
+          }
+          YY_BREAK case 63:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_YEAR);
+          }
+          YY_BREAK case 64:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_MONTH);
+          }
+          YY_BREAK case 65:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_MONTHDAY);
+          }
+          YY_BREAK case 66:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 67:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_HOUR);
+          }
+          YY_BREAK case 68:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_MINUTE);
+          }
+          YY_BREAK case 69:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_SECOND);
+          }
+          YY_BREAK case 70:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_AM_PM);
+          }
+          YY_BREAK case 71:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_ZONE);
+          }
+          YY_BREAK case 72:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_TIME);
+          }
+          YY_BREAK case 73:
+          {
+            int csize = mblen (token->text, token->length);
+              token->text += csize;
+              token->length -= csize;
+              DB_FMT_LEX_RETURN (FT_TIMESTAMP);
+          }
+          YY_BREAK case 74:
+          {
+            DB_FMT_LEX_RETURN (FT_DATE_FORMAT);
+          }
+          YY_BREAK case 75:
+          {
+            DB_FMT_LEX_RETURN (FT_FLOAT_FORMAT);
+          }
+          YY_BREAK case 76:
+          {
+            DB_FMT_LEX_RETURN (FT_INTEGER_FORMAT);
+          }
+          YY_BREAK case 77:
+          {
+            DB_FMT_LEX_RETURN (FT_INTEGER_FORMAT);
+          }
+          YY_BREAK case 78:
+          {
+            DB_FMT_LEX_RETURN (FT_MONETARY_FORMAT);
+          }
+          YY_BREAK case 79:
+          {
+            DB_FMT_LEX_RETURN (FT_TIME_FORMAT);
+          }
+          YY_BREAK case 80:
+          {
+            DB_FMT_LEX_RETURN (FT_DATETIME_FORMAT);
+          }
+          YY_BREAK case 81:
+          {
+            DB_FMT_LEX_RETURN (FT_BIT_STRING_FORMAT);
+          }
+          YY_BREAK case 82:
+          {
+            DB_FMT_LEX_RETURN (FT_BINARY_DIGITS);
+          }
+          YY_BREAK case 83:
+          {
+            DB_FMT_LEX_RETURN (FT_HEX_DIGITS);
+          }
+          YY_BREAK case 84:
+          {
+            DB_FMT_LEX_RETURN (FT_BINARY_DIGITS);
+          }
+          YY_BREAK case 85:
+          {
+            DB_FMT_LEX_RETURN (FT_HEX_DIGITS);
+          }
+          YY_BREAK case 86:
+          {
+            token->value = 0;
+            DB_FMT_LEX_RETURN (FT_AM_PM);
+          }
+          YY_BREAK case 87:
+          {
+            token->value = 1;
+            DB_FMT_LEX_RETURN (FT_AM_PM);
+          }
+          YY_BREAK case 88:
+          {
+            token->value = 0;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 89:
+          {
+            token->value = 1;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 90:
+          {
+            token->value = 2;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 91:
+          {
+            token->value = 3;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 92:
+          {
+            token->value = 4;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 93:
+          {
+            token->value = 5;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 94:
+          {
+            token->value = 6;
+            DB_FMT_LEX_RETURN (FT_WEEKDAY);
+          }
+          YY_BREAK case 95:
+          {
+            DB_FMT_LEX_RETURN (FT_UNKNOWN);
+          }
+          YY_BREAK case YY_STATE_EOF (INITIAL):case
+            YY_STATE_EOF (SC_US_ENG_NUMBER):case
+            YY_STATE_EOF (SC_KO_KR_NUMBER):case
+            YY_STATE_EOF (SC_US_ENG_TIME):case
+            YY_STATE_EOF (SC_KO_KR_TIME):case
+            YY_STATE_EOF (SC_BIT_STRING):case
+            YY_STATE_EOF (SC_INTEGER_FORMAT):case
+            YY_STATE_EOF (SC_TIME_FORMAT):case
+            YY_STATE_EOF (SC_BIT_STRING_FORMAT):case
+            YY_STATE_EOF (SC_VALIDATE_DATE_FORMAT):case
+            YY_STATE_EOF (SC_VALIDATE_FLOAT_FORMAT):case
+            YY_STATE_EOF (SC_VALIDATE_INTEGER_FORMAT):case
+            YY_STATE_EOF (SC_VALIDATE_TIME_FORMAT):case
+            YY_STATE_EOF (SC_VALIDATE_DATETIME_FORMAT):case YY_STATE_EOF (SC_VALIDATE_BIT_STRING_FORMAT):
+          {
+            cnv_fmt__next = cnv_fmt__input;
+            token->type = FT_NONE;
+            token->text = token->raw_text = cnv_fmt__input;
+            token->length = 0;
+            yyterminate ();
+          }
+          YY_BREAK case 97:ECHO;
+          YY_BREAK case YY_END_OF_BUFFER:
+          {
+            /* amount of text matched not including the EOB char */
+            int yy_amount_of_matched_text = yy_cp - yytext - 1;
 
-	    /* undo the effects of YY_DO_BEFORE_ACTION */
-	     *yy_cp = yy_hold_char;
+            /* undo the effects of YY_DO_BEFORE_ACTION */
+             *yy_cp = yy_hold_char;
 
-	    /* note that here we test for yy_c_buf_p "<=" to the position
-	     * of the first EOB in the buffer, since yy_c_buf_p will
-	     * already have been incremented past the NUL character
-	     * (since all states make transitions on EOB to the end-
-	     * of-buffer state).  Contrast this with the test in yyinput().
-	     */
-	    if (yy_c_buf_p <= &yy_current_buffer->yy_ch_buf[yy_n_chars])
-	      /* this was really a NUL */
-	      {
-		yy_state_type yy_next_state;
+            /* note that here we test for yy_c_buf_p "<=" to the position
+             * of the first EOB in the buffer, since yy_c_buf_p will
+             * already have been incremented past the NUL character
+             * (since all states make transitions on EOB to the end-
+             * of-buffer state).  Contrast this with the test in yyinput().
+             */
+            if (yy_c_buf_p <= &yy_current_buffer->yy_ch_buf[yy_n_chars])
+              /* this was really a NUL */
+              {
+                yy_state_type yy_next_state;
 
-		  yy_c_buf_p = yytext + yy_amount_of_matched_text;
+                  yy_c_buf_p = yytext + yy_amount_of_matched_text;
 
-		  yy_current_state = yy_get_previous_state ();
+                  yy_current_state = yy_get_previous_state ();
 
-		/* okay, we're now positioned to make the
-		 * NUL transition.  We couldn't have
-		 * yy_get_previous_state() go ahead and do it
-		 * for us because it doesn't know how to deal
-		 * with the possibility of jamming (and we
-		 * don't want to build jamming into it because
-		 * then it will run more slowly)
-		 */
+                /* okay, we're now positioned to make the
+                 * NUL transition.  We couldn't have
+                 * yy_get_previous_state() go ahead and do it
+                 * for us because it doesn't know how to deal
+                 * with the possibility of jamming (and we
+                 * don't want to build jamming into it because
+                 * then it will run more slowly)
+                 */
 
-		  yy_next_state = yy_try_NUL_trans (yy_current_state);
+                  yy_next_state = yy_try_NUL_trans (yy_current_state);
 
-		  yy_bp = yytext + YY_MORE_ADJ;
+                  yy_bp = yytext + YY_MORE_ADJ;
 
-		if (yy_next_state)
-		  {
-		    /* consume the NUL */
-		    yy_cp = ++yy_c_buf_p;
-		    yy_current_state = yy_next_state;
-		    goto yy_match;
-		  }
+                if (yy_next_state)
+                  {
+                    /* consume the NUL */
+                    yy_cp = ++yy_c_buf_p;
+                    yy_current_state = yy_next_state;
+                    goto yy_match;
+                  }
 
-		else
-		  {
-		    yy_cp = yy_last_accepting_cpos;
-		    yy_current_state = yy_last_accepting_state;
-		    goto yy_find_action;
-		  }
-	      }
+                else
+                  {
+                    yy_cp = yy_last_accepting_cpos;
+                    yy_current_state = yy_last_accepting_state;
+                    goto yy_find_action;
+                  }
+              }
 
-	    else
-	      switch (yy_get_next_buffer ())
-		{
-		case EOB_ACT_END_OF_FILE:
-		  {
-		    yy_did_buffer_switch_on_eof = 0;
+            else
+              switch (yy_get_next_buffer ())
+                {
+                case EOB_ACT_END_OF_FILE:
+                  {
+                    yy_did_buffer_switch_on_eof = 0;
 
-		    if (yywrap ())
-		      {
-			/* note: because we've taken care in
-			 * yy_get_next_buffer() to have set up yytext,
-			 * we can now set up yy_c_buf_p so that if some
-			 * total hoser (like flex itself) wants
-			 * to call the scanner after we return the
-			 * YY_NULL, it'll still work - another YY_NULL
-			 * will get returned.
-			 */
-			yy_c_buf_p = yytext + YY_MORE_ADJ;
+                    if (yywrap ())
+                      {
+                        /* note: because we've taken care in
+                         * yy_get_next_buffer() to have set up yytext,
+                         * we can now set up yy_c_buf_p so that if some
+                         * total hoser (like flex itself) wants
+                         * to call the scanner after we return the
+                         * YY_NULL, it'll still work - another YY_NULL
+                         * will get returned.
+                         */
+                        yy_c_buf_p = yytext + YY_MORE_ADJ;
 
-			yy_act = YY_STATE_EOF ((yy_start - 1) / 2);
-			goto do_action;
-		      }
+                        yy_act = YY_STATE_EOF ((yy_start - 1) / 2);
+                        goto do_action;
+                      }
 
-		    else
-		      {
-			if (!yy_did_buffer_switch_on_eof)
-			  YY_NEW_FILE;
-		      }
-		  }
-		  break;
+                    else
+                      {
+                        if (!yy_did_buffer_switch_on_eof)
+                          YY_NEW_FILE;
+                      }
+                  }
+                  break;
 
-		case EOB_ACT_CONTINUE_SCAN:
-		  yy_c_buf_p = yytext + yy_amount_of_matched_text;
+                case EOB_ACT_CONTINUE_SCAN:
+                  yy_c_buf_p = yytext + yy_amount_of_matched_text;
 
-		  yy_current_state = yy_get_previous_state ();
+                  yy_current_state = yy_get_previous_state ();
 
-		  yy_cp = yy_c_buf_p;
-		  yy_bp = yytext + YY_MORE_ADJ;
-		  goto yy_match;
+                  yy_cp = yy_c_buf_p;
+                  yy_bp = yytext + YY_MORE_ADJ;
+                  goto yy_match;
 
-		case EOB_ACT_LAST_MATCH:
-		  yy_c_buf_p = &yy_current_buffer->yy_ch_buf[yy_n_chars];
+                case EOB_ACT_LAST_MATCH:
+                  yy_c_buf_p = &yy_current_buffer->yy_ch_buf[yy_n_chars];
 
-		  yy_current_state = yy_get_previous_state ();
+                  yy_current_state = yy_get_previous_state ();
 
-		  yy_cp = yy_c_buf_p;
-		  yy_bp = yytext + YY_MORE_ADJ;
-		  goto yy_find_action;
-		}
-	    break;
-	  }
+                  yy_cp = yy_c_buf_p;
+                  yy_bp = yytext + YY_MORE_ADJ;
+                  goto yy_find_action;
+                }
+            break;
+          }
 
-	default:
+        default:
 #ifdef FLEX_DEBUG
-	  printf ("action # %d\n", yy_act);
+          printf ("action # %d\n", yy_act);
 #endif
-	  YY_FATAL_ERROR
-	    ("fatal flex scanner internal error--no action found");
-	}
+          YY_FATAL_ERROR ("fatal flex scanner internal error--no action found");
+        }
     }
 }
 
@@ -1502,13 +1499,12 @@ static int
 yy_get_next_buffer ()
 {
   register YY_CHAR *dest = yy_current_buffer->yy_ch_buf;
-  register YY_CHAR *source = yytext - 1;	/* copy prev. char, too */
+  register YY_CHAR *source = yytext - 1;        /* copy prev. char, too */
   register int number_to_move, i;
   int ret_val;
 
   if (yy_c_buf_p > &yy_current_buffer->yy_ch_buf[yy_n_chars + 1])
-    YY_FATAL_ERROR
-      ("fatal flex scanner internal error--end of buffer missed");
+    YY_FATAL_ERROR ("fatal flex scanner internal error--end of buffer missed");
 
   /* try to read more data */
 
@@ -1529,29 +1525,28 @@ yy_get_next_buffer ()
       int num_to_read = yy_current_buffer->yy_buf_size - number_to_move - 1;
 
       if (num_to_read > YY_READ_BUF_SIZE)
-	num_to_read = YY_READ_BUF_SIZE;
+        num_to_read = YY_READ_BUF_SIZE;
 
       else if (num_to_read <= 0)
-	YY_FATAL_ERROR ("fatal error - scanner input buffer overflow");
+        YY_FATAL_ERROR ("fatal error - scanner input buffer overflow");
 
       /* read in more data */
-      YY_INPUT ((&yy_current_buffer->yy_ch_buf[number_to_move]),
-		yy_n_chars, num_to_read);
+      YY_INPUT ((&yy_current_buffer->yy_ch_buf[number_to_move]), yy_n_chars, num_to_read);
     }
 
   if (yy_n_chars == 0)
     {
       if (number_to_move == 1)
-	{
-	  ret_val = EOB_ACT_END_OF_FILE;
-	  yy_current_buffer->yy_eof_status = EOF_DONE;
-	}
+        {
+          ret_val = EOB_ACT_END_OF_FILE;
+          yy_current_buffer->yy_eof_status = EOF_DONE;
+        }
 
       else
-	{
-	  ret_val = EOB_ACT_LAST_MATCH;
-	  yy_current_buffer->yy_eof_status = EOF_PENDING;
-	}
+        {
+          ret_val = EOB_ACT_LAST_MATCH;
+          yy_current_buffer->yy_eof_status = EOF_PENDING;
+        }
     }
 
   else
@@ -1591,16 +1586,16 @@ yy_get_previous_state ()
     {
       register YY_CHAR yy_c = (*yy_cp ? yy_ec[*yy_cp] : 1);
       if (yy_accept[yy_current_state])
-	{
-	  yy_last_accepting_state = yy_current_state;
-	  yy_last_accepting_cpos = yy_cp;
-	}
+        {
+          yy_last_accepting_state = yy_current_state;
+          yy_last_accepting_cpos = yy_cp;
+        }
       while (yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state)
-	{
-	  yy_current_state = yy_def[yy_current_state];
-	  if (yy_current_state >= 353)
-	    yy_c = yy_meta[yy_c];
-	}
+        {
+          yy_current_state = yy_def[yy_current_state];
+          if (yy_current_state >= 353)
+            yy_c = yy_meta[yy_c];
+        }
       yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
     }
 
@@ -1637,7 +1632,7 @@ yy_try_NUL_trans (yy_current_state)
     {
       yy_current_state = yy_def[yy_current_state];
       if (yy_current_state >= 353)
-	yy_c = yy_meta[yy_c];
+        yy_c = yy_meta[yy_c];
     }
   yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
   yy_is_jam = (yy_current_state == 352);
@@ -1663,22 +1658,20 @@ yyunput (c, yy_bp)
   *yy_cp = yy_hold_char;
 
   if (yy_cp < yy_current_buffer->yy_ch_buf + 2)
-    {				/* need to shift things up to make room */
-      register int number_to_move = yy_n_chars + 2;	/* +2 for EOB chars */
-      register YY_CHAR *dest =
-	&yy_current_buffer->yy_ch_buf[yy_current_buffer->yy_buf_size + 2];
-      register YY_CHAR *source =
-	&yy_current_buffer->yy_ch_buf[number_to_move];
+    {                           /* need to shift things up to make room */
+      register int number_to_move = yy_n_chars + 2;     /* +2 for EOB chars */
+      register YY_CHAR *dest = &yy_current_buffer->yy_ch_buf[yy_current_buffer->yy_buf_size + 2];
+      register YY_CHAR *source = &yy_current_buffer->yy_ch_buf[number_to_move];
 
       while (source > yy_current_buffer->yy_ch_buf)
-	*--dest = *--source;
+        *--dest = *--source;
 
       yy_cp += dest - source;
       yy_bp += dest - source;
       yy_n_chars = yy_current_buffer->yy_buf_size;
 
       if (yy_cp < yy_current_buffer->yy_ch_buf + 2)
-	YY_FATAL_ERROR ("flex scanner push-back overflow");
+        YY_FATAL_ERROR ("flex scanner push-back overflow");
     }
 
   if (yy_cp > yy_bp && yy_cp[-1] == '\n')
@@ -1689,7 +1682,7 @@ yyunput (c, yy_bp)
   /* note: the formal parameter *must* be called "yy_bp" for this
    *       macro to now work correctly
    */
-  YY_DO_BEFORE_ACTION;		/* set up yytext again */
+  YY_DO_BEFORE_ACTION;          /* set up yytext again */
 }
 
 
@@ -1713,46 +1706,46 @@ input ()
        * valid NUL; if not, then we've hit the end of the buffer.
        */
       if (yy_c_buf_p < &yy_current_buffer->yy_ch_buf[yy_n_chars])
-	/* this was really a NUL */
-	*yy_c_buf_p = '\0';
+        /* this was really a NUL */
+        *yy_c_buf_p = '\0';
 
       else
-	{			/* need more input */
-	  yytext = yy_c_buf_p;
-	  ++yy_c_buf_p;
+        {                       /* need more input */
+          yytext = yy_c_buf_p;
+          ++yy_c_buf_p;
 
-	  switch (yy_get_next_buffer ())
-	    {
-	    case EOB_ACT_END_OF_FILE:
-	      {
-		if (yywrap ())
-		  {
-		    yy_c_buf_p = yytext + YY_MORE_ADJ;
-		    return (EOF);
-		  }
+          switch (yy_get_next_buffer ())
+            {
+            case EOB_ACT_END_OF_FILE:
+              {
+                if (yywrap ())
+                  {
+                    yy_c_buf_p = yytext + YY_MORE_ADJ;
+                    return (EOF);
+                  }
 
-		YY_NEW_FILE;
+                YY_NEW_FILE;
 
 #ifdef __cplusplus
-		return (yyinput ());
+                return (yyinput ());
 #else
-		return (input ());
+                return (input ());
 #endif
-	      }
-	      break;
+              }
+              break;
 
-	    case EOB_ACT_CONTINUE_SCAN:
-	      yy_c_buf_p = yytext + YY_MORE_ADJ;
-	      break;
+            case EOB_ACT_CONTINUE_SCAN:
+              yy_c_buf_p = yytext + YY_MORE_ADJ;
+              break;
 
-	    case EOB_ACT_LAST_MATCH:
+            case EOB_ACT_LAST_MATCH:
 #ifdef __cplusplus
-	      YY_FATAL_ERROR ("unexpected last match in yyinput()");
+              YY_FATAL_ERROR ("unexpected last match in yyinput()");
 #else
-	      YY_FATAL_ERROR ("unexpected last match in input()");
+              YY_FATAL_ERROR ("unexpected last match in input()");
 #endif
-	    }
-	}
+            }
+        }
     }
 
   c = *yy_c_buf_p;
@@ -1933,7 +1926,7 @@ cnv_fmt_analyze (const char *instring, FMT_LEX_MODE mode)
 void
 cnv_fmt_unlex ()
 {
-  cnv_fmt__unlex = 1;		/* see rules section */
+  cnv_fmt__unlex = 1;           /* see rules section */
 }
 
 /*
@@ -1972,8 +1965,7 @@ cnv_fmt_lex_start (FMT_LEX_MODE mode)
     mode == FL_VALIDATE_INTEGER_FORMAT ? SC_VALIDATE_INTEGER_FORMAT :
     mode == FL_VALIDATE_TIME_FORMAT ? SC_VALIDATE_TIME_FORMAT :
     mode == FL_VALIDATE_DATETIME_FORMAT ? SC_VALIDATE_DATETIME_FORMAT :
-    mode == FL_VALIDATE_BIT_STRING_FORMAT ? SC_VALIDATE_BIT_STRING_FORMAT :
-    INITIAL;
+    mode == FL_VALIDATE_BIT_STRING_FORMAT ? SC_VALIDATE_BIT_STRING_FORMAT : INITIAL;
 }
 
 
@@ -1991,19 +1983,19 @@ cnv_fmt_number_mode (INTL_ZONE zone)
     {
     case INTL_ZONE_US:
       {
-	mode = FL_US_ENG_NUMBER;
-	break;
+        mode = FL_US_ENG_NUMBER;
+        break;
       }
     case INTL_ZONE_KR:
       {
-	mode = FL_KO_KR_NUMBER;
-	break;
+        mode = FL_KO_KR_NUMBER;
+        break;
       }
     default:
       {
-	assert (!"Zone not implemented!");
-	mode = FL_US_ENG_NUMBER;
-	break;
+        assert (!"Zone not implemented!");
+        mode = FL_US_ENG_NUMBER;
+        break;
       }
     }
 
@@ -2025,20 +2017,20 @@ cnv_fmt_time_mode (INTL_ZONE zone)
     {
     case INTL_ZONE_US:
       {
-	mode = FL_US_ENG_TIME;
-	break;
+        mode = FL_US_ENG_TIME;
+        break;
       }
     case INTL_ZONE_KR:
       {
-	mode = FL_KO_KR_TIME;
-	break;
+        mode = FL_KO_KR_TIME;
+        break;
       }
 
     default:
       {
-	assert (!"Zone not implemented!");
-	mode = FL_US_ENG_TIME;
-	break;
+        assert (!"Zone not implemented!");
+        mode = FL_US_ENG_TIME;
+        break;
       }
     }
 

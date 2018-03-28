@@ -84,10 +84,8 @@ static unsigned int template_savepoint_count = 0;
 #endif
 
 
-static DB_VALUE *check_att_domain (SM_ATTRIBUTE * att,
-				   DB_VALUE * proposed_value);
-static int check_constraints (SM_ATTRIBUTE * att, DB_VALUE * value,
-			      unsigned force_check_not_null);
+static DB_VALUE *check_att_domain (SM_ATTRIBUTE * att, DB_VALUE * proposed_value);
+static int check_constraints (SM_ATTRIBUTE * att, DB_VALUE * value, unsigned force_check_not_null);
 #if 0
 static int quick_validate (SM_VALIDATION * valid, DB_VALUE * value);
 static void cache_validation (SM_VALIDATION * valid, DB_VALUE * value);
@@ -95,21 +93,17 @@ static void cache_validation (SM_VALIDATION * valid, DB_VALUE * value);
 static void begin_template_traversal (void);
 static OBJ_TEMPLATE *make_template (MOP object, MOP classobj);
 static int validate_template (OBJ_TEMPLATE * temp);
-static OBJ_TEMPASSIGN *obt_make_assignment (OBJ_TEMPLATE * template_ptr,
-					    SM_ATTRIBUTE * att);
+static OBJ_TEMPASSIGN *obt_make_assignment (OBJ_TEMPLATE * template_ptr, SM_ATTRIBUTE * att);
 static void obt_free_assignment (OBJ_TEMPASSIGN * assign);
 static void obt_free_template (OBJ_TEMPLATE * template_ptr);
 static int populate_defaults (OBJ_TEMPLATE * template_ptr);
 static MOP create_template_object (OBJ_TEMPLATE * template_ptr);
-static int access_object (OBJ_TEMPLATE * template_ptr, MOP * object,
-			  MOBJ * objptr);
+static int access_object (OBJ_TEMPLATE * template_ptr, MOP * object, MOBJ * objptr);
 static int obt_convert_set_templates (SETREF * setref);
 static int obt_final_check_set (SETREF * setref, int *has_uniques);
 
-static int obt_final_check (OBJ_TEMPLATE * template_ptr, int check_non_null,
-			    int *has_uniques);
-static int obt_apply_assignment (MOP op, SM_ATTRIBUTE * att, char *mem,
-				 DB_VALUE * value);
+static int obt_final_check (OBJ_TEMPLATE * template_ptr, int check_non_null, int *has_uniques);
+static int obt_apply_assignment (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * value);
 static int obt_apply_assignments (OBJ_TEMPLATE * template_ptr);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
@@ -127,8 +121,7 @@ static int obt_apply_assignments (OBJ_TEMPLATE * template_ptr);
  */
 
 int
-obt_find_attribute (OBJ_TEMPLATE * template_ptr,
-		    const char *name, SM_ATTRIBUTE ** attp)
+obt_find_attribute (OBJ_TEMPLATE * template_ptr, const char *name, SM_ATTRIBUTE ** attp)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -193,43 +186,41 @@ check_att_domain (SM_ATTRIBUTE * att, DB_VALUE * proposed_value)
     {
       value = pr_make_ext_value ();
       if (value == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       status = tp_value_coerce (proposed_value, value, att->sma_domain);
       if (status != DOMAIN_COMPATIBLE)
-	{
-	  (void) pr_free_ext_value (value);
-	}
+        {
+          (void) pr_free_ext_value (value);
+        }
     }
 
   if (status != DOMAIN_COMPATIBLE)
     {
       switch (status)
-	{
-	case DOMAIN_ERROR:
-	  /* error has already been set */
-	  break;
-	case DOMAIN_OVERFLOW:
-	  (void) tp_domain_status_er_set (status, ARG_FILE_LINE,
-					  proposed_value, att->sma_domain);
-	  assert (er_errid () != NO_ERROR);
-	  break;
-	case DOMAIN_INCOMPATIBLE:
-	default:
-	  /*
-	   * the default case shouldn't really be encountered, might want to
-	   * signal a different error.  The OVERFLOW case should only
-	   * be returned during coercion which wasn't requested, to be safe,
-	   * treat these like a domain conflict.  Probably need a more generic
-	   * domain conflict error that uses full printed representations
-	   * of the entire domain.
-	   */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_DOMAIN_CONFLICT, 1,
-		  att->name);
-	  break;
-	}
+        {
+        case DOMAIN_ERROR:
+          /* error has already been set */
+          break;
+        case DOMAIN_OVERFLOW:
+          (void) tp_domain_status_er_set (status, ARG_FILE_LINE, proposed_value, att->sma_domain);
+          assert (er_errid () != NO_ERROR);
+          break;
+        case DOMAIN_INCOMPATIBLE:
+        default:
+          /*
+           * the default case shouldn't really be encountered, might want to
+           * signal a different error.  The OVERFLOW case should only
+           * be returned during coercion which wasn't requested, to be safe,
+           * treat these like a domain conflict.  Probably need a more generic
+           * domain conflict error that uses full printed representations
+           * of the entire domain.
+           */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_DOMAIN_CONFLICT, 1, att->name);
+          break;
+        }
 
       /* return NULL if incompatible */
       value = NULL;
@@ -255,8 +246,7 @@ check_att_domain (SM_ATTRIBUTE * att, DB_VALUE * proposed_value)
  */
 
 static int
-check_constraints (SM_ATTRIBUTE * att, DB_VALUE * value,
-		   unsigned force_check_not_null)
+check_constraints (SM_ATTRIBUTE * att, DB_VALUE * value, unsigned force_check_not_null)
 {
   int error = NO_ERROR;
   MOP mop;
@@ -265,36 +255,34 @@ check_constraints (SM_ATTRIBUTE * att, DB_VALUE * value,
 
   /* check NOT NULL constraint */
   if (value == NULL || DB_IS_NULL (value)
-      || (att->sma_domain->type == tp_Type_object
-	  && (mop = DB_GET_OBJECT (value)) && WS_MOP_IS_NULL (mop)))
+      || (att->sma_domain->type == tp_Type_object && (mop = DB_GET_OBJECT (value)) && WS_MOP_IS_NULL (mop)))
     {
       if (att->flags & SM_ATTFLAG_NON_NULL)
-	{
-	  if (!force_check_not_null)
-	    {
-	      assert (DB_IS_NULL (value));
-	      assert (att->sma_domain->type != tp_Type_object);
+        {
+          if (!force_check_not_null)
+            {
+              assert (DB_IS_NULL (value));
+              assert (att->sma_domain->type != tp_Type_object);
 
-	      /* This is allowed to happen only during INSERT statements,
-	       * since the next serial value will be filled in at a later
-	       * time. For other cases, the force_check_not_null flag should
-	       * be set. */
-	    }
-	  else
-	    {
-	      ERROR1 (error, ER_OBJ_ATTRIBUTE_CANT_BE_NULL, att->name);
-	    }
-	}
+              /* This is allowed to happen only during INSERT statements,
+               * since the next serial value will be filled in at a later
+               * time. For other cases, the force_check_not_null flag should
+               * be set. */
+            }
+          else
+            {
+              ERROR1 (error, ER_OBJ_ATTRIBUTE_CANT_BE_NULL, att->name);
+            }
+        }
     }
   else
     {
       /* Check size constraints */
       if (tp_check_value_size (att->sma_domain, value) != DOMAIN_COMPATIBLE)
-	{
-	  /* probably need an error message that isn't specific to "string" types */
-	  ERROR2 (error, ER_OBJ_STRING_OVERFLOW, att->name,
-		  att->sma_domain->precision);
-	}
+        {
+          /* probably need an error message that isn't specific to "string" types */
+          ERROR2 (error, ER_OBJ_STRING_OVERFLOW, att->name, att->sma_domain->precision);
+        }
     }
 
   return error;
@@ -328,77 +316,75 @@ quick_validate (SM_VALIDATION * valid, DB_VALUE * value)
     {
     case DB_TYPE_OBJECT:
       {
-	DB_OBJECT *obj, *class_;
+        DB_OBJECT *obj, *class_;
 
-	obj = db_get_object (value);
-	if (obj != NULL)
-	  {
-	    class_ = sm_get_class (obj);
-	    if (class_ != NULL)
-	      {
-		if (class_ == valid->last_class)
-		  {
-		    is_valid = 1;
-		  }
-		else
-		  {
-		    /* wasn't on the first level cache, check the list */
-		    is_valid = ml_find (valid->validated_classes, class_);
-		    /* if its on the list, auto select this for the next time around */
-		    if (is_valid)
-		      {
-			valid->last_class = class_;
-		      }
-		  }
-	      }
-	  }
+        obj = db_get_object (value);
+        if (obj != NULL)
+          {
+            class_ = sm_get_class (obj);
+            if (class_ != NULL)
+              {
+                if (class_ == valid->last_class)
+                  {
+                    is_valid = 1;
+                  }
+                else
+                  {
+                    /* wasn't on the first level cache, check the list */
+                    is_valid = ml_find (valid->validated_classes, class_);
+                    /* if its on the list, auto select this for the next time around */
+                    if (is_valid)
+                      {
+                        valid->last_class = class_;
+                      }
+                  }
+              }
+          }
       }
       break;
 
     case DB_TYPE_SEQUENCE:
       {
-	DB_SET *set;
-	DB_DOMAIN *domain;
+        DB_SET *set;
+        DB_DOMAIN *domain;
 
-	set = db_get_set (value);
-	domain = set_get_domain (set);
-	if (domain == valid->last_setdomain)
-	  {
-	    is_valid = 1;
-	  }
+        set = db_get_set (value);
+        domain = set_get_domain (set);
+        if (domain == valid->last_setdomain)
+          {
+            is_valid = 1;
+          }
       }
       break;
 
     case DB_TYPE_VARCHAR:
-      if (type == valid->last_type
-	  && DB_GET_STRING_PRECISION (value) == valid->last_precision)
-	{
-	  is_valid = 1;
-	}
+      if (type == valid->last_type && DB_GET_STRING_PRECISION (value) == valid->last_precision)
+        {
+          is_valid = 1;
+        }
       break;
 
     case DB_TYPE_VARBIT:
-      if (type == valid->last_type
-	  && DB_GET_VARBIT_PRECISION (value) == valid->last_precision)
-	{
-	  is_valid = 1;
-	}
+      if (type == valid->last_type && DB_GET_VARBIT_PRECISION (value) == valid->last_precision)
+        {
+          is_valid = 1;
+        }
       break;
 
     case DB_TYPE_NUMERIC:
       if (type == valid->last_type
-	  && DB_GET_NUMERIC_PRECISION (value) == valid->last_precision
-	  && DB_GET_NUMERIC_SCALE (value) == valid->last_scale)
-	{
-	  is_valid = 1;
-	}
+          && DB_GET_NUMERIC_PRECISION (value) == valid->last_precision
+          && DB_GET_NUMERIC_SCALE (value) == valid->last_scale)
+        {
+          is_valid = 1;
+        }
       break;
 
     default:
       if (type == valid->last_type)
-	{
-	  is_valid = 1;
-	}
+        {
+          is_valid = 1;
+        }
       break;
     }
 
@@ -433,33 +419,33 @@ cache_validation (SM_VALIDATION * valid, DB_VALUE * value)
     {
     case DB_TYPE_OBJECT:
       {
-	DB_OBJECT *obj, *class_;
+        DB_OBJECT *obj, *class_;
 
-	obj = db_get_object (value);
-	if (obj != NULL)
-	  {
-	    class_ = sm_get_class (obj);
-	    if (class_ != NULL)
-	      {
-		valid->last_class = class_;
-		/*
-		 * !! note that we have to be building an external object list
-		 * here so these serve as GC roots.  This is kludgey, we should
-		 * be encapsulating structure rules inside cl_ where the
-		 * SM_VALIDATION is allocated.
-		 */
-		(void) ml_ext_add (&valid->validated_classes, class_, NULL);
-	      }
-	  }
+        obj = db_get_object (value);
+        if (obj != NULL)
+          {
+            class_ = sm_get_class (obj);
+            if (class_ != NULL)
+              {
+                valid->last_class = class_;
+                /*
+                 * !! note that we have to be building an external object list
+                 * here so these serve as GC roots.  This is kludgey, we should
+                 * be encapsulating structure rules inside cl_ where the
+                 * SM_VALIDATION is allocated.
+                 */
+                (void) ml_ext_add (&valid->validated_classes, class_, NULL);
+              }
+          }
       }
       break;
 
     case DB_TYPE_SEQUENCE:
       {
-	DB_SET *set;
+        DB_SET *set;
 
-	set = db_get_set (value);
-	valid->last_setdomain = set_get_domain (set);
+        set = db_get_set (value);
+        valid->last_setdomain = set_get_domain (set);
       }
       break;
 
@@ -518,9 +504,7 @@ cache_validation (SM_VALIDATION * valid, DB_VALUE * value)
  */
 
 DB_VALUE *
-obt_check_assignment (SM_ATTRIBUTE * att,
-		      DB_VALUE * proposed_value,
-		      unsigned force_check_not_null)
+obt_check_assignment (SM_ATTRIBUTE * att, DB_VALUE * proposed_value, unsigned force_check_not_null)
 {
   DB_VALUE *value;
 
@@ -537,49 +521,47 @@ obt_check_assignment (SM_ATTRIBUTE * att,
 #if 1
       value = check_att_domain (att, proposed_value);
       if (value != NULL)
-	{
-	  if (check_constraints (att, value, force_check_not_null) !=
-	      NO_ERROR)
-	    {
-	      if (value != proposed_value)
-		{
-		  (void) pr_free_ext_value (value);
-		}
-	      value = NULL;
-	    }
-	}
+        {
+          if (check_constraints (att, value, force_check_not_null) != NO_ERROR)
+            {
+              if (value != proposed_value)
+                {
+                  (void) pr_free_ext_value (value);
+                }
+              value = NULL;
+            }
+        }
 #else
       /*
        * before we make the expensive checks, see if we've got some cached
        * validation information handy
        */
       if (!quick_validate (valid, value))
-	{
-	  value = check_att_domain (att, proposed_value);
-	  if (value != NULL)
-	    {
-	      if (check_constraints
-		  (att, value, force_check_not_null) != NO_ERROR)
-		{
-		  if (value != proposed_value)
-		    {
-		      (void) pr_free_ext_value (value);
-		    }
-		  value = NULL;
-		}
-	      else
-		{
-		  /*
-		   * we're ok, if there was no coercion required, remember this for
-		   * next time.
-		   */
-		  if (value == proposed_value)
-		    {
-		      cache_validation (valid, proposed_value);
-		    }
-		}
-	    }
-	}
+        {
+          value = check_att_domain (att, proposed_value);
+          if (value != NULL)
+            {
+              if (check_constraints (att, value, force_check_not_null) != NO_ERROR)
+                {
+                  if (value != proposed_value)
+                    {
+                      (void) pr_free_ext_value (value);
+                    }
+                  value = NULL;
+                }
+              else
+                {
+                  /*
+                   * we're ok, if there was no coercion required, remember this for
+                   * next time.
+                   */
+                  if (value == proposed_value)
+                    {
+                      cache_validation (valid, proposed_value);
+                    }
+                }
+            }
+        }
 #endif
     }
 
@@ -636,7 +618,7 @@ make_template (MOP object, MOP classobj)
   MOBJ obj;
   OBJ_TEMPASSIGN **vec;
 
-  template_ptr = NULL;		/* init */
+  template_ptr = NULL;          /* init */
 
   /* fetch & lock the class with the appropriate options */
   mode = S_LOCK;
@@ -672,7 +654,7 @@ make_template (MOP object, MOP classobj)
    * virtual class, for proxies, the instances look like usual
    */
 
-  if (class_->class_type == SM_VCLASS_CT	/* a view, and... */
+  if (class_->class_type == SM_VCLASS_CT        /* a view, and... */
       && object != classobj /* we are not doing a meta class update */ )
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IT_NOT_UPDATABLE_STMT, 0);
@@ -690,9 +672,9 @@ make_template (MOP object, MOP classobj)
   if (object != NULL && object != classobj)
     {
       if (au_fetch_instance (object, &obj, X_LOCK, AU_UPDATE))
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       /*
        * Could cache the object memory pointer this in the template as
@@ -729,22 +711,21 @@ make_template (MOP object, MOP classobj)
 
       vec = NULL;
       if (template_ptr->nassigns)
-	{
-	  int i;
+        {
+          int i;
 
-	  vec = (OBJ_TEMPASSIGN **) malloc (template_ptr->nassigns *
-					    sizeof (OBJ_TEMPASSIGN *));
-	  if (vec == NULL)
-	    {
-	      free_and_init (template_ptr);
-	      return NULL;
-	    }
+          vec = (OBJ_TEMPASSIGN **) malloc (template_ptr->nassigns * sizeof (OBJ_TEMPASSIGN *));
+          if (vec == NULL)
+            {
+              free_and_init (template_ptr);
+              return NULL;
+            }
 
-	  for (i = 0; i < template_ptr->nassigns; i++)
-	    {
-	      vec[i] = NULL;
-	    }
-	}
+          for (i = 0; i < template_ptr->nassigns; i++)
+            {
+              vec[i] = NULL;
+            }
+        }
 
       template_ptr->assignments = vec;
     }
@@ -764,9 +745,7 @@ validate_template (OBJ_TEMPLATE * temp)
 {
   int error = NO_ERROR;
 
-  if (temp != NULL
-      && (temp->tran_id != tm_Tran_index
-	  || temp->schema_id != sm_local_schema_version ()))
+  if (temp != NULL && (temp->tran_id != tm_Tran_index || temp->schema_id != sm_local_schema_version ()))
     {
       error = ER_OBJ_INVALID_TEMPLATE;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
@@ -800,9 +779,9 @@ obt_make_assignment (OBJ_TEMPLATE * template_ptr, SM_ATTRIBUTE * att)
 
       template_ptr->assignments[att->order] = assign;
       if (classobj_has_unique_constraint (att->constraints))
-	{
-	  template_ptr->uniques_were_modified = 1;
-	}
+        {
+          template_ptr->uniques_were_modified = 1;
+        }
     }
 
   return assign;
@@ -830,29 +809,28 @@ obt_free_assignment (OBJ_TEMPASSIGN * assign)
   if (assign != NULL)
     {
       if (assign->variable != NULL)
-	{
+        {
 
-	  DB_TYPE av_type;
+          DB_TYPE av_type;
 
-	  /* check for nested templates */
-	  av_type = DB_VALUE_TYPE (assign->variable);
-	  if (TP_IS_SET_TYPE (av_type)
-	      && DB_GET_SET (assign->variable) != NULL)
-	    {
-	      /* must go through and free any elements that may be template pointers */
-	      setref = DB_PULL_SET (assign->variable);
-	      if (setref->set != NULL)
-		{
-		  set_size = setobj_size (setref->set);
-		  for (i = 0; i < set_size; i++)
-		    {
-		      setobj_get_element_ptr (setref->set, i, &value);
-		    }
-		}
-	    }
+          /* check for nested templates */
+          av_type = DB_VALUE_TYPE (assign->variable);
+          if (TP_IS_SET_TYPE (av_type) && DB_GET_SET (assign->variable) != NULL)
+            {
+              /* must go through and free any elements that may be template pointers */
+              setref = DB_PULL_SET (assign->variable);
+              if (setref->set != NULL)
+                {
+                  set_size = setobj_size (setref->set);
+                  for (i = 0; i < set_size; i++)
+                    {
+                      setobj_get_element_ptr (setref->set, i, &value);
+                    }
+                }
+            }
 
-	  (void) pr_free_ext_value (assign->variable);
-	}
+          (void) pr_free_ext_value (assign->variable);
+        }
 
       free_and_init (assign);
     }
@@ -882,25 +860,25 @@ obt_free_template (OBJ_TEMPLATE * template_ptr)
       template_ptr->traversed = 1;
 
       for (i = 0; i < template_ptr->nassigns; i++)
-	{
-	  a = template_ptr->assignments[i];
-	  if (a == NULL)
-	    {
-	      continue;
-	    }
+        {
+          a = template_ptr->assignments[i];
+          if (a == NULL)
+            {
+              continue;
+            }
 
-	  if (a->obj != NULL)
-	    {
-	      obt_free_template (a->obj);
-	    }
+          if (a->obj != NULL)
+            {
+              obt_free_template (a->obj);
+            }
 
-	  obt_free_assignment (a);
-	}
+          obt_free_assignment (a);
+        }
 
       if (template_ptr->assignments)
-	{
-	  free_and_init (template_ptr->assignments);
-	}
+        {
+          free_and_init (template_ptr->assignments);
+        }
 
       free_and_init (template_ptr);
     }
@@ -945,30 +923,30 @@ populate_defaults (OBJ_TEMPLATE * template_ptr)
        */
 
       if (DB_VALUE_TYPE (&att->default_value.value) != DB_TYPE_NULL)
-	{
+        {
 
-	  exists = template_ptr->assignments[att->order];
+          exists = template_ptr->assignments[att->order];
 
-	  if (exists == NULL)
-	    {
-	      a = obt_make_assignment (template_ptr, att);
-	      if (a == NULL)
-		{
-		  goto memory_error;
-		}
-	      a->is_default = 1;
-	      a->variable = pr_make_ext_value ();
-	      if (a->variable == NULL)
-		{
-		  goto memory_error;
-		}
-	      /* would be nice if we could avoid copying here */
-	      if (pr_clone_value (&att->default_value.value, a->variable))
-		{
-		  goto memory_error;
-		}
-	    }
-	}
+          if (exists == NULL)
+            {
+              a = obt_make_assignment (template_ptr, att);
+              if (a == NULL)
+                {
+                  goto memory_error;
+                }
+              a->is_default = 1;
+              a->variable = pr_make_ext_value ();
+              if (a->variable == NULL)
+                {
+                  goto memory_error;
+                }
+              /* would be nice if we could avoid copying here */
+              if (pr_clone_value (&att->default_value.value, a->variable))
+                {
+                  goto memory_error;
+                }
+            }
+        }
     }
 
   return (NO_ERROR);
@@ -1045,9 +1023,9 @@ obt_edit_object (MOP object)
        */
       class_ = sm_get_class (object);
       if (class_ != NULL)
-	{
-	  template_ptr = make_template (object, class_);
-	}
+        {
+          template_ptr = make_template (object, class_);
+        }
     }
 
   return template_ptr;
@@ -1133,37 +1111,37 @@ obt_assign (OBJ_TEMPLATE * template_ptr, SM_ATTRIBUTE * att, DB_VALUE * value)
     {
       assign = obt_make_assignment (template_ptr, att);
       if (assign == NULL)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
     }
 
   if (actual != value)
     {
       if (assign->variable)
-	{
-	  pr_free_ext_value (assign->variable);
-	}
+        {
+          pr_free_ext_value (assign->variable);
+        }
       assign->variable = actual;
     }
   else
     {
       if (assign->variable)
-	{
-	  /*
-	   *
-	   * Clear the contents, but recycle the container.
-	   */
-	  (void) pr_clear_value (assign->variable);
-	}
+        {
+          /*
+           *
+           * Clear the contents, but recycle the container.
+           */
+          (void) pr_clear_value (assign->variable);
+        }
       else
-	{
-	  assign->variable = pr_make_ext_value ();
-	  if (assign->variable == NULL)
-	    {
-	      goto error_exit;
-	    }
-	}
+        {
+          assign->variable = pr_make_ext_value ();
+          if (assign->variable == NULL)
+            {
+              goto error_exit;
+            }
+        }
       /*
        *
        * Note that this copies the set value, might not want to do this
@@ -1206,14 +1184,14 @@ obt_set (OBJ_TEMPLATE * template_ptr, const char *attname, DB_VALUE * value)
   else
     {
       if (validate_template (template_ptr))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       if (obt_find_attribute (template_ptr, attname, &att))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       error = obt_assign (template_ptr, att, value, NULL);
     }
@@ -1234,8 +1212,7 @@ obt_set (OBJ_TEMPLATE * template_ptr, const char *attname, DB_VALUE * value)
  */
 
 int
-obt_desc_set (OBJ_TEMPLATE * template_ptr, SM_DESCRIPTOR * desc,
-	      DB_VALUE * value)
+obt_desc_set (OBJ_TEMPLATE * template_ptr, SM_DESCRIPTOR * desc, DB_VALUE * value)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -1248,20 +1225,19 @@ obt_desc_set (OBJ_TEMPLATE * template_ptr, SM_DESCRIPTOR * desc,
   else
     {
       if (validate_template (template_ptr))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       /*
        * Note that we pass in the outer class MOP rather than an object
        * since we don't necessarily have an object at this point.
        */
-      error = sm_get_descriptor_component (template_ptr->classobj, desc, 1,
-					   &class_, &att);
+      error = sm_get_descriptor_component (template_ptr->classobj, desc, 1, &class_, &att);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       error = obt_assign (template_ptr, att, value, desc->valid);
     }
@@ -1359,9 +1335,9 @@ access_object (OBJ_TEMPLATE * template_ptr, MOP * object, MOBJ * objptr)
   if (template_ptr->object == NULL)
     {
       if (create_template_object (template_ptr) == NULL)
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
     }
 
   /*
@@ -1376,10 +1352,10 @@ access_object (OBJ_TEMPLATE * template_ptr, MOP * object, MOBJ * objptr)
     {
       error = au_fetch_instance_force (mop, &obj, X_LOCK);
       if (error == NO_ERROR)
-	{
-	  /* must call this when updating instances */
-	  ws_class_has_object_dependencies (classobj);
-	}
+        {
+          /* must call this when updating instances */
+          ws_class_has_object_dependencies (classobj);
+        }
     }
 
   if (obj == NULL)
@@ -1419,13 +1395,13 @@ obt_convert_set_templates (SETREF * setref)
     {
       set = setref->set;
       if (set != NULL)
-	{
-	  set_size = setobj_size (set);
-	  for (i = 0; i < set_size && error == NO_ERROR; i++)
-	    {
-	      setobj_get_element_ptr (set, i, &value);
-	    }
-	}
+        {
+          set_size = setobj_size (set);
+          for (i = 0; i < set_size && error == NO_ERROR; i++)
+            {
+              setobj_get_element_ptr (set, i, &value);
+            }
+        }
     }
 
   return error;
@@ -1457,13 +1433,13 @@ obt_final_check_set (SETREF * setref, UNUSED_ARG int *has_uniques)
     {
       set = setref->set;
       if (set != NULL)
-	{
-	  set_size = setobj_size (set);
-	  for (i = 0; i < set_size && error == NO_ERROR; i++)
-	    {
-	      setobj_get_element_ptr (set, i, &value);
-	    }
-	}
+        {
+          set_size = setobj_size (set);
+          for (i = 0; i < set_size && error == NO_ERROR; i++)
+            {
+              setobj_get_element_ptr (set, i, &value);
+            }
+        }
     }
 
   return error;
@@ -1498,25 +1474,22 @@ obt_check_missing_assignments (OBJ_TEMPLATE * template_ptr)
       /* use the base_class if this is a virtual class insert */
       class_ = template_ptr->class_;
 
-      for (att = class_->ordered_attributes; att != NULL && error == NO_ERROR;
-	   att = att->order_link)
-	{
+      for (att = class_->ordered_attributes; att != NULL && error == NO_ERROR; att = att->order_link)
+        {
 
-	  if ((att->flags & SM_ATTFLAG_NON_NULL)
-	      && DB_IS_NULL (&att->default_value.value)
-	      && att->default_value.default_expr == DB_DEFAULT_NONE)
-	    {
-	      ass = template_ptr->assignments[att->order];
-	      if (ass == NULL)
-		{
-		  if (att->flags & SM_ATTFLAG_NON_NULL)
-		    {
-		      ERROR1 (error, ER_OBJ_MISSING_NON_NULL_ASSIGN,
-			      att->name);
-		    }
-		}
-	    }
-	}
+          if ((att->flags & SM_ATTFLAG_NON_NULL)
+              && DB_IS_NULL (&att->default_value.value) && att->default_value.default_expr == DB_DEFAULT_NONE)
+            {
+              ass = template_ptr->assignments[att->order];
+              if (ass == NULL)
+                {
+                  if (att->flags & SM_ATTFLAG_NON_NULL)
+                    {
+                      ERROR1 (error, ER_OBJ_MISSING_NON_NULL_ASSIGN, att->name);
+                    }
+                }
+            }
+        }
     }
 
   return error;
@@ -1532,8 +1505,7 @@ obt_check_missing_assignments (OBJ_TEMPLATE * template_ptr)
  */
 
 static int
-obt_final_check (OBJ_TEMPLATE * template_ptr, int check_non_null,
-		 int *has_uniques)
+obt_final_check (OBJ_TEMPLATE * template_ptr, int check_non_null, int *has_uniques)
 {
   int error = NO_ERROR;
   OBJ_TEMPASSIGN *a;
@@ -1564,14 +1536,14 @@ obt_final_check (OBJ_TEMPLATE * template_ptr, int check_non_null,
   if (template_ptr->object == NULL)
     {
       if (populate_defaults (template_ptr))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       if (check_non_null && obt_check_missing_assignments (template_ptr))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
     }
 
   /* does this template have uniques? */
@@ -1585,25 +1557,24 @@ obt_final_check (OBJ_TEMPLATE * template_ptr, int check_non_null,
     {
       a = template_ptr->assignments[i];
       if (a == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if (a->obj != NULL)
-	{
-	  /* the non-null flag is only used for the outermost template */
-	  error = obt_final_check (a->obj, 1, has_uniques);
-	}
+        {
+          /* the non-null flag is only used for the outermost template */
+          error = obt_final_check (a->obj, 1, has_uniques);
+        }
       else
-	{
-	  DB_TYPE av_type;
+        {
+          DB_TYPE av_type;
 
-	  av_type = DB_VALUE_TYPE (a->variable);
-	  if (TP_IS_SET_TYPE (av_type))
-	    {
-	      error = obt_final_check_set (DB_GET_SET (a->variable),
-					   has_uniques);
-	    }
-	}
+          av_type = DB_VALUE_TYPE (a->variable);
+          if (TP_IS_SET_TYPE (av_type))
+            {
+              error = obt_final_check_set (DB_GET_SET (a->variable), has_uniques);
+            }
+        }
     }
 
   /* check unique_constraints, but only if not disabled */
@@ -1648,11 +1619,11 @@ obt_apply_assignment (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * value)
       /* for sets, first apply any templates in the set */
       error = obt_convert_set_templates (DB_GET_SET (value));
       if (error == NO_ERROR)
-	{
+        {
 
-	  /* BE VERY CAREFUL HERE, IN THE OLD VERSION THE SET WAS BEING COPIED ? */
-	  error = obj_assign_value (op, att, mem, value);
-	}
+          /* BE VERY CAREFUL HERE, IN THE OLD VERSION THE SET WAS BEING COPIED ? */
+          error = obj_assign_value (op, att, mem, value);
+        }
     }
 
   return error;
@@ -1714,36 +1685,36 @@ obt_apply_assignments (OBJ_TEMPLATE * template_ptr)
     {
       a = template_ptr->assignments[i];
       if (a == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       /* find memory pointer if this is an instance attribute */
       mem = NULL;
       if (mobj != NULL)
-	{
-	  mem = (char *) mobj + a->att->offset;
-	}
+        {
+          mem = (char *) mobj + a->att->offset;
+        }
 
       if (error == NO_ERROR)
-	{
-	  /* check for template assignment that needs to be expanded */
-	  if (a->obj != NULL)
-	    {
-	      /* this is a template assignment, recurse on this template */
-	      error = obt_apply_assignments (a->obj);
-	      if (error == NO_ERROR)
-		{
-		  DB_MAKE_OBJECT (&val, a->obj->object);
-		  error = obt_apply_assignment (object, a->att, mem, &val);
-		}
-	    }
-	  else
-	    {
-	      /* non-template assignment */
-	      error = obt_apply_assignment (object, a->att, mem, a->variable);
-	    }
-	}
+        {
+          /* check for template assignment that needs to be expanded */
+          if (a->obj != NULL)
+            {
+              /* this is a template assignment, recurse on this template */
+              error = obt_apply_assignments (a->obj);
+              if (error == NO_ERROR)
+                {
+                  DB_MAKE_OBJECT (&val, a->obj->object);
+                  error = obt_apply_assignment (object, a->att, mem, &val);
+                }
+            }
+          else
+            {
+              /* non-template assignment */
+              error = obt_apply_assignment (object, a->att, mem, a->variable);
+            }
+        }
     }
 
   if ((error == NO_ERROR) && (object != NULL))
@@ -1766,12 +1737,12 @@ obt_apply_assignments (OBJ_TEMPLATE * template_ptr)
   if (error == NO_ERROR)
     {
       if (template_ptr->uniques_were_modified)
-	{
-	  if (locator_flush_class (template_ptr->classobj) != NO_ERROR)
-	    {
-	      error = er_errid ();
-	    }
-	}
+        {
+          if (locator_flush_class (template_ptr->classobj) != NO_ERROR)
+            {
+              error = er_errid ();
+            }
+        }
     }
 
   return error;
@@ -1804,8 +1775,7 @@ obt_retain_after_finish (OBJ_TEMPLATE * template_ptr)
  */
 
 int
-obt_update_internal (OBJ_TEMPLATE * template_ptr, MOP * newobj,
-		     int check_non_null)
+obt_update_internal (OBJ_TEMPLATE * template_ptr, MOP * newobj, int check_non_null)
 {
   int error = NO_ERROR;
   int has_uniques = 0;
@@ -1822,20 +1792,20 @@ obt_update_internal (OBJ_TEMPLATE * template_ptr, MOP * newobj,
       begin_template_traversal ();
       error = obt_final_check (template_ptr, check_non_null, &has_uniques);
       if (error == NO_ERROR)
-	{
-	  /* allocate another traversal counter for the assignment pass */
-	  begin_template_traversal ();
-	  error = obt_apply_assignments (template_ptr);
-	  if (error == NO_ERROR)
-	    {
-	      if (newobj != NULL)
-		{
-		  *newobj = template_ptr->object;
-		}
+        {
+          /* allocate another traversal counter for the assignment pass */
+          begin_template_traversal ();
+          error = obt_apply_assignments (template_ptr);
+          if (error == NO_ERROR)
+            {
+              if (newobj != NULL)
+                {
+                  *newobj = template_ptr->object;
+                }
 
-	      obt_free_template (template_ptr);
-	    }
-	}
+              obt_free_template (template_ptr);
+            }
+        }
     }
 
   return error;

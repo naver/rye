@@ -66,7 +66,7 @@
 #include "cas_cci_internal.h"
 #endif
 
-#define HOST_ID_ARRAY_SIZE 8	/* size of the host_id string */
+#define HOST_ID_ARRAY_SIZE 8    /* size of the host_id string */
 #define TCP_MIN_NUM_RETRIES 3
 #if !defined(INADDR_NONE)
 #define INADDR_NONE 0xffffffff
@@ -89,12 +89,10 @@ static const int css_Maximum_server_count = 50;
 
 static void css_sockopt (SOCKET sd);
 static int css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
-			 const char *dbname, struct sockaddr *saddr,
-			 socklen_t * slen);
+                         const char *dbname, struct sockaddr *saddr, socklen_t * slen);
 
 static void
-css_get_domain_path_internal (char *path_buf, int buf_len,
-			      const char *name, const char *ext)
+css_get_domain_path_internal (char *path_buf, int buf_len, const char *name, const char *ext)
 {
   char filename[PATH_MAX];
 
@@ -133,28 +131,22 @@ css_sockopt (SOCKET sd)
 
   if (prm_get_integer_value (PRM_ID_TCP_RCVBUF_SIZE) > 0)
     {
-      setsockopt (sd, SOL_SOCKET, SO_RCVBUF,
-		  (int *) prm_get_value (PRM_ID_TCP_RCVBUF_SIZE),
-		  sizeof (int));
+      setsockopt (sd, SOL_SOCKET, SO_RCVBUF, (int *) prm_get_value (PRM_ID_TCP_RCVBUF_SIZE), sizeof (int));
     }
 
   if (prm_get_integer_value (PRM_ID_TCP_SNDBUF_SIZE) > 0)
     {
-      setsockopt (sd, SOL_SOCKET, SO_SNDBUF,
-		  (int *) prm_get_value (PRM_ID_TCP_SNDBUF_SIZE),
-		  sizeof (int));
+      setsockopt (sd, SOL_SOCKET, SO_SNDBUF, (int *) prm_get_value (PRM_ID_TCP_SNDBUF_SIZE), sizeof (int));
     }
 
   if (prm_get_bool_value (PRM_ID_TCP_NODELAY))
     {
-      setsockopt (sd, IPPROTO_TCP, TCP_NODELAY,
-		  (const char *) &bool_value, sizeof (bool_value));
+      setsockopt (sd, IPPROTO_TCP, TCP_NODELAY, (const char *) &bool_value, sizeof (bool_value));
     }
 
   if (prm_get_bool_value (PRM_ID_TCP_KEEPALIVE))
     {
-      setsockopt (sd, SOL_SOCKET, SO_KEEPALIVE,
-		  (const char *) &bool_value, sizeof (bool_value));
+      setsockopt (sd, SOL_SOCKET, SO_KEEPALIVE, (const char *) &bool_value, sizeof (bool_value));
     }
 }
 
@@ -163,27 +155,25 @@ css_sockopt (SOCKET sd)
  */
 static int
 css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
-	      const char *dbname, struct sockaddr *saddr, socklen_t * slen)
+              const char *dbname, struct sockaddr *saddr, socklen_t * slen)
 {
   if (prm_is_myself_node_info (node_info))
     {
       struct sockaddr_un unix_saddr;
       char sock_path[PATH_MAX];
 
-      if (connect_type == SVR_CONNECT_TYPE_TO_SERVER ||
-	  connect_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
-	{
-	  css_get_server_domain_path (sock_path, sizeof (sock_path), dbname);
-	}
+      if (connect_type == SVR_CONNECT_TYPE_TO_SERVER || connect_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
+        {
+          css_get_server_domain_path (sock_path, sizeof (sock_path), dbname);
+        }
       else
-	{
-	  css_get_master_domain_path (sock_path, sizeof (sock_path), false);
-	}
+        {
+          css_get_master_domain_path (sock_path, sizeof (sock_path), false);
+        }
 
       memset ((void *) &unix_saddr, 0, sizeof (unix_saddr));
       unix_saddr.sun_family = AF_UNIX;
-      strncpy (unix_saddr.sun_path, sock_path,
-	       sizeof (unix_saddr.sun_path) - 1);
+      strncpy (unix_saddr.sun_path, sock_path, sizeof (unix_saddr.sun_path) - 1);
       *slen = sizeof (unix_saddr);
       memcpy ((void *) saddr, (void *) &unix_saddr, *slen);
 
@@ -211,8 +201,7 @@ css_sockaddr (const PRM_NODE_INFO * node_info, int connect_type,
  * css_tcp_client_open () -
  */
 SOCKET
-css_tcp_client_open (const PRM_NODE_INFO * node_info, int connect_type,
-		     const char *dbname, int timeout)
+css_tcp_client_open (const PRM_NODE_INFO * node_info, int connect_type, const char *dbname, int timeout)
 {
   SOCKET sd = -1;
   struct sockaddr *saddr;
@@ -252,8 +241,7 @@ css_tcp_client_open (const PRM_NODE_INFO * node_info, int connect_type,
 
   if (sd < 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_CANNOT_CREATE_SOCKET, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_CANNOT_CREATE_SOCKET, 0);
       return INVALID_SOCKET;
     }
   else
@@ -277,8 +265,7 @@ again_eintr:
   if (errno != EINPROGRESS)
     {
       close (sd);
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
-		    "connect failed with errno %d", errno);
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :" "connect failed with errno %d", errno);
       return INVALID_SOCKET;
     }
 
@@ -290,12 +277,11 @@ retry_poll:
   if (n < 0)
     {
       if (errno == EINTR)
-	{
-	  goto retry_poll;
-	}
+        {
+          goto retry_poll;
+        }
 
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
-		    "poll failed errno %d", errno);
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :" "poll failed errno %d", errno);
       close (sd);
       return INVALID_SOCKET;
     }
@@ -304,8 +290,7 @@ retry_poll:
       /* 0 means it timed out and no fd is changed */
       errno = ETIMEDOUT;
       close (sd);
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
-		    "poll failed with timeout %d", timeout);
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :" "poll failed with timeout %d", timeout);
       return INVALID_SOCKET;
     }
 
@@ -313,15 +298,13 @@ retry_poll:
   slen = sizeof (n);
   if (getsockopt (sd, SOL_SOCKET, SO_ERROR, (void *) &n, &slen) < 0)
     {
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
-		    "getsockopt failed errno %d", errno);
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :" "getsockopt failed errno %d", errno);
       close (sd);
       return INVALID_SOCKET;
     }
   if (n != 0)
     {
-      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :"
-		    "connection failed errno %d", n);
+      er_log_debug (ARG_FILE_LINE, "css_tcp_client_open :" "connection failed errno %d", n);
       close (sd);
       return INVALID_SOCKET;
     }
@@ -350,34 +333,28 @@ css_tcp_master_open (SOCKET * res_sockfd)
   css_get_master_domain_path (sock_path, PATH_MAX, false);
 
   unix_srv_addr.sun_family = AF_UNIX;
-  strncpy (unix_srv_addr.sun_path, sock_path,
-	   sizeof (unix_srv_addr.sun_path) - 1);
+  strncpy (unix_srv_addr.sun_path, sock_path, sizeof (unix_srv_addr.sun_path) - 1);
 
   if (access (sock_path, F_OK) == 0)
     {
       if (stat (sock_path, &unix_socket_stat) == -1)
-	{
-	  /* stat() failed */
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST, 1,
-			       sock_path);
-	  return ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST;
-	}
+        {
+          /* stat() failed */
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST, 1, sock_path);
+          return ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST;
+        }
       if (!S_ISSOCK (unix_socket_stat.st_mode))
-	{
-	  /* not socket file */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST, 1, sock_path);
-	  return ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST;
-	}
+        {
+          /* not socket file */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST, 1, sock_path);
+          return ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST;
+        }
       if (unlink (sock_path) == -1)
-	{
-	  /* unlink() failed */
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST, 1,
-			       sock_path);
-	  return ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST;
-	}
+        {
+          /* unlink() failed */
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST, 1, sock_path);
+          return ERR_CSS_UNIX_DOMAIN_SOCKET_FILE_EXIST;
+        }
     }
 
 retry2:
@@ -385,40 +362,34 @@ retry2:
   sock_fd = socket (AF_UNIX, SOCK_STREAM, 0);
   if (IS_INVALID_SOCKET (sock_fd))
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_CANNOT_CREATE_STREAM, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_CANNOT_CREATE_STREAM, 0);
       return ERR_CSS_TCP_CANNOT_CREATE_STREAM;
     }
 
-  if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR,
-		  (char *) &reuseaddr_flag, sizeof (reuseaddr_flag)) < 0)
+  if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &reuseaddr_flag, sizeof (reuseaddr_flag)) < 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_BIND_ABORT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_BIND_ABORT, 0);
       css_shutdown_socket (sock_fd);
       return ERR_CSS_TCP_BIND_ABORT;
     }
 
-  if (bind (sock_fd, (struct sockaddr *) &unix_srv_addr,
-	    sizeof (unix_srv_addr)) < 0)
+  if (bind (sock_fd, (struct sockaddr *) &unix_srv_addr, sizeof (unix_srv_addr)) < 0)
     {
       if (errno == EADDRINUSE && retry_count <= 5)
-	{
-	  retry_count++;
-	  css_shutdown_socket (sock_fd);
-	  (void) sleep (1);
-	  goto retry2;
-	}
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_BIND_ABORT, 0);
+        {
+          retry_count++;
+          css_shutdown_socket (sock_fd);
+          (void) sleep (1);
+          goto retry2;
+        }
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_BIND_ABORT, 0);
       css_shutdown_socket (sock_fd);
       return ERR_CSS_TCP_BIND_ABORT;
     }
 
   if (listen (sock_fd, css_Maximum_server_count) != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_ACCEPT_ERROR, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_ACCEPT_ERROR, 0);
       css_shutdown_socket (sock_fd);
       return ERR_CSS_TCP_ACCEPT_ERROR;
     }
@@ -448,25 +419,23 @@ css_master_accept (SOCKET sockfd)
       new_sockfd = accept (sockfd, &sa, &clilen);
 
       if (IS_INVALID_SOCKET (new_sockfd))
-	{
-	  if (errno == EINTR)
-	    {
-	      errno = 0;
-	      continue;
-	    }
+        {
+          if (errno == EINTR)
+            {
+              errno = 0;
+              continue;
+            }
 
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_TCP_ACCEPT_ERROR, 0);
-	  return INVALID_SOCKET;
-	}
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_ACCEPT_ERROR, 0);
+          return INVALID_SOCKET;
+        }
 
       break;
     }
 
   if (sa.sa_family == AF_INET)
     {
-      setsockopt (sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &boolean,
-		  sizeof (boolean));
+      setsockopt (sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &boolean, sizeof (boolean));
     }
 
   return new_sockfd;
@@ -493,8 +462,7 @@ css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd)
   *sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
   if (IS_INVALID_SOCKET (*sockfd))
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_DATAGRAM_SOCKET, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_DATAGRAM_SOCKET, 0);
       return false;
     }
 
@@ -505,8 +473,7 @@ css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd)
 
   if (bind (*sockfd, (struct sockaddr *) &serv_addr, servlen) < 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_DATAGRAM_BIND, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_DATAGRAM_BIND, 0);
       return false;
     }
 
@@ -520,8 +487,7 @@ css_tcp_setup_server_datagram (char *pathname, SOCKET * sockfd)
 
   if (listen (*sockfd, 5) != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_ACCEPT_ERROR, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_ACCEPT_ERROR, 0);
       return false;
     }
 
@@ -560,44 +526,43 @@ css_tcp_master_datagram (char *path_name, SOCKET * sockfd)
        */
       *sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
       if (IS_INVALID_SOCKET (*sockfd))
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_TCP_DATAGRAM_SOCKET, 0);
-	  return false;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_DATAGRAM_SOCKET, 0);
+          return false;
+        }
 
     again_eintr:
       success = connect (*sockfd, (struct sockaddr *) &serv_addr, servlen);
       if (success < 0)
-	{
-	  if (errno == EINTR)
-	    {
-	      goto again_eintr;
-	    }
+        {
+          if (errno == EINTR)
+            {
+              goto again_eintr;
+            }
 
-	  if (errno == ECONNREFUSED || errno == ETIMEDOUT)
-	    {
+          if (errno == ECONNREFUSED || errno == ETIMEDOUT)
+            {
 
-	      if (num_retries > TCP_MIN_NUM_RETRIES)
-		{
-		  will_retry = false;
-		}
-	      else
-		{
-		  will_retry = true;
-		  num_retries++;
-		}
-	    }
-	  else
-	    {
-	      will_retry = false;	/* Don't retry */
-	    }
+              if (num_retries > TCP_MIN_NUM_RETRIES)
+                {
+                  will_retry = false;
+                }
+              else
+                {
+                  will_retry = true;
+                  num_retries++;
+                }
+            }
+          else
+            {
+              will_retry = false;       /* Don't retry */
+            }
 
-	  close (*sockfd);
-	  *sockfd = INVALID_SOCKET;
-	  (void) sleep (1);
-	  continue;
-	}
+          close (*sockfd);
+          *sockfd = INVALID_SOCKET;
+          (void) sleep (1);
+          continue;
+        }
       break;
     }
   while (success < 0 && will_retry == true);
@@ -605,12 +570,9 @@ css_tcp_master_datagram (char *path_name, SOCKET * sockfd)
 
   if (success < 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_DATAGRAM_CONNECT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_DATAGRAM_CONNECT, 0);
 #if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "Failed with number of retries = %d during connection\n",
-		    num_retries);
+      er_log_debug (ARG_FILE_LINE, "Failed with number of retries = %d during connection\n", num_retries);
 #endif /* RYE_DEBUG */
       return false;
     }
@@ -618,8 +580,7 @@ css_tcp_master_datagram (char *path_name, SOCKET * sockfd)
   if (num_retries > 0)
     {
 #if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE,
-		    "Connected after number of retries = %d\n", num_retries);
+      er_log_debug (ARG_FILE_LINE, "Connected after number of retries = %d\n", num_retries);
 #endif /* RYE_DEBUG */
     }
 
@@ -665,8 +626,7 @@ css_recv_fd (SOCKET fd, int *int_val, struct timeval * recv_time)
   if (rc < (int) SEND_FD_CONTROL_LEN)
     {
 #ifdef _DEBUG
-      printf ("recvmsg failed. errno = %d. str=%s\n", errno,
-	      strerror (errno));
+      printf ("recvmsg failed. errno = %d. str=%s\n", errno, strerror (errno));
 #endif
       return INVALID_SOCKET;
     }
@@ -698,8 +658,7 @@ css_recv_fd (SOCKET fd, int *int_val, struct timeval * recv_time)
  *   rid(in):
  */
 int
-css_transfer_fd (SOCKET server_fd, SOCKET client_fd, int int_val,
-		 const struct timeval *recv_time)
+css_transfer_fd (SOCKET server_fd, SOCKET client_fd, int int_val, const struct timeval *recv_time)
 {
   struct iovec iov[1];
   struct msghdr msg;
@@ -766,16 +725,15 @@ css_shutdown_socket (SOCKET fd)
     again_eintr:
       rc = close (fd);
       if (rc != 0)
-	{
-	  if (errno == EINTR)
-	    {
-	      goto again_eintr;
-	    }
+        {
+          if (errno == EINTR)
+            {
+              goto again_eintr;
+            }
 #if defined(RYE_DEBUG)
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_GENERIC_ERROR, 1, "");
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 #endif /* RYE_DEBUG */
-	}
+        }
     }
 }
 
@@ -809,9 +767,7 @@ css_peer_alive (SOCKET sd, int timeout)
   slen = sizeof (saddr);
   if (getpeername (sd, (struct sockaddr *) &saddr, &slen) < 0)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "css_peer_alive: returning errno %d from getpeername()\n",
-		    errno);
+      er_log_debug (ARG_FILE_LINE, "css_peer_alive: returning errno %d from getpeername()\n", errno);
       return false;
     }
 
@@ -821,7 +777,7 @@ css_peer_alive (SOCKET sd, int timeout)
       return true;
     }
 
-#if 0				/* temporarily disabled */
+#if 0                           /* temporarily disabled */
   /* try to make raw socket to ping the peer */
   if ((nsd = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0)
     {
@@ -831,16 +787,14 @@ css_peer_alive (SOCKET sd, int timeout)
   /* failed to make a ICMP socket; try to connect to the port ECHO */
   if ((nsd = socket (AF_INET, SOCK_STREAM, 0)) < 0)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "css_peer_alive: errno %d from socket(SOCK_STREAM)\n",
-		    errno);
+      er_log_debug (ARG_FILE_LINE, "css_peer_alive: errno %d from socket(SOCK_STREAM)\n", errno);
       return false;
     }
 
   /* make the socket non blocking so we can use select */
   SET_NONBLOCKING (nsd);
 
-  saddr.sin_port = htons (7);	/* port ECHO */
+  saddr.sin_port = htons (7);   /* port ECHO */
   n = connect (nsd, (struct sockaddr *) &saddr, slen);
 
   /*
@@ -855,19 +809,17 @@ css_peer_alive (SOCKET sd, int timeout)
 
   switch (errno)
     {
-    case EINPROGRESS:		/* non-blocking, asynchronously */
+    case EINPROGRESS:          /* non-blocking, asynchronously */
       break;
-    case ENETUNREACH:		/* network unreachable */
-    case EAFNOSUPPORT:		/* address family not supported */
-    case EADDRNOTAVAIL:	/* address is not available on the remote machine */
-    case EINVAL:		/* on some linux, connecting to the loopback */
-      er_log_debug (ARG_FILE_LINE,
-		    "css_peer_alive: errno %d from connect()\n", errno);
+    case ENETUNREACH:          /* network unreachable */
+    case EAFNOSUPPORT:         /* address family not supported */
+    case EADDRNOTAVAIL:        /* address is not available on the remote machine */
+    case EINVAL:               /* on some linux, connecting to the loopback */
+      er_log_debug (ARG_FILE_LINE, "css_peer_alive: errno %d from connect()\n", errno);
       close (nsd);
       return false;
-    default:			/* otherwise, connection failed */
-      er_log_debug (ARG_FILE_LINE,
-		    "css_peer_alive: errno %d from connect()\n", errno);
+    default:                   /* otherwise, connection failed */
+      er_log_debug (ARG_FILE_LINE, "css_peer_alive: errno %d from connect()\n", errno);
       close (nsd);
       return false;
     }
@@ -880,11 +832,10 @@ retry_poll:
   if (n < 0)
     {
       if (errno == EINTR)
-	{
-	  goto retry_poll;
-	}
-      er_log_debug (ARG_FILE_LINE, "css_peer_alive: errno %d from poll()\n",
-		    errno);
+        {
+          goto retry_poll;
+        }
+      er_log_debug (ARG_FILE_LINE, "css_peer_alive: errno %d from poll()\n", errno);
       close (nsd);
       return false;
     }
@@ -899,8 +850,7 @@ retry_poll:
   size = sizeof (n);
   if (getsockopt (nsd, SOL_SOCKET, SO_ERROR, (void *) &n, &size) < 0)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "css_peer_alive: getsockopt() return error %d\n", errno);
+      er_log_debug (ARG_FILE_LINE, "css_peer_alive: getsockopt() return error %d\n", errno);
       close (nsd);
       return false;
     }
@@ -911,8 +861,7 @@ retry_poll:
       return true;
     }
 
-  er_log_debug (ARG_FILE_LINE, "css_peer_alive: errno %d from connect()\n",
-		n);
+  er_log_debug (ARG_FILE_LINE, "css_peer_alive: errno %d from connect()\n", n);
   close (nsd);
   return false;
 }

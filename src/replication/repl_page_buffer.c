@@ -40,23 +40,18 @@
 
 
 /* static functions */
-static LOG_PHY_PAGEID cirp_to_phy_pageid (CIRP_BUF_MGR * buf_mgr,
-					  LOG_PAGEID logical_pageid);
+static LOG_PHY_PAGEID cirp_to_phy_pageid (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID logical_pageid);
 
-static PRM_NODE_INFO cirp_get_hostname_from_log_path (const char *log_path,
-						      const char *db_name);
+static PRM_NODE_INFO cirp_get_hostname_from_log_path (const char *log_path, const char *db_name);
 
 
-static int cirp_log_io_read (char *vname, int vdes, void *io_pgptr,
-			     LOG_PHY_PAGEID pageid, int pagesize);
+static int cirp_log_io_read (char *vname, int vdes, void *io_pgptr, LOG_PHY_PAGEID pageid, int pagesize);
 
 static void cirp_logpb_compress_final (CIRP_BUF_MGR * buf_mgr);
 static int cirp_logpb_compress_init (CIRP_BUF_MGR * buf_mgr);
 
 static void cirp_logpb_act_log_final (CIRP_BUF_MGR * buf_mgr);
-static int cirp_logpb_act_log_init (CIRP_BUF_MGR * buf_mgr,
-				    const char *log_path,
-				    const char *prefix_name);
+static int cirp_logpb_act_log_init (CIRP_BUF_MGR * buf_mgr, const char *log_path, const char *prefix_name);
 static void cirp_logpb_act_log_close (CIRP_BUF_MGR * buf_mgr);
 static int cirp_logpb_act_log_open (CIRP_BUF_MGR * buf_mgr);
 
@@ -68,39 +63,28 @@ static int cirp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr);
 
 static int cirp_logpb_arv_log_open (CIRP_BUF_MGR * buf_mgr, int arv_num);
 static int cirp_logpb_arv_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr, int arv_num);
-static int cirp_logpb_arv_log_find_arv_num (CIRP_BUF_MGR * buf_mgr,
-					    int *arv_num, LOG_PAGEID pageid);
-static int cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR *
-						     buf_mgr, int *arv_num,
-						     LOG_PAGEID pageid);
+static int cirp_logpb_arv_log_find_arv_num (CIRP_BUF_MGR * buf_mgr, int *arv_num, LOG_PAGEID pageid);
+static int cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr, int *arv_num, LOG_PAGEID pageid);
 static int cirp_logpb_remove_archive_log_internal (CIRP_BUF_MGR *
-						   buf_mgr, int first_arv_num,
-						   int last_arv_num,
-						   int max_arv_cnt_to_delete);
+                                                   buf_mgr, int first_arv_num,
+                                                   int last_arv_num, int max_arv_cnt_to_delete);
 
 static void cirp_logpb_cache_final (CIRP_BUF_MGR * buf_mgr);
 static int cirp_logpb_cache_init (CIRP_BUF_MGR * buf_mgr);
 
-static int cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr,
-			     LOG_PAGEID pageid, CIRP_LOGPB * logpb);
-static int cirp_logpb_fetch_from_archive (CIRP_BUF_MGR * buf_mgr,
-					  LOG_PAGEID pageid, char *data);
-static int cirp_logpb_fetch_from_active (CIRP_BUF_MGR * buf_mgr,
-					 LOG_PAGEID pageid, char *data);
-static int cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr,
-				      CIRP_LOGPB ** out_logpb,
-				      LOG_PAGEID pageid);
+static int cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid, CIRP_LOGPB * logpb);
+static int cirp_logpb_fetch_from_archive (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid, char *data);
+static int cirp_logpb_fetch_from_active (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid, char *data);
+static int cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, CIRP_LOGPB ** out_logpb, LOG_PAGEID pageid);
 static int cirp_logpb_expand_buffer (CIRP_BUF_MGR * buf_mgr);
 static void cirp_logpb_clear_logpb (CIRP_LOGPB * logpb);
 
 static int cirp_logpb_init_buffer_manager (CIRP_BUF_MGR * buf_mgr);
 static void cirp_logpb_common_final (CIRP_BUF_MGR * buf_mgr);
-static int cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr,
-				   const char *db_name, const char *log_path);
+static int cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr, const char *db_name, const char *log_path);
 
 static void cirp_clear_recdes_pool (CIRP_BUF_MGR * buf_mgr);
-static int cirp_init_recdes_pool (CIRP_BUF_MGR * buf_mgr, int page_size,
-				  int num_recdes);
+static int cirp_init_recdes_pool (CIRP_BUF_MGR * buf_mgr, int page_size, int num_recdes);
 
 static int rp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr);
 
@@ -138,9 +122,9 @@ cirp_get_hostname_from_log_path (const char *log_path, const char *db_name)
     {
       p--;
       if (p == log_path)
-	{
-	  goto end;
-	}
+        {
+          goto end;
+        }
     }
 
   hostname = strstr (p, db_name);
@@ -188,18 +172,18 @@ cirp_to_phy_pageid (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID logical_pageid)
 
       tmp_pageid = logical_pageid - log_hdr->ha_info.fpageid;
       if (tmp_pageid >= log_hdr->npages)
-	{
-	  tmp_pageid %= log_hdr->npages;
-	}
+        {
+          tmp_pageid %= log_hdr->npages;
+        }
       else if (tmp_pageid < 0)
-	{
-	  tmp_pageid = log_hdr->npages - ((-tmp_pageid) % log_hdr->npages);
-	}
+        {
+          tmp_pageid = log_hdr->npages - ((-tmp_pageid) % log_hdr->npages);
+        }
       tmp_pageid++;
       if (tmp_pageid > log_hdr->npages)
-	{
-	  tmp_pageid %= log_hdr->npages;
-	}
+        {
+          tmp_pageid %= log_hdr->npages;
+        }
 
       assert (tmp_pageid <= PAGEID_MAX);
       phy_pageid = (LOG_PHY_PAGEID) tmp_pageid;
@@ -219,9 +203,7 @@ cirp_to_phy_pageid (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID logical_pageid)
  *    pagesize(in):
  */
 static int
-cirp_log_io_read_with_max_retries (char *vname, int vdes,
-				   void *io_pgptr, LOG_PHY_PAGEID pageid,
-				   int pagesize)
+cirp_log_io_read_with_max_retries (char *vname, int vdes, void *io_pgptr, LOG_PHY_PAGEID pageid, int pagesize)
 {
   int nbytes;
   int remain_bytes = pagesize;
@@ -234,8 +216,7 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
   if (lseek64 (vdes, offset, SEEK_SET) == -1)
     {
       error = ER_IO_READ;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 2, pageid, vname);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, pageid, vname);
       return error;
     }
 
@@ -245,33 +226,32 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
       nbytes = read (vdes, current_ptr, remain_bytes);
 
       if (nbytes == 0)
-	{
-	  /*
-	   * This is an end of file.
-	   */
-	  assert (false);
+        {
+          /*
+           * This is an end of file.
+           */
+          assert (false);
 
-	  error = ER_PB_BAD_PAGEID;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, pageid, vname);
+          error = ER_PB_BAD_PAGEID;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, pageid, vname);
 
-	  return error;
-	}
+          return error;
+        }
       else if (nbytes < 0)
-	{
-	  assert (false);
+        {
+          assert (false);
 
-	  if (errno == EINTR)
-	    {
-	      continue;
-	    }
-	  else
-	    {
-	      error = ER_IO_READ;
-	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				   error, 2, pageid, vname);
-	      return error;
-	    }
-	}
+          if (errno == EINTR)
+            {
+              continue;
+            }
+          else
+            {
+              error = ER_IO_READ;
+              er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, pageid, vname);
+              return error;
+            }
+        }
 
       remain_bytes -= nbytes;
       current_ptr += nbytes;
@@ -282,8 +262,7 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
       assert (false);
 
       error = ER_IO_READ;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 2, pageid, vname);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, pageid, vname);
       return error;
     }
 
@@ -301,11 +280,9 @@ cirp_log_io_read_with_max_retries (char *vname, int vdes,
  *    pagesize(in):
  */
 static int
-cirp_log_io_read (char *vname, int vdes,
-		  void *io_pgptr, LOG_PHY_PAGEID pageid, int pagesize)
+cirp_log_io_read (char *vname, int vdes, void *io_pgptr, LOG_PHY_PAGEID pageid, int pagesize)
 {
-  return cirp_log_io_read_with_max_retries (vname, vdes, io_pgptr, pageid,
-					    pagesize);
+  return cirp_log_io_read_with_max_retries (vname, vdes, io_pgptr, pageid, pagesize);
 }
 
 /*
@@ -346,8 +323,7 @@ cirp_logpb_compress_init (CIRP_BUF_MGR * buf_mgr)
   if (lzo_init () != LZO_E_OK)
     {
       er_log_debug (ARG_FILE_LINE, "Failed to initialize lzo");
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
-	      __FILE__);
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, __FILE__);
       return ER_GENERIC_ERROR;
     }
 
@@ -356,8 +332,7 @@ cirp_logpb_compress_init (CIRP_BUF_MGR * buf_mgr)
   buf_mgr->rec_type = (char *) malloc (DB_SIZEOF (INT16));
   if (buf_mgr->rec_type == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (INT16));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, DB_SIZEOF (INT16));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -365,8 +340,7 @@ cirp_logpb_compress_init (CIRP_BUF_MGR * buf_mgr)
   buf_mgr->undo_unzip = log_zip_alloc (IO_MAX_PAGE_SIZE, false);
   if (buf_mgr->undo_unzip == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -374,8 +348,7 @@ cirp_logpb_compress_init (CIRP_BUF_MGR * buf_mgr)
   buf_mgr->redo_unzip = log_zip_alloc (IO_MAX_PAGE_SIZE, false);
   if (buf_mgr->redo_unzip == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -411,22 +384,19 @@ cirp_logpb_act_log_final (CIRP_BUF_MGR * buf_mgr)
  *    prefix_name(in):
  */
 static int
-cirp_logpb_act_log_init (CIRP_BUF_MGR * buf_mgr, const char *log_path,
-			 const char *prefix_name)
+cirp_logpb_act_log_init (CIRP_BUF_MGR * buf_mgr, const char *log_path, const char *prefix_name)
 {
   CIRP_ACT_LOG *act_log = &buf_mgr->act_log;
 
   assert (act_log->path[0] == '\0'
-	  && act_log->vdes == NULL_VOLDES
-	  && act_log->hdr_page == NULL && act_log->log_hdr == NULL);
+          && act_log->vdes == NULL_VOLDES && act_log->hdr_page == NULL && act_log->log_hdr == NULL);
 
   fileio_make_log_active_name (act_log->path, log_path, prefix_name);
 
   act_log->hdr_page = (LOG_PAGE *) malloc (IO_MAX_PAGE_SIZE);
   if (act_log->hdr_page == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -474,8 +444,7 @@ cirp_logpb_act_log_open (CIRP_BUF_MGR * buf_mgr)
   act_log->vdes = fileio_open (act_log->path, O_RDONLY, 0);
   if (act_log->vdes == NULL_VOLDES)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_LOG_MOUNT_FAIL, 1, act_log->path);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_MOUNT_FAIL, 1, act_log->path);
       error = ER_LOG_MOUNT_FAIL;
       goto error_rtn;
     }
@@ -506,16 +475,14 @@ cirp_logpb_act_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr)
     {
       error = cirp_logpb_act_log_open (buf_mgr);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   if (act_log->log_hdr != NULL)
     {
-      cirp_logpb_decache_range (buf_mgr,
-				act_log->log_hdr->ha_info.last_flushed_pageid,
-				LOGPAGEID_MAX);
+      cirp_logpb_decache_range (buf_mgr, act_log->log_hdr->ha_info.last_flushed_pageid, LOGPAGEID_MAX);
     }
 
   error = pthread_mutex_lock (&writer->lock);
@@ -576,15 +543,13 @@ cirp_logpb_arv_log_init (CIRP_BUF_MGR * buf_mgr)
   arv_log = &buf_mgr->arv_log;
 
   assert (arv_log->arv_num == NULL_ARV_NUM
-	  && arv_log->path[0] == '\0'
-	  && arv_log->vdes == NULL_VOLDES
-	  && arv_log->hdr_page == NULL && arv_log->log_hdr == NULL);
+          && arv_log->path[0] == '\0'
+          && arv_log->vdes == NULL_VOLDES && arv_log->hdr_page == NULL && arv_log->log_hdr == NULL);
 
   arv_log->hdr_page = (LOG_PAGE *) malloc (IO_MAX_PAGE_SIZE);
   if (arv_log->hdr_page == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, IO_MAX_PAGE_SIZE);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -639,8 +604,7 @@ cirp_logpb_arv_log_remove (CIRP_BUF_MGR * buf_mgr, int arv_num)
       cirp_logpb_arv_log_close (buf_mgr);
     }
 
-  fileio_make_log_archive_name (archive_name, buf_mgr->log_path,
-				buf_mgr->prefix_name, arv_num);
+  fileio_make_log_archive_name (archive_name, buf_mgr->log_path, buf_mgr->prefix_name, arv_num);
   fileio_unformat (NULL, archive_name);
 
   return;
@@ -676,16 +640,13 @@ cirp_logpb_arv_log_open (CIRP_BUF_MGR * buf_mgr, int arv_num)
     }
 
   assert (buf_mgr->log_path[0] != '\0' && buf_mgr->prefix_name[0] != '\0');
-  fileio_make_log_archive_name (arv_log->path,
-				buf_mgr->log_path,
-				buf_mgr->prefix_name, arv_num);
+  fileio_make_log_archive_name (arv_log->path, buf_mgr->log_path, buf_mgr->prefix_name, arv_num);
 
   arv_log->vdes = fileio_open (arv_log->path, O_RDONLY, 0);
   if (arv_log->vdes == NULL_VOLDES)
     {
       error = ER_LOG_MOUNT_FAIL;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 1, arv_log->path);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, arv_log->path);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -719,34 +680,30 @@ cirp_logpb_arv_log_fetch_hdr (CIRP_BUF_MGR * buf_mgr, int arv_num)
     }
 
   error = cirp_log_io_read_with_max_retries (arv_log->path, arv_log->vdes,
-					     arv_log->hdr_page, 0,
-					     buf_mgr->db_logpagesize);
+                                             arv_log->hdr_page, 0, buf_mgr->db_logpagesize);
   if (error != NO_ERROR)
     {
       assert (false);
 
       if (error == ER_PB_BAD_PAGEID)
-	{
-	  goto error_rtn;
-	}
+        {
+          goto error_rtn;
+        }
       else
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_READ, 3,
-		  LOGPB_HEADER_PAGE_ID, 0, arv_log->path);
-	  error = ER_LOG_READ;
-	  goto error_rtn;
-	}
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_READ, 3, LOGPB_HEADER_PAGE_ID, 0, arv_log->path);
+          error = ER_LOG_READ;
+          goto error_rtn;
+        }
     }
 
   arv_log->log_hdr = (struct log_arv_header *) arv_log->hdr_page->area;
 
   /* validate archive log header */
   if (strncmp (arv_log->log_hdr->magic,
-	       RYE_MAGIC_LOG_ARCHIVE, RYE_MAGIC_MAX_LENGTH) != 0
-      || arv_log->log_hdr->arv_num != arv_num)
+               RYE_MAGIC_LOG_ARCHIVE, RYE_MAGIC_MAX_LENGTH) != 0 || arv_log->log_hdr->arv_num != arv_num)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_READ, 3,
-	      LOGPB_HEADER_PAGE_ID, 0, arv_log->path);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_READ, 3, LOGPB_HEADER_PAGE_ID, 0, arv_log->path);
       error = ER_LOG_READ;
       goto error_rtn;
     }
@@ -767,8 +724,7 @@ error_rtn:
  *    pageid(in):
  */
 static int
-cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
-					  int *arv_num, LOG_PAGEID pageid)
+cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr, int *arv_num, LOG_PAGEID pageid)
 {
   CIRP_ANALYZER_INFO *analyzer = NULL;
   int error;
@@ -789,15 +745,15 @@ cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
   else
     {
       if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
-	{
-	  left = 0;
-	}
+        {
+          left = 0;
+        }
       else
-	{
-	  assert (analyzer->deleted_arv_info.last_deleted_arv_num >= 0);
+        {
+          assert (analyzer->deleted_arv_info.last_deleted_arv_num >= 0);
 
-	  left = analyzer->deleted_arv_info.last_deleted_arv_num + 1;
-	}
+          left = analyzer->deleted_arv_info.last_deleted_arv_num + 1;
+        }
 
       right = act_log->log_hdr->ha_info.nxarv_num - 1;
       find_arv_num = right;
@@ -807,15 +763,15 @@ cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
     {
       error = cirp_logpb_arv_log_fetch_hdr (buf_mgr, find_arv_num);
       if (error != NO_ERROR)
-	{
-	  if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
-	    {
-	      rp_logpb_find_last_deleted_arv_num (buf_mgr);
-	    }
-	  error = ER_LOG_NOTIN_ARCHIVE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, pageid);
-	  return error;
-	}
+        {
+          if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
+            {
+              rp_logpb_find_last_deleted_arv_num (buf_mgr);
+            }
+          error = ER_LOG_NOTIN_ARCHIVE;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, pageid);
+          return error;
+        }
 
       arv_log_hdr = buf_mgr->arv_log.log_hdr;
       assert (arv_log_hdr != NULL);
@@ -824,24 +780,22 @@ cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
       npages = arv_log_hdr->npages;
 
       if (pageid >= fpageid && pageid < fpageid + npages)
-	{
-	  *arv_num = find_arv_num;
-	  return NO_ERROR;
-	}
+        {
+          *arv_num = find_arv_num;
+          return NO_ERROR;
+        }
       else if (pageid < fpageid)
-	{
-	  right = find_arv_num - 1;
-	  find_arv_num = CEIL_PTVDIV ((left + right), 2);
-	}
+        {
+          right = find_arv_num - 1;
+          find_arv_num = CEIL_PTVDIV ((left + right), 2);
+        }
       else if (pageid >= fpageid + npages)
-	{
-	  left = find_arv_num + 1;
-	  find_arv_num = CEIL_PTVDIV ((left + right), 2);
-	}
+        {
+          left = find_arv_num + 1;
+          find_arv_num = CEIL_PTVDIV ((left + right), 2);
+        }
     }
-  while (find_arv_num >= 0
-	 && left <= right
-	 && find_arv_num < act_log->log_hdr->ha_info.nxarv_num);
+  while (find_arv_num >= 0 && left <= right && find_arv_num < act_log->log_hdr->ha_info.nxarv_num);
 
   error = ER_LOG_NOTIN_ARCHIVE;
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, pageid);
@@ -856,8 +810,7 @@ cirp_logpb_arv_log_find_arv_num_internal (CIRP_BUF_MGR * buf_mgr,
  *    pageid(in):
  */
 static int
-cirp_logpb_arv_log_find_arv_num (CIRP_BUF_MGR * buf_mgr, int *arv_num,
-				 LOG_PAGEID pageid)
+cirp_logpb_arv_log_find_arv_num (CIRP_BUF_MGR * buf_mgr, int *arv_num, LOG_PAGEID pageid)
 {
   int error;
   struct log_arv_header *arv_log_hdr = NULL;
@@ -877,23 +830,22 @@ cirp_logpb_arv_log_find_arv_num (CIRP_BUF_MGR * buf_mgr, int *arv_num,
       npages = arv_log_hdr->npages;
 
       if (pageid >= fpageid && pageid < fpageid + npages)
-	{
-	  assert (arv_log_hdr->arv_num == buf_mgr->arv_log.arv_num);
+        {
+          assert (arv_log_hdr->arv_num == buf_mgr->arv_log.arv_num);
 
-	  *arv_num = arv_log_hdr->arv_num;
-	  return NO_ERROR;
-	}
+          *arv_num = arv_log_hdr->arv_num;
+          return NO_ERROR;
+        }
 
       /* guess */
       if (pageid >= fpageid)
-	{
-	  *arv_num = buf_mgr->arv_log.arv_num + (pageid - fpageid) / npages;
-	}
+        {
+          *arv_num = buf_mgr->arv_log.arv_num + (pageid - fpageid) / npages;
+        }
       else
-	{
-	  *arv_num = buf_mgr->arv_log.arv_num
-	    - ((fpageid - pageid) / npages + 1);
-	}
+        {
+          *arv_num = buf_mgr->arv_log.arv_num - ((fpageid - pageid) / npages + 1);
+        }
     }
 
 retry_search:
@@ -901,20 +853,20 @@ retry_search:
   if (error != NO_ERROR)
     {
       if (error == ER_LOG_NOTIN_ARCHIVE)
-	{
-	  if (*arv_num != NULL_ARV_NUM)
-	    {
-	      /* binary search */
-	      *arv_num = NULL_ARV_NUM;
-	      goto retry_search;
-	    }
-	  else
-	    {
-	      /* did not refresh log header */
-	      error = ER_HA_LOG_PAGE_DOESNOT_EXIST;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	    }
-	}
+        {
+          if (*arv_num != NULL_ARV_NUM)
+            {
+              /* binary search */
+              *arv_num = NULL_ARV_NUM;
+              goto retry_search;
+            }
+          else
+            {
+              /* did not refresh log header */
+              error = ER_HA_LOG_PAGE_DOESNOT_EXIST;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+            }
+        }
 
       return error;
     }
@@ -938,16 +890,14 @@ cirp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr)
   while (arv_log_num >= 0)
     {
       /* make archive_name */
-      fileio_make_log_archive_name (arv_log_path,
-				    buf_mgr->log_path,
-				    buf_mgr->prefix_name, arv_log_num);
+      fileio_make_log_archive_name (arv_log_path, buf_mgr->log_path, buf_mgr->prefix_name, arv_log_num);
 
       /* open the archive file */
       arv_log_vdes = fileio_open (arv_log_path, O_RDONLY, 0);
       if (arv_log_vdes == NULL_VOLDES)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       fileio_close (arv_log_vdes);
       arv_log_num--;
@@ -974,9 +924,9 @@ rp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr)
     {
       arv_num = cirp_logpb_find_last_deleted_arv_num (buf_mgr);
       if (arv_num != NULL_ARV_NUM)
-	{
-	  analyzer->deleted_arv_info.last_deleted_arv_num = arv_num;
-	}
+        {
+          analyzer->deleted_arv_info.last_deleted_arv_num = arv_num;
+        }
     }
 
   pthread_mutex_unlock (&analyzer->lock);
@@ -994,8 +944,7 @@ rp_logpb_find_last_deleted_arv_num (CIRP_BUF_MGR * buf_mgr)
  */
 static int
 cirp_logpb_remove_archive_log_internal (CIRP_BUF_MGR * buf_mgr,
-					int first_arv_num, int last_arv_num,
-					int max_arv_cnt_to_delete)
+                                        int first_arv_num, int last_arv_num, int max_arv_cnt_to_delete)
 {
   int i;
   const char *info_reason, *catmsg;
@@ -1004,8 +953,7 @@ cirp_logpb_remove_archive_log_internal (CIRP_BUF_MGR * buf_mgr,
 
   if ((int) (first_arv_num + max_arv_cnt_to_delete) >= 0)
     {
-      last_arv_num = MIN (last_arv_num,
-			  first_arv_num + max_arv_cnt_to_delete);
+      last_arv_num = MIN (last_arv_num, first_arv_num + max_arv_cnt_to_delete);
     }
 
   if (first_arv_num > last_arv_num)
@@ -1019,31 +967,23 @@ cirp_logpb_remove_archive_log_internal (CIRP_BUF_MGR * buf_mgr,
       cirp_logpb_arv_log_remove (buf_mgr, i);
     }
 
-  info_reason = msgcat_message (MSGCAT_CATALOG_RYE,
-				MSGCAT_SET_LOG,
-				MSGCAT_LOG_MAX_ARCHIVES_HAS_BEEN_EXCEEDED);
+  info_reason = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOG, MSGCAT_LOG_MAX_ARCHIVES_HAS_BEEN_EXCEEDED);
   if (info_reason == NULL)
     {
-      info_reason = "Number of active log archives has been exceeded"
-	" the max desired number.";
+      info_reason = "Number of active log archives has been exceeded" " the max desired number.";
     }
-  catmsg = msgcat_message (MSGCAT_CATALOG_RYE,
-			   MSGCAT_SET_LOG, MSGCAT_LOG_LOGINFO_REMOVE_REASON);
+  catmsg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOG, MSGCAT_LOG_LOGINFO_REMOVE_REASON);
   if (catmsg == NULL)
     {
       catmsg = "REMOVE: %d %s to %d %s.\nREASON: %s\n";
     }
 
-  fileio_make_log_archive_name (first_archive_name, buf_mgr->log_path,
-				buf_mgr->prefix_name, first_arv_num);
-  fileio_make_log_archive_name (last_archive_name, buf_mgr->log_path,
-				buf_mgr->prefix_name, last_arv_num);
+  fileio_make_log_archive_name (first_archive_name, buf_mgr->log_path, buf_mgr->prefix_name, first_arv_num);
+  fileio_make_log_archive_name (last_archive_name, buf_mgr->log_path, buf_mgr->prefix_name, last_arv_num);
   log_dump_log_info (buf_mgr->log_info_path, false, catmsg,
-		     first_arv_num,
-		     fileio_get_base_file_name (first_archive_name),
-		     last_arv_num,
-		     fileio_get_base_file_name (last_archive_name),
-		     info_reason);
+                     first_arv_num,
+                     fileio_get_base_file_name (first_archive_name),
+                     last_arv_num, fileio_get_base_file_name (last_archive_name), info_reason);
 
   return last_arv_num;
 }
@@ -1078,17 +1018,14 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "invalid function arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "invalid function arguments");
       return error;
     }
 
-  rm_arv_intv_in_secs =
-    prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL);
+  rm_arv_intv_in_secs = prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL);
   max_archives = prm_get_integer_value (PRM_ID_HA_COPY_LOG_MAX_ARCHIVES);
 
-  if (max_archives < 0
-      || max_archives == INT_MAX || req_pageid == NULL_PAGEID)
+  if (max_archives < 0 || max_archives == INT_MAX || req_pageid == NULL_PAGEID)
     {
       assert (false);
 
@@ -1108,17 +1045,17 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
   if (rm_arv_intv_in_secs == 0)
     {
       if (buf_mgr->last_nxarv_num != act_log->log_hdr->ha_info.nxarv_num)
-	{
-	  max_arv_cnt_to_delete = INT_MAX;
-	}
+        {
+          max_arv_cnt_to_delete = INT_MAX;
+        }
     }
   else
     {
       timediff = now - analyzer->deleted_arv_info.last_arv_deleted_time;
       if (timediff > rm_arv_intv_in_secs)
-	{
-	  max_arv_cnt_to_delete = 1;
-	}
+        {
+          max_arv_cnt_to_delete = 1;
+        }
     }
 
   if (max_arv_cnt_to_delete == 0)
@@ -1128,15 +1065,14 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
 
   if (CIRP_LOG_IS_IN_ARCHIVE (buf_mgr, req_pageid))
     {
-      error = cirp_logpb_arv_log_find_arv_num (buf_mgr, &req_arv_num,
-					       req_pageid);
+      error = cirp_logpb_arv_log_find_arv_num (buf_mgr, &req_arv_num, req_pageid);
       if (error != NO_ERROR)
-	{
-	  /* not found archive */
-	  assert (error == ER_HA_LOG_PAGE_DOESNOT_EXIST);
+        {
+          /* not found archive */
+          assert (error == ER_HA_LOG_PAGE_DOESNOT_EXIST);
 
-	  return NO_ERROR;
-	}
+          return NO_ERROR;
+        }
     }
   else
     {
@@ -1147,25 +1083,18 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
   if (analyzer->deleted_arv_info.last_deleted_arv_num == NULL_ARV_NUM)
     {
       cnt_curr_archives = act_log->log_hdr->ha_info.nxarv_num;
-      cnt_remain_archives = MAX (max_archives,
-				 act_log->log_hdr->ha_info.nxarv_num
-				 - req_arv_num);
+      cnt_remain_archives = MAX (max_archives, act_log->log_hdr->ha_info.nxarv_num - req_arv_num);
 
       first_arv_num = 0;
-      last_arv_num = (act_log->log_hdr->ha_info.nxarv_num - 1
-		      - cnt_remain_archives);
+      last_arv_num = (act_log->log_hdr->ha_info.nxarv_num - 1 - cnt_remain_archives);
     }
   else
     {
-      cnt_curr_archives = (act_log->log_hdr->ha_info.nxarv_num
-			   - analyzer->deleted_arv_info.last_deleted_arv_num -
-			   1);
-      cnt_remain_archives =
-	MAX (max_archives, act_log->log_hdr->ha_info.nxarv_num - req_arv_num);
+      cnt_curr_archives = (act_log->log_hdr->ha_info.nxarv_num - analyzer->deleted_arv_info.last_deleted_arv_num - 1);
+      cnt_remain_archives = MAX (max_archives, act_log->log_hdr->ha_info.nxarv_num - req_arv_num);
 
       first_arv_num = analyzer->deleted_arv_info.last_deleted_arv_num + 1;
-      last_arv_num = (act_log->log_hdr->ha_info.nxarv_num - 1
-		      - cnt_remain_archives);
+      last_arv_num = (act_log->log_hdr->ha_info.nxarv_num - 1 - cnt_remain_archives);
     }
   if (cnt_curr_archives <= cnt_remain_archives)
     {
@@ -1175,11 +1104,8 @@ cirp_logpb_remove_archive_log (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID req_pageid)
   assert (first_arv_num <= last_arv_num);
 
   last_deleted_arv_num = cirp_logpb_remove_archive_log_internal (buf_mgr,
-								 first_arv_num,
-								 last_arv_num,
-								 max_arv_cnt_to_delete);
-  assert (last_deleted_arv_num >=
-	  analyzer->deleted_arv_info.last_deleted_arv_num);
+                                                                 first_arv_num, last_arv_num, max_arv_cnt_to_delete);
+  assert (last_deleted_arv_num >= analyzer->deleted_arv_info.last_deleted_arv_num);
   if (last_deleted_arv_num > analyzer->deleted_arv_info.last_deleted_arv_num)
     {
       analyzer->deleted_arv_info.last_deleted_arv_num = last_deleted_arv_num;
@@ -1241,13 +1167,11 @@ cirp_logpb_cache_init (CIRP_BUF_MGR * buf_mgr)
     }
 
   cache->hash_table = mht_create ("cache log buffer hash table for applying"
-				  " replication log",
-				  cache->num_buffer * 8, mht_logpageidhash,
-				  mht_compare_logpageids_are_equal);
+                                  " replication log",
+                                  cache->num_buffer * 8, mht_logpageidhash, mht_compare_logpageids_are_equal);
   if (cache->hash_table == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      cache->num_buffer * 8);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, cache->num_buffer * 8);
       error = ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -1262,8 +1186,7 @@ cirp_logpb_cache_init (CIRP_BUF_MGR * buf_mgr)
  *    data(out):
  */
 static int
-cirp_logpb_fetch_from_archive (CIRP_BUF_MGR * buf_mgr,
-			       LOG_PAGEID pageid, char *data)
+cirp_logpb_fetch_from_archive (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid, char *data)
 {
   int error = NO_ERROR;
   int arv_num;
@@ -1278,8 +1201,7 @@ cirp_logpb_fetch_from_archive (CIRP_BUF_MGR * buf_mgr,
       return error;
     }
 
-  if (arv_log->vdes == NULL_VOLDES || arv_num < 0
-      || arv_log->arv_num != arv_num)
+  if (arv_log->vdes == NULL_VOLDES || arv_num < 0 || arv_log->arv_num != arv_num)
     {
       assert (false);
 
@@ -1293,27 +1215,22 @@ retry:
   phy_pageid = pageid - arv_log->log_hdr->fpageid + 1;
   assert (phy_pageid >= 0 && phy_pageid <= arv_log->log_hdr->npages);
 
-  error = cirp_log_io_read_with_max_retries (arv_log->path,
-					     arv_log->vdes,
-					     data,
-					     phy_pageid,
-					     buf_mgr->db_logpagesize);
+  error = cirp_log_io_read_with_max_retries (arv_log->path, arv_log->vdes, data, phy_pageid, buf_mgr->db_logpagesize);
   if (error != NO_ERROR)
     {
       assert (false);
 
       if (error == ER_PB_BAD_PAGEID)
-	{
-	  cirp_logpb_arv_log_close (buf_mgr);
-	  goto retry;
-	}
+        {
+          cirp_logpb_arv_log_close (buf_mgr);
+          goto retry;
+        }
       else
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_READ, 3,
-		  pageid, phy_pageid, arv_log->path);
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_READ, 3, pageid, phy_pageid, arv_log->path);
 
-	  return ER_LOG_READ;
-	}
+          return ER_LOG_READ;
+        }
     }
 
   assert (error == NO_ERROR);
@@ -1328,8 +1245,7 @@ retry:
  *    data(out):
  */
 static int
-cirp_logpb_fetch_from_active (CIRP_BUF_MGR * buf_mgr,
-			      LOG_PAGEID pageid, char *data)
+cirp_logpb_fetch_from_active (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid, char *data)
 {
   int error;
   LOG_PHY_PAGEID phy_pageid = NULL_PAGEID;
@@ -1339,9 +1255,7 @@ cirp_logpb_fetch_from_active (CIRP_BUF_MGR * buf_mgr,
   phy_pageid = cirp_to_phy_pageid (buf_mgr, pageid);
   assert (phy_pageid >= 0);
 
-  error = cirp_log_io_read (buf_mgr->act_log.path,
-			    buf_mgr->act_log.vdes,
-			    data, phy_pageid, buf_mgr->db_logpagesize);
+  error = cirp_log_io_read (buf_mgr->act_log.path, buf_mgr->act_log.vdes, data, phy_pageid, buf_mgr->db_logpagesize);
   if (error != NO_ERROR)
     {
       return error;
@@ -1358,8 +1272,7 @@ cirp_logpb_fetch_from_active (CIRP_BUF_MGR * buf_mgr,
  *    logpb(in/out):
  */
 static int
-cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
-		  CIRP_LOGPB * logpb)
+cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid, CIRP_LOGPB * logpb)
 {
   int error = NO_ERROR;
   CIRP_ACT_LOG *act_log;
@@ -1370,8 +1283,7 @@ cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
   act_log = &buf_mgr->act_log;
 
   if (pageid > act_log->log_hdr->append_lsa.pageid
-      || pageid > act_log->log_hdr->eof_lsa.pageid
-      || pageid > act_log->log_hdr->ha_info.last_flushed_pageid)
+      || pageid > act_log->log_hdr->eof_lsa.pageid || pageid > act_log->log_hdr->ha_info.last_flushed_pageid)
     {
       error = ER_HA_LOG_PAGE_DOESNOT_EXIST;
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, error, 0);
@@ -1381,12 +1293,11 @@ cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
 
   if (CIRP_LOG_IS_IN_ARCHIVE (buf_mgr, pageid))
     {
-      error = cirp_logpb_fetch_from_archive (buf_mgr, pageid,
-					     (char *) &logpb->log_page);
+      error = cirp_logpb_fetch_from_archive (buf_mgr, pageid, (char *) &logpb->log_page);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       logpb->in_archive = true;
     }
@@ -1394,9 +1305,9 @@ cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
     {
       error = pthread_mutex_lock (&writer->lock);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       assert (writer->is_archiving == false);
 
       writer->reader_count++;
@@ -1405,20 +1316,19 @@ cirp_logpb_fetch (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
 
       has_mutex = true;
 
-      error = cirp_logpb_fetch_from_active (buf_mgr, pageid,
-					    (char *) &logpb->log_page);
+      error = cirp_logpb_fetch_from_active (buf_mgr, pageid, (char *) &logpb->log_page);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       logpb->in_archive = false;
 
       error = pthread_mutex_lock (&writer->lock);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       assert (writer->is_archiving == false);
       writer->reader_count--;
       pthread_cond_signal (&writer->cond);
@@ -1448,8 +1358,7 @@ exit_on_error:
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "invalid error code");
     }
 
   if (has_mutex == true)
@@ -1472,8 +1381,7 @@ exit_on_error:
  *    pageid(in):
  */
 static int
-cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, CIRP_LOGPB ** out_logpb,
-			   LOG_PAGEID pageid)
+cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, CIRP_LOGPB ** out_logpb, LOG_PAGEID pageid)
 {
   int error = NO_ERROR;
   CIRP_LOGPB_CACHE *cache;
@@ -1486,8 +1394,7 @@ cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, CIRP_LOGPB ** out_logpb,
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       return error;
     }
   *out_logpb = NULL;
@@ -1500,57 +1407,57 @@ cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, CIRP_LOGPB ** out_logpb,
       num_recently_freed = 0;
 
       for (i = 0; i < cache->num_buffer; i++)
-	{
-	  last = ((last + 1) % cache->num_buffer);
-	  logpb = cache->buffer[last];
-	  if (logpb->num_fixed == 0)
-	    {
-	      if (logpb->recently_freed == true)
-		{
-		  logpb->recently_freed = false;
-		  num_recently_freed++;
-		}
-	      else
-		{
-		  found = last;
-		  break;
-		}
-	    }
-	}
+        {
+          last = ((last + 1) % cache->num_buffer);
+          logpb = cache->buffer[last];
+          if (logpb->num_fixed == 0)
+            {
+              if (logpb->recently_freed == true)
+                {
+                  logpb->recently_freed = false;
+                  num_recently_freed++;
+                }
+              else
+                {
+                  found = last;
+                  break;
+                }
+            }
+        }
 
       if (found >= 0)
-	{
-	  if (logpb->pageid != NULL_PAGEID)
-	    {
-	      (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
-	    }
+        {
+          if (logpb->pageid != NULL_PAGEID)
+            {
+              (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
+            }
 
-	  cirp_logpb_clear_logpb (logpb);
+          cirp_logpb_clear_logpb (logpb);
 
-	  error = cirp_logpb_fetch (buf_mgr, pageid, logpb);
-	  if (error != NO_ERROR)
-	    {
-	      cirp_logpb_clear_logpb (logpb);
-	      return error;
-	    }
+          error = cirp_logpb_fetch (buf_mgr, pageid, logpb);
+          if (error != NO_ERROR)
+            {
+              cirp_logpb_clear_logpb (logpb);
+              return error;
+            }
 
-	  *out_logpb = logpb;
+          *out_logpb = logpb;
 
-	  assert (logpb->pageid > NULL_PAGEID);
-	  assert (error == NO_ERROR);
-	  return NO_ERROR;
-	}
+          assert (logpb->pageid > NULL_PAGEID);
+          assert (error == NO_ERROR);
+          return NO_ERROR;
+        }
 
       if (num_recently_freed > 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       error = cirp_logpb_expand_buffer (buf_mgr);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   assert (false);
@@ -1571,10 +1478,8 @@ cirp_logpb_replace_buffer (CIRP_BUF_MGR * buf_mgr, CIRP_LOGPB ** out_logpb,
  */
 int
 cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
-				  CIRP_LOGPB ** out_logpb,
-				  LOG_PAGEID pageid,
-				  UNUSED_ARG const char *file_name,
-				  UNUSED_ARG int line_number)
+                                  CIRP_LOGPB ** out_logpb,
+                                  LOG_PAGEID pageid, UNUSED_ARG const char *file_name, UNUSED_ARG int line_number)
 {
   CIRP_LOGPB_CACHE *cache;
   CIRP_LOGPB *logpb = NULL;
@@ -1587,8 +1492,7 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       return error;
     }
 
@@ -1599,25 +1503,25 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
     {
       error = cirp_logpb_replace_buffer (buf_mgr, &logpb, pageid);
       if (error != NO_ERROR || logpb == NULL)
-	{
-	  assert (error != NO_ERROR && logpb == NULL);
-	  if (error == NO_ERROR)
-	    {
-	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
-	    }
+        {
+          assert (error != NO_ERROR && logpb == NULL);
+          if (error == NO_ERROR)
+            {
+              REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+            }
 
-	  return error;
-	}
+          return error;
+        }
 
       (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
 
       if (mht_put (cache->hash_table, &logpb->pageid, logpb) == NULL)
-	{
-	  cirp_logpb_clear_logpb (logpb);
+        {
+          cirp_logpb_clear_logpb (logpb);
 
-	  REPL_SET_GENERIC_ERROR (error, "memory hash table error");
-	  return error;
-	}
+          REPL_SET_GENERIC_ERROR (error, "memory hash table error");
+          return error;
+        }
 
       logpb->num_fixed = 1;
     }
@@ -1662,14 +1566,11 @@ cirp_logpb_get_page_buffer_debug (CIRP_BUF_MGR * buf_mgr,
 #if !defined(NDEBUG)
 int
 cirp_logpb_get_log_page_debug (CIRP_BUF_MGR * buf_mgr,
-			       LOG_PAGE ** log_page,
-			       LOG_PAGEID pageid,
-			       UNUSED_ARG const char *file_name,
-			       UNUSED_ARG int line_number)
+                               LOG_PAGE ** log_page,
+                               LOG_PAGEID pageid, UNUSED_ARG const char *file_name, UNUSED_ARG int line_number)
 #else
 int
-cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr,
-			 LOG_PAGE ** log_page, LOG_PAGEID pageid)
+cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** log_page, LOG_PAGEID pageid)
 #endif
 {
   CIRP_LOGPB *logpb = NULL;
@@ -1690,10 +1591,10 @@ cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr,
       assert (error != NO_ERROR && logpb == NULL);
 
       if (error == NO_ERROR)
-	{
-	  assert (false);
-	  error = ER_FAILED;
-	}
+        {
+          assert (false);
+          error = ER_FAILED;
+        }
       return error;
     }
   assert (logpb != NULL);
@@ -1721,8 +1622,7 @@ cirp_logpb_get_log_page (CIRP_BUF_MGR * buf_mgr,
  */
 int
 cirp_logpb_release_debug (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID pageid,
-			  UNUSED_ARG const char *file_name,
-			  UNUSED_ARG int line_number)
+                          UNUSED_ARG const char *file_name, UNUSED_ARG int line_number)
 {
   CIRP_LOGPB_CACHE *cache;
   CIRP_LOGPB *logpb = NULL;
@@ -1784,17 +1684,17 @@ cirp_logpb_release_all (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID exclude_pageid)
     {
       logpb = cache->buffer[i];
       if (logpb->pageid == exclude_pageid)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (logpb->num_fixed > 0)
-	{
-	  assert (false);
+        {
+          assert (false);
 
-	  logpb->num_fixed = 0;
-	  logpb->recently_freed = true;
-	}
+          logpb->num_fixed = 0;
+          logpb->recently_freed = true;
+        }
     }
 
   return NO_ERROR;
@@ -1808,8 +1708,7 @@ cirp_logpb_release_all (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID exclude_pageid)
  *    to(in):
  */
 int
-cirp_logpb_decache_range (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID from,
-			  LOG_PAGEID to)
+cirp_logpb_decache_range (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID from, LOG_PAGEID to)
 {
   int i;
   CIRP_LOGPB_CACHE *cache;
@@ -1821,11 +1720,10 @@ cirp_logpb_decache_range (CIRP_BUF_MGR * buf_mgr, LOG_PAGEID from,
     {
       logpb = cache->buffer[i];
 
-      if (logpb->pageid == NULL_PAGEID
-	  || logpb->pageid < from || logpb->pageid > to)
-	{
-	  continue;
-	}
+      if (logpb->pageid == NULL_PAGEID || logpb->pageid < from || logpb->pageid > to)
+        {
+          continue;
+        }
 
       (void) mht_rem (cache->hash_table, &logpb->pageid, NULL, NULL);
 
@@ -1850,8 +1748,7 @@ cirp_logpb_expand_buffer (CIRP_BUF_MGR * buf_mgr)
 
   cache = &buf_mgr->cache;
 
-  size = ((SIZEOF_CIRP_LOGPB * CIRP_LOGPB_AREA_SIZE)
-	  + DB_SIZEOF (CIRP_LOGPB_AREA));
+  size = ((SIZEOF_CIRP_LOGPB * CIRP_LOGPB_AREA_SIZE) + DB_SIZEOF (CIRP_LOGPB_AREA));
   new_area = (CIRP_LOGPB_AREA *) malloc (size);
   if (new_area == NULL)
     {
@@ -1863,27 +1760,21 @@ cirp_logpb_expand_buffer (CIRP_BUF_MGR * buf_mgr)
   memset ((void *) new_area, 0, size);
 
   new_num_buffer = cache->num_buffer + CIRP_LOGPB_AREA_SIZE;
-  new_buffer = (CIRP_LOGPB **) realloc (cache->buffer,
-					new_num_buffer
-					* DB_SIZEOF (CIRP_LOGPB *));
+  new_buffer = (CIRP_LOGPB **) realloc (cache->buffer, new_num_buffer * DB_SIZEOF (CIRP_LOGPB *));
   if (new_buffer == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, new_num_buffer * DB_SIZEOF (CIRP_LOGPB *));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, new_num_buffer * DB_SIZEOF (CIRP_LOGPB *));
 
       GOTO_EXIT_ON_ERROR;
     }
 
-  new_area->area = ((CIRP_LOGPB *) ((char *) new_area
-				    + DB_SIZEOF (CIRP_LOGPB_AREA)));
+  new_area->area = ((CIRP_LOGPB *) ((char *) new_area + DB_SIZEOF (CIRP_LOGPB_AREA)));
   new_area->next = cache->area_head;
-  for (i = 0, bufferid = cache->num_buffer; i < CIRP_LOGPB_AREA_SIZE;
-       i++, bufferid++)
+  for (i = 0, bufferid = cache->num_buffer; i < CIRP_LOGPB_AREA_SIZE; i++, bufferid++)
     {
-      new_buffer[bufferid] = (CIRP_LOGPB *) ((char *) new_area->area
-					     + i * SIZEOF_CIRP_LOGPB);
+      new_buffer[bufferid] = (CIRP_LOGPB *) ((char *) new_area->area + i * SIZEOF_CIRP_LOGPB);
 
       cirp_logpb_clear_logpb (new_buffer[bufferid]);
     }
@@ -1919,27 +1810,26 @@ exit_on_error:
  */
 int
 rp_log_read_advance_when_doesnt_fit (CIRP_BUF_MGR * buf_mgr,
-				     LOG_PAGE ** pgptr, LOG_PAGEID * pageid,
-				     PGLENGTH * offset, int length,
-				     LOG_PAGE * org_pgptr)
+                                     LOG_PAGE ** pgptr, LOG_PAGEID * pageid,
+                                     PGLENGTH * offset, int length, LOG_PAGE * org_pgptr)
 {
   int error = NO_ERROR;
 
   if ((*offset) + length >= CIRP_LOGAREA_SIZE (buf_mgr))
     {
       if ((org_pgptr) != (*pgptr))
-	{
-	  cirp_logpb_release (buf_mgr, (*pgptr)->hdr.logical_pageid);
-	}
+        {
+          cirp_logpb_release (buf_mgr, (*pgptr)->hdr.logical_pageid);
+        }
 
       *pageid = *pageid + 1;
       error = cirp_logpb_get_log_page (buf_mgr, pgptr, *pageid);
       if (error != NO_ERROR || (*pgptr) == NULL)
-	{
-	  assert (error != NO_ERROR && (*pgptr) == NULL);
+        {
+          assert (error != NO_ERROR && (*pgptr) == NULL);
 
-	  return error;
-	}
+          return error;
+        }
       (*offset) = 0;
     }
 
@@ -1957,8 +1847,7 @@ rp_log_read_advance_when_doesnt_fit (CIRP_BUF_MGR * buf_mgr,
  */
 int
 rp_log_read_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
-		   LOG_PAGEID * pageid, PGLENGTH * offset,
-		   LOG_PAGE * org_pgptr)
+                   LOG_PAGEID * pageid, PGLENGTH * offset, LOG_PAGE * org_pgptr)
 {
   int error = NO_ERROR;
 
@@ -1966,17 +1855,17 @@ rp_log_read_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
   while ((*offset) >= CIRP_LOGAREA_SIZE (buf_mgr))
     {
       if ((*pgptr) != org_pgptr)
-	{
-	  cirp_logpb_release (buf_mgr, (*pgptr)->hdr.logical_pageid);
-	}
+        {
+          cirp_logpb_release (buf_mgr, (*pgptr)->hdr.logical_pageid);
+        }
 
       *pageid = *pageid + 1;
       error = cirp_logpb_get_log_page (buf_mgr, pgptr, *pageid);
       if (error != NO_ERROR || (*pgptr) == NULL)
-	{
-	  assert (error != NO_ERROR && (*pgptr) == NULL);
-	  return error;
-	}
+        {
+          assert (error != NO_ERROR && (*pgptr) == NULL);
+          return error;
+        }
 
       *offset -= CIRP_LOGAREA_SIZE (buf_mgr);
       *offset = DB_ALIGN (*offset, MAX_ALIGNMENT);
@@ -1998,8 +1887,7 @@ rp_log_read_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
  */
 int
 rp_log_read_add_align (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** pgptr,
-		       LOG_PAGEID * pageid, PGLENGTH * offset, int add_length,
-		       LOG_PAGE * org_pgptr)
+                       LOG_PAGEID * pageid, PGLENGTH * offset, int add_length, LOG_PAGE * org_pgptr)
 {
   *offset += add_length;
   return rp_log_read_align (buf_mgr, pgptr, pageid, offset, org_pgptr);
@@ -2089,8 +1977,7 @@ cirp_logpb_init_buffer_manager (CIRP_BUF_MGR * buf_mgr)
  * cirp_logpb_common_init
  */
 static int
-cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr, const char *db_name,
-			const char *log_path)
+cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr, const char *db_name, const char *log_path)
 {
   char *p;
 
@@ -2106,11 +1993,9 @@ cirp_logpb_common_init (CIRP_BUF_MGR * buf_mgr, const char *db_name,
       *p = '\0';
     }
 
-  buf_mgr->host_info = cirp_get_hostname_from_log_path (log_path,
-							buf_mgr->prefix_name);
+  buf_mgr->host_info = cirp_get_hostname_from_log_path (log_path, buf_mgr->prefix_name);
 
-  fileio_make_log_info_name (buf_mgr->log_info_path, log_path,
-			     buf_mgr->prefix_name);
+  fileio_make_log_info_name (buf_mgr->log_info_path, log_path, buf_mgr->prefix_name);
 
   buf_mgr->last_nxarv_num = NULL_ARV_NUM;
 
@@ -2164,13 +2049,13 @@ cirp_clear_recdes_pool (CIRP_BUF_MGR * buf_mgr)
   if (pool->recdes_arr != NULL)
     {
       for (i = 0; i < pool->num_recdes; i++)
-	{
-	  recdes = &pool->recdes_arr[i];
-	  if (recdes->area_size > pool->db_page_size)
-	    {
-	      free_and_init (recdes->data);
-	    }
-	}
+        {
+          recdes = &pool->recdes_arr[i];
+          if (recdes->area_size > pool->db_page_size)
+            {
+              free_and_init (recdes->data);
+            }
+        }
       free_and_init (pool->recdes_arr);
     }
 
@@ -2197,8 +2082,7 @@ cirp_clear_recdes_pool (CIRP_BUF_MGR * buf_mgr)
  *
  */
 int
-cirp_realloc_recdes_data (CIRP_BUF_MGR * buf_mgr, RECDES * recdes,
-			  int data_size)
+cirp_realloc_recdes_data (CIRP_BUF_MGR * buf_mgr, RECDES * recdes, int data_size)
 {
   CIRP_RECDES_POOL *pool = NULL;
   int error = NO_ERROR;
@@ -2216,18 +2100,18 @@ cirp_realloc_recdes_data (CIRP_BUF_MGR * buf_mgr, RECDES * recdes,
   if (recdes->area_size < data_size)
     {
       if (recdes->area_size > pool->db_page_size)
-	{
-	  /* recdes->data was realloced by previous operation */
-	  free_and_init (recdes->data);
-	}
+        {
+          /* recdes->data was realloced by previous operation */
+          free_and_init (recdes->data);
+        }
 
       recdes->data = (char *) malloc (data_size);
       if (recdes->data == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, data_size);
-	  return error;
-	}
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, data_size);
+          return error;
+        }
 
       recdes->area_size = data_size;
     }
@@ -2263,31 +2147,29 @@ cirp_init_recdes_pool (CIRP_BUF_MGR * buf_mgr, int page_size, int num_recdes)
     {
       pool->area = (char *) malloc (page_size * num_recdes);
       if (pool->area == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OUT_OF_VIRTUAL_MEMORY, 1, page_size * num_recdes);
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, page_size * num_recdes);
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
 
       pool->recdes_arr = (RECDES *) malloc (sizeof (RECDES) * num_recdes);
       if (pool->recdes_arr == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (RECDES) * num_recdes);
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (RECDES) * num_recdes);
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
 
       p = pool->area;
       for (i = 0; i < num_recdes; i++)
-	{
-	  recdes = &pool->recdes_arr[i];
+        {
+          recdes = &pool->recdes_arr[i];
 
-	  recdes->data = p;
-	  recdes->area_size = page_size;
-	  recdes->length = 0;
+          recdes->data = p;
+          recdes->area_size = page_size;
+          recdes->length = 0;
 
-	  p += page_size;
-	}
+          p += page_size;
+        }
 
       pool->db_page_size = page_size;
       pool->num_recdes = num_recdes;
@@ -2314,8 +2196,7 @@ cirp_init_recdes_pool (CIRP_BUF_MGR * buf_mgr, int page_size, int num_recdes)
  *    log_path(in):
  */
 int
-cirp_logpb_initialize (CIRP_BUF_MGR * buf_mgr, const char *db_name,
-		       const char *log_path)
+cirp_logpb_initialize (CIRP_BUF_MGR * buf_mgr, const char *db_name, const char *log_path)
 {
   int error;
 
@@ -2338,8 +2219,7 @@ cirp_logpb_initialize (CIRP_BUF_MGR * buf_mgr, const char *db_name,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirp_logpb_act_log_init (buf_mgr, (const char *) buf_mgr->log_path,
-				   (const char *) buf_mgr->prefix_name);
+  error = cirp_logpb_act_log_init (buf_mgr, (const char *) buf_mgr->log_path, (const char *) buf_mgr->prefix_name);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2357,8 +2237,7 @@ cirp_logpb_initialize (CIRP_BUF_MGR * buf_mgr, const char *db_name,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirp_init_recdes_pool (buf_mgr, IO_MAX_PAGE_SIZE,
-				 LA_MAX_UNFLUSHED_REPL_ITEMS);
+  error = cirp_init_recdes_pool (buf_mgr, IO_MAX_PAGE_SIZE, LA_MAX_UNFLUSHED_REPL_ITEMS);
   if (error != NO_ERROR)
     {
       er_log_debug (ARG_FILE_LINE, "Cannot initialize recdes pool");
@@ -2448,8 +2327,7 @@ rp_assign_recdes_from_pool (CIRP_BUF_MGR * buf_mgr, RECDES ** rec)
  *   lsa(in):
  */
 int
-cirp_log_get_eot_time (CIRP_BUF_MGR * buf_mgr, time_t * donetime,
-		       LOG_PAGE * org_pgptr, LOG_LSA lsa)
+cirp_log_get_eot_time (CIRP_BUF_MGR * buf_mgr, time_t * donetime, LOG_PAGE * org_pgptr, LOG_LSA lsa)
 {
   int error = NO_ERROR;
   LOG_PAGEID pageid;
@@ -2472,16 +2350,13 @@ cirp_log_get_eot_time (CIRP_BUF_MGR * buf_mgr, time_t * donetime,
     }
 
   error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
-					       &offset,
-					       SSIZEOF (struct log_donetime),
-					       org_pgptr);
+                                               &offset, SSIZEOF (struct log_donetime), org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
-  *donetime =
-    ((struct log_donetime *) ((char *) pgptr->area + offset))->at_time;
+  *donetime = ((struct log_donetime *) ((char *) pgptr->area + offset))->at_time;
 
   if (pgptr != NULL && pgptr != org_pgptr)
     {
@@ -2516,8 +2391,7 @@ exit_on_error:
  *    lsa(in):
  */
 int
-cirp_log_get_ha_server_state (struct log_ha_server_state *state,
-			      LOG_PAGE * org_pgptr, LOG_LSA lsa)
+cirp_log_get_ha_server_state (struct log_ha_server_state *state, LOG_PAGE * org_pgptr, LOG_LSA lsa)
 {
   int error = NO_ERROR;
   LOG_PAGEID pageid;
@@ -2532,8 +2406,7 @@ cirp_log_get_ha_server_state (struct log_ha_server_state *state,
   if (state == NULL || org_pgptr == NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       return error;
     }
 
@@ -2542,8 +2415,7 @@ cirp_log_get_ha_server_state (struct log_ha_server_state *state,
   pgptr = org_pgptr;
 
   length = DB_SIZEOF (struct log_ha_server_state);
-  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
-					       &offset, length, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid, &offset, length, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2584,14 +2456,12 @@ exit_on_error:
  */
 int
 cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
-		       char *area, int length,
-		       LOG_PAGEID log_pageid, PGLENGTH log_offset,
-		       LOG_PAGE * org_pgptr)
+                       char *area, int length, LOG_PAGEID log_pageid, PGLENGTH log_offset, LOG_PAGE * org_pgptr)
 {
   int rec_length = (int) sizeof (INT16);
-  int copy_length;		/* Length to copy into area */
-  int t_length;			/* target length  */
-  int area_offset = 0;		/* The area offset */
+  int copy_length;              /* Length to copy into area */
+  int t_length;                 /* target length  */
+  int area_offset = 0;          /* The area offset */
   int error = NO_ERROR;
   LOG_PAGE *pgptr;
 
@@ -2603,78 +2473,67 @@ cirp_log_copy_fromlog (CIRP_BUF_MGR * buf_mgr, char *rec_type,
   if (rec_type != NULL)
     {
       while (rec_length > 0)
-	{
-	  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
-						       &log_pageid,
-						       &log_offset, 0,
-						       org_pgptr);
-	  if (error != NO_ERROR || pgptr == NULL)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
+        {
+          error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &log_pageid, &log_offset, 0, org_pgptr);
+          if (error != NO_ERROR || pgptr == NULL)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  copy_length =
-	    ((log_offset + rec_length <=
-	      CIRP_LOGAREA_SIZE (buf_mgr)) ? rec_length :
-	     CIRP_LOGAREA_SIZE (buf_mgr) - log_offset);
-	  memcpy (rec_type + area_offset, (char *) (pgptr)->area + log_offset,
-		  copy_length);
-	  rec_length -= copy_length;
-	  area_offset += copy_length;
-	  log_offset += copy_length;
-	  t_length -= copy_length;
-	}
+          copy_length =
+            ((log_offset + rec_length <=
+              CIRP_LOGAREA_SIZE (buf_mgr)) ? rec_length : CIRP_LOGAREA_SIZE (buf_mgr) - log_offset);
+          memcpy (rec_type + area_offset, (char *) (pgptr)->area + log_offset, copy_length);
+          rec_length -= copy_length;
+          area_offset += copy_length;
+          log_offset += copy_length;
+          t_length -= copy_length;
+        }
 
       /* skip class_oid */
       rec_length = (int) sizeof (OID);
       while (rec_length > 0)
-	{
-	  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
-						       &log_pageid,
-						       &log_offset, 0,
-						       org_pgptr);
-	  if (error != NO_ERROR || pgptr == NULL)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
+        {
+          error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &log_pageid, &log_offset, 0, org_pgptr);
+          if (error != NO_ERROR || pgptr == NULL)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  if ((log_offset + rec_length) <= CIRP_LOGAREA_SIZE (buf_mgr))
-	    {
-	      copy_length = rec_length;
-	    }
-	  else
-	    {
-	      copy_length = CIRP_LOGAREA_SIZE (buf_mgr) - log_offset;
-	    }
+          if ((log_offset + rec_length) <= CIRP_LOGAREA_SIZE (buf_mgr))
+            {
+              copy_length = rec_length;
+            }
+          else
+            {
+              copy_length = CIRP_LOGAREA_SIZE (buf_mgr) - log_offset;
+            }
 
-	  rec_length -= copy_length;
-	  log_offset += copy_length;
-	  t_length -= copy_length;
-	}
+          rec_length -= copy_length;
+          log_offset += copy_length;
+          t_length -= copy_length;
+        }
     }
 
   area_offset = 0;
   /* The log data is not contiguous */
   while (t_length > 0)
     {
-      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
-						   &log_pageid, &log_offset,
-						   0, org_pgptr);
+      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &log_pageid, &log_offset, 0, org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       if ((log_offset + t_length) <= CIRP_LOGAREA_SIZE (buf_mgr))
-	{
-	  copy_length = t_length;
-	}
+        {
+          copy_length = t_length;
+        }
       else
-	{
-	  copy_length = CIRP_LOGAREA_SIZE (buf_mgr) - log_offset;
-	}
+        {
+          copy_length = CIRP_LOGAREA_SIZE (buf_mgr) - log_offset;
+        }
 
-      memcpy (area + area_offset, (char *) (pgptr)->area + log_offset,
-	      copy_length);
+      memcpy (area + area_offset, (char *) (pgptr)->area + log_offset, copy_length);
       t_length -= copy_length;
       area_offset += copy_length;
       log_offset += copy_length;
@@ -2722,21 +2581,19 @@ exit_on_error:
  */
 int
 rp_make_repl_data_item_from_log (CIRP_BUF_MGR * buf_mgr,
-				 CIRP_REPL_ITEM * repl_item,
-				 LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
+                                 CIRP_REPL_ITEM * repl_item, LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
 {
   int error = NO_ERROR;
   struct log_replication *repl_log;
   LOG_PAGE *pgptr;
   PGLENGTH offset;
   LOG_PAGEID pageid;
-  int length;			/* type change PGLENGTH -> int */
+  int length;                   /* type change PGLENGTH -> int */
   char *ptr;
   RP_DATA_ITEM *data;
   char *area = NULL;
 
-  assert (buf_mgr != NULL && repl_item != NULL
-	  && org_pgptr != NULL && lsa != NULL);
+  assert (buf_mgr != NULL && repl_item != NULL && org_pgptr != NULL && lsa != NULL);
   assert (repl_item->item_type == RP_ITEM_TYPE_DATA);
 
   pgptr = org_pgptr;
@@ -2750,8 +2607,7 @@ rp_make_repl_data_item_from_log (CIRP_BUF_MGR * buf_mgr,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
-					       &offset, length, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid, &offset, length, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2775,8 +2631,7 @@ rp_make_repl_data_item_from_log (CIRP_BUF_MGR * buf_mgr,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirp_log_copy_fromlog (buf_mgr, NULL, area, length, pageid,
-				 offset, pgptr);
+  error = cirp_log_copy_fromlog (buf_mgr, NULL, area, length, pageid, offset, pgptr);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2838,23 +2693,21 @@ exit_on_error:
  */
 int
 rp_make_repl_schema_item_from_log (CIRP_BUF_MGR * buf_mgr,
-				   CIRP_REPL_ITEM * repl_item,
-				   LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
+                                   CIRP_REPL_ITEM * repl_item, LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
 {
   int error = NO_ERROR;
   struct log_replication *repl_log;
   LOG_PAGE *pgptr;
   PGLENGTH offset;
   LOG_PAGEID pageid;
-  int length;			/* type change PGLENGTH -> int */
+  int length;                   /* type change PGLENGTH -> int */
   char *ptr;
   RP_DDL_ITEM *ddl;
   const char *class_name;
   int tmp;
   char *area = NULL;
 
-  assert (buf_mgr != NULL && repl_item != NULL
-	  && org_pgptr != NULL && lsa != NULL);
+  assert (buf_mgr != NULL && repl_item != NULL && org_pgptr != NULL && lsa != NULL);
   assert (repl_item->item_type == RP_ITEM_TYPE_DDL);
 
   pgptr = org_pgptr;
@@ -2868,8 +2721,7 @@ rp_make_repl_schema_item_from_log (CIRP_BUF_MGR * buf_mgr,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
-					       &offset, length, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid, &offset, length, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2893,8 +2745,7 @@ rp_make_repl_schema_item_from_log (CIRP_BUF_MGR * buf_mgr,
       GOTO_EXIT_ON_ERROR;
     }
 
-  error = cirp_log_copy_fromlog (buf_mgr, NULL, area, length, pageid,
-				 offset, pgptr);
+  error = cirp_log_copy_fromlog (buf_mgr, NULL, area, length, pageid, offset, pgptr);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2952,8 +2803,7 @@ exit_on_error:
  */
 int
 cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
-				struct log_gid_bitmap_update *gbu,
-				LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
+                                struct log_gid_bitmap_update *gbu, LOG_PAGE * org_pgptr, const LOG_LSA * lsa)
 {
   int error = NO_ERROR;
   LOG_PAGEID pageid;
@@ -2964,8 +2814,7 @@ cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
   if (gbu == NULL || org_pgptr == NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       return error;
     }
 
@@ -2974,8 +2823,7 @@ cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
   pgptr = org_pgptr;
 
   length = DB_SIZEOF (struct log_gid_bitmap_update);
-  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
-					       &offset, length, org_pgptr);
+  error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid, &offset, length, org_pgptr);
   if (error != NO_ERROR || pgptr == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -2983,16 +2831,14 @@ cirp_log_get_gid_bitmap_update (CIRP_BUF_MGR * buf_mgr,
 
   if (pgptr != NULL)
     {
-      *gbu =
-	*((struct log_gid_bitmap_update *) ((char *) pgptr->area + offset));
+      *gbu = *((struct log_gid_bitmap_update *) ((char *) pgptr->area + offset));
       er_log_debug (ARG_FILE_LINE, "gid_bitmap_update: %d, %d, %d, %d",
-		    gbu->migrator_id, gbu->group_id, gbu->target,
-		    gbu->on_off);
+                    gbu->migrator_id, gbu->group_id, gbu->target, gbu->on_off);
 
       if (pgptr != org_pgptr)
-	{
-	  cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
-	}
+        {
+          cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
+        }
     }
 
   assert (error == NO_ERROR);

@@ -43,10 +43,10 @@
 /* used in conversion to julian */
 #define IGREG1     	(15 + 31L * (10 + 12L * 1582))
 /* used in conversion from julian */
-#define IGREG2     	2299161	/* 10/15/1582 */
+#define IGREG2     	2299161 /* 10/15/1582 */
 /* used in special zero date */
-#define IGREG_SPECIAL 	0	/* 01/01/-4713 DATE
-				   || 01/01/1970 00:00:00 TIMESTAMP */
+#define IGREG_SPECIAL 	0       /* 01/01/-4713 DATE
+                                   || 01/01/1970 00:00:00 TIMESTAMP */
 
 #define FLOOR(d1) floor(d1)
 
@@ -67,54 +67,37 @@ static void decode_time (int timeval, int *hourp, int *minutep, int *secondp);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int encode_time (int hour, int minute, int second);
 #endif
-static void decode_mtime (int mtimeval, int *hourp, int *minutep,
-			  int *secondp, int *millisecondp);
-static unsigned int encode_mtime (int hour, int minute, int second,
-				  int millisecond);
+static void decode_mtime (int mtimeval, int *hourp, int *minutep, int *secondp, int *millisecondp);
+static unsigned int encode_mtime (int hour, int minute, int second, int millisecond);
 static int init_tm (struct tm *);
 static int get_current_year (void);
 static const char *parse_date (const char *buf, int buf_len, DB_DATE * date);
 static const char *parse_time (const char *buf, int buf_len, DB_TIME * mtime);
-static const char *parse_mtime (const char *buf, int buf_len,
-				unsigned int *mtime, bool * is_msec,
-				bool * is_explicit);
-static const char *parse_datetime (const char *buf, int buf_len,
-				   DB_DATETIME * datetime);
+static const char *parse_mtime (const char *buf, int buf_len, unsigned int *mtime, bool * is_msec, bool * is_explicit);
+static const char *parse_datetime (const char *buf, int buf_len, DB_DATETIME * datetime);
 static char const *parse_date_separated (char const *str, char const *strend,
-					 DB_DATE * date,
-					 char const **syntax_check,
-					 int *year_digits, char *sep_ch);
+                                         DB_DATE * date, char const **syntax_check, int *year_digits, char *sep_ch);
 static char const *parse_mtime_separated (char const *str, char const *strend,
-					  unsigned int *mtime,
-					  char const **syntax_check,
-					  int *time_parts, char *sep_ch,
-					  bool * has_explicit_msec,
-					  bool is_datetime);
+                                          unsigned int *mtime,
+                                          char const **syntax_check,
+                                          int *time_parts, char *sep_ch, bool * has_explicit_msec, bool is_datetime);
 static char const *parse_explicit_mtime_separated (char const *str,
-						   char const *strend,
-						   unsigned int *mtime,
-						   char const **syntax_check,
-						   bool * has_explicit_msec);
-static char const *parse_explicit_mtime_compact (char const *str,
-						 char const *strend,
-						 unsigned int *mtime);
+                                                   char const *strend,
+                                                   unsigned int *mtime,
+                                                   char const **syntax_check, bool * has_explicit_msec);
+static char const *parse_explicit_mtime_compact (char const *str, char const *strend, unsigned int *mtime);
 static char const *parse_datetime_compact (char const *str,
-					   char const *strend,
-					   DB_DATE * date,
-					   unsigned int *mtime,
-					   bool * has_explicit_time,
-					   bool * has_explicit_msec);
+                                           char const *strend,
+                                           DB_DATE * date,
+                                           unsigned int *mtime, bool * has_explicit_time, bool * has_explicit_msec);
 static char const *parse_timedate_separated (char const *str,
-					     char const *strend,
-					     DB_DATE * date,
-					     unsigned int *mtime,
-					     char const **syntax_check,
-					     bool * has_explicit_msec);
+                                             char const *strend,
+                                             DB_DATE * date,
+                                             unsigned int *mtime, char const **syntax_check, bool * has_explicit_msec);
 static int get_end_of_week_one_of_year (int year, int mode);
 static bool is_local_am_str (const char *p, const char *p_end);
 static bool is_local_pm_str (const char *p, const char *p_end);
-static int tm_encode (struct tm *c_time_struct, time_t * retval,
-		      DB_DATE * date, DB_TIME * timeval);
+static int tm_encode (struct tm *c_time_struct, time_t * retval, DB_DATE * date, DB_TIME * timeval);
 
 /*
  * julian_encode() - Generic routine for calculating a julian date given
@@ -221,7 +204,7 @@ julian_decode (int jul, int *monthp, int *dayp, int *yearp, int *weekp)
     }
   else
     {
-      ja = jul;			/* else no conversion necessary */
+      ja = jul;                 /* else no conversion necessary */
     }
 
   if (ja == IGREG_SPECIAL)
@@ -238,18 +221,18 @@ julian_decode (int jul, int *monthp, int *dayp, int *yearp, int *weekp)
       day = jb - jd - (int) (30.6001 * je);
       month = je - 1;
       if (month > 12)
-	{
-	  month -= 12;
-	}
+        {
+          month -= 12;
+        }
       year = jc - 4715;
       if (month > 2)
-	{
-	  --year;
-	}
+        {
+          --year;
+        }
       if (year <= 0)
-	{
-	  --year;
-	}
+        {
+          --year;
+        }
     }
 
   if (monthp != NULL)
@@ -267,9 +250,9 @@ julian_decode (int jul, int *monthp, int *dayp, int *yearp, int *weekp)
   if (weekp != NULL)
     {
       if (jul == IGREG_SPECIAL)
-	{
-	  *weekp = 0;
-	}
+        {
+          *weekp = 0;
+        }
       *weekp = (int) ((jul + 1) % 7);
     }
 }
@@ -299,8 +282,7 @@ db_date_encode (DB_DATE * date, int month, int day, int year)
     }
 
   *date = 0;
-  if (year < 0 || year > 9999 || month < 0 || month > 12
-      || day < 0 || day > 31)
+  if (year < 0 || year > 9999 || month < 0 || month > 12 || day < 0 || day > 31)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATE_CONVERSION, 0);
       return ER_DATE_CONVERSION;
@@ -315,14 +297,14 @@ db_date_encode (DB_DATE * date, int month, int day, int year)
        */
       julian_decode (tmp, &tmp_month, &tmp_day, &tmp_year, NULL);
       if (month == tmp_month && day == tmp_day && year == tmp_year)
-	{
-	  *date = tmp;
-	}
+        {
+          *date = tmp;
+        }
       else
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATE_CONVERSION, 0);
-	  return ER_DATE_CONVERSION;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATE_CONVERSION, 0);
+          return ER_DATE_CONVERSION;
+        }
     }
 
   return NO_ERROR;
@@ -395,8 +377,7 @@ db_time_encode (DB_TIME * timeval, int hour, int minute, int second)
       return ER_TIME_CONVERSION;
     }
 
-  if (hour >= 0 && minute >= 0 && second >= 0 &&
-      hour < 24 && minute < 60 && second < 60)
+  if (hour >= 0 && minute >= 0 && second >= 0 && hour < 24 && minute < 60 && second < 60)
     {
       *timeval = (((hour * 60) + minute) * 60) + second;
     }
@@ -472,8 +453,7 @@ db_time_decode (DB_TIME * timeval, int *hourp, int *minutep, int *secondp)
  * time(in) : database time structure
  */
 static int
-tm_encode (struct tm *c_time_struct, time_t * retval, DB_DATE * date,
-	   DB_TIME * timeval)
+tm_encode (struct tm *c_time_struct, time_t * retval, DB_DATE * date, DB_TIME * timeval)
 {
   int mon, day, year, hour, min, sec;
   struct tm loc;
@@ -483,9 +463,7 @@ tm_encode (struct tm *c_time_struct, time_t * retval, DB_DATE * date,
 
   *retval = -1;
 
-  if (c_time_struct == NULL
-      || ((date == NULL) && (timeval == NULL))
-      || init_tm (c_time_struct) == -1)
+  if (c_time_struct == NULL || ((date == NULL) && (timeval == NULL)) || init_tm (c_time_struct) == -1)
     {
       assert (false);
 
@@ -501,13 +479,13 @@ tm_encode (struct tm *c_time_struct, time_t * retval, DB_DATE * date,
       c_time_struct->tm_year = year;
 
       if (c_time_struct->tm_year < 1900)
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_DATE_CONVERSION, 0);
-	  return ER_DATE_CONVERSION;
-	}
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_DATE_CONVERSION, 0);
+          return ER_DATE_CONVERSION;
+        }
       c_time_struct->tm_year -= 1900;
       c_time_struct->tm_mon -= 1;
-      c_time_struct->tm_isdst = -1;	/* Don't know if DST applies or not */
+      c_time_struct->tm_isdst = -1;     /* Don't know if DST applies or not */
     }
 
   if (timeval != NULL)
@@ -522,7 +500,7 @@ tm_encode (struct tm *c_time_struct, time_t * retval, DB_DATE * date,
 
   /* mktime() on Sun anomalously returns negative values other than -1. */
   *retval = mktime (&loc);
-  if (*retval < (time_t) 0)	/* get correct tm_isdst */
+  if (*retval < (time_t) 0)     /* get correct tm_isdst */
     {
       er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_DATE_CONVERSION, 0);
       return ER_DATE_CONVERSION;
@@ -582,11 +560,10 @@ db_timeval_encode (struct timeval *tm, DB_DATETIME * datetime)
 
   assert (tm != NULL);
 
-  timeval = datetime->time / 1000;	/* msec to sec */
+  timeval = datetime->time / 1000;      /* msec to sec */
   tm->tv_usec = (datetime->time % 1000) * 1000;
 
-  error =
-    tm_encode (&tmp_time_struct, &tm->tv_sec, &datetime->date, &timeval);
+  error = tm_encode (&tmp_time_struct, &tm->tv_sec, &datetime->date, &timeval);
   if (error != NO_ERROR)
     {
       return error;
@@ -638,8 +615,7 @@ db_mktime (DB_DATE * date, DB_TIME * timeval)
  * time(in): time
  */
 int
-db_strftime (char *s, int smax, const char *fmt, DB_DATE * date,
-	     DB_TIME * timeval)
+db_strftime (char *s, int smax, const char *fmt, DB_DATE * date, DB_TIME * timeval)
 {
   int retval;
   struct tm date_and_time;
@@ -679,8 +655,7 @@ db_localtime (time_t * epoch_time, DB_DATE * date, DB_TIME * timeval)
 
   if (date != NULL)
     {
-      *date = julian_encode (temp->tm_mon + 1, temp->tm_mday,
-			     temp->tm_year + 1900);
+      *date = julian_encode (temp->tm_mon + 1, temp->tm_mday, temp->tm_year + 1900);
     }
   if (timeval != NULL)
     {
@@ -715,8 +690,7 @@ db_localdatetime (time_t * epoch_time, DB_DATETIME * datetime)
     }
 
   return db_datetime_encode (datetime, temp->tm_mon + 1, temp->tm_mday,
-			     temp->tm_year + 1900, temp->tm_hour,
-			     temp->tm_min, temp->tm_sec, 0);
+                             temp->tm_year + 1900, temp->tm_hour, temp->tm_min, temp->tm_sec, 0);
 }
 
 /*
@@ -797,49 +771,49 @@ parse_date (const char *buf, int buf_len, DB_DATE * date)
     {
       /* skip leading space */
       for (c = *p; p < strend && char_isspace (c); c = *++p)
-	{
-	  ;
-	}
+        {
+          ;
+        }
 
       /* read found decimal field value */
       for (c = *p; p < strend && char_isdigit (c); c = *++p)
-	{
-	  part[i] = part[i] * 10 + (c - '0');
-	  part_char_len[i]++;
-	}
+        {
+          part[i] = part[i] * 10 + (c - '0');
+          part_char_len[i]++;
+        }
 
       if (i < DIM (part) - 1)
-	{
-	  /* skip inter-field space */
-	  for (c = *p; p < strend && char_isspace (c); c = *++p)
-	    {
-	      ;
-	    }
+        {
+          /* skip inter-field space */
+          for (c = *p; p < strend && char_isspace (c); c = *++p)
+            {
+              ;
+            }
 
-	  /* check date separator ('/' or '-'), if any */
-	  if (seperator != '\0' && c != '\0' && c != seperator)
-	    {
-	      return NULL;
-	    }
+          /* check date separator ('/' or '-'), if any */
+          if (seperator != '\0' && c != '\0' && c != seperator)
+            {
+              return NULL;
+            }
 
-	  /* find and skip the separator */
-	  if (c == '/')
-	    {
-	      ++p;
-	      seperator = c;
-	      date_style = MMDDYYYY;
-	    }
-	  else if (c == '-')
-	    {
-	      ++p;
-	      seperator = c;
-	      date_style = YYYYMMDD;
-	    }
-	  else
-	    {
-	      break;
-	    }
-	}
+          /* find and skip the separator */
+          if (c == '/')
+            {
+              ++p;
+              seperator = c;
+              date_style = MMDDYYYY;
+            }
+          else if (c == '-')
+            {
+              ++p;
+              seperator = c;
+              date_style = YYYYMMDD;
+            }
+          else
+            {
+              break;
+            }
+        }
     }
 
   /* skip trailing space */
@@ -851,30 +825,30 @@ parse_date (const char *buf, int buf_len, DB_DATE * date)
   if (date_style == MMDDYYYY)
     {
       if (i == 1)
-	{
-	  year_part = -1;
-	}
+        {
+          year_part = -1;
+        }
       else
-	{
-	  year_part = 2;
-	}
+        {
+          year_part = 2;
+        }
       month_part = 0;
       day_part = 1;
     }
   else if (date_style == YYYYMMDD)
     {
       if (i == 1)
-	{
-	  year_part = -1;
-	  month_part = 0;
-	  day_part = 1;
-	}
+        {
+          year_part = -1;
+          month_part = 0;
+          day_part = 1;
+        }
       else
-	{
-	  year_part = 0;
-	  month_part = 1;
-	  day_part = 2;
-	}
+        {
+          year_part = 0;
+          month_part = 1;
+          day_part = 2;
+        }
     }
   else
     {
@@ -896,16 +870,16 @@ parse_date (const char *buf, int buf_len, DB_DATE * date)
     {
       year = part[year_part];
       if (part_char_len[year_part] == 2)
-	{
-	  if (year < 70)
-	    {
-	      year += 2000;
-	    }
-	  else
-	    {
-	      year += 1900;
-	    }
-	}
+        {
+          if (year < 70)
+            {
+              year += 2000;
+            }
+          else
+            {
+              year += 1900;
+            }
+        }
     }
 
   month = part[month_part];
@@ -967,9 +941,9 @@ parse_time (const char *buf, int buf_len, DB_TIME * time)
   if (p != NULL)
     {
       if (is_msec == true)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       *time = mtime / 1000;
     }
@@ -1007,8 +981,7 @@ db_string_check_explicit_time (const char *str, int str_len)
  * mtime(out): pointer to unsigned int to be updated with the parsed time
  */
 static const char *
-parse_mtime (const char *buf, int buf_len, unsigned int *mtime,
-	     bool * is_msec, bool * is_explicit)
+parse_mtime (const char *buf, int buf_len, unsigned int *mtime, bool * is_msec, bool * is_explicit)
 {
   int part[4] = { 0, 0, 0, 0 };
   unsigned int i;
@@ -1035,55 +1008,55 @@ parse_mtime (const char *buf, int buf_len, unsigned int *mtime,
   for (i = 0, p = buf; i < DIM (part); i++)
     {
       for (c = *p; p < strend && char_isspace (c); c = *++p)
-	;
+        ;
       for (c = *p; p < strend && char_isdigit (c); c = *++p)
-	{
-	  if (i != 3)
-	    {
-	      part[i] = part[i] * 10 + (c - '0');
-	    }
-	  else
-	    {
-	      part[i] += (int) ((c - '0') * fraction + 0.5);
-	      fraction /= 10;
-	    }
-	}
+        {
+          if (i != 3)
+            {
+              part[i] = part[i] * 10 + (c - '0');
+            }
+          else
+            {
+              part[i] += (int) ((c - '0') * fraction + 0.5);
+              fraction /= 10;
+            }
+        }
       if (i < DIM (part) - 1)
-	{
-	  for (c = *p; p < strend && char_isspace (c); c = *++p)
-	    ;
-	  if (c == ':')
-	    {
-	      if (i == 2)
-		{
-		  return NULL;
-		}
-	      ++p;
-	    }
-	  else if (c == '.' && i == 2)
-	    {
-	      ++p;
-	      if (is_msec != NULL)
-		{
-		  *is_msec = true;
-		}
-	    }
-	  else
-	    {
-	      /* This allows time' ' to be interpreted as 0 which means 12:00:00 AM. */
-	      ++i;
+        {
+          for (c = *p; p < strend && char_isspace (c); c = *++p)
+            ;
+          if (c == ':')
+            {
+              if (i == 2)
+                {
+                  return NULL;
+                }
+              ++p;
+            }
+          else if (c == '.' && i == 2)
+            {
+              ++p;
+              if (is_msec != NULL)
+                {
+                  *is_msec = true;
+                }
+            }
+          else
+            {
+              /* This allows time' ' to be interpreted as 0 which means 12:00:00 AM. */
+              ++i;
 
-	      /* This means time string format is not completed (like 0, 01:00) *
-	       * This flag will be used by operate like [select 1 + '1'] which
-	       * should not be converted to time */
-	      if (is_explicit != NULL && i < 3)
-		{
-		  *is_explicit = false;
-		}
+              /* This means time string format is not completed (like 0, 01:00) *
+               * This flag will be used by operate like [select 1 + '1'] which
+               * should not be converted to time */
+              if (is_explicit != NULL && i < 3)
+                {
+                  *is_explicit = false;
+                }
 
-	      break;
-	    }
-	}
+              break;
+            }
+        }
     }
 
   for (c = *p; p < strend && char_isspace (c); c = *++p)
@@ -1092,25 +1065,25 @@ parse_mtime (const char *buf, int buf_len, unsigned int *mtime,
     {
       p += local_am_strlen;
       if (part[0] == 12)
-	{
-	  part[0] = 0;
-	}
+        {
+          part[0] = 0;
+        }
       else if (part[0] > 12)
-	{
-	  part[0] = -1;
-	}
+        {
+          part[0] = -1;
+        }
     }
   else if (is_local_pm_str (p, strend))
     {
       p += local_pm_strlen;
       if (part[0] < 12)
-	{
-	  part[0] += 12;
-	}
+        {
+          part[0] += 12;
+        }
       else if (part[0] == 0)
-	{
-	  part[0] = -1;
-	}
+        {
+          part[0] = -1;
+        }
     }
   else if (i == 0 && *buf)
     {
@@ -1155,9 +1128,9 @@ fill_local_ampm_str (char str[10], bool am)
   if (init_tm (&tm) == -1)
     {
       if (am)
-	strcpy (str, "am");
+        strcpy (str, "am");
       else
-	strcpy (str, "pm");
+        strcpy (str, "pm");
     }
   else
     {
@@ -1166,15 +1139,15 @@ fill_local_ampm_str (char str[10], bool am)
        * the am/pm designators.
        */
       if (am)
-	{
-	  tm.tm_hour = 0;
-	  strftime (str, 10, "%p", &tm);
-	}
+        {
+          tm.tm_hour = 0;
+          strftime (str, 10, "%p", &tm);
+        }
       else
-	{
-	  tm.tm_hour = 12;
-	  strftime (str, 10, "%p", &tm);
-	}
+        {
+          tm.tm_hour = 12;
+          strftime (str, 10, "%p", &tm);
+        }
     }
 }
 
@@ -1202,8 +1175,7 @@ db_date_locale_init (void)
 static bool
 is_local_am_str (const char *p, const char *p_end)
 {
-  return (p + local_am_strlen - 1 < p_end) &&
-    (intl_mbs_ncasecmp (p, local_am_str, local_am_strlen) == 0);
+  return (p + local_am_strlen - 1 < p_end) && (intl_mbs_ncasecmp (p, local_am_str, local_am_strlen) == 0);
 }
 
 /*
@@ -1215,8 +1187,7 @@ is_local_am_str (const char *p, const char *p_end)
 static bool
 is_local_pm_str (const char *p, const char *p_end)
 {
-  return (p + local_pm_strlen - 1 < p_end) &&
-    (intl_mbs_ncasecmp (p, local_pm_str, local_pm_strlen) == 0);
+  return (p + local_pm_strlen - 1 < p_end) && (intl_mbs_ncasecmp (p, local_pm_str, local_pm_strlen) == 0);
 }
 
 /*
@@ -1246,13 +1217,12 @@ is_local_pm_str (const char *p, const char *p_end)
  */
 static char const *
 parse_date_separated (char const *str, char const *strend, DB_DATE * date,
-		      char const **syntax_check, int *year_digits,
-		      char *sep_ch)
+                      char const **syntax_check, int *year_digits, char *sep_ch)
 {
   DB_DATE cdate;
-  unsigned char separator = 0;	/* 0 - yet to be read
-				   1 - only single slashes read
-				   2 - non-slashes (or multiple slashes) read */
+  unsigned char separator = 0;  /* 0 - yet to be read
+                                   1 - only single slashes read
+                                   2 - non-slashes (or multiple slashes) read */
 
   int date_parts[3] = { 0, 0, 0 };
   unsigned char date_parts_len[3] = { 0, 0, 0 };
@@ -1270,96 +1240,94 @@ parse_date_separated (char const *str, char const *strend, DB_DATE * date,
 
   if (p == strend || !char_isdigit (*p))
     {
-      return NULL;		/* date should begin with a digit */
+      return NULL;              /* date should begin with a digit */
     }
 
   /* read up to three date parts (year, month, day) from string,
    * separated by non-blank, non-alphanumeric characters */
   if (sep_ch)
     {
-      *sep_ch = '0';		/* a digit can not be a separator */
+      *sep_ch = '0';            /* a digit can not be a separator */
     }
 
   q = p;
 
-  while (p < strend && q == p && !char_isspace (*p) && !char_isalpha (*p)
-	 && parts_found < DIM (date_parts))
+  while (p < strend && q == p && !char_isspace (*p) && !char_isalpha (*p) && parts_found < DIM (date_parts))
     {
       unsigned char new_separator = separator;
 
       /* read any separator */
-      while (p < strend && !char_isspace (*p) && !char_isdigit (*p)
-	     && !char_isalpha (*p))
-	{
-	  if (*p == '/')
-	    {
-	      /* '/' separator found */
-	      if (separator == 0)
-		{
-		  new_separator = 1;
-		}
-	    }
-	  else
-	    {
-	      /* non-slash separator found */
-	      new_separator = 2;
-	    }
+      while (p < strend && !char_isspace (*p) && !char_isdigit (*p) && !char_isalpha (*p))
+        {
+          if (*p == '/')
+            {
+              /* '/' separator found */
+              if (separator == 0)
+                {
+                  new_separator = 1;
+                }
+            }
+          else
+            {
+              /* non-slash separator found */
+              new_separator = 2;
+            }
 
-	  if (sep_ch)
-	    {
-	      if (*sep_ch)
-		{
-		  if (*sep_ch == '0')
-		    {
-		      *sep_ch = *p;
-		    }
-		  else
-		    {
-		      if (*sep_ch != *p)
-			{
-			  /* more than one separator found */
-			  *sep_ch = '\0';
-			}
-		    }
-		}
-	    }
+          if (sep_ch)
+            {
+              if (*sep_ch)
+                {
+                  if (*sep_ch == '0')
+                    {
+                      *sep_ch = *p;
+                    }
+                  else
+                    {
+                      if (*sep_ch != *p)
+                        {
+                          /* more than one separator found */
+                          *sep_ch = '\0';
+                        }
+                    }
+                }
+            }
 
-	  p++;
-	}
+          p++;
+        }
 
       /* read the number (date part value) */
       if (p < strend && char_isdigit (*p))
-	{
-	  separator = new_separator;
+        {
+          separator = new_separator;
 
-	  while (p < strend && char_isdigit (*p))
-	    {
-	      if (date_parts[parts_found] < DATETIME_FIELD_LIMIT)
-		{
-		  date_parts[parts_found] *= 10;
-		  date_parts[parts_found] += *p - '0';
-		}
+          while (p < strend && char_isdigit (*p))
+            {
+              if (date_parts[parts_found] < DATETIME_FIELD_LIMIT)
+                {
+                  date_parts[parts_found] *= 10;
+                  date_parts[parts_found] += *p - '0';
+                }
 
-	      if (date_parts_len[parts_found] < 4)
-		{
-		  date_parts_len[parts_found]++;
-		}
+              if (date_parts_len[parts_found] < 4)
+                {
+                  date_parts_len[parts_found]++;
+                }
 
-	      p++;
-	    }
+              p++;
+            }
 
-	  if (year_digits && date_parts[parts_found] >= DATETIME_FIELD_LIMIT)
-	    {
-	      /* In a context where the number of digits specified for the year is
-	       * requested (when reading a time from a datetime string), having
-	       * any date part larger than the field limit is not only an invalid
-	       * value, but also a parsing error. */
-	      return NULL;
-	    }
+          if (year_digits && date_parts[parts_found] >= DATETIME_FIELD_LIMIT)
+            {
+              /* In a context where the number of digits specified for the year is
+               * requested (when reading a time from a datetime string), having
+               * any date part larger than the field limit is not only an invalid
+               * value, but also a parsing error. */
+              return NULL;
+            }
 
-	  parts_found++;
-	  q = p;
-	}
+          parts_found++;
+          q = p;
+        }
     }
 
   p = q;
@@ -1372,7 +1340,7 @@ parse_date_separated (char const *str, char const *strend, DB_DATE * date,
 
   if (separator == 1)
     {
-#if 0				/* TODO - */
+#if 0                           /* TODO - */
       /* Do not permit the order of date fields: MM/DD[/YY] or [YY-]MM-DD */
       return NULL;
 #else
@@ -1391,45 +1359,44 @@ parse_date_separated (char const *str, char const *strend, DB_DATE * date,
       day_part = 2;
 
       if (parts_found == 2)
-	{
-	  date_parts[2] = date_parts[1];
-	  date_parts[1] = date_parts[0];
-	  date_parts_len[2] = date_parts_len[1];
-	  date_parts_len[1] = date_parts_len[0];
-	}
+        {
+          date_parts[2] = date_parts[1];
+          date_parts[1] = date_parts[0];
+          date_parts_len[2] = date_parts_len[1];
+          date_parts_len[1] = date_parts_len[0];
+        }
     }
 
   /* Fill in the year or the century, if omitted */
   if (parts_found == 2)
     {
       if (year_digits)
-	{
-	  *year_digits = 0;
-	}
+        {
+          *year_digits = 0;
+        }
       date_parts[year_part] = get_current_year ();
     }
   else
     {
       if (year_digits)
-	{
-	  *year_digits = date_parts_len[year_part];
-	}
+        {
+          *year_digits = date_parts_len[year_part];
+        }
 
       if (date_parts_len[year_part] == 2)
-	{
-	  if (date_parts[year_part] < 70)
-	    {
-	      date_parts[year_part] += 2000;
-	    }
-	  else
-	    {
-	      date_parts[year_part] += 1900;
-	    }
-	}
+        {
+          if (date_parts[year_part] < 70)
+            {
+              date_parts[year_part] += 2000;
+            }
+          else
+            {
+              date_parts[year_part] += 1900;
+            }
+        }
     }
 
-  if (date_parts[month_part] == 0 && date_parts[day_part] == 0
-      && date_parts[year_part] == 0)
+  if (date_parts[month_part] == 0 && date_parts[day_part] == 0 && date_parts[year_part] == 0)
     {
       *date = IGREG_SPECIAL;
       return p;
@@ -1437,42 +1404,38 @@ parse_date_separated (char const *str, char const *strend, DB_DATE * date,
 
   /* Check and return the resulting date */
   if (date_parts[year_part] >= 10000 || date_parts[month_part] > 12
-      || date_parts[month_part] < 1 || date_parts[day_part] > 31
-      || date_parts[day_part] < 1)
+      || date_parts[month_part] < 1 || date_parts[day_part] > 31 || date_parts[day_part] < 1)
     {
       /* malformed or invalid date string */
       if (syntax_check)
-	{
-	  /* parsing successfull, but unexpected value */
-	  *syntax_check = p;
-	}
+        {
+          /* parsing successfull, but unexpected value */
+          *syntax_check = p;
+        }
       return NULL;
     }
   else
     {
       int year, month, day;
 
-      cdate =
-	julian_encode
-	(date_parts[month_part], date_parts[day_part], date_parts[year_part]);
+      cdate = julian_encode (date_parts[month_part], date_parts[day_part], date_parts[year_part]);
       julian_decode (cdate, &month, &day, &year, NULL);
 
-      if (day == date_parts[day_part]
-	  && month == date_parts[month_part] && year == date_parts[year_part])
-	{
-	  *date = cdate;
-	  return p;
-	}
+      if (day == date_parts[day_part] && month == date_parts[month_part] && year == date_parts[year_part])
+        {
+          *date = cdate;
+          return p;
+        }
       else
-	{
-	  /* parsing successfull, but unexpected value */
-	  if (syntax_check)
-	    {
-	      *syntax_check = p;
-	    }
+        {
+          /* parsing successfull, but unexpected value */
+          if (syntax_check)
+            {
+              *syntax_check = p;
+            }
 
-	  return NULL;
-	}
+          return NULL;
+        }
     }
 }
 
@@ -1504,9 +1467,8 @@ parse_date_separated (char const *str, char const *strend, DB_DATE * date,
  */
 static char const *
 parse_mtime_separated (char const *str, char const *strend,
-		       unsigned int *mtime, char const **syntax_check,
-		       int *time_parts, char *sep_ch,
-		       bool * has_explicit_msec, bool is_datetime)
+                       unsigned int *mtime, char const **syntax_check,
+                       int *time_parts, char *sep_ch, bool * has_explicit_msec, bool is_datetime)
 {
   int h = 0, m = 0, s = 0, msec = 0;
   char const *p = str, *q;
@@ -1515,7 +1477,7 @@ parse_mtime_separated (char const *str, char const *strend,
 
   if (sep_ch)
     {
-      *sep_ch = '0';		/* a digit can not be a separator */
+      *sep_ch = '0';            /* a digit can not be a separator */
     }
 
   if (p == strend || !char_isdigit (*p))
@@ -1528,10 +1490,10 @@ parse_mtime_separated (char const *str, char const *strend,
   while (p < strend && char_isdigit (*p))
     {
       if (h < DATETIME_FIELD_LIMIT)
-	{
-	  h *= 10;
-	  h += *p - '0';
-	}
+        {
+          h *= 10;
+          h += *p - '0';
+        }
 
       p++;
     }
@@ -1545,26 +1507,25 @@ parse_mtime_separated (char const *str, char const *strend,
 
   /* skip separators */
   q = p;
-  while (p < strend && !char_isspace (*p) && !char_isalpha (*p) &&
-	 !char_isdigit (*p))
+  while (p < strend && !char_isspace (*p) && !char_isalpha (*p) && !char_isdigit (*p))
     {
       if (sep_ch)
-	{
-	  if (*sep_ch)
-	    {
-	      if (*sep_ch == '0')
-		{
-		  *sep_ch = *p;
-		}
-	      else
-		{
-		  if (*sep_ch != *p)
-		    {
-		      *sep_ch = '\0';
-		    }
-		}
-	    }
-	}
+        {
+          if (*sep_ch)
+            {
+              if (*sep_ch == '0')
+                {
+                  *sep_ch = *p;
+                }
+              else
+                {
+                  if (*sep_ch != *p)
+                    {
+                      *sep_ch = '\0';
+                    }
+                }
+            }
+        }
 
       p++;
     }
@@ -1578,154 +1539,149 @@ parse_mtime_separated (char const *str, char const *strend,
   /* read minutes value */
   if (p < strend && char_isdigit (*p))
     {
-      while (p < strend && char_isdigit (*p) &&
-	     DATETIME_FIELD_LIMIT - (*p - '0') / 10 > m)
-	{
-	  if (m < DATETIME_FIELD_LIMIT)
-	    {
-	      m *= 10;
-	      m += *p - '0';
-	    }
+      while (p < strend && char_isdigit (*p) && DATETIME_FIELD_LIMIT - (*p - '0') / 10 > m)
+        {
+          if (m < DATETIME_FIELD_LIMIT)
+            {
+              m *= 10;
+              m += *p - '0';
+            }
 
-	  p++;
-	}
+          p++;
+        }
 
       if (time_parts && m >= DATETIME_FIELD_LIMIT)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       /* skip any separators */
       q = p;
 
-      while
-	(p < strend && !char_isspace (*p) && !char_isalpha (*p) &&
-	 !char_isdigit (*p))
-	{
-	  if (sep_ch)
-	    {
-	      if (*sep_ch)
-		{
-		  if (*sep_ch == '0')
-		    {
-		      *sep_ch = *p;
-		    }
-		  else
-		    {
-		      if (*sep_ch != *p)
-			{
-			  *sep_ch = '\0';
-			}
-		    }
-		}
-	    }
-	  p++;
-	}
+      while (p < strend && !char_isspace (*p) && !char_isalpha (*p) && !char_isdigit (*p))
+        {
+          if (sep_ch)
+            {
+              if (*sep_ch)
+                {
+                  if (*sep_ch == '0')
+                    {
+                      *sep_ch = *p;
+                    }
+                  else
+                    {
+                      if (*sep_ch != *p)
+                        {
+                          *sep_ch = '\0';
+                        }
+                    }
+                }
+            }
+          p++;
+        }
 
       if (is_datetime && p < strend && char_isspace (*p))
-	{
-	  *syntax_check = p;
-	  return NULL;
-	}
+        {
+          *syntax_check = p;
+          return NULL;
+        }
 
       /* read seconds value */
       if (p < strend && char_isdigit (*p))
-	{
-	  while
-	    (p < strend && char_isdigit (*p) &&
-	     DATETIME_FIELD_LIMIT - (*p - '0') / 10 > s)
-	    {
-	      if (s < DATETIME_FIELD_LIMIT)
-		{
-		  s *= 10;
-		  s += *p - '0';
-		}
-	      p++;
-	    }
+        {
+          while (p < strend && char_isdigit (*p) && DATETIME_FIELD_LIMIT - (*p - '0') / 10 > s)
+            {
+              if (s < DATETIME_FIELD_LIMIT)
+                {
+                  s *= 10;
+                  s += *p - '0';
+                }
+              p++;
+            }
 
-	  /* numeric datetime field overflowed and failed parsing */
-	  if (time_parts && s >= DATETIME_FIELD_LIMIT)
-	    {
-	      return NULL;
-	    }
+          /* numeric datetime field overflowed and failed parsing */
+          if (time_parts && s >= DATETIME_FIELD_LIMIT)
+            {
+              return NULL;
+            }
 
 
-	  if (time_parts)
-	    {
-	      *time_parts = 3;	/* hh:mm:ss */
-	    }
+          if (time_parts)
+            {
+              *time_parts = 3;  /* hh:mm:ss */
+            }
 
-	  /* read milliseconds value */
-	  if (p < strend && *p == '.')
-	    {
-	      p++;
-	      if (p < strend && char_isdigit (*p))
-		{
-		  msec += (*p - '0') * 100;
-		  p++;
+          /* read milliseconds value */
+          if (p < strend && *p == '.')
+            {
+              p++;
+              if (p < strend && char_isdigit (*p))
+                {
+                  msec += (*p - '0') * 100;
+                  p++;
 
-		  if (p < strend && char_isdigit (*p))
-		    {
-		      msec += (*p - '0') * 10;
-		      p++;
+                  if (p < strend && char_isdigit (*p))
+                    {
+                      msec += (*p - '0') * 10;
+                      p++;
 
-		      if (p < strend && char_isdigit (*p))
-			{
-			  msec += *p - '0';
-			  p++;
+                      if (p < strend && char_isdigit (*p))
+                        {
+                          msec += *p - '0';
+                          p++;
 
-			  /* attempting to round, instead of truncate, the
-			   * number of milliseconds will result in
-			   * userspace problems when '11-02-24 23:59:59.9999'
-			   * is converted to DATETIME, and then '11-02-24' is
-			   * converted to DATE and '23:59:59:9999' is
-			   * converted to TIME
-			   * User might expect to get the same results
-			   * in both cases, when in fact the wrap-around for
-			   * the time value will give different results if
-			   * the number of milliseconds is rounded. */
-			  while (p < strend && char_isdigit (*p))
-			    {
-			      p++;
-			    }
-			}
-		    }
-		}
-	      if (has_explicit_msec)
-		{
-		  *has_explicit_msec = true;
-		}
-	    }
-	}
+                          /* attempting to round, instead of truncate, the
+                           * number of milliseconds will result in
+                           * userspace problems when '11-02-24 23:59:59.9999'
+                           * is converted to DATETIME, and then '11-02-24' is
+                           * converted to DATE and '23:59:59:9999' is
+                           * converted to TIME
+                           * User might expect to get the same results
+                           * in both cases, when in fact the wrap-around for
+                           * the time value will give different results if
+                           * the number of milliseconds is rounded. */
+                          while (p < strend && char_isdigit (*p))
+                            {
+                              p++;
+                            }
+                        }
+                    }
+                }
+              if (has_explicit_msec)
+                {
+                  *has_explicit_msec = true;
+                }
+            }
+        }
       else
-	{
-	  /* No seconds present after the minutes and the separator. */
+        {
+          /* No seconds present after the minutes and the separator. */
 
-	  if (time_parts)
-	    {
-	      *time_parts = 2;
-	    }
-	}
+          if (time_parts)
+            {
+              *time_parts = 2;
+            }
+        }
     }
   else
     {
       /* No minutes value present after the hour and separator */
 
       if (time_parts)
-	{
-	  if (char_isdigit (*(p - 1)))
-	    {
-	      *time_parts = 1;	/* hh */
-	    }
-	  else
-	    {
-	      *time_parts = 2;	/* { hh sep } is just like { hh sep mm } */
-	    }
-	}
+        {
+          if (char_isdigit (*(p - 1)))
+            {
+              *time_parts = 1;  /* hh */
+            }
+          else
+            {
+              *time_parts = 2;  /* { hh sep } is just like { hh sep mm } */
+            }
+        }
     }
 
   /* look for the am/pm string following the time */
-  q = p;			/* save p just in case there is no am/pm string */
+  q = p;                        /* save p just in case there is no am/pm string */
 
   while (p < strend && char_isspace (*p))
     {
@@ -1733,74 +1689,66 @@ parse_mtime_separated (char const *str, char const *strend,
     }
 
   /* look for either the local or the English am/pm strings */
-  if (is_local_am_str (p, strend)
-      && (p + local_am_strlen == strend
-	  || !char_isalpha (p[local_am_strlen])))
+  if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
     {
       p += local_am_strlen;
       if (h == 12)
-	{
-	  /* 12:01am means 00:01 */
-	  h = 0;
-	}
+        {
+          /* 12:01am means 00:01 */
+          h = 0;
+        }
     }
   else
     {
-      if (is_local_pm_str (p, strend)
-	  && (p + local_pm_strlen == strend
-	      || !char_isalpha (p[local_pm_strlen])))
-	{
-	  p += local_pm_strlen;
-	  if (h < 12)
-	    {
-	      /* only a 12-hour clock uses the am/pm string */
-	      h += 12;
-	    }
-	}
+      if (is_local_pm_str (p, strend) && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+        {
+          p += local_pm_strlen;
+          if (h < 12)
+            {
+              /* only a 12-hour clock uses the am/pm string */
+              h += 12;
+            }
+        }
       else
-	{
-	  if (is_local_am_str (p, strend) &&
-	      (p + local_am_strlen == strend ||
-	       !char_isalpha (p[local_am_strlen])))
-	    {
-	      p += local_am_strlen;
-	      if (h == 12)
-		{
-		  h = 0;
-		}
-	    }
-	  else
-	    {
-	      if (is_local_pm_str (p, strend)
-		  && (p + local_pm_strlen == strend ||
-		      !char_isalpha (p[local_pm_strlen])))
-		{
-		  p += local_pm_strlen;
-		  if (h < 12)
-		    {
-		      /* only a 12-hour clock uses the am/pm string */
-		      h += 12;
-		    }
-		}
-	      else
-		{
-		  /* no "am"/"pm" string found */
-		  p = q;
+        {
+          if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
+            {
+              p += local_am_strlen;
+              if (h == 12)
+                {
+                  h = 0;
+                }
+            }
+          else
+            {
+              if (is_local_pm_str (p, strend) && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+                {
+                  p += local_pm_strlen;
+                  if (h < 12)
+                    {
+                      /* only a 12-hour clock uses the am/pm string */
+                      h += 12;
+                    }
+                }
+              else
+                {
+                  /* no "am"/"pm" string found */
+                  p = q;
 
-		  /* check if an incomplete time is followed by a space */
-		  if (time_parts && *time_parts < 3)
-		    {
-		      if (p < strend && char_isspace (*p))
-			{
-			  /* turn off parsing just the time off the
-			     timestamp */
+                  /* check if an incomplete time is followed by a space */
+                  if (time_parts && *time_parts < 3)
+                    {
+                      if (p < strend && char_isspace (*p))
+                        {
+                          /* turn off parsing just the time off the
+                             timestamp */
 
-			  *time_parts = 1;
-			}
-		    }
-		}
-	    }
-	}
+                          *time_parts = 1;
+                        }
+                    }
+                }
+            }
+        }
     }
 
   /* check the numeric values
@@ -1812,7 +1760,7 @@ parse_mtime_separated (char const *str, char const *strend,
     {
       /* time parsed successfully, but the found value was unexpected */
       if (syntax_check)
-	*syntax_check = p;
+        *syntax_check = p;
       return NULL;
     }
 
@@ -1843,9 +1791,7 @@ parse_mtime_separated (char const *str, char const *strend,
  */
 static char const *
 parse_explicit_mtime_separated (char const *str, char const *strend,
-				unsigned int *mtime,
-				char const **syntax_check,
-				bool * has_explicit_msec)
+                                unsigned int *mtime, char const **syntax_check, bool * has_explicit_msec)
 {
   int h = 0, m = 0, s = 0, msec = 0, time_parts[3] = { 0, 0, 0 };
   unsigned time_parts_found = 0;
@@ -1873,33 +1819,30 @@ parse_explicit_mtime_separated (char const *str, char const *strend,
   while
     (((time_parts_found && p[0] == ':' &&
        (++p < strend && char_isdigit (*p)))
-      ||
-      (!time_parts_found && char_isdigit (p[0])))
-     && time_parts_found < DIM (time_parts))
+      || (!time_parts_found && char_isdigit (p[0]))) && time_parts_found < DIM (time_parts))
     {
       do
-	{
-	  time_parts[time_parts_found] *= 10;
-	  time_parts[time_parts_found] += *p - '0';
-	  p++;
-	}
-      while (time_parts[time_parts_found] < DATETIME_FIELD_LIMIT
-	     && p < strend && char_isdigit (*p));
+        {
+          time_parts[time_parts_found] *= 10;
+          time_parts[time_parts_found] += *p - '0';
+          p++;
+        }
+      while (time_parts[time_parts_found] < DATETIME_FIELD_LIMIT && p < strend && char_isdigit (*p));
 
       if (p < strend && char_isdigit (*p))
-	{
-	  /* invalid number of seconds/minutes/hours */
-	  return NULL;
-	}
+        {
+          /* invalid number of seconds/minutes/hours */
+          return NULL;
+        }
       else
-	{
-	  time_parts_found++;
-	}
+        {
+          time_parts_found++;
+        }
 
       if (p >= strend)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   /* Allow trailing ':' separator if time is incomplete */
@@ -1913,23 +1856,23 @@ parse_explicit_mtime_separated (char const *str, char const *strend,
       p++;
 
       while (msec_digit_order && p < strend && char_isdigit (*p))
-	{
-	  msec += (*p++ - '0') * msec_digit_order;
-	  msec_digit_order /= 10;
-	}
+        {
+          msec += (*p++ - '0') * msec_digit_order;
+          msec_digit_order /= 10;
+        }
 
       /* skip remaining digits in the fractional seconds part, if any
        * trying to round, instead of truncate, the milliseconds part can
        * lead to user space problems if wrap-around is needed. */
       while (p < strend && char_isdigit (*p))
-	{
-	  p++;
-	}
+        {
+          p++;
+        }
 
       if (has_explicit_msec)
-	{
-	  *has_explicit_msec = true;
-	}
+        {
+          *has_explicit_msec = true;
+        }
     }
 
   /* infer the hours, minutes and seconds from the number of time parts read
@@ -1952,7 +1895,7 @@ parse_explicit_mtime_separated (char const *str, char const *strend,
 
   /* skip optional whitespace before the am/pm string following the numeric
    * time value */
-  q = p;			/* save p in case there is no am/pm string */
+  q = p;                        /* save p in case there is no am/pm string */
 
   while (p < strend && char_isspace (*p))
     {
@@ -1960,85 +1903,77 @@ parse_explicit_mtime_separated (char const *str, char const *strend,
     }
 
   /* look for either the local or the English am/pm strings */
-  if (is_local_am_str (p, strend)
-      && (p + local_am_strlen == strend
-	  || !char_isalpha (p[local_am_strlen])))
+  if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
     {
       p += local_am_strlen;
       if (h == 12)
-	{
-	  h = 0;		/* 12:01am means 00:01 */
-	}
+        {
+          h = 0;                /* 12:01am means 00:01 */
+        }
       else if (h > 12)
-	{
-	  if (syntax_check)
-	    {
-	      *syntax_check = p;
-	    }
-	  return NULL;
-	}
+        {
+          if (syntax_check)
+            {
+              *syntax_check = p;
+            }
+          return NULL;
+        }
     }
   else
     {
-      if (is_local_pm_str (p, strend)
-	  && (p + local_pm_strlen == strend
-	      || !char_isalpha (p[local_pm_strlen])))
-	{
-	  p += local_pm_strlen;
-	  if (h < 12)
-	    {
-	      /* only a 12-hour clock uses the am/pm string */
-	      h += 12;
-	    }
-	}
+      if (is_local_pm_str (p, strend) && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+        {
+          p += local_pm_strlen;
+          if (h < 12)
+            {
+              /* only a 12-hour clock uses the am/pm string */
+              h += 12;
+            }
+        }
       else
-	{
-	  if (is_local_am_str (p, strend) &&
-	      (p + local_am_strlen == strend ||
-	       !char_isalpha (p[local_am_strlen])))
-	    {
-	      p += local_am_strlen;
-	      if (h == 12)
-		{
-		  h = 0;
-		}
-	      else if (h > 12)
-		{
-		  if (syntax_check)
-		    {
-		      *syntax_check = p;
-		    }
-		  return NULL;
-		}
-	    }
-	  else
-	    {
-	      if (is_local_pm_str (p, strend)
-		  && (p + local_pm_strlen == strend ||
-		      !char_isalpha (p[local_pm_strlen])))
-		{
-		  p += local_pm_strlen;
-		  if (h < 12)
-		    {
-		      /* only a 12-hour clock uses the am/pm string */
-		      h += 12;
-		    }
-		}
-	      else
-		{
-		  p = q;
-		}
-	    }
-	}
+        {
+          if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
+            {
+              p += local_am_strlen;
+              if (h == 12)
+                {
+                  h = 0;
+                }
+              else if (h > 12)
+                {
+                  if (syntax_check)
+                    {
+                      *syntax_check = p;
+                    }
+                  return NULL;
+                }
+            }
+          else
+            {
+              if (is_local_pm_str (p, strend) && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+                {
+                  p += local_pm_strlen;
+                  if (h < 12)
+                    {
+                      /* only a 12-hour clock uses the am/pm string */
+                      h += 12;
+                    }
+                }
+              else
+                {
+                  p = q;
+                }
+            }
+        }
     }
 
   /* check the time parts read */
   if (h > 23 || m > 59 || s > 59)
     {
       if (syntax_check)
-	{
-	  *syntax_check = p;
-	}
+        {
+          *syntax_check = p;
+        }
       return NULL;
     }
 
@@ -2061,8 +1996,7 @@ parse_explicit_mtime_separated (char const *str, char const *strend,
  *
  */
 static char const *
-parse_explicit_mtime_compact (char const *str, char const *strend,
-			      unsigned int *mtime)
+parse_explicit_mtime_compact (char const *str, char const *strend, unsigned int *mtime)
 {
   char const *p = str, *q = str, *r = str;
   int y = 0, mo = 0, d = 0, h = 0, m = 0, s = 0, msec = 0;
@@ -2086,245 +2020,236 @@ parse_explicit_mtime_compact (char const *str, char const *strend,
   if (p != q || q[0] == '.')
     {
       if (q - p > 14)
-	{
-	  /* YYYY MM DD HH MM SS [.] [ssss..] */
-	  /* if (q[0] != '.') */
-	  {
-	    y =
-	      DECODE (p[0]) * 1000
-	      + DECODE (p[1]) * 100 + DECODE (p[2]) * 10 + DECODE (p[3]);
-	    mo = DECODE (p[4]) * 10 + DECODE (p[5]);
-	    d = DECODE (p[6]) * 10 + DECODE (p[7]);
-	    h = DECODE (p[8]) * 10 + DECODE (p[9]);
-	    m = DECODE (p[10]) * 10 + DECODE (p[11]);
-	    s = DECODE (p[12]) * 10 + DECODE (p[13]);
+        {
+          /* YYYY MM DD HH MM SS [.] [ssss..] */
+          /* if (q[0] != '.') */
+          {
+            y = DECODE (p[0]) * 1000 + DECODE (p[1]) * 100 + DECODE (p[2]) * 10 + DECODE (p[3]);
+            mo = DECODE (p[4]) * 10 + DECODE (p[5]);
+            d = DECODE (p[6]) * 10 + DECODE (p[7]);
+            h = DECODE (p[8]) * 10 + DECODE (p[9]);
+            m = DECODE (p[10]) * 10 + DECODE (p[11]);
+            s = DECODE (p[12]) * 10 + DECODE (p[13]);
 
-	    p += 14;
-	    msec += DECODE (*p++) * 100;
-	    if (p < strend && char_isdigit (*p))
-	      {
-		msec += DECODE (*p++) * 10;
-		if (p < strend && char_isdigit (*p))
-		  {
-		    /* reading 3 digits after decimal point is not
-		     * mysql compatible (which only reads 2 digits)
-		     * but is the expected Rye behavior */
-		    msec += DECODE (*p++);
+            p += 14;
+            msec += DECODE (*p++) * 100;
+            if (p < strend && char_isdigit (*p))
+              {
+                msec += DECODE (*p++) * 10;
+                if (p < strend && char_isdigit (*p))
+                  {
+                    /* reading 3 digits after decimal point is not
+                     * mysql compatible (which only reads 2 digits)
+                     * but is the expected Rye behavior */
+                    msec += DECODE (*p++);
 
-		    /* skil all other digits in the milliseconds
-		     * field. */
-		    p = q;
-		  }
-	      }
-	  }
-	}
+                    /* skil all other digits in the milliseconds
+                     * field. */
+                    p = q;
+                  }
+              }
+          }
+        }
       else
-	{
-	  switch (q - p)
-	    {
-	    case 14:
-	      /* YYYY-MM-DD HH:MM:SS */
-	      y += DECODE (*p++);
-	    case 13:
-	      y *= 10;
-	      y += DECODE (*p++);
-	    case 12:
-	      /*   YY-MM-DD HH:MM:SS */
-	      y *= 10;
-	      y += DECODE (*p++);
-	    case 11:
-	      y *= 10;
-	      y += DECODE (*p++);
-	    case 10:
-	      /*      MM-DD HH:MM:SS */
-	      mo += DECODE (*p++);
-	    case 9:
-	      /*       M-DD HH:MM:SS */
-	      mo *= 10;
-	      mo += DECODE (*p++);
-	      d += DECODE (*p++) * 10;
-	      d += DECODE (*p++);
-	    case 6:
-	      /*                HH:MM:SS */
-	      h += DECODE (*p++);
-	    case 5:
-	      /*             H:MM:SS */
-	      h *= 10;
-	      h += DECODE (*p++);
-	    case 4:
-	      /*               MM:SS */
-	      m += DECODE (*p++);
-	    case 3:
-	      /*                M:SS */
-	      m *= 10;
-	      m += DECODE (*p++);
-	    case 2:
-	      /*                      SS */
-	      s += DECODE (*p++);
-	    case 1:
-	      /*                       S */
-	      s *= 10;
-	      s += DECODE (*p++);
-	    case 0:
-	      if (*p == '.')
-		{
-		  /* read number of milliseconds */
+        {
+          switch (q - p)
+            {
+            case 14:
+              /* YYYY-MM-DD HH:MM:SS */
+              y += DECODE (*p++);
+            case 13:
+              y *= 10;
+              y += DECODE (*p++);
+            case 12:
+              /*   YY-MM-DD HH:MM:SS */
+              y *= 10;
+              y += DECODE (*p++);
+            case 11:
+              y *= 10;
+              y += DECODE (*p++);
+            case 10:
+              /*      MM-DD HH:MM:SS */
+              mo += DECODE (*p++);
+            case 9:
+              /*       M-DD HH:MM:SS */
+              mo *= 10;
+              mo += DECODE (*p++);
+              d += DECODE (*p++) * 10;
+              d += DECODE (*p++);
+            case 6:
+              /*                HH:MM:SS */
+              h += DECODE (*p++);
+            case 5:
+              /*             H:MM:SS */
+              h *= 10;
+              h += DECODE (*p++);
+            case 4:
+              /*               MM:SS */
+              m += DECODE (*p++);
+            case 3:
+              /*                M:SS */
+              m *= 10;
+              m += DECODE (*p++);
+            case 2:
+              /*                      SS */
+              s += DECODE (*p++);
+            case 1:
+              /*                       S */
+              s *= 10;
+              s += DECODE (*p++);
+            case 0:
+              if (*p == '.')
+                {
+                  /* read number of milliseconds */
 
-		  p++;
-		  if (p < strend && char_isdigit (*p))
-		    {
-		      msec += DECODE (*p++) * 100;
-		      if (p < strend && char_isdigit (*p))
-			{
-			  msec += DECODE (*p++) * 10;
-			  if (p < strend && char_isdigit (*p))
-			    {
-			      msec += DECODE (*p++);
+                  p++;
+                  if (p < strend && char_isdigit (*p))
+                    {
+                      msec += DECODE (*p++) * 100;
+                      if (p < strend && char_isdigit (*p))
+                        {
+                          msec += DECODE (*p++) * 10;
+                          if (p < strend && char_isdigit (*p))
+                            {
+                              msec += DECODE (*p++);
 
-			      while (p < strend && char_isdigit (*p))
-				{
-				  p++;
-				}
-			    }
-			}
-		    }
-		}
-	      break;
-	    case 7:
-	      /*          YY-MM-DD H */
-	      y = DECODE (p[0]) * 10 + DECODE (p[1]);
-	      mo = DECODE (p[2]) * 10 + DECODE (p[3]);
-	      d = DECODE (p[4]) * 10 + DECODE (p[5]);
-	      h = DECODE (p[6]);
-	      p += 7;
-	      break;
-	    default:
-	      /* should not be reached */
-	    case 8:
-	      /*         DD HH:MM:SS */
-	      return NULL;
-	    }
-	}
+                              while (p < strend && char_isdigit (*p))
+                                {
+                                  p++;
+                                }
+                            }
+                        }
+                    }
+                }
+              break;
+            case 7:
+              /*          YY-MM-DD H */
+              y = DECODE (p[0]) * 10 + DECODE (p[1]);
+              mo = DECODE (p[2]) * 10 + DECODE (p[3]);
+              d = DECODE (p[4]) * 10 + DECODE (p[5]);
+              h = DECODE (p[6]);
+              p += 7;
+              break;
+            default:
+              /* should not be reached */
+            case 8:
+              /*         DD HH:MM:SS */
+              return NULL;
+            }
+        }
 
       /* year, month, day, hour, minute, seconds have been read */
       ndigits = q - r;
       if (ndigits > 6)
-	{
-	  /* a date precedes the time in the input string */
+        {
+          /* a date precedes the time in the input string */
 
-	  DB_DATE cdate;
-	  int year, month, day;
+          DB_DATE cdate;
+          int year, month, day;
 
-	  /* year is also specified in the date */
-	  if ((ndigits == 12) || (ndigits == 7))
-	    {
-	      /* 2-digits year specified, fill in the century */
-	      if (y < 70)
-		{
-		  y += 2000;
-		}
-	      else
-		{
-		  y += 1900;
-		}
-	    }
-	  else if (ndigits <= 10)
-	    {
-	      /* No year specified with the date, fill in the current year */
-	      y = get_current_year ();
-	    }
+          /* year is also specified in the date */
+          if ((ndigits == 12) || (ndigits == 7))
+            {
+              /* 2-digits year specified, fill in the century */
+              if (y < 70)
+                {
+                  y += 2000;
+                }
+              else
+                {
+                  y += 1900;
+                }
+            }
+          else if (ndigits <= 10)
+            {
+              /* No year specified with the date, fill in the current year */
+              y = get_current_year ();
+            }
 
-	  /* check for a valid date preceding the time in the input string
-	   * */
-	  cdate = julian_encode (mo, d, y);
-	  julian_decode (cdate, &month, &day, &year, NULL);
+          /* check for a valid date preceding the time in the input string
+           * */
+          cdate = julian_encode (mo, d, y);
+          julian_decode (cdate, &month, &day, &year, NULL);
 
-	  if (y != year || mo != month || d != day)
-	    {
-	      /* invalid date specified in front of the time in the input
-	       * string */
-	      return NULL;
-	    }
-	}
+          if (y != year || mo != month || d != day)
+            {
+              /* invalid date specified in front of the time in the input
+               * string */
+              return NULL;
+            }
+        }
 
       /* look for either the local or the English am/pm strings */
       /* skip optional whitespace before the am/pm string following the numeric
        * time value */
-      q = p;			/* save p just in case there is no am/pm string */
+      q = p;                    /* save p just in case there is no am/pm string */
 
       while (p < strend && char_isspace (*p))
-	{
-	  p++;
-	}
+        {
+          p++;
+        }
 
-      if (is_local_am_str (p, strend)
-	  && (p + local_am_strlen == strend
-	      || !char_isalpha (p[local_am_strlen])))
-	{
-	  p += local_am_strlen;
-	  if (h == 12)
-	    {
-	      h = 0;		/* 12:01am means 00:01 */
-	    }
-	}
+      if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
+        {
+          p += local_am_strlen;
+          if (h == 12)
+            {
+              h = 0;            /* 12:01am means 00:01 */
+            }
+        }
       else
-	{
-	  if (is_local_pm_str (p, strend)
-	      && (p + local_pm_strlen == strend
-		  || !char_isalpha (p[local_pm_strlen])))
-	    {
-	      p += local_pm_strlen;
-	      if (h < 12)
-		{
-		  /* only a 12-hour clock uses the am/pm string */
-		  h += 12;
-		}
-	    }
-	  else
-	    {
-	      if (is_local_am_str (p, strend) &&
-		  (p + local_am_strlen == strend ||
-		   !char_isalpha (p[local_am_strlen])))
-		{
-		  p += local_am_strlen;
+        {
+          if (is_local_pm_str (p, strend) && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+            {
+              p += local_pm_strlen;
+              if (h < 12)
+                {
+                  /* only a 12-hour clock uses the am/pm string */
+                  h += 12;
+                }
+            }
+          else
+            {
+              if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
+                {
+                  p += local_am_strlen;
 
-		  if (h == 12)
-		    {
-		      h = 0;
-		    }
-		}
-	      else
-		{
-		  if (is_local_pm_str (p, strend)
-		      && (p + local_pm_strlen == strend ||
-			  !char_isalpha (p[local_pm_strlen])))
-		    {
-		      p += local_pm_strlen;
-		      if (h < 12)
-			{
-			  /* only a 12-hour clock uses the am/pm string */
-			  h += 12;
-			}
-		    }
-		  else
-		    {
-		      p = q;
-		    }
-		}
-	    }
-	}
+                  if (h == 12)
+                    {
+                      h = 0;
+                    }
+                }
+              else
+                {
+                  if (is_local_pm_str (p, strend)
+                      && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+                    {
+                      p += local_pm_strlen;
+                      if (h < 12)
+                        {
+                          /* only a 12-hour clock uses the am/pm string */
+                          h += 12;
+                        }
+                    }
+                  else
+                    {
+                      p = q;
+                    }
+                }
+            }
+        }
 
       /* check and return the parsed time value */
 
       if (h > 23 || m > 59 || s > 59)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       else
-	{
-	  *mtime = encode_mtime (h, m, s, msec);
-	  return p;
-	}
+        {
+          *mtime = encode_mtime (h, m, s, msec);
+          return p;
+        }
     }
   else
     {
@@ -2355,8 +2280,7 @@ parse_explicit_mtime_compact (char const *str, char const *strend,
  */
 static char const *
 parse_datetime_compact (char const *str, char const *strend, DB_DATE * date,
-			unsigned int *mtime, bool * has_explicit_time,
-			bool * has_explicit_msec)
+                        unsigned int *mtime, bool * has_explicit_time, bool * has_explicit_msec)
 {
   int y = 0, mo = 0, d = 0, h = 0, m = 0, s = 0, msec = 0, ndigits = 0;
   char const *p = str, *q = str;
@@ -2426,27 +2350,25 @@ parse_datetime_compact (char const *str, char const *strend, DB_DATE * date,
 
       /* read year */
       if (ndigits < 14)
-	{
-	  y = DECODE (p[0]) * 10 + DECODE (p[1]);
-	  if (y < 70)
-	    {
-	      y += 2000;
-	    }
-	  else
-	    {
-	      y += 1900;
-	    }
+        {
+          y = DECODE (p[0]) * 10 + DECODE (p[1]);
+          if (y < 70)
+            {
+              y += 2000;
+            }
+          else
+            {
+              y += 1900;
+            }
 
-	  p += 2;
-	}
+          p += 2;
+        }
       else
-	{
-	  y =
-	    DECODE (p[0]) * 1000
-	    + DECODE (p[1]) * 100 + DECODE (p[2]) * 10 + DECODE (p[3]);
+        {
+          y = DECODE (p[0]) * 1000 + DECODE (p[1]) * 100 + DECODE (p[2]) * 10 + DECODE (p[3]);
 
-	  p += 4;
-	}
+          p += 4;
+        }
 
       /* read month, day, hour, minute */
       mo = DECODE (p[0]) * 10 + DECODE (p[1]);
@@ -2456,57 +2378,57 @@ parse_datetime_compact (char const *str, char const *strend, DB_DATE * date,
 
       m = DECODE (*p++);
       if (p < strend && char_isdigit (*p))
-	{
-	  m *= 10;
-	  m += DECODE (*p++);
+        {
+          m *= 10;
+          m += DECODE (*p++);
 
-	  if (p < strend && char_isdigit (*p))
-	    {
-	      s += DECODE (*p++);
+          if (p < strend && char_isdigit (*p))
+            {
+              s += DECODE (*p++);
 
-	      if (p < strend && char_isdigit (*p))
-		{
-		  s *= 10;
-		  s += DECODE (*p++);
-		}
+              if (p < strend && char_isdigit (*p))
+                {
+                  s *= 10;
+                  s += DECODE (*p++);
+                }
 
-	      /* read milliseconds */
-	      if (*p == '.')
-		{
-		  if (has_explicit_msec)
-		    {
-		      *has_explicit_msec = true;
-		    }
-		  p++;
-		}
+              /* read milliseconds */
+              if (*p == '.')
+                {
+                  if (has_explicit_msec)
+                    {
+                      *has_explicit_msec = true;
+                    }
+                  p++;
+                }
 
-	      if (p < strend && char_isdigit (*p))
-		{
-		  if (has_explicit_msec)
-		    {
-		      *has_explicit_msec = true;
-		    }
+              if (p < strend && char_isdigit (*p))
+                {
+                  if (has_explicit_msec)
+                    {
+                      *has_explicit_msec = true;
+                    }
 
-		  msec += DECODE (*p++) * 100;
+                  msec += DECODE (*p++) * 100;
 
-		  if (p < strend && char_isdigit (*p))
-		    {
-		      msec += DECODE (*p++) * 10;
+                  if (p < strend && char_isdigit (*p))
+                    {
+                      msec += DECODE (*p++) * 10;
 
-		      if (p < strend && char_isdigit (*p))
-			{
-			  msec += DECODE (*p);
+                      if (p < strend && char_isdigit (*p))
+                        {
+                          msec += DECODE (*p);
 
-			  /* skip remaining digits */
-			  while (p < strend && char_isdigit (*p))
-			    {
-			      p++;
-			    }
-			}
-		    }
-		}
-	    }
-	}
+                          /* skip remaining digits */
+                          while (p < strend && char_isdigit (*p))
+                            {
+                              p++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
   if (has_explicit_time)
@@ -2522,17 +2444,17 @@ parse_datetime_compact (char const *str, char const *strend, DB_DATE * date,
   else
     {
       if (ndigits == 6 || ndigits == 7)
-	{
-	  /* YY MM DD */
-	  if (y < 70)
-	    {
-	      y += 2000;
-	    }
-	  else
-	    {
-	      y += 1900;
-	    }
-	}
+        {
+          /* YY MM DD */
+          if (y < 70)
+            {
+              y += 2000;
+            }
+          else
+            {
+              y += 1900;
+            }
+        }
     }
 
 
@@ -2547,69 +2469,62 @@ parse_datetime_compact (char const *str, char const *strend, DB_DATE * date,
 
       /* skip optional whitespace before the am/pm string following the numeric
        * time value */
-      q = p;			/* save p just in case there is no am/pm string */
+      q = p;                    /* save p just in case there is no am/pm string */
 
       while (p < strend && char_isspace (*p))
-	{
-	  p++;
-	}
+        {
+          p++;
+        }
 
-      if (is_local_am_str (p, strend)
-	  && (p + local_am_strlen == strend
-	      || !char_isalpha (p[local_am_strlen])))
-	{
-	  p += local_am_strlen;
-	  if (h == 12)
-	    {
-	      h = 0;		/* 12:01am means 00:01 */
-	    }
-	}
+      if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
+        {
+          p += local_am_strlen;
+          if (h == 12)
+            {
+              h = 0;            /* 12:01am means 00:01 */
+            }
+        }
       else
-	{
-	  if (is_local_pm_str (p, strend)
-	      && (p + local_pm_strlen == strend
-		  || !char_isalpha (p[local_pm_strlen])))
-	    {
-	      p += local_pm_strlen;
-	      if (h < 12)
-		{
-		  /* only a 12-hour clock uses the am/pm string */
-		  h += 12;
-		}
-	    }
-	  else
-	    {
-	      if (is_local_am_str (p, strend) &&
-		  (p + local_am_strlen == strend ||
-		   !char_isalpha (p[local_am_strlen])))
-		{
-		  p += local_am_strlen;
+        {
+          if (is_local_pm_str (p, strend) && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+            {
+              p += local_pm_strlen;
+              if (h < 12)
+                {
+                  /* only a 12-hour clock uses the am/pm string */
+                  h += 12;
+                }
+            }
+          else
+            {
+              if (is_local_am_str (p, strend) && (p + local_am_strlen == strend || !char_isalpha (p[local_am_strlen])))
+                {
+                  p += local_am_strlen;
 
-		  if (h == 12)
-		    {
-		      h = 0;
-		    }
-		}
-	      else
-		{
-		  if (is_local_pm_str (p, strend)
-		      && (p + local_pm_strlen == strend ||
-			  !char_isalpha (p[local_pm_strlen])))
-		    {
-		      p += local_pm_strlen;
-		      if (h < 12)
-			{
-			  /* only a 12-hour clock uses the am/pm string */
-			  h += 12;
-			}
-		    }
-		  else
-		    {
-		      p = q;
-		    }
-		}
-	    }
-	}
+                  if (h == 12)
+                    {
+                      h = 0;
+                    }
+                }
+              else
+                {
+                  if (is_local_pm_str (p, strend)
+                      && (p + local_pm_strlen == strend || !char_isalpha (p[local_pm_strlen])))
+                    {
+                      p += local_pm_strlen;
+                      if (h < 12)
+                        {
+                          /* only a 12-hour clock uses the am/pm string */
+                          h += 12;
+                        }
+                    }
+                  else
+                    {
+                      p = q;
+                    }
+                }
+            }
+        }
     }
 
   /* check and return the date and time read */
@@ -2621,10 +2536,10 @@ parse_datetime_compact (char const *str, char const *strend, DB_DATE * date,
       julian_decode (cdate, &month, &day, &year, NULL);
 
       if (y != year || mo != month || d != day)
-	{
-	  /* invalid date in the input string */
-	  return NULL;
-	}
+        {
+          /* invalid date in the input string */
+          return NULL;
+        }
 
       *date = cdate;
       *mtime = encode_mtime (h, m, s, msec);
@@ -2663,8 +2578,7 @@ parse_datetime_compact (char const *str, char const *strend, DB_DATE * date,
  */
 static char const *
 parse_timedate_separated (char const *str, char const *strend, DB_DATE * date,
-			  unsigned int *mtime, char const **syntax,
-			  bool * has_explicit_msec)
+                          unsigned int *mtime, char const **syntax, bool * has_explicit_msec)
 {
   char sep_ch = '0';
   char const *p = str, *syntax_check = NULL;
@@ -2674,32 +2588,28 @@ parse_timedate_separated (char const *str, char const *strend, DB_DATE * date,
   assert (str <= strend);
 
   /* attempts to read time in explicit format */
-  p =
-    parse_explicit_mtime_separated (p, strend, mtime, &syntax_check,
-				    has_explicit_msec);
+  p = parse_explicit_mtime_separated (p, strend, mtime, &syntax_check, has_explicit_msec);
 
   if (!p && !syntax_check)
     {
       /* attempt to read time in the relaxed format if explicit format failed */
       if (has_explicit_msec)
-	{
-	  *has_explicit_msec = false;
-	}
+        {
+          *has_explicit_msec = false;
+        }
 
-      p =
-	parse_mtime_separated (str, strend, mtime, &syntax_check, NULL,
-			       &sep_ch, has_explicit_msec, false);
+      p = parse_mtime_separated (str, strend, mtime, &syntax_check, NULL, &sep_ch, has_explicit_msec, false);
 
       if (p || syntax_check)
-	{
-	  if (sep_ch != '0' && sep_ch != ':')
-	    {
-	      /* the parsed time uses no ':' separator, so fallback to reading a
-	       * date-time string instead of a time-date string */
-	      p = NULL;
-	      syntax_check = NULL;
-	    }
-	}
+        {
+          if (sep_ch != '0' && sep_ch != ':')
+            {
+              /* the parsed time uses no ':' separator, so fallback to reading a
+               * date-time string instead of a time-date string */
+              p = NULL;
+              syntax_check = NULL;
+            }
+        }
     }
 
   if (p || syntax_check)
@@ -2707,72 +2617,67 @@ parse_timedate_separated (char const *str, char const *strend, DB_DATE * date,
       bool space_separator = false;
 
       if (!syntax_check)
-	{
-	  syntax_check = p;
-	}
+        {
+          syntax_check = p;
+        }
 
-      while (syntax_check < strend && !char_isalpha (*syntax_check)
-	     && !char_isdigit (*syntax_check))
-	{
-	  if (char_isspace (*syntax_check++))
-	    {
-	      space_separator = true;
-	    }
-	}
+      while (syntax_check < strend && !char_isalpha (*syntax_check) && !char_isdigit (*syntax_check))
+        {
+          if (char_isspace (*syntax_check++))
+            {
+              space_separator = true;
+            }
+        }
 
       if (space_separator)
-	{
-	  char const *q = syntax_check;
+        {
+          char const *q = syntax_check;
 
-	  syntax_check = NULL;
-	  sep_ch = '0';
+          syntax_check = NULL;
+          sep_ch = '0';
 
-	  if (p)
-	    {
-	      p =
-		parse_date_separated (q, strend, date, &syntax_check, NULL,
-				      &sep_ch);
+          if (p)
+            {
+              p = parse_date_separated (q, strend, date, &syntax_check, NULL, &sep_ch);
 
-	      if (p || syntax_check)
-		{
-		  if (sep_ch == '-' || sep_ch == '/')
-		    {
-		      if (p)
-			{
-			  /* parsed a time-date string with valid values */
-			  return p;
-			}
-		      else
-			{
-			  /* parsed a time-date string, with an invalid date value */
-			  *syntax = syntax_check;
-			  return NULL;
-			}
-		    }
-		}
-	    }
-	  else
-	    {
-	      p =
-		parse_date_separated (q, strend, date, &syntax_check, NULL,
-				      &sep_ch);
+              if (p || syntax_check)
+                {
+                  if (sep_ch == '-' || sep_ch == '/')
+                    {
+                      if (p)
+                        {
+                          /* parsed a time-date string with valid values */
+                          return p;
+                        }
+                      else
+                        {
+                          /* parsed a time-date string, with an invalid date value */
+                          *syntax = syntax_check;
+                          return NULL;
+                        }
+                    }
+                }
+            }
+          else
+            {
+              p = parse_date_separated (q, strend, date, &syntax_check, NULL, &sep_ch);
 
-	      if ((p || syntax_check) && (sep_ch == '-' || sep_ch == '/'))
-		{
-		  if (p)
-		    {
-		      *syntax = p;
-		    }
-		  else
-		    {
-		      *syntax = syntax_check;
-		    }
+              if ((p || syntax_check) && (sep_ch == '-' || sep_ch == '/'))
+                {
+                  if (p)
+                    {
+                      *syntax = p;
+                    }
+                  else
+                    {
+                      *syntax = syntax_check;
+                    }
 
-		  /* parsed a time-date string, with an invalid time value */
-		  return NULL;
-		}
-	    }
-	}
+                  /* parsed a time-date string, with an invalid time value */
+                  return NULL;
+                }
+            }
+        }
     }
 
   return NULL;
@@ -2789,8 +2694,7 @@ parse_timedate_separated (char const *str, char const *strend, DB_DATE * date,
  * millisecond(out):   the milliseconds part of the converted time
  */
 int
-db_date_parse_time (char const *str, int str_len, DB_TIME * time,
-		    int *millisecond)
+db_date_parse_time (char const *str, int str_len, DB_TIME * time, int *millisecond)
 {
   char const *syntax_check = NULL;
   int year_digits = 0;
@@ -2805,8 +2709,7 @@ db_date_parse_time (char const *str, int str_len, DB_TIME * time,
   strend = str + str_len;
 
   /* attempt to read a time-date string first */
-  p = parse_timedate_separated (str, strend, &date, &mtime, &syntax_check,
-				NULL);
+  p = parse_timedate_separated (str, strend, &date, &mtime, &syntax_check, NULL);
 
   if (p)
     {
@@ -2817,22 +2720,21 @@ db_date_parse_time (char const *str, int str_len, DB_TIME * time,
   else
     {
       if (syntax_check)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
-	  return ER_TIME_CONVERSION;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+          return ER_TIME_CONVERSION;
+        }
       else
-	{
-	  date = 0;
-	  mtime = 0;
-	}
+        {
+          date = 0;
+          mtime = 0;
+        }
     }
 
   /* attempt to read a separated DATETIME string after parsing a time-date
    * string failed */
 
-  p = parse_date_separated (str, strend, &date, &syntax_check, &year_digits,
-			    &sep_ch);
+  p = parse_date_separated (str, strend, &date, &syntax_check, &year_digits, &sep_ch);
 
   if (p || syntax_check)
     {
@@ -2841,120 +2743,109 @@ db_date_parse_time (char const *str, int str_len, DB_TIME * time,
 
       /* check whether string has explicit date part */
       if (sep_ch == '-' || sep_ch == '/')
-	{
-	  has_explicit_date_part = true;
-	}
+        {
+          has_explicit_date_part = true;
+        }
 
       if (!syntax_check)
-	{
-	  syntax_check = p;
-	}
+        {
+          syntax_check = p;
+        }
 
-      while (syntax_check < strend && !char_isalpha (*syntax_check)
-	     && !char_isdigit (*syntax_check))
-	{
-	  if (char_isspace (*syntax_check++))
-	    {
-	      space_separator = true;
-	    }
-	}
+      while (syntax_check < strend && !char_isalpha (*syntax_check) && !char_isdigit (*syntax_check))
+        {
+          if (char_isspace (*syntax_check++))
+            {
+              space_separator = true;
+            }
+        }
 
       if (space_separator)
-	{
-	  if (p)
-	    {
-	      /* Valid date followed by separator */
-	      int time_parts = 0;
+        {
+          if (p)
+            {
+              /* Valid date followed by separator */
+              int time_parts = 0;
 
-	      p = syntax_check;
-	      syntax_check = NULL;
-	      p =
-		parse_mtime_separated (p, strend, &mtime, &syntax_check,
-				       &time_parts, NULL, NULL, false);
+              p = syntax_check;
+              syntax_check = NULL;
+              p = parse_mtime_separated (p, strend, &mtime, &syntax_check, &time_parts, NULL, NULL, false);
 
-	      if (p)
-		{
-		  while (p < strend && char_isspace (*p))
-		    {
-		      p++;
-		    }
+              if (p)
+                {
+                  while (p < strend && char_isspace (*p))
+                    {
+                      p++;
+                    }
 
-		  /* if there is one non-space character in remaining characters */
-		  if (p != strend)
-		    {
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_TIME_CONVERSION, 0);
-		      return ER_TIME_CONVERSION;
-		    }
+                  /* if there is one non-space character in remaining characters */
+                  if (p != strend)
+                    {
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+                      return ER_TIME_CONVERSION;
+                    }
 
-		  if (year_digits >= 3 || (time_parts >= 2 && year_digits))
-		    {
-		      *time = mtime / 1000;
-		      *millisecond = mtime % 1000;
-		      return NO_ERROR;
-		    }
-		}
-	      else
-		{
-		  if (syntax_check)
-		    {
-		      /* date-time string with an invalid time */
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_TIME_CONVERSION, 0);
-		      return ER_TIME_CONVERSION;
-		    }
-		  else
-		    {
-		      /* no time value found following the date and separator
-		       * check whether is a Date string with space suffix
-		       * for example,"2012-8-15     " */
-		      if (has_explicit_date_part)
-			{
-			  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				  ER_TIME_CONVERSION, 0);
-			  return ER_TIME_CONVERSION;
-			}
-		    }
-		}
-	    }
-	  else
-	    {
-	      /* Invalid date followed by separator, */
-	      int time_parts = 0;
+                  if (year_digits >= 3 || (time_parts >= 2 && year_digits))
+                    {
+                      *time = mtime / 1000;
+                      *millisecond = mtime % 1000;
+                      return NO_ERROR;
+                    }
+                }
+              else
+                {
+                  if (syntax_check)
+                    {
+                      /* date-time string with an invalid time */
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+                      return ER_TIME_CONVERSION;
+                    }
+                  else
+                    {
+                      /* no time value found following the date and separator
+                       * check whether is a Date string with space suffix
+                       * for example,"2012-8-15     " */
+                      if (has_explicit_date_part)
+                        {
+                          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+                          return ER_TIME_CONVERSION;
+                        }
+                    }
+                }
+            }
+          else
+            {
+              /* Invalid date followed by separator, */
+              int time_parts = 0;
 
-	      p = syntax_check;
-	      syntax_check = NULL;
-	      p =
-		parse_mtime_separated (p, strend, &mtime, &syntax_check,
-				       &time_parts, NULL, NULL, false);
-	      if (p || syntax_check)
-		{
-		  /* date-time string with an invalid date and/or time */
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_TIME_CONVERSION, 0);
-		  return ER_TIME_CONVERSION;
-		}
-	      else
-		{
-		  if (has_explicit_date_part)
-		    {
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_TIME_CONVERSION, 0);
-		      return ER_TIME_CONVERSION;
-		    }
-		}
-	    }
-	}
+              p = syntax_check;
+              syntax_check = NULL;
+              p = parse_mtime_separated (p, strend, &mtime, &syntax_check, &time_parts, NULL, NULL, false);
+              if (p || syntax_check)
+                {
+                  /* date-time string with an invalid date and/or time */
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+                  return ER_TIME_CONVERSION;
+                }
+              else
+                {
+                  if (has_explicit_date_part)
+                    {
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+                      return ER_TIME_CONVERSION;
+                    }
+                }
+            }
+        }
       else
-	{
-	  if (p && has_explicit_date_part)
-	    {
-	      /* only explicit Date type, should return an error. */
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION,
-		      0);
-	      return ER_TIME_CONVERSION;
-	    }
-	}
+        {
+          if (p && has_explicit_date_part)
+            {
+              /* only explicit Date type, should return an error. */
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+              return ER_TIME_CONVERSION;
+            }
+        }
     }
 
   /* attempt to read an explicit separated TIME string (a time-only string)
@@ -2962,26 +2853,24 @@ db_date_parse_time (char const *str, int str_len, DB_TIME * time,
   mtime = 0;
   syntax_check = NULL;
 
-  p =
-    parse_explicit_mtime_separated (str, strend, &mtime, &syntax_check, NULL);
+  p = parse_explicit_mtime_separated (str, strend, &mtime, &syntax_check, NULL);
 
   if (p)
     {
       if (p < strend && p[0] == ' ')
-	{
-	  while (p < strend && char_isspace (*p))
-	    {
-	      p++;
-	    }
+        {
+          while (p < strend && char_isspace (*p))
+            {
+              p++;
+            }
 
-	  /* if there is one non-space character in remaining characters */
-	  if (p != strend)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION,
-		      0);
-	      return ER_TIME_CONVERSION;
-	    }
-	}
+          /* if there is one non-space character in remaining characters */
+          if (p != strend)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+              return ER_TIME_CONVERSION;
+            }
+        }
 
       *time = mtime / 1000;
       *millisecond = mtime % 1000;
@@ -2990,43 +2879,41 @@ db_date_parse_time (char const *str, int str_len, DB_TIME * time,
   else
     {
       if (syntax_check)
-	{
-	  /* Time could be parsed as [[HH : ]MM] : SS[.sss], but is an invalid time
-	   * value */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
-	  return ER_TIME_CONVERSION;
-	}
+        {
+          /* Time could be parsed as [[HH : ]MM] : SS[.sss], but is an invalid time
+           * value */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+          return ER_TIME_CONVERSION;
+        }
       else
-	{
-	  /* read a compact TIME string */
-	  p = parse_explicit_mtime_compact (str, strend, &mtime);
+        {
+          /* read a compact TIME string */
+          p = parse_explicit_mtime_compact (str, strend, &mtime);
 
-	  if (p)
-	    {
-	      while (p < strend && char_isspace (*p))
-		{
-		  p++;
-		}
+          if (p)
+            {
+              while (p < strend && char_isspace (*p))
+                {
+                  p++;
+                }
 
-	      /* if remaining characters includes one non-space character */
-	      if (p != strend)
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_TIME_CONVERSION, 0);
-		  return ER_TIME_CONVERSION;
-		}
+              /* if remaining characters includes one non-space character */
+              if (p != strend)
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+                  return ER_TIME_CONVERSION;
+                }
 
-	      *time = mtime / 1000;
-	      *millisecond = mtime % 1000;
-	      return NO_ERROR;
-	    }
-	  else
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION,
-		      0);
-	      return ER_TIME_CONVERSION;
-	    }
-	}
+              *time = mtime / 1000;
+              *millisecond = mtime % 1000;
+              return NO_ERROR;
+            }
+          else
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
+              return ER_TIME_CONVERSION;
+            }
+        }
     }
 }
 
@@ -3051,8 +2938,7 @@ db_date_parse_time (char const *str, int str_len, DB_TIME * time,
  */
 int
 db_date_parse_datetime_parts (char const *str, int str_len,
-			      DB_DATETIME * datetime,
-			      bool * has_explicit_time, char const **endp)
+                              DB_DATETIME * datetime, bool * has_explicit_time, char const **endp)
 {
   DB_DATE date = 0;
   unsigned int mtime = 0;
@@ -3060,15 +2946,14 @@ db_date_parse_datetime_parts (char const *str, int str_len,
   char const *syntax_check = NULL, *p;
 
   /* read a separated time-date string first */
-  p = parse_timedate_separated (str, strend, &date, &mtime, &syntax_check,
-				NULL);
+  p = parse_timedate_separated (str, strend, &date, &mtime, &syntax_check, NULL);
 
   if (p)
     {
       if (has_explicit_time)
-	{
-	  *has_explicit_time = true;
-	}
+        {
+          *has_explicit_time = true;
+        }
 
       datetime->date = date;
       datetime->time = mtime;
@@ -3078,17 +2963,15 @@ db_date_parse_datetime_parts (char const *str, int str_len,
   else
     {
       if (syntax_check)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION,
-		  0);
-	  return ER_DATETIME_CONVERSION;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION, 0);
+          return ER_DATETIME_CONVERSION;
+        }
     }
 
   /* read a separated DATETIME string */
 
-  p = parse_date_separated (str, strend, &datetime->date, &syntax_check, NULL,
-			    NULL);
+  p = parse_date_separated (str, strend, &datetime->date, &syntax_check, NULL, NULL);
   if (p)
     {
       char const *q;
@@ -3097,107 +2980,98 @@ db_date_parse_datetime_parts (char const *str, int str_len,
 
       /* skip the date and time separator from the string */
       while (p < strend && !char_isalpha (*p) && !char_isdigit (*p))
-	{
-	  p++;
-	}
+        {
+          p++;
+        }
 
       /* parse the time portion in the string */
-      q =
-	parse_mtime_separated (p, strend, &datetime->time, &syntax_check,
-			       NULL, NULL, NULL, true);
+      q = parse_mtime_separated (p, strend, &datetime->time, &syntax_check, NULL, NULL, NULL, true);
       if (q)
-	{
-	  if (has_explicit_time)
-	    {
-	      *has_explicit_time = true;
-	    }
+        {
+          if (has_explicit_time)
+            {
+              *has_explicit_time = true;
+            }
 
-	  goto finalcheck;
-	}
+          goto finalcheck;
+        }
       else
-	{
-	  if (syntax_check)
-	    {
-	      /* Invalid time value present in the string */
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_DATETIME_CONVERSION, 0);
-	      return ER_DATETIME_CONVERSION;
-	    }
-	  else
-	    {
-	      /* no time value present */
-	      if (has_explicit_time)
-		{
-		  *has_explicit_time = false;
-		}
+        {
+          if (syntax_check)
+            {
+              /* Invalid time value present in the string */
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION, 0);
+              return ER_DATETIME_CONVERSION;
+            }
+          else
+            {
+              /* no time value present */
+              if (has_explicit_time)
+                {
+                  *has_explicit_time = false;
+                }
 
-	      datetime->time = 0;
+              datetime->time = 0;
 
-	      goto finalcheck;
-	    }
-	}
+              goto finalcheck;
+            }
+        }
     }
   else
     {
       char const *r;
 
       if (syntax_check)
-	{
-	  /* try to parse the first date portion as YY MM DD (or more) */
-	  DB_DATETIME cdatetime;
+        {
+          /* try to parse the first date portion as YY MM DD (or more) */
+          DB_DATETIME cdatetime;
 
-	  while (str < strend && char_isspace (*str))
-	    {
-	      str++;
-	    }
+          while (str < strend && char_isspace (*str))
+            {
+              str++;
+            }
 
-	  r = parse_datetime_compact (str, strend, &cdatetime.date,
-				      &cdatetime.time, has_explicit_time,
-				      NULL);
+          r = parse_datetime_compact (str, strend, &cdatetime.date, &cdatetime.time, has_explicit_time, NULL);
 
-	  /* mysql prefers a large value here like 14, and returns NULL
-	   * otherwise */
-	  if (r && (*r == 0 || (*r && (r - str >= 6))))
-	    {
-	      if (endp)
-		{
-		  *endp = r;
-		}
-	      *datetime = cdatetime;
+          /* mysql prefers a large value here like 14, and returns NULL
+           * otherwise */
+          if (r && (*r == 0 || (*r && (r - str >= 6))))
+            {
+              if (endp)
+                {
+                  *endp = r;
+                }
+              *datetime = cdatetime;
 
-	      goto finalcheck;
-	    }
-	  else
-	    {
-	      /* invalid date value present in the string */
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_DATETIME_CONVERSION, 0);
-	      return ER_DATETIME_CONVERSION;
-	    }
-	}
+              goto finalcheck;
+            }
+          else
+            {
+              /* invalid date value present in the string */
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION, 0);
+              return ER_DATETIME_CONVERSION;
+            }
+        }
       else
-	{
-	  /* read a compact DATETIME string */
-	  r = parse_datetime_compact (str, strend, &datetime->date,
-				      &datetime->time, has_explicit_time,
-				      NULL);
+        {
+          /* read a compact DATETIME string */
+          r = parse_datetime_compact (str, strend, &datetime->date, &datetime->time, has_explicit_time, NULL);
 
-	  if (r)
-	    {
-	      if (endp)
-		{
-		  *endp = r;
-		}
+          if (r)
+            {
+              if (endp)
+                {
+                  *endp = r;
+                }
 
-	      goto finalcheck;
-	    }
-	  else
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_DATETIME_CONVERSION, 0);
-	      return ER_DATETIME_CONVERSION;
-	    }
-	}
+              goto finalcheck;
+            }
+          else
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION, 0);
+              return ER_DATETIME_CONVERSION;
+            }
+        }
     }
 
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION, 0);
@@ -3207,11 +3081,10 @@ finalcheck:
   if (datetime->date == IGREG_SPECIAL)
     {
       if (datetime->time != 0)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION,
-		  0);
-	  return ER_DATETIME_CONVERSION;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATETIME_CONVERSION, 0);
+          return ER_DATETIME_CONVERSION;
+        }
     }
 
   return NO_ERROR;
@@ -3283,9 +3156,9 @@ parse_datetime (const char *buf, int buf_len, DB_DATETIME * datetime)
     {
       p = parse_mtime (p, buf_len - (p - buf), &mtime, NULL, NULL);
       if (p)
-	{
-	  goto finalcheck;
-	}
+        {
+          goto finalcheck;
+        }
     }
 
   p = parse_mtime (buf, buf_len, &mtime, NULL, NULL);
@@ -3293,9 +3166,9 @@ parse_datetime (const char *buf, int buf_len, DB_DATETIME * datetime)
     {
       p = parse_date (p, buf_len - (p - buf), &date);
       if (p)
-	{
-	  goto finalcheck;
-	}
+        {
+          goto finalcheck;
+        }
     }
 
   return NULL;
@@ -3304,9 +3177,9 @@ finalcheck:
   if (date == IGREG_SPECIAL)
     {
       if (mtime != 0)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   datetime->date = date;
@@ -3333,9 +3206,9 @@ db_string_check_explicit_date (const char *str, int str_len)
   if (result)
     {
       while (char_isspace (result[0]))
-	{
-	  result++;
-	}
+        {
+          result++;
+        }
     }
   if (result == NULL || result[0] != '\0')
     {
@@ -3366,9 +3239,9 @@ db_string_to_date_ex (const char *str, int str_len, DB_DATE * date)
   if (p != NULL)
     {
       while (p < p_end && char_isspace (p[0]))
-	{
-	  p++;
-	}
+        {
+          p++;
+        }
     }
   if (p == NULL || (p < p_end && p[0] != '\0'))
     {
@@ -3413,9 +3286,9 @@ db_string_to_time_ex (const char *str, int str_len, DB_TIME * time)
   if (p != NULL)
     {
       while (p < p_end && char_isspace (p[0]))
-	{
-	  p++;
-	}
+        {
+          p++;
+        }
     }
   if (p == NULL || (p < p_end && p[0] != '\0'))
     {
@@ -3535,8 +3408,7 @@ encode_mtime (int hour, int minute, int second, int millisecond)
  * millisecondp(out) : millisecond pointer
  */
 static void
-decode_mtime (int mtimeval, int *hourp, int *minutep,
-	      int *secondp, int *millisecondp)
+decode_mtime (int mtimeval, int *hourp, int *minutep, int *secondp, int *millisecondp)
 {
   int hours, minutes, seconds, milliseconds;
 
@@ -3583,13 +3455,12 @@ db_datetime_to_string (char *buf, int bufsize, DB_DATETIME * datetime)
       return 0;
     }
 
-  db_datetime_decode (datetime, &mon, &day, &year,
-		      &hour, &minute, &second, &millisecond);
+  db_datetime_decode (datetime, &mon, &day, &year, &hour, &minute, &second, &millisecond);
   assert (0 <= hour);
   assert (hour <= 23);
 
   retval = snprintf (buf, bufsize, "%04d-%02d-%02d %02d:%02d:%02d.%03d",
-		     year, mon, day, hour, minute, second, millisecond);
+                     year, mon, day, hour, minute, second, millisecond);
   if (bufsize < retval)
     {
       retval = 0;
@@ -3621,18 +3492,16 @@ db_datetime_to_string2 (char *buf, int bufsize, DB_DATETIME * datetime)
       return 0;
     }
 
-  db_datetime_decode (datetime, &mon, &day, &year,
-		      &hour, &minute, &second, &millisecond);
+  db_datetime_decode (datetime, &mon, &day, &year, &hour, &minute, &second, &millisecond);
 
   if (millisecond > 0)
     {
       retval = snprintf (buf, bufsize, "%04d-%02d-%02d %02d:%02d:%02d.%03d",
-			 year, mon, day, hour, minute, second, millisecond);
+                         year, mon, day, hour, minute, second, millisecond);
     }
   else
     {
-      retval = snprintf (buf, bufsize, "%04d-%02d-%02d %02d:%02d:%02d",
-			 year, mon, day, hour, minute, second);
+      retval = snprintf (buf, bufsize, "%04d-%02d-%02d %02d:%02d:%02d", year, mon, day, hour, minute, second);
     }
   if (bufsize < retval)
     {
@@ -3651,8 +3520,7 @@ db_datetime_to_string2 (char *buf, int bufsize, DB_DATETIME * datetime)
  * datetime(out): a pointer to a DB_DATETIME to be modified
  */
 int
-db_string_to_datetime_ex (const char *str, int str_len,
-			  DB_DATETIME * datetime)
+db_string_to_datetime_ex (const char *str, int str_len, DB_DATETIME * datetime)
 {
   const char *p;
   const char *p_end = str + str_len;
@@ -3661,7 +3529,7 @@ db_string_to_datetime_ex (const char *str, int str_len,
   if (p != NULL)
     {
       while (p < p_end && char_isspace (p[0]))
-	p++;
+        p++;
     }
   if (p == NULL || (p < p_end && p[0] != '\0'))
     {
@@ -3699,8 +3567,7 @@ db_string_to_datetime (const char *str, DB_DATETIME * datetime)
  */
 int
 db_datetime_decode (const DB_DATETIME * datetime, int *month, int *day,
-		    int *year, int *hour, int *minute, int *second,
-		    int *millisecond)
+                    int *year, int *hour, int *minute, int *second, int *millisecond)
 {
   db_date_decode (&datetime->date, month, day, year);
   decode_mtime (datetime->time, hour, minute, second, millisecond);
@@ -3723,7 +3590,7 @@ db_datetime_decode (const DB_DATETIME * datetime, int *month, int *day,
  */
 int
 db_datetime_encode (DB_DATETIME * datetime, int month, int day, int year,
-		    int hour, int minute, int second, int millisecond)
+                    int hour, int minute, int second, int millisecond)
 {
   datetime->time = encode_mtime (hour, minute, second, millisecond);
   return db_date_encode (&datetime->date, month, day, year);
@@ -3737,19 +3604,17 @@ db_datetime_encode (DB_DATETIME * datetime, int month, int day, int year,
  * result_datetime(out):
  */
 int
-db_subtract_int_from_datetime (DB_DATETIME * dt1, DB_BIGINT bi2,
-			       DB_DATETIME * result_datetime)
+db_subtract_int_from_datetime (DB_DATETIME * dt1, DB_BIGINT bi2, DB_DATETIME * result_datetime)
 {
   DB_BIGINT bi1, result_bi, tmp_bi;
 
   if (bi2 < 0)
     {
       if (bi2 == DB_BIGINT_MIN)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_QPROC_TIME_UNDERFLOW, 0);
-	  return ER_QPROC_TIME_UNDERFLOW;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_TIME_UNDERFLOW, 0);
+          return ER_QPROC_TIME_UNDERFLOW;
+        }
 
       return db_add_int_to_datetime (dt1, -bi2, result_datetime);
     }
@@ -3764,8 +3629,7 @@ db_subtract_int_from_datetime (DB_DATETIME * dt1, DB_BIGINT bi2,
     }
 
   tmp_bi = (DB_BIGINT) (result_bi / MILLISECONDS_OF_ONE_DAY);
-  if (OR_CHECK_INT_OVERFLOW (tmp_bi)
-      || tmp_bi > DB_DATE_MAX || tmp_bi < DB_DATE_MIN)
+  if (OR_CHECK_INT_OVERFLOW (tmp_bi) || tmp_bi > DB_DATE_MAX || tmp_bi < DB_DATE_MIN)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_TIME_UNDERFLOW, 0);
       return ER_QPROC_TIME_UNDERFLOW;
@@ -3784,25 +3648,22 @@ db_subtract_int_from_datetime (DB_DATETIME * dt1, DB_BIGINT bi2,
  * result_datetime(out):
  */
 int
-db_add_int_to_datetime (DB_DATETIME * datetime, DB_BIGINT bi2,
-			DB_DATETIME * result_datetime)
+db_add_int_to_datetime (DB_DATETIME * datetime, DB_BIGINT bi2, DB_DATETIME * result_datetime)
 {
   DB_BIGINT bi1, result_bi, tmp_bi;
 
   if (bi2 < 0)
     {
       if (bi2 == DB_BIGINT_MIN)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_QPROC_TIME_UNDERFLOW, 0);
-	  return ER_QPROC_TIME_UNDERFLOW;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_TIME_UNDERFLOW, 0);
+          return ER_QPROC_TIME_UNDERFLOW;
+        }
 
       return db_subtract_int_from_datetime (datetime, -bi2, result_datetime);
     }
 
-  bi1 = ((DB_BIGINT) datetime->date) * MILLISECONDS_OF_ONE_DAY
-    + datetime->time;
+  bi1 = ((DB_BIGINT) datetime->date) * MILLISECONDS_OF_ONE_DAY + datetime->time;
 
   result_bi = bi1 + bi2;
   if (OR_CHECK_ADD_OVERFLOW (bi1, bi2, result_bi))
@@ -3812,8 +3673,7 @@ db_add_int_to_datetime (DB_DATETIME * datetime, DB_BIGINT bi2,
     }
 
   tmp_bi = (DB_BIGINT) (result_bi / MILLISECONDS_OF_ONE_DAY);
-  if (OR_CHECK_INT_OVERFLOW (tmp_bi)
-      || tmp_bi > DB_DATE_MAX || tmp_bi < DB_DATE_MIN)
+  if (OR_CHECK_INT_OVERFLOW (tmp_bi) || tmp_bi > DB_DATE_MAX || tmp_bi < DB_DATE_MIN)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_TIME_UNDERFLOW, 0);
       return ER_QPROC_TIME_UNDERFLOW;
@@ -3859,16 +3719,16 @@ db_get_day_of_year (int year, int month, int day)
   if (month > 2 && year % 4 == 0)
     {
       if (year % 100 != 0)
-	{
-	  day_of_year++;
-	}
+        {
+          day_of_year++;
+        }
       else
-	{
-	  if (year % 400 == 0)
-	    {
-	      day_of_year++;
-	    }
-	}
+        {
+          if (year % 400 == 0)
+            {
+              day_of_year++;
+            }
+        }
     }
   return day_of_year;
 }
@@ -3893,11 +3753,8 @@ db_get_day_of_week (int year, int month, int day)
     }
 
   dow = (day
-	 + (2 * month)
-	 + (int) (6 * (month + 1) / 10)
-	 + year
-	 + (int) (year / 4)
-	 - (int) (year / 100) + (int) (year / 400) + 1) % 7;
+         + (2 * month)
+         + (int) (6 * (month + 1) / 10) + year + (int) (year / 4) - (int) (year / 100) + (int) (year / 400) + 1) % 7;
   assert (0 <= dow);
   assert (dow <= 6);
 
@@ -3931,67 +3788,67 @@ get_end_of_week_one_of_year (int year, int mode)
     case 0:
     case 2:
       if (dow_1Jan == 1)
-	{
-	  return 7;
-	}
+        {
+          return 7;
+        }
       else
-	{
-	  return 7 + 8 - dow_1Jan;
-	}
+        {
+          return 7 + 8 - dow_1Jan;
+        }
     case 1:
     case 3:
       if (dow_1Jan == 1)
-	{
-	  return 7 + 1;
-	}
+        {
+          return 7 + 1;
+        }
       else if (dow_1Jan > 5)
-	{
-	  return 16 - dow_1Jan;
-	}
+        {
+          return 16 - dow_1Jan;
+        }
       else
-	{
-	  return 9 - dow_1Jan;
-	}
+        {
+          return 9 - dow_1Jan;
+        }
     case 4:
       if (dow_1Jan > 4)
-	{
-	  return 7 + 8 - dow_1Jan;
-	}
+        {
+          return 7 + 8 - dow_1Jan;
+        }
       else
-	{
-	  return 8 - dow_1Jan;
-	}
+        {
+          return 8 - dow_1Jan;
+        }
     case 5:
       if (dow_1Jan == 1)
-	{
-	  return 7 + 1;
-	}
+        {
+          return 7 + 1;
+        }
       else if (dow_1Jan == 2)
-	{
-	  return 7;
-	}
+        {
+          return 7;
+        }
       else
-	{
-	  return 16 - dow_1Jan;
-	}
+        {
+          return 16 - dow_1Jan;
+        }
     case 6:
       if (dow_1Jan > 4)
-	{
-	  return 7 + 8 - dow_1Jan;
-	}
+        {
+          return 7 + 8 - dow_1Jan;
+        }
       else
-	{
-	  return 8 - dow_1Jan;
-	}
+        {
+          return 8 - dow_1Jan;
+        }
     case 7:
       if (dow_1Jan == 2)
-	{
-	  return 7;
-	}
+        {
+          return 7;
+        }
       else
-	{
-	  return 16 - dow_1Jan;
-	}
+        {
+          return 16 - dow_1Jan;
+        }
     }
 
   assert (false);
@@ -4033,9 +3890,9 @@ db_get_week_of_year (int year, int month, int day, int mode)
       /* if it isn't in the first week, compute week number */
       week_number = 1 + (day_of_year - end_of_first_week) / 7;
       if ((day_of_year - end_of_first_week) % 7)
-	{
-	  week_number++;
-	}
+        {
+          week_number++;
+        }
       return week_number;
     }
 
@@ -4122,15 +3979,15 @@ db_check_time_date_format (const char *format_s)
 
   for (i = 1; i < len; i++)
     {
-      if (format_s[i - 1] != '%')	/* %x */
-	continue;
-      if (i > 1 && format_s[i - 2] == '%')	/* but not %%x */
-	continue;
+      if (format_s[i - 1] != '%')       /* %x */
+        continue;
+      if (i > 1 && format_s[i - 2] == '%')      /* but not %%x */
+        continue;
 
       if (format_type[(unsigned char) format_s[i]] != 0)
-	{
-	  res |= format_type[(unsigned char) format_s[i]];
-	}
+        {
+          res |= format_type[(unsigned char) format_s[i]];
+        }
     }
 
   return res;
@@ -4149,8 +4006,7 @@ db_check_time_date_format (const char *format_s)
  *   day, month and year will be updated just in case of no error
  */
 int
-db_add_weeks_and_days_to_date (int *day, int *month, int *year,
-			       int weeks, int day_week)
+db_add_weeks_and_days_to_date (int *day, int *month, int *year, int weeks, int day_week)
 {
   int days_months[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
   int d, m, y, i;
@@ -4197,24 +4053,24 @@ db_add_weeks_and_days_to_date (int *day, int *month, int *year,
     {
       d = d + 7;
       if (d > days_months[m])
-	{
-	  d = d - days_months[m];
-	  m = m + 1;
+        {
+          d = d - days_months[m];
+          m = m + 1;
 
-	  if (m > 12)
-	    {
-	      m = 1;
-	      y = y + 1;
-	      if ((y % 400 == 0) || (y % 100 != 0 && y % 4 == 0))
-		{
-		  days_months[2] = 29;
-		}
-	      else
-		{
-		  days_months[2] = 28;
-		}
-	    }
-	}
+          if (m > 12)
+            {
+              m = 1;
+              y = y + 1;
+              if ((y % 400 == 0) || (y % 100 != 0 && y % 4 == 0))
+                {
+                  days_months[2] = 29;
+                }
+              else
+                {
+                  days_months[2] = 28;
+                }
+            }
+        }
     }
 
   d = d + day_week;
@@ -4223,10 +4079,10 @@ db_add_weeks_and_days_to_date (int *day, int *month, int *year,
       d = d - days_months[m];
       m = m + 1;
       if (m > 12)
-	{
-	  m = 1;
-	  y = y + 1;
-	}
+        {
+          m = 1;
+          y = y + 1;
+        }
     }
 
   if (y < 0 || y > 9999)

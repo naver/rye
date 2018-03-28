@@ -76,10 +76,10 @@
 typedef struct thread_manager THREAD_MANAGER;
 struct thread_manager
 {
-  THREAD_ENTRY *thread_array;	/* thread entry array */
-  int num_total;		/* possible total threads. length of thread_array */
+  THREAD_ENTRY *thread_array;   /* thread entry array */
+  int num_total;                /* possible total threads. length of thread_array */
 
-  int num_workers;		/* number of all workers and con_handlers */
+  int num_workers;              /* number of all workers and con_handlers */
   int num_daemons;
   bool initialized;
 };
@@ -114,33 +114,20 @@ static THREAD_MANAGER thread_Manager;
  * For special Purpose Threads: deadlock detector, checkpoint daemon
  *    Under the win32-threads system, *_cond variables are an auto-reset event
  */
-static DAEMON_THREAD_MONITOR
-  thread_Deadlock_detect_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Checkpoint_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Purge_archive_logs_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Oob_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Page_flush_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Flush_control_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Session_control_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-DAEMON_THREAD_MONITOR
-  thread_Log_flush_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Check_ha_delay_info_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Auto_volume_expansion_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-static DAEMON_THREAD_MONITOR
-  thread_Log_clock_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
-DAEMON_THREAD_MONITOR
-  thread_Heap_bestspace_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Deadlock_detect_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Checkpoint_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Purge_archive_logs_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Oob_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Page_flush_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Flush_control_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Session_control_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+DAEMON_THREAD_MONITOR thread_Log_flush_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Check_ha_delay_info_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Auto_volume_expansion_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Log_clock_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+DAEMON_THREAD_MONITOR thread_Heap_bestspace_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
 #if 0
-static DAEMON_THREAD_MONITOR
-  thread_Job_queue_control_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
+static DAEMON_THREAD_MONITOR thread_Job_queue_control_thread = DAEMON_THREAD_MONITOR_INITIALIZER;
 #endif
 
 static int thread_initialize_entry (THREAD_ENTRY * entry_ptr);
@@ -151,38 +138,24 @@ static THREAD_ENTRY *thread_find_entry_by_tran_index (int tran_index);
 #endif
 static void thread_stop_oob_handler_thread ();
 static void thread_stop_daemon (DAEMON_THREAD_MONITOR * daemon_monitor);
-static void thread_wakeup_daemon_thread (DAEMON_THREAD_MONITOR *
-					 daemon_monitor);
+static void thread_wakeup_daemon_thread (DAEMON_THREAD_MONITOR * daemon_monitor);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static int thread_compare_shutdown_sequence_of_daemon (const void *p1,
-						       const void *p2);
+static int thread_compare_shutdown_sequence_of_daemon (const void *p1, const void *p2);
 #endif
 
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_deadlock_detect_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_checkpoint_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_purge_archive_logs_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_page_flush_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_flush_control_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_log_flush_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_session_control_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_check_ha_delay_info_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_auto_volume_expansion_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_log_clock_thread (void *);
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_heap_bestspace_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_deadlock_detect_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_checkpoint_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_purge_archive_logs_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_page_flush_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_flush_control_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_log_flush_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_session_control_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_check_ha_delay_info_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_auto_volume_expansion_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_log_clock_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_heap_bestspace_thread (void *);
 #if 0
-static THREAD_RET_T THREAD_CALLING_CONVENTION
-thread_job_queue_control_thread (void *);
+static THREAD_RET_T THREAD_CALLING_CONVENTION thread_job_queue_control_thread (void *);
 #endif
 
 typedef struct thread_daemon THREAD_DAEMON;
@@ -228,29 +201,22 @@ static THREAD_DAEMON thread_Daemons[] = {
    (void *) thread_log_flush_thread}
 };
 
-static int thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason,
-				   bool had_mutex);
+static int thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason, bool had_mutex);
 static void thread_reset_nrequestors_of_log_flush_thread (void);
 
-extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p,
-				     INT64 * source_applied_time);
+extern int catcls_get_analyzer_info (THREAD_ENTRY * thread_p, INT64 * source_applied_time);
 
 static int thread_create_thread_attr (pthread_attr_t * thread_attr);
 static int thread_destroy_thread_attr (pthread_attr_t * thread_attr);
-static int thread_create_new (THREAD_ENTRY * thread_p,
-			      pthread_attr_t * thread_attr,
-			      void *(*start_routine) (void *));
+static int thread_create_new (THREAD_ENTRY * thread_p, pthread_attr_t * thread_attr, void *(*start_routine) (void *));
 static THREAD_ENTRY *thread_get_worker (int worker_index);
 static THREAD_ENTRY *thread_get_daemon (int daemon_index);
 static int thread_create_new_thread_group (int base_index,
-					   int num_threads,
-					   void *(*thread_func) (void *),
-					   bool is_daemon);
+                                           int num_threads, void *(*thread_func) (void *), bool is_daemon);
 static void thread_reset_thread_info (THREAD_ENTRY * thread_p);
 
 static THREAD_RET_T THREAD_CALLING_CONVENTION thread_worker (void *arg_p);
-static void thread_set_worker_group_info (int max_workers, int base_index,
-					  JOB_QUEUE_TYPE q_type);
+static void thread_set_worker_group_info (int max_workers, int base_index, JOB_QUEUE_TYPE q_type);
 static void thread_init_worker_group (void);
 static int thread_max_workers (void);
 
@@ -298,9 +264,9 @@ thread_set_thread_entry_info (THREAD_ENTRY * entry_p)
     {
       r = pthread_setspecific (css_Thread_key, (const void *) entry_p);
       if (r == 0)
-	{
-	  r = er_set_msg_info (&(entry_p->er_msg));
-	}
+        {
+          r = er_set_msg_info (&(entry_p->er_msg));
+        }
     }
 
   return r;
@@ -367,18 +333,18 @@ thread_initialize_manager (void)
     {
       /* destroy mutex and cond */
       for (i = 1; i < thread_Manager.num_total; i++)
-	{
-	  r = thread_finalize_entry (&thread_Manager.thread_array[i]);
-	  if (r != NO_ERROR)
-	    {
-	      return r;
-	    }
-	}
+        {
+          r = thread_finalize_entry (&thread_Manager.thread_array[i]);
+          if (r != NO_ERROR)
+            {
+              return r;
+            }
+        }
       r = thread_finalize_entry (&thread_Manager.thread_array[0]);
       if (r != NO_ERROR)
-	{
-	  return r;
-	}
+        {
+          return r;
+        }
       free_and_init (thread_Manager.thread_array);
     }
 
@@ -388,15 +354,13 @@ thread_initialize_manager (void)
 
   /* possible max workers and total threads for memory allocation */
   thread_Manager.num_workers = thread_max_workers ();
-  thread_Manager.num_total =
-    thread_Manager.num_workers + DIM (thread_Daemons) + NUM_SYSTEM_TRANS;
+  thread_Manager.num_total = thread_Manager.num_workers + DIM (thread_Daemons) + NUM_SYSTEM_TRANS;
 
   size = thread_Manager.num_total * sizeof (THREAD_ENTRY);
   tsd_ptr = thread_Manager.thread_array = (THREAD_ENTRY *) malloc (size);
   if (tsd_ptr == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -411,7 +375,7 @@ thread_initialize_manager (void)
   tsd_ptr->tid = pthread_self ();
   tsd_ptr->status = TS_RUN;
   tsd_ptr->resume_status = THREAD_RESUME_NONE;
-  tsd_ptr->tran_index = 0;	/* system transaction */
+  tsd_ptr->tran_index = 0;      /* system transaction */
   thread_set_thread_entry_info (tsd_ptr);
 
   /* init worker/deadlock-detection/checkpoint daemon/audit-flush
@@ -421,9 +385,9 @@ thread_initialize_manager (void)
     {
       r = thread_initialize_entry (&thread_Manager.thread_array[i]);
       if (r != NO_ERROR)
-	{
-	  return r;
-	}
+        {
+          return r;
+        }
       thread_Manager.thread_array[i].index = i;
     }
 
@@ -433,8 +397,7 @@ thread_initialize_manager (void)
     {
       WORKER_GROUP_INFO *group_info = &worker_Group_info[i];
       thread_set_worker_group_info (group_info->num_workers,
-				    group_info->base_index_in_workers,
-				    group_info->job_queue_type);
+                                    group_info->base_index_in_workers, group_info->job_queue_type);
     }
 
   thread_Manager.initialized = true;
@@ -479,8 +442,7 @@ thread_max_workers ()
 }
 
 static void
-thread_set_worker_group_info (int max_workers, int base_index,
-			      JOB_QUEUE_TYPE q_type)
+thread_set_worker_group_info (int max_workers, int base_index, JOB_QUEUE_TYPE q_type)
 {
   int i;
   THREAD_ENTRY *thr_p;
@@ -521,22 +483,19 @@ server_stats_dump (FILE * fp)
       total_cs_waits_clock += stats[item_waits].acc_time;
     }
 
-  fprintf (fp, "%*ccsect_wait total wait:%ld\n", indent, ' ',
-	   mnt_clock_to_time (total_cs_waits_clock));
+  fprintf (fp, "%*ccsect_wait total wait:%ld\n", indent, ' ', mnt_clock_to_time (total_cs_waits_clock));
   for (i = 0; i < CSECT_LAST; i++)
     {
       item_waits = mnt_csect_type_to_server_item_waits (i);
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
-	       csect_get_cs_name (i),
-	       mnt_clock_to_time (stats[item_waits].acc_time));
+               csect_get_cs_name (i), mnt_clock_to_time (stats[item_waits].acc_time));
       /* keep out zero division */
       if (total_cs_waits_clock > 0)
-	{
-	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats[item_waits].acc_time) /
-		    total_cs_waits_clock) * 100);
-	}
+        {
+          fprintf (fp, "(%.1f%%)",
+                   ((double) mnt_clock_to_time (stats[item_waits].acc_time) / total_cs_waits_clock) * 100);
+        }
       fprintf (fp, "\n");
     }
 
@@ -548,22 +507,19 @@ server_stats_dump (FILE * fp)
       total_page_waits_clock += stats[item_waits].acc_time;
     }
 
-  fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ',
-	   mnt_clock_to_time (total_page_waits_clock));
+  fprintf (fp, "%*cpage_wait total wait:%ld\n", indent, ' ', mnt_clock_to_time (total_page_waits_clock));
   for (i = 0; i < PAGE_LAST; i++)
     {
       item_waits = mnt_page_ptype_to_server_item_fetches_waits (i);
 
       fprintf (fp, "%*c%s:%ld ", indent + 5, ' ',
-	       page_type_to_string (i),
-	       mnt_clock_to_time (stats[item_waits].acc_time));
+               page_type_to_string (i), mnt_clock_to_time (stats[item_waits].acc_time));
       /* keep out zero division */
       if (total_page_waits_clock > 0)
-	{
-	  fprintf (fp, "(%.1f%%)",
-		   ((double) mnt_clock_to_time (stats[item_waits].acc_time) /
-		    total_page_waits_clock) * 100);
-	}
+        {
+          fprintf (fp, "(%.1f%%)",
+                   ((double) mnt_clock_to_time (stats[item_waits].acc_time) / total_page_waits_clock) * 100);
+        }
       fprintf (fp, "\n");
     }
 
@@ -573,13 +529,11 @@ server_stats_dump (FILE * fp)
 #if 0
 int
 server_stats_add_wait_time (THREAD_ENTRY * thread_p,
-			    SERVER_STATS_TYPE stats_type, int sub_type,
-			    struct timeval *wait_start)
+                            SERVER_STATS_TYPE stats_type, int sub_type, struct timeval *wait_start)
 {
   int error_code = NO_ERROR;
 
-  error_code = server_stats_set_current_wait_time (thread_p,
-						   stats_type, wait_start);
+  error_code = server_stats_set_current_wait_time (thread_p, stats_type, wait_start);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -589,9 +543,7 @@ server_stats_add_wait_time (THREAD_ENTRY * thread_p,
 }
 
 int
-server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
-				    SERVER_STATS_TYPE stats_type,
-				    struct timeval *wait_start)
+server_stats_set_current_wait_time (THREAD_ENTRY * thread_p, SERVER_STATS_TYPE stats_type, struct timeval *wait_start)
 {
   struct timeval wait_end;
 
@@ -603,14 +555,12 @@ server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
   gettimeofday (&wait_end, NULL);
 
   INIT_TIMEVAL (thread_p->server_stats.current_wait_time);
-  ADD_TIMEVAL (thread_p->server_stats.current_wait_time,
-	       *wait_start, wait_end);
+  ADD_TIMEVAL (thread_p->server_stats.current_wait_time, *wait_start, wait_end);
 
   switch (stats_type)
     {
     case SERVER_STATS_CS:
-      ADD_TIMEVAL (thread_p->server_stats.cs_total_wait_time,
-		   *wait_start, wait_end);
+      ADD_TIMEVAL (thread_p->server_stats.cs_total_wait_time, *wait_start, wait_end);
       break;
 
     default:
@@ -622,9 +572,7 @@ server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
 }
 
 int
-server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
-				    SERVER_STATS_TYPE stats_type,
-				    int sub_type)
+server_stats_add_current_wait_time (THREAD_ENTRY * thread_p, SERVER_STATS_TYPE stats_type, int sub_type)
 {
   struct timeval wait_end;
 
@@ -637,8 +585,7 @@ server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
   switch (stats_type)
     {
     case SERVER_STATS_CS:
-      ADD_WAIT_TIMEVAL (thread_p->server_stats.cs_wait_time[sub_type],
-			thread_p->server_stats.current_wait_time);
+      ADD_WAIT_TIMEVAL (thread_p->server_stats.cs_wait_time[sub_type], thread_p->server_stats.current_wait_time);
       break;
 
     default:
@@ -672,16 +619,14 @@ thread_start_workers (void)
       group_info = &worker_Group_info[i];
 
       r = thread_create_new_thread_group (group_info->base_index_in_workers,
-					  group_info->num_workers,
-					  group_info->thread_func, false);
+                                          group_info->num_workers, group_info->thread_func, false);
       if (r != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
-  r = thread_create_new_thread_group (0, thread_Manager.num_daemons,
-				      NULL, true);
+  r = thread_create_new_thread_group (0, thread_Manager.num_daemons, NULL, true);
   if (r != NO_ERROR)
     {
       return ER_FAILED;
@@ -691,9 +636,7 @@ thread_start_workers (void)
 }
 
 static int
-thread_create_new_thread_group (int base_index,
-				int num_threads,
-				void *(*thread_func) (void *), bool is_daemon)
+thread_create_new_thread_group (int base_index, int num_threads, void *(*thread_func) (void *), bool is_daemon)
 {
   int i;
   THREAD_ENTRY *thread_p;
@@ -710,21 +653,21 @@ thread_create_new_thread_group (int base_index,
   for (i = 0; i < num_threads; i++)
     {
       if (is_daemon)
-	{
-	  thread_func = thread_Daemons[i].daemon_function;
-	  thread_p = thread_get_daemon (i);
-	  thread_Daemons[i].daemon_monitor->thread_index = thread_p->index;
-	}
+        {
+          thread_func = thread_Daemons[i].daemon_function;
+          thread_p = thread_get_daemon (i);
+          thread_Daemons[i].daemon_monitor->thread_index = thread_p->index;
+        }
       else
-	{
-	  thread_p = thread_get_worker (base_index + i);
-	}
+        {
+          thread_p = thread_get_worker (base_index + i);
+        }
 
       r = thread_create_new (thread_p, &thread_attr, thread_func);
       if (r != NO_ERROR)
-	{
-	  return r;
-	}
+        {
+          return r;
+        }
     }
 
   thread_destroy_thread_attr (&thread_attr);
@@ -743,24 +686,21 @@ thread_create_thread_attr (pthread_attr_t * thread_attr)
   r = pthread_attr_init (thread_attr);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_ATTR_INIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_ATTR_INIT, 0);
       return ER_CSS_PTHREAD_ATTR_INIT;
     }
 
   r = pthread_attr_setdetachstate (thread_attr, PTHREAD_CREATE_DETACHED);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_ATTR_SETDETACHSTATE, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_ATTR_SETDETACHSTATE, 0);
       return ER_CSS_PTHREAD_ATTR_SETDETACHSTATE;
     }
 
   r = pthread_attr_setscope (thread_attr, PTHREAD_SCOPE_SYSTEM);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_ATTR_SETSCOPE, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_ATTR_SETSCOPE, 0);
       return ER_CSS_PTHREAD_ATTR_SETSCOPE;
     }
 
@@ -768,15 +708,12 @@ thread_create_thread_attr (pthread_attr_t * thread_attr)
   r = pthread_attr_getstacksize (thread_attr, &ts_size);
   if (ts_size != (size_t) prm_get_bigint_value (PRM_ID_THREAD_STACKSIZE))
     {
-      r = pthread_attr_setstacksize (thread_attr,
-				     prm_get_bigint_value
-				     (PRM_ID_THREAD_STACKSIZE));
+      r = pthread_attr_setstacksize (thread_attr, prm_get_bigint_value (PRM_ID_THREAD_STACKSIZE));
       if (r != 0)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_CSS_PTHREAD_ATTR_SETSTACKSIZE, 0);
-	  return ER_CSS_PTHREAD_ATTR_SETSTACKSIZE;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_ATTR_SETSTACKSIZE, 0);
+          return ER_CSS_PTHREAD_ATTR_SETSTACKSIZE;
+        }
     }
 #endif /* _POSIX_THREAD_ATTR_STACKSIZE */
   return NO_ERROR;
@@ -788,8 +725,7 @@ thread_destroy_thread_attr (pthread_attr_t * thread_attr)
   /* destroy thread_attribute */
   if (pthread_attr_destroy (thread_attr) < 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_ATTR_DESTROY, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_ATTR_DESTROY, 0);
       return ER_CSS_PTHREAD_ATTR_DESTROY;
     }
 
@@ -797,25 +733,21 @@ thread_destroy_thread_attr (pthread_attr_t * thread_attr)
 }
 
 static int
-thread_create_new (THREAD_ENTRY * thread_p,
-		   pthread_attr_t * thread_attr,
-		   void *(*start_routine) (void *))
+thread_create_new (THREAD_ENTRY * thread_p, pthread_attr_t * thread_attr, void *(*start_routine) (void *))
 {
   int r;
 
   r = pthread_mutex_lock (&thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_LOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_LOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_LOCK;
     }
 
   r = pthread_create (&thread_p->tid, thread_attr, start_routine, thread_p);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_CREATE, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_CREATE, 0);
       pthread_mutex_unlock (&thread_p->th_entry_lock);
       return ER_CSS_PTHREAD_CREATE;
     }
@@ -823,8 +755,7 @@ thread_create_new (THREAD_ENTRY * thread_p,
   r = pthread_mutex_unlock (&thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_UNLOCK;
     }
 
@@ -854,44 +785,42 @@ loop:
       thread_p = thread_get_worker (i);
 
       conn_p = thread_p->conn_entry;
-      if ((stop_phase == THREAD_STOP_LOGWR && conn_p == NULL)
-	  || (conn_p != NULL && conn_p->stop_phase != stop_phase))
-	{
-	  continue;
-	}
+      if ((stop_phase == THREAD_STOP_LOGWR && conn_p == NULL) || (conn_p != NULL && conn_p->stop_phase != stop_phase))
+        {
+          continue;
+        }
 
       thread_p->shutdown = true;
 
       if (thread_p->tran_index != -1)
-	{
-	  if (stop_phase == THREAD_STOP_WORKERS_EXCEPT_LOGWR)
-	    {
-	      logtb_set_tran_index_interrupt (NULL, thread_p->tran_index, 1);
-	    }
+        {
+          if (stop_phase == THREAD_STOP_WORKERS_EXCEPT_LOGWR)
+            {
+              logtb_set_tran_index_interrupt (NULL, thread_p->tran_index, 1);
+            }
 
-	  if (thread_p->status == TS_WAIT)
-	    {
-	      if (stop_phase == THREAD_STOP_WORKERS_EXCEPT_LOGWR)
-		{
-		  thread_p->interrupted = true;
-		  thread_wakeup (thread_p, THREAD_RESUME_DUE_TO_INTERRUPT);
-		}
-	      else if (stop_phase == THREAD_STOP_LOGWR)
-		{
-		  /*
-		   * we can only wakeup LWT when waiting on THREAD_LOGWR_SUSPENDED.
-		   */
-		  r =
-		    thread_check_suspend_reason_and_wakeup (thread_p,
-							    THREAD_RESUME_DUE_TO_INTERRUPT,
-							    THREAD_LOGWR_SUSPENDED);
-		  if (r == NO_ERROR)
-		    {
-		      thread_p->interrupted = true;
-		    }
-		}
-	    }
-	}
+          if (thread_p->status == TS_WAIT)
+            {
+              if (stop_phase == THREAD_STOP_WORKERS_EXCEPT_LOGWR)
+                {
+                  thread_p->interrupted = true;
+                  thread_wakeup (thread_p, THREAD_RESUME_DUE_TO_INTERRUPT);
+                }
+              else if (stop_phase == THREAD_STOP_LOGWR)
+                {
+                  /*
+                   * we can only wakeup LWT when waiting on THREAD_LOGWR_SUSPENDED.
+                   */
+                  r =
+                    thread_check_suspend_reason_and_wakeup (thread_p,
+                                                            THREAD_RESUME_DUE_TO_INTERRUPT, THREAD_LOGWR_SUSPENDED);
+                  if (r == NO_ERROR)
+                    {
+                      thread_p->interrupted = true;
+                    }
+                }
+            }
+        }
     }
 
   THREAD_SLEEP (50);
@@ -907,30 +836,28 @@ loop:
       thread_p = thread_get_worker (i);
 
       conn_p = thread_p->conn_entry;
-      if ((stop_phase == THREAD_STOP_LOGWR && conn_p == NULL)
-	  || (conn_p && conn_p->stop_phase != stop_phase))
-	{
-	  continue;
-	}
+      if ((stop_phase == THREAD_STOP_LOGWR && conn_p == NULL) || (conn_p && conn_p->stop_phase != stop_phase))
+        {
+          continue;
+        }
 
       if (thread_p->status != TS_FREE && thread_p->status != TS_DEAD)
-	{
-	  repeat_loop = true;
-	}
+        {
+          repeat_loop = true;
+        }
     }
 
   if (repeat_loop)
     {
       if (css_is_shutdown_timeout_expired ())
-	{
+        {
 #if defined(RYE_DEBUG)
-	  logtb_dump_trantable (NULL, stderr);
+          logtb_dump_trantable (NULL, stderr);
 #endif
-	  er_log_debug (ARG_FILE_LINE,
-			"thread_stop_active_workers: _exit(0)\n");
-	  /* exit process after some tries */
-	  _exit (0);
-	}
+          er_log_debug (ARG_FILE_LINE, "thread_stop_active_workers: _exit(0)\n");
+          /* exit process after some tries */
+          _exit (0);
+        }
 
       goto loop;
     }
@@ -969,14 +896,12 @@ thread_stop_daemon (DAEMON_THREAD_MONITOR * daemon_monitor)
       thread_wakeup_daemon_thread (daemon_monitor);
 
       if (css_is_shutdown_timeout_expired ())
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"thread_stop_daemon(%d): _exit(0)\n",
-			daemon_monitor->thread_index);
-	  /* exit process after some tries */
-	  _exit (0);
-	}
-      thread_sleep (10);	/* 10 msec */
+        {
+          er_log_debug (ARG_FILE_LINE, "thread_stop_daemon(%d): _exit(0)\n", daemon_monitor->thread_index);
+          /* exit process after some tries */
+          _exit (0);
+        }
+      thread_sleep (10);        /* 10 msec */
     }
 }
 
@@ -1015,13 +940,12 @@ thread_stop_oob_handler_thread ()
       thread_wakeup_oob_handler_thread ();
 
       if (css_is_shutdown_timeout_expired ())
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"thread_stop_oob_handler_thread: _exit(0)\n");
-	  /* exit process after some tries */
-	  _exit (0);
-	}
-      thread_sleep (10);	/* 10 msec */
+        {
+          er_log_debug (ARG_FILE_LINE, "thread_stop_oob_handler_thread: _exit(0)\n");
+          /* exit process after some tries */
+          _exit (0);
+        }
+      thread_sleep (10);        /* 10 msec */
     }
 }
 
@@ -1038,9 +962,7 @@ thread_stop_active_daemons (void)
 
   for (i = 0; i < thread_Manager.num_daemons; i++)
     {
-      assert ((i == 0)
-	      || (thread_Daemons[i - 1].shutdown_sequence
-		  < thread_Daemons[i].shutdown_sequence));
+      assert ((i == 0) || (thread_Daemons[i - 1].shutdown_sequence < thread_Daemons[i].shutdown_sequence));
 
       thread_stop_daemon (thread_Daemons[i].daemon_monitor);
     }
@@ -1076,23 +998,23 @@ loop:
     {
       thread_p = thread_get_worker (i);
       if (thread_p->status != TS_DEAD)
-	{
-	  repeat_loop = true;
-	}
+        {
+          repeat_loop = true;
+        }
     }
 
   if (repeat_loop)
     {
       if (css_is_shutdown_timeout_expired ())
-	{
+        {
 #if defined(RYE_DEBUG)
-	  xlogtb_dump_trantable (NULL, stderr);
+          xlogtb_dump_trantable (NULL, stderr);
 #endif
-	  er_log_debug (ARG_FILE_LINE, "thread_kill_all_workers: _exit(0)\n");
-	  /* exit process after some tries */
-	  _exit (0);
-	}
-      thread_sleep (1000);	/* 1000 msec */
+          er_log_debug (ARG_FILE_LINE, "thread_kill_all_workers: _exit(0)\n");
+          /* exit process after some tries */
+          _exit (0);
+        }
+      thread_sleep (1000);      /* 1000 msec */
       goto loop;
     }
 
@@ -1141,8 +1063,7 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
   r = pthread_mutex_init (&entry_p->tran_index_lock, NULL);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_INIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_INIT, 0);
       return ER_CSS_PTHREAD_MUTEX_INIT;
     }
 
@@ -1164,24 +1085,21 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
   r = pthread_mutex_init (&entry_p->th_entry_lock, NULL);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_INIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_INIT, 0);
       return ER_CSS_PTHREAD_MUTEX_INIT;
     }
 
   r = pthread_mutex_init (&entry_p->th_job_lock, NULL);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_INIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_INIT, 0);
       return ER_CSS_PTHREAD_MUTEX_INIT;
     }
 
   r = pthread_cond_init (&entry_p->wakeup_cond, NULL);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_INIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_INIT, 0);
       return ER_CSS_PTHREAD_COND_INIT;
     }
 
@@ -1196,7 +1114,7 @@ thread_initialize_entry (THREAD_ENTRY * entry_p)
 
   entry_p->check_interrupt = true;
   entry_p->check_page_validation = true;
-  entry_p->type = TT_WORKER;	/* init */
+  entry_p->type = TT_WORKER;    /* init */
 
   (void) css_set_private_heap (entry_p, 0);
   assert (css_get_private_heap (entry_p) == 0);
@@ -1256,10 +1174,10 @@ thread_finalize_entry (THREAD_ENTRY * entry_p)
   for (i = 0; i < 3; i++)
     {
       if (entry_p->cnv_adj_buffer[i] != NULL)
-	{
-	  adj_ar_free (entry_p->cnv_adj_buffer[i]);
-	  entry_p->cnv_adj_buffer[i] = NULL;
-	}
+        {
+          adj_ar_free (entry_p->cnv_adj_buffer[i]);
+          entry_p->cnv_adj_buffer[i] = NULL;
+        }
     }
 #endif
 
@@ -1268,29 +1186,25 @@ thread_finalize_entry (THREAD_ENTRY * entry_p)
   r = pthread_mutex_destroy (&entry_p->tran_index_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_DESTROY, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_DESTROY, 0);
       error = ER_CSS_PTHREAD_MUTEX_DESTROY;
     }
   r = pthread_mutex_destroy (&entry_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_DESTROY, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_DESTROY, 0);
       error = ER_CSS_PTHREAD_MUTEX_DESTROY;
     }
   r = pthread_mutex_destroy (&entry_p->th_job_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_DESTROY, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_DESTROY, 0);
       error = ER_CSS_PTHREAD_MUTEX_DESTROY;
     }
   r = pthread_cond_destroy (&entry_p->wakeup_cond);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_DESTROY, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_DESTROY, 0);
       error = ER_CSS_PTHREAD_COND_DESTROY;
     }
   entry_p->resume_status = THREAD_RESUME_NONE;
@@ -1328,9 +1242,8 @@ void
 thread_print_entry_info (THREAD_ENTRY * thread_p)
 {
   fprintf (stderr,
-	   "THREAD_ENTRY(tid(%ld),client_id(%d),tran_index(%d),rid(%d),status(%d))\n",
-	   thread_p->tid, thread_p->client_id, thread_p->tran_index,
-	   thread_p->rid, thread_p->status);
+           "THREAD_ENTRY(tid(%ld),client_id(%d),tran_index(%d),rid(%d),status(%d))\n",
+           thread_p->tid, thread_p->client_id, thread_p->tran_index, thread_p->rid, thread_p->status);
 
   if (thread_p->conn_entry != NULL)
     {
@@ -1363,9 +1276,9 @@ thread_find_entry_by_tran_index_except_me (int tran_index)
     {
       thread_p = thread_get_worker (i);
       if (thread_p->tran_index == tran_index && thread_p->tid != me)
-	{
-	  return thread_p;
-	}
+        {
+          return thread_p;
+        }
     }
 
   return NULL;
@@ -1387,9 +1300,9 @@ thread_find_entry_by_tran_index (int tran_index)
     {
       thread_p = thread_get_worker (i);
       if (thread_p->tran_index == tran_index)
-	{
-	  return thread_p;
-	}
+        {
+          return thread_p;
+        }
     }
 
   return NULL;
@@ -1441,8 +1354,7 @@ thread_lock_entry (THREAD_ENTRY * thread_p)
   r = pthread_mutex_lock (&thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_LOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_LOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_LOCK;
     }
 
@@ -1464,8 +1376,7 @@ thread_unlock_entry (THREAD_ENTRY * thread_p)
   r = pthread_mutex_unlock (&thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_UNLOCK;
     }
 
@@ -1482,8 +1393,7 @@ thread_unlock_entry (THREAD_ENTRY * thread_p)
  *       also, the lock must have already been acquired.
  */
 int
-thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
-					int suspended_reason)
+thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p, int suspended_reason)
 {
   int r;
   int old_status;
@@ -1501,13 +1411,11 @@ thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
 
   if (suspended_reason == THREAD_LOCK_SUSPENDED)
     {
-      mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LOCK_WAITS,
-				   1, perf_start);
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LOCK_WAITS, 1, perf_start);
     }
   else if (suspended_reason == THREAD_PGBUF_SUSPENDED)
     {
-      mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LATCH_WAITS,
-				   1, perf_start);
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_SQL_TRACE_LATCH_WAITS, 1, perf_start);
     }
   else
     {
@@ -1516,8 +1424,7 @@ thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
 
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_WAIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_WAIT, 0);
       return ER_CSS_PTHREAD_COND_WAIT;
     }
 
@@ -1526,8 +1433,7 @@ thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
   r = pthread_mutex_unlock (&thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_UNLOCK;
     }
 
@@ -1543,9 +1449,7 @@ thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
  *   suspended_reason(in):
  */
 int
-thread_suspend_timeout_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
-						struct timespec *time_p,
-						int suspended_reason)
+thread_suspend_timeout_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p, struct timespec *time_p, int suspended_reason)
 {
   int r;
   int old_status;
@@ -1557,14 +1461,11 @@ thread_suspend_timeout_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
 
   thread_p->resume_status = suspended_reason;
 
-  r =
-    pthread_cond_timedwait (&thread_p->wakeup_cond, &thread_p->th_entry_lock,
-			    time_p);
+  r = pthread_cond_timedwait (&thread_p->wakeup_cond, &thread_p->th_entry_lock, time_p);
 
   if (r != 0 && r != ETIMEDOUT)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_TIMEDWAIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_TIMEDWAIT, 0);
       return ER_CSS_PTHREAD_COND_TIMEDWAIT;
     }
 
@@ -1578,8 +1479,7 @@ thread_suspend_timeout_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
   r = pthread_mutex_unlock (&thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_UNLOCK;
     }
 
@@ -1592,8 +1492,7 @@ thread_suspend_timeout_wakeup_and_unlock_entry (THREAD_ENTRY * thread_p,
  *   tran_index(in):
  */
 int
-thread_suspend_wakeup_and_unlock_entry_with_tran_index (int tran_index,
-							int suspended_reason)
+thread_suspend_wakeup_and_unlock_entry_with_tran_index (int tran_index, int suspended_reason)
 {
   THREAD_ENTRY *thread_p;
   int r;
@@ -1618,8 +1517,7 @@ thread_suspend_wakeup_and_unlock_entry_with_tran_index (int tran_index,
   r = pthread_cond_wait (&thread_p->wakeup_cond, &thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_WAIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_WAIT, 0);
       return ER_CSS_PTHREAD_COND_WAIT;
     }
 
@@ -1628,8 +1526,7 @@ thread_suspend_wakeup_and_unlock_entry_with_tran_index (int tran_index,
   r = pthread_mutex_unlock (&thread_p->th_entry_lock);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_UNLOCK;
     }
 
@@ -1644,8 +1541,7 @@ thread_suspend_wakeup_and_unlock_entry_with_tran_index (int tran_index,
  *   resume_reason:
  */
 static int
-thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason,
-			bool had_mutex)
+thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason, bool had_mutex)
 {
   int r = NO_ERROR;
 
@@ -1653,20 +1549,19 @@ thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason,
     {
       r = thread_lock_entry (thread_p);
       if (r != 0)
-	{
-	  return r;
-	}
+        {
+          return r;
+        }
     }
 
   r = pthread_cond_signal (&thread_p->wakeup_cond);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_SIGNAL, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_SIGNAL, 0);
       if (had_mutex == false)
-	{
-	  thread_unlock_entry (thread_p);
-	}
+        {
+          thread_unlock_entry (thread_p);
+        }
       return ER_CSS_PTHREAD_COND_SIGNAL;
     }
 
@@ -1690,9 +1585,7 @@ thread_wakeup_internal (THREAD_ENTRY * thread_p, int resume_reason,
  */
 static int
 thread_check_suspend_reason_and_wakeup_internal (THREAD_ENTRY * thread_p,
-						 int resume_reason,
-						 int suspend_reason,
-						 bool had_mutex)
+                                                 int resume_reason, int suspend_reason, bool had_mutex)
 {
   int r = NO_ERROR;
 
@@ -1700,9 +1593,9 @@ thread_check_suspend_reason_and_wakeup_internal (THREAD_ENTRY * thread_p,
     {
       r = thread_lock_entry (thread_p);
       if (r != 0)
-	{
-	  return r;
-	}
+        {
+          return r;
+        }
     }
 
   if (thread_p->resume_status != suspend_reason)
@@ -1714,8 +1607,7 @@ thread_check_suspend_reason_and_wakeup_internal (THREAD_ENTRY * thread_p,
   r = pthread_cond_signal (&thread_p->wakeup_cond);
   if (r != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_SIGNAL, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_SIGNAL, 0);
       thread_unlock_entry (thread_p);
       return ER_CSS_PTHREAD_COND_SIGNAL;
     }
@@ -1741,13 +1633,9 @@ thread_wakeup (THREAD_ENTRY * thread_p, int resume_reason)
 }
 
 int
-thread_check_suspend_reason_and_wakeup (THREAD_ENTRY * thread_p,
-					int resume_reason, int suspend_reason)
+thread_check_suspend_reason_and_wakeup (THREAD_ENTRY * thread_p, int resume_reason, int suspend_reason)
 {
-  return thread_check_suspend_reason_and_wakeup_internal (thread_p,
-							  resume_reason,
-							  suspend_reason,
-							  false);
+  return thread_check_suspend_reason_and_wakeup_internal (thread_p, resume_reason, suspend_reason, false);
 }
 
 /*
@@ -1796,18 +1684,16 @@ thread_wakeup_with_tran_index (int tran_index, int resume_reason)
  *       value. Halts exection of the currently running thread.
  */
 void
-thread_waiting_for_function (THREAD_ENTRY * thread_p, CSS_THREAD_FN func,
-			     CSS_THREAD_ARG arg)
+thread_waiting_for_function (THREAD_ENTRY * thread_p, CSS_THREAD_FN func, CSS_THREAD_ARG arg)
 {
   if (thread_p == NULL)
     {
       thread_p = thread_get_thread_entry_info ();
     }
 
-  while ((*func) (thread_p, arg) == false && thread_p->interrupted != true
-	 && thread_p->shutdown != true)
+  while ((*func) (thread_p, arg) == false && thread_p->interrupted != true && thread_p->shutdown != true)
     {
-      thread_sleep (10);	/* 10 msec */
+      thread_sleep (10);        /* 10 msec */
     }
 }
 #endif
@@ -1823,8 +1709,7 @@ thread_waiting_for_function (THREAD_ENTRY * thread_p, CSS_THREAD_FN func,
  */
 int
 thread_suspend_with_other_mutex (THREAD_ENTRY * thread_p,
-				 pthread_mutex_t * mutex_p, int timeout,
-				 struct timespec *to, int suspended_reason)
+                                 pthread_mutex_t * mutex_p, int timeout, struct timespec *to, int suspended_reason)
 {
   int r;
   int old_status;
@@ -1836,8 +1721,7 @@ thread_suspend_with_other_mutex (THREAD_ENTRY * thread_p,
   r = pthread_mutex_lock (&thread_p->th_entry_lock);
   if (r != NO_ERROR)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_LOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_LOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_LOCK;
     }
 
@@ -1847,8 +1731,7 @@ thread_suspend_with_other_mutex (THREAD_ENTRY * thread_p,
   r = pthread_mutex_unlock (&thread_p->th_entry_lock);
   if (r != NO_ERROR)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_UNLOCK;
     }
 
@@ -1865,19 +1748,17 @@ thread_suspend_with_other_mutex (THREAD_ENTRY * thread_p,
   /* we should restore thread's status */
   if (r != NO_ERROR)
     {
-      error = (r == ETIMEDOUT) ?
-	ER_CSS_PTHREAD_COND_TIMEDOUT : ER_CSS_PTHREAD_COND_WAIT;
+      error = (r == ETIMEDOUT) ? ER_CSS_PTHREAD_COND_TIMEDOUT : ER_CSS_PTHREAD_COND_WAIT;
       if (timeout == INF_WAIT || r != ETIMEDOUT)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+        }
     }
 
   r = pthread_mutex_lock (&thread_p->th_entry_lock);
   if (r != NO_ERROR)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_LOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_LOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_LOCK;
     }
 
@@ -1886,8 +1767,7 @@ thread_suspend_with_other_mutex (THREAD_ENTRY * thread_p,
   r = pthread_mutex_unlock (&thread_p->th_entry_lock);
   if (r != NO_ERROR)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_CSS_PTHREAD_MUTEX_UNLOCK;
     }
 
@@ -2005,25 +1885,23 @@ thread_has_threads (THREAD_ENTRY * caller, int tran_index, int client_id)
     {
       thread_p = thread_get_worker (i);
       if (thread_p == caller)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       rv = pthread_mutex_lock (&thread_p->tran_index_lock);
       if (thread_p->tid != pthread_self () && thread_p->status != TS_DEAD
-	  && thread_p->status != TS_FREE && thread_p->status != TS_CHECK)
-	{
-	  conn_p = thread_p->conn_entry;
-	  if (tran_index == NULL_TRAN_INDEX
-	      && (conn_p != NULL && conn_p->client_id == client_id))
-	    {
-	      n++;
-	    }
-	  else if (tran_index == thread_p->tran_index
-		   && (conn_p == NULL || conn_p->client_id == client_id))
-	    {
-	      n++;
-	    }
-	}
+          && thread_p->status != TS_FREE && thread_p->status != TS_CHECK)
+        {
+          conn_p = thread_p->conn_entry;
+          if (tran_index == NULL_TRAN_INDEX && (conn_p != NULL && conn_p->client_id == client_id))
+            {
+              n++;
+            }
+          else if (tran_index == thread_p->tran_index && (conn_p == NULL || conn_p->client_id == client_id))
+            {
+              n++;
+            }
+        }
       pthread_mutex_unlock (&thread_p->tran_index_lock);
     }
 
@@ -2044,7 +1922,7 @@ thread_has_threads (THREAD_ENTRY * caller, int tran_index, int client_id)
  */
 void
 thread_get_info_threads (int *num_total_threads, int *num_worker_threads,
-			 int *num_free_threads, int *num_suspended_threads)
+                         int *num_free_threads, int *num_suspended_threads)
 {
   THREAD_ENTRY *thread_p;
   int i;
@@ -2068,17 +1946,17 @@ thread_get_info_threads (int *num_total_threads, int *num_worker_threads,
   if (num_free_threads || num_suspended_threads)
     {
       for (i = 0; i < thread_Manager.num_workers; i++)
-	{
-	  thread_p = thread_get_worker (i);
-	  if (num_free_threads && thread_p->status == TS_FREE)
-	    {
-	      (*num_free_threads)++;
-	    }
-	  if (num_suspended_threads && thread_p->status == TS_WAIT)
-	    {
-	      (*num_suspended_threads)++;
-	    }
-	}
+        {
+          thread_p = thread_get_worker (i);
+          if (num_free_threads && thread_p->status == TS_FREE)
+            {
+              (*num_free_threads)++;
+            }
+          if (num_suspended_threads && thread_p->status == TS_WAIT)
+            {
+              (*num_suspended_threads)++;
+            }
+        }
     }
 }
 
@@ -2110,9 +1988,9 @@ thread_max_workers_by_queue_type (JOB_QUEUE_TYPE q_type)
   for (i = WORKER_GROUP_MIN; i <= WORKER_GROUP_MAX; i++)
     {
       if (worker_Group_info[i].job_queue_type == q_type)
-	{
-	  return worker_Group_info[i].num_workers;
-	}
+        {
+          return worker_Group_info[i].num_workers;
+        }
     }
   return 0;
 }
@@ -2145,11 +2023,10 @@ thread_dump_threads (void)
       thread_p = thread_get_worker (i);
 
       fprintf (stderr,
-	       "thread %d(tid(%ld),client_id(%d),tran_index(%d),"
-	       "rid(%d),status(%s),interrupt(%d))\n",
-	       thread_p->index, thread_p->tid, thread_p->client_id,
-	       thread_p->tran_index, thread_p->rid,
-	       status[thread_p->status], thread_p->interrupted);
+               "thread %d(tid(%ld),client_id(%d),tran_index(%d),"
+               "rid(%d),status(%s),interrupt(%d))\n",
+               thread_p->index, thread_p->tid, thread_p->client_id,
+               thread_p->tran_index, thread_p->rid, status[thread_p->status], thread_p->interrupted);
     }
 
   fflush (stderr);
@@ -2246,9 +2123,9 @@ thread_set_check_interrupt (THREAD_ENTRY * thread_p, bool flag)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       old_val = thread_p->check_interrupt;
       thread_p->check_interrupt = flag;
@@ -2269,9 +2146,9 @@ thread_get_check_interrupt (THREAD_ENTRY * thread_p)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       ret_val = thread_p->check_interrupt;
     }
@@ -2292,9 +2169,9 @@ thread_set_check_groupid (THREAD_ENTRY * thread_p, bool flag)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       old_val = thread_p->check_groupid;
       thread_p->check_groupid = flag;
@@ -2315,9 +2192,9 @@ thread_get_check_groupid (THREAD_ENTRY * thread_p)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       ret_val = thread_p->check_groupid;
     }
@@ -2338,9 +2215,9 @@ thread_set_check_page_validation (THREAD_ENTRY * thread_p, bool flag)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       old_val = thread_p->check_page_validation;
       thread_p->check_page_validation = flag;
@@ -2361,9 +2238,9 @@ thread_get_check_page_validation (THREAD_ENTRY * thread_p)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       ret_val = thread_p->check_page_validation;
     }
@@ -2393,9 +2270,9 @@ thread_worker (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
-  tsd_ptr->type = TT_WORKER;	/* not defined yet */
-  tsd_ptr->status = TS_FREE;	/* set thread stat as free */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
+  tsd_ptr->type = TT_WORKER;    /* not defined yet */
+  tsd_ptr->status = TS_FREE;    /* set thread stat as free */
 
   css_incr_num_run_thread (tsd_ptr->job_queue_type);
 
@@ -2406,25 +2283,24 @@ thread_worker (void *arg_p)
       er_clear ();
 
       if (css_get_new_job (tsd_ptr->job_queue_type, &new_job) != NO_ERROR)
-	{
-	  /* if there was no job to process */
-	  pthread_mutex_unlock (&tsd_ptr->tran_index_lock);
-	  continue;
-	}
+        {
+          /* if there was no job to process */
+          pthread_mutex_unlock (&tsd_ptr->tran_index_lock);
+          continue;
+        }
 
 //      job_conn = new_job.conn_entry;
       handler_func = new_job.func;
       handler_func_arg = new_job.arg;
 
 #ifdef _TRACE_THREADS_
-      CSS_TRACE4 ("processing job_entry(%p, %p, %p)\n",
-		  job_conn, job_entry_p->func, job_entry_p->arg);
+      CSS_TRACE4 ("processing job_entry(%p, %p, %p)\n", job_conn, job_entry_p->func, job_entry_p->arg);
 #endif /* _TRACE_THREADS_ */
 
       /* set tsd_ptr information */
-      tsd_ptr->status = TS_RUN;	/* set thread status as running */
+      tsd_ptr->status = TS_RUN; /* set thread status as running */
 
-      handler_func (tsd_ptr, handler_func_arg);	/* invoke request handler */
+      handler_func (tsd_ptr, handler_func_arg); /* invoke request handler */
 
       thread_reset_thread_info (tsd_ptr);
     }
@@ -2481,9 +2357,9 @@ thread_deadlock_detect_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Deadlock_detect_thread.lock);
   thread_Deadlock_detect_thread.is_available = true;
@@ -2495,57 +2371,56 @@ thread_deadlock_detect_thread (void *arg_p)
   /* during server is active */
   while (!tsd_ptr->shutdown)
     {
-      thread_sleep (100);	/* 100 msec */
+      thread_sleep (100);       /* 100 msec */
       if (!lock_check_local_deadlock_detection ())
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       er_clear ();
 
       /* check if the lock-wait thread exists */
       thread_p = thread_find_first_lockwait_entry (&thrd_index);
       if (thread_p == (THREAD_ENTRY *) NULL)
-	{
-	  /* none is lock-waiting */
-	  rv = pthread_mutex_lock (&thread_Deadlock_detect_thread.lock);
-	  thread_Deadlock_detect_thread.is_running = false;
+        {
+          /* none is lock-waiting */
+          rv = pthread_mutex_lock (&thread_Deadlock_detect_thread.lock);
+          thread_Deadlock_detect_thread.is_running = false;
 
-	  if (tsd_ptr->shutdown)
-	    {
-	      pthread_mutex_unlock (&thread_Deadlock_detect_thread.lock);
-	      break;
-	    }
-	  pthread_cond_wait (&thread_Deadlock_detect_thread.cond,
-			     &thread_Deadlock_detect_thread.lock);
+          if (tsd_ptr->shutdown)
+            {
+              pthread_mutex_unlock (&thread_Deadlock_detect_thread.lock);
+              break;
+            }
+          pthread_cond_wait (&thread_Deadlock_detect_thread.cond, &thread_Deadlock_detect_thread.lock);
 
-	  thread_Deadlock_detect_thread.is_running = true;
+          thread_Deadlock_detect_thread.is_running = true;
 
-	  pthread_mutex_unlock (&thread_Deadlock_detect_thread.lock);
-	  continue;
-	}
+          pthread_mutex_unlock (&thread_Deadlock_detect_thread.lock);
+          continue;
+        }
 
       /* One or more threads are lock-waiting */
       lockwait_count = 0;
       while (thread_p != (THREAD_ENTRY *) NULL)
-	{
-	  /*
-	   * The transaction, for which the current thread is working,
-	   * might be interrupted. The interrupt checking is also performed
-	   * within lock_force_timeout_expired_wait_transactions().
-	   */
-	  state = lock_force_timeout_expired_wait_transactions (thread_p);
-	  if (state == false)
-	    {
-	      lockwait_count++;
-	    }
-	  thread_p = thread_find_next_lockwait_entry (&thrd_index);
-	}
+        {
+          /*
+           * The transaction, for which the current thread is working,
+           * might be interrupted. The interrupt checking is also performed
+           * within lock_force_timeout_expired_wait_transactions().
+           */
+          state = lock_force_timeout_expired_wait_transactions (thread_p);
+          if (state == false)
+            {
+              lockwait_count++;
+            }
+          thread_p = thread_find_next_lockwait_entry (&thrd_index);
+        }
 
       if (lockwait_count >= 2)
-	{
-	  (void) lock_detect_local_deadlock (tsd_ptr);
-	}
+        {
+          (void) lock_detect_local_deadlock (tsd_ptr);
+        }
     }
 
   rv = pthread_mutex_lock (&thread_Deadlock_detect_thread.lock);
@@ -2593,9 +2468,9 @@ thread_session_control_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Session_control_thread.lock);
   thread_Session_control_thread.is_available = true;
@@ -2612,14 +2487,13 @@ thread_session_control_thread (void *arg_p)
       to.tv_sec = timeout.tv_sec + 60;
 
       rv = pthread_mutex_lock (&thread_Session_control_thread.lock);
-      pthread_cond_timedwait (&thread_Session_control_thread.cond,
-			      &thread_Session_control_thread.lock, &to);
+      pthread_cond_timedwait (&thread_Session_control_thread.cond, &thread_Session_control_thread.lock, &to);
       pthread_mutex_unlock (&thread_Session_control_thread.lock);
 
       if (tsd_ptr->shutdown)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       session_remove_expired_sessions (&timeout);
     }
@@ -2671,9 +2545,9 @@ thread_checkpoint_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Checkpoint_thread.lock);
   thread_Checkpoint_thread.is_available = true;
@@ -2687,18 +2561,15 @@ thread_checkpoint_thread (void *arg_p)
     {
       er_clear ();
 
-      to.tv_sec =
-	time (NULL) +
-	prm_get_bigint_value (PRM_ID_LOG_CHECKPOINT_INTERVAL) / 1000;
+      to.tv_sec = time (NULL) + prm_get_bigint_value (PRM_ID_LOG_CHECKPOINT_INTERVAL) / 1000;
 
       rv = pthread_mutex_lock (&thread_Checkpoint_thread.lock);
-      pthread_cond_timedwait (&thread_Checkpoint_thread.cond,
-			      &thread_Checkpoint_thread.lock, &to);
+      pthread_cond_timedwait (&thread_Checkpoint_thread.cond, &thread_Checkpoint_thread.lock, &to);
       pthread_mutex_unlock (&thread_Checkpoint_thread.lock);
       if (tsd_ptr->shutdown)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       logpb_checkpoint (tsd_ptr);
     }
@@ -2750,9 +2621,9 @@ thread_purge_archive_logs_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Purge_archive_logs_thread.lock);
   thread_Purge_archive_logs_thread.is_available = true;
@@ -2767,62 +2638,53 @@ thread_purge_archive_logs_thread (void *arg_p)
       er_clear ();
 
       if (prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL) > 0)
-	{
-	  to.tv_sec = time (NULL);
-	  if (to.tv_sec >
-	      last_deleted_time +
-	      prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL))
-	    {
-	      to.tv_sec +=
-		prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL);
-	    }
-	  else
-	    {
-	      to.tv_sec =
-		last_deleted_time +
-		prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL);
-	    }
-	}
+        {
+          to.tv_sec = time (NULL);
+          if (to.tv_sec > last_deleted_time + prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL))
+            {
+              to.tv_sec += prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL);
+            }
+          else
+            {
+              to.tv_sec = last_deleted_time + prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL);
+            }
+        }
 
       rv = pthread_mutex_lock (&thread_Purge_archive_logs_thread.lock);
       if (prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL) > 0)
-	{
-	  pthread_cond_timedwait (&thread_Purge_archive_logs_thread.cond,
-				  &thread_Purge_archive_logs_thread.lock,
-				  &to);
-	}
+        {
+          pthread_cond_timedwait (&thread_Purge_archive_logs_thread.cond, &thread_Purge_archive_logs_thread.lock, &to);
+        }
       else
-	{
-	  pthread_cond_wait (&thread_Purge_archive_logs_thread.cond,
-			     &thread_Purge_archive_logs_thread.lock);
-	}
+        {
+          pthread_cond_wait (&thread_Purge_archive_logs_thread.cond, &thread_Purge_archive_logs_thread.lock);
+        }
       pthread_mutex_unlock (&thread_Purge_archive_logs_thread.lock);
       if (tsd_ptr->shutdown)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL) > 0)
-	{
-	  cur_time = time (NULL);
-	  if (cur_time - last_deleted_time <
-	      prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL))
-	    {
-	      /* do not delete logs. wait more time */
-	      continue;
-	    }
-	  /* remove a log */
-	  if (logpb_remove_archive_logs_exceed_limit (tsd_ptr, 1) > 0)
-	    {
-	      /* A log was deleted */
-	      last_deleted_time = time (NULL);
-	    }
-	}
+        {
+          cur_time = time (NULL);
+          if (cur_time - last_deleted_time < prm_get_integer_value (PRM_ID_REMOVE_LOG_ARCHIVES_INTERVAL))
+            {
+              /* do not delete logs. wait more time */
+              continue;
+            }
+          /* remove a log */
+          if (logpb_remove_archive_logs_exceed_limit (tsd_ptr, 1) > 0)
+            {
+              /* A log was deleted */
+              last_deleted_time = time (NULL);
+            }
+        }
       else
-	{
-	  /* remove all unnecessary logs */
-	  logpb_remove_archive_logs_exceed_limit (tsd_ptr, 0);
-	}
+        {
+          /* remove all unnecessary logs */
+          logpb_remove_archive_logs_exceed_limit (tsd_ptr, 0);
+        }
 
     }
 
@@ -2892,9 +2754,9 @@ thread_check_ha_delay_info_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
-  tsd_ptr->type = TT_DAEMON;	/* daemon thread */
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
+  tsd_ptr->type = TT_DAEMON;    /* daemon thread */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Check_ha_delay_info_thread.lock);
   thread_Check_ha_delay_info_thread.is_running = true;
@@ -2915,12 +2777,11 @@ thread_check_ha_delay_info_thread (void *arg_p)
       thread_Check_ha_delay_info_thread.is_running = false;
 
       do
-	{
-	  rv =
-	    pthread_cond_timedwait (&thread_Check_ha_delay_info_thread.cond,
-				    &thread_Check_ha_delay_info_thread.lock,
-				    &cur_time);
-	}
+        {
+          rv =
+            pthread_cond_timedwait (&thread_Check_ha_delay_info_thread.cond,
+                                    &thread_Check_ha_delay_info_thread.lock, &cur_time);
+        }
       while (rv == 0 && tsd_ptr->shutdown == false);
 
       thread_Check_ha_delay_info_thread.is_running = true;
@@ -2928,15 +2789,15 @@ thread_check_ha_delay_info_thread (void *arg_p)
       pthread_mutex_unlock (&thread_Check_ha_delay_info_thread.lock);
 
       if (tsd_ptr->shutdown == true)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       error_code = catcls_get_analyzer_info (tsd_ptr, &source_applied_time);
       if (error_code != NO_ERROR)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       clock_gettime (CLOCK_REALTIME, &cur_time);
       max_delay = timespec_to_msec (&cur_time) - source_applied_time;
@@ -2948,55 +2809,51 @@ thread_check_ha_delay_info_thread (void *arg_p)
       log_append_ha_server_state (tsd_ptr, server_state);
 
       if (server_state != HA_STATE_SLAVE)
-	{
-	  css_unset_ha_repl_delayed ();
+        {
+          css_unset_ha_repl_delayed ();
 
-	  csect_exit (CSECT_HA_SERVER_STATE);
-	}
+          csect_exit (CSECT_HA_SERVER_STATE);
+        }
       else
-	{
-	  csect_exit (CSECT_HA_SERVER_STATE);
+        {
+          csect_exit (CSECT_HA_SERVER_STATE);
 
-	  delay_limit = prm_get_bigint_value (PRM_ID_HA_DELAY_LIMIT);
-	  acceptable_delay = (delay_limit -
-			      prm_get_bigint_value
-			      (PRM_ID_HA_DELAY_LIMIT_DELTA));
-	  if (acceptable_delay < 0)
-	    {
-	      acceptable_delay = 0;
-	    }
+          delay_limit = prm_get_bigint_value (PRM_ID_HA_DELAY_LIMIT);
+          acceptable_delay = (delay_limit - prm_get_bigint_value (PRM_ID_HA_DELAY_LIMIT_DELTA));
+          if (acceptable_delay < 0)
+            {
+              acceptable_delay = 0;
+            }
 
-	  if (max_delay > 0)
-	    {
-	      max_delay -= HA_DELAY_ERR_CORRECTION;
+          if (max_delay > 0)
+            {
+              max_delay -= HA_DELAY_ERR_CORRECTION;
 
-	      if (delay_limit > 0)
-		{
-		  if (max_delay > delay_limit)
-		    {
-		      if (!css_is_ha_repl_delayed ())
-			{
-			  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-				  ER_HA_REPL_DELAY_DETECTED, 2,
-				  max_delay, delay_limit);
+              if (delay_limit > 0)
+                {
+                  if (max_delay > delay_limit)
+                    {
+                      if (!css_is_ha_repl_delayed ())
+                        {
+                          er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
+                                  ER_HA_REPL_DELAY_DETECTED, 2, max_delay, delay_limit);
 
-			  css_set_ha_repl_delayed ();
-			}
-		    }
-		  else if (max_delay <= acceptable_delay)
-		    {
-		      if (css_is_ha_repl_delayed ())
-			{
-			  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-				  ER_HA_REPL_DELAY_RESOLVED, 2,
-				  max_delay, acceptable_delay);
+                          css_set_ha_repl_delayed ();
+                        }
+                    }
+                  else if (max_delay <= acceptable_delay)
+                    {
+                      if (css_is_ha_repl_delayed ())
+                        {
+                          er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
+                                  ER_HA_REPL_DELAY_RESOLVED, 2, max_delay, acceptable_delay);
 
-			  css_unset_ha_repl_delayed ();
-			}
-		    }
-		}
-	    }
-	}
+                          css_unset_ha_repl_delayed ();
+                        }
+                    }
+                }
+            }
+        }
     }
 
   rv = pthread_mutex_lock (&thread_Check_ha_delay_info_thread.lock);
@@ -3032,9 +2889,9 @@ thread_page_flush_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
-  tsd_ptr->type = TT_DAEMON;	/* daemon thread */
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
+  tsd_ptr->type = TT_DAEMON;    /* daemon thread */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
   thread_Page_flush_thread.is_running = true;
@@ -3050,50 +2907,46 @@ thread_page_flush_thread (void *arg_p)
       wakeup_interval = prm_get_bigint_value (PRM_ID_PAGE_BG_FLUSH_INTERVAL);
 
       if (wakeup_interval > 0)
-	{
-	  gettimeofday (&cur_time, NULL);
+        {
+          gettimeofday (&cur_time, NULL);
 
-	  wakeup_time.tv_sec = cur_time.tv_sec + (wakeup_interval / 1000);
-	  tmp_usec = cur_time.tv_usec + (wakeup_interval % 1000) * 1000;
-	  if (tmp_usec >= 1000000)
-	    {
-	      wakeup_time.tv_sec += 1;
-	      tmp_usec -= 1000000;
-	    }
-	  wakeup_time.tv_nsec = tmp_usec * 1000;
-	}
+          wakeup_time.tv_sec = cur_time.tv_sec + (wakeup_interval / 1000);
+          tmp_usec = cur_time.tv_usec + (wakeup_interval % 1000) * 1000;
+          if (tmp_usec >= 1000000)
+            {
+              wakeup_time.tv_sec += 1;
+              tmp_usec -= 1000000;
+            }
+          wakeup_time.tv_nsec = tmp_usec * 1000;
+        }
 
       rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
       thread_Page_flush_thread.is_running = false;
 
       if (wakeup_interval > 0)
-	{
-	  do
-	    {
-	      rv = pthread_cond_timedwait (&thread_Page_flush_thread.cond,
-					   &thread_Page_flush_thread.lock,
-					   &wakeup_time);
-	    }
-	  while (rv == 0);
-	}
+        {
+          do
+            {
+              rv = pthread_cond_timedwait (&thread_Page_flush_thread.cond,
+                                           &thread_Page_flush_thread.lock, &wakeup_time);
+            }
+          while (rv == 0);
+        }
       else
-	{
-	  pthread_cond_wait (&thread_Page_flush_thread.cond,
-			     &thread_Page_flush_thread.lock);
-	}
+        {
+          pthread_cond_wait (&thread_Page_flush_thread.cond, &thread_Page_flush_thread.lock);
+        }
 
       thread_Page_flush_thread.is_running = true;
 
       pthread_mutex_unlock (&thread_Page_flush_thread.lock);
 
       if (tsd_ptr->shutdown)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
-      pgbuf_flush_victim_candidate (tsd_ptr,
-				    prm_get_float_value
-				    (PRM_ID_PB_BUFFER_FLUSH_RATIO));
+      pgbuf_flush_victim_candidate (tsd_ptr, prm_get_float_value (PRM_ID_PB_BUFFER_FLUSH_RATIO));
     }
 
   rv = pthread_mutex_lock (&thread_Page_flush_thread.lock);
@@ -3156,7 +3009,7 @@ thread_flush_control_thread (void *arg_p)
 
   struct timeval begin_tv, end_tv, diff_tv;
   INT64 diff_usec;
-  int wakeup_interval_in_msec = 50;	/* 1 msec */
+  int wakeup_interval_in_msec = 50;     /* 1 msec */
 
   int token_gen = 0;
   int token_consumed = 0;
@@ -3167,9 +3020,9 @@ thread_flush_control_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
-  tsd_ptr->type = TT_DAEMON;	/* daemon thread */
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
+  tsd_ptr->type = TT_DAEMON;    /* daemon thread */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   thread_Flush_control_thread.is_available = true;
   thread_Flush_control_thread.is_running = true;
@@ -3189,40 +3042,35 @@ thread_flush_control_thread (void *arg_p)
       (void) gettimeofday (&begin_tv, NULL);
       er_clear ();
 
-      wakeup_time.tv_sec =
-	begin_tv.tv_sec + (wakeup_interval_in_msec / 1000LL);
-      tmp_usec =
-	begin_tv.tv_usec + (wakeup_interval_in_msec % 1000LL) * 1000LL;
+      wakeup_time.tv_sec = begin_tv.tv_sec + (wakeup_interval_in_msec / 1000LL);
+      tmp_usec = begin_tv.tv_usec + (wakeup_interval_in_msec % 1000LL) * 1000LL;
       if (tmp_usec >= 1000000)
-	{
-	  wakeup_time.tv_sec += 1;
-	  tmp_usec -= 1000000;
-	}
+        {
+          wakeup_time.tv_sec += 1;
+          tmp_usec -= 1000000;
+        }
       wakeup_time.tv_nsec = tmp_usec * 1000;
 
       rv = pthread_mutex_lock (&thread_Flush_control_thread.lock);
       thread_Flush_control_thread.is_running = false;
 
-      pthread_cond_timedwait (&thread_Flush_control_thread.cond,
-			      &thread_Flush_control_thread.lock,
-			      &wakeup_time);
+      pthread_cond_timedwait (&thread_Flush_control_thread.cond, &thread_Flush_control_thread.lock, &wakeup_time);
 
       thread_Flush_control_thread.is_running = true;
 
       pthread_mutex_unlock (&thread_Flush_control_thread.lock);
 
       if (tsd_ptr->shutdown)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       (void) gettimeofday (&end_tv, NULL);
       DIFF_TIMEVAL (begin_tv, end_tv, diff_tv);
       diff_usec = diff_tv.tv_sec * 1000000LL + diff_tv.tv_usec;
 
       /* Do it's job */
-      (void) fileio_flush_control_add_tokens (tsd_ptr, diff_usec, &token_gen,
-					      &token_consumed);
+      (void) fileio_flush_control_add_tokens (tsd_ptr, diff_usec, &token_gen, &token_consumed);
     }
   rv = pthread_mutex_lock (&thread_Flush_control_thread.lock);
   thread_Flush_control_thread.is_available = false;
@@ -3285,9 +3133,9 @@ thread_log_flush_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
-  tsd_ptr->type = TT_DAEMON;	/* daemon thread */
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
+  tsd_ptr->type = TT_DAEMON;    /* daemon thread */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Log_flush_thread.lock);
   thread_Log_flush_thread.is_available = true;
@@ -3300,21 +3148,19 @@ thread_log_flush_thread (void *arg_p)
   total_elapsed_time = 0;
   param_refresh_remained = param_refresh_interval;
 
-  tsd_ptr->event_stats.trace_log_flush_time =
-    prm_get_bigint_value (PRM_ID_LOG_TRACE_FLUSH_TIME);
+  tsd_ptr->event_stats.trace_log_flush_time = prm_get_bigint_value (PRM_ID_LOG_TRACE_FLUSH_TIME);
 
   while (!tsd_ptr->shutdown)
     {
       er_clear ();
 
-      gc_interval =
-	prm_get_bigint_value (PRM_ID_LOG_ASYNC_LOG_FLUSH_INTERVAL);
+      gc_interval = prm_get_bigint_value (PRM_ID_LOG_ASYNC_LOG_FLUSH_INTERVAL);
 
       wakeup_interval = max_wait_time;
       if (gc_interval > 0)
-	{
-	  wakeup_interval = MIN (gc_interval, wakeup_interval);
-	}
+        {
+          wakeup_interval = MIN (gc_interval, wakeup_interval);
+        }
 
       clock_gettime (CLOCK_REALTIME, &wait_time);
       working_time = (int) timespec_diff_in_msec (&wait_time, &wakeup_time);
@@ -3327,13 +3173,11 @@ thread_log_flush_thread (void *arg_p)
 
       ret = 0;
       if (thread_Log_flush_thread.nrequestors == 0 || gc_interval > 0)
-	{
-	  thread_Log_flush_thread.is_running = false;
-	  ret = pthread_cond_timedwait (&thread_Log_flush_thread.cond,
-					&thread_Log_flush_thread.lock,
-					&LFT_wakeup_time);
-	  thread_Log_flush_thread.is_running = true;
-	}
+        {
+          thread_Log_flush_thread.is_running = false;
+          ret = pthread_cond_timedwait (&thread_Log_flush_thread.cond, &thread_Log_flush_thread.lock, &LFT_wakeup_time);
+          thread_Log_flush_thread.is_running = true;
+        }
 
       rv = pthread_mutex_unlock (&thread_Log_flush_thread.lock);
 
@@ -3341,27 +3185,26 @@ thread_log_flush_thread (void *arg_p)
       total_elapsed_time += timespec_diff_in_msec (&wakeup_time, &wait_time);
 
       if (tsd_ptr->shutdown)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (ret == ETIMEDOUT)
-	{
-	  if (total_elapsed_time < gc_interval)
-	    {
-	      continue;
-	    }
-	}
+        {
+          if (total_elapsed_time < gc_interval)
+            {
+              continue;
+            }
+        }
 
       /* to prevent performance degradation */
       param_refresh_remained -= total_elapsed_time;
       if (param_refresh_remained < 0)
-	{
-	  tsd_ptr->event_stats.trace_log_flush_time
-	    = prm_get_bigint_value (PRM_ID_LOG_TRACE_FLUSH_TIME);
+        {
+          tsd_ptr->event_stats.trace_log_flush_time = prm_get_bigint_value (PRM_ID_LOG_TRACE_FLUSH_TIME);
 
-	  param_refresh_remained = param_refresh_interval;
-	}
+          param_refresh_remained = param_refresh_interval;
+        }
 
       FI_RESET (tsd_ptr, FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT);
 
@@ -3390,8 +3233,7 @@ thread_log_flush_thread (void *arg_p)
   tsd_ptr->status = TS_DEAD;
 
 #if defined(RYE_DEBUG)
-  er_log_debug (ARG_FILE_LINE,
-		"thread_log_flush_thread: " "[%d]end \n", (int) THREAD_ID ());
+  er_log_debug (ARG_FILE_LINE, "thread_log_flush_thread: " "[%d]end \n", (int) THREAD_ID ());
 #endif /* RYE_DEBUG */
 
   return (THREAD_RET_T) 0;
@@ -3462,9 +3304,9 @@ thread_log_clock_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Log_clock_thread.lock);
   thread_Log_clock_thread.is_available = true;
@@ -3480,7 +3322,7 @@ thread_log_clock_thread (void *arg_p)
       gettimeofday (&now, NULL);
       clock_milli_sec = (now.tv_sec * 1000LL) + (now.tv_usec / 1000LL);
       ATOMIC_TAS_64 (&log_Clock_msec, clock_milli_sec);
-      thread_sleep (200);	/* 200 msec */
+      thread_sleep (200);       /* 200 msec */
     }
 
   rv = pthread_mutex_lock (&thread_Log_clock_thread.lock);
@@ -3512,9 +3354,9 @@ thread_auto_volume_expansion_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   thread_Auto_volume_expansion_thread.is_available = true;
 
@@ -3527,8 +3369,7 @@ thread_auto_volume_expansion_thread (void *arg_p)
   rv = pthread_cond_init (&boot_Auto_addvol_job.cond, NULL);
   if (rv != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_COND_INIT, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_COND_INIT, 0);
       tsd_ptr->status = TS_DEAD;
 
       return (THREAD_RET_T) 0;
@@ -3541,12 +3382,11 @@ thread_auto_volume_expansion_thread (void *arg_p)
       thread_Auto_volume_expansion_thread.is_running = false;
 
       if (tsd_ptr->shutdown)
-	{
-	  pthread_mutex_unlock (&thread_Auto_volume_expansion_thread.lock);
-	  break;
-	}
-      pthread_cond_wait (&thread_Auto_volume_expansion_thread.cond,
-			 &thread_Auto_volume_expansion_thread.lock);
+        {
+          pthread_mutex_unlock (&thread_Auto_volume_expansion_thread.lock);
+          break;
+        }
+      pthread_cond_wait (&thread_Auto_volume_expansion_thread.cond, &thread_Auto_volume_expansion_thread.lock);
 
       thread_Auto_volume_expansion_thread.is_running = true;
 
@@ -3555,37 +3395,35 @@ thread_auto_volume_expansion_thread (void *arg_p)
       rv = pthread_mutex_lock (&boot_Auto_addvol_job.lock);
       npages = boot_Auto_addvol_job.ext_info.extend_npages;
       if (npages <= 0)
-	{
-	  pthread_mutex_unlock (&boot_Auto_addvol_job.lock);
-	  continue;
-	}
+        {
+          pthread_mutex_unlock (&boot_Auto_addvol_job.lock);
+          continue;
+        }
       pthread_mutex_unlock (&boot_Auto_addvol_job.lock);
 
       volid = disk_cache_get_auto_extend_volid (tsd_ptr);
 
       if (volid != NULL_VOLID)
-	{
-	  if (csect_enter (tsd_ptr, CSECT_BOOT_SR_DBPARM, INF_WAIT) ==
-	      NO_ERROR)
-	    {
-	      if (disk_expand_perm (tsd_ptr, volid, npages) <= 0)
-		{
-		  volid = NULL_VOLID;
-		}
+        {
+          if (csect_enter (tsd_ptr, CSECT_BOOT_SR_DBPARM, INF_WAIT) == NO_ERROR)
+            {
+              if (disk_expand_perm (tsd_ptr, volid, npages) <= 0)
+                {
+                  volid = NULL_VOLID;
+                }
 
-	      csect_exit (CSECT_BOOT_SR_DBPARM);
-	    }
-	  else
-	    {
-	      volid = NULL_VOLID;
-	    }
-	}
+              csect_exit (CSECT_BOOT_SR_DBPARM);
+            }
+          else
+            {
+              volid = NULL_VOLID;
+            }
+        }
 
       pthread_mutex_lock (&boot_Auto_addvol_job.lock);
       boot_Auto_addvol_job.ret_volid = volid;
       (void) pthread_cond_broadcast (&boot_Auto_addvol_job.cond);
-      memset (&boot_Auto_addvol_job.ext_info, '\0',
-	      sizeof (DBDEF_VOL_EXT_INFO));
+      memset (&boot_Auto_addvol_job.ext_info, '\0', sizeof (DBDEF_VOL_EXT_INFO));
       pthread_mutex_unlock (&boot_Auto_addvol_job.lock);
     }
 
@@ -3674,9 +3512,9 @@ thread_heap_bestspace_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
 
   rv = pthread_mutex_lock (&thread_Heap_bestspace_thread.lock);
   thread_Heap_bestspace_thread.is_available = true;
@@ -3694,63 +3532,60 @@ thread_heap_bestspace_thread (void *arg_p)
       tmp_usec = now.tv_usec + (wakeup_interval_in_msecs % 1000) * 1000;
 
       if (tmp_usec >= 1000000)
-	{
-	  wakeup_time.tv_sec += 1;
-	  tmp_usec -= 1000000;
-	}
+        {
+          wakeup_time.tv_sec += 1;
+          tmp_usec -= 1000000;
+        }
       wakeup_time.tv_nsec = tmp_usec * 1000;
 
       rv = pthread_mutex_lock (&thread_Heap_bestspace_thread.lock);
       thread_Heap_bestspace_thread.is_running = false;
 
       rv = pthread_cond_timedwait (&thread_Heap_bestspace_thread.cond,
-				   &thread_Heap_bestspace_thread.lock,
-				   &wakeup_time);
+                                   &thread_Heap_bestspace_thread.lock, &wakeup_time);
 
       thread_Heap_bestspace_thread.is_running = true;
 
       pthread_mutex_unlock (&thread_Heap_bestspace_thread.lock);
 
       if (!tsd_ptr->shutdown)
-	{
-	  in_transaction = false;
-	  tran_index = logtb_assign_tran_index (tsd_ptr, NULL, NULL,
-						TRAN_LOCK_INFINITE_WAIT);
-	  if (tran_index == NULL_TRAN_INDEX)
-	    {
-	      goto end_transaction;
-	    }
+        {
+          in_transaction = false;
+          tran_index = logtb_assign_tran_index (tsd_ptr, NULL, NULL, TRAN_LOCK_INFINITE_WAIT);
+          if (tran_index == NULL_TRAN_INDEX)
+            {
+              goto end_transaction;
+            }
 
-	  in_transaction = true;
-	  if (logtb_start_transaction_if_needed (tsd_ptr) == NULL_TRANID)
-	    {
-	      goto end_transaction;
-	    }
+          in_transaction = true;
+          if (logtb_start_transaction_if_needed (tsd_ptr) == NULL_TRANID)
+            {
+              goto end_transaction;
+            }
 
-	  if (heap_bestspace_sync_all_heap_files_if_needed (tsd_ptr) !=
-	      NO_ERROR)
-	    {
-	      goto end_transaction;
-	    }
+          if (heap_bestspace_sync_all_heap_files_if_needed (tsd_ptr) != NO_ERROR)
+            {
+              goto end_transaction;
+            }
 
-	  if (xtran_server_commit (tsd_ptr) != TRAN_UNACTIVE_COMMITTED)
-	    {
-	      goto end_transaction;
-	    }
-	  in_transaction = false;
+          if (xtran_server_commit (tsd_ptr) != TRAN_UNACTIVE_COMMITTED)
+            {
+              goto end_transaction;
+            }
+          in_transaction = false;
 
-	end_transaction:
-	  if (in_transaction == true)
-	    {
-	      xtran_server_abort (tsd_ptr);
-	    }
+        end_transaction:
+          if (in_transaction == true)
+            {
+              xtran_server_abort (tsd_ptr);
+            }
 
-	  if (tran_index != NULL_TRAN_INDEX)
-	    {
-	      logtb_set_to_system_tran_index (tsd_ptr);
-	      logtb_release_tran_index (tsd_ptr, tran_index);
-	    }
-	}
+          if (tran_index != NULL_TRAN_INDEX)
+            {
+              logtb_set_to_system_tran_index (tsd_ptr);
+              logtb_release_tran_index (tsd_ptr, tran_index);
+            }
+        }
     }
 
   rv = pthread_mutex_lock (&thread_Heap_bestspace_thread.lock);
@@ -3807,22 +3642,19 @@ thread_slam_tran_index (THREAD_ENTRY * thread_p, int tran_index)
  */
 int
 xthread_kill_tran_index (THREAD_ENTRY * thread_p, int kill_tran_index,
-			 const char *kill_user_p, const char *kill_host_p,
-			 int kill_pid)
+                         const char *kill_user_p, const char *kill_host_p, int kill_pid)
 {
-  char *slam_progname_p;	/* Client program name for tran */
-  char *slam_user_p;		/* Client user name for tran    */
-  char *slam_host_p;		/* Client host for tran         */
-  int slam_pid;			/* Client process id for tran   */
+  char *slam_progname_p;        /* Client program name for tran */
+  char *slam_user_p;            /* Client user name for tran    */
+  char *slam_host_p;            /* Client host for tran         */
+  int slam_pid;                 /* Client process id for tran   */
   bool signaled = false;
   int error_code = NO_ERROR;
   bool killed = false;
   int i;
 
   if (kill_tran_index == NULL_TRAN_INDEX
-      || kill_user_p == NULL
-      || kill_host_p == NULL
-      || strcmp (kill_user_p, "") == 0 || strcmp (kill_host_p, "") == 0)
+      || kill_user_p == NULL || kill_host_p == NULL || strcmp (kill_user_p, "") == 0 || strcmp (kill_host_p, "") == 0)
     {
       /*
        * Not enough information to kill specific transaction..
@@ -3835,57 +3667,51 @@ xthread_kill_tran_index (THREAD_ENTRY * thread_p, int kill_tran_index,
     }
 
   signaled = false;
-  for (i = 0;
-       i < THREAD_RETRY_MAX_SLAM_TIMES && error_code == NO_ERROR && !killed;
-       i++)
+  for (i = 0; i < THREAD_RETRY_MAX_SLAM_TIMES && error_code == NO_ERROR && !killed; i++)
     {
       if (logtb_find_client_name_host_pid (kill_tran_index, &slam_progname_p,
-					   &slam_user_p, &slam_host_p,
-					   &slam_pid) != NO_ERROR)
-	{
-	  if (signaled == false)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_CSS_KILL_UNKNOWN_TRANSACTION, 4,
-		      kill_tran_index, kill_user_p, kill_host_p, kill_pid);
-	      error_code = ER_CSS_KILL_UNKNOWN_TRANSACTION;
-	    }
-	  else
-	    {
-	      killed = true;
-	    }
-	  break;
-	}
+                                           &slam_user_p, &slam_host_p, &slam_pid) != NO_ERROR)
+        {
+          if (signaled == false)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_CSS_KILL_UNKNOWN_TRANSACTION, 4, kill_tran_index, kill_user_p, kill_host_p, kill_pid);
+              error_code = ER_CSS_KILL_UNKNOWN_TRANSACTION;
+            }
+          else
+            {
+              killed = true;
+            }
+          break;
+        }
 
-      if (kill_pid == slam_pid
-	  && strcmp (kill_user_p, slam_user_p) == 0
-	  && strcmp (kill_host_p, slam_host_p) == 0)
-	{
-	  thread_slam_tran_index (thread_p, kill_tran_index);
-	  signaled = true;
-	}
+      if (kill_pid == slam_pid && strcmp (kill_user_p, slam_user_p) == 0 && strcmp (kill_host_p, slam_host_p) == 0)
+        {
+          thread_slam_tran_index (thread_p, kill_tran_index);
+          signaled = true;
+        }
       else
-	{
-	  if (signaled == false)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_CSS_KILL_DOES_NOTMATCH, 8,
-		      kill_tran_index, kill_user_p, kill_host_p, kill_pid,
-		      kill_tran_index, slam_user_p, slam_host_p, slam_pid);
-	      error_code = ER_CSS_KILL_DOES_NOTMATCH;
-	    }
-	  else
-	    {
-	      killed = true;
-	    }
-	  break;
-	}
-      thread_sleep (1000);	/* 1000 msec */
+        {
+          if (signaled == false)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_CSS_KILL_DOES_NOTMATCH, 8,
+                      kill_tran_index, kill_user_p, kill_host_p, kill_pid,
+                      kill_tran_index, slam_user_p, slam_host_p, slam_pid);
+              error_code = ER_CSS_KILL_DOES_NOTMATCH;
+            }
+          else
+            {
+              killed = true;
+            }
+          break;
+        }
+      thread_sleep (1000);      /* 1000 msec */
     }
 
   if (error_code == NO_ERROR && !killed)
     {
-      error_code = ER_FAILED;	/* timeout */
+      error_code = ER_FAILED;   /* timeout */
     }
 
   return error_code;
@@ -3906,14 +3732,14 @@ thread_find_first_lockwait_entry (int *thread_index_p)
     {
       thread_p = thread_get_worker (i);
       if (thread_p->status == TS_DEAD || thread_p->status == TS_FREE)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if (thread_p->lockwait != NULL)
-	{			/* found */
-	  *thread_index_p = i;
-	  return thread_p;
-	}
+        {                       /* found */
+          *thread_index_p = i;
+          return thread_p;
+        }
     }
 
   return (THREAD_ENTRY *) NULL;
@@ -3934,14 +3760,14 @@ thread_find_next_lockwait_entry (int *thread_index_p)
     {
       thread_p = thread_get_worker (i);
       if (thread_p->status == TS_DEAD || thread_p->status == TS_FREE)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if (thread_p->lockwait != NULL)
-	{			/* found */
-	  *thread_index_p = i;
-	  return thread_p;
-	}
+        {                       /* found */
+          *thread_index_p = i;
+          return thread_p;
+        }
     }
 
   return (THREAD_ENTRY *) NULL;
@@ -3970,25 +3796,25 @@ thread_get_lockwait_entry (int tran_index, THREAD_ENTRY ** thread_array_p)
   THREAD_ENTRY *thread_p;
   int i, thread_count;
 
-  assert (false);		/* is impossible */
+  assert (false);               /* is impossible */
 
   thread_count = 0;
   for (i = 0; i < thread_Manager.num_workers; i++)
     {
       thread_p = thread_get_worker (i);
       if (thread_p->status == TS_DEAD || thread_p->status == TS_FREE)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if (thread_p->tran_index == tran_index && thread_p->lockwait != NULL)
-	{
-	  thread_array_p[thread_count] = thread_p;
-	  thread_count++;
-	  if (thread_count >= 10)
-	    {
-	      break;
-	    }
-	}
+        {
+          thread_array_p[thread_count] = thread_p;
+          thread_count++;
+          if (thread_count >= 10)
+            {
+              break;
+            }
+        }
     }
 
   return thread_count;
@@ -4003,8 +3829,7 @@ thread_get_lockwait_entry (int tran_index, THREAD_ENTRY ** thread_array_p)
  *   tran_index(in):
  */
 void
-thread_set_info (THREAD_ENTRY * thread_p, int client_id, int rid,
-		 int tran_index)
+thread_set_info (THREAD_ENTRY * thread_p, int client_id, int rid, int tran_index)
 {
   thread_p->client_id = client_id;
   thread_p->rid = rid;
@@ -4114,9 +3939,9 @@ thread_set_sort_stats_active (THREAD_ENTRY * thread_p, bool flag)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       old_val = thread_p->sort_stats_active;
       thread_p->sort_stats_active = flag;
@@ -4137,9 +3962,9 @@ thread_get_sort_stats_active (THREAD_ENTRY * thread_p)
   if (BO_IS_SERVER_RESTARTED ())
     {
       if (thread_p == NULL)
-	{
-	  thread_p = thread_get_thread_entry_info ();
-	}
+        {
+          thread_p = thread_get_thread_entry_info ();
+        }
 
       ret_val = thread_p->sort_stats_active;
     }
@@ -4229,9 +4054,9 @@ thread_job_queue_control_thread (void *arg_p)
   rv = pthread_mutex_lock (&tsd_ptr->th_entry_lock);
   pthread_mutex_unlock (&tsd_ptr->th_entry_lock);
 
-  thread_set_thread_entry_info (tsd_ptr);	/* save TSD */
+  thread_set_thread_entry_info (tsd_ptr);       /* save TSD */
   tsd_ptr->type = TT_DAEMON;
-  tsd_ptr->status = TS_RUN;	/* set thread stat as RUN */
+  tsd_ptr->status = TS_RUN;     /* set thread stat as RUN */
   thread_Job_queue_control_thread.is_available = true;
   thread_Job_queue_control_thread.is_running = true;
 
@@ -4326,17 +4151,15 @@ thread_mnt_track_dump (THREAD_ENTRY * thread_p)
   else
     {
       for (i = thread_p->mnt_track_top; i >= 0; i--)
-	{
-	  fprintf (stdout, "\n--------\n|%3d   |\n--------",
-		   thread_p->mnt_track_stack[i].item);
-	}
+        {
+          fprintf (stdout, "\n--------\n|%3d   |\n--------", thread_p->mnt_track_stack[i].item);
+        }
     }
   fprintf (stdout, "\n");
 }
 
 void
-thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
-			  UINT64 start_time)
+thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value, UINT64 start_time)
 {
   int tran_index;
   int i;
@@ -4350,8 +4173,6 @@ thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
 
   for (i = thread_p->mnt_track_top; i >= 0; i--)
     {
-      monitor_stats_counter_with_time (tran_index + 1,
-				       thread_p->mnt_track_stack[i].item,
-				       value, start_time);
+      monitor_stats_counter_with_time (tran_index + 1, thread_p->mnt_track_stack[i].item, value, start_time);
     }
 }

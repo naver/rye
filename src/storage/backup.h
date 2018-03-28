@@ -80,15 +80,15 @@
 
 typedef enum
 {
-  BK_ZIP_NONE_METHOD,		/* None  */
-  BK_ZIP_LZO1X_METHOD		/* LZO1X */
+  BK_ZIP_NONE_METHOD,           /* None  */
+  BK_ZIP_LZO1X_METHOD           /* LZO1X */
 } BK_ZIP_METHOD;
 
 typedef enum
 {
-  BK_ZIP_NONE_LEVEL = 0,	/* None */
-  BK_ZIP_1_LEVEL = 1,		/* best speed */
-  BK_ZIP_9_LEVEL = 9,		/* best compression */
+  BK_ZIP_NONE_LEVEL = 0,        /* None */
+  BK_ZIP_1_LEVEL = 1,           /* best speed */
+  BK_ZIP_9_LEVEL = 9,           /* best compression */
   BK_ZIP_LZO1X_999_LEVEL = BK_ZIP_9_LEVEL,
   BK_ZIP_LZO1X_DEFAULT_LEVEL = BK_ZIP_1_LEVEL,
 } BK_ZIP_LEVEL;
@@ -113,8 +113,8 @@ typedef enum
 typedef struct bk_backup_page BK_BACKUP_PAGE;
 struct bk_backup_page
 {
-  PAGEID iopageid;		/* Identifier of page to buffer */
-  FILEIO_PAGE iopage;		/* The content of the page */
+  PAGEID iopageid;              /* Identifier of page to buffer */
+  FILEIO_PAGE iopage;           /* The content of the page */
 };
 
 /* Backup header */
@@ -122,26 +122,26 @@ struct bk_backup_page
 typedef struct bk_backup_header BK_BACKUP_HEADER;
 struct bk_backup_header
 {
-  PAGEID iopageid;		/* Must be the same as start of an BK_BACKUP_PAGE
-				   NOTE: a union would be better. */
-  char bk_magic[RYE_MAGIC_MAX_LENGTH];	/* Magic value for file/magic
-					   Unix utility */
-  RYE_VERSION bk_db_version;	/* rye version for compatibility check */
-  int bk_hdr_version;		/* For future compatibility checking */
-  INT64 db_creation;		/* Database creation time */
-  INT64 start_time;		/* Time of backup start */
-  INT64 end_time;		/* Time of backup end */
-  char db_name[PATH_MAX];	/* Fullname of backed up database.
-				   Really more than one byte */
-  PRM_NODE_INFO db_host_info;	/* host info */
-  PGLENGTH db_iopagesize;	/* Size of database pages */
-  LOG_LSA chkpt_lsa;		/* LSA for next incremental backup */
-  LOG_LSA backuptime_lsa;	/* for HA apply */
+  PAGEID iopageid;              /* Must be the same as start of an BK_BACKUP_PAGE
+                                   NOTE: a union would be better. */
+  char bk_magic[RYE_MAGIC_MAX_LENGTH];  /* Magic value for file/magic
+                                           Unix utility */
+  RYE_VERSION bk_db_version;    /* rye version for compatibility check */
+  int bk_hdr_version;           /* For future compatibility checking */
+  INT64 db_creation;            /* Database creation time */
+  INT64 start_time;             /* Time of backup start */
+  INT64 end_time;               /* Time of backup end */
+  char db_name[PATH_MAX];       /* Fullname of backed up database.
+                                   Really more than one byte */
+  PRM_NODE_INFO db_host_info;   /* host info */
+  PGLENGTH db_iopagesize;       /* Size of database pages */
+  LOG_LSA chkpt_lsa;            /* LSA for next incremental backup */
+  LOG_LSA backuptime_lsa;       /* for HA apply */
 
-  int bkup_iosize;		/* Buffered io size when backup was taken */
-  int bkpagesize;		/* size of backup page */
-  BK_ZIP_METHOD zip_method;	/* compression method  */
-  BK_ZIP_LEVEL zip_level;	/* compression level   */
+  int bkup_iosize;              /* Buffered io size when backup was taken */
+  int bkpagesize;               /* size of backup page */
+  BK_ZIP_METHOD zip_method;     /* compression method  */
+  BK_ZIP_LEVEL zip_level;       /* compression level   */
   int make_slave;
   HA_STATE server_state;
 };
@@ -150,31 +150,31 @@ struct bk_backup_header
 typedef struct bk_backup_buffer BK_BACKUP_BUFFER;
 struct bk_backup_buffer
 {
-  int vdes;			/* Open descriptor of backup device */
-  const char *vlabel;		/* Pointer to current backup device name */
-  char name[PATH_MAX];		/* Name of the current backup volume */
+  int vdes;                     /* Open descriptor of backup device */
+  const char *vlabel;           /* Pointer to current backup device name */
+  char name[PATH_MAX];          /* Name of the current backup volume */
 
-  int iosize;			/* Optimal I/O pagesize for backup device */
-  int count;			/* Number of current buffered bytes */
-  INT64 voltotalio;		/* Total number of bytes that have been
-				   either read or written (current volume) */
-  INT64 alltotalio;		/* total for all volumes */
-  char *buffer;			/* Pointer to the buffer */
-  char *ptr;			/* Pointer to the first buffered byte when
-				 * reading and pointer to the next byte to
-				 * buffer when writing
-				 */
+  int iosize;                   /* Optimal I/O pagesize for backup device */
+  int count;                    /* Number of current buffered bytes */
+  INT64 voltotalio;             /* Total number of bytes that have been
+                                   either read or written (current volume) */
+  INT64 alltotalio;             /* total for all volumes */
+  char *buffer;                 /* Pointer to the buffer */
+  char *ptr;                    /* Pointer to the first buffered byte when
+                                 * reading and pointer to the next byte to
+                                 * buffer when writing
+                                 */
 };
 
 typedef struct bk_dbvol_buffer BK_DBVOL_BUFFER;
 struct bk_dbvol_buffer
 {
-  int vdes;			/* Open file descriptor of device name for
-				   writing purposes */
-  VOLID volid;			/* Identifier of volume to backup/restore */
-  INT64 nbytes;			/* Number of bytes of file */
-  const char *vlabel;		/* Pointer to file name to backup */
-  BK_BACKUP_PAGE *area;		/* Area to read/write the page */
+  int vdes;                     /* Open file descriptor of device name for
+                                   writing purposes */
+  VOLID volid;                  /* Identifier of volume to backup/restore */
+  INT64 nbytes;                 /* Number of bytes of file */
+  const char *vlabel;           /* Pointer to file name to backup */
+  BK_BACKUP_PAGE *area;         /* Area to read/write the page */
 
   /* for verbose backup progress */
   int bk_npages;
@@ -185,8 +185,8 @@ struct bk_dbvol_buffer
 typedef struct bk_zip_page BK_ZIP_PAGE;
 struct bk_zip_page
 {
-  lzo_uint buf_len;		/* compressed block size */
-  lzo_byte buf[1];		/* data block */
+  lzo_uint buf_len;             /* compressed block size */
+  lzo_byte buf[1];              /* data block */
 };
 
 typedef struct bk_node BK_NODE;
@@ -197,8 +197,8 @@ struct bk_node
   int pageid;
   bool writeable;
   ssize_t nread;
-  BK_BACKUP_PAGE *area;		/* Area to read/write the page */
-  BK_ZIP_PAGE *zip_page;	/* Area to compress/decompress the page */
+  BK_BACKUP_PAGE *area;         /* Area to read/write the page */
+  BK_ZIP_PAGE *zip_page;        /* Area to compress/decompress the page */
   lzo_bytep wrkmem;
 };
 
@@ -216,15 +216,15 @@ struct bk_thread_info
 {
 #if defined(SERVER_MODE)
   pthread_mutex_t mtx;
-  pthread_cond_t rcv;		/* condition variable of read_thread */
-  pthread_cond_t wcv;		/* condition variable of write_thread */
-#endif				/* SERVER_MODE */
+  pthread_cond_t rcv;           /* condition variable of read_thread */
+  pthread_cond_t wcv;           /* condition variable of write_thread */
+#endif                          /* SERVER_MODE */
 
   int tran_index;
 
-  int num_threads;		/* number of read threads plus one write thread */
-  int act_r_threads;		/* number of activated read threads */
-  int end_r_threads;		/* number of ended read threads */
+  int num_threads;              /* number of read threads plus one write thread */
+  int act_r_threads;            /* number of activated read threads */
+  int end_r_threads;            /* number of ended read threads */
 
   int pageid;
   int from_npages;
@@ -240,12 +240,12 @@ struct bk_thread_info
 typedef struct bk_backup_session BK_BACKUP_SESSION;
 struct bk_backup_session
 {
-  BK_BACKUP_HEADER *bkuphdr;	/* pointer to header information */
-  BK_BACKUP_BUFFER bkup;	/* Buffering area for backup volume */
-  BK_DBVOL_BUFFER dbfile;	/* Buffer area for database files */
-  BK_THREAD_INFO read_thread_info;	/* read-threads info */
-  FILE *verbose_fp;		/* Backupdb/Restoredb status msg */
-  int sleep_msecs;		/* sleep internval in msecs */
+  BK_BACKUP_HEADER *bkuphdr;    /* pointer to header information */
+  BK_BACKUP_BUFFER bkup;        /* Buffering area for backup volume */
+  BK_DBVOL_BUFFER dbfile;       /* Buffer area for database files */
+  BK_THREAD_INFO read_thread_info;      /* read-threads info */
+  FILE *verbose_fp;             /* Backupdb/Restoredb status msg */
+  int sleep_msecs;              /* sleep internval in msecs */
 
   int num_perm_vols;
   int first_arv_needed;
@@ -262,28 +262,22 @@ struct bk_vol_header_in_backup
 {
   INT64 nbytes;
   VOLID volid;
-  short dummy1;			/* Dummy field for 8byte align */
-  int dummy2;			/* Dummy field for 8byte align */
+  short dummy1;                 /* Dummy field for 8byte align */
+  int dummy2;                   /* Dummy field for 8byte align */
   char vlabel[PATH_MAX];
 };
 
 extern int bk_init_backup_buffer (BK_BACKUP_SESSION * session,
-				  const char *db_name,
-				  const char *backup_path, int do_compress);
-extern int bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p,
-				      int num_threads, int sleep_msecs);
-extern void bk_make_backup_name (char *backup_name,
-				 const char *nopath_volname,
-				 const char *backup_path, int unit_num);
+                                  const char *db_name, const char *backup_path, int do_compress);
+extern int bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p, int num_threads, int sleep_msecs);
+extern void bk_make_backup_name (char *backup_name, const char *nopath_volname, const char *backup_path, int unit_num);
 extern const char *bk_get_backup_level_string (void);
 extern const char *bk_get_zip_method_string (BK_ZIP_METHOD zip_method);
 extern const char *bk_get_zip_level_string (BK_ZIP_LEVEL zip_level);
-extern BK_NODE *bk_allocate_node (BK_QUEUE * qp,
-				  BK_BACKUP_HEADER * backup_hdr);
+extern BK_NODE *bk_allocate_node (BK_QUEUE * qp, BK_BACKUP_HEADER * backup_hdr);
 extern BK_NODE *bk_free_node (BK_QUEUE * qp, BK_NODE * node);
 extern BK_NODE *bk_append_queue (BK_QUEUE * queue_p, BK_NODE * node_p);
 extern BK_NODE *bk_delete_queue_head (BK_QUEUE * qp);
-extern void bk_abort_backup_client (BK_BACKUP_SESSION * session_p,
-				    bool does_unformat_bk);
+extern void bk_abort_backup_client (BK_BACKUP_SESSION * session_p, bool does_unformat_bk);
 extern void bk_abort_backup_server (BK_BACKUP_SESSION * session_p);
 #endif /* BACKUP_H_ */

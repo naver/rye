@@ -76,27 +76,20 @@ typedef enum
   TEMPOID_FLUSH_NOT_SUPPORT = 1
 } TEMPOID_FLUSH_RESULT;
 
-static int find_attribute (SM_CLASS ** classp, SM_ATTRIBUTE ** attp, MOP op,
-			   const char *name, int for_write);
+static int find_attribute (SM_CLASS ** classp, SM_ATTRIBUTE ** attp, MOP op, const char *name, int for_write);
 static int assign_null_value (MOP op, SM_ATTRIBUTE * att, char *mem);
-static int assign_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
-			     SETREF * setref);
+static int assign_set_value (MOP op, SM_ATTRIBUTE * att, char *mem, SETREF * setref);
 
-static int obj_set_att (MOP op, SM_CLASS * class_, SM_ATTRIBUTE * att,
-			DB_VALUE * value);
+static int obj_set_att (MOP op, SM_CLASS * class_, SM_ATTRIBUTE * att, DB_VALUE * value);
 
-static int get_object_value (MOP op, SM_ATTRIBUTE * att, char *mem,
-			     DB_VALUE * source, DB_VALUE * dest);
-static int get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
-			  DB_VALUE * source, DB_VALUE * dest);
+static int get_object_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * source, DB_VALUE * dest);
+static int get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * source, DB_VALUE * dest);
 
-static MOP find_unique (MOP classop, SM_ATTRIBUTE * att,
-			DB_IDXKEY * key, LOCK lock);
+static MOP find_unique (MOP classop, SM_ATTRIBUTE * att, DB_IDXKEY * key, LOCK lock);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int flush_temporary_OID (MOP classop, DB_VALUE * key);
 
-static DB_VALUE *obj_make_key_value (DB_VALUE * key,
-				     const DB_VALUE * values[], int size);
+static DB_VALUE *obj_make_key_value (DB_VALUE * key, const DB_VALUE * values[], int size);
 #endif
 
 /* ATTRIBUTE LOCATION */
@@ -118,8 +111,7 @@ static DB_VALUE *obj_make_key_value (DB_VALUE * key,
  *    try to merge where possible.
  */
 static int
-find_attribute (SM_CLASS ** classp, SM_ATTRIBUTE ** attp, MOP op,
-		const char *name, UNUSED_ARG int for_write)
+find_attribute (SM_CLASS ** classp, SM_ATTRIBUTE ** attp, MOP op, const char *name, UNUSED_ARG int for_write)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -141,15 +133,15 @@ find_attribute (SM_CLASS ** classp, SM_ATTRIBUTE ** attp, MOP op,
   if (error_saved)
     {
       if (error == NO_ERROR)
-	{
-	  er_stack_pop ();
-	}
+        {
+          er_stack_pop ();
+        }
       else
-	{
-	  /* Current error(occurred in locator_is_class) is returned,
-	   * and the previous error is cleared from the stack */
-	  er_stack_clear ();
-	}
+        {
+          /* Current error(occurred in locator_is_class) is returned,
+           * and the previous error is cleared from the stack */
+          er_stack_clear ();
+        }
     }
 
   if (error != NO_ERROR)
@@ -194,8 +186,7 @@ find_attribute (SM_CLASS ** classp, SM_ATTRIBUTE ** attp, MOP op,
  */
 
 int
-obj_locate_attribute (MOP op, int attid, int for_write,
-		      char **memp, SM_ATTRIBUTE ** attp)
+obj_locate_attribute (MOP op, int attid, int for_write, char **memp, SM_ATTRIBUTE ** attp)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -212,37 +203,36 @@ obj_locate_attribute (MOP op, int attid, int for_write,
   if (error == NO_ERROR)
     {
       if (for_write)
-	{
-	  error = au_fetch_instance (op, &obj, X_LOCK, AU_UPDATE);
-	}
+        {
+          error = au_fetch_instance (op, &obj, X_LOCK, AU_UPDATE);
+        }
       else
-	{
-	  error = au_fetch_instance (op, &obj, S_LOCK, AU_SELECT);
-	}
+        {
+          error = au_fetch_instance (op, &obj, S_LOCK, AU_SELECT);
+        }
 
       if (error == NO_ERROR)
-	{
-	  if (for_write)
-	    {
-	      /* must call this when updating instances */
-	      ws_class_has_object_dependencies (op->class_mop);
-	    }
+        {
+          if (for_write)
+            {
+              /* must call this when updating instances */
+              ws_class_has_object_dependencies (op->class_mop);
+            }
 
-	  found = NULL;
-	  for (att = class_->attributes; att != NULL && found == NULL;
-	       att = att->next)
-	    {
-	      if (att->id == attid)
-		{
-		  found = att;
-		}
-	    }
+          found = NULL;
+          for (att = class_->attributes; att != NULL && found == NULL; att = att->next)
+            {
+              if (att->id == attid)
+                {
+                  found = att;
+                }
+            }
 
-	  if (found != NULL)
-	    {
-	      memory = (char *) (((char *) obj) + found->offset);
-	    }
-	}
+          if (found != NULL)
+            {
+              memory = (char *) (((char *) obj) + found->offset);
+            }
+        }
     }
 
   if (error == NO_ERROR && found == NULL)
@@ -289,16 +279,16 @@ assign_null_value (MOP op, SM_ATTRIBUTE * att, char *mem)
   else
     {
       if (PRIM_SETMEM (att->sma_domain->type, att->sma_domain, mem, NULL))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
       else
-	{
-	  if (!att->sma_domain->type->variable_p)
-	    {
-	      OBJ_CLEAR_BOUND_BIT (op->object, att->storage_order);
-	    }
-	}
+        {
+          if (!att->sma_domain->type->variable_p)
+            {
+              OBJ_CLEAR_BOUND_BIT (op->object, att->storage_order);
+            }
+        }
     }
 
   return NO_ERROR;
@@ -341,67 +331,66 @@ assign_set_value (MOP op, SM_ATTRIBUTE * att, char *mem, SETREF * setref)
     {
       owner = op;
       if (mem == NULL && !locator_is_class (op))
-	{
-	  owner = op->class_mop;
-	}
+        {
+          owner = op->class_mop;
+        }
 
       new_set = set_change_owner (setref, owner, att->id, att->sma_domain);
       if (new_set == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
     }
 
   if (error == NO_ERROR)
     {
       /* assign the value */
       if (mem != NULL)
-	{
-	  DB_MAKE_SEQUENCE (&val, new_set);
+        {
+          DB_MAKE_SEQUENCE (&val, new_set);
 
-	  error =
-	    PRIM_SETMEM (att->sma_domain->type, att->sma_domain, mem, &val);
-	  db_value_put_null (&val);
+          error = PRIM_SETMEM (att->sma_domain->type, att->sma_domain, mem, &val);
+          db_value_put_null (&val);
 
-	  if (error == NO_ERROR)
-	    {
-	      if (new_set != NULL && new_set != setref)
-		{
-		  set_free (new_set);
-		}
-	    }
-	}
+          if (error == NO_ERROR)
+            {
+              if (new_set != NULL && new_set != setref)
+                {
+                  set_free (new_set);
+                }
+            }
+        }
       else
-	{
-	  /*
-	   * remove ownership information in the current set,
-	   * need to be able to free this !!!
-	   */
-	  current_set = DB_GET_SET (&att->default_value.value);
-	  if (current_set != NULL)
-	    {
-	      error = set_disconnect (current_set);
-	    }
+        {
+          /*
+           * remove ownership information in the current set,
+           * need to be able to free this !!!
+           */
+          current_set = DB_GET_SET (&att->default_value.value);
+          if (current_set != NULL)
+            {
+              error = set_disconnect (current_set);
+            }
 
-	  if (error == NO_ERROR)
-	    {
+          if (error == NO_ERROR)
+            {
 
-	      /* set the new value */
-	      if (new_set != NULL)
-		{
-		  DB_MAKE_SEQUENCE (&att->default_value.value, new_set);
-		}
-	      else
-		{
-		  DB_MAKE_NULL (&att->default_value.value);
-		}
+              /* set the new value */
+              if (new_set != NULL)
+                {
+                  DB_MAKE_SEQUENCE (&att->default_value.value, new_set);
+                }
+              else
+                {
+                  DB_MAKE_NULL (&att->default_value.value);
+                }
 
-	      if (new_set != NULL)
-		{
-		  new_set->ref_count++;
-		}
-	    }
-	}
+              if (new_set != NULL)
+                {
+                  new_set->ref_count++;
+                }
+            }
+        }
     }
 
   return error;
@@ -429,8 +418,7 @@ obj_assign_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * value)
 
   if (op == NULL || att == NULL)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS,
-	      0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
       return ER_OBJ_INVALID_ARGUMENTS;
     }
 
@@ -443,36 +431,33 @@ obj_assign_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * value)
   else
     {
       if (TP_IS_SET_TYPE (TP_DOMAIN_TYPE (att->sma_domain)))
-	{
-	  error = assign_set_value (op, att, mem, DB_GET_SET (value));
-	}
+        {
+          error = assign_set_value (op, att, mem, DB_GET_SET (value));
+        }
       else
-	{
-	  if (att->sma_domain->type == tp_Type_object
-	      && (mop = DB_GET_OBJECT (value)) && WS_MOP_IS_NULL (mop))
-	    {
-	      error = assign_null_value (op, att, mem);
-	    }
-	  else
-	    {
-	      /* uncomplicated assignment, use the primitive type macros */
-	      if (mem != NULL)
-		{
-		  error =
-		    PRIM_SETMEM (att->sma_domain->type, att->sma_domain, mem,
-				 value);
-		  if (!error && !att->sma_domain->type->variable_p)
-		    {
-		      OBJ_SET_BOUND_BIT (op->object, att->storage_order);
-		    }
-		}
-	      else
-		{
-		  pr_clear_value (&att->default_value.value);
-		  pr_clone_value (value, &att->default_value.value);
-		}
-	    }
-	}
+        {
+          if (att->sma_domain->type == tp_Type_object && (mop = DB_GET_OBJECT (value)) && WS_MOP_IS_NULL (mop))
+            {
+              error = assign_null_value (op, att, mem);
+            }
+          else
+            {
+              /* uncomplicated assignment, use the primitive type macros */
+              if (mem != NULL)
+                {
+                  error = PRIM_SETMEM (att->sma_domain->type, att->sma_domain, mem, value);
+                  if (!error && !att->sma_domain->type->variable_p)
+                    {
+                      OBJ_SET_BOUND_BIT (op->object, att->storage_order);
+                    }
+                }
+              else
+                {
+                  pr_clear_value (&att->default_value.value);
+                  pr_clone_value (value, &att->default_value.value);
+                }
+            }
+        }
     }
 
   return error;
@@ -497,8 +482,7 @@ obj_assign_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * value)
  *    locks have been obtained.
  */
 static int
-obj_set_att (MOP op, UNUSED_ARG SM_CLASS * class_, SM_ATTRIBUTE * att,
-	     DB_VALUE * value)
+obj_set_att (MOP op, UNUSED_ARG SM_CLASS * class_, SM_ATTRIBUTE * att, DB_VALUE * value)
 {
   int error = NO_ERROR;
   char *mem;
@@ -517,21 +501,21 @@ obj_set_att (MOP op, UNUSED_ARG SM_CLASS * class_, SM_ATTRIBUTE * att,
     {
       temp = obt_edit_object (op);
       if (temp == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  error = obt_assign (temp, att, value);
-	  if (error == NO_ERROR)
-	    {
-	      error = obt_update (temp, NULL);
-	    }
-	  else
-	    {
-	      obt_quit (temp);
-	    }
-	}
+        {
+          error = obt_assign (temp, att, value);
+          if (error == NO_ERROR)
+            {
+              error = obt_update (temp, NULL);
+            }
+          else
+            {
+              obt_quit (temp);
+            }
+        }
     }
   else
     {
@@ -543,9 +527,9 @@ obj_set_att (MOP op, UNUSED_ARG SM_CLASS * class_, SM_ATTRIBUTE * att,
       /* assume class locks are good, get memory offset */
       mem = NULL;
       if (au_fetch_instance (op, &obj, X_LOCK, AU_UPDATE))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       /* must call this when updating instances */
       ws_class_has_object_dependencies (op->class_mop);
@@ -558,21 +542,21 @@ obj_set_att (MOP op, UNUSED_ARG SM_CLASS * class_, SM_ATTRIBUTE * att,
       ws_pin_instance_and_class (op, &opin, &cpin);
 
       if (error == NO_ERROR)
-	{
-	  actual = obt_check_assignment (att, value, 0);
-	  if (actual == NULL)
-	    {
-	      error = er_errid ();
-	    }
-	  else
-	    {
-	      error = obj_assign_value (op, att, mem, actual);
-	      if (actual != value)
-		{
-		  pr_free_ext_value (actual);
-		}
-	    }
-	}
+        {
+          actual = obt_check_assignment (att, value, 0);
+          if (actual == NULL)
+            {
+              error = er_errid ();
+            }
+          else
+            {
+              error = obj_assign_value (op, att, mem, actual);
+              if (actual != value)
+                {
+                  pr_free_ext_value (actual);
+                }
+            }
+        }
 
       ws_restore_pin (op, opin, cpin);
     }
@@ -600,8 +584,7 @@ obj_set (MOP op, const char *name, DB_VALUE * value)
   SM_ATTRIBUTE *att;
   SM_CLASS *class_;
 
-  if ((op == NULL) || (name == NULL)
-      || ((value != NULL) && (DB_VALUE_TYPE (value) > DB_TYPE_LAST)))
+  if ((op == NULL) || (name == NULL) || ((value != NULL) && (DB_VALUE_TYPE (value) > DB_TYPE_LAST)))
     {
       ERROR0 (error, ER_OBJ_INVALID_ARGUMENTS);
     }
@@ -609,9 +592,9 @@ obj_set (MOP op, const char *name, DB_VALUE * value)
     {
       error = find_attribute (&class_, &att, op, name, 1);
       if (error == NO_ERROR)
-	{
-	  error = obj_set_att (op, class_, att, value);
-	}
+        {
+          error = obj_set_att (op, class_, att, value);
+        }
     }
 
   return (error);
@@ -638,8 +621,7 @@ obj_desc_set (MOP op, SM_DESCRIPTOR * desc, DB_VALUE * value)
   SM_ATTRIBUTE *att;
   SM_CLASS *class_;
 
-  if ((op == NULL) || (desc == NULL)
-      || ((value != NULL) && (DB_VALUE_TYPE (value) > DB_TYPE_LAST)))
+  if ((op == NULL) || (desc == NULL) || ((value != NULL) && (DB_VALUE_TYPE (value) > DB_TYPE_LAST)))
     {
       ERROR0 (error, ER_OBJ_INVALID_ARGUMENTS);
     }
@@ -648,9 +630,9 @@ obj_desc_set (MOP op, SM_DESCRIPTOR * desc, DB_VALUE * value)
       /* map the descriptor into an actual pair of class/attribute structures */
       error = sm_get_descriptor_component (op, desc, 1, &class_, &att);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       error = obj_set_att (op, class_, att, value, desc->valid);
     }
@@ -680,8 +662,7 @@ obj_desc_set (MOP op, SM_DESCRIPTOR * desc, DB_VALUE * value)
  */
 
 static int
-get_object_value (MOP op, SM_ATTRIBUTE * att, char *mem,
-		  DB_VALUE * source, DB_VALUE * dest)
+get_object_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * source, DB_VALUE * dest)
 {
   MOP current;
   DB_VALUE curval;
@@ -700,9 +681,9 @@ get_object_value (MOP op, SM_ATTRIBUTE * att, char *mem,
     {
       DB_MAKE_OBJECT (&curval, NULL);
       if (PRIM_GETMEM (att->sma_domain->type, att->sma_domain, mem, &curval))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
       current = DB_GET_OBJECT (&curval);
     }
   else if (TP_DOMAIN_TYPE (att->sma_domain) == DB_VALUE_TYPE (source))
@@ -721,28 +702,28 @@ get_object_value (MOP op, SM_ATTRIBUTE * att, char *mem,
        */
 
       if (mem != NULL)
-	{
-	  if (PRIM_SETMEM (att->sma_domain->type, att->sma_domain, mem, NULL))
-	    {
-	      return er_errid ();
-	    }
-	  OBJ_CLEAR_BOUND_BIT (op->object, att->storage_order);
-	}
+        {
+          if (PRIM_SETMEM (att->sma_domain->type, att->sma_domain, mem, NULL))
+            {
+              return er_errid ();
+            }
+          OBJ_CLEAR_BOUND_BIT (op->object, att->storage_order);
+        }
       else
-	{
-	  DB_MAKE_NULL (source);
-	}
+        {
+          DB_MAKE_NULL (source);
+        }
     }
   else
     {
       if (current != NULL)
-	{
-	  DB_MAKE_OBJECT (dest, current);
-	}
+        {
+          DB_MAKE_OBJECT (dest, current);
+        }
       else
-	{
-	  DB_MAKE_NULL (dest);
-	}
+        {
+          DB_MAKE_NULL (dest);
+        }
     }
 
   return rc;
@@ -766,8 +747,7 @@ get_object_value (MOP op, SM_ATTRIBUTE * att, char *mem,
  */
 
 static int
-get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
-	       DB_VALUE * source, DB_VALUE * dest)
+get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * source, DB_VALUE * dest)
 {
   SETREF *set;
   DB_VALUE setval;
@@ -775,8 +755,7 @@ get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
 
   if (op == NULL || att == NULL)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS,
-	      0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
       return ER_OBJ_INVALID_ARGUMENTS;
     }
 
@@ -793,12 +772,11 @@ get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
   owner = op;
   if (mem != NULL)
     {
-      db_value_domain_init (&setval, TP_DOMAIN_TYPE (att->sma_domain),
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (&setval, TP_DOMAIN_TYPE (att->sma_domain), DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       if (PRIM_GETMEM (att->sma_domain->type, att->sma_domain, mem, &setval))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
       set = DB_GET_SET (&setval);
       db_value_put_null (&setval);
     }
@@ -806,18 +784,18 @@ get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
     {
       /* note, we may have a temporary OP here ! */
       if (!locator_is_class (op))
-	{
-	  owner = op->class_mop;	/* owner is class */
-	}
+        {
+          owner = op->class_mop;        /* owner is class */
+        }
       if (TP_DOMAIN_TYPE (att->sma_domain) == DB_VALUE_TYPE (source))
-	{
-	  set = DB_GET_SET (source);
-	  /* KLUDGE: shouldn't be doing this at this level */
-	  if (set != NULL)
-	    {
-	      set->ref_count++;
-	    }
-	}
+        {
+          set = DB_GET_SET (source);
+          /* KLUDGE: shouldn't be doing this at this level */
+          if (set != NULL)
+            {
+              set->ref_count++;
+            }
+        }
     }
 
   /*
@@ -827,9 +805,9 @@ get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
   if (set != NULL && set->owner != owner)
     {
       if (set_connect (set, owner, att->id, att->sma_domain))
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
     }
 
   /* convert NULL sets to DB_TYPE_NULL */
@@ -861,15 +839,13 @@ get_set_value (MOP op, SM_ATTRIBUTE * att, char *mem,
  */
 
 int
-obj_get_value (MOP op, SM_ATTRIBUTE * att, void *mem,
-	       DB_VALUE * source, DB_VALUE * dest)
+obj_get_value (MOP op, SM_ATTRIBUTE * att, void *mem, DB_VALUE * source, DB_VALUE * dest)
 {
   int error = NO_ERROR;
 
   if (op == NULL || att == NULL)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS,
-	      0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
       return ER_OBJ_INVALID_ARGUMENTS;
     }
 
@@ -883,48 +859,45 @@ obj_get_value (MOP op, SM_ATTRIBUTE * att, void *mem,
     }
 
   /* first check the bound bits */
-  if (!att->sma_domain->type->variable_p && mem != NULL
-      && OBJ_GET_BOUND_BIT (op->object, att->storage_order) == 0)
+  if (!att->sma_domain->type->variable_p && mem != NULL && OBJ_GET_BOUND_BIT (op->object, att->storage_order) == 0)
     {
       DB_MAKE_NULL (dest);
     }
   else
     {
       if (TP_IS_SET_TYPE (TP_DOMAIN_TYPE (att->sma_domain)))
-	{
-#if 1				/* TODO - trace */
-	  assert (false);
+        {
+#if 1                           /* TODO - trace */
+          assert (false);
 #endif
-	  error = get_set_value (op, att, (char *) mem, source, dest);
-	}
+          error = get_set_value (op, att, (char *) mem, source, dest);
+        }
       else if (att->sma_domain->type == tp_Type_object)
-	{
-#if 1				/* TODO - trace */
-	  assert (false);
+        {
+#if 1                           /* TODO - trace */
+          assert (false);
 #endif
-	  error = get_object_value (op, att, (char *) mem, source, dest);
-	}
+          error = get_object_value (op, att, (char *) mem, source, dest);
+        }
       else
-	{
-	  if (mem != NULL)
-	    {
-	      error =
-		PRIM_GETMEM (att->sma_domain->type, att->sma_domain, mem,
-			     dest);
-	      if (!error)
-		{
-		  OBJ_FORCE_SIMPLE_NULL_TO_UNBOUND (dest);
-		}
-	    }
-	  else
-	    {
-	      error = pr_clone_value (source, dest);
-	      if (!error)
-		{
-		  OBJ_FORCE_SIMPLE_NULL_TO_UNBOUND (dest);
-		}
-	    }
-	}
+        {
+          if (mem != NULL)
+            {
+              error = PRIM_GETMEM (att->sma_domain->type, att->sma_domain, mem, dest);
+              if (!error)
+                {
+                  OBJ_FORCE_SIMPLE_NULL_TO_UNBOUND (dest);
+                }
+            }
+          else
+            {
+              error = pr_clone_value (source, dest);
+              if (!error)
+                {
+                  OBJ_FORCE_SIMPLE_NULL_TO_UNBOUND (dest);
+                }
+            }
+        }
     }
 
   return error;
@@ -948,8 +921,7 @@ obj_get_value (MOP op, SM_ATTRIBUTE * att, void *mem,
  */
 
 int
-obj_get_att (MOP op, UNUSED_ARG SM_CLASS * class_, SM_ATTRIBUTE * att,
-	     DB_VALUE * value)
+obj_get_att (MOP op, UNUSED_ARG SM_CLASS * class_, SM_ATTRIBUTE * att, DB_VALUE * value)
 {
   int error = NO_ERROR;
   char *mem;
@@ -999,9 +971,9 @@ obj_get (MOP op, const char *name, DB_VALUE * value)
     {
       error = find_attribute (&class_, &att, op, name, 0);
       if (error == NO_ERROR)
-	{
-	  error = obj_get_att (op, class_, att, value);
-	}
+        {
+          error = obj_get_att (op, class_, att, value);
+        }
     }
 
   return error;
@@ -1037,7 +1009,7 @@ obj_get_path (DB_OBJECT * object, const char *attpath, DB_VALUE * value)
 
   error = NO_ERROR;
   (void) strcpy (&buf[0], attpath);
-  delimiter = '.';		/* start with implicit dot */
+  delimiter = '.';              /* start with implicit dot */
   DB_MAKE_OBJECT (&temp_value, object);
   for (token = &buf[0]; char_isspace (*token) && *token != '\0'; token++);
   end = token;
@@ -1046,88 +1018,84 @@ obj_get_path (DB_OBJECT * object, const char *attpath, DB_VALUE * value)
     {
       nextdelim = '\0';
       if (delimiter == '.')
-	{
-	  if (DB_VALUE_TYPE (&temp_value) != DB_TYPE_OBJECT)
-	    {
-	      ERROR0 (error, ER_OBJ_INVALID_OBJECT_IN_PATH);
-	    }
-	  else
-	    {
-	      for (end = token; !char_isspace (*end) && *end != '\0';)
-		{
-		  if ((*end != '.') && (*end != '['))
-		    {
-		      end++;
-		    }
-		  else
-		    {
-		      nextdelim = *end;
-		      *end = '\0';
-		    }
-		}
+        {
+          if (DB_VALUE_TYPE (&temp_value) != DB_TYPE_OBJECT)
+            {
+              ERROR0 (error, ER_OBJ_INVALID_OBJECT_IN_PATH);
+            }
+          else
+            {
+              for (end = token; !char_isspace (*end) && *end != '\0';)
+                {
+                  if ((*end != '.') && (*end != '['))
+                    {
+                      end++;
+                    }
+                  else
+                    {
+                      nextdelim = *end;
+                      *end = '\0';
+                    }
+                }
 
-	      if (token == end)
-		{
-		  ERROR0 (error, ER_OBJ_INVALID_PATH_EXPRESSION);
-		}
-	      else
-		{
-		  error = obj_get (DB_GET_OBJECT (&temp_value), token,
-				   &temp_value);
-		}
-	    }
-	}
+              if (token == end)
+                {
+                  ERROR0 (error, ER_OBJ_INVALID_PATH_EXPRESSION);
+                }
+              else
+                {
+                  error = obj_get (DB_GET_OBJECT (&temp_value), token, &temp_value);
+                }
+            }
+        }
       else if (delimiter == '[')
-	{
-	  DB_TYPE temp_type;
+        {
+          DB_TYPE temp_type;
 
-	  temp_type = DB_VALUE_TYPE (&temp_value);
-	  if (!TP_IS_SET_TYPE (temp_type))
-	    {
-	      ERROR0 (error, ER_OBJ_INVALID_SET_IN_PATH);
-	    }
-	  else
-	    {
-	      for (end = token; char_isdigit (*end) && *end != '\0'; end++)
-		;
+          temp_type = DB_VALUE_TYPE (&temp_value);
+          if (!TP_IS_SET_TYPE (temp_type))
+            {
+              ERROR0 (error, ER_OBJ_INVALID_SET_IN_PATH);
+            }
+          else
+            {
+              for (end = token; char_isdigit (*end) && *end != '\0'; end++)
+                ;
 
-	      nextdelim = *end;
-	      *end = '\0';
-	      if (end == token)
-		{
-		  ERROR0 (error, ER_OBJ_INVALID_INDEX_IN_PATH);
-		}
-	      else
-		{
-		  index = atoi (token);
-		  if (temp_type == DB_TYPE_SEQUENCE)
-		    {
-		      error = db_seq_get (DB_GET_SET (&temp_value), index,
-					  &temp_value);
-		    }
-		  else
-		    {
-		      error = db_set_get (DB_GET_SET (&temp_value), index,
-					  &temp_value);
-		    }
+              nextdelim = *end;
+              *end = '\0';
+              if (end == token)
+                {
+                  ERROR0 (error, ER_OBJ_INVALID_INDEX_IN_PATH);
+                }
+              else
+                {
+                  index = atoi (token);
+                  if (temp_type == DB_TYPE_SEQUENCE)
+                    {
+                      error = db_seq_get (DB_GET_SET (&temp_value), index, &temp_value);
+                    }
+                  else
+                    {
+                      error = db_set_get (DB_GET_SET (&temp_value), index, &temp_value);
+                    }
 
-		  if (error == NO_ERROR)
-		    {
-		      for (++end; nextdelim != ']' && nextdelim != '\0';
-			   nextdelim = *end++)
-			;
-		      if (nextdelim != '\0')
-			{
-			  nextdelim = *end;
-			}
-		    }
-		}
-	    }
-	}
+                  if (error == NO_ERROR)
+                    {
+                      for (++end; nextdelim != ']' && nextdelim != '\0'; nextdelim = *end++)
+                        ;
+                      if (nextdelim != '\0')
+                        {
+                          nextdelim = *end;
+                        }
+                    }
+                }
+            }
+        }
       else
-	{
-	  ERROR0 (error, ER_OBJ_INVALID_PATH_EXPRESSION);
-	}
+        {
+          ERROR0 (error, ER_OBJ_INVALID_PATH_EXPRESSION);
+        }
 
       /* next iteration */
       delimiter = nextdelim;
@@ -1175,30 +1143,30 @@ obj_alloc (SM_CLASS * class_, int bound_bit_status)
     {
       /* init the bound bit vector */
       if (class_->fixed_count)
-	{
-	  bits = (unsigned int *) (obj + OBJ_HEADER_BOUND_BITS_OFFSET);
-	  nwords = OR_BOUND_BIT_WORDS (class_->fixed_count);
-	  for (i = 0; i < nwords; i++)
-	    {
-	      if (bound_bit_status)
-		{
-		  bits[i] = 0xFFFFFFFF;
-		}
-	      else
-		{
-		  bits[i] = 0;
-		}
-	    }
-	}
+        {
+          bits = (unsigned int *) (obj + OBJ_HEADER_BOUND_BITS_OFFSET);
+          nwords = OR_BOUND_BIT_WORDS (class_->fixed_count);
+          for (i = 0; i < nwords; i++)
+            {
+              if (bound_bit_status)
+                {
+                  bits[i] = 0xFFFFFFFF;
+                }
+              else
+                {
+                  bits[i] = 0;
+                }
+            }
+        }
 
       /* clear the object */
       for (att = class_->attributes; att != NULL; att = att->next)
-	{
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+        {
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  mem = obj + att->offset;
-	  PRIM_INITMEM (att->sma_domain->type, mem, att->sma_domain);
-	}
+          mem = obj + att->offset;
+          PRIM_INITMEM (att->sma_domain->type, mem, att->sma_domain);
+        }
     }
 
   return obj;
@@ -1229,9 +1197,9 @@ obj_create (MOP classop)
     {
       /* remember to disable the NON NULL integrity constraint checking */
       if (obt_update_internal (obj_template, &new_mop, 0) != NO_ERROR)
-	{
-	  obt_quit (obj_template);
-	}
+        {
+          obt_quit (obj_template);
+        }
     }
   return (new_mop);
 }
@@ -1274,40 +1242,40 @@ obj_copy (MOP op)
   else
     {
       if (au_fetch_class (op, &class_, S_LOCK, AU_INSERT) != NO_ERROR)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       /* do this so that we make really sure that op->class is set up */
       if (au_fetch_instance (op, &src, S_LOCK, AU_SELECT) != NO_ERROR)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       obj_template = obt_def_object (op->class_mop);
       if (obj_template != NULL)
-	{
-	  for (att = class_->attributes; att != NULL; att = att->next)
-	    {
-	      if (obj_get_att (op, class_, att, &value) != NO_ERROR)
-		{
-		  goto error;
-		}
+        {
+          for (att = class_->attributes; att != NULL; att = att->next)
+            {
+              if (obj_get_att (op, class_, att, &value) != NO_ERROR)
+                {
+                  goto error;
+                }
 
-	      if (obt_assign (obj_template, att, &value, NULL) != NO_ERROR)
-		{
-		  goto error;
-		}
+              if (obt_assign (obj_template, att, &value, NULL) != NO_ERROR)
+                {
+                  goto error;
+                }
 
-	      (void) pr_clear_value (&value);
-	    }
+              (void) pr_clear_value (&value);
+            }
 
-	  /* leaves new NULL if error */
-	  if (obt_update_internal (obj_template, &new_mop, 0) != NO_ERROR)
-	    {
-	      obt_quit (obj_template);
-	    }
-	}
+          /* leaves new NULL if error */
+          if (obt_update_internal (obj_template, &new_mop, 0) != NO_ERROR)
+            {
+              obt_quit (obj_template);
+            }
+        }
     }
 
   return new_mop;
@@ -1422,9 +1390,9 @@ error_exit:
       /* TODO - trigger failure, remember to unpin */
       (void) ws_pin (op, pin);
       if (base_op != NULL && base_op != op)
-	{
-	  (void) ws_pin (base_op, pin2);
-	}
+        {
+          (void) ws_pin (base_op, pin2);
+        }
       unpin_on_error = false;
     }
   return error;
@@ -1476,7 +1444,7 @@ find_unique (MOP classop, SM_ATTRIBUTE * att, DB_IDXKEY * key, LOCK lock)
 
   class_oid = ws_oid (classop);
 
-#if 1				/* TODO - remove me someday */
+#if 1                           /* TODO - remove me someday */
   /* make sure all dirtied objects have been flushed */
   if (sm_flush_objects (classop) != NO_ERROR)
     {
@@ -1493,31 +1461,26 @@ find_unique (MOP classop, SM_ATTRIBUTE * att, DB_IDXKEY * key, LOCK lock)
   BTID_SET_NULL (&btid);
 
   /* look for a unique index on this attribute */
-  r = classobj_get_cached_index_family (att->constraints,
-					SM_CONSTRAINT_UNIQUE, &btid);
+  r = classobj_get_cached_index_family (att->constraints, SM_CONSTRAINT_UNIQUE, &btid);
   if (r == 0)
     {
       /* look for a primary key on this attribute */
-      r = classobj_get_cached_index_family (att->constraints,
-					    SM_CONSTRAINT_PRIMARY_KEY, &btid);
+      r = classobj_get_cached_index_family (att->constraints, SM_CONSTRAINT_PRIMARY_KEY, &btid);
       if (r == 0)
-	{
-	  /* couldn't find one, check for a index */
-	  r = classobj_get_cached_index_family (att->constraints,
-						SM_CONSTRAINT_INDEX, &btid);
-	  if (r == 0)
-	    {
-	      /* couldn't find anything to search in */
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OBJ_INDEX_NOT_FOUND, 0);
-	      return NULL;
-	    }
-	}
+        {
+          /* couldn't find one, check for a index */
+          r = classobj_get_cached_index_family (att->constraints, SM_CONSTRAINT_INDEX, &btid);
+          if (r == 0)
+            {
+              /* couldn't find anything to search in */
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_INDEX_NOT_FOUND, 0);
+              return NULL;
+            }
+        }
     }
 
   /* now search the index */
-  if (btree_find_unique (class_oid, &btid, key, &unique_oid) ==
-      BTREE_KEY_FOUND)
+  if (btree_find_unique (class_oid, &btid, key, &unique_oid) == BTREE_KEY_FOUND)
     {
       found = ws_mop (&unique_oid, classop);
     }
@@ -1534,9 +1497,9 @@ find_unique (MOP classop, SM_ATTRIBUTE * att, DB_IDXKEY * key, LOCK lock)
   if (found != NULL)
     {
       if (au_fetch_instance_force (found, NULL, lock) != NO_ERROR)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
 #if 0
@@ -1589,13 +1552,13 @@ flush_temporary_OID (MOP classop, DB_VALUE * key)
     {
       /* flush this class and see if the value remains temporary */
       if (sm_flush_objects (classop) != NO_ERROR)
-	{
-	  return TEMPOID_FLUSH_FAIL;
-	}
+        {
+          return TEMPOID_FLUSH_FAIL;
+        }
       if (OID_ISTEMP (WS_OID (mop)))
-	{
-	  return TEMPOID_FLUSH_NOT_SUPPORT;
-	}
+        {
+          return TEMPOID_FLUSH_NOT_SUPPORT;
+        }
     }
   return TEMPOID_FLUSH_OK;
 }
@@ -1638,14 +1601,13 @@ obj_find_unique (MOP op, const char *attname, DB_IDXKEY * key, LOCK lock)
     {
       att = classobj_find_attribute (class_->attributes, attname);
       if (att == NULL)
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  ER_OBJ_INVALID_ATTRIBUTE, 1, attname);
-	}
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ATTRIBUTE, 1, attname);
+        }
       else
-	{
-	  obj = find_unique (op, att, key, lock);
-	}
+        {
+          obj = find_unique (op, att, key, lock);
+        }
     }
 
   return obj;
@@ -1670,44 +1632,40 @@ obj_make_key_value (DB_VALUE * key, const DB_VALUE * values[], int size)
   if (size == 1)
     {
       if (DB_IS_NULL (values[0]))
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OBJ_INVALID_ARGUMENTS, 0);
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
+          return NULL;
+        }
       *key = *values[0];
     }
   else
     {
       mc_seq = set_create_sequence (size);
       if (mc_seq == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       for (i = 0, nullcnt = 0; i < size; i++)
-	{
-	  if (values[i] == NULL
-	      || set_put_element (mc_seq, i,
-				  (DB_VALUE *) values[i]) != NO_ERROR)
-	    {
-	      set_free (mc_seq);
-	      return NULL;
-	    }
+        {
+          if (values[i] == NULL || set_put_element (mc_seq, i, (DB_VALUE *) values[i]) != NO_ERROR)
+            {
+              set_free (mc_seq);
+              return NULL;
+            }
 
-	  if (DB_IS_NULL (values[i]))
-	    {
-	      nullcnt++;
-	    }
-	}
+          if (DB_IS_NULL (values[i]))
+            {
+              nullcnt++;
+            }
+        }
 
       if (nullcnt >= size)
-	{
-	  set_free (mc_seq);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OBJ_INVALID_ARGUMENTS, 0);
-	  return NULL;
-	}
+        {
+          set_free (mc_seq);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
+          return NULL;
+        }
 
       DB_MAKE_SEQUENCE (key, mc_seq);
     }
@@ -1725,8 +1683,7 @@ obj_make_key_value (DB_VALUE * key, const DB_VALUE * values[], int size)
  *    recdes(in): record to be inserted
  */
 int
-obj_repl_add_object (const char *class_name, DB_IDXKEY * key, int type,
-		     RECDES * recdes)
+obj_repl_add_object (const char *class_name, DB_IDXKEY * key, int type, RECDES * recdes)
 {
   int error = NO_ERROR;
   int operation = 0;
@@ -1779,16 +1736,16 @@ obj_isinstance (MOP obj)
   if (obj != NULL)
     {
       if (!locator_is_class (obj))
-	{
-	  /*
-	   * before declaring this an instance, we have to make sure it
-	   * isn't deleted
-	   */
-	  if (!WS_ISMARK_DELETED (obj))
-	    {
-	      is_instance = true;
-	    }
-	}
+        {
+          /*
+           * before declaring this an instance, we have to make sure it
+           * isn't deleted
+           */
+          if (!WS_ISMARK_DELETED (obj))
+            {
+              is_instance = true;
+            }
+        }
     }
 
   return (is_instance);
@@ -1812,24 +1769,24 @@ obj_lock (MOP op, int for_write)
   if (locator_is_class (op))
     {
       if (for_write)
-	{
-	  error = au_fetch_class (op, NULL, X_LOCK, AU_ALTER);
-	}
+        {
+          error = au_fetch_class (op, NULL, X_LOCK, AU_ALTER);
+        }
       else
-	{
-	  error = au_fetch_class (op, NULL, S_LOCK, AU_SELECT);
-	}
+        {
+          error = au_fetch_class (op, NULL, S_LOCK, AU_SELECT);
+        }
     }
   else
     {
       if (for_write)
-	{
-	  error = au_fetch_instance (op, NULL, X_LOCK, AU_UPDATE);
-	}
+        {
+          error = au_fetch_instance (op, NULL, X_LOCK, AU_UPDATE);
+        }
       else
-	{
-	  error = au_fetch_instance (op, NULL, S_LOCK, AU_SELECT);
-	}
+        {
+          error = au_fetch_instance (op, NULL, S_LOCK, AU_SELECT);
+        }
     }
 
   return (error);

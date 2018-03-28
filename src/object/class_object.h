@@ -128,15 +128,15 @@ typedef struct tp_domain SM_DOMAIN;
  */
 typedef enum
 {
-  SM_ATTFLAG_INDEX = 1,		/* attribute has an index 0x01 */
-  SM_ATTFLAG_UNIQUE = 2,	/* attribute has UNIQUE constraint 0x02 */
-  SM_ATTFLAG_NON_NULL = 4,	/* attribute has NON_NULL constraint 0x04 */
-#if 0				/* unused */
-  SM_ATTFLAG_VID = 8,		/* attribute is part of virtual object id 0x08 */
+  SM_ATTFLAG_INDEX = 1,         /* attribute has an index 0x01 */
+  SM_ATTFLAG_UNIQUE = 2,        /* attribute has UNIQUE constraint 0x02 */
+  SM_ATTFLAG_NON_NULL = 4,      /* attribute has NON_NULL constraint 0x04 */
+#if 0                           /* unused */
+  SM_ATTFLAG_VID = 8,           /* attribute is part of virtual object id 0x08 */
 #endif
-  SM_ATTFLAG_NEW = 16,		/* is a new attribute  0x10 */
-  SM_ATTFLAG_PRIMARY_KEY = 32,	/* attribute has a primary key 0x20 */
-  SM_ATTFLAG_SHARD_KEY = 64	/* attribute is the shard key 0x40 */
+  SM_ATTFLAG_NEW = 16,          /* is a new attribute  0x10 */
+  SM_ATTFLAG_PRIMARY_KEY = 32,  /* attribute has a primary key 0x20 */
+  SM_ATTFLAG_SHARD_KEY = 64     /* attribute is the shard key 0x40 */
 } SM_ATTRIBUTE_FLAG;
 
 /* attribute constraint types */
@@ -155,8 +155,8 @@ typedef enum
  */
 typedef enum
 {
-  SM_CLASS_CT,			/* default SQL/X class */
-  SM_VCLASS_CT			/* component db virtual class */
+  SM_CLASS_CT,                  /* default SQL/X class */
+  SM_VCLASS_CT                  /* component db virtual class */
 } SM_CLASS_TYPE;
 
 /*
@@ -165,13 +165,13 @@ typedef enum
  */
 typedef enum
 {
-  SM_CLASSFLAG_SYSTEM = 1,	/* a system defined class */
-#if 0				/* unused */
-  SM_CLASSFLAG_WITHCHECKOPTION = 2,	/* a view with check option */
-  SM_CLASSFLAG_LOCALCHECKOPTION = 4,	/* view w/local check option */
-  SM_CLASSFLAG_REUSE_OID = 8,	/* the class can reuse OIDs */
+  SM_CLASSFLAG_SYSTEM = 1,      /* a system defined class */
+#if 0                           /* unused */
+  SM_CLASSFLAG_WITHCHECKOPTION = 2,     /* a view with check option */
+  SM_CLASSFLAG_LOCALCHECKOPTION = 4,    /* view w/local check option */
+  SM_CLASSFLAG_REUSE_OID = 8,   /* the class can reuse OIDs */
 #endif
-  SM_CLASSFLAG_SHARD_TABLE = 16	/* a shard table */
+  SM_CLASSFLAG_SHARD_TABLE = 16 /* a shard table */
 } SM_CLASS_FLAG;
 
 /*
@@ -180,8 +180,8 @@ typedef enum
  */
 typedef enum
 {
-  Meta_root,			/* the object is the root class */
-  Meta_class			/* the object is a normal class */
+  Meta_root,                    /* the object is the root class */
+  Meta_class                    /* the object is a normal class */
 } SM_METATYPE;
 
 
@@ -196,7 +196,7 @@ typedef struct sm_class_header SM_CLASS_HEADER;
 
 struct sm_class_header
 {
-  SM_METATYPE type;		/* doesn't need to be a full word */
+  SM_METATYPE type;             /* doesn't need to be a full word */
   const char *name;
 
   HFID heap;
@@ -229,10 +229,10 @@ struct sm_constraint
 typedef struct sm_default_value SM_DEFAULT_VALUE;
 struct sm_default_value
 {
-  DB_VALUE original_value;	/* initial default value; */
-  DB_VALUE value;		/* current default/class value */
-  DB_DEFAULT_EXPR_TYPE default_expr;	/* identifier for the default
-					 * expression */
+  DB_VALUE original_value;      /* initial default value; */
+  DB_VALUE value;               /* current default/class value */
+  DB_DEFAULT_EXPR_TYPE default_expr;    /* identifier for the default
+                                         * expression */
 };
 
 typedef struct sm_attribute SM_ATTRIBUTE;
@@ -280,27 +280,27 @@ struct sm_attribute
 {
   struct sm_attribute *next;
 
-  const char *name;		/* name */
-  PR_TYPE *type;		/* basic type */
-  TP_DOMAIN *sma_domain;	/* allowable types */
+  const char *name;             /* name */
+  PR_TYPE *type;                /* basic type */
+  TP_DOMAIN *sma_domain;        /* allowable types */
 
-  MOP class_mop;		/* origin class */
+  MOP class_mop;                /* origin class */
 
-  int id;			/* unique id number */
-  int offset;			/* memory offset */
+  int id;                       /* unique id number */
+  int offset;                   /* memory offset */
 
-  SM_DEFAULT_VALUE default_value;	/* default value */
+  SM_DEFAULT_VALUE default_value;       /* default value */
 
-  SM_CONSTRAINT *constraints;	/* cached constraint list */
+  SM_CONSTRAINT *constraints;   /* cached constraint list */
 
   /* see tfcl and the discussion on attribute extensions */
-  DB_SEQ *properties;		/* property list */
+  DB_SEQ *properties;           /* property list */
 
-  unsigned int flags;		/* bit flags */
-  int order;			/* definition order number */
-  struct sm_attribute *order_link;	/* list in definition order */
+  unsigned int flags;           /* bit flags */
+  int order;                    /* definition order number */
+  struct sm_attribute *order_link;      /* list in definition order */
 
-  int storage_order;		/* storage order number */
+  int storage_order;            /* storage order number */
 };
 
 typedef struct sm_class_constraint_attribute SM_DISK_CONSTRAINT_ATTRIBUTE;
@@ -321,7 +321,7 @@ struct sm_class_constraint
   const char *name;
   int num_atts;
   SM_ATTRIBUTE **attributes;
-  int *asc_desc;		/* asc/desc info list */
+  int *asc_desc;                /* asc/desc info list */
   BTID index_btid;
   int index_status;
   SM_CONSTRAINT_TYPE type;
@@ -353,9 +353,9 @@ struct sm_repr_attribute
 {
   struct sm_repr_attribute *next;
 
-  int attid;			/* old attribute id */
-  DB_TYPE typeid_;		/* type id */
-  TP_DOMAIN *domain;		/* full domain, think about merging with type id */
+  int attid;                    /* old attribute id */
+  DB_TYPE typeid_;              /* type id */
+  TP_DOMAIN *domain;            /* full domain, think about merging with type id */
 };
 
 /*
@@ -372,10 +372,10 @@ struct sm_representation
 {
   struct sm_representation *next;
 
-  SM_REPR_ATTRIBUTE *attributes;	/* list of attribute descriptions */
-  int id;			/* unique identifier for this rep */
-  int fixed_count;		/* number of fixed attributes */
-  int variable_count;		/* number of variable attributes */
+  SM_REPR_ATTRIBUTE *attributes;        /* list of attribute descriptions */
+  int id;                       /* unique identifier for this rep */
+  int fixed_count;              /* number of fixed attributes */
+  int variable_count;           /* number of variable attributes */
 };
 
 /*
@@ -402,41 +402,41 @@ struct sm_class
 {
   SM_CLASS_HEADER header;
 
-  SM_CLASS_TYPE class_type;	/* what kind of class variant is this? */
-  int repid;			/* current representation id */
+  SM_CLASS_TYPE class_type;     /* what kind of class variant is this? */
+  int repid;                    /* current representation id */
 
-  SM_REPRESENTATION *representations;	/* list of old representations */
+  SM_REPRESENTATION *representations;   /* list of old representations */
 
-  int object_size;		/* memory size in bytes */
-  int att_count;		/* number of instance attributes */
-  SM_ATTRIBUTE *attributes;	/* list of instance attribute definitions */
+  int object_size;              /* memory size in bytes */
+  int att_count;                /* number of instance attributes */
+  SM_ATTRIBUTE *attributes;     /* list of instance attribute definitions */
 
-  const char *loader_commands;	/* command string to the dynamic loader */
+  const char *loader_commands;  /* command string to the dynamic loader */
 
-  int fixed_count;		/* number of fixed size attributes */
-  int variable_count;		/* number of variable size attributes */
-  int fixed_size;		/* byte size of fixed attributes */
+  int fixed_count;              /* number of fixed size attributes */
+  int variable_count;           /* number of variable size attributes */
+  int fixed_size;               /* byte size of fixed attributes */
 
-  int att_ids;			/* attribute id counter */
-  int unused;			/* formerly repid counter, delete */
+  int att_ids;                  /* attribute id counter */
+  int unused;                   /* formerly repid counter, delete */
 
-  SM_QUERY_SPEC *query_spec;	/* virtual class query_spec information */
-  SM_TEMPLATE *new_;		/* temporary structure */
-  CLASS_STATS *stats;		/* server statistics, loaded on demand */
+  SM_QUERY_SPEC *query_spec;    /* virtual class query_spec information */
+  SM_TEMPLATE *new_;            /* temporary structure */
+  CLASS_STATS *stats;           /* server statistics, loaded on demand */
 
-  MOP owner;			/* authorization object */
-  int unused_02;		/* class collation, delete */
-  void *auth_cache;		/* compiled cache */
+  MOP owner;                    /* authorization object */
+  int unused_02;                /* class collation, delete */
+  void *auth_cache;             /* compiled cache */
 
-  SM_ATTRIBUTE *ordered_attributes;	/* see classobj_fixup_loaded_class () */
+  SM_ATTRIBUTE *ordered_attributes;     /* see classobj_fixup_loaded_class () */
   struct parser_context *virtual_query_cache;
-  SM_CLASS_CONSTRAINT *constraints;	/* Constraint cache */
-  SM_DISK_CONSTRAINT *disk_constraints;	/* Disk strucure of Constraint */
+  SM_CLASS_CONSTRAINT *constraints;     /* Constraint cache */
+  SM_DISK_CONSTRAINT *disk_constraints; /* Disk strucure of Constraint */
 
   unsigned int flags;
   unsigned int virtual_cache_schema_id;
 
-  unsigned post_load_cleanup:1;	/* set if post load cleanup has occurred */
+  unsigned post_load_cleanup:1; /* set if post load cleanup has occurred */
 
 };
 
@@ -444,18 +444,18 @@ struct sm_class
 
 struct sm_template
 {
-  MOP op;			/* class MOP (if editing existing class) */
-  SM_CLASS *current;		/* current class structure (if editing existing) */
-  SM_CLASS_TYPE class_type;	/* what kind of class variant is this? */
-  int tran_index;		/* transaction index when template was created */
+  MOP op;                       /* class MOP (if editing existing class) */
+  SM_CLASS *current;            /* current class structure (if editing existing) */
+  SM_CLASS_TYPE class_type;     /* what kind of class variant is this? */
+  int tran_index;               /* transaction index when template was created */
 
-  const char *name;		/* class name */
+  const char *name;             /* class name */
 
-  SM_ATTRIBUTE *attributes;	/* instance attribute definitions */
+  SM_ATTRIBUTE *attributes;     /* instance attribute definitions */
 
-  const char *loader_commands;	/* loader commands */
+  const char *loader_commands;  /* loader commands */
 
-  SM_QUERY_SPEC *query_spec;	/* query_spec list */
+  SM_QUERY_SPEC *query_spec;    /* query_spec list */
 
   SM_ATTRIBUTE *instance_attributes;
 
@@ -476,14 +476,14 @@ typedef struct sm_class_info SM_CLASS_INFO;
 struct sm_class_info
 {
   const char *name;
-  DB_OBJECT *owner;		/* owner's user object */
+  DB_OBJECT *owner;             /* owner's user object */
 
-  SM_CLASS_TYPE class_type;	/* what kind of class variant is this? */
-  int att_count;		/* number of instance attributes */
-  SM_ATTRIBUTE *attributes;	/* list of attribute definitions */
-  SM_QUERY_SPEC *query_spec;	/* virtual class query_spec list */
+  SM_CLASS_TYPE class_type;     /* what kind of class variant is this? */
+  int att_count;                /* number of instance attributes */
+  SM_ATTRIBUTE *attributes;     /* list of attribute definitions */
+  SM_QUERY_SPEC *query_spec;    /* virtual class query_spec list */
 
-  unsigned int flags;		/* persistent flags */
+  unsigned int flags;           /* persistent flags */
 };
 
 
@@ -512,12 +512,12 @@ struct sm_descriptor_list
 typedef struct sm_validation SM_VALIDATION;
 struct sm_validation
 {
-  DB_OBJECT *last_class;	/* DB_TYPE_OBJECT validation cache */
+  DB_OBJECT *last_class;        /* DB_TYPE_OBJECT validation cache */
   DB_OBJLIST *validated_classes;
 
-  DB_DOMAIN *last_setdomain;	/* DB_TYPE_COLLECTION validation cache */
+  DB_DOMAIN *last_setdomain;    /* DB_TYPE_COLLECTION validation cache */
 
-  DB_TYPE last_type;		/* Other validation caches */
+  DB_TYPE last_type;            /* Other validation caches */
   int last_precision;
   int last_scale;
 };
@@ -533,12 +533,12 @@ struct sm_descriptor
 {
   struct sm_descriptor *next;
 
-  char *name;			/* component name */
+  char *name;                   /* component name */
 
-  SM_DESCRIPTOR_LIST *map;	/* class/component map */
-  SM_VALIDATION *valid;		/* validation cache */
+  SM_DESCRIPTOR_LIST *map;      /* class/component map */
+  SM_VALIDATION *valid;         /* validation cache */
 
-  DB_OBJECT *class_mop;		/* root class */
+  DB_OBJECT *class_mop;         /* root class */
 };
 #endif
 
@@ -581,20 +581,14 @@ extern void classobj_free_threaded_array (DB_LIST * array, LFREEER clear);
 extern DB_SEQ *classobj_make_prop (void);
 extern int classobj_copy_props (DB_SEQ * properties, DB_SEQ ** new_);
 extern void classobj_free_prop (DB_SEQ * properties);
-extern int classobj_get_prop (DB_SEQ * properties, const char *name,
-			      DB_VALUE * pvalue);
-extern int classobj_put_prop (DB_SEQ * properties, const char *name,
-			      DB_VALUE * pvalue);
+extern int classobj_get_prop (DB_SEQ * properties, const char *name, DB_VALUE * pvalue);
+extern int classobj_put_prop (DB_SEQ * properties, const char *name, DB_VALUE * pvalue);
 extern int classobj_drop_prop (DB_SEQ * properties, const char *name);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int classobj_find_prop_constraint (DB_SEQ * properties,
-					  const char *prop_name,
-					  const char *cnstr_name,
-					  DB_VALUE * cnstr_val);
+                                          const char *prop_name, const char *cnstr_name, DB_VALUE * cnstr_val);
 #endif
-extern int classobj_get_cached_index_family (SM_CONSTRAINT * constraints,
-					     SM_CONSTRAINT_TYPE type,
-					     BTID * id);
+extern int classobj_get_cached_index_family (SM_CONSTRAINT * constraints, SM_CONSTRAINT_TYPE type, BTID * id);
 extern bool classobj_has_unique_constraint (SM_CONSTRAINT * constraints);
 extern int classobj_decompose_property_btid (const char *buffer, BTID * btid);
 #if defined (ENABLE_UNUSED_FUNCTION)
@@ -608,63 +602,44 @@ extern int classobj_oid_from_property_value (DB_VALUE * value, OID * oid);
 /* Constraints */
 extern bool classobj_cache_constraints (SM_CLASS * class_);
 
-extern void
-classobj_free_disk_constraint_attribute (SM_DISK_CONSTRAINT_ATTRIBUTE *
-					 cons_att);
+extern void classobj_free_disk_constraint_attribute (SM_DISK_CONSTRAINT_ATTRIBUTE * cons_att);
 extern void classobj_free_class_constraint (SM_CLASS_CONSTRAINT * cons);
 extern void classobj_decache_class_constraints (SM_CLASS * class_);
-#if 1				/* TODO:[happy] */
+#if 1                           /* TODO:[happy] */
 extern int classobj_cache_class_constraints (SM_CLASS * class_);
 #endif
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern SM_CLASS_CONSTRAINT
-  * classobj_find_class_constraint (SM_CLASS_CONSTRAINT * constraints,
-				    SM_CONSTRAINT_TYPE type,
-				    const char *name);
+  * classobj_find_class_constraint (SM_CLASS_CONSTRAINT * constraints, SM_CONSTRAINT_TYPE type, const char *name);
 #endif
-extern SM_CLASS_CONSTRAINT *classobj_find_class_index (SM_CLASS * class_,
-						       const char *name);
-extern SM_CLASS_CONSTRAINT
-  * classobj_find_constraint_by_name (SM_CLASS_CONSTRAINT * cons_list,
-				      const char *name);
+extern SM_CLASS_CONSTRAINT *classobj_find_class_index (SM_CLASS * class_, const char *name);
+extern SM_CLASS_CONSTRAINT * classobj_find_constraint_by_name (SM_CLASS_CONSTRAINT * cons_list, const char *name);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern void classobj_remove_class_constraint_node (SM_CLASS_CONSTRAINT **
-						   constraints,
-						   SM_CLASS_CONSTRAINT *
-						   node);
+extern void classobj_remove_class_constraint_node (SM_CLASS_CONSTRAINT ** constraints, SM_CLASS_CONSTRAINT * node);
 #endif
 
 extern int classobj_make_class_constraints (SM_CLASS_CONSTRAINT ** new_list,
-					    SM_ATTRIBUTE * attributes,
-					    SM_DISK_CONSTRAINT *
-					    disk_cons_list);
+                                            SM_ATTRIBUTE * attributes, SM_DISK_CONSTRAINT * disk_cons_list);
 
 /* Disk Constraints */
 extern SM_DISK_CONSTRAINT *classobj_make_disk_constraint (void);
 extern void classobj_free_disk_constraint (SM_DISK_CONSTRAINT * disk_cons);
-extern SM_DISK_CONSTRAINT *classobj_find_disk_constraint (SM_DISK_CONSTRAINT *
-							  disk_cons_list,
-							  const char *name);
+extern SM_DISK_CONSTRAINT *classobj_find_disk_constraint (SM_DISK_CONSTRAINT * disk_cons_list, const char *name);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern bool classobj_class_has_indexes (SM_CLASS * class_);
 #endif
 
 /* Attribute */
-extern SM_ATTRIBUTE *classobj_make_attribute (const char *name,
-					      PR_TYPE * type);
-extern SM_ATTRIBUTE *classobj_copy_attribute (SM_ATTRIBUTE * src,
-					      const char *alias);
-extern int classobj_copy_att_ordered_list (SM_ATTRIBUTE * attlist,
-					   SM_ATTRIBUTE ** copy_ptr);
+extern SM_ATTRIBUTE *classobj_make_attribute (const char *name, PR_TYPE * type);
+extern SM_ATTRIBUTE *classobj_copy_attribute (SM_ATTRIBUTE * src, const char *alias);
+extern int classobj_copy_att_ordered_list (SM_ATTRIBUTE * attlist, SM_ATTRIBUTE ** copy_ptr);
 
 extern void classobj_free_attribute (SM_ATTRIBUTE * att);
 
 /* Representation attribute */
-extern SM_REPR_ATTRIBUTE *classobj_make_repattribute (int attid,
-						      DB_TYPE typeid_,
-						      TP_DOMAIN * domain);
+extern SM_REPR_ATTRIBUTE *classobj_make_repattribute (int attid, DB_TYPE typeid_, TP_DOMAIN * domain);
 
 /* Representation */
 extern SM_REPRESENTATION *classobj_make_representation (void);
@@ -677,56 +652,40 @@ extern void classobj_free_query_spec (SM_QUERY_SPEC *);
 
 /* constraint */
 extern SM_CLASS_CONSTRAINT *classobj_make_class_constraint (void);
-extern SM_DISK_CONSTRAINT_ATTRIBUTE
-  * classobj_make_disk_constraint_attribute (void);
-extern SM_DISK_CONSTRAINT_ATTRIBUTE
-  * classobj_copy_disk_constraint_attribute (SM_DISK_CONSTRAINT_ATTRIBUTE *
-					     src);
-extern int classobj_put_disk_constraint (SM_DISK_CONSTRAINT ** disk_cons_list,
-					 SM_CLASS_CONSTRAINT * src_cons);
+extern SM_DISK_CONSTRAINT_ATTRIBUTE * classobj_make_disk_constraint_attribute (void);
+extern SM_DISK_CONSTRAINT_ATTRIBUTE * classobj_copy_disk_constraint_attribute (SM_DISK_CONSTRAINT_ATTRIBUTE * src);
+extern int classobj_put_disk_constraint (SM_DISK_CONSTRAINT ** disk_cons_list, SM_CLASS_CONSTRAINT * src_cons);
 /* Editing template */
-extern SM_TEMPLATE *classobj_make_template (const char *name, MOP op,
-					    SM_CLASS * class_);
-extern SM_TEMPLATE *classobj_make_template_like (const char *name,
-						 SM_CLASS * class_);
+extern SM_TEMPLATE *classobj_make_template (const char *name, MOP op, SM_CLASS * class_);
+extern SM_TEMPLATE *classobj_make_template_like (const char *name, SM_CLASS * class_);
 extern void classobj_free_template (SM_TEMPLATE * template_ptr);
 /* disk constraint */
-extern SM_DISK_CONSTRAINT *classobj_copy_disk_constraint (SM_DISK_CONSTRAINT *
-							  src);
+extern SM_DISK_CONSTRAINT *classobj_copy_disk_constraint (SM_DISK_CONSTRAINT * src);
 
 /* Class */
 extern SM_CLASS *classobj_make_class (const char *name);
 extern void classobj_free_class (SM_CLASS * class_);
 extern int classobj_class_size (SM_CLASS * class_);
 
-extern int classobj_install_template (SM_CLASS * class_, SM_TEMPLATE * flat,
-				      int saverep);
+extern int classobj_install_template (SM_CLASS * class_, SM_TEMPLATE * flat, int saverep);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern SM_REPRESENTATION *classobj_find_representation (SM_CLASS * class_,
-							int id);
+extern SM_REPRESENTATION *classobj_find_representation (SM_CLASS * class_, int id);
 #endif
 
 extern void classobj_fixup_loaded_class (SM_CLASS * class_);
 
-extern SM_ATTRIBUTE *classobj_find_attribute (SM_ATTRIBUTE * attlist,
-					      const char *name);
-extern SM_ATTRIBUTE *classobj_find_attribute_id (SM_ATTRIBUTE * attlist,
-						 int id);
+extern SM_ATTRIBUTE *classobj_find_attribute (SM_ATTRIBUTE * attlist, const char *name);
+extern SM_ATTRIBUTE *classobj_find_attribute_id (SM_ATTRIBUTE * attlist, int id);
 
 
-extern const char **classobj_point_at_att_names (SM_CLASS_CONSTRAINT *
-						 constraint, int *count_ref);
+extern const char **classobj_point_at_att_names (SM_CLASS_CONSTRAINT * constraint, int *count_ref);
 /* Descriptors */
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern SM_DESCRIPTOR *classobj_make_descriptor (MOP class_mop,
-						SM_CLASS * classobj,
-						SM_ATTRIBUTE * att,
-						int write_access);
+                                                SM_CLASS * classobj, SM_ATTRIBUTE * att, int write_access);
 extern SM_DESCRIPTOR_LIST *classobj_make_desclist (MOP class_mop,
-						   SM_CLASS * classobj,
-						   SM_ATTRIBUTE * att,
-						   int write_access);
+                                                   SM_CLASS * classobj, SM_ATTRIBUTE * att, int write_access);
 
 extern void classobj_free_desclist (SM_DESCRIPTOR_LIST * dl);
 extern void classobj_free_descriptor (SM_DESCRIPTOR * desc);
@@ -737,17 +696,13 @@ extern void classobj_free_descriptor (SM_DESCRIPTOR * desc);
 extern void classobj_print (SM_CLASS * class_);
 #endif
 /* primary key */
-extern SM_CLASS_CONSTRAINT *classobj_find_class_primary_key (SM_CLASS *
-							     class_);
-extern SM_CLASS_CONSTRAINT
-  * classobj_find_cons_primary_key (SM_CLASS_CONSTRAINT * cons_list);
+extern SM_CLASS_CONSTRAINT *classobj_find_class_primary_key (SM_CLASS * class_);
+extern SM_CLASS_CONSTRAINT * classobj_find_cons_primary_key (SM_CLASS_CONSTRAINT * cons_list);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern const char *classobj_map_constraint_to_property (SM_CONSTRAINT_TYPE
-							constraint);
+extern const char *classobj_map_constraint_to_property (SM_CONSTRAINT_TYPE constraint);
 #endif
 extern int classobj_check_index_exist (SM_CLASS_CONSTRAINT * constraints,
-				       const char *class_name,
-				       const char *constraint_name);
+                                       const char *class_name, const char *constraint_name);
 SM_ATTRIBUTE *classobj_find_shard_key_column (SM_CLASS * class_);
 #endif /* _CLASS_OBJECT_H_ */

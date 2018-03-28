@@ -50,18 +50,14 @@ typedef enum
   CAS_LOG_TYPE_MAX = CAS_LOG_DENIED_ACCESS_LOG
 } T_CAS_LOG_TYPE;
 
-extern void cas_log_init (T_SHM_APPL_SERVER * shm_p,
-			  T_APPL_SERVER_INFO * as_info_p, int id);
+extern void cas_log_init (T_SHM_APPL_SERVER * shm_p, T_APPL_SERVER_INFO * as_info_p, int id);
 extern void cas_log_close_all (void);
 
 extern int cas_access_log (struct timeval *start_time, int as_index,
-			   in_addr_t client_ip, char *dbname, char *dbuser,
-			   ACCESS_LOG_TYPE log_type);
+                           in_addr_t client_ip, char *dbname, char *dbuser, ACCESS_LOG_TYPE log_type);
 extern void cas_log_write (T_CAS_LOG_TYPE cas_log_type, int flag,
-			   struct timeval *log_time, unsigned int seq_num,
-			   const char *fmt, ...);
-extern void cas_log_write_string (T_CAS_LOG_TYPE cas_log_type,
-				  char *value, int size, bool print_nl);
+                           struct timeval *log_time, unsigned int seq_num, const char *fmt, ...);
+extern void cas_log_write_string (T_CAS_LOG_TYPE cas_log_type, char *value, int size, bool print_nl);
 
 extern void cas_sql_log_end (bool flush, int run_time_sec, int run_time_msec);
 extern void cas_sql_log_reset (void);

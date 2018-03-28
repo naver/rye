@@ -76,25 +76,19 @@ static TP_DOMAIN *or_get_domain_internal (char *ptr);
 static TP_DOMAIN *or_get_att_domain_and_cache (char *ptr);
 static void or_get_att_index (char *ptr, BTID * btid);
 static int or_get_default_value (OR_ATTRIBUTE * attr, char *ptr, int length);
-static int or_get_current_default_value (OR_ATTRIBUTE * attr, char *ptr,
-					 int length);
+static int or_get_current_default_value (OR_ATTRIBUTE * attr, char *ptr, int length);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static int or_cl_get_prop_nocopy (DB_SEQ * properties, const char *name,
-				  DB_VALUE * pvalue);
+static int or_cl_get_prop_nocopy (DB_SEQ * properties, const char *name, DB_VALUE * pvalue);
 #endif
 static int or_init_index (OR_INDEX * or_index);
 static int or_init_classrep (OR_CLASSREP * or_classrep);
 static int or_init_attribute (OR_ATTRIBUTE * or_att);
 static OR_CLASSREP *or_get_current_representation (RECDES * record);
 static OR_CLASSREP *or_get_old_representation (RECDES * record, int repid);
-static int or_get_representation_attributes (OR_ATTRIBUTE ** out_attributes,
-					     int *fixed_length,
-					     char *disk_rep);
+static int or_get_representation_attributes (OR_ATTRIBUTE ** out_attributes, int *fixed_length, char *disk_rep);
 static int or_get_constraints (OR_INDEX ** or_index, int *n_constraints,
-			       RECDES * record, OR_ATTRIBUTE * attributes,
-			       int n_attributes);
-static int or_get_attributes (OR_ATTRIBUTE ** or_attribute,
-			      int *fixed_length, RECDES * record);
+                               RECDES * record, OR_ATTRIBUTE * attributes, int n_attributes);
+static int or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length, RECDES * record);
 
 
 /*
@@ -109,8 +103,7 @@ orc_class_repid (RECDES * record)
   char *ptr;
   int id;
 
-  ptr = (char *) record->data +
-    OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT) + ORC_REPID_OFFSET;
+  ptr = (char *) record->data + OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT) + ORC_REPID_OFFSET;
 
   id = OR_GET_INT (ptr);
 
@@ -176,7 +169,7 @@ orc_diskrep_from_record (UNUSED_ARG THREAD_ENTRY * thread_p, RECDES * record)
   rep->n_fixed = 0;
   rep->n_variable = 0;
   rep->fixed_length = or_rep->fixed_length;
-#if 0				/* reserved for future use */
+#if 0                           /* reserved for future use */
   rep->repr_reserved_1 = 0;
 #endif
   rep->fixed = NULL;
@@ -188,32 +181,31 @@ orc_diskrep_from_record (UNUSED_ARG THREAD_ENTRY * thread_p, RECDES * record)
   for (i = 0; i < n_attributes; i++, or_att++)
     {
       if (or_att->is_fixed)
-	{
-	  (rep->n_fixed)++;
-	}
+        {
+          (rep->n_fixed)++;
+        }
       else
-	{
-	  (rep->n_variable)++;
-	}
+        {
+          (rep->n_variable)++;
+        }
     }
 
   if (rep->n_fixed)
     {
       rep->fixed = (DISK_ATTR *) malloc (sizeof (DISK_ATTR) * rep->n_fixed);
       if (rep->fixed == NULL)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
 
   if (rep->n_variable)
     {
-      rep->variable =
-	(DISK_ATTR *) malloc (sizeof (DISK_ATTR) * rep->n_variable);
+      rep->variable = (DISK_ATTR *) malloc (sizeof (DISK_ATTR) * rep->n_variable);
       if (rep->variable == NULL)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
 
   /* Copy the attribute information */
@@ -224,27 +216,27 @@ orc_diskrep_from_record (UNUSED_ARG THREAD_ENTRY * thread_p, RECDES * record)
   for (i = 0; i < n_attributes; i++, or_att++)
     {
       if (or_att->is_fixed)
-	{
-	  att = att_fixed;
-	}
+        {
+          att = att_fixed;
+        }
       else
-	{
-	  att = att_variable;
-	}
+        {
+          att = att_variable;
+        }
 
       if (att == NULL)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       if (or_att->is_fixed)
-	{
-	  att_fixed++;
-	}
+        {
+          att_fixed++;
+        }
       else
-	{
-	  att_variable++;
-	}
+        {
+          att_variable++;
+        }
 
       att->type = or_att->type;
       att->id = or_att->id;
@@ -263,74 +255,71 @@ orc_diskrep_from_record (UNUSED_ARG THREAD_ENTRY * thread_p, RECDES * record)
 
       n_btstats = att->n_btstats = or_att->n_btids;
       if (n_btstats > 0)
-	{
-	  att->bt_stats =
-	    (BTREE_STATS *) malloc (sizeof (BTREE_STATS) * n_btstats);
-	  if (att->bt_stats == NULL)
-	    {
-	      goto exit_on_error;
-	    }
+        {
+          att->bt_stats = (BTREE_STATS *) malloc (sizeof (BTREE_STATS) * n_btstats);
+          if (att->bt_stats == NULL)
+            {
+              goto exit_on_error;
+            }
 
-	  for (j = 0, bt_statsp = att->bt_stats; j < n_btstats;
-	       j++, bt_statsp++)
-	    {
-	      bt_statsp->btid = or_att->btids[j];
+          for (j = 0, bt_statsp = att->bt_stats; j < n_btstats; j++, bt_statsp++)
+            {
+              bt_statsp->btid = or_att->btids[j];
 
-	      bt_statsp->leafs = 0;
-	      bt_statsp->pages = 0;
-	      bt_statsp->height = 0;
-	      bt_statsp->keys = 0;
+              bt_statsp->leafs = 0;
+              bt_statsp->pages = 0;
+              bt_statsp->height = 0;
+              bt_statsp->keys = 0;
 
-	      bt_statsp->pkeys_size = 0;
-	      for (k = 0; k < BTREE_STATS_PKEYS_NUM; k++)
-		{
-		  bt_statsp->pkeys[k] = 0;
-		}
+              bt_statsp->pkeys_size = 0;
+              for (k = 0; k < BTREE_STATS_PKEYS_NUM; k++)
+                {
+                  bt_statsp->pkeys[k] = 0;
+                }
 
-	      bt_statsp->tot_free_space = 0;
+              bt_statsp->tot_free_space = 0;
 
-	      bt_statsp->num_table_vpids = 0;
-	      bt_statsp->num_user_pages_mrkdelete = 0;
-	      bt_statsp->num_allocsets = 0;
+              bt_statsp->num_table_vpids = 0;
+              bt_statsp->num_user_pages_mrkdelete = 0;
+              bt_statsp->num_allocsets = 0;
 
-	      /* get the index ID which corresponds to the BTID */
-	      indx_id =
-		heap_classrepr_find_index_id (or_rep, &(bt_statsp->btid));
-	      if (indx_id < 0)
-		{
-		  /* currently, does not know BTID
-		   */
-		  continue;
-		}
+              /* get the index ID which corresponds to the BTID */
+              indx_id = heap_classrepr_find_index_id (or_rep, &(bt_statsp->btid));
+              if (indx_id < 0)
+                {
+                  /* currently, does not know BTID
+                   */
+                  continue;
+                }
 
-	      indexp = &(or_rep->indexes[indx_id]);
+              indexp = &(or_rep->indexes[indx_id]);
 
-#if 0				/* reserved for future use */
-	      for (k = 0; k < BTREE_STATS_RESERVED_NUM; k++)
-		{
-		  bt_statsp->reserved[k] = 0;
-		}
+#if 0                           /* reserved for future use */
+              for (k = 0; k < BTREE_STATS_RESERVED_NUM; k++)
+                {
+                  bt_statsp->reserved[k] = 0;
+                }
 #endif
 
-	      bt_statsp->pkeys_size = indexp->n_atts;
-	      assert_release (bt_statsp->pkeys_size > 0);
-	      assert_release (bt_statsp->pkeys_size <= BTREE_STATS_PKEYS_NUM);
+              bt_statsp->pkeys_size = indexp->n_atts;
+              assert_release (bt_statsp->pkeys_size > 0);
+              assert_release (bt_statsp->pkeys_size <= BTREE_STATS_PKEYS_NUM);
 
-	      for (k = 0; k < bt_statsp->pkeys_size; k++)
-		{
-		  bt_statsp->pkeys[k] = 0;
-		}
+              for (k = 0; k < bt_statsp->pkeys_size; k++)
+                {
+                  bt_statsp->pkeys[k] = 0;
+                }
 
 #if 0
-	      DB_MAKE_NULL (&(bt_statsp->unused_min_value));
-	      DB_MAKE_NULL (&(bt_statsp->unused_max_value));
+              DB_MAKE_NULL (&(bt_statsp->unused_min_value));
+              DB_MAKE_NULL (&(bt_statsp->unused_max_value));
 #endif
-	    }			/* for (j = 0, ...) */
-	}
+            }                   /* for (j = 0, ...) */
+        }
       else
-	{
-	  att->bt_stats = NULL;
-	}
+        {
+          att->bt_stats = NULL;
+        }
     }
 
   or_free_classrep (or_rep);
@@ -365,42 +354,42 @@ orc_free_diskrep (DISK_REPR * rep)
   if (rep != NULL)
     {
       if (rep->fixed != NULL)
-	{
-	  for (i = 0; i < rep->n_fixed; i++)
-	    {
-	      if (rep->fixed[i].value != NULL)
-		{
-		  free_and_init (rep->fixed[i].value);
-		}
+        {
+          for (i = 0; i < rep->n_fixed; i++)
+            {
+              if (rep->fixed[i].value != NULL)
+                {
+                  free_and_init (rep->fixed[i].value);
+                }
 
-	      if (rep->fixed[i].bt_stats != NULL)
-		{
-		  free_and_init (rep->fixed[i].bt_stats);
-		  rep->fixed[i].bt_stats = NULL;
-		}
-	    }
+              if (rep->fixed[i].bt_stats != NULL)
+                {
+                  free_and_init (rep->fixed[i].bt_stats);
+                  rep->fixed[i].bt_stats = NULL;
+                }
+            }
 
-	  free_and_init (rep->fixed);
-	}
+          free_and_init (rep->fixed);
+        }
 
       if (rep->variable != NULL)
-	{
-	  for (i = 0; i < rep->n_variable; i++)
-	    {
-	      if (rep->variable[i].value != NULL)
-		{
-		  free_and_init (rep->variable[i].value);
-		}
+        {
+          for (i = 0; i < rep->n_variable; i++)
+            {
+              if (rep->variable[i].value != NULL)
+                {
+                  free_and_init (rep->variable[i].value);
+                }
 
-	      if (rep->variable[i].bt_stats != NULL)
-		{
-		  free_and_init (rep->variable[i].bt_stats);
-		  rep->variable[i].bt_stats = NULL;
-		}
-	    }
+              if (rep->variable[i].bt_stats != NULL)
+                {
+                  free_and_init (rep->variable[i].bt_stats);
+                  rep->variable[i].bt_stats = NULL;
+                }
+            }
 
-	  free_and_init (rep->variable);
-	}
+          free_and_init (rep->variable);
+        }
 
       free_and_init (rep);
     }
@@ -421,14 +410,13 @@ orc_class_info_from_record (RECDES * record)
   info = (CLS_INFO *) malloc (sizeof (CLS_INFO));
   if (info == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      sizeof (CLS_INFO));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (CLS_INFO));
       return NULL;
     }
 
   info->tot_pages = 0;
   info->tot_objects = 0;
-  info->time_stamp = stats_get_time_stamp ();	/* current system time */
+  info->time_stamp = stats_get_time_stamp ();   /* current system time */
 
   orc_class_hfid_from_record (record, &info->hfid);
 
@@ -461,8 +449,7 @@ or_class_repid (RECDES * record)
 
   assert (OR_GET_OFFSET_SIZE (record->data) == BIG_VAR_OFFSET_SIZE);
 
-  ptr = (char *) record->data +
-    OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT) + ORC_REPID_OFFSET;
+  ptr = (char *) record->data + OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT) + ORC_REPID_OFFSET;
 
   id = OR_GET_INT (ptr);
 
@@ -542,51 +529,48 @@ or_get_domain_internal (char *ptr)
 
       new_ = tp_domain_new (typeid_);
       if (new_ == NULL)
-	{
-	  /* error handling */
-	  while (domain != NULL)
-	    {
-	      TP_DOMAIN *next = domain->next;
+        {
+          /* error handling */
+          while (domain != NULL)
+            {
+              TP_DOMAIN *next = domain->next;
 
-	      assert (domain->next_list == NULL);
-	      assert (domain->is_cached == 0);
+              assert (domain->next_list == NULL);
+              assert (domain->is_cached == 0);
 
-	      tp_domain_free (domain);
-	      domain = next;
-	    }
-	  return NULL;
-	}
+              tp_domain_free (domain);
+              domain = next;
+            }
+          return NULL;
+        }
 
       if (last == NULL)
-	{
-	  domain = new_;
-	}
+        {
+          domain = new_;
+        }
       else
-	{
-	  last->next = new_;
-	}
+        {
+          last->next = new_;
+        }
       last = new_;
 
       new_->precision = OR_GET_INT (fixed + ORC_DOMAIN_PRECISION_OFFSET);
       new_->scale = OR_GET_INT (fixed + ORC_DOMAIN_SCALE_OFFSET);
-      new_->collation_id = OR_GET_INT (fixed +
-				       ORC_DOMAIN_COLLATION_ID_OFFSET);
+      new_->collation_id = OR_GET_INT (fixed + ORC_DOMAIN_COLLATION_ID_OFFSET);
 
       OR_GET_OID (fixed + ORC_DOMAIN_CLASS_OFFSET, &new_->class_oid);
       /* can't swizzle the pointer on the server */
       new_->class_mop = NULL;
 
-      if (OR_VAR_TABLE_ELEMENT_LENGTH (dstart, ORC_DOMAIN_SETDOMAIN_INDEX) ==
-	  0)
-	{
-	  new_->setdomain = NULL;
-	}
+      if (OR_VAR_TABLE_ELEMENT_LENGTH (dstart, ORC_DOMAIN_SETDOMAIN_INDEX) == 0)
+        {
+          new_->setdomain = NULL;
+        }
       else
-	{
-	  offset =
-	    OR_VAR_TABLE_ELEMENT_OFFSET (dstart, ORC_DOMAIN_SETDOMAIN_INDEX);
-	  new_->setdomain = or_get_domain_internal (dstart + offset);
-	}
+        {
+          offset = OR_VAR_TABLE_ELEMENT_OFFSET (dstart, ORC_DOMAIN_SETDOMAIN_INDEX);
+          new_->setdomain = or_get_domain_internal (dstart + offset);
+        }
 
       assert (new_->next_list == NULL);
       assert (new_->is_cached == 0);
@@ -699,12 +683,12 @@ or_get_default_value (OR_ATTRIBUTE * attr, char *ptr, int length)
       attr->default_value.val_length = length;
       attr->default_value.value = malloc (length);
       if (attr->default_value.value == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, length);
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, length);
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       memcpy (attr->default_value.value, vptr, length);
     }
@@ -778,12 +762,12 @@ or_get_current_default_value (OR_ATTRIBUTE * attr, char *ptr, int length)
       attr->current_default_value.val_length = length;
       attr->current_default_value.value = malloc (length);
       if (attr->current_default_value.value == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, length);
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, length);
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       memcpy (attr->current_default_value.value, vptr, length);
     }
@@ -824,8 +808,7 @@ exit_on_error:
  *       operations faster.
  */
 static int
-or_cl_get_prop_nocopy (DB_SEQ * properties, const char *name,
-		       DB_VALUE * pvalue)
+or_cl_get_prop_nocopy (DB_SEQ * properties, const char *name, DB_VALUE * pvalue)
 {
   int error;
   int found, max, i;
@@ -839,36 +822,33 @@ or_cl_get_prop_nocopy (DB_SEQ * properties, const char *name,
     {
       max = set_size (properties);
       for (i = 0; i < max && !found && error == NO_ERROR; i += 2)
-	{
-	  error = set_get_element_nocopy (properties, i, &value);
-	  if (error == NO_ERROR)
-	    {
-	      if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR
-		  || DB_GET_STRING (&value) == NULL)
-		{
-		  error = ER_SM_INVALID_PROPERTY;
-		}
-	      else
-		{
-		  prop_name = DB_PULL_STRING (&value);
-		  if (strcmp (name, prop_name) == 0)
-		    {
-		      if ((i + 1) >= max)
-			{
-			  error = ER_SM_INVALID_PROPERTY;
-			}
-		      else
-			{
-			  error =
-			    set_get_element_nocopy (properties, i + 1,
-						    pvalue);
-			  if (error == NO_ERROR)
-			    found = i + 1;
-			}
-		    }
-		}
-	    }
-	}
+        {
+          error = set_get_element_nocopy (properties, i, &value);
+          if (error == NO_ERROR)
+            {
+              if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR || DB_GET_STRING (&value) == NULL)
+                {
+                  error = ER_SM_INVALID_PROPERTY;
+                }
+              else
+                {
+                  prop_name = DB_PULL_STRING (&value);
+                  if (strcmp (name, prop_name) == 0)
+                    {
+                      if ((i + 1) >= max)
+                        {
+                          error = ER_SM_INVALID_PROPERTY;
+                        }
+                      else
+                        {
+                          error = set_get_element_nocopy (properties, i + 1, pvalue);
+                          if (error == NO_ERROR)
+                            found = i + 1;
+                        }
+                    }
+                }
+            }
+        }
     }
 
   if (error)
@@ -994,8 +974,7 @@ or_get_current_representation (RECDES * record)
   if (rep == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      sizeof (OR_CLASSREP));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (OR_CLASSREP));
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1022,14 +1001,12 @@ or_get_current_representation (RECDES * record)
   assert (rep->fixed_length == fixed_length);
 
   /* Read the B-tree IDs from the class constraint list */
-  error = or_get_constraints (&rep->indexes, &rep->n_indexes, record,
-			      rep->attributes, rep->n_attributes);
+  error = or_get_constraints (&rep->indexes, &rep->n_indexes, record, rep->attributes, rep->n_attributes);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
-  assert ((rep->n_indexes > 0 && rep->indexes != NULL)
-	  || (rep->n_indexes == 0 && rep->indexes == NULL));
+  assert ((rep->n_indexes > 0 && rep->indexes != NULL) || (rep->n_indexes == 0 && rep->indexes == NULL));
 
   return rep;
 
@@ -1063,8 +1040,7 @@ exit_on_error:
  *   record(in):
  */
 static int
-or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length,
-		   RECDES * record)
+or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length, RECDES * record)
 {
   OR_ATTRIBUTE *attributes = NULL, *att = NULL;
 
@@ -1103,8 +1079,7 @@ or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length,
   if (attributes == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      sizeof (OR_ATTRIBUTE) * n_attributes);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (OR_ATTRIBUTE) * n_attributes);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1127,26 +1102,17 @@ or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length,
       diskatt = attset + OR_SET_ELEMENT_OFFSET (attset, i);
 
       /* find out where the original default value is kept */
-      valptr = (diskatt +
-		OR_VAR_TABLE_ELEMENT_OFFSET (diskatt,
-					     ORC_ATT_ORIGINAL_VALUE_INDEX));
+      valptr = (diskatt + OR_VAR_TABLE_ELEMENT_OFFSET (diskatt, ORC_ATT_ORIGINAL_VALUE_INDEX));
 
-      vallen = OR_VAR_TABLE_ELEMENT_LENGTH (diskatt,
-					    ORC_ATT_ORIGINAL_VALUE_INDEX);
+      vallen = OR_VAR_TABLE_ELEMENT_LENGTH (diskatt, ORC_ATT_ORIGINAL_VALUE_INDEX);
 
-      valptr2 = (diskatt +
-		 OR_VAR_TABLE_ELEMENT_OFFSET (diskatt,
-					      ORC_ATT_CURRENT_VALUE_INDEX));
+      valptr2 = (diskatt + OR_VAR_TABLE_ELEMENT_OFFSET (diskatt, ORC_ATT_CURRENT_VALUE_INDEX));
 
-      vallen2 = OR_VAR_TABLE_ELEMENT_LENGTH (diskatt,
-					     ORC_ATT_CURRENT_VALUE_INDEX);
+      vallen2 = OR_VAR_TABLE_ELEMENT_LENGTH (diskatt, ORC_ATT_CURRENT_VALUE_INDEX);
 
-      valptr1 = (diskatt +
-		 OR_VAR_TABLE_ELEMENT_OFFSET (diskatt,
-					      ORC_ATT_PROPERTIES_INDEX));
+      valptr1 = (diskatt + OR_VAR_TABLE_ELEMENT_OFFSET (diskatt, ORC_ATT_PROPERTIES_INDEX));
 
-      vallen1 = OR_VAR_TABLE_ELEMENT_LENGTH (diskatt,
-					     ORC_ATT_PROPERTIES_INDEX);
+      vallen1 = OR_VAR_TABLE_ELEMENT_LENGTH (diskatt, ORC_ATT_PROPERTIES_INDEX);
 
       or_init (&buf, valptr1, vallen1);
 
@@ -1154,22 +1120,22 @@ or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length,
       ptr = diskatt + OR_VAR_TABLE_SIZE (ORC_ATT_VAR_ATT_COUNT);
 
       if (OR_GET_INT (ptr + ORC_ATT_FLAG_OFFSET) & SM_ATTFLAG_NON_NULL)
-	{
-	  att->is_notnull = 1;
-	}
+        {
+          att->is_notnull = 1;
+        }
       else
-	{
-	  att->is_notnull = 0;
-	}
+        {
+          att->is_notnull = 0;
+        }
 
       if (OR_GET_INT (ptr + ORC_ATT_FLAG_OFFSET) & SM_ATTFLAG_SHARD_KEY)
-	{
-	  att->is_shard_key = 1;
-	}
+        {
+          att->is_shard_key = 1;
+        }
       else
-	{
-	  att->is_shard_key = 0;
-	}
+        {
+          att->is_shard_key = 0;
+        }
 
       att->type = (DB_TYPE) OR_GET_INT (ptr + ORC_ATT_TYPE_OFFSET);
       att->id = OR_GET_INT (ptr + ORC_ATT_ID_OFFSET);
@@ -1193,71 +1159,65 @@ or_get_attributes (OR_ATTRIBUTE ** or_attribute, int *fixed_length,
       /* Extract the full domain for this attribute, think about caching here
          it will add some time that may not be necessary. */
       if (OR_VAR_TABLE_ELEMENT_LENGTH (diskatt, ORC_ATT_DOMAIN_INDEX) == 0)
-	{
-	  /* shouldn't happen, fake one up from the type ! */
-	  att->domain = tp_domain_resolve_default (att->type);
-	}
+        {
+          /* shouldn't happen, fake one up from the type ! */
+          att->domain = tp_domain_resolve_default (att->type);
+        }
       else
-	{
-	  dptr =
-	    diskatt + OR_VAR_TABLE_ELEMENT_OFFSET (diskatt,
-						   ORC_ATT_DOMAIN_INDEX);
-	  att->domain = or_get_att_domain_and_cache (dptr);
-	}
+        {
+          dptr = diskatt + OR_VAR_TABLE_ELEMENT_OFFSET (diskatt, ORC_ATT_DOMAIN_INDEX);
+          att->domain = or_get_att_domain_and_cache (dptr);
+        }
 
       if (i < n_fixed)
-	{
-	  att->is_fixed = 1;
-	  att->location = offset;
-	  offset += tp_domain_disk_size (att->domain);
-	}
+        {
+          att->is_fixed = 1;
+          att->location = offset;
+          offset += tp_domain_disk_size (att->domain);
+        }
       else
-	{
-	  att->is_fixed = 0;
-	  att->location = i - n_fixed;
-	}
+        {
+          att->is_fixed = 0;
+          att->location = i - n_fixed;
+        }
 
       /* get the current default value */
       if (vallen2)
-	{
-	  error = or_get_current_default_value (att, valptr2, vallen2);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	}
+        {
+          error = or_get_current_default_value (att, valptr2, vallen2);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+        }
 
       /* get the default value, this could be using a new DB_VALUE ? */
       if (vallen)
-	{
-	  error = or_get_default_value (att, valptr, vallen);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	}
+        {
+          error = or_get_default_value (att, valptr, vallen);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+        }
 
       att->default_value.default_expr = DB_DEFAULT_NONE;
       att->current_default_value.default_expr = DB_DEFAULT_NONE;
       if (vallen1 > 0)
-	{
-	  db_make_null (&val);
-	  db_make_null (&def_expr);
-	  or_get_value (&buf, &val,
-			tp_domain_resolve_default (DB_TYPE_SEQUENCE),
-			vallen1, true);
-	  att_props = DB_GET_SEQUENCE (&val);
-	  if (att_props != NULL &&
-	      classobj_get_prop (att_props, "default_expr", &def_expr) > 0)
-	    {
-	      att->default_value.default_expr = DB_GET_INTEGER (&def_expr);
-	      att->current_default_value.default_expr = DB_GET_INTEGER
-		(&def_expr);
-	    }
+        {
+          db_make_null (&val);
+          db_make_null (&def_expr);
+          or_get_value (&buf, &val, tp_domain_resolve_default (DB_TYPE_SEQUENCE), vallen1, true);
+          att_props = DB_GET_SEQUENCE (&val);
+          if (att_props != NULL && classobj_get_prop (att_props, "default_expr", &def_expr) > 0)
+            {
+              att->default_value.default_expr = DB_GET_INTEGER (&def_expr);
+              att->current_default_value.default_expr = DB_GET_INTEGER (&def_expr);
+            }
 
-	  pr_clear_value (&def_expr);
-	  pr_clear_value (&val);
-	}
+          pr_clear_value (&def_expr);
+          pr_clear_value (&val);
+        }
     }
 
   *or_attribute = attributes;
@@ -1301,7 +1261,7 @@ exit_on_error:
  */
 static int
 or_get_constraints (OR_INDEX ** or_index, int *n_constraints, RECDES * record,
-		    OR_ATTRIBUTE * attributes, int n_attributes)
+                    OR_ATTRIBUTE * attributes, int n_attributes)
 {
   OR_ATTRIBUTE *att, *found_att = NULL;
   OR_INDEX *indexes = NULL;
@@ -1346,8 +1306,7 @@ or_get_constraints (OR_INDEX ** or_index, int *n_constraints, RECDES * record,
   if (indexes == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error, 1, sizeof (OR_INDEX) * num_cons);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (OR_INDEX) * num_cons);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1362,53 +1321,44 @@ or_get_constraints (OR_INDEX ** or_index, int *n_constraints, RECDES * record,
     {
       diskcon = conset + OR_SET_ELEMENT_OFFSET (conset, i);
 
-      valptr = (diskcon + OR_VAR_TABLE_ELEMENT_OFFSET (diskcon,
-						       ORC_CLASS_CONSTRAINTS_NAME_INDEX));
+      valptr = (diskcon + OR_VAR_TABLE_ELEMENT_OFFSET (diskcon, ORC_CLASS_CONSTRAINTS_NAME_INDEX));
 
-      vallen = OR_VAR_TABLE_ELEMENT_LENGTH (diskcon,
-					    ORC_CLASS_CONSTRAINTS_NAME_INDEX);
+      vallen = OR_VAR_TABLE_ELEMENT_LENGTH (diskcon, ORC_CLASS_CONSTRAINTS_NAME_INDEX);
 
-      valptr1 = (diskcon + OR_VAR_TABLE_ELEMENT_OFFSET (diskcon,
-							ORC_CLASS_CONSTRAINTS_BTID_INDEX));
+      valptr1 = (diskcon + OR_VAR_TABLE_ELEMENT_OFFSET (diskcon, ORC_CLASS_CONSTRAINTS_BTID_INDEX));
 
-      vallen1 = OR_VAR_TABLE_ELEMENT_LENGTH (diskcon,
-					     ORC_CLASS_CONSTRAINTS_BTID_INDEX);
+      vallen1 = OR_VAR_TABLE_ELEMENT_LENGTH (diskcon, ORC_CLASS_CONSTRAINTS_BTID_INDEX);
 
-      valptr2 = (diskcon + OR_VAR_TABLE_ELEMENT_OFFSET (diskcon,
-							ORC_CLASS_CONSTRAINTS_ATTS_INDEX));
+      valptr2 = (diskcon + OR_VAR_TABLE_ELEMENT_OFFSET (diskcon, ORC_CLASS_CONSTRAINTS_ATTS_INDEX));
 
-      vallen2 = OR_VAR_TABLE_ELEMENT_LENGTH (diskcon,
-					     ORC_CLASS_CONSTRAINTS_ATTS_INDEX);
+      vallen2 = OR_VAR_TABLE_ELEMENT_LENGTH (diskcon, ORC_CLASS_CONSTRAINTS_ATTS_INDEX);
 
       /* set ptr to the beginning of the fixed attributes */
       ptr = diskcon + OR_VAR_TABLE_SIZE (ORC_CLASS_CONSTRAINTS_VAR_ATT_COUNT);
 
-      cons_type =
-	(SM_CONSTRAINT_TYPE) OR_GET_INT (ptr +
-					 ORC_CLASS_CONSTRAINTS_TYPE_OFFSET);
+      cons_type = (SM_CONSTRAINT_TYPE) OR_GET_INT (ptr + ORC_CLASS_CONSTRAINTS_TYPE_OFFSET);
       switch (cons_type)
-	{
-	case SM_CONSTRAINT_UNIQUE:
-	  indexes[i].type = BTREE_UNIQUE;
-	  break;
-	case SM_CONSTRAINT_INDEX:
-	  indexes[i].type = BTREE_INDEX;
-	  break;
-	case SM_CONSTRAINT_NOT_NULL:
-	  assert (cons_type != SM_CONSTRAINT_NOT_NULL);
-	  indexes[i].type = BTREE_INDEX;
-	  break;
-	case SM_CONSTRAINT_PRIMARY_KEY:
-	  indexes[i].type = BTREE_PRIMARY_KEY;
-	  break;
-	default:
-	  assert (false);
-	  indexes[i].type = BTREE_INDEX;
-	  break;
-	}
+        {
+        case SM_CONSTRAINT_UNIQUE:
+          indexes[i].type = BTREE_UNIQUE;
+          break;
+        case SM_CONSTRAINT_INDEX:
+          indexes[i].type = BTREE_INDEX;
+          break;
+        case SM_CONSTRAINT_NOT_NULL:
+          assert (cons_type != SM_CONSTRAINT_NOT_NULL);
+          indexes[i].type = BTREE_INDEX;
+          break;
+        case SM_CONSTRAINT_PRIMARY_KEY:
+          indexes[i].type = BTREE_PRIMARY_KEY;
+          break;
+        default:
+          assert (false);
+          indexes[i].type = BTREE_INDEX;
+          break;
+        }
 
-      indexes[i].index_status = OR_GET_INT (ptr +
-					    ORC_CLASS_CONSTRAINTS_STATUS_OFFSET);
+      indexes[i].index_status = OR_GET_INT (ptr + ORC_CLASS_CONSTRAINTS_STATUS_OFFSET);
 
       or_init (&buf, valptr, vallen);
       indexes[i].btname = or_packed_get_varchar (&buf, &vallen);
@@ -1420,102 +1370,91 @@ or_get_constraints (OR_INDEX ** or_index, int *n_constraints, RECDES * record,
 
 
       n_atts = OR_SET_ELEMENT_COUNT (valptr2);
-      indexes[i].atts =
-	(OR_ATTRIBUTE **) malloc (sizeof (OR_ATTRIBUTE *) * n_atts);
+      indexes[i].atts = (OR_ATTRIBUTE **) malloc (sizeof (OR_ATTRIBUTE *) * n_atts);
       if (indexes[i].atts == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 1, sizeof (OR_ATTRIBUTE *) * n_atts);
-	  goto exit_on_error;
-	}
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (OR_ATTRIBUTE *) * n_atts);
+          goto exit_on_error;
+        }
       memset (indexes[i].atts, 0, sizeof (OR_ATTRIBUTE *) * n_atts);
 
       indexes[i].asc_desc = (int *) malloc (sizeof (int) * n_atts);
       if (indexes[i].asc_desc == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 1, sizeof (int) * n_atts);
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (int) * n_atts);
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       indexes[i].n_atts = 0;
       for (j = 0; j < n_atts; j++)
-	{
-	  disk_con_att = valptr2 + OR_SET_ELEMENT_OFFSET (valptr2, j);
+        {
+          disk_con_att = valptr2 + OR_SET_ELEMENT_OFFSET (valptr2, j);
 
-	  disk_con_att = disk_con_att +
-	    OR_VAR_TABLE_SIZE (ORC_CLASS_CONSTRAINTS_ATTS_VAR_ATT_COUNT);
+          disk_con_att = disk_con_att + OR_VAR_TABLE_SIZE (ORC_CLASS_CONSTRAINTS_ATTS_VAR_ATT_COUNT);
 
-	  indexes[i].asc_desc[j] = OR_GET_INT (disk_con_att +
-					       ORC_CLASS_CONSTRAINTS_ATT_ASCDESC_OFFSET);
-	  att_id = OR_GET_INT (disk_con_att +
-			       ORC_CLASS_CONSTRAINTS_ATT_ATTID_OFFSET);
-	  found_att = NULL;
-	  for (k = 0, att = attributes; k < n_attributes; k++, att++)
-	    {
-	      if (att->id == att_id)
-		{
-		  found_att = att;
-		  indexes[i].atts[indexes[i].n_atts] = found_att;
-		  indexes[i].n_atts++;
-		  break;
-		}
-	    }
+          indexes[i].asc_desc[j] = OR_GET_INT (disk_con_att + ORC_CLASS_CONSTRAINTS_ATT_ASCDESC_OFFSET);
+          att_id = OR_GET_INT (disk_con_att + ORC_CLASS_CONSTRAINTS_ATT_ATTID_OFFSET);
+          found_att = NULL;
+          for (k = 0, att = attributes; k < n_attributes; k++, att++)
+            {
+              if (att->id == att_id)
+                {
+                  found_att = att;
+                  indexes[i].atts[indexes[i].n_atts] = found_att;
+                  indexes[i].n_atts++;
+                  break;
+                }
+            }
 
-	  /* found_att == NULL if drop column */
-	  if (j == 0 && found_att != NULL)
-	    {
-	      /* first attribute */
-	      assert (indexes[i].atts[j] == found_att);
-	      if (found_att->btids == NULL)
-		{
-		  /* we've never had one before, use the local pack */
-		  found_att->btids = found_att->btid_pack;
-		  found_att->max_btids = OR_ATT_BTID_PREALLOC;
-		}
-	      else
-		{
-		  /* we've already got one, continue to use the local pack until that
-		     runs out and then start mallocing. */
-		  if (found_att->n_btids >= found_att->max_btids)
-		    {
-		      if (found_att->btids == found_att->btid_pack)
-			{
-			  /* allocate a bigger array and copy over our local pack */
-			  size = found_att->n_btids + OR_ATT_BTID_PREALLOC;
-			  found_att->btids =
-			    (BTID *) malloc (sizeof (BTID) * size);
-			  if (found_att->btids != NULL)
-			    {
-			      memcpy (found_att->btids,
-				      found_att->btid_pack,
-				      (sizeof (BTID) * found_att->n_btids));
-			    }
-			  found_att->max_btids = size;
-			}
-		      else
-			{
-			  /* we already have an externally allocated array, make it
-			     bigger */
-			  size = found_att->n_btids + OR_ATT_BTID_PREALLOC;
-			  found_att->btids =
-			    (BTID *) realloc (found_att->btids,
-					      size * sizeof (BTID));
-			  found_att->max_btids = size;
-			}
-		    }
-		}
+          /* found_att == NULL if drop column */
+          if (j == 0 && found_att != NULL)
+            {
+              /* first attribute */
+              assert (indexes[i].atts[j] == found_att);
+              if (found_att->btids == NULL)
+                {
+                  /* we've never had one before, use the local pack */
+                  found_att->btids = found_att->btid_pack;
+                  found_att->max_btids = OR_ATT_BTID_PREALLOC;
+                }
+              else
+                {
+                  /* we've already got one, continue to use the local pack until that
+                     runs out and then start mallocing. */
+                  if (found_att->n_btids >= found_att->max_btids)
+                    {
+                      if (found_att->btids == found_att->btid_pack)
+                        {
+                          /* allocate a bigger array and copy over our local pack */
+                          size = found_att->n_btids + OR_ATT_BTID_PREALLOC;
+                          found_att->btids = (BTID *) malloc (sizeof (BTID) * size);
+                          if (found_att->btids != NULL)
+                            {
+                              memcpy (found_att->btids, found_att->btid_pack, (sizeof (BTID) * found_att->n_btids));
+                            }
+                          found_att->max_btids = size;
+                        }
+                      else
+                        {
+                          /* we already have an externally allocated array, make it
+                             bigger */
+                          size = found_att->n_btids + OR_ATT_BTID_PREALLOC;
+                          found_att->btids = (BTID *) realloc (found_att->btids, size * sizeof (BTID));
+                          found_att->max_btids = size;
+                        }
+                    }
+                }
 
-	      if (found_att->btids)
-		{
-		  found_att->btids[found_att->n_btids] = indexes[i].btid;
-		  found_att->n_btids += 1;
-		}
-	    }
-	}
+              if (found_att->btids)
+                {
+                  found_att->btids[found_att->n_btids] = indexes[i].btid;
+                  found_att->n_btids += 1;
+                }
+            }
+        }
     }
 
   *or_index = indexes;
@@ -1582,8 +1521,7 @@ or_get_old_representation (RECDES * record, int repid)
   {
     int current_repid;
 
-    fixed =
-      record->data + OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT);
+    fixed = record->data + OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT);
     current_repid = OR_GET_INT (fixed + ORC_REPID_OFFSET);
 
     assert (repid != current_repid);
@@ -1605,8 +1543,7 @@ or_get_old_representation (RECDES * record, int repid)
 
   assert (OR_GET_OFFSET_SIZE (record->data) == BIG_VAR_OFFSET_SIZE);
 
-  repset = (record->data +
-	    OR_VAR_OFFSET (record->data, ORC_REPRESENTATIONS_INDEX));
+  repset = (record->data + OR_VAR_OFFSET (record->data, ORC_REPRESENTATIONS_INDEX));
 
   /* repset now points to the beginning of a complex set representation,
      find out how many elements are in the set. */
@@ -1628,13 +1565,13 @@ or_get_old_representation (RECDES * record, int repid)
       id = OR_GET_INT (fixed + ORC_REP_ID_OFFSET);
 
       if (id == repid)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       else
-	{
-	  disk_rep = NULL;
-	}
+        {
+          disk_rep = NULL;
+        }
     }
 
   if (disk_rep == NULL)
@@ -1649,8 +1586,7 @@ or_get_old_representation (RECDES * record, int repid)
   if (rep == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      sizeof (OR_CLASSREP));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (OR_CLASSREP));
 
       return NULL;
     }
@@ -1673,8 +1609,7 @@ or_get_old_representation (RECDES * record, int repid)
       return rep;
     }
 
-  error = or_get_representation_attributes (&rep->attributes,
-					    &rep->fixed_length, disk_rep);
+  error = or_get_representation_attributes (&rep->attributes, &rep->fixed_length, disk_rep);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1707,8 +1642,7 @@ exit_on_error:
  *   repid(in): representation id to extract
  */
 static int
-or_get_representation_attributes (OR_ATTRIBUTE ** out_attributes,
-				  int *fixed_length, char *disk_rep)
+or_get_representation_attributes (OR_ATTRIBUTE ** out_attributes, int *fixed_length, char *disk_rep)
 {
   OR_ATTRIBUTE *att, *attributes;
   char *attset, *repatt, *dptr;
@@ -1749,8 +1683,7 @@ or_get_representation_attributes (OR_ATTRIBUTE ** out_attributes,
   if (attributes == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      sizeof (OR_ATTRIBUTE) * n_attributes);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (OR_ATTRIBUTE) * n_attributes);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1764,9 +1697,7 @@ or_get_representation_attributes (OR_ATTRIBUTE ** out_attributes,
    * substructure's variable offset table (which it does) and use
    * OR_VAR_TABLE_ELEMENT_OFFSET.
    */
-  attset =
-    disk_rep + OR_VAR_TABLE_ELEMENT_OFFSET (disk_rep,
-					    ORC_REP_ATTRIBUTES_INDEX);
+  attset = disk_rep + OR_VAR_TABLE_ELEMENT_OFFSET (disk_rep, ORC_REP_ATTRIBUTES_INDEX);
 
   /* Calculate the offset to the first fixed width attribute in instances
    * of this class.  Save the start of this region so we can calculate the
@@ -1806,30 +1737,28 @@ or_get_representation_attributes (OR_ATTRIBUTE ** out_attributes,
       /* Extract the full domain for this attribute, think about caching here
          it will add some time that may not be necessary. */
       if (OR_VAR_TABLE_ELEMENT_LENGTH (repatt, ORC_REPATT_DOMAIN_INDEX) == 0)
-	{
-	  assert (false);
-	  /* shouldn't happen, fake one up from the type ! */
-	  att->domain = tp_domain_resolve_default (att->type);
-	}
+        {
+          assert (false);
+          /* shouldn't happen, fake one up from the type ! */
+          att->domain = tp_domain_resolve_default (att->type);
+        }
       else
-	{
-	  dptr =
-	    repatt + OR_VAR_TABLE_ELEMENT_OFFSET (repatt,
-						  ORC_REPATT_DOMAIN_INDEX);
-	  att->domain = or_get_att_domain_and_cache (dptr);
-	}
+        {
+          dptr = repatt + OR_VAR_TABLE_ELEMENT_OFFSET (repatt, ORC_REPATT_DOMAIN_INDEX);
+          att->domain = or_get_att_domain_and_cache (dptr);
+        }
 
       if (i < n_fixed)
-	{
-	  att->is_fixed = 1;
-	  att->location = offset;
-	  offset += tp_domain_disk_size (att->domain);
-	}
+        {
+          att->is_fixed = 1;
+          att->location = offset;
+          offset += tp_domain_disk_size (att->domain);
+        }
       else
-	{
-	  att->is_fixed = 0;
-	  att->location = i - n_fixed;
-	}
+        {
+          att->is_fixed = 0;
+          att->location = i - n_fixed;
+        }
     }
 
   /* Offset at this point contains the total fixed size of the
@@ -1890,18 +1819,16 @@ or_get_all_representation (RECDES * record, int *count)
 
   if (!OR_VAR_IS_NULL (record->data, ORC_REPRESENTATIONS_INDEX))
     {
-      repset = (record->data +
-		OR_VAR_OFFSET (record->data, ORC_REPRESENTATIONS_INDEX));
+      repset = (record->data + OR_VAR_OFFSET (record->data, ORC_REPRESENTATIONS_INDEX));
       old_rep_count = OR_SET_ELEMENT_COUNT (repset);
     }
 
   /* add one for current representation */
-  rep_arr =
-    (OR_CLASSREP **) malloc (sizeof (OR_CLASSREP *) * (old_rep_count + 1));
+  rep_arr = (OR_CLASSREP **) malloc (sizeof (OR_CLASSREP *) * (old_rep_count + 1));
   if (rep_arr == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      (sizeof (OR_CLASSREP *) * (old_rep_count + 1)));
+              (sizeof (OR_CLASSREP *) * (old_rep_count + 1)));
       return NULL;
     }
 
@@ -1914,14 +1841,13 @@ or_get_all_representation (RECDES * record, int *count)
       goto error;
     }
 
-  for (repid = rep_arr[0]->id - 1, i = 0; repid >= 0 && i < old_rep_count;
-       repid--)
+  for (repid = rep_arr[0]->id - 1, i = 0; repid >= 0 && i < old_rep_count; repid--)
     {
       rep_arr[i + 1] = or_get_old_representation (record, repid);
       if (rep_arr[i + 1] != NULL)
-	{
-	  i++;
-	}
+        {
+          i++;
+        }
     }
   assert (old_rep_count == i);
 
@@ -1933,9 +1859,9 @@ error:
   if (rep_arr != NULL)
     {
       for (i = 0; i < old_rep_count + 1; i++)
-	{
-	  or_free_classrep (rep_arr[i]);
-	}
+        {
+          or_free_classrep (rep_arr[i]);
+        }
       free_and_init (rep_arr);
     }
 
@@ -1970,18 +1896,17 @@ or_get_classrep (RECDES * record, int repid)
   else
     {
       /* find out what the most recent representation is */
-      fixed =
-	record->data + OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT);
+      fixed = record->data + OR_FIXED_ATTRIBUTES_OFFSET (ORC_CLASS_VAR_ATT_COUNT);
       current = OR_GET_INT (fixed + ORC_REPID_OFFSET);
 
       if (current == repid)
-	{
-	  rep = or_get_current_representation (record);
-	}
+        {
+          rep = or_get_current_representation (record);
+        }
       else
-	{
-	  rep = or_get_old_representation (record, repid);
-	}
+        {
+          rep = or_get_old_representation (record, repid);
+        }
     }
 
   return rep;
@@ -1999,18 +1924,18 @@ or_free_classrep (OR_CLASSREP * rep)
   if (rep != NULL)
     {
       if (rep->attributes != NULL)
-	{
-	  or_free_attributes (rep->attributes, rep->n_attributes);
-	  rep->n_attributes = 0;
-	  rep->attributes = NULL;
-	}
+        {
+          or_free_attributes (rep->attributes, rep->n_attributes);
+          rep->n_attributes = 0;
+          rep->attributes = NULL;
+        }
 
       if (rep->indexes != NULL)
-	{
-	  or_free_constraints (rep->indexes, rep->n_indexes);
-	  rep->n_indexes = 0;
-	  rep->indexes = NULL;
-	}
+        {
+          or_free_constraints (rep->indexes, rep->n_indexes);
+          rep->n_indexes = 0;
+          rep->indexes = NULL;
+        }
 
       free_and_init (rep);
     }
@@ -2033,19 +1958,19 @@ or_free_attributes (OR_ATTRIBUTE * attributes, int n_attributes)
   for (i = 0, att = attributes; i < n_attributes; i++, att++)
     {
       if (att->default_value.value != NULL)
-	{
-	  free_and_init (att->default_value.value);
-	}
+        {
+          free_and_init (att->default_value.value);
+        }
 
       if (att->current_default_value.value != NULL)
-	{
-	  free_and_init (att->current_default_value.value);
-	}
+        {
+          free_and_init (att->current_default_value.value);
+        }
 
       if (att->btids != NULL && att->btids != att->btid_pack)
-	{
-	  free_and_init (att->btids);
-	}
+        {
+          free_and_init (att->btids);
+        }
     }
 
   free_and_init (attributes);
@@ -2068,19 +1993,19 @@ or_free_constraints (OR_INDEX * indexes, int n_indexes)
   for (i = 0, index = indexes; i < n_indexes; i++, index++)
     {
       if (index->atts != NULL)
-	{
-	  free_and_init (index->atts);
-	}
+        {
+          free_and_init (index->atts);
+        }
 
       if (index->btname != NULL)
-	{
-	  free_and_init (index->btname);
-	}
+        {
+          free_and_init (index->btname);
+        }
 
       if (index->asc_desc != NULL)
-	{
-	  free_and_init (index->asc_desc);
-	}
+        {
+          free_and_init (index->asc_desc);
+        }
     }
 
   free_and_init (indexes);
@@ -2141,9 +2066,9 @@ or_get_attrname (RECDES * record, int attrid)
       ptr = diskatt + OR_VAR_TABLE_SIZE (ORC_ATT_VAR_ATT_COUNT);
       id = OR_GET_INT (ptr + ORC_ATT_ID_OFFSET);
       if (id == attrid)
-	{
-	  found = true;
-	}
+        {
+          found = true;
+        }
     }
 
   /*
@@ -2153,8 +2078,7 @@ or_get_attrname (RECDES * record, int attrid)
     {
       unsigned char len;
 
-      attr_name = (diskatt +
-		   OR_VAR_TABLE_ELEMENT_OFFSET (diskatt, ORC_ATT_NAME_INDEX));
+      attr_name = (diskatt + OR_VAR_TABLE_ELEMENT_OFFSET (diskatt, ORC_ATT_NAME_INDEX));
 
       /*
        * kludge kludge kludge
@@ -2164,13 +2088,13 @@ or_get_attrname (RECDES * record, int attrid)
        */
       len = *((unsigned char *) attr_name);
       if (len < 0xFFU)
-	{
-	  attr_name += 1;
-	}
+        {
+          attr_name += 1;
+        }
       else
-	{
-	  attr_name = attr_name + 1 + OR_INT_SIZE;
-	}
+        {
+          attr_name = attr_name + 1 + OR_INT_SIZE;
+        }
     }
 
   return attr_name;

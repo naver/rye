@@ -156,7 +156,7 @@ struct server_trace_stat
 typedef struct thread_mnt_track THREAD_MNT_TRACK;
 struct thread_mnt_track
 {
-  int item;			/* MNT_SERVER_ITEM */
+  int item;                     /* MNT_SERVER_ITEM */
 };
 
 typedef enum
@@ -173,63 +173,63 @@ typedef enum
 
 struct thread_entry
 {
-  int index;			/* thread entry index */
-  int index_in_group;		/* thread index in each group
-				   (con_handlers, worker, daemon) */
-  JOB_QUEUE_TYPE job_queue_type;	/* waiting job queue type for worker thread */
-  int type;			/* thread type */
-  pthread_t tid;		/* thread id */
-  int client_id;		/* client id whom this thread is responding */
-  int tran_index;		/* tran index to which this thread belongs */
+  int index;                    /* thread entry index */
+  int index_in_group;           /* thread index in each group
+                                   (con_handlers, worker, daemon) */
+  JOB_QUEUE_TYPE job_queue_type;        /* waiting job queue type for worker thread */
+  int type;                     /* thread type */
+  pthread_t tid;                /* thread id */
+  int client_id;                /* client id whom this thread is responding */
+  int tran_index;               /* tran index to which this thread belongs */
   pthread_mutex_t tran_index_lock;
-  unsigned int rid;		/* request id which this thread is processing */
-  int status;			/* thread status */
+  unsigned int rid;             /* request id which this thread is processing */
+  int status;                   /* thread status */
 
-  pthread_mutex_t th_entry_lock;	/* latch for this thread entry */
-  pthread_mutex_t th_job_lock;	/* mutex for job queue handling */
-  pthread_cond_t wakeup_cond;	/* wakeup condition */
+  pthread_mutex_t th_entry_lock;        /* latch for this thread entry */
+  pthread_mutex_t th_job_lock;  /* mutex for job queue handling */
+  pthread_cond_t wakeup_cond;   /* wakeup condition */
 
-  HL_HEAPID private_heap_id;	/* id of thread private memory allocator */
+  HL_HEAPID private_heap_id;    /* id of thread private memory allocator */
 #if defined (ENABLE_UNUSED_FUNCTION)
-  ADJ_ARRAY *cnv_adj_buffer[3];	/* conversion buffer */
+  ADJ_ARRAY *cnv_adj_buffer[3]; /* conversion buffer */
 #endif
 
-  struct css_conn_entry *conn_entry;	/* conn entry ptr */
+  struct css_conn_entry *conn_entry;    /* conn entry ptr */
 
-  ER_MSG_INFO er_msg;		/* error msg info */
+  ER_MSG_INFO er_msg;           /* error msg info */
 
-  void *xasl_unpack_info_ptr;	/* XASL_UNPACK_INFO * */
-  int xasl_errcode;		/* xasl errorcode */
+  void *xasl_unpack_info_ptr;   /* XASL_UNPACK_INFO * */
+  int xasl_errcode;             /* xasl errorcode */
   int xasl_recursion_depth;
 
-  unsigned int rand_seed;	/* seed for rand_r() */
-  struct drand48_data rand_buf;	/* seed for lrand48_r(), drand48_r() */
+  unsigned int rand_seed;       /* seed for rand_r() */
+  struct drand48_data rand_buf; /* seed for lrand48_r(), drand48_r() */
 
-  char qp_num_buf[81];		/* buffer which contains number as
-				   string form;
-				   used in the qp/numeric_db_value_print() */
+  char qp_num_buf[81];          /* buffer which contains number as
+                                   string form;
+                                   used in the qp/numeric_db_value_print() */
 
-  int resume_status;		/* resume status */
-  int request_latch_mode;	/* for page latch support */
+  int resume_status;            /* resume status */
+  int request_latch_mode;       /* for page latch support */
   int request_fix_count;
   bool victim_request_fail;
-  bool interrupted;		/* is this request/transaction interrupted ? */
-  bool shutdown;		/* is server going down? */
-  bool check_interrupt;		/* check_interrupt == false, during
-				   fl_alloc* function call. */
-  bool check_page_validation;	/* check_page_validation == false, during
-				   btree_handle_prev_leaf_after_locking()
-				   or btree_handle_curr_leaf_after_locking()
-				   function call. */
+  bool interrupted;             /* is this request/transaction interrupted ? */
+  bool shutdown;                /* is server going down? */
+  bool check_interrupt;         /* check_interrupt == false, during
+                                   fl_alloc* function call. */
+  bool check_page_validation;   /* check_page_validation == false, during
+                                   btree_handle_prev_leaf_after_locking()
+                                   or btree_handle_curr_leaf_after_locking()
+                                   function call. */
   struct thread_entry *next_wait_thrd;
 
   void *lockwait;
-  INT64 lockwait_stime;		/* time in milliseconds */
-  int lockwait_msecs;		/* time in milliseconds */
+  INT64 lockwait_stime;         /* time in milliseconds */
+  int lockwait_msecs;           /* time in milliseconds */
   int lockwait_state;
   void *query_entry;
   struct thread_entry *tran_next_wait;
-  struct thread_entry *worker_thrd_list;	/* worker thrd on jobq list */
+  struct thread_entry *worker_thrd_list;        /* worker thrd on jobq list */
 
   void *log_zip_undo;
   void *log_zip_redo;
@@ -259,8 +259,8 @@ struct thread_entry
   const char *last_error_file_name;
   void *recv_packet;
 
-  bool check_groupid;		/* check_groupid == false, iff client is
-				 * HA applier, migrator, group GC */
+  bool check_groupid;           /* check_groupid == false, iff client is
+                                 * HA applier, migrator, group GC */
 };
 
 #define DOES_THREAD_RESUME_DUE_TO_SHUTDOWN(thread_p) \
@@ -295,40 +295,26 @@ extern int thread_kill_all_workers (void);
 extern void thread_final_manager (void);
 extern void thread_slam_tran_index (THREAD_ENTRY * thread_p, int tran_index);
 extern int thread_unlock_entry (THREAD_ENTRY * p);
-extern int thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * p,
-						   int suspended_reason);
+extern int thread_suspend_wakeup_and_unlock_entry (THREAD_ENTRY * p, int suspended_reason);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int thread_suspend_timeout_wakeup_and_unlock_entry (THREAD_ENTRY * p,
-							   struct timespec *t,
-							   int
-							   suspended_reason);
-extern int thread_suspend_wakeup_and_unlock_entry_with_tran_index (int
-								   tran_index,
-								   int
-								   suspended_reason);
+extern int thread_suspend_timeout_wakeup_and_unlock_entry (THREAD_ENTRY * p, struct timespec *t, int suspended_reason);
+extern int thread_suspend_wakeup_and_unlock_entry_with_tran_index (int tran_index, int suspended_reason);
 #endif
 extern int thread_wakeup (THREAD_ENTRY * p, int resume_reason);
-extern int thread_check_suspend_reason_and_wakeup (THREAD_ENTRY * thread_p,
-						   int resume_reason,
-						   int suspend_reason);
+extern int thread_check_suspend_reason_and_wakeup (THREAD_ENTRY * thread_p, int resume_reason, int suspend_reason);
 
-extern int thread_wakeup_already_had_mutex (THREAD_ENTRY * p,
-					    int resume_reason);
+extern int thread_wakeup_already_had_mutex (THREAD_ENTRY * p, int resume_reason);
 extern int thread_wakeup_with_tran_index (int tran_index, int resume_reason);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern ADJ_ARRAY *css_get_cnv_adj_buffer (int idx);
 extern void css_set_cnv_adj_buffer (int idx, ADJ_ARRAY * buffer);
 extern int thread_is_manager_initialized (void);
-extern void thread_waiting_for_function (THREAD_ENTRY * thread_p,
-					 CSS_THREAD_FN func,
-					 CSS_THREAD_ARG arg);
+extern void thread_waiting_for_function (THREAD_ENTRY * thread_p, CSS_THREAD_FN func, CSS_THREAD_ARG arg);
 #endif
 extern void thread_sleep (double);
 extern void thread_get_info_threads (int *num_total_threads,
-				     int *num_worker_threads,
-				     int *num_free_threads,
-				     int *num_suspended_threads);
+                                     int *num_worker_threads, int *num_free_threads, int *num_suspended_threads);
 extern int thread_num_worker_threads (void);
 extern int thread_num_total_threads (void);
 extern int thread_num_con_handler_threads (void);
@@ -342,20 +328,17 @@ extern unsigned int thread_get_comm_request_id (THREAD_ENTRY * thread_p);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void thread_set_comm_request_id (unsigned int rid);
 #endif
-extern THREAD_ENTRY *thread_find_entry_by_tran_index_except_me (int
-								tran_index);
+extern THREAD_ENTRY *thread_find_entry_by_tran_index_except_me (int tran_index);
 extern int thread_get_current_entry_index (void);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void thread_wakeup_session_control_thread (void);
 extern void thread_wakeup_check_ha_delay_info_thread (void);
 #endif
 extern struct css_conn_entry *thread_get_current_conn_entry (void);
-extern int thread_has_threads (THREAD_ENTRY * caller, int tran_index,
-			       int client_id);
+extern int thread_has_threads (THREAD_ENTRY * caller, int tran_index, int client_id);
 extern bool thread_set_check_interrupt (THREAD_ENTRY * thread_p, bool flag);
 extern bool thread_set_check_groupid (THREAD_ENTRY * thread_p, bool flag);
-extern bool thread_set_check_page_validation (THREAD_ENTRY * thread_p,
-					      bool flag);
+extern bool thread_set_check_page_validation (THREAD_ENTRY * thread_p, bool flag);
 extern void thread_wakeup_deadlock_detect_thread (void);
 extern void thread_wakeup_log_flush_thread (void);
 extern void thread_wakeup_page_flush_thread (void);
@@ -378,9 +361,8 @@ extern int thread_get_lockwait_entry (int tran_index, THREAD_ENTRY ** array);
 
 
 extern int thread_suspend_with_other_mutex (THREAD_ENTRY * p,
-					    pthread_mutex_t * mutexp,
-					    int timeout, struct timespec *to,
-					    int suspended_reason);
+                                            pthread_mutex_t * mutexp,
+                                            int timeout, struct timespec *to, int suspended_reason);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void thread_print_entry_info (THREAD_ENTRY * p);
 extern void thread_dump_threads (void);
@@ -390,16 +372,12 @@ extern bool thread_get_check_groupid (THREAD_ENTRY * thread_p);
 extern bool thread_get_check_page_validation (THREAD_ENTRY * thread_p);
 
 extern int xthread_kill_tran_index (THREAD_ENTRY * thread_p,
-				    int kill_tran_index,
-				    const char *kill_user,
-				    const char *kill_host, int kill_pid);
+                                    int kill_tran_index, const char *kill_user, const char *kill_host, int kill_pid);
 
 extern HL_HEAPID css_get_private_heap (THREAD_ENTRY * thread_p);
-extern HL_HEAPID css_set_private_heap (THREAD_ENTRY * thread_p,
-				       HL_HEAPID heap_id);
+extern HL_HEAPID css_set_private_heap (THREAD_ENTRY * thread_p, HL_HEAPID heap_id);
 
-extern void thread_set_info (THREAD_ENTRY * thread_p, int client_id, int rid,
-			     int tran_index);
+extern void thread_set_info (THREAD_ENTRY * thread_p, int client_id, int rid, int tran_index);
 extern void thread_trace_on (THREAD_ENTRY * thread_p);
 extern void thread_set_trace_format (THREAD_ENTRY * thread_p, int format);
 extern bool thread_is_on_trace (THREAD_ENTRY * thread_p);
@@ -418,28 +396,20 @@ extern INT64 thread_get_log_clock_msec (void);
 extern int server_stats_dump (FILE * fp);
 #if 0
 extern int server_stats_add_wait_time (THREAD_ENTRY * thread_p,
-				       SERVER_STATS_TYPE stats_type,
-				       int sub_type,
-				       struct timeval *wait_start);
+                                       SERVER_STATS_TYPE stats_type, int sub_type, struct timeval *wait_start);
 extern int server_stats_set_current_wait_time (THREAD_ENTRY * thread_p,
-					       SERVER_STATS_TYPE stats_type,
-					       struct timeval *wait_start);
-extern int server_stats_add_current_wait_time (THREAD_ENTRY * thread_p,
-					       SERVER_STATS_TYPE stats_type,
-					       int sub_type);
+                                               SERVER_STATS_TYPE stats_type, struct timeval *wait_start);
+extern int server_stats_add_current_wait_time (THREAD_ENTRY * thread_p, SERVER_STATS_TYPE stats_type, int sub_type);
 #endif
 
 extern bool thread_is_auto_volume_expansion_thread_available (void);
 
 extern int thread_lock_entry (THREAD_ENTRY * thread_p);
 
-extern void thread_mnt_track_push (THREAD_ENTRY * thread_p, int item,
-				   int *status);
-extern THREAD_MNT_TRACK *thread_mnt_track_pop (THREAD_ENTRY * thread_p,
-					       int *status);
+extern void thread_mnt_track_push (THREAD_ENTRY * thread_p, int item, int *status);
+extern THREAD_MNT_TRACK *thread_mnt_track_pop (THREAD_ENTRY * thread_p, int *status);
 extern void thread_mnt_track_dump (THREAD_ENTRY * thread_p);
-extern void thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value,
-				      UINT64 start_time);
+extern void thread_mnt_track_counter (THREAD_ENTRY * thread_p, INT64 value, UINT64 start_time);
 
 #endif /* SERVER_MODE */
 

@@ -91,15 +91,14 @@ extern char *msgcat_message (int, int, int);
 /* message catalog description  */
 typedef struct msg_catd
 {
-  const char *file;		/* file name of this message catalog */
-  void *catd;			/* nl_catd from POSIX catopen() */
+  const char *file;             /* file name of this message catalog */
+  void *catd;                   /* nl_catd from POSIX catopen() */
 } *MSG_CATD;
 
 /* base functions for message catalog support */
 extern MSG_CATD msgcat_open (const char *);
 extern MSG_CATD msgcat_get_descriptor (int cat_id);
-extern char *msgcat_gets (MSG_CATD msg_catd, int set_id, int msg_id,
-			  const char *s);
+extern char *msgcat_gets (MSG_CATD msg_catd, int set_id, int msg_id, const char *s);
 extern int msgcat_close (MSG_CATD msg_catd);
 
 #endif /* _MESSAGE_CATALOG_H_ */

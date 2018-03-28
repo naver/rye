@@ -93,52 +93,52 @@ typedef enum
   MNT_STATS_SQL_TRACE_LATCH_WAITS,
 
   /* Statistics at critical section */
-#if 1				/* csect sub-info */
-  MNT_STATS_CSECT_ER_LOG_FILE,	/* 0 */
-  MNT_STATS_CSECT_ER_MSG_CACHE,	/* 1 */
-  MNT_STATS_CSECT_WFG,		/* 2 */
-  MNT_STATS_CSECT_LOG,		/* 3 */
-  MNT_STATS_CSECT_LOG_BUFFER,	/* 4 */
-  MNT_STATS_CSECT_LOG_ARCHIVE,	/* 5 */
-  MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE,	/* 6 */
-  MNT_STATS_CSECT_FILE_NEWFILE,	/* 7 */
-  MNT_STATS_CSECT_QPROC_QUERY_TABLE,	/* 8 */
-  MNT_STATS_CSECT_BOOT_SR_DBPARM,	/* 9 */
-  MNT_STATS_CSECT_DISK_REFRESH_GOODVOL,	/* 10 */
-  MNT_STATS_CSECT_CNV_FMT_LEXER,	/* 11 */
-  MNT_STATS_CSECT_CT_OID_TABLE,	/* 12 */
-  MNT_STATS_CSECT_HA_SERVER_STATE,	/* 13 */
-  MNT_STATS_CSECT_SESSION_STATE,	/* 14 */
-  MNT_STATS_CSECT_ACL,		/* 15 */
-  MNT_STATS_CSECT_EVENT_LOG_FILE,	/* 16 */
-  MNT_STATS_CSECT_ACCESS_STATUS,	/* 17 */
-  MNT_STATS_CSECT_TEMPFILE_CACHE,	/* 18 */
-  MNT_STATS_CSECT_CSS_ACTIVE_CONN,	/* 19 */
-  MNT_STATS_CSECT_CSS_FREE_CONN,	/* 20 */
-  MNT_STATS_CSECT_UNKNOWN,	/* 21 */
+#if 1                           /* csect sub-info */
+  MNT_STATS_CSECT_ER_LOG_FILE,  /* 0 */
+  MNT_STATS_CSECT_ER_MSG_CACHE, /* 1 */
+  MNT_STATS_CSECT_WFG,          /* 2 */
+  MNT_STATS_CSECT_LOG,          /* 3 */
+  MNT_STATS_CSECT_LOG_BUFFER,   /* 4 */
+  MNT_STATS_CSECT_LOG_ARCHIVE,  /* 5 */
+  MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE,   /* 6 */
+  MNT_STATS_CSECT_FILE_NEWFILE, /* 7 */
+  MNT_STATS_CSECT_QPROC_QUERY_TABLE,    /* 8 */
+  MNT_STATS_CSECT_BOOT_SR_DBPARM,       /* 9 */
+  MNT_STATS_CSECT_DISK_REFRESH_GOODVOL, /* 10 */
+  MNT_STATS_CSECT_CNV_FMT_LEXER,        /* 11 */
+  MNT_STATS_CSECT_CT_OID_TABLE, /* 12 */
+  MNT_STATS_CSECT_HA_SERVER_STATE,      /* 13 */
+  MNT_STATS_CSECT_SESSION_STATE,        /* 14 */
+  MNT_STATS_CSECT_ACL,          /* 15 */
+  MNT_STATS_CSECT_EVENT_LOG_FILE,       /* 16 */
+  MNT_STATS_CSECT_ACCESS_STATUS,        /* 17 */
+  MNT_STATS_CSECT_TEMPFILE_CACHE,       /* 18 */
+  MNT_STATS_CSECT_CSS_ACTIVE_CONN,      /* 19 */
+  MNT_STATS_CSECT_CSS_FREE_CONN,        /* 20 */
+  MNT_STATS_CSECT_UNKNOWN,      /* 21 */
 
-  MNT_STATS_CSECT_WAITS_ER_LOG_FILE,	/* 0 */
-  MNT_STATS_CSECT_WAITS_ER_MSG_CACHE,	/* 1 */
-  MNT_STATS_CSECT_WAITS_WFG,	/* 2 */
-  MNT_STATS_CSECT_WAITS_LOG,	/* 3 */
-  MNT_STATS_CSECT_WAITS_LOG_BUFFER,	/* 4 */
-  MNT_STATS_CSECT_WAITS_LOG_ARCHIVE,	/* 5 */
-  MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE,	/* 6 */
-  MNT_STATS_CSECT_WAITS_FILE_NEWFILE,	/* 7 */
-  MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE,	/* 8 */
-  MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM,	/* 9 */
-  MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL,	/* 10 */
-  MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER,	/* 11 */
-  MNT_STATS_CSECT_WAITS_CT_OID_TABLE,	/* 12 */
-  MNT_STATS_CSECT_WAITS_HA_SERVER_STATE,	/* 13 */
-  MNT_STATS_CSECT_WAITS_SESSION_STATE,	/* 14 */
-  MNT_STATS_CSECT_WAITS_ACL,	/* 15 */
-  MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE,	/* 16 */
-  MNT_STATS_CSECT_WAITS_ACCESS_STATUS,	/* 17 */
-  MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE,	/* 18 */
-  MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN,	/* 19 */
-  MNT_STATS_CSECT_WAITS_CSS_FREE_CONN,	/* 20 */
-  MNT_STATS_CSECT_WAITS_UNKNOWN,	/* 21 */
+  MNT_STATS_CSECT_WAITS_ER_LOG_FILE,    /* 0 */
+  MNT_STATS_CSECT_WAITS_ER_MSG_CACHE,   /* 1 */
+  MNT_STATS_CSECT_WAITS_WFG,    /* 2 */
+  MNT_STATS_CSECT_WAITS_LOG,    /* 3 */
+  MNT_STATS_CSECT_WAITS_LOG_BUFFER,     /* 4 */
+  MNT_STATS_CSECT_WAITS_LOG_ARCHIVE,    /* 5 */
+  MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE,     /* 6 */
+  MNT_STATS_CSECT_WAITS_FILE_NEWFILE,   /* 7 */
+  MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE,      /* 8 */
+  MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM, /* 9 */
+  MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL,   /* 10 */
+  MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER,  /* 11 */
+  MNT_STATS_CSECT_WAITS_CT_OID_TABLE,   /* 12 */
+  MNT_STATS_CSECT_WAITS_HA_SERVER_STATE,        /* 13 */
+  MNT_STATS_CSECT_WAITS_SESSION_STATE,  /* 14 */
+  MNT_STATS_CSECT_WAITS_ACL,    /* 15 */
+  MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE, /* 16 */
+  MNT_STATS_CSECT_WAITS_ACCESS_STATUS,  /* 17 */
+  MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE, /* 18 */
+  MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN,        /* 19 */
+  MNT_STATS_CSECT_WAITS_CSS_FREE_CONN,  /* 20 */
+  MNT_STATS_CSECT_WAITS_UNKNOWN,        /* 21 */
 #endif
 
   /* Statistics at disk level */
@@ -157,51 +157,51 @@ typedef enum
 
   /* Statistics at page level */
   MNT_STATS_DATA_PAGE_FETCHES,
-#if 1				/* fetches sub-info */
-  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,	/* 1 file header page             */
-  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,	/* 2 file allocset table page             */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,	/* 3 heap header page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_HEAP,	/* 4 heap page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,	/* 5 volume header page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,	/* 6 volume bitmap page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_XASL,	/* 7 xasl stream page                     */
-  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,	/* 8 query result page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_EHASH,	/* 9 ehash bucket/dir page                */
-  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,	/* 10 overflow page (with ovf_keyval)      */
-  MNT_STATS_DATA_PAGE_FETCHES_AREA,	/* 11 area page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,	/* 12 catalog page                         */
-  MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT,	/* 13 b+tree index root page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_BTREE,	/* 14 b+tree index page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN,	/* 0 unknown                     */
+#if 1                           /* fetches sub-info */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,      /* 1 file header page             */
+  MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB, /* 2 file allocset table page             */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,      /* 3 heap header page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_HEAP,     /* 4 heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,        /* 5 volume header page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,        /* 6 volume bitmap page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_XASL,     /* 7 xasl stream page                     */
+  MNT_STATS_DATA_PAGE_FETCHES_QRESULT,  /* 8 query result page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_EHASH,    /* 9 ehash bucket/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW, /* 10 overflow page (with ovf_keyval)      */
+  MNT_STATS_DATA_PAGE_FETCHES_AREA,     /* 11 area page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_CATALOG,  /* 12 catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT,       /* 13 b+tree index root page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_BTREE,    /* 14 b+tree index page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN,  /* 0 unknown                     */
 
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER,	/* 1 file header page             */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB,	/* 2 file allocset table page             */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER,	/* 3 heap header page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP,	/* 4 heap page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER,	/* 5 volume header page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP,	/* 6 volume bitmap page                   */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_XASL,	/* 7 xasl stream page                     */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT,	/* 8 query result page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH,	/* 9 ehash bucket/dir page                */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW,	/* 10 overflow page (with ovf_keyval)      */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_AREA,	/* 11 area page                            */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG,	/* 12 catalog page                         */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT,	/* 13 b+tree index root page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE,	/* 14 b+tree index page                    */
-  MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN,	/* 0 unknown                     */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER,        /* 1 file header page             */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB,   /* 2 file allocset table page             */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER,        /* 3 heap header page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP,       /* 4 heap page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER,  /* 5 volume header page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP,  /* 6 volume bitmap page                   */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_XASL,       /* 7 xasl stream page                     */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT,    /* 8 query result page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH,      /* 9 ehash bucket/dir page                */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW,   /* 10 overflow page (with ovf_keyval)      */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_AREA,       /* 11 area page                            */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG,    /* 12 catalog page                         */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT, /* 13 b+tree index root page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE,      /* 14 b+tree index page                    */
+  MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN,    /* 0 unknown                     */
 
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES,	/* 15 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES,	/* 16 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE,	/* 17 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE,	/* 18 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC,	/* 19 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT,	/* 20 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE,	/* 21 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE,	/* 22 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL,	/* 23 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA,	/* 24 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT,	/* 25 */
-  MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK,	/* 26 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES,  /* 15 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES,   /* 16 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE,  /* 17 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE,        /* 18 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC,        /* 19 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT,    /* 20 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE,    /* 21 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE,    /* 22 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL,  /* 23 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA,    /* 24 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT,     /* 25 */
+  MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK,       /* 26 */
 #endif
 
   MNT_STATS_DATA_PAGE_DIRTIES,
@@ -298,7 +298,7 @@ typedef enum
   MNT_STATS_PLAN_CACHE_XASL_ID_HASH_ENTRIES,
   MNT_STATS_PLAN_CACHE_CLASS_OID_HASH_ENTRIES,
 
-  MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO,	/* should be the last member */
+  MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO, /* should be the last member */
 
   MNT_SIZE_OF_SERVER_EXEC_STATS
 } MNT_SERVER_ITEM;
@@ -346,19 +346,12 @@ extern void mnt_reset_stats (void);
 	mnt_stats_counter(thread_p,ITEM,1)
 #define mnt_stats_event_off(THREAD_P,ITEM)	\
 	mnt_stats_counter(thread_p,ITEM,-1)
-extern void mnt_stats_counter (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
-			       INT64 value);
-extern void mnt_stats_counter_with_time (THREAD_ENTRY * thread_p,
-					 MNT_SERVER_ITEM item, INT64 value,
-					 UINT64 start_time);
-extern void mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
-			     INT64 value);
-extern INT64 mnt_get_stats_with_time (THREAD_ENTRY * thread_p,
-				      MNT_SERVER_ITEM item,
-				      UINT64 * acc_time);
+extern void mnt_stats_counter (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value);
+extern void mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value, UINT64 start_time);
+extern void mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value);
+extern INT64 mnt_get_stats_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, UINT64 * acc_time);
 extern INT64 mnt_get_stats (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item);
-extern void mnt_server_copy_stats (THREAD_ENTRY * thread_p,
-				   MONITOR_STATS * to_stats);
+extern void mnt_server_copy_stats (THREAD_ENTRY * thread_p, MONITOR_STATS * to_stats);
 #else /* SERVER_MODE || SA_MODE */
 #define mnt_stats_counter(THREAD_P,ITEM,VALUE)
 #define mnt_stats_counter_with_time(THREAD_P,ITEM,VALUE,START_TIME)
@@ -370,16 +363,11 @@ extern void mnt_server_copy_stats (THREAD_ENTRY * thread_p,
 extern void mnt_calc_hit_ratio (MONITOR_STATS * stats, int num_stats);
 
 extern MNT_SERVER_ITEM mnt_csect_type_to_server_item (const CSECT_TYPE ctype);
-extern MNT_SERVER_ITEM mnt_csect_type_to_server_item_waits (const CSECT_TYPE
-							    ctype);
+extern MNT_SERVER_ITEM mnt_csect_type_to_server_item_waits (const CSECT_TYPE ctype);
 
-extern PAGE_TYPE mnt_server_item_fetches_to_page_ptype (const MNT_SERVER_ITEM
-							item);
-extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches (const PAGE_TYPE
-							      ptype);
-extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches_waits (const
-								    PAGE_TYPE
-								    ptype);
+extern PAGE_TYPE mnt_server_item_fetches_to_page_ptype (const MNT_SERVER_ITEM item);
+extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches (const PAGE_TYPE ptype);
+extern MNT_SERVER_ITEM mnt_page_ptype_to_server_item_fetches_waits (const PAGE_TYPE ptype);
 extern UINT64 mnt_clock_to_time (const UINT64 acc_time);
 
 #endif /* _PERF_MONITOR_H_ */

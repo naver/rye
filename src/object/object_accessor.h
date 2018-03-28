@@ -40,7 +40,7 @@
   DB_MAKE_NULL(dbvalue);
 
 
-#if 0				/* remove chn. not used, heyman */
+#if 0                           /* remove chn. not used, heyman */
 
 /*
  *
@@ -104,29 +104,23 @@ extern int obj_delete (MOP op);
 
 extern int obj_get (MOP op, const char *name, DB_VALUE * value);
 
-extern int obj_get_att (MOP op, SM_CLASS * class_, SM_ATTRIBUTE * att,
-			DB_VALUE * value);
+extern int obj_get_att (MOP op, SM_CLASS * class_, SM_ATTRIBUTE * att, DB_VALUE * value);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int obj_get_path (DB_OBJECT * object, const char *attpath,
-			 DB_VALUE * value);
+extern int obj_get_path (DB_OBJECT * object, const char *attpath, DB_VALUE * value);
 #endif
 extern int obj_set (MOP op, const char *name, DB_VALUE * value);
 
-extern int obj_assign_value (MOP op, SM_ATTRIBUTE * att, char *mem,
-			     DB_VALUE * value);
+extern int obj_assign_value (MOP op, SM_ATTRIBUTE * att, char *mem, DB_VALUE * value);
 
 #if defined(ENABLE_UNUSED_FUNCTION)
 /* Attribute descriptor interface */
 extern int obj_desc_set (MOP op, SM_DESCRIPTOR * desc, DB_VALUE * value);
 
-extern int obj_send_stack (MOP obj, const char *name,
-			   DB_VALUE * returnval, ...);
-extern int obj_desc_send_stack (MOP obj, SM_DESCRIPTOR * desc,
-				DB_VALUE * returnval, ...);
+extern int obj_send_stack (MOP obj, const char *name, DB_VALUE * returnval, ...);
+extern int obj_desc_send_stack (MOP obj, SM_DESCRIPTOR * desc, DB_VALUE * returnval, ...);
 /* backward compatibility, should use obj_send_list() */
-extern int obj_send (MOP obj, const char *name, DB_VALUE * returnval,
-		     DB_VALUE_LIST * arglist);
+extern int obj_send (MOP obj, const char *name, DB_VALUE * returnval, DB_VALUE_LIST * arglist);
 extern int obj_isclass (MOP obj);
 
 /* Tests */
@@ -135,11 +129,9 @@ extern bool obj_isinstance (MOP obj);
 
 /* Misc operations */
 extern int obj_lock (MOP op, int for_write);
-extern MOP obj_find_unique (MOP op, const char *attname,
-			    DB_IDXKEY * key, LOCK lock);
+extern MOP obj_find_unique (MOP op, const char *attname, DB_IDXKEY * key, LOCK lock);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int obj_repl_add_object (const char *class_name, DB_IDXKEY * key,
-				int type, RECDES * recdes);
+extern int obj_repl_add_object (const char *class_name, DB_IDXKEY * key, int type, RECDES * recdes);
 #endif
 
 /* Internal support for specific modules */
@@ -149,18 +141,14 @@ extern void obj_free_memory (SM_CLASS * class_, MOBJ obj);
 
 /* attribute locator for set handler */
 #if !defined(SERVER_MODE)
-extern int obj_locate_attribute (MOP op, int attid, int for_write,
-				 char **memp, SM_ATTRIBUTE ** attp);
+extern int obj_locate_attribute (MOP op, int attid, int for_write, char **memp, SM_ATTRIBUTE ** attp);
 #endif
 extern char *obj_alloc (SM_CLASS * class_, int bound_bit_status);
 
 
-extern int obj_get_value (MOP op, SM_ATTRIBUTE * att, void *mem,
-			  DB_VALUE * source, DB_VALUE * dest);
+extern int obj_get_value (MOP op, SM_ATTRIBUTE * att, void *mem, DB_VALUE * source, DB_VALUE * dest);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern int obj_find_unique_id (MOP op, const char *att_name,
-			       BTID * id_array, int id_array_size,
-			       int *total_ids);
+extern int obj_find_unique_id (MOP op, const char *att_name, BTID * id_array, int id_array_size, int *total_ids);
 #endif
 
 #endif /* _OBJECT_ACCESSOR_H_ */

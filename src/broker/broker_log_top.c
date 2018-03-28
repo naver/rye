@@ -61,20 +61,16 @@ struct t_work_msg
 #endif
 
 static int log_top_query (int argc, char *argv[], int arg_start);
-static int log_top (FILE * fp, char *filename, long start_offset,
-		    long end_offset);
+static int log_top (FILE * fp, char *filename, long start_offset, long end_offset);
 static int log_execute (char *linebuf, char **query_p);
 static int get_args (int argc, char *argv[]);
 #ifdef MT_MODE
 static void *thr_main (void *arg);
 #endif
 static int read_multi_line_sql (FILE * fp, T_STRING * t_str, char **linebuf,
-				int *lineno, T_STRING * sql_buf,
-				T_STRING * cas_log_buf);
-static int read_execute_end_msg (const char *msg_p, int *res_code,
-				 int *runtime_msec);
-static int read_bind_value (FILE * fp, T_STRING * t_str, char **linebuf,
-			    int *lineno, T_STRING * cas_log_buf);
+                                int *lineno, T_STRING * sql_buf, T_STRING * cas_log_buf);
+static int read_execute_end_msg (const char *msg_p, int *res_code, int *runtime_msec);
+static int read_bind_value (FILE * fp, T_STRING * t_str, char **linebuf, int *lineno, T_STRING * cas_log_buf);
 static int search_offset (FILE * fp, char *string, long *offset, bool start);
 static char *organize_query_string (const char *sql);
 
@@ -110,27 +106,27 @@ main (int argc, char *argv[])
       char *file_ptr = NULL;
 
       if (stat (argv[i], &statbuf) == 0 && S_ISREG (statbuf.st_mode))
-	{
-	  file_ptr = argv[i];
-	}
+        {
+          file_ptr = argv[i];
+        }
       else
-	{
-	  envvar_ryelogdir_file (tmpfile, sizeof (tmpfile), argv[i]);
-	  if (stat (tmpfile, &statbuf) == 0 && S_ISREG (statbuf.st_mode))
-	    {
-	      file_ptr = tmpfile;
-	    }
-	}
+        {
+          envvar_ryelogdir_file (tmpfile, sizeof (tmpfile), argv[i]);
+          if (stat (tmpfile, &statbuf) == 0 && S_ISREG (statbuf.st_mode))
+            {
+              file_ptr = tmpfile;
+            }
+        }
 
       if (file_ptr == NULL)
-	{
-	  fprintf (stderr, "file not found [%s]\n", argv[i]);
-	  return -1;
-	}
+        {
+          fprintf (stderr, "file not found [%s]\n", argv[i]);
+          return -1;
+        }
       else
-	{
-	  argv[i] = strdup (file_ptr);
-	}
+        {
+          argv[i] = strdup (file_ptr);
+        }
     }
 
   if (mode_tran)
@@ -166,14 +162,12 @@ get_file_offset (char *filename, long *start_offset, long *end_offset)
       return -1;
     }
 
-  if (from_date[0] == '\0' ||
-      search_offset (fp, from_date, start_offset, true) < 0)
+  if (from_date[0] == '\0' || search_offset (fp, from_date, start_offset, true) < 0)
     {
       *start_offset = -1;
     }
 
-  if (to_date[0] == '\0' ||
-      search_offset (fp, to_date, end_offset, false) < 0)
+  if (to_date[0] == '\0' || search_offset (fp, to_date, end_offset, false) < 0)
     {
       *end_offset = -1;
     }
@@ -188,12 +182,12 @@ check_log_time (char *start_date, char *end_date)
   if (from_date[0])
     {
       if (strncmp (end_date, from_date, DATE_STR_LEN) < 0)
-	return -1;
+        return -1;
     }
   if (to_date[0])
     {
       if (strncmp (to_date, start_date, DATE_STR_LEN) < 0)
-	return -1;
+        return -1;
     }
 
   return 0;
@@ -236,43 +230,43 @@ log_top_query (int argc, char *argv[], int arg_start)
 
       fp = fopen (filename, "r");
       if (fp == NULL)
-	{
-	  fprintf (stderr, "%s[%s]\n", strerror (errno), filename);
+        {
+          fprintf (stderr, "%s[%s]\n", strerror (errno), filename);
 #ifdef MT_MODE
-	  process_flag = 0;
+          process_flag = 0;
 #endif
-	  return -1;
-	}
+          return -1;
+        }
 
       if (get_file_offset (filename, &start_offset, &end_offset) < 0)
-	{
-	  start_offset = end_offset = -1;
-	}
+        {
+          start_offset = end_offset = -1;
+        }
 
 #ifdef MT_MODE
       while (1)
-	{
-	  for (j = 0; j < num_thread; j++)
-	    {
-	      if (work_msg[j].filename == NULL)
-		{
-		  work_msg[j].fp = fp;
-		  work_msg[j].filename = filename;
-		  break;
-		}
-	    }
-	  if (j == num_thread)
-	    THREAD_SLEEP (1000);
-	  else
-	    break;
-	}
+        {
+          for (j = 0; j < num_thread; j++)
+            {
+              if (work_msg[j].filename == NULL)
+                {
+                  work_msg[j].fp = fp;
+                  work_msg[j].filename = filename;
+                  break;
+                }
+            }
+          if (j == num_thread)
+            THREAD_SLEEP (1000);
+          else
+            break;
+        }
 #else
       error = log_top (fp, filename, start_offset, end_offset);
       fclose (fp);
       if (error < 0)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 #endif
     }
 
@@ -295,16 +289,16 @@ thr_main (void *arg)
   while (process_flag)
     {
       if (work_msg[self_index].filename == NULL)
-	{
-	  THREAD_SLEEP (100);
-	}
+        {
+          THREAD_SLEEP (100);
+        }
       else
-	{
-	  log_top (work_msg[self_index].fp, work_msg[self_index].filename);
-	  fclose (work_msg[self_index].fp);
-	  work_msg[self_index].fp = NULL;
-	  work_msg[self_index].filename = NULL;
-	}
+        {
+          log_top (work_msg[self_index].fp, work_msg[self_index].filename);
+          fclose (work_msg[self_index].fp);
+          work_msg[self_index].fp = NULL;
+          work_msg[self_index].filename = NULL;
+        }
     }
   return NULL;
 }
@@ -357,183 +351,170 @@ log_top (FILE * fp, char *filename, long start_offset, long end_offset)
   while (1)
     {
       if (end_offset != -1)
-	{
-	  if (ftell (fp) > end_offset)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (ftell (fp) > end_offset)
+            {
+              break;
+            }
+        }
 
       if (read_flag)
-	{
-	  if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
+            {
+              break;
+            }
+        }
       read_flag = 1;
 
       if (is_cas_log (linebuf) == false)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       GET_CUR_DATE_STR (cur_date, linebuf);
       if (start_date[0] == '\0')
-	{
-	  strcpy (start_date, cur_date);
-	}
+        {
+          strcpy (start_date, cur_date);
+        }
 
       msg_p = get_msg_start_ptr (linebuf);
       if (strncmp (msg_p, "execute", 7) == 0
-	  || strncmp (msg_p, "execute_all", 11) == 0
-	  || strncmp (msg_p, "execute_call", 12) == 0
-	  || strncmp (msg_p, "execute_batch", 13) == 0)
-	{
-	  int qi_idx;
-	  char *query_p;
-	  int end_block_flag = 0;
+          || strncmp (msg_p, "execute_all", 11) == 0
+          || strncmp (msg_p, "execute_call", 12) == 0 || strncmp (msg_p, "execute_batch", 13) == 0)
+        {
+          int qi_idx;
+          char *query_p;
+          int end_block_flag = 0;
 
-	  /*
-	   * execute log format:
-	   * <execute_cmd> srv_h_id <handle_id> <query_string>
-	   * bind <bind_index> : <TYPE> <VALUE>
-	   * <execute_cmd> [error:]<res> tuple <tuple_count> time <runtime_msec>
-	   * <execute_cmd>:
-	   *      execute, execute_all or execute_call
-	   *
-	   * ex)
-	   * execute srv_h_id 1 select 'a' from CT_ROOT_NAME
-	   * bind 1 : VARCHAR test str
-	   * execute 0 tuple 1 time 0.004
-	   */
-	  qi_idx = log_execute (linebuf, &query_p);
-	  if (qi_idx < 0 || query_p == NULL)
-	    goto log_top_err;
+          /*
+           * execute log format:
+           * <execute_cmd> srv_h_id <handle_id> <query_string>
+           * bind <bind_index> : <TYPE> <VALUE>
+           * <execute_cmd> [error:]<res> tuple <tuple_count> time <runtime_msec>
+           * <execute_cmd>:
+           *      execute, execute_all or execute_call
+           *
+           * ex)
+           * execute srv_h_id 1 select 'a' from CT_ROOT_NAME
+           * bind 1 : VARCHAR test str
+           * execute 0 tuple 1 time 0.004
+           */
+          qi_idx = log_execute (linebuf, &query_p);
+          if (qi_idx < 0 || query_p == NULL)
+            goto log_top_err;
 
-	  t_string_clear (sql_buf);
-	  t_string_clear (cas_log_buf);
+          t_string_clear (sql_buf);
+          t_string_clear (cas_log_buf);
 
-	  t_string_add (sql_buf, query_p, strlen (query_p));
-	  t_string_add (cas_log_buf, linebuf, strlen (linebuf));
+          t_string_add (sql_buf, query_p, strlen (query_p));
+          t_string_add (cas_log_buf, linebuf, strlen (linebuf));
 
-	  if (read_multi_line_sql (fp, linebuf_tstr, &linebuf, &lineno,
-				   sql_buf, cas_log_buf) < 0)
-	    {
-	      break;
-	    }
-	  if (read_bind_value (fp, linebuf_tstr, &linebuf, &lineno,
-			       cas_log_buf) < 0)
-	    {
-	      break;
-	    }
+          if (read_multi_line_sql (fp, linebuf_tstr, &linebuf, &lineno, sql_buf, cas_log_buf) < 0)
+            {
+              break;
+            }
+          if (read_bind_value (fp, linebuf_tstr, &linebuf, &lineno, cas_log_buf) < 0)
+            {
+              break;
+            }
 
-	  msg_p = get_msg_start_ptr (linebuf);
+          msg_p = get_msg_start_ptr (linebuf);
 
-	  /* skip query_cancel */
-	  if (strncmp (msg_p, "query_cancel", 12) == 0)
-	    {
-	      if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
-		{
-		  break;
-		}
-	    }
+          /* skip query_cancel */
+          if (strncmp (msg_p, "query_cancel", 12) == 0)
+            {
+              if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
+                {
+                  break;
+                }
+            }
 
-	  if (strncmp (msg_p, "execute", 7) != 0)
-	    {
-	      while (1)
-		{
-		  if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
-		    {
-		      break;
-		    }
+          if (strncmp (msg_p, "execute", 7) != 0)
+            {
+              while (1)
+                {
+                  if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
+                    {
+                      break;
+                    }
 
-		  msg_p = get_msg_start_ptr (linebuf);
-		  if (strncmp (msg_p, "***", 3) == 0)
-		    {
-		      end_block_flag = 1;
-		      if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <=
-			  0)
-			{
-			  /* ut_get_line error, just break; */
-			  break;
-			}
-		      break;
-		    }
-		}
-	    }
+                  msg_p = get_msg_start_ptr (linebuf);
+                  if (strncmp (msg_p, "***", 3) == 0)
+                    {
+                      end_block_flag = 1;
+                      if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
+                        {
+                          /* ut_get_line error, just break; */
+                          break;
+                        }
+                      break;
+                    }
+                }
+            }
 
-	  if (end_block_flag == 1)
-	    {
-	      continue;
-	    }
+          if (end_block_flag == 1)
+            {
+              continue;
+            }
 
-	  query_info_buf[qi_idx].sql =
-	    (char *) RYE_REALLOC (query_info_buf[qi_idx].sql,
-				  t_string_len (sql_buf) + 1);
+          query_info_buf[qi_idx].sql = (char *) RYE_REALLOC (query_info_buf[qi_idx].sql, t_string_len (sql_buf) + 1);
 
-	  strcpy (query_info_buf[qi_idx].sql, trim (t_string_str (sql_buf)));
-	  query_info_buf[qi_idx].organized_sql = organize_query_string
-	    (query_info_buf[qi_idx].sql);
+          strcpy (query_info_buf[qi_idx].sql, trim (t_string_str (sql_buf)));
+          query_info_buf[qi_idx].organized_sql = organize_query_string (query_info_buf[qi_idx].sql);
 
-	  msg_p = get_msg_start_ptr (linebuf);
-	  GET_CUR_DATE_STR (cur_date, linebuf);
+          msg_p = get_msg_start_ptr (linebuf);
+          GET_CUR_DATE_STR (cur_date, linebuf);
 
-	  strcpy (query_info_buf[qi_idx].start_date, start_date);
+          strcpy (query_info_buf[qi_idx].start_date, start_date);
 
-	  if (log_top_mode == MODE_MAX_HANDLE)
-	    {
-	      if (qi_idx >= mode_max_handle_lower_bound)
-		{
-		  if (query_info_add
-		      (&query_info_buf[qi_idx], qi_idx + 1, 0, filename,
-		       lineno, cur_date) < 0)
-		    {
-		      goto log_top_err;
-		    }
-		}
-	    }
-	  else
-	    {
-	      int execute_res, runtime;
+          if (log_top_mode == MODE_MAX_HANDLE)
+            {
+              if (qi_idx >= mode_max_handle_lower_bound)
+                {
+                  if (query_info_add (&query_info_buf[qi_idx], qi_idx + 1, 0, filename, lineno, cur_date) < 0)
+                    {
+                      goto log_top_err;
+                    }
+                }
+            }
+          else
+            {
+              int execute_res, runtime;
 
-	      /* set cas_log to query info */
-	      if (t_string_add (cas_log_buf, linebuf, strlen (linebuf)) < 0)
-		{
-		  goto log_top_err;
-		}
+              /* set cas_log to query info */
+              if (t_string_add (cas_log_buf, linebuf, strlen (linebuf)) < 0)
+                {
+                  goto log_top_err;
+                }
 
-	      query_info_buf[qi_idx].cas_log =
-		(char *) RYE_REALLOC (query_info_buf[qi_idx].cas_log,
-				      t_string_len (cas_log_buf) + 1);
+              query_info_buf[qi_idx].cas_log =
+                (char *) RYE_REALLOC (query_info_buf[qi_idx].cas_log, t_string_len (cas_log_buf) + 1);
 
-	      memcpy (query_info_buf[qi_idx].cas_log,
-		      t_string_str (cas_log_buf), t_string_len (cas_log_buf));
+              memcpy (query_info_buf[qi_idx].cas_log, t_string_str (cas_log_buf), t_string_len (cas_log_buf));
 
-	      query_info_buf[qi_idx].cas_log_len = t_string_len (cas_log_buf);
+              query_info_buf[qi_idx].cas_log_len = t_string_len (cas_log_buf);
 
 
-	      /* read execute info & if fail add to query_info_arr_ne */
-	      if (read_execute_end_msg (msg_p, &execute_res, &runtime) < 0)
-		{
-		  if (query_info_add_ne () < 0)
-		    {
-		      goto log_top_err;
-		    }
+              /* read execute info & if fail add to query_info_arr_ne */
+              if (read_execute_end_msg (msg_p, &execute_res, &runtime) < 0)
+                {
+                  if (query_info_add_ne () < 0)
+                    {
+                      goto log_top_err;
+                    }
 
-		  read_flag = 0;
-		  continue;
-		}
+                  read_flag = 0;
+                  continue;
+                }
 
-	      /* add to query_info_arr */
-	      if (query_info_add
-		  (&query_info_buf[qi_idx], runtime, execute_res, filename,
-		   lineno, cur_date) < 0)
-		{
-		  goto log_top_err;
-		}
-	    }
-	}
+              /* add to query_info_arr */
+              if (query_info_add (&query_info_buf[qi_idx], runtime, execute_res, filename, lineno, cur_date) < 0)
+                {
+                  goto log_top_err;
+                }
+            }
+        }
       start_date[0] = '\0';
     }
 
@@ -589,28 +570,28 @@ get_args (int argc, char *argv[])
   while ((c = getopt (argc, argv, "th:F:T:")) != EOF)
     {
       switch (c)
-	{
-	case 't':
-	  mode_tran = 1;
-	  break;
-	case 'h':
-	  mode_max_handle_lower_bound = atoi (optarg);
-	  break;
-	case 'F':
-	  if (str_to_log_date_format (optarg, from_date) < 0)
-	    {
-	      goto date_format_err;
-	    }
-	  break;
-	case 'T':
-	  if (str_to_log_date_format (optarg, to_date) < 0)
-	    {
-	      goto date_format_err;
-	    }
-	  break;
-	default:
-	  goto getargs_err;
-	}
+        {
+        case 't':
+          mode_tran = 1;
+          break;
+        case 'h':
+          mode_max_handle_lower_bound = atoi (optarg);
+          break;
+        case 'F':
+          if (str_to_log_date_format (optarg, from_date) < 0)
+            {
+              goto date_format_err;
+            }
+          break;
+        case 'T':
+          if (str_to_log_date_format (optarg, to_date) < 0)
+            {
+              goto date_format_err;
+            }
+          break;
+        default:
+          goto getargs_err;
+        }
     }
 
   if (mode_max_handle_lower_bound > 0)
@@ -620,47 +601,44 @@ get_args (int argc, char *argv[])
     return optind;
 
 getargs_err:
-  fprintf (stderr, "%s [-t] [-F <from date>] [-T <to date>] <log_file> ...\n",
-	   argv[0]);
+  fprintf (stderr, "%s [-t] [-F <from date>] [-T <to date>] <log_file> ...\n", argv[0]);
   return -1;
 date_format_err:
-  fprintf (stderr,
-	   "invalid date. valid date format is yyyy-mm-dd hh:mm:ss.\n");
+  fprintf (stderr, "invalid date. valid date format is yyyy-mm-dd hh:mm:ss.\n");
   return -1;
 }
 
 static int
 read_multi_line_sql (FILE * fp, T_STRING * t_str, char **linebuf, int *lineno,
-		     T_STRING * sql_buf, T_STRING * cas_log_buf)
+                     T_STRING * sql_buf, T_STRING * cas_log_buf)
 {
   while (1)
     {
       if (ut_get_line (fp, t_str, linebuf, lineno) <= 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
       if (is_cas_log (*linebuf))
-	{
-	  return 0;
-	}
+        {
+          return 0;
+        }
 
       if (t_string_add (sql_buf, *linebuf, strlen (*linebuf)) < 0)
-	{
-	  fprintf (stderr, "malloc error\n");
-	  return -1;
-	}
+        {
+          fprintf (stderr, "malloc error\n");
+          return -1;
+        }
       if (t_string_add (cas_log_buf, *linebuf, strlen (*linebuf)) < 0)
-	{
-	  fprintf (stderr, "malloc error\n");
-	  return -1;
-	}
+        {
+          fprintf (stderr, "malloc error\n");
+          return -1;
+        }
     }
 }
 
 static int
-read_bind_value (FILE * fp, T_STRING * t_str, char **linebuf, int *lineno,
-		 T_STRING * cas_log_buf)
+read_bind_value (FILE * fp, T_STRING * t_str, char **linebuf, int *lineno, T_STRING * cas_log_buf)
 {
   const char *msg_p;
   char is_bind_value;
@@ -671,32 +649,32 @@ read_bind_value (FILE * fp, T_STRING * t_str, char **linebuf, int *lineno,
       is_bind_value = 0;
 
       if (is_cas_log (*linebuf))
-	{
-	  msg_p = get_msg_start_ptr (*linebuf);
-	  if (strncmp (msg_p, "bind ", 5) == 0)
-	    is_bind_value = 1;
-	}
+        {
+          msg_p = get_msg_start_ptr (*linebuf);
+          if (strncmp (msg_p, "bind ", 5) == 0)
+            is_bind_value = 1;
+        }
       else
-	{
-	  is_bind_value = 1;
-	}
+        {
+          is_bind_value = 1;
+        }
       if (is_bind_value)
-	{
-	  linebuf_len = t_string_len (t_str);
-	  if (t_string_add (cas_log_buf, *linebuf, linebuf_len) < 0)
-	    {
-	      return -1;
-	    }
-	}
+        {
+          linebuf_len = t_string_len (t_str);
+          if (t_string_add (cas_log_buf, *linebuf, linebuf_len) < 0)
+            {
+              return -1;
+            }
+        }
       else
-	{
-	  return 0;
-	}
+        {
+          return 0;
+        }
 
       if (ut_get_line (fp, t_str, linebuf, lineno) <= 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
   while (1);
 }
@@ -793,54 +771,54 @@ search_offset (FILE * fp, char *string, long *offset, bool start)
   while (true)
     {
       if (fseek (fp, cur_ptr, SEEK_SET) < 0)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       while (ut_get_line (fp, linebuf_tstr, &linebuf, &line_no) > 0)
-	{
-	  if (is_cas_log (linebuf))
-	    {
-	      break;
-	    }
-	  cur_ptr = ftell (fp);
+        {
+          if (is_cas_log (linebuf))
+            {
+              break;
+            }
+          cur_ptr = ftell (fp);
 
-	  if (cur_ptr >= end_ptr)
-	    {
-	      tmp_offset = old_start_saved ? old_start_ptr : start_ptr;
-	      goto end_loop;
-	    }
-	}
+          if (cur_ptr >= end_ptr)
+            {
+              tmp_offset = old_start_saved ? old_start_ptr : start_ptr;
+              goto end_loop;
+            }
+        }
 
       ret_val = strncmp (linebuf, string, DATE_STR_LEN);
 
       if (ret_val < 0)
-	{
-	  old_start_saved = true;
-	  old_start_ptr = start_ptr;
-	  start_ptr = ftell (fp);
-	}
+        {
+          old_start_saved = true;
+          old_start_ptr = start_ptr;
+          start_ptr = ftell (fp);
+        }
 
       if (ret_val >= 0)
-	{
-	  if (ret_val == 0 && old_start_saved)
-	    {
-	      tmp_offset = start_ptr;
-	      goto end_loop;
-	    }
-	  else
-	    {
-	      old_start_saved = false;
-	      end_ptr = cur_ptr;
-	    }
-	}
+        {
+          if (ret_val == 0 && old_start_saved)
+            {
+              tmp_offset = start_ptr;
+              goto end_loop;
+            }
+          else
+            {
+              old_start_saved = false;
+              end_ptr = cur_ptr;
+            }
+        }
 
       cur_ptr = start_ptr + (end_ptr - start_ptr) / 2;
       if (cur_ptr <= start_ptr)
-	{
-	  tmp_offset = start_ptr;
-	  goto end_loop;
-	}
+        {
+          tmp_offset = start_ptr;
+          goto end_loop;
+        }
     }
 
 end_loop:
@@ -852,21 +830,21 @@ end_loop:
   while (ut_get_line (fp, linebuf_tstr, &linebuf, &line_no) > 0)
     {
       if (start)
-	{
-	  /* the first line of the time */
-	  if (strncmp (linebuf, string, DATE_STR_LEN) >= 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* the first line of the time */
+          if (strncmp (linebuf, string, DATE_STR_LEN) >= 0)
+            {
+              break;
+            }
+        }
       else
-	{
-	  /* the last line of the time */
-	  if (strncmp (linebuf, string, DATE_STR_LEN) > 0)
-	    {
-	      break;
-	    }
-	}
+        {
+          /* the last line of the time */
+          if (strncmp (linebuf, string, DATE_STR_LEN) > 0)
+            {
+              break;
+            }
+        }
       tmp_offset = ftell (fp);
     }
 
@@ -914,74 +892,72 @@ organize_query_string (const char *sql)
       token_len = 1;
 
       if (token == SQL_TOKEN_NONE)
-	{
-	  if (*q == '\'' && (q == sql || *(q - 1) != '\\'))
-	    {
-	      token = SQL_TOKEN_SINGLE_QUOTE;
-	    }
-	  else if (*q == '"' && (q == sql || *(q - 1) != '\\'))
-	    {
-	      token = SQL_TOKEN_DOUBLE_QUOTE;
-	    }
-	  else if (*q == '-' && *(q + 1) == '-')
-	    {
-	      need_copy_token = false;
-	      token = SQL_TOKEN_SQL_COMMENT;
-	      token_len = 2;
-	    }
-	  else if (*q == '/' && *(q + 1) == '*')
-	    {
-	      need_copy_token = false;
-	      token = SQL_TOKEN_C_COMMENT;
-	      token_len = 2;
-	    }
-	  else if (*q == '/' && *(q + 1) == '/')
-	    {
-	      need_copy_token = false;
-	      token = SQL_TOKEN_CPP_COMMENT;
-	      token_len = 2;
-	    }
-	}
+        {
+          if (*q == '\'' && (q == sql || *(q - 1) != '\\'))
+            {
+              token = SQL_TOKEN_SINGLE_QUOTE;
+            }
+          else if (*q == '"' && (q == sql || *(q - 1) != '\\'))
+            {
+              token = SQL_TOKEN_DOUBLE_QUOTE;
+            }
+          else if (*q == '-' && *(q + 1) == '-')
+            {
+              need_copy_token = false;
+              token = SQL_TOKEN_SQL_COMMENT;
+              token_len = 2;
+            }
+          else if (*q == '/' && *(q + 1) == '*')
+            {
+              need_copy_token = false;
+              token = SQL_TOKEN_C_COMMENT;
+              token_len = 2;
+            }
+          else if (*q == '/' && *(q + 1) == '/')
+            {
+              need_copy_token = false;
+              token = SQL_TOKEN_CPP_COMMENT;
+              token_len = 2;
+            }
+        }
       else
-	{
-	  need_copy_token = false;
+        {
+          need_copy_token = false;
 
-	  if (token == SQL_TOKEN_SINGLE_QUOTE)
-	    {
-	      need_copy_token = true;
+          if (token == SQL_TOKEN_SINGLE_QUOTE)
+            {
+              need_copy_token = true;
 
-	      if (*q == '\'' && *(q - 1) != '\\')
-		{
-		  token = SQL_TOKEN_NONE;
-		}
-	    }
-	  else if (token == SQL_TOKEN_DOUBLE_QUOTE)
-	    {
-	      need_copy_token = true;
+              if (*q == '\'' && *(q - 1) != '\\')
+                {
+                  token = SQL_TOKEN_NONE;
+                }
+            }
+          else if (token == SQL_TOKEN_DOUBLE_QUOTE)
+            {
+              need_copy_token = true;
 
-	      if (*q == '"' && *(q - 1) != '\\')
-		{
-		  token = SQL_TOKEN_NONE;
-		}
-	    }
-	  else if ((token == SQL_TOKEN_SQL_COMMENT
-		    || token == SQL_TOKEN_CPP_COMMENT) && *q == '\n')
-	    {
-	      token = SQL_TOKEN_NONE;
-	    }
-	  else if (token == SQL_TOKEN_C_COMMENT && *q == '*'
-		   && *(q + 1) == '/')
-	    {
-	      token = SQL_TOKEN_NONE;
-	      token_len = 2;
-	    }
-	}
+              if (*q == '"' && *(q - 1) != '\\')
+                {
+                  token = SQL_TOKEN_NONE;
+                }
+            }
+          else if ((token == SQL_TOKEN_SQL_COMMENT || token == SQL_TOKEN_CPP_COMMENT) && *q == '\n')
+            {
+              token = SQL_TOKEN_NONE;
+            }
+          else if (token == SQL_TOKEN_C_COMMENT && *q == '*' && *(q + 1) == '/')
+            {
+              token = SQL_TOKEN_NONE;
+              token_len = 2;
+            }
+        }
 
       if (need_copy_token)
-	{
-	  memcpy (p, q, token_len);
-	  p += token_len;
-	}
+        {
+          memcpy (p, q, token_len);
+          p += token_len;
+        }
 
       q += token_len;
     }

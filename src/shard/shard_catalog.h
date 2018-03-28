@@ -35,8 +35,7 @@ struct _shard_ct_shard_gid_skey_info
   char skey[SHARD_SKEY_LENGTH];
 };
 
-typedef struct _shard_ct_shard_gid_removed_info
-  SHARD_CT_SHARD_GID_REMOVED_INFO;
+typedef struct _shard_ct_shard_gid_removed_info SHARD_CT_SHARD_GID_REMOVED_INFO;
 struct _shard_ct_shard_gid_removed_info
 {
   int gid;
@@ -45,18 +44,15 @@ struct _shard_ct_shard_gid_removed_info
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int shard_get_ct_shard_gid_skey_info (const int gid, const char *skey,
-					     SHARD_CT_SHARD_GID_SKEY_INFO *
-					     shard_gid_skey_info);
+                                             SHARD_CT_SHARD_GID_SKEY_INFO * shard_gid_skey_info);
 #endif
 extern int shard_delete_ct_shard_gid_skey_info_with_gid (const int gid);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int shard_insert_ct_shard_gid_skey_info (SHARD_CT_SHARD_GID_SKEY_INFO *
-						shard_gid_skey_info);
+extern int shard_insert_ct_shard_gid_skey_info (SHARD_CT_SHARD_GID_SKEY_INFO * shard_gid_skey_info);
 
 extern int shard_get_ct_shard_gid_removed_info (const int gid,
-						SHARD_CT_SHARD_GID_REMOVED_INFO
-						* shard_gid_removed_info);
+                                                SHARD_CT_SHARD_GID_REMOVED_INFO * shard_gid_removed_info);
 #endif
 
 extern int shard_delete_ct_shard_gid_removed_info_with_gid (const int gid);

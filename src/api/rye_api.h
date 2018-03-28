@@ -30,37 +30,37 @@
 
 typedef enum
 {
-  TRAN_UNKNOWN_ISOLATION = 0x00,	/*        0  0000 */
+  TRAN_UNKNOWN_ISOLATION = 0x00,        /*        0  0000 */
 
-#if 0				/* unused */
-  TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE = 0x01,	/*        0  0001 */
-  TRAN_DEGREE_1_CONSISTENCY = 0x01,	/* Alias of above */
+#if 0                           /* unused */
+  TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE = 0x01,   /*        0  0001 */
+  TRAN_DEGREE_1_CONSISTENCY = 0x01,     /* Alias of above */
 
-  TRAN_COMMIT_CLASS_COMMIT_INSTANCE = 0x02,	/*        0  0010 */
-  TRAN_DEGREE_2_CONSISTENCY = 0x02,	/* Alias of above */
+  TRAN_COMMIT_CLASS_COMMIT_INSTANCE = 0x02,     /*        0  0010 */
+  TRAN_DEGREE_2_CONSISTENCY = 0x02,     /* Alias of above */
 #endif
 
-  TRAN_REP_CLASS_UNCOMMIT_INSTANCE = 0x03,	/*        0  0011 */
-  TRAN_READ_UNCOMMITTED = 0x03,	/* Alias of above */
+  TRAN_REP_CLASS_UNCOMMIT_INSTANCE = 0x03,      /*        0  0011 */
+  TRAN_READ_UNCOMMITTED = 0x03, /* Alias of above */
 
-#if 0				/* unused */
-  TRAN_REP_CLASS_COMMIT_INSTANCE = 0x04,	/*        0  0100 */
-  TRAN_READ_COMMITTED = 0x04,	/* Alias of above */
-  TRAN_CURSOR_STABILITY = 0x04,	/* Alias of above */
+#if 0                           /* unused */
+  TRAN_REP_CLASS_COMMIT_INSTANCE = 0x04,        /*        0  0100 */
+  TRAN_READ_COMMITTED = 0x04,   /* Alias of above */
+  TRAN_CURSOR_STABILITY = 0x04, /* Alias of above */
 
-  TRAN_REP_CLASS_REP_INSTANCE = 0x05,	/*        0  0101 */
-  TRAN_REP_READ = 0x05,		/* Alias of above */
-  TRAN_DEGREE_2_9999_CONSISTENCY = 0x05,	/* Alias of above */
+  TRAN_REP_CLASS_REP_INSTANCE = 0x05,   /*        0  0101 */
+  TRAN_REP_READ = 0x05,         /* Alias of above */
+  TRAN_DEGREE_2_9999_CONSISTENCY = 0x05,        /* Alias of above */
 
-  TRAN_SERIALIZABLE = 0x06,	/*        0  0110 */
-  TRAN_DEGREE_3_CONSISTENCY = 0x06,	/* Alias of above */
-  TRAN_NO_PHANTOM_READ = 0x06,	/* Alias of above */
+  TRAN_SERIALIZABLE = 0x06,     /*        0  0110 */
+  TRAN_DEGREE_3_CONSISTENCY = 0x06,     /* Alias of above */
+  TRAN_NO_PHANTOM_READ = 0x06,  /* Alias of above */
 #endif
 
   TRAN_DEFAULT_ISOLATION = TRAN_REP_CLASS_UNCOMMIT_INSTANCE,
 
-  TRAN_MINVALUE_ISOLATION = 0x01,	/* internal use only */
-  TRAN_MAXVALUE_ISOLATION = 0x06	/* internal use only */
+  TRAN_MINVALUE_ISOLATION = 0x01,       /* internal use only */
+  TRAN_MAXVALUE_ISOLATION = 0x06        /* internal use only */
 } DB_TRAN_ISOLATION;
 
 typedef enum

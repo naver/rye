@@ -42,12 +42,8 @@
 #include "backup.h"
 
 extern int xbk_prepare_backup (THREAD_ENTRY * thread_p, int num_threads,
-			       int do_compress,
-			       int sleep_msecs, int make_slave,
-			       BK_BACKUP_SESSION * session);
+                               int do_compress, int sleep_msecs, int make_slave, BK_BACKUP_SESSION * session);
 extern int xbk_backup_volume (THREAD_ENTRY * thread_p, int rid, int buf_size);
-extern int xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid,
-				  int buf_size,
-				  int delete_unneeded_logarchives);
+extern int xbk_backup_log_volume (THREAD_ENTRY * thread_p, int rid, int buf_size, int delete_unneeded_logarchives);
 
 #endif /* BACKUP_SR_H_ */

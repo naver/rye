@@ -38,9 +38,7 @@
 #define DATABASES_FILENAME "databases.txt"
 
 extern char *cfg_maycreate_get_directory_filename (char *buffer, size_t size);
-extern int cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list,
-				   BOOT_CLIENT_TYPE client_type,
-				   bool connect_order_random);
+extern int cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list, BOOT_CLIENT_TYPE client_type, bool connect_order_random);
 
 extern int cfg_database_exists (bool * exists, int vdes, const char *dbname);
 extern int cfg_database_add (int vdes, const char *dbname);

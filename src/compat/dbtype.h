@@ -140,7 +140,7 @@
 
 #define DB_MAKE_NULL_NARGS(...) db_make_null_nargs(__VA_ARGS__)
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
 #define DB_IDXKEY_MAKE_NULL(key) db_idxkey_make_null(key)
 #endif
 
@@ -220,7 +220,7 @@
 
 #define DB_IS_NULL_NARGS(...)           db_value_is_null_nargs(__VA_ARGS__)
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
 #define DB_IDXKEY_IS_NULL(key)        db_idxkey_is_null(key)
 #endif
 
@@ -304,7 +304,7 @@
 
 /* DB_DATE_MIN and DB_DATE_MAX are calculated by julian_encode function
    with arguments (1,1,1) and (12,31,9999) respectively. */
-#define DB_DATE_ZERO       DB_UINT32_MIN	/* 0 means zero date */
+#define DB_DATE_ZERO       DB_UINT32_MIN        /* 0 means zero date */
 #define DB_DATE_MIN        1721424
 #define DB_DATE_MAX        5373484
 
@@ -319,59 +319,59 @@
    as value type tags in the DB_VALUE structures. */
 typedef enum
 {
-  DB_TYPE_FIRST = 0,		/* first for iteration   */
+  DB_TYPE_FIRST = 0,            /* first for iteration   */
   DB_TYPE_UNKNOWN = 0,
   DB_TYPE_NULL = 0,
   DB_TYPE_INTEGER = 1,
 #if 0
-  DB_TYPE_FLOAT = 2,		/* unused */
+  DB_TYPE_FLOAT = 2,            /* unused */
 #endif
   DB_TYPE_DOUBLE = 3,
-  DB_TYPE_VARCHAR = 4,		/* SQL CHAR(n) VARYING values   */
+  DB_TYPE_VARCHAR = 4,          /* SQL CHAR(n) VARYING values   */
   DB_TYPE_OBJECT = 5,
 #if 0
-  DB_TYPE_SET = 6,		/* unused */
-  DB_TYPE_MULTISET = 7,		/* unused */
+  DB_TYPE_SET = 6,              /* unused */
+  DB_TYPE_MULTISET = 7,         /* unused */
 #endif
   DB_TYPE_SEQUENCE = 8,
 #if 0
-  DB_TYPE_ELO = 9,		/* unused */
+  DB_TYPE_ELO = 9,              /* unused */
 #endif
   DB_TYPE_TIME = 10,
 #if 0
-  DB_TYPE_TIMESTAMP = 11,	/* unused *//* SQL TIMESTAMP  */
+  DB_TYPE_TIMESTAMP = 11,       /* unused *//* SQL TIMESTAMP  */
 #endif
   DB_TYPE_DATE = 12,
 #if 0
   DB_TYPE_MONETARY = 13,
 #endif
-  DB_TYPE_VARIABLE = 14,	/* internal use only */
-  DB_TYPE_SUB = 15,		/* internal use only */
+  DB_TYPE_VARIABLE = 14,        /* internal use only */
+  DB_TYPE_SUB = 15,             /* internal use only */
 #if 0
   POINTER = 16,
   ERROR = 17,
-  DB_TYPE_SMALLINT = 18,	/* unused *//* SQL SMALLINT           */
-  DB_TYPE_VOBJ = 19,		/* unused *//* internal use only */
+  DB_TYPE_SMALLINT = 18,        /* unused *//* SQL SMALLINT           */
+  DB_TYPE_VOBJ = 19,            /* unused *//* internal use only */
 #endif
-  DB_TYPE_OID = 20,		/* internal use only */
+  DB_TYPE_OID = 20,             /* internal use only */
 #if 0
-  DB_TYPE_DB_VALUE = 21,	/* special for esql *//* unused */
+  DB_TYPE_DB_VALUE = 21,        /* special for esql *//* unused */
 #endif
-  DB_TYPE_NUMERIC = 22,		/* SQL NUMERIC(p,s) values      */
-  DB_TYPE_VARBIT = 24,		/* SQL BIT(n) VARYING values    */
+  DB_TYPE_NUMERIC = 22,         /* SQL NUMERIC(p,s) values      */
+  DB_TYPE_VARBIT = 24,          /* SQL BIT(n) VARYING values    */
 #if 0
-  DB_TYPE_CHAR = 25,		/* unused *//* SQL CHAR(n) values   */
-  DB_TYPE_NCHAR = 26,		/* unused *//* SQL NATIONAL CHAR(n) values  */
-  DB_TYPE_VARNCHAR = 27,	/* unused *//* SQL NATIONAL CHAR(n) VARYING values  */
+  DB_TYPE_CHAR = 25,            /* unused *//* SQL CHAR(n) values   */
+  DB_TYPE_NCHAR = 26,           /* unused *//* SQL NATIONAL CHAR(n) values  */
+  DB_TYPE_VARNCHAR = 27,        /* unused *//* SQL NATIONAL CHAR(n) VARYING values  */
 #endif
-  DB_TYPE_RESULTSET = 28,	/* internal use only */
+  DB_TYPE_RESULTSET = 28,       /* internal use only */
 #if 0
-  DB_TYPE_IDXKEY = 29,		/* unused */
+  DB_TYPE_IDXKEY = 29,          /* unused */
 #endif
-  DB_TYPE_TABLE = 30,		/* internal use only */
+  DB_TYPE_TABLE = 30,           /* internal use only */
   DB_TYPE_BIGINT = 31,
   DB_TYPE_DATETIME = 32,
-#if 0				/* unused */
+#if 0                           /* unused */
   DB_TYPE_BLOB = 33,
   DB_TYPE_CLOB = 34,
   DB_TYPE_ENUMERATION = 35,
@@ -384,10 +384,10 @@ typedef enum
   DB_TYPE_STRING = DB_TYPE_VARCHAR,
 
 #if 0
-  DB_TYPE_CHAR = DB_TYPE_VARCHAR,	/* SQL CHAR(n) */
-  DB_TYPE_NCHAR = DB_TYPE_VARCHAR,	/* SQL NATIONAL CHAR(n) */
-  DB_TYPE_VARNCHAR = DB_TYPE_VARCHAR,	/* SQL NATIONAL CHAR(n) VARYING */
-  DB_TYPE_BIT = DB_TYPE_VARBIT,	/* SQL BIT(n) */
+  DB_TYPE_CHAR = DB_TYPE_VARCHAR,       /* SQL CHAR(n) */
+  DB_TYPE_NCHAR = DB_TYPE_VARCHAR,      /* SQL NATIONAL CHAR(n) */
+  DB_TYPE_VARNCHAR = DB_TYPE_VARCHAR,   /* SQL NATIONAL CHAR(n) VARYING */
+  DB_TYPE_BIT = DB_TYPE_VARBIT, /* SQL BIT(n) */
 #endif
 
   DB_TYPE_LAST = DB_TYPE_DATETIME
@@ -430,8 +430,8 @@ typedef unsigned int DB_DATE;
 typedef struct db_datetime DB_DATETIME;
 struct db_datetime
 {
-  unsigned int date;		/* date */
-  unsigned int time;		/* time */
+  unsigned int date;            /* date */
+  unsigned int time;            /* time */
 };
 
 /* Structure used for the representation of numeric values. */
@@ -461,26 +461,26 @@ typedef DB_COLLECTION DB_SET;
  *  LOID and related definition which were in storage_common.h moved here.
  */
 
-typedef struct vpid VPID;	/* REAL PAGE IDENTIFIER */
+typedef struct vpid VPID;       /* REAL PAGE IDENTIFIER */
 struct vpid
 {
-  INT32 pageid;			/* Page identifier */
-  INT16 volid;			/* Volume identifier where the page reside */
+  INT32 pageid;                 /* Page identifier */
+  INT16 volid;                  /* Volume identifier where the page reside */
 };
 
-typedef struct vfid VFID;	/* REAL FILE IDENTIFIER */
+typedef struct vfid VFID;       /* REAL FILE IDENTIFIER */
 struct vfid
 {
-  INT32 fileid;			/* File identifier */
-  INT16 volid;			/* Volume identifier where the file reside */
+  INT32 fileid;                 /* File identifier */
+  INT16 volid;                  /* Volume identifier where the file reside */
 };
 #define NULL_VFID_INITIALIZER { NULL_FILEID, NULL_VOLID }
 
-typedef struct loid LOID;	/* LARGE OBJECT IDENTIFIER */
+typedef struct loid LOID;       /* LARGE OBJECT IDENTIFIER */
 struct loid
 {
-  VPID vpid;			/* Real page identifier */
-  VFID vfid;			/* Real file identifier */
+  VPID vpid;                    /* Real page identifier */
+  VFID vfid;                    /* Real file identifier */
 };
 
 /* This is the memory representation of an internal object
@@ -565,7 +565,7 @@ struct db_value_array
   DB_VALUE *vals;
 };
 
-#define MAX_INDEX_KEY_LIST_NUM  17	/* with rightmost OID type */
+#define MAX_INDEX_KEY_LIST_NUM  17      /* with rightmost OID type */
 
 /* This is used to chain DB_VALUEs into a list.  It is used as an idxkey */
 typedef struct db_idxkey DB_IDXKEY;
@@ -582,8 +582,8 @@ struct db_idxkey
 typedef struct db_workspace_stats DB_WORKSPACE_STATS;
 struct db_workspace_stats
 {
-  int obj_desc_used;		/* number of object descriptors used */
-  int obj_desc_total;		/* total # of object descriptors allocated  */
+  int obj_desc_used;            /* number of object descriptors used */
+  int obj_desc_total;           /* total # of object descriptors allocated  */
 };
 
 /* This defines the C language type identifier constants.
@@ -593,7 +593,7 @@ struct db_workspace_stats
 typedef enum
 {
   DB_TYPE_C_DEFAULT = 0,
-  DB_TYPE_C_FIRST = 100,	/* first for iteration */
+  DB_TYPE_C_FIRST = 100,        /* first for iteration */
   DB_TYPE_C_INT,
   DB_TYPE_C_LONG,
 #if 0
@@ -625,7 +625,7 @@ typedef enum
   DB_TYPE_C_MONETARY = DB_TYPE_C_DOUBLE,
 #endif
 
-  DB_TYPE_C_LAST		/* last for iteration   */
+  DB_TYPE_C_LAST                /* last for iteration   */
 } DB_TYPE_C;
 
 typedef DB_BIGINT DB_C_BIGINT;
@@ -678,36 +678,27 @@ extern int db_value_free (DB_VALUE * value);
 extern int db_value_clear_array (DB_VALUE_ARRAY * value_array);
 #endif
 extern void db_value_print (const DB_VALUE * value);
-extern int db_value_coerce (const DB_VALUE * src,
-			    DB_VALUE * dest,
-			    const DB_DOMAIN * desired_domain);
+extern int db_value_coerce (const DB_VALUE * src, DB_VALUE * dest, const DB_DOMAIN * desired_domain);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int db_value_equal (const DB_VALUE * value1, const DB_VALUE * value2);
 #endif
-extern int db_value_compare (const DB_VALUE * value1,
-			     const DB_VALUE * value2);
-extern int db_value_domain_init (DB_VALUE * value, DB_TYPE type,
-				 const int precision, const int scale);
+extern int db_value_compare (const DB_VALUE * value1, const DB_VALUE * value2);
+extern int db_value_domain_init (DB_VALUE * value, DB_TYPE type, const int precision, const int scale);
 extern int db_value_domain_min (DB_VALUE * value, DB_TYPE type,
-				const int precision, const int scale,
-				const int collation_id);
+                                const int precision, const int scale, const int collation_id);
 extern int db_value_domain_max (DB_VALUE * value, DB_TYPE type,
-				const int precision, const int scale,
-				const int collation_id);
+                                const int precision, const int scale, const int collation_id);
 extern int db_value_domain_default (DB_VALUE * value, const DB_TYPE type,
-				    const int precision, const int scale,
-				    const int collation_id);
-extern int db_value_domain_zero (DB_VALUE * value, const DB_TYPE type,
-				 const int precision, const int scale);
+                                    const int precision, const int scale, const int collation_id);
+extern int db_value_domain_zero (DB_VALUE * value, const DB_TYPE type, const int precision, const int scale);
 extern int db_string_truncate (DB_VALUE * value, const int max_precision);
 extern DB_TYPE db_value_domain_type (const DB_VALUE * value);
 extern DB_TYPE db_value_type (const DB_VALUE * value);
 extern int db_value_precision (const DB_VALUE * value);
 extern int db_value_scale (const DB_VALUE * value);
 extern int db_value_put_null (DB_VALUE * value);
-extern int db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type,
-				 void *input, const int input_length);
+extern int db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type, void *input, const int input_length);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern bool db_value_type_is_collection (const DB_VALUE * value);
 #endif
@@ -719,9 +710,7 @@ extern bool db_value_is_null (const DB_VALUE * value);
 extern bool db_value_is_null_nargs (int nargs, ...);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int db_value_get (DB_VALUE * value,
-			 const DB_TYPE_C type,
-			 void *buf,
-			 const int buflen, int *transferlen, int *outputlen);
+                         const DB_TYPE_C type, void *buf, const int buflen, int *transferlen, int *outputlen);
 #endif
 extern int db_value_size (const DB_VALUE * value, DB_TYPE_C type, int *size);
 extern int db_value_char_size (const DB_VALUE * value, int *size);
@@ -741,28 +730,19 @@ extern int db_make_sequence (DB_VALUE * value, DB_C_SET * set);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int db_make_collection (DB_VALUE * value, DB_C_SET * set);
 #endif
-extern int db_make_time (DB_VALUE * value,
-			 const int hour, const int minute, const int second);
-extern int db_value_put_encoded_time (DB_VALUE * value,
-				      const DB_TIME * time_value);
-extern int db_make_date (DB_VALUE * value,
-			 const int month, const int day, const int year);
-extern int db_value_put_encoded_date (DB_VALUE * value,
-				      const DB_DATE * date_value);
+extern int db_make_time (DB_VALUE * value, const int hour, const int minute, const int second);
+extern int db_value_put_encoded_time (DB_VALUE * value, const DB_TIME * time_value);
+extern int db_make_date (DB_VALUE * value, const int month, const int day, const int year);
+extern int db_value_put_encoded_date (DB_VALUE * value, const DB_DATE * date_value);
 extern int db_make_datetime (DB_VALUE * value, const DB_DATETIME * datetime);
 extern int db_make_bigint (DB_VALUE * value, const DB_BIGINT num);
 extern int db_make_string (DB_VALUE * value, const char *str);
 extern int db_make_string_copy (DB_VALUE * value, const char *str);
-extern int db_make_numeric (DB_VALUE * value,
-			    const DB_C_NUMERIC num,
-			    const int precision, const int scale);
+extern int db_make_numeric (DB_VALUE * value, const DB_C_NUMERIC num, const int precision, const int scale);
 extern int db_make_varbit (DB_VALUE * value, const int max_bit_length,
-			   const DB_C_VARBIT bit_str,
-			   const int bit_str_bit_size);
+                           const DB_C_VARBIT bit_str, const int bit_str_bit_size);
 extern int db_make_varchar (DB_VALUE * value, const int max_char_length,
-			    DB_C_VARCHAR str,
-			    const int char_str_byte_size,
-			    const int collation_id);
+                            DB_C_VARCHAR str, const int char_str_byte_size, const int collation_id);
 
 extern int db_make_resultset (DB_VALUE * value, const DB_RESULTSET handle);
 
@@ -795,8 +775,7 @@ extern int db_get_string_size (const DB_VALUE * value);
 
 extern DB_RESULTSET db_get_resultset (const DB_VALUE * value);
 
-extern int db_string_put_cs_and_collation (DB_VALUE * value,
-					   const int collation_id);
+extern int db_string_put_cs_and_collation (DB_VALUE * value, const int collation_id);
 extern int db_get_string_collation (const DB_VALUE * value);
 extern int valcnv_convert_value_to_string (DB_VALUE * value);
 

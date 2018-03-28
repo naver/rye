@@ -43,8 +43,7 @@
 static const int REPL_LOG_INFO_ALLOC_SIZE = 100;
 
 #if defined(SERVER_MODE) || defined(SA_MODE)
-static int repl_log_info_alloc (LOG_TDES * tdes, int arr_size,
-				bool need_realloc);
+static int repl_log_info_alloc (LOG_TDES * tdes, int arr_size, bool need_realloc);
 #endif /* SERVER_MODE || SA_MODE */
 
 #if defined(SERVER_MODE) || defined(SA_MODE)
@@ -135,27 +134,24 @@ repl_log_info_alloc (LOG_TDES * tdes, int arr_size, bool need_realloc)
       i = arr_size * DB_SIZEOF (LOG_REPL_RECORD);
       tdes->repl_records = (LOG_REPL_RECORD *) malloc (i);
       if (tdes->repl_records == NULL)
-	{
-	  error = ER_REPL_ERROR;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1,
-		  "can't allocate memory");
-	  return error;
-	}
+        {
+          error = ER_REPL_ERROR;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1, "can't allocate memory");
+          return error;
+        }
       tdes->num_repl_records = arr_size;
       k = 0;
     }
   else
     {
       i = tdes->num_repl_records + arr_size;
-      tdes->repl_records = (LOG_REPL_RECORD *)
-	realloc (tdes->repl_records, i * DB_SIZEOF (LOG_REPL_RECORD));
+      tdes->repl_records = (LOG_REPL_RECORD *) realloc (tdes->repl_records, i * DB_SIZEOF (LOG_REPL_RECORD));
       if (tdes->repl_records == NULL)
-	{
-	  error = ER_REPL_ERROR;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1,
-		  "can't allocate memory");
-	  return error;
-	}
+        {
+          error = ER_REPL_ERROR;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1, "can't allocate memory");
+          return error;
+        }
       k = tdes->num_repl_records;
       tdes->num_repl_records = i;
     }
@@ -219,19 +215,18 @@ repl_add_update_lsa (THREAD_ENTRY * thread_p, const OID * inst_oid)
   for (i = tdes->cur_repl_record - 1; i >= 0; i--)
     {
       repl_rec = (LOG_REPL_RECORD *) (&(tdes->repl_records[i]));
-      if (OID_EQ (&repl_rec->inst_oid, inst_oid)
-	  && !LSA_ISNULL (&tdes->repl_update_lsa))
-	{
-	  assert (repl_rec->rcvindex == RVREPL_DATA_UPDATE);
-	  if (repl_rec->rcvindex == RVREPL_DATA_UPDATE)
-	    {
-	      LSA_COPY (&repl_rec->lsa, &tdes->repl_update_lsa);
-	      LSA_SET_NULL (&tdes->repl_update_lsa);
-	      LSA_SET_NULL (&tdes->repl_insert_lsa);
-	      find = true;
-	      break;
-	    }
-	}
+      if (OID_EQ (&repl_rec->inst_oid, inst_oid) && !LSA_ISNULL (&tdes->repl_update_lsa))
+        {
+          assert (repl_rec->rcvindex == RVREPL_DATA_UPDATE);
+          if (repl_rec->rcvindex == RVREPL_DATA_UPDATE)
+            {
+              LSA_COPY (&repl_rec->lsa, &tdes->repl_update_lsa);
+              LSA_SET_NULL (&tdes->repl_update_lsa);
+              LSA_SET_NULL (&tdes->repl_insert_lsa);
+              find = true;
+              break;
+            }
+        }
     }
 
   if (find == false)
@@ -257,8 +252,7 @@ repl_add_update_lsa (THREAD_ENTRY * thread_p, const OID * inst_oid)
  */
 int
 repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
-		 const OID * inst_oid, LOG_RECTYPE log_type,
-		 LOG_RCVINDEX rcvindex, DB_IDXKEY * key)
+                 const OID * inst_oid, LOG_RECTYPE log_type, LOG_RCVINDEX rcvindex, DB_IDXKEY * key)
 {
   int tran_index;
   LOG_TDES *tdes;
@@ -286,15 +280,13 @@ repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
 
   /* check the replication log array status, if we need to alloc? */
   if (REPL_LOG_IS_NOT_EXISTS (tran_index)
-      && ((error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE,
-					false)) != NO_ERROR))
+      && ((error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE, false)) != NO_ERROR))
     {
       return error;
     }
   /* the replication log array is full? re-alloc? */
   else if (REPL_LOG_IS_FULL (tran_index)
-	   && (error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE,
-					    true)) != NO_ERROR)
+           && (error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE, true)) != NO_ERROR)
     {
       return error;
     }
@@ -310,32 +302,30 @@ repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
     {
       class_name = heap_get_class_name (thread_p, class_oid);
       if (class_name == NULL)
-	{
-	  error = er_errid ();
-	  if (error == NO_ERROR)
-	    {
-	      error = ER_REPL_ERROR;
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1,
-		      "can't get class_name");
-	    }
-	  return error;
-	}
+        {
+          error = er_errid ();
+          if (error == NO_ERROR)
+            {
+              error = ER_REPL_ERROR;
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1, "can't get class_name");
+            }
+          return error;
+        }
 
       str_tot_len = or_packed_string_length (class_name, &strlen);
       idxkey_len = OR_IDXKEY_ALIGNED_SIZE (key);
-      repl_rec->length = (OR_INT_SIZE	/* group id */
-			  + str_tot_len + idxkey_len);
+      repl_rec->length = (OR_INT_SIZE   /* group id */
+                          + str_tot_len + idxkey_len);
 
       ptr = (char *) malloc (repl_rec->length);
       if (ptr == NULL)
-	{
-	  assert (false);
-	  free_and_init (class_name);
-	  error = ER_REPL_ERROR;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1,
-		  "can't allocate memory");
-	  return error;
-	}
+        {
+          assert (false);
+          free_and_init (class_name);
+          error = ER_REPL_ERROR;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1, "can't allocate memory");
+          return error;
+        }
 
 #if !defined(NDEBUG)
       /* suppress valgrind UMW error */
@@ -347,20 +337,20 @@ repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
       ptr = or_pack_int (ptr, inst_oid->groupid);
       ptr = or_pack_string_with_length (ptr, class_name, strlen);
       if (ptr == NULL)
-	{
-	  assert (false);
-	  free_and_init (class_name);
-	  error = ER_REPL_ERROR;
-	  return error;
-	}
+        {
+          assert (false);
+          free_and_init (class_name);
+          error = ER_REPL_ERROR;
+          return error;
+        }
       ptr = or_pack_db_idxkey (ptr, key);
       if (ptr == NULL)
-	{
-	  assert (false);
-	  free_and_init (class_name);
-	  error = ER_REPL_ERROR;
-	  return error;
-	}
+        {
+          assert (false);
+          free_and_init (class_name);
+          error = ER_REPL_ERROR;
+          return error;
+        }
 
       free_and_init (class_name);
     }
@@ -375,11 +365,11 @@ repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
     {
     case RVREPL_DATA_INSERT:
       if (!LSA_ISNULL (&tdes->repl_insert_lsa))
-	{
-	  LSA_COPY (&repl_rec->lsa, &tdes->repl_insert_lsa);
-	  LSA_SET_NULL (&tdes->repl_insert_lsa);
-	  LSA_SET_NULL (&tdes->repl_update_lsa);
-	}
+        {
+          LSA_COPY (&repl_rec->lsa, &tdes->repl_insert_lsa);
+          LSA_SET_NULL (&tdes->repl_insert_lsa);
+          LSA_SET_NULL (&tdes->repl_update_lsa);
+        }
       break;
     case RVREPL_DATA_UPDATE:
       /*
@@ -387,13 +377,13 @@ repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
        * file update, so we don't need to LSA for update log here.
        */
       if (LSA_ISNULL (&tdes->last_lsa))
-	{
-	  LSA_COPY (&repl_rec->lsa, &log_Gl.prior_info.prior_lsa);
-	}
+        {
+          LSA_COPY (&repl_rec->lsa, &log_Gl.prior_info.prior_lsa);
+        }
       else
-	{
-	  LSA_COPY (&repl_rec->lsa, &tdes->last_lsa);
-	}
+        {
+          LSA_COPY (&repl_rec->lsa, &tdes->last_lsa);
+        }
       break;
     case RVREPL_DATA_DELETE:
       /*
@@ -401,13 +391,13 @@ repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
        * LSA. Delete is operation is possible without "After Image"
        */
       if (LSA_ISNULL (&tdes->last_lsa))
-	{
-	  LSA_COPY (&repl_rec->lsa, &log_Gl.prior_info.prior_lsa);
-	}
+        {
+          LSA_COPY (&repl_rec->lsa, &log_Gl.prior_info.prior_lsa);
+        }
       else
-	{
-	  LSA_COPY (&repl_rec->lsa, &tdes->last_lsa);
-	}
+        {
+          LSA_COPY (&repl_rec->lsa, &tdes->last_lsa);
+        }
       break;
     default:
       break;
@@ -429,8 +419,7 @@ repl_log_insert (THREAD_ENTRY * thread_p, const OID * class_oid,
  *      descriptor (tdes)
  */
 int
-repl_log_insert_schema (THREAD_ENTRY * thread_p,
-			REPL_INFO_SCHEMA * repl_schema)
+repl_log_insert_schema (THREAD_ENTRY * thread_p, REPL_INFO_SCHEMA * repl_schema)
 {
   int tran_index;
   LOG_TDES *tdes;
@@ -454,15 +443,13 @@ repl_log_insert_schema (THREAD_ENTRY * thread_p,
 
   /* check the replication log array status, if we need to alloc? */
   if (REPL_LOG_IS_NOT_EXISTS (tran_index)
-      && ((error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE,
-					false)) != NO_ERROR))
+      && ((error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE, false)) != NO_ERROR))
     {
       return error;
     }
   /* the replication log array is full? re-alloc? */
   else if (REPL_LOG_IS_FULL (tran_index)
-	   && (error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE,
-					    true)) != NO_ERROR)
+           && (error = repl_log_info_alloc (tdes, REPL_LOG_INFO_ALLOC_SIZE, true)) != NO_ERROR)
     {
       return error;
     }
@@ -474,17 +461,15 @@ repl_log_insert_schema (THREAD_ENTRY * thread_p,
   OID_SET_NULL (&repl_rec->inst_oid);
 
   /* make the common info for the schema replication */
-  repl_rec->length = OR_INT_SIZE	/* REPL_INFO_SCHEMA.statement_type */
-    + OR_INT_SIZE		/* REPL_INFO_SCHEMA.online_ddl_type */
+  repl_rec->length = OR_INT_SIZE        /* REPL_INFO_SCHEMA.statement_type */
+    + OR_INT_SIZE               /* REPL_INFO_SCHEMA.online_ddl_type */
     + or_packed_string_length (repl_schema->name, &strlen1)
-    + or_packed_string_length (repl_schema->ddl, &strlen2)
-    + or_packed_string_length (repl_schema->db_user, &strlen3);
+    + or_packed_string_length (repl_schema->ddl, &strlen2) + or_packed_string_length (repl_schema->db_user, &strlen3);
   repl_rec->repl_data = (char *) malloc (repl_rec->length);
   if (repl_rec->repl_data == NULL)
     {
       error = ER_REPL_ERROR;
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1,
-	      "can't allocate memory");
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1, "can't allocate memory");
       return error;
     }
   ptr = repl_rec->repl_data;
@@ -495,9 +480,9 @@ repl_log_insert_schema (THREAD_ENTRY * thread_p,
   ptr = or_pack_string_with_length (ptr, repl_schema->db_user, strlen3);
 
   er_log_debug (ARG_FILE_LINE, "repl_log_insert_schema:"
-		" repl_schema { type %d, ddl_type %d, name %s, ddl %s, user %s }\n",
-		repl_schema->statement_type, repl_schema->online_ddl_type,
-		repl_schema->name, repl_schema->ddl, repl_schema->db_user);
+                " repl_schema { type %d, ddl_type %d, name %s, ddl %s, user %s }\n",
+                repl_schema->statement_type, repl_schema->online_ddl_type,
+                repl_schema->name, repl_schema->ddl, repl_schema->db_user);
   LSA_COPY (&repl_rec->lsa, &tdes->last_lsa);
 
   tdes->cur_repl_record++;
@@ -524,9 +509,9 @@ repl_log_abort_after_lsa (LOG_TDES * tdes, LOG_LSA * start_lsa)
   for (i = 0; i < tdes->cur_repl_record; i++)
     {
       if (LSA_GT (&repl_rec_arr[i].lsa, start_lsa))
-	{
-	  repl_rec_arr[i].must_flush = LOG_REPL_DONT_NEED_FLUSH;
-	}
+        {
+          repl_rec_arr[i].must_flush = LOG_REPL_DONT_NEED_FLUSH;
+        }
     }
 
   return NO_ERROR;

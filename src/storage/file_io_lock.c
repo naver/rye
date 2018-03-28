@@ -100,11 +100,9 @@
 #define fileio_unlock_file(fd, offset, whence, len) \
   fileio_lock_region(fd, F_SETLK, F_UNLCK, offset, whence, len)
 
-static void fileio_make_volume_lock_name (char *vol_lockname,
-					  const char *vol_fullname);
+static void fileio_make_volume_lock_name (char *vol_lockname, const char *vol_fullname);
 static bool fileio_is_terminated_process (int pid);
-static int fileio_lock_region (int fd, int cmd, int type, off_t offset,
-			       int whence, off_t len);
+static int fileio_lock_region (int fd, int cmd, int type, off_t offset, int whence, off_t len);
 
 /*
  * fileio_is_terminated_process () -
@@ -134,8 +132,7 @@ fileio_is_terminated_process (int pid)
  *
  */
 FILEIO_LOCKF_TYPE
-fileio_lock (const char *db_full_name_p, const char *vol_label_p,
-	     int vol_fd, bool dowait)
+fileio_lock (const char *db_full_name_p, const char *vol_label_p, int vol_fd, bool dowait)
 {
   FILE *fp;
   char name_info_lock[PATH_MAX];
@@ -171,13 +168,10 @@ fileio_lock (const char *db_full_name_p, const char *vol_label_p,
    */
   if (fstat (vol_fd, &stbuf) != -1)
     {
-      if ((stbuf.st_mode & S_ISGID) != 0
-	  && (stbuf.st_mode & S_IRWXG) != S_IXGRP)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"A mandatory lock will be set on file = %s",
-			vol_label_p);
-	}
+      if ((stbuf.st_mode & S_ISGID) != 0 && (stbuf.st_mode & S_IRWXG) != S_IXGRP)
+        {
+          er_log_debug (ARG_FILE_LINE, "A mandatory lock will be set on file = %s", vol_label_p);
+        }
     }
 #endif /* RYE_DEBUG */
 
@@ -195,55 +189,53 @@ fileio_lock (const char *db_full_name_p, const char *vol_label_p,
    *       problem with this secundary technique
    */
 
-  sprintf (format_string, "%%%ds %%d %%%ds %%lld", FILEIO_USER_NAME_SIZE - 1,
-	   MAXHOSTNAMELEN - 1);
+  sprintf (format_string, "%%%ds %%d %%%ds %%lld", FILEIO_USER_NAME_SIZE - 1, MAXHOSTNAMELEN - 1);
 
 again:
   while (retry == true && fileio_lock_file_write (vol_fd, 0, SEEK_SET, 0) < 0)
     {
       if (errno == EINTR)
-	{
-	  /* Retry if the an interruption was signed */
-	  retry = true;
-	  continue;
-	}
+        {
+          /* Retry if the an interruption was signed */
+          retry = true;
+          continue;
+        }
 //      lockf_errno = errno;
       retry = false;
 
       /* Volume seems to be mounted by someone else. Find out who has it. */
       fp = fopen (name_info_lock, "r");
       if (fp == NULL)
-	{
+        {
 
-	  (void) sleep (3);
-	  num_loops += 3;
-	  total_num_loops += 3;
-	  fp = fopen (name_info_lock, "r");
-	  if (fp == NULL && num_loops <= 3)
-	    {
-	      /*
-	       * Note that we try to check for the lock only one more time,
-	       * unless we have been waiting for a while
-	       * (Case of dowait == false,
-	       * note that num_loops is set to 0 when waiting for a lock).
-	       */
-	      retry = true;
-	      continue;
-	    }
-	}
+          (void) sleep (3);
+          num_loops += 3;
+          total_num_loops += 3;
+          fp = fopen (name_info_lock, "r");
+          if (fp == NULL && num_loops <= 3)
+            {
+              /*
+               * Note that we try to check for the lock only one more time,
+               * unless we have been waiting for a while
+               * (Case of dowait == false,
+               * note that num_loops is set to 0 when waiting for a lock).
+               */
+              retry = true;
+              continue;
+            }
+        }
 
-      if (fp == NULL || fscanf (fp, format_string, user, &pid, host,
-				&tmp_lock_time) != 4)
-	{
-	  strcpy (user, "???");
-	  strcpy (host, "???");
-	  pid = 0;
-	  lock_time = 0;
-	}
+      if (fp == NULL || fscanf (fp, format_string, user, &pid, host, &tmp_lock_time) != 4)
+        {
+          strcpy (user, "???");
+          strcpy (host, "???");
+          pid = 0;
+          lock_time = 0;
+        }
       else
-	{
-	  lock_time = tmp_lock_time;
-	}
+        {
+          lock_time = tmp_lock_time;
+        }
       /* Make sure that the process holding the lock is not a
        * run away process. A run away process is one
        * of the following:
@@ -253,75 +245,71 @@ again:
        *    longer
        */
       if (fp == NULL)
-	{
-	  /* It is no more true that if the lockby file does not exist, then it
-	   * is the run away process. When the user cannot get the file lock,
-	   * it means that the another process who owns the database exists.
-	   */
-	  fileio_ctime (&lock_time, io_timeval);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_LOCKED, 6,
-		  vol_label_p, db_full_name_p, user, pid, host,
-		  (lock_time == 0) ? "???" : io_timeval);
-	  return FILEIO_NOT_LOCKF;
-	}
+        {
+          /* It is no more true that if the lockby file does not exist, then it
+           * is the run away process. When the user cannot get the file lock,
+           * it means that the another process who owns the database exists.
+           */
+          fileio_ctime (&lock_time, io_timeval);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_LOCKED, 6,
+                  vol_label_p, db_full_name_p, user, pid, host, (lock_time == 0) ? "???" : io_timeval);
+          return FILEIO_NOT_LOCKF;
+        }
       else
-	{
-	  (void) fclose (fp);
-	  *host2 = '\0';
-	  cuserid ((char *) login_name);
+        {
+          (void) fclose (fp);
+          *host2 = '\0';
+          cuserid ((char *) login_name);
 
-	  login_name[FILEIO_USER_NAME_SIZE - 1] = '\0';
+          login_name[FILEIO_USER_NAME_SIZE - 1] = '\0';
 
-	  if (!(strcmp (user, login_name) == 0
-		&& GETHOSTNAME (host2, MAXHOSTNAMELEN) == 0
-		&& strcmp (host, host2) == 0
-		&& fileio_is_terminated_process (pid) != 0 && errno == ESRCH))
-	    {
-	      if (dowait != false)
-		{
-		  /*
-		   * NOBODY USES dowait EXPECT DATABASE.TXT
-		   *
-		   * It would be nice if we could use a wait function to wait on a
-		   * process that is not a child process.
-		   * Wait until the process is gone if we are in the same machine,
-		   * otherwise, continue looping.
-		   */
-		  while (fileio_is_volume_exist (name_info_lock) == true
-			 && num_loops < 60 && total_num_loops < max_num_loops)
-		    {
-		      if (strcmp (host, host2) == 0
-			  && fileio_is_terminated_process (pid) != 0)
-			{
-			  break;
-			}
+          if (!(strcmp (user, login_name) == 0
+                && GETHOSTNAME (host2, MAXHOSTNAMELEN) == 0
+                && strcmp (host, host2) == 0 && fileio_is_terminated_process (pid) != 0 && errno == ESRCH))
+            {
+              if (dowait != false)
+                {
+                  /*
+                   * NOBODY USES dowait EXPECT DATABASE.TXT
+                   *
+                   * It would be nice if we could use a wait function to wait on a
+                   * process that is not a child process.
+                   * Wait until the process is gone if we are in the same machine,
+                   * otherwise, continue looping.
+                   */
+                  while (fileio_is_volume_exist (name_info_lock) == true
+                         && num_loops < 60 && total_num_loops < max_num_loops)
+                    {
+                      if (strcmp (host, host2) == 0 && fileio_is_terminated_process (pid) != 0)
+                        {
+                          break;
+                        }
 
-		      (void) sleep (3);
-		      num_loops += 3;
-		      total_num_loops += 3;
-		    }
+                      (void) sleep (3);
+                      num_loops += 3;
+                      total_num_loops += 3;
+                    }
 
-		  if (total_num_loops < max_num_loops)
-		    {
-		      retry = true;
-		      num_loops = 0;
-		      goto again;
-		    }
-		}
+                  if (total_num_loops < max_num_loops)
+                    {
+                      retry = true;
+                      num_loops = 0;
+                      goto again;
+                    }
+                }
 
-	      /* not a run away process */
-	      fileio_ctime (&lock_time, io_timeval);
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_IO_MOUNT_LOCKED, 6, vol_label_p, db_full_name_p,
-		      user, pid, host, (lock_time == 0) ? "???" : io_timeval);
-	      return FILEIO_NOT_LOCKF;
-	    }
-	}
+              /* not a run away process */
+              fileio_ctime (&lock_time, io_timeval);
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_IO_MOUNT_LOCKED, 6, vol_label_p, db_full_name_p,
+                      user, pid, host, (lock_time == 0) ? "???" : io_timeval);
+              return FILEIO_NOT_LOCKF;
+            }
+        }
 #if defined(RYE_DEBUG)
       er_log_debug (ARG_FILE_LINE, "io_lock: WARNING ignoring a run away"
-		    " lock on volume = %s\n. locked daemon may not be"
-		    " working right.\n UNIX error = %s",
-		    vol_label_p, strerror (lockf_errno));
+                    " lock on volume = %s\n. locked daemon may not be"
+                    " working right.\n UNIX error = %s", vol_label_p, strerror (lockf_errno));
 #endif /* RYE_DEBUG */
     }
 
@@ -331,29 +319,27 @@ again:
   if (fp != NULL)
     {
       if (GETHOSTNAME (host, MAXHOSTNAMELEN) != 0)
-	{
-	  strcpy (host, "???");
-	}
+        {
+          strcpy (host, "???");
+        }
 
       if (getuserid (login_name, FILEIO_USER_NAME_SIZE) == NULL)
-	{
-	  strcpy (login_name, "???");
-	}
+        {
+          strcpy (login_name, "???");
+        }
 
-      (void) fprintf (fp, "%s %d %s %ld", login_name, (int) GETPID (),
-		      host, time (NULL));
+      (void) fprintf (fp, "%s %d %s %ld", login_name, (int) GETPID (), host, time (NULL));
       (void) fclose (fp);
     }
   else
     {
       /* Unable to create the lockf file. */
       if (result == FILEIO_LOCKF)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_IO_MOUNT_FAIL, 1, name_info_lock);
-	  fileio_unlock (vol_label_p, vol_fd, result);
-	  result = FILEIO_NOT_LOCKF;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, name_info_lock);
+          fileio_unlock (vol_label_p, vol_fd, result);
+          result = FILEIO_NOT_LOCKF;
+        }
     }
 
   return result;
@@ -368,8 +354,7 @@ again:
  *
  */
 FILEIO_LOCKF_TYPE
-fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
-			 int vol_fd)
+fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p, int vol_fd)
 {
   FILE *fp;
   char host[MAXHOSTNAMELEN];
@@ -397,13 +382,10 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
    */
   if (fstat (vol_fd, &stbuf) != -1)
     {
-      if ((stbuf.st_mode & S_ISGID) != 0
-	  && (stbuf.st_mode & S_IRWXG) != S_IXGRP)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"A mandatory lock will be set on file = %s",
-			vol_label_p);
-	}
+      if ((stbuf.st_mode & S_ISGID) != 0 && (stbuf.st_mode & S_IRWXG) != S_IXGRP)
+        {
+          er_log_debug (ARG_FILE_LINE, "A mandatory lock will be set on file = %s", vol_label_p);
+        }
     }
 #endif /* RYE_DEBUG */
 
@@ -417,64 +399,59 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
    *       the lock. This is important to avoid a possible synchronization
    *       problem with this secundary technique
    */
-  sprintf (format_string, "%%%ds %%d %%%ds %%lld",
-	   FILEIO_USER_NAME_SIZE - 1, MAXHOSTNAMELEN - 1);
+  sprintf (format_string, "%%%ds %%d %%%ds %%lld", FILEIO_USER_NAME_SIZE - 1, MAXHOSTNAMELEN - 1);
 
   while (retry == true && fileio_lock_file_write (vol_fd, 0, SEEK_SET, 0) < 0)
     {
       if (errno == EINTR)
-	{
-	  /* Retry if the an interruption was signed */
-	  retry = true;
-	  continue;
-	}
+        {
+          /* Retry if the an interruption was signed */
+          retry = true;
+          continue;
+        }
 //      lockf_errno = errno;
       retry = false;
 
       /* Volume seems to be mounted by someone else. Find out who has it. */
       fp = fopen (lock_path_p, "r");
       if (fp == NULL)
-	{
-	  (void) sleep (3);
-	  num_loops += 3;
-	  fp = fopen (lock_path_p, "r");
-	  if (fp == NULL && num_loops <= 3)
-	    {
-	      retry = true;
-	      continue;
-	    }
-	}
+        {
+          (void) sleep (3);
+          num_loops += 3;
+          fp = fopen (lock_path_p, "r");
+          if (fp == NULL && num_loops <= 3)
+            {
+              retry = true;
+              continue;
+            }
+        }
 
-      if (fp == NULL
-	  || fscanf (fp, format_string, user, &pid,
-		     host, &tmp_lock_time) != 4)
-	{
-	  strcpy (user, "???");
-	  strcpy (host, "???");
-	  pid = 0;
-	  lock_time = 0;
-	}
+      if (fp == NULL || fscanf (fp, format_string, user, &pid, host, &tmp_lock_time) != 4)
+        {
+          strcpy (user, "???");
+          strcpy (host, "???");
+          pid = 0;
+          lock_time = 0;
+        }
       else
-	{
-	  lock_time = tmp_lock_time;
-	}
+        {
+          lock_time = tmp_lock_time;
+        }
 
       if (fp != NULL)
-	{
-	  (void) fclose (fp);
-	}
+        {
+          (void) fclose (fp);
+        }
 #if defined(RYE_DEBUG)
       er_log_debug (ARG_FILE_LINE, "io_lock: WARNING ignoring a run away"
-		    " lock on volume = %s\n. locked daemon may not be"
-		    " working right.\n UNIX error = %s",
-		    lock_path_p, strerror (lockf_errno));
+                    " lock on volume = %s\n. locked daemon may not be"
+                    " working right.\n UNIX error = %s", lock_path_p, strerror (lockf_errno));
 #endif /* RYE_DEBUG */
 
       memset (io_timeval, 0, sizeof (io_timeval));
       fileio_ctime (&lock_time, io_timeval);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_LOCKED, 6,
-	      lock_path_p, db_full_name_p, user, pid, host,
-	      (lock_time == 0) ? "???" : io_timeval);
+              lock_path_p, db_full_name_p, user, pid, host, (lock_time == 0) ? "???" : io_timeval);
       return FILEIO_NOT_LOCKF;
     }
 
@@ -487,7 +464,7 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
     }
   else
     {
-      fp = NULL;		/* error */
+      fp = NULL;                /* error */
     }
 
   if (fp != NULL)
@@ -495,17 +472,16 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
       lseek (new_fd, (off_t) 0, SEEK_SET);
 
       if (GETHOSTNAME (host, MAXHOSTNAMELEN) != 0)
-	{
-	  strcpy (host, "???");
-	}
+        {
+          strcpy (host, "???");
+        }
 
       if (getuserid (login_name, FILEIO_USER_NAME_SIZE) == NULL)
-	{
-	  strcpy (login_name, "???");
-	}
+        {
+          strcpy (login_name, "???");
+        }
 
-      (void) fprintf (fp, "%s %d %s %ld",
-		      login_name, (int) GETPID (), host, time (NULL));
+      (void) fprintf (fp, "%s %d %s %ld", login_name, (int) GETPID (), host, time (NULL));
       fflush (fp);
 
       (void) fclose (fp);
@@ -515,11 +491,10 @@ fileio_lock_la_log_path (const char *db_full_name_p, const char *lock_path_p,
       /* Unable to create the lockf file. */
       assert (result == FILEIO_LOCKF);
       if (result == FILEIO_LOCKF)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_IO_MOUNT_FAIL, 1, lock_path_p);
-	  result = FILEIO_NOT_LOCKF;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, lock_path_p);
+          result = FILEIO_NOT_LOCKF;
+        }
     }
 
   return result;
@@ -559,25 +534,21 @@ fileio_lock_la_dbname (int *lockf_vdes, char *db_name, char *log_path)
   if (access (lock_dir, F_OK) < 0)
     {
       if (mkdir (lock_dir, 0777) < 0)
-	{
-	  er_log_debug (ARG_FILE_LINE, "unable to create dir (%s)", lock_dir);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_BO_DIRECTORY_DOESNOT_EXIST, 1, lock_dir);
-	  result = FILEIO_NOT_LOCKF;
-	  goto error_return;
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "unable to create dir (%s)", lock_dir);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_DIRECTORY_DOESNOT_EXIST, 1, lock_dir);
+          result = FILEIO_NOT_LOCKF;
+          goto error_return;
+        }
     }
 
-  snprintf (format_string, sizeof (format_string), "%%d %%%ds %%%ds",
-	    DB_MAX_IDENTIFIER_LENGTH - 1, PATH_MAX - 1);
+  snprintf (format_string, sizeof (format_string), "%%d %%%ds %%%ds", DB_MAX_IDENTIFIER_LENGTH - 1, PATH_MAX - 1);
 
   fd = fileio_open (lock_path, O_RDWR | O_CREAT, 0644);
   if (fd == NULL_VOLDES)
     {
-      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)",
-		    lock_path);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL,
-			   1, lock_path);
+      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)", lock_path);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, lock_path);
 
       result = FILEIO_NOT_LOCKF;
       goto error_return;
@@ -590,34 +561,29 @@ fileio_lock_la_dbname (int *lockf_vdes, char *db_name, char *log_path)
 
       r = fscanf (fp, format_string, &pid, tmp_db_name, tmp_log_path);
       if (r == 3)
-	{
-	  assert_release (strcmp (db_name, tmp_db_name) == 0);
+        {
+          assert_release (strcmp (db_name, tmp_db_name) == 0);
 
-	  if (strcmp (db_name, tmp_db_name)
-	      || strcmp (log_path, tmp_log_path))
-	    {
-	      er_log_debug (ARG_FILE_LINE, "db_name(%s,%s), log_path(%s,%s)",
-			    db_name, tmp_db_name, log_path, tmp_log_path);
+          if (strcmp (db_name, tmp_db_name) || strcmp (log_path, tmp_log_path))
+            {
+              er_log_debug (ARG_FILE_LINE, "db_name(%s,%s), log_path(%s,%s)",
+                            db_name, tmp_db_name, log_path, tmp_log_path);
 
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_IO_MOUNT_LOCKED, 6, lock_path, db_name, "-", pid,
-		      "-", "-");
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_LOCKED, 6, lock_path, db_name, "-", pid, "-", "-");
 
-	      fclose (fp);
+              fclose (fp);
 
-	      result = FILEIO_NOT_LOCKF;
-	      goto error_return;
-	    }
-	}
+              result = FILEIO_NOT_LOCKF;
+              goto error_return;
+            }
+        }
 
       fclose (fp);
     }
   else
     {
-      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)",
-		    lock_path);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL,
-			   1, lock_path);
+      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)", lock_path);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, lock_path);
 
       result = FILEIO_NOT_LOCKF;
       goto error_return;
@@ -625,8 +591,7 @@ fileio_lock_la_dbname (int *lockf_vdes, char *db_name, char *log_path)
 
   if (fileio_lock_file_write (fd, 0, SEEK_SET, 0) < 0)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_LOCKED, 6,
-	      lock_path, db_name, "-", 0, "-", "-");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_LOCKED, 6, lock_path, db_name, "-", 0, "-", "-");
 
       result = FILEIO_NOT_LOCKF;
       goto error_return;
@@ -647,10 +612,8 @@ fileio_lock_la_dbname (int *lockf_vdes, char *db_name, char *log_path)
       error = fileio_release_lock (fd);
       assert_release (error == NO_ERROR);
 
-      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)",
-		    lock_path);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL,
-			   1, lock_path);
+      er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)", lock_path);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, lock_path);
 
       result = FILEIO_NOT_LOCKF;
       goto error_return;
@@ -708,10 +671,8 @@ fileio_unlock_la_dbname (int *lockf_vdes, char *db_name, bool clear_owner)
 
   if (access (lock_dir, F_OK) < 0)
     {
-      er_log_debug (ARG_FILE_LINE, "lock directory does not exist (%s)",
-		    lock_dir);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_DIRECTORY_DOESNOT_EXIST,
-	      1, lock_dir);
+      er_log_debug (ARG_FILE_LINE, "lock directory does not exist (%s)", lock_dir);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_DIRECTORY_DOESNOT_EXIST, 1, lock_dir);
       return FILEIO_NOT_LOCKF;
     }
 
@@ -719,23 +680,21 @@ fileio_unlock_la_dbname (int *lockf_vdes, char *db_name, bool clear_owner)
     {
       fp = fopen (lock_path, "w+");
       if (fp == NULL)
-	{
-	  er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)",
-			lock_path);
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_IO_MOUNT_FAIL, 1, lock_path);
+        {
+          er_log_debug (ARG_FILE_LINE, "unable to open lock_file (%s)", lock_path);
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, lock_path);
 
-	  return FILEIO_LOCKF;
-	}
+          return FILEIO_LOCKF;
+        }
 
       fseek (fp, (off_t) 0, SEEK_END);
       end_offset = ftell (fp);
       fseek (fp, (off_t) 0, SEEK_SET);
 
       if (end_offset > 0)
-	{
-	  fprintf (fp, "%*s", (int) end_offset, " ");
-	}
+        {
+          fprintf (fp, "%*s", (int) end_offset, " ");
+        }
       fflush (fp);
       fclose (fp);
     }
@@ -783,25 +742,23 @@ fileio_check_lockby_file (char *name_info_lock_p)
   fp = fopen (name_info_lock_p, "r");
   if (fp != NULL)
     {
-      sprintf (format_string, "%%%ds %%d %%%ds", FILEIO_USER_NAME_SIZE - 1,
-	       MAXHOSTNAMELEN - 1);
+      sprintf (format_string, "%%%ds %%d %%%ds", FILEIO_USER_NAME_SIZE - 1, MAXHOSTNAMELEN - 1);
       if (fscanf (fp, format_string, user, &pid, host) != 3)
-	{
-	  strcpy (user, "???");
-	  strcpy (host, "???");
-	  pid = 0;
-	}
+        {
+          strcpy (user, "???");
+          strcpy (host, "???");
+          pid = 0;
+        }
       (void) fclose (fp);
 
       /* Check for same process, same user, same host */
       getuserid (login_name, FILEIO_USER_NAME_SIZE);
 
       if (pid == GETPID () && strcmp (user, login_name) == 0
-	  && GETHOSTNAME (host2, MAXHOSTNAMELEN) == 0
-	  && strcmp (host, host2) == 0)
-	{
-	  (void) remove (name_info_lock_p);
-	}
+          && GETHOSTNAME (host2, MAXHOSTNAMELEN) == 0 && strcmp (host, host2) == 0)
+        {
+          (void) remove (name_info_lock_p);
+        }
     }
 }
 #endif
@@ -823,8 +780,7 @@ fileio_check_lockby_file (char *name_info_lock_p)
  *       and an error condition is returned.
  */
 void
-fileio_unlock (const char *vol_label_p, int vol_fd,
-	       FILEIO_LOCKF_TYPE lockf_type)
+fileio_unlock (const char *vol_label_p, int vol_fd, FILEIO_LOCKF_TYPE lockf_type)
 {
   char name_info_lock[PATH_MAX];
 
@@ -833,9 +789,9 @@ fileio_unlock (const char *vol_label_p, int vol_fd,
   if (prm_get_bool_value (PRM_ID_IO_LOCKF_ENABLE) == true)
     {
       if (vol_label_p == NULL)
-	{
-	  vol_label_p = "";
-	}
+        {
+          vol_label_p = "";
+        }
 
       strcpy (name_info_lock, vol_label_p);
       fileio_make_volume_lock_name (name_info_lock, vol_label_p);
@@ -847,16 +803,16 @@ fileio_unlock (const char *vol_label_p, int vol_fd,
        */
 #if 0
       if (lockf_type != FILEIO_LOCKF)
-	{
-	  assert (lockf_type == FILEIO_NOT_LOCKF);
-	  fileio_check_lockby_file (name_info_lock);
-	}
+        {
+          assert (lockf_type == FILEIO_NOT_LOCKF);
+          fileio_check_lockby_file (name_info_lock);
+        }
       else
 #endif
-	{
-	  (void) rye_remove_files (name_info_lock);
-	  fileio_unlock_file (vol_fd, 0, SEEK_SET, 0);
-	}
+        {
+          (void) rye_remove_files (name_info_lock);
+          fileio_unlock_file (vol_fd, 0, SEEK_SET, 0);
+        }
     }
 }
 
@@ -875,8 +831,7 @@ fileio_get_lock (int fd, const char *vol_label_p)
   if (fileio_lock_file_read (fd, 0, SEEK_SET, 0) < 0)
     {
       error = ER_IO_GET_LOCK_FAIL;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 2, vol_label_p, fd);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, vol_label_p, fd);
     }
 
   return error;
@@ -903,11 +858,11 @@ again:
   while (retry == true && fileio_lock_file_read (fd, 0, SEEK_SET, 0) < 0)
     {
       if (errno == EINTR)
-	{
-	  /* Retry if the an interruption was signed */
-	  retry = true;
-	  continue;
-	}
+        {
+          /* Retry if the an interruption was signed */
+          retry = true;
+          continue;
+        }
 
       retry = false;
 
@@ -915,17 +870,16 @@ again:
       num_loops += 3;
 
       if (num_loops < max_num_loops)
-	{
-	  retry = true;
-	  goto again;
-	}
+        {
+          retry = true;
+          goto again;
+        }
     }
 
   if (retry == false)
     {
       error = ER_IO_GET_LOCK_FAIL;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 2, vol_label_p, fd);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, vol_label_p, fd);
     }
 
   return error;
@@ -961,8 +915,7 @@ fileio_release_lock (int fd)
  *       DB_MAX_PATH_LENGTH length.
  */
 static void
-fileio_make_volume_lock_name (char *vol_lock_name_p,
-			      const char *vol_full_name_p)
+fileio_make_volume_lock_name (char *vol_lock_name_p, const char *vol_full_name_p)
 {
   sprintf (vol_lock_name_p, "%s%s", vol_full_name_p, FILEIO_VOLLOCK_SUFFIX);
 }
@@ -978,8 +931,7 @@ fileio_make_volume_lock_name (char *vol_lock_name_p,
  *   len(in):
  */
 static int
-fileio_lock_region (int fd, int cmd, int type, off_t offset,
-		    int whence, off_t len)
+fileio_lock_region (int fd, int cmd, int type, off_t offset, int whence, off_t len)
 {
   struct flock lock;
 
@@ -988,10 +940,10 @@ fileio_lock_region (int fd, int cmd, int type, off_t offset,
   assert (whence == SEEK_SET);
   assert (len == 0);
 
-  lock.l_type = type;		/* F_RDLOCK, F_WRLOCK, F_UNLOCK */
-  lock.l_start = offset;	/* byte offset, relative to l_whence */
-  lock.l_whence = whence;	/* SEEK_SET, SEEK_CUR, SEEK_END */
-  lock.l_len = len;		/* #bytes (O means to EOF) */
+  lock.l_type = type;           /* F_RDLOCK, F_WRLOCK, F_UNLOCK */
+  lock.l_start = offset;        /* byte offset, relative to l_whence */
+  lock.l_whence = whence;       /* SEEK_SET, SEEK_CUR, SEEK_END */
+  lock.l_len = len;             /* #bytes (O means to EOF) */
 
   return fcntl (fd, cmd, &lock);
 }

@@ -42,15 +42,15 @@
 
 /* LIMITS AND NULL VALUES ON DISK RELATED DATATYPES */
 
-#define NULL_PAGEID (-1)	/* Value of an invalid page identifier */
-#define NULL_SLOTID (-1)	/* Value of an invalid slot identifier */
-#define NULL_VOLID  (-1)	/* Value of an invalid volume identifier */
-#define NULL_GROUPID (DB_INT32_MIN)	/* Value of an invalid shard group identifier */
-#define GLOBAL_GROUPID (0)	/* Value of a no-shard group identifier */
+#define NULL_PAGEID (-1)        /* Value of an invalid page identifier */
+#define NULL_SLOTID (-1)        /* Value of an invalid slot identifier */
+#define NULL_VOLID  (-1)        /* Value of an invalid volume identifier */
+#define NULL_GROUPID (DB_INT32_MIN)     /* Value of an invalid shard group identifier */
+#define GLOBAL_GROUPID (0)      /* Value of a no-shard group identifier */
 
-#define NULL_SECTID (-1)	/* Value of an invalid sector identifier */
-#define NULL_OFFSET (-1)	/* Value of an invalid offset */
-#define NULL_FILEID (-1)	/* Value of an invalid file identifier */
+#define NULL_SECTID (-1)        /* Value of an invalid sector identifier */
+#define NULL_OFFSET (-1)        /* Value of an invalid offset */
+#define NULL_FILEID (-1)        /* Value of an invalid file identifier */
 
 #define NULL_ARV_NUM (-1)
 
@@ -63,7 +63,7 @@
 #define VOL_MAX_NPAGES(page_size) \
   ((sizeof(off_t) == 4) ? (INT_MAX / (page_size)) : INT_MAX)
 
-#define LOGPAGEID_MAX   0x7fffffffffffLL	/* 6 bytes length */
+#define LOGPAGEID_MAX   0x7fffffffffffLL        /* 6 bytes length */
 
 /* Compose the full name of a database */
 
@@ -79,21 +79,21 @@
 
 /* Type definitions related to disk information	*/
 
-typedef INT32 PAGEID;		/* Data page identifier */
-typedef INT64 LOG_PAGEID;	/* Log page identifier */
-typedef PAGEID LOG_PHY_PAGEID;	/* physical log page identifier */
+typedef INT32 PAGEID;           /* Data page identifier */
+typedef INT64 LOG_PAGEID;       /* Log page identifier */
+typedef PAGEID LOG_PHY_PAGEID;  /* physical log page identifier */
 
-typedef INT16 VOLID;		/* Volume identifier */
-typedef PAGEID DKNPAGES;	/* Number of disk pages */
+typedef INT16 VOLID;            /* Volume identifier */
+typedef PAGEID DKNPAGES;        /* Number of disk pages */
 
-typedef INT16 PGSLOTID;		/* Page slot identifier */
-typedef PGSLOTID PGNSLOTS;	/* Number of slots on a page */
-typedef INT16 PGLENGTH;		/* Page length */
+typedef INT16 PGSLOTID;         /* Page slot identifier */
+typedef PGSLOTID PGNSLOTS;      /* Number of slots on a page */
+typedef INT16 PGLENGTH;         /* Page length */
 
-typedef PAGEID FILEID;		/* File identifier */
-typedef INT32 LOLENGTH;		/* Length for a large object */
+typedef PAGEID FILEID;          /* File identifier */
+typedef INT32 LOLENGTH;         /* Length for a large object */
 
-typedef INT32 GROUPID;		/* Shard group identifier */
+typedef INT32 GROUPID;          /* Shard group identifier */
 
 #define PAGEID_EQ(p1, p2) ((p1) == (p2))
 #define VOLID_EQ(v1, v2) ((v1) == (v2))
@@ -106,11 +106,11 @@ typedef INT32 GROUPID;		/* Shard group identifier */
 
 #define LOG_LSA_OFFSET_BITS 16
 
-typedef struct log_lsa LOG_LSA;	/* Log address identifier */
+typedef struct log_lsa LOG_LSA; /* Log address identifier */
 struct log_lsa
 {
-  INT64 pageid:48;		/* Log page identifier : 48 bits(6 bytes) length */
-  INT64 offset:16;		/* Offset in page : 16 bits(2 bytes) length */
+  INT64 pageid:48;              /* Log page identifier : 48 bits(6 bytes) length */
+  INT64 offset:16;              /* Offset in page : 16 bits(2 bytes) length */
 };
 
 #define LSA_COPY(lsa_ptr1, lsa_ptr2) *(lsa_ptr1) = *(lsa_ptr2)
@@ -149,7 +149,7 @@ struct log_lsa
 
 /* BOTH IO_PAGESIZE AND DB_PAGESIZE MUST BE MULTIPLE OF sizeof(int) */
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
 #define IO_DEFAULT_PAGE_SIZE    (16 * ONE_K)
 #else
 #define IO_DEFAULT_PAGE_SIZE    (4 * ONE_K)
@@ -173,8 +173,8 @@ struct log_lsa
 #define BTREE_NODE_TYPE_SIZE            OR_SHORT_SIZE
 #define BTREE_NODE_KEY_CNT_SIZE         OR_SHORT_SIZE
 #define BTREE_NODE_MAX_KEY_LEN_SIZE     OR_SHORT_SIZE
-#define BTREE_NODE_NEXT_VPID_SIZE       DISK_VPID_SIZE	/* SHORT + INT */
-#define BTREE_NODE_PREV_VPID_SIZE       DISK_VPID_SIZE	/* SHORT + INT */
+#define BTREE_NODE_NEXT_VPID_SIZE       DISK_VPID_SIZE  /* SHORT + INT */
+#define BTREE_NODE_PREV_VPID_SIZE       DISK_VPID_SIZE  /* SHORT + INT */
 #define BTREE_NODE_PADDING_SIZE         OR_SHORT_SIZE
 #define BTREE_NODE_SPLIT_INFO_SIZE      SPLIT_INFO_SIZE
 
@@ -185,8 +185,8 @@ struct log_lsa
 #define BTREE_UNIQUE_SIZE               OR_INT_SIZE
 #define BTREE_REVERSE_SIZE              OR_INT_SIZE
 #define BTREE_REV_LEVEL_SIZE            OR_INT_SIZE
-#define BTREE_OVFID_SIZE                DISK_VFID_SIZE	/* INT + SHORT */
-#define BTREE_RESERVED_SIZE             OR_SHORT_SIZE	/* currently, unused */
+#define BTREE_OVFID_SIZE                DISK_VFID_SIZE  /* INT + SHORT */
+#define BTREE_RESERVED_SIZE             OR_SHORT_SIZE   /* currently, unused */
 #endif
 
 #define BTREE_NODE_TYPE_OFFSET          (0)
@@ -246,33 +246,33 @@ struct log_lsa
 typedef struct btree_node_split_info BTREE_NODE_SPLIT_INFO;
 struct btree_node_split_info
 {
-  float pivot;			/* pivot = split_slot_id / num_keys */
-  int index;			/* number of key insert after node split */
+  float pivot;                  /* pivot = split_slot_id / num_keys */
+  int index;                    /* number of key insert after node split */
 };
 
-typedef char *PAGE_PTR;		/* Pointer to a page */
+typedef char *PAGE_PTR;         /* Pointer to a page */
 
 /* TODO - PAGE_TYPE is used for debugging */
 /* fetches sub-info */
 typedef enum
 {
-  PAGE_UNKNOWN = 0,		/* 0 used for initialized page            */
-  PAGE_FILE_HEADER,		/* 1 file header page                     */
-  PAGE_FILE_TAB,		/* 2 file allocset table page             */
-  PAGE_HEAP_HEADER,		/* 3 heap header page               */
-  PAGE_HEAP,			/* 4 heap page                            */
-  PAGE_VOLHEADER,		/* 5 volume header page                   */
-  PAGE_VOLBITMAP,		/* 6 volume bitmap page                   */
-  PAGE_XASL,			/* 7 xasl stream page                     */
-  PAGE_QRESULT,			/* 8 query result page                    */
-  PAGE_EHASH,			/* 9 ehash bucket/dir page                */
-  PAGE_OVERFLOW,		/* 10 overflow page                        */
-  PAGE_AREA,			/* 11 area page                            */
-  PAGE_CATALOG,			/* 12 catalog page                         */
-  PAGE_BTREE_ROOT,		/* 13 b+tree index root page               */
-  PAGE_BTREE,			/* 14 b+tree index page                    */
+  PAGE_UNKNOWN = 0,             /* 0 used for initialized page            */
+  PAGE_FILE_HEADER,             /* 1 file header page                     */
+  PAGE_FILE_TAB,                /* 2 file allocset table page             */
+  PAGE_HEAP_HEADER,             /* 3 heap header page               */
+  PAGE_HEAP,                    /* 4 heap page                            */
+  PAGE_VOLHEADER,               /* 5 volume header page                   */
+  PAGE_VOLBITMAP,               /* 6 volume bitmap page                   */
+  PAGE_XASL,                    /* 7 xasl stream page                     */
+  PAGE_QRESULT,                 /* 8 query result page                    */
+  PAGE_EHASH,                   /* 9 ehash bucket/dir page                */
+  PAGE_OVERFLOW,                /* 10 overflow page                        */
+  PAGE_AREA,                    /* 11 area page                            */
+  PAGE_CATALOG,                 /* 12 catalog page                         */
+  PAGE_BTREE_ROOT,              /* 13 b+tree index root page               */
+  PAGE_BTREE,                   /* 14 b+tree index page                    */
 
-  PAGE_LAST			/* 15 */
+  PAGE_LAST                     /* 15 */
 } PAGE_TYPE;
 
 #define ISCAN_OID_BUFFER_SIZE \
@@ -280,72 +280,72 @@ typedef enum
 
 /* TYPE DEFINITIONS RELATED TO KEY AND VALUES */
 
-typedef enum			/* range search option */
+typedef enum                    /* range search option */
 {
-  NA_NA,			/* v1 and v2 are N/A, so that no range is defined */
-  GE_LE,			/* v1 <= key <= v2 */
-  GE_LT,			/* v1 <= key < v2 */
-  GT_LE,			/* v1 < key <= v2 */
-  GT_LT,			/* v1 < key < v2 */
-  GE_INF,			/* v1 <= key (<= the end) */
-  GT_INF,			/* v1 < key (<= the end) */
-  INF_LE,			/* (the beginning <=) key <= v2 */
-  INF_LT,			/* (the beginning <=) key < v2 */
-  INF_INF,			/* the beginning <= key <= the end */
-  EQ_NA,			/* key = v1, v2 is N/A */
+  NA_NA,                        /* v1 and v2 are N/A, so that no range is defined */
+  GE_LE,                        /* v1 <= key <= v2 */
+  GE_LT,                        /* v1 <= key < v2 */
+  GT_LE,                        /* v1 < key <= v2 */
+  GT_LT,                        /* v1 < key < v2 */
+  GE_INF,                       /* v1 <= key (<= the end) */
+  GT_INF,                       /* v1 < key (<= the end) */
+  INF_LE,                       /* (the beginning <=) key <= v2 */
+  INF_LT,                       /* (the beginning <=) key < v2 */
+  INF_INF,                      /* the beginning <= key <= the end */
+  EQ_NA,                        /* key = v1, v2 is N/A */
 
   /* following options are reserved for the future use */
-  LE_GE,			/* key <= v1 || key >= v2 or NOT (v1 < key < v2) */
-  LE_GT,			/* key <= v1 || key > v2 or NOT (v1 < key <= v2) */
-  LT_GE,			/* key < v1 || key >= v2 or NOT (v1 <= key < v2) */
-  LT_GT,			/* key < v1 || key > v2 or NOT (v1 <= key <= v2) */
-  NEQ_NA			/* key != v1 */
+  LE_GE,                        /* key <= v1 || key >= v2 or NOT (v1 < key < v2) */
+  LE_GT,                        /* key <= v1 || key > v2 or NOT (v1 < key <= v2) */
+  LT_GE,                        /* key < v1 || key >= v2 or NOT (v1 <= key < v2) */
+  LT_GT,                        /* key < v1 || key > v2 or NOT (v1 <= key <= v2) */
+  NEQ_NA                        /* key != v1 */
 } RANGE;
 
 /* File structure identifiers */
 
-typedef struct hfid HFID;	/* FILE HEAP IDENTIFIER */
+typedef struct hfid HFID;       /* FILE HEAP IDENTIFIER */
 struct hfid
 {
-  VFID vfid;			/* Volume and file identifier */
-  INT32 hpgid;			/* First page identifier (the header page) */
+  VFID vfid;                    /* Volume and file identifier */
+  INT32 hpgid;                  /* First page identifier (the header page) */
 };
 #define NULL_HFID_INITIALIZER    {{NULL_FILEID, NULL_VOLID}, NULL_PAGEID}
 
-typedef struct btid BTID;	/* B+tree identifier */
+typedef struct btid BTID;       /* B+tree identifier */
 struct btid
 {
-  VFID vfid;			/* B+tree index volume identifier */
-  INT32 root_pageid;		/* Root page identifier */
+  VFID vfid;                    /* B+tree index volume identifier */
+  INT32 root_pageid;            /* Root page identifier */
 };
 #define NULL_BTID_INITIALIZER { NULL_VFID_INITIALIZER, NULL_PAGEID }
 
-typedef struct ehid EHID;	/* EXTENDIBLE HASHING IDENTIFIER */
+typedef struct ehid EHID;       /* EXTENDIBLE HASHING IDENTIFIER */
 struct ehid
 {
-  VFID vfid;			/* Volume and Directory file identifier */
-  INT32 pageid;			/* The first (root) page of the directory */
+  VFID vfid;                    /* Volume and Directory file identifier */
+  INT32 pageid;                 /* The first (root) page of the directory */
 };
 
-typedef struct recdes RECDES;	/* RECORD DESCRIPTOR */
+typedef struct recdes RECDES;   /* RECORD DESCRIPTOR */
 struct recdes
 {
-  int area_size;		/* Length of the allocated area. It includes
-				   only the data field. The value is negative
-				   if data is inside buffer. For example,
-				   peeking in a slotted page. */
-  int length;			/* Length of the data. Does not include the
-				   length and type fields */
-  INT16 type;			/* Type of record */
-  char *data;			/* The data */
+  int area_size;                /* Length of the allocated area. It includes
+                                   only the data field. The value is negative
+                                   if data is inside buffer. For example,
+                                   peeking in a slotted page. */
+  int length;                   /* Length of the data. Does not include the
+                                   length and type fields */
+  INT16 type;                   /* Type of record */
+  char *data;                   /* The data */
 };
 
-typedef struct lorecdes LORECDES;	/* Work area descriptor */
+typedef struct lorecdes LORECDES;       /* Work area descriptor */
 struct lorecdes
 {
-  LOLENGTH length;		/* The length of data in the area */
-  LOLENGTH area_size;		/* The size of the area */
-  char *data;			/* Pointer to the beginning of the area */
+  LOLENGTH length;              /* The length of data in the area */
+  LOLENGTH area_size;           /* The size of the area */
+  char *data;                   /* Pointer to the beginning of the area */
 };
 
 #define RECDES_INITIALIZER { 0, -1, REC_UNKNOWN, NULL }
@@ -406,7 +406,7 @@ struct lorecdes
 
 /* Types ans defines of transaction managment */
 
-typedef int TRANID;		/* Transaction identifier      */
+typedef int TRANID;             /* Transaction identifier      */
 
 #define NULL_TRANID     (-1)
 #define NULL_TRAN_INDEX (-1)
@@ -415,11 +415,11 @@ typedef enum
 {
   /* Don't change the initialization since they reflect the elements of
      lock_Conv and lock_Comp */
-  NA_LOCK = 0,			/* N/A lock */
-  NULL_LOCK = 1,		/* NULL lock */
-  S_LOCK = 2,			/* Shared lock */
-  U_LOCK = 3,			/* Update lock */
-  X_LOCK = 4,			/* Exclusive lock */
+  NA_LOCK = 0,                  /* N/A lock */
+  NULL_LOCK = 1,                /* NULL lock */
+  S_LOCK = 2,                   /* Shared lock */
+  U_LOCK = 3,                   /* Update lock */
+  X_LOCK = 4,                   /* Exclusive lock */
 } LOCK;
 
 extern LOCK lock_Conv[5][5];
@@ -467,19 +467,19 @@ typedef enum
 typedef struct bo_restart_arg BO_RESTART_ARG;
 struct bo_restart_arg
 {
-  bool printtoc;		/* True to show backup's table of contents */
-  time_t stopat;		/* the recovery stop time if restarting from
-				   backup */
-  const char *backuppath;	/* Pathname override for location of backup
-				   volumes */
-  const char *verbose_file;	/* restoredb verbose msg file */
+  bool printtoc;                /* True to show backup's table of contents */
+  time_t stopat;                /* the recovery stop time if restarting from
+                                   backup */
+  const char *backuppath;       /* Pathname override for location of backup
+                                   volumes */
+  const char *verbose_file;     /* restoredb verbose msg file */
   bool restore_upto_backuptime;
   bool make_slave;
 
   int server_state;
   PRM_NODE_INFO db_host_info;
-  LOG_LSA backuptime_lsa;	/* for HA apply */
-  INT64 db_creation;		/* Database creation time */
+  LOG_LSA backuptime_lsa;       /* for HA apply */
+  INT64 db_creation;            /* Database creation time */
 };
 
 /* Magic default values */
@@ -515,8 +515,8 @@ typedef enum
   S_ERROR = -1,
   S_END = 0,
   S_SUCCESS = 1,
-  S_DOESNT_FIT,			/* only for slotted page */
-  S_DOESNT_EXIST		/* only for slotted page */
+  S_DOESNT_FIT,                 /* only for slotted page */
+  S_DOESNT_EXIST                /* only for slotted page */
 } SCAN_CODE;
 
 typedef enum

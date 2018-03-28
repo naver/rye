@@ -40,8 +40,7 @@ static int fi_handler_random_exit (THREAD_ENTRY * thread_p, void *arg);
 static int fi_handler_random_fail (THREAD_ENTRY * thread_p, void *arg);
 static int fi_handler_random_sleep (THREAD_ENTRY * thread_p, void *arg);
 
-static FI_TEST_ITEM *fi_code_item (THREAD_ENTRY * thread_p,
-				   FI_TEST_CODE code);
+static FI_TEST_ITEM *fi_code_item (THREAD_ENTRY * thread_p, FI_TEST_CODE code);
 
 /******************************************************************************
  *
@@ -55,8 +54,7 @@ static bool fi_hasalready_Initiated = false;
 
 
 static void
-fi_init_test_item (FI_TEST_CODE test_code, const char *name,
-		   FI_HANDLER_FUNC func)
+fi_init_test_item (FI_TEST_CODE test_code, const char *name, FI_HANDLER_FUNC func)
 {
   FI_TEST_ITEM *fi_item;
 
@@ -75,68 +73,50 @@ fi_init_test_item (FI_TEST_CODE test_code, const char *name,
 void
 fi_init (void)
 {
-  fi_init_test_item (FI_TEST_FILE_MANAGER_FILE_DESTROY_ERROR1,
-		     "fi_file_destroy_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_FILE_MANAGER_FILE_DESTROY_ERROR1, "fi_file_destroy_error_1", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_OVF_FILE_UPDATE_ERROR1,
-		     "fi_ovf_file_update_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_OVF_FILE_UPDATE_ERROR1, "fi_ovf_file_update_error_1", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_HEAP_CREATE_ERROR1,
-		     "fi_heap_create_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_HEAP_CREATE_ERROR1, "fi_heap_create_error_1", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_RANDOM_EXIT,
-		     "fi_btree_random_exit", fi_handler_random_exit);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_RANDOM_EXIT, "fi_btree_random_exit", fi_handler_random_exit);
 
   fi_init_test_item (FI_TEST_LOG_MANAGER_RANDOM_EXIT_AT_RUN_POSTPONE,
-		     "fi_run_postpone_random_exit", fi_handler_random_exit);
+                     "fi_run_postpone_random_exit", fi_handler_random_exit);
 
-  fi_init_test_item (FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT,
-		     "fi_doesnt_fit_exit", fi_handler_random_exit);
+  fi_init_test_item (FI_TEST_LOG_MANAGER_DOESNT_FIT_EXIT, "fi_doesnt_fit_exit", fi_handler_random_exit);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_SPLIT_ERROR1,
-		     "fi_btree_split_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_SPLIT_ERROR1, "fi_btree_split_error_1", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_ROOT_SPLIT_ERROR1,
-		     "fi_btree_root_split_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ROOT_SPLIT_ERROR1, "fi_btree_root_split_error_1", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR1,
-		     "fi_btree_add_index_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR1, "fi_btree_add_index_error_1", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR2,
-		     "fi_btree_add_index_error_2", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ADD_INDEX_ERROR2, "fi_btree_add_index_error_2", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR1,
-		     "fi_btree_alloc_page_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR1, "fi_btree_alloc_page_error_1", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR2,
-		     "fi_btree_alloc_page_error_2", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR2, "fi_btree_alloc_page_error_2", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR3,
-		     "fi_btree_alloc_page_error_3", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_ALLOC_PAGE_ERROR3, "fi_btree_alloc_page_error_3", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_BTREE_MANAGER_MERGE_ERROR1,
-		     "fi_btree_merge_error_1", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_BTREE_MANAGER_MERGE_ERROR1, "fi_btree_merge_error_1", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_BTREE_MANAGER_DELETE_INDEX_ERROR1,
-		     "fi_btree_delete_index_error_1", fi_handler_random_fail);
+                     "fi_btree_delete_index_error_1", fi_handler_random_fail);
 
   fi_init_test_item (FI_TEST_BTREE_MANAGER_DELETE_INDEX_ERROR2,
-		     "fi_btree_delete_index_error_2", fi_handler_random_fail);
+                     "fi_btree_delete_index_error_2", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE,
-		     "fi_hb_slow_heartbeat_message", fi_handler_random_sleep);
+  fi_init_test_item (FI_TEST_HB_SLOW_HEARTBEAT_MESSAGE, "fi_hb_slow_heartbeat_message", fi_handler_random_sleep);
 
-  fi_init_test_item (FI_TEST_HB_DISK_FAIL,
-		     "fi_hb_disk_fail", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_HB_DISK_FAIL, "fi_hb_disk_fail", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_HB_PING_HOST_FAIL,
-		     "fi_hb_ping_host_fail", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_HB_PING_HOST_FAIL, "fi_hb_ping_host_fail", fi_handler_random_fail);
 
-  fi_init_test_item (FI_TEST_REPL_RANDOM_EXIT,
-		     "fi_repl_random_exit", fi_handler_random_exit);
+  fi_init_test_item (FI_TEST_REPL_RANDOM_EXIT, "fi_repl_random_exit", fi_handler_random_exit);
 
-  fi_init_test_item (FI_TEST_REPL_RANDOM_FAIL,
-		     "fi_repl_random_fail", fi_handler_random_fail);
+  fi_init_test_item (FI_TEST_REPL_RANDOM_FAIL, "fi_repl_random_fail", fi_handler_random_fail);
 
 
   fi_hasalready_Initiated = true;
@@ -175,14 +155,12 @@ fi_thread_init (UNUSED_ARG THREAD_ENTRY * thread_p)
 
   if (thread_p->fi_test_array == NULL)
     {
-      thread_p->fi_test_array =
-	(FI_TEST_ITEM *) malloc (sizeof (fi_Test_items));
+      thread_p->fi_test_array = (FI_TEST_ITEM *) malloc (sizeof (fi_Test_items));
       if (thread_p->fi_test_array == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (fi_Test_items));
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (fi_Test_items));
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
 
       memcpy (thread_p->fi_test_array, fi_Test_items, sizeof (fi_Test_items));
     }
@@ -335,8 +313,7 @@ fi_reset (THREAD_ENTRY * thread_p, FI_TEST_CODE code)
  *   state(in):
  */
 int
-fi_test_arg_int (THREAD_ENTRY * thread_p, FI_TEST_CODE code, int arg,
-		 int state)
+fi_test_arg_int (THREAD_ENTRY * thread_p, FI_TEST_CODE code, int arg, int state)
 {
   return fi_test (thread_p, code, &arg, state);
 }
@@ -383,20 +360,18 @@ fi_test (THREAD_ENTRY * thread_p, FI_TEST_CODE code, void *arg, int state)
  *    entries(in):
  */
 int
-fi_test_array (THREAD_ENTRY * thread_p, int num_entries,
-	       FI_TEST_ENTRY * entries)
+fi_test_array (THREAD_ENTRY * thread_p, int num_entries, FI_TEST_ENTRY * entries)
 {
   int error = NO_ERROR;
   int i;
 
   for (i = 0; i < num_entries; i++)
     {
-      error = fi_test (thread_p, entries[i].test_code, NULL,
-		       entries[i].state);
+      error = fi_test (thread_p, entries[i].test_code, NULL, entries[i].state);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   return error;
@@ -409,20 +384,18 @@ fi_test_array (THREAD_ENTRY * thread_p, int num_entries,
  *    entries(in):
  */
 int
-fi_test_array_arg_int (THREAD_ENTRY * thread_p, int num_entries,
-		       FI_TEST_ENTRY_ARG_INT * entries)
+fi_test_array_arg_int (THREAD_ENTRY * thread_p, int num_entries, FI_TEST_ENTRY_ARG_INT * entries)
 {
   int error = NO_ERROR;
   int i;
 
   for (i = 0; i < num_entries; i++)
     {
-      error = fi_test (thread_p, entries[i].test_code, &entries[i].arg,
-		       entries[i].state);
+      error = fi_test (thread_p, entries[i].test_code, &entries[i].arg, entries[i].state);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   return error;
@@ -533,8 +506,7 @@ fi_handler_random_exit (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
 #endif
   if ((r % mod_factor) == 0)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_FAULT_INJECTION, 1, "fault injection: random exit");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_FAULT_INJECTION, 1, "fault injection: random exit");
 
       _exit (0);
     }
@@ -569,10 +541,8 @@ fi_handler_random_fail (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
     {
       char err_msg[ER_MSG_SIZE];
 
-      snprintf (err_msg, sizeof (err_msg),
-		"fault injection: random fail(mod_factor(%d)", mod_factor);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_FAULT_INJECTION, 1, err_msg);
+      snprintf (err_msg, sizeof (err_msg), "fault injection: random fail(mod_factor(%d)", mod_factor);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_FAULT_INJECTION, 1, err_msg);
 
       return ER_FAULT_INJECTION;
     }
@@ -606,8 +576,7 @@ fi_handler_random_sleep (UNUSED_ARG THREAD_ENTRY * thread_p, void *arg)
   r = rand () % arg_sleep.mod_factor;
   if (r == 0)
     {
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	      ER_FAULT_INJECTION, 1, "fault injection: random sleep");
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_FAULT_INJECTION, 1, "fault injection: random sleep");
       THREAD_SLEEP (arg_sleep.sleep_time);
     }
 

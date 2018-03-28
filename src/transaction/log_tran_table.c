@@ -85,24 +85,20 @@ static TRAN_TABLE_MUTEX tb_Mutex = { NULL, 0, PTHREAD_MUTEX_INITIALIZER };
 #endif /* SERVER_MODE */
 
 static const int LOG_MAX_NUM_CONTIGUOUS_TDES = INT_MAX / sizeof (LOG_TDES);
-static const float LOG_EXPAND_TRANTABLE_RATIO = 1.25;	/* Increase table by 25% */
-static const int LOG_TOPOPS_STACK_INCREMENT = 3;	/* No more than 3 nested
-							 * top system operations
-							 */
+static const float LOG_EXPAND_TRANTABLE_RATIO = 1.25;   /* Increase table by 25% */
+static const int LOG_TOPOPS_STACK_INCREMENT = 3;        /* No more than 3 nested
+                                                         * top system operations
+                                                         */
 static const char *log_Client_id_unknown_string = "(unknown)";
-static BOOT_CLIENT_CREDENTIAL log_Client_credential =
-  BOOT_CLIENT_CREDENTIAL_INITIALIZER;
+static BOOT_CLIENT_CREDENTIAL log_Client_credential = BOOT_CLIENT_CREDENTIAL_INITIALIZER;
 
 static int block_Global_dml = false;
 
-static int logtb_expand_trantable (THREAD_ENTRY * thread_p,
-				   int num_new_indices);
+static int logtb_expand_trantable (THREAD_ENTRY * thread_p, int num_new_indices);
 static int logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
-				      TRAN_STATE state,
-				      const BOOT_CLIENT_CREDENTIAL *
-				      client_credential,
-				      TRAN_STATE * current_state,
-				      int wait_msecs);
+                                      TRAN_STATE state,
+                                      const BOOT_CLIENT_CREDENTIAL *
+                                      client_credential, TRAN_STATE * current_state, int wait_msecs);
 static void logtb_initialize_tdes (LOG_TDES * tdes, int tran_index);
 static LOG_ADDR_TDESAREA *logtb_allocate_tdes_area (int num_indices);
 static void logtb_initialize_trantable (TRANTABLE * trantable_p);
@@ -111,15 +107,11 @@ static void logtb_set_number_of_assigned_tran_indices (int num_trans);
 static void logtb_increment_number_of_assigned_tran_indices ();
 static void logtb_decrement_number_of_assigned_tran_indices ();
 static void logtb_set_number_of_total_tran_indices (int num_total_trans);
-static bool logtb_is_interrupted_tdes (THREAD_ENTRY * thread_p,
-				       LOG_TDES * tdes, bool clear,
-				       bool * continue_checking);
-static void logtb_dump_top_operations (FILE * out_fp,
-				       LOG_TOPOPS_STACK * topops_p);
+static bool logtb_is_interrupted_tdes (THREAD_ENTRY * thread_p, LOG_TDES * tdes, bool clear, bool * continue_checking);
+static void logtb_dump_top_operations (FILE * out_fp, LOG_TOPOPS_STACK * topops_p);
 static void logtb_dump_tdes (FILE * out_fp, LOG_TDES * tdes);
 static void logtb_set_tdes (THREAD_ENTRY * thread_p, LOG_TDES * tdes,
-			    const BOOT_CLIENT_CREDENTIAL * client_credential,
-			    int wait_msecs);
+                            const BOOT_CLIENT_CREDENTIAL * client_credential, int wait_msecs);
 static void logtb_init_working_tran (WORKING_TRAN * working_tran);
 static int logtb_append_working_tran (int tran_index);
 static int logtb_remove_working_tran (int tran_index);
@@ -159,15 +151,14 @@ logtb_realloc_topops_stack (LOG_TDES * tdes, int num_elms)
     {
       tdes->topops.stack = (struct log_topops_addresses *) newptr;
       if (tdes->topops.max == 0)
-	{
-	  tdes->topops.last = -1;
-	}
+        {
+          tdes->topops.last = -1;
+        }
       tdes->topops.max += num_elms;
     }
   else
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       return NULL;
     }
   return tdes->topops.stack;
@@ -185,10 +176,10 @@ logtb_realloc_topops_stack (LOG_TDES * tdes, int num_elms)
 static LOG_ADDR_TDESAREA *
 logtb_allocate_tdes_area (int num_indices)
 {
-  LOG_ADDR_TDESAREA *area;	/* Contiguous area for new
-				 * transaction indices
-				 */
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_ADDR_TDESAREA *area;      /* Contiguous area for new
+                                 * transaction indices
+                                 */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int i, tran_index;
   size_t area_size;
 
@@ -204,15 +195,13 @@ logtb_allocate_tdes_area (int num_indices)
       return NULL;
     }
 
-  area->tdesarea = ((LOG_TDES *) ((char *) area
-				  + sizeof (LOG_ADDR_TDESAREA)));
+  area->tdesarea = ((LOG_TDES *) ((char *) area + sizeof (LOG_ADDR_TDESAREA)));
   area->next = log_Gl.trantable.area;
 
   /*
    * Initialize every newly created transaction descriptor index
    */
-  for (i = 0, tran_index = NUM_TOTAL_TRAN_INDICES;
-       i < num_indices; tran_index++, i++)
+  for (i = 0, tran_index = NUM_TOTAL_TRAN_INDICES; i < num_indices; tran_index++, i++)
     {
       tdes = log_Gl.trantable.all_tdes[tran_index] = &area->tdesarea[i];
       logtb_initialize_tdes (tdes, i);
@@ -234,8 +223,8 @@ logtb_allocate_tdes_area (int num_indices)
 static int
 logtb_expand_trantable (THREAD_ENTRY * thread_p, int num_new_indices)
 {
-  LOG_ADDR_TDESAREA *area;	/* Contiguous area for new transaction indices */
-  int total_indices;		/* Total number of transaction indices */
+  LOG_ADDR_TDESAREA *area;      /* Contiguous area for new transaction indices */
+  int total_indices;            /* Total number of transaction indices */
 #if 0
   int groupid_size, bitmap_size;
   char *groupid_bitmap;
@@ -249,8 +238,7 @@ logtb_expand_trantable (THREAD_ENTRY * thread_p, int num_new_indices)
    * just return.
    */
   total_indices = MAX_NTRANS;
-  if (log_Gl.rcv_phase == LOG_RESTARTED
-      && total_indices <= NUM_TOTAL_TRAN_INDICES)
+  if (log_Gl.rcv_phase == LOG_RESTARTED && total_indices <= NUM_TOTAL_TRAN_INDICES)
     {
       return NO_ERROR;
     }
@@ -258,12 +246,11 @@ logtb_expand_trantable (THREAD_ENTRY * thread_p, int num_new_indices)
 
   while (num_new_indices > LOG_MAX_NUM_CONTIGUOUS_TDES)
     {
-      error_code =
-	logtb_expand_trantable (thread_p, LOG_MAX_NUM_CONTIGUOUS_TDES);
+      error_code = logtb_expand_trantable (thread_p, LOG_MAX_NUM_CONTIGUOUS_TDES);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
       num_new_indices -= LOG_MAX_NUM_CONTIGUOUS_TDES;
     }
 
@@ -286,12 +273,10 @@ logtb_expand_trantable (THREAD_ENTRY * thread_p, int num_new_indices)
    * Nobody should have pointer to transaction table
    */
   i = total_indices * sizeof (*log_Gl.trantable.all_tdes);
-  log_Gl.trantable.all_tdes =
-    (LOG_TDES **) realloc (log_Gl.trantable.all_tdes, i);
+  log_Gl.trantable.all_tdes = (LOG_TDES **) realloc (log_Gl.trantable.all_tdes, i);
   if (log_Gl.trantable.all_tdes == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, i);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, i);
       error_code = ER_OUT_OF_VIRTUAL_MEMORY;
       goto error;
     }
@@ -346,9 +331,7 @@ error:
  *              number of expected transactions.
  */
 void
-logtb_define_trantable (THREAD_ENTRY * thread_p,
-			int num_expected_tran_indices,
-			UNUSED_ARG int num_expected_locks)
+logtb_define_trantable (THREAD_ENTRY * thread_p, int num_expected_tran_indices, UNUSED_ARG int num_expected_locks)
 {
   logtb_set_to_system_tran_index (thread_p);
 
@@ -360,8 +343,7 @@ logtb_define_trantable (THREAD_ENTRY * thread_p,
       logpb_finalize_pool ();
     }
 
-  (void) logtb_define_trantable_log_latch (thread_p,
-					   num_expected_tran_indices);
+  (void) logtb_define_trantable_log_latch (thread_p, num_expected_tran_indices);
 
   logtb_set_to_system_tran_index (thread_p);
 
@@ -383,8 +365,7 @@ logtb_define_trantable (THREAD_ENTRY * thread_p,
  *              other uses).
  */
 int
-logtb_define_trantable_log_latch (THREAD_ENTRY * thread_p,
-				  int num_expected_tran_indices)
+logtb_define_trantable_log_latch (THREAD_ENTRY * thread_p, int num_expected_tran_indices)
 {
   int error_code = NO_ERROR;
 
@@ -400,8 +381,7 @@ logtb_define_trantable_log_latch (THREAD_ENTRY * thread_p,
    */
   num_expected_tran_indices = MAX (num_expected_tran_indices, MAX_NTRANS);
 
-  num_expected_tran_indices = MAX (num_expected_tran_indices,
-				   LOG_SYSTEM_TRAN_INDEX + 1);
+  num_expected_tran_indices = MAX (num_expected_tran_indices, LOG_SYSTEM_TRAN_INDEX + 1);
 
   /* If there is an already defined table, free such a table */
   if (log_Gl.trantable.area != NULL)
@@ -427,32 +407,28 @@ logtb_define_trantable_log_latch (THREAD_ENTRY * thread_p,
        * try again with defaults.
        */
       if (log_Gl.trantable.area != NULL)
-	{
-	  logtb_undefine_trantable (thread_p);
-	}
+        {
+          logtb_undefine_trantable (thread_p);
+        }
 
 #if defined(SERVER_MODE)
-      if (num_expected_tran_indices <= LOG_ESTIMATE_NACTIVE_TRANS
-	  || log_Gl.rcv_phase == LOG_RESTARTED)
+      if (num_expected_tran_indices <= LOG_ESTIMATE_NACTIVE_TRANS || log_Gl.rcv_phase == LOG_RESTARTED)
 #else /* SERVER_MODE */
       if (num_expected_tran_indices <= LOG_ESTIMATE_NACTIVE_TRANS)
 #endif /* SERVER_MODE */
-	{
-	  /* Out of memory */
-	  logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
-			     "log_def_trantable");
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          /* Out of memory */
+          logpb_fatal_error (thread_p, true, ARG_FILE_LINE, "log_def_trantable");
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
       else
-	{
-	  error_code =
-	    logtb_define_trantable_log_latch (thread_p,
-					      LOG_ESTIMATE_NACTIVE_TRANS);
-	  return error_code;
-	}
+        {
+          error_code = logtb_define_trantable_log_latch (thread_p, LOG_ESTIMATE_NACTIVE_TRANS);
+          return error_code;
+        }
     }
 
-  logtb_set_number_of_assigned_tran_indices (1);	/* sys tran */
+  logtb_set_number_of_assigned_tran_indices (1);        /* sys tran */
 
   /*
    * Assign the first entry for the system transaction. System transaction
@@ -461,8 +437,7 @@ logtb_define_trantable_log_latch (THREAD_ENTRY * thread_p,
   error_code = logtb_initialize_system_tdes (thread_p);
   if (error_code != NO_ERROR)
     {
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_UNKNOWN_TRANINDEX, 1, LOG_SYSTEM_TRAN_INDEX);
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_UNKNOWN_TRANINDEX, 1, LOG_SYSTEM_TRAN_INDEX);
       logpb_fatal_error (thread_p, true, ARG_FILE_LINE, "log_def_trantable");
       return error_code;
     }
@@ -531,10 +506,8 @@ logtb_initialize_system_tdes (THREAD_ENTRY * thread_p)
   tdes = LOG_FIND_TDES (LOG_SYSTEM_TRAN_INDEX);
   if (tdes == NULL)
     {
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_UNKNOWN_TRANINDEX, 1, LOG_SYSTEM_TRAN_INDEX);
-      logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
-			 "log_initialize_system_tdes");
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_UNKNOWN_TRANINDEX, 1, LOG_SYSTEM_TRAN_INDEX);
+      logpb_fatal_error (thread_p, true, ARG_FILE_LINE, "log_initialize_system_tdes");
       return ER_LOG_UNKNOWN_TRANINDEX;
     }
 
@@ -543,8 +516,7 @@ logtb_initialize_system_tdes (THREAD_ENTRY * thread_p)
   tdes->trid = LOG_SYSTEM_TRANID;
   tdes->wait_msecs = TRAN_LOCK_INFINITE_WAIT;
   tdes->client_id = NULL_CLIENT_ID;
-  logtb_set_client_ids_all (&tdes->client, -1, NULL, NULL, NULL, NULL, NULL,
-			    -1);
+  logtb_set_client_ids_all (&tdes->client, -1, NULL, NULL, NULL, NULL, NULL, -1);
   tdes->query_timeout = 0;
   tdes->tran_abort_reason = TRAN_NORMAL;
 
@@ -562,7 +534,7 @@ void
 logtb_undefine_trantable (THREAD_ENTRY * thread_p)
 {
   struct log_addr_tdesarea *area;
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int i;
 
   lock_finalize ();
@@ -576,40 +548,40 @@ logtb_undefine_trantable (THREAD_ENTRY * thread_p)
        * free this area
        */
       for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
-	{
-	  /*
-	   * If there is any memory allocated in the transaction descriptor,
-	   * release it
-	   */
-	  tdes = LOG_FIND_TDES (i);
-	  if (tdes != NULL)
-	    {
-	      logtb_clear_tdes (thread_p, tdes);
-	      csect_finalize_critical_section (&tdes->cs_topop);
-	      if (tdes->topops.max != 0)
-		{
-		  free_and_init (tdes->topops.stack);
-		  tdes->topops.max = 0;
-		  tdes->topops.last = -1;
-		}
-	    }
-	}
+        {
+          /*
+           * If there is any memory allocated in the transaction descriptor,
+           * release it
+           */
+          tdes = LOG_FIND_TDES (i);
+          if (tdes != NULL)
+            {
+              logtb_clear_tdes (thread_p, tdes);
+              csect_finalize_critical_section (&tdes->cs_topop);
+              if (tdes->topops.max != 0)
+                {
+                  free_and_init (tdes->topops.stack);
+                  tdes->topops.max = 0;
+                  tdes->topops.last = -1;
+                }
+            }
+        }
 
 #if defined(ENABLE_UNUSED_FUNCTION)
       wfg_free_nodes (thread_p);
 #endif
 
       if (log_Gl.trantable.all_tdes != NULL)
-	{
-	  free_and_init (log_Gl.trantable.all_tdes);
-	}
+        {
+          free_and_init (log_Gl.trantable.all_tdes);
+        }
 
       area = log_Gl.trantable.area;
       while (area != NULL)
-	{
-	  log_Gl.trantable.area = area->next;
-	  free_and_init (area);
-	}
+        {
+          log_Gl.trantable.area = area->next;
+          free_and_init (area);
+        }
     }
 
   logtb_initialize_trantable (&log_Gl.trantable);
@@ -739,10 +711,9 @@ logtb_am_i_dba_client (THREAD_ENTRY * thread_p)
  */
 int
 logtb_assign_tran_index (THREAD_ENTRY * thread_p,
-			 const BOOT_CLIENT_CREDENTIAL * client_credential,
-			 TRAN_STATE * current_state, int wait_msecs)
+                         const BOOT_CLIENT_CREDENTIAL * client_credential, TRAN_STATE * current_state, int wait_msecs)
 {
-  int tran_index;		/* The allocated transaction index */
+  int tran_index;               /* The allocated transaction index */
 
 #if defined(SERVER_MODE)
   if (thread_p == NULL)
@@ -755,8 +726,7 @@ logtb_assign_tran_index (THREAD_ENTRY * thread_p,
 
   TR_TABLE_LOCK (thread_p);
   tran_index =
-    logtb_allocate_tran_index (thread_p, LOG_SYSTEM_TRANID, TRAN_ACTIVE,
-			       client_credential, current_state, wait_msecs);
+    logtb_allocate_tran_index (thread_p, LOG_SYSTEM_TRANID, TRAN_ACTIVE, client_credential, current_state, wait_msecs);
   TR_TABLE_UNLOCK (thread_p);
 
   if (tran_index != NULL_TRAN_INDEX)
@@ -785,8 +755,7 @@ logtb_assign_tran_index (THREAD_ENTRY * thread_p,
  */
 static void
 logtb_set_tdes (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_TDES * tdes,
-		const BOOT_CLIENT_CREDENTIAL * client_credential,
-		int wait_msecs)
+                const BOOT_CLIENT_CREDENTIAL * client_credential, int wait_msecs)
 {
 #if defined(SERVER_MODE)
   CSS_CONN_ENTRY *conn;
@@ -797,12 +766,10 @@ logtb_set_tdes (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_TDES * tdes,
       client_credential = &log_Client_credential;
     }
   logtb_set_client_ids_all (&tdes->client, client_credential->client_type,
-			    client_credential->client_info,
-			    client_credential->db_user,
-			    client_credential->program_name,
-			    client_credential->login_name,
-			    client_credential->host_name,
-			    client_credential->process_id);
+                            client_credential->client_info,
+                            client_credential->db_user,
+                            client_credential->program_name,
+                            client_credential->login_name, client_credential->host_name, client_credential->process_id);
 #if defined(SERVER_MODE)
   if (thread_p == NULL)
     {
@@ -866,15 +833,14 @@ logtb_set_tdes (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_TDES * tdes,
  */
 static int
 logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
-			   TRAN_STATE state,
-			   const BOOT_CLIENT_CREDENTIAL * client_credential,
-			   TRAN_STATE * current_state, int wait_msecs)
+                           TRAN_STATE state,
+                           const BOOT_CLIENT_CREDENTIAL * client_credential, TRAN_STATE * current_state, int wait_msecs)
 {
   int i;
   int visited_loop_start_pos;
-  LOG_TDES *tdes;		/* Transaction descriptor */
-  int tran_index;		/* The assigned index */
-  UNUSED_VAR int save_tran_index;	/* Save as a good index to assign */
+  LOG_TDES *tdes;               /* Transaction descriptor */
+  int tran_index;               /* The assigned index */
+  UNUSED_VAR int save_tran_index;       /* Save as a good index to assign */
   int assigned_tran_indics, total_tran_indices;
 
 #if defined(SERVER_MODE)
@@ -896,20 +862,18 @@ logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
 #if defined(SERVER_MODE)
       /* When normal processing, we never expand trantable */
       if (log_Gl.rcv_phase == LOG_RESTARTED && total_tran_indices > 0)
-	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_TM_TOO_MANY_CLIENTS, 1, total_tran_indices - 1);
-	  return NULL_TRAN_INDEX;
-	}
+        {
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_TM_TOO_MANY_CLIENTS, 1, total_tran_indices - 1);
+          return NULL_TRAN_INDEX;
+        }
 #endif /* SERVER_MODE */
 
-      i = (int) (((float) total_tran_indices * LOG_EXPAND_TRANTABLE_RATIO)
-		 + 0.5);
+      i = (int) (((float) total_tran_indices * LOG_EXPAND_TRANTABLE_RATIO) + 0.5);
       if (logtb_expand_trantable (thread_p, i) != NO_ERROR)
-	{
-	  /* Out of memory or something like that */
-	  return NULL_TRAN_INDEX;
-	}
+        {
+          /* Out of memory or something like that */
+          return NULL_TRAN_INDEX;
+        }
     }
 
   /*
@@ -917,35 +881,31 @@ logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
    * tran_index.
    */
   for (i = log_Gl.trantable.hint_free_index, visited_loop_start_pos = 0;
-       tran_index == NULL_TRAN_INDEX && visited_loop_start_pos < 2;
-       i = (i + 1) % NUM_TOTAL_TRAN_INDICES)
+       tran_index == NULL_TRAN_INDEX && visited_loop_start_pos < 2; i = (i + 1) % NUM_TOTAL_TRAN_INDICES)
     {
       tdes = LOG_FIND_TDES (i);
-      if (tdes != NULL && tdes->client_id == NULL_CLIENT_ID
-	  && tdes->trid == NULL_TRANID)
-	{
-	  tran_index = i;
-	}
+      if (tdes != NULL && tdes->client_id == NULL_CLIENT_ID && tdes->trid == NULL_TRANID)
+        {
+          tran_index = i;
+        }
       if (i == log_Gl.trantable.hint_free_index)
-	{
-	  visited_loop_start_pos++;
-	}
+        {
+          visited_loop_start_pos++;
+        }
     }
 
   if (tran_index != NULL_TRAN_INDEX)
     {
-      log_Gl.trantable.hint_free_index =
-	(tran_index + 1) % NUM_TOTAL_TRAN_INDICES;
+      log_Gl.trantable.hint_free_index = (tran_index + 1) % NUM_TOTAL_TRAN_INDICES;
 
       logtb_increment_number_of_assigned_tran_indices ();
 
       tdes = LOG_FIND_TDES (tran_index);
       if (tdes == NULL)
-	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_UNKNOWN_TRANINDEX, 1, tran_index);
-	  return NULL_TRAN_INDEX;
-	}
+        {
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_UNKNOWN_TRANINDEX, 1, tran_index);
+          return NULL_TRAN_INDEX;
+        }
 
       logtb_clear_tdes (thread_p, tdes);
       logtb_set_tdes (thread_p, tdes, client_credential, wait_msecs);
@@ -954,9 +914,9 @@ logtb_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
       tdes->state = state;
 
       if (current_state)
-	{
-	  *current_state = state;
-	}
+        {
+          *current_state = state;
+        }
 
       logtb_set_current_tran_index (thread_p, tran_index);
 
@@ -1010,10 +970,9 @@ logtb_tran_is_allowed_modification (THREAD_ENTRY * thread_p)
  *              (the analysis phase).
  */
 LOG_TDES *
-logtb_rv_find_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
-				   const LOG_LSA * log_lsa)
+logtb_rv_find_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid, const LOG_LSA * log_lsa)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int tran_index;
 
   /*
@@ -1026,24 +985,21 @@ logtb_rv_find_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
     {
       /* Define the index */
       tran_index = logtb_allocate_tran_index (thread_p, trid,
-					      TRAN_UNACTIVE_UNILATERALLY_ABORTED,
-					      NULL, NULL,
-					      TRAN_LOCK_INFINITE_WAIT);
+                                              TRAN_UNACTIVE_UNILATERALLY_ABORTED, NULL, NULL, TRAN_LOCK_INFINITE_WAIT);
       tdes = LOG_FIND_TDES (tran_index);
       if (tran_index == NULL_TRAN_INDEX || tdes == NULL)
-	{
-	  /*
-	   * Unable to assign a transaction index. The recovery process
-	   * cannot continue
-	   */
-	  logpb_fatal_error (thread_p, true, ARG_FILE_LINE,
-			     "log_recovery_find_or_alloc");
-	  return NULL;
-	}
+        {
+          /*
+           * Unable to assign a transaction index. The recovery process
+           * cannot continue
+           */
+          logpb_fatal_error (thread_p, true, ARG_FILE_LINE, "log_recovery_find_or_alloc");
+          return NULL;
+        }
       else
-	{
-	  LSA_COPY (&tdes->begin_lsa, log_lsa);
-	}
+        {
+          LSA_COPY (&tdes->begin_lsa, log_lsa);
+        }
     }
   else
     {
@@ -1069,7 +1025,7 @@ logtb_rv_find_allocate_tran_index (THREAD_ENTRY * thread_p, TRANID trid,
 void
 logtb_release_tran_index (THREAD_ENTRY * thread_p, int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   qmgr_clear_trans_wakeup (thread_p, tran_index, true, false);
 
@@ -1084,11 +1040,11 @@ logtb_release_tran_index (THREAD_ENTRY * thread_p, int tran_index)
        * not be freed (i.e., left as loose end distributed transaction)
        */
       if (tdes->topops.max != 0)
-	{
-	  free_and_init (tdes->topops.stack);
-	  tdes->topops.max = 0;
-	  tdes->topops.last = -1;
-	}
+        {
+          free_and_init (tdes->topops.stack);
+          tdes->topops.max = 0;
+          tdes->topops.last = -1;
+        }
 
       logtb_free_tran_index (thread_p, tran_index);
 
@@ -1113,7 +1069,7 @@ logtb_release_tran_index (THREAD_ENTRY * thread_p, int tran_index)
 void
 logtb_free_tran_index (THREAD_ENTRY * thread_p, int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int log_tran_index;
 
 #if defined(SERVER_MODE)
@@ -1129,8 +1085,7 @@ logtb_free_tran_index (THREAD_ENTRY * thread_p, int tran_index)
   if (tran_index > NUM_TOTAL_TRAN_INDICES || tdes == NULL)
     {
 #if defined(RYE_DEBUG)
-      er_log_debug (ARG_FILE_LINE, "log_free_tran_index: Unknown index = %d."
-		    " Operation is ignored", tran_index);
+      er_log_debug (ARG_FILE_LINE, "log_free_tran_index: Unknown index = %d." " Operation is ignored", tran_index);
 #endif /* RYE_DEBUG */
       return;
     }
@@ -1156,24 +1111,24 @@ logtb_free_tran_index (THREAD_ENTRY * thread_p, int tran_index)
       TR_TABLE_LOCK (thread_p);
       logtb_decrement_number_of_assigned_tran_indices ();
       if (log_Gl.trantable.hint_free_index > tran_index)
-	{
-	  log_Gl.trantable.hint_free_index = tran_index;
-	}
+        {
+          log_Gl.trantable.hint_free_index = tran_index;
+        }
       TR_TABLE_UNLOCK (thread_p);
 
       if (log_tran_index == tran_index)
-	{
-	  if (!LOG_ISRESTARTED ())
-	    {
-	      log_tran_index = LOG_SYSTEM_TRAN_INDEX;
-	    }
-	  else
-	    {
-	      log_tran_index = NULL_TRAN_INDEX;
-	    }
+        {
+          if (!LOG_ISRESTARTED ())
+            {
+              log_tran_index = LOG_SYSTEM_TRAN_INDEX;
+            }
+          else
+            {
+              log_tran_index = NULL_TRAN_INDEX;
+            }
 
-	  logtb_set_current_tran_index (thread_p, log_tran_index);
-	}
+          logtb_set_current_tran_index (thread_p, log_tran_index);
+        }
     }
 }
 
@@ -1191,30 +1146,28 @@ logtb_free_tran_index (THREAD_ENTRY * thread_p, int tran_index)
  *              a system error happens, which in principle never happen.
  */
 void
-logtb_free_tran_index_with_undo_lsa (THREAD_ENTRY * thread_p,
-				     const LOG_LSA * undo_lsa)
+logtb_free_tran_index_with_undo_lsa (THREAD_ENTRY * thread_p, const LOG_LSA * undo_lsa)
 {
   int i;
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   TR_TABLE_LOCK (thread_p);
 
   if (undo_lsa != NULL && !LSA_ISNULL (undo_lsa))
     {
       for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
-	{
-	  if (i != LOG_SYSTEM_TRAN_INDEX)
-	    {
-	      tdes = LOG_FIND_TDES (i);
-	      if (tdes != NULL
-		  && tdes->trid != NULL_TRANID
-		  && tdes->state == TRAN_UNACTIVE_UNILATERALLY_ABORTED
-		  && LSA_EQ (undo_lsa, &tdes->undo_nxlsa))
-		{
-		  logtb_free_tran_index (thread_p, i);
-		}
-	    }
-	}
+        {
+          if (i != LOG_SYSTEM_TRAN_INDEX)
+            {
+              tdes = LOG_FIND_TDES (i);
+              if (tdes != NULL
+                  && tdes->trid != NULL_TRANID
+                  && tdes->state == TRAN_UNACTIVE_UNILATERALLY_ABORTED && LSA_EQ (undo_lsa, &tdes->undo_nxlsa))
+                {
+                  logtb_free_tran_index (thread_p, i);
+                }
+            }
+        }
     }
 
   TR_TABLE_UNLOCK (thread_p);
@@ -1233,27 +1186,26 @@ static void
 logtb_dump_tdes (FILE * out_fp, LOG_TDES * tdes)
 {
   fprintf (out_fp, "Tran_index = %2d, Trid = %d,\n"
-	   "    State = %s,\n"
-	   "    Isolation = %s,\n"
-	   "    Wait_msecs = %d\n"
-	   "    Head_lsa = %lld|%d, Tail_lsa = %lld|%d,"
-	   " Postpone_lsa = %lld|%d,\n"
-	   "    SaveLSA = %lld|%d, UndoNextLSA = %lld|%d,\n"
-	   "    Client_User: (Type = %d, User = %s, Program = %s, "
-	   "Login = %s, Host = %s, Pid = %d)\n"
-	   "\n",
-	   tdes->tran_index, tdes->trid,
-	   log_state_string (tdes->state),
-	   log_isolation_string (TRAN_DEFAULT_ISOLATION),
-	   tdes->wait_msecs,
-	   (long long int) tdes->begin_lsa.pageid, tdes->begin_lsa.offset,
-	   (long long int) tdes->last_lsa.pageid, tdes->last_lsa.offset,
-	   (long long int) tdes->posp_nxlsa.pageid, tdes->posp_nxlsa.offset,
-	   (long long int) tdes->savept_lsa.pageid, tdes->savept_lsa.offset,
-	   (long long int) tdes->undo_nxlsa.pageid, tdes->undo_nxlsa.offset,
-	   tdes->client.client_type, tdes->client.db_user,
-	   tdes->client.program_name, tdes->client.login_name,
-	   tdes->client.host_name, tdes->client.process_id);
+           "    State = %s,\n"
+           "    Isolation = %s,\n"
+           "    Wait_msecs = %d\n"
+           "    Head_lsa = %lld|%d, Tail_lsa = %lld|%d,"
+           " Postpone_lsa = %lld|%d,\n"
+           "    SaveLSA = %lld|%d, UndoNextLSA = %lld|%d,\n"
+           "    Client_User: (Type = %d, User = %s, Program = %s, "
+           "Login = %s, Host = %s, Pid = %d)\n"
+           "\n",
+           tdes->tran_index, tdes->trid,
+           log_state_string (tdes->state),
+           log_isolation_string (TRAN_DEFAULT_ISOLATION),
+           tdes->wait_msecs,
+           (long long int) tdes->begin_lsa.pageid, tdes->begin_lsa.offset,
+           (long long int) tdes->last_lsa.pageid, tdes->last_lsa.offset,
+           (long long int) tdes->posp_nxlsa.pageid, tdes->posp_nxlsa.offset,
+           (long long int) tdes->savept_lsa.pageid, tdes->savept_lsa.offset,
+           (long long int) tdes->undo_nxlsa.pageid, tdes->undo_nxlsa.offset,
+           tdes->client.client_type, tdes->client.db_user,
+           tdes->client.program_name, tdes->client.login_name, tdes->client.host_name, tdes->client.process_id);
 
   if (tdes->topops.max != 0 && tdes->topops.last >= 0)
     {
@@ -1279,10 +1231,9 @@ logtb_dump_top_operations (FILE * out_fp, LOG_TOPOPS_STACK * topops_p)
   for (i = topops_p->last; i >= 0; i--)
     {
       fprintf (out_fp, " Head = %lld|%d, Posp_Head = %lld|%d\n",
-	       (long long int) topops_p->stack[i].lastparent_lsa.pageid,
-	       topops_p->stack[i].lastparent_lsa.offset,
-	       (long long int) topops_p->stack[i].posp_lsa.pageid,
-	       topops_p->stack[i].posp_lsa.offset);
+               (long long int) topops_p->stack[i].lastparent_lsa.pageid,
+               topops_p->stack[i].lastparent_lsa.offset,
+               (long long int) topops_p->stack[i].posp_lsa.pageid, topops_p->stack[i].posp_lsa.offset);
     }
 }
 
@@ -1298,7 +1249,7 @@ void
 xlogtb_dump_trantable (UNUSED_ARG THREAD_ENTRY * thread_p, FILE * out_fp)
 {
   int i;
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   fprintf (out_fp, "\n ** DUMPING TABLE OF ACTIVE TRANSACTIONS **\n");
 
@@ -1308,13 +1259,13 @@ xlogtb_dump_trantable (UNUSED_ARG THREAD_ENTRY * thread_p, FILE * out_fp)
     {
       tdes = LOG_FIND_TDES (i);
       if (tdes == NULL || tdes->trid == NULL_TRANID)
-	{
-	  fprintf (out_fp, "Tran_index = %2d... Free transaction index\n", i);
-	}
+        {
+          fprintf (out_fp, "Tran_index = %2d... Free transaction index\n", i);
+        }
       else
-	{
-	  logtb_dump_tdes (out_fp, tdes);
-	}
+        {
+          logtb_dump_tdes (out_fp, tdes);
+        }
     }
 
   TR_TABLE_UNLOCK (thread_p);
@@ -1332,8 +1283,7 @@ logtb_commit_lsa (THREAD_ENTRY * thread_p)
   LOG_LSA min_lsa, commit_lsa;
   bool exists_ddl_tran = false;
 
-  logtb_find_smallest_begin_lsa_without_ddl_tran (thread_p, &min_lsa,
-						  &exists_ddl_tran);
+  logtb_find_smallest_begin_lsa_without_ddl_tran (thread_p, &min_lsa, &exists_ddl_tran);
   if (exists_ddl_tran == false)
     {
       LSA_SET_NULL (&min_lsa);
@@ -1342,9 +1292,9 @@ logtb_commit_lsa (THREAD_ENTRY * thread_p)
   else
     {
       if (LSA_ISNULL (&min_lsa))
-	{
-	  prior_lsa_get_current_lsa (thread_p, &min_lsa);
-	}
+        {
+          prior_lsa_get_current_lsa (thread_p, &min_lsa);
+        }
 
 #if !defined(NDEBUG)
       logtb_get_commit_lsa (&commit_lsa);
@@ -1392,9 +1342,9 @@ logtb_clear_tdes (THREAD_ENTRY * thread_p, LOG_TDES * tdes)
       assert (error == NO_ERROR);
 
       if (tdes->type == TRAN_TYPE_DML)
-	{
-	  need_commit_lsa = true;
-	}
+        {
+          need_commit_lsa = true;
+        }
     }
 
   tdes->type = TRAN_TYPE_UNKNOWN;
@@ -1429,25 +1379,24 @@ logtb_clear_tdes (THREAD_ENTRY * thread_p, LOG_TDES * tdes)
   for (i = 0; i < tdes->cur_repl_record; i++)
     {
       if (tdes->repl_records[i].repl_data)
-	{
-	  free_and_init (tdes->repl_records[i].repl_data);
-	}
+        {
+          free_and_init (tdes->repl_records[i].repl_data);
+        }
     }
 
-  for (i = 0; i < tdes->num_exec_queries && i < MAX_NUM_EXEC_QUERY_HISTORY;
-       i++)
+  for (i = 0; i < tdes->num_exec_queries && i < MAX_NUM_EXEC_QUERY_HISTORY; i++)
     {
       if (tdes->bind_history[i].vals == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       dbval = tdes->bind_history[i].vals;
       for (j = 0; j < tdes->bind_history[i].size; j++)
-	{
-	  db_value_clear (dbval);
-	  dbval++;
-	}
+        {
+          db_value_clear (dbval);
+          dbval++;
+        }
 
       free_and_init (tdes->bind_history[i].vals);
       tdes->bind_history[i].size = 0;
@@ -1474,17 +1423,16 @@ logtb_clear_tdes (THREAD_ENTRY * thread_p, LOG_TDES * tdes)
 
   tdes->is_allowed_modification = true;
 
-  tdes->tran_group_id = NULL_GROUPID;	/* init */
+  tdes->tran_group_id = NULL_GROUPID;   /* init */
 
   if (tdes->bk_session != NULL)
     {
 #if defined(SERVER_MODE)
       LOG_CS_ENTER (thread_p);
       if (tdes->bk_session->saved_run_nxchkpt_atpageid != NULL_PAGEID)
-	{
-	  log_Gl.run_nxchkpt_atpageid =
-	    tdes->bk_session->saved_run_nxchkpt_atpageid;
-	}
+        {
+          log_Gl.run_nxchkpt_atpageid = tdes->bk_session->saved_run_nxchkpt_atpageid;
+        }
       log_Gl.backup_in_progress = false;
       LOG_CS_EXIT ();
 #endif /* SERVER_MODE */
@@ -1548,8 +1496,8 @@ logtb_initialize_tdes (LOG_TDES * tdes, int tran_index)
   LSA_SET_NULL (&tdes->topop_lsa);
   LSA_SET_NULL (&tdes->tail_topresult_lsa);
 
-  tdes->cs_topop.cs_index = CSECT_UNKNOWN;	/* leave me as is */
-  tdes->cs_topop.name = NULL;	/* leave me as is */
+  tdes->cs_topop.cs_index = CSECT_UNKNOWN;      /* leave me as is */
+  tdes->cs_topop.name = NULL;   /* leave me as is */
   csect_initialize_critical_section (&tdes->cs_topop);
 
   tdes->topops.stack = NULL;
@@ -1582,7 +1530,7 @@ logtb_initialize_tdes (LOG_TDES * tdes, int tran_index)
     }
 
   DB_MAKE_NULL (&tdes->tran_shard_key);
-  tdes->tran_group_id = NULL_GROUPID;	/* init */
+  tdes->tran_group_id = NULL_GROUPID;   /* init */
   tdes->bk_session = NULL;
 }
 
@@ -1608,13 +1556,13 @@ logtb_start_transaction_if_needed (THREAD_ENTRY * thread_p)
     {
       trid = logtb_get_new_tran_id (thread_p, tdes);
       if (BOOT_WRITE_ON_STANDY_CLIENT_TYPE (tdes->client.client_type))
-	{
-	  tdes->is_allowed_modification = true;
-	}
+        {
+          tdes->is_allowed_modification = true;
+        }
       else
-	{
-	  tdes->is_allowed_modification = db_is_allowed_modification ();
-	}
+        {
+          tdes->is_allowed_modification = db_is_allowed_modification ();
+        }
     }
   else
     {
@@ -1659,8 +1607,7 @@ logtb_append_working_tran (int tran_index)
   if (working_tran == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, sizeof (WORKING_TRAN));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (WORKING_TRAN));
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1679,16 +1626,14 @@ logtb_append_working_tran (int tran_index)
       log_Gl.trantable.working_tran_list_tail->next = working_tran;
 #if !defined(NDEBUG)
       {
-	LOG_TDES *tail_tdes, *current_tdes;
+        LOG_TDES *tail_tdes, *current_tdes;
 
-	tail_tdes =
-	  LOG_FIND_TDES (log_Gl.trantable.working_tran_list_tail->tran_index);
-	current_tdes = LOG_FIND_TDES (working_tran->tran_index);
+        tail_tdes = LOG_FIND_TDES (log_Gl.trantable.working_tran_list_tail->tran_index);
+        current_tdes = LOG_FIND_TDES (working_tran->tran_index);
 
-	assert (tail_tdes != NULL && current_tdes != NULL
-		&& tail_tdes->trid != NULL_TRANID
-		&& current_tdes->trid != NULL_TRANID
-		&& LSA_LE (&tail_tdes->begin_lsa, &current_tdes->begin_lsa));
+        assert (tail_tdes != NULL && current_tdes != NULL
+                && tail_tdes->trid != NULL_TRANID
+                && current_tdes->trid != NULL_TRANID && LSA_LE (&tail_tdes->begin_lsa, &current_tdes->begin_lsa));
       }
 #endif
     }
@@ -1727,26 +1672,25 @@ logtb_remove_working_tran (int tran_index)
 {
   WORKING_TRAN *current, *prev;
 
-  for (prev = NULL, current = log_Gl.trantable.working_tran_list_head;
-       current != NULL; current = current->next)
+  for (prev = NULL, current = log_Gl.trantable.working_tran_list_head; current != NULL; current = current->next)
     {
 #if !defined(NDEBUG)
       if (prev != NULL)
-	{
-	  LOG_TDES *prev_tdes, *current_tdes;
+        {
+          LOG_TDES *prev_tdes, *current_tdes;
 
-	  prev_tdes = LOG_FIND_TDES (prev->tran_index);
-	  current_tdes = LOG_FIND_TDES (current->tran_index);
+          prev_tdes = LOG_FIND_TDES (prev->tran_index);
+          current_tdes = LOG_FIND_TDES (current->tran_index);
 
-	  assert (prev_tdes != NULL);
-	  assert (current_tdes != NULL);
-	  assert (LSA_LE (&prev_tdes->begin_lsa, &current_tdes->begin_lsa));
-	}
+          assert (prev_tdes != NULL);
+          assert (current_tdes != NULL);
+          assert (LSA_LE (&prev_tdes->begin_lsa, &current_tdes->begin_lsa));
+        }
 #endif
       if (current->tran_index == tran_index)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       prev = current;
     }
@@ -1766,10 +1710,10 @@ logtb_remove_working_tran (int tran_index)
       current->next = NULL;
 
       if (current == log_Gl.trantable.working_tran_list_tail)
-	{
-	  log_Gl.trantable.working_tran_list_tail = NULL;
-	  assert (log_Gl.trantable.working_tran_list_head == NULL);
-	}
+        {
+          log_Gl.trantable.working_tran_list_tail = NULL;
+          assert (log_Gl.trantable.working_tran_list_head == NULL);
+        }
     }
   else
     {
@@ -1779,9 +1723,9 @@ logtb_remove_working_tran (int tran_index)
       current->next = NULL;
 
       if (current == log_Gl.trantable.working_tran_list_tail)
-	{
-	  log_Gl.trantable.working_tran_list_tail = prev;
-	}
+        {
+          log_Gl.trantable.working_tran_list_tail = prev;
+        }
     }
 
   free_and_init (current);
@@ -1823,8 +1767,7 @@ logtb_get_new_tran_id (THREAD_ENTRY * thread_p, LOG_TDES * tdes)
     }
   tdes->state = TRAN_ACTIVE;
 
-  if (BOOT_READ_ONLY_CLIENT_TYPE (client_type)
-      || css_is_client_ro_tran (thread_p) == true)
+  if (BOOT_READ_ONLY_CLIENT_TYPE (client_type) || css_is_client_ro_tran (thread_p) == true)
     {
       tdes->type = TRAN_TYPE_READ_ONLY;
     }
@@ -1832,10 +1775,10 @@ logtb_get_new_tran_id (THREAD_ENTRY * thread_p, LOG_TDES * tdes)
     {
       tdes->type = TRAN_TYPE_DML;
       if (logtb_append_working_tran (tdes->tran_index) != NO_ERROR)
-	{
-	  tdes->trid = NULL_TRANID;
-	  tdes->state = TRAN_UNACTIVE_UNKNOWN;
-	}
+        {
+          tdes->trid = NULL_TRANID;
+          tdes->state = TRAN_UNACTIVE_UNKNOWN;
+        }
     }
 
   TR_TABLE_UNLOCK (thread_p);
@@ -1865,8 +1808,8 @@ int
 logtb_find_tran_index (THREAD_ENTRY * thread_p, TRANID trid)
 {
   int i;
-  int tran_index = NULL_TRAN_INDEX;	/* The transaction index */
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  int tran_index = NULL_TRAN_INDEX;     /* The transaction index */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   /* Avoid searching as much as possible */
   tran_index = logtb_get_current_tran_index (thread_p);
@@ -1878,14 +1821,14 @@ logtb_find_tran_index (THREAD_ENTRY * thread_p, TRANID trid)
       TR_TABLE_LOCK (thread_p);
       /* Search the transaction table for such transaction */
       for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
-	{
-	  tdes = LOG_FIND_TDES (i);
-	  if (tdes != NULL && tdes->trid != NULL_TRANID && tdes->trid == trid)
-	    {
-	      tran_index = i;
-	      break;
-	    }
-	}
+        {
+          tdes = LOG_FIND_TDES (i);
+          if (tdes != NULL && tdes->trid != NULL_TRANID && tdes->trid == trid)
+            {
+              tran_index = i;
+              break;
+            }
+        }
       TR_TABLE_UNLOCK (thread_p);
     }
 
@@ -1902,8 +1845,8 @@ logtb_find_tran_index (THREAD_ENTRY * thread_p, TRANID trid)
 TRANID
 logtb_find_tranid (int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
-  TRANID trid = NULL_TRANID;	/* Transaction index */
+  LOG_TDES *tdes;               /* Transaction descriptor */
+  TRANID trid = NULL_TRANID;    /* Transaction index */
 
   tdes = LOG_FIND_TDES (tran_index);
   if (tdes != NULL)
@@ -1953,7 +1896,7 @@ logtb_find_current_ha_status (UNUSED_ARG THREAD_ENTRY * thread_p)
 static int
 logtb_find_shard_groupid (int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int groupid = NULL_GROUPID;
 
   tdes = LOG_FIND_TDES (tran_index);
@@ -1986,8 +1929,8 @@ logtb_find_current_shard_groupid (THREAD_ENTRY * thread_p)
 static char *
 logtb_find_shard_lockname (int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
-  char *lockname = NULL;	/* shard key lock name */
+  LOG_TDES *tdes;               /* Transaction descriptor */
+  char *lockname = NULL;        /* shard key lock name */
 
   tdes = LOG_FIND_TDES (tran_index);
   if (tdes != NULL)
@@ -2027,31 +1970,22 @@ logtb_find_current_shard_lockname (THREAD_ENTRY * thread_p)
  */
 void
 logtb_set_client_ids_all (LOG_CLIENTIDS * client, int client_type,
-			  const char *client_info, const char *db_user,
-			  const char *program_name, const char *login_name,
-			  const char *host_name, int process_id)
+                          const char *client_info, const char *db_user,
+                          const char *program_name, const char *login_name, const char *host_name, int process_id)
 {
   client->client_type = client_type;
-  strncpy (client->client_info,
-	   (client_info) ? client_info : "", DB_MAX_IDENTIFIER_LENGTH);
+  strncpy (client->client_info, (client_info) ? client_info : "", DB_MAX_IDENTIFIER_LENGTH);
   client->client_info[DB_MAX_IDENTIFIER_LENGTH] = '\0';
-  strncpy (client->db_user,
-	   (db_user) ? db_user : log_Client_id_unknown_string,
-	   LOG_USERNAME_MAX - 1);
+  strncpy (client->db_user, (db_user) ? db_user : log_Client_id_unknown_string, LOG_USERNAME_MAX - 1);
   client->db_user[LOG_USERNAME_MAX - 1] = '\0';
-  if (program_name == NULL
-      || basename_r (program_name, client->program_name, PATH_MAX) < 0)
+  if (program_name == NULL || basename_r (program_name, client->program_name, PATH_MAX) < 0)
     {
       strncpy (client->program_name, log_Client_id_unknown_string, PATH_MAX);
     }
   client->program_name[PATH_MAX] = '\0';
-  strncpy (client->login_name,
-	   (login_name) ? login_name : log_Client_id_unknown_string,
-	   L_cuserid);
+  strncpy (client->login_name, (login_name) ? login_name : log_Client_id_unknown_string, L_cuserid);
   client->login_name[L_cuserid] = '\0';
-  strncpy (client->host_name,
-	   (host_name) ? host_name : log_Client_id_unknown_string,
-	   MAXHOSTNAMELEN);
+  strncpy (client->host_name, (host_name) ? host_name : log_Client_id_unknown_string, MAXHOSTNAMELEN);
   client->host_name[MAXHOSTNAMELEN] = '\0';
   client->process_id = process_id;
 }
@@ -2062,8 +1996,7 @@ logtb_set_client_ids_all (LOG_CLIENTIDS * client, int client_type,
  *
  */
 void
-logtb_shutdown_write_normal_clients (UNUSED_ARG THREAD_ENTRY * thread_p,
-				     bool force)
+logtb_shutdown_write_normal_clients (UNUSED_ARG THREAD_ENTRY * thread_p, bool force)
 {
   LOG_TDES *tdes;
   int i;
@@ -2074,15 +2007,14 @@ logtb_shutdown_write_normal_clients (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       tdes = LOG_FIND_TDES (i);
       if (tdes != NULL && tdes->client_id != NULL_CLIENT_ID)
-	{
-	  if (BOOT_WRITE_NORMAL_CLIENT_TYPE (tdes->client.client_type)
-	      && (force == true || tdes->trid == -1))
-	    {
+        {
+          if (BOOT_WRITE_NORMAL_CLIENT_TYPE (tdes->client.client_type) && (force == true || tdes->trid == -1))
+            {
 #if defined(SERVER_MODE)
-	      css_shutdown_conn_by_tran_index (i);
+              css_shutdown_conn_by_tran_index (i);
 #endif
-	    }
-	}
+            }
+        }
     }
 
   TR_TABLE_UNLOCK (thread_p);
@@ -2105,13 +2037,12 @@ logtb_count_active_write_clients (UNUSED_ARG THREAD_ENTRY * thread_p)
     {
       tdes = LOG_FIND_TDES (i);
       if (tdes != NULL && tdes->client_id != NULL_CLIENT_ID)
-	{
-	  if (BOOT_WRITE_NORMAL_CLIENT_TYPE (tdes->client.client_type)
-	      && tdes->trid != -1)
-	    {
-	      count++;
-	    }
-	}
+        {
+          if (BOOT_WRITE_NORMAL_CLIENT_TYPE (tdes->client.client_type) && tdes->trid != -1)
+            {
+              count++;
+            }
+        }
     }
   TR_TABLE_UNLOCK (thread_p);
 
@@ -2133,7 +2064,7 @@ logtb_find_client_type (int tran_index)
   tdes = LOG_FIND_TDES (tran_index);
   if (tdes != NULL && tdes->client_id != NULL_CLIENT_ID)
     {
-      return tdes->client.client_type;	/* BOOT_CLIENT_TYPE */
+      return tdes->client.client_type;  /* BOOT_CLIENT_TYPE */
     }
 
   return -1;
@@ -2200,10 +2131,9 @@ logtb_find_client_hostname (int tran_index)
  */
 int
 logtb_find_client_name_host_pid (int tran_index, char **client_prog_name,
-				 char **client_user_name,
-				 char **client_host_name, int *client_pid)
+                                 char **client_user_name, char **client_host_name, int *client_pid)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   tdes = LOG_FIND_TDES (tran_index);
 
@@ -2232,10 +2162,9 @@ logtb_find_client_name_host_pid (int tran_index, char **client_prog_name,
  *   client_info(out):
  */
 int
-logtb_get_current_client_ids (THREAD_ENTRY * thread_p,
-			      LOG_CLIENTIDS * client_info)
+logtb_get_current_client_ids (THREAD_ENTRY * thread_p, LOG_CLIENTIDS * client_info)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL || tdes->trid == NULL_TRANID)
@@ -2268,15 +2197,14 @@ logtb_get_current_client_ids (THREAD_ENTRY * thread_p,
  */
 int
 xlogtb_get_pack_tran_table (UNUSED_ARG THREAD_ENTRY * thread_p,
-			    char **buffer_p, int *size_p,
-			    int include_query_exec_info)
+                            char **buffer_p, int *size_p, int include_query_exec_info)
 {
   int error_code = NO_ERROR;
   int num_clients = 0;
   int i;
   int size;
   char *buffer, *ptr;
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 #if defined(SERVER_MODE)
   UINT64 current_msec = 0;
   TRAN_QUERY_EXEC_INFO *query_exec_info = NULL;
@@ -2286,16 +2214,14 @@ xlogtb_get_pack_tran_table (UNUSED_ARG THREAD_ENTRY * thread_p,
 #if defined(SERVER_MODE)
   if (include_query_exec_info)
     {
-      query_exec_info =
-	(TRAN_QUERY_EXEC_INFO *) calloc (NUM_TOTAL_TRAN_INDICES,
-					 sizeof (TRAN_QUERY_EXEC_INFO));
+      query_exec_info = (TRAN_QUERY_EXEC_INFO *) calloc (NUM_TOTAL_TRAN_INDICES, sizeof (TRAN_QUERY_EXEC_INFO));
 
       if (query_exec_info == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, NUM_TOTAL_TRAN_INDICES * sizeof (TRAN_QUERY_EXEC_INFO));
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
+                  1, NUM_TOTAL_TRAN_INDICES * sizeof (TRAN_QUERY_EXEC_INFO));
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
 
       current_msec = thread_get_log_clock_msec ();
     }
@@ -2308,98 +2234,87 @@ xlogtb_get_pack_tran_table (UNUSED_ARG THREAD_ENTRY * thread_p,
 
   TR_TABLE_LOCK (thread_p);
 
-  size = OR_INT_SIZE;		/* Number of client transactions */
+  size = OR_INT_SIZE;           /* Number of client transactions */
 
   /* Find size of needed buffer */
   for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
     {
       tdes = LOG_FIND_TDES (i);
       if (!LOG_IS_CLIENT_ACTIVE (tdes))
-	{
-	  /* The index is not assigned or is system transaction (no-client) */
-	  continue;
-	}
+        {
+          /* The index is not assigned or is system transaction (no-client) */
+          continue;
+        }
 
-      size += 3 * OR_INT_SIZE	/* tran index + tran state + process id */
-	+ or_packed_string_length (tdes->client.db_user, NULL)
-	+ or_packed_string_length (tdes->client.program_name, NULL)
-	+ or_packed_string_length (tdes->client.login_name, NULL)
-	+ or_packed_string_length (tdes->client.host_name, NULL);
+      size += 3 * OR_INT_SIZE   /* tran index + tran state + process id */
+        + or_packed_string_length (tdes->client.db_user, NULL)
+        + or_packed_string_length (tdes->client.program_name, NULL)
+        + or_packed_string_length (tdes->client.login_name, NULL)
+        + or_packed_string_length (tdes->client.host_name, NULL);
 
 #if defined(SERVER_MODE)
       if (include_query_exec_info)
-	{
-	  if (tdes->query_start_time > 0)
-	    {
-	      query_exec_info[i].query_time =
-		(float) (current_msec - tdes->query_start_time) / 1000.0;
-	    }
+        {
+          if (tdes->query_start_time > 0)
+            {
+              query_exec_info[i].query_time = (float) (current_msec - tdes->query_start_time) / 1000.0;
+            }
 
-	  if (tdes->tran_start_time > 0)
-	    {
-	      query_exec_info[i].tran_time =
-		(float) (current_msec - tdes->tran_start_time) / 1000.0;
-	    }
+          if (tdes->tran_start_time > 0)
+            {
+              query_exec_info[i].tran_time = (float) (current_msec - tdes->tran_start_time) / 1000.0;
+            }
 
-	  lock_get_lock_holder_tran_index (thread_p,
-					   &query_exec_info[i].
-					   wait_for_tran_index_string,
-					   tdes->tran_index,
-					   tdes->waiting_for_res);
+          lock_get_lock_holder_tran_index (thread_p,
+                                           &query_exec_info[i].wait_for_tran_index_string,
+                                           tdes->tran_index, tdes->waiting_for_res);
 
-	  if (!XASL_ID_IS_NULL (&tdes->xasl_id))
-	    {
-	      /* retrieve query statement in the xasl_cache entry */
-	      ent =
-		qexec_check_xasl_cache_ent_by_xasl (thread_p, &tdes->xasl_id,
-						    -1, NULL, false);
+          if (!XASL_ID_IS_NULL (&tdes->xasl_id))
+            {
+              /* retrieve query statement in the xasl_cache entry */
+              ent = qexec_check_xasl_cache_ent_by_xasl (thread_p, &tdes->xasl_id, -1, NULL, false);
 
-	      /* entry can be NULL, if xasl cache entry is deleted */
-	      if (ent != NULL)
-		{
-		  if (ent->sql_info.sql_hash_text != NULL)
-		    {
-		      char *sql = ent->sql_info.sql_hash_text;
+              /* entry can be NULL, if xasl cache entry is deleted */
+              if (ent != NULL)
+                {
+                  if (ent->sql_info.sql_hash_text != NULL)
+                    {
+                      char *sql = ent->sql_info.sql_hash_text;
 
-		      if (qmgr_get_sql_id (thread_p,
-					   &query_exec_info[i].sql_id,
-					   sql, strlen (sql)) != NO_ERROR)
-			{
-			  goto error;
-			}
+                      if (qmgr_get_sql_id (thread_p, &query_exec_info[i].sql_id, sql, strlen (sql)) != NO_ERROR)
+                        {
+                          goto error;
+                        }
 
-		      if (ent->sql_info.sql_user_text != NULL)
-			{
-			  sql = ent->sql_info.sql_user_text;
-			}
+                      if (ent->sql_info.sql_user_text != NULL)
+                        {
+                          sql = ent->sql_info.sql_user_text;
+                        }
 
-		      /* copy query string */
-		      query_exec_info[i].query_stmt = strdup (sql);
-		      if (query_exec_info[i].query_stmt == NULL)
-			{
-			  error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-			  goto error;
-			}
-		    }
-		  (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
-								ent, true);
-		}
+                      /* copy query string */
+                      query_exec_info[i].query_stmt = strdup (sql);
+                      if (query_exec_info[i].query_stmt == NULL)
+                        {
+                          error_code = ER_OUT_OF_VIRTUAL_MEMORY;
+                          goto error;
+                        }
+                    }
+                  (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p, ent, true);
+                }
 
-	      /* structure copy */
-	      XASL_ID_COPY (&query_exec_info[i].xasl_id, &tdes->xasl_id);
-	    }
-	  else
-	    {
-	      XASL_ID_SET_NULL (&query_exec_info[i].xasl_id);
-	    }
+              /* structure copy */
+              XASL_ID_COPY (&query_exec_info[i].xasl_id, &tdes->xasl_id);
+            }
+          else
+            {
+              XASL_ID_SET_NULL (&query_exec_info[i].xasl_id);
+            }
 
-	  size += 2 * OR_FLOAT_SIZE	/* query time + tran time */
-	    + or_packed_string_length (query_exec_info[i].
-				       wait_for_tran_index_string, NULL)
-	    + or_packed_string_length (query_exec_info[i].query_stmt, NULL)
-	    + or_packed_string_length (query_exec_info[i].sql_id, NULL)
-	    + OR_XASL_ID_SIZE;
-	}
+          size += 2 * OR_FLOAT_SIZE     /* query time + tran time */
+            + or_packed_string_length (query_exec_info[i].wait_for_tran_index_string, NULL)
+            + or_packed_string_length (query_exec_info[i].query_stmt, NULL)
+            + or_packed_string_length (query_exec_info[i].sql_id, NULL) + OR_XASL_ID_SIZE;
+        }
 #endif
       num_clients++;
     }
@@ -2408,8 +2323,7 @@ xlogtb_get_pack_tran_table (UNUSED_ARG THREAD_ENTRY * thread_p,
   buffer = (char *) malloc (size);
   if (buffer == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       error_code = ER_OUT_OF_VIRTUAL_MEMORY;
       goto error;
     }
@@ -2422,10 +2336,10 @@ xlogtb_get_pack_tran_table (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       tdes = LOG_FIND_TDES (i);
       if (!LOG_IS_CLIENT_ACTIVE (tdes))
-	{
-	  /* The index is not assigned or is system transaction (no-client) */
-	  continue;
-	}
+        {
+          /* The index is not assigned or is system transaction (no-client) */
+          continue;
+        }
 
       ptr = or_pack_int (ptr, tdes->tran_index);
       ptr = or_pack_int (ptr, tdes->state);
@@ -2437,16 +2351,14 @@ xlogtb_get_pack_tran_table (UNUSED_ARG THREAD_ENTRY * thread_p,
 
 #if defined(SERVER_MODE)
       if (include_query_exec_info)
-	{
-	  ptr = or_pack_float (ptr, query_exec_info[i].query_time);
-	  ptr = or_pack_float (ptr, query_exec_info[i].tran_time);
-	  ptr =
-	    or_pack_string (ptr,
-			    query_exec_info[i].wait_for_tran_index_string);
-	  ptr = or_pack_string (ptr, query_exec_info[i].query_stmt);
-	  ptr = or_pack_string (ptr, query_exec_info[i].sql_id);
-	  OR_PACK_XASL_ID (ptr, &query_exec_info[i].xasl_id);
-	}
+        {
+          ptr = or_pack_float (ptr, query_exec_info[i].query_time);
+          ptr = or_pack_float (ptr, query_exec_info[i].tran_time);
+          ptr = or_pack_string (ptr, query_exec_info[i].wait_for_tran_index_string);
+          ptr = or_pack_string (ptr, query_exec_info[i].query_stmt);
+          ptr = or_pack_string (ptr, query_exec_info[i].sql_id);
+          OR_PACK_XASL_ID (ptr, &query_exec_info[i].xasl_id);
+        }
 #endif
     }
 
@@ -2459,20 +2371,20 @@ error:
   if (query_exec_info != NULL)
     {
       for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
-	{
-	  if (query_exec_info[i].wait_for_tran_index_string)
-	    {
-	      free_and_init (query_exec_info[i].wait_for_tran_index_string);
-	    }
-	  if (query_exec_info[i].query_stmt)
-	    {
-	      free_and_init (query_exec_info[i].query_stmt);
-	    }
-	  if (query_exec_info[i].sql_id)
-	    {
-	      free_and_init (query_exec_info[i].sql_id);
-	    }
-	}
+        {
+          if (query_exec_info[i].wait_for_tran_index_string)
+            {
+              free_and_init (query_exec_info[i].wait_for_tran_index_string);
+            }
+          if (query_exec_info[i].query_stmt)
+            {
+              free_and_init (query_exec_info[i].query_stmt);
+            }
+          if (query_exec_info[i].sql_id)
+            {
+              free_and_init (query_exec_info[i].sql_id);
+            }
+        }
       free_and_init (query_exec_info);
     }
 #endif
@@ -2523,7 +2435,7 @@ logtb_find_current_client_hostname (THREAD_ENTRY * thread_p)
 LOG_LSA *
 logtb_find_current_tran_lsa (THREAD_ENTRY * thread_p)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   tdes = logtb_get_current_tdes (thread_p);
   return ((tdes != NULL) ? &tdes->last_lsa : NULL);
@@ -2540,7 +2452,7 @@ logtb_find_current_tran_lsa (THREAD_ENTRY * thread_p)
 TRAN_STATE
 logtb_find_state (int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   tdes = LOG_FIND_TDES (tran_index);
   if (tdes != NULL)
@@ -2571,15 +2483,14 @@ logtb_find_state (int tran_index)
 int
 xlogtb_reset_wait_msecs (THREAD_ENTRY * thread_p, int wait_msecs)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
-  int old_wait_msecs;		/* The old waiting time to be returned */
+  LOG_TDES *tdes;               /* Transaction descriptor */
+  int old_wait_msecs;           /* The old waiting time to be returned */
 
   tdes = logtb_get_current_tdes (thread_p);
   if (tdes == NULL)
     {
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_UNKNOWN_TRANINDEX, 1,
-	      logtb_get_current_tran_index (thread_p));
+              ER_LOG_UNKNOWN_TRANINDEX, 1, logtb_get_current_tran_index (thread_p));
       return -1;
     }
 
@@ -2599,7 +2510,7 @@ xlogtb_reset_wait_msecs (THREAD_ENTRY * thread_p, int wait_msecs)
 int
 logtb_find_wait_msecs (int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   tdes = LOG_FIND_TDES (tran_index);
   if (tdes != NULL)
@@ -2623,7 +2534,7 @@ logtb_find_wait_msecs (int tran_index)
 int
 logtb_find_current_wait_msecs (THREAD_ENTRY * thread_p)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int tran_index;
 
   tran_index = logtb_get_current_tran_index (thread_p);
@@ -2663,20 +2574,19 @@ int
 xlogtb_reset_isolation (THREAD_ENTRY * thread_p, TRAN_ISOLATION isolation)
 {
   int error_code = NO_ERROR;
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int tran_index;
 
   tran_index = logtb_get_current_tran_index (thread_p);
   tdes = LOG_FIND_TDES (tran_index);
   if (isolation == TRAN_DEFAULT_ISOLATION && tdes != NULL)
     {
-      assert (error_code == NO_ERROR);	/* OK - nop */
+      assert (error_code == NO_ERROR);  /* OK - nop */
     }
   else
     {
       error_code = ER_LOG_INVALID_ISOLATION_LEVEL;
-      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error_code, 2, TRAN_DEFAULT_ISOLATION, TRAN_DEFAULT_ISOLATION);
+      er_set (ER_SYNTAX_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2, TRAN_DEFAULT_ISOLATION, TRAN_DEFAULT_ISOLATION);
     }
 
   return error_code;
@@ -2694,9 +2604,9 @@ TRAN_ISOLATION
 logtb_find_isolation (UNUSED_ARG int tran_index)
 {
 #if 1
-  return TRAN_DEFAULT_ISOLATION;	/* == TRAN_REP_CLASS_UNCOMMIT_INSTANCE */
+  return TRAN_DEFAULT_ISOLATION;        /* == TRAN_REP_CLASS_UNCOMMIT_INSTANCE */
 #else
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   tdes = LOG_FIND_TDES (tran_index);
   if (tdes != NULL)
@@ -2742,9 +2652,7 @@ logtb_find_current_isolation (THREAD_ENTRY * thread_p)
 void
 xlogtb_set_interrupt (THREAD_ENTRY * thread_p, int set)
 {
-  logtb_set_tran_index_interrupt (thread_p,
-				  logtb_get_current_tran_index (thread_p),
-				  set);
+  logtb_set_tran_index_interrupt (thread_p, logtb_get_current_tran_index (thread_p), set);
 }
 
 /*
@@ -2761,43 +2669,41 @@ xlogtb_set_interrupt (THREAD_ENTRY * thread_p, int set)
  *              so that the next caller obtains an interrupt.
  */
 bool
-logtb_set_tran_index_interrupt (THREAD_ENTRY * thread_p, int tran_index,
-				int set)
+logtb_set_tran_index_interrupt (THREAD_ENTRY * thread_p, int tran_index, int set)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   if (log_Gl.trantable.area != NULL)
     {
       tdes = LOG_FIND_TDES (tran_index);
       if (tdes != NULL && tdes->trid != NULL_TRANID)
-	{
-	  if (tdes->interrupt != set)
-	    {
-	      TR_TABLE_LOCK (thread_p);
+        {
+          if (tdes->interrupt != set)
+            {
+              TR_TABLE_LOCK (thread_p);
 
-	      tdes->interrupt = set;
-	      if (set == true)
-		{
-		  log_Gl.trantable.num_interrupts++;
-		}
-	      else
-		{
-		  log_Gl.trantable.num_interrupts--;
-		}
+              tdes->interrupt = set;
+              if (set == true)
+                {
+                  log_Gl.trantable.num_interrupts++;
+                }
+              else
+                {
+                  log_Gl.trantable.num_interrupts--;
+                }
 
-	      TR_TABLE_UNLOCK (thread_p);
-	    }
+              TR_TABLE_UNLOCK (thread_p);
+            }
 
-	  if (set == true)
-	    {
-	      pgbuf_force_to_check_for_interrupts ();
-	      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-		      ER_INTERRUPTING, 1, tran_index);
-	      mnt_stats_counter (thread_p, MNT_STATS_TRAN_INTERRUPTS, 1);
-	    }
+          if (set == true)
+            {
+              pgbuf_force_to_check_for_interrupts ();
+              er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTING, 1, tran_index);
+              mnt_stats_counter (thread_p, MNT_STATS_TRAN_INTERRUPTS, 1);
+            }
 
-	  return true;
-	}
+          return true;
+        }
     }
 
   return false;
@@ -2815,9 +2721,7 @@ logtb_set_tran_index_interrupt (THREAD_ENTRY * thread_p, int tran_index,
  * Note:
  */
 static bool
-logtb_is_interrupted_tdes (UNUSED_ARG THREAD_ENTRY * thread_p,
-			   LOG_TDES * tdes, bool clear,
-			   bool * continue_checking)
+logtb_is_interrupted_tdes (UNUSED_ARG THREAD_ENTRY * thread_p, LOG_TDES * tdes, bool clear, bool * continue_checking)
 {
   int interrupt;
   INT64 now;
@@ -2831,13 +2735,13 @@ logtb_is_interrupted_tdes (UNUSED_ARG THREAD_ENTRY * thread_p,
       interrupt = false;
 
       if (log_Gl.trantable.num_interrupts > 0)
-	{
-	  *continue_checking = true;
-	}
+        {
+          *continue_checking = true;
+        }
       else
-	{
-	  *continue_checking = false;
-	}
+        {
+          *continue_checking = false;
+        }
     }
   else if (interrupt == true && clear == true)
     {
@@ -2846,13 +2750,13 @@ logtb_is_interrupted_tdes (UNUSED_ARG THREAD_ENTRY * thread_p,
       TR_TABLE_LOCK (thread_p);
       log_Gl.trantable.num_interrupts--;
       if (log_Gl.trantable.num_interrupts > 0)
-	{
-	  *continue_checking = true;
-	}
+        {
+          *continue_checking = true;
+        }
       else
-	{
-	  *continue_checking = false;
-	}
+        {
+          *continue_checking = false;
+        }
       TR_TABLE_UNLOCK (thread_p);
     }
   else if (interrupt == false && tdes->query_timeout > 0)
@@ -2868,13 +2772,12 @@ logtb_is_interrupted_tdes (UNUSED_ARG THREAD_ENTRY * thread_p,
       now = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000LL);
 #endif /* !SERVER_MODE */
       if (tdes->query_timeout < now)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"logtb_is_interrupted_tdes: timeout %lld milliseconds "
-			"delayed (expected=%lld, now=%lld)",
-			now - tdes->query_timeout, tdes->query_timeout, now);
-	  interrupt = true;
-	}
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "logtb_is_interrupted_tdes: timeout %lld milliseconds "
+                        "delayed (expected=%lld, now=%lld)", now - tdes->query_timeout, tdes->query_timeout, now);
+          interrupt = true;
+        }
     }
   return interrupt;
 }
@@ -2902,10 +2805,9 @@ logtb_is_interrupted_tdes (UNUSED_ARG THREAD_ENTRY * thread_p,
  *              transaction will be partially aborted.
  */
 bool
-logtb_is_interrupted (THREAD_ENTRY * thread_p, bool clear,
-		      bool * continue_checking)
+logtb_is_interrupted (THREAD_ENTRY * thread_p, bool clear, bool * continue_checking)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int tran_index;
 
   if (log_Gl.trantable.area == NULL)
@@ -2943,10 +2845,9 @@ logtb_is_interrupted (THREAD_ENTRY * thread_p, bool clear,
  *              be interrupted.
  */
 bool
-logtb_is_interrupted_tran (THREAD_ENTRY * thread_p, bool clear,
-			   bool * continue_checking, int tran_index)
+logtb_is_interrupted_tran (THREAD_ENTRY * thread_p, bool clear, bool * continue_checking, int tran_index)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   tdes = LOG_FIND_TDES (tran_index);
   if (log_Gl.trantable.area == NULL || tdes == NULL)
@@ -2968,9 +2869,7 @@ logtb_is_interrupted_tran (THREAD_ENTRY * thread_p, bool clear,
 void
 xlogtb_set_suppress_repl_on_transaction (THREAD_ENTRY * thread_p, int set)
 {
-  logtb_set_suppress_repl_on_transaction (thread_p,
-					  logtb_get_current_tran_index
-					  (thread_p), set);
+  logtb_set_suppress_repl_on_transaction (thread_p, logtb_get_current_tran_index (thread_p), set);
 }
 
 /*
@@ -2984,26 +2883,25 @@ xlogtb_set_suppress_repl_on_transaction (THREAD_ENTRY * thread_p, int set)
  *   set(in): non-zero to set, zero to unset
  */
 bool
-logtb_set_suppress_repl_on_transaction (UNUSED_ARG THREAD_ENTRY * thread_p,
-					int tran_index, int set)
+logtb_set_suppress_repl_on_transaction (UNUSED_ARG THREAD_ENTRY * thread_p, int tran_index, int set)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
 
   if (log_Gl.trantable.area != NULL)
     {
       tdes = LOG_FIND_TDES (tran_index);
       if (tdes != NULL && tdes->trid != NULL_TRANID)
-	{
-	  if (tdes->suppress_replication != set)
-	    {
-	      TR_TABLE_LOCK (thread_p);
+        {
+          if (tdes->suppress_replication != set)
+            {
+              TR_TABLE_LOCK (thread_p);
 
-	      tdes->suppress_replication = set;
+              tdes->suppress_replication = set;
 
-	      TR_TABLE_UNLOCK (thread_p);
-	    }
-	  return true;
-	}
+              TR_TABLE_UNLOCK (thread_p);
+            }
+          return true;
+        }
     }
   return false;
 }
@@ -3030,7 +2928,7 @@ bool
 logtb_is_active (THREAD_ENTRY * thread_p, TRANID trid)
 {
   int i;
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   bool active = false;
   int tran_index;
 
@@ -3051,14 +2949,14 @@ logtb_is_active (THREAD_ENTRY * thread_p, TRANID trid)
       TR_TABLE_LOCK (thread_p);
       /* Search the transaction table for such transaction */
       for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
-	{
-	  tdes = LOG_FIND_TDES (i);
-	  if (tdes != NULL && tdes->trid != NULL_TRANID && tdes->trid == trid)
-	    {
-	      active = LOG_ISTRAN_ACTIVE (tdes);
-	      break;
-	    }
-	}
+        {
+          tdes = LOG_FIND_TDES (i);
+          if (tdes != NULL && tdes->trid != NULL_TRANID && tdes->trid == trid)
+            {
+              active = LOG_ISTRAN_ACTIVE (tdes);
+              break;
+            }
+        }
       TR_TABLE_UNLOCK (thread_p);
     }
 
@@ -3075,7 +2973,7 @@ logtb_is_active (THREAD_ENTRY * thread_p, TRANID trid)
 bool
 logtb_is_current_active (THREAD_ENTRY * thread_p)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int tran_index;
 
   tran_index = logtb_get_current_tran_index (thread_p);
@@ -3099,7 +2997,7 @@ logtb_is_current_active (THREAD_ENTRY * thread_p)
 bool
 logtb_is_current_system_tran (THREAD_ENTRY * thread_p)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int tran_index;
 
   tran_index = logtb_get_current_tran_index (thread_p);
@@ -3151,7 +3049,7 @@ bool
 logtb_istran_finished (THREAD_ENTRY * thread_p, TRANID trid)
 {
   int i;
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   bool active = true;
   int tran_index;
 
@@ -3167,14 +3065,14 @@ logtb_istran_finished (THREAD_ENTRY * thread_p, TRANID trid)
       TR_TABLE_LOCK (thread_p);
       /* Search the transaction table for such transaction */
       for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
-	{
-	  tdes = LOG_FIND_TDES (i);
-	  if (tdes != NULL && tdes->trid != NULL_TRANID && tdes->trid == trid)
-	    {
-	      active = false;
-	      break;
-	    }
-	}
+        {
+          tdes = LOG_FIND_TDES (i);
+          if (tdes != NULL && tdes->trid != NULL_TRANID && tdes->trid == trid)
+            {
+              active = false;
+              break;
+            }
+        }
       TR_TABLE_UNLOCK (thread_p);
     }
 
@@ -3191,7 +3089,7 @@ logtb_istran_finished (THREAD_ENTRY * thread_p, TRANID trid)
 bool
 logtb_has_updated (THREAD_ENTRY * thread_p)
 {
-  LOG_TDES *tdes;		/* Transaction descriptor */
+  LOG_TDES *tdes;               /* Transaction descriptor */
   int tran_index;
 
   tran_index = logtb_get_current_tran_index (thread_p);
@@ -3236,8 +3134,7 @@ logtb_set_to_system_tran_index (THREAD_ENTRY * thread_p)
  * Note:
  */
 void
-logtb_set_current_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
-			      int tran_index)
+logtb_set_current_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p, int tran_index)
 {
 #if defined(SERVER_MODE)
   if (thread_p == NULL)
@@ -3306,25 +3203,24 @@ LOG_LSA *
 logtb_find_unilaterally_largest_undo_lsa (UNUSED_ARG THREAD_ENTRY * thread_p)
 {
   int i;
-  LOG_TDES *tdes;		/* Transaction descriptor */
-  LOG_LSA *max = NULL;		/* The maximum LSA value  */
+  LOG_TDES *tdes;               /* Transaction descriptor */
+  LOG_LSA *max = NULL;          /* The maximum LSA value  */
 
   TR_TABLE_LOCK (thread_p);
   for (i = 0; i < NUM_TOTAL_TRAN_INDICES; i++)
     {
       if (i != LOG_SYSTEM_TRAN_INDEX)
-	{
-	  tdes = LOG_FIND_TDES (i);
-	  if (tdes != NULL
-	      && tdes->trid != NULL_TRANID
-	      && (tdes->state == TRAN_UNACTIVE_UNILATERALLY_ABORTED
-		  || tdes->state == TRAN_UNACTIVE_ABORTED)
-	      && !LSA_ISNULL (&tdes->undo_nxlsa)
-	      && (max == NULL || LSA_LT (max, &tdes->undo_nxlsa)))
-	    {
-	      max = &tdes->undo_nxlsa;
-	    }
-	}
+        {
+          tdes = LOG_FIND_TDES (i);
+          if (tdes != NULL
+              && tdes->trid != NULL_TRANID
+              && (tdes->state == TRAN_UNACTIVE_UNILATERALLY_ABORTED
+                  || tdes->state == TRAN_UNACTIVE_ABORTED)
+              && !LSA_ISNULL (&tdes->undo_nxlsa) && (max == NULL || LSA_LT (max, &tdes->undo_nxlsa)))
+            {
+              max = &tdes->undo_nxlsa;
+            }
+        }
     }
   TR_TABLE_UNLOCK (thread_p);
 
@@ -3341,8 +3237,7 @@ logtb_find_unilaterally_largest_undo_lsa (UNUSED_ARG THREAD_ENTRY * thread_p)
  */
 int
 logtb_find_smallest_begin_lsa_without_ddl_tran (UNUSED_ARG THREAD_ENTRY *
-						thread_p, LOG_LSA * min_lsa,
-						bool * exists_ddl_tran)
+                                                thread_p, LOG_LSA * min_lsa, bool * exists_ddl_tran)
 {
   LOG_TDES *tdes;
   WORKING_TRAN *current;
@@ -3352,13 +3247,12 @@ logtb_find_smallest_begin_lsa_without_ddl_tran (UNUSED_ARG THREAD_ENTRY *
 
   *exists_ddl_tran = false;
   LSA_SET_NULL (min_lsa);
-  for (current = log_Gl.trantable.working_tran_list_head;
-       current != NULL; current = current->next)
+  for (current = log_Gl.trantable.working_tran_list_head; current != NULL; current = current->next)
     {
       if (current->tran_index == LOG_SYSTEM_TRAN_INDEX)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       tdes = LOG_FIND_TDES (current->tran_index);
 #if defined(SERVER_MODE)
@@ -3367,26 +3261,25 @@ logtb_find_smallest_begin_lsa_without_ddl_tran (UNUSED_ARG THREAD_ENTRY *
       assert (!LSA_ISNULL (&tdes->begin_lsa));
 #endif
 
-      if (tdes != NULL
-	  && tdes->trid != NULL_TRANID && !LSA_ISNULL (&tdes->begin_lsa))
-	{
-	  if (tdes->type == TRAN_TYPE_DDL)
-	    {
-	      *exists_ddl_tran = true;
-	    }
-	  else
-	    {
-	      if (LSA_ISNULL (min_lsa))
-		{
-		  LSA_COPY (min_lsa, &tdes->begin_lsa);
-		}
-	    }
-	}
+      if (tdes != NULL && tdes->trid != NULL_TRANID && !LSA_ISNULL (&tdes->begin_lsa))
+        {
+          if (tdes->type == TRAN_TYPE_DDL)
+            {
+              *exists_ddl_tran = true;
+            }
+          else
+            {
+              if (LSA_ISNULL (min_lsa))
+                {
+                  LSA_COPY (min_lsa, &tdes->begin_lsa);
+                }
+            }
+        }
 
       if (*exists_ddl_tran == true && !LSA_ISNULL (min_lsa))
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   return NO_ERROR;
@@ -3419,8 +3312,7 @@ logtb_lock_tran_table (THREAD_ENTRY * thread_p)
   if (r != 0)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_LOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_LOCK, 0);
       return ER_FAILED;
     }
 
@@ -3468,8 +3360,7 @@ logtb_unlock_tran_table (THREAD_ENTRY * thread_p)
   if (r != 0)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_FAILED;
     }
 
@@ -3503,7 +3394,7 @@ logtb_shard_group_check_own (UNUSED_ARG THREAD_ENTRY * thread_p, int gid)
    */
   if (gid == GLOBAL_GROUPID)
     {
-      return true;		/* OK */
+      return true;              /* OK */
     }
 
   /* check iff client-type need to skip out group id filtering
@@ -3536,13 +3427,12 @@ xlogtb_exist_working_tran (UNUSED_ARG THREAD_ENTRY * thread_p, int group_id)
 
   assert (group_id != GLOBAL_GROUPID);
 
-  for (current = log_Gl.trantable.working_tran_list_head;
-       current != NULL; current = current->next)
+  for (current = log_Gl.trantable.working_tran_list_head; current != NULL; current = current->next)
     {
       if (current->tran_index == LOG_SYSTEM_TRAN_INDEX)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       tdes = LOG_FIND_TDES (current->tran_index);
       assert (tdes != NULL);
@@ -3550,12 +3440,11 @@ xlogtb_exist_working_tran (UNUSED_ARG THREAD_ENTRY * thread_p, int group_id)
       assert (!LSA_ISNULL (&tdes->begin_lsa));
 
       if (tdes != NULL
-	  && tdes->trid != NULL_TRANID
-	  && !LSA_ISNULL (&tdes->begin_lsa)
-	  && (NULL_GROUPID == group_id || tdes->tran_group_id == group_id))
-	{
-	  return true;
-	}
+          && tdes->trid != NULL_TRANID
+          && !LSA_ISNULL (&tdes->begin_lsa) && (NULL_GROUPID == group_id || tdes->tran_group_id == group_id))
+        {
+          return true;
+        }
     }
 
   return false;
@@ -3564,8 +3453,8 @@ xlogtb_exist_working_tran (UNUSED_ARG THREAD_ENTRY * thread_p, int group_id)
 
 int
 xlogtb_update_group_id (UNUSED_ARG THREAD_ENTRY * thread_p,
-			UNUSED_ARG int migrator_id, UNUSED_ARG int group_id,
-			UNUSED_ARG int target, UNUSED_ARG int on_off)
+                        UNUSED_ARG int migrator_id, UNUSED_ARG int group_id,
+                        UNUSED_ARG int target, UNUSED_ARG int on_off)
 {
 #if defined (SERVER_MODE)
   bool continue_check;
@@ -3575,49 +3464,46 @@ xlogtb_update_group_id (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       error = svr_shm_enable_group_bit (group_id);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
   else
     {
       while (true)
-	{
-	  TR_TABLE_LOCK (thread_p);
+        {
+          TR_TABLE_LOCK (thread_p);
 
-	  if (group_id == GLOBAL_GROUPID
-	      /* migrator already locks the global shard lock */
-	      || xlogtb_exist_working_tran (thread_p, group_id) == false)
-	    {
-	      error = svr_shm_clear_group_bit (group_id);
-	      TR_TABLE_UNLOCK (thread_p);
+          if (group_id == GLOBAL_GROUPID
+              /* migrator already locks the global shard lock */
+              || xlogtb_exist_working_tran (thread_p, group_id) == false)
+            {
+              error = svr_shm_clear_group_bit (group_id);
+              TR_TABLE_UNLOCK (thread_p);
 
-	      if (error != NO_ERROR)
-		{
-		  return error;
-		}
-	      break;
-	    }
+              if (error != NO_ERROR)
+                {
+                  return error;
+                }
+              break;
+            }
 
-	  TR_TABLE_UNLOCK (thread_p);
-	  thread_sleep (10);
+          TR_TABLE_UNLOCK (thread_p);
+          thread_sleep (10);
 
-	  /* interrupt check */
-	  if (thread_get_check_interrupt (thread_p) == true)
-	    {
-	      if (logtb_is_interrupted (thread_p, true, &continue_check) ==
-		  true)
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTED,
-			  0);
-		  return ER_FAILED;
-		}
-	    }
-	}
+          /* interrupt check */
+          if (thread_get_check_interrupt (thread_p) == true)
+            {
+              if (logtb_is_interrupted (thread_p, true, &continue_check) == true)
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTED, 0);
+                  return ER_FAILED;
+                }
+            }
+        }
     }
 
-  log_append_gid_bitmap_update_record (thread_p, migrator_id, group_id,
-				       target, on_off);
+  log_append_gid_bitmap_update_record (thread_p, migrator_id, group_id, target, on_off);
 #endif
 
   return NO_ERROR;
@@ -3637,8 +3523,7 @@ logtb_is_blocked_global_dml (void)
 }
 
 void
-logtb_set_backup_session (THREAD_ENTRY * thread_p,
-			  BK_BACKUP_SESSION * session)
+logtb_set_backup_session (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session)
 {
   LOG_TDES *tdes;
   int tran_index;

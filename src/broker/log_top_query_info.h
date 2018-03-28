@@ -52,7 +52,7 @@ void query_info_mutex_init ();
 extern void query_info_init (T_QUERY_INFO * query_info);
 extern void query_info_clear (T_QUERY_INFO * qi);
 extern int query_info_add (T_QUERY_INFO * qi, int exec_time, int execute_res,
-			   char *filename, int lineno, char *end_date);
+                           char *filename, int lineno, char *end_date);
 extern int query_info_add_ne (void);
 extern void query_info_print (void);
 

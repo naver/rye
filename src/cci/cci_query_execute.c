@@ -142,48 +142,30 @@ typedef enum
  * PRIVATE FUNCTION PROTOTYPES						*
  ************************************************************************/
 
-static int prepare_info_decode (T_NET_RES * net_res,
-				T_REQ_HANDLE * req_handle);
-static int get_cursor_pos (T_REQ_HANDLE * req_handle, int offset,
-			   char origin);
+static int prepare_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle);
+static int get_cursor_pos (T_REQ_HANDLE * req_handle, int offset, char origin);
 static int fetch_info_decode (T_NET_RES * net_res, int num_cols,
-			      T_TUPLE_VALUE ** tuple_value,
-			      T_REQ_HANDLE * req_handle);
+                              T_TUPLE_VALUE ** tuple_value, T_REQ_HANDLE * req_handle);
 
-static int get_column_info (T_NET_RES * net_res,
-			    T_CCI_COL_INFO ** ret_col_info);
+static int get_column_info (T_NET_RES * net_res, T_CCI_COL_INFO ** ret_col_info);
 static int get_shard_key_info (T_NET_RES * net_res);
-static int schema_info_decode (T_NET_RES * net_res,
-			       T_REQ_HANDLE * req_handle);
+static int schema_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle);
 
-static int bind_value_set (T_CCI_TYPE a_type, char flag, const void *value,
-			   int length, T_BIND_VALUE * bind_value);
-static int bind_value_to_net_buf (T_NET_BUF * net_buf, char a_type,
-				  const void *value, int size);
-static int execute_info_decode (T_NET_RES * net_res,
-				T_REQ_HANDLE * req_handle);
-static int execute_batch_info_decode (T_NET_RES * net_res, char flag,
-				      T_CCI_QUERY_RESULT ** qr);
-static int decode_fetch_result (T_REQ_HANDLE * req_handle,
-				T_NET_RES * net_res);
-static int qe_close_req_handle_internal (T_REQ_HANDLE * req_handle,
-					 T_CON_HANDLE * con_handle,
-					 bool force_close);
-static int qe_send_close_handle_msg (T_CON_HANDLE * con_handle,
-				     int server_handle_id);
+static int bind_value_set (T_CCI_TYPE a_type, char flag, const void *value, int length, T_BIND_VALUE * bind_value);
+static int bind_value_to_net_buf (T_NET_BUF * net_buf, char a_type, const void *value, int size);
+static int execute_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle);
+static int execute_batch_info_decode (T_NET_RES * net_res, char flag, T_CCI_QUERY_RESULT ** qr);
+static int decode_fetch_result (T_REQ_HANDLE * req_handle, T_NET_RES * net_res);
+static int qe_close_req_handle_internal (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, bool force_close);
+static int qe_send_close_handle_msg (T_CON_HANDLE * con_handle, int server_handle_id);
 
-static int qe_get_data_datetime (T_CCI_TYPE type, char *col_value_p,
-				 void *value);
+static int qe_get_data_datetime (T_CCI_TYPE type, char *col_value_p, void *value);
 static int qe_get_data_str (T_VALUE_BUF * conv_val_buf, T_CCI_TYPE type,
-			    char *col_value_p, int col_val_size, void *value,
-			    int *indicator);
-static int qe_get_data_bigint (T_CCI_TYPE type, char *col_value_p,
-			       void *value);
+                            char *col_value_p, int col_val_size, void *value, int *indicator);
+static int qe_get_data_bigint (T_CCI_TYPE type, char *col_value_p, void *value);
 static int qe_get_data_int (T_CCI_TYPE type, char *col_value_p, void *value);
-static int qe_get_data_double (T_CCI_TYPE type, char *col_value_p,
-			       void *value);
-static int qe_get_data_bit (T_CCI_TYPE type, char *col_value_p,
-			    int col_val_size, void *value);
+static int qe_get_data_double (T_CCI_TYPE type, char *col_value_p, void *value);
+static int qe_get_data_bit (T_CCI_TYPE type, char *col_value_p, int col_val_size, void *value);
 static int add_arg_idxkey (T_NET_BUF * net_buf, DB_IDXKEY * idxkey);
 
 /************************************************************************
@@ -291,47 +273,45 @@ qe_end_tran (T_CON_HANDLE * con_handle, char type)
   if (IS_CAS_STATEMENT_POOLING (con_handle))
     {
       if (type == CCI_TRAN_ROLLBACK)
-	{
-	  /* close all results sets */
-	  hm_req_handle_close_all_resultsets (con_handle);
-	}
+        {
+          /* close all results sets */
+          hm_req_handle_close_all_resultsets (con_handle);
+        }
       else
-	{
-	  /* close only unholdable results sets */
-	  hm_req_handle_close_all_unholdable_resultsets (con_handle);
-	}
+        {
+          /* close only unholdable results sets */
+          hm_req_handle_close_all_unholdable_resultsets (con_handle);
+        }
     }
   else
     {
       if (type == CCI_TRAN_ROLLBACK)
-	{
-	  hm_req_handle_free_all (con_handle);
-	}
+        {
+          hm_req_handle_free_all (con_handle);
+        }
       else
-	{
-	  hm_req_handle_free_all_unholdable (con_handle);
-	}
+        {
+          hm_req_handle_free_all_unholdable (con_handle);
+        }
     }
 
   keep_connection = true;
 
-  if (con_handle->alter_hosts->cur_id > 0 &&
-      con_handle->con_property.rc_time > 0)
+  if (con_handle->alter_hosts->cur_id > 0 && con_handle->con_property.rc_time > 0)
     {
       cur_time = time (NULL);
       failure_time = con_handle->last_failure_time;
 
-      if (failure_time > 0 &&
-	  (cur_time - failure_time) > con_handle->con_property.rc_time)
-	{
-	  if (con_is_unreachable_host (con_handle, 0) == false)
-	    {
-	      keep_connection = false;
-	      con_handle->alter_hosts->cur_id = 0;
-	      con_handle->force_failback = 0;
-	      con_handle->last_failure_time = 0;
-	    }
-	}
+      if (failure_time > 0 && (cur_time - failure_time) > con_handle->con_property.rc_time)
+        {
+          if (con_is_unreachable_host (con_handle, 0) == false)
+            {
+              keep_connection = false;
+              con_handle->alter_hosts->cur_id = 0;
+              con_handle->force_failback = 0;
+              con_handle->last_failure_time = 0;
+            }
+        }
     }
 
   if (keep_connection == false)
@@ -344,8 +324,7 @@ qe_end_tran (T_CON_HANDLE * con_handle, char type)
 }
 
 int
-qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
-	    const char *sql_stmt, char flag, int reuse)
+qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, const char *sql_stmt, char flag, int reuse)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_PREPARE;
@@ -396,9 +375,9 @@ qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
     {
       int i;
       for (i = 0; i < con_handle->deferred_close_handle_count; i++)
-	{
-	  ADD_ARG_INT (&net_buf, con_handle->deferred_close_handle_list[i]);
-	}
+        {
+          ADD_ARG_INT (&net_buf, con_handle->deferred_close_handle_list[i]);
+        }
       con_handle->deferred_close_handle_count = 0;
     }
 
@@ -412,13 +391,12 @@ qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -=
-	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
+      remaining_time -= (int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
-	{
-	  net_buf_clear (&net_buf);
-	  return CCI_ER_QUERY_TIMEOUT;
-	}
+        {
+          net_buf_clear (&net_buf);
+          return CCI_ER_QUERY_TIMEOUT;
+        }
     }
 
   err_code = net_send_msg (con_handle, net_buf.data, net_buf.data_size);
@@ -461,26 +439,23 @@ qe_prepare (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (!reuse)
     {
       if (req_handle->num_bind > 0)
-	{
-	  req_handle->bind_value = (T_BIND_VALUE *)
-	    MALLOC (sizeof (T_BIND_VALUE) * req_handle->num_bind);
+        {
+          req_handle->bind_value = (T_BIND_VALUE *) MALLOC (sizeof (T_BIND_VALUE) * req_handle->num_bind);
 
-	  if (req_handle->bind_value == NULL)
-	    {
-	      return CCI_ER_NO_MORE_MEMORY;
-	    }
+          if (req_handle->bind_value == NULL)
+            {
+              return CCI_ER_NO_MORE_MEMORY;
+            }
 
-	  memset (req_handle->bind_value,
-		  0, sizeof (T_BIND_VALUE) * req_handle->num_bind);
-	}
+          memset (req_handle->bind_value, 0, sizeof (T_BIND_VALUE) * req_handle->num_bind);
+        }
     }
 
   return CCI_ER_NO_ERROR;
 }
 
 int
-qe_bind_param (T_REQ_HANDLE * req_handle, int index, T_CCI_TYPE a_type,
-	       const void *value, int length, char flag)
+qe_bind_param (T_REQ_HANDLE * req_handle, int index, T_CCI_TYPE a_type, const void *value, int length, char flag)
 {
   int err_code;
 
@@ -505,15 +480,13 @@ qe_bind_param (T_REQ_HANDLE * req_handle, int index, T_CCI_TYPE a_type,
       return 0;
     }
 
-  err_code = bind_value_set (a_type, flag, value, length,
-			     &(req_handle->bind_value[index]));
+  err_code = bind_value_set (a_type, flag, value, length, &(req_handle->bind_value[index]));
 
   return err_code;
 }
 
 int
-qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
-	    int max_col_size, int group_id)
+qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag, int max_col_size, int group_id)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_EXECUTE;
@@ -555,16 +528,14 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -=
-	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
+      remaining_time -= (int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
-	{
-	  err_code = CCI_ER_QUERY_TIMEOUT;
-	  goto execute_error;
-	}
+        {
+          err_code = CCI_ER_QUERY_TIMEOUT;
+          goto execute_error;
+        }
     }
-  if (TIMEOUT_IS_SET (con_handle)
-      && con_handle->con_property.disconnect_on_query_timeout == false)
+  if (TIMEOUT_IS_SET (con_handle) && con_handle->con_property.disconnect_on_query_timeout == false)
     {
       use_server_query_cancel = true;
     }
@@ -583,9 +554,8 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
   for (i = 0; i < req_handle->num_bind; i++)
     {
       bind_value_to_net_buf (&net_buf,
-			     (char) req_handle->bind_value[i].a_type,
-			     req_handle->bind_value[i].value,
-			     req_handle->bind_value[i].size);
+                             (char) req_handle->bind_value[i].a_type,
+                             req_handle->bind_value[i].value, req_handle->bind_value[i].size);
     }
 
   if (net_buf.err_code < 0)
@@ -602,9 +572,7 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
 
   net_buf_clear (&net_buf);
 
-  err_code = net_recv_msg_timeout (con_handle, &net_res,
-				   ((use_server_query_cancel) ?
-				    0 : remaining_time));
+  err_code = net_recv_msg_timeout (con_handle, &net_res, ((use_server_query_cancel) ? 0 : remaining_time));
   if (err_code < 0)
     {
       req_handle->cas_cursor_status = CAS_CURSOR_STATUS_CLOSED;
@@ -624,8 +592,7 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
       return err_code;
     }
 
-  if (req_handle->stmt_type == CCI_STMT_SELECT
-      || req_handle->stmt_type == CCI_STMT_SELECT_UPDATE)
+  if (req_handle->stmt_type == CCI_STMT_SELECT || req_handle->stmt_type == CCI_STMT_SELECT_UPDATE)
     {
       req_handle->num_tuple = res_count;
     }
@@ -658,10 +625,10 @@ qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag,
       num_tuple = decode_fetch_result (req_handle, net_res);
       req_handle->cursor_pos = 0;
       if (num_tuple < 0)
-	{
-	  FREE_MEM (net_res);
-	  return num_tuple;
-	}
+        {
+          FREE_MEM (net_res);
+          return num_tuple;
+        }
     }
   else
     {
@@ -693,15 +660,14 @@ qe_bind_value_free (T_REQ_HANDLE * req_handle)
   for (i = 0; i < req_handle->num_bind; i++)
     {
       if (req_handle->bind_value[i].alloc_buffer)
-	{
-	  FREE_MEM (req_handle->bind_value[i].alloc_buffer);
-	}
+        {
+          FREE_MEM (req_handle->bind_value[i].alloc_buffer);
+        }
     }
 }
 
 int
-qe_get_db_parameter (T_CON_HANDLE * con_handle, T_CCI_DB_PARAM param_name,
-		     void *ret_val)
+qe_get_db_parameter (T_CON_HANDLE * con_handle, T_CCI_DB_PARAM param_name, void *ret_val)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_GET_DB_PARAMETER;
@@ -772,8 +738,7 @@ qe_close_query_result (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle)
       return CCI_ER_NOT_IMPLEMENTED;
     }
 
-  if (!hm_get_con_handle_holdable (con_handle)
-      || req_handle->cas_cursor_status == CAS_CURSOR_STATUS_CLOSED)
+  if (!hm_get_con_handle_holdable (con_handle) || req_handle->cas_cursor_status == CAS_CURSOR_STATUS_CLOSED)
     {
       return err_code;
     }
@@ -815,8 +780,7 @@ qe_close_req_handle (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle)
 }
 
 static int
-qe_close_req_handle_internal (T_REQ_HANDLE * req_handle,
-			      T_CON_HANDLE * con_handle, bool force_close)
+qe_close_req_handle_internal (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, bool force_close)
 {
   int err_code = 0;
   int *new_deferred_close_handle_list = NULL;
@@ -834,57 +798,46 @@ qe_close_req_handle_internal (T_REQ_HANDLE * req_handle,
       return 0;
     }
 
-  if (req_handle->stmt_type == CCI_STMT_SELECT ||
-      req_handle->stmt_type == CCI_STMT_SELECT_UPDATE || force_close)
+  if (req_handle->stmt_type == CCI_STMT_SELECT || req_handle->stmt_type == CCI_STMT_SELECT_UPDATE || force_close)
     {
       goto send_close_handle_msg;
     }
 
   if (con_handle->deferred_close_handle_count == 0 &&
-      con_handle->deferred_max_close_handle_count !=
-      DEFERRED_CLOSE_HANDLE_ALLOC_SIZE)
+      con_handle->deferred_max_close_handle_count != DEFERRED_CLOSE_HANDLE_ALLOC_SIZE)
     {
       /* shrink the list size */
       new_deferred_close_handle_list =
-	(int *) REALLOC (con_handle->deferred_close_handle_list,
-			 sizeof (int) * DEFERRED_CLOSE_HANDLE_ALLOC_SIZE);
+        (int *) REALLOC (con_handle->deferred_close_handle_list, sizeof (int) * DEFERRED_CLOSE_HANDLE_ALLOC_SIZE);
       if (new_deferred_close_handle_list == NULL)
-	{
-	  goto send_close_handle_msg;
-	}
-      con_handle->deferred_max_close_handle_count =
-	DEFERRED_CLOSE_HANDLE_ALLOC_SIZE;
+        {
+          goto send_close_handle_msg;
+        }
+      con_handle->deferred_max_close_handle_count = DEFERRED_CLOSE_HANDLE_ALLOC_SIZE;
       con_handle->deferred_close_handle_list = new_deferred_close_handle_list;
     }
-  else if (con_handle->deferred_close_handle_count + 1 >
-	   con_handle->deferred_max_close_handle_count)
+  else if (con_handle->deferred_close_handle_count + 1 > con_handle->deferred_max_close_handle_count)
     {
       /* grow the list size */
       new_deferred_max_close_handle_count =
-	con_handle->deferred_max_close_handle_count +
-	DEFERRED_CLOSE_HANDLE_ALLOC_SIZE;
+        con_handle->deferred_max_close_handle_count + DEFERRED_CLOSE_HANDLE_ALLOC_SIZE;
       new_deferred_close_handle_list =
-	(int *) REALLOC (con_handle->deferred_close_handle_list,
-			 sizeof (int) * new_deferred_max_close_handle_count);
+        (int *) REALLOC (con_handle->deferred_close_handle_list, sizeof (int) * new_deferred_max_close_handle_count);
       if (new_deferred_close_handle_list == NULL)
-	{
-	  goto send_close_handle_msg;
-	}
-      con_handle->deferred_max_close_handle_count =
-	new_deferred_max_close_handle_count;
+        {
+          goto send_close_handle_msg;
+        }
+      con_handle->deferred_max_close_handle_count = new_deferred_max_close_handle_count;
       con_handle->deferred_close_handle_list = new_deferred_close_handle_list;
     }
 
-  con_handle->
-    deferred_close_handle_list[con_handle->deferred_close_handle_count++] =
-    req_handle->server_handle_id;
+  con_handle->deferred_close_handle_list[con_handle->deferred_close_handle_count++] = req_handle->server_handle_id;
 
   return err_code;
 
 send_close_handle_msg:
 
-  err_code = qe_send_close_handle_msg (con_handle,
-				       req_handle->server_handle_id);
+  err_code = qe_send_close_handle_msg (con_handle, req_handle->server_handle_id);
 
   return err_code;
 }
@@ -899,9 +852,9 @@ qe_close_req_handle_all (T_CON_HANDLE * con_handle)
   for (i = 0; i < con_handle->max_req_handle; i++)
     {
       if (con_handle->req_handle_table[i] == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       req_handle = con_handle->req_handle_table[i];
 
       qe_close_req_handle_internal (req_handle, con_handle, false);
@@ -955,41 +908,40 @@ qe_cursor (T_REQ_HANDLE * req_handle, int offset, char origin)
 
   if (req_handle->handle_type == HANDLE_PREPARE)
     {
-      if (req_handle->stmt_type == CCI_STMT_SELECT ||
-	  req_handle->stmt_type == CCI_STMT_SELECT_UPDATE)
-	{
-	  cursor_pos = get_cursor_pos (req_handle, offset, origin);
-	  if (cursor_pos <= 0)
-	    {
-	      req_handle->cursor_pos = 0;
-	      return CCI_ER_NO_MORE_DATA;
-	    }
-	  else if (cursor_pos > req_handle->num_tuple)
-	    {
-	      req_handle->cursor_pos = req_handle->num_tuple + 1;
-	      return CCI_ER_NO_MORE_DATA;
-	    }
+      if (req_handle->stmt_type == CCI_STMT_SELECT || req_handle->stmt_type == CCI_STMT_SELECT_UPDATE)
+        {
+          cursor_pos = get_cursor_pos (req_handle, offset, origin);
+          if (cursor_pos <= 0)
+            {
+              req_handle->cursor_pos = 0;
+              return CCI_ER_NO_MORE_DATA;
+            }
+          else if (cursor_pos > req_handle->num_tuple)
+            {
+              req_handle->cursor_pos = req_handle->num_tuple + 1;
+              return CCI_ER_NO_MORE_DATA;
+            }
 
-	  req_handle->cursor_pos = cursor_pos;
-	  return 0;
-	}
+          req_handle->cursor_pos = cursor_pos;
+          return 0;
+        }
       else
-	{
-	  return CCI_ER_NO_MORE_DATA;
-	}
+        {
+          return CCI_ER_NO_MORE_DATA;
+        }
     }
   else if (req_handle->handle_type == HANDLE_SCHEMA_INFO)
     {
       cursor_pos = get_cursor_pos (req_handle, offset, origin);
       if (cursor_pos <= 0 || cursor_pos > req_handle->num_tuple)
-	{
-	  if (cursor_pos <= 0)
-	    req_handle->cursor_pos = 0;
-	  else if (cursor_pos > req_handle->num_tuple)
-	    req_handle->cursor_pos = req_handle->num_tuple + 1;
+        {
+          if (cursor_pos <= 0)
+            req_handle->cursor_pos = 0;
+          else if (cursor_pos > req_handle->num_tuple)
+            req_handle->cursor_pos = req_handle->num_tuple + 1;
 
-	  return CCI_ER_NO_MORE_DATA;
-	}
+          return CCI_ER_NO_MORE_DATA;
+        }
       req_handle->cursor_pos = cursor_pos;
       return 0;
     }
@@ -1002,8 +954,7 @@ qe_cursor (T_REQ_HANDLE * req_handle, int offset, char origin)
 }
 
 int
-qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
-	  int result_set_index)
+qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, int result_set_index)
 {
   T_NET_BUF net_buf;
   int err_code;
@@ -1031,8 +982,7 @@ qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
       req_handle->cursor_pos >= req_handle->fetched_tuple_begin &&
       req_handle->cursor_pos <= req_handle->fetched_tuple_end)
     {
-      req_handle->cur_fetch_tuple_index = req_handle->cursor_pos -
-	req_handle->fetched_tuple_begin;
+      req_handle->cur_fetch_tuple_index = req_handle->cursor_pos - req_handle->fetched_tuple_begin;
       return 0;
     }
 
@@ -1042,7 +992,7 @@ qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   net_buf_cp_str (&net_buf, &func_code, 1);
   ADD_ARG_INT (&net_buf, req_handle->server_handle_id);
   ADD_ARG_INT (&net_buf, req_handle->cursor_pos);
-  ADD_ARG_INT (&net_buf, 0);	/* fetch size. not used */
+  ADD_ARG_INT (&net_buf, 0);    /* fetch size. not used */
   ADD_ARG_INT (&net_buf, result_set_index);
 
   if (net_buf.err_code < 0)
@@ -1074,8 +1024,7 @@ qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
 }
 
 int
-qe_get_data (T_REQ_HANDLE * req_handle, int col_no,
-	     int a_type, void *value, int *indicator)
+qe_get_data (T_REQ_HANDLE * req_handle, int col_no, int a_type, void *value, int *indicator)
 {
   char *col_value_p;
   T_CCI_TYPE db_type;
@@ -1096,9 +1045,7 @@ qe_get_data (T_REQ_HANDLE * req_handle, int col_no,
   if (req_handle->cur_fetch_tuple_index < 0)
     return CCI_ER_INVALID_CURSOR_POS;
 
-  col_value_p =
-    req_handle->tuple_value[req_handle->
-			    cur_fetch_tuple_index].column_ptr[col_no - 1];
+  col_value_p = req_handle->tuple_value[req_handle->cur_fetch_tuple_index].column_ptr[col_no - 1];
 
   db_type = CCI_GET_RESULT_INFO_TYPE (req_handle->col_info, col_no);
 
@@ -1125,8 +1072,7 @@ qe_get_data (T_REQ_HANDLE * req_handle, int col_no,
     {
     case CCI_TYPE_VARCHAR:
     case CCI_TYPE_NUMERIC:
-      err_code = qe_get_data_str (&(req_handle->conv_value_buffer), db_type,
-				  col_value_p, data_size, value, indicator);
+      err_code = qe_get_data_str (&(req_handle->conv_value_buffer), db_type, col_value_p, data_size, value, indicator);
       break;
     case CCI_TYPE_BIGINT:
       err_code = qe_get_data_bigint (db_type, col_value_p, value);
@@ -1155,8 +1101,7 @@ qe_get_data (T_REQ_HANDLE * req_handle, int col_no,
 }
 
 int
-qe_schema_info (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
-		int type, char *arg1, char *arg2, int flag)
+qe_schema_info (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, int type, char *arg1, char *arg2, int flag)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_SCHEMA_INFO;
@@ -1222,8 +1167,7 @@ qe_schema_info (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
     }
 
   if (net_res_to_int (&server_handle_id, net_res) < 0 ||
-      net_res_to_byte (&dummy_stmt_type, net_res) < 0 ||
-      net_res_to_int (&dummy_parameter_count, net_res) < 0)
+      net_res_to_byte (&dummy_stmt_type, net_res) < 0 || net_res_to_int (&dummy_parameter_count, net_res) < 0)
     {
       FREE_MEM (net_res);
       return CCI_ER_COMMUNICATION;
@@ -1277,13 +1221,12 @@ qe_get_db_version (T_CON_HANDLE * con_handle, char *out_buf, int buf_size)
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -=
-	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
+      remaining_time -= (int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
-	{
-	  net_buf_clear (&net_buf);
-	  return CCI_ER_QUERY_TIMEOUT;
-	}
+        {
+          net_buf_clear (&net_buf);
+          return CCI_ER_QUERY_TIMEOUT;
+        }
     }
 
   err_code = net_send_msg (con_handle, net_buf.data, net_buf.data_size);
@@ -1306,10 +1249,10 @@ qe_get_db_version (T_CON_HANDLE * con_handle, char *out_buf, int buf_size)
       int size;
 
       if (net_res_to_str (&ptr, &size, net_res) < 0)
-	{
-	  FREE_MEM (net_res);
-	  return CCI_ER_COMMUNICATION;
-	}
+        {
+          FREE_MEM (net_res);
+          return CCI_ER_COMMUNICATION;
+        }
 
       buf_size = MIN (buf_size - 1, size);
       strncpy (out_buf, ptr, buf_size);
@@ -1322,8 +1265,7 @@ qe_get_db_version (T_CON_HANDLE * con_handle, char *out_buf, int buf_size)
 }
 
 int
-qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
-		  T_CCI_QUERY_RESULT ** qr)
+qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, T_CCI_QUERY_RESULT ** qr)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_EXECUTE_BATCH;
@@ -1346,13 +1288,12 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -=
-	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
+      remaining_time -= (int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
-	{
-	  net_buf_clear (&net_buf);
-	  return CCI_ER_QUERY_TIMEOUT;
-	}
+        {
+          net_buf_clear (&net_buf);
+          return CCI_ER_QUERY_TIMEOUT;
+        }
     }
 
   autocommit_flag = (char) con_handle->autocommit_mode;
@@ -1370,76 +1311,72 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   for (row = 0; row < req_handle->bind_array_size; row++)
     {
       for (idx = 0; idx < req_handle->num_bind; idx++)
-	{
-	  cur_cell.alloc_buffer = NULL;
-	  cur_cell.value = NULL;
-	  cur_cell.a_type = req_handle->bind_value[idx].a_type;
+        {
+          cur_cell.alloc_buffer = NULL;
+          cur_cell.value = NULL;
+          cur_cell.a_type = req_handle->bind_value[idx].a_type;
 
-	  if (req_handle->bind_value[idx].value == NULL ||
-	      req_handle->bind_value[idx].null_ind[row])
-	    {
-	      cur_cell.value = NULL;
-	      cur_cell.size = 0;
-	    }
-	  else
-	    {
-	      T_CCI_TYPE a_type;
-	      const void *value;
-	      const void *ptr_arr;
+          if (req_handle->bind_value[idx].value == NULL || req_handle->bind_value[idx].null_ind[row])
+            {
+              cur_cell.value = NULL;
+              cur_cell.size = 0;
+            }
+          else
+            {
+              T_CCI_TYPE a_type;
+              const void *value;
+              const void *ptr_arr;
 
-	      a_type = req_handle->bind_value[idx].a_type;
-	      err_code = 0;
+              a_type = req_handle->bind_value[idx].a_type;
+              err_code = 0;
 
-	      ptr_arr = req_handle->bind_value[idx].value;
+              ptr_arr = req_handle->bind_value[idx].value;
 
-	      if (a_type == CCI_TYPE_VARCHAR || a_type == CCI_TYPE_NUMERIC)
-		{
-		  value = ((const char *const *) ptr_arr)[row];
-		}
-	      else if (a_type == CCI_TYPE_BIGINT)
-		{
-		  value = &((const INT64 *) ptr_arr)[row];
-		}
-	      else if (a_type == CCI_TYPE_INT)
-		{
-		  value = &((const int *) ptr_arr)[row];
-		}
-	      else if (a_type == CCI_TYPE_DOUBLE)
-		{
-		  value = &((const double *) ptr_arr)[row];
-		}
-	      else if (a_type == CCI_TYPE_VARBIT)
-		{
-		  value = &((const T_CCI_VARBIT *) ptr_arr)[row];
-		}
-	      else if (a_type == CCI_TYPE_DATE || a_type == CCI_TYPE_TIME ||
-		       a_type == CCI_TYPE_DATETIME)
-		{
-		  value = &((const T_CCI_DATETIME *) ptr_arr)[row];
-		}
-	      else
-		{
-		  err_code = CCI_ER_ATYPE;
-		}
+              if (a_type == CCI_TYPE_VARCHAR || a_type == CCI_TYPE_NUMERIC)
+                {
+                  value = ((const char *const *) ptr_arr)[row];
+                }
+              else if (a_type == CCI_TYPE_BIGINT)
+                {
+                  value = &((const INT64 *) ptr_arr)[row];
+                }
+              else if (a_type == CCI_TYPE_INT)
+                {
+                  value = &((const int *) ptr_arr)[row];
+                }
+              else if (a_type == CCI_TYPE_DOUBLE)
+                {
+                  value = &((const double *) ptr_arr)[row];
+                }
+              else if (a_type == CCI_TYPE_VARBIT)
+                {
+                  value = &((const T_CCI_VARBIT *) ptr_arr)[row];
+                }
+              else if (a_type == CCI_TYPE_DATE || a_type == CCI_TYPE_TIME || a_type == CCI_TYPE_DATETIME)
+                {
+                  value = &((const T_CCI_DATETIME *) ptr_arr)[row];
+                }
+              else
+                {
+                  err_code = CCI_ER_ATYPE;
+                }
 
-	      if (err_code == 0)
-		{
-		  err_code = bind_value_set (a_type, CCI_BIND_PTR, value,
-					     UNMEASURED_LENGTH, &cur_cell);
-		}
+              if (err_code == 0)
+                {
+                  err_code = bind_value_set (a_type, CCI_BIND_PTR, value, UNMEASURED_LENGTH, &cur_cell);
+                }
 
-	      if (err_code < 0)
-		{
-		  net_buf_clear (&net_buf);
-		  return err_code;
-		}
-	    }
-	  bind_value_to_net_buf (&net_buf, (char) cur_cell.a_type,
-				 cur_cell.value, cur_cell.size);
+              if (err_code < 0)
+                {
+                  net_buf_clear (&net_buf);
+                  return err_code;
+                }
+            }
+          bind_value_to_net_buf (&net_buf, (char) cur_cell.a_type, cur_cell.value, cur_cell.size);
 
-	  FREE_MEM (cur_cell.alloc_buffer);
-	}			/* end of for (idx) */
-    }				/* end of for (row) */
+          FREE_MEM (cur_cell.alloc_buffer);
+        }                       /* end of for (idx) */
+    }                           /* end of for (row) */
 
   if (net_buf.err_code < 0)
     {
@@ -1451,13 +1388,12 @@ qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
   if (TIMEOUT_IS_SET (con_handle))
     {
       remaining_time = con_handle->current_timeout;
-      remaining_time -=
-	(int) timeval_diff_in_msec (NULL, &con_handle->start_time);
+      remaining_time -= (int) timeval_diff_in_msec (NULL, &con_handle->start_time);
       if (remaining_time <= 0)
-	{
-	  net_buf_clear (&net_buf);
-	  return CCI_ER_QUERY_TIMEOUT;
-	}
+        {
+          net_buf_clear (&net_buf);
+          return CCI_ER_QUERY_TIMEOUT;
+        }
     }
 
   err_code = net_send_msg (con_handle, net_buf.data, net_buf.data_size);
@@ -1488,7 +1424,7 @@ qe_query_result_free (int num_q, T_CCI_QUERY_RESULT * qr)
   if (qr)
     {
       for (i = 0; i < num_q; i++)
-	FREE_MEM (qr[i].err_msg);
+        FREE_MEM (qr[i].err_msg);
       FREE_MEM (qr);
     }
 }
@@ -1507,8 +1443,7 @@ qe_query_result_copy (T_REQ_HANDLE * req_handle, T_CCI_QUERY_RESULT ** res_qr)
       return 0;
     }
 
-  qr =
-    (T_CCI_QUERY_RESULT *) MALLOC (sizeof (T_CCI_QUERY_RESULT) * num_query);
+  qr = (T_CCI_QUERY_RESULT *) MALLOC (sizeof (T_CCI_QUERY_RESULT) * num_query);
   if (qr == NULL)
     {
       return CCI_ER_NO_MORE_MEMORY;
@@ -1529,80 +1464,78 @@ qe_query_result_copy (T_REQ_HANDLE * req_handle, T_CCI_QUERY_RESULT ** res_qr)
 
 static int
 qe_get_data_str (T_VALUE_BUF * conv_val_buf, T_CCI_TYPE db_type,
-		 char *col_value_p, int col_val_size, void *value,
-		 int *indicator)
+                 char *col_value_p, int col_val_size, void *value, int *indicator)
 {
   switch (db_type)
     {
     case CCI_TYPE_VARCHAR:
     case CCI_TYPE_NUMERIC:
       {
-	*((char **) value) = col_value_p;
-	*indicator = col_val_size - 1;
+        *((char **) value) = col_value_p;
+        *indicator = col_val_size - 1;
       }
       return 0;
     case CCI_TYPE_VARBIT:
       {
-	if (hm_conv_value_buf_alloc (conv_val_buf, col_val_size * 2 + 2) < 0)
-	  {
-	    return CCI_ER_NO_MORE_MEMORY;
-	  }
-	ut_bit_to_str (col_value_p, col_val_size,
-		       (char *) conv_val_buf->data, col_val_size * 2 + 2);
+        if (hm_conv_value_buf_alloc (conv_val_buf, col_val_size * 2 + 2) < 0)
+          {
+            return CCI_ER_NO_MORE_MEMORY;
+          }
+        ut_bit_to_str (col_value_p, col_val_size, (char *) conv_val_buf->data, col_val_size * 2 + 2);
       }
       break;
     case CCI_TYPE_BIGINT:
       {
-	INT64 data;
+        INT64 data;
 
-	qe_get_data_bigint (db_type, col_value_p, &data);
+        qe_get_data_bigint (db_type, col_value_p, &data);
 
-	if (hm_conv_value_buf_alloc (conv_val_buf, 128) < 0)
-	  {
-	    return CCI_ER_NO_MORE_MEMORY;
-	  }
-	ut_int_to_str (data, (char *) conv_val_buf->data, 128);
+        if (hm_conv_value_buf_alloc (conv_val_buf, 128) < 0)
+          {
+            return CCI_ER_NO_MORE_MEMORY;
+          }
+        ut_int_to_str (data, (char *) conv_val_buf->data, 128);
       }
       break;
     case CCI_TYPE_INT:
       {
-	int data;
+        int data;
 
-	qe_get_data_int (db_type, col_value_p, &data);
+        qe_get_data_int (db_type, col_value_p, &data);
 
-	if (hm_conv_value_buf_alloc (conv_val_buf, 128) < 0)
-	  {
-	    return CCI_ER_NO_MORE_MEMORY;
-	  }
-	ut_int_to_str (data, (char *) conv_val_buf->data, 128);
+        if (hm_conv_value_buf_alloc (conv_val_buf, 128) < 0)
+          {
+            return CCI_ER_NO_MORE_MEMORY;
+          }
+        ut_int_to_str (data, (char *) conv_val_buf->data, 128);
       }
       break;
     case CCI_TYPE_DOUBLE:
       {
-	double data;
+        double data;
 
-	qe_get_data_double (db_type, col_value_p, &data);
+        qe_get_data_double (db_type, col_value_p, &data);
 
-	if (hm_conv_value_buf_alloc (conv_val_buf, 512) < 0)
-	  {
-	    return CCI_ER_NO_MORE_MEMORY;
-	  }
-	ut_double_to_str (data, (char *) conv_val_buf->data, 512);
+        if (hm_conv_value_buf_alloc (conv_val_buf, 512) < 0)
+          {
+            return CCI_ER_NO_MORE_MEMORY;
+          }
+        ut_double_to_str (data, (char *) conv_val_buf->data, 512);
       }
       break;
     case CCI_TYPE_DATE:
     case CCI_TYPE_TIME:
     case CCI_TYPE_DATETIME:
       {
-	T_CCI_DATETIME data;
+        T_CCI_DATETIME data;
 
-	qe_get_data_datetime (db_type, col_value_p, &data);
+        qe_get_data_datetime (db_type, col_value_p, &data);
 
-	if (hm_conv_value_buf_alloc (conv_val_buf, 128) < 0)
-	  {
-	    return CCI_ER_NO_MORE_MEMORY;
-	  }
-	ut_datetime_to_str (&data, db_type, (char *) conv_val_buf->data, 128);
+        if (hm_conv_value_buf_alloc (conv_val_buf, 128) < 0)
+          {
+            return CCI_ER_NO_MORE_MEMORY;
+          }
+        ut_datetime_to_str (&data, db_type, (char *) conv_val_buf->data, 128);
       }
       break;
 
@@ -1626,25 +1559,25 @@ qe_get_data_bigint (T_CCI_TYPE db_type, char *col_value_p, void *value)
     case CCI_TYPE_VARCHAR:
     case CCI_TYPE_NUMERIC:
       if (ut_str_to_bigint (col_value_p, &data) < 0)
-	{
-	  return CCI_ER_TYPE_CONVERSION;
-	}
+        {
+          return CCI_ER_TYPE_CONVERSION;
+        }
       break;
     case CCI_TYPE_BIGINT:
       NET_STR_TO_BIGINT (data, col_value_p);
       break;
     case CCI_TYPE_INT:
       {
-	int i_val;
-	NET_STR_TO_INT (i_val, col_value_p);
-	data = (INT64) i_val;
-	break;
+        int i_val;
+        NET_STR_TO_INT (i_val, col_value_p);
+        data = (INT64) i_val;
+        break;
       }
     case CCI_TYPE_DOUBLE:
       {
-	double d_val;
-	NET_STR_TO_DOUBLE (d_val, col_value_p);
-	data = (INT64) d_val;
+        double d_val;
+        NET_STR_TO_DOUBLE (d_val, col_value_p);
+        data = (INT64) d_val;
       }
       break;
     default:
@@ -1666,15 +1599,15 @@ qe_get_data_int (T_CCI_TYPE db_type, char *col_value_p, void *value)
     case CCI_TYPE_VARCHAR:
     case CCI_TYPE_NUMERIC:
       if (ut_str_to_int (col_value_p, &data) < 0)
-	{
-	  return CCI_ER_TYPE_CONVERSION;
-	}
+        {
+          return CCI_ER_TYPE_CONVERSION;
+        }
       break;
     case CCI_TYPE_BIGINT:
       {
-	INT64 bi_val;
-	NET_STR_TO_BIGINT (bi_val, col_value_p);
-	data = (int) bi_val;
+        INT64 bi_val;
+        NET_STR_TO_BIGINT (bi_val, col_value_p);
+        data = (int) bi_val;
       }
       break;
     case CCI_TYPE_INT:
@@ -1682,9 +1615,9 @@ qe_get_data_int (T_CCI_TYPE db_type, char *col_value_p, void *value)
       break;
     case CCI_TYPE_DOUBLE:
       {
-	double d_val;
-	NET_STR_TO_DOUBLE (d_val, col_value_p);
-	data = (int) d_val;
+        double d_val;
+        NET_STR_TO_DOUBLE (d_val, col_value_p);
+        data = (int) d_val;
       }
       break;
     default:
@@ -1706,27 +1639,27 @@ qe_get_data_double (T_CCI_TYPE db_type, char *col_value_p, void *value)
     case CCI_TYPE_VARCHAR:
     case CCI_TYPE_NUMERIC:
       if (ut_str_to_double (col_value_p, &data) < 0)
-	{
-	  return CCI_ER_TYPE_CONVERSION;
-	}
+        {
+          return CCI_ER_TYPE_CONVERSION;
+        }
       break;
     case CCI_TYPE_BIGINT:
       {
-	INT64 bi_val;
-	NET_STR_TO_BIGINT (bi_val, col_value_p);
-	data = (double) bi_val;
+        INT64 bi_val;
+        NET_STR_TO_BIGINT (bi_val, col_value_p);
+        data = (double) bi_val;
       }
       break;
     case CCI_TYPE_INT:
       {
-	int i_val;
-	NET_STR_TO_INT (i_val, col_value_p);
-	data = (double) i_val;
+        int i_val;
+        NET_STR_TO_INT (i_val, col_value_p);
+        data = (double) i_val;
       }
       break;
     case CCI_TYPE_DOUBLE:
       {
-	NET_STR_TO_DOUBLE (data, col_value_p);
+        NET_STR_TO_DOUBLE (data, col_value_p);
       }
       break;
     default:
@@ -1764,8 +1697,7 @@ qe_get_data_datetime (T_CCI_TYPE db_type, char *col_value_p, void *value)
 }
 
 static int
-qe_get_data_bit (T_CCI_TYPE db_type, char *col_value_p, int col_val_size,
-		 void *value)
+qe_get_data_bit (T_CCI_TYPE db_type, char *col_value_p, int col_val_size, void *value)
 {
   if (db_type == CCI_TYPE_VARBIT)
     {
@@ -1794,9 +1726,9 @@ qe_get_query_plan (T_CON_HANDLE * con_handle, const char *sql, char **out_buf)
   if (sql == NULL)
     {
       if (out_buf)
-	{
-	  *out_buf = NULL;
-	}
+        {
+          *out_buf = NULL;
+        }
       return CCI_ER_NO_ERROR;
     }
 
@@ -1830,17 +1762,17 @@ qe_get_query_plan (T_CON_HANDLE * con_handle, const char *sql, char **out_buf)
 
       err_code = net_res_to_str (&ptr, &info_size, net_res);
       if (err_code < 0)
-	{
-	  FREE_MEM (net_res);
-	  return err_code;
-	}
+        {
+          FREE_MEM (net_res);
+          return err_code;
+        }
 
       tmp_buf = (char *) MALLOC (info_size + 1);
       if (tmp_buf == NULL)
-	{
-	  FREE_MEM (net_res);
-	  return CCI_ER_NO_MORE_MEMORY;
-	}
+        {
+          FREE_MEM (net_res);
+          return CCI_ER_NO_MORE_MEMORY;
+        }
       memcpy (tmp_buf, ptr, info_size);
       tmp_buf[info_size] = '\0';
       *out_buf = tmp_buf;
@@ -1852,17 +1784,16 @@ qe_get_query_plan (T_CON_HANDLE * con_handle, const char *sql, char **out_buf)
 }
 
 void
-tuple_value_free (T_TUPLE_VALUE * tuple_value, int num_tuple,
-		  UNUSED_ARG int num_cols)
+tuple_value_free (T_TUPLE_VALUE * tuple_value, int num_tuple, UNUSED_ARG int num_cols)
 {
   if (tuple_value)
     {
       int i;
 
       for (i = 0; i < num_tuple; i++)
-	{
-	  FREE_MEM (tuple_value[i].column_ptr);
-	}
+        {
+          FREE_MEM (tuple_value[i].column_ptr);
+        }
       FREE_MEM (tuple_value);
     }
 }
@@ -1879,8 +1810,7 @@ prepare_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle)
   char stmt_type;
   T_CCI_COL_INFO *col_info = NULL;
 
-  if (net_res_to_byte (&stmt_type, net_res) < 0 ||
-      net_res_to_int (&num_bind_info, net_res) < 0)
+  if (net_res_to_byte (&stmt_type, net_res) < 0 || net_res_to_int (&num_bind_info, net_res) < 0)
     {
       return CCI_ER_COMMUNICATION;
     }
@@ -1920,8 +1850,7 @@ get_cursor_pos (T_REQ_HANDLE * req_handle, int offset, char origin)
 }
 
 static int
-fetch_info_decode (T_NET_RES * net_res, int num_cols,
-		   T_TUPLE_VALUE ** tuple_value, T_REQ_HANDLE * req_handle)
+fetch_info_decode (T_NET_RES * net_res, int num_cols, T_TUPLE_VALUE ** tuple_value, T_REQ_HANDLE * req_handle)
 {
   int err_code = 0;
   int num_tuple, i, j;
@@ -1942,17 +1871,16 @@ fetch_info_decode (T_NET_RES * net_res, int num_cols,
   else if (num_tuple == 0)
     {
       if (net_res_to_byte (&cursor_status, net_res) < 0)
-	{
-	  return CCI_ER_COMMUNICATION;
-	}
+        {
+          return CCI_ER_COMMUNICATION;
+        }
 
       req_handle->cas_cursor_status = cursor_status;
 
       return 0;
     }
 
-  tmp_tuple_value = (T_TUPLE_VALUE *)
-    MALLOC (sizeof (T_TUPLE_VALUE) * num_tuple);
+  tmp_tuple_value = (T_TUPLE_VALUE *) MALLOC (sizeof (T_TUPLE_VALUE) * num_tuple);
   if (tmp_tuple_value == NULL)
     {
       return CCI_ER_NO_MORE_MEMORY;
@@ -1964,38 +1892,37 @@ fetch_info_decode (T_NET_RES * net_res, int num_cols,
       int tuple_index;
 
       if (net_res_to_int (&tuple_index, net_res) < 0)
-	{
-	  err_code = CCI_ER_COMMUNICATION;
-	  goto fetch_info_decode_error;
-	}
+        {
+          err_code = CCI_ER_COMMUNICATION;
+          goto fetch_info_decode_error;
+        }
 
       tmp_tuple_value[i].tuple_index = tuple_index;
 
-      tmp_tuple_value[i].column_ptr =
-	(char **) MALLOC (sizeof (char *) * num_cols);
+      tmp_tuple_value[i].column_ptr = (char **) MALLOC (sizeof (char *) * num_cols);
       if (tmp_tuple_value[i].column_ptr == NULL)
-	{
-	  err_code = CCI_ER_NO_MORE_MEMORY;
-	  goto fetch_info_decode_error;
-	}
+        {
+          err_code = CCI_ER_NO_MORE_MEMORY;
+          goto fetch_info_decode_error;
+        }
       memset (tmp_tuple_value[i].column_ptr, 0, sizeof (char *) * num_cols);
 
       for (j = 0; j < num_cols; j++)
-	{
-	  int data_size;
-	  char *col_p, *dummy_ptr;
+        {
+          int data_size;
+          char *col_p, *dummy_ptr;
 
-	  col_p = net_res_cur_ptr (net_res);
+          col_p = net_res_cur_ptr (net_res);
 
-	  if (net_res_to_str (&dummy_ptr, &data_size, net_res) < 0)
-	    {
-	      err_code = CCI_ER_COMMUNICATION;
-	      goto fetch_info_decode_error;
-	    }
+          if (net_res_to_str (&dummy_ptr, &data_size, net_res) < 0)
+            {
+              err_code = CCI_ER_COMMUNICATION;
+              goto fetch_info_decode_error;
+            }
 
-	  tmp_tuple_value[i].column_ptr[j] = col_p;
-	}			/* end of for j */
-    }				/* end of for i */
+          tmp_tuple_value[i].column_ptr[j] = col_p;
+        }                       /* end of for j */
+    }                           /* end of for i */
 
   if (net_res_to_byte (&cursor_status, net_res) < 0)
     {
@@ -2033,76 +1960,69 @@ get_column_info (T_NET_RES * net_res, T_CCI_COL_INFO ** ret_col_info)
   col_info = NULL;
   if (num_col_info > 0)
     {
-      col_info = (T_CCI_COL_INFO *) MALLOC (sizeof (T_CCI_COL_INFO)
-					    * num_col_info);
+      col_info = (T_CCI_COL_INFO *) MALLOC (sizeof (T_CCI_COL_INFO) * num_col_info);
       if (col_info == NULL)
-	{
-	  return CCI_ER_NO_MORE_MEMORY;
-	}
+        {
+          return CCI_ER_NO_MORE_MEMORY;
+        }
 
       memset ((char *) col_info, 0, sizeof (T_CCI_COL_INFO) * num_col_info);
 
       for (i = 0; i < num_col_info; i++)
-	{
-	  char type;
-	  short scale;
-	  int precision;
-	  int disp_name_size;
-	  char *disp_name_ptr;
-	  int attr_name_size;
-	  char *attr_name_ptr;
-	  int tbl_name_size;
-	  char *tbl_name_ptr;
-	  char is_non_null;
-	  int defval_size;
-	  char *defval_ptr;
-	  char is_unique_key;
-	  char is_primary_key;
+        {
+          char type;
+          short scale;
+          int precision;
+          int disp_name_size;
+          char *disp_name_ptr;
+          int attr_name_size;
+          char *attr_name_ptr;
+          int tbl_name_size;
+          char *tbl_name_ptr;
+          char is_non_null;
+          int defval_size;
+          char *defval_ptr;
+          char is_unique_key;
+          char is_primary_key;
 
-	  if (net_res_to_byte (&type, net_res) < 0 ||
-	      net_res_to_short (&scale, net_res) < 0 ||
-	      net_res_to_int (&precision, net_res) < 0 ||
-	      net_res_to_str (&disp_name_ptr, &disp_name_size, net_res) < 0)
-	    {
-	      goto get_column_info_error;
-	    }
+          if (net_res_to_byte (&type, net_res) < 0 ||
+              net_res_to_short (&scale, net_res) < 0 ||
+              net_res_to_int (&precision, net_res) < 0 || net_res_to_str (&disp_name_ptr, &disp_name_size, net_res) < 0)
+            {
+              goto get_column_info_error;
+            }
 
-	  col_info[i].type = (T_CCI_TYPE) type;
-	  col_info[i].scale = scale;
-	  col_info[i].precision = precision;
+          col_info[i].type = (T_CCI_TYPE) type;
+          col_info[i].scale = scale;
+          col_info[i].precision = precision;
 
-	  ALLOC_N_COPY (col_info[i].col_name, disp_name_ptr, disp_name_size,
-			char *);
-	  if (col_info[i].col_name == NULL)
-	    {
-	      goto get_column_info_error;
-	    }
+          ALLOC_N_COPY (col_info[i].col_name, disp_name_ptr, disp_name_size, char *);
+          if (col_info[i].col_name == NULL)
+            {
+              goto get_column_info_error;
+            }
 
-	  if (net_res_to_str (&attr_name_ptr, &attr_name_size, net_res) < 0 ||
-	      net_res_to_str (&tbl_name_ptr, &tbl_name_size, net_res) < 0 ||
-	      net_res_to_byte (&is_non_null, net_res) < 0 ||
-	      net_res_to_str (&defval_ptr, &defval_size, net_res) < 0 ||
-	      net_res_to_byte (&is_unique_key, net_res) < 0 ||
-	      net_res_to_byte (&is_primary_key, net_res) < 0)
-	    {
-	      goto get_column_info_error;
-	    }
+          if (net_res_to_str (&attr_name_ptr, &attr_name_size, net_res) < 0 ||
+              net_res_to_str (&tbl_name_ptr, &tbl_name_size, net_res) < 0 ||
+              net_res_to_byte (&is_non_null, net_res) < 0 ||
+              net_res_to_str (&defval_ptr, &defval_size, net_res) < 0 ||
+              net_res_to_byte (&is_unique_key, net_res) < 0 || net_res_to_byte (&is_primary_key, net_res) < 0)
+            {
+              goto get_column_info_error;
+            }
 
-	  ALLOC_N_COPY (col_info[i].real_attr, attr_name_ptr, attr_name_size,
-			char *);
-	  ALLOC_N_COPY (col_info[i].class_name, tbl_name_ptr, tbl_name_size,
-			char *);
-	  col_info[i].is_non_null = is_non_null;
-	  ALLOC_N_COPY (col_info[i].default_value, defval_ptr, defval_size,
-			char *);
-	  col_info[i].is_unique_key = is_unique_key;
-	  col_info[i].is_primary_key = is_primary_key;
+          ALLOC_N_COPY (col_info[i].real_attr, attr_name_ptr, attr_name_size, char *);
+          ALLOC_N_COPY (col_info[i].class_name, tbl_name_ptr, tbl_name_size, char *);
+          col_info[i].is_non_null = is_non_null;
+          ALLOC_N_COPY (col_info[i].default_value, defval_ptr, defval_size, char *);
+          col_info[i].is_unique_key = is_unique_key;
+          col_info[i].is_primary_key = is_primary_key;
 
-	  if (col_info[i].default_value == NULL)
-	    {
-	      goto get_column_info_error;
-	    }
-	}
+          if (col_info[i].default_value == NULL)
+            {
+              goto get_column_info_error;
+            }
+        }
     }
 
   if (ret_col_info)
@@ -2144,9 +2064,9 @@ get_shard_key_info (T_NET_RES * net_res)
       int size;
 
       if (net_res_to_str (&p, &size, net_res) < 0)
-	{
-	  goto get_shard_key_info_error;
-	}
+        {
+          goto get_shard_key_info_error;
+        }
     }
 
   if (net_res_to_int (&num_shard_key_pos, net_res) < 0)
@@ -2158,9 +2078,9 @@ get_shard_key_info (T_NET_RES * net_res)
       int pos;
 
       if (net_res_to_int (&pos, net_res) < 0)
-	{
-	  goto get_shard_key_info_error;
-	}
+        {
+          goto get_shard_key_info_error;
+        }
     }
 
   return 0;
@@ -2201,8 +2121,7 @@ schema_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle)
 }
 
 static int
-bind_value_set (T_CCI_TYPE a_type, char flag, const void *value,
-		int length, T_BIND_VALUE * bind_value)
+bind_value_set (T_CCI_TYPE a_type, char flag, const void *value, int length, T_BIND_VALUE * bind_value)
 {
   const char *cp_src = value;
   int cp_size;
@@ -2210,17 +2129,17 @@ bind_value_set (T_CCI_TYPE a_type, char flag, const void *value,
   if (a_type == CCI_TYPE_VARCHAR || a_type == CCI_TYPE_NUMERIC)
     {
       if (length == UNMEASURED_LENGTH)
-	{
-	  bind_value->size = strlen (value);
-	}
+        {
+          bind_value->size = strlen (value);
+        }
       else
-	{
-	  bind_value->size = length;
-	}
+        {
+          bind_value->size = length;
+        }
 
       cp_size = bind_value->size;
 
-      bind_value->size += 1;	/* protocol with cas */
+      bind_value->size += 1;    /* protocol with cas */
     }
   else if (a_type == CCI_TYPE_INT)
     {
@@ -2245,8 +2164,7 @@ bind_value_set (T_CCI_TYPE a_type, char flag, const void *value,
       cp_size = bit_value->size;
       cp_src = bit_value->buf;
     }
-  else if (a_type == CCI_TYPE_DATE || a_type == CCI_TYPE_TIME ||
-	   a_type == CCI_TYPE_DATETIME)
+  else if (a_type == CCI_TYPE_DATE || a_type == CCI_TYPE_TIME || a_type == CCI_TYPE_DATETIME)
     {
       bind_value->size = 0;
       cp_size = sizeof (T_CCI_DATETIME);
@@ -2266,17 +2184,16 @@ bind_value_set (T_CCI_TYPE a_type, char flag, const void *value,
       ALLOC_COPY_BIT (bind_value->alloc_buffer, cp_src, cp_size);
       bind_value->value = bind_value->alloc_buffer;
       if (bind_value->value == NULL)
-	{
-	  return CCI_ER_NO_MORE_MEMORY;
-	}
+        {
+          return CCI_ER_NO_MORE_MEMORY;
+        }
     }
 
   return 0;
 }
 
 static int
-bind_value_to_net_buf (T_NET_BUF * net_buf, char type, const void *value,
-		       int size)
+bind_value_to_net_buf (T_NET_BUF * net_buf, char type, const void *value, int size)
 {
   if (value == NULL)
     {
@@ -2343,8 +2260,7 @@ execute_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle)
   memset (qr, 0, sizeof (T_CCI_QUERY_RESULT));
 
   if (net_res_to_byte (&stmt_type, net_res) < 0 ||
-      net_res_to_int (&res_count, net_res) < 0 ||
-      net_res_to_int (&num_col_types, net_res) < 0)
+      net_res_to_int (&res_count, net_res) < 0 || net_res_to_int (&num_col_types, net_res) < 0)
     {
       FREE_MEM (qr);
       return CCI_ER_COMMUNICATION;
@@ -2360,25 +2276,24 @@ execute_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle)
       int precision;
 
       if (num_col_types != req_handle->num_col_info)
-	{
-	  assert (0);
-	  FREE_MEM (qr);
-	  return CCI_ER_COMMUNICATION;
-	}
+        {
+          assert (0);
+          FREE_MEM (qr);
+          return CCI_ER_COMMUNICATION;
+        }
 
       for (i = 0; i < num_col_types; i++)
-	{
-	  if (net_res_to_byte (&col_type, net_res) < 0 ||
-	      net_res_to_short (&scale, net_res) < 0 ||
-	      net_res_to_int (&precision, net_res) < 0)
-	    {
-	      FREE_MEM (qr);
-	      return CCI_ER_COMMUNICATION;
-	    }
-	  req_handle->col_info[i].type = col_type;
-	  req_handle->col_info[i].scale = scale;
-	  req_handle->col_info[i].precision = precision;
-	}
+        {
+          if (net_res_to_byte (&col_type, net_res) < 0 ||
+              net_res_to_short (&scale, net_res) < 0 || net_res_to_int (&precision, net_res) < 0)
+            {
+              FREE_MEM (qr);
+              return CCI_ER_COMMUNICATION;
+            }
+          req_handle->col_info[i].type = col_type;
+          req_handle->col_info[i].scale = scale;
+          req_handle->col_info[i].precision = precision;
+        }
     }
 
   req_handle->qr = qr;
@@ -2388,8 +2303,7 @@ execute_info_decode (T_NET_RES * net_res, T_REQ_HANDLE * req_handle)
 }
 
 static int
-execute_batch_info_decode (T_NET_RES * net_res, char flag,
-			   T_CCI_QUERY_RESULT ** res_qr)
+execute_batch_info_decode (T_NET_RES * net_res, char flag, T_CCI_QUERY_RESULT ** res_qr)
 {
   int num_query;
   int i;
@@ -2408,8 +2322,7 @@ execute_batch_info_decode (T_NET_RES * net_res, char flag,
       return num_query;
     }
 
-  qr =
-    (T_CCI_QUERY_RESULT *) MALLOC (sizeof (T_CCI_QUERY_RESULT) * num_query);
+  qr = (T_CCI_QUERY_RESULT *) MALLOC (sizeof (T_CCI_QUERY_RESULT) * num_query);
   if (qr == NULL)
     {
       return CCI_ER_NO_MORE_MEMORY;
@@ -2422,60 +2335,59 @@ execute_batch_info_decode (T_NET_RES * net_res, char flag,
       char exec_status;
 
       if (net_res_to_byte (&exec_status, net_res) < 0)
-	{
-	  qe_query_result_free (i, qr);
-	  return CCI_ER_COMMUNICATION;
-	}
+        {
+          qe_query_result_free (i, qr);
+          return CCI_ER_COMMUNICATION;
+        }
 
       if (exec_status == EXEC_QUERY_ERROR)
-	{
-	  int srv_err_indicator;
-	  int srv_err_code;
-	  int srv_err_msg_size;
-	  char *srv_err_msg_p;
+        {
+          int srv_err_indicator;
+          int srv_err_code;
+          int srv_err_msg_size;
+          char *srv_err_msg_p;
 
-	  if (net_res_to_int (&srv_err_indicator, net_res) < 0 ||
-	      net_res_to_int (&srv_err_code, net_res) < 0 ||
-	      net_res_to_str (&srv_err_msg_p, &srv_err_msg_size, net_res) < 0)
-	    {
-	      qe_query_result_free (i, qr);
-	      return CCI_ER_COMMUNICATION;
-	    }
+          if (net_res_to_int (&srv_err_indicator, net_res) < 0 ||
+              net_res_to_int (&srv_err_code, net_res) < 0 ||
+              net_res_to_str (&srv_err_msg_p, &srv_err_msg_size, net_res) < 0)
+            {
+              qe_query_result_free (i, qr);
+              return CCI_ER_COMMUNICATION;
+            }
 
-	  qr[i].result_count = srv_err_code;
-	  qr[i].err_no = srv_err_code;;
+          qr[i].result_count = srv_err_code;
+          qr[i].err_no = srv_err_code;;
 
-	  if (srv_err_msg_p != NULL)
-	    {
-	      ALLOC_N_COPY (qr[i].err_msg, srv_err_msg_p, srv_err_msg_size,
-			    char *);
-	    }
-	}
+          if (srv_err_msg_p != NULL)
+            {
+              ALLOC_N_COPY (qr[i].err_msg, srv_err_msg_p, srv_err_msg_size, char *);
+            }
+        }
       else
-	{
-	  int res_count;
+        {
+          int res_count;
 
-	  if (flag == EXECUTE_BATCH)
-	    {
-	      char stmt_type;
+          if (flag == EXECUTE_BATCH)
+            {
+              char stmt_type;
 
-	      if (net_res_to_byte (&stmt_type, net_res) < 0)
-		{
-		  qe_query_result_free (i, qr);
-		  return CCI_ER_COMMUNICATION;
-		}
+              if (net_res_to_byte (&stmt_type, net_res) < 0)
+                {
+                  qe_query_result_free (i, qr);
+                  return CCI_ER_COMMUNICATION;
+                }
 
-	      qr[i].stmt_type = stmt_type;
-	    }
+              qr[i].stmt_type = stmt_type;
+            }
 
-	  if (net_res_to_int (&res_count, net_res) < 0)
-	    {
-	      qe_query_result_free (i, qr);
-	      return CCI_ER_COMMUNICATION;
-	    }
+          if (net_res_to_int (&res_count, net_res) < 0)
+            {
+              qe_query_result_free (i, qr);
+              return CCI_ER_COMMUNICATION;
+            }
 
-	  qr[i].result_count = res_count;
-	}
+          qr[i].result_count = res_count;
+        }
     }
 
   *res_qr = qr;
@@ -2491,8 +2403,7 @@ decode_fetch_result (T_REQ_HANDLE * req_handle, T_NET_RES * net_res)
 
   num_cols = req_handle->num_col_info;
 
-  num_tuple = fetch_info_decode (net_res, num_cols,
-				 &(req_handle->tuple_value), req_handle);
+  num_tuple = fetch_info_decode (net_res, num_cols, &(req_handle->tuple_value), req_handle);
   if (num_tuple < 0)
     {
       return num_tuple;
@@ -2517,8 +2428,7 @@ decode_fetch_result (T_REQ_HANDLE * req_handle, T_NET_RES * net_res)
 }
 
 int
-qe_update_db_group_id (T_CON_HANDLE * con_handle, int migrator_id,
-		       int group_id, int target, bool on_off)
+qe_update_db_group_id (T_CON_HANDLE * con_handle, int migrator_id, int group_id, int target, bool on_off)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_UPDATE_GROUP_ID;
@@ -2701,8 +2611,7 @@ qe_block_global_dml (T_CON_HANDLE * con_handle, bool start_or_end)
 }
 
 int
-qe_get_server_mode (T_CON_HANDLE * con_handle, int *mode,
-		    unsigned int *master_addr)
+qe_get_server_mode (T_CON_HANDLE * con_handle, int *mode, unsigned int *master_addr)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_SERVER_MODE;
@@ -2739,8 +2648,7 @@ qe_get_server_mode (T_CON_HANDLE * con_handle, int *mode,
       return err_code;
     }
 
-  if (net_res_to_int (mode, net_res) < 0 ||
-      net_res_to_int ((int *) master_addr, net_res) < 0)
+  if (net_res_to_int (mode, net_res) < 0 || net_res_to_int ((int *) master_addr, net_res) < 0)
     {
       err_code = CCI_ER_COMMUNICATION;
     }
@@ -2813,12 +2721,11 @@ static int
 add_repl_item_catalog (T_NET_BUF * net_buf, RP_CATALOG_ITEM * catalog)
 {
   assert (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
-	  || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE);
+          || catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE);
   assert (catalog->recdes != NULL);
   assert (cci_db_idxkey_has_null (&catalog->key) == false);
 
-  ADD_ARG_STR (net_buf, catalog->class_name,
-	       strlen (catalog->class_name) + 1);
+  ADD_ARG_STR (net_buf, catalog->class_name, strlen (catalog->class_name) + 1);
   ADD_ARG_IDXKEY (net_buf, &catalog->key);
   ADD_ARG_INT (net_buf, catalog->copyarea_op);
   ADD_ARG_STR (net_buf, catalog->recdes->data, catalog->recdes->length);
@@ -2834,8 +2741,7 @@ add_repl_item_data (T_NET_BUF * net_buf, RP_DATA_ITEM * data)
 {
   assert (data->class_name != NULL);
   assert (data->rcv_index == RVREPL_DATA_INSERT
-	  || data->rcv_index == RVREPL_DATA_UPDATE
-	  || data->rcv_index == RVREPL_DATA_DELETE);
+          || data->rcv_index == RVREPL_DATA_UPDATE || data->rcv_index == RVREPL_DATA_DELETE);
   assert (cci_db_idxkey_has_null (&data->key) == false);
 
   ADD_ARG_STR (net_buf, data->class_name, strlen (data->class_name) + 1);
@@ -2857,8 +2763,7 @@ add_repl_item_data (T_NET_BUF * net_buf, RP_DATA_ITEM * data)
 }
 
 int
-qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
-		   int num_items, int applier_id)
+qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head, int num_items, int applier_id)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_SEND_REPL_DATA;
@@ -2907,20 +2812,20 @@ qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
     {
       ADD_ARG_INT (&net_buf, item->item_type);
       switch (item->item_type)
-	{
-	case RP_ITEM_TYPE_CATALOG:
-	  err_code = add_repl_item_catalog (&net_buf, &item->info.catalog);
-	  break;
-	case RP_ITEM_TYPE_DDL:
-	  err_code = add_repl_item_ddl (&net_buf, &item->info.ddl);
-	  break;
-	case RP_ITEM_TYPE_DATA:
-	  err_code = add_repl_item_data (&net_buf, &item->info.data);
-	  break;
-	default:
-	  assert (false);
-	  return CCI_ER_INVALID_ARGS;
-	}
+        {
+        case RP_ITEM_TYPE_CATALOG:
+          err_code = add_repl_item_catalog (&net_buf, &item->info.catalog);
+          break;
+        case RP_ITEM_TYPE_DDL:
+          err_code = add_repl_item_ddl (&net_buf, &item->info.ddl);
+          break;
+        case RP_ITEM_TYPE_DATA:
+          err_code = add_repl_item_data (&net_buf, &item->info.data);
+          break;
+        default:
+          assert (false);
+          return CCI_ER_INVALID_ARGS;
+        }
 
       item = item->next;
       item_count++;
@@ -2934,9 +2839,9 @@ qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
   if (err_code < 0 || net_buf.err_code < 0)
     {
       if (err_code == CCI_ER_NO_ERROR)
-	{
-	  err_code = net_buf.err_code;
-	}
+        {
+          err_code = net_buf.err_code;
+        }
       net_buf_clear (&net_buf);
 
       return err_code;
@@ -2955,8 +2860,7 @@ qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head,
 }
 
 int
-qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
-			  in_addr_t ip, int port, int state)
+qe_notify_ha_agent_state (T_CON_HANDLE * con_handle, in_addr_t ip, int port, int state)
 {
   T_NET_BUF net_buf;
   char func_code = CAS_FC_NOTIFY_HA_AGENT_STATE;
@@ -2996,8 +2900,7 @@ qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
 }
 
 int
-qe_change_dbuser (T_CON_HANDLE * con_handle, const char *user,
-		  const char *passwd)
+qe_change_dbuser (T_CON_HANDLE * con_handle, const char *user, const char *passwd)
 {
   char *dbuser, *dbpasswd;
   int err_code = CCI_ER_NO_ERROR;;

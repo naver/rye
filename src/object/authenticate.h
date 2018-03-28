@@ -144,10 +144,8 @@ extern void au_final (void);
 
 extern int au_install (void);
 extern int au_start (void);
-extern int au_login (const char *name, const char *password,
-		     bool ignore_dba_privilege);
-extern int au_perform_login (const char *name, const char *password,
-			     bool ignore_dba_privilege);
+extern int au_login (const char *name, const char *password, bool ignore_dba_privilege);
+extern int au_perform_login (const char *name, const char *password, bool ignore_dba_privilege);
 
 extern void au_disable_passwords (void);
 extern void au_enable_passwords (void);
@@ -167,17 +165,14 @@ extern int au_rename_table (const char *old_name, const char *new_name);
 extern char *au_user_name (void);
 extern char *au_user_name_dup (void);
 /* grant/revoke */
-extern int au_grant (MOP user, MOP class_mop, DB_AUTH type,
-		     bool grant_option);
+extern int au_grant (MOP user, MOP class_mop, DB_AUTH type, bool grant_option);
 extern int au_revoke (MOP user, MOP class_mop, DB_AUTH type);
 
 /* class & instance accessors */
-extern int au_fetch_class (MOP op, SM_CLASS ** class_ptr,
-			   LOCK lock, DB_AUTH type);
+extern int au_fetch_class (MOP op, SM_CLASS ** class_ptr, LOCK lock, DB_AUTH type);
 extern int au_fetch_class_force (MOP op, SM_CLASS ** class_, LOCK lock);
 
-extern int au_fetch_instance (MOP op, MOBJ * obj_ptr, LOCK lock,
-			      DB_AUTH type);
+extern int au_fetch_instance (MOP op, MOBJ * obj_ptr, LOCK lock, DB_AUTH type);
 extern int au_fetch_instance_force (MOP op, MOBJ * obj_ptr, LOCK lock);
 
 /* class cache support */
@@ -207,8 +202,7 @@ extern int au_get_class_privilege (DB_OBJECT * mop, unsigned int *auth);
 /*
  * Etc
  */
-extern int au_change_owner_helper (MOP obj, DB_VALUE * returnval,
-				   DB_VALUE * class_, DB_VALUE * owner);
+extern int au_change_owner_helper (MOP obj, DB_VALUE * returnval, DB_VALUE * class_, DB_VALUE * owner);
 extern const char *au_get_public_user_name (void);
 extern const char *au_get_user_class_name (void);
 #if defined(ENABLE_UNUSED_FUNCTION)

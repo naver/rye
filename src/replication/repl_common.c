@@ -80,10 +80,9 @@ void
 rp_set_agent_need_restart (const char *file_name, int line)
 {
   er_log_debug (ARG_FILE_LINE,
-		"FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
-		"hb_Proc_shutdown(%d)",
-		file_name, line, repl_Agent_need_restart,
-		repl_Agent_need_shutdown, hb_Proc_shutdown);
+                "FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
+                "hb_Proc_shutdown(%d)",
+                file_name, line, repl_Agent_need_restart, repl_Agent_need_shutdown, hb_Proc_shutdown);
 
   repl_Agent_need_restart = true;
 }
@@ -95,10 +94,9 @@ void
 rp_set_agent_need_shutdown (const char *file_name, int line)
 {
   er_log_debug (ARG_FILE_LINE,
-		"FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
-		"hb_Proc_shutdown(%d)",
-		file_name, line, repl_Agent_need_restart,
-		repl_Agent_need_shutdown, hb_Proc_shutdown);
+                "FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
+                "hb_Proc_shutdown(%d)",
+                file_name, line, repl_Agent_need_restart, repl_Agent_need_shutdown, hb_Proc_shutdown);
 
   repl_Agent_need_shutdown = true;
 }
@@ -109,8 +107,7 @@ rp_set_agent_need_shutdown (const char *file_name, int line)
 bool
 rp_need_restart (void)
 {
-  return (repl_Agent_need_restart == true || repl_Agent_need_shutdown == true
-	  || hb_Proc_shutdown == true);
+  return (repl_Agent_need_restart == true || repl_Agent_need_shutdown == true || hb_Proc_shutdown == true);
 }
 
 /*
@@ -122,10 +119,9 @@ bool
 rp_need_shutdown (const char *file_name, int line)
 {
   er_log_debug (ARG_FILE_LINE,
-		"FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
-		"hb_Proc_shutdown(%d)",
-		file_name, line, repl_Agent_need_restart,
-		repl_Agent_need_shutdown, hb_Proc_shutdown);
+                "FILE(%s,%d),repl_Agent_need_restart(%d) repl_Agent_need_shutdown(%d), "
+                "hb_Proc_shutdown(%d)",
+                file_name, line, repl_Agent_need_restart, repl_Agent_need_shutdown, hb_Proc_shutdown);
 
   return (repl_Agent_need_shutdown == true || hb_Proc_shutdown == true);
 }
@@ -139,8 +135,7 @@ rp_need_shutdown (const char *file_name, int line)
  *    lsa(in):
  */
 int
-rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
-		       const LOG_LSA * lsa)
+rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, TRANID tran_id, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   RP_DATA_ITEM *data = NULL;
@@ -158,8 +153,7 @@ rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
   if (item == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
       return error;
     }
 
@@ -194,8 +188,7 @@ rp_new_repl_item_data (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
  *    lsa(in):
  */
 int
-rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
-		      const LOG_LSA * lsa)
+rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, TRANID tran_id, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_DDL_ITEM *ddl;
@@ -214,8 +207,7 @@ rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
   if (item == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
       return error;
     }
 
@@ -247,8 +239,7 @@ rp_new_repl_item_ddl (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
  *    lsa(in):
  */
 int
-rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
-			  const LOG_LSA * lsa)
+rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, TRANID tran_id, const LOG_LSA * lsa)
 {
   CIRP_REPL_ITEM *item;
   RP_CATALOG_ITEM *catalog;
@@ -267,8 +258,7 @@ rp_new_repl_catalog_item (CIRP_REPL_ITEM ** repl_item, TRANID tran_id,
   if (item == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, DB_SIZEOF (CIRP_REPL_ITEM));
       return error;
     }
 
@@ -305,43 +295,43 @@ cirp_free_repl_item (CIRP_REPL_ITEM * item)
     {
     case RP_ITEM_TYPE_DATA:
       {
-	RP_DATA_ITEM *data;
+        RP_DATA_ITEM *data;
 
-	data = &item->info.data;
-	if (data->class_name != NULL)
-	  {
-	    free_and_init (data->class_name);
-	    db_idxkey_clear (&data->key);
-	  }
+        data = &item->info.data;
+        if (data->class_name != NULL)
+          {
+            free_and_init (data->class_name);
+            db_idxkey_clear (&data->key);
+          }
       }
       break;
     case RP_ITEM_TYPE_DDL:
       {
-	RP_DDL_ITEM *ddl;
+        RP_DDL_ITEM *ddl;
 
-	ddl = &item->info.ddl;
+        ddl = &item->info.ddl;
 
-	if (ddl->db_user != NULL)
-	  {
-	    free_and_init (ddl->db_user);
-	  }
-	if (ddl->query != NULL)
-	  {
-	    free_and_init (ddl->query);
-	  }
+        if (ddl->db_user != NULL)
+          {
+            free_and_init (ddl->db_user);
+          }
+        if (ddl->query != NULL)
+          {
+            free_and_init (ddl->query);
+          }
       }
       break;
     case RP_ITEM_TYPE_CATALOG:
       {
-	RP_CATALOG_ITEM *catalog;
+        RP_CATALOG_ITEM *catalog;
 
-	catalog = &item->info.catalog;
+        catalog = &item->info.catalog;
 
-	if (catalog->class_name != NULL)
-	  {
-	    free_and_init (catalog->class_name);
-	    db_idxkey_clear (&catalog->key);
-	  }
+        if (catalog->class_name != NULL)
+          {
+            free_and_init (catalog->class_name);
+            db_idxkey_clear (&catalog->key);
+          }
       }
       break;
 
@@ -368,58 +358,51 @@ rp_is_valid_repl_item (CIRP_REPL_ITEM * item)
   while (item != NULL)
     {
       switch (item->item_type)
-	{
-	case RP_ITEM_TYPE_DATA:
-	  data = &item->info.data;
-	  if (data->class_name == NULL || LSA_ISNULL (&item->lsa)
-	      || cci_db_idxkey_has_null (&data->key))
-	    {
-	      return false;
-	    }
+        {
+        case RP_ITEM_TYPE_DATA:
+          data = &item->info.data;
+          if (data->class_name == NULL || LSA_ISNULL (&item->lsa) || cci_db_idxkey_has_null (&data->key))
+            {
+              return false;
+            }
 
-	  if (data->rcv_index != RVREPL_DATA_INSERT
-	      && data->rcv_index != RVREPL_DATA_UPDATE
-	      && data->rcv_index != RVREPL_DATA_DELETE)
-	    {
-	      return false;
-	    }
-	  break;
-	case RP_ITEM_TYPE_DDL:
-	  if (LSA_ISNULL (&item->lsa))
-	    {
-	      return false;
-	    }
-	  break;
-	case RP_ITEM_TYPE_CATALOG:
-	  catalog = &item->info.catalog;
+          if (data->rcv_index != RVREPL_DATA_INSERT
+              && data->rcv_index != RVREPL_DATA_UPDATE && data->rcv_index != RVREPL_DATA_DELETE)
+            {
+              return false;
+            }
+          break;
+        case RP_ITEM_TYPE_DDL:
+          if (LSA_ISNULL (&item->lsa))
+            {
+              return false;
+            }
+          break;
+        case RP_ITEM_TYPE_CATALOG:
+          catalog = &item->info.catalog;
 
-	  if (catalog->class_name == NULL
-	      || cci_db_idxkey_has_null (&catalog->key))
-	    {
-	      return false;
-	    }
+          if (catalog->class_name == NULL || cci_db_idxkey_has_null (&catalog->key))
+            {
+              return false;
+            }
 
-	  if (catalog->copyarea_op != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
-	      && catalog->copyarea_op != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
-	    {
-	      return false;
-	    }
+          if (catalog->copyarea_op != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+              && catalog->copyarea_op != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
+            {
+              return false;
+            }
 
-	  if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
-	      && strncasecmp (catalog->class_name,
-			      CT_LOG_ANALYZER_NAME,
-			      strlen (CT_LOG_ANALYZER_NAME) != 0))
-	    {
-	      return false;
-	    }
-	  if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE
-	      && strncasecmp (catalog->class_name,
-			      CT_LOG_APPLIER_NAME,
-			      strlen (CT_LOG_APPLIER_NAME) != 0))
-	    {
-	      return false;
-	    }
-	}
+          if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+              && strncasecmp (catalog->class_name, CT_LOG_ANALYZER_NAME, strlen (CT_LOG_ANALYZER_NAME) != 0))
+            {
+              return false;
+            }
+          if (catalog->copyarea_op == LC_FLUSH_HA_CATALOG_APPLIER_UPDATE
+              && strncasecmp (catalog->class_name, CT_LOG_APPLIER_NAME, strlen (CT_LOG_APPLIER_NAME) != 0))
+            {
+              return false;
+            }
+        }
       item = item->next;
     }
 
@@ -441,8 +424,7 @@ rp_make_repl_host_key (DB_VALUE * dbval, const PRM_NODE_INFO * node_info)
   host_key_str = (char *) malloc (MAX_NODE_INFO_STR_LEN);
   if (host_key_str == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, MAX_NODE_INFO_STR_LEN);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, MAX_NODE_INFO_STR_LEN);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
   prm_node_info_to_str (host_key_str, MAX_NODE_INFO_STR_LEN, node_info);
@@ -459,9 +441,7 @@ rp_host_str_to_node_info (PRM_NODE_INFO * node_info, const char *host_str)
 
   memset (&node_list, 0, sizeof (node_list));
 
-  if (host_str != NULL &&
-      prm_split_node_str (&node_list, host_str, false) == NO_ERROR &&
-      node_list.num_nodes >= 1)
+  if (host_str != NULL && prm_split_node_str (&node_list, host_str, false) == NO_ERROR && node_list.num_nodes >= 1)
     {
       *node_info = node_list.nodes[0];
       return NO_ERROR;

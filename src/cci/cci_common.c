@@ -94,8 +94,7 @@ static unsigned int cci_mht_5str_pseudo_key (const void *key, int key_size);
 static unsigned int cci_mht_calculate_htsize (unsigned int ht_size);
 static int cci_mht_rehash (CCI_MHT_TABLE * ht);
 
-static void *cci_mht_put_internal (CCI_MHT_TABLE * ht, void *key, void *data,
-				   CCI_MHT_PUT_OPT opt);
+static void *cci_mht_put_internal (CCI_MHT_TABLE * ht, void *key, void *data, CCI_MHT_PUT_OPT opt);
 
 /*
  * cci_mht_5str_pseudo_key() - hash string key into pseudo integer key
@@ -119,22 +118,22 @@ cci_mht_5str_pseudo_key (const void *key, int key_size)
     {
       int c;
       while ((c = *(k + i++)) != 0)
-	{
-	  hash = ((hash << 5) + hash) + c;	/* hash * 33 + c */
-	}
+        {
+          hash = ((hash << 5) + hash) + c;      /* hash * 33 + c */
+        }
     }
   else
     {
       for (; i < key_size; i++)
-	{
-	  hash = ((hash << 5) + hash) + *(k + i);
-	}
+        {
+          hash = ((hash << 5) + hash) + *(k + i);
+        }
     }
 
   hash += ~(hash << 9);
-  hash ^= ((hash >> 14) | (i << 18));	/* >>> */
+  hash ^= ((hash >> 14) | (i << 18));   /* >>> */
   hash += (hash << 4);
-  hash ^= ((hash >> 10) | (i << 22));	/* >>> */
+  hash ^= ((hash >> 10) | (i << 22));   /* >>> */
 
   return hash;
 }
@@ -209,45 +208,45 @@ static const unsigned int cci_mht_Primes[NPRIMES] = {
 static unsigned int
 cci_mht_calculate_htsize (unsigned int ht_size)
 {
-  int left, right, middle;	/* indices for binary search */
+  int left, right, middle;      /* indices for binary search */
 
   if (ht_size > cci_mht_Primes[NPRIMES - 1])
     {
       /* get a power of two */
       if (!((ht_size & (ht_size - 1)) == 0))
-	{
-	  /* Turn off some bits but the left most one */
-	  while (!(ht_size & (ht_size - 1)))
-	    {
-	      ht_size &= (ht_size - 1);
-	    }
-	  ht_size <<= 1;
-	}
+        {
+          /* Turn off some bits but the left most one */
+          while (!(ht_size & (ht_size - 1)))
+            {
+              ht_size &= (ht_size - 1);
+            }
+          ht_size <<= 1;
+        }
     }
   else
     {
       /* we can assign a primary number; binary search */
       for (middle = 0, left = 0, right = NPRIMES - 1; left <= right;)
-	{
-	  middle = CEIL_PTVDIV ((left + right), 2);
-	  if (ht_size == cci_mht_Primes[middle])
-	    {
-	      break;
-	    }
-	  else if (ht_size > cci_mht_Primes[middle])
-	    {
-	      left = middle + 1;
-	    }
-	  else
-	    {
-	      right = middle - 1;
-	    }
-	}
+        {
+          middle = CEIL_PTVDIV ((left + right), 2);
+          if (ht_size == cci_mht_Primes[middle])
+            {
+              break;
+            }
+          else if (ht_size > cci_mht_Primes[middle])
+            {
+              left = middle + 1;
+            }
+          else
+            {
+              right = middle - 1;
+            }
+        }
       /* If we didn't find the size, get the larger size and not the small one */
       if (ht_size > cci_mht_Primes[middle] && middle < (NPRIMES - 1))
-	{
-	  middle++;
-	}
+        {
+          middle++;
+        }
       ht_size = cci_mht_Primes[middle];
     }
 
@@ -271,11 +270,10 @@ cci_mht_calculate_htsize (unsigned int ht_size)
  *       otherwise, FALSE.
  */
 CCI_MHT_TABLE *
-cci_mht_create (const char *name, int est_size, HASH_FUNC hash_func,
-		CMP_FUNC cmp_func)
+cci_mht_create (const char *name, int est_size, HASH_FUNC hash_func, CMP_FUNC cmp_func)
 {
   CCI_MHT_TABLE *ht;
-  CCI_HENTRY_PTR *hvector;	/* Entries of hash table         */
+  CCI_HENTRY_PTR *hvector;      /* Entries of hash table         */
   unsigned int ht_estsize;
   unsigned int size;
 
@@ -338,10 +336,10 @@ cci_mht_create (const char *name, int est_size, HASH_FUNC hash_func,
 static int
 cci_mht_rehash (CCI_MHT_TABLE * ht)
 {
-  CCI_HENTRY_PTR *new_hvector;	/* New entries of hash table       */
-  CCI_HENTRY_PTR *hvector;	/* Entries of hash table           */
-  CCI_HENTRY_PTR hentry;	/* A hash table entry. linked list */
-  CCI_HENTRY_PTR next_hentry = NULL;	/* Next element in linked list     */
+  CCI_HENTRY_PTR *new_hvector;  /* New entries of hash table       */
+  CCI_HENTRY_PTR *hvector;      /* Entries of hash table           */
+  CCI_HENTRY_PTR hentry;        /* A hash table entry. linked list */
+  CCI_HENTRY_PTR next_hentry = NULL;    /* Next element in linked list     */
   float rehash_factor;
   unsigned int hash;
   unsigned int est_size;
@@ -373,28 +371,27 @@ cci_mht_rehash (CCI_MHT_TABLE * ht)
   memset (new_hvector, 0x00, size);
 
   /* Now rehash the current entries onto the vector of hash entries table */
-  for (ht->ncollisions = 0, hvector = ht->table, i = 0; i < ht->size;
-       hvector++, i++)
+  for (ht->ncollisions = 0, hvector = ht->table, i = 0; i < ht->size; hvector++, i++)
     {
       /* Go over each linked list */
       for (hentry = *hvector; hentry != NULL; hentry = next_hentry)
-	{
-	  next_hentry = hentry->next;
+        {
+          next_hentry = hentry->next;
 
-	  hash = (*ht->hash_func) (hentry->key, est_size);
-	  if (hash >= est_size)
-	    {
-	      hash %= est_size;
-	    }
+          hash = (*ht->hash_func) (hentry->key, est_size);
+          if (hash >= est_size)
+            {
+              hash %= est_size;
+            }
 
-	  /* Link the new entry with any previous elements */
-	  hentry->next = new_hvector[hash];
-	  if (hentry->next != NULL)
-	    {
-	      ht->ncollisions++;
-	    }
-	  new_hvector[hash] = hentry;
-	}
+          /* Link the new entry with any previous elements */
+          hentry->next = new_hvector[hash];
+          if (hentry->next != NULL)
+            {
+              ht->ncollisions++;
+            }
+          new_hvector[hash] = hentry;
+        }
     }
 
   /* Now move to new vector of entries */
@@ -428,18 +425,18 @@ cci_mht_destroy (CCI_MHT_TABLE * ht, bool free_key, bool free_data)
     {
       /* Go over each linked list */
       for (hentry = *hvector; hentry != NULL; hentry = next_hentry)
-	{
-	  next_hentry = hentry->next;
-	  if (free_key)
-	    {
-	      FREE_MEM (hentry->key);
-	    }
-	  if (free_data)
-	    {
-	      FREE_MEM (hentry->data);
-	    }
-	  FREE_MEM (hentry);
-	}
+        {
+          next_hentry = hentry->next;
+          if (free_key)
+            {
+              FREE_MEM (hentry->key);
+            }
+          if (free_data)
+            {
+              FREE_MEM (hentry->data);
+            }
+          FREE_MEM (hentry);
+        }
     }
 
   while (ht->nprealloc_entries > 0)
@@ -485,67 +482,66 @@ cci_mht_rem (CCI_MHT_TABLE * ht, void *key, bool free_key, bool free_data)
     }
 
   /* Now search the linked list.. Is there any entry with the given key ? */
-  for (hentry = ht->table[hash], prev_hentry = NULL; hentry != NULL;
-       prev_hentry = hentry, hentry = hentry->next)
+  for (hentry = ht->table[hash], prev_hentry = NULL; hentry != NULL; prev_hentry = hentry, hentry = hentry->next)
     {
       if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	{
-	  data = hentry->data;
+        {
+          data = hentry->data;
 
-	  /* Remove from double link list of active entries */
-	  if (ht->act_head == ht->act_tail)
-	    {
-	      /* Single active element */
-	      ht->act_head = ht->act_tail = NULL;
-	    }
-	  else if (ht->act_head == hentry)
-	    {
-	      /* Deleting from the head */
-	      ht->act_head = hentry->act_next;
-	      hentry->act_next->act_prev = NULL;
-	    }
-	  else if (ht->act_tail == hentry)
-	    {
-	      /* Deleting from the tail */
-	      ht->act_tail = hentry->act_prev;
-	      hentry->act_prev->act_next = NULL;
-	    }
-	  else
-	    {
-	      /* Deleting from the middle */
-	      hentry->act_prev->act_next = hentry->act_next;
-	      hentry->act_next->act_prev = hentry->act_prev;
-	    }
+          /* Remove from double link list of active entries */
+          if (ht->act_head == ht->act_tail)
+            {
+              /* Single active element */
+              ht->act_head = ht->act_tail = NULL;
+            }
+          else if (ht->act_head == hentry)
+            {
+              /* Deleting from the head */
+              ht->act_head = hentry->act_next;
+              hentry->act_next->act_prev = NULL;
+            }
+          else if (ht->act_tail == hentry)
+            {
+              /* Deleting from the tail */
+              ht->act_tail = hentry->act_prev;
+              hentry->act_prev->act_next = NULL;
+            }
+          else
+            {
+              /* Deleting from the middle */
+              hentry->act_prev->act_next = hentry->act_next;
+              hentry->act_next->act_prev = hentry->act_prev;
+            }
 
-	  /* Remove from the hash */
-	  if (prev_hentry != NULL)
-	    {
-	      prev_hentry->next = hentry->next;
-	      ht->ncollisions--;
-	    }
-	  else if ((ht->table[hash] = hentry->next) != NULL)
-	    {
-	      ht->ncollisions--;
-	    }
-	  ht->nentries--;
-	  /* Save the entry for future insertions */
-	  ht->nprealloc_entries++;
-	  hentry->next = ht->prealloc_entries;
-	  ht->prealloc_entries = hentry;
+          /* Remove from the hash */
+          if (prev_hentry != NULL)
+            {
+              prev_hentry->next = hentry->next;
+              ht->ncollisions--;
+            }
+          else if ((ht->table[hash] = hentry->next) != NULL)
+            {
+              ht->ncollisions--;
+            }
+          ht->nentries--;
+          /* Save the entry for future insertions */
+          ht->nprealloc_entries++;
+          hentry->next = ht->prealloc_entries;
+          ht->prealloc_entries = hentry;
 
-	  if (free_key)
-	    {
-	      FREE_MEM (hentry->key);
-	    }
+          if (free_key)
+            {
+              FREE_MEM (hentry->key);
+            }
 
-	  if (free_data)
-	    {
-	      FREE_MEM (hentry->data);
-	      return NULL;
-	    }
+          if (free_data)
+            {
+              FREE_MEM (hentry->data);
+              return NULL;
+            }
 
-	  return data;
-	}
+          return data;
+        }
     }
 
   return NULL;
@@ -581,9 +577,9 @@ cci_mht_get (CCI_MHT_TABLE * ht, void *key)
   for (hentry = ht->table[hash]; hentry != NULL; hentry = hentry->next)
     {
       if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	{
-	  return hentry->data;
-	}
+        {
+          return hentry->data;
+        }
     }
   return NULL;
 }
@@ -606,8 +602,7 @@ cci_mht_get (CCI_MHT_TABLE * ht, void *key)
  *                                      key
  */
 static void *
-cci_mht_put_internal (CCI_MHT_TABLE * ht, void *key, void *data,
-		      CCI_MHT_PUT_OPT opt)
+cci_mht_put_internal (CCI_MHT_TABLE * ht, void *key, void *data, CCI_MHT_PUT_OPT opt)
 {
   unsigned int hash;
   CCI_HENTRY_PTR hentry;
@@ -628,18 +623,18 @@ cci_mht_put_internal (CCI_MHT_TABLE * ht, void *key, void *data,
     {
       /* Now search the linked list.. Is there any entry with the given key ? */
       for (hentry = ht->table[hash]; hentry != NULL; hentry = hentry->next)
-	{
-	  if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
-	    {
-	      /* Replace the old data with the new one */
-	      if (!(opt & CCI_MHT_OPT_KEEP_KEY))
-		{
-		  hentry->key = key;
-		}
-	      hentry->data = data;
-	      return key;
-	    }
-	}
+        {
+          if (hentry->key == key || (*ht->cmp_func) (hentry->key, key))
+            {
+              /* Replace the old data with the new one */
+              if (!(opt & CCI_MHT_OPT_KEEP_KEY))
+                {
+                  hentry->key = key;
+                }
+              hentry->data = data;
+              return key;
+            }
+        }
     }
 
   /* This is a new entry */
@@ -653,9 +648,9 @@ cci_mht_put_internal (CCI_MHT_TABLE * ht, void *key, void *data,
     {
       hentry = (CCI_HENTRY_PTR) MALLOC (sizeof (CCI_HENTRY));
       if (hentry == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   /*
@@ -695,9 +690,9 @@ cci_mht_put_internal (CCI_MHT_TABLE * ht, void *key, void *data,
   if (ht->nentries > ht->rehash_at && ht->ncollisions > (ht->nentries * 0.05))
     {
       if (cci_mht_rehash (ht) < 0)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   return key;
@@ -738,9 +733,9 @@ cci_mht_put_data (CCI_MHT_TABLE * ht, void *key, void *data)
 int
 cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func, void *func_args)
 {
-  CCI_HENTRY_PTR *hvector;	/* Entries of hash table           */
-  CCI_HENTRY_PTR hentry;	/* A hash table entry. linked list */
-  CCI_HENTRY_PTR next_hentry = NULL;	/* Next element in linked list     */
+  CCI_HENTRY_PTR *hvector;      /* Entries of hash table           */
+  CCI_HENTRY_PTR hentry;        /* A hash table entry. linked list */
+  CCI_HENTRY_PTR next_hentry = NULL;    /* Next element in linked list     */
   unsigned int i;
   int error_code;
 
@@ -754,26 +749,26 @@ cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func, void *func_args)
     {
       /* Go over the linked list for this hash table entry */
       for (hentry = *hvector; hentry != NULL; hentry = next_hentry)
-	{
-	  /* free */
-	  if (rem_func)
-	    {
-	      error_code = (*rem_func) (hentry->key, hentry->data, func_args);
-	      if (error_code < 0)
-		{
-		  return error_code;
-		}
+        {
+          /* free */
+          if (rem_func)
+            {
+              error_code = (*rem_func) (hentry->key, hentry->data, func_args);
+              if (error_code < 0)
+                {
+                  return error_code;
+                }
 
-	      hentry->key = NULL;
-	      hentry->data = NULL;
-	    }
+              hentry->key = NULL;
+              hentry->data = NULL;
+            }
 
-	  next_hentry = hentry->next;
-	  /* Save the entries for future insertions */
-	  ht->nprealloc_entries++;
-	  hentry->next = ht->prealloc_entries;
-	  ht->prealloc_entries = hentry;
-	}
+          next_hentry = hentry->next;
+          /* Save the entries for future insertions */
+          ht->nprealloc_entries++;
+          hentry->next = ht->prealloc_entries;
+          ht->prealloc_entries = hentry;
+        }
       *hvector = NULL;
     }
 

@@ -162,9 +162,9 @@ cfg_pop_linetoken (char *str_p, char **token_p)
     {
       token = (char *) malloc (length + 1);
       if (token != NULL)
-	{
-	  STRNCPY (token, p, length + 1);
-	}
+        {
+          STRNCPY (token, p, length + 1);
+        }
     }
 
   *token_p = token;
@@ -187,7 +187,7 @@ cfg_get_directory_filename (char *buffer, size_t size)
 
   if (envvar_confdir_file (buffer, size, DATABASES_FILENAME))
     {
-      status = 1;		/* success */
+      status = 1;               /* success */
     }
 
   return status;
@@ -212,11 +212,9 @@ cfg_maycreate_get_directory_filename (char *buffer, size_t size)
   if (file_p == NULL)
     {
 #if !defined(CS_MODE)
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CFG_NO_WRITE_ACCESS, 1, buffer);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CFG_NO_WRITE_ACCESS, 1, buffer);
 #else /* !CS_MODE */
-      er_set_with_oserror (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-			   ER_CFG_NO_WRITE_ACCESS, 1, buffer);
+      er_set_with_oserror (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_CFG_NO_WRITE_ACCESS, 1, buffer);
 #endif /* !CS_MODE */
       return NULL;
     }
@@ -252,62 +250,59 @@ cfg_read_directory (int vdes, DB_INFO ** info_p)
       fstat (vdes, &stat_buffer);
       line = (char *) malloc (stat_buffer.st_size + 1);
       if (line == NULL)
-	{
-	  *info_p = NULL;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, stat_buffer.st_size + 1);
-	  return ER_OUT_OF_VIRTUAL_MEMORY;
-	}
+        {
+          *info_p = NULL;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, stat_buffer.st_size + 1);
+          return ER_OUT_OF_VIRTUAL_MEMORY;
+        }
       read (vdes, line, stat_buffer.st_size);
       line[stat_buffer.st_size] = '\0';
       str = cfg_next_char (line);
       while (*str != '\0')
-	{
-	  if (*str != '#')
-	    {
-	      if ((db = (DB_INFO *) malloc (sizeof (DB_INFO))) == NULL)
-		{
-		  if (databases != NULL)
-		    {
-		      cfg_free_directory (databases);
-		    }
-		  *info_p = NULL;
-		  free_and_init (line);
+        {
+          if (*str != '#')
+            {
+              if ((db = (DB_INFO *) malloc (sizeof (DB_INFO))) == NULL)
+                {
+                  if (databases != NULL)
+                    {
+                      cfg_free_directory (databases);
+                    }
+                  *info_p = NULL;
+                  free_and_init (line);
 
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (DB_INFO));
-		  return ER_OUT_OF_VIRTUAL_MEMORY;
-		}
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (DB_INFO));
+                  return ER_OUT_OF_VIRTUAL_MEMORY;
+                }
 
-	      db->next = NULL;
-	      str = cfg_pop_linetoken (str, &db->name);
+              db->next = NULL;
+              str = cfg_pop_linetoken (str, &db->name);
 
-	      if (databases == NULL)
-		{
-		  databases = db;
-		}
-	      else
-		{
-		  last->next = db;
-		}
-	      last = db;
-	      if (db->name == NULL)
+              if (databases == NULL)
+                {
+                  databases = db;
+                }
+              else
+                {
+                  last->next = db;
+                }
+              last = db;
+              if (db->name == NULL)
 
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_CFG_INVALID_DATABASES, 1, DATABASES_FILENAME);
-		  if (databases != NULL)
-		    {
-		      cfg_free_directory (databases);
-		    }
-		  *info_p = NULL;
-		  free_and_init (line);
-		  return ER_CFG_INVALID_DATABASES;
-		}
-	    }
-	  str = cfg_next_line (str);
-	  str = cfg_next_char (str);
-	}
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CFG_INVALID_DATABASES, 1, DATABASES_FILENAME);
+                  if (databases != NULL)
+                    {
+                      cfg_free_directory (databases);
+                    }
+                  *info_p = NULL;
+                  free_and_init (line);
+                  return ER_CFG_INVALID_DATABASES;
+                }
+            }
+          str = cfg_next_line (str);
+          str = cfg_next_char (str);
+        }
       error_code = NO_ERROR;
       free_and_init (line);
     }
@@ -371,16 +366,15 @@ cfg_free_directory (DB_INFO * databases)
 {
   DB_INFO *db_info_p, *next_info_p;
 
-  for (db_info_p = databases, next_info_p = NULL; db_info_p != NULL;
-       db_info_p = next_info_p)
+  for (db_info_p = databases, next_info_p = NULL; db_info_p != NULL; db_info_p = next_info_p)
     {
 
       next_info_p = db_info_p->next;
 
       if (db_info_p->name != NULL)
-	{
-	  free_and_init (db_info_p->name);
-	}
+        {
+          free_and_init (db_info_p->name);
+        }
 
       free_and_init (db_info_p);
     }
@@ -403,8 +397,7 @@ cfg_new_db (const char *name)
   if (db_info_p == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, DB_SIZEOF (DB_INFO));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, DB_SIZEOF (DB_INFO));
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -427,9 +420,9 @@ exit_on_error:
   if (db_info_p != NULL)
     {
       if (db_info_p->name != NULL)
-	{
-	  free_and_init (db_info_p->name);
-	}
+        {
+          free_and_init (db_info_p->name);
+        }
 
       free_and_init (db_info_p);
     }
@@ -449,13 +442,12 @@ cfg_find_db_list (DB_INFO * db_info_list_p, const char *name)
   DB_INFO *db_info_p, *found_info_p;
 
   found_info_p = NULL;
-  for (db_info_p = db_info_list_p; db_info_p != NULL && found_info_p == NULL;
-       db_info_p = db_info_p->next)
+  for (db_info_p = db_info_list_p; db_info_p != NULL && found_info_p == NULL; db_info_p = db_info_p->next)
     {
       if (strcmp (db_info_p->name, name) == 0)
-	{
-	  found_info_p = db_info_p;
-	}
+        {
+          found_info_p = db_info_p;
+        }
     }
 
   return (found_info_p);
@@ -500,24 +492,24 @@ cfg_delete_db (DB_INFO ** dir_info_p, const char *name)
        db_info_p != NULL && found_info_p == NULL; db_info_p = db_info_p->next)
     {
       if (strcmp (db_info_p->name, name) == 0)
-	{
-	  found_info_p = db_info_p;
-	}
+        {
+          found_info_p = db_info_p;
+        }
       else
-	{
-	  prev_info_p = db_info_p;
-	}
+        {
+          prev_info_p = db_info_p;
+        }
     }
   if (found_info_p != NULL)
     {
       if (prev_info_p == NULL)
-	{
-	  *dir_info_p = found_info_p->next;
-	}
+        {
+          *dir_info_p = found_info_p->next;
+        }
       else
-	{
-	  prev_info_p->next = found_info_p->next;
-	}
+        {
+          prev_info_p->next = found_info_p->next;
+        }
       found_info_p->next = NULL;
       cfg_free_directory (found_info_p);
       success = true;
@@ -559,9 +551,7 @@ ha_node_info_cmp (const void *data1, const void *data2)
  * cfg_get_hosts_from_shm() -
  */
 int
-cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list,
-			BOOT_CLIENT_TYPE client_type,
-			bool connect_order_random)
+cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list, BOOT_CLIENT_TYPE client_type, bool connect_order_random)
 {
   int num_nodes;
   struct shm_ha_node_info ha_nodes_info[SHM_MAX_HA_NODE_LIST];
@@ -579,8 +569,7 @@ cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list,
   int error;
 
   /* set connection order */
-  if (client_type == BOOT_CLIENT_READ_ONLY_BROKER ||
-      client_type == BOOT_CLIENT_SLAVE_ONLY_BROKER)
+  if (client_type == BOOT_CLIENT_READ_ONLY_BROKER || client_type == BOOT_CLIENT_SLAVE_ONLY_BROKER)
     {
       con_order_slave = 1;
       con_order_replica = 2;
@@ -588,8 +577,7 @@ cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list,
       con_order_unknown = 4;
     }
   else if (client_type == BOOT_CLIENT_RW_BROKER_REPLICA_ONLY ||
-	   client_type == BOOT_CLIENT_RO_BROKER_REPLICA_ONLY ||
-	   client_type == BOOT_CLIENT_SO_BROKER_REPLICA_ONLY)
+           client_type == BOOT_CLIENT_RO_BROKER_REPLICA_ONLY || client_type == BOOT_CLIENT_SO_BROKER_REPLICA_ONLY)
     {
       con_order_replica = 1;
       con_order_slave = 2;
@@ -604,8 +592,7 @@ cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list,
       con_order_unknown = 4;
     }
 
-  error = rye_master_shm_get_ha_nodes (nodes, &num_nodes,
-				       SHM_MAX_HA_NODE_LIST);
+  error = rye_master_shm_get_ha_nodes (nodes, &num_nodes, SHM_MAX_HA_NODE_LIST);
   if (error != NO_ERROR)
     {
       return error;
@@ -624,38 +611,37 @@ cfg_get_hosts_from_shm (PRM_NODE_LIST * node_list,
 
       /* set con order */
       switch (nodes[i].node_state)
-	{
-	case HA_STATE_SLAVE:
-	case HA_STATE_TO_BE_SLAVE:
-	  ha_nodes_info[i].con_order = con_order_slave;
-	  break;
-	case HA_STATE_TO_BE_MASTER:
-	case HA_STATE_MASTER:
-	  ha_nodes_info[i].con_order = con_order_master;
-	  break;
-	case HA_STATE_REPLICA:
-	  ha_nodes_info[i].con_order = con_order_replica;
-	  break;
-	case HA_STATE_UNKNOWN:
-	default:
-	  ha_nodes_info[i].con_order = con_order_unknown;
-	  break;
-	}
+        {
+        case HA_STATE_SLAVE:
+        case HA_STATE_TO_BE_SLAVE:
+          ha_nodes_info[i].con_order = con_order_slave;
+          break;
+        case HA_STATE_TO_BE_MASTER:
+        case HA_STATE_MASTER:
+          ha_nodes_info[i].con_order = con_order_master;
+          break;
+        case HA_STATE_REPLICA:
+          ha_nodes_info[i].con_order = con_order_replica;
+          break;
+        case HA_STATE_UNKNOWN:
+        default:
+          ha_nodes_info[i].con_order = con_order_unknown;
+          break;
+        }
 
       /* set priority */
       if (connect_order_random)
-	{
-	  drand48_r (&buf, &r);
-	  ha_nodes_info[i].priority = (int) (r * 0x0fffffff);
-	}
+        {
+          drand48_r (&buf, &r);
+          ha_nodes_info[i].priority = (int) (r * 0x0fffffff);
+        }
       else
-	{
-	  ha_nodes_info[i].priority = nodes[i].priority;
-	}
+        {
+          ha_nodes_info[i].priority = nodes[i].priority;
+        }
     }
 
-  qsort (ha_nodes_info, num_nodes, sizeof (struct shm_ha_node_info),
-	 ha_node_info_cmp);
+  qsort (ha_nodes_info, num_nodes, sizeof (struct shm_ha_node_info), ha_node_info_cmp);
 
 
   if (num_nodes > PRM_MAX_HA_NODE_LIST)
@@ -727,9 +713,9 @@ cfg_database_add (int vdes, const char *dbname)
     {
       db = cfg_add_db (&dir, dbname);
       if (db != NULL)
-	{
-	  cfg_write_directory (vdes, dir);
-	}
+        {
+          cfg_write_directory (vdes, dir);
+        }
     }
 
   cfg_free_directory (dir);

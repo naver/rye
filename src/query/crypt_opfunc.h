@@ -30,9 +30,8 @@
 
 #include "thread.h"
 
-extern int sha_one (THREAD_ENTRY * thread_p, const char *src, int src_len,
-		    char **dest_p, int *dest_len_p);
+extern int sha_one (THREAD_ENTRY * thread_p, const char *src, int src_len, char **dest_p, int *dest_len_p);
 extern int sha_two (THREAD_ENTRY * thread_p, const char *src, int src_len,
-		    int need_hash_len, char **dest_p, int *dest_len_p);
+                    int need_hash_len, char **dest_p, int *dest_len_p);
 
 #endif

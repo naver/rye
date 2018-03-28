@@ -110,12 +110,12 @@ query_info_print (void)
     {
       if (fp_res)
         {
-	  fclose(fp_res);
-	}
+          fclose (fp_res);
+        }
       if (fp_q)
         {
-	  fclose(fp_q);
-	}
+          fclose (fp_q);
+        }
 
       fprintf (stderr, "%s\n", strerror (errno));
       goto query_info_print_end;
@@ -124,8 +124,7 @@ query_info_print (void)
   qsort (query_info_arr, num_query_info, sizeof (T_QUERY_INFO), sort_func);
 
   if (log_top_mode == MODE_PROC_TIME)
-    fprintf (fp_res, "%8s %8s %9s %9s %10s\n", "", "max", "min", "avg",
-	     "cnt(err)");
+    fprintf (fp_res, "%8s %8s %9s %9s %10s\n", "", "max", "min", "avg", "cnt(err)");
   else
     fprintf (fp_res, "%8s %8s %10s\n", "", "max", "cnt");
 
@@ -135,27 +134,24 @@ query_info_print (void)
     {
       sprintf (buf, "[Q%d]", i + 1);
       if (log_top_mode == MODE_PROC_TIME)
-	{
-	  fprintf (fp_res, "%-8s %9s %9s %9s %4d (%d)",
-		   buf,
-		   time2str (query_info_arr[i].max, maxstr),
-		   time2str (query_info_arr[i].min, minstr),
-		   time2str (query_info_arr[i].sum / query_info_arr[i].count,
-			     avgstr), query_info_arr[i].count,
-		   query_info_arr[i].err_count);
-	}
+        {
+          fprintf (fp_res, "%-8s %9s %9s %9s %4d (%d)",
+                   buf,
+                   time2str (query_info_arr[i].max, maxstr),
+                   time2str (query_info_arr[i].min, minstr),
+                   time2str (query_info_arr[i].sum / query_info_arr[i].count,
+                             avgstr), query_info_arr[i].count, query_info_arr[i].err_count);
+        }
       else
-	{
-	  fprintf (fp_res, "%-8s %8d %10d",
-		   buf, query_info_arr[i].max, query_info_arr[i].count);
-	}
+        {
+          fprintf (fp_res, "%-8s %8d %10d", buf, query_info_arr[i].max, query_info_arr[i].count);
+        }
 
       fprintf (fp_q, "%s-------------------------------------------\n", buf);
 
       fprintf (fp_res, "\n");
 
-      fwrite (query_info_arr[i].cas_log, query_info_arr[i].cas_log_len, 1,
-	      fp_q);
+      fwrite (query_info_arr[i].cas_log, query_info_arr[i].cas_log_len, 1, fp_q);
       fprintf (fp_q, "\n");
 
 #ifdef TEST
@@ -193,8 +189,7 @@ query_info_print_end:
 }
 
 int
-query_info_add (T_QUERY_INFO * qi, int exec_time, int execute_res,
-		char *filename, int lineno, char *end_date)
+query_info_add (T_QUERY_INFO * qi, int exec_time, int execute_res, char *filename, int lineno, char *end_date)
 {
   int qi_idx = -1;
   int i;
@@ -215,24 +210,21 @@ query_info_add (T_QUERY_INFO * qi, int exec_time, int execute_res,
   for (i = 0; i < num_query_info; i++)
     {
       if (strcmp (query_info_arr[i].organized_sql, qi->organized_sql) == 0)
-	{
-	  qi_idx = i;
-	  break;
-	}
+        {
+          qi_idx = i;
+          break;
+        }
     }
 
   if (qi_idx == -1)
     {
-      query_info_arr =
-	(T_QUERY_INFO *) RYE_REALLOC (query_info_arr,
-				      sizeof (T_QUERY_INFO) *
-				      (num_query_info + 1));
+      query_info_arr = (T_QUERY_INFO *) RYE_REALLOC (query_info_arr, sizeof (T_QUERY_INFO) * (num_query_info + 1));
       if (query_info_arr == NULL)
-	{
-	  fprintf (stderr, "%s\n", strerror (errno));
-	  retval = -1;
-	  goto query_info_add_end;
-	}
+        {
+          fprintf (stderr, "%s\n", strerror (errno));
+          retval = -1;
+          goto query_info_add_end;
+        }
       qi_idx = num_query_info;
       query_info_init (&query_info_arr[qi_idx]);
       query_info_arr[qi_idx].sql = strdup (qi->sql);
@@ -248,20 +240,16 @@ query_info_add (T_QUERY_INFO * qi, int exec_time, int execute_res,
     {
       query_info_arr[qi_idx].max = exec_time;
       RYE_FREE_MEM (query_info_arr[qi_idx].cas_log);
-      query_info_arr[qi_idx].cas_log =
-	(char *) RYE_MALLOC (strlen (filename) + qi->cas_log_len + 20);
+      query_info_arr[qi_idx].cas_log = (char *) RYE_MALLOC (strlen (filename) + qi->cas_log_len + 20);
       if (query_info_arr[qi_idx].cas_log == NULL)
-	{
-	  fprintf (stderr, "%s\n", strerror (errno));
-	  retval = -1;
-	  goto query_info_add_end;
-	}
+        {
+          fprintf (stderr, "%s\n", strerror (errno));
+          retval = -1;
+          goto query_info_add_end;
+        }
       sprintf (query_info_arr[qi_idx].cas_log, "%s:%d\n", filename, lineno);
-      query_info_arr[qi_idx].cas_log_len =
-	strlen (query_info_arr[qi_idx].cas_log);
-      memcpy (query_info_arr[qi_idx].cas_log +
-	      query_info_arr[qi_idx].cas_log_len, qi->cas_log,
-	      qi->cas_log_len);
+      query_info_arr[qi_idx].cas_log_len = strlen (query_info_arr[qi_idx].cas_log);
+      memcpy (query_info_arr[qi_idx].cas_log + query_info_arr[qi_idx].cas_log_len, qi->cas_log, qi->cas_log_len);
       query_info_arr[qi_idx].cas_log_len += qi->cas_log_len;
     }
   query_info_arr[qi_idx].count++;
@@ -303,33 +291,31 @@ query_info_add_ne ()
   for (i = 0; i < num_query_info; i++)
     {
       if (strcmp (query_info_arr[i].organized_sql, qi->organized_sql) == 0)
-	{
-	  retval = 0;
-	  goto query_info_add_ne_end;
-	}
+        {
+          retval = 0;
+          goto query_info_add_ne_end;
+        }
     }
 
   for (i = 0; i < num_query_info_ne; i++)
     {
       if (strcmp (query_info_arr_ne[i].organized_sql, qi->organized_sql) == 0)
-	{
-	  qi_idx = i;
-	  break;
-	}
+        {
+          qi_idx = i;
+          break;
+        }
     }
 
   if (qi_idx == -1)
     {
       query_info_arr_ne =
-	(T_QUERY_INFO *) RYE_REALLOC (query_info_arr_ne,
-				      sizeof (T_QUERY_INFO) *
-				      (num_query_info_ne + 1));
+        (T_QUERY_INFO *) RYE_REALLOC (query_info_arr_ne, sizeof (T_QUERY_INFO) * (num_query_info_ne + 1));
       if (query_info_arr_ne == NULL)
-	{
-	  fprintf (stderr, "%s\n", strerror (errno));
-	  retval = -1;
-	  goto query_info_add_ne_end;
-	}
+        {
+          fprintf (stderr, "%s\n", strerror (errno));
+          retval = -1;
+          goto query_info_add_ne_end;
+        }
       qi_idx = num_query_info_ne;
       query_info_init (&query_info_arr_ne[qi_idx]);
       query_info_arr_ne[qi_idx].sql = strdup (qi->sql);

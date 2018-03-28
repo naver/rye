@@ -98,11 +98,11 @@ enum qmgr_page_type
 typedef struct qmgr_mutex QMGR_MUTEX;
 struct qmgr_mutex
 {
-  pthread_t owner;		/* mutex owner */
-  unsigned int lock_count;	/* how many times we acquired mutex */
+  pthread_t owner;              /* mutex owner */
+  unsigned int lock_count;      /* how many times we acquired mutex */
   pthread_mutex_t lock;
   pthread_cond_t not_busy_cond;
-  unsigned int nwaits;		/* the number of waiters */
+  unsigned int nwaits;          /* the number of waiters */
 };
 #endif
 
@@ -112,13 +112,13 @@ struct qmgr_tran_entry
 #if defined (SERVER_MODE)
   QMGR_MUTEX lock;
 #endif
-  QMGR_TRAN_STATUS trans_stat;	/* transaction status */
-  int query_id_generator;	/* global query identifier count */
+  QMGR_TRAN_STATUS trans_stat;  /* transaction status */
+  int query_id_generator;       /* global query identifier count */
 
-  int num_query_entries;	/* number of allocated query entries */
+  int num_query_entries;        /* number of allocated query entries */
 
-  QMGR_QUERY_ENTRY *query_entry_list_p;	/* linked list of query entries */
-  QMGR_QUERY_ENTRY *free_query_entry_list_p;	/* free query entry list */
+  QMGR_QUERY_ENTRY *query_entry_list_p; /* linked list of query entries */
+  QMGR_QUERY_ENTRY *free_query_entry_list_p;    /* free query entry list */
 };
 
 typedef struct qmgr_temp_file_list QMGR_TEMP_FILE_LIST;
@@ -135,8 +135,8 @@ struct qmgr_temp_file_list
 typedef struct qmgr_query_table QMGR_QUERY_TABLE;
 struct qmgr_query_table
 {
-  QMGR_TRAN_ENTRY *tran_entries_p;	/* list of transaction entries */
-  int num_trans;		/* size of trans_ind[] */
+  QMGR_TRAN_ENTRY *tran_entries_p;      /* list of transaction entries */
+  int num_trans;                /* size of trans_ind[] */
 
   /* temp file free list info */
   QMGR_TEMP_FILE_LIST temp_file_list[QMGR_NUM_TEMP_FILE_LISTS];
@@ -164,76 +164,50 @@ static void qmgr_lock_mutex (THREAD_ENTRY * thread_p, QMGR_MUTEX * qm_mutex);
 static void qmgr_unlock_mutex (QMGR_MUTEX * qm_mutex);
 #endif
 
-static QMGR_PAGE_TYPE qmgr_get_page_type (PAGE_PTR page_p,
-					  QMGR_TEMP_FILE * temp_file_p);
-static void qmgr_put_page_header (PAGE_PTR page_p,
-				  QFILE_PAGE_HEADER * header_p);
+static QMGR_PAGE_TYPE qmgr_get_page_type (PAGE_PTR page_p, QMGR_TEMP_FILE * temp_file_p);
+static void qmgr_put_page_header (PAGE_PTR page_p, QFILE_PAGE_HEADER * header_p);
 
-static QMGR_QUERY_ENTRY *qmgr_allocate_query_entry (THREAD_ENTRY * thread_p,
-						    QMGR_TRAN_ENTRY *
-						    tran_entry_p);
-static void qmgr_free_query_entry (THREAD_ENTRY * thread_p,
-				   QMGR_TRAN_ENTRY * tran_entry_p,
-				   QMGR_QUERY_ENTRY * q_ptr);
-static void qmgr_deallocate_query_entries (THREAD_ENTRY * thread_p,
-					   QMGR_QUERY_ENTRY * q_ptr);
-static void qmgr_add_query_entry (THREAD_ENTRY * thread_p,
-				  QMGR_QUERY_ENTRY * q_ptr, int trans_ind);
-static QMGR_QUERY_ENTRY *qmgr_find_query_entry (QMGR_QUERY_ENTRY *
-						query_list_p,
-						QUERY_ID query_id);
-static void qmgr_delete_query_entry (THREAD_ENTRY * thread_p,
-				     QUERY_ID query_id, int trans_ind);
+static QMGR_QUERY_ENTRY *qmgr_allocate_query_entry (THREAD_ENTRY * thread_p, QMGR_TRAN_ENTRY * tran_entry_p);
+static void qmgr_free_query_entry (THREAD_ENTRY * thread_p, QMGR_TRAN_ENTRY * tran_entry_p, QMGR_QUERY_ENTRY * q_ptr);
+static void qmgr_deallocate_query_entries (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * q_ptr);
+static void qmgr_add_query_entry (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * q_ptr, int trans_ind);
+static QMGR_QUERY_ENTRY *qmgr_find_query_entry (QMGR_QUERY_ENTRY * query_list_p, QUERY_ID query_id);
+static void qmgr_delete_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id, int trans_ind);
 static void qmgr_free_tran_entries (THREAD_ENTRY * thread_p);
 
 static int xqmgr_unpack_xasl_tree (THREAD_ENTRY * thread_p,
-				   const XASL_ID * xasl_id_p,
-				   char *xasl_stream, int xasl_stream_size,
-				   XASL_CACHE_CLONE * cache_clone_p,
-				   XASL_NODE ** xasl_tree);
-static PAGE_PTR qmgr_get_external_file_page (THREAD_ENTRY * thread_p,
-					     VPID * vpid,
-					     QMGR_TEMP_FILE * vfid);
-static int qmgr_free_query_temp_file_by_query_entry (THREAD_ENTRY * thread_p,
-						     QMGR_QUERY_ENTRY * qptr,
-						     int tran_idx);
-static QMGR_TEMP_FILE *qmgr_allocate_tempfile_with_buffer (int
-							   num_buffer_pages);
+                                   const XASL_ID * xasl_id_p,
+                                   char *xasl_stream, int xasl_stream_size,
+                                   XASL_CACHE_CLONE * cache_clone_p, XASL_NODE ** xasl_tree);
+static PAGE_PTR qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid, QMGR_TEMP_FILE * vfid);
+static int qmgr_free_query_temp_file_by_query_entry (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * qptr, int tran_idx);
+static QMGR_TEMP_FILE *qmgr_allocate_tempfile_with_buffer (int num_buffer_pages);
 
 #if defined (SERVER_MODE)
 #if defined (ENABLE_UNUSED_FUNCTION)
 static XASL_NODE *qmgr_find_leaf (XASL_NODE * xasl);
 #endif
 static QFILE_LIST_ID *qmgr_process_query (THREAD_ENTRY * thread_p,
-					  const XASL_ID * xasl_id,
-					  char *xasl_stream,
-					  int xasl_stream_size,
-					  int dbval_count,
-					  DB_VALUE * dbvals_p,
-					  QUERY_FLAG flag,
-					  XASL_CACHE_CLONE * cache_clone_p,
-					  QMGR_QUERY_ENTRY * query_p,
-					  QMGR_TRAN_ENTRY * tran_entry_p,
-					  int shard_groupid,
-					  DB_VALUE * shard_key);
+                                          const XASL_ID * xasl_id,
+                                          char *xasl_stream,
+                                          int xasl_stream_size,
+                                          int dbval_count,
+                                          DB_VALUE * dbvals_p,
+                                          QUERY_FLAG flag,
+                                          XASL_CACHE_CLONE * cache_clone_p,
+                                          QMGR_QUERY_ENTRY * query_p,
+                                          QMGR_TRAN_ENTRY * tran_entry_p, int shard_groupid, DB_VALUE * shard_key);
 static void qmgr_reset_query_exec_info (int tran_index);
-static void qmgr_set_query_exec_info_to_tdes (int tran_index,
-					      int query_timeout,
-					      const XASL_ID * xasl_id);
+static void qmgr_set_query_exec_info_to_tdes (int tran_index, int query_timeout, const XASL_ID * xasl_id);
 #endif
 
 static void qmgr_initialize_temp_file_list (QMGR_TEMP_FILE_LIST *
-					    temp_file_list_p,
-					    QMGR_TEMP_FILE_MEMBUF_TYPE
-					    membuf_type);
-static void qmgr_finalize_temp_file_list (QMGR_TEMP_FILE_LIST *
-					  temp_file_list_p);
-static QMGR_TEMP_FILE *qmgr_get_temp_file_from_list (QMGR_TEMP_FILE_LIST *
-						     temp_file_list_p);
+                                            temp_file_list_p, QMGR_TEMP_FILE_MEMBUF_TYPE membuf_type);
+static void qmgr_finalize_temp_file_list (QMGR_TEMP_FILE_LIST * temp_file_list_p);
+static QMGR_TEMP_FILE *qmgr_get_temp_file_from_list (QMGR_TEMP_FILE_LIST * temp_file_list_p);
 static void qmgr_put_temp_file_into_list (QMGR_TEMP_FILE * temp_file_p);
 
-static int copy_bind_value_to_tdes (THREAD_ENTRY * thread_p,
-				    int num_bind_vals, DB_VALUE * bind_vals);
+static int copy_bind_value_to_tdes (THREAD_ENTRY * thread_p, int num_bind_vals, DB_VALUE * bind_vals);
 
 /*
  * qmgr_get_page_type () -
@@ -249,8 +223,7 @@ qmgr_get_page_type (PAGE_PTR page_p, QMGR_TEMP_FILE * temp_file_p)
   if (temp_file_p != NULL
       && temp_file_p->membuf_last >= 0
       && temp_file_p->membuf
-      && page_p >= temp_file_p->membuf[0]
-      && page_p <= temp_file_p->membuf[temp_file_p->membuf_last])
+      && page_p >= temp_file_p->membuf[0] && page_p <= temp_file_p->membuf[temp_file_p->membuf_last])
     {
       return QMGR_MEMBUF_PAGE;
     }
@@ -260,16 +233,14 @@ qmgr_get_page_type (PAGE_PTR page_p, QMGR_TEMP_FILE * temp_file_p)
       PAGE_PTR begin_page = NULL, end_page = NULL;
 
       begin_page = (PAGE_PTR) ((PAGE_PTR) temp_file_p->membuf +
-			       DB_ALIGN (sizeof (PAGE_PTR) *
-					 temp_file_p->membuf_npages,
-					 MAX_ALIGNMENT));
+                               DB_ALIGN (sizeof (PAGE_PTR) * temp_file_p->membuf_npages, MAX_ALIGNMENT));
       end_page = begin_page + temp_file_p->membuf_npages * DB_PAGESIZE;
       if (begin_page <= page_p && page_p <= end_page)
-	{
-	  /* defense code */
-	  assert_release (false);
-	  return QMGR_UNKNOWN_PAGE;
-	}
+        {
+          /* defense code */
+          assert_release (false);
+          return QMGR_UNKNOWN_PAGE;
+        }
     }
 
   return QMGR_TEMP_FILE_PAGE;
@@ -282,16 +253,13 @@ qmgr_put_page_header (PAGE_PTR page_p, QFILE_PAGE_HEADER * header_p)
   OR_PUT_INT ((page_p) + QFILE_PREV_PAGE_ID_OFFSET, (header_p)->prev_pgid);
   OR_PUT_INT ((page_p) + QFILE_NEXT_PAGE_ID_OFFSET, (header_p)->next_pgid);
   OR_PUT_INT ((page_p) + QFILE_LAST_TUPLE_OFFSET, (header_p)->lasttpl_off);
-  OR_PUT_INT ((page_p) + QFILE_OVERFLOW_PAGE_ID_OFFSET,
-	      (header_p)->ovfl_pgid);
+  OR_PUT_INT ((page_p) + QFILE_OVERFLOW_PAGE_ID_OFFSET, (header_p)->ovfl_pgid);
   OR_PUT_SHORT ((page_p) + QFILE_PREV_VOL_ID_OFFSET, (header_p)->prev_volid);
   OR_PUT_SHORT ((page_p) + QFILE_NEXT_VOL_ID_OFFSET, (header_p)->next_volid);
-  OR_PUT_SHORT ((page_p) + QFILE_OVERFLOW_VOL_ID_OFFSET,
-		(header_p)->ovfl_volid);
+  OR_PUT_SHORT ((page_p) + QFILE_OVERFLOW_VOL_ID_OFFSET, (header_p)->ovfl_volid);
 #if !defined(NDEBUG)
   /* suppress valgrind UMW error */
-  memset (page_p + QFILE_RESERVED_OFFSET, 0,
-	  QFILE_PAGE_HEADER_SIZE - QFILE_RESERVED_OFFSET);
+  memset (page_p + QFILE_RESERVED_OFFSET, 0, QFILE_PAGE_HEADER_SIZE - QFILE_RESERVED_OFFSET);
 #endif
 }
 
@@ -302,8 +270,7 @@ qmgr_check_mutex_error (int r, const char *file, int line)
 {
   if (r != 0)
     {
-      fprintf (stderr, "Error at %s(%d) : (%s)\n **** THREAD EXIT ****\n",
-	       file, line, "Mutex operation error");
+      fprintf (stderr, "Error at %s(%d) : (%s)\n **** THREAD EXIT ****\n", file, line, "Mutex operation error");
       pthread_exit (NULL);
     }
 }
@@ -318,7 +285,7 @@ qmgr_initialize_mutex (QMGR_MUTEX * mutex_p)
 {
   int r;
 
-  mutex_p->owner = (pthread_t) 0;	/* null thread id */
+  mutex_p->owner = (pthread_t) 0;       /* null thread id */
   mutex_p->lock_count = 0;
 
   r = pthread_mutex_init (&mutex_p->lock, NULL);
@@ -364,11 +331,11 @@ qmgr_lock_mutex (THREAD_ENTRY * thread_p, QMGR_MUTEX * mutex_p)
   if (mutex_p->lock_count > 0 && mutex_p->owner != thread_p->tid)
     {
       do
-	{
-	  mutex_p->nwaits++;
-	  pthread_cond_wait (&mutex_p->not_busy_cond, &mutex_p->lock);
-	  mutex_p->nwaits--;
-	}
+        {
+          mutex_p->nwaits++;
+          pthread_cond_wait (&mutex_p->not_busy_cond, &mutex_p->lock);
+          mutex_p->nwaits--;
+        }
       while (mutex_p->lock_count != 0);
     }
 
@@ -394,10 +361,10 @@ qmgr_unlock_mutex (QMGR_MUTEX * mutex_p)
   if (--mutex_p->lock_count == 0)
     {
       mutex_p->owner = (pthread_t) 0;
-      if (mutex_p->nwaits > 0)	/* there is an waiter */
-	{
-	  pthread_cond_signal (&mutex_p->not_busy_cond);
-	}
+      if (mutex_p->nwaits > 0)  /* there is an waiter */
+        {
+          pthread_cond_signal (&mutex_p->not_busy_cond);
+        }
     }
 
   pthread_mutex_unlock (&mutex_p->lock);
@@ -438,8 +405,7 @@ qmgr_mark_query_as_completed (QMGR_QUERY_ENTRY * query_p)
  * a structure.
  */
 static QMGR_QUERY_ENTRY *
-qmgr_allocate_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
-			   QMGR_TRAN_ENTRY * tran_entry_p)
+qmgr_allocate_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p, QMGR_TRAN_ENTRY * tran_entry_p)
 {
   QMGR_QUERY_ENTRY *query_p;
 
@@ -457,11 +423,10 @@ qmgr_allocate_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       query_p = (QMGR_QUERY_ENTRY *) malloc (sizeof (QMGR_QUERY_ENTRY));
       if (query_p == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, sizeof (QMGR_QUERY_ENTRY));
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (QMGR_QUERY_ENTRY));
+          return NULL;
+        }
 
       query_p->list_id = NULL;
 
@@ -475,7 +440,7 @@ qmgr_allocate_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
     }
 
   /* assign query id */
-  if (tran_entry_p->query_id_generator >= SHRT_MAX - 2)	/* overflow happened */
+  if (tran_entry_p->query_id_generator >= SHRT_MAX - 2) /* overflow happened */
     {
       tran_entry_p->query_id_generator = 0;
     }
@@ -495,7 +460,7 @@ qmgr_allocate_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
   query_p->propagate_interrupt = true;
   query_p->query_flag = 0;
   query_p->is_holdable = false;
-  VPID_SET_NULL (&query_p->save_vpid);	/* Setup default for save_vpid */
+  VPID_SET_NULL (&query_p->save_vpid);  /* Setup default for save_vpid */
 
   return query_p;
 }
@@ -510,9 +475,7 @@ qmgr_allocate_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
  * or by calling db_free.
  */
 static void
-qmgr_free_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
-		       QMGR_TRAN_ENTRY * tran_entry_p,
-		       QMGR_QUERY_ENTRY * query_p)
+qmgr_free_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p, QMGR_TRAN_ENTRY * tran_entry_p, QMGR_QUERY_ENTRY * query_p)
 {
 #if defined (SERVER_MODE)
   if (query_p->er_msg)
@@ -540,8 +503,7 @@ qmgr_free_query_entry (UNUSED_ARG THREAD_ENTRY * thread_p,
  * Note: Free the area allocated for the query entry list
  */
 static void
-qmgr_deallocate_query_entries (UNUSED_ARG THREAD_ENTRY * thread_p,
-			       QMGR_QUERY_ENTRY * query_p)
+qmgr_deallocate_query_entries (UNUSED_ARG THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * query_p)
 {
   QMGR_QUERY_ENTRY *p;
 
@@ -552,18 +514,18 @@ qmgr_deallocate_query_entries (UNUSED_ARG THREAD_ENTRY * thread_p,
 
 #if defined (SERVER_MODE)
       if (p->er_msg)
-	{
-	  free_and_init (p->er_msg);
-	}
+        {
+          free_and_init (p->er_msg);
+        }
 
       pthread_mutex_destroy (&p->lock);
       pthread_cond_destroy (&p->cond);
 #endif
 
       if (p->list_id)
-	{
-	  QFILE_FREE_AND_INIT_LIST_ID (p->list_id);
-	}
+        {
+          QFILE_FREE_AND_INIT_LIST_ID (p->list_id);
+        }
 
       free_and_init (p);
     }
@@ -579,8 +541,7 @@ qmgr_deallocate_query_entries (UNUSED_ARG THREAD_ENTRY * thread_p,
  * current transaction.
  */
 static void
-qmgr_add_query_entry (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * query_p,
-		      int tran_index)
+qmgr_add_query_entry (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * query_p, int tran_index)
 {
   QMGR_TRAN_ENTRY *tran_entry_p;
 
@@ -596,8 +557,7 @@ qmgr_add_query_entry (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * query_p,
 
   qmgr_lock_mutex (thread_p, &tran_entry_p->lock);
 
-  if (tran_entry_p->trans_stat == QMGR_TRAN_NULL ||
-      tran_entry_p->trans_stat == QMGR_TRAN_TERMINATED)
+  if (tran_entry_p->trans_stat == QMGR_TRAN_NULL || tran_entry_p->trans_stat == QMGR_TRAN_TERMINATED)
     {
       tran_entry_p->trans_stat = QMGR_TRAN_RUNNING;
       tran_entry_p->query_entry_list_p = query_p;
@@ -635,8 +595,7 @@ qmgr_find_query_entry (QMGR_QUERY_ENTRY * query_list_p, QUERY_ID query_id)
  * or NULL if the query entry is not found.
  */
 QMGR_QUERY_ENTRY *
-qmgr_get_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id,
-		      int tran_index)
+qmgr_get_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id, int tran_index)
 {
   QMGR_QUERY_ENTRY *query_p = NULL;
   QMGR_TRAN_ENTRY *tran_entry_p;
@@ -662,8 +621,7 @@ qmgr_get_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id,
   tran_entry_p = &qmgr_Query_table.tran_entries_p[tran_index];
 
   qmgr_lock_mutex (thread_p, &tran_entry_p->lock);
-  query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p,
-				   query_id);
+  query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
   if (query_p != NULL)
     {
       qmgr_unlock_mutex (&tran_entry_p->lock);
@@ -722,8 +680,7 @@ qmgr_get_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id,
  * query entry list for the current transaction.
  */
 static void
-qmgr_delete_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id,
-			 int tran_index)
+qmgr_delete_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id, int tran_index)
 {
   QMGR_QUERY_ENTRY *query_p = NULL, *prev_query_p = NULL;
   QMGR_TRAN_ENTRY *tran_entry_p;
@@ -766,9 +723,9 @@ qmgr_delete_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id,
       tran_entry_p->query_entry_list_p = query_p->next;
 
       if (tran_entry_p->query_entry_list_p == NULL)
-	{
-	  tran_entry_p->trans_stat = QMGR_TRAN_TERMINATED;
-	}
+        {
+          tran_entry_p->trans_stat = QMGR_TRAN_TERMINATED;
+        }
     }
   else
     {
@@ -817,24 +774,23 @@ qmgr_allocate_tran_entries (UNUSED_ARG THREAD_ENTRY * thread_p, int count)
 
   if (qmgr_Query_table.tran_entries_p == NULL)
     {
-      qmgr_Query_table.tran_entries_p =
-	(QMGR_TRAN_ENTRY *) malloc (count * sizeof (QMGR_TRAN_ENTRY));
+      qmgr_Query_table.tran_entries_p = (QMGR_TRAN_ENTRY *) malloc (count * sizeof (QMGR_TRAN_ENTRY));
 
       if (qmgr_Query_table.tran_entries_p == NULL)
-	{
-	  csect_exit (CSECT_QPROC_QUERY_TABLE);
-	  return ER_FAILED;
-	}
+        {
+          csect_exit (CSECT_QPROC_QUERY_TABLE);
+          return ER_FAILED;
+        }
 
       qmgr_Query_table.num_trans = count;
 
       /* initialize newly allocated areas */
       tran_entry_p = qmgr_Query_table.tran_entries_p;
       for (i = 0; i < qmgr_Query_table.num_trans; i++)
-	{
-	  qmgr_initialize_tran_entry (tran_entry_p);
-	  tran_entry_p++;
-	}
+        {
+          qmgr_initialize_tran_entry (tran_entry_p);
+          tran_entry_p++;
+        }
 
       csect_exit (CSECT_QPROC_QUERY_TABLE);
 
@@ -847,9 +803,7 @@ qmgr_allocate_tran_entries (UNUSED_ARG THREAD_ENTRY * thread_p, int count)
       return NO_ERROR;
     }
 
-  tmp_entry_p =
-    (QMGR_TRAN_ENTRY *) realloc (qmgr_Query_table.tran_entries_p,
-				 count * sizeof (QMGR_TRAN_ENTRY));
+  tmp_entry_p = (QMGR_TRAN_ENTRY *) realloc (qmgr_Query_table.tran_entries_p, count * sizeof (QMGR_TRAN_ENTRY));
   if (tmp_entry_p == NULL)
     {
       csect_exit (CSECT_QPROC_QUERY_TABLE);
@@ -857,9 +811,7 @@ qmgr_allocate_tran_entries (UNUSED_ARG THREAD_ENTRY * thread_p, int count)
     }
 
   qmgr_Query_table.tran_entries_p = tmp_entry_p;
-  tran_entry_p =
-    (QMGR_TRAN_ENTRY *) qmgr_Query_table.tran_entries_p +
-    qmgr_Query_table.num_trans;
+  tran_entry_p = (QMGR_TRAN_ENTRY *) qmgr_Query_table.tran_entries_p + qmgr_Query_table.num_trans;
   for (i = qmgr_Query_table.num_trans; i < count; i++)
     {
       qmgr_initialize_tran_entry (tran_entry_p);
@@ -894,10 +846,8 @@ qmgr_free_tran_entries (THREAD_ENTRY * thread_p)
   for (i = 0; i < qmgr_Query_table.num_trans; i++)
     {
       qmgr_lock_mutex (thread_p, &tran_entry_p->lock);
-      qmgr_deallocate_query_entries (thread_p,
-				     tran_entry_p->query_entry_list_p);
-      qmgr_deallocate_query_entries (thread_p,
-				     tran_entry_p->free_query_entry_list_p);
+      qmgr_deallocate_query_entries (thread_p, tran_entry_p->query_entry_list_p);
+      qmgr_deallocate_query_entries (thread_p, tran_entry_p->free_query_entry_list_p);
       qmgr_unlock_mutex (&tran_entry_p->lock);
 
       qmgr_destroy_mutex (&tran_entry_p->lock);
@@ -943,29 +893,25 @@ qmgr_dump_query_entry (QMGR_QUERY_ENTRY * query_p)
   fprintf (stdout, "\t\tQuery Entry Structures:\n");
   fprintf (stdout, "\t\tquery_id: %lld\n", (long long) query_p->query_id);
   fprintf (stdout, "\t\txasl_id: {{%d, %d}, {%d, %d}}\n",
-	   query_p->xasl_id.first_vpid.pageid,
-	   query_p->xasl_id.first_vpid.volid,
-	   query_p->xasl_id.temp_vfid.fileid,
-	   query_p->xasl_id.temp_vfid.volid);
+           query_p->xasl_id.first_vpid.pageid,
+           query_p->xasl_id.first_vpid.volid, query_p->xasl_id.temp_vfid.fileid, query_p->xasl_id.temp_vfid.volid);
   fprintf (stdout, "\t\tlist_id: %p\n", (void *) query_p->list_id);
 
   if (query_p->list_id)
     {
       list_id_p = query_p->list_id;
       fprintf (stdout,
-	       "\t\t{type_list: {%d, %p}, tuple_cnt: %d, page_cnt: %d,\n"
-	       "\t first_vpid: {%d, %d}, last_vpid: {%d, %d},\n"
-	       "\t last_pgptr: %p, last_offset: %d, lasttpl_len: %d}\n",
-	       list_id_p->type_list.type_cnt,
-	       (void *) list_id_p->type_list.domp,
-	       list_id_p->tuple_cnt,
-	       list_id_p->page_cnt,
-	       list_id_p->first_vpid.pageid,
-	       list_id_p->first_vpid.volid,
-	       list_id_p->last_vpid.pageid,
-	       list_id_p->last_vpid.volid,
-	       list_id_p->last_pgptr,
-	       list_id_p->last_offset, list_id_p->lasttpl_len);
+               "\t\t{type_list: {%d, %p}, tuple_cnt: %d, page_cnt: %d,\n"
+               "\t first_vpid: {%d, %d}, last_vpid: {%d, %d},\n"
+               "\t last_pgptr: %p, last_offset: %d, lasttpl_len: %d}\n",
+               list_id_p->type_list.type_cnt,
+               (void *) list_id_p->type_list.domp,
+               list_id_p->tuple_cnt,
+               list_id_p->page_cnt,
+               list_id_p->first_vpid.pageid,
+               list_id_p->first_vpid.volid,
+               list_id_p->last_vpid.pageid,
+               list_id_p->last_vpid.volid, list_id_p->last_pgptr, list_id_p->last_offset, list_id_p->lasttpl_len);
     }
 
   if (query_p->qe_temp_vfid)
@@ -973,27 +919,23 @@ qmgr_dump_query_entry (QMGR_QUERY_ENTRY * query_p)
       temp_vfid_p = query_p->qe_temp_vfid;
 
       do
-	{
-	  fprintf (stdout, "\t\tfile_vfid: %p\n", (void *) &temp_vfid_p);
-	  fprintf (stdout, "\t\tvpid_array_index: %d\n",
-		   temp_vfid_p->vpid_index);
-	  fprintf (stdout, "\t\tvpid_array_count: %d\n",
-		   temp_vfid_p->vpid_count);
+        {
+          fprintf (stdout, "\t\tfile_vfid: %p\n", (void *) &temp_vfid_p);
+          fprintf (stdout, "\t\tvpid_array_index: %d\n", temp_vfid_p->vpid_index);
+          fprintf (stdout, "\t\tvpid_array_count: %d\n", temp_vfid_p->vpid_count);
 
-	  if (temp_vfid_p->vpid_index != -1)
-	    {
-	      for (i = 1; i < temp_vfid_p->vpid_count; i++)
-		{
-		  fprintf (stdout, "\t\tvpid_array[%d]:\n", i);
-		  fprintf (stdout, "\t\t\tpage_id: %d\n",
-			   temp_vfid_p->vpid_array[i].pageid);
-		  fprintf (stdout, "\t\t\tvol_id: %d\n",
-			   temp_vfid_p->vpid_array[i].volid);
-		}
-	    }
+          if (temp_vfid_p->vpid_index != -1)
+            {
+              for (i = 1; i < temp_vfid_p->vpid_count; i++)
+                {
+                  fprintf (stdout, "\t\tvpid_array[%d]:\n", i);
+                  fprintf (stdout, "\t\t\tpage_id: %d\n", temp_vfid_p->vpid_array[i].pageid);
+                  fprintf (stdout, "\t\t\tvol_id: %d\n", temp_vfid_p->vpid_array[i].volid);
+                }
+            }
 
-	  temp_vfid_p = temp_vfid_p->next;
-	}
+          temp_vfid_p = temp_vfid_p->next;
+        }
       while (temp_vfid_p != query_p->qe_temp_vfid);
     }
 
@@ -1021,13 +963,13 @@ qmgr_dump (void)
   for (i = 0; i < qmgr_Query_table.num_trans; i++)
     {
       if (tran_entry_p->trans_stat == QMGR_TRAN_WAITING)
-	{
-	  waiting_count++;
-	}
+        {
+          waiting_count++;
+        }
       else if (tran_entry_p->trans_stat == QMGR_TRAN_RUNNING)
-	{
-	  running_count++;
-	}
+        {
+          running_count++;
+        }
 
       tran_entry_p++;
     }
@@ -1044,16 +986,14 @@ qmgr_dump (void)
   for (i = 0; i < qmgr_Query_table.num_trans; i++)
     {
       fprintf (stdout, "\tTrans_ind: %d\n", i);
-      fprintf (stdout, "\tTrans_stat: %s\n",
-	       qmgr_get_tran_status_string (tran_entry_p->trans_stat));
+      fprintf (stdout, "\tTrans_stat: %s\n", qmgr_get_tran_status_string (tran_entry_p->trans_stat));
 
       fprintf (stdout, "\tTrans_query_entries:\n");
 
-      for (query_p = tran_entry_p->query_entry_list_p; query_p;
-	   query_p = query_p->next)
-	{
-	  qmgr_dump_query_entry (query_p);
-	}
+      for (query_p = tran_entry_p->query_entry_list_p; query_p; query_p = query_p->next)
+        {
+          qmgr_dump_query_entry (query_p);
+        }
 
       fprintf (stdout, "\t------------------------ \n");
       tran_entry_p++;
@@ -1084,32 +1024,25 @@ qmgr_initialize (THREAD_ENTRY * thread_p)
   if (qmgr_Query_table.tran_entries_p == NULL)
     {
       total_tran_indices = logtb_get_number_of_total_tran_indices ();
-      if (qmgr_allocate_tran_entries (thread_p, total_tran_indices) !=
-	  NO_ERROR)
-	{
-	  csect_exit (CSECT_QPROC_QUERY_TABLE);
-	  return ER_FAILED;
-	}
+      if (qmgr_allocate_tran_entries (thread_p, total_tran_indices) != NO_ERROR)
+        {
+          csect_exit (CSECT_QPROC_QUERY_TABLE);
+          return ER_FAILED;
+        }
     }
 
   if (qmgr_Query_table.temp_file_list[TEMP_FILE_MEMBUF_NORMAL].list != NULL)
     {
-      qmgr_finalize_temp_file_list (&qmgr_Query_table.temp_file_list
-				    [TEMP_FILE_MEMBUF_NORMAL]);
+      qmgr_finalize_temp_file_list (&qmgr_Query_table.temp_file_list[TEMP_FILE_MEMBUF_NORMAL]);
     }
-  qmgr_initialize_temp_file_list (&qmgr_Query_table.temp_file_list
-				  [TEMP_FILE_MEMBUF_NORMAL],
-				  TEMP_FILE_MEMBUF_NORMAL);
+  qmgr_initialize_temp_file_list (&qmgr_Query_table.temp_file_list[TEMP_FILE_MEMBUF_NORMAL], TEMP_FILE_MEMBUF_NORMAL);
 
-  if (qmgr_Query_table.temp_file_list[TEMP_FILE_MEMBUF_KEY_BUFFER].list !=
-      NULL)
+  if (qmgr_Query_table.temp_file_list[TEMP_FILE_MEMBUF_KEY_BUFFER].list != NULL)
     {
-      qmgr_finalize_temp_file_list (&qmgr_Query_table.temp_file_list
-				    [TEMP_FILE_MEMBUF_KEY_BUFFER]);
+      qmgr_finalize_temp_file_list (&qmgr_Query_table.temp_file_list[TEMP_FILE_MEMBUF_KEY_BUFFER]);
     }
   qmgr_initialize_temp_file_list (&qmgr_Query_table.temp_file_list
-				  [TEMP_FILE_MEMBUF_KEY_BUFFER],
-				  TEMP_FILE_MEMBUF_KEY_BUFFER);
+                                  [TEMP_FILE_MEMBUF_KEY_BUFFER], TEMP_FILE_MEMBUF_KEY_BUFFER);
 
   csect_exit (CSECT_QPROC_QUERY_TABLE);
 
@@ -1178,9 +1111,7 @@ qmgr_finalize (THREAD_ENTRY * thread_p)
  * NULL will be returned.
  */
 XASL_ID *
-xqmgr_prepare_query (THREAD_ENTRY * thread_p,
-		     COMPILE_CONTEXT * context,
-		     XASL_STREAM * stream, const OID * user_oid_p)
+xqmgr_prepare_query (THREAD_ENTRY * thread_p, COMPILE_CONTEXT * context, XASL_STREAM * stream, const OID * user_oid_p)
 {
   XASL_CACHE_ENTRY *cache_entry_p;
   char *p;
@@ -1201,23 +1132,19 @@ xqmgr_prepare_query (THREAD_ENTRY * thread_p,
       XASL_ID_SET_NULL (stream->xasl_id);
 
       /* lookup the XASL cache with the query string as the key */
-      cache_entry_p =
-	qexec_lookup_xasl_cache_ent (thread_p, context->sql_hash_text,
-				     user_oid_p);
+      cache_entry_p = qexec_lookup_xasl_cache_ent (thread_p, context->sql_hash_text, user_oid_p);
 
       if (cache_entry_p)
-	{
-	  XASL_ID_COPY (stream->xasl_id, &(cache_entry_p->xasl_id));
-	  if (stream->xasl_header)
-	    {
-	      /* also xasl header was requested */
-	      qfile_load_xasl_node_header (thread_p, stream->xasl_id,
-					   stream->xasl_header);
-	    }
+        {
+          XASL_ID_COPY (stream->xasl_id, &(cache_entry_p->xasl_id));
+          if (stream->xasl_header)
+            {
+              /* also xasl header was requested */
+              qfile_load_xasl_node_header (thread_p, stream->xasl_id, stream->xasl_header);
+            }
 
-	  (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
-							cache_entry_p, true);
-	}
+          (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p, cache_entry_p, true);
+        }
 
       return stream->xasl_id;
     }
@@ -1230,28 +1157,23 @@ xqmgr_prepare_query (THREAD_ENTRY * thread_p,
   /* at this time, I'd like to look up once again because it is possible
      that the other competing thread which is running the same query has
      updated the cache before me */
-  cache_entry_p =
-    qexec_lookup_xasl_cache_ent (thread_p, context->sql_hash_text,
-				 user_oid_p);
+  cache_entry_p = qexec_lookup_xasl_cache_ent (thread_p, context->sql_hash_text, user_oid_p);
   if (cache_entry_p)
     {
       er_log_debug (ARG_FILE_LINE,
-		    "xqmgr_prepare_query: second qexec_lookup_xasl_cache_ent "
-		    "qstmt %s\n", context->sql_hash_text);
+                    "xqmgr_prepare_query: second qexec_lookup_xasl_cache_ent " "qstmt %s\n", context->sql_hash_text);
       XASL_ID_COPY (stream->xasl_id, &(cache_entry_p->xasl_id));
 
       if (cache_entry_p)
-	{
-	  (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p,
-							cache_entry_p, true);
-	}
+        {
+          (void) qexec_remove_my_tran_id_in_xasl_entry (thread_p, cache_entry_p, true);
+        }
       goto exit_on_end;
     }
 
   if (qfile_store_xasl (thread_p, stream) == 0)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "xqmgr_prepare_query: qfile_store_xasl failed\n");
+      er_log_debug (ARG_FILE_LINE, "xqmgr_prepare_query: qfile_store_xasl failed\n");
       goto exit_on_error;
     }
 
@@ -1269,18 +1191,18 @@ xqmgr_prepare_query (THREAD_ENTRY * thread_p,
       class_oid_list_p = (OID *) malloc (sizeof (OID) * n_oid_list);
       tcard_list_p = (int *) malloc (sizeof (int) * n_oid_list);
       if (class_oid_list_p == NULL || tcard_list_p == NULL)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       for (i = 0; i < n_oid_list; i++)
-	{
-	  p = or_unpack_oid (p, &class_oid_list_p[i]);
-	}
+        {
+          p = or_unpack_oid (p, &class_oid_list_p[i]);
+        }
       for (i = 0; i < n_oid_list; i++)
-	{
-	  p = or_unpack_int (p, &tcard_list_p[i]);
-	}
+        {
+          p = or_unpack_int (p, &tcard_list_p[i]);
+        }
     }
   else
     {
@@ -1291,15 +1213,14 @@ xqmgr_prepare_query (THREAD_ENTRY * thread_p,
 
   cache_entry_p =
     qexec_update_xasl_cache_ent (thread_p, context, stream,
-				 &creator_oid, n_oid_list,
-				 class_oid_list_p, tcard_list_p, dbval_cnt);
+                                 &creator_oid, n_oid_list, class_oid_list_p, tcard_list_p, dbval_cnt);
   if (cache_entry_p == NULL)
     {
       XASL_ID *xasl_id = stream->xasl_id;
       er_log_debug (ARG_FILE_LINE,
-		    "xsm_query_prepare: qexec_update_xasl_cache_ent failed xasl_id { first_vpid { %d %d } temp_vfid { %d %d } }\n",
-		    xasl_id->first_vpid.pageid, xasl_id->first_vpid.volid,
-		    xasl_id->temp_vfid.fileid, xasl_id->temp_vfid.volid);
+                    "xsm_query_prepare: qexec_update_xasl_cache_ent failed xasl_id { first_vpid { %d %d } temp_vfid { %d %d } }\n",
+                    xasl_id->first_vpid.pageid, xasl_id->first_vpid.volid,
+                    xasl_id->temp_vfid.fileid, xasl_id->temp_vfid.volid);
       (void) file_destroy (thread_p, &xasl_id->temp_vfid);
 
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_XASLNODE, 0);
@@ -1312,13 +1233,13 @@ xqmgr_prepare_query (THREAD_ENTRY * thread_p,
     {
       XASL_ID *xasl_id = stream->xasl_id;
       er_log_debug (ARG_FILE_LINE,
-		    "xqmgr_prepare_query: qexec_update_xasl_cache_ent changed xasl_id { first_vpid { %d %d } temp_vfid { %d %d } } to xasl_id { first_vpid { %d %d } temp_vfid { %d %d } }\n",
-		    temp_xasl_id.first_vpid.pageid,
-		    temp_xasl_id.first_vpid.volid,
-		    temp_xasl_id.temp_vfid.fileid,
-		    temp_xasl_id.temp_vfid.volid,
-		    xasl_id->first_vpid.pageid, xasl_id->first_vpid.volid,
-		    xasl_id->temp_vfid.fileid, xasl_id->temp_vfid.volid);
+                    "xqmgr_prepare_query: qexec_update_xasl_cache_ent changed xasl_id { first_vpid { %d %d } temp_vfid { %d %d } } to xasl_id { first_vpid { %d %d } temp_vfid { %d %d } }\n",
+                    temp_xasl_id.first_vpid.pageid,
+                    temp_xasl_id.first_vpid.volid,
+                    temp_xasl_id.temp_vfid.fileid,
+                    temp_xasl_id.temp_vfid.volid,
+                    xasl_id->first_vpid.pageid, xasl_id->first_vpid.volid,
+                    xasl_id->temp_vfid.fileid, xasl_id->temp_vfid.volid);
       /* the other competing thread which is running the has updated the cache
          very after the moment of the previous check;
          simply abandon my XASL file */
@@ -1364,10 +1285,9 @@ exit_on_error:
  */
 static int
 xqmgr_unpack_xasl_tree (THREAD_ENTRY * thread_p,
-			const XASL_ID * xasl_id,
-			char *xasl_stream, int xasl_stream_size,
-			XASL_CACHE_CLONE * cache_clone_p,
-			XASL_NODE ** xasl_tree)
+                        const XASL_ID * xasl_id,
+                        char *xasl_stream, int xasl_stream_size,
+                        XASL_CACHE_CLONE * cache_clone_p, XASL_NODE ** xasl_tree)
 {
   char *xstream;
   int xstream_size;
@@ -1386,40 +1306,37 @@ xqmgr_unpack_xasl_tree (THREAD_ENTRY * thread_p,
 
       /* load the XASL stream from the file of xasl_id */
       if (qfile_load_xasl (thread_p, xasl_id, &xstream, &xstream_size) == 0)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"xqmgr_unpack_xasl_tree: qfile_load_xasl failed"
-			" xasl_id { first_vpid { %d %d } "
-			"temp_vfid { %d %d } }\n",
-			xasl_id->first_vpid.pageid,
-			xasl_id->first_vpid.volid,
-			xasl_id->temp_vfid.fileid, xasl_id->temp_vfid.volid);
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "xqmgr_unpack_xasl_tree: qfile_load_xasl failed"
+                        " xasl_id { first_vpid { %d %d } "
+                        "temp_vfid { %d %d } }\n",
+                        xasl_id->first_vpid.pageid,
+                        xasl_id->first_vpid.volid, xasl_id->temp_vfid.fileid, xasl_id->temp_vfid.volid);
 
-	  goto exit_on_error;
-	}
+          goto exit_on_error;
+        }
 
       /* unpack the XASL stream to the XASL tree for execution */
-      if (stx_map_stream_to_xasl (thread_p, xasl_tree,
-				  xstream, xstream_size) != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+      if (stx_map_stream_to_xasl (thread_p, xasl_tree, xstream, xstream_size) != NO_ERROR)
+        {
+          goto exit_on_error;
+        }
 
       if (cache_clone_p)
-	{
-	  assert (cache_clone_p->xasl == NULL);
+        {
+          assert (cache_clone_p->xasl == NULL);
 
-	  /* save unpacked XASL tree info */
-	  cache_clone_p->xasl = *xasl_tree;
-	}
+          /* save unpacked XASL tree info */
+          cache_clone_p->xasl = *xasl_tree;
+        }
     }
   else
     {
       /* get previously unpacked XASL tree info */
       *xasl_tree = cache_clone_p->xasl;
 #if defined(SERVER_MODE)
-      (void) css_set_private_heap (thread_p,
-				   cache_clone_p->xasl->private_heap_id);
+      (void) css_set_private_heap (thread_p, cache_clone_p->xasl->private_heap_id);
 #endif
     }
 
@@ -1469,14 +1386,12 @@ exit_on_error:
  */
 static QFILE_LIST_ID *
 qmgr_process_query (THREAD_ENTRY * thread_p,
-		    const XASL_ID * xasl_id,
-		    char *xasl_stream, int xasl_stream_size,
-		    int dbval_count, DB_VALUE * dbvals_p,
-		    QUERY_FLAG flag,
-		    XASL_CACHE_CLONE * cache_clone_p,
-		    QMGR_QUERY_ENTRY * query_p,
-		    QMGR_TRAN_ENTRY * tran_entry_p, int shard_groupid,
-		    DB_VALUE * shard_key)
+                    const XASL_ID * xasl_id,
+                    char *xasl_stream, int xasl_stream_size,
+                    int dbval_count, DB_VALUE * dbvals_p,
+                    QUERY_FLAG flag,
+                    XASL_CACHE_CLONE * cache_clone_p,
+                    QMGR_QUERY_ENTRY * query_p, QMGR_TRAN_ENTRY * tran_entry_p, int shard_groupid, DB_VALUE * shard_key)
 {
   XASL_NODE *xasl_p;
   QFILE_LIST_ID *list_id;
@@ -1489,9 +1404,7 @@ qmgr_process_query (THREAD_ENTRY * thread_p,
   xasl_p = NULL;
   list_id = NULL;
 
-  if (xqmgr_unpack_xasl_tree
-      (thread_p, xasl_id, xasl_stream, xasl_stream_size, cache_clone_p,
-       &xasl_p) != NO_ERROR)
+  if (xqmgr_unpack_xasl_tree (thread_p, xasl_id, xasl_stream, xasl_stream_size, cache_clone_p, &xasl_p) != NO_ERROR)
     {
       goto exit_on_error;
     }
@@ -1500,14 +1413,12 @@ qmgr_process_query (THREAD_ENTRY * thread_p,
     {
       /* check the number of the host variables for this XASL */
       if (xasl_p->dbval_cnt > dbval_count)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"qmgr_process_query: dbval_cnt mismatch %d vs %d\n",
-			xasl_p->dbval_cnt, dbval_count);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_XASLNODE,
-		  0);
-	  goto exit_on_error;
-	}
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "qmgr_process_query: dbval_cnt mismatch %d vs %d\n", xasl_p->dbval_cnt, dbval_count);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_XASLNODE, 0);
+          goto exit_on_error;
+        }
     }
 
   if (flag & REQUEST_FROM_MIGRATOR)
@@ -1517,9 +1428,8 @@ qmgr_process_query (THREAD_ENTRY * thread_p,
 
   /* execute the query with the value list, if any */
   query_p->list_id = qexec_execute_query (thread_p, xasl_p,
-					  dbval_count, dbvals_p,
-					  query_p->query_id, shard_groupid,
-					  shard_key, req_from_migrator);
+                                          dbval_count, dbvals_p,
+                                          query_p->query_id, shard_groupid, shard_key, req_from_migrator);
 
   if (cache_clone_p == NULL)
     {
@@ -1530,11 +1440,11 @@ qmgr_process_query (THREAD_ENTRY * thread_p,
      even if an error was occurred.
      We should check the error condition and free listid. */
   if (query_p->errid < 0)
-    {				/* error has occurred */
+    {                           /* error has occurred */
       if (query_p->list_id)
-	{
-	  QFILE_FREE_AND_INIT_LIST_ID (query_p->list_id);
-	}
+        {
+          QFILE_FREE_AND_INIT_LIST_ID (query_p->list_id);
+        }
       /* error occurred during executing the query */
       goto exit_on_error;
     }
@@ -1574,13 +1484,13 @@ qmgr_set_xasl_trace (UNUSED_ARG THREAD_ENTRY * thread_p, QUERY_FLAG * flag_p)
       thread_trace_on (thread_p);
 
       if (IS_XASL_TRACE_TEXT (*flag_p))
-	{
-	  thread_set_trace_format (thread_p, QUERY_TRACE_TEXT);
-	}
+        {
+          thread_set_trace_format (thread_p, QUERY_TRACE_TEXT);
+        }
       else if (IS_XASL_TRACE_JSON (*flag_p))
-	{
-	  thread_set_trace_format (thread_p, QUERY_TRACE_JSON);
-	}
+        {
+          thread_set_trace_format (thread_p, QUERY_TRACE_JSON);
+        }
     }
 
   return xasl_trace;
@@ -1608,11 +1518,10 @@ qmgr_set_xasl_trace (UNUSED_ARG THREAD_ENTRY * thread_p, QUERY_FLAG * flag_p)
  */
 QFILE_LIST_ID *
 xqmgr_execute_query (THREAD_ENTRY * thread_p,
-		     const XASL_ID * xasl_id_p, QUERY_ID * query_id_p,
-		     int dbval_count, void *dbval_p, QUERY_FLAG * flag_p,
-		     UNUSED_ARG int query_timeout, int shard_groupid,
-		     DB_VALUE * shard_key,
-		     XASL_CACHE_ENTRY ** ret_cache_entry_p)
+                     const XASL_ID * xasl_id_p, QUERY_ID * query_id_p,
+                     int dbval_count, void *dbval_p, QUERY_FLAG * flag_p,
+                     UNUSED_ARG int query_timeout, int shard_groupid,
+                     DB_VALUE * shard_key, XASL_CACHE_ENTRY ** ret_cache_entry_p)
 {
   XASL_CACHE_ENTRY *xasl_cache_entry_p;
   DB_VALUE *dbvals_p;
@@ -1657,12 +1566,8 @@ xqmgr_execute_query (THREAD_ENTRY * thread_p,
 
   /* Check the existence of the given XASL. If someone marked it
      to be deleted, then remove it if possible. */
-  cache_clone_p = NULL;		/* mark as pop */
-  xasl_cache_entry_p = qexec_check_xasl_cache_ent_by_xasl (thread_p,
-							   xasl_id_p,
-							   dbval_count,
-							   &cache_clone_p,
-							   false);
+  cache_clone_p = NULL;         /* mark as pop */
+  xasl_cache_entry_p = qexec_check_xasl_cache_ent_by_xasl (thread_p, xasl_id_p, dbval_count, &cache_clone_p, false);
   if (xasl_cache_entry_p == NULL)
     {
       /* It doesn't be there or was marked to be deleted. */
@@ -1684,16 +1589,16 @@ xqmgr_execute_query (THREAD_ENTRY * thread_p,
 
       dbvals_p = (DB_VALUE *) malloc (sizeof (DB_VALUE) * dbval_count);
       if (dbvals_p == NULL)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       /* unpack DB_VALUEs from the received data */
       ptr = data;
       for (i = 0, dbval = dbvals_p; i < dbval_count; i++, dbval++)
-	{
-	  ptr = or_unpack_db_value (ptr, dbval);
-	}
+        {
+          ptr = or_unpack_db_value (ptr, dbval);
+        }
     }
 #else
   dbvals_p = (DB_VALUE *) dbval_p;
@@ -1738,8 +1643,7 @@ xqmgr_execute_query (THREAD_ENTRY * thread_p,
 
   if (query_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QM_QENTRY_RUNOUT, 1,
-	      QMGR_MAX_QUERY_ENTRY_PER_TRAN);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QM_QENTRY_RUNOUT, 1, QMGR_MAX_QUERY_ENTRY_PER_TRAN);
       goto exit_on_error;
     }
 
@@ -1773,10 +1677,9 @@ xqmgr_execute_query (THREAD_ENTRY * thread_p,
      (XASL tree) from the cached(stored) XASL stream. */
 
   list_id_p = qmgr_process_query (thread_p, xasl_id_p,
-				  NULL, 0,
-				  dbval_count, dbvals_p, *flag_p,
-				  cache_clone_p, query_p, tran_entry_p,
-				  shard_groupid, shard_key);
+                                  NULL, 0,
+                                  dbval_count, dbvals_p, *flag_p,
+                                  cache_clone_p, query_p, tran_entry_p, shard_groupid, shard_key);
   if (list_id_p == NULL)
     {
       goto exit_on_error;
@@ -1791,9 +1694,9 @@ end:
   if (dbvals_p)
     {
       for (i = 0, dbval = dbvals_p; i < dbval_count; i++, dbval++)
-	{
-	  db_value_clear (dbval);
-	}
+        {
+          db_value_clear (dbval);
+        }
       free_and_init (dbvals_p);
     }
 #endif
@@ -1801,8 +1704,7 @@ end:
   /* save XASL tree */
   if (cache_clone_p)
     {
-      (void) qexec_check_xasl_cache_ent_by_xasl (thread_p, xasl_id_p, -1,
-						 &cache_clone_p, true);
+      (void) qexec_check_xasl_cache_ent_by_xasl (thread_p, xasl_id_p, -1, &cache_clone_p, true);
     }
 
 #if defined (SERVER_MODE)
@@ -1818,12 +1720,10 @@ exit_on_error:
       /* mark that the query is completed and then delete this query entry */
       qmgr_mark_query_as_completed (query_p);
 
-      if (qmgr_free_query_temp_file_by_query_entry (thread_p,
-						    query_p,
-						    tran_index) != NO_ERROR)
-	{
-	  assert (er_errid () == ER_INTERRUPTED);
-	}
+      if (qmgr_free_query_temp_file_by_query_entry (thread_p, query_p, tran_index) != NO_ERROR)
+        {
+          assert (er_errid () == ER_INTERRUPTED);
+        }
 
       qmgr_delete_query_entry (thread_p, query_p->query_id, tran_index);
     }
@@ -1847,8 +1747,7 @@ exit_on_error:
  *   bind_vals(in):
  */
 static int
-copy_bind_value_to_tdes (THREAD_ENTRY * thread_p, int num_bind_vals,
-			 DB_VALUE * bind_vals)
+copy_bind_value_to_tdes (THREAD_ENTRY * thread_p, int num_bind_vals, DB_VALUE * bind_vals)
 {
   LOG_TDES *tdes;
   DB_VALUE *vals;
@@ -1866,25 +1765,23 @@ copy_bind_value_to_tdes (THREAD_ENTRY * thread_p, int num_bind_vals,
       tdes->bind_history[tdes->num_exec_queries].size = num_bind_vals;
 
       if (num_bind_vals > 0)
-	{
-	  vals = (DB_VALUE *) malloc (sizeof (DB_VALUE) * num_bind_vals);
-	  if (vals == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      sizeof (DB_VALUE) * num_bind_vals);
+        {
+          vals = (DB_VALUE *) malloc (sizeof (DB_VALUE) * num_bind_vals);
+          if (vals == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (DB_VALUE) * num_bind_vals);
 
-	      return ER_OUT_OF_VIRTUAL_MEMORY;
-	    }
+              return ER_OUT_OF_VIRTUAL_MEMORY;
+            }
 
-	  for (i = 0; i < num_bind_vals; i++)
-	    {
-	      DB_MAKE_NULL (&vals[i]);
-	      pr_clone_value (&bind_vals[i], &vals[i]);
-	    }
+          for (i = 0; i < num_bind_vals; i++)
+            {
+              DB_MAKE_NULL (&vals[i]);
+              pr_clone_value (&bind_vals[i], &vals[i]);
+            }
 
-	  tdes->bind_history[tdes->num_exec_queries].vals = vals;
-	}
+          tdes->bind_history[tdes->num_exec_queries].vals = vals;
+        }
     }
 
   tdes->num_exec_queries++;
@@ -1919,8 +1816,7 @@ xqmgr_end_query (THREAD_ENTRY * thread_p, QUERY_ID query_id)
   /* get query entry */
   if (qmgr_Query_table.tran_entries_p == NULL)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID,
-	      1, query_id);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1, query_id);
       return ER_FAILED;
     }
 
@@ -1931,8 +1827,7 @@ xqmgr_end_query (THREAD_ENTRY * thread_p, QUERY_ID query_id)
 
   qmgr_lock_mutex (thread_p, &tran_entry_p->lock);
 
-  query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p,
-				   query_id);
+  query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
   if (query_p == NULL)
     {
       /* maybe this is:
@@ -1982,8 +1877,7 @@ xqmgr_end_query (THREAD_ENTRY * thread_p, QUERY_ID query_id)
       QFILE_FREE_AND_INIT_LIST_ID (query_p->list_id);
 
       /* free external volumes, if any */
-      rc = qmgr_free_query_temp_file_by_query_entry (thread_p, query_p,
-						     tran_index);
+      rc = qmgr_free_query_temp_file_by_query_entry (thread_p, query_p, tran_index);
     }
 
   XASL_ID_SET_NULL (&query_p->xasl_id);
@@ -2003,36 +1897,30 @@ xqmgr_end_query (THREAD_ENTRY * thread_p, QUERY_ID query_id)
  * file id upon request of the client.
  */
 int
-xqmgr_drop_query_plan (THREAD_ENTRY * thread_p, const char *qstmt,
-		       const OID * user_oid_p, const XASL_ID * xasl_id_p)
+xqmgr_drop_query_plan (THREAD_ENTRY * thread_p, const char *qstmt, const OID * user_oid_p, const XASL_ID * xasl_id_p)
 {
   if (qstmt && user_oid_p)
     {
       /* delete the XASL cache entry */
-      if (qexec_remove_xasl_cache_ent_by_qstr (thread_p, qstmt,
-					       user_oid_p) != NO_ERROR)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"xqmgr_drop_query_plan: xs_remove_xasl_cache_ent_by_qstr failed for query_str %s\n",
-			qstmt);
-	  return ER_FAILED;
-	}
+      if (qexec_remove_xasl_cache_ent_by_qstr (thread_p, qstmt, user_oid_p) != NO_ERROR)
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "xqmgr_drop_query_plan: xs_remove_xasl_cache_ent_by_qstr failed for query_str %s\n", qstmt);
+          return ER_FAILED;
+        }
     }
 
   if (xasl_id_p)
     {
       /* delete the XASL cache entry */
-      if (qexec_remove_xasl_cache_ent_by_xasl (thread_p, xasl_id_p) !=
-	  NO_ERROR)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"xqmgr_drop_query_plan: xs_remove_xasl_cache_ent_by_xasl failed for xasl_id { first_vpid { %d %d } temp_vfid { %d %d } }\n",
-			xasl_id_p->first_vpid.pageid,
-			xasl_id_p->first_vpid.volid,
-			xasl_id_p->temp_vfid.fileid,
-			xasl_id_p->temp_vfid.volid);
-	  return ER_FAILED;
-	}
+      if (qexec_remove_xasl_cache_ent_by_xasl (thread_p, xasl_id_p) != NO_ERROR)
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "xqmgr_drop_query_plan: xs_remove_xasl_cache_ent_by_xasl failed for xasl_id { first_vpid { %d %d } temp_vfid { %d %d } }\n",
+                        xasl_id_p->first_vpid.pageid,
+                        xasl_id_p->first_vpid.volid, xasl_id_p->temp_vfid.fileid, xasl_id_p->temp_vfid.volid);
+          return ER_FAILED;
+        }
     }
 
   return NO_ERROR;
@@ -2086,8 +1974,7 @@ xqmgr_dump_query_plans (THREAD_ENTRY * thread_p, FILE * out_fp)
  * to execute queries.
  */
 void
-qmgr_clear_trans_wakeup (THREAD_ENTRY * thread_p, int tran_index,
-			 bool is_tran_died, bool is_abort)
+qmgr_clear_trans_wakeup (THREAD_ENTRY * thread_p, int tran_index, bool is_tran_died, bool is_abort)
 {
   QMGR_QUERY_ENTRY *query_p, *t;
   QMGR_TRAN_ENTRY *tran_entry_p;
@@ -2105,8 +1992,7 @@ qmgr_clear_trans_wakeup (THREAD_ENTRY * thread_p, int tran_index,
     )
     {
 #ifdef QP_DEBUG
-      er_log_debug (ARG_FILE_LINE, "qmgr_clear_trans_wakeup:"
-		    "Invalid transaction index %d called...\n", tran_index);
+      er_log_debug (ARG_FILE_LINE, "qmgr_clear_trans_wakeup:" "Invalid transaction index %d called...\n", tran_index);
 #endif
       return;
     }
@@ -2131,10 +2017,10 @@ qmgr_clear_trans_wakeup (THREAD_ENTRY * thread_p, int tran_index,
       rv = pthread_mutex_lock (&query_p->lock);
 
       if (query_p->query_mode != QUERY_COMPLETED)
-	{
-	  logtb_set_tran_index_interrupt (thread_p, tran_index, true);
-	  query_p->interrupt = true;
-	}
+        {
+          logtb_set_tran_index_interrupt (thread_p, tran_index, true);
+          query_p->interrupt = true;
+        }
 
       pthread_mutex_unlock (&query_p->lock);
       query_p = query_p->next;
@@ -2158,19 +2044,18 @@ again:
        * QUERY_COMPLETED by me. Do you feel uneasy about skipping my query ?
        * Q : Why don't you use "thread_get_thread_entry_info()->tid" instead of
        * "THREAD_ID()" ? */
-      if (query_p->query_mode != QUERY_COMPLETED
-	  && query_p->tid != pthread_self ())
-	{
-	  qmgr_unlock_mutex (&tran_entry_p->lock);
+      if (query_p->query_mode != QUERY_COMPLETED && query_p->tid != pthread_self ())
+        {
+          qmgr_unlock_mutex (&tran_entry_p->lock);
 
-	  query_p->nwaits++;
-	  pthread_cond_wait (&query_p->cond, &query_p->lock);
-	  query_p->nwaits--;
-	  pthread_mutex_unlock (&query_p->lock);
+          query_p->nwaits++;
+          pthread_cond_wait (&query_p->cond, &query_p->lock);
+          query_p->nwaits--;
+          pthread_mutex_unlock (&query_p->lock);
 
-	  qmgr_lock_mutex (thread_p, &tran_entry_p->lock);
-	  goto again;
-	}
+          qmgr_lock_mutex (thread_p, &tran_entry_p->lock);
+          goto again;
+        }
       pthread_mutex_unlock (&query_p->lock);
       query_p = query_p->next;
     }
@@ -2186,20 +2071,20 @@ again:
   while (query_p)
     {
       if (query_p->is_holdable && !is_abort && !is_tran_died)
-	{
-	  /* this is a commit and we have to add the result to the holdable
-	     queries list */
-	  xsession_store_query_entry_info (thread_p, query_p);
-	  /* reset result info */
-	  query_p->list_id = NULL;
-	  query_p->qe_temp_vfid = NULL;
-	}
+        {
+          /* this is a commit and we have to add the result to the holdable
+             queries list */
+          xsession_store_query_entry_info (thread_p, query_p);
+          /* reset result info */
+          query_p->list_id = NULL;
+          query_p->qe_temp_vfid = NULL;
+        }
       /* destroy the query result if not destroyed yet */
       if (query_p->list_id)
-	{
-	  qfile_close_list (thread_p, query_p->list_id);
-	  QFILE_FREE_AND_INIT_LIST_ID (query_p->list_id);
-	}
+        {
+          qfile_close_list (thread_p, query_p->list_id);
+          QFILE_FREE_AND_INIT_LIST_ID (query_p->list_id);
+        }
 
       /* Note: In cases of abort, the qm must delete its own
        * tempfiles otherwise the file manager will delete them out from
@@ -2207,23 +2092,20 @@ again:
        * functions file_new_destroy_all_tmp and log_abort_local.
        */
       if (query_p->qe_temp_vfid != NULL)
-	{
-	  qmgr_free_query_temp_file_by_query_entry (thread_p, query_p,
-						    tran_index);
-	}
+        {
+          qmgr_free_query_temp_file_by_query_entry (thread_p, query_p, tran_index);
+        }
 
       XASL_ID_SET_NULL (&query_p->xasl_id);
       /* if there were external volumes created for the transaction,
        * free them so that they can be used by coming transactions.
        */
-      if (qmgr_free_query_temp_file_by_query_entry (thread_p, query_p,
-						    tran_index) != NO_ERROR)
-	{
+      if (qmgr_free_query_temp_file_by_query_entry (thread_p, query_p, tran_index) != NO_ERROR)
+        {
 #ifdef QP_DEBUG
-	  er_log_debug (ARG_FILE_LINE, "qm_clear_trans_wakeup: "
-			"External volume deletion failed.\n");
+          er_log_debug (ARG_FILE_LINE, "qm_clear_trans_wakeup: " "External volume deletion failed.\n");
 #endif
-	}
+        }
       /* remove query entry */
       t = query_p;
 
@@ -2268,8 +2150,7 @@ qmgr_get_tran_status (THREAD_ENTRY * thread_p, int tran_index)
  *   trans_status(in)   :
  */
 void
-qmgr_set_tran_status (THREAD_ENTRY * thread_p, int tran_index,
-		      QMGR_TRAN_STATUS trans_status)
+qmgr_set_tran_status (THREAD_ENTRY * thread_p, int tran_index, QMGR_TRAN_STATUS trans_status)
 {
   if (tran_index >= 0)
     {
@@ -2294,8 +2175,7 @@ qmgr_set_tran_status (THREAD_ENTRY * thread_p, int tran_index,
  *   tfile_vfidp(in)    :
  */
 PAGE_PTR
-qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
-		   QMGR_TEMP_FILE * tfile_vfid_p)
+qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p, QMGR_TEMP_FILE * tfile_vfid_p)
 {
   int tran_index;
   PAGE_PTR page_p;
@@ -2305,8 +2185,7 @@ qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
 
   if (vpid_p->volid == NULL_VOLID && tfile_vfid_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_TEMP_FILE,
-	      1, logtb_get_current_tran_index (thread_p));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_TEMP_FILE, 1, logtb_get_current_tran_index (thread_p));
       return NULL;
     }
 
@@ -2316,37 +2195,33 @@ qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
       tran_index = logtb_get_current_tran_index (thread_p);
 
       if (vpid_p->pageid >= 0 && vpid_p->pageid <= tfile_vfid_p->membuf_last)
-	{
-	  /* interrupt check */
+        {
+          /* interrupt check */
 #if defined (SERVER_MODE)
-	  if (thread_get_check_interrupt (thread_p) == true
-	      && logtb_is_interrupted_tran (thread_p, true, &dummy,
-					    tran_index) == true)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTED, 0);
-	      page_p = NULL;
-	    }
-	  else
-	    {
-	      page_p = tfile_vfid_p->membuf[vpid_p->pageid];
-	    }
+          if (thread_get_check_interrupt (thread_p) == true
+              && logtb_is_interrupted_tran (thread_p, true, &dummy, tran_index) == true)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_INTERRUPTED, 0);
+              page_p = NULL;
+            }
+          else
+            {
+              page_p = tfile_vfid_p->membuf[vpid_p->pageid];
+            }
 #else
-	  page_p = tfile_vfid_p->membuf[vpid_p->pageid];
+          page_p = tfile_vfid_p->membuf[vpid_p->pageid];
 #endif
-	}
+        }
       else
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_QPROC_INVALID_TEMP_FILE, 1, tran_index);
-	  page_p = NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_TEMP_FILE, 1, tran_index);
+          page_p = NULL;
+        }
     }
   else
     {
       /* return temp file page */
-      page_p = pgbuf_fix (thread_p, vpid_p, OLD_PAGE,
-			  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			  PAGE_QRESULT);
+      page_p = pgbuf_fix (thread_p, vpid_p, OLD_PAGE, PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, PAGE_QRESULT);
     }
 
   return page_p;
@@ -2359,8 +2234,7 @@ qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
  *   tfile_vfidp(in)    :
  */
 void
-qmgr_free_old_page (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
-		    QMGR_TEMP_FILE * tfile_vfid_p)
+qmgr_free_old_page (THREAD_ENTRY * thread_p, PAGE_PTR page_p, QMGR_TEMP_FILE * tfile_vfid_p)
 {
   QMGR_PAGE_TYPE page_type;
 
@@ -2405,8 +2279,7 @@ qmgr_free_old_page (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
  */
 void
 qmgr_set_dirty_page (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
-		     int free_page, LOG_DATA_ADDR * addr_p,
-		     QMGR_TEMP_FILE * tfile_vfid_p)
+                     int free_page, LOG_DATA_ADDR * addr_p, QMGR_TEMP_FILE * tfile_vfid_p)
 {
   QMGR_PAGE_TYPE page_type;
 
@@ -2443,21 +2316,18 @@ qmgr_set_dirty_page (THREAD_ENTRY * thread_p, PAGE_PTR page_p,
  * If an error occurs, NULL pointer is returned.
  */
 PAGE_PTR
-qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
-		   QMGR_TEMP_FILE * tfile_vfid_p)
+qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpid_p, QMGR_TEMP_FILE * tfile_vfid_p)
 {
   PAGE_PTR page_p;
 
   if (tfile_vfid_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_TEMP_FILE,
-	      1, logtb_get_current_tran_index (thread_p));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_TEMP_FILE, 1, logtb_get_current_tran_index (thread_p));
       return NULL;
     }
 
   /* first page, return memory buffer instead real temp file page */
-  if (tfile_vfid_p->membuf != NULL
-      && tfile_vfid_p->membuf_last < tfile_vfid_p->membuf_npages - 1)
+  if (tfile_vfid_p->membuf != NULL && tfile_vfid_p->membuf_last < tfile_vfid_p->membuf_npages - 1)
     {
       vpid_p->volid = NULL_VOLID;
       vpid_p->pageid = ++(tfile_vfid_p->membuf_last);
@@ -2467,16 +2337,13 @@ qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
   /* memory buffer is exhausted; create temp file */
   if (VFID_ISNULL (&tfile_vfid_p->temp_vfid))
     {
-      if (file_create_tmp (thread_p, &tfile_vfid_p->temp_vfid,
-			   TEMP_FILE_DEFAULT_PAGES, NULL) == NULL)
-	{
-	  vpid_p->pageid = NULL_PAGEID;
-	  return NULL;
-	}
+      if (file_create_tmp (thread_p, &tfile_vfid_p->temp_vfid, TEMP_FILE_DEFAULT_PAGES, NULL) == NULL)
+        {
+          vpid_p->pageid = NULL_PAGEID;
+          return NULL;
+        }
       tfile_vfid_p->temp_file_type = FILE_TMP;
-      tfile_vfid_p->last_free_page_index =
-	file_get_numpages (thread_p, &tfile_vfid_p->temp_vfid, NULL, NULL,
-			   NULL) - 1;
+      tfile_vfid_p->last_free_page_index = file_get_numpages (thread_p, &tfile_vfid_p->temp_vfid, NULL, NULL, NULL) - 1;
     }
 
   /* try to get pages from an external temp file */
@@ -2486,10 +2353,9 @@ qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
       /* more temp file page is unavailable; cause error to stop the query */
       vpid_p->pageid = NULL_PAGEID;
       if (er_errid () == ER_FILE_NOT_ENOUGH_PAGES_IN_VOLUME)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_QPROC_OUT_OF_TEMP_SPACE, 0);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_OUT_OF_TEMP_SPACE, 0);
+        }
     }
 
   return page_p;
@@ -2508,15 +2374,13 @@ qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
  * necessary error code is set and NULL pointer is returned.
  */
 static PAGE_PTR
-qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
-			     QMGR_TEMP_FILE * tmp_vfid_p)
+qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p, QMGR_TEMP_FILE * tmp_vfid_p)
 {
   PAGE_PTR page_p;
   int nthpg;
   LOG_DATA_ADDR addr = LOG_ADDR_INITIALIZER;
   DKNPAGES num_pages = TEMP_FILE_DEFAULT_PAGES;
-  QFILE_PAGE_HEADER page_header =
-    { 0, NULL_PAGEID, NULL_PAGEID, 0, NULL_PAGEID,
+  QFILE_PAGE_HEADER page_header = { 0, NULL_PAGEID, NULL_PAGEID, 0, NULL_PAGEID,
     NULL_VOLID, NULL_VOLID, NULL_VOLID
   };
 
@@ -2530,30 +2394,26 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
 
   if (tmp_vfid_p->vpid_index != -1)
     {
-      page_p = pgbuf_fix_newpg (thread_p,
-				&(tmp_vfid_p->
-				  vpid_array[tmp_vfid_p->vpid_index]),
-				PAGE_QRESULT);
+      page_p = pgbuf_fix_newpg (thread_p, &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]), PAGE_QRESULT);
       if (page_p == NULL)
-	{
-	  VPID_SET_NULL (vpid_p);
-	  return NULL;
-	}
+        {
+          VPID_SET_NULL (vpid_p);
+          return NULL;
+        }
 
       tmp_vfid_p->curr_free_page_index++;
       *vpid_p = tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index++];
       qmgr_put_page_header (page_p, &page_header);
 
-      LOG_ADDR_SET (&addr, &tmp_vfid_p->temp_vfid, page_p,
-		    -1 /* irrelevant */ );
-      log_skip_logging_set_lsa (thread_p, &addr);	/* ignore logging */
+      LOG_ADDR_SET (&addr, &tmp_vfid_p->temp_vfid, page_p, -1 /* irrelevant */ );
+      log_skip_logging_set_lsa (thread_p, &addr);       /* ignore logging */
 
       pgbuf_set_dirty (thread_p, page_p, DONT_FREE);
 
       if (tmp_vfid_p->vpid_index >= tmp_vfid_p->vpid_count)
-	{
-	  tmp_vfid_p->vpid_index = -1;
-	}
+        {
+          tmp_vfid_p->vpid_index = -1;
+        }
 
       return page_p;
     }
@@ -2567,42 +2427,38 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
        * Don't care about initializing the pages
        */
       if (file_alloc_pages_as_noncontiguous
-	  (thread_p, &tmp_vfid_p->temp_vfid, vpid_p, &nthpg, num_pages,
-	   NULL, NULL, NULL, NULL) == NULL)
-	{
-	  /* if error was no more pages, ignore this expected error code */
-	  if (er_errid () != ER_FILE_NOT_ENOUGH_PAGES_IN_VOLUME)
-	    {
-	      return NULL;
-	    }
+          (thread_p, &tmp_vfid_p->temp_vfid, vpid_p, &nthpg, num_pages, NULL, NULL, NULL, NULL) == NULL)
+        {
+          /* if error was no more pages, ignore this expected error code */
+          if (er_errid () != ER_FILE_NOT_ENOUGH_PAGES_IN_VOLUME)
+            {
+              return NULL;
+            }
 
-	  /* Find out how many pages are available and ask for that many pages.
-	   * Since we are in a multi-user environment, we have no guarantee that
-	   * we'll be able to get the number of pages maxpgs_could_allocate()
-	   * returns.  Also right before we call maxpgs, another user may free
-	   * up a bunch of pages, so only ask for the min of num_pages and
-	   * our current request.
-	   */
-	  num_pages =
-	    file_find_maxpages_allocable (thread_p, &tmp_vfid_p->temp_vfid);
-	  if (num_pages <= 0)
-	    {
-	      return NULL;
-	    }
+          /* Find out how many pages are available and ask for that many pages.
+           * Since we are in a multi-user environment, we have no guarantee that
+           * we'll be able to get the number of pages maxpgs_could_allocate()
+           * returns.  Also right before we call maxpgs, another user may free
+           * up a bunch of pages, so only ask for the min of num_pages and
+           * our current request.
+           */
+          num_pages = file_find_maxpages_allocable (thread_p, &tmp_vfid_p->temp_vfid);
+          if (num_pages <= 0)
+            {
+              return NULL;
+            }
 
-	  /*
-	   * allocate next extent of pages for the file
-	   * Don't care about initializing the pages
-	   */
-	  if (file_alloc_pages_as_noncontiguous (thread_p,
-						 &tmp_vfid_p->temp_vfid,
-						 vpid_p, &nthpg, num_pages,
-						 NULL, NULL, NULL,
-						 NULL) == NULL)
-	    {
-	      return NULL;
-	    }
-	}
+          /*
+           * allocate next extent of pages for the file
+           * Don't care about initializing the pages
+           */
+          if (file_alloc_pages_as_noncontiguous (thread_p,
+                                                 &tmp_vfid_p->temp_vfid,
+                                                 vpid_p, &nthpg, num_pages, NULL, NULL, NULL, NULL) == NULL)
+            {
+              return NULL;
+            }
+        }
 
       /* reset file page indices information */
       tmp_vfid_p->last_free_page_index += num_pages;
@@ -2611,9 +2467,7 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
   /* fetch and return the external volume page */
   tmp_vfid_p->vpid_count =
     file_find_nthpages (thread_p, &tmp_vfid_p->temp_vfid,
-			tmp_vfid_p->vpid_array,
-			tmp_vfid_p->curr_free_page_index,
-			QMGR_VPID_ARRAY_SIZE);
+                        tmp_vfid_p->vpid_array, tmp_vfid_p->curr_free_page_index, QMGR_VPID_ARRAY_SIZE);
   if (tmp_vfid_p->vpid_count == -1)
     {
       tmp_vfid_p->vpid_index = -1;
@@ -2624,9 +2478,7 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
   tmp_vfid_p->vpid_index = 0;
   tmp_vfid_p->total_count += num_pages;
 
-  page_p = pgbuf_fix_newpg (thread_p,
-			    &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]),
-			    PAGE_QRESULT);
+  page_p = pgbuf_fix_newpg (thread_p, &(tmp_vfid_p->vpid_array[tmp_vfid_p->vpid_index]), PAGE_QRESULT);
   if (page_p == NULL)
     {
       VPID_SET_NULL (vpid_p);
@@ -2642,7 +2494,7 @@ qmgr_get_external_file_page (THREAD_ENTRY * thread_p, VPID * vpid_p,
     }
 
   LOG_ADDR_SET (&addr, &tmp_vfid_p->temp_vfid, page_p, -1 /* irrelevant */ );
-  log_skip_logging_set_lsa (thread_p, &addr);	/* ignore logging */
+  log_skip_logging_set_lsa (thread_p, &addr);   /* ignore logging */
 
   pgbuf_set_dirty (thread_p, page_p, DONT_FREE);
 
@@ -2662,8 +2514,7 @@ qmgr_allocate_tempfile_with_buffer (int num_buffer_pages)
   tempfile_p = (QMGR_TEMP_FILE *) malloc (size);
   if (tempfile_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
     }
   memset (tempfile_p, 0x00, size);
 
@@ -2676,9 +2527,7 @@ qmgr_allocate_tempfile_with_buffer (int num_buffer_pages)
  *   query_id(in)       :
  */
 QMGR_TEMP_FILE *
-qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
-			   QUERY_ID query_id,
-			   QMGR_TEMP_FILE_MEMBUF_TYPE membuf_type)
+qmgr_create_new_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id, QMGR_TEMP_FILE_MEMBUF_TYPE membuf_type)
 {
   QMGR_QUERY_ENTRY *query_p;
   QMGR_TRAN_ENTRY *tran_entry_p;
@@ -2699,9 +2548,7 @@ qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
     prm_get_bigint_value (PRM_ID_TEMP_MEM_BUFFER_SIZE) / IO_PAGESIZE :
     prm_get_bigint_value (PRM_ID_INDEX_SCAN_KEY_BUFFER_SIZE) / IO_PAGESIZE;
 
-  tfile_vfid_p =
-    qmgr_get_temp_file_from_list (&qmgr_Query_table.temp_file_list
-				  [membuf_type]);
+  tfile_vfid_p = qmgr_get_temp_file_from_list (&qmgr_Query_table.temp_file_list[membuf_type]);
   if (tfile_vfid_p == NULL)
     {
       tfile_vfid_p = qmgr_allocate_tempfile_with_buffer (num_buffer_pages);
@@ -2709,7 +2556,7 @@ qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
   else
     {
       assert (tfile_vfid_p->membuf_npages >= 0);
-      num_buffer_pages = tfile_vfid_p->membuf_npages;	/* TODO - */
+      num_buffer_pages = tfile_vfid_p->membuf_npages;   /* TODO - */
     }
 
   if (tfile_vfid_p == NULL)
@@ -2717,9 +2564,7 @@ qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
       return NULL;
     }
 
-  tfile_vfid_p->membuf = (PAGE_PTR *) ((PAGE_PTR) tfile_vfid_p +
-				       DB_ALIGN (sizeof (QMGR_TEMP_FILE),
-						 MAX_ALIGNMENT));
+  tfile_vfid_p->membuf = (PAGE_PTR *) ((PAGE_PTR) tfile_vfid_p + DB_ALIGN (sizeof (QMGR_TEMP_FILE), MAX_ALIGNMENT));
 
   /* initialize tfile_vfid */
   VFID_SET_NULL (&tfile_vfid_p->temp_vfid);
@@ -2739,8 +2584,7 @@ qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
   tfile_vfid_p->total_count = 0;
   tfile_vfid_p->membuf_last = -1;
   page_p = (PAGE_PTR) ((PAGE_PTR) tfile_vfid_p->membuf +
-		       DB_ALIGN (sizeof (PAGE_PTR) *
-				 tfile_vfid_p->membuf_npages, MAX_ALIGNMENT));
+                       DB_ALIGN (sizeof (PAGE_PTR) * tfile_vfid_p->membuf_npages, MAX_ALIGNMENT));
 
   for (i = 0; i < tfile_vfid_p->membuf_npages; i++)
     {
@@ -2760,8 +2604,7 @@ qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
   /* find query entry */
   if (qmgr_Query_table.tran_entries_p != NULL)
     {
-      query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p,
-				       query_id);
+      query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
     }
   else
     {
@@ -2772,8 +2615,7 @@ qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
     {
       free_and_init (tfile_vfid_p);
       qmgr_unlock_mutex (&tran_entry_p->lock);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1,
-	      query_id);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1, query_id);
       return NULL;
     }
 
@@ -2829,9 +2671,7 @@ qmgr_create_result_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
 
   VFID_SET_NULL (&tfile_vfid_p->temp_vfid);
 
-  if (file_create_queryarea (thread_p, &tfile_vfid_p->temp_vfid,
-			     TEMP_FILE_DEFAULT_PAGES,
-			     "Query result file") == NULL)
+  if (file_create_queryarea (thread_p, &tfile_vfid_p->temp_vfid, TEMP_FILE_DEFAULT_PAGES, "Query result file") == NULL)
     {
       free_and_init (tfile_vfid_p);
       return NULL;
@@ -2840,9 +2680,7 @@ qmgr_create_result_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
   tfile_vfid_p->temp_file_type = FILE_QUERY_AREA;
   /* initialize the allocated tfile_vfid */
   tfile_vfid_p->curr_free_page_index = 0;
-  tfile_vfid_p->last_free_page_index =
-    file_get_numpages (thread_p, &tfile_vfid_p->temp_vfid, NULL, NULL,
-		       NULL) - 1;
+  tfile_vfid_p->last_free_page_index = file_get_numpages (thread_p, &tfile_vfid_p->temp_vfid, NULL, NULL, NULL) - 1;
   tfile_vfid_p->vpid_index = -1;
   tfile_vfid_p->vpid_count = 0;
 
@@ -2852,8 +2690,7 @@ qmgr_create_result_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
     }
 
   tfile_vfid_p->total_count = 0;
-  tfile_vfid_p->membuf_last =
-    (prm_get_integer_value (PRM_ID_TEMP_MEM_BUFFER_PAGES) / IO_PAGESIZE) - 1;
+  tfile_vfid_p->membuf_last = (prm_get_integer_value (PRM_ID_TEMP_MEM_BUFFER_PAGES) / IO_PAGESIZE) - 1;
   tfile_vfid_p->membuf = NULL;
   tfile_vfid_p->membuf_npages = 0;
   tfile_vfid_p->membuf_type = TEMP_FILE_MEMBUF_NONE;
@@ -2872,8 +2709,7 @@ qmgr_create_result_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
   /* find the query entry */
   if (qmgr_Query_table.tran_entries_p != NULL)
     {
-      query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p,
-				       query_id);
+      query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
     }
   else
     {
@@ -2884,8 +2720,7 @@ qmgr_create_result_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
     {
       /* query entry is not found */
       qmgr_unlock_mutex (&tran_entry_p->lock);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID,
-	      1, query_id);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1, query_id);
       free_and_init (tfile_vfid_p);
       return NULL;
     }
@@ -2944,8 +2779,7 @@ qmgr_free_query_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
 
   if (qmgr_Query_table.tran_entries_p != NULL)
     {
-      query_p =
-	qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
+      query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
     }
   else
     {
@@ -2966,46 +2800,42 @@ qmgr_free_query_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
       tfile_vfid_p->prev->next = NULL;
 
       while (tfile_vfid_p)
-	{
-	  if (!(tfile_vfid_p->temp_file_type == FILE_QUERY_AREA
-		&& query_p->errid >= 0)
-	      && !VFID_ISNULL (&tfile_vfid_p->temp_vfid))
-	    {
-	      if (file_destroy (thread_p, &tfile_vfid_p->temp_vfid) !=
-		  NO_ERROR)
-		{
-		  /* stop; return error */
-		  rc = ER_FAILED;
-		}
-	    }
-	  temp = tfile_vfid_p;
-	  tfile_vfid_p = tfile_vfid_p->next;
+        {
+          if (!(tfile_vfid_p->temp_file_type == FILE_QUERY_AREA
+                && query_p->errid >= 0) && !VFID_ISNULL (&tfile_vfid_p->temp_vfid))
+            {
+              if (file_destroy (thread_p, &tfile_vfid_p->temp_vfid) != NO_ERROR)
+                {
+                  /* stop; return error */
+                  rc = ER_FAILED;
+                }
+            }
+          temp = tfile_vfid_p;
+          tfile_vfid_p = tfile_vfid_p->next;
 
-	  if (temp->temp_file_type != FILE_QUERY_AREA)
-	    {
-	      rv =
-		pthread_mutex_lock (&qmgr_Query_table.temp_file_free_mutex);
+          if (temp->temp_file_type != FILE_QUERY_AREA)
+            {
+              rv = pthread_mutex_lock (&qmgr_Query_table.temp_file_free_mutex);
 
-	      /* add to the free list */
-	      if (qmgr_Query_table.temp_file_free_count <
-		  QMGR_TEMP_FILE_FREE_LIST_SIZE)
-		{
-		  temp->prev = NULL;
-		  temp->next = qmgr_Query_table.temp_file_free_list;
-		  qmgr_Query_table.temp_file_free_list = temp;
-		  qmgr_Query_table.temp_file_free_count++;
-		  temp = NULL;
-		}
+              /* add to the free list */
+              if (qmgr_Query_table.temp_file_free_count < QMGR_TEMP_FILE_FREE_LIST_SIZE)
+                {
+                  temp->prev = NULL;
+                  temp->next = qmgr_Query_table.temp_file_free_list;
+                  qmgr_Query_table.temp_file_free_list = temp;
+                  qmgr_Query_table.temp_file_free_count++;
+                  temp = NULL;
+                }
 
-	      pthread_mutex_unlock (&qmgr_Query_table.temp_file_free_mutex);
-	    }
+              pthread_mutex_unlock (&qmgr_Query_table.temp_file_free_mutex);
+            }
 
-	  /* free too many temp_file */
-	  if (temp)
-	    {
-	      free_and_init (temp);
-	    }
-	}
+          /* free too many temp_file */
+          if (temp)
+            {
+              free_and_init (temp);
+            }
+        }
       query_p->temp_vfid = NULL;
     }
 
@@ -3024,8 +2854,7 @@ qmgr_free_query_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id)
  */
 int
 qmgr_free_temp_file_list (THREAD_ENTRY * thread_p,
-			  QMGR_TEMP_FILE * tfile_vfid_p,
-			  UNUSED_ARG QUERY_ID query_id, bool is_error)
+                          QMGR_TEMP_FILE * tfile_vfid_p, UNUSED_ARG QUERY_ID query_id, bool is_error)
 {
   QMGR_TEMP_FILE *temp = NULL;
   int rc = NO_ERROR, fd_ret = NO_ERROR;
@@ -3036,28 +2865,27 @@ qmgr_free_temp_file_list (THREAD_ENTRY * thread_p,
   while (tfile_vfid_p)
     {
       fd_ret = NO_ERROR;
-      if ((tfile_vfid_p->temp_file_type != FILE_QUERY_AREA || is_error)
-	  && !VFID_ISNULL (&tfile_vfid_p->temp_vfid))
-	{
-	  fd_ret = file_destroy (thread_p, &tfile_vfid_p->temp_vfid);
-	  if (fd_ret != NO_ERROR)
-	    {
-	      /* set error but continue with the destroy process */
-	      rc = ER_FAILED;
-	    }
-	}
+      if ((tfile_vfid_p->temp_file_type != FILE_QUERY_AREA || is_error) && !VFID_ISNULL (&tfile_vfid_p->temp_vfid))
+        {
+          fd_ret = file_destroy (thread_p, &tfile_vfid_p->temp_vfid);
+          if (fd_ret != NO_ERROR)
+            {
+              /* set error but continue with the destroy process */
+              rc = ER_FAILED;
+            }
+        }
 
       temp = tfile_vfid_p;
       tfile_vfid_p = tfile_vfid_p->next;
 
       if (temp->temp_file_type != FILE_QUERY_AREA)
-	{
-	  qmgr_put_temp_file_into_list (temp);
-	}
+        {
+          qmgr_put_temp_file_into_list (temp);
+        }
       else
-	{
-	  free_and_init (temp);
-	}
+        {
+          free_and_init (temp);
+        }
     }
 
   return rc;
@@ -3073,9 +2901,7 @@ qmgr_free_temp_file_list (THREAD_ENTRY * thread_p,
  * Note: Destroy the external temporary file used, if any.
  */
 static int
-qmgr_free_query_temp_file_by_query_entry (THREAD_ENTRY * thread_p,
-					  QMGR_QUERY_ENTRY * query_p,
-					  int tran_index)
+qmgr_free_query_temp_file_by_query_entry (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * query_p, int tran_index)
 {
   int rc;
   QMGR_TEMP_FILE *tfile_vfid_p;
@@ -3105,8 +2931,7 @@ qmgr_free_query_temp_file_by_query_entry (THREAD_ENTRY * thread_p,
       tfile_vfid_p = query_p->qe_temp_vfid;
       tfile_vfid_p->prev->next = NULL;
 
-      rc = qmgr_free_temp_file_list (thread_p, tfile_vfid_p,
-				     query_p->query_id, is_error);
+      rc = qmgr_free_temp_file_list (thread_p, tfile_vfid_p, query_p->query_id, is_error);
 
       query_p->qe_temp_vfid = NULL;
     }
@@ -3125,8 +2950,7 @@ qmgr_free_query_temp_file_by_query_entry (THREAD_ENTRY * thread_p,
  * is responsible for setting pointers to this tmp_vfid to NULL afterwards.
  */
 int
-qmgr_free_list_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id,
-			  QMGR_TEMP_FILE * tfile_vfid_p)
+qmgr_free_list_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id, QMGR_TEMP_FILE * tfile_vfid_p)
 {
   QMGR_QUERY_ENTRY *query_p;
   QMGR_TRAN_ENTRY *tran_entry_p;
@@ -3143,8 +2967,7 @@ qmgr_free_list_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id,
 
   if (qmgr_Query_table.tran_entries_p != NULL)
     {
-      query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p,
-				       query_id);
+      query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
     }
   else
     {
@@ -3162,43 +2985,43 @@ qmgr_free_list_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id,
   if (query_p->qe_temp_vfid)
     {
       if (!VFID_ISNULL (&tfile_vfid_p->temp_vfid))
-	{
-	  if (file_destroy (thread_p, &tfile_vfid_p->temp_vfid) != NO_ERROR)
-	    {
-	      /* stop; return error */
-	      rc = ER_FAILED;
-	    }
-	  VFID_SET_NULL (&tfile_vfid_p->temp_vfid);
-	}
+        {
+          if (file_destroy (thread_p, &tfile_vfid_p->temp_vfid) != NO_ERROR)
+            {
+              /* stop; return error */
+              rc = ER_FAILED;
+            }
+          VFID_SET_NULL (&tfile_vfid_p->temp_vfid);
+        }
 
       if (query_p->qe_temp_vfid->next == query_p->qe_temp_vfid)
-	{
-	  query_p->qe_temp_vfid = NULL;
-	}
+        {
+          query_p->qe_temp_vfid = NULL;
+        }
       else
-	{
-	  tfile_vfid_p->next->prev = tfile_vfid_p->prev;
-	  tfile_vfid_p->prev->next = tfile_vfid_p->next;
-	  if (query_p->qe_temp_vfid == tfile_vfid_p)
-	    {
-	      query_p->qe_temp_vfid = tfile_vfid_p->next;
-	    }
-	}
+        {
+          tfile_vfid_p->next->prev = tfile_vfid_p->prev;
+          tfile_vfid_p->prev->next = tfile_vfid_p->next;
+          if (query_p->qe_temp_vfid == tfile_vfid_p)
+            {
+              query_p->qe_temp_vfid = tfile_vfid_p->next;
+            }
+        }
 
       if (tfile_vfid_p->temp_file_type != FILE_QUERY_AREA)
-	{
-	  qmgr_put_temp_file_into_list (tfile_vfid_p);
-	}
+        {
+          qmgr_put_temp_file_into_list (tfile_vfid_p);
+        }
       else if (tfile_vfid_p)
-	{
-	  /* free too many temp_file */
-	  free_and_init (tfile_vfid_p);
-	}
+        {
+          /* free too many temp_file */
+          free_and_init (tfile_vfid_p);
+        }
     }
 
   qmgr_unlock_mutex (&tran_entry_p->lock);
 
-#if 1				/* TODO - need to fix temp file leak */
+#if 1                           /* TODO - need to fix temp file leak */
   assert (rc == NO_ERROR || er_errid () != NO_ERROR);
 #else
   assert (rc == NO_ERROR);
@@ -3230,8 +3053,7 @@ xqmgr_get_query_info (THREAD_ENTRY * thread_p, QUERY_ID query_id)
 
   if (query_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID,
-	      1, query_id);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1, query_id);
       return -1;
     }
 
@@ -3254,8 +3076,7 @@ xqmgr_get_query_info (THREAD_ENTRY * thread_p, QUERY_ID query_id)
  *   query_id(in)       :
  */
 void *
-qmgr_get_area_error_async (THREAD_ENTRY * thread_p, int *length_p,
-			   int count, QUERY_ID query_id)
+qmgr_get_area_error_async (THREAD_ENTRY * thread_p, int *length_p, int count, QUERY_ID query_id)
 {
   int len;
   char *area, *ptr;
@@ -3276,8 +3097,7 @@ qmgr_get_area_error_async (THREAD_ENTRY * thread_p, int *length_p,
   query_p = qmgr_get_query_entry (thread_p, query_id, NULL_TRAN_INDEX);
   if (query_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID,
-	      1, query_id);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1, query_id);
       return NULL;
     }
 
@@ -3309,7 +3129,7 @@ qmgr_get_area_error_async (THREAD_ENTRY * thread_p, int *length_p,
 
   OR_PUT_INT (ptr, len);
   ptr += OR_INT_SIZE;
-  OR_PUT_INT (ptr, 1);		/* done == 1 */
+  OR_PUT_INT (ptr, 1);          /* done == 1 */
   ptr += OR_INT_SIZE;
   OR_PUT_INT (ptr, count);
   ptr += OR_INT_SIZE;
@@ -3342,8 +3162,7 @@ qmgr_interrupt_query (THREAD_ENTRY * thread_p, QUERY_ID query_id)
    */
   if (qmgr_Query_table.tran_entries_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID,
-	      1, query_id);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1, query_id);
       return true;
     }
 
@@ -3356,14 +3175,12 @@ qmgr_interrupt_query (THREAD_ENTRY * thread_p, QUERY_ID query_id)
 
   qmgr_lock_mutex (thread_p, &tran_entry_p->lock);
 
-  query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p,
-				   query_id);
+  query_p = qmgr_find_query_entry (tran_entry_p->query_entry_list_p, query_id);
 
   if (query_p == NULL)
     {
       qmgr_unlock_mutex (&tran_entry_p->lock);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID,
-	      1, query_id);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, 1, query_id);
       return true;
     }
   else
@@ -3390,8 +3207,7 @@ qmgr_get_query_error_with_id (THREAD_ENTRY * thread_p, QUERY_ID query_id)
 
   if (query_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID,
-	      (int) query_id);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_UNKNOWN_QUERYID, (int) query_id);
       return ER_QPROC_UNKNOWN_QUERYID;
     }
 
@@ -3421,19 +3237,18 @@ qmgr_get_query_error_with_entry (QMGR_QUERY_ENTRY * query_p)
 
   if (errid < 0)
     {
-      p = error_area =
-	(char *) malloc (3 * OR_INT_SIZE + strlen (er_msg) + 1);
+      p = error_area = (char *) malloc (3 * OR_INT_SIZE + strlen (er_msg) + 1);
 
       if (error_area)
-	{
-	  p = or_pack_int (p, errid);
-	  p = or_pack_int (p, ER_ERROR_SEVERITY);
-	  p = or_pack_int (p, strlen (er_msg) + 1);
-	  strcpy (p, er_msg);
+        {
+          p = or_pack_int (p, errid);
+          p = or_pack_int (p, ER_ERROR_SEVERITY);
+          p = or_pack_int (p, strlen (er_msg) + 1);
+          strcpy (p, er_msg);
 
-	  er_set_area_error (error_area);
-	  free_and_init (error_area);
-	}
+          er_set_area_error (error_area);
+          free_and_init (error_area);
+        }
     }
 
   return errid;
@@ -3457,34 +3272,34 @@ qmgr_set_query_error (THREAD_ENTRY * thread_p, QUERY_ID query_id)
     {
       rv = pthread_mutex_lock (&query_p->lock);
       if (query_p->errid != NO_ERROR)
-	{
-	  /* if an error was already set, don't overwrite it */
-	  pthread_mutex_unlock (&query_p->lock);
-	  return;
-	}
+        {
+          /* if an error was already set, don't overwrite it */
+          pthread_mutex_unlock (&query_p->lock);
+          return;
+        }
 
       query_p->errid = er_errid ();
       if (query_p->errid != NO_ERROR)
-	{
+        {
 #if defined (SERVER_MODE)
-	  char *ptr = (char *) er_msg ();
+          char *ptr = (char *) er_msg ();
 
-	  if (ptr != NULL)
-	    {
-	      query_p->er_msg = strdup (ptr);
-	    }
-	  else
-	    {
-	      query_p->er_msg = NULL;
-	    }
+          if (ptr != NULL)
+            {
+              query_p->er_msg = strdup (ptr);
+            }
+          else
+            {
+              query_p->er_msg = NULL;
+            }
 #else
-	  query_p->er_msg = (char *) er_msg ();
+          query_p->er_msg = (char *) er_msg ();
 #endif
-	}
+        }
       else
-	{
-	  query_p->er_msg = NULL;
-	}
+        {
+          query_p->er_msg = NULL;
+        }
 
       pthread_mutex_unlock (&query_p->lock);
     }
@@ -3501,13 +3316,12 @@ static XASL_NODE *
 qmgr_find_leaf (XASL_NODE * xasl_p)
 {
   /* Search down the left side until a BUILDLIST_PROC node is found */
-  for (xasl_p = xasl_p->proc.union_.left; xasl_p;
-       xasl_p = xasl_p->proc.union_.left)
+  for (xasl_p = xasl_p->proc.union_.left; xasl_p; xasl_p = xasl_p->proc.union_.left)
     {
       if (xasl_p->type == BUILDLIST_PROC)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   return xasl_p;
@@ -3535,8 +3349,7 @@ qmgr_setup_empty_list_file (char *page_p)
  *   membuf_type(in):
  */
 void
-qmgr_initialize_temp_file_list (QMGR_TEMP_FILE_LIST * temp_file_list_p,
-				QMGR_TEMP_FILE_MEMBUF_TYPE membuf_type)
+qmgr_initialize_temp_file_list (QMGR_TEMP_FILE_LIST * temp_file_list_p, QMGR_TEMP_FILE_MEMBUF_TYPE membuf_type)
 {
   int i, num_buffer_pages;
   QMGR_TEMP_FILE *temp_file_p;
@@ -3544,8 +3357,7 @@ qmgr_initialize_temp_file_list (QMGR_TEMP_FILE_LIST * temp_file_list_p,
   int rv;
 #endif
 
-  assert (temp_file_list_p != NULL
-	  && QMGR_IS_VALID_MEMBUF_TYPE (membuf_type));
+  assert (temp_file_list_p != NULL && QMGR_IS_VALID_MEMBUF_TYPE (membuf_type));
   if (temp_file_list_p == NULL || !QMGR_IS_VALID_MEMBUF_TYPE (membuf_type))
     {
       return;
@@ -3563,9 +3375,9 @@ qmgr_initialize_temp_file_list (QMGR_TEMP_FILE_LIST * temp_file_list_p,
     {
       temp_file_p = qmgr_allocate_tempfile_with_buffer (num_buffer_pages);
       if (temp_file_p == NULL)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       /* add to the free list */
       temp_file_p->prev = NULL;
       temp_file_p->next = temp_file_list_p->list;
@@ -3661,20 +3473,19 @@ qmgr_put_temp_file_into_list (QMGR_TEMP_FILE * temp_file_p)
 
   if (QMGR_IS_VALID_MEMBUF_TYPE (temp_file_p->membuf_type))
     {
-      temp_file_list_p =
-	&qmgr_Query_table.temp_file_list[temp_file_p->membuf_type];
+      temp_file_list_p = &qmgr_Query_table.temp_file_list[temp_file_p->membuf_type];
 
       rv = pthread_mutex_lock (&temp_file_list_p->mutex);
 
       /* add to the free list */
       if (temp_file_list_p->count < QMGR_TEMP_FILE_FREE_LIST_SIZE)
-	{
-	  temp_file_p->prev = NULL;
-	  temp_file_p->next = temp_file_list_p->list;
-	  temp_file_list_p->list = temp_file_p;
-	  temp_file_list_p->count++;
-	  temp_file_p = NULL;
-	}
+        {
+          temp_file_p->prev = NULL;
+          temp_file_p->next = temp_file_list_p->list;
+          temp_file_list_p->list = temp_file_p;
+          temp_file_list_p->count++;
+          temp_file_p = NULL;
+        }
 
       pthread_mutex_unlock (&temp_file_list_p->mutex);
     }
@@ -3709,8 +3520,7 @@ qmgr_get_temp_file_membuf_pages (QMGR_TEMP_FILE * temp_file_p)
  *   query_timeout(in): milli seconds
  */
 static void
-qmgr_set_query_exec_info_to_tdes (int tran_index, int query_timeout,
-				  const XASL_ID * xasl_id)
+qmgr_set_query_exec_info_to_tdes (int tran_index, int query_timeout, const XASL_ID * xasl_id)
 {
   LOG_TDES *tdes_p;
 
@@ -3724,36 +3534,36 @@ qmgr_set_query_exec_info_to_tdes (int tran_index, int query_timeout,
       tdes_p->query_start_time = thread_get_log_clock_msec ();
 
       if (query_timeout > 0)
-	{
-	  tdes_p->query_timeout = tdes_p->query_start_time + query_timeout;
-	}
+        {
+          tdes_p->query_timeout = tdes_p->query_start_time + query_timeout;
+        }
       else if (query_timeout == 0)
-	{
-	  tdes_p->query_timeout = 0;
-	}
+        {
+          tdes_p->query_timeout = 0;
+        }
       else if (query_timeout != -1)
-	{
-	  /* already expired */
-	  tdes_p->query_timeout = tdes_p->query_start_time;
-	}
+        {
+          /* already expired */
+          tdes_p->query_timeout = tdes_p->query_start_time;
+        }
       else
-	{
-	  /*
-	   * query_timeout == -1
-	   * This means that the query is not the first of a bundle of queries.
-	   * We will apply a timeout to the bundle, not each query.
-	   * Actually CAS always sends -1 in this case.
-	   */
-	}
+        {
+          /*
+           * query_timeout == -1
+           * This means that the query is not the first of a bundle of queries.
+           * We will apply a timeout to the bundle, not each query.
+           * Actually CAS always sends -1 in this case.
+           */
+        }
       if (tdes_p->tran_start_time == 0)
-	{
-	  /* set transaction start time, if this is the first query */
-	  tdes_p->tran_start_time = tdes_p->query_start_time;
-	}
+        {
+          /* set transaction start time, if this is the first query */
+          tdes_p->tran_start_time = tdes_p->query_start_time;
+        }
       if (xasl_id != NULL)
-	{
-	  XASL_ID_COPY (&tdes_p->xasl_id, xasl_id);
-	}
+        {
+          XASL_ID_COPY (&tdes_p->xasl_id, xasl_id);
+        }
     }
 }
 
@@ -3796,8 +3606,7 @@ qmgr_reset_query_exec_info (int tran_index)
  *   even though the length is same.
  */
 int
-qmgr_get_sql_id (UNUSED_ARG THREAD_ENTRY * thread_p, char **sql_id_buf,
-		 char *query, int sql_len)
+qmgr_get_sql_id (UNUSED_ARG THREAD_ENTRY * thread_p, char **sql_id_buf, char *query, int sql_len)
 {
   char hashstring[32 + 1] = { '\0' };
   char *ret_buf;
@@ -3811,12 +3620,11 @@ qmgr_get_sql_id (UNUSED_ARG THREAD_ENTRY * thread_p, char **sql_id_buf,
   ret_buf = (char *) malloc (sizeof (char) * (QMGR_SQL_ID_LENGTH + 1));
   if (ret_buf == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (QMGR_SQL_ID_LENGTH + 1));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (QMGR_SQL_ID_LENGTH + 1));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
-  md5_buffer (query, sql_len, hashstring);	/* 16 bytes hash value */
+  md5_buffer (query, sql_len, hashstring);      /* 16 bytes hash value */
 
   md5_hash_to_hex (hashstring, hashstring);
 

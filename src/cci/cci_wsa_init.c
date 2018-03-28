@@ -69,8 +69,7 @@ wsa_initialize ()
   /* Make sure that the version requested is >= 1.1. */
   /* The low byte is the major version and the high */
   /* byte is the minor version.   */
-  if (LOBYTE (wVersionRequested) < 1
-      || (LOBYTE (wVersionRequested) == 1 && HIBYTE (wVersionRequested) < 1))
+  if (LOBYTE (wVersionRequested) < 1 || (LOBYTE (wVersionRequested) == 1 && HIBYTE (wVersionRequested) < 1))
     {
       return -1;
     }

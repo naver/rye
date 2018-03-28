@@ -87,7 +87,7 @@
 #define CAS_LOG_RESET_REOPEN          0x01
 #define CAS_LOG_RESET_REMOVE            0x02
 
-#define MAX_CONN_INFO_LENGTH    ((MAXHOSTNAMELEN + 1) * 2)	/* host1:host2 */
+#define MAX_CONN_INFO_LENGTH    ((MAXHOSTNAMELEN + 1) * 2)      /* host1:host2 */
 
 #define ACL_IP_BYTE_COUNT           4
 #define ACL_MAX_ITEM_COUNT      50
@@ -103,7 +103,7 @@
 #define UNUSABLE_DATABASE_MAX    (200)
 #define PAIR_LIST                (2)
 
-#define MAX_QUERY_TIMEOUT_LIMIT         86400	/* seconds; 1 day */
+#define MAX_QUERY_TIMEOUT_LIMIT         86400   /* seconds; 1 day */
 #define LONG_QUERY_TIME_LIMIT           (MAX_QUERY_TIMEOUT_LIMIT)
 #define LONG_TRANSACTION_TIME_LIMIT     (MAX_QUERY_TIMEOUT_LIMIT)
 
@@ -222,7 +222,7 @@ struct t_appl_server_info
   char cas_err_log_reset;
   char service_flag;
   char reset_flag;
-  char uts_status;		/* flag whether the uts is busy or idle */
+  char uts_status;              /* flag whether the uts is busy or idle */
   char client_type;
   char service_ready_flag;
   char con_status;
@@ -232,7 +232,7 @@ struct t_appl_server_info
   char cur_statement_pooling;
   char cci_default_autocommit;
   char mutex_turn;
-  char mutex_flag[2];		/* for mutex */
+  char mutex_flag[2];           /* for mutex */
   sem_t con_status_sem;
 
   short as_id;
@@ -240,15 +240,15 @@ struct t_appl_server_info
   unsigned short cas_clt_port;
   in_addr_t cas_clt_ip_addr;
 
-  int num_request;		/* number of request */
-  int pid;			/* the process id */
+  int num_request;              /* number of request */
+  int pid;                      /* the process id */
   int psize;
   time_t psize_time;
 
-  time_t last_access_time;	/* last access time */
+  time_t last_access_time;      /* last access time */
   time_t transaction_start_time;
   time_t last_connect_time;
-  time_t claimed_alive_time;	/* to check if the cas hangs */
+  time_t claimed_alive_time;    /* to check if the cas hangs */
 
   RYE_VERSION clt_version;
 
@@ -291,7 +291,7 @@ struct t_db_server
 typedef struct t_shm_appl_server T_SHM_APPL_SERVER;
 struct t_shm_appl_server
 {
-  RYE_SHM_HEADER shm_header;	/* should be the first field of shm */
+  RYE_SHM_HEADER shm_header;    /* should be the first field of shm */
   int shm_key_br_global;
   char access_log;
   char sql_log_mode;
@@ -304,7 +304,7 @@ struct t_shm_appl_server
   char broker_log_reset;
   char connect_order_random;
   int replica_only_flag;
-  int max_num_delayed_hosts_lookup;	/* max num of HA delayed hosts to lookup */
+  int max_num_delayed_hosts_lookup;     /* max num of HA delayed hosts to lookup */
 
   char broker_name[BROKER_NAME_LEN];
   char appl_server_name[APPL_SERVER_NAME_MAX_SIZE];
@@ -326,12 +326,12 @@ struct t_shm_appl_server
   int job_queue_size;
   int sql_log_max_size;
   int broker_log_max_size;
-  int long_query_time;		/* msec */
-  int long_transaction_time;	/* msec */
+  int long_query_time;          /* msec */
+  int long_transaction_time;    /* msec */
   int max_prepared_stmt_count;
   int num_acl_info;
   int acl_chn;
-  int cas_rctime;		/* sec */
+  int cas_rctime;               /* sec */
   int unusable_databases_cnt[PAIR_LIST];
   unsigned int unusable_databases_seq;
   bool monitor_hang_flag;
@@ -360,20 +360,20 @@ struct t_shm_appl_server
 typedef struct t_shm_broker T_SHM_BROKER;
 struct t_shm_broker
 {
-  RYE_SHM_HEADER shm_header;	/* should be the first field of shm */
+  RYE_SHM_HEADER shm_header;    /* should be the first field of shm */
 
   char broker_key[SHM_BROKER_KEY_LEN + 1];
 
   in_addr_t my_ip;
   uid_t owner_uid;
-  int num_broker;		/* number of broker */
+  int num_broker;               /* number of broker */
 
   int num_shard_version_info;
   struct
   {
     char local_dbname[SRV_CON_DBNAME_SIZE];
     time_t sync_time;
-    int64_t shard_info_ver;	/* MAX(nodeid_ver, groupid_ver) */
+    int64_t shard_info_ver;     /* MAX(nodeid_ver, groupid_ver) */
   } shard_version_info[SHM_MAX_SHARD_VERSION_INFO_COUNT];
 
   T_BROKER_INFO br_info[1];
@@ -384,9 +384,7 @@ int br_sem_wait (sem_t * sem_t);
 int br_sem_post (sem_t * sem_t);
 int br_sem_destroy (sem_t * sem_t);
 
-T_SHM_BROKER *br_shm_init_shm_broker (int shm_key_br_gl,
-				      T_BROKER_INFO * br_info, int br_num);
-T_SHM_APPL_SERVER *br_shm_init_shm_as (T_BROKER_INFO * br_info_p,
-				       int shm_key_br_gl);
+T_SHM_BROKER *br_shm_init_shm_broker (int shm_key_br_gl, T_BROKER_INFO * br_info, int br_num);
+T_SHM_APPL_SERVER *br_shm_init_shm_as (T_BROKER_INFO * br_info_p, int shm_key_br_gl);
 
 #endif /* _BROKER_SHM_H_ */

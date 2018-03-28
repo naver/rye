@@ -98,9 +98,9 @@ typedef struct schema_def
      entry level SQL does include specification of tables, views, and grants
      as part of CREATE SCHEMA statements. */
 
-  void *tables;			/* unused dummy                             */
-  void *views;			/* unused dummy                             */
-  void *grants;			/* unused dummy                             */
+  void *tables;                 /* unused dummy                             */
+  void *views;                  /* unused dummy                             */
+  void *grants;                 /* unused dummy                             */
 
 } SCHEMA_DEF;
 
@@ -149,7 +149,7 @@ struct sm_candidate
 
   const char *name;
   MOP source;
-  SM_ATTRIBUTE *att;		/* actual component structure */
+  SM_ATTRIBUTE *att;            /* actual component structure */
   int order;
 };
 
@@ -188,74 +188,55 @@ static unsigned int global_schema_version = 0;
 #if !defined (SERVER_MODE)
 static int domain_search (MOP dclass_mop, MOP class_mop);
 #endif
-static int find_attribute_op (MOP op, const char *name,
-			      SM_CLASS ** classp, SM_ATTRIBUTE ** attp);
+static int find_attribute_op (MOP op, const char *name, SM_CLASS ** classp, SM_ATTRIBUTE ** attp);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static int fetch_descriptor_class (MOP op, SM_DESCRIPTOR * desc,
-				   int for_update, SM_CLASS ** class_);
+static int fetch_descriptor_class (MOP op, SM_DESCRIPTOR * desc, int for_update, SM_CLASS ** class_);
 #endif
 
 static const char *template_classname (SM_TEMPLATE * template_);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static const char *candidate_source_name (SM_TEMPLATE * template_,
-					  SM_CANDIDATE * candidate);
+static const char *candidate_source_name (SM_TEMPLATE * template_, SM_CANDIDATE * candidate);
 #endif
-static SM_CANDIDATE *make_candidate_from_attribute (SM_ATTRIBUTE * att,
-						    MOP source);
+static SM_CANDIDATE *make_candidate_from_attribute (SM_ATTRIBUTE * att, MOP source);
 static void free_candidates (SM_CANDIDATE * candidates);
 static SM_CANDIDATE *prune_candidate (SM_CANDIDATE ** clist_pointer);
-static void add_candidate (SM_CANDIDATE ** candlist, SM_ATTRIBUTE * comp,
-			   int order, MOP source);
-static SM_ATTRIBUTE *make_attribute_from_candidate (MOP classop,
-						    SM_CANDIDATE * cand);
+static void add_candidate (SM_CANDIDATE ** candlist, SM_ATTRIBUTE * comp, int order, MOP source);
+static SM_ATTRIBUTE *make_attribute_from_candidate (MOP classop, SM_CANDIDATE * cand);
 static SM_CANDIDATE *get_candidates (SM_TEMPLATE * def, SM_TEMPLATE * flat);
-static int resolve_candidates (SM_TEMPLATE * template_,
-			       SM_CANDIDATE * candidates,
-			       SM_CANDIDATE ** winner_return);
+static int resolve_candidates (SM_TEMPLATE * template_, SM_CANDIDATE * candidates, SM_CANDIDATE ** winner_return);
 static void insert_attribute (SM_ATTRIBUTE ** attlist, SM_ATTRIBUTE * att);
 static int flatten_components (SM_TEMPLATE * def, SM_TEMPLATE * flat);
 static int flatten_query_spec_lists (SM_TEMPLATE * def, SM_TEMPLATE * flat);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static SM_ATTRIBUTE *find_matching_att (SM_ATTRIBUTE * list,
-					SM_ATTRIBUTE * att, int idmatch);
+static SM_ATTRIBUTE *find_matching_att (SM_ATTRIBUTE * list, SM_ATTRIBUTE * att, int idmatch);
 static int retain_former_ids (SM_TEMPLATE * flat);
 #endif
 static int flatten_properties (SM_TEMPLATE * def, SM_TEMPLATE * flat);
-static int flatten_template (SM_TEMPLATE * def, MOP deleted_class,
-			     SM_TEMPLATE ** flatp);
+static int flatten_template (SM_TEMPLATE * def, MOP deleted_class, SM_TEMPLATE ** flatp);
 static SM_ATTRIBUTE *order_atts_by_alignment (SM_ATTRIBUTE * atts);
 static int build_storage_order (SM_CLASS * class_, SM_TEMPLATE * flat);
 static void fixup_component_classes (MOP classop, SM_TEMPLATE * flat);
 static void fixup_self_domain (TP_DOMAIN * domain, MOP self);
 static void fixup_attribute_self_domain (SM_ATTRIBUTE * att, MOP self);
 static void fixup_self_reference_domains (MOP classop, SM_TEMPLATE * flat);
-static int allocate_index (MOP classop, SM_CLASS * class_,
-			   SM_CLASS_CONSTRAINT * constraint);
+static int allocate_index (MOP classop, SM_CLASS * class_, SM_CLASS_CONSTRAINT * constraint);
 static int deallocate_index (SM_CLASS_CONSTRAINT * cons, BTID * index);
-static int allocate_disk_structures_index (MOP classop, SM_CLASS * class_,
-					   SM_CLASS_CONSTRAINT * con);
-static int allocate_disk_structures (MOP classop, SM_CLASS * class_,
-				     int *num_allocated_index);
+static int allocate_disk_structures_index (MOP classop, SM_CLASS * class_, SM_CLASS_CONSTRAINT * con);
+static int allocate_disk_structures (MOP classop, SM_CLASS * class_, int *num_allocated_index);
 static int load_index_data (MOP classop, SM_CLASS * class_);
-static int transfer_disk_structures (MOP classop, SM_CLASS * class_,
-				     SM_TEMPLATE * flat);
-static int install_new_representation (MOP classop, SM_CLASS * class_,
-				       SM_TEMPLATE * flat);
+static int transfer_disk_structures (MOP classop, SM_CLASS * class_, SM_TEMPLATE * flat);
+static int install_new_representation (MOP classop, SM_CLASS * class_, SM_TEMPLATE * flat);
 static int check_catalog_space (MOP classmop, SM_CLASS * class_);
 static int update_class (SM_TEMPLATE * template_, MOP * classmop);
 #if defined(ENABLE_UNUSED_FUNCTION)
 static int sm_exist_index (MOP classop, const char *idxname, BTID * btid);
 #endif
 static char *sm_default_constraint_name (const char *class_name,
-					 DB_CONSTRAINT_TYPE type,
-					 const char **att_names,
-					 const int *asc_desc);
+                                         DB_CONSTRAINT_TYPE type, const char **att_names, const int *asc_desc);
 
 #if defined(ENABLE_UNUSED_FUNCTION)
 static DB_OBJLIST *sm_get_all_objects (DB_OBJECT * op);
-static int sm_check_index_exist (MOP classop,
-				 DB_CONSTRAINT_TYPE constraint_type,
-				 const char *constraint_name);
+static int sm_check_index_exist (MOP classop, DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name);
 
 static void sm_reset_descriptors (MOP class_);
 #endif
@@ -265,8 +246,7 @@ static void sm_print (MOP classmop);
 #endif
 
 #if defined(ENABLE_UNUSED_FUNCTION)
-static DB_OBJLIST *sm_query_lock (MOP classop, DB_OBJLIST * exceptions,
-				  int only, int update);
+static DB_OBJLIST *sm_query_lock (MOP classop, DB_OBJLIST * exceptions, int only, int update);
 static DB_OBJLIST *sm_get_all_classes (int external_list);
 static DB_OBJLIST *sm_get_base_classes (int external_list);
 static const char *sm_get_class_name_internal (MOP op, bool return_null);
@@ -427,10 +407,10 @@ sm_final ()
     {
       class_ = (SM_CLASS *) cl->op->object;
       if (class_ != NULL && class_->virtual_query_cache != NULL)
-	{
-	  mq_free_virtual_query_cache (class_->virtual_query_cache);
-	  class_->virtual_query_cache = NULL;
-	}
+        {
+          mq_free_virtual_query_cache (class_->virtual_query_cache);
+          class_->virtual_query_cache = NULL;
+        }
     }
 }
 
@@ -479,8 +459,7 @@ sm_check_name (const char *name)
 {
   if (name == NULL || name[0] == '\0')
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_SM_INVALID_NAME, 1,
-	      name);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_SM_INVALID_NAME, 1, name);
       return 0;
     }
   else
@@ -533,21 +512,21 @@ sm_get_class (MOP obj)
   if (obj != NULL)
     {
       if (locator_is_class (obj))
-	{
-	  op = obj;
-	}
+        {
+          op = obj;
+        }
       else
-	{
-	  if (obj->class_mop == NULL)
-	    {
-#if 1				/* TODO - trace */
-	      assert (false);
+        {
+          if (obj->class_mop == NULL)
+            {
+#if 1                           /* TODO - trace */
+              assert (false);
 #endif
-	      /* force class load through object load */
-	      (void) au_fetch_class (obj, NULL, S_LOCK, AU_SELECT);
-	    }
-	  op = obj->class_mop;
-	}
+              /* force class load through object load */
+              (void) au_fetch_class (obj, NULL, S_LOCK, AU_SELECT);
+            }
+          op = obj->class_mop;
+        }
     }
 
   return op;
@@ -577,39 +556,38 @@ sm_fetch_all_classes (LOCK lock)
   lmops = NULL;
 
   if (au_check_user () == NO_ERROR)
-    {				/* make sure we have a user */
+    {                           /* make sure we have a user */
       last = NULL;
       lmops = locator_get_all_mops (sm_Root_class_mop, lock);
       /* probably should make sure we push here because the list could be long */
       if (lmops != NULL)
-	{
-	  for (i = 0; i < lmops->num; i++)
-	    {
-	      /* is it necessary to have this check ? */
-	      if (!WS_MARKED_DELETED (lmops->mops[i])
-		  && lmops->mops[i] != sm_Root_class_mop)
-		{
-		  /* should have a ext_ append function */
-		  new_ = ml_ext_alloc_link ();
-		  if (new_ == NULL)
-		    {
-		      goto memory_error;
-		    }
-		  new_->op = lmops->mops[i];
-		  new_->next = NULL;
-		  if (last != NULL)
-		    {
-		      last->next = new_;
-		    }
-		  else
-		    {
-		      objects = new_;
-		    }
-		  last = new_;
-		}
-	    }
-	  locator_free_list_mops (lmops);
-	}
+        {
+          for (i = 0; i < lmops->num; i++)
+            {
+              /* is it necessary to have this check ? */
+              if (!WS_MARKED_DELETED (lmops->mops[i]) && lmops->mops[i] != sm_Root_class_mop)
+                {
+                  /* should have a ext_ append function */
+                  new_ = ml_ext_alloc_link ();
+                  if (new_ == NULL)
+                    {
+                      goto memory_error;
+                    }
+                  new_->op = lmops->mops[i];
+                  new_->next = NULL;
+                  if (last != NULL)
+                    {
+                      last->next = new_;
+                    }
+                  else
+                    {
+                      objects = new_;
+                    }
+                  last = new_;
+                }
+            }
+          locator_free_list_mops (lmops);
+        }
     }
 
   return objects;
@@ -645,7 +623,7 @@ sm_get_all_classes (int external_list)
 {
   /* Lock all the classes in shared mode */
   return sm_fetch_all_classes (external_list, DB_FETCH_QUERY_READ);
-}				/* sm_get_all_classes */
+}                               /* sm_get_all_classes */
 
 /*
  * sm_get_base_classes() - Returns a list of classes that have no super classes
@@ -691,59 +669,59 @@ sm_fetch_all_objects (DB_OBJECT * op, LOCK lock)
   if (op != NULL)
     {
       if (locator_is_class (op))
-	{
-	  classmop = op;
-	}
+        {
+          classmop = op;
+        }
       else
-	{
-	  if (op->class_mop == NULL)
-	    {
-#if 1				/* TODO - trace */
-	      assert (false);
+        {
+          if (op->class_mop == NULL)
+            {
+#if 1                           /* TODO - trace */
+              assert (false);
 #endif
-	      /* force load */
-	      (void) au_fetch_class (op, &class_, S_LOCK, AU_SELECT);
-	    }
-	  classmop = op->class_mop;
-	}
+              /* force load */
+              (void) au_fetch_class (op, &class_, S_LOCK, AU_SELECT);
+            }
+          classmop = op->class_mop;
+        }
       if (classmop != NULL)
-	{
-	  class_ = (SM_CLASS *) classmop->object;
-	  if (!class_)
-	    {
-	      (void) au_fetch_class (classmop, &class_, S_LOCK, AU_SELECT);
-	    }
-	  if (!class_)
-	    {
-	      return NULL;
-	    }
+        {
+          class_ = (SM_CLASS *) classmop->object;
+          if (!class_)
+            {
+              (void) au_fetch_class (classmop, &class_, S_LOCK, AU_SELECT);
+            }
+          if (!class_)
+            {
+              return NULL;
+            }
 
-	  ct = sm_get_class_type (class_);
-	  if (ct == SM_CLASS_CT)
-	    {
-	      lmops = locator_get_all_mops (classmop, lock);
-	      if (lmops != NULL)
-		{
-		  for (i = 0; i < lmops->num; i++)
-		    {
-		      /* is it necessary to have this check ? */
-		      if (!WS_MARKED_DELETED (lmops->mops[i]))
-			{
-			  new_ = ml_ext_alloc_link ();
-			  if (new_ == NULL)
-			    {
-			      goto memory_error;
-			    }
+          ct = sm_get_class_type (class_);
+          if (ct == SM_CLASS_CT)
+            {
+              lmops = locator_get_all_mops (classmop, lock);
+              if (lmops != NULL)
+                {
+                  for (i = 0; i < lmops->num; i++)
+                    {
+                      /* is it necessary to have this check ? */
+                      if (!WS_MARKED_DELETED (lmops->mops[i]))
+                        {
+                          new_ = ml_ext_alloc_link ();
+                          if (new_ == NULL)
+                            {
+                              goto memory_error;
+                            }
 
-			  new_->op = lmops->mops[i];
-			  new_->next = objects;
-			  objects = new_;
-			}
-		    }
-		  locator_free_list_mops (lmops);
-		}
-	    }
-	}
+                          new_->op = lmops->mops[i];
+                          new_->next = objects;
+                          objects = new_;
+                        }
+                    }
+                  locator_free_list_mops (lmops);
+                }
+            }
+        }
     }
 
   return objects;
@@ -813,8 +791,7 @@ sm_rename_class (MOP op, const char *new_name)
     {
       error = er_errid ();
     }
-  else if ((error = au_fetch_class (op, &class_, X_LOCK, AU_ALTER))
-	   == NO_ERROR)
+  else if ((error = au_fetch_class (op, &class_, X_LOCK, AU_ALTER)) == NO_ERROR)
     {
       /*  We need to go ahead and copy the string since prepare_rename uses
        *  the address of the string in the hash table.
@@ -822,24 +799,24 @@ sm_rename_class (MOP op, const char *new_name)
       current = class_->header.name;
       newname = ws_copy_string (realname);
       if (newname == NULL)
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       if (locator_prepare_rename_class (op, current, newname) == NULL)
-	{
-	  ws_free_string (newname);
-	  error = er_errid ();
-	}
+        {
+          ws_free_string (newname);
+          error = er_errid ();
+        }
       else
-	{
-	  class_->header.name = newname;
-#if 1				/* TODO - remove me someday */
-	  error = sm_flush_objects (op);
+        {
+          class_->header.name = newname;
+#if 1                           /* TODO - remove me someday */
+          error = sm_flush_objects (op);
 #endif
 
-	  ws_free_string (current);
-	}
+          ws_free_string (current);
+        }
     }
 
   return error;
@@ -865,17 +842,16 @@ sm_mark_system_classes (void)
     {
       lmops = locator_get_all_mops (sm_Root_class_mop, S_LOCK);
       if (lmops != NULL)
-	{
-	  for (i = 0; i < lmops->num; i++)
-	    {
-	      if (!WS_MARKED_DELETED (lmops->mops[i]) && lmops->mops[i]
-		  != sm_Root_class_mop)
-		{
-		  (void) sm_mark_system_class (lmops->mops[i], 1);
-		}
-	    }
-	  locator_free_list_mops (lmops);
-	}
+        {
+          for (i = 0; i < lmops->num; i++)
+            {
+              if (!WS_MARKED_DELETED (lmops->mops[i]) && lmops->mops[i] != sm_Root_class_mop)
+                {
+                  (void) sm_mark_system_class (lmops->mops[i], 1);
+                }
+            }
+          locator_free_list_mops (lmops);
+        }
     }
 }
 
@@ -912,16 +888,16 @@ sm_set_class_flag (MOP classop, SM_CLASS_FLAG flag, int on_or_off)
     {
       error = au_fetch_class_force (classop, &class_, X_LOCK);
       if (error == NO_ERROR)
-	{
-	  if (on_or_off)
-	    {
-	      class_->flags |= flag;
-	    }
-	  else
-	    {
-	      class_->flags &= ~flag;
-	    }
-	}
+        {
+          if (on_or_off)
+            {
+              class_->flags |= flag;
+            }
+          else
+            {
+              class_->flags &= ~flag;
+            }
+        }
     }
 
   return error;
@@ -967,11 +943,11 @@ sm_shard_key_col_name (MOP op)
   if (op != NULL)
     {
       if (au_fetch_class_force (op, &class_, S_LOCK) == NO_ERROR)
-	{
-	  key_attr = classobj_find_shard_key_column (class_);
-	  name = key_attr->name;
-	  assert (name == NULL || strlen (name) >= 0);
-	}
+        {
+          key_attr = classobj_find_shard_key_column (class_);
+          name = key_attr->name;
+          assert (name == NULL || strlen (name) >= 0);
+        }
     }
 
   return name;
@@ -994,9 +970,9 @@ sm_get_class_flag (MOP op, SM_CLASS_FLAG flag)
   if (op != NULL && locator_is_class (op))
     {
       if (au_fetch_class_force (op, &class_, S_LOCK) == NO_ERROR)
-	{
-	  result = class_->flags & flag;
-	}
+        {
+          result = class_->flags & flag;
+        }
     }
 
   return result;
@@ -1020,31 +996,29 @@ sm_force_write_all_classes (void)
   if (lmops != NULL)
     {
       for (i = 0; i < lmops->num; i++)
-	{
-	  ws_dirty (lmops->mops[i]);
-	}
+        {
+          ws_dirty (lmops->mops[i]);
+        }
 
       /* insert all class objects into the catalog classes */
-      if (locator_flush_all_instances (sm_Root_class_mop, DONT_DECACHE)
-	  != NO_ERROR)
-	{
-	  return er_errid ();
-	}
+      if (locator_flush_all_instances (sm_Root_class_mop, DONT_DECACHE) != NO_ERROR)
+        {
+          return er_errid ();
+        }
 
       for (i = 0; i < lmops->num; i++)
-	{
-	  ws_dirty (lmops->mops[i]);
-	}
+        {
+          ws_dirty (lmops->mops[i]);
+        }
 
       /* update class hierarchy values for some class objects.
        * the hierarchy makes class/class mutual references
        * so some class objects were inserted with no hierarchy values.
        */
-      if (locator_flush_all_instances (sm_Root_class_mop, DONT_DECACHE)
-	  != NO_ERROR)
-	{
-	  return er_errid ();
-	}
+      if (locator_flush_all_instances (sm_Root_class_mop, DONT_DECACHE) != NO_ERROR)
+        {
+          return er_errid ();
+        }
 
       locator_free_list_mops (lmops);
     }
@@ -1125,7 +1099,7 @@ domain_search (MOP dclass_mop, MOP class_mop)
 {
   int ok = 0;
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (false);
 #endif
 
@@ -1152,7 +1126,7 @@ sm_check_object_domain (TP_DOMAIN * domain, MOP object)
 {
   int ok;
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (false);
 #endif
 
@@ -1162,30 +1136,30 @@ sm_check_object_domain (TP_DOMAIN * domain, MOP object)
       /* check for physical and logical NULLness of the MOP, treat it
          as if it were SQL NULL which is allowed in all domains */
       if (WS_MOP_IS_NULL (object))
-	{
-	  ok = 1;
-	}
+        {
+          ok = 1;
+        }
       /* check for the wildcard object domain */
       else if (domain->class_mop == NULL)
-	{
-	  ok = 1;
-	}
+        {
+          ok = 1;
+        }
       else
-	{
-	  /* fetch the class if it hasn't been cached, should this be a write
-	     lock ?  don't need to pin, only forcing the class fetch
-	   */
-	  if (object->class_mop == NULL)
-	    {
-	      au_fetch_instance (object, NULL, S_LOCK, AU_SELECT);
-	    }
+        {
+          /* fetch the class if it hasn't been cached, should this be a write
+             lock ?  don't need to pin, only forcing the class fetch
+           */
+          if (object->class_mop == NULL)
+            {
+              au_fetch_instance (object, NULL, S_LOCK, AU_SELECT);
+            }
 
-	  /* if its still NULL, assume an authorization error and go on */
-	  if (object->class_mop != NULL)
-	    {
-	      ok = domain_search (domain->class_mop, object->class_mop);
-	    }
-	}
+          /* if its still NULL, assume an authorization error and go on */
+          if (object->class_mop != NULL)
+            {
+              ok = domain_search (domain->class_mop, object->class_mop);
+            }
+        }
     }
 
   return ok;
@@ -1224,51 +1198,48 @@ sm_coerce_object_domain (TP_DOMAIN * domain, MOP object, MOP * dest_object)
       /* check for physical and logical NULLness of the MOP, treat it
          as if it were SQL NULL which is allowed in all domains */
       if (WS_MOP_IS_NULL (object))
-	{
-	  ok = 1;
-	}
+        {
+          ok = 1;
+        }
       /* check for the wildcard object domain */
       else if (domain->class_mop == NULL)
-	{
-	  ok = 1;
-	}
+        {
+          ok = 1;
+        }
       else
-	{
-	  /* fetch the class if it hasn't been cached, should this be a write lock ?
-	     don't need to pin, only forcing the class fetch
-	   */
-	  if (object->class_mop == NULL)
-	    {
-	      au_fetch_instance (object, NULL, S_LOCK, AU_SELECT);
-	    }
+        {
+          /* fetch the class if it hasn't been cached, should this be a write lock ?
+             don't need to pin, only forcing the class fetch
+           */
+          if (object->class_mop == NULL)
+            {
+              au_fetch_instance (object, NULL, S_LOCK, AU_SELECT);
+            }
 
-	  /* if its still NULL, assume an authorization error and go on */
-	  if (object->class_mop != NULL)
-	    {
-	      if (domain->class_mop == object->class_mop)
-		{
-		  ok = 1;
-		}
-	      else
-		{
-		  if (au_fetch_class_force (object->class_mop, &class_,
-					    S_LOCK) == NO_ERROR)
-		    {
-		      /* Coerce a view to a real class. */
-		      if (class_->class_type == SM_VCLASS_CT)
-			{
-			  assert (false);
-			  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				  ER_SM_INVALID_ARGUMENTS, 0);
-			  return 0;
-			}
+          /* if its still NULL, assume an authorization error and go on */
+          if (object->class_mop != NULL)
+            {
+              if (domain->class_mop == object->class_mop)
+                {
+                  ok = 1;
+                }
+              else
+                {
+                  if (au_fetch_class_force (object->class_mop, &class_, S_LOCK) == NO_ERROR)
+                    {
+                      /* Coerce a view to a real class. */
+                      if (class_->class_type == SM_VCLASS_CT)
+                        {
+                          assert (false);
+                          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SM_INVALID_ARGUMENTS, 0);
+                          return 0;
+                        }
 
-		      ok = domain_search (domain->class_mop,
-					  object->class_mop);
-		    }
-		}
-	    }
-	}
+                      ok = domain_search (domain->class_mop, object->class_mop);
+                    }
+                }
+            }
+        }
     }
 
   if (ok)
@@ -1303,15 +1274,15 @@ sm_check_class_domain (TP_DOMAIN * domain, MOP class_)
 
       /* wildcard case */
       if (domain->class_mop == NULL)
-	{
-	  ok = 1;
-	}
+        {
+          ok = 1;
+        }
       else
-	{
-	  /* recursively check domains for class & super classes
-	     for now assume only one possible base class */
-	  ok = domain_search (domain->class_mop, class_);
-	}
+        {
+          /* recursively check domains for class & super classes
+             for now assume only one possible base class */
+          ok = domain_search (domain->class_mop, class_);
+        }
     }
 
   return ok;
@@ -1374,44 +1345,42 @@ sm_get_class_with_statistics (MOP classop)
   /* only try to get statistics if we know the class has been flushed
      if it has a temporary oid, it isn't flushed and there are no statistics */
 
-  if (classop != NULL
-      && locator_is_class (classop) && !OID_ISTEMP (WS_OID (classop)))
+  if (classop != NULL && locator_is_class (classop) && !OID_ISTEMP (WS_OID (classop)))
     {
       if (au_fetch_class (classop, &class_, S_LOCK, AU_SELECT) == NO_ERROR)
-	{
-	  if (class_->stats == NULL)
-	    {
-	      /* it's first time to get the statistics of this class */
-	      if (!OID_ISTEMP (WS_OID (classop)))
-		{
-		  /* make sure the class is flushed before asking for statistics,
-		     this handles the case where an index has been added to the class
-		     but the catalog & statistics do not reflect this fact until
-		     the class is flushed.  We might want to flush instances
-		     as well but that shouldn't affect the statistics ? */
-		  if (locator_flush_class (classop) != NO_ERROR)
-		    {
-		      return NULL;
-		    }
-		  class_->stats = stats_get_statistics (WS_OID (classop), 0);
-		}
-	    }
-	  else
-	    {
-	      CLASS_STATS *stats;
+        {
+          if (class_->stats == NULL)
+            {
+              /* it's first time to get the statistics of this class */
+              if (!OID_ISTEMP (WS_OID (classop)))
+                {
+                  /* make sure the class is flushed before asking for statistics,
+                     this handles the case where an index has been added to the class
+                     but the catalog & statistics do not reflect this fact until
+                     the class is flushed.  We might want to flush instances
+                     as well but that shouldn't affect the statistics ? */
+                  if (locator_flush_class (classop) != NO_ERROR)
+                    {
+                      return NULL;
+                    }
+                  class_->stats = stats_get_statistics (WS_OID (classop), 0);
+                }
+            }
+          else
+            {
+              CLASS_STATS *stats;
 
-	      /* to get the statistics to be updated, it send timestamp
-	         as uninitialized value */
-	      stats = stats_get_statistics (WS_OID (classop),
-					    class_->stats->time_stamp);
-	      /* if newly updated statistics are fetched, replace the old one */
-	      if (stats)
-		{
-		  stats_free_statistics (class_->stats);
-		  class_->stats = stats;
-		}
-	    }
-	}
+              /* to get the statistics to be updated, it send timestamp
+                 as uninitialized value */
+              stats = stats_get_statistics (WS_OID (classop), class_->stats->time_stamp);
+              /* if newly updated statistics are fetched, replace the old one */
+              if (stats)
+                {
+                  stats_free_statistics (class_->stats);
+                  class_->stats = stats;
+                }
+            }
+        }
     }
 
   return class_;
@@ -1429,18 +1398,17 @@ sm_get_statistics_force (MOP classop)
   SM_CLASS *class_;
   CLASS_STATS *stats = NULL;
 
-  if (classop != NULL
-      && locator_is_class (classop) && !OID_ISTEMP (WS_OID (classop)))
+  if (classop != NULL && locator_is_class (classop) && !OID_ISTEMP (WS_OID (classop)))
     {
       if (au_fetch_class (classop, &class_, S_LOCK, AU_SELECT) == NO_ERROR)
-	{
-	  if (class_->stats)
-	    {
-	      stats_free_statistics (class_->stats);
-	      class_->stats = NULL;
-	    }
-	  stats = class_->stats = stats_get_statistics (WS_OID (classop), 0);
-	}
+        {
+          if (class_->stats)
+            {
+              stats_free_statistics (class_->stats);
+              class_->stats = NULL;
+            }
+          stats = class_->stats = stats_get_statistics (WS_OID (classop), 0);
+        }
     }
 
   return stats;
@@ -1471,47 +1439,44 @@ sm_update_statistics (MOP classop, bool update_stats, bool with_fullscan)
   /* only try to get statistics if we know the class has been flushed
      if it has a temporary oid, it isn't flushed and there are no statistics */
 
-  if (classop != NULL && !OID_ISTEMP (WS_OID (classop))
-      && locator_is_class (classop))
+  if (classop != NULL && !OID_ISTEMP (WS_OID (classop)) && locator_is_class (classop))
     {
 
       /* make sure the workspace is flushed before calculating stats */
       if (locator_flush_all_instances (classop, DONT_DECACHE) != NO_ERROR)
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
-      error = stats_update_statistics (WS_OID (classop),
-				       (update_stats ? 1 : 0),
-				       (with_fullscan ? 1 : 0));
+      error = stats_update_statistics (WS_OID (classop), (update_stats ? 1 : 0), (with_fullscan ? 1 : 0));
       if (error == NO_ERROR)
-	{
-	  /* only recache if the class itself is cached */
-	  if (classop->object != NULL)
-	    {			/* check cache */
-	      /* why are we checking authorization here ? */
-	      error = au_fetch_class_force (classop, &class_, S_LOCK);
-	      if (error == NO_ERROR)
-		{
-		  if (class_->stats != NULL)
-		    {
-		      stats_free_statistics (class_->stats);
-		      class_->stats = NULL;
-		    }
+        {
+          /* only recache if the class itself is cached */
+          if (classop->object != NULL)
+            {                   /* check cache */
+              /* why are we checking authorization here ? */
+              error = au_fetch_class_force (classop, &class_, S_LOCK);
+              if (error == NO_ERROR)
+                {
+                  if (class_->stats != NULL)
+                    {
+                      stats_free_statistics (class_->stats);
+                      class_->stats = NULL;
+                    }
 
-		  /* make sure the class is flushed before acquiring stats,
-		     see comments above in sm_get_class_with_statistics */
-		  if (locator_flush_class (classop) != NO_ERROR)
-		    {
-		      return (er_errid ());
-		    }
+                  /* make sure the class is flushed before acquiring stats,
+                     see comments above in sm_get_class_with_statistics */
+                  if (locator_flush_class (classop) != NO_ERROR)
+                    {
+                      return (er_errid ());
+                    }
 
-		  /* get the new ones, should do this at the same time as the
-		     update operation to avoid two server calls */
-		  class_->stats = stats_get_statistics (WS_OID (classop), 0);
-		}
-	    }
-	}
+                  /* get the new ones, should do this at the same time as the
+                     update operation to avoid two server calls */
+                  class_->stats = stats_get_statistics (WS_OID (classop), 0);
+                }
+            }
+        }
     }
 
   return error;
@@ -1537,8 +1502,7 @@ sm_update_all_statistics (bool update_stats, bool with_fullscan)
       return er_errid ();
     }
 
-  error = stats_update_all_statistics ((update_stats ? 1 : 0),
-				       (with_fullscan ? 1 : 0));
+  error = stats_update_all_statistics ((update_stats ? 1 : 0), (with_fullscan ? 1 : 0));
   if (error != NO_ERROR)
     {
       return error;
@@ -1548,9 +1512,9 @@ sm_update_all_statistics (bool update_stats, bool with_fullscan)
   for (cl = ws_Resident_classes; cl != NULL; cl = cl->next)
     {
       if (!WS_ISMARK_DELETED (cl->op))
-	{
-	  (void) sm_update_statistics (cl->op, update_stats, with_fullscan);
-	}
+        {
+          (void) sm_update_statistics (cl->op, update_stats, with_fullscan);
+        }
     }
 
   assert (error == NO_ERROR);
@@ -1581,9 +1545,7 @@ sm_update_all_catalog_statistics (bool update_stats, bool with_fullscan)
 
   for (i = 0; classes[i] != NULL && error == NO_ERROR; i++)
     {
-      error =
-	sm_update_catalog_statistics (classes[i], update_stats,
-				      with_fullscan);
+      error = sm_update_catalog_statistics (classes[i], update_stats, with_fullscan);
     }
 
   assert (classes[i] == NULL);
@@ -1600,8 +1562,7 @@ sm_update_all_catalog_statistics (bool update_stats, bool with_fullscan)
  */
 
 int
-sm_update_catalog_statistics (const char *class_name, bool update_stats,
-			      bool with_fullscan)
+sm_update_catalog_statistics (const char *class_name, bool update_stats, bool with_fullscan)
 {
   int error = NO_ERROR;
   DB_OBJECT *obj;
@@ -1639,10 +1600,10 @@ sm_class_name (MOP op)
   if (op != NULL)
     {
       if (au_fetch_class_force (op, &class_, S_LOCK) == NO_ERROR)
-	{
-	  name = class_->header.name;
-	  assert (name == NULL || strlen (name) >= 0);
-	}
+        {
+          name = class_->header.name;
+          assert (name == NULL || strlen (name) >= 0);
+        }
     }
 
   return name;
@@ -1667,12 +1628,12 @@ sm_object_size_quick (SM_CLASS * class_, MOBJ obj)
     {
       size = class_->object_size;
       for (att = class_->attributes; att != (void *) 0; att = att->next)
-	{
-	  if (att->type->variable_p)
-	    {
-	      size += pr_total_mem_size (att->type, obj + att->offset);
-	    }
-	}
+        {
+          if (att->type->variable_p)
+            {
+              size += pr_total_mem_size (att->type, obj + att->offset);
+            }
+        }
     }
 
   return size;
@@ -1757,9 +1718,9 @@ sm_get_heap (MOP classmop)
   if (locator_is_class (classmop))
     {
       if (au_fetch_class (classmop, &class_, S_LOCK, AU_SELECT) == NO_ERROR)
-	{
-	  heap = &class_->header.heap;
-	}
+        {
+          heap = &class_->header.heap;
+        }
     }
 
   return heap;
@@ -1799,10 +1760,10 @@ sm_has_indexes (MOBJ classobj)
   for (con = class_->constraints; con != NULL; con = con->next)
     {
       if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type))
-	{
-	  has_indexes = true;
-	  break;
-	}
+        {
+          has_indexes = true;
+          break;
+        }
     }
 
   return has_indexes;
@@ -1824,14 +1785,13 @@ sm_has_constraint (MOBJ classobj, SM_ATTRIBUTE_FLAG constraint)
   int has_constraint = 0;
 
   class_ = (SM_CLASS *) classobj;
-  for (att = class_->attributes; att != NULL;
-       att = (SM_ATTRIBUTE *) att->header.next)
+  for (att = class_->attributes; att != NULL; att = (SM_ATTRIBUTE *) att->header.next)
     {
       if (att->flags & constraint)
-	{
-	  has_constraint = 1;
-	  break;
-	}
+        {
+          has_constraint = 1;
+          break;
+        }
     }
 
   return has_constraint;
@@ -1897,8 +1857,7 @@ sm_find_class (const char *name)
  */
 
 static int
-find_attribute_op (MOP op, const char *name,
-		   SM_CLASS ** classp, SM_ATTRIBUTE ** attp)
+find_attribute_op (MOP op, const char *name, SM_CLASS ** classp, SM_ATTRIBUTE ** attp)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -1912,18 +1871,18 @@ find_attribute_op (MOP op, const char *name,
     {
       error = au_fetch_class (op, &class_, S_LOCK, AU_SELECT);
       if (error == NO_ERROR)
-	{
-	  att = classobj_find_attribute (class_->attributes, name);
-	  if (att == NULL)
-	    {
-	      ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, name);
-	    }
-	  else
-	    {
-	      *classp = class_;
-	      *attp = att;
-	    }
-	}
+        {
+          att = classobj_find_attribute (class_->attributes, name);
+          if (att == NULL)
+            {
+              ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, name);
+            }
+          else
+            {
+              *classp = class_;
+              *attp = att;
+            }
+        }
     }
 
   return error;
@@ -1978,9 +1937,9 @@ sm_get_att_name (MOP classop, int id)
     {
       att = classobj_find_attribute_id (class_->attributes, id);
       if (att != NULL)
-	{
-	  name = att->name;
-	}
+        {
+          name = att->name;
+        }
     }
 
   return name;
@@ -2077,9 +2036,9 @@ sm_att_class (MOP classop, const char *name)
 
       sm_filter_domain (att->sma_domain);
       if (att->sma_domain != NULL && att->sma_domain->type == tp_Type_object)
-	{
-	  attclass = att->sma_domain->class_mop;
-	}
+        {
+          attclass = att->sma_domain->class_mop;
+        }
     }
 
   return attclass;
@@ -2112,19 +2071,19 @@ sm_att_info (MOP classop, const char *name, int *idp, TP_DOMAIN ** domainp)
     {
       att = classobj_find_attribute (class_->attributes, name);
       if (att == NULL)
-	{
-	  /* return error but don't call er_set */
-	  error = ER_SM_ATTRIBUTE_NOT_FOUND;
-	}
+        {
+          /* return error but don't call er_set */
+          error = ER_SM_ATTRIBUTE_NOT_FOUND;
+        }
 
       if (error == NO_ERROR)
-	{
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+        {
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  sm_filter_domain (att->sma_domain);
-	  *idp = att->id;
-	  *domainp = att->sma_domain;
-	}
+          sm_filter_domain (att->sma_domain);
+          *idp = att->id;
+          *domainp = att->sma_domain;
+        }
     }
 
   return error;
@@ -2141,8 +2100,7 @@ sm_att_info (MOP classop, const char *name, int *idp, TP_DOMAIN ** domainp)
  */
 
 BTID *
-sm_find_index (MOP classop, const char **att_names, int num_atts,
-	       bool unique_index_only, BTID * btid)
+sm_find_index (MOP classop, const char **att_names, int num_atts, bool unique_index_only, BTID * btid)
 {
   int error = NO_ERROR;
   int i;
@@ -2160,52 +2118,52 @@ sm_find_index (MOP classop, const char **att_names, int num_atts,
   for (con = class_->constraints; con != NULL; con = con->next)
     {
       if (!SM_IS_CONSTRAINT_INDEX_FAMILY (con->type))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (unique_index_only)
-	{
-	  if (!SM_IS_CONSTRAINT_UNIQUE_FAMILY (con->type))
-	    {
-	      continue;
-	    }
-	}
+        {
+          if (!SM_IS_CONSTRAINT_UNIQUE_FAMILY (con->type))
+            {
+              continue;
+            }
+        }
 
 #if 1
       if (con->index_status == 0)
-	{
-	  /* in progress */
-	  continue;
-	}
+        {
+          /* in progress */
+          continue;
+        }
 #endif
 
       if (num_atts == 0)
-	{
-	  /* we don't care about attributes, any index is a good one */
-	  break;
-	}
+        {
+          /* we don't care about attributes, any index is a good one */
+          break;
+        }
 
       for (i = 0; i < num_atts; i++)
-	{
-	  att1 = con->attributes[i];
-	  if (att1 == NULL)
-	    {
-	      break;
-	    }
+        {
+          att1 = con->attributes[i];
+          if (att1 == NULL)
+            {
+              break;
+            }
 
-	  att2 = classobj_find_attribute (class_->attributes, att_names[i]);
-	  if (att2 == NULL || att1->id != att2->id)
-	    {
-	      break;
-	    }
-	}
+          att2 = classobj_find_attribute (class_->attributes, att_names[i]);
+          if (att2 == NULL || att1->id != att2->id)
+            {
+              break;
+            }
+        }
 
       if ((i == num_atts) && con->attributes[i] == NULL)
-	{
-	  /* found it */
-	  break;
-	}
+        {
+          /* found it */
+          break;
+        }
     }
 
   if (con)
@@ -2231,8 +2189,7 @@ sm_find_index (MOP classop, const char **att_names, int num_atts,
  */
 
 int
-sm_att_default_value (MOP classop, const char *name, DB_VALUE * value,
-		      DB_DEFAULT_EXPR_TYPE * function_code)
+sm_att_default_value (MOP classop, const char *name, DB_VALUE * value, DB_DEFAULT_EXPR_TYPE * function_code)
 {
   SM_CLASS *class_ = NULL;
   SM_ATTRIBUTE *att = NULL;
@@ -2285,15 +2242,13 @@ sm_att_constrained (MOP classop, const char *name, SM_ATTRIBUTE_FLAG cons)
   if (find_attribute_op (classop, name, &class_, &att) == NO_ERROR)
     {
       if (SM_IS_ATTFLAG_INDEX_FAMILY (cons))
-	{
-	  rc = classobj_get_cached_index_family (att->constraints,
-						 SM_MAP_INDEX_ATTFLAG_TO_CONSTRAINT
-						 (cons), NULL);
-	}
+        {
+          rc = classobj_get_cached_index_family (att->constraints, SM_MAP_INDEX_ATTFLAG_TO_CONSTRAINT (cons), NULL);
+        }
       else
-	{
-	  rc = att->flags & cons;
-	}
+        {
+          rc = att->flags & cons;
+        }
     }
 
   return rc;
@@ -2332,7 +2287,7 @@ sm_att_unique_constrained (MOP classop, const char *name)
  *   classop(in): class object
  */
 
-#if 1				/* TODO - remove me someday */
+#if 1                           /* TODO - remove me someday */
 /*
  * sm_flush_objects() - Flush all the instances of a particular class
  *    to the server. Used by the query processor to ensure that all
@@ -2365,146 +2320,142 @@ sm_flush_and_decache_objects (MOP obj, int decache)
   MOBJ mem;
   SM_CLASS *class_;
 
-#if 1				/* TODO -trace */
+#if 1                           /* TODO -trace */
   assert (decache == DONT_DECACHE);
 #endif
 
   if (obj == NULL)
     {
-      return NO_ERROR;		/* nop */
+      return NO_ERROR;          /* nop */
     }
 
   if (locator_is_class (obj))
     {
       /* always make sure the class is flushed as well */
       if (locator_flush_class (obj) != NO_ERROR)
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       class_ = (SM_CLASS *) locator_fetch_class (obj, S_LOCK);
       if (class_ == NULL)
-	{
-	  ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
-	}
+        {
+          ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
+        }
       else
-	{
-	  switch (class_->class_type)
-	    {
-	    case SM_CLASS_CT:
-	      if (sm_issystem (class_))
-		{
-		  /* if system class, flush all dirty class */
-		  if (locator_flush_all_instances (sm_Root_class_mop,
-						   DONT_DECACHE) != NO_ERROR)
-		    {
-		      error = er_errid ();
-		      break;
-		    }
-		}
+        {
+          switch (class_->class_type)
+            {
+            case SM_CLASS_CT:
+              if (sm_issystem (class_))
+                {
+                  /* if system class, flush all dirty class */
+                  if (locator_flush_all_instances (sm_Root_class_mop, DONT_DECACHE) != NO_ERROR)
+                    {
+                      error = er_errid ();
+                      break;
+                    }
+                }
 
-	      if (locator_flush_all_instances (obj, decache) != NO_ERROR)
-		{
-		  error = er_errid ();
-		}
-	      break;
+              if (locator_flush_all_instances (obj, decache) != NO_ERROR)
+                {
+                  error = er_errid ();
+                }
+              break;
 
-	    case SM_VCLASS_CT:
-	      break;
+            case SM_VCLASS_CT:
+              break;
 
-	    default:
-	      assert (false);
-	      break;
-	    }
-	}
+            default:
+              assert (false);
+              break;
+            }
+        }
     }
   else
     {
       if (obj->class_mop != NULL)
-	{
-	  if (locator_flush_class (obj->class_mop) != NO_ERROR)
-	    {
-	      return er_errid ();
-	    }
+        {
+          if (locator_flush_class (obj->class_mop) != NO_ERROR)
+            {
+              return er_errid ();
+            }
 
-	  class_ = (SM_CLASS *) locator_fetch_class (obj, S_LOCK);
-	  if (class_ == NULL)
-	    {
-	      ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
-	    }
-	  else
-	    {
-	      switch (class_->class_type)
-		{
-		case SM_CLASS_CT:
-		  if (locator_flush_all_instances (obj->class_mop,
-						   decache) != NO_ERROR)
-		    {
-		      error = er_errid ();
-		    }
-		  break;
+          class_ = (SM_CLASS *) locator_fetch_class (obj, S_LOCK);
+          if (class_ == NULL)
+            {
+              ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
+            }
+          else
+            {
+              switch (class_->class_type)
+                {
+                case SM_CLASS_CT:
+                  if (locator_flush_all_instances (obj->class_mop, decache) != NO_ERROR)
+                    {
+                      error = er_errid ();
+                    }
+                  break;
 
-		case SM_VCLASS_CT:
-		  break;
+                case SM_VCLASS_CT:
+                  break;
 
-		default:
-		  assert (false);
-		  break;
-		}
-	    }
-	}
+                default:
+                  assert (false);
+                  break;
+                }
+            }
+        }
       else
-	{
-#if 1				/* TODO - trace */
-	  assert (false);
+        {
+#if 1                           /* TODO - trace */
+          assert (false);
 #endif
-	  error = au_fetch_instance (obj, &mem, S_LOCK, AU_SELECT);
-	  if (error == NO_ERROR)
-	    {
-	      /* don't need to pin here, we only wanted to check authorization */
-	      if (obj->class_mop != NULL)
-		{
-		  if (locator_flush_class (obj->class_mop) != NO_ERROR)
-		    {
-		      return er_errid ();
-		    }
+          error = au_fetch_instance (obj, &mem, S_LOCK, AU_SELECT);
+          if (error == NO_ERROR)
+            {
+              /* don't need to pin here, we only wanted to check authorization */
+              if (obj->class_mop != NULL)
+                {
+                  if (locator_flush_class (obj->class_mop) != NO_ERROR)
+                    {
+                      return er_errid ();
+                    }
 
-		  class_ = (SM_CLASS *) locator_fetch_class (obj, S_LOCK);
-		  if (class_ == NULL)
-		    {
-		      ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
-		    }
-		  else
-		    {
-		      switch (class_->class_type)
-			{
-			case SM_CLASS_CT:
-			  if (locator_flush_all_instances (obj->class_mop,
-							   decache)
-			      != NO_ERROR)
-			    {
-			      error = er_errid ();
-			    }
-			  break;
+                  class_ = (SM_CLASS *) locator_fetch_class (obj, S_LOCK);
+                  if (class_ == NULL)
+                    {
+                      ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
+                    }
+                  else
+                    {
+                      switch (class_->class_type)
+                        {
+                        case SM_CLASS_CT:
+                          if (locator_flush_all_instances (obj->class_mop, decache) != NO_ERROR)
+                            {
+                              error = er_errid ();
+                            }
+                          break;
 
-			case SM_VCLASS_CT:
-			  break;
+                        case SM_VCLASS_CT:
+                          break;
 
-			default:
-			  assert (false);
-			  break;
-			}
-		    }
-		}
-	      else
-		{
-#if 1				/* TODO - trace */
-		  assert (false);
+                        default:
+                          assert (false);
+                          break;
+                        }
+                    }
+                }
+              else
+                {
+#if 1                           /* TODO - trace */
+                  assert (false);
 #endif
-		  ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
-		}
-	    }
-	}
+                  ERROR0 (error, ER_WS_NO_CLASS_FOR_INSTANCE);
+                }
+            }
+        }
     }
 
   return error;
@@ -2600,29 +2551,24 @@ sm_virtual_queries (void *parent_parser, DB_OBJECT * class_object)
   (void) ws_pin (class_object, 1);
 
   if (cl->virtual_query_cache != NULL
-      && cl->virtual_query_cache->view_cache != NULL
-      && cl->virtual_query_cache->view_cache->vquery_for_query != NULL)
+      && cl->virtual_query_cache->view_cache != NULL && cl->virtual_query_cache->view_cache->vquery_for_query != NULL)
     {
-      (void) pt_class_pre_fetch (cl->virtual_query_cache,
-				 cl->virtual_query_cache->view_cache->
-				 vquery_for_query);
+      (void) pt_class_pre_fetch (cl->virtual_query_cache, cl->virtual_query_cache->view_cache->vquery_for_query);
       if (er_has_error ())
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       if (pt_has_error (cl->virtual_query_cache))
-	{
-	  mq_free_virtual_query_cache (cl->virtual_query_cache);
-	  cl->virtual_query_cache = NULL;
-	}
+        {
+          mq_free_virtual_query_cache (cl->virtual_query_cache);
+          cl->virtual_query_cache = NULL;
+        }
     }
 
-  current_schema_id = sm_local_schema_version ()
-    + sm_global_schema_version ();
+  current_schema_id = sm_local_schema_version () + sm_global_schema_version ();
 
-  if (cl->virtual_query_cache != NULL
-      && cl->virtual_cache_schema_id != current_schema_id)
+  if (cl->virtual_query_cache != NULL && cl->virtual_cache_schema_id != current_schema_id)
     {
       old_cache = cl->virtual_query_cache;
       cl->virtual_query_cache = NULL;
@@ -2639,32 +2585,31 @@ sm_virtual_queries (void *parent_parser, DB_OBJECT * class_object)
        */
       virtual_query = mq_virtual_queries (class_object);
       if (virtual_query == NULL)
-	{
-	  if (old_cache)
-	    {
-	      cl->virtual_query_cache = old_cache;
-	    }
-	  return NULL;
-	}
+        {
+          if (old_cache)
+            {
+              cl->virtual_query_cache = old_cache;
+            }
+          return NULL;
+        }
 
       if (old_cache)
-	{
-	  mq_free_virtual_query_cache (old_cache);
-	}
+        {
+          mq_free_virtual_query_cache (old_cache);
+        }
 
       if (cl->virtual_query_cache)
-	{
-	  mq_free_virtual_query_cache (virtual_query);
-	}
+        {
+          mq_free_virtual_query_cache (virtual_query);
+        }
       else
-	{
-	  cl->virtual_query_cache = virtual_query;
-	}
+        {
+          cl->virtual_query_cache = virtual_query;
+        }
 
       /* need to re-evalutate current_schema_id as global_schema_version
        * was changed by the call to mq_virtual_queries() */
-      current_schema_id = sm_local_schema_version ()
-	+ sm_global_schema_version ();
+      current_schema_id = sm_local_schema_version () + sm_global_schema_version ();
       cl->virtual_cache_schema_id = current_schema_id;
     }
 
@@ -2674,10 +2619,9 @@ sm_virtual_queries (void *parent_parser, DB_OBJECT * class_object)
     {
       /* propagate errors */
       ((PARSER_CONTEXT *) parent_parser)->error_msgs =
-	parser_append_node (parser_copy_tree_list
-			    ((PARSER_CONTEXT *) parent_parser,
-			     cache->error_msgs),
-			    ((PARSER_CONTEXT *) parent_parser)->error_msgs);
+        parser_append_node (parser_copy_tree_list
+                            ((PARSER_CONTEXT *) parent_parser,
+                             cache->error_msgs), ((PARSER_CONTEXT *) parent_parser)->error_msgs);
     }
 
   return cache;
@@ -2695,8 +2639,7 @@ sm_virtual_queries (void *parent_parser, DB_OBJECT * class_object)
  */
 
 int
-sm_get_attribute_descriptor (DB_OBJECT * op, const char *name,
-			     int for_update, SM_DESCRIPTOR ** desc_ptr)
+sm_get_attribute_descriptor (DB_OBJECT * op, const char *name, int for_update, SM_DESCRIPTOR ** desc_ptr)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -2712,9 +2655,9 @@ sm_get_attribute_descriptor (DB_OBJECT * op, const char *name,
     {
       att = classobj_find_attribute (class_->attributes, name);
       if (att == NULL)
-	{
-	  ERROR1 (error, ER_OBJ_INVALID_ATTRIBUTE, name);
-	}
+        {
+          ERROR1 (error, ER_OBJ_INVALID_ATTRIBUTE, name);
+        }
     }
 
   if (!error && att != NULL)
@@ -2724,15 +2667,15 @@ sm_get_attribute_descriptor (DB_OBJECT * op, const char *name,
 
       desc = classobj_make_descriptor (classmop, class_, att, for_update);
       if (desc == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  desc->next = sm_Descriptors;
-	  sm_Descriptors = desc;
-	  *desc_ptr = desc;
-	}
+        {
+          desc->next = sm_Descriptors;
+          sm_Descriptors = desc;
+          *desc_ptr = desc;
+        }
     }
 
   return error;
@@ -2760,13 +2703,13 @@ sm_free_descriptor (SM_DESCRIPTOR * desc)
   if (d != NULL)
     {
       if (prev == NULL)
-	{
-	  sm_Descriptors = d->next;
-	}
+        {
+          sm_Descriptors = d->next;
+        }
       else
-	{
-	  prev->next = d->next;
-	}
+        {
+          prev->next = d->next;
+        }
 
       classobj_free_descriptor (d);
     }
@@ -2793,10 +2736,10 @@ sm_reset_descriptors (MOP class_)
       /* transaction boundary, unconditionally clear all outstanding
          descriptors */
       for (d = sm_Descriptors; d != NULL; d = d->next)
-	{
-	  classobj_free_desclist (d->map);
-	  d->map = NULL;
-	}
+        {
+          classobj_free_desclist (d->map);
+          d->map = NULL;
+        }
     }
   else
     {
@@ -2805,18 +2748,17 @@ sm_reset_descriptors (MOP class_)
          hierarcy.
        */
       for (d = sm_Descriptors; d != NULL; d = d->next)
-	{
-	  for (dl = d->map; dl != NULL && dl->classobj != class_;
-	       dl = dl->next)
-	    ;
+        {
+          for (dl = d->map; dl != NULL && dl->classobj != class_; dl = dl->next)
+            ;
 
-	  if (dl != NULL)
-	    {
-	      /* found one, free the whole list */
-	      classobj_free_desclist (d->map);
-	      d->map = NULL;
-	    }
-	}
+          if (dl != NULL)
+            {
+              /* found one, free the whole list */
+              classobj_free_desclist (d->map);
+              d->map = NULL;
+            }
+        }
     }
 }
 
@@ -2833,8 +2775,7 @@ sm_reset_descriptors (MOP class_)
  */
 
 static int
-fetch_descriptor_class (MOP op, SM_DESCRIPTOR * desc, int for_update,
-			SM_CLASS ** class_)
+fetch_descriptor_class (MOP op, SM_DESCRIPTOR * desc, int for_update, SM_CLASS ** class_)
 {
   int error = NO_ERROR;
 
@@ -2867,8 +2808,7 @@ fetch_descriptor_class (MOP op, SM_DESCRIPTOR * desc, int for_update,
 
 int
 sm_get_descriptor_component (MOP op, SM_DESCRIPTOR * desc,
-			     int for_update,
-			     SM_CLASS ** class_ptr, SM_ATTRIBUTE ** att_ptr)
+                             int for_update, SM_CLASS ** class_ptr, SM_ATTRIBUTE ** att_ptr)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -2892,79 +2832,77 @@ sm_get_descriptor_component (MOP op, SM_DESCRIPTOR * desc,
 
       /* get the class MOP for this thing, avoid fetching if possible */
       if (op->class_mop == NULL)
-	{
-	  if (fetch_descriptor_class (op, desc, for_update, &class_))
-	    {
-	      return er_errid ();
-	    }
-	}
+        {
+          if (fetch_descriptor_class (op, desc, for_update, &class_))
+            {
+              return er_errid ();
+            }
+        }
       classmop = (IS_CLASS_MOP (op)) ? op : op->class_mop;
 
       /* search the descriptor map for this class */
-      for (d = desc->map, prev = NULL; d != NULL && d->classobj != classmop;
-	   d = d->next)
-	{
-	  prev = d;
-	}
+      for (d = desc->map, prev = NULL; d != NULL && d->classobj != classmop; d = d->next)
+        {
+          prev = d;
+        }
 
       if (d != NULL)
-	{
-	  /* found an existing one, move it to the head of the list */
-	  if (prev != NULL)
-	    {
-	      prev->next = d->next;
-	      d->next = desc->map;
-	      desc->map = d;
-	    }
-	  /* check update authorization if we haven't done it yet */
-	  if (for_update && !d->write_access)
-	    {
-	      if (class_ == NULL)
-		{
-		  if (fetch_descriptor_class (op, desc, for_update, &class_))
-		    {
-		      return er_errid ();
-		    }
-		}
-	      d->write_access = 1;
-	    }
-	  *att_ptr = d->att;
-	  *class_ptr = d->class_;
-	}
+        {
+          /* found an existing one, move it to the head of the list */
+          if (prev != NULL)
+            {
+              prev->next = d->next;
+              d->next = desc->map;
+              desc->map = d;
+            }
+          /* check update authorization if we haven't done it yet */
+          if (for_update && !d->write_access)
+            {
+              if (class_ == NULL)
+                {
+                  if (fetch_descriptor_class (op, desc, for_update, &class_))
+                    {
+                      return er_errid ();
+                    }
+                }
+              d->write_access = 1;
+            }
+          *att_ptr = d->att;
+          *class_ptr = d->class_;
+        }
       else
-	{
-	  /* not on the list, fetch it if we haven't already done so */
-	  if (class_ == NULL)
-	    {
-	      if (fetch_descriptor_class (op, desc, for_update, &class_))
-		{
-		  return er_errid ();
-		}
-	    }
+        {
+          /* not on the list, fetch it if we haven't already done so */
+          if (class_ == NULL)
+            {
+              if (fetch_descriptor_class (op, desc, for_update, &class_))
+                {
+                  return er_errid ();
+                }
+            }
 
-	  att = classobj_find_attribute (class_->attributes, desc->name);
-	  if (att == NULL)
-	    {
-	      ERROR1 (error, ER_OBJ_INVALID_ATTRIBUTE, desc->name);
-	    }
-	  else
-	    {
-	      /* make a new descriptor and add it to the head of the list */
-	      new_ = classobj_make_desclist (classmop, class_, att,
-					     for_update);
-	      if (new_ == NULL)
-		{
-		  error = er_errid ();
-		}
-	      else
-		{
-		  new_->next = desc->map;
-		  desc->map = new_;
-		  *att_ptr = att;
-		  *class_ptr = class_;
-		}
-	    }
-	}
+          att = classobj_find_attribute (class_->attributes, desc->name);
+          if (att == NULL)
+            {
+              ERROR1 (error, ER_OBJ_INVALID_ATTRIBUTE, desc->name);
+            }
+          else
+            {
+              /* make a new descriptor and add it to the head of the list */
+              new_ = classobj_make_desclist (classmop, class_, att, for_update);
+              if (new_ == NULL)
+                {
+                  error = er_errid ();
+                }
+              else
+                {
+                  new_->next = desc->map;
+                  desc->map = new_;
+                  *att_ptr = att;
+                  *class_ptr = class_;
+                }
+            }
+        }
     }
 
   return error;
@@ -3014,13 +2952,13 @@ candidate_source_name (SM_TEMPLATE * template_, SM_CANDIDATE * candidate)
   else
     {
       if (template_->name != NULL)
-	{
-	  name = template_->name;
-	}
+        {
+          name = template_->name;
+        }
       else if (template_->op != NULL)
-	{
-	  name = sm_class_name (template_->op);
-	}
+        {
+          name = sm_class_name (template_->op);
+        }
     }
 
   return name;
@@ -3094,9 +3032,7 @@ prune_candidate (SM_CANDIDATE ** clist_pointer)
   if (head != NULL)
     {
       candidates =
-	(SM_CANDIDATE *) nlist_filter ((DB_NAMELIST **) clist_pointer,
-				       head->name,
-				       (NLSEARCHER) SM_COMPARE_NAMES);
+        (SM_CANDIDATE *) nlist_filter ((DB_NAMELIST **) clist_pointer, head->name, (NLSEARCHER) SM_COMPARE_NAMES);
     }
 
   return candidates;
@@ -3116,8 +3052,7 @@ prune_candidate (SM_CANDIDATE ** clist_pointer)
  */
 
 static void
-add_candidate (SM_CANDIDATE ** candlist, SM_ATTRIBUTE * att, int order,
-	       MOP source)
+add_candidate (SM_CANDIDATE ** candlist, SM_ATTRIBUTE * att, int order, MOP source)
 {
   SM_CANDIDATE *new_;
 
@@ -3162,7 +3097,7 @@ make_attribute_from_candidate (MOP classop, SM_CANDIDATE * cand)
 
   if (cand->source != NULL && cand->source != classop)
     {
-      att->id = -1;		/* must reassign this */
+      att->id = -1;             /* must reassign this */
     }
 
   return att;
@@ -3215,8 +3150,7 @@ get_candidates (SM_TEMPLATE * def, UNUSED_ARG SM_TEMPLATE * flat)
  */
 
 static int
-resolve_candidates (SM_TEMPLATE * template_, SM_CANDIDATE * candidates,
-		    SM_CANDIDATE ** winner_return)
+resolve_candidates (SM_TEMPLATE * template_, SM_CANDIDATE * candidates, SM_CANDIDATE ** winner_return)
 {
   SM_CANDIDATE *c, *local;
 
@@ -3225,9 +3159,9 @@ resolve_candidates (SM_TEMPLATE * template_, SM_CANDIDATE * candidates,
   for (c = candidates; c != NULL; c = c->next)
     {
       if (c->source == NULL || c->source == template_->op)
-	{
-	  local = c;
-	}
+        {
+          local = c;
+        }
     }
 
   *winner_return = local;
@@ -3301,28 +3235,27 @@ flatten_components (SM_TEMPLATE * def, SM_TEMPLATE * flat)
   /* prune the like named candidates of the list one at a time, check
      for consistency and resolve any conflicts */
 
-  while (error == NO_ERROR
-	 && ((candidates = prune_candidate (&candlist)) != NULL))
+  while (error == NO_ERROR && ((candidates = prune_candidate (&candlist)) != NULL))
     {
       error = resolve_candidates (flat, candidates, &winner);
 
       if (error == NO_ERROR)
-	{
-	  if (winner != NULL)
-	    {
-	      /* convert the candidate back to a attribute */
-	      att = make_attribute_from_candidate (def->op, winner);
-	      if (att == NULL)
-		{
-		  error = er_errid ();
-		  free_candidates (candidates);
-		  break;
-		}
+        {
+          if (winner != NULL)
+            {
+              /* convert the candidate back to a attribute */
+              att = make_attribute_from_candidate (def->op, winner);
+              if (att == NULL)
+                {
+                  error = er_errid ();
+                  free_candidates (candidates);
+                  break;
+                }
 
-	      /* add it to the appropriate list */
-	      insert_attribute (&flat->attributes, att);
-	    }
-	}
+              /* add it to the appropriate list */
+              insert_attribute (&flat->attributes, att);
+            }
+        }
       free_candidates (candidates);
     }
 
@@ -3357,12 +3290,11 @@ flatten_query_spec_lists (SM_TEMPLATE * def, SM_TEMPLATE * flat)
   else
     {
       flat->query_spec = (SM_QUERY_SPEC *)
-	WS_LIST_COPY (def->query_spec, classobj_copy_query_spec,
-		      classobj_free_query_spec);
+        WS_LIST_COPY (def->query_spec, classobj_copy_query_spec, classobj_free_query_spec);
       if (flat->query_spec == NULL)
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
     }
 
   /* no need to flatten the query_spec lists */
@@ -3391,20 +3323,19 @@ find_matching_att (SM_ATTRIBUTE * list, SM_ATTRIBUTE * att, int idmatch)
   for (a = list; a != NULL && found == NULL; a = a->next)
     {
       if (idmatch)
-	{
-	  if (a->id == att->id)
-	    {
-	      found = a;
-	    }
-	}
+        {
+          if (a->id == att->id)
+            {
+              found = a;
+            }
+        }
       else
-	{
-	  if (SM_COMPARE_NAMES (a->name, att->name) == 0
-	      && a->class_mop == att->class_mop && a->type == att->type)
-	    {
-	      found = a;
-	    }
-	}
+        {
+          if (SM_COMPARE_NAMES (a->name, att->name) == 0 && a->class_mop == att->class_mop && a->type == att->type)
+            {
+              found = a;
+            }
+        }
     }
 
   return found;
@@ -3443,72 +3374,58 @@ retain_former_ids (SM_TEMPLATE * flat)
     {
       /* Check each new inherited attribute.  These attribute will not have
          an assigned id and their class MOPs will not match */
-      for (new_att = flat->attributes; new_att != NULL;
-	   new_att = new_att->next)
-	{
-	  /* is this a new attribute ? */
-	  if (new_att->id == -1)
-	    {
-	      /* is it inherited ? */
-	      if (new_att->class_mop != NULL
-		  && new_att->class_mop != flat->op)
-		{
-		  assert (false);	/* is impossible */
-		  /* look for a matching attribute in the existing representation */
-		  found = find_matching_att (flat->current->attributes,
-					     new_att, 0);
-		  if (found != NULL)
-		    {
-		      /* re-use this attribute */
-		      new_att->id = found->id;
-		    }
-		  else
-		    {
-		      /* couldn't find it, it may have been renamed in the super
-		         class though */
-		      if (au_fetch_class_force (new_att->class_mop, &sclass,
-						S_LOCK) == NO_ERROR)
-			{
-			  /* search the super class' pending attribute list for
-			     this name */
-			  if (sclass->new_ != NULL)
-			    {
-			      super_new =
-				find_matching_att (sclass->new_->attributes,
-						   new_att, 0);
-			      if (super_new != NULL)
-				{
-				  /*
-				   * search the supers original attribute list
-				   * based on the id of the new one
-				   */
-				  super_old =
-				    find_matching_att (sclass->attributes,
-						       super_new, 1);
-				  if (super_old != NULL)
-				    {
-				      if (SM_COMPARE_NAMES
-					  (super_old->name,
-					   new_att->name) != 0)
-					{
-					  /* search our old list with the old name */
-					  found =
-					    find_matching_att (flat->
-							       current->
-							       attributes,
-							       super_old, 0);
-					  if (found != NULL)
-					    {
-					      /* found the renamed attribute, reuse id */
-					      new_att->id = found->id;
-					    }
-					}
-				    }
-				}
-			    }
-			}
-		    }
-		}
+      for (new_att = flat->attributes; new_att != NULL; new_att = new_att->next)
+        {
+          /* is this a new attribute ? */
+          if (new_att->id == -1)
+            {
+              /* is it inherited ? */
+              if (new_att->class_mop != NULL && new_att->class_mop != flat->op)
+                {
+                  assert (false);       /* is impossible */
+                  /* look for a matching attribute in the existing representation */
+                  found = find_matching_att (flat->current->attributes, new_att, 0);
+                  if (found != NULL)
+                    {
+                      /* re-use this attribute */
+                      new_att->id = found->id;
+                    }
+                  else
+                    {
+                      /* couldn't find it, it may have been renamed in the super
+                         class though */
+                      if (au_fetch_class_force (new_att->class_mop, &sclass, S_LOCK) == NO_ERROR)
+                        {
+                          /* search the super class' pending attribute list for
+                             this name */
+                          if (sclass->new_ != NULL)
+                            {
+                              super_new = find_matching_att (sclass->new_->attributes, new_att, 0);
+                              if (super_new != NULL)
+                                {
+                                  /*
+                                   * search the supers original attribute list
+                                   * based on the id of the new one
+                                   */
+                                  super_old = find_matching_att (sclass->attributes, super_new, 1);
+                                  if (super_old != NULL)
+                                    {
+                                      if (SM_COMPARE_NAMES (super_old->name, new_att->name) != 0)
+                                        {
+                                          /* search our old list with the old name */
+                                          found = find_matching_att (flat->current->attributes, super_old, 0);
+                                          if (found != NULL)
+                                            {
+                                              /* found the renamed attribute, reuse id */
+                                              new_att->id = found->id;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
 /* As mentioned in the description above, we no longer think that
    it is a good idea to retain the old attribute ID when shadowing
@@ -3516,31 +3433,29 @@ retain_former_ids (SM_TEMPLATE * flat)
    and might think differently again I would rather keep this part
    of the code in here as a reminder. */
 #if 0
-	      else
-		{
-		  /* Its a new local attribute.  If we're shadowing a previously
-		     inherited attribute, reuse the old id so we don't lose the
-		     previous value.  This is new (12/7/94), does it cause
-		     unexpected problems ? */
-		  /* look for one in the existing representation */
-		  found =
-		    classobj_find_attribute (flat->current->attributes,
-					     new->header.name);
-		  /* was it inherited ? */
-		  if (found != NULL && found->class != new->class)
-		    {
-		      /* reuse the attribute id, don't have to worry about type
-		         compatibility because that must have been checked during
-		         flattening. */
-		      new->id = found->id;
-		    }
-		  /* else couldn't find it, do we need to deal with the case where
-		     the inherited attribute from the super class has been renamed
-		     as is done above ? */
-		}
+              else
+                {
+                  /* Its a new local attribute.  If we're shadowing a previously
+                     inherited attribute, reuse the old id so we don't lose the
+                     previous value.  This is new (12/7/94), does it cause
+                     unexpected problems ? */
+                  /* look for one in the existing representation */
+                  found = classobj_find_attribute (flat->current->attributes, new->header.name);
+                  /* was it inherited ? */
+                  if (found != NULL && found->class != new->class)
+                    {
+                      /* reuse the attribute id, don't have to worry about type
+                         compatibility because that must have been checked during
+                         flattening. */
+                      new->id = found->id;
+                    }
+                  /* else couldn't find it, do we need to deal with the case where
+                     the inherited attribute from the super class has been renamed
+                     as is done above ? */
+                }
 #endif /* 0 */
-	    }
-	}
+            }
+        }
     }
 
   return NO_ERROR;
@@ -3582,13 +3497,12 @@ flatten_properties (SM_TEMPLATE * def, SM_TEMPLATE * flat)
   if (def->disk_constraints != NULL)
     {
       flat->disk_constraints =
-	(SM_DISK_CONSTRAINT *) WS_LIST_COPY (def->disk_constraints,
-					     classobj_copy_disk_constraint,
-					     classobj_free_disk_constraint);
+        (SM_DISK_CONSTRAINT *) WS_LIST_COPY (def->disk_constraints,
+                                             classobj_copy_disk_constraint, classobj_free_disk_constraint);
       if (flat->disk_constraints == NULL)
-	{
-	  goto structure_error;
-	}
+        {
+          goto structure_error;
+        }
     }
 
   return error;
@@ -3613,8 +3527,7 @@ structure_error:
  */
 
 static int
-flatten_template (UNUSED_ARG SM_TEMPLATE * def, UNUSED_ARG MOP deleted_class,
-		  SM_TEMPLATE ** flatp)
+flatten_template (UNUSED_ARG SM_TEMPLATE * def, UNUSED_ARG MOP deleted_class, SM_TEMPLATE ** flatp)
 {
   int error = NO_ERROR;
   SM_TEMPLATE *flat;
@@ -3643,9 +3556,9 @@ flatten_template (UNUSED_ARG SM_TEMPLATE * def, UNUSED_ARG MOP deleted_class,
     {
       flat->loader_commands = ws_copy_string (def->loader_commands);
       if (flat->loader_commands == NULL)
-	{
-	  goto memory_error;
-	}
+        {
+          goto memory_error;
+        }
     }
 
   /* flatten each component list */
@@ -3711,21 +3624,20 @@ order_atts_by_alignment (SM_ATTRIBUTE * atts)
   while (atts != NULL)
     {
       for (found = atts, attr = atts; attr != NULL; attr = attr->next)
-	{
-	  assert (TP_DOMAIN_TYPE (attr->sma_domain) != DB_TYPE_VARIABLE);
+        {
+          assert (TP_DOMAIN_TYPE (attr->sma_domain) != DB_TYPE_VARIABLE);
 
-	  /* the new attr becomes the found attr if it has larger alignment
-	   * requirements or if it has the same alignment needs but has
-	   * smaller disk size.
-	   */
-	  if ((attr->type->alignment > found->type->alignment)
-	      || ((attr->type->alignment == found->type->alignment)
-		  && (tp_domain_disk_size (attr->sma_domain) <
-		      tp_domain_disk_size (found->sma_domain))))
-	    {
-	      found = attr;
-	    }
-	}
+          /* the new attr becomes the found attr if it has larger alignment
+           * requirements or if it has the same alignment needs but has
+           * smaller disk size.
+           */
+          if ((attr->type->alignment > found->type->alignment)
+              || ((attr->type->alignment == found->type->alignment)
+                  && (tp_domain_disk_size (attr->sma_domain) < tp_domain_disk_size (found->sma_domain))))
+            {
+              found = attr;
+            }
+        }
 
       /* move the one we found to the new list */
       WS_LIST_REMOVE (&atts, found);
@@ -3780,65 +3692,61 @@ build_storage_order (SM_CLASS * class_, SM_TEMPLATE * flat)
   for (current = class_->attributes; current != NULL; current = current->next)
     {
       found = NULL;
-      for (new_att = newatts; new_att != NULL && found == NULL;
-	   new_att = new_att->next)
-	{
-	  assert (TP_DOMAIN_TYPE (new_att->sma_domain) != DB_TYPE_VARIABLE);
+      for (new_att = newatts; new_att != NULL && found == NULL; new_att = new_att->next)
+        {
+          assert (TP_DOMAIN_TYPE (new_att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  /* if the ids are the same, use it without looking at the name,
-	     this is how rename works */
-	  if (new_att->id != -1)
-	    {
-	      if (new_att->id == current->id)
-		{
-		  found = new_att;
-		  /* ALTER CHANGE column : check if new representation is
-		   * required */
-		  if (!tp_domain_match
-		      (current->sma_domain, new_att->sma_domain,
-		       TP_EXACT_MATCH))
-		    {
-		      newrep = 1;
-		    }
-		}
-	    }
+          /* if the ids are the same, use it without looking at the name,
+             this is how rename works */
+          if (new_att->id != -1)
+            {
+              if (new_att->id == current->id)
+                {
+                  found = new_att;
+                  /* ALTER CHANGE column : check if new representation is
+                   * required */
+                  if (!tp_domain_match (current->sma_domain, new_att->sma_domain, TP_EXACT_MATCH))
+                    {
+                      newrep = 1;
+                    }
+                }
+            }
 
-	  /* this shouldn't be necessary now that we assume ids have been
-	     assigned where there was one before */
+          /* this shouldn't be necessary now that we assume ids have been
+             assigned where there was one before */
 
-	  else if ((SM_COMPARE_NAMES (current->name,
-				      new_att->name) == 0)
-		   && (current->class_mop == new_att->class_mop)
-		   && (current->type == new_att->type))
-	    {
-	      found = new_att;
-	    }
-	}
+          else if ((SM_COMPARE_NAMES (current->name,
+                                      new_att->name) == 0)
+                   && (current->class_mop == new_att->class_mop) && (current->type == new_att->type))
+            {
+              found = new_att;
+            }
+        }
 
       if (found == NULL)
-	{
-	  newrep = 1;		/* attribute was deleted */
-	}
+        {
+          newrep = 1;           /* attribute was deleted */
+        }
       else
-	{
-	  /* there was a match, either in name or id */
-	  if (found->id == -1)
-	    {
-	      /* name match, reuse the old id */
-	      found->id = current->id;
-	    }
+        {
+          /* there was a match, either in name or id */
+          if (found->id == -1)
+            {
+              /* name match, reuse the old id */
+              found->id = current->id;
+            }
 
-	  (void) WS_LIST_REMOVE (&newatts, found);
-	  found->next = NULL;
-	  if (found->type->variable_p)
-	    {
-	      WS_LIST_APPEND (&variable, found);
-	    }
-	  else
-	    {
-	      WS_LIST_APPEND (&fixed, found);
-	    }
-	}
+          (void) WS_LIST_REMOVE (&newatts, found);
+          found->next = NULL;
+          if (found->type->variable_p)
+            {
+              WS_LIST_APPEND (&variable, found);
+            }
+          else
+            {
+              WS_LIST_APPEND (&fixed, found);
+            }
+        }
     }
 
   /* check for new attributes */
@@ -3846,20 +3754,20 @@ build_storage_order (SM_CLASS * class_, SM_TEMPLATE * flat)
     {
       newrep = 1;
       for (new_att = newatts, next = NULL; new_att != NULL; new_att = next)
-	{
-	  next = new_att->next;
-	  new_att->next = NULL;
-	  new_att->id = class_->att_ids++;
+        {
+          next = new_att->next;
+          new_att->next = NULL;
+          new_att->id = class_->att_ids++;
 
-	  if (new_att->type->variable_p)
-	    {
-	      WS_LIST_APPEND (&variable, new_att);
-	    }
-	  else
-	    {
-	      WS_LIST_APPEND (&fixed, new_att);
-	    }
-	}
+          if (new_att->type->variable_p)
+            {
+              WS_LIST_APPEND (&variable, new_att);
+            }
+          else
+            {
+              WS_LIST_APPEND (&fixed, new_att);
+            }
+        }
     }
 
   /* order the fixed attributes in descending order by alignment needs */
@@ -3876,11 +3784,10 @@ build_storage_order (SM_CLASS * class_, SM_TEMPLATE * flat)
   else
     {
       newatts = fixed;
-      for (new_att = fixed; new_att != NULL && new_att->next != NULL;
-	   new_att = new_att->next)
-	{
-	  ;
-	}
+      for (new_att = fixed; new_att != NULL && new_att->next != NULL; new_att = new_att->next)
+        {
+          ;
+        }
       new_att->next = variable;
     }
 
@@ -3912,9 +3819,9 @@ fixup_component_classes (MOP classop, SM_TEMPLATE * flat)
   for (a = flat->attributes; a != NULL; a = a->next)
     {
       if (a->class_mop == NULL)
-	{
-	  a->class_mop = classop;
-	}
+        {
+          a->class_mop = classop;
+        }
     }
 
 }
@@ -3949,10 +3856,10 @@ fixup_self_domain (TP_DOMAIN * domain, MOP self)
       /* PR_TYPE is changeable only for transient domain. */
       assert (d->type != tp_Type_null || !d->is_cached);
       if (d->type == tp_Type_null && !d->is_cached)
-	{
-	  d->type = tp_Type_object;
-	  d->class_mop = self;
-	}
+        {
+          d->type = tp_Type_object;
+          d->class_mop = self;
+        }
       fixup_self_domain (d->setdomain, self);
     }
 }
@@ -4020,8 +3927,7 @@ fixup_self_reference_domains (MOP classop, SM_TEMPLATE * flat)
  */
 
 static int
-allocate_index (MOP classop, UNUSED_ARG SM_CLASS * class_,
-		SM_CLASS_CONSTRAINT * constraint)
+allocate_index (MOP classop, UNUSED_ARG SM_CLASS * class_, SM_CLASS_CONSTRAINT * constraint)
 {
   int error = NO_ERROR;
   DB_TYPE *att_type = NULL;
@@ -4036,8 +3942,7 @@ allocate_index (MOP classop, UNUSED_ARG SM_CLASS * class_,
   if (att_type == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      constraint->num_atts * sizeof (DB_TYPE));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, constraint->num_atts * sizeof (DB_TYPE));
 
       goto exit_on_error;
     }
@@ -4049,19 +3954,18 @@ allocate_index (MOP classop, UNUSED_ARG SM_CLASS * class_,
          DB_TYPE_OID */
       att_type[i] = constraint->attributes[i]->type->id;
       if (att_type[i] == DB_TYPE_OBJECT)
-	{
-	  att_type[i] = DB_TYPE_OID;
-	}
+        {
+          att_type[i] = DB_TYPE_OID;
+        }
 
       if (!tp_valid_indextype (att_type[i]))
-	{
-	  assert (false);
-	  error = ER_SM_INVALID_INDEX_TYPE;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 1,
-		  pr_type_name (att_type[i]));
+        {
+          assert (false);
+          error = ER_SM_INVALID_INDEX_TYPE;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 1, pr_type_name (att_type[i]));
 
-	  goto exit_on_error;
-	}
+          goto exit_on_error;
+        }
     }
   assert (i == constraint->num_atts);
 
@@ -4074,7 +3978,7 @@ allocate_index (MOP classop, UNUSED_ARG SM_CLASS * class_,
 
   error =
     btree_add_index (&constraint->index_btid, constraint->num_atts, att_type,
-		     WS_OID (classop), constraint->attributes[0]->id);
+                     WS_OID (classop), constraint->attributes[0]->id);
 
   free_and_init (att_type);
 
@@ -4094,10 +3998,10 @@ exit_on_error:
       error = er_errid ();
       assert (error != NO_ERROR);
       if (error == NO_ERROR)
-	{
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-	}
+        {
+          error = ER_GENERIC_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
+        }
     }
 
   return error;
@@ -4121,9 +4025,9 @@ deallocate_index (SM_CLASS_CONSTRAINT * cons, BTID * index)
   for (con = cons; con != NULL; con = con->next)
     {
       if (BTID_IS_EQUAL (index, &con->index_btid))
-	{
-	  ref_count++;
-	}
+        {
+          ref_count++;
+        }
     }
 
   if (ref_count == 1)
@@ -4143,8 +4047,7 @@ deallocate_index (SM_CLASS_CONSTRAINT * cons, BTID * index)
  *   recache_cls_cons(out):
  */
 static int
-allocate_disk_structures_index (MOP classop, SM_CLASS * class_,
-				SM_CLASS_CONSTRAINT * con)
+allocate_disk_structures_index (MOP classop, SM_CLASS * class_, SM_CLASS_CONSTRAINT * con)
 {
   int error = NO_ERROR;
 
@@ -4174,7 +4077,7 @@ allocate_disk_structures_index (MOP classop, SM_CLASS * class_,
     {
       error = ER_GENERIC_ERROR;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-      return error;		/* unknown error */
+      return error;             /* unknown error */
     }
 
   return NO_ERROR;
@@ -4193,8 +4096,7 @@ allocate_disk_structures_index (MOP classop, SM_CLASS * class_,
  *   num_allocated_index(out):
  */
 static int
-allocate_disk_structures (MOP classop, SM_CLASS * class_,
-			  int *num_allocated_index)
+allocate_disk_structures (MOP classop, SM_CLASS * class_, int *num_allocated_index)
 {
   SM_CLASS_CONSTRAINT *con;
   LOCK lock_of_temp_class = NULL_LOCK;
@@ -4226,9 +4128,9 @@ allocate_disk_structures (MOP classop, SM_CLASS * class_,
       lock_of_temp_class = ws_get_lock (classop);
 
       if (locator_assign_permanent_oid (classop) == NULL)
-	{
-	  goto structure_error;
-	}
+        {
+          goto structure_error;
+        }
     }
 
   COPY_OID (&class_oid, WS_OID (classop));
@@ -4237,50 +4139,44 @@ allocate_disk_structures (MOP classop, SM_CLASS * class_,
 
   for (con = class_->constraints; con != NULL; con = con->next)
     {
-      if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type)
-	  && con->attributes[0] != NULL)
-	{
-	  if (!BTID_IS_NULL (&con->index_btid)
-	      && con->index_status != INDEX_STATUS_COMPLETED)
-	    {
-	      assert (false);
+      if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type) && con->attributes[0] != NULL)
+        {
+          if (!BTID_IS_NULL (&con->index_btid) && con->index_status != INDEX_STATUS_COMPLETED)
+            {
+              assert (false);
 
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_ALTER_EXISTS_INVALID_INDEX_IN_TABLE, 0);
-	      goto structure_error;
-	    }
-	  else if (BTID_IS_NULL (&con->index_btid))
-	    {
-	      if (!HFID_IS_NULL (&hfid))
-		{
-		  if (ws_get_lock (classop) != U_LOCK)
-		    {
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_ALTER_CANNOT_UPDATE_HEAP_DATA, 0);
-		      goto structure_error;
-		    }
-		}
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_ALTER_EXISTS_INVALID_INDEX_IN_TABLE, 0);
+              goto structure_error;
+            }
+          else if (BTID_IS_NULL (&con->index_btid))
+            {
+              if (!HFID_IS_NULL (&hfid))
+                {
+                  if (ws_get_lock (classop) != U_LOCK)
+                    {
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_ALTER_CANNOT_UPDATE_HEAP_DATA, 0);
+                      goto structure_error;
+                    }
+                }
 
-	      if (allocate_disk_structures_index (classop, class_, con) !=
-		  NO_ERROR)
-		{
-		  goto structure_error;
-		}
-	      (*num_allocated_index)++;
-	    }
+              if (allocate_disk_structures_index (classop, class_, con) != NO_ERROR)
+                {
+                  goto structure_error;
+                }
+              (*num_allocated_index)++;
+            }
 
-	  assert (!BTID_IS_NULL (&con->index_btid));
+          assert (!BTID_IS_NULL (&con->index_btid));
 
-	  /* Whether we allocated a BTID or not, always write the constraint info
-	   * back out to the property list.  This is where the promotion of
-	   * attribute name references to ids references happens.
-	   */
-	  if (classobj_put_disk_constraint (&class_->disk_constraints,
-					    con) != NO_ERROR)
-	    {
-	      goto structure_error;
-	    }
-	}
+          /* Whether we allocated a BTID or not, always write the constraint info
+           * back out to the property list.  This is where the promotion of
+           * attribute name references to ids references happens.
+           */
+          if (classobj_put_disk_constraint (&class_->disk_constraints, con) != NO_ERROR)
+            {
+              goto structure_error;
+            }
+        }
     }
 
   /* when we're done, make sure that each attribute's cache is also updated */
@@ -4302,13 +4198,13 @@ allocate_disk_structures (MOP classop, SM_CLASS * class_,
   if (lock_of_temp_class != NULL_LOCK)
     {
       /* classop do not have lock of permanent oid */
-      ws_set_lock (classop, S_LOCK);	/* temporary set as S lock */
+      ws_set_lock (classop, S_LOCK);    /* temporary set as S lock */
 
       /* get lock on class */
       if (locator_fetch_class (classop, lock_of_temp_class) == NULL)
-	{
-	  goto structure_error;
-	}
+        {
+          goto structure_error;
+        }
 
       /* acquire X lock */
       assert (ws_get_lock (classop) == lock_of_temp_class);
@@ -4356,22 +4252,20 @@ load_index_data (MOP classop, SM_CLASS * class_)
     {
       assert (con->attributes != NULL);
       if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type)
-	  && con->attributes[0] != NULL
-	  && con->index_status == INDEX_STATUS_IN_PROGRESS)
-	{
-	  error = btree_load_data (&con->index_btid, &class_oid, &hfid);
-	  if (error != NO_ERROR)
-	    {
-	      goto exit_on_error;
-	    }
+          && con->attributes[0] != NULL && con->index_status == INDEX_STATUS_IN_PROGRESS)
+        {
+          error = btree_load_data (&con->index_btid, &class_oid, &hfid);
+          if (error != NO_ERROR)
+            {
+              goto exit_on_error;
+            }
 
-	  con->index_status = INDEX_STATUS_COMPLETED;
-	  if (classobj_put_disk_constraint (&class_->disk_constraints,
-					    con) != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	}
+          con->index_status = INDEX_STATUS_COMPLETED;
+          if (classobj_put_disk_constraint (&class_->disk_constraints, con) != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+        }
     }
 
   if (locator_fetch_class (classop, U_LOCK) == NULL)
@@ -4400,7 +4294,7 @@ load_index_data (MOP classop, SM_CLASS * class_)
     }
 
   error = sm_update_statistics (classop, true /* update_stats */ ,
-				STATS_WITH_SAMPLING);
+                                STATS_WITH_SAMPLING);
   if (error != NO_ERROR)
     {
       goto exit_on_error;
@@ -4453,12 +4347,10 @@ exit_on_error:
  */
 
 static int
-transfer_disk_structures (UNUSED_ARG MOP classop, SM_CLASS * class_,
-			  SM_TEMPLATE * flat)
+transfer_disk_structures (UNUSED_ARG MOP classop, SM_CLASS * class_, SM_TEMPLATE * flat)
 {
   int error = NO_ERROR;
-  SM_DISK_CONSTRAINT *flat_disk_cons, *disk_cons, *new_disk_cons, *prev,
-    *next;
+  SM_DISK_CONSTRAINT *flat_disk_cons, *disk_cons, *new_disk_cons, *prev, *next;
   SM_DISK_CONSTRAINT_ATTRIBUTE *disk_att;
   SM_CLASS_CONSTRAINT *cons;
   SM_ATTRIBUTE *att = NULL;
@@ -4476,11 +4368,10 @@ transfer_disk_structures (UNUSED_ARG MOP classop, SM_CLASS * class_,
       flat_disk_cons = flat->disk_constraints;
 
 #if !defined(NDEBUG)
-      for (disk_cons = flat_disk_cons; disk_cons != NULL;
-	   disk_cons = disk_cons->next)
-	{
-	  assert (SM_IS_CONSTRAINT_INDEX_FAMILY (disk_cons->type));
-	}
+      for (disk_cons = flat_disk_cons; disk_cons != NULL; disk_cons = disk_cons->next)
+        {
+          assert (SM_IS_CONSTRAINT_INDEX_FAMILY (disk_cons->type));
+        }
 #endif
 
       assert (class_->class_type == flat->class_type);
@@ -4492,59 +4383,56 @@ transfer_disk_structures (UNUSED_ARG MOP classop, SM_CLASS * class_,
       assert (cons->attributes != NULL);
 
       if (!SM_IS_CONSTRAINT_INDEX_FAMILY (cons->type))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      new_disk_cons = classobj_find_disk_constraint (flat_disk_cons,
-						     cons->name);
+      new_disk_cons = classobj_find_disk_constraint (flat_disk_cons, cons->name);
       if (new_disk_cons == NULL)
-	{
-	  /* Constraint does not exist in the template */
-	  if (cons->attributes[0] != NULL)
-	    {
-	      /* destroy the old index but only if we're the owner of
-	       * it!
-	       */
-	      error = deallocate_index (class_->constraints,
-					&cons->index_btid);
-	      if (error != NO_ERROR)
-		{
-		  goto end;
-		}
+        {
+          /* Constraint does not exist in the template */
+          if (cons->attributes[0] != NULL)
+            {
+              /* destroy the old index but only if we're the owner of
+               * it!
+               */
+              error = deallocate_index (class_->constraints, &cons->index_btid);
+              if (error != NO_ERROR)
+                {
+                  goto end;
+                }
 
-	      BTID_SET_NULL (&cons->index_btid);
-	    }
-	}
+              BTID_SET_NULL (&cons->index_btid);
+            }
+        }
       else if (!BTID_IS_EQUAL (&cons->index_btid, &new_disk_cons->index_btid))
-	{
-	  if (BTID_IS_NULL (&(new_disk_cons->index_btid)))
-	    {
-	      /* Template index isn't set, transfer the old one
-	       * Can this happen, it should have been transfered by now.
-	       */
+        {
+          if (BTID_IS_NULL (&(new_disk_cons->index_btid)))
+            {
+              /* Template index isn't set, transfer the old one
+               * Can this happen, it should have been transfered by now.
+               */
 
-	      BTID_COPY (&new_disk_cons->index_btid, &cons->index_btid);
-	    }
-	  else
-	    {
-	      /* The index in the new template is not the same, I'm not entirely
-	       * sure what this means or how we can get here.
-	       * Possibly if we drop the unique but add it again with the same
-	       * name but over different attributes.
-	       */
-	      if (cons->attributes[0] != NULL)
-		{
-		  error = deallocate_index (class_->constraints,
-					    &cons->index_btid);
-		  if (error != NO_ERROR)
-		    {
-		      goto end;
-		    }
-		  BTID_SET_NULL (&cons->index_btid);
-		}
-	    }
-	}
+              BTID_COPY (&new_disk_cons->index_btid, &cons->index_btid);
+            }
+          else
+            {
+              /* The index in the new template is not the same, I'm not entirely
+               * sure what this means or how we can get here.
+               * Possibly if we drop the unique but add it again with the same
+               * name but over different attributes.
+               */
+              if (cons->attributes[0] != NULL)
+                {
+                  error = deallocate_index (class_->constraints, &cons->index_btid);
+                  if (error != NO_ERROR)
+                    {
+                      goto end;
+                    }
+                  BTID_SET_NULL (&cons->index_btid);
+                }
+            }
+        }
     }
 
   /* Filter out any constraints that don't have associated attributes,
@@ -4556,99 +4444,91 @@ transfer_disk_structures (UNUSED_ARG MOP classop, SM_CLASS * class_,
     {
       next = disk_cons->next;
 
-      if (disk_cons->index_status != INDEX_STATUS_IN_PROGRESS
-	  && disk_cons->disk_info_of_atts != NULL)
-	{
-	  for (disk_att = disk_cons->disk_info_of_atts; disk_att != NULL;
-	       disk_att = disk_att->next)
-	    {
-	      if (disk_att->att_id >= 0)
-		{
-		  att = classobj_find_attribute_id (flat->instance_attributes,
-						    disk_att->att_id);
-		}
-	      else
-		{
-		  att = classobj_find_attribute (flat->instance_attributes,
-						 disk_att->name);
-		}
+      if (disk_cons->index_status != INDEX_STATUS_IN_PROGRESS && disk_cons->disk_info_of_atts != NULL)
+        {
+          for (disk_att = disk_cons->disk_info_of_atts; disk_att != NULL; disk_att = disk_att->next)
+            {
+              if (disk_att->att_id >= 0)
+                {
+                  att = classobj_find_attribute_id (flat->instance_attributes, disk_att->att_id);
+                }
+              else
+                {
+                  att = classobj_find_attribute (flat->instance_attributes, disk_att->name);
+                }
 
-	      if (att == NULL)
-		{
-		  break;
-		}
-	    }
+              if (att == NULL)
+                {
+                  break;
+                }
+            }
 
-	  if (disk_att == NULL)
-	    {
-	      /* found all attribute */
-	      prev = disk_cons;
-	      continue;
-	    }
-	}
+          if (disk_att == NULL)
+            {
+              /* found all attribute */
+              prev = disk_cons;
+              continue;
+            }
+        }
 
       /* remove from flat_disk_cons */
       if (prev == NULL)
-	{
-	  /* first node */
-	  flat_disk_cons = disk_cons->next;
-	}
+        {
+          /* first node */
+          flat_disk_cons = disk_cons->next;
+        }
       else
-	{
-	  prev->next = disk_cons->next;
-	}
+        {
+          prev->next = disk_cons->next;
+        }
       disk_cons->next = NULL;
 
       if (!BTID_IS_NULL (&disk_cons->index_btid))
-	{
-	  error =
-	    deallocate_index (class_->constraints, &disk_cons->index_btid);
-	  if (error != NO_ERROR)
-	    {
-	      goto end;
-	    }
-	  BTID_SET_NULL (&disk_cons->index_btid);
-	}
+        {
+          error = deallocate_index (class_->constraints, &disk_cons->index_btid);
+          if (error != NO_ERROR)
+            {
+              goto end;
+            }
+          BTID_SET_NULL (&disk_cons->index_btid);
+        }
       classobj_free_disk_constraint (disk_cons);
       disk_cons = NULL;
     }
 
   if (flat != NULL)
     {
-      num_pk = 0;		/* init */
-      for (disk_cons = flat_disk_cons; disk_cons != NULL;
-	   disk_cons = disk_cons->next)
-	{
-	  if (disk_cons->type == SM_CONSTRAINT_PRIMARY_KEY)
-	    {
-	      if (num_pk != 0)
-		{
-		  error = ER_SM_PRIMARY_KEY_EXISTS;
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  error, 2, class_->header.name, disk_cons->name);
-		  goto end;
-		}
-	      num_pk++;
-	    }
-	}
+      num_pk = 0;               /* init */
+      for (disk_cons = flat_disk_cons; disk_cons != NULL; disk_cons = disk_cons->next)
+        {
+          if (disk_cons->type == SM_CONSTRAINT_PRIMARY_KEY)
+            {
+              if (num_pk != 0)
+                {
+                  error = ER_SM_PRIMARY_KEY_EXISTS;
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, class_->header.name, disk_cons->name);
+                  goto end;
+                }
+              num_pk++;
+            }
+        }
 
       /* ignore iff createdb */
       if (db_get_client_type () != BOOT_CLIENT_CREATEDB)
-	{
-	  if (flat->class_type == SM_CLASS_CT && num_pk <= 0)
-	    {
-#if 1				/* TODO - add PK */
-	      if (prm_get_bool_value (PRM_ID_TEST_MODE) == false)
+        {
+          if (flat->class_type == SM_CLASS_CT && num_pk <= 0)
+            {
+#if 1                           /* TODO - add PK */
+              if (prm_get_bool_value (PRM_ID_TEST_MODE) == false)
 #endif
-		{
-		  /* not permit table without PK */
-		  error = ER_SM_PRIMARY_KEY_NOT_EXISTS;
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  error, 1, class_->header.name);
-		  goto end;
-		}
-	    }
-	}
+                {
+                  /* not permit table without PK */
+                  error = ER_SM_PRIMARY_KEY_NOT_EXISTS;
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, class_->header.name);
+                  goto end;
+                }
+            }
+        }
 
       flat->disk_constraints = flat_disk_cons;
     }
@@ -4675,8 +4555,7 @@ end:
  */
 
 static int
-install_new_representation (MOP classop, SM_CLASS * class_,
-			    SM_TEMPLATE * flat)
+install_new_representation (MOP classop, SM_CLASS * class_, SM_TEMPLATE * flat)
 {
   int error = NO_ERROR;
   int needrep, newrep;
@@ -4709,61 +4588,61 @@ install_new_representation (MOP classop, SM_CLASS * class_,
        * an error can happen if we run out of space during flushing.
        */
       if (!classop->no_objects)
-	{
-	  switch (class_->class_type)
-	    {
-	    case SM_CLASS_CT:
-	      if (locator_flush_all_instances (classop, DECACHE) != NO_ERROR)
-		{
-		  return (er_errid ());
-		}
-	      break;
+        {
+          switch (class_->class_type)
+            {
+            case SM_CLASS_CT:
+              if (locator_flush_all_instances (classop, DECACHE) != NO_ERROR)
+                {
+                  return (er_errid ());
+                }
+              break;
 
-	    case SM_VCLASS_CT:
-	      break;
+            case SM_VCLASS_CT:
+              break;
 
-	    default:
-	      break;
-	    }
+            default:
+              break;
+            }
 
-	  /* note that the previous operation will flush the current class
-	   * representation along with the instances and clear the dirty bit,
-	   * this is unnecessary if the class was only marked dirty
-	   * in preparation for the new representation.
-	   * Because the dirty bit is clear however, we must turn it back on
-	   * after the new representation is installed so it will be properly
-	   * flushed, the next time a transaction commits or
-	   * locator_flush_all_instances is called
-	   */
-	  if (locator_update_class (classop) == NULL)
-	    {
-	      return (er_errid ());
-	    }
+          /* note that the previous operation will flush the current class
+           * representation along with the instances and clear the dirty bit,
+           * this is unnecessary if the class was only marked dirty
+           * in preparation for the new representation.
+           * Because the dirty bit is clear however, we must turn it back on
+           * after the new representation is installed so it will be properly
+           * flushed, the next time a transaction commits or
+           * locator_flush_all_instances is called
+           */
+          if (locator_update_class (classop) == NULL)
+            {
+              return (er_errid ());
+            }
 
-	  /* !!! I've seen some cases where objects are left cached while this
-	   * flag is on which is illegal.  Not sure how this happens but leave
-	   * this trap so we can track it down.  Shouldn't be necessary
-	   */
-	  if (ws_class_has_cached_objects (classop))
-	    {
-	      ERROR0 (error, ER_SM_CORRUPTED);
-	      return error;
-	    }
+          /* !!! I've seen some cases where objects are left cached while this
+           * flag is on which is illegal.  Not sure how this happens but leave
+           * this trap so we can track it down.  Shouldn't be necessary
+           */
+          if (ws_class_has_cached_objects (classop))
+            {
+              ERROR0 (error, ER_SM_CORRUPTED);
+              return error;
+            }
 
-	  newrep = 1;
+          newrep = 1;
 
-	  /* Set the no_objects flag so we know that if no object dependencies
-	   * are introduced on this representation, we don't have to generate
-	   * another one the next time the class is updated.
-	   */
+          /* Set the no_objects flag so we know that if no object dependencies
+           * are introduced on this representation, we don't have to generate
+           * another one the next time the class is updated.
+           */
 
-	  /* this used to be outside, think about why */
-	  WS_SET_NO_OBJECTS (classop);
-	}
+          /* this used to be outside, think about why */
+          WS_SET_NO_OBJECTS (classop);
+        }
       else
-	{
-	  newrep = 1;
-	}
+        {
+          newrep = 1;
+        }
     }
 
   error = transfer_disk_structures (classop, class_, flat);
@@ -4848,24 +4727,21 @@ check_catalog_space (MOP classmop, SM_CLASS * class_)
          because it will have no entries for this class oid.
        */
 
-      status =
-	catalog_is_acceptable_new_representation (WS_OID (classmop),
-						  &class_->header.heap,
-						  &can_accept);
+      status = catalog_is_acceptable_new_representation (WS_OID (classmop), &class_->header.heap, &can_accept);
       if (status != NO_ERROR)
-	{
-	  error = er_errid ();
-	  /* ignore if if the class hasn't been flushed yet */
-	  if (error == ER_CT_UNKNOWN_CLASSID)
-	    {
-	      /* if dirty bit isn't on in this MOP, its probably an internal error */
-	      error = NO_ERROR;
-	    }
-	}
+        {
+          error = er_errid ();
+          /* ignore if if the class hasn't been flushed yet */
+          if (error == ER_CT_UNKNOWN_CLASSID)
+            {
+              /* if dirty bit isn't on in this MOP, its probably an internal error */
+              error = NO_ERROR;
+            }
+        }
       else if (!can_accept)
-	{
-	  ERROR1 (error, ER_SM_CATALOG_SPACE, class_->header.name);
-	}
+        {
+          ERROR1 (error, ER_SM_CATALOG_SPACE, class_->header.name);
+        }
     }
 
   return error;
@@ -4927,22 +4803,20 @@ update_class (SM_TEMPLATE * template_, MOP * classmop)
   if ((template_->op != NULL))
     {
       /* existing class, fetch it */
-      assert (ws_get_lock (template_->op) == X_LOCK
-	      || ws_get_lock (template_->op) == U_LOCK);
+      assert (ws_get_lock (template_->op) == X_LOCK || ws_get_lock (template_->op) == U_LOCK);
 
-      error = au_fetch_class (template_->op, &class_,
-			      template_->op->ws_lock, AU_ALTER);
+      error = au_fetch_class (template_->op, &class_, template_->op->ws_lock, AU_ALTER);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       /* make sure the catalog manager can deal with another representation */
       error = check_catalog_space (template_->op, class_);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   /* flatten template, store the pending template in the "new" field
@@ -4959,9 +4833,9 @@ update_class (SM_TEMPLATE * template_, MOP * classmop)
          then the class may no longer be in the workspace.  So make sure
          that the class exists before using it.  */
       if (class_ != NULL && error != ER_LK_UNILATERALLY_ABORTED)
-	{
-	  class_->new_ = NULL;
-	}
+        {
+          class_->new_ = NULL;
+        }
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -4981,14 +4855,14 @@ update_class (SM_TEMPLATE * template_, MOP * classmop)
     {
       class_ = classobj_make_class (template_->name);
       if (class_ == NULL)
-	{
-	  error = er_errid ();
+        {
+          error = er_errid ();
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       class_->class_type = flat->class_type;
-      class_->owner = au_get_user ();	/* remember the owner id */
+      class_->owner = au_get_user ();   /* remember the owner id */
 
       /* NOTE: Garbage collection can occur in the following function
          as a result of the allocation of the class MOP.  We must
@@ -4999,15 +4873,14 @@ update_class (SM_TEMPLATE * template_, MOP * classmop)
          install_new_representation.  The template that holds
          the new class contents IS already a GC root.
        */
-      template_->op = locator_add_class ((MOBJ) class_,
-					 (char *) class_->header.name);
+      template_->op = locator_add_class ((MOBJ) class_, (char *) class_->header.name);
       if (template_->op == NULL)
-	{
-	  /* return locator error code */
-	  error = er_errid ();
+        {
+          /* return locator error code */
+          error = er_errid ();
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   /* the next sequence of operations is extremely critical,
@@ -5022,8 +4895,7 @@ update_class (SM_TEMPLATE * template_, MOP * classmop)
     }
 
   num_allocated_index = 0;
-  error = allocate_disk_structures (template_->op, class_,
-				    &num_allocated_index);
+  error = allocate_disk_structures (template_->op, class_, &num_allocated_index);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -5034,9 +4906,9 @@ update_class (SM_TEMPLATE * template_, MOP * classmop)
       do_rollback_on_error = false;
       error = load_index_data (template_->op, class_);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   if (classmop != NULL)
@@ -5105,7 +4977,7 @@ sm_delete_class_mop (MOP op)
   SM_CLASS *class_;
   SM_TEMPLATE *template_;
 
-  template_ = NULL;		/* init */
+  template_ = NULL;             /* init */
 
   if (op == NULL)
     {
@@ -5142,9 +5014,9 @@ sm_delete_class_mop (MOP op)
     {
     case SM_CLASS_CT:
       if (locator_flush_all_instances (op, DECACHE) != NO_ERROR)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       break;
 
     case SM_VCLASS_CT:
@@ -5267,14 +5139,14 @@ sm_exist_index (MOP classop, const char *idxname, BTID * btid)
     {
       cons = classobj_find_class_index (class_, idxname);
       if (cons)
-	{
-	  if (btid)
-	    {
-	      BTID_COPY (btid, &cons->index_btid);
-	    }
+        {
+          if (btid)
+            {
+              BTID_COPY (btid, &cons->index_btid);
+            }
 
-	  return NO_ERROR;
-	}
+          return NO_ERROR;
+        }
     }
 
   return ER_FAILED;
@@ -5304,25 +5176,24 @@ sm_get_index (MOP classop, const char *attname, BTID * index)
     {
       att = classobj_find_attribute (class_->attributes, attname);
       if (att == NULL)
-	{
-	  ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, attname);
-	}
+        {
+          ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, attname);
+        }
       else
-	{
-	  SM_CONSTRAINT *con;
-	  int found = 0;
+        {
+          SM_CONSTRAINT *con;
+          int found = 0;
 
-	  /*  First look for the index in the attribute constraint cache */
-	  for (con = att->constraints; ((con != NULL) && !found);
-	       con = con->next)
-	    {
-	      if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type))
-		{
-		  *index = con->index;
-		  found = 1;
-		}
-	    }
-	}
+          /*  First look for the index in the attribute constraint cache */
+          for (con = att->constraints; ((con != NULL) && !found); con = con->next)
+            {
+              if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type))
+                {
+                  *index = con->index;
+                  found = 1;
+                }
+            }
+        }
     }
 
   return error;
@@ -5362,8 +5233,7 @@ sm_get_index (MOP classop, const char *attname, BTID * index)
 
 static char *
 sm_default_constraint_name (const char *class_name,
-			    DB_CONSTRAINT_TYPE type,
-			    const char **att_names, const int *asc_desc)
+                            DB_CONSTRAINT_TYPE type, const char **att_names, const int *asc_desc)
 {
 #define MAX_ATTR_IN_AUTO_GEN_NAME 30
   const char **ptr;
@@ -5386,216 +5256,203 @@ sm_default_constraint_name (const char *class_name,
       int class_name_prefix_size = DB_MAX_IDENTIFIER_LENGTH;
       int att_name_prefix_size = DB_MAX_IDENTIFIER_LENGTH;
       char md5_str[32 + 1] = {
-	'\0'
+        '\0'
       };
 
       /* Constraint Type */
       prefix = (type == DB_CONSTRAINT_INDEX) ? "i_" :
-	(type == DB_CONSTRAINT_UNIQUE) ? "u_" :
-	(type == DB_CONSTRAINT_PRIMARY_KEY) ? "pk_" :
-	(type == DB_CONSTRAINT_NOT_NULL) ? "n_" :
-	/*          UNKNOWN TYPE            */ "x_";
+        (type == DB_CONSTRAINT_UNIQUE) ? "u_" :
+        (type == DB_CONSTRAINT_PRIMARY_KEY) ? "pk_" : (type == DB_CONSTRAINT_NOT_NULL) ? "n_" :
+        /*          UNKNOWN TYPE            */ "x_";
 
       /*
        *  Count the number of characters that we'll need for the name
        */
       name_length = strlen (prefix);
-      name_length += strlen (class_name);	/* class name */
+      name_length += strlen (class_name);       /* class name */
 
       for (ptr = att_names; *ptr != NULL; ptr++)
-	{
-	  n_attrs++;
-	}
+        {
+          n_attrs++;
+        }
 
       if (n_attrs <= 0)
-	{
-	  /* this should not happen */
-	  assert (false);
-	  ERROR0 (error, ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
-	  name = NULL;
-	  goto exit;
-	}
+        {
+          /* this should not happen */
+          assert (false);
+          ERROR0 (error, ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
+          name = NULL;
+          goto exit;
+        }
 
       i = 0;
       for (ptr = att_names; (*ptr != NULL) && (i < n_attrs); ptr++, i++)
-	{
-	  int ptr_size = 0;
+        {
+          int ptr_size = 0;
 
-	  do_desc = false;	/* init */
-	  if (asc_desc && asc_desc[i] == 1)
-	    {
-	      do_desc = true;
-	    }
+          do_desc = false;      /* init */
+          if (asc_desc && asc_desc[i] == 1)
+            {
+              do_desc = true;
+            }
 
-	  ptr_size = strlen (*ptr);
-	  name_length += (1 + ptr_size);	/* separator and attr name */
-	  if (do_desc)
-	    {
-	      name_length += 2;	/* '_d' for 'desc' */
-	    }
-	}			/* for (ptr = ...) */
+          ptr_size = strlen (*ptr);
+          name_length += (1 + ptr_size);        /* separator and attr name */
+          if (do_desc)
+            {
+              name_length += 2; /* '_d' for 'desc' */
+            }
+        }                       /* for (ptr = ...) */
 
       if (name_length >= DB_MAX_IDENTIFIER_LENGTH)
-	{
-	  /* constraint name will contain a descriptive prefix + prefixes of
-	   * class name + prefixes of the first MAX_ATTR_IN_AUTO_GEN_NAME
-	   * attributes + MD5 of the entire string of concatenated class name
-	   * and attributes names */
-	  char *name_all = NULL;
-	  int size_class_and_attrs =
-	    DB_MAX_IDENTIFIER_LENGTH - 1 - strlen (prefix) - 32 - 1;
+        {
+          /* constraint name will contain a descriptive prefix + prefixes of
+           * class name + prefixes of the first MAX_ATTR_IN_AUTO_GEN_NAME
+           * attributes + MD5 of the entire string of concatenated class name
+           * and attributes names */
+          char *name_all = NULL;
+          int size_class_and_attrs = DB_MAX_IDENTIFIER_LENGTH - 1 - strlen (prefix) - 32 - 1;
 
-	  name_all = (char *) malloc (name_length + 1);
-	  if (name_all == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1, name_length + 1);
-	      goto exit;
-	    }
-	  strcpy (name_all, class_name);
-	  for (ptr = att_names, i = 0; i < n_attrs; ptr++, i++)
-	    {
-	      strcat (name_all, *ptr);
-	      if (asc_desc && asc_desc[i] == 1)
-		{
-		  strcat (name_all, "d");
-		}
-	    }
+          name_all = (char *) malloc (name_length + 1);
+          if (name_all == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, name_length + 1);
+              goto exit;
+            }
+          strcpy (name_all, class_name);
+          for (ptr = att_names, i = 0; i < n_attrs; ptr++, i++)
+            {
+              strcat (name_all, *ptr);
+              if (asc_desc && asc_desc[i] == 1)
+                {
+                  strcat (name_all, "d");
+                }
+            }
 
-	  md5_buffer (name_all, strlen (name_all), md5_str);
-	  md5_hash_to_hex (md5_str, md5_str);
+          md5_buffer (name_all, strlen (name_all), md5_str);
+          md5_hash_to_hex (md5_str, md5_str);
 
-	  free_and_init (name_all);
+          free_and_init (name_all);
 
-	  if (n_attrs > MAX_ATTR_IN_AUTO_GEN_NAME)
-	    {
-	      n_attrs = MAX_ATTR_IN_AUTO_GEN_NAME;
-	    }
+          if (n_attrs > MAX_ATTR_IN_AUTO_GEN_NAME)
+            {
+              n_attrs = MAX_ATTR_IN_AUTO_GEN_NAME;
+            }
 
-	  att_name_prefix_size = size_class_and_attrs / (n_attrs + 1);
-	  class_name_prefix_size = att_name_prefix_size;
+          att_name_prefix_size = size_class_and_attrs / (n_attrs + 1);
+          class_name_prefix_size = att_name_prefix_size;
 
-	  if (strlen (class_name) < class_name_prefix_size)
-	    {
-	      class_name_prefix_size = strlen (class_name);
-	    }
-	  else
-	    {
-	      char class_name_trunc[DB_MAX_IDENTIFIER_LENGTH];
+          if (strlen (class_name) < class_name_prefix_size)
+            {
+              class_name_prefix_size = strlen (class_name);
+            }
+          else
+            {
+              char class_name_trunc[DB_MAX_IDENTIFIER_LENGTH];
 
-	      strncpy (class_name_trunc, class_name, class_name_prefix_size);
-	      class_name_trunc[class_name_prefix_size] = '\0';
+              strncpy (class_name_trunc, class_name, class_name_prefix_size);
+              class_name_trunc[class_name_prefix_size] = '\0';
 
-	      /* make sure last character is not truncated */
-	      if (intl_identifier_fix (class_name_trunc,
-				       class_name_prefix_size) != NO_ERROR)
-		{
-		  /* this should not happen */
-		  assert (false);
-		  ERROR0 (error, ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
-		  name = NULL;
-		  goto exit;
-		}
-	      class_name_prefix_size = strlen (class_name_trunc);
-	    }
+              /* make sure last character is not truncated */
+              if (intl_identifier_fix (class_name_trunc, class_name_prefix_size) != NO_ERROR)
+                {
+                  /* this should not happen */
+                  assert (false);
+                  ERROR0 (error, ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
+                  name = NULL;
+                  goto exit;
+                }
+              class_name_prefix_size = strlen (class_name_trunc);
+            }
 
-	  /* includes '_' between attributes */
-	  att_name_prefix_size =
-	    ((size_class_and_attrs - class_name_prefix_size) / n_attrs) - 1;
-	  name_length = DB_MAX_IDENTIFIER_LENGTH;
-	}
+          /* includes '_' between attributes */
+          att_name_prefix_size = ((size_class_and_attrs - class_name_prefix_size) / n_attrs) - 1;
+          name_length = DB_MAX_IDENTIFIER_LENGTH;
+        }
       /*
        *  Allocate space for the name and construct it
        */
-      name = (char *) malloc (name_length + 1);	/* Remember terminating NULL */
+      name = (char *) malloc (name_length + 1); /* Remember terminating NULL */
       if (name != NULL)
-	{
-	  /* Constraint Type */
-	  strcpy (name, prefix);
+        {
+          /* Constraint Type */
+          strcpy (name, prefix);
 
-	  /* Class name */
-	  strncat (name, class_name, class_name_prefix_size);
+          /* Class name */
+          strncat (name, class_name, class_name_prefix_size);
 
-	  /* separated list of attribute names */
-	  k = 0;
-	  i = 0;
-	  /* n_attrs is already limited to MAX_ATTR_IN_AUTO_GEN_NAME here */
-	  for (ptr = att_names; k < n_attrs; ptr++, i++)
-	    {
-	      do_desc = false;	/* init */
-	      if (asc_desc && asc_desc[i] == 1)
-		{
-		  do_desc = true;
-		}
+          /* separated list of attribute names */
+          k = 0;
+          i = 0;
+          /* n_attrs is already limited to MAX_ATTR_IN_AUTO_GEN_NAME here */
+          for (ptr = att_names; k < n_attrs; ptr++, i++)
+            {
+              do_desc = false;  /* init */
+              if (asc_desc && asc_desc[i] == 1)
+                {
+                  do_desc = true;
+                }
 
-	      strcat (name, "_");
+              strcat (name, "_");
 
-	      if (att_name_prefix_size == DB_MAX_IDENTIFIER_LENGTH)
-		{
-		  (void) intl_identifier_lower (*ptr, &name[strlen (name)]);
+              if (att_name_prefix_size == DB_MAX_IDENTIFIER_LENGTH)
+                {
+                  (void) intl_identifier_lower (*ptr, &name[strlen (name)]);
 
-		  /* attr is marked as 'desc' */
-		  if (do_desc)
-		    {
-		      strcat (name, "_d");
-		    }
-		}
-	      else
-		{
-		  char att_name_trunc[DB_MAX_IDENTIFIER_LENGTH];
+                  /* attr is marked as 'desc' */
+                  if (do_desc)
+                    {
+                      strcat (name, "_d");
+                    }
+                }
+              else
+                {
+                  char att_name_trunc[DB_MAX_IDENTIFIER_LENGTH];
 
-		  (void) intl_identifier_lower (*ptr, att_name_trunc);
+                  (void) intl_identifier_lower (*ptr, att_name_trunc);
 
-		  if (do_desc)
-		    {
-		      /* make sure last character is not truncated */
-		      assert (att_name_prefix_size > 2);
-		      if (intl_identifier_fix (att_name_trunc,
-					       att_name_prefix_size - 2)
-			  != NO_ERROR)
-			{
-			  assert (false);
-			  ERROR0 (error,
-				  ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
-			  free_and_init (name);
-			  goto exit;
-			}
-		      strcat (att_name_trunc, "_d");
-		    }
-		  else
-		    {
-		      if (intl_identifier_fix (att_name_trunc,
-					       att_name_prefix_size)
-			  != NO_ERROR)
-			{
-			  assert (false);
-			  ERROR0 (error,
-				  ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
-			  free_and_init (name);
-			  goto exit;
-			}
-		    }
+                  if (do_desc)
+                    {
+                      /* make sure last character is not truncated */
+                      assert (att_name_prefix_size > 2);
+                      if (intl_identifier_fix (att_name_trunc, att_name_prefix_size - 2) != NO_ERROR)
+                        {
+                          assert (false);
+                          ERROR0 (error, ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
+                          free_and_init (name);
+                          goto exit;
+                        }
+                      strcat (att_name_trunc, "_d");
+                    }
+                  else
+                    {
+                      if (intl_identifier_fix (att_name_trunc, att_name_prefix_size) != NO_ERROR)
+                        {
+                          assert (false);
+                          ERROR0 (error, ER_SM_INVALID_DEF_CONSTRAINT_NAME_PARAMS);
+                          free_and_init (name);
+                          goto exit;
+                        }
+                    }
 
-		  strcat (name, att_name_trunc);
-		}
-	      k++;
-	    }
+                  strcat (name, att_name_trunc);
+                }
+              k++;
+            }
 
-	  if (att_name_prefix_size != DB_MAX_IDENTIFIER_LENGTH
-	      || class_name_prefix_size != DB_MAX_IDENTIFIER_LENGTH)
-	    {
-	      /* append MD5 */
-	      strcat (name, "_");
-	      strcat (name, md5_str);
+          if (att_name_prefix_size != DB_MAX_IDENTIFIER_LENGTH || class_name_prefix_size != DB_MAX_IDENTIFIER_LENGTH)
+            {
+              /* append MD5 */
+              strcat (name, "_");
+              strcat (name, md5_str);
 
-	      assert (strlen (name) <= DB_MAX_IDENTIFIER_LENGTH);
-	    }
-	}
+              assert (strlen (name) <= DB_MAX_IDENTIFIER_LENGTH);
+            }
+        }
       else
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, name_length + 1);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, name_length + 1);
+        }
     }
 
 exit:
@@ -5628,31 +5485,28 @@ exit:
 
 char *
 sm_produce_constraint_name (const char *class_name,
-			    DB_CONSTRAINT_TYPE constraint_type,
-			    const char **att_names,
-			    const int *asc_desc, const char *given_name)
+                            DB_CONSTRAINT_TYPE constraint_type,
+                            const char **att_names, const int *asc_desc, const char *given_name)
 {
   char *name = NULL;
   size_t name_size;
 
   if (given_name == NULL)
     {
-      name = sm_default_constraint_name (class_name, constraint_type,
-					 att_names, asc_desc);
+      name = sm_default_constraint_name (class_name, constraint_type, att_names, asc_desc);
     }
   else
     {
       name_size = strlen (given_name);
       name = (char *) malloc (name_size + 1);
       if (name != NULL)
-	{
-	  intl_identifier_lower (given_name, name);
-	}
+        {
+          intl_identifier_lower (given_name, name);
+        }
       else
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, name_size + 1);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, name_size + 1);
+        }
     }
 
   return name;
@@ -5671,12 +5525,10 @@ sm_produce_constraint_name (const char *class_name,
 
 char *
 sm_produce_constraint_name_mop (MOP classop,
-				DB_CONSTRAINT_TYPE constraint_type,
-				const char **att_names,
-				const int *asc_desc, const char *given_name)
+                                DB_CONSTRAINT_TYPE constraint_type,
+                                const char **att_names, const int *asc_desc, const char *given_name)
 {
-  return sm_produce_constraint_name (sm_class_name (classop), constraint_type,
-				     att_names, asc_desc, given_name);
+  return sm_produce_constraint_name (sm_class_name (classop), constraint_type, att_names, asc_desc, given_name);
 }
 
 /*
@@ -5691,13 +5543,10 @@ sm_produce_constraint_name_mop (MOP classop,
  */
 char *
 sm_produce_constraint_name_tmpl (SM_TEMPLATE * tmpl,
-				 DB_CONSTRAINT_TYPE constraint_type,
-				 const char **att_names,
-				 const int *asc_desc, const char *given_name)
+                                 DB_CONSTRAINT_TYPE constraint_type,
+                                 const char **att_names, const int *asc_desc, const char *given_name)
 {
-  return sm_produce_constraint_name (template_classname (tmpl),
-				     constraint_type, att_names, asc_desc,
-				     given_name);
+  return sm_produce_constraint_name (template_classname (tmpl), constraint_type, att_names, asc_desc, given_name);
 }
 
 #if defined(ENABLE_UNUSED_FUNCTION)
@@ -5709,9 +5558,7 @@ sm_produce_constraint_name_tmpl (SM_TEMPLATE * tmpl,
  *   constraint_name(in): Constraint name.
  */
 static int
-sm_check_index_exist (MOP classop,
-		      DB_CONSTRAINT_TYPE constraint_type,
-		      const char *constraint_name)
+sm_check_index_exist (MOP classop, DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name)
 {
   int error = NO_ERROR;
   SM_CLASS *class_;
@@ -5727,8 +5574,7 @@ sm_check_index_exist (MOP classop,
       return error;
     }
 
-  return classobj_check_index_exist (class_->constraints,
-				     class_->header.name, constraint_name);
+  return classobj_check_index_exist (class_->constraints, class_->header.name, constraint_name);
 }
 #endif
 
@@ -5747,8 +5593,7 @@ sm_check_index_exist (MOP classop,
  */
 int
 sm_add_constraint (MOP classop, DB_CONSTRAINT_TYPE constraint_type,
-		   const char *constraint_name, const char **att_names,
-		   const int *asc_desc)
+                   const char *constraint_name, const char **att_names, const int *asc_desc)
 {
   int error = NO_ERROR;
   SM_TEMPLATE *def;
@@ -5767,55 +5612,53 @@ sm_add_constraint (MOP classop, DB_CONSTRAINT_TYPE constraint_type,
     case DB_CONSTRAINT_PRIMARY_KEY:
       def = smt_edit_class_mop_with_lock (classop, U_LOCK);
       if (def == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  error = smt_add_constraint (def, constraint_type, constraint_name,
-				      att_names, asc_desc);
-	  if (error == NO_ERROR)
-	    {
-	      error = smt_finish_class (def, &newmop);
-	    }
+        {
+          error = smt_add_constraint (def, constraint_type, constraint_name, att_names, asc_desc);
+          if (error == NO_ERROR)
+            {
+              error = smt_finish_class (def, &newmop);
+            }
 
-	  if (error == NO_ERROR)
-	    {
-	      error = sm_update_statistics (newmop, true /* update_stats */ ,
-					    STATS_WITH_SAMPLING);
-	    }
-	  else
-	    {
-	      smt_quit (def);
-	    }
-	}
+          if (error == NO_ERROR)
+            {
+              error = sm_update_statistics (newmop, true /* update_stats */ ,
+                                            STATS_WITH_SAMPLING);
+            }
+          else
+            {
+              smt_quit (def);
+            }
+        }
       break;
 
     case DB_CONSTRAINT_NOT_NULL:
       def = smt_edit_class_mop_with_lock (classop, X_LOCK);
       if (def == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  error = smt_add_constraint (def, constraint_type, constraint_name,
-				      att_names, asc_desc);
-	  if (error == NO_ERROR)
-	    {
-	      error = smt_finish_class (def, NULL);
-	    }
+        {
+          error = smt_add_constraint (def, constraint_type, constraint_name, att_names, asc_desc);
+          if (error == NO_ERROR)
+            {
+              error = smt_finish_class (def, NULL);
+            }
 
-	  if (error == NO_ERROR)
-	    {
-	      /* don't have to update stats for NOT NULL
-	       */
-	    }
-	  else
-	    {
-	      smt_quit (def);
-	    }
-	}
+          if (error == NO_ERROR)
+            {
+              /* don't have to update stats for NOT NULL
+               */
+            }
+          else
+            {
+              smt_quit (def);
+            }
+        }
       break;
 
     default:
@@ -5837,8 +5680,7 @@ sm_add_constraint (MOP classop, DB_CONSTRAINT_TYPE constraint_type,
  */
 int
 sm_drop_constraint (MOP classop,
-		    DB_CONSTRAINT_TYPE constraint_type,
-		    const char *constraint_name, const char **att_names)
+                    DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name, const char **att_names)
 {
   int error = NO_ERROR;
   SM_TEMPLATE *def = NULL;
@@ -5850,47 +5692,44 @@ sm_drop_constraint (MOP classop,
     case DB_CONSTRAINT_PRIMARY_KEY:
       def = smt_edit_class_mop_with_lock (classop, X_LOCK);
       if (def == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  error = smt_drop_constraint (def, att_names, constraint_name,
-				       SM_MAP_CONSTRAINT_TO_ATTFLAG
-				       (constraint_type));
+        {
+          error = smt_drop_constraint (def, att_names, constraint_name, SM_MAP_CONSTRAINT_TO_ATTFLAG (constraint_type));
 
-	  if (error == NO_ERROR)
-	    {
-	      error = smt_finish_class (def, NULL);
-	    }
+          if (error == NO_ERROR)
+            {
+              error = smt_finish_class (def, NULL);
+            }
 
-	  if (error != NO_ERROR)
-	    {
-	      smt_quit (def);
-	    }
-	}
+          if (error != NO_ERROR)
+            {
+              smt_quit (def);
+            }
+        }
       break;
 
     case DB_CONSTRAINT_NOT_NULL:
       def = smt_edit_class_mop_with_lock (classop, X_LOCK);
       if (def == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  error = smt_drop_constraint (def, att_names, constraint_name,
-				       SM_ATTFLAG_NON_NULL);
-	  if (error == NO_ERROR)
-	    {
-	      error = smt_finish_class (def, NULL);
-	    }
+        {
+          error = smt_drop_constraint (def, att_names, constraint_name, SM_ATTFLAG_NON_NULL);
+          if (error == NO_ERROR)
+            {
+              error = smt_finish_class (def, NULL);
+            }
 
-	  if (error != NO_ERROR)
-	    {
-	      smt_quit (def);
-	    }
-	}
+          if (error != NO_ERROR)
+            {
+              smt_quit (def);
+            }
+        }
       break;
 
     default:
@@ -5922,20 +5761,19 @@ sm_free_constraint_info (SM_CONSTRAINT_INFO ** save_info)
       char **crt_name_p = NULL;
 
       for (crt_name_p = info->att_names; *crt_name_p != NULL; ++crt_name_p)
-	{
-	  free_and_init (*crt_name_p);
-	}
+        {
+          free_and_init (*crt_name_p);
+        }
       free_and_init (info->att_names);
 
       if (info->ref_attrs != NULL)
-	{
-	  for (crt_name_p = info->ref_attrs; *crt_name_p != NULL;
-	       ++crt_name_p)
-	    {
-	      free_and_init (*crt_name_p);
-	    }
-	  free_and_init (info->ref_attrs);
-	}
+        {
+          for (crt_name_p = info->ref_attrs; *crt_name_p != NULL; ++crt_name_p)
+            {
+              free_and_init (*crt_name_p);
+            }
+          free_and_init (info->ref_attrs);
+        }
 
       free_and_init (info->name);
       free_and_init (info->asc_desc);
@@ -5990,8 +5828,7 @@ exit:
  *   c(in): The constraint to be saved
  */
 int
-sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info,
-			 const SM_CLASS_CONSTRAINT * const c)
+sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info, const SM_CLASS_CONSTRAINT * const c)
 {
   int error_code = NO_ERROR;
   SM_CONSTRAINT_INFO *new_constraint = NULL;
@@ -5999,13 +5836,11 @@ sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info,
   int i = 0;
   SM_ATTRIBUTE **crt_att_p = NULL;
 
-  new_constraint =
-    (SM_CONSTRAINT_INFO *) calloc (1, sizeof (SM_CONSTRAINT_INFO));
+  new_constraint = (SM_CONSTRAINT_INFO *) calloc (1, sizeof (SM_CONSTRAINT_INFO));
   if (new_constraint == NULL)
     {
       error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1,
-	      sizeof (SM_CONSTRAINT_INFO));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, sizeof (SM_CONSTRAINT_INFO));
       goto error_exit;
     }
 
@@ -6014,26 +5849,22 @@ sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info,
   if (new_constraint->name == NULL)
     {
       error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1,
-	      strlen (c->name) + 1);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, strlen (c->name) + 1);
       goto error_exit;
     }
 
   assert (c->attributes != NULL);
-  for (crt_att_p = c->attributes, num_atts = 0; *crt_att_p != NULL;
-       ++crt_att_p)
+  for (crt_att_p = c->attributes, num_atts = 0; *crt_att_p != NULL; ++crt_att_p)
     {
       ++num_atts;
     }
   assert (num_atts > 0 && num_atts == c->num_atts);
 
-  new_constraint->att_names = (char **) calloc (num_atts + 1,
-						sizeof (char *));
+  new_constraint->att_names = (char **) calloc (num_atts + 1, sizeof (char *));
   if (new_constraint->att_names == NULL)
     {
       error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1,
-	      (num_atts + 1) * sizeof (char *));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, (num_atts + 1) * sizeof (char *));
       goto error_exit;
     }
 
@@ -6043,12 +5874,11 @@ sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info,
 
       new_constraint->att_names[i] = strdup (attr_name);
       if (new_constraint->att_names[i] == NULL)
-	{
-	  error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1,
-		  strlen (attr_name) + 1);
-	  goto error_exit;
-	}
+        {
+          error_code = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, strlen (attr_name) + 1);
+          goto error_exit;
+        }
     }
 
   if (c->asc_desc != NULL)
@@ -6057,16 +5887,15 @@ sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info,
 
       new_constraint->asc_desc = (int *) calloc (num_atts, sizeof (int));
       if (new_constraint->asc_desc == NULL)
-	{
-	  error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1,
-		  num_atts * sizeof (int));
-	  goto error_exit;
-	}
+        {
+          error_code = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, num_atts * sizeof (int));
+          goto error_exit;
+        }
       for (i = 0; i < num_atts; ++i)
-	{
-	  new_constraint->asc_desc[i] = c->asc_desc[i];
-	}
+        {
+          new_constraint->asc_desc[i] = c->asc_desc[i];
+        }
     }
 
   assert (new_constraint->next == NULL);
@@ -6104,9 +5933,9 @@ sm_has_non_null_attribute (SM_ATTRIBUTE ** attrs)
   for (i = 0; attrs[i] != NULL; i++)
     {
       if (attrs[i]->flags & SM_ATTFLAG_NON_NULL)
-	{
-	  return 1;
-	}
+        {
+          return 1;
+        }
     }
 
   return 0;

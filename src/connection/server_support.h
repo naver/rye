@@ -35,9 +35,9 @@
 typedef struct css_job_entry CSS_JOB_ENTRY;
 struct css_job_entry
 {
-  CSS_CONN_ENTRY *conn_entry;	/* conn entry from which we read request */
-  CSS_THREAD_FN func;		/* request handling function */
-  CSS_THREAD_ARG arg;		/* handling function argument */
+  CSS_CONN_ENTRY *conn_entry;   /* conn entry from which we read request */
+  CSS_THREAD_FN func;           /* request handling function */
+  CSS_THREAD_ARG arg;           /* handling function argument */
   struct css_job_entry *next;
 };
 
@@ -62,13 +62,10 @@ extern void css_wakeup_all_jobq_waiters (void);
 
 extern void *css_oob_handler_thread (void *arg);
 
-extern int css_send_reply_to_client (CSS_CONN_ENTRY * conn, unsigned int eid,
-				     int num_buffers, ...);
-extern unsigned int css_send_abort_to_client (CSS_CONN_ENTRY * conn,
-					      unsigned int eid);
+extern int css_send_reply_to_client (CSS_CONN_ENTRY * conn, unsigned int eid, int num_buffers, ...);
+extern unsigned int css_send_abort_to_client (CSS_CONN_ENTRY * conn, unsigned int eid);
 extern int css_init (const char *server_name);
-extern void css_set_client_version (THREAD_ENTRY * thread_p,
-				    const RYE_VERSION * version);
+extern void css_set_client_version (THREAD_ENTRY * thread_p, const RYE_VERSION * version);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern void css_end_server_request (CSS_CONN_ENTRY * conn);
 #endif
@@ -77,15 +74,10 @@ extern bool css_is_shutdown_timeout_expired (void);
 extern bool css_is_ha_repl_delayed (void);
 extern void css_set_ha_repl_delayed (void);
 extern void css_unset_ha_repl_delayed (void);
-extern int css_check_ha_server_state_for_client (THREAD_ENTRY * thread_p,
-						 int whence);
-extern int css_change_ha_server_state (THREAD_ENTRY * thread_p,
-				       HA_STATE req_server_state, bool force);
-extern int css_notify_ha_apply_state (THREAD_ENTRY * thread_p,
-				      const PRM_NODE_INFO * node_info,
-				      HA_APPLY_STATE state);
-extern THREAD_RET_T THREAD_CALLING_CONVENTION
-css_connection_handler_thread (void *arg_p);
+extern int css_check_ha_server_state_for_client (THREAD_ENTRY * thread_p, int whence);
+extern int css_change_ha_server_state (THREAD_ENTRY * thread_p, HA_STATE req_server_state, bool force);
+extern int css_notify_ha_apply_state (THREAD_ENTRY * thread_p, const PRM_NODE_INFO * node_info, HA_APPLY_STATE state);
+extern THREAD_RET_T THREAD_CALLING_CONVENTION css_connection_handler_thread (void *arg_p);
 
 extern void css_epoll_set_check (CSS_CONN_ENTRY * conn, bool check_conn);
 extern int css_epoll_del_conn (CSS_CONN_ENTRY * conn);
@@ -96,12 +88,9 @@ extern int css_decr_num_run_thread (JOB_QUEUE_TYPE q_type);
 
 extern int css_init_job_queue (void);
 extern void css_final_job_queue (void);
-extern int css_get_new_job (JOB_QUEUE_TYPE q_type,
-			    CSS_JOB_ENTRY * ret_job_entry);
-extern int css_add_to_job_queue (JOB_QUEUE_TYPE q_type,
-				 CSS_JOB_ENTRY * job_entry);
-extern int css_internal_request_handler (THREAD_ENTRY * thread_p,
-					 CSS_THREAD_ARG arg);
+extern int css_get_new_job (JOB_QUEUE_TYPE q_type, CSS_JOB_ENTRY * ret_job_entry);
+extern int css_add_to_job_queue (JOB_QUEUE_TYPE q_type, CSS_JOB_ENTRY * job_entry);
+extern int css_internal_request_handler (THREAD_ENTRY * thread_p, CSS_THREAD_ARG arg);
 #if 0
 extern void css_job_queue_check (FILE * out_fp);
 #endif

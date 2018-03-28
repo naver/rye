@@ -67,13 +67,12 @@ net_buf_destroy (T_NET_BUF * net_buf)
 int
 net_buf_cp_byte (T_NET_BUF * net_buf, char ch)
 {
-  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_BYTE
-      && net_buf_realloc (net_buf, NET_SIZE_BYTE) < 0)
+  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_BYTE && net_buf_realloc (net_buf, NET_SIZE_BYTE) < 0)
     {
       return CAS_ER_NO_MORE_MEMORY;
     }
 
-  *(NET_BUF_CURR_PTR (net_buf)) = ch;	/* do not call memcpy(); simply assign */
+  *(NET_BUF_CURR_PTR (net_buf)) = ch;   /* do not call memcpy(); simply assign */
   net_buf->data_size += NET_SIZE_BYTE;
   return 0;
 }
@@ -84,8 +83,7 @@ net_buf_cp_str (T_NET_BUF * net_buf, const char *buf, int size)
   if (size <= 0)
     return 0;
 
-  if (NET_BUF_FREE_SIZE (net_buf) < size
-      && net_buf_realloc (net_buf, size) < 0)
+  if (NET_BUF_FREE_SIZE (net_buf) < size && net_buf_realloc (net_buf, size) < 0)
     {
       return CAS_ER_NO_MORE_MEMORY;
     }
@@ -98,13 +96,12 @@ net_buf_cp_str (T_NET_BUF * net_buf, const char *buf, int size)
 int
 net_buf_cp_int (T_NET_BUF * net_buf, int value, int *begin_offset)
 {
-  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_INT
-      && net_buf_realloc (net_buf, NET_SIZE_INT) < 0)
+  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_INT && net_buf_realloc (net_buf, NET_SIZE_INT) < 0)
     {
       if (begin_offset)
-	{
-	  *begin_offset = -1;
-	}
+        {
+          *begin_offset = -1;
+        }
       return CAS_ER_NO_MORE_MEMORY;
     }
 
@@ -134,13 +131,12 @@ net_buf_overwrite_int (T_NET_BUF * net_buf, int offset, int value)
 int
 net_buf_cp_bigint (T_NET_BUF * net_buf, DB_BIGINT value, int *begin_offset)
 {
-  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_BIGINT
-      && net_buf_realloc (net_buf, NET_SIZE_BIGINT) < 0)
+  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_BIGINT && net_buf_realloc (net_buf, NET_SIZE_BIGINT) < 0)
     {
       if (begin_offset)
-	{
-	  *begin_offset = -1;
-	}
+        {
+          *begin_offset = -1;
+        }
       return CAS_ER_NO_MORE_MEMORY;
     }
 
@@ -159,8 +155,7 @@ net_buf_cp_bigint (T_NET_BUF * net_buf, DB_BIGINT value, int *begin_offset)
 int
 net_buf_cp_double (T_NET_BUF * net_buf, double value)
 {
-  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_DOUBLE
-      && net_buf_realloc (net_buf, NET_SIZE_DOUBLE) < 0)
+  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_DOUBLE && net_buf_realloc (net_buf, NET_SIZE_DOUBLE) < 0)
     {
       return CAS_ER_NO_MORE_MEMORY;
     }
@@ -174,8 +169,7 @@ net_buf_cp_double (T_NET_BUF * net_buf, double value)
 int
 net_buf_cp_short (T_NET_BUF * net_buf, short value)
 {
-  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_SHORT
-      && net_buf_realloc (net_buf, NET_SIZE_SHORT) < 0)
+  if (NET_BUF_FREE_SIZE (net_buf) < NET_SIZE_SHORT && net_buf_realloc (net_buf, NET_SIZE_SHORT) < 0)
     {
       return CAS_ER_NO_MORE_MEMORY;
     }
@@ -187,8 +181,7 @@ net_buf_cp_short (T_NET_BUF * net_buf, short value)
 }
 
 void
-net_buf_error_msg_set (T_NET_BUF * net_buf, int err_indicator,
-		       int err_code, char *err_str)
+net_buf_error_msg_set (T_NET_BUF * net_buf, int err_indicator, int err_code, char *err_str)
 {
   size_t err_str_len = 0;
 
@@ -269,8 +262,7 @@ net_htond (double from)
 #endif /* !BYTE_ORDER_BIG_ENDIAN */
 
 void
-net_buf_column_info_set (T_NET_BUF * net_buf, char ut, short scale,
-			 int prec, const char *name)
+net_buf_column_info_set (T_NET_BUF * net_buf, char ut, short scale, int prec, const char *name)
 {
   net_buf_cp_byte (net_buf, ut);
   net_buf_cp_short (net_buf, scale);
@@ -286,17 +278,17 @@ net_buf_column_info_set (T_NET_BUF * net_buf, char ut, short scale,
 
       RYE_ALLOC_COPY_STR (tmp_str, name);
       if (tmp_str == NULL)
-	{
-	  net_buf_cp_int (net_buf, 1, NULL);
-	  net_buf_cp_byte (net_buf, '\0');
-	}
+        {
+          net_buf_cp_int (net_buf, 1, NULL);
+          net_buf_cp_byte (net_buf, '\0');
+        }
       else
-	{
-	  trim (tmp_str);
-	  net_buf_cp_int (net_buf, strlen (tmp_str) + 1, NULL);
-	  net_buf_cp_str (net_buf, tmp_str, strlen (tmp_str) + 1);
-	  RYE_FREE_MEM (tmp_str);
-	}
+        {
+          trim (tmp_str);
+          net_buf_cp_int (net_buf, strlen (tmp_str) + 1, NULL);
+          net_buf_cp_str (net_buf, tmp_str, strlen (tmp_str) + 1);
+          RYE_FREE_MEM (tmp_str);
+        }
     }
 }
 
@@ -312,11 +304,11 @@ net_buf_realloc (T_NET_BUF * net_buf, int size)
       new_alloc_size = net_buf->alloc_size + extra * NET_BUF_EXTRA_SIZE;
       net_buf->data = (char *) RYE_REALLOC (net_buf->data, new_alloc_size);
       if (net_buf->data == NULL)
-	{
-	  net_buf->alloc_size = 0;
-	  net_buf->err_code = CAS_ER_NO_MORE_MEMORY;
-	  return -1;
-	}
+        {
+          net_buf->alloc_size = 0;
+          net_buf->err_code = CAS_ER_NO_MORE_MEMORY;
+          return -1;
+        }
 
       net_buf->alloc_size = new_alloc_size;
     }
@@ -440,8 +432,7 @@ net_arg_get_time (short *hh, short *mm, short *ss, void *arg)
 }
 
 void
-net_arg_get_datetime (short *yr, short *mon, short *day, short *hh, short *mm,
-		      short *ss, short *ms, void *arg)
+net_arg_get_datetime (short *yr, short *mon, short *day, short *hh, short *mm, short *ss, short *ms, void *arg)
 {
   short tmp_s;
   char *cur_p = (char *) arg + NET_SIZE_INT;

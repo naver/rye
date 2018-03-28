@@ -55,15 +55,15 @@
  */
 
 int lock_Comp[5][5] = {
-  {DB_NA, DB_NA, DB_NA, DB_NA, DB_NA}		/* N/A */
+  {DB_NA, DB_NA, DB_NA, DB_NA, DB_NA}   /* N/A */
   ,
-  {DB_NA, true, true, true, true}		/* NULL */
+  {DB_NA, true, true, true, true}       /* NULL */
   ,
-  {DB_NA, true, true, true, false}		/* S */
+  {DB_NA, true, true, true, false}      /* S */
   ,
-  {DB_NA, true, true, false, false}		/* U */
+  {DB_NA, true, true, false, false}     /* U */
   ,
-  {DB_NA, true, false, false, false}		/* X */
+  {DB_NA, true, false, false, false}    /* X */
 };
 
 /*
@@ -89,13 +89,13 @@ int lock_Comp[5][5] = {
  */
 
 LOCK lock_Conv[5][5] = {
-  {NA_LOCK, NA_LOCK, NA_LOCK, NA_LOCK, NA_LOCK}	/* N/A */
+  {NA_LOCK, NA_LOCK, NA_LOCK, NA_LOCK, NA_LOCK} /* N/A */
   ,
-  {NA_LOCK, NULL_LOCK, S_LOCK,  U_LOCK, X_LOCK}	/* NULL */
+  {NA_LOCK, NULL_LOCK, S_LOCK, U_LOCK, X_LOCK}  /* NULL */
   ,
-  {NA_LOCK, S_LOCK, S_LOCK, U_LOCK, X_LOCK}	/* S */
+  {NA_LOCK, S_LOCK, S_LOCK, U_LOCK, X_LOCK}     /* S */
   ,
-  {NA_LOCK, U_LOCK, U_LOCK, U_LOCK, X_LOCK}	/* U */
+  {NA_LOCK, U_LOCK, U_LOCK, U_LOCK, X_LOCK}     /* U */
   ,
-  {NA_LOCK, X_LOCK, X_LOCK, X_LOCK, X_LOCK}	/* X */
+  {NA_LOCK, X_LOCK, X_LOCK, X_LOCK, X_LOCK}     /* X */
 };

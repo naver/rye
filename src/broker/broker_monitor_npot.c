@@ -107,16 +107,13 @@ typedef struct
 static void print_usage (void);
 static int get_args (int argc, char *argv[]);
 static int set_my_hostname (void);
-static void npot_broker_monitor (T_SHM_INFO * shm_info,
-				 bool is_rawdata_print);
+static void npot_broker_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print);
 static char *get_pw_name (uid_t uid);
-static T_SHM_INFO *make_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type,
-				  const char *user_name);
+static T_SHM_INFO *make_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type, const char *user_name);
 static bool is_shm_all_valid (void);
 static void reset_shm_info_list (void);
 static void clear_shm_info (void);
-static int add_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type,
-			 const char *user_name);
+static int add_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type, const char *user_name);
 static int find_all_rye_shm (void);
 static int uid_equals (const void *key1, const void *key2);
 static unsigned int uid_ht_hash (const void *key, unsigned int ht_size);
@@ -124,17 +121,14 @@ static unsigned int stat_info_ht_hash (const void *key, unsigned int ht_size);
 static int stat_info_equals (const void *key1, const void *key2);
 static int stat_info_ht_rem_data (void *key, void *data, void *args);
 static void print_monitor_item (const char *metric_name,
-				const char *item_name, const char *instance,
-				const char *tag_broker_or_db,
-				const char *broker_db_name, time_t check_time,
-				int64_t value, uint64_t acc_time,
-				bool is_cumulative_value,
-				bool is_collecting_time,
-				bool is_rawdata_print);
+                                const char *item_name, const char *instance,
+                                const char *tag_broker_or_db,
+                                const char *broker_db_name, time_t check_time,
+                                int64_t value, uint64_t acc_time,
+                                bool is_cumulative_value, bool is_collecting_time, bool is_rawdata_print);
 static void send_data (const char *metric_name, const char *item_name,
-		       const char *instance, const char *tag_broker_or_db,
-		       const char *broker_db_name, time_t check_time,
-		       const char *value_p);
+                       const char *instance, const char *tag_broker_or_db,
+                       const char *broker_db_name, time_t check_time, const char *value_p);
 static T_MONITOR_ITEM *clone_monitor_item (T_MONITOR_ITEM * item);
 static int make_connect_info (char *arg);
 static int tcp_connect (void);
@@ -142,10 +136,8 @@ static void tcp_send (const char *msg, int size);
 static void tcp_close (void);
 
 static void npot_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print);
-static T_DB_STATS_INFO *create_db_stats_info_for_server (MONITOR_INFO *
-							 monitor);
-static T_DB_STATS_INFO *create_db_stats_info_for_repl (MONITOR_INFO *
-						       monitor);
+static T_DB_STATS_INFO *create_db_stats_info_for_server (MONITOR_INFO * monitor);
+static T_DB_STATS_INFO *create_db_stats_info_for_repl (MONITOR_INFO * monitor);
 
 static T_SHM_INFO *shm_Info_list = NULL;
 static char my_Hostname[64];
@@ -188,8 +180,7 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  item_Ht = cci_mht_create ("mointor_item_hash", 1000, stat_info_ht_hash,
-			    stat_info_equals);
+  item_Ht = cci_mht_create ("mointor_item_hash", 1000, stat_info_ht_hash, stat_info_equals);
   uid_Ht = cci_mht_create ("uid_ht", 10, uid_ht_hash, uid_equals);
 
   if (item_Ht == NULL || uid_Ht == NULL)
@@ -200,54 +191,52 @@ main (int argc, char *argv[])
   while (repeat_Count != 0)
     {
       if (tcp_Send_connect_info != NULL)
-	{
-	  if (tcp_connect () < 0)
-	    {
-	      goto loop_end;
-	    }
-	}
+        {
+          if (tcp_connect () < 0)
+            {
+              goto loop_end;
+            }
+        }
 
       if (find_all_rye_shm () < 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
       if (is_shm_all_valid () == false)
-	{
-	  cci_mht_clear (item_Ht, stat_info_ht_rem_data, NULL);
-	  clear_shm_info ();
-	  sleep (1);
-	  continue;
-	}
+        {
+          cci_mht_clear (item_Ht, stat_info_ht_rem_data, NULL);
+          clear_shm_info ();
+          sleep (1);
+          continue;
+        }
 
       shm_info = shm_Info_list;
       while (shm_info)
-	{
-	  if (shm_info->is_valid
-	      && (userName == NULL
-		  || strcmp (userName, shm_info->user_name) == 0))
-	    {
-	      if (shm_info->shm_type == RYE_SHM_TYPE_BROKER_GLOBAL)
-		{
-		  npot_broker_monitor (shm_info, is_rawdata_print);
-		}
-	      else if (shm_info->shm_type == RYE_SHM_TYPE_MONITOR)
-		{
-		  npot_monitor (shm_info, is_rawdata_print);
-		}
-	    }
-	  shm_info = shm_info->next;
-	}
+        {
+          if (shm_info->is_valid && (userName == NULL || strcmp (userName, shm_info->user_name) == 0))
+            {
+              if (shm_info->shm_type == RYE_SHM_TYPE_BROKER_GLOBAL)
+                {
+                  npot_broker_monitor (shm_info, is_rawdata_print);
+                }
+              else if (shm_info->shm_type == RYE_SHM_TYPE_MONITOR)
+                {
+                  npot_monitor (shm_info, is_rawdata_print);
+                }
+            }
+          shm_info = shm_info->next;
+        }
 
     loop_end:
       if (repeat_Count > 0)
-	{
-	  repeat_Count--;
-	}
+        {
+          repeat_Count--;
+        }
       if (repeat_Count != 0)
-	{
-	  sleep (MONITOR_INTERVAL);
-	}
+        {
+          sleep (MONITOR_INTERVAL);
+        }
     }
 
   return 0;
@@ -263,22 +252,22 @@ get_args (int argc, char *argv[])
   while ((opt = getopt (argc, argv, "c:r:u:f:")) != -1)
     {
       switch (opt)
-	{
-	case 'c':
-	  if (make_connect_info (optarg) < 0)
-	    {
-	      return -1;
-	    }
-	  break;
-	case 'r':
-	  repeat_Count = atoi (optarg);
-	  break;
-	case 'f':
-	  printFilter = optarg;
-	  break;
-	default:
-	  return -1;
-	}
+        {
+        case 'c':
+          if (make_connect_info (optarg) < 0)
+            {
+              return -1;
+            }
+          break;
+        case 'r':
+          repeat_Count = atoi (optarg);
+          break;
+        case 'f':
+          printFilter = optarg;
+          break;
+        default:
+          return -1;
+        }
     }
 
   if (printFilter != NULL)
@@ -287,41 +276,41 @@ get_args (int argc, char *argv[])
 
       filter_array = Rye_split_string (printFilter, ",");
       if (filter_array == NULL)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
       snprintf (buf, sizeof (buf), "user=");
       found = Rye_str_array_find_substr (filter_array, buf);
       if (found != -1)
-	{
-	  userName = strstr (filter_array[found], "=");
-	  userName = strdup (userName + 1);
-	}
+        {
+          userName = strstr (filter_array[found], "=");
+          userName = strdup (userName + 1);
+        }
 
       snprintf (buf, sizeof (buf), "metric=");
       found = Rye_str_array_find_substr (filter_array, buf);
       if (found != -1)
-	{
-	  metricFilter = strstr (filter_array[found], "=");
-	  metricFilter = strdup (metricFilter + 1);
-	}
+        {
+          metricFilter = strstr (filter_array[found], "=");
+          metricFilter = strdup (metricFilter + 1);
+        }
 
       snprintf (buf, sizeof (buf), "%s=", TAG_DB_NAME);
       found = Rye_str_array_find_substr (filter_array, buf);
       if (found != -1)
-	{
-	  dbnameFilter = strstr (filter_array[found], "=");
-	  dbnameFilter = strdup (dbnameFilter + 1);
-	}
+        {
+          dbnameFilter = strstr (filter_array[found], "=");
+          dbnameFilter = strdup (dbnameFilter + 1);
+        }
 
       snprintf (buf, sizeof (buf), "%s=", TAG_ITEM);
       found = Rye_str_array_find_substr (filter_array, buf);
       if (found != -1)
-	{
-	  itemFilter = strstr (filter_array[found], "=");
-	  itemFilter = strdup (itemFilter + 1);
-	}
+        {
+          itemFilter = strstr (filter_array[found], "=");
+          itemFilter = strdup (itemFilter + 1);
+        }
 
       Rye_str_array_free (filter_array);
     }
@@ -335,8 +324,7 @@ print_usage (void)
   printf ("broker_monitor_npot [-c] [-r] [-u]\n");
   printf ("\t-c connection url(default: stdout)\n");
   printf ("\t-r repeat count(default: inf)\n");
-  printf ("\t-f output filter(filters:user,metric,%s,%s"
-	  " ex:item=pageid,metric=ha)\n", TAG_DB_NAME, TAG_ITEM);
+  printf ("\t-f output filter(filters:user,metric,%s,%s" " ex:item=pageid,metric=ha)\n", TAG_DB_NAME, TAG_ITEM);
 }
 
 static int
@@ -348,9 +336,9 @@ set_my_hostname ()
   if (p == NULL)
     {
       if (gethostname (my_Hostname, sizeof (my_Hostname)) < 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
   else
     {
@@ -383,8 +371,7 @@ create_db_stats_info_for_server (MONITOR_INFO * monitor)
   T_DB_STATS_INFO *db_stats = NULL;
   int i, num_stats;
 
-  if (monitor == NULL
-      || monitor->meta->num_stats != MNT_SIZE_OF_SERVER_EXEC_STATS)
+  if (monitor == NULL || monitor->meta->num_stats != MNT_SIZE_OF_SERVER_EXEC_STATS)
     {
       assert (false);
       return NULL;
@@ -401,168 +388,145 @@ create_db_stats_info_for_server (MONITOR_INFO * monitor)
   for (i = 0; i < num_stats; i++)
     {
       db_stats[i].is_cumulative = monitor_stats_is_cumulative (monitor, i);
-      db_stats[i].is_collecting_time =
-	monitor_stats_is_collecting_time (monitor, i);
+      db_stats[i].is_collecting_time = monitor_stats_is_collecting_time (monitor, i);
     }
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SQL_TRACE_LOCK_WAITS],
-		     "sql_trace", "lock_waits");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SQL_TRACE_LATCH_WAITS],
-		     "sql_trace", "latch_waits");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SQL_TRACE_LOCK_WAITS], "sql_trace", "lock_waits");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SQL_TRACE_LATCH_WAITS], "sql_trace", "latch_waits");
 
-#if 1				/* csect sub-info */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ER_LOG_FILE], "csect", "er_log_file");	/* 0 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ER_MSG_CACHE], "csect", "er_msg_cache");	/* 1 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WFG], "csect", "wfg");	/* 2 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_LOG], "csect", "log");	/* 3 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_LOG_BUFFER], "csect", "log_buffer");	/* 4 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_LOG_ARCHIVE], "csect", "log_archive");	/* 5 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE], "csect", "sr_locator_classname_table");	/* 6 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_FILE_NEWFILE], "csect", "file_newfile");	/* 7 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_QPROC_QUERY_TABLE], "csect", "qproc_query_table");	/* 8 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_BOOT_SR_DBPARM], "csect", "boot_sr_dbparm");	/* 9 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_DISK_REFRESH_GOODVOL], "csect", "disk_refresh_goodvol");	/* 10 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CNV_FMT_LEXER], "csect", "cnv_fmt_lexer");	/* 11 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CT_OID_TABLE], "csect", "ct_oid_table");	/* 12 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_HA_SERVER_STATE], "csect", "ha_server_state");	/* 13 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_SESSION_STATE], "csect", "session_state");	/* 14 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ACL], "csect", "waits_acl");	/* 15 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_EVENT_LOG_FILE], "csect", "event_log_file");	/* 16 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ACCESS_STATUS], "csect", "access_status");	/* 17 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_TEMPFILE_CACHE], "csect", "tempfile_cache");	/* 18 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CSS_ACTIVE_CONN], "csect", "css_active_conn");	/* 19 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CSS_FREE_CONN], "csect", "css_free_conn");	/* 20 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_UNKNOWN], "csect", "unknown");	/* 21 */
+#if 1                           /* csect sub-info */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ER_LOG_FILE], "csect", "er_log_file");   /* 0 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ER_MSG_CACHE], "csect", "er_msg_cache"); /* 1 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WFG], "csect", "wfg");   /* 2 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_LOG], "csect", "log");   /* 3 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_LOG_BUFFER], "csect", "log_buffer");     /* 4 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_LOG_ARCHIVE], "csect", "log_archive");   /* 5 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE], "csect", "sr_locator_classname_table");     /* 6 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_FILE_NEWFILE], "csect", "file_newfile"); /* 7 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_QPROC_QUERY_TABLE], "csect", "qproc_query_table");       /* 8 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_BOOT_SR_DBPARM], "csect", "boot_sr_dbparm");     /* 9 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_DISK_REFRESH_GOODVOL], "csect", "disk_refresh_goodvol"); /* 10 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CNV_FMT_LEXER], "csect", "cnv_fmt_lexer");       /* 11 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CT_OID_TABLE], "csect", "ct_oid_table"); /* 12 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_HA_SERVER_STATE], "csect", "ha_server_state");   /* 13 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_SESSION_STATE], "csect", "session_state");       /* 14 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ACL], "csect", "waits_acl");     /* 15 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_EVENT_LOG_FILE], "csect", "event_log_file");     /* 16 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_ACCESS_STATUS], "csect", "access_status");       /* 17 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_TEMPFILE_CACHE], "csect", "tempfile_cache");     /* 18 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CSS_ACTIVE_CONN], "csect", "css_active_conn");   /* 19 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_CSS_FREE_CONN], "csect", "css_free_conn");       /* 20 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_UNKNOWN], "csect", "unknown");   /* 21 */
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ER_LOG_FILE], "csect", "waits_er_log_file");	/* 0 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ER_MSG_CACHE], "csect", "waits_er_msg_cache");	/* 1 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_WFG], "csect", "waits_wfg");	/* 2 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_LOG], "csect", "waits_log");	/* 3 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_LOG_BUFFER], "csect", "waits_log_buffer");	/* 4 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_LOG_ARCHIVE], "csect", "waits_log_archive");	/* 5 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE], "csect", "waits_sr_locator_classname_table");	/* 6 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_FILE_NEWFILE], "csect", "waits_file_newfile");	/* 7 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE], "csect", "waits_qproc_query_table");	/* 8 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM], "csect", "waits_boot_sr_dbparm");	/* 9 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL], "csect", "waits_disk_refresh_goodvol");	/* 10 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER], "csect", "waits_cnv_fmt_lexer");	/* 11 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CT_OID_TABLE], "csect", "waits_ct_oid_table");	/* 12 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_HA_SERVER_STATE], "csect", "waits_ha_server_state");	/* 13 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_SESSION_STATE], "csect", "waits_session_state");	/* 14 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ACL], "csect", "waits_acl");	/* 15 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE], "csect", "waits_event_log_file");	/* 16 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ACCESS_STATUS], "csect", "waits_access_status");	/* 17 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE], "csect", "waits_tempfile_cache");	/* 18 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN], "csect", "waits_css_active_conn");	/* 19 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CSS_FREE_CONN], "csect", "waits_css_free_conn");	/* 20 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_UNKNOWN], "csect", "waits_unknown");	/* 21 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ER_LOG_FILE], "csect", "waits_er_log_file");       /* 0 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ER_MSG_CACHE], "csect", "waits_er_msg_cache");     /* 1 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_WFG], "csect", "waits_wfg");       /* 2 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_LOG], "csect", "waits_log");       /* 3 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_LOG_BUFFER], "csect", "waits_log_buffer"); /* 4 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_LOG_ARCHIVE], "csect", "waits_log_archive");       /* 5 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE], "csect", "waits_sr_locator_classname_table"); /* 6 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_FILE_NEWFILE], "csect", "waits_file_newfile");     /* 7 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE], "csect", "waits_qproc_query_table");   /* 8 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM], "csect", "waits_boot_sr_dbparm"); /* 9 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL], "csect", "waits_disk_refresh_goodvol");     /* 10 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER], "csect", "waits_cnv_fmt_lexer");   /* 11 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CT_OID_TABLE], "csect", "waits_ct_oid_table");     /* 12 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_HA_SERVER_STATE], "csect", "waits_ha_server_state");       /* 13 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_SESSION_STATE], "csect", "waits_session_state");   /* 14 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ACL], "csect", "waits_acl");       /* 15 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE], "csect", "waits_event_log_file"); /* 16 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_ACCESS_STATUS], "csect", "waits_access_status");   /* 17 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE], "csect", "waits_tempfile_cache"); /* 18 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN], "csect", "waits_css_active_conn");       /* 19 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_CSS_FREE_CONN], "csect", "waits_css_free_conn");   /* 20 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_CSECT_WAITS_UNKNOWN], "csect", "waits_unknown");       /* 21 */
 #endif
 
 #if 0
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_SECTOR_ALLOCS],
-		     "disk", "sector_allocs");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_SECTOR_DEALLOCS],
-		     "disk", "sector_deallocs");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_PAGE_ALLOCS],
-		     "disk", "page_allocs");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_PAGE_DEALLOCS],
-		     "disk", "page_deallocs");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_SECTOR_ALLOCS], "disk", "sector_allocs");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_SECTOR_DEALLOCS], "disk", "sector_deallocs");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_PAGE_ALLOCS], "disk", "page_allocs");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_PAGE_DEALLOCS], "disk", "page_deallocs");
 #endif
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_TEMP_EXPAND],
-		     "disk", "temp_expand");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DISK_TEMP_EXPAND], "disk", "temp_expand");
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES],
-		     "datapage", "fetch");
-#if 1				/* fetches sub-info */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER], "datapage", "fetch_file_header");	/* 1 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB], "datapage", "fetch_file_tab");	/* 2 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER], "datapage", "fetch_heap_header");	/* 3 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_HEAP], "datapage", "fetch_heap");	/* 4 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER], "datapage", "fetch_volheader");	/* 5 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP], "datapage", "fetch_volbitmap");	/* 6 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_XASL], "datapage", "fetch_xasl");	/* 7 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_QRESULT], "datapage", "fetch_qresult");	/* 8 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_EHASH], "datapage", "fetch_ehash");	/* 9 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW], "datapage", "fetch_overflow");	/* 10 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_AREA], "datapage", "fetch_area");	/* 11 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_CATALOG], "datapage", "fetch_catalog");	/* 12 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT], "datapage", "fetch_btree_root");	/* 13 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_BTREE], "datapage", "fetch_btree");	/* 14 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN], "datapage", "fetch_unknown");	/* 0 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES], "datapage", "fetch");
+#if 1                           /* fetches sub-info */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER], "datapage", "fetch_file_header");      /* 1 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB], "datapage", "fetch_file_tab");    /* 2 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER], "datapage", "fetch_heap_header");      /* 3 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_HEAP], "datapage", "fetch_heap");    /* 4 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER], "datapage", "fetch_volheader");  /* 5 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP], "datapage", "fetch_volbitmap");  /* 6 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_XASL], "datapage", "fetch_xasl");    /* 7 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_QRESULT], "datapage", "fetch_qresult");      /* 8 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_EHASH], "datapage", "fetch_ehash");  /* 9 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW], "datapage", "fetch_overflow");    /* 10 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_AREA], "datapage", "fetch_area");    /* 11 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_CATALOG], "datapage", "fetch_catalog");      /* 12 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT], "datapage", "fetch_btree_root");        /* 13 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_BTREE], "datapage", "fetch_btree");  /* 14 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN], "datapage", "fetch_unknown");      /* 0 */
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER], "datapage", "fetch_wait_file_header");	/* 1 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB], "datapage", "fetch_wait_file_tab");	/* 2 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER], "datapage", "fetch_wait_heap_header");	/* 3 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP], "datapage", "fetch_wait_heap");	/* 4 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER], "datapage", "fetch_wait_volheader");	/* 5 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP], "datapage", "fetch_wait_volbitmap");	/* 6 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_XASL], "datapage", "fetch_wait_xasl");	/* 7 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT], "datapage", "fetch_wait_qresult");	/* 8 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH], "datapage", "fetch_wait_ehash");	/* 9 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW], "datapage", "fetch_wait_overflow");	/* 10 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_AREA], "datapage", "fetch_wait_area");	/* 11 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG], "datapage", "fetch_wait_catalog");	/* 12 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT], "datapage", "fetch_wait_btree_root");	/* 13 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE], "datapage", "fetch_wait_btree");	/* 14 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN], "datapage", "fetch_wait_unknown");	/* 0 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER], "datapage", "fetch_wait_file_header");   /* 1 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB], "datapage", "fetch_wait_file_tab"); /* 2 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER], "datapage", "fetch_wait_heap_header");   /* 3 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP], "datapage", "fetch_wait_heap"); /* 4 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER], "datapage", "fetch_wait_volheader");       /* 5 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP], "datapage", "fetch_wait_volbitmap");       /* 6 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_XASL], "datapage", "fetch_wait_xasl"); /* 7 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT], "datapage", "fetch_wait_qresult");   /* 8 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH], "datapage", "fetch_wait_ehash");       /* 9 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW], "datapage", "fetch_wait_overflow"); /* 10 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_AREA], "datapage", "fetch_wait_area"); /* 11 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG], "datapage", "fetch_wait_catalog");   /* 12 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT], "datapage", "fetch_wait_btree_root");     /* 13 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE], "datapage", "fetch_wait_btree");       /* 14 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN], "datapage", "fetch_wait_unknown");   /* 0 */
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES], "datapage", "fetch_track_file_allocset_alloc_pages");	/* 15 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES], "datapage", "fetch_track_file_alloc_pages");	/* 16 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE], "datapage", "fetch_track_file_dealloc_page");	/* 17 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE], "datapage", "fetch_track_heap_find_best_page");	/* 18 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC], "datapage", "fetch_track_heap_find_bestspace_sync");	/* 19 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT], "datapage", "fetch_track_heap_ovf_insert");	/* 20 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE], "datapage", "fetch_track_heap_ovf_update");	/* 21 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE], "datapage", "fetch_track_heap_ovf_delete");	/* 22 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL], "datapage", "fetch_track_btree_merge_level");	/* 23 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA], "datapage", "fetch_track_btree_load_data");	/* 24 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT], "datapage", "fetch_track_pgbuf_flush_checkpoint");	/* 25 */
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK], "datapage", "fetch_track_log_rollback");	/* 26 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES], "datapage", "fetch_track_file_allocset_alloc_pages");      /* 15 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES], "datapage", "fetch_track_file_alloc_pages");        /* 16 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE], "datapage", "fetch_track_file_dealloc_page");      /* 17 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE], "datapage", "fetch_track_heap_find_best_page");  /* 18 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC], "datapage", "fetch_track_heap_find_bestspace_sync");     /* 19 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT], "datapage", "fetch_track_heap_ovf_insert");  /* 20 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE], "datapage", "fetch_track_heap_ovf_update");  /* 21 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE], "datapage", "fetch_track_heap_ovf_delete");  /* 22 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL], "datapage", "fetch_track_btree_merge_level");      /* 23 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA], "datapage", "fetch_track_btree_load_data");  /* 24 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT], "datapage", "fetch_track_pgbuf_flush_checkpoint");    /* 25 */
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK], "datapage", "fetch_track_log_rollback");        /* 26 */
 #endif
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_IOREADS],
-		     "datapage", "ioread");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_IOWRITES],
-		     "datapage", "iowrite");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_IOREADS], "datapage", "ioread");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_IOWRITES], "datapage", "iowrite");
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_LOG_PAGE_IOREADS],
-		     "logpage", "ioread");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_LOG_PAGE_IOWRITES],
-		     "logpage", "iowrite");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_LOG_PAGE_IOREADS], "logpage", "ioread");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_LOG_PAGE_IOWRITES], "logpage", "iowrite");
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_LOG_CHECKPOINTS],
-		     "event", "checkpoint");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_LOG_CHECKPOINTS], "event", "checkpoint");
 
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_DDL_LOCKS_REQUESTS], "lock", "ddl");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_GLOBAL_LOCKS_REQUEST],
-		     "lock", "global");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SHARD_LOCKS_REQUEST],
-		     "lock", "shard");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_GLOBAL_LOCKS_REQUEST], "lock", "global");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SHARD_LOCKS_REQUEST], "lock", "shard");
 
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_TRAN_COMMITS], "tran", "commit");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_TRAN_ROLLBACKS], "tran", "rollback");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_TRAN_INTERRUPTS],
-		     "tran", "interrupt");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_TRAN_INTERRUPTS], "tran", "interrupt");
 
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_INSERTS], "btree", "insert");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_DELETES], "btree", "delete");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_UPDATES], "btree", "update");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_LOAD_DATA],
-		     "event", "create_index");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_LOAD_DATA], "event", "create_index");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_COVERED], "btree", "covered");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_NONCOVERED],
-		     "btree", "noncovered");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_NONCOVERED], "btree", "noncovered");
 #if 0
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_RESUMES], "btree", "resumes");
-  SET_DB_STATS_INFO (&db_stats
-		     [MNT_STATS_BTREE_MULTIRANGE_OPTIMIZATION], "btree",
-		     "multirange_optimization");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_MULTIRANGE_OPTIMIZATION], "btree", "multirange_optimization");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_SPLITS], "btree", "splits");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_MERGES], "btree", "merges");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_PAGE_ALLOCS], "btree",
-		     "page_allocs");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_PAGE_DEALLOCS],
-		     "btree", "page_deallocs");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_PAGE_ALLOCS], "btree", "page_allocs");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_BTREE_PAGE_DEALLOCS], "btree", "page_deallocs");
 #endif
 
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_QUERY_SELECTS], "query", "select");
@@ -573,51 +537,34 @@ create_db_stats_info_for_server (MONITOR_INFO * monitor)
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_QUERY_ISCANS], "query", "iscan");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_QUERY_LSCANS], "query", "lscan");
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_QUERY_HOLDABLE_CURSORS],
-		     "query", "holdablecursors");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_QUERY_HOLDABLE_CURSORS], "query", "holdablecursors");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_SORT_IO_PAGES], "sort", "iopage");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SORT_DATA_PAGES],
-		     "sort", "datapage");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_SORT_DATA_PAGES], "sort", "datapage");
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_NETWORK_REQUESTS],
-		     "network", "request");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_NETWORK_REQUESTS], "network", "request");
 
-  SET_DB_STATS_INFO (&db_stats
-		     [MNT_STATS_HEAP_STATS_BESTSPACE_ENTRIES], "heap",
-		     "bestspace");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_HEAP_STATS_BESTSPACE_ENTRIES], "heap", "bestspace");
 
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_ADD], "plancache", "add");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_LOOKUP],
-		     "plancache", "lookup");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_LOOKUP], "plancache", "lookup");
   SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_HIT], "plancache", "hit");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_MISS],
-		     "plancache", "miss");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_FULL],
-		     "plancache", "full");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_DELETE],
-		     "plancache", "delete");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_INVALID_XASL_ID],
-		     "plancache", "invalid");
-  SET_DB_STATS_INFO (&db_stats
-		     [MNT_STATS_PLAN_CACHE_QUERY_STRING_HASH_ENTRIES],
-		     "plancache", "entry");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_MISS], "plancache", "miss");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_FULL], "plancache", "full");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_DELETE], "plancache", "delete");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_INVALID_XASL_ID], "plancache", "invalid");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PLAN_CACHE_QUERY_STRING_HASH_ENTRIES], "plancache", "entry");
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PRIOR_LSA_LIST_SIZE],
-		     "prior_lsa", "size");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PRIOR_LSA_LIST_MAXED],
-		     "prior_lsa", "maxed");
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PRIOR_LSA_LIST_REMOVED],
-		     "prior_lsa", "removed");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PRIOR_LSA_LIST_SIZE], "prior_lsa", "size");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PRIOR_LSA_LIST_MAXED], "prior_lsa", "maxed");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_PRIOR_LSA_LIST_REMOVED], "prior_lsa", "removed");
 
-  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO],
-		     "buffer", "hit_ratio");
+  SET_DB_STATS_INFO (&db_stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO], "buffer", "hit_ratio");
 
   return db_stats;
 }
 
 static void
-npot_print_cur_stats (MONITOR_INFO * monitor, T_DB_STATS_INFO * db_stats,
-		      const char *user_name, bool is_rawdata_print)
+npot_print_cur_stats (MONITOR_INFO * monitor, T_DB_STATS_INFO * db_stats, const char *user_name, bool is_rawdata_print)
 {
   MONITOR_STATS *cur_stats = NULL;
   time_t check_time = time (NULL);
@@ -647,25 +594,22 @@ npot_print_cur_stats (MONITOR_INFO * monitor, T_DB_STATS_INFO * db_stats,
   for (i = 0; i < num_stats; i++)
     {
       if (db_stats[i].metric == NULL)
-	{
-	  continue;
-	}
-      if (monitor->meta->monitor_type == MONITOR_TYPE_REPL
-	  && i == MNT_RP_DELAY)
-	{
-	  clock_gettime (CLOCK_REALTIME, &cur_time);
+        {
+          continue;
+        }
+      if (monitor->meta->monitor_type == MONITOR_TYPE_REPL && i == MNT_RP_DELAY)
+        {
+          clock_gettime (CLOCK_REALTIME, &cur_time);
 
-	  cur_stats[i].value = (timespec_to_msec (&cur_time)
-				- cur_stats[MNT_RP_APPLIED_TIME].value);
-	}
+          cur_stats[i].value = (timespec_to_msec (&cur_time) - cur_stats[MNT_RP_APPLIED_TIME].value);
+        }
 
       print_monitor_item (db_stats[i].metric,
-			  db_stats[i].item, user_name,
-			  TAG_DB_NAME, monitor_get_name (monitor),
-			  check_time, cur_stats[i].value,
-			  cur_stats[i].acc_time,
-			  db_stats[i].is_cumulative,
-			  db_stats[i].is_collecting_time, is_rawdata_print);
+                          db_stats[i].item, user_name,
+                          TAG_DB_NAME, monitor_get_name (monitor),
+                          check_time, cur_stats[i].value,
+                          cur_stats[i].acc_time,
+                          db_stats[i].is_cumulative, db_stats[i].is_collecting_time, is_rawdata_print);
     }
 
   free_and_init (cur_stats);
@@ -678,8 +622,7 @@ create_db_stats_info_for_repl (MONITOR_INFO * monitor)
   T_DB_STATS_INFO *db_stats = NULL;
   int i, num_stats;
 
-  if (monitor == NULL
-      || monitor->meta->num_stats != MNT_SIZE_OF_REPL_EXEC_STATS)
+  if (monitor == NULL || monitor->meta->num_stats != MNT_SIZE_OF_REPL_EXEC_STATS)
     {
       assert (false);
       return NULL;
@@ -696,23 +639,18 @@ create_db_stats_info_for_repl (MONITOR_INFO * monitor)
   for (i = 0; i < num_stats; i++)
     {
       db_stats[i].is_cumulative = monitor_stats_is_cumulative (monitor, i);
-      db_stats[i].is_collecting_time =
-	monitor_stats_is_collecting_time (monitor, i);
+      db_stats[i].is_collecting_time = monitor_stats_is_collecting_time (monitor, i);
     }
 
   SET_DB_STATS_INFO (&db_stats[MNT_RP_EOF_PAGEID], "ha", "eof_pageid");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_GAP], "ha", "received_gap");
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_PAGEID],
-		     "ha", "received_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_RECEIVED_PAGEID], "ha", "received_pageid");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_GAP], "ha", "flushed_gap");
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_PAGEID],
-		     "ha", "flushed_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_FLUSHED_PAGEID], "ha", "flushed_pageid");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_CURRENT_GAP], "ha", "current_gap");
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_CURRENT_PAGEID],
-		     "ha", "current_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_CURRENT_PAGEID], "ha", "current_pageid");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_REQUIRED_GAP], "ha", "required_gap");
-  SET_DB_STATS_INFO (&db_stats[MNT_RP_REQUIRED_PAGEID],
-		     "ha", "required_pageid");
+  SET_DB_STATS_INFO (&db_stats[MNT_RP_REQUIRED_PAGEID], "ha", "required_pageid");
 
   SET_DB_STATS_INFO (&db_stats[MNT_RP_APPLIED_TIME], "ha", "applied_time");
   SET_DB_STATS_INFO (&db_stats[MNT_RP_DELAY], "ha", "delay");
@@ -743,19 +681,17 @@ npot_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print)
     {
       db_stats = create_db_stats_info_for_server (monitor);
       if (db_stats != NULL)
-	{
-	  npot_print_cur_stats (monitor, db_stats, shm_info->user_name,
-				is_rawdata_print);
-	}
+        {
+          npot_print_cur_stats (monitor, db_stats, shm_info->user_name, is_rawdata_print);
+        }
     }
   else if (monitor->meta->monitor_type == MONITOR_TYPE_REPL)
     {
       db_stats = create_db_stats_info_for_repl (monitor);
       if (db_stats != NULL)
-	{
-	  npot_print_cur_stats (monitor, db_stats, shm_info->user_name,
-				is_rawdata_print);
-	}
+        {
+          npot_print_cur_stats (monitor, db_stats, shm_info->user_name, is_rawdata_print);
+        }
     }
   else
     {
@@ -793,53 +729,47 @@ npot_broker_monitor (T_SHM_INFO * shm_info, bool is_rawdata_print)
       br_info_p = &shm_br->br_info[br_idx];
 
       if (br_info_p->service_flag != SERVICE_ON)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if (br_info_p->broker_type != NORMAL_BROKER)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      shm_appl = rye_shm_attach (br_info_p->appl_server_shm_key,
-				 RYE_SHM_TYPE_BROKER_LOCAL, true);
+      shm_appl = rye_shm_attach (br_info_p->appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, true);
       if (shm_appl == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       for (i = 0; i < br_info_p->appl_server_max_num; i++)
-	{
-	  as_info_p = &(shm_appl->info.as_info[i]);
+        {
+          as_info_p = &(shm_appl->info.as_info[i]);
 
-	  num_qx += as_info_p->num_queries_processed;
-	  num_error += (as_info_p->num_error_queries -
-			as_info_p->num_unique_error_queries);
+          num_qx += as_info_p->num_queries_processed;
+          num_error += (as_info_p->num_error_queries - as_info_p->num_unique_error_queries);
 
-	  if (as_info_p->uts_status == UTS_STATUS_BUSY
-	      && as_info_p->con_status != CON_STATUS_OUT_TRAN)
-	    {
-	      if (as_info_p->log_msg[0] == '\0')
-		{
-		  num_client_wait++;
-		}
-	      else
-		{
-		  num_busy++;
-		}
-	    }
-	}
+          if (as_info_p->uts_status == UTS_STATUS_BUSY && as_info_p->con_status != CON_STATUS_OUT_TRAN)
+            {
+              if (as_info_p->log_msg[0] == '\0')
+                {
+                  num_client_wait++;
+                }
+              else
+                {
+                  num_busy++;
+                }
+            }
+        }
 
       print_monitor_item (METRIC_BROKER_QPS, NULL, shm_info->user_name,
-			  TAG_BROKER_NAME, br_info_p->name, check_time,
-			  num_qx, 0, true, false, is_rawdata_print);
+                          TAG_BROKER_NAME, br_info_p->name, check_time, num_qx, 0, true, false, is_rawdata_print);
       print_monitor_item (METRIC_BROKER_ERROR, NULL,
-			  shm_info->user_name, TAG_BROKER_NAME,
-			  br_info_p->name, check_time, num_error, 0, true,
-			  false, is_rawdata_print);
+                          shm_info->user_name, TAG_BROKER_NAME,
+                          br_info_p->name, check_time, num_error, 0, true, false, is_rawdata_print);
       print_monitor_item (METRIC_BROKER_BUSY_CAS, NULL, shm_info->user_name,
-			  TAG_BROKER_NAME, br_info_p->name, check_time,
-			  num_busy, 0, false, false, is_rawdata_print);
+                          TAG_BROKER_NAME, br_info_p->name, check_time, num_busy, 0, false, false, is_rawdata_print);
 
       rye_shm_detach (shm_appl);
     }
@@ -864,24 +794,20 @@ clone_monitor_item (T_MONITOR_ITEM * item)
 
 static void
 set_monitor_item (T_MONITOR_ITEM * item, const char *metric,
-		  const char *item_name, const char *instance,
-		  const char *broker_db_name, time_t check_time,
-		  int64_t value, uint64_t acc_time)
+                  const char *item_name, const char *instance,
+                  const char *broker_db_name, time_t check_time, int64_t value, uint64_t acc_time)
 {
   if (item_name == NULL)
     {
-      snprintf (item->item_hash_key, sizeof (item->item_hash_key),
-		"%s", metric);
+      snprintf (item->item_hash_key, sizeof (item->item_hash_key), "%s", metric);
     }
   else
     {
-      snprintf (item->item_hash_key, sizeof (item->item_hash_key),
-		"%s.%s", metric, item_name);
+      snprintf (item->item_hash_key, sizeof (item->item_hash_key), "%s.%s", metric, item_name);
     }
 
   item->instance = instance;
-  strncpy (item->broker_db_name, broker_db_name,
-	   sizeof (item->broker_db_name));
+  strncpy (item->broker_db_name, broker_db_name, sizeof (item->broker_db_name));
   item->broker_db_name[sizeof (item->broker_db_name) - 1] = '\0';
   item->last_check_time = check_time;
   item->last_value = value;
@@ -898,33 +824,29 @@ copy_monitor_item_value (T_MONITOR_ITEM * dest, const T_MONITOR_ITEM * src)
 
 static void
 print_monitor_item (const char *metric_name, const char *item_name,
-		    const char *instance, const char *tag_broker_or_db,
-		    const char *broker_db_name, time_t check_time,
-		    int64_t value, uint64_t acc_time,
-		    bool is_cumulative_value, bool is_collecting_time,
-		    bool is_rawdata_print)
+                    const char *instance, const char *tag_broker_or_db,
+                    const char *broker_db_name, time_t check_time,
+                    int64_t value, uint64_t acc_time,
+                    bool is_cumulative_value, bool is_collecting_time, bool is_rawdata_print)
 {
   char value_buf[128];
   char *value_p = NULL;
   char avg_time_buf[128];
   char *avg_time_p = NULL;
 
-  if (metricFilter != NULL && metric_name != NULL
-      && strstr (metric_name, metricFilter) == NULL)
+  if (metricFilter != NULL && metric_name != NULL && strstr (metric_name, metricFilter) == NULL)
     {
       return;
     }
 
   if (dbnameFilter != NULL && tag_broker_or_db != NULL
       && broker_db_name != NULL
-      && strcmp (tag_broker_or_db, TAG_DB_NAME) == 0
-      && strstr (broker_db_name, dbnameFilter) == NULL)
+      && strcmp (tag_broker_or_db, TAG_DB_NAME) == 0 && strstr (broker_db_name, dbnameFilter) == NULL)
     {
       return;
     }
 
-  if (itemFilter != NULL && item_name != NULL
-      && strstr (item_name, itemFilter) == NULL)
+  if (itemFilter != NULL && item_name != NULL && strstr (item_name, itemFilter) == NULL)
     {
       return;
     }
@@ -934,45 +856,41 @@ print_monitor_item (const char *metric_name, const char *item_name,
       T_MONITOR_ITEM cur_item;
       T_MONITOR_ITEM *prev_item;
 
-      set_monitor_item (&cur_item, metric_name, item_name, instance,
-			broker_db_name, check_time, value, acc_time);
+      set_monitor_item (&cur_item, metric_name, item_name, instance, broker_db_name, check_time, value, acc_time);
 
       prev_item = cci_mht_get (item_Ht, &cur_item);
       if (prev_item == NULL)
-	{
-	  prev_item = clone_monitor_item (&cur_item);
-	  cci_mht_put (item_Ht, prev_item, prev_item);
-	}
+        {
+          prev_item = clone_monitor_item (&cur_item);
+          cci_mht_put (item_Ht, prev_item, prev_item);
+        }
       else
-	{
-	  if (prev_item->last_check_time < cur_item.last_check_time &&
-	      prev_item->last_value <= cur_item.last_value)
-	    {
-	      double value_per_sec;
-	      int64_t diff_value;
+        {
+          if (prev_item->last_check_time < cur_item.last_check_time && prev_item->last_value <= cur_item.last_value)
+            {
+              double value_per_sec;
+              int64_t diff_value;
 
-	      diff_value = cur_item.last_value - prev_item->last_value;
-	      value_per_sec = (double) diff_value /
-		(cur_item.last_check_time - prev_item->last_check_time);
+              diff_value = cur_item.last_value - prev_item->last_value;
+              value_per_sec = (double) diff_value / (cur_item.last_check_time - prev_item->last_check_time);
 
-	      sprintf (value_buf, "%.1f", value_per_sec);
-	      value_p = value_buf;
+              sprintf (value_buf, "%.1f", value_per_sec);
+              value_p = value_buf;
 
-	      if (is_collecting_time && diff_value > 0
-		  && prev_item->acc_time <= cur_item.acc_time)
-		{
-		  double time_per_value;
+              if (is_collecting_time && diff_value > 0 && prev_item->acc_time <= cur_item.acc_time)
+                {
+                  double time_per_value;
 
-		  time_per_value = (cur_item.acc_time - prev_item->acc_time);
-		  time_per_value /= diff_value;
+                  time_per_value = (cur_item.acc_time - prev_item->acc_time);
+                  time_per_value /= diff_value;
 
-		  sprintf (avg_time_buf, "%.1f", time_per_value);
-		  avg_time_p = avg_time_buf;
-		}
-	    }
+                  sprintf (avg_time_buf, "%.1f", time_per_value);
+                  avg_time_p = avg_time_buf;
+                }
+            }
 
-	  copy_monitor_item_value (prev_item, &cur_item);
-	}
+          copy_monitor_item_value (prev_item, &cur_item);
+        }
     }
   else
     {
@@ -982,24 +900,21 @@ print_monitor_item (const char *metric_name, const char *item_name,
 
   if (value_p != NULL)
     {
-      send_data (metric_name, item_name, instance, tag_broker_or_db,
-		 broker_db_name, check_time, value_p);
+      send_data (metric_name, item_name, instance, tag_broker_or_db, broker_db_name, check_time, value_p);
 
       if (avg_time_p != NULL)
-	{
-	  char perf_item_name[64];
-	  snprintf (perf_item_name, sizeof (perf_item_name), "%s.%s",
-		    metric_name, item_name);
-	  send_data ("perf", perf_item_name, instance, tag_broker_or_db,
-		     broker_db_name, check_time, avg_time_p);
-	}
+        {
+          char perf_item_name[64];
+          snprintf (perf_item_name, sizeof (perf_item_name), "%s.%s", metric_name, item_name);
+          send_data ("perf", perf_item_name, instance, tag_broker_or_db, broker_db_name, check_time, avg_time_p);
+        }
     }
 }
 
 static void
 send_data (const char *metric_name, const char *item_name,
-	   const char *instance, const char *tag_broker_or_db,
-	   const char *broker_db_name, time_t check_time, const char *value_p)
+           const char *instance, const char *tag_broker_or_db,
+           const char *broker_db_name, time_t check_time, const char *value_p)
 {
   char tag_item_value[1024];
 
@@ -1009,16 +924,14 @@ send_data (const char *metric_name, const char *item_name,
     }
   else
     {
-      snprintf (tag_item_value, sizeof (tag_item_value), "%s=%s",
-		TAG_ITEM, item_name);
+      snprintf (tag_item_value, sizeof (tag_item_value), "%s=%s", TAG_ITEM, item_name);
     }
 
   if (tcp_Send_connect_info == NULL)
     {
       printf ("%s%s %d %s %s=%s %s=%s %s=%s %s\n",
-	      METRIC_PREFIX, metric_name, (int) check_time, value_p,
-	      TAG_HOST, my_Hostname, tag_broker_or_db, broker_db_name,
-	      TAG_INSTANCE, instance, tag_item_value);
+              METRIC_PREFIX, metric_name, (int) check_time, value_p,
+              TAG_HOST, my_Hostname, tag_broker_or_db, broker_db_name, TAG_INSTANCE, instance, tag_item_value);
     }
   else
     {
@@ -1026,11 +939,10 @@ send_data (const char *metric_name, const char *item_name,
       int msg_size;
 
       msg_size = snprintf (msg_buf, sizeof (msg_buf),
-			   "put %s%s %d %s %s=%s %s=%s %s=%s %s %s\n",
-			   METRIC_PREFIX, metric_name, (int) check_time,
-			   value_p, TAG_HOST, my_Hostname, tag_broker_or_db,
-			   broker_db_name, TAG_INSTANCE, instance,
-			   tag_item_value, tag_Service);
+                           "put %s%s %d %s %s=%s %s=%s %s=%s %s %s\n",
+                           METRIC_PREFIX, metric_name, (int) check_time,
+                           value_p, TAG_HOST, my_Hostname, tag_broker_or_db,
+                           broker_db_name, TAG_INSTANCE, instance, tag_item_value, tag_Service);
       assert (msg_size < (int) sizeof (msg_buf));
       tcp_send (msg_buf, msg_size);
     }
@@ -1056,28 +968,26 @@ find_all_rye_shm ()
 
       shmid = shmctl (i, SHM_STAT, &shmid_ds);
       if (shmid < 0 || (shmid_ds.shm_perm.mode & SHM_DEST) != 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      shm_type = rye_shm_check_shm (shmid_ds.shm_perm.__key,
-				    RYE_SHM_TYPE_UNKNOWN, true);
+      shm_type = rye_shm_check_shm (shmid_ds.shm_perm.__key, RYE_SHM_TYPE_UNKNOWN, true);
       if (shm_type == RYE_SHM_TYPE_UNKNOWN)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       user_name = get_pw_name (shmid_ds.shm_perm.uid);
       if (user_name == NULL)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
-      if (add_shm_info (shmid_ds.shm_perm.__key, shmid,
-			shm_type, user_name) < 0)
-	{
-	  return -1;
-	}
+      if (add_shm_info (shmid_ds.shm_perm.__key, shmid, shm_type, user_name) < 0)
+        {
+          return -1;
+        }
     }
 
   return 0;
@@ -1114,14 +1024,14 @@ get_pw_name (uid_t uid)
   if (pw_name == NULL || uid_p == NULL)
     {
       if (pw_name != NULL)
-	{
-	  free (pw_name);
-	}
+        {
+          free (pw_name);
+        }
 
       if (uid_p != NULL)
-	{
-	  free (uid_p);
-	}
+        {
+          free (uid_p);
+        }
 
       return NULL;
     }
@@ -1134,8 +1044,7 @@ get_pw_name (uid_t uid)
 }
 
 static T_SHM_INFO *
-make_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type,
-	       const char *user_name)
+make_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type, const char *user_name)
 {
   T_SHM_INFO *shm_info;
 
@@ -1163,9 +1072,9 @@ is_shm_all_valid ()
   while (p)
     {
       if (p->is_valid == false)
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       p = p->next;
     }
 
@@ -1201,18 +1110,16 @@ clear_shm_info ()
 }
 
 static int
-add_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type,
-	      const char *user_name)
+add_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type, const char *user_name)
 {
   T_SHM_INFO *p = shm_Info_list;
 
   while (p)
     {
-      if (p->key == key && p->shmid == shmid && p->shm_type == shm_type &&
-	  strcmp (p->user_name, user_name) == 0)
-	{
-	  break;
-	}
+      if (p->key == key && p->shmid == shmid && p->shm_type == shm_type && strcmp (p->user_name, user_name) == 0)
+        {
+          break;
+        }
       p = p->next;
     }
 
@@ -1220,9 +1127,9 @@ add_shm_info (key_t key, int shmid, RYE_SHM_TYPE shm_type,
     {
       p = make_shm_info (key, shmid, shm_type, user_name);
       if (p == NULL)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
       p->next = shm_Info_list;
       shm_Info_list = p;
     }
@@ -1301,8 +1208,7 @@ stat_info_equals (const void *key1, const void *key2)
   assert (item1 != NULL && item2 != NULL);
 
   if (strcmp (item1->item_hash_key, item2->item_hash_key) == 0 &&
-      strcmp (item1->broker_db_name, item2->broker_db_name) == 0 &&
-      strcmp (item1->instance, item2->instance) == 0)
+      strcmp (item1->broker_db_name, item2->broker_db_name) == 0 && strcmp (item1->instance, item2->instance) == 0)
     {
       return 1;
     }
@@ -1313,8 +1219,7 @@ stat_info_equals (const void *key1, const void *key2)
 }
 
 static int
-stat_info_ht_rem_data (void *key, UNUSED_ARG void *data,
-		       UNUSED_ARG void *args)
+stat_info_ht_rem_data (void *key, UNUSED_ARG void *data, UNUSED_ARG void *args)
 {
   assert (key == data && key != NULL);
   free (key);
@@ -1347,10 +1252,10 @@ tcp_send (const char *msg, int size)
     {
       write_len = send (tcp_Send_fd, msg, size, 0);
       if (write_len <= 0)
-	{
-	  tcp_close ();
-	  return;
-	}
+        {
+          tcp_close ();
+          return;
+        }
 
       msg += write_len;
       size -= write_len;
@@ -1358,32 +1263,31 @@ tcp_send (const char *msg, int size)
 
   while (true)
     {
-      read_len = recv (tcp_Send_fd, dummy_read_buf, sizeof (dummy_read_buf),
-		       MSG_PEEK | MSG_DONTWAIT);
+      read_len = recv (tcp_Send_fd, dummy_read_buf, sizeof (dummy_read_buf), MSG_PEEK | MSG_DONTWAIT);
       if (read_len == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       else if (read_len > 0)
-	{
-	  read_len = recv (tcp_Send_fd, dummy_read_buf, read_len, 0);
+        {
+          read_len = recv (tcp_Send_fd, dummy_read_buf, read_len, 0);
 #if 0
-	  write (1, dummy_read_buf, read_len);
+          write (1, dummy_read_buf, read_len);
 #endif
-	}
+        }
 
       if (read_len < 0)
-	{
-	  if (errno == EAGAIN)
-	    {
-	      break;
-	    }
-	  else
-	    {
-	      tcp_close ();
-	      return;
-	    }
-	}
+        {
+          if (errno == EAGAIN)
+            {
+              break;
+            }
+          else
+            {
+              tcp_close ();
+              return;
+            }
+        }
     }
 }
 
@@ -1431,21 +1335,21 @@ tcp_connect ()
   if (ret < 0)
     {
       if (errno == EINPROGRESS)
-	{
-	  po[0].fd = tcp_Send_fd;
-	  po[0].events = POLLOUT;
-	  po[0].revents = 0;
+        {
+          po[0].fd = tcp_Send_fd;
+          po[0].events = POLLOUT;
+          po[0].revents = 0;
 
-	  ret = poll (po, 1, connect_timeout);
-	  if (ret <= 0 || po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	    {
-	      goto connect_err;
-	    }
-	}
+          ret = poll (po, 1, connect_timeout);
+          if (ret <= 0 || po[0].revents & POLLERR || po[0].revents & POLLHUP)
+            {
+              goto connect_err;
+            }
+        }
       else
-	{
-	  goto connect_err;
-	}
+        {
+          goto connect_err;
+        }
     }
 
   if (fcntl (tcp_Send_fd, F_SETFL, flags) < 0)
@@ -1454,21 +1358,18 @@ tcp_connect ()
     }
 
   sock_opt = 1;
-  if (setsockopt (tcp_Send_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt,
-		  sizeof (sock_opt)) < 0)
+  if (setsockopt (tcp_Send_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &sock_opt, sizeof (sock_opt)) < 0)
     {
       assert (0);
     }
 
   sock_opt = 1;
-  if (setsockopt (tcp_Send_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt,
-		  sizeof (sock_opt)) < 0)
+  if (setsockopt (tcp_Send_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &sock_opt, sizeof (sock_opt)) < 0)
     {
       assert (0);
     }
 
-  msg_size = snprintf (msg, sizeof (msg), "auth %s %s\n",
-		       tcp_Send_connect_info->id, tcp_Send_connect_info->pw);
+  msg_size = snprintf (msg, sizeof (msg), "auth %s %s\n", tcp_Send_connect_info->id, tcp_Send_connect_info->pw);
   assert (msg_size < (int) sizeof (msg));
   tcp_send (msg, msg_size);
 
@@ -1538,25 +1439,21 @@ make_connect_info (char *arg)
 #define CS_FUNC_ER_SET er_set
 void
 CS_FUNC_ER_SET (UNUSED_ARG int severity, UNUSED_ARG const char *file_name,
-		UNUSED_ARG const int line_no, UNUSED_ARG int err_id,
-		UNUSED_ARG int num_args, ...)
+                UNUSED_ARG const int line_no, UNUSED_ARG int err_id, UNUSED_ARG int num_args, ...)
 {
 }
 
 #define CS_FUNC_ER_SET_WITH_OSERROR er_set_with_oserror
 void
 CS_FUNC_ER_SET_WITH_OSERROR (UNUSED_ARG int severity,
-			     UNUSED_ARG const char *file_name,
-			     UNUSED_ARG const int line_no,
-			     UNUSED_ARG int err_id, UNUSED_ARG int num_args,
-			     ...)
+                             UNUSED_ARG const char *file_name,
+                             UNUSED_ARG const int line_no, UNUSED_ARG int err_id, UNUSED_ARG int num_args, ...)
 {
 }
 
 #define CS_FUNC_ER_SET_ERROR_POSITION er_set_error_position
 int
-CS_FUNC_ER_SET_ERROR_POSITION (UNUSED_ARG const char *file_name,
-			       UNUSED_ARG int line_no)
+CS_FUNC_ER_SET_ERROR_POSITION (UNUSED_ARG const char *file_name, UNUSED_ARG int line_no)
 {
   return -1;
 }
@@ -1570,16 +1467,13 @@ CS_FUNC_ER_ERRID (void)
 
 #define CS_FUNC_ER_LOG_DEBUG _er_log_debug
 void
-CS_FUNC_ER_LOG_DEBUG (UNUSED_ARG const char *file_name,
-		      UNUSED_ARG const int line_no,
-		      UNUSED_ARG const char *fmt, ...)
+CS_FUNC_ER_LOG_DEBUG (UNUSED_ARG const char *file_name, UNUSED_ARG const int line_no, UNUSED_ARG const char *fmt, ...)
 {
 }
 
 #define CS_FUNC_ER_DATETIME er_datetime
 int
-CS_FUNC_ER_DATETIME (UNUSED_ARG struct timeval *tv_p, UNUSED_ARG char *tmbuf,
-		     UNUSED_ARG int tmbuf_size)
+CS_FUNC_ER_DATETIME (UNUSED_ARG struct timeval *tv_p, UNUSED_ARG char *tmbuf, UNUSED_ARG int tmbuf_size)
 {
   return 0;
 }
@@ -1602,8 +1496,7 @@ CS_FUNC_PRM_GET_BOOL_VALUE (UNUSED_ARG PARAM_ID prm_id)
 
 #define CS_FUNC_PRM_IS_SAME_NODE prm_is_same_node
 bool
-CS_FUNC_PRM_IS_SAME_NODE (UNUSED_ARG const PRM_NODE_INFO * node1,
-			  UNUSED_ARG const PRM_NODE_INFO * node2)
+CS_FUNC_PRM_IS_SAME_NODE (UNUSED_ARG const PRM_NODE_INFO * node1, UNUSED_ARG const PRM_NODE_INFO * node2)
 {
   assert (0);
   return false;
@@ -1611,8 +1504,7 @@ CS_FUNC_PRM_IS_SAME_NODE (UNUSED_ARG const PRM_NODE_INFO * node1,
 
 #define CS_FUNC_CSS_IP_TO_STR css_ip_to_str
 int
-CS_FUNC_CSS_IP_TO_STR (UNUSED_ARG char *buf, UNUSED_ARG int size,
-		       UNUSED_ARG in_addr_t ip)
+CS_FUNC_CSS_IP_TO_STR (UNUSED_ARG char *buf, UNUSED_ARG int size, UNUSED_ARG in_addr_t ip)
 {
   assert (0);
   return -1;
@@ -1637,8 +1529,7 @@ CS_FUNC_PRM_GET_NULL_NODE_INFO (void)
 
 #define CS_FUNC_PRM_NODE_INFO_TO_STR prm_node_info_to_str
 void
-CS_FUNC_PRM_NODE_INFO_TO_STR (UNUSED_ARG char *buf, UNUSED_ARG int size,
-			      UNUSED_ARG const PRM_NODE_INFO * node_info)
+CS_FUNC_PRM_NODE_INFO_TO_STR (UNUSED_ARG char *buf, UNUSED_ARG int size, UNUSED_ARG const PRM_NODE_INFO * node_info)
 {
   assert (0);
 }

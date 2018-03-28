@@ -81,24 +81,22 @@ css_handle_pipe_shutdown (int sig)
     {
       entry = css_return_entry_from_conn (conn, css_Client_anchor);
       if (entry != NULL)
-	{
-	  css_remove_queued_connection_by_entry (entry, &css_Client_anchor);
-	}
+        {
+          css_remove_queued_connection_by_entry (entry, &css_Client_anchor);
+        }
       css_internal_server_shutdown ();
     }
   else
     {
       /* Avoid an infinite loop by checking if the previous handle is myself */
-      if (css_Previous_sigpipe_handler != NULL &&
-	  css_Previous_sigpipe_handler != css_handle_pipe_shutdown)
-	{
-	  (*css_Previous_sigpipe_handler) (sig);
-	}
+      if (css_Previous_sigpipe_handler != NULL && css_Previous_sigpipe_handler != css_handle_pipe_shutdown)
+        {
+          (*css_Previous_sigpipe_handler) (sig);
+        }
     }
 #else
   /* Avoid an infinite loop by checking if the previous handle is myself */
-  if (css_Previous_sigpipe_handler != NULL
-      && css_Previous_sigpipe_handler != css_handle_pipe_shutdown)
+  if (css_Previous_sigpipe_handler != NULL && css_Previous_sigpipe_handler != css_handle_pipe_shutdown)
     {
       (*css_Previous_sigpipe_handler) (sig);
     }
@@ -116,11 +114,9 @@ css_handle_pipe_shutdown (int sig)
 static void
 css_set_pipe_signal (void)
 {
-  css_Previous_sigpipe_handler = os_set_signal_handler (SIGPIPE,
-							css_handle_pipe_shutdown);
+  css_Previous_sigpipe_handler = os_set_signal_handler (SIGPIPE, css_handle_pipe_shutdown);
   if ((css_Previous_sigpipe_handler == SIG_IGN)
-      || (css_Previous_sigpipe_handler == SIG_ERR)
-      || (css_Previous_sigpipe_handler == SIG_DFL)
+      || (css_Previous_sigpipe_handler == SIG_ERR) || (css_Previous_sigpipe_handler == SIG_DFL)
 #if !defined(LINUX)
       || (css_Previous_sigpipe_handler == SIG_HOLD)
 #endif /* not LINUX */
@@ -144,8 +140,7 @@ css_client_init (const char *server_name, const PRM_NODE_INFO * node_info)
 
   prm_node_info_to_str (hostname, sizeof (hostname), node_info);
 
-  conn = css_connect_to_rye_server (node_info, server_name,
-				    SVR_CONNECT_TYPE_TO_SERVER);
+  conn = css_connect_to_rye_server (node_info, server_name, SVR_CONNECT_TYPE_TO_SERVER);
   if (conn != NULL)
     {
       css_queue_connection (conn, hostname, &css_Client_anchor);
@@ -154,11 +149,10 @@ css_client_init (const char *server_name, const PRM_NODE_INFO * node_info)
     {
       error = er_errid ();
       if (error == NO_ERROR)
-	{
-	  error = ER_NET_CANT_CONNECT_SERVER;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
-		  server_name, hostname);
-	}
+        {
+          error = ER_NET_CANT_CONNECT_SERVER;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, server_name, hostname);
+        }
     }
 
   return error;
@@ -174,8 +168,7 @@ css_client_init (const char *server_name, const PRM_NODE_INFO * node_info)
  *   buffer_size(in): size of data buffer
  */
 int
-css_send_error_to_server (char *host, unsigned int eid,
-			  char *buffer, int buffer_size)
+css_send_error_to_server (char *host, unsigned int eid, char *buffer, int buffer_size)
 {
   CSS_MAP_ENTRY *entry;
 
@@ -183,17 +176,16 @@ css_send_error_to_server (char *host, unsigned int eid,
   if (entry != NULL)
     {
       entry->conn->tran_index = tm_Tran_index;
-      css_Errno = css_send_error_packet (entry->conn, CSS_RID_FROM_EID (eid),
-					 buffer, buffer_size);
+      css_Errno = css_send_error_packet (entry->conn, CSS_RID_FROM_EID (eid), buffer, buffer_size);
       if (css_Errno == NO_ERRORS)
-	{
-	  return 0;
-	}
+        {
+          return 0;
+        }
       else
-	{
-	  css_remove_queued_connection_by_entry (entry, &css_Client_anchor);
-	  return css_Errno;
-	}
+        {
+          css_remove_queued_connection_by_entry (entry, &css_Client_anchor);
+          return css_Errno;
+        }
     }
 
   css_Errno = SERVER_WAS_NOT_FOUND;
@@ -208,8 +200,7 @@ css_send_error_to_server (char *host, unsigned int eid,
  *   rid(in): request id
  */
 int
-css_send_data_to_server_v (char *host, unsigned short rid,
-			   int num_buffers, va_list args)
+css_send_data_to_server_v (char *host, unsigned short rid, int num_buffers, va_list args)
 {
   CSS_MAP_ENTRY *entry;
 
@@ -243,12 +234,11 @@ css_terminate (bool server_error)
   while (css_Client_anchor)
     {
       if (server_error && css_Client_anchor->conn)
-	{
-	  css_Client_anchor->conn->status = CONN_CLOSING;
-	}
+        {
+          css_Client_anchor->conn->status = CONN_CLOSING;
+        }
       css_send_close_request (css_Client_anchor->conn);
-      css_remove_queued_connection_by_entry (css_Client_anchor,
-					     &css_Client_anchor);
+      css_remove_queued_connection_by_entry (css_Client_anchor, &css_Client_anchor);
     }
 
   /*
@@ -273,8 +263,7 @@ css_terminate (bool server_error)
  *       buffers to the server
  */
 unsigned int
-css_send_request_to_server_v (char *host, int request, int num_args,
-			      va_list args)
+css_send_request_to_server_v (char *host, int request, int num_args, va_list args)
 {
   CSS_MAP_ENTRY *entry;
   unsigned short rid;
@@ -284,18 +273,17 @@ css_send_request_to_server_v (char *host, int request, int num_args,
     {
       entry->conn->tran_index = tm_Tran_index;
 
-      css_Errno = css_send_command_packet_v (entry->conn, request, &rid,
-					     num_args, args);
+      css_Errno = css_send_command_packet_v (entry->conn, request, &rid, num_args, args);
 
       if (css_Errno == NO_ERRORS)
-	{
-	  return (css_make_eid (entry->id, rid));
-	}
+        {
+          return (css_make_eid (entry->id, rid));
+        }
       else
-	{
-	  css_remove_queued_connection_by_entry (entry, &css_Client_anchor);
-	  return 0;
-	}
+        {
+          css_remove_queued_connection_by_entry (entry, &css_Client_anchor);
+          return 0;
+        }
     }
 
   css_Errno = SERVER_WAS_NOT_FOUND;
@@ -304,16 +292,14 @@ css_send_request_to_server_v (char *host, int request, int num_args,
 
 int
 css_recv_data_from_server (CSS_NET_PACKET ** recv_packet,
-			   CSS_CONN_ENTRY * conn, int rid,
-			   int timeout, int num_buffers, ...)
+                           CSS_CONN_ENTRY * conn, int rid, int timeout, int num_buffers, ...)
 {
   va_list args;
   int rc;
 
   va_start (args, num_buffers);
 
-  rc = css_recv_data_from_server_v (recv_packet, conn, rid, timeout,
-				    num_buffers, args);
+  rc = css_recv_data_from_server_v (recv_packet, conn, rid, timeout, num_buffers, args);
 
   va_end (args);
 
@@ -322,8 +308,7 @@ css_recv_data_from_server (CSS_NET_PACKET ** recv_packet,
 
 int
 css_recv_data_from_server_v (CSS_NET_PACKET ** recv_packet,
-			     CSS_CONN_ENTRY * conn, int rid,
-			     int timeout, int num_buffers, va_list args)
+                             CSS_CONN_ENTRY * conn, int rid, int timeout, int num_buffers, va_list args)
 {
   CSS_NET_PACKET *tmp_recv_packet = NULL;
   bool er_set_flag = false;
@@ -346,56 +331,54 @@ css_recv_data_from_server_v (CSS_NET_PACKET ** recv_packet,
 
       va_copy (tmp_args, args);
 
-      css_error = css_net_packet_recv_v (&tmp_recv_packet, conn,
-					 timeout, num_buffers, tmp_args);
+      css_error = css_net_packet_recv_v (&tmp_recv_packet, conn, timeout, num_buffers, tmp_args);
 
       va_end (tmp_args);
 
       if (css_error != NO_ERRORS)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (tmp_recv_packet->header.request_id == rid)
-	{
-	  if (tmp_recv_packet->header.packet_type == DATA_TYPE)
-	    {
-	      if (recv_packet)
-		{
-		  *recv_packet = tmp_recv_packet;
-		}
-	      else
-		{
-		  css_net_packet_free (tmp_recv_packet);
-		}
-	      break;
-	    }
-	  else if (tmp_recv_packet->header.packet_type == ERROR_TYPE)
-	    {
-	      if (er_set_flag == false)
-		{
-		  char *err;
-		  assert (tmp_recv_packet->header.num_buffers == 1);
-		  err = css_net_packet_get_buffer (tmp_recv_packet, 0, -1,
-						   false);
-		  assert (err != NULL);
-		  er_set_area_error (err);
-		  er_set_flag = true;
-		}
-	    }
-	  else if (tmp_recv_packet->header.packet_type == ABORT_TYPE)
-	    {
-	      css_net_packet_free (tmp_recv_packet);
-	      return SERVER_ABORTED;
-	    }
-	}
+        {
+          if (tmp_recv_packet->header.packet_type == DATA_TYPE)
+            {
+              if (recv_packet)
+                {
+                  *recv_packet = tmp_recv_packet;
+                }
+              else
+                {
+                  css_net_packet_free (tmp_recv_packet);
+                }
+              break;
+            }
+          else if (tmp_recv_packet->header.packet_type == ERROR_TYPE)
+            {
+              if (er_set_flag == false)
+                {
+                  char *err;
+                  assert (tmp_recv_packet->header.num_buffers == 1);
+                  err = css_net_packet_get_buffer (tmp_recv_packet, 0, -1, false);
+                  assert (err != NULL);
+                  er_set_area_error (err);
+                  er_set_flag = true;
+                }
+            }
+          else if (tmp_recv_packet->header.packet_type == ABORT_TYPE)
+            {
+              css_net_packet_free (tmp_recv_packet);
+              return SERVER_ABORTED;
+            }
+        }
       else
-	{
-	  /* this case happens if signal handler call db_shutdown()
-	   * while some query is executing
-	   */
-	  // assert (false);
-	}
+        {
+          /* this case happens if signal handler call db_shutdown()
+           * while some query is executing
+           */
+          // assert (false);
+        }
 
       css_net_packet_free (tmp_recv_packet);
     }
@@ -404,8 +387,7 @@ css_recv_data_from_server_v (CSS_NET_PACKET ** recv_packet,
 }
 
 int
-css_recv_error_from_server (CSS_CONN_ENTRY * conn, int rid,
-			    char **error_area, int *error_length, int timeout)
+css_recv_error_from_server (CSS_CONN_ENTRY * conn, int rid, char **error_area, int *error_length, int timeout)
 {
   int css_error;
   CSS_NET_PACKET *tmp_recv_packet = NULL;
@@ -415,38 +397,36 @@ css_recv_error_from_server (CSS_CONN_ENTRY * conn, int rid,
       css_error = css_net_packet_recv (&tmp_recv_packet, conn, timeout, 0);
 
       if (css_error != NO_ERRORS)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (tmp_recv_packet->header.request_id != rid)
-	{
-	  assert (false);	/* TODO: NEED TEST */
-	}
+        {
+          assert (false);       /* TODO: NEED TEST */
+        }
       else if (tmp_recv_packet->header.packet_type == ERROR_TYPE)
-	{
-	  if (error_area)
-	    {
-	      *error_length = css_net_packet_get_recv_size (tmp_recv_packet,
-							    0);
-	      *error_area = css_net_packet_get_buffer (tmp_recv_packet, 0,
-						       -1, true);
-	      if (*error_area == NULL)
-		{
-		  css_error = ERROR_ON_READ;
-		}
-	    }
-	  break;
-	}
+        {
+          if (error_area)
+            {
+              *error_length = css_net_packet_get_recv_size (tmp_recv_packet, 0);
+              *error_area = css_net_packet_get_buffer (tmp_recv_packet, 0, -1, true);
+              if (*error_area == NULL)
+                {
+                  css_error = ERROR_ON_READ;
+                }
+            }
+          break;
+        }
       else if (tmp_recv_packet->header.packet_type == ABORT_TYPE)
-	{
-	  css_error = SERVER_ABORTED;
-	  break;
-	}
+        {
+          css_error = SERVER_ABORTED;
+          break;
+        }
       else
-	{
-	  assert (false);
-	}
+        {
+          assert (false);
+        }
 
       css_net_packet_free (tmp_recv_packet);
       tmp_recv_packet = NULL;

@@ -78,7 +78,7 @@ t_bind_string_add (T_STRING * t_str, char *str, int str_len, int bind_len)
       int new_alloc_size = STR_ALLOC_SIZE (t_str->data_len + str_len + 1);
       t_str->data = (char *) RYE_REALLOC (t_str->data, new_alloc_size);
       if (t_str->data == NULL)
-	return -1;
+        return -1;
       t_str->alloc_size = new_alloc_size;
     }
   memcpy (t_str->data + t_str->data_len, str, str_len);

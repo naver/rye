@@ -131,10 +131,9 @@ static void boot_shutdown_client_at_exit (void);
 #endif
 #if defined(CS_MODE)
 static int boot_cli_init_css (const char *dbname,
-			      const PRM_NODE_LIST * node_list,
-			      int client_type,
-			      bool check_capabilities, int opt_cap,
-			      bool discriminative, bool is_preferred_host);
+                              const PRM_NODE_LIST * node_list,
+                              int client_type,
+                              bool check_capabilities, int opt_cap, bool discriminative, bool is_preferred_host);
 #endif /* CS_MODE */
 static int boot_define_class (MOP class_mop);
 static int boot_define_attribute (MOP class_mop);
@@ -222,16 +221,15 @@ boot_client (int tran_index, int lock_wait)
  */
 int
 boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
-			BOOT_DB_PATH_INFO * db_path_info,
-			bool db_overwrite, const char *file_addmore_vols,
-			DKNPAGES npages, PGLENGTH db_desired_pagesize,
-			DKNPAGES log_npages,
-			PGLENGTH db_desired_log_page_size)
+                        BOOT_DB_PATH_INFO * db_path_info,
+                        bool db_overwrite, const char *file_addmore_vols,
+                        DKNPAGES npages, PGLENGTH db_desired_pagesize,
+                        DKNPAGES log_npages, PGLENGTH db_desired_log_page_size)
 {
-  OID rootclass_oid;		/* Oid of root class */
-  HFID rootclass_hfid;		/* Heap for classes */
-  int tran_index = NULL_TRAN_INDEX;	/* Assigned transaction index */
-  int tran_lock_wait_msecs;	/* Default lock waiting */
+  OID rootclass_oid;            /* Oid of root class */
+  HFID rootclass_hfid;          /* Heap for classes */
+  int tran_index = NULL_TRAN_INDEX;     /* Assigned transaction index */
+  int tran_lock_wait_msecs;     /* Default lock waiting */
   unsigned int length;
   int error_code = NO_ERROR;
 #if defined (CS_MODE)
@@ -263,10 +261,9 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
   if (lang_init () != NO_ERROR)
     {
       if (er_errid () == NO_ERROR)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOC_INIT, 1,
-		  "Failed to initialize language module");
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOC_INIT, 1, "Failed to initialize language module");
+        }
       error_code = ER_LOC_INIT;
       goto error_exit;
     }
@@ -280,8 +277,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
   /* database name must be specified */
   if (cli_cred->db_name == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_UNKNOWN_DATABASE, 1,
-	      "(null)");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_UNKNOWN_DATABASE, 1, "(null)");
       error_code = ER_BO_UNKNOWN_DATABASE;
       goto error_exit;
     }
@@ -289,8 +285,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
   /* open the system message catalog, before prm_ ?  */
   if (msgcat_init () != NO_ERROR)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_BO_CANNOT_ACCESS_MESSAGE_CATALOG, 0);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_CANNOT_ACCESS_MESSAGE_CATALOG, 0);
       error_code = ER_BO_CANNOT_ACCESS_MESSAGE_CATALOG;
       goto error_exit;
     }
@@ -311,8 +306,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
   if (envvar_db_dir (pathname, PATH_MAX, cli_cred->db_name) == NULL)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_BO_CWD_FAIL, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_CWD_FAIL, 0);
       error_code = ER_BO_CWD_FAIL;
       goto error_exit;
     }
@@ -323,8 +317,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
     {
       /* db_path + db_name is too long */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_BO_FULL_DATABASE_NAME_IS_TOO_LONG, 3, pathname,
-	      cli_cred->db_name, length, PATH_MAX);
+              ER_BO_FULL_DATABASE_NAME_IS_TOO_LONG, 3, pathname, cli_cred->db_name, length, PATH_MAX);
 
       error_code = ER_BO_FULL_DATABASE_NAME_IS_TOO_LONG;
       goto error_exit;
@@ -334,14 +327,13 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
   assert (db_path_info->db_host == NULL);
   if (db_path_info->db_host == NULL)
     {
-#if 0				/* use Unix-domain socket for localhost */
+#if 0                           /* use Unix-domain socket for localhost */
       if (GETHOSTNAME (db_host_buf, MAXHOSTNAMELEN) != 0)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_BO_UNABLE_TO_FIND_HOSTNAME, 0);
-	  error_code = ER_BO_UNABLE_TO_FIND_HOSTNAME;
-	  goto error_exit;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_UNABLE_TO_FIND_HOSTNAME, 0);
+          error_code = ER_BO_UNABLE_TO_FIND_HOSTNAME;
+          goto error_exit;
+        }
       db_host_buf[MAXHOSTNAMELEN] = '\0';
 #else
       strcpy (boot_Db_host_buf, "localhost");
@@ -352,8 +344,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
   prm_split_node_str (&node_list, db_path_info->db_host, false);
 
   /* Get the absolute path name */
-  COMPOSE_FULL_NAME (boot_Volume_label, sizeof (boot_Volume_label),
-		     pathname, cli_cred->db_name);
+  COMPOSE_FULL_NAME (boot_Volume_label, sizeof (boot_Volume_label), pathname, cli_cred->db_name);
 
   er_clear ();
 
@@ -365,40 +356,39 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
       char *upper_case_name;
 
       if (user_name != NULL)
-	{
-	  upper_case_name_size = strlen (user_name);
-	  upper_case_name = (char *) malloc (upper_case_name_size + 1);
-	  if (upper_case_name == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1, upper_case_name_size + 1);
-	    }
-	  else
-	    {
-	      intl_identifier_upper (user_name, upper_case_name);
-	      cli_cred->db_user = upper_case_name;
-	      db_user_alloced = upper_case_name;
-	    }
-	  free_and_init (user_name);
-	}
+        {
+          upper_case_name_size = strlen (user_name);
+          upper_case_name = (char *) malloc (upper_case_name_size + 1);
+          if (upper_case_name == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, upper_case_name_size + 1);
+            }
+          else
+            {
+              intl_identifier_upper (user_name, upper_case_name);
+              cli_cred->db_user = upper_case_name;
+              db_user_alloced = upper_case_name;
+            }
+          free_and_init (user_name);
+        }
       upper_case_name = NULL;
 
       if (cli_cred->db_user == NULL)
-	{
-	  cli_cred->db_user = boot_Client_no_user_string;
-	}
+        {
+          cli_cred->db_user = boot_Client_no_user_string;
+        }
     }
   /* Get the login name, host, and process identifier */
   if (cli_cred->login_name == NULL)
     {
       if (getuserid (boot_Client_id_buffer, L_cuserid) != (char *) NULL)
-	{
-	  cli_cred->login_name = boot_Client_id_buffer;
-	}
+        {
+          cli_cred->login_name = boot_Client_id_buffer;
+        }
       else
-	{
-	  cli_cred->login_name = boot_Client_id_unknown_string;
-	}
+        {
+          cli_cred->login_name = boot_Client_id_unknown_string;
+        }
     }
 
   if (cli_cred->host_name == NULL)
@@ -409,8 +399,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
 #if defined(CS_MODE)
   /* Initialize the communication subsystem */
   error_code = boot_cli_init_css (cli_cred->db_name, &node_list,
-				  cli_cred->client_type, false,
-				  BOOT_NO_OPT_CAP, false, false);
+                                  cli_cred->client_type, false, BOOT_NO_OPT_CAP, false, false);
   if (error_code != NO_ERROR)
     {
       goto error_exit;
@@ -431,11 +420,10 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
     }
   /* Initialize the disk and the server part */
   tran_index = boot_initialize_server (cli_cred, db_path_info,
-				       db_overwrite, file_addmore_vols,
-				       npages, db_desired_pagesize,
-				       log_npages, db_desired_log_page_size,
-				       &rootclass_oid, &rootclass_hfid,
-				       tran_lock_wait_msecs);
+                                       db_overwrite, file_addmore_vols,
+                                       npages, db_desired_pagesize,
+                                       log_npages, db_desired_log_page_size,
+                                       &rootclass_oid, &rootclass_hfid, tran_lock_wait_msecs);
   if (db_user_alloced != NULL)
     {
       assert (cli_cred->db_user != NULL);
@@ -448,10 +436,10 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
     {
       error_code = er_errid ();
       if (error_code == NO_ERROR)
-	{
-	  error_code = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, "");
-	}
+        {
+          error_code = ER_GENERIC_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, "");
+        }
       goto error_exit;
     }
 
@@ -503,9 +491,7 @@ boot_initialize_client (BOOT_CLIENT_CREDENTIAL * cli_cred,
 #if defined (CS_MODE)
   /* print version string */
   strncpy (format, msgcat_message (MSGCAT_CATALOG_RYE,
-				   MSGCAT_SET_GENERAL,
-				   MSGCAT_GENERAL_DATABASE_INIT),
-	   BOOT_FORMAT_MAX_LENGTH);
+                                   MSGCAT_SET_GENERAL, MSGCAT_GENERAL_DATABASE_INIT), BOOT_FORMAT_MAX_LENGTH);
   (void) fprintf (stdout, format, rel_package_string ());
 #endif /* CS_MODE */
 
@@ -600,18 +586,16 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
   if (lang_init () != NO_ERROR)
     {
       if (er_errid () == NO_ERROR)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOC_INIT, 1,
-		  "Failed to initialize language module");
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOC_INIT, 1, "Failed to initialize language module");
+        }
       return ER_LOC_INIT;
     }
 
   /* database name must be specified */
   if (cli_cred->db_name == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_UNKNOWN_DATABASE, 1,
-	      "(null)");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_UNKNOWN_DATABASE, 1, "(null)");
       return ER_BO_UNKNOWN_DATABASE;
     }
 
@@ -641,49 +625,45 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
       db_name[sizeof (db_name) - 1] = '\0';
 
       if (cli_cred->client_type == BOOT_CLIENT_REPL_BROKER)
-	{
+        {
 #if defined(CS_MODE)
-	  prm_split_node_str (&node_list, NULL, true);
+          prm_split_node_str (&node_list, NULL, true);
 #else /* CS_MODE */
-	  error_code = ER_NOT_IN_STANDALONE;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code,
-		  1, cli_cred->db_name);
-	  goto error;
+          error_code = ER_NOT_IN_STANDALONE;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, cli_cred->db_name);
+          goto error;
 #endif /* !CS_MODE */
-	}
+        }
       else
-	{
+        {
 #if defined(CS_MODE)
-	  cfg_get_hosts_from_shm (&node_list,
-				  cli_cred->client_type,
-				  cli_cred->connect_order_random);
-	  if (node_list.num_nodes <= 0)
-	    {
-	      prm_get_ha_node_list (&node_list);
-	      if (node_list.num_nodes <= 0)
-		{
-		  prm_split_node_str (&node_list, NULL, true);
-		}
-	    }
+          cfg_get_hosts_from_shm (&node_list, cli_cred->client_type, cli_cred->connect_order_random);
+          if (node_list.num_nodes <= 0)
+            {
+              prm_get_ha_node_list (&node_list);
+              if (node_list.num_nodes <= 0)
+                {
+                  prm_split_node_str (&node_list, NULL, true);
+                }
+            }
 
-	  if (node_list.num_nodes <= 0 ||
-	      (node_list.num_nodes > 1 &&
-	       (BOOT_ADMIN_CLIENT_TYPE (cli_cred->client_type) ||
-		BOOT_RSQL_CLIENT_TYPE (cli_cred->client_type) ||
-		BOOT_LOG_REPLICATOR_TYPE (cli_cred->client_type))))
-	    {
-	      error_code = ER_NET_NO_EXPLICIT_SERVER_HOST;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 0);
-	      goto error;
-	    }
+          if (node_list.num_nodes <= 0 ||
+              (node_list.num_nodes > 1 &&
+               (BOOT_ADMIN_CLIENT_TYPE (cli_cred->client_type) ||
+                BOOT_RSQL_CLIENT_TYPE (cli_cred->client_type) || BOOT_LOG_REPLICATOR_TYPE (cli_cred->client_type))))
+            {
+              error_code = ER_NET_NO_EXPLICIT_SERVER_HOST;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 0);
+              goto error;
+            }
 #endif /* CS_MODE */
-	}
+        }
     }
   else
     {
       /* db_name@host_name */
 #if defined(CS_MODE)
-      *ptr = '\0';		/* screen 'db@host' */
+      *ptr = '\0';              /* screen 'db@host' */
 
       prm_split_node_str (&node_list, ptr + 1, false);
 
@@ -693,8 +673,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
       *ptr = (char) '@';
 #else /* CS_MODE */
       error_code = ER_NOT_IN_STANDALONE;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code,
-	      1, cli_cred->db_name);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 1, cli_cred->db_name);
       goto error;
 #endif /* !CS_MODE */
     }
@@ -707,33 +686,33 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
       char *user_name = au_user_name_dup ();
 
       if (user_name != NULL)
-	{
-	  /* user name is upper-cased in server using server's charset */
-	  cli_cred->db_user = user_name;
-	  db_user_alloced = user_name;
-	}
+        {
+          /* user name is upper-cased in server using server's charset */
+          cli_cred->db_user = user_name;
+          db_user_alloced = user_name;
+        }
 
       if (cli_cred->db_user == NULL)
-	{
-	  cli_cred->db_user = boot_Client_no_user_string;
-	}
+        {
+          cli_cred->db_user = boot_Client_no_user_string;
+        }
       else if (cli_cred->db_user[0] == '\0')
-	{
-	  free_and_init (db_user_alloced);
-	  cli_cred->db_user = au_get_public_user_name ();
-	}
+        {
+          free_and_init (db_user_alloced);
+          cli_cred->db_user = au_get_public_user_name ();
+        }
     }
   /* Get the login name, host, and process identifier */
   if (cli_cred->login_name == NULL)
     {
       if (getuserid (boot_Client_id_buffer, L_cuserid) != (char *) NULL)
-	{
-	  cli_cred->login_name = boot_Client_id_buffer;
-	}
+        {
+          cli_cred->login_name = boot_Client_id_buffer;
+        }
       else
-	{
-	  cli_cred->login_name = boot_Client_id_unknown_string;
-	}
+        {
+          cli_cred->login_name = boot_Client_id_unknown_string;
+        }
     }
   if (cli_cred->host_name == NULL)
     {
@@ -754,163 +733,147 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
 
   for (i = 0; i < 2; i++)
     {
-      if (BOOT_IS_PREFERRED_HOSTS_SET (cli_cred)
-	  && skip_preferred_hosts == false)
-	{
-	  check_capabilities = true;
+      if (BOOT_IS_PREFERRED_HOSTS_SET (cli_cred) && skip_preferred_hosts == false)
+        {
+          check_capabilities = true;
 
-	  if (i == 0)		/* first */
-	    {
-	      optional_cap = BOOT_CHECK_HA_DELAY_CAP;
-	    }
-	  else			/* second */
-	    {
-	      if (!BOOT_REPLICA_ONLY_BROKER_CLIENT_TYPE
-		  (cli_cred->client_type)
-		  && BOOT_NORMAL_CLIENT_TYPE (cli_cred->client_type))
-		{
-		  check_capabilities = false;
-		}
-	      db_set_ignore_repl_delay ();
+          if (i == 0)           /* first */
+            {
+              optional_cap = BOOT_CHECK_HA_DELAY_CAP;
+            }
+          else                  /* second */
+            {
+              if (!BOOT_REPLICA_ONLY_BROKER_CLIENT_TYPE
+                  (cli_cred->client_type) && BOOT_NORMAL_CLIENT_TYPE (cli_cred->client_type))
+                {
+                  check_capabilities = false;
+                }
+              db_set_ignore_repl_delay ();
 
-	      optional_cap = BOOT_NO_OPT_CAP;
-	    }
+              optional_cap = BOOT_NO_OPT_CAP;
+            }
 
-	  boot_Host_connected = prm_get_null_node_info ();
+          boot_Host_connected = prm_get_null_node_info ();
 
-	  db_unset_reconnect_reason (DB_RC_NON_PREFERRED_HOSTS);
+          db_unset_reconnect_reason (DB_RC_NON_PREFERRED_HOSTS);
 
-	  /* connect to preferred hosts in a sequential order even though
-	   * a user sets CONNECT_ORDER to RANDOM
-	   */
-	  error_code = boot_cli_init_css (db_name, &cli_cred->preferred_nodes,
-					  cli_cred->client_type,
-					  check_capabilities,
-					  optional_cap, false, true);
+          /* connect to preferred hosts in a sequential order even though
+           * a user sets CONNECT_ORDER to RANDOM
+           */
+          error_code = boot_cli_init_css (db_name, &cli_cred->preferred_nodes,
+                                          cli_cred->client_type, check_capabilities, optional_cap, false, true);
 
-	  if (error_code != NO_ERROR)
-	    {
-	      db_set_reconnect_reason (DB_RC_NON_PREFERRED_HOSTS);
+          if (error_code != NO_ERROR)
+            {
+              db_set_reconnect_reason (DB_RC_NON_PREFERRED_HOSTS);
 
-	      if (error_code == ER_NET_SERVER_HAND_SHAKE)
-		{
-		  er_log_debug (ARG_FILE_LINE, "boot_restart_client: "
-				"boot_cli_init_css () ER_NET_SERVER_HAND_SHAKE\n");
+              if (error_code == ER_NET_SERVER_HAND_SHAKE)
+                {
+                  er_log_debug (ARG_FILE_LINE, "boot_restart_client: "
+                                "boot_cli_init_css () ER_NET_SERVER_HAND_SHAKE\n");
 
-		  boot_Host_connected = prm_get_null_node_info ();
-		}
-	      else
-		{
-		  skip_preferred_hosts = true;
-		}
-	    }
-	}
+                  boot_Host_connected = prm_get_null_node_info ();
+                }
+              else
+                {
+                  skip_preferred_hosts = true;
+                }
+            }
+        }
 
       if (skip_db_info == true)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (BOOT_IS_PREFERRED_HOSTS_SET (cli_cred) && error_code == NO_ERROR)
-	{
-	  /* connected to any preferred hosts successfully */
-	  break;
-	}
+        {
+          /* connected to any preferred hosts successfully */
+          break;
+        }
       else
-	if (BOOT_REPLICA_ONLY_BROKER_CLIENT_TYPE (cli_cred->client_type) ||
-	    cli_cred->client_type == BOOT_CLIENT_SLAVE_ONLY_BROKER)
+        if (BOOT_REPLICA_ONLY_BROKER_CLIENT_TYPE (cli_cred->client_type) ||
+            cli_cred->client_type == BOOT_CLIENT_SLAVE_ONLY_BROKER)
 
-	{
-	  check_capabilities = true;
-	  if (i == 0)		/* first */
-	    {
-	      optional_cap = BOOT_CHECK_HA_DELAY_CAP;
-	    }
-	  else			/* second */
-	    {
-	      db_set_ignore_repl_delay ();
+        {
+          check_capabilities = true;
+          if (i == 0)           /* first */
+            {
+              optional_cap = BOOT_CHECK_HA_DELAY_CAP;
+            }
+          else                  /* second */
+            {
+              db_set_ignore_repl_delay ();
 
-	      optional_cap = BOOT_NO_OPT_CAP;
-	    }
+              optional_cap = BOOT_NO_OPT_CAP;
+            }
 
-	  error_code = boot_cli_init_css (db_name, &node_list,
-					  cli_cred->client_type,
-					  check_capabilities,
-					  optional_cap, false, false);
-	}
+          error_code = boot_cli_init_css (db_name, &node_list,
+                                          cli_cred->client_type, check_capabilities, optional_cap, false, false);
+        }
       else if (BOOT_RSQL_CLIENT_TYPE (cli_cred->client_type))
-	{
-	  assert (!BOOT_IS_PREFERRED_HOSTS_SET (cli_cred));
+        {
+          assert (!BOOT_IS_PREFERRED_HOSTS_SET (cli_cred));
 
-	  check_capabilities = false;
-	  optional_cap = BOOT_NO_OPT_CAP;
+          check_capabilities = false;
+          optional_cap = BOOT_NO_OPT_CAP;
 
-	  error_code = boot_cli_init_css (db_name, &node_list,
-					  cli_cred->client_type,
-					  check_capabilities, optional_cap,
-					  false, false);
-	  break;		/* dont retry */
-	}
+          error_code = boot_cli_init_css (db_name, &node_list,
+                                          cli_cred->client_type, check_capabilities, optional_cap, false, false);
+          break;                /* dont retry */
+        }
       else if (BOOT_NORMAL_CLIENT_TYPE (cli_cred->client_type))
-	{
-	  if (i == 0)		/* first */
-	    {
-	      check_capabilities = true;
-	      optional_cap = BOOT_CHECK_HA_DELAY_CAP;
-	    }
-	  else			/* second */
-	    {
-	      db_set_ignore_repl_delay ();
+        {
+          if (i == 0)           /* first */
+            {
+              check_capabilities = true;
+              optional_cap = BOOT_CHECK_HA_DELAY_CAP;
+            }
+          else                  /* second */
+            {
+              db_set_ignore_repl_delay ();
 
-	      check_capabilities = false;
-	      optional_cap = BOOT_NO_OPT_CAP;
-	    }
+              check_capabilities = false;
+              optional_cap = BOOT_NO_OPT_CAP;
+            }
 
-	  error_code = boot_cli_init_css (db_name, &node_list,
-					  cli_cred->client_type,
-					  check_capabilities, optional_cap,
-					  false, false);
+          error_code = boot_cli_init_css (db_name, &node_list,
+                                          cli_cred->client_type, check_capabilities, optional_cap, false, false);
 
-	}
+        }
       else
-	{
-	  assert (!BOOT_IS_PREFERRED_HOSTS_SET (cli_cred));
+        {
+          assert (!BOOT_IS_PREFERRED_HOSTS_SET (cli_cred));
 
-	  check_capabilities = false;
-	  optional_cap = BOOT_NO_OPT_CAP;
-	  error_code = boot_cli_init_css (db_name, &node_list,
-					  cli_cred->client_type,
-					  check_capabilities, optional_cap,
-					  false, false);
-	  break;		/* dont retry */
-	}
+          check_capabilities = false;
+          optional_cap = BOOT_NO_OPT_CAP;
+          error_code = boot_cli_init_css (db_name, &node_list,
+                                          cli_cred->client_type, check_capabilities, optional_cap, false, false);
+          break;                /* dont retry */
+        }
 
       if (error_code == NO_ERROR)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       else if (error_code == ER_NET_SERVER_HAND_SHAKE)
-	{
-	  er_log_debug (ARG_FILE_LINE, "boot_restart_client: "
-			"boot_cli_init_css () ER_NET_SERVER_HAND_SHAKE\n");
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "boot_restart_client: " "boot_cli_init_css () ER_NET_SERVER_HAND_SHAKE\n");
+        }
       else
-	{
-	  skip_db_info = true;
-	}
+        {
+          skip_db_info = true;
+        }
     }
 
   if (error_code != NO_ERROR)
     {
-      er_log_debug (ARG_FILE_LINE, "boot_restart_client: "
-		    "boot_cli_init_css () error %d\n", error_code);
+      er_log_debug (ARG_FILE_LINE, "boot_restart_client: " "boot_cli_init_css () error %d\n", error_code);
       goto error;
     }
-  prm_node_info_to_str (connected_node_str, sizeof (connected_node_str),
-			&boot_Host_connected);
+  prm_node_info_to_str (connected_node_str, sizeof (connected_node_str), &boot_Host_connected);
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECTED_TO, 4,
-	  cli_cred->program_name, cli_cred->process_id,
-	  cli_cred->db_name, connected_node_str);
+          cli_cred->program_name, cli_cred->process_id, cli_cred->db_name, connected_node_str);
 
   /* tune some client parameters with the value from the server */
   sysprm_tune_client_parameters ();
@@ -937,19 +900,15 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
   tran_lock_wait_msecs = TRAN_LOCK_INFINITE_WAIT;
 
   er_log_debug (ARG_FILE_LINE, "boot_restart_client: "
-		"register client { type %d db %s user %s password %s "
-		"program %s login %s host %s pid %d }\n",
-		cli_cred->client_type,
-		cli_cred->db_name, cli_cred->db_user,
-		cli_cred->db_password ==
-		NULL ? "(null)" : cli_cred->db_password,
-		cli_cred->program_name,
-		cli_cred->login_name,
-		cli_cred->host_name, cli_cred->process_id);
+                "register client { type %d db %s user %s password %s "
+                "program %s login %s host %s pid %d }\n",
+                cli_cred->client_type,
+                cli_cred->db_name, cli_cred->db_user,
+                cli_cred->db_password ==
+                NULL ? "(null)" : cli_cred->db_password,
+                cli_cred->program_name, cli_cred->login_name, cli_cred->host_name, cli_cred->process_id);
 
-  tran_index = boot_register_client (cli_cred,
-				     tran_lock_wait_msecs,
-				     &transtate, &boot_Server_credential);
+  tran_index = boot_register_client (cli_cred, tran_lock_wait_msecs, &transtate, &boot_Server_credential);
 
   if (tran_index == NULL_TRAN_INDEX)
     {
@@ -965,8 +924,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
     }
 
   /* Reset the pagesize according to server.. */
-  if (db_set_page_size (boot_Server_credential.page_size,
-			boot_Server_credential.log_page_size) != NO_ERROR)
+  if (db_set_page_size (boot_Server_credential.page_size, boot_Server_credential.log_page_size) != NO_ERROR)
     {
       error_code = er_errid ();
       goto error;
@@ -983,9 +941,8 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
   oid_set_root (&boot_Server_credential.root_class_oid);
   OID_INIT_TEMPID ();
 
-  sm_init (&boot_Server_credential.root_class_oid,
-	   &boot_Server_credential.root_class_hfid);
-  au_init ();			/* initialize authorization globals */
+  sm_init (&boot_Server_credential.root_class_oid, &boot_Server_credential.root_class_hfid);
+  au_init ();                   /* initialize authorization globals */
 
   /* start authorization and make sure the logged in user has access */
   error_code = au_start ();
@@ -994,8 +951,7 @@ boot_restart_client (BOOT_CLIENT_CREDENTIAL * cli_cred)
       goto error;
     }
 
-  (void) db_find_or_create_session (cli_cred->db_user,
-				    cli_cred->program_name);
+  (void) db_find_or_create_session (cli_cred->db_user, cli_cred->program_name);
   /* free the thing get from au_user_name_dup() */
   if (db_user_alloced != NULL)
     {
@@ -1057,8 +1013,7 @@ error:
 
   if (BOOT_IS_CLIENT_RESTARTED ())
     {
-      er_log_debug (ARG_FILE_LINE, "boot_shutdown_client: "
-		    "unregister client { tran %d }\n", tm_Tran_index);
+      er_log_debug (ARG_FILE_LINE, "boot_shutdown_client: " "unregister client { tran %d }\n", tm_Tran_index);
       boot_shutdown_client ();
     }
 
@@ -1097,16 +1052,16 @@ boot_shutdown_client (void)
        * of the commit_on_shutdown system parameter.
        */
       if (tran_is_active_and_has_updated ())
-	{
-	  if (prm_get_bool_value (PRM_ID_COMMIT_ON_SHUTDOWN) != false)
-	    {
-	      (void) tran_commit ();
-	    }
-	  else
-	    {
-	      (void) tran_abort ();
-	    }
-	}
+        {
+          if (prm_get_bool_value (PRM_ID_COMMIT_ON_SHUTDOWN) != false)
+            {
+              (void) tran_commit ();
+            }
+          else
+            {
+              (void) tran_abort ();
+            }
+        }
 
       /*
        * Make sure that we are still up. For example, if the server died, we do
@@ -1114,12 +1069,12 @@ boot_shutdown_client (void)
        */
 
       if (BOOT_IS_CLIENT_RESTARTED ())
-	{
-	  (void) boot_unregister_client (tm_Tran_index);
+        {
+          (void) boot_unregister_client (tm_Tran_index);
 #if defined(CS_MODE)
-	  (void) net_client_final ();
+          (void) net_client_final ();
 #endif /* !CS_MODE */
-	}
+        }
 
       boot_client_all_finalize ();
     }
@@ -1194,8 +1149,7 @@ boot_server_die_or_changed (void)
 #if defined(CS_MODE)
       css_terminate (true);
 #endif /* !CS_MODE */
-      er_log_debug (ARG_FILE_LINE,
-		    "boot_server_die_or_changed() terminated\n");
+      er_log_debug (ARG_FILE_LINE, "boot_server_die_or_changed() terminated\n");
     }
 }
 
@@ -1214,9 +1168,9 @@ boot_client_all_finalize (void)
     {
 #if defined(CS_MODE)
       if (boot_Server_credential.alloc_buffer)
-	{
-	  free_and_init (boot_Server_credential.alloc_buffer);
-	}
+        {
+          free_and_init (boot_Server_credential.alloc_buffer);
+        }
 #endif
       tran_free_savepoint_list ();
       set_final ();
@@ -1236,8 +1190,7 @@ boot_client_all_finalize (void)
 #endif
 
       memset (&boot_Server_credential, 0, sizeof (boot_Server_credential));
-      memset (boot_Server_credential.server_session_key, 0xFF,
-	      SERVER_SESSION_KEY_SIZE);
+      memset (boot_Server_credential.server_session_key, 0xFF, SERVER_SESSION_KEY_SIZE);
 
       boot_client (NULL_TRAN_INDEX, TRAN_LOCK_INFINITE_WAIT);
       boot_Is_client_all_final = true;
@@ -1261,8 +1214,8 @@ boot_client_all_finalize (void)
  */
 static int
 boot_cli_init_css (const char *dbname, const PRM_NODE_LIST * arg_node_list,
-		   int client_type, bool check_capabilities, int opt_cap,
-		   UNUSED_ARG bool discriminative, bool is_preferred_host)
+                   int client_type, bool check_capabilities, int opt_cap,
+                   UNUSED_ARG bool discriminative, bool is_preferred_host)
 {
   int error = ER_NET_NO_SERVER_HOST;
   int n;
@@ -1282,9 +1235,7 @@ boot_cli_init_css (const char *dbname, const PRM_NODE_LIST * arg_node_list,
   assert (arg_node_list->num_nodes > 0);
 
   max_num_delayed_hosts_lookup = db_get_max_num_delayed_hosts_lookup ();
-  if (is_preferred_host == false
-      && max_num_delayed_hosts_lookup == 0
-      && (opt_cap & BOOT_CHECK_HA_DELAY_CAP))
+  if (is_preferred_host == false && max_num_delayed_hosts_lookup == 0 && (opt_cap & BOOT_CHECK_HA_DELAY_CAP))
     {
       /* if max_num_delayed_hosts_lookup is zero, move on to 2nd try */
       return ER_NET_SERVER_HAND_SHAKE;
@@ -1302,8 +1253,7 @@ boot_cli_init_css (const char *dbname, const PRM_NODE_LIST * arg_node_list,
       node_list.nodes[0] = boot_Host_connected;
       cpsize = MIN (arg_node_list->num_nodes, PRM_MAX_HA_NODE_LIST - 1);
       node_list.num_nodes = cpsize + 1;
-      memcpy (&node_list.nodes[1], arg_node_list->nodes,
-	      cpsize * sizeof (arg_node_list->nodes[0]));
+      memcpy (&node_list.nodes[1], arg_node_list->nodes, cpsize * sizeof (arg_node_list->nodes[0]));
     }
 
   db_clear_delayed_hosts_count ();
@@ -1313,84 +1263,76 @@ boot_cli_init_css (const char *dbname, const PRM_NODE_LIST * arg_node_list,
       char host_str[MAX_NODE_INFO_STR_LEN];
 
       if (css_check_server_alive_fn != NULL)
-	{
-	  if (css_check_server_alive_fn (dbname,
-					 &node_list.nodes[n]) == false)
-	    {
-	      continue;
-	    }
-	}
+        {
+          if (css_check_server_alive_fn (dbname, &node_list.nodes[n]) == false)
+            {
+              continue;
+            }
+        }
 
       prm_node_info_to_str (host_str, sizeof (host_str), &node_list.nodes[n]);
 
       error = net_client_init (dbname, &node_list.nodes[n]);
       if (error == NO_ERROR)
-	{
-	  RYE_VERSION server_version;
+        {
+          RYE_VERSION server_version;
 
-	  boot_Host_connected = node_list.nodes[n];
+          boot_Host_connected = node_list.nodes[n];
 
-	  /* ping to validate availability and to check compatibility */
-	  er_clear ();
-	  error = net_client_ping_server_with_handshake (client_type,
-							 check_capabilities,
-							 opt_cap,
-							 &server_version);
-	  if (error == NO_ERROR)
-	    {
-	      boot_Peer_version = server_version;
-	    }
-	  else
-	    {
-	      css_terminate (false);
-	    }
-	}
+          /* ping to validate availability and to check compatibility */
+          er_clear ();
+          error = net_client_ping_server_with_handshake (client_type, check_capabilities, opt_cap, &server_version);
+          if (error == NO_ERROR)
+            {
+              boot_Peer_version = server_version;
+            }
+          else
+            {
+              css_terminate (false);
+            }
+        }
 
       /* connect error to the db at the host */
       switch (error)
-	{
-	case NO_ERROR:
-	  return NO_ERROR;
+        {
+        case NO_ERROR:
+          return NO_ERROR;
 
-	case ER_NET_SERVER_HAND_SHAKE:
-	case ER_NET_HS_UNKNOWN_SERVER_REL:
-	  cap_error = true;
-	case ER_NET_DIFFERENT_RELEASE:
-	case ER_NET_NO_SERVER_HOST:
-	case ER_NET_CANT_CONNECT_SERVER:
-	case ER_NET_NO_MASTER:
-	case ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER:
-	case ERR_CSS_TCP_CONNECT_TIMEDOUT:
-	case ERR_CSS_ERROR_FROM_SERVER:
-	case ER_CSS_CLIENTS_EXCEEDED:
-	  {
-	    er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		    ER_BO_CONNECT_FAILED, 2, dbname, host_str);
-	  }
-	  break;
-	default:
-	  /* ?? */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECT_FAILED,
-		  2, dbname, host_str);
-	}
+        case ER_NET_SERVER_HAND_SHAKE:
+        case ER_NET_HS_UNKNOWN_SERVER_REL:
+          cap_error = true;
+        case ER_NET_DIFFERENT_RELEASE:
+        case ER_NET_NO_SERVER_HOST:
+        case ER_NET_CANT_CONNECT_SERVER:
+        case ER_NET_NO_MASTER:
+        case ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER:
+        case ERR_CSS_TCP_CONNECT_TIMEDOUT:
+        case ERR_CSS_ERROR_FROM_SERVER:
+        case ER_CSS_CLIENTS_EXCEEDED:
+          {
+            er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECT_FAILED, 2, dbname, host_str);
+          }
+          break;
+        default:
+          /* ?? */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECT_FAILED, 2, dbname, host_str);
+        }
 
       if (error == ER_NET_SERVER_HAND_SHAKE
-	  && is_preferred_host == false
-	  && (opt_cap & BOOT_CHECK_HA_DELAY_CAP)
-	  && max_num_delayed_hosts_lookup > 0)
-	{
-	  /* do not count delayed boot_Host_connected */
-	  if (boot_host_connected_exist == true && n == 0)
-	    {
-	      db_clear_delayed_hosts_count ();
-	    }
+          && is_preferred_host == false && (opt_cap & BOOT_CHECK_HA_DELAY_CAP) && max_num_delayed_hosts_lookup > 0)
+        {
+          /* do not count delayed boot_Host_connected */
+          if (boot_host_connected_exist == true && n == 0)
+            {
+              db_clear_delayed_hosts_count ();
+            }
 
-	  if (db_get_delayed_hosts_count () >= max_num_delayed_hosts_lookup)
-	    {
-	      break;
-	    }
-	}
-    }				/* for (tn) */
+          if (db_get_delayed_hosts_count () >= max_num_delayed_hosts_lookup)
+            {
+              break;
+            }
+        }
+    }                           /* for (tn) */
 
   /* failed to connect all hosts; write an error message */
   node_list_str[0] = '\0';
@@ -1399,13 +1341,12 @@ boot_cli_init_css (const char *dbname, const PRM_NODE_LIST * arg_node_list,
       char host_str[MAX_NODE_INFO_STR_LEN];
       prm_node_info_to_str (host_str, sizeof (host_str), &node_list.nodes[n]);
       if (n != 0)
-	{
-	  strcat (node_list_str, ":");
-	}
+        {
+          strcat (node_list_str, ":");
+        }
       strncat (node_list_str, host_str, MAX_NODE_INFO_STR_LEN);
     }
-  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECT_FAILED, 2,
-	  dbname, node_list_str);
+  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_BO_CONNECT_FAILED, 2, dbname, node_list_str);
 
   if (check_capabilities == true && cap_error == true)
     {
@@ -1465,8 +1406,7 @@ boot_define_class (MOP class_mop)
       return error_code;
     }
 
-  error_code =
-    smt_add_attribute (def, "owner", au_get_user_class_name (), NULL);
+  error_code = smt_add_attribute (def, "owner", au_get_user_class_name (), NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1521,8 +1461,7 @@ boot_define_class (MOP class_mop)
     }
 
   /* add index */
-  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL,
-				  index_col_names);
+  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL, index_col_names);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1626,8 +1565,7 @@ boot_define_attribute (MOP class_mop)
     }
 
   /* add index */
-  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL,
-				  index_col_names);
+  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL, index_col_names);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1713,8 +1651,7 @@ boot_define_domain (MOP class_mop)
       return error_code;
     }
 
-  error_code =
-    smt_add_attribute (def, "domain_table_name", "varchar(255)", NULL);
+  error_code = smt_add_attribute (def, "domain_table_name", "varchar(255)", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1747,8 +1684,7 @@ boot_define_domain (MOP class_mop)
     }
 
   /* add index */
-  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL,
-				  index_col_names);
+  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL, index_col_names);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1813,8 +1749,7 @@ boot_define_query_spec (MOP class_mop)
     }
 
   /* add index */
-  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL,
-				  index_col_names);
+  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL, index_col_names);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1912,8 +1847,7 @@ boot_define_index (MOP class_mop)
     }
 
   /* add index */
-  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL,
-				  index_col_names);
+  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL, index_col_names);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -1996,8 +1930,7 @@ boot_define_index_key (MOP class_mop)
     }
 
   /* add index */
-  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL,
-				  index_col_names);
+  error_code = db_add_constraint (class_mop, DB_CONSTRAINT_INDEX, NULL, index_col_names);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -2052,20 +1985,19 @@ boot_add_data_type (MOP class_mop)
   for (i = 0; i < DB_TYPE_LAST; i++)
     {
       if (names[i] != NULL)
-	{
-	  obj = db_create_internal (class_mop);
-	  if (obj == NULL)
-	    {
-	      return er_errid ();
-	    }
+        {
+          obj = db_create_internal (class_mop);
+          if (obj == NULL)
+            {
+              return er_errid ();
+            }
 
-	  DB_MAKE_INTEGER (&val, i + 1);
-	  db_put_internal (obj, "type_id", &val);
+          DB_MAKE_INTEGER (&val, i + 1);
+          db_put_internal (obj, "type_id", &val);
 
-	  DB_MAKE_VARCHAR (&val, 9, (char *) names[i], strlen (names[i]),
-			   LANG_SYS_COLLATION);
-	  db_put_internal (obj, "type_name", &val);
-	}
+          DB_MAKE_VARCHAR (&val, 9, (char *) names[i], strlen (names[i]), LANG_SYS_COLLATION);
+          db_put_internal (obj, "type_name", &val);
+        }
     }
 
   return NO_ERROR;
@@ -2155,27 +2087,24 @@ boot_add_collations (MOP class_mop)
 
       assert (lang_coll != NULL);
 
-      if (i > LANG_COLL_UTF8_EN_CI
-	  && lang_coll->coll.coll_id == LANG_COLL_UTF8_EN_CI)
-	{
-	  continue;
-	}
+      if (i > LANG_COLL_UTF8_EN_CI && lang_coll->coll.coll_id == LANG_COLL_UTF8_EN_CI)
+        {
+          continue;
+        }
       found_coll++;
 
       obj = db_create_internal (class_mop);
       if (obj == NULL)
-	{
-	  return er_errid ();
-	}
+        {
+          return er_errid ();
+        }
 
       assert (lang_coll->coll.coll_id == i);
 
       DB_MAKE_INTEGER (&val, i);
       db_put_internal (obj, CT_DBCOLL_COLL_ID_COLUMN, &val);
 
-      DB_MAKE_VARCHAR (&val, 32, lang_coll->coll.coll_name,
-		       strlen (lang_coll->coll.coll_name),
-		       LANG_SYS_COLLATION);
+      DB_MAKE_VARCHAR (&val, 32, lang_coll->coll.coll_name, strlen (lang_coll->coll.coll_name), LANG_SYS_COLLATION);
       db_put_internal (obj, CT_DBCOLL_COLL_NAME_COLUMN, &val);
 
       DB_MAKE_INTEGER (&val, (int) (lang_coll->codeset));
@@ -2194,8 +2123,7 @@ boot_add_collations (MOP class_mop)
       db_put_internal (obj, CT_DBCOLL_UCA_STRENGTH, &val);
 
       assert (strlen (lang_coll->coll.checksum) == 32);
-      DB_MAKE_VARCHAR (&val, 32, lang_coll->coll.checksum, 32,
-		       LANG_SYS_COLLATION);
+      DB_MAKE_VARCHAR (&val, 32, lang_coll->coll.checksum, 32, LANG_SYS_COLLATION);
       db_put_internal (obj, CT_DBCOLL_CHECKSUM_COLUMN, &val);
     }
 
@@ -2223,57 +2151,49 @@ boot_define_collations (MOP class_mop)
       return er_errid ();
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_COLL_ID_COLUMN, "integer",
-				  NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_COLL_ID_COLUMN, "integer", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_COLL_NAME_COLUMN,
-				  "varchar(32)", NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_COLL_NAME_COLUMN, "varchar(32)", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_CHARSET_ID_COLUMN, "integer",
-				  NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_CHARSET_ID_COLUMN, "integer", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_BUILT_IN_COLUMN, "integer",
-				  NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_BUILT_IN_COLUMN, "integer", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_EXPANSIONS_COLUMN, "integer",
-				  NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_EXPANSIONS_COLUMN, "integer", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_CONTRACTIONS_COLUMN,
-				  "integer", NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_CONTRACTIONS_COLUMN, "integer", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_UCA_STRENGTH, "integer",
-				  NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_UCA_STRENGTH, "integer", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
     }
 
-  error_code = smt_add_attribute (def, CT_DBCOLL_CHECKSUM_COLUMN,
-				  "varchar(32)", NULL);
+  error_code = smt_add_attribute (def, CT_DBCOLL_CHECKSUM_COLUMN, "varchar(32)", NULL);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -2340,59 +2260,57 @@ boot_define_catalog_table (void)
 
       class_mop = db_create_class (table->name);
       if (class_mop == NULL)
-	{
-	  error_code = er_errid ();
-	  goto end;
-	}
+        {
+          error_code = er_errid ();
+          goto end;
+        }
 
       def = smt_edit_class_mop_with_lock (class_mop, X_LOCK);
       if (def == NULL)
-	{
-	  error_code = er_errid ();
-	  goto end;
-	}
+        {
+          error_code = er_errid ();
+          goto end;
+        }
 
       /* add columns */
       for (j = 0; j < table->num_columns; j++)
-	{
-	  error_code = smt_add_attribute (def, table->columns[j].name,
-					  table->columns[j].type, NULL);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto end;
-	    }
-	}
+        {
+          error_code = smt_add_attribute (def, table->columns[j].name, table->columns[j].type, NULL);
+          if (error_code != NO_ERROR)
+            {
+              goto end;
+            }
+        }
 
       error_code = smt_finish_class (def, NULL);
       if (error_code != NO_ERROR)
-	{
-	  goto end;
-	}
+        {
+          goto end;
+        }
 
       /* add constraints */
       for (j = 0; j < table->num_constraints; j++)
-	{
-	  error_code = db_add_constraint (class_mop,
-					  table->constraint[j].type,
-					  table->constraint[j].name,
-					  table->constraint[j].atts);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto end;
-	    }
-	}
+        {
+          error_code = db_add_constraint (class_mop,
+                                          table->constraint[j].type,
+                                          table->constraint[j].name, table->constraint[j].atts);
+          if (error_code != NO_ERROR)
+            {
+              goto end;
+            }
+        }
 
       if (locator_has_heap (class_mop) == NULL)
-	{
-	  error_code = er_errid ();
-	  goto end;
-	}
+        {
+          error_code = er_errid ();
+          goto end;
+        }
 
       error_code = au_change_owner (class_mop, au_get_dba_user ());
       if (error_code != NO_ERROR)
-	{
-	  goto end;
-	}
+        {
+          goto end;
+        }
     }
 
 end:
@@ -2431,20 +2349,20 @@ catcls_class_install (void)
     {
       class_mop[i] = db_create_class (clist[i].name);
       if (class_mop[i] == NULL)
-	{
-	  error_code = er_errid ();
-	  goto end;
-	}
+        {
+          error_code = er_errid ();
+          goto end;
+        }
     }
 
   for (i = 0; i < num_classes; i++)
     {
       error_code = ((DEF_CLASS_FUNCTION) (clist[i].function)) (class_mop[i]);
       if (error_code != NO_ERROR)
-	{
-	  error_code = er_errid ();
-	  goto end;
-	}
+        {
+          error_code = er_errid ();
+          goto end;
+        }
     }
 
   error_code = boot_define_catalog_table ();
@@ -2490,10 +2408,9 @@ boot_get_host_name (void)
   if (boot_Host_name[0] == '\0')
     {
       if (GETHOSTNAME (boot_Host_name, MAXHOSTNAMELEN) != 0)
-	{
-	  STRNCPY (boot_Host_name, boot_Client_id_unknown_string,
-		   MAXHOSTNAMELEN);
-	}
+        {
+          STRNCPY (boot_Host_name, boot_Client_id_unknown_string, MAXHOSTNAMELEN);
+        }
     }
 
   return boot_Host_name;
@@ -2517,27 +2434,22 @@ boot_check_locales (BOOT_CLIENT_CREDENTIAL * cli_cred)
   char cli_text[PATH_MAX];
   char srv_text[DB_MAX_IDENTIFIER_LENGTH + 10];
 
-  error_code = boot_get_server_locales (&server_collations, &server_locales,
-					&server_coll_cnt,
-					&server_locales_cnt);
+  error_code = boot_get_server_locales (&server_collations, &server_locales, &server_coll_cnt, &server_locales_cnt);
   if (error_code != NO_ERROR)
     {
       goto exit;
     }
 
   (void) basename_r (cli_cred->program_name, cli_text, sizeof (cli_text));
-  snprintf (srv_text, sizeof (srv_text) - 1, "server '%s'",
-	    cli_cred->db_name);
+  snprintf (srv_text, sizeof (srv_text) - 1, "server '%s'", cli_cred->db_name);
 
-  error_code = lang_check_coll_compat (server_collations, server_coll_cnt,
-				       cli_text, srv_text);
+  error_code = lang_check_coll_compat (server_collations, server_coll_cnt, cli_text, srv_text);
   if (error_code != NO_ERROR)
     {
       goto exit;
     }
 
-  error_code = lang_check_locale_compat (server_locales, server_locales_cnt,
-					 cli_text, srv_text);
+  error_code = lang_check_locale_compat (server_locales, server_locales_cnt, cli_text, srv_text);
 
 exit:
   if (server_collations != NULL)
@@ -2568,6 +2480,5 @@ boot_get_server_session_key (void)
 void
 boot_set_server_session_key (const char *key)
 {
-  memcpy (boot_Server_credential.server_session_key, key,
-	  SERVER_SESSION_KEY_SIZE);
+  memcpy (boot_Server_credential.server_session_key, key, SERVER_SESSION_KEY_SIZE);
 }

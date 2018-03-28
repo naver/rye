@@ -44,16 +44,16 @@ typedef struct overflow_first_part OVERFLOW_FIRST_PART;
 struct overflow_first_part
 {
   VPID next_vpid;
-  OID mig_oid;			/* (class oid + group id) for migrator */
+  OID mig_oid;                  /* (class oid + group id) for migrator */
   int length;
-  char data[1];			/* Really more than one */
+  char data[1];                 /* Really more than one */
 };
 
 typedef struct overflow_rest_part OVERFLOW_REST_PART;
 struct overflow_rest_part
 {
   VPID next_vpid;
-  char data[1];			/* Really more than one */
+  char data[1];                 /* Really more than one */
 };
 
 typedef struct overflow_recv_links OVERFLOW_RECV_LINKS;
@@ -76,22 +76,15 @@ typedef enum
   OVERFLOW_SKIP_LOGGING
 } OVERFLOW_LOGGING_TYPE;
 
-static void overflow_next_vpid (const VPID * ovf_vpid, VPID * vpid,
-				PAGE_PTR pgptr);
+static void overflow_next_vpid (const VPID * ovf_vpid, VPID * vpid, PAGE_PTR pgptr);
 static const VPID *overflow_traverse (THREAD_ENTRY * thread_p,
-				      const VFID * ovf_vfid,
-				      const VPID * ovf_vpid,
-				      OVERFLOW_DO_FUNC func);
-static int overflow_delete_internal (THREAD_ENTRY * thread_p,
-				     const VFID * ovf_vfid, VPID * vpid,
-				     PAGE_PTR pgptr);
+                                      const VFID * ovf_vfid, const VPID * ovf_vpid, OVERFLOW_DO_FUNC func);
+static int overflow_delete_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid, VPID * vpid, PAGE_PTR pgptr);
 static int overflow_flush_internal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);
 static VPID *overflow_insert_internal (THREAD_ENTRY * thread_p,
-				       const VFID * ovf_vfid,
-				       VPID * ovf_vpid, RECDES * recdes,
-				       OVERFLOW_LOGGING_TYPE logging_type,
-				       int *ovf_first_page,
-				       const OID * class_oid);
+                                       const VFID * ovf_vfid,
+                                       VPID * ovf_vpid, RECDES * recdes,
+                                       OVERFLOW_LOGGING_TYPE logging_type, int *ovf_first_page, const OID * class_oid);
 /*
  * overflow_insert () - Insert a multipage data in overflow
  *   return: ovf_vpid on success or NULL on failure
@@ -116,32 +109,27 @@ static VPID *overflow_insert_internal (THREAD_ENTRY * thread_p,
  */
 VPID *
 overflow_insert (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
-		 VPID * ovf_vpid, RECDES * recdes, int *ovf_first_page,
-		 const OID * class_oid)
+                 VPID * ovf_vpid, RECDES * recdes, int *ovf_first_page, const OID * class_oid)
 {
   return overflow_insert_internal (thread_p, ovf_vfid, ovf_vpid,
-				   recdes, OVERFLOW_NORMAL_LOGGING,
-				   ovf_first_page, class_oid);
+                                   recdes, OVERFLOW_NORMAL_LOGGING, ovf_first_page, class_oid);
 }
 
 #if defined(ENABLE_UNUSED_FUNCTION)
 VPID *
 overflow_insert_without_undo_logging (THREAD_ENTRY * thread_p,
-				      const VFID * ovf_vfid, VPID * ovf_vpid,
-				      RECDES * recdes, int *ovf_first_page,
-				      const OID * class_oid)
+                                      const VFID * ovf_vfid, VPID * ovf_vpid,
+                                      RECDES * recdes, int *ovf_first_page, const OID * class_oid)
 {
   return overflow_insert_internal (thread_p, ovf_vfid, ovf_vpid,
-				   recdes, OVERFLOW_SKIP_UNDO_LOGGING,
-				   ovf_first_page, class_oid);
+                                   recdes, OVERFLOW_SKIP_UNDO_LOGGING, ovf_first_page, class_oid);
 }
 #endif
 
 static VPID *
 overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
-			  VPID * ovf_vpid, RECDES * recdes,
-			  OVERFLOW_LOGGING_TYPE logging_type,
-			  int *ovf_first_page, const OID * class_oid)
+                          VPID * ovf_vpid, RECDES * recdes,
+                          OVERFLOW_LOGGING_TYPE logging_type, int *ovf_first_page, const OID * class_oid)
 {
   PAGE_PTR vfid_fhdr_pgptr = NULL;
   OVERFLOW_FIRST_PART *first_part;
@@ -187,8 +175,7 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
   fhdr_vpid.pageid = ovf_vfid->fileid;
 
   vfid_fhdr_pgptr = pgbuf_fix (thread_p, &fhdr_vpid, OLD_PAGE,
-			       PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH,
-			       PAGE_FILE_HEADER);
+                               PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, PAGE_FILE_HEADER);
   if (vfid_fhdr_pgptr == NULL)
     {
       return NULL;
@@ -199,8 +186,7 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
    * dividing length by pagesize - the smallest header. Then, we make sure
    * that this estimate is correct.
    */
-  length = recdes->length - (DB_PAGESIZE -
-			     (int) offsetof (OVERFLOW_FIRST_PART, data));
+  length = recdes->length - (DB_PAGESIZE - (int) offsetof (OVERFLOW_FIRST_PART, data));
   if (length > 0)
     {
       i = DB_PAGESIZE - offsetof (OVERFLOW_REST_PART, data);
@@ -215,12 +201,11 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
     {
       vpids = (VPID *) malloc ((npages + 1) * sizeof (VPID));
       if (vpids == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, (npages + 1) * sizeof (VPID));
-	  pgbuf_unfix (thread_p, vfid_fhdr_pgptr);
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (npages + 1) * sizeof (VPID));
+          pgbuf_unfix (thread_p, vfid_fhdr_pgptr);
+          return NULL;
+        }
     }
   else
     {
@@ -250,60 +235,55 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
       int num_obtained_pages;
       assert (ovf_first_page != NULL);
       if (*ovf_first_page < 0)
-	{
-	  /* first page cannot be negative */
-	  *ovf_first_page = 0;
-	}
-      if (file_get_numpages (thread_p, ovf_vfid, NULL, NULL, NULL) <=
-	  *ovf_first_page)
-	{
-	  /* need to allocate more pages */
-	  need_alloc = true;
-	}
+        {
+          /* first page cannot be negative */
+          *ovf_first_page = 0;
+        }
+      if (file_get_numpages (thread_p, ovf_vfid, NULL, NULL, NULL) <= *ovf_first_page)
+        {
+          /* need to allocate more pages */
+          need_alloc = true;
+        }
       else
-	{
-	  num_obtained_pages =
-	    file_find_nthpages (thread_p, ovf_vfid, alloc_vpids.vpids,
-				*ovf_first_page, npages);
-	  if (num_obtained_pages == -1)
-	    {
-	      /* error obtaining pages */
-	      if (vpids != vpids_buffer)
-		{
-		  free_and_init (vpids);
-		}
-	      pgbuf_unfix (thread_p, vfid_fhdr_pgptr);
-	      return NULL;
-	    }
+        {
+          num_obtained_pages = file_find_nthpages (thread_p, ovf_vfid, alloc_vpids.vpids, *ovf_first_page, npages);
+          if (num_obtained_pages == -1)
+            {
+              /* error obtaining pages */
+              if (vpids != vpids_buffer)
+                {
+                  free_and_init (vpids);
+                }
+              pgbuf_unfix (thread_p, vfid_fhdr_pgptr);
+              return NULL;
+            }
 
-	  if (num_obtained_pages < npages)
-	    {
-	      /* couldn't obtain npages, allocation is still necessary */
-	      alloc_npages -= num_obtained_pages;
-	      need_alloc = true;
-	    }
-	  /* update current index of alloc_vpids */
-	  alloc_vpids.index += num_obtained_pages;
-	}
+          if (num_obtained_pages < npages)
+            {
+              /* couldn't obtain npages, allocation is still necessary */
+              alloc_npages -= num_obtained_pages;
+              need_alloc = true;
+            }
+          /* update current index of alloc_vpids */
+          alloc_vpids.index += num_obtained_pages;
+        }
     }
 
   if (need_alloc)
     {
       if (file_alloc_pages_as_noncontiguous (thread_p, ovf_vfid,
-					     (alloc_vpids.vpids
-					      + alloc_vpids.index),
-					     &alloc_nth, alloc_npages,
-					     NULL, NULL, NULL,
-					     &alloc_vpids) == NULL)
-	{
-	  if (vpids != vpids_buffer)
-	    {
-	      free_and_init (vpids);
-	    }
+                                             (alloc_vpids.vpids
+                                              + alloc_vpids.index),
+                                             &alloc_nth, alloc_npages, NULL, NULL, NULL, &alloc_vpids) == NULL)
+        {
+          if (vpids != vpids_buffer)
+            {
+              free_and_init (vpids);
+            }
 
-	  pgbuf_unfix (thread_p, vfid_fhdr_pgptr);
-	  return NULL;
-	}
+          pgbuf_unfix (thread_p, vfid_fhdr_pgptr);
+          return NULL;
+        }
     }
 
   if (ovf_first_page != NULL)
@@ -332,71 +312,67 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
     {
       addr.pgptr = pgbuf_fix_newpg (thread_p, &vpids[i], PAGE_OVERFLOW);
       if (addr.pgptr == NULL)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       /* Is this the first page ? */
       if (i == 0)
-	{
-	  /* This is the first part */
-	  first_part = (OVERFLOW_FIRST_PART *) addr.pgptr;
+        {
+          /* This is the first part */
+          first_part = (OVERFLOW_FIRST_PART *) addr.pgptr;
 
-	  first_part->next_vpid = vpids[i + 1];
-	  if (class_oid == NULL)
-	    {
-	      OID_SET_NULL (&first_part->mig_oid);
-	      addr.gid = NULL_GROUPID;
-	    }
-	  else
-	    {
-	      first_part->mig_oid = *class_oid;
-	      first_part->mig_oid.groupid = addr.gid = or_grp_id (recdes);
-	    }
-	  first_part->length = length;
-	  copyto = (char *) first_part->data;
+          first_part->next_vpid = vpids[i + 1];
+          if (class_oid == NULL)
+            {
+              OID_SET_NULL (&first_part->mig_oid);
+              addr.gid = NULL_GROUPID;
+            }
+          else
+            {
+              first_part->mig_oid = *class_oid;
+              first_part->mig_oid.groupid = addr.gid = or_grp_id (recdes);
+            }
+          first_part->length = length;
+          copyto = (char *) first_part->data;
 
-	  copy_length = DB_PAGESIZE - offsetof (OVERFLOW_FIRST_PART, data);
-	  if (length < copy_length)
-	    {
-	      copy_length = length;
-	    }
+          copy_length = DB_PAGESIZE - offsetof (OVERFLOW_FIRST_PART, data);
+          if (length < copy_length)
+            {
+              copy_length = length;
+            }
 
-	  /* notify the first part of overflow recdes */
-	  log_append_empty_record (thread_p, LOG_DUMMY_OVF_RECORD, &addr);
-	}
+          /* notify the first part of overflow recdes */
+          log_append_empty_record (thread_p, LOG_DUMMY_OVF_RECORD, &addr);
+        }
       else
-	{
-	  rest_parts = (OVERFLOW_REST_PART *) addr.pgptr;
+        {
+          rest_parts = (OVERFLOW_REST_PART *) addr.pgptr;
 
-	  rest_parts->next_vpid = vpids[i + 1];
-	  copyto = (char *) rest_parts->data;
+          rest_parts->next_vpid = vpids[i + 1];
+          copyto = (char *) rest_parts->data;
 
-	  copy_length = DB_PAGESIZE - offsetof (OVERFLOW_REST_PART, data);
-	  if (length < copy_length)
-	    {
-	      copy_length = length;
-	    }
-	}
+          copy_length = DB_PAGESIZE - offsetof (OVERFLOW_REST_PART, data);
+          if (length < copy_length)
+            {
+              copy_length = length;
+            }
+        }
 
       memcpy (copyto, data, copy_length);
       data += copy_length;
       length -= copy_length;
 
       pgbuf_get_vpid (addr.pgptr, &undo_recv.new_vpid);
-      if (file_is_new_file (thread_p, ovf_vfid) == FILE_OLD_FILE
-	  && logging_type == OVERFLOW_NORMAL_LOGGING)
-	{
-	  /* we don't do undo logging for new files */
-	  log_append_undo_data (thread_p, RVOVF_NEWPAGE_LOGICAL_UNDO,
-				&logical_undoaddr, sizeof (undo_recv),
-				&undo_recv);
-	}
+      if (file_is_new_file (thread_p, ovf_vfid) == FILE_OLD_FILE && logging_type == OVERFLOW_NORMAL_LOGGING)
+        {
+          /* we don't do undo logging for new files */
+          log_append_undo_data (thread_p, RVOVF_NEWPAGE_LOGICAL_UNDO,
+                                &logical_undoaddr, sizeof (undo_recv), &undo_recv);
+        }
 
       log_append_redo_data (thread_p, RVOVF_NEWPAGE_INSERT, &addr,
-			    copy_length +
-			    CAST_BUFLEN (copyto - (char *) addr.pgptr),
-			    (char *) addr.pgptr);
+                            copy_length + CAST_BUFLEN (copyto - (char *) addr.pgptr), (char *) addr.pgptr);
 
       pgbuf_set_dirty (thread_p, addr.pgptr, FREE);
       addr.pgptr = NULL;
@@ -407,8 +383,8 @@ overflow_insert_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
   if (length > 0)
     {
       er_log_debug (ARG_FILE_LINE, "ovf_insert: ** SYSTEM ERROR calculation"
-		    " of number of pages needed to store overflow data seems"
-		    " incorrect. Need no more than %d pages", npages);
+                    " of number of pages needed to store overflow data seems"
+                    " incorrect. Need no more than %d pages", npages);
       goto exit_on_error;
     }
 #endif
@@ -474,8 +450,7 @@ overflow_next_vpid (const VPID * ovf_vpid, VPID * vpid, PAGE_PTR pgptr)
  *   func(in): Overflow address
  */
 static const VPID *
-overflow_traverse (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
-		   const VPID * ovf_vpid, OVERFLOW_DO_FUNC func)
+overflow_traverse (THREAD_ENTRY * thread_p, const VFID * ovf_vfid, const VPID * ovf_vpid, OVERFLOW_DO_FUNC func)
 {
   VPID next_vpid;
   VPID vpid;
@@ -491,38 +466,36 @@ overflow_traverse (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 
   while (!(VPID_ISNULL (&next_vpid)))
     {
-      pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_WRITE,
-			 PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+      pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
       if (pgptr == NULL)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       vpid = next_vpid;
       overflow_next_vpid (ovf_vpid, &next_vpid, pgptr);
 
       switch (func)
-	{
-	case OVERFLOW_DO_DELETE:
-	  if (ovf_vfid == NULL)	/* assert */
-	    {
-	      goto exit_on_error;
-	    }
-	  if (overflow_delete_internal (thread_p, ovf_vfid, &vpid, pgptr) !=
-	      NO_ERROR)
-	    {
-	      goto exit_on_error;
-	    }
-	  break;
-	case OVERFLOW_DO_FLUSH:
-	  if (overflow_flush_internal (thread_p, pgptr) != NO_ERROR)
-	    {
-	      goto exit_on_error;
-	    }
-	  break;
-	default:
-	  break;
-	}
+        {
+        case OVERFLOW_DO_DELETE:
+          if (ovf_vfid == NULL) /* assert */
+            {
+              goto exit_on_error;
+            }
+          if (overflow_delete_internal (thread_p, ovf_vfid, &vpid, pgptr) != NO_ERROR)
+            {
+              goto exit_on_error;
+            }
+          break;
+        case OVERFLOW_DO_FLUSH:
+          if (overflow_flush_internal (thread_p, pgptr) != NO_ERROR)
+            {
+              goto exit_on_error;
+            }
+          break;
+        default:
+          break;
+        }
     }
 
   return ovf_vpid;
@@ -549,8 +522,7 @@ exit_on_error:
  *       overflow record which has been appropriately locked.
  */
 const VPID *
-overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
-		 const VPID * ovf_vpid, RECDES * recdes)
+overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid, const VPID * ovf_vpid, RECDES * recdes)
 {
   OVERFLOW_FIRST_PART *first_part = NULL;
   OVERFLOW_REST_PART *rest_parts = NULL;
@@ -590,22 +562,21 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
   while (length > 0)
     {
       if (isnewpage == false)
-	{
-	  addr.pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE,
-				  PGBUF_LATCH_WRITE,
-				  PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
-	}
+        {
+          addr.pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE,
+                                  PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+        }
       else
-	{
-	  addr.pgptr = pgbuf_fix_newpg (thread_p, &next_vpid, PAGE_OVERFLOW);
-	}
+        {
+          addr.pgptr = pgbuf_fix_newpg (thread_p, &next_vpid, PAGE_OVERFLOW);
+        }
 
       if (addr.pgptr == NULL)
-	{
-	  error = er_errid ();
+        {
+          error = er_errid ();
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       addr_vpid_ptr = pgbuf_get_vpid_ptr (addr.pgptr);
 
@@ -613,201 +584,186 @@ overflow_update (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 
       /* Is this the first page ? */
       if (VPID_EQ (addr_vpid_ptr, ovf_vpid))
-	{
-	  /* This is the first part */
-	  first_part = (OVERFLOW_FIRST_PART *) addr.pgptr;
-	  addr.gid = first_part->mig_oid.groupid;
+        {
+          /* This is the first part */
+          first_part = (OVERFLOW_FIRST_PART *) addr.pgptr;
+          addr.gid = first_part->mig_oid.groupid;
 
-	  old_length = first_part->length;
-	  copyto = (char *) first_part->data;
-	  next_vpid = first_part->next_vpid;
+          old_length = first_part->length;
+          copyto = (char *) first_part->data;
+          next_vpid = first_part->next_vpid;
 
-	  hdr_length = offsetof (OVERFLOW_FIRST_PART, data);
-	  if ((length + hdr_length) > DB_PAGESIZE)
-	    {
-	      copy_length = DB_PAGESIZE - hdr_length;
-	    }
-	  else
-	    {
-	      copy_length = length;
-	    }
+          hdr_length = offsetof (OVERFLOW_FIRST_PART, data);
+          if ((length + hdr_length) > DB_PAGESIZE)
+            {
+              copy_length = DB_PAGESIZE - hdr_length;
+            }
+          else
+            {
+              copy_length = length;
+            }
 
-	  /* Log before image */
-	  if (hdr_length + old_length > DB_PAGESIZE)
-	    {
-	      log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr,
-				    DB_PAGESIZE, addr.pgptr);
-	      old_length -= DB_PAGESIZE - hdr_length;
-	    }
-	  else
-	    {
-	      log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr,
-				    hdr_length + old_length, addr.pgptr);
-	      old_length = 0;
-	    }
+          /* Log before image */
+          if (hdr_length + old_length > DB_PAGESIZE)
+            {
+              log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr, DB_PAGESIZE, addr.pgptr);
+              old_length -= DB_PAGESIZE - hdr_length;
+            }
+          else
+            {
+              log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr, hdr_length + old_length, addr.pgptr);
+              old_length = 0;
+            }
 
-	  /* Modify the new length */
-	  first_part->length = length;
+          /* Modify the new length */
+          first_part->length = length;
 
-	  /* notify the first part of overflow recdes */
-	  log_append_empty_record (thread_p, LOG_DUMMY_OVF_RECORD, &addr);
-	}
+          /* notify the first part of overflow recdes */
+          log_append_empty_record (thread_p, LOG_DUMMY_OVF_RECORD, &addr);
+        }
       else
-	{
-	  rest_parts = (OVERFLOW_REST_PART *) addr.pgptr;
-	  copyto = (char *) rest_parts->data;
-	  if (isnewpage == true)
-	    {
-	      VPID_SET_NULL (&next_vpid);
-	      rest_parts->next_vpid = next_vpid;
-	    }
-	  else
-	    {
-	      next_vpid = rest_parts->next_vpid;
-	    }
+        {
+          rest_parts = (OVERFLOW_REST_PART *) addr.pgptr;
+          copyto = (char *) rest_parts->data;
+          if (isnewpage == true)
+            {
+              VPID_SET_NULL (&next_vpid);
+              rest_parts->next_vpid = next_vpid;
+            }
+          else
+            {
+              next_vpid = rest_parts->next_vpid;
+            }
 
-	  hdr_length = offsetof (OVERFLOW_REST_PART, data);
-	  if ((length + hdr_length) > DB_PAGESIZE)
-	    {
-	      copy_length = DB_PAGESIZE - hdr_length;
-	    }
-	  else
-	    {
-	      copy_length = length;
-	    }
+          hdr_length = offsetof (OVERFLOW_REST_PART, data);
+          if ((length + hdr_length) > DB_PAGESIZE)
+            {
+              copy_length = DB_PAGESIZE - hdr_length;
+            }
+          else
+            {
+              copy_length = length;
+            }
 
-	  if (old_length > 0)
-	    {
-	      if (hdr_length + old_length > DB_PAGESIZE)
-		{
-		  log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr,
-					DB_PAGESIZE, addr.pgptr);
-		  old_length -= DB_PAGESIZE - hdr_length;
-		}
-	      else
-		{
-		  log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr,
-					hdr_length + old_length, addr.pgptr);
-		  old_length = 0;
-		}
-	    }
-	}
+          if (old_length > 0)
+            {
+              if (hdr_length + old_length > DB_PAGESIZE)
+                {
+                  log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr, DB_PAGESIZE, addr.pgptr);
+                  old_length -= DB_PAGESIZE - hdr_length;
+                }
+              else
+                {
+                  log_append_undo_data (thread_p, RVOVF_PAGE_UPDATE, &addr, hdr_length + old_length, addr.pgptr);
+                  old_length = 0;
+                }
+            }
+        }
 
       memcpy (copyto, data, copy_length);
       data += copy_length;
       length -= copy_length;
 
-      log_append_redo_data (thread_p, RVOVF_PAGE_UPDATE, &addr,
-			    copy_length + hdr_length, (char *) addr.pgptr);
+      log_append_redo_data (thread_p, RVOVF_PAGE_UPDATE, &addr, copy_length + hdr_length, (char *) addr.pgptr);
       pgbuf_set_dirty (thread_p, addr.pgptr, DONT_FREE);
 
       if (length > 0)
-	{
-	  /* Need more pages... Get next page */
-	  if (VPID_ISNULL (&next_vpid))
-	    {
-	      /* We need to allocate a new page */
-	      if (file_alloc_pages (thread_p, ovf_vfid, &next_vpid, 1,
-				    addr_vpid_ptr, NULL, NULL) == NULL)
-		{
-		  error = er_errid ();
+        {
+          /* Need more pages... Get next page */
+          if (VPID_ISNULL (&next_vpid))
+            {
+              /* We need to allocate a new page */
+              if (file_alloc_pages (thread_p, ovf_vfid, &next_vpid, 1, addr_vpid_ptr, NULL, NULL) == NULL)
+                {
+                  error = er_errid ();
 
-		  GOTO_EXIT_ON_ERROR;
-		}
-	      recv.new_vpid = next_vpid;
+                  GOTO_EXIT_ON_ERROR;
+                }
+              recv.new_vpid = next_vpid;
 
-	      log_append_undoredo_data (thread_p, RVOVF_NEWPAGE_LINK, &addr,
-					sizeof (recv), sizeof (next_vpid),
-					&recv, &next_vpid);
+              log_append_undoredo_data (thread_p, RVOVF_NEWPAGE_LINK, &addr,
+                                        sizeof (recv), sizeof (next_vpid), &recv, &next_vpid);
 
-	      isnewpage = true;	/* So that its link can be set to NULL */
+              isnewpage = true; /* So that its link can be set to NULL */
 
-	      /* This logical undo is to remove the page in case of rollback */
-	      if (file_is_new_file (thread_p, ovf_vfid) == FILE_OLD_FILE)
-		{
-		  /* we don't do undo logging for new files */
-		  log_append_undo_data (thread_p, RVOVF_NEWPAGE_LOGICAL_UNDO,
-					&logical_undoaddr, sizeof (recv),
-					&recv);
-		}
+              /* This logical undo is to remove the page in case of rollback */
+              if (file_is_new_file (thread_p, ovf_vfid) == FILE_OLD_FILE)
+                {
+                  /* we don't do undo logging for new files */
+                  log_append_undo_data (thread_p, RVOVF_NEWPAGE_LOGICAL_UNDO, &logical_undoaddr, sizeof (recv), &recv);
+                }
 
-	      if (rest_parts == NULL)
-		{
-		  /* This is the first part */
-		  first_part->next_vpid = next_vpid;
-		}
-	      else
-		{
-		  /* This is part of rest part */
-		  rest_parts->next_vpid = next_vpid;
-		}
+              if (rest_parts == NULL)
+                {
+                  /* This is the first part */
+                  first_part->next_vpid = next_vpid;
+                }
+              else
+                {
+                  /* This is part of rest part */
+                  rest_parts->next_vpid = next_vpid;
+                }
 
-	      error = FI_TEST_ARG_INT (thread_p,
-				       FI_TEST_OVF_FILE_UPDATE_ERROR1, 0, 0);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
-	    }
+              error = FI_TEST_ARG_INT (thread_p, FI_TEST_OVF_FILE_UPDATE_ERROR1, 0, 0);
+              if (error != NO_ERROR)
+                {
+                  GOTO_EXIT_ON_ERROR;
+                }
+            }
 
-	  pgbuf_unfix_and_init (thread_p, addr.pgptr);
-	}
+          pgbuf_unfix_and_init (thread_p, addr.pgptr);
+        }
       else
-	{
-	  /* The content of the data has been copied. We don't need more pages.
-	     Deallocate any additional pages */
-	  VPID_SET_NULL (&tmp_vpid);
+        {
+          /* The content of the data has been copied. We don't need more pages.
+             Deallocate any additional pages */
+          VPID_SET_NULL (&tmp_vpid);
 
-	  log_append_undoredo_data (thread_p, RVOVF_CHANGE_LINK, &addr,
-				    sizeof (next_vpid), sizeof (next_vpid),
-				    &next_vpid, &tmp_vpid);
+          log_append_undoredo_data (thread_p, RVOVF_CHANGE_LINK, &addr,
+                                    sizeof (next_vpid), sizeof (next_vpid), &next_vpid, &tmp_vpid);
 
-	  if (rest_parts == NULL)
-	    {
-	      /* This is the first part */
-	      VPID_SET_NULL (&first_part->next_vpid);
-	    }
-	  else
-	    {
-	      /* This is part of rest part */
-	      VPID_SET_NULL (&rest_parts->next_vpid);
-	    }
-	  pgbuf_unfix_and_init (thread_p, addr.pgptr);
+          if (rest_parts == NULL)
+            {
+              /* This is the first part */
+              VPID_SET_NULL (&first_part->next_vpid);
+            }
+          else
+            {
+              /* This is part of rest part */
+              VPID_SET_NULL (&rest_parts->next_vpid);
+            }
+          pgbuf_unfix_and_init (thread_p, addr.pgptr);
 
-	  while (!(VPID_ISNULL (&next_vpid)))
-	    {
-	      addr.pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE,
-				      PGBUF_LATCH_WRITE,
-				      PGBUF_UNCONDITIONAL_LATCH,
-				      PAGE_OVERFLOW);
-	      if (addr.pgptr == NULL)
-		{
-		  error = er_errid ();
+          while (!(VPID_ISNULL (&next_vpid)))
+            {
+              addr.pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE,
+                                      PGBUF_LATCH_WRITE, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+              if (addr.pgptr == NULL)
+                {
+                  error = er_errid ();
 
-		  GOTO_EXIT_ON_ERROR;
-		}
+                  GOTO_EXIT_ON_ERROR;
+                }
 
-	      tmp_vpid = next_vpid;
-	      rest_parts = (OVERFLOW_REST_PART *) addr.pgptr;
-	      next_vpid = rest_parts->next_vpid;
+              tmp_vpid = next_vpid;
+              rest_parts = (OVERFLOW_REST_PART *) addr.pgptr;
+              next_vpid = rest_parts->next_vpid;
 
-	      error = pgbuf_invalidate (thread_p, addr.pgptr);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
-	      addr.pgptr = NULL;
+              error = pgbuf_invalidate (thread_p, addr.pgptr);
+              if (error != NO_ERROR)
+                {
+                  GOTO_EXIT_ON_ERROR;
+                }
+              addr.pgptr = NULL;
 
-	      error =
-		file_dealloc_page (thread_p, ovf_vfid, &tmp_vpid,
-				   PAGE_OVERFLOW);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
-	    }
-	  break;
-	}
+              error = file_dealloc_page (thread_p, ovf_vfid, &tmp_vpid, PAGE_OVERFLOW);
+              if (error != NO_ERROR)
+                {
+                  GOTO_EXIT_ON_ERROR;
+                }
+            }
+          break;
+        }
     }
 
   return ovf_vpid;
@@ -818,8 +774,7 @@ exit_on_error:
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "invalid error code");
     }
 
   if (addr.pgptr != NULL)
@@ -839,8 +794,7 @@ exit_on_error:
  *   pgptr(in):
  */
 static int
-overflow_delete_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
-			  VPID * vpid, PAGE_PTR pgptr)
+overflow_delete_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid, VPID * vpid, PAGE_PTR pgptr)
 {
   int ret;
 
@@ -860,8 +814,7 @@ overflow_delete_internal (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
 
 exit_on_error:
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -874,8 +827,7 @@ exit_on_error:
  * Note: The function deallocate the pages composing the overflow record
  */
 const VPID *
-overflow_delete (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
-		 const VPID * ovf_vpid)
+overflow_delete (THREAD_ENTRY * thread_p, const VFID * ovf_vfid, const VPID * ovf_vpid)
 {
   return overflow_traverse (thread_p, ovf_vfid, ovf_vpid, OVERFLOW_DO_DELETE);
 }
@@ -899,8 +851,7 @@ overflow_flush_internal (THREAD_ENTRY * thread_p, PAGE_PTR pgptr)
 
 exit_on_error:
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 /*
@@ -934,8 +885,7 @@ overflow_get_length (THREAD_ENTRY * thread_p, const VPID * ovf_vpid)
    * know by accessing the relocation-overflow record with the appropiate lock
    */
 
-  pgptr = pgbuf_fix (thread_p, ovf_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+  pgptr = pgbuf_fix (thread_p, ovf_vpid, OLD_PAGE, PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
   if (pgptr == NULL)
     {
       return -1;
@@ -967,8 +917,7 @@ overflow_get_length (THREAD_ENTRY * thread_p, const VPID * ovf_vpid)
  */
 SCAN_CODE
 overflow_get_nbytes (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
-		     RECDES * recdes, int start_offset, int max_nbytes,
-		     int *remaining_length)
+                     RECDES * recdes, int start_offset, int max_nbytes, int *remaining_length)
 {
   OVERFLOW_FIRST_PART *first_part;
   OVERFLOW_REST_PART *rest_parts;
@@ -986,8 +935,7 @@ overflow_get_nbytes (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
 
   next_vpid = *ovf_vpid;
 
-  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
   if (pgptr == NULL)
     {
       return S_ERROR;
@@ -1005,9 +953,9 @@ overflow_get_nbytes (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
     {
       /* Don't give more than what we have */
       if (max_nbytes > (*remaining_length - start_offset))
-	{
-	  max_nbytes = *remaining_length - start_offset;
-	}
+        {
+          max_nbytes = *remaining_length - start_offset;
+        }
     }
 
   if (max_nbytes < 0)
@@ -1050,15 +998,14 @@ overflow_get_nbytes (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
     {
       /* Continue seeking until the starting offset is reached (passed) */
       if (start_offset > 0)
-	{
-	  /* Advance .. seek as much as you can */
-	  copy_length =
-	    (int) ((copyfrom + start_offset) > ((char *) pgptr + DB_PAGESIZE)
-		   ? DB_PAGESIZE - (copyfrom -
-				    (char *) pgptr) : start_offset);
-	  start_offset -= copy_length;
-	  copyfrom += copy_length;
-	}
+        {
+          /* Advance .. seek as much as you can */
+          copy_length =
+            (int) ((copyfrom + start_offset) > ((char *) pgptr + DB_PAGESIZE)
+                   ? DB_PAGESIZE - (copyfrom - (char *) pgptr) : start_offset);
+          start_offset -= copy_length;
+          copyfrom += copy_length;
+        }
 
       /*
        * Copy as much as you can when you do not need to continue seeking,
@@ -1066,49 +1013,46 @@ overflow_get_nbytes (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
        * of the page) and we are not located at the end of the overflow record.
        */
       if (start_offset == 0)
-	{
-	  if (copyfrom + max_nbytes > (char *) pgptr + DB_PAGESIZE)
-	    {
-	      copy_length =
-		DB_PAGESIZE - CAST_BUFLEN (copyfrom - (char *) pgptr);
-	    }
-	  else
-	    {
-	      copy_length = max_nbytes;
-	    }
+        {
+          if (copyfrom + max_nbytes > (char *) pgptr + DB_PAGESIZE)
+            {
+              copy_length = DB_PAGESIZE - CAST_BUFLEN (copyfrom - (char *) pgptr);
+            }
+          else
+            {
+              copy_length = max_nbytes;
+            }
 
-	  /* If we were not at the end of the page, perform the copy */
-	  if (copy_length > 0)
-	    {
-	      memcpy (data, copyfrom, copy_length);
-	      data += copy_length;
-	      max_nbytes -= copy_length;
-	    }
-	}
+          /* If we were not at the end of the page, perform the copy */
+          if (copy_length > 0)
+            {
+              memcpy (data, copyfrom, copy_length);
+              data += copy_length;
+              max_nbytes -= copy_length;
+            }
+        }
 
       pgbuf_unfix_and_init (thread_p, pgptr);
       if (max_nbytes > 0)
-	{
-	  if (VPID_ISNULL (&next_vpid))
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HEAP_OVFADDRESS_CORRUPTED, 3, ovf_vpid->volid,
-		      ovf_vpid->pageid, NULL_SLOTID);
-	      return S_ERROR;
-	    }
+        {
+          if (VPID_ISNULL (&next_vpid))
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_HEAP_OVFADDRESS_CORRUPTED, 3, ovf_vpid->volid, ovf_vpid->pageid, NULL_SLOTID);
+              return S_ERROR;
+            }
 
-	  pgptr =
-	    pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		       PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
-	  if (pgptr == NULL)
-	    {
-	      recdes->length = 0;
-	      return S_ERROR;
-	    }
-	  rest_parts = (OVERFLOW_REST_PART *) pgptr;
-	  copyfrom = (char *) rest_parts->data;
-	  next_vpid = rest_parts->next_vpid;
-	}
+          pgptr =
+            pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+          if (pgptr == NULL)
+            {
+              recdes->length = 0;
+              return S_ERROR;
+            }
+          rest_parts = (OVERFLOW_REST_PART *) pgptr;
+          copyfrom = (char *) rest_parts->data;
+          next_vpid = rest_parts->next_vpid;
+        }
     }
 
   return S_SUCCESS;
@@ -1134,8 +1078,7 @@ overflow_get (THREAD_ENTRY * thread_p, const VPID * ovf_vpid, RECDES * recdes)
 {
   int remaining_length;
 
-  return overflow_get_nbytes (thread_p, ovf_vpid, recdes, 0, -1,
-			      &remaining_length);
+  return overflow_get_nbytes (thread_p, ovf_vpid, recdes, 0, -1, &remaining_length);
 }
 
 /*
@@ -1150,8 +1093,7 @@ overflow_get (THREAD_ENTRY * thread_p, const VPID * ovf_vpid, RECDES * recdes)
  */
 int
 overflow_get_capacity (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
-		       int *ovf_size, int *ovf_num_pages, int *ovf_overhead,
-		       int *ovf_free_space)
+                       int *ovf_size, int *ovf_num_pages, int *ovf_overhead, int *ovf_free_space)
 {
   OVERFLOW_FIRST_PART *first_part;
   OVERFLOW_REST_PART *rest_parts;
@@ -1169,8 +1111,7 @@ overflow_get_capacity (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
 
   next_vpid = *ovf_vpid;
 
-  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
   if (pgptr == NULL)
     {
       return ER_FAILED;
@@ -1191,42 +1132,40 @@ overflow_get_capacity (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
   while (remain_length > 0)
     {
       if (remain_length > DB_PAGESIZE)
-	{
-	  remain_length -= DB_PAGESIZE - hdr_length;
-	}
+        {
+          remain_length -= DB_PAGESIZE - hdr_length;
+        }
       else
-	{
-	  *ovf_free_space = DB_PAGESIZE - remain_length;
-	  remain_length = 0;
-	}
+        {
+          *ovf_free_space = DB_PAGESIZE - remain_length;
+          remain_length = 0;
+        }
 
       *ovf_num_pages += 1;
       *ovf_overhead += hdr_length;
 
       if (remain_length > 0)
-	{
-	  pgbuf_unfix_and_init (thread_p, pgptr);
-	  if (VPID_ISNULL (&next_vpid))
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HEAP_OVFADDRESS_CORRUPTED, 3, ovf_vpid->volid,
-		      ovf_vpid->pageid, NULL_SLOTID);
-	      ret = ER_HEAP_OVFADDRESS_CORRUPTED;
-	      goto exit_on_error;
-	    }
+        {
+          pgbuf_unfix_and_init (thread_p, pgptr);
+          if (VPID_ISNULL (&next_vpid))
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_HEAP_OVFADDRESS_CORRUPTED, 3, ovf_vpid->volid, ovf_vpid->pageid, NULL_SLOTID);
+              ret = ER_HEAP_OVFADDRESS_CORRUPTED;
+              goto exit_on_error;
+            }
 
-	  pgptr =
-	    pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		       PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
-	  if (pgptr == NULL)
-	    {
-	      goto exit_on_error;
-	    }
+          pgptr =
+            pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+          if (pgptr == NULL)
+            {
+              goto exit_on_error;
+            }
 
-	  rest_parts = (OVERFLOW_REST_PART *) pgptr;
-	  hdr_length = offsetof (OVERFLOW_REST_PART, data);
-	  next_vpid = rest_parts->next_vpid;
-	}
+          rest_parts = (OVERFLOW_REST_PART *) pgptr;
+          hdr_length = offsetof (OVERFLOW_REST_PART, data);
+          next_vpid = rest_parts->next_vpid;
+        }
     }
 
   pgbuf_unfix_and_init (thread_p, pgptr);
@@ -1240,8 +1179,7 @@ exit_on_error:
   *ovf_overhead = 0;
   *ovf_free_space = 0;
 
-  return (ret == NO_ERROR
-	  && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+  return (ret == NO_ERROR && (ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
 }
 
 #if defined (RYE_DEBUG)
@@ -1269,8 +1207,7 @@ overflow_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * ovf_vpid)
    */
 
   next_vpid = *ovf_vpid;
-  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-		     PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ, PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
   if (pgptr == NULL)
     {
       return ((ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
@@ -1284,37 +1221,36 @@ overflow_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * ovf_vpid)
   while (remain_length > 0)
     {
       dump_length =
-	(int) ((dumpfrom + remain_length > (char *) pgptr + DB_PAGESIZE)
-	       ? DB_PAGESIZE - (dumpfrom - (char *) pgptr) : remain_length);
+        (int) ((dumpfrom + remain_length > (char *) pgptr + DB_PAGESIZE)
+               ? DB_PAGESIZE - (dumpfrom - (char *) pgptr) : remain_length);
       for (i = 0; i < dump_length; i++)
-	{
-	  (void) fputc (*dumpfrom++, fp);
-	}
+        {
+          (void) fputc (*dumpfrom++, fp);
+        }
 
       remain_length -= dump_length;
 
       if (remain_length > 0)
-	{
-	  pgbuf_unfix_and_init (thread_p, pgptr);
-	  if (VPID_ISNULL (&next_vpid))
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_HEAP_OVFADDRESS_CORRUPTED, 3, ovf_vpid->volid,
-		      ovf_vpid->pageid, NULL_SLOTID);
-	      return ER_HEAP_OVFADDRESS_CORRUPTED;
-	    }
+        {
+          pgbuf_unfix_and_init (thread_p, pgptr);
+          if (VPID_ISNULL (&next_vpid))
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_HEAP_OVFADDRESS_CORRUPTED, 3, ovf_vpid->volid, ovf_vpid->pageid, NULL_SLOTID);
+              return ER_HEAP_OVFADDRESS_CORRUPTED;
+            }
 
-	  pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
-			     PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
-	  if (pgptr == NULL)
-	    {
-	      return ((ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
-	    }
+          pgptr = pgbuf_fix (thread_p, &next_vpid, OLD_PAGE, PGBUF_LATCH_READ,
+                             PGBUF_UNCONDITIONAL_LATCH, PAGE_OVERFLOW);
+          if (pgptr == NULL)
+            {
+              return ((ret = er_errid ()) == NO_ERROR) ? ER_FAILED : ret;
+            }
 
-	  rest_parts = (OVERFLOW_REST_PART *) pgptr;
-	  dumpfrom = (char *) rest_parts->data;
-	  next_vpid = rest_parts->next_vpid;
-	}
+          rest_parts = (OVERFLOW_REST_PART *) pgptr;
+          dumpfrom = (char *) rest_parts->data;
+          next_vpid = rest_parts->next_vpid;
+        }
     }
 
   pgbuf_unfix_and_init (thread_p, pgptr);
@@ -1332,15 +1268,13 @@ overflow_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * ovf_vpid)
  *   avg_ovfdata_size(in): Avergae size of overflow data
  */
 int
-overflow_estimate_npages_needed (THREAD_ENTRY * thread_p, int total_novf_sets,
-				 int avg_ovfdata_size)
+overflow_estimate_npages_needed (THREAD_ENTRY * thread_p, int total_novf_sets, int avg_ovfdata_size)
 {
   int npages;
 
   /* Overflow insertion
      First page.. Substract length for insertion in first page */
-  avg_ovfdata_size -=
-    (DB_PAGESIZE - (int) offsetof (OVERFLOW_FIRST_PART, data));
+  avg_ovfdata_size -= (DB_PAGESIZE - (int) offsetof (OVERFLOW_FIRST_PART, data));
   if (avg_ovfdata_size > 0)
     {
       /* The rest of the pages */
@@ -1370,8 +1304,7 @@ overflow_rv_newpage_logical_undo (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
   const OVERFLOW_RECV_LINKS *newpg;
 
   newpg = (const OVERFLOW_RECV_LINKS *) rcv->data;
-  (void) file_dealloc_page (thread_p, &newpg->ovf_vfid, &newpg->new_vpid,
-			    PAGE_OVERFLOW);
+  (void) file_dealloc_page (thread_p, &newpg->ovf_vfid, &newpg->new_vpid, PAGE_OVERFLOW);
 
   return NO_ERROR;
 }
@@ -1384,17 +1317,14 @@ overflow_rv_newpage_logical_undo (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
  *   data(in): The data being logged
  */
 void
-overflow_rv_newpage_logical_dump_undo (FILE * fp,
-				       UNUSED_ARG int length_ignore,
-				       void *data)
+overflow_rv_newpage_logical_dump_undo (FILE * fp, UNUSED_ARG int length_ignore, void *data)
 {
   OVERFLOW_RECV_LINKS *newpg;
 
   newpg = (OVERFLOW_RECV_LINKS *) data;
   (void) fprintf (fp, "Deallocating page %d|%d"
-		  " from Volid = %d, Fileid = %d\n",
-		  newpg->new_vpid.volid, newpg->new_vpid.pageid,
-		  newpg->ovf_vfid.volid, newpg->ovf_vfid.fileid);
+                  " from Volid = %d, Fileid = %d\n",
+                  newpg->new_vpid.volid, newpg->new_vpid.pageid, newpg->ovf_vfid.volid, newpg->ovf_vfid.fileid);
 }
 
 /*
@@ -1462,8 +1392,7 @@ overflow_rv_link_dump (FILE * fp, UNUSED_ARG int length_ignore, void *data)
   VPID *vpid;
 
   vpid = (VPID *) data;
-  fprintf (fp, "Overflow Reference to Volid = %d|Pageid = %d\n",
-	   vpid->volid, vpid->pageid);
+  fprintf (fp, "Overflow Reference to Volid = %d|Pageid = %d\n", vpid->volid, vpid->pageid);
 }
 
 /*
@@ -1480,8 +1409,7 @@ overflow_rv_page_dump (FILE * fp, int length, void *data)
   int hdr_length;
 
   rest_parts = (OVERFLOW_REST_PART *) data;
-  fprintf (fp, "Overflow Link to Volid = %d|Pageid = %d\n",
-	   rest_parts->next_vpid.volid, rest_parts->next_vpid.pageid);
+  fprintf (fp, "Overflow Link to Volid = %d|Pageid = %d\n", rest_parts->next_vpid.volid, rest_parts->next_vpid.pageid);
   dumpfrom = (char *) data;
 
   hdr_length = offsetof (OVERFLOW_REST_PART, data);

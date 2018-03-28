@@ -52,7 +52,7 @@
 #include "boot_sr.h"
 #include "locator_sr.h"
 #include "btree.h"
-#include "thread.h"		/* MAX_NTHRDS */
+#include "thread.h"             /* MAX_NTHRDS */
 #include "object_primitive.h"
 #include "dbtype.h"
 #include "db.h"
@@ -101,13 +101,12 @@
  * exist, it may be created depending of the value of argument create.
  */
 VFID *
-heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
-		    VFID * ovf_vfid, bool docreate)
+heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid, VFID * ovf_vfid, bool docreate)
 {
-  HEAP_HDR_STATS *heap_hdr;	/* Header of heap structure    */
-  LOG_DATA_ADDR addr_hdr = LOG_ADDR_INITIALIZER;	/* Address of logging data     */
-  VPID vpid;			/* Page-volume identifier      */
-  RECDES hdr_recdes;		/* Header record descriptor    */
+  HEAP_HDR_STATS *heap_hdr;     /* Header of heap structure    */
+  LOG_DATA_ADDR addr_hdr = LOG_ADDR_INITIALIZER;        /* Address of logging data     */
+  VPID vpid;                    /* Page-volume identifier      */
+  RECDES hdr_recdes;            /* Header record descriptor    */
   int mode;
 
   assert (file_is_new_file (thread_p, &(hfid->vfid)) == FILE_OLD_FILE);
@@ -120,9 +119,7 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
   vpid.pageid = hfid->hpgid;
 
   mode = (docreate == true ? PGBUF_LATCH_WRITE : PGBUF_LATCH_READ);
-  addr_hdr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, mode,
-				   PGBUF_UNCONDITIONAL_LATCH,
-				   PAGE_HEAP_HEADER);
+  addr_hdr.pgptr = heap_pgbuf_fix (thread_p, hfid, &vpid, mode, PGBUF_UNCONDITIONAL_LATCH, PAGE_HEAP_HEADER);
   if (addr_hdr.pgptr == NULL)
     {
       /* something went wrong, return */
@@ -131,8 +128,7 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
 
   /* Peek the header record */
 
-  if (spage_get_record (addr_hdr.pgptr, HEAP_HEADER_AND_CHAIN_SLOTID,
-			&hdr_recdes, PEEK) != S_SUCCESS)
+  if (spage_get_record (addr_hdr.pgptr, HEAP_HEADER_AND_CHAIN_SLOTID, &hdr_recdes, PEEK) != S_SUCCESS)
     {
       pgbuf_unfix_and_init (thread_p, addr_hdr.pgptr);
       return NULL;
@@ -142,58 +138,55 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
   if (VFID_ISNULL (&heap_hdr->ovf_vfid))
     {
       if (docreate == true)
-	{
-	  FILE_OVF_HEAP_DES hfdes_ovf;
-	  /*
-	   * Create the overflow file. Try to create the overflow file in the
-	   * same volume where the heap was defined
-	   */
+        {
+          FILE_OVF_HEAP_DES hfdes_ovf;
+          /*
+           * Create the overflow file. Try to create the overflow file in the
+           * same volume where the heap was defined
+           */
 
-	  /*
-	   * START A TOP SYSTEM OPERATION
-	   */
+          /*
+           * START A TOP SYSTEM OPERATION
+           */
 
-	  if (log_start_system_op (thread_p) == NULL)
-	    {
-	      pgbuf_unfix_and_init (thread_p, addr_hdr.pgptr);
-	      return NULL;
-	    }
-
-
-	  ovf_vfid->volid = hfid->vfid.volid;
-	  /*
-	   * At least three pages since a multipage object will take at least
-	   * two pages
-	   */
+          if (log_start_system_op (thread_p) == NULL)
+            {
+              pgbuf_unfix_and_init (thread_p, addr_hdr.pgptr);
+              return NULL;
+            }
 
 
-	  /* Initialize description of overflow heap file */
-	  HFID_COPY (&hfdes_ovf.hfid, hfid);
+          ovf_vfid->volid = hfid->vfid.volid;
+          /*
+           * At least three pages since a multipage object will take at least
+           * two pages
+           */
 
-	  if (file_create (thread_p, ovf_vfid, 3, FILE_MULTIPAGE_OBJECT_HEAP,
-			   &hfdes_ovf, NULL, 0) != NULL)
-	    {
-	      /* Log undo, then redo */
-	      log_append_undo_data (thread_p, RVHF_STATS, &addr_hdr,
-				    sizeof (*heap_hdr), heap_hdr);
-	      VFID_COPY (&heap_hdr->ovf_vfid, ovf_vfid);
-	      log_append_redo_data (thread_p, RVHF_STATS, &addr_hdr,
-				    sizeof (*heap_hdr), heap_hdr);
-	      pgbuf_set_dirty (thread_p, addr_hdr.pgptr, DONT_FREE);
 
-	      log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
-	      (void) file_new_declare_as_old (thread_p, ovf_vfid);
-	    }
-	  else
-	    {
-	      log_end_system_op (thread_p, LOG_RESULT_TOPOP_ABORT);
-	      ovf_vfid = NULL;
-	    }
-	}
+          /* Initialize description of overflow heap file */
+          HFID_COPY (&hfdes_ovf.hfid, hfid);
+
+          if (file_create (thread_p, ovf_vfid, 3, FILE_MULTIPAGE_OBJECT_HEAP, &hfdes_ovf, NULL, 0) != NULL)
+            {
+              /* Log undo, then redo */
+              log_append_undo_data (thread_p, RVHF_STATS, &addr_hdr, sizeof (*heap_hdr), heap_hdr);
+              VFID_COPY (&heap_hdr->ovf_vfid, ovf_vfid);
+              log_append_redo_data (thread_p, RVHF_STATS, &addr_hdr, sizeof (*heap_hdr), heap_hdr);
+              pgbuf_set_dirty (thread_p, addr_hdr.pgptr, DONT_FREE);
+
+              log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
+              (void) file_new_declare_as_old (thread_p, ovf_vfid);
+            }
+          else
+            {
+              log_end_system_op (thread_p, LOG_RESULT_TOPOP_ABORT);
+              ovf_vfid = NULL;
+            }
+        }
       else
-	{
-	  ovf_vfid = NULL;
-	}
+        {
+          ovf_vfid = NULL;
+        }
     }
   else
     {
@@ -216,27 +209,23 @@ heap_ovf_find_vfid (THREAD_ENTRY * thread_p, const HFID * hfid,
  * Note: Insert the content of a multipage object in overflow.
  */
 OID *
-heap_ovf_insert (THREAD_ENTRY * thread_p, const HFID * hfid, OID * ovf_oid,
-		 RECDES * recdes, const OID * class_oid)
+heap_ovf_insert (THREAD_ENTRY * thread_p, const HFID * hfid, OID * ovf_oid, RECDES * recdes, const OID * class_oid)
 {
   int status = NO_ERROR;
   VFID ovf_vfid;
-  VPID ovf_vpid;		/* Address of overflow insertion */
+  VPID ovf_vpid;                /* Address of overflow insertion */
 
-  thread_mnt_track_push (thread_p,
-			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT,
-			 &status);
+  thread_mnt_track_push (thread_p, MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT, &status);
 
   if (heap_ovf_find_vfid (thread_p, hfid, &ovf_vfid, true) == NULL
-      || overflow_insert (thread_p, &ovf_vfid, &ovf_vpid, recdes,
-			  NULL, class_oid) == NULL)
+      || overflow_insert (thread_p, &ovf_vfid, &ovf_vpid, recdes, NULL, class_oid) == NULL)
     {
       goto exit_on_error;
     }
 
   ovf_oid->pageid = ovf_vpid.pageid;
   ovf_oid->volid = ovf_vpid.volid;
-  ovf_oid->slotid = NULL_SLOTID;	/* Irrelevant */
+  ovf_oid->slotid = NULL_SLOTID;        /* Irrelevant */
 
   if (status == NO_ERROR)
     {
@@ -267,16 +256,13 @@ exit_on_error:
  * Note: Update the content of a multipage object.
  */
 const OID *
-heap_ovf_update (THREAD_ENTRY * thread_p, const HFID * hfid,
-		 const OID * ovf_oid, RECDES * recdes)
+heap_ovf_update (THREAD_ENTRY * thread_p, const HFID * hfid, const OID * ovf_oid, RECDES * recdes)
 {
   int status = NO_ERROR;
   VFID ovf_vfid;
   VPID ovf_vpid;
 
-  thread_mnt_track_push (thread_p,
-			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE,
-			 &status);
+  thread_mnt_track_push (thread_p, MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE, &status);
 
   if (heap_ovf_find_vfid (thread_p, hfid, &ovf_vfid, false) == NULL)
     {
@@ -319,16 +305,13 @@ exit_on_error:
  * Note: Delete the content of a multipage object.
  */
 const OID *
-heap_ovf_delete (THREAD_ENTRY * thread_p, const HFID * hfid,
-		 const OID * ovf_oid)
+heap_ovf_delete (THREAD_ENTRY * thread_p, const HFID * hfid, const OID * ovf_oid)
 {
   int status = NO_ERROR;
   VFID ovf_vfid;
   VPID ovf_vpid;
 
-  thread_mnt_track_push (thread_p,
-			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE,
-			 &status);
+  thread_mnt_track_push (thread_p, MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE, &status);
 
   if (heap_ovf_find_vfid (thread_p, hfid, &ovf_vfid, false) == NULL)
     {
@@ -443,14 +426,12 @@ heap_ovf_get (THREAD_ENTRY * thread_p, const OID * ovf_oid, RECDES * recdes)
  */
 int
 heap_ovf_get_capacity (THREAD_ENTRY * thread_p, const OID * ovf_oid,
-		       int *ovf_len, int *ovf_num_pages, int *ovf_overhead,
-		       int *ovf_free_space)
+                       int *ovf_len, int *ovf_num_pages, int *ovf_overhead, int *ovf_free_space)
 {
   VPID ovf_vpid;
 
   ovf_vpid.pageid = ovf_oid->pageid;
   ovf_vpid.volid = ovf_oid->volid;
 
-  return overflow_get_capacity (thread_p, &ovf_vpid, ovf_len, ovf_num_pages,
-				ovf_overhead, ovf_free_space);
+  return overflow_get_capacity (thread_p, &ovf_vpid, ovf_len, ovf_num_pages, ovf_overhead, ovf_free_space);
 }

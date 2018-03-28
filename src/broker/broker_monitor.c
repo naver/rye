@@ -58,7 +58,7 @@
 #include "broker_admin_pub.h"
 #include "tcp.h"
 
-#define		DEFAULT_CHECK_PERIOD		300	/* seconds */
+#define		DEFAULT_CHECK_PERIOD		300     /* seconds */
 #define		MAX_APPL_NUM		100
 
 #define         FIELD_DELIMITER          ' '
@@ -81,7 +81,7 @@ typedef enum
   FIELD_APPL_SERVER_NUM_CLIENT_WAIT_IN_SEC,
   FIELD_APPL_SERVER_NUM_BUSY_IN_SEC,
   FIELD_JOB_QUEUE_ID,
-  FIELD_THREAD,			/* = 10 */
+  FIELD_THREAD,                 /* = 10 */
   FIELD_CPU_USAGE,
   FIELD_CPU_TIME,
   FIELD_TPS,
@@ -91,7 +91,7 @@ typedef enum
   FIELD_NUM_OF_UPDATE_QUERIES,
   FIELD_NUM_OF_DELETE_QUERIES,
   FIELD_NUM_OF_OTHERS_QUERIES,
-  FIELD_LONG_TRANSACTION,	/* = 20 */
+  FIELD_LONG_TRANSACTION,       /* = 20 */
   FIELD_LONG_QUERY,
   FIELD_ERROR_QUERIES,
   FIELD_UNIQUE_ERROR_QUERIES,
@@ -101,7 +101,7 @@ typedef enum
   FIELD_NUMBER_OF_CONNECTION,
   FIELD_ID,
   FIELD_LQS,
-  FIELD_STATUS,			/* = 30 */
+  FIELD_STATUS,                 /* = 30 */
   FIELD_LAST_ACCESS_TIME,
   FIELD_DB_NAME,
   FIELD_HOST,
@@ -111,7 +111,7 @@ typedef enum
   FIELD_SQL_LOG_MODE,
   FIELD_TRANSACTION_STIME,
   FIELD_CONNECT,
-  FIELD_RESTART,		/* = 40 */
+  FIELD_RESTART,                /* = 40 */
   FIELD_REQUEST,
   FIELD_NUMBER_OF_CONNECTION_REJECTED,
   FIELD_UNUSABLE_DATABASES,
@@ -268,21 +268,16 @@ static void ip2str (in_addr_t ip, char *ip_str);
 static void time2str (const time_t t, char *str);
 
 static void print_monitor_header ();
-static void
-set_monitor_items (BR_MONITORING_ITEM * mnt_items,
-		   T_BROKER_INFO * br_info, T_SHM_APPL_SERVER * shm_appl);
+static void set_monitor_items (BR_MONITORING_ITEM * mnt_items, T_BROKER_INFO * br_info, T_SHM_APPL_SERVER * shm_appl);
 static void
 print_monitor_items (BR_MONITORING_ITEM * mnt_items_cur,
-		     BR_MONITORING_ITEM * mnt_items_old,
-		     double elapsed_time, T_BROKER_INFO * br_info_p,
-		     T_SHM_APPL_SERVER * shm_appl);
+                     BR_MONITORING_ITEM * mnt_items_old,
+                     double elapsed_time, T_BROKER_INFO * br_info_p, T_SHM_APPL_SERVER * shm_appl);
 
 static void
 appl_info_display (T_SHM_APPL_SERVER * shm_appl,
-		   T_APPL_SERVER_INFO * as_info_p, int br_index,
-		   int as_index,
-		   APPL_MONITORING_ITEM * appl_mnt_old, time_t current_time,
-		   double elapsed_time);
+                   T_APPL_SERVER_INFO * as_info_p, int br_index,
+                   int as_index, APPL_MONITORING_ITEM * appl_mnt_old, time_t current_time, double elapsed_time);
 static void mgmt_monitor (void);
 static int appl_monitor (char *br_vector, double elapsed_time);
 static int brief_monitor (char *br_vector, double elapsed_time);
@@ -292,14 +287,11 @@ static void time_format (int t, char *time_str);
 static void get_cpu_usage_string (char *buf_p, float usage);
 #endif
 static void print_appl_header (bool use_pdh_flag);
-static int print_title (char *buf_p, int buf_offset, FIELD_NAME name,
-			const char *new_title_p);
+static int print_title (char *buf_p, int buf_offset, FIELD_NAME name, const char *new_title_p);
 static void print_value (FIELD_NAME name, const void *value, FIELD_TYPE type);
-static const char *get_access_mode_string (T_ACCESS_MODE_VALUE mode,
-					   int replica_only_flag);
+static const char *get_access_mode_string (T_ACCESS_MODE_VALUE mode, int replica_only_flag);
 static const char *get_sql_log_mode_string (T_SQL_LOG_MODE_VALUE mode);
-static const char *get_status_string (T_APPL_SERVER_INFO * as_info_p,
-				      char appl_server);
+static const char *get_status_string (T_APPL_SERVER_INFO * as_info_p, char appl_server);
 
 static int unusable_databases_monitor (void);
 
@@ -389,8 +381,7 @@ broker_monitor (int argc, char **argv)
   if (shm_Br == NULL)
     {
       /* This means we have to launch broker */
-      fprintf (stdout, "master shared memory open error[0x%x]\r\n",
-	       shm_key_br_gl);
+      fprintf (stdout, "master shared memory open error[0x%x]\r\n", shm_key_br_gl);
       return 1;
     }
   if (shm_Br->num_broker < 1 || shm_Br->num_broker > MAX_BROKER_NUM)
@@ -432,91 +423,90 @@ broker_monitor (int argc, char **argv)
       elapsed_time = difftime (time_cur, time_old);
 
       if (refresh_Sec > 0 && !tty_Mode)
-	{
-	  move (0, 0);
-	  refresh ();
-	}
+        {
+          move (0, 0);
+          refresh ();
+        }
 
       if (shm_Br == NULL || shm_Br->shm_header.status != RYE_SHM_VALID)
-	{
-	  if (shm_Br)
-	    {
-	      rye_shm_detach (shm_Br);
-	    }
+        {
+          if (shm_Br)
+            {
+              rye_shm_detach (shm_Br);
+            }
 
-	  shm_Br = rye_shm_attach (shm_key_br_gl,
-				   RYE_SHM_TYPE_BROKER_GLOBAL, true);
-	}
+          shm_Br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, true);
+        }
       else
-	{
-	  if (mgmt_Monitor_flag)
-	    {
-	      mgmt_monitor ();
-	    }
-	  else if (monitor_Flag == 0)
-	    {
-	      appl_monitor (br_vector, elapsed_time);
-	    }
-	  else
-	    {
-	      if (monitor_Flag & BROKER_MONITOR_FLAG_MASK)
-		{
-		  if ((monitor_Flag & ~BROKER_MONITOR_FLAG_MASK) != 0)
-		    {
-		      print_newline ();
-		    }
-		  brief_monitor (br_vector, elapsed_time);
-		}
+        {
+          if (mgmt_Monitor_flag)
+            {
+              mgmt_monitor ();
+            }
+          else if (monitor_Flag == 0)
+            {
+              appl_monitor (br_vector, elapsed_time);
+            }
+          else
+            {
+              if (monitor_Flag & BROKER_MONITOR_FLAG_MASK)
+                {
+                  if ((monitor_Flag & ~BROKER_MONITOR_FLAG_MASK) != 0)
+                    {
+                      print_newline ();
+                    }
+                  brief_monitor (br_vector, elapsed_time);
+                }
 
-	      if (monitor_Flag & UNUSABLE_DATABASES_FLAG_MASK)
-		{
-		  if ((monitor_Flag & ~UNUSABLE_DATABASES_FLAG_MASK) != 0)
-		    {
-		      print_newline ();
-		    }
-		  unusable_databases_monitor ();
-		}
-	    }
-	}
+              if (monitor_Flag & UNUSABLE_DATABASES_FLAG_MASK)
+                {
+                  if ((monitor_Flag & ~UNUSABLE_DATABASES_FLAG_MASK) != 0)
+                    {
+                      print_newline ();
+                    }
+                  unusable_databases_monitor ();
+                }
+            }
+        }
 
       if (refresh_Sec > 0 && !tty_Mode)
-	{
-	  int in_ch = 0;
+        {
+          int in_ch = 0;
 
-	  refresh ();
-	  clrtobot ();
-	  move (0, 0);
-	  refresh ();
-	  in_ch = get_char ();
+          refresh ();
+          clrtobot ();
+          move (0, 0);
+          refresh ();
+          in_ch = get_char ();
 
-	  if (in_ch == 'q')
-	    {
-	      break;
-	    }
-	  else if (in_ch == '' || in_ch == '\r' || in_ch == '\n' || in_ch == ' ')
-	    {
-	      clear ();
-	      refresh ();
-	    }
-	}
+          if (in_ch == 'q')
+            {
+              break;
+            }
+          else if (in_ch == '' || in_ch == '\r' || in_ch == '\n' || in_ch == ' ')
+            {
+              clear ();
+              refresh ();
+            }
+        }
       else if (refresh_Sec > 0)
-	{
-	  for (i = 0; i < 10; i++)
-	    {
-	      THREAD_SLEEP (refresh_Sec * 100);
-	    }
-	  fflush (stdout);
-	}
+        {
+          for (i = 0; i < 10; i++)
+            {
+              THREAD_SLEEP (refresh_Sec * 100);
+            }
+          fflush (stdout);
+        }
       else
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (elapsed_time > 0)
-	{
-	  time_old = time_cur;
-	}
-    }				/* end of while(1) */
+        {
+          time_old = time_cur;
+        }
+    }                           /* end of while(1) */
 
   if (shm_Br != NULL)
     {
@@ -535,8 +525,7 @@ broker_monitor (int argc, char **argv)
 static void
 print_usage (void)
 {
-  printf
-    ("broker_monitor [-b] [-m] [-q] [-t] [-s <sec>] [-u] [-f] [<expr>]\n");
+  printf ("broker_monitor [-b] [-m] [-q] [-t] [-s <sec>] [-u] [-f] [<expr>]\n");
   printf ("\t<expr> part of broker name or SERVICE=[ON|OFF]\n");
   printf ("\t-q display job queue\n");
   printf ("\t-u display unusable database server\n");
@@ -565,90 +554,89 @@ get_args (int argc, char *argv[], char *br_vector)
   while ((c = getopt (argc, argv, optchars)) != EOF)
     {
       switch (c)
-	{
-	case 't':
-	  tty_Mode = true;
-	  break;
-	case 'q':
-	  display_Job_queue = true;
-	  break;
-	case 's':
-	  refresh_Sec = atoi (optarg);
-	  break;
-	case 'b':
-	  monitor_Flag |= BROKER_MONITOR_FLAG_MASK;
-	  break;
-	case 'l':
-	  state_Interval = last_Access_sec = atoi (optarg);
-	  if (state_Interval < 1)
-	    {
-	      state_Interval = 1;
-	    }
-	  break;
-	case 'f':
-	  full_Info_flag = true;
-	  break;
-	case 'u':
-	  monitor_Flag |= UNUSABLE_DATABASES_FLAG_MASK;
-	  break;
-	case 'm':
-	  mgmt_Monitor_flag = true;
-	  break;
-	case 'h':
-	case '?':
-	  print_usage ();
-	  return -1;
-	}
+        {
+        case 't':
+          tty_Mode = true;
+          break;
+        case 'q':
+          display_Job_queue = true;
+          break;
+        case 's':
+          refresh_Sec = atoi (optarg);
+          break;
+        case 'b':
+          monitor_Flag |= BROKER_MONITOR_FLAG_MASK;
+          break;
+        case 'l':
+          state_Interval = last_Access_sec = atoi (optarg);
+          if (state_Interval < 1)
+            {
+              state_Interval = 1;
+            }
+          break;
+        case 'f':
+          full_Info_flag = true;
+          break;
+        case 'u':
+          monitor_Flag |= UNUSABLE_DATABASES_FLAG_MASK;
+          break;
+        case 'm':
+          mgmt_Monitor_flag = true;
+          break;
+        case 'h':
+        case '?':
+          print_usage ();
+          return -1;
+        }
     }
 
   for (; optind < argc; optind++)
     {
       if (br_name_opt_flag == false)
-	{
-	  if (strncasecmp (argv[optind], "SERVICE=", strlen ("SERVICE=")) ==
-	      0)
-	    {
-	      char *value_p;
-	      value_p = argv[optind] + strlen ("SERVICE=");
-	      if (strcasecmp (value_p, "ON") == 0)
-		{
-		  service_Filter_value = SERVICE_ON;
-		  break;
-		}
-	      else if (strcasecmp (value_p, "OFF") == 0)
-		{
-		  service_Filter_value = SERVICE_OFF;
-		  break;
-		}
-	      else
-		{
-		  print_usage ();
-		  return -1;
-		}
-	    }
-	}
+        {
+          if (strncasecmp (argv[optind], "SERVICE=", strlen ("SERVICE=")) == 0)
+            {
+              char *value_p;
+              value_p = argv[optind] + strlen ("SERVICE=");
+              if (strcasecmp (value_p, "ON") == 0)
+                {
+                  service_Filter_value = SERVICE_ON;
+                  break;
+                }
+              else if (strcasecmp (value_p, "OFF") == 0)
+                {
+                  service_Filter_value = SERVICE_OFF;
+                  break;
+                }
+              else
+                {
+                  print_usage ();
+                  return -1;
+                }
+            }
+        }
 
       br_name_opt_flag = true;
       if (regcomp (&re, argv[optind], 0) != 0)
-	{
-	  fprintf (stderr, "%s\r\n", argv[optind]);
-	  return -1;
-	}
+        {
+          fprintf (stderr, "%s\r\n", argv[optind]);
+          return -1;
+        }
       for (j = 0; j < shm_Br->num_broker; j++)
-	{
-	  status = regexec (&re, shm_Br->br_info[j].name, 0, NULL, 0);
-	  if (status == 0)
-	    {
-	      br_vector[j] = 1;
-	    }
-	}
+        {
+          status = regexec (&re, shm_Br->br_info[j].name, 0, NULL, 0);
+          if (status == 0)
+            {
+              br_vector[j] = 1;
+            }
+        }
       regfree (&re);
     }
 
   if (br_name_opt_flag == false)
     {
       for (j = 0; j < shm_Br->num_broker; j++)
-	br_vector[j] = 1;
+        br_vector[j] = 1;
     }
 
   return 0;
@@ -667,21 +655,19 @@ print_job_queue (T_MAX_HEAP_NODE * job_queue)
       char time_str[64];
 
       if (max_heap_delete (job_queue, &item) < 0)
-	break;
+        break;
 
       if (first_flag)
-	{
-	  sprintf (outbuf, "%5s  %s%9s%13s%13s", "ID", "PRIORITY", "IP",
-		   "TIME", "REQUEST");
-	  str_out ("%s", outbuf);
-	  print_newline ();
-	  first_flag = 0;
-	}
+        {
+          sprintf (outbuf, "%5s  %s%9s%13s%13s", "ID", "PRIORITY", "IP", "TIME", "REQUEST");
+          str_out ("%s", outbuf);
+          print_newline ();
+          first_flag = 0;
+        }
 
       ip2str (item.ip, ip_str);
       time2str (item.recv_time.tv_sec, time_str);
-      sprintf (outbuf, "%5d%7d%17s%10s ",
-	       item.id, item.priority, ip_str, time_str);
+      sprintf (outbuf, "%5d%7d%17s%10s ", item.id, item.priority, ip_str, time_str);
       str_out ("%s", outbuf);
       print_newline ();
     }
@@ -694,8 +680,7 @@ ip2str (in_addr_t ip_addr, char *ip_str)
 {
   const unsigned char *ip = (const unsigned char *) &ip_addr;
   sprintf (ip_str, "%d.%d.%d.%d", (unsigned char) ip[0],
-	   (unsigned char) ip[1],
-	   (unsigned char) ip[2], (unsigned char) ip[3]);
+           (unsigned char) ip[1], (unsigned char) ip[2], (unsigned char) ip[3]);
 }
 
 static void
@@ -713,10 +698,8 @@ time2str (const time_t t, char *str)
 
 static void
 appl_info_display (T_SHM_APPL_SERVER * shm_appl,
-		   T_APPL_SERVER_INFO * as_info_p, int br_index,
-		   int as_index,
-		   APPL_MONITORING_ITEM * appl_mnt_old, time_t current_time,
-		   double elapsed_time)
+                   T_APPL_SERVER_INFO * as_info_p, int br_index,
+                   int as_index, APPL_MONITORING_ITEM * appl_mnt_old, time_t current_time, double elapsed_time)
 {
   UINT64 qps;
   UINT64 lqs;
@@ -738,18 +721,17 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 
   if (last_Access_sec > 0)
     {
-      if (as_info_p->uts_status != UTS_STATUS_BUSY
-	  || current_time - as_info_p->last_access_time < last_Access_sec)
-	{
-	  return;
-	}
+      if (as_info_p->uts_status != UTS_STATUS_BUSY || current_time - as_info_p->last_access_time < last_Access_sec)
+        {
+          return;
+        }
 
       if (as_info_p->uts_status == UTS_STATUS_BUSY
-	  && IS_APPL_SERVER_TYPE_CAS (shm_Br->br_info[br_index].appl_server)
-	  && as_info_p->con_status == CON_STATUS_OUT_TRAN)
-	{
-	  return;
-	}
+          && IS_APPL_SERVER_TYPE_CAS (shm_Br->br_info[br_index].appl_server)
+          && as_info_p->con_status == CON_STATUS_OUT_TRAN)
+        {
+          return;
+        }
     }
 
 //  col_len = 0;
@@ -758,10 +740,8 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
   print_value (FIELD_PID, &as_info_p->pid, FIELD_T_INT);
   if (elapsed_time > 0)
     {
-      qps = (as_info_p->num_queries_processed -
-	     appl_mnt_old->num_query_processed) / elapsed_time;
-      lqs = (as_info_p->num_long_queries -
-	     appl_mnt_old->num_long_query) / elapsed_time;
+      qps = (as_info_p->num_queries_processed - appl_mnt_old->num_query_processed) / elapsed_time;
+      lqs = (as_info_p->num_long_queries - appl_mnt_old->num_long_query) / elapsed_time;
       appl_mnt_old->num_query_processed = as_info_p->num_queries_processed;
       appl_mnt_old->num_long_query = as_info_p->num_long_queries;
       appl_mnt_old->qps = qps;
@@ -777,10 +757,7 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
   print_value (FIELD_LQS, &lqs, FIELD_T_UINT64);
   psize = (int) (os_get_mem_size (as_info_p->pid, MEM_VSIZE) / ONE_K);
   print_value (FIELD_PSIZE, &psize, FIELD_T_INT);
-  print_value (FIELD_STATUS,
-	       get_status_string (as_info_p,
-				  shm_Br->br_info[br_index].appl_server),
-	       FIELD_T_STRING);
+  print_value (FIELD_STATUS, get_status_string (as_info_p, shm_Br->br_info[br_index].appl_server), FIELD_T_STRING);
 
 #ifdef GET_PSINFO
   get_psinfo (as_info_p->pid, &proc_info);
@@ -794,54 +771,45 @@ appl_info_display (T_SHM_APPL_SERVER * shm_appl,
 
   if (full_Info_flag)
     {
-      print_value (FIELD_LAST_ACCESS_TIME, &(as_info_p->last_access_time),
-		   FIELD_T_TIME);
+      print_value (FIELD_LAST_ACCESS_TIME, &(as_info_p->last_access_time), FIELD_T_TIME);
       if (as_info_p->database_name[0] != '\0')
-	{
-	  char hostname[MAX_NODE_INFO_STR_LEN];
-	  prm_node_info_to_str (hostname, sizeof (hostname),
-				&as_info_p->db_node);
-	  print_value (FIELD_DB_NAME, as_info_p->database_name,
-		       FIELD_T_STRING);
-	  print_value (FIELD_HOST, hostname, FIELD_T_STRING);
-	  print_value (FIELD_LAST_CONNECT_TIME,
-		       &(as_info_p->last_connect_time), FIELD_T_TIME);
-	}
+        {
+          char hostname[MAX_NODE_INFO_STR_LEN];
+          prm_node_info_to_str (hostname, sizeof (hostname), &as_info_p->db_node);
+          print_value (FIELD_DB_NAME, as_info_p->database_name, FIELD_T_STRING);
+          print_value (FIELD_HOST, hostname, FIELD_T_STRING);
+          print_value (FIELD_LAST_CONNECT_TIME, &(as_info_p->last_connect_time), FIELD_T_TIME);
+        }
       else
-	{
-	  print_value (FIELD_DB_NAME, "-", FIELD_T_STRING);
-	  print_value (FIELD_HOST, "-", FIELD_T_STRING);
-	  print_value (FIELD_LAST_CONNECT_TIME, "-", FIELD_T_STRING);
-	}
+        {
+          print_value (FIELD_DB_NAME, "-", FIELD_T_STRING);
+          print_value (FIELD_HOST, "-", FIELD_T_STRING);
+          print_value (FIELD_LAST_CONNECT_TIME, "-", FIELD_T_STRING);
+        }
 
       css_ip_to_str (ip_str, sizeof (ip_str), as_info_p->cas_clt_ip_addr);
       print_value (FIELD_CLIENT_IP, ip_str, FIELD_T_STRING);
-      print_value (FIELD_CLIENT_VERSION, as_info_p->client_version,
-		   FIELD_T_STRING);
+      print_value (FIELD_CLIENT_VERSION, as_info_p->client_version, FIELD_T_STRING);
 
       if (as_info_p->cur_sql_log_mode != shm_appl->sql_log_mode)
-	{
-	  print_value (FIELD_SQL_LOG_MODE,
-		       get_sql_log_mode_string (as_info_p->cur_sql_log_mode),
-		       FIELD_T_STRING);
-	}
+        {
+          print_value (FIELD_SQL_LOG_MODE, get_sql_log_mode_string (as_info_p->cur_sql_log_mode), FIELD_T_STRING);
+        }
       else
-	{
-	  print_value (FIELD_SQL_LOG_MODE, "-", FIELD_T_STRING);
-	}
+        {
+          print_value (FIELD_SQL_LOG_MODE, "-", FIELD_T_STRING);
+        }
 
       tran_start_time = as_info_p->transaction_start_time;
       if (tran_start_time != (time_t) 0)
-	{
-	  print_value (FIELD_TRANSACTION_STIME, &tran_start_time,
-		       FIELD_T_TIME);
-	}
+        {
+          print_value (FIELD_TRANSACTION_STIME, &tran_start_time, FIELD_T_TIME);
+        }
       else
-	{
-	  print_value (FIELD_TRANSACTION_STIME, "-", FIELD_T_STRING);
-	}
-      print_value (FIELD_CONNECT, &(as_info_p->num_connect_requests),
-		   FIELD_T_INT);
+        {
+          print_value (FIELD_TRANSACTION_STIME, "-", FIELD_T_STRING);
+        }
+      print_value (FIELD_CONNECT, &(as_info_p->num_connect_requests), FIELD_T_INT);
       print_value (FIELD_RESTART, &(as_info_p->num_restarts), FIELD_T_INT);
     }
   print_newline ();
@@ -873,8 +841,7 @@ local_mgmt_monitor (const T_SHM_LOCAL_MGMT_INFO * shm_info_p)
   str_out ("%c", FIELD_DELIMITER);
   str_out ("admin_req:%d", shm_info_p->admin_req_count);
   str_out ("%c", FIELD_DELIMITER);
-  str_out ("db_connect:%d(%d)",
-	   shm_info_p->db_connect_success, shm_info_p->db_connect_fail);
+  str_out ("db_connect:%d(%d)", shm_info_p->db_connect_success, shm_info_p->db_connect_fail);
   print_newline ();
 
   str_out ("%s", indent1);
@@ -894,8 +861,7 @@ local_mgmt_monitor (const T_SHM_LOCAL_MGMT_INFO * shm_info_p)
   for (i = 0; i < shm_info_p->num_child_process; i++)
     {
       str_out ("%s", indent2);
-      str_out ("pid=%d cmd=%s", shm_info_p->child_process_info[i].pid,
-	       shm_info_p->child_process_info[i].cmd);
+      str_out ("pid=%d cmd=%s", shm_info_p->child_process_info[i].pid, shm_info_p->child_process_info[i].cmd);
       print_newline ();
     }
 
@@ -906,25 +872,24 @@ local_mgmt_monitor (const T_SHM_LOCAL_MGMT_INFO * shm_info_p)
       print_newline ();
 
       for (i = 0; i < shm_Br->num_shard_version_info; i++)
-	{
-	  char time_buf[256];
-	  if (shm_Br->shard_version_info[i].sync_time > 0)
-	    {
-	      struct timeval time_val;
-	      time_val.tv_sec = shm_Br->shard_version_info[i].sync_time;
-	      time_val.tv_usec = 0;
-	      (void) er_datetime (&time_val, time_buf, sizeof (time_buf));
-	    }
-	  else
-	    {
-	      strcpy (time_buf, "-");
-	    }
-	  str_out ("%s", indent2);
-	  str_out ("local_dbname:%s shard_info_version:%ld (%s)",
-		   shm_Br->shard_version_info[i].local_dbname,
-		   shm_Br->shard_version_info[i].shard_info_ver, time_buf);
-	  print_newline ();
-	}
+        {
+          char time_buf[256];
+          if (shm_Br->shard_version_info[i].sync_time > 0)
+            {
+              struct timeval time_val;
+              time_val.tv_sec = shm_Br->shard_version_info[i].sync_time;
+              time_val.tv_usec = 0;
+              (void) er_datetime (&time_val, time_buf, sizeof (time_buf));
+            }
+          else
+            {
+              strcpy (time_buf, "-");
+            }
+          str_out ("%s", indent2);
+          str_out ("local_dbname:%s shard_info_version:%ld (%s)",
+                   shm_Br->shard_version_info[i].local_dbname, shm_Br->shard_version_info[i].shard_info_ver, time_buf);
+          print_newline ();
+        }
     }
 }
 
@@ -940,8 +905,7 @@ shard_mgmt_monitor (const T_SHM_SHARD_MGMT_INFO * shm_info_p)
   print_newline ();
 
   str_out ("%s", indent2);
-  str_out ("shard_mgmt:%d ping:%d",
-	   shm_info_p->mgmt_req_count, shm_info_p->ping_req_count);
+  str_out ("shard_mgmt:%d ping:%d", shm_info_p->mgmt_req_count, shm_info_p->ping_req_count);
   print_newline ();
 
   str_out ("%s", indent1);
@@ -950,9 +914,8 @@ shard_mgmt_monitor (const T_SHM_SHARD_MGMT_INFO * shm_info_p)
 
   str_out ("%s", indent2);
   str_out ("shard_info:%d admin_req:%d admin_wait:%d",
-	   shm_info_p->get_info_req_queue.num_job,
-	   shm_info_p->admin_req_queue.num_job,
-	   shm_info_p->wait_job_req_queue.num_job);
+           shm_info_p->get_info_req_queue.num_job,
+           shm_info_p->admin_req_queue.num_job, shm_info_p->wait_job_req_queue.num_job);
   print_newline ();
 
   str_out ("%s", indent1);
@@ -961,15 +924,12 @@ shard_mgmt_monitor (const T_SHM_SHARD_MGMT_INFO * shm_info_p)
 
   str_out ("%s", indent2);
   str_out ("scheduled:%d running:%d fail:%d migrator:%d",
-	   shm_info_p->rbl_scheduled_count,
-	   shm_info_p->rbl_running_count,
-	   shm_info_p->rbl_fail_count, shm_info_p->running_migrator_count);
+           shm_info_p->rbl_scheduled_count,
+           shm_info_p->rbl_running_count, shm_info_p->rbl_fail_count, shm_info_p->running_migrator_count);
   print_newline ();
   str_out ("%s", indent2);
   str_out ("complete:%d shard_keys:%d avg_time:%.1f",
-	   shm_info_p->rbl_complete_count,
-	   shm_info_p->rbl_complete_shard_keys,
-	   shm_info_p->rbl_complete_avg_time);
+           shm_info_p->rbl_complete_count, shm_info_p->rbl_complete_shard_keys, shm_info_p->rbl_complete_avg_time);
   print_newline ();
 
   str_out ("%s", indent1);
@@ -980,33 +940,31 @@ shard_mgmt_monitor (const T_SHM_SHARD_MGMT_INFO * shm_info_p)
     {
       const char *ha_mode_str;
       switch (shm_info_p->shard_node_info[i].ha_state)
-	{
-	case HA_STATE_FOR_DRIVER_MASTER:
-	case HA_STATE_FOR_DRIVER_TO_BE_MASTER:
-	  ha_mode_str = "master";
-	  break;
-	case HA_STATE_FOR_DRIVER_SLAVE:
-	case HA_STATE_FOR_DRIVER_TO_BE_SLAVE:
-	  ha_mode_str = "slave";
-	  break;
-	case HA_STATE_FOR_DRIVER_REPLICA:
-	  ha_mode_str = "replica";
-	  break;
-	case HA_STATE_FOR_DRIVER_UNKNOWN:
-	default:
-	  ha_mode_str = "unknown";
-	  break;
+        {
+        case HA_STATE_FOR_DRIVER_MASTER:
+        case HA_STATE_FOR_DRIVER_TO_BE_MASTER:
+          ha_mode_str = "master";
+          break;
+        case HA_STATE_FOR_DRIVER_SLAVE:
+        case HA_STATE_FOR_DRIVER_TO_BE_SLAVE:
+          ha_mode_str = "slave";
+          break;
+        case HA_STATE_FOR_DRIVER_REPLICA:
+          ha_mode_str = "replica";
+          break;
+        case HA_STATE_FOR_DRIVER_UNKNOWN:
+        default:
+          ha_mode_str = "unknown";
+          break;
 
-	}
+        }
 
       str_out ("%s", indent2);
       str_out ("id:%d %s:%d %s (%s:%s)",
-	       shm_info_p->shard_node_info[i].node_id,
-	       shm_info_p->shard_node_info[i].host_ip,
-	       PRM_NODE_INFO_GET_PORT (&shm_info_p->shard_node_info[i].
-				       host_info),
-	       shm_info_p->shard_node_info[i].local_dbname,
-	       shm_info_p->shard_node_info[i].host_name, ha_mode_str);
+               shm_info_p->shard_node_info[i].node_id,
+               shm_info_p->shard_node_info[i].host_ip,
+               PRM_NODE_INFO_GET_PORT (&shm_info_p->shard_node_info[i].host_info),
+               shm_info_p->shard_node_info[i].local_dbname, shm_info_p->shard_node_info[i].host_name, ha_mode_str);
       print_newline ();
     }
 }
@@ -1025,52 +983,50 @@ mgmt_monitor ()
       br_info_p = &shm_Br->br_info[br_idx];
 
       if (br_info_p->broker_type == NORMAL_BROKER)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       str_out ("%% %s", br_info_p->name);
 
       if (br_info_p->service_flag != SERVICE_ON)
-	{
-	  str_out ("%c%s", FIELD_DELIMITER, "OFF");
-	  print_newline ();
-	  print_newline ();
-	  continue;
-	}
+        {
+          str_out ("%c%s", FIELD_DELIMITER, "OFF");
+          print_newline ();
+          print_newline ();
+          continue;
+        }
 
-      shm_appl = rye_shm_attach (br_info_p->appl_server_shm_key,
-				 RYE_SHM_TYPE_BROKER_LOCAL, true);
+      shm_appl = rye_shm_attach (br_info_p->appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, true);
       if (shm_appl == NULL)
-	{
-	  str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
-	  print_newline ();
-	  print_newline ();
-	  continue;
-	}
+        {
+          str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
+          print_newline ();
+          print_newline ();
+          continue;
+        }
 
       str_out ("%cPID=%d", FIELD_DELIMITER, br_info_p->broker_pid);
       if (br_info_p->broker_type == LOCAL_MGMT)
-	{
-	  str_out ("%cPORT=%d", FIELD_DELIMITER, br_info_p->port);
-	}
+        {
+          str_out ("%cPORT=%d", FIELD_DELIMITER, br_info_p->port);
+        }
 
       if (br_info_p->broker_type == SHARD_MGMT)
-	{
-	  str_out ("%cGLOBAL_DBNAME=%s",
-		   FIELD_DELIMITER, br_info_p->shard_global_dbname);
-	}
+        {
+          str_out ("%cGLOBAL_DBNAME=%s", FIELD_DELIMITER, br_info_p->shard_global_dbname);
+        }
 
       print_newline ();
 
       if (br_info_p->broker_type == SHARD_MGMT)
-	{
-	  shard_mgmt_monitor (&shm_appl->info.shard_mgmt_info);
-	}
+        {
+          shard_mgmt_monitor (&shm_appl->info.shard_mgmt_info);
+        }
       else
-	{
-	  local_mgmt_monitor (&shm_appl->info.local_mgmt_info);
-	}
+        {
+          local_mgmt_monitor (&shm_appl->info.local_mgmt_info);
+        }
 
       print_newline ();
       rye_shm_detach (shm_appl);
@@ -1096,83 +1052,78 @@ appl_monitor (char *br_vector, double elapsed_time)
     {
       int n = 0;
       for (i = 0; i < shm_Br->num_broker; i++)
-	{
-	  n += shm_Br->br_info[i].appl_server_max_num;
-	}
+        {
+          n += shm_Br->br_info[i].appl_server_max_num;
+        }
 
-      appl_mnt_olds =
-	(APPL_MONITORING_ITEM *) calloc (sizeof (APPL_MONITORING_ITEM), n);
+      appl_mnt_olds = (APPL_MONITORING_ITEM *) calloc (sizeof (APPL_MONITORING_ITEM), n);
       if (appl_mnt_olds == NULL)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
       memset ((char *) appl_mnt_olds, 0, sizeof (APPL_MONITORING_ITEM) * n);
     }
 
   for (i = 0; i < shm_Br->num_broker; i++)
     {
-      if (br_vector[i] == 0 ||
-	  shm_Br->br_info[i].broker_type != NORMAL_BROKER)
-	{
-	  continue;
-	}
+      if (br_vector[i] == 0 || shm_Br->br_info[i].broker_type != NORMAL_BROKER)
+        {
+          continue;
+        }
 
-      if (service_Filter_value != SERVICE_UNKNOWN
-	  && service_Filter_value != shm_Br->br_info[i].service_flag)
-	{
-	  continue;
-	}
+      if (service_Filter_value != SERVICE_UNKNOWN && service_Filter_value != shm_Br->br_info[i].service_flag)
+        {
+          continue;
+        }
 
       str_out ("%% %s", shm_Br->br_info[i].name);
 
       if (shm_Br->br_info[i].service_flag == SERVICE_ON)
-	{
-	  shm_appl = rye_shm_attach (shm_Br->br_info[i].appl_server_shm_key,
-				     RYE_SHM_TYPE_BROKER_LOCAL, true);
-	  if (shm_appl == NULL)
-	    {
-	      str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
-	      print_newline ();
-	    }
-	  else
-	    {
-	      print_newline ();
-	      print_appl_header (false);
-	      current_time = time (NULL);
+        {
+          shm_appl = rye_shm_attach (shm_Br->br_info[i].appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, true);
+          if (shm_appl == NULL)
+            {
+              str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
+              print_newline ();
+            }
+          else
+            {
+              print_newline ();
+              print_appl_header (false);
+              current_time = time (NULL);
 
-	      /* CAS INFORMATION DISPLAY */
-	      appl_offset = 0;
+              /* CAS INFORMATION DISPLAY */
+              appl_offset = 0;
 
-	      for (k = 0; k < i; k++)
-		{
-		  appl_offset += shm_Br->br_info[k].appl_server_max_num;
-		}
-	      for (j = 0; j < shm_Br->br_info[i].appl_server_max_num; j++)
-		{
-		  appl_info_display (shm_appl, &(shm_appl->info.as_info[j]),
-				     i, j, &(appl_mnt_olds[appl_offset + j]),
-				     current_time, elapsed_time);
-		}		/* CAS INFORMATION DISPLAY */
+              for (k = 0; k < i; k++)
+                {
+                  appl_offset += shm_Br->br_info[k].appl_server_max_num;
+                }
+              for (j = 0; j < shm_Br->br_info[i].appl_server_max_num; j++)
+                {
+                  appl_info_display (shm_appl, &(shm_appl->info.as_info[j]),
+                                     i, j, &(appl_mnt_olds[appl_offset + j]), current_time, elapsed_time);
+                }               /* CAS INFORMATION DISPLAY */
 
-	      print_newline ();
+              print_newline ();
 
-	      if (display_Job_queue == true)
-		{
-		  print_job_queue (job_queue);
-		}
+              if (display_Job_queue == true)
+                {
+                  print_job_queue (job_queue);
+                }
 
-	      if (shm_appl)
-		{
-		  rye_shm_detach (shm_appl);
-		}
-	    }
-	}
+              if (shm_appl)
+                {
+                  rye_shm_detach (shm_appl);
+                }
+            }
+        }
       else
-	{			/* service_flag == OFF */
-	  str_out ("%c%s", FIELD_DELIMITER, "OFF");
-	  print_newline ();
-	  print_newline ();
-	}
+        {                       /* service_flag == OFF */
+          str_out ("%c%s", FIELD_DELIMITER, "OFF");
+          print_newline ();
+          print_newline ();
+        }
     }
 
   return 0;
@@ -1186,8 +1137,7 @@ print_monitor_header ()
   int i;
   static unsigned int tty_print_header = 0;
 
-  if (tty_Mode == true && (tty_print_header++ % 20 != 0)
-      && (monitor_Flag & ~BROKER_MONITOR_FLAG_MASK) == 0)
+  if (tty_Mode == true && (tty_print_header++ % 20 != 0) && (monitor_Flag & ~BROKER_MONITOR_FLAG_MASK) == 0)
     {
       return;
     }
@@ -1206,25 +1156,17 @@ print_monitor_header ()
     {
       char field_title_with_interval[256];
 
-      buf_offset = print_title (buf, buf_offset,
-				FIELD_APPL_SERVER_NUM_TOTAL, "AS(T");
-      buf_offset = print_title (buf, buf_offset,
-				FIELD_APPL_SERVER_NUM_CLIENT_WAIT, NULL);
-      buf_offset = print_title (buf, buf_offset,
-				FIELD_APPL_SERVER_NUM_BUSY, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_APPL_SERVER_NUM_TOTAL, "AS(T");
+      buf_offset = print_title (buf, buf_offset, FIELD_APPL_SERVER_NUM_CLIENT_WAIT, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_APPL_SERVER_NUM_BUSY, NULL);
       sprintf (field_title_with_interval, "%d%s", state_Interval, "s-W");
-      buf_offset = print_title (buf, buf_offset,
-				FIELD_APPL_SERVER_NUM_CLIENT_WAIT_IN_SEC,
-				field_title_with_interval);
+      buf_offset = print_title (buf, buf_offset, FIELD_APPL_SERVER_NUM_CLIENT_WAIT_IN_SEC, field_title_with_interval);
       sprintf (field_title_with_interval, "%d%s", state_Interval, "s-B)");
-      buf_offset = print_title (buf, buf_offset,
-				FIELD_APPL_SERVER_NUM_BUSY_IN_SEC,
-				field_title_with_interval);
+      buf_offset = print_title (buf, buf_offset, FIELD_APPL_SERVER_NUM_BUSY_IN_SEC, field_title_with_interval);
     }
   else
     {
-      buf_offset = print_title (buf, buf_offset,
-				FIELD_APPL_SERVER_NUM_TOTAL, "AS");
+      buf_offset = print_title (buf, buf_offset, FIELD_APPL_SERVER_NUM_TOTAL, "AS");
     }
 
   buf_offset = print_title (buf, buf_offset, FIELD_JOB_QUEUE_ID, NULL);
@@ -1239,23 +1181,17 @@ print_monitor_header ()
   buf_offset = print_title (buf, buf_offset, FIELD_QPS, NULL);
   if (full_Info_flag == false)
     {
-      buf_offset =
-	print_title (buf, buf_offset, FIELD_NUM_OF_SELECT_QUERIES, NULL);
-      buf_offset =
-	print_title (buf, buf_offset, FIELD_NUM_OF_INSERT_QUERIES, NULL);
-      buf_offset =
-	print_title (buf, buf_offset, FIELD_NUM_OF_UPDATE_QUERIES, NULL);
-      buf_offset =
-	print_title (buf, buf_offset, FIELD_NUM_OF_DELETE_QUERIES, NULL);
-      buf_offset =
-	print_title (buf, buf_offset, FIELD_NUM_OF_OTHERS_QUERIES, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_NUM_OF_SELECT_QUERIES, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_NUM_OF_INSERT_QUERIES, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_NUM_OF_UPDATE_QUERIES, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_NUM_OF_DELETE_QUERIES, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_NUM_OF_OTHERS_QUERIES, NULL);
     }
 
   buf_offset = print_title (buf, buf_offset, FIELD_LONG_TRANSACTION, NULL);
   buf_offset = print_title (buf, buf_offset, FIELD_LONG_QUERY, NULL);
   buf_offset = print_title (buf, buf_offset, FIELD_ERROR_QUERIES, NULL);
-  buf_offset = print_title (buf, buf_offset, FIELD_UNIQUE_ERROR_QUERIES,
-			    NULL);
+  buf_offset = print_title (buf, buf_offset, FIELD_UNIQUE_ERROR_QUERIES, NULL);
   if (full_Info_flag)
     {
       buf_offset = print_title (buf, buf_offset, FIELD_CANCELED, NULL);
@@ -1263,14 +1199,11 @@ print_monitor_header ()
       buf_offset = print_title (buf, buf_offset, FIELD_SQL_LOG, NULL);
     }
 
-  buf_offset =
-    print_title (buf, buf_offset, FIELD_NUMBER_OF_CONNECTION, NULL);
-  buf_offset =
-    print_title (buf, buf_offset, FIELD_NUMBER_OF_CONNECTION_REJECTED, NULL);
+  buf_offset = print_title (buf, buf_offset, FIELD_NUMBER_OF_CONNECTION, NULL);
+  buf_offset = print_title (buf, buf_offset, FIELD_NUMBER_OF_CONNECTION_REJECTED, NULL);
   if (full_Info_flag)
     {
-      buf_offset = print_title (buf, buf_offset,
-				FIELD_NUMBER_OF_BROKER_REQ, NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_NUMBER_OF_BROKER_REQ, NULL);
     }
 
   str_out ("%s", buf);
@@ -1286,8 +1219,7 @@ print_monitor_header ()
 }
 
 static void
-set_monitor_items (BR_MONITORING_ITEM * mnt_items,
-		   T_BROKER_INFO * br_info_p, T_SHM_APPL_SERVER * shm_appl)
+set_monitor_items (BR_MONITORING_ITEM * mnt_items, T_BROKER_INFO * br_info_p, T_SHM_APPL_SERVER * shm_appl)
 {
   int i;
   BR_MONITORING_ITEM *mnt_item_p = NULL;
@@ -1312,32 +1244,30 @@ set_monitor_items (BR_MONITORING_ITEM * mnt_items,
       mnt_item_p->num_connect += as_info_p->num_connect_requests;
       mnt_item_p->num_connect_reject += as_info_p->num_connect_rejected;
       if (full_Info_flag && as_info_p->service_flag == ON)
-	{
-	  time_t cur_time = time (NULL);
-	  bool time_expired =
-	    (cur_time - as_info_p->last_access_time >= state_Interval);
+        {
+          time_t cur_time = time (NULL);
+          bool time_expired = (cur_time - as_info_p->last_access_time >= state_Interval);
 
-	  if (as_info_p->uts_status == UTS_STATUS_BUSY
-	      && as_info_p->con_status != CON_STATUS_OUT_TRAN)
-	    {
-	      if (as_info_p->log_msg[0] == '\0')
-		{
-		  mnt_item_p->num_client_wait++;
-		  if (time_expired)
-		    {
-		      mnt_item_p->num_client_wait_nsec++;
-		    }
-		}
-	      else
-		{
-		  mnt_item_p->num_busy++;
-		  if (time_expired)
-		    {
-		      mnt_item_p->num_busy_nsec++;
-		    }
-		}
-	    }
-	}
+          if (as_info_p->uts_status == UTS_STATUS_BUSY && as_info_p->con_status != CON_STATUS_OUT_TRAN)
+            {
+              if (as_info_p->log_msg[0] == '\0')
+                {
+                  mnt_item_p->num_client_wait++;
+                  if (time_expired)
+                    {
+                      mnt_item_p->num_client_wait_nsec++;
+                    }
+                }
+              else
+                {
+                  mnt_item_p->num_busy++;
+                  if (time_expired)
+                    {
+                      mnt_item_p->num_busy_nsec++;
+                    }
+                }
+            }
+        }
       mnt_item_p->num_request += as_info_p->num_requests_received;
       mnt_item_p->num_tx += as_info_p->num_transactions_processed;
       mnt_item_p->num_qx += as_info_p->num_queries_processed;
@@ -1350,20 +1280,17 @@ set_monitor_items (BR_MONITORING_ITEM * mnt_items,
       mnt_item_p->num_insert_query += as_info_p->num_insert_queries;
       mnt_item_p->num_update_query += as_info_p->num_update_queries;
       mnt_item_p->num_delete_query += as_info_p->num_delete_queries;
-      mnt_item_p->
-	num_others_query = (mnt_item_p->num_qx
-			    - mnt_item_p->num_select_query
-			    - mnt_item_p->num_insert_query
-			    - mnt_item_p->num_update_query
-			    - mnt_item_p->num_delete_query);
+      mnt_item_p->num_others_query = (mnt_item_p->num_qx
+                                      - mnt_item_p->num_select_query
+                                      - mnt_item_p->num_insert_query
+                                      - mnt_item_p->num_update_query - mnt_item_p->num_delete_query);
     }
 }
 
 static void
 print_monitor_items (BR_MONITORING_ITEM * mnt_items_cur,
-		     BR_MONITORING_ITEM * mnt_items_old,
-		     double elapsed_time, T_BROKER_INFO * br_info_p,
-		     T_SHM_APPL_SERVER * shm_appl)
+                     BR_MONITORING_ITEM * mnt_items_old,
+                     double elapsed_time, T_BROKER_INFO * br_info_p, T_SHM_APPL_SERVER * shm_appl)
 {
   BR_MONITORING_ITEM *mnt_item_cur_p = NULL;
   BR_MONITORING_ITEM *mnt_item_old_p = NULL;
@@ -1381,35 +1308,23 @@ print_monitor_items (BR_MONITORING_ITEM * mnt_items_cur,
 
   if (elapsed_time > 0)
     {
-      mnt_item.tps =
-	(mnt_item_cur_p->num_tx - mnt_item_old_p->num_tx) / elapsed_time;
-      mnt_item.qps =
-	(mnt_item_cur_p->num_qx - mnt_item_old_p->num_qx) / elapsed_time;
+      mnt_item.tps = (mnt_item_cur_p->num_tx - mnt_item_old_p->num_tx) / elapsed_time;
+      mnt_item.qps = (mnt_item_cur_p->num_qx - mnt_item_old_p->num_qx) / elapsed_time;
       mnt_item.lts = mnt_item_cur_p->num_lt - mnt_item_old_p->num_lt;
       mnt_item.lqs = mnt_item_cur_p->num_lq - mnt_item_old_p->num_lq;
       mnt_item.eqs = mnt_item_cur_p->num_eq - mnt_item_old_p->num_eq;
       mnt_item.eqs_ui = mnt_item_cur_p->num_eq_ui - mnt_item_old_p->num_eq_ui;
-      mnt_item.its =
-	mnt_item_cur_p->num_interrupts - mnt_item_old_p->num_interrupt;
-      mnt_item.num_select_query =
-	mnt_item_cur_p->num_select_query - mnt_item_old_p->num_select_query;
-      mnt_item.num_insert_query =
-	mnt_item_cur_p->num_insert_query - mnt_item_old_p->num_insert_query;
-      mnt_item.num_update_query =
-	mnt_item_cur_p->num_update_query - mnt_item_old_p->num_update_query;
-      mnt_item.num_delete_query =
-	mnt_item_cur_p->num_delete_query - mnt_item_old_p->num_delete_query;
-      mnt_item.num_others_query =
-	mnt_item_cur_p->num_others_query - mnt_item_old_p->num_others_query;
+      mnt_item.its = mnt_item_cur_p->num_interrupts - mnt_item_old_p->num_interrupt;
+      mnt_item.num_select_query = mnt_item_cur_p->num_select_query - mnt_item_old_p->num_select_query;
+      mnt_item.num_insert_query = mnt_item_cur_p->num_insert_query - mnt_item_old_p->num_insert_query;
+      mnt_item.num_update_query = mnt_item_cur_p->num_update_query - mnt_item_old_p->num_update_query;
+      mnt_item.num_delete_query = mnt_item_cur_p->num_delete_query - mnt_item_old_p->num_delete_query;
+      mnt_item.num_others_query = mnt_item_cur_p->num_others_query - mnt_item_old_p->num_others_query;
 
-      mnt_item.num_br_reject = mnt_item_cur_p->num_br_reject -
-	mnt_item_old_p->num_br_reject;
-      mnt_item.num_br_connect_fail = mnt_item_cur_p->num_br_connect_fail -
-	mnt_item_old_p->num_br_connect_fail;
-      mnt_item.num_br_ping_req = mnt_item_cur_p->num_br_ping_req -
-	mnt_item_old_p->num_br_ping_req;
-      mnt_item.num_br_cancel_req = mnt_item_cur_p->num_br_cancel_req -
-	mnt_item_old_p->num_br_cancel_req;
+      mnt_item.num_br_reject = mnt_item_cur_p->num_br_reject - mnt_item_old_p->num_br_reject;
+      mnt_item.num_br_connect_fail = mnt_item_cur_p->num_br_connect_fail - mnt_item_old_p->num_br_connect_fail;
+      mnt_item.num_br_ping_req = mnt_item_cur_p->num_br_ping_req - mnt_item_old_p->num_br_ping_req;
+      mnt_item.num_br_cancel_req = mnt_item_cur_p->num_br_cancel_req - mnt_item_old_p->num_br_cancel_req;
 
       mnt_item_cur_p->tps = mnt_item.tps;
       mnt_item_cur_p->qps = mnt_item.qps;
@@ -1430,26 +1345,20 @@ print_monitor_items (BR_MONITORING_ITEM * mnt_items_cur,
     {
       int process_size;
 
-      process_size = (int) (os_get_mem_size (br_info_p->broker_pid,
-					     MEM_VSIZE) / ONE_K);
+      process_size = (int) (os_get_mem_size (br_info_p->broker_pid, MEM_VSIZE) / ONE_K);
       print_value (FIELD_PSIZE, &process_size, FIELD_T_INT);
     }
   print_value (FIELD_PORT, &(br_info_p->port), FIELD_T_INT);
 
-  print_value (FIELD_APPL_SERVER_NUM_TOTAL,
-	       &mnt_item_cur_p->num_appl_server, FIELD_T_INT);
+  print_value (FIELD_APPL_SERVER_NUM_TOTAL, &mnt_item_cur_p->num_appl_server, FIELD_T_INT);
 
   if (full_Info_flag)
     {
 
-      print_value (FIELD_APPL_SERVER_NUM_CLIENT_WAIT,
-		   &mnt_item_cur_p->num_client_wait, FIELD_T_INT);
-      print_value (FIELD_APPL_SERVER_NUM_BUSY, &mnt_item_cur_p->num_busy,
-		   FIELD_T_INT);
-      print_value (FIELD_APPL_SERVER_NUM_CLIENT_WAIT_IN_SEC,
-		   &mnt_item_cur_p->num_client_wait_nsec, FIELD_T_INT);
-      print_value (FIELD_APPL_SERVER_NUM_BUSY_IN_SEC,
-		   &mnt_item_cur_p->num_busy_nsec, FIELD_T_INT);
+      print_value (FIELD_APPL_SERVER_NUM_CLIENT_WAIT, &mnt_item_cur_p->num_client_wait, FIELD_T_INT);
+      print_value (FIELD_APPL_SERVER_NUM_BUSY, &mnt_item_cur_p->num_busy, FIELD_T_INT);
+      print_value (FIELD_APPL_SERVER_NUM_CLIENT_WAIT_IN_SEC, &mnt_item_cur_p->num_client_wait_nsec, FIELD_T_INT);
+      print_value (FIELD_APPL_SERVER_NUM_BUSY_IN_SEC, &mnt_item_cur_p->num_busy_nsec, FIELD_T_INT);
     }
 
   print_value (FIELD_JOB_QUEUE_ID, &(shm_appl->job_queue[0].id), FIELD_T_INT);
@@ -1471,22 +1380,15 @@ print_monitor_items (BR_MONITORING_ITEM * mnt_items_cur,
 
   if (full_Info_flag == false)
     {
-      print_value (FIELD_NUM_OF_SELECT_QUERIES,
-		   &mnt_item.num_select_query, FIELD_T_UINT64);
-      print_value (FIELD_NUM_OF_INSERT_QUERIES,
-		   &mnt_item.num_insert_query, FIELD_T_UINT64);
-      print_value (FIELD_NUM_OF_UPDATE_QUERIES,
-		   &mnt_item.num_update_query, FIELD_T_UINT64);
-      print_value (FIELD_NUM_OF_DELETE_QUERIES,
-		   &mnt_item.num_delete_query, FIELD_T_UINT64);
-      print_value (FIELD_NUM_OF_OTHERS_QUERIES,
-		   &mnt_item.num_others_query, FIELD_T_UINT64);
+      print_value (FIELD_NUM_OF_SELECT_QUERIES, &mnt_item.num_select_query, FIELD_T_UINT64);
+      print_value (FIELD_NUM_OF_INSERT_QUERIES, &mnt_item.num_insert_query, FIELD_T_UINT64);
+      print_value (FIELD_NUM_OF_UPDATE_QUERIES, &mnt_item.num_update_query, FIELD_T_UINT64);
+      print_value (FIELD_NUM_OF_DELETE_QUERIES, &mnt_item.num_delete_query, FIELD_T_UINT64);
+      print_value (FIELD_NUM_OF_OTHERS_QUERIES, &mnt_item.num_others_query, FIELD_T_UINT64);
     }
-  sprintf (buf, "%lu/%-.1f", mnt_item.lts,
-	   (shm_appl->long_transaction_time / 1000.0));
+  sprintf (buf, "%lu/%-.1f", mnt_item.lts, (shm_appl->long_transaction_time / 1000.0));
   print_value (FIELD_LONG_TRANSACTION, buf, FIELD_T_STRING);
-  sprintf (buf, "%lu/%-.1f", mnt_item.lqs,
-	   (shm_appl->long_query_time / 1000.0));
+  sprintf (buf, "%lu/%-.1f", mnt_item.lqs, (shm_appl->long_query_time / 1000.0));
   print_value (FIELD_LONG_QUERY, buf, FIELD_T_STRING);
   print_value (FIELD_ERROR_QUERIES, &mnt_item.eqs, FIELD_T_UINT64);
   print_value (FIELD_UNIQUE_ERROR_QUERIES, &mnt_item.eqs_ui, FIELD_T_UINT64);
@@ -1495,25 +1397,18 @@ print_monitor_items (BR_MONITORING_ITEM * mnt_items_cur,
     {
       print_value (FIELD_CANCELED, &mnt_item.its, FIELD_T_INT64);
       print_value (FIELD_ACCESS_MODE,
-		   get_access_mode_string (br_info_p->access_mode,
-					   br_info_p->
-					   replica_only_flag),
-		   FIELD_T_STRING);
-      print_value (FIELD_SQL_LOG,
-		   get_sql_log_mode_string (br_info_p->sql_log_mode),
-		   FIELD_T_STRING);
+                   get_access_mode_string (br_info_p->access_mode, br_info_p->replica_only_flag), FIELD_T_STRING);
+      print_value (FIELD_SQL_LOG, get_sql_log_mode_string (br_info_p->sql_log_mode), FIELD_T_STRING);
     }
 
-  print_value (FIELD_NUMBER_OF_CONNECTION,
-	       &mnt_item_cur_p->num_connect, FIELD_T_UINT64);
-  print_value (FIELD_NUMBER_OF_CONNECTION_REJECTED,
-	       &mnt_item_cur_p->num_connect_reject, FIELD_T_UINT64);
+  print_value (FIELD_NUMBER_OF_CONNECTION, &mnt_item_cur_p->num_connect, FIELD_T_UINT64);
+  print_value (FIELD_NUMBER_OF_CONNECTION_REJECTED, &mnt_item_cur_p->num_connect_reject, FIELD_T_UINT64);
 
   if (full_Info_flag)
     {
       sprintf (buf, "%d,%d,%d,%d",
-	       mnt_item.num_br_reject, mnt_item.num_br_connect_fail,
-	       mnt_item.num_br_ping_req, mnt_item.num_br_cancel_req);
+               mnt_item.num_br_reject, mnt_item.num_br_connect_fail,
+               mnt_item.num_br_ping_req, mnt_item.num_br_cancel_req);
       print_value (FIELD_NUMBER_OF_BROKER_REQ, buf, FIELD_T_STRING);
     }
 
@@ -1537,15 +1432,15 @@ brief_monitor (char *br_vector, double elapsed_time)
   for (br_index = 0; br_index < shm_Br->num_broker; br_index++)
     {
       if (br_vector[br_index] == 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       broker_name_size = strlen (shm_Br->br_info[br_index].name);
       if (broker_name_size > max_broker_name_size)
-	{
-	  max_broker_name_size = broker_name_size;
-	}
+        {
+          max_broker_name_size = broker_name_size;
+        }
     }
   if (max_broker_name_size > BROKER_NAME_LEN)
     {
@@ -1557,24 +1452,22 @@ brief_monitor (char *br_vector, double elapsed_time)
 
   if (mnt_items_old == NULL)
     {
-      mnt_items_old = (BR_MONITORING_ITEM **)
-	calloc (sizeof (BR_MONITORING_ITEM *), shm_Br->num_broker);
+      mnt_items_old = (BR_MONITORING_ITEM **) calloc (sizeof (BR_MONITORING_ITEM *), shm_Br->num_broker);
       if (mnt_items_old == NULL)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
     }
 
   if (mnt_items_cur_p == NULL)
     {
-      mnt_items_cur_p = (BR_MONITORING_ITEM *)
-	malloc (sizeof (BR_MONITORING_ITEM));
+      mnt_items_cur_p = (BR_MONITORING_ITEM *) malloc (sizeof (BR_MONITORING_ITEM));
       if (mnt_items_cur_p == NULL)
-	{
-	  str_out ("%s", "malloc error");
-	  print_newline ();
-	  return -1;
-	}
+        {
+          str_out ("%s", "malloc error");
+          print_newline ();
+          return -1;
+        }
     }
 
   for (br_index = 0; br_index < shm_Br->num_broker; br_index++)
@@ -1584,15 +1477,14 @@ brief_monitor (char *br_vector, double elapsed_time)
       br_info_p = &shm_Br->br_info[br_index];
 
       if (br_vector[br_index] == 0 || br_info_p->broker_type != NORMAL_BROKER)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      if (service_Filter_value != SERVICE_UNKNOWN
-	  && service_Filter_value != br_info_p->service_flag)
-	{
-	  continue;
-	}
+      if (service_Filter_value != SERVICE_UNKNOWN && service_Filter_value != br_info_p->service_flag)
+        {
+          continue;
+        }
 
       snprintf (broker_name, BROKER_NAME_LEN, "%s", br_info_p->name);
       broker_name[BROKER_NAME_LEN] = '\0';
@@ -1600,48 +1492,45 @@ brief_monitor (char *br_vector, double elapsed_time)
       print_value (FIELD_BROKER_NAME, broker_name, FIELD_T_STRING);
 
       if (br_info_p->service_flag != SERVICE_ON)
-	{
-	  str_out ("%c%s", FIELD_DELIMITER, "OFF");
-	  print_newline ();
-	  continue;
-	}
+        {
+          str_out ("%c%s", FIELD_DELIMITER, "OFF");
+          print_newline ();
+          continue;
+        }
 
-      shm_appl = rye_shm_attach (br_info_p->appl_server_shm_key,
-				 RYE_SHM_TYPE_BROKER_LOCAL, true);
+      shm_appl = rye_shm_attach (br_info_p->appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, true);
       if (shm_appl == NULL)
-	{
-	  str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
-	  print_newline ();
-	  return -1;
-	}
+        {
+          str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
+          print_newline ();
+          return -1;
+        }
 
       memset (mnt_items_cur_p, 0, sizeof (BR_MONITORING_ITEM));
 
       if (mnt_items_old[br_index] == NULL)
-	{
-	  mnt_items_old[br_index] = (BR_MONITORING_ITEM *)
-	    calloc (sizeof (BR_MONITORING_ITEM), 1);
-	  if (mnt_items_old[br_index] == NULL)
-	    {
-	      str_out ("%s", "malloc error");
-	      print_newline ();
-	      goto error;
-	    }
-	}
+        {
+          mnt_items_old[br_index] = (BR_MONITORING_ITEM *) calloc (sizeof (BR_MONITORING_ITEM), 1);
+          if (mnt_items_old[br_index] == NULL)
+            {
+              str_out ("%s", "malloc error");
+              print_newline ();
+              goto error;
+            }
+        }
 
       mnt_items_old_p = mnt_items_old[br_index];
 
       set_monitor_items (mnt_items_cur_p, br_info_p, shm_appl);
 
-      print_monitor_items (mnt_items_cur_p, mnt_items_old_p,
-			   elapsed_time, br_info_p, shm_appl);
+      print_monitor_items (mnt_items_cur_p, mnt_items_old_p, elapsed_time, br_info_p, shm_appl);
       memcpy (mnt_items_old_p, mnt_items_cur_p, sizeof (BR_MONITORING_ITEM));
 
       if (shm_appl)
-	{
-	  rye_shm_detach (shm_appl);
-	  shm_appl = NULL;
-	}
+        {
+          rye_shm_detach (shm_appl);
+          shm_appl = NULL;
+        }
     }
 
   return 0;
@@ -1679,20 +1568,17 @@ print_appl_header (UNUSED_ARG bool use_pdh_flag)
 #endif
   if (full_Info_flag)
     {
-      buf_offset = print_title (buf, buf_offset, FIELD_LAST_ACCESS_TIME,
-				NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_LAST_ACCESS_TIME, NULL);
       buf_offset = print_title (buf, buf_offset, FIELD_DB_NAME, NULL);
       buf_offset = print_title (buf, buf_offset, FIELD_HOST, NULL);
-      buf_offset = print_title (buf, buf_offset, FIELD_LAST_CONNECT_TIME,
-				NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_LAST_CONNECT_TIME, NULL);
 
       buf_offset = print_title (buf, buf_offset, FIELD_CLIENT_IP, NULL);
       buf_offset = print_title (buf, buf_offset, FIELD_CLIENT_VERSION, NULL);
 
       buf_offset = print_title (buf, buf_offset, FIELD_SQL_LOG_MODE, NULL);
 
-      buf_offset = print_title (buf, buf_offset, FIELD_TRANSACTION_STIME,
-				NULL);
+      buf_offset = print_title (buf, buf_offset, FIELD_TRANSACTION_STIME, NULL);
       buf_offset = print_title (buf, buf_offset, FIELD_CONNECT, NULL);
       buf_offset = print_title (buf, buf_offset, FIELD_RESTART, NULL);
 
@@ -1733,54 +1619,45 @@ unusable_databases_monitor (void)
   for (i = 0; i < shm_Br->num_broker; i++)
     {
       str_out ("*%c", FIELD_DELIMITER);
-      print_value (FIELD_BROKER_NAME, shm_Br->br_info[i].name,
-		   FIELD_T_STRING);
+      print_value (FIELD_BROKER_NAME, shm_Br->br_info[i].name, FIELD_T_STRING);
 
       if (shm_Br->br_info[i].service_flag == SERVICE_ON)
-	{
-	  shm_appl = rye_shm_attach (shm_Br->br_info[i].appl_server_shm_key,
-				     RYE_SHM_TYPE_BROKER_LOCAL, true);
-	  if (shm_appl == NULL)
-	    {
-	      str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
-	      print_newline ();
-	    }
-	  else
-	    {
-	      if (shm_appl->monitor_server_flag)
-		{
-		  u_index = shm_appl->unusable_databases_seq % 2;
+        {
+          shm_appl = rye_shm_attach (shm_Br->br_info[i].appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, true);
+          if (shm_appl == NULL)
+            {
+              str_out ("%c%s", FIELD_DELIMITER, "shared memory open error");
+              print_newline ();
+            }
+          else
+            {
+              if (shm_appl->monitor_server_flag)
+                {
+                  u_index = shm_appl->unusable_databases_seq % 2;
 
-		  for (j = 0; j < shm_appl->unusable_databases_cnt[u_index];
-		       j++)
-		    {
-		      char host[MAX_NODE_INFO_STR_LEN];
-		      prm_node_info_to_str (host, sizeof (host),
-					    &shm_appl->
-					    unusable_databases[u_index][j].
-					    db_node);
-		      str_out ("%s@%s ",
-			       shm_appl->unusable_databases[u_index][j].
-			       database_name, host);
-		    }
-		}
-	      print_newline ();
-	      rye_shm_detach (shm_appl);
-	    }
-	}
+                  for (j = 0; j < shm_appl->unusable_databases_cnt[u_index]; j++)
+                    {
+                      char host[MAX_NODE_INFO_STR_LEN];
+                      prm_node_info_to_str (host, sizeof (host), &shm_appl->unusable_databases[u_index][j].db_node);
+                      str_out ("%s@%s ", shm_appl->unusable_databases[u_index][j].database_name, host);
+                    }
+                }
+              print_newline ();
+              rye_shm_detach (shm_appl);
+            }
+        }
       else
-	{
-	  str_out ("%c%s", FIELD_DELIMITER, "OFF");
-	  print_newline ();
-	}
+        {
+          str_out ("%c%s", FIELD_DELIMITER, "OFF");
+          print_newline ();
+        }
     }
 
   return 0;
 }
 
 static int
-print_title (char *buf_p, int buf_offset, FIELD_NAME name,
-	     const char *new_title_p)
+print_title (char *buf_p, int buf_offset, FIELD_NAME name, const char *new_title_p)
 {
   struct status_field *field_p = NULL;
   const char *title_p = NULL;
@@ -1802,30 +1679,25 @@ print_title (char *buf_p, int buf_offset, FIELD_NAME name,
   switch (field_p->name)
     {
     case FIELD_BROKER_NAME:
-      buf_offset += sprintf (buf_p + buf_offset, "%c%c",
-			     FIELD_DELIMITER, FIELD_DELIMITER);
+      buf_offset += sprintf (buf_p + buf_offset, "%c%c", FIELD_DELIMITER, FIELD_DELIMITER);
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  buf_offset += sprintf (buf_p + buf_offset, "%-*s",
-				 field_p->width, title_p);
-	}
+        {
+          buf_offset += sprintf (buf_p + buf_offset, "%-*s", field_p->width, title_p);
+        }
       else
-	{
-	  buf_offset += sprintf (buf_p + buf_offset, "%*s",
-				 field_p->width, title_p);
-	}
+        {
+          buf_offset += sprintf (buf_p + buf_offset, "%*s", field_p->width, title_p);
+        }
       break;
     default:
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  buf_offset += sprintf (buf_p + buf_offset, "%-*s",
-				 field_p->width, title_p);
-	}
+        {
+          buf_offset += sprintf (buf_p + buf_offset, "%-*s", field_p->width, title_p);
+        }
       else
-	{
-	  buf_offset += sprintf (buf_p + buf_offset, "%*s",
-				 field_p->width, title_p);
-	}
+        {
+          buf_offset += sprintf (buf_p + buf_offset, "%*s", field_p->width, title_p);
+        }
       break;
     }
   buf_offset += sprintf (buf_p + buf_offset, "%c", FIELD_DELIMITER);
@@ -1848,66 +1720,66 @@ print_value (FIELD_NAME name, const void *value_p, FIELD_TYPE type)
     {
     case FIELD_T_INT:
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  str_out ("%-*d", field_p->width, *(const int *) value_p);
-	}
+        {
+          str_out ("%-*d", field_p->width, *(const int *) value_p);
+        }
       else
-	{
-	  str_out ("%*d", field_p->width, *(const int *) value_p);
-	}
+        {
+          str_out ("%*d", field_p->width, *(const int *) value_p);
+        }
       break;
     case FIELD_T_STRING:
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  str_out ("%-*s", field_p->width, (const char *) value_p);
-	}
+        {
+          str_out ("%-*s", field_p->width, (const char *) value_p);
+        }
       else
-	{
-	  str_out ("%*s", field_p->width, (const char *) value_p);
-	}
+        {
+          str_out ("%*s", field_p->width, (const char *) value_p);
+        }
       break;
     case FIELD_T_FLOAT:
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  str_out ("%-*f", field_p->width, *(const float *) value_p);
-	}
+        {
+          str_out ("%-*f", field_p->width, *(const float *) value_p);
+        }
       else
-	{
-	  str_out ("%*f", field_p->width, *(const float *) value_p);
-	}
+        {
+          str_out ("%*f", field_p->width, *(const float *) value_p);
+        }
       break;
     case FIELD_T_UINT64:
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  str_out ("%-*lu", field_p->width, *(const UINT64 *) value_p);
-	}
+        {
+          str_out ("%-*lu", field_p->width, *(const UINT64 *) value_p);
+        }
       else
-	{
-	  str_out ("%*lu", field_p->width, *(const UINT64 *) value_p);
-	}
+        {
+          str_out ("%*lu", field_p->width, *(const UINT64 *) value_p);
+        }
       break;
     case FIELD_T_INT64:
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  str_out ("%-*ld", field_p->width, *(const INT64 *) value_p);
-	}
+        {
+          str_out ("%-*ld", field_p->width, *(const INT64 *) value_p);
+        }
       else
-	{
-	  str_out ("%*ld", field_p->width, *(const INT64 *) value_p);
-	}
+        {
+          str_out ("%*ld", field_p->width, *(const INT64 *) value_p);
+        }
       break;
     case FIELD_T_TIME:
       time_val.tv_sec = *((const time_t *) value_p);
       time_val.tv_usec = 0;
       (void) er_datetime (&time_val, time_buf, sizeof (time_buf));
       if (field_p->align == FIELD_LEFT_ALIGN)
-	{
-	  str_out ("%-*s", field_p->width, time_buf);
-	}
+        {
+          str_out ("%-*s", field_p->width, time_buf);
+        }
       else
-	{
-	  str_out ("%*s", field_p->width, time_buf);
-	}
+        {
+          str_out ("%*s", field_p->width, time_buf);
+        }
     default:
       break;
     }
@@ -1956,24 +1828,24 @@ get_status_string (T_APPL_SERVER_INFO * as_info_p, char appl_server)
   if (as_info_p->uts_status == UTS_STATUS_BUSY)
     {
       if (IS_APPL_SERVER_TYPE_CAS (appl_server))
-	{
-	  if (as_info_p->con_status == CON_STATUS_OUT_TRAN)
-	    {
-	      return "CLOSE_WAIT";
-	    }
-	  else if (as_info_p->log_msg[0] == '\0')
-	    {
-	      return "CLIENT_WAIT";
-	    }
-	  else
-	    {
-	      return "BUSY";
-	    }
-	}
+        {
+          if (as_info_p->con_status == CON_STATUS_OUT_TRAN)
+            {
+              return "CLOSE_WAIT";
+            }
+          else if (as_info_p->log_msg[0] == '\0')
+            {
+              return "CLIENT_WAIT";
+            }
+          else
+            {
+              return "BUSY";
+            }
+        }
       else
-	{
-	  return "BUSY";
-	}
+        {
+          return "BUSY";
+        }
     }
   else if (as_info_p->uts_status == UTS_STATUS_RESTART)
     {

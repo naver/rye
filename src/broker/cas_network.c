@@ -75,8 +75,7 @@ net_init_env (char *port_name)
     {
       return INVALID_SOCKET;
     }
-  if ((setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-		   sizeof (one))) < 0)
+  if ((setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof (one))) < 0)
     {
       RYE_CLOSE_SOCKET (sock_fd);
       return INVALID_SOCKET;
@@ -85,8 +84,7 @@ net_init_env (char *port_name)
   memset (&sock_addr, 0, sizeof (struct sockaddr_un));
   sock_addr.sun_family = AF_UNIX;
   snprintf (sock_addr.sun_path, sizeof (sock_addr.sun_path), "%s", port_name);
-  sock_addr_len =
-    strlen (sock_addr.sun_path) + sizeof (sock_addr.sun_family) + 1;
+  sock_addr_len = strlen (sock_addr.sun_path) + sizeof (sock_addr.sun_family) + 1;
 
   if (bind (sock_fd, (struct sockaddr *) &sock_addr, sock_addr_len) < 0)
     {
@@ -111,9 +109,7 @@ net_connect_client (SOCKET srv_sock_fd)
   struct sockaddr_in clt_sock_addr;
 
   clt_sock_addr_len = sizeof (clt_sock_addr);
-  clt_sock_fd =
-    accept (srv_sock_fd, (struct sockaddr *) &clt_sock_addr,
-	    &clt_sock_addr_len);
+  clt_sock_fd = accept (srv_sock_fd, (struct sockaddr *) &clt_sock_addr, &clt_sock_addr_len);
 
   if (IS_INVALID_SOCKET (clt_sock_fd))
     return INVALID_SOCKET;
@@ -132,12 +128,12 @@ net_write_stream (SOCKET sock_fd, const char *buf, int size)
       write_len = write_buffer (sock_fd, buf, size);
 
       if (write_len <= 0)
-	{
+        {
 #ifdef _DEBUG
-	  printf ("write error\n");
+          printf ("write error\n");
 #endif
-	  return -1;
-	}
+          return -1;
+        }
       buf += write_len;
       size -= write_len;
     }
@@ -154,13 +150,13 @@ net_read_stream (SOCKET sock_fd, char *buf, int size)
       read_len = read_buffer (sock_fd, buf, size);
 
       if (read_len <= 0)
-	{
+        {
 #ifdef _DEBUG
-	  if (!is_net_timed_out ())
-	    printf ("read error %d\n", read_len);
+          if (!is_net_timed_out ())
+            printf ("read error %d\n", read_len);
 #endif
-	  return -1;
-	}
+          return -1;
+        }
       buf += read_len;
       size -= read_len;
     }
@@ -201,13 +197,11 @@ init_msg_header (MSG_HEADER * header)
 
   server_nodeid = db_server_shard_nodeid ();
   server_nodeid = htons (server_nodeid);
-  memcpy (header->info_ptr + CAS_STATUS_INFO_IDX_SERVER_NODEID,
-	  &server_nodeid, 2);
+  memcpy (header->info_ptr + CAS_STATUS_INFO_IDX_SERVER_NODEID, &server_nodeid, 2);
 
   shard_info_ver = cas_shard_info_version ();
   shard_info_ver = net_htoni64 (shard_info_ver);
-  memcpy (header->info_ptr + CAS_STATUS_INFO_IDX_SHARD_INFO_VER,
-	  &shard_info_ver, 8);
+  memcpy (header->info_ptr + CAS_STATUS_INFO_IDX_SHARD_INFO_VER, &shard_info_ver, 8);
 }
 
 
@@ -252,10 +246,10 @@ net_decode_str (char *msg, int msg_size, char *func_code, void ***ret_argv)
   while (remain_size > 0)
     {
       if (remain_size < 4)
-	{
-	  RYE_FREE_MEM (argv);
-	  return CAS_ER_COMMUNICATION;
-	}
+        {
+          RYE_FREE_MEM (argv);
+          return CAS_ER_COMMUNICATION;
+        }
       argp = cur_p;
       memcpy ((char *) &i_val, cur_p, 4);
       i_val = ntohl (i_val);
@@ -263,21 +257,21 @@ net_decode_str (char *msg, int msg_size, char *func_code, void ***ret_argv)
       cur_p += 4;
 
       if (remain_size < i_val)
-	{
-	  RYE_FREE_MEM (argv);
-	  return CAS_ER_COMMUNICATION;
-	}
+        {
+          RYE_FREE_MEM (argv);
+          return CAS_ER_COMMUNICATION;
+        }
 
       argc++;
       if (argc > alloc_argc)
-	{
-	  alloc_argc += 10;
-	  argv = (void **) RYE_REALLOC (argv, sizeof (void *) * alloc_argc);
-	  if (argv == NULL)
-	    {
-	      return CAS_ER_NO_MORE_MEMORY;
-	    }
-	}
+        {
+          alloc_argc += 10;
+          argv = (void **) RYE_REALLOC (argv, sizeof (void *) * alloc_argc);
+          if (argv == NULL)
+            {
+              return CAS_ER_NO_MORE_MEMORY;
+            }
+        }
 
       argv[argc - 1] = argp;
 
@@ -329,14 +323,14 @@ retry_poll:
   if (n < 0)
     {
       if (errno == EINTR)
-	{
-	  goto retry_poll;
-	}
+        {
+          goto retry_poll;
+        }
       else
-	{
-	  net_error_flag = 1;
-	  return -1;
-	}
+        {
+          net_error_flag = 1;
+          return -1;
+        }
     }
   else if (n == 0)
     {
@@ -347,21 +341,21 @@ retry_poll:
   else
     {
       if (!IS_INVALID_SOCKET (new_Req_sock_fd) && (po[1].revents & POLLIN))
-	{
-	  /* CHANGE CLIENT */
-	  return -1;
-	}
+        {
+          /* CHANGE CLIENT */
+          return -1;
+        }
       if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	{
-	  read_len = -1;
-	}
+        {
+          read_len = -1;
+        }
       else if (po[0].revents & POLLIN)
-	{
+        {
 #endif /* ASYNC_MODE */
-	  /* RECEIVE NEW REQUEST */
-	  read_len = READ_FROM_SOCKET (sock_fd, buf, size);
+          /* RECEIVE NEW REQUEST */
+          read_len = READ_FROM_SOCKET (sock_fd, buf, size);
 #if defined(ASYNC_MODE)
-	}
+        }
     }
 #endif /* ASYNC_MODE */
 
@@ -397,14 +391,14 @@ retry_poll:
   if (n < 0)
     {
       if (errno == EINTR)
-	{
-	  goto retry_poll;
-	}
+        {
+          goto retry_poll;
+        }
       else
-	{
-	  net_error_flag = 1;
-	  return -1;
-	}
+        {
+          net_error_flag = 1;
+          return -1;
+        }
     }
   else if (n == 0)
     {
@@ -415,15 +409,15 @@ retry_poll:
   else
     {
       if (po[0].revents & POLLERR || po[0].revents & POLLHUP)
-	{
-	  write_len = -1;
-	}
+        {
+          write_len = -1;
+        }
       else if (po[0].revents & POLLOUT)
-	{
+        {
 #endif /* ASYNC_MODE */
-	  write_len = WRITE_TO_SOCKET (sock_fd, buf, size);
+          write_len = WRITE_TO_SOCKET (sock_fd, buf, size);
 #if defined(ASYNC_MODE)
-	}
+        }
     }
 #endif /* ASYNC_MODE */
 
@@ -453,8 +447,7 @@ unset_net_timeout_flag (void)
 }
 
 void
-net_write_error (int sock, int cas_info_size,
-		 int indicator, int code, char *msg)
+net_write_error (int sock, int cas_info_size, int indicator, int code, char *msg)
 {
   size_t len;
   size_t err_msg_len = 0;

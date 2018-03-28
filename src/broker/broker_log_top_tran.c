@@ -44,8 +44,7 @@ struct t_log_info
   char *logstr;
 };
 
-static int log_top (FILE * fp, char *filename, long start_offset,
-		    long end_offset);
+static int log_top (FILE * fp, char *filename, long start_offset, long end_offset);
 static int info_delete (T_LOG_INFO * info);
 static void print_result (void);
 static int info_add (T_LOG_INFO * info, char *start_date, char *end_date);
@@ -72,21 +71,21 @@ log_top_tran (int argc, char *argv[], int arg_start)
 
       fp = fopen (filename, "r");
       if (fp == NULL)
-	{
-	  fprintf (stderr, "%s[%s]\n", strerror (errno), filename);
-	  return -1;
-	}
+        {
+          fprintf (stderr, "%s[%s]\n", strerror (errno), filename);
+          return -1;
+        }
       if (get_file_offset (filename, &start_offset, &end_offset) < 0)
-	{
-	  start_offset = end_offset = -1;
-	}
+        {
+          start_offset = end_offset = -1;
+        }
 
       error = log_top (fp, filename, start_offset, end_offset);
       fclose (fp);
       if (error < 0)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   print_result ();
@@ -120,73 +119,72 @@ log_top (FILE * fp, char *filename, long start_offset, long end_offset)
   if (start_offset != -1)
     {
       if (fseek (fp, start_offset, SEEK_SET) < 0)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
 
   while (1)
     {
       if (end_offset != -1)
-	{
-	  if (ftell (fp) > end_offset)
-	    {
-	      break;
-	    }
-	}
+        {
+          if (ftell (fp) > end_offset)
+            {
+              break;
+            }
+        }
 
       if (ut_get_line (fp, linebuf_tstr, &linebuf, &lineno) <= 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (is_cas_log (linebuf) == false)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       GET_CUR_DATE_STR (cur_date, linebuf);
       if (start_date[0] == '\0')
-	{
-	  strcpy (start_date, cur_date);
-	}
+        {
+          strcpy (start_date, cur_date);
+        }
 
       if (is_first)
-	{
-	  if (linebuf[0] != '\n')
-	    {
-	      sprintf (fileinfo_str, "%s:%d\n", filename, lineno);
-	      t_string_add (str_buf, fileinfo_str,
-			    (int) strlen (fileinfo_str));
-	      is_first = 0;
-	    }
-	}
+        {
+          if (linebuf[0] != '\n')
+            {
+              sprintf (fileinfo_str, "%s:%d\n", filename, lineno);
+              t_string_add (str_buf, fileinfo_str, (int) strlen (fileinfo_str));
+              is_first = 0;
+            }
+        }
 
       t_string_add (str_buf, linebuf, (int) strlen (linebuf));
 
       msg_p = get_msg_start_ptr (linebuf);
       if (strncmp (msg_p, "***", 3) == 0)
-	{
-	  float runtime;
+        {
+          float runtime;
 
-	  if (sscanf (msg_p + 3 + 1, "%*s %*s %f", &runtime) == 1)
-	    {
-	      T_LOG_INFO tmpinfo;
-	      char *log_str;
-	      log_str = strdup (t_string_str (str_buf));
-	      if (log_str == NULL)
-		{
-		  perror ("strdup");
-		  goto error;
-		}
-	      tmpinfo.runtime = runtime;
-	      tmpinfo.logstr = log_str;
-	      info_add (&tmpinfo, start_date, cur_date);
-	    }
-	  t_string_clear (str_buf);
-	  is_first = 1;
-	  start_date[0] = '\0';
-	}
+          if (sscanf (msg_p + 3 + 1, "%*s %*s %f", &runtime) == 1)
+            {
+              T_LOG_INFO tmpinfo;
+              char *log_str;
+              log_str = strdup (t_string_str (str_buf));
+              if (log_str == NULL)
+                {
+                  perror ("strdup");
+                  goto error;
+                }
+              tmpinfo.runtime = runtime;
+              tmpinfo.logstr = log_str;
+              info_add (&tmpinfo, start_date, cur_date);
+            }
+          t_string_clear (str_buf);
+          is_first = 1;
+          start_date[0] = '\0';
+        }
     }
 
   t_string_free (str_buf);
@@ -217,14 +215,13 @@ print_result (void)
   for (i = 0;; i++)
     {
       if (info_delete (&temp[i]) < 0)
-	break;
+        break;
     }
 
   for (i--; i >= 0; i--)
     {
 #if 0
-      fprintf (fp_t,
-	       "-----------------------------------------------------\n");
+      fprintf (fp_t, "-----------------------------------------------------\n");
 #endif
       fprintf (fp_t, "%s\n", temp[i].logstr);
       RYE_FREE_MEM (temp[i].logstr);
@@ -245,10 +242,10 @@ info_add (T_LOG_INFO * info, char *start_date, char *end_date)
   if (info_arr_size == info_arr_max_size)
     {
       if (info_arr[1].runtime > info->runtime)
-	{
-	  RYE_FREE_MEM (info->logstr);
-	  return 0;
-	}
+        {
+          RYE_FREE_MEM (info->logstr);
+          return 0;
+        }
       info_delete (&temp);
       RYE_FREE_MEM (temp.logstr);
     }
@@ -280,11 +277,10 @@ info_delete (T_LOG_INFO * info)
   child = 2;
   while (child <= info_arr_size)
     {
-      if ((child < info_arr_size)
-	  && (info_arr[child].runtime > info_arr[child + 1].runtime))
-	child++;
+      if ((child < info_arr_size) && (info_arr[child].runtime > info_arr[child + 1].runtime))
+        child++;
       if (temp.runtime < info_arr[child].runtime)
-	break;
+        break;
       info_arr[parent] = info_arr[child];
       parent = child;
       child *= 2;

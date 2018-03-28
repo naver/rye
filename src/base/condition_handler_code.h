@@ -29,8 +29,8 @@
 #ident "$Id$"
 
 /* Constants for encoding and decoding CO_CODE values. */
-#define CO_MAX_CODE         1024	/* Max codes per module */
-#define CO_MAX_MODULE       INT_MAX/CO_MAX_CODE	/* Max module identifier */
+#define CO_MAX_CODE         1024        /* Max codes per module */
+#define CO_MAX_MODULE       INT_MAX/CO_MAX_CODE /* Max module identifier */
 
 #define CO_CODE(MODULE, CODE)           \
   -((int)MODULE * (int)CO_MAX_CODE + (int)CODE - (int)1)

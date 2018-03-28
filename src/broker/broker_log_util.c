@@ -49,9 +49,9 @@ ut_tolower (char *str)
   for (p = str; *p; p++)
     {
       if (*p >= 'A' && *p <= 'Z')
-	{
-	  *p = *p - 'A' + 'a';
-	}
+        {
+          *p = *p - 'A' + 'a';
+        }
     }
 }
 
@@ -126,7 +126,7 @@ is_bind_with_size (char *buf, int *tot_val_size, int *info_size)
   char *info_end;
   int len;
 
-  size[0] = '\0';		/* init */
+  size[0] = '\0';               /* init */
 
   if (info_size)
     {
@@ -152,8 +152,7 @@ is_bind_with_size (char *buf, int *tot_val_size, int *info_size)
 
   if ((strncmp (p, "CHAR", 4) != 0) && (strncmp (p, "VARCHAR", 7) != 0)
       && (strncmp (p, "NCHAR", 5) != 0) && (strncmp (p, "VARNCHAR", 8) != 0)
-      && (strncmp (p, "BINARY", 3) != 0)
-      && (strncmp (p, "VARBINARY", 6) != 0))
+      && (strncmp (p, "BINARY", 3) != 0) && (strncmp (p, "VARBINARY", 6) != 0))
     {
       return false;
     }
@@ -190,19 +189,19 @@ is_bind_with_size (char *buf, int *tot_val_size, int *info_size)
     {
       len = size_end - size_begin;
       if (len >= (int) sizeof (size))
-	{
-	  goto error_on_val_size;
-	}
+        {
+          goto error_on_val_size;
+        }
       if (len > 0)
-	{
-	  memcpy (size, size_begin, len);
-	  size[len] = '\0';
-	}
+        {
+          memcpy (size, size_begin, len);
+          size[len] = '\0';
+        }
       *tot_val_size = atoi (size);
       if (*tot_val_size < 0)
-	{
-	  goto error_on_val_size;
-	}
+        {
+          goto error_on_val_size;
+        }
     }
 
   return true;
@@ -237,70 +236,66 @@ ut_get_line (FILE * fp, T_STRING * t_str, char **out_str, int *lineno)
       memset (buf, 0, sizeof (buf));
       position = ftell (fp);
       if (fgets (buf, sizeof (buf), fp) == NULL)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       /* if it is (debug) line, skip it */
       if (strncmp (buf + 19, "(debug)", 7) == 0)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       if (is_first)
-	{
-	  bind_with_size = is_bind_with_size (buf, &tot_val_size, &info_size);
-	  if (tot_val_size < 0 || info_size < 0
-	      || (tot_val_size + info_size + 1) < 0)
-	    {
-	      fprintf (stderr, "log error\n");
-	      return -1;
-	    }
-	  is_first = false;
-	}
+        {
+          bind_with_size = is_bind_with_size (buf, &tot_val_size, &info_size);
+          if (tot_val_size < 0 || info_size < 0 || (tot_val_size + info_size + 1) < 0)
+            {
+              fprintf (stderr, "log error\n");
+              return -1;
+            }
+          is_first = false;
+        }
 
       if (bind_with_size)
-	{
-	  size_t rlen;
-	  char *value = NULL;
+        {
+          size_t rlen;
+          char *value = NULL;
 
-	  value = (char *) RYE_MALLOC (info_size + tot_val_size + 1);
-	  if (value == NULL)
-	    {
-	      fprintf (stderr, "memory allocation error.\n");
-	      return -1;
-	    }
-	  if (fseek (fp, position, SEEK_SET) < 0)
-	    {
-	      fprintf (stderr, "fseek error.\n");
-	      RYE_FREE_MEM (value);
-	      return -1;
-	    }
-	  rlen =
-	    fread ((void *) value, sizeof (char), info_size + tot_val_size,
-		   fp);
-	  if (rlen == 0)
-	    {
-	      ;			/* TODO - avoid compile error */
-	    }
-	  if (t_bind_string_add
-	      (t_str, value, info_size + tot_val_size, tot_val_size) < 0)
-	    {
-	      fprintf (stderr, "memory allocation error.\n");
-	      RYE_FREE_MEM (value);
-	      return -1;
-	    }
-	  RYE_FREE_MEM (value);
-	  break;
-	}
+          value = (char *) RYE_MALLOC (info_size + tot_val_size + 1);
+          if (value == NULL)
+            {
+              fprintf (stderr, "memory allocation error.\n");
+              return -1;
+            }
+          if (fseek (fp, position, SEEK_SET) < 0)
+            {
+              fprintf (stderr, "fseek error.\n");
+              RYE_FREE_MEM (value);
+              return -1;
+            }
+          rlen = fread ((void *) value, sizeof (char), info_size + tot_val_size, fp);
+          if (rlen == 0)
+            {
+              ;                 /* TODO - avoid compile error */
+            }
+          if (t_bind_string_add (t_str, value, info_size + tot_val_size, tot_val_size) < 0)
+            {
+              fprintf (stderr, "memory allocation error.\n");
+              RYE_FREE_MEM (value);
+              return -1;
+            }
+          RYE_FREE_MEM (value);
+          break;
+        }
       else
-	{
-	  if (t_string_add (t_str, buf, strlen (buf)) < 0)
-	    {
-	      fprintf (stderr, "memory allocation error.\n");
-	      return -1;
-	    }
-	  if (buf[sizeof (buf) - 2] == '\0' || buf[sizeof (buf) - 2] == '\n')
-	    break;
-	}
+        {
+          if (t_string_add (t_str, buf, strlen (buf)) < 0)
+            {
+              fprintf (stderr, "memory allocation error.\n");
+              return -1;
+            }
+          if (buf[sizeof (buf) - 2] == '\0' || buf[sizeof (buf) - 2] == '\n')
+            break;
+        }
     }
 
   out_str_len = t_string_len (t_str);
@@ -319,8 +314,7 @@ is_cas_log (const char *str)
       return false;
     }
 
-  if (str[4] == '-' && str[7] == '-' && str[10] == ' ' && str[13] == ':' &&
-      str[16] == ':' && str[23] == ' ')
+  if (str[4] == '-' && str[7] == '-' && str[10] == ' ' && str[13] == ':' && str[16] == ':' && str[23] == ' ')
     {
       return true;
     }
@@ -364,29 +358,28 @@ str_to_log_date_format (char *str, char *date_format_str)
     {
       result = str_to_int32 (&val, &endp, startp, 10);
       if (result != 0)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
       if (val < 0)
-	{
-	  val = 0;
-	}
+        {
+          val = 0;
+        }
       date_val[i] = val;
       if (*endp == '\0')
-	{
-	  break;
-	}
+        {
+          break;
+        }
       startp = endp + 1;
       if (*startp == '\0')
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   sprintf (date_format_str,
-	   "%d-%02d-%02d %02d:%02d:%02d.%03d",
-	   date_val[0], date_val[1], date_val[2], date_val[3], date_val[4],
-	   date_val[5], date_val[6]);
+           "%d-%02d-%02d %02d:%02d:%02d.%03d",
+           date_val[0], date_val[1], date_val[2], date_val[3], date_val[4], date_val[5], date_val[6]);
   return 0;
 
 error:
@@ -409,18 +402,17 @@ ut_get_execute_type (const char *msg_p, int *prepare_flag, int *execute_flag)
 }
 
 int
-ut_check_log_valid_time (const char *log_date, const char *from_date,
-			 const char *to_date)
+ut_check_log_valid_time (const char *log_date, const char *from_date, const char *to_date)
 {
   if (from_date[0])
     {
       if (strncmp (log_date, from_date, DATE_STR_LEN) < 0)
-	return -1;
+        return -1;
     }
   if (to_date[0])
     {
       if (strncmp (to_date, log_date, DATE_STR_LEN) < 0)
-	return -1;
+        return -1;
     }
 
   return 0;

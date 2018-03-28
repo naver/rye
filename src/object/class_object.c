@@ -42,13 +42,13 @@
 #include "schema_manager.h"
 #include "dbi.h"
 
-#include "dbval.h"		/* this must be the last header file included */
+#include "dbval.h"              /* this must be the last header file included */
 
 /* Macro to generate the UNIQUE property string from the components */
 #define SM_SPRINTF_UNIQUE_PROPERTY_VALUE(buffer, volid, fileid, pageid) \
   sprintf(buffer, "%d|%d|%d", (int)volid, (int)fileid, (int)pageid)
 
-const int SM_MAX_STRING_LENGTH = 1073741823;	/* 0x3fffffff */
+const int SM_MAX_STRING_LENGTH = 1073741823;    /* 0x3fffffff */
 
 #if 0
 static SM_CONSTRAINT_TYPE Constraint_types[] = {
@@ -72,19 +72,14 @@ static const char *Constraint_properties[] = {
 #if defined (RYE_DEBUG)
 static void classobj_print_props (DB_SEQ * properties);
 #endif
-static SM_CONSTRAINT *classobj_make_constraint (const char *name,
-						SM_CONSTRAINT_TYPE type,
-						int status, BTID * id);
+static SM_CONSTRAINT *classobj_make_constraint (const char *name, SM_CONSTRAINT_TYPE type, int status, BTID * id);
 static void classobj_free_constraint (SM_CONSTRAINT * constraint);
 static int classobj_constraint_size (SM_CONSTRAINT * constraint);
 static int classobj_cache_not_null_constraints (const char *class_name,
-						SM_ATTRIBUTE * attributes,
-						SM_CLASS_CONSTRAINT **
-						con_ptr);
+                                                SM_ATTRIBUTE * attributes, SM_CLASS_CONSTRAINT ** con_ptr);
 static int classobj_domain_size (TP_DOMAIN * domain);
 static void classobj_filter_attribute_props (DB_SEQ * props);
-static int classobj_init_attribute (SM_ATTRIBUTE * src, SM_ATTRIBUTE * dest,
-				    int copy);
+static int classobj_init_attribute (SM_ATTRIBUTE * src, SM_ATTRIBUTE * dest, int copy);
 static void classobj_clear_attribute_value (DB_VALUE * value);
 static void classobj_clear_attribute (SM_ATTRIBUTE * att);
 static int classobj_attribute_size (SM_ATTRIBUTE * att);
@@ -92,18 +87,15 @@ static void classobj_free_repattribute (SM_REPR_ATTRIBUTE * rat);
 static int classobj_repattribute_size (void);
 static int classobj_representation_size (SM_REPRESENTATION * rep);
 static int classobj_query_spec_size (SM_QUERY_SPEC * query_spec);
-static void classobj_insert_ordered_attribute (SM_ATTRIBUTE ** attlist,
-					       SM_ATTRIBUTE * att);
+static void classobj_insert_ordered_attribute (SM_ATTRIBUTE ** attlist, SM_ATTRIBUTE * att);
 static SM_REPRESENTATION *classobj_capture_representation (SM_CLASS * class_);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static void classobj_sort_attlist (SM_ATTRIBUTE ** source);
 #endif
 static int classobj_copy_attribute_like (DB_CTMPL * ctemplate,
-					 SM_ATTRIBUTE * attribute,
-					 const char *const like_class_name);
+                                         SM_ATTRIBUTE * attribute, const char *const like_class_name);
 static int classobj_copy_constraint_like (DB_CTMPL * ctemplate,
-					  SM_CLASS_CONSTRAINT * constraint,
-					  const char *const like_class_name);
+                                          SM_CLASS_CONSTRAINT * constraint, const char *const like_class_name);
 
 
 /* THREADED ARRAYS */
@@ -135,17 +127,17 @@ classobj_alloc_threaded_array (int size, int count)
     {
       array = (DB_LIST *) db_ws_alloc (size * count);
       if (array == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       ptr = (char *) array;
       for (i = 0; i < (count - 1); i++)
-	{
-	  l = (DB_LIST *) ptr;
-	  l->next = (DB_LIST *) (ptr + size);
-	  ptr += size;
-	}
+        {
+          l = (DB_LIST *) ptr;
+          l->next = (DB_LIST *) (ptr + size);
+          ptr += size;
+        }
       l = (DB_LIST *) ptr;
       l->next = NULL;
     }
@@ -168,12 +160,12 @@ classobj_free_threaded_array (DB_LIST * array, LFREEER clear)
   if (clear != NULL)
     {
       for (l = array; l != NULL; l = l->next)
-	{
-	  if (clear != NULL)
-	    {
-	      (*clear) (l);
-	    }
-	}
+        {
+          if (clear != NULL)
+            {
+              (*clear) (l);
+            }
+        }
     }
   db_ws_free (array);
 }
@@ -247,45 +239,44 @@ classobj_put_prop (DB_SEQ * properties, const char *name, DB_VALUE * pvalue)
     {
       error = set_get_element (properties, i, &value);
       if (error != NO_ERROR)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR ||
-	  (val_str = DB_GET_STRING (&value)) == NULL)
-	{
-	  error = ER_SM_INVALID_PROPERTY;
-	}
+      if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR || (val_str = DB_GET_STRING (&value)) == NULL)
+        {
+          error = ER_SM_INVALID_PROPERTY;
+        }
       else
-	{
-	  if (strcmp (name, val_str) == 0)
-	    {
-	      if ((i + 1) >= max)
-		{
-		  error = ER_SM_INVALID_PROPERTY;
-		}
-	      else
-		{
-		  found = i + 1;
-		}
-	    }
-	}
+        {
+          if (strcmp (name, val_str) == 0)
+            {
+              if ((i + 1) >= max)
+                {
+                  error = ER_SM_INVALID_PROPERTY;
+                }
+              else
+                {
+                  found = i + 1;
+                }
+            }
+        }
       pr_clear_value (&value);
     }
 
   if (error == NO_ERROR)
     {
       if (found)
-	{
-	  set_put_element (properties, found, pvalue);
-	}
+        {
+          set_put_element (properties, found, pvalue);
+        }
       else
-	{
-	  /* start with the property value to avoid growing the array twice */
-	  set_put_element (properties, max + 1, pvalue);
-	  db_make_string (&value, name);
-	  set_put_element (properties, max, &value);
-	}
+        {
+          /* start with the property value to avoid growing the array twice */
+          set_put_element (properties, max + 1, pvalue);
+          db_make_string (&value, name);
+          set_put_element (properties, max, &value);
+        }
     }
 
 error:
@@ -328,32 +319,31 @@ classobj_drop_prop (DB_SEQ * properties, const char *name)
     {
       error = set_get_element (properties, i, &value);
       if (error != NO_ERROR)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR ||
-	  (val_str = DB_GET_STRING (&value)) == NULL)
-	{
-	  error = ER_SM_INVALID_PROPERTY;
-	}
+      if (DB_VALUE_TYPE (&value) != DB_TYPE_VARCHAR || (val_str = DB_GET_STRING (&value)) == NULL)
+        {
+          error = ER_SM_INVALID_PROPERTY;
+        }
       else
-	{
-	  if (strcmp (name, val_str) == 0)
-	    {
-	      if ((i + 1) >= max)
-		{
-		  error = ER_SM_INVALID_PROPERTY;
-		}
-	      else
-		{
-		  dropped = 1;
-		  /* drop the two elements at the found position */
-		  set_drop_seq_element (properties, i);
-		  set_drop_seq_element (properties, i);
-		}
-	    }
-	}
+        {
+          if (strcmp (name, val_str) == 0)
+            {
+              if ((i + 1) >= max)
+                {
+                  error = ER_SM_INVALID_PROPERTY;
+                }
+              else
+                {
+                  dropped = 1;
+                  /* drop the two elements at the found position */
+                  set_drop_seq_element (properties, i);
+                  set_drop_seq_element (properties, i);
+                }
+            }
+        }
       pr_clear_value (&value);
 
     }
@@ -391,16 +381,16 @@ classobj_print_props (DB_SEQ * properties)
   if (max)
     {
       for (i = 0; i < max; i++)
-	{
-	  if (set_get_element (properties, i, &value) != NO_ERROR)
-	    fprintf (stdout, "*** error *** ");
-	  else
-	    {
-	      help_fprint_value (stdout, &value);
-	      pr_clear_value (&value);
-	      fprintf (stdout, " ");
-	    }
-	}
+        {
+          if (set_get_element (properties, i, &value) != NO_ERROR)
+            fprintf (stdout, "*** error *** ");
+          else
+            {
+              help_fprint_value (stdout, &value);
+              pr_clear_value (&value);
+              fprintf (stdout, " ");
+            }
+        }
       fprintf (stdout, "\n");
     }
 
@@ -487,8 +477,7 @@ classobj_copy_props (DB_SEQ * properties, DB_SEQ ** new_properties)
  */
 
 int
-classobj_find_prop_constraint (DB_SEQ * properties, const char *prop_name,
-			       const char *cnstr_name, DB_VALUE * cnstr_val)
+classobj_find_prop_constraint (DB_SEQ * properties, const char *prop_name, const char *cnstr_name, DB_VALUE * cnstr_val)
 {
   DB_VALUE prop_val;
   DB_SEQ *prop_seq;
@@ -599,8 +588,7 @@ exit_on_error:
  *   id(out): pointer to ID
  */
 int
-classobj_get_cached_index_family (SM_CONSTRAINT * constraints,
-				  SM_CONSTRAINT_TYPE type, BTID * id)
+classobj_get_cached_index_family (SM_CONSTRAINT * constraints, SM_CONSTRAINT_TYPE type, BTID * id)
 {
   SM_CONSTRAINT *cnstr;
   int ok = 0;
@@ -610,14 +598,14 @@ classobj_get_cached_index_family (SM_CONSTRAINT * constraints,
   for (cnstr = constraints; cnstr != NULL; cnstr = cnstr->next)
     {
       if (cnstr->type != type && cnstr->status == INDEX_STATUS_IN_PROGRESS)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (id != NULL)
-	{
-	  *id = cnstr->index;
-	}
+        {
+          *id = cnstr->index;
+        }
       ok = 1;
       break;
 
@@ -640,9 +628,9 @@ classobj_has_unique_constraint (SM_CONSTRAINT * constraints)
   for (c = constraints; c != NULL; c = c->next)
     {
       if (SM_IS_CONSTRAINT_UNIQUE_FAMILY (c->type))
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
@@ -659,8 +647,7 @@ classobj_has_unique_constraint (SM_CONSTRAINT * constraints)
  */
 
 static SM_CONSTRAINT *
-classobj_make_constraint (const char *name, SM_CONSTRAINT_TYPE type,
-			  int status, BTID * id)
+classobj_make_constraint (const char *name, SM_CONSTRAINT_TYPE type, int status, BTID * id)
 {
   SM_CONSTRAINT *constraint;
 
@@ -702,10 +689,10 @@ classobj_free_constraint (SM_CONSTRAINT * constraint)
     {
       next = c->next;
       if (c->name != NULL)
-	{
-	  db_ws_free (c->name);
-	  c->name = NULL;
-	}
+        {
+          db_ws_free (c->name);
+          c->name = NULL;
+        }
 
       db_ws_free_and_init (c);
     }
@@ -745,10 +732,10 @@ classobj_cache_constraints (SM_CLASS * class_)
   for (att = class_->attributes; att != NULL; att = att->next)
     {
       if (att->constraints)
-	{
-	  classobj_free_constraint (att->constraints);
-	  att->constraints = NULL;
-	}
+        {
+          classobj_free_constraint (att->constraints);
+          att->constraints = NULL;
+        }
     }
 
   /*
@@ -759,49 +746,43 @@ classobj_cache_constraints (SM_CLASS * class_)
       return ok;
     }
 
-  for (disk_cons = class_->disk_constraints; disk_cons != NULL;
-       disk_cons = disk_cons->next)
+  for (disk_cons = class_->disk_constraints; disk_cons != NULL; disk_cons = disk_cons->next)
     {
-      for (disk_att = disk_cons->disk_info_of_atts; disk_att != NULL;
-	   disk_att = disk_att->next)
-	{
-	  if (disk_att->att_id >= 0)
-	    {
-	      att = classobj_find_attribute_id (class_->attributes,
-						disk_att->att_id);
-	    }
-	  else
-	    {
-	      att = classobj_find_attribute (class_->attributes,
-					     disk_att->name);
-	    }
+      for (disk_att = disk_cons->disk_info_of_atts; disk_att != NULL; disk_att = disk_att->next)
+        {
+          if (disk_att->att_id >= 0)
+            {
+              att = classobj_find_attribute_id (class_->attributes, disk_att->att_id);
+            }
+          else
+            {
+              att = classobj_find_attribute (class_->attributes, disk_att->name);
+            }
 
-	  /* att == NULL if drop column */
-	  if (att != NULL)
-	    {
-	      /*
-	       *  Add a new constraint node to the cache list
-	       */
-	      att_cons = classobj_make_constraint (disk_cons->name,
-						   disk_cons->type,
-						   disk_cons->index_status,
-						   &disk_cons->index_btid);
-	      if (att_cons == NULL)
-		{
-		  return false;
-		}
+          /* att == NULL if drop column */
+          if (att != NULL)
+            {
+              /*
+               *  Add a new constraint node to the cache list
+               */
+              att_cons = classobj_make_constraint (disk_cons->name,
+                                                   disk_cons->type, disk_cons->index_status, &disk_cons->index_btid);
+              if (att_cons == NULL)
+                {
+                  return false;
+                }
 
-	      if (att->constraints == NULL)
-		{
-		  att->constraints = att_cons;
-		}
-	      else
-		{
-		  att_cons->next = att->constraints;
-		  att->constraints = att_cons;
-		}
-	    }
-	}
+              if (att->constraints == NULL)
+                {
+                  att->constraints = att_cons;
+                }
+              else
+                {
+                  att_cons->next = att->constraints;
+                  att->constraints = att_cons;
+                }
+            }
+        }
     }
 
   return ok;
@@ -853,9 +834,7 @@ classobj_make_disk_constraint_attribute ()
   SM_DISK_CONSTRAINT_ATTRIBUTE *new_;
 
   /* make a new disk constraint entry */
-  new_ =
-    (SM_DISK_CONSTRAINT_ATTRIBUTE *)
-    db_ws_alloc (sizeof (SM_DISK_CONSTRAINT_ATTRIBUTE));
+  new_ = (SM_DISK_CONSTRAINT_ATTRIBUTE *) db_ws_alloc (sizeof (SM_DISK_CONSTRAINT_ATTRIBUTE));
   if (new_ == NULL)
     {
       return NULL;
@@ -875,8 +854,7 @@ classobj_make_disk_constraint_attribute ()
  *   constraint attributes(in): disk constraint attribute list
  */
 void
-classobj_free_disk_constraint_attribute (SM_DISK_CONSTRAINT_ATTRIBUTE *
-					 cons_att)
+classobj_free_disk_constraint_attribute (SM_DISK_CONSTRAINT_ATTRIBUTE * cons_att)
 {
   if (cons_att->name != NULL)
     {
@@ -922,8 +900,7 @@ classobj_free_disk_constraint (SM_DISK_CONSTRAINT * disk_cons)
 {
   if (disk_cons->disk_info_of_atts != NULL)
     {
-      WS_LIST_FREE (disk_cons->disk_info_of_atts,
-		    classobj_free_disk_constraint_attribute);
+      WS_LIST_FREE (disk_cons->disk_info_of_atts, classobj_free_disk_constraint_attribute);
       disk_cons->disk_info_of_atts = NULL;
     }
   if (disk_cons->name != NULL)
@@ -945,8 +922,7 @@ classobj_free_disk_constraint (SM_DISK_CONSTRAINT * disk_cons)
 
 int
 classobj_make_class_constraints (SM_CLASS_CONSTRAINT ** new_list,
-				 SM_ATTRIBUTE * attributes,
-				 SM_DISK_CONSTRAINT * disk_cons_list)
+                                 SM_ATTRIBUTE * attributes, SM_DISK_CONSTRAINT * disk_cons_list)
 {
 
   SM_CLASS_CONSTRAINT *new_cons, *first, *last;
@@ -959,26 +935,25 @@ classobj_make_class_constraints (SM_CLASS_CONSTRAINT ** new_list,
   *new_list = NULL;
   first = last = NULL;
 
-  for (disk_cons = disk_cons_list; disk_cons != NULL;
-       disk_cons = disk_cons->next)
+  for (disk_cons = disk_cons_list; disk_cons != NULL; disk_cons = disk_cons->next)
     {
       new_cons = classobj_make_class_constraint ();
       if (new_cons == NULL)
-	{
-	  error = er_errid ();
+        {
+          error = er_errid ();
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       /* append to list */
       if (first == NULL)
-	{
-	  first = new_cons;
-	}
+        {
+          first = new_cons;
+        }
       else
-	{
-	  last->next = (SM_CLASS_CONSTRAINT *) new_cons;
-	}
+        {
+          last->next = (SM_CLASS_CONSTRAINT *) new_cons;
+        }
       last = new_cons;
 
       new_cons->name = ws_copy_string (disk_cons->name);
@@ -987,58 +962,52 @@ classobj_make_class_constraints (SM_CLASS_CONSTRAINT ** new_list,
       new_cons->type = disk_cons->type;
       new_cons->num_atts = disk_cons->num_atts;
 
-      new_cons->attributes =
-	(SM_ATTRIBUTE **) malloc (sizeof (SM_ATTRIBUTE *) *
-				  (new_cons->num_atts + 1));
+      new_cons->attributes = (SM_ATTRIBUTE **) malloc (sizeof (SM_ATTRIBUTE *) * (new_cons->num_atts + 1));
       if (new_cons->attributes == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 1,
-		  sizeof (SM_ATTRIBUTE *) * (new_cons->num_atts + 1));
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (SM_ATTRIBUTE *) * (new_cons->num_atts + 1));
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       new_cons->asc_desc = (int *) malloc (sizeof (int) * new_cons->num_atts);
       if (new_cons->asc_desc == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 1, sizeof (int) * new_cons->num_atts);
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (int) * new_cons->num_atts);
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       att = NULL;
-      for (i = 0, cons_att = disk_cons->disk_info_of_atts;
-	   cons_att != NULL; cons_att = cons_att->next, i++)
-	{
-	  if (cons_att->att_id >= 0)
-	    {
-	      att = classobj_find_attribute_id (attributes, cons_att->att_id);
-	    }
-	  else
-	    {
-	      att = classobj_find_attribute (attributes, cons_att->name);
-	    }
+      for (i = 0, cons_att = disk_cons->disk_info_of_atts; cons_att != NULL; cons_att = cons_att->next, i++)
+        {
+          if (cons_att->att_id >= 0)
+            {
+              att = classobj_find_attribute_id (attributes, cons_att->att_id);
+            }
+          else
+            {
+              att = classobj_find_attribute (attributes, cons_att->name);
+            }
 
-	  /* att == NULL if drop column. */
-	  new_cons->attributes[i] = att;
+          /* att == NULL if drop column. */
+          new_cons->attributes[i] = att;
 
-	  if (att == NULL)
-	    {
-	      break;
-	    }
-	  new_cons->asc_desc[i] = cons_att->asc_desc;
-	}
+          if (att == NULL)
+            {
+              break;
+            }
+          new_cons->asc_desc[i] = cons_att->asc_desc;
+        }
       if (att == NULL)
-	{
-	  for (i = 0; i < new_cons->num_atts; i++)
-	    {
-	      new_cons->attributes[i] = NULL;
-	    }
-	}
+        {
+          for (i = 0; i < new_cons->num_atts; i++)
+            {
+              new_cons->attributes[i] = NULL;
+            }
+        }
 
       assert (new_cons->num_atts == i);
       new_cons->attributes[i] = NULL;
@@ -1095,9 +1064,7 @@ classobj_decache_class_constraints (SM_CLASS * class_)
  */
 
 static int
-classobj_cache_not_null_constraints (const char *class_name,
-				     SM_ATTRIBUTE * attributes,
-				     SM_CLASS_CONSTRAINT ** con_ptr)
+classobj_cache_not_null_constraints (const char *class_name, SM_ATTRIBUTE * attributes, SM_CLASS_CONSTRAINT ** con_ptr)
 {
   SM_ATTRIBUTE *att = NULL;
   SM_CLASS_CONSTRAINT *new_ = NULL;
@@ -1117,83 +1084,79 @@ classobj_cache_not_null_constraints (const char *class_name,
   if (last != NULL)
     {
       while (last->next != NULL)
-	{
-	  last = last->next;
-	}
+        {
+          last = last->next;
+        }
     }
 
   for (att = attributes; att != NULL; att = att->next)
     {
       if (att->flags & SM_ATTFLAG_NON_NULL)
-	{
+        {
 
-	  /* Construct a default name for the constraint node.  The constraint
-	     name is normally allocated from the heap but we want it stored
-	     in the workspace so we'll construct it as usual and then copy
-	     it into the workspace before calling classobj_make_class_constraint().
-	     After the name is copied into the workspace it can be deallocated
-	     from the heap.  The name will be deallocated from the workspace
-	     when the constraint node is destroyed.  */
-	  att_names[0] = att->name;
-	  att_names[1] = NULL;
-	  constraint_name = sm_produce_constraint_name (class_name,
-							DB_CONSTRAINT_NOT_NULL,
-							att_names, NULL,
-							NULL);
-	  if (constraint_name == NULL)
-	    {
-	      goto memory_error;
-	    }
+          /* Construct a default name for the constraint node.  The constraint
+             name is normally allocated from the heap but we want it stored
+             in the workspace so we'll construct it as usual and then copy
+             it into the workspace before calling classobj_make_class_constraint().
+             After the name is copied into the workspace it can be deallocated
+             from the heap.  The name will be deallocated from the workspace
+             when the constraint node is destroyed.  */
+          att_names[0] = att->name;
+          att_names[1] = NULL;
+          constraint_name = sm_produce_constraint_name (class_name, DB_CONSTRAINT_NOT_NULL, att_names, NULL, NULL);
+          if (constraint_name == NULL)
+            {
+              goto memory_error;
+            }
 
-	  ws_name = ws_copy_string (constraint_name);
-	  if (ws_name == NULL)
-	    {
-	      goto memory_error;
-	    }
+          ws_name = ws_copy_string (constraint_name);
+          if (ws_name == NULL)
+            {
+              goto memory_error;
+            }
 
 
 
-	  /* Allocate a new class constraint node */
-	  new_ = classobj_make_class_constraint ();
-	  if (new_ == NULL)
-	    {
-	      goto memory_error;
-	    }
-	  new_->name = ws_name;
-	  new_->type = SM_CONSTRAINT_NOT_NULL;
+          /* Allocate a new class constraint node */
+          new_ = classobj_make_class_constraint ();
+          if (new_ == NULL)
+            {
+              goto memory_error;
+            }
+          new_->name = ws_name;
+          new_->type = SM_CONSTRAINT_NOT_NULL;
 
-	  /* The constraint node now has a pointer to the workspace name so
-	     we'll disassociate our local pointer with the string. */
-	  ws_name = NULL;
+          /* The constraint node now has a pointer to the workspace name so
+             we'll disassociate our local pointer with the string. */
+          ws_name = NULL;
 
-	  /* Add the new constraint node to the list */
-	  if (constraints == NULL)
-	    {
-	      constraints = new_;
-	    }
-	  else
-	    {
-	      last->next = new_;
-	    }
+          /* Add the new constraint node to the list */
+          if (constraints == NULL)
+            {
+              constraints = new_;
+            }
+          else
+            {
+              last->next = new_;
+            }
 
-	  last = new_;
+          last = new_;
 
-	  /* Allocate an array for the attribute involved in the constraint.
-	     The array will always contain one attribute pointer and a
-	     terminating NULL pointer. */
-	  new_->attributes =
-	    (SM_ATTRIBUTE **) db_ws_alloc (sizeof (SM_ATTRIBUTE *) * 2);
-	  if (new_->attributes == NULL)
-	    {
-	      goto memory_error;
-	    }
+          /* Allocate an array for the attribute involved in the constraint.
+             The array will always contain one attribute pointer and a
+             terminating NULL pointer. */
+          new_->attributes = (SM_ATTRIBUTE **) db_ws_alloc (sizeof (SM_ATTRIBUTE *) * 2);
+          if (new_->attributes == NULL)
+            {
+              goto memory_error;
+            }
 
-	  new_->attributes[0] = att;
-	  new_->attributes[1] = NULL;
-	  new_->num_atts = 1;
+          new_->attributes[0] = att;
+          new_->attributes[1] = NULL;
+          new_->num_atts = 1;
 
-	  free_and_init (constraint_name);
-	}
+          free_and_init (constraint_name);
+        }
     }
 
   *con_ptr = constraints;
@@ -1238,18 +1201,14 @@ classobj_cache_class_constraints (SM_CLASS * class_)
   classobj_decache_class_constraints (class_);
 
   /* Cache the Indexes and Unique constraints found in the property list */
-  error = classobj_make_class_constraints (&class_->constraints,
-					   class_->attributes,
-					   class_->disk_constraints);
+  error = classobj_make_class_constraints (&class_->constraints, class_->attributes, class_->disk_constraints);
 
   /* The NOT NULL constraints are not in the property lists but are instead
      contained in the SM_ATTRIBUTE structures as flags.  Search through
      the attributes and cache the NOT NULL constraints found. */
   if (error == NO_ERROR)
     {
-      error = classobj_cache_not_null_constraints (class_->header.name,
-						   class_->attributes,
-						   &(class_->constraints));
+      error = classobj_cache_not_null_constraints (class_->header.name, class_->attributes, &(class_->constraints));
     }
 
   return error;
@@ -1266,18 +1225,16 @@ classobj_cache_class_constraints (SM_CLASS * class_)
  */
 
 SM_CLASS_CONSTRAINT *
-classobj_find_class_constraint (SM_CLASS_CONSTRAINT * constraints,
-				SM_CONSTRAINT_TYPE type, const char *name)
+classobj_find_class_constraint (SM_CLASS_CONSTRAINT * constraints, SM_CONSTRAINT_TYPE type, const char *name)
 {
   SM_CLASS_CONSTRAINT *con;
 
   for (con = constraints; con != NULL; con = con->next)
     {
-      if ((con->type == type)
-	  && (intl_identifier_casecmp (con->name, name) == 0))
-	{
-	  break;
-	}
+      if ((con->type == type) && (intl_identifier_casecmp (con->name, name) == 0))
+        {
+          break;
+        }
     }
   return con;
 }
@@ -1291,18 +1248,16 @@ classobj_find_class_constraint (SM_CLASS_CONSTRAINT * constraints,
  */
 
 SM_CLASS_CONSTRAINT *
-classobj_find_constraint_by_name (SM_CLASS_CONSTRAINT * cons_list,
-				  const char *name)
+classobj_find_constraint_by_name (SM_CLASS_CONSTRAINT * cons_list, const char *name)
 {
   SM_CLASS_CONSTRAINT *cons;
 
   for (cons = cons_list; cons; cons = cons->next)
     {
-      if ((SM_IS_CONSTRAINT_INDEX_FAMILY (cons->type))
-	  && SM_COMPARE_NAMES (cons->name, name) == 0)
-	{
-	  break;
-	}
+      if ((SM_IS_CONSTRAINT_INDEX_FAMILY (cons->type)) && SM_COMPARE_NAMES (cons->name, name) == 0)
+        {
+          break;
+        }
     }
 
   return cons;
@@ -1335,7 +1290,7 @@ classobj_find_cons_primary_key (SM_CLASS_CONSTRAINT * cons_list)
   for (cons = cons_list; cons; cons = cons->next)
     {
       if (cons->type == SM_CONSTRAINT_PRIMARY_KEY)
-	break;
+        break;
     }
 
   return cons;
@@ -1363,8 +1318,7 @@ classobj_find_class_primary_key (SM_CLASS * class_)
  */
 
 void
-classobj_remove_class_constraint_node (SM_CLASS_CONSTRAINT ** constraints,
-				       SM_CLASS_CONSTRAINT * node)
+classobj_remove_class_constraint_node (SM_CLASS_CONSTRAINT ** constraints, SM_CLASS_CONSTRAINT * node)
 {
   SM_CLASS_CONSTRAINT *con = NULL, *next = NULL, *prev = NULL;
 
@@ -1372,22 +1326,22 @@ classobj_remove_class_constraint_node (SM_CLASS_CONSTRAINT ** constraints,
     {
       next = con->next;
       if (con != node)
-	{
-	  prev = con;
-	}
+        {
+          prev = con;
+        }
       else
-	{
-	  if (prev == NULL)
-	    {
-	      *constraints = con->next;
-	    }
-	  else
-	    {
-	      prev->next = con->next;
-	    }
+        {
+          if (prev == NULL)
+            {
+              *constraints = con->next;
+            }
+          else
+            {
+              prev->next = con->next;
+            }
 
-	  con->next = NULL;
-	}
+          con->next = NULL;
+        }
     }
 }
 
@@ -1404,13 +1358,12 @@ classobj_class_has_indexes (SM_CLASS * class_)
   bool has_index = false;
 
   has_index = false;
-  for (con = class_->constraints; (con != NULL && !has_index);
-       con = con->next)
+  for (con = class_->constraints; (con != NULL && !has_index); con = con->next)
     {
       if (SM_IS_CONSTRAINT_INDEX_FAMILY (con->type))
-	{
-	  has_index = true;
-	}
+        {
+          has_index = true;
+        }
     }
 
   return has_index;
@@ -1432,9 +1385,7 @@ classobj_domain_size (TP_DOMAIN * domain)
   int size;
 
   size = sizeof (TP_DOMAIN);
-  size +=
-    ws_list_total ((DB_LIST *) domain->setdomain,
-		   (LTOTALER) classobj_domain_size);
+  size += ws_list_total ((DB_LIST *) domain->setdomain, (LTOTALER) classobj_domain_size);
 
   return (size);
 }
@@ -1483,10 +1434,10 @@ classobj_make_attribute (const char *name, PR_TYPE * type)
     {
       att->name = ws_copy_string (name);
       if (att->name == NULL)
-	{
-	  db_ws_free (att);
-	  return NULL;
-	}
+        {
+          db_ws_free (att);
+          return NULL;
+        }
     }
 
   return att;
@@ -1532,14 +1483,14 @@ classobj_init_attribute (SM_ATTRIBUTE * src, SM_ATTRIBUTE * dest, int copy)
   int error = NO_ERROR;
 
   dest->name = NULL;
-  dest->id = src->id;		/* correct ? */
+  dest->id = src->id;           /* correct ? */
   dest->type = src->type;
   dest->class_mop = src->class_mop;
   dest->offset = src->offset;
   dest->flags = src->flags;
   dest->order = src->order;
   dest->storage_order = src->storage_order;
-  dest->order_link = NULL;	/* can never be copied */
+  dest->order_link = NULL;      /* can never be copied */
   dest->constraints = NULL;
   dest->sma_domain = NULL;
   dest->properties = NULL;
@@ -1550,58 +1501,56 @@ classobj_init_attribute (SM_ATTRIBUTE * src, SM_ATTRIBUTE * dest, int copy)
   if (copy)
     {
       if (src->name != NULL)
-	{
-	  dest->name = ws_copy_string (src->name);
-	  if (dest->name == NULL)
-	    {
-	      goto memory_error;
-	    }
-	}
+        {
+          dest->name = ws_copy_string (src->name);
+          if (dest->name == NULL)
+            {
+              goto memory_error;
+            }
+        }
       if (src->sma_domain != NULL)
-	{
-	  assert (TP_DOMAIN_TYPE (src->sma_domain) != DB_TYPE_VARIABLE);
-	  dest->sma_domain = tp_domain_copy (src->sma_domain);
-	  if (dest->sma_domain == NULL)
-	    {
-	      goto memory_error;
-	    }
+        {
+          assert (TP_DOMAIN_TYPE (src->sma_domain) != DB_TYPE_VARIABLE);
+          dest->sma_domain = tp_domain_copy (src->sma_domain);
+          if (dest->sma_domain == NULL)
+            {
+              goto memory_error;
+            }
 
-	  dest->sma_domain = tp_domain_cache (dest->sma_domain);
-	}
+          dest->sma_domain = tp_domain_cache (dest->sma_domain);
+        }
       if (src->properties != NULL)
-	{
-	  error = classobj_copy_props (src->properties, &(dest->properties));
-	  if (error != NO_ERROR)
-	    {
-	      goto memory_error;
-	    }
-	}
+        {
+          error = classobj_copy_props (src->properties, &(dest->properties));
+          if (error != NO_ERROR)
+            {
+              goto memory_error;
+            }
+        }
 
       /* remove the properties that can't be inherited */
       classobj_filter_attribute_props (dest->properties);
 
       if (src->constraints != NULL)
-	{
-	  /*
-	   *  We used to just copy the unique BTID from the source to the
-	   *  destination.  We might want to copy the src cache to dest, or
-	   *  maybe regenerate the cache for dest since the information is
-	   *  already in its property list.  - JB
-	   */
-	}
+        {
+          /*
+           *  We used to just copy the unique BTID from the source to the
+           *  destination.  We might want to copy the src cache to dest, or
+           *  maybe regenerate the cache for dest since the information is
+           *  already in its property list.  - JB
+           */
+        }
 
       /* make a copy of the default value */
-      if (pr_clone_value
-	  (&src->default_value.value, &dest->default_value.value))
-	{
-	  goto memory_error;
-	}
+      if (pr_clone_value (&src->default_value.value, &dest->default_value.value))
+        {
+          goto memory_error;
+        }
 
-      if (pr_clone_value (&src->default_value.original_value,
-			  &dest->default_value.original_value))
-	{
-	  goto memory_error;
-	}
+      if (pr_clone_value (&src->default_value.original_value, &dest->default_value.original_value))
+        {
+          goto memory_error;
+        }
     }
   else
     {
@@ -1679,10 +1628,10 @@ classobj_copy_attribute (SM_ATTRIBUTE * src, const char *alias)
       ws_free_string (att->name);
       att->name = ws_copy_string (alias);
       if (att->name == NULL)
-	{
-	  db_ws_free (att);
-	  return NULL;
-	}
+        {
+          db_ws_free (att);
+          return NULL;
+        }
     }
 
   return (att);
@@ -1697,8 +1646,7 @@ classobj_copy_attribute (SM_ATTRIBUTE * src, const char *alias)
  */
 
 int
-classobj_copy_att_ordered_list (SM_ATTRIBUTE * attlist,
-				SM_ATTRIBUTE ** copy_ptr)
+classobj_copy_att_ordered_list (SM_ATTRIBUTE * attlist, SM_ATTRIBUTE ** copy_ptr)
 {
   SM_ATTRIBUTE *att, *new_, *first, *last, *next;
   int error = NO_ERROR;
@@ -1711,18 +1659,18 @@ classobj_copy_att_ordered_list (SM_ATTRIBUTE * attlist,
 
       new_ = classobj_copy_attribute (att, NULL);
       if (new_ == NULL)
-	{
-	  goto memory_error;
-	}
+        {
+          goto memory_error;
+        }
 
       if (first == NULL)
-	{
-	  first = new_;
-	}
+        {
+          first = new_;
+        }
       else
-	{
-	  last->next = new_;
-	}
+        {
+          last->next = new_;
+        }
       last = new_;
     }
 
@@ -1767,8 +1715,7 @@ classobj_copy_disk_constraint_attribute (SM_DISK_CONSTRAINT_ATTRIBUTE * src)
   if (dest == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      sizeof (SM_DISK_CONSTRAINT_ATTRIBUTE));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, sizeof (SM_DISK_CONSTRAINT_ATTRIBUTE));
 
       goto exit_on_error;
     }
@@ -1806,8 +1753,7 @@ exit_on_error:
  *   src_cons(in):
  */
 int
-classobj_put_disk_constraint (SM_DISK_CONSTRAINT ** disk_cons_list,
-			      SM_CLASS_CONSTRAINT * src_cons)
+classobj_put_disk_constraint (SM_DISK_CONSTRAINT ** disk_cons_list, SM_CLASS_CONSTRAINT * src_cons)
 {
   SM_DISK_CONSTRAINT *cons_list, *prev_cons, *found_cons, *new_disk_cons;
   SM_DISK_CONSTRAINT_ATTRIBUTE *att, *first, *last;
@@ -1842,46 +1788,45 @@ classobj_put_disk_constraint (SM_DISK_CONSTRAINT ** disk_cons_list,
     {
       att = classobj_make_disk_constraint_attribute ();
       if (att == NULL)
-	{
-	  error = er_errid ();
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = er_errid ();
+          GOTO_EXIT_ON_ERROR;
+        }
 
       att->asc_desc = src_cons->asc_desc[i];
 
       if (src_cons->attributes[i]->name != NULL)
-	{
-	  att->name = ws_copy_string (src_cons->attributes[i]->name);
-	}
+        {
+          att->name = ws_copy_string (src_cons->attributes[i]->name);
+        }
       assert (src_cons->attributes[i]->id >= 0);
       att->att_id = src_cons->attributes[i]->id;
 
 
       if (first == NULL)
-	{
-	  first = att;
-	  last = att;
-	}
+        {
+          first = att;
+          last = att;
+        }
       else
-	{
-	  assert (last != NULL);
-	  last->next = att;
-	  last = att;
-	}
+        {
+          assert (last != NULL);
+          last->next = att;
+          last = att;
+        }
     }
   assert (i == src_cons->num_atts);
 
   new_disk_cons->disk_info_of_atts = first;
 
   prev_cons = NULL;
-  for (cons_list = *disk_cons_list; cons_list != NULL;
-       cons_list = cons_list->next)
+  for (cons_list = *disk_cons_list; cons_list != NULL; cons_list = cons_list->next)
     {
       if (strcmp (cons_list->name, src_cons->name) == 0)
-	{
-	  found_cons = cons_list;
-	  break;
-	}
+        {
+          found_cons = cons_list;
+          break;
+        }
       prev_cons = cons_list;
     }
 
@@ -1894,18 +1839,18 @@ classobj_put_disk_constraint (SM_DISK_CONSTRAINT ** disk_cons_list,
       found_cons->next = NULL;
 
       if (prev_cons == NULL)
-	{
-	  /* found first */
-	  assert (*disk_cons_list == found_cons);
+        {
+          /* found first */
+          assert (*disk_cons_list == found_cons);
 
-	  *disk_cons_list = new_disk_cons;
-	}
+          *disk_cons_list = new_disk_cons;
+        }
       else
-	{
-	  assert (prev_cons->next == found_cons);
+        {
+          assert (prev_cons->next == found_cons);
 
-	  prev_cons->next = new_disk_cons;
-	}
+          prev_cons->next = new_disk_cons;
+        }
 
       classobj_free_disk_constraint (found_cons);
       found_cons = NULL;
@@ -1914,17 +1859,17 @@ classobj_put_disk_constraint (SM_DISK_CONSTRAINT ** disk_cons_list,
     {
       /* append disk constraint */
       if (*disk_cons_list == NULL)
-	{
-	  *disk_cons_list = new_disk_cons;
-	}
+        {
+          *disk_cons_list = new_disk_cons;
+        }
       else
-	{
-	  /* prev_cons is last of list */
-	  assert (prev_cons != NULL && prev_cons->next == NULL);
+        {
+          /* prev_cons is last of list */
+          assert (prev_cons != NULL && prev_cons->next == NULL);
 
-	  /* append last */
-	  prev_cons->next = new_disk_cons;
-	}
+          /* append last */
+          prev_cons->next = new_disk_cons;
+        }
     }
 
   assert (error == NO_ERROR);
@@ -1942,9 +1887,9 @@ exit_on_error:
   if (new_disk_cons != NULL)
     {
       if (new_disk_cons->disk_info_of_atts == first)
-	{
-	  first = NULL;		/* keep out double free */
-	}
+        {
+          first = NULL;         /* keep out double free */
+        }
 
       classobj_free_disk_constraint (new_disk_cons);
       new_disk_cons = NULL;
@@ -1976,8 +1921,7 @@ classobj_copy_disk_constraint (SM_DISK_CONSTRAINT * src)
   if (dest == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      sizeof (SM_CLASS_CONSTRAINT));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, sizeof (SM_CLASS_CONSTRAINT));
 
       goto exit_on_error;
     }
@@ -2000,15 +1944,14 @@ classobj_copy_disk_constraint (SM_DISK_CONSTRAINT * src)
       assert (src->num_atts > 0);
 
       dest->disk_info_of_atts =
-	(SM_DISK_CONSTRAINT_ATTRIBUTE *) WS_LIST_COPY (src->disk_info_of_atts,
-						       classobj_copy_disk_constraint_attribute,
-						       db_ws_free);
+        (SM_DISK_CONSTRAINT_ATTRIBUTE *) WS_LIST_COPY (src->disk_info_of_atts,
+                                                       classobj_copy_disk_constraint_attribute, db_ws_free);
       if (dest->disk_info_of_atts == NULL)
-	{
-	  error = er_errid ();
+        {
+          error = er_errid ();
 
-	  goto exit_on_error;
-	}
+          goto exit_on_error;
+        }
     }
 
   assert (dest != NULL);
@@ -2059,19 +2002,19 @@ classobj_clear_attribute_value (DB_VALUE * value)
       /* get directly to the set */
       ref = DB_GET_SET (value);
       if (ref != NULL)
-	{
-	  /* always free the underlying set object */
-	  if (ref->set != NULL)
-	    {
-	      setobj_free (ref->set);
-	      ref->set = NULL;
-	    }
+        {
+          /* always free the underlying set object */
+          if (ref->set != NULL)
+            {
+              setobj_free (ref->set);
+              ref->set = NULL;
+            }
 
-	  /* now free the reference, if the counter goes to zero its freed
-	     otherwise, it gets left dangling but at least we've free the
-	     set storage at this point */
-	  set_free (ref);
-	}
+          /* now free the reference, if the counter goes to zero its freed
+             otherwise, it gets left dangling but at least we've free the
+             set storage at this point */
+          set_free (ref);
+        }
     }
   else
     {
@@ -2162,17 +2105,13 @@ classobj_attribute_size (SM_ATTRIBUTE * att)
     {
       size += strlen (att->name) + 1;
     }
-  size +=
-    ws_list_total ((DB_LIST *) att->sma_domain,
-		   (LTOTALER) classobj_domain_size);
+  size += ws_list_total ((DB_LIST *) att->sma_domain, (LTOTALER) classobj_domain_size);
   size += pr_value_mem_size (&att->default_value.value);
   size += pr_value_mem_size (&att->default_value.original_value);
 
   if (att->constraints != NULL)
     {
-      size +=
-	ws_list_total ((DB_LIST *) att->constraints,
-		       (LTOTALER) classobj_constraint_size);
+      size += ws_list_total ((DB_LIST *) att->constraints, (LTOTALER) classobj_constraint_size);
     }
 
   /* need to add in property set */
@@ -2327,10 +2266,10 @@ classobj_make_query_spec (const char *specification)
     {
       query_spec->specification = ws_copy_string (specification);
       if (query_spec->specification == NULL)
-	{
-	  db_ws_free (query_spec);
-	  query_spec = NULL;
-	}
+        {
+          db_ws_free (query_spec);
+          query_spec = NULL;
+        }
     }
 
   return (query_spec);
@@ -2372,9 +2311,9 @@ classobj_free_query_spec (SM_QUERY_SPEC * query_spec)
   if (query_spec != NULL)
     {
       if (query_spec->specification != NULL)
-	{
-	  ws_free_string (query_spec->specification);
-	}
+        {
+          ws_free_string (query_spec->specification);
+        }
       db_ws_free (query_spec);
     }
 }
@@ -2427,8 +2366,7 @@ classobj_free_template (SM_TEMPLATE * template_ptr)
   ws_free_string (template_ptr->name);
   template_ptr->name = NULL;
 
-  WS_LIST_FREE (template_ptr->disk_constraints,
-		classobj_free_disk_constraint);
+  WS_LIST_FREE (template_ptr->disk_constraints, classobj_free_disk_constraint);
   template_ptr->disk_constraints = NULL;
 
   free_and_init (template_ptr);
@@ -2472,51 +2410,46 @@ classobj_make_template (const char *name, MOP op, SM_CLASS * class_)
     {
       template_ptr->name = ws_copy_string (name);
       if (template_ptr->name == NULL)
-	{
-	  goto memory_error;
-	}
+        {
+          goto memory_error;
+        }
     }
 
   if (class_ != NULL)
     {
       template_ptr->class_type = class_->class_type;
 
-      if (classobj_copy_att_ordered_list (class_->ordered_attributes,
-					  &template_ptr->attributes))
-	{
-	  goto memory_error;
-	}
+      if (classobj_copy_att_ordered_list (class_->ordered_attributes, &template_ptr->attributes))
+        {
+          goto memory_error;
+        }
 
       if (class_->loader_commands != NULL)
-	{
-	  template_ptr->loader_commands =
-	    ws_copy_string (class_->loader_commands);
-	  if (template_ptr->loader_commands == NULL)
-	    {
-	      goto memory_error;
-	    }
-	}
+        {
+          template_ptr->loader_commands = ws_copy_string (class_->loader_commands);
+          if (template_ptr->loader_commands == NULL)
+            {
+              goto memory_error;
+            }
+        }
       if (class_->query_spec)
-	{
-	  template_ptr->query_spec = (SM_QUERY_SPEC *)
-	    WS_LIST_COPY (class_->query_spec, classobj_copy_query_spec,
-			  classobj_free_query_spec);
-	  if (template_ptr->query_spec == NULL)
-	    {
-	      goto memory_error;
-	    }
-	}
+        {
+          template_ptr->query_spec = (SM_QUERY_SPEC *)
+            WS_LIST_COPY (class_->query_spec, classobj_copy_query_spec, classobj_free_query_spec);
+          if (template_ptr->query_spec == NULL)
+            {
+              goto memory_error;
+            }
+        }
       if (class_->constraints != NULL)
-	{
-	  template_ptr->disk_constraints = (SM_DISK_CONSTRAINT *)
-	    WS_LIST_COPY (class_->disk_constraints,
-			  classobj_copy_disk_constraint,
-			  classobj_free_disk_constraint);
-	  if (error != NO_ERROR)
-	    {
-	      goto memory_error;
-	    }
-	}
+        {
+          template_ptr->disk_constraints = (SM_DISK_CONSTRAINT *)
+            WS_LIST_COPY (class_->disk_constraints, classobj_copy_disk_constraint, classobj_free_disk_constraint);
+          if (error != NO_ERROR)
+            {
+              goto memory_error;
+            }
+        }
 
     }
 
@@ -2568,34 +2501,32 @@ classobj_make_template_like (const char *name, SM_CLASS * class_)
   if (class_->attributes != NULL)
     {
       for (a = class_->ordered_attributes; a != NULL; a = a->order_link)
-	{
-	  if (classobj_copy_attribute_like (template_ptr, a,
-					    existing_name) != NO_ERROR)
-	    {
-	      goto error_exit;
-	    }
-	}
+        {
+          if (classobj_copy_attribute_like (template_ptr, a, existing_name) != NO_ERROR)
+            {
+              goto error_exit;
+            }
+        }
     }
 
   if (class_->constraints != NULL)
     {
       for (c = class_->constraints; c; c = c->next)
-	{
-	  if (SM_IS_CONSTRAINT_INDEX_FAMILY (c->type))
-	    {
-	      if (classobj_copy_constraint_like (template_ptr, c,
-						 existing_name) != NO_ERROR)
-		{
-		  goto error_exit;
-		}
-	    }
-	  else
-	    {
-	      /* NOT NULL have already been copied by classobj_copy_attribute_like.
-	         INDEX will be duplicated after the class is created. */
-	      assert (c->type == SM_CONSTRAINT_NOT_NULL);
-	    }
-	}
+        {
+          if (SM_IS_CONSTRAINT_INDEX_FAMILY (c->type))
+            {
+              if (classobj_copy_constraint_like (template_ptr, c, existing_name) != NO_ERROR)
+                {
+                  goto error_exit;
+                }
+            }
+          else
+            {
+              /* NOT NULL have already been copied by classobj_copy_attribute_like.
+                 INDEX will be duplicated after the class is created. */
+              assert (c->type == SM_CONSTRAINT_NOT_NULL);
+            }
+        }
     }
 
   return template_ptr;
@@ -2621,7 +2552,7 @@ error_exit:
 
 static int
 classobj_copy_attribute_like (DB_CTMPL * ctemplate, SM_ATTRIBUTE * attribute,
-			      UNUSED_ARG const char *const like_class_name)
+                              UNUSED_ARG const char *const like_class_name)
 {
   int error = NO_ERROR;
   const char *names[2];
@@ -2637,10 +2568,9 @@ classobj_copy_attribute_like (DB_CTMPL * ctemplate, SM_ATTRIBUTE * attribute,
     }
 
   error = smt_add_attribute_w_dflt (ctemplate, attribute->name, NULL,
-				    attribute->sma_domain,
-				    &attribute->default_value.value,
-				    attribute->default_value.default_expr,
-				    is_shard_key);
+                                    attribute->sma_domain,
+                                    &attribute->default_value.value,
+                                    attribute->default_value.default_expr, is_shard_key);
   if (error != NO_ERROR)
     {
       return error;
@@ -2650,12 +2580,11 @@ classobj_copy_attribute_like (DB_CTMPL * ctemplate, SM_ATTRIBUTE * attribute,
     {
       names[0] = attribute->name;
       names[1] = NULL;
-      error =
-	dbt_add_constraint (ctemplate, DB_CONSTRAINT_NOT_NULL, NULL, names);
+      error = dbt_add_constraint (ctemplate, DB_CONSTRAINT_NOT_NULL, NULL, names);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   return error;
@@ -2679,20 +2608,17 @@ classobj_point_at_att_names (SM_CLASS_CONSTRAINT * constraint, int *count_ref)
   int count;
   int i;
 
-  for (attribute_p = constraint->attributes, count = 0;
-       *attribute_p; ++attribute_p)
+  for (attribute_p = constraint->attributes, count = 0; *attribute_p; ++attribute_p)
     {
       ++count;
     }
   att_names = (const char **) malloc ((count + 1) * sizeof (const char *));
   if (att_names == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      (count + 1) * sizeof (const char *));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (count + 1) * sizeof (const char *));
       return NULL;
     }
-  for (attribute_p = constraint->attributes, i = 0;
-       *attribute_p != NULL; ++attribute_p, ++i)
+  for (attribute_p = constraint->attributes, i = 0; *attribute_p != NULL; ++attribute_p, ++i)
     {
       att_names[i] = (*attribute_p)->name;
     }
@@ -2720,8 +2646,7 @@ classobj_point_at_att_names (SM_CLASS_CONSTRAINT * constraint, int *count_ref)
 
 static int
 classobj_copy_constraint_like (DB_CTMPL * ctemplate,
-			       SM_CLASS_CONSTRAINT * constraint,
-			       UNUSED_ARG const char *const like_class_name)
+                               SM_CLASS_CONSTRAINT * constraint, UNUSED_ARG const char *const like_class_name)
 {
   int error = NO_ERROR;
   DB_CONSTRAINT_TYPE constraint_type = db_constraint_type (constraint);
@@ -2749,8 +2674,7 @@ classobj_copy_constraint_like (DB_CTMPL * ctemplate,
       return er_errid ();
     }
 
-  error = smt_add_constraint (ctemplate, constraint_type,
-			      new_cons_name, att_names, constraint->asc_desc);
+  error = smt_add_constraint (ctemplate, constraint_type, new_cons_name, att_names, constraint->asc_desc);
 
   free_and_init (att_names);
 
@@ -2788,8 +2712,7 @@ classobj_make_class (const char *name)
   class_ = (SM_CLASS *) db_ws_alloc (sizeof (SM_CLASS));
   if (class_ == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (SM_CLASS));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (SM_CLASS));
 
       return NULL;
     }
@@ -2801,7 +2724,7 @@ classobj_make_class (const char *name)
   HFID_SET_NULL (&class_->header.heap);
   class_->header.heap.vfid.volid = boot_User_volid;
 
-  class_->repid = 0;		/* initial rep is zero */
+  class_->repid = 0;            /* initial rep is zero */
   class_->representations = NULL;
 
   class_->object_size = 0;
@@ -2835,10 +2758,10 @@ classobj_make_class (const char *name)
     {
       class_->header.name = ws_copy_string (name);
       if (class_->header.name == NULL)
-	{
-	  db_ws_free (class_);
-	  class_ = NULL;
-	}
+        {
+          db_ws_free (class_);
+          class_ = NULL;
+        }
     }
 
   return (class_);
@@ -2864,8 +2787,7 @@ classobj_free_class (SM_CLASS * class_)
   WS_LIST_FREE (class_->representations, classobj_free_representation);
   WS_LIST_FREE (class_->query_spec, classobj_free_query_spec);
 
-  classobj_free_threaded_array ((DB_LIST *) class_->attributes,
-				(LFREEER) classobj_clear_attribute);
+  classobj_free_threaded_array ((DB_LIST *) class_->attributes, (LFREEER) classobj_clear_attribute);
 
   /* this shouldn't happen here ? - make sure we can't GC this away
    * in the middle of an edit.
@@ -2922,13 +2844,9 @@ classobj_class_size (SM_CLASS * class_)
 
   size = sizeof (SM_CLASS);
   size += strlen (class_->header.name) + 1;
-  size +=
-    ws_list_total ((DB_LIST *) class_->representations,
-		   (LTOTALER) classobj_representation_size);
+  size += ws_list_total ((DB_LIST *) class_->representations, (LTOTALER) classobj_representation_size);
 
-  size +=
-    ws_list_total ((DB_LIST *) class_->query_spec,
-		   (LTOTALER) classobj_query_spec_size);
+  size += ws_list_total ((DB_LIST *) class_->query_spec, (LTOTALER) classobj_query_spec_size);
 
   if (class_->loader_commands != NULL)
     {
@@ -2955,8 +2873,7 @@ classobj_class_size (SM_CLASS * class_)
  */
 
 static void
-classobj_insert_ordered_attribute (SM_ATTRIBUTE ** attlist,
-				   SM_ATTRIBUTE * att)
+classobj_insert_ordered_attribute (SM_ATTRIBUTE ** attlist, SM_ATTRIBUTE * att)
 {
   SM_ATTRIBUTE *a, *prev;
 
@@ -3010,9 +2927,9 @@ classobj_fixup_loaded_class (SM_CLASS * class_)
       assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
       if (!att->sma_domain->type->variable_p)
-	{
-	  fixed_count++;
-	}
+        {
+          fixed_count++;
+        }
     }
 
   /* if we have at least one fixed width attribute, then we'll also need
@@ -3038,9 +2955,9 @@ classobj_fixup_loaded_class (SM_CLASS * class_)
        * up to a word boundary.
        */
       if (i == fixed_count)
-	{
-	  offset = DB_ATT_ALIGN (offset);
-	}
+        {
+          offset = DB_ATT_ALIGN (offset);
+        }
 
       att->offset = offset;
       offset += tp_domain_memory_size (att->sma_domain);
@@ -3050,8 +2967,7 @@ classobj_fixup_loaded_class (SM_CLASS * class_)
   offset = DB_ATT_ALIGN (offset);
   class_->object_size = offset;
 
-  for (att = class_->ordered_attributes, i = 0; att != NULL;
-       att = att->order_link, i++)
+  for (att = class_->ordered_attributes, i = 0; att != NULL; att = att->order_link, i++)
     {
       att->order = i;
     }
@@ -3093,21 +3009,19 @@ classobj_capture_representation (SM_CLASS * class_)
     {
       assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-      rat =
-	classobj_make_repattribute (att->id, TP_DOMAIN_TYPE (att->sma_domain),
-				    att->sma_domain);
+      rat = classobj_make_repattribute (att->id, TP_DOMAIN_TYPE (att->sma_domain), att->sma_domain);
       if (rat == NULL)
-	{
-	  goto memory_error;
-	}
+        {
+          goto memory_error;
+        }
       if (last == NULL)
-	{
-	  rep->attributes = rat;
-	}
+        {
+          rep->attributes = rat;
+        }
       else
-	{
-	  last->next = rat;
-	}
+        {
+          last->next = rat;
+        }
       last = rat;
     }
 
@@ -3143,21 +3057,20 @@ classobj_sort_attlist (SM_ATTRIBUTE ** source)
       next = att->next;
 
       prev = NULL;
-      for (ins = sorted; ins != NULL && ins->order < att->order;
-	   ins = ins->next)
-	{
-	  prev = ins;
-	}
+      for (ins = sorted; ins != NULL && ins->order < att->order; ins = ins->next)
+        {
+          prev = ins;
+        }
 
       att->next = ins;
       if (prev == NULL)
-	{
-	  sorted = att;
-	}
+        {
+          sorted = att;
+        }
       else
-	{
-	  prev->next = att;
-	}
+        {
+          prev->next = att;
+        }
     }
   *source = sorted;
 }
@@ -3198,9 +3111,9 @@ classobj_install_template (SM_CLASS * class_, SM_TEMPLATE * flat, int saverep)
     {
       oldrep = classobj_capture_representation (class_);
       if (oldrep == NULL)
-	{
-	  goto memory_error;
-	}
+        {
+          goto memory_error;
+        }
 
       /* save the old representation */
       oldrep->next = class_->representations;
@@ -3214,54 +3127,51 @@ classobj_install_template (SM_CLASS * class_, SM_TEMPLATE * flat, int saverep)
   fixed_size = 0;
 
   /* install attribute lists */
-  classobj_free_threaded_array ((DB_LIST *) class_->attributes,
-				(LFREEER) classobj_clear_attribute);
-  class_->attributes = NULL;	/* init */
+  classobj_free_threaded_array ((DB_LIST *) class_->attributes, (LFREEER) classobj_clear_attribute);
+  class_->attributes = NULL;    /* init */
 
   att_count = ws_list_length ((DB_LIST *) flat->instance_attributes);
   if (att_count)
     {
-      atts = (SM_ATTRIBUTE *)
-	classobj_alloc_threaded_array (sizeof (SM_ATTRIBUTE), att_count);
+      atts = (SM_ATTRIBUTE *) classobj_alloc_threaded_array (sizeof (SM_ATTRIBUTE), att_count);
       if (atts == NULL)
-	{
-	  goto memory_error;
-	}
+        {
+          goto memory_error;
+        }
 
       class_->attributes = atts;
 
       /* in order to properly calculate the memory offset, we must make an initial
          pass and count the number of fixed width attributes */
       for (att = flat->instance_attributes; att != NULL; att = att->next)
-	{
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+        {
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  if (!att->sma_domain->type->variable_p)
-	    {
-	      fixed_count++;
-	    }
-	  else
-	    {
-	      variable_count++;
-	    }
-	}
+          if (!att->sma_domain->type->variable_p)
+            {
+              fixed_count++;
+            }
+          else
+            {
+              variable_count++;
+            }
+        }
 
       /* calculate the disk size of the fixed width attribute block */
-      for (att = flat->instance_attributes, i = 0; att != NULL;
-	   att = att->next, i++)
-	{
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+      for (att = flat->instance_attributes, i = 0; att != NULL; att = att->next, i++)
+        {
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  if (classobj_init_attribute (att, &atts[i], 0))
-	    {
-	      goto memory_error;
-	    }
-	  /* disk information */
-	  if (!att->sma_domain->type->variable_p)
-	    {
-	      fixed_size += tp_domain_disk_size (att->sma_domain);
-	    }
-	}
+          if (classobj_init_attribute (att, &atts[i], 0))
+            {
+              goto memory_error;
+            }
+          /* disk information */
+          if (!att->sma_domain->type->variable_p)
+            {
+              fixed_size += tp_domain_disk_size (att->sma_domain);
+            }
+        }
       /* bring the size of the fixed block up to a word boundary */
       fixed_size = DB_ATT_ALIGN (fixed_size);
     }
@@ -3333,13 +3243,12 @@ classobj_find_representation (SM_CLASS * class_, int id)
 {
   SM_REPRESENTATION *rep, *found;
 
-  for (rep = class_->representations, found = NULL;
-       rep != NULL && found == NULL; rep = rep->next)
+  for (rep = class_->representations, found = NULL; rep != NULL && found == NULL; rep = rep->next)
     {
       if (rep->id == id)
-	{
-	  found = rep;
-	}
+        {
+          found = rep;
+        }
     }
 
   return (found);
@@ -3379,17 +3288,16 @@ classobj_make_disk_constraint (void)
  */
 
 SM_DISK_CONSTRAINT *
-classobj_find_disk_constraint (SM_DISK_CONSTRAINT * disk_cons_list,
-			       const char *name)
+classobj_find_disk_constraint (SM_DISK_CONSTRAINT * disk_cons_list, const char *name)
 {
   SM_DISK_CONSTRAINT *cons;
 
   for (cons = disk_cons_list; cons != NULL; cons = cons->next)
     {
       if (intl_identifier_casecmp (cons->name, name) == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
   return cons;
 }
@@ -3424,28 +3332,25 @@ classobj_print (SM_CLASS * class_)
   if (class_->ordered_attributes != NULL)
     {
       fprintf (stdout, "Attributes\n");
-      for (att = class_->ordered_attributes;
-	   att != NULL; att = att->order_link)
-	{
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+      for (att = class_->ordered_attributes; att != NULL; att = att->order_link)
+        {
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  fprintf (stdout, "  Name=%-25s, id=%3d", att->header.name, att->id);
-	  if (att->sma_domain != NULL && att->sma_domain->type != NULL)
-	    {
-	      fprintf (stdout, ", pr_type=%-10s",
-		       att->sma_domain->type->name);
-	    }
-	  fprintf (stdout, "\n");
-	  fprintf (stdout,
-		   "    mem_offset=%3d, order=%3d, storage_order=%3d\n",
-		   att->offset, att->order, att->storage_order);
+          fprintf (stdout, "  Name=%-25s, id=%3d", att->header.name, att->id);
+          if (att->sma_domain != NULL && att->sma_domain->type != NULL)
+            {
+              fprintf (stdout, ", pr_type=%-10s", att->sma_domain->type->name);
+            }
+          fprintf (stdout, "\n");
+          fprintf (stdout,
+                   "    mem_offset=%3d, order=%3d, storage_order=%3d\n", att->offset, att->order, att->storage_order);
 
-	  if (att->properties != NULL)
-	    {
-	      fprintf (stdout, "    Properties : ");
-	      classobj_print_props (att->properties);
-	    }
-	}
+          if (att->properties != NULL)
+            {
+              fprintf (stdout, "    Properties : ");
+              classobj_print_props (att->properties);
+            }
+        }
     }
 }
 #endif
@@ -3466,11 +3371,11 @@ classobj_find_attribute (SM_ATTRIBUTE * attlist, const char *name)
   for (att = attlist; att != NULL; att = att->next)
     {
       if (intl_identifier_casecmp (att->name, name) == 0)
-	{
-	  assert (att->sma_domain != NULL);
+        {
+          assert (att->sma_domain != NULL);
 
-	  return att;
-	}
+          return att;
+        }
     }
 
   return NULL;
@@ -3491,9 +3396,9 @@ classobj_find_attribute_id (SM_ATTRIBUTE * attlist, int id)
   for (att = attlist; att != NULL; att = att->next)
     {
       if (att->id == id)
-	{
-	  return att;
-	}
+        {
+          return att;
+        }
     }
 
   return NULL;
@@ -3513,8 +3418,7 @@ classobj_find_attribute_id (SM_ATTRIBUTE * attlist, int id)
  */
 
 SM_DESCRIPTOR_LIST *
-classobj_make_desclist (MOP classobj, SM_CLASS * class_,
-			SM_ATTRIBUTE * att, int write_access)
+classobj_make_desclist (MOP classobj, SM_CLASS * class_, SM_ATTRIBUTE * att, int write_access)
 {
   SM_DESCRIPTOR_LIST *dl;
 
@@ -3595,8 +3499,7 @@ classobj_free_descriptor (SM_DESCRIPTOR * desc)
  */
 
 SM_DESCRIPTOR *
-classobj_make_descriptor (MOP class_mop, SM_CLASS * classobj,
-			  SM_ATTRIBUTE * att, int write_access)
+classobj_make_descriptor (MOP class_mop, SM_CLASS * classobj, SM_ATTRIBUTE * att, int write_access)
 {
   SM_DESCRIPTOR *desc;
   SM_VALIDATION *valid;
@@ -3617,45 +3520,43 @@ classobj_make_descriptor (MOP class_mop, SM_CLASS * classobj,
          after schema/transaction changes */
       desc->name = (char *) malloc (strlen (att->name) + 1);
       if (desc->name == NULL)
-	{
-	  free_and_init (desc);
-	  return NULL;
-	}
+        {
+          free_and_init (desc);
+          return NULL;
+        }
       strcpy (desc->name, att->name);
     }
 
   /* create the initial map entry if we have the information */
   if (class_mop != NULL)
     {
-      desc->map =
-	classobj_make_desclist (class_mop, classobj, att, write_access);
+      desc->map = classobj_make_desclist (class_mop, classobj, att, write_access);
       if (desc->map == NULL)
-	{
-	  classobj_free_descriptor (desc);
-	  desc = NULL;
-	}
+        {
+          classobj_free_descriptor (desc);
+          desc = NULL;
+        }
     }
 
   /* go ahead and make a validation cache all the time */
   valid = (SM_VALIDATION *) malloc (sizeof (SM_VALIDATION));
   if (valid == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      sizeof (SM_VALIDATION));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (SM_VALIDATION));
       classobj_free_descriptor (desc);
       desc = NULL;
     }
   else
     {
       if (desc == NULL)
-	{
-	  free_and_init (valid);
-	  return desc;
-	}
+        {
+          free_and_init (valid);
+          return desc;
+        }
       else
-	{
-	  desc->valid = valid;
-	}
+        {
+          desc->valid = valid;
+        }
 
       valid->last_class = NULL;
       valid->validated_classes = NULL;
@@ -3682,9 +3583,7 @@ classobj_make_descriptor (MOP class_mop, SM_CLASS * classobj,
  *   constraint_name(in): Constraint name.
  */
 int
-classobj_check_index_exist (SM_CLASS_CONSTRAINT * constraints,
-			    const char *class_name,
-			    const char *constraint_name)
+classobj_check_index_exist (SM_CLASS_CONSTRAINT * constraints, const char *class_name, const char *constraint_name)
 {
   int error = NO_ERROR;
   SM_CLASS_CONSTRAINT *existing_con;
@@ -3695,8 +3594,7 @@ classobj_check_index_exist (SM_CLASS_CONSTRAINT * constraints,
     }
 
   /* check index name uniqueness */
-  existing_con = classobj_find_constraint_by_name (constraints,
-						   constraint_name);
+  existing_con = classobj_find_constraint_by_name (constraints, constraint_name);
   if (existing_con && existing_con->index_status != INDEX_STATUS_IN_PROGRESS)
     {
       ERROR2 (error, ER_SM_INDEX_EXISTS, class_name, existing_con->name);
@@ -3719,9 +3617,9 @@ classobj_find_shard_key_column (SM_CLASS * class_)
   for (att = class_->attributes; att != NULL; att = att->next)
     {
       if (att->flags & SM_ATTFLAG_SHARD_KEY)
-	{
-	  return att;
-	}
+        {
+          return att;
+        }
     }
 
   return NULL;

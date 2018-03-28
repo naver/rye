@@ -38,8 +38,7 @@
 
 static RYE_SERVER_SHM *rye_Server_shm = NULL;
 
-static RYE_SERVER_SHM *rye_server_shm_attach (const char *dbname,
-					      bool is_monitoring);
+static RYE_SERVER_SHM *rye_server_shm_attach (const char *dbname, bool is_monitoring);
 static void rye_server_shm_detach (RYE_SERVER_SHM * shm_p);
 
 
@@ -67,8 +66,7 @@ svr_shm_initialize (const char *dbname)
       return ER_FAILED;
     }
 
-  if (rye_shm_check_shm (svr_shm_key, RYE_SHM_TYPE_SERVER, false) ==
-      RYE_SHM_TYPE_SERVER)
+  if (rye_shm_check_shm (svr_shm_key, RYE_SHM_TYPE_SERVER, false) == RYE_SHM_TYPE_SERVER)
     {
       rye_shm_destroy (svr_shm_key);
     }
@@ -127,8 +125,7 @@ svr_shm_clear_stats (int tran_index, MNT_SERVER_ITEM item)
 {
   assert (tran_index >= 0);
 
-  if (rye_Server_shm == NULL
-      || tran_index < 0 || tran_index >= rye_Server_shm->ntrans)
+  if (rye_Server_shm == NULL || tran_index < 0 || tran_index >= rye_Server_shm->ntrans)
     {
       assert (false);
     }
@@ -365,22 +362,20 @@ svr_shm_check_repl_done (void)
   for (i = 0; i < rye_Server_shm->ha_info.num_repl; i++)
     {
       if (rye_Server_shm->ha_info.repl_info[i].is_local_host == false
-	  && rye_Server_shm->ha_info.repl_info[i].state !=
-	  HA_APPLY_STATE_DONE)
-	{
-	  found = true;
-	  break;
-	}
+          && rye_Server_shm->ha_info.repl_info[i].state != HA_APPLY_STATE_DONE)
+        {
+          found = true;
+          break;
+        }
     }
 
   if (found == false)
     {
       server_state = svr_shm_get_server_state ();
-      if (server_state == HA_STATE_TO_BE_MASTER
-	  || server_state == HA_STATE_MASTER)
-	{
-	  return true;
-	}
+      if (server_state == HA_STATE_TO_BE_MASTER || server_state == HA_STATE_MASTER)
+        {
+          return true;
+        }
     }
 
   return false;
@@ -409,8 +404,7 @@ svr_shm_sync_node_info_to_repl (void)
       return ER_FAILED;
     }
 
-  error =
-    rye_master_shm_get_ha_nodes (nodes, &num_nodes, SHM_MAX_HA_NODE_LIST);
+  error = rye_master_shm_get_ha_nodes (nodes, &num_nodes, SHM_MAX_HA_NODE_LIST);
   if (error != NO_ERROR)
     {
       return error;
@@ -428,18 +422,17 @@ svr_shm_sync_node_info_to_repl (void)
       repl_info = &rye_Server_shm->ha_info.repl_info[i];
       found = false;
       for (j = 0; j < num_nodes; j++)
-	{
-	  if (prm_is_same_node (&nodes[j].node_info,
-				&repl_info->node_info) == true)
-	    {
-	      found = true;
-	      break;
-	    }
-	}
+        {
+          if (prm_is_same_node (&nodes[j].node_info, &repl_info->node_info) == true)
+            {
+              found = true;
+              break;
+            }
+        }
       if (found == true)
-	{
-	  new_repl_info[new_repl_count++] = *repl_info;
-	}
+        {
+          new_repl_info[new_repl_count++] = *repl_info;
+        }
     }
 
   /* append added node info */
@@ -447,24 +440,23 @@ svr_shm_sync_node_info_to_repl (void)
     {
       found = false;
       for (j = 0; j < rye_Server_shm->ha_info.num_repl; j++)
-	{
-	  repl_info = &rye_Server_shm->ha_info.repl_info[j];
-	  if (prm_is_same_node (&nodes[i].node_info,
-				&repl_info->node_info) == true)
-	    {
-	      found = true;
-	      break;
-	    }
-	}
+        {
+          repl_info = &rye_Server_shm->ha_info.repl_info[j];
+          if (prm_is_same_node (&nodes[i].node_info, &repl_info->node_info) == true)
+            {
+              found = true;
+              break;
+            }
+        }
 
       if (found == false)
-	{
-	  new_repl_info[new_repl_count].node_info = nodes[i].node_info;
-	  new_repl_info[new_repl_count].state = HA_APPLY_STATE_UNREGISTERED;
-	  new_repl_info[new_repl_count].is_local_host = nodes[i].is_localhost;
+        {
+          new_repl_info[new_repl_count].node_info = nodes[i].node_info;
+          new_repl_info[new_repl_count].state = HA_APPLY_STATE_UNREGISTERED;
+          new_repl_info[new_repl_count].is_local_host = nodes[i].is_localhost;
 
-	  new_repl_count++;
-	}
+          new_repl_count++;
+        }
     }
 
   rye_Server_shm->ha_info.num_repl = new_repl_count;
@@ -492,8 +484,7 @@ svr_shm_set_repl_info (const PRM_NODE_INFO * node_info, HA_APPLY_STATE state)
       return ER_FAILED;
     }
 
-  assert (state >= HA_APPLY_STATE_UNREGISTERED
-	  && state <= HA_APPLY_STATE_ERROR);
+  assert (state >= HA_APPLY_STATE_UNREGISTERED && state <= HA_APPLY_STATE_ERROR);
 
   error = svr_shm_sync_node_info_to_repl ();
   if (error != NO_ERROR)
@@ -506,10 +497,10 @@ svr_shm_set_repl_info (const PRM_NODE_INFO * node_info, HA_APPLY_STATE state)
     {
       repl_info = &rye_Server_shm->ha_info.repl_info[i];
       if (prm_is_same_node (&repl_info->node_info, node_info) == true)
-	{
-	  found_repl_info = repl_info;
-	  break;
-	}
+        {
+          found_repl_info = repl_info;
+          break;
+        }
     }
 
   if (found_repl_info == NULL)
@@ -577,8 +568,7 @@ rye_server_shm_detach (RYE_SERVER_SHM * shm_p)
  *   dbname(in):
  */
 int
-rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
-				   const char *dbname)
+rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info, const char *dbname)
 {
   RYE_SERVER_SHM *shm_p;
 
@@ -598,16 +588,13 @@ rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info,
 
   if (shard_info->groupid_bitmap_size <= 0
       || shard_info->groupid_bitmap_size >= SHARD_MAX_BITMAP_SIZE
-      || shard_info->nodeid < 0
-      || shard_info->num_groupid <= 0
-      || shard_info->num_groupid > GROUPID_MAX)
+      || shard_info->nodeid < 0 || shard_info->num_groupid <= 0 || shard_info->num_groupid > GROUPID_MAX)
     {
       assert (false);
       return ER_FAILED;
     }
 
-  memcpy (shm_p->shard_info.groupid_bitmap,
-	  shard_info->groupid_bitmap, shard_info->groupid_bitmap_size);
+  memcpy (shm_p->shard_info.groupid_bitmap, shard_info->groupid_bitmap, shard_info->groupid_bitmap_size);
   shm_p->shard_info.nodeid = shard_info->nodeid;
   shm_p->shard_info.num_groupid = shard_info->num_groupid;
 
@@ -780,29 +767,25 @@ rye_server_shm_dump (FILE * out_fp, int shm_key)
 
   /* shard info */
   fprintf (out_fp, "\t\t node_id:%d, num_groupid:%d bitmap_size:%d\n",
-	   shm_p->shard_info.nodeid, shm_p->shard_info.num_groupid,
-	   shm_p->shard_info.groupid_bitmap_size);
+           shm_p->shard_info.nodeid, shm_p->shard_info.num_groupid, shm_p->shard_info.groupid_bitmap_size);
 
   /* ha info */
   fprintf (out_fp, "\t\t state:%s, eof:%ld,%d, num_repl:%d\n",
-	   HA_STATE_NAME (shm_p->server_state),
-	   (long) shm_p->ha_info.eof_lsa.pageid,
-	   shm_p->ha_info.eof_lsa.offset, shm_p->ha_info.num_repl);
+           HA_STATE_NAME (shm_p->server_state),
+           (long) shm_p->ha_info.eof_lsa.pageid, shm_p->ha_info.eof_lsa.offset, shm_p->ha_info.num_repl);
 
   /* repl info */
   index = 0;
   for (i = 0; i < shm_p->ha_info.num_repl; i++)
     {
       if (shm_p->ha_info.repl_info[i].is_local_host == true)
-	{
-	  continue;
-	}
-      prm_node_info_to_str (buf, sizeof (buf),
-			    &shm_p->ha_info.repl_info[i].node_info);
+        {
+          continue;
+        }
+      prm_node_info_to_str (buf, sizeof (buf), &shm_p->ha_info.repl_info[i].node_info);
 
       fprintf (out_fp, "\t\t\t Repl:%d, node:%s, state:%s\n",
-	       index++, buf,
-	       HA_APPLY_STATE_NAME (shm_p->ha_info.repl_info[i].state));
+               index++, buf, HA_APPLY_STATE_NAME (shm_p->ha_info.repl_info[i].state));
     }
 
   rye_server_shm_detach (shm_p);

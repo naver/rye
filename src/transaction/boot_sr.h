@@ -80,8 +80,7 @@ extern void boot_server_status (BOOT_SERVER_STATUS status);
 #if defined(SERVER_MODE)
 /* in xserver_interface.h */
 extern void boot_donot_shutdown_server_at_exit (void);
-extern void xboot_notify_unregister_client (THREAD_ENTRY * thread_p,
-					    int tran_index);
+extern void xboot_notify_unregister_client (THREAD_ENTRY * thread_p, int tran_index);
 #endif /* SERVER_MODE */
 
 extern const char *boot_db_name (void);
@@ -93,25 +92,20 @@ extern DKNPAGES boot_max_pages_new_volume (void);
 extern DKNPAGES boot_max_pages_for_new_auto_volume_extension (void);
 extern DKNPAGES boot_max_pages_for_new_temp_volume (void);
 extern VOLID boot_add_auto_volume_extension (THREAD_ENTRY * thread_p,
-					     DKNPAGES min_npages,
-					     DISK_SETPAGE_TYPE setpage_type,
-					     DISK_VOLPURPOSE vol_purpose,
-					     bool wait);
+                                             DKNPAGES min_npages,
+                                             DISK_SETPAGE_TYPE setpage_type, DISK_VOLPURPOSE vol_purpose, bool wait);
 extern VOLID boot_add_temp_volume (THREAD_ENTRY * thread_p, DKNPAGES npages);
 extern DKNPAGES boot_get_temp_temp_vol_max_npages (void);
 extern int boot_add_temp_volume_and_file (VFID * vfid, DKNPAGES npages);
 extern int boot_restart_server (THREAD_ENTRY * thread_p, bool print_restart,
-				const char *db_name, bool from_backup,
-				BO_RESTART_ARG * r_args);
+                                const char *db_name, bool from_backup, BO_RESTART_ARG * r_args);
 #if defined (SA_MODE)
 extern int xboot_restart_from_backup (THREAD_ENTRY * thread_p,
-				      int print_restart, const char *db_name,
-				      BO_RESTART_ARG * r_args);
+                                      int print_restart, const char *db_name, BO_RESTART_ARG * r_args);
 #endif /* SA_MODE */
 
 extern bool xboot_shutdown_server (THREAD_ENTRY * thread_p);
-extern int xboot_delete (THREAD_ENTRY * thread_p, const char *db_name,
-			 bool force_delete);
+extern int xboot_delete (THREAD_ENTRY * thread_p, const char *db_name, bool force_delete);
 extern void boot_server_all_finalize (THREAD_ENTRY * thread_p);
 
 #endif /* _BOOT_SR_H_ */

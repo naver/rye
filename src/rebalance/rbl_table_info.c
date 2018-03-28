@@ -45,21 +45,18 @@ rbl_get_shard_keys (CCI_CONN * conn, int gid, int *num_keys)
 
   RBL_ASSERT (num_keys != NULL);
 
-  sprintf (sql, "SELECT skey FROM [%s] WHERE gid = %d",
-           CT_SHARD_GID_SKEY_INFO_NAME, gid);
+  sprintf (sql, "SELECT skey FROM [%s] WHERE gid = %d", CT_SHARD_GID_SKEY_INFO_NAME, gid);
 
   if (cci_prepare (conn, &stmt, sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return NULL;
     }
 
   n = cci_execute (&stmt, 0, 0);
   if (n < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto error_exit;
     }
 
@@ -74,16 +71,14 @@ rbl_get_shard_keys (CCI_CONN * conn, int gid, int *num_keys)
     {
       if (cci_fetch_next (&stmt) < 0)
         {
-          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                     stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
           goto error_exit;
         }
 
       skey = cci_get_string (&stmt, 1, &ind);
       if (skey == NULL && stmt.err_buf.err_code != CCI_ER_NO_ERROR)
         {
-          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                     stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
           goto error_exit;
         }
 
@@ -138,21 +133,18 @@ rbl_get_all_shard_tables (CCI_CONN * conn, int *num_table)
   TABLE_INFO *tables = NULL;
   char *t_name, *c_name;
 
-  sprintf (sql,
-           "SELECT table_name, col_name FROM db_column WHERE is_shard_key = 1");
+  sprintf (sql, "SELECT table_name, col_name FROM db_column WHERE is_shard_key = 1");
 
   if (cci_prepare (conn, &stmt, sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return NULL;
     }
 
   n = cci_execute (&stmt, 0, 0);
   if (n < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto handle_error;
     }
 
@@ -167,24 +159,21 @@ rbl_get_all_shard_tables (CCI_CONN * conn, int *num_table)
     {
       if (cci_fetch_next (&stmt) < 0)
         {
-          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                     stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
           goto handle_error;
         }
 
       t_name = cci_get_string (&stmt, 1, &ind);
       if (t_name == NULL && stmt.err_buf.err_code != CCI_ER_NO_ERROR)
         {
-          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                     stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
           goto handle_error;
         }
 
       c_name = cci_get_string (&stmt, 2, &ind);
       if (c_name == NULL && stmt.err_buf.err_code != CCI_ER_NO_ERROR)
         {
-          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                     stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
           goto handle_error;
         }
 
@@ -227,21 +216,18 @@ rbl_get_all_global_tables (CCI_CONN * conn, int *num_table)
            " WHERE is_system_table <> 1 AND table_type = 0 "
            " AND table_name <> 'shard_db' AND table_name <> 'shard_node' "
            " AND table_name <> 'shard_groupid' AND table_name <> 'shard_migration') "
-           "DIFFERENCE "
-           "(SELECT table_name FROM db_column WHERE is_shard_key = 1)");
+           "DIFFERENCE " "(SELECT table_name FROM db_column WHERE is_shard_key = 1)");
 
   if (cci_prepare (conn, &stmt, sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return NULL;
     }
 
   n = cci_execute (&stmt, 0, 0);
   if (n < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto handle_error;
     }
 
@@ -256,16 +242,14 @@ rbl_get_all_global_tables (CCI_CONN * conn, int *num_table)
     {
       if (cci_fetch_next (&stmt) < 0)
         {
-          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                     stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
           goto handle_error;
         }
 
       t_name = cci_get_string (&stmt, 1, &ind);
       if (t_name == NULL && stmt.err_buf.err_code != CCI_ER_NO_ERROR)
         {
-          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-                     stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
           goto handle_error;
         }
 

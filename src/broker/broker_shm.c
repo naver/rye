@@ -44,14 +44,12 @@
 
 static int get_host_ip (unsigned char *ip_addr);
 
-static void broker_shm_set_as_info (T_APPL_SERVER_INFO * as_info_p,
-				    T_BROKER_INFO * br_info_p, int as_index);
+static void broker_shm_set_as_info (T_APPL_SERVER_INFO * as_info_p, T_BROKER_INFO * br_info_p, int as_index);
 
 static const char *get_appl_server_name (void);
 
 T_SHM_BROKER *
-br_shm_init_shm_broker (int shm_key_br_gl, T_BROKER_INFO * br_info,
-			int br_num)
+br_shm_init_shm_broker (int shm_key_br_gl, T_BROKER_INFO * br_info, int br_num)
 {
   int i;
   int shm_size;
@@ -65,8 +63,7 @@ br_shm_init_shm_broker (int shm_key_br_gl, T_BROKER_INFO * br_info,
 
   shm_size = sizeof (T_SHM_BROKER) + (br_num - 1) * sizeof (T_BROKER_INFO);
 
-  shm_br = rye_shm_create (shm_key_br_gl, shm_size,
-			   RYE_SHM_TYPE_BROKER_GLOBAL);
+  shm_br = rye_shm_create (shm_key_br_gl, shm_size, RYE_SHM_TYPE_BROKER_GLOBAL);
 
   if (shm_br == NULL)
     {
@@ -106,8 +103,7 @@ br_shm_init_shm_as (T_BROKER_INFO * br_info_p, int shm_key_br_gl)
       shm_size += (sizeof (T_APPL_SERVER_INFO) * (APPL_SERVER_NUM_LIMIT - 1));
     }
 
-  shm_as_p = rye_shm_create (br_info_p->appl_server_shm_key, shm_size,
-			     RYE_SHM_TYPE_BROKER_LOCAL);
+  shm_as_p = rye_shm_create (br_info_p->appl_server_shm_key, shm_size, RYE_SHM_TYPE_BROKER_LOCAL);
 
   if (shm_as_p == NULL)
     {
@@ -120,13 +116,12 @@ br_shm_init_shm_as (T_BROKER_INFO * br_info_p, int shm_key_br_gl)
 
   shm_as_p->cci_default_autocommit = br_info_p->cci_default_autocommit;
   shm_as_p->job_queue_size = br_info_p->job_queue_size;
-  shm_as_p->job_queue[0].id = 0;	/* initialize max heap */
+  shm_as_p->job_queue[0].id = 0;        /* initialize max heap */
   shm_as_p->max_prepared_stmt_count = br_info_p->max_prepared_stmt_count;
 
   shm_as_p->monitor_hang_flag = br_info_p->monitor_hang_flag;
   shm_as_p->monitor_server_flag = br_info_p->monitor_server_flag;
-  memset (shm_as_p->unusable_databases_cnt, 0,
-	  sizeof (shm_as_p->unusable_databases_cnt));
+  memset (shm_as_p->unusable_databases_cnt, 0, sizeof (shm_as_p->unusable_databases_cnt));
 
   strcpy (shm_as_p->broker_name, br_info_p->name);
 
@@ -153,8 +148,7 @@ br_shm_init_shm_as (T_BROKER_INFO * br_info_p, int shm_key_br_gl)
   shm_as_p->connect_order_random = br_info_p->connect_order_random;
   shm_as_p->replica_only_flag = br_info_p->replica_only_flag;
 
-  shm_as_p->max_num_delayed_hosts_lookup =
-    br_info_p->max_num_delayed_hosts_lookup;
+  shm_as_p->max_num_delayed_hosts_lookup = br_info_p->max_num_delayed_hosts_lookup;
 
   shm_as_p->cas_rctime = br_info_p->cas_rctime;
 
@@ -171,8 +165,7 @@ br_shm_init_shm_as (T_BROKER_INFO * br_info_p, int shm_key_br_gl)
 }
 
 static void
-broker_shm_set_as_info (T_APPL_SERVER_INFO * as_info_p,
-			T_BROKER_INFO * br_info_p, int as_index)
+broker_shm_set_as_info (T_APPL_SERVER_INFO * as_info_p, T_BROKER_INFO * br_info_p, int as_index)
 {
   as_info_p->service_flag = SERVICE_OFF;
   as_info_p->last_access_time = time (NULL);

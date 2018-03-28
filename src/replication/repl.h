@@ -81,7 +81,7 @@ struct cirp_ct_log_applier
   PRM_NODE_INFO host_info;
   int id;
 
-  LOG_LSA committed_lsa;	/* last committed commit log lsa */
+  LOG_LSA committed_lsa;        /* last committed commit log lsa */
 };
 
 typedef struct cirp_ct_log_analyzer CIRP_CT_LOG_ANALYZER;
@@ -91,8 +91,8 @@ struct cirp_ct_log_analyzer
 
   LOG_LSA required_lsa;
 
-  INT64 source_applied_time;	/* Time in Milli seconds */
-  INT64 creation_time;		/* Time in Milli seconds */
+  INT64 source_applied_time;    /* Time in Milli seconds */
+  INT64 creation_time;          /* Time in Milli seconds */
 };
 
 typedef struct cirp_writer_info CIRP_WRITER_INFO;
@@ -157,7 +157,7 @@ struct _cirp_analyzer_info
   bool last_is_end_of_record;
   bool is_end_of_record;
   int last_node_state;
-  int last_ha_file_status;	/* FIXME-notout: check initial value */
+  int last_ha_file_status;      /* FIXME-notout: check initial value */
   bool is_role_changed;
   RQueue *q_applied_time;
 
@@ -251,8 +251,7 @@ extern bool rp_dead_agent_exists (void);
 extern int rp_start_all_applier (void);
 extern int rp_end_all_applier (void);
 extern bool rp_check_appliers_status (CIRP_AGENT_STATUS status);
-extern void _rp_log_debug (const char *file_name, const int line_no,
-			   const char *fmt, ...);
+extern void _rp_log_debug (const char *file_name, const int line_no, const char *fmt, ...);
 
 #define REPL_MEM_CHECK_DEBUG
 #if defined(REPL_MEM_CHECK_DEBUG) || !defined (NDEBUG)

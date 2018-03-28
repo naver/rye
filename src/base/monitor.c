@@ -41,20 +41,13 @@ MONITOR_INFO *mntCollector = NULL;
 
 static MONITOR_STATS_META *monitor_create_server_stats_meta (void);
 static MONITOR_STATS_META *monitor_create_repl_stats_meta (void);
-static MONITOR_STATS_META *monitor_create_stats_meta (MONITOR_TYPE
-						      monitor_type);
+static MONITOR_STATS_META *monitor_create_stats_meta (MONITOR_TYPE monitor_type);
 static MONITOR_INFO *monitor_create_viewer (const char *name, int shm_key);
 static void monitor_dump_stats_normal (char *buffer, int buf_size,
-				       MONITOR_INFO * monitor,
-				       MONITOR_STATS * stats,
-				       const char *substr);
-static void monitor_dump_stats_csv_header (char *buffer, int buf_size,
-					   MONITOR_INFO * monitor,
-					   const char *substr);
+                                       MONITOR_INFO * monitor, MONITOR_STATS * stats, const char *substr);
+static void monitor_dump_stats_csv_header (char *buffer, int buf_size, MONITOR_INFO * monitor, const char *substr);
 static void monitor_dump_stats_csv (char *buffer, int buf_size,
-				    MONITOR_INFO * monitor,
-				    MONITOR_STATS * stats,
-				    const char *substr);
+                                    MONITOR_INFO * monitor, MONITOR_STATS * stats, const char *substr);
 /*
  * monitor_make_name
  *   return:
@@ -95,8 +88,7 @@ monitor_get_num_stats (MONITOR_TYPE monitor_type)
  *   monitor_type(in):
  */
 static RYE_MONITOR_SHM *
-monitor_create_shm (const char *name, int num_monitors,
-		    MONITOR_TYPE monitor_type)
+monitor_create_shm (const char *name, int num_monitors, MONITOR_TYPE monitor_type)
 {
   RYE_MONITOR_SHM *shm_p = NULL;
   int shm_key = -1;
@@ -108,16 +100,14 @@ monitor_create_shm (const char *name, int num_monitors,
       goto exit_on_error;
     }
 
-  if (rye_shm_check_shm (shm_key, RYE_SHM_TYPE_MONITOR,
-			 false) == RYE_SHM_TYPE_MONITOR)
+  if (rye_shm_check_shm (shm_key, RYE_SHM_TYPE_MONITOR, false) == RYE_SHM_TYPE_MONITOR)
     {
       rye_shm_destroy (shm_key);
     }
 
   num_stats = monitor_get_num_stats (monitor_type);
   /* global stats + monitor stats */
-  shm_size = (sizeof (RYE_MONITOR_SHM)
-	      + sizeof (MONITOR_STATS) * num_stats * (num_monitors + 1));
+  shm_size = (sizeof (RYE_MONITOR_SHM) + sizeof (MONITOR_STATS) * num_stats * (num_monitors + 1));
   shm_p = rye_shm_create (shm_key, shm_size, RYE_SHM_TYPE_MONITOR);
   if (shm_p == NULL)
     {
@@ -165,8 +155,7 @@ monitor_create_stats_meta (MONITOR_TYPE monitor_type)
       break;
     default:
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-	      1, "Invalid MONITOR_TYPE");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "Invalid MONITOR_TYPE");
       break;
     }
 
@@ -176,7 +165,7 @@ monitor_create_stats_meta (MONITOR_TYPE monitor_type)
 
     for (i = 0; i < meta_p->num_stats; i++)
       {
-	assert (meta_p->info[i].name[0] != '\0');
+        assert (meta_p->info[i].name[0] != '\0');
       }
   }
 #endif
@@ -195,9 +184,7 @@ monitor_create_stats_meta (MONITOR_TYPE monitor_type)
  *   value_type(in):
  */
 static void
-init_monitor_stats_info (MONITOR_STATS_INFO * info, int item,
-			 const char *name,
-			 MONITOR_STATS_VALUE_TYPE value_type)
+init_monitor_stats_info (MONITOR_STATS_INFO * info, int item, const char *name, MONITOR_STATS_VALUE_TYPE value_type)
 {
   assert (info != NULL);
 
@@ -220,13 +207,11 @@ monitor_create_server_stats_meta (void)
   int num_stats;
 
   num_stats = monitor_get_num_stats (MONITOR_TYPE_SERVER);
-  size = (sizeof (MONITOR_STATS_META)
-	  + num_stats * sizeof (MONITOR_STATS_INFO));
+  size = (sizeof (MONITOR_STATS_META) + num_stats * sizeof (MONITOR_STATS_INFO));
   meta_p = (MONITOR_STATS_META *) malloc (size);
   if (meta_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       return NULL;
     }
   meta_p->monitor_type = MONITOR_TYPE_SERVER;
@@ -235,685 +220,497 @@ monitor_create_server_stats_meta (void)
 
   /* sql trace */
   init_monitor_stats_info (info_p, MNT_STATS_SQL_TRACE_LOCK_WAITS,
-			   "sql_trace_lock_waits",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "sql_trace_lock_waits", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_SQL_TRACE_LATCH_WAITS,
-			   "sql_trace_latch_waits",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "sql_trace_latch_waits", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   /* csec counter info */
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ER_LOG_FILE,
-			   "csect_er_log_file", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ER_LOG_FILE, "csect_er_log_file", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ER_MSG_CACHE,
-			   "csect_er_msg_cache", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ER_MSG_CACHE, "csect_er_msg_cache", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WFG,
-			   "csect_wfg", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WFG, "csect_wfg", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_LOG,
-			   "csect_log", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_LOG, "csect_log", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_LOG_BUFFER,
-			   "csect_log_buffer", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_LOG_BUFFER, "csect_log_buffer", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_LOG_ARCHIVE,
-			   "csect_log_archive", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_LOG_ARCHIVE, "csect_log_archive", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE,
-			   "csect_sr_locator_classname_table",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE,
+                           "csect_sr_locator_classname_table", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_FILE_NEWFILE,
-			   "csect_file_newfile", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_FILE_NEWFILE, "csect_file_newfile", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_QPROC_QUERY_TABLE,
-			   "csect_qproc_query_table",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "csect_qproc_query_table", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_BOOT_SR_DBPARM,
-			   "csect_boot_sr_dbparm",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_BOOT_SR_DBPARM, "csect_boot_sr_dbparm", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_DISK_REFRESH_GOODVOL,
-			   "csect_disk_refresh_goodvol",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "csect_disk_refresh_goodvol", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_CNV_FMT_LEXER,
-			   "csect_cnf_fmt_lexer",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_CNV_FMT_LEXER, "csect_cnf_fmt_lexer", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_CT_OID_TABLE,
-			   "csect_ct_oid_table", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_CT_OID_TABLE, "csect_ct_oid_table", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_HA_SERVER_STATE,
-			   "csect_ha_server_state",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "csect_ha_server_state", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_SESSION_STATE,
-			   "csect_session_state",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_SESSION_STATE, "csect_session_state", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ACL,
-			   "csect_acl", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ACL, "csect_acl", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_EVENT_LOG_FILE,
-			   "csect_event_log_file",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_EVENT_LOG_FILE, "csect_event_log_file", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ACCESS_STATUS,
-			   "csect_access_status",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_ACCESS_STATUS, "csect_access_status", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_TEMPFILE_CACHE,
-			   "csect_tempfile_cache",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_TEMPFILE_CACHE, "csect_tempfile_cache", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_CSS_ACTIVE_CONN,
-			   "csect_css_active_conn",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "csect_css_active_conn", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_CSS_FREE_CONN,
-			   "csect_css_free_conn",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_CSS_FREE_CONN, "csect_css_free_conn", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_UNKNOWN,
-			   "csect_unknown", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_UNKNOWN, "csect_unknown", MONITOR_STATS_VALUE_COUNTER);
 
   /* csec wait time info */
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_ER_LOG_FILE,
-			   "csect_waits_er_log_file",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_er_log_file", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_ER_MSG_CACHE,
-			   "csect_waits_er_msg_cache",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_er_msg_cache", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_WFG,
-			   "csect_waits_wfg",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_WFG, "csect_waits_wfg", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_LOG,
-			   "csect_waits_log",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_LOG, "csect_waits_log", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_LOG_BUFFER,
-			   "csect_waits_log_buffer",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_log_buffer", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_LOG_ARCHIVE,
-			   "csect_waits_log_archive",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_log_archive", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE,
-			   "csect_waits_sr_locator_classname_table",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE,
+                           "csect_waits_sr_locator_classname_table", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_FILE_NEWFILE,
-			   "csect_waits_file_newfile",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_file_newfile", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE,
-			   "csect_waits_qproc_query_table",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE,
+                           "csect_waits_qproc_query_table", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM,
-			   "csect_waits_boot_sr_dbparm",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_boot_sr_dbparm", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL,
-			   "csect_waits_disk_refresh_goodvol",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL,
+                           "csect_waits_disk_refresh_goodvol", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER,
-			   "csect_waits_cnf_fmt_lexer",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_cnf_fmt_lexer", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_CT_OID_TABLE,
-			   "csect_waits_ct_oid_table",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_ct_oid_table", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_HA_SERVER_STATE,
-			   "csect_waits_ha_server_state",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_ha_server_state", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_SESSION_STATE,
-			   "csect_waits_session_state",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_session_state", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_ACL,
-			   "csect_waits_acl",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_ACL, "csect_waits_acl", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE,
-			   "csect_waits_event_log_file",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_event_log_file", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_ACCESS_STATUS,
-			   "csect_waits_access_status",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_access_status", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE,
-			   "csect_waits_tempfile_cache",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_tempfile_cache", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN,
-			   "csect_waits_css_active_conn",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_css_active_conn", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_CSS_FREE_CONN,
-			   "csect_waits_css_free_conn",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_css_free_conn", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CSECT_WAITS_UNKNOWN,
-			   "csect_waits_unknown",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "csect_waits_unknown", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   /* Statistics at disk level */
   init_monitor_stats_info (info_p, MNT_STATS_DISK_SECTOR_ALLOCS,
-			   "disk_sector_allocs",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "disk_sector_allocs", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DISK_SECTOR_DEALLOCS,
-			   "disk_sector_deallocs",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "disk_sector_deallocs", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DISK_PAGE_ALLOCS,
-			   "disk_page_allocs",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "disk_page_allocs", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DISK_PAGE_DEALLOCS,
-			   "disk_page_deallocs",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "disk_page_deallocs", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DISK_TEMP_EXPAND,
-			   "disk_temp_expand",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "disk_temp_expand", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   /* Statistics at file io level */
-  init_monitor_stats_info (info_p, MNT_STATS_FILE_CREATES,
-			   "file_creates", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_FILE_CREATES, "file_creates", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_FILE_REMOVES,
-			   "file_removes", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_FILE_REMOVES, "file_removes", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_FILE_IOREADS,
-			   "file_ioreads",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_FILE_IOREADS, "file_ioreads", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_FILE_IOWRITES,
-			   "file_iowrites",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_FILE_IOWRITES, "file_iowrites", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_FILE_IOSYNCHES,
-			   "file_iosynches", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_FILE_IOSYNCHES, "file_iosynches", MONITOR_STATS_VALUE_COUNTER);
 
   /* Statistics at page level */
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES,
-			   "datapage_fetch",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,
-			   "datapage_fetch_file_header",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER,
+                           "datapage_fetch_file_header", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB,
-			   "datapage_fetch_file_tab",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_file_tab", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,
-			   "datapage_fetch_heap_header",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER,
+                           "datapage_fetch_heap_header", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_HEAP,
-			   "datapage_fetch_heap",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_heap", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER,
-			   "datapage_fetch_volheader",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_volheader", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP,
-			   "datapage_fetch_volbitmap",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_volbitmap", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_XASL,
-			   "datapage_fetch_xasl",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_xasl", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_QRESULT,
-			   "datapage_fetch_qresult",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_qresult", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_EHASH,
-			   "datapage_fetch_ehash",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_ehash", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW,
-			   "datapage_fetch_overflow",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_overflow", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_AREA,
-			   "datapage_fetch_area",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_area", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_CATALOG,
-			   "datapage_fetch_catalog",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_catalog", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT,
-			   "datapage_fetch_btree_root",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_btree_root", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_BTREE,
-			   "datapage_fetch_btree",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_btree", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN,
-			   "datapage_fetch_unknown",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_unknown", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER,
-			   "datapage_fetch_waits_file_header",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER,
+                           "datapage_fetch_waits_file_header", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB,
-			   "datapage_fetch_waits_file_tab",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB,
+                           "datapage_fetch_waits_file_tab", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER,
-			   "datapage_fetch_waits_heap_header",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER,
+                           "datapage_fetch_waits_heap_header", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP,
-			   "datapage_fetch_waits_heap",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_waits_heap", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER,
-			   "datapage_fetch_waits_volheader",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER,
+                           "datapage_fetch_waits_volheader", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP,
-			   "datapage_fetch_waits_volbitmap",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP,
+                           "datapage_fetch_waits_volbitmap", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_WAITS_XASL,
-			   "datapage_fetch_waits_xasl",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_waits_xasl", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT,
-			   "datapage_fetch_waits_qresult",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT,
+                           "datapage_fetch_waits_qresult", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH,
-			   "datapage_fetch_waits_ehash",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH,
+                           "datapage_fetch_waits_ehash", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW,
-			   "datapage_fetch_waits_overflow",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW,
+                           "datapage_fetch_waits_overflow", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_FETCHES_WAITS_AREA,
-			   "datapage_fetch_waits_area",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_fetch_waits_area", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG,
-			   "datapage_fetch_waits_catalog",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG,
+                           "datapage_fetch_waits_catalog", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT,
-			   "datapage_fetch_waits_btree_root",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT,
+                           "datapage_fetch_waits_btree_root", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE,
-			   "datapage_fetch_waits_btree",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE,
+                           "datapage_fetch_waits_btree", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN,
-			   "datapage_fetch_waits_unknown",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN,
+                           "datapage_fetch_waits_unknown", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES,
-			   "datapage_fetch_track_file_allocset_alloc_pages",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOCSET_ALLOC_PAGES,
+                           "datapage_fetch_track_file_allocset_alloc_pages", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES,
-			   "datapage_fetch_track_file_alloc_pages",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_ALLOC_PAGES,
+                           "datapage_fetch_track_file_alloc_pages", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE,
-			   "datapage_fetch_track_file_dealloc_page",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_FILE_DEALLOC_PAGE,
+                           "datapage_fetch_track_file_dealloc_page", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE,
-			   "datapage_fetch_track_heap_find_best_page",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_FIND_BEST_PAGE,
+                           "datapage_fetch_track_heap_find_best_page", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC,
-			   "datapage_fetch_track_heap_bestspace_sync",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_BESTSPACE_SYNC,
+                           "datapage_fetch_track_heap_bestspace_sync", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT,
-			   "datapage_fetch_track_heap_ovf_insert",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_INSERT,
+                           "datapage_fetch_track_heap_ovf_insert", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE,
-			   "datapage_fetch_track_heap_ovf_update",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_UPDATE,
+                           "datapage_fetch_track_heap_ovf_update", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE,
-			   "datapage_fetch_track_heap_ovf_delete",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_HEAP_OVF_DELETE,
+                           "datapage_fetch_track_heap_ovf_delete", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL,
-			   "datapage_fetch_track_btree_merge_level",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_MERGE_LEVEL,
+                           "datapage_fetch_track_btree_merge_level", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA,
-			   "datapage_fetch_track_btree_load_data",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA,
+                           "datapage_fetch_track_btree_load_data", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT,
-			   "datapage_fetch_track_pgbuf_flush_checkpoint",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_PGBUF_FLUSH_CHECKPOINT,
+                           "datapage_fetch_track_pgbuf_flush_checkpoint", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK,
-			   "datapage_fetch_track_log_rollback",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           MNT_STATS_DATA_PAGE_FETCHES_TRACK_LOG_ROLLBACK,
+                           "datapage_fetch_track_log_rollback", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_DIRTIES,
-			   "datapage_dirties", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_DIRTIES, "datapage_dirties", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_IOREADS,
-			   "datapage_ioreads",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_ioreads", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_IOWRITES,
-			   "datapage_iowrites",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "datapage_iowrites", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_VICTIMS,
-			   "datapage_victims", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_VICTIMS, "datapage_victims", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_DATA_PAGE_IOWRITES_FOR_REPLACEMENT,
-			   "datapage_iowrites_for_replacement",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           MNT_STATS_DATA_PAGE_IOWRITES_FOR_REPLACEMENT,
+                           "datapage_iowrites_for_replacement", MONITOR_STATS_VALUE_COUNTER);
 
   /* Statistics at log level */
   init_monitor_stats_info (info_p, MNT_STATS_LOG_PAGE_IOREADS,
-			   "logpage_ioreads",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "logpage_ioreads", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_LOG_PAGE_IOWRITES,
-			   "logpage_iowrites",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "logpage_iowrites", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_LOG_APPEND_RECORDS,
-			   "logpage_append_records",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_LOG_APPEND_RECORDS, "logpage_append_records", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_LOG_ARCHIVES,
-			   "logpage_archives", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_LOG_ARCHIVES, "logpage_archives", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_LOG_CHECKPOINTS,
-			   "event_checkpoints", MONITOR_STATS_VALUE_EVENT);
+  init_monitor_stats_info (info_p, MNT_STATS_LOG_CHECKPOINTS, "event_checkpoints", MONITOR_STATS_VALUE_EVENT);
 
-  init_monitor_stats_info (info_p, MNT_STATS_LOG_WALS,
-			   "logpage_wals", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_LOG_WALS, "logpage_wals", MONITOR_STATS_VALUE_COUNTER);
 
   /* Statistics at lock level */
-  init_monitor_stats_info (info_p, MNT_STATS_DDL_LOCKS_REQUESTS,
-			   "lock_ddl", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_DDL_LOCKS_REQUESTS, "lock_ddl", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_CLASS_LOCKS_REQUEST,
-			   "lock_table",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_CLASS_LOCKS_REQUEST, "lock_table", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_CATALOG_LOCKS_REQUEST,
-			   "lock_catalog",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "lock_catalog", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_GLOBAL_LOCKS_REQUEST,
-			   "lock_global",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "lock_global", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_SHARD_LOCKS_REQUEST,
-			   "lock_shard",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_SHARD_LOCKS_REQUEST, "lock_shard", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PAGE_LOCKS_ACQUIRED,
-			   "lock_page", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PAGE_LOCKS_ACQUIRED, "lock_page", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED,
-			   "lock_object", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, "lock_object", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_PAGE_LOCKS_CONVERTED,
-			   "lock_page_lock_converted",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "lock_page_lock_converted", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_OBJECT_LOCKS_CONVERTED,
-			   "lock_objects_lock_converted",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "lock_objects_lock_converted", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_PAGE_LOCKS_RE_REQUESTED,
-			   "lock_page_locks_re-requested",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "lock_page_locks_re-requested", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_OBJECT_LOCKS_RE_REQUESTED,
-			   "lock_object_locks_re-requested",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "lock_object_locks_re-requested", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PAGE_LOCKS_WAITS,
-			   "lock_page_locks_waits",
-			   MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PAGE_LOCKS_WAITS, "lock_page_locks_waits", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_OBJECT_LOCKS_WAITS,
-			   "lock_object_locks_waits",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "lock_object_locks_waits", MONITOR_STATS_VALUE_COUNTER);
 
   /* Transaction Management level */
-  init_monitor_stats_info (info_p, MNT_STATS_TRAN_COMMITS,
-			   "tran_commit", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_TRAN_COMMITS, "tran_commit", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_TRAN_ROLLBACKS,
-			   "tran_rollback", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_TRAN_ROLLBACKS, "tran_rollback", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_TRAN_SAVEPOINTS,
-			   "tran_savepoint", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_TRAN_SAVEPOINTS, "tran_savepoint", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_TRAN_TOPOPS,
-			   "tran_topop", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_TRAN_TOPOPS, "tran_topop", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_TRAN_INTERRUPTS,
-			   "tran_interrupt", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_TRAN_INTERRUPTS, "tran_interrupt", MONITOR_STATS_VALUE_COUNTER);
 
   /* Statistics at btree level */
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_INSERTS,
-			   "btree_insert",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_INSERTS, "btree_insert", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_DELETES,
-			   "btree_delete",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_DELETES, "btree_delete", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_UPDATES,
-			   "btree_update", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_UPDATES, "btree_update", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_LOAD_DATA,
-			   "event_create_index", MONITOR_STATS_VALUE_EVENT);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_LOAD_DATA, "event_create_index", MONITOR_STATS_VALUE_EVENT);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_COVERED,
-			   "btree_covered", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_COVERED, "btree_covered", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_NONCOVERED,
-			   "btree_noncovered", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_NONCOVERED, "btree_noncovered", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_RESUMES,
-			   "btree_resume", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_RESUMES, "btree_resume", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_BTREE_MULTIRANGE_OPTIMIZATION,
-			   "btree_multirange_optimization",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           MNT_STATS_BTREE_MULTIRANGE_OPTIMIZATION,
+                           "btree_multirange_optimization", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_SPLITS,
-			   "btree_splits",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_SPLITS, "btree_splits", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
-  init_monitor_stats_info (info_p, MNT_STATS_BTREE_MERGES,
-			   "btree_merge",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+  init_monitor_stats_info (info_p, MNT_STATS_BTREE_MERGES, "btree_merge", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_BTREE_PAGE_ALLOCS,
-			   "btree_page_allocs",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "btree_page_allocs", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   init_monitor_stats_info (info_p, MNT_STATS_BTREE_PAGE_DEALLOCS,
-			   "btree_page_deallocs",
-			   MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
+                           "btree_page_deallocs", MONITOR_STATS_VALUE_COUNTER_WITH_TIME);
 
   /* Execution statistics for the query manager */
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_SELECTS,
-			   "query_select", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_SELECTS, "query_select", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_INSERTS,
-			   "query_insert", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_INSERTS, "query_insert", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_DELETES,
-			   "query_delete", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_DELETES, "query_delete", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_UPDATES,
-			   "query_update", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_UPDATES, "query_update", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_SSCANS,
-			   "query_sscan", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_SSCANS, "query_sscan", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_ISCANS,
-			   "query_iscan", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_ISCANS, "query_iscan", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_LSCANS,
-			   "query_lscans", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_LSCANS, "query_lscans", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_QUERY_NLJOINS,
-			   "query_nljoins", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_QUERY_NLJOINS, "query_nljoins", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_QUERY_HOLDABLE_CURSORS,
-			   "query_holdable_cursors",
-			   MONITOR_STATS_VALUE_GAUGE);
+                           "query_holdable_cursors", MONITOR_STATS_VALUE_GAUGE);
 
   /* execution statistics for external sort */
-  init_monitor_stats_info (info_p, MNT_STATS_SORT_IO_PAGES,
-			   "sort_iopage", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_SORT_IO_PAGES, "sort_iopage", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_SORT_DATA_PAGES,
-			   "sort_data_page", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_SORT_DATA_PAGES, "sort_data_page", MONITOR_STATS_VALUE_COUNTER);
 
   /* Network Communication level */
-  init_monitor_stats_info (info_p, MNT_STATS_NETWORK_REQUESTS,
-			   "network_request", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_NETWORK_REQUESTS, "network_request", MONITOR_STATS_VALUE_COUNTER);
 
   /* Statistics at Flush Control */
   init_monitor_stats_info (info_p, MNT_STATS_ADAPTIVE_FLUSH_PAGES,
-			   "flush_control_data_page",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "flush_control_data_page", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_ADAPTIVE_FLUSH_LOG_PAGES,
-			   "flush_control_log_page",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "flush_control_log_page", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_ADAPTIVE_FLUSH_MAX_PAGES,
-			   "flush_control_max_page",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "flush_control_max_page", MONITOR_STATS_VALUE_COUNTER);
 
   /* Prior LSA */
-  init_monitor_stats_info (info_p, MNT_STATS_PRIOR_LSA_LIST_SIZE,
-			   "prior_lsa_size", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_STATS_PRIOR_LSA_LIST_SIZE, "prior_lsa_size", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PRIOR_LSA_LIST_MAXED,
-			   "prior_lsa_maxed", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PRIOR_LSA_LIST_MAXED, "prior_lsa_maxed", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PRIOR_LSA_LIST_REMOVED,
-			   "prior_lsa_removed", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PRIOR_LSA_LIST_REMOVED, "prior_lsa_removed", MONITOR_STATS_VALUE_COUNTER);
 
   /* Heap best space info */
   init_monitor_stats_info (info_p, MNT_STATS_HEAP_STATS_BESTSPACE_ENTRIES,
-			   "heap_bestspace_entry", MONITOR_STATS_VALUE_GAUGE);
+                           "heap_bestspace_entry", MONITOR_STATS_VALUE_GAUGE);
 
   init_monitor_stats_info (info_p, MNT_STATS_HEAP_STATS_BESTSPACE_MAXED,
-			   "heap_bestspace_maxed",
-			   MONITOR_STATS_VALUE_COUNTER);
+                           "heap_bestspace_maxed", MONITOR_STATS_VALUE_COUNTER);
 
   /* Plan cache */
-  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_ADD,
-			   "plan_cache_add", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_ADD, "plan_cache_add", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_LOOKUP,
-			   "plan_cache_lookup", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_LOOKUP, "plan_cache_lookup", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_HIT,
-			   "plan_cache_hit", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_HIT, "plan_cache_hit", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_MISS,
-			   "plan_cache_miss", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_MISS, "plan_cache_miss", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_FULL,
-			   "plan_cache_full", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_FULL, "plan_cache_full", MONITOR_STATS_VALUE_COUNTER);
 
-  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_DELETE,
-			   "plan_cache_delete", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_DELETE, "plan_cache_delete", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p, MNT_STATS_PLAN_CACHE_INVALID_XASL_ID,
-			   "plan_cache_invalid", MONITOR_STATS_VALUE_COUNTER);
+                           "plan_cache_invalid", MONITOR_STATS_VALUE_COUNTER);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_PLAN_CACHE_QUERY_STRING_HASH_ENTRIES,
-			   "plan_cache_query_string_entry",
-			   MONITOR_STATS_VALUE_GAUGE);
+                           MNT_STATS_PLAN_CACHE_QUERY_STRING_HASH_ENTRIES,
+                           "plan_cache_query_string_entry", MONITOR_STATS_VALUE_GAUGE);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_PLAN_CACHE_XASL_ID_HASH_ENTRIES,
-			   "plan_cache_xasl_id_entry",
-			   MONITOR_STATS_VALUE_GAUGE);
+                           MNT_STATS_PLAN_CACHE_XASL_ID_HASH_ENTRIES,
+                           "plan_cache_xasl_id_entry", MONITOR_STATS_VALUE_GAUGE);
 
   init_monitor_stats_info (info_p,
-			   MNT_STATS_PLAN_CACHE_CLASS_OID_HASH_ENTRIES,
-			   "plan_cache_table_entry",
-			   MONITOR_STATS_VALUE_GAUGE);
+                           MNT_STATS_PLAN_CACHE_CLASS_OID_HASH_ENTRIES,
+                           "plan_cache_table_entry", MONITOR_STATS_VALUE_GAUGE);
 
   init_monitor_stats_info (info_p, MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO,
-			   "buffer_hit_ratio", MONITOR_STATS_VALUE_COUNTER);
+                           "buffer_hit_ratio", MONITOR_STATS_VALUE_COUNTER);
 
   return meta_p;
 }
@@ -933,13 +730,11 @@ monitor_create_repl_stats_meta (void)
   int num_stats;
 
   num_stats = monitor_get_num_stats (MONITOR_TYPE_REPL);
-  size = (sizeof (MONITOR_STATS_META)
-	  + num_stats * sizeof (MONITOR_STATS_INFO));
+  size = (sizeof (MONITOR_STATS_META) + num_stats * sizeof (MONITOR_STATS_INFO));
   meta_p = (MONITOR_STATS_META *) malloc (size);
   if (meta_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       return NULL;
     }
   meta_p->monitor_type = MONITOR_TYPE_REPL;
@@ -947,55 +742,37 @@ monitor_create_repl_stats_meta (void)
 
   info_p = meta_p->info;
 
-  init_monitor_stats_info (info_p, MNT_RP_EOF_PAGEID,
-			   "ha_eof_pageid", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_EOF_PAGEID, "ha_eof_pageid", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_RECEIVED_GAP,
-			   "ha_received_gap", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_RECEIVED_GAP, "ha_received_gap", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_RECEIVED_PAGEID,
-			   "ha_received_pageid", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_RECEIVED_PAGEID, "ha_received_pageid", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_FLUSHED_GAP,
-			   "ha_flushed_gap", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_FLUSHED_GAP, "ha_flushed_gap", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_FLUSHED_PAGEID,
-			   "ha_flushed_pageid", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_FLUSHED_PAGEID, "ha_flushed_pageid", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_CURRENT_GAP,
-			   "ha_current_gap", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_CURRENT_GAP, "ha_current_gap", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_CURRENT_PAGEID,
-			   "ha_current_pageid", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_CURRENT_PAGEID, "ha_current_pageid", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_REQUIRED_GAP,
-			   "ha_required_gap", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_REQUIRED_GAP, "ha_required_gap", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_REQUIRED_PAGEID,
-			   "ha_required_pageid", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_REQUIRED_PAGEID, "ha_required_pageid", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_APPLIED_TIME,
-			   "ha_applied_time", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_APPLIED_TIME, "ha_applied_time", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_DELAY,
-			   "ha_delay_time", MONITOR_STATS_VALUE_GAUGE);
+  init_monitor_stats_info (info_p, MNT_RP_DELAY, "ha_delay_time", MONITOR_STATS_VALUE_GAUGE);
 
-  init_monitor_stats_info (info_p, MNT_RP_QUEUE_FULL,
-			   "ha_queue_full", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_QUEUE_FULL, "ha_queue_full", MONITOR_STATS_VALUE_COUNTER);
 
 
-  init_monitor_stats_info (info_p, MNT_RP_INSERT,
-			   "ha_insert", MONITOR_STATS_VALUE_COUNTER);
-  init_monitor_stats_info (info_p, MNT_RP_UPDATE,
-			   "ha_update", MONITOR_STATS_VALUE_COUNTER);
-  init_monitor_stats_info (info_p, MNT_RP_DELETE,
-			   "ha_delete", MONITOR_STATS_VALUE_COUNTER);
-  init_monitor_stats_info (info_p, MNT_RP_DDL,
-			   "ha_ddl", MONITOR_STATS_VALUE_COUNTER);
-  init_monitor_stats_info (info_p, MNT_RP_COMMIT,
-			   "ha_commit", MONITOR_STATS_VALUE_COUNTER);
-  init_monitor_stats_info (info_p, MNT_RP_FAIL,
-			   "ha_fail", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_INSERT, "ha_insert", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_UPDATE, "ha_update", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_DELETE, "ha_delete", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_DDL, "ha_ddl", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_COMMIT, "ha_commit", MONITOR_STATS_VALUE_COUNTER);
+  init_monitor_stats_info (info_p, MNT_RP_FAIL, "ha_fail", MONITOR_STATS_VALUE_COUNTER);
 
   return meta_p;
 }
@@ -1041,8 +818,7 @@ monitor_final_monitor_info (MONITOR_INFO * monitor)
  *   num_stats(in):
  */
 int
-monitor_create_collector (const char *name, int num_monitors,
-			  MONITOR_TYPE monitor_type)
+monitor_create_collector (const char *name, int num_monitors, MONITOR_TYPE monitor_type)
 {
   RYE_MONITOR_SHM *shm_p = NULL;
   MONITOR_STATS_META *stats_meta = NULL;
@@ -1059,8 +835,7 @@ monitor_create_collector (const char *name, int num_monitors,
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid monitor name length");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid monitor name length");
       goto exit_on_error;
     }
 
@@ -1068,8 +843,7 @@ monitor_create_collector (const char *name, int num_monitors,
   if (shm_p == NULL)
     {
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Cannot create shared memory");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Cannot create shared memory");
       goto exit_on_error;
     }
 
@@ -1077,8 +851,7 @@ monitor_create_collector (const char *name, int num_monitors,
   if (stats_meta == NULL)
     {
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Cannot create stats_meta");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Cannot create stats_meta");
       goto exit_on_error;
     }
 
@@ -1086,8 +859,7 @@ monitor_create_collector (const char *name, int num_monitors,
   if (mntCollector == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, sizeof (MONITOR_INFO));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (MONITOR_INFO));
       goto exit_on_error;
     }
 
@@ -1103,8 +875,7 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid error code");
     }
 
   if (stats_meta != NULL)
@@ -1157,8 +928,7 @@ monitor_stats_counter (int mnt_id, int item, INT64 value)
  *   exec_time(in):
  */
 void
-monitor_stats_counter_with_time (int mnt_id, int item, INT64 value,
-				 UINT64 start_time)
+monitor_stats_counter_with_time (int mnt_id, int item, INT64 value, UINT64 start_time)
 {
   MONITOR_STATS_INFO *info = NULL;
   MONITOR_STATS *stats = NULL;
@@ -1167,8 +937,7 @@ monitor_stats_counter_with_time (int mnt_id, int item, INT64 value,
   UNUSED_VAR UINT64 after_exec_time;
   UINT64 end_time, exec_time;
 
-  if (mntCollector == NULL || mntCollector->meta == NULL
-      || mntCollector->monitor_shm == NULL)
+  if (mntCollector == NULL || mntCollector->meta == NULL || mntCollector->monitor_shm == NULL)
     {
       return;
     }
@@ -1183,8 +952,7 @@ monitor_stats_counter_with_time (int mnt_id, int item, INT64 value,
   info = &mntCollector->meta->info[item];
 
   if (info->value_type != MONITOR_STATS_VALUE_COUNTER
-      && info->value_type != MONITOR_STATS_VALUE_COUNTER_WITH_TIME
-      && info->value_type != MONITOR_STATS_VALUE_EVENT)
+      && info->value_type != MONITOR_STATS_VALUE_COUNTER_WITH_TIME && info->value_type != MONITOR_STATS_VALUE_EVENT)
     {
       assert (false);
       return;
@@ -1227,8 +995,7 @@ monitor_stats_gauge (int mnt_id, int item, INT64 value)
   int item_index;
   UNUSED_VAR INT64 after_value;
 
-  if (mntCollector == NULL || mntCollector->meta == NULL
-      || mntCollector->monitor_shm == NULL)
+  if (mntCollector == NULL || mntCollector->meta == NULL || mntCollector->monitor_shm == NULL)
     {
       return;
     }
@@ -1273,8 +1040,7 @@ monitor_get_stats_with_time (UINT64 * acc_time, int mnt_id, int item)
   MONITOR_STATS *stats = NULL;
   int item_index;
 
-  if (mntCollector == NULL || mntCollector->meta == NULL
-      || mntCollector->monitor_shm == NULL)
+  if (mntCollector == NULL || mntCollector->meta == NULL || mntCollector->monitor_shm == NULL)
     {
       return 0;
     }
@@ -1328,8 +1094,7 @@ monitor_create_viewer_from_name (const char *name)
   if (strlen (name) >= SHM_NAME_SIZE)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-	      1, "Invalid monitor name length");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "Invalid monitor name length");
 
       return NULL;
     }
@@ -1369,8 +1134,7 @@ monitor_create_viewer (const char *name, int shm_key)
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       goto exit_on_error;
     }
 
@@ -1391,8 +1155,7 @@ monitor_create_viewer (const char *name, int shm_key)
   if (stats_meta == NULL)
     {
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "fail create_stats_info");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "fail create_stats_info");
       goto exit_on_error;
     }
 
@@ -1400,8 +1163,7 @@ monitor_create_viewer (const char *name, int shm_key)
   if (monitor == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, sizeof (MONITOR_INFO));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (MONITOR_INFO));
       goto exit_on_error;
     }
 
@@ -1448,8 +1210,7 @@ monitor_final_viewer (MONITOR_INFO * monitor_info)
 bool
 monitor_stats_is_cumulative (MONITOR_INFO * monitor, int item)
 {
-  if (monitor == NULL || monitor->meta == NULL || monitor->shm_key <= 0
-      || item < 0 || item >= monitor->meta->num_stats)
+  if (monitor == NULL || monitor->meta == NULL || monitor->shm_key <= 0 || item < 0 || item >= monitor->meta->num_stats)
     {
       assert (false);
       return false;
@@ -1468,8 +1229,7 @@ monitor_stats_is_cumulative (MONITOR_INFO * monitor, int item)
 bool
 monitor_stats_is_collecting_time (MONITOR_INFO * monitor, int item)
 {
-  if (monitor == NULL || monitor->meta == NULL || monitor->shm_key <= 0
-      || item < 0 || item >= monitor->meta->num_stats)
+  if (monitor == NULL || monitor->meta == NULL || monitor->shm_key <= 0 || item < 0 || item >= monitor->meta->num_stats)
     {
       assert (false);
       return false;
@@ -1503,9 +1263,9 @@ monitor_open_viewer_data (MONITOR_INFO * monitor)
     {
       shm_p = rye_shm_attach (monitor->shm_key, RYE_SHM_TYPE_MONITOR, true);
       if (shm_p == NULL)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
   if (monitor->meta->monitor_type != shm_p->monitor_type)
@@ -1568,9 +1328,9 @@ monitor_get_name (MONITOR_INFO * monitor)
   else
     {
       if (monitor_open_viewer_data (monitor) != NO_ERROR)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       shm_p = monitor->monitor_shm;
     }
 
@@ -1593,8 +1353,7 @@ monitor_get_name (MONITOR_INFO * monitor)
  *   int mnt_id(in):
  */
 int
-monitor_copy_stats (MONITOR_INFO * monitor,
-		    MONITOR_STATS * to_stats, int mnt_id)
+monitor_copy_stats (MONITOR_INFO * monitor, MONITOR_STATS * to_stats, int mnt_id)
 {
   RYE_MONITOR_SHM *shm_p = NULL;
   MONITOR_STATS_META *meta_p = NULL;
@@ -1615,15 +1374,14 @@ monitor_copy_stats (MONITOR_INFO * monitor,
     {
       error = monitor_open_viewer_data (monitor);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       shm_p = monitor->monitor_shm;
       meta_p = monitor->meta;
     }
 
-  if (shm_p == NULL || meta_p == NULL
-      || mnt_id <= 0 || mnt_id > shm_p->num_monitors)
+  if (shm_p == NULL || meta_p == NULL || mnt_id <= 0 || mnt_id > shm_p->num_monitors)
     {
       assert (false);
 
@@ -1631,8 +1389,7 @@ monitor_copy_stats (MONITOR_INFO * monitor,
     }
 
   /* copy thread stats, start point: monitor_shm, copy length: meta */
-  memcpy (to_stats, &shm_p->stats[mnt_id * shm_p->num_stats],
-	  sizeof (MONITOR_STATS) * meta_p->num_stats);
+  memcpy (to_stats, &shm_p->stats[mnt_id * shm_p->num_stats], sizeof (MONITOR_STATS) * meta_p->num_stats);
 
   return error;
 }
@@ -1666,9 +1423,9 @@ monitor_copy_global_stats (MONITOR_INFO * monitor, MONITOR_STATS * to_stats)
     {
       error = monitor_open_viewer_data (monitor);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       shm_p = monitor->monitor_shm;
       meta_p = monitor->meta;
     }
@@ -1680,8 +1437,7 @@ monitor_copy_global_stats (MONITOR_INFO * monitor, MONITOR_STATS * to_stats)
     }
 
   /* copy global stats */
-  memcpy (to_stats, &shm_p->stats[0],
-	  sizeof (MONITOR_STATS) * meta_p->num_stats);
+  memcpy (to_stats, &shm_p->stats[0], sizeof (MONITOR_STATS) * meta_p->num_stats);
 
   return error;
 }
@@ -1697,7 +1453,7 @@ monitor_copy_global_stats (MONITOR_INFO * monitor, MONITOR_STATS * to_stats)
  */
 int
 monitor_diff_stats (MONITOR_INFO * monitor, MONITOR_STATS * diff_stats,
-		    MONITOR_STATS * new_stats, MONITOR_STATS * old_stats)
+                    MONITOR_STATS * new_stats, MONITOR_STATS * old_stats)
 {
   MONITOR_STATS_META *meta_p = NULL;
   int i;
@@ -1723,32 +1479,31 @@ monitor_diff_stats (MONITOR_INFO * monitor, MONITOR_STATS * diff_stats,
     {
       /* calc diff values */
       if (IS_CUMMULATIVE_VALUE (meta_p->info[i].value_type))
-	{
-	  if (new_stats[i].value >= old_stats[i].value)
-	    {
-	      diff_stats[i].value = (new_stats[i].value - old_stats[i].value);
-	    }
-	  else
-	    {
-	      diff_stats[i].value = 0;
-	    }
-	}
+        {
+          if (new_stats[i].value >= old_stats[i].value)
+            {
+              diff_stats[i].value = (new_stats[i].value - old_stats[i].value);
+            }
+          else
+            {
+              diff_stats[i].value = 0;
+            }
+        }
       else
-	{
-	  diff_stats[i].value = new_stats[i].value;
-	}
+        {
+          diff_stats[i].value = new_stats[i].value;
+        }
 
       /* calc diff acc_time */
       assert (new_stats[i].acc_time >= old_stats[i].acc_time);
       if (new_stats[i].acc_time >= old_stats[i].acc_time)
-	{
-	  diff_stats[i].acc_time =
-	    (new_stats[i].acc_time - old_stats[i].acc_time);
-	}
+        {
+          diff_stats[i].acc_time = (new_stats[i].acc_time - old_stats[i].acc_time);
+        }
       else
-	{
-	  diff_stats[i].acc_time = 0;
-	}
+        {
+          diff_stats[i].acc_time = 0;
+        }
     }
 
   return NO_ERROR;
@@ -1767,9 +1522,8 @@ monitor_diff_stats (MONITOR_INFO * monitor, MONITOR_STATS * diff_stats,
  */
 void
 monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
-		    MONITOR_STATS * cur_stats, MONITOR_STATS * old_stats,
-		    int cumulative, MONITOR_DUMP_TYPE dump_type,
-		    const char *substr)
+                    MONITOR_STATS * cur_stats, MONITOR_STATS * old_stats,
+                    int cumulative, MONITOR_DUMP_TYPE dump_type, const char *substr)
 {
   MONITOR_STATS *diff_stats = NULL;
   char stat_buf[16 * ONE_K];
@@ -1789,36 +1543,31 @@ monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
 
   if (dump_type == MNT_DUMP_TYPE_CSV_HEADER)
     {
-      monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
-				    NULL, dump_type, substr);
+      monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf), NULL, dump_type, substr);
     }
   else
     {
 
       if (cumulative)
-	{
-	  monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
-					cur_stats, dump_type, substr);
-	}
+        {
+          monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf), cur_stats, dump_type, substr);
+        }
       else
-	{
-	  diff_stats =
-	    (MONITOR_STATS *) malloc (sizeof (MONITOR_STATS) * num_stats);
-	  if (diff_stats == NULL)
-	    {
-	      return;
-	    }
+        {
+          diff_stats = (MONITOR_STATS *) malloc (sizeof (MONITOR_STATS) * num_stats);
+          if (diff_stats == NULL)
+            {
+              return;
+            }
 
-	  if (monitor_diff_stats (monitor, diff_stats, cur_stats,
-				  old_stats) != NO_ERROR)
-	    {
-	      free_and_init (diff_stats);
-	      return;
-	    }
+          if (monitor_diff_stats (monitor, diff_stats, cur_stats, old_stats) != NO_ERROR)
+            {
+              free_and_init (diff_stats);
+              return;
+            }
 
-	  monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf),
-					diff_stats, dump_type, substr);
-	}
+          monitor_dump_stats_to_buffer (monitor, stat_buf, sizeof (stat_buf), diff_stats, dump_type, substr);
+        }
     }
 
   fprintf (stream, "%s", stat_buf);
@@ -1843,9 +1592,8 @@ monitor_dump_stats (FILE * stream, MONITOR_INFO * monitor,
  */
 void
 monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
-			      char *buffer, int buf_size,
-			      MONITOR_STATS * stats,
-			      MONITOR_DUMP_TYPE dump_type, const char *substr)
+                              char *buffer, int buf_size,
+                              MONITOR_STATS * stats, MONITOR_DUMP_TYPE dump_type, const char *substr)
 {
   if (buffer == NULL || buf_size <= 0)
     {
@@ -1887,8 +1635,7 @@ monitor_dump_stats_to_buffer (MONITOR_INFO * monitor,
  */
 static void
 monitor_dump_stats_normal (char *buffer, int buf_size,
-			   MONITOR_INFO * monitor, MONITOR_STATS * stats,
-			   const char *substr)
+                           MONITOR_INFO * monitor, MONITOR_STATS * stats, const char *substr)
 {
   MONITOR_STATS_META *meta_p;
   char time_array[256];
@@ -1919,25 +1666,24 @@ monitor_dump_stats_normal (char *buffer, int buf_size,
   for (i = 0; i < meta_p->num_stats; i++)
     {
       if (substr != NULL)
-	{
-	  str = strstr (meta_p->info[i].name, substr);
-	}
+        {
+          str = strstr (meta_p->info[i].name, substr);
+        }
       else
-	{
-	  str = meta_p->info[i].name;
-	}
+        {
+          str = meta_p->info[i].name;
+        }
 
       if (str != NULL)
-	{
-	  ret = snprintf (out, remained_size, "%-29s = %10lld\n",
-			  meta_p->info[i].name, (long long) stats[i].value);
-	  remained_size -= ret;
-	  out += ret;
-	  if (remained_size <= 0)
-	    {
-	      return;
-	    }
-	}
+        {
+          ret = snprintf (out, remained_size, "%-29s = %10lld\n", meta_p->info[i].name, (long long) stats[i].value);
+          remained_size -= ret;
+          out += ret;
+          if (remained_size <= 0)
+            {
+              return;
+            }
+        }
     }
 
   buffer[buf_size - 1] = '\0';
@@ -1954,8 +1700,7 @@ monitor_dump_stats_normal (char *buffer, int buf_size,
  *   substr(in):
  */
 static void
-monitor_dump_stats_csv_header (char *buffer, int buf_size,
-			       MONITOR_INFO * monitor, const char *substr)
+monitor_dump_stats_csv_header (char *buffer, int buf_size, MONITOR_INFO * monitor, const char *substr)
 {
   MONITOR_STATS_META *meta_p;
   char *out;
@@ -1984,24 +1729,24 @@ monitor_dump_stats_csv_header (char *buffer, int buf_size,
   for (i = 0; i < meta_p->num_stats; i++)
     {
       if (substr != NULL)
-	{
-	  str = strstr (meta_p->info[i].name, substr);
-	}
+        {
+          str = strstr (meta_p->info[i].name, substr);
+        }
       else
-	{
-	  str = meta_p->info[i].name;
-	}
+        {
+          str = meta_p->info[i].name;
+        }
 
       if (str != NULL)
-	{
-	  ret = snprintf (out, remained_size, ",%s", meta_p->info[i].name);
-	  remained_size -= ret;
-	  out += ret;
-	  if (remained_size <= 0)
-	    {
-	      return;
-	    }
-	}
+        {
+          ret = snprintf (out, remained_size, ",%s", meta_p->info[i].name);
+          remained_size -= ret;
+          out += ret;
+          if (remained_size <= 0)
+            {
+              return;
+            }
+        }
     }
 
   buffer[buf_size - 1] = '\0';
@@ -2018,9 +1763,7 @@ monitor_dump_stats_csv_header (char *buffer, int buf_size,
  *   substr(in):
  */
 static void
-monitor_dump_stats_csv (char *buffer, int buf_size,
-			MONITOR_INFO * monitor, MONITOR_STATS * stats,
-			const char *substr)
+monitor_dump_stats_csv (char *buffer, int buf_size, MONITOR_INFO * monitor, MONITOR_STATS * stats, const char *substr)
 {
   MONITOR_STATS_META *meta_p = NULL;
   char time_array[256];
@@ -2051,24 +1794,24 @@ monitor_dump_stats_csv (char *buffer, int buf_size,
   for (i = 0; i < meta_p->num_stats; i++)
     {
       if (substr != NULL)
-	{
-	  str = strstr (meta_p->info[i].name, substr);
-	}
+        {
+          str = strstr (meta_p->info[i].name, substr);
+        }
       else
-	{
-	  str = meta_p->info[i].name;
-	}
+        {
+          str = meta_p->info[i].name;
+        }
 
       if (str != NULL)
-	{
-	  ret = snprintf (out, remained_size, ",%ld", stats[i].value);
-	  remained_size -= ret;
-	  out += ret;
-	  if (remained_size <= 0)
-	    {
-	      return;
-	    }
-	}
+        {
+          ret = snprintf (out, remained_size, ",%ld", stats[i].value);
+          remained_size -= ret;
+          out += ret;
+          if (remained_size <= 0)
+            {
+              return;
+            }
+        }
     }
 
   buffer[buf_size - 1] = '\0';
