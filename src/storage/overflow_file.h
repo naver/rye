@@ -35,53 +35,35 @@
 #include "recovery.h"
 
 extern VPID *overflow_insert (THREAD_ENTRY * thread_p, const VFID * ovf_vfid,
-			      VPID * ovf_vpid, RECDES * recdes,
-			      int *ovf_first_page, const OID * class_oid);
+                              VPID * ovf_vpid, RECDES * recdes, int *ovf_first_page, const OID * class_oid);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern VPID *overflow_insert_without_undo_logging (THREAD_ENTRY * thread_p,
-						   const VFID * ovf_vfid,
-						   VPID * ovf_vpid,
-						   RECDES * recdes,
-						   int *ovf_first_page,
-						   const OID * class_oid);
+                                                   const VFID * ovf_vfid,
+                                                   VPID * ovf_vpid,
+                                                   RECDES * recdes, int *ovf_first_page, const OID * class_oid);
 #endif
 extern const VPID *overflow_update (THREAD_ENTRY * thread_p,
-				    const VFID * ovf_vfid,
-				    const VPID * ovf_vpid, RECDES * recdes);
-extern const VPID *overflow_delete (THREAD_ENTRY * thread_p,
-				    const VFID * ovf_vfid,
-				    const VPID * ovf_vpid);
+                                    const VFID * ovf_vfid, const VPID * ovf_vpid, RECDES * recdes);
+extern const VPID *overflow_delete (THREAD_ENTRY * thread_p, const VFID * ovf_vfid, const VPID * ovf_vpid);
 extern void overflow_flush (THREAD_ENTRY * thread_p, const VPID * ovf_vpid);
-extern int overflow_get_length (THREAD_ENTRY * thread_p,
-				const VPID * ovf_vpid);
-extern SCAN_CODE overflow_get (THREAD_ENTRY * thread_p, const VPID * ovf_vpid,
-			       RECDES * recdes);
+extern int overflow_get_length (THREAD_ENTRY * thread_p, const VPID * ovf_vpid);
+extern SCAN_CODE overflow_get (THREAD_ENTRY * thread_p, const VPID * ovf_vpid, RECDES * recdes);
 extern SCAN_CODE overflow_get_nbytes (THREAD_ENTRY * thread_p,
-				      const VPID * ovf_vpid, RECDES * recdes,
-				      int start_offset, int max_nbytes,
-				      int *remaining_length);
+                                      const VPID * ovf_vpid, RECDES * recdes,
+                                      int start_offset, int max_nbytes, int *remaining_length);
 extern int overflow_get_capacity (THREAD_ENTRY * thread_p,
-				  const VPID * ovf_vpid, int *ovf_length,
-				  int *ovf_num_pages, int *ovf_overhead,
-				  int *ovf_free_space);
+                                  const VPID * ovf_vpid, int *ovf_length,
+                                  int *ovf_num_pages, int *ovf_overhead, int *ovf_free_space);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern int overflow_estimate_npages_needed (THREAD_ENTRY * thread_p,
-					    int total_novf_sets,
-					    int avg_ovfdata_size);
+extern int overflow_estimate_npages_needed (THREAD_ENTRY * thread_p, int total_novf_sets, int avg_ovfdata_size);
 #endif
 #if defined (RYE_DEBUG)
-extern int overflow_dump (THREAD_ENTRY * thread_p, FILE * fp,
-			  VPID * ovf_vpid);
+extern int overflow_dump (THREAD_ENTRY * thread_p, FILE * fp, VPID * ovf_vpid);
 #endif
-extern int overflow_rv_newpage_logical_undo (THREAD_ENTRY * thread_p,
-					     LOG_RCV * rcv);
-extern void overflow_rv_newpage_logical_dump_undo (FILE * fp,
-						   int length_ignore,
-						   void *data);
-extern int overflow_rv_newpage_insert_redo (THREAD_ENTRY * thread_p,
-					    LOG_RCV * rcv);
-extern int overflow_rv_newpage_link_undo (THREAD_ENTRY * thread_p,
-					  LOG_RCV * rcv);
+extern int overflow_rv_newpage_logical_undo (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
+extern void overflow_rv_newpage_logical_dump_undo (FILE * fp, int length_ignore, void *data);
+extern int overflow_rv_newpage_insert_redo (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
+extern int overflow_rv_newpage_link_undo (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern int overflow_rv_link (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
 extern void overflow_rv_link_dump (FILE * fp, int length_ignore, void *data);
 extern void overflow_rv_page_dump (FILE * fp, int length, void *data);

@@ -33,8 +33,7 @@
 
 extern unsigned int stats_get_time_stamp (void);
 #if defined(RYE_DEBUG)
-extern void stats_dump_class_statistics (CLASS_STATS * class_stats,
-					 FILE * fpp);
+extern void stats_dump_class_statistics (CLASS_STATS * class_stats, FILE * fpp);
 #endif /* RYE_DEBUG */
 
 #endif /* _STATISTICS_SR_H_ */

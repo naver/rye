@@ -37,13 +37,8 @@
 #include "file_io.h"
 
 extern int bk_get_backup_volume (THREAD_ENTRY * thread_p,
-				 const char *db_fullname,
-				 const char *user_backuppath,
-				 char *from_volbackup);
-extern int bk_list_restore (THREAD_ENTRY * thread_p,
-			    const char *db_full_name_p,
-			    char *backup_source_p);
+                                 const char *db_fullname, const char *user_backuppath, char *from_volbackup);
+extern int bk_list_restore (THREAD_ENTRY * thread_p, const char *db_full_name_p, char *backup_source_p);
 extern int bk_restore (THREAD_ENTRY * thread_p, const char *db_fullname,
-		       const char *logpath, const char *prefix_logname,
-		       BO_RESTART_ARG * r_args);
+                       const char *logpath, const char *prefix_logname, BO_RESTART_ARG * r_args);
 #endif /* RESTORE_H_ */
