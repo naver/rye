@@ -63,8 +63,7 @@ static META_ATTRIBUTE domain_atts[] = {
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
 
-META_CLASS tf_Metaclass_domain =
-  { META_DOMAIN_NAME, {META_PAGE_DOMAIN, 0, META_VOLUME, GLOBAL_GROUPID}, 0,
+META_CLASS tf_Metaclass_domain = { META_DOMAIN_NAME, {META_PAGE_DOMAIN, 0, META_VOLUME, GLOBAL_GROUPID}, 0,
 0,
 0,
 &domain_atts[0]
@@ -88,9 +87,9 @@ static META_ATTRIBUTE att_atts[] = {
   {"properties", DB_TYPE_SEQUENCE, 0, NULL, 0, 0, NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
-META_CLASS tf_Metaclass_attribute =
-  { META_ATTRIBUTE_NAME, {META_PAGE_ATTRIBUTE, 0, META_VOLUME,
-			  GLOBAL_GROUPID},
+
+META_CLASS tf_Metaclass_attribute = { META_ATTRIBUTE_NAME, {META_PAGE_ATTRIBUTE, 0, META_VOLUME,
+                                                            GLOBAL_GROUPID},
 0, 0, 0,
 &att_atts[0]
 };
@@ -102,9 +101,9 @@ static META_ATTRIBUTE repatt_atts[] = {
   {"domain", DB_TYPE_SEQUENCE, 1, META_DOMAIN_NAME, 0, 0, NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
-META_CLASS tf_Metaclass_repattribute =
-  { META_REPATTRIBUTE_NAME, {META_PAGE_REPATTRIBUTE, 0, META_VOLUME,
-			     GLOBAL_GROUPID}, 0, 0, 0,
+
+META_CLASS tf_Metaclass_repattribute = { META_REPATTRIBUTE_NAME, {META_PAGE_REPATTRIBUTE, 0, META_VOLUME,
+                                                                  GLOBAL_GROUPID}, 0, 0, 0,
 &repatt_atts[0]
 };
 
@@ -118,9 +117,9 @@ static META_ATTRIBUTE rep_atts[] = {
   {"properties", DB_TYPE_SEQUENCE, 0, NULL, 0, 0, NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
-META_CLASS tf_Metaclass_representation =
-  { META_REPRESENTATION_NAME, {META_PAGE_REPRESENTATION, 0, META_VOLUME,
-			       GLOBAL_GROUPID}, 0,
+
+META_CLASS tf_Metaclass_representation = { META_REPRESENTATION_NAME, {META_PAGE_REPRESENTATION, 0, META_VOLUME,
+                                                                      GLOBAL_GROUPID}, 0,
 0, 0, &rep_atts[0]
 };
 
@@ -151,8 +150,7 @@ static META_ATTRIBUTE class_atts[] = {
   {"properties", DB_TYPE_SEQUENCE, 0, META_CONSTRAINT_NAME, 1, 0, NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
-META_CLASS tf_Metaclass_class =
-  { META_CLASS_NAME, {META_PAGE_CLASS, 0, META_VOLUME, GLOBAL_GROUPID}, 0, 0,
+META_CLASS tf_Metaclass_class = { META_CLASS_NAME, {META_PAGE_CLASS, 0, META_VOLUME, GLOBAL_GROUPID}, 0, 0,
 0,
 &class_atts[0]
 };
@@ -162,9 +160,9 @@ static META_ATTRIBUTE query_spec_atts[] = {
   {"specification", DB_TYPE_VARCHAR, 1, NULL, 0, 0, NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
-META_CLASS tf_Metaclass_query_spec =
-  { META_QUERY_SPEC_NAME, {META_PAGE_QUERY_SPEC, 0, META_VOLUME,
-			   GLOBAL_GROUPID}, 0, 0, 0,
+
+META_CLASS tf_Metaclass_query_spec = { META_QUERY_SPEC_NAME, {META_PAGE_QUERY_SPEC, 0, META_VOLUME,
+                                                              GLOBAL_GROUPID}, 0, 0, 0,
 &query_spec_atts[0]
 };
 
@@ -175,8 +173,8 @@ static META_ATTRIBUTE constraint_attribute_atts[] = {
   {"reserved", DB_TYPE_VARCHAR, 0, NULL, 0, 0, NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
-META_CLASS tf_Metaclass_constraint_attribute =
-  { META_CONSTRAINT_ATTRIBUTE_NAME,
+
+META_CLASS tf_Metaclass_constraint_attribute = { META_CONSTRAINT_ATTRIBUTE_NAME,
   {META_PAGE_CONSTRAINT_ATTRIBUTE, 0, META_VOLUME, GLOBAL_GROUPID}, 0, 0, 0,
   &constraint_attribute_atts[0]
 };
@@ -191,9 +189,10 @@ static META_ATTRIBUTE constraint_atts[] = {
    NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
+
 META_CLASS tf_Metaclass_constraint = {
   META_CONSTRAINT_NAME, {META_PAGE_CONSTRAINT, 0, META_VOLUME,
-			 GLOBAL_GROUPID},
+                         GLOBAL_GROUPID},
   0, 0, 0, &constraint_atts[0]
 };
 
@@ -205,8 +204,7 @@ static META_ATTRIBUTE root_atts[] = {
   {"name", DB_TYPE_VARCHAR, 0, NULL, 0, 0, NULL},
   {NULL, (DB_TYPE) 0, 0, NULL, 0, 0, NULL}
 };
-META_CLASS tf_Metaclass_root =
-  { "rootclass", {META_PAGE_ROOT, 0, META_VOLUME, GLOBAL_GROUPID}, 0, 0, 0,
+META_CLASS tf_Metaclass_root = { "rootclass", {META_PAGE_ROOT, 0, META_VOLUME, GLOBAL_GROUPID}, 0, 0, 0,
 &root_atts[0]
 };
 
@@ -237,7 +235,7 @@ static CT_ATTR ct_class_atts[] = {
   {"table_type", NULL_ATTRID, DB_TYPE_INTEGER},
   {"owner", NULL_ATTRID, DB_TYPE_OBJECT},
   {"collation_id", NULL_ATTRID, DB_TYPE_INTEGER},
-  {"table_name", NULL_ATTRID, DB_TYPE_VARCHAR},	/* refer catcls_find_btid_of_class_name () */
+  {"table_name", NULL_ATTRID, DB_TYPE_VARCHAR}, /* refer catcls_find_btid_of_class_name () */
   {"owner_name", NULL_ATTRID, DB_TYPE_VARCHAR},
   {"cols", NULL_ATTRID, DB_TYPE_SEQUENCE},
   {"query_specs", NULL_ATTRID, DB_TYPE_SEQUENCE},
@@ -379,12 +377,13 @@ CATCLS_COLUMN columns_IndexStats[] = {
   ,
   {"leaf_pct_free", "double"}
   ,
-  {"num_table_vpids", "int"}	/* Number of total pages for file table */
+  {"num_table_vpids", "int"}    /* Number of total pages for file table */
   ,
-  {"num_user_pages_mrkdelete", "int"}	/* Num marked deleted pages */
+  {"num_user_pages_mrkdelete", "int"}   /* Num marked deleted pages */
   ,
-  {"num_allocsets", "int"}	/* Number of volume arrays */
+  {"num_allocsets", "int"}      /* Number of volume arrays */
 };
+
 CATCLS_CONSTRAINT cons_IndexStats[] = {
   {
    DB_CONSTRAINT_PRIMARY_KEY, NULL, {"table_name", "index_name", NULL}
@@ -440,6 +439,7 @@ CATCLS_COLUMN columns_LogAnalyzer[] = {
   ,
   {"creation_time", "bigint"}
 };
+
 CATCLS_CONSTRAINT cons_LogAnalyzer[] = {
   {
    DB_CONSTRAINT_PRIMARY_KEY, NULL, {"host_ip", NULL}
@@ -465,6 +465,7 @@ CATCLS_COLUMN columns_LogApplier[] = {
   ,
   {"committed_lsa", "bigint"}
 };
+
 CATCLS_CONSTRAINT cons_LogApplier[] = {
   {
    DB_CONSTRAINT_PRIMARY_KEY, NULL, {"host_ip", "id", NULL}
@@ -480,6 +481,7 @@ CATCLS_COLUMN columns_ShardGidSkey[] = {
   ,
   {"skey", "string"}
 };
+
 CATCLS_CONSTRAINT cons_ShardGidSkey[] = {
   {
    DB_CONSTRAINT_PRIMARY_KEY, NULL, {"gid", "skey", NULL}
@@ -491,6 +493,7 @@ CATCLS_COLUMN columns_ShardGidRemoved[] = {
   ,
   {"rem_dt", "datetime"}
 };
+
 CATCLS_CONSTRAINT cons_ShardGidRemoved[] = {
   {
    DB_CONSTRAINT_PRIMARY_KEY, NULL, {"gid", NULL}
@@ -566,34 +569,33 @@ tf_compile_meta_classes ()
       class_->n_variable = class_->fixed_size = 0;
 
       for (i = 0; class_->atts[i].name != NULL; i++)
-	{
-	  att = &class_->atts[i];
-	  att->id = i;
+        {
+          att = &class_->atts[i];
+          att->id = i;
 
-	  if (pr_is_variable_type (att->type))
-	    {
-	      class_->n_variable++;
-	    }
-	  else if (class_->n_variable)
-	    {
-	      /*
-	       * can't have fixed width attributes AFTER variable width
-	       * attributes
-	       */
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_TF_INVALID_METACLASS, 0);
-	    }
-	  else
-	    {
-	      /*
-	       * need a domain for size calculations, since we don't use
-	       * any parameterized types this isn't necessary but we still must
-	       * have it to call tp_domain_isk_size().
-	       */
-	      domain = tp_domain_resolve_default (att->type);
-	      class_->fixed_size += tp_domain_disk_size (domain);
-	    }
-	}
+          if (pr_is_variable_type (att->type))
+            {
+              class_->n_variable++;
+            }
+          else if (class_->n_variable)
+            {
+              /*
+               * can't have fixed width attributes AFTER variable width
+               * attributes
+               */
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_INVALID_METACLASS, 0);
+            }
+          else
+            {
+              /*
+               * need a domain for size calculations, since we don't use
+               * any parameterized types this isn't necessary but we still must
+               * have it to call tp_domain_isk_size().
+               */
+              domain = tp_domain_resolve_default (att->type);
+              class_->fixed_size += tp_domain_disk_size (domain);
+            }
+        }
     }
 }
 

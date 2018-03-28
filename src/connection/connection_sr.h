@@ -71,18 +71,14 @@ extern void css_print_conn_entry_info (CSS_CONN_ENTRY * p);
 extern void css_print_conn_list (void);
 #endif
 extern CSS_CONN_ENTRY *css_find_conn_by_tran_index (int tran_index);
-extern int css_get_session_ids_for_active_connections (SESSION_ID ** ids,
-						       int *count);
+extern int css_get_session_ids_for_active_connections (SESSION_ID ** ids, int *count);
 extern void css_shutdown_conn_by_tran_index (int tran_index);
 
-extern int css_send_abort_request (CSS_CONN_ENTRY * conn,
-				   unsigned short request_id);
+extern int css_send_abort_request (CSS_CONN_ENTRY * conn, unsigned short request_id);
 extern int css_return_queued_data (CSS_CONN_ENTRY * conn,
-				   unsigned int req_id, char **buffer,
-				   int *buffer_size, int timeout);
+                                   unsigned int req_id, char **buffer, int *buffer_size, int timeout);
 
-extern unsigned int css_return_eid_from_conn (CSS_CONN_ENTRY * conn,
-					      unsigned short rid);
+extern unsigned int css_return_eid_from_conn (CSS_CONN_ENTRY * conn, unsigned short rid);
 
 extern unsigned short css_get_request_id (CSS_CONN_ENTRY * conn);
 extern int css_set_accessible_ip_info (void);
@@ -91,28 +87,20 @@ extern int css_free_ip_info (IP_INFO * ip_info);
 extern int css_read_ip_info (IP_INFO ** out_ip_info, char *filename);
 extern int css_check_ip (IP_INFO * ip_info, unsigned char *address);
 
-extern void css_set_user_access_status (const char *db_user,
-					const char *host,
-					const char *program_name);
+extern void css_set_user_access_status (const char *db_user, const char *host, const char *program_name);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern void css_get_user_access_status (int num_user,
-					LAST_ACCESS_STATUS **
-					access_status_array);
+extern void css_get_user_access_status (int num_user, LAST_ACCESS_STATUS ** access_status_array);
 #endif
 extern void css_free_user_access_status (void);
 extern int css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
-					     CSS_CONN_ENTRY * conn, int rid,
-					     int timeout, int num_buffers,
-					     ...);
+                                             CSS_CONN_ENTRY * conn, int rid, int timeout, int num_buffers, ...);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int css_find_dupliated_conn (int conn_idx);
 #endif
 
 extern int css_common_connect_sr (CSS_CONN_ENTRY * conn,
-				  unsigned short *rid,
-				  const PRM_NODE_INFO * node_info,
-				  int connect_type,
-				  const char *server_name,
-				  int server_name_length);
+                                  unsigned short *rid,
+                                  const PRM_NODE_INFO * node_info,
+                                  int connect_type, const char *server_name, int server_name_length);
 
 #endif /* _CONNECTION_SR_H_ */

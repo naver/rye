@@ -43,22 +43,22 @@
  * The number of one bits in a four-bit nibble.
  */
 static const char nbits[] = {
-  0,				/* 0000 */
-  1,				/* 0001 */
-  1,				/* 0010 */
-  2,				/* 0011 */
-  1,				/* 0100 */
-  2,				/* 0101 */
-  2,				/* 0110 */
-  3,				/* 0111 */
-  1,				/* 1000 */
-  2,				/* 1001 */
-  2,				/* 1010 */
-  3,				/* 1011 */
-  2,				/* 1100 */
-  3,				/* 1101 */
-  3,				/* 1110 */
-  4,				/* 1111 */
+  0,                            /* 0000 */
+  1,                            /* 0001 */
+  1,                            /* 0010 */
+  2,                            /* 0011 */
+  1,                            /* 0100 */
+  2,                            /* 0101 */
+  2,                            /* 0110 */
+  3,                            /* 0111 */
+  1,                            /* 1000 */
+  2,                            /* 1001 */
+  2,                            /* 1010 */
+  3,                            /* 1011 */
+  2,                            /* 1100 */
+  3,                            /* 1101 */
+  3,                            /* 1110 */
+  4,                            /* 1111 */
 };
 
 static BITSET_CARRIER empty_set_words[NWORDS] = { 0 };
@@ -100,8 +100,7 @@ bitset_extend (BITSET * dst, int nwords)
   words = (BITSET_CARRIER *) malloc (NBYTES (nwords));
   if (words == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      NBYTES (nwords));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, NBYTES (nwords));
       return;
     }
 
@@ -146,7 +145,7 @@ bitset_add (BITSET * dst, int x)
 {
   int n;
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (x >= 0);
 #endif
 
@@ -171,7 +170,7 @@ bitset_remove (BITSET * dst, int x)
 {
   int n;
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (x >= 0);
 #endif
 
@@ -290,13 +289,13 @@ bitset_subset (const BITSET * r, const BITSET * s)
     {
       nwords -= 1;
       if (s->setp[nwords])
-	return 0;
+        return 0;
     }
   while (nwords)
     {
       nwords -= 1;
       if ((r->setp[nwords] & s->setp[nwords]) != s->setp[nwords])
-	return 0;
+        return 0;
     }
 
   return 1;
@@ -319,7 +318,7 @@ bitset_intersects (const BITSET * r, const BITSET * s)
     {
       nwords -= 1;
       if (r->setp[nwords] & s->setp[nwords])
-	return 1;
+        return 1;
     }
 
   return 0;
@@ -341,7 +340,7 @@ bitset_is_empty (const BITSET * s)
     {
       nwords -= 1;
       if (s->setp[nwords])
-	return 0;
+        return 0;
     }
 
   return 1;
@@ -363,21 +362,21 @@ bitset_is_equivalent (const BITSET * r, const BITSET * s)
     {
       nwords = s->nwords;
       while (nwords > r->nwords)
-	{
-	  nwords -= 1;
-	  if (s->setp[nwords])
-	    return 0;
-	}
+        {
+          nwords -= 1;
+          if (s->setp[nwords])
+            return 0;
+        }
     }
   else if (r->nwords > s->nwords)
     {
       nwords = r->nwords;
       while (nwords > s->nwords)
-	{
-	  nwords -= 1;
-	  if (r->setp[nwords])
-	    return 0;
-	}
+        {
+          nwords -= 1;
+          if (r->setp[nwords])
+            return 0;
+        }
     }
   else
     {
@@ -388,7 +387,7 @@ bitset_is_equivalent (const BITSET * r, const BITSET * s)
     {
       nwords -= 1;
       if (r->setp[nwords] != s->setp[nwords])
-	return 0;
+        return 0;
     }
 
   return 1;
@@ -414,10 +413,10 @@ bitset_cardinality (const BITSET * s)
       nwords -= 1;
       word = s->setp[nwords];
       while (word)
-	{
-	  card += nbits[word & 0xf];
-	  word >>= 4;
-	}
+        {
+          card += nbits[word & 0xf];
+          word >>= 4;
+        }
     }
 
   return card;
@@ -444,12 +443,12 @@ bitset_position (const BITSET * s, int x)
       pos = 0;
 
       for (i = 0, m = _WORD (x); i < m; i++)
-	for (word = s->setp[i]; word; word >>= 4)
-	  pos += nbits[word & 0xf];
+        for (word = s->setp[i]; word; word >>= 4)
+          pos += nbits[word & 0xf];
 
       mask = (1L << x) - 1;
       for (word = s->setp[m] & mask; word; word >>= 4)
-	pos += nbits[word & 0xf];
+        pos += nbits[word & 0xf];
     }
   else
     pos = -1;
@@ -495,15 +494,14 @@ bitset_next_member (BITSET_ITERATOR * si)
   nwords = si->set->nwords;
   for (m = _WORD (current); m < nwords; current = _WORDSIZE * ++m)
     {
-      for (word = si->set->setp[m] >> _BIT (current); word;
-	   current++, word >>= 1)
-	{
-	  if (word & 0x1)
-	    {
-	      si->next = current + 1;
-	      return current;
-	    }
-	}
+      for (word = si->set->setp[m] >> _BIT (current); word; current++, word >>= 1)
+        {
+          if (word & 0x1)
+            {
+              si->next = current + 1;
+              return current;
+            }
+        }
     }
 
   si->next = -1;
@@ -543,13 +541,13 @@ bitset_print (const BITSET * s, FILE * fp)
       BITSET_ITERATOR si;
 
       if ((i = bitset_iterate (s, &si)) != -1)
-	{
-	  (void) fprintf (fp, "%d", i);
-	  while ((i = bitset_next_member (&si)) != -1)
-	    {
-	      (void) fprintf (fp, " %d", i);
-	    }
-	}
+        {
+          (void) fprintf (fp, "%d", i);
+          while ((i = bitset_next_member (&si)) != -1)
+            {
+              (void) fprintf (fp, " %d", i);
+            }
+        }
     }
 }
 

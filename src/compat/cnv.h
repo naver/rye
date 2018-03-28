@@ -30,58 +30,32 @@
 #include "dbtype.h"
 
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern const char *db_string_value (const char *string, int str_size,
-				    const char *format, DB_VALUE * value);
-extern int db_value_string (const DB_VALUE * value, const char *format,
-			    char *string, int max_size);
+extern const char *db_string_value (const char *string, int str_size, const char *format, DB_VALUE * value);
+extern int db_value_string (const DB_VALUE * value, const char *format, char *string, int max_size);
 
-extern const char *db_value_to_string (const DB_VALUE * value,
-				       const char *format);
-extern int db_date_string (const DB_DATE * the_date, const char *date_format,
-			   char *string, int max_size);
-extern int db_double_string (double the_double, const char *double_format,
-			     char *string, int max_size);
-extern int db_integer_string (int the_integer, const char *integer_format,
-			      char *string, int max_size);
-extern int db_bigint_string (DB_BIGINT the_bigint, const char *bigint_format,
-			     char *string, int max_size);
+extern const char *db_value_to_string (const DB_VALUE * value, const char *format);
+extern int db_date_string (const DB_DATE * the_date, const char *date_format, char *string, int max_size);
+extern int db_double_string (double the_double, const char *double_format, char *string, int max_size);
+extern int db_integer_string (int the_integer, const char *integer_format, char *string, int max_size);
+extern int db_bigint_string (DB_BIGINT the_bigint, const char *bigint_format, char *string, int max_size);
 extern int db_validate_format (const char *format, DB_TYPE type);
 
-extern const char *db_string_date (const char *date_string,
-				   const char *date_format,
-				   DB_DATE * the_date);
-extern const char *db_string_double (const char *double_string,
-				     const char *double_format,
-				     double *the_double);
-extern const char *db_string_integer (const char *integer_string,
-				      const char *integer_format,
-				      int *the_integer);
-extern const char *db_string_bigint (const char *bitint_string,
-				     const char *bigint_format,
-				     DB_BIGINT * the_bigint);
-extern const char *db_string_time (const char *time_string,
-				   const char *time_format,
-				   DB_TIME * the_time);
-extern int db_time_string (const DB_TIME * the_time, const char *time_format,
-			   char *string, int max_size);
+extern const char *db_string_date (const char *date_string, const char *date_format, DB_DATE * the_date);
+extern const char *db_string_double (const char *double_string, const char *double_format, double *the_double);
+extern const char *db_string_integer (const char *integer_string, const char *integer_format, int *the_integer);
+extern const char *db_string_bigint (const char *bitint_string, const char *bigint_format, DB_BIGINT * the_bigint);
+extern const char *db_string_time (const char *time_string, const char *time_format, DB_TIME * the_time);
+extern int db_time_string (const DB_TIME * the_time, const char *time_format, char *string, int max_size);
 extern const char *db_string_datetime (const char *datetime_string,
-				       const char *datetime_format,
-				       DB_DATETIME * the_datetime);
+                                       const char *datetime_format, DB_DATETIME * the_datetime);
 extern int db_datetime_string (const DB_DATETIME * the_datetime,
-			       const char *datetime_format, char *string,
-			       int max_size);
-extern const char *db_string_bit (const char *string, const char *bit_format,
-				  DB_VALUE * the_db_bit);
+                               const char *datetime_format, char *string, int max_size);
+extern const char *db_string_bit (const char *string, const char *bit_format, DB_VALUE * the_db_bit);
 #endif
-extern int db_bit_string (const DB_VALUE * the_db_bit,
-			  const char *bit_format, char *string, int max_size);
+extern int db_bit_string (const DB_VALUE * the_db_bit, const char *bit_format, char *string, int max_size);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern const char *db_string_numeric (const char *string,
-				      const char *numeric_format,
-				      DB_VALUE * the_numeric);
-extern int db_numeric_string (const DB_VALUE * the_numeric,
-			      const char *numeric_format, char *string,
-			      int max_size);
+extern const char *db_string_numeric (const char *string, const char *numeric_format, DB_VALUE * the_numeric);
+extern int db_numeric_string (const DB_VALUE * the_numeric, const char *numeric_format, char *string, int max_size);
 
 /* cleanup function, should only be called by boot_shutdown */
 extern void cnv_cleanup (void);

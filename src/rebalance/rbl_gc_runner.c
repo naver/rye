@@ -74,8 +74,7 @@ print_usage_and_exit (void)
 }
 
 static int
-rbl_gc_connect (const char *host, int port, const char *dbname,
-		const char *pw, CCI_CONN * conn, bool is_local_con)
+rbl_gc_connect (const char *host, int port, const char *dbname, const char *pw, CCI_CONN * conn, bool is_local_con)
 {
   char url[1024];
   const char *url_property;
@@ -93,8 +92,7 @@ rbl_gc_connect (const char *host, int port, const char *dbname,
 
   if (cci_connect (conn, url, "dba", pw ? pw : "") < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return ER_FAILED;
     }
 
@@ -122,13 +120,11 @@ rbl_gc_thread (void *arg)
       return (THREAD_RET_T) NULL;
     }
 
-  error = rbl_gc_connect (node->hostname, node->port, node->dbname,
-			  ctx->pw, &ctx->conn, true);
+  error = rbl_gc_connect (node->hostname, node->port, node->dbname, ctx->pw, &ctx->conn, true);
   if (error != NO_ERROR)
     {
       RBL_NOTICE (ARG_FILE_LINE, "DB connection fail: "
-		  "host = %s, port = %d, dbname = %s, error = %d\n",
-		  node->hostname, node->port, node->dbname, error);
+                  "host = %s, port = %d, dbname = %s, error = %d\n", node->hostname, node->port, node->dbname, error);
       return (THREAD_RET_T) NULL;
     }
 
@@ -136,14 +132,12 @@ rbl_gc_thread (void *arg)
   if (error == NO_ERROR)
     {
       RBL_NOTICE (ARG_FILE_LINE, "Garbage collect success: "
-		  "host = %s, port = %d, dbname = %s\n",
-		  node->hostname, node->port, node->dbname);
+                  "host = %s, port = %d, dbname = %s\n", node->hostname, node->port, node->dbname);
     }
   else
     {
       RBL_NOTICE (ARG_FILE_LINE, "Garbage collect fail: "
-		  "host = %s, port = %d, dbname = %s, error = %d\n",
-		  node->hostname, node->port, node->dbname, error);
+                  "host = %s, port = %d, dbname = %s, error = %d\n", node->hostname, node->port, node->dbname, error);
     }
 
   cci_disconnect (&ctx->conn);
@@ -168,45 +162,45 @@ main (int argc, char *argv[])
     {
       opt = getopt_long (argc, argv, "", options, &opt_index);
       if (opt == -1)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       switch (opt)
-	{
-	case 'h':
-	  host = optarg;
-	  break;
-	case 'p':
-	  port = atoi (optarg);
-	  break;
-	case 'd':
-	  dbname = optarg;
-	  break;
-	case 't':
-	  max_runtime = atoi (optarg);
-	  break;
-	case 'w':
-	  pw = optarg;
-	  break;
-	default:
-	  print_usage_and_exit ();
-	  break;
-	}
+        {
+        case 'h':
+          host = optarg;
+          break;
+        case 'p':
+          port = atoi (optarg);
+          break;
+        case 'd':
+          dbname = optarg;
+          break;
+        case 't':
+          max_runtime = atoi (optarg);
+          break;
+        case 'w':
+          pw = optarg;
+          break;
+        default:
+          print_usage_and_exit ();
+          break;
+        }
     }
 
   if (host != NULL)
     {
       char *p = strchr (host, ':');
       if (p != NULL)
-	{
-	  int tmp_port;
-	  *p = '\0';
-	  if (parse_int (&tmp_port, p + 1, 10) == 0 && tmp_port > 0)
-	    {
-	      port = tmp_port;
-	    }
-	}
+        {
+          int tmp_port;
+          *p = '\0';
+          if (parse_int (&tmp_port, p + 1, 10) == 0 && tmp_port > 0)
+            {
+              port = tmp_port;
+            }
+        }
     }
 
   if (host == NULL || dbname == NULL || port <= 0 || max_runtime < 0)
@@ -218,8 +212,8 @@ main (int argc, char *argv[])
   rbl_error_log_init ("rye_gc", dbname, 0);
 
   RBL_NOTICE (ARG_FILE_LINE,
-	      "Garbage collect start: host = %s, port = %d, dbname = %s, "
-	      "max runtime = %d\n", host, port, dbname, max_runtime);
+              "Garbage collect start: host = %s, port = %d, dbname = %s, "
+              "max runtime = %d\n", host, port, dbname, max_runtime);
 
   error = rbl_gc_connect (host, port, dbname, pw, &conn, false);
   if (error != NO_ERROR)
@@ -232,26 +226,22 @@ main (int argc, char *argv[])
   error = cci_shard_get_info (&conn, &nodes, &groups);
   if (error != NO_ERROR)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn.err_buf.err_code, conn.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn.err_buf.err_code, conn.err_buf.err_msg);
       goto end;
     }
 
   error = cci_shard_gc_start (&conn);
   if (error != NO_ERROR)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn.err_buf.err_code, conn.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn.err_buf.err_code, conn.err_buf.err_msg);
       goto end;
     }
   is_notified = true;
 
-  ctx =
-    (RBL_GC_CONTEXT *) malloc (sizeof (RBL_GC_CONTEXT) * nodes->node_count);
+  ctx = (RBL_GC_CONTEXT *) malloc (sizeof (RBL_GC_CONTEXT) * nodes->node_count);
   if (ctx == NULL)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY,
-		 sizeof (RBL_GC_CONTEXT) * nodes->node_count);
+      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, sizeof (RBL_GC_CONTEXT) * nodes->node_count);
       error = RBL_OUT_OF_MEMORY;
       goto end;
     }
@@ -260,9 +250,8 @@ main (int argc, char *argv[])
   for (i = 0; i < nodes->node_count; i++)
     {
       RBL_DEBUG (ARG_FILE_LINE, "Node info:\n%d %s %s %d\n",
-		 nodes->node_info[i].nodeid,
-		 nodes->node_info[i].dbname,
-		 nodes->node_info[i].hostname, nodes->node_info[i].port);
+                 nodes->node_info[i].nodeid,
+                 nodes->node_info[i].dbname, nodes->node_info[i].hostname, nodes->node_info[i].port);
     }
 #endif
 
@@ -272,13 +261,12 @@ main (int argc, char *argv[])
       ctx[i].pw = pw;
       ctx[i].max_runtime = max_runtime;
 
-      error = pthread_create (&(ctx[i].gc_thrd), NULL,
-			      rbl_gc_thread, &(ctx[i]));
+      error = pthread_create (&(ctx[i].gc_thrd), NULL, rbl_gc_thread, &(ctx[i]));
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR_MSG (ARG_FILE_LINE, "pthread_create() error.\n");
-	  break;
-	}
+        {
+          RBL_ERROR_MSG (ARG_FILE_LINE, "pthread_create() error.\n");
+          break;
+        }
     }
 
   for (i = 0; i < num_thrd; i++)
@@ -292,11 +280,10 @@ end:
     {
       error = cci_shard_gc_end (&conn);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     conn.err_buf.err_code, conn.err_buf.err_msg);
-	  goto end;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn.err_buf.err_code, conn.err_buf.err_msg);
+          goto end;
+        }
     }
 
   if (nodes != NULL)

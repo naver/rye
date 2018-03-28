@@ -93,8 +93,7 @@ utility_rsql_print (int message_num, ...)
       utility_load_print_error (stderr);
       return;
     }
-  utility_load_symbol (util_sa_library, &symbol,
-		       UTILITY_GENERIC_MSG_FUNC_NAME);
+  utility_load_symbol (util_sa_library, &symbol, UTILITY_GENERIC_MSG_FUNC_NAME);
   if (symbol == NULL)
     {
       utility_load_print_error (stderr);
@@ -162,98 +161,96 @@ main (int argc, char *argv[])
       int option_index = 0;
       int option_key;
 
-      option_key = getopt_long (argc, argv, option_string,
-				rsql_option, &option_index);
+      option_key = getopt_long (argc, argv, option_string, rsql_option, &option_index);
       if (option_key == -1)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       switch (option_key)
-	{
-	case RSQL_SA_MODE_S:
-	  rsql_arg.sa_mode = true;
-	  break;
+        {
+        case RSQL_SA_MODE_S:
+          rsql_arg.sa_mode = true;
+          break;
 
-	case RSQL_CS_MODE_S:
-	  rsql_arg.cs_mode = true;
-	  break;
+        case RSQL_CS_MODE_S:
+          rsql_arg.cs_mode = true;
+          break;
 
-	case RSQL_USER_S:
-	  rsql_arg.user_name = optarg;
-	  break;
+        case RSQL_USER_S:
+          rsql_arg.user_name = optarg;
+          break;
 
-	case RSQL_PASSWORD_S:
-	  rsql_arg.passwd = optarg;
-	  break;
+        case RSQL_PASSWORD_S:
+          rsql_arg.passwd = optarg;
+          break;
 
-	case RSQL_ERROR_CONTINUE_S:
-	  rsql_arg.continue_on_error = true;
-	  break;
+        case RSQL_ERROR_CONTINUE_S:
+          rsql_arg.continue_on_error = true;
+          break;
 
-	case RSQL_INPUT_FILE_S:
-	  rsql_arg.in_file_name = optarg;
-	  break;
+        case RSQL_INPUT_FILE_S:
+          rsql_arg.in_file_name = optarg;
+          break;
 
-	case RSQL_OUTPUT_FILE_S:
-	  rsql_arg.out_file_name = optarg;
-	  break;
+        case RSQL_OUTPUT_FILE_S:
+          rsql_arg.out_file_name = optarg;
+          break;
 
-	case RSQL_SINGLE_LINE_S:
-	  explicit_single_line = true;
-	  break;
+        case RSQL_SINGLE_LINE_S:
+          explicit_single_line = true;
+          break;
 
-	case RSQL_NO_SINGLE_LINE_S:
-	  rsql_arg.single_line_execution = false;
-	  break;
+        case RSQL_NO_SINGLE_LINE_S:
+          rsql_arg.single_line_execution = false;
+          break;
 
-	case RSQL_COMMAND_S:
-	  rsql_arg.command = optarg;
-	  break;
+        case RSQL_COMMAND_S:
+          rsql_arg.command = optarg;
+          break;
 
-	case RSQL_LINE_OUTPUT_S:
-	  rsql_arg.line_output = true;
-	  break;
+        case RSQL_LINE_OUTPUT_S:
+          rsql_arg.line_output = true;
+          break;
 
-	case RSQL_NO_AUTO_COMMIT_S:
-	  rsql_arg.auto_commit = false;
-	  break;
+        case RSQL_NO_AUTO_COMMIT_S:
+          rsql_arg.auto_commit = false;
+          break;
 
-	case RSQL_NO_PAGER_S:
-	  rsql_arg.nopager = true;
-	  break;
+        case RSQL_NO_PAGER_S:
+          rsql_arg.nopager = true;
+          break;
 
-	case RSQL_WRITE_ON_STANDBY_S:
-	  rsql_arg.write_on_standby = true;
-	  break;
+        case RSQL_WRITE_ON_STANDBY_S:
+          rsql_arg.write_on_standby = true;
+          break;
 
-	case RSQL_TIME_OFF_S:
-	  rsql_arg.time_on = false;
-	  break;
+        case RSQL_TIME_OFF_S:
+          rsql_arg.time_on = false;
+          break;
 
-	case RSQL_STRING_WIDTH_S:
-	  {
-	    int string_width = 0, result;
+        case RSQL_STRING_WIDTH_S:
+          {
+            int string_width = 0, result;
 
-	    result = parse_int (&string_width, optarg, 10);
+            result = parse_int (&string_width, optarg, 10);
 
-	    if (result != 0 || string_width < 0)
-	      {
-		goto print_usage;
-	      }
+            if (result != 0 || string_width < 0)
+              {
+                goto print_usage;
+              }
 
-	    rsql_arg.string_width = string_width;
-	  }
-	  break;
+            rsql_arg.string_width = string_width;
+          }
+          break;
 
-	case VERSION_S:
-	  utility_rsql_print (MSGCAT_UTIL_GENERIC_VERSION, UTIL_RSQL_NAME,
-			      PRODUCT_STRING);
-	  goto exit_on_end;
+        case VERSION_S:
+          utility_rsql_print (MSGCAT_UTIL_GENERIC_VERSION, UTIL_RSQL_NAME, PRODUCT_STRING);
+          goto exit_on_end;
 
-	default:
-	  goto print_usage;
-	}
+        default:
+          goto print_usage;
+        }
     }
 
   if (argc - optind == 1)
@@ -269,15 +266,14 @@ main (int argc, char *argv[])
     {
       assert (rsql_arg.db_name == NULL);
 
-#if 0				/* unused */
+#if 0                           /* unused */
       utility_rsql_print (MSGCAT_UTIL_GENERIC_MISS_DBNAME);
       goto print_usage;
 #endif
     }
 
   if ((rsql_arg.sa_mode || rsql_arg.write_on_standby)
-      && (rsql_arg.user_name == NULL
-	  || strcasecmp (rsql_arg.user_name, "DBA")))
+      && (rsql_arg.user_name == NULL || strcasecmp (rsql_arg.user_name, "DBA")))
     {
       /* sa_mode, write_on_standby is allowed only to DBA */
       goto print_usage;

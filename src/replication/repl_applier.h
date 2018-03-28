@@ -36,13 +36,10 @@
 #include "cas_cci.h"
 
 extern void *applier_main (void *arg);
-extern int cirp_init_applier (CIRP_APPLIER_INFO * applier,
-			      const char *database_name,
-			      const char *log_path);
+extern int cirp_init_applier (CIRP_APPLIER_INFO * applier, const char *database_name, const char *log_path);
 extern int cirp_clear_applier (CIRP_APPLIER_INFO * applier);
 extern int cirp_final_applier (CIRP_APPLIER_INFO * applier);
-extern int cirp_appl_get_committed_lsa (CIRP_APPLIER_INFO * applier,
-					LOG_LSA * committed_lsa);
+extern int cirp_appl_get_committed_lsa (CIRP_APPLIER_INFO * applier, LOG_LSA * committed_lsa);
 CIRP_AGENT_STATUS cirp_get_applier_status (CIRP_APPLIER_INFO * applier);
 
 #endif /* _REPL_APPLIER_H_ */

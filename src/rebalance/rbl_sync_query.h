@@ -28,13 +28,11 @@
 
 #include "log_impl.h"
 
-extern unsigned int rbl_tranid_hash (const void *key,
-				     const unsigned int ht_size);
+extern unsigned int rbl_tranid_hash (const void *key, const unsigned int ht_size);
 extern int rbl_compare_tranid_are_equal (const void *key1, const void *key2);
 extern int rbl_sync_query_init (void);
 extern int rbl_tran_list_add (TRANID tran_id, char *query);
-extern int rbl_sync_execute_query (RBL_SYNC_CONTEXT * ctx, TRANID tran_id,
-				   int gid);
+extern int rbl_sync_execute_query (RBL_SYNC_CONTEXT * ctx, TRANID tran_id, int gid);
 extern void rbl_clear_tran_list (TRANID tran_id);
 
 #endif /* RBL_SYNC_QUERY_H_ */

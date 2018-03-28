@@ -45,11 +45,11 @@ typedef struct
   OID *oidp;
   int oid_cnt;
   int oid_buf_size;
-} OID_LIST;			/* list of OIDs */
+} OID_LIST;                     /* list of OIDs */
 
 typedef struct
 {
-  OID_LIST **oidptr;		/* list of OID_LIST pointers */
+  OID_LIST **oidptr;            /* list of OID_LIST pointers */
   int ptr_cnt;
 } OID_PTRLIST;
 
@@ -79,12 +79,12 @@ typedef int CL_ATTR_ID;
 
 typedef struct
 {
-  CL_ATTR_ID id;		/* Attribute identifier */
-  DB_TYPE type;			/* Attribute data type */
-  HEAP_CACHE_ATTRINFO *cache_attrinfo;	/* used to cache catalog info */
-  DB_VALUE *cache_dbvalp;	/* cached value for particular attr */
+  CL_ATTR_ID id;                /* Attribute identifier */
+  DB_TYPE type;                 /* Attribute data type */
+  HEAP_CACHE_ATTRINFO *cache_attrinfo;  /* used to cache catalog info */
+  DB_VALUE *cache_dbvalp;       /* cached value for particular attr */
   /* in cache_attrinfo */
-} ATTR_DESCR;			/* Attribute Descriptor */
+} ATTR_DESCR;                   /* Attribute Descriptor */
 
 #define UT_CLEAR_ATTR_DESCR(ptr) \
 { (ptr)->id = -1; \
@@ -101,18 +101,18 @@ typedef enum
 
 typedef struct index_id_node
 {
-  INDX_ID_TYPE type;		/* Index Type */
+  INDX_ID_TYPE type;            /* Index Type */
   union
   {
-    BTID btid;			/* B+tree index identifier */
-    EHID ehid;			/* Extendible Hash index identifier */
+    BTID btid;                  /* B+tree index identifier */
+    EHID ehid;                  /* Extendible Hash index identifier */
   } i;
-} INDX_ID;			/* Index Identifier */
+} INDX_ID;                      /* Index Identifier */
 
 typedef enum
 {
-  R_KEYLIST,			/* a list of key value searches */
-  R_RANGELIST			/* a list of range searches */
+  R_KEYLIST,                    /* a list of key value searches */
+  R_RANGELIST                   /* a list of range searches */
 } RANGE_TYPE;
 
 /*
@@ -122,36 +122,36 @@ struct regu_variable_node;
 
 typedef struct key_range
 {
-  struct regu_variable_node *key1;	/* pointer to first key value */
-  struct regu_variable_node *key2;	/* pointer to second key value */
-  RANGE range;			/* range spec; GE_LE, GT_LE, GE_LT,
-				   GT_LT, GE_INF, GT_INF, INF_LT,
-				   INF_LE, INF_INF */
-} KEY_RANGE;			/* key range structure */
+  struct regu_variable_node *key1;      /* pointer to first key value */
+  struct regu_variable_node *key2;      /* pointer to second key value */
+  RANGE range;                  /* range spec; GE_LE, GT_LE, GE_LT,
+                                   GT_LT, GE_INF, GT_INF, INF_LT,
+                                   INF_LE, INF_INF */
+} KEY_RANGE;                    /* key range structure */
 
 typedef struct key_info
 {
-  KEY_RANGE *key_ranges;	/* a list of key ranges */
-  int key_cnt;			/* key count */
-  int is_constant;		/* every key value is a constant */
-  struct regu_variable_node *key_limit_l;	/* lower key limit */
-  struct regu_variable_node *key_limit_u;	/* upper key limit */
-  int key_limit_reset;		/* should key limit reset at each range */
-} KEY_INFO;			/* key information structure */
+  KEY_RANGE *key_ranges;        /* a list of key ranges */
+  int key_cnt;                  /* key count */
+  int is_constant;              /* every key value is a constant */
+  struct regu_variable_node *key_limit_l;       /* lower key limit */
+  struct regu_variable_node *key_limit_u;       /* upper key limit */
+  int key_limit_reset;          /* should key limit reset at each range */
+} KEY_INFO;                     /* key information structure */
 
 typedef struct indx_info
 {
-  INDX_ID indx_id;		/* index identifier */
-  int coverage;			/* index coverage state */
+  INDX_ID indx_id;              /* index identifier */
+  int coverage;                 /* index coverage state */
   OID class_oid;
-  RANGE_TYPE range_type;	/* range type */
-  KEY_INFO key_info;		/* key information */
-  int orderby_desc;		/* first column of the order by is desc */
-  int groupby_desc;		/* first column of the group by is desc */
-  int use_desc_index;		/* using descending index */
-  int orderby_skip;		/* order by skip information */
-  int groupby_skip;		/* group by skip information */
-} INDX_INFO;			/* index information structure */
+  RANGE_TYPE range_type;        /* range type */
+  KEY_INFO key_info;            /* key information */
+  int orderby_desc;             /* first column of the order by is desc */
+  int groupby_desc;             /* first column of the group by is desc */
+  int use_desc_index;           /* using descending index */
+  int orderby_skip;             /* order by skip information */
+  int groupby_skip;             /* group by skip information */
+} INDX_INFO;                    /* index information structure */
 
 
 /*
@@ -160,13 +160,13 @@ typedef struct indx_info
 
 typedef struct val_descr
 {
-  DB_VALUE *dbval_ptr;		/* Array of values */
-  int dbval_cnt;		/* Value Count */
+  DB_VALUE *dbval_ptr;          /* Array of values */
+  int dbval_cnt;                /* Value Count */
   DB_DATETIME sys_datetime;
   long lrand;
   double drand;
-  struct xasl_state *xasl_state;	/* XASL_STATE pointer */
-} VAL_DESCR;			/* Value Descriptor */
+  struct xasl_state *xasl_state;        /* XASL_STATE pointer */
+} VAL_DESCR;                    /* Value Descriptor */
 
 /*
  *       	      STRUCTURE FOR QUERY PROCESSOR DOMAIN

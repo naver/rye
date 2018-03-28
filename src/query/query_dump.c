@@ -106,14 +106,9 @@ static const char *qdump_bool_operator_string (BOOL_OP bool_op);
 static bool qdump_print_lhs_predicate (PRED_EXPR * pred_p);
 #if defined(RYE_DEBUG)
 static QDUMP_XASL_CHECK_NODE *qdump_find_check_node_for (XASL_NODE * xasl,
-							 QDUMP_XASL_CHECK_NODE
-							 *
-							 chk_nodes
-							 [HASH_NUMBER]);
-static void qdump_check_node (XASL_NODE * xasl,
-			      QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER]);
-static int qdump_print_inconsistencies (QDUMP_XASL_CHECK_NODE *
-					chk_nodes[HASH_NUMBER]);
+                                                         QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER]);
+static void qdump_check_node (XASL_NODE * xasl, QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER]);
+static int qdump_print_inconsistencies (QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER]);
 #endif /* RYE_DEBUG */
 
 /*
@@ -182,9 +177,9 @@ qdump_print_db_value_array (DB_VALUE ** array_p, int count)
   for (i = 0; i < count; i++, array_p++)
     {
       if (!qdump_print_db_value (*array_p))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       fprintf (foutput, "; ");
     }
 
@@ -201,8 +196,7 @@ qdump_print_attribute (const char *action_p, int attr_count, int *attr_ids_p)
 
   for (i = 0; i < attr_count; i++)
     {
-      fprintf (foutput, "%d%c", attr_ids_p[i],
-	       i == attr_count - 1 ? ']' : ',');
+      fprintf (foutput, "%d%c", attr_ids_p[i], i == attr_count - 1 ? ']' : ',');
     }
 
   return true;
@@ -258,9 +252,7 @@ qdump_print_delete_proc_node (DELETE_PROC_NODE * node_p)
 static bool
 qdump_print_insert_proc_node (INSERT_PROC_NODE * node_p)
 {
-  fprintf (foutput, "class oid[%d %d %d]",
-	   node_p->class_oid.pageid, node_p->class_oid.slotid,
-	   node_p->class_oid.volid);
+  fprintf (foutput, "class oid[%d %d %d]", node_p->class_oid.pageid, node_p->class_oid.slotid, node_p->class_oid.volid);
 
   qdump_print_hfid (node_p->class_hfid);
   qdump_print_attribute ("insert", node_p->no_vals, node_p->att_id);
@@ -329,9 +321,9 @@ qdump_print_access_spec (ACCESS_SPEC_TYPE * spec_list_p)
   if (spec_list_p->access == INDEX)
     {
       if (qdump_print_index (spec_list_p->indexptr) == false)
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
 
   fprintf (foutput, "\n	");
@@ -414,21 +406,20 @@ qdump_print_key_info (KEY_INFO * key_info_p)
   fprintf (foutput, "key ranges:");
   for (i = 0; i < key_info_p->key_cnt; i++)
     {
-      fprintf (foutput, "<%s>",
-	       qdump_key_range_string (key_info_p->key_ranges[i].range));
+      fprintf (foutput, "<%s>", qdump_key_range_string (key_info_p->key_ranges[i].range));
 
       fprintf (foutput, "[");
       if (!qdump_print_value (key_info_p->key_ranges[i].key1))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       fprintf (foutput, "][");
 
       if (!qdump_print_value (key_info_p->key_ranges[i].key2))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       fprintf (foutput, "]");
     }
   fprintf (foutput, "<is constant:%d>", key_info_p->is_constant);
@@ -500,14 +491,12 @@ qdump_print_index_id (INDX_ID id)
   if (id.type == T_BTID)
     {
       fprintf (foutput, "<type: Btree>");
-      fprintf (foutput, "(%d;%d)", id.i.btid.vfid.fileid,
-	       id.i.btid.vfid.volid);
+      fprintf (foutput, "(%d;%d)", id.i.btid.vfid.fileid, id.i.btid.vfid.volid);
     }
   else
     {
       fprintf (foutput, "<type: Extendible Hashing>");
-      fprintf (foutput, "<%d;%d;%d>", id.i.ehid.vfid.volid,
-	       id.i.ehid.vfid.fileid, id.i.ehid.pageid);
+      fprintf (foutput, "<%d;%d;%d>", id.i.ehid.vfid.volid, id.i.ehid.vfid.fileid, id.i.ehid.pageid);
     }
 
   return true;
@@ -521,8 +510,7 @@ qdump_print_index_id (INDX_ID id)
 static bool
 qdump_print_btid (BTID id)
 {
-  fprintf (foutput, "<Btree:(%d;%d;%d)>", id.vfid.fileid,
-	   id.vfid.volid, id.root_pageid);
+  fprintf (foutput, "<Btree:(%d;%d;%d)>", id.vfid.fileid, id.vfid.volid, id.root_pageid);
   return true;
 }
 
@@ -535,9 +523,7 @@ static bool
 qdump_print_class (CLS_SPEC_TYPE * class_p)
 {
   qdump_print_hfid (class_p->hfid);
-  fprintf (foutput, "oid[%d %d %d]",
-	   class_p->cls_oid.pageid, class_p->cls_oid.slotid,
-	   class_p->cls_oid.volid);
+  fprintf (foutput, "oid[%d %d %d]", class_p->cls_oid.pageid, class_p->cls_oid.slotid, class_p->cls_oid.volid);
   fprintf (foutput, "\n	regu_list_key:");
   qdump_print_regu_variable_list (class_p->cls_regu_list_key);
   fprintf (foutput, "\n	regu_list_pred:");
@@ -615,9 +601,9 @@ qdump_print_outlist (const char *title_p, OUTPTR_LIST * outlist_p)
     {
       fprintf (foutput, "[addr:%p]", &nextptr->value);
       if (!qdump_print_value (&nextptr->value))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       fprintf (foutput, "; ");
       nextptr = nextptr->next;
@@ -686,8 +672,7 @@ qdump_print_domain_list (int cnt, TP_DOMAIN ** domains_p)
 
   for (i = 0; i < cnt; i++)
     {
-      fprintf (foutput, "%s; ",
-	       qdump_data_type_string (TP_DOMAIN_TYPE (domains_p[i])));
+      fprintf (foutput, "%s; ", qdump_data_type_string (TP_DOMAIN_TYPE (domains_p[i])));
     }
 
   return true;
@@ -779,15 +764,13 @@ qdump_print_value_list (VAL_LIST * value_list_p)
   while (dbval_list != NULL)
     {
       fprintf (foutput, "addr:%p|", dbval_list->val);
-      fprintf (foutput, "type:%s",
-	       qdump_data_type_string (DB_VALUE_DOMAIN_TYPE
-				       (dbval_list->val)));
+      fprintf (foutput, "type:%s", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (dbval_list->val)));
       fprintf (foutput, "|value:");
 
       if (!qdump_print_db_value (dbval_list->val))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       fprintf (foutput, "; ");
       dbval_list = dbval_list->next;
@@ -813,9 +796,9 @@ qdump_print_regu_variable_list (REGU_VARIABLE_LIST var_list)
   while (var_list != NULL)
     {
       if (!qdump_print_value (&var_list->value))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       fprintf (foutput, "; ");
       var_list = var_list->next;
@@ -1004,39 +987,39 @@ qdump_print_value (REGU_VARIABLE * value_p)
     case TYPE_INARITH:
     case TYPE_OUTARITH:
       if (!qdump_print_arith (ARITH_EXP, (void *) value_p->value.arithptr))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       return true;
     case TYPE_ATTR_ID:
       if (!qdump_print_attribute_id (value_p->value.attr_descr))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       return true;
 
     case TYPE_LIST_ID:
       if (value_p->value.srlist_id->sorted)
-	{
-	  fprintf (foutput, "[SORTED]");
-	}
+        {
+          fprintf (foutput, "[SORTED]");
+        }
       else
-	{
-	  fprintf (foutput, "[NOT SORTED]");
-	}
+        {
+          fprintf (foutput, "[NOT SORTED]");
+        }
 
       if (!qdump_print_list_id (value_p->value.srlist_id->list_id))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       return true;
 
     case TYPE_POSITION:
       if (!qdump_print_tuple_value_position (value_p->value.pos_descr))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       return true;
 
@@ -1091,13 +1074,13 @@ qdump_function_type_string (FUNC_TYPE ftype)
     case PT_GENERIC:
       return "GENERIC";
     case F_TOP_TABLE_FUNC:
-      assert (false);		/* internal use only */
+      assert (false);           /* internal use only */
       return "F_TOP_TABLE_FUNC";
     case F_IDXKEY:
       return "F_IDXKEY";
     case F_SEQUENCE:
-#if 0				/* TODO - */
-      assert (false);		/* should not reach here */
+#if 0                           /* TODO - */
+      assert (false);           /* should not reach here */
 #endif
       return "F_SEQUENCE";
     case F_INSERT_SUBSTRING:
@@ -1129,8 +1112,7 @@ qdump_print_function_value (REGU_VARIABLE * regu_var_p)
     }
 
   fprintf (foutput, "[TYPE_FUNC]");
-  fprintf (foutput, "[%s]",
-	   qdump_function_type_string (regu_var_p->value.funcp->ftype));
+  fprintf (foutput, "[%s]", qdump_function_type_string (regu_var_p->value.funcp->ftype));
   fprintf (foutput, "operand-->");
   qdump_print_regu_variable_list (regu_var_p->value.funcp->operand);
 
@@ -1213,8 +1195,7 @@ qdump_print_comp_eval_term (EVAL_TERM * term_p)
   COMP_EVAL_TERM *et_comp_p = &term_p->et.et_comp;
 
   qdump_print_value (et_comp_p->comp_lhs);
-  fprintf (foutput, " %s ",
-	   qdump_relation_operator_string (et_comp_p->comp_rel_op));
+  fprintf (foutput, " %s ", qdump_relation_operator_string (et_comp_p->comp_rel_op));
 
   if (et_comp_p->comp_rhs != NULL)
     {
@@ -1230,8 +1211,7 @@ qdump_print_alsm_eval_term (EVAL_TERM * term_p)
   ALSM_EVAL_TERM *et_alsm_p = &term_p->et.et_alsm;
 
   qdump_print_value (et_alsm_p->elem);
-  fprintf (foutput, " %s ",
-	   qdump_relation_operator_string (et_alsm_p->alsm_rel_op));
+  fprintf (foutput, " %s ", qdump_relation_operator_string (et_alsm_p->alsm_rel_op));
 
   switch (et_alsm_p->eq_flag)
     {
@@ -1264,9 +1244,9 @@ qdump_print_like_eval_term (EVAL_TERM * term_p)
   if (et_like_p->esc_char)
     {
       if (!qdump_print_value (et_like_p->esc_char))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
 
   return true;
@@ -1280,8 +1260,7 @@ qdump_print_rlike_eval_term (EVAL_TERM * term_p)
   fprintf (foutput, "SOURCE");
   qdump_print_value (et_rlike_p->src);
   fprintf (foutput, (et_rlike_p->case_sensitive->value.dbval.data.i ?
-		     "PATTERN (CASE SENSITIVE):" :
-		     "PATTERN (CASE INSENSITIVE):"));
+                     "PATTERN (CASE SENSITIVE):" : "PATTERN (CASE INSENSITIVE):"));
 
   if (!qdump_print_value (et_rlike_p->pattern))
     {
@@ -1337,9 +1316,9 @@ qdump_print_term (PRED_EXPR * pred_p)
       fprintf (foutput, "(NOT ");
 
       if (!qdump_print_predicate (pred_p->pe.not_term))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       fprintf (foutput, ")");
 
       return true;
@@ -1388,8 +1367,7 @@ qdump_print_lhs_predicate (PRED_EXPR * pred_p)
       return false;
     }
 
-  fprintf (foutput, " %s ",
-	   qdump_bool_operator_string (pred_p->pe.pred.bool_op));
+  fprintf (foutput, " %s ", qdump_bool_operator_string (pred_p->pe.pred.bool_op));
 
   return true;
 }
@@ -1413,43 +1391,42 @@ qdump_print_predicate (PRED_EXPR * pred_p)
     {
     case T_PRED:
       if (qdump_print_lhs_predicate (pred_p) == false)
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       parn_cnt = 1;
 
       /* Traverse right-linear chains of AND/OR terms */
-      for (pred_p = pred_p->pe.pred.rhs; pred_p->type == T_PRED;
-	   pred_p = pred_p->pe.pred.rhs)
-	{
-	  if (qdump_print_lhs_predicate (pred_p) == false)
-	    {
-	      return false;
-	    }
+      for (pred_p = pred_p->pe.pred.rhs; pred_p->type == T_PRED; pred_p = pred_p->pe.pred.rhs)
+        {
+          if (qdump_print_lhs_predicate (pred_p) == false)
+            {
+              return false;
+            }
 
-	  parn_cnt++;
-	}
+          parn_cnt++;
+        }
 
       /* rhs */
       switch (pred_p->type)
-	{
-	case T_EVAL_TERM:
-	case T_NOT_TERM:
-	  if (!qdump_print_term (pred_p))
-	    {
-	      return false;
-	    }
-	  break;
-	default:
-	  return false;
-	}
+        {
+        case T_EVAL_TERM:
+        case T_NOT_TERM:
+          if (!qdump_print_term (pred_p))
+            {
+              return false;
+            }
+          break;
+        default:
+          return false;
+        }
 
       while (parn_cnt > 0)
-	{
-	  fprintf (foutput, ")");
-	  parn_cnt--;
-	}
+        {
+          fprintf (foutput, ")");
+          parn_cnt--;
+        }
 
       return true;
 
@@ -1534,8 +1511,7 @@ qdump_arith_operator_string (OPERATOR_TYPE opcode)
 static bool
 qdump_print_arith_expression (ARITH_TYPE * arith_p)
 {
-  fprintf (foutput, "[%s]",
-	   qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (arith_p->value)));
+  fprintf (foutput, "[%s]", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (arith_p->value)));
 
   if (arith_p->opcode == T_UNMINUS
 #if defined(ENABLE_UNUSED_FUNCTION)
@@ -1545,20 +1521,20 @@ qdump_print_arith_expression (ARITH_TYPE * arith_p)
     {
       fprintf (foutput, "(");
       if (arith_p->opcode == T_UNMINUS)
-	{
-	  fprintf (foutput, "-");
-	}
+        {
+          fprintf (foutput, "-");
+        }
 #if defined(ENABLE_UNUSED_FUNCTION)
       else
-	{
-	  fprintf (foutput, "+");
-	}
+        {
+          fprintf (foutput, "+");
+        }
 #endif /* ENABLE_UNUSED_FUNCTION */
 
       if (!qdump_print_value (arith_p->rightptr))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       fprintf (foutput, ")");
     }
   else
@@ -1567,16 +1543,16 @@ qdump_print_arith_expression (ARITH_TYPE * arith_p)
 
       fprintf (foutput, "(");
       if (!qdump_print_value (arith_p->leftptr))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
 
       fprintf (foutput, "%s", qdump_arith_operator_string (arith_p->opcode));
 
       if (!qdump_print_value (arith_p->rightptr))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
       fprintf (foutput, ")");
     }
 
@@ -1586,9 +1562,7 @@ qdump_print_arith_expression (ARITH_TYPE * arith_p)
 static bool
 qdump_print_aggregate_expression (AGGREGATE_TYPE * aggptr)
 {
-  fprintf (foutput, "[%s]",
-	   qdump_data_type_string (DB_VALUE_DOMAIN_TYPE
-				   (aggptr->accumulator.value)));
+  fprintf (foutput, "[%s]", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (aggptr->accumulator.value)));
 
   fprintf (foutput, "%s(", qdump_function_type_string (aggptr->function));
 
@@ -1617,9 +1591,9 @@ qdump_print_aggregate_expression (AGGREGATE_TYPE * aggptr)
     {
       fprintf (foutput, "; ");
       if (!qdump_print_arith (AGG_EXP, aggptr->next))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
 
   return true;
@@ -1681,32 +1655,29 @@ qdump_check_xasl_tree (XASL_NODE * xasl_p)
  *   chk_nodes(in):
  */
 static QDUMP_XASL_CHECK_NODE *
-qdump_find_check_node_for (XASL_NODE * xasl_p,
-			   QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER])
+qdump_find_check_node_for (XASL_NODE * xasl_p, QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER])
 {
   UINTPTR access_node_hash;
   QDUMP_XASL_CHECK_NODE *check_node_p;
 
   access_node_hash = (UINTPTR) xasl_p % HASH_NUMBER;
 
-  for (check_node_p = chk_nodes[access_node_hash]; check_node_p;
-       check_node_p = check_node_p->next)
+  for (check_node_p = chk_nodes[access_node_hash]; check_node_p; check_node_p = check_node_p->next)
     {
       if (check_node_p->xasl_addr == (UINTPTR) xasl_p)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   if (!check_node_p)
     {
       /* forward reference */
-      check_node_p =
-	(QDUMP_XASL_CHECK_NODE *) malloc (sizeof (QDUMP_XASL_CHECK_NODE));
+      check_node_p = (QDUMP_XASL_CHECK_NODE *) malloc (sizeof (QDUMP_XASL_CHECK_NODE));
       if (check_node_p == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       check_node_p->next = chk_nodes[access_node_hash];
       chk_nodes[access_node_hash] = check_node_p;
       check_node_p->xasl_addr = (UINTPTR) xasl_p;
@@ -1725,8 +1696,7 @@ qdump_find_check_node_for (XASL_NODE * xasl_p,
  *   chk_nodes(in):
  */
 static void
-qdump_check_node (XASL_NODE * xasl_p,
-		  QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER])
+qdump_check_node (XASL_NODE * xasl_p, QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER])
 {
   UINTPTR addr_hash;
   QDUMP_XASL_CHECK_NODE *check_node_p, *check_node1_p;
@@ -1760,16 +1730,14 @@ qdump_check_node (XASL_NODE * xasl_p,
   for (spec_p = xasl_p->spec_list; spec_p; spec_p = spec_p->next)
     {
       if (spec_p->type == TARGET_LIST)
-	{
-	  check_node1_p =
-	    qdump_find_check_node_for (ACCESS_SPEC_XASL_NODE (spec_p),
-				       chk_nodes);
-	  /* mark as referenced */
-	  if (check_node1_p)
-	    {
-	      check_node1_p->referenced = 1;
-	    }
-	}
+        {
+          check_node1_p = qdump_find_check_node_for (ACCESS_SPEC_XASL_NODE (spec_p), chk_nodes);
+          /* mark as referenced */
+          if (check_node1_p)
+            {
+              check_node1_p->referenced = 1;
+            }
+        }
     }
 
   /* recursively check the children of this node */
@@ -1778,19 +1746,17 @@ qdump_check_node (XASL_NODE * xasl_p,
     case UNION_PROC:
     case DIFFERENCE_PROC:
     case INTERSECTION_PROC:
-      check_node1_p =
-	qdump_find_check_node_for (xasl_p->proc.union_.left, chk_nodes);
+      check_node1_p = qdump_find_check_node_for (xasl_p->proc.union_.left, chk_nodes);
       if (check_node1_p)
-	{
-	  check_node1_p->referenced = 1;
-	}
+        {
+          check_node1_p->referenced = 1;
+        }
 
-      check_node1_p =
-	qdump_find_check_node_for (xasl_p->proc.union_.right, chk_nodes);
+      check_node1_p = qdump_find_check_node_for (xasl_p->proc.union_.right, chk_nodes);
       if (check_node1_p)
-	{
-	  check_node1_p->referenced = 1;
-	}
+        {
+          check_node1_p->referenced = 1;
+        }
       break;
 
     case BUILDLIST_PROC:
@@ -1821,35 +1787,32 @@ qdump_print_inconsistencies (QDUMP_XASL_CHECK_NODE * chk_nodes[HASH_NUMBER])
 
   for (i = 0; i < HASH_NUMBER; i++)
     {
-      for (check_node_p = chk_nodes[i]; check_node_p;
-	   check_node_p = check_node_p->next)
-	{
-	  /* any buildlist procs that are referenced must be reachable */
-	  if (check_node_p->referenced && !check_node_p->reachable)
-	    {
-	      if (!error)
-		{
-		  fprintf (stdout,
-			   "\nSYSTEM ERROR--INCONSISTENT XASL TREE\n\n");
-		}
+      for (check_node_p = chk_nodes[i]; check_node_p; check_node_p = check_node_p->next)
+        {
+          /* any buildlist procs that are referenced must be reachable */
+          if (check_node_p->referenced && !check_node_p->reachable)
+            {
+              if (!error)
+                {
+                  fprintf (stdout, "\nSYSTEM ERROR--INCONSISTENT XASL TREE\n\n");
+                }
 
-	      fprintf (stdout,
-		       "Referenced node [%lld] is not reachable in the tree\n",
-		       (long long) check_node_p->xasl_addr);
-	      error = 1;
-	    }
-	}
+              fprintf (stdout,
+                       "Referenced node [%lld] is not reachable in the tree\n", (long long) check_node_p->xasl_addr);
+              error = 1;
+            }
+        }
     }
 
   /* clean up our mallocs */
   for (i = 0; i < HASH_NUMBER; i++)
     {
       for (check_node_p = chk_nodes[i]; check_node_p; /* do nothing */ )
-	{
-	  tmp_node_p = check_node_p;
-	  check_node_p = check_node_p->next;
-	  free_and_init (tmp_node_p);
-	}
+        {
+          tmp_node_p = check_node_p;
+          check_node_p = check_node_p->next;
+          free_and_init (tmp_node_p);
+        }
     }
 
   if (error)
@@ -1869,8 +1832,7 @@ qdump_print_build_list_node (XASL_NODE * xasl_p)
   if (xasl_p->outptr_list != NULL)
     {
       fprintf (foutput, "-->output columns:");
-      qdump_print_db_value_array (node_p->output_columns,
-				  xasl_p->outptr_list->valptr_cnt);
+      qdump_print_db_value_array (node_p->output_columns, xasl_p->outptr_list->valptr_cnt);
       fprintf (foutput, "\n");
     }
 
@@ -1912,9 +1874,7 @@ qdump_print_build_list_node (XASL_NODE * xasl_p)
     {
       fprintf (foutput, "-->grbynum val:");
       fprintf (foutput, "<addr:%p|", node_p->g_grbynum_val);
-      fprintf (foutput, "type:%s",
-	       qdump_data_type_string (DB_VALUE_DOMAIN_TYPE
-				       (node_p->g_grbynum_val)));
+      fprintf (foutput, "type:%s", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (node_p->g_grbynum_val)));
       fprintf (foutput, "|value:");
       qdump_print_db_value (node_p->g_grbynum_val);
       fprintf (foutput, ">\n");
@@ -1927,9 +1887,9 @@ qdump_print_build_list_node (XASL_NODE * xasl_p)
       fprintf (foutput, "\n");
 
       if (node_p->g_grbynum_flag == XASL_G_GRBYNUM_FLAG_SCAN_CONTINUE)
-	{
-	  fprintf (foutput, "-->grbynum CONTINUE\n");
-	}
+        {
+          fprintf (foutput, "-->grbynum CONTINUE\n");
+        }
     }
 
   if (node_p->g_agg_list)
@@ -1967,9 +1927,7 @@ qdump_print_build_value_node (XASL_NODE * xasl_p)
     {
       fprintf (foutput, "-->grbynum val:");
       fprintf (foutput, "<addr:%p|", node_p->grbynum_val);
-      fprintf (foutput, "type:%s",
-	       qdump_data_type_string (DB_VALUE_DOMAIN_TYPE
-				       (node_p->grbynum_val)));
+      fprintf (foutput, "type:%s", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (node_p->grbynum_val)));
       fprintf (foutput, "|value:");
       qdump_print_db_value (node_p->grbynum_val);
       fprintf (foutput, ">\n");
@@ -2021,39 +1979,38 @@ qdump_print_xasl (XASL_NODE * xasl_p)
       fprintf (foutput, "-->[flag=");
 
       if (XASL_IS_FLAGED (xasl_p, XASL_LINK_TO_REGU_VARIABLE))
-	{
-	  XASL_CLEAR_FLAG (xasl_p, XASL_LINK_TO_REGU_VARIABLE);
-	  fprintf (foutput, "%sXASL_LINK_TO_REGU_VARIABLE",
-		   (nflag ? "|" : ""));
-	  nflag++;
-	}
+        {
+          XASL_CLEAR_FLAG (xasl_p, XASL_LINK_TO_REGU_VARIABLE);
+          fprintf (foutput, "%sXASL_LINK_TO_REGU_VARIABLE", (nflag ? "|" : ""));
+          nflag++;
+        }
 
       if (XASL_IS_FLAGED (xasl_p, XASL_SKIP_ORDERBY_LIST))
-	{
-	  XASL_CLEAR_FLAG (xasl_p, XASL_SKIP_ORDERBY_LIST);
-	  fprintf (foutput, "%sXASL_SKIP_ORDERBY_LIST", (nflag ? "|" : ""));
-	  nflag++;
-	}
+        {
+          XASL_CLEAR_FLAG (xasl_p, XASL_SKIP_ORDERBY_LIST);
+          fprintf (foutput, "%sXASL_SKIP_ORDERBY_LIST", (nflag ? "|" : ""));
+          nflag++;
+        }
 
       if (XASL_IS_FLAGED (xasl_p, XASL_ZERO_CORR_LEVEL))
-	{
-	  XASL_CLEAR_FLAG (xasl_p, XASL_ZERO_CORR_LEVEL);
-	  fprintf (foutput, "%sXASL_ZERO_CORR_LEVEL", (nflag ? "|" : ""));
-	  nflag++;
-	}
+        {
+          XASL_CLEAR_FLAG (xasl_p, XASL_ZERO_CORR_LEVEL);
+          fprintf (foutput, "%sXASL_ZERO_CORR_LEVEL", (nflag ? "|" : ""));
+          nflag++;
+        }
 
       if (XASL_IS_FLAGED (xasl_p, XASL_TOP_MOST_XASL))
-	{
-	  XASL_CLEAR_FLAG (xasl_p, XASL_TOP_MOST_XASL);
-	  fprintf (foutput, "%sXASL_TOP_MOST_XASL", (nflag ? "|" : ""));
-	  nflag++;
-	}
+        {
+          XASL_CLEAR_FLAG (xasl_p, XASL_TOP_MOST_XASL);
+          fprintf (foutput, "%sXASL_TOP_MOST_XASL", (nflag ? "|" : ""));
+          nflag++;
+        }
 
       if (xasl_p->flag)
-	{
-	  fprintf (foutput, "%d%s", xasl_p->flag, (nflag ? "|" : ""));
-	  nflag++;
-	}
+        {
+          fprintf (foutput, "%d%s", xasl_p->flag, (nflag ? "|" : ""));
+          nflag++;
+        }
 
       fprintf (foutput, "]\n");
 
@@ -2083,9 +2040,7 @@ qdump_print_xasl (XASL_NODE * xasl_p)
     {
       fprintf (foutput, "-->ordbynum val:");
       fprintf (foutput, "<addr:%p|", xasl_p->ordbynum_val);
-      fprintf (foutput, "type:%s",
-	       qdump_data_type_string (DB_VALUE_DOMAIN_TYPE
-				       (xasl_p->ordbynum_val)));
+      fprintf (foutput, "type:%s", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (xasl_p->ordbynum_val)));
       fprintf (foutput, "|value:");
       qdump_print_db_value (xasl_p->ordbynum_val);
       fprintf (foutput, ">\n");
@@ -2097,7 +2052,7 @@ qdump_print_xasl (XASL_NODE * xasl_p)
       qdump_print_predicate (xasl_p->ordbynum_pred);
       fprintf (foutput, "\n");
       if (xasl_p->ordbynum_flag == XASL_ORDBYNUM_FLAG_SCAN_CONTINUE)
-	fprintf (foutput, "-->ordbynum CONTINUE\n");
+        fprintf (foutput, "-->ordbynum CONTINUE\n");
     }
 
   if (xasl_p->orderby_limit)
@@ -2113,22 +2068,21 @@ qdump_print_xasl (XASL_NODE * xasl_p)
 
 #if defined(SERVER_MODE)
       if (prm_get_bool_value (PRM_ID_USE_ORDERBY_SORT_LIMIT))
-	{
-	  sort_limit = "enabled";
-	}
+        {
+          sort_limit = "enabled";
+        }
 #else
       param = prm_get_name (PRM_ID_USE_ORDERBY_SORT_LIMIT);
       if (param != NULL)
-	{
-	  if (db_get_system_parameter_value (value, sizeof (value),
-					     param) == NO_ERROR)
-	    {
-	      if (value[0] == 'y')
-		{
-		  sort_limit = "enabled";
-		}
-	    }
-	}
+        {
+          if (db_get_system_parameter_value (value, sizeof (value), param) == NO_ERROR)
+            {
+              if (value[0] == 'y')
+                {
+                  sort_limit = "enabled";
+                }
+            }
+        }
 #endif
 
       fprintf (foutput, " (optimization %s)", sort_limit);
@@ -2140,16 +2094,15 @@ qdump_print_xasl (XASL_NODE * xasl_p)
       fprintf (foutput, "-->single tuple:");
       single_tuple_p = xasl_p->single_tuple;
       if (single_tuple_p)
-	{
-	  fprintf (foutput, "[value list]:");
-	  for (value_list = single_tuple_p->valp, i = 0;
-	       i < single_tuple_p->val_cnt;
-	       value_list = value_list->next, i++)
-	    {
-	      qdump_print_db_value (value_list->val);
-	      fprintf (foutput, "\t");
-	    }
-	}
+        {
+          fprintf (foutput, "[value list]:");
+          for (value_list = single_tuple_p->valp, i = 0;
+               i < single_tuple_p->val_cnt; value_list = value_list->next, i++)
+            {
+              qdump_print_db_value (value_list->val);
+              fprintf (foutput, "\t");
+            }
+        }
       fprintf (foutput, "\n");
     }
 
@@ -2211,9 +2164,7 @@ qdump_print_xasl (XASL_NODE * xasl_p)
     {
       fprintf (foutput, "-->instnum val:");
       fprintf (foutput, "<addr:%p|", xasl_p->instnum_val);
-      fprintf (foutput, "type:%s",
-	       qdump_data_type_string (DB_VALUE_DOMAIN_TYPE
-				       (xasl_p->instnum_val)));
+      fprintf (foutput, "type:%s", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (xasl_p->instnum_val)));
       fprintf (foutput, "|value:");
       qdump_print_db_value (xasl_p->instnum_val);
       fprintf (foutput, ">\n");
@@ -2223,9 +2174,7 @@ qdump_print_xasl (XASL_NODE * xasl_p)
     {
       fprintf (foutput, "-->old instnum val:");
       fprintf (foutput, "<addr:%p|", xasl_p->save_instnum_val);
-      fprintf (foutput, "type:%s",
-	       qdump_data_type_string (DB_VALUE_DOMAIN_TYPE
-				       (xasl_p->save_instnum_val)));
+      fprintf (foutput, "type:%s", qdump_data_type_string (DB_VALUE_DOMAIN_TYPE (xasl_p->save_instnum_val)));
       fprintf (foutput, "|value:");
       qdump_print_db_value (xasl_p->save_instnum_val);
       fprintf (foutput, ">\n");
@@ -2237,9 +2186,9 @@ qdump_print_xasl (XASL_NODE * xasl_p)
       qdump_print_predicate (xasl_p->instnum_pred);
       fprintf (foutput, "\n");
       if (xasl_p->instnum_flag == XASL_INSTNUM_FLAG_SCAN_CONTINUE)
-	{
-	  fprintf (foutput, "-->instnum CONTINUE\n");
-	}
+        {
+          fprintf (foutput, "-->instnum CONTINUE\n");
+        }
     }
 
   fprintf (foutput, "-->current spec:");
@@ -2392,62 +2341,60 @@ qdump_print_access_spec_stats_json (ACCESS_SPEC_TYPE * spec_list_p)
       type = spec->type;
 
       if (type == TARGET_CLASS)
-	{
-	  cls_node = &ACCESS_SPEC_CLS_SPEC (spec);
-	  class_name = heap_get_class_name (NULL, &(cls_node->cls_oid));
-	  spec_name[0] = '\0';
+        {
+          cls_node = &ACCESS_SPEC_CLS_SPEC (spec);
+          class_name = heap_get_class_name (NULL, &(cls_node->cls_oid));
+          spec_name[0] = '\0';
 
-	  if (spec->access == SEQUENTIAL)
-	    {
-	      if (class_name != NULL)
-		{
-		  sprintf (spec_name, "table (%s)", class_name);
-		}
-	      else
-		{
-		  sprintf (spec_name, "table (unknown)");
-		}
-	    }
-	  else if (spec->access == INDEX)
-	    {
-	      if (heap_get_indexname_of_btid (NULL, &(cls_node->cls_oid),
-					      &spec->indexptr->indx_id.i.btid,
-					      &index_name) == NO_ERROR)
-		{
-		  if (class_name != NULL && index_name != NULL)
-		    {
-		      sprintf (spec_name, "index (%s.%s)", class_name,
-			       index_name);
-		    }
-		  else
-		    {
-		      sprintf (spec_name, "index (unknown)");
-		    }
-		}
-	    }
+          if (spec->access == SEQUENTIAL)
+            {
+              if (class_name != NULL)
+                {
+                  sprintf (spec_name, "table (%s)", class_name);
+                }
+              else
+                {
+                  sprintf (spec_name, "table (unknown)");
+                }
+            }
+          else if (spec->access == INDEX)
+            {
+              if (heap_get_indexname_of_btid (NULL, &(cls_node->cls_oid),
+                                              &spec->indexptr->indx_id.i.btid, &index_name) == NO_ERROR)
+                {
+                  if (class_name != NULL && index_name != NULL)
+                    {
+                      sprintf (spec_name, "index (%s.%s)", class_name, index_name);
+                    }
+                  else
+                    {
+                      sprintf (spec_name, "index (unknown)");
+                    }
+                }
+            }
 
-	  json_object_set_new (scan, "access", json_string (spec_name));
+          json_object_set_new (scan, "access", json_string (spec_name));
 
-	  if (class_name != NULL)
-	    {
-	      free_and_init (class_name);
-	    }
-	  if (index_name != NULL)
-	    {
-	      free_and_init (index_name);
-	    }
-	}
+          if (class_name != NULL)
+            {
+              free_and_init (class_name);
+            }
+          if (index_name != NULL)
+            {
+              free_and_init (index_name);
+            }
+        }
       else if (type == TARGET_LIST)
-	{
-	  json_object_set_new (scan, "access", json_string ("temp"));
-	}
+        {
+          json_object_set_new (scan, "access", json_string ("temp"));
+        }
 
       scan_print_stats_json (&spec->s_id, scan);
 
       if (scan_array != NULL)
-	{
-	  json_array_append_new (scan_array, scan);
-	}
+        {
+          json_array_append_new (scan_array, scan);
+        }
     }
 
   if (scan_array != NULL)
@@ -2496,13 +2443,9 @@ qdump_print_stats_json (XASL_NODE * xasl_p, json_t * parent)
     case UPDATE_PROC:
     case DELETE_PROC:
     case INSERT_PROC:
-      json_object_set_new (proc, "time",
-			   json_integer (TO_MSEC
-					 (xasl_p->xasl_stats.elapsed_time)));
-      json_object_set_new (proc, "fetch",
-			   json_integer (xasl_p->xasl_stats.fetches));
-      json_object_set_new (proc, "ioread",
-			   json_integer (xasl_p->xasl_stats.ioreads));
+      json_object_set_new (proc, "time", json_integer (TO_MSEC (xasl_p->xasl_stats.elapsed_time)));
+      json_object_set_new (proc, "fetch", json_integer (xasl_p->xasl_stats.fetches));
+      json_object_set_new (proc, "ioread", json_integer (xasl_p->xasl_stats.ioreads));
       break;
 
     case UNION_PROC:
@@ -2544,51 +2487,44 @@ qdump_print_stats_json (XASL_NODE * xasl_p, json_t * parent)
     {
       groupby = json_object ();
 
-      json_object_set_new (groupby, "time",
-			   json_integer (TO_MSEC (gstats->groupby_time)));
+      json_object_set_new (groupby, "time", json_integer (TO_MSEC (gstats->groupby_time)));
 
       if (gstats->groupby_sort)
-	{
-	  json_object_set_new (groupby, "sort", json_true ());
-	  json_object_set_new (groupby, "page",
-			       json_integer (gstats->groupby_pages));
-	  json_object_set_new (groupby, "ioread",
-			       json_integer (gstats->groupby_ioreads));
-	}
+        {
+          json_object_set_new (groupby, "sort", json_true ());
+          json_object_set_new (groupby, "page", json_integer (gstats->groupby_pages));
+          json_object_set_new (groupby, "ioread", json_integer (gstats->groupby_ioreads));
+        }
       else
-	{
-	  json_object_set_new (groupby, "sort", json_false ());
-	}
+        {
+          json_object_set_new (groupby, "sort", json_false ());
+        }
 
       json_object_set_new (groupby, "rows", json_integer (gstats->rows));
       json_object_set_new (proc, "GROUPBY", groupby);
     }
 
   ostats = &xasl_p->orderby_stats;
-  if (ostats->orderby_filesort || ostats->orderby_topnsort
-      || XASL_IS_FLAGED (xasl_p, XASL_SKIP_ORDERBY_LIST))
+  if (ostats->orderby_filesort || ostats->orderby_topnsort || XASL_IS_FLAGED (xasl_p, XASL_SKIP_ORDERBY_LIST))
     {
       orderby = json_object ();
 
-      json_object_set_new (orderby, "time",
-			   json_integer (TO_MSEC (ostats->orderby_time)));
+      json_object_set_new (orderby, "time", json_integer (TO_MSEC (ostats->orderby_time)));
 
       if (ostats->orderby_filesort)
-	{
-	  json_object_set_new (orderby, "sort", json_true ());
-	  json_object_set_new (orderby, "page",
-			       json_integer (ostats->orderby_pages));
-	  json_object_set_new (orderby, "ioread",
-			       json_integer (ostats->orderby_ioreads));
-	}
+        {
+          json_object_set_new (orderby, "sort", json_true ());
+          json_object_set_new (orderby, "page", json_integer (ostats->orderby_pages));
+          json_object_set_new (orderby, "ioread", json_integer (ostats->orderby_ioreads));
+        }
       else if (ostats->orderby_topnsort)
-	{
-	  json_object_set_new (orderby, "topnsort", json_true ());
-	}
+        {
+          json_object_set_new (orderby, "topnsort", json_true ());
+        }
       else
-	{
-	  json_object_set_new (orderby, "skipsort", json_true ());
-	}
+        {
+          json_object_set_new (orderby, "skipsort", json_true ());
+        }
 
       json_object_set_new (proc, "ORDERBY", orderby);
     }
@@ -2596,15 +2532,15 @@ qdump_print_stats_json (XASL_NODE * xasl_p, json_t * parent)
   if (HAVE_SUBQUERY_PROC (xasl_p) && xasl_p->aptr_list != NULL)
     {
       if (HAVE_SUBQUERY_PROC (xasl_p->aptr_list))
-	{
-	  subquery = json_object ();
-	  qdump_print_stats_json (xasl_p->aptr_list, subquery);
-	  json_object_set_new (proc, "SUBQUERY (uncorrelated)", subquery);
-	}
+        {
+          subquery = json_object ();
+          qdump_print_stats_json (xasl_p->aptr_list, subquery);
+          json_object_set_new (proc, "SUBQUERY (uncorrelated)", subquery);
+        }
       else
-	{
-	  qdump_print_stats_json (xasl_p->aptr_list, proc);
-	}
+        {
+          qdump_print_stats_json (xasl_p->aptr_list, proc);
+        }
     }
 
   if (xasl_p->dptr_list != NULL)
@@ -2622,8 +2558,7 @@ qdump_print_stats_json (XASL_NODE * xasl_p, json_t * parent)
  *   spec_list_p(in):
  */
 static void
-qdump_print_access_spec_stats_text (FILE * fp, ACCESS_SPEC_TYPE * spec_list_p,
-				    int indent)
+qdump_print_access_spec_stats_text (FILE * fp, ACCESS_SPEC_TYPE * spec_list_p, int indent)
 {
   TARGET_TYPE type;
   char *class_name = NULL, *index_name = NULL;
@@ -2641,60 +2576,58 @@ qdump_print_access_spec_stats_text (FILE * fp, ACCESS_SPEC_TYPE * spec_list_p,
   for (spec = spec_list_p, i = 0; spec != NULL; spec = spec->next, i++)
     {
       if (i > 0)
-	{
-	  fprintf (fp, "%*c", multi_spec_indent, ' ');
-	}
+        {
+          fprintf (fp, "%*c", multi_spec_indent, ' ');
+        }
 
       type = spec->type;
       if (type == TARGET_CLASS)
-	{
-	  cls_node = &ACCESS_SPEC_CLS_SPEC (spec);
-	  class_name = heap_get_class_name (NULL, &(cls_node->cls_oid));
+        {
+          cls_node = &ACCESS_SPEC_CLS_SPEC (spec);
+          class_name = heap_get_class_name (NULL, &(cls_node->cls_oid));
 
-	  if (spec->access == SEQUENTIAL)
-	    {
-	      if (class_name != NULL)
-		{
-		  fprintf (fp, "(table: %s), ", class_name);
-		}
-	      else
-		{
-		  fprintf (fp, "(table: unknown), ");
-		}
-	    }
-	  else if (spec->access == INDEX)
-	    {
-	      if (heap_get_indexname_of_btid (NULL, &(cls_node->cls_oid),
-					      &spec->indexptr->indx_id.i.btid,
-					      &index_name) == NO_ERROR)
-		{
-		  if (class_name != NULL && index_name != NULL)
-		    {
-		      fprintf (fp, "(index: %s.%s), ", class_name,
-			       index_name);
-		    }
-		  else
-		    {
-		      fprintf (fp, "(index: unknown), ");
-		    }
-		}
-	    }
+          if (spec->access == SEQUENTIAL)
+            {
+              if (class_name != NULL)
+                {
+                  fprintf (fp, "(table: %s), ", class_name);
+                }
+              else
+                {
+                  fprintf (fp, "(table: unknown), ");
+                }
+            }
+          else if (spec->access == INDEX)
+            {
+              if (heap_get_indexname_of_btid (NULL, &(cls_node->cls_oid),
+                                              &spec->indexptr->indx_id.i.btid, &index_name) == NO_ERROR)
+                {
+                  if (class_name != NULL && index_name != NULL)
+                    {
+                      fprintf (fp, "(index: %s.%s), ", class_name, index_name);
+                    }
+                  else
+                    {
+                      fprintf (fp, "(index: unknown), ");
+                    }
+                }
+            }
 
-	  scan_print_stats_text (fp, &spec->s_id);
+          scan_print_stats_text (fp, &spec->s_id);
 
-	  if (class_name != NULL)
-	    {
-	      free_and_init (class_name);
-	    }
-	  if (index_name != NULL)
-	    {
-	      free_and_init (index_name);
-	    }
-	}
+          if (class_name != NULL)
+            {
+              free_and_init (class_name);
+            }
+          if (index_name != NULL)
+            {
+              free_and_init (index_name);
+            }
+        }
       else
-	{
-	  scan_print_stats_text (fp, &spec->s_id);
-	}
+        {
+          scan_print_stats_text (fp, &spec->s_id);
+        }
 
       fprintf (fp, "\n");
     }
@@ -2735,10 +2668,9 @@ qdump_print_stats_text (FILE * fp, XASL_NODE * xasl_p, int indent)
     case UPDATE_PROC:
     case DELETE_PROC:
       fprintf (fp, "%s (time: %d, fetch: %lld, ioread: %lld)\n",
-	       qdump_xasl_type_string (xasl_p),
-	       TO_MSEC (xasl_p->xasl_stats.elapsed_time),
-	       (long long int) xasl_p->xasl_stats.fetches,
-	       (long long int) xasl_p->xasl_stats.ioreads);
+               qdump_xasl_type_string (xasl_p),
+               TO_MSEC (xasl_p->xasl_stats.elapsed_time),
+               (long long int) xasl_p->xasl_stats.fetches, (long long int) xasl_p->xasl_stats.ioreads);
       indent += 2;
       break;
 
@@ -2774,50 +2706,47 @@ qdump_print_stats_text (FILE * fp, XASL_NODE * xasl_p, int indent)
       fprintf (fp, "GROUPBY (time: %d", TO_MSEC (gstats->groupby_time));
 
       if (gstats->groupby_sort)
-	{
-	  fprintf (fp, ", sort: true, page: %lld, ioread: %lld",
-		   (long long int) gstats->groupby_pages,
-		   (long long int) gstats->groupby_ioreads);
-	}
+        {
+          fprintf (fp, ", sort: true, page: %lld, ioread: %lld",
+                   (long long int) gstats->groupby_pages, (long long int) gstats->groupby_ioreads);
+        }
       else
-	{
-	  fprintf (fp, ", sort: false");
-	}
+        {
+          fprintf (fp, ", sort: false");
+        }
 
       fprintf (fp, ", rows: %d)\n", gstats->rows);
     }
 
   ostats = &xasl_p->orderby_stats;
-  if (ostats->orderby_filesort || ostats->orderby_topnsort
-      || XASL_IS_FLAGED (xasl_p, XASL_SKIP_ORDERBY_LIST))
+  if (ostats->orderby_filesort || ostats->orderby_topnsort || XASL_IS_FLAGED (xasl_p, XASL_SKIP_ORDERBY_LIST))
     {
       fprintf (fp, "%*c", indent, ' ');
       fprintf (fp, "ORDERBY (time: %d", TO_MSEC (ostats->orderby_time));
 
       if (ostats->orderby_filesort)
-	{
-	  fprintf (fp, ", sort: true");
-	  fprintf (fp, ", page: %lld, ioread: %lld",
-		   (long long int) ostats->orderby_pages,
-		   (long long int) ostats->orderby_ioreads);
-	}
+        {
+          fprintf (fp, ", sort: true");
+          fprintf (fp, ", page: %lld, ioread: %lld",
+                   (long long int) ostats->orderby_pages, (long long int) ostats->orderby_ioreads);
+        }
       else if (ostats->orderby_topnsort)
-	{
-	  fprintf (fp, ", topnsort: true");
-	}
+        {
+          fprintf (fp, ", topnsort: true");
+        }
       else
-	{
-	  fprintf (fp, ", skipsort: true");
-	}
+        {
+          fprintf (fp, ", skipsort: true");
+        }
       fprintf (fp, ")\n");
     }
 
   if (HAVE_SUBQUERY_PROC (xasl_p) && xasl_p->aptr_list != NULL)
     {
       if (HAVE_SUBQUERY_PROC (xasl_p->aptr_list))
-	{
-	  fprintf (fp, "%*cSUBQUERY (uncorrelated)\n", indent, ' ');
-	}
+        {
+          fprintf (fp, "%*cSUBQUERY (uncorrelated)\n", indent, ' ');
+        }
 
       qdump_print_stats_text (fp, xasl_p->aptr_list, indent);
     }

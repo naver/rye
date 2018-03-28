@@ -56,7 +56,7 @@
 #include "session.h"
 #endif
 
-#include "dbval.h"		/* this must be the last header file included!!! */
+#include "dbval.h"              /* this must be the last header file included!!! */
 
 void (*prev_sigfpe_handler) (int) = SIG_DFL;
 
@@ -107,10 +107,9 @@ void sigfpe_handler (int sig);
 
 int
 db_init (const char *program, UNUSED_ARG int print_version,
-	 const char *dbname, const char *host_name,
-	 const bool overwrite,
-	 const char *addmore_vols_file, int npages, int desired_pagesize,
-	 int log_npages, int desired_log_page_size)
+         const char *dbname, const char *host_name,
+         const bool overwrite,
+         const char *addmore_vols_file, int npages, int desired_pagesize, int log_npages, int desired_log_page_size)
 {
 #if defined (RYE_DEBUG)
   int value;
@@ -122,7 +121,7 @@ db_init (const char *program, UNUSED_ARG int print_version,
   BOOT_CLIENT_CREDENTIAL client_credential;
   BOOT_DB_PATH_INFO db_path_info;
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   assert (host_name == NULL);
 #endif
 
@@ -135,59 +134,53 @@ db_init (const char *program, UNUSED_ARG int print_version,
          What to do with volumes. */
       env_value = envvar_get ("BOSR_SPLIT_INIT_VOLUME");
       if (env_value != NULL)
-	{
-	  value = atoi (env_value);
-	}
+        {
+          value = atoi (env_value);
+        }
       else
-	{
-	  value = 0;
-	}
+        {
+          value = 0;
+        }
 
       if (value != 0)
-	{
-	  FILE *more_vols_fp;
-	  DKNPAGES db_npages;
+        {
+          FILE *more_vols_fp;
+          DKNPAGES db_npages;
 
-	  db_npages = npages / 4;
+          db_npages = npages / 4;
 
-	  if (tmpnam (more_vol_info_temp_file) != NULL
-	      && (more_vols_fp =
-		  fopen (more_vol_info_temp_file, "w")) != NULL)
-	    {
-	      fprintf (more_vols_fp, "%s %s %s %d", "PURPOSE", "DATA",
-		       "NPAGES", db_npages);
-	      fprintf (more_vols_fp, "%s %s %s %d", "PURPOSE", "INDEX",
-		       "NPAGES", db_npages);
-	      fprintf (more_vols_fp, "%s %s %s %d", "PURPOSE", "TEMP",
-		       "NPAGES", db_npages);
-	      fclose (more_vols_fp);
+          if (tmpnam (more_vol_info_temp_file) != NULL && (more_vols_fp = fopen (more_vol_info_temp_file, "w")) != NULL)
+            {
+              fprintf (more_vols_fp, "%s %s %s %d", "PURPOSE", "DATA", "NPAGES", db_npages);
+              fprintf (more_vols_fp, "%s %s %s %d", "PURPOSE", "INDEX", "NPAGES", db_npages);
+              fprintf (more_vols_fp, "%s %s %s %d", "PURPOSE", "TEMP", "NPAGES", db_npages);
+              fclose (more_vols_fp);
 
-	      if ((db_npages * 4) != npages)
-		{
-		  npages = npages - (db_npages * 4);
-		}
-	      else
-		{
-		  npages = db_npages;
-		}
+              if ((db_npages * 4) != npages)
+                {
+                  npages = npages - (db_npages * 4);
+                }
+              else
+                {
+                  npages = db_npages;
+                }
 
-	      addmore_vols_file = more_vol_info_file =
-		more_vol_info_temp_file;
-	    }
-	}
+              addmore_vols_file = more_vol_info_file = more_vol_info_temp_file;
+            }
+        }
     }
 #endif /* RYE_DEBUG */
 
   if (desired_pagesize > 0)
     {
       if (desired_pagesize < IO_MIN_PAGE_SIZE)
-	{
-	  desired_pagesize = IO_MIN_PAGE_SIZE;
-	}
+        {
+          desired_pagesize = IO_MIN_PAGE_SIZE;
+        }
       else if (desired_pagesize > IO_MAX_PAGE_SIZE)
-	{
-	  desired_pagesize = IO_MAX_PAGE_SIZE;
-	}
+        {
+          desired_pagesize = IO_MAX_PAGE_SIZE;
+        }
     }
   else
     {
@@ -197,13 +190,13 @@ db_init (const char *program, UNUSED_ARG int print_version,
   if (desired_log_page_size > 0)
     {
       if (desired_log_page_size < IO_MIN_PAGE_SIZE)
-	{
-	  desired_log_page_size = IO_MIN_PAGE_SIZE;
-	}
+        {
+          desired_log_page_size = IO_MIN_PAGE_SIZE;
+        }
       else if (desired_log_page_size > IO_MAX_PAGE_SIZE)
-	{
-	  desired_log_page_size = IO_MAX_PAGE_SIZE;
-	}
+        {
+          desired_log_page_size = IO_MAX_PAGE_SIZE;
+        }
     }
   else
     {
@@ -222,15 +215,13 @@ db_init (const char *program, UNUSED_ARG int print_version,
 
   db_path_info.db_host = host_name;
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   assert (db_path_info.db_host == NULL);
 #endif
 
   error = boot_initialize_client (&client_credential, &db_path_info,
-				  (bool) overwrite, addmore_vols_file,
-				  npages, (PGLENGTH) desired_pagesize,
-				  log_npages,
-				  (PGLENGTH) desired_log_page_size);
+                                  (bool) overwrite, addmore_vols_file,
+                                  npages, (PGLENGTH) desired_pagesize, log_npages, (PGLENGTH) desired_log_page_size);
 
 #if defined (RYE_DEBUG)
   if (more_vol_info_file != NULL)
@@ -275,8 +266,7 @@ db_add_volume (DBDEF_VOL_EXT_INFO * ext_info)
 
   if (au_get_dba_user () != NULL && !au_is_dba_group_member (au_get_user ()))
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1,
-	      "db_add_volume");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1, "db_add_volume");
       return er_errid ();
     }
 
@@ -643,8 +633,7 @@ db_clear_host_connected (void)
  *
  */
 int
-db_restart (const char *program, UNUSED_ARG int print_version,
-	    const char *volume)
+db_restart (const char *program, UNUSED_ARG int print_version, const char *volume)
 {
   int error = NO_ERROR;
   BOOT_CLIENT_CREDENTIAL client_credential;
@@ -706,8 +695,7 @@ db_restart (const char *program, UNUSED_ARG int print_version,
  *   client_type(in) : BOOT_CLIENT_TYPE_XXX in boot.h
  */
 int
-db_restart_ex (const char *program, const char *db_name, const char *db_user,
-	       const char *db_password, int client_type)
+db_restart_ex (const char *program, const char *db_name, const char *db_user, const char *db_password, int client_type)
 {
   int retval;
 
@@ -1324,8 +1312,7 @@ db_get_user_and_host_name (void)
   if (!user)
     {
       db_string_free (username);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, len);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, len);
       return 0;
     }
 
@@ -1435,8 +1422,7 @@ db_error_code (void)
 db_error_log_handler_t
 db_register_error_log_handler (db_error_log_handler_t f)
 {
-  return (db_error_log_handler_t) er_register_log_handler ((er_log_handler_t)
-							   f);
+  return (db_error_log_handler_t) er_register_log_handler ((er_log_handler_t) f);
 }
 
 /*
@@ -1478,37 +1464,36 @@ fetch_set_internal (DB_SET * set, int quit_on_error)
     {
       mops = (DB_OBJECT **) malloc ((max + 1) * sizeof (DB_OBJECT *));
       if (mops == NULL)
-	{
-	  return (er_errid ());
-	}
+        {
+          return (er_errid ());
+        }
       cnt = 0;
 
       for (i = 0; i < max && error == NO_ERROR; i++)
-	{
-	  error = set_get_element (set, i, &value);
-	  if (error == NO_ERROR)
-	    {
-	      if (DB_VALUE_TYPE (&value) == DB_TYPE_OBJECT
-		  && DB_GET_OBJECT (&value) != NULL)
-		{
-		  mops[cnt] = DB_GET_OBJECT (&value);
-		  cnt++;
-		}
-	      db_value_clear (&value);
-	    }
-	}
+        {
+          error = set_get_element (set, i, &value);
+          if (error == NO_ERROR)
+            {
+              if (DB_VALUE_TYPE (&value) == DB_TYPE_OBJECT && DB_GET_OBJECT (&value) != NULL)
+                {
+                  mops[cnt] = DB_GET_OBJECT (&value);
+                  cnt++;
+                }
+              db_value_clear (&value);
+            }
+        }
       mops[cnt] = NULL;
       if (error == NO_ERROR && cnt)
-	{
-	  obj = locator_fetch_set (cnt, mops, S_LOCK, quit_on_error);
-	  if (obj == NULL)
-	    {
-	      error = er_errid ();
-	    }
-	}
+        {
+          obj = locator_fetch_set (cnt, mops, S_LOCK, quit_on_error);
+          if (obj == NULL)
+            {
+              error = er_errid ();
+            }
+        }
 
       for (i = 0; i < max; i++)
-	mops[i] = NULL;
+        mops[i] = NULL;
 
       free_and_init (mops);
     }
@@ -1605,8 +1590,7 @@ db_object (DB_IDENTIFIER * oid)
  *    return    : error code
  */
 int
-db_update_persist_conf_file (const char *proc_name, const char *sect_name,
-			     const char *key, const char *value)
+db_update_persist_conf_file (const char *proc_name, const char *sect_name, const char *key, const char *value)
 {
   assert (proc_name != NULL);
   assert (sect_name != NULL);
@@ -1616,8 +1600,7 @@ db_update_persist_conf_file (const char *proc_name, const char *sect_name,
   if (proc_name == NULL || sect_name == NULL || key == NULL || value == NULL)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, "db_update_persist_conf_file:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "db_update_persist_conf_file:");
       return ER_GENERIC_ERROR;
     }
 
@@ -1641,8 +1624,7 @@ db_delete_proc_persist_conf_file (const char *proc_name)
   if (proc_name == NULL)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, "db_delete_proc_persist_conf_file:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "db_delete_proc_persist_conf_file:");
       return ER_GENERIC_ERROR;
     }
 
@@ -1654,8 +1636,7 @@ db_delete_proc_persist_conf_file (const char *proc_name)
  *    return    : error code
  */
 int
-db_delete_sect_persist_conf_file (const char *proc_name,
-				  const char *sect_name)
+db_delete_sect_persist_conf_file (const char *proc_name, const char *sect_name)
 {
   assert (proc_name != NULL);
   assert (sect_name != NULL);
@@ -1663,8 +1644,7 @@ db_delete_sect_persist_conf_file (const char *proc_name,
   if (proc_name == NULL || sect_name == NULL)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, "db_delete_sect_persist_conf_file:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "db_delete_sect_persist_conf_file:");
       return ER_GENERIC_ERROR;
     }
 
@@ -1676,8 +1656,7 @@ db_delete_sect_persist_conf_file (const char *proc_name,
  *    return    : error code
  */
 int
-db_delete_key_persist_conf_file (const char *proc_name, const char *sect_name,
-				 const char *key)
+db_delete_key_persist_conf_file (const char *proc_name, const char *sect_name, const char *key)
 {
   assert (proc_name != NULL);
   assert (sect_name != NULL);
@@ -1686,8 +1665,7 @@ db_delete_key_persist_conf_file (const char *proc_name, const char *sect_name,
   if (proc_name == NULL || sect_name == NULL || key == NULL)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, "db_delete_key_persist_conf_file:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "db_delete_key_persist_conf_file:");
       return ER_GENERIC_ERROR;
     }
 
@@ -1706,8 +1684,7 @@ db_read_server_persist_conf_file (const char *sect_name, const bool reload)
   if (sect_name == NULL)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, "db_read_server_persist_conf_file:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "db_read_server_persist_conf_file:");
       return ER_GENERIC_ERROR;
     }
 
@@ -1726,8 +1703,7 @@ db_read_broker_persist_conf_file (INI_TABLE * ini)
   if (ini == NULL)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, "db_read_broker_persist_conf_file:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "db_read_broker_persist_conf_file:");
       return ER_GENERIC_ERROR;
     }
 
@@ -1739,8 +1715,7 @@ db_read_broker_persist_conf_file (INI_TABLE * ini)
  *    return    : error code
  */
 int
-db_dump_persist_conf_file (FILE * fp, const char *proc_name,
-			   const char *sect_name)
+db_dump_persist_conf_file (FILE * fp, const char *proc_name, const char *sect_name)
 {
   return sysprm_dump_persist_conf_file (fp, proc_name, sect_name);
 }
@@ -1757,8 +1732,7 @@ db_dump_persist_conf_file (FILE * fp, const char *proc_name,
  *    persist(in):
  */
 int
-db_set_system_parameters (char *prm_names, int len, const char *data,
-			  const bool persist)
+db_set_system_parameters (char *prm_names, int len, const char *data, const bool persist)
 {
   int rc;
   int error = NO_ERROR;
@@ -1767,12 +1741,10 @@ db_set_system_parameters (char *prm_names, int len, const char *data,
   /* validate changes */
   rc = sysprm_validate_change_parameters (data, persist, true, &assignments);
   /* If a server parameter is changed, user must belong to DBA group */
-  if (rc == PRM_ERR_NOT_FOR_CLIENT && au_get_dba_user () != NULL
-      && !au_is_dba_group_member (au_get_user ()))
+  if (rc == PRM_ERR_NOT_FOR_CLIENT && au_get_dba_user () != NULL && !au_is_dba_group_member (au_get_user ()))
     {
       /* user is not authorized to do the changes */
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1,
-	      "db_set_system_parameters");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_AU_DBA_ONLY, 1, "db_set_system_parameters");
       error = ER_AU_DBA_ONLY;
       goto cleanup;
     }
@@ -1787,11 +1759,10 @@ db_set_system_parameters (char *prm_names, int len, const char *data,
   if (error < 0)
     {
       if (er_errid () == NO_ERROR)
-	{
-	  error = ER_GENERIC_ERROR;
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-			       "sysprm_change_parameter_values:");
-	}
+        {
+          error = ER_GENERIC_ERROR;
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "sysprm_change_parameter_values:");
+        }
       goto cleanup;
     }
 
@@ -1800,8 +1771,7 @@ db_set_system_parameters (char *prm_names, int len, const char *data,
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-			   "sysprm_print_assign_names:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "sysprm_print_assign_names:");
       goto cleanup;
     }
 
@@ -1863,8 +1833,7 @@ db_get_system_parameters (char *data, int len)
  * param_name(in): name of system parameter
  */
 int
-db_get_system_parameter_value (char *value, int max_len,
-			       const char *param_name)
+db_get_system_parameter_value (char *value, int max_len, const char *param_name)
 {
   int error = NO_ERROR;
   char buffer[512];
@@ -1954,10 +1923,7 @@ db_find_or_create_session (const char *db_user, const char *program_name)
 
   server_session_key = db_get_server_session_key ();
   /* server_session_key is in/out parameter, it is replaced new key */
-  err =
-    csession_find_or_create_session (&sess_id,
-				     server_session_key, db_user, host_name,
-				     program_name);
+  err = csession_find_or_create_session (&sess_id, server_session_key, db_user, host_name, program_name);
   if (err != NO_ERROR)
     {
       db_set_session_id (DB_EMPTY_SESSION);
@@ -1998,8 +1964,7 @@ db_server_shard_nodeid ()
 }
 
 int
-db_update_group_id (UNUSED_ARG int migrator_id, UNUSED_ARG int group_id,
-		    UNUSED_ARG int target, UNUSED_ARG int on_off)
+db_update_group_id (UNUSED_ARG int migrator_id, UNUSED_ARG int group_id, UNUSED_ARG int target, UNUSED_ARG int on_off)
 {
 #if defined (CS_MODE)
   return logtb_update_group_id (migrator_id, group_id, target, on_off);

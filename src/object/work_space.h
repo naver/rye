@@ -44,7 +44,7 @@ struct ws_repl_flush_err
   int operation;
   int error_code;
   char *error_msg;
-  DB_IDXKEY key;		/* PK */
+  DB_IDXKEY key;                /* PK */
 };
 
 typedef struct ws_repl_obj WS_REPL_OBJ;
@@ -52,7 +52,7 @@ struct ws_repl_obj
 {
   struct ws_repl_obj *next;
   char class_name[1024];
-  DB_IDXKEY key;		/* PK */
+  DB_IDXKEY key;                /* PK */
   int operation;
   RECDES *recdes;
 };
@@ -80,20 +80,20 @@ struct ws_repl_list
 struct db_object
 {
 
-  OID ws_oid;			/* local copy of the OID pointer */
-  struct db_object *class_mop;	/* pointer to class */
-  void *object;			/* pointer to attribute values */
+  OID ws_oid;                   /* local copy of the OID pointer */
+  struct db_object *class_mop;  /* pointer to class */
+  void *object;                 /* pointer to attribute values */
 
-  struct db_object *class_link;	/* link for class instances list */
-  struct db_object *dirty_link;	/* link for dirty list */
-  struct db_object *hash_link;	/* link for workspace hash table */
-  struct db_object *commit_link;	/* link for obj to be reset at commit/abort */
-  LOCK ws_lock;			/* object lock */
+  struct db_object *class_link; /* link for class instances list */
+  struct db_object *dirty_link; /* link for dirty list */
+  struct db_object *hash_link;  /* link for workspace hash table */
+  struct db_object *commit_link;        /* link for obj to be reset at commit/abort */
+  LOCK ws_lock;                 /* object lock */
 
-  unsigned dirty:1;		/* dirty flag */
-  unsigned deleted:1;		/* deleted flag */
-  unsigned no_objects:1;	/* optimization for classes */
-  unsigned pinned:1;		/* to prevent swapping */
+  unsigned dirty:1;             /* dirty flag */
+  unsigned deleted:1;           /* deleted flag */
+  unsigned no_objects:1;        /* optimization for classes */
+  unsigned pinned:1;            /* to prevent swapping */
 };
 
 
@@ -166,8 +166,8 @@ typedef int (*MAPFUNC) (MOP mop, void *args);
 typedef struct ws_statistics WS_STATISTICS;
 struct ws_statistics
 {
-  int mops_allocated;		/* total number of mops allocated */
-  int mops_freed;		/* total reclaimed mops */
+  int mops_allocated;           /* total number of mops allocated */
+  int mops_freed;               /* total reclaimed mops */
 
   int dirty_list_emergencies;
   int corruptions;
@@ -338,8 +338,7 @@ extern MOP ws_mop (OID * oid, MOP class_mop);
 extern MOP ws_new_mop (OID * oid, MOP class_mop);
 #endif
 extern void ws_perm_oid (MOP mop, OID * newoid);
-extern int ws_perm_oid_and_class (MOP mop, OID * new_oid,
-				  OID * new_class_oid);
+extern int ws_perm_oid_and_class (MOP mop, OID * new_oid, OID * new_class_oid);
 
 /* Set mops */
 #if 0
@@ -354,7 +353,7 @@ extern void ws_filter_dirty (void);
 extern int ws_map_class_dirty (MOP class_op, MAPFUNC function, void *args);
 
 /* Resident instance list maintenance */
-#if defined (ENABLE_UNUSED_FUNCTION)	/* TODO - */
+#if defined (ENABLE_UNUSED_FUNCTION)    /* TODO - */
 extern void ws_set_class (MOP inst, MOP class_mop);
 #endif
 extern int ws_map_class (MOP class_op, MAPFUNC function, void *args);
@@ -374,8 +373,7 @@ extern MOP ws_cache_with_oid (MOBJ obj, OID * oid, MOP class_mop);
 
 /* Class name cache */
 extern MOP ws_find_class (const char *name);
-extern void ws_add_classname (MOBJ classobj, MOP classmop,
-			      const char *cl_name);
+extern void ws_add_classname (MOBJ classobj, MOP classmop, const char *cl_name);
 extern void ws_drop_classname (MOBJ classobj);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void ws_reset_classname_cache (void);
@@ -480,15 +478,11 @@ extern DB_LIST *ws_list_nconc (DB_LIST * list1, DB_LIST * list2);
 typedef DB_C_INT (*NLSEARCHER) (const void *, const void *);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern DB_NAMELIST *nlist_remove (DB_NAMELIST ** list, const char *name,
-				  NLSEARCHER fcn);
-extern int nlist_append (DB_NAMELIST ** list, const char *name,
-			 NLSEARCHER fcn, int *added);
-extern int nlist_find_or_append (DB_NAMELIST ** list, const char *name,
-				 NLSEARCHER fcn, int *position);
+extern DB_NAMELIST *nlist_remove (DB_NAMELIST ** list, const char *name, NLSEARCHER fcn);
+extern int nlist_append (DB_NAMELIST ** list, const char *name, NLSEARCHER fcn, int *added);
+extern int nlist_find_or_append (DB_NAMELIST ** list, const char *name, NLSEARCHER fcn, int *position);
 #endif
-extern DB_NAMELIST *nlist_filter (DB_NAMELIST ** root, const char *name,
-				  NLSEARCHER fcn);
+extern DB_NAMELIST *nlist_filter (DB_NAMELIST ** root, const char *name, NLSEARCHER fcn);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern DB_NAMELIST *nlist_copy (DB_NAMELIST * list);
 #endif
@@ -538,9 +532,7 @@ extern int ws_has_dirty_objects (MOP op, int *isvirt);
 
 extern bool ws_need_flush (void);
 
-extern int ws_add_to_repl_obj_list (const char *class_name,
-				    DB_IDXKEY * key,
-				    RECDES * recdes, int operation);
+extern int ws_add_to_repl_obj_list (const char *class_name, DB_IDXKEY * key, RECDES * recdes, int operation);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern void ws_init_repl_objs (void);
 #endif
@@ -548,8 +540,7 @@ extern void ws_clear_all_repl_objs (void);
 extern void ws_free_repl_obj (WS_REPL_OBJ * obj);
 extern WS_REPL_OBJ *ws_get_repl_obj_from_list (void);
 
-extern void ws_set_repl_error_into_error_link (LC_COPYAREA_ONEOBJ * obj,
-					       char *content_ptr);
+extern void ws_set_repl_error_into_error_link (LC_COPYAREA_ONEOBJ * obj, char *content_ptr);
 
 extern WS_REPL_FLUSH_ERR *ws_get_repl_error_from_error_link (void);
 extern int ws_clear_all_repl_errors_of_error_link (void);

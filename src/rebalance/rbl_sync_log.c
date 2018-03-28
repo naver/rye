@@ -54,14 +54,14 @@ struct overflow_first_part
   VPID next_vpid;
   OID class_oid;
   int length;
-  char data[1];			/* Really more than one */
+  char data[1];                 /* Really more than one */
 };
 
 typedef struct overflow_rest_part OVERFLOW_REST_PART;
 struct overflow_rest_part
 {
   VPID next_vpid;
-  char data[1];			/* Really more than one */
+  char data[1];                 /* Really more than one */
 };
 
 typedef struct rbl_overflow_data RBL_OVERFLOW_DATA;
@@ -78,8 +78,7 @@ static DB_OBJLIST *all_Tables = NULL;
 static MHT_TABLE *ht_Tran_ovfl_rec = NULL;
 
 static LOG_PAGE *rbl_next_log_page (RBL_SYNC_CONTEXT * ctx);
-static int rbl_copy_data_from_log (RBL_SYNC_CONTEXT * ctx, char *area,
-				   int length);
+static int rbl_copy_data_from_log (RBL_SYNC_CONTEXT * ctx, char *area, int length);
 
 int
 rbl_sync_log_init (RBL_SYNC_CONTEXT * ctx, int gid)
@@ -92,12 +91,10 @@ rbl_sync_log_init (RBL_SYNC_CONTEXT * ctx, int gid)
   ctx->num_log_pages = 0;
   ctx->max_log_pages = LOGWR_COPY_LOG_BUFFER_NPAGES;
 
-  ctx->unzip_area =
-    log_zip_alloc ((ctx->max_log_pages + 1) * LOG_PAGESIZE, false);
+  ctx->unzip_area = log_zip_alloc ((ctx->max_log_pages + 1) * LOG_PAGESIZE, false);
   if (ctx->unzip_area == NULL)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY,
-		 (ctx->max_log_pages + 1) * LOG_PAGESIZE);
+      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, (ctx->max_log_pages + 1) * LOG_PAGESIZE);
       ctx->logpg_area_size = 0;
       return RBL_OUT_OF_MEMORY;
     }
@@ -108,20 +105,18 @@ rbl_sync_log_init (RBL_SYNC_CONTEXT * ctx, int gid)
   if (ctx->logpg_area == NULL)
     {
       if (ctx->unzip_area != NULL)
-	{
-	  log_zip_free (ctx->unzip_area);
-	  ctx->unzip_area = NULL;
-	}
+        {
+          log_zip_free (ctx->unzip_area);
+          ctx->unzip_area = NULL;
+        }
       RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, ctx->logpg_area_size);
       return RBL_OUT_OF_MEMORY;
     }
 
-  ctx->log_pages =
-    (LOG_PAGE **) malloc (ctx->max_log_pages * sizeof (LOG_PAGE *));
+  ctx->log_pages = (LOG_PAGE **) malloc (ctx->max_log_pages * sizeof (LOG_PAGE *));
   if (ctx->log_pages == NULL)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY,
-		 ctx->max_log_pages * sizeof (LOG_PAGE **));
+      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, ctx->max_log_pages * sizeof (LOG_PAGE **));
       return RBL_OUT_OF_MEMORY;
     }
 
@@ -158,9 +153,7 @@ rbl_sync_log_init (RBL_SYNC_CONTEXT * ctx, int gid)
       return er_errid ();
     }
 
-  ht_Tran_ovfl_rec =
-    mht_create ("Tran Overflow Record", 1024, rbl_tranid_hash,
-		rbl_compare_tranid_are_equal);
+  ht_Tran_ovfl_rec = mht_create ("Tran Overflow Record", 1024, rbl_tranid_hash, rbl_compare_tranid_are_equal);
   if (ht_Tran_ovfl_rec == NULL)
     {
       RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, 1024);
@@ -249,10 +242,10 @@ rbl_arrange_log_pages (RBL_SYNC_CONTEXT * ctx_ptr)
   RBL_ASSERT (ctx_ptr->last_recv_pageid <= ctx_ptr->server_lsa.pageid);
 
   RBL_DEBUG (ARG_FILE_LINE, "Get Log Pages: start_pageid =%lld, "
-	     "num_log_pages = %d, last_recv_pageid = %lld, "
-	     "server_lsa = (%lld, %d)\n",
-	     start_pageid, ctx_ptr->num_log_pages, ctx_ptr->last_recv_pageid,
-	     ctx_ptr->server_lsa.pageid, ctx_ptr->server_lsa.offset);
+             "num_log_pages = %d, last_recv_pageid = %lld, "
+             "server_lsa = (%lld, %d)\n",
+             start_pageid, ctx_ptr->num_log_pages, ctx_ptr->last_recv_pageid,
+             ctx_ptr->server_lsa.pageid, ctx_ptr->server_lsa.offset);
 }
 
 
@@ -265,9 +258,9 @@ rbl_next_log_page_when_dosent_fit (RBL_SYNC_CONTEXT * ctx, int length)
     {
       ctx->cur_page = rbl_next_log_page (ctx);
       if (ctx->cur_page == NULL)
-	{
-	  error = RBL_LOG_PAGE_ERROR;
-	}
+        {
+          error = RBL_LOG_PAGE_ERROR;
+        }
 
       ctx->cur_offset = 0;
     }
@@ -287,9 +280,9 @@ rbl_log_read_align (RBL_SYNC_CONTEXT * ctx)
     {
       ctx->cur_page = rbl_next_log_page (ctx);
       if (ctx->cur_page == NULL)
-	{
-	  error = RBL_LOG_PAGE_ERROR;
-	}
+        {
+          error = RBL_LOG_PAGE_ERROR;
+        }
 
       offset -= RBL_LOGAREA_SIZE;
       offset = DB_ALIGN (offset, MAX_ALIGNMENT);
@@ -319,11 +312,10 @@ rbl_next_log_page (RBL_SYNC_CONTEXT * ctx)
 
       error = rbl_get_log_pages (ctx);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_LOG_PAGE_ERROR,
-		     ctx->last_recv_pageid, error);
-	  return NULL;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_LOG_PAGE_ERROR, ctx->last_recv_pageid, error);
+          return NULL;
+        }
 
       rbl_arrange_log_pages (ctx);
       ctx->cur_page_index = 0;
@@ -337,8 +329,7 @@ rbl_next_log_page (RBL_SYNC_CONTEXT * ctx)
 }
 
 static int
-rbl_get_undoredo_diff (RBL_SYNC_CONTEXT * ctx, bool * is_undo_zip,
-		       char **undo_data, int *undo_length)
+rbl_get_undoredo_diff (RBL_SYNC_CONTEXT * ctx, bool * is_undo_zip, char **undo_data, int *undo_length)
 {
   LOG_ZIP *undo_unzip_data = NULL;
   int error;
@@ -367,12 +358,12 @@ rbl_get_undoredo_diff (RBL_SYNC_CONTEXT * ctx, bool * is_undo_zip,
   if (*is_undo_zip && *undo_length > 0)
     {
       if (!log_unzip (undo_unzip_data, *undo_length, *undo_data))
-	{
-	  free_and_init (*undo_data);
+        {
+          free_and_init (*undo_data);
 
-	  RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
-	  return RBL_LOG_DECOMPRESS_FAIL;
-	}
+          RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
+          return RBL_LOG_DECOMPRESS_FAIL;
+        }
     }
 
   error = rbl_log_read_align (ctx);
@@ -391,8 +382,7 @@ rbl_get_undoredo_diff (RBL_SYNC_CONTEXT * ctx, bool * is_undo_zip,
  */
 static int
 rbl_get_zipped_data (RBL_SYNC_CONTEXT * ctx, char *undo_data, int undo_length,
-		     bool is_diff, bool is_undo_zip, INT16 * rec_type,
-		     OID * class_oid, char **data, int *length)
+                     bool is_diff, bool is_undo_zip, INT16 * rec_type, OID * class_oid, char **data, int *length)
 {
   int redo_length = 0;
   int offset = 0;
@@ -407,21 +397,18 @@ rbl_get_zipped_data (RBL_SYNC_CONTEXT * ctx, char *undo_data, int undo_length,
   if (is_diff)
     {
       if (is_undo_zip)
-	{
-	  undo_length = undo_unzip_data->data_length;
-	  redo_length = redo_unzip_data->data_length;
+        {
+          undo_length = undo_unzip_data->data_length;
+          redo_length = redo_unzip_data->data_length;
 
-	  (void) log_diff (undo_length,
-			   undo_unzip_data->
-			   log_data, redo_length, redo_unzip_data->log_data);
-	}
+          (void) log_diff (undo_length, undo_unzip_data->log_data, redo_length, redo_unzip_data->log_data);
+        }
       else
-	{
+        {
 
-	  redo_length = redo_unzip_data->data_length;
-	  (void) log_diff (undo_length,
-			   undo_data, redo_length, redo_unzip_data->log_data);
-	}
+          redo_length = redo_unzip_data->data_length;
+          (void) log_diff (undo_length, undo_data, redo_length, redo_unzip_data->log_data);
+        }
     }
   else
     {
@@ -462,14 +449,12 @@ rbl_copy_data_from_log (RBL_SYNC_CONTEXT * ctx, char *area, int length)
     {
       error = rbl_next_log_page_when_dosent_fit (ctx, 0);
       if (error != NO_ERROR)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
-      copy_length = ((ctx->cur_offset + length <= RBL_LOGAREA_SIZE) ?
-		     length : RBL_LOGAREA_SIZE - ctx->cur_offset);
-      memcpy (area + area_offset,
-	      (char *) ctx->cur_page->area + ctx->cur_offset, copy_length);
+      copy_length = ((ctx->cur_offset + length <= RBL_LOGAREA_SIZE) ? length : RBL_LOGAREA_SIZE - ctx->cur_offset);
+      memcpy (area + area_offset, (char *) ctx->cur_page->area + ctx->cur_offset, copy_length);
       length -= copy_length;
       area_offset += copy_length;
       ctx->cur_offset += copy_length;
@@ -480,7 +465,7 @@ rbl_copy_data_from_log (RBL_SYNC_CONTEXT * ctx, char *area, int length)
 
 static int
 rbl_get_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_undoredo *undoredo,
-		   bool is_diff, RECDES * recdes, OID * class_oid)
+                   bool is_diff, RECDES * recdes, OID * class_oid)
 {
   int length;
   int error = NO_ERROR;
@@ -494,8 +479,7 @@ rbl_get_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_undoredo *undoredo,
 
   if (is_diff)
     {
-      error = rbl_get_undoredo_diff (ctx, &is_undo_zip, &undo_data,
-				     &undo_length);
+      error = rbl_get_undoredo_diff (ctx, &is_undo_zip, &undo_data, &undo_length);
     }
   else
     {
@@ -512,94 +496,92 @@ rbl_get_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_undoredo *undoredo,
     {
       zip_data = (char *) malloc (length);
       if (zip_data == NULL)
-	{
-	  if (undo_data != NULL)
-	    {
-	      free_and_init (undo_data);
-	    }
+        {
+          if (undo_data != NULL)
+            {
+              free_and_init (undo_data);
+            }
 
-	  RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, length);
-	  return RBL_OUT_OF_MEMORY;
-	}
+          RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, length);
+          return RBL_OUT_OF_MEMORY;
+        }
 
       /* Get Zip Data */
       error = rbl_copy_data_from_log (ctx, zip_data, length);
       if (error != NO_ERROR)
-	{
-	  if (undo_data != NULL)
-	    {
-	      free_and_init (undo_data);
-	    }
-	  free_and_init (zip_data);
+        {
+          if (undo_data != NULL)
+            {
+              free_and_init (undo_data);
+            }
+          free_and_init (zip_data);
 
-	  return error;
-	}
+          return error;
+        }
 
       if (!log_unzip (ctx->redo_unzip, length, zip_data))
-	{
-	  if (undo_data != NULL)
-	    {
-	      free_and_init (undo_data);
-	    }
-	  free_and_init (zip_data);
-	  RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
-	  return RBL_LOG_DECOMPRESS_FAIL;
-	}
+        {
+          if (undo_data != NULL)
+            {
+              free_and_init (undo_data);
+            }
+          free_and_init (zip_data);
+          RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
+          return RBL_LOG_DECOMPRESS_FAIL;
+        }
 
       error = rbl_get_zipped_data (ctx, undo_data, undo_length, is_diff,
-				   is_undo_zip, &rec_type, class_oid,
-				   &data, &length);
+                                   is_undo_zip, &rec_type, class_oid, &data, &length);
       free_and_init (zip_data);
     }
   else
     {
       error = rbl_copy_data_from_log (ctx, (char *) &rec_type, REC_TYPE_SIZE);
       if (error != NO_ERROR)
-	{
-	  if (undo_data != NULL)
-	    {
-	      free_and_init (undo_data);
-	    }
-	  return error;
-	}
+        {
+          if (undo_data != NULL)
+            {
+              free_and_init (undo_data);
+            }
+          return error;
+        }
 
-      error = rbl_copy_data_from_log (ctx, (char *) class_oid,
-				      CLASS_OID_SIZE);
+      error = rbl_copy_data_from_log (ctx, (char *) class_oid, CLASS_OID_SIZE);
       if (error != NO_ERROR)
-	{
-	  if (undo_data != NULL)
-	    {
-	      free_and_init (undo_data);
-	    }
-	  return error;
-	}
+        {
+          if (undo_data != NULL)
+            {
+              free_and_init (undo_data);
+            }
+          return error;
+        }
 
       RBL_ASSERT (class_oid->groupid == ctx->gid);
 
       length -= (REC_TYPE_SIZE + CLASS_OID_SIZE);
       data = (char *) malloc (length);
       if (data == NULL)
-	{
-	  if (undo_data != NULL)
-	    {
-	      free_and_init (undo_data);
-	    }
+        {
+          if (undo_data != NULL)
+            {
+              free_and_init (undo_data);
+            }
 
-	  RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, length);
-	  return RBL_OUT_OF_MEMORY;
-	}
+          RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, length);
+          return RBL_OUT_OF_MEMORY;
+        }
 
       error = rbl_copy_data_from_log (ctx, data, length);
       if (error != NO_ERROR)
-	{
-	  if (undo_data != NULL)
-	    {
-	      free_and_init (undo_data);
-	    }
-	  free_and_init (data);
+        {
+          if (undo_data != NULL)
+            {
+              free_and_init (undo_data);
+            }
+          free_and_init (data);
 
-	  return error;
-	}
+          return error;
+        }
     }
 
   if (undo_data != NULL)
@@ -624,8 +606,7 @@ rbl_make_ovfl_data (UNUSED_ARG RBL_SYNC_CONTEXT * ctx, TRANID trid)
   ovfl_rec = (RBL_OVERFLOW_DATA *) malloc (sizeof (RBL_OVERFLOW_DATA));
   if (ovfl_rec == NULL)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY,
-		 sizeof (RBL_OVERFLOW_DATA));
+      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, sizeof (RBL_OVERFLOW_DATA));
       return RBL_OUT_OF_MEMORY;
     }
 
@@ -643,8 +624,7 @@ rbl_make_ovfl_data (UNUSED_ARG RBL_SYNC_CONTEXT * ctx, TRANID trid)
 }
 
 static int
-rbl_free_ovfl_data (UNUSED_ARG const void *key, void *data,
-		    UNUSED_ARG void *args)
+rbl_free_ovfl_data (UNUSED_ARG const void *key, void *data, UNUSED_ARG void *args)
 {
   RBL_OVERFLOW_DATA *ovfl_rec;
 
@@ -660,8 +640,7 @@ rbl_free_ovfl_data (UNUSED_ARG const void *key, void *data,
 }
 
 static int
-rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
-			TRANID trid, bool * is_completed)
+rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo, TRANID trid, bool * is_completed)
 {
   int length;
   char *raw_data;
@@ -700,12 +679,12 @@ rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
   if (ZIP_CHECK (redo->length))
     {
       if (!log_unzip (ctx->redo_unzip, length, raw_data))
-	{
-	  RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
-	  free_and_init (raw_data);
+        {
+          RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
+          free_and_init (raw_data);
 
-	  return RBL_LOG_DECOMPRESS_FAIL;
-	}
+          return RBL_LOG_DECOMPRESS_FAIL;
+        }
 
       p = (const char *) ctx->redo_unzip->log_data;
       length = ctx->redo_unzip->data_length;
@@ -723,12 +702,12 @@ rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
 
       ovfl_rec->recdes.data = (char *) malloc (first->length);
       if (ovfl_rec->recdes.data == NULL)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, first->length);
-	  free_and_init (raw_data);
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, first->length);
+          free_and_init (raw_data);
 
-	  return RBL_OUT_OF_MEMORY;
-	}
+          return RBL_OUT_OF_MEMORY;
+        }
 
       ovfl_rec->recdes.type = REC_BIGONE;
       ovfl_rec->recdes.area_size = first->length;
@@ -745,8 +724,7 @@ rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
 
   area_len = length - offset;
   RBL_ASSERT (ovfl_rec->recdes.data != NULL);
-  memcpy (ovfl_rec->recdes.data + ovfl_rec->copyed_length,
-	  p + offset, area_len);
+  memcpy (ovfl_rec->recdes.data + ovfl_rec->copyed_length, p + offset, area_len);
   ovfl_rec->copyed_length += area_len;
 
   if (ovfl_rec->copyed_length == ovfl_rec->recdes.length)
@@ -760,8 +738,7 @@ rbl_get_ovfl_redo_data (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
 }
 
 static int
-rbl_get_ovfl_redo_record (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
-			  RECDES * recdes, OID * class_oid)
+rbl_get_ovfl_redo_record (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo, RECDES * recdes, OID * class_oid)
 {
   int length;
   char *raw_data;
@@ -786,12 +763,12 @@ rbl_get_ovfl_redo_record (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
   if (ZIP_CHECK (redo->length))
     {
       if (!log_unzip (ctx->redo_unzip, length, raw_data))
-	{
-	  RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
-	  free_and_init (raw_data);
+        {
+          RBL_ERROR_MSG (ARG_FILE_LINE, "Failed to decompress log page\n");
+          free_and_init (raw_data);
 
-	  return RBL_LOG_DECOMPRESS_FAIL;
-	}
+          return RBL_LOG_DECOMPRESS_FAIL;
+        }
 
       p = (const char *) ctx->redo_unzip->log_data;
       length = ctx->redo_unzip->data_length;
@@ -825,7 +802,7 @@ rbl_get_ovfl_redo_record (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo,
 
 static int
 rbl_get_undo_data (RBL_SYNC_CONTEXT * ctx, struct log_undoredo *undoredo,
-		   UNUSED_ARG bool is_diff, RECDES * recdes, OID * class_oid)
+                   UNUSED_ARG bool is_diff, RECDES * recdes, OID * class_oid)
 {
   int length;
   int error = NO_ERROR;
@@ -870,9 +847,9 @@ rbl_get_undo_data (RBL_SYNC_CONTEXT * ctx, struct log_undoredo *undoredo,
   if (data == NULL)
     {
       if (undo_data != NULL)
-	{
-	  free_and_init (undo_data);
-	}
+        {
+          free_and_init (undo_data);
+        }
 
       RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, length);
       return RBL_OUT_OF_MEMORY;
@@ -915,9 +892,7 @@ rbl_get_undoredo_info (RBL_SYNC_CONTEXT * ctx, struct log_undoredo *undoredo)
       return error;
     }
 
-  *undoredo =
-    *((struct log_undoredo *) ((char *) ctx->cur_page->area +
-			       ctx->cur_offset));
+  *undoredo = *((struct log_undoredo *) ((char *) ctx->cur_page->area + ctx->cur_offset));
 
 #if 0
   printf ("undo_length = %d\n", (*undoredo)->ulength);
@@ -956,8 +931,7 @@ rbl_get_redo_info (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo)
       return error;
     }
 
-  *redo =
-    *((struct log_redo *) ((char *) ctx->cur_page->area + ctx->cur_offset));
+  *redo = *((struct log_redo *) ((char *) ctx->cur_page->area + ctx->cur_offset));
 
 #if 0
   printf ("redo_length = %d\n", (*redo)->length);
@@ -974,8 +948,7 @@ rbl_get_redo_info (RBL_SYNC_CONTEXT * ctx, struct log_redo *redo)
 }
 
 static int
-rbl_log_get_updated_gid (RBL_SYNC_CONTEXT * ctx,
-			 struct log_gid_bitmap_update *gid_update)
+rbl_log_get_updated_gid (RBL_SYNC_CONTEXT * ctx, struct log_gid_bitmap_update *gid_update)
 {
   int length;
   int error = NO_ERROR;
@@ -996,8 +969,7 @@ rbl_log_get_updated_gid (RBL_SYNC_CONTEXT * ctx,
       return error;
     }
 
-  *gid_update = *((struct log_gid_bitmap_update *)
-		  ((char *) ctx->cur_page->area + ctx->cur_offset));
+  *gid_update = *((struct log_gid_bitmap_update *) ((char *) ctx->cur_page->area + ctx->cur_offset));
 
   error = rbl_log_read_add_align (ctx, length);
   if (error != NO_ERROR)
@@ -1009,8 +981,7 @@ rbl_log_get_updated_gid (RBL_SYNC_CONTEXT * ctx,
 }
 
 static PARSER_VARCHAR *
-rbl_print_insert_att_values (PARSER_CONTEXT * parser,
-			     SM_CLASS * class_, MOBJ obj)
+rbl_print_insert_att_values (PARSER_CONTEXT * parser, SM_CLASS * class_, MOBJ obj)
 {
   PARSER_VARCHAR *buffer = NULL;
   SM_ATTRIBUTE *att;
@@ -1028,9 +999,9 @@ rbl_print_insert_att_values (PARSER_CONTEXT * parser,
       buffer = describe_value (parser, buffer, &v);
 
       if (c < class_->att_count - 1)
-	{
-	  buffer = pt_append_nulstring (parser, buffer, ",");
-	}
+        {
+          buffer = pt_append_nulstring (parser, buffer, ",");
+        }
 
       pr_clear_value (&v);
       c++;
@@ -1121,9 +1092,9 @@ rbl_is_pk_attribute (SM_CLASS_CONSTRAINT * pk, SM_ATTRIBUTE * att)
   for (i = 0; i < pk->num_atts; i++)
     {
       if (att->id == pk->attributes[i]->id)
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
@@ -1141,8 +1112,7 @@ rbl_print_pk (PARSER_CONTEXT * parser, SM_CLASS * class_, MOBJ obj)
   DB_VALUE v;
 
   pk_cons = classobj_find_class_primary_key (class_);
-  if (pk_cons == NULL || pk_cons->attributes == NULL
-      || pk_cons->attributes[0] == NULL)
+  if (pk_cons == NULL || pk_cons->attributes == NULL || pk_cons->attributes[0] == NULL)
     {
       return NULL;
     }
@@ -1151,14 +1121,14 @@ rbl_print_pk (PARSER_CONTEXT * parser, SM_CLASS * class_, MOBJ obj)
   for (att = class_->ordered_attributes; att != NULL; att = att->order_link)
     {
       if (rbl_is_pk_attribute (pk_cons, att) == false)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (c > 0)
-	{
-	  buffer = pt_append_nulstring (parser, buffer, " AND ");
-	}
+        {
+          buffer = pt_append_nulstring (parser, buffer, " AND ");
+        }
 
       mem = (char *) (((char *) obj) + att->offset);
       error = PRIM_GETMEM (att->sma_domain->type, att->sma_domain, mem, &v);
@@ -1227,15 +1197,15 @@ rbl_get_find_table (OID * class_oid)
   for (t = all_Tables; t != NULL; t = t->next)
     {
       if (sm_is_system_table (t->op))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (OID_EQ (&(t->op->ws_oid), class_oid))
-	{
-	  class_obj = t->op;
-	  break;
-	}
+        {
+          class_obj = t->op;
+          break;
+        }
     }
 
   return class_obj;
@@ -1286,13 +1256,13 @@ rbl_make_sql (RECDES * recdes, OID * class_oid, LOG_RCVINDEX rcvindex)
     case RVHF_INSERT:
     case RVOVF_NEWPAGE_INSERT:
       if (recdes->type == REC_NEWHOME)
-	{
-	  sql = rbl_write_replace_sql (class_, obj);
-	}
+        {
+          sql = rbl_write_replace_sql (class_, obj);
+        }
       else
-	{
-	  sql = rbl_write_insert_sql (class_, obj);
-	}
+        {
+          sql = rbl_write_insert_sql (class_, obj);
+        }
       break;
     case RVHF_UPDATE:
     case RVOVF_PAGE_UPDATE:
@@ -1334,186 +1304,176 @@ rbl_analyze_log_record (RBL_SYNC_CONTEXT * ctx, LOG_RECORD_HEADER * lrec)
     case LOG_DIFF_UNDOREDO_DATA:
       error = rbl_get_undoredo_info (ctx, &undoredo);
       if (error != NO_ERROR)
-	{
-	  RBL_ASSERT (0);
-	  return error;
-	}
+        {
+          RBL_ASSERT (0);
+          return error;
+        }
 
       if (undoredo.data.gid != ctx->gid)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       is_diff = (lrec->type == LOG_DIFF_UNDOREDO_DATA);
 
-      if (undoredo.data.rcvindex == RVHF_INSERT
-	  || undoredo.data.rcvindex == RVHF_UPDATE)
-	{
-	  error = rbl_get_redo_data (ctx, &undoredo, is_diff, &recdes,
-				     &class_oid);
-	  if (error != NO_ERROR)
-	    {
-	      RBL_ASSERT (0);
-	      return error;
-	    }
+      if (undoredo.data.rcvindex == RVHF_INSERT || undoredo.data.rcvindex == RVHF_UPDATE)
+        {
+          error = rbl_get_redo_data (ctx, &undoredo, is_diff, &recdes, &class_oid);
+          if (error != NO_ERROR)
+            {
+              RBL_ASSERT (0);
+              return error;
+            }
 
-	  RBL_ASSERT (recdes.data != NULL);
-	  sql = rbl_make_sql (&recdes, &class_oid, undoredo.data.rcvindex);
-	  free (recdes.data);
-	}
+          RBL_ASSERT (recdes.data != NULL);
+          sql = rbl_make_sql (&recdes, &class_oid, undoredo.data.rcvindex);
+          free (recdes.data);
+        }
       else if (undoredo.data.rcvindex == RVHF_DELETE)
-	{
-	  error = rbl_get_undo_data (ctx, &undoredo, is_diff, &recdes,
-				     &class_oid);
-	  if (error != NO_ERROR)
-	    {
-	      RBL_ASSERT (0);
-	      return error;
-	    }
+        {
+          error = rbl_get_undo_data (ctx, &undoredo, is_diff, &recdes, &class_oid);
+          if (error != NO_ERROR)
+            {
+              RBL_ASSERT (0);
+              return error;
+            }
 
-	  RBL_ASSERT (recdes.data != NULL);
-	  sql = rbl_make_sql (&recdes, &class_oid, undoredo.data.rcvindex);
-	  free (recdes.data);
-	}
+          RBL_ASSERT (recdes.data != NULL);
+          sql = rbl_make_sql (&recdes, &class_oid, undoredo.data.rcvindex);
+          free (recdes.data);
+        }
       else
-	{
-	  return NO_ERROR;
-	}
+        {
+          return NO_ERROR;
+        }
 
       if (sql != NULL)
-	{
-	  error = rbl_tran_list_add (lrec->trid, sql);
-	  if (error != NO_ERROR)
-	    {
-	      return error;
-	    }
-	}
+        {
+          error = rbl_tran_list_add (lrec->trid, sql);
+          if (error != NO_ERROR)
+            {
+              return error;
+            }
+        }
 
       break;
 
     case LOG_REDO_DATA:
       error = rbl_get_redo_info (ctx, &redo);
       if (error != NO_ERROR)
-	{
-	  RBL_ASSERT (0);
-	  return error;
-	}
+        {
+          RBL_ASSERT (0);
+          return error;
+        }
 
       if (redo.data.gid != ctx->gid)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
-      if (redo.data.rcvindex == RVOVF_NEWPAGE_INSERT
-	  || redo.data.rcvindex == RVOVF_PAGE_UPDATE)
-	{
-	  error = rbl_get_ovfl_redo_data (ctx, &redo, lrec->trid,
-					  &is_completed);
-	  if (error != NO_ERROR)
-	    {
-	      mht_rem (ht_Tran_ovfl_rec, &lrec->trid, rbl_free_ovfl_data,
-		       NULL);
-	      return error;
-	    }
+      if (redo.data.rcvindex == RVOVF_NEWPAGE_INSERT || redo.data.rcvindex == RVOVF_PAGE_UPDATE)
+        {
+          error = rbl_get_ovfl_redo_data (ctx, &redo, lrec->trid, &is_completed);
+          if (error != NO_ERROR)
+            {
+              mht_rem (ht_Tran_ovfl_rec, &lrec->trid, rbl_free_ovfl_data, NULL);
+              return error;
+            }
 
-	  if (is_completed == true)
-	    {
-	      ovfl_rec = (RBL_OVERFLOW_DATA *) mht_get (ht_Tran_ovfl_rec,
-							&lrec->trid);
-	      if (ovfl_rec == NULL)
-		{
-		  RBL_ASSERT (0);
-		  return ER_FAILED;
-		}
+          if (is_completed == true)
+            {
+              ovfl_rec = (RBL_OVERFLOW_DATA *) mht_get (ht_Tran_ovfl_rec, &lrec->trid);
+              if (ovfl_rec == NULL)
+                {
+                  RBL_ASSERT (0);
+                  return ER_FAILED;
+                }
 
-	      RBL_ASSERT (ovfl_rec->recdes.data != NULL);
+              RBL_ASSERT (ovfl_rec->recdes.data != NULL);
 
-	      /* in case of overflow update, rcvindex is RVOVF_NEWPAGE_INSERT.
-	       * 3rd parameter of rbl_make_sql() should be RVOVF_PAGE_UPDATE
-	       * that will generate REPLACE query
-	       */
-	      sql = rbl_make_sql (&ovfl_rec->recdes, &ovfl_rec->class_oid,
-				  RVOVF_PAGE_UPDATE);
+              /* in case of overflow update, rcvindex is RVOVF_NEWPAGE_INSERT.
+               * 3rd parameter of rbl_make_sql() should be RVOVF_PAGE_UPDATE
+               * that will generate REPLACE query
+               */
+              sql = rbl_make_sql (&ovfl_rec->recdes, &ovfl_rec->class_oid, RVOVF_PAGE_UPDATE);
 
-	      mht_rem (ht_Tran_ovfl_rec, &lrec->trid, rbl_free_ovfl_data,
-		       NULL);
+              mht_rem (ht_Tran_ovfl_rec, &lrec->trid, rbl_free_ovfl_data, NULL);
 
-	      if (sql != NULL)
-		{
-		  error = rbl_tran_list_add (lrec->trid, sql);
-		  if (error != NO_ERROR)
-		    {
-		      return error;
-		    }
-		}
-	    }
-	}
+              if (sql != NULL)
+                {
+                  error = rbl_tran_list_add (lrec->trid, sql);
+                  if (error != NO_ERROR)
+                    {
+                      return error;
+                    }
+                }
+            }
+        }
 
       break;
 
     case LOG_DUMMY_OVF_RECORD:
       error = rbl_make_ovfl_data (ctx, lrec->trid);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       break;
 
     case LOG_DUMMY_OVF_RECORD_DEL:
       error = rbl_get_redo_info (ctx, &redo);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       RBL_ASSERT (redo.data.rcvindex == RVHF_DELETE);
       if (redo.data.gid != ctx->gid)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       error = rbl_get_ovfl_redo_record (ctx, &redo, &recdes, &class_oid);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       RBL_ASSERT (recdes.data != NULL);
       sql = rbl_make_sql (&recdes, &class_oid, redo.data.rcvindex);
       free (recdes.data);
 
       if (sql != NULL)
-	{
-	  error = rbl_tran_list_add (lrec->trid, sql);
-	  if (error != NO_ERROR)
-	    {
-	      return error;
-	    }
-	}
+        {
+          error = rbl_tran_list_add (lrec->trid, sql);
+          if (error != NO_ERROR)
+            {
+              return error;
+            }
+        }
 
       break;
 
     case LOG_DUMMY_UPDATE_GID_BITMAP:
       error = rbl_log_get_updated_gid (ctx, &gid_update);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
-      if (gid_update.migrator_id == ctx->migrator_id
-	  && gid_update.group_id == ctx->gid)
-	{
-	  ctx->shutdown = true;
-	}
+      if (gid_update.migrator_id == ctx->migrator_id && gid_update.group_id == ctx->gid)
+        {
+          ctx->shutdown = true;
+        }
       break;
 
     case LOG_COMMIT:
       mht_rem (ht_Tran_ovfl_rec, &lrec->trid, rbl_free_ovfl_data, NULL);
       error = rbl_sync_execute_query (ctx, lrec->trid, ctx->gid);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       break;
 
@@ -1540,57 +1500,54 @@ rbl_analyze_log_pages (RBL_SYNC_CONTEXT * ctx, bool * meet_end_of_log)
     {
       ctx->cur_page = rbl_next_log_page (ctx);
       if (ctx->cur_page == NULL)
-	{
-	  RBL_ASSERT (0);
-	  return RBL_LOG_PAGE_ERROR;
-	}
+        {
+          RBL_ASSERT (0);
+          return RBL_LOG_PAGE_ERROR;
+        }
 
       if (LSA_ISNULL (&ctx->synced_lsa))
-	{
-	  /* read the first log record in the page */
-	  ctx->final_lsa.offset = ctx->cur_page->hdr.offset;
-	}
+        {
+          /* read the first log record in the page */
+          ctx->final_lsa.offset = ctx->cur_page->hdr.offset;
+        }
 
       RBL_ASSERT (ctx->final_lsa.pageid >= ctx->cur_pageid);
       while (ctx->final_lsa.pageid == ctx->cur_pageid)
-	{
-	  lrec =
-	    *(LOG_GET_LOG_RECORD_HEADER (ctx->cur_page, &ctx->final_lsa));
+        {
+          lrec = *(LOG_GET_LOG_RECORD_HEADER (ctx->cur_page, &ctx->final_lsa));
 
-	  RBL_DEBUG (ARG_FILE_LINE, "Log Type = %d, Forw_LSA = (%lld, %d)",
-		     lrec.type, lrec.forw_lsa.pageid, lrec.forw_lsa.offset);
+          RBL_DEBUG (ARG_FILE_LINE, "Log Type = %d, Forw_LSA = (%lld, %d)",
+                     lrec.type, lrec.forw_lsa.pageid, lrec.forw_lsa.offset);
 
-	  if (lrec.type == LOG_END_OF_LOG
-	      || LSA_EQ (&ctx->final_lsa, &ctx->server_lsa))
-	    {
-	      *meet_end_of_log = true;
-	      return NO_ERROR;
-	    }
+          if (lrec.type == LOG_END_OF_LOG || LSA_EQ (&ctx->final_lsa, &ctx->server_lsa))
+            {
+              *meet_end_of_log = true;
+              return NO_ERROR;
+            }
 
-	  if (lrec.trid == NULL_TRANID
-	      || LSA_GE (&lrec.prev_tranlsa, &ctx->final_lsa)
-	      || LSA_GE (&lrec.back_lsa, &ctx->final_lsa)
-	      || LSA_LE (&lrec.forw_lsa, &ctx->final_lsa))
-	    {
-	      RBL_ASSERT (0);
-	      return ER_LOG_PAGE_CORRUPTED;
-	    }
+          if (lrec.trid == NULL_TRANID
+              || LSA_GE (&lrec.prev_tranlsa, &ctx->final_lsa)
+              || LSA_GE (&lrec.back_lsa, &ctx->final_lsa) || LSA_LE (&lrec.forw_lsa, &ctx->final_lsa))
+            {
+              RBL_ASSERT (0);
+              return ER_LOG_PAGE_CORRUPTED;
+            }
 
-	  error = rbl_analyze_log_record (ctx, &lrec);
-	  if (error != NO_ERROR)
-	    {
-	      RBL_ASSERT (0);
-	      return error;
-	    }
+          error = rbl_analyze_log_record (ctx, &lrec);
+          if (error != NO_ERROR)
+            {
+              RBL_ASSERT (0);
+              return error;
+            }
 
-	  if (ctx->shutdown == true)
-	    {
-	      return NO_ERROR;
-	    }
+          if (ctx->shutdown == true)
+            {
+              return NO_ERROR;
+            }
 
-	  LSA_COPY (&ctx->synced_lsa, &ctx->final_lsa);
-	  LSA_COPY (&ctx->final_lsa, &lrec.forw_lsa);
-	}
+          LSA_COPY (&ctx->synced_lsa, &ctx->final_lsa);
+          LSA_COPY (&ctx->final_lsa, &lrec.forw_lsa);
+        }
     }
 
   return NO_ERROR;
@@ -1622,27 +1579,25 @@ rbl_sync_log (RBL_SYNC_CONTEXT * ctx)
 
       error = rbl_get_log_pages (ctx);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_LOG_PAGE_ERROR,
-		     ctx->last_recv_pageid, error);
-	  break;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_LOG_PAGE_ERROR, ctx->last_recv_pageid, error);
+          break;
+        }
 
       rbl_arrange_log_pages (ctx);
       error = rbl_analyze_log_pages (ctx, &meet_end_of_log);
 
       if (error != NO_ERROR)
-	{
-	  RBL_NOTICE (ARG_FILE_LINE,
-		      "Log page analysis fail: error = %d", error);
-	  assert (0);
-	  break;
-	}
+        {
+          RBL_NOTICE (ARG_FILE_LINE, "Log page analysis fail: error = %d", error);
+          assert (0);
+          break;
+        }
 
       if (meet_end_of_log == true)
-	{
-	  THREAD_SLEEP (100);
-	}
+        {
+          THREAD_SLEEP (100);
+        }
     }
 
   return error;
@@ -1662,28 +1617,25 @@ rbl_sync_check_delay (RBL_SYNC_CONTEXT * ctx)
       run_time = time (NULL) - ctx->start_time;
 
       if (run_time < 1 || ctx->total_log_pages == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       lps = (ctx->total_log_pages / run_time) + 1;
-      RBL_DEBUG (ARG_FILE_LINE,
-		 "rbl_sync_check_delay: lps = %d, delay = %d\n", lps,
-		 ctx->delay);
+      RBL_DEBUG (ARG_FILE_LINE, "rbl_sync_check_delay: lps = %d, delay = %d\n", lps, ctx->delay);
 
-      if (ctx->delay <= ctx->max_log_pages
-	  || ctx->delay <= (lps * (max_delay_msec / 1000.0f)))
-	{
-	  break;
-	}
+      if (ctx->delay <= ctx->max_log_pages || ctx->delay <= (lps * (max_delay_msec / 1000.0f)))
+        {
+          break;
+        }
 
       if (++retry >= 100)
-	{
-	  RBL_ERROR_MSG (ARG_FILE_LINE,
-			 "Give up migration due to log sync delay : "
-			 "log_pages/sec = %d, delay = %d\n", lps, ctx->delay);
-	  return ER_FAILED;
-	}
+        {
+          RBL_ERROR_MSG (ARG_FILE_LINE,
+                         "Give up migration due to log sync delay : "
+                         "log_pages/sec = %d, delay = %d\n", lps, ctx->delay);
+          return ER_FAILED;
+        }
 
       THREAD_SLEEP (1000);
     }

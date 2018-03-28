@@ -52,12 +52,12 @@ const char *rbl_Err_msg[] = {
 static FILE *log_Fp;
 static pthread_mutex_t log_Mutex;
 static const char *rbl_Severity_msg[] = { "DEBUG", "NOTICE", "ERROR" };
+
 static int max_Err_severity = 0;
 static char log_File_path[PATH_MAX];
 
 void
-rbl_error_log (int severity, const char *file_name, const int line_no,
-	       const char *fmt, ...)
+rbl_error_log (int severity, const char *file_name, const int line_no, const char *fmt, ...)
 {
   va_list ap;
   char time_array[256];
@@ -81,7 +81,7 @@ rbl_error_log (int severity, const char *file_name, const int line_no,
     }
 
   fprintf (log_Fp, "\nTime: %s - %s - File: %s, Line: %d\n", time_array,
-	   rbl_Severity_msg[severity], file_name, line_no);
+           rbl_Severity_msg[severity], file_name, line_no);
   vfprintf (log_Fp, fmt, ap);
   fflush (log_Fp);
 
@@ -91,7 +91,7 @@ rbl_error_log (int severity, const char *file_name, const int line_no,
     {
       va_start (ap, fmt);
       fprintf (stderr, "\nTime: %s - %s - File: %s, Line: %d\n", time_array,
-	       rbl_Severity_msg[severity], file_name, line_no);
+               rbl_Severity_msg[severity], file_name, line_no);
       vfprintf (stderr, fmt, ap);
       fflush (stderr);
       va_end (ap);
@@ -121,9 +121,8 @@ rbl_error_log_init (const char *prefix, char *dbname, int id)
 
   (void) pthread_mutex_init (&log_Mutex, NULL);
 
-#if 1				/* TODO - #1074 er Mgr */
-  (void) er_init (prm_get_string_value (PRM_ID_ER_LOG_FILE),
-		  prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
+#if 1                           /* TODO - #1074 er Mgr */
+  (void) er_init (prm_get_string_value (PRM_ID_ER_LOG_FILE), prm_get_integer_value (PRM_ID_ER_EXIT_ASK));
 #endif
 
   (void) lang_init ();
@@ -137,9 +136,9 @@ rbl_error_log_final (bool remove_log_file)
       fclose (log_Fp);
 
       if (remove_log_file == true && max_Err_severity < RBL_ERROR_SEVERITY)
-	{
-	  unlink (log_File_path);
-	}
+        {
+          unlink (log_File_path);
+        }
     }
 
   pthread_mutex_destroy (&log_Mutex);

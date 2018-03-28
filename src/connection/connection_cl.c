@@ -126,8 +126,7 @@ css_make_conn (SOCKET fd)
   conn = (CSS_CONN_ENTRY *) malloc (sizeof (CSS_CONN_ENTRY));
   if (conn == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, sizeof (CSS_CONN_ENTRY));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (CSS_CONN_ENTRY));
       return NULL;
     }
 
@@ -166,17 +165,17 @@ css_dealloc_conn (CSS_CONN_ENTRY * conn)
   for (p = previous = css_Conn_anchor; p; previous = p, p = p->next)
     {
       if (p == conn)
-	{
-	  if (p == css_Conn_anchor)
-	    {
-	      css_Conn_anchor = p->next;
-	    }
-	  else
-	    {
-	      previous->next = p->next;
-	    }
-	  break;
-	}
+        {
+          if (p == css_Conn_anchor)
+            {
+              css_Conn_anchor = p->next;
+            }
+          else
+            {
+              previous->next = p->next;
+            }
+          break;
+        }
     }
 
   if (p)
@@ -224,9 +223,9 @@ css_find_conn_from_fd (SOCKET fd)
   for (p = css_Conn_anchor; p; p = p->next)
     {
       if (p->fd == fd)
-	{
-	  return p;
-	}
+        {
+          return p;
+        }
     }
 
   return NULL;
@@ -289,9 +288,8 @@ css_send_close_request (CSS_CONN_ENTRY * conn)
  */
 int
 css_common_connect_cl (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
-		       int connect_type, const char *dbname,
-		       const char *packed_name, int packed_name_len,
-		       int timeout, unsigned short *rid, bool send_magic)
+                       int connect_type, const char *dbname,
+                       const char *packed_name, int packed_name_len, int timeout, unsigned short *rid, bool send_magic)
 {
   SOCKET fd;
   int css_error = NO_ERRORS;
@@ -303,42 +301,34 @@ css_common_connect_cl (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
       conn->fd = fd;
 
       if (send_magic == true)
-	{
-	  css_error = css_send_magic (conn);
-	}
+        {
+          css_error = css_send_magic (conn);
+        }
 
       if (css_error == NO_ERRORS)
-	{
-	  css_error = css_send_command_packet (conn, connect_type, rid, 1,
-					       packed_name, packed_name_len);
-	}
+        {
+          css_error = css_send_command_packet (conn, connect_type, rid, 1, packed_name, packed_name_len);
+        }
     }
   else
     {
       char hostname[256];
       prm_node_info_to_str (hostname, sizeof (hostname), node_info);
       if (errno == ETIMEDOUT)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ERR_CSS_TCP_CONNECT_TIMEDOUT, 2, hostname,
-			       timeout);
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_CONNECT_TIMEDOUT, 2, hostname, timeout);
+        }
       else
-	{
-	  if (connect_type == SVR_CONNECT_TYPE_TO_SERVER ||
-	      connect_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
-	    {
-	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				   ER_NET_CANT_CONNECT_SERVER, 2,
-				   dbname, hostname);
-	    }
-	  else
-	    {
-	      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1,
-				   hostname);
-	    }
-	}
+        {
+          if (connect_type == SVR_CONNECT_TYPE_TO_SERVER || connect_type == SVR_CONNECT_TYPE_TRANSFER_CONN)
+            {
+              er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_NET_CANT_CONNECT_SERVER, 2, dbname, hostname);
+            }
+          else
+            {
+              er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1, hostname);
+            }
+        }
       css_error = REQUEST_REFUSED;
     }
 
@@ -349,8 +339,7 @@ css_common_connect_cl (const PRM_NODE_INFO * node_info, CSS_CONN_ENTRY * conn,
  * css_connect_to_rye_server () - make a new connection to a server
  */
 CSS_CONN_ENTRY *
-css_connect_to_rye_server (const PRM_NODE_INFO * node_info,
-			   const char *server_name, int connect_type)
+css_connect_to_rye_server (const PRM_NODE_INFO * node_info, const char *server_name, int connect_type)
 {
   CSS_CONN_ENTRY *conn;
   int css_error;
@@ -371,14 +360,12 @@ css_connect_to_rye_server (const PRM_NODE_INFO * node_info,
     }
 
   if (css_common_connect_cl (node_info, conn, connect_type, server_name,
-			     packed_name, packed_name_len, timeout, &rid,
-			     true) != NO_ERRORS)
+                             packed_name, packed_name_len, timeout, &rid, true) != NO_ERRORS)
     {
       goto exit;
     }
 
-  css_error = css_recv_data_from_server (NULL, conn, rid, -1,
-					 1, (char *) reply, sizeof (int) * 2);
+  css_error = css_recv_data_from_server (NULL, conn, rid, -1, 1, (char *) reply, sizeof (int) * 2);
   if (css_error != NO_ERRORS)
     {
       goto exit;
@@ -396,15 +383,14 @@ css_connect_to_rye_server (const PRM_NODE_INFO * node_info,
       char *error_area;
 
       error_area = NULL;
-      if (css_recv_error_from_server (conn, rid, &error_area,
-				      &error_length, -1) == NO_ERRORS)
-	{
-	  if (error_area != NULL)
-	    {
-	      er_set_area_error ((void *) error_area);
-	      free_and_init (error_area);
-	    }
-	}
+      if (css_recv_error_from_server (conn, rid, &error_area, &error_length, -1) == NO_ERRORS)
+        {
+          if (error_area != NULL)
+            {
+              er_set_area_error ((void *) error_area);
+              free_and_init (error_area);
+            }
+        }
     }
 
 exit:
@@ -419,8 +405,7 @@ exit:
  *       as well as modify runtime parameters.
  */
 CSS_CONN_ENTRY *
-css_connect_to_master_for_info (const PRM_NODE_INFO * node_info,
-				unsigned short *rid)
+css_connect_to_master_for_info (const PRM_NODE_INFO * node_info, unsigned short *rid)
 {
   return (css_connect_to_master_timeout (node_info, 0, rid));
 }
@@ -435,8 +420,7 @@ css_connect_to_master_for_info (const PRM_NODE_INFO * node_info,
  *       as well as modify runtime parameters.
  */
 CSS_CONN_ENTRY *
-css_connect_to_master_timeout (const PRM_NODE_INFO * node_info, int timeout,
-			       unsigned short *rid)
+css_connect_to_master_timeout (const PRM_NODE_INFO * node_info, int timeout, unsigned short *rid)
 {
   CSS_CONN_ENTRY *conn;
   double time = timeout;
@@ -450,8 +434,7 @@ css_connect_to_master_timeout (const PRM_NODE_INFO * node_info, int timeout,
   time = ceil (time / 1000);
 
   if (css_common_connect_cl (node_info, conn, SVR_CONNECT_TYPE_MASTER_INFO,
-			     NULL, NULL, 0,
-			     (int) time, rid, true) == NO_ERRORS)
+                             NULL, NULL, 0, (int) time, rid, true) == NO_ERRORS)
     {
       return conn;
     }
@@ -467,8 +450,7 @@ css_connect_to_master_timeout (const PRM_NODE_INFO * node_info, int timeout,
  */
 int
 css_send_request_to_master (CSS_CONN_ENTRY * conn, CSS_MASTER_REQUEST request,
-			    int timeout, int num_send_buffers,
-			    int num_recv_buffers, ...)
+                            int timeout, int num_send_buffers, int num_recv_buffers, ...)
 {
   va_list args, tmp_args;
   unsigned short rid;
@@ -477,16 +459,14 @@ css_send_request_to_master (CSS_CONN_ENTRY * conn, CSS_MASTER_REQUEST request,
   int css_error = NO_ERRORS;
   CSS_NET_PACKET *recv_packet = NULL;
 
-  if ((num_send_buffers != 0 && num_send_buffers != 1)
-      || (num_recv_buffers != 0 && num_recv_buffers != 1))
+  if ((num_send_buffers != 0 && num_send_buffers != 1) || (num_recv_buffers != 0 && num_recv_buffers != 1))
     {
       assert (false);
       return ERROR_ON_READ;
     }
 
   va_start (args, num_recv_buffers);
-  css_error = css_send_command_packet_v (conn, request, &rid,
-					 num_send_buffers, args);
+  css_error = css_send_command_packet_v (conn, request, &rid, num_send_buffers, args);
   if (css_error != NO_ERRORS)
     {
       rid = 0;
@@ -542,9 +522,7 @@ css_does_master_exist ()
   PRM_NODE_INFO node_info = prm_get_myself_node_info ();
 
   /* Don't waste time retrying between master to master connections */
-  fd =
-    css_tcp_client_open (&node_info, SVR_CONNECT_TYPE_MASTER_INFO, NULL,
-			 1000);
+  fd = css_tcp_client_open (&node_info, SVR_CONNECT_TYPE_MASTER_INFO, NULL, 1000);
   if (!IS_INVALID_SOCKET (fd))
     {
       css_shutdown_socket (fd);

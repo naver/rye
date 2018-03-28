@@ -36,11 +36,8 @@ extern SM_TEMPLATE *smt_edit_class_mop_with_lock (MOP class_, LOCK lock);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern SM_TEMPLATE *smt_edit_class (const char *name);
 #endif /* ENABLE_UNUSED_FUNCTION */
-extern SM_TEMPLATE *smt_copy_class_mop (const char *name, MOP op,
-					SM_CLASS ** class_);
-extern SM_TEMPLATE *smt_copy_class (const char *new_name,
-				    const char *existing_name,
-				    SM_CLASS ** class_);
+extern SM_TEMPLATE *smt_copy_class_mop (const char *name, MOP op, SM_CLASS ** class_);
+extern SM_TEMPLATE *smt_copy_class (const char *new_name, const char *existing_name, SM_CLASS ** class_);
 extern int smt_quit (SM_TEMPLATE * template_);
 
 /* Virtual class support */
@@ -49,66 +46,49 @@ extern SM_CLASS_TYPE smt_get_class_type (SM_TEMPLATE * template_);
 
 /* Attribute definition */
 extern int smt_add_attribute_w_dflt (DB_CTMPL * def,
-				     const char *name,
-				     const char *domain_string,
-				     DB_DOMAIN * domain,
-				     DB_VALUE * default_value,
-				     DB_DEFAULT_EXPR_TYPE default_expr,
-				     bool is_shard_key);
+                                     const char *name,
+                                     const char *domain_string,
+                                     DB_DOMAIN * domain,
+                                     DB_VALUE * default_value, DB_DEFAULT_EXPR_TYPE default_expr, bool is_shard_key);
 
 extern int smt_add_attribute_w_dflt_w_order (DB_CTMPL * def,
-					     const char *name,
-					     const char *domain_string,
-					     DB_DOMAIN * domain,
-					     DB_VALUE * default_value,
-					     const bool add_first,
-					     const char *add_after_attribute,
-					     DB_DEFAULT_EXPR_TYPE
-					     default_expr, bool is_shard_key);
+                                             const char *name,
+                                             const char *domain_string,
+                                             DB_DOMAIN * domain,
+                                             DB_VALUE * default_value,
+                                             const bool add_first,
+                                             const char *add_after_attribute,
+                                             DB_DEFAULT_EXPR_TYPE default_expr, bool is_shard_key);
 
 extern int smt_add_attribute_any (SM_TEMPLATE * template_,
-				  const char *name,
-				  const char *domain_string,
-				  DB_DOMAIN * domain,
-				  const bool add_first,
-				  const char *add_after_attribute,
-				  bool is_shard_key);
+                                  const char *name,
+                                  const char *domain_string,
+                                  DB_DOMAIN * domain,
+                                  const bool add_first, const char *add_after_attribute, bool is_shard_key);
 
-extern int smt_add_attribute (SM_TEMPLATE * template_,
-			      const char *name,
-			      const char *domain_string, DB_DOMAIN * domain);
+extern int smt_add_attribute (SM_TEMPLATE * template_, const char *name, const char *domain_string, DB_DOMAIN * domain);
 
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern int smt_delete_set_attribute_domain (SM_TEMPLATE * template_,
-					    const char *name,
-					    const char *domain_string,
-					    DB_DOMAIN * domain);
+                                            const char *name, const char *domain_string, DB_DOMAIN * domain);
 #endif
 
 extern int smt_set_attribute_default (SM_TEMPLATE * template_,
-				      const char *name,
-				      DB_VALUE * value,
-				      DB_DEFAULT_EXPR_TYPE default_expr);
+                                      const char *name, DB_VALUE * value, DB_DEFAULT_EXPR_TYPE default_expr);
 
 extern int smt_add_constraint (SM_TEMPLATE * template_,
-			       DB_CONSTRAINT_TYPE constraint_type,
-			       const char *constraint_name,
-			       const char **att_names, const int *asc_desc);
+                               DB_CONSTRAINT_TYPE constraint_type,
+                               const char *constraint_name, const char **att_names, const int *asc_desc);
 
 extern int smt_drop_constraint (SM_TEMPLATE * template_,
-				const char **att_names,
-				const char *constraint_name,
-				SM_ATTRIBUTE_FLAG constraint);
+                                const char **att_names, const char *constraint_name, SM_ATTRIBUTE_FLAG constraint);
 
-extern int smt_add_index (SM_TEMPLATE * template_, const char *name,
-			  int on_or_off);
+extern int smt_add_index (SM_TEMPLATE * template_, const char *name, int on_or_off);
 
-extern int smt_find_attribute (SM_TEMPLATE * template_, const char *name,
-			       SM_ATTRIBUTE ** attp);
+extern int smt_find_attribute (SM_TEMPLATE * template_, const char *name, SM_ATTRIBUTE ** attp);
 
 /* Rename functions */
-extern int smt_rename_any (SM_TEMPLATE * template_, const char *name,
-			   const char *new_name);
+extern int smt_rename_any (SM_TEMPLATE * template_, const char *name, const char *new_name);
 
 /* Deletion functions */
 extern int smt_delete_any (SM_TEMPLATE * template_, const char *name);
@@ -118,15 +98,10 @@ extern int smt_class_delete (SM_TEMPLATE * template_, const char *name);
 #endif
 
 /* Query_spec functions */
-extern int smt_add_query_spec (SM_TEMPLATE * template_,
-			       const char *specification);
+extern int smt_add_query_spec (SM_TEMPLATE * template_, const char *specification);
 extern int smt_change_attribute_pos (SM_TEMPLATE * template_,
-				     const char *name,
-				     const bool change_first,
-				     const char *change_after_attribute);
-extern int smt_change_attribute_domain (SM_TEMPLATE * template_,
-					const char *name,
-					TP_DOMAIN * new_domain);
+                                     const char *name, const bool change_first, const char *change_after_attribute);
+extern int smt_change_attribute_domain (SM_TEMPLATE * template_, const char *name, TP_DOMAIN * new_domain);
 
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern void smt_downcase_all_class_info (void);

@@ -41,28 +41,19 @@ extern SOCKET_QUEUE_ENTRY *css_Master_socket_anchor;
 extern pthread_mutex_t css_Master_socket_anchor_lock;
 
 extern void css_master_requests_init (void);
-extern void css_process_start_shutdown (SOCKET_QUEUE_ENTRY * sock_entq,
-					int timeout, char *buffer);
+extern void css_process_start_shutdown (SOCKET_QUEUE_ENTRY * sock_entq, int timeout, char *buffer);
 extern void css_master_request_handler (SOCKET_QUEUE_ENTRY * sock_ent);
-extern void css_remove_entry_by_conn (CSS_CONN_ENTRY * conn_p,
-				      SOCKET_QUEUE_ENTRY ** anchor_p);
+extern void css_remove_entry_by_conn (CSS_CONN_ENTRY * conn_p, SOCKET_QUEUE_ENTRY ** anchor_p);
 
 extern void css_master_cleanup (int sig);
 
-extern SOCKET_QUEUE_ENTRY *css_return_entry_of_server (const char *name_p,
-						       SOCKET_QUEUE_ENTRY *
-						       anchor_p);
+extern SOCKET_QUEUE_ENTRY *css_return_entry_of_server (const char *name_p, SOCKET_QUEUE_ENTRY * anchor_p);
 
 
 extern SOCKET_QUEUE_ENTRY *css_add_request_to_socket_queue (CSS_CONN_ENTRY *
-							    conn_p,
-							    char *name_p,
-							    SOCKET fd,
-							    int fd_type,
-							    int pid,
-							    SOCKET_QUEUE_ENTRY
-							    ** anchor_p);
-extern SOCKET_QUEUE_ENTRY *css_return_entry_by_conn (CSS_CONN_ENTRY * conn_p,
-						     SOCKET_QUEUE_ENTRY **
-						     anchor_p);
+                                                            conn_p,
+                                                            char *name_p,
+                                                            SOCKET fd,
+                                                            int fd_type, int pid, SOCKET_QUEUE_ENTRY ** anchor_p);
+extern SOCKET_QUEUE_ENTRY *css_return_entry_by_conn (CSS_CONN_ENTRY * conn_p, SOCKET_QUEUE_ENTRY ** anchor_p);
 #endif /* _MASTER_REQUEST_H_ */

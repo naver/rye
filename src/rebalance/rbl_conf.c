@@ -112,14 +112,12 @@ rbl_conf_find_master_node_index (CCI_NODE_INFO ** node_info, int num_node)
 
   for (i = 0; i < num_node; i++)
     {
-      server_state = rbl_conf_connect_db (node_info[i]->dbname,
-					  node_info[i]->hostname,
-					  node_info[i]->port);
+      server_state = rbl_conf_connect_db (node_info[i]->dbname, node_info[i]->hostname, node_info[i]->port);
       if (server_state == HA_STATE_MASTER)
-	{
-	  db_shutdown ();
-	  return i;
-	}
+        {
+          db_shutdown ();
+          return i;
+        }
 
       db_shutdown ();
     }
@@ -135,8 +133,7 @@ rbl_conf_connect_srcdb (int mode)
 
   RBL_ASSERT (mode == RBL_MASTER || mode == RBL_SLAVE);
 
-  src_Master_index = rbl_conf_find_master_node_index (src_Node_info,
-						      num_Src_node_info);
+  src_Master_index = rbl_conf_find_master_node_index (src_Node_info, num_Src_node_info);
   if (src_Master_index < 0)
     {
       RBL_ASSERT (0);
@@ -150,37 +147,35 @@ rbl_conf_connect_srcdb (int mode)
   if (mode == RBL_MASTER)
     {
       server_state =
-	rbl_conf_connect_db (src_Node_info[src_Master_index]->dbname,
-			     src_Node_info[src_Master_index]->hostname,
-			     src_Node_info[src_Master_index]->port);
+        rbl_conf_connect_db (src_Node_info[src_Master_index]->dbname,
+                             src_Node_info[src_Master_index]->hostname, src_Node_info[src_Master_index]->port);
       RBL_ASSERT (server_state == HA_STATE_MASTER);
 
       if (server_state == HA_STATE_MASTER)
-	{
-	  src_Connected_index = src_Master_index;
-	  return NO_ERROR;
-	}
+        {
+          src_Connected_index = src_Master_index;
+          return NO_ERROR;
+        }
     }
   else
     {
       RBL_ASSERT (mode == RBL_SLAVE);
       for (i = 0; i < num_Src_node_info; i++)
-	{
-	  if (i == src_Master_index)
-	    {
-	      continue;
-	    }
+        {
+          if (i == src_Master_index)
+            {
+              continue;
+            }
 
-	  server_state = rbl_conf_connect_db (src_Node_info[i]->dbname,
-					      "localhost", -1);
-	  if (server_state == HA_STATE_SLAVE)
-	    {
-	      src_Connected_index = i;
-	      return NO_ERROR;
-	    }
+          server_state = rbl_conf_connect_db (src_Node_info[i]->dbname, "localhost", -1);
+          if (server_state == HA_STATE_SLAVE)
+            {
+              src_Connected_index = i;
+              return NO_ERROR;
+            }
 
-	  db_shutdown ();
-	}
+          db_shutdown ();
+        }
     }
 
   return ER_FAILED;
@@ -195,9 +190,9 @@ rbl_conf_find_nodeinfo (int nodeid, int *num_node_info)
   for (i = 0; i < node_Info->node_count; i++)
     {
       if (node_Info->node_info[i].nodeid == nodeid)
-	{
-	  num_found++;
-	}
+        {
+          num_found++;
+        }
     }
 
   nodes = (CCI_NODE_INFO **) malloc (sizeof (CCI_NODE_INFO *) * num_found);
@@ -210,9 +205,9 @@ rbl_conf_find_nodeinfo (int nodeid, int *num_node_info)
   for (i = 0; i < node_Info->node_count; i++)
     {
       if (node_Info->node_info[i].nodeid == nodeid)
-	{
-	  nodes[num_found++] = &node_Info->node_info[i];
-	}
+        {
+          nodes[num_found++] = &node_Info->node_info[i];
+        }
     }
 
   *num_node_info = num_found;
@@ -243,9 +238,8 @@ rbl_conf_get_dest_node (int index)
 
 static int
 rbl_conf_make_connection (const char *host, int port, const char *dbname,
-			  CCI_CONN * conn, bool dbname_with_host,
-			  bool to_slave, bool ignore_dba_password,
-			  bool is_local_con)
+                          CCI_CONN * conn, bool dbname_with_host,
+                          bool to_slave, bool ignore_dba_password, bool is_local_con)
 {
   char url[1024];
   const char *rwmode = "rw";
@@ -268,13 +262,11 @@ rbl_conf_make_connection (const char *host, int port, const char *dbname,
 
   if (dbname_with_host == true)
     {
-      sprintf (url, "cci:rye://%s:%d/%s@%s/%s?%s",
-	       host, port, dbname, host, rwmode, url_property);
+      sprintf (url, "cci:rye://%s:%d/%s@%s/%s?%s", host, port, dbname, host, rwmode, url_property);
     }
   else
     {
-      sprintf (url, "cci:rye://%s:%d/%s/%s?%s",
-	       host, port, dbname, rwmode, url_property);
+      sprintf (url, "cci:rye://%s:%d/%s/%s?%s", host, port, dbname, rwmode, url_property);
     }
 
   if (ignore_dba_password == false)
@@ -286,8 +278,7 @@ rbl_conf_make_connection (const char *host, int port, const char *dbname,
 
   if (cci_connect (conn, url, "dba", (pw ? pw : "")) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return ER_FAILED;
     }
 
@@ -298,9 +289,8 @@ rbl_conf_make_connection (const char *host, int port, const char *dbname,
 
 int
 rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
-	       int src_node_id, int dest_node_id, int group_id,
-	       const char *dest_host, int dest_port, const char *dest_dbname,
-	       int src_node_ha_staus, bool copy_schema)
+               int src_node_id, int dest_node_id, int group_id,
+               const char *dest_host, int dest_port, const char *dest_dbname, int src_node_ha_staus, bool copy_schema)
 {
   int i, error;
   CCI_SHARD_GROUPID_INFO *groupid_info;
@@ -308,8 +298,7 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
 
   sprintf (prog_Name, "%s_%d", PROG_NAME, group_id);
 
-  error = rbl_conf_make_connection (mgmt_host, mgmt_port, mgmt_dbname,
-				    &mgmt_Conn, false, false, false, false);
+  error = rbl_conf_make_connection (mgmt_host, mgmt_port, mgmt_dbname, &mgmt_Conn, false, false, false, false);
   if (error != NO_ERROR)
     {
       return error;
@@ -318,8 +307,7 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
   error = cci_shard_get_info (&mgmt_Conn, &node_Info, &groupid_info);
   if (error != NO_ERROR)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 mgmt_Conn.err_buf.err_code, mgmt_Conn.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, mgmt_Conn.err_buf.err_code, mgmt_Conn.err_buf.err_msg);
       return ER_FAILED;
     }
 
@@ -328,16 +316,13 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
   for (i = 0; i < node_Info->node_count; i++)
     {
       RBL_DEBUG (ARG_FILE_LINE, "Node info:\n%d %s %s %d\n",
-		 node_Info->node_info[i].nodeid,
-		 node_Info->node_info[i].dbname,
-		 node_Info->node_info[i].hostname,
-		 node_Info->node_info[i].port);
+                 node_Info->node_info[i].nodeid,
+                 node_Info->node_info[i].dbname, node_Info->node_info[i].hostname, node_Info->node_info[i].port);
     }
 
   for (i = 1; i <= groupid_info->groupid_count; i++)
     {
-      RBL_DEBUG (ARG_FILE_LINE, "Group Id info:\n%3d %d\n", i + 1,
-		 groupid_info->nodeid_table[i]);
+      RBL_DEBUG (ARG_FILE_LINE, "Group Id info:\n%3d %d\n", i + 1, groupid_info->nodeid_table[i]);
     }
 #endif
   cci_shard_group_info_free (groupid_info);
@@ -351,20 +336,18 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
 
   if (copy_schema == false)
     {
-      dest_Node_info =
-	rbl_conf_find_nodeinfo (dest_node_id, &num_Dest_node_info);
+      dest_Node_info = rbl_conf_find_nodeinfo (dest_node_id, &num_Dest_node_info);
       if (dest_Node_info == NULL)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_NODE_NOT_FOUND, dest_node_id);
-	  return ER_FAILED;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_NODE_NOT_FOUND, dest_node_id);
+          return ER_FAILED;
+        }
 
-      dest_Master_index =
-	rbl_conf_find_master_node_index (dest_Node_info, num_Dest_node_info);
+      dest_Master_index = rbl_conf_find_master_node_index (dest_Node_info, num_Dest_node_info);
       if (dest_Master_index < 0)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
   /* source db login */
@@ -381,9 +364,7 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
     }
 
   error = rbl_conf_make_connection (src_node->hostname, src_node->port,
-				    src_node->dbname, &srcdb_Conn, true,
-				    src_node_ha_staus == RBL_SLAVE, false,
-				    true);
+                                    src_node->dbname, &srcdb_Conn, true, src_node_ha_staus == RBL_SLAVE, false, true);
   if (error != NO_ERROR)
     {
       return error;
@@ -392,53 +373,48 @@ rbl_conf_init (const char *mgmt_host, int mgmt_port, const char *mgmt_dbname,
   if (copy_schema == true)
     {
       for (i = 0; i < 2; i++)
-	{
-	  error = rbl_conf_make_connection (dest_host, dest_port, dest_dbname,
-					    &destdb_Conn[i], false, false,
-					    true, true);
-	  if (error != NO_ERROR)
-	    {
-	      return error;
-	    }
-	}
+        {
+          error = rbl_conf_make_connection (dest_host, dest_port, dest_dbname,
+                                            &destdb_Conn[i], false, false, true, true);
+          if (error != NO_ERROR)
+            {
+              return error;
+            }
+        }
     }
   else
     {
       RBL_ASSERT (dest_Master_index > -1);
       dest_node = rbl_conf_get_dest_node (dest_Master_index);
       if (dest_node == NULL)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
 
       for (i = 0; i < 2; i++)
-	{
-	  error =
-	    rbl_conf_make_connection (dest_node->hostname, dest_node->port,
-				      dest_node->dbname, &destdb_Conn[i],
-				      false, false, false, true);
-	  if (error != NO_ERROR)
-	    {
-	      return error;
-	    }
-	}
+        {
+          error =
+            rbl_conf_make_connection (dest_node->hostname, dest_node->port,
+                                      dest_node->dbname, &destdb_Conn[i], false, false, false, true);
+          if (error != NO_ERROR)
+            {
+              return error;
+            }
+        }
     }
 
   return NO_ERROR;
 }
 
 static int
-rbl_conf_update_groupid_bitmap (RBL_COPY_CONTEXT * ctx, CCI_CONN * conn,
-				bool on_off, bool do_commit)
+rbl_conf_update_groupid_bitmap (RBL_COPY_CONTEXT * ctx, CCI_CONN * conn, bool on_off, bool do_commit)
 {
   int error;
 
-  error = cci_update_db_group_id (conn, ctx->sync_ctx->migrator_id,
-				  ctx->gid, 0 /* master */ , on_off);
+  error = cci_update_db_group_id (conn, ctx->sync_ctx->migrator_id, ctx->gid, 0 /* master */ , on_off);
   if (error != NO_ERROR)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       cci_end_tran (conn, CCI_TRAN_ROLLBACK);
       return error;
     }
@@ -452,8 +428,7 @@ rbl_conf_update_groupid_bitmap (RBL_COPY_CONTEXT * ctx, CCI_CONN * conn,
 }
 
 int
-rbl_conf_update_src_groupid (RBL_COPY_CONTEXT * ctx, bool on_off,
-			     bool do_commit)
+rbl_conf_update_src_groupid (RBL_COPY_CONTEXT * ctx, bool on_off, bool do_commit)
 {
   CCI_CONN *conn, tmp_conn;
   CCI_NODE_INFO *node;
@@ -462,13 +437,11 @@ rbl_conf_update_src_groupid (RBL_COPY_CONTEXT * ctx, bool on_off,
   if (ctx->run_slave == true)
     {
       node = src_Node_info[src_Master_index];
-      error = rbl_conf_make_connection (node->hostname, node->port,
-					node->dbname, &tmp_conn, true,
-					false, false, true);
+      error = rbl_conf_make_connection (node->hostname, node->port, node->dbname, &tmp_conn, true, false, false, true);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       conn = &tmp_conn;
     }
@@ -507,31 +480,27 @@ rbl_conf_get_repl_delay (CCI_CONN * conn)
 
   if (cci_prepare (conn, &stmt, sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return -1;
     }
 
   if (cci_execute (&stmt, 0, 0) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto error_exit;
     }
 
   error = cci_fetch_next (&stmt);
   if (error < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto error_exit;
     }
 
   applied_time = cci_get_bigint (&stmt, 1, &ind);
   if (stmt.err_buf.err_code != CCI_ER_NO_ERROR)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto error_exit;
     }
 
@@ -565,25 +534,22 @@ rbl_conf_check_repl_delay (CCI_CONN * conn)
     {
       delay = rbl_conf_get_repl_delay (conn);
       if (delay < 0)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
 
-      RBL_DEBUG (ARG_FILE_LINE, "Replication delay: %ld, %ld\n",
-		 delay, max_delay_msec);
+      RBL_DEBUG (ARG_FILE_LINE, "Replication delay: %ld, %ld\n", delay, max_delay_msec);
 
       if (delay <= max_delay_msec)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (++retry >= 100)
-	{
-	  RBL_ERROR_MSG (ARG_FILE_LINE,
-			 "Give up migration due to replication delay : %d (ms)\n",
-			 delay);
-	  return ER_FAILED;
-	}
+        {
+          RBL_ERROR_MSG (ARG_FILE_LINE, "Give up migration due to replication delay : %d (ms)\n", delay);
+          return ER_FAILED;
+        }
 
       THREAD_SLEEP (1000);
     }
@@ -601,13 +567,11 @@ rbl_conf_insert_gid_removed_info_srcdb (int group_id, bool run_slave)
   if (run_slave == true)
     {
       node = src_Node_info[src_Master_index];
-      error = rbl_conf_make_connection (node->hostname, node->port,
-					node->dbname, &tmp_conn, true, false,
-					false, true);
+      error = rbl_conf_make_connection (node->hostname, node->port, node->dbname, &tmp_conn, true, false, false, true);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       conn = &tmp_conn;
     }
   else
@@ -618,14 +582,12 @@ rbl_conf_insert_gid_removed_info_srcdb (int group_id, bool run_slave)
   error = cci_insert_gid_removed_info (conn, group_id);
   if (error != NO_ERROR)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
     }
 
   if (conn == &tmp_conn)
     {
-      cci_end_tran (conn,
-		    error == NO_ERROR ? CCI_TRAN_COMMIT : CCI_TRAN_ROLLBACK);
+      cci_end_tran (conn, error == NO_ERROR ? CCI_TRAN_COMMIT : CCI_TRAN_ROLLBACK);
       cci_disconnect (conn);
     }
 

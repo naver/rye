@@ -32,24 +32,14 @@
 #include "cas_cci.h"
 
 
-extern int rpct_get_log_analyzer (CCI_CONN * conn,
-				  CIRP_CT_LOG_ANALYZER * ct_data,
-				  const PRM_NODE_INFO * host_info);
-extern int rpct_insert_log_analyzer (CCI_CONN * conn,
-				     CIRP_CT_LOG_ANALYZER * ct_data);
-extern int rpct_update_log_analyzer (CCI_CONN * conn,
-				     CIRP_CT_LOG_ANALYZER * ct_data);
-extern int rpct_analyzer_to_catalog_item (RP_CATALOG_ITEM * catalog,
-					  RECDES * recdes,
-					  CIRP_CT_LOG_ANALYZER * ct_data);
+extern int rpct_get_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data, const PRM_NODE_INFO * host_info);
+extern int rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data);
+extern int rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data);
+extern int rpct_analyzer_to_catalog_item (RP_CATALOG_ITEM * catalog, RECDES * recdes, CIRP_CT_LOG_ANALYZER * ct_data);
 
-extern int rpct_init_applier_info (CCI_CONN * conn,
-				   const PRM_NODE_INFO * host_ip);
-extern int rpct_insert_log_applier (CCI_CONN * conn,
-				    CIRP_CT_LOG_APPLIER * ct_data);
-extern int rpct_applier_to_catalog_item (RP_CATALOG_ITEM * catalog,
-					 RECDES * recdes,
-					 CIRP_CT_LOG_APPLIER * ct_data);
+extern int rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_ip);
+extern int rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data);
+extern int rpct_applier_to_catalog_item (RP_CATALOG_ITEM * catalog, RECDES * recdes, CIRP_CT_LOG_APPLIER * ct_data);
 
 
 extern int cirp_execute_query (CCI_CONN * conn, CCI_STMT * stmt, char *query);

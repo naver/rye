@@ -51,19 +51,13 @@
 
 #define MAX_NUMERIC_STRING_SIZE	82
 
-static PT_NODE *pt_get_object_data_type (PARSER_CONTEXT * parser,
-					 const DB_VALUE * val);
+static PT_NODE *pt_get_object_data_type (PARSER_CONTEXT * parser, const DB_VALUE * val);
 
-static PT_NODE *pt_bind_helper (PARSER_CONTEXT * parser,
-				PT_NODE * node,
-				DB_VALUE * val, int *data_type_added);
+static PT_NODE *pt_bind_helper (PARSER_CONTEXT * parser, PT_NODE * node, DB_VALUE * val, int *data_type_added);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-static PT_NODE *pt_bind_set_type (PARSER_CONTEXT * parser,
-				  PT_NODE * node,
-				  DB_VALUE * val, int *data_type_added);
-static PT_NODE *pt_set_elements_to_value (PARSER_CONTEXT * parser,
-					  const DB_VALUE * val);
+static PT_NODE *pt_bind_set_type (PARSER_CONTEXT * parser, PT_NODE * node, DB_VALUE * val, int *data_type_added);
+static PT_NODE *pt_set_elements_to_value (PARSER_CONTEXT * parser, const DB_VALUE * val);
 #endif
 
 /*
@@ -116,7 +110,7 @@ pt_misc_to_qp_misc_operand (PT_MISC_TYPE misc_specifier)
       operand = SUBSTR;
       break;
     default:
-      operand = (MISC_OPERAND) 0;	/* technically an error */
+      operand = (MISC_OPERAND) 0;       /* technically an error */
     }
 
   return operand;
@@ -133,8 +127,7 @@ pt_misc_to_qp_misc_operand (PT_MISC_TYPE misc_specifier)
  *  modifies: parser heap, set
  */
 void
-pt_add_type_to_set (PARSER_CONTEXT * parser, const PT_NODE * typs,
-		    PT_NODE ** set)
+pt_add_type_to_set (PARSER_CONTEXT * parser, const PT_NODE * typs, PT_NODE ** set)
 {
   PT_TYPE_ENUM typ;
   PT_NODE *s, *ent;
@@ -155,155 +148,145 @@ pt_add_type_to_set (PARSER_CONTEXT * parser, const PT_NODE * typs,
        */
       typ = typs->type_enum;
       if (typ != PT_TYPE_NONE && typ != PT_TYPE_MAYBE)
-	{
-	  /* check for system errors */
-	  if (typ == PT_TYPE_OBJECT)
-	    {
-	      if (typs->data_type == NULL)
-		{
-		  PT_INTERNAL_ERROR (parser, "interface");
-		  return;
-		}
+        {
+          /* check for system errors */
+          if (typ == PT_TYPE_OBJECT)
+            {
+              if (typs->data_type == NULL)
+                {
+                  PT_INTERNAL_ERROR (parser, "interface");
+                  return;
+                }
 
-	      if (typs->data_type->info.data_type.entity == NULL)
-		{
-		  /* this type is the generic object */
-		  cls_nam = NULL;
-		  cls = NULL;
-		}
-	      else
-		{
-		  /* non-generic object. it must have a class name */
-		  cls =
-		    typs->data_type->info.data_type.entity->info.name.
-		    db_object;
-		  cls_nam = sm_class_name (cls);
-		  if (cls == NULL || cls_nam == NULL)
-		    {
-		      PT_INTERNAL_ERROR (parser, "interface");
-		      return;
-		    }
-		}
-	    }
+              if (typs->data_type->info.data_type.entity == NULL)
+                {
+                  /* this type is the generic object */
+                  cls_nam = NULL;
+                  cls = NULL;
+                }
+              else
+                {
+                  /* non-generic object. it must have a class name */
+                  cls = typs->data_type->info.data_type.entity->info.name.db_object;
+                  cls_nam = sm_class_name (cls);
+                  if (cls == NULL || cls_nam == NULL)
+                    {
+                      PT_INTERNAL_ERROR (parser, "interface");
+                      return;
+                    }
+                }
+            }
 
-	  /* check if the type is already in the set */
-	  for (s = *set, found = false;
-	       s && s->node_type == PT_DATA_TYPE && !found; s = s->next)
-	    {
-	      if (typ == s->type_enum)
-		{
-		  if (typ == PT_TYPE_OBJECT)
-		    {
-		      /* for objects, check if the classes are equal */
-		      ent = s->info.data_type.entity;
-		      if (ent && (ent->node_type == PT_NAME)
-			  && (e_nam = ent->info.name.original))
-			{
-			  /* ent is not the generic object so equality is
-			   * based on class_name.  But be careful because
-			   * the type we're looking for may still be the
-			   * generic object.
-			   */
-			  if (cls != NULL)
-			    {
-			      found =
-				!intl_identifier_casecmp (cls_nam, e_nam);
-			    }
-			}
-		      else
-			{
-			  /* ent must be the generic object, the only
-			   * way it matches is if typs is also the
-			   * generic object.
-			   */
-			  found = (cls == NULL);
-			}
-		    }
-		  else if (typ == PT_TYPE_NUMERIC)
-		    {
-		      if (s->info.data_type.precision <
-			  typs->data_type->info.data_type.precision
-			  || s->info.data_type.dec_scale <
-			  typs->data_type->info.data_type.dec_scale)
-			{
-			  continue;
-			}
-		      found = true;
-		    }
-		  else
-		    {
-		      /* for simple types, equality of type_enum is enough */
-		      found = true;
-		    }
-		}
-	      else
-		{
-		  found = false;
-		}
-	    }
+          /* check if the type is already in the set */
+          for (s = *set, found = false; s && s->node_type == PT_DATA_TYPE && !found; s = s->next)
+            {
+              if (typ == s->type_enum)
+                {
+                  if (typ == PT_TYPE_OBJECT)
+                    {
+                      /* for objects, check if the classes are equal */
+                      ent = s->info.data_type.entity;
+                      if (ent && (ent->node_type == PT_NAME) && (e_nam = ent->info.name.original))
+                        {
+                          /* ent is not the generic object so equality is
+                           * based on class_name.  But be careful because
+                           * the type we're looking for may still be the
+                           * generic object.
+                           */
+                          if (cls != NULL)
+                            {
+                              found = !intl_identifier_casecmp (cls_nam, e_nam);
+                            }
+                        }
+                      else
+                        {
+                          /* ent must be the generic object, the only
+                           * way it matches is if typs is also the
+                           * generic object.
+                           */
+                          found = (cls == NULL);
+                        }
+                    }
+                  else if (typ == PT_TYPE_NUMERIC)
+                    {
+                      if (s->info.data_type.precision <
+                          typs->data_type->info.data_type.precision
+                          || s->info.data_type.dec_scale < typs->data_type->info.data_type.dec_scale)
+                        {
+                          continue;
+                        }
+                      found = true;
+                    }
+                  else
+                    {
+                      /* for simple types, equality of type_enum is enough */
+                      found = true;
+                    }
+                }
+              else
+                {
+                  found = false;
+                }
+            }
 
-	  if (!found)
-	    {
-	      /* prepend it to the set of data_types */
-	      PT_NODE *new_typ = NULL;
-	      if (typs->data_type == NULL)
-		{
-		  new_typ = parser_new_node (parser, PT_DATA_TYPE);
-		  new_typ->type_enum = typ;
-		}
-	      else
-		{
-		  /* If the node has been parameterized by its data_type,
-		   * node, copy ALL pertinent information into this node.
-		   * Datatype parameterization includes ALL the fields of
-		   * a data_type node (ie, virt_object, proxy_object, etc).
-		   */
-		  new_typ = parser_copy_tree_list (parser, typs->data_type);
-		}
-	      if (new_typ && PT_IS_COLLECTION_TYPE (typs->type_enum))
-		{
-		  /* In case of a set in a multiset the data type must be of
-		   * type set and not just simply adding types of the set into
-		   * the types of multiset */
-		  s = parser_new_node (parser, PT_DATA_TYPE);
-		  s->type_enum = typs->type_enum;
-		  s->data_type = new_typ;
-		  new_typ = s;
-		}
-	      if (new_typ)
-		{
-		  if ((typ == PT_TYPE_OBJECT) && (cls != NULL))
-		    {
-		      PT_NODE *entity = NULL, *t;
-		      entity = pt_add_class_to_entity_list (parser,
-							    cls, entity, typs,
-							    (UINTPTR) typs,
-							    PT_CLASS);
-		      new_typ->info.data_type.virt_type_enum = typ;
-		      if (new_typ->info.data_type.entity != NULL)
-			{
-			  parser_free_tree (parser,
-					    new_typ->info.data_type.entity);
-			}
-		      new_typ->info.data_type.entity = entity;
+          if (!found)
+            {
+              /* prepend it to the set of data_types */
+              PT_NODE *new_typ = NULL;
+              if (typs->data_type == NULL)
+                {
+                  new_typ = parser_new_node (parser, PT_DATA_TYPE);
+                  new_typ->type_enum = typ;
+                }
+              else
+                {
+                  /* If the node has been parameterized by its data_type,
+                   * node, copy ALL pertinent information into this node.
+                   * Datatype parameterization includes ALL the fields of
+                   * a data_type node (ie, virt_object, proxy_object, etc).
+                   */
+                  new_typ = parser_copy_tree_list (parser, typs->data_type);
+                }
+              if (new_typ && PT_IS_COLLECTION_TYPE (typs->type_enum))
+                {
+                  /* In case of a set in a multiset the data type must be of
+                   * type set and not just simply adding types of the set into
+                   * the types of multiset */
+                  s = parser_new_node (parser, PT_DATA_TYPE);
+                  s->type_enum = typs->type_enum;
+                  s->data_type = new_typ;
+                  new_typ = s;
+                }
+              if (new_typ)
+                {
+                  if ((typ == PT_TYPE_OBJECT) && (cls != NULL))
+                    {
+                      PT_NODE *entity = NULL, *t;
+                      entity = pt_add_class_to_entity_list (parser, cls, entity, typs, (UINTPTR) typs, PT_CLASS);
+                      new_typ->info.data_type.virt_type_enum = typ;
+                      if (new_typ->info.data_type.entity != NULL)
+                        {
+                          parser_free_tree (parser, new_typ->info.data_type.entity);
+                        }
+                      new_typ->info.data_type.entity = entity;
 
-		      /*
-		       * Make sure that everything on the entity list has the
-		       * same bloody spec_id.
-		       */
-		      for (t = entity; t; t = t->next)
-			{
-			  t->info.name.spec_id = (UINTPTR) entity;
-			}
-		    }
-		  new_typ->next = *set;
-		  *set = new_typ;
-		}
-	    }
-	}
+                      /*
+                       * Make sure that everything on the entity list has the
+                       * same bloody spec_id.
+                       */
+                      for (t = entity; t; t = t->next)
+                        {
+                          t->info.name.spec_id = (UINTPTR) entity;
+                        }
+                    }
+                  new_typ->next = *set;
+                  *set = new_typ;
+                }
+            }
+        }
 
       typs = typs->next;
-    }				/* while (typs) */
+    }                           /* while (typs) */
 }
 
 /*
@@ -375,21 +358,20 @@ pt_set_elements_to_value (PARSER_CONTEXT * parser, const DB_VALUE * val)
   result.next = NULL;
 
   db_make_null (&element);
-  for (i = 0, size = db_set_size (db_get_set (val));
-       i < size && error >= 0; i++)
+  for (i = 0, size = db_set_size (db_get_set (val)); i < size && error >= 0; i++)
     {
       error = db_set_get (db_get_set (val), i, &element);
       if (error >= 0 && (elem = pt_dbval_to_value (parser, &element)))
-	{
-	  parser_append_node (elem, &result);
-	  db_value_clear (&element);
-	}
+        {
+          parser_append_node (elem, &result);
+          db_value_clear (&element);
+        }
       else
-	{
-	  result.next = NULL;
-	  db_value_clear (&element);
-	  break;
-	}
+        {
+          result.next = NULL;
+          db_value_clear (&element);
+          break;
+        }
     }
 
   return result.next;
@@ -403,8 +385,7 @@ pt_set_elements_to_value (PARSER_CONTEXT * parser, const DB_VALUE * val)
  *  default_value (in):
  */
 PT_NODE *
-pt_sm_attribute_default_value_to_node (PARSER_CONTEXT * parser,
-				       const SM_ATTRIBUTE * sm_attr)
+pt_sm_attribute_default_value_to_node (PARSER_CONTEXT * parser, const SM_ATTRIBUTE * sm_attr)
 {
   PT_NODE *result;
   const SM_DEFAULT_VALUE *default_value;
@@ -426,20 +407,19 @@ pt_sm_attribute_default_value_to_node (PARSER_CONTEXT * parser,
     {
       result = pt_dbval_to_value (parser, &default_value->value);
       if (result == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
   else
     {
       result = parser_new_node (parser, PT_EXPR);
       if (!result)
-	{
-	  PT_INTERNAL_ERROR (parser, "allocate new node");
-	  return NULL;
-	}
-      result->info.expr.op =
-	pt_op_type_from_default_expr_type (default_value->default_expr);
+        {
+          PT_INTERNAL_ERROR (parser, "allocate new node");
+          return NULL;
+        }
+      result->info.expr.op = pt_op_type_from_default_expr_type (default_value->default_expr);
     }
 
   data_type = parser_new_node (parser, PT_DATA_TYPE);
@@ -508,144 +488,130 @@ pt_dbval_to_value (PARSER_CONTEXT * parser, const DB_VALUE * val)
 
     case DB_TYPE_NUMERIC:
       strcpy (temp, numeric_db_value_print ((DB_VALUE *) val));
-      result->info.value.data_value.str =
-	pt_append_nulstring (parser, (PARSER_VARCHAR *) NULL,
-			     (const char *) temp);
+      result->info.value.data_value.str = pt_append_nulstring (parser, (PARSER_VARCHAR *) NULL, (const char *) temp);
       result->data_type = parser_new_node (parser, PT_DATA_TYPE);
       if (result->data_type == NULL)
-	{
-	  parser_free_node (parser, result);
-	  result = NULL;
-	}
+        {
+          parser_free_node (parser, result);
+          result = NULL;
+        }
       else
-	{
-	  result->data_type->type_enum = result->type_enum;
-	  result->data_type->info.data_type.precision =
-	    DB_VALUE_PRECISION (val);
-	  result->data_type->info.data_type.dec_scale = DB_VALUE_SCALE (val);
-	}
+        {
+          result->data_type->type_enum = result->type_enum;
+          result->data_type->info.data_type.precision = DB_VALUE_PRECISION (val);
+          result->data_type->info.data_type.dec_scale = DB_VALUE_SCALE (val);
+        }
       break;
 
     case DB_TYPE_VARCHAR:
       bytes = db_get_string (val);
       size = db_get_string_size (val);
-      result->info.value.data_value.str =
-	pt_append_bytes (parser, NULL, bytes, size);
+      result->info.value.data_value.str = pt_append_bytes (parser, NULL, bytes, size);
       result->info.value.data_value.str->length = size;
       result->info.value.string_type = ' ';
       result->data_type = parser_new_node (parser, PT_DATA_TYPE);
       if (result->data_type == NULL)
-	{
-	  parser_free_node (parser, result);
-	  result = NULL;
-	}
+        {
+          parser_free_node (parser, result);
+          result = NULL;
+        }
       else
-	{
-	  result->data_type->type_enum = result->type_enum;
-	  result->data_type->info.data_type.precision =
-	    DB_VALUE_PRECISION (val);
-	  result->data_type->info.data_type.collation_id =
-	    db_get_string_collation (val);
-	  assert (result->data_type->info.data_type.collation_id >= 0);
-	}
+        {
+          result->data_type->type_enum = result->type_enum;
+          result->data_type->info.data_type.precision = DB_VALUE_PRECISION (val);
+          result->data_type->info.data_type.collation_id = db_get_string_collation (val);
+          assert (result->data_type->info.data_type.collation_id >= 0);
+        }
       break;
     case DB_TYPE_VARBIT:
       {
-	int max_length = 0;
-	char *printed_bit = NULL;
-	size = 0;
-	bytes = DB_GET_VARBIT (val, &size);
-	max_length = ((size + 3) / 4) + 4;
-	printed_bit = (char *) malloc (max_length);
-	if (printed_bit == NULL)
-	  {
-	    PT_ERRORm (parser, NULL, MSGCAT_SET_PARSER_SEMANTIC,
-		       MSGCAT_SEMANTIC_OUT_OF_MEMORY);
-	    parser_free_node (parser, result);
-	    result = NULL;
-	    break;
-	  }
-	if (db_bit_string (val, "%X", printed_bit, max_length) != NO_ERROR)
-	  {
-	    free_and_init (printed_bit);
-	    PT_ERRORmf (parser, NULL, MSGCAT_SET_PARSER_SEMANTIC,
-			MSGCAT_SEMANTIC_DATA_OVERFLOW_ON,
-			pt_show_type_enum (PT_TYPE_VARBIT));
-	    parser_free_node (parser, result);
-	    result = NULL;
-	    break;
-	  }
+        int max_length = 0;
+        char *printed_bit = NULL;
+        size = 0;
+        bytes = DB_GET_VARBIT (val, &size);
+        max_length = ((size + 3) / 4) + 4;
+        printed_bit = (char *) malloc (max_length);
+        if (printed_bit == NULL)
+          {
+            PT_ERRORm (parser, NULL, MSGCAT_SET_PARSER_SEMANTIC, MSGCAT_SEMANTIC_OUT_OF_MEMORY);
+            parser_free_node (parser, result);
+            result = NULL;
+            break;
+          }
+        if (db_bit_string (val, "%X", printed_bit, max_length) != NO_ERROR)
+          {
+            free_and_init (printed_bit);
+            PT_ERRORmf (parser, NULL, MSGCAT_SET_PARSER_SEMANTIC,
+                        MSGCAT_SEMANTIC_DATA_OVERFLOW_ON, pt_show_type_enum (PT_TYPE_VARBIT));
+            parser_free_node (parser, result);
+            result = NULL;
+            break;
+          }
 
-	/* get the printed size */
-	size = strlen (printed_bit);
+        /* get the printed size */
+        size = strlen (printed_bit);
 
-	result->info.value.string_type = 'X';
-	result->info.value.data_value.str =
-	  pt_append_bytes (parser, NULL, printed_bit, size);
+        result->info.value.string_type = 'X';
+        result->info.value.data_value.str = pt_append_bytes (parser, NULL, printed_bit, size);
 
-	free_and_init (printed_bit);
+        free_and_init (printed_bit);
 
-	result->info.value.data_value.str->length = size;
+        result->info.value.data_value.str->length = size;
 
-	result->data_type = parser_new_node (parser, PT_DATA_TYPE);
-	if (result->data_type == NULL)
-	  {
-	    parser_free_node (parser, result);
-	    result = NULL;
-	  }
-	else
-	  {
-	    result->data_type->type_enum = result->type_enum;
-	    result->data_type->info.data_type.precision =
-	      DB_VALUE_PRECISION (val);
-	  }
-	break;
+        result->data_type = parser_new_node (parser, PT_DATA_TYPE);
+        if (result->data_type == NULL)
+          {
+            parser_free_node (parser, result);
+            result = NULL;
+          }
+        else
+          {
+            result->data_type->type_enum = result->type_enum;
+            result->data_type->info.data_type.precision = DB_VALUE_PRECISION (val);
+          }
+        break;
       }
     case DB_TYPE_OBJECT:
       result->info.value.data_value.op = DB_GET_OBJECT (val);
       result->data_type = pt_get_object_data_type (parser, val);
       if (result->data_type == NULL)
-	{
-	  parser_free_node (parser, result);
-	  result = NULL;
-	}
+        {
+          parser_free_node (parser, result);
+          result = NULL;
+        }
       break;
     case DB_TYPE_TIME:
       if (db_time_to_string (buf, sizeof (buf), DB_GET_TIME (val)) == 0)
-	{
-	  result->type_enum = PT_TYPE_NONE;
-	}
+        {
+          result->type_enum = PT_TYPE_NONE;
+        }
       else
-	{
-	  result->info.value.data_value.str =
-	    pt_append_bytes (parser, NULL, buf, strlen (buf));
-	}
+        {
+          result->info.value.data_value.str = pt_append_bytes (parser, NULL, buf, strlen (buf));
+        }
       break;
     case DB_TYPE_DATETIME:
-      if (db_datetime_to_string (buf, sizeof (buf),
-				 DB_GET_DATETIME (val)) == 0)
-	{
-	  result->type_enum = PT_TYPE_NONE;
-	}
+      if (db_datetime_to_string (buf, sizeof (buf), DB_GET_DATETIME (val)) == 0)
+        {
+          result->type_enum = PT_TYPE_NONE;
+        }
       else
-	{
-	  result->info.value.data_value.str =
-	    pt_append_bytes (parser, NULL, buf, strlen (buf));
-	}
+        {
+          result->info.value.data_value.str = pt_append_bytes (parser, NULL, buf, strlen (buf));
+        }
       break;
     case DB_TYPE_DATE:
       if (db_date_to_string (buf, sizeof (buf), DB_GET_DATE (val)) == 0)
-	{
-	  result->type_enum = PT_TYPE_NONE;
-	}
+        {
+          result->type_enum = PT_TYPE_NONE;
+        }
       else
-	{
-	  result->info.value.data_value.str =
-	    pt_append_bytes (parser, NULL, buf, strlen (buf));
-	}
+        {
+          result->info.value.data_value.str = pt_append_bytes (parser, NULL, buf, strlen (buf));
+        }
       break;
 
-#if 0				/* TODO - */
+#if 0                           /* TODO - */
       /* explicitly treat others as an error condition */
     case DB_TYPE_SUB:
     case DB_TYPE_TABLE:
@@ -679,8 +645,7 @@ pt_dbval_to_value (PARSER_CONTEXT * parser, const DB_VALUE * val)
  *  effects : evaluates and adds the values as elements of the db_value
  */
 DB_VALUE *
-pt_seq_value_to_db (PARSER_CONTEXT * parser, PT_NODE * values,
-		    DB_VALUE * db_value, PT_NODE ** el_types)
+pt_seq_value_to_db (PARSER_CONTEXT * parser, PT_NODE * values, DB_VALUE * db_value, PT_NODE ** el_types)
 {
   PT_NODE *element;
   DB_VALUE *e_val = NULL;
@@ -688,37 +653,35 @@ pt_seq_value_to_db (PARSER_CONTEXT * parser, PT_NODE * values,
 
   assert (parser != NULL);
 
-  for (element = values, indx = 0;
-       element != NULL; element = element->next, indx++)
+  for (element = values, indx = 0; element != NULL; element = element->next, indx++)
     {
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       if (!PT_IS_CONST (element))
-	{
-	  PT_ERRORc (parser, element, db_error_string (3));
-	  return NULL;
-	}
+        {
+          PT_ERRORc (parser, element, db_error_string (3));
+          return NULL;
+        }
 #endif
       e_val = pt_value_to_db (parser, element);
       if (!pt_has_error (parser))
-	{
-	  if (db_seq_put (DB_GET_SEQUENCE (db_value), indx, e_val)
-	      != NO_ERROR)
-	    {
-	      PT_ERRORc (parser, element, db_error_string (3));
-	      return NULL;
-	    }
-	}
+        {
+          if (db_seq_put (DB_GET_SEQUENCE (db_value), indx, e_val) != NO_ERROR)
+            {
+              PT_ERRORc (parser, element, db_error_string (3));
+              return NULL;
+            }
+        }
       else
-	{
-	  /* this is not an error case, but a result of the use
-	   * of PT_VALUE node to represent non constant expressions
-	   * Here we are trying to convert a non-constant expression,
-	   * and failed. NULL is returned, indicating that a db_value
-	   * cannot be made, because this is not a constant sequence.
-	   * Yeah, this is a kludge....
-	   */
-	  return NULL;
-	}
+        {
+          /* this is not an error case, but a result of the use
+           * of PT_VALUE node to represent non constant expressions
+           * Here we are trying to convert a non-constant expression,
+           * and failed. NULL is returned, indicating that a db_value
+           * cannot be made, because this is not a constant sequence.
+           * Yeah, this is a kludge....
+           */
+          return NULL;
+        }
     }
 
   pt_add_type_to_set (parser, values, el_types);
@@ -757,82 +720,73 @@ pt_value_to_db (PARSER_CONTEXT * parser, PT_NODE * value)
      if it is an input host_variable then
      its associated DB_VALUE is in parser->host_variables[x]
    */
-  if (value->node_type == PT_HOST_VAR
-      && value->info.host_var.var_type == PT_HOST_IN)
+  if (value->node_type == PT_HOST_VAR && value->info.host_var.var_type == PT_HOST_IN)
     {
       DB_DOMAIN *hv_dom;
 
       db_value = pt_host_var_db_value (parser, value);
 
       if (db_value)
-	{
-	  if (value->type_enum != PT_TYPE_NONE
-	      && !PT_IS_NULL_NODE (value)
-	      && value->type_enum != PT_TYPE_MAYBE
-	      && value->type_enum != PT_TYPE_NUMERIC
-	      && value->type_enum != PT_TYPE_VARCHAR
-	      && value->type_enum != PT_TYPE_VARBIT
-	      && (hv_dom =
-		  pt_node_to_db_domain (parser, value, NULL)) != NULL)
-	    {
-	      /* host_var node "value" has a useful domain for itself so that
-	         check compatibility between the "value" and the host variable
-	         provided by the user */
+        {
+          if (value->type_enum != PT_TYPE_NONE
+              && !PT_IS_NULL_NODE (value)
+              && value->type_enum != PT_TYPE_MAYBE
+              && value->type_enum != PT_TYPE_NUMERIC
+              && value->type_enum != PT_TYPE_VARCHAR
+              && value->type_enum != PT_TYPE_VARBIT && (hv_dom = pt_node_to_db_domain (parser, value, NULL)) != NULL)
+            {
+              /* host_var node "value" has a useful domain for itself so that
+                 check compatibility between the "value" and the host variable
+                 provided by the user */
 
-	      hv_dom = tp_domain_cache (hv_dom);
-	      if (!hv_dom	/* must be cached before use! */
-		  || tp_value_coerce (db_value, db_value,
-				      hv_dom) != DOMAIN_COMPATIBLE)
-		{
-		  PT_ERRORmf2 (parser, value,
-			       MSGCAT_SET_PARSER_SEMANTIC,
-			       MSGCAT_SEMANTIC_CANT_COERCE_TO, "host var",
-			       pt_show_type_enum (value->type_enum));
-		  return NULL;
-		}
+              hv_dom = tp_domain_cache (hv_dom);
+              if (!hv_dom       /* must be cached before use! */
+                  || tp_value_coerce (db_value, db_value, hv_dom) != DOMAIN_COMPATIBLE)
+                {
+                  PT_ERRORmf2 (parser, value,
+                               MSGCAT_SET_PARSER_SEMANTIC,
+                               MSGCAT_SEMANTIC_CANT_COERCE_TO, "host var", pt_show_type_enum (value->type_enum));
+                  return NULL;
+                }
 
-	    }
-	  else
-	    {
-	      /* host var node "value" has no useful domain, which probably means
-	         that it's a so-far untyped host var reference whose type we're
-	         trying to deduce from the supplied value itself.
-	         Just return the value and continue on... */
+            }
+          else
+            {
+              /* host var node "value" has no useful domain, which probably means
+                 that it's a so-far untyped host var reference whose type we're
+                 trying to deduce from the supplied value itself.
+                 Just return the value and continue on... */
 
-	      if (pt_bind_type_from_dbval (parser, value, db_value) == NULL)
-		{
-		  return NULL;
-		}
+              if (pt_bind_type_from_dbval (parser, value, db_value) == NULL)
+                {
+                  return NULL;
+                }
 
-	      if (value->type_enum == PT_TYPE_MAYBE)
-		{
-		  hv_dom = pt_node_to_db_domain (parser, value, NULL);
-		  hv_dom = tp_domain_cache (hv_dom);
-		  if (!hv_dom	/* domain must be cached before use! */
-		      || tp_value_coerce (db_value, db_value, hv_dom)
-		      != DOMAIN_COMPATIBLE)
-		    {
-		      PT_ERRORmf2 (parser, value,
-				   MSGCAT_SET_PARSER_SEMANTIC,
-				   MSGCAT_SEMANTIC_CANT_COERCE_TO, "host var",
-				   pt_show_type_enum (value->type_enum));
-		      return NULL;
-		    }
-		}
-	    }
+              if (value->type_enum == PT_TYPE_MAYBE)
+                {
+                  hv_dom = pt_node_to_db_domain (parser, value, NULL);
+                  hv_dom = tp_domain_cache (hv_dom);
+                  if (!hv_dom   /* domain must be cached before use! */
+                      || tp_value_coerce (db_value, db_value, hv_dom) != DOMAIN_COMPATIBLE)
+                    {
+                      PT_ERRORmf2 (parser, value,
+                                   MSGCAT_SET_PARSER_SEMANTIC,
+                                   MSGCAT_SEMANTIC_CANT_COERCE_TO, "host var", pt_show_type_enum (value->type_enum));
+                      return NULL;
+                    }
+                }
+            }
 
-	}
-      else			/* if (db_value) */
-	{
-	  if (parser->set_host_var == 1)
-	    {
-	      PT_ERRORmf2 (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-			   MSGCAT_RUNTIME_HOSTVAR_INDEX_ERROR,
-			   value->info.host_var.index,
-			   parser->host_var_count);
-	    }
-	  return NULL;
-	}
+        }
+      else                      /* if (db_value) */
+        {
+          if (parser->set_host_var == 1)
+            {
+              PT_ERRORmf2 (parser, value, MSGCAT_SET_PARSER_RUNTIME,
+                           MSGCAT_RUNTIME_HOSTVAR_INDEX_ERROR, value->info.host_var.index, parser->host_var_count);
+            }
+          return NULL;
+        }
 
       return db_value;
     }
@@ -847,8 +801,7 @@ pt_value_to_db (PARSER_CONTEXT * parser, PT_NODE * value)
     }
 
   more_type_info_needed = 0;
-  if (pt_db_value_initialize (parser, value, db_value, &more_type_info_needed)
-      == NULL)
+  if (pt_db_value_initialize (parser, value, db_value, &more_type_info_needed) == NULL)
     {
       return (DB_VALUE *) NULL;
     }
@@ -895,8 +848,7 @@ pt_string_to_db_domain (const char *s, const char *class_name)
   stmt = (char *) malloc (strlen (prefix) + strlen (s) + 1);
   if (stmt == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      strlen (prefix) + strlen (s) + 1);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, strlen (prefix) + strlen (s) + 1);
       return (DB_DOMAIN *) NULL;
     }
 
@@ -906,16 +858,16 @@ pt_string_to_db_domain (const char *s, const char *class_name)
     {
       dt = parser_parse_string (parser, stmt);
       if (!pt_has_error (parser) && dt)
-	{
-	  if (dt->node_type == PT_DATA_TYPE)
-	    {
-	      retval = pt_data_type_to_db_domain (parser, dt, class_name);
-	    }
-	}
+        {
+          if (dt->node_type == PT_DATA_TYPE)
+            {
+              retval = pt_data_type_to_db_domain (parser, dt, class_name);
+            }
+        }
       else
-	{
-	  pt_report_to_ersys (parser, PT_SYNTAX);
-	}
+        {
+          pt_report_to_ersys (parser, PT_SYNTAX);
+        }
       parser_free_parser (parser);
     }
   free_and_init (stmt);
@@ -933,8 +885,7 @@ pt_string_to_db_domain (const char *s, const char *class_name)
  *   node(out):
  */
 void
-pt_string_to_data_type (PARSER_CONTEXT * parser, const char *s,
-			PT_NODE * node)
+pt_string_to_data_type (PARSER_CONTEXT * parser, const char *s, PT_NODE * node)
 {
   DB_DOMAIN *dom;
 
@@ -975,51 +926,40 @@ pt_type_enum_to_db_domain (const PT_TYPE_ENUM t)
   switch (domain_type)
     {
     case DB_TYPE_INTEGER:
-      retval = tp_domain_construct (domain_type, NULL, DB_INTEGER_PRECISION,
-				    0, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_INTEGER_PRECISION, 0, NULL);
       break;
     case DB_TYPE_BIGINT:
-      retval = tp_domain_construct (domain_type, NULL, DB_BIGINT_PRECISION,
-				    0, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_BIGINT_PRECISION, 0, NULL);
       break;
     case DB_TYPE_DOUBLE:
-      retval = tp_domain_construct (domain_type, NULL,
-				    DB_DOUBLE_DECIMAL_PRECISION, 0, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_DOUBLE_DECIMAL_PRECISION, 0, NULL);
       break;
     case DB_TYPE_TIME:
-      retval = tp_domain_construct (domain_type, NULL, DB_TIME_PRECISION,
-				    0, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_TIME_PRECISION, 0, NULL);
       break;
     case DB_TYPE_DATE:
-      retval = tp_domain_construct (domain_type, NULL, DB_DATE_PRECISION,
-				    0, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_DATE_PRECISION, 0, NULL);
       break;
     case DB_TYPE_DATETIME:
-      retval = tp_domain_construct (domain_type, NULL, DB_DATETIME_PRECISION,
-				    DB_DATETIME_DECIMAL_SCALE, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_DATETIME_PRECISION, DB_DATETIME_DECIMAL_SCALE, NULL);
       break;
     case DB_TYPE_SUB:
     case DB_TYPE_OID:
     case DB_TYPE_OBJECT:
     case DB_TYPE_SEQUENCE:
-      retval = tp_domain_construct (domain_type, (DB_OBJECT *) 0, 0, 0,
-				    (TP_DOMAIN *) 0);
+      retval = tp_domain_construct (domain_type, (DB_OBJECT *) 0, 0, 0, (TP_DOMAIN *) 0);
       break;
 
     case DB_TYPE_NUMERIC:
-      retval = tp_domain_construct (domain_type, NULL,
-				    DB_DEFAULT_NUMERIC_PRECISION,
-				    DB_DEFAULT_NUMERIC_SCALE, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_DEFAULT_NUMERIC_PRECISION, DB_DEFAULT_NUMERIC_SCALE, NULL);
       break;
 
     case DB_TYPE_VARCHAR:
-      retval = tp_domain_construct (domain_type, NULL,
-				    DB_MAX_VARCHAR_PRECISION, 0, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_MAX_VARCHAR_PRECISION, 0, NULL);
       break;
 
     case DB_TYPE_VARBIT:
-      retval = tp_domain_construct (domain_type, NULL,
-				    DB_MAX_VARBIT_PRECISION, 0, NULL);
+      retval = tp_domain_construct (domain_type, NULL, DB_MAX_VARBIT_PRECISION, 0, NULL);
       break;
 
     case DB_TYPE_NULL:
@@ -1065,8 +1005,7 @@ pt_type_enum_to_db_domain (const PT_TYPE_ENUM t)
  *             Subtle, ain't it?
  */
 DB_DOMAIN *
-pt_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
-			   const char *class_name)
+pt_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt, const char *class_name)
 {
   DB_DOMAIN *retval = (DB_DOMAIN *) 0;
   DB_TYPE domain_type;
@@ -1093,37 +1032,34 @@ pt_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
       return pt_type_enum_to_db_domain (dt->type_enum);
 
     case DB_TYPE_OBJECT:
-      if (dt->info.data_type.entity
-	  && dt->info.data_type.entity->node_type == PT_NAME)
-	{
-	  const char *name;
+      if (dt->info.data_type.entity && dt->info.data_type.entity->node_type == PT_NAME)
+        {
+          const char *name;
 
-	  name = dt->info.data_type.entity->info.name.original;
-	  class_obj = sm_find_class (name);
+          name = dt->info.data_type.entity->info.name.original;
+          class_obj = sm_find_class (name);
 
-	  /* If the attribute domain is the name of the class being created,
-	     indicate with a -1. */
-	  if (class_obj == NULL)
-	    {
-	      if (class_name != NULL && name != NULL
-		  && intl_identifier_casecmp (name, class_name) != 0)
-		{
-		  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-			  ER_SM_DOMAIN_NOT_A_CLASS, 1,
-			  dt->info.data_type.entity->info.name.original);
-		  return NULL;
-		}
-	      class_obj = (DB_OBJECT *) TP_DOMAIN_SELF_REF;
-	    }
-	}
+          /* If the attribute domain is the name of the class being created,
+             indicate with a -1. */
+          if (class_obj == NULL)
+            {
+              if (class_name != NULL && name != NULL && intl_identifier_casecmp (name, class_name) != 0)
+                {
+                  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                          ER_SM_DOMAIN_NOT_A_CLASS, 1, dt->info.data_type.entity->info.name.original);
+                  return NULL;
+                }
+              class_obj = (DB_OBJECT *) TP_DOMAIN_SELF_REF;
+            }
+        }
       break;
 
     case DB_TYPE_VARCHAR:
       precision = dt->info.data_type.precision;
       if (precision == DB_DEFAULT_PRECISION)
-	{
-	  precision = DB_MAX_VARCHAR_PRECISION;
-	}
+        {
+          precision = DB_MAX_VARCHAR_PRECISION;
+        }
       collation_id = dt->info.data_type.collation_id;
       assert (collation_id >= 0);
       break;
@@ -1131,17 +1067,17 @@ pt_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
     case DB_TYPE_VARBIT:
       precision = dt->info.data_type.precision;
       if (precision == DB_DEFAULT_PRECISION)
-	{
-	  precision = DB_MAX_VARBIT_PRECISION;
-	}
+        {
+          precision = DB_MAX_VARBIT_PRECISION;
+        }
       break;
 
     case DB_TYPE_NUMERIC:
       precision = dt->info.data_type.precision;
       if (precision == DB_DEFAULT_PRECISION)
-	{
-	  precision = DB_DEFAULT_NUMERIC_PRECISION;
-	}
+        {
+          precision = DB_DEFAULT_NUMERIC_PRECISION;
+        }
       scale = dt->info.data_type.dec_scale;
       break;
 
@@ -1159,21 +1095,21 @@ pt_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
   if (retval)
     {
       if (class_obj == (DB_OBJECT *) TP_DOMAIN_SELF_REF)
-	{
-	  retval->class_mop = NULL;
-	  retval->self_ref = 1;
-	}
+        {
+          retval->class_mop = NULL;
+          retval->self_ref = 1;
+        }
       else
-	{
-	  retval->class_mop = class_obj;
-	  retval->self_ref = 0;
-	  /* For compatibility on the server side, class objects must have
-	     the oid in the domain match the oid in the class object. */
-	  if (class_obj)
-	    {
-	      COPY_OID (&(retval->class_oid), &(class_obj->ws_oid));
-	    }
-	}
+        {
+          retval->class_mop = class_obj;
+          retval->self_ref = 0;
+          /* For compatibility on the server side, class objects must have
+             the oid in the domain match the oid in the class object. */
+          if (class_obj)
+            {
+              COPY_OID (&(retval->class_oid), &(class_obj->ws_oid));
+            }
+        }
 
       retval->precision = precision;
       retval->scale = scale;
@@ -1212,8 +1148,7 @@ pt_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
  *             Subtle, ain't it?
  */
 DB_DOMAIN *
-pt_node_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
-				PT_TYPE_ENUM type)
+pt_node_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt, PT_TYPE_ENUM type)
 {
   DB_TYPE domain_type;
   DB_OBJECT *class_obj = (DB_OBJECT *) 0;
@@ -1242,19 +1177,16 @@ pt_node_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
       return pt_type_enum_to_db_domain (type);
 
     case DB_TYPE_OBJECT:
-      if (dt->info.data_type.entity
-	  && dt->info.data_type.entity->node_type == PT_NAME)
-	{
-	  class_obj = (DB_OBJECT *)
-	    sm_find_class (dt->info.data_type.entity->info.name.original);
-	  if (!class_obj)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_SM_DOMAIN_NOT_A_CLASS, 1,
-		      dt->info.data_type.entity->info.name.original);
-	      return (DB_DOMAIN *) 0;
-	    }
-	}
+      if (dt->info.data_type.entity && dt->info.data_type.entity->node_type == PT_NAME)
+        {
+          class_obj = (DB_OBJECT *) sm_find_class (dt->info.data_type.entity->info.name.original);
+          if (!class_obj)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_SM_DOMAIN_NOT_A_CLASS, 1, dt->info.data_type.entity->info.name.original);
+              return (DB_DOMAIN *) 0;
+            }
+        }
       break;
 
     case DB_TYPE_VARCHAR:
@@ -1270,22 +1202,21 @@ pt_node_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
 
     case DB_TYPE_SEQUENCE:
       while (dt && (error == NO_ERROR))
-	{
-	  domain = pt_data_type_to_db_domain (parser, dt, NULL);
-	  if (domain)
-	    {
-#if 1				/* remove nested set */
-	      assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (domain)));
+        {
+          domain = pt_data_type_to_db_domain (parser, dt, NULL);
+          if (domain)
+            {
+#if 1                           /* remove nested set */
+              assert (!TP_IS_SET_TYPE (TP_DOMAIN_TYPE (domain)));
 #endif
-	      error = tp_domain_add (&setdomain, domain);
-	    }
-	  dt = dt->next;
-	}
+              error = tp_domain_add (&setdomain, domain);
+            }
+          dt = dt->next;
+        }
       if (error == NO_ERROR)
-	{
-	  retval = tp_domain_construct (domain_type,
-					(DB_OBJECT *) 0, 0, 0, setdomain);
-	}
+        {
+          retval = tp_domain_construct (domain_type, (DB_OBJECT *) 0, 0, 0, setdomain);
+        }
       return retval;
 
     case DB_TYPE_NULL:
@@ -1320,8 +1251,7 @@ pt_node_data_type_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * dt,
  *   class_name(in):
  */
 DB_DOMAIN *
-pt_node_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * node,
-		      const char *class_name)
+pt_node_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * node, const char *class_name)
 {
   int error = NO_ERROR, natts = 0;
   DB_DOMAIN *retval = (DB_DOMAIN *) 0;
@@ -1336,37 +1266,34 @@ pt_node_to_db_domain (PARSER_CONTEXT * parser, PT_NODE * node,
     {
       domain_type = pt_type_enum_to_db (node->type_enum);
       switch (domain_type)
-	{
-	case DB_TYPE_SEQUENCE:
-	  /* Recursively build the setdomain */
-	  dt = node->data_type;
-	  while (dt && (error == NO_ERROR))
-	    {
-	      domain = pt_data_type_to_db_domain (parser, dt, class_name);
-	      if (domain)
-		{
-		  error = tp_domain_add (&setdomain, domain);
-		}
-	      else
-		{
-		  /* given element domain was not found, raise error */
-		  error = er_errid ();
-		}
-	      dt = dt->next;
-	    }
-	  if (error == NO_ERROR)
-	    {
-	      retval = tp_domain_construct (domain_type,
-					    (DB_OBJECT *) 0, natts, 0,
-					    setdomain);
-	    }
-	  break;
+        {
+        case DB_TYPE_SEQUENCE:
+          /* Recursively build the setdomain */
+          dt = node->data_type;
+          while (dt && (error == NO_ERROR))
+            {
+              domain = pt_data_type_to_db_domain (parser, dt, class_name);
+              if (domain)
+                {
+                  error = tp_domain_add (&setdomain, domain);
+                }
+              else
+                {
+                  /* given element domain was not found, raise error */
+                  error = er_errid ();
+                }
+              dt = dt->next;
+            }
+          if (error == NO_ERROR)
+            {
+              retval = tp_domain_construct (domain_type, (DB_OBJECT *) 0, natts, 0, setdomain);
+            }
+          break;
 
-	default:
-	  retval = pt_data_type_to_db_domain (parser, node->data_type,
-					      class_name);
-	  break;
-	}
+        default:
+          retval = pt_data_type_to_db_domain (parser, node->data_type, class_name);
+          break;
+        }
     }
   else
     {
@@ -1495,18 +1422,15 @@ pt_sort_in_desc_order (PT_NODE * vlist)
   do
     {
       t = init_list->info.value.data_value.i;
-      for (c_addr = init_list->next, p_addr = init_list;
-	   c_addr != NULL; c_addr = c_addr->next, p_addr = p_addr->next)
-	{
-	  if (p_addr->info.value.data_value.i <
-	      c_addr->info.value.data_value.i)
-	    {
-	      t = p_addr->info.value.data_value.i;
-	      p_addr->info.value.data_value.i =
-		c_addr->info.value.data_value.i;
-	      c_addr->info.value.data_value.i = t;
-	    }
-	}
+      for (c_addr = init_list->next, p_addr = init_list; c_addr != NULL; c_addr = c_addr->next, p_addr = p_addr->next)
+        {
+          if (p_addr->info.value.data_value.i < c_addr->info.value.data_value.i)
+            {
+              t = p_addr->info.value.data_value.i;
+              p_addr->info.value.data_value.i = c_addr->info.value.data_value.i;
+              c_addr->info.value.data_value.i = t;
+            }
+        }
     }
   while (t != init_list->info.value.data_value.i);
 
@@ -1515,19 +1439,18 @@ pt_sort_in_desc_order (PT_NODE * vlist)
   while (c_addr)
     {
       if (c_addr->next == NULL)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
-      if (c_addr->info.value.data_value.i ==
-	  c_addr->next->info.value.data_value.i)
-	{
-	  c_addr->next = c_addr->next->next;
-	}
+      if (c_addr->info.value.data_value.i == c_addr->next->info.value.data_value.i)
+        {
+          c_addr->next = c_addr->next->next;
+        }
       else
-	{
-	  c_addr = c_addr->next;
-	}
+        {
+          c_addr = c_addr->next;
+        }
     }
 
   return init_list;
@@ -1731,13 +1654,13 @@ pt_node_to_stmt_type (const PT_NODE * node)
       return RYE_STMT_DELETE;
     case PT_GET_XACTION:
       if (node->info.get_xaction.option == PT_ISOLATION_LEVEL)
-	{
-	  return RYE_STMT_GET_ISO_LVL;
-	}
+        {
+          return RYE_STMT_GET_ISO_LVL;
+        }
       else if (node->info.get_xaction.option == PT_LOCK_TIMEOUT)
-	{
-	  return RYE_STMT_GET_TIMEOUT;
-	}
+        {
+          return RYE_STMT_GET_TIMEOUT;
+        }
     case PT_GET_OPT_LVL:
       return RYE_STMT_GET_OPT_LVL;
     case PT_SET_OPT_LVL:
@@ -1770,8 +1693,7 @@ pt_node_to_stmt_type (const PT_NODE * node)
  */
 
 static PT_NODE *
-pt_bind_helper (PARSER_CONTEXT * parser,
-		PT_NODE * node, DB_VALUE * val, int *data_type_added)
+pt_bind_helper (PARSER_CONTEXT * parser, PT_NODE * node, DB_VALUE * val, int *data_type_added)
 {
   PT_NODE *dt;
   DB_TYPE val_type;
@@ -1784,8 +1706,7 @@ pt_bind_helper (PARSER_CONTEXT * parser,
   dt = NULL;
 
   val_type = DB_VALUE_DOMAIN_TYPE (val);
-  if (DB_IS_NULL (val)
-      && (val_type == DB_TYPE_NULL || val_type == DB_TYPE_VARIABLE))
+  if (DB_IS_NULL (val) && (val_type == DB_TYPE_NULL || val_type == DB_TYPE_VARIABLE))
     {
       node->type_enum = PT_TYPE_NONE;
       return node;
@@ -1804,18 +1725,18 @@ pt_bind_helper (PARSER_CONTEXT * parser,
     {
     case DB_TYPE_INTEGER:
       if (node->node_type == PT_DATA_TYPE)
-	{
-	  node->info.data_type.precision = TP_INTEGER_PRECISION;
-	  node->info.data_type.dec_scale = TP_INTEGER_SCALE;
-	}
+        {
+          node->info.data_type.precision = TP_INTEGER_PRECISION;
+          node->info.data_type.dec_scale = TP_INTEGER_SCALE;
+        }
       break;
 
     case DB_TYPE_BIGINT:
       if (node->node_type == PT_DATA_TYPE)
-	{
-	  node->info.data_type.precision = TP_BIGINT_PRECISION;
-	  node->info.data_type.dec_scale = TP_BIGINT_SCALE;
-	}
+        {
+          node->info.data_type.precision = TP_BIGINT_PRECISION;
+          node->info.data_type.dec_scale = TP_BIGINT_SCALE;
+        }
       break;
 
     case DB_TYPE_NULL:
@@ -1847,25 +1768,23 @@ pt_bind_helper (PARSER_CONTEXT * parser,
     case DB_TYPE_NUMERIC:
       dt = parser_new_node (parser, PT_DATA_TYPE);
       if (dt)
-	{
-	  dt->type_enum = node->type_enum;
-	  dt->info.data_type.precision = DB_VALUE_PRECISION (val);
-	  dt->info.data_type.dec_scale = DB_VALUE_SCALE (val);
-	}
+        {
+          dt->type_enum = node->type_enum;
+          dt->info.data_type.precision = DB_VALUE_PRECISION (val);
+          dt->info.data_type.dec_scale = DB_VALUE_SCALE (val);
+        }
       break;
 
     case DB_TYPE_VARCHAR:
     case DB_TYPE_VARBIT:
       dt = parser_new_node (parser, PT_DATA_TYPE);
       if (dt)
-	{
-	  dt->type_enum = node->type_enum;
-	  dt->info.data_type.precision = DB_VALUE_PRECISION (val);
-	  dt->info.data_type.collation_id =
-	    (int) db_get_string_collation (val);
-	  assert (!TP_IS_CHAR_TYPE (val_type)
-		  || dt->info.data_type.collation_id >= 0);
-	}
+        {
+          dt->type_enum = node->type_enum;
+          dt->info.data_type.precision = DB_VALUE_PRECISION (val);
+          dt->info.data_type.collation_id = (int) db_get_string_collation (val);
+          assert (!TP_IS_CHAR_TYPE (val_type) || dt->info.data_type.collation_id >= 0);
+        }
       break;
 
     case DB_TYPE_OBJECT:
@@ -1881,14 +1800,14 @@ pt_bind_helper (PARSER_CONTEXT * parser,
   if (dt)
     {
       if (node)
-	{
-	  node->data_type = dt;
-	  *data_type_added = 1;
-	}
+        {
+          node->data_type = dt;
+          *data_type_added = 1;
+        }
       else
-	{
-	  parser_free_node (parser, dt);
-	}
+        {
+          parser_free_node (parser, dt);
+        }
     }
 
   return node;
@@ -1905,8 +1824,7 @@ pt_bind_helper (PARSER_CONTEXT * parser,
  */
 
 static PT_NODE *
-pt_bind_set_type (PARSER_CONTEXT * parser,
-		  PT_NODE * node, DB_VALUE * val, int *data_type_added)
+pt_bind_set_type (PARSER_CONTEXT * parser, PT_NODE * node, DB_VALUE * val, int *data_type_added)
 {
   SET_ITERATOR *iterator;
   DB_VALUE *element;
@@ -1931,9 +1849,9 @@ pt_bind_set_type (PARSER_CONTEXT * parser,
   while ((element = set_iterator_value (iterator)))
     {
       if (!pt_bind_helper (parser, &tmp, element, &tmp_data_type_added))
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       pt_add_type_to_set (parser, &tmp, &set_type);
 
@@ -1943,9 +1861,9 @@ pt_bind_set_type (PARSER_CONTEXT * parser,
        * intermediate stuff that was produced by pt_bind_helper.
        */
       if (tmp_data_type_added)
-	{
-	  parser_free_node (parser, tmp.data_type);
-	}
+        {
+          parser_free_node (parser, tmp.data_type);
+        }
       tmp.data_type = NULL;
 
       set_iterator_next (iterator);
@@ -1979,8 +1897,7 @@ error:
  */
 
 PT_NODE *
-pt_bind_type_from_dbval (PARSER_CONTEXT * parser, PT_NODE * node,
-			 DB_VALUE * val)
+pt_bind_type_from_dbval (PARSER_CONTEXT * parser, PT_NODE * node, DB_VALUE * val)
 {
   int data_type_added;
 
@@ -2015,22 +1932,19 @@ pt_set_host_variables (PARSER_CONTEXT * parser, int count, DB_VALUE * values)
     {
       /* oh no, an user gave me wrong data ... generate warning! */
       PT_WARNINGmf2 (parser, NULL,
-		     MSGCAT_SET_PARSER_RUNTIME,
-		     MSGCAT_RUNTIME_HOSTVAR_INDEX_ERROR, count,
-		     parser->host_var_count);
+                     MSGCAT_SET_PARSER_RUNTIME, MSGCAT_RUNTIME_HOSTVAR_INDEX_ERROR, count, parser->host_var_count);
       return;
     }
 
   /* cast and copy the given values to the place holder */
-  for (val = values, hv = parser->host_variables, i = 0;
-       i < parser->host_var_count; val++, hv++, i++)
+  for (val = values, hv = parser->host_variables, i = 0; i < parser->host_var_count; val++, hv++, i++)
     {
       pr_clear_value (hv);
 
       pr_clone_value (val, hv);
     }
 
-  parser->set_host_var = 1;	/* OK */
+  parser->set_host_var = 1;     /* OK */
 }
 
 /*
@@ -2049,12 +1963,12 @@ pt_host_var_db_value (PARSER_CONTEXT * parser, PT_NODE * hv)
     {
       idx = hv->info.host_var.index;
       if (idx >= 0 && idx < parser->host_var_count)
-	{
-	  if (parser->set_host_var)
-	    {
-	      val = &parser->host_variables[idx];
-	    }
-	}
+        {
+          if (parser->set_host_var)
+            {
+              val = &parser->host_variables[idx];
+            }
+        }
     }
 
   return val;
@@ -2071,8 +1985,7 @@ pt_host_var_db_value (PARSER_CONTEXT * parser, PT_NODE * hv)
  *   more_type_info_needed(in): flag for need more info
  */
 DB_VALUE *
-pt_db_value_initialize (PARSER_CONTEXT * parser, PT_NODE * value,
-			DB_VALUE * db_value, int *more_type_info_needed)
+pt_db_value_initialize (PARSER_CONTEXT * parser, PT_NODE * value, DB_VALUE * db_value, int *more_type_info_needed)
 {
   DB_SEQ *seq;
   DB_DATE date;
@@ -2095,30 +2008,25 @@ pt_db_value_initialize (PARSER_CONTEXT * parser, PT_NODE * value,
     case PT_TYPE_NONE:
     case PT_TYPE_MAYBE:
     case PT_TYPE_NULL:
-      db_value_domain_init (db_value, DB_TYPE_VARIABLE, DB_DEFAULT_PRECISION,
-			    DB_DEFAULT_SCALE);
+      db_value_domain_init (db_value, DB_TYPE_VARIABLE, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       break;
 
     case PT_TYPE_SEQUENCE:
       seq = db_seq_create (NULL, NULL, 0);
       if (seq == NULL)
-	{
-	  PT_ERROR (parser, value,
-		    msgcat_message (MSGCAT_CATALOG_RYE,
-				    MSGCAT_SET_PARSER_SEMANTIC,
-				    MSGCAT_SEMANTIC_OUT_OF_MEMORY));
-	  return (DB_VALUE *) NULL;
-	}
+        {
+          PT_ERROR (parser, value,
+                    msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_PARSER_SEMANTIC, MSGCAT_SEMANTIC_OUT_OF_MEMORY));
+          return (DB_VALUE *) NULL;
+        }
 
       db_make_sequence (db_value, seq);
 
-      if (pt_seq_value_to_db (parser,
-			      value->info.value.data_value.set,
-			      db_value, &value->data_type) == NULL)
-	{
-	  pr_clear_value (db_value);
-	  return (DB_VALUE *) NULL;
-	}
+      if (pt_seq_value_to_db (parser, value->info.value.data_value.set, db_value, &value->data_type) == NULL)
+        {
+          pr_clear_value (db_value);
+          return (DB_VALUE *) NULL;
+        }
 
       value->info.value.db_value_is_in_workspace = true;
       break;
@@ -2134,14 +2042,13 @@ pt_db_value_initialize (PARSER_CONTEXT * parser, PT_NODE * value,
 
     case PT_TYPE_NUMERIC:
       if (numeric_coerce_string_to_num
-	  ((const char *) value->info.value.data_value.str->bytes,
-	   value->info.value.data_value.str->length, db_value) != NO_ERROR)
-	{
-	  PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-		      MSGCAT_RUNTIME_BAD_NUMERIC,
-		      value->info.value.data_value.str->bytes);
-	  return (DB_VALUE *) NULL;
-	}
+          ((const char *) value->info.value.data_value.str->bytes,
+           value->info.value.data_value.str->length, db_value) != NO_ERROR)
+        {
+          PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
+                      MSGCAT_RUNTIME_BAD_NUMERIC, value->info.value.data_value.str->bytes);
+          return (DB_VALUE *) NULL;
+        }
       *more_type_info_needed = (value->data_type == NULL);
       break;
 
@@ -2150,110 +2057,90 @@ pt_db_value_initialize (PARSER_CONTEXT * parser, PT_NODE * value,
       break;
 
     case PT_TYPE_DATE:
-      if (db_string_to_date
-	  ((const char *) value->info.value.data_value.str->bytes,
-	   &date) != NO_ERROR)
-	{
-	  PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-		      MSGCAT_RUNTIME_BAD_DATE,
-		      value->info.value.data_value.str->bytes);
-	  return (DB_VALUE *) NULL;
-	}
-      db_value_domain_init (db_value, DB_TYPE_DATE, DB_DEFAULT_PRECISION,
-			    DB_DEFAULT_SCALE);
+      if (db_string_to_date ((const char *) value->info.value.data_value.str->bytes, &date) != NO_ERROR)
+        {
+          PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
+                      MSGCAT_RUNTIME_BAD_DATE, value->info.value.data_value.str->bytes);
+          return (DB_VALUE *) NULL;
+        }
+      db_value_domain_init (db_value, DB_TYPE_DATE, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       db_value_put_encoded_date (db_value, &date);
       break;
 
     case PT_TYPE_TIME:
-      if (db_string_to_time
-	  ((const char *) value->info.value.data_value.str->bytes,
-	   &time) != NO_ERROR)
-	{
-	  PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-		      MSGCAT_RUNTIME_BAD_TIME,
-		      value->info.value.data_value.str->bytes);
-	  return (DB_VALUE *) NULL;
-	}
-      db_value_domain_init (db_value, DB_TYPE_TIME, DB_DEFAULT_PRECISION,
-			    DB_DEFAULT_SCALE);
+      if (db_string_to_time ((const char *) value->info.value.data_value.str->bytes, &time) != NO_ERROR)
+        {
+          PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
+                      MSGCAT_RUNTIME_BAD_TIME, value->info.value.data_value.str->bytes);
+          return (DB_VALUE *) NULL;
+        }
+      db_value_domain_init (db_value, DB_TYPE_TIME, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       db_value_put_encoded_time (db_value, &time);
       break;
 
     case PT_TYPE_DATETIME:
-      if (db_string_to_datetime
-	  ((const char *) value->info.value.data_value.str->bytes,
-	   &datetime) != NO_ERROR)
-	{
-	  PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-		      MSGCAT_RUNTIME_BAD_DATETIME,
-		      value->info.value.data_value.str->bytes);
-	  return (DB_VALUE *) NULL;
-	}
+      if (db_string_to_datetime ((const char *) value->info.value.data_value.str->bytes, &datetime) != NO_ERROR)
+        {
+          PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_RUNTIME,
+                      MSGCAT_RUNTIME_BAD_DATETIME, value->info.value.data_value.str->bytes);
+          return (DB_VALUE *) NULL;
+        }
       db_make_datetime (db_value, &datetime);
       break;
 
     case PT_TYPE_VARBIT:
       if (value->info.value.string_type == 'B')
-	{
-	  src_length = value->info.value.data_value.str->length;
-	  dst_length = (src_length + 7) / 8;
-	  bits_converted = 0;
-	  bstring = (char *) malloc (dst_length + 1);
-	  if (!bstring)
-	    {
-	      return (DB_VALUE *) NULL;
-	    }
-	  bits_converted =
-	    qstr_bit_to_bin (bstring, dst_length,
-			     (char *) value->info.value.data_value.str->bytes,
-			     src_length);
-	  if (bits_converted != src_length)
-	    {
-	      free_and_init (bstring);
-	      PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_SEMANTIC,
-			  MSGCAT_SEMANTIC_INVALID_BITSTRING,
-			  pt_short_print (parser, value));
-	      return (DB_VALUE *) NULL;
-	    }
+        {
+          src_length = value->info.value.data_value.str->length;
+          dst_length = (src_length + 7) / 8;
+          bits_converted = 0;
+          bstring = (char *) malloc (dst_length + 1);
+          if (!bstring)
+            {
+              return (DB_VALUE *) NULL;
+            }
+          bits_converted =
+            qstr_bit_to_bin (bstring, dst_length, (char *) value->info.value.data_value.str->bytes, src_length);
+          if (bits_converted != src_length)
+            {
+              free_and_init (bstring);
+              PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_SEMANTIC,
+                          MSGCAT_SEMANTIC_INVALID_BITSTRING, pt_short_print (parser, value));
+              return (DB_VALUE *) NULL;
+            }
 
-	  db_make_varbit (db_value, TP_FLOATING_PRECISION_VALUE,
-			  bstring, src_length);
-	  db_value->need_clear = true;
-	  value->info.value.db_value_is_in_workspace = true;
-	}
+          db_make_varbit (db_value, TP_FLOATING_PRECISION_VALUE, bstring, src_length);
+          db_value->need_clear = true;
+          value->info.value.db_value_is_in_workspace = true;
+        }
       else if (value->info.value.string_type == 'X')
-	{
-	  src_length = value->info.value.data_value.str->length;
-	  dst_length = (src_length + 1) / 2;
-	  bits_converted = 0;
-	  bstring = (char *) malloc (dst_length + 1);
-	  if (!bstring)
-	    {
-	      return (DB_VALUE *) NULL;
-	    }
-	  bits_converted =
-	    qstr_hex_to_bin (bstring, dst_length,
-			     (char *) value->info.value.data_value.str->bytes,
-			     src_length);
-	  if (bits_converted != src_length)
-	    {
-	      free_and_init (bstring);
-	      PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_SEMANTIC,
-			  MSGCAT_SEMANTIC_INVALID_BITSTRING,
-			  pt_short_print (parser, value));
-	      return (DB_VALUE *) NULL;
-	    }
-	  db_make_varbit (db_value, TP_FLOATING_PRECISION_VALUE,
-			  bstring, src_length * 4);
-	  db_value->need_clear = true;
-	  value->info.value.db_value_is_in_workspace = true;
-	}
+        {
+          src_length = value->info.value.data_value.str->length;
+          dst_length = (src_length + 1) / 2;
+          bits_converted = 0;
+          bstring = (char *) malloc (dst_length + 1);
+          if (!bstring)
+            {
+              return (DB_VALUE *) NULL;
+            }
+          bits_converted =
+            qstr_hex_to_bin (bstring, dst_length, (char *) value->info.value.data_value.str->bytes, src_length);
+          if (bits_converted != src_length)
+            {
+              free_and_init (bstring);
+              PT_ERRORmf (parser, value, MSGCAT_SET_PARSER_SEMANTIC,
+                          MSGCAT_SEMANTIC_INVALID_BITSTRING, pt_short_print (parser, value));
+              return (DB_VALUE *) NULL;
+            }
+          db_make_varbit (db_value, TP_FLOATING_PRECISION_VALUE, bstring, src_length * 4);
+          db_value->need_clear = true;
+          value->info.value.db_value_is_in_workspace = true;
+        }
       else
-	{
-	  PT_ERRORm (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-		     MSGCAT_RUNTIME_UNDEFINED_CONVERSION);
-	  return (DB_VALUE *) NULL;
-	}
+        {
+          PT_ERRORm (parser, value, MSGCAT_SET_PARSER_RUNTIME, MSGCAT_RUNTIME_UNDEFINED_CONVERSION);
+          return (DB_VALUE *) NULL;
+        }
       db_value_alter_type (db_value, pt_type_enum_to_db (value->type_enum));
       *more_type_info_needed = (value->data_type == NULL);
       break;
@@ -2261,9 +2148,8 @@ pt_db_value_initialize (PARSER_CONTEXT * parser, PT_NODE * value,
     case PT_TYPE_VARCHAR:
       /* for constants, set the precision to TP_FLOATING_PRECISION_VALUE */
       db_make_varchar (db_value, TP_FLOATING_PRECISION_VALUE,
-		       (DB_C_VARCHAR) value->info.value.data_value.str->bytes,
-		       value->info.value.data_value.str->length,
-		       collation_id);
+                       (DB_C_VARCHAR) value->info.value.data_value.str->bytes,
+                       value->info.value.data_value.str->length, collation_id);
       value->info.value.db_value_is_in_workspace = false;
       *more_type_info_needed = (value->data_type == NULL);
       break;
@@ -2275,16 +2161,14 @@ pt_db_value_initialize (PARSER_CONTEXT * parser, PT_NODE * value,
       break;
 
     case PT_TYPE_COMPOUND:
-      PT_ERRORm (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-		 MSGCAT_RUNTIME_UNIMPLEMENTED_CONV);
+      PT_ERRORm (parser, value, MSGCAT_SET_PARSER_RUNTIME, MSGCAT_RUNTIME_UNIMPLEMENTED_CONV);
       return (DB_VALUE *) NULL;
 
     case PT_TYPE_STAR:
     case PT_TYPE_EXPR_SET:
     case PT_TYPE_MAX:
     case PT_TYPE_RESULTSET:
-      PT_ERRORm (parser, value, MSGCAT_SET_PARSER_RUNTIME,
-		 MSGCAT_RUNTIME_UNDEFINED_CONVERSION);
+      PT_ERRORm (parser, value, MSGCAT_SET_PARSER_RUNTIME, MSGCAT_RUNTIME_UNDEFINED_CONVERSION);
       return (DB_VALUE *) NULL;
 
     default:

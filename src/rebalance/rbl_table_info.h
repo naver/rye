@@ -37,8 +37,7 @@ typedef struct table_info
 extern char **rbl_get_shard_keys (CCI_CONN * conn, int gid, int *num_keys);
 extern void rbl_free_shard_keys (char **keys, int n);
 extern TABLE_INFO *rbl_get_all_shard_tables (CCI_CONN * conn, int *num_table);
-extern TABLE_INFO *rbl_get_all_global_tables (CCI_CONN * conn,
-                                              int *num_table);
+extern TABLE_INFO *rbl_get_all_global_tables (CCI_CONN * conn, int *num_table);
 extern void rbl_free_table_info (TABLE_INFO * info, int n);
 
 #endif /* RBL_TABLE_INFO_H_ */

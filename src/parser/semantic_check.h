@@ -29,39 +29,24 @@
 
 
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int pt_class_assignable (PARSER_CONTEXT * parser,
-				const PT_NODE * d_class,
-				const PT_NODE * s_class);
+extern int pt_class_assignable (PARSER_CONTEXT * parser, const PT_NODE * d_class, const PT_NODE * s_class);
 #endif
 
-extern PT_NODE *pt_type_cast_vclass_query_spec_column (PARSER_CONTEXT *
-						       parser, PT_NODE * attr,
-						       PT_NODE * col);
+extern PT_NODE *pt_type_cast_vclass_query_spec_column (PARSER_CONTEXT * parser, PT_NODE * attr, PT_NODE * col);
 
-extern PT_NODE *pt_semantic_check (PARSER_CONTEXT * parser,
-				   PT_NODE * statement);
+extern PT_NODE *pt_semantic_check (PARSER_CONTEXT * parser, PT_NODE * statement);
 
-extern PT_NODE *pt_invert (PARSER_CONTEXT * parser,
-			   PT_NODE * name_expr, PT_NODE * result);
+extern PT_NODE *pt_invert (PARSER_CONTEXT * parser, PT_NODE * name_expr, PT_NODE * result);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern PT_NODE *pt_find_attr_def (const PT_NODE * attr_def_list,
-				  const PT_NODE * name);
-extern PT_NODE *pt_find_cnstr_def (const PT_NODE * cnstr_def_list,
-				   const PT_NODE * name);
+extern PT_NODE *pt_find_attr_def (const PT_NODE * attr_def_list, const PT_NODE * name);
+extern PT_NODE *pt_find_cnstr_def (const PT_NODE * cnstr_def_list, const PT_NODE * name);
 #endif
 
 extern PT_NODE *pt_find_order_value_in_list (PARSER_CONTEXT * parser,
-					     const PT_NODE * sort_value,
-					     const PT_NODE * order_list);
+                                             const PT_NODE * sort_value, const PT_NODE * order_list);
 extern bool pt_check_cast_op (PARSER_CONTEXT * parser, PT_NODE * node);
-extern bool pt_check_compatible_node_for_orderby (PARSER_CONTEXT * parser,
-						  PT_NODE * order,
-						  PT_NODE * column);
-extern PT_NODE *pt_check_odku_assignments (PARSER_CONTEXT * parser,
-					   PT_NODE * insert);
+extern bool pt_check_compatible_node_for_orderby (PARSER_CONTEXT * parser, PT_NODE * order, PT_NODE * column);
+extern PT_NODE *pt_check_odku_assignments (PARSER_CONTEXT * parser, PT_NODE * insert);
 extern PT_NODE *pt_check_cyclic_reference_in_view_spec (PARSER_CONTEXT *
-							parser,
-							PT_NODE * node,
-							void *arg,
-							int *continue_walk);
+                                                        parser, PT_NODE * node, void *arg, int *continue_walk);
 #endif /* _SEMANTIC_CHECK_H_ */

@@ -42,10 +42,10 @@
 #define	MORE_LINE_EXPANSION_UNIT	40
 
 /* to build the current help message lines */
-static char **iq_More_lines;	/* more message lines */
-static int iq_Num_more_lines = 0;	/* number of more lines */
+static char **iq_More_lines;    /* more message lines */
+static int iq_Num_more_lines = 0;       /* number of more lines */
 
-#define DEFAULT_DB_ERROR_MSG_LEVEL      3	/* current max */
+#define DEFAULT_DB_ERROR_MSG_LEVEL      3       /* current max */
 
 /* editor buffer management */
 typedef struct
@@ -56,12 +56,10 @@ typedef struct
   RSQL_STATEMENT_STATE state;
 } RSQL_EDIT_CONTENTS;
 
-static RSQL_EDIT_CONTENTS rsql_Edit_contents =
-  { NULL, 0, 0, RSQL_STATE_GENERAL };
+static RSQL_EDIT_CONTENTS rsql_Edit_contents = { NULL, 0, 0, RSQL_STATE_GENERAL };
 
 
-static void iq_format_err (char *string, int buf_size, int line_no,
-			   int col_no);
+static void iq_format_err (char *string, int buf_size, int line_no, int col_no);
 static bool iq_input_device_is_a_tty (void);
 static bool iq_output_device_is_a_tty (void);
 static int rsql_get_user_home (char *homebuf, int bufsize);
@@ -105,11 +103,11 @@ rsql_get_user_home (char *homedir, int homedir_size)
   while ((ptr = getpwent ()) != NULL)
     {
       if (userid == ptr->pw_uid)
-	{
-	  snprintf (homedir, homedir_size, "%s", ptr->pw_dir);
-	  endpwent ();
-	  return NO_ERROR;
-	}
+        {
+          snprintf (homedir, homedir_size, "%s", ptr->pw_dir);
+          endpwent ();
+          return NO_ERROR;
+        }
     }
   endpwent ();
   return ER_FAILED;
@@ -130,7 +128,7 @@ rsql_get_user_home (char *homedir, int homedir_size)
 char *
 rsql_get_real_path (const char *pathname)
 {
-  static char real_path[PATH_MAX];	/* real path name */
+  static char real_path[PATH_MAX];      /* real path name */
   char home[PATH_MAX];
 
   if (pathname == NULL)
@@ -154,9 +152,9 @@ rsql_get_real_path (const char *pathname)
   if (pathname[0] == '~')
     {
       if (rsql_get_user_home (home, sizeof (home)) != NO_ERROR)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       snprintf (real_path, sizeof (real_path), "%s%s", home, &pathname[1]);
     }
@@ -177,7 +175,7 @@ rsql_get_real_path (const char *pathname)
 void
 rsql_invoke_system (const char *command)
 {
-  bool error_found = false;	/* TRUE if error found */
+  bool error_found = false;     /* TRUE if error found */
 
   if (system (command) == 127)
     {
@@ -204,8 +202,8 @@ int
 rsql_invoke_system_editor (void)
 {
   char *cmd = NULL;
-  char *fname = (char *) NULL;	/* pointer to temp file name */
-  FILE *fp = (FILE *) NULL;	/* pointer to stream */
+  char *fname = (char *) NULL;  /* pointer to temp file name */
+  FILE *fp = (FILE *) NULL;     /* pointer to stream */
 
   if (!iq_output_device_is_a_tty ())
     {
@@ -296,7 +294,7 @@ error:
 void
 rsql_fputs (const char *str, FILE * fp)
 {
-  bool flag;			/* toggled at every "\1" */
+  bool flag;                    /* toggled at every "\1" */
 
   if (!fp)
     {
@@ -306,14 +304,14 @@ rsql_fputs (const char *str, FILE * fp)
   for (flag = false; *str != '\0'; str++)
     {
       if (*str == '\1')
-	{
-	  putc ((flag) ? '>' : '<', fp);
-	  flag = !flag;
-	}
+        {
+          putc ((flag) ? '>' : '<', fp);
+          flag = !flag;
+        }
       else
-	{
-	  putc (*str, fp);
-	}
+        {
+          putc (*str, fp);
+        }
     }
 }
 
@@ -341,9 +339,7 @@ rsql_fputs_console_conv (const char *str, FILE * fp)
     }
 
   if (rsql_text_utf8_to_console != NULL
-      && (*rsql_text_utf8_to_console) (str, strlen (str), &conv_buf,
-				       &conv_buf_size) == NO_ERROR
-      && conv_buf != NULL)
+      && (*rsql_text_utf8_to_console) (str, strlen (str), &conv_buf, &conv_buf_size) == NO_ERROR && conv_buf != NULL)
     {
       conv_buf_ptr = conv_buf;
     }
@@ -372,7 +368,7 @@ rsql_fputs_console_conv (const char *str, FILE * fp)
 FILE *
 rsql_popen (const char *cmd, FILE * fd)
 {
-  FILE *pf;			/* pipe stream to pager */
+  FILE *pf;                     /* pipe stream to pager */
 
   pf = fd;
   if (cmd == NULL || cmd[0] == '\0')
@@ -384,11 +380,11 @@ rsql_popen (const char *cmd, FILE * fd)
     {
       pf = popen (cmd, "w");
       if (pf == NULL)
-	{			/* pager failed, */
-	  rsql_Error_code = RSQL_ERR_CANT_EXEC_PAGER;
-	  nonscr_display_error ();
-	  pf = fd;
-	}
+        {                       /* pager failed, */
+          rsql_Error_code = RSQL_ERR_CANT_EXEC_PAGER;
+          nonscr_display_error ();
+          pf = fd;
+        }
     }
   else
     {
@@ -432,14 +428,12 @@ iq_format_err (char *string, int buf_size, int line_no, int col_no)
   if (line_no > 0)
     {
       if (col_no > 0)
-	snprintf (string, buf_size,
-		  msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
-				  RSQL_EXACT_POSITION_ERR_FORMAT), line_no,
-		  col_no);
+        snprintf (string, buf_size,
+                  msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
+                                  RSQL_EXACT_POSITION_ERR_FORMAT), line_no, col_no);
       else
-	snprintf (string, buf_size,
-		  msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
-				  RSQL_START_POSITION_ERR_FORMAT), line_no);
+        snprintf (string, buf_size,
+                  msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_START_POSITION_ERR_FORMAT), line_no);
       strcat (string, "\n");
     }
 }
@@ -492,12 +486,11 @@ rsql_display_session_err (DB_SESSION * session, int line_no)
     {
       err = db_get_next_error (err, &line_no, &col_no);
       if (line_no > 0)
-	{
-	  rsql_fputs ("\n", rsql_Error_fp);
-	  iq_format_err (rsql_Scratch_text, SCRATCH_TEXT_LEN, line_no,
-			 col_no);
-	  rsql_fputs_console_conv (rsql_Scratch_text, rsql_Error_fp);
-	}
+        {
+          rsql_fputs ("\n", rsql_Error_fp);
+          iq_format_err (rsql_Scratch_text, SCRATCH_TEXT_LEN, line_no, col_no);
+          rsql_fputs_console_conv (rsql_Scratch_text, rsql_Error_fp);
+        }
       nonscr_display_error ();
     }
   while (err);
@@ -521,18 +514,17 @@ int
 rsql_append_more_line (int indent, const char *line)
 {
   int i, j;
-  int n;			/* register copy of num_more_lines */
-  int exp_len;			/* length of lines after tab expand */
-  int new_num;			/* new # of entries */
+  int n;                        /* register copy of num_more_lines */
+  int exp_len;                  /* length of lines after tab expand */
+  int new_num;                  /* new # of entries */
   char *p;
   const char *q;
-  char **t_lines;		/* temp pointer */
+  char **t_lines;               /* temp pointer */
   char *conv_buf = NULL;
   int conv_buf_size = 0;
 
   if (rsql_text_utf8_to_console != NULL &&
-      (*rsql_text_utf8_to_console) (line, strlen (line), &conv_buf,
-				    &conv_buf_size) == NO_ERROR)
+      (*rsql_text_utf8_to_console) (line, strlen (line), &conv_buf, &conv_buf_size) == NO_ERROR)
     {
       line = (conv_buf != NULL) ? conv_buf : line;
     }
@@ -547,24 +539,23 @@ rsql_append_more_line (int indent, const char *line)
     {
       new_num = n + MORE_LINE_EXPANSION_UNIT;
       if (n == 0)
-	{
-	  t_lines = (char **) malloc (sizeof (char *) * new_num);
-	}
+        {
+          t_lines = (char **) malloc (sizeof (char *) * new_num);
+        }
       else
-	{
-	  t_lines =
-	    (char **) realloc (iq_More_lines, sizeof (char *) * new_num);
-	}
+        {
+          t_lines = (char **) realloc (iq_More_lines, sizeof (char *) * new_num);
+        }
       if (t_lines == NULL)
-	{
-	  rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-	  if (conv_buf != NULL)
-	    {
-	      assert (rsql_text_utf8_to_console != NULL);
-	      free_and_init (conv_buf);
-	    }
-	  return (RSQL_FAILURE);
-	}
+        {
+          rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+          if (conv_buf != NULL)
+            {
+              assert (rsql_text_utf8_to_console != NULL);
+              free_and_init (conv_buf);
+            }
+          return (RSQL_FAILURE);
+        }
       iq_More_lines = t_lines;
     }
 
@@ -574,18 +565,18 @@ rsql_append_more_line (int indent, const char *line)
   for (i = exp_len = 0, q = line; *q != '\0'; q++)
     {
       if (*q == '\n')
-	{
-	  exp_len += i + 1;
-	  i = 0;
-	}
+        {
+          exp_len += i + 1;
+          i = 0;
+        }
       else if (*q == '\t')
-	{
-	  i += TAB_STOP - i % TAB_STOP;
-	}
+        {
+          i += TAB_STOP - i % TAB_STOP;
+        }
       else
-	{
-	  i++;
-	}
+        {
+          i++;
+        }
     }
   exp_len += i + 1;
 
@@ -594,10 +585,10 @@ rsql_append_more_line (int indent, const char *line)
     {
       rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
       if (conv_buf != NULL)
-	{
-	  assert (rsql_text_utf8_to_console != NULL);
-	  free_and_init (conv_buf);
-	}
+        {
+          assert (rsql_text_utf8_to_console != NULL);
+          free_and_init (conv_buf);
+        }
       return (RSQL_FAILURE);
     }
   for (i = 0, p = iq_More_lines[n]; i < indent; i++)
@@ -609,22 +600,22 @@ rsql_append_more_line (int indent, const char *line)
   for (i = 0, q = line; *q != '\0'; q++)
     {
       if (*q == '\n')
-	{
-	  *p++ = *q;
-	  i = 0;
-	}
+        {
+          *p++ = *q;
+          i = 0;
+        }
       else if (*q == '\t')
-	{
-	  for (j = TAB_STOP - i % TAB_STOP; j > 0; j--, i++)
-	    {
-	      *p++ = ' ';
-	    }
-	}
+        {
+          for (j = TAB_STOP - i % TAB_STOP; j > 0; j--, i++)
+            {
+              *p++ = ' ';
+            }
+        }
       else
-	{
-	  *p++ = *q;
-	  i++;
-	}
+        {
+          *p++ = *q;
+          i++;
+        }
     }
   *p = '\0';
 
@@ -650,7 +641,7 @@ void
 rsql_display_more_lines (const char *title)
 {
   int i;
-  FILE *pf;			/* pipe stream to pager */
+  FILE *pf;                     /* pipe stream to pager */
 
   /* simple code without signal, setjmp, longjmp
    */
@@ -686,12 +677,12 @@ rsql_free_more_lines (void)
   if (iq_Num_more_lines > 0)
     {
       for (i = 0; i < iq_Num_more_lines; i++)
-	{
-	  if (iq_More_lines[i] != NULL)
-	    {
-	      free_and_init (iq_More_lines[i]);
-	    }
-	}
+        {
+          if (iq_More_lines[i] != NULL)
+            {
+              free_and_init (iq_More_lines[i]);
+            }
+        }
       free_and_init (iq_More_lines);
       iq_Num_more_lines = 0;
     }
@@ -748,29 +739,29 @@ rsql_get_tmp_buf (size_t size)
        * it exists, and then allocate a big enough one.
        */
       if (size + 1 < bufsize)
-	{
-	  return bufp;
-	}
+        {
+          return bufp;
+        }
       else
-	{
-	  if (bufp)
-	    {
-	      free_and_init (bufp);
-	      bufsize = 0;
-	    }
-	  bufsize = size + 1;
-	  bufp = (char *) malloc (bufsize);
-	  if (bufp == NULL)
-	    {
-	      rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-	      bufsize = 0;
-	      return NULL;
-	    }
-	  else
-	    {
-	      return bufp;
-	    }
-	}
+        {
+          if (bufp)
+            {
+              free_and_init (bufp);
+              bufsize = 0;
+            }
+          bufsize = size + 1;
+          bufp = (char *) malloc (bufsize);
+          if (bufp == NULL)
+            {
+              rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+              bufsize = 0;
+              return NULL;
+            }
+          else
+            {
+              return bufp;
+            }
+        }
     }
 }
 
@@ -795,8 +786,7 @@ nonscr_display_error (void)
   strncpy (buffer, "\n", remaining);
   remaining -= strlen ("\n");
 
-  msg = msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
-			RSQL_ERROR_PREFIX);
+  msg = msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL, RSQL_ERROR_PREFIX);
   strncat (buffer, msg, remaining);
   remaining -= strlen (msg);
 
@@ -804,14 +794,13 @@ nonscr_display_error (void)
   len_errmsg = strlen (errmsg);
 
   if (rsql_text_utf8_to_console != NULL &&
-      (*rsql_text_utf8_to_console) (errmsg, len_errmsg,
-				    &con_buf_ptr, &con_buf_size) == NO_ERROR)
+      (*rsql_text_utf8_to_console) (errmsg, len_errmsg, &con_buf_ptr, &con_buf_size) == NO_ERROR)
     {
       if (con_buf_ptr != NULL)
-	{
-	  errmsg = con_buf_ptr;
-	  len_errmsg = con_buf_size;
-	}
+        {
+          errmsg = con_buf_ptr;
+          len_errmsg = con_buf_size;
+        }
     }
 
   if (len_errmsg > (remaining - 3) /* "\n\n" + NULL */ )
@@ -822,9 +811,9 @@ nonscr_display_error (void)
       int separator_len = strlen (separator);
 
       print_len = (remaining - 3 - separator_len) / 2;
-      strncat (buffer, errmsg, print_len);	/* first half */
+      strncat (buffer, errmsg, print_len);      /* first half */
       strncat (buffer, separator, separator_len);
-      strncat (buffer, errmsg + len_errmsg - print_len, print_len);	/* second half */
+      strncat (buffer, errmsg + len_errmsg - print_len, print_len);     /* second half */
       remaining -= (print_len * 2 + separator_len);
     }
   else
@@ -874,8 +863,7 @@ rsql_edit_contents_expand (int required_size)
     {
       new_alloc_size *= 2;
     }
-  rsql_Edit_contents.contents =
-    realloc (rsql_Edit_contents.contents, new_alloc_size);
+  rsql_Edit_contents.contents = realloc (rsql_Edit_contents.contents, new_alloc_size);
   if (rsql_Edit_contents.contents == NULL)
     {
       rsql_Edit_contents.alloc_size = 0;
@@ -906,8 +894,7 @@ rsql_edit_contents_append (const char *str, bool flag_append_new_line)
     {
       return RSQL_FAILURE;
     }
-  memcpy (rsql_Edit_contents.contents + rsql_Edit_contents.data_size, str,
-	  str_len);
+  memcpy (rsql_Edit_contents.contents + rsql_Edit_contents.data_size, str, str_len);
   rsql_Edit_contents.data_size = new_data_size;
   if (flag_append_new_line)
     {
@@ -955,162 +942,161 @@ rsql_walk_statement (const char *str, RSQL_STATEMENT_STATE state)
   for (p = str; p < str + str_length; p++)
     {
       switch (state)
-	{
-	case RSQL_STATE_GENERAL:
-	  switch (*p)
-	    {
-	    case '/':
-	      if (*(p + 1) == '/')
-		{
-		  state = RSQL_STATE_CPP_COMMENT;
-		  p++;
-		  break;
-		}
-	      if (*(p + 1) == '*')
-		{
-		  state = RSQL_STATE_C_COMMENT;
-		  p++;
-		  break;
-		}
-	      is_last_stmt_valid = true;
-	      break;
-	    case '-':
-	      if (*(p + 1) == '-')
-		{
-		  state = RSQL_STATE_SQL_COMMENT;
-		  p++;
-		  break;
-		}
-	      is_last_stmt_valid = true;
-	      break;
-	    case '\'':
-	      state = RSQL_STATE_SINGLE_QUOTE;
-	      is_last_stmt_valid = true;
-	      break;
-	    case '"':
-	      if (prm_get_bool_value (PRM_ID_ANSI_QUOTES) == false)
-		{
-		  state = RSQL_STATE_MYSQL_QUOTE;
-		}
-	      else
-		{
-		  state = RSQL_STATE_DOUBLE_QUOTE_IDENTIFIER;
-		}
-	      is_last_stmt_valid = true;
-	      break;
-	    case '`':
-	      state = RSQL_STATE_BACKTICK_IDENTIFIER;
-	      is_last_stmt_valid = true;
-	      break;
-	    case '[':
-	      state = RSQL_STATE_BRACKET_IDENTIFIER;
-	      is_last_stmt_valid = true;
-	      break;
-	    case ';':
-	      include_stmt = true;
-	      is_last_stmt_valid = false;
-	      if (*(p + 1) == 0)
-		{
-		  state = RSQL_STATE_STATEMENT_END;
-		}
-	      break;
-	    case ' ':
-	    case '\t':
-	      /* do not change is_last_stmt_valid */
-	      break;
-	    default:
-	      if (!is_last_stmt_valid)
-		{
-		  is_last_stmt_valid = true;
-		}
-	      break;
-	    }
-	  break;
+        {
+        case RSQL_STATE_GENERAL:
+          switch (*p)
+            {
+            case '/':
+              if (*(p + 1) == '/')
+                {
+                  state = RSQL_STATE_CPP_COMMENT;
+                  p++;
+                  break;
+                }
+              if (*(p + 1) == '*')
+                {
+                  state = RSQL_STATE_C_COMMENT;
+                  p++;
+                  break;
+                }
+              is_last_stmt_valid = true;
+              break;
+            case '-':
+              if (*(p + 1) == '-')
+                {
+                  state = RSQL_STATE_SQL_COMMENT;
+                  p++;
+                  break;
+                }
+              is_last_stmt_valid = true;
+              break;
+            case '\'':
+              state = RSQL_STATE_SINGLE_QUOTE;
+              is_last_stmt_valid = true;
+              break;
+            case '"':
+              if (prm_get_bool_value (PRM_ID_ANSI_QUOTES) == false)
+                {
+                  state = RSQL_STATE_MYSQL_QUOTE;
+                }
+              else
+                {
+                  state = RSQL_STATE_DOUBLE_QUOTE_IDENTIFIER;
+                }
+              is_last_stmt_valid = true;
+              break;
+            case '`':
+              state = RSQL_STATE_BACKTICK_IDENTIFIER;
+              is_last_stmt_valid = true;
+              break;
+            case '[':
+              state = RSQL_STATE_BRACKET_IDENTIFIER;
+              is_last_stmt_valid = true;
+              break;
+            case ';':
+              include_stmt = true;
+              is_last_stmt_valid = false;
+              if (*(p + 1) == 0)
+                {
+                  state = RSQL_STATE_STATEMENT_END;
+                }
+              break;
+            case ' ':
+            case '\t':
+              /* do not change is_last_stmt_valid */
+              break;
+            default:
+              if (!is_last_stmt_valid)
+                {
+                  is_last_stmt_valid = true;
+                }
+              break;
+            }
+          break;
 
-	case RSQL_STATE_C_COMMENT:
-	  if (*p == '*' && *(p + 1) == '/')
-	    {
-	      state = RSQL_STATE_GENERAL;
-	      p++;
-	      break;
-	    }
-	  break;
+        case RSQL_STATE_C_COMMENT:
+          if (*p == '*' && *(p + 1) == '/')
+            {
+              state = RSQL_STATE_GENERAL;
+              p++;
+              break;
+            }
+          break;
 
-	case RSQL_STATE_CPP_COMMENT:
-	  if (*p == '\n')
-	    {
-	      state = RSQL_STATE_GENERAL;
-	    }
-	  break;
+        case RSQL_STATE_CPP_COMMENT:
+          if (*p == '\n')
+            {
+              state = RSQL_STATE_GENERAL;
+            }
+          break;
 
-	case RSQL_STATE_SQL_COMMENT:
-	  if (*p == '\n')
-	    {
-	      state = RSQL_STATE_GENERAL;
-	    }
-	  break;
+        case RSQL_STATE_SQL_COMMENT:
+          if (*p == '\n')
+            {
+              state = RSQL_STATE_GENERAL;
+            }
+          break;
 
-	case RSQL_STATE_SINGLE_QUOTE:
-	  if (*p == '\'')
-	    {
-	      if (*(p + 1) == '\'')
-		{
-		  /* escape by '' */
-		  p++;
-		}
-	      else
-		{
-		  state = RSQL_STATE_GENERAL;
-		}
-	    }
-	  break;
+        case RSQL_STATE_SINGLE_QUOTE:
+          if (*p == '\'')
+            {
+              if (*(p + 1) == '\'')
+                {
+                  /* escape by '' */
+                  p++;
+                }
+              else
+                {
+                  state = RSQL_STATE_GENERAL;
+                }
+            }
+          break;
 
-	case RSQL_STATE_MYSQL_QUOTE:
-	  if (*p == '"')
-	    {
-	      if (*(p + 1) == '\"')
-		{
-		  /* escape by "" */
-		  p++;
-		}
-	      else
-		{
-		  state = RSQL_STATE_GENERAL;
-		}
-	    }
-	  break;
+        case RSQL_STATE_MYSQL_QUOTE:
+          if (*p == '"')
+            {
+              if (*(p + 1) == '\"')
+                {
+                  /* escape by "" */
+                  p++;
+                }
+              else
+                {
+                  state = RSQL_STATE_GENERAL;
+                }
+            }
+          break;
 
-	case RSQL_STATE_DOUBLE_QUOTE_IDENTIFIER:
-	  if (*p == '"')
-	    {
-	      state = RSQL_STATE_GENERAL;
-	    }
-	  break;
+        case RSQL_STATE_DOUBLE_QUOTE_IDENTIFIER:
+          if (*p == '"')
+            {
+              state = RSQL_STATE_GENERAL;
+            }
+          break;
 
-	case RSQL_STATE_BACKTICK_IDENTIFIER:
-	  if (*p == '`')
-	    {
-	      state = RSQL_STATE_GENERAL;
-	    }
-	  break;
+        case RSQL_STATE_BACKTICK_IDENTIFIER:
+          if (*p == '`')
+            {
+              state = RSQL_STATE_GENERAL;
+            }
+          break;
 
-	case RSQL_STATE_BRACKET_IDENTIFIER:
-	  if (*p == ']')
-	    {
-	      state = RSQL_STATE_GENERAL;
-	    }
-	  break;
+        case RSQL_STATE_BRACKET_IDENTIFIER:
+          if (*p == ']')
+            {
+              state = RSQL_STATE_GENERAL;
+            }
+          break;
 
-	default:
-	  /* should not be here */
-	  break;
-	}
+        default:
+          /* should not be here */
+          break;
+        }
     }
 
   /* when include other stmts and the last smt is non sense stmt. */
   if (include_stmt && !is_last_stmt_valid
-      && (state == RSQL_STATE_SQL_COMMENT || state == RSQL_STATE_CPP_COMMENT
-	  || state == RSQL_STATE_GENERAL))
+      && (state == RSQL_STATE_SQL_COMMENT || state == RSQL_STATE_CPP_COMMENT || state == RSQL_STATE_GENERAL))
     {
       state = RSQL_STATE_STATEMENT_END;
     }
@@ -1148,8 +1134,7 @@ rsql_is_statement_in_block (RSQL_STATEMENT_STATE state)
   if (state == RSQL_STATE_C_COMMENT || state == RSQL_STATE_SINGLE_QUOTE
       || state == RSQL_STATE_MYSQL_QUOTE
       || state == RSQL_STATE_DOUBLE_QUOTE_IDENTIFIER
-      || state == RSQL_STATE_BACKTICK_IDENTIFIER
-      || state == RSQL_STATE_BRACKET_IDENTIFIER)
+      || state == RSQL_STATE_BACKTICK_IDENTIFIER || state == RSQL_STATE_BRACKET_IDENTIFIER)
     {
       return true;
     }
@@ -1197,16 +1182,15 @@ rsql_edit_read_file (FILE * fp)
     {
       char *line_begin = line_buf;
 
-      if (is_first_read_line
-	  && intl_is_bom_magic (line_buf, strlen (line_buf)))
-	{
-	  line_begin += 3;
-	}
+      if (is_first_read_line && intl_is_bom_magic (line_buf, strlen (line_buf)))
+        {
+          line_begin += 3;
+        }
 
       is_first_read_line = false;
 
       if (rsql_edit_contents_append (line_begin, false) != RSQL_SUCCESS)
-	return RSQL_FAILURE;
+        return RSQL_FAILURE;
     }
   return RSQL_SUCCESS;
 }
@@ -1224,14 +1208,12 @@ rsql_edit_write_file (FILE * fp)
   int write_len;
   while (remain_size > 0)
     {
-      write_len =
-	(int) fwrite (p + (rsql_Edit_contents.data_size - remain_size), 1,
-		      remain_size, fp);
+      write_len = (int) fwrite (p + (rsql_Edit_contents.data_size - remain_size), 1, remain_size, fp);
       if (write_len <= 0)
-	{
-	  rsql_Error_code = RSQL_ERR_OS_ERROR;
-	  return RSQL_FAILURE;
-	}
+        {
+          rsql_Error_code = RSQL_ERR_OS_ERROR;
+          return RSQL_FAILURE;
+        }
       remain_size -= write_len;
     }
   return RSQL_SUCCESS;
@@ -1286,12 +1268,12 @@ rsql_errmsg (int code)
 
       msg_map_size = DIM (rsql_Err_msg_map);
       for (i = 0; i < msg_map_size; i++)
-	{
-	  if (code == rsql_Err_msg_map[i].error_code)
-	    {
-	      return (rsql_get_message (rsql_Err_msg_map[i].msg_id));
-	    }
-	}
+        {
+          if (code == rsql_Err_msg_map[i].error_code)
+            {
+              return (rsql_get_message (rsql_Err_msg_map[i].msg_id));
+            }
+        }
       return (rsql_get_message (RSQL_E_UNKNOWN_TEXT));
     }
 }
@@ -1376,8 +1358,7 @@ rsql_query_clear (RSQL_QUERY * query)
  *    flag_append_new_line(in):
  */
 int
-rsql_query_append_string (RSQL_QUERY * query, char *str, int str_length,
-			  bool flag_append_new_line)
+rsql_query_append_string (RSQL_QUERY * query, char *str, int str_length, bool flag_append_new_line)
 {
   char *area = NULL;
   int new_alloc_size = 0;
@@ -1400,12 +1381,12 @@ rsql_query_append_string (RSQL_QUERY * query, char *str, int str_length,
       new_alloc_size = query->alloc_size + MAX (str_length + 1, ONE_K);
       area = realloc (query->query, new_alloc_size);
       if (area == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, new_alloc_size);
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, new_alloc_size);
 
-	  return error;
-	}
+          return error;
+        }
 
       query->query = area;
       query->alloc_size = new_alloc_size;

@@ -75,8 +75,7 @@ xtran_server_commit (THREAD_ENTRY * thread_p)
 
   state = log_commit (thread_p, tran_index);
 
-  (void) locator_drop_transient_class_name_entries (thread_p, tran_index,
-						    NULL);
+  (void) locator_drop_transient_class_name_entries (thread_p, tran_index, NULL);
   return state;
 }
 
@@ -114,8 +113,7 @@ xtran_server_abort (THREAD_ENTRY * thread_p)
 
   state = log_abort (thread_p, tran_index);
 
-  (void) locator_drop_transient_class_name_entries (thread_p, tran_index,
-						    NULL);
+  (void) locator_drop_transient_class_name_entries (thread_p, tran_index, NULL);
 
   return state;
 }
@@ -189,8 +187,7 @@ xtran_server_start_topop (THREAD_ENTRY * thread_p, LOG_LSA * topop_lsa)
  *              independently of the transaction.
  */
 TRAN_STATE
-xtran_server_end_topop (THREAD_ENTRY * thread_p, LOG_RESULT_TOPOP result,
-			LOG_LSA * topop_lsa)
+xtran_server_end_topop (THREAD_ENTRY * thread_p, LOG_RESULT_TOPOP result, LOG_LSA * topop_lsa)
 {
   int tran_index;
   TRAN_STATE state;
@@ -205,12 +202,10 @@ xtran_server_end_topop (THREAD_ENTRY * thread_p, LOG_RESULT_TOPOP result,
     case LOG_RESULT_TOPOP_COMMIT:
     case LOG_RESULT_TOPOP_ABORT:
       if (log_get_parent_lsa_system_op (thread_p, topop_lsa) == topop_lsa)
-	{
-	  tran_index = logtb_get_current_tran_index (thread_p);
-	  (void) locator_drop_transient_class_name_entries (thread_p,
-							    tran_index,
-							    topop_lsa);
-	}
+        {
+          tran_index = logtb_get_current_tran_index (thread_p);
+          (void) locator_drop_transient_class_name_entries (thread_p, tran_index, topop_lsa);
+        }
       state = log_end_system_op (thread_p, result);
       break;
 
@@ -247,8 +242,7 @@ xtran_server_end_topop (THREAD_ENTRY * thread_p, LOG_RESULT_TOPOP result,
  *              transaction can have.
  */
 int
-xtran_server_savepoint (THREAD_ENTRY * thread_p, const char *savept_name,
-			LOG_LSA * savept_lsa)
+xtran_server_savepoint (THREAD_ENTRY * thread_p, const char *savept_name, LOG_LSA * savept_lsa)
 {
   int error_code = NO_ERROR;
 
@@ -286,8 +280,7 @@ xtran_server_savepoint (THREAD_ENTRY * thread_p, const char *savept_name,
  *              these actions at the client.
  */
 TRAN_STATE
-xtran_server_partial_abort (THREAD_ENTRY * thread_p, const char *savept_name,
-			    LOG_LSA * savept_lsa)
+xtran_server_partial_abort (THREAD_ENTRY * thread_p, const char *savept_name, LOG_LSA * savept_lsa)
 {
   int tran_index;
   TRAN_STATE state;
@@ -297,8 +290,7 @@ xtran_server_partial_abort (THREAD_ENTRY * thread_p, const char *savept_name,
 
   if (!LSA_ISNULL (savept_lsa))
     {
-      (void) locator_drop_transient_class_name_entries (thread_p, tran_index,
-							savept_lsa);
+      (void) locator_drop_transient_class_name_entries (thread_p, tran_index, savept_lsa);
     }
 
   return state;
@@ -354,15 +346,13 @@ loop:
   prev_thrd_cnt = thread_has_threads (thread_p, tran_index, client_id);
   if (prev_thrd_cnt > 0)
     {
-      if (!logtb_is_interrupted_tran (thread_p, false, &continue_check,
-				      tran_index))
-	{
-	  logtb_set_tran_index_interrupt (thread_p, tran_index, true);
-	}
+      if (!logtb_is_interrupted_tran (thread_p, false, &continue_check, tran_index))
+        {
+          logtb_set_tran_index_interrupt (thread_p, tran_index, true);
+        }
     }
 
-  while ((thrd_cnt = thread_has_threads (thread_p, tran_index, client_id))
-	 >= prev_thrd_cnt && thrd_cnt > 0)
+  while ((thrd_cnt = thread_has_threads (thread_p, tran_index, client_id)) >= prev_thrd_cnt && thrd_cnt > 0)
     {
       /* Some threads may wait for data from the m-driver.
        * It's possible from the fact that css_server_thread() is responsible
@@ -371,7 +361,7 @@ loop:
        * m-drivers.
        * We must have chance to receive data from them.
        */
-      thread_sleep (10);	/* 10 msec */
+      thread_sleep (10);        /* 10 msec */
     }
 
   if (thrd_cnt > 0)
@@ -397,6 +387,5 @@ loop:
 int
 xtran_server_is_active_and_has_updated (THREAD_ENTRY * thread_p)
 {
-  return (logtb_is_current_active (thread_p)
-	  && xtran_server_has_updated (thread_p));
+  return (logtb_is_current_active (thread_p) && xtran_server_has_updated (thread_p));
 }

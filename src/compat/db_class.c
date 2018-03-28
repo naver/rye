@@ -77,9 +77,9 @@ db_create_class (const char *name)
   if (def != NULL)
     {
       if (smt_finish_class (def, &class_) != NO_ERROR)
-	{
-	  smt_quit (def);
-	}
+        {
+          smt_quit (def);
+        }
     }
   return (class_);
 }
@@ -147,8 +147,7 @@ db_rename_class (MOP classop, const char *new_name)
  * default_value(in): default_value
  */
 int
-db_add_attribute_internal (MOP class_, const char *name, const char *domain,
-			   DB_VALUE * default_value)
+db_add_attribute_internal (MOP class_, const char *name, const char *domain, DB_VALUE * default_value)
 {
   int error = NO_ERROR;
   SM_TEMPLATE *def;
@@ -165,33 +164,30 @@ db_add_attribute_internal (MOP class_, const char *name, const char *domain,
     }
   else
     {
-      error = smt_add_attribute_any (def, name, domain, (DB_DOMAIN *) 0,
-				     false, NULL, false);
+      error = smt_add_attribute_any (def, name, domain, (DB_DOMAIN *) 0, false, NULL, false);
       if (error)
-	{
-	  smt_quit (def);
-	}
+        {
+          smt_quit (def);
+        }
       else
-	{
-	  if (default_value != NULL)
-	    {
-	      error =
-		smt_set_attribute_default (def, name, default_value,
-					   DB_DEFAULT_NONE);
-	    }
-	  if (error)
-	    {
-	      smt_quit (def);
-	    }
-	  else
-	    {
-	      error = smt_finish_class (def, &newmop);
-	      if (error)
-		{
-		  smt_quit (def);
-		}
-	    }
-	}
+        {
+          if (default_value != NULL)
+            {
+              error = smt_set_attribute_default (def, name, default_value, DB_DEFAULT_NONE);
+            }
+          if (error)
+            {
+              smt_quit (def);
+            }
+          else
+            {
+              error = smt_finish_class (def, &newmop);
+              if (error)
+                {
+                  smt_quit (def);
+                }
+            }
+        }
     }
   return error;
 }
@@ -206,8 +202,7 @@ db_add_attribute_internal (MOP class_, const char *name, const char *domain,
  * default_value(in): optional default value
  */
 int
-db_add_attribute (MOP obj, const char *name, const char *domain,
-		  DB_VALUE * default_value)
+db_add_attribute (MOP obj, const char *name, const char *domain, DB_VALUE * default_value)
 {
   int retval = 0;
 
@@ -248,17 +243,17 @@ drop_internal (MOP class_, const char *name)
     {
       error = smt_delete_any (def, name);
       if (error)
-	{
-	  smt_quit (def);
-	}
+        {
+          smt_quit (def);
+        }
       else
-	{
-	  error = smt_finish_class (def, &newmop);
-	  if (error)
-	    {
-	      smt_quit (def);
-	    }
-	}
+        {
+          error = smt_finish_class (def, &newmop);
+          if (error)
+            {
+              smt_quit (def);
+            }
+        }
     }
 
   return error;
@@ -312,17 +307,17 @@ db_change_default (MOP class_, const char *name, DB_VALUE * value)
     {
       error = smt_set_attribute_default (def, name, value, DB_DEFAULT_NONE);
       if (error)
-	{
-	  smt_quit (def);
-	}
+        {
+          smt_quit (def);
+        }
       else
-	{
-	  error = smt_finish_class (def, &newmop);
-	  if (error)
-	    {
-	      smt_quit (def);
-	    }
-	}
+        {
+          error = smt_finish_class (def, &newmop);
+          if (error)
+            {
+              smt_quit (def);
+            }
+        }
     }
   return (error);
 }
@@ -336,8 +331,7 @@ db_change_default (MOP class_, const char *name, DB_VALUE * value)
  * newname(in) : new component name
  */
 int
-db_rename (MOP class_, const char *name,
-	   int class_namespace, const char *newname)
+db_rename (MOP class_, const char *name, int class_namespace, const char *newname)
 {
   int error = NO_ERROR;
 
@@ -378,17 +372,17 @@ db_rename_internal (MOP class_, const char *name, const char *newname)
     {
       error = smt_rename_any (def, name, newname);
       if (error)
-	{
-	  smt_quit (def);
-	}
+        {
+          smt_quit (def);
+        }
       else
-	{
-	  error = smt_finish_class (def, &newmop);
-	  if (error)
-	    {
-	      smt_quit (def);
-	    }
-	}
+        {
+          error = smt_finish_class (def, &newmop);
+          if (error)
+            {
+              smt_quit (def);
+            }
+        }
     }
 
   return (error);
@@ -419,21 +413,18 @@ db_constrain_non_null (MOP class_, const char *name, int on_or_off)
     {
 #if !defined(NDEBUG)
       {
-	bool has_nulls = false;
+        bool has_nulls = false;
 
-	assert (do_check_rows_for_null (class_, name, &has_nulls) ==
-		NO_ERROR);
-	assert (has_nulls == false);
+        assert (do_check_rows_for_null (class_, name, &has_nulls) == NO_ERROR);
+        assert (has_nulls == false);
       }
 #endif
 
-      retval = db_add_constraint (class_, DB_CONSTRAINT_NOT_NULL,
-				  NULL, att_names);
+      retval = db_add_constraint (class_, DB_CONSTRAINT_NOT_NULL, NULL, att_names);
     }
   else
     {
-      retval = db_drop_constraint (class_, DB_CONSTRAINT_NOT_NULL,
-				   NULL, att_names);
+      retval = db_drop_constraint (class_, DB_CONSTRAINT_NOT_NULL, NULL, att_names);
     }
 
   return retval;
@@ -491,8 +482,7 @@ db_drop_index (MOP classmop, const char *attname)
 
   att_names[0] = attname;
   att_names[1] = NULL;
-  retval = db_drop_constraint (classmop, DB_CONSTRAINT_INDEX,
-			       NULL, att_names);
+  retval = db_drop_constraint (classmop, DB_CONSTRAINT_INDEX, NULL, att_names);
 
   return (retval);
 }
@@ -510,8 +500,7 @@ db_drop_index (MOP classmop, const char *attname)
  */
 int
 db_add_constraint (MOP classmop,
-		   DB_CONSTRAINT_TYPE constraint_type,
-		   const char *constraint_name, const char **att_names)
+                   DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name, const char **att_names)
 {
   int retval;
   char *name = NULL;
@@ -520,16 +509,14 @@ db_add_constraint (MOP classmop,
   CHECK_2ARGS_ERROR (classmop, att_names);
   CHECK_MODIFICATION_ERROR ();
 
-  name = sm_produce_constraint_name_mop (classmop, constraint_type,
-					 att_names, NULL, constraint_name);
+  name = sm_produce_constraint_name_mop (classmop, constraint_type, att_names, NULL, constraint_name);
   if (name == NULL)
     {
       retval = er_errid ();
     }
   else
     {
-      retval = sm_add_constraint (classmop, constraint_type, name,
-				  att_names, NULL);
+      retval = sm_add_constraint (classmop, constraint_type, name, att_names, NULL);
       free_and_init (name);
     }
 
@@ -557,8 +544,7 @@ db_add_constraint (MOP classmop,
  */
 int
 db_drop_constraint (MOP classmop,
-		    DB_CONSTRAINT_TYPE constraint_type,
-		    const char *constraint_name, const char **att_names)
+                    DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name, const char **att_names)
 {
   int retval;
   char *name = NULL;
@@ -567,8 +553,7 @@ db_drop_constraint (MOP classmop,
   CHECK_1ARG_ERROR (classmop);
   CHECK_MODIFICATION_ERROR ();
 
-  name = sm_produce_constraint_name_mop (classmop, constraint_type,
-					 att_names, NULL, constraint_name);
+  name = sm_produce_constraint_name_mop (classmop, constraint_type, att_names, NULL, constraint_name);
 
   if (name == NULL)
     {
@@ -576,8 +561,7 @@ db_drop_constraint (MOP classmop,
     }
   else
     {
-      retval =
-	sm_drop_constraint (classmop, constraint_type, name, att_names);
+      retval = sm_drop_constraint (classmop, constraint_type, name, att_names);
       free_and_init (name);
     }
 

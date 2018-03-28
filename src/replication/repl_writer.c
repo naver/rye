@@ -129,26 +129,20 @@ static int cirpwr_set_hdr_and_flush_info (void);
 
 static int cirpwr_check_archive_info ();
 static int cirpwr_archive_active_log (void);
-static int rp_log_header_validate (const LOG_HEADER * log_hdr,
-				   const char *db_name);
+static int rp_log_header_validate (const LOG_HEADER * log_hdr, const char *db_name);
 
 static int cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr);
 static int net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
-						   int request, char *argbuf,
-						   int argsize,
-						   char *replybuf,
-						   int replysize);
+                                                   int request, char *argbuf,
+                                                   int argsize, char *replybuf, int replysize);
 static int net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node);
-static LOG_PAGEID cirpwr_get_fpageid (LOG_PAGEID current_pageid,
-				      const LOG_HEADER * head);
+static LOG_PAGEID cirpwr_get_fpageid (LOG_PAGEID current_pageid, const LOG_HEADER * head);
 
 static int rpwr_alloc_recv_node (RECV_Q_NODE ** node);
 static int cirpwr_copy_all_omitted_pages (LOG_PAGEID fpageid);
 
-static int cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info,
-					CIRP_AGENT_STATUS status);
-static int cirpwr_change_writer_status (CIRP_WRITER_INFO * writer_info,
-					CIRP_AGENT_STATUS status);
+static int cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info, CIRP_AGENT_STATUS status);
+static int cirpwr_change_writer_status (CIRP_WRITER_INFO * writer_info, CIRP_AGENT_STATUS status);
 
 
 /*
@@ -175,19 +169,18 @@ cirpwr_to_physical_pageid (LOG_PAGEID logical_pageid)
 
       assert (cirpwr_Gl.ha_info.npages > 0);
       if (tmp_pageid >= cirpwr_Gl.ha_info.npages)
-	{
-	  tmp_pageid %= cirpwr_Gl.ha_info.npages;
-	}
+        {
+          tmp_pageid %= cirpwr_Gl.ha_info.npages;
+        }
       else if (tmp_pageid < 0)
-	{
-	  tmp_pageid = (cirpwr_Gl.ha_info.npages
-			- ((-tmp_pageid) % cirpwr_Gl.ha_info.npages));
-	}
+        {
+          tmp_pageid = (cirpwr_Gl.ha_info.npages - ((-tmp_pageid) % cirpwr_Gl.ha_info.npages));
+        }
       tmp_pageid++;
       if (tmp_pageid > cirpwr_Gl.ha_info.npages)
-	{
-	  tmp_pageid %= cirpwr_Gl.ha_info.npages;
-	}
+        {
+          tmp_pageid %= cirpwr_Gl.ha_info.npages;
+        }
 
       assert (tmp_pageid <= PAGEID_MAX);
       phy_pageid = (LOG_PHY_PAGEID) tmp_pageid;
@@ -210,8 +203,7 @@ cirpwr_fetch_header_page (void)
   CIRP_WRITER_INFO *writer;
   int error = NO_ERROR;
 
-  error = cirpwr_fetch_log_page (cirpwr_Gl.loghdr_pgptr,
-				 LOGPB_HEADER_PAGE_ID);
+  error = cirpwr_fetch_log_page (cirpwr_Gl.loghdr_pgptr, LOGPB_HEADER_PAGE_ID);
   if (error != NO_ERROR)
     {
       return error;
@@ -255,22 +247,19 @@ cirpwr_fetch_log_page (LOG_PAGE * log_pgptr, LOG_PAGEID pageid)
    * Find the corresponding physical page and read the page form disk.
    */
   phy_pageid = cirpwr_to_physical_pageid (pageid);
-  if (fileio_read (NULL, cirpwr_Gl.append_vdes, log_pgptr, phy_pageid,
-		   LOG_PAGESIZE) == NULL)
+  if (fileio_read (NULL, cirpwr_Gl.append_vdes, log_pgptr, phy_pageid, LOG_PAGESIZE) == NULL)
     {
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_READ, 3, pageid, phy_pageid, cirpwr_Gl.active_name);
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_READ, 3, pageid, phy_pageid, cirpwr_Gl.active_name);
       return ER_LOG_READ;
     }
   else
     {
       if (log_pgptr->hdr.logical_pageid != pageid)
-	{
-	  assert (false);
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LOG_PAGE_CORRUPTED, 1, pageid);
-	  return ER_LOG_PAGE_CORRUPTED;
-	}
+        {
+          assert (false);
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_PAGE_CORRUPTED, 1, pageid);
+          return ER_LOG_PAGE_CORRUPTED;
+        }
     }
 
   return NO_ERROR;
@@ -340,8 +329,7 @@ cirp_init_writer (CIRP_WRITER_INFO * writer)
   if (writer->hdr_page == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-			   1, IO_MAX_PAGE_SIZE);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, IO_MAX_PAGE_SIZE);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -385,60 +373,52 @@ cirpwr_initialize (const char *db_name, const char *log_path)
   at_char = strchr (cirpwr_Gl.db_name, '@');
   if (at_char != NULL)
     {
-      if (rp_host_str_to_node_info (&cirpwr_Gl.host_info,
-				    at_char + 1) != NO_ERROR)
-	{
-	  assert (0);
-	}
+      if (rp_host_str_to_node_info (&cirpwr_Gl.host_info, at_char + 1) != NO_ERROR)
+        {
+          assert (0);
+        }
       *at_char = '\0';
     }
   strncpy (cirpwr_Gl.log_path, log_path, PATH_MAX - 1);
 
   /* set the active log file path */
-  fileio_make_log_active_name (cirpwr_Gl.active_name, log_path,
-			       cirpwr_Gl.db_name);
+  fileio_make_log_active_name (cirpwr_Gl.active_name, log_path, cirpwr_Gl.db_name);
   /* set the log info file path */
-  fileio_make_log_info_name (cirpwr_Gl.loginf_path, log_path,
-			     cirpwr_Gl.db_name);
+  fileio_make_log_info_name (cirpwr_Gl.loginf_path, log_path, cirpwr_Gl.db_name);
   /* background archive file path */
-  fileio_make_log_archive_temp_name (cirpwr_Gl.bg_archive_name, log_path,
-				     cirpwr_Gl.db_name);
+  fileio_make_log_archive_temp_name (cirpwr_Gl.bg_archive_name, log_path, cirpwr_Gl.db_name);
   log_nbuffers = LOGWR_COPY_LOG_BUFFER_NPAGES + 1;
 
   if (cirpwr_Gl.unzip_area == NULL)
     {
-      cirpwr_Gl.unzip_area =
-	log_zip_alloc (log_nbuffers * LOG_PAGESIZE, false);
+      cirpwr_Gl.unzip_area = log_zip_alloc (log_nbuffers * LOG_PAGESIZE, false);
       if (cirpwr_Gl.unzip_area == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		  log_nbuffers * LOG_PAGESIZE);
-	  cirpwr_Gl.logpg_area_size = 0;
-	  return error;
-	}
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, log_nbuffers * LOG_PAGESIZE);
+          cirpwr_Gl.logpg_area_size = 0;
+          return error;
+        }
     }
   if (cirpwr_Gl.recv_log_queue == NULL)
     {
       cirpwr_Gl.recv_log_queue = Rye_queue_new ();
       if (cirpwr_Gl.recv_log_queue == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		  sizeof (RQueue));
-	  return error;
-	}
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (RQueue));
+          return error;
+        }
     }
   if (cirpwr_Gl.free_list == NULL)
     {
       cirpwr_Gl.free_list = Rye_queue_new ();
       if (cirpwr_Gl.free_list == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		  sizeof (RQueue));
-	  return error;
-	}
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, sizeof (RQueue));
+          return error;
+        }
     }
 
   if (cirpwr_Gl.logpg_area == NULL)
@@ -446,18 +426,17 @@ cirpwr_initialize (const char *db_name, const char *log_path)
       cirpwr_Gl.logpg_area_size = log_nbuffers * LOG_PAGESIZE;
       cirpwr_Gl.logpg_area = RYE_MALLOC (cirpwr_Gl.logpg_area_size);
       if (cirpwr_Gl.logpg_area == NULL)
-	{
-	  if (cirpwr_Gl.unzip_area != NULL)
-	    {
-	      log_zip_free (cirpwr_Gl.unzip_area);
-	      cirpwr_Gl.unzip_area = NULL;
-	    }
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, cirpwr_Gl.logpg_area_size);
-	  cirpwr_Gl.logpg_area_size = 0;
-	  return error;
-	}
+        {
+          if (cirpwr_Gl.unzip_area != NULL)
+            {
+              log_zip_free (cirpwr_Gl.unzip_area);
+              cirpwr_Gl.unzip_area = NULL;
+            }
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, cirpwr_Gl.logpg_area_size);
+          cirpwr_Gl.logpg_area_size = 0;
+          return error;
+        }
     }
   cirpwr_Gl.loghdr_pgptr = (LOG_PAGE *) cirpwr_Gl.logpg_area;
 
@@ -470,13 +449,11 @@ cirpwr_initialize (const char *db_name, const char *log_path)
     }
 
   cirpwr_Gl.max_toflush = log_nbuffers - 1;
-  cirpwr_Gl.toflush = (LOG_PAGE **) calloc (cirpwr_Gl.max_toflush,
-					    sizeof (LOG_PAGE *));
+  cirpwr_Gl.toflush = (LOG_PAGE **) calloc (cirpwr_Gl.max_toflush, sizeof (LOG_PAGE *));
   if (cirpwr_Gl.toflush == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, cirpwr_Gl.max_toflush * sizeof (cirpwr_Gl.toflush));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, cirpwr_Gl.max_toflush * sizeof (cirpwr_Gl.toflush));
       cirpwr_Gl.max_toflush = 0;
       return error;
     }
@@ -524,8 +501,7 @@ cirpwr_create_active_log (CCI_CONN * conn)
   if (error == CCI_ER_NO_MORE_DATA)
     {
       er_log_debug (ARG_FILE_LINE, "init log info from log header."
-		    "sof_lsa(%lld,%d)", (long long) m_log_hdr->sof_lsa.pageid,
-		    m_log_hdr->sof_lsa.offset);
+                    "sof_lsa(%lld,%d)", (long long) m_log_hdr->sof_lsa.pageid, m_log_hdr->sof_lsa.offset);
 
       /* insert new log analyzer info */
 
@@ -542,13 +518,12 @@ cirpwr_create_active_log (CCI_CONN * conn)
 
       error = rpct_insert_log_analyzer (conn, &ct);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
-  cirpwr_Gl.ha_info.fpageid = cirpwr_get_fpageid (ct.required_lsa.pageid,
-						  m_log_hdr);
+  cirpwr_Gl.ha_info.fpageid = cirpwr_get_fpageid (ct.required_lsa.pageid, m_log_hdr);
   cirpwr_Gl.ha_info.npages = m_log_hdr->npages;
   cirpwr_Gl.last_received_pageid = -ct.required_lsa.pageid;
   cirpwr_Gl.ha_info.last_flushed_pageid = -ct.required_lsa.pageid;
@@ -562,18 +537,15 @@ cirpwr_create_active_log (CCI_CONN * conn)
 
   /* Create a new active log */
   cirpwr_Gl.append_vdes = fileio_format (NULL,
-					 cirpwr_Gl.db_name,
-					 cirpwr_Gl.active_name,
-					 LOG_DBLOG_ACTIVE_VOLID,
-					 m_log_hdr->npages + 1,
-					 true, true,
-					 false, LOG_PAGESIZE, 0, false);
+                                         cirpwr_Gl.db_name,
+                                         cirpwr_Gl.active_name,
+                                         LOG_DBLOG_ACTIVE_VOLID,
+                                         m_log_hdr->npages + 1, true, true, false, LOG_PAGESIZE, 0, false);
   if (cirpwr_Gl.append_vdes == NULL_VOLDES)
     {
       /* Unable to create an active log */
       error = ER_IO_FORMAT_FAIL;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   error, 3, cirpwr_Gl.active_name, -1, -1);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 3, cirpwr_Gl.active_name, -1, -1);
 
       return error;
     }
@@ -625,69 +597,57 @@ cirpwr_init_copy_log_info (void)
     {
       /* Mount the active log and read the log header */
       cirpwr_Gl.append_vdes = fileio_mount (NULL, cirpwr_Gl.db_name,
-					    cirpwr_Gl.active_name,
-					    LOG_DBLOG_ACTIVE_VOLID,
-					    true, false);
+                                            cirpwr_Gl.active_name, LOG_DBLOG_ACTIVE_VOLID, true, false);
       if (cirpwr_Gl.append_vdes == NULL_VOLDES)
-	{
-	  /* Unable to create an active log */
-	  error = ER_IO_FORMAT_FAIL;
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       error, 3, cirpwr_Gl.active_name, -1, -1);
+        {
+          /* Unable to create an active log */
+          error = ER_IO_FORMAT_FAIL;
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 3, cirpwr_Gl.active_name, -1, -1);
 
-	  return error;
-	}
+          return error;
+        }
 
       error = cirpwr_fetch_header_page ();
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       error = rp_log_header_validate (m_log_hdr, cirpwr_Gl.db_name);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
-      memcpy (&cirpwr_Gl.ha_info, &m_log_hdr->ha_info,
-	      sizeof (COPY_LOG_HEADER));
+      memcpy (&cirpwr_Gl.ha_info, &m_log_hdr->ha_info, sizeof (COPY_LOG_HEADER));
     }
   cirpwr_Gl.last_received_pageid = cirpwr_Gl.ha_info.last_flushed_pageid;
   cirpwr_Gl.last_received_file_status = cirpwr_Gl.ha_info.file_status;
 
-  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_EOF_PAGEID,
-		       m_log_hdr->eof_lsa.pageid);
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_EOF_PAGEID, m_log_hdr->eof_lsa.pageid);
 
-  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID,
-		       cirpwr_Gl.last_received_pageid);
+  monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID, cirpwr_Gl.last_received_pageid);
   monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_GAP,
-		       monitor_get_stats (MNT_RP_COPIER_ID,
-					  MNT_RP_EOF_PAGEID)
-		       - monitor_get_stats (MNT_RP_COPIER_ID,
-					    MNT_RP_RECEIVED_PAGEID));
+                       monitor_get_stats (MNT_RP_COPIER_ID,
+                                          MNT_RP_EOF_PAGEID)
+                       - monitor_get_stats (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID));
 
-  monitor_stats_gauge (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID,
-		       cirpwr_Gl.ha_info.last_flushed_pageid);
+  monitor_stats_gauge (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID, cirpwr_Gl.ha_info.last_flushed_pageid);
 
   monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_FLUSHED_GAP,
-		       monitor_get_stats (MNT_RP_COPIER_ID,
-					  MNT_RP_RECEIVED_PAGEID)
-		       - monitor_get_stats (MNT_RP_FLUSHER_ID,
-					    MNT_RP_FLUSHED_PAGEID));
+                       monitor_get_stats (MNT_RP_COPIER_ID,
+                                          MNT_RP_RECEIVED_PAGEID)
+                       - monitor_get_stats (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID));
 
 
   cirpwr_Gl.action = CIRPWR_ACTION_NONE;
 
   vdes = fileio_format (NULL, cirpwr_Gl.db_name,
-			cirpwr_Gl.bg_archive_name,
-			LOG_DBLOG_BG_ARCHIVE_VOLID,
-			m_log_hdr->npages + 1,
-			false, false, false, LOG_PAGESIZE, 0, false);
+                        cirpwr_Gl.bg_archive_name,
+                        LOG_DBLOG_BG_ARCHIVE_VOLID, m_log_hdr->npages + 1, false, false, false, LOG_PAGESIZE, 0, false);
   if (vdes == NULL_VOLDES)
     {
-      REPL_SET_GENERIC_ERROR (error,
-			      "Unable to create temporary archive log");
+      REPL_SET_GENERIC_ERROR (error, "Unable to create temporary archive log");
       return error;
     }
 
@@ -716,8 +676,7 @@ rp_log_header_validate (const LOG_HEADER * log_hdr, const char *db_name)
   int error = NO_ERROR;
 
   /* check magic */
-  if (strncmp (log_hdr->log_magic,
-	       RYE_MAGIC_LOG_ACTIVE, RYE_MAGIC_MAX_LENGTH) != 0)
+  if (strncmp (log_hdr->log_magic, RYE_MAGIC_LOG_ACTIVE, RYE_MAGIC_MAX_LENGTH) != 0)
     {
       REPL_SET_GENERIC_ERROR (error, "invalid magic(%s)", log_hdr->log_magic);
 
@@ -725,40 +684,34 @@ rp_log_header_validate (const LOG_HEADER * log_hdr, const char *db_name)
     }
 
   /* check prefix name */
-  if (log_hdr->prefix_name[0] != '\0'
-      && strncmp (log_hdr->prefix_name, db_name,
-		  strlen (log_hdr->prefix_name)) != 0)
+  if (log_hdr->prefix_name[0] != '\0' && strncmp (log_hdr->prefix_name, db_name, strlen (log_hdr->prefix_name)) != 0)
     {
       /* ER_LOG_INCOMPATIBLE_PREFIX_NAME */
       snprintf (err_msg, sizeof (err_msg),
-		"NOTIFICATION: The prefix name '%s' is not the same as"
-		" '%s' on the log disk. The log may have been renamed"
-		" outside the database domain.",
-		db_name, log_hdr->prefix_name);
+                "NOTIFICATION: The prefix name '%s' is not the same as"
+                " '%s' on the log disk. The log may have been renamed"
+                " outside the database domain.", db_name, log_hdr->prefix_name);
 
       /*
        * This looks like the log or the log was renamed. Incompatible
        * prefix name with the prefix stored on disk
        */
       er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	      ER_LOG_INCOMPATIBLE_PREFIX_NAME, 2,
-	      db_name, log_hdr->prefix_name);
+              ER_LOG_INCOMPATIBLE_PREFIX_NAME, 2, db_name, log_hdr->prefix_name);
       /* Continue anyhow */
     }
 
   /* check log page size */
   if (log_hdr->db_logpagesize != IO_MAX_PAGE_SIZE)
     {
-      REPL_SET_GENERIC_ERROR (error, "invalid log page size(%d)",
-			      log_hdr->db_logpagesize);
+      REPL_SET_GENERIC_ERROR (error, "invalid log page size(%d)", log_hdr->db_logpagesize);
 
       return error;
     }
 
   if (log_hdr->db_iopagesize != IO_MAX_PAGE_SIZE)
     {
-      REPL_SET_GENERIC_ERROR (error, "invalid data page size(%d)",
-			      log_hdr->db_iopagesize);
+      REPL_SET_GENERIC_ERROR (error, "invalid data page size(%d)", log_hdr->db_iopagesize);
 
       return error;
     }
@@ -805,8 +758,7 @@ cirpwr_finalize (void)
     }
   if (cirpwr_Gl.recv_log_queue != NULL)
     {
-      Rye_queue_free_full (cirpwr_Gl.recv_log_queue,
-			   cirpwr_rye_queue_node_free);
+      Rye_queue_free_full (cirpwr_Gl.recv_log_queue, cirpwr_rye_queue_node_free);
       free_and_init (cirpwr_Gl.recv_log_queue);
     }
   if (cirpwr_Gl.free_list != NULL)
@@ -898,25 +850,21 @@ cirpwr_set_hdr_and_flush_info (void)
   assert (cirpwr_Gl.loghdr_pgptr == (LOG_PAGE *) cirpwr_Gl.logpg_area);
 
   /* Check if it need archiving */
-  if (m_log_hdr->ha_info.file_status == LOG_HA_FILESTAT_ARCHIVED
-      && ha_info->last_flushed_pageid >= 0)
+  if (m_log_hdr->ha_info.file_status == LOG_HA_FILESTAT_ARCHIVED && ha_info->last_flushed_pageid >= 0)
     {
-      assert (ha_info->last_flushed_pageid == fpageid
-	      || ha_info->last_flushed_pageid + 1 == fpageid);
+      assert (ha_info->last_flushed_pageid == fpageid || ha_info->last_flushed_pageid + 1 == fpageid);
 
       /* Do delayed archiving */
       cirpwr_Gl.action |= CIRPWR_ACTION_ARCHIVING;
       cirpwr_Gl.last_arv_lpageid = fpageid - 1;
     }
-  else if ((ha_info->nxarv_num + 1 == m_log_hdr->nxarv_num)
-	   && (fpageid >= m_log_hdr->nxarv_pageid))
+  else if ((ha_info->nxarv_num + 1 == m_log_hdr->nxarv_num) && (fpageid >= m_log_hdr->nxarv_pageid))
     {
       cirpwr_Gl.action |= CIRPWR_ACTION_ARCHIVING;
       cirpwr_Gl.last_arv_lpageid = m_log_hdr->nxarv_pageid - 1;
     }
   assert (cirpwr_Gl.last_arv_lpageid < 0
-	  || ha_info->last_flushed_pageid < 0
-	  || cirpwr_Gl.last_arv_lpageid <= ha_info->last_flushed_pageid);
+          || ha_info->last_flushed_pageid < 0 || cirpwr_Gl.last_arv_lpageid <= ha_info->last_flushed_pageid);
 
   /*
    * LWT sets the archiving flag at the time when it sends new active page
@@ -932,35 +880,35 @@ cirpwr_set_hdr_and_flush_info (void)
 
       error = pthread_mutex_lock (&writer->lock);
       if (error != NO_ERROR)
-	{
-	  error = ER_CSS_PTHREAD_MUTEX_LOCK;
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+        {
+          error = ER_CSS_PTHREAD_MUTEX_LOCK;
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	  return error;
-	}
+          return error;
+        }
 
       while (writer->reader_count > 0)
-	{
-	  if (rp_need_shutdown (ARG_FILE_LINE) == true)
-	    {
-	      pthread_mutex_unlock (&writer->lock);
+        {
+          if (rp_need_shutdown (ARG_FILE_LINE) == true)
+            {
+              pthread_mutex_unlock (&writer->lock);
 
-	      REPL_SET_GENERIC_ERROR (error, "NEED SHUTDOWN");
-	      return error;
-	    }
-	  clock_gettime (CLOCK_REALTIME, &wakeup_time);
-	  wakeup_time = timespec_add_msec (&wakeup_time, 10);
-	  pthread_cond_timedwait (&writer->cond, &writer->lock, &wakeup_time);
-	}
+              REPL_SET_GENERIC_ERROR (error, "NEED SHUTDOWN");
+              return error;
+            }
+          clock_gettime (CLOCK_REALTIME, &wakeup_time);
+          wakeup_time = timespec_add_msec (&wakeup_time, 10);
+          pthread_cond_timedwait (&writer->cond, &writer->lock, &wakeup_time);
+        }
 
       writer->is_archiving = true;
       error = cirpwr_archive_active_log ();
       writer->is_archiving = false;
       if (error != NO_ERROR)
-	{
-	  pthread_mutex_unlock (&writer->lock);
-	  return error;
-	}
+        {
+          pthread_mutex_unlock (&writer->lock);
+          return error;
+        }
 
       cirpwr_Gl.action &= ~CIRPWR_ACTION_ARCHIVING;
 
@@ -968,9 +916,9 @@ cirpwr_set_hdr_and_flush_info (void)
 
       error = cirpwr_flush_header_page ();
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   ha_info->last_flushed_pageid = last_pgptr->hdr.logical_pageid;
@@ -1013,37 +961,29 @@ cirpwr_copy_all_omitted_pages (LOG_PAGEID fpageid)
     {
       error = cirpwr_fetch_log_page (log_pgptr, pageid);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
-      phy_pageid = (LOG_PHY_PAGEID) (pageid -
-				     cirpwr_Gl.bg_archive_info.start_page_id +
-				     1);
-      if (fileio_write
-	  (NULL, cirpwr_Gl.bg_archive_info.vdes, log_pgptr, phy_pageid,
-	   LOG_PAGESIZE) == NULL)
-	{
-	  error = er_errid ();
-	  if (error == ER_IO_WRITE_OUT_OF_SPACE)
-	    {
-	      error = ER_LOG_WRITE_OUT_OF_SPACE;
-	      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		      error, 4,
-		      pageid, phy_pageid, cirpwr_Gl.bg_archive_name,
-		      LOG_PAGESIZE);
-	    }
-	  else
-	    {
-	      error = ER_LOG_WRITE;
-	      er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-				   error, 3,
-				   pageid, phy_pageid,
-				   cirpwr_Gl.bg_archive_name);
-	    }
+      phy_pageid = (LOG_PHY_PAGEID) (pageid - cirpwr_Gl.bg_archive_info.start_page_id + 1);
+      if (fileio_write (NULL, cirpwr_Gl.bg_archive_info.vdes, log_pgptr, phy_pageid, LOG_PAGESIZE) == NULL)
+        {
+          error = er_errid ();
+          if (error == ER_IO_WRITE_OUT_OF_SPACE)
+            {
+              error = ER_LOG_WRITE_OUT_OF_SPACE;
+              er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                      error, 4, pageid, phy_pageid, cirpwr_Gl.bg_archive_name, LOG_PAGESIZE);
+            }
+          else
+            {
+              error = ER_LOG_WRITE;
+              er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                                   error, 3, pageid, phy_pageid, cirpwr_Gl.bg_archive_name);
+            }
 
-	  return error;
-	}
+          return error;
+        }
 
       cirpwr_Gl.bg_archive_info.current_page_id = pageid;
     }
@@ -1097,89 +1037,78 @@ cirpwr_writev_append_pages (LOG_PAGE ** to_flush, DKNPAGES npages)
   if (cirpwr_Gl.bg_archive_info.current_page_id == NULL_PAGEID)
     {
       if (fpageid != cirpwr_Gl.bg_archive_info.start_page_id)
-	{
-	  assert (false);
+        {
+          assert (false);
 
-	  REPL_SET_GENERIC_ERROR (error,
-				  "invalid temporary archive log file");
-	  return error;
-	}
+          REPL_SET_GENERIC_ERROR (error, "invalid temporary archive log file");
+          return error;
+        }
     }
   else
     {
       if (fpageid != cirpwr_Gl.bg_archive_info.current_page_id
-	  && fpageid != cirpwr_Gl.bg_archive_info.current_page_id + 1)
-	{
-	  assert (false);
+          && fpageid != cirpwr_Gl.bg_archive_info.current_page_id + 1)
+        {
+          assert (false);
 
-	  REPL_SET_GENERIC_ERROR (error,
-				  "invalid temporary archive log file");
-	  return error;
-	}
+          REPL_SET_GENERIC_ERROR (error, "invalid temporary archive log file");
+          return error;
+        }
     }
 
 
-  phy_pageid = (LOG_PHY_PAGEID) (fpageid -
-				 cirpwr_Gl.bg_archive_info.start_page_id + 1);
+  phy_pageid = (LOG_PHY_PAGEID) (fpageid - cirpwr_Gl.bg_archive_info.start_page_id + 1);
   if (fileio_writev (NULL, cirpwr_Gl.bg_archive_info.vdes, (void **) to_flush,
-		     phy_pageid, npages, LOG_PAGESIZE) == NULL)
+                     phy_pageid, npages, LOG_PAGESIZE) == NULL)
     {
       error = er_errid ();
       if (error == ER_IO_WRITE_OUT_OF_SPACE)
-	{
-	  error = ER_LOG_WRITE_OUT_OF_SPACE;
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 4,
-		  fpageid, phy_pageid, cirpwr_Gl.bg_archive_name,
-		  LOG_PAGESIZE);
-	}
+        {
+          error = ER_LOG_WRITE_OUT_OF_SPACE;
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                  error, 4, fpageid, phy_pageid, cirpwr_Gl.bg_archive_name, LOG_PAGESIZE);
+        }
       else
-	{
-	  error = ER_LOG_WRITE;
-	  er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-			       error, 3,
-			       fpageid, phy_pageid,
-			       cirpwr_Gl.bg_archive_name);
-	}
+        {
+          error = ER_LOG_WRITE;
+          er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                               error, 3, fpageid, phy_pageid, cirpwr_Gl.bg_archive_name);
+        }
 
       return error;
     }
 
   cirpwr_Gl.bg_archive_info.current_page_id = fpageid + (npages - 1);
   er_log_debug (ARG_FILE_LINE,
-		"background archiving  current_page_id[%lld], fpageid[%lld, %lld], npages[%d]",
-		cirpwr_Gl.bg_archive_info.current_page_id, fpageid,
-		phy_pageid, npages);
+                "background archiving  current_page_id[%lld], fpageid[%lld, %lld], npages[%d]",
+                cirpwr_Gl.bg_archive_info.current_page_id, fpageid, phy_pageid, npages);
 
   FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 1000, 0);
 
   /* 2. active write */
   phy_pageid = cirpwr_to_physical_pageid (fpageid);
-  if (fileio_writev (NULL, cirpwr_Gl.append_vdes, (void **) to_flush,
-		     phy_pageid, npages, LOG_PAGESIZE) == NULL)
+  if (fileio_writev (NULL, cirpwr_Gl.append_vdes, (void **) to_flush, phy_pageid, npages, LOG_PAGESIZE) == NULL)
     {
       error = er_errid ();
       if (error == ER_IO_WRITE_OUT_OF_SPACE)
-	{
-	  error = ER_LOG_WRITE_OUT_OF_SPACE;
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 4,
-		  fpageid, phy_pageid, cirpwr_Gl.active_name, LOG_PAGESIZE);
-	}
+        {
+          error = ER_LOG_WRITE_OUT_OF_SPACE;
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                  error, 4, fpageid, phy_pageid, cirpwr_Gl.active_name, LOG_PAGESIZE);
+        }
       else
-	{
-	  error = ER_LOG_WRITE;
-	  er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-			       error, 3,
-			       fpageid, phy_pageid, cirpwr_Gl.active_name);
-	}
+        {
+          error = ER_LOG_WRITE;
+          er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                               error, 3, fpageid, phy_pageid, cirpwr_Gl.active_name);
+        }
 
       return error;
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"active log:  hdr fpageid[%lld], fpageid[%lld, %lld], npages[%d]",
-		cirpwr_Gl.ha_info.fpageid, fpageid, phy_pageid, npages);
+                "active log:  hdr fpageid[%lld], fpageid[%lld, %lld], npages[%d]",
+                cirpwr_Gl.ha_info.fpageid, fpageid, phy_pageid, npages);
 
   assert (error == NO_ERROR);
   return error;
@@ -1213,63 +1142,58 @@ cirpwr_flush_all_append_pages (void)
       pgptr = cirpwr_Gl.toflush[i];
 
       if (idxflush != -1 && prv_pgptr != NULL)
-	{
-	  /*
-	   * This append log page should be dirty and contiguous to previous
-	   * append page. If it is not, we need to flush the accumulated pages
-	   * up to this point, and then start accumulating pages again.
-	   */
-	  pageid = pgptr->hdr.logical_pageid;
-	  prv_pageid = prv_pgptr->hdr.logical_pageid;
+        {
+          /*
+           * This append log page should be dirty and contiguous to previous
+           * append page. If it is not, we need to flush the accumulated pages
+           * up to this point, and then start accumulating pages again.
+           */
+          pageid = pgptr->hdr.logical_pageid;
+          prv_pageid = prv_pgptr->hdr.logical_pageid;
 
-	  if ((pageid != prv_pageid + 1)
-	      || (cirpwr_to_physical_pageid (pageid)
-		  != cirpwr_to_physical_pageid (prv_pageid) + 1))
-	    {
-	      m_log_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
-	      /*
-	       * Has the log been cycled ?
-	       */
-	      if (cirpwr_to_physical_pageid
-		  (cirpwr_Gl.toflush[idxflush]->hdr.logical_pageid) == 1)
-		{
-		  cirpwr_Gl.ha_info.fpageid += m_log_hdr->npages;
-		  assert (cirpwr_Gl.ha_info.fpageid
-			  == cirpwr_Gl.toflush[idxflush]->hdr.logical_pageid);
-		  assert (cirpwr_Gl.ha_info.fpageid % m_log_hdr->npages == 0);
-		}
+          if ((pageid != prv_pageid + 1)
+              || (cirpwr_to_physical_pageid (pageid) != cirpwr_to_physical_pageid (prv_pageid) + 1))
+            {
+              m_log_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
+              /*
+               * Has the log been cycled ?
+               */
+              if (cirpwr_to_physical_pageid (cirpwr_Gl.toflush[idxflush]->hdr.logical_pageid) == 1)
+                {
+                  cirpwr_Gl.ha_info.fpageid += m_log_hdr->npages;
+                  assert (cirpwr_Gl.ha_info.fpageid == cirpwr_Gl.toflush[idxflush]->hdr.logical_pageid);
+                  assert (cirpwr_Gl.ha_info.fpageid % m_log_hdr->npages == 0);
+                }
 
-	      /*
-	       * This page is not contiguous.
-	       *
-	       * Flush the accumulated contiguous pages
-	       */
-	      error =
-		cirpwr_writev_append_pages (&cirpwr_Gl.toflush[idxflush],
-					    i - idxflush);
-	      if (error != NO_ERROR)
-		{
-		  return error;
-		}
+              /*
+               * This page is not contiguous.
+               *
+               * Flush the accumulated contiguous pages
+               */
+              error = cirpwr_writev_append_pages (&cirpwr_Gl.toflush[idxflush], i - idxflush);
+              if (error != NO_ERROR)
+                {
+                  return error;
+                }
 
-	      need_sync = true;
+              need_sync = true;
 
-	      /*
-	       * Start over the accumulation of pages
-	       */
+              /*
+               * Start over the accumulation of pages
+               */
 
-	      flush_page_count += i - idxflush;
-	      idxflush = -1;
-	    }
-	}
+              flush_page_count += i - idxflush;
+              idxflush = -1;
+            }
+        }
 
       if (idxflush == -1)
-	{
-	  /*
-	   * This page should be included in the flush
-	   */
-	  idxflush = i;
-	}
+        {
+          /*
+           * This page should be included in the flush
+           */
+          idxflush = i;
+        }
 
       /* prv_pgptr was not pgptr's previous buffer.
        * prv_pgptr was the first buffer to flush,
@@ -1287,12 +1211,11 @@ cirpwr_flush_all_append_pages (void)
       int page_toflush = cirpwr_Gl.num_toflush - idxflush;
 
       /* last countious pages */
-      error = cirpwr_writev_append_pages (&cirpwr_Gl.toflush[idxflush],
-					  page_toflush);
+      error = cirpwr_writev_append_pages (&cirpwr_Gl.toflush[idxflush], page_toflush);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       need_sync = true;
       flush_page_count += page_toflush;
@@ -1303,9 +1226,7 @@ cirpwr_flush_all_append_pages (void)
    * Make sure that all of the above log writes are synchronized with any
    * future log writes. That is, the pages should be stored on physical disk.
    */
-  if (need_sync == true
-      && fileio_synchronize (NULL, cirpwr_Gl.append_vdes,
-			     cirpwr_Gl.active_name) == NULL_VOLDES)
+  if (need_sync == true && fileio_synchronize (NULL, cirpwr_Gl.append_vdes, cirpwr_Gl.active_name) == NULL_VOLDES)
     {
       return er_errid ();
     }
@@ -1313,20 +1234,17 @@ cirpwr_flush_all_append_pages (void)
   /* It's for dual write. */
   if (need_sync == true)
     {
-      if (fileio_synchronize (NULL, cirpwr_Gl.bg_archive_info.vdes,
-			      cirpwr_Gl.bg_archive_name) == NULL_VOLDES)
-	{
-	  return er_errid ();
-	}
-      cirpwr_Gl.bg_archive_info.last_sync_pageid
-	= cirpwr_Gl.bg_archive_info.current_page_id;
+      if (fileio_synchronize (NULL, cirpwr_Gl.bg_archive_info.vdes, cirpwr_Gl.bg_archive_name) == NULL_VOLDES)
+        {
+          return er_errid ();
+        }
+      cirpwr_Gl.bg_archive_info.last_sync_pageid = cirpwr_Gl.bg_archive_info.current_page_id;
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"cirpwr_write_log_pages, flush_page_count(%d), %d->%d\n",
-		flush_page_count, cirpwr_Gl.toflush[0]->hdr.logical_pageid,
-		cirpwr_Gl.toflush[cirpwr_Gl.num_toflush -
-				  1]->hdr.logical_pageid);
+                "cirpwr_write_log_pages, flush_page_count(%d), %d->%d\n",
+                flush_page_count, cirpwr_Gl.toflush[0]->hdr.logical_pageid,
+                cirpwr_Gl.toflush[cirpwr_Gl.num_toflush - 1]->hdr.logical_pageid);
 
   /* Initialize flush info */
   for (i = 0; i < cirpwr_Gl.num_toflush; i++)
@@ -1373,22 +1291,19 @@ cirpwr_flush_header_page (void)
     {
       char host_str[MAX_NODE_INFO_STR_LEN];
       if (PRM_NODE_INFO_GET_IP (&cirpwr_Gl.host_info) == INADDR_NONE)
-	{
-	  strcpy (host_str, "unknown");
-	}
+        {
+          strcpy (host_str, "unknown");
+        }
       else
-	{
-	  prm_node_info_to_str (host_str, sizeof (host_str),
-				&cirpwr_Gl.host_info);
-	}
+        {
+          prm_node_info_to_str (host_str, sizeof (host_str), &cirpwr_Gl.host_info);
+        }
       snprintf (buffer, ONE_K,
-		"change the state of HA server (%s@%s) from '%s' to '%s'",
-		cirpwr_Gl.db_name, host_str,
-		HA_STATE_NAME (cirpwr_Gl.ha_info.server_state),
-		HA_STATE_NAME (m_log_hdr->ha_info.server_state));
+                "change the state of HA server (%s@%s) from '%s' to '%s'",
+                cirpwr_Gl.db_name, host_str,
+                HA_STATE_NAME (cirpwr_Gl.ha_info.server_state), HA_STATE_NAME (m_log_hdr->ha_info.server_state));
 
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE,
-	      1, buffer);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, buffer);
     }
 
   cirpwr_Gl.ha_info.file_status = m_log_hdr->ha_info.file_status;
@@ -1405,25 +1320,22 @@ cirpwr_flush_header_page (void)
    * So, log cs is not needed.
    */
   if (fileio_write (NULL, cirpwr_Gl.append_vdes, cirpwr_Gl.loghdr_pgptr,
-		    phy_pageid, LOG_PAGESIZE) == NULL
-      || fileio_synchronize (NULL, cirpwr_Gl.append_vdes,
-			     cirpwr_Gl.active_name) == NULL_VOLDES)
+                    phy_pageid, LOG_PAGESIZE) == NULL
+      || fileio_synchronize (NULL, cirpwr_Gl.append_vdes, cirpwr_Gl.active_name) == NULL_VOLDES)
     {
 
       if (er_errid () == ER_IO_WRITE_OUT_OF_SPACE)
-	{
-	  error = ER_LOG_WRITE_OUT_OF_SPACE;
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  error, 4, logical_pageid, phy_pageid,
-		  cirpwr_Gl.active_name, LOG_PAGESIZE);
-	}
+        {
+          error = ER_LOG_WRITE_OUT_OF_SPACE;
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                  error, 4, logical_pageid, phy_pageid, cirpwr_Gl.active_name, LOG_PAGESIZE);
+        }
       else
-	{
-	  error = ER_LOG_WRITE;
-	  er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-			       error, 3, logical_pageid, phy_pageid,
-			       cirpwr_Gl.active_name);
-	}
+        {
+          error = ER_LOG_WRITE;
+          er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                               error, 3, logical_pageid, phy_pageid, cirpwr_Gl.active_name);
+        }
 
       return error;
     }
@@ -1440,13 +1352,12 @@ cirpwr_flush_header_page (void)
   pthread_mutex_unlock (&writer->lock);
 
   er_log_debug (ARG_FILE_LINE,
-		"cirpwr_flush_header_page, ha_server_state=%s, ha_file_status=%s\n"
-		"last_flushed_pageid(%lld), nxarv_pageid(%lld), nxarv_num(%d)\n",
-		HA_STATE_NAME (cirpwr_Gl.ha_info.server_state),
-		css_ha_filestat_string (cirpwr_Gl.ha_info.file_status),
-		(long long) cirpwr_Gl.ha_info.last_flushed_pageid,
-		(long long) cirpwr_Gl.ha_info.nxarv_pageid,
-		cirpwr_Gl.ha_info.nxarv_num);
+                "cirpwr_flush_header_page, ha_server_state=%s, ha_file_status=%s\n"
+                "last_flushed_pageid(%lld), nxarv_pageid(%lld), nxarv_num(%d)\n",
+                HA_STATE_NAME (cirpwr_Gl.ha_info.server_state),
+                css_ha_filestat_string (cirpwr_Gl.ha_info.file_status),
+                (long long) cirpwr_Gl.ha_info.last_flushed_pageid,
+                (long long) cirpwr_Gl.ha_info.nxarv_pageid, cirpwr_Gl.ha_info.nxarv_num);
 
 
   assert (error == NO_ERROR);
@@ -1475,17 +1386,15 @@ cirpwr_check_archive_info ()
   if (bg_arv_info->start_page_id != ha_info->nxarv_pageid)
     {
       REPL_SET_GENERIC_ERROR (error,
-			      "bg_arv_info->start_page_id(%lld), ha_info->nxarv_pageid(%lld)",
-			      (long long) bg_arv_info->start_page_id,
-			      (long long) ha_info->fpageid);
+                              "bg_arv_info->start_page_id(%lld), ha_info->nxarv_pageid(%lld)",
+                              (long long) bg_arv_info->start_page_id, (long long) ha_info->fpageid);
       return error;
     }
   if (bg_arv_info->current_page_id < cirpwr_Gl.last_arv_lpageid)
     {
       REPL_SET_GENERIC_ERROR (error,
-			      "bg_arv_info->current_page_id(%lld), cirpwr_Gl.last_arv_lpageid(%lld)",
-			      (long long) bg_arv_info->current_page_id,
-			      (long long) cirpwr_Gl.last_arv_lpageid);
+                              "bg_arv_info->current_page_id(%lld), cirpwr_Gl.last_arv_lpageid(%lld)",
+                              (long long) bg_arv_info->current_page_id, (long long) cirpwr_Gl.last_arv_lpageid);
       return error;
     }
 
@@ -1522,9 +1431,7 @@ cirpwr_archive_active_log (void)
     {
       /* archive file already created */
       assert ((cirpwr_Gl.ha_info.nxarv_pageid
-	       == cirpwr_Gl.last_arv_lpageid + 1)
-	      && (bg_arv_info->start_page_id
-		  == cirpwr_Gl.last_arv_lpageid + 1));
+               == cirpwr_Gl.last_arv_lpageid + 1) && (bg_arv_info->start_page_id == cirpwr_Gl.last_arv_lpageid + 1));
 
       return NO_ERROR;
     }
@@ -1558,36 +1465,29 @@ cirpwr_archive_active_log (void)
   arvhdr->next_trid = NULL_TRANID;
   arvhdr->fpageid = bg_arv_info->start_page_id;
   arvhdr->arv_num = cirpwr_Gl.ha_info.nxarv_num;
-  arvhdr->npages = (DKNPAGES) (cirpwr_Gl.last_arv_lpageid
-			       - bg_arv_info->start_page_id + 1);
+  arvhdr->npages = (DKNPAGES) (cirpwr_Gl.last_arv_lpageid - bg_arv_info->start_page_id + 1);
 
   /*
    * Now create the archive and start copying pages
    */
 
-  snprintf (buffer, sizeof (buffer), "log archiving started for archive %03d",
-	    arvhdr->arv_num);
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1,
-	  buffer);
+  snprintf (buffer, sizeof (buffer), "log archiving started for archive %03d", arvhdr->arv_num);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_HA_GENERIC_ERROR, 1, buffer);
 
-  fileio_make_log_archive_name (archive_name, cirpwr_Gl.log_path,
-				cirpwr_Gl.db_name, arvhdr->arv_num);
+  fileio_make_log_archive_name (archive_name, cirpwr_Gl.log_path, cirpwr_Gl.db_name, arvhdr->arv_num);
 
-  if (fileio_write (NULL, bg_arv_info->vdes, arv_hdr_pgptr,
-		    0, LOG_PAGESIZE) == NULL)
+  if (fileio_write (NULL, bg_arv_info->vdes, arv_hdr_pgptr, 0, LOG_PAGESIZE) == NULL)
     {
       /* Error archiving header page into archive */
       error = ER_LOG_WRITE;
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_WRITE, 3,
-	      0, 0, fileio_get_base_file_name (archive_name));
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_LOG_WRITE, 3, 0, 0, fileio_get_base_file_name (archive_name));
       GOTO_EXIT_ON_ERROR;
     }
 
   fileio_dismount (NULL, bg_arv_info->vdes);
   bg_arv_info->vdes = NULL_VOLDES;
 
-  if (fileio_rename (NULL_VOLID, cirpwr_Gl.bg_archive_name,
-		     archive_name) == NULL)
+  if (fileio_rename (NULL_VOLID, cirpwr_Gl.bg_archive_name, archive_name) == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
@@ -1602,36 +1502,30 @@ cirpwr_archive_active_log (void)
   bg_arv_info->current_page_id = NULL_PAGEID;
   bg_arv_info->last_sync_pageid = NULL_PAGEID;
   bg_arv_info->vdes = fileio_format (NULL, cirpwr_Gl.db_name,
-				     cirpwr_Gl.bg_archive_name,
-				     LOG_DBLOG_BG_ARCHIVE_VOLID,
-				     m_log_hdr->npages, false, false,
-				     false, LOG_PAGESIZE, 0, false);
+                                     cirpwr_Gl.bg_archive_name,
+                                     LOG_DBLOG_BG_ARCHIVE_VOLID,
+                                     m_log_hdr->npages, false, false, false, LOG_PAGESIZE, 0, false);
   if (bg_arv_info->vdes == NULL_VOLDES)
     {
-      REPL_SET_GENERIC_ERROR (error,
-			      "Unable to create temporary archive log");
+      REPL_SET_GENERIC_ERROR (error, "Unable to create temporary archive log");
       GOTO_EXIT_ON_ERROR;
     }
 
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_LOG_ARCHIVE_CREATED, 3,
-	  fileio_get_base_file_name (archive_name), arvhdr->fpageid,
-	  arvhdr->fpageid + arvhdr->npages - 1);
+          fileio_get_base_file_name (archive_name), arvhdr->fpageid, arvhdr->fpageid + arvhdr->npages - 1);
 
-  catmsg = msgcat_message (MSGCAT_CATALOG_RYE,
-			   MSGCAT_SET_LOG, MSGCAT_LOG_LOGINFO_ARCHIVE);
+  catmsg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOG, MSGCAT_LOG_LOGINFO_ARCHIVE);
   if (catmsg == NULL)
     {
       catmsg = "ARCHIVE: %d %s %lld %lld\n";
     }
   error = log_dump_log_info (cirpwr_Gl.loginf_path, false, catmsg,
-			     arvhdr->arv_num,
-			     fileio_get_base_file_name (archive_name),
-			     arvhdr->fpageid,
-			     arvhdr->fpageid + arvhdr->npages - 1);
+                             arvhdr->arv_num,
+                             fileio_get_base_file_name (archive_name),
+                             arvhdr->fpageid, arvhdr->fpageid + arvhdr->npages - 1);
   er_log_debug (ARG_FILE_LINE,
-		"logwr_archive_active_log, arv_num(%d), fpageid(%lld) lpageid(%lld)\n",
-		arvhdr->arv_num, arvhdr->fpageid,
-		arvhdr->fpageid + arvhdr->npages - 1);
+                "logwr_archive_active_log, arv_num(%d), fpageid(%lld) lpageid(%lld)\n",
+                arvhdr->arv_num, arvhdr->fpageid, arvhdr->fpageid + arvhdr->npages - 1);
 
   FI_TEST_ARG_INT (NULL, FI_TEST_REPL_RANDOM_EXIT, 2, 0);
 
@@ -1672,8 +1566,7 @@ cirpwr_write_log_pages (void)
   if (!(cirpwr_Gl.action & CIRPWR_ACTION_ARCHIVING)
       && !(cirpwr_Gl.action & CIRPWR_ACTION_FORCE_FLUSH)
       && cirpwr_Gl.num_toflush == 1
-      && diff_msec < 1000
-      && (cirpwr_Gl.ha_info.last_flushed_pageid == m_log_hdr->eof_lsa.pageid))
+      && diff_msec < 1000 && (cirpwr_Gl.ha_info.last_flushed_pageid == m_log_hdr->eof_lsa.pageid))
     {
       return NO_ERROR;
     }
@@ -1748,9 +1641,8 @@ cirpwr_get_log_header ()
   ptr = or_pack_int (ptr, compressed_protocol);
 
   error = net_client_get_log_header (&ctx, request,
-				     OR_ALIGNED_BUF_SIZE (a_request), reply,
-				     OR_ALIGNED_BUF_SIZE (a_reply),
-				     (char **) &logpg_area);
+                                     OR_ALIGNED_BUF_SIZE (a_request), reply,
+                                     OR_ALIGNED_BUF_SIZE (a_reply), (char **) &logpg_area);
   if (error != NO_ERROR)
     {
       RYE_FREE_MEM (logpg_area);
@@ -1773,9 +1665,8 @@ cirpwr_get_log_header ()
   ptr = or_pack_int (ptr, compressed_protocol);
 
   error = net_client_get_log_header (&ctx, request,
-				     OR_ALIGNED_BUF_SIZE (a_request), reply,
-				     OR_ALIGNED_BUF_SIZE (a_reply),
-				     (char **) &logpg_area);
+                                     OR_ALIGNED_BUF_SIZE (a_request), reply,
+                                     OR_ALIGNED_BUF_SIZE (a_reply), (char **) &logpg_area);
   RYE_FREE_MEM (logpg_area);
 
   return error;
@@ -1822,111 +1713,102 @@ log_copier_main (void *arg)
   assert (th_entry->th_type == CIRP_THREAD_COPIER);
 
   snprintf (err_msg, sizeof (err_msg),
-	    "Writer Start: last_pageid(%lld)",
-	    (long long) cirpwr_Gl.ha_info.last_flushed_pageid);
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	  err_msg);
+            "Writer Start: last_pageid(%lld)", (long long) cirpwr_Gl.ha_info.last_flushed_pageid);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
   while (REPL_NEED_SHUTDOWN () == false)
     {
       /* connect rye_server */
       if (db_get_connect_status () != DB_CONNECTION_STATUS_CONNECTED)
-	{
-	  error = cirp_connect_copylogdb (th_entry->arg->db_name, false);
-	  if (error != NO_ERROR)
-	    {
-	      int recv_q_node_count, wakeup_interval = 100;
-	      struct timespec wakeup_time;
+        {
+          error = cirp_connect_copylogdb (th_entry->arg->db_name, false);
+          if (error != NO_ERROR)
+            {
+              int recv_q_node_count, wakeup_interval = 100;
+              struct timespec wakeup_time;
 
-	      m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
-	      if (m_hdr->ha_info.server_state != HA_STATE_DEAD)
-		{
-		  error = rpwr_alloc_recv_node (&node);
-		  if (error == NO_ERROR)
-		    {
-		      node->server_status = HA_STATE_DEAD;
-		      pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-		      Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
-		      pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
-		      pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+              m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
+              if (m_hdr->ha_info.server_state != HA_STATE_DEAD)
+                {
+                  error = rpwr_alloc_recv_node (&node);
+                  if (error == NO_ERROR)
+                    {
+                      node->server_status = HA_STATE_DEAD;
+                      pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+                      Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
+                      pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
+                      pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
-		      do
-			{
-			  clock_gettime (CLOCK_REALTIME, &wakeup_time);
-			  wakeup_time = timespec_add_msec (&wakeup_time,
-							   wakeup_interval);
+                      do
+                        {
+                          clock_gettime (CLOCK_REALTIME, &wakeup_time);
+                          wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
 
-			  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-			  pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,
-						  &cirpwr_Gl.recv_q_lock,
-						  &wakeup_time);
-			  recv_q_node_count =
-			    cirpwr_Gl.recv_log_queue->list.count;
-			  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-			}
-		      while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
-			     && REPL_NEED_SHUTDOWN () == false);
-		    }
-		}
-	      THREAD_SLEEP (100);
+                          pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+                          pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond, &cirpwr_Gl.recv_q_lock, &wakeup_time);
+                          recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
+                          pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+                        }
+                      while (recv_q_node_count > HB_RECV_Q_MAX_COUNT && REPL_NEED_SHUTDOWN () == false);
+                    }
+                }
+              THREAD_SLEEP (100);
 
-	      continue;
-	    }
-	}
+              continue;
+            }
+        }
 
       /* copy log pages */
       while (ctx.shutdown == false && REPL_NEED_SHUTDOWN () == false)
-	{
-	  error = cirpwr_get_log_pages (&ctx);
-	  if (error != NO_ERROR)
-	    {
-	      ctx.last_error = error;
+        {
+          error = cirpwr_get_log_pages (&ctx);
+          if (error != NO_ERROR)
+            {
+              ctx.last_error = error;
 
-	      if (error == ER_NET_SERVER_CRASHED)
-		{
-		  /* Write the server is dead at the log header */
-		  er_log_debug (ARG_FILE_LINE, "SERVER CRASHED");
+              if (error == ER_NET_SERVER_CRASHED)
+                {
+                  /* Write the server is dead at the log header */
+                  er_log_debug (ARG_FILE_LINE, "SERVER CRASHED");
 
-		  m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
-		  if (m_hdr->ha_info.server_state != HA_STATE_DEAD)
-		    {
-		      error = rpwr_alloc_recv_node (&node);
-		      if (error == NO_ERROR)
-			{
-			  node->server_status = HA_STATE_DEAD;
-			  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-			  Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
-			  pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
-			  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-			}
-		    }
+                  m_hdr = (LOG_HEADER *) (cirpwr_Gl.loghdr_pgptr->area);
+                  if (m_hdr->ha_info.server_state != HA_STATE_DEAD)
+                    {
+                      error = rpwr_alloc_recv_node (&node);
+                      if (error == NO_ERROR)
+                        {
+                          node->server_status = HA_STATE_DEAD;
+                          pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+                          Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
+                          pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
+                          pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+                        }
+                    }
 
-		  ctx.shutdown = true;
-		  break;
-		}
-	      else if (error == ER_HA_LW_FAILED_GET_LOG_PAGE)
-		{
-		  ctx.shutdown = true;
+                  ctx.shutdown = true;
+                  break;
+                }
+              else if (error == ER_HA_LW_FAILED_GET_LOG_PAGE)
+                {
+                  ctx.shutdown = true;
 
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_HB_PROCESS_EVENT, 2,
-			  "Encountered an unrecoverable error "
-			  "and will shut itself down", "");
-		  break;
-		}
-	      else if (error == ER_HA_LA_SHARED_MEM_RESET
-		       || error == ER_HA_LA_INVALID_SHARED_MEM)
-		{
-		  ctx.shutdown = true;
-		  break;
-		}
-	    }
-	}
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                          ER_HB_PROCESS_EVENT, 2,
+                          "Encountered an unrecoverable error " "and will shut itself down", "");
+                  break;
+                }
+              else if (error == ER_HA_LA_SHARED_MEM_RESET || error == ER_HA_LA_INVALID_SHARED_MEM)
+                {
+                  ctx.shutdown = true;
+                  break;
+                }
+            }
+        }
 
       if (ctx.rc != -1)
-	{
-	  net_client_logwr_send_end_msg (ctx.rc, ER_FAILED);
-	}
+        {
+          net_client_logwr_send_end_msg (ctx.rc, ER_FAILED);
+        }
 
       /* clear connection */
       db_shutdown ();
@@ -1939,20 +1821,15 @@ log_copier_main (void *arg)
 
       retry_count++;
 
-      snprintf (err_msg, sizeof (err_msg),
-		"Writer Retry: last_pageid(%ld)",
-		cirpwr_Gl.ha_info.last_flushed_pageid);
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	      err_msg);
+      snprintf (err_msg, sizeof (err_msg), "Writer Retry: last_pageid(%ld)", cirpwr_Gl.ha_info.last_flushed_pageid);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
     }
 
   RP_SET_AGENT_NEED_SHUTDOWN ();
   cirpwr_change_copier_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
-  snprintf (err_msg, sizeof (err_msg), "Writer Exit: last_pageid(%ld)",
-	    cirpwr_Gl.ha_info.last_flushed_pageid);
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	  err_msg);
+  snprintf (err_msg, sizeof (err_msg), "Writer Exit: last_pageid(%ld)", cirpwr_Gl.ha_info.last_flushed_pageid);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
   free_and_init (th_er_msg);
 
@@ -2002,7 +1879,7 @@ log_writer_main (void *arg)
   char err_msg[ER_MSG_SIZE];
   RECV_Q_NODE *node;
   struct timespec wakeup_time;
-  int wakeup_interval = 100;	/* msec */
+  int wakeup_interval = 100;    /* msec */
 
   th_entry = (CIRP_THREAD_ENTRY *) arg;
 
@@ -2030,35 +1907,32 @@ log_writer_main (void *arg)
       wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
 
       pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-      pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond, &cirpwr_Gl.recv_q_lock,
-			      &wakeup_time);
+      pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond, &cirpwr_Gl.recv_q_lock, &wakeup_time);
       pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
       while (1)
-	{
-	  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	  node = (RECV_Q_NODE *) Rye_queue_dequeue (cirpwr_Gl.recv_log_queue);
-	  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-	  if (node == NULL)
-	    {
-	      break;
-	    }
+        {
+          pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+          node = (RECV_Q_NODE *) Rye_queue_dequeue (cirpwr_Gl.recv_log_queue);
+          pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+          if (node == NULL)
+            {
+              break;
+            }
 
-	  (void) net_client_cirpwr_get_next_log_pages (node);
+          (void) net_client_cirpwr_get_next_log_pages (node);
 
-	  pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	  pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
-	  pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-	}
+          pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+          pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
+          pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+        }
     }
 
   RP_SET_AGENT_NEED_SHUTDOWN ();
   cirpwr_change_writer_status (&Repl_Info->writer_info, CIRP_AGENT_DEAD);
 
-  snprintf (err_msg, sizeof (err_msg), "Flusher Exit: last_pageid(%ld)",
-	    cirpwr_Gl.ha_info.last_flushed_pageid);
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	  err_msg);
+  snprintf (err_msg, sizeof (err_msg), "Flusher Exit: last_pageid(%ld)", cirpwr_Gl.ha_info.last_flushed_pageid);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
   free_and_init (th_er_msg_info);
 
@@ -2073,8 +1947,7 @@ log_writer_main (void *arg)
  *   status(in):
  */
 static int
-cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info,
-			     CIRP_AGENT_STATUS status)
+cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info, CIRP_AGENT_STATUS status)
 {
   pthread_mutex_lock (&writer_info->lock);
   writer_info->copier_status = status;
@@ -2091,8 +1964,7 @@ cirpwr_change_copier_status (CIRP_WRITER_INFO * writer_info,
  *   status(in):
  */
 static int
-cirpwr_change_writer_status (CIRP_WRITER_INFO * writer_info,
-			     CIRP_AGENT_STATUS status)
+cirpwr_change_writer_status (CIRP_WRITER_INFO * writer_info, CIRP_AGENT_STATUS status)
 {
   pthread_mutex_lock (&writer_info->lock);
   writer_info->writer_status = status;
@@ -2168,8 +2040,7 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
       /* received first pageid of active or archive log */
       ;
     }
-  else if (cirpwr_Gl.last_received_file_status ==
-	   LOG_HA_FILESTAT_SYNCHRONIZED)
+  else if (cirpwr_Gl.last_received_file_status == LOG_HA_FILESTAT_SYNCHRONIZED)
     {
       ;
     }
@@ -2188,8 +2059,8 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"cirpwr_get_log_pages, fpageid(%lld),  compressed_protocol(%d)",
-		first_pageid_torecv, compressed_protocol);
+                "cirpwr_get_log_pages, fpageid(%lld),  compressed_protocol(%d)",
+                first_pageid_torecv, compressed_protocol);
 
   request = OR_ALIGNED_BUF_START (a_request);
   reply = OR_ALIGNED_BUF_START (a_reply);
@@ -2199,12 +2070,10 @@ cirpwr_get_log_pages (LOGWR_CONTEXT * ctx_ptr)
   ptr = or_pack_int (ptr, compressed_protocol);
 
   error = net_client_request_with_cirpwr_context (ctx_ptr,
-						  NET_SERVER_LOGWR_GET_LOG_PAGES,
-						  request,
-						  OR_ALIGNED_BUF_SIZE
-						  (a_request), reply,
-						  OR_ALIGNED_BUF_SIZE
-						  (a_reply));
+                                                  NET_SERVER_LOGWR_GET_LOG_PAGES,
+                                                  request,
+                                                  OR_ALIGNED_BUF_SIZE
+                                                  (a_request), reply, OR_ALIGNED_BUF_SIZE (a_reply));
 
   return error;
 }
@@ -2239,22 +2108,22 @@ rpwr_alloc_recv_node (RECV_Q_NODE ** node)
       size = sizeof (RECV_Q_NODE);
       q_node = (RECV_Q_NODE *) malloc (size);
       if (q_node == NULL)
-	{
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, size);
-	  return error;
-	}
+        {
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, size);
+          return error;
+        }
 
       size = LOGWR_COPY_LOG_BUFFER_NPAGES * LOG_PAGESIZE;
       q_node->data = (char *) malloc (size);
       if (q_node->data == NULL)
-	{
-	  free (q_node);
+        {
+          free (q_node);
 
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, size);
-	  return error;
-	}
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, size);
+          return error;
+        }
       q_node->area_length = size;
     }
 
@@ -2276,9 +2145,7 @@ rpwr_alloc_recv_node (RECV_Q_NODE ** node)
  */
 static int
 net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
-					int request,
-					char *argbuf, int argsize,
-					char *replybuf, int replysize)
+                                        int request, char *argbuf, int argsize, char *replybuf, int replysize)
 {
   unsigned int eid;
   int error;
@@ -2299,9 +2166,9 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
       error = net_client_request_send_msg (&eid, request, 1, argbuf, argsize);
 
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       ctx_ptr->rc = eid;
     }
   else
@@ -2311,9 +2178,9 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
       error = net_client_data_send_msg (eid, 1, argbuf, argsize);
 
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   error = rpwr_alloc_recv_node (&node);
@@ -2323,9 +2190,7 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
     }
 
   recv_packet = NULL;
-  error = net_client_request_recv_msg (&recv_packet, eid, -1, 2,
-				       replybuf, replysize,
-				       node->data, node->area_length);
+  error = net_client_request_recv_msg (&recv_packet, eid, -1, 2, replybuf, replysize, node->data, node->area_length);
   if (error != NO_ERROR)
     {
       pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
@@ -2345,99 +2210,95 @@ net_client_request_with_cirpwr_context (LOGWR_CONTEXT * ctx_ptr,
     {
     case GET_NEXT_LOG_PAGES:
       {
-	int length;
-	INT64 pageid, eof_pageid;
-	int num_page, file_status, server_status;
-	int data_recv_size;
+        int length;
+        INT64 pageid, eof_pageid;
+        int num_page, file_status, server_status;
+        int data_recv_size;
 
-	ptr = or_unpack_int (ptr, &length);
-	ptr = or_unpack_int64 (ptr, &pageid);
-	ptr = or_unpack_int64 (ptr, &eof_pageid);
-	ptr = or_unpack_int (ptr, &num_page);
-	ptr = or_unpack_int (ptr, &file_status);
-	ptr = or_unpack_int (ptr, &server_status);
+        ptr = or_unpack_int (ptr, &length);
+        ptr = or_unpack_int64 (ptr, &pageid);
+        ptr = or_unpack_int64 (ptr, &eof_pageid);
+        ptr = or_unpack_int (ptr, &num_page);
+        ptr = or_unpack_int (ptr, &file_status);
+        ptr = or_unpack_int (ptr, &server_status);
 
-	if (pageid < 0 || num_page < 0)
-	  {
-	    assert (false);
+        if (pageid < 0 || num_page < 0)
+          {
+            assert (false);
 
-	    error = ER_NET_SERVER_CRASHED;
-	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+            error = ER_NET_SERVER_CRASHED;
+            er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
 
-	    css_net_packet_free (recv_packet);
-	    assert (node != NULL);
-	    pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	    Rye_queue_enqueue (cirpwr_Gl.free_list, node);
-	    node = NULL;
-	    pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+            css_net_packet_free (recv_packet);
+            assert (node != NULL);
+            pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+            Rye_queue_enqueue (cirpwr_Gl.free_list, node);
+            node = NULL;
+            pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
-	    return error;
-	  }
+            return error;
+          }
 
-	node->server_status = server_status;
-	node->fpageid = pageid;
-	node->num_page = num_page;
-	node->length = length;
+        node->server_status = server_status;
+        node->fpageid = pageid;
+        node->num_page = num_page;
+        node->length = length;
 
-	cirpwr_Gl.last_received_pageid = pageid + num_page - 1;
-	cirpwr_Gl.last_received_file_status = file_status;
+        cirpwr_Gl.last_received_pageid = pageid + num_page - 1;
+        cirpwr_Gl.last_received_file_status = file_status;
 
-	pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
-	node = NULL;
-	recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
-	pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
-	pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+        pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+        Rye_queue_enqueue (cirpwr_Gl.recv_log_queue, node);
+        node = NULL;
+        recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
+        pthread_cond_signal (&cirpwr_Gl.recv_q_cond);
+        pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
 
-	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_EOF_PAGEID, eof_pageid);
-	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID,
-			     cirpwr_Gl.last_received_pageid);
+        monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_EOF_PAGEID, eof_pageid);
+        monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID, cirpwr_Gl.last_received_pageid);
 
-	monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_GAP,
-			     monitor_get_stats (MNT_RP_COPIER_ID,
-						MNT_RP_EOF_PAGEID)
-			     - monitor_get_stats (MNT_RP_COPIER_ID,
-						  MNT_RP_RECEIVED_PAGEID));
+        monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_GAP,
+                             monitor_get_stats (MNT_RP_COPIER_ID,
+                                                MNT_RP_EOF_PAGEID)
+                             - monitor_get_stats (MNT_RP_COPIER_ID, MNT_RP_RECEIVED_PAGEID));
 
-	while (recv_q_node_count > HB_RECV_Q_MAX_COUNT
-	       && REPL_NEED_SHUTDOWN () == false)
-	  {
-	    clock_gettime (CLOCK_REALTIME, &wakeup_time);
+        while (recv_q_node_count > HB_RECV_Q_MAX_COUNT && REPL_NEED_SHUTDOWN () == false)
+          {
+            clock_gettime (CLOCK_REALTIME, &wakeup_time);
 
-	    wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
+            wakeup_time = timespec_add_msec (&wakeup_time, wakeup_interval);
 
-	    pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
-	    pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond,
-				    &cirpwr_Gl.recv_q_lock, &wakeup_time);
-	    recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
-	    pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
-	  }
+            pthread_mutex_lock (&cirpwr_Gl.recv_q_lock);
+            pthread_cond_timedwait (&cirpwr_Gl.recv_q_cond, &cirpwr_Gl.recv_q_lock, &wakeup_time);
+            recv_q_node_count = cirpwr_Gl.recv_log_queue->list.count;
+            pthread_mutex_unlock (&cirpwr_Gl.recv_q_lock);
+          }
 
-	assert (length <= cirpwr_Gl.logpg_area_size);
+        assert (length <= cirpwr_Gl.logpg_area_size);
 
-	data_recv_size = css_net_packet_get_recv_size (recv_packet, 1);
-	if (data_recv_size < length)
-	  {
-	    assert (false);
+        data_recv_size = css_net_packet_get_recv_size (recv_packet, 1);
+        if (data_recv_size < length)
+          {
+            assert (false);
 
-	    error = ER_NET_SERVER_CRASHED;
-	    er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	    ctx_ptr->shutdown = true;
-	  }
+            error = ER_NET_SERVER_CRASHED;
+            er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+            ctx_ptr->shutdown = true;
+          }
       }
       break;
     case END_CALLBACK:
       ptr = or_unpack_int (ptr, &request_error);
       if (request_error != ctx_ptr->last_error)
-	{
-	  /* By server error or shutdown */
-	  error = request_error;
-	  if (error != ER_HA_LW_FAILED_GET_LOG_PAGE)
-	    {
-	      error = ER_NET_SERVER_CRASHED;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	    }
-	}
+        {
+          /* By server error or shutdown */
+          error = request_error;
+          if (error != ER_HA_LW_FAILED_GET_LOG_PAGE)
+            {
+              error = ER_NET_SERVER_CRASHED;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+            }
+        }
 
       ctx_ptr->shutdown = true;
       break;
@@ -2485,35 +2346,33 @@ net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node)
   else
     {
       if (!ZIP_CHECK (node->length))
-	{
-	  memcpy (cirpwr_Gl.logpg_area, node->data, node->length);
-	  length = node->length;
-	}
+        {
+          memcpy (cirpwr_Gl.logpg_area, node->data, node->length);
+          length = node->length;
+        }
       else
-	{
-	  length = (int) GET_ZIP_LEN (node->length);
+        {
+          length = (int) GET_ZIP_LEN (node->length);
 
-	  if (!log_unzip (cirpwr_Gl.unzip_area, length, node->data))
-	    {
-	      assert (false);	/* TODO - */
-	      error = ER_IO_LZO_DECOMPRESS_FAIL;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	    }
+          if (!log_unzip (cirpwr_Gl.unzip_area, length, node->data))
+            {
+              assert (false);   /* TODO - */
+              error = ER_IO_LZO_DECOMPRESS_FAIL;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+            }
 
-	  memcpy (cirpwr_Gl.logpg_area,
-		  cirpwr_Gl.unzip_area->log_data,
-		  (int) cirpwr_Gl.unzip_area->data_length);
+          memcpy (cirpwr_Gl.logpg_area, cirpwr_Gl.unzip_area->log_data, (int) cirpwr_Gl.unzip_area->data_length);
 
-	  length = cirpwr_Gl.unzip_area->data_length;
-	}
+          length = cirpwr_Gl.unzip_area->data_length;
+        }
 
       cirpwr_Gl.logpg_fill_size = length;
 
       error = cirpwr_set_hdr_and_flush_info ();
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
     }
 
   error = cirpwr_write_log_pages ();
@@ -2521,14 +2380,12 @@ net_client_cirpwr_get_next_log_pages (RECV_Q_NODE * node)
     {
       return error;
     }
-  monitor_stats_gauge (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID,
-		       cirpwr_Gl.ha_info.last_flushed_pageid);
+  monitor_stats_gauge (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID, cirpwr_Gl.ha_info.last_flushed_pageid);
 
   monitor_stats_gauge (MNT_RP_COPIER_ID, MNT_RP_FLUSHED_GAP,
-		       monitor_get_stats (MNT_RP_COPIER_ID,
-					  MNT_RP_RECEIVED_PAGEID)
-		       - monitor_get_stats (MNT_RP_FLUSHER_ID,
-					    MNT_RP_FLUSHED_PAGEID));
+                       monitor_get_stats (MNT_RP_COPIER_ID,
+                                          MNT_RP_RECEIVED_PAGEID)
+                       - monitor_get_stats (MNT_RP_FLUSHER_ID, MNT_RP_FLUSHED_PAGEID));
 
   if (cirpwr_Gl.action & CIRPWR_ACTION_FORCE_FLUSH)
     {

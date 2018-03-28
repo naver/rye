@@ -27,12 +27,12 @@
 
 #ident "$Id$"
 
-#include "language_support.h"	/* for international string functions */
-#include "storage_common.h"	/* for HFID */
-#include "object_domain.h"	/* for TP_DOMAIN */
-#include "work_space.h"		/* for MOP */
-#include "class_object.h"	/* for SM_CLASS */
-#include "schema_template.h"	/* template interface */
+#include "language_support.h"   /* for international string functions */
+#include "storage_common.h"     /* for HFID */
+#include "object_domain.h"      /* for TP_DOMAIN */
+#include "work_space.h"         /* for MOP */
+#include "class_object.h"       /* for SM_CLASS */
+#include "schema_template.h"    /* template interface */
 #include "dbdef.h"
 
 /*
@@ -86,39 +86,27 @@ extern int sm_delete_class (const char *name);
 extern int sm_get_index (MOP classop, const char *attname, BTID * index);
 #endif
 extern char *sm_produce_constraint_name (const char *class_name,
-					 DB_CONSTRAINT_TYPE constraint_type,
-					 const char **att_names,
-					 const int *asc_desc,
-					 const char *given_name);
+                                         DB_CONSTRAINT_TYPE constraint_type,
+                                         const char **att_names, const int *asc_desc, const char *given_name);
 extern char *sm_produce_constraint_name_mop (MOP classop,
-					     DB_CONSTRAINT_TYPE
-					     constraint_type,
-					     const char **att_names,
-					     const int *asc_desc,
-					     const char *given_name);
+                                             DB_CONSTRAINT_TYPE
+                                             constraint_type,
+                                             const char **att_names, const int *asc_desc, const char *given_name);
 extern char *sm_produce_constraint_name_tmpl (SM_TEMPLATE * tmpl,
-					      DB_CONSTRAINT_TYPE
-					      constraint_type,
-					      const char **att_names,
-					      const int *asc_desc,
-					      const char *given_name);
+                                              DB_CONSTRAINT_TYPE
+                                              constraint_type,
+                                              const char **att_names, const int *asc_desc, const char *given_name);
 extern int sm_add_constraint (MOP classop,
-			      DB_CONSTRAINT_TYPE constraint_type,
-			      const char *constraint_name,
-			      const char **att_names, const int *asc_desc);
+                              DB_CONSTRAINT_TYPE constraint_type,
+                              const char *constraint_name, const char **att_names, const int *asc_desc);
 extern int sm_drop_constraint (MOP classop,
-			       DB_CONSTRAINT_TYPE constraint_type,
-			       const char *constraint_name,
-			       const char **att_names);
+                               DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name, const char **att_names);
 
 /* Misc schema operations */
 extern int sm_rename_class (MOP op, const char *new_name);
 extern void sm_mark_system_classes (void);
-extern int sm_update_all_catalog_statistics (bool update_stats,
-					     bool with_fullscan);
-extern int sm_update_catalog_statistics (const char *class_name,
-					 bool update_stats,
-					 bool with_fullscan);
+extern int sm_update_all_catalog_statistics (bool update_stats, bool with_fullscan);
+extern int sm_update_catalog_statistics (const char *class_name, bool update_stats, bool with_fullscan);
 extern int sm_force_write_all_classes (void);
 #ifdef SA_MODE
 extern void sm_mark_system_class_for_catalog (void);
@@ -135,8 +123,7 @@ extern int sm_get_class_flag (MOP op, SM_CLASS_FLAG flag);
 extern int sm_destroy_representations (MOP op);
 #endif
 
-extern int sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info,
-				    const SM_CLASS_CONSTRAINT * const c);
+extern int sm_save_constraint_info (SM_CONSTRAINT_INFO ** save_info, const SM_CLASS_CONSTRAINT * const c);
 extern void sm_free_constraint_info (SM_CONSTRAINT_INFO ** save_info);
 
 
@@ -156,8 +143,7 @@ extern int sm_filter_domain (TP_DOMAIN * domain);
 extern int sm_check_object_domain (TP_DOMAIN * domain, MOP object);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int sm_check_class_domain (TP_DOMAIN * domain, MOP class_);
-extern int sm_coerce_object_domain (TP_DOMAIN * domain, MOP object,
-				    MOP * dest_object);
+extern int sm_coerce_object_domain (TP_DOMAIN * domain, MOP object, MOP * dest_object);
 #endif
 #endif
 
@@ -172,8 +158,7 @@ extern SM_CLASS *sm_get_class_with_statistics (MOP classop);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern CLASS_STATS *sm_get_statistics_force (MOP classop);
 #endif
-extern int sm_update_statistics (MOP classop, bool update_stats,
-				 bool with_fullscan);
+extern int sm_update_statistics (MOP classop, bool update_stats, bool with_fullscan);
 extern int sm_update_all_statistics (bool update_stats, bool with_fullscan);
 
 /* Misc information functions */
@@ -200,29 +185,22 @@ extern DB_TYPE sm_att_type_id (MOP classop, const char *name);
 
 extern MOP sm_att_class (MOP classop, const char *name);
 #endif
-extern int sm_att_info (MOP classop, const char *name, int *idp,
-			TP_DOMAIN ** domainp);
-extern int sm_att_constrained (MOP classop, const char *name,
-			       SM_ATTRIBUTE_FLAG cons);
+extern int sm_att_info (MOP classop, const char *name, int *idp, TP_DOMAIN ** domainp);
+extern int sm_att_constrained (MOP classop, const char *name, SM_ATTRIBUTE_FLAG cons);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int sm_att_default_value (MOP classop, const char *name,
-				 DB_VALUE * value,
-				 DB_DEFAULT_EXPR_TYPE * default_expr);
+extern int sm_att_default_value (MOP classop, const char *name, DB_VALUE * value, DB_DEFAULT_EXPR_TYPE * default_expr);
 #endif
 
-extern BTID *sm_find_index (MOP classop, const char **att_names,
-			    int num_atts,
-			    bool unique_index_only, BTID * btid);
+extern BTID *sm_find_index (MOP classop, const char **att_names, int num_atts, bool unique_index_only, BTID * btid);
 
 /* Query processor support functions */
 extern unsigned int sm_local_schema_version (void);
 extern void sm_bump_local_schema_version (void);
 extern unsigned int sm_global_schema_version (void);
 extern void sm_bump_global_schema_version (void);
-extern struct parser_context *sm_virtual_queries (void *parent_parser,
-						  DB_OBJECT * class_object);
+extern struct parser_context *sm_virtual_queries (void *parent_parser, DB_OBJECT * class_object);
 
-#if 1				/* TODO - remove me someday */
+#if 1                           /* TODO - remove me someday */
 extern int sm_flush_objects (MOP obj);
 #endif
 extern int sm_flush_and_decache_objects (MOP obj, int decache);
@@ -233,16 +211,12 @@ extern int sm_isshard_table (SM_CLASS * class_);
 
 /* Attribute & Method descriptors */
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int sm_get_attribute_descriptor (DB_OBJECT * op, const char *name,
-					int for_update,
-					SM_DESCRIPTOR ** desc);
+extern int sm_get_attribute_descriptor (DB_OBJECT * op, const char *name, int for_update, SM_DESCRIPTOR ** desc);
 
 extern void sm_free_descriptor (SM_DESCRIPTOR * desc);
 
 extern int sm_get_descriptor_component (MOP op, SM_DESCRIPTOR * desc,
-					int for_update,
-					SM_CLASS ** class_ptr,
-					SM_ATTRIBUTE ** att_ptr);
+                                        int for_update, SM_CLASS ** class_ptr, SM_ATTRIBUTE ** att_ptr);
 #endif
 
 /* Module control */

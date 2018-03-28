@@ -91,7 +91,7 @@ db_ws_realloc (void *ptr, size_t size)
 void
 db_ws_free (void *ptr)
 {
-#if 0				/* TODO:[happy] */
+#if 0                           /* TODO:[happy] */
   assert (ptr != NULL);
 #endif
 

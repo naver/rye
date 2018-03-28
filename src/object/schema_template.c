@@ -47,34 +47,22 @@
 
 static int check_namespace (SM_TEMPLATE * temp, const char *name);
 static int resolve_class_domain (SM_TEMPLATE * tmp, DB_DOMAIN * domain);
-static int get_domain (SM_TEMPLATE * tmp,
-		       const char *domain_string, DB_DOMAIN ** domainp);
-static int check_domain_class_type (SM_TEMPLATE * template_,
-				    DB_OBJECT * domain_classobj);
+static int get_domain (SM_TEMPLATE * tmp, const char *domain_string, DB_DOMAIN ** domainp);
+static int check_domain_class_type (SM_TEMPLATE * template_, DB_OBJECT * domain_classobj);
 static SM_TEMPLATE *def_class_internal (const char *name, int class_type);
 static int smt_add_constraint_to_property (SM_TEMPLATE * template_,
-					   SM_CONSTRAINT_TYPE type,
-					   const char *constraint_name,
-					   SM_ATTRIBUTE ** atts,
-					   const int *asc_desc);
+                                           SM_CONSTRAINT_TYPE type,
+                                           const char *constraint_name, SM_ATTRIBUTE ** atts, const int *asc_desc);
 static int smt_drop_constraint_from_property (SM_TEMPLATE * template_,
-					      const char *constraint_name,
-					      SM_ATTRIBUTE_FLAG constraint);
+                                              const char *constraint_name, SM_ATTRIBUTE_FLAG constraint);
 static int smt_add_attribute_to_list (SM_ATTRIBUTE ** att_list,
-				      SM_ATTRIBUTE * att,
-				      const bool add_first,
-				      const char *add_after_attribute);
-static int smt_check_index_exist (SM_TEMPLATE * template_,
-				  const char *constraint_name);
+                                      SM_ATTRIBUTE * att, const bool add_first, const char *add_after_attribute);
+static int smt_check_index_exist (SM_TEMPLATE * template_, const char *constraint_name);
 static int smt_change_attribute_pos_in_list (SM_ATTRIBUTE ** att_list,
-					     SM_ATTRIBUTE * att,
-					     const bool change_first,
-					     const char
-					     *change_after_attribute);
+                                             SM_ATTRIBUTE * att,
+                                             const bool change_first, const char *change_after_attribute);
 static void
-smt_set_attribute_orig_default_value (SM_ATTRIBUTE * att,
-				      DB_VALUE * new_orig_value,
-				      DB_DEFAULT_EXPR_TYPE default_expr);
+smt_set_attribute_orig_default_value (SM_ATTRIBUTE * att, DB_VALUE * new_orig_value, DB_DEFAULT_EXPR_TYPE default_expr);
 
 /* TEMPLATE SEARCH FUNCTIONS */
 /*
@@ -94,8 +82,7 @@ smt_set_attribute_orig_default_value (SM_ATTRIBUTE * att,
  */
 
 int
-smt_find_attribute (SM_TEMPLATE * template_, const char *name,
-		    SM_ATTRIBUTE ** attp)
+smt_find_attribute (SM_TEMPLATE * template_, const char *name, SM_ATTRIBUTE ** attp)
 {
   int error = NO_ERROR;
   SM_ATTRIBUTE *att;
@@ -108,34 +95,31 @@ smt_find_attribute (SM_TEMPLATE * template_, const char *name,
     {
       att = classobj_find_attribute (template_->attributes, name);
       if (att != NULL)
-	{
-	  *attp = att;
-	}
+        {
+          *attp = att;
+        }
       else
-	{
-	  if (template_->current == NULL)
-	    {
-	      ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, name);
-	    }
-	  else
-	    {
-	      /* check for mistaken references to inherited attributes and
-	         give a better message */
-	      att =
-		classobj_find_attribute (template_->current->attributes,
-					 name);
-	      if (att == NULL)
-		{
-		  /* wasn't inherited, give the ususal message */
-		  ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, name);
-		}
-	      else
-		{
-		  ERROR2 (error, ER_SM_INHERITED_ATTRIBUTE, name,
-			  sm_class_name (att->class_mop));
-		}
-	    }
-	}
+        {
+          if (template_->current == NULL)
+            {
+              ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, name);
+            }
+          else
+            {
+              /* check for mistaken references to inherited attributes and
+                 give a better message */
+              att = classobj_find_attribute (template_->current->attributes, name);
+              if (att == NULL)
+                {
+                  /* wasn't inherited, give the ususal message */
+                  ERROR1 (error, ER_SM_ATTRIBUTE_NOT_FOUND, name);
+                }
+              else
+                {
+                  ERROR2 (error, ER_SM_INHERITED_ATTRIBUTE, name, sm_class_name (att->class_mop));
+                }
+            }
+        }
     }
 
   return error;
@@ -177,41 +161,40 @@ resolve_class_domain (SM_TEMPLATE * tmp, DB_DOMAIN * domain)
   if (domain)
     {
       switch (TP_DOMAIN_TYPE (domain))
-	{
-	case DB_TYPE_SEQUENCE:
-	  tmp_domain = domain->setdomain;
-	  while (tmp_domain)
-	    {
-	      error = resolve_class_domain (tmp, tmp_domain);
-	      if (error != NO_ERROR)
-		{
-		  return error;
-		}
-	      tmp_domain = tmp_domain->next;
-	    }
-	  break;
+        {
+        case DB_TYPE_SEQUENCE:
+          tmp_domain = domain->setdomain;
+          while (tmp_domain)
+            {
+              error = resolve_class_domain (tmp, tmp_domain);
+              if (error != NO_ERROR)
+                {
+                  return error;
+                }
+              tmp_domain = tmp_domain->next;
+            }
+          break;
 
-	case DB_TYPE_OBJECT:
-	  if (domain->self_ref)
-	    {
-	      domain->type = tp_Type_null;
-	      /* kludge, store the template as the "class" for this
-	         special domain */
-	      domain->class_mop = (MOP) tmp;
-	    }
-	  break;
+        case DB_TYPE_OBJECT:
+          if (domain->self_ref)
+            {
+              domain->type = tp_Type_null;
+              /* kludge, store the template as the "class" for this
+                 special domain */
+              domain->class_mop = (MOP) tmp;
+            }
+          break;
 
-	default:
-	  break;
-	}
+        default:
+          break;
+        }
     }
 
   return error;
 }
 
 static int
-get_domain (SM_TEMPLATE * tmp,
-	    const char *domain_string, DB_DOMAIN ** domainp)
+get_domain (SM_TEMPLATE * tmp, const char *domain_string, DB_DOMAIN ** domainp)
 {
   int error = NO_ERROR;
   DB_DOMAIN *domain = (DB_DOMAIN *) 0;
@@ -225,27 +208,27 @@ get_domain (SM_TEMPLATE * tmp,
   else
     {
       if (domain_string == NULL || domain_string[0] == '*')
-	{
-	  ERROR0 (error, ER_SM_INVALID_ARGUMENTS);
-	}
+        {
+          ERROR0 (error, ER_SM_INVALID_ARGUMENTS);
+        }
       else
-	{
-	  domain = pt_string_to_db_domain (domain_string, tmp->name);
-	}
+        {
+          domain = pt_string_to_db_domain (domain_string, tmp->name);
+        }
     }
 
   if (domain != NULL)
     {
       error = resolve_class_domain (tmp, domain);
       if (error != NO_ERROR)
-	{
-	  assert (TP_DOMAIN_TYPE (domain) != DB_TYPE_VARIABLE);
-	  if (*domainp == NULL)
-	    {
-	      tp_domain_free (domain);
-	    }
-	  domain = NULL;
-	}
+        {
+          assert (TP_DOMAIN_TYPE (domain) != DB_TYPE_VARIABLE);
+          if (*domainp == NULL)
+            {
+              tp_domain_free (domain);
+            }
+          domain = NULL;
+        }
     }
   else
     {
@@ -276,13 +259,11 @@ check_domain_class_type (SM_TEMPLATE * template_, DB_OBJECT * domain_classobj)
   if (template_->class_type == SM_CLASS_CT)
     {
       if (domain_classobj != NULL
-	  && !(error = au_fetch_class_force (domain_classobj, &class_,
-					     S_LOCK))
-	  && template_->class_type != class_->class_type)
-	{
-	  ERROR1 (error, ER_SM_INCOMPATIBLE_DOMAIN_CLASS_TYPE,
-		  class_->header.name);
-	}
+          && !(error = au_fetch_class_force (domain_classobj, &class_,
+                                             S_LOCK)) && template_->class_type != class_->class_type)
+        {
+          ERROR1 (error, ER_SM_INCOMPATIBLE_DOMAIN_CLASS_TYPE, class_->header.name);
+        }
     }
 
   return error;
@@ -311,20 +292,19 @@ def_class_internal (const char *name, int class_type)
     {
       type = pr_find_type (name);
       if (type != NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_SM_CLASS_WITH_PRIM_NAME, 1, name);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SM_CLASS_WITH_PRIM_NAME, 1, name);
+        }
       else
-	{
-	  sm_downcase_name (name, realname, SM_MAX_IDENTIFIER_LENGTH);
-	  name = realname;
-	  template_ = classobj_make_template (name, NULL, NULL);
-	  if (template_ != NULL)
-	    {
-	      template_->class_type = (SM_CLASS_TYPE) class_type;
-	    }
-	}
+        {
+          sm_downcase_name (name, realname, SM_MAX_IDENTIFIER_LENGTH);
+          name = realname;
+          template_ = classobj_make_template (name, NULL, NULL);
+          if (template_ != NULL)
+            {
+              template_->class_type = (SM_CLASS_TYPE) class_type;
+            }
+        }
     }
 
   return template_;
@@ -374,13 +354,13 @@ smt_edit_class_mop_with_lock (MOP op, LOCK lock)
   else
     {
       if (au_fetch_class (op, &class_, lock, AU_ALTER) == NO_ERROR)
-	{
-	  /* cleanup the class and flush out the run-time information prior to
-	     editing */
-	  sm_clean_class (op, class_);
+        {
+          /* cleanup the class and flush out the run-time information prior to
+             editing */
+          sm_clean_class (op, class_);
 
-	  template_ = classobj_make_template (sm_class_name (op), op, class_);
-	}
+          template_ = classobj_make_template (sm_class_name (op), op, class_);
+        }
     }
 
   return template_;
@@ -414,10 +394,10 @@ smt_copy_class_mop (const char *name, MOP op, SM_CLASS ** class_)
   if (au_fetch_class (op, class_, S_LOCK, DB_AUTH_SELECT) == NO_ERROR)
     {
       if ((*class_)->class_type != SM_CLASS_CT)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_NOT_A_CLASS, 0);
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_NOT_A_CLASS, 0);
+          return NULL;
+        }
 
       template_ = classobj_make_template_like (name, *class_);
     }
@@ -438,8 +418,7 @@ smt_copy_class_mop (const char *name, MOP op, SM_CLASS ** class_)
  */
 
 SM_TEMPLATE *
-smt_copy_class (const char *new_name, const char *existing_name,
-		SM_CLASS ** class_)
+smt_copy_class (const char *new_name, const char *existing_name, SM_CLASS ** class_)
 {
   SM_TEMPLATE *template_ = NULL;
 
@@ -447,9 +426,9 @@ smt_copy_class (const char *new_name, const char *existing_name,
     {
       MOP op = sm_find_class (existing_name);
       if (op != NULL)
-	{
-	  template_ = smt_copy_class_mop (new_name, op, class_);
-	}
+        {
+          template_ = smt_copy_class_mop (new_name, op, class_);
+        }
     }
 
   return template_;
@@ -493,24 +472,19 @@ smt_quit (SM_TEMPLATE * template_)
  */
 int
 smt_add_attribute_w_dflt_w_order (DB_CTMPL * def,
-				  const char *name,
-				  const char *domain_string,
-				  DB_DOMAIN * domain,
-				  DB_VALUE * default_value,
-				  const bool add_first,
-				  const char *add_after_attribute,
-				  DB_DEFAULT_EXPR_TYPE default_expr,
-				  bool is_shard_key)
+                                  const char *name,
+                                  const char *domain_string,
+                                  DB_DOMAIN * domain,
+                                  DB_VALUE * default_value,
+                                  const bool add_first,
+                                  const char *add_after_attribute, DB_DEFAULT_EXPR_TYPE default_expr, bool is_shard_key)
 {
   int error = NO_ERROR;
 
-  error = smt_add_attribute_any (def, name, domain_string, domain,
-				 add_first, add_after_attribute,
-				 is_shard_key);
+  error = smt_add_attribute_any (def, name, domain_string, domain, add_first, add_after_attribute, is_shard_key);
   if (error == NO_ERROR && default_value != NULL)
     {
-      error =
-	smt_set_attribute_default (def, name, default_value, default_expr);
+      error = smt_set_attribute_default (def, name, default_value, default_expr);
     }
 
   return error;
@@ -527,16 +501,13 @@ smt_add_attribute_w_dflt_w_order (DB_CTMPL * def,
  */
 int
 smt_add_attribute_w_dflt (DB_CTMPL * def,
-			  const char *name,
-			  const char *domain_string,
-			  DB_DOMAIN * domain,
-			  DB_VALUE * default_value,
-			  DB_DEFAULT_EXPR_TYPE default_expr,
-			  bool is_shard_key)
+                          const char *name,
+                          const char *domain_string,
+                          DB_DOMAIN * domain,
+                          DB_VALUE * default_value, DB_DEFAULT_EXPR_TYPE default_expr, bool is_shard_key)
 {
   return smt_add_attribute_w_dflt_w_order (def, name, domain_string, domain,
-					   default_value, false,
-					   NULL, default_expr, is_shard_key);
+                                           default_value, false, NULL, default_expr, is_shard_key);
 }
 
 /*
@@ -556,9 +527,8 @@ smt_add_attribute_w_dflt (DB_CTMPL * def,
 
 int
 smt_add_attribute_any (SM_TEMPLATE * template_, const char *name,
-		       const char *domain_string, DB_DOMAIN * domain,
-		       const bool add_first,
-		       const char *add_after_attribute, bool is_shard_key)
+                       const char *domain_string, DB_DOMAIN * domain,
+                       const bool add_first, const char *add_after_attribute, bool is_shard_key)
 {
   int error_code = NO_ERROR;
   SM_ATTRIBUTE *att = NULL;
@@ -570,7 +540,7 @@ smt_add_attribute_any (SM_TEMPLATE * template_, const char *name,
   assert (template_ != NULL);
 
   att_list = &template_->attributes;
-  cur_domain = domain;		/* save */
+  cur_domain = domain;          /* save */
 
   if (!sm_check_name (name))
     {
@@ -583,8 +553,7 @@ smt_add_attribute_any (SM_TEMPLATE * template_, const char *name,
 
   if (add_after_attribute != NULL)
     {
-      sm_downcase_name (add_after_attribute, add_after_attribute_real_name,
-			SM_MAX_IDENTIFIER_LENGTH);
+      sm_downcase_name (add_after_attribute, add_after_attribute_real_name, SM_MAX_IDENTIFIER_LENGTH);
       add_after_attribute = add_after_attribute_real_name;
     }
 
@@ -610,9 +579,9 @@ smt_add_attribute_any (SM_TEMPLATE * template_, const char *name,
     {
       error_code = check_domain_class_type (template_, domain->class_mop);
       if (error_code != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
     }
 
   att = classobj_make_attribute (name, domain->type);
@@ -634,8 +603,7 @@ smt_add_attribute_any (SM_TEMPLATE * template_, const char *name,
   assert (TP_DOMAIN_TYPE (domain) != DB_TYPE_VARIABLE);
   att->sma_domain = domain;
 
-  error_code = smt_add_attribute_to_list (att_list, att, add_first,
-					  add_after_attribute);
+  error_code = smt_add_attribute_to_list (att_list, att, add_first, add_after_attribute);
   if (error_code != NO_ERROR)
     {
       goto error_exit;
@@ -653,10 +621,10 @@ error_exit:
   if (domain != NULL)
     {
       if (cur_domain == NULL)
-	{
-	  assert (TP_DOMAIN_TYPE (domain) != DB_TYPE_VARIABLE);
-	  tp_domain_free (domain);
-	}
+        {
+          assert (TP_DOMAIN_TYPE (domain) != DB_TYPE_VARIABLE);
+          tp_domain_free (domain);
+        }
     }
 
   return error_code;
@@ -675,8 +643,7 @@ error_exit:
 
 static int
 smt_add_attribute_to_list (SM_ATTRIBUTE ** att_list, SM_ATTRIBUTE * att,
-			   const bool add_first,
-			   const char *add_after_attribute)
+                           const bool add_first, const char *add_after_attribute)
 {
   int error_code = NO_ERROR;
   SM_ATTRIBUTE *crt_att = NULL;
@@ -700,14 +667,13 @@ smt_add_attribute_to_list (SM_ATTRIBUTE ** att_list, SM_ATTRIBUTE * att,
   for (crt_att = *att_list; crt_att != NULL; crt_att = crt_att->next)
     {
       if (intl_identifier_casecmp (crt_att->name, add_after_attribute) == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
   if (crt_att == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_COLNAME, 1,
-	      add_after_attribute);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_COLNAME, 1, add_after_attribute);
       error_code = ER_QPROC_INVALID_COLNAME;
       goto error_exit;
     }
@@ -734,12 +700,9 @@ error_exit:
  *      and remove this function.
  */
 int
-smt_add_attribute (SM_TEMPLATE * template_,
-		   const char *name,
-		   const char *domain_string, DB_DOMAIN * domain)
+smt_add_attribute (SM_TEMPLATE * template_, const char *name, const char *domain_string, DB_DOMAIN * domain)
 {
-  return (smt_add_attribute_any (template_, name, domain_string, domain,
-				 false, NULL, false));
+  return (smt_add_attribute_any (template_, name, domain_string, domain, false, NULL, false));
 }
 
 #if defined(ENABLE_UNUSED_FUNCTION)
@@ -755,9 +718,7 @@ smt_add_attribute (SM_TEMPLATE * template_,
 
 int
 smt_delete_set_attribute_domain (SM_TEMPLATE * template_,
-				 const char *name,
-				 const char *domain_string,
-				 DB_DOMAIN * domain)
+                                 const char *name, const char *domain_string, DB_DOMAIN * domain)
 {
   int error = NO_ERROR;
   SM_ATTRIBUTE *att;
@@ -767,25 +728,22 @@ smt_delete_set_attribute_domain (SM_TEMPLATE * template_,
 
   if (error == NO_ERROR)
     {
-      if ((att->sma_domain == NULL)
-	  || !pr_is_set_type (TP_DOMAIN_TYPE (att->sma_domain)))
-	{
-	  ERROR1 (error, ER_SM_DOMAIN_NOT_A_SET, name);
-	}
+      if ((att->sma_domain == NULL) || !pr_is_set_type (TP_DOMAIN_TYPE (att->sma_domain)))
+        {
+          ERROR1 (error, ER_SM_DOMAIN_NOT_A_SET, name);
+        }
       else
-	{
-	  error = get_domain (template_, domain_string, &domain);
-	  if (error == NO_ERROR)
-	    {
-	      assert (domain != NULL);
-	      if (domain == NULL
-		  || !tp_domain_drop (&att->sma_domain->setdomain, domain))
-		{
-		  ERROR2 (error, ER_SM_DOMAIN_NOT_FOUND, name,
-			  (domain_string ? domain_string : "unknown"));
-		}
-	    }
-	}
+        {
+          error = get_domain (template_, domain_string, &domain);
+          if (error == NO_ERROR)
+            {
+              assert (domain != NULL);
+              if (domain == NULL || !tp_domain_drop (&att->sma_domain->setdomain, domain))
+                {
+                  ERROR2 (error, ER_SM_DOMAIN_NOT_FOUND, name, (domain_string ? domain_string : "unknown"));
+                }
+            }
+        }
     }
 
   return error;
@@ -805,8 +763,7 @@ smt_delete_set_attribute_domain (SM_TEMPLATE * template_,
 
 int
 smt_set_attribute_default (SM_TEMPLATE * template_, const char *name,
-			   DB_VALUE * proposed_value,
-			   DB_DEFAULT_EXPR_TYPE default_expr)
+                           DB_VALUE * proposed_value, DB_DEFAULT_EXPR_TYPE default_expr)
 {
   int error = NO_ERROR;
   SM_ATTRIBUTE *att;
@@ -823,73 +780,68 @@ smt_set_attribute_default (SM_TEMPLATE * template_, const char *name,
   if (error == NO_ERROR)
     {
       if (proposed_value && DB_IS_NULL (proposed_value)
-	  && default_expr == DB_DEFAULT_NONE
-	  && (att->flags & SM_ATTFLAG_PRIMARY_KEY))
-	{
-	  ERROR1 (error, ER_CANNOT_HAVE_PK_DEFAULT_NULL, name);
-	  return error;
-	}
+          && default_expr == DB_DEFAULT_NONE && (att->flags & SM_ATTFLAG_PRIMARY_KEY))
+        {
+          ERROR1 (error, ER_CANNOT_HAVE_PK_DEFAULT_NULL, name);
+          return error;
+        }
 
       value = proposed_value;
       status = tp_domain_check (att->sma_domain, value, TP_EXACT_MATCH);
       if (status != DOMAIN_COMPATIBLE)
-	{
-	  /* coerce it if we can */
-	  value = pr_make_ext_value ();
-	  if (value == NULL)
-	    {
-	      error = er_errid ();
-	      goto end;
-	    }
+        {
+          /* coerce it if we can */
+          value = pr_make_ext_value ();
+          if (value == NULL)
+            {
+              error = er_errid ();
+              goto end;
+            }
 
-	  status = tp_value_coerce (proposed_value, value, att->sma_domain);
-	  /* value is freed at the bottom */
-	}
+          status = tp_value_coerce (proposed_value, value, att->sma_domain);
+          /* value is freed at the bottom */
+        }
       if (status != DOMAIN_COMPATIBLE)
-	{
-	  ERROR1 (error, ER_OBJ_DOMAIN_CONFLICT, att->name);
-	}
+        {
+          ERROR1 (error, ER_OBJ_DOMAIN_CONFLICT, att->name);
+        }
       else
-	{
-	  /* check a subset of the integrity constraints, we can't check for
-	     NOT NULL or unique here */
+        {
+          /* check a subset of the integrity constraints, we can't check for
+             NOT NULL or unique here */
 
-	  if (value != NULL &&
-	      tp_check_value_size (att->sma_domain,
-				   value) != DOMAIN_COMPATIBLE)
-	    {
-	      /* need an error message that isn't specific to "string" types */
-	      ERROR2 (error, ER_OBJ_STRING_OVERFLOW, att->name,
-		      att->sma_domain->precision);
-	    }
-	  else
-	    {
-	      pr_clear_value (&att->default_value.value);
-	      pr_clone_value (value, &att->default_value.value);
-	      att->default_value.default_expr = default_expr;
+          if (value != NULL && tp_check_value_size (att->sma_domain, value) != DOMAIN_COMPATIBLE)
+            {
+              /* need an error message that isn't specific to "string" types */
+              ERROR2 (error, ER_OBJ_STRING_OVERFLOW, att->name, att->sma_domain->precision);
+            }
+          else
+            {
+              pr_clear_value (&att->default_value.value);
+              pr_clone_value (value, &att->default_value.value);
+              att->default_value.default_expr = default_expr;
 
-	      /* if there wasn't an previous original value, take this one.
-	       * This can only happen for new templates OR if this is a new
-	       * attribute that was added during this template OR if this is
-	       * the first time setting a default value to the attribute.
-	       * This should be handled by using candidates in the template
-	       * and storing an extra bit field in the candidate structure.
-	       * See the comment above sm_attribute for more information
-	       * about "original_value".
-	       */
-	      if (att->flags & SM_ATTFLAG_NEW)
-		{
-		  smt_set_attribute_orig_default_value (att, value,
-							default_expr);
-		}
-	    }
-	}
+              /* if there wasn't an previous original value, take this one.
+               * This can only happen for new templates OR if this is a new
+               * attribute that was added during this template OR if this is
+               * the first time setting a default value to the attribute.
+               * This should be handled by using candidates in the template
+               * and storing an extra bit field in the candidate structure.
+               * See the comment above sm_attribute for more information
+               * about "original_value".
+               */
+              if (att->flags & SM_ATTFLAG_NEW)
+                {
+                  smt_set_attribute_orig_default_value (att, value, default_expr);
+                }
+            }
+        }
 
       /* free the coerced value if any */
       if (value != proposed_value)
-	{
-	  pr_free_ext_value (value);
-	}
+        {
+          pr_free_ext_value (value);
+        }
     }
 
 end:
@@ -913,9 +865,7 @@ end:
  *	   default value is stored as att->original_value.
  */
 static void
-smt_set_attribute_orig_default_value (SM_ATTRIBUTE * att,
-				      DB_VALUE * new_orig_value,
-				      DB_DEFAULT_EXPR_TYPE default_expr)
+smt_set_attribute_orig_default_value (SM_ATTRIBUTE * att, DB_VALUE * new_orig_value, DB_DEFAULT_EXPR_TYPE default_expr)
 {
   assert (att != NULL);
   assert (new_orig_value != NULL);
@@ -935,9 +885,7 @@ smt_set_attribute_orig_default_value (SM_ATTRIBUTE * att,
  */
 
 static int
-smt_drop_constraint_from_property (SM_TEMPLATE * template_,
-				   const char *constraint_name,
-				   SM_ATTRIBUTE_FLAG constraint)
+smt_drop_constraint_from_property (SM_TEMPLATE * template_, const char *constraint_name, SM_ATTRIBUTE_FLAG constraint)
 {
   int error = NO_ERROR;
   SM_DISK_CONSTRAINT *cons, *found_cons, *prev_cons;
@@ -953,10 +901,10 @@ smt_drop_constraint_from_property (SM_TEMPLATE * template_,
       assert (SM_IS_CONSTRAINT_INDEX_FAMILY (cons->type));
 
       if (strcmp (cons->name, constraint_name) == 0)
-	{
-	  found_cons = cons;
-	  break;
-	}
+        {
+          found_cons = cons;
+          break;
+        }
       prev_cons = cons;
     }
 
@@ -1010,9 +958,8 @@ exit_on_error:
 
 static int
 smt_add_constraint_to_property (SM_TEMPLATE * template_,
-				SM_CONSTRAINT_TYPE type,
-				const char *constraint_name,
-				SM_ATTRIBUTE ** atts, const int *asc_desc)
+                                SM_CONSTRAINT_TYPE type,
+                                const char *constraint_name, SM_ATTRIBUTE ** atts, const int *asc_desc)
 {
   SM_DISK_CONSTRAINT *last_cons_of_type, *new_disk_cons, *disk_cons;
   SM_DISK_CONSTRAINT_ATTRIBUTE *att, *first, *last;
@@ -1030,19 +977,17 @@ smt_add_constraint_to_property (SM_TEMPLATE * template_,
   new_disk_cons = last_cons_of_type = NULL;
   first = last = NULL;
 
-  for (disk_cons = template_->disk_constraints; disk_cons != NULL;
-       disk_cons = disk_cons->next)
+  for (disk_cons = template_->disk_constraints; disk_cons != NULL; disk_cons = disk_cons->next)
     {
-      if (strcmp (disk_cons->name, constraint_name) == 0
-	  && disk_cons->index_status != INDEX_STATUS_IN_PROGRESS)
-	{
-	  ERROR1 (error, ER_SM_CONSTRAINT_EXISTS, constraint_name);
-	  GOTO_EXIT_ON_ERROR;
-	}
+      if (strcmp (disk_cons->name, constraint_name) == 0 && disk_cons->index_status != INDEX_STATUS_IN_PROGRESS)
+        {
+          ERROR1 (error, ER_SM_CONSTRAINT_EXISTS, constraint_name);
+          GOTO_EXIT_ON_ERROR;
+        }
       if (type_order[disk_cons->type] <= type_order[type])
-	{
-	  last_cons_of_type = disk_cons;
-	}
+        {
+          last_cons_of_type = disk_cons;
+        }
     }
 
   new_disk_cons = classobj_make_disk_constraint ();
@@ -1064,33 +1009,33 @@ smt_add_constraint_to_property (SM_TEMPLATE * template_,
     {
       att = classobj_make_disk_constraint_attribute ();
       if (att == NULL)
-	{
-	  error = er_errid ();
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = er_errid ();
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if (asc_desc == NULL)
-	{
-	  att->asc_desc = 0;
-	}
+        {
+          att->asc_desc = 0;
+        }
       else
-	{
-	  att->asc_desc = asc_desc[i];
-	}
+        {
+          att->asc_desc = asc_desc[i];
+        }
       att->name = ws_copy_string (atts[i]->name);
       att->att_id = atts[i]->id;
 
       if (first == NULL)
-	{
-	  first = att;
-	  last = att;
-	}
+        {
+          first = att;
+          last = att;
+        }
       else
-	{
-	  assert (last != NULL);
-	  last->next = att;
-	  last = att;
-	}
+        {
+          assert (last != NULL);
+          last->next = att;
+          last = att;
+        }
     }
   new_disk_cons->num_atts = i;
   new_disk_cons->disk_info_of_atts = first;
@@ -1100,9 +1045,9 @@ smt_add_constraint_to_property (SM_TEMPLATE * template_,
     {
       /* append new_disk_cons first of list */
       if (template_->disk_constraints != NULL)
-	{
-	  new_disk_cons->next = template_->disk_constraints;
-	}
+        {
+          new_disk_cons->next = template_->disk_constraints;
+        }
       template_->disk_constraints = new_disk_cons;
     }
   else
@@ -1128,16 +1073,15 @@ exit_on_error:
   if (first != NULL)
     {
       if (new_disk_cons != NULL && new_disk_cons->disk_info_of_atts == first)
-	{
-	  ;			/* go ahead; free at classobj_free_disk_constraint () */
-	}
+        {
+          ;                     /* go ahead; free at classobj_free_disk_constraint () */
+        }
       else
-	{
-	  assert (new_disk_cons == NULL
-		  || new_disk_cons->disk_info_of_atts == NULL);
-	  WS_LIST_FREE (first, classobj_free_disk_constraint_attribute);
-	  first = NULL;
-	}
+        {
+          assert (new_disk_cons == NULL || new_disk_cons->disk_info_of_atts == NULL);
+          WS_LIST_FREE (first, classobj_free_disk_constraint_attribute);
+          first = NULL;
+        }
     }
 
   if (new_disk_cons != NULL)
@@ -1160,15 +1104,13 @@ exit_on_error:
 
 int
 smt_drop_constraint (SM_TEMPLATE * template_, const char **att_names,
-		     const char *constraint_name,
-		     SM_ATTRIBUTE_FLAG constraint)
+                     const char *constraint_name, SM_ATTRIBUTE_FLAG constraint)
 {
   int error = NO_ERROR;
   SM_ATTRIBUTE *not_null_attr[1], *pk_attr;
   int n_atts;
 
-  if (!(SM_IS_ATTFLAG_INDEX_FAMILY (constraint)
-	|| constraint == SM_ATTFLAG_NON_NULL))
+  if (!(SM_IS_ATTFLAG_INDEX_FAMILY (constraint) || constraint == SM_ATTFLAG_NON_NULL))
     {
       ERROR0 (error, ER_SM_INVALID_ARGUMENTS);
       return error;
@@ -1178,54 +1120,51 @@ smt_drop_constraint (SM_TEMPLATE * template_, const char **att_names,
     {
       n_atts = 0;
       if (att_names != NULL)
-	{
-	  while (att_names[n_atts] != NULL)
-	    {
-	      n_atts++;
-	    }
-	}
+        {
+          while (att_names[n_atts] != NULL)
+            {
+              n_atts++;
+            }
+        }
 
       if (n_atts != 1)
-	{
-	  ERROR0 (error, ER_SM_NOT_NULL_WRONG_NUM_ATTS);
-	  return error;
-	}
+        {
+          ERROR0 (error, ER_SM_NOT_NULL_WRONG_NUM_ATTS);
+          return error;
+        }
     }
 
-  error = smt_drop_constraint_from_property (template_, constraint_name,
-					     constraint);
+  error = smt_drop_constraint_from_property (template_, constraint_name, constraint);
 
   if (error == NO_ERROR)
     {
       if (constraint == SM_ATTFLAG_PRIMARY_KEY)
-	{
-	  for (pk_attr = template_->attributes; pk_attr != NULL;
-	       pk_attr = pk_attr->next)
-	    {
-	      if (pk_attr->flags & SM_ATTFLAG_PRIMARY_KEY)
-		{
-		  pk_attr->flags &= ~SM_ATTFLAG_PRIMARY_KEY;
-		  pk_attr->flags &= ~SM_ATTFLAG_NON_NULL;
-		}
-	    }
-	}
+        {
+          for (pk_attr = template_->attributes; pk_attr != NULL; pk_attr = pk_attr->next)
+            {
+              if (pk_attr->flags & SM_ATTFLAG_PRIMARY_KEY)
+                {
+                  pk_attr->flags &= ~SM_ATTFLAG_PRIMARY_KEY;
+                  pk_attr->flags &= ~SM_ATTFLAG_NON_NULL;
+                }
+            }
+        }
       else if (constraint == SM_ATTFLAG_NON_NULL)
-	{
-	  error = smt_find_attribute (template_, att_names[0],
-				      &not_null_attr[0]);
+        {
+          error = smt_find_attribute (template_, att_names[0], &not_null_attr[0]);
 
-	  if (error == NO_ERROR)
-	    {
-	      if (not_null_attr[0]->flags & constraint)
-		{
-		  not_null_attr[0]->flags &= ~constraint;
-		}
-	      else
-		{
-		  ERROR1 (error, ER_SM_CONSTRAINT_NOT_FOUND, "NON_NULL");
-		}
-	    }
-	}
+          if (error == NO_ERROR)
+            {
+              if (not_null_attr[0]->flags & constraint)
+                {
+                  not_null_attr[0]->flags &= ~constraint;
+                }
+              else
+                {
+                  ERROR1 (error, ER_SM_CONSTRAINT_NOT_FOUND, "NON_NULL");
+                }
+            }
+        }
     }
 
   return error;
@@ -1249,27 +1188,24 @@ smt_check_index_exist (SM_TEMPLATE * template_, const char *constraint_name)
     {
       error = au_fetch_class (template_->op, &class_, S_LOCK, AU_ALTER);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       check_cons = class_->constraints;
     }
   else
     {
-      error = classobj_make_class_constraints (&check_cons,
-					       template_->attributes,
-					       template_->disk_constraints);
+      error = classobj_make_class_constraints (&check_cons, template_->attributes, template_->disk_constraints);
       if (error != NO_ERROR)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
 
       temp_cons = check_cons;
     }
 
-  error = classobj_check_index_exist (check_cons, template_->name,
-				      constraint_name);
+  error = classobj_check_index_exist (check_cons, template_->name, constraint_name);
 
   if (temp_cons != NULL)
     {
@@ -1292,9 +1228,8 @@ smt_check_index_exist (SM_TEMPLATE * template_, const char *constraint_name)
 
 int
 smt_add_constraint (SM_TEMPLATE * template_,
-		    DB_CONSTRAINT_TYPE constraint_type,
-		    const char *constraint_name, const char **att_names,
-		    const int *asc_desc)
+                    DB_CONSTRAINT_TYPE constraint_type,
+                    const char *constraint_name, const char **att_names, const int *asc_desc)
 {
   int error = NO_ERROR;
   SM_ATTRIBUTE **atts = NULL;
@@ -1318,9 +1253,9 @@ smt_add_constraint (SM_TEMPLATE * template_,
   if (att_names != NULL)
     {
       while (att_names[n_atts] != NULL)
-	{
-	  n_atts++;
-	}
+        {
+          n_atts++;
+        }
     }
 
   if (n_atts == 0)
@@ -1334,8 +1269,7 @@ smt_add_constraint (SM_TEMPLATE * template_,
   if (n_atts > MAX_INDEX_KEY_LIST_NUM - 1)
     {
       error = ER_SM_MAX_INDEX_KEY_LIST_NUM;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2,
-	      MAX_INDEX_KEY_LIST_NUM - 1, n_atts);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, MAX_INDEX_KEY_LIST_NUM - 1, n_atts);
 
       goto exit_on_error;
     }
@@ -1344,8 +1278,7 @@ smt_add_constraint (SM_TEMPLATE * template_,
   atts = (SM_ATTRIBUTE **) malloc (atts_size);
   if (atts == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_OUT_OF_VIRTUAL_MEMORY, 1, atts_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, atts_size);
 
       error = ER_OUT_OF_VIRTUAL_MEMORY;
       goto exit_on_error;
@@ -1355,9 +1288,9 @@ smt_add_constraint (SM_TEMPLATE * template_,
     {
       error = smt_find_attribute (template_, att_names[i], &atts[i]);
       if (error != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
   atts[i] = NULL;
 
@@ -1365,61 +1298,55 @@ smt_add_constraint (SM_TEMPLATE * template_,
   for (i = 0; i < n_atts; i++)
     {
       for (j = i + 1; j < n_atts; j++)
-	{
-	  /* can not check attr-id, because is not yet assigned */
-	  if (intl_identifier_casecmp (atts[i]->name, atts[j]->name) == 0)
-	    {
-	      ERROR1 (error, ER_SM_INDEX_ATTR_DUPLICATED, atts[i]->name);
+        {
+          /* can not check attr-id, because is not yet assigned */
+          if (intl_identifier_casecmp (atts[i]->name, atts[j]->name) == 0)
+            {
+              ERROR1 (error, ER_SM_INDEX_ATTR_DUPLICATED, atts[i]->name);
 
-	      goto exit_on_error;
-	    }
-	}
+              goto exit_on_error;
+            }
+        }
     }
 
   /* Check if table has shard column then, */
   /*   the first column of pk constraint should be shard key column. */
   /*   and shard key column must be in unique constraint. */
 
-  if (constraint_type == DB_CONSTRAINT_PRIMARY_KEY
-      || constraint_type == DB_CONSTRAINT_UNIQUE)
+  if (constraint_type == DB_CONSTRAINT_PRIMARY_KEY || constraint_type == DB_CONSTRAINT_UNIQUE)
     {
       att_list = &template_->attributes;
       for (crt_att = *att_list; crt_att != NULL; crt_att = crt_att->next)
-	{
-	  if (constraint_type == DB_CONSTRAINT_PRIMARY_KEY
-	      && crt_att->flags & SM_ATTFLAG_SHARD_KEY
-	      && intl_identifier_casecmp (crt_att->name, atts[0]->name) != 0)
-	    {
-	      /* the first column of pk constraint should be shard key column */
-	      assert (false);	/* is impossible */
-	      ERROR1 (error, ER_SHARD_KEY_MUST_BE_FIRST_POSITION_IN_PK,
-		      crt_att->name);
-	      goto exit_on_error;
-	    }
+        {
+          if (constraint_type == DB_CONSTRAINT_PRIMARY_KEY
+              && crt_att->flags & SM_ATTFLAG_SHARD_KEY && intl_identifier_casecmp (crt_att->name, atts[0]->name) != 0)
+            {
+              /* the first column of pk constraint should be shard key column */
+              assert (false);   /* is impossible */
+              ERROR1 (error, ER_SHARD_KEY_MUST_BE_FIRST_POSITION_IN_PK, crt_att->name);
+              goto exit_on_error;
+            }
 
-	  if (constraint_type == DB_CONSTRAINT_UNIQUE
-	      && crt_att->flags & SM_ATTFLAG_SHARD_KEY)
-	    {
-	      /* shard key column must be in unique constraint column */
-	      for (i = 0; i < n_atts; i++)
-		{
-		  if (intl_identifier_casecmp (crt_att->name, atts[i]->name)
-		      == 0)
-		    {
-		      assert (atts[i]->flags & SM_ATTFLAG_SHARD_KEY);
-		      break;
-		    }
-		}
+          if (constraint_type == DB_CONSTRAINT_UNIQUE && crt_att->flags & SM_ATTFLAG_SHARD_KEY)
+            {
+              /* shard key column must be in unique constraint column */
+              for (i = 0; i < n_atts; i++)
+                {
+                  if (intl_identifier_casecmp (crt_att->name, atts[i]->name) == 0)
+                    {
+                      assert (atts[i]->flags & SM_ATTFLAG_SHARD_KEY);
+                      break;
+                    }
+                }
 
-	      if (i == n_atts)
-		{
-		  /* shard key column is not in unique constraint */
-		  ERROR1 (error, ER_SHARD_KEY_MUST_BE_IN_UNIQUE,
-			  crt_att->name);
-		  goto exit_on_error;
-		}
-	    }
-	}
+              if (i == n_atts)
+                {
+                  /* shard key column is not in unique constraint */
+                  ERROR1 (error, ER_SHARD_KEY_MUST_BE_IN_UNIQUE, crt_att->name);
+                  goto exit_on_error;
+                }
+            }
+        }
     }
 
   /*
@@ -1436,44 +1363,42 @@ smt_add_constraint (SM_TEMPLATE * template_,
        *    - We only allow index family constraints on indexable data types.
        */
       if (template_->class_type != SM_CLASS_CT)
-	{
-	  assert (false);	/* is impossible */
-	  ERROR0 (error, SM_MAP_INDEX_ATTFLAG_TO_VCLASS_ERROR (constraint));	/* TODO: add error code */
+        {
+          assert (false);       /* is impossible */
+          ERROR0 (error, SM_MAP_INDEX_ATTFLAG_TO_VCLASS_ERROR (constraint));    /* TODO: add error code */
 
-	  goto exit_on_error;
-	}
+          goto exit_on_error;
+        }
 
       for (i = 0; i < n_atts; i++)
-	{
-	  /* server doesn't treat DB_TYPE_OBJECT, so that convert it to
-	     DB_TYPE_OID */
-	  att_type = atts[i]->type->id;
-	  if (att_type == DB_TYPE_OBJECT)
-	    {
-	      att_type = DB_TYPE_OID;
-	    }
+        {
+          /* server doesn't treat DB_TYPE_OBJECT, so that convert it to
+             DB_TYPE_OID */
+          att_type = atts[i]->type->id;
+          if (att_type == DB_TYPE_OBJECT)
+            {
+              att_type = DB_TYPE_OID;
+            }
 
-	  if (!tp_valid_indextype (att_type))
-	    {
-	      if (SM_IS_ATTFLAG_UNIQUE_FAMILY (constraint))
-		{
-		  ERROR2 (error, ER_SM_INVALID_UNIQUE_TYPE,
-			  atts[i]->type->name,
-			  SM_GET_CONSTRAINT_STRING (constraint_type));
-		}
-	      else if (constraint == SM_ATTFLAG_INDEX)
-		{
-		  ERROR1 (error, ER_SM_INVALID_INDEX_TYPE,
-			  atts[i]->type->name);
-		}
-	      else
-		{
-		  ERROR1 (error, ER_GENERIC_ERROR, "");
-		}
+          if (!tp_valid_indextype (att_type))
+            {
+              if (SM_IS_ATTFLAG_UNIQUE_FAMILY (constraint))
+                {
+                  ERROR2 (error, ER_SM_INVALID_UNIQUE_TYPE,
+                          atts[i]->type->name, SM_GET_CONSTRAINT_STRING (constraint_type));
+                }
+              else if (constraint == SM_ATTFLAG_INDEX)
+                {
+                  ERROR1 (error, ER_SM_INVALID_INDEX_TYPE, atts[i]->type->name);
+                }
+              else
+                {
+                  ERROR1 (error, ER_GENERIC_ERROR, "");
+                }
 
-	      goto exit_on_error;
-	    }
-	}
+              goto exit_on_error;
+            }
+        }
 
       /*
        * No errors were found, drop or add the constraint
@@ -1483,23 +1408,21 @@ smt_add_constraint (SM_TEMPLATE * template_,
        *  of at the beginning of this function.
        */
       error = smt_add_constraint_to_property (template_,
-					      SM_MAP_INDEX_ATTFLAG_TO_CONSTRAINT
-					      (constraint),
-					      constraint_name, atts,
-					      asc_desc);
+                                              SM_MAP_INDEX_ATTFLAG_TO_CONSTRAINT
+                                              (constraint), constraint_name, atts, asc_desc);
       if (error != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       if (constraint == SM_ATTFLAG_PRIMARY_KEY)
-	{
-	  for (i = 0; i < n_atts; i++)
-	    {
-	      atts[i]->flags |= SM_ATTFLAG_PRIMARY_KEY;
-	      atts[i]->flags |= SM_ATTFLAG_NON_NULL;
-	    }
-	}
+        {
+          for (i = 0; i < n_atts; i++)
+            {
+              atts[i]->flags |= SM_ATTFLAG_PRIMARY_KEY;
+              atts[i]->flags |= SM_ATTFLAG_NON_NULL;
+            }
+        }
     }
   else if (constraint == SM_ATTFLAG_NON_NULL)
     {
@@ -1511,30 +1434,30 @@ smt_add_constraint (SM_TEMPLATE * template_,
        *    - class attributes without default value
        */
       if (n_atts != 1)
-	{
-	  ERROR0 (error, ER_SM_NOT_NULL_WRONG_NUM_ATTS);
-	}
+        {
+          ERROR0 (error, ER_SM_NOT_NULL_WRONG_NUM_ATTS);
+        }
       else if (template_->class_type != SM_CLASS_CT)
-	{
-	  assert (false);	/* is impossible */
-	  ERROR0 (error, ER_SM_NOT_NULL_ON_VCLASS);
-	}
+        {
+          assert (false);       /* is impossible */
+          ERROR0 (error, ER_SM_NOT_NULL_ON_VCLASS);
+        }
       else
-	{
-	  if (atts[0]->flags & constraint)
-	    {
-	      ERROR1 (error, ER_SM_CONSTRAINT_EXISTS, "NON_NULL");
-	    }
-	  else
-	    {
-	      atts[0]->flags |= constraint;
-	    }
-	}
+        {
+          if (atts[0]->flags & constraint)
+            {
+              ERROR1 (error, ER_SM_CONSTRAINT_EXISTS, "NON_NULL");
+            }
+          else
+            {
+              atts[0]->flags |= constraint;
+            }
+        }
 
       if (error != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
   else
     {
@@ -1582,8 +1505,7 @@ exit_on_error:
  */
 
 int
-smt_rename_any (SM_TEMPLATE * template_, const char *name,
-		const char *new_name)
+smt_rename_any (SM_TEMPLATE * template_, const char *name, const char *new_name)
 {
   int error = NO_ERROR;
   char real_new_name[SM_MAX_IDENTIFIER_LENGTH];
@@ -1591,7 +1513,7 @@ smt_rename_any (SM_TEMPLATE * template_, const char *name,
 
   if (!sm_check_name (name) || !sm_check_name (new_name))
     {
-      error = er_errid ();	/* return error set by call */
+      error = er_errid ();      /* return error set by call */
       GOTO_EXIT_ON_ERROR;
     }
 
@@ -1655,14 +1577,14 @@ smt_delete_any (SM_TEMPLATE * template_, const char *name)
   if (error == NO_ERROR)
     {
       if (att->flags & SM_ATTFLAG_PRIMARY_KEY)
-	{
-	  ERROR1 (error, ER_SM_ATTRIBUTE_PRIMARY_KEY_MEMBER, name);
-	}
+        {
+          ERROR1 (error, ER_SM_ATTRIBUTE_PRIMARY_KEY_MEMBER, name);
+        }
       else
-	{
-	  WS_LIST_REMOVE (&template_->attributes, att);
-	  classobj_free_attribute (att);
-	}
+        {
+          WS_LIST_REMOVE (&template_->attributes, att);
+          classobj_free_attribute (att);
+        }
     }
 
   return error;
@@ -1693,15 +1615,15 @@ smt_add_query_spec (SM_TEMPLATE * template_, const char *specification)
     {
       ct = template_->class_type;
       if (ct == SM_VCLASS_CT)
-	{
-	  WS_LIST_APPEND (&template_->query_spec, query_spec);
-	}
+        {
+          WS_LIST_APPEND (&template_->query_spec, query_spec);
+        }
       else
-	{
-	  db_ws_free (query_spec);
-	  error = ER_SM_INVALID_CLASS;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
-	}
+        {
+          db_ws_free (query_spec);
+          error = ER_SM_INVALID_CLASS;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 0);
+        }
     }
 
   return error;
@@ -1766,8 +1688,7 @@ sm_get_class_type (SM_CLASS * class_)
  */
 int
 smt_change_attribute_pos (SM_TEMPLATE * template_, const char *name,
-			  const bool change_first,
-			  const char *change_after_attribute)
+                          const bool change_first, const char *change_after_attribute)
 {
   int error_code = NO_ERROR;
   SM_ATTRIBUTE *att = NULL;
@@ -1779,8 +1700,7 @@ smt_change_attribute_pos (SM_TEMPLATE * template_, const char *name,
   assert (name != NULL);
   assert (change_first == true || change_after_attribute != NULL);
 
-  if (template_ == NULL || name == NULL
-      || (change_first == false && change_after_attribute == NULL))
+  if (template_ == NULL || name == NULL || (change_first == false && change_after_attribute == NULL))
     {
       ERROR0 (error_code, ER_SM_INVALID_ARGUMENTS);
 
@@ -1799,9 +1719,7 @@ smt_change_attribute_pos (SM_TEMPLATE * template_, const char *name,
 
   if (change_after_attribute != NULL)
     {
-      sm_downcase_name (change_after_attribute,
-			change_after_attribute_real_name,
-			SM_MAX_IDENTIFIER_LENGTH);
+      sm_downcase_name (change_after_attribute, change_after_attribute_real_name, SM_MAX_IDENTIFIER_LENGTH);
       change_after_attribute = change_after_attribute_real_name;
     }
 
@@ -1814,9 +1732,7 @@ smt_change_attribute_pos (SM_TEMPLATE * template_, const char *name,
   assert (att != NULL);
 
   /* change order */
-  error_code = smt_change_attribute_pos_in_list (att_list, att,
-						 change_first,
-						 change_after_attribute);
+  error_code = smt_change_attribute_pos_in_list (att_list, att, change_first, change_after_attribute);
 
   return error_code;
 
@@ -1838,14 +1754,12 @@ error_exit:
 
 static int
 smt_change_attribute_pos_in_list (SM_ATTRIBUTE ** att_list,
-				  SM_ATTRIBUTE * att, const bool change_first,
-				  const char *change_after_attribute)
+                                  SM_ATTRIBUTE * att, const bool change_first, const char *change_after_attribute)
 {
   int error_code = NO_ERROR;
 
   /* we must change the position : either to first or after another element */
-  assert ((change_first && change_after_attribute == NULL) ||
-	  (!change_first && change_after_attribute != NULL));
+  assert ((change_first && change_after_attribute == NULL) || (!change_first && change_after_attribute != NULL));
 
   assert (att != NULL);
   assert (att_list != NULL);
@@ -1858,8 +1772,7 @@ smt_change_attribute_pos_in_list (SM_ATTRIBUTE ** att_list,
     }
 
   att->next = NULL;
-  error_code = smt_add_attribute_to_list (att_list, att, change_first,
-					  change_after_attribute);
+  error_code = smt_add_attribute_to_list (att_list, att, change_first, change_after_attribute);
   /* error code already set */
   return error_code;
 }
@@ -1873,8 +1786,7 @@ smt_change_attribute_pos_in_list (SM_ATTRIBUTE ** att_list,
  *   new_domain(in): new attribute domain
  */
 int
-smt_change_attribute_domain (SM_TEMPLATE * template_, const char *name,
-			     TP_DOMAIN * new_domain)
+smt_change_attribute_domain (SM_TEMPLATE * template_, const char *name, TP_DOMAIN * new_domain)
 {
   int error_code = NO_ERROR;
   SM_ATTRIBUTE *att = NULL;

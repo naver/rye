@@ -55,31 +55,22 @@ enum
   LAST_TPL = -2
 };
 
-static void cursor_initialize_current_tuple_value_position (CURSOR_ID *
-							    cursor_id_p);
+static void cursor_initialize_current_tuple_value_position (CURSOR_ID * cursor_id_p);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int cursor_fixup_vobjs (DB_VALUE * val);
 #endif
 static int cursor_get_tuple_value_to_dbvalue (OR_BUF * buf, TP_DOMAIN * dom,
-					      QFILE_TUPLE_VALUE_FLAG val_flag,
-					      DB_VALUE * db_value, bool copy);
-static int cursor_get_tuple_value_from_list (CURSOR_ID * c_id, int index,
-					     DB_VALUE * value, char *tuple);
+                                              QFILE_TUPLE_VALUE_FLAG val_flag, DB_VALUE * db_value, bool copy);
+static int cursor_get_tuple_value_from_list (CURSOR_ID * c_id, int index, DB_VALUE * value, char *tuple);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int cursor_get_first_tuple_value (char *tuple,
-					 QFILE_TUPLE_VALUE_TYPE_LIST *
-					 type_list, DB_VALUE * value,
-					 bool copy);
+                                         QFILE_TUPLE_VALUE_TYPE_LIST * type_list, DB_VALUE * value, bool copy);
 #endif
 static char *cursor_peek_tuple (CURSOR_ID * cursor_id);
 static int cursor_get_list_file_page (CURSOR_ID * cursor_id, VPID * vpid);
-static int cursor_allocate_tuple_area (CURSOR_ID * cursor_id_p,
-				       int tuple_length);
-static int cursor_construct_tuple_from_overflow_pages (CURSOR_ID *
-						       cursor_id_p,
-						       VPID * vpid_p);
-static int cursor_point_current_tuple (CURSOR_ID * cursor_id_p, int position,
-				       int offset);
+static int cursor_allocate_tuple_area (CURSOR_ID * cursor_id_p, int tuple_length);
+static int cursor_construct_tuple_from_overflow_pages (CURSOR_ID * cursor_id_p, VPID * vpid_p);
+static int cursor_point_current_tuple (CURSOR_ID * cursor_id_p, int position, int offset);
 static int cursor_buffer_last_page (CURSOR_ID * cursor_id_p, VPID * vpid_p);
 
 /*
@@ -107,8 +98,7 @@ cursor_initialize_current_tuple_value_position (CURSOR_ID * cursor_id_p)
  *   src_list_id(in): Source list identifier
  */
 int
-cursor_copy_list_id (QFILE_LIST_ID * dest_list_id_p,
-		     const QFILE_LIST_ID * src_list_id_p)
+cursor_copy_list_id (QFILE_LIST_ID * dest_list_id_p, const QFILE_LIST_ID * src_list_id_p)
 {
   size_t size;
   QFILE_TUPLE_VALUE_TYPE_LIST *dest_type_list_p;
@@ -126,25 +116,24 @@ cursor_copy_list_id (QFILE_LIST_ID * dest_list_id_p,
       dest_type_list_p->domp = (TP_DOMAIN **) malloc (size);
 
       if (dest_type_list_p->domp == NULL)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
       memcpy (dest_type_list_p->domp, src_type_list_p->domp, size);
     }
 
   dest_list_id_p->tpl_descr.f_valp = NULL;
-  dest_list_id_p->sort_list = NULL;	/* never use sort_list in crs_ level */
+  dest_list_id_p->sort_list = NULL;     /* never use sort_list in crs_ level */
 
   if (src_list_id_p->last_pgptr)
     {
       dest_list_id_p->last_pgptr = (PAGE_PTR) malloc (CURSOR_BUFFER_SIZE);
       if (dest_list_id_p->last_pgptr == NULL)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
 
-      memcpy (dest_list_id_p->last_pgptr, src_list_id_p->last_pgptr,
-	      CURSOR_BUFFER_SIZE);
+      memcpy (dest_list_id_p->last_pgptr, src_list_id_p->last_pgptr, CURSOR_BUFFER_SIZE);
     }
 
   return NO_ERROR;
@@ -201,20 +190,20 @@ cursor_fixup_vobjs (DB_VALUE * value_p)
     case DB_TYPE_OID:
       oid = DB_GET_OID (value_p);
       if (oid != NULL && !OID_ISNULL (oid))
-	{
-	  obj = ws_mop (oid, NULL);
-	}
+        {
+          obj = ws_mop (oid, NULL);
+        }
 
       if (obj)
-	{
-	  DB_MAKE_OBJECT (value_p, obj);
-	  rc = NO_ERROR;
-	}
+        {
+          DB_MAKE_OBJECT (value_p, obj);
+          rc = NO_ERROR;
+        }
       else
-	{
-	  assert (false);	/* should be avoided */
-	  rc = ER_FAILED;
-	}
+        {
+          assert (false);       /* should be avoided */
+          rc = ER_FAILED;
+        }
       break;
 
     case DB_TYPE_SEQUENCE:
@@ -242,8 +231,7 @@ cursor_fixup_vobjs (DB_VALUE * value_p)
  */
 static int
 cursor_get_tuple_value_to_dbvalue (OR_BUF * buffer_p, TP_DOMAIN * domain_p,
-				   QFILE_TUPLE_VALUE_FLAG value_flag,
-				   DB_VALUE * value_p, bool is_copy)
+                                   QFILE_TUPLE_VALUE_FLAG value_flag, DB_VALUE * value_p, bool is_copy)
 {
   PR_TYPE *pr_type;
   DB_TYPE type;
@@ -257,14 +245,12 @@ cursor_get_tuple_value_to_dbvalue (OR_BUF * buffer_p, TP_DOMAIN * domain_p,
   type = pr_type->id;
   if (value_flag == V_UNBOUND)
     {
-      db_value_domain_init (value_p, type, domain_p->precision,
-			    domain_p->scale);
+      db_value_domain_init (value_p, type, domain_p->precision, domain_p->scale);
       return NO_ERROR;
     }
 
   /* for all other types, we can use the prim routines */
-  if ((*(pr_type->data_readval)) (buffer_p, value_p, domain_p, -1, is_copy) !=
-      NO_ERROR)
+  if ((*(pr_type->data_readval)) (buffer_p, value_p, domain_p, -1, is_copy) != NO_ERROR)
     {
       return ER_FAILED;
     }
@@ -289,8 +275,7 @@ cursor_get_tuple_value_to_dbvalue (OR_BUF * buffer_p, TP_DOMAIN * domain_p,
  *   tuple(in)  : List file tuple
  */
 static int
-cursor_get_tuple_value_from_list (CURSOR_ID * cursor_id_p, int index,
-				  DB_VALUE * value_p, char *tuple_p)
+cursor_get_tuple_value_from_list (CURSOR_ID * cursor_id_p, int index, DB_VALUE * value_p, char *tuple_p)
 {
   QFILE_TUPLE_VALUE_TYPE_LIST *type_list_p;
   QFILE_TUPLE_VALUE_FLAG flag;
@@ -311,8 +296,7 @@ cursor_get_tuple_value_from_list (CURSOR_ID * cursor_id_p, int index,
 
   /* check for saved tplvalue position info */
   if (cursor_id_p->current_tuple_value_index >= 0
-      && cursor_id_p->current_tuple_value_index <= index
-      && cursor_id_p->current_tuple_value_p != NULL)
+      && cursor_id_p->current_tuple_value_index <= index && cursor_id_p->current_tuple_value_p != NULL)
     {
       i = cursor_id_p->current_tuple_value_index;
       tuple_p = cursor_id_p->current_tuple_value_p;
@@ -325,9 +309,7 @@ cursor_get_tuple_value_from_list (CURSOR_ID * cursor_id_p, int index,
 
   for (; i < index; i++)
     {
-      tuple_p +=
-	(QFILE_TUPLE_VALUE_HEADER_SIZE +
-	 QFILE_GET_TUPLE_VALUE_LENGTH (tuple_p));
+      tuple_p += (QFILE_TUPLE_VALUE_HEADER_SIZE + QFILE_GET_TUPLE_VALUE_LENGTH (tuple_p));
     }
 
   /* save index-th tplvalue position info */
@@ -339,8 +321,7 @@ cursor_get_tuple_value_from_list (CURSOR_ID * cursor_id_p, int index,
   buffer.ptr = tuple_p;
 
   return cursor_get_tuple_value_to_dbvalue (&buffer, type_list_p->domp[i],
-					    flag, value_p,
-					    cursor_id_p->is_copy_tuple_value);
+                                            flag, value_p, cursor_id_p->is_copy_tuple_value);
 }
 
 #if defined (ENABLE_UNUSED_FUNCTION)
@@ -355,8 +336,7 @@ cursor_get_tuple_value_from_list (CURSOR_ID * cursor_id_p, int index,
  */
 static int
 cursor_get_first_tuple_value (char *tuple_p,
-			      QFILE_TUPLE_VALUE_TYPE_LIST * type_list_p,
-			      DB_VALUE * value_p, bool is_copy)
+                              QFILE_TUPLE_VALUE_TYPE_LIST * type_list_p, DB_VALUE * value_p, bool is_copy)
 {
   QFILE_TUPLE_VALUE_FLAG flag;
   OR_BUF buffer;
@@ -368,8 +348,7 @@ cursor_get_first_tuple_value (char *tuple_p,
   tuple_p += QFILE_TUPLE_VALUE_HEADER_SIZE;
   buffer.ptr = tuple_p;
 
-  return cursor_get_tuple_value_to_dbvalue (&buffer, type_list_p->domp[0],
-					    flag, value_p, is_copy);
+  return cursor_get_tuple_value_to_dbvalue (&buffer, type_list_p->domp[0], flag, value_p, is_copy);
 }
 #endif
 
@@ -405,45 +384,44 @@ cursor_get_list_file_page (CURSOR_ID * cursor_id_p, VPID * vpid_p)
     {
       cursor_id_p->buffer = NULL;
       if (cursor_id_p->buffer_filled_size > 0)
-	{
-	  /* it received a page from server */
-	  if (VPID_EQ (vpid_p, &cursor_id_p->header_vpid))
-	    {
-	      /* in case of header vpid in buffer area */
-	      cursor_id_p->buffer = cursor_id_p->buffer_area;
-	    }
-	  else
-	    {
-	      page_p = cursor_id_p->buffer_area;
-	      page_size = 0;
+        {
+          /* it received a page from server */
+          if (VPID_EQ (vpid_p, &cursor_id_p->header_vpid))
+            {
+              /* in case of header vpid in buffer area */
+              cursor_id_p->buffer = cursor_id_p->buffer_area;
+            }
+          else
+            {
+              page_p = cursor_id_p->buffer_area;
+              page_size = 0;
 
-	      while (page_size <
-		     (cursor_id_p->buffer_filled_size - CURSOR_BUFFER_SIZE))
-		{
-		  if (QFILE_GET_OVERFLOW_PAGE_ID (page_p) == NULL_PAGEID)
-		    {
-		      QFILE_GET_NEXT_VPID (&in_vpid, page_p);
-		    }
-		  else
-		    {
-		      QFILE_GET_OVERFLOW_VPID (&in_vpid, page_p);
-		    }
+              while (page_size < (cursor_id_p->buffer_filled_size - CURSOR_BUFFER_SIZE))
+                {
+                  if (QFILE_GET_OVERFLOW_PAGE_ID (page_p) == NULL_PAGEID)
+                    {
+                      QFILE_GET_NEXT_VPID (&in_vpid, page_p);
+                    }
+                  else
+                    {
+                      QFILE_GET_OVERFLOW_VPID (&in_vpid, page_p);
+                    }
 
-		  if (VPID_ISNULL (&in_vpid))
-		    {
-		      break;
-		    }
-		  else if (VPID_EQ (vpid_p, &in_vpid))
-		    {
-		      cursor_id_p->buffer = page_p + CURSOR_BUFFER_SIZE;
-		      break;
-		    }
+                  if (VPID_ISNULL (&in_vpid))
+                    {
+                      break;
+                    }
+                  else if (VPID_EQ (vpid_p, &in_vpid))
+                    {
+                      cursor_id_p->buffer = page_p + CURSOR_BUFFER_SIZE;
+                      break;
+                    }
 
-		  page_p += CURSOR_BUFFER_SIZE;
-		  page_size += CURSOR_BUFFER_SIZE;
-		}
-	    }
-	}
+                  page_p += CURSOR_BUFFER_SIZE;
+                  page_size += CURSOR_BUFFER_SIZE;
+                }
+            }
+        }
     }
 
   /* if not found, get the page from server */
@@ -454,15 +432,13 @@ cursor_get_list_file_page (CURSOR_ID * cursor_id_p, VPID * vpid_p)
       assert (cursor_id_p->buffer_area != NULL);
 
       ret_val = qfile_get_list_file_page (cursor_id_p->query_id,
-					  vpid_p->volid,
-					  vpid_p->pageid,
-					  cursor_id_p->buffer_area,
-					  &cursor_id_p->buffer_filled_size);
+                                          vpid_p->volid,
+                                          vpid_p->pageid, cursor_id_p->buffer_area, &cursor_id_p->buffer_filled_size);
 
       if (ret_val != NO_ERROR)
-	{
-	  return ret_val;
-	}
+        {
+          return ret_val;
+        }
 
       cursor_id_p->buffer = cursor_id_p->buffer_area;
       QFILE_COPY_VPID (&cursor_id_p->header_vpid, vpid_p);
@@ -486,8 +462,7 @@ cursor_allocate_tuple_area (CURSOR_ID * cursor_id_p, int tuple_length)
     }
   else
     {
-      cursor_id_p->tuple_record.tpl =
-	(char *) realloc (cursor_id_p->tuple_record.tpl, tuple_length);
+      cursor_id_p->tuple_record.tpl = (char *) realloc (cursor_id_p->tuple_record.tpl, tuple_length);
     }
 
   if (cursor_id_p->tuple_record.tpl == NULL)
@@ -500,8 +475,7 @@ cursor_allocate_tuple_area (CURSOR_ID * cursor_id_p, int tuple_length)
 }
 
 static int
-cursor_construct_tuple_from_overflow_pages (CURSOR_ID * cursor_id_p,
-					    VPID * vpid_p)
+cursor_construct_tuple_from_overflow_pages (CURSOR_ID * cursor_id_p, VPID * vpid_p)
 {
   VPID overflow_vpid;
   char *buffer_p;
@@ -521,9 +495,9 @@ cursor_construct_tuple_from_overflow_pages (CURSOR_ID * cursor_id_p,
   if (cursor_id_p->tuple_record.size < tuple_length)
     {
       if (cursor_allocate_tuple_area (cursor_id_p, tuple_length) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
   tuple_p = cursor_id_p->tuple_record.tpl;
@@ -534,27 +508,24 @@ cursor_construct_tuple_from_overflow_pages (CURSOR_ID * cursor_id_p,
       buffer_p = cursor_id_p->buffer;
 
       QFILE_GET_OVERFLOW_VPID (&overflow_vpid, buffer_p);
-      tuple_page_size = MIN (tuple_length - offset,
-			     QFILE_MAX_TUPLE_SIZE_IN_PAGE);
+      tuple_page_size = MIN (tuple_length - offset, QFILE_MAX_TUPLE_SIZE_IN_PAGE);
       memcpy (tuple_p, buffer_p + QFILE_PAGE_HEADER_SIZE, tuple_page_size);
       tuple_p += tuple_page_size;
       offset += tuple_page_size;
 
       if (overflow_vpid.pageid != NULL_PAGEID)
-	{
-	  if (cursor_get_list_file_page (cursor_id_p, &overflow_vpid)
-	      != NO_ERROR)
-	    {
-	      return ER_FAILED;
-	    }
-	  QFILE_COPY_VPID (&cursor_id_p->current_vpid, &overflow_vpid);
-	}
+        {
+          if (cursor_get_list_file_page (cursor_id_p, &overflow_vpid) != NO_ERROR)
+            {
+              return ER_FAILED;
+            }
+          QFILE_COPY_VPID (&cursor_id_p->current_vpid, &overflow_vpid);
+        }
     }
   while (overflow_vpid.pageid != NULL_PAGEID);
 
   /* reset buffer as a head page of overflow page */
-  if (!VPID_EQ (vpid_p, &overflow_vpid)
-      && cursor_get_list_file_page (cursor_id_p, vpid_p) != NO_ERROR)
+  if (!VPID_EQ (vpid_p, &overflow_vpid) && cursor_get_list_file_page (cursor_id_p, vpid_p) != NO_ERROR)
     {
       return ER_FAILED;
     }
@@ -573,16 +544,13 @@ cursor_point_current_tuple (CURSOR_ID * cursor_id_p, int position, int offset)
       return ER_FAILED;
     }
 
-  cursor_id_p->buffer_tuple_count =
-    QFILE_GET_TUPLE_COUNT (cursor_id_p->buffer);
-  cursor_id_p->current_tuple_length =
-    QFILE_GET_TUPLE_LENGTH ((cursor_id_p->buffer + QFILE_PAGE_HEADER_SIZE));
+  cursor_id_p->buffer_tuple_count = QFILE_GET_TUPLE_COUNT (cursor_id_p->buffer);
+  cursor_id_p->current_tuple_length = QFILE_GET_TUPLE_LENGTH ((cursor_id_p->buffer + QFILE_PAGE_HEADER_SIZE));
 
   if (position == LAST_TPL)
     {
       cursor_id_p->current_tuple_no = cursor_id_p->buffer_tuple_count - 1;
-      cursor_id_p->current_tuple_offset =
-	QFILE_GET_LAST_TUPLE_OFFSET (cursor_id_p->buffer);
+      cursor_id_p->current_tuple_offset = QFILE_GET_LAST_TUPLE_OFFSET (cursor_id_p->buffer);
     }
   else if (position == FIRST_TPL)
     {
@@ -611,23 +579,21 @@ cursor_buffer_last_page (CURSOR_ID * cursor_id_p, VPID * vpid_p)
       return ER_FAILED;
     }
 
-  if (cursor_id_p->list_id.last_pgptr
-      && VPID_EQ (&(cursor_id_p->list_id.first_vpid), vpid_p))
+  if (cursor_id_p->list_id.last_pgptr && VPID_EQ (&(cursor_id_p->list_id.first_vpid), vpid_p))
     {
       if (cursor_id_p->buffer == NULL)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
 
-      memcpy (cursor_id_p->buffer, cursor_id_p->list_id.last_pgptr,
-	      CURSOR_BUFFER_SIZE);
+      memcpy (cursor_id_p->buffer, cursor_id_p->list_id.last_pgptr, CURSOR_BUFFER_SIZE);
     }
   else
     {
       if (cursor_get_list_file_page (cursor_id_p, vpid_p) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
   return NO_ERROR;
@@ -656,8 +622,7 @@ cursor_buffer_last_page (CURSOR_ID * cursor_id_p, VPID * vpid_p)
  *       on the page, the offset is ignored.
  */
 int
-cursor_fetch_page_having_tuple (CURSOR_ID * cursor_id_p, VPID * vpid_p,
-				int position, int offset)
+cursor_fetch_page_having_tuple (CURSOR_ID * cursor_id_p, VPID * vpid_p, int position, int offset)
 {
   if (cursor_id_p == NULL || vpid_p == NULL)
     {
@@ -670,9 +635,9 @@ cursor_fetch_page_having_tuple (CURSOR_ID * cursor_id_p, VPID * vpid_p,
   if (!VPID_EQ (&(cursor_id_p->current_vpid), vpid_p))
     {
       if (cursor_buffer_last_page (cursor_id_p, vpid_p) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
   if (cursor_id_p->buffer == NULL)
@@ -687,16 +652,14 @@ cursor_fetch_page_having_tuple (CURSOR_ID * cursor_id_p, VPID * vpid_p,
 
   if (QFILE_GET_OVERFLOW_PAGE_ID (cursor_id_p->buffer) != NULL_PAGEID)
     {
-      if (cursor_construct_tuple_from_overflow_pages (cursor_id_p, vpid_p)
-	  != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
+      if (cursor_construct_tuple_from_overflow_pages (cursor_id_p, vpid_p) != NO_ERROR)
+        {
+          return ER_FAILED;
+        }
     }
   else
     {
-      cursor_id_p->current_tuple_p =
-	cursor_id_p->buffer + cursor_id_p->current_tuple_offset;
+      cursor_id_p->current_tuple_p = cursor_id_p->buffer + cursor_id_p->current_tuple_offset;
     }
 
   /* If there is only one tuple, don't prefetch objects because
@@ -738,8 +701,7 @@ cursor_print_list (QUERY_ID query_id, QFILE_LIST_ID * list_id_p)
       return;
     }
 
-  fprintf (stdout,
-	   "\n=================   Q U E R Y   R E S U L T S   =================\n\n");
+  fprintf (stdout, "\n=================   Q U E R Y   R E S U L T S   =================\n\n");
 
   if (cursor_open (&cursor_id, list_id_p) == false)
     {
@@ -753,34 +715,33 @@ cursor_print_list (QUERY_ID query_id, QFILE_LIST_ID * list_id_p)
     {
       status = cursor_next_tuple (&cursor_id);
       if (status != DB_CURSOR_SUCCESS)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
-      if (cursor_get_tuple_value_list (&cursor_id, count, value_list_p) !=
-	  NO_ERROR)
-	{
-	  goto cleanup;
-	}
+      if (cursor_get_tuple_value_list (&cursor_id, count, value_list_p) != NO_ERROR)
+        {
+          goto cleanup;
+        }
 
       fprintf (stdout, "\n ");
 
       for (i = 0, value_p = value_list_p; i < count; i++, value_p++)
-	{
-	  fprintf (stdout, "  ");
+        {
+          fprintf (stdout, "  ");
 
-	  if (TP_IS_SET_TYPE (DB_VALUE_TYPE (value_p)))
-	    {
-	      db_set_print (DB_GET_SET (value_p));
-	    }
-	  else
-	    {
-	      db_value_print (value_p);
-	    }
+          if (TP_IS_SET_TYPE (DB_VALUE_TYPE (value_p)))
+            {
+              db_set_print (DB_GET_SET (value_p));
+            }
+          else
+            {
+              db_value_print (value_p);
+            }
 
-	  db_value_clear (value_p);
-	  fprintf (stdout, "  ");
-	}
+          db_value_clear (value_p);
+          fprintf (stdout, "  ");
+        }
     }
 
   fprintf (stdout, "\n");
@@ -811,7 +772,7 @@ cleanup:
 bool
 cursor_open (CURSOR_ID * cursor_id_p, QFILE_LIST_ID * list_id_p)
 {
-  static QFILE_LIST_ID empty_list_id;	/* TODO: remove static empty_list_id */
+  static QFILE_LIST_ID empty_list_id;   /* TODO: remove static empty_list_id */
 
   if (cursor_id_p == NULL)
     {
@@ -838,7 +799,7 @@ cursor_open (CURSOR_ID * cursor_id_p, QFILE_LIST_ID * list_id_p)
   cursor_id_p->buffer_area = NULL;
   cursor_id_p->buffer_filled_size = 0;
   cursor_id_p->list_id = empty_list_id;
-  cursor_id_p->is_copy_tuple_value = true;	/* copy */
+  cursor_id_p->is_copy_tuple_value = true;      /* copy */
   cursor_initialize_current_tuple_value_position (cursor_id_p);
 
   if (cursor_copy_list_id (&cursor_id_p->list_id, list_id_p) != NO_ERROR)
@@ -854,9 +815,9 @@ cursor_open (CURSOR_ID * cursor_id_p, QFILE_LIST_ID * list_id_p)
       cursor_id_p->buffer = cursor_id_p->buffer_area;
 
       if (cursor_id_p->buffer == NULL)
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
 
   return true;
@@ -996,19 +957,16 @@ cursor_next_tuple (CURSOR_ID * cursor_id_p)
   if (cursor_id_p->position == C_BEFORE)
     {
       if (VPID_ISNULL (&(cursor_id_p->list_id.first_vpid)))
-	{
-	  return DB_CURSOR_END;
-	}
+        {
+          return DB_CURSOR_END;
+        }
 
-      if (cursor_fetch_page_having_tuple (cursor_id_p,
-					  &cursor_id_p->list_id.first_vpid,
-					  FIRST_TPL, 0) != NO_ERROR)
-	{
-	  return DB_CURSOR_ERROR;
-	}
+      if (cursor_fetch_page_having_tuple (cursor_id_p, &cursor_id_p->list_id.first_vpid, FIRST_TPL, 0) != NO_ERROR)
+        {
+          return DB_CURSOR_ERROR;
+        }
 
-      QFILE_COPY_VPID (&cursor_id_p->current_vpid,
-		       &cursor_id_p->list_id.first_vpid);
+      QFILE_COPY_VPID (&cursor_id_p->current_vpid, &cursor_id_p->list_id.first_vpid);
       /*
        * Setup the cursor so that we can proceed through the next "if"
        * statement w/o code duplication.
@@ -1024,33 +982,29 @@ cursor_next_tuple (CURSOR_ID * cursor_id_p)
       VPID next_vpid;
 
       if (cursor_id_p->current_tuple_no < cursor_id_p->buffer_tuple_count - 1)
-	{
-	  cursor_id_p->tuple_no++;
-	  cursor_id_p->current_tuple_no++;
-	  cursor_id_p->current_tuple_offset +=
-	    cursor_id_p->current_tuple_length;
-	  cursor_id_p->current_tuple_p += cursor_id_p->current_tuple_length;
-	  cursor_id_p->current_tuple_length =
-	    QFILE_GET_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
-	}
+        {
+          cursor_id_p->tuple_no++;
+          cursor_id_p->current_tuple_no++;
+          cursor_id_p->current_tuple_offset += cursor_id_p->current_tuple_length;
+          cursor_id_p->current_tuple_p += cursor_id_p->current_tuple_length;
+          cursor_id_p->current_tuple_length = QFILE_GET_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
+        }
       else if (QFILE_GET_NEXT_PAGE_ID (cursor_id_p->buffer) != NULL_PAGEID)
-	{
-	  QFILE_GET_NEXT_VPID (&next_vpid, cursor_id_p->buffer);
-	  if (cursor_fetch_page_having_tuple (cursor_id_p,
-					      &next_vpid, FIRST_TPL,
-					      0) != NO_ERROR)
-	    {
-	      return DB_CURSOR_ERROR;
-	    }
-	  QFILE_COPY_VPID (&cursor_id_p->current_vpid, &next_vpid);
-	  cursor_id_p->tuple_no++;
-	}
+        {
+          QFILE_GET_NEXT_VPID (&next_vpid, cursor_id_p->buffer);
+          if (cursor_fetch_page_having_tuple (cursor_id_p, &next_vpid, FIRST_TPL, 0) != NO_ERROR)
+            {
+              return DB_CURSOR_ERROR;
+            }
+          QFILE_COPY_VPID (&cursor_id_p->current_vpid, &next_vpid);
+          cursor_id_p->tuple_no++;
+        }
       else
-	{
-	  cursor_id_p->position = C_AFTER;
-	  cursor_id_p->tuple_no = cursor_id_p->list_id.tuple_cnt;
-	  return DB_CURSOR_END;
-	}
+        {
+          cursor_id_p->position = C_AFTER;
+          cursor_id_p->tuple_no = cursor_id_p->list_id.tuple_cnt;
+          return DB_CURSOR_END;
+        }
     }
   else if (cursor_id_p->position == C_AFTER)
     {
@@ -1095,52 +1049,45 @@ cursor_prev_tuple (CURSOR_ID * cursor_id_p)
       VPID prev_vpid;
 
       if (cursor_id_p->current_tuple_no > 0)
-	{
-	  cursor_id_p->tuple_no--;
-	  cursor_id_p->current_tuple_no--;
-	  cursor_id_p->current_tuple_offset -=
-	    QFILE_GET_PREV_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
-	  cursor_id_p->current_tuple_p -=
-	    QFILE_GET_PREV_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
-	  cursor_id_p->current_tuple_length =
-	    QFILE_GET_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
-	}
+        {
+          cursor_id_p->tuple_no--;
+          cursor_id_p->current_tuple_no--;
+          cursor_id_p->current_tuple_offset -= QFILE_GET_PREV_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
+          cursor_id_p->current_tuple_p -= QFILE_GET_PREV_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
+          cursor_id_p->current_tuple_length = QFILE_GET_TUPLE_LENGTH (cursor_id_p->current_tuple_p);
+        }
       else if (QFILE_GET_PREV_PAGE_ID (cursor_id_p->buffer) != NULL_PAGEID)
-	{
-	  QFILE_GET_PREV_VPID (&prev_vpid, cursor_id_p->buffer);
+        {
+          QFILE_GET_PREV_VPID (&prev_vpid, cursor_id_p->buffer);
 
-	  if (cursor_fetch_page_having_tuple
-	      (cursor_id_p, &prev_vpid, LAST_TPL, 0) != NO_ERROR)
-	    {
-	      return DB_CURSOR_ERROR;
-	    }
+          if (cursor_fetch_page_having_tuple (cursor_id_p, &prev_vpid, LAST_TPL, 0) != NO_ERROR)
+            {
+              return DB_CURSOR_ERROR;
+            }
 
-	  QFILE_COPY_VPID (&cursor_id_p->current_vpid, &prev_vpid);
-	  cursor_id_p->tuple_no--;
-	}
+          QFILE_COPY_VPID (&cursor_id_p->current_vpid, &prev_vpid);
+          cursor_id_p->tuple_no--;
+        }
       else
-	{
-	  cursor_id_p->position = C_BEFORE;
-	  cursor_id_p->tuple_no = -1;
-	  return DB_CURSOR_END;
-	}
+        {
+          cursor_id_p->position = C_BEFORE;
+          cursor_id_p->tuple_no = -1;
+          return DB_CURSOR_END;
+        }
     }
   else if (cursor_id_p->position == C_AFTER)
     {
       if (VPID_ISNULL (&(cursor_id_p->list_id.first_vpid)))
-	{
-	  return DB_CURSOR_END;
-	}
+        {
+          return DB_CURSOR_END;
+        }
 
-      if (cursor_fetch_page_having_tuple
-	  (cursor_id_p, &cursor_id_p->list_id.last_vpid, LAST_TPL,
-	   0) != NO_ERROR)
-	{
-	  return DB_CURSOR_ERROR;
-	}
+      if (cursor_fetch_page_having_tuple (cursor_id_p, &cursor_id_p->list_id.last_vpid, LAST_TPL, 0) != NO_ERROR)
+        {
+          return DB_CURSOR_ERROR;
+        }
 
-      QFILE_COPY_VPID (&cursor_id_p->current_vpid,
-		       &cursor_id_p->list_id.last_vpid);
+      QFILE_COPY_VPID (&cursor_id_p->current_vpid, &cursor_id_p->list_id.last_vpid);
       cursor_id_p->position = C_ON;
       cursor_id_p->tuple_no--;
     }
@@ -1180,15 +1127,12 @@ cursor_first_tuple (CURSOR_ID * cursor_id_p)
       return DB_CURSOR_END;
     }
 
-  if (cursor_fetch_page_having_tuple
-      (cursor_id_p, &cursor_id_p->list_id.first_vpid, FIRST_TPL,
-       0) != NO_ERROR)
+  if (cursor_fetch_page_having_tuple (cursor_id_p, &cursor_id_p->list_id.first_vpid, FIRST_TPL, 0) != NO_ERROR)
     {
       return DB_CURSOR_ERROR;
     }
 
-  QFILE_COPY_VPID (&cursor_id_p->current_vpid,
-		   &cursor_id_p->list_id.first_vpid);
+  QFILE_COPY_VPID (&cursor_id_p->current_vpid, &cursor_id_p->list_id.first_vpid);
   cursor_id_p->position = C_ON;
   cursor_id_p->tuple_no = 0;
 
@@ -1227,15 +1171,12 @@ cursor_last_tuple (CURSOR_ID * cursor_id_p)
       return DB_CURSOR_END;
     }
 
-  if (cursor_fetch_page_having_tuple (cursor_id_p,
-				      &cursor_id_p->list_id.last_vpid,
-				      LAST_TPL, 0) != NO_ERROR)
+  if (cursor_fetch_page_having_tuple (cursor_id_p, &cursor_id_p->list_id.last_vpid, LAST_TPL, 0) != NO_ERROR)
     {
       return DB_CURSOR_ERROR;
     }
 
-  QFILE_COPY_VPID (&cursor_id_p->current_vpid,
-		   &cursor_id_p->list_id.last_vpid);
+  QFILE_COPY_VPID (&cursor_id_p->current_vpid, &cursor_id_p->list_id.last_vpid);
   cursor_id_p->position = C_ON;
   cursor_id_p->tuple_no = cursor_id_p->list_id.tuple_cnt - 1;
 
@@ -1255,8 +1196,7 @@ cursor_last_tuple (CURSOR_ID * cursor_id_p)
  *       returned.
  */
 int
-cursor_get_tuple_value (CURSOR_ID * cursor_id_p, int index,
-			DB_VALUE * value_p)
+cursor_get_tuple_value (CURSOR_ID * cursor_id_p, int index, DB_VALUE * value_p)
 {
   char *tuple_p;
 
@@ -1268,8 +1208,7 @@ cursor_get_tuple_value (CURSOR_ID * cursor_id_p, int index,
 
   if (index < 0 || index >= cursor_id_p->list_id.type_list.type_cnt)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_TPLVAL_INDEX,
-	      1, index);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_TPLVAL_INDEX, 1, index);
       return ER_FAILED;
     }
 
@@ -1279,8 +1218,7 @@ cursor_get_tuple_value (CURSOR_ID * cursor_id_p, int index,
       return ER_FAILED;
     }
 
-  return cursor_get_tuple_value_from_list (cursor_id_p, index, value_p,
-					   tuple_p);
+  return cursor_get_tuple_value_from_list (cursor_id_p, index, value_p, tuple_p);
 }
 
 /*
@@ -1297,8 +1235,7 @@ cursor_get_tuple_value (CURSOR_ID * cursor_id_p, int index,
  *       error code is returned.
  */
 int
-cursor_get_tuple_value_list (CURSOR_ID * cursor_id_p, int size,
-			     DB_VALUE * value_list_p)
+cursor_get_tuple_value_list (CURSOR_ID * cursor_id_p, int size, DB_VALUE * value_list_p)
 {
   DB_VALUE *value_p;
   int index;
@@ -1315,9 +1252,9 @@ cursor_get_tuple_value_list (CURSOR_ID * cursor_id_p, int size,
   while (index < size)
     {
       if (cursor_get_tuple_value (cursor_id_p, index, value_p) != NO_ERROR)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
 
       index++;
       value_p++;

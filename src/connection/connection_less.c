@@ -32,8 +32,7 @@
 #include "connection_less.h"
 
 static unsigned short css_make_entry_id (CSS_MAP_ENTRY * anchor);
-static CSS_MAP_ENTRY *css_get_queued_entry (char *host,
-					    CSS_MAP_ENTRY * anchor);
+static CSS_MAP_ENTRY *css_get_queued_entry (char *host, CSS_MAP_ENTRY * anchor);
 
 /*
  * css_make_eid() - create an eid which is a combination of the entry id and
@@ -67,9 +66,9 @@ css_return_entry_from_eid (unsigned int eid, CSS_MAP_ENTRY * anchor)
   for (map_entry_p = anchor; map_entry_p; map_entry_p = map_entry_p->next)
     {
       if (map_entry_p->id == entry_id)
-	{
-	  return (map_entry_p);
-	}
+        {
+          return (map_entry_p);
+        }
     }
   return (NULL);
 }
@@ -96,19 +95,19 @@ css_make_entry_id (CSS_MAP_ENTRY * anchor)
   for (map_entry_p = anchor; map_entry_p; map_entry_p = map_entry_p->next)
     {
       if (entry_id == old_value)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ENTRY_OVERRUN, 0);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ENTRY_OVERRUN, 0);
+        }
 
       if (entry_id == map_entry_p->id)
-	{
-	  entry_id++;
-	  if (entry_id < 0)
-	    {
-	      entry_id = 0;
-	    }
-	  map_entry_p = anchor;
-	}
+        {
+          entry_id++;
+          if (entry_id < 0)
+            {
+              entry_id = 0;
+            }
+          map_entry_p = anchor;
+        }
     }
 
   return entry_id;
@@ -122,8 +121,7 @@ css_make_entry_id (CSS_MAP_ENTRY * anchor)
  *   anchor(out): map entry anchor
  */
 CSS_MAP_ENTRY *
-css_queue_connection (CSS_CONN_ENTRY * conn, const char *host,
-		      CSS_MAP_ENTRY ** anchor)
+css_queue_connection (CSS_CONN_ENTRY * conn, const char *host, CSS_MAP_ENTRY ** anchor)
 {
   CSS_MAP_ENTRY *map_entry_p;
 
@@ -138,17 +136,17 @@ css_queue_connection (CSS_CONN_ENTRY * conn, const char *host,
   if (map_entry_p != NULL)
     {
       if (host)
-	{
-	  map_entry_p->key = (char *) malloc (strlen (host) + 1);
-	  if (map_entry_p->key != NULL)
-	    {
-	      strcpy (map_entry_p->key, host);
-	    }
-	}
+        {
+          map_entry_p->key = (char *) malloc (strlen (host) + 1);
+          if (map_entry_p->key != NULL)
+            {
+              strcpy (map_entry_p->key, host);
+            }
+        }
       else
-	{
-	  map_entry_p->key = NULL;
-	}
+        {
+          map_entry_p->key = NULL;
+        }
       map_entry_p->conn = conn;
       map_entry_p->next = *anchor;
       map_entry_p->id = css_make_entry_id (*anchor);
@@ -176,9 +174,9 @@ css_get_queued_entry (char *host, CSS_MAP_ENTRY * anchor)
   for (map_entry_p = anchor; map_entry_p; map_entry_p = map_entry_p->next)
     {
       if (strcmp (host, map_entry_p->key) == 0)
-	{
-	  return (map_entry_p);
-	}
+        {
+          return (map_entry_p);
+        }
     }
 
   return (NULL);
@@ -192,27 +190,25 @@ css_get_queued_entry (char *host, CSS_MAP_ENTRY * anchor)
  *   anchor(in/out): map entry anchor
  */
 void
-css_remove_queued_connection_by_entry (CSS_MAP_ENTRY * entry,
-				       CSS_MAP_ENTRY ** anchor)
+css_remove_queued_connection_by_entry (CSS_MAP_ENTRY * entry, CSS_MAP_ENTRY ** anchor)
 {
   CSS_MAP_ENTRY *map_entry_p, *prev_map_entry_p;
 
   for (map_entry_p = *anchor, prev_map_entry_p = NULL;
-       map_entry_p;
-       prev_map_entry_p = map_entry_p, map_entry_p = map_entry_p->next)
+       map_entry_p; prev_map_entry_p = map_entry_p, map_entry_p = map_entry_p->next)
     {
       if (entry == map_entry_p)
-	{
-	  if (map_entry_p == *anchor)
-	    {
-	      *anchor = map_entry_p->next;
-	    }
-	  else
-	    {
-	      prev_map_entry_p->next = map_entry_p->next;
-	    }
-	  break;
-	}
+        {
+          if (map_entry_p == *anchor)
+            {
+              *anchor = map_entry_p->next;
+            }
+          else
+            {
+              prev_map_entry_p->next = map_entry_p->next;
+            }
+          break;
+        }
     }
 
   if (map_entry_p)
@@ -242,9 +238,9 @@ css_return_open_entry (char *host, CSS_MAP_ENTRY ** anchor)
   if (map_entry_p != NULL)
     {
       if (css_test_for_open_conn (map_entry_p->conn))
-	{
-	  return (map_entry_p);
-	}
+        {
+          return (map_entry_p);
+        }
     }
 
   return (NULL);
@@ -265,9 +261,9 @@ css_return_entry_from_conn (CSS_CONN_ENTRY * conn, CSS_MAP_ENTRY * anchor)
   for (map_entry_p = anchor; map_entry_p; map_entry_p = map_entry_p->next)
     {
       if (map_entry_p->conn == conn)
-	{
-	  return (map_entry_p);
-	}
+        {
+          return (map_entry_p);
+        }
     }
 
   return (NULL);

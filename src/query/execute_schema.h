@@ -31,7 +31,7 @@
 #include "query_executor.h"
 #include "schema_manager.h"
 
-#if 0				/* not used; do not delete me */
+#if 0                           /* not used; do not delete me */
 #define PARTITION_CATALOG_CLASS "_db_partition"
 #define PARTITION_ATT_CLASSOF "class_of"
 #define PARTITION_ATT_PNAME "pname"
@@ -40,16 +40,13 @@
 #define PARTITION_ATT_PVALUES "pvalues"
 #endif
 
-extern int do_add_queries (PARSER_CONTEXT * parser,
-			   DB_CTMPL * ctemplate, const PT_NODE * queries);
+extern int do_add_queries (PARSER_CONTEXT * parser, DB_CTMPL * ctemplate, const PT_NODE * queries);
 extern int do_add_attributes (PARSER_CONTEXT * parser,
-			      DB_CTMPL * ctemplate, PT_NODE * atts,
-			      PT_NODE * constraints, PT_NODE * shard_key);
+                              DB_CTMPL * ctemplate, PT_NODE * atts, PT_NODE * constraints, PT_NODE * shard_key);
 extern int do_add_constraints (DB_CTMPL * ctemplate, PT_NODE * constraints);
 extern int do_create_entity (DB_SESSION * session, PT_NODE * node);
-#if defined (ENABLE_UNUSED_FUNCTION)	/* TODO - delete me */
-extern int do_check_rows_for_null (MOP class_mop, const char *att_name,
-				   bool * has_nulls);
+#if defined (ENABLE_UNUSED_FUNCTION)    /* TODO - delete me */
+extern int do_check_rows_for_null (MOP class_mop, const char *att_name, bool * has_nulls);
 #endif
 
 #endif /* _EXECUTE_SCHEMA_H_ */

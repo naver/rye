@@ -29,24 +29,17 @@
 
 extern int commdb_master_shutdown (CSS_CONN_ENTRY ** local_conn, int minutes);
 extern int commdb_get_server_status (CSS_CONN_ENTRY ** local_conn);
-extern int commdb_is_registered_procs (CSS_CONN_ENTRY ** local_conn,
-				       bool * success_fail);
-extern int commdb_deact_stop_all (CSS_CONN_ENTRY * conn,
-				  bool deact_immediately);
-extern int commdb_deact_confirm_stop_all (CSS_CONN_ENTRY * conn,
-					  bool * success_fail);
+extern int commdb_is_registered_procs (CSS_CONN_ENTRY ** local_conn, bool * success_fail);
+extern int commdb_deact_stop_all (CSS_CONN_ENTRY * conn, bool deact_immediately);
+extern int commdb_deact_confirm_stop_all (CSS_CONN_ENTRY * conn, bool * success_fail);
 extern int commdb_deactivate_heartbeat (CSS_CONN_ENTRY * conn);
-extern int commdb_deact_confirm_no_server (CSS_CONN_ENTRY * conn,
-					   bool * success_fail);
+extern int commdb_deact_confirm_no_server (CSS_CONN_ENTRY * conn, bool * success_fail);
 extern int commdb_activate_heartbeat (CSS_CONN_ENTRY ** local_conn);
-extern int commdb_ha_node_info_query (CSS_CONN_ENTRY ** local_conn,
-				      bool verbose_yn);
-extern int commdb_ha_process_info_query (CSS_CONN_ENTRY ** local_conn,
-					 bool verbose_yn);
+extern int commdb_ha_node_info_query (CSS_CONN_ENTRY ** local_conn, bool verbose_yn);
+extern int commdb_ha_process_info_query (CSS_CONN_ENTRY ** local_conn, bool verbose_yn);
 extern int commdb_ha_ping_host_info_query (CSS_CONN_ENTRY ** local_conn);
 extern int commdb_ha_admin_info_query (CSS_CONN_ENTRY ** local_conn);
 extern int commdb_reconfig_heartbeat (CSS_CONN_ENTRY ** local_conn);
-extern int commdb_changemode (CSS_CONN_ENTRY ** local_conn,
-			      HA_STATE req_node_state, bool force);
+extern int commdb_changemode (CSS_CONN_ENTRY ** local_conn, HA_STATE req_node_state, bool force);
 
 #endif /* _COMMDB_H_ */

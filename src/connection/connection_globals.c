@@ -40,8 +40,7 @@
 #include "system_parameter.h"
 
 /* do not change first 4 bytes of css_Net_magic */
-char css_Net_magic[CSS_NET_MAGIC_SIZE] =
-  { 0x00, 0x00, 0x00, 'R', 'Y', 'E', 0x00, 0x01 };
+char css_Net_magic[CSS_NET_MAGIC_SIZE] = { 0x00, 0x00, 0x00, 'R', 'Y', 'E', 0x00, 0x01 };
 
 static bool css_Is_conn_rules_initialized = false;
 
@@ -64,6 +63,7 @@ CSS_CONN_RULE_INFO css_Conn_rules[] = {
    css_get_ha_client_max_conn,
    CR_RESERVED_FIRST, 0, 0}
 };
+
 const int css_Conn_rules_size = DIM (css_Conn_rules);
 
 /*
@@ -113,14 +113,14 @@ css_is_normal_client (BOOT_CLIENT_TYPE client_type)
   for (i = 0; i < css_Conn_rules_size; i++)
     {
       if (i == CSS_CR_NORMAL_ONLY_IDX)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (css_Conn_rules[i].check_client_type_fn (client_type))
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
   return true;
 }
@@ -159,8 +159,7 @@ css_init_conn_rules (void)
     {
       assert (css_Conn_rules[i].get_max_conn_num_fn != NULL);
 
-      css_Conn_rules[i].max_num_conn =
-	css_Conn_rules[i].get_max_conn_num_fn ();
+      css_Conn_rules[i].max_num_conn = css_Conn_rules[i].get_max_conn_num_fn ();
     }
 
   css_Is_conn_rules_initialized = true;

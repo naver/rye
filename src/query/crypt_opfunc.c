@@ -75,8 +75,7 @@ static const char *const crypt_lib_fail_info[] = {
 };
 
 static int init_gcrypt (void);
-static char *str_to_hex (const char *src, int src_len, char **dest_p,
-			 int *dest_len_p);
+static char *str_to_hex (const char *src, int src_len, char **dest_p, int *dest_len_p);
 
 /*
  * init_gcrypt() -- Initialize libgcrypt
@@ -95,22 +94,21 @@ init_gcrypt (void)
       pthread_mutex_lock (&gcrypt_init_mutex);
 
       if (gcrypt_initialized == 1)
-	{
-	  /* It means other concurrent thread has initialized gcrypt when
-	   * the thread blocked by pthread_mutex_lock(&gcrypt_init_mutex). */
-	  pthread_mutex_unlock (&gcrypt_init_mutex);
-	  return NO_ERROR;
-	}
+        {
+          /* It means other concurrent thread has initialized gcrypt when
+           * the thread blocked by pthread_mutex_lock(&gcrypt_init_mutex). */
+          pthread_mutex_unlock (&gcrypt_init_mutex);
+          return NO_ERROR;
+        }
 
-      i_gcrypt_err =
-	gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+      i_gcrypt_err = gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
       if (i_gcrypt_err != GPG_ERR_NO_ERROR)
-	{
-	  pthread_mutex_unlock (&gcrypt_init_mutex);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_ENCRYPTION_LIB_FAILED,
-		  1, crypt_lib_fail_info[CRYPT_LIB_INIT_ERR]);
-	  return ER_ENCRYPTION_LIB_FAILED;
-	}
+        {
+          pthread_mutex_unlock (&gcrypt_init_mutex);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_ENCRYPTION_LIB_FAILED,
+                  1, crypt_lib_fail_info[CRYPT_LIB_INIT_ERR]);
+          return ER_ENCRYPTION_LIB_FAILED;
+        }
 #endif
       gcry_check_version (NULL);
 
@@ -123,14 +121,14 @@ init_gcrypt (void)
 
       i_gcrypt_err = gcry_control (GCRYCTL_INITIALIZATION_FINISHED_P);
       if (i_gcrypt_err != GCRYPT_INIT_SUCCESS)
-	{
+        {
 #if defined(SERVER_MODE)
-	  pthread_mutex_unlock (&gcrypt_init_mutex);
+          pthread_mutex_unlock (&gcrypt_init_mutex);
 #endif
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_ENCRYPTION_LIB_FAILED,
-		  1, crypt_lib_fail_info[CRYPT_LIB_INIT_ERR]);
-	  return ER_ENCRYPTION_LIB_FAILED;
-	}
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_ENCRYPTION_LIB_FAILED,
+                  1, crypt_lib_fail_info[CRYPT_LIB_INIT_ERR]);
+          return ER_ENCRYPTION_LIB_FAILED;
+        }
       gcrypt_initialized = (i_gcrypt_err == GCRYPT_INIT_SUCCESS) ? 1 : 0;
 #if defined(SERVER_MODE)
       pthread_mutex_unlock (&gcrypt_init_mutex);
@@ -191,8 +189,7 @@ str_to_hex (const char *src, int src_len, char **dest_p, int *dest_len_p)
  * Note:
  */
 int
-sha_one (UNUSED_ARG THREAD_ENTRY * thread_p, const char *src, int src_len,
-	 char **dest_p, int *dest_len_p)
+sha_one (UNUSED_ARG THREAD_ENTRY * thread_p, const char *src, int src_len, char **dest_p, int *dest_len_p)
 {
   int hash_length;
   char *dest = NULL;
@@ -252,7 +249,7 @@ exit_and_free:
  */
 int
 sha_two (UNUSED_ARG THREAD_ENTRY * thread_p, const char *src, int src_len,
-	 int need_hash_len, char **dest_p, int *dest_len_p)
+         int need_hash_len, char **dest_p, int *dest_len_p)
 {
   int hash_length;
   int algo;

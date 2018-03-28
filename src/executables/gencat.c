@@ -77,7 +77,7 @@ up-to-date.  Many thanks.
 #include <sys/types.h>
 #include <sys/queue.h>
 
-#include <arpa/inet.h>		/* Needed for htonl() on POSIX systems */
+#include <arpa/inet.h>          /* Needed for htonl() on POSIX systems */
 
 #include <ctype.h>
 #include <errno.h>
@@ -130,14 +130,14 @@ struct _nls_cat_hdr
 
 struct _nls_set_hdr
 {
-  int32_t __setno;		/* set number: 0 < x <= NL_SETMAX */
-  int32_t __nmsgs;		/* number of messages in the set  */
-  int32_t __index;		/* index of first msg_hdr in msg_hdr table */
+  int32_t __setno;              /* set number: 0 < x <= NL_SETMAX */
+  int32_t __nmsgs;              /* number of messages in the set  */
+  int32_t __index;              /* index of first msg_hdr in msg_hdr table */
 };
 
 struct _nls_msg_hdr
 {
-  int32_t __msgno;		/* msg number: 0 < x <= NL_MSGMAX */
+  int32_t __msgno;              /* msg number: 0 < x <= NL_MSGMAX */
   int32_t __msglen;
   int32_t __offset;
 };
@@ -196,12 +196,12 @@ main (int argc, char *argv[])
   while ((c = getopt (argc, argv, "")) != -1)
     {
       switch (c)
-	{
-	case '?':
-	default:
-	  usage ();
-	  /* NOTREACHED */
-	}
+        {
+        case '?':
+        default:
+          usage ();
+          /* NOTREACHED */
+        }
     }
   argc -= optind;
   argv += optind;
@@ -221,62 +221,62 @@ main (int argc, char *argv[])
     {
       ofd = open (catfile, O_WRONLY | O_CREAT | O_EXCL, 0666);
       if (ofd < 0)
-	{
-	  if (errno == EEXIST)
-	    {
-	      if ((ofd = open (catfile, O_RDWR)) < 0)
-		{
-		  err (1, "Unable to open %s", catfile);
-		  /* NOTREACHED */
-		}
-	    }
-	  else
-	    {
-	      err (1, "Unable to create new %s", catfile);
-	      /* NOTREACHED */
-	    }
-	  curfile = catfile;
-	  updatecat = 1;
-	  MCReadCat (ofd);
-	  if (lseek (ofd, SEEK_SET, 0) < 0)
-	    {
-	      err (1, "Unable to seek on %s", catfile);
-	      /* NOTREACHED */
-	    }
-	}
+        {
+          if (errno == EEXIST)
+            {
+              if ((ofd = open (catfile, O_RDWR)) < 0)
+                {
+                  err (1, "Unable to open %s", catfile);
+                  /* NOTREACHED */
+                }
+            }
+          else
+            {
+              err (1, "Unable to create new %s", catfile);
+              /* NOTREACHED */
+            }
+          curfile = catfile;
+          updatecat = 1;
+          MCReadCat (ofd);
+          if (lseek (ofd, SEEK_SET, 0) < 0)
+            {
+              err (1, "Unable to seek on %s", catfile);
+              /* NOTREACHED */
+            }
+        }
     }
 
   if (((*argv)[0] == '-') && ((*argv)[1] == '\0'))
     {
       if (argc != 2)
         {
-	   usage ();
-        /* NOTREACHED */
+          usage ();
+          /* NOTREACHED */
         }
       MCParse (STDIN_FILENO);
     }
   else
     {
       for (; *argv; argv++)
-	{
-	  if ((ifd = open (*argv, O_RDONLY)) < 0)
-	  {
-	    err (1, "Unable to read %s", *argv);
-	  }
-	  curfile = *argv;
-	  lineno = 0;
-	  MCParse (ifd);
-	  close (ifd);
-	}
+        {
+          if ((ifd = open (*argv, O_RDONLY)) < 0)
+            {
+              err (1, "Unable to read %s", *argv);
+            }
+          curfile = *argv;
+          lineno = 0;
+          MCParse (ifd);
+          close (ifd);
+        }
     }
 
   if (updatecat)
     {
       if (ftruncate (ofd, 0) != 0)
-	{
-	  err (1, "Unable to truncate %s", catfile);
-	  /* NOTREACHED */
-	}
+        {
+          err (1, "Unable to truncate %s", catfile);
+          /* NOTREACHED */
+        }
     }
 
   MCWriteCat (ofd);
@@ -288,16 +288,15 @@ warning (const char *cptr, const char *msg)
 {
   if (lineno)
     {
-      fprintf (stderr, "%s: %s on line %ld, %s\n",
-	       progname, msg, lineno, curfile);
+      fprintf (stderr, "%s: %s on line %ld, %s\n", progname, msg, lineno, curfile);
       fprintf (stderr, "%s\n", curline);
       if (cptr)
-	{
-	  char *tptr;
-	  for (tptr = curline; tptr < cptr; ++tptr)
-	    putc (' ', stderr);
-	  fprintf (stderr, "^\n");
-	}
+        {
+          char *tptr;
+          for (tptr = curline; tptr < cptr; ++tptr)
+            putc (' ', stderr);
+          fprintf (stderr, "^\n");
+        }
     }
   else
     {
@@ -365,39 +364,39 @@ get_line (int fd)
   for (;;)
     {
       for (; bptr < bend && cptr < cend; ++cptr, ++bptr)
-	{
-	  if (*bptr == '\n')
-	    {
-	      *cptr = '\0';
-	      ++bptr;
-	      return (curline);
-	    }
-	  else
-	    *cptr = *bptr;
-	}
+        {
+          if (*bptr == '\n')
+            {
+              *cptr = '\0';
+              ++bptr;
+              return (curline);
+            }
+          else
+            *cptr = *bptr;
+        }
       if (cptr == cend)
-	{
-	  /* relocate cptr to hold the offset from curline */
-	  int offset = cptr - curline;
-	  curline = xrealloc (curline, curlen *= 2);
-	  cptr = curline + offset;
-	  cend = curline + curlen;
-	}
+        {
+          /* relocate cptr to hold the offset from curline */
+          int offset = cptr - curline;
+          curline = xrealloc (curline, curlen *= 2);
+          cptr = curline + offset;
+          cend = curline + curlen;
+        }
       if (bptr == bend)
-	{
-	  buflen = read (fd, buf, BUFSIZ);
-	  if (buflen <= 0)
-	    {
-	      if (cptr > curline)
-		{
-		  *cptr = '\0';
-		  return (curline);
-		}
-	      return (NULL);
-	    }
-	  bend = buf + buflen;
-	  bptr = buf;
-	}
+        {
+          buflen = read (fd, buf, BUFSIZ);
+          if (buflen <= 0)
+            {
+              if (cptr > curline)
+                {
+                  *cptr = '\0';
+                  return (curline);
+                }
+              return (NULL);
+            }
+          bend = buf + buflen;
+          bptr = buf;
+        }
     }
 }
 
@@ -444,9 +443,9 @@ getmsg (int fd, char *cptr, char quote)
   if (clen > msglen)
     {
       if (msglen)
-	msg = xrealloc (msg, clen);
+        msg = xrealloc (msg, clen);
       else
-	msg = xmalloc (clen);
+        msg = xmalloc (clen);
       msglen = clen;
     }
   tptr = msg;
@@ -454,98 +453,98 @@ getmsg (int fd, char *cptr, char quote)
   while (*cptr)
     {
       if (quote && *cptr == quote)
-	{
-	  char *tmp;
-	  tmp = cptr + 1;
-	  if (*tmp && (!isspace ((unsigned char) *tmp) || *wskip (tmp)))
-	    {
-	      warning (cptr, "unexpected quote character, ignoring");
-	      *tptr++ = *cptr++;
-	    }
-	  else
-	    {
-	      *cptr = '\0';
-	    }
-	}
+        {
+          char *tmp;
+          tmp = cptr + 1;
+          if (*tmp && (!isspace ((unsigned char) *tmp) || *wskip (tmp)))
+            {
+              warning (cptr, "unexpected quote character, ignoring");
+              *tptr++ = *cptr++;
+            }
+          else
+            {
+              *cptr = '\0';
+            }
+        }
       else
-	{
-	  if (*cptr == '\\')
-	    {
-	      ++cptr;
-	      switch (*cptr)
-		{
-		case '\0':
-		  cptr = get_line (fd);
-		  if (!cptr)
-		    error ("premature end of file");
-		  msglen += strlen (cptr);
-		  i = (int) (tptr - msg);
-		  msg = xrealloc (msg, msglen);
-		  tptr = msg + i;
-		  break;
-		case 'n':
-		  *tptr++ = '\n';
-		  ++cptr;
-		  break;
-		case 't':
-		  *tptr++ = '\t';
-		  ++cptr;
-		  break;
-		case 'v':
-		  *tptr++ = '\v';
-		  ++cptr;
-		  break;
-		case 'b':
-		  *tptr++ = '\b';
-		  ++cptr;
-		  break;
-		case 'r':
-		  *tptr++ = '\r';
-		  ++cptr;
-		  break;
-		case 'f':
-		  *tptr++ = '\f';
-		  ++cptr;
-		  break;
-		case '"':
-		  *tptr++ = '"';
-		  ++cptr;
-		  break;
-		case '\\':
-		  *tptr++ = '\\';
-		  ++cptr;
-		  break;
-		default:
-		  if (quote && *cptr == quote)
-		    {
-		      *tptr++ = *cptr++;
-		    }
-		  else if (isdigit ((unsigned char) *cptr))
-		    {
-		      *tptr = 0;
-		      for (i = 0; i < 3; ++i)
-			{
-			  if (!isdigit ((unsigned char) *cptr))
-			    break;
-			  if (*cptr > '7')
-			    warning (cptr, "octal number greater than 7?!");
-			  *tptr *= 8;
-			  *tptr += (*cptr - '0');
-			  ++cptr;
-			}
-		    }
-		  else
-		    {
-		      warning (cptr, "unrecognized escape sequence");
-		    }
-		  break;
-		}
-	    }
-	  else
-	    {
-	      *tptr++ = *cptr++;
-	    }
-	}
+        {
+          if (*cptr == '\\')
+            {
+              ++cptr;
+              switch (*cptr)
+                {
+                case '\0':
+                  cptr = get_line (fd);
+                  if (!cptr)
+                    error ("premature end of file");
+                  msglen += strlen (cptr);
+                  i = (int) (tptr - msg);
+                  msg = xrealloc (msg, msglen);
+                  tptr = msg + i;
+                  break;
+                case 'n':
+                  *tptr++ = '\n';
+                  ++cptr;
+                  break;
+                case 't':
+                  *tptr++ = '\t';
+                  ++cptr;
+                  break;
+                case 'v':
+                  *tptr++ = '\v';
+                  ++cptr;
+                  break;
+                case 'b':
+                  *tptr++ = '\b';
+                  ++cptr;
+                  break;
+                case 'r':
+                  *tptr++ = '\r';
+                  ++cptr;
+                  break;
+                case 'f':
+                  *tptr++ = '\f';
+                  ++cptr;
+                  break;
+                case '"':
+                  *tptr++ = '"';
+                  ++cptr;
+                  break;
+                case '\\':
+                  *tptr++ = '\\';
+                  ++cptr;
+                  break;
+                default:
+                  if (quote && *cptr == quote)
+                    {
+                      *tptr++ = *cptr++;
+                    }
+                  else if (isdigit ((unsigned char) *cptr))
+                    {
+                      *tptr = 0;
+                      for (i = 0; i < 3; ++i)
+                        {
+                          if (!isdigit ((unsigned char) *cptr))
+                            break;
+                          if (*cptr > '7')
+                            warning (cptr, "octal number greater than 7?!");
+                          *tptr *= 8;
+                          *tptr += (*cptr - '0');
+                          ++cptr;
+                        }
+                    }
+                  else
+                    {
+                      warning (cptr, "unrecognized escape sequence");
+                    }
+                  break;
+                }
+            }
+          else
+            {
+              *tptr++ = *cptr++;
+            }
+        }
     }
   *tptr = '\0';
   return (msg);
@@ -564,112 +563,112 @@ MCParse (int fd)
   while ((cptr = get_line (fd)))
     {
       if (*cptr == '$')
-	{
-	  ++cptr;
-	  if (strncmp (cptr, "set", 3) == 0)
-	    {
-	      cptr += 3;
-	      cptr = wskip (cptr);
-	      setid = atoi (cptr);
-	      MCAddSet (setid);
-	      msgid = 0;
-	    }
-	  else if (strncmp (cptr, "delset", 6) == 0)
-	    {
-	      cptr += 6;
-	      cptr = wskip (cptr);
-	      setid = atoi (cptr);
-	      MCDelSet (setid);
-	    }
-	  else if (strncmp (cptr, "quote", 5) == 0)
-	    {
-	      cptr += 5;
-	      if (!*cptr)
-		quote = 0;
-	      else
-		{
-		  cptr = wskip (cptr);
-		  if (!*cptr)
-		    quote = 0;
-		  else
-		    quote = *cptr;
-		}
-	    }
-	  else if (isspace ((unsigned char) *cptr))
-	    {
-	      ;
-	    }
-	  else
-	    {
-	      if (*cptr)
-		{
-		  cptr = wskip (cptr);
-		  if (*cptr)
-		    warning (cptr, "unrecognized line");
-		}
-	    }
-	}
+        {
+          ++cptr;
+          if (strncmp (cptr, "set", 3) == 0)
+            {
+              cptr += 3;
+              cptr = wskip (cptr);
+              setid = atoi (cptr);
+              MCAddSet (setid);
+              msgid = 0;
+            }
+          else if (strncmp (cptr, "delset", 6) == 0)
+            {
+              cptr += 6;
+              cptr = wskip (cptr);
+              setid = atoi (cptr);
+              MCDelSet (setid);
+            }
+          else if (strncmp (cptr, "quote", 5) == 0)
+            {
+              cptr += 5;
+              if (!*cptr)
+                quote = 0;
+              else
+                {
+                  cptr = wskip (cptr);
+                  if (!*cptr)
+                    quote = 0;
+                  else
+                    quote = *cptr;
+                }
+            }
+          else if (isspace ((unsigned char) *cptr))
+            {
+              ;
+            }
+          else
+            {
+              if (*cptr)
+                {
+                  cptr = wskip (cptr);
+                  if (*cptr)
+                    warning (cptr, "unrecognized line");
+                }
+            }
+        }
       else
-	{
-	  /*
-	   * First check for (and eat) empty lines....
-	   */
-	  if (!*cptr)
-	    continue;
-	  /*
-	   * We have a digit? Start of a message. Else,
-	   * syntax error.
-	   */
-	  if (isdigit ((unsigned char) *cptr))
-	    {
-	      msgid = atoi (cptr);
-	      cptr = cskip (cptr);
-	      if (*cptr)
-		{
-		  cptr = wskip (cptr);
-		  if (!*cptr)
-		    {
-		      MCAddMsg (msgid, "");
-		      continue;
-		    }
-		}
-	    }
-	  else
-	    {
-	      warning (cptr, "neither blank line nor start of a message id");
-	      continue;
-	    }
-	  /*
-	   * If no set directive specified, all messages
-	   * shall be in default message set NL_SETD.
-	   */
-	  if (setid == 0)
-	    {
-	      setid = NL_SETD;
-	      MCAddSet (setid);
-	    }
-	  /*
-	   * If we have a message ID, but no message,
-	   * then this means "delete this message id
-	   * from the catalog".
-	   */
-	  if (!*cptr)
-	    {
-	      MCDelMsg (msgid);
-	    }
-	  else
-	    {
-	      str = getmsg (fd, cptr, quote);
-	      MCAddMsg (msgid, str);
-	    }
-	}
+        {
+          /*
+           * First check for (and eat) empty lines....
+           */
+          if (!*cptr)
+            continue;
+          /*
+           * We have a digit? Start of a message. Else,
+           * syntax error.
+           */
+          if (isdigit ((unsigned char) *cptr))
+            {
+              msgid = atoi (cptr);
+              cptr = cskip (cptr);
+              if (*cptr)
+                {
+                  cptr = wskip (cptr);
+                  if (!*cptr)
+                    {
+                      MCAddMsg (msgid, "");
+                      continue;
+                    }
+                }
+            }
+          else
+            {
+              warning (cptr, "neither blank line nor start of a message id");
+              continue;
+            }
+          /*
+           * If no set directive specified, all messages
+           * shall be in default message set NL_SETD.
+           */
+          if (setid == 0)
+            {
+              setid = NL_SETD;
+              MCAddSet (setid);
+            }
+          /*
+           * If we have a message ID, but no message,
+           * then this means "delete this message id
+           * from the catalog".
+           */
+          if (!*cptr)
+            {
+              MCDelMsg (msgid);
+            }
+          else
+            {
+              str = getmsg (fd, cptr, quote);
+              MCAddMsg (msgid, str);
+            }
+        }
     }
 }
 
 void
 MCReadCat (int fd)
 {
-  void *msgcat;			/* message catalog data */
+  void *msgcat;                 /* message catalog data */
   struct _nls_cat_hdr cat_hdr;
   struct _nls_set_hdr *set_hdr;
   struct _nls_msg_hdr *msg_hdr;
@@ -683,13 +682,13 @@ MCReadCat (int fd)
   if (n < (int) sizeof (cat_hdr))
     {
       if (n == 0)
-	return;			/* empty file */
+        return;                 /* empty file */
       else if (n == -1)
-	err (1, "header read");
+        err (1, "header read");
       else
-	{
-	  errx (1, CORRUPT);
-	}
+        {
+          errx (1, CORRUPT);
+        }
     }
   if (ntohl (cat_hdr.__magic) != _NLS_MAGIC)
     {
@@ -706,9 +705,8 @@ MCReadCat (int fd)
       || (cat_hdr.__msg_hdr_offset < 0)
       || (cat_hdr.__msg_txt_offset < 0)
       || (cat_hdr.__mem <
-	  (cat_hdr.__nsets * (int) sizeof (struct _nls_set_hdr)))
-      || (cat_hdr.__mem < cat_hdr.__msg_hdr_offset)
-      || (cat_hdr.__mem < cat_hdr.__msg_txt_offset))
+          (cat_hdr.__nsets * (int) sizeof (struct _nls_set_hdr)))
+      || (cat_hdr.__mem < cat_hdr.__msg_hdr_offset) || (cat_hdr.__mem < cat_hdr.__msg_txt_offset))
     {
       errx (1, "%s: catalog header", CORRUPT);
     }
@@ -718,17 +716,16 @@ MCReadCat (int fd)
     {
       if (n == -1)
         {
-	  err (1, "data read");
+          err (1, "data read");
         }
       else
-	{
-	  errx (1, CORRUPT);
-	}
+        {
+          errx (1, CORRUPT);
+        }
     }
 
   set_hdr = (struct _nls_set_hdr *) msgcat;
-  msg_hdr = (struct _nls_msg_hdr *) ((char *) msgcat +
-				     cat_hdr.__msg_hdr_offset);
+  msg_hdr = (struct _nls_msg_hdr *) ((char *) msgcat + cat_hdr.__msg_hdr_offset);
   strings = (char *) msgcat + cat_hdr.__msg_txt_offset;
 
   setno = 0;
@@ -736,9 +733,9 @@ MCReadCat (int fd)
     {
       set_hdr->__setno = ntohl (set_hdr->__setno);
       if (set_hdr->__setno < setno)
-	{
-	  errx (1, "%s: bad set number (%d)", CORRUPT, set_hdr->__setno);
-	}
+        {
+          errx (1, "%s: bad set number (%d)", CORRUPT, set_hdr->__setno);
+        }
       setno = set_hdr->__setno;
 
       MCAddSet (setno);
@@ -746,31 +743,28 @@ MCReadCat (int fd)
       set_hdr->__nmsgs = ntohl (set_hdr->__nmsgs);
       set_hdr->__index = ntohl (set_hdr->__index);
       if (set_hdr->__nmsgs < 0 || set_hdr->__index < 0)
-	{
-	  errx (1, "%s: set header", CORRUPT);
-	}
+        {
+          errx (1, "%s: set header", CORRUPT);
+        }
 
       /* Get the data */
       msgno = 0;
       for (m = 0; m < set_hdr->__nmsgs; m++, msg_hdr++)
-	{
-	  msg_hdr->__msgno = ntohl (msg_hdr->__msgno);
-	  msg_hdr->__offset = ntohl (msg_hdr->__offset);
-	  if (msg_hdr->__msgno < msgno)
-	    {
-	      errx (1, "%s: bad message number (%d)",
-		    CORRUPT, msg_hdr->__msgno);
-	    }
-	  if ((msg_hdr->__offset < 0) ||
-	      ((strings + msg_hdr->__offset) >
-	       ((char *) msgcat + cat_hdr.__mem)))
-	    {
-	      errx (1, "%s: message header", CORRUPT);
-	    }
+        {
+          msg_hdr->__msgno = ntohl (msg_hdr->__msgno);
+          msg_hdr->__offset = ntohl (msg_hdr->__offset);
+          if (msg_hdr->__msgno < msgno)
+            {
+              errx (1, "%s: bad message number (%d)", CORRUPT, msg_hdr->__msgno);
+            }
+          if ((msg_hdr->__offset < 0) || ((strings + msg_hdr->__offset) > ((char *) msgcat + cat_hdr.__mem)))
+            {
+              errx (1, "%s: message header", CORRUPT);
+            }
 
-	  msgno = msg_hdr->__msgno;
-	  MCAddMsg (msgno, strings + msg_hdr->__offset);
-	}
+          msgno = msg_hdr->__msgno;
+          MCAddMsg (msgno, strings + msg_hdr->__offset);
+        }
     }
   free (msgcat);
 }
@@ -787,11 +781,11 @@ MCReadCat (int fd)
 void
 MCWriteCat (int fd)
 {
-  int nsets;			/* number of sets */
-  int nmsgs;			/* number of msgs */
-  int string_size;		/* total size of string pool */
-  int msgcat_size;		/* total size of message catalog */
-  void *msgcat;			/* message catalog data */
+  int nsets;                    /* number of sets */
+  int nmsgs;                    /* number of msgs */
+  int string_size;              /* total size of string pool */
+  int msgcat_size;              /* total size of message catalog */
+  void *msgcat;                 /* message catalog data */
   struct _nls_cat_hdr *cat_hdr;
   struct _nls_set_hdr *set_hdr;
   struct _nls_msg_hdr *msg_hdr;
@@ -811,12 +805,11 @@ MCWriteCat (int fd)
     {
       nsets++;
 
-      for (msg = set->msghead.lh_first; msg != NULL;
-	   msg = msg->entries.le_next)
-	{
-	  nmsgs++;
-	  string_size += strlen (msg->str) + 1;
-	}
+      for (msg = set->msghead.lh_first; msg != NULL; msg = msg->entries.le_next)
+        {
+          nmsgs++;
+          string_size += strlen (msg->str) + 1;
+        }
     }
 
 #ifdef DEBUG
@@ -828,8 +821,7 @@ MCWriteCat (int fd)
   /* determine size and then allocate buffer for constructing external
    * message catalog representation */
   msgcat_size = sizeof (struct _nls_cat_hdr)
-    + (nsets * sizeof (struct _nls_set_hdr))
-    + (nmsgs * sizeof (struct _nls_msg_hdr)) + string_size;
+    + (nsets * sizeof (struct _nls_set_hdr)) + (nmsgs * sizeof (struct _nls_msg_hdr)) + string_size;
 
   msgcat = xmalloc (msgcat_size);
   if (msgcat == NULL)
@@ -844,20 +836,14 @@ MCWriteCat (int fd)
   cat_hdr->__nsets = htonl (nsets);
   cat_hdr->__mem = htonl (msgcat_size - sizeof (struct _nls_cat_hdr));
   cat_hdr->__msg_hdr_offset = htonl (nsets * sizeof (struct _nls_set_hdr));
-  cat_hdr->__msg_txt_offset =
-    htonl (nsets * sizeof (struct _nls_set_hdr) +
-	   nmsgs * sizeof (struct _nls_msg_hdr));
+  cat_hdr->__msg_txt_offset = htonl (nsets * sizeof (struct _nls_set_hdr) + nmsgs * sizeof (struct _nls_msg_hdr));
 
   /* compute offsets for set & msg header tables and string pool */
-  set_hdr = (struct _nls_set_hdr *) ((char *) msgcat +
-				     sizeof (struct _nls_cat_hdr));
+  set_hdr = (struct _nls_set_hdr *) ((char *) msgcat + sizeof (struct _nls_cat_hdr));
   msg_hdr = (struct _nls_msg_hdr *) ((char *) msgcat +
-				     sizeof (struct _nls_cat_hdr) +
-				     nsets * sizeof (struct _nls_set_hdr));
+                                     sizeof (struct _nls_cat_hdr) + nsets * sizeof (struct _nls_set_hdr));
   strings = (char *) msgcat +
-    sizeof (struct _nls_cat_hdr) +
-    nsets * sizeof (struct _nls_set_hdr) +
-    nmsgs * sizeof (struct _nls_msg_hdr);
+    sizeof (struct _nls_cat_hdr) + nsets * sizeof (struct _nls_set_hdr) + nmsgs * sizeof (struct _nls_msg_hdr);
 
   msg_index = 0;
   msg_offset = 0;
@@ -865,22 +851,21 @@ MCWriteCat (int fd)
     {
 
       nmsgs = 0;
-      for (msg = set->msghead.lh_first; msg != NULL;
-	   msg = msg->entries.le_next)
-	{
-	  int msg_len = strlen (msg->str) + 1;
+      for (msg = set->msghead.lh_first; msg != NULL; msg = msg->entries.le_next)
+        {
+          int msg_len = strlen (msg->str) + 1;
 
-	  msg_hdr->__msgno = htonl (msg->msgId);
-	  msg_hdr->__msglen = htonl (msg_len);
-	  msg_hdr->__offset = htonl (msg_offset);
+          msg_hdr->__msgno = htonl (msg->msgId);
+          msg_hdr->__msglen = htonl (msg_len);
+          msg_hdr->__offset = htonl (msg_offset);
 
-	  memcpy (strings, msg->str, msg_len);
-	  strings += msg_len;
-	  msg_offset += msg_len;
+          memcpy (strings, msg->str, msg_len);
+          strings += msg_len;
+          msg_offset += msg_len;
 
-	  nmsgs++;
-	  msg_hdr++;
-	}
+          nmsgs++;
+          msg_hdr++;
+        }
 
       set_hdr->__setno = htonl (set->setId);
       set_hdr->__nmsgs = htonl (nmsgs);
@@ -927,13 +912,13 @@ MCAddSet (int setId)
       p->setId = setId;
 
       if (q == NULL)
-	{
-	  LIST_INSERT_HEAD (&sethead, p, entries);
-	}
+        {
+          LIST_INSERT_HEAD (&sethead, p, entries);
+        }
       else
-	{
-	  LIST_INSERT_AFTER (q, p, entries);
-	}
+        {
+          LIST_INSERT_AFTER (q, p, entries);
+        }
     }
 
   curSet = p;
@@ -972,13 +957,13 @@ MCAddMsg (int msgId, const char *str)
       memset (p, '\0', sizeof (struct _msgT));
 
       if (q == NULL)
-	{
-	  LIST_INSERT_HEAD (&curSet->msghead, p, entries);
-	}
+        {
+          LIST_INSERT_HEAD (&curSet->msghead, p, entries);
+        }
       else
-	{
-	  LIST_INSERT_AFTER (q, p, entries);
-	}
+        {
+          LIST_INSERT_AFTER (q, p, entries);
+        }
     }
 
   p->msgId = msgId;
@@ -1009,11 +994,11 @@ MCDelSet (int setId)
     {
       LIST_REMOVE (set, entries);
       while ((msg = set->msghead.lh_first) != NULL)
-	{
-	  LIST_REMOVE (msg, entries);
-	  free (msg->str);
-	  free (msg);
-	}
+        {
+          LIST_REMOVE (msg, entries);
+          free (msg->str);
+          free (msg);
+        }
       free (set);
       return;
     }

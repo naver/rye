@@ -2661,8 +2661,8 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
                   else
                     {           /* The input section is finished */
                       big_index = sort_param->in_half + min;
-                      if (sort_param->
-                          file_contents[big_index].num_pages[sort_param->file_contents[big_index].first_run])
+                      if (sort_param->file_contents[big_index].
+                          num_pages[sort_param->file_contents[big_index].first_run])
                         {
                           /* There are still some pages in the current input
                              run */
@@ -2670,8 +2670,8 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
                           in_cur_bufaddr[min] = in_sectaddr[min];
 
                           read_pages =
-                            sort_param->file_contents[big_index].num_pages[sort_param->
-                                                                           file_contents[big_index].first_run];
+                            sort_param->file_contents[big_index].num_pages[sort_param->file_contents[big_index].
+                                                                           first_run];
                           if (in_sectsize < read_pages)
                             {
                               read_pages = in_sectsize;
@@ -2691,9 +2691,8 @@ sort_exphase_merge_elim_dup (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
                           cur_page[big_index] += read_pages;
 
                           in_act_bufno[min] = 0;
-                          sort_param->file_contents[big_index].num_pages[sort_param->
-                                                                         file_contents[big_index].first_run] -=
-                            read_pages;
+                          sort_param->file_contents[big_index].num_pages[sort_param->file_contents[big_index].
+                                                                         first_run] -= read_pages;
                         }
                       else
                         {
@@ -3464,8 +3463,8 @@ sort_exphase_merge (THREAD_ENTRY * thread_p, SORT_PARAM * sort_param)
                           in_cur_bufaddr[min] = in_sectaddr[min];
 
                           read_pages =
-                            sort_param->file_contents[big_index].num_pages[sort_param->
-                                                                           file_contents[big_index].first_run];
+                            sort_param->file_contents[big_index].num_pages[sort_param->file_contents[big_index].
+                                                                           first_run];
                           if (in_sectsize < read_pages)
                             {
                               read_pages = in_sectsize;

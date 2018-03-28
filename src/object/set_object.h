@@ -31,9 +31,9 @@
 
 #include "error_manager.h"
 #include "object_representation.h"
-#include "object_domain.h"	/* for TP_DOMAIN */
-#include "parser.h"		/* for PT_OP_TYPE */
-#include "locator.h"		/* for LC_OIDSET */
+#include "object_domain.h"      /* for TP_DOMAIN */
+#include "parser.h"             /* for PT_OP_TYPE */
+#include "locator.h"            /* for LC_OIDSET */
 
 #define IMPLICIT (1)
 
@@ -83,12 +83,12 @@
 #if defined (ENABLE_UNUSED_FUNCTION)
 typedef struct set_iterator
 {
-  struct set_iterator *next;	/* chain of iterators on this set */
+  struct set_iterator *next;    /* chain of iterators on this set */
 
-  DB_SET *ref;			/* set we're iterating over */
-  SETOBJ *set;			/* set object */
-  DB_VALUE *value;		/* current element pointer */
-  int position;			/* current element index */
+  DB_SET *ref;                  /* set we're iterating over */
+  SETOBJ *set;                  /* set object */
+  DB_VALUE *value;              /* current element pointer */
+  int position;                 /* current element index */
 } SET_ITERATOR;
 #endif
 
@@ -103,25 +103,25 @@ struct setobj
 {
 
   DB_TYPE coltype;
-  int size;			/* valid indexes from 0 to size -1
-				 * aka the number of represented values in
-				 * the collection */
-  int lastinsert;		/* the last value insertion point
-				 * 0 to size. */
-  int topblock;			/* maximum index of an allocated block.
-				 * This is the maximum non-NULL db_value
-				 * pointer index of array. array[topblock]
-				 * should be non-NULL. array[topblock+1] will
-				 * be a NULL pointer for future expansion.
-				 */
-  int arraytop;			/* maximum indexable pointer in array the valid
-				 * indexes for array are 0 to arraytop
-				 * inclusive Generally this may be greater
-				 * than topblock */
-  int topblockcount;		/* This is the max index of the top block
-				 * Since it may be shorter than a standard
-				 * sized block for space efficicency.
-				 */
+  int size;                     /* valid indexes from 0 to size -1
+                                 * aka the number of represented values in
+                                 * the collection */
+  int lastinsert;               /* the last value insertion point
+                                 * 0 to size. */
+  int topblock;                 /* maximum index of an allocated block.
+                                 * This is the maximum non-NULL db_value
+                                 * pointer index of array. array[topblock]
+                                 * should be non-NULL. array[topblock+1] will
+                                 * be a NULL pointer for future expansion.
+                                 */
+  int arraytop;                 /* maximum indexable pointer in array the valid
+                                 * indexes for array are 0 to arraytop
+                                 * inclusive Generally this may be greater
+                                 * than topblock */
+  int topblockcount;            /* This is the max index of the top block
+                                 * Since it may be shorter than a standard
+                                 * sized block for space efficicency.
+                                 */
   DB_VALUE **array;
 
   /* not stored on disk, attached at run time by the schema */
@@ -138,8 +138,7 @@ extern DB_COLLECTION *set_create (DB_TYPE type, int initial_size);
 extern void set_area_init (void);
 extern DB_COLLECTION *set_create_sequence (int size);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern DB_COLLECTION *set_create_with_domain (TP_DOMAIN * domain,
-					      int initial_size);
+extern DB_COLLECTION *set_create_with_domain (TP_DOMAIN * domain, int initial_size);
 #endif
 extern DB_COLLECTION *set_make_reference (void);
 extern DB_COLLECTION *set_copy (DB_COLLECTION * set);
@@ -148,8 +147,7 @@ extern int set_clear (DB_COLLECTION * set);
 #endif
 extern void set_free (DB_COLLECTION * set);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern DB_COLLECTION *set_coerce (DB_COLLECTION * set, TP_DOMAIN * domain,
-				  bool implicit_coercion);
+extern DB_COLLECTION *set_coerce (DB_COLLECTION * set, TP_DOMAIN * domain, bool implicit_coercion);
 extern int set_filter (DB_COLLECTION * set);
 #endif
 
@@ -157,8 +155,7 @@ extern int set_filter (DB_COLLECTION * set);
 
 extern int set_get_element (DB_COLLECTION * set, int index, DB_VALUE * value);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int set_get_element_nocopy (DB_COLLECTION * set, int index,
-				   DB_VALUE * value);
+extern int set_get_element_nocopy (DB_COLLECTION * set, int index, DB_VALUE * value);
 #endif
 extern int set_add_element (DB_COLLECTION * set, DB_VALUE * value);
 #if defined (ENABLE_UNUSED_FUNCTION)
@@ -166,26 +163,21 @@ extern int set_add_element_quick (DB_COLLECTION * set, DB_VALUE * value);
 #endif
 extern int set_put_element (DB_COLLECTION * set, int index, DB_VALUE * value);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int set_drop_element (DB_COLLECTION * set, DB_VALUE * value,
-			     bool match_nulls);
+extern int set_drop_element (DB_COLLECTION * set, DB_VALUE * value, bool match_nulls);
 #endif
 extern int set_drop_seq_element (DB_COLLECTION * set, int index);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int set_find_seq_element (DB_COLLECTION * set, DB_VALUE * value,
-				 int index);
+extern int set_find_seq_element (DB_COLLECTION * set, DB_VALUE * value, int index);
 #endif
 
 #if defined(ENABLE_UNUSED_FUNCTION)
 /* set operations */
 extern int set_difference (DB_COLLECTION * collection1,
-			   DB_COLLECTION * collection2,
-			   DB_COLLECTION ** result, DB_DOMAIN * domain);
+                           DB_COLLECTION * collection2, DB_COLLECTION ** result, DB_DOMAIN * domain);
 extern int set_union (DB_COLLECTION * collection1,
-		      DB_COLLECTION * collection2,
-		      DB_COLLECTION ** result, DB_DOMAIN * domain);
+                      DB_COLLECTION * collection2, DB_COLLECTION ** result, DB_DOMAIN * domain);
 extern int set_intersection (DB_COLLECTION * collection1,
-			     DB_COLLECTION * collection2,
-			     DB_COLLECTION ** result, DB_DOMAIN * domain);
+                             DB_COLLECTION * collection2, DB_COLLECTION ** result, DB_DOMAIN * domain);
 #endif
 
 extern void set_make_collection (DB_VALUE * value, DB_COLLECTION * col);
@@ -201,15 +193,12 @@ extern bool set_isempty (DB_COLLECTION * set);
 extern bool set_is_all_null (DB_COLLECTION * set);
 extern bool set_has_null (DB_COLLECTION * set);
 extern bool set_ismember (DB_COLLECTION * set, DB_VALUE * value);
-extern int set_issome (DB_VALUE * value, DB_COLLECTION * set,
-		       PT_OP_TYPE op, int do_coercion);
+extern int set_issome (DB_VALUE * value, DB_COLLECTION * set, PT_OP_TYPE op, int do_coercion);
 extern int set_convert_oids_to_objects (DB_COLLECTION * set);
 #endif
 extern DB_TYPE set_get_type (DB_COLLECTION * set);
-extern int set_seq_compare (DB_COLLECTION * set1, DB_COLLECTION * set2,
-			    int do_coercion, int total_order);
-extern TP_DOMAIN_STATUS set_check_domain (DB_COLLECTION * set,
-					  TP_DOMAIN * domain);
+extern int set_seq_compare (DB_COLLECTION * set1, DB_COLLECTION * set2, int do_coercion, int total_order);
+extern TP_DOMAIN_STATUS set_check_domain (DB_COLLECTION * set, TP_DOMAIN * domain);
 extern TP_DOMAIN *set_get_domain (DB_COLLECTION * set);
 
 /* Debugging functions */
@@ -223,11 +212,9 @@ extern void set_final (void);
 
 /* intended for use only by the object manager (obj) */
 
-extern int set_connect (DB_COLLECTION * ref, MOP owner, int attid,
-			TP_DOMAIN * domain);
+extern int set_connect (DB_COLLECTION * ref, MOP owner, int attid, TP_DOMAIN * domain);
 extern int set_disconnect (DB_COLLECTION * ref);
-extern DB_COLLECTION *set_change_owner (DB_COLLECTION * ref, MOP owner,
-					int attid, TP_DOMAIN * domain);
+extern DB_COLLECTION *set_change_owner (DB_COLLECTION * ref, MOP owner, int attid, TP_DOMAIN * domain);
 extern int set_get_setobj (DB_COLLECTION * ref, COL ** setptr, int for_write);
 
 #if defined(ENABLE_UNUSED_FUNCTION)
@@ -281,17 +268,14 @@ extern int setobj_size (COL * col);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern int setobj_cardinality (COL * col);
 extern bool setobj_isempty (COL * col);
-extern bool setobj_ismember (COL * col, DB_VALUE * proposed_value,
-			     int check_null);
+extern bool setobj_ismember (COL * col, DB_VALUE * proposed_value, int check_null);
 #endif
-extern int setobj_compare_order (COL * set1, COL * set2,
-				 int do_coercion, int total_order);
+extern int setobj_compare_order (COL * set1, COL * set2, int do_coercion, int total_order);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int setobj_difference (COL * set1, COL * set2, COL * result);
 extern int setobj_union (COL * set1, COL * set2, COL * result);
 extern int setobj_intersection (COL * set1, COL * set2, COL * result);
-extern int setobj_issome (DB_VALUE * value, COL * set, PT_OP_TYPE op,
-			  int do_coercion);
+extern int setobj_issome (DB_VALUE * value, COL * set, PT_OP_TYPE op, int do_coercion);
 extern int setobj_convert_oids_to_objects (COL * col);
 #endif
 extern int setobj_get_element_ptr (COL * col, int index, DB_VALUE ** result);
@@ -299,14 +283,12 @@ extern int setobj_get_element (COL * set, int index, DB_VALUE * value);
 extern int setobj_add_element (COL * col, DB_VALUE * value);
 extern int setobj_put_element (COL * col, int index, DB_VALUE * value);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern int setobj_drop_element (COL * col, DB_VALUE * value,
-				bool match_nulls);
+extern int setobj_drop_element (COL * col, DB_VALUE * value, bool match_nulls);
 #endif
 extern int setobj_drop_seq_element (COL * col, int index);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int setobj_find_seq_element (COL * col, DB_VALUE * value, int index);
-extern COL *setobj_coerce (COL * col, TP_DOMAIN * domain,
-			   bool implicit_coercion);
+extern COL *setobj_coerce (COL * col, TP_DOMAIN * domain, bool implicit_coercion);
 #endif
 extern void setobj_print (FILE * fp, COL * col);
 extern DB_TYPE setobj_type (COL * set);

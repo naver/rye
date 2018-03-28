@@ -67,7 +67,7 @@
 #define DB_GET_NUMERIC_SCALE(val) \
     ((val)->domain.numeric_info.scale)
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
 #define db_push_oid(v, n) \
     ((v)->domain.general_info.type = DB_TYPE_OID, \
      (v)->data.oid.pageid = (n)->pageid, \
