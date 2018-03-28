@@ -156,55 +156,55 @@ main (int argc, char *argv[])
     {
       opt = getopt_long (argc, argv, "", options, &opt_index);
       if (opt == -1)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       switch (opt)
-	{
-	case 10:
-	  mgmt_host = optarg;
-	  break;
-	case 11:
-	  mgmt_port = atoi (optarg);
-	  break;
-	case 12:
-	  mgmt_dbname = optarg;
-	  break;
-	case 20:
-	  src_node_id = atoi (optarg);
-	  break;
-	case 30:
-	  dest_node_id = atoi (optarg);
-	  break;
-	case 31:
-	  dest_host = optarg;
-	  break;
-	case 32:
-	  dest_port = atoi (optarg);
-	  break;
-	case 33:
-	  dest_dbname = optarg;
-	  break;
-	case 40:
-	  group_id = atoi (optarg);
-	  break;
-	case 50:
-	  copy_schema = true;
-	  break;
-	case 60:
-	  run_slave = true;
-	  break;
-	default:
-	  print_usage_and_exit ();
-	  break;
-	}
+        {
+        case 10:
+          mgmt_host = optarg;
+          break;
+        case 11:
+          mgmt_port = atoi (optarg);
+          break;
+        case 12:
+          mgmt_dbname = optarg;
+          break;
+        case 20:
+          src_node_id = atoi (optarg);
+          break;
+        case 30:
+          dest_node_id = atoi (optarg);
+          break;
+        case 31:
+          dest_host = optarg;
+          break;
+        case 32:
+          dest_port = atoi (optarg);
+          break;
+        case 33:
+          dest_dbname = optarg;
+          break;
+        case 40:
+          group_id = atoi (optarg);
+          break;
+        case 50:
+          copy_schema = true;
+          break;
+        case 60:
+          run_slave = true;
+          break;
+        default:
+          print_usage_and_exit ();
+          break;
+        }
     }
 
   if (mgmt_host == NULL || mgmt_dbname == NULL || mgmt_port < 0
       || src_node_id < 0
       || (copy_schema == true
-	  && (dest_host == NULL || dest_dbname == NULL || dest_port < 0))
+          && (dest_host == NULL || dest_dbname == NULL || dest_port < 0))
       || (copy_schema == false && (dest_node_id < 0 || group_id < 0)))
     {
       print_usage_and_exit ();
@@ -214,17 +214,15 @@ main (int argc, char *argv[])
   rbl_error_log_init ("rye_migrator", mgmt_dbname, group_id);
 
   RBL_NOTICE (ARG_FILE_LINE,
-	      "Group migration start: host = %s, port = %d, dbname = %s, "
-	      "source node = %d, dest node = %d, group id = %d, "
-	      "copy schema = %d, run slave = %d\n",
-	      mgmt_host, mgmt_port, mgmt_dbname,
-	      src_node_id, dest_node_id, group_id, copy_schema, run_slave);
+              "Group migration start: host = %s, port = %d, dbname = %s, "
+              "source node = %d, dest node = %d, group id = %d, "
+              "copy schema = %d, run slave = %d\n",
+              mgmt_host, mgmt_port, mgmt_dbname, src_node_id, dest_node_id, group_id, copy_schema, run_slave);
 
   /* make cci connections */
   error = rbl_conf_init (mgmt_host, mgmt_port, mgmt_dbname,
-			 src_node_id, dest_node_id, group_id,
-			 dest_host, dest_port, dest_dbname,
-			 run_slave ? RBL_SLAVE : RBL_MASTER, copy_schema);
+                         src_node_id, dest_node_id, group_id,
+                         dest_host, dest_port, dest_dbname, run_slave ? RBL_SLAVE : RBL_MASTER, copy_schema);
   if (error != NO_ERROR)
     {
       RBL_ERROR_MSG (ARG_FILE_LINE, "Node connection fail = %d\n", error);
@@ -240,10 +238,10 @@ main (int argc, char *argv[])
     {
       error = rbl_copy_schema ();
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR_MSG (ARG_FILE_LINE, "Copy schema error = %d\n", error);
-	  exit_code = EXIT_AT_COPY_SCHEMA;
-	}
+        {
+          RBL_ERROR_MSG (ARG_FILE_LINE, "Copy schema error = %d\n", error);
+          exit_code = EXIT_AT_COPY_SCHEMA;
+        }
 
       rbl_conf_final ();
       rbl_error_log_final (true);
@@ -262,12 +260,11 @@ main (int argc, char *argv[])
       /* noti migration start to mgmt */
       error = cci_shard_migration_start (mgmt_conn, group_id, dest_node_id);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     mgmt_conn->err_buf.err_code, mgmt_conn->err_buf.err_msg);
-	  exit_code = EXIT_AT_START_NOTI;
-	  goto error_exit;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, mgmt_conn->err_buf.err_code, mgmt_conn->err_buf.err_msg);
+          exit_code = EXIT_AT_START_NOTI;
+          goto error_exit;
+        }
     }
 
   /* garbage collection for dest db */
@@ -294,8 +291,7 @@ main (int argc, char *argv[])
 
   gettimeofday (&copy_ctx.start_time, NULL);
   copy_ctx.sync_ctx = &sync_ctx;
-  error =
-    pthread_create (&data_copy_th, NULL, rbl_data_copy_thread, &copy_ctx);
+  error = pthread_create (&data_copy_th, NULL, rbl_data_copy_thread, &copy_ctx);
   if (error != NO_ERROR)
     {
       RBL_ERROR_MSG (ARG_FILE_LINE, "pthread_create() error\n");
@@ -326,12 +322,11 @@ main (int argc, char *argv[])
     {
       error = cci_block_global_dml (dest_conn, false);
       if (error < 0)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     dest_conn->err_buf.err_code, dest_conn->err_buf.err_msg);
-	  goto error_exit;
-	  exit_code = EXIT_AT_BLOCK_GLOBAL_DML;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, dest_conn->err_buf.err_code, dest_conn->err_buf.err_msg);
+          goto error_exit;
+          exit_code = EXIT_AT_BLOCK_GLOBAL_DML;
+        }
     }
   else
     {
@@ -339,36 +334,33 @@ main (int argc, char *argv[])
 
       error = rbl_conf_update_dest_groupid (&copy_ctx);
       if (error != NO_ERROR)
-	{
-	  exit_code = EXIT_AT_UPDATE_GID;
-	  goto error_exit;
-	}
+        {
+          exit_code = EXIT_AT_UPDATE_GID;
+          goto error_exit;
+        }
 
-      error = cci_shard_migration_end (mgmt_conn, group_id, dest_node_id,
-				       copy_ctx.num_skeys);
+      error = cci_shard_migration_end (mgmt_conn, group_id, dest_node_id, copy_ctx.num_skeys);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     mgmt_conn->err_buf.err_code, mgmt_conn->err_buf.err_msg);
-	  exit_code = EXIT_AT_END_NOTI;
-	  goto error_exit;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, mgmt_conn->err_buf.err_code, mgmt_conn->err_buf.err_msg);
+          exit_code = EXIT_AT_END_NOTI;
+          goto error_exit;
+        }
 
       error = rbl_conf_insert_gid_removed_info_srcdb (group_id, run_slave);
       if (error != NO_ERROR)
-	{
-	  exit_code = EXIT_AT_INSERT_GID_INFO;
-	  goto error_exit;
-	}
+        {
+          exit_code = EXIT_AT_INSERT_GID_INFO;
+          goto error_exit;
+        }
 
       error = cci_delete_gid_removed_info (dest_conn, group_id);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     dest_conn->err_buf.err_code, dest_conn->err_buf.err_msg);
-	  exit_code = EXIT_AT_DELETE_GID_INFO;
-	  goto error_exit;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, dest_conn->err_buf.err_code, dest_conn->err_buf.err_msg);
+          exit_code = EXIT_AT_DELETE_GID_INFO;
+          goto error_exit;
+        }
     }
 
   cci_end_tran (mgmt_conn, CCI_TRAN_COMMIT);
@@ -381,13 +373,13 @@ main (int argc, char *argv[])
   gettimeofday (&end_time, NULL);
   DIFF_TIMEVAL (start_time, end_time, elapsed_time);
   RBL_NOTICE (ARG_FILE_LINE, "Group migration success: group id: %d, "
-	      "num_shard_keys: %d, num_rows: %d, elapsed: %ld(ms)\n",
-	      group_id, copy_ctx.num_skeys, copy_ctx.num_copied_rows,
-	      (elapsed_time.tv_sec * 1000) + (elapsed_time.tv_usec / 1000));
+              "num_shard_keys: %d, num_rows: %d, elapsed: %ld(ms)\n",
+              group_id, copy_ctx.num_skeys, copy_ctx.num_copied_rows,
+              (elapsed_time.tv_sec * 1000) + (elapsed_time.tv_usec / 1000));
   fprintf (stdout, "Group migration success: group id: %d, "
-	   "num_shard_keys: %d, num_rows: %d, elapsed: %ld\n",
-	   group_id, copy_ctx.num_skeys, copy_ctx.num_copied_rows,
-	   (elapsed_time.tv_sec * 1000) + (elapsed_time.tv_usec / 1000));
+           "num_shard_keys: %d, num_rows: %d, elapsed: %ld\n",
+           group_id, copy_ctx.num_skeys, copy_ctx.num_copied_rows,
+           (elapsed_time.tv_sec * 1000) + (elapsed_time.tv_usec / 1000));
   fflush (stdout);
 
   rbl_error_log_final (true);
@@ -407,9 +399,7 @@ error_exit:
   rbl_sync_log_final (&sync_ctx);
   rbl_conf_final ();
 
-  RBL_NOTICE (ARG_FILE_LINE,
-	      "Group migration fail: group id = %d, error = %d\n",
-	      group_id, error);
+  RBL_NOTICE (ARG_FILE_LINE, "Group migration fail: group id = %d, error = %d\n", group_id, error);
   rbl_error_log_final (false);
 
   return exit_code;

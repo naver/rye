@@ -79,40 +79,27 @@ int db_Client_type = BOOT_CLIENT_DEFAULT;
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int transfer_string (char *dst, int *xflen, int *outlen,
-			    const int dstlen, const char *src,
-			    const int srclen, const DB_TYPE_C type);
+                            const int dstlen, const char *src, const int srclen, const DB_TYPE_C type);
 static int transfer_bit_string (char *buf, int *xflen,
-				int *outlen, const int buflen,
-				const DB_VALUE * src, const DB_TYPE_C c_type);
+                                int *outlen, const int buflen, const DB_VALUE * src, const DB_TYPE_C c_type);
 #endif
-static int coerce_char_to_dbvalue_numeric (DB_VALUE * value, char *buf,
-					   const int buflen);
+static int coerce_char_to_dbvalue_numeric (DB_VALUE * value, char *buf, const int buflen);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static int coerce_numeric_to_dbvalue (DB_VALUE * value, char *buf,
-				      const DB_TYPE_C c_type);
-static int coerce_binary_to_dbvalue (DB_VALUE * value, char *buf,
-				     const int buflen);
+static int coerce_numeric_to_dbvalue (DB_VALUE * value, char *buf, const DB_TYPE_C c_type);
+static int coerce_binary_to_dbvalue (DB_VALUE * value, char *buf, const int buflen);
 static int coerce_date_to_dbvalue (DB_VALUE * value, char *buf);
 static int coerce_time_to_dbvalue (DB_VALUE * value, char *buf);
 static int coerce_datetime_to_dbvalue (DB_VALUE * value, char *buf);
 #endif
 
 static VALCNV_BUFFER *valcnv_append_bytes (VALCNV_BUFFER * old_string,
-					   const char *new_tail,
-					   const size_t new_tail_length);
-static VALCNV_BUFFER *valcnv_append_string (VALCNV_BUFFER * old_string,
-					    const char *new_tail);
-static VALCNV_BUFFER *valcnv_convert_double_to_string (VALCNV_BUFFER * buf,
-						       const double value);
-static VALCNV_BUFFER *valcnv_convert_bit_to_string (VALCNV_BUFFER * buf,
-						    const DB_VALUE * value);
-static VALCNV_BUFFER *valcnv_convert_set_to_string (VALCNV_BUFFER * buf,
-						    DB_SET * set);
-static VALCNV_BUFFER *valcnv_convert_data_to_string (VALCNV_BUFFER * buf,
-						     const DB_VALUE * value);
-static VALCNV_BUFFER *valcnv_convert_db_value_to_string (VALCNV_BUFFER * buf,
-							 const DB_VALUE *
-							 value);
+                                           const char *new_tail, const size_t new_tail_length);
+static VALCNV_BUFFER *valcnv_append_string (VALCNV_BUFFER * old_string, const char *new_tail);
+static VALCNV_BUFFER *valcnv_convert_double_to_string (VALCNV_BUFFER * buf, const double value);
+static VALCNV_BUFFER *valcnv_convert_bit_to_string (VALCNV_BUFFER * buf, const DB_VALUE * value);
+static VALCNV_BUFFER *valcnv_convert_set_to_string (VALCNV_BUFFER * buf, DB_SET * set);
+static VALCNV_BUFFER *valcnv_convert_data_to_string (VALCNV_BUFFER * buf, const DB_VALUE * value);
+static VALCNV_BUFFER *valcnv_convert_db_value_to_string (VALCNV_BUFFER * buf, const DB_VALUE * value);
 
 /*
  *  db_value_put_null()
@@ -145,8 +132,7 @@ db_value_put_null (DB_VALUE * value)
  */
 
 int
-db_value_domain_init (DB_VALUE * value, const DB_TYPE type,
-		      const int precision, const int scale)
+db_value_domain_init (DB_VALUE * value, const DB_TYPE type, const int precision, const int scale)
 {
   int error = NO_ERROR;
 
@@ -162,69 +148,66 @@ db_value_domain_init (DB_VALUE * value, const DB_TYPE type,
     {
     case DB_TYPE_NUMERIC:
       if (precision == DB_DEFAULT_PRECISION)
-	{
-	  value->domain.numeric_info.precision = DB_DEFAULT_NUMERIC_PRECISION;
-	}
+        {
+          value->domain.numeric_info.precision = DB_DEFAULT_NUMERIC_PRECISION;
+        }
       else
-	{
-	  value->domain.numeric_info.precision = precision;
-	}
+        {
+          value->domain.numeric_info.precision = precision;
+        }
 
       if (scale == DB_DEFAULT_SCALE)
-	{
-	  value->domain.numeric_info.scale = DB_DEFAULT_NUMERIC_SCALE;
-	}
+        {
+          value->domain.numeric_info.scale = DB_DEFAULT_NUMERIC_SCALE;
+        }
       else
-	{
-	  value->domain.numeric_info.scale = scale;
-	}
+        {
+          value->domain.numeric_info.scale = scale;
+        }
 
       if (IS_INVALID_PRECISION (precision, DB_MAX_NUMERIC_PRECISION))
-	{
-	  error = ER_INVALID_PRECISION;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  error, 3, precision, 0, DB_MAX_NUMERIC_PRECISION);
-	  value->domain.numeric_info.precision = DB_DEFAULT_NUMERIC_PRECISION;
-	  value->domain.numeric_info.scale = DB_DEFAULT_NUMERIC_SCALE;
-	}
+        {
+          error = ER_INVALID_PRECISION;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 3, precision, 0, DB_MAX_NUMERIC_PRECISION);
+          value->domain.numeric_info.precision = DB_DEFAULT_NUMERIC_PRECISION;
+          value->domain.numeric_info.scale = DB_DEFAULT_NUMERIC_SCALE;
+        }
       break;
 
     case DB_TYPE_VARBIT:
       if (precision == DB_DEFAULT_PRECISION)
-	{
-	  value->domain.char_info.length = DB_MAX_VARBIT_PRECISION;
-	}
+        {
+          value->domain.char_info.length = DB_MAX_VARBIT_PRECISION;
+        }
       else
-	{
-	  value->domain.char_info.length = precision;
-	}
+        {
+          value->domain.char_info.length = precision;
+        }
 
       if (IS_INVALID_PRECISION (precision, DB_MAX_VARBIT_PRECISION))
-	{
-	  error = ER_INVALID_PRECISION;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  error, 3, precision, 0, DB_MAX_VARBIT_PRECISION);
-	  value->domain.char_info.length = DB_MAX_VARBIT_PRECISION;
-	}
+        {
+          error = ER_INVALID_PRECISION;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 3, precision, 0, DB_MAX_VARBIT_PRECISION);
+          value->domain.char_info.length = DB_MAX_VARBIT_PRECISION;
+        }
       break;
 
     case DB_TYPE_VARCHAR:
       if (precision == DB_DEFAULT_PRECISION)
-	{
-	  value->domain.char_info.length = DB_MAX_VARCHAR_PRECISION;
-	}
+        {
+          value->domain.char_info.length = DB_MAX_VARCHAR_PRECISION;
+        }
       else
-	{
-	  value->domain.char_info.length = precision;
-	}
+        {
+          value->domain.char_info.length = precision;
+        }
 
       if (IS_INVALID_PRECISION (precision, DB_MAX_VARCHAR_PRECISION))
-	{
-	  error = ER_INVALID_PRECISION;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  error, 3, precision, 0, DB_MAX_VARCHAR_PRECISION);
-	  value->domain.char_info.length = DB_MAX_VARCHAR_PRECISION;
-	}
+        {
+          error = ER_INVALID_PRECISION;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error, 3, precision, 0, DB_MAX_VARCHAR_PRECISION);
+          value->domain.char_info.length = DB_MAX_VARCHAR_PRECISION;
+        }
       value->domain.char_info.collation_id = LANG_COERCIBLE_COLL;
       break;
 
@@ -262,9 +245,7 @@ db_value_domain_init (DB_VALUE * value, const DB_TYPE type,
  * collation_id(in): collation_id.
  */
 int
-db_value_domain_min (DB_VALUE * value, const DB_TYPE type,
-		     const int precision, const int scale,
-		     const int collation_id)
+db_value_domain_min (DB_VALUE * value, const DB_TYPE type, const int precision, const int scale, const int collation_id)
 {
   int error;
 
@@ -296,7 +277,7 @@ db_value_domain_min (DB_VALUE * value, const DB_TYPE type,
       /* case DB_TYPE_OBJECT: not in server-side code */
     case DB_TYPE_SEQUENCE:
       value->data.set = NULL;
-      value->domain.general_info.is_null = 1;	/* NULL SET value */
+      value->domain.general_info.is_null = 1;   /* NULL SET value */
       break;
     case DB_TYPE_TIME:
       value->data.time = DB_TIME_MIN;
@@ -317,31 +298,31 @@ db_value_domain_min (DB_VALUE * value, const DB_TYPE type,
       value->data.oid.pageid = NULL_PAGEID;
       value->data.oid.slotid = NULL_PAGEID;
       value->data.oid.volid = NULL_PAGEID;
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       value->data.oid.groupid = NULL_PAGEID;
 #endif
       value->domain.general_info.is_null = 0;
       break;
     case DB_TYPE_NUMERIC:
       {
-	char str[DB_MAX_NUMERIC_PRECISION + 2];
+        char str[DB_MAX_NUMERIC_PRECISION + 2];
 
-	memset (str, 0, DB_MAX_NUMERIC_PRECISION + 2);
-	str[0] = '-';
-	memset (str + 1, '9', value->domain.numeric_info.precision);
-	numeric_coerce_dec_str_to_num (str, value->data.num.d.buf);
-	value->domain.general_info.is_null = 0;
+        memset (str, 0, DB_MAX_NUMERIC_PRECISION + 2);
+        str[0] = '-';
+        memset (str + 1, '9', value->domain.numeric_info.precision);
+        numeric_coerce_dec_str_to_num (str, value->data.num.d.buf);
+        value->domain.general_info.is_null = 0;
       }
       break;
     case DB_TYPE_VARBIT:
       value->data.ch.size = 1;
-      value->data.ch.buf = (char *) "\0";	/* zero; 0 */
+      value->data.ch.buf = (char *) "\0";       /* zero; 0 */
       value->domain.general_info.is_null = 0;
       break;
       /* space is the min value, matching the comparison in qstr_compare */
     case DB_TYPE_VARCHAR:
       value->data.ch.size = 1;
-      value->data.ch.buf = (char *) "\40";	/* space; 32 */
+      value->data.ch.buf = (char *) "\40";      /* space; 32 */
       value->domain.general_info.is_null = 0;
       value->domain.char_info.collation_id = collation_id;
       break;
@@ -349,8 +330,7 @@ db_value_domain_min (DB_VALUE * value, const DB_TYPE type,
     default:
       assert (false);
       error = ER_UCI_INVALID_DATA_TYPE;
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-	      ER_UCI_INVALID_DATA_TYPE, 0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_UCI_INVALID_DATA_TYPE, 0);
       break;
     }
 
@@ -368,9 +348,7 @@ db_value_domain_min (DB_VALUE * value, const DB_TYPE type,
  * collation_id(in): collation_id.
  */
 int
-db_value_domain_max (DB_VALUE * value, const DB_TYPE type,
-		     const int precision, const int scale,
-		     const int collation_id)
+db_value_domain_max (DB_VALUE * value, const DB_TYPE type, const int precision, const int scale, const int collation_id)
 {
   int error;
 
@@ -401,7 +379,7 @@ db_value_domain_max (DB_VALUE * value, const DB_TYPE type,
       /* case DB_TYPE_OBJECT: not in server-side code */
     case DB_TYPE_SEQUENCE:
       value->data.set = NULL;
-      value->domain.general_info.is_null = 1;	/* NULL SET value */
+      value->domain.general_info.is_null = 1;   /* NULL SET value */
       break;
     case DB_TYPE_TIME:
       value->data.time = DB_TIME_MAX;
@@ -422,19 +400,19 @@ db_value_domain_max (DB_VALUE * value, const DB_TYPE type,
       value->data.oid.pageid = DB_INT32_MAX;
       value->data.oid.slotid = DB_INT16_MAX;
       value->data.oid.volid = DB_INT16_MAX;
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       value->data.oid.groupid = DB_INT32_MAX;
 #endif
       value->domain.general_info.is_null = 0;
       break;
     case DB_TYPE_NUMERIC:
       {
-	char str[DB_MAX_NUMERIC_PRECISION + 1];
+        char str[DB_MAX_NUMERIC_PRECISION + 1];
 
-	memset (str, 0, DB_MAX_NUMERIC_PRECISION + 1);
-	memset (str, '9', value->domain.numeric_info.precision);
-	numeric_coerce_dec_str_to_num (str, value->data.num.d.buf);
-	value->domain.general_info.is_null = 0;
+        memset (str, 0, DB_MAX_NUMERIC_PRECISION + 1);
+        memset (str, '9', value->domain.numeric_info.precision);
+        numeric_coerce_dec_str_to_num (str, value->data.num.d.buf);
+        value->domain.general_info.is_null = 0;
       }
       break;
       /* TODO: The string "\377" (one character of code 255) is not a perfect
@@ -443,7 +421,7 @@ db_value_domain_max (DB_VALUE * value, const DB_TYPE type,
        */
     case DB_TYPE_VARBIT:
       value->data.ch.size = 1;
-      value->data.ch.buf = (char *) "\377";	/* 255 */
+      value->data.ch.buf = (char *) "\377";     /* 255 */
       value->domain.general_info.is_null = 0;
       break;
     case DB_TYPE_VARCHAR:
@@ -457,8 +435,7 @@ db_value_domain_max (DB_VALUE * value, const DB_TYPE type,
     default:
       assert (false);
       error = ER_UCI_INVALID_DATA_TYPE;
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-	      ER_UCI_INVALID_DATA_TYPE, 0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_UCI_INVALID_DATA_TYPE, 0);
       break;
     }
 
@@ -477,8 +454,7 @@ db_value_domain_max (DB_VALUE * value, const DB_TYPE type,
  */
 int
 db_value_domain_default (DB_VALUE * value, const DB_TYPE type,
-			 const int precision, const int scale,
-			 const int collation_id)
+                         const int precision, const int scale, const int collation_id)
 {
   int error = NO_ERROR;
 
@@ -524,7 +500,7 @@ db_value_domain_default (DB_VALUE * value, const DB_TYPE type,
       value->data.oid.pageid = NULL_PAGEID;
       value->data.oid.slotid = NULL_PAGEID;
       value->data.oid.volid = NULL_PAGEID;
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       value->data.oid.groupid = NULL_PAGEID;
 #endif
       value->domain.general_info.is_null = 0;
@@ -538,7 +514,7 @@ db_value_domain_default (DB_VALUE * value, const DB_TYPE type,
       value->domain.general_info.is_null = 0;
       value->domain.char_info.collation_id = collation_id;
       break;
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
     case DB_TYPE_OBJECT:
     case DB_TYPE_VARIABLE:
     case DB_TYPE_SUB:
@@ -565,8 +541,7 @@ db_value_domain_default (DB_VALUE * value, const DB_TYPE type,
  *	  types it returns an error (ER_UCI_INVALID_DATA_TYPE);
  */
 int
-db_value_domain_zero (DB_VALUE * value, const DB_TYPE type,
-		      const int precision, const int scale)
+db_value_domain_zero (DB_VALUE * value, const DB_TYPE type, const int precision, const int scale)
 {
   int error = NO_ERROR;
 
@@ -598,8 +573,7 @@ db_value_domain_zero (DB_VALUE * value, const DB_TYPE type,
       break;
     default:
       error = ER_UCI_INVALID_DATA_TYPE;
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-	      ER_UCI_INVALID_DATA_TYPE, 0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_UCI_INVALID_DATA_TYPE, 0);
       break;
     }
 
@@ -628,32 +602,30 @@ db_string_truncate (DB_VALUE * value, const int precision)
     case DB_TYPE_VARCHAR:
       val_str = DB_GET_STRING (value);
       if (val_str != NULL && DB_GET_STRING_LENGTH (value) > precision)
-	{
-	  intl_char_size ((unsigned char *) val_str, precision, &byte_size);
-	  string = (char *) malloc (byte_size + 1);
-	  if (string == NULL)
-	    {
-	      error = ER_OUT_OF_VIRTUAL_MEMORY;
-	      break;
-	    }
+        {
+          intl_char_size ((unsigned char *) val_str, precision, &byte_size);
+          string = (char *) malloc (byte_size + 1);
+          if (string == NULL)
+            {
+              error = ER_OUT_OF_VIRTUAL_MEMORY;
+              break;
+            }
 
-	  assert (byte_size < DB_GET_STRING_SIZE (value));
-	  strncpy (string, val_str, byte_size);
-	  string[byte_size] = '\0';
-	  db_make_varchar (&src_value, precision, string, byte_size,
-			   DB_GET_STRING_COLLATION (value));
+          assert (byte_size < DB_GET_STRING_SIZE (value));
+          strncpy (string, val_str, byte_size);
+          string[byte_size] = '\0';
+          db_make_varchar (&src_value, precision, string, byte_size, DB_GET_STRING_COLLATION (value));
 
-	  pr_clear_value (value);
-	  (*(tp_String.setval)) (value, &src_value, true);
+          pr_clear_value (value);
+          (*(tp_String.setval)) (value, &src_value, true);
 
-	  pr_clear_value (&src_value);
-	}
+          pr_clear_value (&src_value);
+        }
       break;
 
     default:
       error = ER_UCI_INVALID_DATA_TYPE;
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-	      ER_UCI_INVALID_DATA_TYPE, 0);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_UCI_INVALID_DATA_TYPE, 0);
       break;
     }
 
@@ -679,24 +651,23 @@ db_value_domain_type (const DB_VALUE * value)
 
   db_type = (DB_TYPE) value->domain.general_info.type;
 
-  assert (DB_IS_NULL (value)
-	  || (DB_TYPE_FIRST < db_type && db_type <= DB_TYPE_LAST));
+  assert (DB_IS_NULL (value) || (DB_TYPE_FIRST < db_type && db_type <= DB_TYPE_LAST));
 
 #if !defined(NDEBUG)
   if (!DB_IS_NULL (value))
     {
-      assert (db_type != (DB_TYPE) 2);	/* DB_TYPE_FLOAT */
-      assert (db_type != (DB_TYPE) 9);	/* DB_TYPE_ELO */
-      assert (db_type != (DB_TYPE) 11);	/* DB_TYPE_TIMESTAMP */
-      assert (db_type != (DB_TYPE) 13);	/* DB_TYPE_MONETARY */
-      assert (db_type != (DB_TYPE) 16);	/* POINTER */
-      assert (db_type != (DB_TYPE) 17);	/* ERROR */
-      assert (db_type != (DB_TYPE) 18);	/* DB_TYPE_SMALLINT */
-      assert (db_type != (DB_TYPE) 19);	/* DB_TYPE_VOBJ */
-      assert (db_type != (DB_TYPE) 21);	/* DB_TYPE_DB_VALUE */
-      assert (db_type != (DB_TYPE) 25);	/* DB_TYPE_DB_CHAR */
-      assert (db_type != (DB_TYPE) 26);	/* DB_TYPE_DB_NCHAR */
-      assert (db_type != (DB_TYPE) 27);	/* DB_TYPE_DB_VARNCHAR */
+      assert (db_type != (DB_TYPE) 2);  /* DB_TYPE_FLOAT */
+      assert (db_type != (DB_TYPE) 9);  /* DB_TYPE_ELO */
+      assert (db_type != (DB_TYPE) 11); /* DB_TYPE_TIMESTAMP */
+      assert (db_type != (DB_TYPE) 13); /* DB_TYPE_MONETARY */
+      assert (db_type != (DB_TYPE) 16); /* POINTER */
+      assert (db_type != (DB_TYPE) 17); /* ERROR */
+      assert (db_type != (DB_TYPE) 18); /* DB_TYPE_SMALLINT */
+      assert (db_type != (DB_TYPE) 19); /* DB_TYPE_VOBJ */
+      assert (db_type != (DB_TYPE) 21); /* DB_TYPE_DB_VALUE */
+      assert (db_type != (DB_TYPE) 25); /* DB_TYPE_DB_CHAR */
+      assert (db_type != (DB_TYPE) 26); /* DB_TYPE_DB_NCHAR */
+      assert (db_type != (DB_TYPE) 27); /* DB_TYPE_DB_VARNCHAR */
     }
 #endif
 
@@ -727,7 +698,7 @@ db_value_type (const DB_VALUE * value)
 int
 db_value_precision (const DB_VALUE * value)
 {
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   switch (DB_VALUE_DOMAIN_TYPE (value))
     {
     case DB_TYPE_NUMERIC:
@@ -830,19 +801,19 @@ db_value_is_null_nargs (int nargs, ...)
   int i;
   DB_VALUE *valp;
 
-  is_null = false;		/* init */
+  is_null = false;              /* init */
 
-  va_start (argptr, nargs);	/* variadic process start */
+  va_start (argptr, nargs);     /* variadic process start */
   for (i = 0; i < nargs; i++)
     {
-      valp = va_arg (argptr, DB_VALUE *);	/* get variadic arg */
+      valp = va_arg (argptr, DB_VALUE *);       /* get variadic arg */
       if (DB_IS_NULL (valp))
-	{
-	  is_null = true;
-	  break;
-	}
+        {
+          is_null = true;
+          break;
+        }
     }
-  va_end (argptr);		/* variadic process end */
+  va_end (argptr);              /* variadic process end */
 
   return is_null;
 }
@@ -881,9 +852,9 @@ db_idxkey_has_null (const DB_IDXKEY * key)
   for (i = 0; i < key->size; i++)
     {
       if (db_value_is_null (&(key->vals[i])) == true)
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
 
   return false;
@@ -909,13 +880,13 @@ db_value_eh_key (DB_VALUE * value)
     case DB_TYPE_OBJECT:
       obj = DB_GET_OBJECT (value);
       if (obj == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       else
-	{
-	  return WS_OID (obj);
-	}
+        {
+          return WS_OID (obj);
+        }
     default:
       return &value->data;
     }
@@ -932,7 +903,7 @@ db_value_put_db_data (DB_VALUE * value, const DB_DATA * data)
 {
   CHECK_2ARGS_ERROR (value, data);
 
-  value->data = *data;		/* structure copy */
+  value->data = *data;          /* structure copy */
   return NO_ERROR;
 }
 
@@ -989,8 +960,7 @@ db_value_alter_type (DB_VALUE * value, const DB_TYPE type)
  *
  */
 int
-db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type, void *input,
-		      const int input_length)
+db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type, void *input, const int input_length)
 {
   int error_code = NO_ERROR;
   int status = C_TO_VALUE_NOERROR;
@@ -1009,8 +979,7 @@ db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type, void *input,
   switch (c_type)
     {
     case DB_TYPE_C_VARCHAR:
-      status =
-	coerce_char_to_dbvalue_numeric (value, (char *) input, input_length);
+      status = coerce_char_to_dbvalue_numeric (value, (char *) input, input_length);
       break;
 
     default:
@@ -1021,8 +990,7 @@ db_value_put_numeric (DB_VALUE * value, const DB_TYPE_C c_type, void *input,
   if (status == C_TO_VALUE_UNSUPPORTED_CONVERSION)
     {
       error_code = ER_DB_UNSUPPORTED_CONVERSION;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_DB_UNSUPPORTED_CONVERSION, 1, "db_value_put");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DB_UNSUPPORTED_CONVERSION, 1, "db_value_put");
     }
   else if (status == C_TO_VALUE_CONVERSION_ERROR)
     {
@@ -1063,20 +1031,20 @@ db_make_null_nargs (int nargs, ...)
   int i;
   DB_VALUE *valp;
 
-  va_start (argptr, nargs);	/* variadic process start */
+  va_start (argptr, nargs);     /* variadic process start */
   for (i = 0; i < nargs; i++)
     {
-      valp = va_arg (argptr, DB_VALUE *);	/* get variadic arg */
+      valp = va_arg (argptr, DB_VALUE *);       /* get variadic arg */
       if (valp != NULL)
-	{
-	  if (db_make_null (valp) != NO_ERROR)
-	    {
-	      assert (false);
-	      error = ER_FAILED;	/* TODO - */
-	    }
-	}
+        {
+          if (db_make_null (valp) != NO_ERROR)
+            {
+              assert (false);
+              error = ER_FAILED;        /* TODO - */
+            }
+        }
     }
-  va_end (argptr);		/* variadic process end */
+  va_end (argptr);              /* variadic process end */
 
   return error;
 }
@@ -1098,10 +1066,10 @@ db_idxkey_make_null (DB_IDXKEY * key)
   for (i = 0; i < MAX_INDEX_KEY_LIST_NUM; i++)
     {
       if (db_make_null (&(key->vals[i])) != NO_ERROR)
-	{
-	  assert (false);
-	  error = ER_FAILED;	/* TODO - */
-	}
+        {
+          assert (false);
+          error = ER_FAILED;    /* TODO - */
+        }
     }
 
   return error;
@@ -1173,8 +1141,7 @@ db_make_double (DB_VALUE * value, const double num)
  * scale(in):
  */
 int
-db_make_numeric (DB_VALUE * value, const DB_C_NUMERIC num,
-		 const int precision, const int scale)
+db_make_numeric (DB_VALUE * value, const DB_C_NUMERIC num, const int precision, const int scale)
 {
   int error = NO_ERROR;
 
@@ -1207,8 +1174,7 @@ db_make_numeric (DB_VALUE * value, const DB_C_NUMERIC num,
  * size(in):
  */
 int
-db_make_db_char (DB_VALUE * value, const int collation_id, char *str,
-		 const int size)
+db_make_db_char (DB_VALUE * value, const int collation_id, char *str, const int size)
 {
   int error_status = NO_ERROR;
   DB_TYPE value_type;
@@ -1225,7 +1191,7 @@ db_make_db_char (DB_VALUE * value, const int collation_id, char *str,
     {
       error_status = ER_TP_CANT_COERCE;
       er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error_status, 2,
-	      pr_type_name (value_type), pr_type_name (DB_TYPE_VARCHAR));
+              pr_type_name (value_type), pr_type_name (DB_TYPE_VARCHAR));
       return error_status;
     }
 
@@ -1236,7 +1202,7 @@ db_make_db_char (DB_VALUE * value, const int collation_id, char *str,
    * kind of character string, assume the string is NULL
    * terminated.
    */
-  assert (size >= 0);		/* TODO - */
+  assert (size >= 0);           /* TODO - */
 
   if (size == DB_DEFAULT_STRING_LENGTH && QSTR_IS_CHAR (value_type))
     {
@@ -1256,8 +1222,7 @@ db_make_db_char (DB_VALUE * value, const int collation_id, char *str,
       /* TODO - We need to ensure that we don't exceed the max size
        * for the char value specified in the domain.
        */
-      value->domain.char_info.length =
-	MAX (value->domain.char_info.length, value->data.ch.size);
+      value->domain.char_info.length = MAX (value->domain.char_info.length, value->data.ch.size);
     }
 
   value->data.ch.buf = (char *) str;
@@ -1288,8 +1253,7 @@ db_make_db_char (DB_VALUE * value, const int collation_id, char *str,
  * bit_str_bit_size(in):
  */
 int
-db_make_varbit (DB_VALUE * value, const int max_bit_length,
-		const DB_C_VARBIT bit_str, const int bit_str_bit_size)
+db_make_varbit (DB_VALUE * value, const int max_bit_length, const DB_C_VARBIT bit_str, const int bit_str_bit_size)
 {
   int error;
 
@@ -1327,9 +1291,7 @@ db_make_string (DB_VALUE * value, const char *str)
       size = 0;
     }
 
-  error = db_make_varchar (value, DB_MAX_VARCHAR_PRECISION,
-			   (const DB_C_VARCHAR) str, size,
-			   LANG_COERCIBLE_COLL);
+  error = db_make_varchar (value, DB_MAX_VARCHAR_PRECISION, (const DB_C_VARCHAR) str, size, LANG_COERCIBLE_COLL);
 
   return error;
 }
@@ -1368,16 +1330,14 @@ db_make_string_copy (DB_VALUE * value, const char *str)
  */
 int
 db_make_varchar (DB_VALUE * value, const int max_char_length,
-		 DB_C_VARCHAR str, const int char_str_byte_size,
-		 const int collation_id)
+                 DB_C_VARCHAR str, const int char_str_byte_size, const int collation_id)
 {
   int error;
 
   CHECK_1ARG_ERROR (value);
 
-#if 0				/* TODO - */
-  assert (max_char_length == DB_DEFAULT_PRECISION
-	  || char_str_byte_size <= max_char_length);
+#if 0                           /* TODO - */
+  assert (max_char_length == DB_DEFAULT_PRECISION || char_str_byte_size <= max_char_length);
 #endif
 
   db_value_domain_init (value, DB_TYPE_VARCHAR, max_char_length, 0);
@@ -1430,18 +1390,16 @@ db_make_sequence (DB_VALUE * value, DB_SET * set)
   value->data.set = set;
   if (set)
     {
-      if ((set->set && setobj_type (set->set) == DB_TYPE_SEQUENCE)
-	  || set->disk_set)
-	{
-	  value->domain.general_info.is_null = 0;
-	}
+      if ((set->set && setobj_type (set->set) == DB_TYPE_SEQUENCE) || set->disk_set)
+        {
+          value->domain.general_info.is_null = 0;
+        }
       else
-	{
-	  error_status = ER_TP_CANT_COERCE;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  error_status, 2, pr_type_name (setobj_type (set->set)),
-		  pr_type_name (DB_TYPE_SEQUENCE));
-	}
+        {
+          error_status = ER_TP_CANT_COERCE;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                  error_status, 2, pr_type_name (setobj_type (set->set)), pr_type_name (DB_TYPE_SEQUENCE));
+        }
     }
   else
     {
@@ -1471,7 +1429,7 @@ db_make_collection (DB_VALUE * value, DB_COLLECTION * col)
      base type of the collection. */
   if (col == NULL)
     {
-      value->domain.general_info.type = DB_TYPE_SEQUENCE;	/* undefined */
+      value->domain.general_info.type = DB_TYPE_SEQUENCE;       /* undefined */
       value->data.set = NULL;
       value->domain.general_info.is_null = 1;
     }
@@ -1694,12 +1652,11 @@ db_get_string (const DB_VALUE * value)
       return NULL;
     }
 
-  assert (DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARCHAR
-	  || DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARBIT);
+  assert (DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARCHAR || DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARBIT);
 
   str = value->data.ch.buf;
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (str != NULL);
 #endif
 
@@ -1722,8 +1679,7 @@ db_get_varbit (const DB_VALUE * value, int *length)
       return NULL;
     }
 
-  assert (DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARCHAR
-	  || DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARBIT);
+  assert (DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARCHAR || DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARBIT);
 
   *length = value->data.ch.size;
   str = value->data.ch.buf;
@@ -1747,7 +1703,7 @@ db_get_string_size (const DB_VALUE * value)
   if (!QSTR_IS_CHAR_OR_BIT (db_type))
     {
       assert (false);
-      return size;		/* give up */
+      return size;              /* give up */
     }
   assert (db_type == DB_TYPE_VARCHAR || db_type == DB_TYPE_VARBIT);
 
@@ -1772,8 +1728,7 @@ db_get_string_collation (const DB_VALUE * value)
 {
   assert (value != NULL);
 
-  if (!(DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARCHAR
-	|| DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARBIT))
+  if (!(DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARCHAR || DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_VARBIT))
     {
       assert (false);
       return LANG_SYS_COLLATION;
@@ -1826,8 +1781,7 @@ db_get_object (const DB_VALUE * value)
       return NULL;
     }
 
-  assert (DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_OBJECT
-	  || DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_OID);
+  assert (DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_OBJECT || DB_VALUE_DOMAIN_TYPE (value) == DB_TYPE_OID);
 
   return value->data.op;
 }
@@ -1938,10 +1892,10 @@ db_value_copy (DB_VALUE * value)
     {
       new_ = pr_make_ext_value ();
       if (new_ == NULL)
-	{
-	  assert (false);
-	  return NULL;
-	}
+        {
+          assert (false);
+          return NULL;
+        }
 
       pr_clone_value (value, new_);
     }
@@ -2001,9 +1955,9 @@ db_idxkey_clone (const DB_IDXKEY * src, DB_IDXKEY * dest)
       dest->size = src->size;
 
       for (i = 0; error == NO_ERROR && i < src->size; i++)
-	{
-	  error = db_value_clone (&(src->vals[i]), &(dest->vals[i]));
-	}
+        {
+          error = db_value_clone (&(src->vals[i]), &(dest->vals[i]));
+        }
     }
 
   return error;
@@ -2045,19 +1999,19 @@ db_value_clear_nargs (int nargs, ...)
   int i;
   DB_VALUE *valp;
 
-  va_start (argptr, nargs);	/* variadic process start */
+  va_start (argptr, nargs);     /* variadic process start */
   for (i = 0; i < nargs; i++)
     {
-      valp = va_arg (argptr, DB_VALUE *);	/* get variadic arg */
+      valp = va_arg (argptr, DB_VALUE *);       /* get variadic arg */
       if (valp != NULL)
-	{
-	  if (pr_clear_value (valp) != NO_ERROR)
-	    {
-	      error = ER_FAILED;	/* TODO - */
-	    }
-	}
+        {
+          if (pr_clear_value (valp) != NO_ERROR)
+            {
+              error = ER_FAILED;        /* TODO - */
+            }
+        }
     }
-  va_end (argptr);		/* variadic process end */
+  va_end (argptr);              /* variadic process end */
 
   return error;
 }
@@ -2079,10 +2033,10 @@ db_idxkey_clear (DB_IDXKEY * key)
   for (i = 0; i < key->size; i++)
     {
       if (pr_clear_value (&(key->vals[i])) != NO_ERROR)
-	{
-	  assert (false);
-	  error = ER_FAILED;	/* TODO - */
-	}
+        {
+          assert (false);
+          error = ER_FAILED;    /* TODO - */
+        }
     }
 
   key->size = 0;
@@ -2139,9 +2093,9 @@ db_value_clear_array (DB_VALUE_ARRAY * value_array)
       /* don't check connection here, we always allow things to be freed */
       tmp_error = pr_clear_value (&value_array->vals[i]);
       if (tmp_error != NO_ERROR && error == NO_ERROR)
-	{
-	  error = tmp_error;
-	}
+        {
+          error = tmp_error;
+        }
     }
 
   return error;
@@ -2276,8 +2230,7 @@ db_type_to_db_domain (const DB_TYPE type)
  * desired_domain(in) : the desired domain of the coerced result.
  */
 int
-db_value_coerce (const DB_VALUE * src, DB_VALUE * dest,
-		 const DB_DOMAIN * desired_domain)
+db_value_coerce (const DB_VALUE * src, DB_VALUE * dest, const DB_DOMAIN * desired_domain)
 {
   TP_DOMAIN_STATUS status;
   int err = NO_ERROR;
@@ -2288,26 +2241,24 @@ db_value_coerce (const DB_VALUE * src, DB_VALUE * dest,
     case DOMAIN_ERROR:
       err = er_errid ();
       if (err != NO_ERROR)
-	{
-	  /* already set an error */
-	  break;
-	}
+        {
+          /* already set an error */
+          break;
+        }
       /* if no error has been set, fall through */
     case DOMAIN_INCOMPATIBLE:
       {
-	err = ER_TP_CANT_COERCE;
-	er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		err, 2,
-		pr_type_name ((DB_TYPE) src->domain.general_info.type),
-		pr_type_name (TP_DOMAIN_TYPE (desired_domain)));
+        err = ER_TP_CANT_COERCE;
+        er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                err, 2,
+                pr_type_name ((DB_TYPE) src->domain.general_info.type), pr_type_name (TP_DOMAIN_TYPE (desired_domain)));
       }
       break;
     case DOMAIN_OVERFLOW:
       {
-	err = ER_IT_DATA_OVERFLOW;
-	er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		ER_IT_DATA_OVERFLOW, 1,
-		pr_type_name (TP_DOMAIN_TYPE (desired_domain)));
+        err = ER_IT_DATA_OVERFLOW;
+        er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                ER_IT_DATA_OVERFLOW, 1, pr_type_name (TP_DOMAIN_TYPE (desired_domain)));
       }
       break;
     default:
@@ -2397,8 +2348,7 @@ db_get_oid (const DB_VALUE * value)
  */
 static int
 transfer_string (char *dst, int *xflen, int *outlen,
-		 const int dstlen, const char *src, const int srclen,
-		 const DB_TYPE_C type)
+                 const int dstlen, const char *src, const int srclen, const DB_TYPE_C type)
 {
   int code = NO_ERROR;
   int length, size;
@@ -2413,9 +2363,9 @@ transfer_string (char *dst, int *xflen, int *outlen,
       dst[*xflen] = '\0';
 
       if (outlen)
-	{
-	  *outlen = 0;
-	}
+        {
+          *outlen = 0;
+        }
     }
   else
     {
@@ -2432,15 +2382,14 @@ transfer_string (char *dst, int *xflen, int *outlen,
       dst[size] = '\0';
       *xflen = size;
       if (outlen)
-	{
-	  *outlen = srclen;
-	}
+        {
+          *outlen = srclen;
+        }
       else
-	{
-	  code = ER_UCI_NULL_IND_NEEDED;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_UCI_NULL_IND_NEEDED,
-		  0);
-	}
+        {
+          code = ER_UCI_NULL_IND_NEEDED;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_UCI_NULL_IND_NEEDED, 0);
+        }
     }
 
   return code;
@@ -2467,9 +2416,7 @@ transfer_string (char *dst, int *xflen, int *outlen,
  *              or fixed).
  */
 static int
-transfer_bit_string (char *buf, int *xflen, int *outlen,
-		     const int buflen, const DB_VALUE * src,
-		     const DB_TYPE_C c_type)
+transfer_bit_string (char *buf, int *xflen, int *outlen, const int buflen, const DB_VALUE * src, const DB_TYPE_C c_type)
 {
   DB_VALUE tmp_value;
   DB_DATA_STATUS data_status;
@@ -2487,18 +2434,18 @@ transfer_bit_string (char *buf, int *xflen, int *outlen,
     {
       *xflen = DB_GET_STRING_LENGTH (&tmp_value);
       if (data_status == DATA_STATUS_TRUNCATED)
-	{
-	  if (outlen != NULL)
-	    {
-	      *outlen = DB_GET_STRING_LENGTH (src);
-	    }
-	}
+        {
+          if (outlen != NULL)
+            {
+              *outlen = DB_GET_STRING_LENGTH (src);
+            }
+        }
 
       tmp_val_str = DB_GET_STRING (&tmp_value);
       if (tmp_val_str != NULL)
-	{
-	  memcpy (buf, tmp_val_str, DB_GET_STRING_SIZE (&tmp_value));
-	}
+        {
+          memcpy (buf, tmp_val_str, DB_GET_STRING_SIZE (&tmp_value));
+        }
 
       error_code = db_value_clear (&tmp_value);
     }
@@ -2531,23 +2478,22 @@ transfer_bit_string (char *buf, int *xflen, int *outlen,
  *
  */
 int
-db_value_get (DB_VALUE * value, const DB_TYPE_C c_type,
-	      void *buf, const int buflen, int *xflen, int *outlen)
+db_value_get (DB_VALUE * value, const DB_TYPE_C c_type, void *buf, const int buflen, int *xflen, int *outlen)
 {
   int error_code = NO_ERROR;
 
   if (DB_IS_NULL (value))
     {
       if (outlen)
-	{
-	  *outlen = -1;
-	  return NO_ERROR;
-	}
+        {
+          *outlen = -1;
+          return NO_ERROR;
+        }
       else
-	{
-	  error_code = ER_UCI_NULL_IND_NEEDED;
-	  goto error0;
-	}
+        {
+          error_code = ER_UCI_NULL_IND_NEEDED;
+          goto error0;
+        }
     }
 
   if ((buf == NULL) || (xflen == NULL))
@@ -2576,391 +2522,365 @@ db_value_get (DB_VALUE * value, const DB_TYPE_C c_type,
     {
     case DB_TYPE_INTEGER:
       {
-	int i = DB_GET_INTEGER (value);
+        int i = DB_GET_INTEGER (value);
 
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_INT:
-	    *(DB_C_INT *) buf = (DB_C_INT) i;
-	    *xflen = sizeof (DB_C_INT);
-	    break;
-	  case DB_TYPE_C_LONG:
-	    *(DB_C_LONG *) buf = (DB_C_LONG) i;
-	    *xflen = sizeof (DB_C_LONG);
-	    break;
-	  case DB_TYPE_C_DOUBLE:
-	    *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) i;
-	    *xflen = sizeof (DB_C_DOUBLE);
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    {
-	      char tmp[NUM_BUF_SIZE];
-	      sprintf (tmp, "%d", i);
-	      error_code =
-		transfer_string ((char *) buf, xflen, outlen, buflen, tmp,
-				 strlen (tmp), c_type);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_INT */
+        switch (c_type)
+          {
+          case DB_TYPE_C_INT:
+            *(DB_C_INT *) buf = (DB_C_INT) i;
+            *xflen = sizeof (DB_C_INT);
+            break;
+          case DB_TYPE_C_LONG:
+            *(DB_C_LONG *) buf = (DB_C_LONG) i;
+            *xflen = sizeof (DB_C_LONG);
+            break;
+          case DB_TYPE_C_DOUBLE:
+            *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) i;
+            *xflen = sizeof (DB_C_DOUBLE);
+            break;
+          case DB_TYPE_C_VARCHAR:
+            {
+              char tmp[NUM_BUF_SIZE];
+              sprintf (tmp, "%d", i);
+              error_code = transfer_string ((char *) buf, xflen, outlen, buflen, tmp, strlen (tmp), c_type);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_INT */
       break;
 
     case DB_TYPE_BIGINT:
       {
-	DB_BIGINT bigint = DB_GET_BIGINT (value);
+        DB_BIGINT bigint = DB_GET_BIGINT (value);
 
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_INT:
-	    *(DB_C_INT *) buf = (DB_C_INT) bigint;
-	    *xflen = sizeof (DB_C_INT);
-	    break;
-	  case DB_TYPE_C_BIGINT:
-	    *(DB_C_BIGINT *) buf = (DB_C_BIGINT) bigint;
-	    *xflen = sizeof (DB_C_BIGINT);
-	    break;
-	  case DB_TYPE_C_LONG:
-	    *(DB_C_LONG *) buf = (DB_C_LONG) bigint;
-	    *xflen = sizeof (DB_C_LONG);
-	    break;
-	  case DB_TYPE_C_DOUBLE:
-	    *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) bigint;
-	    *xflen = sizeof (DB_C_DOUBLE);
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    {
-	      char tmp[NUM_BUF_SIZE];
-	      sprintf (tmp, "%lld", (long long) bigint);
-	      error_code =
-		transfer_string ((char *) buf, xflen, outlen, buflen, tmp,
-				 strlen (tmp), c_type);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_BIGINT */
+        switch (c_type)
+          {
+          case DB_TYPE_C_INT:
+            *(DB_C_INT *) buf = (DB_C_INT) bigint;
+            *xflen = sizeof (DB_C_INT);
+            break;
+          case DB_TYPE_C_BIGINT:
+            *(DB_C_BIGINT *) buf = (DB_C_BIGINT) bigint;
+            *xflen = sizeof (DB_C_BIGINT);
+            break;
+          case DB_TYPE_C_LONG:
+            *(DB_C_LONG *) buf = (DB_C_LONG) bigint;
+            *xflen = sizeof (DB_C_LONG);
+            break;
+          case DB_TYPE_C_DOUBLE:
+            *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) bigint;
+            *xflen = sizeof (DB_C_DOUBLE);
+            break;
+          case DB_TYPE_C_VARCHAR:
+            {
+              char tmp[NUM_BUF_SIZE];
+              sprintf (tmp, "%lld", (long long) bigint);
+              error_code = transfer_string ((char *) buf, xflen, outlen, buflen, tmp, strlen (tmp), c_type);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_BIGINT */
       break;
 
     case DB_TYPE_DOUBLE:
       {
-	double d = DB_GET_DOUBLE (value);
+        double d = DB_GET_DOUBLE (value);
 
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_INT:
-	    {
-	      *(DB_C_INT *) buf = (DB_C_INT) d;
-	      *xflen = sizeof (DB_C_INT);
-	    }
-	    break;
-	  case DB_TYPE_C_LONG:
-	    {
-	      *(DB_C_LONG *) buf = (DB_C_LONG) d;
-	      *xflen = sizeof (DB_C_LONG);
-	    }
-	    break;
-	  case DB_TYPE_C_DOUBLE:
-	    {
-	      *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) d;
-	      *xflen = sizeof (DB_C_DOUBLE);
-	    }
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    {
-	      char tmp[NUM_BUF_SIZE];
-	      sprintf (tmp, "%f", (DB_C_DOUBLE) d);
-	      error_code =
-		transfer_string ((char *) buf, xflen, outlen, buflen, tmp,
-				 strlen (tmp), c_type);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_DOUBLE */
+        switch (c_type)
+          {
+          case DB_TYPE_C_INT:
+            {
+              *(DB_C_INT *) buf = (DB_C_INT) d;
+              *xflen = sizeof (DB_C_INT);
+            }
+            break;
+          case DB_TYPE_C_LONG:
+            {
+              *(DB_C_LONG *) buf = (DB_C_LONG) d;
+              *xflen = sizeof (DB_C_LONG);
+            }
+            break;
+          case DB_TYPE_C_DOUBLE:
+            {
+              *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) d;
+              *xflen = sizeof (DB_C_DOUBLE);
+            }
+            break;
+          case DB_TYPE_C_VARCHAR:
+            {
+              char tmp[NUM_BUF_SIZE];
+              sprintf (tmp, "%f", (DB_C_DOUBLE) d);
+              error_code = transfer_string ((char *) buf, xflen, outlen, buflen, tmp, strlen (tmp), c_type);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_DOUBLE */
       break;
 
     case DB_TYPE_VARCHAR:
       {
-	const char *s = DB_GET_STRING (value);
-	int n = DB_GET_STRING_SIZE (value);
+        const char *s = DB_GET_STRING (value);
+        int n = DB_GET_STRING_SIZE (value);
 
-	if (s == NULL)
-	  {
-	    goto invalid_args;
-	  }
+        if (s == NULL)
+          {
+            goto invalid_args;
+          }
 
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_INT:
-	    {
-	      char tmp[NUM_BUF_SIZE];
-	      if (n >= NUM_BUF_SIZE)
-		{
-		  goto invalid_args;
-		}
+        switch (c_type)
+          {
+          case DB_TYPE_C_INT:
+            {
+              char tmp[NUM_BUF_SIZE];
+              if (n >= NUM_BUF_SIZE)
+                {
+                  goto invalid_args;
+                }
 
-	      memcpy (tmp, s, n);
-	      tmp[n] = '\0';
-	      *(DB_C_INT *) buf = (DB_C_INT) atol (tmp);
-	      *xflen = sizeof (DB_C_INT);
-	    }
-	    break;
-	  case DB_TYPE_C_LONG:
-	    {
-	      char tmp[NUM_BUF_SIZE];
-	      if (n >= NUM_BUF_SIZE)
-		{
-		  goto invalid_args;
-		}
+              memcpy (tmp, s, n);
+              tmp[n] = '\0';
+              *(DB_C_INT *) buf = (DB_C_INT) atol (tmp);
+              *xflen = sizeof (DB_C_INT);
+            }
+            break;
+          case DB_TYPE_C_LONG:
+            {
+              char tmp[NUM_BUF_SIZE];
+              if (n >= NUM_BUF_SIZE)
+                {
+                  goto invalid_args;
+                }
 
-	      memcpy (tmp, s, n);
-	      tmp[n] = '\0';
-	      *(DB_C_LONG *) buf = (DB_C_LONG) atol (tmp);
-	      *xflen = sizeof (DB_C_LONG);
-	    }
-	    break;
-	  case DB_TYPE_C_DOUBLE:
-	    {
-	      char tmp[NUM_BUF_SIZE];
-	      if (n >= NUM_BUF_SIZE)
-		{
-		  goto invalid_args;
-		}
+              memcpy (tmp, s, n);
+              tmp[n] = '\0';
+              *(DB_C_LONG *) buf = (DB_C_LONG) atol (tmp);
+              *xflen = sizeof (DB_C_LONG);
+            }
+            break;
+          case DB_TYPE_C_DOUBLE:
+            {
+              char tmp[NUM_BUF_SIZE];
+              if (n >= NUM_BUF_SIZE)
+                {
+                  goto invalid_args;
+                }
 
-	      memcpy (tmp, s, n);
-	      tmp[n] = '\0';
-	      *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) atof (tmp);
-	      *xflen = sizeof (DB_C_DOUBLE);
-	    }
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    error_code = transfer_string ((char *) buf, xflen, outlen, buflen,
-					  s, n, c_type);
-	    break;
+              memcpy (tmp, s, n);
+              tmp[n] = '\0';
+              *(DB_C_DOUBLE *) buf = (DB_C_DOUBLE) atof (tmp);
+              *xflen = sizeof (DB_C_DOUBLE);
+            }
+            break;
+          case DB_TYPE_C_VARCHAR:
+            error_code = transfer_string ((char *) buf, xflen, outlen, buflen, s, n, c_type);
+            break;
 
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_VARCHAR */
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_VARCHAR */
       break;
 
     case DB_TYPE_OBJECT:
       {
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_OBJECT:
-	    {
-	      *(DB_OBJECT **) buf = (DB_OBJECT *) DB_GET_OBJECT (value);
-	      *xflen = sizeof (DB_OBJECT *);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_OBJECT */
+        switch (c_type)
+          {
+          case DB_TYPE_C_OBJECT:
+            {
+              *(DB_OBJECT **) buf = (DB_OBJECT *) DB_GET_OBJECT (value);
+              *xflen = sizeof (DB_OBJECT *);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_OBJECT */
       break;
 
     case DB_TYPE_SEQUENCE:
       {
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_SET:
-	    {
-	      *(DB_SET **) buf = (DB_SET *) DB_GET_SET (value);
-	      *xflen = sizeof (DB_SET *);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
+        switch (c_type)
+          {
+          case DB_TYPE_C_SET:
+            {
+              *(DB_SET **) buf = (DB_SET *) DB_GET_SET (value);
+              *xflen = sizeof (DB_SET *);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
       }
       break;
 
     case DB_TYPE_TIME:
       {
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_TIME:
-	    {
-	      *(DB_TIME *) buf = *(DB_GET_TIME (value));
-	      *xflen = sizeof (DB_TIME);
-	    }
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    {
-	      int n;
-	      char tmp[TIME_BUF_SIZE];
-	      n = db_time_to_string (tmp, sizeof (tmp), DB_GET_TIME (value));
-	      if (n < 0)
-		{
-		  goto invalid_args;
-		}
-	      error_code =
-		transfer_string ((char *) buf, xflen, outlen, buflen, tmp,
-				 strlen (tmp), c_type);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_TIME */
+        switch (c_type)
+          {
+          case DB_TYPE_C_TIME:
+            {
+              *(DB_TIME *) buf = *(DB_GET_TIME (value));
+              *xflen = sizeof (DB_TIME);
+            }
+            break;
+          case DB_TYPE_C_VARCHAR:
+            {
+              int n;
+              char tmp[TIME_BUF_SIZE];
+              n = db_time_to_string (tmp, sizeof (tmp), DB_GET_TIME (value));
+              if (n < 0)
+                {
+                  goto invalid_args;
+                }
+              error_code = transfer_string ((char *) buf, xflen, outlen, buflen, tmp, strlen (tmp), c_type);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_TIME */
       break;
 
     case DB_TYPE_DATETIME:
       {
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_DATETIME:
-	    {
-	      *(DB_DATETIME *) buf = *(DB_GET_DATETIME (value));
-	      *xflen = sizeof (DB_DATETIME);
-	    }
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    {
-	      int n;
-	      char tmp[DATETIME_BUF_SIZE];
-	      n = db_datetime_to_string (tmp,
-					 sizeof (tmp),
-					 DB_GET_DATETIME (value));
-	      if (n < 0)
-		{
-		  goto invalid_args;
-		}
-	      error_code =
-		transfer_string ((char *) buf, xflen, outlen, buflen, tmp,
-				 strlen (tmp), c_type);
+        switch (c_type)
+          {
+          case DB_TYPE_C_DATETIME:
+            {
+              *(DB_DATETIME *) buf = *(DB_GET_DATETIME (value));
+              *xflen = sizeof (DB_DATETIME);
+            }
+            break;
+          case DB_TYPE_C_VARCHAR:
+            {
+              int n;
+              char tmp[DATETIME_BUF_SIZE];
+              n = db_datetime_to_string (tmp, sizeof (tmp), DB_GET_DATETIME (value));
+              if (n < 0)
+                {
+                  goto invalid_args;
+                }
+              error_code = transfer_string ((char *) buf, xflen, outlen, buflen, tmp, strlen (tmp), c_type);
 
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_DATETIME */
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_DATETIME */
 
     case DB_TYPE_DATE:
       {
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_DATE:
-	    {
-	      *(DB_DATE *) buf = *(DB_GET_DATE (value));
-	      *xflen = sizeof (DB_DATE);
-	    }
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    {
-	      int n;
-	      char tmp[DATE_BUF_SIZE];
-	      n = db_date_to_string (tmp, sizeof (tmp), DB_GET_DATE (value));
-	      if (n < 0)
-		{
-		  goto invalid_args;
-		}
-	      error_code =
-		transfer_string ((char *) buf, xflen, outlen, buflen, tmp,
-				 strlen (tmp), c_type);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_DATE */
+        switch (c_type)
+          {
+          case DB_TYPE_C_DATE:
+            {
+              *(DB_DATE *) buf = *(DB_GET_DATE (value));
+              *xflen = sizeof (DB_DATE);
+            }
+            break;
+          case DB_TYPE_C_VARCHAR:
+            {
+              int n;
+              char tmp[DATE_BUF_SIZE];
+              n = db_date_to_string (tmp, sizeof (tmp), DB_GET_DATE (value));
+              if (n < 0)
+                {
+                  goto invalid_args;
+                }
+              error_code = transfer_string ((char *) buf, xflen, outlen, buflen, tmp, strlen (tmp), c_type);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_DATE */
       break;
 
     case DB_TYPE_NUMERIC:
       {
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_INT:
-	  case DB_TYPE_C_LONG:
-	  case DB_TYPE_C_BIGINT:
-	    {
-	      DB_VALUE v;
-	      DB_DATA_STATUS status;
+        switch (c_type)
+          {
+          case DB_TYPE_C_INT:
+          case DB_TYPE_C_LONG:
+          case DB_TYPE_C_BIGINT:
+            {
+              DB_VALUE v;
+              DB_DATA_STATUS status;
 
-	      db_value_domain_init (&v,
-				    DB_TYPE_BIGINT,
-				    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
-	      (void) numeric_db_value_coerce_from_num (value, &v, &status);
-	      if (status != NO_ERROR)
-		{
-		  goto invalid_args;
-		}
-	      error_code = db_value_get (&v, c_type, buf, buflen,
-					 xflen, outlen);
-	      pr_clear_value (&v);
-	    }
-	    break;
-	  case DB_TYPE_C_DOUBLE:
-	    {
-	      DB_VALUE v;
-	      DB_DATA_STATUS status;
+              db_value_domain_init (&v, DB_TYPE_BIGINT, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+              (void) numeric_db_value_coerce_from_num (value, &v, &status);
+              if (status != NO_ERROR)
+                {
+                  goto invalid_args;
+                }
+              error_code = db_value_get (&v, c_type, buf, buflen, xflen, outlen);
+              pr_clear_value (&v);
+            }
+            break;
+          case DB_TYPE_C_DOUBLE:
+            {
+              DB_VALUE v;
+              DB_DATA_STATUS status;
 
-	      db_value_domain_init (&v,
-				    DB_TYPE_DOUBLE,
-				    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
-	      (void) numeric_db_value_coerce_from_num (value, &v, &status);
-	      if (status != NO_ERROR)
-		{
-		  goto invalid_args;
-		}
-	      error_code = db_value_get (&v, c_type, buf, buflen, xflen,
-					 outlen);
-	      pr_clear_value (&v);
-	    }
-	    break;
-	  case DB_TYPE_C_VARCHAR:
-	    {
-	      DB_VALUE v;
-	      DB_DATA_STATUS status;
+              db_value_domain_init (&v, DB_TYPE_DOUBLE, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+              (void) numeric_db_value_coerce_from_num (value, &v, &status);
+              if (status != NO_ERROR)
+                {
+                  goto invalid_args;
+                }
+              error_code = db_value_get (&v, c_type, buf, buflen, xflen, outlen);
+              pr_clear_value (&v);
+            }
+            break;
+          case DB_TYPE_C_VARCHAR:
+            {
+              DB_VALUE v;
+              DB_DATA_STATUS status;
 
-	      db_value_domain_init (&v,
-				    DB_TYPE_VARCHAR,
-				    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
-	      (void) numeric_db_value_coerce_from_num (value, &v, &status);
-	      if (status != NO_ERROR)
-		{
-		  goto invalid_args;
-		}
-	      error_code = db_value_get (&v, c_type, buf, buflen, xflen,
-					 outlen);
-	      pr_clear_value (&v);
-	    }
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_NUMERIC */
+              db_value_domain_init (&v, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+              (void) numeric_db_value_coerce_from_num (value, &v, &status);
+              if (status != NO_ERROR)
+                {
+                  goto invalid_args;
+                }
+              error_code = db_value_get (&v, c_type, buf, buflen, xflen, outlen);
+              pr_clear_value (&v);
+            }
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_NUMERIC */
       break;
 
     case DB_TYPE_VARBIT:
       {
-	switch (c_type)
-	  {
-	  case DB_TYPE_C_VARBIT:
-	    error_code =
-	      transfer_bit_string ((char *) buf, xflen, outlen, buflen, value,
-				   c_type);
-	    break;
-	  default:
-	    goto unsupported_conversion;
-	  }
-      }				/* DB_TYPE_VARBIT */
+        switch (c_type)
+          {
+          case DB_TYPE_C_VARBIT:
+            error_code = transfer_bit_string ((char *) buf, xflen, outlen, buflen, value, c_type);
+            break;
+          default:
+            goto unsupported_conversion;
+          }
+      }                         /* DB_TYPE_VARBIT */
       break;
 
     case DB_TYPE_VARIABLE:
     case DB_TYPE_SUB:
-    case DB_TYPE_OID:		/* Probably won't ever happen */
+    case DB_TYPE_OID:          /* Probably won't ever happen */
       goto unsupported_conversion;
 
     case DB_TYPE_FIRST:
     case DB_TYPE_RESULTSET:
-    case DB_TYPE_TABLE:	/* Should be impossible. */
+    case DB_TYPE_TABLE:        /* Should be impossible. */
       goto invalid_args;
 
     default:
@@ -2983,8 +2903,7 @@ error0:
   return error_code;
 
 unsupported_conversion:
-  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	  ER_DB_UNSUPPORTED_CONVERSION, 1, "db_value_get");
+  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DB_UNSUPPORTED_CONVERSION, 1, "db_value_get");
   return ER_DB_UNSUPPORTED_CONVERSION;
 }
 #endif
@@ -3015,43 +2934,40 @@ coerce_char_to_dbvalue_numeric (DB_VALUE * value, char *buf, const int buflen)
 #if defined (ENABLE_UNUSED_FUNCTION)
     case DB_TYPE_VARCHAR:
       {
-	int char_count;
-	int precision = DB_VALUE_PRECISION (value);
+        int char_count;
+        int precision = DB_VALUE_PRECISION (value);
 
-	intl_char_count ((unsigned char *) buf, buflen, &char_count);
+        intl_char_count ((unsigned char *) buf, buflen, &char_count);
 
-	if (precision == TP_FLOATING_PRECISION_VALUE && buflen != 0)
-	  {
-	    precision = char_count;
-	  }
+        if (precision == TP_FLOATING_PRECISION_VALUE && buflen != 0)
+          {
+            precision = char_count;
+          }
 
-	if ((precision == TP_FLOATING_PRECISION_VALUE)
-	    || (db_type == DB_TYPE_VARCHAR && precision >= char_count))
-	  {
-	    qstr_make_typed_string (db_type, value, precision, buf, buflen,
-				    LANG_COERCIBLE_COLL);
-	  }
-	else
-	  {
-	    DB_VALUE tmp_value;
-	    DB_DATA_STATUS data_status;
-	    int error;
+        if ((precision == TP_FLOATING_PRECISION_VALUE) || (db_type == DB_TYPE_VARCHAR && precision >= char_count))
+          {
+            qstr_make_typed_string (db_type, value, precision, buf, buflen, LANG_COERCIBLE_COLL);
+          }
+        else
+          {
+            DB_VALUE tmp_value;
+            DB_DATA_STATUS data_status;
+            int error;
 
-	    qstr_make_typed_string (db_type, &tmp_value, precision, buf,
-				    buflen, LANG_COERCIBLE_COLL);
+            qstr_make_typed_string (db_type, &tmp_value, precision, buf, buflen, LANG_COERCIBLE_COLL);
 
-	    error = db_char_string_coerce (&tmp_value, value, &data_status);
-	    if (error != NO_ERROR)
-	      {
-		status = C_TO_VALUE_CONVERSION_ERROR;
-	      }
-	    else if (data_status == DATA_STATUS_TRUNCATED)
-	      {
-		status = C_TO_VALUE_TRUNCATION_ERROR;
-	      }
+            error = db_char_string_coerce (&tmp_value, value, &data_status);
+            if (error != NO_ERROR)
+              {
+                status = C_TO_VALUE_CONVERSION_ERROR;
+              }
+            else if (data_status == DATA_STATUS_TRUNCATED)
+              {
+                status = C_TO_VALUE_TRUNCATION_ERROR;
+              }
 
-	    (void) db_value_clear (&tmp_value);
-	  }
+            (void) db_value_clear (&tmp_value);
+          }
       }
       break;
     case DB_TYPE_DOUBLE:
@@ -3061,47 +2977,44 @@ coerce_char_to_dbvalue_numeric (DB_VALUE * value, char *buf, const int buflen)
     case DB_TYPE_TIME:
     case DB_TYPE_DATETIME:
       if (db_string_value (buf, buflen, "", value) == NULL)
-	{
-	  status = C_TO_VALUE_CONVERSION_ERROR;
-	}
+        {
+          status = C_TO_VALUE_CONVERSION_ERROR;
+        }
       break;
 #endif
     case DB_TYPE_NUMERIC:
       {
-	DB_VALUE tmp_value;
-	unsigned char new_num[DB_NUMERIC_BUF_SIZE];
-	int desired_precision = DB_VALUE_PRECISION (value);
-	int desired_scale = DB_VALUE_SCALE (value);
+        DB_VALUE tmp_value;
+        unsigned char new_num[DB_NUMERIC_BUF_SIZE];
+        int desired_precision = DB_VALUE_PRECISION (value);
+        int desired_scale = DB_VALUE_SCALE (value);
 
-	/* string_to_num will coerce the string to a numeric, but will
-	 * set the precision and scale based on the value passed.
-	 * Then we call num_to_num to coerce to the desired precision
-	 * and scale.
-	 */
+        /* string_to_num will coerce the string to a numeric, but will
+         * set the precision and scale based on the value passed.
+         * Then we call num_to_num to coerce to the desired precision
+         * and scale.
+         */
 
-	if (numeric_coerce_string_to_num (buf, buflen, &tmp_value) !=
-	    NO_ERROR)
-	  {
-	    status = C_TO_VALUE_CONVERSION_ERROR;
-	  }
-	else if (numeric_coerce_num_to_num (db_get_numeric (&tmp_value),
-					    DB_VALUE_PRECISION (&tmp_value),
-					    DB_VALUE_SCALE (&tmp_value),
-					    desired_precision, desired_scale,
-					    new_num) != NO_ERROR)
-	  {
-	    status = C_TO_VALUE_CONVERSION_ERROR;
-	  }
-	else
-	  {
-	    /* Yes, I know that the precision and scale are already
-	     * set, but this is neater than just assigning the value.
-	     */
-	    db_make_numeric (value, new_num, desired_precision,
-			     desired_scale);
-	  }
+        if (numeric_coerce_string_to_num (buf, buflen, &tmp_value) != NO_ERROR)
+          {
+            status = C_TO_VALUE_CONVERSION_ERROR;
+          }
+        else if (numeric_coerce_num_to_num (db_get_numeric (&tmp_value),
+                                            DB_VALUE_PRECISION (&tmp_value),
+                                            DB_VALUE_SCALE (&tmp_value),
+                                            desired_precision, desired_scale, new_num) != NO_ERROR)
+          {
+            status = C_TO_VALUE_CONVERSION_ERROR;
+          }
+        else
+          {
+            /* Yes, I know that the precision and scale are already
+             * set, but this is neater than just assigning the value.
+             */
+            db_make_numeric (value, new_num, desired_precision, desired_scale);
+          }
 
-	db_value_clear (&tmp_value);
+        db_value_clear (&tmp_value);
       }
       break;
     default:
@@ -3128,8 +3041,7 @@ coerce_char_to_dbvalue_numeric (DB_VALUE * value, char *buf, const int buflen)
  */
 
 static int
-coerce_numeric_to_dbvalue (DB_VALUE * value, char *buf,
-			   const DB_TYPE_C c_type)
+coerce_numeric_to_dbvalue (DB_VALUE * value, char *buf, const DB_TYPE_C c_type)
 {
   int status = C_TO_VALUE_NOERROR;
   DB_TYPE db_type = DB_VALUE_DOMAIN_TYPE (value);
@@ -3139,88 +3051,88 @@ coerce_numeric_to_dbvalue (DB_VALUE * value, char *buf,
     {
     case DB_TYPE_C_INT:
       {
-	DB_C_INT num = *(DB_C_INT *) buf;
+        DB_C_INT num = *(DB_C_INT *) buf;
 
-	switch (db_type)
-	  {
-	  case DB_TYPE_NUMERIC:
-	    db_make_int (&value2, (int) num);
-	    if (qdata_coerce_dbval_to_numeric (&value2, value) != NO_ERROR)
-	      {
-		status = C_TO_VALUE_NOERROR;
-	      }
-	    break;
-	  case DB_TYPE_INTEGER:
-	    db_make_int (value, (int) num);
-	    break;
-	  case DB_TYPE_BIGINT:
-	    db_make_bigint (value, (DB_C_BIGINT) num);
-	    break;
-	  case DB_TYPE_DOUBLE:
-	    db_make_double (value, (DB_C_DOUBLE) num);
-	    break;
-	  default:
-	    status = C_TO_VALUE_UNSUPPORTED_CONVERSION;
-	    break;
-	  }
+        switch (db_type)
+          {
+          case DB_TYPE_NUMERIC:
+            db_make_int (&value2, (int) num);
+            if (qdata_coerce_dbval_to_numeric (&value2, value) != NO_ERROR)
+              {
+                status = C_TO_VALUE_NOERROR;
+              }
+            break;
+          case DB_TYPE_INTEGER:
+            db_make_int (value, (int) num);
+            break;
+          case DB_TYPE_BIGINT:
+            db_make_bigint (value, (DB_C_BIGINT) num);
+            break;
+          case DB_TYPE_DOUBLE:
+            db_make_double (value, (DB_C_DOUBLE) num);
+            break;
+          default:
+            status = C_TO_VALUE_UNSUPPORTED_CONVERSION;
+            break;
+          }
       }
       break;
 
     case DB_TYPE_C_LONG:
       {
-	DB_C_LONG num = *(DB_C_LONG *) buf;
+        DB_C_LONG num = *(DB_C_LONG *) buf;
 
-	switch (db_type)
-	  {
-	  case DB_TYPE_NUMERIC:
-	    db_make_int (&value2, (int) num);
-	    if (qdata_coerce_dbval_to_numeric (&value2, value) != NO_ERROR)
-	      {
-		status = C_TO_VALUE_NOERROR;
-	      }
-	    break;
-	  case DB_TYPE_INTEGER:
-	    db_make_int (value, (int) num);
-	    break;
-	  case DB_TYPE_BIGINT:
-	    db_make_bigint (value, (DB_C_BIGINT) num);
-	    break;
-	  case DB_TYPE_DOUBLE:
-	    db_make_double (value, (DB_C_DOUBLE) num);
-	    break;
-	  default:
-	    status = C_TO_VALUE_UNSUPPORTED_CONVERSION;
-	    break;
-	  }
+        switch (db_type)
+          {
+          case DB_TYPE_NUMERIC:
+            db_make_int (&value2, (int) num);
+            if (qdata_coerce_dbval_to_numeric (&value2, value) != NO_ERROR)
+              {
+                status = C_TO_VALUE_NOERROR;
+              }
+            break;
+          case DB_TYPE_INTEGER:
+            db_make_int (value, (int) num);
+            break;
+          case DB_TYPE_BIGINT:
+            db_make_bigint (value, (DB_C_BIGINT) num);
+            break;
+          case DB_TYPE_DOUBLE:
+            db_make_double (value, (DB_C_DOUBLE) num);
+            break;
+          default:
+            status = C_TO_VALUE_UNSUPPORTED_CONVERSION;
+            break;
+          }
       }
       break;
 
     case DB_TYPE_C_DOUBLE:
       {
-	DB_C_DOUBLE num = *(DB_C_DOUBLE *) buf;
+        DB_C_DOUBLE num = *(DB_C_DOUBLE *) buf;
 
-	switch (db_type)
-	  {
-	  case DB_TYPE_NUMERIC:
-	    db_make_int (&value2, (int) num);
-	    if (qdata_coerce_dbval_to_numeric (&value2, value) != NO_ERROR)
-	      {
-		status = C_TO_VALUE_NOERROR;
-	      }
-	    break;
-	  case DB_TYPE_INTEGER:
-	    db_make_int (value, (int) num);
-	    break;
-	  case DB_TYPE_BIGINT:
-	    db_make_bigint (value, (DB_C_BIGINT) num);
-	    break;
-	  case DB_TYPE_DOUBLE:
-	    db_make_double (value, (DB_C_DOUBLE) num);
-	    break;
-	  default:
-	    status = C_TO_VALUE_UNSUPPORTED_CONVERSION;
-	    break;
-	  }
+        switch (db_type)
+          {
+          case DB_TYPE_NUMERIC:
+            db_make_int (&value2, (int) num);
+            if (qdata_coerce_dbval_to_numeric (&value2, value) != NO_ERROR)
+              {
+                status = C_TO_VALUE_NOERROR;
+              }
+            break;
+          case DB_TYPE_INTEGER:
+            db_make_int (value, (int) num);
+            break;
+          case DB_TYPE_BIGINT:
+            db_make_bigint (value, (DB_C_BIGINT) num);
+            break;
+          case DB_TYPE_DOUBLE:
+            db_make_double (value, (DB_C_DOUBLE) num);
+            break;
+          default:
+            status = C_TO_VALUE_UNSUPPORTED_CONVERSION;
+            break;
+          }
       }
       break;
 
@@ -3257,76 +3169,73 @@ coerce_binary_to_dbvalue (DB_VALUE * value, char *buf, const int buflen)
     {
     case DB_TYPE_VARBIT:
       {
-	int precision = DB_VALUE_PRECISION (value);
+        int precision = DB_VALUE_PRECISION (value);
 
-	if (precision == TP_FLOATING_PRECISION_VALUE && buflen != 0)
-	  {
-	    precision = buflen;
-	  }
+        if (precision == TP_FLOATING_PRECISION_VALUE && buflen != 0)
+          {
+            precision = buflen;
+          }
 
-	if (precision == TP_FLOATING_PRECISION_VALUE || precision >= buflen)
-	  {
-	    qstr_make_typed_string (db_type, value, precision, buf, buflen,
-				    0);
-	  }
-	else
-	  {
-	    DB_VALUE tmp_value;
-	    DB_DATA_STATUS data_status;
-	    int error;
+        if (precision == TP_FLOATING_PRECISION_VALUE || precision >= buflen)
+          {
+            qstr_make_typed_string (db_type, value, precision, buf, buflen, 0);
+          }
+        else
+          {
+            DB_VALUE tmp_value;
+            DB_DATA_STATUS data_status;
+            int error;
 
-	    qstr_make_typed_string (db_type, &tmp_value, precision, buf,
-				    buflen, 0);
+            qstr_make_typed_string (db_type, &tmp_value, precision, buf, buflen, 0);
 
-	    error = db_bit_string_coerce (&tmp_value, value, &data_status);
-	    if (error != NO_ERROR)
-	      {
-		status = C_TO_VALUE_CONVERSION_ERROR;
-	      }
-	    else if (data_status == DATA_STATUS_TRUNCATED)
-	      {
-		status = C_TO_VALUE_TRUNCATION_ERROR;
-	      }
+            error = db_bit_string_coerce (&tmp_value, value, &data_status);
+            if (error != NO_ERROR)
+              {
+                status = C_TO_VALUE_CONVERSION_ERROR;
+              }
+            else if (data_status == DATA_STATUS_TRUNCATED)
+              {
+                status = C_TO_VALUE_TRUNCATION_ERROR;
+              }
 
-	    (void) db_value_clear (&tmp_value);
-	  }
+            (void) db_value_clear (&tmp_value);
+          }
       }
       break;
 #if 0
     case DB_TYPE_VARCHAR:
       {
-	int error_code;
-	DB_VALUE tmp_value;
-	DB_DATA_STATUS data_status;
+        int error_code;
+        DB_VALUE tmp_value;
+        DB_DATA_STATUS data_status;
 
-	db_make_varchar (&tmp_value, DB_DEFAULT_PRECISION, buf,
-			 BITS_TO_BYTES (buflen), LANG_COERCIBLE_COLL);
+        db_make_varchar (&tmp_value, DB_DEFAULT_PRECISION, buf, BITS_TO_BYTES (buflen), LANG_COERCIBLE_COLL);
 
-	/*
-	 *  If the precision is not specified, fix it to
-	 *  the input precision otherwise db_char_string_coerce()
-	 *  will fail.
-	 */
-	if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
-	  {
-	    db_value_domain_init (value, db_type, BITS_TO_BYTES (buflen), 0);
-	  }
+        /*
+         *  If the precision is not specified, fix it to
+         *  the input precision otherwise db_char_string_coerce()
+         *  will fail.
+         */
+        if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
+          {
+            db_value_domain_init (value, db_type, BITS_TO_BYTES (buflen), 0);
+          }
 
-	error_code = db_char_string_coerce (&tmp_value, value, &data_status);
-	if (error_code != NO_ERROR)
-	  {
-	    status = C_TO_VALUE_CONVERSION_ERROR;
-	  }
-	else if (data_status == DATA_STATUS_TRUNCATED)
-	  {
-	    status = C_TO_VALUE_TRUNCATION_ERROR;
-	  }
+        error_code = db_char_string_coerce (&tmp_value, value, &data_status);
+        if (error_code != NO_ERROR)
+          {
+            status = C_TO_VALUE_CONVERSION_ERROR;
+          }
+        else if (data_status == DATA_STATUS_TRUNCATED)
+          {
+            status = C_TO_VALUE_TRUNCATION_ERROR;
+          }
 
-	error_code = db_value_clear (&tmp_value);
-	if (error_code != NO_ERROR)
-	  {
-	    status = C_TO_VALUE_CONVERSION_ERROR;
-	  }
+        error_code = db_value_clear (&tmp_value);
+        if (error_code != NO_ERROR)
+          {
+            status = C_TO_VALUE_CONVERSION_ERROR;
+          }
       }
       break;
     case DB_TYPE_INTEGER:
@@ -3381,46 +3290,45 @@ coerce_date_to_dbvalue (DB_VALUE * value, char *buf)
     {
     case DB_TYPE_VARCHAR:
       {
-	DB_DATE db_date;
-	char tmp[DATE_BUF_SIZE];
+        DB_DATE db_date;
+        char tmp[DATE_BUF_SIZE];
 
-	if (db_date_encode (&db_date, date->month, date->day, date->year) !=
-	    NO_ERROR || db_date_to_string (tmp, DATE_BUF_SIZE, &db_date) == 0)
-	  {
-	    status = C_TO_VALUE_CONVERSION_ERROR;
-	  }
-	else
-	  {
-	    DB_VALUE tmp_value;
-	    DB_DATA_STATUS data_status;
-	    int length = strlen (tmp);
+        if (db_date_encode (&db_date, date->month, date->day, date->year) !=
+            NO_ERROR || db_date_to_string (tmp, DATE_BUF_SIZE, &db_date) == 0)
+          {
+            status = C_TO_VALUE_CONVERSION_ERROR;
+          }
+        else
+          {
+            DB_VALUE tmp_value;
+            DB_DATA_STATUS data_status;
+            int length = strlen (tmp);
 
-	    if (length == 0)
-	      {
-		length = 1;
-	      }
+            if (length == 0)
+              {
+                length = 1;
+              }
 
-	    qstr_make_typed_string (db_type, &tmp_value, length, tmp, length,
-				    LANG_COERCIBLE_COLL);
+            qstr_make_typed_string (db_type, &tmp_value, length, tmp, length, LANG_COERCIBLE_COLL);
 
-	    /*
-	     *  If the precision is not specified, fix it to
-	     *  the input precision otherwise db_char_string_coerce()
-	     *  will fail.
-	     */
-	    if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
-	      {
-		db_value_domain_init (value, db_type, length, 0);
-	      }
+            /*
+             *  If the precision is not specified, fix it to
+             *  the input precision otherwise db_char_string_coerce()
+             *  will fail.
+             */
+            if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
+              {
+                db_value_domain_init (value, db_type, length, 0);
+              }
 
-	    (void) db_char_string_coerce (&tmp_value, value, &data_status);
-	    if (data_status == DATA_STATUS_TRUNCATED)
-	      {
-		status = C_TO_VALUE_TRUNCATION_ERROR;
-	      }
+            (void) db_char_string_coerce (&tmp_value, value, &data_status);
+            if (data_status == DATA_STATUS_TRUNCATED)
+              {
+                status = C_TO_VALUE_TRUNCATION_ERROR;
+              }
 
-	    (void) db_value_clear (&tmp_value);
-	  }
+            (void) db_value_clear (&tmp_value);
+          }
       }
       break;
     case DB_TYPE_DATE:
@@ -3459,47 +3367,45 @@ coerce_time_to_dbvalue (DB_VALUE * value, char *buf)
     {
     case DB_TYPE_VARCHAR:
       {
-	DB_TIME db_time;
-	char tmp[TIME_BUF_SIZE];
+        DB_TIME db_time;
+        char tmp[TIME_BUF_SIZE];
 
-	db_time_encode (&db_time, c_time->hour, c_time->minute,
-			c_time->second);
-	if (db_time_string (&db_time, "", tmp, TIME_BUF_SIZE) != 0)
-	  {
-	    status = C_TO_VALUE_CONVERSION_ERROR;
-	  }
-	else
-	  {
-	    DB_VALUE tmp_value;
-	    DB_DATA_STATUS data_status;
-	    int length = strlen (tmp);
+        db_time_encode (&db_time, c_time->hour, c_time->minute, c_time->second);
+        if (db_time_string (&db_time, "", tmp, TIME_BUF_SIZE) != 0)
+          {
+            status = C_TO_VALUE_CONVERSION_ERROR;
+          }
+        else
+          {
+            DB_VALUE tmp_value;
+            DB_DATA_STATUS data_status;
+            int length = strlen (tmp);
 
-	    if (length == 0)
-	      {
-		length = 1;
-	      }
+            if (length == 0)
+              {
+                length = 1;
+              }
 
-	    qstr_make_typed_string (db_type, &tmp_value, length, tmp, length,
-				    LANG_COERCIBLE_COLL);
+            qstr_make_typed_string (db_type, &tmp_value, length, tmp, length, LANG_COERCIBLE_COLL);
 
-	    /*
-	     *  If the precision is not specified, fix it to
-	     *  the input precision otherwise db_char_string_coerce()
-	     *  will fail.
-	     */
-	    if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
-	      {
-		db_value_domain_init (value, db_type, length, 0);
-	      }
+            /*
+             *  If the precision is not specified, fix it to
+             *  the input precision otherwise db_char_string_coerce()
+             *  will fail.
+             */
+            if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
+              {
+                db_value_domain_init (value, db_type, length, 0);
+              }
 
-	    (void) db_char_string_coerce (&tmp_value, value, &data_status);
-	    if (data_status == DATA_STATUS_TRUNCATED)
-	      {
-		status = C_TO_VALUE_TRUNCATION_ERROR;
-	      }
+            (void) db_char_string_coerce (&tmp_value, value, &data_status);
+            if (data_status == DATA_STATUS_TRUNCATED)
+              {
+                status = C_TO_VALUE_TRUNCATION_ERROR;
+              }
 
-	    (void) db_value_clear (&tmp_value);
-	  }
+            (void) db_value_clear (&tmp_value);
+          }
       }
       break;
     case DB_TYPE_TIME:
@@ -3538,66 +3444,65 @@ coerce_datetime_to_dbvalue (DB_VALUE * value, char *buf)
     {
     case DB_TYPE_VARCHAR:
       {
-	char tmp[DATETIME_BUF_SIZE];
+        char tmp[DATETIME_BUF_SIZE];
 
-	if (db_datetime_string (datetime, "", tmp, DATETIME_BUF_SIZE) != 0)
-	  {
-	    status = C_TO_VALUE_CONVERSION_ERROR;
-	  }
-	else
-	  {
-	    DB_VALUE tmp_value;
-	    DB_DATA_STATUS data_status;
-	    int length = strlen (tmp);
+        if (db_datetime_string (datetime, "", tmp, DATETIME_BUF_SIZE) != 0)
+          {
+            status = C_TO_VALUE_CONVERSION_ERROR;
+          }
+        else
+          {
+            DB_VALUE tmp_value;
+            DB_DATA_STATUS data_status;
+            int length = strlen (tmp);
 
-	    if (length == 0)
-	      {
-		length = 1;
-	      }
+            if (length == 0)
+              {
+                length = 1;
+              }
 
-	    qstr_make_typed_string (db_type, &tmp_value, length, tmp, length,
-				    LANG_COERCIBLE_COLL);
+            qstr_make_typed_string (db_type, &tmp_value, length, tmp, length, LANG_COERCIBLE_COLL);
 
-	    /*
-	     *  If the precision is not specified, fix it to
-	     *  the input precision otherwise db_char_string_coerce()
-	     *  will fail.
-	     */
-	    if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
-	      {
-		db_value_domain_init (value, db_type, length, 0);
-	      }
+            /*
+             *  If the precision is not specified, fix it to
+             *  the input precision otherwise db_char_string_coerce()
+             *  will fail.
+             */
+            if (DB_VALUE_PRECISION (value) == TP_FLOATING_PRECISION_VALUE)
+              {
+                db_value_domain_init (value, db_type, length, 0);
+              }
 
-	    (void) db_char_string_coerce (&tmp_value, value, &data_status);
-	    if (data_status == DATA_STATUS_TRUNCATED)
-	      {
-		status = C_TO_VALUE_TRUNCATION_ERROR;
-	      }
+            (void) db_char_string_coerce (&tmp_value, value, &data_status);
+            if (data_status == DATA_STATUS_TRUNCATED)
+              {
+                status = C_TO_VALUE_TRUNCATION_ERROR;
+              }
 
-	    (void) db_value_clear (&tmp_value);
-	  }
+            (void) db_value_clear (&tmp_value);
+          }
       }
       break;
     case DB_TYPE_DATE:
       {
-	DB_DATE tmp_date;
+        DB_DATE tmp_date;
 
-	tmp_date = datetime->date;
-	db_value_put_encoded_date (value, &tmp_date);
+        tmp_date = datetime->date;
+        db_value_put_encoded_date (value, &tmp_date);
       }
       break;
     case DB_TYPE_TIME:
       {
-	DB_TIME tmp_time;
+        DB_TIME tmp_time;
 
-	tmp_time = datetime->time / 1000;
-	db_value_put_encoded_time (value, &tmp_time);
+        tmp_time = datetime->time / 1000;
+        db_value_put_encoded_time (value, &tmp_time);
       }
       break;
     case DB_TYPE_DATETIME:
       {
-	db_make_datetime (value, datetime);
-	break;
+        db_make_datetime (value, datetime);
+        break;
       }
     default:
       status = C_TO_VALUE_UNSUPPORTED_CONVERSION;
@@ -3772,7 +3677,7 @@ db_string_put_cs_and_collation (DB_VALUE * value, const int collation_id)
       assert (false);
       error_status = ER_TP_CANT_COERCE;
       er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, error_status, 2,
-	      pr_type_name (value_type), pr_type_name (DB_TYPE_VARCHAR));
+              pr_type_name (value_type), pr_type_name (DB_TYPE_VARCHAR));
     }
 
   return error_status;
@@ -3788,8 +3693,7 @@ db_string_put_cs_and_collation (DB_VALUE * value, const int collation_id)
  *
  */
 static VALCNV_BUFFER *
-valcnv_append_bytes (VALCNV_BUFFER * buffer_p, const char *new_tail_p,
-		     const size_t new_tail_length)
+valcnv_append_bytes (VALCNV_BUFFER * buffer_p, const char *new_tail_p, const size_t new_tail_length)
 {
   size_t old_length;
   unsigned char *new_bytes;
@@ -3802,11 +3706,10 @@ valcnv_append_bytes (VALCNV_BUFFER * buffer_p, const char *new_tail_p,
     {
       buffer_p = (VALCNV_BUFFER *) malloc (sizeof (VALCNV_BUFFER));
       if (buffer_p == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, sizeof (VALCNV_BUFFER));
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (VALCNV_BUFFER));
+          return NULL;
+        }
 
       buffer_p->length = 0;
       buffer_p->bytes = NULL;
@@ -3814,13 +3717,11 @@ valcnv_append_bytes (VALCNV_BUFFER * buffer_p, const char *new_tail_p,
 
   old_length = buffer_p->length;
 
-  new_bytes = (unsigned char *) realloc (buffer_p->bytes,
-					 old_length + new_tail_length);
+  new_bytes = (unsigned char *) realloc (buffer_p->bytes, old_length + new_tail_length);
   if (new_bytes == NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, buffer_p->length);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, buffer_p->length);
       return NULL;
     }
 
@@ -3878,8 +3779,7 @@ valcnv_convert_double_to_string (VALCNV_BUFFER * buffer_p, const double value)
  *
  */
 static VALCNV_BUFFER *
-valcnv_convert_bit_to_string (VALCNV_BUFFER * buffer_p,
-			      const DB_VALUE * value_p)
+valcnv_convert_bit_to_string (VALCNV_BUFFER * buffer_p, const DB_VALUE * value_p)
 {
   unsigned char *bit_string_p;
   int nibble_len, nibbles, count;
@@ -3893,16 +3793,15 @@ valcnv_convert_bit_to_string (VALCNV_BUFFER * buffer_p,
 
   nibble_len = (DB_GET_STRING_LENGTH (value_p) + 3) / 4;
 
-  for (nibbles = 0, count = 0; nibbles < nibble_len - 1;
-       count++, nibbles += 2)
+  for (nibbles = 0, count = 0; nibbles < nibble_len - 1; count++, nibbles += 2)
     {
       sprintf (tbuf, "%02x", bit_string_p[count]);
       tbuf[2] = '\0';
       buffer_p = valcnv_append_string (buffer_p, tbuf);
       if (buffer_p == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   if (nibbles < nibble_len)
@@ -3911,9 +3810,9 @@ valcnv_convert_bit_to_string (VALCNV_BUFFER * buffer_p,
       tbuf[1] = '\0';
       buffer_p = valcnv_append_string (buffer_p, tbuf);
       if (buffer_p == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   return buffer_p;
@@ -3959,37 +3858,37 @@ valcnv_convert_set_to_string (VALCNV_BUFFER * buffer_p, DB_SET * set_p)
     {
       err = set_get_element (set_p, i, &value);
       if (err < 0)
-	{
-#if 1				/* TODO - */
-	  if (save_buffer_p == NULL && buffer_p != NULL)
-	    {
-	      /* is alloc at here */
-	      free_and_init (buffer_p->bytes);
-	      free_and_init (buffer_p);
-	    }
+        {
+#if 1                           /* TODO - */
+          if (save_buffer_p == NULL && buffer_p != NULL)
+            {
+              /* is alloc at here */
+              free_and_init (buffer_p->bytes);
+              free_and_init (buffer_p);
+            }
 #endif
-	  return NULL;
-	}
+          return NULL;
+        }
 
       buffer_p = valcnv_convert_db_value_to_string (buffer_p, &value);
       pr_clear_value (&value);
       if (i < size - 1)
-	{
-	  buffer_p = valcnv_append_string (buffer_p, ", ");
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
-	}
+        {
+          buffer_p = valcnv_append_string (buffer_p, ", ");
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
+        }
     }
 
   if (i < size)
     {
       buffer_p = valcnv_append_string (buffer_p, "...");
       if (buffer_p == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   buffer_p = valcnv_append_string (buffer_p, "}");
@@ -4010,8 +3909,7 @@ valcnv_convert_set_to_string (VALCNV_BUFFER * buffer_p, DB_SET * set_p)
  *
  */
 static VALCNV_BUFFER *
-valcnv_convert_data_to_string (VALCNV_BUFFER * buffer_p,
-			       const DB_VALUE * value_p)
+valcnv_convert_data_to_string (VALCNV_BUFFER * buffer_p, const DB_VALUE * value_p)
 {
   OID *oid_p;
   DB_SET *set_p;
@@ -4027,170 +3925,161 @@ valcnv_convert_data_to_string (VALCNV_BUFFER * buffer_p,
   else
     {
       switch (DB_VALUE_TYPE (value_p))
-	{
-	case DB_TYPE_INTEGER:
-	  sprintf (line, "%d", DB_GET_INTEGER (value_p));
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  break;
+        {
+        case DB_TYPE_INTEGER:
+          sprintf (line, "%d", DB_GET_INTEGER (value_p));
+          buffer_p = valcnv_append_string (buffer_p, line);
+          break;
 
-	case DB_TYPE_BIGINT:
-	  sprintf (line, "%lld", (long long) DB_GET_BIGINT (value_p));
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  break;
+        case DB_TYPE_BIGINT:
+          sprintf (line, "%lld", (long long) DB_GET_BIGINT (value_p));
+          buffer_p = valcnv_append_string (buffer_p, line);
+          break;
 
-	case DB_TYPE_DOUBLE:
-	  buffer_p =
-	    valcnv_convert_double_to_string (buffer_p,
-					     DB_GET_DOUBLE (value_p));
-	  break;
+        case DB_TYPE_DOUBLE:
+          buffer_p = valcnv_convert_double_to_string (buffer_p, DB_GET_DOUBLE (value_p));
+          break;
 
-	case DB_TYPE_NUMERIC:
-	  buffer_p =
-	    valcnv_append_string (buffer_p,
-				  numeric_db_value_print ((DB_VALUE *)
-							  value_p));
-	  break;
+        case DB_TYPE_NUMERIC:
+          buffer_p = valcnv_append_string (buffer_p, numeric_db_value_print ((DB_VALUE *) value_p));
+          break;
 
-	case DB_TYPE_VARBIT:
-	  buffer_p = valcnv_convert_bit_to_string (buffer_p, value_p);
-	  break;
+        case DB_TYPE_VARBIT:
+          buffer_p = valcnv_convert_bit_to_string (buffer_p, value_p);
+          break;
 
-	case DB_TYPE_VARCHAR:
-	  src_p = DB_GET_STRING (value_p);
-	  if (src_p == NULL)
-	    {
-	      assert (false);
-	      return NULL;
-	    }
+        case DB_TYPE_VARCHAR:
+          src_p = DB_GET_STRING (value_p);
+          if (src_p == NULL)
+            {
+              assert (false);
+              return NULL;
+            }
 
-	  if (DB_GET_STRING_SIZE (value_p) == 0)
-	    {
-	      buffer_p = valcnv_append_string (buffer_p, "");
-	      return buffer_p;
-	    }
+          if (DB_GET_STRING_SIZE (value_p) == 0)
+            {
+              buffer_p = valcnv_append_string (buffer_p, "");
+              return buffer_p;
+            }
 
-	  end_p = src_p + DB_GET_STRING_SIZE (value_p);
-	  while (src_p < end_p)
-	    {
-	      for (p = src_p; p < end_p && *p != '\''; p++)
-		{
-		  ;
-		}
+          end_p = src_p + DB_GET_STRING_SIZE (value_p);
+          while (src_p < end_p)
+            {
+              for (p = src_p; p < end_p && *p != '\''; p++)
+                {
+                  ;
+                }
 
-	      if (p < end_p)
-		{
-		  len = p - src_p + 1;
-		  buffer_p = valcnv_append_bytes (buffer_p, src_p, len);
-		  if (buffer_p == NULL)
-		    {
-		      return NULL;
-		    }
+              if (p < end_p)
+                {
+                  len = p - src_p + 1;
+                  buffer_p = valcnv_append_bytes (buffer_p, src_p, len);
+                  if (buffer_p == NULL)
+                    {
+                      return NULL;
+                    }
 
-		  buffer_p = valcnv_append_string (buffer_p, "'");
-		  if (buffer_p == NULL)
-		    {
-		      return NULL;
-		    }
-		}
-	      else
-		{
-		  buffer_p =
-		    valcnv_append_bytes (buffer_p, src_p, end_p - src_p);
-		  if (buffer_p == NULL)
-		    {
-		      return NULL;
-		    }
-		}
+                  buffer_p = valcnv_append_string (buffer_p, "'");
+                  if (buffer_p == NULL)
+                    {
+                      return NULL;
+                    }
+                }
+              else
+                {
+                  buffer_p = valcnv_append_bytes (buffer_p, src_p, end_p - src_p);
+                  if (buffer_p == NULL)
+                    {
+                      return NULL;
+                    }
+                }
 
-	      src_p = p + 1;
-	    }
-	  break;
+              src_p = p + 1;
+            }
+          break;
 
-	case DB_TYPE_OID:
-	  oid_p = (OID *) db_get_oid (value_p);
+        case DB_TYPE_OID:
+          oid_p = (OID *) db_get_oid (value_p);
 
-	  sprintf (line, "%d", (int) oid_p->volid);
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
+          sprintf (line, "%d", (int) oid_p->volid);
+          buffer_p = valcnv_append_string (buffer_p, line);
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
 
-	  buffer_p = valcnv_append_string (buffer_p, "|");
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
+          buffer_p = valcnv_append_string (buffer_p, "|");
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
 
-	  sprintf (line, "%d", (int) oid_p->pageid);
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
+          sprintf (line, "%d", (int) oid_p->pageid);
+          buffer_p = valcnv_append_string (buffer_p, line);
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
 
-	  buffer_p = valcnv_append_string (buffer_p, "|");
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
+          buffer_p = valcnv_append_string (buffer_p, "|");
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
 
-	  sprintf (line, "%d", (int) oid_p->slotid);
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
+          sprintf (line, "%d", (int) oid_p->slotid);
+          buffer_p = valcnv_append_string (buffer_p, line);
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
 
-	  break;
+          break;
 
-	case DB_TYPE_SEQUENCE:
-	  set_p = db_get_set (value_p);
-	  if (set_p == NULL)
-	    {
-	      buffer_p = valcnv_append_string (buffer_p, "NULL");
-	    }
-	  else
-	    {
-	      return valcnv_convert_set_to_string (buffer_p, set_p);
-	    }
+        case DB_TYPE_SEQUENCE:
+          set_p = db_get_set (value_p);
+          if (set_p == NULL)
+            {
+              buffer_p = valcnv_append_string (buffer_p, "NULL");
+            }
+          else
+            {
+              return valcnv_convert_set_to_string (buffer_p, set_p);
+            }
 
-	  break;
+          break;
 
-	case DB_TYPE_TIME:
-	  err = db_time_to_string (line, VALCNV_TOO_BIG_TO_MATTER,
-				   DB_GET_TIME (value_p));
-	  if (err == 0)
-	    {
-	      return NULL;
-	    }
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  break;
+        case DB_TYPE_TIME:
+          err = db_time_to_string (line, VALCNV_TOO_BIG_TO_MATTER, DB_GET_TIME (value_p));
+          if (err == 0)
+            {
+              return NULL;
+            }
+          buffer_p = valcnv_append_string (buffer_p, line);
+          break;
 
-	case DB_TYPE_DATETIME:
-	  err = db_datetime_to_string (line, VALCNV_TOO_BIG_TO_MATTER,
-				       DB_GET_DATETIME (value_p));
-	  if (err == 0)
-	    {
-	      return NULL;
-	    }
+        case DB_TYPE_DATETIME:
+          err = db_datetime_to_string (line, VALCNV_TOO_BIG_TO_MATTER, DB_GET_DATETIME (value_p));
+          if (err == 0)
+            {
+              return NULL;
+            }
 
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  break;
+          buffer_p = valcnv_append_string (buffer_p, line);
+          break;
 
-	case DB_TYPE_DATE:
-	  err = db_date_to_string (line, VALCNV_TOO_BIG_TO_MATTER,
-				   DB_GET_DATE (value_p));
-	  if (err == 0)
-	    {
-	      return NULL;
-	    }
-	  buffer_p = valcnv_append_string (buffer_p, line);
-	  break;
+        case DB_TYPE_DATE:
+          err = db_date_to_string (line, VALCNV_TOO_BIG_TO_MATTER, DB_GET_DATE (value_p));
+          if (err == 0)
+            {
+              return NULL;
+            }
+          buffer_p = valcnv_append_string (buffer_p, line);
+          break;
 
-	default:
-	  break;
-	}
+        default:
+          break;
+        }
     }
 
   return buffer_p;
@@ -4205,8 +4094,7 @@ valcnv_convert_data_to_string (VALCNV_BUFFER * buffer_p,
  *
  */
 static VALCNV_BUFFER *
-valcnv_convert_db_value_to_string (VALCNV_BUFFER * buffer_p,
-				   const DB_VALUE * value_p)
+valcnv_convert_db_value_to_string (VALCNV_BUFFER * buffer_p, const DB_VALUE * value_p)
 {
   if (DB_IS_NULL (value_p))
     {
@@ -4215,27 +4103,27 @@ valcnv_convert_db_value_to_string (VALCNV_BUFFER * buffer_p,
   else
     {
       switch (DB_VALUE_TYPE (value_p))
-	{
-	case DB_TYPE_VARBIT:
-	  buffer_p = valcnv_append_string (buffer_p, "X'");
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
+        {
+        case DB_TYPE_VARBIT:
+          buffer_p = valcnv_append_string (buffer_p, "X'");
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
 
-	  buffer_p = valcnv_convert_data_to_string (buffer_p, value_p);
-	  if (buffer_p == NULL)
-	    {
-	      return NULL;
-	    }
+          buffer_p = valcnv_convert_data_to_string (buffer_p, value_p);
+          if (buffer_p == NULL)
+            {
+              return NULL;
+            }
 
-	  buffer_p = valcnv_append_string (buffer_p, "'");
-	  break;
+          buffer_p = valcnv_append_string (buffer_p, "'");
+          break;
 
-	default:
-	  buffer_p = valcnv_convert_data_to_string (buffer_p, value_p);
-	  break;
-	}
+        default:
+          buffer_p = valcnv_convert_data_to_string (buffer_p, value_p);
+          break;
+        }
     }
 
   return buffer_p;
@@ -4259,13 +4147,12 @@ valcnv_convert_value_to_string (DB_VALUE * value_p)
     {
       buf_p = valcnv_convert_db_value_to_string (buf_p, value_p);
       if (buf_p == NULL)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
 
       DB_MAKE_VARCHAR (&src_value, DB_MAX_STRING_LENGTH,
-		       (char *) buf_p->bytes, CAST_STRLEN (buf_p->length),
-		       LANG_COERCIBLE_COLL);
+                       (char *) buf_p->bytes, CAST_STRLEN (buf_p->length), LANG_COERCIBLE_COLL);
 
       pr_clear_value (value_p);
       (*(tp_String.setval)) (value_p, &src_value, true);

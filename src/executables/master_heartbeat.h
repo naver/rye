@@ -147,7 +147,7 @@ enum HB_NOLOG_REASON
 #define HB_IS_INITIALIZED_TIME(arg_time) \
             ((arg_time.tv_sec == 0 && arg_time.tv_usec == 0) ? 1 : 0)
 
-#define HB_PROC_RECOVERY_DELAY_TIME		(30* 1000)	/* milli-second */
+#define HB_PROC_RECOVERY_DELAY_TIME		(30* 1000)      /* milli-second */
 
 /* heartbeat list */
 typedef struct hb_list HB_LIST;
@@ -170,7 +170,7 @@ struct hb_node_entry
   short score;
   short heartbeat_gap;
 
-  struct timeval last_recv_hbtime;	/* last received heartbeat time */
+  struct timeval last_recv_hbtime;      /* last received heartbeat time */
   RYE_VERSION node_version;
 };
 
@@ -219,7 +219,7 @@ struct hb_proc_entry
   HB_PROC_ENTRY *next;
   HB_PROC_ENTRY **prev;
 
-  HB_PROC_STATE state;		/* process state */
+  HB_PROC_STATE state;          /* process state */
   HB_PROC_TYPE type;
   HA_STATE server_state;
 
@@ -230,11 +230,11 @@ struct hb_proc_entry
   char args[HB_MAX_SZ_PROC_ARGS];
   char argv[HB_MAX_NUM_PROC_ARGV][HB_MAX_SZ_PROC_ARGV];
 
-  struct timeval frtime;	/* first registered time */
-  struct timeval rtime;		/* registerd time */
-  struct timeval dtime;		/* deregistered time */
-  struct timeval ktime;		/* shutdown time */
-  struct timeval stime;		/* start time */
+  struct timeval frtime;        /* first registered time */
+  struct timeval rtime;         /* registerd time */
+  struct timeval dtime;         /* deregistered time */
+  struct timeval ktime;         /* shutdown time */
+  struct timeval stime;         /* start time */
 
   unsigned short changemode_rid;
   unsigned short changemode_gap;
@@ -246,7 +246,7 @@ struct hb_proc_entry
 
   bool sync_groupid_bitmap;
 
-  bool being_shutdown;		/* whether the proc is being shut down */
+  bool being_shutdown;          /* whether the proc is being shut down */
   bool server_hang;
 };
 
@@ -269,19 +269,19 @@ typedef struct hb_cluster_job_arg HB_CLUSTER_JOB_ARG;
 struct hb_cluster_job_arg
 {
   unsigned int ping_check_count;
-  unsigned int retries;		/* job retries */
+  unsigned int retries;         /* job retries */
 };
 
 /* heartbeat resource job argument */
 typedef struct hb_resource_job_arg HB_RESOURCE_JOB_ARG;
 struct hb_resource_job_arg
 {
-  int pid;			/* process id */
+  int pid;                      /* process id */
 
-  char args[HB_MAX_SZ_PROC_ARGS];	/* args */
+  char args[HB_MAX_SZ_PROC_ARGS];       /* args */
 
-  int retries;			/* job retries */
-  int max_retries;		/* job max retries */
+  int retries;                  /* job retries */
+  int max_retries;              /* job max retries */
 
 };
 
@@ -361,8 +361,7 @@ extern int hb_activate_heartbeat (void);
 extern int hb_process_start (const HA_CONF * ha_conf);
 
 extern bool hb_is_registered_processes (CSS_CONN_ENTRY * conn);
-extern int hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg,
-					  CSS_CONN_ENTRY * conn);
+extern int hb_resource_register_new_proc (HBP_PROC_REGISTER * proc_reg, CSS_CONN_ENTRY * conn);
 extern void hb_resource_receive_changemode (CSS_CONN_ENTRY * conn, int state);
 
 extern int hb_check_request_eligibility (SOCKET sd, int *result);

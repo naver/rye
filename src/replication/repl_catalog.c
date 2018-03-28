@@ -35,31 +35,22 @@
 #include "system_parameter.h"
 #include "query_executor.h"
 
-#define REPL_CT_QRY_BUF_SIZE 	(ONE_K * 2)	/* 2048 */
+#define REPL_CT_QRY_BUF_SIZE 	(ONE_K * 2)     /* 2048 */
 
 /* common */
 static int cirp_make_select_query_with_pk (char *query_buf, size_t buf_size,
-					   CATCLS_TABLE * table,
-					   int num_pk_array,
-					   const char **pk_array);
+                                           CATCLS_TABLE * table, int num_pk_array, const char **pk_array);
 static int cirp_make_count_all_query_with_cond (char *query_buf,
-						size_t buf_size,
-						const char *table_name,
-						const char *cond);
+                                                size_t buf_size, const char *table_name, const char *cond);
 
 /* analyzer */
-static int cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * ct_data,
-					  CCI_CONN * conn, char *query);
+static int cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * ct_data, CCI_CONN * conn, char *query);
 
 /* applier */
-static int rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers,
-				     const PRM_NODE_INFO * host_info);
+static int rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers, const PRM_NODE_INFO * host_info);
 static int rpct_get_log_applier (CCI_CONN * conn,
-				 CIRP_CT_LOG_APPLIER * ct_data,
-				 const PRM_NODE_INFO * host_info,
-				 int applier_id);
-static int cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
-					 CCI_CONN * conn, char *query);
+                                 CIRP_CT_LOG_APPLIER * ct_data, const PRM_NODE_INFO * host_info, int applier_id);
+static int cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier, CCI_CONN * conn, char *query);
 
 
 /*
@@ -71,8 +62,7 @@ static int cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
  *   host_info(in):
  */
 int
-rpct_get_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data,
-		       const PRM_NODE_INFO * host_info)
+rpct_get_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data, const PRM_NODE_INFO * host_info)
 {
   int error = NO_ERROR;
   char query_buf[REPL_CT_QRY_BUF_SIZE];
@@ -85,8 +75,7 @@ rpct_get_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data,
 
   prm_node_info_to_str (host_key_str, sizeof (host_key_str), host_info);
   pk_array[0] = host_key_str;
-  len = cirp_make_select_query_with_pk (query_buf, sizeof (query_buf), table,
-					1, pk_array);
+  len = cirp_make_select_query_with_pk (query_buf, sizeof (query_buf), table, 1, pk_array);
   if (len <= 0)
     {
       assert (false);
@@ -135,8 +124,7 @@ rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   recdes.area_size = sizeof (CIRP_CT_LOG_ANALYZER);
   recdes.data = (char *) (&tmp_rec);
-  error = rpct_analyzer_to_catalog_item (&item->info.catalog, &recdes,
-					 ct_data);
+  error = rpct_analyzer_to_catalog_item (&item->info.catalog, &recdes, ct_data);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -147,8 +135,7 @@ rpct_insert_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
   error = cci_send_repl_data (conn, item, 1, -1);
   if (error < 0)
     {
-      REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
-			      conn->err_buf.err_code, conn->err_buf.err_msg);
+      REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s", conn->err_buf.err_code, conn->err_buf.err_msg);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -203,8 +190,7 @@ rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
 
   recdes.area_size = sizeof (CIRP_CT_LOG_ANALYZER);
   recdes.data = (char *) (&tmp_rec);
-  error = rpct_analyzer_to_catalog_item (&item->info.catalog, &recdes,
-					 ct_data);
+  error = rpct_analyzer_to_catalog_item (&item->info.catalog, &recdes, ct_data);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -215,8 +201,7 @@ rpct_update_log_analyzer (CCI_CONN * conn, CIRP_CT_LOG_ANALYZER * ct_data)
   error = cci_send_repl_data (conn, item, 1, -1);
   if (error < 0)
     {
-      REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
-			      conn->err_buf.err_code, conn->err_buf.err_msg);
+      REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s", conn->err_buf.err_code, conn->err_buf.err_msg);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -284,48 +269,47 @@ rpct_init_applier_info (CCI_CONN * conn, const PRM_NODE_INFO * host_info)
     {
       /* insert new log appliers info */
       for (i = 0; i < Repl_Info->num_applier; i++)
-	{
-	  applier = &Repl_Info->applier_info[i];
+        {
+          applier = &Repl_Info->applier_info[i];
 
-	  applier->ct.host_info = *host_info;
-	  applier->ct.id = i + 1;
+          applier->ct.host_info = *host_info;
+          applier->ct.id = i + 1;
 
-	  LSA_SET_NULL (&applier->ct.committed_lsa);
+          LSA_SET_NULL (&applier->ct.committed_lsa);
 
-	  error = rpct_insert_log_applier (conn, &applier->ct);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
+          error = rpct_insert_log_applier (conn, &applier->ct);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  er_log_debug (ARG_FILE_LINE, "insert applier info(id:%d)",
-			applier->ct.id);
-	}
+          er_log_debug (ARG_FILE_LINE, "insert applier info(id:%d)", applier->ct.id);
+        }
     }
   else
     {
       if (num_appliers != Repl_Info->num_applier)
-	{
-	  REPL_SET_GENERIC_ERROR (error, "invalid max_num_appliers");
+        {
+          REPL_SET_GENERIC_ERROR (error, "invalid max_num_appliers");
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 #if !defined(NDEBUG)
       /* suppress valgrind UMW error */
       memset (&ct, 0, sizeof (ct));
 #endif
       /* get new log appliers info */
       for (i = 0; i < Repl_Info->num_applier; i++)
-	{
-	  applier = &Repl_Info->applier_info[i];
+        {
+          applier = &Repl_Info->applier_info[i];
 
-	  error = rpct_get_log_applier (conn, &ct, host_info, i + 1);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  applier->ct = ct;
-	}
+          error = rpct_get_log_applier (conn, &ct, host_info, i + 1);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+          applier->ct = ct;
+        }
     }
 
   error = cci_end_tran (conn, CCI_TRAN_COMMIT);
@@ -360,9 +344,7 @@ exit_on_error:
  *   applier_id(in):
  */
 static int
-rpct_get_log_applier (CCI_CONN * conn,
-		      CIRP_CT_LOG_APPLIER * ct_data,
-		      const PRM_NODE_INFO * host_info, int applier_id)
+rpct_get_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data, const PRM_NODE_INFO * host_info, int applier_id)
 {
   int error = NO_ERROR;
   char query_buf[REPL_CT_QRY_BUF_SIZE];
@@ -378,8 +360,7 @@ rpct_get_log_applier (CCI_CONN * conn,
   pk_array[0] = host_key_str;
   snprintf (id_buf, sizeof (id_buf), "%d", applier_id);
   pk_array[1] = id_buf;
-  len = cirp_make_select_query_with_pk (query_buf, sizeof (query_buf),
-					table, 2, pk_array);
+  len = cirp_make_select_query_with_pk (query_buf, sizeof (query_buf), table, 2, pk_array);
   if (len <= 0)
     {
       assert (false);
@@ -413,8 +394,7 @@ exit_on_error:
  *   host_info(in):
  */
 static int
-rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers,
-			  const PRM_NODE_INFO * host_info)
+rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers, const PRM_NODE_INFO * host_info)
 {
   int error = NO_ERROR;
   char query_buf[REPL_CT_QRY_BUF_SIZE];
@@ -434,10 +414,8 @@ rpct_get_num_log_applier (CCI_CONN * conn, int *num_appliers,
   assert (strcasecmp (table->columns[0].name, "host_ip") == 0);
 
   prm_node_info_to_str (host_key_str, sizeof (host_key_str), host_info);
-  snprintf (cond, sizeof (cond), "%s='%s'",
-	    table->columns[0].name, host_key_str);
-  len = cirp_make_count_all_query_with_cond (query_buf, sizeof (query_buf),
-					     table->name, cond);
+  snprintf (cond, sizeof (cond), "%s='%s'", table->columns[0].name, host_key_str);
+  len = cirp_make_count_all_query_with_cond (query_buf, sizeof (query_buf), table->name, cond);
   if (len <= 0)
     {
       assert (false);
@@ -511,8 +489,7 @@ rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
 
   recdes.area_size = sizeof (CIRP_CT_LOG_APPLIER);
   recdes.data = (char *) (&tmp_rec);
-  error = rpct_applier_to_catalog_item (&item->info.catalog, &recdes,
-					ct_data);
+  error = rpct_applier_to_catalog_item (&item->info.catalog, &recdes, ct_data);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -523,8 +500,7 @@ rpct_insert_log_applier (CCI_CONN * conn, CIRP_CT_LOG_APPLIER * ct_data)
   error = cci_send_repl_data (conn, item, 1, -1);
   if (error < 0)
     {
-      REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
-			      conn->err_buf.err_code, conn->err_buf.err_msg);
+      REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s", conn->err_buf.err_code, conn->err_buf.err_msg);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -562,8 +538,7 @@ exit_on_error:
  */
 static int
 cirp_make_select_query_with_pk (char *query_buf, size_t buf_size,
-				CATCLS_TABLE * table, int num_pk_array,
-				const char **pk_array)
+                                CATCLS_TABLE * table, int num_pk_array, const char **pk_array)
 {
   char condition[ONE_K];
   int i;
@@ -576,20 +551,19 @@ cirp_make_select_query_with_pk (char *query_buf, size_t buf_size,
   for (i = 0; i < table->num_columns; i++)
     {
       if (i != 0)
-	{
-	  len = str_append (query_buf, len, ", ", buf_size - len);
-	}
-      len = str_append (query_buf, len, table->columns[i].name,
-			buf_size - len);
+        {
+          len = str_append (query_buf, len, ", ", buf_size - len);
+        }
+      len = str_append (query_buf, len, table->columns[i].name, buf_size - len);
     }
 
   for (i = 0; i < table->num_constraints; i++)
     {
       if (table->constraint[i].type == DB_CONSTRAINT_PRIMARY_KEY)
-	{
-	  pk = &table->constraint[i];
-	  break;
-	}
+        {
+          pk = &table->constraint[i];
+          break;
+        }
     }
 
   if (pk == NULL)
@@ -598,8 +572,7 @@ cirp_make_select_query_with_pk (char *query_buf, size_t buf_size,
 
       assert (false);
 
-      REPL_SET_GENERIC_ERROR (error, "not found primary key in %s",
-			      table->name);
+      REPL_SET_GENERIC_ERROR (error, "not found primary key in %s", table->name);
 
       return -1;
     }
@@ -617,16 +590,15 @@ cirp_make_select_query_with_pk (char *query_buf, size_t buf_size,
   for (i = 0; i < num_pk_array; i++)
     {
       if (i > MAX_INDEX_KEY_LIST_NUM)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
       if (i != 0)
-	{
-	  len = str_append (query_buf, len, " AND ", buf_size - len);
-	}
-      snprintf (condition, sizeof (condition), " %s = '%s'",
-		pk->atts[i], pk_array[i]);
+        {
+          len = str_append (query_buf, len, " AND ", buf_size - len);
+        }
+      snprintf (condition, sizeof (condition), " %s = '%s'", pk->atts[i], pk_array[i]);
       len = str_append (query_buf, len, condition, buf_size - len);
     }
 
@@ -645,13 +617,11 @@ cirp_make_select_query_with_pk (char *query_buf, size_t buf_size,
  *   cond(in):
  */
 static int
-cirp_make_count_all_query_with_cond (char *query_buf, size_t buf_size,
-				     const char *table_name, const char *cond)
+cirp_make_count_all_query_with_cond (char *query_buf, size_t buf_size, const char *table_name, const char *cond)
 {
   int len;
 
-  len = snprintf (query_buf, buf_size, "SELECT COUNT(*) FROM %s WHERE %s;",
-		  table_name, cond);
+  len = snprintf (query_buf, buf_size, "SELECT COUNT(*) FROM %s WHERE %s;", table_name, cond);
 
   return len;
 }
@@ -701,8 +671,7 @@ exit_on_error:
  *    query(in):
  */
 static int
-cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * analyzer,
-			       CCI_CONN * conn, char *query)
+cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * analyzer, CCI_CONN * conn, char *query)
 {
   int index;
   int ind;
@@ -752,9 +721,7 @@ cirp_get_analyzer_from_result (CIRP_CT_LOG_ANALYZER * analyzer,
     }
   assert (ind >= 0);
   analyzer->required_lsa = int64_to_lsa (bi);
-  if (!LSA_ISNULL (&analyzer->required_lsa)
-      && (analyzer->required_lsa.pageid < 0
-	  || analyzer->required_lsa.offset < 0))
+  if (!LSA_ISNULL (&analyzer->required_lsa) && (analyzer->required_lsa.pageid < 0 || analyzer->required_lsa.offset < 0))
     {
       assert (false);
       GOTO_EXIT_ON_ERROR;
@@ -812,8 +779,7 @@ exit_on_error:
  *    query(in):
  */
 static int
-cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
-			      CCI_CONN * conn, char *query)
+cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier, CCI_CONN * conn, char *query)
 {
   int index;
   int ind;
@@ -871,9 +837,7 @@ cirp_get_applier_from_result (CIRP_CT_LOG_APPLIER * applier,
     }
   assert (ind >= 0);
   applier->committed_lsa = int64_to_lsa (bi);
-  if (!LSA_ISNULL (&applier->committed_lsa)
-      && (applier->committed_lsa.pageid < 0
-	  || applier->committed_lsa.offset < 0))
+  if (!LSA_ISNULL (&applier->committed_lsa) && (applier->committed_lsa.pageid < 0 || applier->committed_lsa.offset < 0))
     {
       assert (false);
       GOTO_EXIT_ON_ERROR;
@@ -912,8 +876,7 @@ exit_on_error:
  *   ct_data(in):
  */
 int
-rpct_applier_to_catalog_item (RP_CATALOG_ITEM * catalog,
-			      RECDES * recdes, CIRP_CT_LOG_APPLIER * ct_data)
+rpct_applier_to_catalog_item (RP_CATALOG_ITEM * catalog, RECDES * recdes, CIRP_CT_LOG_APPLIER * ct_data)
 {
   int error = NO_ERROR;
 
@@ -928,8 +891,7 @@ rpct_applier_to_catalog_item (RP_CATALOG_ITEM * catalog,
   if (catalog->class_name == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      strlen (CT_LOG_APPLIER_NAME));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, strlen (CT_LOG_APPLIER_NAME));
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -967,9 +929,7 @@ exit_on_error:
  *   ct_data(in):
  */
 int
-rpct_analyzer_to_catalog_item (RP_CATALOG_ITEM * catalog,
-			       RECDES * recdes,
-			       CIRP_CT_LOG_ANALYZER * ct_data)
+rpct_analyzer_to_catalog_item (RP_CATALOG_ITEM * catalog, RECDES * recdes, CIRP_CT_LOG_ANALYZER * ct_data)
 {
   int error = NO_ERROR;
 
@@ -984,8 +944,7 @@ rpct_analyzer_to_catalog_item (RP_CATALOG_ITEM * catalog,
   if (catalog->class_name == NULL)
     {
       error = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      strlen (CT_LOG_ANALYZER_NAME));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, strlen (CT_LOG_ANALYZER_NAME));
 
       GOTO_EXIT_ON_ERROR;
     }

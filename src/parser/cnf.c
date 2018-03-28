@@ -34,7 +34,7 @@ typedef enum cnf_mode CNF_MODE;
 enum cnf_mode
 {
   TRANSFORM_CNF_OR_COMPACT = 0,
-  TRANSFORM_CNF_OR_PRUNE = 1,	/* -- not used */
+  TRANSFORM_CNF_OR_PRUNE = 1,   /* -- not used */
   TRANSFORM_CNF_AND_OR = 2
 };
 
@@ -51,44 +51,30 @@ struct find_id_info
 typedef struct similarity_context SIMILARITY_CONTEXT;
 struct similarity_context
 {
-  int max_number_of_nodes;	/* the max number of nodes */
-  int number_of_nodes;		/* the number of nodes */
-  unsigned int accumulated_opcode;	/* the accumulated value of op type */
-  unsigned int accumulated_node_type;	/* the accumulated value of node type */
+  int max_number_of_nodes;      /* the max number of nodes */
+  int number_of_nodes;          /* the number of nodes */
+  unsigned int accumulated_opcode;      /* the accumulated value of op type */
+  unsigned int accumulated_node_type;   /* the accumulated value of node type */
 };
 
 static PT_NODE *pt_and_or_form (PARSER_CONTEXT * parser, PT_NODE * node);
 static PT_NODE *pt_negate_expr (PARSER_CONTEXT * parser, PT_NODE * node);
 #if defined(ENABLE_UNUSED_FUNCTION)
 static PT_NODE *pt_aof_to_cnf (PARSER_CONTEXT * parser, PT_NODE * node);
-static PT_NODE *pt_distributes_disjunction (PARSER_CONTEXT * parser,
-					    PT_NODE * node_1,
-					    PT_NODE * node_2);
+static PT_NODE *pt_distributes_disjunction (PARSER_CONTEXT * parser, PT_NODE * node_1, PT_NODE * node_2);
 static PT_NODE *pt_flatten_and_or (PARSER_CONTEXT * parser, PT_NODE * node);
 #endif /* ENABLE_UNUSED_FUNCTION */
 static int count_and_or (PARSER_CONTEXT * parser, const PT_NODE * node);
-static PT_NODE *pt_transform_cnf_pre (PARSER_CONTEXT * parser, PT_NODE * node,
-				      void *arg, int *continue_walk);
-static PT_NODE *pt_transform_cnf_post (PARSER_CONTEXT * parser,
-				       PT_NODE * node, void *arg,
-				       int *continue_walk);
-static PT_NODE *pt_find_name_id_pre (PARSER_CONTEXT * parser, PT_NODE * tree,
-				     void *arg, int *continue_walk);
-static PT_NODE *pt_find_name_id_post (PARSER_CONTEXT * parser, PT_NODE * tree,
-				      void *arg, int *continue_walk);
+static PT_NODE *pt_transform_cnf_pre (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk);
+static PT_NODE *pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk);
+static PT_NODE *pt_find_name_id_pre (PARSER_CONTEXT * parser, PT_NODE * tree, void *arg, int *continue_walk);
+static PT_NODE *pt_find_name_id_post (PARSER_CONTEXT * parser, PT_NODE * tree, void *arg, int *continue_walk);
 static void pt_tag_term_with_id (PARSER_CONTEXT * parser, PT_NODE * term,
-				 UINTPTR id, UINTPTR join_spec,
-				 bool tag_subqueries);
-static void pt_tag_terms_with_id (PARSER_CONTEXT * parser, PT_NODE * terms,
-				  UINTPTR id, UINTPTR join_spec);
-static void pt_tag_terms_with_specs (PARSER_CONTEXT * parser, PT_NODE * terms,
-				     PT_NODE * join_spec, UINTPTR join_id);
-static PT_NODE *pt_tag_start_of_cnf_post (PARSER_CONTEXT * parser,
-					  PT_NODE * node, void *arg,
-					  int *continue_walk);
-static PT_NODE *pt_calculate_similarity (PARSER_CONTEXT * parser,
-					 PT_NODE * node, void *arg,
-					 int *continue_walk);
+                                 UINTPTR id, UINTPTR join_spec, bool tag_subqueries);
+static void pt_tag_terms_with_id (PARSER_CONTEXT * parser, PT_NODE * terms, UINTPTR id, UINTPTR join_spec);
+static void pt_tag_terms_with_specs (PARSER_CONTEXT * parser, PT_NODE * terms, PT_NODE * join_spec, UINTPTR join_id);
+static PT_NODE *pt_tag_start_of_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk);
+static PT_NODE *pt_calculate_similarity (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk);
 
 
 /*
@@ -100,7 +86,7 @@ static PT_NODE *pt_calculate_similarity (PARSER_CONTEXT * parser,
  */
 static PT_NODE *
 pt_tag_start_of_cnf_post (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
-			  UNUSED_ARG void *arg, UNUSED_ARG int *continue_walk)
+                          UNUSED_ARG void *arg, UNUSED_ARG int *continue_walk)
 {
   if (node == NULL || node->type_enum != PT_TYPE_LOGICAL)
     {
@@ -142,51 +128,51 @@ pt_and_or_form (PARSER_CONTEXT * parser, PT_NODE * node)
       /* unfold NOT expression */
       arg1 = node->info.expr.arg1;
       switch (arg1->info.expr.op)
-	{
-	case PT_NOT:
-	  /* NOT (NOT expr) == expr */
-	  node = pt_and_or_form (parser, arg1->info.expr.arg1);
+        {
+        case PT_NOT:
+          /* NOT (NOT expr) == expr */
+          node = pt_and_or_form (parser, arg1->info.expr.arg1);
 
-	  /* free NOT node(arg1) */
-	  arg1->info.expr.arg1 = NULL;
-	  arg1->next = NULL;
-	  arg1->or_next = NULL;
-	  parser_free_tree (parser, arg1);
-	  break;
+          /* free NOT node(arg1) */
+          arg1->info.expr.arg1 = NULL;
+          arg1->next = NULL;
+          arg1->or_next = NULL;
+          parser_free_tree (parser, arg1);
+          break;
 
-	case PT_AND:
-	  /* NOT (expr AND expr) == (NOT expr) OR (NOT expr) */
-	  node->info.expr.op = PT_OR;
-	  temp = pt_negate_expr (parser, arg1->info.expr.arg1);
-	  node->info.expr.arg1 = pt_and_or_form (parser, temp);
-	  temp = pt_negate_expr (parser, arg1->info.expr.arg2);
-	  node->info.expr.arg2 = pt_and_or_form (parser, temp);
-	  break;
+        case PT_AND:
+          /* NOT (expr AND expr) == (NOT expr) OR (NOT expr) */
+          node->info.expr.op = PT_OR;
+          temp = pt_negate_expr (parser, arg1->info.expr.arg1);
+          node->info.expr.arg1 = pt_and_or_form (parser, temp);
+          temp = pt_negate_expr (parser, arg1->info.expr.arg2);
+          node->info.expr.arg2 = pt_and_or_form (parser, temp);
+          break;
 
-	case PT_OR:
-	  /* NOT (expr OR expr) == (NOT expr) AND (NOT expr) */
-	  node->info.expr.op = PT_AND;
-	  temp = pt_negate_expr (parser, arg1->info.expr.arg1);
-	  node->info.expr.arg1 = pt_and_or_form (parser, temp);
-	  temp = pt_negate_expr (parser, arg1->info.expr.arg2);
-	  node->info.expr.arg2 = pt_and_or_form (parser, temp);
-	  break;
+        case PT_OR:
+          /* NOT (expr OR expr) == (NOT expr) AND (NOT expr) */
+          node->info.expr.op = PT_AND;
+          temp = pt_negate_expr (parser, arg1->info.expr.arg1);
+          node->info.expr.arg1 = pt_and_or_form (parser, temp);
+          temp = pt_negate_expr (parser, arg1->info.expr.arg2);
+          node->info.expr.arg2 = pt_and_or_form (parser, temp);
+          break;
 
-	default:
-	  neg_op_type = pt_negate_op (arg1->info.expr.op);
-	  if (neg_op_type != 0)
-	    {
-	      arg1->info.expr.op = neg_op_type;
+        default:
+          neg_op_type = pt_negate_op (arg1->info.expr.op);
+          if (neg_op_type != 0)
+            {
+              arg1->info.expr.op = neg_op_type;
 
-	      /* free NOT node(node) */
-	      node->info.expr.arg1 = NULL;
-	      node->next = NULL;
-	      node->or_next = NULL;
-	      parser_free_tree (parser, node);
-	      node = arg1;
-	    }
-	  break;
-	}			/* switch (arg1->info.expr.op) */
+              /* free NOT node(node) */
+              node->info.expr.arg1 = NULL;
+              node->next = NULL;
+              node->or_next = NULL;
+              parser_free_tree (parser, node);
+              node = arg1;
+            }
+          break;
+        }                       /* switch (arg1->info.expr.op) */
       break;
 
     case PT_AND:
@@ -197,7 +183,7 @@ pt_and_or_form (PARSER_CONTEXT * parser, PT_NODE * node)
 
     default:
       break;
-    }				/* switch (node->info.expr.op) */
+    }                           /* switch (node->info.expr.op) */
 
   return node;
 }
@@ -227,26 +213,26 @@ pt_negate_expr (PARSER_CONTEXT * parser, PT_NODE * node)
   if (neg_op_type == 0)
     {
       if (node->info.expr.op == PT_NOT)
-	{
-	  /* special case; negating 'NOT expr' */
-	  temp = node->info.expr.arg1;
-	  node->info.expr.arg1 = NULL;
-	  node->next = NULL;
-	  node->or_next = NULL;
-	  parser_free_tree (parser, node);
-	  node = temp;
-	}
+        {
+          /* special case; negating 'NOT expr' */
+          temp = node->info.expr.arg1;
+          node->info.expr.arg1 = NULL;
+          node->next = NULL;
+          node->or_next = NULL;
+          parser_free_tree (parser, node);
+          node = temp;
+        }
       else
-	{
-	  /* making 'NOT expr' */
-	  temp = parser_new_node (parser, PT_EXPR);
-	  temp->type_enum = PT_TYPE_LOGICAL;
-	  temp->info.expr.paren_type = node->info.expr.paren_type;
-	  temp->info.expr.op = PT_NOT;
-	  temp->info.expr.arg1 = node;
-	  temp->info.expr.location = node->info.expr.location;
-	  node = temp;
-	}
+        {
+          /* making 'NOT expr' */
+          temp = parser_new_node (parser, PT_EXPR);
+          temp->type_enum = PT_TYPE_LOGICAL;
+          temp->info.expr.paren_type = node->info.expr.paren_type;
+          temp->info.expr.op = PT_NOT;
+          temp->info.expr.arg1 = node;
+          temp->info.expr.location = node->info.expr.location;
+          node = temp;
+        }
     }
   else
     {
@@ -287,12 +273,9 @@ pt_aof_to_cnf (PARSER_CONTEXT * parser, PT_NODE * node)
 
     case PT_OR:
       result = pt_distributes_disjunction (parser,
-					   pt_aof_to_cnf (parser,
-							  node->info.expr.
-							  arg1),
-					   pt_aof_to_cnf (parser,
-							  node->info.expr.
-							  arg2));
+                                           pt_aof_to_cnf (parser,
+                                                          node->info.expr.arg1),
+                                           pt_aof_to_cnf (parser, node->info.expr.arg2));
       break;
     default:
       break;
@@ -312,8 +295,7 @@ pt_aof_to_cnf (PARSER_CONTEXT * parser, PT_NODE * node)
  *   node_2(in): a parse tree node of type PT_EXPR
  */
 static PT_NODE *
-pt_distributes_disjunction (PARSER_CONTEXT * parser, PT_NODE * node_1,
-			    PT_NODE * node_2)
+pt_distributes_disjunction (PARSER_CONTEXT * parser, PT_NODE * node_1, PT_NODE * node_2)
 {
   PT_NODE *new_node, *temp_1, *temp_2;
 
@@ -327,9 +309,9 @@ pt_distributes_disjunction (PARSER_CONTEXT * parser, PT_NODE * node_1,
     {
       temp_1 = parser_new_node (parser, PT_EXPR);
       if (temp_1 == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       temp_1->type_enum = PT_TYPE_LOGICAL;
       temp_1->info.expr.paren_type = 1;
@@ -341,9 +323,9 @@ pt_distributes_disjunction (PARSER_CONTEXT * parser, PT_NODE * node_1,
 
       temp_2 = parser_new_node (parser, PT_EXPR);
       if (temp_2 == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       temp_2->type_enum = PT_TYPE_LOGICAL;
       temp_2->info.expr.paren_type = 1;
@@ -367,9 +349,9 @@ pt_distributes_disjunction (PARSER_CONTEXT * parser, PT_NODE * node_1,
     {
       temp_1 = parser_new_node (parser, PT_EXPR);
       if (temp_1 == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       temp_1->type_enum = PT_TYPE_LOGICAL;
       temp_1->info.expr.paren_type = 1;
@@ -381,9 +363,9 @@ pt_distributes_disjunction (PARSER_CONTEXT * parser, PT_NODE * node_1,
 
       temp_2 = parser_new_node (parser, PT_EXPR);
       if (temp_2 == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       temp_2->type_enum = PT_TYPE_LOGICAL;
       temp_2->info.expr.paren_type = 1;
@@ -444,8 +426,7 @@ pt_flatten_and_or (PARSER_CONTEXT * parser, PT_NODE * node)
       list = pt_flatten_and_or (parser, node->info.expr.arg1);
 
       /* convert right part of AND into CNF */
-      list = parser_append_node
-	(pt_flatten_and_or (parser, node->info.expr.arg2), list);
+      list = parser_append_node (pt_flatten_and_or (parser, node->info.expr.arg2), list);
 
       /* free the AND node */
       node->info.expr.arg1 = NULL;
@@ -460,8 +441,7 @@ pt_flatten_and_or (PARSER_CONTEXT * parser, PT_NODE * node)
       list = pt_flatten_and_or (parser, node->info.expr.arg1);
 
       /* convert right part of OR into CNF */
-      list = parser_append_node_or
-	(pt_flatten_and_or (parser, node->info.expr.arg2), list);
+      list = parser_append_node_or (pt_flatten_and_or (parser, node->info.expr.arg2), list);
 
       /* free the OR node */
       node->info.expr.arg1 = NULL;
@@ -490,19 +470,19 @@ count_and_or (PARSER_CONTEXT * parser, const PT_NODE * node)
     {
     case PT_AND:
       left = count_and_or (parser, node->info.expr.arg1);
-      if (left > 100)		/* pruning */
-	{
-	  return left;
-	}
+      if (left > 100)           /* pruning */
+        {
+          return left;
+        }
       right = count_and_or (parser, node->info.expr.arg2);
       cnf_cnt = left + right;
       break;
     case PT_OR:
       left = count_and_or (parser, node->info.expr.arg1);
-      if (left > 100)		/* pruning */
-	{
-	  return left;
-	}
+      if (left > 100)           /* pruning */
+        {
+          return left;
+        }
       right = count_and_or (parser, node->info.expr.arg2);
       cnf_cnt = left * right;
       break;
@@ -523,19 +503,18 @@ count_and_or (PARSER_CONTEXT * parser, const PT_NODE * node)
  *   continue_walk(in/out):
  */
 static PT_NODE *
-pt_transform_cnf_pre (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
-		      void *arg, int *continue_walk)
+pt_transform_cnf_pre (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk)
 {
   CNF_MODE *mode = (CNF_MODE *) arg;
 
   if (!node || node->node_type != PT_EXPR)
     {
       if (node && node->node_type == PT_SELECT)
-	{
-	  /* meet subquery in search condition.
-	   * prune and go ahead */
-	  *continue_walk = PT_STOP_WALK;
-	}
+        {
+          /* meet subquery in search condition.
+           * prune and go ahead */
+          *continue_walk = PT_STOP_WALK;
+        }
       return node;
     }
 
@@ -546,9 +525,9 @@ pt_transform_cnf_pre (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
     case PT_OR:
       /* OR-tree prune mode */
       if (*mode == TRANSFORM_CNF_OR_PRUNE)
-	{
-	  *continue_walk = PT_STOP_WALK;
-	}
+        {
+          *continue_walk = PT_STOP_WALK;
+        }
       break;
     default:
       break;
@@ -567,14 +546,12 @@ pt_transform_cnf_pre (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
  *   continue_walk(in/out)
  */
 static PT_NODE *
-pt_calculate_similarity (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
-			 void *arg, int *continue_walk)
+pt_calculate_similarity (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk)
 {
   SIMILARITY_CONTEXT *ctx = (SIMILARITY_CONTEXT *) arg;
 
   ctx->number_of_nodes++;
-  if (ctx->max_number_of_nodes != -1
-      && ctx->number_of_nodes > ctx->max_number_of_nodes)
+  if (ctx->max_number_of_nodes != -1 && ctx->number_of_nodes > ctx->max_number_of_nodes)
     {
       *continue_walk = PT_STOP_WALK;
       return node;
@@ -608,8 +585,7 @@ pt_calculate_similarity (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
  *   continue_walk(in/out):
  */
 static PT_NODE *
-pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node,
-		       void *arg, int *continue_walk)
+pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk)
 {
   PT_NODE *list, *lhs, *rhs, *last, *conj, *temp, *lhs_next, *rhs_next;
   CNF_MODE *mode = (CNF_MODE *) arg;
@@ -624,11 +600,11 @@ pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node,
   if (!node || node->node_type != PT_EXPR)
     {
       if (node && node->node_type == PT_SELECT)
-	{
-	  /* meet subquery in search condition.
-	   * prune and go ahead */
-	  *continue_walk = PT_CONTINUE_WALK;
-	}
+        {
+          /* meet subquery in search condition.
+           * prune and go ahead */
+          *continue_walk = PT_CONTINUE_WALK;
+        }
       return node;
     }
 
@@ -642,9 +618,9 @@ pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node,
       /* append RHS list to LHS list */
       list = node->info.expr.arg1;
       for (last = list; last->next; last = last->next)
-	{
-	  ;
-	}
+        {
+          ;
+        }
       last->next = node->info.expr.arg2;
 
       /* free AND node excluding LHS list and RHS list */
@@ -658,13 +634,13 @@ pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node,
     case PT_OR:
       /* OR-tree prune mode */
       if (*mode == TRANSFORM_CNF_OR_PRUNE)
-	{
-	  list = node;
-	  /* '*continue_walk' was changed to PT_STOP_WALK
-	     by pt_transform_cnf_pre() to prune OR-tree */
-	  *continue_walk = PT_CONTINUE_WALK;
-	  break;
-	}
+        {
+          list = node;
+          /* '*continue_walk' was changed to PT_STOP_WALK
+             by pt_transform_cnf_pre() to prune OR-tree */
+          *continue_walk = PT_CONTINUE_WALK;
+          break;
+        }
 
 
       save_custom = parser->custom_print;
@@ -673,295 +649,289 @@ pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node,
       common_list = NULL;
 
       for (lhs = node->info.expr.arg1, lhs_count = 0; lhs; lhs = lhs->next)
-	{
-	  ++lhs_count;
-	}
+        {
+          ++lhs_count;
+        }
       for (rhs = node->info.expr.arg2, rhs_count = 0; rhs; rhs = rhs->next)
-	{
-	  ++rhs_count;
-	}
+        {
+          ++rhs_count;
+        }
 
       /* traverse LHS list */
       lhs_prev = NULL;
       for (lhs = node->info.expr.arg1; lhs; lhs = lhs_next)
-	{
-	  lhs_next = lhs->next;
+        {
+          lhs_next = lhs->next;
 
-	  num_markers = 0;
-	  (void) parser_walk_tree (parser, lhs, pt_count_input_markers,
-				   &num_markers, NULL, NULL);
-	  if (num_markers > 0)
-	    {			/* found input marker, give up */
-	      lhs_prev = lhs;
-	      continue;
-	    }
+          num_markers = 0;
+          (void) parser_walk_tree (parser, lhs, pt_count_input_markers, &num_markers, NULL, NULL);
+          if (num_markers > 0)
+            {                   /* found input marker, give up */
+              lhs_prev = lhs;
+              continue;
+            }
 
-	  common_found = false;
+          common_found = false;
 
-	  lhs_str = NULL;
+          lhs_str = NULL;
 
-	  lhs_ctx.max_number_of_nodes = -1;
-	  lhs_ctx.number_of_nodes = 0;
-	  lhs_ctx.accumulated_opcode = 0;
-	  lhs_ctx.accumulated_node_type = 0;
-	  (void) parser_walk_tree (parser, lhs, pt_calculate_similarity,
-				   &lhs_ctx, NULL, NULL);
+          lhs_ctx.max_number_of_nodes = -1;
+          lhs_ctx.number_of_nodes = 0;
+          lhs_ctx.accumulated_opcode = 0;
+          lhs_ctx.accumulated_node_type = 0;
+          (void) parser_walk_tree (parser, lhs, pt_calculate_similarity, &lhs_ctx, NULL, NULL);
 
-	  /* traverse RHS list */
-	  rhs_prev = NULL;
-	  for (rhs = node->info.expr.arg2; rhs; rhs = rhs_next)
-	    {
-	      rhs_next = rhs->next;
+          /* traverse RHS list */
+          rhs_prev = NULL;
+          for (rhs = node->info.expr.arg2; rhs; rhs = rhs_next)
+            {
+              rhs_next = rhs->next;
 
-	      rhs_ctx.max_number_of_nodes = lhs_ctx.number_of_nodes;
-	      rhs_ctx.number_of_nodes = 0;
-	      rhs_ctx.accumulated_opcode = 0;
-	      rhs_ctx.accumulated_node_type = 0;
-	      (void) parser_walk_tree (parser, rhs, pt_calculate_similarity,
-				       &rhs_ctx, NULL, NULL);
+              rhs_ctx.max_number_of_nodes = lhs_ctx.number_of_nodes;
+              rhs_ctx.number_of_nodes = 0;
+              rhs_ctx.accumulated_opcode = 0;
+              rhs_ctx.accumulated_node_type = 0;
+              (void) parser_walk_tree (parser, rhs, pt_calculate_similarity, &rhs_ctx, NULL, NULL);
 
-	      /*
-	       * Because the cost of parser_print_tree() is very high. we use
-	       * a simple way to test whether lhs and rhs node are similar.
-	       * Only when they are similar, we call parser_print_tree().
-	       */
-	      if (lhs_ctx.number_of_nodes == rhs_ctx.number_of_nodes
-		  && lhs_ctx.accumulated_node_type ==
-		  rhs_ctx.accumulated_node_type
-		  && lhs_ctx.accumulated_opcode == rhs_ctx.accumulated_opcode)
-		{
-		  if (lhs_str == NULL)
-		    {
-		      /* get parse tree string */
-		      lhs_str = parser_print_tree (parser, lhs);
-		    }
-		  /* get parse tree string */
-		  rhs_str = parser_print_tree (parser, rhs);
+              /*
+               * Because the cost of parser_print_tree() is very high. we use
+               * a simple way to test whether lhs and rhs node are similar.
+               * Only when they are similar, we call parser_print_tree().
+               */
+              if (lhs_ctx.number_of_nodes == rhs_ctx.number_of_nodes
+                  && lhs_ctx.accumulated_node_type ==
+                  rhs_ctx.accumulated_node_type && lhs_ctx.accumulated_opcode == rhs_ctx.accumulated_opcode)
+                {
+                  if (lhs_str == NULL)
+                    {
+                      /* get parse tree string */
+                      lhs_str = parser_print_tree (parser, lhs);
+                    }
+                  /* get parse tree string */
+                  rhs_str = parser_print_tree (parser, rhs);
 
-		  if (!pt_str_compare (lhs_str, rhs_str, CASE_SENSITIVE))
-		    {		/* found common cnf */
-		      common_found = true;
-		      break;
-		    }
-		}
+                  if (!pt_str_compare (lhs_str, rhs_str, CASE_SENSITIVE))
+                    {           /* found common cnf */
+                      common_found = true;
+                      break;
+                    }
+                }
 
-	      rhs_prev = rhs;
-	    }
+              rhs_prev = rhs;
+            }
 
-	  if (common_found)
-	    {
-	      common_list =
-		parser_append_node (parser_copy_tree (parser, lhs),
-				    common_list);
+          if (common_found)
+            {
+              common_list = parser_append_node (parser_copy_tree (parser, lhs), common_list);
 
-	      /* delete from lhs list */
-	      if (lhs_prev == NULL)
-		{
-		  node->info.expr.arg1 = lhs_next;
-		}
-	      else
-		{
-		  lhs_prev->next = lhs_next;
-		}
+              /* delete from lhs list */
+              if (lhs_prev == NULL)
+                {
+                  node->info.expr.arg1 = lhs_next;
+                }
+              else
+                {
+                  lhs_prev->next = lhs_next;
+                }
 
-	      /* free compacted node */
-	      lhs->next = NULL;
-	      parser_free_tree (parser, lhs);
+              /* free compacted node */
+              lhs->next = NULL;
+              parser_free_tree (parser, lhs);
 
-	      /* delete from rhs list */
-	      if (rhs_prev == NULL)
-		{
-		  node->info.expr.arg2 = rhs_next;
-		}
-	      else
-		{
-		  rhs_prev->next = rhs_next;
-		}
+              /* delete from rhs list */
+              if (rhs_prev == NULL)
+                {
+                  node->info.expr.arg2 = rhs_next;
+                }
+              else
+                {
+                  rhs_prev->next = rhs_next;
+                }
 
-	      /* free compacted node */
-	      rhs->next = NULL;
-	      parser_free_tree (parser, rhs);
+              /* free compacted node */
+              rhs->next = NULL;
+              parser_free_tree (parser, rhs);
 
-	      continue;
-	    }
+              continue;
+            }
 
-	  lhs_prev = lhs;
-	}
+          lhs_prev = lhs;
+        }
 
-      parser->custom_print = save_custom;	/* restore */
+      parser->custom_print = save_custom;       /* restore */
 
       lhs = node->info.expr.arg1;
       rhs = node->info.expr.arg2;
 
       /* fully compacted */
       if (lhs == NULL || rhs == NULL)
-	{
-	  /* free OR node excluding LHS list and RHS list */
-	  node->info.expr.arg1 = node->info.expr.arg2 = NULL;
+        {
+          /* free OR node excluding LHS list and RHS list */
+          node->info.expr.arg1 = node->info.expr.arg2 = NULL;
 
-	  /* OR node should not have 'next' and 'or_next'
-	     node->next = node->or_next = NULL */
-	  parser_free_tree (parser, node);
+          /* OR node should not have 'next' and 'or_next'
+             node->next = node->or_next = NULL */
+          parser_free_tree (parser, node);
 
-	  /* A and B or A ==> A and (B or true) ==> A */
-	  list = common_list;
-	  break;
-	}
+          /* A and B or A ==> A and (B or true) ==> A */
+          list = common_list;
+          break;
+        }
 
       /* OR-tree compact mode */
       if (*mode == TRANSFORM_CNF_OR_COMPACT)
-	{
-	  arg1 = arg2 = NULL;	/* init */
+        {
+          arg1 = arg2 = NULL;   /* init */
 
-	  /* rollback to AND-OR tree */
-	  if (lhs)
-	    {			/* build AND-tree */
-	      lhs_next = lhs->next;
-	      lhs->next = NULL;
+          /* rollback to AND-OR tree */
+          if (lhs)
+            {                   /* build AND-tree */
+              lhs_next = lhs->next;
+              lhs->next = NULL;
 
-	      arg1 = lhs;
+              arg1 = lhs;
 
-	      for (lhs = lhs_next; lhs; lhs = lhs_next)
-		{
-		  lhs_next = lhs->next;
-		  lhs->next = NULL;
+              for (lhs = lhs_next; lhs; lhs = lhs_next)
+                {
+                  lhs_next = lhs->next;
+                  lhs->next = NULL;
 
-		  arg1 = pt_and (parser, arg1, lhs);
-		}
-	      if (arg1 && arg1->info.expr.op == PT_AND)
-		{
-		  arg1->info.expr.paren_type = 1;
-		}
-	    }
+                  arg1 = pt_and (parser, arg1, lhs);
+                }
+              if (arg1 && arg1->info.expr.op == PT_AND)
+                {
+                  arg1->info.expr.paren_type = 1;
+                }
+            }
 
-	  if (rhs)
-	    {			/* build AND-tree */
-	      rhs_next = rhs->next;
-	      rhs->next = NULL;
+          if (rhs)
+            {                   /* build AND-tree */
+              rhs_next = rhs->next;
+              rhs->next = NULL;
 
-	      arg2 = rhs;
+              arg2 = rhs;
 
-	      for (rhs = rhs_next; rhs; rhs = rhs_next)
-		{
-		  rhs_next = rhs->next;
-		  rhs->next = NULL;
+              for (rhs = rhs_next; rhs; rhs = rhs_next)
+                {
+                  rhs_next = rhs->next;
+                  rhs->next = NULL;
 
-		  arg2 = pt_and (parser, arg2, rhs);
-		}
-	      if (arg2 && arg2->info.expr.op == PT_AND)
-		{
-		  arg2->info.expr.paren_type = 1;
-		}
-	    }
+                  arg2 = pt_and (parser, arg2, rhs);
+                }
+              if (arg2 && arg2->info.expr.op == PT_AND)
+                {
+                  arg2->info.expr.paren_type = 1;
+                }
+            }
 
-	  if (arg1 && arg2)
-	    {			/* build OR-tree */
-	      list = pt_and (parser, arg1, arg2);
-	      list->info.expr.op = PT_OR;
-	    }
-	  else
-	    {
-	      /* A and B or A ==> A and (B or true) ==> A */
-	      list = NULL;
-	    }
+          if (arg1 && arg2)
+            {                   /* build OR-tree */
+              list = pt_and (parser, arg1, arg2);
+              list->info.expr.op = PT_OR;
+            }
+          else
+            {
+              /* A and B or A ==> A and (B or true) ==> A */
+              list = NULL;
+            }
 
-	  if (list != NULL && list->info.expr.op == PT_OR)
-	    {
-	      list->info.expr.paren_type = 1;
-	    }
+          if (list != NULL && list->info.expr.op == PT_OR)
+            {
+              list->info.expr.paren_type = 1;
+            }
 
-	  list = parser_append_node (list, common_list);
+          list = parser_append_node (list, common_list);
 
-	  break;
-	}
+          break;
+        }
 
       /* redo cnf transformation */
       lhs = node->info.expr.arg1;
       rhs = node->info.expr.arg2;
 
       if (lhs->next == NULL && rhs->next == NULL)
-	{
-	  /* special case;
-	     one LHS node OR one RHS node
-	     ==> LHS -(or_next)-> RHS */
+        {
+          /* special case;
+             one LHS node OR one RHS node
+             ==> LHS -(or_next)-> RHS */
 
-	  /* append RHS node to LHS node */
-	  list = node->info.expr.arg1;
-	  for (temp = list; temp->or_next; temp = temp->or_next)
-	    {
-	      ;
-	    }
+          /* append RHS node to LHS node */
+          list = node->info.expr.arg1;
+          for (temp = list; temp->or_next; temp = temp->or_next)
+            {
+              ;
+            }
 
-	  temp->or_next = node->info.expr.arg2;
+          temp->or_next = node->info.expr.arg2;
 
-	  /* free OR node excluding LHS list and RHS list */
-	  node->info.expr.arg1 = node->info.expr.arg2 = NULL;
+          /* free OR node excluding LHS list and RHS list */
+          node->info.expr.arg1 = node->info.expr.arg2 = NULL;
 
-	  /* OR node should not have 'next' and 'or_next'
-	     node->next = node->or_next = NULL */
-	  parser_free_tree (parser, node);
-	}
+          /* OR node should not have 'next' and 'or_next'
+             node->next = node->or_next = NULL */
+          parser_free_tree (parser, node);
+        }
       else
-	{
-	  list = last = NULL;
+        {
+          list = last = NULL;
 
-	  /* traverse LHS list */
-	  for (lhs = node->info.expr.arg1; lhs; lhs = lhs_next)
-	    {
-	      lhs_next = lhs->next;
-	      lhs->next = NULL;	/* cut off link temporarily */
+          /* traverse LHS list */
+          for (lhs = node->info.expr.arg1; lhs; lhs = lhs_next)
+            {
+              lhs_next = lhs->next;
+              lhs->next = NULL; /* cut off link temporarily */
 
-	      /* traverse RHS list */
-	      for (rhs = node->info.expr.arg2; rhs; rhs = rhs_next)
-		{
-		  rhs_next = rhs->next;
-		  rhs->next = NULL;	/* cut off link temporarily */
+              /* traverse RHS list */
+              for (rhs = node->info.expr.arg2; rhs; rhs = rhs_next)
+                {
+                  rhs_next = rhs->next;
+                  rhs->next = NULL;     /* cut off link temporarily */
 
-		  /* clone LHS node (conjunctive)
-		     if RHS is the last node, this LHS is the last one
-		     to be used; so point to directly without cloning */
-		  if (rhs_next == NULL)
-		    conj = lhs;
-		  else
-		    conj = parser_copy_tree_list (parser, lhs);
+                  /* clone LHS node (conjunctive)
+                     if RHS is the last node, this LHS is the last one
+                     to be used; so point to directly without cloning */
+                  if (rhs_next == NULL)
+                    conj = lhs;
+                  else
+                    conj = parser_copy_tree_list (parser, lhs);
 
-		  /* append RHS node clone to LHS node clone */
-		  for (temp = conj; temp->or_next; temp = temp->or_next)
-		    {
-		      ;
-		    }
-		  /* if LHS is the last node, this RHS is the last one
-		     to be used; so point to directly without cloning */
-		  if (lhs_next == NULL)
-		    {
-		      temp->or_next = rhs;
-		    }
-		  else
-		    {
-		      temp->or_next = parser_copy_tree_list (parser, rhs);
-		      rhs->next = rhs_next;	/* relink RHS list */
-		    }
+                  /* append RHS node clone to LHS node clone */
+                  for (temp = conj; temp->or_next; temp = temp->or_next)
+                    {
+                      ;
+                    }
+                  /* if LHS is the last node, this RHS is the last one
+                     to be used; so point to directly without cloning */
+                  if (lhs_next == NULL)
+                    {
+                      temp->or_next = rhs;
+                    }
+                  else
+                    {
+                      temp->or_next = parser_copy_tree_list (parser, rhs);
+                      rhs->next = rhs_next;     /* relink RHS list */
+                    }
 
-		  /* and then link the conjunctive to the CNF list */
-		  if (last)
-		    last->next = conj;
-		  else
-		    list = last = conj;
+                  /* and then link the conjunctive to the CNF list */
+                  if (last)
+                    last->next = conj;
+                  else
+                    list = last = conj;
 
-		  for (last = conj; last->next; last = last->next)
-		    {
-		      ;
-		    }
-		}		/* for (rhs = ...) */
-	    }			/* for (lhs = ...) */
+                  for (last = conj; last->next; last = last->next)
+                    {
+                      ;
+                    }
+                }               /* for (rhs = ...) */
+            }                   /* for (lhs = ...) */
 
-	  /* free OR node excluding LHS list and RHS list */
-	  node->info.expr.arg1 = node->info.expr.arg2 = NULL;
+          /* free OR node excluding LHS list and RHS list */
+          node->info.expr.arg1 = node->info.expr.arg2 = NULL;
 
-	  /* OR node should not have 'next' and 'or_next'
-	     node->next = node->or_next = NULL */
-	  parser_free_tree (parser, node);
-	}
+          /* OR node should not have 'next' and 'or_next'
+             node->next = node->or_next = NULL */
+          parser_free_tree (parser, node);
+        }
 
       list = parser_append_node (list, common_list);
       break;
@@ -969,7 +939,7 @@ pt_transform_cnf_post (PARSER_CONTEXT * parser, PT_NODE * node,
     default:
       list = node;
       break;
-    }				/* switch (node->info.expr.op) */
+    }                           /* switch (node->info.expr.op) */
 
   /* return CNF/DNF list */
   return list;
@@ -999,71 +969,67 @@ pt_cnf (PARSER_CONTEXT * parser, PT_NODE * node)
       next = node->next;
       node->next = NULL;
 
-      if (node->node_type == PT_VALUE
-	  || PT_EXPR_INFO_IS_FLAGED (node, PT_EXPR_INFO_CNF_DONE))
-	{
-	  /* if it is a value, it should be a const value which was a const
-	   * expression and folded as a const value.
-	   * if the case, skip this node and go ahead.
-	   */
+      if (node->node_type == PT_VALUE || PT_EXPR_INFO_IS_FLAGED (node, PT_EXPR_INFO_CNF_DONE))
+        {
+          /* if it is a value, it should be a const value which was a const
+           * expression and folded as a const value.
+           * if the case, skip this node and go ahead.
+           */
 
-	  /* if it is already in CNF */
-	  cnf = node;
-	  /* and then link it to the CNF list */
-	  if (last)
-	    {
-	      last->next = cnf;
-	    }
-	  else
-	    {
-	      list = last = cnf;
-	    }
+          /* if it is already in CNF */
+          cnf = node;
+          /* and then link it to the CNF list */
+          if (last)
+            {
+              last->next = cnf;
+            }
+          else
+            {
+              list = last = cnf;
+            }
 
-	  /* adjust last pointer */
-	  for (last = cnf; last->next; last = last->next)
-	    {
-	      ;
-	    }
-	}
+          /* adjust last pointer */
+          for (last = cnf; last->next; last = last->next)
+            {
+              ;
+            }
+        }
       else
-	{
-	  /* transform the tree to AND-OR form which
-	   * does not have NOT expression */
-	  node = pt_and_or_form (parser, node);
+        {
+          /* transform the tree to AND-OR form which
+           * does not have NOT expression */
+          node = pt_and_or_form (parser, node);
 
-	  /* if the number of result nodes of CNF list to be made is too big,
-	     do CNF transformation in OR-tree prune mode */
-	  mode = (count_and_or (parser, node) > 100)
-	    ? TRANSFORM_CNF_OR_COMPACT : TRANSFORM_CNF_AND_OR;
+          /* if the number of result nodes of CNF list to be made is too big,
+             do CNF transformation in OR-tree prune mode */
+          mode = (count_and_or (parser, node) > 100) ? TRANSFORM_CNF_OR_COMPACT : TRANSFORM_CNF_AND_OR;
 
-	  /* transform the tree to CNF list */
-	  cnf = parser_walk_tree (parser, node, pt_transform_cnf_pre, &mode,
-				  pt_transform_cnf_post, &mode);
-	  /* and then link it to the CNF list */
-	  if (last)
-	    {
-	      last->next = cnf;
-	    }
-	  else
-	    {
-	      list = last = cnf;
-	    }
+          /* transform the tree to CNF list */
+          cnf = parser_walk_tree (parser, node, pt_transform_cnf_pre, &mode, pt_transform_cnf_post, &mode);
+          /* and then link it to the CNF list */
+          if (last)
+            {
+              last->next = cnf;
+            }
+          else
+            {
+              list = last = cnf;
+            }
 
-	  /* adjust last pointer and mark that they have been transformed */
-	  for (last = cnf; last->next; last = last->next)
-	    {
-	      PT_EXPR_INFO_SET_FLAG (last, PT_EXPR_INFO_CNF_DONE);
-	    }
-	  PT_EXPR_INFO_SET_FLAG (last, PT_EXPR_INFO_CNF_DONE);
-	}
+          /* adjust last pointer and mark that they have been transformed */
+          for (last = cnf; last->next; last = last->next)
+            {
+              PT_EXPR_INFO_SET_FLAG (last, PT_EXPR_INFO_CNF_DONE);
+            }
+          PT_EXPR_INFO_SET_FLAG (last, PT_EXPR_INFO_CNF_DONE);
+        }
 
       /* next node */
       node = next;
     }
   while (next);
 
-  list = parser_walk_tree (parser, list,
-			   NULL, NULL, pt_tag_start_of_cnf_post, NULL);
+  list = parser_walk_tree (parser, list, NULL, NULL, pt_tag_start_of_cnf_post, NULL);
   return list;
 }
 
@@ -1077,8 +1043,7 @@ pt_cnf (PARSER_CONTEXT * parser, PT_NODE * node)
  *   continue_walk(in/out):
  */
 static PT_NODE *
-pt_find_name_id_pre (PARSER_CONTEXT * parser, PT_NODE * tree,
-		     void *arg, int *continue_walk)
+pt_find_name_id_pre (PARSER_CONTEXT * parser, PT_NODE * tree, void *arg, int *continue_walk)
 {
   FIND_ID_INFO *info = (FIND_ID_INFO *) arg;
 
@@ -1091,21 +1056,19 @@ pt_find_name_id_pre (PARSER_CONTEXT * parser, PT_NODE * tree,
   else
     {
       if (PT_IS_QUERY_NODE_TYPE (tree->node_type))
-	{
-	  if (tree->info.query.correlation_level == 1
-	      && info->tag_subqueries && !info->in_query)
-	    {
-	      info->in_query = tree;
+        {
+          if (tree->info.query.correlation_level == 1 && info->tag_subqueries && !info->in_query)
+            {
+              info->in_query = tree;
 
-	      /* if this subquery is correlated 1, test it for tagging */
-	      pt_tag_term_with_id (parser, tree, info->id,
-				   info->join_spec, false);
-	    }
-	  else if (tree->info.query.correlation_level == 0)
-	    {
-	      *continue_walk = PT_LIST_WALK;
-	    }
-	}
+              /* if this subquery is correlated 1, test it for tagging */
+              pt_tag_term_with_id (parser, tree, info->id, info->join_spec, false);
+            }
+          else if (tree->info.query.correlation_level == 0)
+            {
+              *continue_walk = PT_LIST_WALK;
+            }
+        }
     }
 
   return tree;
@@ -1121,8 +1084,7 @@ pt_find_name_id_pre (PARSER_CONTEXT * parser, PT_NODE * tree,
  *   continue_walk(in/out):
  */
 static PT_NODE *
-pt_find_name_id_post (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * tree,
-		      void *arg, int *continue_walk)
+pt_find_name_id_post (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * tree, void *arg, int *continue_walk)
 {
   FIND_ID_INFO *info = (FIND_ID_INFO *) arg;
 
@@ -1147,8 +1109,7 @@ pt_find_name_id_post (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * tree,
  *   tag_subqueries(in):
  */
 static void
-pt_tag_term_with_id (PARSER_CONTEXT * parser, PT_NODE * term,
-		     UINTPTR id, UINTPTR join_spec, bool tag_subqueries)
+pt_tag_term_with_id (PARSER_CONTEXT * parser, PT_NODE * term, UINTPTR id, UINTPTR join_spec, bool tag_subqueries)
 {
   FIND_ID_INFO info;
 
@@ -1158,8 +1119,7 @@ pt_tag_term_with_id (PARSER_CONTEXT * parser, PT_NODE * term,
   info.tag_subqueries = tag_subqueries;
   info.in_query = NULL;
 
-  parser_walk_leaves (parser, term, pt_find_name_id_pre, &info,
-		      pt_find_name_id_post, &info);
+  parser_walk_leaves (parser, term, pt_find_name_id_pre, &info, pt_find_name_id_post, &info);
   if (info.found)
     {
       term->spec_ident = join_spec;
@@ -1176,20 +1136,19 @@ pt_tag_term_with_id (PARSER_CONTEXT * parser, PT_NODE * term,
  *   join_spec(in):
  */
 static void
-pt_tag_terms_with_id (PARSER_CONTEXT * parser, PT_NODE * terms,
-		      UINTPTR id, UINTPTR join_spec)
+pt_tag_terms_with_id (PARSER_CONTEXT * parser, PT_NODE * terms, UINTPTR id, UINTPTR join_spec)
 {
   while (terms)
     {
       if (terms->node_type == PT_EXPR && terms->info.expr.op == PT_AND)
-	{
-	  pt_tag_terms_with_id (parser, terms->info.expr.arg1, id, join_spec);
-	  pt_tag_terms_with_id (parser, terms->info.expr.arg2, id, join_spec);
-	}
+        {
+          pt_tag_terms_with_id (parser, terms->info.expr.arg1, id, join_spec);
+          pt_tag_terms_with_id (parser, terms->info.expr.arg2, id, join_spec);
+        }
       else
-	{
-	  pt_tag_term_with_id (parser, terms, id, join_spec, true);
-	}
+        {
+          pt_tag_term_with_id (parser, terms, id, join_spec, true);
+        }
       terms = terms->next;
     }
 }
@@ -1214,8 +1173,7 @@ pt_tag_terms_with_id (PARSER_CONTEXT * parser, PT_NODE * terms,
  * 	a later join spec, B, or suppath spec C of A.
  */
 static void
-pt_tag_terms_with_specs (PARSER_CONTEXT * parser, PT_NODE * terms,
-			 PT_NODE * join_spec, UINTPTR join_id)
+pt_tag_terms_with_specs (PARSER_CONTEXT * parser, PT_NODE * terms, PT_NODE * join_spec, UINTPTR join_id)
 {
   pt_tag_terms_with_id (parser, terms, join_spec->info.spec.id, join_id);
 }
@@ -1229,8 +1187,7 @@ pt_tag_terms_with_specs (PARSER_CONTEXT * parser, PT_NODE * terms,
  *   continue_walk(in): used for pruning fruitless subtree walks
  */
 PT_NODE *
-pt_do_cnf (PARSER_CONTEXT * parser, PT_NODE * node, UNUSED_ARG void *arg,
-	   UNUSED_ARG int *continue_walk)
+pt_do_cnf (PARSER_CONTEXT * parser, PT_NODE * node, UNUSED_ARG void *arg, UNUSED_ARG int *continue_walk)
 {
   PT_NODE *list, *spec;
 
@@ -1246,21 +1203,18 @@ pt_do_cnf (PARSER_CONTEXT * parser, PT_NODE * node, UNUSED_ARG void *arg,
     {
       /* to make pt_cnf() work */
       for (; list; list = list->next)
-	{
-	  PT_EXPR_INFO_CLEAR_FLAG (list, PT_EXPR_INFO_CNF_DONE);
-	}
+        {
+          PT_EXPR_INFO_CLEAR_FLAG (list, PT_EXPR_INFO_CNF_DONE);
+        }
 
       /* do CNF transformation */
-      node->info.query.q.select.where =
-	pt_cnf (parser, node->info.query.q.select.where);
+      node->info.query.q.select.where = pt_cnf (parser, node->info.query.q.select.where);
 
       /* test each term in the CNF predicate for membership of the spec id */
       for (spec = node->info.query.q.select.from; spec; spec = spec->next)
-	{
-	  pt_tag_terms_with_specs (parser,
-				   node->info.query.q.select.where,
-				   spec, spec->info.spec.id);
-	}
+        {
+          pt_tag_terms_with_specs (parser, node->info.query.q.select.where, spec, spec->info.spec.id);
+        }
     }
 
   /* do CNF conversion if it has HAVING */
@@ -1269,13 +1223,12 @@ pt_do_cnf (PARSER_CONTEXT * parser, PT_NODE * node, UNUSED_ARG void *arg,
     {
       /* to make pt_cnf() work */
       for (; list; list = list->next)
-	{
-	  PT_EXPR_INFO_CLEAR_FLAG (list, PT_EXPR_INFO_CNF_DONE);
-	}
+        {
+          PT_EXPR_INFO_CLEAR_FLAG (list, PT_EXPR_INFO_CNF_DONE);
+        }
 
       /* do CNF transformation */
-      node->info.query.q.select.having =
-	pt_cnf (parser, node->info.query.q.select.having);
+      node->info.query.q.select.having = pt_cnf (parser, node->info.query.q.select.having);
     }
 
   return node;

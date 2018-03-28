@@ -81,8 +81,7 @@ pt_trim_as_identifier (char *name)
   len = strlen (name);
   if (len >= 2
       && ((name[0] == '[' && name[len - 1] == ']')
-	  || (name[0] == '`' && name[len - 1] == '`')
-	  || (name[0] == '"' && name[len - 1] == '"')))
+          || (name[0] == '`' && name[len - 1] == '`') || (name[0] == '"' && name[len - 1] == '"')))
     {
       tmp_name = pt_makename (name);
       tmp_name[len - 1] = '\0';
@@ -136,10 +135,10 @@ pt_cleanup_hint (PARSER_CONTEXT * parser, PT_HINT hint_table[])
   for (i = 0; hint_table[i].tokens; i++)
     {
       if (hint_table[i].arg_list != NULL)
-	{
-	  parser_free_node (parser, hint_table[i].arg_list);
-	  hint_table[i].arg_list = NULL;
-	}
+        {
+          parser_free_node (parser, hint_table[i].arg_list);
+          hint_table[i].arg_list = NULL;
+        }
     }
 }
 
@@ -158,159 +157,156 @@ pt_get_hint (const char *text, PT_HINT hint_table[], PT_NODE * node)
   for (i = 0; hint_table[i].tokens; i++)
     {
       if (stristr (text, hint_table[i].tokens))
-	{
+        {
 
-	  switch (hint_table[i].hint)
-	    {
-	    case PT_HINT_NONE:
-	      break;
+          switch (hint_table[i].hint)
+            {
+            case PT_HINT_NONE:
+              break;
 
-	    case PT_HINT_ORDERED:	/* force join left-to-right */
-#if 0				/* TEMPORARY COMMENTED CODE: DO NOT REMOVE ME !!! */
-	      node->info.query.q.select.ordered_hint = hint_table[i].arg_list;
-	      hint_table[i].arg_list = NULL;
+            case PT_HINT_ORDERED:      /* force join left-to-right */
+#if 0                           /* TEMPORARY COMMENTED CODE: DO NOT REMOVE ME !!! */
+              node->info.query.q.select.ordered_hint = hint_table[i].arg_list;
+              hint_table[i].arg_list = NULL;
 #endif /* 0                              */
-	      if (node->node_type == PT_SELECT)
-		{
-		  node->info.query.q.select.hint |= hint_table[i].hint;
-		}
-	      else if (node->node_type == PT_DELETE)
-		{
-		  node->info.delete_.hint |= hint_table[i].hint;
-		}
-	      else if (node->node_type == PT_UPDATE)
-		{
-		  node->info.update.hint |= hint_table[i].hint;
-		}
-	      break;
+              if (node->node_type == PT_SELECT)
+                {
+                  node->info.query.q.select.hint |= hint_table[i].hint;
+                }
+              else if (node->node_type == PT_DELETE)
+                {
+                  node->info.delete_.hint |= hint_table[i].hint;
+                }
+              else if (node->node_type == PT_UPDATE)
+                {
+                  node->info.update.hint |= hint_table[i].hint;
+                }
+              break;
 
 #if 0
-	    case PT_HINT_Y:	/* not used */
-	      break;
+            case PT_HINT_Y:    /* not used */
+              break;
 #endif /* 0 */
 
-	    case PT_HINT_USE_NL:	/* force nl-join */
-	      if (node->node_type == PT_SELECT)
-		{
-		  node->info.query.q.select.hint |= hint_table[i].hint;
-		  node->info.query.q.select.use_nl_hint =
-		    hint_table[i].arg_list;
-		  hint_table[i].arg_list = NULL;
-		}
-	      else if (node->node_type == PT_DELETE)
-		{
-		  node->info.delete_.hint |= hint_table[i].hint;
-		  node->info.delete_.use_nl_hint = hint_table[i].arg_list;
-		  hint_table[i].arg_list = NULL;
-		}
-	      else if (node->node_type == PT_UPDATE)
-		{
-		  node->info.update.hint |= hint_table[i].hint;
-		  node->info.update.use_nl_hint = hint_table[i].arg_list;
-		  hint_table[i].arg_list = NULL;
-		}
-	      break;
+            case PT_HINT_USE_NL:       /* force nl-join */
+              if (node->node_type == PT_SELECT)
+                {
+                  node->info.query.q.select.hint |= hint_table[i].hint;
+                  node->info.query.q.select.use_nl_hint = hint_table[i].arg_list;
+                  hint_table[i].arg_list = NULL;
+                }
+              else if (node->node_type == PT_DELETE)
+                {
+                  node->info.delete_.hint |= hint_table[i].hint;
+                  node->info.delete_.use_nl_hint = hint_table[i].arg_list;
+                  hint_table[i].arg_list = NULL;
+                }
+              else if (node->node_type == PT_UPDATE)
+                {
+                  node->info.update.hint |= hint_table[i].hint;
+                  node->info.update.use_nl_hint = hint_table[i].arg_list;
+                  hint_table[i].arg_list = NULL;
+                }
+              break;
 
-	    case PT_HINT_USE_IDX:	/* force idx-join */
-	      if (node->node_type == PT_SELECT)
-		{
-		  node->info.query.q.select.hint |= hint_table[i].hint;
-		  node->info.query.q.select.use_idx_hint =
-		    hint_table[i].arg_list;
-		  hint_table[i].arg_list = NULL;
-		}
-	      else if (node->node_type == PT_DELETE)
-		{
-		  node->info.delete_.hint |= hint_table[i].hint;
-		  node->info.delete_.use_idx_hint = hint_table[i].arg_list;
-		  hint_table[i].arg_list = NULL;
-		}
-	      else if (node->node_type == PT_UPDATE)
-		{
-		  node->info.update.hint |= hint_table[i].hint;
-		  node->info.update.use_idx_hint = hint_table[i].arg_list;
-		  hint_table[i].arg_list = NULL;
-		}
-	      break;
+            case PT_HINT_USE_IDX:      /* force idx-join */
+              if (node->node_type == PT_SELECT)
+                {
+                  node->info.query.q.select.hint |= hint_table[i].hint;
+                  node->info.query.q.select.use_idx_hint = hint_table[i].arg_list;
+                  hint_table[i].arg_list = NULL;
+                }
+              else if (node->node_type == PT_DELETE)
+                {
+                  node->info.delete_.hint |= hint_table[i].hint;
+                  node->info.delete_.use_idx_hint = hint_table[i].arg_list;
+                  hint_table[i].arg_list = NULL;
+                }
+              else if (node->node_type == PT_UPDATE)
+                {
+                  node->info.update.hint |= hint_table[i].hint;
+                  node->info.update.use_idx_hint = hint_table[i].arg_list;
+                  hint_table[i].arg_list = NULL;
+                }
+              break;
 
-	    case PT_HINT_RECOMPILE:	/* recompile */
-	      node->recompile = 1;
-	      break;
+            case PT_HINT_RECOMPILE:    /* recompile */
+              node->recompile = 1;
+              break;
 
-	    case PT_HINT_QUERY_CACHE:	/* query_cache */
-	      if (PT_IS_QUERY_NODE_TYPE (node->node_type))
-		{
-		  node->info.query.hint |= hint_table[i].hint;
-		  node->info.query.qcache_hint = hint_table[i].arg_list;
-		  if (node->info.query.qcache_hint)
-		    {
-		      if (atoi
-			  (node->info.query.qcache_hint->info.name.original))
-			node->info.query.do_cache = 1;
-		      else
-			node->info.query.do_not_cache = 1;
-		    }
-		  else
-		    {
-		      node->info.query.do_cache = 1;
-		    }
-		}
-	      hint_table[i].arg_list = NULL;
-	      break;
+            case PT_HINT_QUERY_CACHE:  /* query_cache */
+              if (PT_IS_QUERY_NODE_TYPE (node->node_type))
+                {
+                  node->info.query.hint |= hint_table[i].hint;
+                  node->info.query.qcache_hint = hint_table[i].arg_list;
+                  if (node->info.query.qcache_hint)
+                    {
+                      if (atoi (node->info.query.qcache_hint->info.name.original))
+                        node->info.query.do_cache = 1;
+                      else
+                        node->info.query.do_not_cache = 1;
+                    }
+                  else
+                    {
+                      node->info.query.do_cache = 1;
+                    }
+                }
+              hint_table[i].arg_list = NULL;
+              break;
 
-	    case PT_HINT_REEXECUTE:	/* reexecute */
-	      if (PT_IS_QUERY_NODE_TYPE (node->node_type))
-		{
-		  node->info.query.hint |= hint_table[i].hint;
-		  node->info.query.reexecute = 1;
-		}
-	      break;
+            case PT_HINT_REEXECUTE:    /* reexecute */
+              if (PT_IS_QUERY_NODE_TYPE (node->node_type))
+                {
+                  node->info.query.hint |= hint_table[i].hint;
+                  node->info.query.reexecute = 1;
+                }
+              break;
 
-	    case PT_HINT_USE_IDX_DESC:	/* descending index scan */
-	    case PT_HINT_NO_COVERING_IDX:	/* do not use covering index scan */
-	    case PT_HINT_NO_IDX_DESC:	/* do not use descending index scan */
-	      if (node->node_type == PT_SELECT)
-		{
-		  node->info.query.q.select.hint |= hint_table[i].hint;
-		}
-	      else if (node->node_type == PT_DELETE)
-		{
-		  node->info.delete_.hint |= hint_table[i].hint;
-		}
-	      else if (node->node_type == PT_UPDATE)
-		{
-		  node->info.update.hint |= hint_table[i].hint;
-		}
-	      break;
+            case PT_HINT_USE_IDX_DESC: /* descending index scan */
+            case PT_HINT_NO_COVERING_IDX:      /* do not use covering index scan */
+            case PT_HINT_NO_IDX_DESC:  /* do not use descending index scan */
+              if (node->node_type == PT_SELECT)
+                {
+                  node->info.query.q.select.hint |= hint_table[i].hint;
+                }
+              else if (node->node_type == PT_DELETE)
+                {
+                  node->info.delete_.hint |= hint_table[i].hint;
+                }
+              else if (node->node_type == PT_UPDATE)
+                {
+                  node->info.update.hint |= hint_table[i].hint;
+                }
+              break;
 
-	    case PT_HINT_FORCE_PAGE_ALLOCATION:	/* force new page allocation for insert */
-	      if (node->node_type == PT_INSERT)
-		{
-		  node->info.insert.hint |= hint_table[i].hint;
-		}
-	      break;
+            case PT_HINT_FORCE_PAGE_ALLOCATION:        /* force new page allocation for insert */
+              if (node->node_type == PT_INSERT)
+                {
+                  node->info.insert.hint |= hint_table[i].hint;
+                }
+              break;
 
-	    case PT_HINT_NO_MULTI_RANGE_OPT:
-	    case PT_HINT_NO_SORT_LIMIT:
-	      if (node->node_type == PT_SELECT)
-		{
-		  node->info.query.q.select.hint |= hint_table[i].hint;
-		}
-	      else if (node->node_type == PT_DELETE)
-		{
-		  node->info.delete_.hint |= hint_table[i].hint;
-		}
-	      else if (node->node_type == PT_UPDATE)
-		{
-		  node->info.update.hint |= hint_table[i].hint;
-		}
-	      break;
+            case PT_HINT_NO_MULTI_RANGE_OPT:
+            case PT_HINT_NO_SORT_LIMIT:
+              if (node->node_type == PT_SELECT)
+                {
+                  node->info.query.q.select.hint |= hint_table[i].hint;
+                }
+              else if (node->node_type == PT_DELETE)
+                {
+                  node->info.delete_.hint |= hint_table[i].hint;
+                }
+              else if (node->node_type == PT_UPDATE)
+                {
+                  node->info.update.hint |= hint_table[i].hint;
+                }
+              break;
 
-	    default:
-	      break;
-	    }
-	}
-    }				/* for (i = ... ) */
+            default:
+              break;
+            }
+        }
+    }                           /* for (i = ... ) */
 }
 
 /*
@@ -321,8 +317,7 @@ pt_get_hint (const char *text, PT_HINT hint_table[], PT_NODE * node)
  *   prev_is_white_char(in): flag indicates prev char
  */
 void
-pt_check_hint (const char *text, PT_HINT hint_table[],
-	       PT_HINT_ENUM * result_hint, bool prev_is_white_char)
+pt_check_hint (const char *text, PT_HINT hint_table[], PT_HINT_ENUM * result_hint, bool prev_is_white_char)
 {
   int i, j, len, count;
   PT_HINT_ENUM hint;
@@ -333,207 +328,178 @@ pt_check_hint (const char *text, PT_HINT hint_table[],
 
   for (i = 0; hint_table[i].tokens; i++)
     {
-      count = 0;		/* init */
-      hint = PT_HINT_NONE;	/* init */
+      count = 0;                /* init */
+      hint = PT_HINT_NONE;      /* init */
       strncpy (hint_buf, text, JP_MAXNAME);
       hint_buf[JP_MAXNAME - 1] = '\0';
       hint_p = ustr_casestr (hint_buf, hint_table[i].tokens);
 
       while (hint_p)
-	{
-	  has_parenthesis = false;
-	  len = strlen (hint_table[i].tokens);
-	  /* check token before */
-	  if ((count == 0 && (prev_is_white_char ||
-			      (hint_p > hint_buf
-			       && IS_WHITE_CHAR (*(hint_p - 1)))))
-	      || IS_WHITE_CHAR (*(hint_p - 1)))
-	    {
-	      hint_p += len;	/* consume token */
-	      /* check token after */
-	      if (IS_WHITE_CHAR (*(hint_p)))
-		{		/* no arguments */
-		  /* found specified hint */
-		  hint = hint_table[i].hint;
-		}
-	      else if (*(hint_p) == '(')
-		{		/* need to check for argument */
-		  has_parenthesis = true;
-		  hint_p++;	/* consume '(' */
-		  arg_start = hint_p;
-		  arg_end = strstr (arg_start, ")");
-		  /* check arguments */
-		  if (arg_end
-		      && ((len = CAST_STRLEN (arg_end - arg_start)) > 0))
-		    {
-		      for (j = 0; j < len; j++)
-			{
-			  if (hint_p[j] == '(')
-			    {
-			      /* illegal hint expression */
-			      break;
-			    }
-			  if (hint_p[j] == ',')
-			    {	/* found delimiter */
-			      hint_p[j] = '\0';	/* replace ',' */
-			      /* trim space around found spec name */
-			      for (; arg_start < &(hint_p[j]); arg_start++)
-				{
-				  if (!IS_WHITE_CHAR (*arg_start))
-				    {
-				      break;
-				    }
-				}
-			      for (temp = &(hint_p[j - 1]); temp > arg_start;
-				   temp--)
-				{
-				  if (!IS_WHITE_CHAR (*temp))
-				    {
-				      break;
-				    }
-				  *temp = '\0';	/* counsume space */
-				}
-			      /* add specified spec */
-			      if (arg_start < &(hint_p[j]))
-				{
-				  arg =
-				    parser_new_node (this_parser, PT_NAME);
-				  if (arg)
-				    {
-				      temp = strstr (arg_start, ".");
-				      if (temp && temp < &(hint_p[j]))
-					{
-					  *temp = '\0';
-					  arg->info.name.resolved =
-					    pt_trim_as_identifier (arg_start);
-					  arg->info.name.resolved =
-					    pt_makename (arg->info.name.
-							 resolved);
-					  *temp++ = '.';
-					  arg->info.name.original =
-					    pt_trim_as_identifier (temp);
-					  arg->info.name.original =
-					    pt_makename (arg->info.name.
-							 original);
-					}
-				      else
-					{
-					  arg->info.name.original =
-					    pt_trim_as_identifier (arg_start);
-					  arg->info.name.original =
-					    pt_makename (arg->info.name.
-							 original);
-					}
-				      arg->info.name.meta_class =
-					PT_HINT_NAME;
-				      hint_table[i].arg_list =
-					parser_append_node (arg,
-							    hint_table
-							    [i].arg_list);
-				    }
-				}
-			      arg_start = &(hint_p[j + 1]);
-			    }
-			}	/* for (j = ... ) */
+        {
+          has_parenthesis = false;
+          len = strlen (hint_table[i].tokens);
+          /* check token before */
+          if ((count == 0 && (prev_is_white_char ||
+                              (hint_p > hint_buf && IS_WHITE_CHAR (*(hint_p - 1))))) || IS_WHITE_CHAR (*(hint_p - 1)))
+            {
+              hint_p += len;    /* consume token */
+              /* check token after */
+              if (IS_WHITE_CHAR (*(hint_p)))
+                {               /* no arguments */
+                  /* found specified hint */
+                  hint = hint_table[i].hint;
+                }
+              else if (*(hint_p) == '(')
+                {               /* need to check for argument */
+                  has_parenthesis = true;
+                  hint_p++;     /* consume '(' */
+                  arg_start = hint_p;
+                  arg_end = strstr (arg_start, ")");
+                  /* check arguments */
+                  if (arg_end && ((len = CAST_STRLEN (arg_end - arg_start)) > 0))
+                    {
+                      for (j = 0; j < len; j++)
+                        {
+                          if (hint_p[j] == '(')
+                            {
+                              /* illegal hint expression */
+                              break;
+                            }
+                          if (hint_p[j] == ',')
+                            {   /* found delimiter */
+                              hint_p[j] = '\0'; /* replace ',' */
+                              /* trim space around found spec name */
+                              for (; arg_start < &(hint_p[j]); arg_start++)
+                                {
+                                  if (!IS_WHITE_CHAR (*arg_start))
+                                    {
+                                      break;
+                                    }
+                                }
+                              for (temp = &(hint_p[j - 1]); temp > arg_start; temp--)
+                                {
+                                  if (!IS_WHITE_CHAR (*temp))
+                                    {
+                                      break;
+                                    }
+                                  *temp = '\0'; /* counsume space */
+                                }
+                              /* add specified spec */
+                              if (arg_start < &(hint_p[j]))
+                                {
+                                  arg = parser_new_node (this_parser, PT_NAME);
+                                  if (arg)
+                                    {
+                                      temp = strstr (arg_start, ".");
+                                      if (temp && temp < &(hint_p[j]))
+                                        {
+                                          *temp = '\0';
+                                          arg->info.name.resolved = pt_trim_as_identifier (arg_start);
+                                          arg->info.name.resolved = pt_makename (arg->info.name.resolved);
+                                          *temp++ = '.';
+                                          arg->info.name.original = pt_trim_as_identifier (temp);
+                                          arg->info.name.original = pt_makename (arg->info.name.original);
+                                        }
+                                      else
+                                        {
+                                          arg->info.name.original = pt_trim_as_identifier (arg_start);
+                                          arg->info.name.original = pt_makename (arg->info.name.original);
+                                        }
+                                      arg->info.name.meta_class = PT_HINT_NAME;
+                                      hint_table[i].arg_list = parser_append_node (arg, hint_table[i].arg_list);
+                                    }
+                                }
+                              arg_start = &(hint_p[j + 1]);
+                            }
+                        }       /* for (j = ... ) */
 
-		      if (j < len)
-			{
-			  /* error occurs. free alloced nodes */
-			  if (hint_table[i].arg_list)
-			    {
-			      parser_free_tree (this_parser,
-						hint_table[i].arg_list);
-			      hint_table[i].arg_list = NULL;
-			    }
-			  /* consume illegal hint expression */
-			  hint_p += j + 1;
-			}
-		      else
-			{	/* OK */
-			  /* check last argument */
-			  hint_p[j] = '\0';	/* replace ')' */
-			  /* trim space around found spec name */
-			  for (; arg_start < &(hint_p[j]); arg_start++)
-			    {
-			      if (!IS_WHITE_CHAR (*arg_start))
-				{
-				  break;
-				}
-			    }
-			  for (temp = &(hint_p[j - 1]); temp > arg_start;
-			       temp--)
-			    {
-			      if (!IS_WHITE_CHAR (*temp))
-				{
-				  break;
-				}
-			      *temp = '\0';	/* counsume space */
-			    }
-			  if (arg_start < &(hint_p[j]))
-			    {
-			      arg = parser_new_node (this_parser, PT_NAME);
-			      if (arg)
-				{
-				  temp = strstr (arg_start, ".");
-				  if (temp && temp < &(hint_p[j]))
-				    {
-				      *temp = '\0';
-				      arg->info.name.resolved =
-					pt_trim_as_identifier (arg_start);
-				      arg->info.name.resolved =
-					pt_makename (arg->info.name.resolved);
-				      *temp++ = '.';
-				      arg->info.name.original =
-					pt_trim_as_identifier (temp);
-				      arg->info.name.original =
-					pt_makename (arg->info.name.original);
-				    }
-				  else
-				    {
-				      arg->info.name.original =
-					pt_trim_as_identifier (arg_start);
-				      arg->info.name.original =
-					pt_makename (arg->info.name.original);
-				    }
-				  arg->info.name.meta_class = PT_HINT_NAME;
-				  hint_table[i].arg_list =
-				    parser_append_node (arg,
-							hint_table
-							[i].arg_list);
-				}
-			    }
+                      if (j < len)
+                        {
+                          /* error occurs. free alloced nodes */
+                          if (hint_table[i].arg_list)
+                            {
+                              parser_free_tree (this_parser, hint_table[i].arg_list);
+                              hint_table[i].arg_list = NULL;
+                            }
+                          /* consume illegal hint expression */
+                          hint_p += j + 1;
+                        }
+                      else
+                        {       /* OK */
+                          /* check last argument */
+                          hint_p[j] = '\0';     /* replace ')' */
+                          /* trim space around found spec name */
+                          for (; arg_start < &(hint_p[j]); arg_start++)
+                            {
+                              if (!IS_WHITE_CHAR (*arg_start))
+                                {
+                                  break;
+                                }
+                            }
+                          for (temp = &(hint_p[j - 1]); temp > arg_start; temp--)
+                            {
+                              if (!IS_WHITE_CHAR (*temp))
+                                {
+                                  break;
+                                }
+                              *temp = '\0';     /* counsume space */
+                            }
+                          if (arg_start < &(hint_p[j]))
+                            {
+                              arg = parser_new_node (this_parser, PT_NAME);
+                              if (arg)
+                                {
+                                  temp = strstr (arg_start, ".");
+                                  if (temp && temp < &(hint_p[j]))
+                                    {
+                                      *temp = '\0';
+                                      arg->info.name.resolved = pt_trim_as_identifier (arg_start);
+                                      arg->info.name.resolved = pt_makename (arg->info.name.resolved);
+                                      *temp++ = '.';
+                                      arg->info.name.original = pt_trim_as_identifier (temp);
+                                      arg->info.name.original = pt_makename (arg->info.name.original);
+                                    }
+                                  else
+                                    {
+                                      arg->info.name.original = pt_trim_as_identifier (arg_start);
+                                      arg->info.name.original = pt_makename (arg->info.name.original);
+                                    }
+                                  arg->info.name.meta_class = PT_HINT_NAME;
+                                  hint_table[i].arg_list = parser_append_node (arg, hint_table[i].arg_list);
+                                }
+                            }
 
-			  hint_p += len;	/* consume arguments */
-			  hint_p++;	/* consume ')' */
-			}
-		    }
+                          hint_p += len;        /* consume arguments */
+                          hint_p++;     /* consume ')' */
+                        }
+                    }
 
-		  /* found specified hint */
-		  if (hint_table[i].arg_list)
-		    {
-		      hint = hint_table[i].hint;
-		    }
-		}
-	    }
-	  else
-	    {
-	      /* not found specified hint */
-	      hint_p += len;	/* consume token */
-	    }
+                  /* found specified hint */
+                  if (hint_table[i].arg_list)
+                    {
+                      hint = hint_table[i].hint;
+                    }
+                }
+            }
+          else
+            {
+              /* not found specified hint */
+              hint_p += len;    /* consume token */
+            }
 
-	  /* check for found specified hint */
-	  if (hint & hint_table[i].hint)
-	    {
-	      /* save hint and immediately stop */
-	      *result_hint |= hint;
-	      break;
-	    }
+          /* check for found specified hint */
+          if (hint & hint_table[i].hint)
+            {
+              /* save hint and immediately stop */
+              *result_hint |= hint;
+              break;
+            }
 
-	  count++;
+          count++;
 
-	  /* step to next */
-	  hint_p = ustr_casestr (hint_p, hint_table[i].tokens);
+          /* step to next */
+          hint_p = ustr_casestr (hint_p, hint_table[i].tokens);
 
-	}			/* while (hint_p) */
-    }				/* for (i = ... ) */
+        }                       /* while (hint_p) */
+    }                           /* for (i = ... ) */
 }

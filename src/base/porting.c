@@ -95,21 +95,21 @@ vasprintf (char **ptr, const char *format, va_list ap)
     {
       buffer = (char *) malloc (count + 1);
       if (buffer != NULL)
-	{
-	  count = vsnprintf (buffer, count + 1, format, ap_copy);
-	  if (count < 0)
-	    {
-	      free (buffer);
-	    }
-	  else
-	    {
-	      *ptr = buffer;
-	    }
-	}
+        {
+          count = vsnprintf (buffer, count + 1, format, ap_copy);
+          if (count < 0)
+            {
+              free (buffer);
+            }
+          else
+            {
+              *ptr = buffer;
+            }
+        }
       else
-	{
-	  count = -1;
-	}
+        {
+          count = -1;
+        }
     }
   va_end (ap_copy);
 
@@ -170,22 +170,22 @@ rye_dirname_r (const char *path, char *pathbuf, size_t buflen)
   if (endp == path)
     {
       if (*endp == PATH_SEPARATOR)
-	{
-	  pathbuf[0] = PATH_SEPARATOR;
-	}
+        {
+          pathbuf[0] = PATH_SEPARATOR;
+        }
       else
-	{
-	  pathbuf[0] = PATH_CURRENT;
-	}
+        {
+          pathbuf[0] = PATH_CURRENT;
+        }
       pathbuf[1] = '\0';
       return 1;
     }
   else
     {
       do
-	{
-	  endp--;
-	}
+        {
+          endp--;
+        }
       while (endp > path && *endp == PATH_SEPARATOR);
     }
 
@@ -226,13 +226,13 @@ rye_mkdir (const char *path, mode_t mode)
   if (stat (dir, &statbuf) == -1)
     {
       if (errno == ENOENT && rye_mkdir (dir, mode))
-	{
-	  return mkdir (path, mode) == 0;
-	}
+        {
+          return mkdir (path, mode) == 0;
+        }
       else
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
   else if (S_ISDIR (statbuf.st_mode))
     {
@@ -252,7 +252,7 @@ dirname (const char *path)
     {
       bname = (char *) malloc (PATH_MAX);
       if (bname == NULL)
-	return (NULL);
+        return (NULL);
     }
 
   return (rye_dirname_r (path, bname, PATH_MAX) < 0) ? NULL : bname;
@@ -324,7 +324,7 @@ basename (const char *path)
     {
       bname = (char *) malloc (PATH_MAX);
       if (bname == NULL)
-	return (NULL);
+        return (NULL);
     }
 
   return (basename_r (path, bname, PATH_MAX) < 0) ? NULL : bname;
@@ -403,16 +403,16 @@ stristr (const char *s, const char *find)
     {
       len = strlen (find);
       do
-	{
-	  do
-	    {
-	      if ((sc = *s++) == '\0')
-		{
-		  return NULL;
-		}
-	    }
-	  while (toupper (sc) != toupper (c));
-	}
+        {
+          do
+            {
+              if ((sc = *s++) == '\0')
+                {
+                  return NULL;
+                }
+            }
+          while (toupper (sc) != toupper (c));
+        }
       while (strncasecmp (s, find, len) != 0);
       s--;
     }
@@ -566,13 +566,13 @@ os_set_signal_handler (const int sig_no, SIGNAL_HANDLER_FUNCTION sig_handler)
     {
     case SIGALRM:
 #if defined(SA_INTERRUPT)
-      act.sa_flags |= SA_INTERRUPT;	/* disable other interrupts */
+      act.sa_flags |= SA_INTERRUPT;     /* disable other interrupts */
 #endif /* SA_INTERRUPT */
       break;
     default:
 #if defined(SA_RESTART)
-      act.sa_flags |= SA_RESTART;	/* making certain system calls
-					   restartable across signals */
+      act.sa_flags |= SA_RESTART;       /* making certain system calls
+                                           restartable across signals */
 #endif /* SA_RESTART */
       break;
     }
@@ -604,8 +604,7 @@ os_send_signal (const int pid, const int sig_no)
  *
  */
 INT64
-timeval_diff_in_msec (const struct timeval * end_time,
-		      const struct timeval * start_time)
+timeval_diff_in_msec (const struct timeval * end_time, const struct timeval * start_time)
 {
   INT64 msec;
   struct timeval end_time_value;
@@ -717,8 +716,7 @@ timespec_add_msec (const struct timespec *start_time, int add_msec)
  *
  */
 INT64
-timespec_diff_in_msec (const struct timespec * end_time,
-		       const struct timespec * start_time)
+timespec_diff_in_msec (const struct timespec * end_time, const struct timespec * start_time)
 {
   INT64 msec;
 
@@ -780,8 +778,7 @@ port_open_memstream (char **ptr, size_t * sizeloc)
  *         this function flush contents to ptr before close handle
  */
 void
-port_close_memstream (FILE * fp, UNUSED_ARG char **ptr,
-		      UNUSED_ARG size_t * sizeloc)
+port_close_memstream (FILE * fp, UNUSED_ARG char **ptr, UNUSED_ARG size_t * sizeloc)
 {
 #if !defined(HAVE_OPEN_MEMSTREAM)
   char *buff = NULL;
@@ -797,18 +794,18 @@ port_close_memstream (FILE * fp, UNUSED_ARG char **ptr,
       fclose (fp);
 #else
       if (fstat (fileno (fp), &stat_buf) == 0)
-	{
-	  *sizeloc = stat_buf.st_size;
+        {
+          *sizeloc = stat_buf.st_size;
 
-	  buff = malloc (*sizeloc + 1);
-	  if (buff)
-	    {
-	      fseek (fp, 0, SEEK_SET);
-	      n = fread (buff, 1, *sizeloc, fp);
-	      buff[n] = '\0';
-	      *sizeloc = n;
-	    }
-	}
+          buff = malloc (*sizeloc + 1);
+          if (buff)
+            {
+              fseek (fp, 0, SEEK_SET);
+              n = fread (buff, 1, *sizeloc, fp);
+              buff[n] = '\0';
+              *sizeloc = n;
+            }
+        }
 
       fclose (fp);
       /* tempname from port_open_memstream */
@@ -823,15 +820,13 @@ port_close_memstream (FILE * fp, UNUSED_ARG char **ptr,
 
 /* HA */
 bool
-ha_make_log_path (char *path, int size, const char *base,
-		  const char *db, const char *node)
+ha_make_log_path (char *path, int size, const char *base, const char *db, const char *node)
 {
   return snprintf (path, size, "%s/%s_%s", base, db, node) >= 0;
 }
 
 bool
-ha_concat_db_and_host (char *db_host, int size, const char *db,
-		       const char *host)
+ha_concat_db_and_host (char *db_host, int size, const char *db, const char *host)
 {
   return snprintf (db_host, size, "%s@%s", db, host) >= 0;
 }
@@ -846,9 +841,7 @@ trim (char *str)
   if (str == NULL)
     return (str);
 
-  for (s = str;
-       *s != '\0' && (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r');
-       s++)
+  for (s = str; *s != '\0' && (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'); s++)
     ;
   if (*s == '\0')
     {
@@ -940,8 +933,7 @@ str_to_int32 (int *ret_p, char **end_p, const char *str_p, int base)
   errno = 0;
   val = strtol (str_p, end_p, base);
 
-  if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
-      || (errno != 0 && val == 0))
+  if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) || (errno != 0 && val == 0))
     {
       return -1;
     }
@@ -1022,8 +1014,7 @@ str_to_int64 (INT64 * ret_p, char **end_p, const char *str_p, int base)
   errno = 0;
   val = strtoll (str_p, end_p, base);
 
-  if ((errno == ERANGE && (val == LLONG_MAX || val == LLONG_MIN))
-      || (errno != 0 && val == 0))
+  if ((errno == ERANGE && (val == LLONG_MAX || val == LLONG_MIN)) || (errno != 0 && val == 0))
     {
       return -1;
     }
@@ -1111,8 +1102,7 @@ rye_init_string (RYE_STRING * buffer, int max_size)
  *    max_size(in):
  */
 int
-rye_init_string_with_buffer (RYE_STRING * str, char *buffer,
-			     int buffer_length)
+rye_init_string_with_buffer (RYE_STRING * str, char *buffer, int buffer_length)
 {
   if (str == NULL || buffer == NULL || buffer_length < 1)
     {
@@ -1183,8 +1173,7 @@ rye_append_string (RYE_STRING * buffer, const char *src)
       return -1;
     }
 
-  len = (int) strlcpy (buffer->buffer + buffer->length, src,
-		       buffer->max_length);
+  len = (int) strlcpy (buffer->buffer + buffer->length, src, buffer->max_length);
   if (buffer->length + len >= buffer->max_length)
     {
       return -1;
@@ -1213,8 +1202,7 @@ rye_append_format_string (RYE_STRING * buffer, const char *format, ...)
     }
 
   va_start (ap, format);
-  len = (int) vsnprintf (buffer->buffer + buffer->length,
-			 buffer->max_length - buffer->length, format, ap);
+  len = (int) vsnprintf (buffer->buffer + buffer->length, buffer->max_length - buffer->length, format, ap);
   va_end (ap);
 
   if (buffer->length + len >= buffer->max_length)
@@ -1253,15 +1241,14 @@ rye_split_string (RYE_STRING * buffer, const char *delim)
       return NULL;
     }
 
-  for (v = strtok_r (o, delim, &save);
-       v != NULL; v = strtok_r (NULL, delim, &save))
+  for (v = strtok_r (o, delim, &save); v != NULL; v = strtok_r (NULL, delim, &save))
     {
       r = (char **) realloc (r, sizeof (char *) * (count + 1));
       if (r == NULL)
-	{
-	  free (o);
-	  return NULL;
-	}
+        {
+          free (o);
+          return NULL;
+        }
       r[count - 1] = strdup (v);
       r[count] = NULL;
       count++;
@@ -1300,8 +1287,7 @@ rye_free_string_array (char **array)
  *    max_src_length(in):
  */
 size_t
-str_append (char *dst, size_t dst_length, const char *src,
-	    size_t max_src_length)
+str_append (char *dst, size_t dst_length, const char *src, size_t max_src_length)
 {
   size_t len;
 
@@ -1324,8 +1310,7 @@ get_random_string (char *rand_string, int len)
   int max_index;
   int i;
 
-  char alphanum[] = "0123456789abcdefghijklmnopqrstuvwxyz"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  char alphanum[] = "0123456789abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
   if (init == false)
     {
@@ -1355,28 +1340,27 @@ hostname_to_ip (const char *host)
   in_addr = inet_addr (host);
   if (in_addr == INADDR_NONE)
     {
-# if defined (HAVE_GETHOSTBYNAME_R)
-# if defined (HAVE_GETHOSTBYNAME_R_GLIBC)
+#if defined (HAVE_GETHOSTBYNAME_R)
+#if defined (HAVE_GETHOSTBYNAME_R_GLIBC)
       struct hostent *hp, hent;
       int herr;
       char buf[1024];
 
-      if (gethostbyname_r (host, &hent, buf, sizeof (buf), &hp, &herr) != 0
-	  || hp == NULL)
-	{
-	  return INADDR_NONE;
-	}
+      if (gethostbyname_r (host, &hent, buf, sizeof (buf), &hp, &herr) != 0 || hp == NULL)
+        {
+          return INADDR_NONE;
+        }
       if (hent.h_length != sizeof (in_addr_t))
-	{
-	  assert (0);
-	  return INADDR_NONE;
-	}
+        {
+          assert (0);
+          return INADDR_NONE;
+        }
       memcpy ((void *) &in_addr, (void *) hent.h_addr, hent.h_length);
-# else
-# error "HAVE_GETHOSTBYNAME_R_GLIBC"
+#else
+#error "HAVE_GETHOSTBYNAME_R_GLIBC"
 #endif /* !HAVE_GETHOSTBYNAME_R_GLIBC */
-# else
-# error "HAVE_GETHOSTBYNAME_R"
+#else
+#error "HAVE_GETHOSTBYNAME_R"
 #endif /* !HAVE_GETHOSTBYNAME_R */
     }
 
@@ -1403,10 +1387,10 @@ strlcpy (char *dst, const char *src, size_t siz)
   if (n != 0 && --n != 0)
     {
       do
-	{
-	  if ((*d++ = *s++) == 0)
-	    break;
-	}
+        {
+          if ((*d++ = *s++) == 0)
+            break;
+        }
       while (--n != 0);
     }
 
@@ -1414,11 +1398,11 @@ strlcpy (char *dst, const char *src, size_t siz)
   if (n == 0)
     {
       if (siz != 0)
-	*d = '\0';		/* NUL-terminate dst */
+        *d = '\0';              /* NUL-terminate dst */
       while (*s++)
-	;
+        ;
     }
 
-  return (s - src - 1);		/* count does not include NUL */
+  return (s - src - 1);         /* count does not include NUL */
 }
 #endif /* !HAVE_STRLCPY */

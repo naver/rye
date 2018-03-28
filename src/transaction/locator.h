@@ -121,36 +121,36 @@ typedef enum
 typedef struct lc_copyarea_oneobj LC_COPYAREA_ONEOBJ;
 struct lc_copyarea_oneobj
 {
-  LC_COPYAREA_OPERATION operation;	/* Insert, delete, update  */
-  HFID hfid;			/* Valid only for flushing */
-  OID class_oid;		/* Oid of the Class of the object */
-  OID oid;			/* Oid of the object       */
-  int length;			/* Length of the object    */
-  int offset;			/* location in the copy area where the
-				 * content of the object is stored
-				 */
+  LC_COPYAREA_OPERATION operation;      /* Insert, delete, update  */
+  HFID hfid;                    /* Valid only for flushing */
+  OID class_oid;                /* Oid of the Class of the object */
+  OID oid;                      /* Oid of the object       */
+  int length;                   /* Length of the object    */
+  int offset;                   /* location in the copy area where the
+                                 * content of the object is stored
+                                 */
 };
 
 typedef struct lc_copyarea_manyobjs LC_COPYAREA_MANYOBJS;
 struct lc_copyarea_manyobjs
 {
   LC_COPYAREA_ONEOBJ objs;
-  int num_objs;			/* How many objects */
+  int num_objs;                 /* How many objects */
 };
 
 typedef struct lc_copy_area LC_COPYAREA;
 struct lc_copy_area
-{				/* Copy area for flushing and fetching */
-  char *mem;			/* Pointer to location of chunk of area */
-  int length;			/* The size of the area                 */
+{                               /* Copy area for flushing and fetching */
+  char *mem;                    /* Pointer to location of chunk of area */
+  int length;                   /* The size of the area                 */
 };
 
 typedef struct lc_copyarea_desc LC_COPYAREA_DESC;
 struct lc_copyarea_desc
 {
-  LC_COPYAREA_MANYOBJS *mobjs;	/* Describe multiple objects in area */
-  LC_COPYAREA_ONEOBJ **obj;	/* Describe on object in area        */
-  int *offset;			/* Place to store next object in area */
+  LC_COPYAREA_MANYOBJS *mobjs;  /* Describe multiple objects in area */
+  LC_COPYAREA_ONEOBJ **obj;     /* Describe on object in area        */
+  int *offset;                  /* Place to store next object in area */
   RECDES *recdes;
 };
 
@@ -160,105 +160,105 @@ struct lc_copyarea_desc
 typedef struct lc_lockset_reqobj LC_LOCKSET_REQOBJ;
 struct lc_lockset_reqobj
 {
-  OID oid;			/* Oid of the object                    */
-  int class_index;		/* Where is the desired class. A value of -1 means that
-				 * the class_oid is unknown.
-				 */
+  OID oid;                      /* Oid of the object                    */
+  int class_index;              /* Where is the desired class. A value of -1 means that
+                                 * the class_oid is unknown.
+                                 */
 };
 
 typedef struct lc_lockset_classof LC_LOCKSET_CLASSOF;
 struct lc_lockset_classof
 {
-  OID oid;			/* Class_oid                */
+  OID oid;                      /* Class_oid                */
 };
 
 typedef struct lc_lock_set LC_LOCKSET;
 struct lc_lock_set
-{				/* Fetch many area definition */
-  char *mem;			/* Pointer to location of chunk of
-				 * area where the desired objects and
-				 * their classes are described
-				 */
-  int length;			/* Length of the area */
+{                               /* Fetch many area definition */
+  char *mem;                    /* Pointer to location of chunk of
+                                 * area where the desired objects and
+                                 * their classes are described
+                                 */
+  int length;                   /* Length of the area */
 
   /* *** Things related to requested objects *** */
-  int max_reqobjs;		/* Max number of requested objects */
-  int num_reqobjs;		/* Number of requested objects to
-				 * fetch and lock. An object can be an
-				 * instance or a class
-				 */
-  int num_reqobjs_processed;	/* Number of instances processed by
-				 * the server
-				 */
-  int last_reqobj_cached;	/* Last requested object that has been
-				 * cached by workspace manager. Used
-				 * only by client. Don't need to be
-				 * send to server or from server.
-				 */
-  LOCK reqobj_class_lock;	/* Lock to acquire for the requested
-				 * objects that are classes
-				 */
+  int max_reqobjs;              /* Max number of requested objects */
+  int num_reqobjs;              /* Number of requested objects to
+                                 * fetch and lock. An object can be an
+                                 * instance or a class
+                                 */
+  int num_reqobjs_processed;    /* Number of instances processed by
+                                 * the server
+                                 */
+  int last_reqobj_cached;       /* Last requested object that has been
+                                 * cached by workspace manager. Used
+                                 * only by client. Don't need to be
+                                 * send to server or from server.
+                                 */
+  LOCK reqobj_class_lock;       /* Lock to acquire for the requested
+                                 * objects that are classes
+                                 */
 
   /* *** Things related to classes of the requested objects *** */
-  int num_classes_of_reqobjs;	/* Number of known classes for the
-				 * requested objects.
-				 */
-  int num_classes_of_reqobjs_processed;	/* Number of classes processed by the
-					 * server
-					 */
-  int last_classof_reqobjs_cached;	/* Last requested object that has been
-					 * cached by workspace manger. Used
-					 * only bt client. Don't need to be
-					 * send to server or from server.
-					 */
-  int quit_on_errors;		/* Quit when errors are found  */
-  int packed_size;		/* Size of packed lock request area */
-  char *packed;			/* Ptr to packed lock request area */
-  LC_LOCKSET_CLASSOF *classes;	/* Description of set of classes.
-				 * The number of class structures
-				 * are num_classes.. Ptr into mem
-				 */
-  LC_LOCKSET_REQOBJ *objects;	/* Description of requested objects.
-				 * The number of structures are
-				 * num_reqobjs
-				 */
-  bool first_fetch_lockset_call;	/* First client call to
-					 * fetch_request
-					 */
+  int num_classes_of_reqobjs;   /* Number of known classes for the
+                                 * requested objects.
+                                 */
+  int num_classes_of_reqobjs_processed; /* Number of classes processed by the
+                                         * server
+                                         */
+  int last_classof_reqobjs_cached;      /* Last requested object that has been
+                                         * cached by workspace manger. Used
+                                         * only bt client. Don't need to be
+                                         * send to server or from server.
+                                         */
+  int quit_on_errors;           /* Quit when errors are found  */
+  int packed_size;              /* Size of packed lock request area */
+  char *packed;                 /* Ptr to packed lock request area */
+  LC_LOCKSET_CLASSOF *classes;  /* Description of set of classes.
+                                 * The number of class structures
+                                 * are num_classes.. Ptr into mem
+                                 */
+  LC_LOCKSET_REQOBJ *objects;   /* Description of requested objects.
+                                 * The number of structures are
+                                 * num_reqobjs
+                                 */
+  bool first_fetch_lockset_call;        /* First client call to
+                                         * fetch_request
+                                         */
 };
 
 typedef struct lc_lockhint_class LC_LOCKHINT_CLASS;
 struct lc_lockhint_class
 {
-  OID oid;			/* Class_oid                */
-  LOCK lock;			/* The desired lock         */
+  OID oid;                      /* Class_oid                */
+  LOCK lock;                    /* The desired lock         */
 };
 
 typedef struct lc_lock_hint LC_LOCKHINT;
 struct lc_lock_hint
-{				/* Fetch many area definition */
-  char *mem;			/* Pointer to location of chunk of
-				 * area where the prefetched classes
-				 * are described
-				 */
-  int length;			/* Length of the area */
-  int max_classes;		/* Max number of classes */
-  int num_classes;		/* Number of classes to prefetch and
-				 * lock.
-				 */
-  int num_classes_processed;	/* Number of classes that have been
-				 * processed
-				 */
-  int quit_on_errors;		/* Quit when errors are found  */
-  int packed_size;		/* Size of packed lock lockhint area */
-  char *packed;			/* Ptr to packed lock lockhint area */
-  LC_LOCKHINT_CLASS *classes;	/* Description of set of classes. The
-				 * number of class structures are
-				 * num_classes.. Ptr into mem
-				 */
-  bool first_fetch_lockhint_call;	/* First client call to
-					 * fetch_lockhint
-					 */
+{                               /* Fetch many area definition */
+  char *mem;                    /* Pointer to location of chunk of
+                                 * area where the prefetched classes
+                                 * are described
+                                 */
+  int length;                   /* Length of the area */
+  int max_classes;              /* Max number of classes */
+  int num_classes;              /* Number of classes to prefetch and
+                                 * lock.
+                                 */
+  int num_classes_processed;    /* Number of classes that have been
+                                 * processed
+                                 */
+  int quit_on_errors;           /* Quit when errors are found  */
+  int packed_size;              /* Size of packed lock lockhint area */
+  char *packed;                 /* Ptr to packed lock lockhint area */
+  LC_LOCKHINT_CLASS *classes;   /* Description of set of classes. The
+                                 * number of class structures are
+                                 * num_classes.. Ptr into mem
+                                 */
+  bool first_fetch_lockhint_call;       /* First client call to
+                                         * fetch_lockhint
+                                         */
 };
 
 
@@ -318,86 +318,58 @@ struct lc_oidset
 extern LC_COPYAREA *locator_allocate_copyarea (DKNPAGES npages);
 #endif
 extern LC_COPYAREA *locator_allocate_copy_area_by_length (int length);
-extern LC_COPYAREA *locator_reallocate_copy_area_by_length (LC_COPYAREA *
-							    old_area,
-							    int new_length);
+extern LC_COPYAREA *locator_reallocate_copy_area_by_length (LC_COPYAREA * old_area, int new_length);
 
 extern void locator_free_copy_area (LC_COPYAREA * copyarea);
-extern char *locator_pack_copy_area_descriptor (int num_objs,
-						LC_COPYAREA * copyarea,
-						char *desc);
-extern char *locator_unpack_copy_area_descriptor (int num_objs,
-						  LC_COPYAREA * copyarea,
-						  char *desc);
+extern char *locator_pack_copy_area_descriptor (int num_objs, LC_COPYAREA * copyarea, char *desc);
+extern char *locator_unpack_copy_area_descriptor (int num_objs, LC_COPYAREA * copyarea, char *desc);
 extern int locator_send_copy_area (LC_COPYAREA * copyarea,
-				   char **contents_ptr, int *contents_length,
-				   char **desc_ptr, int *desc_length);
+                                   char **contents_ptr, int *contents_length, char **desc_ptr, int *desc_length);
 #if defined(SERVER_MODE)
-extern LC_COPYAREA *locator_recv_allocate_copyarea (int num_objs,
-						    char **contents_ptr,
-						    int contents_length);
+extern LC_COPYAREA *locator_recv_allocate_copyarea (int num_objs, char **contents_ptr, int contents_length);
 #else /* SERVER_MODE */
 extern LC_COPYAREA *locator_recv_allocate_copyarea (int num_objs,
-						    char **packed_desc,
-						    int packed_desc_length,
-						    char **contents_ptr,
-						    int contents_length);
+                                                    char **packed_desc,
+                                                    int packed_desc_length, char **contents_ptr, int contents_length);
 #endif /* SERVER_MODE */
-extern LC_LOCKSET *locator_allocate_lockset (int max_reqobjs,
-					     LOCK reqobj_class_lock,
-					     int quit_on_errors);
+extern LC_LOCKSET *locator_allocate_lockset (int max_reqobjs, LOCK reqobj_class_lock, int quit_on_errors);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern LC_LOCKSET *locator_allocate_lockset_by_length (int length);
-extern LC_LOCKSET *locator_reallocate_lockset (LC_LOCKSET * lockset,
-					       int max_reqobjs);
+extern LC_LOCKSET *locator_reallocate_lockset (LC_LOCKSET * lockset, int max_reqobjs);
 #endif
 extern void locator_free_lockset (LC_LOCKSET * lockset);
 extern LC_LOCKSET *locator_allocate_and_unpack_lockset (char *unpacked,
-							int unpacked_size,
-							bool unpack_classes,
-							bool unpack_objects,
-							bool reg_unpacked);
-extern int locator_pack_lockset (LC_LOCKSET * lockset, bool pack_classes,
-				 bool pack_objects);
-extern int locator_unpack_lockset (LC_LOCKSET * lockset, bool unpack_classes,
-				   bool unpack_objects);
-extern LC_LOCKHINT *locator_allocate_lockhint (int max_classes,
-					       int quit_on_errors);
+                                                        int unpacked_size,
+                                                        bool unpack_classes, bool unpack_objects, bool reg_unpacked);
+extern int locator_pack_lockset (LC_LOCKSET * lockset, bool pack_classes, bool pack_objects);
+extern int locator_unpack_lockset (LC_LOCKSET * lockset, bool unpack_classes, bool unpack_objects);
+extern LC_LOCKHINT *locator_allocate_lockhint (int max_classes, int quit_on_errors);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern LC_LOCKHINT *locator_reallocate_lockhint (LC_LOCKHINT * lockhint,
-						 int max_classes);
+extern LC_LOCKHINT *locator_reallocate_lockhint (LC_LOCKHINT * lockhint, int max_classes);
 #endif
 extern void locator_free_lockhint (LC_LOCKHINT * lockhint);
 extern int locator_pack_lockhint (LC_LOCKHINT * lockhint, bool pack_classes);
-extern int
-locator_unpack_lockhint (LC_LOCKHINT * lockhint, bool unpack_classes);
+extern int locator_unpack_lockhint (LC_LOCKHINT * lockhint, bool unpack_classes);
 extern LC_LOCKHINT *locator_allocate_and_unpack_lockhint (char *unpacked,
-							  int unpacked_size,
-							  bool unpack_classes,
-							  bool reg_unpacked);
+                                                          int unpacked_size, bool unpack_classes, bool reg_unpacked);
 extern void locator_initialize_areas (void);
 extern void locator_free_areas (void);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern LC_OIDSET *locator_make_oid_set (void);
 extern void locator_clear_oid_set (THREAD_ENTRY * thrd, LC_OIDSET * oidset);
-extern void locator_free_oid_set (THREAD_ENTRY * thread_p,
-				  LC_OIDSET * oidset);
+extern void locator_free_oid_set (THREAD_ENTRY * thread_p, LC_OIDSET * oidset);
 extern LC_OIDMAP *locator_add_oid_set (THREAD_ENTRY * thrd, LC_OIDSET * set,
-				       HFID * heap, OID * class_oid,
-				       OID * obj_oid);
+                                       HFID * heap, OID * class_oid, OID * obj_oid);
 extern int locator_get_packed_oid_set_size (LC_OIDSET * oidset);
 extern char *locator_pack_oid_set (char *buffer, LC_OIDSET * oidset);
-extern LC_OIDSET *locator_unpack_oid_set_to_new (THREAD_ENTRY * thread_p,
-						 char *buffer);
+extern LC_OIDSET *locator_unpack_oid_set_to_new (THREAD_ENTRY * thread_p, char *buffer);
 extern bool locator_unpack_oid_set_to_exist (char *buffer, LC_OIDSET * use);
 #endif
 
 /* For Debugging */
 #if defined(RYE_DEBUG)
-extern void
-locator_dump_copy_area (FILE * out_fp, const LC_COPYAREA * copyarea,
-			int print_rec);
+extern void locator_dump_copy_area (FILE * out_fp, const LC_COPYAREA * copyarea, int print_rec);
 extern void locator_dump_lockset (FILE * out_fp, LC_LOCKSET * lockset);
 extern void locator_dump_lockhint (FILE * out_fp, LC_LOCKHINT * lockhint);
 #endif

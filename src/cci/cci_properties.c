@@ -72,10 +72,8 @@ typedef struct
 /*
  * PRIVATE FUNCTION PROTOTYPES
  */
-static int cci_url_parse_properties (T_URL_PROPERTY props[], int len,
-				     const char *properties);
-static int cci_url_set_properties (T_URL_PROPERTY props[], int len,
-				   const char *name, const char *value);
+static int cci_url_parse_properties (T_URL_PROPERTY props[], int len, const char *properties);
+static int cci_url_set_properties (T_URL_PROPERTY props[], int len, const char *name, const char *value);
 static int cci_url_set_value (T_URL_PROPERTY * property, const char *value);
 static int cci_url_get_int (const char *str, int *value);
 static int cci_url_get_bool (const char *str, bool * value);
@@ -113,10 +111,10 @@ cci_url_get_bool (const char *str, bool * value)
   for (i = 0; i < dim; i++)
     {
       if (strcasecmp (accepts[i], str) == 0)
-	{
-	  *value = (i % 2) == 0;
-	  return CCI_ER_NO_ERROR;
-	}
+        {
+          *value = (i % 2) == 0;
+          return CCI_ER_NO_ERROR;
+        }
     }
 
   return CCI_ER_INVALID_URL;
@@ -152,44 +150,44 @@ cci_url_set_value (T_URL_PROPERTY * property, const char *value)
     {
     case BOOL_PROPERTY:
       {
-	bool v;
-	error = cci_url_get_bool (value, &v);
-	if (error == CCI_ER_NO_ERROR)
-	  {
-	    *((char *) property->data) = v;
-	  }
-	break;
+        bool v;
+        error = cci_url_get_bool (value, &v);
+        if (error == CCI_ER_NO_ERROR)
+          {
+            *((char *) property->data) = v;
+          }
+        break;
       }
     case INT_PROPERTY:
       {
-	int v;
-	error = cci_url_get_int (value, &v);
-	if (error == CCI_ER_NO_ERROR)
-	  {
-	    *((int *) property->data) = v;
-	  }
-	break;
+        int v;
+        error = cci_url_get_int (value, &v);
+        if (error == CCI_ER_NO_ERROR)
+          {
+            *((int *) property->data) = v;
+          }
+        break;
       }
     case STRING_PROPERTY:
       {
-	*((char **) property->data) = strdup (value);
-	if (*((char **) property->data) == NULL)
-	  {
-	    return CCI_ER_NO_MORE_MEMORY;
-	  }
-	break;
+        *((char **) property->data) = strdup (value);
+        if (*((char **) property->data) == NULL)
+          {
+            return CCI_ER_NO_MORE_MEMORY;
+          }
+        break;
       }
     case CON_TYPE_PROPERTY:
       {
-	if (strcasecmp (value, "local") == 0)
-	  {
-	    *((T_CON_TYPE *) property->data) = CON_TYPE_LOCAL;
-	  }
-	else
-	  {
-	    *((T_CON_TYPE *) property->data) = CON_TYPE_GLOBAL;
-	  }
-	break;
+        if (strcasecmp (value, "local") == 0)
+          {
+            *((T_CON_TYPE *) property->data) = CON_TYPE_LOCAL;
+          }
+        else
+          {
+            *((T_CON_TYPE *) property->data) = CON_TYPE_GLOBAL;
+          }
+        break;
       }
     default:
       return CCI_ER_INVALID_URL;
@@ -199,8 +197,7 @@ cci_url_set_value (T_URL_PROPERTY * property, const char *value)
 }
 
 static int
-cci_url_set_properties (T_URL_PROPERTY props[], int len, const char *name,
-			const char *value)
+cci_url_set_properties (T_URL_PROPERTY props[], int len, const char *name, const char *value)
 {
   int i, error = CCI_ER_NO_ERROR;
 
@@ -212,10 +209,10 @@ cci_url_set_properties (T_URL_PROPERTY props[], int len, const char *name,
   for (i = 0; i < len && error == CCI_ER_NO_ERROR; i++)
     {
       if (strcasecmp (name, props[i].name) == 0)
-	{
-	  error = cci_url_set_value (&props[i], value);
-	  return error;
-	}
+        {
+          error = cci_url_set_value (&props[i], value);
+          return error;
+        }
     }
 
   if (i == len)
@@ -227,8 +224,7 @@ cci_url_set_properties (T_URL_PROPERTY props[], int len, const char *name,
 }
 
 static int
-cci_url_parse_properties (T_URL_PROPERTY props[], int len,
-			  const char *properties)
+cci_url_parse_properties (T_URL_PROPERTY props[], int len, const char *properties)
 {
   char *token, *save_url = NULL;
   int error = CCI_ER_NO_ERROR;
@@ -262,8 +258,7 @@ cci_url_parse_properties (T_URL_PROPERTY props[], int len,
 }
 
 int
-cci_url_get_althosts (T_ALTER_HOST ** ret_alter_host, const char *server_list,
-		      char is_load_balance_mode)
+cci_url_get_althosts (T_ALTER_HOST ** ret_alter_host, const char *server_list, char is_load_balance_mode)
 {
   T_HOST_INFO hosts[ALTER_HOST_MAX_SIZE];
   T_ALTER_HOST *alter_host;
@@ -283,50 +278,49 @@ cci_url_get_althosts (T_ALTER_HOST ** ret_alter_host, const char *server_list,
       char *token, *save_data = NULL, *end;
 
       for (num_alter_hosts = 0;; num_alter_hosts++)
-	{
-	  char *host, *port_str, *save_alter = NULL;
-	  int port;
+        {
+          char *host, *port_str, *save_alter = NULL;
+          int port;
 
-	  if (num_alter_hosts >= ALTER_HOST_MAX_SIZE)
-	    {
-	      free (data);
-	      return CCI_ER_INVALID_URL;
-	    }
+          if (num_alter_hosts >= ALTER_HOST_MAX_SIZE)
+            {
+              free (data);
+              return CCI_ER_INVALID_URL;
+            }
 
-	  token = strtok_r ((num_alter_hosts == 0 ? data : NULL),
-			    ",", &save_data);
-	  if (token == NULL)
-	    {
-	      break;
-	    }
+          token = strtok_r ((num_alter_hosts == 0 ? data : NULL), ",", &save_data);
+          if (token == NULL)
+            {
+              break;
+            }
 
-	  host = strtok_r (token, ":", &save_alter);
-	  if (host == NULL)
-	    {
-	      free (data);
-	      return CCI_ER_INVALID_URL;
-	    }
+          host = strtok_r (token, ":", &save_alter);
+          if (host == NULL)
+            {
+              free (data);
+              return CCI_ER_INVALID_URL;
+            }
 
-	  port_str = strtok_r (NULL, ":", &save_alter);
-	  if (port_str == NULL)
-	    {
-	      free (data);
-	      return CCI_ER_INVALID_URL;
-	    }
-	  port = strtol (port_str, &end, 10);
-	  if (port <= 0 || (end != NULL && end[0] != '\0'))
-	    {
-	      free (data);
-	      return CCI_ER_INVALID_URL;
-	    }
+          port_str = strtok_r (NULL, ":", &save_alter);
+          if (port_str == NULL)
+            {
+              free (data);
+              return CCI_ER_INVALID_URL;
+            }
+          port = strtol (port_str, &end, 10);
+          if (port <= 0 || (end != NULL && end[0] != '\0'))
+            {
+              free (data);
+              return CCI_ER_INVALID_URL;
+            }
 
-	  error = ut_set_host_info (&hosts[num_alter_hosts], host, port);
-	  if (error < 0)
-	    {
-	      free (data);
-	      return error;
-	    }
-	}
+          error = ut_set_host_info (&hosts[num_alter_hosts], host, port);
+          if (error < 0)
+            {
+              free (data);
+              return error;
+            }
+        }
     }
 
   free (data);
@@ -336,9 +330,7 @@ cci_url_get_althosts (T_ALTER_HOST ** ret_alter_host, const char *server_list,
       return CCI_ER_INVALID_URL;
     }
 
-  alter_host = (T_ALTER_HOST *) malloc (sizeof (T_ALTER_HOST) +
-					sizeof (T_HOST_INFO) *
-					num_alter_hosts);
+  alter_host = (T_ALTER_HOST *) malloc (sizeof (T_ALTER_HOST) + sizeof (T_HOST_INFO) * num_alter_hosts);
   if (alter_host == NULL)
     {
       return CCI_ER_NO_MORE_MEMORY;
@@ -346,8 +338,7 @@ cci_url_get_althosts (T_ALTER_HOST ** ret_alter_host, const char *server_list,
 
   alter_host->count = num_alter_hosts;
   alter_host->cur_id = 0;
-  memcpy (alter_host->host_info, hosts,
-	  sizeof (T_HOST_INFO) * num_alter_hosts);
+  memcpy (alter_host->host_info, hosts, sizeof (T_HOST_INFO) * num_alter_hosts);
 
   if (is_load_balance_mode)
     {

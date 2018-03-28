@@ -33,33 +33,33 @@
 #include <sys/types.h>
 
 #ifdef _LIBC
-# include <endian.h>
-# if __BYTE_ORDER == __BIG_ENDIAN
-#  define WORDS_BIGENDIAN 1
-# endif
+#include <endian.h>
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define WORDS_BIGENDIAN 1
+#endif
 /* We need to keep the namespace clean so define the MD5 function
    protected using leading __ .  */
-# define md5_init_ctx __md5_init_ctx
-# define md5_process_block __md5_process_block
-# define md5_process_bytes __md5_process_bytes
-# define md5_finish_ctx __md5_finish_ctx
-# define md5_read_ctx __md5_read_ctx
+#define md5_init_ctx __md5_init_ctx
+#define md5_process_block __md5_process_block
+#define md5_process_bytes __md5_process_bytes
+#define md5_finish_ctx __md5_finish_ctx
+#define md5_read_ctx __md5_read_ctx
 #if defined (ENABLE_UNUSED_FUNCTION)
-# define md5_stream __md5_stream
+#define md5_stream __md5_stream
 #endif
-# define md5_buffer __md5_buffer
+#define md5_buffer __md5_buffer
 #endif
 
 #ifdef WORDS_BIGENDIAN
-# define SWAP(n)                                                        \
+#define SWAP(n)                                                        \
     (((n) << 24) | (((n) & 0xff00) << 8) | (((n) >> 8) & 0xff00) | ((n) >> 24))
 #else
-# define SWAP(n) (n)
+#define SWAP(n) (n)
 #endif
 
 #define BLOCKSIZE 32768
 #if BLOCKSIZE % 64 != 0
-# error "invalid BLOCKSIZE"
+#error "invalid BLOCKSIZE"
 #endif
 
 /* This array contains the bytes used to pad the buffer to the next
@@ -158,33 +158,33 @@ md5_stream (FILE * stream, void *resblock)
 
       /* Read block.  Take care for partial reads.  */
       while (1)
-	{
-	  n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
+        {
+          n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
 
-	  sum += n;
+          sum += n;
 
-	  if (sum == BLOCKSIZE)
-	    break;
+          if (sum == BLOCKSIZE)
+            break;
 
-	  if (n == 0)
-	    {
-	      /* Check for the error flag IFF N == 0, so that we don't
-	         exit the loop after a partial read due to e.g., EAGAIN
-	         or EWOULDBLOCK.  */
-	      if (ferror (stream))
-		{
-		  free (buffer);
-		  return 1;
-		}
-	      goto process_partial_block;
-	    }
+          if (n == 0)
+            {
+              /* Check for the error flag IFF N == 0, so that we don't
+                 exit the loop after a partial read due to e.g., EAGAIN
+                 or EWOULDBLOCK.  */
+              if (ferror (stream))
+                {
+                  free (buffer);
+                  return 1;
+                }
+              goto process_partial_block;
+            }
 
-	  /* We've read at least one byte, so ignore errors.  But always
-	     check for EOF, since feof may be true even though N > 0.
-	     Otherwise, we could end up calling fread after EOF.  */
-	  if (feof (stream))
-	    goto process_partial_block;
-	}
+          /* We've read at least one byte, so ignore errors.  But always
+             check for EOF, since feof may be true even though N > 0.
+             Otherwise, we could end up calling fread after EOF.  */
+          if (feof (stream))
+            goto process_partial_block;
+        }
 
       /* Process buffer with BLOCKSIZE bytes.  Note that
          BLOCKSIZE % 64 == 0
@@ -239,15 +239,13 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
       ctx->buflen += add;
 
       if (ctx->buflen > 64)
-	{
-	  md5_process_block (ctx->buffer, ctx->buflen & ~63, ctx);
+        {
+          md5_process_block (ctx->buffer, ctx->buflen & ~63, ctx);
 
-	  ctx->buflen &= 63;
-	  /* The regions in the following copy operation cannot overlap.  */
-	  memcpy (ctx->buffer,
-		  &((char *) ctx->buffer)[(left_over + add) & ~63],
-		  ctx->buflen);
-	}
+          ctx->buflen &= 63;
+          /* The regions in the following copy operation cannot overlap.  */
+          memcpy (ctx->buffer, &((char *) ctx->buffer)[(left_over + add) & ~63], ctx->buflen);
+        }
 
       buffer = (const char *) buffer + add;
       len -= add;
@@ -257,22 +255,22 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
   if (len >= 64)
     {
 #if !_STRING_ARCH_unaligned
-# define alignof(type) offsetof (struct { char c; type x; }, x)
-# define UNALIGNED_P(p) (((size_t) p) % alignof (UINT32) != 0)
+#define alignof(type) offsetof (struct { char c; type x; }, x)
+#define UNALIGNED_P(p) (((size_t) p) % alignof (UINT32) != 0)
       if (UNALIGNED_P (buffer))
-	while (len > 64)
-	  {
-	    md5_process_block (memcpy (ctx->buffer, buffer, 64), 64, ctx);
-	    buffer = (const char *) buffer + 64;
-	    len -= 64;
-	  }
+        while (len > 64)
+          {
+            md5_process_block (memcpy (ctx->buffer, buffer, 64), 64, ctx);
+            buffer = (const char *) buffer + 64;
+            len -= 64;
+          }
       else
 #endif
-	{
-	  md5_process_block (buffer, len & ~63, ctx);
-	  buffer = (const char *) buffer + (len & ~63);
-	  len &= 63;
-	}
+        {
+          md5_process_block (buffer, len & ~63, ctx);
+          buffer = (const char *) buffer + (len & ~63);
+          len &= 63;
+        }
     }
 
   /* Move remaining bytes in internal buffer.  */
@@ -283,11 +281,11 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
       memcpy (&((char *) ctx->buffer)[left_over], buffer, len);
       left_over += len;
       if (left_over >= 64)
-	{
-	  md5_process_block (ctx->buffer, 64, ctx);
-	  left_over -= 64;
-	  memcpy (ctx->buffer, &ctx->buffer[16], left_over);
-	}
+        {
+          md5_process_block (ctx->buffer, 64, ctx);
+          left_over -= 64;
+          memcpy (ctx->buffer, &ctx->buffer[16], left_over);
+        }
       ctx->buflen = left_over;
     }
 }

@@ -32,29 +32,20 @@
 extern int css_Errno;
 extern CSS_MAP_ENTRY *css_Client_anchor;
 
-extern int css_client_init (const char *server_name,
-			    const PRM_NODE_INFO * node_info);
+extern int css_client_init (const char *server_name, const PRM_NODE_INFO * node_info);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int css_send_error_to_server (char *host, unsigned int eid,
-				     char *buffer, int buffer_size);
+extern int css_send_error_to_server (char *host, unsigned int eid, char *buffer, int buffer_size);
 #endif
-extern int css_send_data_to_server_v (char *host, unsigned short rid,
-				      int num_buffers, va_list args);
+extern int css_send_data_to_server_v (char *host, unsigned short rid, int num_buffers, va_list args);
 
 extern void css_terminate (bool server_error);
 
-extern unsigned int css_send_request_to_server_v (char *host, int request,
-						  int num_buffers,
-						  va_list args);
+extern unsigned int css_send_request_to_server_v (char *host, int request, int num_buffers, va_list args);
 extern int css_recv_data_from_server (CSS_NET_PACKET ** recv_packet,
-				      CSS_CONN_ENTRY * conn, int rid,
-				      int timeout, int num_buffers, ...);
+                                      CSS_CONN_ENTRY * conn, int rid, int timeout, int num_buffers, ...);
 extern int css_recv_data_from_server_v (CSS_NET_PACKET ** recv_packet,
-					CSS_CONN_ENTRY * conn, int rid,
-					int timeout,
-					int num_buffers, va_list args);
+                                        CSS_CONN_ENTRY * conn, int rid, int timeout, int num_buffers, va_list args);
 extern int css_recv_error_from_server (CSS_CONN_ENTRY * conn, int rid,
-				       char **error_area, int *error_length,
-				       int timeout);
+                                       char **error_area, int *error_length, int timeout);
 
 #endif /* _CLIENT_SUPPORT_H_ */

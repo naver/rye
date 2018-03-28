@@ -60,14 +60,10 @@ enum pt_order_by_adjustment
   PT_TIMES_TWO
 };
 
-static PT_NODE *pt_add_oid_to_select_list (PARSER_CONTEXT * parser,
-					   PT_NODE * statement);
-static PT_NODE *pt_count_entities (PARSER_CONTEXT * parser, PT_NODE * node,
-				   void *arg, int *continue_walk);
-static int pt_add_lock_class (PARSER_CONTEXT * parser, PT_CLASS_LOCKS * lcks,
-			      PT_NODE * spec);
-static PT_NODE *pt_find_lck_classes (PARSER_CONTEXT * parser, PT_NODE * node,
-				     void *arg, int *continue_walk);
+static PT_NODE *pt_add_oid_to_select_list (PARSER_CONTEXT * parser, PT_NODE * statement);
+static PT_NODE *pt_count_entities (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk);
+static int pt_add_lock_class (PARSER_CONTEXT * parser, PT_CLASS_LOCKS * lcks, PT_NODE * spec);
+static PT_NODE *pt_find_lck_classes (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk);
 static int pt_in_lck_array (PT_CLASS_LOCKS * lcks, const char *str);
 
 /*
@@ -93,8 +89,7 @@ pt_spec_to_oid_attr (PARSER_CONTEXT * parser, PT_NODE * spec)
   flat = spec->info.spec.flat_entity_list;
   range = spec->info.spec.range_var;
 
-  if (spec->info.spec.derived_table
-      && spec->info.spec.flat_entity_list && spec->info.spec.as_attr_list)
+  if (spec->info.spec.derived_table && spec->info.spec.flat_entity_list && spec->info.spec.as_attr_list)
     {
       /* this spec should have come from a vclass that was rewritten as a
          derived table; pull ROWOID from as_attr_list */
@@ -120,8 +115,7 @@ pt_spec_to_oid_attr (PARSER_CONTEXT * parser, PT_NODE * spec)
     }
 
   oid->data_type->type_enum = PT_TYPE_OBJECT;
-  oid->data_type->info.data_type.entity =
-    parser_copy_tree_list (parser, flat);
+  oid->data_type->info.data_type.entity = parser_copy_tree_list (parser, flat);
 
   PT_NAME_INFO_SET_FLAG (oid, PT_NAME_INFO_GENERATED_OID);
 
@@ -165,23 +159,23 @@ pt_add_oid_to_select_list (PARSER_CONTEXT * parser, PT_NODE * statement)
        */
       p = statement->info.query.order_by;
       while (p)
-	{
+        {
 #if !defined(NDEBUG)
-	  ord = p->info.sort_spec.expr;
-	  assert (ord->node_type == PT_VALUE);
+          ord = p->info.sort_spec.expr;
+          assert (ord->node_type == PT_VALUE);
 #endif
 
-	  /* adjust value */
-	  p->info.sort_spec.pos_descr.pos_no += 1;
-	  p->info.sort_spec.expr->info.value.data_value.i += 1;
-	  p->info.sort_spec.expr->info.value.db_value.data.i += 1;
+          /* adjust value */
+          p->info.sort_spec.pos_descr.pos_no += 1;
+          p->info.sort_spec.expr->info.value.data_value.i += 1;
+          p->info.sort_spec.expr->info.value.db_value.data.i += 1;
 
-	  /* not needed any more */
-	  p->info.sort_spec.expr->info.value.text = NULL;
+          /* not needed any more */
+          p->info.sort_spec.expr->info.value.text = NULL;
 
-	  p = p->next;
+          p = p->next;
 
-	}
+        }
     }
 
   if (statement->node_type == PT_SELECT)
@@ -189,28 +183,23 @@ pt_add_oid_to_select_list (PARSER_CONTEXT * parser, PT_NODE * statement)
       statement->info.query.oids_included = DB_ROW_OIDS;
       from = statement->info.query.q.select.from;
       if (from && from->node_type == PT_SPEC)
-	{
-	  oid = pt_spec_to_oid_attr (parser, from);
-	  if (oid)
-	    {
-	      /* prepend oid to the statement's select_list */
-	      oid->next = statement->info.query.q.select.list;
-	      statement->info.query.q.select.list = oid;
-	    }
-	}
+        {
+          oid = pt_spec_to_oid_attr (parser, from);
+          if (oid)
+            {
+              /* prepend oid to the statement's select_list */
+              oid->next = statement->info.query.q.select.list;
+              statement->info.query.q.select.list = oid;
+            }
+        }
     }
   else if (statement->node_type == PT_UNION
-	   || statement->node_type == PT_INTERSECTION
-	   || statement->node_type == PT_DIFFERENCE)
+           || statement->node_type == PT_INTERSECTION || statement->node_type == PT_DIFFERENCE)
     {
 
       statement->info.query.oids_included = DB_ROW_OIDS;
-      statement->info.query.q.union_.arg1 =
-	pt_add_oid_to_select_list (parser,
-				   statement->info.query.q.union_.arg1);
-      statement->info.query.q.union_.arg2 =
-	pt_add_oid_to_select_list (parser,
-				   statement->info.query.q.union_.arg2);
+      statement->info.query.q.union_.arg1 = pt_add_oid_to_select_list (parser, statement->info.query.q.union_.arg1);
+      statement->info.query.q.union_.arg2 = pt_add_oid_to_select_list (parser, statement->info.query.q.union_.arg2);
     }
 
   return statement;
@@ -252,9 +241,9 @@ pt_compile (PARSER_CONTEXT * parser, PT_NODE * volatile statement)
 
       /* restore link */
       if (statement)
-	{
-	  statement->next = next;
-	}
+        {
+          statement->next = next;
+        }
     }
 
   PT_CLEAR_JMP_ENV (parser);
@@ -318,12 +307,11 @@ pt_class_pre_fetch (PARSER_CONTEXT * parser, PT_NODE * statement)
 
   /* pt_count_entities() will give us too large a count if a class is
    * mentioned more than once, but this will not hurt us. */
-  (void) parser_walk_tree (parser, statement, pt_count_entities,
-			   &lcks.num_classes, NULL, NULL);
+  (void) parser_walk_tree (parser, statement, pt_count_entities, &lcks.num_classes, NULL, NULL);
 
   if (lcks.num_classes == 0)
     {
-      return statement;		/* caught in semantic check */
+      return statement;         /* caught in semantic check */
     }
 
   /* allocate the arrays */
@@ -332,8 +320,7 @@ pt_class_pre_fetch (PARSER_CONTEXT * parser, PT_NODE * statement)
   if (lcks.classes == NULL)
     {
       PT_ERRORmf (parser, statement, MSGCAT_SET_PARSER_RUNTIME,
-		  MSGCAT_RUNTIME_OUT_OF_MEMORY,
-		  lcks.num_classes * sizeof (char *));
+                  MSGCAT_RUNTIME_OUT_OF_MEMORY, lcks.num_classes * sizeof (char *));
       goto cleanup;
     }
 
@@ -341,8 +328,7 @@ pt_class_pre_fetch (PARSER_CONTEXT * parser, PT_NODE * statement)
   if (lcks.locks == NULL)
     {
       PT_ERRORmf (parser, statement, MSGCAT_SET_PARSER_RUNTIME,
-		  MSGCAT_RUNTIME_OUT_OF_MEMORY,
-		  lcks.num_classes * sizeof (LOCK));
+                  MSGCAT_RUNTIME_OUT_OF_MEMORY, lcks.num_classes * sizeof (LOCK));
       goto cleanup;
     }
 
@@ -351,13 +337,11 @@ pt_class_pre_fetch (PARSER_CONTEXT * parser, PT_NODE * statement)
   /* reset so parser_walk_tree can step through arrays */
   lcks.num_classes = 0;
 
-  (void) parser_walk_tree (parser, statement, pt_find_lck_classes, &lcks,
-			   NULL, NULL);
+  (void) parser_walk_tree (parser, statement, pt_find_lck_classes, &lcks, NULL, NULL);
 
   if (!pt_has_error (parser)
       && locator_lockhint_classes (lcks.num_classes,
-				   (const char **) lcks.classes, lcks.locks,
-				   true) != LC_CLASSNAME_EXIST)
+                                   (const char **) lcks.classes, lcks.locks, true) != LC_CLASSNAME_EXIST)
     {
       PT_ERRORc (parser, statement, db_error_string (3));
     }
@@ -392,8 +376,7 @@ cleanup:
  *   continue_walk(in):
  */
 static PT_NODE *
-pt_count_entities (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
-		   void *arg, UNUSED_ARG int *continue_walk)
+pt_count_entities (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node, void *arg, UNUSED_ARG int *continue_walk)
 {
   int *cnt = (int *) arg;
 
@@ -413,8 +396,7 @@ pt_count_entities (UNUSED_ARG PARSER_CONTEXT * parser, PT_NODE * node,
  *   spec (in)	    : spec to add in locks list.
  */
 int
-pt_add_lock_class (PARSER_CONTEXT * parser, PT_CLASS_LOCKS * lcks,
-		   PT_NODE * spec)
+pt_add_lock_class (PARSER_CONTEXT * parser, PT_CLASS_LOCKS * lcks, PT_NODE * spec)
 {
   int len = 0;
 
@@ -429,22 +411,20 @@ pt_add_lock_class (PARSER_CONTEXT * parser, PT_CLASS_LOCKS * lcks,
       /* expand classes */
       ptr = realloc (lcks->classes, new_size * sizeof (char *));
       if (ptr == NULL)
-	{
-	  PT_ERRORmf (parser, spec, MSGCAT_SET_PARSER_RUNTIME,
-		      MSGCAT_RUNTIME_OUT_OF_MEMORY,
-		      new_size * sizeof (char *));
-	  return ER_FAILED;
-	}
+        {
+          PT_ERRORmf (parser, spec, MSGCAT_SET_PARSER_RUNTIME,
+                      MSGCAT_RUNTIME_OUT_OF_MEMORY, new_size * sizeof (char *));
+          return ER_FAILED;
+        }
       lcks->classes = (char **) ptr;
 
       /* expand locks */
       ptr = realloc (lcks->locks, new_size * sizeof (LOCK));
       if (ptr == NULL)
-	{
-	  PT_ERRORmf (parser, spec, MSGCAT_SET_PARSER_RUNTIME,
-		      MSGCAT_RUNTIME_OUT_OF_MEMORY, new_size * sizeof (LOCK));
-	  return ER_FAILED;
-	}
+        {
+          PT_ERRORmf (parser, spec, MSGCAT_SET_PARSER_RUNTIME, MSGCAT_RUNTIME_OUT_OF_MEMORY, new_size * sizeof (LOCK));
+          return ER_FAILED;
+        }
       lcks->locks = (LOCK *) ptr;
 
       lcks->allocated_count++;
@@ -457,13 +437,11 @@ pt_add_lock_class (PARSER_CONTEXT * parser, PT_CLASS_LOCKS * lcks,
   lcks->classes[lcks->num_classes] = (char *) calloc (1, len + 1);
   if (lcks->classes[lcks->num_classes] == NULL)
     {
-      PT_ERRORmf (parser, spec, MSGCAT_SET_PARSER_RUNTIME,
-		  MSGCAT_RUNTIME_OUT_OF_MEMORY, len + 1);
+      PT_ERRORmf (parser, spec, MSGCAT_SET_PARSER_RUNTIME, MSGCAT_RUNTIME_OUT_OF_MEMORY, len + 1);
       return MSGCAT_RUNTIME_OUT_OF_MEMORY;
     }
 
-  sm_downcase_name (spec->info.spec.entity_name->info.name.original,
-		    lcks->classes[lcks->num_classes], len + 1);
+  sm_downcase_name (spec->info.spec.entity_name->info.name.original, lcks->classes[lcks->num_classes], len + 1);
 
   lcks->locks[lcks->num_classes] = lcks->lock_type;
   lcks->num_classes++;
@@ -481,8 +459,7 @@ pt_add_lock_class (PARSER_CONTEXT * parser, PT_CLASS_LOCKS * lcks,
  *   continue_walk(in):
  */
 static PT_NODE *
-pt_find_lck_classes (PARSER_CONTEXT * parser, PT_NODE * node,
-		     void *arg, int *continue_walk)
+pt_find_lck_classes (PARSER_CONTEXT * parser, PT_NODE * node, void *arg, int *continue_walk)
 {
   PT_CLASS_LOCKS *lcks = (PT_CLASS_LOCKS *) arg;
 
@@ -494,8 +471,7 @@ pt_find_lck_classes (PARSER_CONTEXT * parser, PT_NODE * node,
     }
 
   /* check if this is a parenthesized entity list */
-  if (node->info.spec.entity_name == NULL
-      || node->info.spec.entity_name->node_type != PT_NAME)
+  if (node->info.spec.entity_name == NULL || node->info.spec.entity_name->node_type != PT_NAME)
     {
       return node;
     }
@@ -503,14 +479,13 @@ pt_find_lck_classes (PARSER_CONTEXT * parser, PT_NODE * node,
   lcks->lock_type = S_LOCK;
 
   /* only add to the array, if not there already in this lock mode. */
-  if (!pt_in_lck_array (lcks,
-			node->info.spec.entity_name->info.name.original))
+  if (!pt_in_lck_array (lcks, node->info.spec.entity_name->info.name.original))
     {
       if (pt_add_lock_class (parser, lcks, node) != NO_ERROR)
-	{
-	  *continue_walk = PT_STOP_WALK;
-	  return node;
-	}
+        {
+          *continue_walk = PT_STOP_WALK;
+          return node;
+        }
     }
 
   return node;
@@ -529,14 +504,13 @@ pt_in_lck_array (PT_CLASS_LOCKS * lcks, const char *str)
 
   for (i = 0; i < lcks->num_classes; i++)
     {
-      if (intl_identifier_casecmp (str, lcks->classes[i]) == 0
-	  && lcks->locks[i] == lcks->lock_type)
-	{
-	  return true;
-	}
+      if (intl_identifier_casecmp (str, lcks->classes[i]) == 0 && lcks->locks[i] == lcks->lock_type)
+        {
+          return true;
+        }
     }
 
-  return false;			/* not found */
+  return false;                 /* not found */
 }
 
 /*
@@ -548,8 +522,7 @@ pt_in_lck_array (PT_CLASS_LOCKS * lcks, const char *str)
  *   from_list(in):
  */
 int
-pt_name_occurs_in_from_list (UNUSED_ARG PARSER_CONTEXT * parser,
-			     const char *name, PT_NODE * from_list)
+pt_name_occurs_in_from_list (UNUSED_ARG PARSER_CONTEXT * parser, const char *name, PT_NODE * from_list)
 {
   PT_NODE *spec;
   int i = 0;
@@ -562,13 +535,11 @@ pt_name_occurs_in_from_list (UNUSED_ARG PARSER_CONTEXT * parser,
   for (spec = from_list; spec != NULL; spec = spec->next)
     {
       if (spec->info.spec.range_var
-	  && spec->info.spec.range_var->info.name.original
-	  && (intl_identifier_casecmp (name,
-				       spec->info.spec.range_var->info.name.
-				       original) == 0))
-	{
-	  i++;
-	}
+          && spec->info.spec.range_var->info.name.original
+          && (intl_identifier_casecmp (name, spec->info.spec.range_var->info.name.original) == 0))
+        {
+          i++;
+        }
     }
 
   return i;

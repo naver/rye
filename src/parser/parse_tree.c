@@ -97,22 +97,14 @@ static int parser_id = 1;
 
 static PT_NODE *parser_create_node_block (const PARSER_CONTEXT * parser);
 static void pt_free_node_blocks (const PARSER_CONTEXT * parser);
-static PARSER_STRING_BLOCK *parser_create_string_block (const PARSER_CONTEXT *
-							parser,
-							const int length);
-static void pt_free_a_string_block (const PARSER_CONTEXT * parser,
-				    PARSER_STRING_BLOCK * string_to_free);
-static PARSER_STRING_BLOCK *pt_find_string_block (const PARSER_CONTEXT *
-						  parser,
-						  const char *old_string);
+static PARSER_STRING_BLOCK *parser_create_string_block (const PARSER_CONTEXT * parser, const int length);
+static void pt_free_a_string_block (const PARSER_CONTEXT * parser, PARSER_STRING_BLOCK * string_to_free);
+static PARSER_STRING_BLOCK *pt_find_string_block (const PARSER_CONTEXT * parser, const char *old_string);
 static char *pt_append_string_for (const PARSER_CONTEXT * parser,
-				   const char *old_string,
-				   const char *new_tail,
-				   const int wrap_with_single_quote);
+                                   const char *old_string, const char *new_tail, const int wrap_with_single_quote);
 static PARSER_VARCHAR *pt_append_bytes_for (const PARSER_CONTEXT * parser,
-					    PARSER_VARCHAR * old_string,
-					    const char *new_tail,
-					    const int new_tail_length);
+                                            PARSER_VARCHAR * old_string,
+                                            const char *new_tail, const int new_tail_length);
 static int pt_register_parser (const PARSER_CONTEXT * parser);
 static void pt_unregister_parser (const PARSER_CONTEXT * parser);
 static void pt_free_string_blocks (const PARSER_CONTEXT * parser);
@@ -136,18 +128,17 @@ parser_create_node_block (const PARSER_CONTEXT * parser)
     {
       assert (false);
       if (parser->jmp_env_active)
-	{
-	  /* long jump back to routine that set up the jump env
-	   * for clean up and run down.
-	   */
-	  longjmp (((PARSER_CONTEXT *) parser)->jmp_env, 1);
-	}
+        {
+          /* long jump back to routine that set up the jump env
+           * for clean up and run down.
+           */
+          longjmp (((PARSER_CONTEXT *) parser)->jmp_env, 1);
+        }
       else
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, sizeof (PARSER_NODE_BLOCK));
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (PARSER_NODE_BLOCK));
+          return NULL;
+        }
     }
 
   /* remember which parser allocated this block */
@@ -212,16 +203,16 @@ parser_create_node (const PARSER_CONTEXT * parser)
       /* do not need to use mutex : only used by one parser(and one thread) */
       free_list->node = parser_create_node_block (parser);
       if (free_list->node == NULL)
-	{
-	  assert (false);
-	  return NULL;
-	}
+        {
+          assert (false);
+          return NULL;
+        }
     }
 
   node = free_list->node;
   free_list->node = free_list->node->next;
 
-  node->parser_id = parser->id;	/* consistency check */
+  node->parser_id = parser->id; /* consistency check */
 
   return node;
 }
@@ -249,16 +240,16 @@ pt_free_node_blocks (const PARSER_CONTEXT * parser)
   while (block != NULL)
     {
       if (block->parser_id == parser->id)
-	{
-	  /* remove it from list, and free it */
-	  *previous_block = block->next;
-	  free_and_init (block);
-	}
+        {
+          /* remove it from list, and free it */
+          *previous_block = block->next;
+          free_and_init (block);
+        }
       else
-	{
-	  /* keep it, and move to next block pointer */
-	  previous_block = &block->next;
-	}
+        {
+          /* keep it, and move to next block pointer */
+          previous_block = &block->next;
+        }
       /* re-establish invariant */
       block = *previous_block;
     }
@@ -283,22 +274,20 @@ parser_create_string_block (const PARSER_CONTEXT * parser, const int length)
     {
       block = (PARSER_STRING_BLOCK *) malloc (sizeof (PARSER_STRING_BLOCK));
       if (!block)
-	{
-	  if (parser->jmp_env_active)
-	    {
-	      /* long jump back to routine that set up the jump env
-	       * for clean up and run down.
-	       */
-	      longjmp (((PARSER_CONTEXT *) parser)->jmp_env, 1);
-	    }
-	  else
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      sizeof (PARSER_STRING_BLOCK));
-	      return NULL;
-	    }
-	}
+        {
+          if (parser->jmp_env_active)
+            {
+              /* long jump back to routine that set up the jump env
+               * for clean up and run down.
+               */
+              longjmp (((PARSER_CONTEXT *) parser)->jmp_env, 1);
+            }
+          else
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (PARSER_STRING_BLOCK));
+              return NULL;
+            }
+        }
       block->block_end = STRINGS_PER_BLOCK - 1;
     }
   else
@@ -306,27 +295,24 @@ parser_create_string_block (const PARSER_CONTEXT * parser, const int length)
       /* This is an unusually large string. Allocate a special block
        * for it, with space for one string, plus some space
        * for appending to. */
-      block = (PARSER_STRING_BLOCK *)
-	malloc (sizeof (PARSER_STRING_BLOCK)
-		+ (length + 1001 - STRINGS_PER_BLOCK));
+      block = (PARSER_STRING_BLOCK *) malloc (sizeof (PARSER_STRING_BLOCK) + (length + 1001 - STRINGS_PER_BLOCK));
       if (!block)
-	{
-	  if (parser->jmp_env_active)
-	    {
-	      /* long jump back to routine that set up the jump env
-	       * for clean up and run down.
-	       */
-	      longjmp (((PARSER_CONTEXT *) parser)->jmp_env, 1);
-	    }
-	  else
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      (sizeof (PARSER_STRING_BLOCK) +
-		       (length + 1001 - STRINGS_PER_BLOCK)));
-	      return NULL;
-	    }
-	}
+        {
+          if (parser->jmp_env_active)
+            {
+              /* long jump back to routine that set up the jump env
+               * for clean up and run down.
+               */
+              longjmp (((PARSER_CONTEXT *) parser)->jmp_env, 1);
+            }
+          else
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_OUT_OF_VIRTUAL_MEMORY, 1,
+                      (sizeof (PARSER_STRING_BLOCK) + (length + 1001 - STRINGS_PER_BLOCK)));
+              return NULL;
+            }
+        }
       block->block_end = CAST_BUFLEN (length + 1001 - 1);
     }
 
@@ -362,8 +348,7 @@ parser_create_string_block (const PARSER_CONTEXT * parser, const int length)
  * 	copy_of_foo = pt_create_string(parser, strlen(foo));
  */
 void *
-parser_allocate_string_buffer (const PARSER_CONTEXT * parser,
-			       const int length, const int align)
+parser_allocate_string_buffer (const PARSER_CONTEXT * parser, const int length, const int align)
 {
   int idhash;
   PARSER_STRING_BLOCK *block;
@@ -375,9 +360,8 @@ parser_allocate_string_buffer (const PARSER_CONTEXT * parser,
   rv = pthread_mutex_lock (&parser_memory_lock);
   block = parser_String_blocks[idhash];
   while (block != NULL
-	 && (block->parser_id != parser->id
-	     || ((block->block_end - block->last_string_end) <
-		 (length + (align - 1) + 1))))
+         && (block->parser_id != parser->id
+             || ((block->block_end - block->last_string_end) < (length + (align - 1) + 1))))
     {
       block = block->next;
     }
@@ -387,14 +371,13 @@ parser_allocate_string_buffer (const PARSER_CONTEXT * parser,
     {
       block = parser_create_string_block (parser, length + (align - 1) + 1);
       if (block == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
 
   /* set start to the aligned length */
-  block->last_string_start =
-    CAST_BUFLEN ((block->last_string_end + (align - 1) + 1) & ~(align - 1));
+  block->last_string_start = CAST_BUFLEN ((block->last_string_end + (align - 1) + 1) & ~(align - 1));
   block->last_string_end = CAST_BUFLEN (block->last_string_start + length);
   block->u.chars[block->last_string_start] = 0;
 
@@ -410,8 +393,7 @@ parser_allocate_string_buffer (const PARSER_CONTEXT * parser,
  *   string_to_free(in):
  */
 static void
-pt_free_a_string_block (const PARSER_CONTEXT * parser,
-			PARSER_STRING_BLOCK * string_to_free)
+pt_free_a_string_block (const PARSER_CONTEXT * parser, PARSER_STRING_BLOCK * string_to_free)
 {
   PARSER_STRING_BLOCK **previous_string;
   PARSER_STRING_BLOCK *string;
@@ -456,8 +438,7 @@ pt_find_string_block (const PARSER_CONTEXT * parser, const char *old_string)
   rv = pthread_mutex_lock (&parser_memory_lock);
   string = parser_String_blocks[idhash];
   while (string != NULL
-	 && (string->parser_id != parser->id
-	     || &(string->u.chars[string->last_string_start]) != old_string))
+         && (string->parser_id != parser->id || &(string->u.chars[string->last_string_start]) != old_string))
     {
       string = string->next;
     }
@@ -483,8 +464,7 @@ pt_find_string_block (const PARSER_CONTEXT * parser, const char *old_string)
  */
 static char *
 pt_append_string_for (const PARSER_CONTEXT * parser,
-		      const char *old_string,
-		      const char *new_tail, const int wrap_with_single_quote)
+                      const char *old_string, const char *new_tail, const int wrap_with_single_quote)
 {
   PARSER_STRING_BLOCK *string;
   char *s;
@@ -495,43 +475,40 @@ pt_append_string_for (const PARSER_CONTEXT * parser,
   new_tail_length = strlen (new_tail);
   if (wrap_with_single_quote)
     {
-      new_tail_length += 2;	/* for opening/closing "'" */
+      new_tail_length += 2;     /* for opening/closing "'" */
     }
 
   /* if we did not find old_string at the end of a string buffer, or
    * if there is not room to concatenate the tail, copy both to new string */
-  if ((string == NULL)
-      || ((string->block_end - string->last_string_end) < new_tail_length))
+  if ((string == NULL) || ((string->block_end - string->last_string_end) < new_tail_length))
     {
-      s = parser_allocate_string_buffer (parser,
-					 strlen (old_string) +
-					 new_tail_length, sizeof (char));
+      s = parser_allocate_string_buffer (parser, strlen (old_string) + new_tail_length, sizeof (char));
       if (s == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       strcpy (s, old_string);
       if (wrap_with_single_quote)
-	{
-	  strcat (s, "'");
-	}
+        {
+          strcat (s, "'");
+        }
       strcat (s, new_tail);
       if (wrap_with_single_quote)
-	{
-	  strcat (s, "'");
-	}
+        {
+          strcat (s, "'");
+        }
 
       /* We might be appending to ever-growing buffers. Detect if
        * there was a string found, but it was out of space,
        * and it was the ONLY string in the buffer.
        * If this happened, free it. */
       if (string != NULL
-	  /* && (already know there was not room, see above) */
-	  && string->last_string_start == 0)
-	{
-	  /* old_string is the only contents of string, free it. */
-	  pt_free_a_string_block (parser, string);
-	}
+          /* && (already know there was not room, see above) */
+          && string->last_string_start == 0)
+        {
+          /* old_string is the only contents of string, free it. */
+          pt_free_a_string_block (parser, string);
+        }
     }
   else
     {
@@ -541,15 +518,15 @@ pt_append_string_for (const PARSER_CONTEXT * parser,
        * to the needed size. */
       s = &string->u.chars[string->last_string_end];
       if (wrap_with_single_quote)
-	{
-	  strcpy (s, "'");
-	  strcpy (s + 1, new_tail);
-	  strcpy (s + new_tail_length - 1, "'");
-	}
+        {
+          strcpy (s, "'");
+          strcpy (s + 1, new_tail);
+          strcpy (s + new_tail_length - 1, "'");
+        }
       else
-	{
-	  strcpy (s, new_tail);
-	}
+        {
+          strcpy (s, new_tail);
+        }
       string->last_string_end += new_tail_length;
       s = &string->u.chars[string->last_string_start];
     }
@@ -577,8 +554,7 @@ pt_append_string_for (const PARSER_CONTEXT * parser,
  */
 static PARSER_VARCHAR *
 pt_append_bytes_for (const PARSER_CONTEXT * parser,
-		     PARSER_VARCHAR * old_string,
-		     const char *new_tail, const int new_tail_length)
+                     PARSER_VARCHAR * old_string, const char *new_tail, const int new_tail_length)
 {
   PARSER_STRING_BLOCK *string;
   char *s;
@@ -588,39 +564,34 @@ pt_append_bytes_for (const PARSER_CONTEXT * parser,
 
   /* if we did not find old_string at the end of a string buffer, or
    * if there is not room to concatenate the tail, copy both to new string */
-  if ((string == NULL)
-      || ((string->block_end - string->last_string_end) < new_tail_length))
+  if ((string == NULL) || ((string->block_end - string->last_string_end) < new_tail_length))
     {
       s = parser_allocate_string_buffer (parser,
-					 offsetof (PARSER_VARCHAR,
-						   bytes) +
-					 old_string->length + new_tail_length,
-					 sizeof (long));
+                                         offsetof (PARSER_VARCHAR,
+                                                   bytes) + old_string->length + new_tail_length, sizeof (long));
 
       if (s == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
-      memcpy (s, old_string,
-	      old_string->length + offsetof (PARSER_VARCHAR, bytes));
+      memcpy (s, old_string, old_string->length + offsetof (PARSER_VARCHAR, bytes));
       old_string = (PARSER_VARCHAR *) s;
-      memcpy (&old_string->bytes[old_string->length], new_tail,
-	      new_tail_length);
+      memcpy (&old_string->bytes[old_string->length], new_tail, new_tail_length);
       old_string->length += (int) new_tail_length;
-      old_string->bytes[old_string->length] = 0;	/* nul terminate */
+      old_string->bytes[old_string->length] = 0;        /* nul terminate */
 
       /* We might be appending to ever-growing buffers. Detect if
        * there was a string found, but it was out of space,
        * and it was the ONLY string in the buffer.
        * If this happened, free it. */
       if (string != NULL
-	  /* && (already know there was not room, see above) */
-	  && string->last_string_start == 0)
-	{
-	  /* old_string is the only contents of string, free it. */
-	  pt_free_a_string_block (parser, string);
-	}
+          /* && (already know there was not room, see above) */
+          && string->last_string_start == 0)
+        {
+          /* old_string is the only contents of string, free it. */
+          pt_free_a_string_block (parser, string);
+        }
     }
   else
     {
@@ -629,10 +600,9 @@ pt_append_bytes_for (const PARSER_CONTEXT * parser,
          eg. print buffer, this will grow the allocation efficiently
          to the needed size. */
 
-      memcpy (&old_string->bytes[old_string->length], new_tail,
-	      new_tail_length);
+      memcpy (&old_string->bytes[old_string->length], new_tail, new_tail_length);
       old_string->length += (int) new_tail_length;
-      old_string->bytes[old_string->length] = 0;	/* nul terminate */
+      old_string->bytes[old_string->length] = 0;        /* nul terminate */
 
       string->last_string_end += (int) new_tail_length;
       s = &string->u.chars[string->last_string_start];
@@ -668,15 +638,13 @@ pt_register_parser (const PARSER_CONTEXT * parser)
       /* this is the first time this parser allocated a node. */
       /* set up a free list. This will only be done once per parser. */
 
-      free_list =
-	(PARSER_NODE_FREE_LIST *) calloc (sizeof (PARSER_NODE_FREE_LIST), 1);
+      free_list = (PARSER_NODE_FREE_LIST *) calloc (sizeof (PARSER_NODE_FREE_LIST), 1);
       if (free_list == NULL)
-	{
-	  pthread_mutex_unlock (&free_lists_lock);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, sizeof (PARSER_NODE_FREE_LIST));
-	  return ER_FAILED;
-	}
+        {
+          pthread_mutex_unlock (&free_lists_lock);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (PARSER_NODE_FREE_LIST));
+          return ER_FAILED;
+        }
       free_list->parser_id = parser->id;
       free_list->next = parser_Node_free_lists[idhash];
       parser_Node_free_lists[idhash] = free_list;
@@ -783,8 +751,7 @@ parser_free_node (const PARSER_CONTEXT * parser, PT_NODE * node)
     }
 
   /* before we free this node, see if we need to clear a db_value */
-  if (node->node_type == PT_VALUE
-      && node->info.value.db_value_is_in_workspace)
+  if (node->node_type == PT_VALUE && node->info.value.db_value_is_in_workspace)
     {
       db_value_clear (&node->info.value.db_value);
     }
@@ -825,9 +792,7 @@ parser_alloc (const PARSER_CONTEXT * parser, const int length)
 
   void *pointer;
 
-  pointer = parser_allocate_string_buffer (parser,
-					   length + sizeof (long),
-					   sizeof (double));
+  pointer = parser_allocate_string_buffer (parser, length + sizeof (long), sizeof (double));
   if (pointer)
     memset (pointer, 0, length);
 
@@ -848,8 +813,7 @@ parser_alloc (const PARSER_CONTEXT * parser, const int length)
  * more efficient, and conservative of memory
  */
 char *
-pt_append_string (const PARSER_CONTEXT * parser,
-		  const char *old_string, const char *new_tail)
+pt_append_string (const PARSER_CONTEXT * parser, const char *old_string, const char *new_tail)
 {
   char *s;
 
@@ -859,14 +823,12 @@ pt_append_string (const PARSER_CONTEXT * parser,
     }
   else if (old_string == NULL)
     {
-      s =
-	parser_allocate_string_buffer (parser, strlen (new_tail),
-				       sizeof (char));
+      s = parser_allocate_string_buffer (parser, strlen (new_tail), sizeof (char));
       if (s == NULL)
-	{
-	  assert (false);
-	  return NULL;
-	}
+        {
+          assert (false);
+          return NULL;
+        }
 
       strcpy (s, new_tail);
     }
@@ -888,20 +850,18 @@ pt_append_string (const PARSER_CONTEXT * parser,
  */
 PARSER_VARCHAR *
 pt_append_bytes (const PARSER_CONTEXT * parser,
-		 PARSER_VARCHAR * old_string,
-		 const char *new_tail, const int new_tail_length)
+                 PARSER_VARCHAR * old_string, const char *new_tail, const int new_tail_length)
 {
   PARSER_VARCHAR *s;
 
   if (old_string == NULL)
     {
       old_string = (PARSER_VARCHAR *) parser_allocate_string_buffer
-	((PARSER_CONTEXT *) parser, offsetof (PARSER_VARCHAR, bytes),
-	 sizeof (long));
+        ((PARSER_CONTEXT *) parser, offsetof (PARSER_VARCHAR, bytes), sizeof (long));
       if (old_string == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       old_string->length = 0;
       old_string->bytes[0] = 0;
     }
@@ -912,8 +872,7 @@ pt_append_bytes (const PARSER_CONTEXT * parser,
     }
   else
     {
-      s = pt_append_bytes_for ((PARSER_CONTEXT *) parser, old_string,
-			       new_tail, new_tail_length);
+      s = pt_append_bytes_for ((PARSER_CONTEXT *) parser, old_string, new_tail, new_tail_length);
     }
 
   return s;
@@ -927,17 +886,14 @@ pt_append_bytes (const PARSER_CONTEXT * parser,
  *   new_tail(in):
  */
 PARSER_VARCHAR *
-pt_append_varchar (const PARSER_CONTEXT * parser,
-		   PARSER_VARCHAR * old_string,
-		   const PARSER_VARCHAR * new_tail)
+pt_append_varchar (const PARSER_CONTEXT * parser, PARSER_VARCHAR * old_string, const PARSER_VARCHAR * new_tail)
 {
   if (new_tail == NULL)
     {
       return old_string;
     }
 
-  return pt_append_bytes (parser, old_string, (char *) new_tail->bytes,
-			  new_tail->length);
+  return pt_append_bytes (parser, old_string, (char *) new_tail->bytes, new_tail->length);
 }
 
 
@@ -950,8 +906,7 @@ pt_append_varchar (const PARSER_CONTEXT * parser,
  *   nulstring(in):
  */
 PARSER_VARCHAR *
-pt_append_nulstring (const PARSER_CONTEXT * parser,
-		     PARSER_VARCHAR * bstring, const char *nulstring)
+pt_append_nulstring (const PARSER_CONTEXT * parser, PARSER_VARCHAR * bstring, const char *nulstring)
 {
   if (nulstring == NULL)
     {
@@ -1018,16 +973,16 @@ pt_free_string_blocks (const PARSER_CONTEXT * parser)
   while (block != NULL)
     {
       if (block->parser_id == parser->id)
-	{
-	  /* remove it from list, and free it */
-	  *previous_block = block->next;
-	  free_and_init (block);
-	}
+        {
+          /* remove it from list, and free it */
+          *previous_block = block->next;
+          free_and_init (block);
+        }
       else
-	{
-	  /* keep it, and move to next block pointer */
-	  previous_block = &block->next;
-	}
+        {
+          /* keep it, and move to next block pointer */
+          previous_block = &block->next;
+        }
       /* re-establish invariant */
       block = *previous_block;
     }
@@ -1052,8 +1007,7 @@ parser_create_parser (void)
   parser = (PARSER_CONTEXT *) calloc (sizeof (PARSER_CONTEXT), 1);
   if (parser == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      sizeof (PARSER_CONTEXT));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (PARSER_CONTEXT));
       return NULL;
     }
 
@@ -1118,11 +1072,10 @@ parser_free_parser (PARSER_CONTEXT * parser)
 
   if (parser->host_variables)
     {
-      for (i = 0, hv = parser->host_variables;
-	   i < parser->host_var_count; i++, hv++)
-	{
-	  db_value_clear (hv);
-	}
+      for (i = 0, hv = parser->host_variables; i < parser->host_var_count; i++, hv++)
+        {
+          db_value_clear (hv);
+        }
       free_and_init (parser->host_variables);
     }
 
@@ -1133,24 +1086,24 @@ parser_free_parser (PARSER_CONTEXT * parser)
   if (parser->query_trace == true && parser->num_plan_trace > 0)
     {
       for (i = 0; i < parser->num_plan_trace; i++)
-	{
-	  if (parser->plan_trace[i].format == QUERY_TRACE_TEXT)
-	    {
-	      if (parser->plan_trace[i].trace.text_plan != NULL)
-		{
-		  free_and_init (parser->plan_trace[i].trace.text_plan);
-		}
-	    }
-	  else if (parser->plan_trace[i].format == QUERY_TRACE_JSON)
-	    {
-	      if (parser->plan_trace[i].trace.json_plan != NULL)
-		{
-		  json_object_clear (parser->plan_trace[i].trace.json_plan);
-		  json_decref (parser->plan_trace[i].trace.json_plan);
-		  parser->plan_trace[i].trace.json_plan = NULL;
-		}
-	    }
-	}
+        {
+          if (parser->plan_trace[i].format == QUERY_TRACE_TEXT)
+            {
+              if (parser->plan_trace[i].trace.text_plan != NULL)
+                {
+                  free_and_init (parser->plan_trace[i].trace.text_plan);
+                }
+            }
+          else if (parser->plan_trace[i].format == QUERY_TRACE_JSON)
+            {
+              if (parser->plan_trace[i].trace.json_plan != NULL)
+                {
+                  json_object_clear (parser->plan_trace[i].trace.json_plan);
+                  json_decref (parser->plan_trace[i].trace.json_plan);
+                  parser->plan_trace[i].trace.json_plan = NULL;
+                }
+            }
+        }
 
       parser->num_plan_trace = 0;
     }
@@ -1173,9 +1126,9 @@ parser_free_lcks_classes (PARSER_CONTEXT * parser)
   if (parser->lcks_classes)
     {
       for (i = 0; i < parser->num_lcks_classes; i++)
-	{
-	  free_and_init (parser->lcks_classes[i]);
-	}
+        {
+          free_and_init (parser->lcks_classes[i]);
+        }
 
       free_and_init (parser->lcks_classes);
       parser->num_lcks_classes = 0;
@@ -1192,9 +1145,7 @@ parser_free_lcks_classes (PARSER_CONTEXT * parser)
  *   assignment(in): assignments list to enumerate
  */
 void
-pt_init_assignments_helper (PARSER_CONTEXT * parser,
-			    PT_ASSIGNMENTS_HELPER * helper,
-			    PT_NODE * assignment)
+pt_init_assignments_helper (PARSER_CONTEXT * parser, PT_ASSIGNMENTS_HELPER * helper, PT_NODE * assignment)
 {
   helper->parser = parser;
   helper->assignment = assignment;
@@ -1224,13 +1175,13 @@ pt_get_next_assignment (PT_ASSIGNMENTS_HELPER * ea)
   if (lhs)
     {
       if (lhs->next)
-	{
-	  ea->is_n_column = true;
+        {
+          ea->is_n_column = true;
 
-	  ea->lhs = lhs->next;
+          ea->lhs = lhs->next;
 
-	  return ea->lhs;
-	}
+          return ea->lhs;
+        }
       ea->assignment = ea->assignment->next;
     }
   if (ea->assignment)
@@ -1241,13 +1192,13 @@ pt_get_next_assignment (PT_ASSIGNMENTS_HELPER * ea)
       assert (rhs != NULL);
 
       if (lhs->next)
-	{
-	  ea->is_n_column = true;
-	}
+        {
+          ea->is_n_column = true;
+        }
       else
-	{
-	  ea->is_n_column = false;
-	}
+        {
+          ea->is_n_column = false;
+        }
 
       ea->lhs = lhs;
       ea->rhs = rhs;

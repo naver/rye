@@ -118,19 +118,13 @@ static const char *rsql_Isolation_level_string[] = {
   "SERIALIZABLE"
 };
 
-static const char *rsql_cmd_string (RYE_STMT_TYPE stmt_type,
-				    const char *default_string);
+static const char *rsql_cmd_string (RYE_STMT_TYPE stmt_type, const char *default_string);
 static void display_empty_result (int stmt_type, int line_no);
-static char **get_current_result (int **len,
-				  const CUR_RESULT_INFO * result_info);
-static int write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
-				    const CUR_RESULT_INFO * result_info);
+static char **get_current_result (int **len, const CUR_RESULT_INFO * result_info);
+static int write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp, const CUR_RESULT_INFO * result_info);
 static char *uncontrol_strdup (const char *from);
 static char *uncontrol_strndup (const char *from, int length);
-static int calculate_width (int column_width,
-			    int string_width,
-			    int origin_width,
-			    DB_TYPE attr_type, bool is_null);
+static int calculate_width (int column_width, int string_width, int origin_width, DB_TYPE attr_type, bool is_null);
 static bool is_string_type (DB_TYPE type);
 static bool is_bit_type (DB_TYPE type);
 static bool is_cuttable_type_by_string_width (DB_TYPE type);
@@ -149,12 +143,12 @@ static bool is_type_that_has_suffix (DB_TYPE type);
  */
 void
 rsql_results (const RSQL_ARGUMENT * rsql_arg, DB_QUERY_RESULT * result,
-	      DB_QUERY_TYPE * attr_spec, int line_no, RYE_STMT_TYPE stmt_type)
+              DB_QUERY_TYPE * attr_spec, int line_no, RYE_STMT_TYPE stmt_type)
 {
   int i;
-  DB_QUERY_TYPE *t;		/* temp ptr for attr_spec */
+  DB_QUERY_TYPE *t;             /* temp ptr for attr_spec */
   int err;
-  int *attr_name_lengths = NULL;	/* attribute name length array */
+  int *attr_name_lengths = NULL;        /* attribute name length array */
   CUR_RESULT_INFO result_info;
   int num_attrs = 0;
   char **attr_names = NULL;
@@ -163,8 +157,7 @@ rsql_results (const RSQL_ARGUMENT * rsql_arg, DB_QUERY_RESULT * result,
   int max_attr_name_length = 0;
 
   /* trivial case - no results */
-  if (result == NULL
-      || (err = db_query_first_tuple (result)) == DB_CURSOR_END)
+  if (result == NULL || (err = db_query_first_tuple (result)) == DB_CURSOR_END)
     {
       display_empty_result (stmt_type, line_no);
       return;
@@ -211,84 +204,76 @@ rsql_results (const RSQL_ARGUMENT * rsql_arg, DB_QUERY_RESULT * result,
 
       temp = db_query_format_name (t);
       if (temp == NULL)
-	{
-	  attr_names[i] = (char *) malloc (7);
-	  if (attr_names[i] == NULL)
-	    {
-	      rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-	      goto error;
-	    }
-	  strcpy (attr_names[0], "Result");
-	}
+        {
+          attr_names[i] = (char *) malloc (7);
+          if (attr_names[i] == NULL)
+            {
+              rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+              goto error;
+            }
+          strcpy (attr_names[0], "Result");
+        }
       else
-	{
-	  bool is_console_conv = false;
+        {
+          bool is_console_conv = false;
 
-	  /* console encoded attribute name */
-	  if (rsql_text_utf8_to_console != NULL)
-	    {
-	      char *attr_name_console_encoded = NULL;
-	      int attr_name_console_length = -1;
+          /* console encoded attribute name */
+          if (rsql_text_utf8_to_console != NULL)
+            {
+              char *attr_name_console_encoded = NULL;
+              int attr_name_console_length = -1;
 
-	      /* try to convert attribute name from utf-8 to console */
-	      if ((*rsql_text_utf8_to_console) (temp,
-						strlen (temp),
-						&attr_name_console_encoded,
-						&attr_name_console_length)
-		  == NO_ERROR)
-		{
-		  if (attr_name_console_encoded != NULL)
-		    {
-		      free_and_init (attr_names[i]);
-		      attr_names[i] = attr_name_console_encoded;
-		      is_console_conv = true;
-		    }
-		}
-	    }
+              /* try to convert attribute name from utf-8 to console */
+              if ((*rsql_text_utf8_to_console) (temp,
+                                                strlen (temp),
+                                                &attr_name_console_encoded, &attr_name_console_length) == NO_ERROR)
+                {
+                  if (attr_name_console_encoded != NULL)
+                    {
+                      free_and_init (attr_names[i]);
+                      attr_names[i] = attr_name_console_encoded;
+                      is_console_conv = true;
+                    }
+                }
+            }
 
-	  if (!is_console_conv)
-	    {
-	      attr_names[i] = uncontrol_strdup (temp);
-	      if (attr_names[i] == NULL)
-		{
-		  goto error;
-		}
-	    }
-	}
+          if (!is_console_conv)
+            {
+              attr_names[i] = uncontrol_strdup (temp);
+              if (attr_names[i] == NULL)
+                {
+                  goto error;
+                }
+            }
+        }
       attr_name_lengths[i] = strlen (attr_names[i]);
       max_attr_name_length = MAX (max_attr_name_length, attr_name_lengths[i]);
       attr_types[i] = db_query_format_type (t);
 
       switch (attr_types[i])
-	{
-	case DB_TYPE_INTEGER:
-	  attr_lengths[i] =
-	    MAX (MAX_INTEGER_DISPLAY_LENGTH, attr_name_lengths[i]);
-	  break;
-	case DB_TYPE_BIGINT:
-	  attr_lengths[i] =
-	    MAX (MAX_BIGINT_DISPLAY_LENGTH, attr_name_lengths[i]);
-	  break;
-	case DB_TYPE_DOUBLE:
-	  attr_lengths[i] =
-	    MAX (MAX_DOUBLE_DISPLAY_LENGTH, attr_name_lengths[i]);
-	  break;
-	case DB_TYPE_TIME:
-	  attr_lengths[i] =
-	    -MAX (MAX_TIME_DISPLAY_LENGTH, attr_name_lengths[i]);
-	  break;
-	case DB_TYPE_DATETIME:
-	  attr_lengths[i] =
-	    -MAX (MAX_DATETIME_DISPLAY_LENGTH, attr_name_lengths[i]);
-	  break;
-	case DB_TYPE_DATE:
-	  attr_lengths[i] =
-	    -MAX (MAX_DATE_DISPLAY_LENGTH, attr_name_lengths[i]);
-	  break;
-	default:
-	  attr_lengths[i] = -MAX_DEFAULT_DISPLAY_LENGTH;
-	  break;
-	}
+        {
+        case DB_TYPE_INTEGER:
+          attr_lengths[i] = MAX (MAX_INTEGER_DISPLAY_LENGTH, attr_name_lengths[i]);
+          break;
+        case DB_TYPE_BIGINT:
+          attr_lengths[i] = MAX (MAX_BIGINT_DISPLAY_LENGTH, attr_name_lengths[i]);
+          break;
+        case DB_TYPE_DOUBLE:
+          attr_lengths[i] = MAX (MAX_DOUBLE_DISPLAY_LENGTH, attr_name_lengths[i]);
+          break;
+        case DB_TYPE_TIME:
+          attr_lengths[i] = -MAX (MAX_TIME_DISPLAY_LENGTH, attr_name_lengths[i]);
+          break;
+        case DB_TYPE_DATETIME:
+          attr_lengths[i] = -MAX (MAX_DATETIME_DISPLAY_LENGTH, attr_name_lengths[i]);
+          break;
+        case DB_TYPE_DATE:
+          attr_lengths[i] = -MAX (MAX_DATE_DISPLAY_LENGTH, attr_name_lengths[i]);
+          break;
+        default:
+          attr_lengths[i] = -MAX_DEFAULT_DISPLAY_LENGTH;
+          break;
+        }
     }
 
   result_info.query_result = result;
@@ -300,28 +285,27 @@ rsql_results (const RSQL_ARGUMENT * rsql_arg, DB_QUERY_RESULT * result,
   result_info.curr_stmt_type = stmt_type;
   result_info.curr_stmt_line_no = line_no;
 
-  if (write_results_to_stream (rsql_arg, rsql_Output_fp, &result_info) ==
-      RSQL_FAILURE)
+  if (write_results_to_stream (rsql_arg, rsql_Output_fp, &result_info) == RSQL_FAILURE)
     {
       if (rsql_Error_code == RSQL_ERR_SQL_ERROR)
-	{
-	  rsql_display_rsql_err (0, 0);
-	}
+        {
+          rsql_display_rsql_err (0, 0);
+        }
       else
-	{
-	  nonscr_display_error ();
-	}
+        {
+          nonscr_display_error ();
+        }
     }
   /* free memories */
   if (attr_names != NULL)
     {
       for (i = 0; i < num_attrs; i++)
-	{
-	  if (attr_names[i] != NULL)
-	    {
-	      free_and_init (attr_names[i]);
-	    }
-	}
+        {
+          if (attr_names[i] != NULL)
+            {
+              free_and_init (attr_names[i]);
+            }
+        }
       free_and_init (attr_names);
     }
   if (attr_name_lengths != NULL)
@@ -353,12 +337,12 @@ error:
   if (attr_names != NULL)
     {
       for (i = 0; i < num_attrs; i++)
-	{
-	  if (attr_names[i] != NULL)
-	    {
-	      free_and_init (attr_names[i]);
-	    }
-	}
+        {
+          if (attr_names[i] != NULL)
+            {
+              free_and_init (attr_names[i]);
+            }
+        }
       free_and_init (attr_names);
     }
   if (attr_name_lengths != NULL)
@@ -390,9 +374,9 @@ rsql_cmd_string (RYE_STMT_TYPE stmt_type, const char *default_string)
   for (i = 0; i < table_size; i++)
     {
       if (rsql_Cmd_string_table[i].stmt_type == stmt_type)
-	{
-	  return (rsql_Cmd_string_table[i].cmd_string);
-	}
+        {
+          return (rsql_Cmd_string_table[i].cmd_string);
+        }
     }
   return default_string;
 }
@@ -406,12 +390,11 @@ rsql_cmd_string (RYE_STMT_TYPE stmt_type, const char *default_string)
 static void
 display_empty_result (int stmt_type, int line_no)
 {
-  FILE *pf;			/* pipe stream to pager */
+  FILE *pf;                     /* pipe stream to pager */
 
   snprintf (rsql_Scratch_text, SCRATCH_TEXT_LEN,
-	    msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
-			    RSQL_RESULT_STMT_TITLE_FORMAT),
-	    rsql_cmd_string ((RYE_STMT_TYPE) stmt_type, ""), line_no);
+            msgcat_message (MSGCAT_CATALOG_RSQL, MSGCAT_RSQL_SET_RSQL,
+                            RSQL_RESULT_STMT_TITLE_FORMAT), rsql_cmd_string ((RYE_STMT_TYPE) stmt_type, ""), line_no);
 
   pf = rsql_popen (rsql_Pager_cmd, rsql_Output_fp);
 
@@ -419,9 +402,7 @@ display_empty_result (int stmt_type, int line_no)
   rsql_fputs_console_conv (rsql_Scratch_text, pf);
   rsql_fputs (" ===\n\n", pf);
   rsql_fputs_console_conv (msgcat_message (MSGCAT_CATALOG_RSQL,
-					   MSGCAT_RSQL_SET_RSQL,
-					   RSQL_STAT_NONSCR_EMPTY_RESULT_TEXT),
-			   pf);
+                                           MSGCAT_RSQL_SET_RSQL, RSQL_STAT_NONSCR_EMPTY_RESULT_TEXT), pf);
   rsql_fputs ("\n", pf);
 
   rsql_pclose (pf, rsql_Output_fp);
@@ -442,8 +423,8 @@ static char **
 get_current_result (int **lengths, const CUR_RESULT_INFO * result_info)
 {
   int i;
-  char **val = NULL;		/* temporary array for values */
-  int *len = NULL;		/* temporary array for lengths */
+  char **val = NULL;            /* temporary array for values */
+  int *len = NULL;              /* temporary array for lengths */
   DB_VALUE db_value;
   RYE_STMT_TYPE stmt_type = result_info->curr_stmt_type;
   DB_QUERY_RESULT *result = result_info->query_result;
@@ -481,10 +462,10 @@ get_current_result (int **lengths, const CUR_RESULT_INFO * result_info)
       DB_MAKE_NULL (&db_value);
 
       if (db_query_get_tuple_value (result, i, &db_value) < 0)
-	{
-	  rsql_Error_code = RSQL_ERR_SQL_ERROR;
-	  goto error;
-	}
+        {
+          rsql_Error_code = RSQL_ERR_SQL_ERROR;
+          goto error;
+        }
 
       value_type = DB_VALUE_TYPE (&db_value);
 
@@ -499,132 +480,119 @@ get_current_result (int **lengths, const CUR_RESULT_INFO * result_info)
        *      CS_MODE are validated.
        */
       assert (value_type == DB_TYPE_NULL
-	      /* UNKNOWN, maybe host variable */
-	      || result_info->attr_types[i] == DB_TYPE_NULL
-	      || result_info->attr_types[i] == DB_TYPE_VARIABLE
-	      || value_type == result_info->attr_types[i]);
+              /* UNKNOWN, maybe host variable */
+              || result_info->attr_types[i] == DB_TYPE_NULL
+              || result_info->attr_types[i] == DB_TYPE_VARIABLE || value_type == result_info->attr_types[i]);
 
-#if 0				/* TODO - */
+#if 0                           /* TODO - */
       /* reset to the valid result type
        */
       if (result_info->attr_types[i] == DB_TYPE_VARIABLE)
-	{
-	  if (value_type != DB_TYPE_NULL)
-	    {
-	      assert (value_type != DB_TYPE_VARIABLE);
-	      result_info->attr_types[i] = value_type;
+        {
+          if (value_type != DB_TYPE_NULL)
+            {
+              assert (value_type != DB_TYPE_VARIABLE);
+              result_info->attr_types[i] = value_type;
 
-	      switch (result_info->attr_types[i])
-		{
-		case DB_TYPE_INTEGER:
-		  result_info->attr_lengths[i] =
-		    MAX (MAX_INTEGER_DISPLAY_LENGTH,
-			 strlen (result_info->attr_names[i]));
-		  break;
-		case DB_TYPE_BIGINT:
-		  result_info->attr_lengths[i] =
-		    MAX (MAX_BIGINT_DISPLAY_LENGTH,
-			 strlen (result_info->attr_names[i]));
-		  break;
-		case DB_TYPE_DOUBLE:
-		  result_info->attr_lengths[i] =
-		    MAX (MAX_DOUBLE_DISPLAY_LENGTH,
-			 strlen (result_info->attr_names[i]));
-		  break;
-		case DB_TYPE_TIME:
-		  result_info->attr_lengths[i] =
-		    -MAX (MAX_TIME_DISPLAY_LENGTH,
-			  strlen (result_info->attr_names[i]));
-		  break;
-		case DB_TYPE_DATETIME:
-		  result_info->attr_lengths[i] =
-		    -MAX (MAX_DATETIME_DISPLAY_LENGTH,
-			  strlen (result_info->attr_names[i]));
-		  break;
-		case DB_TYPE_DATE:
-		  result_info->attr_lengths[i] =
-		    -MAX (MAX_DATE_DISPLAY_LENGTH,
-			  strlen (result_info->attr_names[i]));
-		  break;
-		default:
-		  result_info->attr_lengths[i] = -MAX_DEFAULT_DISPLAY_LENGTH;
-		  break;
-		}
+              switch (result_info->attr_types[i])
+                {
+                case DB_TYPE_INTEGER:
+                  result_info->attr_lengths[i] = MAX (MAX_INTEGER_DISPLAY_LENGTH, strlen (result_info->attr_names[i]));
+                  break;
+                case DB_TYPE_BIGINT:
+                  result_info->attr_lengths[i] = MAX (MAX_BIGINT_DISPLAY_LENGTH, strlen (result_info->attr_names[i]));
+                  break;
+                case DB_TYPE_DOUBLE:
+                  result_info->attr_lengths[i] = MAX (MAX_DOUBLE_DISPLAY_LENGTH, strlen (result_info->attr_names[i]));
+                  break;
+                case DB_TYPE_TIME:
+                  result_info->attr_lengths[i] = -MAX (MAX_TIME_DISPLAY_LENGTH, strlen (result_info->attr_names[i]));
+                  break;
+                case DB_TYPE_DATETIME:
+                  result_info->attr_lengths[i] =
+                    -MAX (MAX_DATETIME_DISPLAY_LENGTH, strlen (result_info->attr_names[i]));
+                  break;
+                case DB_TYPE_DATE:
+                  result_info->attr_lengths[i] = -MAX (MAX_DATE_DISPLAY_LENGTH, strlen (result_info->attr_names[i]));
+                  break;
+                default:
+                  result_info->attr_lengths[i] = -MAX_DEFAULT_DISPLAY_LENGTH;
+                  break;
+                }
 
-	    }
-	}
+            }
+        }
 #endif
 
       switch (value_type)
-	{
-	case DB_TYPE_NULL:	/* null value */
-	  val[i] = (char *) malloc (5);
-	  if (val[i] == NULL)
-	    {
-	      rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-	      goto error;
-	    }
-	  strcpy (val[i], "NULL");
-	  break;
+        {
+        case DB_TYPE_NULL:     /* null value */
+          val[i] = (char *) malloc (5);
+          if (val[i] == NULL)
+            {
+              rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+              goto error;
+            }
+          strcpy (val[i], "NULL");
+          break;
 
-	default:		/* other types */
-	  /*
-	   * If we are printing the isolation level, we need to
-	   * interpret it for the user, not just return a meaningless number.
-	   *
-	   * Also interpret a lock timeout value of -1
-	   */
-	  if (stmt_type == RYE_STMT_GET_ISO_LVL)
-	    {
-	      int iso_lvl;
+        default:               /* other types */
+          /*
+           * If we are printing the isolation level, we need to
+           * interpret it for the user, not just return a meaningless number.
+           *
+           * Also interpret a lock timeout value of -1
+           */
+          if (stmt_type == RYE_STMT_GET_ISO_LVL)
+            {
+              int iso_lvl;
 
-	      iso_lvl = DB_GET_INTEGER (&db_value);
+              iso_lvl = DB_GET_INTEGER (&db_value);
 
-	      val[i] = (char *) malloc (128);
-	      if (val[i] == NULL)
-		{
-		  rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-		  goto error;
-		}
+              val[i] = (char *) malloc (128);
+              if (val[i] == NULL)
+                {
+                  rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+                  goto error;
+                }
 
-	      if (iso_lvl < 1 || iso_lvl > 6)
-		{
-		  assert (false);
-		  iso_lvl = 0;
-		}
+              if (iso_lvl < 1 || iso_lvl > 6)
+                {
+                  assert (false);
+                  iso_lvl = 0;
+                }
 
-	      sprintf (val[i], "%s", rsql_Isolation_level_string[iso_lvl]);
-	    }
-	  else if ((stmt_type == RYE_STMT_GET_TIMEOUT)
-		   && (DB_GET_DOUBLE (&db_value) == -1.0))
-	    {
-	      val[i] = (char *) malloc (9);
-	      if (val[i] == NULL)
-		{
-		  rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-		  goto error;
-		}
-	      strcpy (val[i], "INFINITE");
-	    }
-	  else
-	    {
-	      char *temp;
+              sprintf (val[i], "%s", rsql_Isolation_level_string[iso_lvl]);
+            }
+          else if ((stmt_type == RYE_STMT_GET_TIMEOUT) && (DB_GET_DOUBLE (&db_value) == -1.0))
+            {
+              val[i] = (char *) malloc (9);
+              if (val[i] == NULL)
+                {
+                  rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+                  goto error;
+                }
+              strcpy (val[i], "INFINITE");
+            }
+          else
+            {
+              char *temp;
 
-	      temp = rsql_db_value_as_string (&db_value, &len[i]);
-	      if (temp == NULL)
-		{
-		  rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
-		  goto error;
-		}
-	      temp[len[i]] = '\0';
-	      val[i] = temp;
-	    }
-	}
+              temp = rsql_db_value_as_string (&db_value, &len[i]);
+              if (temp == NULL)
+                {
+                  rsql_Error_code = RSQL_ERR_NO_MORE_MEMORY;
+                  goto error;
+                }
+              temp[len[i]] = '\0';
+              val[i] = temp;
+            }
+        }
 
       if (len[i] == 0 && val[i])
-	{
-	  len[i] = strlen (val[i]);
-	}
+        {
+          len[i] = strlen (val[i]);
+        }
     }
 
   assert (lengths != NULL);
@@ -636,12 +604,12 @@ error:
   if (val != NULL)
     {
       for (i = 0; i < num_attrs; i++)
-	{
-	  if (val[i] != NULL)
-	    {
-	      free_and_init (val[i]);
-	    }
-	}
+        {
+          if (val[i] != NULL)
+            {
+              free_and_init (val[i]);
+            }
+        }
       free_and_init (val);
     }
   if (len != NULL)
@@ -663,18 +631,17 @@ error:
  *       the error
  */
 static int
-write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
-			 const CUR_RESULT_INFO * result_info)
+write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp, const CUR_RESULT_INFO * result_info)
 {
   typedef char **value_array;
-  volatile value_array val;	/* attribute values array */
-  int *len;			/* attribute values lengths */
-  volatile int error;		/* to switch return of RSQL_FAILURE/RSQL_SUCCESS */
-  int i;			/* loop counter */
-  int object_no;		/* result object count */
-  int e;			/* error code from DBI */
-  FILE *pf = NULL;		/* pipe stream to pager */
-  int n;			/* # of cols for a line */
+  volatile value_array val;     /* attribute values array */
+  int *len;                     /* attribute values lengths */
+  volatile int error;           /* to switch return of RSQL_FAILURE/RSQL_SUCCESS */
+  int i;                        /* loop counter */
+  int object_no;                /* result object count */
+  int e;                        /* error code from DBI */
+  FILE *pf = NULL;              /* pipe stream to pager */
+  int n;                        /* # of cols for a line */
   RYE_STMT_TYPE stmt_type = result_info->curr_stmt_type;
   DB_QUERY_RESULT *result = result_info->query_result;
   DB_TYPE *attr_types = result_info->attr_types;
@@ -700,8 +667,7 @@ write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
 
   rsql_fputs ("\n=== ", pf);
   snprintf (rsql_Scratch_text, SCRATCH_TEXT_LEN,
-	    rsql_get_message (RSQL_RESULT_STMT_TITLE_FORMAT),
-	    rsql_cmd_string (stmt_type, "UNKNOWN"), line_no);
+            rsql_get_message (RSQL_RESULT_STMT_TITLE_FORMAT), rsql_cmd_string (stmt_type, "UNKNOWN"), line_no);
   rsql_fputs (rsql_Scratch_text, pf);
   rsql_fputs (" ===\n\n", pf);
 
@@ -715,16 +681,15 @@ write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
   if (!rsql_arg->line_output)
     {
       for (n = i = 0; i < num_attrs; i++)
-	{
-	  fprintf (pf, "  %*s", (int) (attr_lengths[i]), attr_names[i]);
-	  n += 2 + ((attr_lengths[i] > 0) ? attr_lengths[i] :
-		    -attr_lengths[i]);
-	}
+        {
+          fprintf (pf, "  %*s", (int) (attr_lengths[i]), attr_names[i]);
+          n += 2 + ((attr_lengths[i] > 0) ? attr_lengths[i] : -attr_lengths[i]);
+        }
       putc ('\n', pf);
       for (; n > 0; n--)
-	{
-	  putc ('=', pf);
-	}
+        {
+          putc ('=', pf);
+        }
       putc ('\n', pf);
     }
 
@@ -733,101 +698,95 @@ write_results_to_stream (const RSQL_ARGUMENT * rsql_arg, FILE * fp,
       rsql_Row_count = object_no;
       /* free previous result */
       if (val != NULL)
-	{
-	  assert (num_attrs == result_info->num_attrs);
-	  for (i = 0; i < num_attrs; i++)
-	    {
-	      free_and_init (val[i]);
-	    }
-	  free_and_init (val);
-	}
+        {
+          assert (num_attrs == result_info->num_attrs);
+          for (i = 0; i < num_attrs; i++)
+            {
+              free_and_init (val[i]);
+            }
+          free_and_init (val);
+        }
       if (len)
-	{
-	  free_and_init (len);
-	}
+        {
+          free_and_init (len);
+        }
 
       val = get_current_result (&len, result_info);
       if (val == NULL)
-	{
-	  rsql_Error_code = RSQL_ERR_SQL_ERROR;
-	  error = TRUE;
-	  goto done;
-	}
+        {
+          rsql_Error_code = RSQL_ERR_SQL_ERROR;
+          error = TRUE;
+          goto done;
+        }
 
       if (!rsql_arg->line_output)
-	{
-	  int padding_size;
+        {
+          int padding_size;
 
-	  for (i = 0; i < num_attrs; i++)
-	    {
-	      if (strcmp ("NULL", val[i]) == 0)
-		{
-		  is_null = true;
-		}
-	      else
-		{
-		  is_null = false;
-		}
+          for (i = 0; i < num_attrs; i++)
+            {
+              if (strcmp ("NULL", val[i]) == 0)
+                {
+                  is_null = true;
+                }
+              else
+                {
+                  is_null = false;
+                }
 
-	      column_width = rsql_get_column_width (attr_names[i]);
-	      value_width =
-		calculate_width (column_width,
-				 rsql_string_width,
-				 len[i], attr_types[i], is_null);
+              column_width = rsql_get_column_width (attr_names[i]);
+              value_width = calculate_width (column_width, rsql_string_width, len[i], attr_types[i], is_null);
 
-	      padding_size = (attr_lengths[i] > 0) ?
-		MAX (attr_lengths[i] -
-		     (value_width), 0)
-		: MIN (attr_lengths[i] + (value_width), 0);
+              padding_size = (attr_lengths[i] > 0) ?
+                MAX (attr_lengths[i] - (value_width), 0) : MIN (attr_lengths[i] + (value_width), 0);
 
-	      fprintf (pf, "  ");
-	      if (padding_size > 0)
-		{
-		  /* right justified */
-		  fprintf (pf, "%*s", (int) padding_size, "");
-		}
+              fprintf (pf, "  ");
+              if (padding_size > 0)
+                {
+                  /* right justified */
+                  fprintf (pf, "%*s", (int) padding_size, "");
+                }
 
-	      value = val[i];
-	      if (is_type_that_has_suffix (attr_types[i]) && is_null == false)
-		{
-		  value[value_width - 1] = '\'';
-		}
+              value = val[i];
+              if (is_type_that_has_suffix (attr_types[i]) && is_null == false)
+                {
+                  value[value_width - 1] = '\'';
+                }
 
-	      fwrite (value, 1, value_width, pf);
+              fwrite (value, 1, value_width, pf);
 
-	      if (padding_size < 0)
-		{
-		  /* left justified */
-		  fprintf (pf, "%*s", (int) (-padding_size), "");
-		}
-	    }
-	  putc ('\n', pf);
-	  /* fflush(pf); */
-	}
+              if (padding_size < 0)
+                {
+                  /* left justified */
+                  fprintf (pf, "%*s", (int) (-padding_size), "");
+                }
+            }
+          putc ('\n', pf);
+          /* fflush(pf); */
+        }
       else
-	{
-	  fprintf (pf, "<%05d>", object_no);
-	  for (i = 0; i < num_attrs; i++)
-	    {
-	      fprintf (pf, "%*c", (int) ((i == 0) ? 1 : 8), ' ');
-	      fprintf (pf, "%*s: %s\n", (int) (-max_attr_name_length),
-		       attr_names[i], val[i]);
-	    }
-	  /* fflush(pf); */
-	}
+        {
+          fprintf (pf, "<%05d>", object_no);
+          for (i = 0; i < num_attrs; i++)
+            {
+              fprintf (pf, "%*c", (int) ((i == 0) ? 1 : 8), ' ');
+              fprintf (pf, "%*s: %s\n", (int) (-max_attr_name_length), attr_names[i], val[i]);
+            }
+          /* fflush(pf); */
+        }
 
       /* advance to next */
       e = db_query_next_tuple (result);
       if (e < 0)
-	{
-	  rsql_Error_code = RSQL_ERR_SQL_ERROR;
-	  error = TRUE;
-	  goto done;
-	}
+        {
+          rsql_Error_code = RSQL_ERR_SQL_ERROR;
+          error = TRUE;
+          goto done;
+        }
       else if (e == DB_CURSOR_END)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
   putc ('\n', pf);
 
@@ -842,9 +801,9 @@ done:
   if (val != NULL)
     {
       for (i = 0; i < num_attrs; i++)
-	{
-	  free_and_init (val[i]);
-	}
+        {
+          free_and_init (val[i]);
+        }
       free_and_init (val);
     }
   if (len)
@@ -866,48 +825,47 @@ done:
  *   is_null(in): check null
  */
 int
-calculate_width (int column_width, int string_width,
-		 int origin_width, DB_TYPE attr_type, bool is_null)
+calculate_width (int column_width, int string_width, int origin_width, DB_TYPE attr_type, bool is_null)
 {
   int result = 0;
 
   if (column_width > 0)
     {
       if (is_null)
-	{
-	  result = column_width;
-	}
+        {
+          result = column_width;
+        }
       else if (is_string_type (attr_type))
-	{
-	  result = column_width + STRING_TYPE_PREFIX_SUFFIX_LENGTH;
-	}
+        {
+          result = column_width + STRING_TYPE_PREFIX_SUFFIX_LENGTH;
+        }
       else if (is_bit_type (attr_type))
-	{
-	  result = column_width + BIT_TYPE_PREFIX_SUFFIX_LENGTH;
-	}
+        {
+          result = column_width + BIT_TYPE_PREFIX_SUFFIX_LENGTH;
+        }
       else
-	{
-	  result = column_width;
-	}
+        {
+          result = column_width;
+        }
     }
   else if (is_cuttable_type_by_string_width (attr_type) && string_width > 0)
     {
       if (is_null)
-	{
-	  result = string_width;
-	}
+        {
+          result = string_width;
+        }
       else if (is_string_type (attr_type))
-	{
-	  result = string_width + STRING_TYPE_PREFIX_SUFFIX_LENGTH;
-	}
+        {
+          result = string_width + STRING_TYPE_PREFIX_SUFFIX_LENGTH;
+        }
       else if (is_bit_type (attr_type))
-	{
-	  result = string_width + BIT_TYPE_PREFIX_SUFFIX_LENGTH;
-	}
+        {
+          result = string_width + BIT_TYPE_PREFIX_SUFFIX_LENGTH;
+        }
       else
-	{
-	  result = string_width;
-	}
+        {
+          result = string_width;
+        }
     }
   else
     {

@@ -58,8 +58,7 @@
 #include "commdb.h"
 #include "object_representation.h"
 
-static CSS_CONN_ENTRY *make_local_master_connection (CSS_CONN_ENTRY **
-						     local_conn);
+static CSS_CONN_ENTRY *make_local_master_connection (CSS_CONN_ENTRY ** local_conn);
 
 
 /*
@@ -80,8 +79,7 @@ request_for_string_value (char **buffer, CSS_CONN_ENTRY * conn, int command)
     }
   *buffer = NULL;
 
-  css_error = css_send_request_to_master (conn, command, -1, 0, 1,
-					  &area, &area_size);
+  css_error = css_send_request_to_master (conn, command, -1, 0, 1, &area, &area_size);
   if (css_error != NO_ERRORS || area == NULL || area_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -114,8 +112,7 @@ request_for_int_value (int *int_value, CSS_CONN_ENTRY * conn, int command)
     }
   *int_value = 0;
 
-  css_error = css_send_request_to_master (conn, command, -1, 0, 1,
-					  &area, &area_size);
+  css_error = css_send_request_to_master (conn, command, -1, 0, 1, &area, &area_size);
   if (css_error != NO_ERRORS || area == NULL || area_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -151,8 +148,7 @@ commdb_get_server_status (CSS_CONN_ENTRY ** local_conn)
 
   if (server_count > 0 && buffer2 != NULL)
     {
-      printf (msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_COMMDB,
-			      COMMDB_STRING4), buffer2);
+      printf (msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_COMMDB, COMMDB_STRING4), buffer2);
     }
 
   free_and_init (buffer1);
@@ -180,9 +176,7 @@ commdb_master_shutdown (CSS_CONN_ENTRY ** local_conn, int minutes)
 
   or_pack_int (request, minutes);
   css_error = css_send_request_to_master (conn, MASTER_START_SHUTDOWN, -1,
-					  1, 0,
-					  request,
-					  OR_ALIGNED_BUF_SIZE (a_request));
+                                          1, 0, request, OR_ALIGNED_BUF_SIZE (a_request));
   if (css_error != NO_ERRORS)
     {
       return ER_FAILED;
@@ -213,9 +207,7 @@ commdb_ha_node_info_query (CSS_CONN_ENTRY ** local_conn, bool verbose_yn)
 
   or_pack_int (request, (int) verbose_yn);
   css_error = css_send_request_to_master (conn, MASTER_GET_HA_NODE_LIST, -1,
-					  1, 1, request,
-					  OR_ALIGNED_BUF_SIZE (a_request),
-					  &reply, &reply_size);
+                                          1, 1, request, OR_ALIGNED_BUF_SIZE (a_request), &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -253,9 +245,7 @@ commdb_ha_process_info_query (CSS_CONN_ENTRY ** local_conn, bool verbose_yn)
 
   or_pack_int (request, (int) verbose_yn);
   css_error = css_send_request_to_master (conn, MASTER_GET_HA_PROCESS_LIST,
-					  -1, 1, 1, request,
-					  OR_ALIGNED_BUF_SIZE (a_request),
-					  &reply, &reply_size);
+                                          -1, 1, 1, request, OR_ALIGNED_BUF_SIZE (a_request), &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -282,8 +272,7 @@ commdb_ha_ping_host_info_query (CSS_CONN_ENTRY ** local_conn)
   char *reply_buffer = NULL;
   CSS_CONN_ENTRY *conn = make_local_master_connection (local_conn);
 
-  request_for_string_value (&reply_buffer, conn,
-			    MASTER_GET_HA_PING_HOST_INFO);
+  request_for_string_value (&reply_buffer, conn, MASTER_GET_HA_PING_HOST_INFO);
 
   if (reply_buffer != NULL)
     {
@@ -333,8 +322,7 @@ commdb_is_registered_procs (CSS_CONN_ENTRY ** local_conn, bool * success_fail)
 
   conn = make_local_master_connection (local_conn);
 
-  request_for_string_value (&reply_buffer, conn,
-			    MASTER_IS_REGISTERED_HA_PROCS);
+  request_for_string_value (&reply_buffer, conn, MASTER_IS_REGISTERED_HA_PROCS);
 
   if (reply_buffer == NULL)
     {
@@ -370,9 +358,7 @@ commdb_reconfig_heartbeat (CSS_CONN_ENTRY ** local_conn)
 
   conn = make_local_master_connection (local_conn);
 
-  css_error = css_send_request_to_master (conn,
-					  MASTER_RECONFIG_HEARTBEAT,
-					  -1, 0, 1, &reply, &reply_size);
+  css_error = css_send_request_to_master (conn, MASTER_RECONFIG_HEARTBEAT, -1, 0, 1, &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -393,8 +379,7 @@ commdb_reconfig_heartbeat (CSS_CONN_ENTRY ** local_conn)
  *   conn(in): connection info
  */
 int
-commdb_changemode (CSS_CONN_ENTRY ** local_conn, HA_STATE req_node_state,
-		   bool force)
+commdb_changemode (CSS_CONN_ENTRY ** local_conn, HA_STATE req_node_state, bool force)
 {
   CSS_CONN_ENTRY *conn;
   OR_ALIGNED_BUF (OR_INT_SIZE + OR_INT_SIZE) a_request;
@@ -411,9 +396,7 @@ commdb_changemode (CSS_CONN_ENTRY ** local_conn, HA_STATE req_node_state,
   ptr = or_pack_int (ptr, (int) force);
 
   css_error = css_send_request_to_master (conn, MASTER_CHANGEMODE,
-					  -1, 1, 1, request,
-					  OR_ALIGNED_BUF_SIZE (a_request),
-					  &reply, &reply_size);
+                                          -1, 1, 1, request, OR_ALIGNED_BUF_SIZE (a_request), &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -442,8 +425,7 @@ commdb_deactivate_heartbeat (CSS_CONN_ENTRY * conn)
   char *ptr;
   int error = NO_ERROR, css_error = NO_ERRORS;
 
-  css_error = css_send_request_to_master (conn, MASTER_DEACTIVATE_HEARTBEAT,
-					  -1, 0, 1, &reply, &reply_size);
+  css_error = css_send_request_to_master (conn, MASTER_DEACTIVATE_HEARTBEAT, -1, 0, 1, &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -481,9 +463,7 @@ commdb_deact_confirm_no_server (CSS_CONN_ENTRY * conn, bool * success_fail)
 
   *success_fail = false;
 
-  css_error = css_send_request_to_master (conn,
-					  MASTER_DEACT_CONFIRM_NO_SERVER,
-					  -1, 0, 1, &reply, &reply_size);
+  css_error = css_send_request_to_master (conn, MASTER_DEACT_CONFIRM_NO_SERVER, -1, 0, 1, &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -518,8 +498,7 @@ commdb_deact_confirm_stop_all (CSS_CONN_ENTRY * conn, bool * success_fail)
 
   *success_fail = false;
 
-  css_error = css_send_request_to_master (conn, MASTER_DEACT_CONFIRM_STOP_ALL,
-					  -1, 0, 1, &reply, &reply_size);
+  css_error = css_send_request_to_master (conn, MASTER_DEACT_CONFIRM_STOP_ALL, -1, 0, 1, &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -550,9 +529,7 @@ commdb_deact_stop_all (CSS_CONN_ENTRY * conn, bool deact_immediately)
   or_pack_int (request, (int) deact_immediately);
 
   css_error = css_send_request_to_master (conn, MASTER_DEACT_STOP_ALL,
-					  -1, 1, 1, request,
-					  OR_ALIGNED_BUF_SIZE (a_request),
-					  &reply, &reply_size);
+                                          -1, 1, 1, request, OR_ALIGNED_BUF_SIZE (a_request), &reply, &reply_size);
   if (css_error != NO_ERRORS || reply == NULL || reply_size <= 0)
     {
       assert (css_error != NO_ERRORS);
@@ -582,8 +559,7 @@ commdb_activate_heartbeat (CSS_CONN_ENTRY ** local_conn)
 
   conn = make_local_master_connection (local_conn);
 
-  error = css_send_request_to_master (conn, MASTER_ACTIVATE_HEARTBEAT, -1,
-				      0, 1, &area, &area_size);
+  error = css_send_request_to_master (conn, MASTER_ACTIVATE_HEARTBEAT, -1, 0, 1, &area, &area_size);
   if (error != NO_ERRORS || area == NULL || area_size <= 0)
     {
       assert (error != NO_ERRORS);

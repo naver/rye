@@ -39,20 +39,13 @@ extern CSS_CONN_ENTRY *css_find_exception_conn (void);
 #endif
 
 extern CSS_CONN_ENTRY *css_connect_to_rye_server (const PRM_NODE_INFO * node,
-						  const char *server_name,
-						  int connect_type);
-extern CSS_CONN_ENTRY *css_connect_to_master_for_info (const PRM_NODE_INFO *
-						       node_info,
-						       unsigned short *rid);
+                                                  const char *server_name, int connect_type);
+extern CSS_CONN_ENTRY *css_connect_to_master_for_info (const PRM_NODE_INFO * node_info, unsigned short *rid);
 extern CSS_CONN_ENTRY *css_connect_to_master_timeout (const PRM_NODE_INFO *
-						      node_info,
-						      int timeout,
-						      unsigned short *rid);
+                                                      node_info, int timeout, unsigned short *rid);
 extern int css_send_request_to_master (CSS_CONN_ENTRY * conn,
-				       CSS_MASTER_REQUEST request,
-				       int timeout,
-				       int num_send_buffers,
-				       int num_recv_buffers, ...);
+                                       CSS_MASTER_REQUEST request,
+                                       int timeout, int num_send_buffers, int num_recv_buffers, ...);
 
 extern bool css_does_master_exist (void);
 
@@ -65,12 +58,11 @@ extern CSS_CONN_ENTRY *css_find_conn_from_fd (SOCKET fd);
 extern unsigned short css_get_request_id (CSS_CONN_ENTRY * conn);
 
 extern int css_common_connect_cl (const PRM_NODE_INFO * node_info,
-				  CSS_CONN_ENTRY * conn,
-				  int connect_type,
-				  const char *server_name,
-				  const char *packed_name,
-				  int packed_name_len, int timeout,
-				  unsigned short *rid, bool send_magic);
+                                  CSS_CONN_ENTRY * conn,
+                                  int connect_type,
+                                  const char *server_name,
+                                  const char *packed_name,
+                                  int packed_name_len, int timeout, unsigned short *rid, bool send_magic);
 
 
 #endif /* _CONNECTION_CL_H_ */

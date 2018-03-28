@@ -126,24 +126,24 @@ extern int lock_Comp[5][5];
   while (0)
 #endif /* SERVER_MODE */
 
-#define RESOURCE_ALLOC_WAIT_TIME 10	/* 10 msec */
+#define RESOURCE_ALLOC_WAIT_TIME 10     /* 10 msec */
 #define MAX_NUM_LOCKS_DUMP_TO_EVENT_LOG 100
 
 /* state of suspended threads */
 typedef enum
 {
-  LOCK_SUSPENDED,		/* Thread has been suspended */
-  LOCK_RESUMED,			/* Thread has been resumed */
-  LOCK_RESUMED_TIMEOUT,		/* Thread has been resumed and notified of
-				   lock timeout */
-  LOCK_RESUMED_DEADLOCK_TIMEOUT,	/* Thread has been resumed and notified of
-					   lock timeout because the current transaction
-					   is selected as a deadlock victim */
-  LOCK_RESUMED_ABORTED,		/* Thread has been resumed, however
-				   it must be aborted because of a deadlock */
+  LOCK_SUSPENDED,               /* Thread has been suspended */
+  LOCK_RESUMED,                 /* Thread has been resumed */
+  LOCK_RESUMED_TIMEOUT,         /* Thread has been resumed and notified of
+                                   lock timeout */
+  LOCK_RESUMED_DEADLOCK_TIMEOUT,        /* Thread has been resumed and notified of
+                                           lock timeout because the current transaction
+                                           is selected as a deadlock victim */
+  LOCK_RESUMED_ABORTED,         /* Thread has been resumed, however
+                                   it must be aborted because of a deadlock */
 #if defined (ENABLE_UNUSED_FUNCTION)
-  LOCK_RESUMED_ABORTED_FIRST,	/* in case of the first aborted thread */
-  LOCK_RESUMED_ABORTED_OTHER,	/* in case of other aborted threads */
+  LOCK_RESUMED_ABORTED_FIRST,   /* in case of the first aborted thread */
+  LOCK_RESUMED_ABORTED_OTHER,   /* in case of other aborted threads */
 #endif
   LOCK_RESUMED_INTERRUPT
 } LOCK_WAIT_STATE;
@@ -240,14 +240,14 @@ struct lk_deadlock_victim
 {
   /* following two fields are used for only global deadlock detection */
   int (*cycle_fun) (int tran_index, void *args);
-  void *args;			/* Arguments to be passed to cycle_fun */
+  void *args;                   /* Arguments to be passed to cycle_fun */
 
-  int tran_index;		/* Index of selected victim */
-  TRANID tranid;		/* Transaction identifier   */
-  int can_timeout;		/* Is abort or timeout      */
+  int tran_index;               /* Index of selected victim */
+  TRANID tranid;                /* Transaction identifier   */
+  int can_timeout;              /* Is abort or timeout      */
 
-  int num_trans_in_cycle;	/* # of transaction in cycle */
-  int *tran_index_in_cycle;	/* tran_index array for transaction in cycle */
+  int num_trans_in_cycle;       /* # of transaction in cycle */
+  int *tran_index_in_cycle;     /* tran_index array for transaction in cycle */
 };
 
 /*
@@ -256,8 +256,8 @@ struct lk_deadlock_victim
 typedef struct lk_hash LK_HASH;
 struct lk_hash
 {
-  pthread_mutex_t hash_mutex;	/* hash mutex of the hash chain */
-  LK_RES *hash_next;		/* next resource in the hash chain */
+  pthread_mutex_t hash_mutex;   /* hash mutex of the hash chain */
+  LK_RES *hash_next;            /* next resource in the hash chain */
 };
 
 /*
@@ -266,9 +266,9 @@ struct lk_hash
 typedef struct lk_entry_block LK_ENTRY_BLOCK;
 struct lk_entry_block
 {
-  LK_ENTRY_BLOCK *next_block;	/* next lock entry block */
-  LK_ENTRY *block;		/* lk_entry block */
-  int count;			/* # of entries in lock entry block */
+  LK_ENTRY_BLOCK *next_block;   /* next lock entry block */
+  LK_ENTRY *block;              /* lk_entry block */
+  int count;                    /* # of entries in lock entry block */
 };
 
 /*
@@ -277,9 +277,9 @@ struct lk_entry_block
 typedef struct lk_res_block LK_RES_BLOCK;
 struct lk_res_block
 {
-  LK_RES_BLOCK *next_block;	/* next lock resource block */
-  LK_RES *block;		/* lk_res block */
-  int count;			/* # of entries in lock res block */
+  LK_RES_BLOCK *next_block;     /* next lock resource block */
+  LK_RES *block;                /* lk_res block */
+  int count;                    /* # of entries in lock res block */
 };
 
 /*
@@ -289,11 +289,11 @@ typedef struct lk_tran_lock LK_TRAN_LOCK;
 struct lk_tran_lock
 {
   /* transaction lock hold lists */
-  pthread_mutex_t hold_mutex;	/* mutex for hold lists */
-  LK_ENTRY *inst_hold_list;	/* instance lock hold list */
-  int inst_hold_count;		/* # of entries in inst_hold_list */
+  pthread_mutex_t hold_mutex;   /* mutex for hold lists */
+  LK_ENTRY *inst_hold_list;     /* instance lock hold list */
+  int inst_hold_count;          /* # of entries in inst_hold_list */
 
-  LK_ENTRY *waiting;		/* waiting lock entry */
+  LK_ENTRY *waiting;            /* waiting lock entry */
 };
 
 /*
@@ -304,28 +304,28 @@ typedef struct lk_global_data LK_GLOBAL_DATA;
 struct lk_global_data
 {
   /* object lock table including hash table */
-  int max_obj_locks;		/* max # of object locks */
-  int obj_hash_size;		/* size of object hash table */
-  LK_HASH *obj_hash_table;	/* object lock hash table */
+  int max_obj_locks;            /* max # of object locks */
+  int obj_hash_size;            /* size of object hash table */
+  LK_HASH *obj_hash_table;      /* object lock hash table */
   pthread_mutex_t obj_res_block_list_mutex;
   pthread_mutex_t obj_entry_block_list_mutex;
   pthread_mutex_t obj_free_res_list_mutex;
   pthread_mutex_t obj_free_entry_list_mutex;
-  LK_RES_BLOCK *obj_res_block_list;	/* lk_res_block list */
-  LK_ENTRY_BLOCK *obj_entry_block_list;	/* lk_entry_block list */
-  LK_RES *obj_free_res_list;	/* free lk_res list */
-  LK_ENTRY *obj_free_entry_list;	/* free lk_entry list */
+  LK_RES_BLOCK *obj_res_block_list;     /* lk_res_block list */
+  LK_ENTRY_BLOCK *obj_entry_block_list; /* lk_entry_block list */
+  LK_RES *obj_free_res_list;    /* free lk_res list */
+  LK_ENTRY *obj_free_entry_list;        /* free lk_entry list */
   int num_obj_res_allocated;
 
   /* transaction lock table */
-  int num_trans;		/* # of transactions */
-  LK_TRAN_LOCK *tran_lock_table;	/* transaction lock hold table */
+  int num_trans;                /* # of transactions */
+  LK_TRAN_LOCK *tran_lock_table;        /* transaction lock hold table */
 
   /* deadlock detection related fields */
   pthread_mutex_t DL_detection_mutex;
-  struct timeval last_deadlock_run;	/* last deadlock detetion time */
-  LK_WFG_NODE *TWFG_node;	/* transaction WFG node */
-  LK_WFG_EDGE *TWFG_edge;	/* transaction WFG edge */
+  struct timeval last_deadlock_run;     /* last deadlock detetion time */
+  LK_WFG_NODE *TWFG_node;       /* transaction WFG node */
+  LK_WFG_EDGE *TWFG_edge;       /* transaction WFG edge */
   int max_TWFG_edge;
   int TWFG_free_edge_idx;
   int global_edge_seq_num;
@@ -335,7 +335,7 @@ struct lk_global_data
   bool verbose_mode;
 #if defined(LK_DUMP)
   int dump_level;
-#endif				/* LK_DUMP */
+#endif                          /* LK_DUMP */
 };
 
 LK_GLOBAL_DATA lk_Gl = {
@@ -406,25 +406,19 @@ static int lk_Standalone_has_xlock = 0;
   } while (0)
 #endif /* !SERVER_MODE */
 
-static DB_VALUE system_Ddl_key;	/* is system scope; not shard key scope */
+static DB_VALUE system_Ddl_key; /* is system scope; not shard key scope */
 
-static DB_VALUE shard_Catalog_key;	/* is shard key scope */
-static DB_VALUE shard_Global_key;	/* is shard key scope */
+static DB_VALUE shard_Catalog_key;      /* is shard key scope */
+static DB_VALUE shard_Global_key;       /* is shard key scope */
 
 #if defined(SERVER_MODE)
 static void lock_initialize_entry (LK_ENTRY * entry_ptr);
-static void lock_initialize_entry_as_granted (LK_ENTRY * entry_ptr,
-					      int tran_index,
-					      struct lk_res *res, LOCK lock);
+static void lock_initialize_entry_as_granted (LK_ENTRY * entry_ptr, int tran_index, struct lk_res *res, LOCK lock);
 static void lock_initialize_entry_as_blocked (LK_ENTRY * entry_ptr,
-					      THREAD_ENTRY * thread_p,
-					      int tran_index,
-					      struct lk_res *res, LOCK lock);
+                                              THREAD_ENTRY * thread_p, int tran_index, struct lk_res *res, LOCK lock);
 static void lock_initialize_resource (struct lk_res *res_ptr);
 static void lock_initialize_resource_as_allocated (THREAD_ENTRY * thread_p,
-						   struct lk_res *res_ptr,
-						   const DB_VALUE * val,
-						   LOCK lock);
+                                                   struct lk_res *res_ptr, const DB_VALUE * val, LOCK lock);
 static int lock_initialize_tran_lock_table (void);
 static int lock_initialize_object_hash_table (void);
 static int lock_initialize_object_lock_res_list (void);
@@ -440,68 +434,45 @@ static int lock_dealloc_resource (THREAD_ENTRY * thread_p, LK_RES * res_ptr);
 static void lock_insert_into_tran_hold_list (LK_ENTRY * entry_ptr);
 static int lock_delete_from_tran_hold_list (LK_ENTRY * entry_ptr);
 #if defined (SERVER_MODE)
-static LK_ENTRY *lock_find_tran_hold_entry (int tran_index,
-					    const DB_VALUE * val);
+static LK_ENTRY *lock_find_tran_hold_entry (int tran_index, const DB_VALUE * val);
 #endif
-static void lock_position_holder_entry (LK_RES * res_ptr,
-					LK_ENTRY * entry_ptr);
-static void lock_set_error_for_timeout (THREAD_ENTRY * thread_p,
-					LK_ENTRY * entry_ptr);
+static void lock_position_holder_entry (LK_RES * res_ptr, LK_ENTRY * entry_ptr);
+static void lock_set_error_for_timeout (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static void lock_set_error_for_aborted (LK_ENTRY * entry_ptr,
-					TRAN_ABORT_REASON abort_reason);
+static void lock_set_error_for_aborted (LK_ENTRY * entry_ptr, TRAN_ABORT_REASON abort_reason);
 #endif
-static LOCK_WAIT_STATE lock_suspend (THREAD_ENTRY * thread_p,
-				     LK_ENTRY * entry_ptr, int wait_msecs);
+static LOCK_WAIT_STATE lock_suspend (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr, int wait_msecs);
 static void lock_resume (LK_ENTRY * entry_ptr, int state);
 static bool lock_wakeup_deadlock_victim_timeout (int tran_index);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static bool lock_wakeup_deadlock_victim_aborted (int tran_index);
 #endif
-static void lock_grant_blocked_holder (THREAD_ENTRY * thread_p,
-				       LK_RES * res_ptr);
-static int lock_grant_blocked_waiter (THREAD_ENTRY * thread_p,
-				      LK_RES * res_ptr);
-static void lock_grant_blocked_waiter_partial (THREAD_ENTRY * thread_p,
-					       LK_RES * res_ptr,
-					       LK_ENTRY * from_whom);
+static void lock_grant_blocked_holder (THREAD_ENTRY * thread_p, LK_RES * res_ptr);
+static int lock_grant_blocked_waiter (THREAD_ENTRY * thread_p, LK_RES * res_ptr);
+static void lock_grant_blocked_waiter_partial (THREAD_ENTRY * thread_p, LK_RES * res_ptr, LK_ENTRY * from_whom);
 static int lock_internal_perform_lock_object (THREAD_ENTRY * thread_p,
-					      int tran_index,
-					      const DB_VALUE * val,
-					      LOCK lock, int wait_msecs,
-					      LK_ENTRY ** entry_addr_ptr);
-static void lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
-						 LK_ENTRY * entry_ptr,
-						 int release_flag);
-static int lock_add_WFG_edge (int from_tran_index, int to_tran_index,
-			      int holder_flag, INT64 edge_wait_stime);
-static void lock_select_deadlock_victim (THREAD_ENTRY * thread_p,
-					 int s, int t);
+                                              int tran_index,
+                                              const DB_VALUE * val,
+                                              LOCK lock, int wait_msecs, LK_ENTRY ** entry_addr_ptr);
+static void lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr, int release_flag);
+static int lock_add_WFG_edge (int from_tran_index, int to_tran_index, int holder_flag, INT64 edge_wait_stime);
+static void lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static void lock_dump_deadlock_victims (THREAD_ENTRY * thread_p,
-					FILE * outfile);
+static void lock_dump_deadlock_victims (THREAD_ENTRY * thread_p, FILE * outfile);
 #endif
-static int lock_compare_lock_info (const void *lockinfo1,
-				   const void *lockinfo2);
+static int lock_compare_lock_info (const void *lockinfo1, const void *lockinfo2);
 static float lock_wait_msecs_to_secs (int msecs);
-static void lock_dump_resource (THREAD_ENTRY * thread_p, FILE * outfp,
-				LK_RES * res_ptr);
+static void lock_dump_resource (THREAD_ENTRY * thread_p, FILE * outfp, LK_RES * res_ptr);
 #if defined (ENABLE_UNUSED_FUNCTION)
 #if defined(SERVER_MODE)
-static void lock_event_log_tran_locks (THREAD_ENTRY * thread_p,
-				       FILE * log_fp, int tran_index);
+static void lock_event_log_tran_locks (THREAD_ENTRY * thread_p, FILE * log_fp, int tran_index);
 #endif
 #endif
-static void lock_event_log_blocked_lock (THREAD_ENTRY * thread_p,
-					 FILE * log_fp, LK_ENTRY * entry);
-static void lock_event_log_blocking_locks (THREAD_ENTRY * thread_p,
-					   FILE * log_fp,
-					   LK_ENTRY * wait_entry);
-static void lock_event_log_lock_info (THREAD_ENTRY * thread_p, FILE * log_fp,
-				      LK_ENTRY * entry);
+static void lock_event_log_blocked_lock (THREAD_ENTRY * thread_p, FILE * log_fp, LK_ENTRY * entry);
+static void lock_event_log_blocking_locks (THREAD_ENTRY * thread_p, FILE * log_fp, LK_ENTRY * wait_entry);
+static void lock_event_log_lock_info (THREAD_ENTRY * thread_p, FILE * log_fp, LK_ENTRY * entry);
 static void lock_event_set_tran_wait_entry (int tran_index, LK_ENTRY * entry);
-static void lock_event_set_xasl_id_to_entry (int tran_index,
-					     LK_ENTRY * entry);
+static void lock_event_set_xasl_id_to_entry (int tran_index, LK_ENTRY * entry);
 #endif /* SERVER_MODE */
 
 
@@ -524,8 +495,7 @@ lock_initialize_entry (LK_ENTRY * entry_ptr)
 
 /* initialize lock entry as granted state */
 static void
-lock_initialize_entry_as_granted (LK_ENTRY * entry_ptr, int tran_index,
-				  struct lk_res *res, LOCK lock)
+lock_initialize_entry_as_granted (LK_ENTRY * entry_ptr, int tran_index, struct lk_res *res, LOCK lock)
 {
   entry_ptr->tran_index = tran_index;
   entry_ptr->res_head = res;
@@ -542,8 +512,7 @@ lock_initialize_entry_as_granted (LK_ENTRY * entry_ptr, int tran_index,
 /* initialize lock entry as blocked state */
 static void
 lock_initialize_entry_as_blocked (LK_ENTRY * entry_ptr,
-				  THREAD_ENTRY * thread_p, int tran_index,
-				  struct lk_res *res, LOCK lock)
+                                  THREAD_ENTRY * thread_p, int tran_index, struct lk_res *res, LOCK lock)
 {
   entry_ptr->tran_index = tran_index;
   entry_ptr->thrd_entry = thread_p;
@@ -574,8 +543,7 @@ lock_initialize_resource (struct lk_res *res_ptr)
 /* initialize lock resource as allocated state */
 static void
 lock_initialize_resource_as_allocated (UNUSED_ARG THREAD_ENTRY * thread_p,
-				       struct lk_res *res_ptr,
-				       const DB_VALUE * val, LOCK lock)
+                                       struct lk_res *res_ptr, const DB_VALUE * val, LOCK lock)
 {
   (void) db_value_clone (val, &(res_ptr->val));
   res_ptr->total_holders_mode = lock;
@@ -607,20 +575,18 @@ lock_initialize_resource_as_allocated (UNUSED_ARG THREAD_ENTRY * thread_p,
 static int
 lock_initialize_tran_lock_table (void)
 {
-  LK_TRAN_LOCK *tran_lock;	/* pointer to transaction hold entry */
-  int i;			/* loop variable                     */
+  LK_TRAN_LOCK *tran_lock;      /* pointer to transaction hold entry */
+  int i;                        /* loop variable                     */
 
   /* initialize the number of transactions */
   lk_Gl.num_trans = MAX_NTRANS;
 
   /* allocate memory space for transaction lock table */
-  lk_Gl.tran_lock_table =
-    (LK_TRAN_LOCK *) malloc (SIZEOF_LK_TRAN_LOCK * lk_Gl.num_trans);
+  lk_Gl.tran_lock_table = (LK_TRAN_LOCK *) malloc (SIZEOF_LK_TRAN_LOCK * lk_Gl.num_trans);
   if (lk_Gl.tran_lock_table == (LK_TRAN_LOCK *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (SIZEOF_LK_TRAN_LOCK * lk_Gl.num_trans));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_TRAN_LOCK * lk_Gl.num_trans));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -648,7 +614,7 @@ static int
 lock_initialize_object_hash_table (void)
 {
 #define LK_INITIAL_OBJECT_LOCK_TABLE_SIZE       10000
-  LK_HASH *hash_anchor;		/* pointer to object lock hash entry */
+  LK_HASH *hash_anchor;         /* pointer to object lock hash entry */
   int i;
 
   lk_Gl.max_obj_locks = LK_INITIAL_OBJECT_LOCK_TABLE_SIZE;
@@ -663,13 +629,11 @@ lock_initialize_object_hash_table (void)
       lk_Gl.obj_hash_size = LK_MIN_OBJECT_LOCKS * LK_HASH_RATIO;
     }
 
-  lk_Gl.obj_hash_table =
-    (LK_HASH *) malloc (SIZEOF_LK_HASH * lk_Gl.obj_hash_size);
+  lk_Gl.obj_hash_table = (LK_HASH *) malloc (SIZEOF_LK_HASH * lk_Gl.obj_hash_size);
   if (lk_Gl.obj_hash_table == (LK_HASH *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (SIZEOF_LK_HASH * lk_Gl.obj_hash_size));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_HASH * lk_Gl.obj_hash_size));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -700,8 +664,8 @@ lock_initialize_object_hash_table (void)
 static int
 lock_initialize_object_lock_res_list (void)
 {
-  LK_RES_BLOCK *res_block;	/* pointer to lock resource block */
-  LK_RES *res_ptr = NULL;	/* pointer to lock entry          */
+  LK_RES_BLOCK *res_block;      /* pointer to lock resource block */
+  LK_RES *res_ptr = NULL;       /* pointer to lock entry          */
   int i;
 
   /* allocate an object lock resource block */
@@ -709,8 +673,7 @@ lock_initialize_object_lock_res_list (void)
   if (res_block == (LK_RES_BLOCK *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, SIZEOF_LK_RES_BLOCK);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, SIZEOF_LK_RES_BLOCK);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -721,8 +684,7 @@ lock_initialize_object_lock_res_list (void)
   if (res_block->block == (LK_RES *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (SIZEOF_LK_RES * res_block->count));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_RES * res_block->count));
       free_and_init (res_block);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
@@ -765,8 +727,8 @@ lock_initialize_object_lock_res_list (void)
 static int
 lock_initialize_object_lock_entry_list (void)
 {
-  LK_ENTRY_BLOCK *entry_block;	/* pointer to lock entry block */
-  LK_ENTRY *entry_ptr = NULL;	/* pointer to lock entry  */
+  LK_ENTRY_BLOCK *entry_block;  /* pointer to lock entry block */
+  LK_ENTRY *entry_ptr = NULL;   /* pointer to lock entry  */
   int i;
 
   /* allocate an object lock entry block */
@@ -774,21 +736,18 @@ lock_initialize_object_lock_entry_list (void)
   if (entry_block == (LK_ENTRY_BLOCK *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, SIZEOF_LK_ENTRY_BLOCK);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, SIZEOF_LK_ENTRY_BLOCK);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
   /* initialize the object lock entry block */
   entry_block->next_block = (LK_ENTRY_BLOCK *) NULL;
   entry_block->count = MAX ((lk_Gl.max_obj_locks * LK_ENTRY_RATIO), 1);
-  entry_block->block =
-    (LK_ENTRY *) malloc (SIZEOF_LK_ENTRY * entry_block->count);
+  entry_block->block = (LK_ENTRY *) malloc (SIZEOF_LK_ENTRY * entry_block->count);
   if (entry_block->block == (LK_ENTRY *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (SIZEOF_LK_ENTRY * entry_block->count));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_ENTRY * entry_block->count));
       free_and_init (entry_block);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
@@ -796,8 +755,7 @@ lock_initialize_object_lock_entry_list (void)
   /* initialize the object lock entries in the block */
   for (i = 0; i < entry_block->count; i++)
     {
-      entry_ptr = (LK_ENTRY *)
-	(((char *) entry_block->block) + SIZEOF_LK_ENTRY * i);
+      entry_ptr = (LK_ENTRY *) (((char *) entry_block->block) + SIZEOF_LK_ENTRY * i);
       lock_initialize_entry (entry_ptr);
       entry_ptr->next = (LK_ENTRY *) (((char *) entry_ptr) + SIZEOF_LK_ENTRY);
     }
@@ -833,13 +791,11 @@ lock_initialize_deadlock_detection (void)
   gettimeofday (&lk_Gl.last_deadlock_run, NULL);
 
   /* allocate transaction WFG node table */
-  lk_Gl.TWFG_node =
-    (LK_WFG_NODE *) malloc (SIZEOF_LK_WFG_NODE * lk_Gl.num_trans);
+  lk_Gl.TWFG_node = (LK_WFG_NODE *) malloc (SIZEOF_LK_WFG_NODE * lk_Gl.num_trans);
   if (lk_Gl.TWFG_node == (LK_WFG_NODE *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, (SIZEOF_LK_WFG_NODE * lk_Gl.num_trans));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_WFG_NODE * lk_Gl.num_trans));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
   /* initialize transaction WFG node table */
@@ -910,14 +866,14 @@ try_alloc_entry_again:
       pthread_mutex_unlock (&lk_Gl.obj_free_res_list_mutex);
 #if defined(LK_DUMP)
       if (lk_Gl.dump_level >= 2)
-	{
-	  fprintf (stderr, "LK_DUMP::lk_alloc_resource() = %p\n", res_ptr);
-	}
+        {
+          fprintf (stderr, "LK_DUMP::lk_alloc_resource() = %p\n", res_ptr);
+        }
 #endif /* LK_DUMP */
       return res_ptr;
     }
 
-#if 1				/* TODO -trace */
+#if 1                           /* TODO -trace */
   assert (false);
 #endif
 
@@ -949,9 +905,9 @@ try_alloc_table_again:
       pthread_mutex_unlock (&lk_Gl.obj_free_res_list_mutex);
 #if defined(LK_DUMP)
       if (lk_Gl.dump_level >= 2)
-	{
-	  fprintf (stderr, "LK_DUMP::lk_alloc_resource() = %p\n", res_ptr);
-	}
+        {
+          fprintf (stderr, "LK_DUMP::lk_alloc_resource() = %p\n", res_ptr);
+        }
 #endif /* LK_DUMP */
       return res_ptr;
     }
@@ -1049,8 +1005,7 @@ lock_alloc_resource_block (void)
   if (res_block == (LK_RES_BLOCK *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      (SIZEOF_LK_RES_BLOCK));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_RES_BLOCK));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -1059,8 +1014,7 @@ lock_alloc_resource_block (void)
   if (res_block->block == (LK_RES *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      (SIZEOF_LK_RES * res_block->count));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_RES * res_block->count));
       free_and_init (res_block);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
@@ -1118,8 +1072,7 @@ lock_alloc_entry (void)
   count_try_alloc_entry = 0;
 
   rv = pthread_mutex_lock (&lk_Gl.obj_free_entry_list_mutex);
-  while (lk_Gl.obj_free_entry_list == (LK_ENTRY *) NULL
-	 && count_try_alloc_entry < LK_SLEEP_MAX_COUNT)
+  while (lk_Gl.obj_free_entry_list == (LK_ENTRY *) NULL && count_try_alloc_entry < LK_SLEEP_MAX_COUNT)
     {
       pthread_mutex_unlock (&lk_Gl.obj_free_entry_list_mutex);
       count_try_alloc_entry++;
@@ -1135,14 +1088,14 @@ lock_alloc_entry (void)
       pthread_mutex_unlock (&lk_Gl.obj_free_entry_list_mutex);
 #if defined(LK_DUMP)
       if (lk_Gl.dump_level >= 2)
-	{
-	  fprintf (stderr, "LK_DUMP::lk_alloc_entry() = %p\n", entry_ptr);
-	}
+        {
+          fprintf (stderr, "LK_DUMP::lk_alloc_entry() = %p\n", entry_ptr);
+        }
 #endif /* LK_DUMP */
       return entry_ptr;
     }
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (false);
 #endif
 
@@ -1152,8 +1105,7 @@ lock_alloc_entry (void)
   count_try_alloc_table = 0;
 
   /* 2. if the free list is empty, allocate a new lock entry block */
-  while (lock_alloc_entry_block () != NO_ERROR
-	 && count_try_alloc_table < LK_SLEEP_MAX_COUNT)
+  while (lock_alloc_entry_block () != NO_ERROR && count_try_alloc_table < LK_SLEEP_MAX_COUNT)
     {
       /*
        * Memory allocation fails.: What should we do ??
@@ -1163,7 +1115,7 @@ lock_alloc_entry (void)
       /* should notify DBA or applications of insufficient memory space */
       count_try_alloc_table++;
 
-      (void) thread_sleep (RESOURCE_ALLOC_WAIT_TIME);	/* sleep: 0.01 second */
+      (void) thread_sleep (RESOURCE_ALLOC_WAIT_TIME);   /* sleep: 0.01 second */
     }
 
   if (count_try_alloc_table < LK_SLEEP_MAX_COUNT)
@@ -1174,9 +1126,9 @@ lock_alloc_entry (void)
       pthread_mutex_unlock (&lk_Gl.obj_free_entry_list_mutex);
 #if defined(LK_DUMP)
       if (lk_Gl.dump_level >= 2)
-	{
-	  fprintf (stderr, "LK_DUMP::lk_alloc_entry() = %p\n", entry_ptr);
-	}
+        {
+          fprintf (stderr, "LK_DUMP::lk_alloc_entry() = %p\n", entry_ptr);
+        }
 #endif /* LK_DUMP */
       return entry_ptr;
     }
@@ -1253,19 +1205,16 @@ lock_alloc_entry_block (void)
   if (entry_block == (LK_ENTRY_BLOCK *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      (SIZEOF_LK_ENTRY_BLOCK));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_ENTRY_BLOCK));
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
   entry_block->count = MAX (LK_MORE_ENTRY_COUNT, 1);
-  entry_block->block =
-    (LK_ENTRY *) malloc (SIZEOF_LK_ENTRY * entry_block->count);
+  entry_block->block = (LK_ENTRY *) malloc (SIZEOF_LK_ENTRY * entry_block->count);
   if (entry_block->block == (LK_ENTRY *) NULL)
     {
       assert (false);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      (SIZEOF_LK_ENTRY * entry_block->count));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_ENTRY * entry_block->count));
       free_and_init (entry_block);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
@@ -1273,8 +1222,7 @@ lock_alloc_entry_block (void)
   /* initialize the object lock entry block */
   for (i = 0; i < entry_block->count; i++)
     {
-      entry_ptr = (LK_ENTRY *)
-	(((char *) entry_block->block) + SIZEOF_LK_ENTRY * i);
+      entry_ptr = (LK_ENTRY *) (((char *) entry_block->block) + SIZEOF_LK_ENTRY * i);
       lock_initialize_entry (entry_ptr);
       entry_ptr->next = (LK_ENTRY *) (((char *) entry_ptr) + SIZEOF_LK_ENTRY);
     }
@@ -1326,14 +1274,13 @@ lock_dealloc_resource (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
   /* conditional mutex hold request */
   ret_val = pthread_mutex_trylock (&hash_anchor->hash_mutex);
   if (ret_val != 0)
-    {				/* I could not hold the hash_mutex */
+    {                           /* I could not hold the hash_mutex */
       if (ret_val != EBUSY)
-	{
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_CSS_PTHREAD_MUTEX_TRYLOCK, 0);
-	  return ER_CSS_PTHREAD_MUTEX_TRYLOCK;
-	}
+        {
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_TRYLOCK, 0);
+          return ER_CSS_PTHREAD_MUTEX_TRYLOCK;
+        }
       /* Someone is holding the hash_mutex */
       pthread_mutex_unlock (&res_ptr->res_mutex);
       rv = pthread_mutex_lock (&hash_anchor->hash_mutex);
@@ -1347,9 +1294,9 @@ lock_dealloc_resource (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
   while (curr != (LK_RES *) NULL)
     {
       if (curr == res_ptr)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       prev = curr;
       curr = curr->hash_next;
     }
@@ -1367,10 +1314,10 @@ lock_dealloc_resource (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
        */
       /* release all the mutexes */
       pthread_mutex_unlock (&hash_anchor->hash_mutex);
-      if (res_mutex_hold == true)	/* This might be always false */
-	{
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	}
+      if (res_mutex_hold == true)       /* This might be always false */
+        {
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+        }
       return NO_ERROR;
     }
 
@@ -1385,26 +1332,25 @@ lock_dealloc_resource (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
       /* hold the res_mutex conditionally */
       ret_val = pthread_mutex_trylock (&res_ptr->res_mutex);
       if (ret_val != 0)
-	{			/* could not hold the res_mutex */
-	  if (ret_val != EBUSY)
-	    {
-	      pthread_mutex_unlock (&hash_anchor->hash_mutex);
-	      er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-				   ER_CSS_PTHREAD_MUTEX_TRYLOCK, 0);
-	      return ER_CSS_PTHREAD_MUTEX_TRYLOCK;
-	    }
-	  /* Someone wants to use this: OK, I will quit! */
-	  pthread_mutex_unlock (&hash_anchor->hash_mutex);
-	  return NO_ERROR;
-	}
+        {                       /* could not hold the res_mutex */
+          if (ret_val != EBUSY)
+            {
+              pthread_mutex_unlock (&hash_anchor->hash_mutex);
+              er_set_with_oserror (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_TRYLOCK, 0);
+              return ER_CSS_PTHREAD_MUTEX_TRYLOCK;
+            }
+          /* Someone wants to use this: OK, I will quit! */
+          pthread_mutex_unlock (&hash_anchor->hash_mutex);
+          return NO_ERROR;
+        }
       /* check if the resource entry is empty again. */
       if (res_ptr->holder != NULL || res_ptr->waiter != NULL)
-	{
-	  /* Someone already got this: OK, I will quit! */
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  pthread_mutex_unlock (&hash_anchor->hash_mutex);
-	  return NO_ERROR;
-	}
+        {
+          /* Someone already got this: OK, I will quit! */
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          pthread_mutex_unlock (&hash_anchor->hash_mutex);
+          return NO_ERROR;
+        }
     }
 
   /* I hold hash_mutex and res_mutex
@@ -1504,20 +1450,20 @@ lock_delete_from_tran_hold_list (LK_ENTRY * entry_ptr)
     {
       tran_lock->inst_hold_list = entry_ptr->tran_next;
       if (entry_ptr->tran_next)
-	{
-	  entry_ptr->tran_next->tran_prev = NULL;
-	}
+        {
+          entry_ptr->tran_next->tran_prev = NULL;
+        }
     }
   else
     {
       if (entry_ptr->tran_prev)
-	{
-	  entry_ptr->tran_prev->tran_next = entry_ptr->tran_next;
-	}
+        {
+          entry_ptr->tran_prev->tran_next = entry_ptr->tran_next;
+        }
       if (entry_ptr->tran_next)
-	{
-	  entry_ptr->tran_next->tran_prev = entry_ptr->tran_prev;
-	}
+        {
+          entry_ptr->tran_next->tran_prev = entry_ptr->tran_prev;
+        }
     }
   tran_lock->inst_hold_count--;
 
@@ -1565,14 +1511,14 @@ lock_position_holder_entry (LK_RES * res_ptr, LK_ENTRY * entry_ptr)
       prev = (LK_ENTRY *) NULL;
       i = res_ptr->holder;
       while (i != (LK_ENTRY *) NULL)
-	{
-	  if (i->blocked_mode == NULL_LOCK)
-	    {
-	      break;
-	    }
-	  prev = i;
-	  i = i->next;
-	}
+        {
+          if (i->blocked_mode == NULL_LOCK)
+            {
+              break;
+            }
+          prev = i;
+          i = i->next;
+        }
     }
   else
     {
@@ -1584,59 +1530,56 @@ lock_position_holder_entry (LK_RES * res_ptr, LK_ENTRY * entry_ptr)
       prev = (LK_ENTRY *) NULL;
       i = res_ptr->holder;
       while (i != (LK_ENTRY *) NULL)
-	{
-	  if (i->blocked_mode != NULL_LOCK)
-	    {
-	      assert (entry_ptr->blocked_mode >= NULL_LOCK
-		      && entry_ptr->granted_mode >= NULL_LOCK);
-	      assert (i->blocked_mode >= NULL_LOCK
-		      && i->granted_mode >= NULL_LOCK);
+        {
+          if (i->blocked_mode != NULL_LOCK)
+            {
+              assert (entry_ptr->blocked_mode >= NULL_LOCK && entry_ptr->granted_mode >= NULL_LOCK);
+              assert (i->blocked_mode >= NULL_LOCK && i->granted_mode >= NULL_LOCK);
 
-	      compat1 = lock_Comp[entry_ptr->blocked_mode][i->blocked_mode];
-	      assert (compat1 != DB_NA);
+              compat1 = lock_Comp[entry_ptr->blocked_mode][i->blocked_mode];
+              assert (compat1 != DB_NA);
 
-	      if (ta == NULL && compat1 == true)
-		{
-		  ta = i;
-		  tap = prev;
-		}
+              if (ta == NULL && compat1 == true)
+                {
+                  ta = i;
+                  tap = prev;
+                }
 
-	      compat1 = lock_Comp[entry_ptr->blocked_mode][i->granted_mode];
-	      assert (compat1 != DB_NA);
+              compat1 = lock_Comp[entry_ptr->blocked_mode][i->granted_mode];
+              assert (compat1 != DB_NA);
 
-	      compat2 = lock_Comp[i->blocked_mode][entry_ptr->granted_mode];
-	      assert (compat2 != DB_NA);
+              compat2 = lock_Comp[i->blocked_mode][entry_ptr->granted_mode];
+              assert (compat2 != DB_NA);
 
-	      if (ta == NULL && tb == NULL
-		  && compat1 == true && compat2 == false)
-		{
-		  tb = i;
-		  tbp = prev;
-		}
-	    }
-	  else
-	    {
-	      if (tc == NULL)
-		{
-		  tc = i;
-		  tcp = prev;
-		}
-	    }
-	  prev = i;
-	  i = i->next;
-	}
+              if (ta == NULL && tb == NULL && compat1 == true && compat2 == false)
+                {
+                  tb = i;
+                  tbp = prev;
+                }
+            }
+          else
+            {
+              if (tc == NULL)
+                {
+                  tc = i;
+                  tcp = prev;
+                }
+            }
+          prev = i;
+          i = i->next;
+        }
       if (ta != NULL)
-	{
-	  prev = tap;
-	}
+        {
+          prev = tap;
+        }
       else if (tb != NULL)
-	{
-	  prev = tbp;
-	}
+        {
+          prev = tbp;
+        }
       else if (tc != NULL)
-	{
-	  prev = tcp;
-	}
+        {
+          prev = tcp;
+        }
     }
 
   /* insert the given lock entry into the found position */
@@ -1677,13 +1620,13 @@ lock_position_holder_entry (LK_RES * res_ptr, LK_ENTRY * entry_ptr)
 static void
 lock_set_error_for_timeout (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr)
 {
-  char *client_prog_name;	/* Client program name for transaction  */
-  char *client_user_name;	/* Client user name for transaction     */
-  char *client_host_name;	/* Client host for transaction          */
-  int client_pid;		/* Client process id for transaction    */
+  char *client_prog_name;       /* Client program name for transaction  */
+  char *client_user_name;       /* Client user name for transaction     */
+  char *client_host_name;       /* Client host for transaction          */
+  int client_pid;               /* Client process id for transaction    */
   char *waitfor_client_users_default = (char *) "";
-  char *waitfor_client_users;	/* Waitfor users                        */
-  char *classname;		/* Name of the class                    */
+  char *waitfor_client_users;   /* Waitfor users                        */
+  char *classname;              /* Name of the class                    */
   int n, i, nwaits, max_waits = DEFAULT_WAIT_USERS;
   int wait_for_buf[DEFAULT_WAIT_USERS];
   int *wait_for = wait_for_buf, *t;
@@ -1702,8 +1645,7 @@ lock_set_error_for_timeout (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr)
   waitfor_client_users = waitfor_client_users_default;
   nwaits = 0;
 
-  assert (entry_ptr->granted_mode >= NULL_LOCK
-	  && entry_ptr->blocked_mode >= NULL_LOCK);
+  assert (entry_ptr->granted_mode >= NULL_LOCK && entry_ptr->blocked_mode >= NULL_LOCK);
 
   /* Dump all the tran. info. which this tran. is waiting for */
   res_ptr = entry_ptr->res_head;
@@ -1714,66 +1656,58 @@ lock_set_error_for_timeout (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr)
   for (entry = res_ptr->holder; entry != NULL; entry = entry->next)
     {
       if (entry == entry_ptr)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      assert (entry->granted_mode >= NULL_LOCK
-	      && entry->blocked_mode >= NULL_LOCK);
+      assert (entry->granted_mode >= NULL_LOCK && entry->blocked_mode >= NULL_LOCK);
       compat1 = lock_Comp[entry->granted_mode][entry_ptr->blocked_mode];
       compat2 = lock_Comp[entry->blocked_mode][entry_ptr->blocked_mode];
       assert (compat1 != DB_NA && compat2 != DB_NA);
 
       if (compat1 == false || compat2 == false)
-	{
-	  EXPAND_WAIT_FOR_ARRAY_IF_NEEDED ();
-	  wait_for[nwaits++] = entry->tran_index;
-	}
+        {
+          EXPAND_WAIT_FOR_ARRAY_IF_NEEDED ();
+          wait_for[nwaits++] = entry->tran_index;
+        }
     }
 
   for (entry = res_ptr->waiter; entry != NULL; entry = entry->next)
     {
       if (entry == entry_ptr)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      assert (entry->granted_mode >= NULL_LOCK
-	      && entry->blocked_mode >= NULL_LOCK);
+      assert (entry->granted_mode >= NULL_LOCK && entry->blocked_mode >= NULL_LOCK);
       compat1 = lock_Comp[entry->blocked_mode][entry_ptr->blocked_mode];
       assert (compat1 != DB_NA);
 
       if (compat1 == false)
-	{
-	  EXPAND_WAIT_FOR_ARRAY_IF_NEEDED ();
-	  wait_for[nwaits++] = entry->tran_index;
-	}
+        {
+          EXPAND_WAIT_FOR_ARRAY_IF_NEEDED ();
+          wait_for[nwaits++] = entry->tran_index;
+        }
     }
 
   pthread_mutex_unlock (&res_ptr->res_mutex);
   free_mutex_flag = false;
 
-  if (nwaits == 0
-      || (waitfor_client_users =
-	  (char *) malloc (unit_size * nwaits)) == NULL)
+  if (nwaits == 0 || (waitfor_client_users = (char *) malloc (unit_size * nwaits)) == NULL)
     {
       waitfor_client_users = waitfor_client_users_default;
     }
   else
     {
       for (ptr = waitfor_client_users, i = 0; i < nwaits; i++)
-	{
-	  (void) logtb_find_client_name_host_pid (wait_for[i],
-						  &client_prog_name,
-						  &client_user_name,
-						  &client_host_name,
-						  &client_pid);
-	  n =
-	    sprintf (ptr, "%s%s@%s|%s(%d)", ((i == 0) ? "" : ", "),
-		     client_user_name, client_host_name, client_prog_name,
-		     client_pid);
-	  ptr += n;
-	}
+        {
+          (void) logtb_find_client_name_host_pid (wait_for[i],
+                                                  &client_prog_name, &client_user_name, &client_host_name, &client_pid);
+          n =
+            sprintf (ptr, "%s%s@%s|%s(%d)", ((i == 0) ? "" : ", "),
+                     client_user_name, client_host_name, client_prog_name, client_pid);
+          ptr += n;
+        }
     }
 
 set_error:
@@ -1791,16 +1725,11 @@ set_error:
 
   /* get the client information of current transaction */
   (void) logtb_find_client_name_host_pid (entry_ptr->tran_index,
-					  &client_prog_name,
-					  &client_user_name,
-					  &client_host_name, &client_pid);
+                                          &client_prog_name, &client_user_name, &client_host_name, &client_pid);
 
-  if (entry_ptr->thrd_entry != NULL
-      && ((entry_ptr->thrd_entry->lockwait_state ==
-	   LOCK_RESUMED_DEADLOCK_TIMEOUT)
+  if (entry_ptr->thrd_entry != NULL && ((entry_ptr->thrd_entry->lockwait_state == LOCK_RESUMED_DEADLOCK_TIMEOUT)
 #if defined (ENABLE_UNUSED_FUNCTION)
-	  || (entry_ptr->thrd_entry->lockwait_state ==
-	      LOCK_RESUMED_ABORTED_OTHER)
+                                        || (entry_ptr->thrd_entry->lockwait_state == LOCK_RESUMED_ABORTED_OTHER)
 #endif
       ))
     {
@@ -1814,61 +1743,55 @@ set_error:
       classname = heap_get_class_name (thread_p, class_oid);
 
       if (classname != NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_CLASS_MSG :
-		   ER_LK_OBJECT_TIMEOUT_CLASS_MSG), 7, entry_ptr->tran_index,
-		  client_user_name, client_host_name, client_pid,
-		  LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
-		  classname, waitfor_client_users);
-	  free_and_init (classname);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                  ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_CLASS_MSG :
+                   ER_LK_OBJECT_TIMEOUT_CLASS_MSG), 7, entry_ptr->tran_index,
+                  client_user_name, client_host_name, client_pid,
+                  LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode), classname, waitfor_client_users);
+          free_and_init (classname);
+        }
       else
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_SIMPLE_MSG :
-		   ER_LK_OBJECT_TIMEOUT_SIMPLE_MSG), 9, entry_ptr->tran_index,
-		  client_user_name, client_host_name, client_pid,
-		  LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
-		  class_oid->volid, class_oid->pageid, class_oid->slotid,
-		  waitfor_client_users);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                  ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_SIMPLE_MSG :
+                   ER_LK_OBJECT_TIMEOUT_SIMPLE_MSG), 9, entry_ptr->tran_index,
+                  client_user_name, client_host_name, client_pid,
+                  LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
+                  class_oid->volid, class_oid->pageid, class_oid->slotid, waitfor_client_users);
+        }
       break;
 
     case DB_TYPE_VARCHAR:
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_VALUE_MSG :
-	       ER_LK_OBJECT_TIMEOUT_VALUE_MSG), 7, entry_ptr->tran_index,
-	      client_user_name, client_host_name, client_pid,
-	      LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
-	      DB_GET_STRING (&entry_ptr->res_head->val),
-	      waitfor_client_users);
+              ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_VALUE_MSG :
+               ER_LK_OBJECT_TIMEOUT_VALUE_MSG), 7, entry_ptr->tran_index,
+              client_user_name, client_host_name, client_pid,
+              LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
+              DB_GET_STRING (&entry_ptr->res_head->val), waitfor_client_users);
       break;
 
     case DB_TYPE_INTEGER:
       sprintf (tmpbuf, "%d", DB_GET_INT (&entry_ptr->res_head->val));
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_VALUE_MSG :
-	       ER_LK_OBJECT_TIMEOUT_VALUE_MSG), 7, entry_ptr->tran_index,
-	      client_user_name, client_host_name, client_pid,
-	      LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
-	      tmpbuf, waitfor_client_users);
+              ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_VALUE_MSG :
+               ER_LK_OBJECT_TIMEOUT_VALUE_MSG), 7, entry_ptr->tran_index,
+              client_user_name, client_host_name, client_pid,
+              LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode), tmpbuf, waitfor_client_users);
       break;
     case DB_TYPE_BIGINT:
       sprintf (tmpbuf, "%ld", DB_GET_BIGINT (&entry_ptr->res_head->val));
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_VALUE_MSG :
-	       ER_LK_OBJECT_TIMEOUT_VALUE_MSG), 7, entry_ptr->tran_index,
-	      client_user_name, client_host_name, client_pid,
-	      LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
-	      tmpbuf, waitfor_client_users);
+              ((isdeadlock_timeout) ? ER_LK_OBJECT_DL_TIMEOUT_VALUE_MSG :
+               ER_LK_OBJECT_TIMEOUT_VALUE_MSG), 7, entry_ptr->tran_index,
+              client_user_name, client_host_name, client_pid,
+              LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode), tmpbuf, waitfor_client_users);
       break;
     default:
       break;
     }
 
-  if (waitfor_client_users
-      && waitfor_client_users != waitfor_client_users_default)
+  if (waitfor_client_users && waitfor_client_users != waitfor_client_users_default)
     {
       free_and_init (waitfor_client_users);
     }
@@ -1879,9 +1802,9 @@ set_error:
 
       log_fp = event_log_start (thread_p, "LOCK_TIMEOUT");
       if (log_fp == NULL)
-	{
-	  return;
-	}
+        {
+          return;
+        }
 
       lock_event_log_blocked_lock (thread_p, log_fp, entry_ptr);
       lock_event_log_blocking_locks (thread_p, log_fp, entry_ptr);
@@ -1903,26 +1826,22 @@ set_error:
  * Note:set error code for unilaterally aborted deadlock victim
  */
 static void
-lock_set_error_for_aborted (LK_ENTRY * entry_ptr,
-			    TRAN_ABORT_REASON abort_reason)
+lock_set_error_for_aborted (LK_ENTRY * entry_ptr, TRAN_ABORT_REASON abort_reason)
 {
-  char *client_prog_name;	/* Client user name for transaction  */
-  char *client_user_name;	/* Client user name for transaction  */
-  char *client_host_name;	/* Client host for transaction       */
-  int client_pid;		/* Client process id for transaction */
+  char *client_prog_name;       /* Client user name for transaction  */
+  char *client_user_name;       /* Client user name for transaction  */
+  char *client_host_name;       /* Client host for transaction       */
+  int client_pid;               /* Client process id for transaction */
   LOG_TDES *tdes;
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (false);
 #endif
 
   (void) logtb_find_client_name_host_pid (entry_ptr->tran_index,
-					  &client_prog_name,
-					  &client_user_name,
-					  &client_host_name, &client_pid);
+                                          &client_prog_name, &client_user_name, &client_host_name, &client_pid);
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_UNILATERALLY_ABORTED, 4,
-	  entry_ptr->tran_index, client_user_name, client_host_name,
-	  client_pid);
+          entry_ptr->tran_index, client_user_name, client_host_name, client_pid);
 
   tdes = LOG_FIND_TDES (entry_ptr->tran_index);
   assert (tdes != NULL);
@@ -1957,36 +1876,31 @@ lock_suspend (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr, int wait_msecs)
 
   if (lk_Gl.verbose_mode == true)
     {
-      char *__client_prog_name;	/* Client program name for transaction */
-      char *__client_user_name;	/* Client user name for transaction    */
-      char *__client_host_name;	/* Client host for transaction         */
-      int __client_pid;		/* Client process id for transaction   */
+      char *__client_prog_name; /* Client program name for transaction */
+      char *__client_user_name; /* Client user name for transaction    */
+      char *__client_host_name; /* Client host for transaction         */
+      int __client_pid;         /* Client process id for transaction   */
 
       fflush (stderr);
       fflush (stdout);
       logtb_find_client_name_host_pid (entry_ptr->tran_index,
-				       &__client_prog_name,
-				       &__client_user_name,
-				       &__client_host_name, &__client_pid);
+                                       &__client_prog_name, &__client_user_name, &__client_host_name, &__client_pid);
       fprintf (stdout, msgcat_message (MSGCAT_CATALOG_RYE,
-				       MSGCAT_SET_LOCK,
-				       MSGCAT_LK_SUSPEND_TRAN),
-	       entry_ptr->thrd_entry->index, entry_ptr->tran_index,
-	       __client_prog_name, __client_user_name, __client_host_name,
-	       __client_pid);
+                                       MSGCAT_SET_LOCK,
+                                       MSGCAT_LK_SUSPEND_TRAN),
+               entry_ptr->thrd_entry->index, entry_ptr->tran_index,
+               __client_prog_name, __client_user_name, __client_host_name, __client_pid);
       fflush (stdout);
     }
 
   /* register lock wait info. into the thread entry */
   entry_ptr->thrd_entry->lockwait = (void *) entry_ptr;
   gettimeofday (&tv, NULL);
-  entry_ptr->thrd_entry->lockwait_stime =
-    (tv.tv_sec * 1000000LL + tv.tv_usec) / 1000LL;
+  entry_ptr->thrd_entry->lockwait_stime = (tv.tv_sec * 1000000LL + tv.tv_usec) / 1000LL;
   entry_ptr->thrd_entry->lockwait_msecs = wait_msecs;
   entry_ptr->thrd_entry->lockwait_state = (int) LOCK_SUSPENDED;
 
-  lk_Gl.TWFG_node[entry_ptr->tran_index].thrd_wait_stime =
-    entry_ptr->thrd_entry->lockwait_stime;
+  lk_Gl.TWFG_node[entry_ptr->tran_index].thrd_wait_stime = entry_ptr->thrd_entry->lockwait_stime;
 
   /* wakeup the dealock detect thread */
   thread_wakeup_deadlock_detect_thread ();
@@ -2006,8 +1920,7 @@ lock_suspend (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr, int wait_msecs)
   lock_event_set_tran_wait_entry (entry_ptr->tran_index, entry_ptr);
 
   /* suspend the worker thread (transaction) */
-  thread_suspend_wakeup_and_unlock_entry (entry_ptr->thrd_entry,
-					  THREAD_LOCK_SUSPENDED);
+  thread_suspend_wakeup_and_unlock_entry (entry_ptr->thrd_entry, THREAD_LOCK_SUSPENDED);
 
   lk_Gl.TWFG_node[entry_ptr->tran_index].thrd_wait_stime = 0;
 
@@ -2067,55 +1980,49 @@ lock_suspend (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr, int wait_msecs)
        * it from the list.
        */
       if (logtb_is_current_active (thread_p) == true)
-	{
-	  /* set error code */
-	  lock_set_error_for_aborted (entry_ptr, TRAN_ABORT_DUE_DEADLOCK);
+        {
+          /* set error code */
+          lock_set_error_for_aborted (entry_ptr, TRAN_ABORT_DUE_DEADLOCK);
 
-	  /* wait until other threads finish their works
-	   * A css_server_thread is always running for this transaction.
-	   * so, wait until thread_has_threads() becomes 1 (except me)
-	   */
-	  if (thread_has_threads (thread_p, entry_ptr->tran_index,
-				  thread_get_client_id (thread_p)) >= 1)
-	    {
-	      logtb_set_tran_index_interrupt (thread_p,
-					      entry_ptr->tran_index, true);
-	      while (1)
-		{
-		  thread_sleep (10);	/* sleep 10 msec */
-		  thread_wakeup_with_tran_index (entry_ptr->tran_index,
-						 THREAD_RESUME_DUE_TO_INTERRUPT);
+          /* wait until other threads finish their works
+           * A css_server_thread is always running for this transaction.
+           * so, wait until thread_has_threads() becomes 1 (except me)
+           */
+          if (thread_has_threads (thread_p, entry_ptr->tran_index, thread_get_client_id (thread_p)) >= 1)
+            {
+              logtb_set_tran_index_interrupt (thread_p, entry_ptr->tran_index, true);
+              while (1)
+                {
+                  thread_sleep (10);    /* sleep 10 msec */
+                  thread_wakeup_with_tran_index (entry_ptr->tran_index, THREAD_RESUME_DUE_TO_INTERRUPT);
 
-		  client_id = thread_get_client_id (thread_p);
-		  if (thread_has_threads (thread_p, entry_ptr->tran_index,
-					  client_id) == 0)
-		    {
-		      break;
-		    }
-		}
-	      logtb_set_tran_index_interrupt (thread_p,
-					      entry_ptr->tran_index, false);
-	    }
-	}
+                  client_id = thread_get_client_id (thread_p);
+                  if (thread_has_threads (thread_p, entry_ptr->tran_index, client_id) == 0)
+                    {
+                      break;
+                    }
+                }
+              logtb_set_tran_index_interrupt (thread_p, entry_ptr->tran_index, false);
+            }
+        }
       else
-	{
-	  /* We are already aborting, fall through.
-	   * Don't do double aborts that could cause an infinite loop.
-	   */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ABORT_TRAN_TWICE, 1,
-		  entry_ptr->tran_index);
-	  /* er_log_debug(ARG_FILE_LINE, "lk_suspend: Likely a system error."
-	     "Trying to abort a transaction twice.\n"); */
+        {
+          /* We are already aborting, fall through.
+           * Don't do double aborts that could cause an infinite loop.
+           */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ABORT_TRAN_TWICE, 1, entry_ptr->tran_index);
+          /* er_log_debug(ARG_FILE_LINE, "lk_suspend: Likely a system error."
+             "Trying to abort a transaction twice.\n"); */
 
-	  /* Since we deadlocked during an abort,
-	   * forcibly remove all page latches of this transaction and
-	   * hope this transaction is the cause of the logjam.
-	   * We are hoping that this frees things
-	   * just enough to let other transactions continue.
-	   * Note it is not be safe to unlock object locks this way.
-	   */
-	  pgbuf_unfix_all (thread_p);
-	}
+          /* Since we deadlocked during an abort,
+           * forcibly remove all page latches of this transaction and
+           * hope this transaction is the cause of the logjam.
+           * We are hoping that this frees things
+           * just enough to let other transactions continue.
+           * Note it is not be safe to unlock object locks this way.
+           */
+          pgbuf_unfix_all (thread_p);
+        }
       return LOCK_RESUMED_ABORTED;
 
     case LOCK_RESUMED_ABORTED_OTHER:
@@ -2178,24 +2085,21 @@ lock_resume (LK_ENTRY * entry_ptr, int state)
    */
   if (lk_Gl.verbose_mode == true)
     {
-      char *__client_prog_name;	/* Client program name for transaction */
-      char *__client_user_name;	/* Client user name for transaction    */
-      char *__client_host_name;	/* Client host for transaction         */
-      int __client_pid;		/* Client process id for transaction   */
+      char *__client_prog_name; /* Client program name for transaction */
+      char *__client_user_name; /* Client user name for transaction    */
+      char *__client_host_name; /* Client host for transaction         */
+      int __client_pid;         /* Client process id for transaction   */
 
       fflush (stderr);
       fflush (stdout);
       (void) logtb_find_client_name_host_pid (entry_ptr->tran_index,
-					      &__client_prog_name,
-					      &__client_user_name,
-					      &__client_host_name,
-					      &__client_pid);
+                                              &__client_prog_name,
+                                              &__client_user_name, &__client_host_name, &__client_pid);
       fprintf (stdout, msgcat_message (MSGCAT_CATALOG_RYE,
-				       MSGCAT_SET_LOCK,
-				       MSGCAT_LK_RESUME_TRAN),
-	       entry_ptr->tran_index, entry_ptr->tran_index,
-	       __client_prog_name, __client_user_name, __client_host_name,
-	       __client_pid);
+                                       MSGCAT_SET_LOCK,
+                                       MSGCAT_LK_RESUME_TRAN),
+               entry_ptr->tran_index, entry_ptr->tran_index,
+               __client_prog_name, __client_user_name, __client_host_name, __client_pid);
       fflush (stdout);
     }
 
@@ -2235,39 +2139,35 @@ lock_wakeup_deadlock_victim_timeout (int tran_index)
   THREAD_ENTRY *thrd_ptr;
   bool wakeup_first = false;
 
-  assert (false);		/* is impossible */
+  assert (false);               /* is impossible */
 
   thrd_count = thread_get_lockwait_entry (tran_index, &thrd_array[0]);
   for (i = 0; i < thrd_count; i++)
     {
       thrd_ptr = thrd_array[i];
       (void) thread_lock_entry (thrd_ptr);
-      if (thrd_ptr->tran_index == tran_index
-	  && LK_IS_LOCKWAIT_THREAD (thrd_ptr))
-	{
-	  /* wake up the thread while notifying timeout */
-	  lock_resume ((LK_ENTRY *) thrd_ptr->lockwait,
-		       LOCK_RESUMED_DEADLOCK_TIMEOUT);
-	  wakeup_first = true;
-	}
+      if (thrd_ptr->tran_index == tran_index && LK_IS_LOCKWAIT_THREAD (thrd_ptr))
+        {
+          /* wake up the thread while notifying timeout */
+          lock_resume ((LK_ENTRY *) thrd_ptr->lockwait, LOCK_RESUMED_DEADLOCK_TIMEOUT);
+          wakeup_first = true;
+        }
       else
-	{
-	  if (thrd_ptr->lockwait != NULL
-	      || thrd_ptr->lockwait_state == (int) LOCK_SUSPENDED)
-	    {
-	      /* some strange lock wait state.. */
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LK_STRANGE_LOCK_WAIT, 5, thrd_ptr->lockwait,
-		      thrd_ptr->lockwait_state, thrd_ptr->index,
-		      thrd_ptr->tid, thrd_ptr->tran_index);
-	    }
-	  /* The current thread has already been waken up by other threads.
-	   * The current thread might be granted the lock. or with any other
-	   * reason....... even if it is a thread of the deadlock victim.
-	   */
-	  /* release the thread entry mutex */
-	  (void) thread_unlock_entry (thrd_ptr);
-	}
+        {
+          if (thrd_ptr->lockwait != NULL || thrd_ptr->lockwait_state == (int) LOCK_SUSPENDED)
+            {
+              /* some strange lock wait state.. */
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                      ER_LK_STRANGE_LOCK_WAIT, 5, thrd_ptr->lockwait,
+                      thrd_ptr->lockwait_state, thrd_ptr->index, thrd_ptr->tid, thrd_ptr->tran_index);
+            }
+          /* The current thread has already been waken up by other threads.
+           * The current thread might be granted the lock. or with any other
+           * reason....... even if it is a thread of the deadlock victim.
+           */
+          /* release the thread entry mutex */
+          (void) thread_unlock_entry (thrd_ptr);
+        }
     }
   return wakeup_first;
 }
@@ -2297,55 +2197,50 @@ lock_wakeup_deadlock_victim_aborted (int tran_index)
   THREAD_ENTRY *thrd_ptr;
   bool wakeup_first = false;
 
-  assert (false);		/* is impossible */
+  assert (false);               /* is impossible */
 
   thrd_count = thread_get_lockwait_entry (tran_index, &thrd_array[0]);
   for (i = 0; i < thrd_count; i++)
     {
       thrd_ptr = thrd_array[i];
       (void) thread_lock_entry (thrd_ptr);
-      if (thrd_ptr->tran_index == tran_index
-	  && LK_IS_LOCKWAIT_THREAD (thrd_ptr))
-	{
-	  /* wake up the thread while notifying deadlock victim */
-	  if (wakeup_first == false)
-	    {
-	      /* The current transaction is really aborted.
-	       * Therefore, other threads of the current transaction must quit
-	       * their executions and return to client.
-	       * Then the first waken-up thread must be charge of the rollback
-	       * of the current transaction.
-	       */
-	      /* set the transaction as deadlock victim */
-	      lk_Gl.TWFG_node[tran_index].DL_victim = true;
-	      lock_resume ((LK_ENTRY *) thrd_ptr->lockwait,
-			   LOCK_RESUMED_ABORTED_FIRST);
-	      wakeup_first = true;
-	    }
-	  else
-	    {
-	      lock_resume ((LK_ENTRY *) thrd_ptr->lockwait,
-			   LOCK_RESUMED_ABORTED_OTHER);
-	    }
-	}
+      if (thrd_ptr->tran_index == tran_index && LK_IS_LOCKWAIT_THREAD (thrd_ptr))
+        {
+          /* wake up the thread while notifying deadlock victim */
+          if (wakeup_first == false)
+            {
+              /* The current transaction is really aborted.
+               * Therefore, other threads of the current transaction must quit
+               * their executions and return to client.
+               * Then the first waken-up thread must be charge of the rollback
+               * of the current transaction.
+               */
+              /* set the transaction as deadlock victim */
+              lk_Gl.TWFG_node[tran_index].DL_victim = true;
+              lock_resume ((LK_ENTRY *) thrd_ptr->lockwait, LOCK_RESUMED_ABORTED_FIRST);
+              wakeup_first = true;
+            }
+          else
+            {
+              lock_resume ((LK_ENTRY *) thrd_ptr->lockwait, LOCK_RESUMED_ABORTED_OTHER);
+            }
+        }
       else
-	{
-	  if (thrd_ptr->lockwait != NULL
-	      || thrd_ptr->lockwait_state == (int) LOCK_SUSPENDED)
-	    {
-	      /* some strange lock wait state.. */
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LK_STRANGE_LOCK_WAIT, 5, thrd_ptr->lockwait,
-		      thrd_ptr->lockwait_state, thrd_ptr->index,
-		      thrd_ptr->tid, thrd_ptr->tran_index);
-	    }
-	  /* The current thread has already been waken up by other threads.
-	   * The current thread might have held the lock. or with any other
-	   * reason....... even if it is a thread of the deadlock victim.
-	   */
-	  /* release the thread entry mutex */
-	  (void) thread_unlock_entry (thrd_ptr);
-	}
+        {
+          if (thrd_ptr->lockwait != NULL || thrd_ptr->lockwait_state == (int) LOCK_SUSPENDED)
+            {
+              /* some strange lock wait state.. */
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                      ER_LK_STRANGE_LOCK_WAIT, 5, thrd_ptr->lockwait,
+                      thrd_ptr->lockwait_state, thrd_ptr->index, thrd_ptr->tid, thrd_ptr->tran_index);
+            }
+          /* The current thread has already been waken up by other threads.
+           * The current thread might have held the lock. or with any other
+           * reason....... even if it is a thread of the deadlock victim.
+           */
+          /* release the thread entry mutex */
+          (void) thread_unlock_entry (thrd_ptr);
+        }
     }
   return wakeup_first;
 }
@@ -2385,20 +2280,20 @@ lock_grant_blocked_holder (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
       /* there are some blocked holders */
       mode = NULL_LOCK;
       for (i = check->next; i != NULL; i = i->next)
-	{
-	  assert (i->granted_mode >= NULL_LOCK && mode >= NULL_LOCK);
-	  mode = lock_Conv[i->granted_mode][mode];
-	  assert (mode != NA_LOCK);
-	}
+        {
+          assert (i->granted_mode >= NULL_LOCK && mode >= NULL_LOCK);
+          mode = lock_Conv[i->granted_mode][mode];
+          assert (mode != NA_LOCK);
+        }
 
       assert (check->blocked_mode >= NULL_LOCK);
       compat = lock_Comp[check->blocked_mode][mode];
       assert (compat != DB_NA);
 
       if (compat == false)
-	{
-	  break;		/* stop the granting */
-	}
+        {
+          break;                /* stop the granting */
+        }
 
       /* compatible: grant it */
 
@@ -2407,77 +2302,75 @@ lock_grant_blocked_holder (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
 
       /* check if the thread is still waiting on a lock */
       if (LK_IS_LOCKWAIT_THREAD (check->thrd_entry))
-	{
-	  /* the thread is still waiting on a lock */
+        {
+          /* the thread is still waiting on a lock */
 
-	  /* reposition the lock entry according to UPR */
-	  for (prev = check, i = check->next; i != NULL;)
-	    {
-	      if (i->blocked_mode == NULL_LOCK)
-		{
-		  break;
-		}
-	      prev = i;
-	      i = i->next;
-	    }
-	  if (prev != check)
-	    {			/* reposition it */
-	      /* remove it */
-	      if (prev_check == NULL)
-		{
-		  res_ptr->holder = check->next;
-		}
-	      else
-		{
-		  prev_check->next = check->next;
-		}
-	      /* insert it */
-	      check->next = prev->next;
-	      prev->next = check;
-	    }
+          /* reposition the lock entry according to UPR */
+          for (prev = check, i = check->next; i != NULL;)
+            {
+              if (i->blocked_mode == NULL_LOCK)
+                {
+                  break;
+                }
+              prev = i;
+              i = i->next;
+            }
+          if (prev != check)
+            {                   /* reposition it */
+              /* remove it */
+              if (prev_check == NULL)
+                {
+                  res_ptr->holder = check->next;
+                }
+              else
+                {
+                  prev_check->next = check->next;
+                }
+              /* insert it */
+              check->next = prev->next;
+              prev->next = check;
+            }
 
-	  /* change granted_mode and blocked_mode */
-	  check->granted_mode = check->blocked_mode;
-	  check->blocked_mode = NULL_LOCK;
+          /* change granted_mode and blocked_mode */
+          check->granted_mode = check->blocked_mode;
+          check->blocked_mode = NULL_LOCK;
 
-	  /* Record number of acquired locks */
-	  mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
+          /* Record number of acquired locks */
+          mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
 #if defined(LK_TRACE_OBJECT)
-	  LK_MSG_LOCK_ACQUIRED (entry_ptr);
+          LK_MSG_LOCK_ACQUIRED (entry_ptr);
 #endif /* LK_TRACE_OBJECT */
-	  /* wake up the blocked holder */
-	  lock_resume (check, LOCK_RESUMED);
-	}
+          /* wake up the blocked holder */
+          lock_resume (check, LOCK_RESUMED);
+        }
       else
-	{
-	  if (check->thrd_entry->lockwait != NULL
-	      || check->thrd_entry->lockwait_state == (int) LOCK_SUSPENDED)
-	    {
-	      /* some strange lock wait state.. */
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LK_STRANGE_LOCK_WAIT, 5, check->thrd_entry->lockwait,
-		      check->thrd_entry->lockwait_state,
-		      check->thrd_entry->index, check->thrd_entry->tid,
-		      check->thrd_entry->tran_index);
-	    }
-	  /* The thread is not waiting for a lock, currently.
-	   * That is, the thread has already been waked up by timeout,
-	   * deadlock victim or interrupt. In this case,
-	   * we have nothing to do since the thread itself will remove
-	   * this lock entry.
-	   */
-	  (void) thread_unlock_entry (check->thrd_entry);
-	  prev_check = check;
-	}
+        {
+          if (check->thrd_entry->lockwait != NULL || check->thrd_entry->lockwait_state == (int) LOCK_SUSPENDED)
+            {
+              /* some strange lock wait state.. */
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                      ER_LK_STRANGE_LOCK_WAIT, 5, check->thrd_entry->lockwait,
+                      check->thrd_entry->lockwait_state,
+                      check->thrd_entry->index, check->thrd_entry->tid, check->thrd_entry->tran_index);
+            }
+          /* The thread is not waiting for a lock, currently.
+           * That is, the thread has already been waked up by timeout,
+           * deadlock victim or interrupt. In this case,
+           * we have nothing to do since the thread itself will remove
+           * this lock entry.
+           */
+          (void) thread_unlock_entry (check->thrd_entry);
+          prev_check = check;
+        }
 
       if (prev_check == NULL)
-	{
-	  check = res_ptr->holder;
-	}
+        {
+          check = res_ptr->holder;
+        }
       else
-	{
-	  check = prev_check->next;
-	}
+        {
+          check = prev_check->next;
+        }
     }
 
 }
@@ -2508,15 +2401,14 @@ lock_grant_blocked_waiter (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
   check = res_ptr->waiter;
   while (check != NULL)
     {
-      assert (check->blocked_mode >= NULL_LOCK
-	      && res_ptr->total_holders_mode >= NULL_LOCK);
+      assert (check->blocked_mode >= NULL_LOCK && res_ptr->total_holders_mode >= NULL_LOCK);
       compat = lock_Comp[check->blocked_mode][res_ptr->total_holders_mode];
       assert (compat != DB_NA);
 
       if (compat == false)
-	{
-	  break;		/* stop the granting */
-	}
+        {
+          break;                /* stop the granting */
+        }
 
       /* compatible: grant it */
       /* hold the thread entry mutex */
@@ -2524,88 +2416,84 @@ lock_grant_blocked_waiter (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
 
       /* check if the thread is still waiting for a lock */
       if (LK_IS_LOCKWAIT_THREAD (check->thrd_entry))
-	{
-	  /* The thread is still waiting for a lock. */
-	  change_total_waiters_mode = true;
+        {
+          /* The thread is still waiting for a lock. */
+          change_total_waiters_mode = true;
 
-	  /* remove the lock entry from the waiter */
-	  if (prev_check == NULL)
-	    {
-	      res_ptr->waiter = check->next;
-	    }
-	  else
-	    {
-	      prev_check->next = check->next;
-	    }
+          /* remove the lock entry from the waiter */
+          if (prev_check == NULL)
+            {
+              res_ptr->waiter = check->next;
+            }
+          else
+            {
+              prev_check->next = check->next;
+            }
 
-	  /* change granted_mode and blocked_mode of the entry */
-	  check->granted_mode = check->blocked_mode;
-	  check->blocked_mode = NULL_LOCK;
+          /* change granted_mode and blocked_mode of the entry */
+          check->granted_mode = check->blocked_mode;
+          check->blocked_mode = NULL_LOCK;
 
-	  /* position the lock entry in the holder list */
-	  lock_position_holder_entry (res_ptr, check);
+          /* position the lock entry in the holder list */
+          lock_position_holder_entry (res_ptr, check);
 
-	  /* change total_holders_mode */
-	  assert (check->granted_mode >= NULL_LOCK
-		  && res_ptr->total_holders_mode >= NULL_LOCK);
-	  res_ptr->total_holders_mode =
-	    lock_Conv[check->granted_mode][res_ptr->total_holders_mode];
-	  assert (res_ptr->total_holders_mode != NA_LOCK);
+          /* change total_holders_mode */
+          assert (check->granted_mode >= NULL_LOCK && res_ptr->total_holders_mode >= NULL_LOCK);
+          res_ptr->total_holders_mode = lock_Conv[check->granted_mode][res_ptr->total_holders_mode];
+          assert (res_ptr->total_holders_mode != NA_LOCK);
 
-	  /* insert the lock entry into transaction hold list. */
-	  lock_insert_into_tran_hold_list (check);
+          /* insert the lock entry into transaction hold list. */
+          lock_insert_into_tran_hold_list (check);
 
-	  /* Record number of acquired locks */
-	  mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
+          /* Record number of acquired locks */
+          mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
 #if defined(LK_TRACE_OBJECT)
-	  LK_MSG_LOCK_ACQUIRED (entry_ptr);
+          LK_MSG_LOCK_ACQUIRED (entry_ptr);
 #endif /* LK_TRACE_OBJECT */
 
-	  /* wake up the blocked waiter */
-	  lock_resume (check, LOCK_RESUMED);
-	}
+          /* wake up the blocked waiter */
+          lock_resume (check, LOCK_RESUMED);
+        }
       else
-	{
-	  if (check->thrd_entry->lockwait != NULL
-	      || check->thrd_entry->lockwait_state == (int) LOCK_SUSPENDED)
-	    {
-	      /* some strange lock wait state.. */
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LK_STRANGE_LOCK_WAIT, 5, check->thrd_entry->lockwait,
-		      check->thrd_entry->lockwait_state,
-		      check->thrd_entry->index, check->thrd_entry->tid,
-		      check->thrd_entry->tran_index);
-	      error_code = ER_LK_STRANGE_LOCK_WAIT;
-	    }
-	  /* The thread is not waiting on the lock, currently.
-	   * That is, the thread has already been waken up
-	   * by lock timeout, deadlock victim or interrupt.
-	   * In this case, we have nothing to do
-	   * since the thread itself will remove this lock entry.
-	   */
-	  (void) thread_unlock_entry (check->thrd_entry);
-	  prev_check = check;
-	}
+        {
+          if (check->thrd_entry->lockwait != NULL || check->thrd_entry->lockwait_state == (int) LOCK_SUSPENDED)
+            {
+              /* some strange lock wait state.. */
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                      ER_LK_STRANGE_LOCK_WAIT, 5, check->thrd_entry->lockwait,
+                      check->thrd_entry->lockwait_state,
+                      check->thrd_entry->index, check->thrd_entry->tid, check->thrd_entry->tran_index);
+              error_code = ER_LK_STRANGE_LOCK_WAIT;
+            }
+          /* The thread is not waiting on the lock, currently.
+           * That is, the thread has already been waken up
+           * by lock timeout, deadlock victim or interrupt.
+           * In this case, we have nothing to do
+           * since the thread itself will remove this lock entry.
+           */
+          (void) thread_unlock_entry (check->thrd_entry);
+          prev_check = check;
+        }
 
       if (prev_check == NULL)
-	{
-	  check = res_ptr->waiter;
-	}
+        {
+          check = res_ptr->waiter;
+        }
       else
-	{
-	  check = prev_check->next;
-	}
+        {
+          check = prev_check->next;
+        }
     }
 
   if (change_total_waiters_mode == true)
     {
       mode = NULL_LOCK;
       for (i = res_ptr->waiter; i != NULL; i = i->next)
-	{
-	  assert (i->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
-	  mode = lock_Conv[i->blocked_mode][mode];
-	  assert (mode != NA_LOCK);
-	}
+        {
+          assert (i->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
+          mode = lock_Conv[i->blocked_mode][mode];
+          assert (mode != NA_LOCK);
+        }
       res_ptr->total_waiters_mode = mode;
     }
 
@@ -2628,8 +2516,7 @@ lock_grant_blocked_waiter (THREAD_ENTRY * thread_p, LK_RES * res_ptr)
  *     of lock holders.
  */
 static void
-lock_grant_blocked_waiter_partial (THREAD_ENTRY * thread_p, LK_RES * res_ptr,
-				   LK_ENTRY * from_whom)
+lock_grant_blocked_waiter_partial (THREAD_ENTRY * thread_p, LK_RES * res_ptr, LK_ENTRY * from_whom)
 {
   LK_ENTRY *prev_check;
   LK_ENTRY *check, *i;
@@ -2659,102 +2546,97 @@ lock_grant_blocked_waiter_partial (THREAD_ENTRY * thread_p, LK_RES * res_ptr,
       assert (compat != DB_NA);
 
       if (compat != true)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
-      assert (check->blocked_mode >= NULL_LOCK
-	      && res_ptr->total_holders_mode >= NULL_LOCK);
+      assert (check->blocked_mode >= NULL_LOCK && res_ptr->total_holders_mode >= NULL_LOCK);
       compat = lock_Comp[check->blocked_mode][res_ptr->total_holders_mode];
       assert (compat != DB_NA);
 
       if (compat == false)
-	{
-	  assert (check->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
-	  mode = lock_Conv[check->blocked_mode][mode];
-	  assert (mode != NA_LOCK);
+        {
+          assert (check->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
+          mode = lock_Conv[check->blocked_mode][mode];
+          assert (mode != NA_LOCK);
 
-	  prev_check = check;
-	  check = check->next;
-	  continue;
-	}
+          prev_check = check;
+          check = check->next;
+          continue;
+        }
 
       /* compatible: grant it */
       (void) thread_lock_entry (check->thrd_entry);
       if (LK_IS_LOCKWAIT_THREAD (check->thrd_entry))
-	{
-	  /* the thread is waiting on a lock */
-	  /* remove the lock entry from the waiter */
-	  if (prev_check == (LK_ENTRY *) NULL)
-	    {
-	      res_ptr->waiter = check->next;
-	    }
-	  else
-	    {
-	      prev_check->next = check->next;
-	    }
+        {
+          /* the thread is waiting on a lock */
+          /* remove the lock entry from the waiter */
+          if (prev_check == (LK_ENTRY *) NULL)
+            {
+              res_ptr->waiter = check->next;
+            }
+          else
+            {
+              prev_check->next = check->next;
+            }
 
-	  /* change granted_mode and blocked_mode of the entry */
-	  check->granted_mode = check->blocked_mode;
-	  check->blocked_mode = NULL_LOCK;
+          /* change granted_mode and blocked_mode of the entry */
+          check->granted_mode = check->blocked_mode;
+          check->blocked_mode = NULL_LOCK;
 
-	  /* position the lock entry into the holder list */
-	  lock_position_holder_entry (res_ptr, check);
+          /* position the lock entry into the holder list */
+          lock_position_holder_entry (res_ptr, check);
 
-	  /* change total_holders_mode */
-	  assert (check->granted_mode >= NULL_LOCK
-		  && res_ptr->total_holders_mode >= NULL_LOCK);
-	  res_ptr->total_holders_mode =
-	    lock_Conv[check->granted_mode][res_ptr->total_holders_mode];
-	  assert (res_ptr->total_holders_mode != NA_LOCK);
+          /* change total_holders_mode */
+          assert (check->granted_mode >= NULL_LOCK && res_ptr->total_holders_mode >= NULL_LOCK);
+          res_ptr->total_holders_mode = lock_Conv[check->granted_mode][res_ptr->total_holders_mode];
+          assert (res_ptr->total_holders_mode != NA_LOCK);
 
-	  /* insert into transaction lock hold list */
-	  lock_insert_into_tran_hold_list (check);
+          /* insert into transaction lock hold list */
+          lock_insert_into_tran_hold_list (check);
 
-	  /* Record number of acquired locks */
-	  mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
+          /* Record number of acquired locks */
+          mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
 #if defined(LK_TRACE_OBJECT)
-	  LK_MSG_LOCK_ACQUIRED (entry_ptr);
+          LK_MSG_LOCK_ACQUIRED (entry_ptr);
 #endif /* LK_TRACE_OBJECT */
 
-	  /* wake up the blocked waiter (correctness must be checked) */
-	  lock_resume (check, LOCK_RESUMED);
-	}
+          /* wake up the blocked waiter (correctness must be checked) */
+          lock_resume (check, LOCK_RESUMED);
+        }
       else
-	{
-	  if (check->thrd_entry->lockwait != NULL
-	      || check->thrd_entry->lockwait_state == (int) LOCK_SUSPENDED)
-	    {
-	      /* some strange lock wait state.. */
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LK_STRANGE_LOCK_WAIT, 5, check->thrd_entry->lockwait,
-		      check->thrd_entry->lockwait_state,
-		      check->thrd_entry->index, check->thrd_entry->tid,
-		      check->thrd_entry->tran_index);
-	    }
-	  /* The thread is not waiting on the lock. That is, the thread has
-	   * already been waken up by lock timeout, deadlock victim or interrupt.
-	   * In this case, we have nothing to do since the thread itself
-	   * will remove this lock entry.
-	   */
-	  (void) thread_unlock_entry (check->thrd_entry);
+        {
+          if (check->thrd_entry->lockwait != NULL || check->thrd_entry->lockwait_state == (int) LOCK_SUSPENDED)
+            {
+              /* some strange lock wait state.. */
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                      ER_LK_STRANGE_LOCK_WAIT, 5, check->thrd_entry->lockwait,
+                      check->thrd_entry->lockwait_state,
+                      check->thrd_entry->index, check->thrd_entry->tid, check->thrd_entry->tran_index);
+            }
+          /* The thread is not waiting on the lock. That is, the thread has
+           * already been waken up by lock timeout, deadlock victim or interrupt.
+           * In this case, we have nothing to do since the thread itself
+           * will remove this lock entry.
+           */
+          (void) thread_unlock_entry (check->thrd_entry);
 
-	  /* change prev_check */
-	  assert (check->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
-	  mode = lock_Conv[check->blocked_mode][mode];
-	  assert (mode != NA_LOCK);
+          /* change prev_check */
+          assert (check->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
+          mode = lock_Conv[check->blocked_mode][mode];
+          assert (mode != NA_LOCK);
 
-	  prev_check = check;
-	}
+          prev_check = check;
+        }
 
       if (prev_check == NULL)
-	{
-	  check = res_ptr->waiter;
-	}
+        {
+          check = res_ptr->waiter;
+        }
       else
-	{
-	  check = prev_check->next;
-	}
+        {
+          check = prev_check->next;
+        }
     }
 
   if (check == NULL)
@@ -2765,11 +2647,11 @@ lock_grant_blocked_waiter_partial (THREAD_ENTRY * thread_p, LK_RES * res_ptr,
     {
       mode = NULL_LOCK;
       for (i = res_ptr->waiter; i != NULL; i = i->next)
-	{
-	  assert (i->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
-	  mode = lock_Conv[i->blocked_mode][mode];
-	  assert (mode != NA_LOCK);
-	}
+        {
+          assert (i->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
+          mode = lock_Conv[i->blocked_mode][mode];
+          assert (mode != NA_LOCK);
+        }
       res_ptr->total_waiters_mode = mode;
     }
 
@@ -2786,33 +2668,27 @@ lock_grant_blocked_waiter_partial (THREAD_ENTRY * thread_p, LK_RES * res_ptr,
 
 #if defined(SERVER_MODE)
 static void
-stat_counter_lock (THREAD_ENTRY * thread_p, DB_TYPE val_type,
-		   const DB_VALUE * val, UINT64 start_time)
+stat_counter_lock (THREAD_ENTRY * thread_p, DB_TYPE val_type, const DB_VALUE * val, UINT64 start_time)
 {
   if (val_type == DB_TYPE_OID)
     {
-      mnt_stats_counter_with_time (thread_p, MNT_STATS_CLASS_LOCKS_REQUEST, 1,
-				   start_time);
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_CLASS_LOCKS_REQUEST, 1, start_time);
     }
   else if (db_value_compare (val, &system_Ddl_key) == DB_EQ)
     {
-      mnt_stats_counter_with_time (thread_p, MNT_STATS_DDL_LOCKS_REQUESTS, 1,
-				   start_time);
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_DDL_LOCKS_REQUESTS, 1, start_time);
     }
   else if (db_value_compare (val, &shard_Catalog_key) == DB_EQ)
     {
-      mnt_stats_counter_with_time (thread_p, MNT_STATS_CATALOG_LOCKS_REQUEST,
-				   1, start_time);
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_CATALOG_LOCKS_REQUEST, 1, start_time);
     }
   else if (db_value_compare (val, &shard_Global_key) == DB_EQ)
     {
-      mnt_stats_counter_with_time (thread_p, MNT_STATS_GLOBAL_LOCKS_REQUEST,
-				   1, start_time);
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_GLOBAL_LOCKS_REQUEST, 1, start_time);
     }
   else
     {
-      mnt_stats_counter_with_time (thread_p, MNT_STATS_SHARD_LOCKS_REQUEST, 1,
-				   start_time);
+      mnt_stats_counter_with_time (thread_p, MNT_STATS_SHARD_LOCKS_REQUEST, 1, start_time);
     }
 }
 
@@ -2841,14 +2717,13 @@ stat_counter_lock (THREAD_ENTRY * thread_p, DB_TYPE val_type,
  */
 static int
 lock_internal_perform_lock_object (THREAD_ENTRY * thread_p, int tran_index,
-				   const DB_VALUE * val, LOCK lock,
-				   int wait_msecs, LK_ENTRY ** entry_addr_ptr)
+                                   const DB_VALUE * val, LOCK lock, int wait_msecs, LK_ENTRY ** entry_addr_ptr)
 {
   UNUSED_VAR TRAN_ISOLATION isolation;
   unsigned int hash_index;
   LK_HASH *hash_anchor;
   int ret_val;
-  LOCK group_mode, old_mode, new_mode;	/* lock mode */
+  LOCK group_mode, old_mode, new_mode;  /* lock mode */
   LK_RES *res_ptr;
   LK_ENTRY *entry_ptr = (LK_ENTRY *) NULL;
   LK_ENTRY *wait_entry_ptr = (LK_ENTRY *) NULL;
@@ -2861,8 +2736,7 @@ lock_internal_perform_lock_object (THREAD_ENTRY * thread_p, int tran_index,
   UINT64 perf_start;
 
   assert (!DB_IS_NULL (val));
-  assert (pgbuf_get_num_hold_cnt (thread_p,
-				  PAGE_UNKNOWN /* all page */ ) == 0);
+  assert (pgbuf_get_num_hold_cnt (thread_p, PAGE_UNKNOWN /* all page */ ) == 0);
 
   if (thread_p == NULL)
     {
@@ -2895,11 +2769,10 @@ start:
   res_ptr = hash_anchor->hash_next;
   for (; res_ptr != (LK_RES *) NULL; res_ptr = res_ptr->hash_next)
     {
-      if (DB_VALUE_TYPE (&res_ptr->val) == val_type
-	  && db_value_compare (&res_ptr->val, val) == DB_EQ)
-	{
-	  break;
-	}
+      if (DB_VALUE_TYPE (&res_ptr->val) == val_type && db_value_compare (&res_ptr->val, val) == DB_EQ)
+        {
+          break;
+        }
     }
 
   if (res_ptr == (LK_RES *) NULL)
@@ -2910,16 +2783,14 @@ start:
       /* allocate a lock resource entry */
       res_ptr = lock_alloc_resource ();
       if (res_ptr == (LK_RES *) NULL)
-	{
-	  assert (false);
-	  pthread_mutex_unlock (&hash_anchor->hash_mutex);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE,
-		  1, "lock resource entry");
-	  return LK_NOTGRANTED_DUE_ERROR;
-	}
+        {
+          assert (false);
+          pthread_mutex_unlock (&hash_anchor->hash_mutex);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE, 1, "lock resource entry");
+          return LK_NOTGRANTED_DUE_ERROR;
+        }
       /* initialize the lock resource entry */
-      lock_initialize_resource_as_allocated (thread_p, res_ptr, val,
-					     NULL_LOCK);
+      lock_initialize_resource_as_allocated (thread_p, res_ptr, val, NULL_LOCK);
 
       /* hold res_mutex */
       rv = pthread_mutex_lock (&res_ptr->res_mutex);
@@ -2927,15 +2798,14 @@ start:
       /* allocate a lock entry */
       entry_ptr = lock_alloc_entry ();
       if (entry_ptr == (LK_ENTRY *) NULL)
-	{
-	  assert (false);
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  pthread_mutex_unlock (&hash_anchor->hash_mutex);
-	  lock_free_resource (thread_p, res_ptr);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE,
-		  1, "lock heap entry");
-	  return LK_NOTGRANTED_DUE_ERROR;
-	}
+        {
+          assert (false);
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          pthread_mutex_unlock (&hash_anchor->hash_mutex);
+          lock_free_resource (thread_p, res_ptr);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE, 1, "lock heap entry");
+          return LK_NOTGRANTED_DUE_ERROR;
+        }
       /* initialize the lock entry as granted state */
       lock_initialize_entry_as_granted (entry_ptr, tran_index, res_ptr, lock);
 
@@ -2983,9 +2853,9 @@ start:
   while (entry_ptr != (LK_ENTRY *) NULL)
     {
       if (entry_ptr->tran_index == tran_index)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       entry_ptr = entry_ptr->next;
     }
 
@@ -2996,198 +2866,181 @@ start:
        */
       /* 1. I am not a holder & my request can be granted. */
       assert (lock >= NULL_LOCK && res_ptr->total_waiters_mode >= NULL_LOCK
-	      && res_ptr->total_holders_mode >= NULL_LOCK);
+              && res_ptr->total_holders_mode >= NULL_LOCK);
       compat = lock_Comp[lock][res_ptr->total_holders_mode];
       assert (compat != DB_NA);
-#if 1				/* TODO - FIXME_LOCK */
+#if 1                           /* TODO - FIXME_LOCK */
       if (compat != true)
-	{
-	  /* check the compatibility with other holders' granted mode */
-	  new_mode = lock;
-	  group_mode = NULL_LOCK;
-	  for (i = res_ptr->holder; i != (LK_ENTRY *) NULL; i = i->next)
-	    {
-	      assert (i->granted_mode >= NULL_LOCK
-		      && group_mode >= NULL_LOCK);
-	      group_mode = lock_Conv[i->granted_mode][group_mode];
-	      assert (group_mode != NA_LOCK);
-	    }
+        {
+          /* check the compatibility with other holders' granted mode */
+          new_mode = lock;
+          group_mode = NULL_LOCK;
+          for (i = res_ptr->holder; i != (LK_ENTRY *) NULL; i = i->next)
+            {
+              assert (i->granted_mode >= NULL_LOCK && group_mode >= NULL_LOCK);
+              group_mode = lock_Conv[i->granted_mode][group_mode];
+              assert (group_mode != NA_LOCK);
+            }
 
-	  assert (new_mode >= NULL_LOCK && group_mode >= NULL_LOCK);
-	  compat = lock_Comp[new_mode][group_mode];
-	  assert (compat != DB_NA);
-	}
+          assert (new_mode >= NULL_LOCK && group_mode >= NULL_LOCK);
+          compat = lock_Comp[new_mode][group_mode];
+          assert (compat != DB_NA);
+        }
 #endif
 
       if (compat == true)
-	{
-	  /* allocate a lock entry */
-	  entry_ptr = lock_alloc_entry ();
-	  if (entry_ptr == (LK_ENTRY *) NULL)
-	    {
-	      assert (false);
-	      pthread_mutex_unlock (&res_ptr->res_mutex);
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE,
-		      1, "lock heap entry");
-	      return LK_NOTGRANTED_DUE_ERROR;
-	    }
-	  /* initialize the lock entry as granted state */
-	  lock_initialize_entry_as_granted (entry_ptr, tran_index, res_ptr,
-					    lock);
+        {
+          /* allocate a lock entry */
+          entry_ptr = lock_alloc_entry ();
+          if (entry_ptr == (LK_ENTRY *) NULL)
+            {
+              assert (false);
+              pthread_mutex_unlock (&res_ptr->res_mutex);
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE, 1, "lock heap entry");
+              return LK_NOTGRANTED_DUE_ERROR;
+            }
+          /* initialize the lock entry as granted state */
+          lock_initialize_entry_as_granted (entry_ptr, tran_index, res_ptr, lock);
 
-	  /* add the lock entry into the holder list */
-	  lock_position_holder_entry (res_ptr, entry_ptr);
+          /* add the lock entry into the holder list */
+          lock_position_holder_entry (res_ptr, entry_ptr);
 
-	  /* change total_holders_mode (total mode of holder list) */
-	  assert (lock >= NULL_LOCK
-		  && res_ptr->total_holders_mode >= NULL_LOCK);
-	  res_ptr->total_holders_mode =
-	    lock_Conv[lock][res_ptr->total_holders_mode];
-	  assert (res_ptr->total_holders_mode != NA_LOCK);
+          /* change total_holders_mode (total mode of holder list) */
+          assert (lock >= NULL_LOCK && res_ptr->total_holders_mode >= NULL_LOCK);
+          res_ptr->total_holders_mode = lock_Conv[lock][res_ptr->total_holders_mode];
+          assert (res_ptr->total_holders_mode != NA_LOCK);
 
-	  /* add the lock entry into the transaction hold list */
-	  lock_insert_into_tran_hold_list (entry_ptr);
+          /* add the lock entry into the transaction hold list */
+          lock_insert_into_tran_hold_list (entry_ptr);
 
-	  /* Record number of acquired locks */
-	  mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
+          /* Record number of acquired locks */
+          mnt_stats_counter (thread_p, MNT_STATS_OBJECT_LOCKS_ACQUIRED, 1);
 #if defined(LK_TRACE_OBJECT)
-	  LK_MSG_LOCK_ACQUIRED (entry_ptr);
+          LK_MSG_LOCK_ACQUIRED (entry_ptr);
 #endif /* LK_TRACE_OBJECT */
 
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  *entry_addr_ptr = entry_ptr;
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          *entry_addr_ptr = entry_ptr;
 
-	  stat_counter_lock (thread_p, val_type, val, perf_start);
-	  return LK_GRANTED;
-	}
+          stat_counter_lock (thread_p, val_type, val, perf_start);
+          return LK_GRANTED;
+        }
 
       if (wait_msecs == LK_ZERO_WAIT || wait_msecs == LK_FORCE_ZERO_WAIT)
-	{
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  if (wait_msecs == LK_ZERO_WAIT)
-	    {
-	      if (entry_ptr == NULL)
-		{
-		  entry_ptr = lock_alloc_entry ();
-		  if (entry_ptr == (LK_ENTRY *) NULL)
-		    {
-		      assert (false);
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_LK_ALLOC_RESOURCE, 1, "lock heap entry");
-		      return LK_NOTGRANTED_DUE_ERROR;
-		    }
-		  lock_initialize_entry_as_blocked (entry_ptr, thread_p,
-						    tran_index, res_ptr,
-						    lock);
-		}
-	      (void) lock_set_error_for_timeout (thread_p, entry_ptr);
+        {
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          if (wait_msecs == LK_ZERO_WAIT)
+            {
+              if (entry_ptr == NULL)
+                {
+                  entry_ptr = lock_alloc_entry ();
+                  if (entry_ptr == (LK_ENTRY *) NULL)
+                    {
+                      assert (false);
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE, 1, "lock heap entry");
+                      return LK_NOTGRANTED_DUE_ERROR;
+                    }
+                  lock_initialize_entry_as_blocked (entry_ptr, thread_p, tran_index, res_ptr, lock);
+                }
+              (void) lock_set_error_for_timeout (thread_p, entry_ptr);
 
-	      lock_free_entry (entry_ptr);
-	    }
-	  return LK_NOTGRANTED_DUE_TIMEOUT;
-	}
+              lock_free_entry (entry_ptr);
+            }
+          return LK_NOTGRANTED_DUE_TIMEOUT;
+        }
 
       /* check if another thread is waiting for the same resource
        */
       wait_entry_ptr = res_ptr->waiter;
       while (wait_entry_ptr != (LK_ENTRY *) NULL)
-	{
-	  if (wait_entry_ptr->tran_index == tran_index)
-	    {
-	      break;
-	    }
-	  wait_entry_ptr = wait_entry_ptr->next;
-	}
+        {
+          if (wait_entry_ptr->tran_index == tran_index)
+            {
+              break;
+            }
+          wait_entry_ptr = wait_entry_ptr->next;
+        }
 
       if (wait_entry_ptr != NULL)
-	{
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		  ER_LK_MANY_LOCK_WAIT_TRAN, 1, tran_index);
-	  thread_lock_entry (thrd_entry);
-	  thread_lock_entry (wait_entry_ptr->thrd_entry);
-	  if (wait_entry_ptr->thrd_entry->lockwait == NULL)
-	    {
-	      /*  */
-	      thread_unlock_entry (wait_entry_ptr->thrd_entry);
-	      thread_unlock_entry (thrd_entry);
-	      pthread_mutex_unlock (&res_ptr->res_mutex);
-	      goto start;
-	    }
+        {
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LK_MANY_LOCK_WAIT_TRAN, 1, tran_index);
+          thread_lock_entry (thrd_entry);
+          thread_lock_entry (wait_entry_ptr->thrd_entry);
+          if (wait_entry_ptr->thrd_entry->lockwait == NULL)
+            {
+              /*  */
+              thread_unlock_entry (wait_entry_ptr->thrd_entry);
+              thread_unlock_entry (thrd_entry);
+              pthread_mutex_unlock (&res_ptr->res_mutex);
+              goto start;
+            }
 
-	  thrd_entry->tran_next_wait =
-	    wait_entry_ptr->thrd_entry->tran_next_wait;
-	  wait_entry_ptr->thrd_entry->tran_next_wait = thrd_entry;
+          thrd_entry->tran_next_wait = wait_entry_ptr->thrd_entry->tran_next_wait;
+          wait_entry_ptr->thrd_entry->tran_next_wait = thrd_entry;
 
-	  thread_unlock_entry (wait_entry_ptr->thrd_entry);
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
+          thread_unlock_entry (wait_entry_ptr->thrd_entry);
+          pthread_mutex_unlock (&res_ptr->res_mutex);
 
-	  thread_suspend_wakeup_and_unlock_entry (thrd_entry,
-						  THREAD_LOCK_SUSPENDED);
-	  if (entry_ptr)
-	    {
-	      if (entry_ptr->thrd_entry->resume_status ==
-		  THREAD_RESUME_DUE_TO_INTERRUPT)
-		{
-		  /* a shutdown thread wakes me up */
-		  return LK_NOTGRANTED_DUE_ERROR;
-		}
-	      else if (entry_ptr->thrd_entry->resume_status !=
-		       THREAD_LOCK_RESUMED)
-		{
-		  /* wake up with other reason */
-		  assert (0);
+          thread_suspend_wakeup_and_unlock_entry (thrd_entry, THREAD_LOCK_SUSPENDED);
+          if (entry_ptr)
+            {
+              if (entry_ptr->thrd_entry->resume_status == THREAD_RESUME_DUE_TO_INTERRUPT)
+                {
+                  /* a shutdown thread wakes me up */
+                  return LK_NOTGRANTED_DUE_ERROR;
+                }
+              else if (entry_ptr->thrd_entry->resume_status != THREAD_LOCK_RESUMED)
+                {
+                  /* wake up with other reason */
+                  assert (0);
 
-		  return LK_NOTGRANTED_DUE_ERROR;
-		}
-	      else
-		{
-		  assert (entry_ptr->thrd_entry->resume_status ==
-			  THREAD_LOCK_RESUMED);
-		}
-	    }
+                  return LK_NOTGRANTED_DUE_ERROR;
+                }
+              else
+                {
+                  assert (entry_ptr->thrd_entry->resume_status == THREAD_LOCK_RESUMED);
+                }
+            }
 
-	  goto start;
-	}
+          goto start;
+        }
 
       /* allocate a lock entry. */
       entry_ptr = lock_alloc_entry ();
       if (entry_ptr == (LK_ENTRY *) NULL)
-	{
-	  assert (false);
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE,
-		  1, "lock heap entry");
-	  return LK_NOTGRANTED_DUE_ERROR;
-	}
+        {
+          assert (false);
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_ALLOC_RESOURCE, 1, "lock heap entry");
+          return LK_NOTGRANTED_DUE_ERROR;
+        }
       /* initialize the lock entry as blocked state */
-      lock_initialize_entry_as_blocked (entry_ptr, thread_p, tran_index,
-					res_ptr, lock);
+      lock_initialize_entry_as_blocked (entry_ptr, thread_p, tran_index, res_ptr, lock);
 
       /* append the lock request at the end of the waiter */
       prev = (LK_ENTRY *) NULL;
       for (i = res_ptr->waiter; i != (LK_ENTRY *) NULL;)
-	{
-	  prev = i;
-	  i = i->next;
-	}
+        {
+          prev = i;
+          i = i->next;
+        }
       if (prev == (LK_ENTRY *) NULL)
-	{
-	  res_ptr->waiter = entry_ptr;
-	}
+        {
+          res_ptr->waiter = entry_ptr;
+        }
       else
-	{
-	  prev->next = entry_ptr;
-	}
+        {
+          prev->next = entry_ptr;
+        }
 
       /* change total_waiters_mode (total mode of waiting waiter) */
       assert (lock >= NULL_LOCK && res_ptr->total_waiters_mode >= NULL_LOCK);
-      res_ptr->total_waiters_mode =
-	lock_Conv[lock][res_ptr->total_waiters_mode];
+      res_ptr->total_waiters_mode = lock_Conv[lock][res_ptr->total_waiters_mode];
       assert (res_ptr->total_waiters_mode != NA_LOCK);
 
       goto blocked;
 
-    }				/* end of a new lock request */
+    }                           /* end of a new lock request */
 
   /* The object exists in the hash chain &
    * I am a lock holder of the lockable object.
@@ -3216,11 +3069,11 @@ start:
   for (i = res_ptr->holder; i != (LK_ENTRY *) NULL; i = i->next)
     {
       if (i != entry_ptr)
-	{
-	  assert (i->granted_mode >= NULL_LOCK && group_mode >= NULL_LOCK);
-	  group_mode = lock_Conv[i->granted_mode][group_mode];
-	  assert (group_mode != NA_LOCK);
-	}
+        {
+          assert (i->granted_mode >= NULL_LOCK && group_mode >= NULL_LOCK);
+          group_mode = lock_Conv[i->granted_mode][group_mode];
+          assert (group_mode != NA_LOCK);
+        }
     }
 
   assert (new_mode >= NULL_LOCK && group_mode >= NULL_LOCK);
@@ -3233,8 +3086,7 @@ start:
       entry_ptr->count += 1;
 
       assert (lock >= NULL_LOCK && res_ptr->total_holders_mode >= NULL_LOCK);
-      res_ptr->total_holders_mode =
-	lock_Conv[lock][res_ptr->total_holders_mode];
+      res_ptr->total_holders_mode = lock_Conv[lock][res_ptr->total_holders_mode];
       assert (res_ptr->total_holders_mode != NA_LOCK);
 
       pthread_mutex_unlock (&res_ptr->res_mutex);
@@ -3247,17 +3099,16 @@ start:
     {
       pthread_mutex_unlock (&res_ptr->res_mutex);
       if (wait_msecs == LK_ZERO_WAIT)
-	{
-	  LK_ENTRY *p = lock_alloc_entry ();
+        {
+          LK_ENTRY *p = lock_alloc_entry ();
 
-	  if (p != NULL)
-	    {
-	      lock_initialize_entry_as_blocked (p, thread_p, tran_index,
-						res_ptr, lock);
-	      lock_set_error_for_timeout (thread_p, p);
-	      lock_free_entry (p);
-	    }
-	}
+          if (p != NULL)
+            {
+              lock_initialize_entry_as_blocked (p, thread_p, tran_index, res_ptr, lock);
+              lock_set_error_for_timeout (thread_p, p);
+              lock_free_entry (p);
+            }
+        }
       return LK_NOTGRANTED_DUE_TIMEOUT;
     }
 
@@ -3267,18 +3118,17 @@ start:
    */
   if (entry_ptr->blocked_mode != NULL_LOCK)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LK_MANY_LOCK_WAIT_TRAN,
-	      1, tran_index);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LK_MANY_LOCK_WAIT_TRAN, 1, tran_index);
       thread_lock_entry (thrd_entry);
       thread_lock_entry (entry_ptr->thrd_entry);
 
       if (entry_ptr->thrd_entry->lockwait == NULL)
-	{
-	  thread_unlock_entry (entry_ptr->thrd_entry);
-	  thread_unlock_entry (thrd_entry);
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  goto start;
-	}
+        {
+          thread_unlock_entry (entry_ptr->thrd_entry);
+          thread_unlock_entry (thrd_entry);
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          goto start;
+        }
 
       thrd_entry->tran_next_wait = entry_ptr->thrd_entry->tran_next_wait;
       entry_ptr->thrd_entry->tran_next_wait = thrd_entry;
@@ -3287,24 +3137,23 @@ start:
 
       pthread_mutex_unlock (&res_ptr->res_mutex);
 
-      thread_suspend_wakeup_and_unlock_entry (thrd_entry,
-					      THREAD_LOCK_SUSPENDED);
+      thread_suspend_wakeup_and_unlock_entry (thrd_entry, THREAD_LOCK_SUSPENDED);
       if (thrd_entry->resume_status == THREAD_RESUME_DUE_TO_INTERRUPT)
-	{
-	  /* a shutdown thread wakes me up */
-	  return LK_NOTGRANTED_DUE_ERROR;
-	}
+        {
+          /* a shutdown thread wakes me up */
+          return LK_NOTGRANTED_DUE_ERROR;
+        }
       else if (thrd_entry->resume_status != THREAD_LOCK_RESUMED)
-	{
-	  /* wake up with other reason */
-	  assert (0);
+        {
+          /* wake up with other reason */
+          assert (0);
 
-	  return LK_NOTGRANTED_DUE_ERROR;
-	}
+          return LK_NOTGRANTED_DUE_ERROR;
+        }
       else
-	{
-	  assert (thrd_entry->resume_status == THREAD_LOCK_RESUMED);
-	}
+        {
+          assert (thrd_entry->resume_status == THREAD_LOCK_RESUMED);
+        }
 
       goto start;
     }
@@ -3313,7 +3162,7 @@ start:
   entry_ptr->count += 1;
   entry_ptr->thrd_entry = thread_p;
 
-#if 1				/* TODO - FIXME_LOCK */
+#if 1                           /* TODO - FIXME_LOCK */
   assert (lock >= NULL_LOCK && res_ptr->total_holders_mode >= NULL_LOCK);
   res_ptr->total_holders_mode = lock_Conv[lock][res_ptr->total_holders_mode];
   assert (res_ptr->total_holders_mode != NA_LOCK);
@@ -3359,17 +3208,17 @@ blocked:
       lock_internal_perform_unlock_object (thread_p, entry_ptr, false);
 
       if (ret_val == LOCK_RESUMED_ABORTED)
-	{
-	  return LK_NOTGRANTED_DUE_ABORTED;
-	}
+        {
+          return LK_NOTGRANTED_DUE_ABORTED;
+        }
       else if (ret_val == LOCK_RESUMED_INTERRUPT)
-	{
-	  return LK_NOTGRANTED_DUE_ERROR;
-	}
-      else			/* LOCK_RESUMED_TIMEOUT || LOCK_SUSPENDED */
-	{
-	  return LK_NOTGRANTED_DUE_TIMEOUT;
-	}
+        {
+          return LK_NOTGRANTED_DUE_ERROR;
+        }
+      else                      /* LOCK_RESUMED_TIMEOUT || LOCK_SUSPENDED */
+        {
+          return LK_NOTGRANTED_DUE_TIMEOUT;
+        }
     }
 
   /* The transaction now got the lock on the object */
@@ -3398,8 +3247,7 @@ lock_conversion_treatement:
  *     Otherwise, just decrement the lock count for supporting isolation level.
  */
 static void
-lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
-				     LK_ENTRY * entry_ptr, int release_flag)
+lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p, LK_ENTRY * entry_ptr, int release_flag)
 {
   int tran_index;
   LK_RES *res_ptr;
@@ -3413,23 +3261,22 @@ lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
   if (lk_Gl.dump_level >= 1)
     {
       fprintf (stderr,
-	       "LK_DUMP::lk_internal_unlock_object()\n"
-	       "  tran(%2d) : oid(%2d|%3d|%3d), class_oid(%2d|%3d|%3d), LOCK(%7s)\n",
-	       entry_ptr->tran_index,
-	       entry_ptr->res_head->oid.volid,
-	       entry_ptr->res_head->oid.pageid,
-	       entry_ptr->res_head->oid.slotid,
-	       entry_ptr->res_head->class_oid.volid,
-	       entry_ptr->res_head->class_oid.pageid,
-	       entry_ptr->res_head->class_oid.slotid,
-	       LOCK_TO_LOCKMODE_STRING (entry_ptr->granted_mode));
+               "LK_DUMP::lk_internal_unlock_object()\n"
+               "  tran(%2d) : oid(%2d|%3d|%3d), class_oid(%2d|%3d|%3d), LOCK(%7s)\n",
+               entry_ptr->tran_index,
+               entry_ptr->res_head->oid.volid,
+               entry_ptr->res_head->oid.pageid,
+               entry_ptr->res_head->oid.slotid,
+               entry_ptr->res_head->class_oid.volid,
+               entry_ptr->res_head->class_oid.pageid,
+               entry_ptr->res_head->class_oid.slotid, LOCK_TO_LOCKMODE_STRING (entry_ptr->granted_mode));
     }
 #endif /* LK_DUMP */
 
   if (entry_ptr == (LK_ENTRY *) NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2,
-	      "lk_internal_unlock_object", "NULL entry pointer");
+              "lk_internal_unlock_object", "NULL entry pointer");
       return;
     }
 
@@ -3445,9 +3292,9 @@ lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
       entry_ptr->count--;
 
       if (entry_ptr->blocked_mode == NULL_LOCK && entry_ptr->count > 0)
-	{
-	  return;
-	}
+        {
+          return;
+        }
     }
 
   /* hold resource mutex */
@@ -3460,9 +3307,9 @@ lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
   while (curr != (LK_ENTRY *) NULL)
     {
       if (curr->tran_index == tran_index)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       prev = curr;
       curr = curr->next;
     }
@@ -3473,56 +3320,55 @@ lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
       prev = (LK_ENTRY *) NULL;
       curr = res_ptr->waiter;
       while (curr != (LK_ENTRY *) NULL)
-	{
-	  if (curr->tran_index == tran_index)
-	    {
-	      break;
-	    }
-	  prev = curr;
-	  curr = curr->next;
-	}
+        {
+          if (curr->tran_index == tran_index)
+            {
+              break;
+            }
+          prev = curr;
+          curr = curr->next;
+        }
 
       if (curr != (LK_ENTRY *) NULL)
-	{
-	  /* get the next lock waiter */
-	  from_whom = curr->next;
+        {
+          /* get the next lock waiter */
+          from_whom = curr->next;
 
-	  /* remove the lock entry from the waiter */
-	  if (prev == (LK_ENTRY *) NULL)
-	    {
-	      res_ptr->waiter = curr->next;
-	    }
-	  else
-	    {
-	      prev->next = curr->next;
-	    }
+          /* remove the lock entry from the waiter */
+          if (prev == (LK_ENTRY *) NULL)
+            {
+              res_ptr->waiter = curr->next;
+            }
+          else
+            {
+              prev->next = curr->next;
+            }
 
-	  /* free the lock entry */
-	  lock_free_entry (curr);
+          /* free the lock entry */
+          lock_free_entry (curr);
 
-	  if (from_whom != (LK_ENTRY *) NULL)
-	    {
-	      /* grant blocked waiter & change total_waiters_mode */
-	      lock_grant_blocked_waiter_partial (thread_p, res_ptr,
-						 from_whom);
-	    }
-	  else
-	    {
-	      /* change only total_waiters_mode */
-	      mode = NULL_LOCK;
-	      for (i = res_ptr->waiter; i != (LK_ENTRY *) NULL; i = i->next)
-		{
-		  assert (i->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
-		  mode = lock_Conv[i->blocked_mode][mode];
-		  assert (mode != NA_LOCK);
-		}
-	      res_ptr->total_waiters_mode = mode;
-	    }
-	}
+          if (from_whom != (LK_ENTRY *) NULL)
+            {
+              /* grant blocked waiter & change total_waiters_mode */
+              lock_grant_blocked_waiter_partial (thread_p, res_ptr, from_whom);
+            }
+          else
+            {
+              /* change only total_waiters_mode */
+              mode = NULL_LOCK;
+              for (i = res_ptr->waiter; i != (LK_ENTRY *) NULL; i = i->next)
+                {
+                  assert (i->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
+                  mode = lock_Conv[i->blocked_mode][mode];
+                  assert (mode != NA_LOCK);
+                }
+              res_ptr->total_waiters_mode = mode;
+            }
+        }
       else
-	{
-	  assert (false);
-	}
+        {
+          assert (false);
+        }
 
       pthread_mutex_unlock (&res_ptr->res_mutex);
 
@@ -3566,7 +3412,7 @@ lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
       mode = lock_Conv[i->granted_mode][mode];
       assert (mode != NA_LOCK);
 
-#if 1				/* TODO - FIXME_LOCK */
+#if 1                           /* TODO - FIXME_LOCK */
       assert (i->blocked_mode >= NULL_LOCK && mode >= NULL_LOCK);
       mode = lock_Conv[i->blocked_mode][mode];
       assert (mode != NA_LOCK);
@@ -3611,8 +3457,7 @@ lock_internal_perform_unlock_object (THREAD_ENTRY * thread_p,
  *     'from_tran_index' transaction waits for 'to_tran_index' transaction.
  */
 static int
-lock_add_WFG_edge (int from_tran_index, int to_tran_index,
-		   int holder_flag, INT64 edge_wait_stime)
+lock_add_WFG_edge (int from_tran_index, int to_tran_index, int holder_flag, INT64 edge_wait_stime)
 {
   int prev, curr;
   int i;
@@ -3621,8 +3466,7 @@ lock_add_WFG_edge (int from_tran_index, int to_tran_index,
 
   /* check if the transactions has been selected as victims */
   /* Note that the transactions might be old deadlock victims */
-  if (lk_Gl.TWFG_node[from_tran_index].DL_victim == true
-      || lk_Gl.TWFG_node[to_tran_index].DL_victim == true)
+  if (lk_Gl.TWFG_node[from_tran_index].DL_victim == true || lk_Gl.TWFG_node[to_tran_index].DL_victim == true)
     {
       return NO_ERROR;
     }
@@ -3634,44 +3478,40 @@ lock_add_WFG_edge (int from_tran_index, int to_tran_index,
     {
       /* a new transaction started */
       if (lk_Gl.TWFG_node[from_tran_index].first_edge != -1)
-	{
-	  prev = -1;
-	  curr = lk_Gl.TWFG_node[from_tran_index].first_edge;
-	  while (curr != -1)
-	    {
-	      prev = curr;
-	      curr = lk_Gl.TWFG_edge[curr].next;
-	    }
-	  lk_Gl.TWFG_edge[prev].next = lk_Gl.TWFG_free_edge_idx;
-	  lk_Gl.TWFG_free_edge_idx =
-	    lk_Gl.TWFG_node[from_tran_index].first_edge;
-	  lk_Gl.TWFG_node[from_tran_index].first_edge = -1;
-	}
+        {
+          prev = -1;
+          curr = lk_Gl.TWFG_node[from_tran_index].first_edge;
+          while (curr != -1)
+            {
+              prev = curr;
+              curr = lk_Gl.TWFG_edge[curr].next;
+            }
+          lk_Gl.TWFG_edge[prev].next = lk_Gl.TWFG_free_edge_idx;
+          lk_Gl.TWFG_free_edge_idx = lk_Gl.TWFG_node[from_tran_index].first_edge;
+          lk_Gl.TWFG_node[from_tran_index].first_edge = -1;
+        }
       lk_Gl.TWFG_node[from_tran_index].checked_by_deadlock_detector = true;
-      lk_Gl.TWFG_node[from_tran_index].tran_edge_seq_num =
-	lk_Gl.global_edge_seq_num;
+      lk_Gl.TWFG_node[from_tran_index].tran_edge_seq_num = lk_Gl.global_edge_seq_num;
     }
 
   if (lk_Gl.TWFG_node[to_tran_index].checked_by_deadlock_detector == false)
     {
       /* a new transaction started */
       if (lk_Gl.TWFG_node[to_tran_index].first_edge != -1)
-	{
-	  prev = -1;
-	  curr = lk_Gl.TWFG_node[to_tran_index].first_edge;
-	  while (curr != -1)
-	    {
-	      prev = curr;
-	      curr = lk_Gl.TWFG_edge[curr].next;
-	    }
-	  lk_Gl.TWFG_edge[prev].next = lk_Gl.TWFG_free_edge_idx;
-	  lk_Gl.TWFG_free_edge_idx =
-	    lk_Gl.TWFG_node[to_tran_index].first_edge;
-	  lk_Gl.TWFG_node[to_tran_index].first_edge = -1;
-	}
+        {
+          prev = -1;
+          curr = lk_Gl.TWFG_node[to_tran_index].first_edge;
+          while (curr != -1)
+            {
+              prev = curr;
+              curr = lk_Gl.TWFG_edge[curr].next;
+            }
+          lk_Gl.TWFG_edge[prev].next = lk_Gl.TWFG_free_edge_idx;
+          lk_Gl.TWFG_free_edge_idx = lk_Gl.TWFG_node[to_tran_index].first_edge;
+          lk_Gl.TWFG_node[to_tran_index].first_edge = -1;
+        }
       lk_Gl.TWFG_node[to_tran_index].checked_by_deadlock_detector = true;
-      lk_Gl.TWFG_node[to_tran_index].tran_edge_seq_num =
-	lk_Gl.global_edge_seq_num;
+      lk_Gl.TWFG_node[to_tran_index].tran_edge_seq_num = lk_Gl.global_edge_seq_num;
     }
 
   /* NOTE the following description..
@@ -3682,49 +3522,46 @@ lock_add_WFG_edge (int from_tran_index, int to_tran_index,
    */
 
   if (lk_Gl.TWFG_free_edge_idx == -1)
-    {				/* too many WFG edges */
+    {                           /* too many WFG edges */
       if (lk_Gl.max_TWFG_edge == LK_MIN_TWFG_EDGE_COUNT)
-	{
-	  lk_Gl.max_TWFG_edge = LK_MID_TWFG_EDGE_COUNT;
-	  for (i = LK_MIN_TWFG_EDGE_COUNT; i < lk_Gl.max_TWFG_edge; i++)
-	    {
-	      lk_Gl.TWFG_edge[i].to_tran_index = -1;
-	      lk_Gl.TWFG_edge[i].next = (i + 1);
-	    }
-	  lk_Gl.TWFG_edge[lk_Gl.max_TWFG_edge - 1].next = -1;
-	  lk_Gl.TWFG_free_edge_idx = LK_MIN_TWFG_EDGE_COUNT;
-	}
+        {
+          lk_Gl.max_TWFG_edge = LK_MID_TWFG_EDGE_COUNT;
+          for (i = LK_MIN_TWFG_EDGE_COUNT; i < lk_Gl.max_TWFG_edge; i++)
+            {
+              lk_Gl.TWFG_edge[i].to_tran_index = -1;
+              lk_Gl.TWFG_edge[i].next = (i + 1);
+            }
+          lk_Gl.TWFG_edge[lk_Gl.max_TWFG_edge - 1].next = -1;
+          lk_Gl.TWFG_free_edge_idx = LK_MIN_TWFG_EDGE_COUNT;
+        }
       else if (lk_Gl.max_TWFG_edge == LK_MID_TWFG_EDGE_COUNT)
-	{
-	  temp_ptr = (char *) lk_Gl.TWFG_edge;
-	  lk_Gl.max_TWFG_edge = LK_MAX_TWFG_EDGE_COUNT;
-	  lk_Gl.TWFG_edge =
-	    (LK_WFG_EDGE *) malloc (SIZEOF_LK_WFG_EDGE * lk_Gl.max_TWFG_edge);
-	  if (lk_Gl.TWFG_edge == (LK_WFG_EDGE *) NULL)
-	    {
-	      assert (false);
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      (SIZEOF_LK_WFG_EDGE * lk_Gl.max_TWFG_edge));
-	      return ER_OUT_OF_VIRTUAL_MEMORY;	/* no method */
-	    }
-	  (void) memcpy ((char *) lk_Gl.TWFG_edge, temp_ptr,
-			 (SIZEOF_LK_WFG_EDGE * LK_MID_TWFG_EDGE_COUNT));
-	  for (i = LK_MID_TWFG_EDGE_COUNT; i < lk_Gl.max_TWFG_edge; i++)
-	    {
-	      lk_Gl.TWFG_edge[i].to_tran_index = -1;
-	      lk_Gl.TWFG_edge[i].next = (i + 1);
-	    }
-	  lk_Gl.TWFG_edge[lk_Gl.max_TWFG_edge - 1].next = -1;
-	  lk_Gl.TWFG_free_edge_idx = LK_MID_TWFG_EDGE_COUNT;
-	}
+        {
+          temp_ptr = (char *) lk_Gl.TWFG_edge;
+          lk_Gl.max_TWFG_edge = LK_MAX_TWFG_EDGE_COUNT;
+          lk_Gl.TWFG_edge = (LK_WFG_EDGE *) malloc (SIZEOF_LK_WFG_EDGE * lk_Gl.max_TWFG_edge);
+          if (lk_Gl.TWFG_edge == (LK_WFG_EDGE *) NULL)
+            {
+              assert (false);
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_OUT_OF_VIRTUAL_MEMORY, 1, (SIZEOF_LK_WFG_EDGE * lk_Gl.max_TWFG_edge));
+              return ER_OUT_OF_VIRTUAL_MEMORY;  /* no method */
+            }
+          (void) memcpy ((char *) lk_Gl.TWFG_edge, temp_ptr, (SIZEOF_LK_WFG_EDGE * LK_MID_TWFG_EDGE_COUNT));
+          for (i = LK_MID_TWFG_EDGE_COUNT; i < lk_Gl.max_TWFG_edge; i++)
+            {
+              lk_Gl.TWFG_edge[i].to_tran_index = -1;
+              lk_Gl.TWFG_edge[i].next = (i + 1);
+            }
+          lk_Gl.TWFG_edge[lk_Gl.max_TWFG_edge - 1].next = -1;
+          lk_Gl.TWFG_free_edge_idx = LK_MID_TWFG_EDGE_COUNT;
+        }
       else
-	{
+        {
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE, "So many TWFG edges are used..\n");
+          er_log_debug (ARG_FILE_LINE, "So many TWFG edges are used..\n");
 #endif /* RYE_DEBUG */
-	  return ER_FAILED;	/* no method */
-	}
+          return ER_FAILED;     /* no method */
+        }
     }
 
   /* allocate free WFG edge */
@@ -3738,8 +3575,7 @@ lock_add_WFG_edge (int from_tran_index, int to_tran_index,
   lk_Gl.TWFG_edge[alloc_idx].edge_wait_stime = edge_wait_stime;
 
   /* connect the WFG edge into WFG */
-  lk_Gl.TWFG_edge[alloc_idx].next =
-    lk_Gl.TWFG_node[from_tran_index].first_edge;
+  lk_Gl.TWFG_edge[alloc_idx].next = lk_Gl.TWFG_node[from_tran_index].first_edge;
   lk_Gl.TWFG_node[from_tran_index].first_edge = alloc_idx;
 
   return NO_ERROR;
@@ -3784,7 +3620,7 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
   int next_node;
   int *tran_index_in_cycle = NULL;
 
-  assert (false);		/* is impossible */
+  assert (false);               /* is impossible */
 
   /* simple notation */
   TWFG_node = lk_Gl.TWFG_node;
@@ -3803,83 +3639,79 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
   else
     {
       if (TWFG_node[t].checked_by_deadlock_detector == false
-	  || TWFG_node[t].thrd_wait_stime == 0
-	  || (TWFG_node[t].thrd_wait_stime >
-	      TWFG_edge[TWFG_node[t].current].edge_wait_stime))
-	{
-	  /* old transaction, not lockwait state, or incorrect WFG edge */
-	  /* remove all outgoing edges */
-	  TWFG_node[t].first_edge = -1;
-	  TWFG_node[t].current = -1;
-	  /* remove incoming edge */
-	  TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
-	  false_dd_cycle = true;
-	}
+          || TWFG_node[t].thrd_wait_stime == 0
+          || (TWFG_node[t].thrd_wait_stime > TWFG_edge[TWFG_node[t].current].edge_wait_stime))
+        {
+          /* old transaction, not lockwait state, or incorrect WFG edge */
+          /* remove all outgoing edges */
+          TWFG_node[t].first_edge = -1;
+          TWFG_node[t].current = -1;
+          /* remove incoming edge */
+          TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
+          false_dd_cycle = true;
+        }
       else
-	{
-	  if (TWFG_edge[TWFG_node[s].current].edge_seq_num
-	      < TWFG_node[t].tran_edge_seq_num)
-	    {
-	      /* old WFG edge : remove it */
-	      TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
-	      false_dd_cycle = true;
-	    }
-	  else
-	    {
-	      tot_WFG_nodes += 1;
-	    }
-	}
+        {
+          if (TWFG_edge[TWFG_node[s].current].edge_seq_num < TWFG_node[t].tran_edge_seq_num)
+            {
+              /* old WFG edge : remove it */
+              TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
+              false_dd_cycle = true;
+            }
+          else
+            {
+              tot_WFG_nodes += 1;
+            }
+        }
     }
   for (v = s; v != t;)
     {
       u = lk_Gl.TWFG_node[v].ancestor;
       if (TWFG_node[v].current == -1)
-	{
-	  /* old WFG edge : remove it */
-	  TWFG_edge[TWFG_node[u].current].to_tran_index = -2;
-	  false_dd_cycle = true;
-	}
+        {
+          /* old WFG edge : remove it */
+          TWFG_edge[TWFG_node[u].current].to_tran_index = -2;
+          false_dd_cycle = true;
+        }
       else
-	{
-	  if (TWFG_node[v].checked_by_deadlock_detector == false
-	      || TWFG_node[v].thrd_wait_stime == 0
-	      || (TWFG_node[v].thrd_wait_stime >
-		  TWFG_edge[TWFG_node[v].current].edge_wait_stime))
-	    {
-	      /* old transaction, not lockwait state, or incorrect WFG edge */
-	      /* remove all outgoing edges */
-	      TWFG_node[v].first_edge = -1;
-	      TWFG_node[v].current = -1;
-	      /* remove incoming edge */
-	      TWFG_edge[TWFG_node[u].current].to_tran_index = -2;
-	      false_dd_cycle = true;
-	    }
-	  else
-	    {
-	      if (TWFG_edge[TWFG_node[u].current].edge_seq_num
-		  < TWFG_node[v].tran_edge_seq_num)
-		{
-		  /* old WFG edge : remove it */
-		  TWFG_edge[TWFG_node[u].current].to_tran_index = -2;
-		  false_dd_cycle = true;
-		}
-	      else
-		{
-		  tot_WFG_nodes += 1;
-		}
-	    }
-	}
+        {
+          if (TWFG_node[v].checked_by_deadlock_detector == false
+              || TWFG_node[v].thrd_wait_stime == 0
+              || (TWFG_node[v].thrd_wait_stime > TWFG_edge[TWFG_node[v].current].edge_wait_stime))
+            {
+              /* old transaction, not lockwait state, or incorrect WFG edge */
+              /* remove all outgoing edges */
+              TWFG_node[v].first_edge = -1;
+              TWFG_node[v].current = -1;
+              /* remove incoming edge */
+              TWFG_edge[TWFG_node[u].current].to_tran_index = -2;
+              false_dd_cycle = true;
+            }
+          else
+            {
+              if (TWFG_edge[TWFG_node[u].current].edge_seq_num < TWFG_node[v].tran_edge_seq_num)
+                {
+                  /* old WFG edge : remove it */
+                  TWFG_edge[TWFG_node[u].current].to_tran_index = -2;
+                  false_dd_cycle = true;
+                }
+              else
+                {
+                  tot_WFG_nodes += 1;
+                }
+            }
+        }
       v = u;
     }
 
   if (false_dd_cycle == true)
-    {				/* clear deadlock cycle */
+    {                           /* clear deadlock cycle */
       for (v = s; v != t;)
-	{
-	  w = TWFG_node[v].ancestor;
-	  TWFG_node[v].ancestor = -1;
-	  v = w;
-	}
+        {
+          w = TWFG_node[v].ancestor;
+          TWFG_node[v].ancestor = -1;
+          v = w;
+        }
       return;
     }
 
@@ -3896,44 +3728,41 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
     {
       tran_index_set = (int *) malloc (sizeof (int) * num_WFG_nodes);
       if (tran_index_set == NULL)
-	{
-	  assert (false);
-	  num_WFG_nodes = 20;
-	  tran_index_set = &tran_index_area[0];
-	}
+        {
+          assert (false);
+          num_WFG_nodes = 20;
+          tran_index_set = &tran_index_area[0];
+        }
     }
   WFG_nidx = 0;
 
   if (TWFG_node[t].checked_by_deadlock_detector == false)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "transaction(index=%d) is old in deadlock cycle\n", t);
+      er_log_debug (ARG_FILE_LINE, "transaction(index=%d) is old in deadlock cycle\n", t);
     }
 #endif /* RYE_DEBUG */
   if (TWFG_edge[TWFG_node[s].current].holder_flag)
     {
       tranid = logtb_find_tranid (t);
       if (logtb_is_active (thread_p, tranid) == false)
-	{
-	  victims[victim_count].tran_index = NULL_TRAN_INDEX;
-	  inact_trans_found = true;
+        {
+          victims[victim_count].tran_index = NULL_TRAN_INDEX;
+          inact_trans_found = true;
 #if defined(RYE_DEBUG)
-	  er_log_debug (ARG_FILE_LINE,
-			"Inactive transaction is found in a deadlock cycle\n"
-			"(tran_index=%d, tranid=%d, state=%s)\n",
-			t, tranid, log_state_string (logtb_find_state (t)));
-	  tran_index_set[WFG_nidx] = t;
-	  WFG_nidx += 1;
+          er_log_debug (ARG_FILE_LINE,
+                        "Inactive transaction is found in a deadlock cycle\n"
+                        "(tran_index=%d, tranid=%d, state=%s)\n", t, tranid, log_state_string (logtb_find_state (t)));
+          tran_index_set[WFG_nidx] = t;
+          WFG_nidx += 1;
 #endif /* RYE_DEBUG */
-	}
+        }
       else
-	{
-	  victims[victim_count].tran_index = t;
-	  victims[victim_count].tranid = tranid;
-	  victims[victim_count].can_timeout =
-	    LK_CAN_TIMEOUT (logtb_find_wait_msecs (t));
-	  lock_holder_found = true;
-	}
+        {
+          victims[victim_count].tran_index = t;
+          victims[victim_count].tranid = tranid;
+          victims[victim_count].can_timeout = LK_CAN_TIMEOUT (logtb_find_wait_msecs (t));
+          lock_holder_found = true;
+        }
     }
   else
     {
@@ -3962,29 +3791,22 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
 
       ptr = cycle_info_string;
 
-      for (i = 0, v = s; i < num_tran_in_cycle;
-	   i++, v = TWFG_node[v].ancestor)
-	{
-	  (void) logtb_find_client_name_host_pid (v,
-						  &client_prog_name,
-						  &client_user_name,
-						  &client_host_name,
-						  &client_pid);
+      for (i = 0, v = s; i < num_tran_in_cycle; i++, v = TWFG_node[v].ancestor)
+        {
+          (void) logtb_find_client_name_host_pid (v,
+                                                  &client_prog_name, &client_user_name, &client_host_name, &client_pid);
 
-	  n = snprintf (ptr, unit_size, "%s%s@%s|%s(%d)",
-			((v == s) ? "" : ", "), client_user_name,
-			client_host_name, client_prog_name, client_pid);
-	  ptr += n;
-	  assert_release (ptr <
-			  cycle_info_string + unit_size * num_tran_in_cycle);
+          n = snprintf (ptr, unit_size, "%s%s@%s|%s(%d)",
+                        ((v == s) ? "" : ", "), client_user_name, client_host_name, client_prog_name, client_pid);
+          ptr += n;
+          assert_release (ptr < cycle_info_string + unit_size * num_tran_in_cycle);
 
-	  tran_index_in_cycle[i] = v;
-	}
+          tran_index_in_cycle[i] = v;
+        }
     }
 
   er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-	  ER_LK_DEADLOCK_CYCLE_DETECTED, 1,
-	  (cycle_info_string) ? cycle_info_string : "");
+          ER_LK_DEADLOCK_CYCLE_DETECTED, 1, (cycle_info_string) ? cycle_info_string : "");
 
   if (cycle_info_string != NULL)
     {
@@ -3995,50 +3817,47 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
     {
 #if defined(RYE_DEBUG)
       if (TWFG_node[v].checked_by_deadlock_detector == false)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"transaction(index=%d) is old in deadlock cycle\n",
-			v);
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "transaction(index=%d) is old in deadlock cycle\n", v);
+        }
 #endif /* RYE_DEBUG */
       if (TWFG_node[v].candidate == true)
-	{
-	  tranid = logtb_find_tranid (v);
-	  if (logtb_is_active (thread_p, tranid) == false)
-	    {
-	      inact_trans_found = true;
+        {
+          tranid = logtb_find_tranid (v);
+          if (logtb_is_active (thread_p, tranid) == false)
+            {
+              inact_trans_found = true;
 #if defined(RYE_DEBUG)
-	      er_log_debug (ARG_FILE_LINE,
-			    "Inactive transaction is found in a deadlock cycle\n"
-			    "(tran_index=%d, tranid=%d, state=%s)\n",
-			    v, tranid,
-			    log_state_string (logtb_find_state (v)));
-	      tran_index_set[WFG_nidx] = v;
-	      WFG_nidx += 1;
+              er_log_debug (ARG_FILE_LINE,
+                            "Inactive transaction is found in a deadlock cycle\n"
+                            "(tran_index=%d, tranid=%d, state=%s)\n",
+                            v, tranid, log_state_string (logtb_find_state (v)));
+              tran_index_set[WFG_nidx] = v;
+              WFG_nidx += 1;
 #endif /* RYE_DEBUG */
-	    }
-	  else
-	    {
-	      lock_holder_found = true;
-	      can_timeout = LK_CAN_TIMEOUT (logtb_find_wait_msecs (v));
-	      if (victims[victim_count].tran_index == NULL_TRAN_INDEX
-		  || (victims[victim_count].can_timeout == false
-		      && can_timeout == true)
-		  || (victims[victim_count].can_timeout == can_timeout
-		      && LK_ISYOUNGER (tranid, victims[victim_count].tranid)))
-		{
-		  victims[victim_count].tran_index = v;
-		  victims[victim_count].tranid = tranid;
-		  victims[victim_count].can_timeout = can_timeout;
-		}
-	    }
-	}
+            }
+          else
+            {
+              lock_holder_found = true;
+              can_timeout = LK_CAN_TIMEOUT (logtb_find_wait_msecs (v));
+              if (victims[victim_count].tran_index == NULL_TRAN_INDEX
+                  || (victims[victim_count].can_timeout == false
+                      && can_timeout == true)
+                  || (victims[victim_count].can_timeout == can_timeout
+                      && LK_ISYOUNGER (tranid, victims[victim_count].tranid)))
+                {
+                  victims[victim_count].tran_index = v;
+                  victims[victim_count].tranid = tranid;
+                  victims[victim_count].can_timeout = can_timeout;
+                }
+            }
+        }
 #if defined(RYE_DEBUG)
       else
-	{			/* TWFG_node[v].candidate == false */
-	  tran_index_set[WFG_nidx] = v;
-	  WFG_nidx += 1;
-	}
+        {                       /* TWFG_node[v].candidate == false */
+          tran_index_set[WFG_nidx] = v;
+          WFG_nidx += 1;
+        }
 #endif
       v = TWFG_node[v].ancestor;
     }
@@ -4046,13 +3865,10 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
   if (victims[victim_count].tran_index != NULL_TRAN_INDEX)
     {
 #if defined(RYE_DEBUG)
-      if (TWFG_node[victims[victim_count].tran_index].
-	  checked_by_deadlock_detector == false)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"victim(index=%d) is old in deadlock cycle\n",
-			victims[victim_count].tran_index);
-	}
+      if (TWFG_node[victims[victim_count].tran_index].checked_by_deadlock_detector == false)
+        {
+          er_log_debug (ARG_FILE_LINE, "victim(index=%d) is old in deadlock cycle\n", victims[victim_count].tran_index);
+        }
 #endif /* RYE_DEBUG */
       TWFG_node[victims[victim_count].tran_index].current = -1;
       victims[victim_count].tran_index_in_cycle = tran_index_in_cycle;
@@ -4064,67 +3880,60 @@ lock_select_deadlock_victim (THREAD_ENTRY * thread_p, int s, int t)
       /* We can't find active holder.
        * In this case, this cycle is regarded as a false deadlock.
        */
-      for (i = 0, v = s; i < num_tran_in_cycle;
-	   v = TWFG_node[v].ancestor, i++)
-	{
-	  assert_release (TWFG_node[v].current >= 0
-			  && TWFG_node[v].current < lk_Gl.max_TWFG_edge);
+      for (i = 0, v = s; i < num_tran_in_cycle; v = TWFG_node[v].ancestor, i++)
+        {
+          assert_release (TWFG_node[v].current >= 0 && TWFG_node[v].current < lk_Gl.max_TWFG_edge);
 
-	  next_node = TWFG_edge[TWFG_node[v].current].to_tran_index;
+          next_node = TWFG_edge[TWFG_node[v].current].to_tran_index;
 
-	  if (TWFG_node[next_node].checked_by_deadlock_detector == false
-	      || TWFG_node[next_node].thrd_wait_stime == 0
-	      || TWFG_node[next_node].thrd_wait_stime >
-	      TWFG_edge[TWFG_node[next_node].current].edge_wait_stime)
-	    {
-	      /* The edge from v to next_node is removed(false edge). */
-	      TWFG_node[next_node].first_edge = -1;
-	      TWFG_node[next_node].current = -1;
-	      TWFG_edge[TWFG_node[v].current].to_tran_index = -2;
-	      TWFG_node[v].current = TWFG_edge[TWFG_node[v].current].next;
-	      break;
-	    }
-	}
+          if (TWFG_node[next_node].checked_by_deadlock_detector == false
+              || TWFG_node[next_node].thrd_wait_stime == 0
+              || TWFG_node[next_node].thrd_wait_stime > TWFG_edge[TWFG_node[next_node].current].edge_wait_stime)
+            {
+              /* The edge from v to next_node is removed(false edge). */
+              TWFG_node[next_node].first_edge = -1;
+              TWFG_node[next_node].current = -1;
+              TWFG_edge[TWFG_node[v].current].to_tran_index = -2;
+              TWFG_node[v].current = TWFG_edge[TWFG_node[v].current].next;
+              break;
+            }
+        }
 
       if (i == num_tran_in_cycle)
-	{
-	  /* can't find false edge */
-	  TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
-	  TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
-	}
+        {
+          /* can't find false edge */
+          TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
+          TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
+        }
 
       if (tran_index_in_cycle != NULL)
-	{
-	  free_and_init (tran_index_in_cycle);
-	}
+        {
+          free_and_init (tran_index_in_cycle);
+        }
 
 #if defined(RYE_DEBUG)
       er_log_debug (ARG_FILE_LINE, "No victim in deadlock cycle....\n");
       if (lock_holder_found == false)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"Any Lock holder is not found in deadlock cycle.\n");
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "Any Lock holder is not found in deadlock cycle.\n");
+        }
       if (inact_trans_found == true)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"Inactive transactions are found in deadlock cycle.\n");
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "Inactive transactions are found in deadlock cycle.\n");
+        }
       er_log_debug (ARG_FILE_LINE,
-		    "total_edges=%d, free_edge_idx=%d, global_edge_seq=%d\n",
-		    lk_Gl.max_TWFG_edge, lk_Gl.TWFG_free_edge_idx,
-		    lk_Gl.global_edge_seq_num);
+                    "total_edges=%d, free_edge_idx=%d, global_edge_seq=%d\n",
+                    lk_Gl.max_TWFG_edge, lk_Gl.TWFG_free_edge_idx, lk_Gl.global_edge_seq_num);
       er_log_debug (ARG_FILE_LINE,
-		    "# of WFG nodes in deadlock cycle = %d (%d printed)\n",
-		    tot_WFG_nodes, num_WFG_nodes);
+                    "# of WFG nodes in deadlock cycle = %d (%d printed)\n", tot_WFG_nodes, num_WFG_nodes);
       for (WFG_nidx = 0; WFG_nidx < num_WFG_nodes; WFG_nidx++)
-	{
-	  er_log_debug (ARG_FILE_LINE, "%3d ", tran_index_set[WFG_nidx]);
-	  if ((WFG_nidx + 1) == num_WFG_nodes || (WFG_nidx % 10) == 9)
-	    {
-	      er_log_debug (ARG_FILE_LINE, "\n");
-	    }
-	}
+        {
+          er_log_debug (ARG_FILE_LINE, "%3d ", tran_index_set[WFG_nidx]);
+          if ((WFG_nidx + 1) == num_WFG_nodes || (WFG_nidx % 10) == 9)
+            {
+              er_log_debug (ARG_FILE_LINE, "\n");
+            }
+        }
 #endif /* RYE_DEBUG */
     }
 
@@ -4160,50 +3969,37 @@ lock_dump_deadlock_victims (THREAD_ENTRY * thread_p, FILE * outfile)
   fprintf (outfile, "*** Deadlock Victim Information ***\n");
   fprintf (outfile, "Victim count = %d\n", victim_count);
   /* print aborted transactions (deadlock victims) */
-  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
-				    MSGCAT_SET_LOCK,
-				    MSGCAT_LK_DEADLOCK_ABORT_HDR));
+  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_DEADLOCK_ABORT_HDR));
   count = 0;
   for (k = 0; k < victim_count; k++)
     {
       if (!victims[k].can_timeout)
-	{
-	  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
-					    MSGCAT_SET_LOCK,
-					    MSGCAT_LK_DEADLOCK_ABORT),
-		   victims[k].tran_index);
-	  if ((count % 10) == 9)
-	    {
-	      fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
-						MSGCAT_SET_LOCK,
-						MSGCAT_LK_NEWLINE));
-	    }
-	  count++;
-	}
+        {
+          fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
+                                            MSGCAT_SET_LOCK, MSGCAT_LK_DEADLOCK_ABORT), victims[k].tran_index);
+          if ((count % 10) == 9)
+            {
+              fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
+            }
+          count++;
+        }
     }
-  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
-				    MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
+  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
   /* print timeout transactions (deadlock victims) */
-  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
-				    MSGCAT_SET_LOCK,
-				    MSGCAT_LK_DEADLOCK_TIMEOUT_HDR));
+  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_DEADLOCK_TIMEOUT_HDR));
   count = 0;
   for (k = 0; k < victim_count; k++)
     {
       if (victims[k].can_timeout)
-	{
-	  fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
-					    MSGCAT_SET_LOCK,
-					    MSGCAT_LK_DEADLOCK_TIMEOUT),
-		   victims[k].tran_index);
-	  if ((count % 10) == 9)
-	    {
-	      fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
-						MSGCAT_SET_LOCK,
-						MSGCAT_LK_NEWLINE));
-	    }
-	  count++;
-	}
+        {
+          fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE,
+                                            MSGCAT_SET_LOCK, MSGCAT_LK_DEADLOCK_TIMEOUT), victims[k].tran_index);
+          if ((count % 10) == 9)
+            {
+              fprintf (outfile, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
+            }
+          count++;
+        }
     }
 
   xlock_dump (thread_p, outfile);
@@ -4279,7 +4075,7 @@ static void
 lock_dump_resource (THREAD_ENTRY * thread_p, FILE * outfp, LK_RES * res_ptr)
 {
   LK_ENTRY *entry_ptr;
-  char *classname;		/* Name of the class */
+  char *classname;              /* Name of the class */
   int num_holders, num_blocked_holders, num_waiters;
   char time_val[CTIME_MAX];
   int val_type;
@@ -4298,200 +4094,167 @@ lock_dump_resource (THREAD_ENTRY * thread_p, FILE * outfp, LK_RES * res_ptr)
       class_oid = DB_GET_OID (&res_ptr->val);
 
       fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK, MSGCAT_LK_RES_OID),
-	       class_oid->volid, class_oid->pageid, class_oid->slotid);
+                                      MSGCAT_SET_LOCK, MSGCAT_LK_RES_OID),
+               class_oid->volid, class_oid->pageid, class_oid->slotid);
 
       classname = heap_get_class_name (thread_p, class_oid);
       if (classname == NULL)
-	{
-	  /* We must stop processing if an interrupt occurs */
-	  if (er_errid () == ER_INTERRUPTED)
-	    {
-	      return;
-	    }
-	}
+        {
+          /* We must stop processing if an interrupt occurs */
+          if (er_errid () == ER_INTERRUPTED)
+            {
+              return;
+            }
+        }
       else
-	{
-	  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-					  MSGCAT_SET_LOCK,
-					  MSGCAT_LK_RES_CLASS_TYPE),
-		   classname);
-	  free_and_init (classname);
-	}
+        {
+          fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_CLASS_TYPE), classname);
+          free_and_init (classname);
+        }
       break;
 
     case DB_TYPE_VARCHAR:
       fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_VALUE),
-	       DB_GET_STRING (&res_ptr->val));
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_VALUE_TYPE), "STRING");
+                                      MSGCAT_SET_LOCK, MSGCAT_LK_RES_VALUE), DB_GET_STRING (&res_ptr->val));
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_VALUE_TYPE), "STRING");
       break;
 
     case DB_TYPE_INTEGER:
       sprintf (tmpbuf, "%d", DB_GET_INT (&res_ptr->val));
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_VALUE), tmpbuf);
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_VALUE), tmpbuf);
 
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_VALUE_TYPE), "INTEGER");
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_VALUE_TYPE), "INTEGER");
       break;
 
     case DB_TYPE_BIGINT:
       sprintf (tmpbuf, "%ld", DB_GET_BIGINT (&res_ptr->val));
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_VALUE), tmpbuf);
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_VALUE), tmpbuf);
 
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_VALUE_TYPE), "BIGINT");
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_VALUE_TYPE), "BIGINT");
       break;
 
     default:
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_UNKNOWN_TYPE));
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_UNKNOWN_TYPE));
     }
 
   /* dump total modes of holders and waiters */
   fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				  MSGCAT_SET_LOCK,
-				  MSGCAT_LK_RES_TOTAL_MODE),
-	   LOCK_TO_LOCKMODE_STRING (res_ptr->total_holders_mode),
-	   LOCK_TO_LOCKMODE_STRING (res_ptr->total_waiters_mode));
+                                  MSGCAT_SET_LOCK,
+                                  MSGCAT_LK_RES_TOTAL_MODE),
+           LOCK_TO_LOCKMODE_STRING (res_ptr->total_holders_mode),
+           LOCK_TO_LOCKMODE_STRING (res_ptr->total_waiters_mode));
 
   num_holders = num_blocked_holders = 0;
   if (res_ptr->holder != (LK_ENTRY *) NULL)
     {
       entry_ptr = res_ptr->holder;
       while (entry_ptr != NULL)
-	{
-	  if (entry_ptr->blocked_mode == NULL_LOCK)
-	    {
-	      num_holders++;
-	    }
-	  else
-	    {
-	      num_blocked_holders++;
-	    }
-	  entry_ptr = entry_ptr->next;
-	}
+        {
+          if (entry_ptr->blocked_mode == NULL_LOCK)
+            {
+              num_holders++;
+            }
+          else
+            {
+              num_blocked_holders++;
+            }
+          entry_ptr = entry_ptr->next;
+        }
     }
   num_waiters = 0;
   if (res_ptr->waiter != (LK_ENTRY *) NULL)
     {
       entry_ptr = res_ptr->waiter;
       while (entry_ptr != (LK_ENTRY *) NULL)
-	{
-	  num_waiters++;
-	  entry_ptr = entry_ptr->next;
-	}
+        {
+          num_waiters++;
+          entry_ptr = entry_ptr->next;
+        }
     }
 
   fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				  MSGCAT_SET_LOCK,
-				  MSGCAT_LK_RES_LOCK_COUNT), num_holders,
-	   num_blocked_holders, num_waiters);
+                                  MSGCAT_SET_LOCK,
+                                  MSGCAT_LK_RES_LOCK_COUNT), num_holders, num_blocked_holders, num_waiters);
 
   /* dump holders */
   if (num_holders > 0)
     {
       /* dump non blocked holders */
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_NON_BLOCKED_HOLDER_HEAD));
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_NON_BLOCKED_HOLDER_HEAD));
       entry_ptr = res_ptr->holder;
       while (entry_ptr != (LK_ENTRY *) NULL)
-	{
-	  if (entry_ptr->blocked_mode == NULL_LOCK)
-	    {
-	      fprintf (outfp,
-		       msgcat_message (MSGCAT_CATALOG_RYE,
-				       MSGCAT_SET_LOCK,
-				       MSGCAT_LK_RES_NON_BLOCKED_HOLDER_ENTRY),
-		       "", entry_ptr->tran_index,
-		       LOCK_TO_LOCKMODE_STRING (entry_ptr->granted_mode),
-		       entry_ptr->count);
-	    }
-	  entry_ptr = entry_ptr->next;
-	}
+        {
+          if (entry_ptr->blocked_mode == NULL_LOCK)
+            {
+              fprintf (outfp,
+                       msgcat_message (MSGCAT_CATALOG_RYE,
+                                       MSGCAT_SET_LOCK,
+                                       MSGCAT_LK_RES_NON_BLOCKED_HOLDER_ENTRY),
+                       "", entry_ptr->tran_index, LOCK_TO_LOCKMODE_STRING (entry_ptr->granted_mode), entry_ptr->count);
+            }
+          entry_ptr = entry_ptr->next;
+        }
     }
 
   if (num_blocked_holders > 0)
     {
       /* dump blocked holders */
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_BLOCKED_HOLDER_HEAD));
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_BLOCKED_HOLDER_HEAD));
       entry_ptr = res_ptr->holder;
       while (entry_ptr != (LK_ENTRY *) NULL)
-	{
-	  if (entry_ptr->blocked_mode != NULL_LOCK)
-	    {
-	      time_t stime =
-		(time_t) (entry_ptr->thrd_entry->lockwait_stime / 1000LL);
-	      if (ctime_r (&stime, time_val) == NULL)
-		{
-		  strcpy (time_val, "???");
-		}
+        {
+          if (entry_ptr->blocked_mode != NULL_LOCK)
+            {
+              time_t stime = (time_t) (entry_ptr->thrd_entry->lockwait_stime / 1000LL);
+              if (ctime_r (&stime, time_val) == NULL)
+                {
+                  strcpy (time_val, "???");
+                }
 
-	      assert (strlen (time_val) > 0);
-	      if (time_val[strlen (time_val) - 1] == '\n')
-		{
-		  time_val[strlen (time_val) - 1] = 0;
-		}
+              assert (strlen (time_val) > 0);
+              if (time_val[strlen (time_val) - 1] == '\n')
+                {
+                  time_val[strlen (time_val) - 1] = 0;
+                }
 
-	      fprintf (outfp,
-		       msgcat_message (MSGCAT_CATALOG_RYE,
-				       MSGCAT_SET_LOCK,
-				       MSGCAT_LK_RES_BLOCKED_HOLDER_ENTRY),
-		       "", entry_ptr->tran_index,
-		       LOCK_TO_LOCKMODE_STRING (entry_ptr->granted_mode),
-		       entry_ptr->count, "",
-		       LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
-		       "", time_val, "",
-		       lock_wait_msecs_to_secs (entry_ptr->thrd_entry->
-						lockwait_msecs));
-	    }
-	  entry_ptr = entry_ptr->next;
-	}
+              fprintf (outfp,
+                       msgcat_message (MSGCAT_CATALOG_RYE,
+                                       MSGCAT_SET_LOCK,
+                                       MSGCAT_LK_RES_BLOCKED_HOLDER_ENTRY),
+                       "", entry_ptr->tran_index,
+                       LOCK_TO_LOCKMODE_STRING (entry_ptr->granted_mode),
+                       entry_ptr->count, "",
+                       LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode),
+                       "", time_val, "", lock_wait_msecs_to_secs (entry_ptr->thrd_entry->lockwait_msecs));
+            }
+          entry_ptr = entry_ptr->next;
+        }
     }
 
   /* dump blocked waiters */
   if (res_ptr->waiter != (LK_ENTRY *) NULL)
     {
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_RES_BLOCKED_WAITER_HEAD));
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_RES_BLOCKED_WAITER_HEAD));
       entry_ptr = res_ptr->waiter;
       while (entry_ptr != (LK_ENTRY *) NULL)
-	{
-	  time_t stime =
-	    (time_t) (entry_ptr->thrd_entry->lockwait_stime / 1000LL);
-	  (void) ctime_r (&stime, time_val);
-	  if (time_val[strlen (time_val) - 1] == '\n')
-	    {
-	      time_val[strlen (time_val) - 1] = 0;
-	    }
-	  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-					  MSGCAT_SET_LOCK,
-					  MSGCAT_LK_RES_BLOCKED_WAITER_ENTRY),
-		   "", entry_ptr->tran_index,
-		   LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode), "",
-		   time_val, "",
-		   lock_wait_msecs_to_secs (entry_ptr->thrd_entry->
-					    lockwait_msecs));
-	  entry_ptr = entry_ptr->next;
-	}
+        {
+          time_t stime = (time_t) (entry_ptr->thrd_entry->lockwait_stime / 1000LL);
+          (void) ctime_r (&stime, time_val);
+          if (time_val[strlen (time_val) - 1] == '\n')
+            {
+              time_val[strlen (time_val) - 1] = 0;
+            }
+          fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
+                                          MSGCAT_SET_LOCK,
+                                          MSGCAT_LK_RES_BLOCKED_WAITER_ENTRY),
+                   "", entry_ptr->tran_index,
+                   LOCK_TO_LOCKMODE_STRING (entry_ptr->blocked_mode), "",
+                   time_val, "", lock_wait_msecs_to_secs (entry_ptr->thrd_entry->lockwait_msecs));
+          entry_ptr = entry_ptr->next;
+        }
     }
 
-  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				  MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
+  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
 
 }
 #endif /* SERVER_MODE */
@@ -4557,9 +4320,9 @@ lock_initialize (void)
     {
       lk_Gl.verbose_mode = (bool) atoi (env_value);
       if (lk_Gl.verbose_mode != false)
-	{
-	  lk_Gl.verbose_mode = true;
-	}
+        {
+          lk_Gl.verbose_mode = true;
+        }
     }
   lk_Gl.no_victim_case_count = 0;
 #endif /* !RYE_DEBUG */
@@ -4571,9 +4334,9 @@ lock_initialize (void)
     {
       lk_Gl.dump_level = atoi (env_value);
       if (lk_Gl.dump_level < 0 || lk_Gl.dump_level > 3)
-	{
-	  lk_Gl.dump_level = 0;
-	}
+        {
+          lk_Gl.dump_level = 0;
+        }
     }
 #endif /* LK_DUMP */
 
@@ -4604,8 +4367,8 @@ lock_finalize (void)
 #if !defined (SERVER_MODE)
   lk_Standalone_has_xlock = false;
 #else /* !SERVER_MODE */
-  LK_RES_BLOCK *res_block;	/* pointer to lock resource table node */
-  LK_ENTRY_BLOCK *entry_block;	/* pointer to lock entry block */
+  LK_RES_BLOCK *res_block;      /* pointer to lock resource table node */
+  LK_ENTRY_BLOCK *entry_block;  /* pointer to lock entry block */
   LK_TRAN_LOCK *tran_lock;
   LK_HASH *hash_anchor;
   int i;
@@ -4624,10 +4387,10 @@ lock_finalize (void)
   if (lk_Gl.tran_lock_table != (LK_TRAN_LOCK *) NULL)
     {
       for (i = 0; i < lk_Gl.num_trans; i++)
-	{
-	  tran_lock = &lk_Gl.tran_lock_table[i];
-	  pthread_mutex_destroy (&tran_lock->hold_mutex);
-	}
+        {
+          tran_lock = &lk_Gl.tran_lock_table[i];
+          pthread_mutex_destroy (&tran_lock->hold_mutex);
+        }
       free_and_init (lk_Gl.tran_lock_table);
     }
   /* reset the number of transactions */
@@ -4640,9 +4403,9 @@ lock_finalize (void)
       entry_block = lk_Gl.obj_entry_block_list;
       lk_Gl.obj_entry_block_list = entry_block->next_block;
       if (entry_block->block != (LK_ENTRY *) NULL)
-	{
-	  free_and_init (entry_block->block);
-	}
+        {
+          free_and_init (entry_block->block);
+        }
       free_and_init (entry_block);
     }
   pthread_mutex_destroy (&lk_Gl.obj_res_block_list_mutex);
@@ -4657,13 +4420,13 @@ lock_finalize (void)
       res_block = lk_Gl.obj_res_block_list;
       lk_Gl.obj_res_block_list = res_block->next_block;
       if (res_block->block != (LK_RES *) NULL)
-	{
-	  for (i = 0; i < res_block->count; i++)
-	    {
-	      pthread_mutex_destroy (&res_block->block[i].res_mutex);
-	    }
-	  free_and_init (res_block->block);
-	}
+        {
+          for (i = 0; i < res_block->count; i++)
+            {
+              pthread_mutex_destroy (&res_block->block[i].res_mutex);
+            }
+          free_and_init (res_block->block);
+        }
       free_and_init (res_block);
     }
   pthread_mutex_destroy (&lk_Gl.obj_entry_block_list_mutex);
@@ -4677,10 +4440,10 @@ lock_finalize (void)
   if (lk_Gl.obj_hash_table != (LK_HASH *) NULL)
     {
       for (i = 0; i < lk_Gl.obj_hash_size; i++)
-	{
-	  hash_anchor = &lk_Gl.obj_hash_table[i];
-	  pthread_mutex_destroy (&hash_anchor->hash_mutex);
-	}
+        {
+          hash_anchor = &lk_Gl.obj_hash_table[i];
+          pthread_mutex_destroy (&hash_anchor->hash_mutex);
+        }
       free_and_init (lk_Gl.obj_hash_table);
     }
   /* reset max number of object locks */
@@ -4705,9 +4468,7 @@ lock_finalize (void)
  *
  */
 int
-lock_object (UNUSED_ARG THREAD_ENTRY * thread_p,
-	     UNUSED_ARG const DB_VALUE * val, LOCK lock,
-	     UNUSED_ARG int cond_flag)
+lock_object (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG const DB_VALUE * val, LOCK lock, UNUSED_ARG int cond_flag)
 {
 #if !defined (SERVER_MODE)
   LK_SET_STANDALONE_XLOCK (lock);
@@ -4720,8 +4481,7 @@ lock_object (UNUSED_ARG THREAD_ENTRY * thread_p,
 
   if (val == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2,
-	      "lock_object", "NULL OID pointer");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2, "lock_object", "NULL OID pointer");
       return LK_NOTGRANTED_DUE_ERROR;
     }
 
@@ -4732,7 +4492,7 @@ lock_object (UNUSED_ARG THREAD_ENTRY * thread_p,
     }
 
   tran_index = logtb_get_current_tran_index (thread_p);
-  if (cond_flag == LK_COND_LOCK)	/* conditional request */
+  if (cond_flag == LK_COND_LOCK)        /* conditional request */
     {
       wait_msecs = LK_FORCE_ZERO_WAIT;
     }
@@ -4741,9 +4501,7 @@ lock_object (UNUSED_ARG THREAD_ENTRY * thread_p,
       wait_msecs = logtb_find_wait_msecs (tran_index);
     }
 
-  granted =
-    lock_internal_perform_lock_object (thread_p, tran_index, val,
-				       lock, wait_msecs, &inst_entry);
+  granted = lock_internal_perform_lock_object (thread_p, tran_index, val, lock, wait_msecs, &inst_entry);
 
   return granted;
 #endif /* !SERVER_MODE */
@@ -4767,8 +4525,7 @@ lock_object (UNUSED_ARG THREAD_ENTRY * thread_p,
  *
  */
 int
-lock_object_wait_msecs (THREAD_ENTRY * thread_p, const DB_VALUE * val,
-			LOCK lock, int cond_flag, int wait_msecs)
+lock_object_wait_msecs (THREAD_ENTRY * thread_p, const DB_VALUE * val, LOCK lock, int cond_flag, int wait_msecs)
 {
 #if !defined (SERVER_MODE)
   LK_SET_STANDALONE_XLOCK (lock);
@@ -4797,8 +4554,7 @@ lock_object_wait_msecs (THREAD_ENTRY * thread_p, const DB_VALUE * val,
  *
  */
 int
-lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
-		       LC_LOCKSET * lockset)
+lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p, LC_LOCKSET * lockset)
 {
 #if !defined (SERVER_MODE)
   LK_SET_STANDALONE_XLOCK (lockset->reqobj_class_lock);
@@ -4809,12 +4565,12 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
   UNUSED_VAR TRAN_ISOLATION isolation;
   LK_LOCKINFO *cls_lockinfo = NULL;
   LK_LOCKINFO *ins_lockinfo = NULL;
-  LC_LOCKSET_REQOBJ *reqobjects;	/* Description of one instance to
-					 * lock
-					 */
-  LC_LOCKSET_CLASSOF *reqclasses;	/* Description of one class of a
-					 * requested object to lock
-					 */
+  LC_LOCKSET_REQOBJ *reqobjects;        /* Description of one instance to
+                                         * lock
+                                         */
+  LC_LOCKSET_CLASSOF *reqclasses;       /* Description of one class of a
+                                         * requested object to lock
+                                         */
   LOCK reqobj_class_lock;
   int cls_count;
   int ins_count;
@@ -4824,8 +4580,7 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
 
   if (lockset == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2,
-	      "lock_objects_lock_set", "NULL lockset pointer");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2, "lock_objects_lock_set", "NULL lockset pointer");
       return LK_NOTGRANTED_DUE_ERROR;
     }
 
@@ -4839,20 +4594,18 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
    */
   if (lockset->quit_on_errors == false && wait_msecs == LK_INFINITE_WAIT)
     {
-      wait_msecs = INT_MAX;	/* will be notified of lock timeout */
+      wait_msecs = INT_MAX;     /* will be notified of lock timeout */
     }
 
   /* prepare cls_lockinfo and ins_lockinfo array */
-  cls_lockinfo =
-    (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockset->num_reqobjs);
+  cls_lockinfo = (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockset->num_reqobjs);
   if (cls_lockinfo == (LK_LOCKINFO *) NULL)
     {
       assert (false);
       return LK_NOTGRANTED_DUE_ERROR;
     }
 
-  ins_lockinfo =
-    (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockset->num_reqobjs);
+  ins_lockinfo = (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockset->num_reqobjs);
   if (ins_lockinfo == (LK_LOCKINFO *) NULL)
     {
       assert (false);
@@ -4871,36 +4624,34 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
   for (i = 0; i < lockset->num_reqobjs; i++)
     {
       if (OID_ISNULL (&reqobjects[i].oid)
-	  || reqobjects[i].class_index < 0
-	  || reqobjects[i].class_index > lockset->num_classes_of_reqobjs)
-	{
-	  continue;
-	}
+          || reqobjects[i].class_index < 0 || reqobjects[i].class_index > lockset->num_classes_of_reqobjs)
+        {
+          continue;
+        }
 
       if (OID_IS_ROOTOID (&reqclasses[reqobjects[i].class_index].oid))
-	{
-	  /* requested object: class => build cls_lockinfo[cls_count] */
-	  COPY_OID (&cls_lockinfo[cls_count].oid, &reqobjects[i].oid);
-	  cls_lockinfo[cls_count].org_oidp = &reqobjects[i].oid;
-	  cls_lockinfo[cls_count].lock = reqobj_class_lock;
-	  /* increment cls_count */
-	  cls_count++;
-	}
+        {
+          /* requested object: class => build cls_lockinfo[cls_count] */
+          COPY_OID (&cls_lockinfo[cls_count].oid, &reqobjects[i].oid);
+          cls_lockinfo[cls_count].org_oidp = &reqobjects[i].oid;
+          cls_lockinfo[cls_count].lock = reqobj_class_lock;
+          /* increment cls_count */
+          cls_count++;
+        }
 #if 0
       else
-	{
-#if 1				/* TODO - */
-	  assert (false);	/* is impossible */
+        {
+#if 1                           /* TODO - */
+          assert (false);       /* is impossible */
 #endif
-	  /* requested object: instance => build cls_lockinfo[cls_count] */
-	  COPY_OID (&ins_lockinfo[ins_count].oid, &reqobjects[i].oid);
-	  COPY_OID (&ins_lockinfo[ins_count].class_oid,
-		    &reqclasses[reqobjects[i].class_index].oid);
-	  ins_lockinfo[ins_count].org_oidp = &reqobjects[i].oid;
-	  ins_lockinfo[ins_count].lock = X_LOCK;	/* TODO - */
-	  /* increment ins_count */
-	  ins_count++;
-	}
+          /* requested object: instance => build cls_lockinfo[cls_count] */
+          COPY_OID (&ins_lockinfo[ins_count].oid, &reqobjects[i].oid);
+          COPY_OID (&ins_lockinfo[ins_count].class_oid, &reqclasses[reqobjects[i].class_index].oid);
+          ins_lockinfo[ins_count].org_oidp = &reqobjects[i].oid;
+          ins_lockinfo[ins_count].lock = X_LOCK;        /* TODO - */
+          /* increment ins_count */
+          ins_count++;
+        }
 #endif
     }
 
@@ -4908,32 +4659,27 @@ lock_objects_lock_set (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       /* sort the cls_lockinfo to avoid deadlock */
       if (cls_count > 1)
-	{
-	  (void) qsort (cls_lockinfo, cls_count, SIZEOF_LK_LOCKINFO,
-			lock_compare_lock_info);
-	}
+        {
+          (void) qsort (cls_lockinfo, cls_count, SIZEOF_LK_LOCKINFO, lock_compare_lock_info);
+        }
 
       for (i = 0; i < cls_count; i++)
-	{
-	  /* hold the locks on the given class objects */
-	  DB_MAKE_OID (&lock_val, &cls_lockinfo[i].oid);
-	  granted = lock_internal_perform_lock_object (thread_p,
-						       tran_index,
-						       &lock_val,
-						       cls_lockinfo[i].lock,
-						       wait_msecs,
-						       &class_entry);
-	  if (granted != LK_GRANTED)
-	    {
-	      if (lockset->quit_on_errors == false
-		  && granted == LK_NOTGRANTED_DUE_TIMEOUT)
-		{
-		  OID_SET_NULL (cls_lockinfo[i].org_oidp);
-		  continue;
-		}
-	      goto error;
-	    }
-	}
+        {
+          /* hold the locks on the given class objects */
+          DB_MAKE_OID (&lock_val, &cls_lockinfo[i].oid);
+          granted = lock_internal_perform_lock_object (thread_p,
+                                                       tran_index,
+                                                       &lock_val, cls_lockinfo[i].lock, wait_msecs, &class_entry);
+          if (granted != LK_GRANTED)
+            {
+              if (lockset->quit_on_errors == false && granted == LK_NOTGRANTED_DUE_TIMEOUT)
+                {
+                  OID_SET_NULL (cls_lockinfo[i].org_oidp);
+                  continue;
+                }
+              goto error;
+            }
+        }
     }
 
   /* release memory space for cls_lockinfo and ins_lockinfo */
@@ -4963,8 +4709,7 @@ error:
  *
  */
 int
-lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
-			LC_LOCKHINT * lockhint)
+lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p, LC_LOCKHINT * lockhint)
 {
 #if !defined (SERVER_MODE)
   int i;
@@ -4972,10 +4717,10 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
   for (i = 0; i < lockhint->num_classes; i++)
     {
       if (lockhint->classes[i].lock == X_LOCK)
-	{
-	  lk_Standalone_has_xlock = true;
-	  break;
-	}
+        {
+          lk_Standalone_has_xlock = true;
+          break;
+        }
     }
   return LK_GRANTED;
 #else /* !SERVER_MODE */
@@ -4991,7 +4736,7 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
   if (lockhint == NULL)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2,
-	      "lock_classes_lock_hint", "NULL lockhint pointer");
+              "lock_classes_lock_hint", "NULL lockhint pointer");
       return LK_NOTGRANTED_DUE_ERROR;
     }
 
@@ -5011,12 +4756,11 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
    */
   if (lockhint->quit_on_errors == false && wait_msecs == LK_INFINITE_WAIT)
     {
-      wait_msecs = INT_MAX;	/* to be notified of lock timeout  */
+      wait_msecs = INT_MAX;     /* to be notified of lock timeout  */
     }
 
   /* prepare cls_lockinfo array */
-  cls_lockinfo =
-    (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockhint->num_classes);
+  cls_lockinfo = (LK_LOCKINFO *) malloc (SIZEOF_LK_LOCKINFO * lockhint->num_classes);
   if (cls_lockinfo == (LK_LOCKINFO *) NULL)
     {
       assert (false);
@@ -5028,11 +4772,10 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
   cls_count = 0;
   for (i = 0; i < lockhint->num_classes; i++)
     {
-      if (OID_ISNULL (&lockhint->classes[i].oid)
-	  || lockhint->classes[i].lock == NULL_LOCK)
-	{
-	  continue;
-	}
+      if (OID_ISNULL (&lockhint->classes[i].oid) || lockhint->classes[i].lock == NULL_LOCK)
+        {
+          continue;
+        }
 
       /* build cls_lockinfo[cls_count] */
       COPY_OID (&cls_lockinfo[cls_count].oid, &lockhint->classes[i].oid);
@@ -5044,8 +4787,7 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
   /* sort class oids before hold the locks in order to avoid deadlocks */
   if (cls_count > 1)
     {
-      (void) qsort (cls_lockinfo, cls_count, SIZEOF_LK_LOCKINFO,
-		    lock_compare_lock_info);
+      (void) qsort (cls_lockinfo, cls_count, SIZEOF_LK_LOCKINFO, lock_compare_lock_info);
     }
 
   for (i = 0; i < cls_count; i++)
@@ -5053,20 +4795,17 @@ lock_classes_lock_hint (UNUSED_ARG THREAD_ENTRY * thread_p,
       /* hold the lock on the given class. */
       DB_MAKE_OID (&lock_val, &cls_lockinfo[i].oid);
       granted = lock_internal_perform_lock_object (thread_p, tran_index,
-						   &lock_val,
-						   cls_lockinfo[i].lock,
-						   wait_msecs, &class_entry);
+                                                   &lock_val, cls_lockinfo[i].lock, wait_msecs, &class_entry);
 
       if (granted != LK_GRANTED)
-	{
-	  if (lockhint->quit_on_errors == false
-	      && granted == LK_NOTGRANTED_DUE_TIMEOUT)
-	    {
-	      OID_SET_NULL (cls_lockinfo[i].org_oidp);
-	      continue;
-	    }
-	  goto error;
-	}
+        {
+          if (lockhint->quit_on_errors == false && granted == LK_NOTGRANTED_DUE_TIMEOUT)
+            {
+              OID_SET_NULL (cls_lockinfo[i].org_oidp);
+              continue;
+            }
+          goto error;
+        }
     }
 
   /* release memory space for cls_lockinfo */
@@ -5092,20 +4831,18 @@ error:
  */
 void
 lock_unlock_object (UNUSED_ARG THREAD_ENTRY * thread_p,
-		    UNUSED_ARG const DB_VALUE * val,
-		    UNUSED_ARG LK_UNLOCK_TYPE unlock_type)
+                    UNUSED_ARG const DB_VALUE * val, UNUSED_ARG LK_UNLOCK_TYPE unlock_type)
 {
 #if !defined (SERVER_MODE)
   return;
 #else /* !SERVER_MODE */
-  int tran_index;		/* transaction table index */
+  int tran_index;               /* transaction table index */
   LK_ENTRY *entry_ptr;
   int release_flag;
 
   if (val == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2,
-	      "lk_unlock_object", "NULL OID pointer");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LK_BAD_ARGUMENT, 2, "lk_unlock_object", "NULL OID pointer");
       return;
     }
 
@@ -5118,9 +4855,9 @@ lock_unlock_object (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       release_flag = false;
       if (unlock_type == LK_UNLOCK_TYPE_FORCE)
-	{
-	  release_flag = true;
-	}
+        {
+          release_flag = true;
+        }
 
       lock_internal_perform_unlock_object (thread_p, entry_ptr, release_flag);
     }
@@ -5169,8 +4906,7 @@ lock_unlock_all (THREAD_ENTRY * thread_p)
 
 #if defined (SERVER_MODE)
 static LK_ENTRY *
-lock_find_tran_hold_entry (UNUSED_ARG int tran_index,
-			   UNUSED_ARG const DB_VALUE * val)
+lock_find_tran_hold_entry (UNUSED_ARG int tran_index, UNUSED_ARG const DB_VALUE * val)
 {
   unsigned int hash_index;
   LK_HASH *hash_anchor;
@@ -5186,9 +4922,9 @@ lock_find_tran_hold_entry (UNUSED_ARG int tran_index,
   for (; res_ptr != NULL; res_ptr = res_ptr->hash_next)
     {
       if (db_value_compare (&res_ptr->val, val) == DB_EQ)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   if (res_ptr == NULL)
@@ -5204,9 +4940,9 @@ lock_find_tran_hold_entry (UNUSED_ARG int tran_index,
   for (; entry_ptr != NULL; entry_ptr = entry_ptr->next)
     {
       if (entry_ptr->tran_index == tran_index)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   pthread_mutex_unlock (&res_ptr->res_mutex);
@@ -5253,8 +4989,7 @@ lock_has_xlock (UNUSED_ARG THREAD_ENTRY * thread_p)
  *
  */
 LOCK
-lock_get_current_lock (UNUSED_ARG THREAD_ENTRY * thread_p,
-		       UNUSED_ARG DB_VALUE * val)
+lock_get_current_lock (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG DB_VALUE * val)
 {
 #if !defined (SERVER_MODE)
   return NULL_LOCK;
@@ -5275,11 +5010,11 @@ lock_get_current_lock (UNUSED_ARG THREAD_ENTRY * thread_p,
   while (lock_entry != NULL)
     {
       if (DB_VALUE_TYPE (&lock_entry->res_head->val) == DB_VALUE_TYPE (val)
-	  && db_value_compare (&lock_entry->res_head->val, val) == DB_EQ)
-	{
-	  lock = lock_entry->granted_mode;
-	  break;
-	}
+          && db_value_compare (&lock_entry->res_head->val, val) == DB_EQ)
+        {
+          lock = lock_entry->granted_mode;
+          break;
+        }
       lock_entry = lock_entry->tran_next;
     }
 
@@ -5300,8 +5035,7 @@ lock_get_current_lock (UNUSED_ARG THREAD_ENTRY * thread_p,
  *     then the threads are forced to timeout.
  */
 void
-lock_force_timeout_lock_wait_transactions (UNUSED_ARG unsigned short
-					   stop_phase)
+lock_force_timeout_lock_wait_transactions (UNUSED_ARG unsigned short stop_phase)
 {
 #if !defined (SERVER_MODE)
   return;
@@ -5315,32 +5049,29 @@ lock_force_timeout_lock_wait_transactions (UNUSED_ARG unsigned short
       thrd = thread_find_entry_by_index (i);
 
       conn_p = thrd->conn_entry;
-      if ((stop_phase == THREAD_STOP_LOGWR && conn_p == NULL)
-	  || (conn_p && conn_p->stop_phase != stop_phase))
-	{
-	  continue;
-	}
+      if ((stop_phase == THREAD_STOP_LOGWR && conn_p == NULL) || (conn_p && conn_p->stop_phase != stop_phase))
+        {
+          continue;
+        }
 
       (void) thread_lock_entry (thrd);
       if (LK_IS_LOCKWAIT_THREAD (thrd))
-	{
-	  /* wake up the thread */
-	  lock_resume ((LK_ENTRY *) thrd->lockwait, LOCK_RESUMED_TIMEOUT);
-	}
+        {
+          /* wake up the thread */
+          lock_resume ((LK_ENTRY *) thrd->lockwait, LOCK_RESUMED_TIMEOUT);
+        }
       else
-	{
-	  if (thrd->lockwait != NULL
-	      || thrd->lockwait_state == (int) LOCK_SUSPENDED)
-	    {
-	      /* some strange lock wait state.. */
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LK_STRANGE_LOCK_WAIT, 5, thrd->lockwait,
-		      thrd->lockwait_state, thrd->index, thrd->tid,
-		      thrd->tran_index);
-	    }
-	  /* release the thread entry mutex */
-	  (void) thread_unlock_entry (thrd);
-	}
+        {
+          if (thrd->lockwait != NULL || thrd->lockwait_state == (int) LOCK_SUSPENDED)
+            {
+              /* some strange lock wait state.. */
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                      ER_LK_STRANGE_LOCK_WAIT, 5, thrd->lockwait,
+                      thrd->lockwait_state, thrd->index, thrd->tid, thrd->tran_index);
+            }
+          /* release the thread entry mutex */
+          (void) thread_unlock_entry (thrd);
+        }
     }
   return;
 #endif /* !SERVER_MODE */
@@ -5375,91 +5106,82 @@ lock_force_timeout_expired_wait_transactions (UNUSED_ARG void *thrd_entry)
       thrd = (THREAD_ENTRY *) thrd_entry;
       (void) thread_lock_entry (thrd);
       if (LK_IS_LOCKWAIT_THREAD (thrd))
-	{
-	  struct timeval tv;
-	  INT64 etime;
-	  (void) gettimeofday (&tv, NULL);
-	  etime = (tv.tv_sec * 1000000LL + tv.tv_usec) / 1000LL;
-	  if (LK_CAN_TIMEOUT (thrd->lockwait_msecs)
-	      && etime - thrd->lockwait_stime > thrd->lockwait_msecs)
-	    {
-	      /* wake up the thread */
-	      lock_resume ((LK_ENTRY *) thrd->lockwait, LOCK_RESUMED_TIMEOUT);
-	      return true;
-	    }
-	  else if (logtb_is_interrupted_tran (NULL, true, &ignore,
-					      thrd->tran_index))
-	    {
-	      /* wake up the thread */
-	      lock_resume ((LK_ENTRY *) thrd->lockwait,
-			   LOCK_RESUMED_INTERRUPT);
-	      return true;
-	    }
-	  else
-	    {
-	      /* release the thread entry mutex */
-	      (void) thread_unlock_entry (thrd);
-	      return false;
-	    }
-	}
+        {
+          struct timeval tv;
+          INT64 etime;
+          (void) gettimeofday (&tv, NULL);
+          etime = (tv.tv_sec * 1000000LL + tv.tv_usec) / 1000LL;
+          if (LK_CAN_TIMEOUT (thrd->lockwait_msecs) && etime - thrd->lockwait_stime > thrd->lockwait_msecs)
+            {
+              /* wake up the thread */
+              lock_resume ((LK_ENTRY *) thrd->lockwait, LOCK_RESUMED_TIMEOUT);
+              return true;
+            }
+          else if (logtb_is_interrupted_tran (NULL, true, &ignore, thrd->tran_index))
+            {
+              /* wake up the thread */
+              lock_resume ((LK_ENTRY *) thrd->lockwait, LOCK_RESUMED_INTERRUPT);
+              return true;
+            }
+          else
+            {
+              /* release the thread entry mutex */
+              (void) thread_unlock_entry (thrd);
+              return false;
+            }
+        }
       else
-	{
-	  if (thrd->lockwait != NULL
-	      || thrd->lockwait_state == (int) LOCK_SUSPENDED)
-	    {
-	      /* some strange lock wait state.. */
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LK_STRANGE_LOCK_WAIT, 5, thrd->lockwait,
-		      thrd->lockwait_state, thrd->index, thrd->tid,
-		      thrd->tran_index);
-	    }
-	  /* release the thread entry mutex */
-	  (void) thread_unlock_entry (thrd);
-	  return false;
-	}
+        {
+          if (thrd->lockwait != NULL || thrd->lockwait_state == (int) LOCK_SUSPENDED)
+            {
+              /* some strange lock wait state.. */
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                      ER_LK_STRANGE_LOCK_WAIT, 5, thrd->lockwait,
+                      thrd->lockwait_state, thrd->index, thrd->tid, thrd->tran_index);
+            }
+          /* release the thread entry mutex */
+          (void) thread_unlock_entry (thrd);
+          return false;
+        }
     }
   else
     {
       for (i = 1; i < thread_num_total_threads (); i++)
-	{
-	  thrd = thread_find_entry_by_index (i);
-	  (void) thread_lock_entry (thrd);
-	  if (LK_IS_LOCKWAIT_THREAD (thrd))
-	    {
-	      struct timeval tv;
-	      INT64 etime;
-	      (void) gettimeofday (&tv, NULL);
-	      etime = (tv.tv_sec * 1000000LL + tv.tv_usec) / 1000LL;
-	      if ((LK_CAN_TIMEOUT (thrd->lockwait_msecs)
-		   && etime - thrd->lockwait_stime > thrd->lockwait_msecs)
-		  || logtb_is_interrupted_tran (NULL, true, &ignore,
-						thrd->tran_index))
-		{
-		  /* wake up the thread */
-		  lock_resume ((LK_ENTRY *) thrd->lockwait,
-			       LOCK_RESUMED_TIMEOUT);
-		}
-	      else
-		{
-		  /* release the thread entry mutex */
-		  (void) thread_unlock_entry (thrd);
-		}
-	    }
-	  else
-	    {
-	      if (thrd->lockwait != NULL
-		  || thrd->lockwait_state == (int) LOCK_SUSPENDED)
-		{
-		  /* some strange lock wait state.. */
-		  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-			  ER_LK_STRANGE_LOCK_WAIT, 5, thrd->lockwait,
-			  thrd->lockwait_state, thrd->index, thrd->tid,
-			  thrd->tran_index);
-		}
-	      /* release the thread entry mutex */
-	      (void) thread_unlock_entry (thrd);
-	    }
-	}
+        {
+          thrd = thread_find_entry_by_index (i);
+          (void) thread_lock_entry (thrd);
+          if (LK_IS_LOCKWAIT_THREAD (thrd))
+            {
+              struct timeval tv;
+              INT64 etime;
+              (void) gettimeofday (&tv, NULL);
+              etime = (tv.tv_sec * 1000000LL + tv.tv_usec) / 1000LL;
+              if ((LK_CAN_TIMEOUT (thrd->lockwait_msecs)
+                   && etime - thrd->lockwait_stime > thrd->lockwait_msecs)
+                  || logtb_is_interrupted_tran (NULL, true, &ignore, thrd->tran_index))
+                {
+                  /* wake up the thread */
+                  lock_resume ((LK_ENTRY *) thrd->lockwait, LOCK_RESUMED_TIMEOUT);
+                }
+              else
+                {
+                  /* release the thread entry mutex */
+                  (void) thread_unlock_entry (thrd);
+                }
+            }
+          else
+            {
+              if (thrd->lockwait != NULL || thrd->lockwait_state == (int) LOCK_SUSPENDED)
+                {
+                  /* some strange lock wait state.. */
+                  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
+                          ER_LK_STRANGE_LOCK_WAIT, 5, thrd->lockwait,
+                          thrd->lockwait_state, thrd->index, thrd->tid, thrd->tran_index);
+                }
+              /* release the thread entry mutex */
+              (void) thread_unlock_entry (thrd);
+            }
+        }
       return true;
     }
 #endif /* !SERVER_MODE */
@@ -5557,7 +5279,7 @@ lock_detect_local_deadlock (UNUSED_ARG THREAD_ENTRY * thread_p)
 
   /* initialize transaction WFG edge table */
   lk_Gl.TWFG_edge = &TWFG_edge_block[0];
-  lk_Gl.max_TWFG_edge = LK_MIN_TWFG_EDGE_COUNT;	/* initial value */
+  lk_Gl.max_TWFG_edge = LK_MIN_TWFG_EDGE_COUNT; /* initial value */
   for (i = 0; i < LK_MIN_TWFG_EDGE_COUNT; i++)
     {
       lk_Gl.TWFG_edge[i].to_tran_index = -1;
@@ -5570,7 +5292,7 @@ lock_detect_local_deadlock (UNUSED_ARG THREAD_ENTRY * thread_p)
   lk_Gl.global_edge_seq_num = 0;
 
   /* initialize victim count */
-  victim_count = 0;		/* used as index of victims array */
+  victim_count = 0;             /* used as index of victims array */
 
   /* hold the deadlock detection mutex */
   rv = pthread_mutex_lock (&lk_Gl.DL_detection_mutex);
@@ -5578,157 +5300,134 @@ lock_detect_local_deadlock (UNUSED_ARG THREAD_ENTRY * thread_p)
   /* lock-wait edge construction for object lock resource table */
   rv = pthread_mutex_lock (&lk_Gl.obj_res_block_list_mutex);
 
-  for (res_block = lk_Gl.obj_res_block_list;
-       res_block != NULL; res_block = res_block->next_block)
+  for (res_block = lk_Gl.obj_res_block_list; res_block != NULL; res_block = res_block->next_block)
     {
       for (k = 0; k < res_block->count; k++)
-	{
-	  /* If the holder list is empty, then the waiter list is also empty.
-	   * Therefore, res_block->block[k].waiter == NULL cannot be checked.
-	   */
-	  if (res_block->block[k].holder == (LK_ENTRY *) NULL)
-	    {
-	      if (res_block->block[k].waiter == (LK_ENTRY *) NULL)
-		{
-		  continue;
-		}
-	    }
+        {
+          /* If the holder list is empty, then the waiter list is also empty.
+           * Therefore, res_block->block[k].waiter == NULL cannot be checked.
+           */
+          if (res_block->block[k].holder == (LK_ENTRY *) NULL)
+            {
+              if (res_block->block[k].waiter == (LK_ENTRY *) NULL)
+                {
+                  continue;
+                }
+            }
 
-	  res_ptr = &res_block->block[k];
+          res_ptr = &res_block->block[k];
 
-	  /* hold resource mutex */
-	  rv = pthread_mutex_lock (&res_ptr->res_mutex);
+          /* hold resource mutex */
+          rv = pthread_mutex_lock (&res_ptr->res_mutex);
 
-	  if (res_ptr->holder == NULL)
-	    {
-	      if (res_ptr->waiter == NULL)
-		{
-		  pthread_mutex_unlock (&res_ptr->res_mutex);
-		  continue;
-		}
-	      else
-		{
+          if (res_ptr->holder == NULL)
+            {
+              if (res_ptr->waiter == NULL)
+                {
+                  pthread_mutex_unlock (&res_ptr->res_mutex);
+                  continue;
+                }
+              else
+                {
 #if defined(RYE_DEBUG)
-		  FILE *lk_fp;
-		  time_t cur_time;
-		  char time_val[CTIME_MAX];
+                  FILE *lk_fp;
+                  time_t cur_time;
+                  char time_val[CTIME_MAX];
 
-		  lk_fp = fopen ("lock_waiter_only_info.log", "a");
-		  if (lk_fp != NULL)
-		    {
-		      cur_time = time (NULL);
-		      (void) ctime_r (&cur_time, time_val);
-		      fprintf (lk_fp,
-			       "##########################################\n");
-		      fprintf (lk_fp, "# current time: %s\n", time_val);
-		      lock_dump_resource (lk_fp, res_ptr);
-		      fprintf (lk_fp,
-			       "##########################################\n");
-		      fclose (lk_fp);
-		    }
+                  lk_fp = fopen ("lock_waiter_only_info.log", "a");
+                  if (lk_fp != NULL)
+                    {
+                      cur_time = time (NULL);
+                      (void) ctime_r (&cur_time, time_val);
+                      fprintf (lk_fp, "##########################################\n");
+                      fprintf (lk_fp, "# current time: %s\n", time_val);
+                      lock_dump_resource (lk_fp, res_ptr);
+                      fprintf (lk_fp, "##########################################\n");
+                      fclose (lk_fp);
+                    }
 #endif /* RYE_DEBUG */
-		  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-			  ER_LK_LOCK_WAITER_ONLY, 1,
-			  "lock_waiter_only_info.log");
+                  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LK_LOCK_WAITER_ONLY, 1, "lock_waiter_only_info.log");
 
-		  if (res_ptr->total_holders_mode != NULL_LOCK)
-		    {
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_LK_TOTAL_HOLDERS_MODE, 1,
-			      res_ptr->total_holders_mode);
-		      res_ptr->total_holders_mode = NULL_LOCK;
-		    }
-		  (void) lock_grant_blocked_waiter (thread_p, res_ptr);
-		}
-	    }
+                  if (res_ptr->total_holders_mode != NULL_LOCK)
+                    {
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                              ER_LK_TOTAL_HOLDERS_MODE, 1, res_ptr->total_holders_mode);
+                      res_ptr->total_holders_mode = NULL_LOCK;
+                    }
+                  (void) lock_grant_blocked_waiter (thread_p, res_ptr);
+                }
+            }
 
-	  /* among holders */
-	  for (hi = res_ptr->holder; hi != NULL; hi = hi->next)
-	    {
-	      if (hi->blocked_mode == NULL_LOCK)
-		{
-		  break;
-		}
-	      for (hj = hi->next; hj != NULL; hj = hj->next)
-		{
-		  assert (hi->granted_mode >= NULL_LOCK
-			  && hi->blocked_mode >= NULL_LOCK);
-		  assert (hj->granted_mode >= NULL_LOCK
-			  && hj->blocked_mode >= NULL_LOCK);
+          /* among holders */
+          for (hi = res_ptr->holder; hi != NULL; hi = hi->next)
+            {
+              if (hi->blocked_mode == NULL_LOCK)
+                {
+                  break;
+                }
+              for (hj = hi->next; hj != NULL; hj = hj->next)
+                {
+                  assert (hi->granted_mode >= NULL_LOCK && hi->blocked_mode >= NULL_LOCK);
+                  assert (hj->granted_mode >= NULL_LOCK && hj->blocked_mode >= NULL_LOCK);
 
-		  compat1 = lock_Comp[hj->blocked_mode][hi->granted_mode];
-		  compat2 = lock_Comp[hj->blocked_mode][hi->blocked_mode];
-		  assert (compat1 != DB_NA && compat2 != DB_NA);
+                  compat1 = lock_Comp[hj->blocked_mode][hi->granted_mode];
+                  compat2 = lock_Comp[hj->blocked_mode][hi->blocked_mode];
+                  assert (compat1 != DB_NA && compat2 != DB_NA);
 
-		  if (compat1 == false || compat2 == false)
-		    {
-		      (void) lock_add_WFG_edge (hj->tran_index,
-						hi->tran_index, true,
-						hj->thrd_entry->
-						lockwait_stime);
-		    }
+                  if (compat1 == false || compat2 == false)
+                    {
+                      (void) lock_add_WFG_edge (hj->tran_index, hi->tran_index, true, hj->thrd_entry->lockwait_stime);
+                    }
 
-		  compat1 = lock_Comp[hi->blocked_mode][hj->granted_mode];
-		  assert (compat1 != DB_NA);
+                  compat1 = lock_Comp[hi->blocked_mode][hj->granted_mode];
+                  assert (compat1 != DB_NA);
 
-		  if (compat1 == false)
-		    {
-		      (void) lock_add_WFG_edge (hi->tran_index,
-						hj->tran_index, true,
-						hi->thrd_entry->
-						lockwait_stime);
-		    }
-		}
-	    }
+                  if (compat1 == false)
+                    {
+                      (void) lock_add_WFG_edge (hi->tran_index, hj->tran_index, true, hi->thrd_entry->lockwait_stime);
+                    }
+                }
+            }
 
-	  /* from waiters in the waiter to holders */
-	  for (hi = res_ptr->holder; hi != NULL; hi = hi->next)
-	    {
-	      for (hj = res_ptr->waiter; hj != NULL; hj = hj->next)
-		{
-		  assert (hi->granted_mode >= NULL_LOCK
-			  && hi->blocked_mode >= NULL_LOCK);
-		  assert (hj->granted_mode >= NULL_LOCK
-			  && hj->blocked_mode >= NULL_LOCK);
+          /* from waiters in the waiter to holders */
+          for (hi = res_ptr->holder; hi != NULL; hi = hi->next)
+            {
+              for (hj = res_ptr->waiter; hj != NULL; hj = hj->next)
+                {
+                  assert (hi->granted_mode >= NULL_LOCK && hi->blocked_mode >= NULL_LOCK);
+                  assert (hj->granted_mode >= NULL_LOCK && hj->blocked_mode >= NULL_LOCK);
 
-		  compat1 = lock_Comp[hj->blocked_mode][hi->granted_mode];
-		  compat2 = lock_Comp[hj->blocked_mode][hi->blocked_mode];
-		  assert (compat1 != DB_NA && compat2 != DB_NA);
+                  compat1 = lock_Comp[hj->blocked_mode][hi->granted_mode];
+                  compat2 = lock_Comp[hj->blocked_mode][hi->blocked_mode];
+                  assert (compat1 != DB_NA && compat2 != DB_NA);
 
-		  if (compat1 == false || compat2 == false)
-		    {
-		      (void) lock_add_WFG_edge (hj->tran_index,
-						hi->tran_index, true,
-						hj->thrd_entry->
-						lockwait_stime);
-		    }
-		}
-	    }
+                  if (compat1 == false || compat2 == false)
+                    {
+                      (void) lock_add_WFG_edge (hj->tran_index, hi->tran_index, true, hj->thrd_entry->lockwait_stime);
+                    }
+                }
+            }
 
-	  /* from waiters in the waiter to other waiters in the waiter */
-	  for (hi = res_ptr->waiter; hi != NULL; hi = hi->next)
-	    {
-	      for (hj = hi->next; hj != NULL; hj = hj->next)
-		{
-		  assert (hj->blocked_mode >= NULL_LOCK
-			  && hi->blocked_mode >= NULL_LOCK);
+          /* from waiters in the waiter to other waiters in the waiter */
+          for (hi = res_ptr->waiter; hi != NULL; hi = hi->next)
+            {
+              for (hj = hi->next; hj != NULL; hj = hj->next)
+                {
+                  assert (hj->blocked_mode >= NULL_LOCK && hi->blocked_mode >= NULL_LOCK);
 
-		  compat1 = lock_Comp[hj->blocked_mode][hi->blocked_mode];
-		  assert (compat1 != DB_NA);
+                  compat1 = lock_Comp[hj->blocked_mode][hi->blocked_mode];
+                  assert (compat1 != DB_NA);
 
-		  if (compat1 == false)
-		    {
-		      (void) lock_add_WFG_edge (hj->tran_index,
-						hi->tran_index, false,
-						hj->thrd_entry->
-						lockwait_stime);
-		    }
-		}
-	    }
+                  if (compat1 == false)
+                    {
+                      (void) lock_add_WFG_edge (hj->tran_index, hi->tran_index, false, hj->thrd_entry->lockwait_stime);
+                    }
+                }
+            }
 
-	  /* release resource mutex */
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	}
+          /* release resource mutex */
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+        }
     }
 
   pthread_mutex_unlock (&lk_Gl.obj_res_block_list_mutex);
@@ -5752,95 +5451,88 @@ lock_detect_local_deadlock (UNUSED_ARG THREAD_ENTRY * thread_p)
   for (k = 1; k < lk_Gl.num_trans; k++)
     {
       if (TWFG_node[k].current == -1)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       s = k;
       TWFG_node[s].ancestor = -2;
       for (; s != -2;)
-	{
-	  if (TWFG_node[s].checked_by_deadlock_detector == false
-	      || TWFG_node[s].thrd_wait_stime == 0
-	      || (TWFG_node[s].current != -1
-		  && (TWFG_node[s].thrd_wait_stime >
-		      TWFG_edge[TWFG_node[s].current].edge_wait_stime)))
-	    {
-	      /* A new transaction started */
-	      TWFG_node[s].first_edge = -1;
-	      TWFG_node[s].current = -1;
-	    }
+        {
+          if (TWFG_node[s].checked_by_deadlock_detector == false
+              || TWFG_node[s].thrd_wait_stime == 0
+              || (TWFG_node[s].current != -1
+                  && (TWFG_node[s].thrd_wait_stime > TWFG_edge[TWFG_node[s].current].edge_wait_stime)))
+            {
+              /* A new transaction started */
+              TWFG_node[s].first_edge = -1;
+              TWFG_node[s].current = -1;
+            }
 
-	  if (TWFG_node[s].current == -1)
-	    {
-	      t = TWFG_node[s].ancestor;
-	      TWFG_node[s].ancestor = -1;
-	      s = t;
-	      if (s != -2 && TWFG_node[s].current != -1)
-		{
-		  assert_release (TWFG_node[s].current >= 0
-				  && TWFG_node[s].current <
-				  lk_Gl.max_TWFG_edge);
-		  TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
-		}
-	      continue;
-	    }
+          if (TWFG_node[s].current == -1)
+            {
+              t = TWFG_node[s].ancestor;
+              TWFG_node[s].ancestor = -1;
+              s = t;
+              if (s != -2 && TWFG_node[s].current != -1)
+                {
+                  assert_release (TWFG_node[s].current >= 0 && TWFG_node[s].current < lk_Gl.max_TWFG_edge);
+                  TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
+                }
+              continue;
+            }
 
-	  assert_release (TWFG_node[s].current >= 0
-			  && TWFG_node[s].current < lk_Gl.max_TWFG_edge);
+          assert_release (TWFG_node[s].current >= 0 && TWFG_node[s].current < lk_Gl.max_TWFG_edge);
 
-	  t = TWFG_edge[TWFG_node[s].current].to_tran_index;
+          t = TWFG_edge[TWFG_node[s].current].to_tran_index;
 
-	  if (t == -2)
-	    {			/* old WFG edge */
-	      TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
-	      continue;
-	    }
+          if (t == -2)
+            {                   /* old WFG edge */
+              TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
+              continue;
+            }
 
-	  if (TWFG_node[t].current == -1)
-	    {
-	      TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
-	      TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
-	      continue;
-	    }
+          if (TWFG_node[t].current == -1)
+            {
+              TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
+              TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
+              continue;
+            }
 
-	  if (TWFG_node[t].checked_by_deadlock_detector == false
-	      || TWFG_node[t].thrd_wait_stime == 0
-	      || TWFG_node[t].thrd_wait_stime >
-	      TWFG_edge[TWFG_node[t].current].edge_wait_stime)
-	    {
-	      TWFG_node[t].first_edge = -1;
-	      TWFG_node[t].current = -1;
-	      TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
-	      TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
-	      continue;
-	    }
+          if (TWFG_node[t].checked_by_deadlock_detector == false
+              || TWFG_node[t].thrd_wait_stime == 0
+              || TWFG_node[t].thrd_wait_stime > TWFG_edge[TWFG_node[t].current].edge_wait_stime)
+            {
+              TWFG_node[t].first_edge = -1;
+              TWFG_node[t].current = -1;
+              TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
+              TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
+              continue;
+            }
 
-	  if (TWFG_edge[TWFG_node[s].current].edge_seq_num <
-	      TWFG_node[t].tran_edge_seq_num)
-	    {			/* old WFG edge */
-	      TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
-	      TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
-	      continue;
-	    }
+          if (TWFG_edge[TWFG_node[s].current].edge_seq_num < TWFG_node[t].tran_edge_seq_num)
+            {                   /* old WFG edge */
+              TWFG_edge[TWFG_node[s].current].to_tran_index = -2;
+              TWFG_node[s].current = TWFG_edge[TWFG_node[s].current].next;
+              continue;
+            }
 
-	  if (TWFG_node[t].ancestor != -1)
-	    {
-	      /* A deadlock cycle is found */
-	      assert (false);	/* is impossible */
-	      lock_select_deadlock_victim (thread_p, s, t);
-	      if (victim_count >= LK_MAX_VICTIM_COUNT)
-		{
-		  goto final;
-		}
-	    }
-	  else
-	    {
-	      TWFG_node[t].ancestor = s;
-	      TWFG_node[t].candidate =
-		TWFG_edge[TWFG_node[s].current].holder_flag;
-	    }
-	  s = t;
-	}
+          if (TWFG_node[t].ancestor != -1)
+            {
+              /* A deadlock cycle is found */
+              assert (false);   /* is impossible */
+              lock_select_deadlock_victim (thread_p, s, t);
+              if (victim_count >= LK_MAX_VICTIM_COUNT)
+                {
+                  goto final;
+                }
+            }
+          else
+            {
+              TWFG_node[t].ancestor = s;
+              TWFG_node[t].candidate = TWFG_edge[TWFG_node[s].current].holder_flag;
+            }
+          s = t;
+        }
     }
 
 final:
@@ -5855,40 +5547,39 @@ final:
       FILE *fp = port_open_memstream (&ptr, &size_loc);
 
       if (fp)
-	{
-	  lock_dump_deadlock_victims (thread_p, fp);
-	  port_close_memstream (fp, &ptr, &size_loc);
+        {
+          lock_dump_deadlock_victims (thread_p, fp);
+          port_close_memstream (fp, &ptr, &size_loc);
 
-	  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-		  ER_LK_DEADLOCK_SPECIFIC_INFO, 1, ptr);
+          er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_LK_DEADLOCK_SPECIFIC_INFO, 1, ptr);
 
-	  if (ptr != NULL)
-	    {
-	      free (ptr);
-	    }
-	}
+          if (ptr != NULL)
+            {
+              free (ptr);
+            }
+        }
     }
 
   /* dump deadlock cycle to event log file */
   for (k = 0; k < victim_count; k++)
     {
       if (victims[k].tran_index_in_cycle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       log_fp = event_log_start (thread_p, "DEADLOCK");
       if (log_fp != NULL)
-	{
-	  for (i = 0; i < victims[k].num_trans_in_cycle; i++)
-	    {
-	      tran_index = victims[k].tran_index_in_cycle[i];
-	      event_log_print_client_info (tran_index, 0);
-	      lock_event_log_tran_locks (thread_p, log_fp, tran_index);
-	    }
+        {
+          for (i = 0; i < victims[k].num_trans_in_cycle; i++)
+            {
+              tran_index = victims[k].tran_index_in_cycle[i];
+              event_log_print_client_info (tran_index, 0);
+              lock_event_log_tran_locks (thread_p, log_fp, tran_index);
+            }
 
-	  event_log_end (thread_p);
-	}
+          event_log_end (thread_p);
+        }
 
       free_and_init (victims[k].tran_index_in_cycle);
     }
@@ -5899,13 +5590,13 @@ final:
   for (k = 0; k < victim_count; k++)
     {
       if (victims[k].can_timeout)
-	{
-	  (void) lock_wakeup_deadlock_victim_timeout (victims[k].tran_index);
-	}
+        {
+          (void) lock_wakeup_deadlock_victim_timeout (victims[k].tran_index);
+        }
       else
-	{
-	  (void) lock_wakeup_deadlock_victim_aborted (victims[k].tran_index);
-	}
+        {
+          (void) lock_wakeup_deadlock_victim_aborted (victims[k].tran_index);
+        }
     }
 #endif
 
@@ -5918,47 +5609,44 @@ final:
   if (victim_count == 0)
     {
       if (lk_Gl.no_victim_case_count < 60)
-	{
-	  lk_Gl.no_victim_case_count += 1;
-	}
+        {
+          lk_Gl.no_victim_case_count += 1;
+        }
       else
-	{
-	  int worker_threads = 0;
-	  int suspended_threads = 0;
-	  int thrd_index;
-	  THREAD_ENTRY *thrd_ptr;
+        {
+          int worker_threads = 0;
+          int suspended_threads = 0;
+          int thrd_index;
+          THREAD_ENTRY *thrd_ptr;
 
-	  /* Make sure that we have threads available for another client
-	   * to execute, otherwise Panic...
-	   */
-	  thread_get_info_threads (NULL, &worker_threads, NULL,
-				   &suspended_threads);
-	  if (worker_threads == suspended_threads)
-	    {
-	      /* We must timeout at least one thread, so other clients can execute,
-	       * otherwise, the server will hang.
-	       */
-	      thrd_ptr = thread_find_first_lockwait_entry (&thrd_index);
-	      while (thrd_ptr != NULL)
-		{
-		  if (lock_wakeup_deadlock_victim_timeout
-		      (thrd_ptr->tran_index) == true)
-		    {
-		      break;
-		    }
-		  thrd_ptr = thread_find_next_lockwait_entry (&thrd_index);
-		}
+          /* Make sure that we have threads available for another client
+           * to execute, otherwise Panic...
+           */
+          thread_get_info_threads (NULL, &worker_threads, NULL, &suspended_threads);
+          if (worker_threads == suspended_threads)
+            {
+              /* We must timeout at least one thread, so other clients can execute,
+               * otherwise, the server will hang.
+               */
+              thrd_ptr = thread_find_first_lockwait_entry (&thrd_index);
+              while (thrd_ptr != NULL)
+                {
+                  if (lock_wakeup_deadlock_victim_timeout (thrd_ptr->tran_index) == true)
+                    {
+                      break;
+                    }
+                  thrd_ptr = thread_find_next_lockwait_entry (&thrd_index);
+                }
 
-	      if (thrd_ptr != NULL)
-		{
-		  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
-			  ER_LK_NOTENOUGH_ACTIVE_THREADS, 3, worker_threads,
-			  logtb_get_number_assigned_tran_indices (),
-			  thrd_ptr->tran_index);
-		}
-	    }
-	  lk_Gl.no_victim_case_count = 0;
-	}
+              if (thrd_ptr != NULL)
+                {
+                  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE,
+                          ER_LK_NOTENOUGH_ACTIVE_THREADS, 3, worker_threads,
+                          logtb_get_number_assigned_tran_indices (), thrd_ptr->tran_index);
+                }
+            }
+          lk_Gl.no_victim_case_count = 0;
+        }
     }
 
   /* save the last deadlock run time */
@@ -5988,14 +5676,14 @@ xlock_dump (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG FILE * outfp)
 #if !defined (SERVER_MODE)
   return;
 #else /* !SERVER_MODE */
-  char *client_prog_name;	/* Client program name for tran */
-  char *client_user_name;	/* Client user name for tran    */
-  char *client_host_name;	/* Client host for tran         */
-  int client_pid;		/* Client process id for tran   */
-  TRAN_ISOLATION isolation;	/* Isolation for client tran    */
+  char *client_prog_name;       /* Client program name for tran */
+  char *client_user_name;       /* Client user name for tran    */
+  char *client_host_name;       /* Client host for tran         */
+  int client_pid;               /* Client process id for tran   */
+  TRAN_ISOLATION isolation;     /* Isolation for client tran    */
   TRAN_STATE state;
   int wait_msecs;
-  int old_wait_msecs = 0;	/* Old transaction lock wait    */
+  int old_wait_msecs = 0;       /* Old transaction lock wait    */
   int tran_index;
   int num_res;
   LK_RES_BLOCK *res_block;
@@ -6012,72 +5700,59 @@ xlock_dump (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG FILE * outfp)
       outfp = stdout;
     }
 
+  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
   fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				  MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
-  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				  MSGCAT_SET_LOCK,
-				  MSGCAT_LK_DUMP_LOCK_TABLE),
-	   prm_get_float_value (PRM_ID_LK_RUN_DEADLOCK_INTERVAL));
+                                  MSGCAT_SET_LOCK,
+                                  MSGCAT_LK_DUMP_LOCK_TABLE), prm_get_float_value (PRM_ID_LK_RUN_DEADLOCK_INTERVAL));
 
   /* Don't get block from anything when dumping object lock table. */
   old_wait_msecs = xlogtb_reset_wait_msecs (thread_p, LK_FORCE_ZERO_WAIT);
 
   /* Dump some information about all transactions */
-  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				  MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
+  fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
   for (tran_index = 0; tran_index < lk_Gl.num_trans; tran_index++)
     {
       if (logtb_find_client_name_host_pid (tran_index, &client_prog_name,
-					   &client_user_name,
-					   &client_host_name,
-					   &client_pid) != NO_ERROR)
-	{
-	  /* Likely this index is not assigned */
-	  continue;
-	}
+                                           &client_user_name, &client_host_name, &client_pid) != NO_ERROR)
+        {
+          /* Likely this index is not assigned */
+          continue;
+        }
       isolation = logtb_find_isolation (tran_index);
       state = logtb_find_state (tran_index);
       wait_msecs = logtb_find_wait_msecs (tran_index);
       lock_timeout_sec = lock_wait_msecs_to_secs (wait_msecs);
 
       if (lock_timeout_sec > 0)
-	{
-	  sprintf (lock_timeout_string, ": %.2f", lock_timeout_sec);
-	}
-      else if ((int) lock_timeout_sec == LK_ZERO_WAIT
-	       || (int) lock_timeout_sec == LK_FORCE_ZERO_WAIT)
-	{
-	  sprintf (lock_timeout_string, ": No wait");
-	}
+        {
+          sprintf (lock_timeout_string, ": %.2f", lock_timeout_sec);
+        }
+      else if ((int) lock_timeout_sec == LK_ZERO_WAIT || (int) lock_timeout_sec == LK_FORCE_ZERO_WAIT)
+        {
+          sprintf (lock_timeout_string, ": No wait");
+        }
       else if ((int) lock_timeout_sec == LK_INFINITE_WAIT)
-	{
-	  sprintf (lock_timeout_string, ": Infinite wait");
-	}
+        {
+          sprintf (lock_timeout_string, ": Infinite wait");
+        }
       else
-	{
-	  assert_release (0);
-	  sprintf (lock_timeout_string, ": %d", (int) lock_timeout_sec);
-	}
+        {
+          assert_release (0);
+          sprintf (lock_timeout_string, ": %d", (int) lock_timeout_sec);
+        }
 
       fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_DUMP_TRAN_IDENTIFIERS),
-	       tran_index, client_prog_name, client_user_name,
-	       client_host_name, client_pid);
+                                      MSGCAT_SET_LOCK,
+                                      MSGCAT_LK_DUMP_TRAN_IDENTIFIERS),
+               tran_index, client_prog_name, client_user_name, client_host_name, client_pid);
       fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_DUMP_TRAN_ISOLATION),
-	       log_isolation_string (isolation));
+                                      MSGCAT_SET_LOCK,
+                                      MSGCAT_LK_DUMP_TRAN_ISOLATION), log_isolation_string (isolation));
       fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_DUMP_TRAN_STATE),
-	       log_state_string (state));
+                                      MSGCAT_SET_LOCK, MSGCAT_LK_DUMP_TRAN_STATE), log_state_string (state));
       fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK,
-				      MSGCAT_LK_DUMP_TRAN_TIMEOUT_PERIOD),
-	       lock_timeout_string);
-      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE,
-				      MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
+                                      MSGCAT_SET_LOCK, MSGCAT_LK_DUMP_TRAN_TIMEOUT_PERIOD), lock_timeout_string);
+      fprintf (outfp, msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_LOCK, MSGCAT_LK_NEWLINE));
     }
 
   /* dump object lock table */
@@ -6092,11 +5767,8 @@ xlock_dump (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG FILE * outfp)
   pthread_mutex_unlock (&lk_Gl.obj_res_block_list_mutex);
 
   fprintf (outfp, "Object Lock Table:\n");
-  fprintf (outfp, "\tCurrent number of objects which are locked    = %d\n",
-	   lk_Gl.num_obj_res_allocated);
-  fprintf (outfp,
-	   "\tMaximum number of objects which can be locked = %d\n\n",
-	   num_res);
+  fprintf (outfp, "\tCurrent number of objects which are locked    = %d\n", lk_Gl.num_obj_res_allocated);
+  fprintf (outfp, "\tMaximum number of objects which can be locked = %d\n\n", num_res);
 
   for (hash_index = 0; hash_index < lk_Gl.obj_hash_size; hash_index++)
     {
@@ -6105,41 +5777,41 @@ xlock_dump (UNUSED_ARG THREAD_ENTRY * thread_p, UNUSED_ARG FILE * outfp)
       res_ptr = hash_anchor->hash_next;
       res_prev = NULL;
       while (res_ptr != (LK_RES *) NULL)
-	{
-	  rv = pthread_mutex_lock (&res_ptr->res_mutex);
+        {
+          rv = pthread_mutex_lock (&res_ptr->res_mutex);
 
-	  if (res_ptr->holder == NULL && res_ptr->waiter == NULL)
-	    {
-	      if (res_prev == (LK_RES *) NULL)
-		{
-		  hash_anchor->hash_next = res_ptr->hash_next;
-		}
-	      else
-		{
-		  res_prev->hash_next = res_ptr->hash_next;
-		}
+          if (res_ptr->holder == NULL && res_ptr->waiter == NULL)
+            {
+              if (res_prev == (LK_RES *) NULL)
+                {
+                  hash_anchor->hash_next = res_ptr->hash_next;
+                }
+              else
+                {
+                  res_prev->hash_next = res_ptr->hash_next;
+                }
 
-	      pthread_mutex_unlock (&res_ptr->res_mutex);
-	      lock_free_resource (thread_p, res_ptr);
+              pthread_mutex_unlock (&res_ptr->res_mutex);
+              lock_free_resource (thread_p, res_ptr);
 
-	      if (res_prev == (LK_RES *) NULL)
-		{
-		  res_ptr = hash_anchor->hash_next;
-		  continue;
-		}
-	      else
-		{
-		  res_ptr = res_prev->hash_next;
-		  continue;
-		}
-	    }
+              if (res_prev == (LK_RES *) NULL)
+                {
+                  res_ptr = hash_anchor->hash_next;
+                  continue;
+                }
+              else
+                {
+                  res_ptr = res_prev->hash_next;
+                  continue;
+                }
+            }
 
-	  lock_dump_resource (thread_p, outfp, res_ptr);
+          lock_dump_resource (thread_p, outfp, res_ptr);
 
-	  pthread_mutex_unlock (&res_ptr->res_mutex);
-	  res_prev = res_ptr;
-	  res_ptr = res_ptr->hash_next;
-	}
+          pthread_mutex_unlock (&res_ptr->res_mutex);
+          res_prev = res_ptr;
+          res_ptr = res_ptr->hash_next;
+        }
       pthread_mutex_unlock (&hash_anchor->hash_mutex);
     }
 
@@ -6206,8 +5878,7 @@ lock_clear_deadlock_victim (UNUSED_ARG int tran_index)
  */
 int
 lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
-				 char **out_buf, UNUSED_ARG int waiter_index,
-				 LK_RES * res)
+                                 char **out_buf, UNUSED_ARG int waiter_index, LK_RES * res)
 {
 #if !defined (SERVER_MODE)
   if (res == NULL)
@@ -6232,7 +5903,7 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
   LK_ENTRY *holder, *waiter;
   int holder_number = 0;
   int buf_size, n, remained_size;
-  bool is_valid = false;	/* validation check */
+  bool is_valid = false;        /* validation check */
   char *buf, *p;
 
   if (res == NULL)
@@ -6264,10 +5935,10 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
   while (waiter != NULL)
     {
       if (waiter->tran_index == waiter_index)
-	{
-	  is_valid = true;
-	  break;
-	}
+        {
+          is_valid = true;
+          break;
+        }
       waiter = waiter->next;
     }
 
@@ -6275,15 +5946,14 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
     {
       holder = res->holder;
       while (holder != NULL)
-	{
-	  if (holder->blocked_mode != NULL_LOCK
-	      && holder->tran_index == waiter_index)
-	    {
-	      is_valid = true;
-	      break;
-	    }
-	  holder = holder->next;
-	}
+        {
+          if (holder->blocked_mode != NULL_LOCK && holder->tran_index == waiter_index)
+            {
+              is_valid = true;
+              break;
+            }
+          holder = holder->next;
+        }
     }
 
   if (is_valid == false)
@@ -6297,9 +5967,9 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
   while (holder != NULL)
     {
       if (holder->tran_index != waiter_index)
-	{
-	  holder_number++;
-	}
+        {
+          holder_number++;
+        }
       holder = holder->next;
     }
 
@@ -6316,8 +5986,7 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
       assert (false);
       pthread_mutex_unlock (&res->res_mutex);
 
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-	      1, buf_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, buf_size);
       return ER_OUT_OF_VIRTUAL_MEMORY;
     }
 
@@ -6343,12 +6012,12 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
   while (holder != NULL)
     {
       if (holder->tran_index != waiter_index)
-	{
-	  n = snprintf (p, remained_size, ", %d", holder->tran_index);
-	  remained_size -= n;
-	  p += n;
-	  assert_release (remained_size >= 0);
-	}
+        {
+          n = snprintf (p, remained_size, ", %d", holder->tran_index);
+          remained_size -= n;
+          p += n;
+          assert_release (remained_size >= 0);
+        }
       holder = holder->next;
     }
 
@@ -6377,8 +6046,7 @@ lock_get_lock_holder_tran_index (UNUSED_ARG THREAD_ENTRY * thread_p,
  *   note: for deadlock
  */
 static void
-lock_event_log_tran_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
-			   int tran_index)
+lock_event_log_tran_locks (THREAD_ENTRY * thread_p, FILE * log_fp, int tran_index)
 {
   int rv, i, indent = 2;
   LK_TRAN_LOCK *tran_lock;
@@ -6392,11 +6060,9 @@ lock_event_log_tran_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
   rv = pthread_mutex_lock (&tran_lock->hold_mutex);
 
   entry = tran_lock->inst_hold_list;
-  for (i = 0; entry != NULL && i < MAX_NUM_LOCKS_DUMP_TO_EVENT_LOG;
-       entry = entry->tran_next, i++)
+  for (i = 0; entry != NULL && i < MAX_NUM_LOCKS_DUMP_TO_EVENT_LOG; entry = entry->tran_next, i++)
     {
-      fprintf (log_fp, "%*clock: %s", indent, ' ',
-	       LOCK_TO_LOCKMODE_STRING (entry->granted_mode));
+      fprintf (log_fp, "%*clock: %s", indent, ' ', LOCK_TO_LOCKMODE_STRING (entry->granted_mode));
 
       lock_event_log_lock_info (thread_p, log_fp, entry);
 
@@ -6415,8 +6081,7 @@ lock_event_log_tran_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
   if (entry != NULL)
     {
       fprintf (log_fp, "wait:\n");
-      fprintf (log_fp, "%*clock: %s", indent, ' ',
-	       LOCK_TO_LOCKMODE_STRING (entry->blocked_mode));
+      fprintf (log_fp, "%*clock: %s", indent, ' ', LOCK_TO_LOCKMODE_STRING (entry->blocked_mode));
 
       lock_event_log_lock_info (thread_p, log_fp, entry);
 
@@ -6440,8 +6105,7 @@ lock_event_log_tran_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
  *   note: for lock timeout
  */
 static void
-lock_event_log_blocked_lock (THREAD_ENTRY * thread_p, FILE * log_fp,
-			     LK_ENTRY * entry)
+lock_event_log_blocked_lock (THREAD_ENTRY * thread_p, FILE * log_fp, LK_ENTRY * entry)
 {
   int indent = 2;
 
@@ -6450,13 +6114,11 @@ lock_event_log_blocked_lock (THREAD_ENTRY * thread_p, FILE * log_fp,
   fprintf (log_fp, "waiter:\n");
   event_log_print_client_info (entry->tran_index, indent);
 
-  fprintf (log_fp, "%*clock: %s", indent, ' ',
-	   LOCK_TO_LOCKMODE_STRING (entry->blocked_mode));
+  fprintf (log_fp, "%*clock: %s", indent, ' ', LOCK_TO_LOCKMODE_STRING (entry->blocked_mode));
   lock_event_log_lock_info (thread_p, log_fp, entry);
 
   event_log_sql_string (thread_p, log_fp, &entry->xasl_id, indent);
-  event_log_bind_values (log_fp, entry->tran_index,
-			 entry->bind_index_in_tran);
+  event_log_bind_values (log_fp, entry->tran_index, entry->bind_index_in_tran);
   fprintf (log_fp, "\n");
 }
 
@@ -6470,8 +6132,7 @@ lock_event_log_blocked_lock (THREAD_ENTRY * thread_p, FILE * log_fp,
  *   note: for lock timeout
  */
 static void
-lock_event_log_blocking_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
-			       LK_ENTRY * wait_entry)
+lock_event_log_blocking_locks (THREAD_ENTRY * thread_p, FILE * log_fp, LK_ENTRY * wait_entry)
 {
   LK_ENTRY *entry;
   LK_RES *res_ptr = NULL;
@@ -6488,50 +6149,46 @@ lock_event_log_blocking_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
   for (entry = res_ptr->holder; entry != NULL; entry = entry->next)
     {
       if (entry == wait_entry)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       compat1 = lock_Comp[entry->granted_mode][wait_entry->blocked_mode];
       compat2 = lock_Comp[entry->blocked_mode][wait_entry->blocked_mode];
 
       if (compat1 == false || compat2 == false)
-	{
-	  event_log_print_client_info (entry->tran_index, indent);
+        {
+          event_log_print_client_info (entry->tran_index, indent);
 
-	  fprintf (log_fp, "%*clock: %s", indent, ' ',
-		   LOCK_TO_LOCKMODE_STRING (entry->granted_mode));
-	  lock_event_log_lock_info (thread_p, log_fp, entry);
+          fprintf (log_fp, "%*clock: %s", indent, ' ', LOCK_TO_LOCKMODE_STRING (entry->granted_mode));
+          lock_event_log_lock_info (thread_p, log_fp, entry);
 
-	  event_log_sql_string (thread_p, log_fp, &entry->xasl_id, indent);
-	  event_log_bind_values (log_fp, entry->tran_index,
-				 entry->bind_index_in_tran);
-	  fprintf (log_fp, "\n");
-	}
+          event_log_sql_string (thread_p, log_fp, &entry->xasl_id, indent);
+          event_log_bind_values (log_fp, entry->tran_index, entry->bind_index_in_tran);
+          fprintf (log_fp, "\n");
+        }
     }
 
   for (entry = res_ptr->waiter; entry != NULL; entry = entry->next)
     {
       if (entry == wait_entry)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       compat1 = lock_Comp[entry->blocked_mode][wait_entry->blocked_mode];
 
       if (compat1 == false)
-	{
-	  event_log_print_client_info (entry->tran_index, indent);
+        {
+          event_log_print_client_info (entry->tran_index, indent);
 
-	  fprintf (log_fp, "%*clock: %s", indent, ' ',
-		   LOCK_TO_LOCKMODE_STRING (entry->granted_mode));
-	  lock_event_log_lock_info (thread_p, log_fp, entry);
+          fprintf (log_fp, "%*clock: %s", indent, ' ', LOCK_TO_LOCKMODE_STRING (entry->granted_mode));
+          lock_event_log_lock_info (thread_p, log_fp, entry);
 
-	  event_log_sql_string (thread_p, log_fp, &entry->xasl_id, indent);
-	  event_log_bind_values (log_fp, entry->tran_index,
-				 entry->bind_index_in_tran);
-	  fprintf (log_fp, "\n");
-	}
+          event_log_sql_string (thread_p, log_fp, &entry->xasl_id, indent);
+          event_log_bind_values (log_fp, entry->tran_index, entry->bind_index_in_tran);
+          fprintf (log_fp, "\n");
+        }
     }
 
   pthread_mutex_unlock (&res_ptr->res_mutex);
@@ -6545,8 +6202,7 @@ lock_event_log_blocking_locks (THREAD_ENTRY * thread_p, FILE * log_fp,
  *   entry(in):
  */
 static void
-lock_event_log_lock_info (THREAD_ENTRY * thread_p, FILE * log_fp,
-			  LK_ENTRY * entry)
+lock_event_log_lock_info (THREAD_ENTRY * thread_p, FILE * log_fp, LK_ENTRY * entry)
 {
   LK_RES *res_ptr;
   char *classname;
@@ -6560,15 +6216,14 @@ lock_event_log_lock_info (THREAD_ENTRY * thread_p, FILE * log_fp,
     {
     case DB_TYPE_OID:
       class_oid = DB_GET_OID (&res_ptr->val);
-      fprintf (log_fp, " (oid=%d|%d|%d", class_oid->volid,
-	       class_oid->pageid, class_oid->slotid);
+      fprintf (log_fp, " (oid=%d|%d|%d", class_oid->volid, class_oid->pageid, class_oid->slotid);
 
       classname = heap_get_class_name (thread_p, class_oid);
       if (classname != NULL)
-	{
-	  fprintf (log_fp, ", table=%s", classname);
-	  free_and_init (classname);
-	}
+        {
+          fprintf (log_fp, ", table=%s", classname);
+          free_and_init (classname);
+        }
       break;
 
     case DB_TYPE_VARCHAR:
@@ -6627,13 +6282,13 @@ lock_event_set_xasl_id_to_entry (int tran_index, LK_ENTRY * entry)
   if (tdes != NULL && !XASL_ID_IS_NULL (&tdes->xasl_id))
     {
       if (tdes->num_exec_queries <= MAX_NUM_EXEC_QUERY_HISTORY)
-	{
-	  entry->bind_index_in_tran = tdes->num_exec_queries - 1;
-	}
+        {
+          entry->bind_index_in_tran = tdes->num_exec_queries - 1;
+        }
       else
-	{
-	  entry->bind_index_in_tran = -1;
-	}
+        {
+          entry->bind_index_in_tran = -1;
+        }
 
       XASL_ID_COPY (&entry->xasl_id, &tdes->xasl_id);
     }
@@ -6645,10 +6300,9 @@ lock_event_set_xasl_id_to_entry (int tran_index, LK_ENTRY * entry)
 }
 #endif /* SERVER_MODE */
 
-OID table_Oid_gid_skey =
-  { NULL_PAGEID, NULL_SLOTID, NULL_VOLID, NULL_GROUPID };
-OID table_Oid_applier =
-  { NULL_PAGEID, NULL_SLOTID, NULL_VOLID, NULL_GROUPID };
+OID table_Oid_gid_skey = { NULL_PAGEID, NULL_SLOTID, NULL_VOLID, NULL_GROUPID };
+OID table_Oid_applier = { NULL_PAGEID, NULL_SLOTID, NULL_VOLID, NULL_GROUPID };
+
 /*
  * lock_shard_key_lock () -
  *    return: error coce
@@ -6662,9 +6316,8 @@ OID table_Oid_applier =
  */
 int
 lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
-		     DB_VALUE * req_shard_key, OID * class_oid,
-		     bool is_shard_table, bool is_catalog_table,
-		     bool for_update)
+                     DB_VALUE * req_shard_key, OID * class_oid,
+                     bool is_shard_table, bool is_catalog_table, bool for_update)
 {
   DB_VALUE *shard_key;
   LOG_TDES *tdes;
@@ -6691,41 +6344,34 @@ lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
   if (shard_groupid == GLOBAL_GROUPID && class_oid != NULL)
     {
       if (OID_ISNULL (&table_Oid_gid_skey))
-	{
-	  status = xlocator_find_class_oid (thread_p,
-					    CT_SHARD_GID_SKEY_INFO_NAME,
-					    &table_Oid_gid_skey, NULL_LOCK);
-	  if (status == LC_CLASSNAME_ERROR || status == LC_CLASSNAME_DELETED)
-	    {
-	      error = ER_LC_UNKNOWN_CLASSNAME;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		      CT_SHARD_GID_SKEY_INFO_NAME);
+        {
+          status = xlocator_find_class_oid (thread_p, CT_SHARD_GID_SKEY_INFO_NAME, &table_Oid_gid_skey, NULL_LOCK);
+          if (status == LC_CLASSNAME_ERROR || status == LC_CLASSNAME_DELETED)
+            {
+              error = ER_LC_UNKNOWN_CLASSNAME;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, CT_SHARD_GID_SKEY_INFO_NAME);
 
-	      return error;
-	    }
+              return error;
+            }
 
-	}
+        }
       if (OID_ISNULL (&table_Oid_applier))
-	{
-	  status = xlocator_find_class_oid (thread_p,
-					    CT_LOG_APPLIER_NAME,
-					    &table_Oid_applier, NULL_LOCK);
-	  if (status == LC_CLASSNAME_ERROR || status == LC_CLASSNAME_DELETED)
-	    {
-	      error = ER_LC_UNKNOWN_CLASSNAME;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		      CT_LOG_APPLIER_NAME);
+        {
+          status = xlocator_find_class_oid (thread_p, CT_LOG_APPLIER_NAME, &table_Oid_applier, NULL_LOCK);
+          if (status == LC_CLASSNAME_ERROR || status == LC_CLASSNAME_DELETED)
+            {
+              error = ER_LC_UNKNOWN_CLASSNAME;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, CT_LOG_APPLIER_NAME);
 
-	      return error;
-	    }
-	}
+              return error;
+            }
+        }
 
-      if (OID_EQ (class_oid, &table_Oid_gid_skey)
-	  || OID_EQ (class_oid, &table_Oid_applier))
-	{
-	  /* This tables do not need lock */
-	  return NO_ERROR;
-	}
+      if (OID_EQ (class_oid, &table_Oid_gid_skey) || OID_EQ (class_oid, &table_Oid_applier))
+        {
+          /* This tables do not need lock */
+          return NO_ERROR;
+        }
     }
 
   /* do shard group id validation
@@ -6739,54 +6385,50 @@ lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
 
       /* check iff valid shard_key for DML */
       if (shard_key == NULL
-	  || DB_IS_NULL (shard_key)
-	  || db_value_compare (shard_key, &system_Ddl_key) == DB_EQ
-	  || is_catalog_table == true)
-	{
-	  assert (false);
-	  error = ER_GENERIC_ERROR;	/* TODO - */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		  "qexec_lock_table_and_shard_key(): Invalid shard_key");
-	  return error;
-	}
+          || DB_IS_NULL (shard_key)
+          || db_value_compare (shard_key, &system_Ddl_key) == DB_EQ || is_catalog_table == true)
+        {
+          assert (false);
+          error = ER_GENERIC_ERROR;     /* TODO - */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "qexec_lock_table_and_shard_key(): Invalid shard_key");
+          return error;
+        }
 
       assert (shard_groupid != GLOBAL_GROUPID);
       if (shard_groupid == GLOBAL_GROUPID)
-	{
-	  error = ER_SHARD_INVALID_GROUPID;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
-	  return error;
-	}
+        {
+          error = ER_SHARD_INVALID_GROUPID;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
+          return error;
+        }
 
       assert (!is_catalog_table);
 
       /* check iff has shardkey group id ownership */
       if (shard_groupid < GLOBAL_GROUPID)
-	{
-	  ;			/* is DML derived from migrator, GC */
-	}
-      else if (shard_groupid == GLOBAL_GROUPID
-	       || !SHARD_GROUP_OWN (thread_p, shard_groupid))
-	{
-	  error = ER_SHARD_INVALID_GROUPID;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
-	  return error;
-	}
+        {
+          ;                     /* is DML derived from migrator, GC */
+        }
+      else if (shard_groupid == GLOBAL_GROUPID || !SHARD_GROUP_OWN (thread_p, shard_groupid))
+        {
+          error = ER_SHARD_INVALID_GROUPID;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
+          return error;
+        }
 
       /* check iff is in DDL; only permit shard catalog lock */
       if (lock_get_current_lock (thread_p, &system_Ddl_key) != NULL_LOCK)
-	{
-	  assert (false);
-	  help_sprint_value (&system_Ddl_key, key1_buf, 255);
-	  key1_buf[255] = 0;
-	  help_sprint_value (shard_key, key2_buf, 255);
-	  key2_buf[255] = 0;
+        {
+          assert (false);
+          help_sprint_value (&system_Ddl_key, key1_buf, 255);
+          key1_buf[255] = 0;
+          help_sprint_value (shard_key, key2_buf, 255);
+          key2_buf[255] = 0;
 
-	  error = ER_SHARD_CANT_LOCK_TWO_SHARD_KEY_A_TRAN;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, key1_buf,
-		  key2_buf);
-	  return error;
-	}
+          error = ER_SHARD_CANT_LOCK_TWO_SHARD_KEY_A_TRAN;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, key1_buf, key2_buf);
+          return error;
+        }
     }
   else
     {
@@ -6796,50 +6438,48 @@ lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
 
       /* check iff valid shard_key for DML */
       if (shard_key != NULL)
-	{
-	  assert (false);
-	  error = ER_GENERIC_ERROR;	/* TODO - */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		  "qexec_lock_table_and_shard_key(): Invalid shard_key");
-	  return error;
-	}
+        {
+          assert (false);
+          error = ER_GENERIC_ERROR;     /* TODO - */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "qexec_lock_table_and_shard_key(): Invalid shard_key");
+          return error;
+        }
 
       /* check iff DML to system table */
       assert (shard_key == NULL);
       if (is_catalog_table == true)
-	{
-	  shard_key = &shard_Catalog_key;	/* set shard catalog lock */
-	}
+        {
+          shard_key = &shard_Catalog_key;       /* set shard catalog lock */
+        }
       else
-	{
-	  shard_key = &shard_Global_key;	/* set shard global lock */
-	}
+        {
+          shard_key = &shard_Global_key;        /* set shard global lock */
+        }
 
       assert (shard_groupid == GLOBAL_GROUPID);
       if (shard_groupid != GLOBAL_GROUPID)
-	{
-	  error = ER_SHARD_INVALID_GROUPID;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
-	  return error;
-	}
+        {
+          error = ER_SHARD_INVALID_GROUPID;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
+          return error;
+        }
 
       /* check iff is in DDL; only permit shard catalog lock */
       if (lock_get_current_lock (thread_p, &system_Ddl_key) != NULL_LOCK)
-	{
-	  if (db_value_compare (shard_key, &shard_Catalog_key) != DB_EQ)
-	    {
-	      assert (false);
-	      help_sprint_value (&system_Ddl_key, key1_buf, 255);
-	      key1_buf[255] = 0;
-	      help_sprint_value (shard_key, key2_buf, 255);
-	      key2_buf[255] = 0;
+        {
+          if (db_value_compare (shard_key, &shard_Catalog_key) != DB_EQ)
+            {
+              assert (false);
+              help_sprint_value (&system_Ddl_key, key1_buf, 255);
+              key1_buf[255] = 0;
+              help_sprint_value (shard_key, key2_buf, 255);
+              key2_buf[255] = 0;
 
-	      error = ER_SHARD_CANT_LOCK_TWO_SHARD_KEY_A_TRAN;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, key1_buf,
-		      key2_buf);
-	      return error;
-	    }
-	}
+              error = ER_SHARD_CANT_LOCK_TWO_SHARD_KEY_A_TRAN;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, key1_buf, key2_buf);
+              return error;
+            }
+        }
     }
 
   /* acquire shardkey lock; System_key, Noshard_key, shard_key
@@ -6851,21 +6491,20 @@ lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
       /* is DML; INSERT, DELETE, UPDATE, SELECT ... FOR UPDATE
        */
       if (for_update == true)
-	{
-	  if (lock_object (thread_p, shard_key, X_LOCK, LK_UNCOND_LOCK) !=
-	      LK_GRANTED)
-	    {
-	      error = er_errid ();
-	      if (error == NO_ERROR)
-		{
-#if 0				/* TODO - currently disable; crash at server stop */
-		  assert (false);
+        {
+          if (lock_object (thread_p, shard_key, X_LOCK, LK_UNCOND_LOCK) != LK_GRANTED)
+            {
+              error = er_errid ();
+              if (error == NO_ERROR)
+                {
+#if 0                           /* TODO - currently disable; crash at server stop */
+                  assert (false);
 #endif
-		  error = ER_FAILED;
-		}
-	      return error;
-	    }
-	}
+                  error = ER_FAILED;
+                }
+              return error;
+            }
+        }
 
       TR_TABLE_LOCK (thread_p);
 
@@ -6875,33 +6514,29 @@ lock_shard_key_lock (THREAD_ENTRY * thread_p, int shard_groupid,
       TR_TABLE_UNLOCK (thread_p);
 
       /* re-check iff has shardkey group id ownership */
-      if (shard_groupid > GLOBAL_GROUPID
-	  && !SHARD_GROUP_OWN (thread_p, shard_groupid))
-	{
-	  error = ER_SHARD_INVALID_GROUPID;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
-	  return error;
-	}
+      if (shard_groupid > GLOBAL_GROUPID && !SHARD_GROUP_OWN (thread_p, shard_groupid))
+        {
+          error = ER_SHARD_INVALID_GROUPID;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, shard_groupid);
+          return error;
+        }
     }
   else
     {
-      assert (db_value_compare (&tdes->tran_shard_key, &system_Ddl_key) !=
-	      DB_EQ);
+      assert (db_value_compare (&tdes->tran_shard_key, &system_Ddl_key) != DB_EQ);
 
-      assert (DB_VALUE_TYPE (&tdes->tran_shard_key) ==
-	      DB_VALUE_TYPE (shard_key));
+      assert (DB_VALUE_TYPE (&tdes->tran_shard_key) == DB_VALUE_TYPE (shard_key));
       if (db_value_compare (&tdes->tran_shard_key, shard_key) != DB_EQ)
-	{
-	  help_sprint_value (&tdes->tran_shard_key, key1_buf, 255);
-	  key1_buf[255] = 0;
-	  help_sprint_value (shard_key, key2_buf, 255);
-	  key2_buf[255] = 0;
+        {
+          help_sprint_value (&tdes->tran_shard_key, key1_buf, 255);
+          key1_buf[255] = 0;
+          help_sprint_value (shard_key, key2_buf, 255);
+          key2_buf[255] = 0;
 
-	  error = ER_SHARD_CANT_LOCK_TWO_SHARD_KEY_A_TRAN;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, key1_buf,
-		  key2_buf);
-	  return error;
-	}
+          error = ER_SHARD_CANT_LOCK_TWO_SHARD_KEY_A_TRAN;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 2, key1_buf, key2_buf);
+          return error;
+        }
     }
 
   assert (error == NO_ERROR);
@@ -6926,8 +6561,7 @@ xlock_system_ddl_lock (THREAD_ENTRY * thread_p)
   if (tdes == NULL)
     {
       error = ER_LOG_UNKNOWN_TRANINDEX;
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error, 1, logtb_get_current_tran_index (thread_p));
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, logtb_get_current_tran_index (thread_p));
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -6937,7 +6571,7 @@ xlock_system_ddl_lock (THREAD_ENTRY * thread_p)
     {
       char key1_buf[256], key2_buf[256];
 
-      assert (false);		/* is impossible */
+      assert (false);           /* is impossible */
 
       help_sprint_value (&tdes->tran_shard_key, key1_buf, 255);
       key1_buf[255] = 0;
@@ -6952,8 +6586,7 @@ xlock_system_ddl_lock (THREAD_ENTRY * thread_p)
 
   tdes->type = TRAN_TYPE_DDL;
 
-  lock_error = lock_object (thread_p, &system_Ddl_key,
-			    X_LOCK, LK_UNCOND_LOCK);
+  lock_error = lock_object (thread_p, &system_Ddl_key, X_LOCK, LK_UNCOND_LOCK);
   if (lock_error != LK_GRANTED)
     {
       assert (lock_error == LK_NOTGRANTED_DUE_ERROR);
@@ -6964,8 +6597,7 @@ xlock_system_ddl_lock (THREAD_ENTRY * thread_p)
     }
 
   TR_TABLE_LOCK (thread_p);
-  logtb_find_smallest_begin_lsa_without_ddl_tran (thread_p, &min_lsa,
-						  &dummy_param);
+  logtb_find_smallest_begin_lsa_without_ddl_tran (thread_p, &min_lsa, &dummy_param);
   if (LSA_ISNULL (&min_lsa))
     {
       prior_lsa_get_current_lsa (thread_p, &min_lsa);
@@ -6983,8 +6615,7 @@ exit_on_error:
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "Invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid error code");
     }
 
   return error;
@@ -7011,16 +6642,16 @@ xlock_change_class_xlock_to_ulock (THREAD_ENTRY * thread_p, OID * class_oid)
   if (lock_get_current_lock (thread_p, &oid_val) != X_LOCK)
     {
       assert (false);
-      error = ER_GENERIC_ERROR;	/* TODO - */
+      error = ER_GENERIC_ERROR; /* TODO - */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "xlock_change_class_xlock_to_ulock(): Not acquired X_LOCK on table");
+              "xlock_change_class_xlock_to_ulock(): Not acquired X_LOCK on table");
       return error;
     }
 #else
-  assert (false);		/* should be avoided */
-  error = ER_GENERIC_ERROR;	/* TODO - */
+  assert (false);               /* should be avoided */
+  error = ER_GENERIC_ERROR;     /* TODO - */
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	  "xlock_change_class_xlock_to_ulock(): Not acquired X_LOCK on table");
+          "xlock_change_class_xlock_to_ulock(): Not acquired X_LOCK on table");
   return error;
 #endif
 
@@ -7031,11 +6662,11 @@ xlock_change_class_xlock_to_ulock (THREAD_ENTRY * thread_p, OID * class_oid)
     {
       error = er_errid ();
       if (error == NO_ERROR)
-	{
-	  assert (error != NO_ERROR);
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
-	}
+        {
+          assert (error != NO_ERROR);
+          error = ER_GENERIC_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "");
+        }
     }
 
   return error;

@@ -30,37 +30,25 @@
 #include "parser.h"
 #include "schema_manager.h"
 
-extern PT_NODE *mq_bump_correlation_level (PARSER_CONTEXT * parser,
-					   PT_NODE * node, int increment,
-					   int match);
+extern PT_NODE *mq_bump_correlation_level (PARSER_CONTEXT * parser, PT_NODE * node, int increment, int match);
 
 extern PT_NODE *mq_translate (PARSER_CONTEXT * parser, PT_NODE * node);
 
 extern PT_NODE *mq_make_derived_spec (PARSER_CONTEXT * parser, PT_NODE * node,
-				      PT_NODE * subquery, int *idx,
-				      PT_NODE ** spec_ptr,
-				      PT_NODE ** attr_list_ptr);
+                                      PT_NODE * subquery, int *idx, PT_NODE ** spec_ptr, PT_NODE ** attr_list_ptr);
 
-extern PT_NODE *mq_get_references (PARSER_CONTEXT * parser,
-				   PT_NODE * statement, PT_NODE * spec);
+extern PT_NODE *mq_get_references (PARSER_CONTEXT * parser, PT_NODE * statement, PT_NODE * spec);
 extern PT_NODE *mq_get_references_helper (PARSER_CONTEXT * parser,
-					  PT_NODE * statement,
-					  PT_NODE * spec,
-					  bool get_spec_referenced_attr);
-extern PT_NODE *mq_reset_ids (PARSER_CONTEXT * parser,
-			      PT_NODE * statement, PT_NODE * spec);
-extern PT_NODE *mq_clear_ids (PARSER_CONTEXT * parser, PT_NODE * node,
-			      PT_NODE * spec);
+                                          PT_NODE * statement, PT_NODE * spec, bool get_spec_referenced_attr);
+extern PT_NODE *mq_reset_ids (PARSER_CONTEXT * parser, PT_NODE * statement, PT_NODE * spec);
+extern PT_NODE *mq_clear_ids (PARSER_CONTEXT * parser, PT_NODE * node, PT_NODE * spec);
 
-extern PT_NODE *mq_set_references (PARSER_CONTEXT * parser,
-				   PT_NODE * statement, PT_NODE * spec);
+extern PT_NODE *mq_set_references (PARSER_CONTEXT * parser, PT_NODE * statement, PT_NODE * spec);
 
 extern bool mq_is_outer_join_spec (PARSER_CONTEXT * parser, PT_NODE * spec);
 
-extern PT_NODE *mq_reset_ids_in_statement (PARSER_CONTEXT * parser,
-					   PT_NODE * statement);
+extern PT_NODE *mq_reset_ids_in_statement (PARSER_CONTEXT * parser, PT_NODE * statement);
 
-extern PT_NODE *mq_rewrite_aggregate_as_derived (PARSER_CONTEXT * parser,
-						 PT_NODE * agg_sel);
+extern PT_NODE *mq_rewrite_aggregate_as_derived (PARSER_CONTEXT * parser, PT_NODE * agg_sel);
 
 #endif /* _VIEW_TRANSFORM_H_ */

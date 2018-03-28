@@ -93,8 +93,7 @@ rel_copy_release_string (char *buf, size_t len)
 #endif /* !NDEBUG */
 
   snprintf (buf, len, "%s (%dbit %s build for %s) (%s %s)",
-	    rel_package_string (), rel_bit_platform (), mode, rel_build_os (),
-	    __DATE__, __TIME__);
+            rel_package_string (), rel_bit_platform (), mode, rel_build_os (), __DATE__, __TIME__);
 }
 
 /*
@@ -137,8 +136,7 @@ rel_copyright_header (void)
   const char *name;
 
   lang_init ();
-  name = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_GENERAL,
-			 MSGCAT_GENERAL_COPYRIGHT_HEADER);
+  name = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_GENERAL, MSGCAT_GENERAL_COPYRIGHT_HEADER);
   return (name) ? name : copyright_header;
 }
 
@@ -152,8 +150,7 @@ rel_copyright_body (void)
   const char *name;
 
   lang_init ();
-  name = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_GENERAL,
-			 MSGCAT_GENERAL_COPYRIGHT_BODY);
+  name = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_GENERAL, MSGCAT_GENERAL_COPYRIGHT_BODY);
   return (name) ? name : copyright_body;
 }
 #endif /* ENABLE_UNUSED_FUNCTION */
@@ -222,6 +219,5 @@ rel_check_net_compatible (const RYE_VERSION * ver1, const RYE_VERSION * ver2)
 void
 rel_version_to_string (RYE_VERSION * version, char *buffer, int buffer_len)
 {
-  snprintf (buffer, buffer_len, "%d.%d.%d.%04d",
-	    version->major, version->minor, version->patch, version->build);
+  snprintf (buffer, buffer_len, "%d.%d.%d.%04d", version->major, version->minor, version->patch, version->build);
 }

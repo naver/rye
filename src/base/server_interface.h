@@ -32,7 +32,7 @@
 #ident "$Id$"
 
 enum
-{ SI_SYS_DATETIME = 1,		/* next is 2 */
+{ SI_SYS_DATETIME = 1,          /* next is 2 */
   SI_CNT = 1
 };
 

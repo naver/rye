@@ -35,9 +35,7 @@
 #include "error_manager.h"
 #include "system_parameter.h"
 
-static RYE_SHM_TYPE rye_shm_check_header (const RYE_SHM_HEADER * shm_header,
-					  RYE_SHM_TYPE shm_type,
-					  bool check_status);
+static RYE_SHM_TYPE rye_shm_check_header (const RYE_SHM_HEADER * shm_header, RYE_SHM_TYPE shm_type, bool check_status);
 
 /*
  * rye_shm_create -
@@ -57,8 +55,7 @@ rye_shm_create (int shm_key, int size, RYE_SHM_TYPE shm_type)
     {
       assert (false);
 
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-	      1, "invalid shm key");
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "invalid shm key");
 
       return NULL;
     }
@@ -66,10 +63,8 @@ rye_shm_create (int shm_key, int size, RYE_SHM_TYPE shm_type)
   mid = shmget (shm_key, size, IPC_CREAT | IPC_EXCL | 0644);
   if (mid == -1)
     {
-      snprintf (err_msg, sizeof (err_msg),
-		"error: shmget - key(%d), size(%d)", shm_key, size);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, err_msg);
+      snprintf (err_msg, sizeof (err_msg), "error: shmget - key(%d), size(%d)", shm_key, size);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, err_msg);
 
       return NULL;
     }
@@ -77,10 +72,8 @@ rye_shm_create (int shm_key, int size, RYE_SHM_TYPE shm_type)
   p = shmat (mid, (char *) 0, 0);
   if (p == (void *) -1)
     {
-      snprintf (err_msg, sizeof (err_msg),
-		"error: shmat - key(%d), size(%d)", shm_key, size);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, err_msg);
+      snprintf (err_msg, sizeof (err_msg), "error: shmat - key(%d), size(%d)", shm_key, size);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, err_msg);
 
       return NULL;
     }
@@ -117,9 +110,9 @@ rye_shm_is_used_key (int shm_key)
   if (shmid < 0)
     {
       if (errno == ENOENT)
-	{
-	  return false;
-	}
+        {
+          return false;
+        }
     }
 
   return true;
@@ -153,8 +146,7 @@ rye_shm_check_shm (int shm_key, RYE_SHM_TYPE shm_type, bool check_status)
       return RYE_SHM_TYPE_UNKNOWN;
     }
 
-  ret_shm_type = rye_shm_check_header ((RYE_SHM_HEADER *) p, shm_type,
-				       check_status);
+  ret_shm_type = rye_shm_check_header ((RYE_SHM_HEADER *) p, shm_type, check_status);
 
   shmdt (p);
 
@@ -185,10 +177,8 @@ rye_shm_attach (int shm_key, RYE_SHM_TYPE shm_type, bool is_monitoring)
   mid = shmget (shm_key, 0, (is_monitoring ? 0 : 0644));
   if (mid == -1)
     {
-      snprintf (err_msg, sizeof (err_msg),
-		"error: shmget - key(%d)", shm_key);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, err_msg);
+      snprintf (err_msg, sizeof (err_msg), "error: shmget - key(%d)", shm_key);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, err_msg);
       return NULL;
     }
 
@@ -196,17 +186,14 @@ rye_shm_attach (int shm_key, RYE_SHM_TYPE shm_type, bool is_monitoring)
   if (p == (void *) -1)
     {
       snprintf (err_msg, sizeof (err_msg), "error: shmat - key(%d)", shm_key);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, err_msg);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, err_msg);
       return NULL;
     }
 
   shm_header = (RYE_SHM_HEADER *) p;
-  if (rye_shm_check_header (shm_header, shm_type,
-			    true) == RYE_SHM_TYPE_UNKNOWN)
+  if (rye_shm_check_header (shm_header, shm_type, true) == RYE_SHM_TYPE_UNKNOWN)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-	      1, "rye_shm_check_header fail");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "rye_shm_check_header fail");
 
       rye_shm_detach (p);
       p = NULL;
@@ -256,10 +243,8 @@ rye_shm_destroy (int shm_key)
   mid = shmget (shm_key, 0, 0644);
   if (mid == -1)
     {
-      snprintf (err_msg, sizeof (err_msg), "error: shmget - key(%d)",
-		shm_key);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR,
-			   1, err_msg);
+      snprintf (err_msg, sizeof (err_msg), "error: shmget - key(%d)", shm_key);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, err_msg);
       return ER_GENERIC_ERROR;
     }
 
@@ -334,8 +319,7 @@ exit_on_error:
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "Invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid error code");
     }
 
   return error;
@@ -389,24 +373,22 @@ exit:
  *    return: true or false
  */
 static RYE_SHM_TYPE
-rye_shm_check_header (const RYE_SHM_HEADER * shm_header,
-		      RYE_SHM_TYPE shm_type, bool check_status)
+rye_shm_check_header (const RYE_SHM_HEADER * shm_header, RYE_SHM_TYPE shm_type, bool check_status)
 {
   if (strcmp (shm_header->magic_string, RYE_SHM_MAGIC_STR) == 0)
     {
       if (check_status == false ||
-	  (shm_header->status == RYE_SHM_VALID &&
-	   shm_header->magic_number == RYE_SHM_MAGIC_NUMBER))
-	{
-	  if (shm_type == RYE_SHM_TYPE_UNKNOWN)
-	    {
-	      return shm_header->shm_type;
-	    }
-	  else if (shm_header->shm_type == shm_type)
-	    {
-	      return shm_type;
-	    }
-	}
+          (shm_header->status == RYE_SHM_VALID && shm_header->magic_number == RYE_SHM_MAGIC_NUMBER))
+        {
+          if (shm_type == RYE_SHM_TYPE_UNKNOWN)
+            {
+              return shm_header->shm_type;
+            }
+          else if (shm_header->shm_type == shm_type)
+            {
+              return shm_type;
+            }
+        }
     }
 
   return RYE_SHM_TYPE_UNKNOWN;

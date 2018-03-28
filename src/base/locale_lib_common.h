@@ -79,8 +79,8 @@ struct coll_contraction
 typedef struct conv_cp_to_bytes CONV_CP_TO_BYTES;
 struct conv_cp_to_bytes
 {
-  unsigned char size;		/* size in bytes of converted codepoint */
-  unsigned char bytes[TEXT_CONV_MAX_BYTES];	/* bytes of encoded sequence */
+  unsigned char size;           /* size in bytes of converted codepoint */
+  unsigned char bytes[TEXT_CONV_MAX_BYTES];     /* bytes of encoded sequence */
 };
 
 
@@ -96,8 +96,8 @@ struct conv_cp_to_bytes
 typedef struct unicode_mapping UNICODE_MAPPING;
 struct unicode_mapping
 {
-  unsigned int cp;		/* The codepoint which the buffer composes to. */
-  int size;			/* number of bytes in the buffer */
+  unsigned int cp;              /* The codepoint which the buffer composes to. */
+  int size;                     /* number of bytes in the buffer */
   /* utf8 buffer, null terminated. */
   unsigned char buffer[NORMALIZATION_MAX_BUF_SIZE];
 };

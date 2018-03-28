@@ -96,8 +96,7 @@ xlogin_user (THREAD_ENTRY * thread_p, const char *username)
  * qentry_p (in) : query entry
  */
 void
-xsession_store_query_entry_info (THREAD_ENTRY * thread_p,
-				 QMGR_QUERY_ENTRY * qentry_p)
+xsession_store_query_entry_info (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * qentry_p)
 {
   session_store_query_entry_info (thread_p, qentry_p);
 }
@@ -109,8 +108,7 @@ xsession_store_query_entry_info (THREAD_ENTRY * thread_p,
  * qentry_p (in/out) : query entry
  */
 int
-xsession_load_query_entry_info (THREAD_ENTRY * thread_p,
-				QMGR_QUERY_ENTRY * qentry_p)
+xsession_load_query_entry_info (THREAD_ENTRY * thread_p, QMGR_QUERY_ENTRY * qentry_p)
 {
   return session_load_query_entry_info (thread_p, qentry_p);
 }
@@ -123,8 +121,7 @@ xsession_load_query_entry_info (THREAD_ENTRY * thread_p,
  * query_id (in) : query id
  */
 int
-xsession_remove_query_entry_info (THREAD_ENTRY * thread_p,
-				  const QUERY_ID query_id)
+xsession_remove_query_entry_info (THREAD_ENTRY * thread_p, const QUERY_ID query_id)
 {
   return session_remove_query_entry_info (thread_p, query_id);
 }
@@ -138,8 +135,7 @@ xsession_remove_query_entry_info (THREAD_ENTRY * thread_p,
  * query_id (in) : query id
  */
 int
-xsession_clear_query_entry_info (THREAD_ENTRY * thread_p,
-				 const QUERY_ID query_id)
+xsession_clear_query_entry_info (THREAD_ENTRY * thread_p, const QUERY_ID query_id)
 {
   return session_clear_query_entry_info (thread_p, query_id);
 }

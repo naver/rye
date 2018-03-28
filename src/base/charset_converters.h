@@ -38,8 +38,8 @@ typedef unsigned int ucs4_t;
 typedef struct s_Summary16 Summary16;
 struct s_Summary16
 {
-  unsigned short indx;		/* index into big table */
-  unsigned short used;		/* bitmask of used entries */
+  unsigned short indx;          /* index into big table */
+  unsigned short used;          /* bitmask of used entries */
 };
 
 #include "ksc5601.h"

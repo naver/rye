@@ -323,14 +323,14 @@ struct qo_node
    *  maintained in QO_NODE_INDEX.
    */
   QO_NODE_INDEX *indexes;
-  QO_USING_INDEX *using_index;	/* indexes specified in USING INDEX clause */
+  QO_USING_INDEX *using_index;  /* indexes specified in USING INDEX clause */
   /* NULL if no USING INDEX clause in the query */
 
-  BITSET outer_dep_set;		/* outer join dependency; to preserve join sequence */
-  PT_HINT_ENUM hint;		/* hint comment contained in given */
-  bool sargable;		/* whether sargs are applicable to this node */
-  bool sort_limit_candidate;	/* whether this node is a candidate for
-				 * a SORT_LIMIT plan */
+  BITSET outer_dep_set;         /* outer join dependency; to preserve join sequence */
+  PT_HINT_ENUM hint;            /* hint comment contained in given */
+  bool sargable;                /* whether sargs are applicable to this node */
+  bool sort_limit_candidate;    /* whether this node is a candidate for
+                                 * a SORT_LIMIT plan */
 };
 
 #define QO_NODE_ENV(node)		(node)->env
@@ -422,19 +422,19 @@ typedef enum
    *                                        e  e
    */
 #if 0
-  QO_TC_PATH = 0x30,		/* 1  1  0  000  *//* unused */
+  QO_TC_PATH = 0x30,            /* 1  1  0  000  *//* unused */
 #endif
-  QO_TC_JOIN = 0x11,		/*    1  0  001  */
-  QO_TC_SARG = 0x02,		/*    0  0  010  */
-  QO_TC_OTHER = 0x03,		/*    0  0  011  */
+  QO_TC_JOIN = 0x11,            /*    1  0  001  */
+  QO_TC_SARG = 0x02,            /*    0  0  010  */
+  QO_TC_OTHER = 0x03,           /*    0  0  011  */
 #if 0
-  QO_TC_DEP_LINK = 0x1c,	/*    1  1  100  *//* unused */
-  QO_TC_DEP_JOIN = 0x1d,	/*    1  1  101  *//* unused */
+  QO_TC_DEP_LINK = 0x1c,        /*    1  1  100  *//* unused */
+  QO_TC_DEP_JOIN = 0x1d,        /*    1  1  101  *//* unused */
 #endif
-  QO_TC_DURING_JOIN = 0x04,	/*    0  0  100  */
-  QO_TC_AFTER_JOIN = 0x05,	/*    0  0  101  */
-  QO_TC_TOTALLY_AFTER_JOIN = 0x06,	/*    0  0  110  */
-  QO_TC_DUMMY_JOIN = 0x1f	/*    1  1  111  */
+  QO_TC_DURING_JOIN = 0x04,     /*    0  0  100  */
+  QO_TC_AFTER_JOIN = 0x05,      /*    0  0  101  */
+  QO_TC_TOTALLY_AFTER_JOIN = 0x06,      /*    0  0  110  */
+  QO_TC_DUMMY_JOIN = 0x1f       /*    1  1  111  */
 } QO_TERMCLASS;
 
 #define QO_IS_EDGE_TERM(t)	(QO_TERM_CLASS(t) & 0x10)
@@ -529,7 +529,7 @@ struct qo_term
   QO_NODE *head;
   QO_NODE *tail;
 
-  int flag;			/* flags */
+  int flag;                     /* flags */
 
   /*
    * The ordinal id of this term; this is the id used to identify this
@@ -566,11 +566,11 @@ struct qo_term
 #define QO_TERM_FLAG(t)	        (t)->flag
 
 
-#define QO_TERM_EQUAL_OP             1	/* is equal op ? */
-#define QO_TERM_RANGELIST            2	/* is RANGE (r1, r2, ...) ? */
-#define QO_TERM_SINGLE_PRED          4	/* is single_pred ? */
-#define QO_TERM_COPY_PT_EXPR         8	/* pt_expr is copyed ? */
-#define QO_TERM_NON_IDX_SARG_COLL   16	/* not suitable for key range/filter */
+#define QO_TERM_EQUAL_OP             1  /* is equal op ? */
+#define QO_TERM_RANGELIST            2  /* is RANGE (r1, r2, ...) ? */
+#define QO_TERM_SINGLE_PRED          4  /* is single_pred ? */
+#define QO_TERM_COPY_PT_EXPR         8  /* pt_expr is copyed ? */
+#define QO_TERM_NON_IDX_SARG_COLL   16  /* not suitable for key range/filter */
 
 #define QO_TERM_IS_FLAGED(t, f)        (QO_TERM_FLAG(t) & (int) (f))
 #define QO_TERM_SET_FLAG(t, f)         QO_TERM_FLAG(t) |= (int) (f)
@@ -662,10 +662,10 @@ struct qo_partition
 
 typedef enum
 {
-  QO_SL_INVALID,		/* SORT-LIMIT plan cannot be created */
-  QO_SL_USE,			/* SORT-LIMIT plan should be created */
-  QO_SL_POSSIBLE		/* All conditions for the SORT-LIMIT plans are met
-				 * but user did not supply a valid limit */
+  QO_SL_INVALID,                /* SORT-LIMIT plan cannot be created */
+  QO_SL_USE,                    /* SORT-LIMIT plan should be created */
+  QO_SL_POSSIBLE                /* All conditions for the SORT-LIMIT plans are met
+                                 * but user did not supply a valid limit */
 } QO_SORT_LIMIT_USE;
 
 struct qo_env
@@ -852,8 +852,7 @@ extern void qo_term_fprint (QO_TERM *, FILE *);
 extern void qo_print_stats (FILE *);
 extern void qo_termset_fprint (QO_ENV *, BITSET *, FILE *);
 extern int qo_seg_width (QO_SEGMENT * seg);
-extern void qo_check_coll_optimization (QO_INDEX_ENTRY * ent,
-					COLL_OPT * collation_opt);
+extern void qo_check_coll_optimization (QO_INDEX_ENTRY * ent, COLL_OPT * collation_opt);
 
 extern double QO_INFINITY;
 

@@ -52,13 +52,11 @@ typedef enum
 } DATABASE_NAME;
 
 static int utility_get_option_index (UTIL_ARG_MAP * arg_map, int arg_ch);
-static int check_database_name_local (const char *name,
-				      int existing_or_new_db);
+static int check_database_name_local (const char *name, int existing_or_new_db);
 static char **util_split_ha_db (const char *str);
 static int util_get_ha_parameters (PRM_NODE_LIST * ha_node_list,
-				   const char **ha_db_list_p,
-				   const char **ha_copy_log_base_p,
-				   int *ha_max_log_applier_p);
+                                   const char **ha_db_list_p,
+                                   const char **ha_copy_log_base_p, int *ha_max_log_applier_p);
 
 /*
  * utility_initialize() - initialize Rye library
@@ -84,8 +82,7 @@ utility_initialize ()
 const char *
 utility_get_generic_message (int message_index)
 {
-  return (msgcat_message (MSGCAT_CATALOG_UTILS,
-			  MSGCAT_UTIL_SET_GENERIC, message_index));
+  return (msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_GENERIC, message_index));
 }
 
 /*
@@ -129,25 +126,23 @@ check_database_name_local (const char *name, int existing_or_new_db)
   else
     {
       for (i = 0; name[i] != 0; i++)
-	{
-	  if (isspace (name[i]) || name[i] == '/' || name[i] == '\\'
-	      || !isprint (name[i])
-	      || (existing_or_new_db == NEW_DATABASE && name[i] == '@'))
-	    {
-	      status = ER_GENERIC_ERROR;
-	      break;
-	    }
-	}
+        {
+          if (isspace (name[i]) || name[i] == '/' || name[i] == '\\'
+              || !isprint (name[i]) || (existing_or_new_db == NEW_DATABASE && name[i] == '@'))
+            {
+              status = ER_GENERIC_ERROR;
+              break;
+            }
+        }
     }
 
   if (status == ER_GENERIC_ERROR)
     {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_BAD_DATABASE_NAME);
+      const char *message = utility_get_generic_message (MSGCAT_UTIL_GENERIC_BAD_DATABASE_NAME);
       if (message != NULL)
-	{
-	  PRINT_AND_LOG_ERR_MSG (message, name[i], name);
-	}
+        {
+          PRINT_AND_LOG_ERR_MSG (message, name[i], name);
+        }
     }
   return status;
 }
@@ -183,24 +178,22 @@ check_volume_name (const char *name)
   else
     {
       for (i = 0; name[i] != 0; i++)
-	{
-	  if (isspace (name[i]) || name[i] == '/' || name[i] == '\\'
-	      || !isprint (name[i]))
-	    {
-	      status = ER_GENERIC_ERROR;
-	      break;
-	    }
-	}
+        {
+          if (isspace (name[i]) || name[i] == '/' || name[i] == '\\' || !isprint (name[i]))
+            {
+              status = ER_GENERIC_ERROR;
+              break;
+            }
+        }
     }
 
   if (status == ER_GENERIC_ERROR)
     {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_BAD_VOLUME_NAME);
+      const char *message = utility_get_generic_message (MSGCAT_UTIL_GENERIC_BAD_VOLUME_NAME);
       if (message != NULL)
-	{
-	  PRINT_AND_LOG_ERR_MSG (message, name[i], name);
-	}
+        {
+          PRINT_AND_LOG_ERR_MSG (message, name[i], name);
+        }
     }
   return status;
 }
@@ -219,9 +212,9 @@ utility_get_option_index (UTIL_ARG_MAP * arg_map, int arg_ch)
   for (i = 0; arg_map[i].arg_ch; i++)
     {
       if (arg_map[i].arg_ch == arg_ch)
-	{
-	  return i;
-	}
+        {
+          return i;
+        }
     }
   return -1;
 }
@@ -258,9 +251,9 @@ utility_get_option_bool_value (UTIL_ARG_MAP * arg_map, int arg_ch)
   if (index != -1)
     {
       if (arg_map[index].arg_value.i == 1)
-	{
-	  return true;
-	}
+        {
+          return true;
+        }
     }
   return false;
 }
@@ -273,24 +266,22 @@ utility_get_option_bool_value (UTIL_ARG_MAP * arg_map, int arg_ch)
  *   arg_ch(in): the value of an argument
  */
 const char *
-utility_get_option_string_value (UTIL_ARG_MAP * arg_map, int arg_ch,
-				 int index)
+utility_get_option_string_value (UTIL_ARG_MAP * arg_map, int arg_ch, int index)
 {
   int arg_index = utility_get_option_index (arg_map, arg_ch);
   if (arg_index != -1)
     {
       if (arg_ch == OPTION_STRING_TABLE)
-	{
-	  if (index < arg_map[arg_index].value_info.num_strings)
-	    {
-	      return (((const char *const *) arg_map[arg_index].arg_value.
-		       p)[index]);
-	    }
-	}
+        {
+          if (index < arg_map[arg_index].value_info.num_strings)
+            {
+              return (((const char *const *) arg_map[arg_index].arg_value.p)[index]);
+            }
+        }
       else
-	{
-	  return ((const char *) arg_map[arg_index].arg_value.p);
-	}
+        {
+          return ((const char *) arg_map[arg_index].arg_value.p);
+        }
     }
   return NULL;
 }
@@ -346,8 +337,7 @@ fopen_ex (const char *filename, const char *type)
  * utility_keyword_search
  */
 int
-utility_keyword_search (UTIL_KEYWORD * keywords, int *keyval_p,
-			const char **keystr_p)
+utility_keyword_search (UTIL_KEYWORD * keywords, int *keyval_p, const char **keystr_p)
 {
   UTIL_KEYWORD *keyp;
 
@@ -355,25 +345,25 @@ utility_keyword_search (UTIL_KEYWORD * keywords, int *keyval_p,
     {
       /* get keyword string from keyword value */
       for (keyp = keywords; keyp->keyval >= 0; keyp++)
-	{
-	  if (*keyval_p == keyp->keyval)
-	    {
-	      *keystr_p = keyp->keystr;
-	      return NO_ERROR;
-	    }
-	}
+        {
+          if (*keyval_p == keyp->keyval)
+            {
+              *keystr_p = keyp->keystr;
+              return NO_ERROR;
+            }
+        }
     }
   else if (*keyval_p < 0 && *keystr_p != NULL)
     {
       /* get keyword value from keyword string */
       for (keyp = keywords; keyp->keystr != NULL; keyp++)
-	{
-	  if (!strcasecmp (*keystr_p, keyp->keystr))
-	    {
-	      *keyval_p = keyp->keyval;
-	      return NO_ERROR;
-	    }
-	}
+        {
+          if (!strcasecmp (*keystr_p, keyp->keystr))
+            {
+              *keyval_p = keyp->keyval;
+              return NO_ERROR;
+            }
+        }
     }
   return ER_FAILED;
 }
@@ -413,17 +403,14 @@ util_split_ha_db (const char *str)
 
 static int
 util_get_ha_parameters (PRM_NODE_LIST * ha_node_list,
-			const char **ha_db_list_p,
-			const char **ha_copy_log_base_p,
-			int *ha_max_log_applier_p)
+                        const char **ha_db_list_p, const char **ha_copy_log_base_p, int *ha_max_log_applier_p)
 {
   int error = NO_ERROR;
 
   *(ha_db_list_p) = prm_get_string_value (PRM_ID_HA_DB_LIST);
   if (*(ha_db_list_p) == NULL || **(ha_db_list_p) == '\0')
     {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_INVALID_PARAMETER);
+      const char *message = utility_get_generic_message (MSGCAT_UTIL_GENERIC_INVALID_PARAMETER);
       fprintf (stderr, message, prm_get_name (PRM_ID_HA_DB_LIST), "");
       return ER_GENERIC_ERROR;
     }
@@ -457,9 +444,9 @@ util_free_ha_conf (HA_CONF * ha_conf)
   for (i = 0, nc = ha_conf->node_conf; i < ha_conf->num_node_conf; i++)
     {
       if (nc[i].copy_log_base)
-	{
-	  free_and_init (nc[i].copy_log_base);
-	}
+        {
+          free_and_init (nc[i].copy_log_base);
+        }
     }
   free_and_init (ha_conf->node_conf);
   ha_conf->num_node_conf = 0;
@@ -491,8 +478,7 @@ util_make_ha_conf (HA_CONF * ha_conf)
   int ha_max_log_applier;
   PRM_NODE_LIST ha_node_list;
 
-  error = util_get_ha_parameters (&ha_node_list, &ha_db_list_p,
-				  &ha_copy_log_base_p, &ha_max_log_applier);
+  error = util_get_ha_parameters (&ha_node_list, &ha_db_list_p, &ha_copy_log_base_p, &ha_max_log_applier);
   if (error != NO_ERROR)
     {
       return error;
@@ -501,27 +487,23 @@ util_make_ha_conf (HA_CONF * ha_conf)
   ha_conf->db_names = util_split_ha_db (ha_db_list_p);
   if (ha_conf->db_names == NULL)
     {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
+      const char *message = utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
       fprintf (stderr, message);
 
       error = ER_GENERIC_ERROR;
       goto ret;
     }
 
-  ha_conf->node_conf =
-    (HA_NODE_CONF *) malloc (sizeof (HA_NODE_CONF) * ha_node_list.num_nodes);
+  ha_conf->node_conf = (HA_NODE_CONF *) malloc (sizeof (HA_NODE_CONF) * ha_node_list.num_nodes);
   if (ha_conf->node_conf == NULL)
     {
-      const char *message =
-	utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
+      const char *message = utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
       fprintf (stderr, message);
 
       error = ER_GENERIC_ERROR;
       goto ret;
     }
-  memset ((void *) ha_conf->node_conf, 0,
-	  sizeof (HA_NODE_CONF) * ha_node_list.num_nodes);
+  memset ((void *) ha_conf->node_conf, 0, sizeof (HA_NODE_CONF) * ha_node_list.num_nodes);
   ha_conf->num_node_conf = ha_node_list.num_nodes;
   ha_conf->max_log_applier = ha_max_log_applier;
 
@@ -531,14 +513,13 @@ util_make_ha_conf (HA_CONF * ha_conf)
       ha_conf->node_conf[i].copy_log_base = strdup (ha_copy_log_base_p);
 
       if (ha_conf->node_conf[i].copy_log_base == NULL)
-	{
-	  const char *message =
-	    utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
-	  fprintf (stderr, message);
+        {
+          const char *message = utility_get_generic_message (MSGCAT_UTIL_GENERIC_NO_MEM);
+          fprintf (stderr, message);
 
-	  error = ER_GENERIC_ERROR;
-	  goto ret;
-	}
+          error = ER_GENERIC_ERROR;
+          goto ret;
+        }
     }
 
 ret:
@@ -662,33 +643,33 @@ util_byte_to_size_string (char *buf, size_t len, INT64 size_num)
   for (i = 0; i <= decpt + 1; i++)
     {
       if (i == decpt)
-	{
-	  buf[i] = '.';
-	}
+        {
+          buf[i] = '.';
+        }
       else if (i == decpt + 1)
-	{
-	  if (num_len > 0 && num_len > decpt)
-	    {
-	      buf[i] = num_str[num_len - 1];
-	    }
-	  else
-	    {
-	      buf[i] = '0';
-	    }
-	  buf[i + 1] = ss[pow];
-	  buf[i + 2] = '\0';
-	}
+        {
+          if (num_len > 0 && num_len > decpt)
+            {
+              buf[i] = num_str[num_len - 1];
+            }
+          else
+            {
+              buf[i] = '0';
+            }
+          buf[i + 1] = ss[pow];
+          buf[i + 2] = '\0';
+        }
       else
-	{
-	  if (num_len < decpt && i >= num_len)
-	    {
-	      buf[i] = '0';
-	    }
-	  else
-	    {
-	      buf[i] = num_str[i];
-	    }
-	}
+        {
+          if (num_len < decpt && i >= num_len)
+            {
+              buf[i] = '0';
+            }
+          else
+            {
+              buf[i] = num_str[i];
+            }
+        }
     }
 
   return NO_ERROR;
@@ -804,8 +785,7 @@ util_msec_to_time_string (char *buf, size_t len, INT64 msec_num)
   if (sec > 0)
     {
       msec = v % ONE_SEC;
-      error = snprintf (buf, len, "%lld.%03lldsec",
-			(long long) sec, (long long) msec);
+      error = snprintf (buf, len, "%lld.%03lldsec", (long long) sec, (long long) msec);
     }
   else if (v < 0)
     {
@@ -818,8 +798,7 @@ util_msec_to_time_string (char *buf, size_t len, INT64 msec_num)
 
   if (error < 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_GENERIC_ERROR, 1, "invalid buffer length");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "invalid buffer length");
       return ER_GENERIC_ERROR;
     }
 

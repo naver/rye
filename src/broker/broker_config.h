@@ -74,9 +74,9 @@
 #define DEFAULT_LONG_QUERY_TIME         "1min"
 #define DEFAULT_LONG_TRANSACTION_TIME   "1min"
 #define DEFAULT_ACCESS_LOG_MAX_SIZE     "10M"
-#define MAX_SQL_LOG_MAX_SIZE            2097152	/* 2G */
-#define MAX_BROKER_LOG_MAX_SIZE		2097152	/* 2G */
-#define MAX_ACCESS_LOG_MAX_SIZE         2097152	/* 2G */
+#define MAX_SQL_LOG_MAX_SIZE            2097152 /* 2G */
+#define MAX_BROKER_LOG_MAX_SIZE		2097152 /* 2G */
+#define MAX_ACCESS_LOG_MAX_SIZE         2097152 /* 2G */
 #define DEFAULT_MAX_NUM_DELAYED_HOSTS_LOOKUP    -1
 
 #define BROKER_NAME_LEN		64
@@ -188,12 +188,12 @@ struct t_broker_info
   int time_to_kill;
   int sql_log_max_size;
   int broker_log_max_size;
-  int long_query_time;		/* msec */
-  int long_transaction_time;	/* msec */
+  int long_query_time;          /* msec */
+  int long_transaction_time;    /* msec */
   int max_string_length;
   int num_busy_count;
   int max_prepared_stmt_count;
-  int access_log_max_size;	/* kbytes */
+  int access_log_max_size;      /* kbytes */
   char source_env[CONF_LOG_FILE_LEN];
   PRM_NODE_LIST preferred_hosts;
 
@@ -209,13 +209,13 @@ struct t_broker_info
 
   char monitor_server_flag;
   char monitor_hang_flag;
-  char reject_client_flag;	/* reject clients due to hanging cas */
+  char reject_client_flag;      /* reject clients due to hanging cas */
 
   char connect_order_random;
   int replica_only_flag;
-  int max_num_delayed_hosts_lookup;	/* max num of HA delayed hosts to lookup */
+  int max_num_delayed_hosts_lookup;     /* max num of HA delayed hosts to lookup */
 
-  int cas_rctime;		/* sec */
+  int cas_rctime;               /* sec */
 
   int shard_mgmt_num_migrator;
   char shard_metadb[SRV_CON_DBNAME_SIZE];
@@ -227,11 +227,9 @@ struct t_broker_info
 };
 
 extern int broker_config_read (T_BROKER_INFO * br_info,
-			       int *num_broker, int *broker_shm_key,
-			       char *admin_log_file, char admin_flag);
+                               int *num_broker, int *broker_shm_key, char *admin_log_file, char admin_flag);
 
-extern void broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info,
-				int num_broker, int broker_shm_key);
+extern void broker_config_dump (FILE * fp, const T_BROKER_INFO * br_info, int num_broker, int broker_shm_key);
 
 extern int conf_get_value_table_on_off (const char *value);
 extern int conf_get_value_sql_log_mode (const char *value);

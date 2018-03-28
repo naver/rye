@@ -243,19 +243,18 @@ extern "C"
   typedef unsigned int (*HASH_FUNC) (const void *key, unsigned int ht_size);
   typedef int (*CMP_FUNC) (const void *key1, const void *key2);
   typedef int (*REM_FUNC) (void *key, void *data, void *args);
-  typedef int (*PRINT_FUNC) (FILE * fp, const void *key, void *data,
-			     void *args);
+  typedef int (*PRINT_FUNC) (FILE * fp, const void *key, void *data, void *args);
 
 /* CCI Hash Table Entry - linked list */
   typedef struct cci_hentry CCI_HENTRY;
   typedef struct cci_hentry *CCI_HENTRY_PTR;
   struct cci_hentry
   {
-    CCI_HENTRY_PTR act_next;	/* Next active entry on hash table */
-    CCI_HENTRY_PTR act_prev;	/* Previous active entry on hash table */
-    CCI_HENTRY_PTR next;	/* Next hash table entry for colisions */
-    void *key;			/* Key associated with entry */
-    void *data;			/* Data associated with key entry */
+    CCI_HENTRY_PTR act_next;    /* Next active entry on hash table */
+    CCI_HENTRY_PTR act_prev;    /* Previous active entry on hash table */
+    CCI_HENTRY_PTR next;        /* Next hash table entry for colisions */
+    void *key;                  /* Key associated with entry */
+    void *data;                 /* Data associated with key entry */
   };
 
 /* CCI Memory Hash Table */
@@ -265,46 +264,40 @@ extern "C"
     HASH_FUNC hash_func;
     CMP_FUNC cmp_func;
     const char *name;
-    CCI_HENTRY_PTR *table;	/* The hash table (entries) */
-    CCI_HENTRY_PTR act_head;	/* Head of active double link list
-				 * entries. Used to perform quick
-				 * mappings of hash table.
-				 */
-    CCI_HENTRY_PTR act_tail;	/* Tail of active double link list
-				 * entries. Used to perform quick
-				 * mappings of hash table.
-				 */
-    CCI_HENTRY_PTR prealloc_entries;	/* Free entries allocated for
-					 * locality reasons
-					 */
-    unsigned int size;		/* Better if prime number */
-    unsigned int rehash_at;	/* Rehash at this num of entries */
-    unsigned int nentries;	/* Actual number of entries */
-    unsigned int nprealloc_entries;	/* Number of preallocated entries
-					 * for future insertions
-					 */
-    unsigned int ncollisions;	/* Number of collisions in HT */
+    CCI_HENTRY_PTR *table;      /* The hash table (entries) */
+    CCI_HENTRY_PTR act_head;    /* Head of active double link list
+                                 * entries. Used to perform quick
+                                 * mappings of hash table.
+                                 */
+    CCI_HENTRY_PTR act_tail;    /* Tail of active double link list
+                                 * entries. Used to perform quick
+                                 * mappings of hash table.
+                                 */
+    CCI_HENTRY_PTR prealloc_entries;    /* Free entries allocated for
+                                         * locality reasons
+                                         */
+    unsigned int size;          /* Better if prime number */
+    unsigned int rehash_at;     /* Rehash at this num of entries */
+    unsigned int nentries;      /* Actual number of entries */
+    unsigned int nprealloc_entries;     /* Number of preallocated entries
+                                         * for future insertions
+                                         */
+    unsigned int ncollisions;   /* Number of collisions in HT */
   };
 
 /************************************************************************
  * PUBLIC FUNCTION PROTOTYPES						*
  ************************************************************************/
-  extern unsigned int cci_mht_5strhash (const void *key,
-					unsigned int ht_size);
+  extern unsigned int cci_mht_5strhash (const void *key, unsigned int ht_size);
   extern int cci_mht_strcasecmpeq (const void *key1, const void *key2);
 
-  extern CCI_MHT_TABLE *cci_mht_create (const char *name, int est_size,
-					HASH_FUNC hash_func,
-					CMP_FUNC cmp_func);
-  extern void cci_mht_destroy (CCI_MHT_TABLE * ht, bool free_key,
-			       bool free_data);
-  extern void *cci_mht_rem (CCI_MHT_TABLE * ht, void *key, bool free_key,
-			    bool free_data);
+  extern CCI_MHT_TABLE *cci_mht_create (const char *name, int est_size, HASH_FUNC hash_func, CMP_FUNC cmp_func);
+  extern void cci_mht_destroy (CCI_MHT_TABLE * ht, bool free_key, bool free_data);
+  extern void *cci_mht_rem (CCI_MHT_TABLE * ht, void *key, bool free_key, bool free_data);
   extern void *cci_mht_get (CCI_MHT_TABLE * ht, void *key);
   extern void *cci_mht_put (CCI_MHT_TABLE * ht, void *key, void *data);
   extern void *cci_mht_put_data (CCI_MHT_TABLE * ht, void *key, void *data);
-  extern int cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func,
-			    void *func_args);
+  extern int cci_mht_clear (CCI_MHT_TABLE * ht, REM_FUNC rem_func, void *func_args);
 
 /************************************************************************
  * PUBLIC VARIABLES							*
@@ -318,4 +311,4 @@ extern "C"
 }
 #endif
 
-#endif				/* _CCI_COMMON_H_ */
+#endif                          /* _CCI_COMMON_H_ */

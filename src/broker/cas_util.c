@@ -47,7 +47,7 @@ ut_tolower (char *str)
   for (p = str; *p; p++)
     {
       if (*p >= 'A' && *p <= 'Z')
-	*p = *p - 'A' + 'a';
+        *p = *p - 'A' + 'a';
     }
 }
 
@@ -62,13 +62,12 @@ ut_toupper (char *str)
   for (p = str; *p; p++)
     {
       if (*p >= 'a' && *p <= 'z')
-	*p = *p - 'a' + 'A';
+        *p = *p - 'a' + 'A';
     }
 }
 
 void
-ut_timeval_diff (struct timeval *start, struct timeval *end, int *res_sec,
-		 int *res_msec)
+ut_timeval_diff (struct timeval *start, struct timeval *end, int *res_sec, int *res_msec)
 {
   int sec, msec;
 
@@ -89,8 +88,7 @@ ut_timeval_diff (struct timeval *start, struct timeval *end, int *res_sec,
 }
 
 int
-ut_check_timeout (struct timeval *start_time, struct timeval *end_time,
-		  int timeout_msec, int *res_sec, int *res_msec)
+ut_check_timeout (struct timeval *start_time, struct timeval *end_time, int timeout_msec, int *res_sec, int *res_msec)
 {
   struct timeval cur_time;
   int diff_msec;

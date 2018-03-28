@@ -69,22 +69,18 @@
 #define MEMBER_SIZE(TYPE, MEMBER) ((int) sizeof(((TYPE *)0)->MEMBER))
 #define NUM_OF_DIGITS(NUMBER) (int)log10(NUMBER) + 1
 
-static int br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
-			T_SHM_BROKER * shm_br, int br_index);
+static int br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl, T_SHM_BROKER * shm_br, int br_index);
 static int br_inactivate (T_BROKER_INFO *);
 static void as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
-			 T_SHM_APPL_SERVER * shm_as_p,
-			 T_APPL_SERVER_INFO * as_info_p, int as_idex,
-			 char **env, int env_num);
+                         T_SHM_APPL_SERVER * shm_as_p,
+                         T_APPL_SERVER_INFO * as_info_p, int as_idex, char **env, int env_num);
 static void as_inactivate (T_APPL_SERVER_INFO * as_info_p, char *broker_name);
 
 static void free_env (char **env, int env_num);
 static char **make_env (char *env_file, int *env_num);
 
-static void get_br_init_err_msg (char *msg_buf, int buf_size, int err_code,
-				 int os_err_code);
-static int admin_acl_test_cmd_internal (const char *acl_filename, int argc,
-					char **argv, FILE * out_fp);
+static void get_br_init_err_msg (char *msg_buf, int buf_size, int err_code, int os_err_code);
+static int admin_acl_test_cmd_internal (const char *acl_filename, int argc, char **argv, FILE * out_fp);
 
 char admin_Err_msg[ADMIN_ERR_MSG_SIZE];
 #define SET_ADMIN_ERR_MSG(...)		\
@@ -152,21 +148,18 @@ admin_start_cmd (T_BROKER_INFO * br_info, int br_num, int shm_key_br_gl)
        * socket path length = sock_path[broker_name].[as_index]
        */
       if (strlen (path) + strlen (br_info[i].name) + 1 +
-	  NUM_OF_DIGITS (br_info[i].appl_server_max_num) >
-	  MEMBER_SIZE (struct sockaddr_un, sun_path) - 1)
-	{
-	  SET_ADMIN_ERR_MSG ("The socket path is too long (>%d): %s",
-			     MEMBER_SIZE (struct sockaddr_un, sun_path),
-			     path);
-	  return -1;
-	}
+          NUM_OF_DIGITS (br_info[i].appl_server_max_num) > MEMBER_SIZE (struct sockaddr_un, sun_path) - 1)
+        {
+          SET_ADMIN_ERR_MSG ("The socket path is too long (>%d): %s", MEMBER_SIZE (struct sockaddr_un, sun_path), path);
+          return -1;
+        }
 
       create_log_dir (br_info[i].name, br_info[i].broker_type);
 
       if (br_info[i].broker_type == SHARD_MGMT)
-	{
-	  has_shard_mgmt = true;
-	}
+        {
+          has_shard_mgmt = true;
+        }
     }
   chdir (envvar_bindir_file (path, BROKER_PATH_MAX, ""));
 
@@ -180,8 +173,7 @@ admin_start_cmd (T_BROKER_INFO * br_info, int br_num, int shm_key_br_gl)
     }
 
   envvar_broker_acl_file (br_acl_file, sizeof (br_acl_file));
-  if (br_acl_read_config_file (&br_acl_conf, br_acl_file, !has_shard_mgmt,
-			       admin_Err_msg) < 0)
+  if (br_acl_read_config_file (&br_acl_conf, br_acl_file, !has_shard_mgmt, admin_Err_msg) < 0)
     {
       res = -1;
       goto end;
@@ -190,56 +182,51 @@ admin_start_cmd (T_BROKER_INFO * br_info, int br_num, int shm_key_br_gl)
   for (order_idx = 0; res == 0 && order_idx < DIM (start_order); order_idx++)
     {
       for (i = 0; i < br_num; i++)
-	{
-	  shm_as_p = NULL;
+        {
+          shm_as_p = NULL;
 
-	  if (start_order[order_idx] !=
-	      (T_BROKER_TYPE) br_info[i].broker_type)
-	    {
-	      continue;
-	    }
-	  if (br_info[i].service_flag != ON)
-	    {
-	      continue;
-	    }
+          if (start_order[order_idx] != (T_BROKER_TYPE) br_info[i].broker_type)
+            {
+              continue;
+            }
+          if (br_info[i].service_flag != ON)
+            {
+              continue;
+            }
 
-	  shm_br->br_info[i].appl_server_shm_key = shm_key_br_gl + i + 1;
+          shm_br->br_info[i].appl_server_shm_key = shm_key_br_gl + i + 1;
 
-	  shm_as_p =
-	    br_shm_init_shm_as (&(shm_br->br_info[i]), shm_key_br_gl);
-	  if (shm_as_p == NULL)
-	    {
-	      SET_ADMIN_ERR_MSG
-		("%s: failed to initialize appl server shared memory.",
-		 br_info[i].name);
+          shm_as_p = br_shm_init_shm_as (&(shm_br->br_info[i]), shm_key_br_gl);
+          if (shm_as_p == NULL)
+            {
+              SET_ADMIN_ERR_MSG ("%s: failed to initialize appl server shared memory.", br_info[i].name);
 
-	      res = -1;
-	      break;
-	    }
+              res = -1;
+              break;
+            }
 
-	  broker_started[i] = true;
+          broker_started[i] = true;
 
-	  if (br_acl_init_shm (shm_as_p, &shm_br->br_info[i],
-			       shm_br, admin_Err_msg, &br_acl_conf) < 0)
-	    {
-	      res = -1;
-	      break;
-	    }
+          if (br_acl_init_shm (shm_as_p, &shm_br->br_info[i], shm_br, admin_Err_msg, &br_acl_conf) < 0)
+            {
+              res = -1;
+              break;
+            }
 
-	  res = br_activate (&(shm_br->br_info[i]), shm_key_br_gl, shm_br, i);
+          res = br_activate (&(shm_br->br_info[i]), shm_key_br_gl, shm_br, i);
 
-	  if (res < 0)
-	    {
-	      break;
-	    }
+          if (res < 0)
+            {
+              break;
+            }
 
-	  if (shm_as_p)
-	    {
-	      rye_shm_detach (shm_as_p);
-	    }
+          if (shm_as_p)
+            {
+              rye_shm_detach (shm_as_p);
+            }
 
-	  res = 0;
-	}
+          res = 0;
+        }
     }
 
 end:
@@ -249,13 +236,13 @@ end:
       memcpy (err_msg_backup, admin_Err_msg, ADMIN_ERR_MSG_SIZE);
 
       for (i = 0; i < br_num; i++)
-	{
-	  if (broker_started[i])
-	    {
-	      br_inactivate (&(shm_br->br_info[i]));
-	      rye_shm_destroy ((shm_br->br_info[i].appl_server_shm_key));
-	    }
-	}
+        {
+          if (broker_started[i])
+            {
+              br_inactivate (&(shm_br->br_info[i]));
+              rye_shm_destroy ((shm_br->br_info[i].appl_server_shm_key));
+            }
+        }
 
       memcpy (admin_Err_msg, err_msg_backup, ADMIN_ERR_MSG_SIZE);
     }
@@ -269,9 +256,9 @@ end:
       rye_shm_destroy (shm_key_br_gl);
 
       if (shm_as_p)
-	{
-	  rye_shm_detach (shm_as_p);
-	}
+        {
+          rye_shm_detach (shm_as_p);
+        }
     }
 
   return res;
@@ -287,8 +274,7 @@ admin_stop_cmd (int shm_key_br_gl)
   shm_br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, false);
   if (shm_br == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_key_br_gl);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_key_br_gl);
       return -1;
     }
 
@@ -303,20 +289,19 @@ admin_stop_cmd (int shm_key_br_gl)
   for (i = 0; i < MAX_BROKER_NUM && i < shm_br->num_broker; i++)
     {
       if (shm_br->br_info[i].service_flag == ON)
-	{
-	  res = br_inactivate (&(shm_br->br_info[i]));
-	  if (res < 0)
-	    {
-	      SET_ADMIN_ERR_MSG ("Cannot inactivate broker [%s]",
-				 shm_br->br_info[i].name);
-	      rye_shm_detach (shm_br);
-	      return -1;
-	    }
-	  else
-	    {
-	      rye_shm_destroy ((shm_br->br_info[i].appl_server_shm_key));
-	    }
-	}
+        {
+          res = br_inactivate (&(shm_br->br_info[i]));
+          if (res < 0)
+            {
+              SET_ADMIN_ERR_MSG ("Cannot inactivate broker [%s]", shm_br->br_info[i].name);
+              rye_shm_detach (shm_br);
+              return -1;
+            }
+          else
+            {
+              rye_shm_destroy ((shm_br->br_info[i].appl_server_shm_key));
+            }
+        }
     }
 
   memcpy (admin_Err_msg, err_msg_backup, ADMIN_ERR_MSG_SIZE);
@@ -340,14 +325,12 @@ admin_on_cmd (int shm_key_br_gl, const char *broker_name)
   shm_br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, false);
   if (shm_br == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_key_br_gl);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_key_br_gl);
       return -1;
     }
 
   envvar_broker_acl_file (br_acl_file, sizeof (br_acl_file));
-  if (br_acl_read_config_file
-      (&br_acl_conf, br_acl_file, false, admin_Err_msg) < 0)
+  if (br_acl_read_config_file (&br_acl_conf, br_acl_file, false, admin_Err_msg) < 0)
     {
       rye_shm_detach (shm_br);
       return -1;
@@ -356,39 +339,34 @@ admin_on_cmd (int shm_key_br_gl, const char *broker_name)
   for (i = 0; i < shm_br->num_broker; i++)
     {
       if (strcmp (shm_br->br_info[i].name, broker_name) == 0)
-	{
-	  if (shm_br->br_info[i].service_flag == ON)
-	    {
-	      SET_ADMIN_ERR_MSG ("Broker[%s] is already running",
-				 broker_name);
-	      rye_shm_detach (shm_br);
-	      return -1;
-	    }
-	  else
-	    {
-	      shm_as_p = br_shm_init_shm_as (&(shm_br->br_info[i]),
-					     shm_key_br_gl);
-	      if (shm_as_p == NULL)
-		{
-		  SET_ADMIN_ERR_MSG ("%s: cannot create shared memory",
-				     broker_name);
+        {
+          if (shm_br->br_info[i].service_flag == ON)
+            {
+              SET_ADMIN_ERR_MSG ("Broker[%s] is already running", broker_name);
+              rye_shm_detach (shm_br);
+              return -1;
+            }
+          else
+            {
+              shm_as_p = br_shm_init_shm_as (&(shm_br->br_info[i]), shm_key_br_gl);
+              if (shm_as_p == NULL)
+                {
+                  SET_ADMIN_ERR_MSG ("%s: cannot create shared memory", broker_name);
 
-		  res = -1;
-		  break;
-		}
+                  res = -1;
+                  break;
+                }
 
-	      if (br_acl_init_shm (shm_as_p, &shm_br->br_info[i],
-				   shm_br, admin_Err_msg, &br_acl_conf) < 0)
-		{
-		  res = -1;
-		  break;
-		}
+              if (br_acl_init_shm (shm_as_p, &shm_br->br_info[i], shm_br, admin_Err_msg, &br_acl_conf) < 0)
+                {
+                  res = -1;
+                  break;
+                }
 
-	      res = br_activate (&(shm_br->br_info[i]), shm_key_br_gl, shm_br,
-				 i);
-	    }
-	  break;
-	}
+              res = br_activate (&(shm_br->br_info[i]), shm_key_br_gl, shm_br, i);
+            }
+          break;
+        }
     }
 
   if (res < 0)
@@ -397,11 +375,11 @@ admin_on_cmd (int shm_key_br_gl, const char *broker_name)
 
       /* if shm_as_p == NULL then, it is expected that failed creating shared memory */
       if (shm_as_p == NULL)
-	{
-	  rye_shm_detach (shm_br);
+        {
+          rye_shm_detach (shm_br);
 
-	  return -1;
-	}
+          return -1;
+        }
 
       memcpy (err_msg_backup, admin_Err_msg, ADMIN_ERR_MSG_SIZE);
 
@@ -437,8 +415,7 @@ admin_off_cmd (int shm_key_br_gl, const char *broker_name)
   shm_br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, false);
   if (shm_br == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_key_br_gl);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_key_br_gl);
       return -1;
     }
 
@@ -451,30 +428,29 @@ admin_off_cmd (int shm_key_br_gl, const char *broker_name)
   for (i = 0; i < shm_br->num_broker; i++)
     {
       if (strcmp (shm_br->br_info[i].name, broker_name) == 0)
-	{
-	  if (shm_br->br_info[i].service_flag == OFF)
-	    {
-	      SET_ADMIN_ERR_MSG ("Broker[%s] is not running", broker_name);
-	      rye_shm_detach (shm_br);
-	      return -1;
-	    }
-	  else
-	    {
-	      res = br_inactivate (&(shm_br->br_info[i]));
-	      if (res < 0)
-		{
-		  SET_ADMIN_ERR_MSG ("Cannot inactivate broker [%s]",
-				     broker_name);
-		  rye_shm_detach (shm_br);
-		  return -1;
-		}
-	      else
-		{
-		  rye_shm_destroy ((shm_br->br_info[i].appl_server_shm_key));
-		}
-	    }
-	  break;
-	}
+        {
+          if (shm_br->br_info[i].service_flag == OFF)
+            {
+              SET_ADMIN_ERR_MSG ("Broker[%s] is not running", broker_name);
+              rye_shm_detach (shm_br);
+              return -1;
+            }
+          else
+            {
+              res = br_inactivate (&(shm_br->br_info[i]));
+              if (res < 0)
+                {
+                  SET_ADMIN_ERR_MSG ("Cannot inactivate broker [%s]", broker_name);
+                  rye_shm_detach (shm_br);
+                  return -1;
+                }
+              else
+                {
+                  rye_shm_destroy ((shm_br->br_info[i].appl_server_shm_key));
+                }
+            }
+          break;
+        }
     }
 
   if (i >= shm_br->num_broker)
@@ -499,8 +475,7 @@ admin_reset_cmd (int shm_key_br_gl, const char *broker_name)
   shm_br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, false);
   if (shm_br == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_key_br_gl);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_key_br_gl);
       return -1;
     }
 
@@ -508,19 +483,19 @@ admin_reset_cmd (int shm_key_br_gl, const char *broker_name)
   for (i = 0; i < shm_br->num_broker; i++)
     {
       if (strcmp (shm_br->br_info[i].name, broker_name) == 0)
-	{
-	  if (shm_br->br_info[i].service_flag == OFF)
-	    {
-	      SET_ADMIN_ERR_MSG ("Broker[%s] is not running", broker_name);
-	      rye_shm_detach (shm_br);
-	      return -1;
-	    }
-	  else
-	    {
-	      br_index = i;
-	    }
-	  break;
-	}
+        {
+          if (shm_br->br_info[i].service_flag == OFF)
+            {
+              SET_ADMIN_ERR_MSG ("Broker[%s] is not running", broker_name);
+              rye_shm_detach (shm_br);
+              return -1;
+            }
+          else
+            {
+              br_index = i;
+            }
+          break;
+        }
     }
 
   if (br_index < 0)
@@ -530,12 +505,10 @@ admin_reset_cmd (int shm_key_br_gl, const char *broker_name)
       return -1;
     }
 
-  shm_as_p = rye_shm_attach (shm_br->br_info[br_index].appl_server_shm_key,
-			     RYE_SHM_TYPE_BROKER_LOCAL, false);
+  shm_as_p = rye_shm_attach (shm_br->br_info[br_index].appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, false);
   if (shm_as_p == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_br->br_info[br_index].appl_server_shm_key);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_br->br_info[br_index].appl_server_shm_key);
       rye_shm_detach (shm_br);
       return -1;
     }
@@ -566,22 +539,18 @@ admin_info_cmd (int shm_key_br_gl)
   shm_br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, true);
   if (shm_br == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_key_br_gl);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_key_br_gl);
       return -1;
     }
 
-  broker_config_dump (stdout, shm_br->br_info, shm_br->num_broker,
-		      shm_key_br_gl);
+  broker_config_dump (stdout, shm_br->br_info, shm_br->num_broker, shm_key_br_gl);
 
   rye_shm_detach (shm_br);
   return 0;
 }
 
 int
-admin_conf_change (int shm_key_br_gl, const char *br_name,
-		   const char *conf_name, const char *conf_value,
-		   int as_number)
+admin_conf_change (int shm_key_br_gl, const char *br_name, const char *conf_name, const char *conf_value, int as_number)
 {
   int i, br_index;
   T_SHM_BROKER *shm_br = NULL;
@@ -599,10 +568,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
   for (i = 0; i < shm_br->num_broker; i++)
     {
       if (strcasecmp (br_name, shm_br->br_info[i].name) == 0)
-	{
-	  br_index = i;
-	  break;
-	}
+        {
+          br_index = i;
+          break;
+        }
     }
   if (br_index < 0)
     {
@@ -617,13 +586,11 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
     }
 
   br_info_p = &(shm_br->br_info[br_index]);
-  shm_as_p = rye_shm_attach (br_info_p->appl_server_shm_key,
-			     RYE_SHM_TYPE_BROKER_LOCAL, false);
+  shm_as_p = rye_shm_attach (br_info_p->appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, false);
 
   if (shm_as_p == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 br_info_p->appl_server_shm_key);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", br_info_p->appl_server_shm_key);
       goto set_conf_error;
     }
   assert (shm_as_p->num_appl_server <= APPL_SERVER_NUM_LIMIT);
@@ -634,33 +601,31 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       sql_log_mode = conf_get_value_sql_log_mode (conf_value);
       if (sql_log_mode < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       if (as_number <= 0)
-	{
-	  shm_br->br_info[br_index].sql_log_mode = sql_log_mode;
-	  shm_as_p->sql_log_mode = sql_log_mode;
-	  for (i = 0; i < shm_br->br_info[br_index].appl_server_max_num; i++)
-	    {
-	      shm_as_p->info.as_info[i].cur_sql_log_mode = sql_log_mode;
-	      shm_as_p->info.as_info[i].cas_log_reset = CAS_LOG_RESET_REOPEN;
-	    }
-	}
+        {
+          shm_br->br_info[br_index].sql_log_mode = sql_log_mode;
+          shm_as_p->sql_log_mode = sql_log_mode;
+          for (i = 0; i < shm_br->br_info[br_index].appl_server_max_num; i++)
+            {
+              shm_as_p->info.as_info[i].cur_sql_log_mode = sql_log_mode;
+              shm_as_p->info.as_info[i].cas_log_reset = CAS_LOG_RESET_REOPEN;
+            }
+        }
       else
-	{
-	  if (as_number > shm_as_p->num_appl_server)
-	    {
-	      SET_ADMIN_ERR_MSG ("Invalid cas number : %d", as_number);
-	      goto set_conf_error;
-	    }
-	  shm_as_p->info.as_info[as_number - 1].cur_sql_log_mode =
-	    sql_log_mode;
-	  shm_as_p->info.as_info[as_number - 1].cas_log_reset =
-	    CAS_LOG_RESET_REOPEN;
-	}
+        {
+          if (as_number > shm_as_p->num_appl_server)
+            {
+              SET_ADMIN_ERR_MSG ("Invalid cas number : %d", as_number);
+              goto set_conf_error;
+            }
+          shm_as_p->info.as_info[as_number - 1].cur_sql_log_mode = sql_log_mode;
+          shm_as_p->info.as_info[as_number - 1].cas_log_reset = CAS_LOG_RESET_REOPEN;
+        }
     }
   else if (strcasecmp (conf_name, "BROKER_LOG") == 0)
     {
@@ -668,10 +633,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       broker_log_mode = conf_get_value_broker_log_mode (conf_value);
       if (broker_log_mode < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       shm_br->br_info[br_index].broker_log_mode = broker_log_mode;
       shm_as_p->broker_log_mode = broker_log_mode;
@@ -684,57 +649,53 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       slow_log_mode = conf_get_value_table_on_off (conf_value);
       if (slow_log_mode < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       if (as_number <= 0)
-	{
-	  shm_br->br_info[br_index].slow_log_mode = slow_log_mode;
-	  shm_as_p->slow_log_mode = slow_log_mode;
-	  for (i = 0; i < shm_br->br_info[br_index].appl_server_max_num; i++)
-	    {
-	      shm_as_p->info.as_info[i].cur_slow_log_mode = slow_log_mode;
-	      shm_as_p->info.as_info[i].cas_slow_log_reset =
-		CAS_LOG_RESET_REOPEN;
-	    }
-	}
+        {
+          shm_br->br_info[br_index].slow_log_mode = slow_log_mode;
+          shm_as_p->slow_log_mode = slow_log_mode;
+          for (i = 0; i < shm_br->br_info[br_index].appl_server_max_num; i++)
+            {
+              shm_as_p->info.as_info[i].cur_slow_log_mode = slow_log_mode;
+              shm_as_p->info.as_info[i].cas_slow_log_reset = CAS_LOG_RESET_REOPEN;
+            }
+        }
       else
-	{
-	  if (as_number > shm_as_p->num_appl_server)
-	    {
-	      SET_ADMIN_ERR_MSG ("Invalid cas number : %d", as_number);
-	      goto set_conf_error;
-	    }
-	  shm_as_p->info.as_info[as_number - 1].cur_slow_log_mode =
-	    slow_log_mode;
-	  shm_as_p->info.as_info[as_number - 1].cas_slow_log_reset =
-	    CAS_LOG_RESET_REOPEN;
-	}
+        {
+          if (as_number > shm_as_p->num_appl_server)
+            {
+              SET_ADMIN_ERR_MSG ("Invalid cas number : %d", as_number);
+              goto set_conf_error;
+            }
+          shm_as_p->info.as_info[as_number - 1].cur_slow_log_mode = slow_log_mode;
+          shm_as_p->info.as_info[as_number - 1].cas_slow_log_reset = CAS_LOG_RESET_REOPEN;
+        }
     }
   else if (strcasecmp (conf_name, "ACCESS_MODE") == 0)
     {
       char access_mode = conf_get_value_access_mode (conf_value);
 
       if (access_mode == -1)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       if (br_info_p->access_mode == access_mode)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->access_mode = access_mode;
       shm_as_p->access_mode = access_mode;
 
-      for (i = 0;
-	   i < shm_as_p->num_appl_server && i < APPL_SERVER_NUM_LIMIT; i++)
-	{
-	  shm_as_p->info.as_info[i].reset_flag = TRUE;
-	}
+      for (i = 0; i < shm_as_p->num_appl_server && i < APPL_SERVER_NUM_LIMIT; i++)
+        {
+          shm_as_p->info.as_info[i].reset_flag = TRUE;
+        }
     }
   else if (strcasecmp (conf_name, "CONNECT_ORDER_RANDOM") == 0)
     {
@@ -742,25 +703,24 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       connect_order_random = conf_get_value_table_on_off (conf_value);
       if (connect_order_random < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       if (br_info_p->connect_order_random == connect_order_random)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       br_info_p->connect_order_random = connect_order_random;
       shm_as_p->connect_order_random = connect_order_random;
 
-      for (i = 0;
-	   i < shm_as_p->num_appl_server && i < APPL_SERVER_NUM_LIMIT; i++)
-	{
-	  shm_as_p->info.as_info[i].reset_flag = TRUE;
-	}
+      for (i = 0; i < shm_as_p->num_appl_server && i < APPL_SERVER_NUM_LIMIT; i++)
+        {
+          shm_as_p->info.as_info[i].reset_flag = TRUE;
+        }
     }
   else if (strcasecmp (conf_name, "MAX_NUM_DELAYED_HOSTS_LOOKUP") == 0)
     {
@@ -768,20 +728,17 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       result = parse_int (&max_num_delayed_hosts_lookup, conf_value, 10);
 
-      if (result != 0
-	  || max_num_delayed_hosts_lookup <
-	  DEFAULT_MAX_NUM_DELAYED_HOSTS_LOOKUP)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+      if (result != 0 || max_num_delayed_hosts_lookup < DEFAULT_MAX_NUM_DELAYED_HOSTS_LOOKUP)
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
-      if (br_info_p->max_num_delayed_hosts_lookup ==
-	  max_num_delayed_hosts_lookup)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
-	  goto set_conf_error;
-	}
+      if (br_info_p->max_num_delayed_hosts_lookup == max_num_delayed_hosts_lookup)
+        {
+          SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       br_info_p->max_num_delayed_hosts_lookup = max_num_delayed_hosts_lookup;
       shm_as_p->max_num_delayed_hosts_lookup = max_num_delayed_hosts_lookup;
@@ -792,10 +749,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       rctime = (int) ut_time_string_to_sec (conf_value, "sec");
       if (rctime < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       br_info_p->cas_rctime = rctime;
       shm_as_p->cas_rctime = rctime;
@@ -807,15 +764,15 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       sql_log_max_size = (int) ut_size_string_to_kbyte (conf_value, "K");
 
       if (sql_log_max_size <= 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       else if (sql_log_max_size > MAX_SQL_LOG_MAX_SIZE)
-	{
-	  SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->sql_log_max_size = sql_log_max_size;
       shm_as_p->sql_log_max_size = sql_log_max_size;
     }
@@ -826,15 +783,15 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       broker_log_max_size = (int) ut_size_string_to_kbyte (conf_value, "K");
 
       if (broker_log_max_size <= 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       else if (broker_log_max_size > MAX_BROKER_LOG_MAX_SIZE)
-	{
-	  SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->broker_log_max_size = broker_log_max_size;
       shm_as_p->broker_log_max_size = broker_log_max_size;
     }
@@ -845,15 +802,15 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       long_query_time = (float) ut_time_string_to_sec (conf_value, "sec");
 
       if (long_query_time < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       else if (long_query_time > LONG_QUERY_TIME_LIMIT)
-	{
-	  SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
+          goto set_conf_error;
+        }
 
       br_info_p->long_query_time = (int) (long_query_time * 1000.0);
       shm_as_p->long_query_time = (int) (long_query_time * 1000.0);
@@ -862,24 +819,21 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
     {
       float long_transaction_time;
 
-      long_transaction_time =
-	(float) ut_time_string_to_sec (conf_value, "sec");
+      long_transaction_time = (float) ut_time_string_to_sec (conf_value, "sec");
 
       if (long_transaction_time < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       else if (long_transaction_time > LONG_TRANSACTION_TIME_LIMIT)
-	{
-	  SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
+          goto set_conf_error;
+        }
 
-      br_info_p->long_transaction_time =
-	(int) (long_transaction_time * 1000.0);
-      shm_as_p->long_transaction_time =
-	(int) (long_transaction_time * 1000.0);
+      br_info_p->long_transaction_time = (int) (long_transaction_time * 1000.0);
+      shm_as_p->long_transaction_time = (int) (long_transaction_time * 1000.0);
     }
   else if (strcasecmp (conf_name, "APPL_SERVER_MAX_SIZE") == 0)
     {
@@ -888,19 +842,18 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       max_size = (int) ut_size_string_to_kbyte (conf_value, "M");
 
       if (max_size < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
-      if (max_size > 0
-	  && max_size > (shm_br->br_info[br_index].appl_server_hard_limit))
-	{
-	  SET_ADMIN_ERR_MSG
-	    ("CONFIGURATION WARNING - the APPL_SERVER_MAX_SIZE (%dM)"
-	     " is greater than the APPL_SERVER_MAX_SIZE_HARD_LIMIT (%dM)",
-	     max_size / ONE_K, shm_as_p->appl_server_hard_limit / ONE_K);
-	}
+      if (max_size > 0 && max_size > (shm_br->br_info[br_index].appl_server_hard_limit))
+        {
+          SET_ADMIN_ERR_MSG
+            ("CONFIGURATION WARNING - the APPL_SERVER_MAX_SIZE (%dM)"
+             " is greater than the APPL_SERVER_MAX_SIZE_HARD_LIMIT (%dM)",
+             max_size / ONE_K, shm_as_p->appl_server_hard_limit / ONE_K);
+        }
 
       br_info_p->appl_server_max_size = max_size;
       shm_as_p->appl_server_max_size = max_size;
@@ -914,20 +867,18 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       max_hard_limit = INT_MAX;
       if (hard_limit <= 0)
-	{
-	  SET_ADMIN_ERR_MSG
-	    ("APPL_SERVER_MAX_SIZE_HARD_LIMIT must be between 1 and %d",
-	     max_hard_limit / ONE_K);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("APPL_SERVER_MAX_SIZE_HARD_LIMIT must be between 1 and %d", max_hard_limit / ONE_K);
+          goto set_conf_error;
+        }
 
       if (hard_limit < shm_br->br_info[br_index].appl_server_max_size)
-	{
-	  SET_ADMIN_ERR_MSG
-	    ("CONFIGURATION WARNING - the APPL_SERVER_MAX_SIZE_HARD_LIMIT (%dM) "
-	     "is smaller than the APPL_SERVER_MAX_SIZE (%dM)",
-	     hard_limit / ONE_K, shm_as_p->appl_server_max_size / ONE_K);
-	}
+        {
+          SET_ADMIN_ERR_MSG
+            ("CONFIGURATION WARNING - the APPL_SERVER_MAX_SIZE_HARD_LIMIT (%dM) "
+             "is smaller than the APPL_SERVER_MAX_SIZE (%dM)",
+             hard_limit / ONE_K, shm_as_p->appl_server_max_size / ONE_K);
+        }
 
       br_info_p->appl_server_hard_limit = hard_limit;
       shm_as_p->appl_server_hard_limit = hard_limit;
@@ -938,10 +889,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       log_backup = conf_get_value_table_on_off (conf_value);
       if (log_backup < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->log_backup = log_backup;
     }
   else if (strcasecmp (conf_name, "TIME_TO_KILL") == 0)
@@ -950,10 +901,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       time_to_kill = (int) ut_time_string_to_sec (conf_value, "sec");
       if (time_to_kill <= 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->time_to_kill = time_to_kill;
     }
   else if (strcasecmp (conf_name, "ACCESS_LOG") == 0)
@@ -962,10 +913,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       access_log_flag = conf_get_value_table_on_off (conf_value);
       if (access_log_flag < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->access_log = access_log_flag;
       shm_as_p->access_log = access_log_flag;
     }
@@ -980,15 +931,15 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       size = (int) ut_size_string_to_kbyte (conf_value, "K");
 
       if (size < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       else if (size > MAX_ACCESS_LOG_MAX_SIZE)
-	{
-	  SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
+          goto set_conf_error;
+        }
 
 
       br_info_p->access_log_max_size = size;
@@ -1000,10 +951,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       keep_con = conf_get_value_keep_con (conf_value);
       if (keep_con < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->keep_connection = keep_con;
       shm_as_p->keep_connection = keep_con;
     }
@@ -1013,10 +964,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       val = conf_get_value_table_on_off (conf_value);
       if (val < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->statement_pooling = val;
       shm_as_p->statement_pooling = val;
     }
@@ -1027,15 +978,15 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       val = (int) ut_time_string_to_sec (conf_value, "sec");
 
       if (val < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value: %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value: %s", conf_value);
+          goto set_conf_error;
+        }
       else if (val > MAX_QUERY_TIMEOUT_LIMIT)
-	{
-	  SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->query_timeout = val;
       shm_as_p->query_timeout = val;
     }
@@ -1046,10 +997,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       memset (&node_list, 0, sizeof (node_list));
 
       if (prm_split_node_str (&node_list, conf_value, false) != NO_ERROR)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value: %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value: %s", conf_value);
+          goto set_conf_error;
+        }
 
       br_info_p->preferred_hosts = node_list;
       shm_as_p->preferred_hosts = node_list;
@@ -1061,30 +1012,29 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       err_code = parse_int (&stmt_cnt, conf_value, 10);
       if (err_code < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       if (stmt_cnt < 1)
-	{
-	  SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("value is out of range : %s", conf_value);
+          goto set_conf_error;
+        }
 
       if (br_info_p->max_prepared_stmt_count == stmt_cnt)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       if (br_info_p->max_prepared_stmt_count > stmt_cnt)
-	{
-	  SET_ADMIN_ERR_MSG
-	    ("cannot be decreased below the previous value '%d' : %s",
-	     br_info_p->max_prepared_stmt_count, conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG
+            ("cannot be decreased below the previous value '%d' : %s", br_info_p->max_prepared_stmt_count, conf_value);
+          goto set_conf_error;
+        }
 
       br_info_p->max_prepared_stmt_count = stmt_cnt;
       shm_as_p->max_prepared_stmt_count = stmt_cnt;
@@ -1095,16 +1045,16 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       session_timeout = (int) ut_time_string_to_sec (conf_value, "sec");
       if (session_timeout < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       if (br_info_p->session_timeout == session_timeout)
-	{
-	  SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("same as previous value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       br_info_p->session_timeout = session_timeout;
       shm_as_p->session_timeout = session_timeout;
@@ -1115,10 +1065,10 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
 
       monitor_server_flag = conf_get_value_table_on_off (conf_value);
       if (monitor_server_flag < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
       br_info_p->monitor_server_flag = monitor_server_flag;
       shm_as_p->monitor_server_flag = monitor_server_flag;
     }
@@ -1127,18 +1077,18 @@ admin_conf_change (int shm_key_br_gl, const char *br_name,
       int num_migrator = 0;
 
       if (parse_int (&num_migrator, conf_value, 10) < 0 || num_migrator <= 0)
-	{
-	  SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
-	  goto set_conf_error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("invalid value : %s", conf_value);
+          goto set_conf_error;
+        }
 
       for (i = 0; i < shm_br->num_broker; i++)
-	{
-	  if (shm_br->br_info[i].broker_type == SHARD_MGMT)
-	    {
-	      shm_br->br_info[i].shard_mgmt_num_migrator = num_migrator;
-	    }
-	}
+        {
+          if (shm_br->br_info[i].broker_type == SHARD_MGMT)
+            {
+              shm_br->br_info[i].shard_mgmt_num_migrator = num_migrator;
+            }
+        }
     }
   else
     {
@@ -1180,18 +1130,18 @@ admin_init_env ()
     {
       p = strchr (environ[i], '=');
       if (p == NULL)
-	{
-	  environ[i] = dummy_env;
-	  continue;
-	}
+        {
+          environ[i] = dummy_env;
+          continue;
+        }
       for (j = 0; clt_envs[j] != NULL; j++)
-	{
-	  if (strncmp (environ[i], clt_envs[j], strlen (clt_envs[j])) == 0)
-	    {
-	      environ[i] = dummy_env;
-	      break;
-	    }
-	}
+        {
+          if (strncmp (environ[i], clt_envs[j], strlen (clt_envs[j])) == 0)
+            {
+              environ[i] = dummy_env;
+              break;
+            }
+        }
     }
 }
 
@@ -1207,8 +1157,7 @@ admin_acl_status_cmd (int shm_key_br_gl, const char *broker_name)
 
   if (shm_br == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_key_br_gl);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_key_br_gl);
       return -1;
     }
 
@@ -1216,47 +1165,44 @@ admin_acl_status_cmd (int shm_key_br_gl, const char *broker_name)
   if (broker_name != NULL)
     {
       for (i = 0; i < shm_br->num_broker; i++)
-	{
-	  if (strcmp (shm_br->br_info[i].name, broker_name) == 0)
-	    {
-	      br_index = i;
-	      break;
-	    }
-	}
+        {
+          if (strcmp (shm_br->br_info[i].name, broker_name) == 0)
+            {
+              br_index = i;
+              break;
+            }
+        }
       if (br_index == -1)
-	{
-	  SET_ADMIN_ERR_MSG ("Cannot find broker [%s]\n", broker_name);
-	  rye_shm_detach (shm_br);
-	  return -1;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("Cannot find broker [%s]\n", broker_name);
+          rye_shm_detach (shm_br);
+          return -1;
+        }
     }
 
   for (i = 0; i < shm_br->num_broker; i++)
     {
       if (shm_br->br_info[i].service_flag == OFF ||
-	  shm_br->br_info[i].broker_type != NORMAL_BROKER ||
-	  strcmp (shm_br->br_info[i].name, BR_SHARD_MGMT_NAME) == 0 ||
-	  (br_index >= 0 && br_index != i))
-	{
-	  continue;
-	}
+          shm_br->br_info[i].broker_type != NORMAL_BROKER ||
+          strcmp (shm_br->br_info[i].name, BR_SHARD_MGMT_NAME) == 0 || (br_index >= 0 && br_index != i))
+        {
+          continue;
+        }
 
-      shm_appl = rye_shm_attach (shm_br->br_info[i].appl_server_shm_key,
-				 RYE_SHM_TYPE_BROKER_LOCAL, true);
+      shm_appl = rye_shm_attach (shm_br->br_info[i].appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, true);
       if (shm_appl == NULL)
-	{
-	  SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			     shm_br->br_info[i].appl_server_shm_key);
-	  rye_shm_detach (shm_br);
-	  return -1;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_br->br_info[i].appl_server_shm_key);
+          rye_shm_detach (shm_br);
+          return -1;
+        }
 
       fprintf (stdout, "[%%%s]\n", shm_appl->broker_name);
 
       for (j = 0; j < shm_appl->num_acl_info; j++)
-	{
-	  br_acl_dump (stdout, &shm_appl->acl_info[j]);
-	}
+        {
+          br_acl_dump (stdout, &shm_appl->acl_info[j]);
+        }
       fprintf (stdout, "\n");
       rye_shm_detach (shm_appl);
     }
@@ -1276,13 +1222,11 @@ cp_acl_file (const char *new_acl_file)
 
   /* make filenames */
   sprintf (tmp_filename, "%s.tmp.%d", BROKER_ACL_FILE, getpid ());
-  if (envvar_confdir_file (tmp_acl_file, sizeof (tmp_acl_file),
-			   tmp_filename) == NULL)
+  if (envvar_confdir_file (tmp_acl_file, sizeof (tmp_acl_file), tmp_filename) == NULL)
     {
       return -1;
     }
-  if (envvar_confdir_file (bak_acl_file, sizeof (tmp_acl_file),
-			   BROKER_ACL_FILE ".bak") == NULL)
+  if (envvar_confdir_file (bak_acl_file, sizeof (tmp_acl_file), BROKER_ACL_FILE ".bak") == NULL)
     {
       return -1;
     }
@@ -1308,23 +1252,23 @@ cp_acl_file (const char *new_acl_file)
 
       n = read (fd_src, buf, sizeof (buf));
       if (n < 0)
-	{
-	  close (fd_src);
-	  close (fd_dest);
-	  unlink (tmp_acl_file);
-	  return -1;
-	}
+        {
+          close (fd_src);
+          close (fd_dest);
+          unlink (tmp_acl_file);
+          return -1;
+        }
       else if (n == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       if (write (fd_dest, buf, n) <= 0)
-	{
-	  close (fd_src);
-	  close (fd_dest);
-	  unlink (tmp_acl_file);
-	  return -1;
-	}
+        {
+          close (fd_src);
+          close (fd_dest);
+          unlink (tmp_acl_file);
+          return -1;
+        }
     }
   close (fd_src);
   close (fd_dest);
@@ -1366,23 +1310,21 @@ admin_acl_reload_cmd (int shm_key_br_gl, const char *new_acl_file)
   if (new_acl_file != NULL)
     {
       if (cp_acl_file (new_acl_file) < 0)
-	{
-	  SET_ADMIN_ERR_MSG ("Cannot make acl file ");
-	  return -1;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("Cannot make acl file ");
+          return -1;
+        }
     }
 
   shm_br = rye_shm_attach (shm_key_br_gl, RYE_SHM_TYPE_BROKER_GLOBAL, false);
 
   if (shm_br == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 shm_key_br_gl);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_key_br_gl);
       return -1;
     }
 
-  if (br_acl_read_config_file (&br_acl_conf, br_acl_file, false,
-			       admin_Err_msg) < 0)
+  if (br_acl_read_config_file (&br_acl_conf, br_acl_file, false, admin_Err_msg) < 0)
     {
       goto error;
     }
@@ -1392,28 +1334,25 @@ admin_acl_reload_cmd (int shm_key_br_gl, const char *new_acl_file)
       int err;
 
       if (shm_br->br_info[i].service_flag == OFF)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
-      shm_appl = rye_shm_attach (shm_br->br_info[i].appl_server_shm_key,
-				 RYE_SHM_TYPE_BROKER_LOCAL, false);
+      shm_appl = rye_shm_attach (shm_br->br_info[i].appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, false);
       if (shm_appl == NULL)
-	{
-	  SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			     shm_br->br_info[i].appl_server_shm_key);
-	  goto error;
-	}
+        {
+          SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", shm_br->br_info[i].appl_server_shm_key);
+          goto error;
+        }
 
-      err = br_acl_set_shm (shm_appl, NULL, &br_acl_conf,
-			    shm_br->br_info[i].name, admin_Err_msg);
+      err = br_acl_set_shm (shm_appl, NULL, &br_acl_conf, shm_br->br_info[i].name, admin_Err_msg);
 
       rye_shm_detach (shm_appl);
 
       if (err < 0)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
 
   rye_shm_detach (shm_br);
@@ -1433,13 +1372,11 @@ admin_acl_test_cmd (int argc, char **argv)
 
   acl_filename = argv[0];
 
-  return admin_acl_test_cmd_internal (acl_filename, argc - 1, argv + 1,
-				      stdout);
+  return admin_acl_test_cmd_internal (acl_filename, argc - 1, argv + 1, stdout);
 }
 
 static int
-admin_acl_test_cmd_internal (const char *acl_filename, int argc, char **argv,
-			     FILE * out_fp)
+admin_acl_test_cmd_internal (const char *acl_filename, int argc, char **argv, FILE * out_fp)
 {
   BROKER_ACL_CONF br_acl_conf;
   int i;
@@ -1459,11 +1396,10 @@ admin_acl_test_cmd_internal (const char *acl_filename, int argc, char **argv,
 
   for (i = 0; i < num_broker; i++)
     {
-      if (br_info[i].broker_type == NORMAL_BROKER &&
-	  br_info[i].name[0] != '_')
-	{
-	  num_acl_broker++;
-	}
+      if (br_info[i].broker_type == NORMAL_BROKER && br_info[i].name[0] != '_')
+        {
+          num_acl_broker++;
+        }
     }
 
   acl_broker = malloc (sizeof (char *) * num_acl_broker);
@@ -1477,120 +1413,113 @@ admin_acl_test_cmd_internal (const char *acl_filename, int argc, char **argv,
       goto end;
     }
 
-  if (br_acl_read_config_file (&br_acl_conf, acl_filename,
-			       false, admin_Err_msg) < 0)
+  if (br_acl_read_config_file (&br_acl_conf, acl_filename, false, admin_Err_msg) < 0)
     {
       goto end;
     }
 
   for (i = 0; i < num_broker; i++)
     {
-      if (br_info[i].broker_type == NORMAL_BROKER &&
-	  br_info[i].name[0] != '_')
-	{
-	  acl_broker[num_acl_broker] = br_info[i].name;
-	  acl_info[num_acl_broker] = malloc (sizeof (BR_ACL_INFO) *
-					     ACL_MAX_ITEM_COUNT);
-	  if (acl_info[num_acl_broker] == NULL)
-	    {
-	      goto end;
-	    }
+      if (br_info[i].broker_type == NORMAL_BROKER && br_info[i].name[0] != '_')
+        {
+          acl_broker[num_acl_broker] = br_info[i].name;
+          acl_info[num_acl_broker] = malloc (sizeof (BR_ACL_INFO) * ACL_MAX_ITEM_COUNT);
+          if (acl_info[num_acl_broker] == NULL)
+            {
+              goto end;
+            }
 
-	  num_acl_info[num_acl_broker] =
-	    br_acl_set_shm (NULL, acl_info[num_acl_broker], &br_acl_conf,
-			    br_info[i].name, admin_Err_msg);
-	  if (num_acl_info[num_acl_broker] < 0)
-	    {
-	      goto end;
-	    }
+          num_acl_info[num_acl_broker] =
+            br_acl_set_shm (NULL, acl_info[num_acl_broker], &br_acl_conf, br_info[i].name, admin_Err_msg);
+          if (num_acl_info[num_acl_broker] < 0)
+            {
+              goto end;
+            }
 
-	  num_acl_broker++;
-	}
+          num_acl_broker++;
+        }
     }
 
   if (out_fp != NULL)
     {
       for (i = 0; i < argc; i++)
-	{
-	  int cur_acl_info = -1;
-	  int j;
-	  const char *res;
+        {
+          int cur_acl_info = -1;
+          int j;
+          const char *res;
 
-	  char *save = NULL;
-	  const char *broker_name;
-	  const char *dbname;
-	  const char *dbuser;
-	  char *ip_str;
-	  ACL_IP_INFO ip_info;
+          char *save = NULL;
+          const char *broker_name;
+          const char *dbname;
+          const char *dbuser;
+          char *ip_str;
+          ACL_IP_INFO ip_info;
 
-	  fprintf (out_fp, "%s -> ", argv[i]);
+          fprintf (out_fp, "%s -> ", argv[i]);
 
-	  broker_name = strtok_r (argv[i], ":", &save);
-	  dbname = strtok_r (NULL, ":", &save);
-	  dbuser = strtok_r (NULL, ":", &save);
-	  ip_str = strtok_r (NULL, ":", &save);
-	  if (broker_name == NULL || dbname == NULL || dbuser == NULL ||
-	      ip_str == NULL)
-	    {
-	      fprintf (out_fp, "ERROR: argument format\n");
-	      continue;
-	    }
+          broker_name = strtok_r (argv[i], ":", &save);
+          dbname = strtok_r (NULL, ":", &save);
+          dbuser = strtok_r (NULL, ":", &save);
+          ip_str = strtok_r (NULL, ":", &save);
+          if (broker_name == NULL || dbname == NULL || dbuser == NULL || ip_str == NULL)
+            {
+              fprintf (out_fp, "ERROR: argument format\n");
+              continue;
+            }
 
-	  for (j = 0; j < num_acl_broker; j++)
-	    {
-	      if (strcmp (broker_name, acl_broker[j]) == 0)
-		{
-		  cur_acl_info = j;
-		  break;
-		}
-	    }
+          for (j = 0; j < num_acl_broker; j++)
+            {
+              if (strcmp (broker_name, acl_broker[j]) == 0)
+                {
+                  cur_acl_info = j;
+                  break;
+                }
+            }
 
-	  if (cur_acl_info < 0)
-	    {
-	      res = "ERROR:broker not found";
-	    }
-	  else
-	    {
-	      memset (&ip_info, 0, sizeof (ACL_IP_INFO));
-	      if (br_acl_conf_read_ip_addr (&ip_info, ip_str, NULL, NULL) < 0)
-		{
-		  res = "ERROR:INVALID IP";
-		}
-	      else
-		{
+          if (cur_acl_info < 0)
+            {
+              res = "ERROR:broker not found";
+            }
+          else
+            {
+              memset (&ip_info, 0, sizeof (ACL_IP_INFO));
+              if (br_acl_conf_read_ip_addr (&ip_info, ip_str, NULL, NULL) < 0)
+                {
+                  res = "ERROR:INVALID IP";
+                }
+              else
+                {
 
-		  if (br_acl_check_right (NULL, acl_info[cur_acl_info],
-					  num_acl_info[cur_acl_info],
-					  dbname, dbuser,
-					  ip_info.ip_addr) < 0)
-		    {
-		      res = "FAIL";
-		    }
-		  else
-		    {
-		      res = "SUCCESS";
-		    }
-		}
-	    }
+                  if (br_acl_check_right (NULL, acl_info[cur_acl_info],
+                                          num_acl_info[cur_acl_info], dbname, dbuser, ip_info.ip_addr) < 0)
+                    {
+                      res = "FAIL";
+                    }
+                  else
+                    {
+                      res = "SUCCESS";
+                    }
+                }
+            }
 
-	  fprintf (out_fp, "%s\n", res);
-	}
+          fprintf (out_fp, "%s\n", res);
+        }
 
       fprintf (out_fp, "\n");
       for (i = 0; i < num_acl_broker; i++)
-	{
-	  BR_ACL_INFO *cur_acl_info;
-	  int j;
+        {
+          BR_ACL_INFO *cur_acl_info;
+          int j;
 
-	  fprintf (out_fp, "[%%%s]\n", acl_broker[i]);
+          fprintf (out_fp, "[%%%s]\n", acl_broker[i]);
 
-	  cur_acl_info = acl_info[i];
-	  for (j = 0; j < num_acl_info[i]; j++)
-	    {
-	      br_acl_dump (out_fp, &cur_acl_info[j]);
-	    }
-	  fprintf (out_fp, "\n");
-	}
+          cur_acl_info = acl_info[i];
+          for (j = 0; j < num_acl_info[i]; j++)
+            {
+              br_acl_dump (out_fp, &cur_acl_info[j]);
+            }
+          fprintf (out_fp, "\n");
+        }
     }
 
   err_code = 0;
@@ -1600,9 +1529,9 @@ end:
   if (acl_info != NULL)
     {
       for (i = 0; i < num_acl_broker; i++)
-	{
-	  RYE_FREE_MEM (acl_info[i]);
-	}
+        {
+          RYE_FREE_MEM (acl_info[i]);
+        }
     }
   RYE_FREE_MEM (acl_broker);
   RYE_FREE_MEM (acl_info);
@@ -1613,8 +1542,7 @@ end:
 
 int
 admin_get_broker_key_and_portid (char **broker_key, int *port,
-				 int shm_key_br_gl, const char *broker_name,
-				 char broker_type)
+                                 int shm_key_br_gl, const char *broker_name, char broker_type)
 {
   T_SHM_BROKER *shm_br = NULL;
   T_BROKER_INFO *br_info_p = NULL;
@@ -1636,8 +1564,7 @@ admin_get_broker_key_and_portid (char **broker_key, int *port,
       goto error;
     }
 
-  br_info_p = ut_find_broker (shm_br->br_info, shm_br->num_broker,
-			      broker_name, broker_type);
+  br_info_p = ut_find_broker (shm_br->br_info, shm_br->num_broker, broker_name, broker_type);
   if (br_info_p == NULL)
     {
       goto error;
@@ -1662,8 +1589,7 @@ error:
 }
 
 static int
-br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
-	     T_SHM_BROKER * shm_br, int br_index)
+br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl, T_SHM_BROKER * shm_br, int br_index)
 {
   int pid, i, res = 0;
   T_SHM_APPL_SERVER *shm_appl = NULL;
@@ -1675,7 +1601,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
   char br_index_env_str[32];
   char broker_port_name[BROKER_PATH_MAX] = "";
 
-  br_info->br_init_err.err_code = 1;	/* will be changed to 0 (success) or err code */
+  br_info->br_init_err.err_code = 1;    /* will be changed to 0 (success) or err code */
   br_info->br_init_err.os_err_code = 0;
   br_info->num_busy_count = 0;
   br_info->reject_client_count = 0;
@@ -1683,8 +1609,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
   br_info->cancel_req_count = 0;
   br_info->ping_req_count = 0;
 
-  shm_appl = rye_shm_attach (br_info->appl_server_shm_key,
-			     RYE_SHM_TYPE_BROKER_LOCAL, false);
+  shm_appl = rye_shm_attach (br_info->appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, false);
   if (shm_appl == NULL)
     {
       SET_ADMIN_ERR_MSG ("%s: cannot open shared memory", br_info->name);
@@ -1693,8 +1618,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
     }
   assert (shm_appl->num_appl_server <= APPL_SERVER_NUM_LIMIT);
 
-  if (ut_get_broker_port_name (broker_port_name,
-			       sizeof (broker_port_name), br_info) == 0)
+  if (ut_get_broker_port_name (broker_port_name, sizeof (broker_port_name), br_info) == 0)
     {
       unlink (broker_port_name);
     }
@@ -1720,13 +1644,12 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
       br_info->broker_pid = getpid ();
 
       if (env != NULL)
-	{
-	  for (i = 0; i < env_num; i++)
-	    putenv (env[i]);
-	}
+        {
+          for (i = 0; i < env_num; i++)
+            putenv (env[i]);
+        }
 
-      sprintf (master_shm_key_str, "%s=%d", MASTER_SHM_KEY_ENV_STR,
-	       shm_key_br_gl);
+      sprintf (master_shm_key_str, "%s=%d", MASTER_SHM_KEY_ENV_STR, shm_key_br_gl);
       putenv (master_shm_key_str);
 
       sprintf (br_index_env_str, "%s=%d", BROKER_INDEX_ENV_STR, br_index);
@@ -1739,11 +1662,11 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
       rye_shm_detach (shm_br);
 
       if (execle (broker_exe_name, argv0, NULL, environ) < 0)
-	{
-	  br_info->broker_pid = 0;
-	  perror (broker_exe_name);
-	  exit (1);
-	}
+        {
+          br_info->broker_pid = 0;
+          perror (broker_exe_name);
+          exit (1);
+        }
       exit (0);
     }
 
@@ -1752,8 +1675,7 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
 
   for (i = 0; i < shm_appl->num_appl_server && i < APPL_SERVER_NUM_LIMIT; i++)
     {
-      as_activate (shm_br, br_info, shm_appl, &shm_appl->info.as_info[i], i,
-		   env, env_num);
+      as_activate (shm_br, br_info, shm_appl, &shm_appl->info.as_info[i], i, env, env_num);
     }
   for (; i < br_info->appl_server_max_num; i++)
     {
@@ -1766,22 +1688,21 @@ br_activate (T_BROKER_INFO * br_info, int shm_key_br_gl,
   for (i = 0; i < broker_check_loop_count; i++)
     {
       if (br_info->br_init_err.err_code > 0)
-	{
-	  THREAD_SLEEP (100);
-	}
+        {
+          THREAD_SLEEP (100);
+        }
       else
-	{
-	  if (br_info->br_init_err.err_code < 0)
-	    {
-	      char br_init_err_msg[1024];
-	      get_br_init_err_msg (br_init_err_msg, sizeof (br_init_err_msg),
-				   br_info->br_init_err.err_code,
-				   br_info->br_init_err.os_err_code);
-	      SET_ADMIN_ERR_MSG ("%s: %s", br_info->name, br_init_err_msg);
-	      res = -1;
-	    }
-	  break;
-	}
+        {
+          if (br_info->br_init_err.err_code < 0)
+            {
+              char br_init_err_msg[1024];
+              get_br_init_err_msg (br_init_err_msg, sizeof (br_init_err_msg),
+                                   br_info->br_init_err.err_code, br_info->br_init_err.os_err_code);
+              SET_ADMIN_ERR_MSG ("%s: %s", br_info->name, br_init_err_msg);
+              res = -1;
+            }
+          break;
+        }
     }
 
   if (i == broker_check_loop_count)
@@ -1817,18 +1738,16 @@ br_inactivate (T_BROKER_INFO * br_info)
       br_info->broker_pid = 0;
 
       if (br_info->broker_type == NORMAL_BROKER)
-	{
-	  THREAD_SLEEP (1000);
-	}
+        {
+          THREAD_SLEEP (1000);
+        }
     }
 
-  shm_appl = rye_shm_attach (br_info->appl_server_shm_key,
-			     RYE_SHM_TYPE_BROKER_LOCAL, false);
+  shm_appl = rye_shm_attach (br_info->appl_server_shm_key, RYE_SHM_TYPE_BROKER_LOCAL, false);
 
   if (shm_appl == NULL)
     {
-      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)",
-			 br_info->appl_server_shm_key);
+      SET_ADMIN_ERR_MSG ("Cannot open shared memory (shmkey:%x)", br_info->appl_server_shm_key);
       res = -1;
       goto end;
     }
@@ -1854,8 +1773,7 @@ end:
 
 static void
 as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
-	     T_SHM_APPL_SERVER * shm_appl, T_APPL_SERVER_INFO * as_info,
-	     int as_index, char **env, int env_num)
+             T_SHM_APPL_SERVER * shm_appl, T_APPL_SERVER_INFO * as_info, int as_index, char **env, int env_num)
 {
   int pid;
   char appl_server_shm_key_env_str[32];
@@ -1897,32 +1815,29 @@ as_activate (T_SHM_BROKER * shm_br, T_BROKER_INFO * br_info,
       char argv0[PATH_MAX];
 
       if (env != NULL)
-	{
-	  for (i = 0; i < env_num; i++)
-	    putenv (env[i]);
-	}
+        {
+          for (i = 0; i < env_num; i++)
+            putenv (env[i]);
+        }
 
-      sprintf (appl_server_shm_key_env_str, "%s=%d",
-	       APPL_SERVER_SHM_KEY_STR, br_info->appl_server_shm_key);
+      sprintf (appl_server_shm_key_env_str, "%s=%d", APPL_SERVER_SHM_KEY_STR, br_info->appl_server_shm_key);
       putenv (appl_server_shm_key_env_str);
 
-      snprintf (as_id_env_str, sizeof (as_id_env_str), "%s=%d", AS_ID_ENV_STR,
-		as_index);
+      snprintf (as_id_env_str, sizeof (as_id_env_str), "%s=%d", AS_ID_ENV_STR, as_index);
       putenv (as_id_env_str);
 
       strcpy (appl_name, shm_appl->appl_server_name);
 
 
-      ut_make_cas_process_name (argv0, sizeof (argv0), br_info->name,
-				as_index);
+      ut_make_cas_process_name (argv0, sizeof (argv0), br_info->name, as_index);
 
       rye_shm_detach (shm_appl);
       rye_shm_detach (shm_br);
 
       if (execle (appl_name, argv0, NULL, environ) < 0)
-	{
-	  perror (appl_name);
-	}
+        {
+          perror (appl_name);
+        }
       exit (0);
     }
 
@@ -2005,39 +1920,39 @@ make_env (char *env_file, int *env_num)
   while (fgets (read_buf, BUFSIZ, env_fp) != NULL)
     {
       if (read_buf[0] == '#')
-	continue;
+        continue;
       read_num = sscanf (read_buf, "%127s%127s", col1, col2);
       if (read_num != 2)
-	continue;
+        continue;
 
       if (env == NULL)
-	{
-	  env = (char **) malloc (sizeof (char *));
-	  if (env == NULL)
-	    {
-	      break;
-	    }
-	}
+        {
+          env = (char **) malloc (sizeof (char *));
+          if (env == NULL)
+            {
+              break;
+            }
+        }
       else
-	{
-	  tmp_env = (char **) realloc (env, sizeof (char *) * (num + 1));
-	  if (tmp_env == NULL)
-	    {
-	      break;
-	    }
-	  env = tmp_env;
-	}
+        {
+          tmp_env = (char **) realloc (env, sizeof (char *) * (num + 1));
+          if (tmp_env == NULL)
+            {
+              break;
+            }
+          env = tmp_env;
+        }
 
 
       env[num] = (char *) malloc (strlen (col1) + strlen (col2) + 2);
       if (env[num] == NULL)
-	{
-	  for (num--; num >= 0; num--)
-	    RYE_FREE_MEM (env[num]);
-	  RYE_FREE_MEM (env);
-	  env = NULL;
-	  break;
-	}
+        {
+          for (num--; num >= 0; num--)
+            RYE_FREE_MEM (env[num]);
+          RYE_FREE_MEM (env);
+          env = NULL;
+          break;
+        }
 
       sprintf (env[num], "%s=%s", col1, col2);
       num++;
@@ -2050,8 +1965,7 @@ make_env (char *env_file, int *env_num)
 }
 
 static void
-get_br_init_err_msg (char *msg_buf, int buf_size, int err_code,
-		     int os_err_code)
+get_br_init_err_msg (char *msg_buf, int buf_size, int err_code, int os_err_code)
 {
   switch (err_code)
     {
@@ -2083,9 +1997,8 @@ get_br_init_err_msg (char *msg_buf, int buf_size, int err_code,
       char *p;
       p = strerror (os_err_code);
       if (p != NULL)
-	{
-	  snprintf (msg_buf, buf_size, "%s (OS err %d, %s)", msg_buf,
-		    os_err_code, p);
-	}
+        {
+          snprintf (msg_buf, buf_size, "%s (OS err %d, %s)", msg_buf, os_err_code, p);
+        }
     }
 }

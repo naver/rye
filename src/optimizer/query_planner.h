@@ -57,8 +57,7 @@ struct qo_plan_vtbl
 {
   const char *plan_string;
   void (*fprint_fn) (QO_PLAN *, FILE *, int);
-  void (*walk_fn) (QO_PLAN *, void (*)(QO_PLAN *, void *), void *,
-		   void (*)(QO_PLAN *, void *), void *);
+  void (*walk_fn) (QO_PLAN *, void (*)(QO_PLAN *, void *), void *, void (*)(QO_PLAN *, void *), void *);
   void (*free_fn) (QO_PLAN *);
   void (*cost_fn) (QO_PLAN *);
   void (*default_cost) (QO_PLAN *);
@@ -110,7 +109,7 @@ struct qo_plan
   double var_cost;
 
   BITSET sarged_terms;
-  PT_NODE *iscan_sort_list;	/* sorting fields */
+  PT_NODE *iscan_sort_list;     /* sorting fields */
 
   /*
    * The set of correlated subqueries that are "covered" by this plan.
@@ -131,19 +130,19 @@ struct qo_plan
 
     struct
     {
-      QO_SCANMETHOD scan_method;	/* SEQ_SCAN, INDEX_SCAN */
+      QO_SCANMETHOD scan_method;        /* SEQ_SCAN, INDEX_SCAN */
       QO_NODE *node;
       BITSET terms;
       BITSET kf_terms;
       bool index_equi;
-      bool index_cover;		/* covered index scan flag */
+      bool index_cover;         /* covered index scan flag */
       QO_NODE_INDEX_ENTRY *index;
     } scan;
 
     struct
     {
       SORT_TYPE sort_type;
-#if 0				/* DO NOT DELETE ME - need future work */
+#if 0                           /* DO NOT DELETE ME - need future work */
       SORT_LIST *sort_list;
 #endif
       QO_PLAN *subplan;
@@ -152,22 +151,22 @@ struct qo_plan
 
     struct
     {
-      JOIN_TYPE join_type;	/* JOIN_INNER, _LEFT, _RIGHT, _OUTER */
-      QO_JOINMETHOD join_method;	/* NL_JOIN, IDX_JOIN */
+      JOIN_TYPE join_type;      /* JOIN_INNER, _LEFT, _RIGHT, _OUTER */
+      QO_JOINMETHOD join_method;        /* NL_JOIN, IDX_JOIN */
       QO_PLAN *outer;
       QO_PLAN *inner;
-      BITSET join_terms;	/* all join edges */
-      BITSET during_join_terms;	/* during join terms */
-      BITSET after_join_terms;	/* after join terms */
+      BITSET join_terms;        /* all join edges */
+      BITSET during_join_terms; /* during join terms */
+      BITSET after_join_terms;  /* after join terms */
     } join;
 
   } plan_un;
 
-  QO_PLAN_ULTI_RANGE_OPT_USE multi_range_opt_use;	/* used to determine if this
-							 * plan uses multi range opt
-							 */
-  bool has_sort_limit;		/* true if this plan or one if its subplans is a
-				 * SORT-LIMIT plan */
+  QO_PLAN_ULTI_RANGE_OPT_USE multi_range_opt_use;       /* used to determine if this
+                                                         * plan uses multi range opt
+                                                         */
+  bool has_sort_limit;          /* true if this plan or one if its subplans is a
+                                 * SORT-LIMIT plan */
   bool use_iscan_descending;
 };
 
@@ -183,7 +182,7 @@ struct qo_plan
 					    qo_plan_free(__p);		      \
 				    } while(0)
 
-#define NPLANS		4	/* Maximum number of plans to keep in a PlanVec */
+#define NPLANS		4       /* Maximum number of plans to keep in a PlanVec */
 
 typedef struct qo_planvec QO_PLANVEC;
 struct qo_planvec

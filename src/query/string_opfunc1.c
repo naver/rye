@@ -55,7 +55,7 @@
 /* this must be the last header file included!!! */
 #include "dbval.h"
 
-#define QSTR_STRING_MAX_SIZE_BYTES (32 * 1024 * 1024)	/* 32M */
+#define QSTR_STRING_MAX_SIZE_BYTES (32 * 1024 * 1024)   /* 32M */
 
 #define QSTR_VALUE_PRECISION(value)                                       \
             ((DB_VALUE_PRECISION(value) == TP_FLOATING_PRECISION_VALUE)  \
@@ -72,127 +72,102 @@
 #define REGEX_MAX_ERROR_MSG_SIZE  100
 
 static int qstr_trim (MISC_OPERAND tr_operand,
-		      const unsigned char *trim,
-		      int trim_length,
-		      int trim_size,
-		      const unsigned char *src_ptr,
-		      DB_TYPE src_type,
-		      int src_length,
-		      int src_size,
-		      unsigned char **res,
-		      DB_TYPE * res_type, int *res_length, int *res_size);
+                      const unsigned char *trim,
+                      int trim_length,
+                      int trim_size,
+                      const unsigned char *src_ptr,
+                      DB_TYPE src_type,
+                      int src_length,
+                      int src_size, unsigned char **res, DB_TYPE * res_type, int *res_length, int *res_size);
 static void trim_leading (const unsigned char *trim_charset_ptr,
-			  int trim_charset_size,
-			  const unsigned char *src_ptr, DB_TYPE src_type,
-			  int src_length, int src_size,
-			  unsigned char **lead_trimmed_ptr,
-			  int *lead_trimmed_length, int *lead_trimmed_size);
+                          int trim_charset_size,
+                          const unsigned char *src_ptr, DB_TYPE src_type,
+                          int src_length, int src_size,
+                          unsigned char **lead_trimmed_ptr, int *lead_trimmed_length, int *lead_trimmed_size);
 static void trim_trailing (const unsigned char *trim_charset_ptr,
-			   int trim_charset_size,
-			   const unsigned char *src_ptr, DB_TYPE src_type,
-			   int src_length, int src_size,
-			   int *trail_trimmed_length,
-			   int *trail_trimmed_size);
+                           int trim_charset_size,
+                           const unsigned char *src_ptr, DB_TYPE src_type,
+                           int src_length, int src_size, int *trail_trimmed_length, int *trail_trimmed_size);
 static int qstr_pad (MISC_OPERAND pad_operand, int pad_length,
-		     const unsigned char *pad_charset_ptr,
-		     int pad_charset_length, int pad_charset_size,
-		     const unsigned char *src_ptr, DB_TYPE src_type,
-		     int src_length, int src_size, unsigned char **result,
-		     DB_TYPE * result_type, int *result_length,
-		     int *result_size);
+                     const unsigned char *pad_charset_ptr,
+                     int pad_charset_length, int pad_charset_size,
+                     const unsigned char *src_ptr, DB_TYPE src_type,
+                     int src_length, int src_size, unsigned char **result,
+                     DB_TYPE * result_type, int *result_length, int *result_size);
 static int qstr_eval_like (const char *tar, int tar_length, const char *expr,
-			   int expr_length, const char *escape, int coll_id);
+                           int expr_length, const char *escape, int coll_id);
 #if defined(ENABLE_UNUSED_FUNCTION)
 static int kor_cmp (unsigned char *src, unsigned char *dest, int size);
 #endif
 static int qstr_replace (unsigned char *src_buf,
-			 int src_len,
-			 int src_size,
-			 int coll_id,
-			 unsigned char *srch_str_buf,
-			 int srch_str_size,
-			 unsigned char *repl_str_buf,
-			 int repl_str_size,
-			 unsigned char **result_buf,
-			 int *result_len, int *result_size);
+                         int src_len,
+                         int src_size,
+                         int coll_id,
+                         unsigned char *srch_str_buf,
+                         int srch_str_size,
+                         unsigned char *repl_str_buf,
+                         int repl_str_size, unsigned char **result_buf, int *result_len, int *result_size);
 static int qstr_translate (unsigned char *src_ptr,
-			   DB_TYPE src_type,
-			   int src_size,
-			   unsigned char *from_str_ptr,
-			   int from_str_size,
-			   unsigned char *to_str_ptr,
-			   int to_str_size,
-			   unsigned char **result_ptr,
-			   DB_TYPE * result_type,
-			   int *result_len, int *result_size);
+                           DB_TYPE src_type,
+                           int src_size,
+                           unsigned char *from_str_ptr,
+                           int from_str_size,
+                           unsigned char *to_str_ptr,
+                           int to_str_size,
+                           unsigned char **result_ptr, DB_TYPE * result_type, int *result_len, int *result_size);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static bool is_string (const DB_VALUE * s);
 #endif /* ENABLE_UNUSED_FUNCTION */
 #if defined (ENABLE_UNUSED_FUNCTION)
 static bool is_integer (const DB_VALUE * i);
 #endif
-static int qstr_grow_string (DB_VALUE * src_string,
-			     DB_VALUE * result, int new_size);
+static int qstr_grow_string (DB_VALUE * src_string, DB_VALUE * result, int new_size);
 static int qstr_concatenate (const unsigned char *s1,
-			     int s1_length,
-			     int s1_precision,
-			     DB_TYPE s1_type,
-			     const unsigned char *s2,
-			     int s2_length,
-			     int s2_precision,
-			     DB_TYPE s2_type,
-			     unsigned char **result,
-			     int *result_length,
-			     int *result_size,
-			     DB_TYPE * result_type,
-			     DB_DATA_STATUS * data_status);
-static bool varchar_truncated (const unsigned char *s,
-			       DB_TYPE s_type, int s_length, int used_chars);
+                             int s1_length,
+                             int s1_precision,
+                             DB_TYPE s1_type,
+                             const unsigned char *s2,
+                             int s2_length,
+                             int s2_precision,
+                             DB_TYPE s2_type,
+                             unsigned char **result,
+                             int *result_length, int *result_size, DB_TYPE * result_type, DB_DATA_STATUS * data_status);
+static bool varchar_truncated (const unsigned char *s, DB_TYPE s_type, int s_length, int used_chars);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static bool varbit_truncated (const unsigned char *s,
-			      int s_length, int used_bits);
+static bool varbit_truncated (const unsigned char *s, int s_length, int used_bits);
 #endif
-static void bit_ncat (unsigned char *r, int offset, const unsigned char *s,
-		      int n);
+static void bit_ncat (unsigned char *r, int offset, const unsigned char *s, int n);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int bstring_fls (const char *s, int n);
 #endif
 static int qstr_bit_coerce (const unsigned char *src,
-			    int src_length,
-			    int src_precision,
-			    DB_TYPE src_type,
-			    unsigned char **dest,
-			    int *dest_length,
-			    int dest_precision,
-			    DB_TYPE dest_type, DB_DATA_STATUS * data_status);
+                            int src_length,
+                            int src_precision,
+                            DB_TYPE src_type,
+                            unsigned char **dest,
+                            int *dest_length, int dest_precision, DB_TYPE dest_type, DB_DATA_STATUS * data_status);
 static int qstr_coerce (const unsigned char *src, int src_length,
-			int src_precision, DB_TYPE src_type,
-			INTL_CODESET src_codeset, INTL_CODESET dest_codeset,
-			unsigned char **dest, int *dest_length,
-			int *dest_size, int dest_precision,
-			DB_TYPE dest_type, DB_DATA_STATUS * data_status);
+                        int src_precision, DB_TYPE src_type,
+                        INTL_CODESET src_codeset, INTL_CODESET dest_codeset,
+                        unsigned char **dest, int *dest_length,
+                        int *dest_size, int dest_precision, DB_TYPE dest_type, DB_DATA_STATUS * data_status);
 static int qstr_position (const char *sub_string, const int sub_size,
-			  const int sub_length,
-			  const char *src_string, const char *src_end,
-			  const char *src_string_bound,
-			  int src_length, int coll_id,
-			  bool is_forward_search, int *position);
+                          const int sub_length,
+                          const char *src_string, const char *src_end,
+                          const char *src_string_bound,
+                          int src_length, int coll_id, bool is_forward_search, int *position);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int shift_left (unsigned char *bit_string, int bit_string_size);
 #endif
 static int qstr_substring (const unsigned char *src,
-			   int src_length,
-			   int start,
-			   int length,
-			   unsigned char **r, int *r_length, int *r_size);
+                           int src_length, int start, int length, unsigned char **r, int *r_length, int *r_size);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static void left_nshift (const unsigned char *bit_string, int bit_string_size,
-			 int shift_amount, unsigned char *r, int r_size);
+                         int shift_amount, unsigned char *r, int r_size);
 static int qstr_ffs (int v);
 #endif
 static int hextoi (char hex_char);
-static void set_time_argument (struct tm *dest, int year, int month, int day,
-			       int hour, int min, int sec);
+static void set_time_argument (struct tm *dest, int year, int month, int day, int hour, int min, int sec);
 static long calc_unix_timestamp (struct tm *time_argument);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static int parse_for_next_int (char **ch, char *output);
@@ -223,8 +198,7 @@ static int parse_for_next_int (char **ch, char *output);
  */
 
 int
-db_string_compare (const DB_VALUE * string1, const DB_VALUE * string2,
-		   DB_VALUE * result)
+db_string_compare (const DB_VALUE * string1, const DB_VALUE * string2, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_string1, tmp_string2;
@@ -243,21 +217,17 @@ db_string_compare (const DB_VALUE * string1, const DB_VALUE * string2,
 
   /* arg check null *********************************************************
    */
-  ;				/* go ahead */
+  ;                             /* go ahead */
 
   /* arg cast type **********************************************************
    */
   if (!DB_IS_NULL (string1))
     {
-      string1 =
-	db_value_cast_arg (string1, &tmp_string1, DB_TYPE_VARCHAR,
-			   &error_status);
+      string1 = db_value_cast_arg (string1, &tmp_string1, DB_TYPE_VARCHAR, &error_status);
     }
   if (!DB_IS_NULL (string2))
     {
-      string2 =
-	db_value_cast_arg (string2, &tmp_string2, DB_TYPE_VARCHAR,
-			   &error_status);
+      string2 = db_value_cast_arg (string2, &tmp_string2, DB_TYPE_VARCHAR, &error_status);
     }
 
   if (error_status != NO_ERROR)
@@ -296,22 +266,20 @@ db_string_compare (const DB_VALUE * string1, const DB_VALUE * string2,
     {
       int coll_id;
 
-      LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (string1),
-			   DB_GET_STRING_COLLATION (string2), coll_id);
+      LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (string1), DB_GET_STRING_COLLATION (string2), coll_id);
 
       if (coll_id == -1)
-	{
-	  error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
-	  goto exit_on_error;
-	}
+        {
+          error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
+          goto exit_on_error;
+        }
 
       cmp_result =
-	QSTR_COMPARE (coll_id,
-		      (unsigned char *) DB_PULL_STRING (string1),
-		      (int) DB_GET_STRING_SIZE (string1),
-		      (unsigned char *) DB_PULL_STRING (string2),
-		      (int) DB_GET_STRING_SIZE (string2));
+        QSTR_COMPARE (coll_id,
+                      (unsigned char *) DB_PULL_STRING (string1),
+                      (int) DB_GET_STRING_SIZE (string1),
+                      (unsigned char *) DB_PULL_STRING (string2), (int) DB_GET_STRING_SIZE (string2));
     }
 
   if (cmp_result < 0)
@@ -392,8 +360,7 @@ exit_on_error:
  */
 int
 db_string_unique_prefix (const DB_VALUE * db_string1,
-			 const DB_VALUE * db_string2,
-			 const bool is_desc, DB_VALUE * db_result)
+                         const DB_VALUE * db_string2, const bool is_desc, DB_VALUE * db_result)
 {
   DB_TYPE result_type = (DB_TYPE) 0;
   int error_status = NO_ERROR;
@@ -407,31 +374,27 @@ db_string_unique_prefix (const DB_VALUE * db_string1,
   assert (db_result != (DB_VALUE *) NULL);
 
   error_status = db_string_compare (db_string1, db_string2, &tmp_result);
-  if ((error_status != NO_ERROR) ||
-      ((c = DB_GET_INTEGER (&tmp_result)) &&
-       ((!is_desc && c > 0) || (is_desc && c < 0))))
+  if ((error_status != NO_ERROR) || ((c = DB_GET_INTEGER (&tmp_result)) && ((!is_desc && c > 0) || (is_desc && c < 0))))
     {
       DB_MAKE_NULL (db_result);
 #if defined(RYE_DEBUG)
       if (error_status == ER_OBJ_INVALID_ARGUMENTS)
-	{
-	  printf ("db_string_unique_prefix(): non-string type: %s and %s\n",
-		  pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string1)),
-		  pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string2)));
-	}
+        {
+          printf ("db_string_unique_prefix(): non-string type: %s and %s\n",
+                  pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string1)), pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string2)));
+        }
       if (error_status == ER_QSTR_INCOMPATIBLE_CODE_SETS)
-	{
-	  printf
-	    ("db_string_unique_prefix(): incompatible types: %s and %s\n",
-	     pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string1)),
-	     pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string2)));
-	}
+        {
+          printf
+            ("db_string_unique_prefix(): incompatible types: %s and %s\n",
+             pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string1)), pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string2)));
+        }
       if (DB_GET_INTEGER (&tmp_result) > 0)
-	{
-	  printf
-	    ("db_string_unique_prefix(): string1 %s, greater than string2 %s\n",
-	     DB_GET_STRING (db_string1), DB_GET_STRING (db_string2));
-	}
+        {
+          printf
+            ("db_string_unique_prefix(): string1 %s, greater than string2 %s\n",
+             DB_GET_STRING (db_string1), DB_GET_STRING (db_string2));
+        }
 #endif
       return ER_GENERIC_ERROR;
     }
@@ -448,8 +411,7 @@ db_string_unique_prefix (const DB_VALUE * db_string1,
       DB_MAKE_NULL (db_result);
 #if defined(RYE_DEBUG)
       printf ("db_string_unique_prefix(): non-string type: %s and %s\n",
-	      pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string1)),
-	      pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string2)));
+              pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string1)), pr_type_name (DB_VALUE_DOMAIN_TYPE (db_string2)));
 #endif
       return ER_GENERIC_ERROR;
     }
@@ -480,16 +442,15 @@ db_string_unique_prefix (const DB_VALUE * db_string1,
       assert (collation_id == DB_GET_STRING_COLLATION (db_string2));
 
       if (string1 == NULL || string2 == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_QPROC_INVALID_PARAMETER, 0);
-	  return ER_QPROC_INVALID_PARAMETER;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_QPROC_INVALID_PARAMETER, 0);
+          return ER_QPROC_INVALID_PARAMETER;
+        }
 
       if (collation_id == LANG_COERCIBLE_COLL)
-	{
-	  collation_id = LANG_SYS_COLLATION;
-	}
+        {
+          collation_id = LANG_SYS_COLLATION;
+        }
 
       intl_pad_char (pad, &pad_size);
 
@@ -500,63 +461,58 @@ db_string_unique_prefix (const DB_VALUE * db_string1,
          for the result (its of varying type) and since padding can mask the
          logical end of both of the strings.  Trimming depends on codeset. */
       if (pad_size == 1)
-	{
-	  for (t = string1 + (size1 - 1); t >= string1 && *t == pad[0];
-	       t--, size1--)
-	    {
-	      ;
-	    }
-	  for (t = string2 + (size2 - 1); t >= string2 && *t == pad[0];
-	       t--, size2--)
-	    {
-	      ;
-	    }
-	}
+        {
+          for (t = string1 + (size1 - 1); t >= string1 && *t == pad[0]; t--, size1--)
+            {
+              ;
+            }
+          for (t = string2 + (size2 - 1); t >= string2 && *t == pad[0]; t--, size2--)
+            {
+              ;
+            }
+        }
       else
-	{
-	  assert (pad_size == 2);
+        {
+          assert (pad_size == 2);
 
-	  for (t = string1 + (size1 - 2); t >= string1 && *t == pad[0]
-	       && *(t + 1) == pad[1]; t--, t--, size1--, size1--)
-	    {
-	      ;
-	    }
+          for (t = string1 + (size1 - 2); t >= string1 && *t == pad[0]
+               && *(t + 1) == pad[1]; t--, t--, size1--, size1--)
+            {
+              ;
+            }
 
-	  for (t = string2 + (size2 - 2); t >= string2 && *t == pad[0]
-	       && *(t + 1) == pad[1]; t--, t--, size2--, size2--)
-	    {
-	      ;
-	    }
-	}
+          for (t = string2 + (size2 - 2); t >= string2 && *t == pad[0]
+               && *(t + 1) == pad[1]; t--, t--, size2--, size2--)
+            {
+              ;
+            }
+        }
 
-      error_status = QSTR_SPLIT_KEY (collation_id, is_desc,
-				     string1, size1, string2, size2, &key,
-				     &result_size);
+      error_status = QSTR_SPLIT_KEY (collation_id, is_desc, string1, size1, string2, size2, &key, &result_size);
       if (error_status == NO_ERROR)
-	{
-	  assert (key != NULL);
+        {
+          assert (key != NULL);
 
-	  result = (char *) malloc (result_size + 1);
-	  if (result)
-	    {
-	      if (result_size)
-		{
-		  (void) memcpy (result, key, result_size);
-		}
+          result = (char *) malloc (result_size + 1);
+          if (result)
+            {
+              if (result_size)
+                {
+                  (void) memcpy (result, key, result_size);
+                }
 
-	      result[result_size] = 0;
+              result[result_size] = 0;
 
-	      db_value_domain_init (db_result, result_type, precision, 0);
-	      error_status = db_make_db_char (db_result, collation_id,
-					      result, result_size);
-	      db_result->need_clear = true;
-	    }
-	  else
-	    {
-	      /* will already be set by memory mgr */
-	      error_status = er_errid ();
-	    }
-	}
+              db_value_domain_init (db_result, result_type, precision, 0);
+              error_status = db_make_db_char (db_result, collation_id, result, result_size);
+              db_result->need_clear = true;
+            }
+          else
+            {
+              /* will already be set by memory mgr */
+              error_status = er_errid ();
+            }
+        }
     }
 
 #if !defined(NDEBUG)
@@ -567,23 +523,23 @@ db_string_unique_prefix (const DB_VALUE * db_string1,
 
       err_status2 = db_string_compare (db_string1, db_result, &tmp_result);
       if (err_status2 == NO_ERROR)
-	{
-	  c1 = DB_GET_INTEGER (&tmp_result);
-	}
+        {
+          c1 = DB_GET_INTEGER (&tmp_result);
+        }
       err_status2 = db_string_compare (db_result, db_string2, &tmp_result);
       if (err_status2 == NO_ERROR)
-	{
-	  c2 = DB_GET_INTEGER (&tmp_result);
-	}
+        {
+          c2 = DB_GET_INTEGER (&tmp_result);
+        }
 
       if (!is_desc)
-	{
-	  assert (c1 <= 0 && c2 <= 0);
-	}
+        {
+          assert (c1 <= 0 && c2 <= 0);
+        }
       else
-	{
-	  assert (c1 >= 0 && c2 >= 0);
-	}
+        {
+          assert (c1 >= 0 && c2 >= 0);
+        }
     }
 #endif
 
@@ -613,8 +569,7 @@ db_string_unique_prefix (const DB_VALUE * db_string1,
 
 int
 db_string_concatenate (const DB_VALUE * string1,
-		       const DB_VALUE * string2,
-		       DB_VALUE * result, DB_DATA_STATUS * data_status)
+                       const DB_VALUE * string2, DB_VALUE * result, DB_DATA_STATUS * data_status)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_string1, tmp_string2;
@@ -645,17 +600,14 @@ db_string_concatenate (const DB_VALUE * string1,
    */
   if (DB_IS_NULL_NARGS (2, string1, string2))
     {
-      db_value_domain_init (result, DB_TYPE_VARCHAR,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (result, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
-  string1 = db_value_cast_arg (string1, &tmp_string1, DB_TYPE_VARCHAR,
-			       &error_status);
-  string2 = db_value_cast_arg (string2, &tmp_string2, DB_TYPE_VARCHAR,
-			       &error_status);
+  string1 = db_value_cast_arg (string1, &tmp_string1, DB_TYPE_VARCHAR, &error_status);
+  string2 = db_value_cast_arg (string2, &tmp_string2, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -682,8 +634,7 @@ db_string_concatenate (const DB_VALUE * string1,
       goto exit_on_error;
     }
 
-  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (string1),
-		       DB_GET_STRING_COLLATION (string2), common_coll);
+  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (string1), DB_GET_STRING_COLLATION (string2), common_coll);
   if (common_coll == -1)
     {
       error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
@@ -693,14 +644,13 @@ db_string_concatenate (const DB_VALUE * string1,
 
   error_status =
     qstr_concatenate ((unsigned char *) DB_PULL_STRING (string1),
-		      (int) DB_GET_STRING_LENGTH (string1),
-		      (int) QSTR_VALUE_PRECISION (string1),
-		      DB_VALUE_DOMAIN_TYPE (string1),
-		      (unsigned char *) DB_PULL_STRING (string2),
-		      (int) DB_GET_STRING_LENGTH (string2),
-		      (int) QSTR_VALUE_PRECISION (string2),
-		      DB_VALUE_DOMAIN_TYPE (string2),
-		      &r, &r_length, &r_size, &r_type, data_status);
+                      (int) DB_GET_STRING_LENGTH (string1),
+                      (int) QSTR_VALUE_PRECISION (string1),
+                      DB_VALUE_DOMAIN_TYPE (string1),
+                      (unsigned char *) DB_PULL_STRING (string2),
+                      (int) DB_GET_STRING_LENGTH (string2),
+                      (int) QSTR_VALUE_PRECISION (string2),
+                      DB_VALUE_DOMAIN_TYPE (string2), &r, &r_length, &r_size, &r_type, data_status);
 
   if (error_status != NO_ERROR)
     {
@@ -711,22 +661,17 @@ db_string_concatenate (const DB_VALUE * string1,
   if (r != NULL)
     {
       if ((DB_VALUE_PRECISION (string1) ==
-	   TP_FLOATING_PRECISION_VALUE) ||
-	  (DB_VALUE_PRECISION (string2) == TP_FLOATING_PRECISION_VALUE))
-	{
-	  result_domain_length = TP_FLOATING_PRECISION_VALUE;
-	}
+           TP_FLOATING_PRECISION_VALUE) || (DB_VALUE_PRECISION (string2) == TP_FLOATING_PRECISION_VALUE))
+        {
+          result_domain_length = TP_FLOATING_PRECISION_VALUE;
+        }
       else
-	{
-	  result_domain_length = MIN (QSTR_MAX_PRECISION (r_type),
-				      DB_VALUE_PRECISION (string1) +
-				      DB_VALUE_PRECISION (string2));
-	}
+        {
+          result_domain_length = MIN (QSTR_MAX_PRECISION (r_type),
+                                      DB_VALUE_PRECISION (string1) + DB_VALUE_PRECISION (string2));
+        }
 
-      qstr_make_typed_string (r_type,
-			      result,
-			      result_domain_length,
-			      (char *) r, r_size, common_coll);
+      qstr_make_typed_string (r_type, result, result_domain_length, (char *) r, r_size, common_coll);
       r[r_size] = 0;
       result->need_clear = true;
     }
@@ -812,8 +757,7 @@ db_string_chr (DB_VALUE * result, DB_VALUE * dbval1)
 
   if (!TP_IS_NUMERIC_TYPE (arg_type))
     {
-      dbval1 = db_value_cast_arg (dbval1, &tmp_dbval1, DB_TYPE_BIGINT,
-				  &error_status);
+      dbval1 = db_value_cast_arg (dbval1, &tmp_dbval1, DB_TYPE_BIGINT, &error_status);
     }
 
   if (error_status != NO_ERROR)
@@ -840,15 +784,14 @@ db_string_chr (DB_VALUE * result, DB_VALUE * dbval1)
       dtmp = DB_GET_DOUBLE (dbval1);
       break;
     case DB_TYPE_NUMERIC:
-      numeric_coerce_num_to_double (db_locate_numeric (dbval1),
-				    DB_VALUE_SCALE (dbval1), &dtmp);
+      numeric_coerce_num_to_double (db_locate_numeric (dbval1), DB_VALUE_SCALE (dbval1), &dtmp);
       break;
     default:
       assert (false);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       error_status = ER_GENERIC_ERROR;
       goto exit_on_error;
-    }				/* switch */
+    }                           /* switch */
 
   /* bi, dtmp and itmp have the default value set to 0, so temp_bigint will
    * hold the numeric representation of the first argument, regardless of
@@ -873,10 +816,10 @@ db_string_chr (DB_VALUE * result, DB_VALUE * dbval1)
   else
     {
       while (temp_arg > 0)
-	{
-	  num_byte_count++;
-	  temp_arg >>= 8;
-	}
+        {
+          num_byte_count++;
+          temp_arg >>= 8;
+        }
     }
 
   num_as_bytes = (char *) malloc ((1 + num_byte_count) * sizeof (char));
@@ -894,8 +837,7 @@ db_string_chr (DB_VALUE * result, DB_VALUE * dbval1)
     }
   num_as_bytes[num_byte_count] = '\0';
 
-  if (intl_check_utf8 ((const unsigned char *) num_as_bytes,
-		       num_byte_count, &invalid_pos) != 0)
+  if (intl_check_utf8 ((const unsigned char *) num_as_bytes, num_byte_count, &invalid_pos) != 0)
     {
       free_and_init (num_as_bytes);
 
@@ -905,8 +847,7 @@ db_string_chr (DB_VALUE * result, DB_VALUE * dbval1)
     }
 
   collation = LANG_GET_DEFAULT_COLLATION;
-  db_make_varchar (result, DB_DEFAULT_PRECISION, num_as_bytes, num_byte_count,
-		   collation);
+  db_make_varchar (result, DB_DEFAULT_PRECISION, num_as_bytes, num_byte_count, collation);
   result->need_clear = true;
 
   if (error_status != NO_ERROR)
@@ -963,8 +904,7 @@ exit_on_error:
 
 int
 db_string_instr (const DB_VALUE * src_string,
-		 const DB_VALUE * sub_string,
-		 const DB_VALUE * start_pos, DB_VALUE * result)
+                 const DB_VALUE * sub_string, const DB_VALUE * start_pos, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_sub_string, tmp_start_pos;
@@ -1005,15 +945,9 @@ db_string_instr (const DB_VALUE * src_string,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  sub_string =
-    db_value_cast_arg (sub_string, &tmp_sub_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  start_pos =
-    db_value_cast_arg (start_pos, &tmp_start_pos, DB_TYPE_INTEGER,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  sub_string = db_value_cast_arg (sub_string, &tmp_sub_string, DB_TYPE_VARCHAR, &error_status);
+  start_pos = db_value_cast_arg (start_pos, &tmp_start_pos, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -1037,8 +971,7 @@ db_string_instr (const DB_VALUE * src_string,
   sub_str_size = DB_GET_STRING_SIZE (sub_string);
   src_size = DB_GET_STRING_SIZE (src_string);
 
-  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string),
-		       DB_GET_STRING_COLLATION (sub_string), coll_id);
+  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string), DB_GET_STRING_COLLATION (sub_string), coll_id);
   if (coll_id == -1)
     {
       error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
@@ -1065,58 +998,51 @@ db_string_instr (const DB_VALUE * src_string,
     {
       offset--;
       if (offset + sub_str_len > src_str_len)
-	{			/* out of bound */
-	  position = 0;
-	}
+        {                       /* out of bound */
+          position = 0;
+        }
       else
-	{
-	  search_from = src_buf;
+        {
+          search_from = src_buf;
 
-	  intl_char_size ((unsigned char *) search_from, offset,
-			  &from_byte_offset);
-	  search_from += from_byte_offset;
+          intl_char_size ((unsigned char *) search_from, offset, &from_byte_offset);
+          search_from += from_byte_offset;
 
-	  intl_char_count ((unsigned char *) search_from,
-			   src_size - from_byte_offset, &src_str_len);
+          intl_char_count ((unsigned char *) search_from, src_size - from_byte_offset, &src_str_len);
 
-	  /* forward search */
-	  error_status =
-	    qstr_position (sub_str, sub_str_size, sub_str_len,
-			   search_from, src_buf + src_size,
-			   src_buf + src_size, src_str_len,
-			   coll_id, true, &position);
-	  position += (position != 0) ? offset : 0;
-	}
+          /* forward search */
+          error_status =
+            qstr_position (sub_str, sub_str_size, sub_str_len,
+                           search_from, src_buf + src_size, src_buf + src_size, src_str_len, coll_id, true, &position);
+          position += (position != 0) ? offset : 0;
+        }
     }
   else if (offset < 0)
     {
       if (src_str_len + offset + 1 < sub_str_len)
-	{
-	  position = 0;
-	}
+        {
+          position = 0;
+        }
       else
-	{
-	  int real_offset = src_str_len + offset - (sub_str_len - 1);
+        {
+          int real_offset = src_str_len + offset - (sub_str_len - 1);
 
-	  search_from = src_buf;
+          search_from = src_buf;
 
-	  intl_char_size ((unsigned char *) search_from, real_offset,
-			  &from_byte_offset);
+          intl_char_size ((unsigned char *) search_from, real_offset, &from_byte_offset);
 
-	  search_from += from_byte_offset;
+          search_from += from_byte_offset;
 
-	  /* backward search */
-	  error_status =
-	    qstr_position (sub_str, sub_str_size, sub_str_len,
-			   search_from, src_buf + src_size, src_buf,
-			   src_str_len + offset + 1, coll_id,
-			   false, &position);
-	  if (position != 0)
-	    {
-	      position = src_str_len - (-offset - 1)
-		- (position - 1) - (sub_str_len - 1);
-	    }
-	}
+          /* backward search */
+          error_status =
+            qstr_position (sub_str, sub_str_size, sub_str_len,
+                           search_from, src_buf + src_size, src_buf,
+                           src_str_len + offset + 1, coll_id, false, &position);
+          if (position != 0)
+            {
+              position = src_str_len - (-offset - 1) - (position - 1) - (sub_str_len - 1);
+            }
+        }
     }
   else
     {
@@ -1201,8 +1127,7 @@ db_string_space (DB_VALUE const *count, DB_VALUE * result)
 
   /* arg cast type **********************************************************
    */
-  count =
-    db_value_cast_arg (count, &tmp_count, DB_TYPE_INTEGER, &error_status);
+  count = db_value_cast_arg (count, &tmp_count, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -1225,8 +1150,7 @@ db_string_space (DB_VALUE const *count, DB_VALUE * result)
   if (len > QSTR_STRING_MAX_SIZE_BYTES)
     {
       error_status = ER_QPROC_STRING_SIZE_TOO_BIG;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error_status, 2, len, QSTR_STRING_MAX_SIZE_BYTES);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 2, len, QSTR_STRING_MAX_SIZE_BYTES);
       assert (er_errid () != NO_ERROR);
       goto exit_on_error;
     }
@@ -1249,14 +1173,13 @@ db_string_space (DB_VALUE const *count, DB_VALUE * result)
       int i = 0;
 
       while (i < len)
-	{
-	  space_string_p[i++] = ' ';
-	}
+        {
+          space_string_p[i++] = ' ';
+        }
     }
   space_string_p[len] = '\0';
 
-  qstr_make_typed_string (DB_TYPE_VARCHAR, result, len,
-			  space_string_p, len, LANG_COERCIBLE_COLL);
+  qstr_make_typed_string (DB_TYPE_VARCHAR, result, len, space_string_p, len, LANG_COERCIBLE_COLL);
   result->need_clear = true;
 
   if (error_status != NO_ERROR)
@@ -1312,8 +1235,7 @@ exit_on_error:
  */
 
 int
-db_string_position (const DB_VALUE * sub_string,
-		    const DB_VALUE * src_string, DB_VALUE * result)
+db_string_position (const DB_VALUE * sub_string, const DB_VALUE * src_string, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_sub_string, tmp_src_string;
@@ -1350,12 +1272,8 @@ db_string_position (const DB_VALUE * sub_string,
 
   /* arg cast type **********************************************************
    */
-  sub_string =
-    db_value_cast_arg (sub_string, &tmp_sub_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
+  sub_string = db_value_cast_arg (sub_string, &tmp_sub_string, DB_TYPE_VARCHAR, &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -1382,8 +1300,7 @@ db_string_position (const DB_VALUE * sub_string,
   sub_str = DB_PULL_STRING (sub_string);
   sub_size = DB_GET_STRING_SIZE (sub_string);
 
-  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string),
-		       DB_GET_STRING_COLLATION (sub_string), coll_id);
+  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string), DB_GET_STRING_COLLATION (sub_string), coll_id);
   if (coll_id == -1)
     {
       error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
@@ -1403,10 +1320,9 @@ db_string_position (const DB_VALUE * sub_string,
 
   error_status =
     qstr_position (sub_str, sub_size,
-		   DB_GET_STRING_LENGTH (sub_string),
-		   src_str, src_str + src_size, src_str + src_size,
-		   DB_GET_STRING_LENGTH (src_string),
-		   coll_id, true, &position);
+                   DB_GET_STRING_LENGTH (sub_string),
+                   src_str, src_str + src_size, src_str + src_size,
+                   DB_GET_STRING_LENGTH (src_string), coll_id, true, &position);
 
   if (error_status != NO_ERROR)
     {
@@ -1467,9 +1383,8 @@ exit_on_error:
 
 int
 db_string_substring (const MISC_OPERAND substr_operand,
-		     const DB_VALUE * src_string,
-		     const DB_VALUE * start_position,
-		     const DB_VALUE * extraction_length, DB_VALUE * result)
+                     const DB_VALUE * src_string,
+                     const DB_VALUE * start_position, const DB_VALUE * extraction_length, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_start_position, tmp_extraction_length;
@@ -1494,8 +1409,7 @@ db_string_substring (const MISC_OPERAND substr_operand,
 
   /* arg init tmp ***********************************************************
    */
-  DB_MAKE_NULL_NARGS (3, &tmp_src_string, &tmp_start_position,
-		      &tmp_extraction_length);
+  DB_MAKE_NULL_NARGS (3, &tmp_src_string, &tmp_start_position, &tmp_extraction_length);
 
   /* arg check null *********************************************************
    */
@@ -1512,17 +1426,11 @@ db_string_substring (const MISC_OPERAND substr_operand,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  start_position =
-    db_value_cast_arg (start_position, &tmp_start_position, DB_TYPE_INTEGER,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  start_position = db_value_cast_arg (start_position, &tmp_start_position, DB_TYPE_INTEGER, &error_status);
   if (extraction_length != NULL)
     {
-      extraction_length =
-	db_value_cast_arg (extraction_length, &tmp_extraction_length,
-			   DB_TYPE_INTEGER, &error_status);
+      extraction_length = db_value_cast_arg (extraction_length, &tmp_extraction_length, DB_TYPE_INTEGER, &error_status);
     }
 
   if (error_status != NO_ERROR)
@@ -1552,26 +1460,23 @@ db_string_substring (const MISC_OPERAND substr_operand,
 
   if (substr_operand == SUBSTR)
     {
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       if (extract_nchars < 0 || string_len < ABS (start_offset))
-	{
-	  goto done;
-	}
+        {
+          goto done;
+        }
 #endif
 
       if (start_offset < 0)
-	{
-	  int byte_pos;
-	  (void) intl_char_size (string,
-				 string_len + start_offset, &byte_pos);
-	  string += byte_pos;
-	  string_len = -start_offset;
-	}
+        {
+          int byte_pos;
+          (void) intl_char_size (string, string_len + start_offset, &byte_pos);
+          string += byte_pos;
+          string_len = -start_offset;
+        }
     }
 
-  error_status = qstr_substring (string, string_len, start_offset,
-				 extract_nchars, &sub, &sub_length,
-				 &sub_size);
+  error_status = qstr_substring (string, string_len, start_offset, extract_nchars, &sub, &sub_length, &sub_size);
   if (error_status != NO_ERROR)
     {
       goto exit_on_error;
@@ -1580,9 +1485,8 @@ db_string_substring (const MISC_OPERAND substr_operand,
   if (sub != NULL)
     {
       qstr_make_typed_string (DB_TYPE_VARCHAR, result,
-			      DB_VALUE_PRECISION (src_string),
-			      (char *) sub, sub_size,
-			      DB_GET_STRING_COLLATION (src_string));
+                              DB_VALUE_PRECISION (src_string),
+                              (char *) sub, sub_size, DB_GET_STRING_COLLATION (src_string));
       sub[sub_size] = 0;
       result->need_clear = true;
     }
@@ -1598,8 +1502,7 @@ done:
 
   /* arg clear tmp **********************************************************
    */
-  db_value_clear_nargs (3, &tmp_src_string, &tmp_start_position,
-			&tmp_extraction_length);
+  db_value_clear_nargs (3, &tmp_src_string, &tmp_start_position, &tmp_extraction_length);
 
   return error_status;
 
@@ -1615,8 +1518,7 @@ exit_on_error:
 
   /* arg clear tmp **********************************************************
    */
-  db_value_clear_nargs (3, &tmp_src_string, &tmp_start_position,
-			&tmp_extraction_length);
+  db_value_clear_nargs (3, &tmp_src_string, &tmp_start_position, &tmp_extraction_length);
 
   return error_status;
 }
@@ -1639,8 +1541,7 @@ exit_on_error:
  */
 
 int
-db_string_repeat (const DB_VALUE * src_string,
-		  const DB_VALUE * count, DB_VALUE * result)
+db_string_repeat (const DB_VALUE * src_string, const DB_VALUE * count, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_count;
@@ -1669,11 +1570,8 @@ db_string_repeat (const DB_VALUE * src_string,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  count =
-    db_value_cast_arg (count, &tmp_count, DB_TYPE_INTEGER, &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  count = db_value_cast_arg (count, &tmp_count, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -1691,21 +1589,18 @@ db_string_repeat (const DB_VALUE * src_string,
 
   if (src_size < 0)
     {
-      intl_char_size ((unsigned char *) DB_PULL_STRING (result), src_length,
-		      &src_size);
+      intl_char_size ((unsigned char *) DB_PULL_STRING (result), src_length, &src_size);
     }
 
   if (count_i <= 0 || src_length <= 0)
     {
       error_status =
-	db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR,
-					   src_length,
-					   DB_GET_STRING_COLLATION
-					   (src_string));
+        db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR,
+                                           src_length, DB_GET_STRING_COLLATION (src_string));
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
     }
   else
     {
@@ -1718,47 +1613,43 @@ db_string_repeat (const DB_VALUE * src_string,
       /* create an empy string for result */
 
       error_status =
-	db_string_make_empty_typed_string (NULL, &dummy, DB_TYPE_VARCHAR,
-					   src_length * count_i,
-					   DB_GET_STRING_COLLATION
-					   (src_string));
+        db_string_make_empty_typed_string (NULL, &dummy, DB_TYPE_VARCHAR,
+                                           src_length * count_i, DB_GET_STRING_COLLATION (src_string));
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       expected_size = src_size * count_i;
       error_status = qstr_grow_string (&dummy, result, expected_size);
       if (error_status != NO_ERROR)
-	{
-	  pr_clear_value (&dummy);
-	  return error_status;
-	}
+        {
+          pr_clear_value (&dummy);
+          return error_status;
+        }
 
       pr_clear_value (&dummy);
 
       /* qstr_grow_string may return DB_NULL if size too big */
       if (DB_IS_NULL (result))
-	{
-	  goto done;
-	}
+        {
+          goto done;
+        }
 
       res_ptr = (unsigned char *) DB_PULL_STRING (result);
       src_ptr = (unsigned char *) DB_PULL_STRING (src_string);
 
       while (count_i--)
-	{
-	  memcpy (res_ptr, src_ptr, src_size);
-	  res_ptr += src_size;
-	}
+        {
+          memcpy (res_ptr, src_ptr, src_size);
+          res_ptr += src_size;
+        }
 
       /* update size of string */
       qstr_make_typed_string (DB_TYPE_VARCHAR,
-			      result,
-			      DB_VALUE_PRECISION (result),
-			      DB_PULL_STRING (result),
-			      (const int) expected_size,
-			      DB_GET_STRING_COLLATION (src_string));
+                              result,
+                              DB_VALUE_PRECISION (result),
+                              DB_PULL_STRING (result), (const int) expected_size, DB_GET_STRING_COLLATION (src_string));
       result->need_clear = true;
     }
 
@@ -1816,9 +1707,7 @@ exit_on_error:
  */
 
 int
-db_string_substring_index (DB_VALUE * src_string,
-			   DB_VALUE * delim_string,
-			   const DB_VALUE * count, DB_VALUE * result)
+db_string_substring_index (DB_VALUE * src_string, DB_VALUE * delim_string, const DB_VALUE * count, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_delim_string, tmp_count;
@@ -1851,14 +1740,9 @@ db_string_substring_index (DB_VALUE * src_string,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  delim_string =
-    db_value_cast_arg (delim_string, &tmp_delim_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  count =
-    db_value_cast_arg (count, &tmp_count, DB_TYPE_INTEGER, &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  delim_string = db_value_cast_arg (delim_string, &tmp_delim_string, DB_TYPE_VARCHAR, &error_status);
+  count = db_value_cast_arg (count, &tmp_count, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -1884,20 +1768,16 @@ db_string_substring_index (DB_VALUE * src_string,
     }
 
   src_cs = INTL_CODESET_UTF8;
-  src_coll = DB_IS_NULL (src_string) ? LANG_SYS_COLLATION :
-    DB_GET_STRING_COLLATION (src_string);
+  src_coll = DB_IS_NULL (src_string) ? LANG_SYS_COLLATION : DB_GET_STRING_COLLATION (src_string);
 
   delim_cs = INTL_CODESET_UTF8;
-  delim_coll = DB_IS_NULL (delim_string) ? LANG_SYS_COLLATION :
-    DB_GET_STRING_COLLATION (delim_string);
+  delim_coll = DB_IS_NULL (delim_string) ? LANG_SYS_COLLATION : DB_GET_STRING_COLLATION (delim_string);
 
   if (count_i == 0)
     {
       /* return an empty string */
       error_status =
-	db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR,
-					   TP_FLOATING_PRECISION_VALUE,
-					   src_coll);
+        db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR, TP_FLOATING_PRECISION_VALUE, src_coll);
     }
   else
     {
@@ -1915,118 +1795,110 @@ db_string_substring_index (DB_VALUE * src_string,
       assert (src_cs == delim_cs);
 
       if (count_from_start)
-	{
-	  while (count_i > 0)
-	    {
-	      DB_MAKE_INTEGER (&offset_val, offset);
-	      error_status =
-		db_string_instr (src_string, delim_string, &offset_val,
-				 &interm_pos);
-	      if (error_status != NO_ERROR)
-		{
-		  goto exit_on_error;
-		}
+        {
+          while (count_i > 0)
+            {
+              DB_MAKE_INTEGER (&offset_val, offset);
+              error_status = db_string_instr (src_string, delim_string, &offset_val, &interm_pos);
+              if (error_status != NO_ERROR)
+                {
+                  goto exit_on_error;
+                }
 
-	      offset = DB_GET_INT (&interm_pos);
-	      if (offset != 0)
-		{
-		  offset += delim_length;
-		  DB_MAKE_INTEGER (&offset_val, offset);
-		}
-	      else
-		{
-		  break;
-		}
-	      count_i--;
-	    }
+              offset = DB_GET_INT (&interm_pos);
+              if (offset != 0)
+                {
+                  offset += delim_length;
+                  DB_MAKE_INTEGER (&offset_val, offset);
+                }
+              else
+                {
+                  break;
+                }
+              count_i--;
+            }
 
-	}
+        }
       else
-	{
-	  while (count_i > 0)
-	    {
-	      /* search from end */
-	      DB_MAKE_INTEGER (&offset_val, -offset);
-	      error_status =
-		db_string_instr (src_string, delim_string, &offset_val,
-				 &interm_pos);
-	      if (error_status != NO_ERROR)
-		{
-		  goto exit_on_error;
-		}
+        {
+          while (count_i > 0)
+            {
+              /* search from end */
+              DB_MAKE_INTEGER (&offset_val, -offset);
+              error_status = db_string_instr (src_string, delim_string, &offset_val, &interm_pos);
+              if (error_status != NO_ERROR)
+                {
+                  goto exit_on_error;
+                }
 
-	      offset = DB_GET_INT (&interm_pos);
-	      if (offset != 0)
-		{
-		  /* adjust offset to indicate position relative to end */
-		  offset = src_length - offset + 2;
-		  DB_MAKE_INTEGER (&offset_val, offset);
-		}
-	      else
-		{
-		  break;
-		}
-	      count_i--;
-	    }
-	}
+              offset = DB_GET_INT (&interm_pos);
+              if (offset != 0)
+                {
+                  /* adjust offset to indicate position relative to end */
+                  offset = src_length - offset + 2;
+                  DB_MAKE_INTEGER (&offset_val, offset);
+                }
+              else
+                {
+                  break;
+                }
+              count_i--;
+            }
+        }
 
       assert (count_i >= 0);
 
       if (count_i == 0)
-	{
-	  /* found count occurences , return the string */
-	  DB_VALUE start_val, len_val;
-	  int start_pos = 1, end_pos = 0;
+        {
+          /* found count occurences , return the string */
+          DB_VALUE start_val, len_val;
+          int start_pos = 1, end_pos = 0;
 
-	  if (count_from_start)
-	    {
-	      start_pos = 1;
-	      end_pos = offset - delim_length - 1;
-	    }
-	  else
-	    {
-	      start_pos = src_length - offset + 2 + delim_length;
-	      end_pos = src_length;
-	    }
+          if (count_from_start)
+            {
+              start_pos = 1;
+              end_pos = offset - delim_length - 1;
+            }
+          else
+            {
+              start_pos = src_length - offset + 2 + delim_length;
+              end_pos = src_length;
+            }
 
-	  if (start_pos > end_pos || start_pos < 1 || end_pos > src_length)
-	    {
-	      /* empty string */
-	      error_status =
-		db_string_make_empty_typed_string (NULL, result,
-						   DB_TYPE_VARCHAR,
-						   TP_FLOATING_PRECISION_VALUE,
-						   src_coll);
-	    }
-	  else
-	    {
-	      DB_MAKE_INTEGER (&start_val, start_pos);
-	      DB_MAKE_INTEGER (&len_val, end_pos - start_pos + 1);
+          if (start_pos > end_pos || start_pos < 1 || end_pos > src_length)
+            {
+              /* empty string */
+              error_status =
+                db_string_make_empty_typed_string (NULL, result,
+                                                   DB_TYPE_VARCHAR, TP_FLOATING_PRECISION_VALUE, src_coll);
+            }
+          else
+            {
+              DB_MAKE_INTEGER (&start_val, start_pos);
+              DB_MAKE_INTEGER (&len_val, end_pos - start_pos + 1);
 
-	      error_status = db_string_substring (SUBSTRING, src_string,
-						  &start_val, &len_val,
-						  result);
+              error_status = db_string_substring (SUBSTRING, src_string, &start_val, &len_val, result);
 
-	      result->need_clear = true;
-	      if (error_status != NO_ERROR)
-		{
-		  pr_clear_value (result);
-		  goto exit_on_error;
-		}
-	    }
-	}
+              result->need_clear = true;
+              if (error_status != NO_ERROR)
+                {
+                  pr_clear_value (result);
+                  goto exit_on_error;
+                }
+            }
+        }
       else
-	{
-	  assert (count_i > 0);
-	  /* not found at all or not enough number of occurences */
-	  /* return the entire source string */
+        {
+          assert (count_i > 0);
+          /* not found at all or not enough number of occurences */
+          /* return the entire source string */
 
-	  error_status = pr_clone_value (src_string, result);
-	  if (error_status != NO_ERROR)
-	    {
-	      goto exit_on_error;
-	    }
-	}
+          error_status = pr_clone_value (src_string, result);
+          if (error_status != NO_ERROR)
+            {
+              goto exit_on_error;
+            }
+        }
     }
 
   if (error_status != NO_ERROR)
@@ -2087,7 +1959,7 @@ db_string_sha_one (DB_VALUE const *src, DB_VALUE * result)
    */
   if (DB_IS_NULL_NARGS (1, src))
     {
-      DB_MAKE_NULL (result);	/* SH1(NULL) returns NULL */
+      DB_MAKE_NULL (result);    /* SH1(NULL) returns NULL */
       goto done;
     }
 
@@ -2104,17 +1976,13 @@ db_string_sha_one (DB_VALUE const *src, DB_VALUE * result)
   /* start main body ********************************************************
    */
 
-  error_status =
-    sha_one (NULL, DB_PULL_STRING (src), DB_GET_STRING_SIZE (src),
-	     &result_strp, &result_len);
+  error_status = sha_one (NULL, DB_PULL_STRING (src), DB_GET_STRING_SIZE (src), &result_strp, &result_len);
   if (error_status != NO_ERROR)
     {
       goto exit_on_error;
     }
 
-  qstr_make_typed_string (DB_TYPE_VARCHAR, result, result_len,
-			  result_strp, result_len,
-			  DB_GET_STRING_COLLATION (src));
+  qstr_make_typed_string (DB_TYPE_VARCHAR, result, result_len, result_strp, result_len, DB_GET_STRING_COLLATION (src));
   result->need_clear = true;
 
   if (error_status != NO_ERROR)
@@ -2158,8 +2026,7 @@ exit_on_error:
  * Note:
  */
 int
-db_string_sha_two (DB_VALUE const *src, DB_VALUE const *hash_len,
-		   DB_VALUE * result)
+db_string_sha_two (DB_VALUE const *src, DB_VALUE const *hash_len, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src, tmp_hash_len;
@@ -2181,16 +2048,14 @@ db_string_sha_two (DB_VALUE const *src, DB_VALUE const *hash_len,
    */
   if (DB_IS_NULL_NARGS (2, src, hash_len))
     {
-      DB_MAKE_NULL (result);	/* sha2(NULL, ...) or sha2(..., NULL) returns NULL */
+      DB_MAKE_NULL (result);    /* sha2(NULL, ...) or sha2(..., NULL) returns NULL */
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
   src = db_value_cast_arg (src, &tmp_src, DB_TYPE_VARCHAR, &error_status);
-  hash_len =
-    db_value_cast_arg (hash_len, &tmp_hash_len, DB_TYPE_INTEGER,
-		       &error_status);
+  hash_len = db_value_cast_arg (hash_len, &tmp_hash_len, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -2203,9 +2068,7 @@ db_string_sha_two (DB_VALUE const *src, DB_VALUE const *hash_len,
 
   len = DB_GET_INT (hash_len);
 
-  error_status =
-    sha_two (NULL, DB_PULL_STRING (src), DB_GET_STRING_LENGTH (src), len,
-	     &result_strp, &result_len);
+  error_status = sha_two (NULL, DB_PULL_STRING (src), DB_GET_STRING_LENGTH (src), len, &result_strp, &result_len);
   if (error_status != NO_ERROR)
     {
       goto exit_on_error;
@@ -2218,9 +2081,7 @@ db_string_sha_two (DB_VALUE const *src, DB_VALUE const *hash_len,
       goto done;
     }
 
-  qstr_make_typed_string (DB_TYPE_VARCHAR, result, result_len,
-			  result_strp, result_len,
-			  DB_GET_STRING_COLLATION (src));
+  qstr_make_typed_string (DB_TYPE_VARCHAR, result, result_len, result_strp, result_len, DB_GET_STRING_COLLATION (src));
   result->need_clear = true;
 
   if (error_status != NO_ERROR)
@@ -2284,7 +2145,7 @@ db_string_md5 (DB_VALUE const *val, DB_VALUE * result)
    */
   if (DB_IS_NULL_NARGS (1, val))
     {
-      DB_MAKE_NULL (result);	/* MD5(NULL) returns NULL */
+      DB_MAKE_NULL (result);    /* MD5(NULL) returns NULL */
       goto done;
     }
 
@@ -2308,8 +2169,7 @@ db_string_md5 (DB_VALUE const *val, DB_VALUE * result)
   md5_hash_to_hex (hashString, hashString);
 
   /* dump result as hex string */
-  qstr_make_typed_string (DB_TYPE_VARCHAR, &hash_string, 32,
-			  hashString, 32, DB_GET_STRING_COLLATION (val));
+  qstr_make_typed_string (DB_TYPE_VARCHAR, &hash_string, 32, hashString, 32, DB_GET_STRING_COLLATION (val));
   hash_string.need_clear = false;
   pr_clone_value (&hash_string, result);
 
@@ -2370,9 +2230,8 @@ exit_on_error:
 
 int
 db_string_insert_substring (DB_VALUE * src_string,
-			    const DB_VALUE * position,
-			    const DB_VALUE * length,
-			    DB_VALUE * sub_string, DB_VALUE * result)
+                            const DB_VALUE * position,
+                            const DB_VALUE * length, DB_VALUE * sub_string, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_sub_string, tmp_position, tmp_length;
@@ -2403,8 +2262,7 @@ db_string_insert_substring (DB_VALUE * src_string,
 
   /* arg init tmp ***********************************************************
    */
-  DB_MAKE_NULL_NARGS (4, &tmp_src_string, &tmp_sub_string, &tmp_position,
-		      &tmp_length);
+  DB_MAKE_NULL_NARGS (4, &tmp_src_string, &tmp_sub_string, &tmp_position, &tmp_length);
 
   /* arg check null *********************************************************
    */
@@ -2416,17 +2274,10 @@ db_string_insert_substring (DB_VALUE * src_string,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  sub_string =
-    db_value_cast_arg (sub_string, &tmp_sub_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  position =
-    db_value_cast_arg (position, &tmp_position, DB_TYPE_INTEGER,
-		       &error_status);
-  length =
-    db_value_cast_arg (length, &tmp_length, DB_TYPE_INTEGER, &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  sub_string = db_value_cast_arg (sub_string, &tmp_sub_string, DB_TYPE_VARCHAR, &error_status);
+  position = db_value_cast_arg (position, &tmp_position, DB_TYPE_INTEGER, &error_status);
+  length = db_value_cast_arg (length, &tmp_length, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -2450,12 +2301,10 @@ db_string_insert_substring (DB_VALUE * src_string,
     }
 
   src_cs = INTL_CODESET_UTF8;
-  src_coll = DB_IS_NULL (src_string) ? LANG_SYS_COLLATION :
-    DB_GET_STRING_COLLATION (src_string);
+  src_coll = DB_IS_NULL (src_string) ? LANG_SYS_COLLATION : DB_GET_STRING_COLLATION (src_string);
 
   substr_cs = INTL_CODESET_UTF8;
-  substr_coll = DB_IS_NULL (sub_string) ? LANG_SYS_COLLATION :
-    DB_GET_STRING_COLLATION (sub_string);
+  substr_coll = DB_IS_NULL (sub_string) ? LANG_SYS_COLLATION : DB_GET_STRING_COLLATION (sub_string);
 
   position_i = DB_GET_INT (position);
   length_i = DB_GET_INT (length);
@@ -2475,40 +2324,35 @@ db_string_insert_substring (DB_VALUE * src_string,
 
       /* string1 = left(string,position) */
       error_status =
-	db_string_make_empty_typed_string (NULL, &string1, DB_TYPE_VARCHAR,
-					   TP_FLOATING_PRECISION_VALUE,
-					   src_coll);
+        db_string_make_empty_typed_string (NULL, &string1, DB_TYPE_VARCHAR, TP_FLOATING_PRECISION_VALUE, src_coll);
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       if (position_i > 1)
-	{
-	  DB_VALUE start_val, len_val;
+        {
+          DB_VALUE start_val, len_val;
 
-	  DB_MAKE_INTEGER (&start_val, 1);
-	  DB_MAKE_INTEGER (&len_val, position_i - 1);
-	  pr_clear_value (&string1);
+          DB_MAKE_INTEGER (&start_val, 1);
+          DB_MAKE_INTEGER (&len_val, position_i - 1);
+          pr_clear_value (&string1);
 
-	  error_status = db_string_substring (SUBSTRING, src_string,
-					      &start_val, &len_val, &string1);
-	  if (error_status != NO_ERROR)
-	    {
-	      goto exit_on_error;
-	    }
-	}
+          error_status = db_string_substring (SUBSTRING, src_string, &start_val, &len_val, &string1);
+          if (error_status != NO_ERROR)
+            {
+              goto exit_on_error;
+            }
+        }
 
       /* string2 = susbtring(string,position+len) */
       error_status =
-	db_string_make_empty_typed_string (NULL, &string2, DB_TYPE_VARCHAR,
-					   TP_FLOATING_PRECISION_VALUE,
-					   src_coll);
+        db_string_make_empty_typed_string (NULL, &string2, DB_TYPE_VARCHAR, TP_FLOATING_PRECISION_VALUE, src_coll);
 
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       /* get string2 if the conditions are fullfilled :
        * 1. length_i >= 0 - compatibility with MySql
@@ -2517,53 +2361,48 @@ db_string_insert_substring (DB_VALUE * src_string,
        *                  - check the start boundary for substring
        */
       if ((length_i >= 0) && ((position_i + length_i) <= src_length))
-	{
-	  DB_VALUE start_val, len_val;
+        {
+          DB_VALUE start_val, len_val;
 
-	  DB_MAKE_INTEGER (&start_val, position_i + length_i);
-	  DB_MAKE_INTEGER (&len_val,
-			   src_length - (position_i + length_i) + 1);
-	  pr_clear_value (&string2);
+          DB_MAKE_INTEGER (&start_val, position_i + length_i);
+          DB_MAKE_INTEGER (&len_val, src_length - (position_i + length_i) + 1);
+          pr_clear_value (&string2);
 
-	  error_status = db_string_substring (SUBSTRING, src_string,
-					      &start_val, &len_val, &string2);
-	  if (error_status != NO_ERROR)
-	    {
-	      goto exit_on_error;
-	    }
-	}
+          error_status = db_string_substring (SUBSTRING, src_string, &start_val, &len_val, &string2);
+          if (error_status != NO_ERROR)
+            {
+              goto exit_on_error;
+            }
+        }
 
       /* partial_result = concat(string1,substring) */
-      error_status =
-	db_string_concatenate (&string1, sub_string, &partial_result,
-			       &data_status);
+      error_status = db_string_concatenate (&string1, sub_string, &partial_result, &data_status);
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
       if (data_status != DATA_STATUS_OK)
-	{
-	  /* This should never happen as the partial_result is a VAR[N]CHAR */
-	  assert (false);
-	  error_status = ER_FAILED;
-	  goto exit_on_error;
-	}
+        {
+          /* This should never happen as the partial_result is a VAR[N]CHAR */
+          assert (false);
+          error_status = ER_FAILED;
+          goto exit_on_error;
+        }
 
       /* result = concat(partial_result,string2) */
-      error_status = db_string_concatenate (&partial_result, &string2, result,
-					    &data_status);
+      error_status = db_string_concatenate (&partial_result, &string2, result, &data_status);
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       if (data_status != DATA_STATUS_OK)
-	{
-	  /* This should never happen as the result is a VAR[N]CHAR */
-	  assert (false);
-	  error_status = ER_FAILED;
-	  goto exit_on_error;
-	}
+        {
+          /* This should never happen as the result is a VAR[N]CHAR */
+          assert (false);
+          error_status = ER_FAILED;
+          goto exit_on_error;
+        }
 
       result_size = DB_GET_STRING_SIZE (result);
     }
@@ -2585,8 +2424,7 @@ done:
   pr_clear_value (&string2);
   pr_clear_value (&partial_result);
 
-  db_value_clear_nargs (4, &tmp_src_string, &tmp_sub_string, &tmp_position,
-			&tmp_length);
+  db_value_clear_nargs (4, &tmp_src_string, &tmp_sub_string, &tmp_position, &tmp_length);
 
   return error_status;
 
@@ -2606,8 +2444,7 @@ exit_on_error:
   pr_clear_value (&string2);
   pr_clear_value (&partial_result);
 
-  db_value_clear_nargs (4, &tmp_src_string, &tmp_sub_string, &tmp_position,
-			&tmp_length);
+  db_value_clear_nargs (4, &tmp_src_string, &tmp_sub_string, &tmp_position, &tmp_length);
 
   return error_status;
 }
@@ -2648,8 +2485,7 @@ db_string_elt (DB_VALUE * result, DB_VALUE * arg[], int const num_args)
 
   /* arg cast type **********************************************************
    */
-  arg[0] =
-    db_value_cast_arg (arg[0], &tmp_arg, DB_TYPE_INTEGER, &error_status);
+  arg[0] = db_value_cast_arg (arg[0], &tmp_arg, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -2758,8 +2594,7 @@ db_string_byte_length (const DB_VALUE * string, DB_VALUE * byte_count)
     }
   else if (DB_IS_NULL (string))
     {
-      db_value_domain_init (byte_count, DB_TYPE_INTEGER, DB_DEFAULT_PRECISION,
-			    DB_DEFAULT_SCALE);
+      db_value_domain_init (byte_count, DB_TYPE_INTEGER, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
     }
   else
     {
@@ -2813,15 +2648,13 @@ db_string_bit_length (const DB_VALUE * string, DB_VALUE * bit_count)
    */
   if (DB_IS_NULL_NARGS (1, string))
     {
-      db_value_domain_init (bit_count, DB_TYPE_INTEGER,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (bit_count, DB_TYPE_INTEGER, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
-  string =
-    db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
+  string = db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -2925,15 +2758,13 @@ db_string_char_length (const DB_VALUE * string, DB_VALUE * char_count)
    */
   if (DB_IS_NULL_NARGS (1, string))
     {
-      db_value_domain_init (char_count, DB_TYPE_INTEGER,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (char_count, DB_TYPE_INTEGER, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
-  string =
-    db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
+  string = db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3061,8 +2892,7 @@ db_string_lower (const DB_VALUE * string, DB_VALUE * lower_string)
 
   /* arg cast type **********************************************************
    */
-  string =
-    db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
+  string = db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3080,8 +2910,7 @@ db_string_lower (const DB_VALUE * string, DB_VALUE * lower_string)
   src_length = DB_GET_STRING_LENGTH (string);
   lower_size =
     intl_lower_string_size (alphabet,
-			    (unsigned char *) DB_PULL_STRING (string),
-			    DB_GET_STRING_SIZE (string), src_length);
+                            (unsigned char *) DB_PULL_STRING (string), DB_GET_STRING_SIZE (string), src_length);
 
   lower_str = (unsigned char *) malloc (lower_size + 1);
   if (lower_str == NULL)
@@ -3092,9 +2921,7 @@ db_string_lower (const DB_VALUE * string, DB_VALUE * lower_string)
 
   lower_length = TP_FLOATING_PRECISION_VALUE;
 
-  intl_lower_string (alphabet,
-		     (unsigned char *) DB_PULL_STRING (string),
-		     lower_str, src_length);
+  intl_lower_string (alphabet, (unsigned char *) DB_PULL_STRING (string), lower_str, src_length);
   lower_str[lower_size] = 0;
 
   if (DB_VALUE_PRECISION (string) != TP_FLOATING_PRECISION_VALUE)
@@ -3102,8 +2929,7 @@ db_string_lower (const DB_VALUE * string, DB_VALUE * lower_string)
       intl_char_count (lower_str, lower_size, &lower_length);
     }
   qstr_make_typed_string (DB_TYPE_VARCHAR, lower_string, lower_length,
-			  (char *) lower_str, lower_size,
-			  DB_GET_STRING_COLLATION (string));
+                          (char *) lower_str, lower_size, DB_GET_STRING_COLLATION (string));
   lower_string->need_clear = true;
 
 
@@ -3210,8 +3036,7 @@ db_string_upper (const DB_VALUE * string, DB_VALUE * upper_string)
 
   /* arg cast type **********************************************************
    */
-  string =
-    db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
+  string = db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3229,8 +3054,7 @@ db_string_upper (const DB_VALUE * string, DB_VALUE * upper_string)
   src_length = DB_GET_STRING_LENGTH (string);
   upper_size =
     intl_upper_string_size (alphabet,
-			    (unsigned char *) DB_PULL_STRING (string),
-			    DB_GET_STRING_SIZE (string), src_length);
+                            (unsigned char *) DB_PULL_STRING (string), DB_GET_STRING_SIZE (string), src_length);
 
   upper_str = (unsigned char *) malloc (upper_size + 1);
   if (upper_str == NULL)
@@ -3241,9 +3065,7 @@ db_string_upper (const DB_VALUE * string, DB_VALUE * upper_string)
 
   upper_length = TP_FLOATING_PRECISION_VALUE;
 
-  intl_upper_string (alphabet,
-		     (unsigned char *) DB_PULL_STRING (string),
-		     upper_str, src_length);
+  intl_upper_string (alphabet, (unsigned char *) DB_PULL_STRING (string), upper_str, src_length);
 
   upper_str[upper_size] = 0;
   if (DB_VALUE_PRECISION (string) != TP_FLOATING_PRECISION_VALUE)
@@ -3251,8 +3073,7 @@ db_string_upper (const DB_VALUE * string, DB_VALUE * upper_string)
       intl_char_count (upper_str, upper_size, &upper_length);
     }
   qstr_make_typed_string (DB_TYPE_VARCHAR, upper_string, upper_length,
-			  (char *) upper_str, upper_size,
-			  DB_GET_STRING_COLLATION (string));
+                          (char *) upper_str, upper_size, DB_GET_STRING_COLLATION (string));
   upper_string->need_clear = true;
 
   if (error_status != NO_ERROR)
@@ -3312,8 +3133,7 @@ exit_on_error:
 
 int
 db_string_trim (const MISC_OPERAND tr_operand,
-		const DB_VALUE * trim_charset,
-		const DB_VALUE * src_string, DB_VALUE * trimmed_string)
+                const DB_VALUE * trim_charset, const DB_VALUE * src_string, DB_VALUE * trimmed_string)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_trim_charset;
@@ -3349,22 +3169,16 @@ db_string_trim (const MISC_OPERAND tr_operand,
       trim_charset_is_null = true;
     }
 
-  if (DB_IS_NULL (src_string)
-      || (!trim_charset_is_null && DB_IS_NULL (trim_charset)))
+  if (DB_IS_NULL (src_string) || (!trim_charset_is_null && DB_IS_NULL (trim_charset)))
     {
-      db_value_domain_init (trimmed_string, DB_TYPE_VARCHAR,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (trimmed_string, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  trim_charset =
-    db_value_cast_arg (trim_charset, &tmp_trim_charset, DB_TYPE_VARCHAR,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  trim_charset = db_value_cast_arg (trim_charset, &tmp_trim_charset, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3380,11 +3194,11 @@ db_string_trim (const MISC_OPERAND tr_operand,
   if (!trim_charset_is_null)
     {
       if (qstr_get_category (src_string) != qstr_get_category (trim_charset))
-	{
-	  error_status = ER_QSTR_INCOMPATIBLE_CODE_SETS;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
-	  goto exit_on_error;
-	}
+        {
+          error_status = ER_QSTR_INCOMPATIBLE_CODE_SETS;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
+          goto exit_on_error;
+        }
 
       trim_charset_ptr = (unsigned char *) DB_PULL_STRING (trim_charset);
       trim_charset_length = DB_GET_STRING_LENGTH (trim_charset);
@@ -3392,15 +3206,13 @@ db_string_trim (const MISC_OPERAND tr_operand,
     }
 
   error_status = qstr_trim (tr_operand,
-			    trim_charset_ptr,
-			    trim_charset_length,
-			    trim_charset_size,
-			    (unsigned char *) DB_PULL_STRING (src_string),
-			    DB_VALUE_DOMAIN_TYPE (src_string),
-			    DB_GET_STRING_LENGTH (src_string),
-			    DB_GET_STRING_SIZE (src_string),
-			    &result,
-			    &result_type, &result_length, &result_size);
+                            trim_charset_ptr,
+                            trim_charset_length,
+                            trim_charset_size,
+                            (unsigned char *) DB_PULL_STRING (src_string),
+                            DB_VALUE_DOMAIN_TYPE (src_string),
+                            DB_GET_STRING_LENGTH (src_string),
+                            DB_GET_STRING_SIZE (src_string), &result, &result_type, &result_length, &result_size);
 
   if (error_status != NO_ERROR)
     {
@@ -3410,13 +3222,10 @@ db_string_trim (const MISC_OPERAND tr_operand,
 
   if (result != NULL)
     {
-      result_domain_length = MIN (QSTR_MAX_PRECISION (result_type),
-				  DB_VALUE_PRECISION (src_string));
+      result_domain_length = MIN (QSTR_MAX_PRECISION (result_type), DB_VALUE_PRECISION (src_string));
       qstr_make_typed_string (result_type,
-			      trimmed_string,
-			      result_domain_length,
-			      (char *) result, result_size,
-			      DB_GET_STRING_COLLATION (src_string));
+                              trimmed_string,
+                              result_domain_length, (char *) result, result_size, DB_GET_STRING_COLLATION (src_string));
       result[result_size] = 0;
       trimmed_string->need_clear = true;
     }
@@ -3457,15 +3266,13 @@ exit_on_error:
 */
 static int
 qstr_trim (MISC_OPERAND trim_operand,
-	   const unsigned char *trim_charset,
-	   int trim_charset_length,
-	   int trim_charset_size,
-	   const unsigned char *src_ptr,
-	   DB_TYPE src_type,
-	   int src_length,
-	   int src_size,
-	   unsigned char **result,
-	   DB_TYPE * result_type, int *result_length, int *result_size)
+           const unsigned char *trim_charset,
+           int trim_charset_length,
+           int trim_charset_size,
+           const unsigned char *src_ptr,
+           DB_TYPE src_type,
+           int src_length,
+           int src_size, unsigned char **result, DB_TYPE * result_type, int *result_length, int *result_size)
 {
   unsigned char pad_char[2], *lead_trimmed_ptr, *trail_trimmed_ptr;
   int lead_trimmed_length, trail_trimmed_length;
@@ -3489,9 +3296,8 @@ qstr_trim (MISC_OPERAND trim_operand,
   if (trim_operand == LEADING || trim_operand == BOTH)
     {
       trim_leading (trim_charset, trim_charset_size,
-		    src_ptr, src_type, src_length, src_size,
-		    &lead_trimmed_ptr,
-		    &lead_trimmed_length, &lead_trimmed_size);
+                    src_ptr, src_type, src_length, src_size,
+                    &lead_trimmed_ptr, &lead_trimmed_length, &lead_trimmed_size);
     }
 
   trail_trimmed_ptr = lead_trimmed_ptr;
@@ -3501,11 +3307,8 @@ qstr_trim (MISC_OPERAND trim_operand,
   if (trim_operand == TRAILING || trim_operand == BOTH)
     {
       trim_trailing (trim_charset, trim_charset_size,
-		     lead_trimmed_ptr,
-		     src_type,
-		     lead_trimmed_length,
-		     lead_trimmed_size,
-		     &trail_trimmed_length, &trail_trimmed_size);
+                     lead_trimmed_ptr,
+                     src_type, lead_trimmed_length, lead_trimmed_size, &trail_trimmed_length, &trail_trimmed_size);
     }
 
   /* setup result */
@@ -3516,8 +3319,7 @@ qstr_trim (MISC_OPERAND trim_operand,
       return error_status;
     }
 
-  (void) memcpy ((char *) (*result), (char *) trail_trimmed_ptr,
-		 trail_trimmed_size);
+  (void) memcpy ((char *) (*result), (char *) trail_trimmed_ptr, trail_trimmed_size);
   (*result)[trail_trimmed_size] = '\0';
 
   *result_type = DB_TYPE_VARCHAR;
@@ -3551,13 +3353,11 @@ qstr_trim (MISC_OPERAND trim_operand,
  */
 static void
 trim_leading (const unsigned char *trim_charset_ptr,
-	      int trim_charset_size,
-	      const unsigned char *src_ptr,
-	      UNUSED_ARG DB_TYPE src_type,
-	      int src_length,
-	      int src_size,
-	      unsigned char **lead_trimmed_ptr,
-	      int *lead_trimmed_length, int *lead_trimmed_size)
+              int trim_charset_size,
+              const unsigned char *src_ptr,
+              UNUSED_ARG DB_TYPE src_type,
+              int src_length,
+              int src_size, unsigned char **lead_trimmed_ptr, int *lead_trimmed_length, int *lead_trimmed_size)
 {
   int cur_src_char_size, cur_trim_char_size;
   unsigned char *cur_src_char_ptr, *cur_trim_char_ptr;
@@ -3569,39 +3369,35 @@ trim_leading (const unsigned char *trim_charset_ptr,
   *lead_trimmed_size = src_size;
 
   /* iterate for source string */
-  for (cur_src_char_ptr = (unsigned char *) src_ptr;
-       cur_src_char_ptr < src_ptr + src_size;)
+  for (cur_src_char_ptr = (unsigned char *) src_ptr; cur_src_char_ptr < src_ptr + src_size;)
     {
       for (cur_trim_char_ptr = (unsigned char *) trim_charset_ptr;
-	   cur_src_char_ptr < (src_ptr + src_size)
-	   && (cur_trim_char_ptr < trim_charset_ptr + trim_charset_size);)
-	{
-	  intl_char_size (cur_src_char_ptr, 1, &cur_src_char_size);
-	  intl_char_size (cur_trim_char_ptr, 1, &cur_trim_char_size);
+           cur_src_char_ptr < (src_ptr + src_size) && (cur_trim_char_ptr < trim_charset_ptr + trim_charset_size);)
+        {
+          intl_char_size (cur_src_char_ptr, 1, &cur_src_char_size);
+          intl_char_size (cur_trim_char_ptr, 1, &cur_trim_char_size);
 
-	  if (cur_src_char_size != cur_trim_char_size)
-	    {
-	      return;
-	    }
+          if (cur_src_char_size != cur_trim_char_size)
+            {
+              return;
+            }
 
-	  cmp_flag =
-	    memcmp ((char *) cur_src_char_ptr, (char *) cur_trim_char_ptr,
-		    cur_trim_char_size);
-	  if (cmp_flag != 0)
-	    {
-	      return;
-	    }
+          cmp_flag = memcmp ((char *) cur_src_char_ptr, (char *) cur_trim_char_ptr, cur_trim_char_size);
+          if (cmp_flag != 0)
+            {
+              return;
+            }
 
-	  cur_src_char_ptr += cur_src_char_size;
-	  cur_trim_char_ptr += cur_trim_char_size;
-	}
+          cur_src_char_ptr += cur_src_char_size;
+          cur_trim_char_ptr += cur_trim_char_size;
+        }
 
       if (cur_trim_char_ptr >= trim_charset_ptr + trim_charset_size)
-	{			/* all string matched */
-	  *lead_trimmed_length -= trim_charset_size;
-	  *lead_trimmed_size -= trim_charset_size;
-	  *lead_trimmed_ptr += trim_charset_size;
-	}
+        {                       /* all string matched */
+          *lead_trimmed_length -= trim_charset_size;
+          *lead_trimmed_size -= trim_charset_size;
+          *lead_trimmed_ptr += trim_charset_size;
+        }
     }
 }
 
@@ -3628,12 +3424,10 @@ trim_leading (const unsigned char *trim_charset_ptr,
  */
 static void
 trim_trailing (const unsigned char *trim_charset_ptr,
-	       int trim_charset_size,
-	       const unsigned char *src_ptr,
-	       UNUSED_ARG DB_TYPE src_type,
-	       int src_length,
-	       int src_size,
-	       int *trail_trimmed_length, int *trail_trimmed_size)
+               int trim_charset_size,
+               const unsigned char *src_ptr,
+               UNUSED_ARG DB_TYPE src_type,
+               int src_length, int src_size, int *trail_trimmed_length, int *trail_trimmed_size)
 {
   int prev_src_char_size, prev_trim_char_size;
   unsigned char *cur_src_char_ptr, *cur_trim_char_ptr;
@@ -3644,43 +3438,36 @@ trim_trailing (const unsigned char *trim_charset_ptr,
   *trail_trimmed_size = src_size;
 
   /* iterate for source string */
-  for (cur_src_char_ptr = (unsigned char *) src_ptr + src_size;
-       cur_src_char_ptr > src_ptr;)
+  for (cur_src_char_ptr = (unsigned char *) src_ptr + src_size; cur_src_char_ptr > src_ptr;)
     {
       for (cur_trim_char_ptr =
-	   (unsigned char *) trim_charset_ptr + trim_charset_size;
-	   cur_trim_char_ptr > trim_charset_ptr
-	   && cur_src_char_ptr > src_ptr;)
-	{
-	  /* get previous letter */
-	  prev_src_char_ptr =
-	    intl_prev_char (cur_src_char_ptr, src_ptr, &prev_src_char_size);
-	  prev_trim_char_ptr =
-	    intl_prev_char (cur_trim_char_ptr, trim_charset_ptr,
-			    &prev_trim_char_size);
+           (unsigned char *) trim_charset_ptr + trim_charset_size;
+           cur_trim_char_ptr > trim_charset_ptr && cur_src_char_ptr > src_ptr;)
+        {
+          /* get previous letter */
+          prev_src_char_ptr = intl_prev_char (cur_src_char_ptr, src_ptr, &prev_src_char_size);
+          prev_trim_char_ptr = intl_prev_char (cur_trim_char_ptr, trim_charset_ptr, &prev_trim_char_size);
 
-	  if (prev_trim_char_size != prev_src_char_size)
-	    {
-	      return;
-	    }
+          if (prev_trim_char_size != prev_src_char_size)
+            {
+              return;
+            }
 
-	  cmp_flag = memcmp ((char *) prev_src_char_ptr,
-			     (char *) prev_trim_char_ptr,
-			     prev_trim_char_size);
-	  if (cmp_flag != 0)
-	    {
-	      return;
-	    }
+          cmp_flag = memcmp ((char *) prev_src_char_ptr, (char *) prev_trim_char_ptr, prev_trim_char_size);
+          if (cmp_flag != 0)
+            {
+              return;
+            }
 
-	  cur_src_char_ptr -= prev_src_char_size;
-	  cur_trim_char_ptr -= prev_trim_char_size;
-	}
+          cur_src_char_ptr -= prev_src_char_size;
+          cur_trim_char_ptr -= prev_trim_char_size;
+        }
 
       if (cur_trim_char_ptr <= trim_charset_ptr)
-	{
-	  *trail_trimmed_length -= trim_charset_size;
-	  *trail_trimmed_size -= trim_charset_size;
-	}
+        {
+          *trail_trimmed_length -= trim_charset_size;
+          *trail_trimmed_size -= trim_charset_size;
+        }
     }
 }
 
@@ -3698,8 +3485,7 @@ trim_trailing (const unsigned char *trim_charset_ptr,
  */
 int
 db_string_pad (const MISC_OPERAND pad_operand, const DB_VALUE * src_string,
-	       const DB_VALUE * pad_length, const DB_VALUE * pad_charset,
-	       DB_VALUE * padded_string)
+               const DB_VALUE * pad_length, const DB_VALUE * pad_charset, DB_VALUE * padded_string)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_pad_length, tmp_pad_charset;
@@ -3722,22 +3508,15 @@ db_string_pad (const MISC_OPERAND pad_operand, const DB_VALUE * src_string,
    */
   if (DB_IS_NULL_NARGS (3, src_string, pad_length, pad_charset))
     {
-      db_value_domain_init (padded_string, DB_TYPE_VARCHAR,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (padded_string, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  pad_length =
-    db_value_cast_arg (pad_length, &tmp_pad_length, DB_TYPE_INTEGER,
-		       &error_status);
-  pad_charset =
-    db_value_cast_arg (pad_charset, &tmp_pad_charset, DB_TYPE_VARCHAR,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  pad_length = db_value_cast_arg (pad_length, &tmp_pad_length, DB_TYPE_INTEGER, &error_status);
+  pad_charset = db_value_cast_arg (pad_charset, &tmp_pad_charset, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3750,13 +3529,12 @@ db_string_pad (const MISC_OPERAND pad_operand, const DB_VALUE * src_string,
 
   total_length = DB_GET_INTEGER (pad_length);
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   if (total_length <= 0)
     {
       /*error_status = ER_QPROC_INVALID_PARAMETER; */
 
-      db_value_domain_init (padded_string, DB_TYPE_VARCHAR,
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (padded_string, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
       goto done;
     }
@@ -3770,15 +3548,13 @@ db_string_pad (const MISC_OPERAND pad_operand, const DB_VALUE * src_string,
     }
 
   error_status = qstr_pad (pad_operand, total_length,
-			   (unsigned char *) DB_PULL_STRING (pad_charset),
-			   DB_GET_STRING_LENGTH (pad_charset),
-			   DB_GET_STRING_SIZE (pad_charset),
-			   (unsigned char *) DB_PULL_STRING (src_string),
-			   DB_VALUE_DOMAIN_TYPE (src_string),
-			   DB_GET_STRING_LENGTH (src_string),
-			   DB_GET_STRING_SIZE (src_string),
-			   &result,
-			   &result_type, &result_length, &result_size);
+                           (unsigned char *) DB_PULL_STRING (pad_charset),
+                           DB_GET_STRING_LENGTH (pad_charset),
+                           DB_GET_STRING_SIZE (pad_charset),
+                           (unsigned char *) DB_PULL_STRING (src_string),
+                           DB_VALUE_DOMAIN_TYPE (src_string),
+                           DB_GET_STRING_LENGTH (src_string),
+                           DB_GET_STRING_SIZE (src_string), &result, &result_type, &result_length, &result_size);
 
   if (error_status != NO_ERROR)
     {
@@ -3789,8 +3565,7 @@ db_string_pad (const MISC_OPERAND pad_operand, const DB_VALUE * src_string,
   if (result != NULL)
     {
       qstr_make_typed_string (result_type, padded_string, result_length,
-			      (char *) result, result_size,
-			      DB_GET_STRING_COLLATION (src_string));
+                              (char *) result, result_size, DB_GET_STRING_COLLATION (src_string));
 
       result[result_size] = 0;
       padded_string->need_clear = true;
@@ -3807,8 +3582,7 @@ done:
 
   /* arg clear tmp **********************************************************
    */
-  db_value_clear_nargs (3, &tmp_src_string, &tmp_pad_length,
-			&tmp_pad_charset);
+  db_value_clear_nargs (3, &tmp_src_string, &tmp_pad_length, &tmp_pad_charset);
 
   return error_status;
 
@@ -3824,8 +3598,7 @@ exit_on_error:
 
   /* arg clear tmp **********************************************************
    */
-  db_value_clear_nargs (3, &tmp_src_string, &tmp_pad_length,
-			&tmp_pad_charset);
+  db_value_clear_nargs (3, &tmp_src_string, &tmp_pad_length, &tmp_pad_charset);
 
   return error_status;
 }
@@ -3835,23 +3608,21 @@ exit_on_error:
  */
 static int
 qstr_pad (MISC_OPERAND pad_operand,
-	  int pad_length,
-	  const unsigned char *pad_charset_ptr,
-	  int pad_charset_length,
-	  int pad_charset_size,
-	  const unsigned char *src_ptr,
-	  UNUSED_ARG DB_TYPE src_type,
-	  int src_length,
-	  int src_size,
-	  unsigned char **result,
-	  DB_TYPE * result_type, int *result_length, int *result_size)
+          int pad_length,
+          const unsigned char *pad_charset_ptr,
+          int pad_charset_length,
+          int pad_charset_size,
+          const unsigned char *src_ptr,
+          UNUSED_ARG DB_TYPE src_type,
+          int src_length,
+          int src_size, unsigned char **result, DB_TYPE * result_type, int *result_length, int *result_size)
 {
   unsigned char def_pad_char[2];
   unsigned char *cur_pad_char_ptr;
-  int def_pad_char_size = 0;	/* default padding char */
+  int def_pad_char_size = 0;    /* default padding char */
   int truncate_size, pad_size, alloc_size, cnt;
-  int length_to_be_padded;	/* length that will be really padded */
-  int remain_length_to_be_padded;	/* remained length that will be padded */
+  int length_to_be_padded;      /* length that will be really padded */
+  int remain_length_to_be_padded;       /* remained length that will be padded */
   int pad_full_size = 0;
   int pad_reminder_size = 0;
   int error_status = NO_ERROR;
@@ -3873,11 +3644,9 @@ qstr_pad (MISC_OPERAND pad_operand,
     }
   else
     {
-      pad_full_size = ((pad_length - src_length) / pad_charset_length)
-	* pad_charset_size;
+      pad_full_size = ((pad_length - src_length) / pad_charset_length) * pad_charset_size;
       intl_char_size ((unsigned char *) pad_charset_ptr,
-		      (pad_length - src_length) % pad_charset_length,
-		      &pad_reminder_size);
+                      (pad_length - src_length) % pad_charset_length, &pad_reminder_size);
       alloc_size = src_size + pad_full_size + pad_reminder_size;
     }
 
@@ -3897,7 +3666,7 @@ qstr_pad (MISC_OPERAND pad_operand,
   /* if source length is greater than pad_length */
   if (src_length >= pad_length)
     {
-      truncate_size = 0;	/* SIZE to be cut */
+      truncate_size = 0;        /* SIZE to be cut */
       intl_char_size ((unsigned char *) src_ptr, pad_length, &truncate_size);
       memcpy ((char *) (*result), (char *) src_ptr, truncate_size);
 
@@ -3916,14 +3685,13 @@ qstr_pad (MISC_OPERAND pad_operand,
 
   /* pad heading first */
 
-  cnt = 0;			/* how many times copy pad_char_set */
-  pad_size = 0;			/* SIZE of padded char */
+  cnt = 0;                      /* how many times copy pad_char_set */
+  pad_size = 0;                 /* SIZE of padded char */
   remain_length_to_be_padded = 0;
 
   for (; cnt < (length_to_be_padded / pad_charset_length); cnt++)
     {
-      (void) memcpy ((char *) (*result) + pad_charset_size * cnt,
-		     (char *) pad_charset_ptr, pad_charset_size);
+      (void) memcpy ((char *) (*result) + pad_charset_size * cnt, (char *) pad_charset_ptr, pad_charset_size);
     }
   pad_size = pad_charset_size * cnt;
   remain_length_to_be_padded = (pad_length - src_length) % pad_charset_length;
@@ -3936,10 +3704,8 @@ qstr_pad (MISC_OPERAND pad_operand,
 
       cur_pad_char_ptr = (unsigned char *) pad_charset_ptr;
 
-      intl_char_size (cur_pad_char_ptr, remain_length_to_be_padded,
-		      &remain_size_to_be_padded);
-      (void) memcpy ((char *) (*result) + pad_size,
-		     (char *) cur_pad_char_ptr, remain_size_to_be_padded);
+      intl_char_size (cur_pad_char_ptr, remain_length_to_be_padded, &remain_size_to_be_padded);
+      (void) memcpy ((char *) (*result) + pad_size, (char *) cur_pad_char_ptr, remain_size_to_be_padded);
       cur_pad_char_ptr += remain_size_to_be_padded;
       pad_size += remain_size_to_be_padded;
     }
@@ -3947,7 +3713,7 @@ qstr_pad (MISC_OPERAND pad_operand,
   memcpy ((char *) (*result) + pad_size, src_ptr, src_size);
 
   if (pad_operand == TRAILING)
-    {				/* switch source and padded string */
+    {                           /* switch source and padded string */
       memmove ((char *) (*result) + src_size, (char *) (*result), pad_size);
       memcpy ((char *) (*result), src_ptr, src_size);
     }
@@ -3994,9 +3760,7 @@ qstr_pad (MISC_OPERAND pad_operand,
 */
 
 int
-db_string_like (const DB_VALUE * src_string,
-		const DB_VALUE * pattern,
-		const DB_VALUE * esc_char, int *result)
+db_string_like (const DB_VALUE * src_string, const DB_VALUE * pattern, const DB_VALUE * esc_char, int *result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_pattern, tmp_esc_char;
@@ -4034,16 +3798,11 @@ db_string_like (const DB_VALUE * src_string,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  pattern =
-    db_value_cast_arg (pattern, &tmp_pattern, DB_TYPE_VARCHAR, &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  pattern = db_value_cast_arg (pattern, &tmp_pattern, DB_TYPE_VARCHAR, &error_status);
   if (esc_char != NULL)
     {
-      esc_char =
-	db_value_cast_arg (esc_char, &tmp_esc_char, DB_TYPE_VARCHAR,
-			   &error_status);
+      esc_char = db_value_cast_arg (esc_char, &tmp_esc_char, DB_TYPE_VARCHAR, &error_status);
     }
 
   if (error_status != NO_ERROR)
@@ -4065,8 +3824,7 @@ db_string_like (const DB_VALUE * src_string,
       goto exit_on_error;
     }
 
-  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string),
-		       DB_GET_STRING_COLLATION (pattern), coll_id);
+  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string), DB_GET_STRING_COLLATION (pattern), coll_id);
   if (coll_id == -1)
     {
       error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
@@ -4077,37 +3835,36 @@ db_string_like (const DB_VALUE * src_string,
   if (esc_char != NULL)
     {
       if (DB_IS_NULL (esc_char))
-	{
-	  /* The implicit escape character ('\\') is used if
-	     (a LIKE b ESCAPE NULL) is given in the syntax */
-	  esc_char_p = "\\";
-	}
+        {
+          /* The implicit escape character ('\\') is used if
+             (a LIKE b ESCAPE NULL) is given in the syntax */
+          esc_char_p = "\\";
+        }
       else
-	{
-	  QSTR_CATEGORY esc_category = qstr_get_category (esc_char);
-	  int esc_char_len, esc_char_size;
+        {
+          QSTR_CATEGORY esc_category = qstr_get_category (esc_char);
+          int esc_char_len, esc_char_size;
 
-	  if (src_category != esc_category)
-	    {
-	      error_status = ER_QSTR_INCOMPATIBLE_CODE_SETS;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
-	      goto exit_on_error;
-	    }
+          if (src_category != esc_category)
+            {
+              error_status = ER_QSTR_INCOMPATIBLE_CODE_SETS;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
+              goto exit_on_error;
+            }
 
-	  esc_char_p = DB_PULL_STRING (esc_char);
-	  esc_char_size = DB_GET_STRING_SIZE (esc_char);
+          esc_char_p = DB_PULL_STRING (esc_char);
+          esc_char_size = DB_GET_STRING_SIZE (esc_char);
 
-	  intl_char_count ((unsigned char *) esc_char_p,
-			   esc_char_size, &esc_char_len);
+          intl_char_count ((unsigned char *) esc_char_p, esc_char_size, &esc_char_len);
 
-	  assert (esc_char_p != NULL);
-	  if (esc_char_len != 1)
-	    {
-	      error_status = ER_QSTR_INVALID_ESCAPE_SEQUENCE;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
-	      goto exit_on_error;
-	    }
-	}
+          assert (esc_char_p != NULL);
+          if (esc_char_len != 1)
+            {
+              error_status = ER_QSTR_INVALID_ESCAPE_SEQUENCE;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
+              goto exit_on_error;
+            }
+        }
     }
 
   src_char_string_p = DB_PULL_STRING (src_string);
@@ -4116,9 +3873,7 @@ db_string_like (const DB_VALUE * src_string,
   pattern_char_string_p = DB_PULL_STRING (pattern);
   pattern_length = DB_GET_STRING_SIZE (pattern);
 
-  *result = qstr_eval_like (src_char_string_p, src_length,
-			    pattern_char_string_p, pattern_length,
-			    esc_char_p, coll_id);
+  *result = qstr_eval_like (src_char_string_p, src_length, pattern_char_string_p, pattern_length, esc_char_p, coll_id);
 
   if (*result == V_ERROR)
     {
@@ -4207,8 +3962,7 @@ db_rlike_free (UNUSED_ARG void *dummy, void *p)
 
 int
 db_string_rlike (const DB_VALUE * src_string, const DB_VALUE * pattern,
-		 const DB_VALUE * case_sensitive, cub_regex_t ** comp_regex,
-		 char **comp_pattern, int *result)
+                 const DB_VALUE * case_sensitive, cub_regex_t ** comp_regex, char **comp_pattern, int *result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_pattern, tmp_case_sensitive;
@@ -4249,14 +4003,9 @@ db_string_rlike (const DB_VALUE * src_string, const DB_VALUE * pattern,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  pattern =
-    db_value_cast_arg (pattern, &tmp_pattern, DB_TYPE_VARCHAR, &error_status);
-  case_sensitive =
-    db_value_cast_arg (case_sensitive, &tmp_case_sensitive, DB_TYPE_INTEGER,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  pattern = db_value_cast_arg (pattern, &tmp_pattern, DB_TYPE_VARCHAR, &error_status);
+  case_sensitive = db_value_cast_arg (case_sensitive, &tmp_case_sensitive, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -4304,28 +4053,27 @@ db_string_rlike (const DB_VALUE * src_string, const DB_VALUE * pattern,
   /* check for re-compile */
   if (rx_compiled_pattern == NULL || rx_compiled_regex == NULL
       || pattern_length != strlen (rx_compiled_pattern)
-      || strncmp (rx_compiled_pattern, pattern_char_string_p,
-		  pattern_length) != 0)
+      || strncmp (rx_compiled_pattern, pattern_char_string_p, pattern_length) != 0)
     {
       /* regex must be re-compiled if regex object is not specified, pattern is
          not specified or compiled pattern does not match current pattern */
 
       /* update compiled pattern */
       if (rx_compiled_pattern != NULL)
-	{
-	  /* free old memory */
-	  free_and_init (rx_compiled_pattern);
-	}
+        {
+          /* free old memory */
+          free_and_init (rx_compiled_pattern);
+        }
 
       /* allocate new memory */
       rx_compiled_pattern = (char *) malloc (pattern_length + 1);
 
       if (rx_compiled_pattern == NULL)
-	{
-	  /* out of memory */
-	  error_status = ER_OUT_OF_VIRTUAL_MEMORY;
-	  goto cleanup;
-	}
+        {
+          /* out of memory */
+          error_status = ER_OUT_OF_VIRTUAL_MEMORY;
+          goto cleanup;
+        }
 
       /* copy string */
       memcpy (rx_compiled_pattern, pattern_char_string_p, pattern_length);
@@ -4333,44 +4081,39 @@ db_string_rlike (const DB_VALUE * src_string, const DB_VALUE * pattern,
 
       /* update compiled regex */
       if (rx_compiled_regex != NULL)
-	{
-	  /* free previously allocated memory */
-	  cub_regfree (rx_compiled_regex);
-	  free_and_init (rx_compiled_regex);
-	}
+        {
+          /* free previously allocated memory */
+          cub_regfree (rx_compiled_regex);
+          free_and_init (rx_compiled_regex);
+        }
 
       /* allocate memory for new regex object */
       rx_compiled_regex = (cub_regex_t *) malloc (sizeof (cub_regex_t));
 
       if (rx_compiled_regex == NULL)
-	{
-	  /* out of memory */
-	  error_status = ER_OUT_OF_VIRTUAL_MEMORY;
-	  goto cleanup;
-	}
+        {
+          /* out of memory */
+          error_status = ER_OUT_OF_VIRTUAL_MEMORY;
+          goto cleanup;
+        }
 
       /* compile regex */
       rx_err = cub_regcomp (rx_compiled_regex, rx_compiled_pattern,
-			    CUB_REG_EXTENDED | CUB_REG_NOSUB
-			    | (is_case_sensitive ? 0 : CUB_REG_ICASE));
+                            CUB_REG_EXTENDED | CUB_REG_NOSUB | (is_case_sensitive ? 0 : CUB_REG_ICASE));
 
       if (rx_err != CUB_REG_OKAY)
-	{
-	  /* regex compilation error */
-	  rx_err_len = cub_regerror (rx_err, rx_compiled_regex, rx_err_buf,
-				     REGEX_MAX_ERROR_MSG_SIZE);
+        {
+          /* regex compilation error */
+          rx_err_len = cub_regerror (rx_err, rx_compiled_regex, rx_err_buf, REGEX_MAX_ERROR_MSG_SIZE);
 
-	  error_status = ER_REGEX_COMPILE_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-		  rx_err_buf);
-	  goto cleanup;
-	}
+          error_status = ER_REGEX_COMPILE_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, rx_err_buf);
+          goto cleanup;
+        }
     }
 
   /* match against pattern; regexec returns zero on match */
-  rx_err =
-    cub_regexec (rx_compiled_regex, src_char_string_p, src_length, 0, NULL,
-		 0);
+  rx_err = cub_regexec (rx_compiled_regex, src_char_string_p, src_length, 0, NULL, 0);
   switch (rx_err)
     {
     case CUB_REG_OKAY:
@@ -4382,8 +4125,7 @@ db_string_rlike (const DB_VALUE * src_string, const DB_VALUE * pattern,
       break;
 
     default:
-      rx_err_len = cub_regerror (rx_err, rx_compiled_regex, rx_err_buf,
-				 REGEX_MAX_ERROR_MSG_SIZE);
+      rx_err_len = cub_regerror (rx_err, rx_compiled_regex, rx_err_buf, REGEX_MAX_ERROR_MSG_SIZE);
       error_status = ER_REGEX_EXEC_ERROR;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, rx_err_buf);
       break;
@@ -4391,16 +4133,14 @@ db_string_rlike (const DB_VALUE * src_string, const DB_VALUE * pattern,
 
 cleanup:
 
-  if ((comp_regex == NULL || error_status != NO_ERROR)
-      && rx_compiled_regex != NULL)
+  if ((comp_regex == NULL || error_status != NO_ERROR) && rx_compiled_regex != NULL)
     {
       /* free memory if (using local regex) or (error occurred) */
       cub_regfree (rx_compiled_regex);
       free_and_init (rx_compiled_regex);
     }
 
-  if ((comp_pattern == NULL || error_status != NO_ERROR)
-      && rx_compiled_pattern != NULL)
+  if ((comp_pattern == NULL || error_status != NO_ERROR) && rx_compiled_pattern != NULL)
     {
       /* free memory if (using local pattern) or (error occurred) */
       free_and_init (rx_compiled_pattern);
@@ -4421,17 +4161,15 @@ cleanup:
   if (error_status != NO_ERROR)
     {
       if (er_errid () == NO_ERROR)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS,
-		  0);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_INVALID_ARGUMENTS, 0);
+        }
       *result = V_ERROR;
     }
 
   /* arg clear tmp **********************************************************
    */
-  db_value_clear_nargs (3, &tmp_src_string, &tmp_pattern,
-			&tmp_case_sensitive);
+  db_value_clear_nargs (3, &tmp_src_string, &tmp_pattern, &tmp_case_sensitive);
 
   return error_status;
 }
@@ -4465,8 +4203,7 @@ cleanup:
  *	  GROUP_CONCAT.
  */
 int
-db_string_limit_size_string (DB_VALUE * src_string, DB_VALUE * result,
-			     const int new_size, int *spare_bytes)
+db_string_limit_size_string (DB_VALUE * src_string, DB_VALUE * result, const int new_size, int *spare_bytes)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string;
@@ -4487,7 +4224,7 @@ db_string_limit_size_string (DB_VALUE * src_string, DB_VALUE * result,
    */
   if (DB_IS_NULL_NARGS (1, src_string))
     {
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       error_status = ER_OBJ_INVALID_ARGUMENTS;
       goto exit_on_error;
 #endif
@@ -4501,9 +4238,7 @@ db_string_limit_size_string (DB_VALUE * src_string, DB_VALUE * result,
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -4524,9 +4259,9 @@ db_string_limit_size_string (DB_VALUE * src_string, DB_VALUE * result,
       assert (error_status == NO_ERROR);
       error_status = pr_clone_value (src_string, result);
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       goto done;
     }
@@ -4535,10 +4270,8 @@ db_string_limit_size_string (DB_VALUE * src_string, DB_VALUE * result,
 
   /* Adjust size to a full character.
    */
-  intl_char_count ((unsigned char *) DB_PULL_STRING (src_string), result_size,
-		   &char_count);
-  intl_char_size ((unsigned char *) DB_PULL_STRING (src_string), char_count,
-		  &adj_char_size);
+  intl_char_count ((unsigned char *) DB_PULL_STRING (src_string), result_size, &char_count);
+  intl_char_size ((unsigned char *) DB_PULL_STRING (src_string), char_count, &adj_char_size);
 
   assert (adj_char_size <= result_size);
 
@@ -4554,14 +4287,12 @@ db_string_limit_size_string (DB_VALUE * src_string, DB_VALUE * result,
 
   if (adj_char_size > 0)
     {
-      memcpy ((char *) r, (char *) DB_PULL_STRING (src_string),
-	      adj_char_size);
+      memcpy ((char *) r, (char *) DB_PULL_STRING (src_string), adj_char_size);
     }
 
   qstr_make_typed_string (DB_TYPE_VARCHAR,
-			  result,
-			  src_domain_precision, (char *) r, adj_char_size,
-			  DB_GET_STRING_COLLATION (src_string));
+                          result,
+                          src_domain_precision, (char *) r, adj_char_size, DB_GET_STRING_COLLATION (src_string));
   result->need_clear = true;
 
   *spare_bytes = result_size - adj_char_size;
@@ -4639,9 +4370,8 @@ db_string_fix_string_size (DB_VALUE * src_string)
   assert (val_size >= string_size);
 
   qstr_make_typed_string (src_type, src_string,
-			  DB_VALUE_PRECISION (src_string),
-			  DB_PULL_STRING (src_string), string_size,
-			  DB_GET_STRING_COLLATION (src_string));
+                          DB_VALUE_PRECISION (src_string),
+                          DB_PULL_STRING (src_string), string_size, DB_GET_STRING_COLLATION (src_string));
   src_string->need_clear = save_need_clear;
 
   return error_status;
@@ -4656,9 +4386,7 @@ db_string_fix_string_size (DB_VALUE * src_string)
 	character 1.
 */
 static int
-qstr_eval_like (const char *tar, int tar_length,
-		const char *expr, int expr_length,
-		const char *escape, int coll_id)
+qstr_eval_like (const char *tar, int tar_length, const char *expr, int expr_length, const char *escape, int coll_id)
 {
   const int IN_CHECK = 0;
   const int IN_PERCENT = 1;
@@ -4669,10 +4397,8 @@ qstr_eval_like (const char *tar, int tar_length,
 
   unsigned char *tar_ptr, *end_tar;
   unsigned char *expr_ptr, *end_expr;
-  bool escape_is_match_one =
-    ((escape != NULL) && *escape == LIKE_WILDCARD_MATCH_ONE);
-  bool escape_is_match_many =
-    ((escape != NULL) && *escape == LIKE_WILDCARD_MATCH_MANY);
+  bool escape_is_match_one = ((escape != NULL) && *escape == LIKE_WILDCARD_MATCH_ONE);
+  bool escape_is_match_many = ((escape != NULL) && *escape == LIKE_WILDCARD_MATCH_MANY);
   unsigned char pad_char[2];
 
 
@@ -4693,293 +4419,279 @@ qstr_eval_like (const char *tar, int tar_length,
       int dummy = 1;
 
       if (status == IN_CHECK)
-	{
-	  bool go_back = true;
-	  if (expr_ptr == end_expr)
-	    {
-	      go_back = false;
+        {
+          bool go_back = true;
+          if (expr_ptr == end_expr)
+            {
+              go_back = false;
 
-	      while (tar_ptr < end_tar && *tar_ptr == ' ')
-		{
-		  tar_ptr++;
-		}
+              while (tar_ptr < end_tar && *tar_ptr == ' ')
+                {
+                  tar_ptr++;
+                }
 
-	      if (tar_ptr == end_tar)
-		{
-		  return V_TRUE;
-		}
-	      else
-		{
-		  if (stackp >= 0 && stackp < STACK_SIZE)
-		    {
-		      tar_ptr = tarstack[stackp];
-		      INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
-		      expr_ptr = exprstack[stackp--];
-		    }
-		  else
-		    {
-		      return V_FALSE;
-		    }
-		}
-	    }
-	  else if (!escape_is_match_many && expr_ptr < end_expr
-		   && *expr_ptr == LIKE_WILDCARD_MATCH_MANY)
-	    {
-	      go_back = false;
-	      status = IN_PERCENT;
-	      while ((expr_ptr + 1 < end_expr)
-		     && *(expr_ptr + 1) == LIKE_WILDCARD_MATCH_MANY)
-		{
-		  expr_ptr++;
-		}
-	    }
-	  else if (tar_ptr < end_tar && expr_ptr < end_expr)
-	    {
-	      if (!escape_is_match_one
-		  && *expr_ptr == LIKE_WILDCARD_MATCH_ONE)
-		{
-		  INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
-		  expr_ptr++;
-		  go_back = false;
-		}
-	      else
-		{
-		  unsigned char *expr_seq_end = expr_ptr;
-		  int cmp;
-		  int tar_matched_size;
-		  unsigned char *match_escape = NULL;
-		  bool inescape = false;
-		  bool has_last_escape = false;
+              if (tar_ptr == end_tar)
+                {
+                  return V_TRUE;
+                }
+              else
+                {
+                  if (stackp >= 0 && stackp < STACK_SIZE)
+                    {
+                      tar_ptr = tarstack[stackp];
+                      INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
+                      expr_ptr = exprstack[stackp--];
+                    }
+                  else
+                    {
+                      return V_FALSE;
+                    }
+                }
+            }
+          else if (!escape_is_match_many && expr_ptr < end_expr && *expr_ptr == LIKE_WILDCARD_MATCH_MANY)
+            {
+              go_back = false;
+              status = IN_PERCENT;
+              while ((expr_ptr + 1 < end_expr) && *(expr_ptr + 1) == LIKE_WILDCARD_MATCH_MANY)
+                {
+                  expr_ptr++;
+                }
+            }
+          else if (tar_ptr < end_tar && expr_ptr < end_expr)
+            {
+              if (!escape_is_match_one && *expr_ptr == LIKE_WILDCARD_MATCH_ONE)
+                {
+                  INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
+                  expr_ptr++;
+                  go_back = false;
+                }
+              else
+                {
+                  unsigned char *expr_seq_end = expr_ptr;
+                  int cmp;
+                  int tar_matched_size;
+                  unsigned char *match_escape = NULL;
+                  bool inescape = false;
+                  bool has_last_escape = false;
 
-		  /* build sequence to check (until wildcard) */
-		  do
-		    {
-		      if (!inescape &&
-			  (((!escape_is_match_many &&
-			     *expr_seq_end == LIKE_WILDCARD_MATCH_MANY)
-			    || (!escape_is_match_one &&
-				*expr_seq_end == LIKE_WILDCARD_MATCH_ONE))))
-			{
-			  break;
-			}
+                  /* build sequence to check (until wildcard) */
+                  do
+                    {
+                      if (!inescape &&
+                          (((!escape_is_match_many &&
+                             *expr_seq_end == LIKE_WILDCARD_MATCH_MANY)
+                            || (!escape_is_match_one && *expr_seq_end == LIKE_WILDCARD_MATCH_ONE))))
+                        {
+                          break;
+                        }
 
-		      /* set escape for match: if remains NULL, we don't check
-		       * for escape in matching function */
-		      if (!inescape && escape != NULL
-			  && intl_cmp_char (expr_seq_end,
-					    (unsigned char *) escape,
-					    &dummy) == 0)
-			{
-			  /* last escape character is not considered escape,
-			   * but normal character */
-			  if (expr_seq_end + 1 >= end_expr)
-			    {
-			      has_last_escape = true;
-			      inescape = false;
-			    }
-			  else
-			    {
-			      inescape = true;
-			      match_escape = (unsigned char *) escape;
-			    }
-			}
-		      else
-			{
-			  inescape = false;
-			}
-		      INTL_NEXT_CHAR (expr_seq_end, expr_seq_end, &dummy);
-		    }
-		  while (expr_seq_end < end_expr);
+                      /* set escape for match: if remains NULL, we don't check
+                       * for escape in matching function */
+                      if (!inescape && escape != NULL
+                          && intl_cmp_char (expr_seq_end, (unsigned char *) escape, &dummy) == 0)
+                        {
+                          /* last escape character is not considered escape,
+                           * but normal character */
+                          if (expr_seq_end + 1 >= end_expr)
+                            {
+                              has_last_escape = true;
+                              inescape = false;
+                            }
+                          else
+                            {
+                              inescape = true;
+                              match_escape = (unsigned char *) escape;
+                            }
+                        }
+                      else
+                        {
+                          inescape = false;
+                        }
+                      INTL_NEXT_CHAR (expr_seq_end, expr_seq_end, &dummy);
+                    }
+                  while (expr_seq_end < end_expr);
 
-		  assert (end_tar - tar_ptr > 0);
-		  assert (expr_seq_end - expr_ptr > 0);
+                  assert (end_tar - tar_ptr > 0);
+                  assert (expr_seq_end - expr_ptr > 0);
 
-		  /* match using collation */
-		  cmp =
-		    current_collation->strmatch (current_collation, true,
-						 tar_ptr, end_tar - tar_ptr,
-						 expr_ptr,
-						 expr_seq_end - expr_ptr,
-						 match_escape,
-						 has_last_escape,
-						 &tar_matched_size);
+                  /* match using collation */
+                  cmp =
+                    current_collation->strmatch (current_collation, true,
+                                                 tar_ptr, end_tar - tar_ptr,
+                                                 expr_ptr,
+                                                 expr_seq_end - expr_ptr,
+                                                 match_escape, has_last_escape, &tar_matched_size);
 
-		  if (cmp == 0)
-		    {
-		      tar_ptr += tar_matched_size;
-		      expr_ptr = expr_seq_end;
-		      go_back = false;
-		    }
+                  if (cmp == 0)
+                    {
+                      tar_ptr += tar_matched_size;
+                      expr_ptr = expr_seq_end;
+                      go_back = false;
+                    }
 
-		  assert (tar_ptr <= end_tar);
-		  assert (expr_ptr <= end_expr);
-		}
-	    }
+                  assert (tar_ptr <= end_tar);
+                  assert (expr_ptr <= end_expr);
+                }
+            }
 
-	  if (go_back)
-	    {
-	      if (stackp >= 0 && stackp < STACK_SIZE)
-		{
-		  tar_ptr = tarstack[stackp];
-		  INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
-		  expr_ptr = exprstack[stackp--];
-		}
-	      else if (stackp > STACK_SIZE)
-		{
-		  return V_ERROR;
-		}
-	      else
-		{
-		  return V_FALSE;
-		}
-	    }
-	}
+          if (go_back)
+            {
+              if (stackp >= 0 && stackp < STACK_SIZE)
+                {
+                  tar_ptr = tarstack[stackp];
+                  INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
+                  expr_ptr = exprstack[stackp--];
+                }
+              else if (stackp > STACK_SIZE)
+                {
+                  return V_ERROR;
+                }
+              else
+                {
+                  return V_FALSE;
+                }
+            }
+        }
       else
-	{
-	  unsigned char *next_expr_ptr;
-	  INTL_NEXT_CHAR (next_expr_ptr, expr_ptr, &dummy);
+        {
+          unsigned char *next_expr_ptr;
+          INTL_NEXT_CHAR (next_expr_ptr, expr_ptr, &dummy);
 
-	  assert (status == IN_PERCENT);
-	  if ((next_expr_ptr < end_expr)
-	      && (!escape_is_match_one || escape == NULL)
-	      && *next_expr_ptr == LIKE_WILDCARD_MATCH_ONE)
-	    {
-	      if (stackp >= STACK_SIZE - 1)
-		{
-		  return V_ERROR;
-		}
-	      tarstack[++stackp] = tar_ptr;
-	      exprstack[stackp] = expr_ptr;
-	      expr_ptr = next_expr_ptr;
-	      INTL_NEXT_CHAR (next_expr_ptr, expr_ptr, &dummy);
+          assert (status == IN_PERCENT);
+          if ((next_expr_ptr < end_expr)
+              && (!escape_is_match_one || escape == NULL) && *next_expr_ptr == LIKE_WILDCARD_MATCH_ONE)
+            {
+              if (stackp >= STACK_SIZE - 1)
+                {
+                  return V_ERROR;
+                }
+              tarstack[++stackp] = tar_ptr;
+              exprstack[stackp] = expr_ptr;
+              expr_ptr = next_expr_ptr;
+              INTL_NEXT_CHAR (next_expr_ptr, expr_ptr, &dummy);
 
-	      if (stackp > STACK_SIZE)
-		{
-		  return V_ERROR;
-		}
-	      status = IN_CHECK;
-	      continue;
-	    }
+              if (stackp > STACK_SIZE)
+                {
+                  return V_ERROR;
+                }
+              status = IN_CHECK;
+              continue;
+            }
 
-	  if (next_expr_ptr == end_expr)
-	    {
-	      return V_TRUE;
-	    }
+          if (next_expr_ptr == end_expr)
+            {
+              return V_TRUE;
+            }
 
-	  if (tar_ptr < end_tar && next_expr_ptr < end_expr)
-	    {
-	      unsigned char *expr_seq_end = next_expr_ptr;
-	      int cmp;
-	      int tar_matched_size;
-	      unsigned char *match_escape = NULL;
-	      bool inescape = false;
-	      bool has_last_escape = false;
+          if (tar_ptr < end_tar && next_expr_ptr < end_expr)
+            {
+              unsigned char *expr_seq_end = next_expr_ptr;
+              int cmp;
+              int tar_matched_size;
+              unsigned char *match_escape = NULL;
+              bool inescape = false;
+              bool has_last_escape = false;
 
-	      /* build sequence to check (until wildcard) */
-	      do
-		{
-		  if (!inescape &&
-		      (((!escape_is_match_many &&
-			 *expr_seq_end == LIKE_WILDCARD_MATCH_MANY)
-			|| (!escape_is_match_one &&
-			    *expr_seq_end == LIKE_WILDCARD_MATCH_ONE))))
-		    {
-		      break;
-		    }
+              /* build sequence to check (until wildcard) */
+              do
+                {
+                  if (!inescape &&
+                      (((!escape_is_match_many &&
+                         *expr_seq_end == LIKE_WILDCARD_MATCH_MANY)
+                        || (!escape_is_match_one && *expr_seq_end == LIKE_WILDCARD_MATCH_ONE))))
+                    {
+                      break;
+                    }
 
-		  /* set escape for match: if remains NULL, we don't check
-		   * for escape in matching function */
-		  if (!inescape && escape != NULL
-		      && intl_cmp_char (expr_seq_end,
-					(unsigned char *) escape,
-					&dummy) == 0)
-		    {
-		      /* last escape character is not considered escape,
-		       * but normal character */
-		      if (expr_seq_end + 1 >= end_expr)
-			{
-			  has_last_escape = true;
-			  inescape = false;
-			}
-		      else
-			{
-			  inescape = true;
-			  match_escape = (unsigned char *) escape;
-			}
-		    }
-		  else
-		    {
-		      inescape = false;
-		    }
+                  /* set escape for match: if remains NULL, we don't check
+                   * for escape in matching function */
+                  if (!inescape && escape != NULL
+                      && intl_cmp_char (expr_seq_end, (unsigned char *) escape, &dummy) == 0)
+                    {
+                      /* last escape character is not considered escape,
+                       * but normal character */
+                      if (expr_seq_end + 1 >= end_expr)
+                        {
+                          has_last_escape = true;
+                          inescape = false;
+                        }
+                      else
+                        {
+                          inescape = true;
+                          match_escape = (unsigned char *) escape;
+                        }
+                    }
+                  else
+                    {
+                      inescape = false;
+                    }
 
-		  INTL_NEXT_CHAR (expr_seq_end, expr_seq_end, &dummy);
-		}
-	      while (expr_seq_end < end_expr);
+                  INTL_NEXT_CHAR (expr_seq_end, expr_seq_end, &dummy);
+                }
+              while (expr_seq_end < end_expr);
 
-	      assert (end_tar - tar_ptr > 0);
-	      assert (expr_seq_end - next_expr_ptr > 0);
+              assert (end_tar - tar_ptr > 0);
+              assert (expr_seq_end - next_expr_ptr > 0);
 
-	      do
-		{
-		  /* match using collation */
-		  cmp =
-		    current_collation->strmatch (current_collation, true,
-						 tar_ptr, end_tar - tar_ptr,
-						 next_expr_ptr,
-						 expr_seq_end - next_expr_ptr,
-						 match_escape,
-						 has_last_escape,
-						 &tar_matched_size);
+              do
+                {
+                  /* match using collation */
+                  cmp =
+                    current_collation->strmatch (current_collation, true,
+                                                 tar_ptr, end_tar - tar_ptr,
+                                                 next_expr_ptr,
+                                                 expr_seq_end - next_expr_ptr,
+                                                 match_escape, has_last_escape, &tar_matched_size);
 
-		  if (cmp == 0)
-		    {
-		      if (stackp >= STACK_SIZE - 1)
-			{
-			  return V_ERROR;
-			}
-		      tarstack[++stackp] = tar_ptr;
-		      tar_ptr += tar_matched_size;
+                  if (cmp == 0)
+                    {
+                      if (stackp >= STACK_SIZE - 1)
+                        {
+                          return V_ERROR;
+                        }
+                      tarstack[++stackp] = tar_ptr;
+                      tar_ptr += tar_matched_size;
 
-		      exprstack[stackp] = expr_ptr;
-		      expr_ptr = expr_seq_end;
+                      exprstack[stackp] = expr_ptr;
+                      expr_ptr = expr_seq_end;
 
-		      if (stackp > STACK_SIZE)
-			{
-			  return V_ERROR;
-			}
-		      status = IN_CHECK;
-		      break;
-		    }
-		  else
-		    {
-		      /* check starting from next char */
-		      INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
-		    }
-		}
-	      while (tar_ptr < end_tar);
-	    }
-	}
+                      if (stackp > STACK_SIZE)
+                        {
+                          return V_ERROR;
+                        }
+                      status = IN_CHECK;
+                      break;
+                    }
+                  else
+                    {
+                      /* check starting from next char */
+                      INTL_NEXT_CHAR (tar_ptr, tar_ptr, &dummy);
+                    }
+                }
+              while (tar_ptr < end_tar);
+            }
+        }
 
       if (tar_ptr == end_tar)
-	{
-	  while (expr_ptr < end_expr && *expr_ptr == LIKE_WILDCARD_MATCH_MANY)
-	    {
-	      expr_ptr++;
-	    }
+        {
+          while (expr_ptr < end_expr && *expr_ptr == LIKE_WILDCARD_MATCH_MANY)
+            {
+              expr_ptr++;
+            }
 
-	  if (expr_ptr == end_expr)
-	    {
-	      return V_TRUE;
-	    }
-	  else
-	    {
-	      return V_FALSE;
-	    }
-	}
+          if (expr_ptr == end_expr)
+            {
+              return V_TRUE;
+            }
+          else
+            {
+              return V_FALSE;
+            }
+        }
       else if (tar_ptr > end_tar)
-	{
-	  return V_FALSE;
-	}
+        {
+          return V_FALSE;
+        }
     }
 }
 
@@ -4988,7 +4700,7 @@ qstr_eval_like (const char *tar, int tar_length,
  */
 int
 db_string_replace (const DB_VALUE * src_string, const DB_VALUE * srch_string,
-		   const DB_VALUE * repl_string, DB_VALUE * replaced_string)
+                   const DB_VALUE * repl_string, DB_VALUE * replaced_string)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_srch_string, tmp_repl_string;
@@ -5014,28 +4726,20 @@ db_string_replace (const DB_VALUE * src_string, const DB_VALUE * srch_string,
    */
   if (DB_IS_NULL_NARGS (3, src_string, srch_string, repl_string))
     {
-      error_status =
-	db_value_domain_init (replaced_string, DB_TYPE_VARCHAR,
-			      DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      error_status = db_value_domain_init (replaced_string, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  srch_string =
-    db_value_cast_arg (srch_string, &tmp_srch_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  repl_string =
-    db_value_cast_arg (repl_string, &tmp_repl_string, DB_TYPE_VARCHAR,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  srch_string = db_value_cast_arg (srch_string, &tmp_srch_string, DB_TYPE_VARCHAR, &error_status);
+  repl_string = db_value_cast_arg (repl_string, &tmp_repl_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -5057,8 +4761,7 @@ db_string_replace (const DB_VALUE * src_string, const DB_VALUE * srch_string,
       goto exit_on_error;
     }
 
-  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string),
-		       DB_GET_STRING_COLLATION (srch_string), coll_id_tmp);
+  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string), DB_GET_STRING_COLLATION (srch_string), coll_id_tmp);
   if (coll_id_tmp == -1)
     {
       error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
@@ -5066,8 +4769,7 @@ db_string_replace (const DB_VALUE * src_string, const DB_VALUE * srch_string,
       goto exit_on_error;
     }
 
-  LANG_RT_COMMON_COLL (coll_id_tmp,
-		       DB_GET_STRING_COLLATION (repl_string), coll_id);
+  LANG_RT_COMMON_COLL (coll_id_tmp, DB_GET_STRING_COLLATION (repl_string), coll_id);
 
   if (coll_id == -1)
     {
@@ -5077,14 +4779,13 @@ db_string_replace (const DB_VALUE * src_string, const DB_VALUE * srch_string,
     }
 
   error_status = qstr_replace ((unsigned char *) DB_PULL_STRING (src_string),
-			       DB_GET_STRING_LENGTH (src_string),
-			       DB_GET_STRING_SIZE (src_string),
-			       coll_id,
-			       (unsigned char *) DB_PULL_STRING (srch_string),
-			       DB_GET_STRING_SIZE (srch_string),
-			       (unsigned char *) DB_PULL_STRING (repl_string),
-			       DB_GET_STRING_SIZE (repl_string),
-			       &result_ptr, &result_length, &result_size);
+                               DB_GET_STRING_LENGTH (src_string),
+                               DB_GET_STRING_SIZE (src_string),
+                               coll_id,
+                               (unsigned char *) DB_PULL_STRING (srch_string),
+                               DB_GET_STRING_SIZE (srch_string),
+                               (unsigned char *) DB_PULL_STRING (repl_string),
+                               DB_GET_STRING_SIZE (repl_string), &result_ptr, &result_length, &result_size);
 
   if (error_status != NO_ERROR)
     {
@@ -5094,20 +4795,17 @@ db_string_replace (const DB_VALUE * src_string, const DB_VALUE * srch_string,
   if (result_ptr != NULL)
     {
       if (result_length == 0)
-	{
-	  qstr_make_typed_string (DB_TYPE_VARCHAR,
-				  replaced_string,
-				  (DB_GET_STRING_LENGTH (src_string) == 0) ?
-				  1 : DB_GET_STRING_LENGTH (src_string),
-				  (char *) result_ptr, result_size, coll_id);
-	}
+        {
+          qstr_make_typed_string (DB_TYPE_VARCHAR,
+                                  replaced_string,
+                                  (DB_GET_STRING_LENGTH (src_string) == 0) ?
+                                  1 : DB_GET_STRING_LENGTH (src_string), (char *) result_ptr, result_size, coll_id);
+        }
       else
-	{
-	  qstr_make_typed_string (DB_TYPE_VARCHAR,
-				  replaced_string,
-				  result_length,
-				  (char *) result_ptr, result_size, coll_id);
-	}
+        {
+          qstr_make_typed_string (DB_TYPE_VARCHAR,
+                                  replaced_string, result_length, (char *) result_ptr, result_size, coll_id);
+        }
       result_ptr[result_size] = 0;
       replaced_string->need_clear = true;
     }
@@ -5123,8 +4821,7 @@ done:
 
   /* arg clear tmp **********************************************************
    */
-  db_value_clear_nargs (3, &tmp_src_string, &tmp_srch_string,
-			&tmp_repl_string);
+  db_value_clear_nargs (3, &tmp_src_string, &tmp_srch_string, &tmp_repl_string);
 
   return error_status;
 
@@ -5140,8 +4837,7 @@ exit_on_error:
 
   /* arg clear tmp **********************************************************
    */
-  db_value_clear_nargs (3, &tmp_src_string, &tmp_srch_string,
-			&tmp_repl_string);
+  db_value_clear_nargs (3, &tmp_src_string, &tmp_srch_string, &tmp_repl_string);
 
   return error_status;
 }
@@ -5150,9 +4846,9 @@ exit_on_error:
  */
 static int
 qstr_replace (unsigned char *src_buf, int src_len, int src_size, int coll_id,
-	      unsigned char *srch_str_buf, int srch_str_size,
-	      unsigned char *repl_str_buf, int repl_str_size,
-	      unsigned char **result_buf, int *result_len, int *result_size)
+              unsigned char *srch_str_buf, int srch_str_size,
+              unsigned char *repl_str_buf, int repl_str_size,
+              unsigned char **result_buf, int *result_len, int *result_size)
 {
 #define REPL_POS_ARRAY_EXTENT 32
 
@@ -5177,12 +4873,11 @@ qstr_replace (unsigned char *src_buf, int src_len, int src_size, int coll_id,
     {
       *result_buf = (unsigned char *) malloc ((size_t) src_size + 1);
       if (*result_buf == NULL)
-	{
-	  error_status = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-		  src_size);
-	  goto exit;
-	}
+        {
+          error_status = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, src_size);
+          goto exit;
+        }
 
       (void) memcpy ((char *) (*result_buf), (char *) src_buf, src_size);
       *result_len = src_len;
@@ -5200,8 +4895,7 @@ qstr_replace (unsigned char *src_buf, int src_len, int src_size, int coll_id,
   if (repl_pos_array == NULL)
     {
       error_status = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-	      2 * sizeof (int) * repl_pos_array_size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, 2 * sizeof (int) * repl_pos_array_size);
       goto exit;
     }
 
@@ -5214,38 +4908,34 @@ qstr_replace (unsigned char *src_buf, int src_len, int src_size, int coll_id,
       int matched_size;
 
       if (QSTR_MATCH (coll_id, src_ptr, src_buf + src_size - src_ptr,
-		      srch_str_buf, srch_str_size, NULL, false,
-		      &matched_size) == 0)
-	{
-	  /* store byte position and size of matched string */
-	  if (repl_pos_array_cnt >= repl_pos_array_size)
-	    {
-	      repl_pos_array_size += REPL_POS_ARRAY_EXTENT;
-	      tmp_array = (int *) realloc (repl_pos_array,
-					   2 * sizeof (int)
-					   * repl_pos_array_size);
-	      if (tmp_array == NULL)
-		{
-		  error_status = ER_OUT_OF_VIRTUAL_MEMORY;
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-			  2 * sizeof (int) * repl_pos_array_size);
-		  goto exit;
-		}
-	      repl_pos_array = tmp_array;
-	    }
-	  repl_pos_array[repl_pos_array_cnt * 2] = src_ptr - src_buf;
-	  repl_pos_array[repl_pos_array_cnt * 2 + 1] = matched_size;
-	  src_ptr += matched_size;
-	  repl_pos_array_cnt++;
-	  *result_size += repl_str_size;
-	  *result_len += repl_str_len;
-	}
+                      srch_str_buf, srch_str_size, NULL, false, &matched_size) == 0)
+        {
+          /* store byte position and size of matched string */
+          if (repl_pos_array_cnt >= repl_pos_array_size)
+            {
+              repl_pos_array_size += REPL_POS_ARRAY_EXTENT;
+              tmp_array = (int *) realloc (repl_pos_array, 2 * sizeof (int) * repl_pos_array_size);
+              if (tmp_array == NULL)
+                {
+                  error_status = ER_OUT_OF_VIRTUAL_MEMORY;
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, 2 * sizeof (int) * repl_pos_array_size);
+                  goto exit;
+                }
+              repl_pos_array = tmp_array;
+            }
+          repl_pos_array[repl_pos_array_cnt * 2] = src_ptr - src_buf;
+          repl_pos_array[repl_pos_array_cnt * 2 + 1] = matched_size;
+          src_ptr += matched_size;
+          repl_pos_array_cnt++;
+          *result_size += repl_str_size;
+          *result_len += repl_str_len;
+        }
       else
-	{
-	  INTL_NEXT_CHAR (src_ptr, src_ptr, &char_size);
-	  *result_size += char_size;
-	  *result_len += 1;
-	}
+        {
+          INTL_NEXT_CHAR (src_ptr, src_ptr, &char_size);
+          *result_size += char_size;
+          *result_len += 1;
+        }
     }
 
   if (repl_pos_array_cnt == 0)
@@ -5257,8 +4947,7 @@ qstr_replace (unsigned char *src_buf, int src_len, int src_size, int coll_id,
   if (*result_buf == NULL)
     {
       error_status = ER_OUT_OF_VIRTUAL_MEMORY;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-	      *result_size + 1);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, *result_size + 1);
       goto exit;
     }
 
@@ -5269,11 +4958,10 @@ qstr_replace (unsigned char *src_buf, int src_len, int src_size, int coll_id,
       /* first, copy non matched original string preceeding matched part */
       matched_ptr = src_buf + repl_pos_array[2 * i];
       if ((matched_ptr - matched_ptr_end) > 0)
-	{
-	  (void) memcpy (target, matched_ptr_end,
-			 matched_ptr - matched_ptr_end);
-	  target += matched_ptr - matched_ptr_end;
-	}
+        {
+          (void) memcpy (target, matched_ptr_end, matched_ptr - matched_ptr_end);
+          target += matched_ptr - matched_ptr_end;
+        }
 
       /* second, copy replacing string */
       (void) memcpy (target, repl_str_buf, repl_str_size);
@@ -5284,8 +4972,7 @@ qstr_replace (unsigned char *src_buf, int src_len, int src_size, int coll_id,
   /* append any trailing string (after last matched part) */
   if (matched_ptr_end < src_buf + src_size)
     {
-      (void) memcpy (target, matched_ptr_end,
-		     src_buf + src_size - matched_ptr_end);
+      (void) memcpy (target, matched_ptr_end, src_buf + src_size - matched_ptr_end);
       target += src_buf + src_size - matched_ptr_end;
     }
 
@@ -5307,8 +4994,7 @@ exit:
  */
 int
 db_string_translate (const DB_VALUE * src_string,
-		     const DB_VALUE * from_string, const DB_VALUE * to_string,
-		     DB_VALUE * transed_string)
+                     const DB_VALUE * from_string, const DB_VALUE * to_string, DB_VALUE * transed_string)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_from_string, tmp_to_string;
@@ -5335,28 +5021,20 @@ db_string_translate (const DB_VALUE * src_string,
    */
   if (DB_IS_NULL_NARGS (3, src_string, from_string, to_string))
     {
-      error_status =
-	db_value_domain_init (transed_string, DB_TYPE_VARCHAR,
-			      DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      error_status = db_value_domain_init (transed_string, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       if (error_status != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       goto done;
     }
 
   /* arg cast type **********************************************************
    */
-  src_string =
-    db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  from_string =
-    db_value_cast_arg (from_string, &tmp_from_string, DB_TYPE_VARCHAR,
-		       &error_status);
-  to_string =
-    db_value_cast_arg (to_string, &tmp_to_string, DB_TYPE_VARCHAR,
-		       &error_status);
+  src_string = db_value_cast_arg (src_string, &tmp_src_string, DB_TYPE_VARCHAR, &error_status);
+  from_string = db_value_cast_arg (from_string, &tmp_from_string, DB_TYPE_VARCHAR, &error_status);
+  to_string = db_value_cast_arg (to_string, &tmp_to_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -5378,8 +5056,7 @@ db_string_translate (const DB_VALUE * src_string,
       goto exit_on_error;
     }
 
-  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string),
-		       DB_GET_STRING_COLLATION (from_string), coll_id_tmp);
+  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (src_string), DB_GET_STRING_COLLATION (from_string), coll_id_tmp);
   if (coll_id_tmp == -1)
     {
       error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
@@ -5387,8 +5064,7 @@ db_string_translate (const DB_VALUE * src_string,
       goto exit_on_error;
     }
 
-  LANG_RT_COMMON_COLL (coll_id_tmp,
-		       DB_GET_STRING_COLLATION (to_string), coll_id);
+  LANG_RT_COMMON_COLL (coll_id_tmp, DB_GET_STRING_COLLATION (to_string), coll_id);
 
   if (coll_id == -1)
     {
@@ -5399,13 +5075,12 @@ db_string_translate (const DB_VALUE * src_string,
 
   error_status =
     qstr_translate ((unsigned char *) DB_PULL_STRING (src_string),
-		    DB_VALUE_DOMAIN_TYPE (src_string),
-		    DB_GET_STRING_SIZE (src_string),
-		    (unsigned char *) DB_PULL_STRING (from_string),
-		    DB_GET_STRING_SIZE (from_string),
-		    (unsigned char *) DB_PULL_STRING (to_string),
-		    DB_GET_STRING_SIZE (to_string),
-		    &result_ptr, &result_type, &result_length, &result_size);
+                    DB_VALUE_DOMAIN_TYPE (src_string),
+                    DB_GET_STRING_SIZE (src_string),
+                    (unsigned char *) DB_PULL_STRING (from_string),
+                    DB_GET_STRING_SIZE (from_string),
+                    (unsigned char *) DB_PULL_STRING (to_string),
+                    DB_GET_STRING_SIZE (to_string), &result_ptr, &result_type, &result_length, &result_size);
 
   if (error_status != NO_ERROR)
     {
@@ -5415,20 +5090,17 @@ db_string_translate (const DB_VALUE * src_string,
   if (result_ptr != NULL)
     {
       if (result_length == 0)
-	{
-	  qstr_make_typed_string (result_type,
-				  transed_string,
-				  (DB_GET_STRING_LENGTH (src_string) == 0) ?
-				  1 : DB_GET_STRING_LENGTH (src_string),
-				  (char *) result_ptr, result_size, coll_id);
-	}
+        {
+          qstr_make_typed_string (result_type,
+                                  transed_string,
+                                  (DB_GET_STRING_LENGTH (src_string) == 0) ?
+                                  1 : DB_GET_STRING_LENGTH (src_string), (char *) result_ptr, result_size, coll_id);
+        }
       else
-	{
-	  qstr_make_typed_string (result_type,
-				  transed_string,
-				  result_length,
-				  (char *) result_ptr, result_size, coll_id);
-	}
+        {
+          qstr_make_typed_string (result_type,
+                                  transed_string, result_length, (char *) result_ptr, result_size, coll_id);
+        }
       result_ptr[result_size] = 0;
       transed_string->need_clear = true;
     }
@@ -5470,10 +5142,9 @@ exit_on_error:
  */
 static int
 qstr_translate (unsigned char *src_ptr, UNUSED_ARG DB_TYPE src_type,
-		int src_size, unsigned char *from_str_ptr, int from_str_size,
-		unsigned char *to_str_ptr, int to_str_size,
-		unsigned char **result_ptr, DB_TYPE * result_type,
-		int *result_len, int *result_size)
+                int src_size, unsigned char *from_str_ptr, int from_str_size,
+                unsigned char *to_str_ptr, int to_str_size,
+                unsigned char **result_ptr, DB_TYPE * result_type, int *result_len, int *result_size)
 {
   int error_status = NO_ERROR;
   int j, offset, offset1, offset2;
@@ -5514,53 +5185,51 @@ loop:
 
       matched = 0;
       from_char_loc = 0;
-      for (fromp = from_str_ptr;
-	   fromp != NULL && fromp < from_str_ptr + from_str_size;
-	   from_char_loc++)
-	{
-	  intl_char_size (fromp, 1, &offset1);
+      for (fromp = from_str_ptr; fromp != NULL && fromp < from_str_ptr + from_str_size; from_char_loc++)
+        {
+          intl_char_size (fromp, 1, &offset1);
 
-	  /* if source and from char are matched, translate */
-	  if ((offset == offset1) && (memcmp (srcp, fromp, offset) == 0))
-	    {
-	      matched = 1;
-	      to_char_loc = 0;
-	      for (j = 0; j < to_str_size;)
-		{
-		  intl_char_size (to_str_ptr + j, 1, &offset2);
+          /* if source and from char are matched, translate */
+          if ((offset == offset1) && (memcmp (srcp, fromp, offset) == 0))
+            {
+              matched = 1;
+              to_char_loc = 0;
+              for (j = 0; j < to_str_size;)
+                {
+                  intl_char_size (to_str_ptr + j, 1, &offset2);
 
-		  if (to_char_loc == from_char_loc)
-		    {		/* if matched char exist, replace */
-		      if (phase == 0)
-			{
-			  *result_size += offset2;
-			}
-		      else
-			{
-			  memcpy (target, to_str_ptr + j, offset2);
-			  target += offset2;
-			}
-		      break;
-		    }
-		  j += offset2;
-		  to_char_loc++;
-		}
-	      break;
-	    }
-	  fromp += offset1;
-	}
+                  if (to_char_loc == from_char_loc)
+                    {           /* if matched char exist, replace */
+                      if (phase == 0)
+                        {
+                          *result_size += offset2;
+                        }
+                      else
+                        {
+                          memcpy (target, to_str_ptr + j, offset2);
+                          target += offset2;
+                        }
+                      break;
+                    }
+                  j += offset2;
+                  to_char_loc++;
+                }
+              break;
+            }
+          fromp += offset1;
+        }
       if (!matched)
-	{			/* preserve source char */
-	  if (phase == 0)
-	    {
-	      *result_size += offset;
-	    }
-	  else
-	    {
-	      memcpy (target, srcp, offset);
-	      target += offset;
-	    }
-	}
+        {                       /* preserve source char */
+          if (phase == 0)
+            {
+              *result_size += offset;
+            }
+          else
+            {
+              memcpy (target, srcp, offset);
+              target += offset;
+            }
+        }
       srcp += offset;
     }
 
@@ -5626,8 +5295,7 @@ loop:
  */
 
 int
-db_bit_string_coerce (const DB_VALUE * src_string,
-		      DB_VALUE * dest_string, DB_DATA_STATUS * data_status)
+db_bit_string_coerce (const DB_VALUE * src_string, DB_VALUE * dest_string, DB_DATA_STATUS * data_status)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_dest_string;
@@ -5652,8 +5320,7 @@ db_bit_string_coerce (const DB_VALUE * src_string,
    */
   if (DB_IS_NULL_NARGS (1, src_string))
     {
-      db_value_domain_init (dest_string, DB_VALUE_DOMAIN_TYPE (dest_string),
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (dest_string, DB_VALUE_DOMAIN_TYPE (dest_string), DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       goto done;
     }
 
@@ -5696,20 +5363,16 @@ db_bit_string_coerce (const DB_VALUE * src_string,
 
   error_status =
     qstr_bit_coerce ((unsigned char *) DB_PULL_STRING (src_string),
-		     DB_GET_STRING_LENGTH (src_string),
-		     QSTR_VALUE_PRECISION (src_string),
-		     DB_TYPE_VARBIT, &dest, &dest_length, dest_prec,
-		     DB_TYPE_VARBIT, data_status);
+                     DB_GET_STRING_LENGTH (src_string),
+                     QSTR_VALUE_PRECISION (src_string),
+                     DB_TYPE_VARBIT, &dest, &dest_length, dest_prec, DB_TYPE_VARBIT, data_status);
 
   if (error_status != NO_ERROR)
     {
       goto exit_on_error;
     }
 
-  qstr_make_typed_string (DB_TYPE_VARBIT,
-			  dest_string,
-			  DB_VALUE_PRECISION (dest_string),
-			  (char *) dest, dest_length, 0);
+  qstr_make_typed_string (DB_TYPE_VARBIT, dest_string, DB_VALUE_PRECISION (dest_string), (char *) dest, dest_length, 0);
   dest_string->need_clear = true;
 
   if (error_status != NO_ERROR)
@@ -5780,8 +5443,7 @@ exit_on_error:
  */
 
 int
-db_char_string_coerce (const DB_VALUE * src_string,
-		       DB_VALUE * dest_string, DB_DATA_STATUS * data_status)
+db_char_string_coerce (const DB_VALUE * src_string, DB_VALUE * dest_string, DB_DATA_STATUS * data_status)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_string, tmp_dest_string;
@@ -5809,8 +5471,7 @@ db_char_string_coerce (const DB_VALUE * src_string,
    */
   if (DB_IS_NULL_NARGS (1, src_string))
     {
-      db_value_domain_init (dest_string, DB_VALUE_DOMAIN_TYPE (dest_string),
-			    DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      db_value_domain_init (dest_string, DB_VALUE_DOMAIN_TYPE (dest_string), DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       goto done;
     }
 
@@ -5851,12 +5512,11 @@ db_char_string_coerce (const DB_VALUE * src_string,
 
   error_status =
     qstr_coerce ((unsigned char *) DB_PULL_STRING (src_string),
-		 DB_GET_STRING_LENGTH (src_string),
-		 QSTR_VALUE_PRECISION (src_string),
-		 DB_VALUE_DOMAIN_TYPE (src_string),
-		 src_codeset, dest_codeset,
-		 &dest, &dest_length, &dest_size, dest_prec,
-		 DB_VALUE_DOMAIN_TYPE (dest_string), data_status);
+                 DB_GET_STRING_LENGTH (src_string),
+                 QSTR_VALUE_PRECISION (src_string),
+                 DB_VALUE_DOMAIN_TYPE (src_string),
+                 src_codeset, dest_codeset,
+                 &dest, &dest_length, &dest_size, dest_prec, DB_VALUE_DOMAIN_TYPE (dest_string), data_status);
 
   if (error_status != NO_ERROR)
     {
@@ -5866,10 +5526,9 @@ db_char_string_coerce (const DB_VALUE * src_string,
   if (dest != NULL)
     {
       qstr_make_typed_string (DB_VALUE_DOMAIN_TYPE (dest_string),
-			      dest_string,
-			      DB_VALUE_PRECISION (dest_string),
-			      (char *) dest, dest_size,
-			      DB_GET_STRING_COLLATION (dest_string));
+                              dest_string,
+                              DB_VALUE_PRECISION (dest_string),
+                              (char *) dest, dest_size, DB_GET_STRING_COLLATION (dest_string));
       dest[dest_size] = 0;
       dest_string->need_clear = true;
     }
@@ -5928,8 +5587,7 @@ exit_on_error:
 
 int
 db_string_make_empty_typed_string (UNUSED_ARG THREAD_ENTRY * thread_p,
-				   DB_VALUE * db_val, const DB_TYPE db_type,
-				   int precision, int collation_id)
+                                   DB_VALUE * db_val, const DB_TYPE db_type, int precision, int collation_id)
 {
   int status = NO_ERROR;
   char *buf = NULL;
@@ -5953,8 +5611,7 @@ db_string_make_empty_typed_string (UNUSED_ARG THREAD_ENTRY * thread_p,
       db_value_domain_init (db_val, db_type, precision, 0);
     }
 
-  precision = ((precision < DB_DEFAULT_PRECISION)
-	       ? DB_DEFAULT_PRECISION : precision);
+  precision = ((precision < DB_DEFAULT_PRECISION) ? DB_DEFAULT_PRECISION : precision);
 
   /* create an empty string DB VALUE */
   buf = (char *) malloc (1);
@@ -5979,8 +5636,7 @@ db_string_make_empty_typed_string (UNUSED_ARG THREAD_ENTRY * thread_p,
  * result (in/out) : will hold the position of the token
  */
 int
-db_find_string_in_in_set (const DB_VALUE * needle, const DB_VALUE * stack,
-			  DB_VALUE * result)
+db_find_string_in_in_set (const DB_VALUE * needle, const DB_VALUE * stack, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_needle, tmp_stack;
@@ -6014,10 +5670,8 @@ db_find_string_in_in_set (const DB_VALUE * needle, const DB_VALUE * stack,
 
   /* arg cast type **********************************************************
    */
-  needle =
-    db_value_cast_arg (needle, &tmp_needle, DB_TYPE_VARCHAR, &error_status);
-  stack =
-    db_value_cast_arg (stack, &tmp_stack, DB_TYPE_VARCHAR, &error_status);
+  needle = db_value_cast_arg (needle, &tmp_needle, DB_TYPE_VARCHAR, &error_status);
+  stack = db_value_cast_arg (stack, &tmp_stack, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -6035,8 +5689,7 @@ db_find_string_in_in_set (const DB_VALUE * needle, const DB_VALUE * stack,
       goto exit_on_error;
     }
 
-  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (stack),
-		       DB_GET_STRING_COLLATION (needle), coll_id);
+  LANG_RT_COMMON_COLL (DB_GET_STRING_COLLATION (stack), DB_GET_STRING_COLLATION (needle), coll_id);
   if (coll_id == -1)
     {
       error_status = ER_QSTR_INCOMPATIBLE_COLLATIONS;
@@ -6061,48 +5714,45 @@ db_find_string_in_in_set (const DB_VALUE * needle, const DB_VALUE * stack,
   for (;;)
     {
       if (*stack_ptr == ',' || stack_ptr >= stack_str + stack_size)
-	{
-	  assert (stack_ptr <= stack_str + stack_size);
+        {
+          assert (stack_ptr <= stack_str + stack_size);
 
-	  if (stack_ptr == elem_start)
-	    {
-	      if (needle_size == 0)
-		{
-		  DB_MAKE_INT (result, position);
-		  goto done;
-		}
-	    }
-	  else
-	    {
-	      assert (stack_ptr > elem_start);
-	      /* check using collation */
-	      if (needle_size > 0)
-		{
-		  cmp = QSTR_MATCH (coll_id, elem_start,
-				    stack_ptr - elem_start,
-				    needle_str, needle_size,
-				    false, false, &matched_stack_size);
-		  if (cmp == 0
-		      && matched_stack_size == stack_ptr - elem_start)
-		    {
-		      DB_MAKE_INT (result, position);
-		      goto done;
-		    }
-		}
-	    }
+          if (stack_ptr == elem_start)
+            {
+              if (needle_size == 0)
+                {
+                  DB_MAKE_INT (result, position);
+                  goto done;
+                }
+            }
+          else
+            {
+              assert (stack_ptr > elem_start);
+              /* check using collation */
+              if (needle_size > 0)
+                {
+                  cmp = QSTR_MATCH (coll_id, elem_start,
+                                    stack_ptr - elem_start, needle_str, needle_size, false, false, &matched_stack_size);
+                  if (cmp == 0 && matched_stack_size == stack_ptr - elem_start)
+                    {
+                      DB_MAKE_INT (result, position);
+                      goto done;
+                    }
+                }
+            }
 
-	  if (stack_ptr >= stack_str + stack_size)
-	    {
-	      break;
-	    }
+          if (stack_ptr >= stack_str + stack_size)
+            {
+              break;
+            }
 
-	  position++;
-	  elem_start = ++stack_ptr;
-	}
+          position++;
+          elem_start = ++stack_ptr;
+        }
       else
-	{
-	  stack_ptr++;
-	}
+        {
+          stack_ptr++;
+        }
     }
 
   /* if we didn't find it in the loop above, then there is no match */
@@ -6172,9 +5822,7 @@ db_bigint_to_binary_string (const DB_VALUE * src_bigint, DB_VALUE * result)
 
   /* arg cast type **********************************************************
    */
-  src_bigint =
-    db_value_cast_arg (src_bigint, &tmp_src_bigint, DB_TYPE_BIGINT,
-		       &error_status);
+  src_bigint = db_value_cast_arg (src_bigint, &tmp_src_bigint, DB_TYPE_BIGINT, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -6201,11 +5849,10 @@ db_bigint_to_binary_string (const DB_VALUE * src_bigint, DB_VALUE * result)
     {
       i = 0;
       /* positive numbers have at most 8 * sizeof(DB_BIGINT) - 1 digits */
-      while ((DB_BIGINT) 1 << i <= bigint_val
-	     && i < (int) sizeof (DB_BIGINT) * 8 - 1)
-	{
-	  i++;
-	}
+      while ((DB_BIGINT) 1 << i <= bigint_val && i < (int) sizeof (DB_BIGINT) * 8 - 1)
+        {
+          i++;
+        }
       digits_count = i;
     }
 
@@ -6220,12 +5867,10 @@ db_bigint_to_binary_string (const DB_VALUE * src_bigint, DB_VALUE * result)
 
   for (i = 0; i < digits_count; i++)
     {
-      binary_form[digits_count - i - 1] =
-	(((DB_BIGINT) 1 << i) & bigint_val) ? '1' : '0';
+      binary_form[digits_count - i - 1] = (((DB_BIGINT) 1 << i) & bigint_val) ? '1' : '0';
     }
 
-  DB_MAKE_VARCHAR (result, digits_count, binary_form, digits_count,
-		   LANG_COERCIBLE_COLL);
+  DB_MAKE_VARCHAR (result, digits_count, binary_form, digits_count, LANG_COERCIBLE_COLL);
   result->need_clear = true;
 
   if (error_status != NO_ERROR)
@@ -6312,12 +5957,12 @@ qstr_pad_string (unsigned char *s, int length)
   else
     {
       for (i = 0; i < length; i++)
-	{
-	  for (j = 0; j < pad_size; j++)
-	    {
-	      *(s++) = pad[j];
-	    }
-	}
+        {
+          for (j = 0; j < pad_size; j++)
+            {
+              *(s++) = pad[j];
+            }
+        }
     }
 
   return s;
@@ -6413,25 +6058,25 @@ qstr_hex_to_bin (char *dest, int dest_size, char *src, int src_size)
 
       hex_digit = hextoi (src[src_index++]);
       if (hex_digit < 0)
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
       else
-	{
-	  dest[i] = hex_digit << 4;
-	  if (src_index < src_size)
-	    {
-	      hex_digit = hextoi (src[src_index++]);
-	      if (hex_digit < 0)
-		{
-		  return -1;
-		}
-	      else
-		{
-		  dest[i] += hex_digit;
-		}
-	    }
-	}
+        {
+          dest[i] = hex_digit << 4;
+          if (src_index < src_size)
+            {
+              hex_digit = hextoi (src[src_index++]);
+              if (hex_digit < 0)
+                {
+                  return -1;
+                }
+              else
+                {
+                  dest[i] += hex_digit;
+                }
+            }
+        }
     }
 
   return src_index;
@@ -6481,21 +6126,21 @@ qstr_bit_to_bin (char *dest, int dest_size, char *src, int src_size)
 
       dest[dest_byte] = 0;
       for (bit_count = 0; bit_count < 8; bit_count++)
-	{
-	  dest[dest_byte] = dest[dest_byte] << 1;
-	  if (src_index < src_size)
-	    {
-	      if (src[src_index] == '1')
-		{
-		  dest[dest_byte]++;
-		}
-	      else if (src[src_index] != '0')
-		{
-		  return -1;	/* Illegal digit */
-		}
-	      src_index++;
-	    }
-	}
+        {
+          dest[dest_byte] = dest[dest_byte] << 1;
+          if (src_index < src_size)
+            {
+              if (src[src_index] == '1')
+                {
+                  dest[dest_byte]++;
+                }
+              else if (src[src_index] != '0')
+                {
+                  return -1;    /* Illegal digit */
+                }
+              src_index++;
+            }
+        }
     }
 
   return src_index;
@@ -6533,10 +6178,7 @@ qstr_bit_to_bin (char *dest, int dest_size, char *src, int src_size)
 
 void
 qstr_bit_to_hex_coerce (char *buffer,
-			int buffer_size,
-			const char *src,
-			int src_length,
-			int pad_flag, int *copy_size, int *truncation)
+                        int buffer_size, const char *src, int src_length, int pad_flag, int *copy_size, int *truncation)
 {
   int src_size = BITS_TO_BYTES (src_length);
 
@@ -6557,15 +6199,14 @@ qstr_bit_to_hex_coerce (char *buffer,
 	    sprintf(&(buffer[2*i]), "%02x", (unsigned char)(src[i]));
 */
       if (pad_flag == true)
-	{
-	  memset (&(buffer[2 * src_size]), '0',
-		  (buffer_size - (2 * src_size)));
-	  *copy_size = buffer_size - 1;
-	}
+        {
+          memset (&(buffer[2 * src_size]), '0', (buffer_size - (2 * src_size)));
+          *copy_size = buffer_size - 1;
+        }
       else
-	{
-	  *copy_size = 2 * src_size;
-	}
+        {
+          *copy_size = 2 * src_size;
+        }
       buffer[*copy_size] = '\0';
       *truncation = 0;
     }
@@ -6579,13 +6220,13 @@ qstr_bit_to_hex_coerce (char *buffer,
        *
        */
       if (buffer_size % 2)
-	{
-	  src_size = buffer_size / 2;
-	}
+        {
+          src_size = buffer_size / 2;
+        }
       else
-	{
-	  src_size = (buffer_size - 1) / 2;
-	}
+        {
+          src_size = (buffer_size - 1) / 2;
+        }
 
       qstr_bin_to_hex (buffer, buffer_size, src, src_size);
 /*
@@ -6625,17 +6266,17 @@ db_get_string_length (const DB_VALUE * value)
 
   if (value == NULL)
     {
-      return length;		/* do nothing */
+      return length;            /* do nothing */
     }
 
   db_type = DB_VALUE_DOMAIN_TYPE (value);
 
   if (!QSTR_IS_CHAR_OR_BIT (db_type))
     {
-#if 0				/* TODO - */
+#if 0                           /* TODO - */
       assert (false);
 #endif
-      return length;		/* give up */
+      return length;            /* give up */
     }
 
   str = value->data.ch.buf;
@@ -6673,8 +6314,7 @@ db_get_string_length (const DB_VALUE * value)
 
 void
 qstr_make_typed_string (const DB_TYPE db_type, DB_VALUE * value,
-			const int precision, const DB_C_VARCHAR src,
-			const int s_unit, const int collation_id)
+                        const int precision, const DB_C_VARCHAR src, const int s_unit, const int collation_id)
 {
   switch (db_type)
     {
@@ -6891,29 +6531,28 @@ is_number (const DB_VALUE * n)
  */
 
 int
-qstr_compare (const unsigned char *string1, int size1,
-	      const unsigned char *string2, int size2)
+qstr_compare (const unsigned char *string1, int size1, const unsigned char *string2, int size2)
 {
   int n, i, cmp;
   unsigned char c1, c2;
 
-#define PAD ' '			/* str_pad_char(INTL_CODESET_ISO88591, pad, &pad_size) */
-#define SPACE PAD		/* smallest character in the collation sequence */
-#define ZERO '\0'		/* space is treated as zero */
+#define PAD ' '                 /* str_pad_char(INTL_CODESET_ISO88591, pad, &pad_size) */
+#define SPACE PAD               /* smallest character in the collation sequence */
+#define ZERO '\0'               /* space is treated as zero */
 
   n = size1 < size2 ? size1 : size2;
   for (i = 0, cmp = 0; i < n && cmp == 0; i++)
     {
       c1 = *string1++;
       if (c1 == SPACE)
-	{
-	  c1 = ZERO;
-	}
+        {
+          c1 = ZERO;
+        }
       c2 = *string2++;
       if (c2 == SPACE)
-	{
-	  c2 = ZERO;
-	}
+        {
+          c2 = ZERO;
+        }
       cmp = c1 - c2;
     }
   if (cmp != 0)
@@ -6930,34 +6569,34 @@ qstr_compare (const unsigned char *string1, int size1,
     {
       n = size2 - size1;
       for (i = 0; i < n && cmp == 0; i++)
-	{
-	  c2 = *string2++;
-	  if (c2 == PAD)
-	    {
-	      c2 = ZERO;
-	    }
-	  cmp = c1 - c2;
-	}
+        {
+          c2 = *string2++;
+          if (c2 == PAD)
+            {
+              c2 = ZERO;
+            }
+          cmp = c1 - c2;
+        }
     }
   else
     {
       n = size1 - size2;
       for (i = 0; i < n && cmp == 0; i++)
-	{
-	  c1 = *string1++;
-	  if (c1 == PAD)
-	    {
-	      c1 = ZERO;
-	    }
-	  cmp = c1 - c2;
-	}
+        {
+          c1 = *string1++;
+          if (c1 == PAD)
+            {
+              c1 = ZERO;
+            }
+          cmp = c1 - c2;
+        }
     }
   return cmp;
 
 #undef PAD
 #undef SPACE
 #undef ZERO
-}				/* qstr_compare() */
+}                               /* qstr_compare() */
 
 /*
  * char_compare () - compare two character strings of DB_TYPE_VARCHAR(tp_VarChar)
@@ -6981,31 +6620,30 @@ qstr_compare (const unsigned char *string1, int size1,
  */
 
 int
-char_compare (const unsigned char *string1, int size1,
-	      const unsigned char *string2, int size2)
+char_compare (const unsigned char *string1, int size1, const unsigned char *string2, int size2)
 {
   int n, i, cmp;
   unsigned char c1, c2;
 
   assert (size1 >= 0 && size2 >= 0);
 
-#define PAD ' '			/* str_pad_char(INTL_CODESET_ISO88591, pad, &pad_size) */
-#define SPACE PAD		/* smallest character in the collation sequence */
-#define ZERO '\0'		/* space is treated as zero */
+#define PAD ' '                 /* str_pad_char(INTL_CODESET_ISO88591, pad, &pad_size) */
+#define SPACE PAD               /* smallest character in the collation sequence */
+#define ZERO '\0'               /* space is treated as zero */
 
   n = size1 < size2 ? size1 : size2;
   for (i = 0, cmp = 0; i < n && cmp == 0; i++)
     {
       c1 = *string1++;
       if (c1 == SPACE)
-	{
-	  c1 = ZERO;
-	}
+        {
+          c1 = ZERO;
+        }
       c2 = *string2++;
       if (c2 == SPACE)
-	{
-	  c2 = ZERO;
-	}
+        {
+          c2 = ZERO;
+        }
       cmp = c1 - c2;
     }
   if (cmp != 0)
@@ -7022,34 +6660,34 @@ char_compare (const unsigned char *string1, int size1,
     {
       n = size2 - size1;
       for (i = 0; i < n && cmp == 0; i++)
-	{
-	  c2 = *string2++;
-	  if (c2 == PAD)
-	    {
-	      c2 = ZERO;
-	    }
-	  cmp = c1 - c2;
-	}
+        {
+          c2 = *string2++;
+          if (c2 == PAD)
+            {
+              c2 = ZERO;
+            }
+          cmp = c1 - c2;
+        }
     }
   else
     {
       n = size1 - size2;
       for (i = 0; i < n && cmp == 0; i++)
-	{
-	  c1 = *string1++;
-	  if (c1 == PAD)
-	    {
-	      c1 = ZERO;
-	    }
-	  cmp = c1 - c2;
-	}
+        {
+          c1 = *string1++;
+          if (c1 == PAD)
+            {
+              c1 = ZERO;
+            }
+          cmp = c1 - c2;
+        }
     }
   return cmp;
 
 #undef PAD
 #undef SPACE
 #undef ZERO
-}				/* char_compare() */
+}                               /* char_compare() */
 
 #endif /* ENABLE_UNUSED_FUNCTION */
 
@@ -7075,12 +6713,11 @@ char_compare (const unsigned char *string1, int size1,
  */
 
 int
-varbit_compare (const unsigned char *string1, int size1,
-		const unsigned char *string2, int size2)
+varbit_compare (const unsigned char *string1, int size1, const unsigned char *string2, int size2)
 {
   int n, i, cmp;
 
-#define PAD '\0'		/* str_pad_char(INTL_CODESET_RAW_BITS, pad, &pad_size) */
+#define PAD '\0'                /* str_pad_char(INTL_CODESET_RAW_BITS, pad, &pad_size) */
   n = size1 < size2 ? size1 : size2;
   for (i = 0, cmp = 0; i < n && cmp == 0; i++)
     {
@@ -7093,7 +6730,7 @@ varbit_compare (const unsigned char *string1, int size1,
   cmp = size1 - size2;
   return cmp;
 #undef PAD
-}				/* varbit_compare() */
+}                               /* varbit_compare() */
 
 
 /*
@@ -7152,8 +6789,7 @@ qstr_grow_string (DB_VALUE * src_string, DB_VALUE * result, int new_size)
   if (result_size > QSTR_STRING_MAX_SIZE_BYTES)
     {
       error_status = ER_QPROC_STRING_SIZE_TOO_BIG;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      error_status, 2, result_size, QSTR_STRING_MAX_SIZE_BYTES);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 2, result_size, QSTR_STRING_MAX_SIZE_BYTES);
       assert (er_errid () != NO_ERROR);
 
       DB_MAKE_NULL (result);
@@ -7174,10 +6810,9 @@ qstr_grow_string (DB_VALUE * src_string, DB_VALUE * result, int new_size)
       memcpy ((char *) r, (char *) DB_PULL_STRING (src_string), src_size);
     }
   qstr_make_typed_string (result_type,
-			  result,
-			  result_domain_length,
-			  (char *) r, (int) MIN (result_size, src_size),
-			  DB_GET_STRING_COLLATION (src_string));
+                          result,
+                          result_domain_length,
+                          (char *) r, (int) MIN (result_size, src_size), DB_GET_STRING_COLLATION (src_string));
 
   result->need_clear = true;
 
@@ -7211,17 +6846,15 @@ qstr_grow_string (DB_VALUE * src_string, DB_VALUE * result, int new_size)
 
 static int
 qstr_concatenate (const unsigned char *s1,
-		  int s1_length,
-		  UNUSED_ARG int s1_precision,
-		  DB_TYPE s1_type,
-		  const unsigned char *s2,
-		  int s2_length,
-		  UNUSED_ARG int s2_precision,
-		  DB_TYPE s2_type,
-		  unsigned char **result,
-		  int *result_length,
-		  int *result_size,
-		  DB_TYPE * result_type, DB_DATA_STATUS * data_status)
+                  int s1_length,
+                  UNUSED_ARG int s1_precision,
+                  DB_TYPE s1_type,
+                  const unsigned char *s2,
+                  int s2_length,
+                  UNUSED_ARG int s2_precision,
+                  DB_TYPE s2_type,
+                  unsigned char **result,
+                  int *result_length, int *result_size, DB_TYPE * result_type, DB_DATA_STATUS * data_status)
 {
   int copy_length, copy_size;
   int pad1_length, pad2_length;
@@ -7244,8 +6877,7 @@ qstr_concatenate (const unsigned char *s1,
    *  result length is adjusted appropriately.  This does
    *  not necessarily indicate a truncation condition.
    */
-  *result_length = MIN ((s1_logical_length + s2_logical_length),
-			QSTR_MAX_PRECISION (s1_type));
+  *result_length = MIN ((s1_logical_length + s2_logical_length), QSTR_MAX_PRECISION (s1_type));
 
   *result_type = DB_TYPE_VARCHAR;
 
@@ -7287,11 +6919,10 @@ qstr_concatenate (const unsigned char *s1,
     {
       copy_length = *result_length;
 
-      if (varchar_truncated ((unsigned char *) s1,
-			     s1_type, s1_length, copy_length))
-	{
-	  *data_status = DATA_STATUS_TRUNCATED;
-	}
+      if (varchar_truncated ((unsigned char *) s1, s1_type, s1_length, copy_length))
+        {
+          *data_status = DATA_STATUS_TRUNCATED;
+        }
     }
   intl_char_size ((unsigned char *) s1, copy_length, &copy_size);
 
@@ -7306,11 +6937,10 @@ qstr_concatenate (const unsigned char *s1,
     {
       cat_length = *result_length - copy_length;
 
-      if (varchar_truncated ((unsigned char *) s2,
-			     s2_type, s2_length, cat_length))
-	{
-	  *data_status = DATA_STATUS_TRUNCATED;
-	}
+      if (varchar_truncated ((unsigned char *) s2, s2_type, s2_length, cat_length))
+        {
+          *data_status = DATA_STATUS_TRUNCATED;
+        }
     }
   intl_char_size ((unsigned char *) s2, cat_length, &cat_size);
 
@@ -7320,8 +6950,7 @@ qstr_concatenate (const unsigned char *s1,
    *  Actually perform the copy operations.
    */
   memcpy ((char *) *result, (char *) s1, copy_size);
-  cat_ptr = qstr_pad_string ((unsigned char *) &((*result)[copy_size]),
-			     pad1_length);
+  cat_ptr = qstr_pad_string ((unsigned char *) &((*result)[copy_size]), pad1_length);
 
   memcpy ((char *) cat_ptr, (char *) s2, cat_size);
   (void) qstr_pad_string ((unsigned char *) &cat_ptr[cat_size], pad2_length);
@@ -7332,8 +6961,7 @@ qstr_concatenate (const unsigned char *s1,
 
 size_error:
   error_status = ER_QPROC_STRING_SIZE_TOO_BIG;
-  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	  error_status, 2, *result_size, QSTR_STRING_MAX_SIZE_BYTES);
+  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 2, *result_size, QSTR_STRING_MAX_SIZE_BYTES);
   return error_status;
   /*
    * Error handler
@@ -7369,8 +6997,7 @@ mem_error:
  */
 
 static bool
-varchar_truncated (const unsigned char *s,
-		   DB_TYPE s_type, int s_length, int used_chars)
+varchar_truncated (const unsigned char *s, DB_TYPE s_type, int s_length, int used_chars)
 {
   unsigned char pad[2];
   int pad_size = 0, trim_length, trim_size;
@@ -7381,8 +7008,7 @@ varchar_truncated (const unsigned char *s,
   intl_pad_char (pad, &pad_size);
   intl_char_size ((unsigned char *) s, s_length, &s_size);
 
-  trim_trailing (pad, pad_size,
-		 s, s_type, s_length, s_size, &trim_length, &trim_size);
+  trim_trailing (pad, pad_size, s, s_type, s_length, s_size, &trim_length, &trim_size);
 
   if (trim_length > used_chars)
     {
@@ -7490,17 +7116,16 @@ bit_ncat (unsigned char *r, int offset, const unsigned char *s, int n)
        *  lower byte is used by the next destination location.
        */
       for (i = start_byte; i < total_size; i++)
-	{
-	  tmp_shifted = (unsigned short) (s[i - start_byte]);
-	  tmp_shifted = tmp_shifted << shift_amount;
-	  r[i] = (r[i] & mask) | (tmp_shifted >> BITS_IN_BYTE);
+        {
+          tmp_shifted = (unsigned short) (s[i - start_byte]);
+          tmp_shifted = tmp_shifted << shift_amount;
+          r[i] = (r[i] & mask) | (tmp_shifted >> BITS_IN_BYTE);
 
-	  if (i < (total_size - 1))
-	    {
-	      r[i + 1] =
-		(unsigned char) (tmp_shifted & (unsigned short) 0xff);
-	    }
-	}
+          if (i < (total_size - 1))
+            {
+              r[i + 1] = (unsigned char) (tmp_shifted & (unsigned short) 0xff);
+            }
+        }
     }
 
   /*  Mask out the unused bits */
@@ -7557,8 +7182,7 @@ bstring_fls (const char *s, int n)
   else
     {
       inter_bit_num = (int) qstr_ffs ((int) (s[byte_num]));
-      bit_num =
-	(byte_num * BITS_IN_BYTE) + (BITS_IN_BYTE - inter_bit_num + 1);
+      bit_num = (byte_num * BITS_IN_BYTE) + (BITS_IN_BYTE - inter_bit_num + 1);
     }
 
   return bit_num;
@@ -7587,13 +7211,11 @@ bstring_fls (const char *s, int n)
 
 static int
 qstr_bit_coerce (const unsigned char *src,
-		 int src_length,
-		 UNUSED_ARG int src_precision,
-		 UNUSED_ARG DB_TYPE src_type,
-		 unsigned char **dest,
-		 int *dest_length,
-		 int dest_precision,
-		 UNUSED_ARG DB_TYPE dest_type, DB_DATA_STATUS * data_status)
+                 int src_length,
+                 UNUSED_ARG int src_precision,
+                 UNUSED_ARG DB_TYPE src_type,
+                 unsigned char **dest,
+                 int *dest_length, int dest_precision, UNUSED_ARG DB_TYPE dest_type, DB_DATA_STATUS * data_status)
 {
   int src_padded_length, copy_size, dest_size, copy_length;
   int error_status = NO_ERROR;
@@ -7634,8 +7256,7 @@ qstr_bit_coerce (const unsigned char *src,
   else
     {
       bit_ncat (*dest, 0, src, copy_length);
-      (void) memset ((char *) &((*dest)[copy_size]),
-		     (int) 0, (dest_size - copy_size));
+      (void) memset ((char *) &((*dest)[copy_size]), (int) 0, (dest_size - copy_size));
     }
 
   return error_status;
@@ -7663,16 +7284,14 @@ qstr_bit_coerce (const unsigned char *src,
 
 static int
 qstr_coerce (const unsigned char *src,
-	     int src_length,
-	     UNUSED_ARG int src_precision,
-	     DB_TYPE src_type,
-	     UNUSED_ARG INTL_CODESET src_codeset,
-	     UNUSED_ARG INTL_CODESET dest_codeset,
-	     unsigned char **dest,
-	     int *dest_length,
-	     int *dest_size,
-	     int dest_precision,
-	     UNUSED_ARG DB_TYPE dest_type, DB_DATA_STATUS * data_status)
+             int src_length,
+             UNUSED_ARG int src_precision,
+             DB_TYPE src_type,
+             UNUSED_ARG INTL_CODESET src_codeset,
+             UNUSED_ARG INTL_CODESET dest_codeset,
+             unsigned char **dest,
+             int *dest_length,
+             int *dest_size, int dest_precision, UNUSED_ARG DB_TYPE dest_type, DB_DATA_STATUS * data_status)
 {
   int src_padded_length, copy_length, copy_size;
   int alloc_size;
@@ -7693,11 +7312,10 @@ qstr_coerce (const unsigned char *src,
   if (src_padded_length > dest_precision)
     {
       src_padded_length = dest_precision;
-      if ((src_length > src_padded_length) &&
-	  (varchar_truncated (src, src_type, src_length, src_padded_length)))
-	{
-	  *data_status = DATA_STATUS_TRUNCATED;
-	}
+      if ((src_length > src_padded_length) && (varchar_truncated (src, src_type, src_length, src_padded_length)))
+        {
+          *data_status = DATA_STATUS_TRUNCATED;
+        }
     }
 
   copy_length = MIN (src_length, src_padded_length);
@@ -7721,8 +7339,7 @@ qstr_coerce (const unsigned char *src,
     int pad_size = 0;
 
     intl_pad_char (pad, &pad_size);
-    alloc_size =
-      MAX (alloc_size, copy_size + (*dest_length - copy_length) * pad_size);
+    alloc_size = MAX (alloc_size, copy_size + (*dest_length - copy_length) * pad_size);
   }
 
   if (!alloc_size)
@@ -7739,23 +7356,21 @@ qstr_coerce (const unsigned char *src,
     {
       assert (copy_size >= 0);
       if (copy_size == 0)
-	{
-	  assert (alloc_size > 0);
-	  **dest = '\0';
-	}
+        {
+          assert (alloc_size > 0);
+          **dest = '\0';
+        }
       else
-	{
-	  if (copy_size > alloc_size)
-	    {
-	      copy_size = alloc_size;
-	      *data_status = DATA_STATUS_TRUNCATED;
-	    }
-	  (void) memcpy ((char *) *dest, (char *) src, (int) copy_size);
-	}
+        {
+          if (copy_size > alloc_size)
+            {
+              copy_size = alloc_size;
+              *data_status = DATA_STATUS_TRUNCATED;
+            }
+          (void) memcpy ((char *) *dest, (char *) src, (int) copy_size);
+        }
 
-      end_of_string = (char *) qstr_pad_string ((unsigned char *)
-						&((*dest)[copy_size]),
-						(*dest_length - copy_length));
+      end_of_string = (char *) qstr_pad_string ((unsigned char *) &((*dest)[copy_size]), (*dest_length - copy_length));
       *dest_size = CAST_STRLEN (end_of_string - (char *) (*dest));
 
       assert (*dest_size <= alloc_size);
@@ -7793,11 +7408,9 @@ qstr_coerce (const unsigned char *src,
 
 static int
 qstr_position (const char *sub_string, const int sub_size,
-	       const int sub_length,
-	       const char *src_string, const char *src_end,
-	       const char *src_string_bound,
-	       int src_length, int coll_id,
-	       bool is_forward_search, int *position)
+               const int sub_length,
+               const char *src_string, const char *src_end,
+               const char *src_string_bound, int src_length, int coll_id, bool is_forward_search, int *position)
 {
   int error_status = NO_ERROR;
   int dummy;
@@ -7824,19 +7437,19 @@ qstr_position (const char *sub_string, const int sub_size,
        *  comparison will be used.
        */
       if (lc->coll.uca_exp_num > 1 || lc->coll.count_contr > 0)
-	{
-	  /* characters may not match one-by-one */
-	  num_searches = src_length;
-	}
+        {
+          /* characters may not match one-by-one */
+          num_searches = src_length;
+        }
       else
-	{
-	  num_searches = src_length - sub_length + 1;
-	  if (sub_length > src_length)
-	    {
-	      *position = 0;
-	      return error_status;
-	    }
-	}
+        {
+          num_searches = src_length - sub_length + 1;
+          if (sub_length > src_length)
+            {
+              *position = 0;
+              return error_status;
+            }
+        }
 
       /*
        *  Starting at the first position of the string, match the
@@ -7850,48 +7463,45 @@ qstr_position (const char *sub_string, const int sub_size,
       result = 1;
 
       for (i = 0; i < num_searches; i++)
-	{
-	  result = QSTR_MATCH (coll_id, ptr, (unsigned char *) src_end - ptr,
-			       (unsigned char *) sub_string, sub_size,
-			       NULL, false, &dummy);
-	  current_position++;
-	  if (result == 0)
-	    {
-	      break;
-	    }
+        {
+          result = QSTR_MATCH (coll_id, ptr, (unsigned char *) src_end - ptr,
+                               (unsigned char *) sub_string, sub_size, NULL, false, &dummy);
+          current_position++;
+          if (result == 0)
+            {
+              break;
+            }
 
-	  if (is_forward_search)
-	    {
-	      if (ptr >= (unsigned char *) src_string_bound)
-		{
-		  break;
-		}
+          if (is_forward_search)
+            {
+              if (ptr >= (unsigned char *) src_string_bound)
+                {
+                  break;
+                }
 
-	      INTL_NEXT_CHAR (ptr, (unsigned char *) ptr, &char_size);
-	    }
-	  else
-	    {
-	      /* backward */
-	      if (ptr > (unsigned char *) src_string_bound)
-		{
-		  ptr = intl_prev_char ((unsigned char *) ptr,
-					(const unsigned char *)
-					src_string_bound, &char_size);
-		}
-	      else
-		{
-		  break;
-		}
-	    }
-	}
+              INTL_NEXT_CHAR (ptr, (unsigned char *) ptr, &char_size);
+            }
+          else
+            {
+              /* backward */
+              if (ptr > (unsigned char *) src_string_bound)
+                {
+                  ptr = intl_prev_char ((unsigned char *) ptr, (const unsigned char *) src_string_bound, &char_size);
+                }
+              else
+                {
+                  break;
+                }
+            }
+        }
 
       /*
        *  Return the position of the match, if found.
        */
       if (result == 0)
-	{
-	  *position = current_position;
-	}
+        {
+          *position = current_position;
+        }
     }
 
   return error_status;
@@ -7929,9 +7539,9 @@ shift_left (unsigned char *bit_string, int bit_string_size)
   for (i = 1; i < bit_string_size; i++)
     {
       if (bit_string[i] & 0x80)
-	{
-	  bit_string[i - 1] |= 0x01;
-	}
+        {
+          bit_string[i - 1] |= 0x01;
+        }
 
       bit_string[i] = bit_string[i] << 1;
     }
@@ -7963,9 +7573,7 @@ shift_left (unsigned char *bit_string, int bit_string_size)
 
 static int
 qstr_substring (const unsigned char *src,
-		int src_length,
-		int start,
-		int length, unsigned char **r, int *r_length, int *r_size)
+                int src_length, int start, int length, unsigned char **r, int *r_length, int *r_size)
 {
   int error_status = NO_ERROR;
   const unsigned char *sub;
@@ -8050,9 +7658,7 @@ qstr_substring (const unsigned char *src,
  *
  */
 static void
-left_nshift (const unsigned char *bit_string,
-	     int bit_string_size,
-	     int shift_amount, unsigned char *r, int r_size)
+left_nshift (const unsigned char *bit_string, int bit_string_size, int shift_amount, unsigned char *r, int r_size)
 {
   int i, shift_bytes, shift_bits, adj_bit_string_size;
   const unsigned char *ptr;
@@ -8066,18 +7672,17 @@ left_nshift (const unsigned char *bit_string,
   for (i = 0; i < r_size; i++)
     {
       if (i < (adj_bit_string_size - 1))
-	{
-	  r[i] = ((ptr[i] << shift_bits) |
-		  (ptr[i + 1] >> (BITS_IN_BYTE - shift_bits)));
-	}
+        {
+          r[i] = ((ptr[i] << shift_bits) | (ptr[i + 1] >> (BITS_IN_BYTE - shift_bits)));
+        }
       else if (i == (adj_bit_string_size - 1))
-	{
-	  r[i] = (ptr[i] << shift_bits);
-	}
+        {
+          r[i] = (ptr[i] << shift_bits);
+        }
       else
-	{
-	  r[i] = 0;
-	}
+        {
+          r[i] = 0;
+        }
     }
 }
 
@@ -8118,15 +7723,15 @@ qstr_ffs (int v)
   if (uv != 0)
     {
       while ((i < nbits) && (position == 0))
-	{
-	  if (uv & 0x01)
-	    {
-	      position = i + 1;
-	    }
+        {
+          if (uv & 0x01)
+            {
+              position = i + 1;
+            }
 
-	  i++;
-	  uv >>= 1;
-	}
+          i++;
+          uv >>= 1;
+        }
     }
 
   return position;
@@ -8182,8 +7787,7 @@ hextoi (char hex_char)
  *   sec(in):
  */
 static void
-set_time_argument (struct tm *dest, int year, int month, int day,
-		   int hour, int min, int sec)
+set_time_argument (struct tm *dest, int year, int month, int day, int hour, int min, int sec)
 {
   if (year >= 1900)
     {
@@ -8216,17 +7820,17 @@ calc_unix_timestamp (struct tm *time_argument)
       /* validation for tm fields in order to cover for mktime conversion's
          like 40th of Sept equals 10th of Oct */
       if (time_argument->tm_year < 0 || time_argument->tm_year > 9999
-	  || time_argument->tm_mon < 0 || time_argument->tm_mon > 11
-	  || time_argument->tm_mday < 1 || time_argument->tm_mday > 31
-	  || time_argument->tm_hour < 0 || time_argument->tm_hour > 23
-	  || time_argument->tm_min < 0 || time_argument->tm_min > 59
-	  || time_argument->tm_sec < 0 || time_argument->tm_sec > 59)
-	{
-	  return -1L;
-	}
+          || time_argument->tm_mon < 0 || time_argument->tm_mon > 11
+          || time_argument->tm_mday < 1 || time_argument->tm_mday > 31
+          || time_argument->tm_hour < 0 || time_argument->tm_hour > 23
+          || time_argument->tm_min < 0 || time_argument->tm_min > 59
+          || time_argument->tm_sec < 0 || time_argument->tm_sec > 59)
+        {
+          return -1L;
+        }
       result = mktime (time_argument);
 
-#if 0 /* DO NOT DELETE ME - not convert to UTC, respect current timezone */
+#if 0                           /* DO NOT DELETE ME - not convert to UTC, respect current timezone */
       /* convert to UTC epoch time */
       if (strcmp (time_argument->tm_zone, "UTC") != 0)
         {
@@ -8273,9 +7877,9 @@ parse_for_next_int (char **ch, char *output)
   while (**ch == '0')
     {
       if (i < 2)
-	{
-	  buf[i++] = **ch;
-	}
+        {
+          buf[i++] = **ch;
+        }
       (*ch)++;
     }
 
@@ -8330,10 +7934,10 @@ db_unix_timestamp (const DB_VALUE * src_date, DB_VALUE * result_timestamp)
 
       now = time (NULL);
       if (now < (time_t) 0)
-	{
-	  assert (false);	/* something wrong */
-	  goto exit_on_error;
-	}
+        {
+          assert (false);       /* something wrong */
+          goto exit_on_error;
+        }
 
       DB_MAKE_INT (result_timestamp, now);
 
@@ -8354,9 +7958,7 @@ db_unix_timestamp (const DB_VALUE * src_date, DB_VALUE * result_timestamp)
 
   /* arg cast type **********************************************************
    */
-  src_date =
-    db_value_cast_arg (src_date, &tmp_src_date, DB_TYPE_DATETIME,
-		       &error_status);
+  src_date = db_value_cast_arg (src_date, &tmp_src_date, DB_TYPE_DATETIME, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -8372,16 +7974,13 @@ db_unix_timestamp (const DB_VALUE * src_date, DB_VALUE * result_timestamp)
   /* The supported datetime range is '1970-01-01 00:00:01'
    * UTC to '2038-01-19 03:14:07' UTC */
 
-  error_status = db_datetime_decode (DB_GET_DATETIME (src_date),
-				     &month, &day, &year, &hour,
-				     &minute, &second, &ms);
+  error_status = db_datetime_decode (DB_GET_DATETIME (src_date), &month, &day, &year, &hour, &minute, &second, &ms);
   if (error_status != NO_ERROR)
     {
       goto exit_on_error;
     }
 
-  if (year == 0 && month == 0 && day == 0
-      && hour == 0 && minute == 0 && second == 0 && ms == 0)
+  if (year == 0 && month == 0 && day == 0 && hour == 0 && minute == 0 && second == 0 && ms == 0)
     {
       /* This function should return 0 if the date is zero date */
       DB_MAKE_INT (result_timestamp, 0);

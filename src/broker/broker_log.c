@@ -42,12 +42,9 @@
 
 static void br_log_open (char *br_name, int port);
 static void br_log_close (void);
-static char *make_broker_log_filename (char *buf, size_t buf_size,
-				       const char *br_name, int port);
+static char *make_broker_log_filename (char *buf, size_t buf_size, const char *br_name, int port);
 static void br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
-				   struct timeval *logtime,
-				   in_addr_t clt_ip,
-				   const char *fmt, va_list ap);
+                                   struct timeval *logtime, in_addr_t clt_ip, const char *fmt, va_list ap);
 static const char *br_log_severity_str (T_BROKER_LOG_SEVERITY severity);
 static void br_log_end (void);
 
@@ -75,9 +72,9 @@ br_log_check ()
   if (br_log_fp != NULL)
     {
       if (access (br_log_file, F_OK) < 0)
-	{
-	  br_log_close ();
-	}
+        {
+          br_log_close ();
+        }
     }
 
   if (shm_appl->broker_log_reset)
@@ -91,8 +88,7 @@ br_log_check ()
 }
 
 void
-br_log_write (T_BROKER_LOG_SEVERITY severity, in_addr_t clt_ip,
-	      const char *fmt, ...)
+br_log_write (T_BROKER_LOG_SEVERITY severity, in_addr_t clt_ip, const char *fmt, ...)
 {
   struct timeval logtime;
   va_list ap;
@@ -131,8 +127,7 @@ br_log_hang_time ()
 
 static void
 br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
-		       UNUSED_ARG struct timeval *logtime,
-		       in_addr_t clt_ip, const char *fmt, va_list ap)
+                       UNUSED_ARG struct timeval *logtime, in_addr_t clt_ip, const char *fmt, va_list ap)
 {
   char time_str[256];
   char clt_ip_str[64];
@@ -145,19 +140,18 @@ br_log_write_internal (T_BROKER_LOG_SEVERITY severity,
   if (br_log_fp != NULL)
     {
       if (clt_ip == INADDR_NONE)
-	{
-	  clt_ip_str[0] = '\0';
-	}
+        {
+          clt_ip_str[0] = '\0';
+        }
       else
-	{
-	  int n;
-	  n = sprintf (clt_ip_str, " CLIENT=");
-	  css_ip_to_str (clt_ip_str + n, sizeof (clt_ip_str) - n, clt_ip);
-	}
+        {
+          int n;
+          n = sprintf (clt_ip_str, " CLIENT=");
+          css_ip_to_str (clt_ip_str + n, sizeof (clt_ip_str) - n, clt_ip);
+        }
 
       (void) er_datetime (NULL, time_str, sizeof (time_str));
-      fprintf (br_log_fp, "%s: %s %s\n",
-	       br_log_severity_str (severity), time_str, clt_ip_str);
+      fprintf (br_log_fp, "%s: %s %s\n", br_log_severity_str (severity), time_str, clt_ip_str);
 
       vfprintf (br_log_fp, fmt, ap);
 
@@ -180,16 +174,16 @@ br_log_end ()
 
       file_pos = ftell (br_log_fp);
       if (file_pos / 1000 > shm_appl->broker_log_max_size)
-	{
-	  br_log_close ();
+        {
+          br_log_close ();
 
-	  snprintf (backupfile, BROKER_PATH_MAX, "%s.bak", br_log_file);
-	  unlink (backupfile);
-	  if (rename (br_log_file, backupfile) < 0)
-	    {
-	      assert (0);
-	    }
-	}
+          snprintf (backupfile, BROKER_PATH_MAX, "%s.bak", br_log_file);
+          unlink (backupfile);
+          if (rename (br_log_file, backupfile) < 0)
+            {
+              assert (0);
+            }
+        }
 
       //TODO: reset
     }
@@ -224,13 +218,13 @@ br_log_open (char *br_name, int port)
 
       br_log_fp = fopen (br_log_file, "r+");
       if (br_log_fp == NULL)
-	{
-	  br_log_fp = fopen (br_log_file, "w");
-	}
+        {
+          br_log_fp = fopen (br_log_file, "w");
+        }
       else
-	{
-	  fseek (br_log_fp, 0, SEEK_END);
-	}
+        {
+          fseek (br_log_fp, 0, SEEK_END);
+        }
     }
   else
     {
@@ -249,8 +243,7 @@ br_log_close ()
 }
 
 static char *
-make_broker_log_filename (char *buf, size_t buf_size, const char *br_name,
-			  int port)
+make_broker_log_filename (char *buf, size_t buf_size, const char *br_name, int port)
 {
   char filename[BROKER_PATH_MAX];
 

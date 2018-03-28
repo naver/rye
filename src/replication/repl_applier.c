@@ -54,97 +54,71 @@ struct la_ovf_first_part
   VPID next_vpid;
   OID class_oid;
   int length;
-  char data[1];			/* Really more than one */
+  char data[1];                 /* Really more than one */
 };
 
 typedef struct la_ovf_rest_parts LA_OVF_REST_PARTS;
 struct la_ovf_rest_parts
 {
   VPID next_vpid;
-  char data[1];			/* Really more than one */
+  char data[1];                 /* Really more than one */
 };
 
 /* use overflow page list to reduce memory copy overhead. */
 typedef struct la_ovf_page_list LA_OVF_PAGE_LIST;
 struct la_ovf_page_list
 {
-  char *rec_type;		/* record type */
-  char *data;			/* overflow page data: header + real data */
-  int length;			/* total length of data */
-  LA_OVF_PAGE_LIST *next;	/* next page */
+  char *rec_type;               /* record type */
+  char *data;                   /* overflow page data: header + real data */
+  int length;                   /* total length of data */
+  LA_OVF_PAGE_LIST *next;       /* next page */
 };
 
 
 static int cirp_get_undoredo_diff (CIRP_BUF_MGR * buf_mgr,
-				   LOG_PAGE ** org_pgptr, LOG_PAGEID * pageid,
-				   PGLENGTH * offset, bool * is_undo_zip,
-				   char **undo_data, int *undo_length);
+                                   LOG_PAGE ** org_pgptr, LOG_PAGEID * pageid,
+                                   PGLENGTH * offset, bool * is_undo_zip, char **undo_data, int *undo_length);
 static char *cirp_get_zipped_data (CIRP_BUF_MGR * buf_mgr, char *undo_data,
-				   int undo_length, bool is_diff,
-				   bool is_undo_zip, bool is_overflow,
-				   char **rec_type, char **data, int *length);
+                                   int undo_length, bool is_diff,
+                                   bool is_undo_zip, bool is_overflow, char **rec_type, char **data, int *length);
 static int cirp_get_log_data (CIRP_BUF_MGR * buf_mgr,
-			      LOG_RECORD_HEADER * lrec, LOG_LSA * lsa,
-			      LOG_PAGE * org_pgptr,
-			      unsigned int match_rcvindex,
-			      unsigned int *rcvindex, void **logs,
-			      char **rec_type, char **data, int *d_length);
+                              LOG_RECORD_HEADER * lrec, LOG_LSA * lsa,
+                              LOG_PAGE * org_pgptr,
+                              unsigned int match_rcvindex,
+                              unsigned int *rcvindex, void **logs, char **rec_type, char **data, int *d_length);
 static int cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
-				     LOG_RECORD_HEADER * log_record,
-				     void *logs, RECDES * recdes,
-				     unsigned int rcvindex);
+                                     LOG_RECORD_HEADER * log_record,
+                                     void *logs, RECDES * recdes, unsigned int rcvindex);
 static int cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
-				       LOG_RECORD_HEADER * lrec,
-				       LOG_PAGE * org_pgptr,
-				       void **logs, char **rec_type,
-				       RECDES * recdes);
+                                       LOG_RECORD_HEADER * lrec,
+                                       LOG_PAGE * org_pgptr, void **logs, char **rec_type, RECDES * recdes);
 static int cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa,
-			    LOG_PAGE * org_pgptr, RECDES * recdes,
-			    unsigned int *rcvindex, char *rec_type);
+                            LOG_PAGE * org_pgptr, RECDES * recdes, unsigned int *rcvindex, char *rec_type);
 
-static int cirp_add_repl_object (CIRP_APPLIER_INFO * applier,
-				 CIRP_REPL_ITEM * item);
-static int cirp_flush_repl_items (CIRP_APPLIER_INFO * applier,
-				  bool immediate);
+static int cirp_add_repl_object (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item);
+static int cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate);
 static int cirp_free_repl_item_list (CIRP_APPLIER_INFO * applier);
 
-static int cirp_apply_delete_log (CIRP_APPLIER_INFO * applier,
-				  RP_DATA_ITEM * item);
-static int cirp_apply_insert_log (CIRP_APPLIER_INFO * applier,
-				  RP_DATA_ITEM * item);
-static int cirp_apply_update_log (CIRP_APPLIER_INFO * applier,
-				  RP_DATA_ITEM * item);
-static int cirp_apply_schema_log (CIRP_APPLIER_INFO * applier,
-				  CIRP_REPL_ITEM * item);
+static int cirp_apply_delete_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item);
+static int cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item);
+static int cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item);
+static int cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item);
 
 static int rp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
-				    LOG_PAGE * log_pgptr, int log_type,
-				    LOG_LSA * final_lsa, TRANID tran_id);
+                                    LOG_PAGE * log_pgptr, int log_type, LOG_LSA * final_lsa, TRANID tran_id);
 static int cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
-				       LOG_LSA * commit_lsa,
-				       LOG_RECORD_HEADER * lrec,
-				       LOG_LSA final_lsa, LOG_PAGE * pg_ptr);
-static int cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
-					 LOG_LSA * commit_lsa);
-static int cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data,
-					 LOG_LSA * committed_lsa);
-static int cirp_get_applier_data (CIRP_APPLIER_INFO * applier,
-				  CIRP_CT_LOG_APPLIER * ct_data);
-static int cirp_set_applier_data (CIRP_APPLIER_INFO * applier,
-				  CIRP_CT_LOG_APPLIER * ct_data);
-static int cirp_change_applier_status (CIRP_APPLIER_INFO * applier,
-				       CIRP_AGENT_STATUS status);
+                                       LOG_LSA * commit_lsa,
+                                       LOG_RECORD_HEADER * lrec, LOG_LSA final_lsa, LOG_PAGE * pg_ptr);
+static int cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier, LOG_LSA * commit_lsa);
+static int cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data, LOG_LSA * committed_lsa);
+static int cirp_get_applier_data (CIRP_APPLIER_INFO * applier, CIRP_CT_LOG_APPLIER * ct_data);
+static int cirp_set_applier_data (CIRP_APPLIER_INFO * applier, CIRP_CT_LOG_APPLIER * ct_data);
+static int cirp_change_applier_status (CIRP_APPLIER_INFO * applier, CIRP_AGENT_STATUS status);
 static int rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier,
-				      LOG_PAGE * log_pgptr,
-				      TRANID tran_id,
-				      const LOG_LSA * final_lsa);
+                                      LOG_PAGE * log_pgptr, TRANID tran_id, const LOG_LSA * final_lsa);
 static int rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
-				    LOG_PAGE * log_pgptr,
-				    TRANID tran_id,
-				    const LOG_LSA * final_lsa);
-static int rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier,
-					  LOG_PAGE * log_pgptr,
-					  const LOG_LSA * final_lsa);
+                                    LOG_PAGE * log_pgptr, TRANID tran_id, const LOG_LSA * final_lsa);
+static int rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier, LOG_PAGE * log_pgptr, const LOG_LSA * final_lsa);
 
 /*
  * cirp_get_applier_status ()-
@@ -172,8 +146,7 @@ cirp_get_applier_status (CIRP_APPLIER_INFO * applier)
  *    status(in):
  */
 static int
-cirp_change_applier_status (CIRP_APPLIER_INFO * applier,
-			    CIRP_AGENT_STATUS status)
+cirp_change_applier_status (CIRP_APPLIER_INFO * applier, CIRP_AGENT_STATUS status)
 {
   pthread_mutex_lock (&applier->lock);
   applier->status = status;
@@ -188,9 +161,7 @@ cirp_change_applier_status (CIRP_APPLIER_INFO * applier,
  */
 static int
 cirp_get_undoredo_diff (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** org_pgptr,
-			LOG_PAGEID * pageid,
-			PGLENGTH * offset, bool * is_undo_zip,
-			char **undo_data, int *undo_length)
+                        LOG_PAGEID * pageid, PGLENGTH * offset, bool * is_undo_zip, char **undo_data, int *undo_length)
 {
   int error = NO_ERROR;
 
@@ -208,7 +179,7 @@ cirp_get_undoredo_diff (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** org_pgptr,
   temp_offset = *offset;
 
   if (ZIP_CHECK (*undo_length))
-    {				/* Undo data is Zip Check */
+    {                           /* Undo data is Zip Check */
       *is_undo_zip = true;
       *undo_length = GET_ZIP_LEN (*undo_length);
     }
@@ -222,8 +193,7 @@ cirp_get_undoredo_diff (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** org_pgptr,
     }
 
   /* get undo data for XOR process */
-  error = cirp_log_copy_fromlog (buf_mgr, NULL, *undo_data, *undo_length,
-				 *pageid, *offset, *org_pgptr);
+  error = cirp_log_copy_fromlog (buf_mgr, NULL, *undo_data, *undo_length, *pageid, *offset, *org_pgptr);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -232,15 +202,14 @@ cirp_get_undoredo_diff (CIRP_BUF_MGR * buf_mgr, LOG_PAGE ** org_pgptr,
   if (*is_undo_zip && *undo_length > 0)
     {
       if (!log_unzip (undo_unzip_data, *undo_length, *undo_data))
-	{
-	  error = ER_IO_LZO_DECOMPRESS_FAIL;
+        {
+          error = ER_IO_LZO_DECOMPRESS_FAIL;
 
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	  GOTO_EXIT_ON_ERROR;
-	}
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+          GOTO_EXIT_ON_ERROR;
+        }
     }
-  error = rp_log_read_add_align (buf_mgr, &temp_pg, &temp_pageid,
-				 &temp_offset, *undo_length, temp_pg);
+  error = rp_log_read_add_align (buf_mgr, &temp_pg, &temp_pageid, &temp_offset, *undo_length, temp_pg);
   if (error != NO_ERROR || temp_pg == NULL)
     {
       GOTO_EXIT_ON_ERROR;
@@ -271,13 +240,12 @@ exit_on_error:
  */
 static char *
 cirp_get_zipped_data (CIRP_BUF_MGR * buf_mgr, char *undo_data,
-		      int undo_length, bool is_diff, bool is_undo_zip,
-		      bool is_overflow, char **rec_type, char **data,
-		      int *length)
+                      int undo_length, bool is_diff, bool is_undo_zip,
+                      bool is_overflow, char **rec_type, char **data, int *length)
 {
   int redo_length = 0;
   int rec_len = 0;
-  int skip_len = DB_SIZEOF (OID);	/* to skip class_oid */
+  int skip_len = DB_SIZEOF (OID);       /* to skip class_oid */
 
   LOG_ZIP *undo_unzip_data = NULL;
   LOG_ZIP *redo_unzip_data = NULL;
@@ -289,21 +257,18 @@ cirp_get_zipped_data (CIRP_BUF_MGR * buf_mgr, char *undo_data,
   if (is_diff)
     {
       if (is_undo_zip)
-	{
-	  undo_length = undo_unzip_data->data_length;
-	  redo_length = redo_unzip_data->data_length;
+        {
+          undo_length = undo_unzip_data->data_length;
+          redo_length = redo_unzip_data->data_length;
 
-	  (void) log_diff (undo_length,
-			   undo_unzip_data->log_data, redo_length,
-			   redo_unzip_data->log_data);
-	}
+          (void) log_diff (undo_length, undo_unzip_data->log_data, redo_length, redo_unzip_data->log_data);
+        }
       else
-	{
+        {
 
-	  redo_length = redo_unzip_data->data_length;
-	  (void) log_diff (undo_length,
-			   undo_data, redo_length, redo_unzip_data->log_data);
-	}
+          redo_length = redo_unzip_data->data_length;
+          (void) log_diff (undo_length, undo_data, redo_length, redo_unzip_data->log_data);
+        }
     }
   else
     {
@@ -326,20 +291,18 @@ cirp_get_zipped_data (CIRP_BUF_MGR * buf_mgr, char *undo_data,
 
       *data = RYE_MALLOC (*length);
       if (*data == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, *length);
-	  *length = 0;
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, *length);
+          *length = 0;
+          return NULL;
+        }
     }
 
   if (rec_type)
     {
       /* FIXME-notout: */
       memcpy (*rec_type, (buf_mgr->redo_unzip)->log_data, rec_len);
-      memcpy (*data, (buf_mgr->redo_unzip)->log_data + rec_len + skip_len,
-	      *length);
+      memcpy (*data, (buf_mgr->redo_unzip)->log_data + rec_len + skip_len, *length);
     }
   else
     {
@@ -368,14 +331,14 @@ cirp_get_zipped_data (CIRP_BUF_MGR * buf_mgr, char *undo_data,
  */
 static int
 cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
-		   LOG_LSA * lsa, LOG_PAGE * org_pgptr,
-		   unsigned int match_rcvindex, unsigned int *rcvindex,
-		   void **logs, char **rec_type, char **data, int *d_length)
+                   LOG_LSA * lsa, LOG_PAGE * org_pgptr,
+                   unsigned int match_rcvindex, unsigned int *rcvindex,
+                   void **logs, char **rec_type, char **data, int *d_length)
 {
   LOG_PAGE *pgptr = NULL;
   UNUSED_VAR LOG_PAGE *old_pg;
   PGLENGTH offset;
-  int length;			/* type change PGLENGTH -> int */
+  int length;                   /* type change PGLENGTH -> int */
   LOG_PAGEID pageid;
   int error = NO_ERROR;
   struct log_undoredo *undoredo;
@@ -409,107 +372,97 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
 
       length = DB_SIZEOF (struct log_undoredo);
       old_pg = pgptr;
-      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid,
-						   &offset, length,
-						   org_pgptr);
+      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid, &offset, length, org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       undoredo = (struct log_undoredo *) ((char *) pgptr->area + offset);
 
-      undo_length = undoredo->ulength;	/* undo log length */
-      temp_length = undoredo->rlength;	/* for the replication, we just need
-					 * the redo data */
+      undo_length = undoredo->ulength;  /* undo log length */
+      temp_length = undoredo->rlength;  /* for the replication, we just need
+                                         * the redo data */
       length = GET_ZIP_LEN (undoredo->rlength);
       assert (length != 0);
 
       if (match_rcvindex == 0 || undoredo->data.rcvindex == match_rcvindex)
-	{
-	  if (rcvindex)
-	    {
-	      *rcvindex = undoredo->data.rcvindex;
-	    }
-	  if (logs)
-	    {
-	      *logs = (void *) undoredo;
-	    }
-	}
+        {
+          if (rcvindex)
+            {
+              *rcvindex = undoredo->data.rcvindex;
+            }
+          if (logs)
+            {
+              *logs = (void *) undoredo;
+            }
+        }
       else if (logs)
-	{
-	  *logs = (void *) NULL;
-	}
+        {
+          *logs = (void *) NULL;
+        }
 
-      error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset,
-				     DB_SIZEOF (*undoredo), org_pgptr);
+      error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset, DB_SIZEOF (*undoredo), org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if (is_diff)
-	{			/* XOR Redo Data */
-	  error = cirp_get_undoredo_diff (buf_mgr, &pgptr, &pageid, &offset,
-					  &is_undo_zip, &undo_data,
-					  &undo_length);
-	}
+        {                       /* XOR Redo Data */
+          error = cirp_get_undoredo_diff (buf_mgr, &pgptr, &pageid, &offset, &is_undo_zip, &undo_data, &undo_length);
+        }
       else
-	{
-	  error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset,
-					 GET_ZIP_LEN (undo_length),
-					 org_pgptr);
-	}
+        {
+          error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset, GET_ZIP_LEN (undo_length), org_pgptr);
+        }
       if (error != NO_ERROR || pgptr == NULL)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       break;
 
     case LOG_REDO_DATA:
       length = DB_SIZEOF (struct log_redo);
-      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr,
-						   &pageid, &offset, length,
-						   org_pgptr);
+      error = rp_log_read_advance_when_doesnt_fit (buf_mgr, &pgptr, &pageid, &offset, length, org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       redo = (struct log_redo *) ((char *) pgptr->area + offset);
       temp_length = redo->length;
       length = GET_ZIP_LEN (redo->length);
 
       if (match_rcvindex == 0 || redo->data.rcvindex == match_rcvindex)
-	{
-	  if (logs)
-	    {
-	      *logs = (void *) redo;
-	    }
-	  if (rcvindex)
-	    {
-	      *rcvindex = redo->data.rcvindex;
-	    }
-	}
+        {
+          if (logs)
+            {
+              *logs = (void *) redo;
+            }
+          if (rcvindex)
+            {
+              *rcvindex = redo->data.rcvindex;
+            }
+        }
       else if (logs)
-	{
-	  *logs = (void *) NULL;
-	}
+        {
+          *logs = (void *) NULL;
+        }
 
-      error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset,
-				     DB_SIZEOF (*redo), org_pgptr);
+      error = rp_log_read_add_align (buf_mgr, &pgptr, &pageid, &offset, DB_SIZEOF (*redo), org_pgptr);
       if (error != NO_ERROR || pgptr == NULL)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       break;
 
     default:
       if (logs)
-	{
-	  *logs = NULL;
-	}
+        {
+          *logs = NULL;
+        }
 
       assert (false);
 
@@ -525,13 +478,13 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
       is_overflow = true;
 
       if (*data == NULL)
-	{
-	  *d_length = 0;
+        {
+          *d_length = 0;
 
-	  error = ER_OUT_OF_VIRTUAL_MEMORY;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, length);
-	  GOTO_EXIT_ON_ERROR;
-	}
+          error = ER_OUT_OF_VIRTUAL_MEMORY;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, length);
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   if (ZIP_CHECK (temp_length))
@@ -540,39 +493,35 @@ cirp_get_log_data (CIRP_BUF_MGR * buf_mgr, LOG_RECORD_HEADER * lrec,
       assert (zip_len != 0);
 
       /* Get Zip Data */
-      error = cirp_log_copy_fromlog (buf_mgr, NULL, *data, zip_len, pageid,
-				     offset, pgptr);
+      error = cirp_log_copy_fromlog (buf_mgr, NULL, *data, zip_len, pageid, offset, pgptr);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if (log_unzip (buf_mgr->redo_unzip, zip_len, *data) == false)
-	{
-	  error = ER_IO_LZO_DECOMPRESS_FAIL;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = ER_IO_LZO_DECOMPRESS_FAIL;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 0);
+          GOTO_EXIT_ON_ERROR;
+        }
 
       *data = cirp_get_zipped_data (buf_mgr, undo_data, undo_length, is_diff,
-				    is_undo_zip, is_overflow, rec_type, data,
-				    &length);
+                                    is_undo_zip, is_overflow, rec_type, data, &length);
       if (*data == NULL)
-	{
-	  error = er_errid ();
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = er_errid ();
+          GOTO_EXIT_ON_ERROR;
+        }
     }
   else
     {
       /* Get Redo Data */
-      error = cirp_log_copy_fromlog (buf_mgr,
-				     rec_type ? *rec_type : NULL, *data,
-				     length, pageid, offset, pgptr);
+      error = cirp_log_copy_fromlog (buf_mgr, rec_type ? *rec_type : NULL, *data, length, pageid, offset, pgptr);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   *d_length = length;
@@ -616,8 +565,7 @@ exit_on_error:
  */
 static int
 cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
-			  LOG_RECORD_HEADER * log_record, void *logs,
-			  RECDES * recdes, unsigned int rcvindex)
+                          LOG_RECORD_HEADER * log_record, void *logs, RECDES * recdes, unsigned int rcvindex)
 {
   LOG_LSA current_lsa;
   LOG_PAGE *current_log_page;
@@ -640,85 +588,78 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
 
   while (!LSA_ISNULL (&current_lsa))
     {
-      error = cirp_logpb_get_log_page (buf_mgr, &current_log_page,
-				       current_lsa.pageid);
+      error = cirp_logpb_get_log_page (buf_mgr, &current_log_page, current_lsa.pageid);
       if (error != NO_ERROR || current_log_page == NULL)
-	{
-	  assert (error != NO_ERROR && current_log_page == NULL);
+        {
+          assert (error != NO_ERROR && current_log_page == NULL);
 
-	  if (error == NO_ERROR)
-	    {
-	      assert (false);
+          if (error == NO_ERROR)
+            {
+              assert (false);
 
-	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
-	    }
-	  GOTO_EXIT_ON_ERROR;
-	}
+              REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+            }
+          GOTO_EXIT_ON_ERROR;
+        }
 
-      current_log_record = LOG_GET_LOG_RECORD_HEADER (current_log_page,
-						      &current_lsa);
+      current_log_record = LOG_GET_LOG_RECORD_HEADER (current_log_page, &current_lsa);
       if (!CIRP_IS_VALID_LOG_RECORD (buf_mgr, current_log_record))
-	{
-	  REPL_SET_GENERIC_ERROR (error, "Invalid log record");
-	  GOTO_EXIT_ON_ERROR;
-	}
-      if (current_log_record->trid != log_record->trid
-	  || current_log_record->type == LOG_DUMMY_OVF_RECORD)
-	{
-	  /* end overflow record */
-	  cirp_logpb_release (buf_mgr, current_log_page->hdr.logical_pageid);
-	  current_log_page = NULL;
-	  break;
-	}
+        {
+          REPL_SET_GENERIC_ERROR (error, "Invalid log record");
+          GOTO_EXIT_ON_ERROR;
+        }
+      if (current_log_record->trid != log_record->trid || current_log_record->type == LOG_DUMMY_OVF_RECORD)
+        {
+          /* end overflow record */
+          cirp_logpb_release (buf_mgr, current_log_page->hdr.logical_pageid);
+          current_log_page = NULL;
+          break;
+        }
       else if (current_log_record->type == LOG_REDO_DATA)
-	{
-	  /* process only LOG_REDO_DATA */
+        {
+          /* process only LOG_REDO_DATA */
 
-	  ovf_list_data = ((LA_OVF_PAGE_LIST *)
-			   RYE_MALLOC (DB_SIZEOF (LA_OVF_PAGE_LIST)));
-	  if (ovf_list_data == NULL)
-	    {
-	      /* malloc failed */
-	      error = ER_OUT_OF_VIRTUAL_MEMORY;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      error, 1, DB_SIZEOF (LA_OVF_PAGE_LIST));
-	      GOTO_EXIT_ON_ERROR;
-	    }
+          ovf_list_data = ((LA_OVF_PAGE_LIST *) RYE_MALLOC (DB_SIZEOF (LA_OVF_PAGE_LIST)));
+          if (ovf_list_data == NULL)
+            {
+              /* malloc failed */
+              error = ER_OUT_OF_VIRTUAL_MEMORY;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, DB_SIZEOF (LA_OVF_PAGE_LIST));
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  memset (ovf_list_data, 0, DB_SIZEOF (LA_OVF_PAGE_LIST));
-	  error = cirp_get_log_data (buf_mgr, current_log_record,
-				     &current_lsa, current_log_page, rcvindex,
-				     NULL, &log_info, NULL,
-				     &ovf_list_data->data,
-				     &ovf_list_data->length);
-	  if (error != NO_ERROR)
-	    {
-	      RYE_FREE_MEM (ovf_list_data->data);
-	      RYE_FREE_MEM (ovf_list_data);
-	      GOTO_EXIT_ON_ERROR;
-	    }
+          memset (ovf_list_data, 0, DB_SIZEOF (LA_OVF_PAGE_LIST));
+          error = cirp_get_log_data (buf_mgr, current_log_record,
+                                     &current_lsa, current_log_page, rcvindex,
+                                     NULL, &log_info, NULL, &ovf_list_data->data, &ovf_list_data->length);
+          if (error != NO_ERROR)
+            {
+              RYE_FREE_MEM (ovf_list_data->data);
+              RYE_FREE_MEM (ovf_list_data);
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  if (log_info != NULL && ovf_list_data->data != NULL)
-	    {
-	      /* add to linked-list */
-	      if (ovf_list_head == NULL)
-		{
-		  ovf_list_head = ovf_list_tail = ovf_list_data;
-		}
-	      else
-		{
-		  ovf_list_data->next = ovf_list_head;
-		  ovf_list_head = ovf_list_data;
-		}
+          if (log_info != NULL && ovf_list_data->data != NULL)
+            {
+              /* add to linked-list */
+              if (ovf_list_head == NULL)
+                {
+                  ovf_list_head = ovf_list_tail = ovf_list_data;
+                }
+              else
+                {
+                  ovf_list_data->next = ovf_list_head;
+                  ovf_list_head = ovf_list_data;
+                }
 
-	      length += ovf_list_data->length;
-	    }
-	  else
-	    {
-	      RYE_FREE_MEM (ovf_list_data->data);
-	      RYE_FREE_MEM (ovf_list_data);
-	    }
-	}
+              length += ovf_list_data->length;
+            }
+          else
+            {
+              RYE_FREE_MEM (ovf_list_data->data);
+              RYE_FREE_MEM (ovf_list_data);
+            }
+        }
       LSA_COPY (&current_lsa, &current_log_record->prev_tranlsa);
 
       cirp_logpb_release (buf_mgr, current_log_page->hdr.logical_pageid);
@@ -741,17 +682,16 @@ cirp_get_overflow_recdes (CIRP_BUF_MGR * buf_mgr,
       ovf_list_head = ovf_list_head->next;
 
       if (first)
-	{
-	  area_offset = offsetof (LA_OVF_FIRST_PART, data);
-	  first = false;
-	}
+        {
+          area_offset = offsetof (LA_OVF_FIRST_PART, data);
+          first = false;
+        }
       else
-	{
-	  area_offset = offsetof (LA_OVF_REST_PARTS, data);
-	}
+        {
+          area_offset = offsetof (LA_OVF_REST_PARTS, data);
+        }
       area_len = ovf_list_data->length - area_offset;
-      memcpy (recdes->data + copyed_len, ovf_list_data->data + area_offset,
-	      area_len);
+      memcpy (recdes->data + copyed_len, ovf_list_data->data + area_offset, area_len);
       copyed_len += area_len;
 
       RYE_FREE_MEM (ovf_list_data->data);
@@ -807,8 +747,8 @@ exit_on_error:
  */
 static int
 cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
-			    LOG_RECORD_HEADER * lrec, LOG_PAGE * org_pgptr,
-			    void **logs, char **rec_type, RECDES * recdes)
+                            LOG_RECORD_HEADER * lrec, LOG_PAGE * org_pgptr,
+                            void **logs, char **rec_type, RECDES * recdes)
 {
   LOG_RECORD_HEADER *tmp_lrec;
   unsigned int rcvindex;
@@ -821,32 +761,29 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
     {
       error = cirp_logpb_get_log_page (buf_mgr, &pg, lsa.pageid);
       if (error != NO_ERROR || pg == NULL)
-	{
-	  assert (error != NO_ERROR && pg == NULL);
+        {
+          assert (error != NO_ERROR && pg == NULL);
 
-	  if (error == NO_ERROR)
-	    {
-	      assert (false);
+          if (error == NO_ERROR)
+            {
+              assert (false);
 
-	      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
-	    }
+              REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+            }
 
-	  return error;
-	}
+          return error;
+        }
       tmp_lrec = LOG_GET_LOG_RECORD_HEADER (pg, &lsa);
-      if (tmp_lrec->trid != lrec->trid
-	  || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, tmp_lrec))
-	{
-	  error = ER_LOG_PAGE_CORRUPTED;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, lsa.pageid);
-	}
+      if (tmp_lrec->trid != lrec->trid || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, tmp_lrec))
+        {
+          error = ER_LOG_PAGE_CORRUPTED;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, lsa.pageid);
+        }
       else
-	{
-	  error = cirp_get_log_data (buf_mgr, tmp_lrec, &lsa, pg,
-				     RVHF_INSERT, &rcvindex, logs,
-				     rec_type,
-				     &recdes->data, &recdes->length);
-	}
+        {
+          error = cirp_get_log_data (buf_mgr, tmp_lrec, &lsa, pg,
+                                     RVHF_INSERT, &rcvindex, logs, rec_type, &recdes->data, &recdes->length);
+        }
       cirp_logpb_release (buf_mgr, pg->hdr.logical_pageid);
     }
   else
@@ -878,7 +815,7 @@ cirp_get_relocation_recdes (CIRP_BUF_MGR * buf_mgr,
  */
 static int
 cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa, LOG_PAGE * org_pgptr,
-		 RECDES * recdes, unsigned int *rcvindex, char *rec_type)
+                 RECDES * recdes, unsigned int *rcvindex, char *rec_type)
 {
   LOG_RECORD_HEADER *lrec;
   LOG_PAGE *pg;
@@ -893,18 +830,14 @@ cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa, LOG_PAGE * org_pgptr,
       return error;
     }
 
-  error = cirp_get_log_data (buf_mgr, lrec, lsa, pg, 0, rcvindex,
-			     &logs, &rec_type, &recdes->data,
-			     &recdes->length);
+  error = cirp_get_log_data (buf_mgr, lrec, lsa, pg, 0, rcvindex, &logs, &rec_type, &recdes->data, &recdes->length);
   if (error != NO_ERROR || logs == NULL)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "cannot get log record from LSA(%d|%d)",
-		    lsa->pageid, lsa->offset);
+      er_log_debug (ARG_FILE_LINE, "cannot get log record from LSA(%d|%d)", lsa->pageid, lsa->offset);
       if (error != NO_ERROR)
-	{
-	  error = ER_FAILED;
-	}
+        {
+          error = ER_FAILED;
+        }
 
       return error;
     }
@@ -915,15 +848,13 @@ cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa, LOG_PAGE * org_pgptr,
   if (*rcvindex == RVOVF_CHANGE_LINK)
     {
       /* if overflow page update */
-      error = cirp_get_overflow_recdes (buf_mgr, lrec, logs, recdes,
-					RVOVF_PAGE_UPDATE);
+      error = cirp_get_overflow_recdes (buf_mgr, lrec, logs, recdes, RVOVF_PAGE_UPDATE);
       recdes->type = REC_BIGONE;
     }
   else if (recdes->type == REC_BIGONE)
     {
       /* if overflow page insert */
-      error = cirp_get_overflow_recdes (buf_mgr, lrec, logs, recdes,
-					RVOVF_NEWPAGE_INSERT);
+      error = cirp_get_overflow_recdes (buf_mgr, lrec, logs, recdes, RVOVF_NEWPAGE_INSERT);
     }
   else if (*rcvindex == RVHF_INSERT && recdes->type == REC_ASSIGN_ADDRESS)
     {
@@ -933,12 +864,11 @@ cirp_get_recdes (CIRP_BUF_MGR * buf_mgr, LOG_LSA * lsa, LOG_PAGE * org_pgptr,
     }
   else if (*rcvindex == RVHF_UPDATE && recdes->type == REC_RELOCATION)
     {
-      error = cirp_get_relocation_recdes (buf_mgr, lrec, pg,
-					  &logs, &rec_type, recdes);
+      error = cirp_get_relocation_recdes (buf_mgr, lrec, pg, &logs, &rec_type, recdes);
       if (error == NO_ERROR)
-	{
-	  recdes->type = *(INT16 *) (rec_type);
-	}
+        {
+          recdes->type = *(INT16 *) (rec_type);
+        }
     }
 
   assert (error != NO_ERROR || or_grp_id (recdes) >= GLOBAL_GROUPID);
@@ -971,8 +901,7 @@ cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate)
 
   if ((applier->head->item_type == RP_ITEM_TYPE_DDL
        && applier->num_unflushed != 2)
-      || (applier->head->item_type == RP_ITEM_TYPE_CATALOG
-	  && applier->num_unflushed != 1))
+      || (applier->head->item_type == RP_ITEM_TYPE_CATALOG && applier->num_unflushed != 1))
     {
       assert (false);
       REPL_SET_GENERIC_ERROR (error, "invalid repl items");
@@ -993,17 +922,14 @@ cirp_flush_repl_items (CIRP_APPLIER_INFO * applier, bool immediate)
     {
       assert (rp_is_valid_repl_item (applier->head));
 
-      error = cci_send_repl_data (&applier->conn, applier->head,
-				  applier->num_unflushed, applier->ct.id);
+      error = cci_send_repl_data (&applier->conn, applier->head, applier->num_unflushed, applier->ct.id);
       if (error < 0)
-	{
-	  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
-				 MNT_RP_FAIL, 1);
+        {
+          monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id, MNT_RP_FAIL, 1);
 
-	  REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
-				  applier->conn.err_buf.err_code,
-				  applier->conn.err_buf.err_msg);
-	}
+          REPL_SET_GENERIC_ERROR (error, "cci error(%d), msg:%s",
+                                  applier->conn.err_buf.err_code, applier->conn.err_buf.err_msg);
+        }
     }
 
   if (immediate == true)
@@ -1092,8 +1018,7 @@ cirp_apply_delete_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * data_item)
       GOTO_EXIT_ON_ERROR;
     }
 
-  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
-			 MNT_RP_DELETE, 1);
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id, MNT_RP_DELETE, 1);
 
   assert (error == NO_ERROR);
   return error;
@@ -1105,8 +1030,7 @@ exit_on_error:
 
   er_stack_push ();
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	  ER_HA_LA_FAILED_TO_APPLY_DELETE, 4, data_item->class_name, buf,
-	  error, "internal client error.");
+          ER_HA_LA_FAILED_TO_APPLY_DELETE, 4, data_item->class_name, buf, error, "internal client error.");
   er_stack_pop ();
 
   return error;
@@ -1153,11 +1077,11 @@ cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
       assert (error != NO_ERROR && pgptr == NULL);
 
       if (error == NO_ERROR)
-	{
-	  assert (false);
+        {
+          assert (false);
 
-	  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
-	}
+          REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+        }
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1170,37 +1094,32 @@ cirp_apply_insert_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
   /* retrieve the target record description */
   /* FIXME-notout: */
-  error = cirp_get_recdes (buf_mgr, &item->target_lsa,
-			   pgptr, recdes, &rcvindex, buf_mgr->rec_type);
+  error = cirp_get_recdes (buf_mgr, &item->target_lsa, pgptr, recdes, &rcvindex, buf_mgr->rec_type);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
   assert ((or_grp_id (recdes) == item->groupid)
-	  || (strcasecmp (item->class_name, CT_SHARD_GID_SKEY_INFO_NAME) == 0
-	      && or_grp_id (recdes) == GLOBAL_GROUPID
-	      && item->groupid >= GLOBAL_GROUPID));
+          || (strcasecmp (item->class_name, CT_SHARD_GID_SKEY_INFO_NAME) == 0
+              && or_grp_id (recdes) == GLOBAL_GROUPID && item->groupid >= GLOBAL_GROUPID));
 
   if (recdes->type == REC_ASSIGN_ADDRESS || recdes->type == REC_RELOCATION)
     {
-      REPL_SET_GENERIC_ERROR (error, "apply_insert : rectype.type = %d\n",
-			      recdes->type);
+      REPL_SET_GENERIC_ERROR (error, "apply_insert : rectype.type = %d\n", recdes->type);
 
       GOTO_EXIT_ON_ERROR;
     }
   if (rcvindex != RVHF_INSERT)
     {
-      REPL_SET_GENERIC_ERROR (error, "apply_insert : rcvindex = %d\n",
-			      rcvindex);
+      REPL_SET_GENERIC_ERROR (error, "apply_insert : rcvindex = %d\n", rcvindex);
 
       GOTO_EXIT_ON_ERROR;
     }
 
   item->recdes = recdes;
 
-  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
-			 MNT_RP_INSERT, 1);
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id, MNT_RP_INSERT, 1);
 
   cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
 
@@ -1214,8 +1133,7 @@ exit_on_error:
 
   er_stack_push ();
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	  ER_HA_LA_FAILED_TO_APPLY_INSERT, 4, item->class_name, buf,
-	  error, "internal client error.");
+          ER_HA_LA_FAILED_TO_APPLY_INSERT, 4, item->class_name, buf, error, "internal client error.");
   er_stack_pop ();
 
   if (pgptr != NULL)
@@ -1267,11 +1185,11 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
       assert (error != NO_ERROR && pgptr == NULL);
 
       if (error == NO_ERROR)
-	{
-	  assert (false);
+        {
+          assert (false);
 
-	  REPL_SET_GENERIC_ERROR (error, "Invalid return value");
-	}
+          REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+        }
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -1284,8 +1202,7 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
   /* retrieve the target record description */
   /* FIXME-notout: */
-  error = cirp_get_recdes (buf_mgr, &item->target_lsa, pgptr,
-			   recdes, &rcvindex, buf_mgr->rec_type);
+  error = cirp_get_recdes (buf_mgr, &item->target_lsa, pgptr, recdes, &rcvindex, buf_mgr->rec_type);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1299,16 +1216,14 @@ cirp_apply_update_log (CIRP_APPLIER_INFO * applier, RP_DATA_ITEM * item)
 
   if (rcvindex != RVHF_UPDATE && rcvindex != RVOVF_CHANGE_LINK)
     {
-      REPL_SET_GENERIC_ERROR (error, "apply_update : rcvindex = %d\n",
-			      rcvindex);
+      REPL_SET_GENERIC_ERROR (error, "apply_update : rcvindex = %d\n", rcvindex);
 
       GOTO_EXIT_ON_ERROR;
     }
 
   item->recdes = recdes;
 
-  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
-			 MNT_RP_UPDATE, 1);
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id, MNT_RP_UPDATE, 1);
 
   cirp_logpb_release (buf_mgr, pgptr->hdr.logical_pageid);
 
@@ -1321,8 +1236,7 @@ exit_on_error:
 
   er_stack_push ();
   er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	  ER_HA_LA_FAILED_TO_APPLY_UPDATE, 4, item->class_name, buf,
-	  error, "internal client error.");
+          ER_HA_LA_FAILED_TO_APPLY_UPDATE, 4, item->class_name, buf, error, "internal client error.");
   er_stack_pop ();
 
   if (pgptr != NULL)
@@ -1347,13 +1261,12 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
   if (item->item_type != RP_ITEM_TYPE_DDL)
     {
       assert (false);
-      ;				/* TODO - avoid compiler warning */
+      ;                         /* TODO - avoid compiler warning */
     }
 
   error = cirp_flush_repl_items (applier, false);
 
-  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
-			 MNT_RP_DDL, 1);
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id, MNT_RP_DDL, 1);
 
   return error;
 }
@@ -1368,9 +1281,7 @@ cirp_apply_schema_log (CIRP_APPLIER_INFO * applier, CIRP_REPL_ITEM * item)
  *   final_lsa(in):
  */
 static int
-rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier,
-			   LOG_PAGE * log_pgptr, TRANID tran_id,
-			   const LOG_LSA * final_lsa)
+rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier, LOG_PAGE * log_pgptr, TRANID tran_id, const LOG_LSA * final_lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   int error = NO_ERROR;
@@ -1380,8 +1291,7 @@ rp_appl_apply_schema_item (CIRP_APPLIER_INFO * applier,
     {
       GOTO_EXIT_ON_ERROR;
     }
-  error = rp_make_repl_schema_item_from_log (&applier->buf_mgr, item,
-					     log_pgptr, final_lsa);
+  error = rp_make_repl_schema_item_from_log (&applier->buf_mgr, item, log_pgptr, final_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1428,9 +1338,7 @@ exit_on_error:
  *   final_lsa(in):
  */
 static int
-rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
-			 LOG_PAGE * log_pgptr, TRANID tran_id,
-			 const LOG_LSA * final_lsa)
+rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier, LOG_PAGE * log_pgptr, TRANID tran_id, const LOG_LSA * final_lsa)
 {
   CIRP_REPL_ITEM *item = NULL;
   RP_DATA_ITEM *data = NULL;
@@ -1441,8 +1349,7 @@ rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
     {
       GOTO_EXIT_ON_ERROR;
     }
-  error = rp_make_repl_data_item_from_log (&applier->buf_mgr, item,
-					   log_pgptr, final_lsa);
+  error = rp_make_repl_data_item_from_log (&applier->buf_mgr, item, log_pgptr, final_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1467,13 +1374,11 @@ rp_appl_apply_data_item (CIRP_APPLIER_INFO * applier,
       assert (false);
 
       REPL_SET_GENERIC_ERROR (error,
-			      "rp_appl_apply_repl_item : rcv_index %d "
-			      "lsa(%lld,%d) target lsa(%lld,%d)\n",
-			      data->rcv_index,
-			      (long long) item->lsa.pageid,
-			      item->lsa.offset,
-			      (long long) data->target_lsa.pageid,
-			      data->target_lsa.offset);
+                              "rp_appl_apply_repl_item : rcv_index %d "
+                              "lsa(%lld,%d) target lsa(%lld,%d)\n",
+                              data->rcv_index,
+                              (long long) item->lsa.pageid,
+                              item->lsa.offset, (long long) data->target_lsa.pageid, data->target_lsa.offset);
     }
   if (error != NO_ERROR)
     {
@@ -1514,15 +1419,12 @@ exit_on_error:
  *   final_lsa(in):
  */
 static int
-rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier,
-			       LOG_PAGE * log_pgptr,
-			       const LOG_LSA * final_lsa)
+rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier, LOG_PAGE * log_pgptr, const LOG_LSA * final_lsa)
 {
   struct log_gid_bitmap_update gbu;
   int error = NO_ERROR;
 
-  error = cirp_log_get_gid_bitmap_update (&applier->buf_mgr, &gbu,
-					  log_pgptr, final_lsa);
+  error = cirp_log_get_gid_bitmap_update (&applier->buf_mgr, &gbu, log_pgptr, final_lsa);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
@@ -1530,14 +1432,13 @@ rp_appl_apply_gid_bitmap_item (CIRP_APPLIER_INFO * applier,
 
   if (gbu.target == 0)
     {
-      error = cci_update_db_group_id (&applier->conn, gbu.migrator_id,
-				      gbu.group_id, 1 /* slave */ ,
-				      gbu.on_off);
+      error = cci_update_db_group_id (&applier->conn, gbu.migrator_id, gbu.group_id, 1 /* slave */ ,
+                                      gbu.on_off);
       if (error < 0)
-	{
-	  REPL_SET_GENERIC_ERROR (error, applier->conn.err_buf.err_msg);
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          REPL_SET_GENERIC_ERROR (error, applier->conn.err_buf.err_msg);
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   assert (error == NO_ERROR);
@@ -1564,39 +1465,35 @@ exit_on_error:
  */
 static int
 rp_appl_apply_repl_item (CIRP_APPLIER_INFO * applier,
-			 LOG_PAGE * log_pgptr, int log_type,
-			 LOG_LSA * final_lsa, TRANID tran_id)
+                         LOG_PAGE * log_pgptr, int log_type, LOG_LSA * final_lsa, TRANID tran_id)
 {
   int error = NO_ERROR;
 
   assert (log_type == LOG_REPLICATION_DATA
-	  || log_type == LOG_REPLICATION_SCHEMA
-	  || log_type == LOG_DUMMY_UPDATE_GID_BITMAP);
+          || log_type == LOG_REPLICATION_SCHEMA || log_type == LOG_DUMMY_UPDATE_GID_BITMAP);
 
   switch (log_type)
     {
     case LOG_REPLICATION_SCHEMA:
-      error = rp_appl_apply_schema_item (applier, log_pgptr,
-					 tran_id, final_lsa);
+      error = rp_appl_apply_schema_item (applier, log_pgptr, tran_id, final_lsa);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       break;
     case LOG_REPLICATION_DATA:
-      error = rp_appl_apply_data_item (applier, log_pgptr,
-				       tran_id, final_lsa);
+      error = rp_appl_apply_data_item (applier, log_pgptr, tran_id, final_lsa);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       break;
     case LOG_DUMMY_UPDATE_GID_BITMAP:
       error = rp_appl_apply_gid_bitmap_item (applier, log_pgptr, final_lsa);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       break;
     default:
       assert (false);
@@ -1630,19 +1527,16 @@ exit_on_error:
  */
 static int
 cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
-			    LOG_LSA * commit_lsa, LOG_RECORD_HEADER * lrec,
-			    LOG_LSA final_lsa, LOG_PAGE * pg_ptr)
+                            LOG_LSA * commit_lsa, LOG_RECORD_HEADER * lrec, LOG_LSA final_lsa, LOG_PAGE * pg_ptr)
 {
   int error = NO_ERROR;
 
   assert_release (lrec->type != LOG_END_OF_LOG);
 
   if (lrec->type == LOG_REPLICATION_DATA
-      || lrec->type == LOG_REPLICATION_SCHEMA
-      || lrec->type == LOG_DUMMY_UPDATE_GID_BITMAP)
+      || lrec->type == LOG_REPLICATION_SCHEMA || lrec->type == LOG_DUMMY_UPDATE_GID_BITMAP)
     {
-      error = rp_appl_apply_repl_item (applier, pg_ptr, lrec->type,
-				       &final_lsa, lrec->trid);
+      error = rp_appl_apply_repl_item (applier, pg_ptr, lrec->type, &final_lsa, lrec->trid);
     }
   else if (lrec->type == LOG_COMMIT)
     {
@@ -1659,8 +1553,7 @@ cirp_appl_apply_log_record (CIRP_APPLIER_INFO * applier,
  *   log_applier(out):
  */
 static int
-cirp_get_applier_data (CIRP_APPLIER_INFO * applier,
-		       CIRP_CT_LOG_APPLIER * ct_data)
+cirp_get_applier_data (CIRP_APPLIER_INFO * applier, CIRP_CT_LOG_APPLIER * ct_data)
 {
   int error = NO_ERROR;
 
@@ -1697,8 +1590,7 @@ exit_on_error:
  *   log_applier(in):
  */
 static int
-cirp_set_applier_data (CIRP_APPLIER_INFO * applier,
-		       CIRP_CT_LOG_APPLIER * ct_data)
+cirp_set_applier_data (CIRP_APPLIER_INFO * applier, CIRP_CT_LOG_APPLIER * ct_data)
 {
   int error = NO_ERROR;
 
@@ -1731,8 +1623,7 @@ exit_on_error:
  *   commit_lsa(in):
  */
 static int
-cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
-			      LOG_LSA * commit_lsa)
+cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier, LOG_LSA * commit_lsa)
 {
   int error = NO_ERROR;
   CIRP_CT_LOG_APPLIER ct_data;
@@ -1757,8 +1648,7 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
       GOTO_EXIT_ON_ERROR;
     }
 
-  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id,
-			 MNT_RP_COMMIT, 1);
+  monitor_stats_counter (MNT_RP_APPLIER_BASE_ID + applier->ct.id, MNT_RP_COMMIT, 1);
 
   error = cirp_applier_update_progress (&ct_data, commit_lsa);
   if (error != NO_ERROR)
@@ -1814,10 +1704,9 @@ cirp_appl_commit_transaction (CIRP_APPLIER_INFO * applier,
     }
 
   er_log_debug (ARG_FILE_LINE,
-		"Applier-%d tran_id:%d, tran start:%ld,%d, tran end:%ld, %d, commit:%ld,%d",
-		applier->ct.id, tran_id, tran_start.pageid,
-		tran_start.offset, tran_end.pageid, tran_end.offset,
-		commit_lsa->pageid, commit_lsa->offset);
+                "Applier-%d tran_id:%d, tran start:%ld,%d, tran end:%ld, %d, commit:%ld,%d",
+                applier->ct.id, tran_id, tran_start.pageid,
+                tran_start.offset, tran_end.pageid, tran_end.offset, commit_lsa->pageid, commit_lsa->offset);
 
   /* update boundary so that committed items can be dismissed */
   cirp_applier_clear_committed_item (applier);
@@ -1846,8 +1735,7 @@ exit_on_error:
  *   committed_lsa(in):
  */
 static int
-cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data,
-			      LOG_LSA * committed_lsa)
+cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data, LOG_LSA * committed_lsa)
 {
   LSA_COPY (&ct_data->committed_lsa, committed_lsa);
 
@@ -1863,8 +1751,7 @@ cirp_applier_update_progress (CIRP_CT_LOG_APPLIER * ct_data,
  *    log_path(in):
  */
 int
-cirp_init_applier (CIRP_APPLIER_INFO * applier,
-		   const char *database_name, const char *log_path)
+cirp_init_applier (CIRP_APPLIER_INFO * applier, const char *database_name, const char *log_path)
 {
   int error = NO_ERROR;
 
@@ -1954,7 +1841,7 @@ static int
 rp_applier_wait_start (CIRP_APPLIER_INFO * applier)
 {
   int error = NO_ERROR;
-  int wakeup_interval = 100;	/* msecs */
+  int wakeup_interval = 100;    /* msecs */
 
   error = pthread_mutex_lock (&applier->lock);
   if (error != NO_ERROR)
@@ -1969,14 +1856,13 @@ rp_applier_wait_start (CIRP_APPLIER_INFO * applier)
 
   while (applier->status == CIRP_AGENT_INIT)
     {
-      error = cirp_pthread_cond_timedwait (&applier->cond,
-					   &applier->lock, wakeup_interval);
+      error = cirp_pthread_cond_timedwait (&applier->cond, &applier->lock, wakeup_interval);
       if (error != NO_ERROR)
-	{
-	  pthread_mutex_unlock (&applier->lock);
+        {
+          pthread_mutex_unlock (&applier->lock);
 
-	  return error;
-	}
+          return error;
+        }
     }
 
   pthread_mutex_unlock (&applier->lock);
@@ -2044,9 +1930,9 @@ applier_main (void *arg)
     {
       error = rp_applier_wait_start (applier);
       if (error != NO_ERROR)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       /* decache all */
       cirp_logpb_decache_range (&applier->buf_mgr, 0, LOGPAGEID_MAX);
 
@@ -2055,194 +1941,176 @@ applier_main (void *arg)
       LSA_SET_NULL (&final_lsa);
 
       snprintf (err_msg, sizeof (err_msg),
-		"Applier-%d Start: committed_lsa(%lld,%d)", applier->ct.id,
-		(long long) applier->ct.committed_lsa.pageid,
-		applier->ct.committed_lsa.offset);
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	      err_msg);
+                "Applier-%d Start: committed_lsa(%lld,%d)", applier->ct.id,
+                (long long) applier->ct.committed_lsa.pageid, applier->ct.committed_lsa.offset);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
       while (rp_need_restart () == false)
-	{
-	  assert (LSA_ISNULL (&commit_lsa));
+        {
+          assert (LSA_ISNULL (&commit_lsa));
 
-	  error = cirp_applier_item_pop (applier, &repl_log_item);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  if (repl_log_item == NULL)
-	    {
-	      /* queue is empty */
-	      error = cirp_applier_wait_for_queue (applier);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
+          error = cirp_applier_item_pop (applier, &repl_log_item);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+          if (repl_log_item == NULL)
+            {
+              /* queue is empty */
+              error = cirp_applier_wait_for_queue (applier);
+              if (error != NO_ERROR)
+                {
+                  GOTO_EXIT_ON_ERROR;
+                }
 
-	      continue;
-	    }
+              continue;
+            }
 
-	  if (LSA_ISNULL (&repl_log_item->tran_start_lsa)
-	      || LSA_ISNULL (&repl_log_item->committed_lsa)
-	      || LSA_ISNULL (&repl_log_item->repl_start_lsa))
-	    {
-	      assert (false);
+          if (LSA_ISNULL (&repl_log_item->tran_start_lsa)
+              || LSA_ISNULL (&repl_log_item->committed_lsa) || LSA_ISNULL (&repl_log_item->repl_start_lsa))
+            {
+              assert (false);
 
-	      REPL_SET_GENERIC_ERROR (error, "Invalid REPL_ITEM("
-				      "tran_start(%ld, %d), committed_lsa(%ld,%d), "
-				      "repl_start_lsa(%ld, %d)",
-				      (long) repl_log_item->
-				      tran_start_lsa.pageid,
-				      repl_log_item->tran_start_lsa.offset,
-				      (long) repl_log_item->
-				      committed_lsa.pageid,
-				      repl_log_item->committed_lsa.offset,
-				      (long) repl_log_item->
-				      repl_start_lsa.pageid,
-				      repl_log_item->repl_start_lsa.offset);
+              REPL_SET_GENERIC_ERROR (error, "Invalid REPL_ITEM("
+                                      "tran_start(%ld, %d), committed_lsa(%ld,%d), "
+                                      "repl_start_lsa(%ld, %d)",
+                                      (long) repl_log_item->tran_start_lsa.pageid,
+                                      repl_log_item->tran_start_lsa.offset,
+                                      (long) repl_log_item->committed_lsa.pageid,
+                                      repl_log_item->committed_lsa.offset,
+                                      (long) repl_log_item->repl_start_lsa.pageid,
+                                      repl_log_item->repl_start_lsa.offset);
 
-	      GOTO_EXIT_ON_ERROR;
-	    }
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  er_log_debug (ARG_FILE_LINE, "Applier-%d queue item tran_id:%d,"
-			"tran_start(%ld, %d), repl_start_lsa(%ld,%d), "
-			"committed_lsa(%ld, %d), applier committed_lsa(%ld, %d)",
-			applier->ct.id, repl_log_item->trid,
-			(long) repl_log_item->tran_start_lsa.pageid,
-			repl_log_item->tran_start_lsa.offset,
-			(long) repl_log_item->repl_start_lsa.pageid,
-			repl_log_item->repl_start_lsa.offset,
-			(long) repl_log_item->committed_lsa.pageid,
-			repl_log_item->committed_lsa.offset,
-			(long) applier->ct.committed_lsa.pageid,
-			applier->ct.committed_lsa.offset);
+          er_log_debug (ARG_FILE_LINE, "Applier-%d queue item tran_id:%d,"
+                        "tran_start(%ld, %d), repl_start_lsa(%ld,%d), "
+                        "committed_lsa(%ld, %d), applier committed_lsa(%ld, %d)",
+                        applier->ct.id, repl_log_item->trid,
+                        (long) repl_log_item->tran_start_lsa.pageid,
+                        repl_log_item->tran_start_lsa.offset,
+                        (long) repl_log_item->repl_start_lsa.pageid,
+                        repl_log_item->repl_start_lsa.offset,
+                        (long) repl_log_item->committed_lsa.pageid,
+                        repl_log_item->committed_lsa.offset,
+                        (long) applier->ct.committed_lsa.pageid, applier->ct.committed_lsa.offset);
 
-	  if (LSA_LE (&repl_log_item->committed_lsa,
-		      &applier->ct.committed_lsa))
-	    {
-	      /* already applied */
-	      /* update boundary so that committed items can be dismissed */
-	      cirp_applier_clear_committed_item (applier);
-	      continue;
-	    }
+          if (LSA_LE (&repl_log_item->committed_lsa, &applier->ct.committed_lsa))
+            {
+              /* already applied */
+              /* update boundary so that committed items can be dismissed */
+              cirp_applier_clear_committed_item (applier);
+              continue;
+            }
 
-	  LSA_COPY (&final_lsa, &repl_log_item->repl_start_lsa);
+          LSA_COPY (&final_lsa, &repl_log_item->repl_start_lsa);
 
-	  /* a loop for each transaction */
-	  LSA_SET_NULL (&commit_lsa);
-	  while (!LSA_ISNULL (&final_lsa) && LSA_ISNULL (&commit_lsa)
-		 && rp_need_restart () == false)
-	    {
-	      /* defense code */
-	      cirp_logpb_release_all (buf_mgr, NULL_PAGEID);
+          /* a loop for each transaction */
+          LSA_SET_NULL (&commit_lsa);
+          while (!LSA_ISNULL (&final_lsa) && LSA_ISNULL (&commit_lsa) && rp_need_restart () == false)
+            {
+              /* defense code */
+              cirp_logpb_release_all (buf_mgr, NULL_PAGEID);
 
-	      /* don't move cirp_logpb_act_log_fetch_hdr ()
-	       * and another function don't call cirp_logpb_act_log_fetch_hdr() */
-	      error = cirp_logpb_act_log_fetch_hdr (buf_mgr);
-	      if (error != NO_ERROR)
-		{
-		  GOTO_EXIT_ON_ERROR;
-		}
-	      log_hdr = buf_mgr->act_log.log_hdr;
+              /* don't move cirp_logpb_act_log_fetch_hdr ()
+               * and another function don't call cirp_logpb_act_log_fetch_hdr() */
+              error = cirp_logpb_act_log_fetch_hdr (buf_mgr);
+              if (error != NO_ERROR)
+                {
+                  GOTO_EXIT_ON_ERROR;
+                }
+              log_hdr = buf_mgr->act_log.log_hdr;
 
-	      error = cirp_logpb_get_page_buffer (buf_mgr, &log_buf,
-						  final_lsa.pageid);
-	      if (error != NO_ERROR || log_buf == NULL)
-		{
-		  if (error == NO_ERROR)
-		    {
-		      assert (false);
+              error = cirp_logpb_get_page_buffer (buf_mgr, &log_buf, final_lsa.pageid);
+              if (error != NO_ERROR || log_buf == NULL)
+                {
+                  if (error == NO_ERROR)
+                    {
+                      assert (false);
 
-		      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
-		    }
-		  GOTO_EXIT_ON_ERROR;
-		}
+                      REPL_SET_GENERIC_ERROR (error, "Invalid return value");
+                    }
+                  GOTO_EXIT_ON_ERROR;
+                }
 
-	      /* a loop for each page */
-	      pg_ptr = &(log_buf->log_page);
-	      while (final_lsa.pageid == log_buf->pageid
-		     && rp_need_restart () == false
-		     && LSA_LT (&final_lsa, &log_hdr->eof_lsa))
-		{
-		  if (final_lsa.offset == 0
-		      || final_lsa.offset == NULL_OFFSET)
-		    {
-		      assert (final_lsa.offset == 0);
-		      assert (log_buf->log_page.hdr.offset == 0);
+              /* a loop for each page */
+              pg_ptr = &(log_buf->log_page);
+              while (final_lsa.pageid == log_buf->pageid
+                     && rp_need_restart () == false && LSA_LT (&final_lsa, &log_hdr->eof_lsa))
+                {
+                  if (final_lsa.offset == 0 || final_lsa.offset == NULL_OFFSET)
+                    {
+                      assert (final_lsa.offset == 0);
+                      assert (log_buf->log_page.hdr.offset == 0);
 
-		      final_lsa.offset = log_buf->log_page.hdr.offset;
-		    }
+                      final_lsa.offset = log_buf->log_page.hdr.offset;
+                    }
 
-		  assert (final_lsa.pageid
-			  <= log_hdr->ha_info.last_flushed_pageid);
+                  assert (final_lsa.pageid <= log_hdr->ha_info.last_flushed_pageid);
 
-		  lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
-		  if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa)
-		      || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
-		    {
-		      assert (false);
-		      cirp_logpb_release (buf_mgr, log_buf->pageid);
-		      log_buf = NULL;
+                  lrec = LOG_GET_LOG_RECORD_HEADER (pg_ptr, &final_lsa);
+                  if (!CIRP_IS_VALID_LSA (buf_mgr, &final_lsa) || !CIRP_IS_VALID_LOG_RECORD (buf_mgr, lrec))
+                    {
+                      assert (false);
+                      cirp_logpb_release (buf_mgr, log_buf->pageid);
+                      log_buf = NULL;
 
-		      error = ER_LOG_PAGE_CORRUPTED;
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      error, 1, final_lsa.pageid);
+                      error = ER_LOG_PAGE_CORRUPTED;
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, final_lsa.pageid);
 
-		      GOTO_EXIT_ON_ERROR;
-		    }
+                      GOTO_EXIT_ON_ERROR;
+                    }
 
-		  if (lrec->trid != repl_log_item->trid)
-		    {
-		      /* set the next record */
-		      LSA_COPY (&final_lsa, &lrec->forw_lsa);
-		      continue;
-		    }
+                  if (lrec->trid != repl_log_item->trid)
+                    {
+                      /* set the next record */
+                      LSA_COPY (&final_lsa, &lrec->forw_lsa);
+                      continue;
+                    }
 
-		  error = cirp_appl_apply_log_record (applier, &commit_lsa,
-						      lrec, final_lsa,
-						      pg_ptr);
-		  if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)
-		    {
-		      /*
-		       * does not received log page from rye_server
-		       * or active log was archived.
-		       */
-		      break;
-		    }
-		  else if (error != NO_ERROR)
-		    {
-		      cirp_logpb_release (buf_mgr, log_buf->pageid);
-		      log_buf = NULL;
-		      GOTO_EXIT_ON_ERROR;
-		    }
+                  error = cirp_appl_apply_log_record (applier, &commit_lsa, lrec, final_lsa, pg_ptr);
+                  if (error == ER_HA_LOG_PAGE_DOESNOT_EXIST)
+                    {
+                      /*
+                       * does not received log page from rye_server
+                       * or active log was archived.
+                       */
+                      break;
+                    }
+                  else if (error != NO_ERROR)
+                    {
+                      cirp_logpb_release (buf_mgr, log_buf->pageid);
+                      log_buf = NULL;
+                      GOTO_EXIT_ON_ERROR;
+                    }
 
-		  /* set the next record */
-		  LSA_COPY (&final_lsa, &lrec->forw_lsa);
+                  /* set the next record */
+                  LSA_COPY (&final_lsa, &lrec->forw_lsa);
 
-		  if (!LSA_ISNULL (&commit_lsa))
-		    {
-		      /* end transaction */
-		      assert (lrec->type == LOG_COMMIT);
+                  if (!LSA_ISNULL (&commit_lsa))
+                    {
+                      /* end transaction */
+                      assert (lrec->type == LOG_COMMIT);
 
-		      applier->num_uncommitted_tran++;
-		      break;
-		    }
-		}		/* end loop for each page */
-	      assert (error == NO_ERROR
-		      || error == ER_HA_LOG_PAGE_DOESNOT_EXIST);
+                      applier->num_uncommitted_tran++;
+                      break;
+                    }
+                }               /* end loop for each page */
+              assert (error == NO_ERROR || error == ER_HA_LOG_PAGE_DOESNOT_EXIST);
 
-	      cirp_logpb_release (buf_mgr, log_buf->pageid);
-	      log_buf = NULL;
-	    }			/* end loop for each transaction */
+              cirp_logpb_release (buf_mgr, log_buf->pageid);
+              log_buf = NULL;
+            }                   /* end loop for each transaction */
 
-	  error = cirp_appl_commit_transaction (applier, &commit_lsa);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  LSA_SET_NULL (&commit_lsa);
+          error = cirp_appl_commit_transaction (applier, &commit_lsa);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+          LSA_SET_NULL (&commit_lsa);
 
-	}			/* end loop */
+        }                       /* end loop */
 
       /* Fall through */
       assert (error == NO_ERROR);
@@ -2250,12 +2118,9 @@ applier_main (void *arg)
     exit_on_error:
 
       snprintf (err_msg, sizeof (err_msg),
-		"Applier-%d Retry(ERROR:%d): committed_lsa(%lld,%d)",
-		applier->ct.id, error,
-		(long long) applier->ct.committed_lsa.pageid,
-		applier->ct.committed_lsa.offset);
-      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	      err_msg);
+                "Applier-%d Retry(ERROR:%d): committed_lsa(%lld,%d)",
+                applier->ct.id, error, (long long) applier->ct.committed_lsa.pageid, applier->ct.committed_lsa.offset);
+      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
       RP_SET_AGENT_NEED_RESTART ();
 
@@ -2268,11 +2133,9 @@ applier_main (void *arg)
   cirp_change_applier_status (applier, CIRP_AGENT_DEAD);
 
   snprintf (err_msg, sizeof (err_msg),
-	    "Applier-%d Exit: committed_lsa(%lld,%d)", applier->ct.id,
-	    (long long) applier->ct.committed_lsa.pageid,
-	    applier->ct.committed_lsa.offset);
-  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1,
-	  err_msg);
+            "Applier-%d Exit: committed_lsa(%lld,%d)", applier->ct.id,
+            (long long) applier->ct.committed_lsa.pageid, applier->ct.committed_lsa.offset);
+  er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_NOTIFY_MESSAGE, 1, err_msg);
 
   free_and_init (th_er_msg_info);
 
@@ -2286,8 +2149,7 @@ applier_main (void *arg)
  *    committed_lsa(out):
  */
 int
-cirp_appl_get_committed_lsa (CIRP_APPLIER_INFO * applier,
-			     LOG_LSA * committed_lsa)
+cirp_appl_get_committed_lsa (CIRP_APPLIER_INFO * applier, LOG_LSA * committed_lsa)
 {
   int error = NO_ERROR;
 

@@ -94,8 +94,7 @@ static int er_csect_enter_log_file (void);
  * catalog, because they must be avilable if the message catalog is not
  * available.
  */
-static const char *er_severity_string[] =
-  { "FATAL ERROR", "ERROR", "SYNTAX ERROR", "WARNING", "NOTIFICATION" };
+static const char *er_severity_string[] = { "FATAL ERROR", "ERROR", "SYNTAX ERROR", "WARNING", "NOTIFICATION" };
 
 static const char *er_unknown_severity = "Unknown severity level";
 
@@ -122,7 +121,7 @@ static const char *er_unknown_severity = "Unknown severity level";
 
 #define SPEC_CODE_LONGLONG ((char)0x88)
 
-#define MAX_LINE (ONE_K * 4)	/* 4096 */
+#define MAX_LINE (ONE_K * 4)    /* 4096 */
 
 /*
  * Default text for messages. These messages are used only when we can't
@@ -224,6 +223,7 @@ static const char *er_builtin_msg[] = {
   /* ER_EVENT_HANDLER */
   "er_init: cannot install event handler \"%s\""
 };
+
 static char *er_cached_msg[sizeof (er_builtin_msg) / sizeof (const char *)];
 
 /* Error log message file related */
@@ -275,14 +275,12 @@ static FILE *er_file_backup (FILE * fp, const char *path);
 static void er_call_stack_dump_on_error (int severity, int err_id);
 static void er_notify_event_on_error (int err_id);
 static int er_set_internal (int severity, const char *file_name,
-			    const int line_no, int err_id, int num_args,
-			    bool include_os_error, FILE * fp,
-			    va_list * ap_ptr);
+                            const int line_no, int err_id, int num_args,
+                            bool include_os_error, FILE * fp, va_list * ap_ptr);
 static void er_log (int err_id);
 static void er_stop_on_error (int err_id);
 
-static int er_study_spec (const char *conversion_spec, char *simple_spec,
-			  int *position, int *width, int *va_class);
+static int er_study_spec (const char *conversion_spec, char *simple_spec, int *position, int *width, int *va_class);
 static void er_study_fmt (ER_FMT * fmt);
 static size_t er_estimate_size (ER_FMT * fmt, va_list * ap);
 static ER_FMT *er_find_fmt (int err_id, int num_args);
@@ -302,11 +300,11 @@ static void er_call_stack_final (void);
 
 /* vector of functions to call when an error is set */
 static PTR_FNERLOG er_Fnlog[ER_MAX_SEVERITY + 1] = {
-  er_log,			/* ER_FATAL_ERROR_SEVERITY */
-  er_log,			/* ER_ERROR_SEVERITY */
-  er_log,			/* ER_SYNTAX_ERROR_SEVERITY */
-  er_log,			/* ER_WARNING_SEVERITY */
-  er_log			/* ER_NOTIFICATION_SEVERITY */
+  er_log,                       /* ER_FATAL_ERROR_SEVERITY */
+  er_log,                       /* ER_ERROR_SEVERITY */
+  er_log,                       /* ER_SYNTAX_ERROR_SEVERITY */
+  er_log,                       /* ER_WARNING_SEVERITY */
+  er_log                        /* ER_NOTIFICATION_SEVERITY */
 };
 
 /*
@@ -399,27 +397,24 @@ er_event (void)
   /* Get the most detailed error message available */
   er_all (&err_id, &severity, &nlevels, &line_no, &file_name, &msg);
 
-  saved_sig_handler =
-    os_set_signal_handler (SIGPIPE, er_event_sigpipe_handler);
+  saved_sig_handler = os_set_signal_handler (SIGPIPE, er_event_sigpipe_handler);
   if (_setjmp (er_Event_jmp_buf) == 0)
     {
-      fprintf (er_Event_pipe, "%d %s %s\n", err_id,
-	       ER_SEVERITY_STRING (severity), msg);
+      fprintf (er_Event_pipe, "%d %s %s\n", err_id, ER_SEVERITY_STRING (severity), msg);
       fflush (er_Event_pipe);
     }
   else
     {
       er_event_started = false;
       if (er_hasalready_initiated)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_BROKEN_PIPE, 1,
-		  prm_get_string_value (PRM_ID_EVENT_HANDLER));
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_BROKEN_PIPE, 1, prm_get_string_value (PRM_ID_EVENT_HANDLER));
+        }
       if (er_Event_pipe != NULL)
-	{
-	  fclose (er_Event_pipe);
-	  er_Event_pipe = NULL;
-	}
+        {
+          fclose (er_Event_pipe);
+          er_Event_pipe = NULL;
+        }
     }
   os_set_signal_handler (SIGPIPE, saved_sig_handler);
 }
@@ -435,69 +430,60 @@ er_event_init (void)
 
   assert (er_hasalready_initiated == true);
 
-  saved_sig_handler =
-    os_set_signal_handler (SIGPIPE, er_event_sigpipe_handler);
+  saved_sig_handler = os_set_signal_handler (SIGPIPE, er_event_sigpipe_handler);
   if (_setjmp (er_Event_jmp_buf) == 0)
     {
       er_event_started = false;
       if (er_Event_pipe != NULL)
-	{
-	  if (er_hasalready_initiated == true)
-	    {
-	      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_EV_STOPPED,
-		      0);
-	    }
-	  msg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_ERROR,
-				-ER_EV_STOPPED);
-	  fprintf (er_Event_pipe, "%d %s %s", ER_EV_STOPPED,
-		   ER_SEVERITY_STRING (ER_NOTIFICATION_SEVERITY),
-		   (msg ? msg : "?"));
+        {
+          if (er_hasalready_initiated == true)
+            {
+              er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_EV_STOPPED, 0);
+            }
+          msg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_ERROR, -ER_EV_STOPPED);
+          fprintf (er_Event_pipe, "%d %s %s", ER_EV_STOPPED,
+                   ER_SEVERITY_STRING (ER_NOTIFICATION_SEVERITY), (msg ? msg : "?"));
 
-	  fflush (er_Event_pipe);
-	  pclose (er_Event_pipe);
-	  er_Event_pipe = NULL;
-	}
+          fflush (er_Event_pipe);
+          pclose (er_Event_pipe);
+          er_Event_pipe = NULL;
+        }
 
-      er_Event_pipe =
-	popen (prm_get_string_value (PRM_ID_EVENT_HANDLER), "w");
+      er_Event_pipe = popen (prm_get_string_value (PRM_ID_EVENT_HANDLER), "w");
       if (er_Event_pipe != NULL)
-	{
-	  if (er_hasalready_initiated == true)
-	    {
-	      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_EV_STARTED,
-		      0);
-	    }
-	  msg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_ERROR,
-				-ER_EV_STARTED);
-	  fprintf (er_Event_pipe, "%d %s %s", ER_EV_STARTED,
-		   ER_SEVERITY_STRING (ER_NOTIFICATION_SEVERITY),
-		   (msg ? msg : "?"));
+        {
+          if (er_hasalready_initiated == true)
+            {
+              er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_EV_STARTED, 0);
+            }
+          msg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_ERROR, -ER_EV_STARTED);
+          fprintf (er_Event_pipe, "%d %s %s", ER_EV_STARTED,
+                   ER_SEVERITY_STRING (ER_NOTIFICATION_SEVERITY), (msg ? msg : "?"));
 
-	  fflush (er_Event_pipe);
-	  er_event_started = true;
-	}
+          fflush (er_Event_pipe);
+          er_event_started = true;
+        }
       else
-	{
-	  if (er_hasalready_initiated == true)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_CONNECT_HANDLER,
-		      1, prm_get_string_value (PRM_ID_EVENT_HANDLER));
-	    }
-	  error = ER_EV_CONNECT_HANDLER;
-	}
+        {
+          if (er_hasalready_initiated == true)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_CONNECT_HANDLER,
+                      1, prm_get_string_value (PRM_ID_EVENT_HANDLER));
+            }
+          error = ER_EV_CONNECT_HANDLER;
+        }
     }
   else
     {
       if (er_hasalready_initiated == true)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_BROKEN_PIPE, 1,
-		  prm_get_string_value (PRM_ID_EVENT_HANDLER));
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_BROKEN_PIPE, 1, prm_get_string_value (PRM_ID_EVENT_HANDLER));
+        }
       if (er_Event_pipe != NULL)
-	{
-	  fclose (er_Event_pipe);
-	  er_Event_pipe = NULL;
-	}
+        {
+          fclose (er_Event_pipe);
+          er_Event_pipe = NULL;
+        }
       error = ER_EV_BROKEN_PIPE;
     }
   os_set_signal_handler (SIGPIPE, saved_sig_handler);
@@ -516,41 +502,36 @@ er_event_final (void)
 
   assert (er_hasalready_initiated);
 
-  saved_sig_handler =
-    os_set_signal_handler (SIGPIPE, er_event_sigpipe_handler);
+  saved_sig_handler = os_set_signal_handler (SIGPIPE, er_event_sigpipe_handler);
   if (_setjmp (er_Event_jmp_buf) == 0)
     {
       er_event_started = false;
       if (er_Event_pipe != NULL)
-	{
-	  if (er_hasalready_initiated)
-	    {
-	      er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_EV_STOPPED,
-		      0);
-	    }
-	  msg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_ERROR,
-				-ER_EV_STOPPED);
-	  fprintf (er_Event_pipe, "%d %s %s", ER_EV_STOPPED,
-		   ER_SEVERITY_STRING (ER_NOTIFICATION_SEVERITY),
-		   (msg ? msg : "?"));
+        {
+          if (er_hasalready_initiated)
+            {
+              er_set (ER_NOTIFICATION_SEVERITY, ARG_FILE_LINE, ER_EV_STOPPED, 0);
+            }
+          msg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_ERROR, -ER_EV_STOPPED);
+          fprintf (er_Event_pipe, "%d %s %s", ER_EV_STOPPED,
+                   ER_SEVERITY_STRING (ER_NOTIFICATION_SEVERITY), (msg ? msg : "?"));
 
-	  fflush (er_Event_pipe);
-	  pclose (er_Event_pipe);
-	  er_Event_pipe = NULL;
-	}
+          fflush (er_Event_pipe);
+          pclose (er_Event_pipe);
+          er_Event_pipe = NULL;
+        }
     }
   else
     {
       if (er_hasalready_initiated)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_BROKEN_PIPE, 1,
-		  prm_get_string_value (PRM_ID_EVENT_HANDLER));
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_EV_BROKEN_PIPE, 1, prm_get_string_value (PRM_ID_EVENT_HANDLER));
+        }
       if (er_Event_pipe != NULL)
-	{
-	  fclose (er_Event_pipe);
-	  er_Event_pipe = NULL;
-	}
+        {
+          fclose (er_Event_pipe);
+          er_Event_pipe = NULL;
+        }
     }
   os_set_signal_handler (SIGPIPE, saved_sig_handler);
 }
@@ -564,8 +545,7 @@ static int
 er_call_stack_init (void)
 {
 #if defined(LINUX)
-  fname_table = mht_create (0, 100, mht_5strhash,
-			    mht_compare_strings_are_equal);
+  fname_table = mht_create (0, 100, mht_5strhash, mht_compare_strings_are_equal);
   if (fname_table == NULL)
     {
       return ER_FAILED;
@@ -640,7 +620,7 @@ er_init (const char *msglog_filename, int exit_ask)
   const char *msg;
   MSG_CATD msg_catd;
   ER_MSG_INFO *er_msg;
-  bool make_access = false;	/* whether separate access log or not */
+  bool make_access = false;     /* whether separate access log or not */
   const char *os_error;
 
 #if defined (SERVER_MODE)
@@ -660,9 +640,9 @@ er_init (const char *msglog_filename, int exit_ask)
   for (i = 0; i < (int) DIM (er_builtin_msg); i++)
     {
       if (er_cached_msg[i] && er_cached_msg[i] != er_builtin_msg[i])
-	{
-	  free_and_init (er_cached_msg[i]);
-	}
+        {
+          free_and_init (er_cached_msg[i]);
+        }
       er_cached_msg[i] = (char *) er_builtin_msg[i];
     }
 
@@ -686,19 +666,19 @@ er_init (const char *msglog_filename, int exit_ask)
     {
       er_Fmt_msg_fail_count = 0;
       for (i = 2; i < abs (ER_LAST_ERROR); i++)
-	{
-	  msg = msgcat_gets (msg_catd, MSGCAT_SET_ERROR, i, NULL);
-	  if (msg == NULL || msg[0] == '\0')
-	    {
-	      er_Fmt_msg_fail_count++;
-	      continue;
-	    }
+        {
+          msg = msgcat_gets (msg_catd, MSGCAT_SET_ERROR, i, NULL);
+          if (msg == NULL || msg[0] == '\0')
+            {
+              er_Fmt_msg_fail_count++;
+              continue;
+            }
 
-	  if (er_create_fmt_msg (&er_Fmt_list[i], -i, msg) == NULL)
-	    {
-	      er_Fmt_msg_fail_count++;
-	    }
-	}
+          if (er_create_fmt_msg (&er_Fmt_list[i], -i, msg) == NULL)
+            {
+              er_Fmt_msg_fail_count++;
+            }
+        }
     }
   else
     {
@@ -717,22 +697,21 @@ er_init (const char *msglog_filename, int exit_ask)
   if (msglog_filename == NULL)
     {
       if (prm_get_string_value (PRM_ID_ER_LOG_FILE))
-	{
-	  msglog_filename = prm_get_string_value (PRM_ID_ER_LOG_FILE);
-	}
+        {
+          msglog_filename = prm_get_string_value (PRM_ID_ER_LOG_FILE);
+        }
     }
 
   if (msglog_filename != NULL)
     {
       if (IS_ABS_PATH (msglog_filename) || msglog_filename[0] == PATH_CURRENT)
-	{
-	  strncpy (er_Msglog_filename_buff, msglog_filename, PATH_MAX - 1);
-	}
+        {
+          strncpy (er_Msglog_filename_buff, msglog_filename, PATH_MAX - 1);
+        }
       else
-	{
-	  envvar_ryelogdir_file (er_Msglog_filename_buff, PATH_MAX,
-				 msglog_filename);
-	}
+        {
+          envvar_ryelogdir_file (er_Msglog_filename_buff, PATH_MAX, msglog_filename);
+        }
 
       er_Msglog_filename_buff[PATH_MAX - 1] = '\0';
       er_Msglog_filename = er_Msglog_filename_buff;
@@ -747,27 +726,26 @@ er_init (const char *msglog_filename, int exit_ask)
       int len = strlen (er_Msglog_filename);
 
       if (len < 4 || strncmp (&er_Msglog_filename[len - 4], ".err", 4) != 0)
-	{
-	  snprintf (er_Accesslog_filename_buff, PATH_MAX, "%s.access",
-		    er_Msglog_filename);
-	  /* ex) server.log => server.log.access */
-	}
+        {
+          snprintf (er_Accesslog_filename_buff, PATH_MAX, "%s.access", er_Msglog_filename);
+          /* ex) server.log => server.log.access */
+        }
       else
-	{
-	  char tmp[PATH_MAX];
-	  strncpy (tmp, er_Msglog_filename, PATH_MAX);
-	  tmp[len - 4] = '\0';
-	  snprintf (er_Accesslog_filename_buff, PATH_MAX, "%s.access", tmp);
-	  /* ex) server_log.err => server_log.access */
-	}
+        {
+          char tmp[PATH_MAX];
+          strncpy (tmp, er_Msglog_filename, PATH_MAX);
+          tmp[len - 4] = '\0';
+          snprintf (er_Accesslog_filename_buff, PATH_MAX, "%s.access", tmp);
+          /* ex) server_log.err => server_log.access */
+        }
 
       er_Accesslog_filename = er_Accesslog_filename_buff;
 
       /* in case of strlen(er_Msglog_filename) > PATH_MAX - 7 */
       if (strnlen (er_Accesslog_filename_buff, PATH_MAX) >= PATH_MAX)
-	{
-	  er_Accesslog_filename = NULL;
-	}
+        {
+          er_Accesslog_filename = NULL;
+        }
     }
   else
     {
@@ -779,28 +757,26 @@ er_init (const char *msglog_filename, int exit_ask)
     {
       er_isa_null_device = er_file_isa_null_device (er_Msglog_filename);
 
-      if (er_isa_null_device
-	  || prm_get_bool_value (PRM_ID_ER_PRODUCTION_MODE))
-	{
-	  er_Msglog_fh = er_file_open (er_Msglog_filename);
-	}
+      if (er_isa_null_device || prm_get_bool_value (PRM_ID_ER_PRODUCTION_MODE))
+        {
+          er_Msglog_fh = er_file_open (er_Msglog_filename);
+        }
       else
-	{
-	  /* want to err on the side of doing production style error logs
-	   * because this may be getting set at some naive customer site.*/
-	  char path[PATH_MAX];
-	  sprintf (path, "%s.%d", er_Msglog_filename, getpid ());
-	  er_Msglog_fh = er_file_open (path);
-	}
+        {
+          /* want to err on the side of doing production style error logs
+           * because this may be getting set at some naive customer site.*/
+          char path[PATH_MAX];
+          sprintf (path, "%s.%d", er_Msglog_filename, getpid ());
+          er_Msglog_fh = er_file_open (path);
+        }
 
       if (er_Msglog_fh == NULL)
-	{
-	  er_Msglog_fh = stderr;
+        {
+          er_Msglog_fh = stderr;
 
-	  os_error = (errno != 0) ? strerror (errno) : "";
-	  syslog (LOG_ALERT, "Cannot open %s(%s)\n", er_Msglog_filename,
-		  os_error);
-	}
+          os_error = (errno != 0) ? strerror (errno) : "";
+          syslog (LOG_ALERT, "Cannot open %s(%s)\n", er_Msglog_filename, os_error);
+        }
     }
   else
     {
@@ -811,28 +787,26 @@ er_init (const char *msglog_filename, int exit_ask)
     {
       er_isa_null_device = er_file_isa_null_device (er_Accesslog_filename);
 
-      if (er_isa_null_device
-	  || prm_get_bool_value (PRM_ID_ER_PRODUCTION_MODE))
-	{
-	  er_Accesslog_fh = er_file_open (er_Accesslog_filename);
-	}
+      if (er_isa_null_device || prm_get_bool_value (PRM_ID_ER_PRODUCTION_MODE))
+        {
+          er_Accesslog_fh = er_file_open (er_Accesslog_filename);
+        }
       else
-	{
-	  /* want to err on the side of doing production style error logs
-	   * because this may be getting set at some naive customer site.*/
-	  char path[PATH_MAX];
-	  sprintf (path, "%s.%d", er_Accesslog_filename, getpid ());
-	  er_Accesslog_fh = er_file_open (path);
-	}
+        {
+          /* want to err on the side of doing production style error logs
+           * because this may be getting set at some naive customer site.*/
+          char path[PATH_MAX];
+          sprintf (path, "%s.%d", er_Accesslog_filename, getpid ());
+          er_Accesslog_fh = er_file_open (path);
+        }
 
       if (er_Accesslog_fh == NULL)
-	{
-	  er_Accesslog_fh = stderr;
+        {
+          er_Accesslog_fh = stderr;
 
-	  os_error = (errno != 0) ? strerror (errno) : "";
-	  syslog (LOG_ALERT, "Cannot open %s(%s)\n", er_Accesslog_filename,
-		  os_error);
-	}
+          os_error = (errno != 0) ? strerror (errno) : "";
+          syslog (LOG_ALERT, "Cannot open %s(%s)\n", er_Accesslog_filename, os_error);
+        }
     }
   else
     {
@@ -867,13 +841,12 @@ er_init (const char *msglog_filename, int exit_ask)
   /*
    * Install event handler
    */
-  if (prm_get_string_value (PRM_ID_EVENT_HANDLER) != NULL
-      && *prm_get_string_value (PRM_ID_EVENT_HANDLER) != '\0')
+  if (prm_get_string_value (PRM_ID_EVENT_HANDLER) != NULL && *prm_get_string_value (PRM_ID_EVENT_HANDLER) != '\0')
     {
       if (er_event_init () != NO_ERROR)
-	{
-	  assert (false);
-	}
+        {
+          assert (false);
+        }
     }
 
   ER_CSECT_EXIT_LOG_FILE ();
@@ -917,10 +890,10 @@ er_file_open (const char *path)
     {
       fseek (fp, 0, SEEK_END);
       if (ftell (fp) > prm_get_bigint_value (PRM_ID_ER_LOG_SIZE))
-	{
-	  /* not a null device file */
-	  fp = er_file_backup (fp, path);
-	}
+        {
+          /* not a null device file */
+          fp = er_file_backup (fp, path);
+        }
     }
   else
     {
@@ -976,7 +949,7 @@ er_file_backup (FILE * fp, const char *path)
 void
 er_clear (void)
 {
-#if 1				/* fix leak */
+#if 1                           /* fix leak */
 #else
   char *buf;
   int size;
@@ -989,41 +962,41 @@ er_clear (void)
       er_Info = er_get_msg_info ();
       assert (er_Info != NULL);
       if (er_Info == NULL)
-	{
-	  return;
-	}
+        {
+          return;
+        }
 
       er_Msg = er_Info->top;
       assert (er_Msg != NULL);
       if (er_Msg == NULL)
-	{
-	  return;
-	}
+        {
+          return;
+        }
 
       er_Msg->err_id = NO_ERROR;
       er_Msg->severity = ER_WARNING_SEVERITY;
       er_Msg->file_name = er_cached_msg[ER_ER_UNKNOWN_FILE];
       er_Msg->line_no = -1;
-#if 1				/* fix leak */
+#if 1                           /* fix leak */
       if (er_Msg->msg_area)
-	{
-	  free_and_init (er_Msg->msg_area);
-	}
+        {
+          free_and_init (er_Msg->msg_area);
+        }
       er_Msg->msg_area_size = 0;
 
       if (er_Msg->args)
-	{
-	  free_and_init (er_Msg->args);
-	}
+        {
+          free_and_init (er_Msg->args);
+        }
       er_Msg->nargs = 0;
 #else
       buf = er_Msg->msg_area;
       size = er_Msg->msg_area_size;
 
       if (buf)
-	{
-	  buf[0] = '\0';
-	}
+        {
+          buf[0] = '\0';
+        }
 #endif
     }
 }
@@ -1072,14 +1045,12 @@ er_fnerlog (int severity, PTR_FNERLOG new_fnlog)
  *       logging function (if any) associated with the error is called.
  */
 void
-er_set (int severity, const char *file_name, const int line_no, int err_id,
-	int num_args, ...)
+er_set (int severity, const char *file_name, const int line_no, int err_id, int num_args, ...)
 {
   va_list ap;
 
   va_start (ap, num_args);
-  (void) er_set_internal (severity, file_name, line_no, err_id, num_args,
-			  false, NULL, &ap);
+  (void) er_set_internal (severity, file_name, line_no, err_id, num_args, false, NULL, &ap);
   va_end (ap);
 }
 
@@ -1103,14 +1074,12 @@ er_set (int severity, const char *file_name, const int line_no, int err_id,
  *       logging function (if any) associated with the error is called.
  */
 void
-er_set_with_file (int severity, const char *file_name, const int line_no,
-		  int err_id, FILE * fp, int num_args, ...)
+er_set_with_file (int severity, const char *file_name, const int line_no, int err_id, FILE * fp, int num_args, ...)
 {
   va_list ap;
 
   va_start (ap, num_args);
-  (void) er_set_internal (severity, file_name, line_no, err_id, num_args,
-			  false, fp, &ap);
+  (void) er_set_internal (severity, file_name, line_no, err_id, num_args, false, fp, &ap);
   va_end (ap);
 }
 #endif
@@ -1135,14 +1104,12 @@ er_set_with_file (int severity, const char *file_name, const int line_no,
  *       error is called.
  */
 void
-er_set_with_oserror (int severity, const char *file_name, const int line_no,
-		     int err_id, int num_args, ...)
+er_set_with_oserror (int severity, const char *file_name, const int line_no, int err_id, int num_args, ...)
 {
   va_list ap;
 
   va_start (ap, num_args);
-  (void) er_set_internal (severity, file_name, line_no, err_id, num_args,
-			  true, NULL, &ap);
+  (void) er_set_internal (severity, file_name, line_no, err_id, num_args, true, NULL, &ap);
   va_end (ap);
 }
 
@@ -1183,19 +1150,17 @@ er_call_stack_dump_on_error (int severity, int err_id)
     }
   else if (prm_get_bool_value (PRM_ID_CALL_STACK_DUMP_ON_ERROR))
     {
-      if (!sysprm_find_err_in_integer_list
-	  (PRM_ID_CALL_STACK_DUMP_DEACTIVATION, err_id))
-	{
-	  er_dump_call_stack (er_Msglog_fh);
-	}
+      if (!sysprm_find_err_in_integer_list (PRM_ID_CALL_STACK_DUMP_DEACTIVATION, err_id))
+        {
+          er_dump_call_stack (er_Msglog_fh);
+        }
     }
   else
     {
-      if (sysprm_find_err_in_integer_list
-	  (PRM_ID_CALL_STACK_DUMP_ACTIVATION, err_id))
-	{
-	  er_dump_call_stack (er_Msglog_fh);
-	}
+      if (sysprm_find_err_in_integer_list (PRM_ID_CALL_STACK_DUMP_ACTIVATION, err_id))
+        {
+          er_dump_call_stack (er_Msglog_fh);
+        }
     }
 }
 
@@ -1203,8 +1168,7 @@ er_call_stack_dump_on_error (int severity, int err_id)
  * er_set_error_position -
  */
 int
-er_set_error_position (UNUSED_ARG const char *file_name,
-		       UNUSED_ARG int line_no)
+er_set_error_position (UNUSED_ARG const char *file_name, UNUSED_ARG int line_no)
 {
 #if defined (SERVER_MODE)
   THREAD_ENTRY *th_entry = thread_get_thread_entry_info ();
@@ -1245,8 +1209,7 @@ er_set_error_position (UNUSED_ARG const char *file_name,
  */
 static int
 er_set_internal (int severity, const char *file_name, const int line_no,
-		 int err_id, int num_args, bool include_os_error,
-		 FILE * fp, va_list * ap_ptr)
+                 int err_id, int num_args, bool include_os_error, FILE * fp, va_list * ap_ptr)
 {
   va_list ap;
   const char *os_error;
@@ -1272,7 +1235,7 @@ er_set_internal (int severity, const char *file_name, const int line_no,
       return ER_FAILED;
     }
 
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (err_id != ER_WS_CORRUPTED);
   assert (err_id != ER_LK_UNILATERALLY_ABORTED);
 //  assert (err_id != ER_SP_UNKNOWN_SLOTID); /* refer catalog_get_class_info */
@@ -1287,7 +1250,7 @@ er_set_internal (int severity, const char *file_name, const int line_no,
   {
     assert (thread_get_thread_entry_info () != NULL);
 
-#if 0				/* TODO - trace checkin failover */
+#if 0                           /* TODO - trace checkin failover */
     {
       LOG_TDES *tdes;
       const char *db_user;
@@ -1296,11 +1259,10 @@ er_set_internal (int severity, const char *file_name, const int line_no,
       db_user = logtb_find_current_client_name (th_entry);
 
       if (tdes != NULL && tdes->type != TRAN_TYPE_UNKNOWN
-	  && tdes->num_repl_records > 0
-	  && db_user != NULL && strcasecmp (db_user, "SHARD_MANAGEMENT") != 0)
-	{
-	  assert (err_id != ER_DB_NO_MODIFICATIONS);
-	}
+          && tdes->num_repl_records > 0 && db_user != NULL && strcasecmp (db_user, "SHARD_MANAGEMENT") != 0)
+        {
+          assert (err_id != ER_DB_NO_MODIFICATIONS);
+        }
     }
 #endif
   }
@@ -1314,8 +1276,7 @@ er_set_internal (int severity, const char *file_name, const int line_no,
 
   memcpy (&ap, ap_ptr, sizeof (ap));
 
-  if ((severity == ER_NOTIFICATION_SEVERITY && er_Msg->err_id != NO_ERROR)
-      || (er_Msg->err_id == ER_INTERRUPTED))
+  if ((severity == ER_NOTIFICATION_SEVERITY && er_Msg->err_id != NO_ERROR) || (er_Msg->err_id == ER_INTERRUPTED))
     {
       er_Msg = er_stack_push ();
       assert (er_Msg != NULL);
@@ -1345,8 +1306,8 @@ er_set_internal (int severity, const char *file_name, const int line_no,
 
   if (err_id >= ER_FAILED || err_id <= ER_LAST_ERROR)
     {
-      assert (0);		/* invalid error id */
-      err_id = ER_FAILED;	/* invalid error id handling */
+      assert (0);               /* invalid error id */
+      err_id = ER_FAILED;       /* invalid error id handling */
     }
 
   new_size = er_estimate_size (er_fmt, ap_ptr);
@@ -1384,34 +1345,34 @@ er_set_internal (int severity, const char *file_name, const int line_no,
   /* Call the logging function if any */
   if (severity <= prm_get_integer_value (PRM_ID_ER_LOG_LEVEL)
       && !(prm_get_bool_value (PRM_ID_ER_LOG_WARNING) == false
-	   && severity == ER_WARNING_SEVERITY) && er_Fnlog[severity] != NULL)
+           && severity == ER_WARNING_SEVERITY) && er_Fnlog[severity] != NULL)
     {
       r = ER_CSECT_ENTER_LOG_FILE ();
       if (r == NO_ERROR)
-	{
-	  (*er_Fnlog[severity]) (err_id);
+        {
+          (*er_Fnlog[severity]) (err_id);
 
-	  /* call stack dump */
-	  er_call_stack_dump_on_error (severity, err_id);
+          /* call stack dump */
+          er_call_stack_dump_on_error (severity, err_id);
 
-	  /* event handler */
-	  er_notify_event_on_error (err_id);
+          /* event handler */
+          er_notify_event_on_error (err_id);
 
-	  if (fp != NULL)
-	    {
-	      /* print file contents */
-	      if (fseek (fp, 0L, SEEK_SET) == 0)
-		{
-		  char buf[MAX_LINE];
-		  while (fgets (buf, MAX_LINE, fp) != NULL)
-		    {
-		      fprintf (er_Msglog_fh, "%s", buf);
-		    }
-		  (void) fflush (er_Msglog_fh);
-		}
-	    }
-	  ER_CSECT_EXIT_LOG_FILE ();
-	}
+          if (fp != NULL)
+            {
+              /* print file contents */
+              if (fseek (fp, 0L, SEEK_SET) == 0)
+                {
+                  char buf[MAX_LINE];
+                  while (fgets (buf, MAX_LINE, fp) != NULL)
+                    {
+                      fprintf (er_Msglog_fh, "%s", buf);
+                    }
+                  (void) fflush (er_Msglog_fh);
+                }
+            }
+          ER_CSECT_EXIT_LOG_FILE ();
+        }
     }
 
   /*
@@ -1430,9 +1391,9 @@ er_set_internal (int severity, const char *file_name, const int line_no,
       er_Msg->file_name = er_cached_msg[ER_ER_UNKNOWN_FILE];
       er_Msg->line_no = -1;
       if (er_Msg->msg_area != NULL)
-	{
-	  er_Msg->msg_area[0] = '\0';
-	}
+        {
+          er_Msg->msg_area[0] = '\0';
+        }
     }
 
 end:
@@ -1460,8 +1421,7 @@ er_stop_on_error (int err_id)
 
   assert (er_hasalready_initiated);
 
-  syslog (LOG_ALERT, er_cached_msg[ER_STOP_SYSLOG],
-	  rel_package_string (), err_id, cuserid (NULL), getpid ());
+  syslog (LOG_ALERT, er_cached_msg[ER_STOP_SYSLOG], rel_package_string (), err_id, cuserid (NULL), getpid ());
 
   (void) fprintf (stderr, "%s", er_cached_msg[ER_ER_ASK]);
   if (scanf ("%d", &exit_requested) != 1)
@@ -1522,27 +1482,26 @@ er_log (int err_id)
    * top if need be.
    */
 
-  if (*log_fh != stderr && *log_fh != stdout
-      && ftell (*log_fh) > prm_get_bigint_value (PRM_ID_ER_LOG_SIZE))
+  if (*log_fh != stderr && *log_fh != stdout && ftell (*log_fh) > prm_get_bigint_value (PRM_ID_ER_LOG_SIZE))
     {
       (void) fflush (*log_fh);
       (void) fprintf (*log_fh, "%s", er_cached_msg[ER_LOG_WRAPAROUND]);
 
       if (!er_isa_null_device)
-	{
-	  *log_fh = er_file_backup (*log_fh, log_file_name);
+        {
+          *log_fh = er_file_backup (*log_fh, log_file_name);
 
-	  if (*log_fh == NULL)
-	    {
-	      *log_fh = stderr;
-	      assert (false);
-	    }
-	}
+          if (*log_fh == NULL)
+            {
+              *log_fh = stderr;
+              assert (false);
+            }
+        }
       else
-	{
-	  /* Should be rewinded to avoid repeated limit check hitting */
-	  (void) fseek (*log_fh, 0L, SEEK_SET);
-	}
+        {
+          /* Should be rewinded to avoid repeated limit check hitting */
+          (void) fseek (*log_fh, 0L, SEEK_SET);
+        }
     }
 
   if (*log_fh == stderr || *log_fh == stdout)
@@ -1575,19 +1534,16 @@ er_log (int err_id)
       char *host_name = NULL;
       int pid = 0;
 
-      if (logtb_find_client_name_host_pid (tran_index, &prog_name,
-					   &user_name, &host_name,
-					   &pid) == NO_ERROR)
-	{
-	  ret = snprintf (more_info, sizeof (more_info),
-			  ", CLIENT = %s:%s(%d), EID = %u",
-			  host_name ? host_name : "unknown",
-			  prog_name ? prog_name : "unknown", pid, er_Eid);
-	  if (ret > 0)
-	    {
-	      more_info_p = &more_info[0];
-	    }
-	}
+      if (logtb_find_client_name_host_pid (tran_index, &prog_name, &user_name, &host_name, &pid) == NO_ERROR)
+        {
+          ret = snprintf (more_info, sizeof (more_info),
+                          ", CLIENT = %s:%s(%d), EID = %u",
+                          host_name ? host_name : "unknown", prog_name ? prog_name : "unknown", pid, er_Eid);
+          if (ret > 0)
+            {
+              more_info_p = &more_info[0];
+            }
+        }
 
     }
   while (0);
@@ -1606,23 +1562,21 @@ er_log (int err_id)
 #endif /* !SERVER_MODE */
 
   /* If file is not exist, it will recreate *log_fh file. */
-  if ((access (log_file_name, F_OK) == -1) && *log_fh != stderr
-      && *log_fh != stdout)
+  if ((access (log_file_name, F_OK) == -1) && *log_fh != stderr && *log_fh != stdout)
     {
       (void) fclose (*log_fh);
       *log_fh = er_file_open (log_file_name);
 
       if (*log_fh == NULL)
-	{
-	  *log_fh = stderr;
-	  assert (false);
-	}
+        {
+          *log_fh = stderr;
+          assert (false);
+        }
     }
 
   fprintf (*log_fh, er_cached_msg[ER_LOG_MSG_WRAPPER_D], time_array,
-	   ER_SEVERITY_STRING (severity), file_name, line_no,
-	   ER_ERROR_WARNING_STRING (severity), err_id, tran_index,
-	   more_info_p, msg);
+           ER_SEVERITY_STRING (severity), file_name, line_no,
+           ER_ERROR_WARNING_STRING (severity), err_id, tran_index, more_info_p, msg);
   fflush (*log_fh);
 
   /* Flush the message so it is printed immediately */
@@ -1641,28 +1595,28 @@ er_log (int err_id)
   if (severity == ER_FATAL_ERROR_SEVERITY)
     {
       switch (er_Exit_ask)
-	{
-	case ER_NEVER_EXIT:
-	  break;
+        {
+        case ER_NEVER_EXIT:
+          break;
 
-	case ER_EXIT_ASK:
+        case ER_EXIT_ASK:
 #if defined (NDEBUG)
-	  er_stop_on_error (err_id);
-	  break;
+          er_stop_on_error (err_id);
+          break;
 #endif /* NDEBUG */
 
-	case ER_EXIT_DONT_ASK:
-	  (void) fprintf (er_Msglog_fh, "%s", er_cached_msg[ER_ER_EXIT]);
-	  (void) fflush (er_Msglog_fh);
-	  er_stack_clearall ();
-	  er_clear ();
-	  exit (EXIT_FAILURE);
-	  break;
+        case ER_EXIT_DONT_ASK:
+          (void) fprintf (er_Msglog_fh, "%s", er_cached_msg[ER_ER_EXIT]);
+          (void) fflush (er_Msglog_fh);
+          er_stack_clearall ();
+          er_clear ();
+          exit (EXIT_FAILURE);
+          break;
 
-	default:
-	  assert (false);
-	  break;
-	}
+        default:
+          assert (false);
+          break;
+        }
     }
 }
 
@@ -1833,15 +1787,13 @@ er_has_error (void)
 
   severity = ((er_Msg != NULL) ? er_Msg->severity : ER_WARNING_SEVERITY);
 
-  if (severity == ER_FATAL_ERROR_SEVERITY || severity == ER_ERROR_SEVERITY
-      || severity == ER_SYNTAX_ERROR_SEVERITY)
+  if (severity == ER_FATAL_ERROR_SEVERITY || severity == ER_ERROR_SEVERITY || severity == ER_SYNTAX_ERROR_SEVERITY)
     {
       ret = true;
     }
   else
     {
-      assert (severity == ER_NOTIFICATION_SEVERITY
-	      || severity == ER_WARNING_SEVERITY);
+      assert (severity == ER_NOTIFICATION_SEVERITY || severity == ER_WARNING_SEVERITY);
       ret = false;
     }
 
@@ -1939,8 +1891,7 @@ er_msg ()
 
   if (!er_Msg->msg_area[0])
     {
-      strncpy (er_Msg->msg_area, er_cached_msg[ER_ER_MISSING_MSG],
-	       er_Msg->msg_area_size);
+      strncpy (er_Msg->msg_area, er_cached_msg[ER_ER_MISSING_MSG], er_Msg->msg_area_size);
       er_Msg->msg_area[er_Msg->msg_area_size - 1] = '\0';
     }
 
@@ -1960,8 +1911,7 @@ er_msg ()
  * Note:
  */
 void
-er_all (int *err_id, int *severity, int *n_levels, int *line_no,
-	const char **file_name, const char **error_msg)
+er_all (int *err_id, int *severity, int *n_levels, int *line_no, const char **file_name, const char **error_msg)
 {
   ER_MSG_INFO *er_Info = er_get_msg_info ();
   ER_MSG *er_Msg = NULL;
@@ -2024,8 +1974,8 @@ er_print (void)
 #endif /* !SERVER_MODE */
 
   fprintf (stdout, er_cached_msg[ER_LOG_MSG_WRAPPER_D], time_array,
-	   ER_SEVERITY_STRING (severity), file_name, line_no,
-	   ER_ERROR_WARNING_STRING (severity), err_id, tran_index, msg);
+           ER_SEVERITY_STRING (severity), file_name, line_no,
+           ER_ERROR_WARNING_STRING (severity), err_id, tran_index, msg);
   fflush (stdout);
 }
 #endif
@@ -2098,19 +2048,15 @@ _er_log_debug (const char *file_name, const int line_no, const char *fmt, ...)
 
 #if defined (SERVER_MODE)
       tran_index = logtb_get_current_tran_index (NULL);
-      logtb_find_client_name_host_pid (tran_index, &prog_name,
-				       &user_name, &host_name, &pid);
+      logtb_find_client_name_host_pid (tran_index, &prog_name, &user_name, &host_name, &pid);
       assert (prog_name != NULL && user_name != NULL && host_name != NULL);
-      snprintf (more_info, sizeof (more_info),
-		"CLIENT = %s:%s(%d), EID = %u", host_name, prog_name, pid,
-		er_Eid);
+      snprintf (more_info, sizeof (more_info), "CLIENT = %s:%s(%d), EID = %u", host_name, prog_name, pid, er_Eid);
 #else /* SERVER_MODE */
       tran_index = TM_TRAN_INDEX ();
       snprintf (more_info, sizeof (more_info), "EID = %u", er_Eid);
 #endif /* !SERVER_MODE */
 
-      fprintf (out, er_cached_msg[ER_LOG_DEBUG_NOTIFY], time_array,
-	       file_name, line_no, more_info);
+      fprintf (out, er_cached_msg[ER_LOG_DEBUG_NOTIFY], time_array, file_name, line_no, more_info);
     }
 
   /* Print out remainder of message */
@@ -2181,7 +2127,7 @@ er_get_area_error (void *buffer, int *length)
   ptr += OR_INT_SIZE;
   len -= OR_INT_SIZE * 3;
   strncpy (ptr, msg, --len /* <= strlen(msg) */ );
-  *(ptr + len) = '\0';		/* bullet proofing */
+  *(ptr + len) = '\0';          /* bullet proofing */
 
   return buffer;
 }
@@ -2248,14 +2194,14 @@ er_set_area_error (void *server_area)
   /* Call the logging function if any */
   if (severity <= prm_get_integer_value (PRM_ID_ER_LOG_LEVEL)
       && !(prm_get_bool_value (PRM_ID_ER_LOG_WARNING) == false
-	   && severity == ER_WARNING_SEVERITY) && er_Fnlog[severity] != NULL)
+           && severity == ER_WARNING_SEVERITY) && er_Fnlog[severity] != NULL)
     {
       r = ER_CSECT_ENTER_LOG_FILE ();
       if (r == NO_ERROR)
-	{
-	  (*er_Fnlog[severity]) (err_id);
-	  ER_CSECT_EXIT_LOG_FILE ();
-	}
+        {
+          (*er_Fnlog[severity]) (err_id);
+          ER_CSECT_EXIT_LOG_FILE ();
+        }
     }
 
   return er_Msg->err_id;
@@ -2432,25 +2378,25 @@ er_stack_clearall (void)
       er_Info = er_get_msg_info ();
       assert (er_Info != NULL);
       if (er_Info == NULL)
-	{
-	  return;
-	}
+        {
+          return;
+        }
 
       er_Msg = er_Info->top;
       assert (er_Msg != NULL);
       if (er_Msg == NULL)
-	{
-	  return;
-	}
+        {
+          return;
+        }
 
       while (er_Msg->stack != NULL)
-	{
-	  er_stack_clear ();
+        {
+          er_stack_clear ();
 
-	  /* reload */
-	  er_Msg = er_Info->top;
-	  assert (er_Msg != NULL);
-	}
+          /* reload */
+          er_Msg = er_Info->top;
+          assert (er_Msg != NULL);
+        }
     }
 }
 
@@ -2492,8 +2438,7 @@ er_la_ignore_on_error (int errid)
  *	 buffers to record that info.
  */
 static int
-er_study_spec (const char *conversion_spec, char *simple_spec,
-	       int *position, int *width, int *va_class)
+er_study_spec (const char *conversion_spec, char *simple_spec, int *position, int *width, int *va_class)
 {
   char *p;
   const char *q;
@@ -2539,29 +2484,29 @@ er_study_spec (const char *conversion_spec, char *simple_spec,
       q++;
 
       if (n)
-	{
-	  *position = n;
-	}
+        {
+          *position = n;
+        }
       p = &simple_spec[1];
 
       /*
        * Look for flags again...
        */
       while (*q == '-' || *q == '+' || *q == ' ' || *q == '#')
-	{
-	  *p++ = *q++;
-	}
+        {
+          *p++ = *q++;
+        }
 
       /*
        * And then look for a width specifier...
        */
       n = 0;
       while (char_isdigit (*q))
-	{
-	  n *= 10;
-	  n += (*q) - '0';
-	  *p++ = *q++;
-	}
+        {
+          n *= 10;
+          n += (*q) - '0';
+          *p++ = *q++;
+        }
       *width = n;
     }
 
@@ -2572,9 +2517,9 @@ er_study_spec (const char *conversion_spec, char *simple_spec,
     {
       *p++ = *q++;
       while (char_isdigit (*q))
-	{
-	  *p++ = *q++;
-	}
+        {
+          *p++ = *q++;
+        }
     }
 
   /*
@@ -2607,34 +2552,34 @@ er_study_spec (const char *conversion_spec, char *simple_spec,
   if (class_ == 0)
     {
       switch (code)
-	{
-	case 'c':
-	case 'd':
-	case 'i':
-	case 'o':
-	case 'u':
-	case 'x':
-	case 'X':
-	  class_ = 'i';
-	  break;
-	case 'p':
-	  class_ = 'p';
-	  break;
-	case 'e':
-	case 'f':
-	case 'g':
-	case 'E':
-	case 'F':
-	case 'G':
-	  class_ = 'f';
-	  break;
-	case 's':
-	  class_ = 's';
-	  break;
-	default:
-	  assert (false);
-	  break;
-	}
+        {
+        case 'c':
+        case 'd':
+        case 'i':
+        case 'o':
+        case 'u':
+        case 'x':
+        case 'X':
+          class_ = 'i';
+          break;
+        case 'p':
+          class_ = 'p';
+          break;
+        case 'e':
+        case 'f':
+        case 'g':
+        case 'E':
+        case 'F':
+        case 'G':
+          class_ = 'f';
+          break;
+        case 's':
+          class_ = 's';
+          break;
+        default:
+          assert (false);
+          break;
+        }
     }
   *va_class = class_;
 
@@ -2663,56 +2608,56 @@ er_study_fmt (ER_FMT * fmt)
   for (p = strchr (fmt->fmt, '%'); p; p = strchr (p, '%'))
     {
       if (p[1] == '%')
-	{			/* " ...%%..." ??? */
-	  p += 1;
-	}
+        {                       /* " ...%%..." ??? */
+          p += 1;
+        }
       else
-	{
-	  /*
-	   * Set up the position parameter off by one so that we can
-	   * decrement it without checking later.
-	   */
-	  n = ++fmt->nspecs;
-	  width = 0;
-	  va_class = 0;
+        {
+          /*
+           * Set up the position parameter off by one so that we can
+           * decrement it without checking later.
+           */
+          n = ++fmt->nspecs;
+          width = 0;
+          va_class = 0;
 
-	  p += er_study_spec (&p[1], buf, &n, &width, &va_class);
+          p += er_study_spec (&p[1], buf, &n, &width, &va_class);
 
-	  /*
-	   * 'n' may have been modified by er_study_spec() if we ran
-	   * into a conversion spec with a positional component (e.g.,
-	   * %3$d).
-	   */
-	  n -= 1;
+          /*
+           * 'n' may have been modified by er_study_spec() if we ran
+           * into a conversion spec with a positional component (e.g.,
+           * %3$d).
+           */
+          n -= 1;
 
-	  if (n >= fmt->spec_top)
-	    {
-	      ER_SPEC *new_spec;
-	      int size;
+          if (n >= fmt->spec_top)
+            {
+              ER_SPEC *new_spec;
+              int size;
 
-	      /*
-	       * Grow the conversion spec array.
-	       */
-	      size = (n + 1) * sizeof (ER_SPEC);
-	      new_spec = (ER_SPEC *) malloc (size);
-	      if (new_spec == NULL)
-		{
-		  assert (false);
-		  return;
-		}
-	      memcpy (new_spec, fmt->spec, fmt->spec_top * sizeof (ER_SPEC));
-	      if (fmt->spec != fmt->spec_buf)
-		{
-		  free_and_init (fmt->spec);
-		}
-	      fmt->spec = new_spec;
-	      fmt->spec_top = (n + 1);
-	    }
+              /*
+               * Grow the conversion spec array.
+               */
+              size = (n + 1) * sizeof (ER_SPEC);
+              new_spec = (ER_SPEC *) malloc (size);
+              if (new_spec == NULL)
+                {
+                  assert (false);
+                  return;
+                }
+              memcpy (new_spec, fmt->spec, fmt->spec_top * sizeof (ER_SPEC));
+              if (fmt->spec != fmt->spec_buf)
+                {
+                  free_and_init (fmt->spec);
+                }
+              fmt->spec = new_spec;
+              fmt->spec_top = (n + 1);
+            }
 
-	  strcpy (fmt->spec[n].spec, buf);
-	  fmt->spec[n].code = va_class;
-	  fmt->spec[n].width = width;
-	}
+          strcpy (fmt->spec[n].spec, buf);
+          fmt->spec[n].code = va_class;
+          fmt->spec[n].width = width;
+        }
     }
 
   /*
@@ -2726,16 +2671,16 @@ er_study_fmt (ER_FMT * fmt)
   for (i = 0; i < fmt->nspecs; i++)
     {
       if (fmt->spec[i].code == 0)
-	{
-	  int code;
+        {
+          int code;
 
-	  code = fmt->err_id;
+          code = fmt->err_id;
 #if 0
-	  assert (false);
+          assert (false);
 #endif
-	  er_internal_msg (fmt, code, ER_ER_SUBSTITUTE_MSG);
-	  break;
-	}
+          er_internal_msg (fmt, code, ER_ER_SUBSTITUTE_MSG);
+          break;
+        }
     }
 }
 
@@ -2783,48 +2728,48 @@ er_estimate_size (ER_FMT * fmt, va_list * ap)
   for (i = 0; i < fmt->nspecs; i++)
     {
       switch (fmt->spec[i].code)
-	{
-	case 'i':
-	  (void) va_arg (args, int);
-	  n = MAX_INT_WIDTH;
-	  break;
+        {
+        case 'i':
+          (void) va_arg (args, int);
+          n = MAX_INT_WIDTH;
+          break;
 
-	case SPEC_CODE_LONGLONG:
-	  (void) va_arg (args, long long int);
-	  n = MAX_INT_WIDTH;
-	  break;
+        case SPEC_CODE_LONGLONG:
+          (void) va_arg (args, long long int);
+          n = MAX_INT_WIDTH;
+          break;
 
-	case 'p':
-	  (void) va_arg (args, void *);
-	  n = MAX_INT_WIDTH;
-	  break;
+        case 'p':
+          (void) va_arg (args, void *);
+          n = MAX_INT_WIDTH;
+          break;
 
-	case 'f':
-	  (void) va_arg (args, double);
-	  n = MAX_DOUBLE_WIDTH;
-	  break;
+        case 'f':
+          (void) va_arg (args, double);
+          n = MAX_DOUBLE_WIDTH;
+          break;
 
-	case 'L':
-	  (void) va_arg (args, long double);
-	  n = MAX_DOUBLE_WIDTH;
-	  break;
+        case 'L':
+          (void) va_arg (args, long double);
+          n = MAX_DOUBLE_WIDTH;
+          break;
 
-	case 's':
-	  str = va_arg (args, char *);
-	  if (str == NULL)
-	    str = "(null)";
-	  n = strlen (str);
-	  break;
+        case 's':
+          str = va_arg (args, char *);
+          if (str == NULL)
+            str = "(null)";
+          n = strlen (str);
+          break;
 
-	default:
-	  assert (false);
-	  /*
-	   * Pray for protection...  We really shouldn't be able to get
-	   * here, since er_study_fmt() should protect us from it.
-	   */
-	  n = MAX_DOUBLE_WIDTH;
-	  break;
-	}
+        default:
+          assert (false);
+          /*
+           * Pray for protection...  We really shouldn't be able to get
+           * here, since er_study_fmt() should protect us from it.
+           */
+          n = MAX_DOUBLE_WIDTH;
+          break;
+        }
       width = fmt->spec[i].width;
       len += MAX (width, n);
     }
@@ -2864,9 +2809,9 @@ er_find_fmt (int err_id, int num_args)
     {
       r = csect_enter (NULL, CSECT_ER_MSG_CACHE, INF_WAIT);
       if (r != NO_ERROR)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       entered_critical_section = true;
     }
 
@@ -2876,32 +2821,32 @@ er_find_fmt (int err_id, int num_args)
 
       msg = msgcat_message (MSGCAT_CATALOG_RYE, MSGCAT_SET_ERROR, -err_id);
       if (msg == NULL || msg[0] == '\0')
-	{
-	  assert (false);
+        {
+          assert (false);
 
-	  msg = er_cached_msg[ER_ER_MISSING_MSG];
-	}
+          msg = er_cached_msg[ER_ER_MISSING_MSG];
+        }
 
       fmt = er_create_fmt_msg (fmt, err_id, msg);
 
       if (fmt != NULL)
-	{
-	  /*
-	   * Be sure that we have the same number of arguments before calling
-	   * er_estimate_size().  Because it uses straight va_arg() and friends
-	   * to grab its arguments, it is vulnerable to argument mismatches
-	   * (e.g., too few arguments, ints in string positions, etc).  This
-	   * won't save us when someone passes an integer argument where the
-	   * format says to expect a string, but it will save us if someone
-	   * just plain forgets how many args there are.
-	   */
-	  if (fmt->nspecs != num_args)
-	    {
-	      assert (false);
+        {
+          /*
+           * Be sure that we have the same number of arguments before calling
+           * er_estimate_size().  Because it uses straight va_arg() and friends
+           * to grab its arguments, it is vulnerable to argument mismatches
+           * (e.g., too few arguments, ints in string positions, etc).  This
+           * won't save us when someone passes an integer argument where the
+           * format says to expect a string, but it will save us if someone
+           * just plain forgets how many args there are.
+           */
+          if (fmt->nspecs != num_args)
+            {
+              assert (false);
 
-	      er_internal_msg (fmt, err_id, ER_ER_SUBSTITUTE_MSG);
-	    }
-	}
+              er_internal_msg (fmt, err_id, ER_ER_SUBSTITUTE_MSG);
+            }
+        }
       er_Fmt_msg_fail_count--;
     }
 
@@ -3033,18 +2978,18 @@ er_make_room (int size)
   if (er_Msg->msg_area_size < size)
     {
       if (er_Msg->msg_area)
-	{
-	  free_and_init (er_Msg->msg_area);
-	}
+        {
+          free_and_init (er_Msg->msg_area);
+        }
 
       er_Msg->msg_area_size = size;
       er_Msg->msg_area = (char *) malloc (size);
       if (er_Msg->msg_area == NULL)
-	{
-	  assert (false);
-	  er_Msg->msg_area_size = 0;
-	  return ER_FAILED;
-	}
+        {
+          assert (false);
+          er_Msg->msg_area_size = 0;
+          return ER_FAILED;
+        }
     }
 
   return NO_ERROR;
@@ -3059,10 +3004,10 @@ er_make_room (int size)
 static int
 er_vsprintf (ER_FMT * fmt, va_list * ap)
 {
-  const char *p;		/* The start of the current non-spec part of fmt */
-  const char *q;		/* The start of the next conversion spec        */
-  char *s;			/* The end of the valid part of er_Msg->msg_area */
-  int n;			/* The va_list position of the current arg      */
+  const char *p;                /* The start of the current non-spec part of fmt */
+  const char *q;                /* The start of the next conversion spec        */
+  char *s;                      /* The end of the valid part of er_Msg->msg_area */
+  int n;                        /* The va_list position of the current arg      */
   int i;
   va_list args;
   ER_MSG_INFO *er_Info = er_get_msg_info ();
@@ -3098,8 +3043,7 @@ er_vsprintf (ER_FMT * fmt, va_list * ap)
    */
   if (fmt == NULL || fmt->fmt == NULL)
     {
-      strncpy (er_Msg->msg_area, er_cached_msg[ER_ER_SUBSTITUTE_MSG],
-	       er_Msg->msg_area_size);
+      strncpy (er_Msg->msg_area, er_cached_msg[ER_ER_SUBSTITUTE_MSG], er_Msg->msg_area_size);
       return ER_FAILED;
     }
 
@@ -3118,16 +3062,16 @@ er_vsprintf (ER_FMT * fmt, va_list * ap)
       int size;
 
       if (er_Msg->args)
-	{
-	  free_and_init (er_Msg->args);
-	}
+        {
+          free_and_init (er_Msg->args);
+        }
       size = fmt->nspecs * sizeof (ER_VA_ARG);
       er_Msg->args = (ER_VA_ARG *) malloc (size);
       if (er_Msg->args == NULL)
-	{
-	  assert (false);
-	  return ER_FAILED;
-	}
+        {
+          assert (false);
+          return ER_FAILED;
+        }
       er_Msg->nargs = fmt->nspecs;
     }
 
@@ -3139,33 +3083,33 @@ er_vsprintf (ER_FMT * fmt, va_list * ap)
   for (i = 0; i < fmt->nspecs; i++)
     {
       switch (fmt->spec[i].code)
-	{
-	case 'i':
-	  er_Msg->args[i].int_value = va_arg (args, int);
-	  break;
-	case SPEC_CODE_LONGLONG:
-	  er_Msg->args[i].longlong_value = va_arg (args, long long);
-	  break;
-	case 'p':
-	  er_Msg->args[i].pointer_value = va_arg (args, void *);
-	  break;
-	case 'f':
-	  er_Msg->args[i].double_value = va_arg (args, double);
-	  break;
-	case 'L':
-	  er_Msg->args[i].longdouble_value = va_arg (args, long double);
-	  break;
-	case 's':
-	  er_Msg->args[i].string_value = va_arg (args, char *);
-	  if (er_Msg->args[i].string_value == NULL)
-	    {
-	      er_Msg->args[i].string_value = "(null)";
-	    }
-	  break;
-	default:
-	  assert (false);
-	  return ER_FAILED;
-	}
+        {
+        case 'i':
+          er_Msg->args[i].int_value = va_arg (args, int);
+          break;
+        case SPEC_CODE_LONGLONG:
+          er_Msg->args[i].longlong_value = va_arg (args, long long);
+          break;
+        case 'p':
+          er_Msg->args[i].pointer_value = va_arg (args, void *);
+          break;
+        case 'f':
+          er_Msg->args[i].double_value = va_arg (args, double);
+          break;
+        case 'L':
+          er_Msg->args[i].longdouble_value = va_arg (args, long double);
+          break;
+        case 's':
+          er_Msg->args[i].string_value = va_arg (args, char *);
+          if (er_Msg->args[i].string_value == NULL)
+            {
+              er_Msg->args[i].string_value = "(null)";
+            }
+          break;
+        default:
+          assert (false);
+          return ER_FAILED;
+        }
     }
 
   /*
@@ -3193,12 +3137,12 @@ er_vsprintf (ER_FMT * fmt, va_list * ap)
       q += 1;
 
       if (q[0] == '%')
-	{
-	  *s++ = '%';
-	  p = q + 2;
-	  i += 1;
-	  continue;
-	}
+        {
+          *s++ = '%';
+          p = q + 2;
+          i += 1;
+          continue;
+        }
 
       /*
        * See if we've got a position specifier; it will look like a
@@ -3209,11 +3153,11 @@ er_vsprintf (ER_FMT * fmt, va_list * ap)
        */
       n = 0;
       while (char_isdigit (*q))
-	{
-	  n *= 10;
-	  n += (*q) - '0';
-	  q += 1;
-	}
+        {
+          n *= 10;
+          n += (*q) - '0';
+          q += 1;
+        }
       n = (*q == '$' && n) ? (n - 1) : i;
 
       /*
@@ -3221,31 +3165,31 @@ er_vsprintf (ER_FMT * fmt, va_list * ap)
        * (non-positional) conversion spec that we produced earlier.
        */
       switch (fmt->spec[n].code)
-	{
-	case 'i':
-	  sprintf (s, fmt->spec[n].spec, er_Msg->args[n].int_value);
-	  break;
-	case SPEC_CODE_LONGLONG:
-	  sprintf (s, fmt->spec[n].spec, er_Msg->args[n].longlong_value);
-	  break;
-	case 'p':
-	  sprintf (s, fmt->spec[n].spec, er_Msg->args[n].pointer_value);
-	  break;
-	case 'f':
-	  sprintf (s, fmt->spec[n].spec, er_Msg->args[n].double_value);
-	  break;
-	case 'L':
-	  sprintf (s, fmt->spec[n].spec, er_Msg->args[n].longdouble_value);
-	  break;
-	case 's':
-	  sprintf (s, fmt->spec[n].spec, er_Msg->args[n].string_value);
-	  break;
-	default:
-	  /*
-	   * Can't get here.
-	   */
-	  break;
-	}
+        {
+        case 'i':
+          sprintf (s, fmt->spec[n].spec, er_Msg->args[n].int_value);
+          break;
+        case SPEC_CODE_LONGLONG:
+          sprintf (s, fmt->spec[n].spec, er_Msg->args[n].longlong_value);
+          break;
+        case 'p':
+          sprintf (s, fmt->spec[n].spec, er_Msg->args[n].pointer_value);
+          break;
+        case 'f':
+          sprintf (s, fmt->spec[n].spec, er_Msg->args[n].double_value);
+          break;
+        case 'L':
+          sprintf (s, fmt->spec[n].spec, er_Msg->args[n].longdouble_value);
+          break;
+        case 's':
+          sprintf (s, fmt->spec[n].spec, er_Msg->args[n].string_value);
+          break;
+        default:
+          /*
+           * Can't get here.
+           */
+          break;
+        }
 
       /*
        * Advance the pointers.  The conversion spec has to end with one
@@ -3301,13 +3245,13 @@ er_datetime (struct timeval *tv_p, char *tmbuf, int tmbuf_size)
   if (tmbuf == NULL || tmbuf_size < 256)
     {
       assert (false);
-      return -1;		/* error */
+      return -1;                /* error */
     }
 
   if (tv_p == NULL)
     {
       tv_p = &tv;
-      gettimeofday (tv_p, NULL);	/* get current time */
+      gettimeofday (tv_p, NULL);        /* get current time */
     }
 
   tm_p = localtime_r (&(tv_p->tv_sec), &tm);
@@ -3319,10 +3263,8 @@ er_datetime (struct timeval *tv_p, char *tmbuf, int tmbuf_size)
   else
     {
       len = snprintf (tmbuf, tmbuf_size - 1, "%d-%02d-%02d %02d:%02d:%02d",
-		      tm_p->tm_year + 1900, tm_p->tm_mon + 1, tm_p->tm_mday,
-		      tm_p->tm_hour, tm_p->tm_min, tm_p->tm_sec);
-      len += snprintf (tmbuf + len, tmbuf_size - 1 - len, ".%03ld",
-		       tv_p->tv_usec / 1000);
+                      tm_p->tm_year + 1900, tm_p->tm_mon + 1, tm_p->tm_mday, tm_p->tm_hour, tm_p->tm_min, tm_p->tm_sec);
+      len += snprintf (tmbuf + len, tmbuf_size - 1 - len, ".%03ld", tv_p->tv_usec / 1000);
     }
 
   assert (len == strlen (RYE_ZERO_TM));

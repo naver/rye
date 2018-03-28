@@ -39,66 +39,30 @@ typedef enum
 
 typedef FN_RETURN (*T_SERVER_FUNC) (int, void **, T_NET_BUF *, T_REQ_INFO *);
 
-extern FN_RETURN fn_end_tran (int argc, void **argv,
-			      T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_end_tran (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
 
-extern FN_RETURN fn_prepare (int argc, void **argv,
-			     T_NET_BUF * net_buf, T_REQ_INFO * req_info);
-extern FN_RETURN fn_execute (int argc, void **argv,
-			     T_NET_BUF * net_buf, T_REQ_INFO * req_info);
-extern FN_RETURN fn_get_db_parameter (int argc, void **argv,
-				      T_NET_BUF * net_buf,
-				      T_REQ_INFO * req_info);
-extern FN_RETURN fn_close_req_handle (int argc, void **argv,
-				      T_NET_BUF * net_buf,
-				      T_REQ_INFO * req_info);
-extern FN_RETURN fn_fetch (int argc, void **argv,
-			   T_NET_BUF * net_buf, T_REQ_INFO * req_info);
-extern FN_RETURN fn_schema_info (int argc, void **argv,
-				 T_NET_BUF * net_buf, T_REQ_INFO * req_info);
-extern FN_RETURN fn_get_db_version (int argc, void **argv,
-				    T_NET_BUF * net_buf,
-				    T_REQ_INFO * req_info);
-extern FN_RETURN fn_execute_batch (int argc, void **argv,
-				   T_NET_BUF * net_buf,
-				   T_REQ_INFO * req_info);
-extern FN_RETURN fn_con_close (int argc, void **argv,
-			       T_NET_BUF * net_buf, T_REQ_INFO * req_info);
-extern FN_RETURN fn_check_cas (int argc, void **argv,
-			       T_NET_BUF * net_buf, T_REQ_INFO * req_info);
-extern FN_RETURN fn_get_class_num_objs (int argc, void **argv,
-					T_NET_BUF * net_buf,
-					T_REQ_INFO * req_info);
-extern FN_RETURN fn_cursor_close (int argc, void **argv,
-				  T_NET_BUF * net_buf, T_REQ_INFO * req_info);
-extern FN_RETURN fn_get_query_plan (int argc, void **argv,
-				    T_NET_BUF * net_buf,
-				    T_REQ_INFO * req_info);
-extern FN_RETURN fn_server_mode (int argc, void **argv,
-				 T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_prepare (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_execute (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_get_db_parameter (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_close_req_handle (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_fetch (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_schema_info (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_get_db_version (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_execute_batch (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_con_close (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_check_cas (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_get_class_num_objs (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_cursor_close (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_server_mode (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
 
-extern FN_RETURN fn_change_dbuser (int argc,
-				   void **argv, T_NET_BUF * net_buf,
-				   T_REQ_INFO * req_info);
-extern FN_RETURN fn_update_group_id (int argc, void **argv,
-				     T_NET_BUF * net_buf,
-				     T_REQ_INFO * req_info);
-extern FN_RETURN fn_insert_gid_removed_info (int argc, void **argv,
-					     T_NET_BUF * net_buf,
-					     T_REQ_INFO * req_info);
-extern FN_RETURN fn_delete_gid_removed_info (int argc, void **argv,
-					     T_NET_BUF * net_buf,
-					     T_REQ_INFO * req_info);
-extern FN_RETURN fn_delete_gid_skey_info (int argc, void **argv,
-					  T_NET_BUF * net_buf,
-					  T_REQ_INFO * req_info);
-extern FN_RETURN fn_block_globl_dml (int argc, void **argv,
-				     T_NET_BUF * net_buf,
-				     T_REQ_INFO * req_info);
-extern FN_RETURN fn_send_repl_data (int argc, void **argv,
-				    T_NET_BUF * net_buf,
-				    T_REQ_INFO * req_info);
+extern FN_RETURN fn_change_dbuser (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_update_group_id (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_insert_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_delete_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_delete_gid_skey_info (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_block_globl_dml (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
+extern FN_RETURN fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
 extern FN_RETURN fn_notify_ha_agent_state (int argc, void **argv,
-					   T_NET_BUF * net_buf,
-					   UNUSED_ARG T_REQ_INFO * req_info);
+                                           T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info);
 #endif /* _CAS_FUNCTION_H_ */

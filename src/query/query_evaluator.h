@@ -39,18 +39,18 @@
 #include "regex38a.h"
 #include "binaryheap.h"
 
-typedef struct qproc_db_value_list *QPROC_DB_VALUE_LIST;	/* TODO */
+typedef struct qproc_db_value_list *QPROC_DB_VALUE_LIST;        /* TODO */
 struct qproc_db_value_list
 {
   QPROC_DB_VALUE_LIST next;
   DB_VALUE *val;
 };
 
-typedef struct val_list_node VAL_LIST;	/* value list */
+typedef struct val_list_node VAL_LIST;  /* value list */
 struct val_list_node
 {
-  QPROC_DB_VALUE_LIST valp;	/* first value node */
-  int val_cnt;			/* value count */
+  QPROC_DB_VALUE_LIST valp;     /* first value node */
+  int val_cnt;                  /* value count */
 };
 
 typedef enum
@@ -69,7 +69,7 @@ typedef enum
   PT_GENERIC,
 
 /* from here down are function code common to parser and xasl */
-  F_TOP_TABLE_FUNC,		/* internal use only */
+  F_TOP_TABLE_FUNC,             /* internal use only */
   F_IDXKEY,
 
 /* "normal" functions, arguments are values */
@@ -82,40 +82,40 @@ typedef enum
 /* type definitions for predicate evaluation */
 typedef enum
 {
-  Q_DISTINCT,			/* no duplicate values */
-  Q_ALL				/* all values */
+  Q_DISTINCT,                   /* no duplicate values */
+  Q_ALL                         /* all values */
 } QUERY_OPTIONS;
 
 typedef enum
 {
   /* types used by both XASL interpreter and regulator */
-  TYPE_DBVAL,			/* use dbval */
-  TYPE_CONSTANT,		/* use varptr */
-  TYPE_ORDERBY_NUM,		/* to be updated by orderby_num() in output
-				   list; act same as TYPE_CONSTANT */
-  TYPE_INARITH,			/* use arithptr */
-  TYPE_OUTARITH,		/* use arithptr */
-  TYPE_ATTR_ID,			/* use attr_descr */
-  TYPE_POSITION,		/* use pos_descr */
-  TYPE_LIST_ID,			/* use srlist_id */
-  TYPE_POS_VALUE,		/* use val_pos for host variable references */
-  TYPE_OID,			/* does not have corresponding field
-				   use current object identifier value */
-  TYPE_FUNC			/* use funcp */
+  TYPE_DBVAL,                   /* use dbval */
+  TYPE_CONSTANT,                /* use varptr */
+  TYPE_ORDERBY_NUM,             /* to be updated by orderby_num() in output
+                                   list; act same as TYPE_CONSTANT */
+  TYPE_INARITH,                 /* use arithptr */
+  TYPE_OUTARITH,                /* use arithptr */
+  TYPE_ATTR_ID,                 /* use attr_descr */
+  TYPE_POSITION,                /* use pos_descr */
+  TYPE_LIST_ID,                 /* use srlist_id */
+  TYPE_POS_VALUE,               /* use val_pos for host variable references */
+  TYPE_OID,                     /* does not have corresponding field
+                                   use current object identifier value */
+  TYPE_FUNC                     /* use funcp */
 } REGU_DATATYPE;
 
 /* regu variable flags */
-#define REGU_VARIABLE_HIDDEN_COLUMN       0x01	/* does not go to list file */
-#define REGU_VARIABLE_FIELD_COMPARE       0x02	/* for FIELD function, marks the
-						   bottom of regu tree */
-#define REGU_VARIABLE_FIELD_NESTED        0x04	/* for FIELD function, reguvar
-						   is child in T_FIELD tree */
+#define REGU_VARIABLE_HIDDEN_COLUMN       0x01  /* does not go to list file */
+#define REGU_VARIABLE_FIELD_COMPARE       0x02  /* for FIELD function, marks the
+                                                   bottom of regu tree */
+#define REGU_VARIABLE_FIELD_NESTED        0x04  /* for FIELD function, reguvar
+                                                   is child in T_FIELD tree */
 #if 0
-#define REGU_VARIABLE_FLAG_RESERVED_01    0x08	/* not used - reserved */
-#define REGU_VARIABLE_FLAG_RESERVED_02    0x10	/* not used - reserved */
+#define REGU_VARIABLE_FLAG_RESERVED_01    0x08  /* not used - reserved */
+#define REGU_VARIABLE_FLAG_RESERVED_02    0x10  /* not used - reserved */
 #endif
-#define REGU_VARIABLE_FETCH_ALL_CONST     0x20	/* is all constant */
-#define REGU_VARIABLE_FETCH_NOT_CONST     0x40	/* is not constant */
+#define REGU_VARIABLE_FETCH_ALL_CONST     0x20  /* is all constant */
+#define REGU_VARIABLE_FETCH_NOT_CONST     0x40  /* is not constant */
 
 #define REGU_VARIABLE_IS_FLAGED(e, f)    ((e)->flags & (short) (f))
 #define REGU_VARIABLE_SET_FLAG(e, f)     (e)->flags |= (short) (f)
@@ -125,47 +125,47 @@ typedef struct regu_variable_node REGU_VARIABLE;
 struct regu_variable_node
 {
   REGU_DATATYPE type;
-  int flags;			/* flags */
-  DB_VALUE *vfetch_to;		/* src db_value to fetch into in qp_fetchvlist */
-  struct xasl_node *xasl;	/* query xasl pointer */
+  int flags;                    /* flags */
+  DB_VALUE *vfetch_to;          /* src db_value to fetch into in qp_fetchvlist */
+  struct xasl_node *xasl;       /* query xasl pointer */
   union regu_data_value
   {
     /* fields used by both XASL interpreter and regulator */
-    DB_VALUE dbval;		/* for DB_VALUE values */
-    DB_VALUE *dbvalptr;		/* for constant values */
-    struct arith_list_node *arithptr;	/* arithmetic expression */
-    struct aggregate_list_node *aggptr;	/* aggregate expression */
-    ATTR_DESCR attr_descr;	/* attribute information */
-    QFILE_TUPLE_VALUE_POSITION pos_descr;	/* list file columns */
-    QFILE_SORTED_LIST_ID *srlist_id;	/* sorted list identifier for subquery results */
-    int val_pos;		/* host variable references */
-    struct function_node *funcp;	/* function */
-    struct regu_variable_list_node *regu_var_list;	/* for CUME_DIST and PERCENT_RANK */
+    DB_VALUE dbval;             /* for DB_VALUE values */
+    DB_VALUE *dbvalptr;         /* for constant values */
+    struct arith_list_node *arithptr;   /* arithmetic expression */
+    struct aggregate_list_node *aggptr; /* aggregate expression */
+    ATTR_DESCR attr_descr;      /* attribute information */
+    QFILE_TUPLE_VALUE_POSITION pos_descr;       /* list file columns */
+    QFILE_SORTED_LIST_ID *srlist_id;    /* sorted list identifier for subquery results */
+    int val_pos;                /* host variable references */
+    struct function_node *funcp;        /* function */
+    struct regu_variable_list_node *regu_var_list;      /* for CUME_DIST and PERCENT_RANK */
   } value;
 };
 
 #define REGU_VARIABLE_XASL(r)      ((r)->xasl)
 
-typedef struct regu_variable_list_node *REGU_VARIABLE_LIST;	/* TODO */
+typedef struct regu_variable_list_node *REGU_VARIABLE_LIST;     /* TODO */
 struct regu_variable_list_node
 {
-  REGU_VARIABLE_LIST next;	/* Next node */
-  REGU_VARIABLE value;		/* Regulator variable */
+  REGU_VARIABLE_LIST next;      /* Next node */
+  REGU_VARIABLE value;          /* Regulator variable */
 };
 
 typedef struct valptr_list_node VALPTR_LIST;
 typedef struct valptr_list_node OUTPTR_LIST;
 struct valptr_list_node
 {
-  REGU_VARIABLE_LIST valptrp;	/* value pointer list */
-  int valptr_cnt;		/* value count */
+  REGU_VARIABLE_LIST valptrp;   /* value pointer list */
+  int valptr_cnt;               /* value count */
 };
 
-typedef struct regu_ptr_list_node *REGU_PTR_LIST;	/* TODO */
+typedef struct regu_ptr_list_node *REGU_PTR_LIST;       /* TODO */
 struct regu_ptr_list_node
 {
-  REGU_PTR_LIST next;		/* Next node */
-  REGU_VARIABLE *var_p;		/* Regulator variable pointer */
+  REGU_PTR_LIST next;           /* Next node */
+  REGU_VARIABLE *var_p;         /* Regulator variable pointer */
 };
 
 typedef enum
@@ -325,58 +325,58 @@ typedef enum
   T_SHA_TWO,
   T_TO_BASE64,
   T_FROM_BASE64
-} OPERATOR_TYPE;		/* arithmetic operator types */
+} OPERATOR_TYPE;                /* arithmetic operator types */
 
 typedef struct pred_expr PRED_EXPR;
 
 typedef struct arith_list_node ARITH_TYPE;
 struct arith_list_node
 {
-  DB_VALUE *value;		/* value of the subtree */
-  REGU_VARIABLE *leftptr;	/* left operand */
-  REGU_VARIABLE *rightptr;	/* right operand */
-  REGU_VARIABLE *thirdptr;	/* third operand */
-  OPERATOR_TYPE opcode;		/* operator value */
-  MISC_OPERAND misc_operand;	/* currently used for trim qualifier
-				 * and datetime extract field specifier */
-  PRED_EXPR *pred;		/* predicate expression */
+  DB_VALUE *value;              /* value of the subtree */
+  REGU_VARIABLE *leftptr;       /* left operand */
+  REGU_VARIABLE *rightptr;      /* right operand */
+  REGU_VARIABLE *thirdptr;      /* third operand */
+  OPERATOR_TYPE opcode;         /* operator value */
+  MISC_OPERAND misc_operand;    /* currently used for trim qualifier
+                                 * and datetime extract field specifier */
+  PRED_EXPR *pred;              /* predicate expression */
 
   /* NOTE: The following member is only used on server internally. */
-  struct drand48_data *rand_seed;	/* seed to be used to generate
-					 * pseudo-random sequence */
+  struct drand48_data *rand_seed;       /* seed to be used to generate
+                                         * pseudo-random sequence */
 };
 
 typedef struct aggregate_accumulator AGGREGATE_ACCUMULATOR;
 struct aggregate_accumulator
 {
-  DB_VALUE *value;		/* value of the aggregate */
-  DB_VALUE *value2;		/* for STDDEV and VARIANCE */
-  DB_BIGINT curr_cnt;		/* for COUNT; current number of items */
+  DB_VALUE *value;              /* value of the aggregate */
+  DB_VALUE *value2;             /* for STDDEV and VARIANCE */
+  DB_BIGINT curr_cnt;           /* for COUNT; current number of items */
 };
 
 typedef struct aggregate_list_node AGGREGATE_TYPE;
 struct aggregate_list_node
 {
-  AGGREGATE_TYPE *next;		/* next aggregate node */
-  FUNC_TYPE function;		/* aggregate function name */
-  QUERY_OPTIONS option;		/* DISTINCT/ALL option */
-  REGU_VARIABLE operand;	/* operand */
-  QFILE_LIST_ID *list_id;	/* used for distinct handling */
+  AGGREGATE_TYPE *next;         /* next aggregate node */
+  FUNC_TYPE function;           /* aggregate function name */
+  QUERY_OPTIONS option;         /* DISTINCT/ALL option */
+  REGU_VARIABLE operand;        /* operand */
+  QFILE_LIST_ID *list_id;       /* used for distinct handling */
   int flag_agg_optimize;
   BTID btid;
-  SORT_LIST *sort_list;		/* for sorting elements before aggregation;
-				 * used by GROUP_CONCAT */
-  AGGREGATE_ACCUMULATOR accumulator;	/* holds runtime values, only for
-					   evaluation */
-  REGU_VARIABLE group_concat_sep;	/* store SEPARATOR for GROUP_CONCAT */
+  SORT_LIST *sort_list;         /* for sorting elements before aggregation;
+                                 * used by GROUP_CONCAT */
+  AGGREGATE_ACCUMULATOR accumulator;    /* holds runtime values, only for
+                                           evaluation */
+  REGU_VARIABLE group_concat_sep;       /* store SEPARATOR for GROUP_CONCAT */
 };
 
 typedef struct function_node FUNCTION_TYPE;
 struct function_node
 {
-  DB_VALUE *value;		/* value of the function */
-  REGU_VARIABLE_LIST operand;	/* operands */
-  FUNC_TYPE ftype;		/* function to call */
+  DB_VALUE *value;              /* value of the function */
+  REGU_VARIABLE_LIST operand;   /* operands */
+  FUNC_TYPE ftype;              /* function to call */
 };
 
 /*
@@ -480,25 +480,24 @@ struct pred_expr
   TYPE_PRED_EXPR type;
 };
 
-typedef DB_LOGICAL (*PR_EVAL_FNC) (THREAD_ENTRY * thread_p, PRED_EXPR *,
-				   VAL_DESCR *, OID *);
+typedef DB_LOGICAL (*PR_EVAL_FNC) (THREAD_ENTRY * thread_p, PRED_EXPR *, VAL_DESCR *, OID *);
 
 /* predicates information of scan */
 typedef struct scan_pred SCAN_PRED;
 struct scan_pred
 {
-  REGU_VARIABLE_LIST regu_list;	/* regu list for predicates (or filters) */
-  PRED_EXPR *pred_expr;		/* predicate expressions */
-  PR_EVAL_FNC pr_eval_fnc;	/* predicate evaluation function */
+  REGU_VARIABLE_LIST regu_list; /* regu list for predicates (or filters) */
+  PRED_EXPR *pred_expr;         /* predicate expressions */
+  PR_EVAL_FNC pr_eval_fnc;      /* predicate evaluation function */
 };
 
 /* attributes information of scan */
 typedef struct scan_attrs SCAN_ATTRS;
 struct scan_attrs
 {
-  ATTR_ID *attr_ids;		/* array of attributes id */
-  HEAP_CACHE_ATTRINFO *attr_cache;	/* attributes access cache */
-  int num_attrs;		/* number of attributes */
+  ATTR_ID *attr_ids;            /* array of attributes id */
+  HEAP_CACHE_ATTRINFO *attr_cache;      /* attributes access cache */
+  int num_attrs;                /* number of attributes */
 };
 
 /* informations that are need for applying filter (predicate) */
@@ -506,46 +505,33 @@ typedef struct filter_info FILTER_INFO;
 struct filter_info
 {
   /* filter information */
-  SCAN_PRED *scan_pred;		/* predicates of the filter */
-  SCAN_ATTRS *scan_attrs;	/* attributes scanning info */
-  VAL_LIST *val_list;		/* value list */
-  VAL_DESCR *val_descr;		/* value descriptor */
+  SCAN_PRED *scan_pred;         /* predicates of the filter */
+  SCAN_ATTRS *scan_attrs;       /* attributes scanning info */
+  VAL_LIST *val_list;           /* value list */
+  VAL_DESCR *val_descr;         /* value descriptor */
 
   /* class information */
-  OID *class_oid;		/* class OID */
+  OID *class_oid;               /* class OID */
 
   /* index information for key-filter */
-  OR_CLASSREP *classrepr;	/* desired class last representation */
-  int indx_id;			/* index ID */
+  OR_CLASSREP *classrepr;       /* desired class last representation */
+  int indx_id;                  /* index ID */
 };
 
-extern DB_LOGICAL eval_limit_count_is_0 (THREAD_ENTRY * thread_p,
-					 REGU_VARIABLE * rv, VAL_DESCR * vd);
-extern DB_LOGICAL eval_pred (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-			     VAL_DESCR * vd, OID * obj_oid);
-extern DB_LOGICAL eval_pred_comp0 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				   VAL_DESCR * vd, OID * obj_oid);
-extern DB_LOGICAL eval_pred_comp1 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				   VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_limit_count_is_0 (THREAD_ENTRY * thread_p, REGU_VARIABLE * rv, VAL_DESCR * vd);
+extern DB_LOGICAL eval_pred (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_comp0 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_comp1 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern DB_LOGICAL eval_pred_comp2 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				   VAL_DESCR * vd, OID * obj_oid);
-extern DB_LOGICAL eval_pred_comp3 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				   VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_comp2 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_comp3 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
 #endif
-extern DB_LOGICAL eval_pred_alsm4 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				   VAL_DESCR * vd, OID * obj_oid);
-extern DB_LOGICAL eval_pred_alsm5 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				   VAL_DESCR * vd, OID * obj_oid);
-extern DB_LOGICAL eval_pred_like6 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				   VAL_DESCR * vd, OID * obj_oid);
-extern DB_LOGICAL eval_pred_rlike7 (THREAD_ENTRY * thread_p, PRED_EXPR * pr,
-				    VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_alsm4 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_alsm5 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_like6 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
+extern DB_LOGICAL eval_pred_rlike7 (THREAD_ENTRY * thread_p, PRED_EXPR * pr, VAL_DESCR * vd, OID * obj_oid);
 extern PR_EVAL_FNC eval_fnc (THREAD_ENTRY * thread_p, PRED_EXPR * pr);
-extern DB_LOGICAL eval_data_filter (THREAD_ENTRY * thread_p, OID * oid,
-				    RECDES * recdes, FILTER_INFO * filter);
-extern DB_LOGICAL eval_key_filter (THREAD_ENTRY * thread_p,
-				   const DB_IDXKEY * key,
-				   FILTER_INFO * filter);
+extern DB_LOGICAL eval_data_filter (THREAD_ENTRY * thread_p, OID * oid, RECDES * recdes, FILTER_INFO * filter);
+extern DB_LOGICAL eval_key_filter (THREAD_ENTRY * thread_p, const DB_IDXKEY * key, FILTER_INFO * filter);
 
 #endif /* _QUERY_EVALUATOR_H_ */

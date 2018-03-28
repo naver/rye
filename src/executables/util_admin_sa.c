@@ -28,9 +28,10 @@
 #include "error_manager.h"
 #include "utility.h"
 
-int main(int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
-  if (utility_initialize() != NO_ERROR)
+  if (utility_initialize () != NO_ERROR)
     {
       assert (false);
       return EXIT_FAILURE;

@@ -49,7 +49,7 @@
 #include "network_interface_cl.h"
 #include "transform.h"
 
-#include "dbval.h"		/* this must be the last header file included!!! */
+#include "dbval.h"              /* this must be the last header file included!!! */
 
 /*
  * OBJECT CREATION/DELETION
@@ -141,7 +141,7 @@ db_get (DB_OBJECT * object, const char *attpath, DB_VALUE * value)
 }
 #endif
 
-#if 0				/* unused */
+#if 0                           /* unused */
 /*
  * db_put() - This function changes the value of an instance or class
  *    attribute. Please refer to the db_put_internal function.
@@ -251,7 +251,7 @@ dbt_finish_object (DB_OTMPL * def)
 
   if (obt_update (def, &object) != NO_ERROR)
     {
-      object = NULL;		/* probably not necessary but be safe */
+      object = NULL;            /* probably not necessary but be safe */
     }
 
   return (object);
@@ -342,9 +342,7 @@ dbt_put_internal (DB_OTMPL * def, const char *name, DB_VALUE * value)
  *    is NOT returned.
  */
 int
-db_get_attribute_descriptor (DB_OBJECT * obj,
-			     const char *attname,
-			     int for_update, DB_ATTDESC ** descriptor)
+db_get_attribute_descriptor (DB_OBJECT * obj, const char *attname, int for_update, DB_ATTDESC ** descriptor)
 {
   int retval;
 

@@ -8,16 +8,16 @@
  * Rye local changes:
  * check VC++ macros for CPU architecture
  */
-#ifdef _M_IX86			/* MSVC predefined macro definition for x86 CPUs */
-# ifndef __i386__
-#  define __i386__		/* required by ieeefp.h in mprec.h */
-# endif
+#ifdef _M_IX86                  /* MSVC predefined macro definition for x86 CPUs */
+#ifndef __i386__
+#define __i386__                /* required by ieeefp.h in mprec.h */
+#endif
 #endif
 
-#ifdef _M_X64			/* MSVC predefined macro definition for x64 CPUs */
-# ifndef __x86_64__
-#  define __x86_64__		/* required by ieeefp.h in mprec.h */
-# endif
+#ifdef _M_X64                   /* MSVC predefined macro definition for x64 CPUs */
+#ifndef __x86_64__
+#define __x86_64__              /* required by ieeefp.h in mprec.h */
+#endif
 #endif
 
 

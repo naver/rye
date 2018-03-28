@@ -48,7 +48,7 @@ extern "C"
 
 #ifndef L_cuserid
 #define L_cuserid 9
-#endif				/* !L_cuserid */
+#endif                          /* !L_cuserid */
 
 #define ONE_K		1024
 #define ONE_M		1048576
@@ -74,15 +74,15 @@ extern "C"
 
 
 #if !defined(HAVE_CTIME_R)
-#  error "HAVE_CTIME_R"
+#error "HAVE_CTIME_R"
 #endif
 
 #if !defined(HAVE_LOCALTIME_R)
-#  error "HAVE_LOCALTIME_R"
+#error "HAVE_LOCALTIME_R"
 #endif
 
 #if !defined(HAVE_DRAND48_R)
-#  error "HAVE_DRAND48_R"
+#error "HAVE_DRAND48_R"
 #endif
 
 
@@ -109,14 +109,14 @@ extern "C"
 
 #if !defined(HAVE_STRDUP)
   extern char *strdup (const char *str);
-#endif				/* HAVE_STRDUP */
+#endif                          /* HAVE_STRDUP */
 
 #if !defined(HAVE_VASPRINTF)
   extern int vasprintf (char **ptr, const char *format, va_list ap);
-#endif				/* HAVE_VASPRINTF */
+#endif                          /* HAVE_VASPRINTF */
 #if !defined(HAVE_ASPRINTF)
   extern int asprintf (char **ptr, const char *format, ...);
-#endif				/* HAVE_ASPRINTF */
+#endif                          /* HAVE_ASPRINTF */
 #if defined(HAVE_ERR_H)
 #include <err.h>
 #else
@@ -129,11 +129,11 @@ extern "C"
 
 #if !defined(HAVE_DIRNAME)
   char *dirname (const char *path);
-#endif				/* HAVE_DIRNAME */
+#endif                          /* HAVE_DIRNAME */
   extern int basename_r (const char *path, char *pathbuf, size_t buflen);
 #if !defined(HAVE_BASENAME)
   extern char *basename (const char *path);
-#endif				/* HAVE_BASENAME */
+#endif                          /* HAVE_BASENAME */
 
 #if defined(ENABLE_UNUSED_FUNCTION)
   extern int utona (unsigned int u, char *s, size_t n);
@@ -175,9 +175,7 @@ extern "C"
 /* os_send_kill() - send the KILL signal to ourselves */
 #define os_send_kill(pid) os_send_signal(pid, SIGKILL)
   typedef void (*SIGNAL_HANDLER_FUNCTION) (int sig_no);
-  extern SIGNAL_HANDLER_FUNCTION os_set_signal_handler (const int sig_no,
-							SIGNAL_HANDLER_FUNCTION
-							sig_handler);
+  extern SIGNAL_HANDLER_FUNCTION os_set_signal_handler (const int sig_no, SIGNAL_HANDLER_FUNCTION sig_handler);
   extern int os_send_signal (const int pid, const int sig_no);
 
 
@@ -189,11 +187,11 @@ extern "C"
 #define COPYMEM(type,dst,src)   do {		\
   *((type *) (dst)) = *((type *) (src));  	\
 }while(0)
-#else				/* !X86 */
+#else                           /* !X86 */
 #define COPYMEM(type,dst,src)   do {		\
   memcpy((dst), (src), sizeof(type)); 		\
 }while(0)
-#endif				/* !X86 */
+#endif                          /* !X86 */
 
 /*
  * Interfaces for atomic operations
@@ -223,12 +221,12 @@ extern "C"
 #define ATOMIC_INC_64(ptr, amount) \
 	__sync_add_and_fetch((ptr), (amount))
 
-#else				/* HAVE_GCC_ATOMIC_BUILTINS */
+#else                           /* HAVE_GCC_ATOMIC_BUILTINS */
 /*
  * Currently we do not provide interfaces for atomic operations
  * on other OS or compilers.
  */
-#endif				/* HAVE_GCC_ATOMIC_BUILTINS */
+#endif                          /* HAVE_GCC_ATOMIC_BUILTINS */
 
 #ifdef __cplusplus
 }
@@ -246,20 +244,15 @@ struct rye_string
 #define string_to_double(str, end_ptr) strtod((str), (end_ptr))
 
 /* for time */
-extern INT64 timeval_diff_in_msec (const struct timeval *end_time,
-				   const struct timeval *start_time);
-extern struct timeval timeval_add_msec (const struct timeval *start_time,
-					int add_msec);
+extern INT64 timeval_diff_in_msec (const struct timeval *end_time, const struct timeval *start_time);
+extern struct timeval timeval_add_msec (const struct timeval *start_time, int add_msec);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern int timeval_to_timespec (struct timespec *to,
-				const struct timeval *from);
+extern int timeval_to_timespec (struct timespec *to, const struct timeval *from);
 #endif
 extern INT64 timeval_to_msec (const struct timeval *val);
 
-extern struct timespec timespec_add_msec (const struct timespec *start_time,
-					  int add_msec);
-extern INT64 timespec_diff_in_msec (const struct timespec *end_time,
-				    const struct timespec *start_time);
+extern struct timespec timespec_add_msec (const struct timespec *start_time, int add_msec);
+extern INT64 timespec_diff_in_msec (const struct timespec *end_time, const struct timespec *start_time);
 extern INT64 timespec_to_msec (const struct timespec *val);
 
 /* for stream file */
@@ -268,10 +261,8 @@ extern FILE *port_open_memstream (char **ptr, size_t * sizeloc);
 extern void port_close_memstream (FILE * fp, char **ptr, size_t * sizeloc);
 
 /* for HA */
-extern bool ha_make_log_path (char *path, int size, const char *base,
-			      const char *db, const char *node);
-extern bool ha_concat_db_and_host (char *db_host, int size, const char *db,
-				   const char *host);
+extern bool ha_make_log_path (char *path, int size, const char *base, const char *db, const char *node);
+extern bool ha_concat_db_and_host (char *db_host, int size, const char *db, const char *host);
 
 /* for string */
 extern char *trim (char *str);
@@ -279,17 +270,12 @@ extern char *trim (char *str);
 extern int parse_int (int *ret_p, const char *str_p, int base);
 extern int parse_bigint (INT64 * ret_p, const char *str_p, int base);
 
-extern int str_to_int32 (int *ret_p, char **end_p, const char *str_p,
-			 int base);
-extern int str_to_uint32 (unsigned int *ret_p, char **end_p,
-			  const char *str_p, int base);
-extern int str_to_int64 (INT64 * ret_p, char **end_p, const char *str_p,
-			 int base);
-extern int str_to_uint64 (UINT64 * ret_p, char **end_p, const char *str_p,
-			  int base);
+extern int str_to_int32 (int *ret_p, char **end_p, const char *str_p, int base);
+extern int str_to_uint32 (unsigned int *ret_p, char **end_p, const char *str_p, int base);
+extern int str_to_int64 (INT64 * ret_p, char **end_p, const char *str_p, int base);
+extern int str_to_uint64 (UINT64 * ret_p, char **end_p, const char *str_p, int base);
 extern int rye_init_string (RYE_STRING * buffer, int max_size);
-extern int rye_init_string_with_buffer (RYE_STRING * str, char *buffer,
-					int buffer_length);
+extern int rye_init_string_with_buffer (RYE_STRING * str, char *buffer, int buffer_length);
 extern void rye_free_string (RYE_STRING * buffer);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern void rye_clear_string (RYE_STRING * buffer);
@@ -298,13 +284,11 @@ extern int rye_append_string (RYE_STRING * buffer, const char *src);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern char **rye_split_string (RYE_STRING * buffer, const char *delim);
 #endif
-extern int rye_append_format_string (RYE_STRING * buffer,
-				     const char *format, ...);
+extern int rye_append_format_string (RYE_STRING * buffer, const char *format, ...);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern void rye_free_string_array (char **array);
 #endif
-extern size_t str_append (char *dst, size_t dst_length, const char *src,
-			  size_t max_src_length);
+extern size_t str_append (char *dst, size_t dst_length, const char *src, size_t max_src_length);
 extern char *get_random_string (char *rand_string, int len);
 extern in_addr_t hostname_to_ip (const char *host);
 

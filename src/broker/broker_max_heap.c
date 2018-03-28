@@ -27,8 +27,7 @@
 #include "broker_max_heap.h"
 
 int
-max_heap_insert (T_MAX_HEAP_NODE * max_heap, int max_heap_size,
-		 T_MAX_HEAP_NODE * item)
+max_heap_insert (T_MAX_HEAP_NODE * max_heap, int max_heap_size, T_MAX_HEAP_NODE * item)
 {
   int i;
 
@@ -48,8 +47,7 @@ max_heap_insert (T_MAX_HEAP_NODE * max_heap, int max_heap_size,
 }
 
 int
-max_heap_change_priority (T_MAX_HEAP_NODE * max_heap, int id,
-			  int new_priority)
+max_heap_change_priority (T_MAX_HEAP_NODE * max_heap, int id, int new_priority)
 {
   T_MAX_HEAP_NODE item;
   int i, k;
@@ -58,12 +56,12 @@ max_heap_change_priority (T_MAX_HEAP_NODE * max_heap, int id,
   for (i = 1; i <= max_heap[0].id; i++)
     {
       if (max_heap[i].id == id)
-	{
-	  item = max_heap[i];
-	  item.priority = new_priority;
-	  k = i;
-	  break;
-	}
+        {
+          item = max_heap[i];
+          item.priority = new_priority;
+          k = i;
+          break;
+        }
     }
   if (k < 0)
     return -1;
@@ -94,11 +92,10 @@ max_heap_delete (T_MAX_HEAP_NODE * max_heap, T_MAX_HEAP_NODE * ret)
 
   while (child <= max_heap[0].id)
     {
-      if ((child < max_heap[0].id)
-	  && (max_heap[child].priority < max_heap[child + 1].priority))
-	child++;
+      if ((child < max_heap[0].id) && (max_heap[child].priority < max_heap[child + 1].priority))
+        child++;
       if (temp.priority > max_heap[child].priority)
-	break;
+        break;
       max_heap[parent] = max_heap[child];
       parent = child;
       child *= 2;

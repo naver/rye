@@ -119,27 +119,18 @@ _DEFUN (Balloc, (ptr, k), struct _reent * ptr _AND int k)
   if (_REENT_MP_FREELIST (ptr) == NULL)
     {
       /* Allocate a list of pointers to the mprec objects */
-      _REENT_MP_FREELIST (ptr) = (struct _Bigint **) mprec_calloc (ptr,
-								   sizeof
-								   (struct
-								    _Bigint
-								    *),
-								   new_k);
+      _REENT_MP_FREELIST (ptr) = (struct _Bigint **) mprec_calloc (ptr, sizeof (struct _Bigint *), new_k);
       if (_REENT_MP_FREELIST (ptr) == NULL)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
       ptr->_max_k = new_k;
     }
   else if (new_k > ptr->_max_k)
     {
       struct _Bigint **new_list = (struct _Bigint **) realloc (ptr->_freelist,
-							       new_k *
-							       sizeof (struct
-								       _Bigint
-								       *));
-      memset (&new_list[ptr->_max_k], 0,
-	      (new_k - ptr->_max_k) * sizeof (struct _Bigint *));
+                                                               new_k * sizeof (struct _Bigint *));
+      memset (&new_list[ptr->_max_k], 0, (new_k - ptr->_max_k) * sizeof (struct _Bigint *));
       ptr->_freelist = new_list;
       ptr->_max_k = new_k;
 
@@ -155,12 +146,9 @@ _DEFUN (Balloc, (ptr, k), struct _reent * ptr _AND int k)
     {
       x = 1 << k;
       /* Allocate an mprec Bigint and stick in in the freelist */
-      rv = (_Bigint *) mprec_calloc (ptr,
-				     1,
-				     sizeof (_Bigint) +
-				     (x - 1) * sizeof (rv->_x));
+      rv = (_Bigint *) mprec_calloc (ptr, 1, sizeof (_Bigint) + (x - 1) * sizeof (rv->_x));
       if (rv == NULL)
-	return NULL;
+        return NULL;
       rv->_k = k;
       rv->_maxwds = x;
     }
@@ -180,8 +168,7 @@ _DEFUN (Bfree, (ptr, v), struct _reent *ptr _AND _Bigint * v)
 }
 
 _Bigint *
-_DEFUN (multadd, (ptr, b, m, a),
-	struct _reent *ptr _AND _Bigint * b _AND int m _AND int a)
+_DEFUN (multadd, (ptr, b, m, a), struct _reent *ptr _AND _Bigint * b _AND int m _AND int a)
 {
   int i, wds;
   __ULong *x, y;
@@ -211,12 +198,12 @@ _DEFUN (multadd, (ptr, b, m, a),
   if (a)
     {
       if (wds >= b->_maxwds)
-	{
-	  b1 = Balloc (ptr, b->_k + 1);
-	  Bcopy (b1, b);
-	  Bfree (ptr, b);
-	  b = b1;
-	}
+        {
+          b1 = Balloc (ptr, b->_k + 1);
+          Bcopy (b1, b);
+          Bfree (ptr, b);
+          b = b1;
+        }
       b->_x[wds++] = a;
       b->_wds = wds;
     }
@@ -225,9 +212,7 @@ _DEFUN (multadd, (ptr, b, m, a),
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 _Bigint *
-_DEFUN (s2b, (ptr, s, nd0, nd, y9),
-	struct _reent * ptr _AND
-	_CONST char *s _AND int nd0 _AND int nd _AND __ULong y9)
+_DEFUN (s2b, (ptr, s, nd0, nd, y9), struct _reent * ptr _AND _CONST char *s _AND int nd0 _AND int nd _AND __ULong y9)
 {
   _Bigint *b;
   int i, k;
@@ -250,7 +235,7 @@ _DEFUN (s2b, (ptr, s, nd0, nd, y9),
     {
       s += 9;
       do
-	b = multadd (ptr, b, 10, *s++ - '0');
+        b = multadd (ptr, b, 10, *s++ - '0');
       while (++i < nd0);
       s++;
     }
@@ -291,7 +276,7 @@ _DEFUN (hi0bits, (x), register __ULong x)
     {
       k++;
       if (!(x & 0x40000000))
-	return 32;
+        return 32;
     }
   return k;
 }
@@ -305,12 +290,12 @@ _DEFUN (lo0bits, (y), __ULong * y)
   if (x & 7)
     {
       if (x & 1)
-	return 0;
+        return 0;
       if (x & 2)
-	{
-	  *y = x >> 1;
-	  return 1;
-	}
+        {
+          *y = x >> 1;
+          return 1;
+        }
       *y = x >> 2;
       return 2;
     }
@@ -340,7 +325,7 @@ _DEFUN (lo0bits, (y), __ULong * y)
       k++;
       x >>= 1;
       if (!x & 1)
-	return 32;
+        return 32;
     }
   *y = x;
   return k;
@@ -358,8 +343,7 @@ _DEFUN (i2b, (ptr, i), struct _reent * ptr _AND int i)
 }
 
 _Bigint *
-_DEFUN (mult, (ptr, a, b),
-	struct _reent * ptr _AND _Bigint * a _AND _Bigint * b)
+_DEFUN (mult, (ptr, a, b), struct _reent * ptr _AND _Bigint * a _AND _Bigint * b)
 {
   _Bigint *c;
   int k, wa, wb, wc;
@@ -393,56 +377,56 @@ _DEFUN (mult, (ptr, a, b),
   for (; xb < xbe; xb++, xc0++)
     {
       if ((y = *xb & 0xffff) != 0)
-	{
-	  x = xa;
-	  xc = xc0;
-	  carry = 0;
-	  do
-	    {
-	      z = (*x & 0xffff) * y + (*xc & 0xffff) + carry;
-	      carry = z >> 16;
-	      z2 = (*x++ >> 16) * y + (*xc >> 16) + carry;
-	      carry = z2 >> 16;
-	      Storeinc (xc, z2, z);
-	    }
-	  while (x < xae);
-	  *xc = carry;
-	}
+        {
+          x = xa;
+          xc = xc0;
+          carry = 0;
+          do
+            {
+              z = (*x & 0xffff) * y + (*xc & 0xffff) + carry;
+              carry = z >> 16;
+              z2 = (*x++ >> 16) * y + (*xc >> 16) + carry;
+              carry = z2 >> 16;
+              Storeinc (xc, z2, z);
+            }
+          while (x < xae);
+          *xc = carry;
+        }
       if ((y = *xb >> 16) != 0)
-	{
-	  x = xa;
-	  xc = xc0;
-	  carry = 0;
-	  z2 = *xc;
-	  do
-	    {
-	      z = (*x & 0xffff) * y + (*xc >> 16) + carry;
-	      carry = z >> 16;
-	      Storeinc (xc, z, z2);
-	      z2 = (*x++ >> 16) * y + (*xc & 0xffff) + carry;
-	      carry = z2 >> 16;
-	    }
-	  while (x < xae);
-	  *xc = z2;
-	}
+        {
+          x = xa;
+          xc = xc0;
+          carry = 0;
+          z2 = *xc;
+          do
+            {
+              z = (*x & 0xffff) * y + (*xc >> 16) + carry;
+              carry = z >> 16;
+              Storeinc (xc, z, z2);
+              z2 = (*x++ >> 16) * y + (*xc & 0xffff) + carry;
+              carry = z2 >> 16;
+            }
+          while (x < xae);
+          *xc = z2;
+        }
     }
 #else
   for (; xb < xbe; xc0++)
     {
       if ((y = *xb++))
-	{
-	  x = xa;
-	  xc = xc0;
-	  carry = 0;
-	  do
-	    {
-	      z = *x++ * y + *xc + carry;
-	      carry = z >> 16;
-	      *xc++ = z & 0xffff;
-	    }
-	  while (x < xae);
-	  *xc = carry;
-	}
+        {
+          x = xa;
+          xc = xc0;
+          carry = 0;
+          do
+            {
+              z = *x++ * y + *xc + carry;
+              carry = z >> 16;
+              *xc++ = z & 0xffff;
+            }
+          while (x < xae);
+          *xc = carry;
+        }
     }
 #endif
   for (xc0 = c->_x, xc = xc0 + wc; wc > 0 && !*--xc; --wc);
@@ -451,8 +435,7 @@ _DEFUN (mult, (ptr, a, b),
 }
 
 _Bigint *
-_DEFUN (pow5mult,
-	(ptr, b, k), struct _reent * ptr _AND _Bigint * b _AND int k)
+_DEFUN (pow5mult, (ptr, b, k), struct _reent * ptr _AND _Bigint * b _AND int k)
 {
   _Bigint *b1, *p5, *p51;
   int i;
@@ -473,18 +456,18 @@ _DEFUN (pow5mult,
   for (;;)
     {
       if (k & 1)
-	{
-	  b1 = mult (ptr, b, p5);
-	  Bfree (ptr, b);
-	  b = b1;
-	}
+        {
+          b1 = mult (ptr, b, p5);
+          Bfree (ptr, b);
+          b = b1;
+        }
       if (!(k >>= 1))
-	break;
+        break;
       if (!(p51 = p5->_next))
-	{
-	  p51 = p5->_next = mult (ptr, p5, p5);
-	  p51->_next = 0;
-	}
+        {
+          p51 = p5->_next = mult (ptr, p5, p5);
+          p51->_next = 0;
+        }
       p5 = p51;
     }
   return b;
@@ -518,13 +501,13 @@ _DEFUN (lshift, (ptr, b, k), struct _reent * ptr _AND _Bigint * b _AND int k)
       k1 = 32 - k;
       z = 0;
       do
-	{
-	  *x1++ = *x << k | z;
-	  z = *x++ >> k1;
-	}
+        {
+          *x1++ = *x << k | z;
+          z = *x++ >> k1;
+        }
       while (x < xe);
       if ((*x1 = z) != 0)
-	++n1;
+        ++n1;
     }
 #else
   if (k &= 0xf)
@@ -532,13 +515,13 @@ _DEFUN (lshift, (ptr, b, k), struct _reent * ptr _AND _Bigint * b _AND int k)
       k1 = 16 - k;
       z = 0;
       do
-	{
-	  *x1++ = (*x << k & 0xffff) | z;
-	  z = *x++ >> k1;
-	}
+        {
+          *x1++ = (*x << k & 0xffff) | z;
+          z = *x++ >> k1;
+        }
       while (x < xe);
       if ((*x1 = z))
-	++n1;
+        ++n1;
     }
 #endif
   else
@@ -573,20 +556,19 @@ _DEFUN (cmp, (a, b), _Bigint * a _AND _Bigint * b)
   for (;;)
     {
       if (*--xa != *--xb)
-	return *xa < *xb ? -1 : 1;
+        return *xa < *xb ? -1 : 1;
       if (xa <= xa0)
-	break;
+        break;
     }
   return 0;
 }
 
 _Bigint *
-_DEFUN (diff, (ptr, a, b), struct _reent * ptr _AND
-	_Bigint * a _AND _Bigint * b)
+_DEFUN (diff, (ptr, a, b), struct _reent * ptr _AND _Bigint * a _AND _Bigint * b)
 {
   _Bigint *c;
   int i, wa, wb;
-  __Long borrow, y;		/* We need signed shifts here. */
+  __Long borrow, y;             /* We need signed shifts here. */
   __ULong *xa, *xae, *xb, *xbe, *xc;
 #ifdef Pack_32
   __Long z;
@@ -692,20 +674,20 @@ _DEFUN (ulp, (_x), double _x)
     {
       L = -L >> Exp_shift;
       if (L < Exp_shift)
-	{
-	  word0 (a) = 0x80000 >> L;
+        {
+          word0 (a) = 0x80000 >> L;
 #ifndef _DOUBLE_IS_32BITS
-	  word1 (a) = 0;
+          word1 (a) = 0;
 #endif
-	}
+        }
       else
-	{
-	  word0 (a) = 0;
-	  L -= Exp_shift;
+        {
+          word0 (a) = 0;
+          L -= Exp_shift;
 #ifndef _DOUBLE_IS_32BITS
-	  word1 (a) = L >= 31 ? 1 : 1 << (31 - L);
+          word1 (a) = L >= 31 ? 1 : 1 << (31 - L);
 #endif
-	}
+        }
     }
 #endif
   return a.d;
@@ -789,9 +771,7 @@ ret_d:
 
 #endif /* ENABLE_UNUSED_FUNCTION */
 _Bigint *
-_DEFUN (d2b,
-	(ptr, _d, e, bits),
-	struct _reent * ptr _AND double _d _AND int *e _AND int *bits)
+_DEFUN (d2b, (ptr, _d, e, bits), struct _reent * ptr _AND double _d _AND int *e _AND int *bits)
 {
   union double_union d;
   _Bigint *b;
@@ -818,7 +798,7 @@ _DEFUN (d2b,
   x = b->_x;
 
   z = d0 & Frac_mask;
-  d0 &= 0x7fffffff;		/* clear sign bit, which we ignore */
+  d0 &= 0x7fffffff;             /* clear sign bit, which we ignore */
 #ifdef Sudden_Underflow
   de = (int) (d0 >> Exp_shift);
 #ifndef IBM
@@ -835,12 +815,12 @@ _DEFUN (d2b,
       y = d1;
       k = lo0bits (&y);
       if (k)
-	{
-	  x[0] = y | z << (32 - k);
-	  z >>= k;
-	}
+        {
+          x[0] = y | z << (32 - k);
+          z >>= k;
+        }
       else
-	x[0] = y;
+        x[0] = y;
       i = b->_wds = (x[1] = z) ? 2 : 1;
     }
   else
@@ -848,7 +828,7 @@ _DEFUN (d2b,
     {
 #ifdef DEBUG
       if (!z)
-	Bug ("Zero passed to d2b");
+        Bug ("Zero passed to d2b");
 #endif
       k = lo0bits (&z);
       x[0] = z;
@@ -863,48 +843,48 @@ _DEFUN (d2b,
       y = d1;
       k = lo0bits (&y);
       if (k)
-	if (k >= 16)
-	  {
-	    x[0] = y | (z << (32 - k) & 0xffff);
-	    x[1] = z >> (k - 16) & 0xffff;
-	    x[2] = z >> k;
-	    i = 2;
-	  }
-	else
-	  {
-	    x[0] = y & 0xffff;
-	    x[1] = y >> 16 | (z << (16 - k) & 0xffff);
-	    x[2] = z >> k & 0xffff;
-	    x[3] = z >> (k + 16);
-	    i = 3;
-	  }
+        if (k >= 16)
+          {
+            x[0] = y | (z << (32 - k) & 0xffff);
+            x[1] = z >> (k - 16) & 0xffff;
+            x[2] = z >> k;
+            i = 2;
+          }
+        else
+          {
+            x[0] = y & 0xffff;
+            x[1] = y >> 16 | (z << (16 - k) & 0xffff);
+            x[2] = z >> k & 0xffff;
+            x[3] = z >> (k + 16);
+            i = 3;
+          }
       else
-	{
-	  x[0] = y & 0xffff;
-	  x[1] = y >> 16;
-	  x[2] = z & 0xffff;
-	  x[3] = z >> 16;
-	  i = 3;
-	}
+        {
+          x[0] = y & 0xffff;
+          x[1] = y >> 16;
+          x[2] = z & 0xffff;
+          x[3] = z >> 16;
+          i = 3;
+        }
     }
   else
     {
 #ifdef DEBUG
       if (!z)
-	Bug ("Zero passed to d2b");
+        Bug ("Zero passed to d2b");
 #endif
       k = lo0bits (&z);
       if (k >= 16)
-	{
-	  x[0] = z;
-	  i = 0;
-	}
+        {
+          x[0] = z;
+          i = 0;
+        }
       else
-	{
-	  x[0] = z & 0xffff;
-	  x[1] = z >> 16;
-	  i = 1;
-	}
+        {
+          x[0] = z & 0xffff;
+          x[1] = z >> 16;
+          i = 1;
+        }
       k += 32;
     }
   while (!x[i])
@@ -959,14 +939,14 @@ _DEFUN (ratio, (a, b), _Bigint * a _AND _Bigint * b)
     {
       word0 (da) += (k >> 2) * Exp_msk1;
       if (k &= 3)
-	da.d *= 1 << k;
+        da.d *= 1 << k;
     }
   else
     {
       k = -k;
       word0 (db) += (k >> 2) * Exp_msk1;
       if (k &= 3)
-	db.d *= 1 << k;
+        db.d *= 1 << k;
     }
 #else
   if (k > 0)

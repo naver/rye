@@ -37,10 +37,8 @@
 #include "repl_common.h"
 
 static CIRP_Q_ITEM *cirp_tran_q_push (CIRP_TRAN_Q * q,
-				      TRANID trid,
-				      LOG_LSA * tran_start_lsa,
-				      LOG_LSA * commited_lsa,
-				      LOG_LSA * repl_start_lsa);
+                                      TRANID trid,
+                                      LOG_LSA * tran_start_lsa, LOG_LSA * commited_lsa, LOG_LSA * repl_start_lsa);
 static CIRP_Q_ITEM *cirp_tran_q_pop (CIRP_TRAN_Q * q);
 static bool cirp_tran_q_is_empty (CIRP_TRAN_Q * q);
 static bool cirp_tran_q_is_committed_and_empty (CIRP_TRAN_Q * q);
@@ -100,8 +98,7 @@ cirp_tran_q_clear_committed_item (CIRP_TRAN_Q * q)
  */
 static CIRP_Q_ITEM *
 cirp_tran_q_push (CIRP_TRAN_Q * q, TRANID trid,
-		  LOG_LSA * tran_start_lsa, LOG_LSA * commited_lsa,
-		  LOG_LSA * repl_start_lsa)
+                  LOG_LSA * tran_start_lsa, LOG_LSA * commited_lsa, LOG_LSA * repl_start_lsa)
 {
   CIRP_Q_ITEM *p;
 
@@ -161,8 +158,7 @@ cirp_tran_q_pop (CIRP_TRAN_Q * q)
  */
 int
 cirp_analyzer_item_push (int la_index, TRANID trid,
-			 LOG_LSA * tran_start_lsa, LOG_LSA * committed_lsa,
-			 LOG_LSA * repl_start_lsa)
+                         LOG_LSA * tran_start_lsa, LOG_LSA * committed_lsa, LOG_LSA * repl_start_lsa)
 {
   CIRP_APPLIER_INFO *applier;
   CIRP_Q_ITEM *item;
@@ -181,8 +177,7 @@ cirp_analyzer_item_push (int la_index, TRANID trid,
       return error;
     }
 
-  item = cirp_tran_q_push (&applier->logq, trid,
-			   tran_start_lsa, committed_lsa, repl_start_lsa);
+  item = cirp_tran_q_push (&applier->logq, trid, tran_start_lsa, committed_lsa, repl_start_lsa);
   if (item == NULL)
     {
       /* queue is full */
@@ -220,8 +215,7 @@ cirp_applier_item_pop (CIRP_APPLIER_INFO * applier, CIRP_Q_ITEM ** item)
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       return error;
     }
 
@@ -264,8 +258,7 @@ cirp_applier_clear_committed_item (CIRP_APPLIER_INFO * applier)
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-	      "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       return error;
     }
 
@@ -331,8 +324,7 @@ cirp_analyzer_is_applier_busy (int la_index)
  *   wakeup_interval(in): msecs
  */
 int
-cirp_pthread_cond_timedwait (pthread_cond_t * pcond, pthread_mutex_t * plock,
-			     int wakeup_interval)
+cirp_pthread_cond_timedwait (pthread_cond_t * pcond, pthread_mutex_t * plock, int wakeup_interval)
 {
   struct timespec wakeup_time = {
     0, 0
@@ -357,12 +349,11 @@ cirp_pthread_cond_timedwait (pthread_cond_t * pcond, pthread_mutex_t * plock,
   if (rv != 0)
     {
       if (rv == ETIMEDOUT)
-	{
-	  return NO_ERROR;
-	}
+        {
+          return NO_ERROR;
+        }
       error = ER_GENERIC_ERROR;
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-			   "os error:");
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "os error:");
 
       return error;
     }
@@ -400,12 +391,11 @@ cirp_analyzer_wait_for_queue (int la_index)
     {
       applier->analyzer_status = CIRP_AGENT_WAIT;
 
-      error = cirp_pthread_cond_timedwait (&applier->cond,
-					   &applier->lock, wakeup_interval);
+      error = cirp_pthread_cond_timedwait (&applier->cond, &applier->lock, wakeup_interval);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   applier->analyzer_status = CIRP_AGENT_BUSY;
@@ -454,12 +444,11 @@ cirp_analyzer_wait_tran_commit (int la_index, LOG_LSA * lsa)
     {
       applier->analyzer_status = CIRP_AGENT_WAIT;
 
-      error = cirp_pthread_cond_timedwait (&applier->cond,
-					   &applier->lock, wakeup_interval);
+      error = cirp_pthread_cond_timedwait (&applier->cond, &applier->lock, wakeup_interval);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   applier->analyzer_status = CIRP_AGENT_BUSY;
@@ -497,8 +486,7 @@ cirp_applier_wait_for_queue (CIRP_APPLIER_INFO * applier)
       assert (false);
 
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid arguments");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid arguments");
       return error;
     }
 
@@ -515,12 +503,11 @@ cirp_applier_wait_for_queue (CIRP_APPLIER_INFO * applier)
     {
       applier->status = CIRP_AGENT_WAIT;
 
-      error = cirp_pthread_cond_timedwait (&applier->cond,
-					   &applier->lock, wakeup_interval);
+      error = cirp_pthread_cond_timedwait (&applier->cond, &applier->lock, wakeup_interval);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   applier->status = CIRP_AGENT_BUSY;

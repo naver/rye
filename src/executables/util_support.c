@@ -37,11 +37,8 @@
 #include "utility.h"
 #include "porting.h"
 
-static int
-util_parse_string_table (UTIL_MAP * util_map, int index, int count,
-			 char **argv);
-static int util_put_option_value (UTIL_MAP * util_map, int arg_ch,
-				  const char *option_arg);
+static int util_parse_string_table (UTIL_MAP * util_map, int index, int count, char **argv);
+static int util_put_option_value (UTIL_MAP * util_map, int arg_ch, const char *option_arg);
 
 /*
  * utility_make_getopt_optstring - makes optstring for getopt_long()
@@ -57,13 +54,13 @@ utility_make_getopt_optstring (const GETOPT_LONG * opt_array, char *buf)
   for (i = 0; opt_array[i].name; i++)
     {
       if (opt_array[i].val < 255)
-	{
-	  *p++ = (char) opt_array[i].val;
-	  if (opt_array[i].has_arg)
-	    {
-	      *p++ = ':';
-	    }
-	}
+        {
+          *p++ = (char) opt_array[i].val;
+          if (opt_array[i].has_arg)
+            {
+              *p++ = ':';
+            }
+        }
     }
   *p = '\0';
   return buf;
@@ -89,14 +86,13 @@ utility_load_library (DSO_HANDLE * handle, const char *path)
     }
 
   /* initialize library */
-  if (utility_load_symbol (*handle, &symbol,
-			   UTILITY_INIT_FUNC_NAME) == NO_ERROR)
+  if (utility_load_symbol (*handle, &symbol, UTILITY_INIT_FUNC_NAME) == NO_ERROR)
     {
       UTILITY_INIT_FUNC init_fn = (UTILITY_INIT_FUNC) symbol;
       if ((*init_fn) () == NO_ERROR)
-	{
-	  return NO_ERROR;
-	}
+        {
+          return NO_ERROR;
+        }
     }
 
   *handle = NULL;
@@ -111,8 +107,7 @@ utility_load_library (DSO_HANDLE * handle, const char *path)
  * NOTE:
  */
 int
-utility_load_symbol (DSO_HANDLE library_handle, DSO_HANDLE * symbol_handle,
-		     const char *symbol_name)
+utility_load_symbol (DSO_HANDLE library_handle, DSO_HANDLE * symbol_handle, const char *symbol_name)
 {
   (*symbol_handle) = dlsym (library_handle, symbol_name);
 
@@ -152,12 +147,12 @@ util_get_option_name (GETOPT_LONG * option, int option_value)
   for (i = 0; option[i].name != NULL; i++)
     {
       if (option[i].val == option_value)
-	{
-	  return option[i].name;
-	}
+        {
+          return option[i].name;
+        }
     }
 
-  assert (false);		/* TODO - trace */
+  assert (false);               /* TODO - trace */
 
   /* unreachable code */
   return "";
@@ -185,29 +180,27 @@ util_parse_argument (UTIL_MAP * util_map, int argc, char **argv)
   while (status == NO_ERROR)
     {
       option_index = 0;
-      option_value =
-	getopt_long (argc, argv, option_string, option, &option_index);
+      option_value = getopt_long (argc, argv, option_string, option, &option_index);
       if (option_value == -1)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (option_value == '?' || option_value == ':')
-	{
-	  status = ER_FAILED;
-	  return status;
-	}
+        {
+          status = ER_FAILED;
+          return status;
+        }
 
       option_name = util_get_option_name (option, option_value);
 
       status = util_put_option_value (util_map, option_value, optarg);
       if (status != NO_ERROR)
-	{
-	  fprintf (stderr, "invalid '--%s' option value: %s\n", option_name,
-		   optarg);
+        {
+          fprintf (stderr, "invalid '--%s' option value: %s\n", option_name, optarg);
 
-	  return ER_FAILED;
-	}
+          return ER_FAILED;
+        }
     }
 
   status = util_parse_string_table (util_map, optind, argc, argv);
@@ -223,8 +216,7 @@ util_parse_argument (UTIL_MAP * util_map, int argc, char **argv)
  * NOTE: An allocated memory may be leaked by the strdup.
  */
 static int
-util_put_option_value (UTIL_MAP * util_map, int arg_ch,
-		       const char *option_arg)
+util_put_option_value (UTIL_MAP * util_map, int arg_ch, const char *option_arg)
 {
   int i;
   UTIL_ARG_MAP *arg_map = util_map->arg_map;
@@ -232,54 +224,54 @@ util_put_option_value (UTIL_MAP * util_map, int arg_ch,
   for (i = 0; arg_map[i].arg_ch; i++)
     {
       if (arg_map[i].arg_ch == arg_ch)
-	{
-	  switch (arg_map[i].value_info.value_type)
-	    {
-	    case ARG_BOOLEAN:
-	      arg_map[i].arg_value.i = 1;
-	      return NO_ERROR;
-	    case ARG_INTEGER:
-	      {
-		int value = 0, result;
+        {
+          switch (arg_map[i].value_info.value_type)
+            {
+            case ARG_BOOLEAN:
+              arg_map[i].arg_value.i = 1;
+              return NO_ERROR;
+            case ARG_INTEGER:
+              {
+                int value = 0, result;
 
-		result = parse_int (&value, option_arg, 10);
+                result = parse_int (&value, option_arg, 10);
 
-		if (result != 0)
-		  {
-		    return ER_FAILED;
-		  }
+                if (result != 0)
+                  {
+                    return ER_FAILED;
+                  }
 
-		arg_map[i].arg_value.i = value;
-		return NO_ERROR;
-	      }
-	    case ARG_BIGINT:
-	      {
-		int result = 0;
-		INT64 value;
+                arg_map[i].arg_value.i = value;
+                return NO_ERROR;
+              }
+            case ARG_BIGINT:
+              {
+                int result = 0;
+                INT64 value;
 
-		result = parse_bigint (&value, option_arg, 10);
+                result = parse_bigint (&value, option_arg, 10);
 
-		if (result != 0)
-		  {
-		    return ER_FAILED;
-		  }
+                if (result != 0)
+                  {
+                    return ER_FAILED;
+                  }
 
-		arg_map[i].arg_value.l = value;
-		return NO_ERROR;
-	      }
-	    case ARG_STRING:
-	      if (option_arg[0] == '-')
-		{
-		  return ER_FAILED;
-		}
+                arg_map[i].arg_value.l = value;
+                return NO_ERROR;
+              }
+            case ARG_STRING:
+              if (option_arg[0] == '-')
+                {
+                  return ER_FAILED;
+                }
 
-	      arg_map[i].arg_value.p = strdup (option_arg);
-	      return NO_ERROR;
-	    default:
-	      return ER_FAILED;
-	    }
-	  return NO_ERROR;
-	}
+              arg_map[i].arg_value.p = strdup (option_arg);
+              return NO_ERROR;
+            default:
+              return ER_FAILED;
+            }
+          return NO_ERROR;
+        }
     }
   return ER_FAILED;
 }
@@ -292,8 +284,7 @@ util_put_option_value (UTIL_MAP * util_map, int arg_ch,
  * NOTE: An allocated memory may be leaked by the malloc and the strdup.
  */
 static int
-util_parse_string_table (UTIL_MAP * util_map, int index, int count,
-			 char **argv)
+util_parse_string_table (UTIL_MAP * util_map, int index, int count, char **argv)
 {
   int i;
   int need_args_num;
@@ -303,11 +294,11 @@ util_parse_string_table (UTIL_MAP * util_map, int index, int count,
   for (i = 0; i < util_map->arg_map[i].arg_ch; i++)
     {
       if (util_map->arg_map[i].arg_ch == OPTION_STRING_TABLE)
-	{
-	  string_table_arg = &util_map->arg_map[i];
-	  need_args_num = util_map->need_args_num;
-	  break;
-	}
+        {
+          string_table_arg = &util_map->arg_map[i];
+          need_args_num = util_map->need_args_num;
+          break;
+        }
     }
   if (string_table_arg == NULL)
     {
@@ -330,8 +321,7 @@ util_parse_string_table (UTIL_MAP * util_map, int index, int count,
   if (need_args_num < num_string_args)
     {
       fprintf (stderr, "'%s' argument is not needed.\n",
-	       string_table[need_args_num] == NULL ?
-	       "" : string_table[need_args_num]);
+               string_table[need_args_num] == NULL ? "" : string_table[need_args_num]);
       return ER_FAILED;
     }
   return NO_ERROR;

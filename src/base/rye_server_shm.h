@@ -69,7 +69,7 @@ struct _server_shm_groupid_bitmap
   short nodeid;
   int num_groupid;
   int groupid_bitmap_size;
-  char groupid_bitmap[SHARD_MAX_BITMAP_SIZE];	/* shard groupid bitmap */
+  char groupid_bitmap[SHARD_MAX_BITMAP_SIZE];   /* shard groupid bitmap */
 };
 
 typedef struct _server_shm_repl_info SERVER_SHM_REPL_INFO;
@@ -118,16 +118,12 @@ extern int svr_shm_set_server_state (HA_STATE server_state);
 extern HA_STATE svr_shm_get_server_state (void);
 extern bool svr_shm_check_repl_done (void);
 extern int svr_shm_sync_node_info_to_repl (void);
-extern int svr_shm_set_repl_info (const PRM_NODE_INFO * node_info,
-				  HA_APPLY_STATE state);
+extern int svr_shm_set_repl_info (const PRM_NODE_INFO * node_info, HA_APPLY_STATE state);
 
 /* client functions */
-extern int rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO *
-					      shard_info, const char *dbname);
-extern int rye_server_shm_set_state (const char *dbname,
-				     HA_STATE server_state);
-extern int rye_server_shm_get_state (HA_STATE * server_state,
-				     const char *dbname);
+extern int rye_server_shm_set_groupid_bitmap (SERVER_SHM_SHARD_INFO * shard_info, const char *dbname);
+extern int rye_server_shm_set_state (const char *dbname, HA_STATE server_state);
+extern int rye_server_shm_get_state (HA_STATE * server_state, const char *dbname);
 extern int rye_server_shm_get_eof_lsa (LOG_LSA * eof_lsa, const char *dbname);
 extern int rye_server_shm_get_nodeid (short *nodeid, const char *dbname);
 extern int rye_server_shm_dump (FILE * out_fp, int shm_key);

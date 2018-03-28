@@ -140,7 +140,7 @@ cnet_buf_cp_byte (T_NET_BUF * net_buf, char value)
   if (net_buf_realloc (net_buf, size) < 0)
     return CCI_ER_NO_MORE_MEMORY;
 
-  *(net_buf->data + net_buf->data_size) = value;	/* do not call memcpy(); simply assign */
+  *(net_buf->data + net_buf->data_size) = value;        /* do not call memcpy(); simply assign */
   net_buf->data_size += size;
 
   return 0;
@@ -263,16 +263,16 @@ net_buf_realloc (T_NET_BUF * net_buf, int size)
     {
       new_alloc_size = net_buf->alloc_size + 1024;
       if (size + net_buf->data_size > new_alloc_size)
-	{
-	  new_alloc_size = size + net_buf->data_size;
-	}
+        {
+          new_alloc_size = size + net_buf->data_size;
+        }
       net_buf->data = (char *) REALLOC (net_buf->data, new_alloc_size);
       if (net_buf->data == NULL)
-	{
-	  net_buf->alloc_size = 0;
-	  net_buf->err_code = CCI_ER_NO_MORE_MEMORY;
-	  return -1;
-	}
+        {
+          net_buf->alloc_size = 0;
+          net_buf->err_code = CCI_ER_NO_MORE_MEMORY;
+          return -1;
+        }
 
       net_buf->alloc_size = new_alloc_size;
     }

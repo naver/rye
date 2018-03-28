@@ -57,9 +57,7 @@ static MNT_CLIENT_STAT_INFO mnt_Stat_info;
 #endif
 
 #if defined(CS_MODE) || defined(SA_MODE)
-static void mnt_get_current_times (time_t * cpu_usr_time,
-				   time_t * cpu_sys_time,
-				   time_t * elapsed_time);
+static void mnt_get_current_times (time_t * cpu_usr_time, time_t * cpu_sys_time, time_t * elapsed_time);
 #endif
 
 
@@ -93,8 +91,7 @@ void
 mnt_reset_stats (void)
 {
   mnt_get_current_times (&mnt_Stat_info.cpu_start_usr_time,
-			 &mnt_Stat_info.cpu_start_sys_time,
-			 &mnt_Stat_info.elapsed_start_time);
+                         &mnt_Stat_info.cpu_start_sys_time, &mnt_Stat_info.elapsed_start_time);
 }
 
 /*
@@ -107,8 +104,7 @@ mnt_reset_stats (void)
  * Note:
  */
 static void
-mnt_get_current_times (time_t * cpu_user_time, time_t * cpu_sys_time,
-		       time_t * elapsed_time)
+mnt_get_current_times (time_t * cpu_user_time, time_t * cpu_sys_time, time_t * elapsed_time)
 {
   struct rusage rusage;
   *cpu_user_time = 0;
@@ -167,8 +163,7 @@ mnt_stats_counter (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
  * mnt_stats_counter_with_time -
  */
 void
-mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
-			     INT64 value, UINT64 start_time)
+mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value, UINT64 start_time)
 {
   int tran_index;
   MNT_SERVER_ITEM parent_item;
@@ -186,8 +181,7 @@ mnt_stats_counter_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
   if (parent_item != item)
     {
       assert (parent_item == MNT_STATS_DATA_PAGE_FETCHES);
-      monitor_stats_counter_with_time (tran_index + 1, parent_item, value,
-				       start_time);
+      monitor_stats_counter_with_time (tran_index + 1, parent_item, value, start_time);
 
       thread_mnt_track_counter (thread_p, value, start_time);
     }
@@ -215,8 +209,7 @@ mnt_stats_gauge (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, INT64 value)
  * mnt_get_stats_with_time -
  */
 INT64
-mnt_get_stats_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item,
-			 UINT64 * acc_time)
+mnt_get_stats_with_time (THREAD_ENTRY * thread_p, MNT_SERVER_ITEM item, UINT64 * acc_time)
 {
   int tran_index;
 
@@ -247,8 +240,7 @@ void
 mnt_calc_hit_ratio (MONITOR_STATS * stats, int num_stats)
 {
   if (MNT_STATS_DATA_PAGE_FETCHES >= num_stats
-      || MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO >= num_stats
-      || MNT_STATS_DATA_PAGE_IOREADS >= num_stats)
+      || MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO >= num_stats || MNT_STATS_DATA_PAGE_IOREADS >= num_stats)
     {
       assert (false);
       return;
@@ -261,9 +253,8 @@ mnt_calc_hit_ratio (MONITOR_STATS * stats, int num_stats)
   else
     {
       stats[MNT_STATS_DATA_PAGE_BUFFER_HIT_RATIO].value =
-	((stats[MNT_STATS_DATA_PAGE_FETCHES].value
-	  - stats[MNT_STATS_DATA_PAGE_IOREADS].value) * 100 * 100)
-	/ stats[MNT_STATS_DATA_PAGE_FETCHES].value;
+        ((stats[MNT_STATS_DATA_PAGE_FETCHES].value
+          - stats[MNT_STATS_DATA_PAGE_IOREADS].value) * 100 * 100) / stats[MNT_STATS_DATA_PAGE_FETCHES].value;
     }
 }
 
@@ -279,49 +270,49 @@ mnt_csect_type_to_server_item (const CSECT_TYPE ctype)
   assert (ctype <= CSECT_LAST);
   switch (ctype)
     {
-    case CSECT_ER_LOG_FILE:	/* 0 */
+    case CSECT_ER_LOG_FILE:    /* 0 */
       return MNT_STATS_CSECT_ER_LOG_FILE;
-    case CSECT_ER_MSG_CACHE:	/* 1 */
+    case CSECT_ER_MSG_CACHE:   /* 1 */
       return MNT_STATS_CSECT_ER_MSG_CACHE;
-    case CSECT_WFG:		/* 2 */
+    case CSECT_WFG:            /* 2 */
       return MNT_STATS_CSECT_WFG;
-    case CSECT_LOG:		/* 3 */
+    case CSECT_LOG:            /* 3 */
       return MNT_STATS_CSECT_LOG;
-    case CSECT_LOG_BUFFER:	/* 4 */
+    case CSECT_LOG_BUFFER:     /* 4 */
       return MNT_STATS_CSECT_LOG_BUFFER;
-    case CSECT_LOG_ARCHIVE:	/* 5 */
+    case CSECT_LOG_ARCHIVE:    /* 5 */
       return MNT_STATS_CSECT_LOG_ARCHIVE;
-    case CSECT_LOCATOR_SR_CLASSNAME_TABLE:	/* 6 */
+    case CSECT_LOCATOR_SR_CLASSNAME_TABLE:     /* 6 */
       return MNT_STATS_CSECT_SR_LOCATOR_CLASSNAME_TABLE;
-    case CSECT_FILE_NEWFILE:	/* 7 */
+    case CSECT_FILE_NEWFILE:   /* 7 */
       return MNT_STATS_CSECT_FILE_NEWFILE;
-    case CSECT_QPROC_QUERY_TABLE:	/* 8 */
+    case CSECT_QPROC_QUERY_TABLE:      /* 8 */
       return MNT_STATS_CSECT_QPROC_QUERY_TABLE;
-    case CSECT_BOOT_SR_DBPARM:	/* 9 */
+    case CSECT_BOOT_SR_DBPARM: /* 9 */
       return MNT_STATS_CSECT_BOOT_SR_DBPARM;
-    case CSECT_DISK_REFRESH_GOODVOL:	/* 10 */
+    case CSECT_DISK_REFRESH_GOODVOL:   /* 10 */
       return MNT_STATS_CSECT_DISK_REFRESH_GOODVOL;
-    case CSECT_CNV_FMT_LEXER:	/* 11 */
+    case CSECT_CNV_FMT_LEXER:  /* 11 */
       return MNT_STATS_CSECT_CNV_FMT_LEXER;
-    case CSECT_CT_OID_TABLE:	/* 12 */
+    case CSECT_CT_OID_TABLE:   /* 12 */
       return MNT_STATS_CSECT_CT_OID_TABLE;
-    case CSECT_HA_SERVER_STATE:	/* 13 */
+    case CSECT_HA_SERVER_STATE:        /* 13 */
       return MNT_STATS_CSECT_HA_SERVER_STATE;
-    case CSECT_SESSION_STATE:	/* 14 */
+    case CSECT_SESSION_STATE:  /* 14 */
       return MNT_STATS_CSECT_SESSION_STATE;
-    case CSECT_ACL:		/* 15 */
+    case CSECT_ACL:            /* 15 */
       return MNT_STATS_CSECT_ACL;
-    case CSECT_EVENT_LOG_FILE:	/* 16 */
+    case CSECT_EVENT_LOG_FILE: /* 16 */
       return MNT_STATS_CSECT_EVENT_LOG_FILE;
-    case CSECT_ACCESS_STATUS:	/* 17 */
+    case CSECT_ACCESS_STATUS:  /* 17 */
       return MNT_STATS_CSECT_ACCESS_STATUS;
-    case CSECT_TEMPFILE_CACHE:	/* 18 */
+    case CSECT_TEMPFILE_CACHE: /* 18 */
       return MNT_STATS_CSECT_TEMPFILE_CACHE;
-    case CSECT_CSS_ACTIVE_CONN:	/* 19 */
+    case CSECT_CSS_ACTIVE_CONN:        /* 19 */
       return MNT_STATS_CSECT_CSS_ACTIVE_CONN;
-    case CSECT_CSS_FREE_CONN:	/* 20 */
+    case CSECT_CSS_FREE_CONN:  /* 20 */
       return MNT_STATS_CSECT_CSS_FREE_CONN;
-    case CSECT_UNKNOWN:	/* 21 */
+    case CSECT_UNKNOWN:        /* 21 */
       return MNT_STATS_CSECT_UNKNOWN;
     default:
       break;
@@ -343,49 +334,49 @@ mnt_csect_type_to_server_item_waits (const CSECT_TYPE ctype)
   assert (ctype <= CSECT_LAST);
   switch (ctype)
     {
-    case CSECT_ER_LOG_FILE:	/* 0 */
+    case CSECT_ER_LOG_FILE:    /* 0 */
       return MNT_STATS_CSECT_WAITS_ER_LOG_FILE;
-    case CSECT_ER_MSG_CACHE:	/* 1 */
+    case CSECT_ER_MSG_CACHE:   /* 1 */
       return MNT_STATS_CSECT_WAITS_ER_MSG_CACHE;
-    case CSECT_WFG:		/* 2 */
+    case CSECT_WFG:            /* 2 */
       return MNT_STATS_CSECT_WAITS_WFG;
-    case CSECT_LOG:		/* 3 */
+    case CSECT_LOG:            /* 3 */
       return MNT_STATS_CSECT_WAITS_LOG;
-    case CSECT_LOG_BUFFER:	/* 4 */
+    case CSECT_LOG_BUFFER:     /* 4 */
       return MNT_STATS_CSECT_WAITS_LOG_BUFFER;
-    case CSECT_LOG_ARCHIVE:	/* 5 */
+    case CSECT_LOG_ARCHIVE:    /* 5 */
       return MNT_STATS_CSECT_WAITS_LOG_ARCHIVE;
-    case CSECT_LOCATOR_SR_CLASSNAME_TABLE:	/* 6 */
+    case CSECT_LOCATOR_SR_CLASSNAME_TABLE:     /* 6 */
       return MNT_STATS_CSECT_WAITS_SR_LOCATOR_CLASSNAME_TABLE;
-    case CSECT_FILE_NEWFILE:	/* 7 */
+    case CSECT_FILE_NEWFILE:   /* 7 */
       return MNT_STATS_CSECT_WAITS_FILE_NEWFILE;
-    case CSECT_QPROC_QUERY_TABLE:	/* 8 */
+    case CSECT_QPROC_QUERY_TABLE:      /* 8 */
       return MNT_STATS_CSECT_WAITS_QPROC_QUERY_TABLE;
-    case CSECT_BOOT_SR_DBPARM:	/* 9 */
+    case CSECT_BOOT_SR_DBPARM: /* 9 */
       return MNT_STATS_CSECT_WAITS_BOOT_SR_DBPARM;
-    case CSECT_DISK_REFRESH_GOODVOL:	/* 10 */
+    case CSECT_DISK_REFRESH_GOODVOL:   /* 10 */
       return MNT_STATS_CSECT_WAITS_DISK_REFRESH_GOODVOL;
-    case CSECT_CNV_FMT_LEXER:	/* 11 */
+    case CSECT_CNV_FMT_LEXER:  /* 11 */
       return MNT_STATS_CSECT_WAITS_CNV_FMT_LEXER;
-    case CSECT_CT_OID_TABLE:	/* 12 */
+    case CSECT_CT_OID_TABLE:   /* 12 */
       return MNT_STATS_CSECT_WAITS_CT_OID_TABLE;
-    case CSECT_HA_SERVER_STATE:	/* 13 */
+    case CSECT_HA_SERVER_STATE:        /* 13 */
       return MNT_STATS_CSECT_WAITS_HA_SERVER_STATE;
-    case CSECT_SESSION_STATE:	/* 14 */
+    case CSECT_SESSION_STATE:  /* 14 */
       return MNT_STATS_CSECT_WAITS_SESSION_STATE;
-    case CSECT_ACL:		/* 15 */
+    case CSECT_ACL:            /* 15 */
       return MNT_STATS_CSECT_WAITS_ACL;
-    case CSECT_EVENT_LOG_FILE:	/* 16 */
+    case CSECT_EVENT_LOG_FILE: /* 16 */
       return MNT_STATS_CSECT_WAITS_EVENT_LOG_FILE;
-    case CSECT_ACCESS_STATUS:	/* 17 */
+    case CSECT_ACCESS_STATUS:  /* 17 */
       return MNT_STATS_CSECT_WAITS_ACCESS_STATUS;
-    case CSECT_TEMPFILE_CACHE:	/* 18 */
+    case CSECT_TEMPFILE_CACHE: /* 18 */
       return MNT_STATS_CSECT_WAITS_TEMPFILE_CACHE;
-    case CSECT_CSS_ACTIVE_CONN:	/* 19 */
+    case CSECT_CSS_ACTIVE_CONN:        /* 19 */
       return MNT_STATS_CSECT_WAITS_CSS_ACTIVE_CONN;
-    case CSECT_CSS_FREE_CONN:	/* 20 */
+    case CSECT_CSS_FREE_CONN:  /* 20 */
       return MNT_STATS_CSECT_WAITS_CSS_FREE_CONN;
-    case CSECT_UNKNOWN:	/* 21 */
+    case CSECT_UNKNOWN:        /* 21 */
       return MNT_STATS_CSECT_WAITS_UNKNOWN;
     default:
       break;
@@ -406,35 +397,35 @@ mnt_server_item_fetches_to_page_ptype (const MNT_SERVER_ITEM item)
 {
   switch (item)
     {
-    case MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER:	/* 1 file header page             */
+    case MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER:      /* 1 file header page             */
       return PAGE_FILE_HEADER;
-    case MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB:	/* 2 file allocset table page             */
+    case MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB: /* 2 file allocset table page             */
       return PAGE_FILE_TAB;
-    case MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER:	/* 3 heap header page                            */
+    case MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER:      /* 3 heap header page                            */
       return PAGE_HEAP_HEADER;
-    case MNT_STATS_DATA_PAGE_FETCHES_HEAP:	/* 4 heap page                            */
+    case MNT_STATS_DATA_PAGE_FETCHES_HEAP:     /* 4 heap page                            */
       return PAGE_HEAP;
-    case MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER:	/* 5 volume header page                   */
+    case MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER:        /* 5 volume header page                   */
       return PAGE_VOLHEADER;
-    case MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP:	/* 6 volume bitmap page                   */
+    case MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP:        /* 6 volume bitmap page                   */
       return PAGE_VOLBITMAP;
-    case MNT_STATS_DATA_PAGE_FETCHES_XASL:	/* 7 xasl stream page                     */
+    case MNT_STATS_DATA_PAGE_FETCHES_XASL:     /* 7 xasl stream page                     */
       return PAGE_XASL;
-    case MNT_STATS_DATA_PAGE_FETCHES_QRESULT:	/* 8 query result page                    */
+    case MNT_STATS_DATA_PAGE_FETCHES_QRESULT:  /* 8 query result page                    */
       return PAGE_QRESULT;
-    case MNT_STATS_DATA_PAGE_FETCHES_EHASH:	/* 9 ehash bucket/dir page                */
+    case MNT_STATS_DATA_PAGE_FETCHES_EHASH:    /* 9 ehash bucket/dir page                */
       return PAGE_EHASH;
-    case MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW:	/* 10 overflow page (with ovf_keyval)      */
+    case MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW: /* 10 overflow page (with ovf_keyval)      */
       return PAGE_OVERFLOW;
-    case MNT_STATS_DATA_PAGE_FETCHES_AREA:	/* 11 area page                            */
+    case MNT_STATS_DATA_PAGE_FETCHES_AREA:     /* 11 area page                            */
       return PAGE_AREA;
-    case MNT_STATS_DATA_PAGE_FETCHES_CATALOG:	/* 12 catalog page                         */
+    case MNT_STATS_DATA_PAGE_FETCHES_CATALOG:  /* 12 catalog page                         */
       return PAGE_CATALOG;
-    case MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT:	/* 13 b+tree index root page                    */
+    case MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT:       /* 13 b+tree index root page                    */
       return PAGE_BTREE_ROOT;
-    case MNT_STATS_DATA_PAGE_FETCHES_BTREE:	/* 14 b+tree index page                    */
+    case MNT_STATS_DATA_PAGE_FETCHES_BTREE:    /* 14 b+tree index page                    */
       return PAGE_BTREE;
-    case MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN:	/* 0 unknown                     */
+    case MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN:  /* 0 unknown                     */
       return PAGE_UNKNOWN;
     default:
       break;
@@ -456,35 +447,35 @@ mnt_page_ptype_to_server_item_fetches (const PAGE_TYPE ptype)
   assert (ptype < PAGE_LAST);
   switch (ptype)
     {
-    case PAGE_FILE_HEADER:	/* 1 file header page                     */
+    case PAGE_FILE_HEADER:     /* 1 file header page                     */
       return MNT_STATS_DATA_PAGE_FETCHES_FILE_HEADER;
-    case PAGE_FILE_TAB:	/* 2 file allocset table page             */
+    case PAGE_FILE_TAB:        /* 2 file allocset table page             */
       return MNT_STATS_DATA_PAGE_FETCHES_FILE_TAB;
-    case PAGE_HEAP_HEADER:	/* 3 heap header page               */
+    case PAGE_HEAP_HEADER:     /* 3 heap header page               */
       return MNT_STATS_DATA_PAGE_FETCHES_HEAP_HEADER;
-    case PAGE_HEAP:		/* 4 heap page                            */
+    case PAGE_HEAP:            /* 4 heap page                            */
       return MNT_STATS_DATA_PAGE_FETCHES_HEAP;
-    case PAGE_VOLHEADER:	/* 5 volume header page                   */
+    case PAGE_VOLHEADER:       /* 5 volume header page                   */
       return MNT_STATS_DATA_PAGE_FETCHES_VOLHEADER;
-    case PAGE_VOLBITMAP:	/* 6 volume bitmap page                   */
+    case PAGE_VOLBITMAP:       /* 6 volume bitmap page                   */
       return MNT_STATS_DATA_PAGE_FETCHES_VOLBITMAP;
-    case PAGE_XASL:		/* 7 xasl stream page                     */
+    case PAGE_XASL:            /* 7 xasl stream page                     */
       return MNT_STATS_DATA_PAGE_FETCHES_XASL;
-    case PAGE_QRESULT:		/* 8 query result page                    */
+    case PAGE_QRESULT:         /* 8 query result page                    */
       return MNT_STATS_DATA_PAGE_FETCHES_QRESULT;
-    case PAGE_EHASH:		/* 9 ehash bucket/dir page                */
+    case PAGE_EHASH:           /* 9 ehash bucket/dir page                */
       return MNT_STATS_DATA_PAGE_FETCHES_EHASH;
-    case PAGE_OVERFLOW:	/* 10 overflow page                        */
+    case PAGE_OVERFLOW:        /* 10 overflow page                        */
       return MNT_STATS_DATA_PAGE_FETCHES_OVERFLOW;
-    case PAGE_AREA:		/* 11 area page                            */
+    case PAGE_AREA:            /* 11 area page                            */
       return MNT_STATS_DATA_PAGE_FETCHES_AREA;
-    case PAGE_CATALOG:		/* 12 catalog page                         */
+    case PAGE_CATALOG:         /* 12 catalog page                         */
       return MNT_STATS_DATA_PAGE_FETCHES_CATALOG;
-    case PAGE_BTREE_ROOT:	/* 13 b+tree index root page               */
+    case PAGE_BTREE_ROOT:      /* 13 b+tree index root page               */
       return MNT_STATS_DATA_PAGE_FETCHES_BTREE_ROOT;
-    case PAGE_BTREE:		/* 14 b+tree index page                    */
+    case PAGE_BTREE:           /* 14 b+tree index page                    */
       return MNT_STATS_DATA_PAGE_FETCHES_BTREE;
-    case PAGE_UNKNOWN:		/* 0 used for initialized page            */
+    case PAGE_UNKNOWN:         /* 0 used for initialized page            */
       return MNT_STATS_DATA_PAGE_FETCHES_UNKNOWN;
     default:
       break;
@@ -506,35 +497,35 @@ mnt_page_ptype_to_server_item_fetches_waits (const PAGE_TYPE ptype)
   assert (ptype < PAGE_LAST);
   switch (ptype)
     {
-    case PAGE_FILE_HEADER:	/* 1 file header page                     */
+    case PAGE_FILE_HEADER:     /* 1 file header page                     */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_HEADER;
-    case PAGE_FILE_TAB:	/* 2 file allocset table page             */
+    case PAGE_FILE_TAB:        /* 2 file allocset table page             */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_FILE_TAB;
-    case PAGE_HEAP_HEADER:	/* 3 heap header page               */
+    case PAGE_HEAP_HEADER:     /* 3 heap header page               */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP_HEADER;
-    case PAGE_HEAP:		/* 4 heap page                            */
+    case PAGE_HEAP:            /* 4 heap page                            */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_HEAP;
-    case PAGE_VOLHEADER:	/* 5 volume header page                   */
+    case PAGE_VOLHEADER:       /* 5 volume header page                   */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLHEADER;
-    case PAGE_VOLBITMAP:	/* 6 volume bitmap page                   */
+    case PAGE_VOLBITMAP:       /* 6 volume bitmap page                   */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_VOLBITMAP;
-    case PAGE_XASL:		/* 7 xasl stream page                     */
+    case PAGE_XASL:            /* 7 xasl stream page                     */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_XASL;
-    case PAGE_QRESULT:		/* 8 query result page                    */
+    case PAGE_QRESULT:         /* 8 query result page                    */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_QRESULT;
-    case PAGE_EHASH:		/* 9 ehash bucket/dir page                */
+    case PAGE_EHASH:           /* 9 ehash bucket/dir page                */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_EHASH;
-    case PAGE_OVERFLOW:	/* 10 overflow page                        */
+    case PAGE_OVERFLOW:        /* 10 overflow page                        */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_OVERFLOW;
-    case PAGE_AREA:		/* 11 area page                            */
+    case PAGE_AREA:            /* 11 area page                            */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_AREA;
-    case PAGE_CATALOG:		/* 12 catalog page                         */
+    case PAGE_CATALOG:         /* 12 catalog page                         */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_CATALOG;
-    case PAGE_BTREE_ROOT:	/* 13 b+tree index root page               */
+    case PAGE_BTREE_ROOT:      /* 13 b+tree index root page               */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE_ROOT;
-    case PAGE_BTREE:		/* 14 b+tree index page                    */
+    case PAGE_BTREE:           /* 14 b+tree index page                    */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_BTREE;
-    case PAGE_UNKNOWN:		/* 0 used for initialized page            */
+    case PAGE_UNKNOWN:         /* 0 used for initialized page            */
       return MNT_STATS_DATA_PAGE_FETCHES_WAITS_UNKNOWN;
     default:
       break;

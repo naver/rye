@@ -32,47 +32,36 @@
 
 extern int do_alter (PARSER_CONTEXT * parser, PT_NODE * statement);
 
-extern int do_alter_index (PARSER_CONTEXT * parser,
-			   const PT_NODE * statement);
-extern int do_create_index (PARSER_CONTEXT * parser,
-			    const PT_NODE * statement);
+extern int do_alter_index (PARSER_CONTEXT * parser, const PT_NODE * statement);
+extern int do_create_index (PARSER_CONTEXT * parser, const PT_NODE * statement);
 extern int do_drop_index (PARSER_CONTEXT * parser, const PT_NODE * statement);
 
 extern int do_commit (PARSER_CONTEXT * parser, PT_NODE * statement);
-extern int do_get_optimization_param (PARSER_CONTEXT * parser,
-				      PT_NODE * statement);
+extern int do_get_optimization_param (PARSER_CONTEXT * parser, PT_NODE * statement);
 extern int do_get_xaction (PARSER_CONTEXT * parser, PT_NODE * statement);
 extern int do_rollback (PARSER_CONTEXT * parser, PT_NODE * statement);
 extern int do_savepoint (PARSER_CONTEXT * parser, PT_NODE * statement);
-extern int do_set_optimization_param (PARSER_CONTEXT * parser,
-				      PT_NODE * statement);
+extern int do_set_optimization_param (PARSER_CONTEXT * parser, PT_NODE * statement);
 extern int do_set_sys_params (PARSER_CONTEXT * parser, PT_NODE * statement);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int do_set_xaction (PARSER_CONTEXT * parser, PT_NODE * statement);
 #endif
 
-extern int do_prepare_delete (DB_SESSION * session, PT_NODE * statement,
-			      PT_NODE * parent);
+extern int do_prepare_delete (DB_SESSION * session, PT_NODE * statement, PT_NODE * parent);
 extern int do_execute_delete (DB_SESSION * session, PT_NODE * statement);
 
 extern int do_drop (PARSER_CONTEXT * parser, PT_NODE * statement);
 
-extern int do_grant (const PARSER_CONTEXT * parser,
-		     const PT_NODE * statement);
-extern int do_revoke (const PARSER_CONTEXT * parser,
-		      const PT_NODE * statement);
-extern int do_create_user (const PARSER_CONTEXT * parser,
-			   const PT_NODE * statement);
-extern int do_drop_user (const PARSER_CONTEXT * parser,
-			 const PT_NODE * statement);
-extern int do_alter_user (const PARSER_CONTEXT * parser,
-			  const PT_NODE * statement);
+extern int do_grant (const PARSER_CONTEXT * parser, const PT_NODE * statement);
+extern int do_revoke (const PARSER_CONTEXT * parser, const PT_NODE * statement);
+extern int do_create_user (const PARSER_CONTEXT * parser, const PT_NODE * statement);
+extern int do_drop_user (const PARSER_CONTEXT * parser, const PT_NODE * statement);
+extern int do_alter_user (const PARSER_CONTEXT * parser, const PT_NODE * statement);
 
 extern int do_prepare_insert (DB_SESSION * session, PT_NODE * statement);
 extern int do_execute_insert (DB_SESSION * session, PT_NODE * statement);
 
-extern int do_rename (const PARSER_CONTEXT * parser,
-		      const PT_NODE * statement);
+extern int do_rename (const PARSER_CONTEXT * parser, const PT_NODE * statement);
 
 extern int do_prepare_select (DB_SESSION * session, PT_NODE * statement);
 extern int do_execute_select (DB_SESSION * session, PT_NODE * statement);
@@ -87,15 +76,12 @@ extern int do_replicate_schema (PARSER_CONTEXT * parser, PT_NODE * statement);
 extern int do_prepare_statement (DB_SESSION * session, PT_NODE * statement);
 extern int do_execute_statement (DB_SESSION * session, PT_NODE * statement);
 #if defined (ENABLE_UNUSED_FUNCTION)
-extern int do_evaluate_default_expr (PARSER_CONTEXT * parser,
-				     PT_NODE * class_name);
+extern int do_evaluate_default_expr (PARSER_CONTEXT * parser, PT_NODE * class_name);
 #endif
 extern bool is_schema_repl_log_statment (const PT_NODE * node);
 
 extern int do_set_query_trace (PARSER_CONTEXT * parser, PT_NODE * statement);
 
 extern int check_for_default_expr (PARSER_CONTEXT * parser,
-				   PT_NODE * specified_attrs,
-				   PT_NODE ** default_expr_attrs,
-				   DB_OBJECT * class_obj);
+                                   PT_NODE * specified_attrs, PT_NODE ** default_expr_attrs, DB_OBJECT * class_obj);
 #endif /* _EXECUTE_STATEMENT_H_ */

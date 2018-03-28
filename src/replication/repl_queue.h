@@ -40,18 +40,14 @@
 #define GLOBAL_APPLIER_INDEX                 1
 
 extern int cirp_analyzer_item_push (int la_index,
-				    TRANID trid, LOG_LSA * tran_start_lsa,
-				    LOG_LSA * committed_lsa,
-				    LOG_LSA * repl_start_lsa);
-extern int cirp_applier_item_pop (CIRP_APPLIER_INFO * applier,
-				  CIRP_Q_ITEM ** item);
+                                    TRANID trid, LOG_LSA * tran_start_lsa,
+                                    LOG_LSA * committed_lsa, LOG_LSA * repl_start_lsa);
+extern int cirp_applier_item_pop (CIRP_APPLIER_INFO * applier, CIRP_Q_ITEM ** item);
 extern int cirp_applier_clear_committed_item (CIRP_APPLIER_INFO * applier);
 
 extern bool cirp_analyzer_is_applier_busy (int la_index);
 
-extern int cirp_pthread_cond_timedwait (pthread_cond_t * pcond,
-					pthread_mutex_t * plock,
-					int wakeup_interval);
+extern int cirp_pthread_cond_timedwait (pthread_cond_t * pcond, pthread_mutex_t * plock, int wakeup_interval);
 extern int cirp_applier_wait_for_queue (CIRP_APPLIER_INFO * shm_applier);
 extern int cirp_analyzer_wait_for_queue (int la_index);
 extern int cirp_analyzer_wait_tran_commit (int la_index, LOG_LSA * lsa);

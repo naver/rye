@@ -46,8 +46,7 @@ static char event_log_file_path[PATH_MAX];
 
 static FILE *event_file_open (const char *path);
 static FILE *event_file_backup (FILE * fp, const char *path);
-static void event_log_print_client_ids_info (LOG_CLIENTIDS * client_info,
-					     int indent);
+static void event_log_print_client_ids_info (LOG_CLIENTIDS * client_info, int indent);
 
 /*
  * event_init - Initialize event log module
@@ -91,10 +90,9 @@ event_log_init (const char *db_name)
     }
 
   snprintf (event_log_name, PATH_MAX - 1,
-	    "%s%c%s_%04d%02d%02d_%02d%02d.event", EVENT_LOG_FILE_DIR,
-	    PATH_SEPARATOR, base_db_name, log_tm_p->tm_year + 1900,
-	    log_tm_p->tm_mon + 1, log_tm_p->tm_mday, log_tm_p->tm_hour,
-	    log_tm_p->tm_min);
+            "%s%c%s_%04d%02d%02d_%02d%02d.event", EVENT_LOG_FILE_DIR,
+            PATH_SEPARATOR, base_db_name, log_tm_p->tm_year + 1900,
+            log_tm_p->tm_mon + 1, log_tm_p->tm_mday, log_tm_p->tm_hour, log_tm_p->tm_min);
 
   envvar_ryelogdir_file (event_log_file_path, PATH_MAX, event_log_name);
   event_Fp = event_file_open (event_log_file_path);
@@ -125,9 +123,9 @@ event_file_open (const char *path)
     {
       fseek (fp, 0, SEEK_END);
       if (ftell (fp) > prm_get_bigint_value (PRM_ID_ER_LOG_SIZE))
-	{
-	  fp = event_file_backup (fp, path);
-	}
+        {
+          fp = event_file_backup (fp, path);
+        }
     }
   else
     {
@@ -188,17 +186,17 @@ event_log_start (THREAD_ENTRY * thread_p, const char *event_name)
   if (event_Fp == NULL || access (log_file_name, F_OK) == -1)
     {
       if (event_Fp != NULL)
-	{
-	  (void) fclose (event_Fp);
-	}
+        {
+          (void) fclose (event_Fp);
+        }
 
       event_Fp = event_file_open (log_file_name);
       if (event_Fp == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
-	  csect_exit (CSECT_EVENT_LOG_FILE);
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+          csect_exit (CSECT_EVENT_LOG_FILE);
+          return NULL;
+        }
     }
   else if (ftell (event_Fp) > prm_get_bigint_value (PRM_ID_ER_LOG_SIZE))
     {
@@ -206,11 +204,11 @@ event_log_start (THREAD_ENTRY * thread_p, const char *event_name)
 
       event_Fp = event_file_backup (event_Fp, log_file_name);
       if (event_Fp == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
-	  csect_exit (CSECT_EVENT_LOG_FILE);
-	  return NULL;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
+          csect_exit (CSECT_EVENT_LOG_FILE);
+          return NULL;
+        }
     }
 
   (void) er_datetime (NULL, time_array, sizeof (time_array));
@@ -260,8 +258,7 @@ event_log_print_client_ids_info (LOG_CLIENTIDS * client_info, int indent)
       fprintf (event_Fp, "%*c", indent, ' ');
     }
   fprintf (event_Fp, "client: %s@%s|%s(%d)\n", client_info->db_user,
-	   client_info->host_name, client_info->program_name,
-	   client_info->process_id);
+           client_info->host_name, client_info->program_name, client_info->process_id);
 }
 
 /*
@@ -309,8 +306,7 @@ event_log_print_client_info (int tran_index, int indent)
  *   xasl_id(in):
  */
 void
-event_log_sql_string (THREAD_ENTRY * thread_p, FILE * log_fp,
-		      XASL_ID * xasl_id, int indent)
+event_log_sql_string (THREAD_ENTRY * thread_p, FILE * log_fp, XASL_ID * xasl_id, int indent)
 {
   XASL_CACHE_ENTRY *ent;
 
@@ -324,8 +320,7 @@ event_log_sql_string (THREAD_ENTRY * thread_p, FILE * log_fp,
       return;
     }
 
-  ent =
-    qexec_check_xasl_cache_ent_by_xasl (thread_p, xasl_id, -1, NULL, false);
+  ent = qexec_check_xasl_cache_ent_by_xasl (thread_p, xasl_id, -1, NULL, false);
 
   if (ent != NULL && ent->sql_info.sql_hash_text != NULL)
     {
@@ -372,13 +367,12 @@ event_log_bind_values (FILE * log_fp, int tran_index, int bind_index)
   for (i = 0; i < tdes->bind_history[bind_index].size; i++)
     {
       val_str = pr_valstring (&tdes->bind_history[bind_index].vals[i]);
-      fprintf (log_fp, "%*cbind: %s\n", indent, ' ',
-	       (val_str == NULL) ? "(null)" : val_str);
+      fprintf (log_fp, "%*cbind: %s\n", indent, ' ', (val_str == NULL) ? "(null)" : val_str);
 
       if (val_str != NULL)
-	{
-	  free_and_init (val_str);
-	}
+        {
+          free_and_init (val_str);
+        }
     }
 }
 
@@ -394,8 +388,7 @@ event_log_bind_values (FILE * log_fp, int tran_index, int bind_index)
  */
 void
 event_log_log_flush_thr_wait (THREAD_ENTRY * thread_p, int flush_count,
-			      LOG_CLIENTIDS * client_info, int flush_time,
-			      int flush_wait_time, int writer_time)
+                              LOG_CLIENTIDS * client_info, int flush_time, int flush_wait_time, int writer_time)
 {
   FILE *log_fp;
   int indent = 2;
@@ -406,17 +399,14 @@ event_log_log_flush_thr_wait (THREAD_ENTRY * thread_p, int flush_count,
       return;
     }
 
-  fprintf (log_fp, "%*ctotal flush count: %d page(s)\n", indent, ' ',
-	   flush_count);
+  fprintf (log_fp, "%*ctotal flush count: %d page(s)\n", indent, ' ', flush_count);
   fprintf (log_fp, "%*ctotal flush time: %d ms\n", indent, ' ', flush_time);
-  fprintf (log_fp, "%*ctime waiting for log writer: %d ms\n", indent, ' ',
-	   flush_wait_time);
+  fprintf (log_fp, "%*ctime waiting for log writer: %d ms\n", indent, ' ', flush_wait_time);
   fprintf (log_fp, "%*clast log writer info\n", indent, ' ');
 
   indent *= 2;
   event_log_print_client_ids_info (client_info, indent);
-  fprintf (log_fp, "%*ctime spent by last log writer: %d ms\n", indent, ' ',
-	   writer_time);
+  fprintf (log_fp, "%*ctime spent by last log writer: %d ms\n", indent, ' ', writer_time);
 
   event_log_end (thread_p);
 }

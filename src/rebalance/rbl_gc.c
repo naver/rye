@@ -43,11 +43,9 @@
 static int *rbl_get_all_removed_group_id (CCI_CONN * conn, int *num_ids);
 static int rbl_gc_shard_table (CCI_CONN * conn, int gid);
 static int rbl_gc_global_table (CCI_CONN * conn);
-static CCI_STMT *rbl_make_table_gc_stmts (CCI_CONN * conn,
-					  TABLE_INFO * tables, int num_table);
+static CCI_STMT *rbl_make_table_gc_stmts (CCI_CONN * conn, TABLE_INFO * tables, int num_table);
 static void rbl_free_table_gc_stmts (CCI_STMT * stmts, int n);
-static int rbl_delete_table_rows (CCI_CONN * dest_conn, CCI_STMT * del_stmt,
-				  int gid, char *skey);
+static int rbl_delete_table_rows (CCI_CONN * dest_conn, CCI_STMT * del_stmt, int gid, char *skey);
 
 int
 rbl_gc_run (CCI_CONN * conn, int max_runtime)
@@ -68,39 +66,37 @@ rbl_gc_run (CCI_CONN * conn, int max_runtime)
     {
       error = rbl_gc_shard_table (conn, gids[i]);
       if (error != NO_ERROR)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       error = cci_delete_gid_removed_info (conn, gids[i]);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     conn->err_buf.err_code, conn->err_buf.err_msg);
-	  cci_end_tran (conn, CCI_TRAN_ROLLBACK);
-	  break;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
+          cci_end_tran (conn, CCI_TRAN_ROLLBACK);
+          break;
+        }
 
       error = cci_delete_gid_skey_info (conn, gids[i]);
       if (error != NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     conn->err_buf.err_code, conn->err_buf.err_msg);
-	  cci_end_tran (conn, CCI_TRAN_ROLLBACK);
-	  break;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
+          cci_end_tran (conn, CCI_TRAN_ROLLBACK);
+          break;
+        }
 
       cci_end_tran (conn, CCI_TRAN_COMMIT);
 
       if (max_runtime > 0)
-	{
-	  gettimeofday (&end_time, NULL);
-	  DIFF_TIMEVAL (start_time, end_time, elapsed_time);
-	  if (elapsed_time.tv_sec >= max_runtime)
-	    {
-	      break;
-	    }
-	}
+        {
+          gettimeofday (&end_time, NULL);
+          DIFF_TIMEVAL (start_time, end_time, elapsed_time);
+          if (elapsed_time.tv_sec >= max_runtime)
+            {
+              break;
+            }
+        }
     }
 
   return error;
@@ -118,16 +114,14 @@ rbl_get_all_removed_group_id (CCI_CONN * conn, int *num_ids)
 
   if (cci_prepare (conn, &stmt, sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 conn->err_buf.err_code, conn->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
       return NULL;
     }
 
   n = cci_execute (&stmt, 0, 0);
   if (n < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 stmt.err_buf.err_code, stmt.err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
       goto handle_error;
     }
 
@@ -141,19 +135,17 @@ rbl_get_all_removed_group_id (CCI_CONN * conn, int *num_ids)
   for (i = 0; i < n; i++)
     {
       if (cci_fetch_next (&stmt) < 0)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     stmt.err_buf.err_code, stmt.err_buf.err_msg);
-	  goto handle_error;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          goto handle_error;
+        }
 
       gid = cci_get_int (&stmt, 1, &ind);
       if (stmt.err_buf.err_code != CCI_ER_NO_ERROR)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     stmt.err_buf.err_code, stmt.err_buf.err_msg);
-	  goto handle_error;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
+          goto handle_error;
+        }
 
       gids[i] = gid;
     }
@@ -211,19 +203,18 @@ rbl_gc_shard_table (CCI_CONN * conn, int gid)
   for (i = 0; i < num_skey; i++)
     {
       for (j = 0; j < num_tbl; j++)
-	{
-	  n = rbl_delete_table_rows (conn, &del_stmts[j], gid, skeys[i]);
-	  if (n < 0)
-	    {
-	      rbl_free_shard_keys (skeys, num_skey);
-	      rbl_free_table_info (tables, num_tbl);
-	      rbl_free_table_gc_stmts (del_stmts, num_tbl);
-	      return ER_FAILED;
-	    }
+        {
+          n = rbl_delete_table_rows (conn, &del_stmts[j], gid, skeys[i]);
+          if (n < 0)
+            {
+              rbl_free_shard_keys (skeys, num_skey);
+              rbl_free_table_info (tables, num_tbl);
+              rbl_free_table_gc_stmts (del_stmts, num_tbl);
+              return ER_FAILED;
+            }
 
-	  RBL_DEBUG (ARG_FILE_LINE, "Table = %s, Deleted rows = %d",
-		     tables[j].table_name, n);
-	}
+          RBL_DEBUG (ARG_FILE_LINE, "Table = %s, Deleted rows = %d", tables[j].table_name, n);
+        }
     }
 
   rbl_free_shard_keys (skeys, num_skey);
@@ -257,14 +248,13 @@ rbl_gc_global_table (CCI_CONN * conn)
     {
       n = rbl_delete_table_rows (conn, &del_stmts[i], GLOBAL_GROUPID, NULL);
       if (n < 0)
-	{
-	  rbl_free_table_info (tables, num_tbl);
-	  rbl_free_table_gc_stmts (del_stmts, num_tbl);
-	  return ER_FAILED;
-	}
+        {
+          rbl_free_table_info (tables, num_tbl);
+          rbl_free_table_gc_stmts (del_stmts, num_tbl);
+          return ER_FAILED;
+        }
 
-      RBL_DEBUG (ARG_FILE_LINE, "Table = %s, Deleted rows = %d",
-		 tables[i].table_name, n);
+      RBL_DEBUG (ARG_FILE_LINE, "Table = %s, Deleted rows = %d", tables[i].table_name, n);
     }
 
   rbl_free_table_info (tables, num_tbl);
@@ -282,30 +272,26 @@ rbl_make_table_gc_stmts (CCI_CONN * conn, TABLE_INFO * tables, int num_table)
   del_stmts = (CCI_STMT *) malloc (sizeof (CCI_STMT) * num_table);
   if (del_stmts == NULL)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY,
-		 sizeof (CCI_STMT) * num_table);
+      RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, sizeof (CCI_STMT) * num_table);
       return NULL;
     }
 
   for (i = 0; i < num_table; i++)
     {
       if (tables[i].skey_col_name == NULL)
-	{
-	  sprintf (sql, "DELETE FROM [%s]", tables[i].table_name);
-	}
+        {
+          sprintf (sql, "DELETE FROM [%s]", tables[i].table_name);
+        }
       else
-	{
-	  sprintf (sql, "DELETE FROM [%s] WHERE [%s] = ?",
-		   tables[i].table_name, tables[i].skey_col_name);
-	}
+        {
+          sprintf (sql, "DELETE FROM [%s] WHERE [%s] = ?", tables[i].table_name, tables[i].skey_col_name);
+        }
 
-      if (cci_prepare (conn, &del_stmts[i], sql,
-		       CCI_PREPARE_FROM_MIGRATOR) < 0)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     conn->err_buf.err_code, conn->err_buf.err_msg);
-	  goto error_exit;
-	}
+      if (cci_prepare (conn, &del_stmts[i], sql, CCI_PREPARE_FROM_MIGRATOR) < 0)
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
+          goto error_exit;
+        }
     }
 
   return del_stmts;
@@ -334,26 +320,23 @@ rbl_free_table_gc_stmts (CCI_STMT * stmts, int n)
 }
 
 static int
-rbl_delete_table_rows (CCI_CONN * dest_conn, CCI_STMT * del_stmt, int gid,
-		       char *skey)
+rbl_delete_table_rows (CCI_CONN * dest_conn, CCI_STMT * del_stmt, int gid, char *skey)
 {
   int n;
 
   if (skey != NULL)
     {
       if (cci_bind_param (del_stmt, 1, CCI_TYPE_VARCHAR, skey, 0) < 0)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     del_stmt->err_buf.err_code, del_stmt->err_buf.err_msg);
-	  goto error_exit;
-	}
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, del_stmt->err_buf.err_code, del_stmt->err_buf.err_msg);
+          goto error_exit;
+        }
     }
 
   n = cci_execute_with_gid (del_stmt, 0, 0, -gid);
   if (n < 0)
     {
-      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		 del_stmt->err_buf.err_code, del_stmt->err_buf.err_msg);
+      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, del_stmt->err_buf.err_code, del_stmt->err_buf.err_msg);
       goto error_exit;
     }
 
@@ -383,17 +366,16 @@ rbl_clear_destdb (CCI_CONN * conn, int gid)
     {
       error = cci_insert_gid_removed_info (conn, gid);
       if (error != NO_ERROR)
-	{
-	  if (conn->err_buf.err_code == ER_BTREE_UNIQUE_FAILED)
-	    {
-	      error = NO_ERROR;
-	    }
-	  else
-	    {
-	      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-			 conn->err_buf.err_code, conn->err_buf.err_msg);
-	    }
-	}
+        {
+          if (conn->err_buf.err_code == ER_BTREE_UNIQUE_FAILED)
+            {
+              error = NO_ERROR;
+            }
+          else
+            {
+              RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
+            }
+        }
       cci_end_tran (conn, CCI_TRAN_COMMIT);
     }
 

@@ -49,8 +49,8 @@ typedef enum
 
 typedef enum
 {
-  QPROC_FETCH_INNER = 0,	/* 0 or n qualified rows */
-  QPROC_FETCH_OUTER		/* 1 NULL row or n qualified rows */
+  QPROC_FETCH_INNER = 0,        /* 0 or n qualified rows */
+  QPROC_FETCH_OUTER             /* 1 NULL row or n qualified rows */
 } QPROC_FETCH_TYPE;
 
 /*
@@ -118,10 +118,10 @@ struct cache_time
 typedef struct xasl_node_header XASL_NODE_HEADER;
 struct xasl_node_header
 {
-  int xasl_flag;		/* multi range optimization flags */
+  int xasl_flag;                /* multi range optimization flags */
 };
 
-#define XASL_NODE_HEADER_SIZE OR_INT_SIZE	/* xasl_flag */
+#define XASL_NODE_HEADER_SIZE OR_INT_SIZE       /* xasl_flag */
 
 #define OR_PACK_XASL_NODE_HEADER(PTR, X)	  \
   do					  \
@@ -160,10 +160,10 @@ struct xasl_node_header
 typedef struct xasl_id XASL_ID;
 struct xasl_id
 {
-  VPID first_vpid;		/* first page real identifier */
-  VFID temp_vfid;		/* temp file volume and file identifier */
-  CACHE_TIME time_stored;	/* when this XASL plan stored */
-};				/* XASL plan file identifier */
+  VPID first_vpid;              /* first page real identifier */
+  VFID temp_vfid;               /* temp file volume and file identifier */
+  CACHE_TIME time_stored;       /* when this XASL plan stored */
+};                              /* XASL plan file identifier */
 
 #define XASL_ID_SET_NULL(X) \
     do { \
@@ -443,14 +443,14 @@ struct xasl_id
  *       		    QFILE_TUPLE FORMAT DEFINITIONS
  */
 
-typedef char *QFILE_TUPLE;	/* list file tuple */
+typedef char *QFILE_TUPLE;      /* list file tuple */
 
 /* tuple record descriptor */
 typedef struct qfile_tuple_record QFILE_TUPLE_RECORD;
 struct qfile_tuple_record
 {
-  char *tpl;			/* tuple pointer */
-  int size;			/* area _allocated_ for tuple pointer */
+  char *tpl;                    /* tuple pointer */
+  int size;                     /* area _allocated_ for tuple pointer */
 };
 
 typedef enum
@@ -463,31 +463,31 @@ typedef enum
 typedef struct qfile_tuple_value_header QFILE_TUPLE_VALUE_HEADER;
 struct qfile_tuple_value_header
 {
-  QFILE_TUPLE_VALUE_FLAG val_flag;	/* V_BOUND/V_UNBOUND? */
-  int val_len;			/* length of tuple value */
+  QFILE_TUPLE_VALUE_FLAG val_flag;      /* V_BOUND/V_UNBOUND? */
+  int val_len;                  /* length of tuple value */
 };
 
 /* Type list structure */
 typedef struct qfile_tuple_value_type_list QFILE_TUPLE_VALUE_TYPE_LIST;
 struct qfile_tuple_value_type_list
 {
-  TP_DOMAIN **domp;		/* array of column domains */
-  int type_cnt;			/* number of data types */
+  TP_DOMAIN **domp;             /* array of column domains */
+  int type_cnt;                 /* number of data types */
 };
 
 /* tuple value position descriptor */
 typedef struct qfile_tuple_value_position QFILE_TUPLE_VALUE_POSITION;
 struct qfile_tuple_value_position
 {
-  int pos_no;			/* value position number */
+  int pos_no;                   /* value position number */
 };
 
 typedef enum
 {
-  T_UNKNOWN,			/* uninitialized: not used */
-  T_SINGLE_BOUND_ITEM,		/* called by qfile_add_item_to_list() */
-  T_NORMAL,			/* normal case */
-  T_SORTKEY			/* called by ls_sort_put_next() */
+  T_UNKNOWN,                    /* uninitialized: not used */
+  T_SINGLE_BOUND_ITEM,          /* called by qfile_add_item_to_list() */
+  T_NORMAL,                     /* normal case */
+  T_SORTKEY                     /* called by ls_sort_put_next() */
 } QFILE_TUPLE_TYPE;
 
 /* tuple descriptor */
@@ -495,17 +495,17 @@ typedef struct qfile_tuple_descriptor QFILE_TUPLE_DESCRIPTOR;
 struct qfile_tuple_descriptor
 {
   /* T_SINGLE_BOUND_ITEM */
-  char *item;			/* pointer of item (i.e, single bound field tuple) */
-  int item_size;		/* item size */
+  char *item;                   /* pointer of item (i.e, single bound field tuple) */
+  int item_size;                /* item size */
 
   /* T_NORMAL */
-  int tpl_size;			/* tuple size */
-  int f_cnt;			/* number of field */
-  DB_VALUE **f_valp;		/* pointer of field value pointer array */
+  int tpl_size;                 /* tuple size */
+  int f_cnt;                    /* number of field */
+  DB_VALUE **f_valp;            /* pointer of field value pointer array */
 
   /* T_SORTKEY */
-  void *sortkey_info;		/* casted pointer of (SORTKEY_INFO *) */
-  void *sort_rec;		/* casted pointer of (SORT_REC *) */
+  void *sortkey_info;           /* casted pointer of (SORTKEY_INFO *) */
+  void *sort_rec;               /* casted pointer of (SORT_REC *) */
 };
 
 /*
@@ -536,11 +536,11 @@ typedef enum
 typedef struct sort_list SORT_LIST;
 struct sort_list
 {
-  struct sort_list *next;	/* Next sort item */
-  QFILE_TUPLE_VALUE_POSITION pos_descr;	/* Value position descriptor */
-  SORT_ORDER s_order;		/* Ascending/Descending Order */
-  SORT_NULLS s_nulls;		/* NULLS as First/Last position */
-};				/* Sort item list */
+  struct sort_list *next;       /* Next sort item */
+  QFILE_TUPLE_VALUE_POSITION pos_descr; /* Value position descriptor */
+  SORT_ORDER s_order;           /* Ascending/Descending Order */
+  SORT_NULLS s_nulls;           /* NULLS as First/Last position */
+};                              /* Sort item list */
 
 /*
  *       		     LIST FILE DEFINITIONS
@@ -549,25 +549,25 @@ struct sort_list
 typedef struct qfile_list_id QFILE_LIST_ID;
 struct qfile_list_id
 {
-  QFILE_TUPLE_VALUE_TYPE_LIST type_list;	/* data type of each column */
-  SORT_LIST *sort_list;		/* sort info of each column */
-#if 1				/* TODO - need to use int64_t type */
-  int tuple_cnt;		/* total number of tuples in the file */
+  QFILE_TUPLE_VALUE_TYPE_LIST type_list;        /* data type of each column */
+  SORT_LIST *sort_list;         /* sort info of each column */
+#if 1                           /* TODO - need to use int64_t type */
+  int tuple_cnt;                /* total number of tuples in the file */
 #endif
-  int page_cnt;			/* total number of pages in the list file */
-  VPID first_vpid;		/* first real page identifier */
-  VPID last_vpid;		/* last real page identifier */
-  PAGE_PTR last_pgptr;		/* last page pointer */
-  int last_offset;		/* mark current end of last page */
-  int lasttpl_len;		/* length of the last tuple file identifier
-				 * NOTE: A tuple can be larger than one page
-				 *       therefore, this field must be int
-				 *       instead of a short value
-				 */
-  QUERY_ID query_id;		/* Associated Query Id */
-  VFID temp_vfid;		/* temp file id; duplicated from tfile_vfid */
-  struct qmgr_temp_file *tfile_vfid;	/* Create a tmp file per list */
-  QFILE_TUPLE_DESCRIPTOR tpl_descr;	/* tuple descriptor */
+  int page_cnt;                 /* total number of pages in the list file */
+  VPID first_vpid;              /* first real page identifier */
+  VPID last_vpid;               /* last real page identifier */
+  PAGE_PTR last_pgptr;          /* last page pointer */
+  int last_offset;              /* mark current end of last page */
+  int lasttpl_len;              /* length of the last tuple file identifier
+                                 * NOTE: A tuple can be larger than one page
+                                 *       therefore, this field must be int
+                                 *       instead of a short value
+                                 */
+  QUERY_ID query_id;            /* Associated Query Id */
+  VFID temp_vfid;               /* temp file id; duplicated from tfile_vfid */
+  struct qmgr_temp_file *tfile_vfid;    /* Create a tmp file per list */
+  QFILE_TUPLE_DESCRIPTOR tpl_descr;     /* tuple descriptor */
 };
 
 #define QFILE_CLEAR_LIST_ID(list_id) \
@@ -601,39 +601,39 @@ struct qfile_list_id
 typedef struct qfile_tuple_position QFILE_TUPLE_POSITION;
 struct qfile_tuple_position
 {
-  SCAN_STATUS status;		/* Scan status                    */
-  SCAN_POSITION position;	/* Scan position                  */
-  VPID vpid;			/* Real tuple page identifier     */
-  int offset;			/* Tuple offset inside the page   */
-  QFILE_TUPLE tpl;		/* Tuple pointer inside the page  */
-  int tplno;			/* Tuple number inside the page   */
+  SCAN_STATUS status;           /* Scan status                    */
+  SCAN_POSITION position;       /* Scan position                  */
+  VPID vpid;                    /* Real tuple page identifier     */
+  int offset;                   /* Tuple offset inside the page   */
+  QFILE_TUPLE tpl;              /* Tuple pointer inside the page  */
+  int tplno;                    /* Tuple number inside the page   */
 };
 
-#define QFILE_OUTER_LIST  0	/* outer list file indicator */
-#define QFILE_INNER_LIST  1	/* inner list file indicator */
+#define QFILE_OUTER_LIST  0     /* outer list file indicator */
+#define QFILE_INNER_LIST  1     /* inner list file indicator */
 
 /* List File Scan Identifier */
 typedef struct qfile_list_scan_id QFILE_LIST_SCAN_ID;
 struct qfile_list_scan_id
 {
-  SCAN_STATUS status;		/* Scan Status */
-  SCAN_POSITION position;	/* Scan Position */
-  VPID curr_vpid;		/* current real page identifier */
-  PAGE_PTR curr_pgptr;		/* current page pointer */
-  QFILE_TUPLE curr_tpl;		/* current tuple pointer */
-  bool keep_page_on_finish;	/* flag; when set, does not free page when scan
-				   ends */
-  int curr_offset;		/* current page offset */
-  int curr_tplno;		/* current tuple number */
-  QFILE_TUPLE_RECORD tplrec;	/* used for overflow tuple peeking */
-  QFILE_LIST_ID list_id;	/* list file identifier */
+  SCAN_STATUS status;           /* Scan Status */
+  SCAN_POSITION position;       /* Scan Position */
+  VPID curr_vpid;               /* current real page identifier */
+  PAGE_PTR curr_pgptr;          /* current page pointer */
+  QFILE_TUPLE curr_tpl;         /* current tuple pointer */
+  bool keep_page_on_finish;     /* flag; when set, does not free page when scan
+                                   ends */
+  int curr_offset;              /* current page offset */
+  int curr_tplno;               /* current tuple number */
+  QFILE_TUPLE_RECORD tplrec;    /* used for overflow tuple peeking */
+  QFILE_LIST_ID list_id;        /* list file identifier */
 };
 
 /* list file flag; denoting type and/or operation of the list file */
 enum
 {
 #if 0
-  QFILE_FLAG_RESULT_FILE = 0x0001,	/* reserved */
+  QFILE_FLAG_RESULT_FILE = 0x0001,      /* reserved */
 #endif
   QFILE_FLAG_UNION = 0x0010,
   QFILE_FLAG_INTERSECT = 0x0020,
@@ -655,16 +655,16 @@ enum
 typedef struct qfile_sorted_list_id QFILE_SORTED_LIST_ID;
 struct qfile_sorted_list_id
 {
-  QFILE_LIST_ID *list_id;	/* List File identifier */
-  int sorted;			/* Has file already been sorted? */
+  QFILE_LIST_ID *list_id;       /* List File identifier */
+  int sorted;                   /* Has file already been sorted? */
 };
 
 /* Sorting Scan Identifier */
 typedef struct qfile_sort_scan_id QFILE_SORT_SCAN_ID;
 struct qfile_sort_scan_id
 {
-  QFILE_LIST_SCAN_ID *s_id;	/* Scan Identifier */
-  QFILE_TUPLE_RECORD tplrec;	/* Tuple Descriptor used for sorting */
+  QFILE_LIST_SCAN_ID *s_id;     /* Scan Identifier */
+  QFILE_TUPLE_RECORD tplrec;    /* Tuple Descriptor used for sorting */
 };
 
 typedef enum execute_mode EXECUTE_MODE;

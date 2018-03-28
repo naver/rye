@@ -51,10 +51,10 @@
  */
 typedef enum
 {
-  SVR_CONNECT_TYPE_MASTER_INFO,	/* send master request to the master server */
-  SVR_CONNECT_TYPE_TO_SERVER,	/* get data from the database server */
-  SVR_CONNECT_TYPE_TRANSFER_CONN,	/* get data from the database server */
-  SVR_CONNECT_TYPE_MASTER_HB_PROC	/* let new server attach */
+  SVR_CONNECT_TYPE_MASTER_INFO, /* send master request to the master server */
+  SVR_CONNECT_TYPE_TO_SERVER,   /* get data from the database server */
+  SVR_CONNECT_TYPE_TRANSFER_CONN,       /* get data from the database server */
+  SVR_CONNECT_TYPE_MASTER_HB_PROC       /* let new server attach */
 } SVR_CONNECT_TYPE;
 
 /*
@@ -78,21 +78,21 @@ enum _css_master_request
   MASTER_GET_SERVER_COUNT,
   MASTER_GET_REQUEST_COUNT,
   MASTER_GET_SERVER_LIST,
-  MASTER_GET_HA_PING_HOST_INFO,	/* HA: get ping hosts info */
-  MASTER_GET_HA_NODE_LIST,	/* HA: get ha node list */
-  MASTER_GET_HA_PROCESS_LIST,	/* HA: get ha process list */
-  MASTER_GET_HA_ADMIN_INFO,	/* HA: get administrative info */
-  MASTER_IS_REGISTERED_HA_PROCS,	/* HA: check registered ha process */
-  MASTER_GET_SERVER_STATE,	/* broker: get the server state */
+  MASTER_GET_HA_PING_HOST_INFO, /* HA: get ping hosts info */
+  MASTER_GET_HA_NODE_LIST,      /* HA: get ha node list */
+  MASTER_GET_HA_PROCESS_LIST,   /* HA: get ha process list */
+  MASTER_GET_HA_ADMIN_INFO,     /* HA: get administrative info */
+  MASTER_IS_REGISTERED_HA_PROCS,        /* HA: check registered ha process */
+  MASTER_GET_SERVER_STATE,      /* broker: get the server state */
 
   MASTER_START_SHUTDOWN,
-  MASTER_ACTIVATE_HEARTBEAT,	/* HA: activate */
+  MASTER_ACTIVATE_HEARTBEAT,    /* HA: activate */
   MASTER_REGISTER_HA_PROCESS,
-  MASTER_DEACT_STOP_ALL,	/* HA: prepare for deactivation */
-  MASTER_DEACT_CONFIRM_STOP_ALL,	/* HA: confirm preparation for deactiavtion */
-  MASTER_DEACTIVATE_HEARTBEAT,	/* HA: deactivate */
-  MASTER_DEACT_CONFIRM_NO_SERVER,	/* HA: confirm the completion of deactivation */
-  MASTER_RECONFIG_HEARTBEAT,	/* HA: reconfigure ha node */
+  MASTER_DEACT_STOP_ALL,        /* HA: prepare for deactivation */
+  MASTER_DEACT_CONFIRM_STOP_ALL,        /* HA: confirm preparation for deactiavtion */
+  MASTER_DEACTIVATE_HEARTBEAT,  /* HA: deactivate */
+  MASTER_DEACT_CONFIRM_NO_SERVER,       /* HA: confirm the completion of deactivation */
+  MASTER_RECONFIG_HEARTBEAT,    /* HA: reconfigure ha node */
 
   MASTER_CHANGEMODE,
   MASTER_CHANGE_SERVER_STATE,
@@ -216,10 +216,10 @@ enum css_check_peer_alive
 typedef enum ha_mode HA_MODE;
 enum ha_mode
 {
-  HA_MODE_OFF = 0,		/* unused */
-  HA_MODE_FAIL_OVER = 1,	/* unused */
+  HA_MODE_OFF = 0,              /* unused */
+  HA_MODE_FAIL_OVER = 1,        /* unused */
   HA_MODE_FAIL_BACK = 2,
-  HA_MODE_LAZY_BACK = 3,	/* not implemented yet */
+  HA_MODE_LAZY_BACK = 3,        /* not implemented yet */
   HA_MODE_ROLE_CHANGE = 4,
   HA_MODE_REPLICA = 5
 };
@@ -234,14 +234,14 @@ enum ha_mode
 typedef enum _ha_state HA_STATE;
 enum _ha_state
 {
-  HA_STATE_NA = -1,		/* N/A */
-  HA_STATE_UNKNOWN = 0,		/* initial state */
+  HA_STATE_NA = -1,             /* N/A */
+  HA_STATE_UNKNOWN = 0,         /* initial state */
   HA_STATE_MASTER = 1,
   HA_STATE_TO_BE_MASTER = 2,
   HA_STATE_SLAVE = 3,
   HA_STATE_TO_BE_SLAVE = 4,
-  HA_STATE_REPLICA = 5,		/* replica mode */
-  HA_STATE_DEAD = 6,		/* virtual state; not exists */
+  HA_STATE_REPLICA = 5,         /* replica mode */
+  HA_STATE_DEAD = 6,            /* virtual state; not exists */
   HA_STATE_MAX
 };
 
@@ -381,26 +381,26 @@ struct css_conn_entry
   RYE_VERSION peer_version;
   SOCKET fd;
   unsigned short request_id;
-  int status;			/* CONN_OPEN, CONN_CLOSED, CONN_CLOSING = 3 */
+  int status;                   /* CONN_OPEN, CONN_CLOSED, CONN_CLOSING = 3 */
   int tran_index;
   int client_id;
-  bool is_server_in_tran;	/* worker threads's tran status. */
-  bool conn_reset_on_commit;	/* set reset_on_commit when commit/abort */
-  bool is_client_ro_tran;	/* is client read-only tran? */
-  short server_shard_nodeid;	/* server's nodeid */
+  bool is_server_in_tran;       /* worker threads's tran status. */
+  bool conn_reset_on_commit;    /* set reset_on_commit when commit/abort */
+  bool is_client_ro_tran;       /* is client read-only tran? */
+  short server_shard_nodeid;    /* server's nodeid */
 
 #if defined(SERVER_MODE)
-  int idx;			/* connection index */
+  int idx;                      /* connection index */
   BOOT_CLIENT_TYPE client_type;
   pthread_mutex_t conn_mutex;
-  bool stop_talk;		/* block and stop this connection */
-  bool ignore_repl_delay;	/* don't do reset_on_commit by the delay
-				 * of replication */
+  bool stop_talk;               /* block and stop this connection */
+  bool ignore_repl_delay;       /* don't do reset_on_commit by the delay
+                                 * of replication */
   unsigned short stop_phase;
   bool con_close_handler_activated;
   int epoll_info_index;
 
-  struct session_state *session_p;	/* session object for current request */
+  struct session_state *session_p;      /* session object for current request */
   int epoll_check_time;
   bool epoll_check_err;
 #endif
@@ -415,12 +415,12 @@ struct css_conn_entry
 typedef struct css_mapping_entry CSS_MAP_ENTRY;
 struct css_mapping_entry
 {
-  char *key;			/* host name (or some such) */
-  CSS_CONN_ENTRY *conn;		/* the connection */
+  char *key;                    /* host name (or some such) */
+  CSS_CONN_ENTRY *conn;         /* the connection */
 #if !defined(SERVER_MODE)
   CSS_MAP_ENTRY *next;
 #endif
-  unsigned short id;		/* host id to help identify the connection */
+  unsigned short id;            /* host id to help identify the connection */
 };
 
 /*

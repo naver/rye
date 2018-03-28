@@ -50,8 +50,7 @@ extern int util_compare_filepath (const char *file1, const char *file2);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
 typedef void (*SIG_HANDLER) (void);
-extern void util_arm_signal_handlers (SIG_HANDLER DB_INT32_handler,
-				      SIG_HANDLER quit_handler);
+extern void util_arm_signal_handlers (SIG_HANDLER DB_INT32_handler, SIG_HANDLER quit_handler);
 extern void util_disarm_signal_handlers (void);
 #endif
 extern char **util_split_string (const char *str, const char *delim);

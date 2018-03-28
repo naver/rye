@@ -123,8 +123,8 @@ extern "C"
   typedef struct
   {
     T_CCI_TYPE a_type;
-    int size;			/* bind_param : value size
-				   bind_param_array : a_type of value */
+    int size;                   /* bind_param : value size
+                                   bind_param_array : a_type of value */
     const void *value;
     int *null_ind;
     void *alloc_buffer;
@@ -237,7 +237,7 @@ extern "C"
   typedef struct
   {
     char load_balance;
-    int rc_time;		/* failback try duration */
+    int rc_time;                /* failback try duration */
     int login_timeout;
     int query_timeout;
     char disconnect_on_query_timeout;
@@ -285,8 +285,8 @@ extern "C"
     int last_failure_time;
 
     /* to check timeout */
-    struct timeval start_time;	/* function start time to check timeout */
-    int current_timeout;	/* login_timeout or query_timeout */
+    struct timeval start_time;  /* function start time to check timeout */
+    int current_timeout;        /* login_timeout or query_timeout */
     int deferred_max_close_handle_count;
     int *deferred_close_handle_list;
     int deferred_close_handle_count;
@@ -308,38 +308,27 @@ extern "C"
  ************************************************************************/
 
   extern char *con_port_name_cache_put (const char *port_name);
-  extern bool con_is_unreachable_host (const T_CON_HANDLE * con_handle,
-				       int host_id);
-  extern void con_unreachable_host_add (const T_CON_HANDLE * con_handle,
-					int host_id);
+  extern bool con_is_unreachable_host (const T_CON_HANDLE * con_handle, int host_id);
+  extern void con_unreachable_host_add (const T_CON_HANDLE * con_handle, int host_id);
 
   extern void hm_con_handle_table_init (void);
   extern T_CON_HANDLE *hm_con_handle_alloc (T_ALTER_HOST * alter_hosts,
-					    const char *server_list,
-					    const char *port_name,
-					    const char *db_name,
-					    const char *db_user,
-					    const char *db_passwd,
-					    const char *property_str,
-					    const T_CON_PROPERTY *
-					    con_property);
-  extern int hm_req_handle_alloc (T_CON_HANDLE * connection,
-				  T_REQ_HANDLE ** statement);
-  extern void hm_req_handle_free (T_CON_HANDLE * con_handle,
-				  T_REQ_HANDLE * req_handle);
+                                            const char *server_list,
+                                            const char *port_name,
+                                            const char *db_name,
+                                            const char *db_user,
+                                            const char *db_passwd,
+                                            const char *property_str, const T_CON_PROPERTY * con_property);
+  extern int hm_req_handle_alloc (T_CON_HANDLE * connection, T_REQ_HANDLE ** statement);
+  extern void hm_req_handle_free (T_CON_HANDLE * con_handle, T_REQ_HANDLE * req_handle);
   extern void hm_req_handle_free_all (T_CON_HANDLE * con_handle);
   extern void hm_req_handle_free_all_unholdable (T_CON_HANDLE * con_handle);
   extern void hm_req_handle_close_all_resultsets (T_CON_HANDLE * con_handle);
-  extern void hm_req_handle_close_all_unholdable_resultsets (T_CON_HANDLE *
-							     con_handle);
+  extern void hm_req_handle_close_all_unholdable_resultsets (T_CON_HANDLE * con_handle);
   extern int hm_con_handle_free (T_CON_HANDLE * connection);
 
-  extern T_CCI_ERROR_CODE hm_get_connection (CCI_HANDLE_ID * conn_handle_id,
-					     T_CON_HANDLE ** connection,
-					     bool force);
-  extern T_CCI_ERROR_CODE hm_get_statement (CCI_STMT * stmt,
-					    T_CON_HANDLE ** connection,
-					    T_REQ_HANDLE ** statement);
+  extern T_CCI_ERROR_CODE hm_get_connection (CCI_HANDLE_ID * conn_handle_id, T_CON_HANDLE ** connection, bool force);
+  extern T_CCI_ERROR_CODE hm_get_statement (CCI_STMT * stmt, T_CON_HANDLE ** connection, T_REQ_HANDLE ** statement);
   extern void hm_req_handle_fetch_buf_free (T_REQ_HANDLE * req_handle);
   extern int hm_conv_value_buf_alloc (T_VALUE_BUF * val_buf, int size);
 
@@ -349,25 +338,19 @@ extern "C"
   extern int req_close_query_result (T_REQ_HANDLE * req_handle);
   extern void hm_invalidate_all_req_handle (T_CON_HANDLE * con_handle);
 
-  extern void hm_set_con_handle_holdable (T_CON_HANDLE * con_handle,
-					  int holdable);
+  extern void hm_set_con_handle_holdable (T_CON_HANDLE * con_handle, int holdable);
   extern int hm_get_con_handle_holdable (T_CON_HANDLE * con_handle);
-  extern int hm_get_req_handle_holdable (T_CON_HANDLE * con_handle,
-					 T_REQ_HANDLE * req_handle);
+  extern int hm_get_req_handle_holdable (T_CON_HANDLE * con_handle, T_REQ_HANDLE * req_handle);
 
   extern void hm_check_rc_time (T_CON_HANDLE * con_handle);
   extern void hm_create_health_check_th (void);
 
   extern void hm_force_close_connection (T_CON_HANDLE * con_handle);
 
-  extern void hm_set_conn_handle_id (CCI_CONN * conn,
-				     const T_CON_HANDLE * con_handle);
-  extern void hm_set_stmt_handle_id (CCI_STMT * stmt,
-				     const T_CON_HANDLE * con_handle,
-				     const T_REQ_HANDLE * req_handle);
+  extern void hm_set_conn_handle_id (CCI_CONN * conn, const T_CON_HANDLE * con_handle);
+  extern void hm_set_stmt_handle_id (CCI_STMT * stmt, const T_CON_HANDLE * con_handle, const T_REQ_HANDLE * req_handle);
 
-  extern void hm_set_handle_id (CCI_HANDLE_ID * handle_id, int id,
-				int64_t id_seq);
+  extern void hm_set_handle_id (CCI_HANDLE_ID * handle_id, int id, int64_t id_seq);
 
 /************************************************************************
  * PUBLIC VARIABLES							*
@@ -377,4 +360,4 @@ extern "C"
 }
 #endif
 
-#endif				/* _CCI_HANDLE_MNG_H_ */
+#endif                          /* _CCI_HANDLE_MNG_H_ */

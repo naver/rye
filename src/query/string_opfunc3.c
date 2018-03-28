@@ -59,14 +59,11 @@
 #define UINT64_MAX_BIN_DIGITS 64
 
 static int db_get_next_like_pattern_character (const char *const pattern,
-					       const int length,
-					       const bool has_escape_char,
-					       const char *escape_str,
-					       int *const position,
-					       char **crt_char_p,
-					       bool * const is_escaped);
-static bool is_safe_last_char_for_like_optimization (const char *chr,
-						     const bool is_escaped);
+                                               const int length,
+                                               const bool has_escape_char,
+                                               const char *escape_str,
+                                               int *const position, char **crt_char_p, bool * const is_escaped);
+static bool is_safe_last_char_for_like_optimization (const char *chr, const bool is_escaped);
 static bool is_valid_ip_slice (const char *ipslice);
 
 /*
@@ -94,11 +91,8 @@ db_get_date_dayofyear (const DB_VALUE * src_date, DB_VALUE * result)
       return NO_ERROR;
     }
   /* get the date/time information from src_date */
-  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day,
-					 &hour, &minute, &second, &ms, NULL);
-  if (retval != NO_ERROR
-      || (year == 0 && month == 0 && day == 0
-	  && hour == 0 && minute == 0 && second == 0 && ms == 0))
+  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day, &hour, &minute, &second, &ms, NULL);
+  if (retval != NO_ERROR || (year == 0 && month == 0 && day == 0 && hour == 0 && minute == 0 && second == 0 && ms == 0))
     {
       /* This function should return NULL if src_date is an invalid parameter
        * or Zero date.
@@ -129,8 +123,7 @@ db_get_date_dayofyear (const DB_VALUE * src_date, DB_VALUE * result)
  * Returns: int
  */
 int
-db_get_date_weekday (const DB_VALUE * src_date, const int mode,
-		     DB_VALUE * result)
+db_get_date_weekday (const DB_VALUE * src_date, const int mode, DB_VALUE * result)
 {
   int month = 0, day = 0, year = 0;
   int second = 0, minute = 0, hour = 0;
@@ -147,11 +140,8 @@ db_get_date_weekday (const DB_VALUE * src_date, const int mode,
     }
 
   /* get the date/time information from src_date */
-  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day,
-					 &hour, &minute, &second, &ms, NULL);
-  if (retval != NO_ERROR
-      || (year == 0 && month == 0 && day == 0
-	  && hour == 0 && minute == 0 && second == 0 && ms == 0))
+  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day, &hour, &minute, &second, &ms, NULL);
+  if (retval != NO_ERROR || (year == 0 && month == 0 && day == 0 && hour == 0 && minute == 0 && second == 0 && ms == 0))
     {
       /* This function should return NULL if src_date is an invalid parameter
        * or zero date.
@@ -172,13 +162,13 @@ db_get_date_weekday (const DB_VALUE * src_date, const int mode,
     case PT_WEEKDAY:
       /* 0 = Monday, 1 = Tuesday, ..., 6 = Sunday */
       if (day_of_week == 0)
-	{
-	  day_of_week = 6;
-	}
+        {
+          day_of_week = 6;
+        }
       else
-	{
-	  day_of_week--;
-	}
+        {
+          day_of_week--;
+        }
       DB_MAKE_INT (result, day_of_week);
       break;
 
@@ -222,8 +212,7 @@ db_get_date_quarter (const DB_VALUE * src_date, DB_VALUE * result)
       return NO_ERROR;
     }
   /* get the date/time information from src_date */
-  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day,
-					 &hour, &minute, &second, &ms, &endp);
+  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day, &hour, &minute, &second, &ms, &endp);
   if (retval != NO_ERROR || (endp && *endp && !char_isspace (*endp)))
     {
       er_clear ();
@@ -233,8 +222,7 @@ db_get_date_quarter (const DB_VALUE * src_date, DB_VALUE * result)
       return ER_DATE_CONVERSION;
     }
 
-  if (year == 0 && month == 0 && day == 0
-      && hour == 0 && minute == 0 && second == 0 && ms == 0)
+  if (year == 0 && month == 0 && day == 0 && hour == 0 && minute == 0 && second == 0 && ms == 0)
     {
       /* This function should return 0 if src_date is zero date */
       DB_MAKE_INT (result, 0);
@@ -286,11 +274,8 @@ db_get_date_totaldays (const DB_VALUE * src_date, DB_VALUE * result)
     }
 
   /* get the date/time information from src_date */
-  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day,
-					 &hour, &minute, &second, &ms, NULL);
-  if (retval != NO_ERROR
-      || (year == 0 && month == 0 && day == 0
-	  && hour == 0 && minute == 0 && second == 0 && ms == 0))
+  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day, &hour, &minute, &second, &ms, NULL);
+  if (retval != NO_ERROR || (year == 0 && month == 0 && day == 0 && hour == 0 && minute == 0 && second == 0 && ms == 0))
     {
       er_clear ();
       DB_MAKE_NULL (result);
@@ -383,8 +368,7 @@ exit_on_error:
  * Returns: date
  */
 int
-db_add_days_to_year (const DB_VALUE * src_year, const DB_VALUE * src_days,
-		     DB_VALUE * result)
+db_add_days_to_year (const DB_VALUE * src_year, const DB_VALUE * src_days, DB_VALUE * result)
 {
   int year_value = 0;
   int days_value = 0;
@@ -461,8 +445,7 @@ error:
  */
 int
 db_convert_to_time (const DB_VALUE * src_hour,
-		    const DB_VALUE * src_minute,
-		    const DB_VALUE * src_second, DB_VALUE * result)
+                    const DB_VALUE * src_minute, const DB_VALUE * src_second, DB_VALUE * result)
 {
   int hour = 0, minute = 0, second = 0;
 
@@ -470,8 +453,7 @@ db_convert_to_time (const DB_VALUE * src_hour,
   assert (src_minute != result);
   assert (src_second != result);
 
-  if (DB_IS_NULL (src_hour) || DB_IS_NULL (src_minute)
-      || DB_IS_NULL (src_second))
+  if (DB_IS_NULL (src_hour) || DB_IS_NULL (src_minute) || DB_IS_NULL (src_second))
     {
       DB_MAKE_NULL (result);
       return NO_ERROR;
@@ -484,8 +466,7 @@ db_convert_to_time (const DB_VALUE * src_hour,
       goto error;
     }
 
-  if (minute >= 60 || minute < 0 || second >= 60 || second < 0
-      || hour >= 24 || hour < 0)
+  if (minute >= 60 || minute < 0 || second >= 60 || second < 0 || hour >= 24 || hour < 0)
     {
       goto error;
     }
@@ -587,8 +568,7 @@ db_convert_time_to_sec (const DB_VALUE * src_date, DB_VALUE * result)
       return NO_ERROR;
     }
 
-  error_status = db_get_time_from_dbvalue (src_date, &hour, &minute, &second,
-					   &millisecond);
+  error_status = db_get_time_from_dbvalue (src_date, &hour, &minute, &second, &millisecond);
   if (error_status != NO_ERROR)
     {
       er_clear ();
@@ -627,18 +607,17 @@ db_round_dbvalue_to_int (const DB_VALUE * src, int *result)
 
     case DB_TYPE_DOUBLE:
       {
-	double x = DB_GET_DOUBLE (src);
-	*result = (int) ((x) > 0 ? ((x) + .5) : ((x) - .5));
-	return NO_ERROR;
+        double x = DB_GET_DOUBLE (src);
+        *result = (int) ((x) > 0 ? ((x) + .5) : ((x) - .5));
+        return NO_ERROR;
       }
 
     case DB_TYPE_NUMERIC:
       {
-	double x = 0;
-	numeric_coerce_num_to_double (db_locate_numeric ((DB_VALUE *) src),
-				      DB_VALUE_SCALE (src), &x);
-	*result = (int) ((x) > 0 ? ((x) + .5) : ((x) - .5));
-	return NO_ERROR;
+        double x = 0;
+        numeric_coerce_num_to_double (db_locate_numeric ((DB_VALUE *) src), DB_VALUE_SCALE (src), &x);
+        *result = (int) ((x) > 0 ? ((x) + .5) : ((x) - .5));
+        return NO_ERROR;
       }
 
     case DB_TYPE_BIGINT:
@@ -647,18 +626,18 @@ db_round_dbvalue_to_int (const DB_VALUE * src, int *result)
 
     case DB_TYPE_VARCHAR:
       {
-	double x;
-	DB_VALUE val;
-	int error_status = tp_value_string_to_double (src, &val);
+        double x;
+        DB_VALUE val;
+        int error_status = tp_value_string_to_double (src, &val);
 
-	if (error_status != NO_ERROR)
-	  {
-	    return error_status;
-	  }
+        if (error_status != NO_ERROR)
+          {
+            return error_status;
+          }
 
-	x = DB_GET_DOUBLE (&val);
-	*result = (int) ((x) > 0 ? ((x) + .5) : ((x) - .5));
-	return NO_ERROR;
+        x = DB_GET_DOUBLE (&val);
+        *result = (int) ((x) > 0 ? ((x) + .5) : ((x) - .5));
+        return NO_ERROR;
       }
 
     default:
@@ -680,13 +659,12 @@ db_round_dbvalue_to_int (const DB_VALUE * src, int *result)
  * Returns: int
  */
 int
-db_get_date_week (const DB_VALUE * src_date, const DB_VALUE * mode,
-		  DB_VALUE * result)
+db_get_date_week (const DB_VALUE * src_date, const DB_VALUE * mode, DB_VALUE * result)
 {
   int month = 0, day = 0, year = 0;
   int second = 0, minute = 0, hour = 0;
   int ms = 0;
-  int calc_mode = 0;		/* default */
+  int calc_mode = 0;            /* default */
   int week_number = 0;
   int retval;
 
@@ -700,25 +678,22 @@ db_get_date_week (const DB_VALUE * src_date, const DB_VALUE * mode,
     }
 
   /* get the date/time information from src_date */
-  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day,
-					 &hour, &minute, &second, &ms, NULL);
-  if (retval != NO_ERROR
-      || (year == 0 && month == 0 && day == 0
-	  && hour == 0 && minute == 0 && second == 0 && ms == 0))
+  retval = db_get_datetime_from_dbvalue (src_date, &year, &month, &day, &hour, &minute, &second, &ms, NULL);
+  if (retval != NO_ERROR || (year == 0 && month == 0 && day == 0 && hour == 0 && minute == 0 && second == 0 && ms == 0))
     {
       goto error;
     }
 
   if (DB_IS_NULL (mode))
     {
-      calc_mode = 0;		/* default */
+      calc_mode = 0;            /* default */
     }
   else
     {
       if (db_round_dbvalue_to_int (mode, &calc_mode) != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
   /* check boundaries for calc_mode */
   if (calc_mode < 0 || calc_mode > 7)
@@ -749,8 +724,7 @@ error:
  * Returns: int
  */
 int
-db_get_date_item (const DB_VALUE * src_date, const int item_type,
-		  DB_VALUE * result)
+db_get_date_item (const DB_VALUE * src_date, const int item_type, DB_VALUE * result)
 {
   int month = 0, day = 0, year = 0;
   int second = 0, minute = 0, hour = 0;
@@ -765,8 +739,7 @@ db_get_date_item (const DB_VALUE * src_date, const int item_type,
     }
 
   /* get the date/time information from src_date */
-  if (db_get_datetime_from_dbvalue (src_date, &year, &month, &day, &hour,
-				    &minute, &second, &ms, NULL) != NO_ERROR)
+  if (db_get_datetime_from_dbvalue (src_date, &year, &month, &day, &hour, &minute, &second, &ms, NULL) != NO_ERROR)
     {
       /* This function should return NULL if src_date is an invalid parameter.
          Clear the error generated by the function call and return null.
@@ -808,8 +781,7 @@ db_get_date_item (const DB_VALUE * src_date, const int item_type,
  * Returns: int
  */
 int
-db_get_time_item (const DB_VALUE * src_date, const int item_type,
-		  DB_VALUE * result)
+db_get_time_item (const DB_VALUE * src_date, const int item_type, DB_VALUE * result)
 {
   int second = 0, minute = 0, hour = 0, millisecond = 0;
 
@@ -821,8 +793,7 @@ db_get_time_item (const DB_VALUE * src_date, const int item_type,
       return NO_ERROR;
     }
 
-  if (db_get_time_from_dbvalue (src_date, &hour, &minute, &second,
-				&millisecond) != NO_ERROR)
+  if (db_get_time_from_dbvalue (src_date, &hour, &minute, &second, &millisecond) != NO_ERROR)
     {
       er_clear ();
       DB_MAKE_NULL (result);
@@ -881,8 +852,7 @@ db_last_day (const DB_VALUE * src_date, DB_VALUE * result_day)
   /* arg cast type **********************************************************
    */
 
-  src_date =
-    db_value_cast_arg (src_date, &tmp_src_date, DB_TYPE_DATE, &error_status);
+  src_date = db_value_cast_arg (src_date, &tmp_src_date, DB_TYPE_DATE, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -941,8 +911,7 @@ exit_on_error:
  * db_months_between () -
  */
 int
-db_months_between (const DB_VALUE * start_mon,
-		   const DB_VALUE * end_mon, DB_VALUE * result_mon)
+db_months_between (const DB_VALUE * start_mon, const DB_VALUE * end_mon, DB_VALUE * result_mon)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_start_mon, tmp_end_mon;
@@ -973,11 +942,8 @@ db_months_between (const DB_VALUE * start_mon,
 
   /* arg cast type **********************************************************
    */
-  start_mon =
-    db_value_cast_arg (start_mon, &tmp_start_mon, DB_TYPE_DATE,
-		       &error_status);
-  end_mon =
-    db_value_cast_arg (end_mon, &tmp_end_mon, DB_TYPE_DATE, &error_status);
+  start_mon = db_value_cast_arg (start_mon, &tmp_start_mon, DB_TYPE_DATE, &error_status);
+  end_mon = db_value_cast_arg (end_mon, &tmp_end_mon, DB_TYPE_DATE, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -988,17 +954,13 @@ db_months_between (const DB_VALUE * start_mon,
   /* start main body ********************************************************
    */
 
-  db_date_decode ((DB_DATE *) & start_mon->data.date, &start_month,
-		  &start_day, &start_year);
-  db_date_decode ((DB_DATE *) & end_mon->data.date, &end_month, &end_day,
-		  &end_year);
+  db_date_decode ((DB_DATE *) & start_mon->data.date, &start_month, &start_day, &start_year);
+  db_date_decode ((DB_DATE *) & end_mon->data.date, &end_month, &end_day, &end_year);
 
   if (start_day == end_day
-      || (start_day == get_last_day (start_month, start_year)
-	  && end_day == get_last_day (end_month, end_year)))
+      || (start_day == get_last_day (start_month, start_year) && end_day == get_last_day (end_month, end_year)))
     {
-      result_double = (double) (start_year * 12 + start_month -
-				end_year * 12 - end_month);
+      result_double = (double) (start_year * 12 + start_month - end_year * 12 - end_month);
     }
   else
     {
@@ -1006,8 +968,7 @@ db_months_between (const DB_VALUE * start_mon,
       end_date = DB_GET_DATE (end_mon);
 
       result_double = (double) ((start_year - end_year) * 12.0) +
-	(double) (start_month - end_month) +
-	(double) ((start_day - end_day) / 31.0);
+        (double) (start_month - end_month) + (double) ((start_day - end_day) / 31.0);
     }
 
   DB_MAKE_DOUBLE (result_mon, result_double);
@@ -1057,8 +1018,7 @@ db_sys_date (DB_VALUE * result_date)
   assert (result_date != (DB_VALUE *) NULL);
 
   /* now return null */
-  db_value_domain_init (result_date, DB_TYPE_DATE, DB_DEFAULT_PRECISION,
-			DB_DEFAULT_SCALE);
+  db_value_domain_init (result_date, DB_TYPE_DATE, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
   /* Need checking error */
 
@@ -1077,8 +1037,7 @@ db_sys_date (DB_VALUE * result_date)
       return error_status;
     }
 
-  DB_MAKE_DATE (result_date, c_time_struct->tm_mon + 1,
-		c_time_struct->tm_mday, c_time_struct->tm_year + 1900);
+  DB_MAKE_DATE (result_date, c_time_struct->tm_mon + 1, c_time_struct->tm_mday, c_time_struct->tm_year + 1900);
 
   return error_status;
 }
@@ -1096,8 +1055,7 @@ db_sys_time (DB_VALUE * result_time)
   assert (result_time != (DB_VALUE *) NULL);
 
   /* now return null */
-  db_value_domain_init (result_time, DB_TYPE_TIME, DB_DEFAULT_PRECISION,
-			DB_DEFAULT_SCALE);
+  db_value_domain_init (result_time, DB_TYPE_TIME, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
   /* Need checking error */
 
@@ -1116,8 +1074,7 @@ db_sys_time (DB_VALUE * result_time)
       return error_status;
     }
 
-  DB_MAKE_TIME (result_time, c_time_struct->tm_hour, c_time_struct->tm_min,
-		c_time_struct->tm_sec);
+  DB_MAKE_TIME (result_time, c_time_struct->tm_hour, c_time_struct->tm_min, c_time_struct->tm_sec);
 
   return error_status;
 }
@@ -1138,8 +1095,7 @@ db_sys_datetime (DB_VALUE * result_datetime)
   assert (result_datetime != (DB_VALUE *) NULL);
 
   /* now return null */
-  db_value_domain_init (result_datetime, DB_TYPE_DATETIME,
-			DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+  db_value_domain_init (result_datetime, DB_TYPE_DATETIME, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
   if (ftime (&tloc) != 0)
     {
@@ -1157,9 +1113,8 @@ db_sys_datetime (DB_VALUE * result_datetime)
     }
 
   db_datetime_encode (&datetime, c_time_struct->tm_mon + 1,
-		      c_time_struct->tm_mday, c_time_struct->tm_year + 1900,
-		      c_time_struct->tm_hour, c_time_struct->tm_min,
-		      c_time_struct->tm_sec, tloc.millitm);
+                      c_time_struct->tm_mday, c_time_struct->tm_year + 1900,
+                      c_time_struct->tm_hour, c_time_struct->tm_min, c_time_struct->tm_sec, tloc.millitm);
   DB_MAKE_DATETIME (result_datetime, &datetime);
 
   return error_status;
@@ -1178,8 +1133,7 @@ db_sys_timezone (DB_VALUE * result_timezone)
   assert (result_timezone != (DB_VALUE *) NULL);
 
   /* now return null */
-  db_value_domain_init (result_timezone, DB_TYPE_INTEGER,
-			DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+  db_value_domain_init (result_timezone, DB_TYPE_INTEGER, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
 
   /* Need checking error                  */
 
@@ -1205,82 +1159,82 @@ get_last_day (int month, int year)
   if (year >= 1700)
     {
       switch (month)
-	{
-	case 1:
-	case 3:
-	case 5:
-	case 7:
-	case 8:
-	case 10:
-	case 12:
-	  lastday = 31;
-	  break;
-	case 4:
-	case 6:
-	case 9:
-	case 11:
-	  lastday = 30;
-	  break;
-	case 2:
-	  if (year % 4 == 0)
-	    {
-	      if (year % 100 == 0)
-		{
-		  if (year % 400 == 0)
-		    {
-		      lastday = 29;
-		    }
-		  else
-		    {
-		      lastday = 28;
-		    }
-		}
-	      else
-		{
-		  lastday = 29;
-		}
-	    }
-	  else
-	    {
-	      lastday = 28;
-	    }
-	  break;
-	default:
-	  break;		/*  Need Error Checking          */
-	}
+        {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+          lastday = 31;
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+          lastday = 30;
+          break;
+        case 2:
+          if (year % 4 == 0)
+            {
+              if (year % 100 == 0)
+                {
+                  if (year % 400 == 0)
+                    {
+                      lastday = 29;
+                    }
+                  else
+                    {
+                      lastday = 28;
+                    }
+                }
+              else
+                {
+                  lastday = 29;
+                }
+            }
+          else
+            {
+              lastday = 28;
+            }
+          break;
+        default:
+          break;                /*  Need Error Checking          */
+        }
     }
   else
     {
       switch (month)
-	{
-	case 1:
-	case 3:
-	case 5:
-	case 7:
-	case 8:
-	case 10:
-	case 12:
-	  lastday = 31;
-	  break;
-	case 4:
-	case 6:
-	case 9:
-	case 11:
-	  lastday = 30;
-	  break;
-	case 2:
-	  if (year % 4 == 0)
-	    {
-	      lastday = 29;
-	    }
-	  else
-	    {
-	      lastday = 28;
-	    }
-	  break;
-	default:
-	  break;		/*  Need Error Checking          */
-	}
+        {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+          lastday = 31;
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+          lastday = 30;
+          break;
+        case 2:
+          if (year % 4 == 0)
+            {
+              lastday = 29;
+            }
+          else
+            {
+              lastday = 28;
+            }
+          break;
+        default:
+          break;                /*  Need Error Checking          */
+        }
     }
   return lastday;
 }
@@ -1320,8 +1274,7 @@ db_string_reverse (const DB_VALUE * src_str, DB_VALUE * result_str)
 
   /* arg cast type **********************************************************
    */
-  src_str =
-    db_value_cast_arg (src_str, &tmp_src_str, DB_TYPE_VARCHAR, &error_status);
+  src_str = db_value_cast_arg (src_str, &tmp_src_str, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -1346,13 +1299,10 @@ db_string_reverse (const DB_VALUE * src_str, DB_VALUE * result_str)
 
   memset (res, 0, DB_GET_STRING_SIZE (src_str) + 1);
   intl_reverse_string ((unsigned char *) DB_PULL_STRING (src_str),
-		       (unsigned char *) res,
-		       DB_GET_STRING_LENGTH (src_str),
-		       DB_GET_STRING_SIZE (src_str));
+                       (unsigned char *) res, DB_GET_STRING_LENGTH (src_str), DB_GET_STRING_SIZE (src_str));
 
   DB_MAKE_VARCHAR (result_str, DB_GET_STRING_PRECISION (src_str),
-		   res, DB_GET_STRING_SIZE (src_str),
-		   DB_GET_STRING_COLLATION (src_str));
+                   res, DB_GET_STRING_SIZE (src_str), DB_GET_STRING_COLLATION (src_str));
 
   result_str->need_clear = true;
 
@@ -1412,8 +1362,7 @@ db_time_dbval (DB_VALUE * result, const DB_VALUE * datetime_value)
 
   type = DB_VALUE_TYPE (datetime_value);
 
-  if (db_get_time_from_dbvalue (datetime_value, &hour, &min, &sec, &milisec)
-      != NO_ERROR)
+  if (db_get_time_from_dbvalue (datetime_value, &hour, &min, &sec, &milisec) != NO_ERROR)
     {
       DB_MAKE_NULL (result);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TIME_CONVERSION, 0);
@@ -1423,11 +1372,11 @@ db_time_dbval (DB_VALUE * result, const DB_VALUE * datetime_value)
 
   if (milisec != 0)
     {
-      size = 12 + 1;		/* HH:MM:SS.MMM */
+      size = 12 + 1;            /* HH:MM:SS.MMM */
     }
   else
     {
-      size = 8 + 1;		/* HH:MM:SS */
+      size = 8 + 1;             /* HH:MM:SS */
     }
 
   res_s = (char *) malloc (size);
@@ -1449,8 +1398,7 @@ db_time_dbval (DB_VALUE * result, const DB_VALUE * datetime_value)
     {
     case DB_TYPE_VARCHAR:
       DB_MAKE_VARCHAR (result, TP_FLOATING_PRECISION_VALUE, res_s,
-		       strlen (res_s),
-		       DB_GET_STRING_COLLATION (datetime_value));
+                       strlen (res_s), DB_GET_STRING_COLLATION (datetime_value));
       break;
 
     default:
@@ -1494,8 +1442,7 @@ db_date_dbval (DB_VALUE * result, const DB_VALUE * date_value)
       return NO_ERROR;
     }
 
-  if (db_get_datetime_from_dbvalue
-      (date_value, &y, &m, &d, &hour, &min, &sec, &ms, NULL) != NO_ERROR)
+  if (db_get_datetime_from_dbvalue (date_value, &y, &m, &d, &hour, &min, &sec, &ms, NULL) != NO_ERROR)
     {
       DB_MAKE_NULL (result);
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_DATE_CONVERSION, 0);
@@ -1503,7 +1450,7 @@ db_date_dbval (DB_VALUE * result, const DB_VALUE * date_value)
       return ER_DATE_CONVERSION;
     }
 
-  res_s = (char *) malloc (10 + 1);	/* MM/DD/YYYY */
+  res_s = (char *) malloc (10 + 1);     /* MM/DD/YYYY */
   if (res_s == NULL)
     {
       return ER_OUT_OF_VIRTUAL_MEMORY;
@@ -1562,8 +1509,7 @@ count_nonleap_years_up_to (int year)
  *   date_value2(in)   : second date
  */
 int
-db_date_diff (const DB_VALUE * date_value1, const DB_VALUE * date_value2,
-	      DB_VALUE * result)
+db_date_diff (const DB_VALUE * date_value1, const DB_VALUE * date_value2, DB_VALUE * result)
 {
   DB_TYPE type1, type2;
   int y1 = 0, m1 = 0, d1 = 0;
@@ -1597,8 +1543,7 @@ db_date_diff (const DB_VALUE * date_value1, const DB_VALUE * date_value2,
       goto error;
     }
 
-  retval = db_get_datetime_from_dbvalue
-    (date_value1, &y1, &m1, &d1, &hour, &min, &sec, &ms, NULL);
+  retval = db_get_datetime_from_dbvalue (date_value1, &y1, &m1, &d1, &hour, &min, &sec, &ms, NULL);
   if (retval != NO_ERROR)
     {
       error_status = ER_DATE_CONVERSION;
@@ -1606,8 +1551,7 @@ db_date_diff (const DB_VALUE * date_value1, const DB_VALUE * date_value2,
       goto error;
     }
 
-  retval = db_get_datetime_from_dbvalue
-    (date_value2, &y2, &m2, &d2, &hour, &min, &sec, &ms, NULL);
+  retval = db_get_datetime_from_dbvalue (date_value2, &y2, &m2, &d2, &hour, &min, &sec, &ms, NULL);
   if (retval != NO_ERROR)
     {
       error_status = ER_DATE_CONVERSION;
@@ -1617,8 +1561,7 @@ db_date_diff (const DB_VALUE * date_value1, const DB_VALUE * date_value2,
 
   if ((y1 == 0 && m1 == 0 && d1 == 0
        && hour == 0 && min == 0 && sec == 0 && ms == 0)
-      || (y2 == 0 && m2 == 0 && d2 == 0
-	  && hour == 0 && min == 0 && sec == 0 && ms == 0))
+      || (y2 == 0 && m2 == 0 && d2 == 0 && hour == 0 && min == 0 && sec == 0 && ms == 0))
     {
       er_clear ();
       DB_MAKE_NULL (result);
@@ -1658,8 +1601,7 @@ error:
 }
 
 int
-db_from_unixtime (const DB_VALUE * src_value, const DB_VALUE * format,
-		  const DB_VALUE * date_lang, DB_VALUE * result)
+db_from_unixtime (const DB_VALUE * src_value, const DB_VALUE * format, const DB_VALUE * date_lang, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_src_value, tmp_format;
@@ -1687,14 +1629,10 @@ db_from_unixtime (const DB_VALUE * src_value, const DB_VALUE * format,
 
   /* arg cast type **********************************************************
    */
-  src_value =
-    db_value_cast_arg (src_value, &tmp_src_value, DB_TYPE_INTEGER,
-		       &error_status);
+  src_value = db_value_cast_arg (src_value, &tmp_src_value, DB_TYPE_INTEGER, &error_status);
   if (format != NULL)
     {
-      format =
-	db_value_cast_arg (format, &tmp_format, DB_TYPE_VARCHAR,
-			   &error_status);
+      format = db_value_cast_arg (format, &tmp_format, DB_TYPE_VARCHAR, &error_status);
     }
 
   if (error_status != NO_ERROR)
@@ -1805,71 +1743,63 @@ db_time_diff (const DB_VALUE * val1, const DB_VALUE * val2, DB_VALUE * result)
   /* get date/time information from val1 */
   if (db_get_time_from_dbvalue (val1, &hour1, &min1, &sec1, &ms) == NO_ERROR)
     {
-      if (db_get_datetime_from_dbvalue (val1, &y1, &m1, &d1, &hour_aux,
-					&min_aux, &sec_aux, &ms_aux, NULL)
-	  == NO_ERROR)
-	{
-	  if (hour_aux != hour1 || min_aux != min1 || sec_aux != sec1)
-	    {
-	      y1 = 0;
-	      m1 = 0;
-	      d1 = 0;
-	    }
-	  else
-	    {
-	      val1_type = DB_TYPE_DATETIME;
-	    }
-	}
+      if (db_get_datetime_from_dbvalue (val1, &y1, &m1, &d1, &hour_aux, &min_aux, &sec_aux, &ms_aux, NULL) == NO_ERROR)
+        {
+          if (hour_aux != hour1 || min_aux != min1 || sec_aux != sec1)
+            {
+              y1 = 0;
+              m1 = 0;
+              d1 = 0;
+            }
+          else
+            {
+              val1_type = DB_TYPE_DATETIME;
+            }
+        }
     }
   else
     {
       /* val1 may be Date type, try it here */
-      if (db_get_datetime_from_dbvalue (val1, &y1, &m1, &d1, &hour_aux,
-					&min_aux, &sec_aux, &ms_aux, NULL)
-	  == NO_ERROR)
-	{
-	  val1_type = DB_TYPE_DATE;
-	}
+      if (db_get_datetime_from_dbvalue (val1, &y1, &m1, &d1, &hour_aux, &min_aux, &sec_aux, &ms_aux, NULL) == NO_ERROR)
+        {
+          val1_type = DB_TYPE_DATE;
+        }
       else
-	{
-	  error_status = ER_TIME_CONVERSION;
-	  goto error;
-	}
+        {
+          error_status = ER_TIME_CONVERSION;
+          goto error;
+        }
     }
 
   /* get date/time information from val2 */
   if (db_get_time_from_dbvalue (val2, &hour2, &min2, &sec2, &ms) == NO_ERROR)
     {
-      if (db_get_datetime_from_dbvalue (val2, &y2, &m2, &d2, &hour_aux,
-					&min_aux, &sec_aux, &ms_aux, NULL)
-	  == NO_ERROR)
-	{
-	  if (hour_aux != hour2 || min_aux != min2 || sec_aux != sec2)
-	    {
-	      y2 = 0;
-	      m2 = 0;
-	      d2 = 0;
-	    }
-	  else
-	    {
-	      val2_type = DB_TYPE_DATETIME;
-	    }
-	}
+      if (db_get_datetime_from_dbvalue (val2, &y2, &m2, &d2, &hour_aux, &min_aux, &sec_aux, &ms_aux, NULL) == NO_ERROR)
+        {
+          if (hour_aux != hour2 || min_aux != min2 || sec_aux != sec2)
+            {
+              y2 = 0;
+              m2 = 0;
+              d2 = 0;
+            }
+          else
+            {
+              val2_type = DB_TYPE_DATETIME;
+            }
+        }
     }
   else
     {
       /* val2 may be Date type, try it here */
-      if (db_get_datetime_from_dbvalue (val2, &y2, &m2, &d2, &hour_aux,
-					&min_aux, &sec_aux, &ms_aux, NULL)
-	  == NO_ERROR)
-	{
-	  val2_type = DB_TYPE_DATE;
-	}
+      if (db_get_datetime_from_dbvalue (val2, &y2, &m2, &d2, &hour_aux, &min_aux, &sec_aux, &ms_aux, NULL) == NO_ERROR)
+        {
+          val2_type = DB_TYPE_DATE;
+        }
       else
-	{
-	  error_status = ER_TIME_CONVERSION;
-	  goto error;
-	}
+        {
+          error_status = ER_TIME_CONVERSION;
+          goto error;
+        }
     }
 
   if (val1_type != val2_type)
@@ -1940,9 +1870,8 @@ error:
  */
 int
 db_get_datetime_from_dbvalue (const DB_VALUE * src_date,
-			      int *year, int *month, int *day,
-			      int *hour, int *minute, int *second,
-			      int *millisecond, const char **endp)
+                              int *year, int *month, int *day,
+                              int *hour, int *minute, int *second, int *millisecond, const char **endp)
 {
   DB_TYPE arg_type = DB_TYPE_NULL;
 
@@ -1957,36 +1886,33 @@ db_get_datetime_from_dbvalue (const DB_VALUE * src_date,
     {
     case DB_TYPE_VARCHAR:
       {
-	DB_DATETIME db_datetime;
-	int str_len;
-	char *strp;
+        DB_DATETIME db_datetime;
+        int str_len;
+        char *strp;
 
-	strp = DB_PULL_STRING (src_date);
-	str_len = DB_GET_STRING_SIZE (src_date);
-	if (db_date_parse_datetime_parts
-	    (strp, str_len, &db_datetime, NULL, endp) != NO_ERROR)
-	  {
-	    return ER_FAILED;
-	  }
+        strp = DB_PULL_STRING (src_date);
+        str_len = DB_GET_STRING_SIZE (src_date);
+        if (db_date_parse_datetime_parts (strp, str_len, &db_datetime, NULL, endp) != NO_ERROR)
+          {
+            return ER_FAILED;
+          }
 
-	return db_datetime_decode (&db_datetime, month, day,
-				   year, hour, minute, second, millisecond);
+        return db_datetime_decode (&db_datetime, month, day, year, hour, minute, second, millisecond);
       }
 
     case DB_TYPE_DATE:
       {
-	*hour = 0;
-	*minute = 0;
-	*second = 0;
-	*millisecond = 0;
-	db_date_decode (DB_GET_DATE (src_date), month, day, year);
+        *hour = 0;
+        *minute = 0;
+        *second = 0;
+        *millisecond = 0;
+        db_date_decode (DB_GET_DATE (src_date), month, day, year);
 
-	return NO_ERROR;
+        return NO_ERROR;
       }
     case DB_TYPE_DATETIME:
       {
-	return db_datetime_decode (DB_GET_DATETIME (src_date), month, day,
-				   year, hour, minute, second, millisecond);
+        return db_datetime_decode (DB_GET_DATETIME (src_date), month, day, year, hour, minute, second, millisecond);
       }
 
     default:
@@ -2011,8 +1937,7 @@ db_get_datetime_from_dbvalue (const DB_VALUE * src_date,
  *       This function returns ER_FAILED without setting the global error info
  */
 int
-db_get_time_from_dbvalue (const DB_VALUE * src_date, int *hour,
-			  int *minute, int *second, int *millisecond)
+db_get_time_from_dbvalue (const DB_VALUE * src_date, int *hour, int *minute, int *second, int *millisecond)
 {
   DB_TYPE arg_type = DB_TYPE_UNKNOWN;
 
@@ -2028,48 +1953,46 @@ db_get_time_from_dbvalue (const DB_VALUE * src_date, int *hour,
     {
     case DB_TYPE_DATE:
       {
-	/* set all to 0 because we don't have any time information */
-	*hour = 0;
-	*minute = 0;
-	*second = 0;
-	return NO_ERROR;
+        /* set all to 0 because we don't have any time information */
+        *hour = 0;
+        *minute = 0;
+        *second = 0;
+        return NO_ERROR;
       }
 
     case DB_TYPE_VARCHAR:
       {
-	DB_TIME db_time;
-	int str_len;
-	char *strp;
+        DB_TIME db_time;
+        int str_len;
+        char *strp;
 
-	strp = DB_GET_STRING (src_date);
-	if (strp == NULL)
-	  {
-	    assert (false);
-	    return ER_FAILED;
-	  }
+        strp = DB_GET_STRING (src_date);
+        if (strp == NULL)
+          {
+            assert (false);
+            return ER_FAILED;
+          }
 
-	str_len = DB_GET_STRING_SIZE (src_date);
-	if (db_date_parse_time (strp, str_len, &db_time, millisecond)
-	    != NO_ERROR)
-	  {
-	    return ER_FAILED;
-	  }
+        str_len = DB_GET_STRING_SIZE (src_date);
+        if (db_date_parse_time (strp, str_len, &db_time, millisecond) != NO_ERROR)
+          {
+            return ER_FAILED;
+          }
 
-	db_time_decode (&db_time, hour, minute, second);
-	return NO_ERROR;
+        db_time_decode (&db_time, hour, minute, second);
+        return NO_ERROR;
       }
 
     case DB_TYPE_DATETIME:
       {
-	int month = 0, day = 0, year = 0;
-	return db_datetime_decode (DB_GET_DATETIME (src_date), &month, &day,
-				   &year, hour, minute, second, millisecond);
+        int month = 0, day = 0, year = 0;
+        return db_datetime_decode (DB_GET_DATETIME (src_date), &month, &day, &year, hour, minute, second, millisecond);
       }
 
     case DB_TYPE_TIME:
       {
-	db_time_decode (DB_GET_TIME (src_date), hour, minute, second);
-	return NO_ERROR;
+        db_time_decode (DB_GET_TIME (src_date), hour, minute, second);
+        return NO_ERROR;
       }
 
     default:
@@ -2103,12 +2026,10 @@ db_get_time_from_dbvalue (const DB_VALUE * src_date, int *hour,
  */
 static int
 db_get_next_like_pattern_character (const char *const pattern,
-				    const int length,
-				    const bool has_escape_char,
-				    const char *escape_str,
-				    int *const position,
-				    char **crt_char_p,
-				    bool * const is_escaped)
+                                    const int length,
+                                    const bool has_escape_char,
+                                    const char *escape_str,
+                                    int *const position, char **crt_char_p, bool * const is_escaped)
 {
   int error_code = NO_ERROR;
   int char_size = 1;
@@ -2126,18 +2047,16 @@ db_get_next_like_pattern_character (const char *const pattern,
   *crt_char_p = NULL;
   *is_escaped = false;
 
-  if (has_escape_char
-      && intl_cmp_char (&(pattern[*position]),
-			(unsigned char *) escape_str, &char_size) == 0)
+  if (has_escape_char && intl_cmp_char (&(pattern[*position]), (unsigned char *) escape_str, &char_size) == 0)
     {
       *position += char_size;
       if (*position >= length)
-	{
-	  /* To keep MySQL compatibility, when the last character
-	   * is escape char, do not return error.*/
-	  *crt_char_p = (char *) (&(pattern[*position - char_size]));
-	  return error_code;
-	}
+        {
+          /* To keep MySQL compatibility, when the last character
+           * is escape char, do not return error.*/
+          *crt_char_p = (char *) (&(pattern[*position - char_size]));
+          return error_code;
+        }
       *is_escaped = true;
     }
 
@@ -2162,8 +2081,7 @@ error_exit:
  * is_escaped(in) : whether the character is escaped in the LIKE pattern
  */
 static bool
-is_safe_last_char_for_like_optimization (const char *chr,
-					 const bool is_escaped)
+is_safe_last_char_for_like_optimization (const char *chr, const bool is_escaped)
 {
   assert (chr != NULL);
 
@@ -2172,8 +2090,7 @@ is_safe_last_char_for_like_optimization (const char *chr,
       return false;
     }
 
-  if (intl_is_max_bound_chr ((const unsigned char *) chr) ||
-      intl_is_min_bound_chr ((const unsigned char *) chr))
+  if (intl_is_max_bound_chr ((const unsigned char *) chr) || intl_is_min_bound_chr ((const unsigned char *) chr))
     {
       return false;
     }
@@ -2268,12 +2185,11 @@ is_safe_last_char_for_like_optimization (const char *chr,
  */
 int
 db_get_info_for_like_optimization (const DB_VALUE * const pattern,
-				   const bool has_escape_char,
-				   const char *escape_str,
-				   int *const num_logical_chars,
-				   int *const last_safe_logical_pos,
-				   int *const num_match_many,
-				   int *const num_match_one)
+                                   const bool has_escape_char,
+                                   const char *escape_str,
+                                   int *const num_logical_chars,
+                                   int *const last_safe_logical_pos,
+                                   int *const num_match_many, int *const num_match_one)
 {
   int i = 0;
   int error_code = NO_ERROR;
@@ -2281,8 +2197,7 @@ db_get_info_for_like_optimization (const DB_VALUE * const pattern,
   int pattern_size = 0;
 
   if (pattern == NULL || num_logical_chars == NULL ||
-      last_safe_logical_pos == NULL || num_match_many == NULL ||
-      num_match_one == NULL)
+      last_safe_logical_pos == NULL || num_match_many == NULL || num_match_one == NULL)
     {
       error_code = ER_OBJ_INVALID_ARGUMENTS;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 0);
@@ -2295,8 +2210,7 @@ db_get_info_for_like_optimization (const DB_VALUE * const pattern,
     {
       error_code = ER_TP_CANT_COERCE;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
-	      pr_type_name (DB_VALUE_DOMAIN_TYPE (pattern)),
-	      pr_type_name (DB_TYPE_VARCHAR));
+              pr_type_name (DB_VALUE_DOMAIN_TYPE (pattern)), pr_type_name (DB_TYPE_VARCHAR));
       goto error_exit;
     }
 
@@ -2313,31 +2227,29 @@ db_get_info_for_like_optimization (const DB_VALUE * const pattern,
       bool is_escaped = false;
 
       error_code =
-	db_get_next_like_pattern_character (pattern_str, pattern_size,
-					    has_escape_char, escape_str, &i,
-					    &crt_char_p, &is_escaped);
+        db_get_next_like_pattern_character (pattern_str, pattern_size,
+                                            has_escape_char, escape_str, &i, &crt_char_p, &is_escaped);
       if (error_code != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       if (!is_escaped)
-	{
-	  if (*crt_char_p == LIKE_WILDCARD_MATCH_MANY)
-	    {
-	      ++(*num_match_many);
-	    }
-	  else if (*crt_char_p == LIKE_WILDCARD_MATCH_ONE)
-	    {
-	      ++(*num_match_one);
-	    }
-	}
+        {
+          if (*crt_char_p == LIKE_WILDCARD_MATCH_MANY)
+            {
+              ++(*num_match_many);
+            }
+          else if (*crt_char_p == LIKE_WILDCARD_MATCH_ONE)
+            {
+              ++(*num_match_one);
+            }
+        }
 
-      if (*num_match_many == 0
-	  && is_safe_last_char_for_like_optimization (crt_char_p, is_escaped))
-	{
-	  *last_safe_logical_pos = *num_logical_chars;
-	}
+      if (*num_match_many == 0 && is_safe_last_char_for_like_optimization (crt_char_p, is_escaped))
+        {
+          *last_safe_logical_pos = *num_logical_chars;
+        }
 
       ++(*num_logical_chars);
     }
@@ -2378,11 +2290,10 @@ error_exit:
  */
 int
 db_get_like_optimization_bounds (const DB_VALUE * const pattern,
-				 DB_VALUE * bound,
-				 const bool has_escape_char,
-				 const char *escape_str,
-				 const bool compute_lower_bound,
-				 const int last_safe_logical_pos)
+                                 DB_VALUE * bound,
+                                 const bool has_escape_char,
+                                 const char *escape_str,
+                                 const bool compute_lower_bound, const int last_safe_logical_pos)
 {
   int error_code = NO_ERROR;
   const char *original = NULL;
@@ -2416,35 +2327,32 @@ db_get_like_optimization_bounds (const DB_VALUE * const pattern,
     {
       error_code = ER_TP_CANT_COERCE;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
-	      pr_type_name (DB_VALUE_DOMAIN_TYPE (pattern)),
-	      pr_type_name (DB_TYPE_VARCHAR));
+              pr_type_name (DB_VALUE_DOMAIN_TYPE (pattern)), pr_type_name (DB_TYPE_VARCHAR));
       goto error_exit;
     }
 
   if (last_safe_logical_pos < 0)
     {
       if (compute_lower_bound)
-	{
-	  error_code =
-	    db_value_domain_min (bound, DB_TYPE_VARCHAR,
-				 DB_VALUE_PRECISION (pattern),
-				 DB_VALUE_SCALE (pattern), collation_id);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error_exit;
-	    }
-	}
+        {
+          error_code =
+            db_value_domain_min (bound, DB_TYPE_VARCHAR,
+                                 DB_VALUE_PRECISION (pattern), DB_VALUE_SCALE (pattern), collation_id);
+          if (error_code != NO_ERROR)
+            {
+              goto error_exit;
+            }
+        }
       else
-	{
-	  error_code =
-	    db_value_domain_max (bound, DB_TYPE_VARCHAR,
-				 DB_VALUE_PRECISION (pattern),
-				 DB_VALUE_SCALE (pattern), collation_id);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error_exit;
-	    }
-	}
+        {
+          error_code =
+            db_value_domain_max (bound, DB_TYPE_VARCHAR,
+                                 DB_VALUE_PRECISION (pattern), DB_VALUE_SCALE (pattern), collation_id);
+          if (error_code != NO_ERROR)
+            {
+              goto error_exit;
+            }
+        }
 
       goto fast_exit;
     }
@@ -2467,70 +2375,62 @@ db_get_like_optimization_bounds (const DB_VALUE * const pattern,
 
   assert (last_safe_logical_pos < char_count);
 
-  for (i = 0, result_length = 0, result_size = 0;
-       result_length <= last_safe_logical_pos;)
+  for (i = 0, result_length = 0, result_size = 0; result_length <= last_safe_logical_pos;)
     {
       char *crt_char_p = NULL;
       bool is_escaped = false;
 
       error_code =
-	db_get_next_like_pattern_character (original, original_size,
-					    has_escape_char, escape_str, &i,
-					    &crt_char_p, &is_escaped);
+        db_get_next_like_pattern_character (original, original_size,
+                                            has_escape_char, escape_str, &i, &crt_char_p, &is_escaped);
       if (error_code != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       if (result_length == last_safe_logical_pos)
-	{
-	  assert (is_safe_last_char_for_like_optimization
-		  (crt_char_p, is_escaped));
-	}
+        {
+          assert (is_safe_last_char_for_like_optimization (crt_char_p, is_escaped));
+        }
 
       if (!is_escaped && *crt_char_p == LIKE_WILDCARD_MATCH_ONE)
-	{
-	  assert (result_length < last_safe_logical_pos);
-	  if (compute_lower_bound)
-	    {
-	      result_size += intl_set_min_bound_chr (result + result_size);
-	    }
-	  else
-	    {
-	      result_size += intl_set_max_bound_chr (result + result_size);
-	    }
-	  result_length++;
-	}
+        {
+          assert (result_length < last_safe_logical_pos);
+          if (compute_lower_bound)
+            {
+              result_size += intl_set_min_bound_chr (result + result_size);
+            }
+          else
+            {
+              result_size += intl_set_max_bound_chr (result + result_size);
+            }
+          result_length++;
+        }
       else
-	{
-	  if (result_length == last_safe_logical_pos && !compute_lower_bound)
-	    {
-	      char *next_alpha_char_p = result + result_size;
-	      int next_len = 0;
+        {
+          if (result_length == last_safe_logical_pos && !compute_lower_bound)
+            {
+              char *next_alpha_char_p = result + result_size;
+              int next_len = 0;
 
-	      result_size +=
-		QSTR_NEXT_ALPHA_CHAR (collation_id,
-				      (unsigned char *) crt_char_p,
-				      original + original_size - crt_char_p,
-				      (unsigned char *) next_alpha_char_p,
-				      &next_len);
-	      result_length += next_len;
-	    }
-	  else
-	    {
-	      result_size += intl_put_char ((unsigned char *) result +
-					    result_size,
-					    (unsigned char *) crt_char_p);
-	      result_length++;
-	    }
+              result_size +=
+                QSTR_NEXT_ALPHA_CHAR (collation_id,
+                                      (unsigned char *) crt_char_p,
+                                      original + original_size - crt_char_p,
+                                      (unsigned char *) next_alpha_char_p, &next_len);
+              result_length += next_len;
+            }
+          else
+            {
+              result_size += intl_put_char ((unsigned char *) result + result_size, (unsigned char *) crt_char_p);
+              result_length++;
+            }
 
-	}
+        }
     }
 
   assert (result_size <= alloc_size);
-  qstr_make_typed_string (DB_TYPE_VARCHAR, bound,
-			  DB_VALUE_PRECISION (pattern), result, result_size,
-			  collation_id);
+  qstr_make_typed_string (DB_TYPE_VARCHAR, bound, DB_VALUE_PRECISION (pattern), result, result_size, collation_id);
   result[result_size] = 0;
   bound->need_clear = true;
 
@@ -2572,8 +2472,7 @@ error_exit:
  */
 int
 db_compress_like_pattern (const DB_VALUE * const pattern,
-			  DB_VALUE * compressed_pattern,
-			  const bool has_escape_char, const char *escape_str)
+                          DB_VALUE * compressed_pattern, const bool has_escape_char, const char *escape_str)
 {
   int error_code = NO_ERROR;
   const char *original = NULL;
@@ -2604,8 +2503,7 @@ db_compress_like_pattern (const DB_VALUE * const pattern,
     {
       error_code = ER_TP_CANT_COERCE;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_code, 2,
-	      pr_type_name (DB_VALUE_DOMAIN_TYPE (pattern)),
-	      pr_type_name (DB_TYPE_VARCHAR));
+              pr_type_name (DB_VALUE_DOMAIN_TYPE (pattern)), pr_type_name (DB_TYPE_VARCHAR));
       goto error_exit;
     }
 
@@ -2616,8 +2514,7 @@ db_compress_like_pattern (const DB_VALUE * const pattern,
     {
       int char_count;
 
-      intl_char_count ((unsigned char *) original, original_size,
-		       &char_count);
+      intl_char_count ((unsigned char *) original, original_size, &char_count);
       /* assume worst case : each character in the compressed pattern is
        * precedeed by the escape char */
       alloc_size = original_size + char_count * strlen (escape_str);
@@ -2634,8 +2531,7 @@ db_compress_like_pattern (const DB_VALUE * const pattern,
       goto error_exit;
     }
 
-  for (i = 0, result_length = 0, result_size = 0, in_percent_sequence = false;
-       i < original_size;)
+  for (i = 0, result_length = 0, result_size = 0, in_percent_sequence = false; i < original_size;)
     {
       char *crt_char_p = NULL;
       bool keep_crt_char = false;
@@ -2643,62 +2539,55 @@ db_compress_like_pattern (const DB_VALUE * const pattern,
       bool is_escaped = false;
 
       error_code =
-	db_get_next_like_pattern_character (original, original_size,
-					    has_escape_char,
-					    escape_str, &i, &crt_char_p,
-					    &is_escaped);
+        db_get_next_like_pattern_character (original, original_size,
+                                            has_escape_char, escape_str, &i, &crt_char_p, &is_escaped);
       if (error_code != NO_ERROR)
-	{
-	  goto error_exit;
-	}
+        {
+          goto error_exit;
+        }
 
       if (is_escaped)
-	{
-	  needs_escape = true;
-	}
+        {
+          needs_escape = true;
+        }
 
       assert (crt_char_p != NULL);
 
-      if (!is_escaped && *crt_char_p == LIKE_WILDCARD_MATCH_MANY &&
-	  in_percent_sequence)
-	{
-	  keep_crt_char = false;
-	}
+      if (!is_escaped && *crt_char_p == LIKE_WILDCARD_MATCH_MANY && in_percent_sequence)
+        {
+          keep_crt_char = false;
+        }
       else
-	{
-	  keep_crt_char = true;
-	}
+        {
+          keep_crt_char = true;
+        }
 
       if (keep_crt_char)
-	{
-	  if (needs_escape)
-	    {
-	      assert (has_escape_char);
-	      result_size += intl_put_char ((unsigned char *) result +
-					    result_size,
-					    (unsigned char *) escape_str);
-	      result_length++;
-	    }
-	  result_size +=
-	    intl_put_char ((unsigned char *) result + result_size,
-			   (unsigned char *) crt_char_p);
-	  result_length++;
-	}
+        {
+          if (needs_escape)
+            {
+              assert (has_escape_char);
+              result_size += intl_put_char ((unsigned char *) result + result_size, (unsigned char *) escape_str);
+              result_length++;
+            }
+          result_size += intl_put_char ((unsigned char *) result + result_size, (unsigned char *) crt_char_p);
+          result_length++;
+        }
 
       if (!is_escaped && *crt_char_p == LIKE_WILDCARD_MATCH_MANY)
-	{
-	  in_percent_sequence = true;
-	}
+        {
+          in_percent_sequence = true;
+        }
       else
-	{
-	  in_percent_sequence = false;
-	}
+        {
+          in_percent_sequence = false;
+        }
     }
 
   assert (result_length <= alloc_size);
   result[result_size] = 0;
   DB_MAKE_VARCHAR (compressed_pattern, TP_FLOATING_PRECISION_VALUE,
-		   result, result_size, DB_GET_STRING_COLLATION (pattern));
+                   result, result_size, DB_GET_STRING_COLLATION (pattern));
   compressed_pattern->need_clear = true;
 
 fast_exit:
@@ -2728,8 +2617,7 @@ error_exit:
  */
 int
 db_like_bound (const DB_VALUE * src_pattern,
-	       const DB_VALUE * src_escape,
-	       DB_VALUE * const result_bound, const bool compute_lower_bound)
+               const DB_VALUE * src_escape, DB_VALUE * const result_bound, const bool compute_lower_bound)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_pattern, tmp_escape;
@@ -2747,7 +2635,7 @@ db_like_bound (const DB_VALUE * src_pattern,
 
   if (result_bound == NULL)
     {
-      assert (false);		/* is impossible */
+      assert (false);           /* is impossible */
       return ER_FAILED;
     }
 
@@ -2778,9 +2666,7 @@ db_like_bound (const DB_VALUE * src_pattern,
 
   if (!QSTR_IS_CHAR (pattern_type))
     {
-      src_pattern =
-	db_value_cast_arg (src_pattern, &tmp_pattern, DB_TYPE_VARCHAR,
-			   &error_status);
+      src_pattern = db_value_cast_arg (src_pattern, &tmp_pattern, DB_TYPE_VARCHAR, &error_status);
     }
 
   if (error_status != NO_ERROR)
@@ -2796,47 +2682,44 @@ db_like_bound (const DB_VALUE * src_pattern,
   else
     {
       if (DB_IS_NULL (src_escape))
-	{
-	  /* a LIKE b ESCAPE NULL means use the default escape character
-	   * '\\' */
-	  has_escape_char = true;
-	  escape_str = "\\";
-	}
+        {
+          /* a LIKE b ESCAPE NULL means use the default escape character
+           * '\\' */
+          has_escape_char = true;
+          escape_str = "\\";
+        }
       else
-	{
-	  escape_type = DB_VALUE_DOMAIN_TYPE (src_escape);
+        {
+          escape_type = DB_VALUE_DOMAIN_TYPE (src_escape);
 
-	  if (!QSTR_IS_CHAR (escape_type))
-	    {
-	      src_escape =
-		db_value_cast_arg (src_escape, &tmp_escape, DB_TYPE_VARCHAR,
-				   &error_status);
-	    }
+          if (!QSTR_IS_CHAR (escape_type))
+            {
+              src_escape = db_value_cast_arg (src_escape, &tmp_escape, DB_TYPE_VARCHAR, &error_status);
+            }
 
-	  if (error_status != NO_ERROR)
-	    {
-	      assert (er_errid () != NO_ERROR);
-	      goto exit_on_error;
-	    }
+          if (error_status != NO_ERROR)
+            {
+              assert (er_errid () != NO_ERROR);
+              goto exit_on_error;
+            }
 
-	  escape_str = DB_PULL_STRING (src_escape);
+          escape_str = DB_PULL_STRING (src_escape);
 
-	  if (DB_GET_STRING_LENGTH (src_escape) != 1 || escape_str[0] == 0)
-	    {
-	      error_status = ER_QSTR_INVALID_ESCAPE_CHARACTER;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
-	      goto exit_on_error;
-	    }
+          if (DB_GET_STRING_LENGTH (src_escape) != 1 || escape_str[0] == 0)
+            {
+              error_status = ER_QSTR_INVALID_ESCAPE_CHARACTER;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
+              goto exit_on_error;
+            }
 
-	  has_escape_char = true;
-	}
+          has_escape_char = true;
+        }
     }
 
   /* start main body ********************************************************
    */
 
-  error_status = db_compress_like_pattern (src_pattern, &compressed_pattern,
-					   has_escape_char, escape_str);
+  error_status = db_compress_like_pattern (src_pattern, &compressed_pattern, has_escape_char, escape_str);
   if (error_status != NO_ERROR)
     {
       goto exit_on_error;
@@ -2844,9 +2727,8 @@ db_like_bound (const DB_VALUE * src_pattern,
 
   error_status =
     db_get_info_for_like_optimization (&compressed_pattern, has_escape_char,
-				       escape_str, &num_logical_chars,
-				       &last_safe_logical_pos,
-				       &num_match_many, &num_match_one);
+                                       escape_str, &num_logical_chars,
+                                       &last_safe_logical_pos, &num_match_many, &num_match_one);
   if (error_status != NO_ERROR)
     {
       goto exit_on_error;
@@ -2854,9 +2736,7 @@ db_like_bound (const DB_VALUE * src_pattern,
 
   error_status =
     db_get_like_optimization_bounds (&compressed_pattern, result_bound,
-				     has_escape_char, escape_str,
-				     compute_lower_bound,
-				     last_safe_logical_pos);
+                                     has_escape_char, escape_str, compute_lower_bound, last_safe_logical_pos);
   if (error_status != NO_ERROR)
     {
       pr_clear_value (result_bound);
@@ -2960,18 +2840,18 @@ db_hex (const DB_VALUE * param, DB_VALUE * result)
       hexval_len = str_size * 2;
       hexval = (char *) malloc (hexval_len + 1);
       if (hexval == NULL)
-	{
-	  error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-	  goto error;
-	}
+        {
+          error_code = ER_OUT_OF_VIRTUAL_MEMORY;
+          goto error;
+        }
       hexval[hexval_len] = 0;
 
       /* compute hex representation */
       for (i = 0; i < str_size; i++)
-	{
-	  hexval[i * 2] = hex_digit[(str[i] >> 4) & 0xF];
-	  hexval[i * 2 + 1] = hex_digit[str[i] & 0xF];
-	}
+        {
+          hexval[i * 2] = hex_digit[(str[i] >> 4) & 0xF];
+          hexval[i * 2 + 1] = hex_digit[str[i] & 0xF];
+        }
 
       /* set return string */
       DB_MAKE_STRING (result, hexval);
@@ -2993,38 +2873,37 @@ db_hex (const DB_VALUE * param, DB_VALUE * result)
        * out of range */
       (void) tp_value_coerce (param, &param_db_bigint, domain);
       if (DB_IS_NULL (&param_db_bigint))
-	{
-	  /* param is out of range, set it to max */
-	  param_bigint = hex_length_limits[UINT64_MAX_HEX_DIGITS];
-	}
+        {
+          /* param is out of range, set it to max */
+          param_bigint = hex_length_limits[UINT64_MAX_HEX_DIGITS];
+        }
       else
-	{
-	  param_bigint = (UINT64) DB_GET_BIGINT (&param_db_bigint);
-	}
+        {
+          param_bigint = (UINT64) DB_GET_BIGINT (&param_db_bigint);
+        }
 
       /* compute hex representation length */
       hexval_len = 1;
-      while (hexval_len < UINT64_MAX_HEX_DIGITS
-	     && param_bigint > hex_length_limits[hexval_len])
-	{
-	  hexval_len++;
-	}
+      while (hexval_len < UINT64_MAX_HEX_DIGITS && param_bigint > hex_length_limits[hexval_len])
+        {
+          hexval_len++;
+        }
 
       /* allocate memory */
       hexval = (char *) malloc (hexval_len + 1);
       if (hexval == NULL)
-	{
-	  error_code = ER_OUT_OF_VIRTUAL_MEMORY;
-	  goto error;
-	}
+        {
+          error_code = ER_OUT_OF_VIRTUAL_MEMORY;
+          goto error;
+        }
       hexval[hexval_len] = 0;
 
       /* compute hex representation */
       for (i = hexval_len - 1; i >= 0; --i)
-	{
-	  hexval[i] = hex_digit[param_bigint & 0xF];
-	  param_bigint >>= 4;
-	}
+        {
+          hexval[i] = hex_digit[param_bigint & 0xF];
+          param_bigint >>= 4;
+        }
 
       /* set return string */
       DB_MAKE_STRING (result, hexval);
@@ -3097,8 +2976,7 @@ db_ascii (const DB_VALUE * param, DB_VALUE * result)
   /* arg cast type **********************************************************
    */
 
-  param =
-    db_value_cast_arg (param, &tmp_param, DB_TYPE_VARCHAR, &error_status);
+  param = db_value_cast_arg (param, &tmp_param, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3118,7 +2996,7 @@ db_ascii (const DB_VALUE * param, DB_VALUE * result)
   /* return first character */
   if (str_size > 0)
     {
-      DB_MAKE_INT (result, (unsigned char) str[0]);	/* TODO - */
+      DB_MAKE_INT (result, (unsigned char) str[0]);     /* TODO - */
     }
   else
     {
@@ -3168,8 +3046,7 @@ exit_on_error:
  *  From_base and to_base should satisfy 2 <= abs(base) <= 36
  */
 int
-db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
-	 const DB_VALUE * to_base, DB_VALUE * result)
+db_conv (const DB_VALUE * num, const DB_VALUE * from_base, const DB_VALUE * to_base, DB_VALUE * result)
 {
   int error_status = NO_ERROR;
   DB_VALUE tmp_num, tmp_from_base, tmp_to_base;
@@ -3226,11 +3103,8 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
 
   /* cast (num) *//* go ahead */
 
-  from_base =
-    db_value_cast_arg (from_base, &tmp_from_base, DB_TYPE_INTEGER,
-		       &error_status);
-  to_base =
-    db_value_cast_arg (to_base, &tmp_to_base, DB_TYPE_INTEGER, &error_status);
+  from_base = db_value_cast_arg (from_base, &tmp_from_base, DB_TYPE_INTEGER, &error_status);
+  to_base = db_value_cast_arg (to_base, &tmp_to_base, DB_TYPE_INTEGER, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3252,8 +3126,7 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
   from_base_int = ABS (from_base_int);
   to_base_int = ABS (to_base_int);
 
-  if (from_base_int < 2 || from_base_int > 36 || to_base_int < 2
-      || to_base_int > 36)
+  if (from_base_int < 2 || from_base_int > 36 || to_base_int < 2 || to_base_int > 36)
     {
       DB_MAKE_NULL (result);
       goto done;
@@ -3265,31 +3138,28 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
     {
       /* generic number -> string */
       switch (num_type)
-	{
-	case DB_TYPE_INTEGER:
-	  snprintf (num_p_str, UINT64_MAX_BIN_DIGITS + 1, "%d",
-		    DB_GET_INT (num));
-	  break;
+        {
+        case DB_TYPE_INTEGER:
+          snprintf (num_p_str, UINT64_MAX_BIN_DIGITS + 1, "%d", DB_GET_INT (num));
+          break;
 
-	case DB_TYPE_BIGINT:
-	  snprintf (num_p_str, UINT64_MAX_BIN_DIGITS + 1, "%lld",
-		    (long long int) DB_GET_BIGINT (num));
-	  break;
+        case DB_TYPE_BIGINT:
+          snprintf (num_p_str, UINT64_MAX_BIN_DIGITS + 1, "%lld", (long long int) DB_GET_BIGINT (num));
+          break;
 
-	case DB_TYPE_NUMERIC:
-	  num_p_str = numeric_db_value_print ((DB_VALUE *) num);
-	  break;
+        case DB_TYPE_NUMERIC:
+          num_p_str = numeric_db_value_print ((DB_VALUE *) num);
+          break;
 
-	case DB_TYPE_DOUBLE:
-	  snprintf (num_p_str, UINT64_MAX_BIN_DIGITS + 1, "%.0f",
-		    DB_GET_DOUBLE (num));
-	  break;
+        case DB_TYPE_DOUBLE:
+          snprintf (num_p_str, UINT64_MAX_BIN_DIGITS + 1, "%.0f", DB_GET_DOUBLE (num));
+          break;
 
-	default:
-	  assert (false);	/* is impossible */
-	  goto exit_on_error;
-	  break;
-	}
+        default:
+          assert (false);       /* is impossible */
+          goto exit_on_error;
+          break;
+        }
     }
   else if (TP_IS_CHAR_TYPE (num_type))
     {
@@ -3297,13 +3167,13 @@ db_conv (const DB_VALUE * num, const DB_VALUE * from_base,
       int str_size = DB_GET_STRING_SIZE (num);
 
       if (str_size >= 0)
-	{
-	  str_size = MIN (str_size, sizeof (num_str) - 1);
-	}
+        {
+          str_size = MIN (str_size, sizeof (num_str) - 1);
+        }
       else
-	{
-	  str_size = sizeof (num_str) - 1;
-	}
+        {
+          str_size = sizeof (num_str) - 1;
+        }
       strncpy (num_str, DB_PULL_STRING (num), str_size);
       num_str[str_size] = '\0';
       num_p_str = num_str;
@@ -3474,8 +3344,7 @@ db_inet_aton (DB_VALUE * result_numbered_ip, const DB_VALUE * string)
 
   /* arg cast type **********************************************************
    */
-  string =
-    db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
+  string = db_value_cast_arg (string, &tmp_string, DB_TYPE_VARCHAR, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3512,33 +3381,29 @@ db_inet_aton (DB_VALUE * result_numbered_ip, const DB_VALUE * string)
       /* use ". \t" to be more tolerable of input format. */
       local_ipslice = strtok_r (temp_tok, ". \t", &local_pivot);
       if (local_ipslice == NULL)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (!is_valid_ip_slice (local_ipslice))
-	{
-	  error_status = ER_OPFUNC_INET_ATON_ARG;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-		  ip_string);
-	  goto exit_on_error;
-	}
+        {
+          error_status = ER_OPFUNC_INET_ATON_ARG;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, ip_string);
+          goto exit_on_error;
+        }
 
       result = parse_int (&slice, local_ipslice, 0);
       if (result != 0 || slice < 0 || slice >= ipsegmax)
-	{
-	  error_status = ER_OPFUNC_INET_ATON_ARG;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-		  ip_string);
-	  goto exit_on_error;
-	}
+        {
+          error_status = ER_OPFUNC_INET_ATON_ARG;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, ip_string);
+          goto exit_on_error;
+        }
       numbered_ip += slice * ipbase;
       ipbase /= ipsegmax;
       slice_count++;
     }
-  if (numbered_ip < 0
-      || numbered_ip > (DB_BIGINT) ipsegmax * ipsegmax * ipsegmax * ipsegmax
-      || slice_count != 4)
+  if (numbered_ip < 0 || numbered_ip > (DB_BIGINT) ipsegmax * ipsegmax * ipsegmax * ipsegmax || slice_count != 4)
     {
       error_status = ER_OPFUNC_INET_ATON_ARG;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, ip_string);
@@ -3643,8 +3508,7 @@ db_inet_ntoa (DB_VALUE * result_ip_string, const DB_VALUE * number)
 
   /* arg cast type **********************************************************
    */
-  number =
-    db_value_cast_arg (number, &tmp_number, DB_TYPE_BIGINT, &error_status);
+  number = db_value_cast_arg (number, &tmp_number, DB_TYPE_BIGINT, &error_status);
 
   if (error_status != NO_ERROR)
     {
@@ -3659,8 +3523,7 @@ db_inet_ntoa (DB_VALUE * result_ip_string, const DB_VALUE * number)
   if (ip_number > ipmax || ip_number < 0)
     {
       error_status = ER_OPFUNC_INET_NTOA_ARG;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1,
-	      (long long int) ip_number);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 1, (long long int) ip_number);
       goto exit_on_error;
     }
 
@@ -3672,9 +3535,9 @@ db_inet_ntoa (DB_VALUE * result_ip_string, const DB_VALUE * number)
       /* safe to use strcat rather than strncat */
       strcat (ip_string, ip_seg_string);
       if (i != 3)
-	{
-	  strcat (ip_string, ".");
-	}
+        {
+          strcat (ip_string, ".");
+        }
     }
 
   /* return string */
@@ -3738,7 +3601,7 @@ static bool
 is_valid_ip_slice (const char *ipslice)
 {
   int pos = 0;
-  int base_type = 10;		/* base type can be 8(oct), 10(dec), 16(hex) */
+  int base_type = 10;           /* base type can be 8(oct), 10(dec), 16(hex) */
 
   assert (ipslice != NULL);
   if (ipslice[0] == '\0')
@@ -3749,44 +3612,44 @@ is_valid_ip_slice (const char *ipslice)
   if (ipslice[0] == '0')
     {
       if (char_tolower (ipslice[1]) == 'x')
-	{
-	  if (ipslice[2] == '\0')
-	    {
-	      return false;
-	    }
-	  base_type = 16;
-	  pos = 2;
-	}
+        {
+          if (ipslice[2] == '\0')
+            {
+              return false;
+            }
+          base_type = 16;
+          pos = 2;
+        }
       else if (ipslice[1] != '\0')
-	{
-	  base_type = 8;
-	  pos = 1;
-	}
+        {
+          base_type = 8;
+          pos = 1;
+        }
     }
 
   while (ipslice[pos] != '\0')
     {
       if (base_type == 10)
-	{
-	  if (!char_isdigit (ipslice[pos]))
-	    {
-	      return false;
-	    }
-	}
+        {
+          if (!char_isdigit (ipslice[pos]))
+            {
+              return false;
+            }
+        }
       else if (base_type == 8)
-	{
-	  if (!('0' <= ipslice[pos] && ipslice[pos] <= '7'))
-	    {
-	      return false;
-	    }
-	}
+        {
+          if (!('0' <= ipslice[pos] && ipslice[pos] <= '7'))
+            {
+              return false;
+            }
+        }
       else
-	{			/* base_type = 16 */
-	  if (!char_isxdigit (ipslice[pos]))
-	    {
-	      return false;
-	    }
-	}
+        {                       /* base_type = 16 */
+          if (!char_isxdigit (ipslice[pos]))
+            {
+              return false;
+            }
+        }
       pos++;
     }
 
@@ -3798,8 +3661,7 @@ is_valid_ip_slice (const char *ipslice)
  */
 int
 db_string_index_prefix (const DB_VALUE * string1,
-			const DB_VALUE * string2,
-			const DB_VALUE * index_type, DB_VALUE * prefix_index)
+                        const DB_VALUE * string2, const DB_VALUE * index_type, DB_VALUE * prefix_index)
 {
   int error_status = NO_ERROR;
   bool is_desc = false;
@@ -3813,15 +3675,12 @@ db_string_index_prefix (const DB_VALUE * string1,
 
   if (DB_IS_NULL (string1) || DB_IS_NULL (string2) || DB_IS_NULL (index_type))
     {
-      error_status =
-	db_value_domain_init (prefix_index, DB_TYPE_VARCHAR,
-			      DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
+      error_status = db_value_domain_init (prefix_index, DB_TYPE_VARCHAR, DB_DEFAULT_PRECISION, DB_DEFAULT_SCALE);
       return error_status;
     }
 
   if (!QSTR_IS_CHAR (DB_VALUE_DOMAIN_TYPE (string1))
-      || !QSTR_IS_CHAR (DB_VALUE_DOMAIN_TYPE (string2))
-      || !is_char_string (index_type))
+      || !QSTR_IS_CHAR (DB_VALUE_DOMAIN_TYPE (string2)) || !is_char_string (index_type))
     {
       error_status = ER_OBJ_INVALID_ARGUMENTS;
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
@@ -3840,9 +3699,7 @@ db_string_index_prefix (const DB_VALUE * string1,
       is_desc = true;
     }
 
-  error_status =
-    db_string_unique_prefix (string1, string2, (const bool) is_desc,
-			     prefix_index);
+  error_status = db_string_unique_prefix (string1, string2, (const bool) is_desc, prefix_index);
 
   return error_status;
 }
@@ -3905,8 +3762,7 @@ db_string_to_base64 (DB_VALUE const *src, DB_VALUE * result)
   /* if input is empty string, output is also empty string */
   if (src_len == 0)
     {
-      db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR, 0,
-					 DB_GET_STRING_COLLATION (src));
+      db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR, 0, DB_GET_STRING_COLLATION (src));
       goto done;
     }
 
@@ -3917,8 +3773,7 @@ db_string_to_base64 (DB_VALUE const *src, DB_VALUE * result)
   if (error_status == NO_ERROR)
     {
       qstr_make_typed_string (DB_TYPE_VARCHAR, result, encode_len,
-			      (const DB_C_VARCHAR) encode_buf, encode_len,
-			      DB_GET_STRING_COLLATION (src));
+                              (const DB_C_VARCHAR) encode_buf, encode_len, DB_GET_STRING_COLLATION (src));
 
       result->need_clear = true;
     }
@@ -4019,8 +3874,7 @@ db_string_from_base64 (DB_VALUE const *src, DB_VALUE * result)
   /* source is empty string */
   if (src_len == 0)
     {
-      db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR, 0,
-					 DB_GET_STRING_COLLATION (src));
+      db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR, 0, DB_GET_STRING_COLLATION (src));
       goto done;
     }
 
@@ -4030,19 +3884,17 @@ db_string_from_base64 (DB_VALUE const *src, DB_VALUE * result)
   switch (err)
     {
     case BASE64_EMPTY_INPUT:
-      db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR, 0,
-					 DB_GET_STRING_COLLATION (src));
+      db_string_make_empty_typed_string (NULL, result, DB_TYPE_VARCHAR, 0, DB_GET_STRING_COLLATION (src));
       break;
 
     case NO_ERROR:
       qstr_make_typed_string (DB_TYPE_VARCHAR, result, decode_len,
-			      (const DB_C_VARCHAR) decode_buf, decode_len,
-			      (const int) DB_GET_STRING_COLLATION (src));
+                              (const DB_C_VARCHAR) decode_buf, decode_len, (const int) DB_GET_STRING_COLLATION (src));
       result->need_clear = true;
       break;
 
     case BASE64_INVALID_INPUT:
-      error_status = ER_QSTR_INVALID_FORMAT;	/* reset error code */
+      error_status = ER_QSTR_INVALID_FORMAT;    /* reset error code */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error_status, 0);
       goto exit_on_error;
 
@@ -4095,8 +3947,7 @@ exit_on_error:
  *   Note:
  */
 DB_VALUE *
-db_value_cast_arg (DB_VALUE const *src, DB_VALUE * dest, DB_TYPE desired_type,
-		   int *errorp)
+db_value_cast_arg (DB_VALUE const *src, DB_VALUE * dest, DB_TYPE desired_type, int *errorp)
 {
   DB_TYPE src_type;
 
@@ -4104,26 +3955,23 @@ db_value_cast_arg (DB_VALUE const *src, DB_VALUE * dest, DB_TYPE desired_type,
   assert (dest != NULL);
   assert (src != dest);
 
-  DB_MAKE_NULL (dest);		/* init */
+  DB_MAKE_NULL (dest);          /* init */
 
   if (*errorp != NO_ERROR)
     {
-      return (DB_VALUE *) src;	/* give up */
+      return (DB_VALUE *) src;  /* give up */
     }
 
   src_type = DB_VALUE_TYPE (src);
   if (src_type == DB_TYPE_NULL || src_type == desired_type)
     {
-      return (DB_VALUE *) src;	/* OK */
+      return (DB_VALUE *) src;  /* OK */
     }
 
-  if (tp_value_coerce (src, dest,
-		       db_type_to_db_domain (desired_type)) !=
-      DOMAIN_COMPATIBLE)
+  if (tp_value_coerce (src, dest, db_type_to_db_domain (desired_type)) != DOMAIN_COMPATIBLE)
     {
       *errorp = ER_TP_CANT_COERCE;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, *errorp, 2,
-	      pr_type_name (src_type), pr_type_name (desired_type));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, *errorp, 2, pr_type_name (src_type), pr_type_name (desired_type));
 
       return (DB_VALUE *) src;
     }

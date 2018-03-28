@@ -49,7 +49,7 @@
 
 #include "parser.h"
 
-#include "dbval.h"		/* this must be the last header file included!!! */
+#include "dbval.h"              /* this must be the last header file included!!! */
 
 #define ERROR_SET(error, code) \
   do {                     \
@@ -99,24 +99,24 @@ db_seq_create (MOP classop, const char *name, int size)
       SM_ATTRIBUTE *att;
 
       if (au_fetch_class (classop, &class_, S_LOCK, AU_SELECT) == NO_ERROR)
-	{
-	  att = classobj_find_attribute (class_->attributes, name);
-	  if (att == NULL)
-	    {
-	      ERROR_SET1 (error, ER_OBJ_INVALID_ATTRIBUTE, name);
-	    }
-	  else
-	    {
-	      if (att->type->id == DB_TYPE_SEQUENCE)
-		{
-		  set = set_create_sequence (size);
-		}
-	      else
-		{
-		  ERROR_SET1 (error, ER_OBJ_DOMAIN_CONFLICT, name);
-		}
-	    }
-	}
+        {
+          att = classobj_find_attribute (class_->attributes, name);
+          if (att == NULL)
+            {
+              ERROR_SET1 (error, ER_OBJ_INVALID_ATTRIBUTE, name);
+            }
+          else
+            {
+              if (att->type->id == DB_TYPE_SEQUENCE)
+                {
+                  set = set_create_sequence (size);
+                }
+              else
+                {
+                  ERROR_SET1 (error, ER_OBJ_DOMAIN_CONFLICT, name);
+                }
+            }
+        }
 #endif
     }
 

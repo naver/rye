@@ -67,8 +67,7 @@ rbl_sync_query_init (void)
 {
   int error = NO_ERROR;
 
-  ht_Tran_queries = mht_create ("Tran Queries", 1024, rbl_tranid_hash,
-				rbl_compare_tranid_are_equal);
+  ht_Tran_queries = mht_create ("Tran Queries", 1024, rbl_tranid_hash, rbl_compare_tranid_are_equal);
   if (ht_Tran_queries == NULL)
     {
       RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, 1024);
@@ -100,19 +99,18 @@ rbl_tran_list_add (TRANID tran_id, char *query)
     {
       list = (TRAN_QUERY_LIST *) malloc (sizeof (TRAN_QUERY_LIST));
       if (list == NULL)
-	{
-	  free (item);
-	  RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY,
-		     sizeof (TRAN_QUERY_LIST));
-	  return RBL_OUT_OF_MEMORY;
-	}
+        {
+          free (item);
+          RBL_ERROR (ARG_FILE_LINE, RBL_OUT_OF_MEMORY, sizeof (TRAN_QUERY_LIST));
+          return RBL_OUT_OF_MEMORY;
+        }
 
       if (mht_put (ht_Tran_queries, &item->tran_id, list) == NULL)
-	{
-	  free (item);
-	  free (list);
-	  return ER_FAILED;
-	}
+        {
+          free (item);
+          free (list);
+          return ER_FAILED;
+        }
 
       list->first = item;
       list->last = item;
@@ -128,8 +126,7 @@ rbl_tran_list_add (TRANID tran_id, char *query)
 }
 
 static int
-rbl_tran_list_free (UNUSED_ARG const void *key, void *data,
-		    UNUSED_ARG void *args)
+rbl_tran_list_free (UNUSED_ARG const void *key, void *data, UNUSED_ARG void *args)
 {
   TRAN_QUERY_LIST *list;
   TRAN_QUERY_ITEM *item, *next;
@@ -172,32 +169,29 @@ rbl_sync_execute_query (RBL_SYNC_CONTEXT * ctx, TRANID tran_id, int gid)
 
   for (item = list->first; item != NULL; item = item->next)
     {
-      if (cci_prepare (conn, &stmt, item->query,
-		       CCI_PREPARE_FROM_MIGRATOR) < 0)
-	{
-	  RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-		     conn->err_buf.err_code, conn->err_buf.err_msg);
-	  goto error_exit;
-	}
+      if (cci_prepare (conn, &stmt, item->query, CCI_PREPARE_FROM_MIGRATOR) < 0)
+        {
+          RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, conn->err_buf.err_code, conn->err_buf.err_msg);
+          goto error_exit;
+        }
 
       error = cci_execute_with_gid (&stmt, 0, 0, -gid);
       if (error < 0)
-	{
-	  if (stmt.err_buf.err_code == ER_BTREE_UNIQUE_FAILED)
-	    {
-	      ctx->num_synced_collision++;
-	    }
-	  else
-	    {
-	      RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR,
-			 stmt.err_buf.err_code, stmt.err_buf.err_msg);
-	      goto error_exit;
-	    }
-	}
+        {
+          if (stmt.err_buf.err_code == ER_BTREE_UNIQUE_FAILED)
+            {
+              ctx->num_synced_collision++;
+            }
+          else
+            {
+              RBL_ERROR (ARG_FILE_LINE, RBL_CCI_ERROR, stmt.err_buf.err_code, stmt.err_buf.err_msg);
+              goto error_exit;
+            }
+        }
       else
-	{
-	  ctx->num_synced_rows++;
-	}
+        {
+          ctx->num_synced_rows++;
+        }
 
       cci_close_req_handle (&stmt);
     }

@@ -122,7 +122,7 @@ enum
   RSQL_E_CLASSNAMEMISSED_TEXT = 236
 };
 
-#define SCRATCH_TEXT_LEN (ONE_K * 4)	/* 4096 */
+#define SCRATCH_TEXT_LEN (ONE_K * 4)    /* 4096 */
 
 /* error codes defined in rsql level */
 enum
@@ -288,10 +288,8 @@ extern int rsql_Line_lwm;
 extern int rsql_Row_count;
 extern int rsql_Num_failures;
 
-extern int (*rsql_text_utf8_to_console) (const char *, const int, char **,
-					 int *);
-extern int (*rsql_text_console_to_utf8) (const char *, const int, char **,
-					 int *);
+extern int (*rsql_text_utf8_to_console) (const char *, const int, char **, int *);
+extern int (*rsql_text_console_to_utf8) (const char *, const int, char **, int *);
 
 extern void rsql_display_msg (const char *string);
 extern void rsql_exit (int exit_status);
@@ -317,14 +315,11 @@ extern void nonscr_display_error (void);
 extern SESSION_CMD rsql_get_session_cmd_no (const char *input);
 
 extern void rsql_results (const RSQL_ARGUMENT * rsql_arg,
-			  DB_QUERY_RESULT * result, DB_QUERY_TYPE * attr_spec,
-			  int line_no, RYE_STMT_TYPE stmt_type);
+                          DB_QUERY_RESULT * result, DB_QUERY_TYPE * attr_spec, int line_no, RYE_STMT_TYPE stmt_type);
 
 extern const char *rsql_edit_contents_get (void);
-extern int rsql_edit_contents_append (const char *str,
-				      bool flag_append_new_line);
-extern RSQL_STATEMENT_STATE rsql_walk_statement (const char *str,
-						 RSQL_STATEMENT_STATE state);
+extern int rsql_edit_contents_append (const char *str, bool flag_append_new_line);
+extern RSQL_STATEMENT_STATE rsql_walk_statement (const char *str, RSQL_STATEMENT_STATE state);
 extern bool rsql_is_statement_complete (RSQL_STATEMENT_STATE state);
 extern bool rsql_is_statement_in_block (RSQL_STATEMENT_STATE state);
 extern void rsql_edit_contents_clear (void);
@@ -341,15 +336,12 @@ extern void rsql_killtran (const char *argument);
 
 extern char *rsql_db_value_as_string (DB_VALUE * value, int *length);
 
-extern int rsql_set_column_width_info (const char *column_name,
-				       int column_width);
+extern int rsql_set_column_width_info (const char *column_name, int column_width);
 extern int rsql_get_column_width (const char *column_name);
 
 extern int rsql_query_init (RSQL_QUERY * query, int size);
 extern int rsql_query_final (RSQL_QUERY * query);
 extern int rsql_query_clear (RSQL_QUERY * query);
-extern int rsql_query_append_string (RSQL_QUERY * query,
-				     char *str, int str_length,
-				     bool flag_append_new_line);
+extern int rsql_query_append_string (RSQL_QUERY * query, char *str, int str_length, bool flag_append_new_line);
 
 #endif /* _RSQL_H_ */

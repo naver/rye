@@ -40,7 +40,7 @@
 #include "quick_fit.h"
 #endif /* SERVER_MODE */
 
-#define DEFAULT_OBSTACK_CHUNK_SIZE      32768	/* 1024 x 32 */
+#define DEFAULT_OBSTACK_CHUNK_SIZE      32768   /* 1024 x 32 */
 
 #if !defined (SERVER_MODE)
 extern unsigned int db_on_server;
@@ -69,37 +69,36 @@ ansisql_strcmp (const char *s, const char *t)
   for (; *s == *t; s++, t++)
     {
       if (*s == '\0')
-	{
-	  return 0;
-	}
+        {
+          return 0;
+        }
     }
 
   if (*s == '\0')
     {
       while (*t != '\0')
-	{
-	  if (*t++ != ' ')
-	    {
-	      return -1;
-	    }
-	}
+        {
+          if (*t++ != ' ')
+            {
+              return -1;
+            }
+        }
       return 0;
     }
   else if (*t == '\0')
     {
       while (*s != '\0')
-	{
-	  if (*s++ != ' ')
-	    {
-	      return 1;
-	    }
-	}
+        {
+          if (*s++ != ' ')
+            {
+              return 1;
+            }
+        }
       return 0;
     }
   else
     {
-      return (*(unsigned const char *) s <
-	      *(unsigned const char *) t) ? -1 : 1;
+      return (*(unsigned const char *) s < *(unsigned const char *) t) ? -1 : 1;
     }
 }
 
@@ -152,23 +151,23 @@ ansisql_strcasecmp (const char *s, const char *t)
   if (*s == '\0')
     {
       while (*t != '\0')
-	{
-	  if (*t++ != ' ')
-	    {
-	      return -1;
-	    }
-	}
+        {
+          if (*t++ != ' ')
+            {
+              return -1;
+            }
+        }
       return 0;
     }
   else
     {
       while (*s != '\0')
-	{
-	  if (*s++ != ' ')
-	    {
-	      return 1;
-	    }
-	}
+        {
+          if (*s++ != ' ')
+            {
+              return 1;
+            }
+        }
       return 0;
     }
 }
@@ -184,8 +183,7 @@ db_alignment (int n)
 {
   return (n >= (int) sizeof (double)) ? (int) sizeof (double) :
     (n >= (int) sizeof (void *))? (int) sizeof (void *) :
-    (n >= (int) sizeof (int)) ? (int) sizeof (int) :
-    (n >= (int) sizeof (short)) ? (int) sizeof (short) : 1;
+    (n >= (int) sizeof (int)) ? (int) sizeof (int) : (n >= (int) sizeof (short)) ? (int) sizeof (short) : 1;
 }
 
 /*
@@ -355,8 +353,7 @@ db_private_alloc (UNUSED_ARG void *thrd, size_t size)
       return NULL;
     }
 
-  heap_id = (thrd ? ((THREAD_ENTRY *) thrd)->private_heap_id :
-	     css_get_private_heap (NULL));
+  heap_id = (thrd ? ((THREAD_ENTRY *) thrd)->private_heap_id : css_get_private_heap (NULL));
 
   if (heap_id)
     {
@@ -366,10 +363,9 @@ db_private_alloc (UNUSED_ARG void *thrd, size_t size)
     {
       ptr = malloc (size);
       if (ptr == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, size);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+        }
     }
   return ptr;
 #else /* SA_MODE */
@@ -382,39 +378,38 @@ db_private_alloc (UNUSED_ARG void *thrd, size_t size)
   else
     {
       if (size <= 0)
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
 
       if (private_heap_id)
-	{
-	  PRIVATE_MALLOC_HEADER *h = NULL;
-	  size_t req_sz;
+        {
+          PRIVATE_MALLOC_HEADER *h = NULL;
+          size_t req_sz;
 
-	  req_sz = private_request_size (size);
-	  h = hl_lea_alloc (private_heap_id, req_sz);
+          req_sz = private_request_size (size);
+          h = hl_lea_alloc (private_heap_id, req_sz);
 
-	  if (h != NULL)
-	    {
-	      h->magic = PRIVATE_MALLOC_HEADER_MAGIC;
-	      h->alloc_type = PRIVATE_ALLOC_TYPE_LEA;
-	      return private_hl2user_ptr (h);
-	    }
-	  else
-	    {
-	      return NULL;
-	    }
-	}
+          if (h != NULL)
+            {
+              h->magic = PRIVATE_MALLOC_HEADER_MAGIC;
+              h->alloc_type = PRIVATE_ALLOC_TYPE_LEA;
+              return private_hl2user_ptr (h);
+            }
+          else
+            {
+              return NULL;
+            }
+        }
       else
-	{
-	  ptr = malloc (size);
-	  if (ptr == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
-	    }
-	  return ptr;
-	}
+        {
+          ptr = malloc (size);
+          if (ptr == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+            }
+          return ptr;
+        }
     }
 #endif /* SA_MODE */
 }
@@ -441,8 +436,7 @@ db_private_realloc (UNUSED_ARG void *thrd, void *ptr, size_t size)
       return NULL;
     }
 
-  heap_id = (thrd ? ((THREAD_ENTRY *) thrd)->private_heap_id :
-	     css_get_private_heap (NULL));
+  heap_id = (thrd ? ((THREAD_ENTRY *) thrd)->private_heap_id : css_get_private_heap (NULL));
 
   if (heap_id)
     {
@@ -452,10 +446,9 @@ db_private_realloc (UNUSED_ARG void *thrd, void *ptr, size_t size)
     {
       new_ptr = realloc (ptr, size);
       if (new_ptr == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, size);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+        }
     }
   return new_ptr;
 #else /* SA_MODE */
@@ -473,47 +466,46 @@ db_private_realloc (UNUSED_ARG void *thrd, void *ptr, size_t size)
   else
     {
       if (private_heap_id)
-	{
-	  PRIVATE_MALLOC_HEADER *h;
+        {
+          PRIVATE_MALLOC_HEADER *h;
 
-	  h = private_user2hl_ptr (ptr);
-	  if (h->magic != PRIVATE_MALLOC_HEADER_MAGIC)
-	    {
-	      return NULL;
-	    }
+          h = private_user2hl_ptr (ptr);
+          if (h->magic != PRIVATE_MALLOC_HEADER_MAGIC)
+            {
+              return NULL;
+            }
 
-	  if (h->alloc_type == PRIVATE_ALLOC_TYPE_LEA)
-	    {
-	      PRIVATE_MALLOC_HEADER *new_h;
-	      size_t req_sz;
+          if (h->alloc_type == PRIVATE_ALLOC_TYPE_LEA)
+            {
+              PRIVATE_MALLOC_HEADER *new_h;
+              size_t req_sz;
 
-	      req_sz = private_request_size (size);
-	      new_h = hl_lea_realloc (private_heap_id, h, req_sz);
-	      if (new_h == NULL)
-		{
-		  return NULL;
-		}
-	      return private_hl2user_ptr (new_h);
-	    }
-	  else if (h->alloc_type == PRIVATE_ALLOC_TYPE_WS)
-	    {
-	      return db_ws_realloc (ptr, size);
-	    }
-	  else
-	    {
-	      return NULL;
-	    }
-	}
+              req_sz = private_request_size (size);
+              new_h = hl_lea_realloc (private_heap_id, h, req_sz);
+              if (new_h == NULL)
+                {
+                  return NULL;
+                }
+              return private_hl2user_ptr (new_h);
+            }
+          else if (h->alloc_type == PRIVATE_ALLOC_TYPE_WS)
+            {
+              return db_ws_realloc (ptr, size);
+            }
+          else
+            {
+              return NULL;
+            }
+        }
       else
-	{
-	  new_ptr = realloc (ptr, size);
-	  if (new_ptr == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
-	    }
-	  return new_ptr;
-	}
+        {
+          new_ptr = realloc (ptr, size);
+          if (new_ptr == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
+            }
+          return new_ptr;
+        }
     }
 #endif /* SA_MODE */
 }
@@ -539,8 +531,7 @@ db_private_free (UNUSED_ARG void *thrd, void *ptr)
 #if defined (CS_MODE)
   db_ws_free (ptr);
 #elif defined (SERVER_MODE)
-  heap_id = (thrd ? ((THREAD_ENTRY *) thrd)->private_heap_id :
-	     css_get_private_heap (NULL));
+  heap_id = (thrd ? ((THREAD_ENTRY *) thrd)->private_heap_id : css_get_private_heap (NULL));
 
   if (heap_id)
     {
@@ -568,23 +559,23 @@ db_private_free (UNUSED_ARG void *thrd, void *ptr)
 
       h = private_user2hl_ptr (ptr);
       if (h->magic != PRIVATE_MALLOC_HEADER_MAGIC)
-	{
-	  /* assertion point */
-	  return;
-	}
+        {
+          /* assertion point */
+          return;
+        }
 
       if (h->alloc_type == PRIVATE_ALLOC_TYPE_LEA)
-	{
-	  hl_lea_free (private_heap_id, h);
-	}
+        {
+          hl_lea_free (private_heap_id, h);
+        }
       else if (h->alloc_type == PRIVATE_ALLOC_TYPE_WS)
-	{
-	  db_ws_free (ptr);	/* not h */
-	}
+        {
+          db_ws_free (ptr);     /* not h */
+        }
       else
-	{
-	  return;
-	}
+        {
+          return;
+        }
     }
 #endif /* SA_MODE */
 }

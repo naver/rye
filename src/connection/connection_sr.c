@@ -73,7 +73,7 @@ static pthread_mutex_t css_Client_id_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t css_Conn_rule_lock = PTHREAD_MUTEX_INITIALIZER;
 static CSS_CONN_ENTRY *css_Free_conn_anchor = NULL;
 static int css_Num_free_conn = 0;
-static int css_Num_max_conn = 101;	/* default max_clients + 1 for conn with master */
+static int css_Num_max_conn = 101;      /* default max_clients + 1 for conn with master */
 
 CSS_CONN_ENTRY *css_Conn_array = NULL;
 CSS_CONN_ENTRY *css_Active_conn_anchor = NULL;
@@ -88,13 +88,10 @@ static int css_get_next_client_id (void);
 
 static void css_dealloc_conn (CSS_CONN_ENTRY * conn);
 
-static unsigned int css_make_eid (unsigned short entry_id,
-				  unsigned short rid);
+static unsigned int css_make_eid (unsigned short entry_id, unsigned short rid);
 
-static int css_increment_num_conn_internal (CSS_CONN_RULE_INFO *
-					    conn_rule_info);
-static void css_decrement_num_conn_internal (CSS_CONN_RULE_INFO *
-					     conn_rule_info);
+static int css_increment_num_conn_internal (CSS_CONN_RULE_INFO * conn_rule_info);
+static void css_decrement_num_conn_internal (CSS_CONN_RULE_INFO * conn_rule_info);
 
 /*
  * get_next_client_id() -
@@ -110,8 +107,7 @@ css_get_next_client_id (void)
   rv = pthread_mutex_lock (&css_Client_id_lock);
   if (rv != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_LOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_LOCK, 0);
       return ER_FAILED;
     }
 
@@ -119,20 +115,20 @@ css_get_next_client_id (void)
     {
       css_Client_id++;
       if (css_Client_id == CSS_MAX_CLIENT_ID)
-	{
-	  css_Client_id = 1;
-	  overflow = true;
-	}
+        {
+          css_Client_id = 1;
+          overflow = true;
+        }
 
       retry = false;
       for (i = 0; overflow && i < css_Num_max_conn; i++)
-	{
-	  if (css_Conn_array[i].client_id == css_Client_id)
-	    {
-	      retry = true;
-	      break;
-	    }
-	}
+        {
+          if (css_Conn_array[i].client_id == css_Client_id)
+            {
+              retry = true;
+              break;
+            }
+        }
     }
   while (retry);
 
@@ -141,8 +137,7 @@ css_get_next_client_id (void)
   rv = pthread_mutex_unlock (&css_Client_id_lock);
   if (rv != 0)
     {
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_PTHREAD_MUTEX_UNLOCK, 0);
       return ER_FAILED;
     }
 
@@ -239,8 +234,7 @@ css_init_conn_list (void)
    * allocate NUM_MASTER_CHANNEL + the total number of
    *  conn entries
    */
-  css_Conn_array = (CSS_CONN_ENTRY *)
-    malloc (sizeof (CSS_CONN_ENTRY) * (css_Num_max_conn));
+  css_Conn_array = (CSS_CONN_ENTRY *) malloc (sizeof (CSS_CONN_ENTRY) * (css_Num_max_conn));
   if (css_Conn_array == NULL)
     {
       return ER_CSS_CONN_INIT;
@@ -253,28 +247,26 @@ css_init_conn_list (void)
       conn->idx = i;
       err = css_initialize_conn (conn, -1);
       if (err != NO_ERROR)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_CSS_CONN_INIT, 0);
-	  return ER_CSS_CONN_INIT;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_CONN_INIT, 0);
+          return ER_CSS_CONN_INIT;
+        }
       if (err != NO_ERROR)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_CSS_CONN_INIT, 0);
-	  return ER_CSS_CONN_INIT;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_CONN_INIT, 0);
+          return ER_CSS_CONN_INIT;
+        }
 
       pthread_mutex_init (&conn->conn_mutex, NULL);
 
       if (i < css_Num_max_conn - 1)
-	{
-	  conn->next = &css_Conn_array[i + 1];
-	}
+        {
+          conn->next = &css_Conn_array[i + 1];
+        }
       else
-	{
-	  conn->next = NULL;
-	}
+        {
+          conn->next = NULL;
+        }
     }
 
   /* initialize active conn list, used for stopping all threads */
@@ -298,14 +290,14 @@ css_final_conn_list (void)
   if (css_Active_conn_anchor != NULL)
     {
       for (conn = css_Active_conn_anchor; conn != NULL; conn = next)
-	{
-	  next = conn->next;
-	  css_shutdown_conn (conn);
-	  css_dealloc_conn (conn);
+        {
+          next = conn->next;
+          css_shutdown_conn (conn);
+          css_dealloc_conn (conn);
 
-	  css_Num_active_conn--;
-	  assert (css_Num_active_conn >= 0);
-	}
+          css_Num_active_conn--;
+          assert (css_Num_active_conn >= 0);
+        }
 
       css_Active_conn_anchor = NULL;
     }
@@ -353,11 +345,10 @@ css_make_conn (SOCKET fd)
   if (conn != NULL)
     {
       if (css_initialize_conn (conn, fd) != NO_ERROR)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_CSS_CONN_INIT, 0);
-	  return NULL;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CSS_CONN_INIT, 0);
+          return NULL;
+        }
     }
 
   return conn;
@@ -430,54 +421,50 @@ css_increment_num_conn_internal (CSS_CONN_RULE_INFO * conn_rule_info)
     {
     case CR_NORMAL_ONLY:
       if (conn_rule_info->num_curr_conn == conn_rule_info->max_num_conn)
-	{
-	  error = ER_CSS_CLIENTS_EXCEEDED;
-	}
+        {
+          error = ER_CSS_CLIENTS_EXCEEDED;
+        }
       else
-	{
-	  conn_rule_info->num_curr_conn++;
-	}
+        {
+          conn_rule_info->num_curr_conn++;
+        }
       break;
     case CR_NORMAL_FIRST:
       /* tries to use a normal conn first */
-      if (css_increment_num_conn_internal
-	  (&css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX]) != NO_ERROR)
-	{
-	  /* if normal conns are all occupied, uses a reserved conn */
-	  if (conn_rule_info->num_curr_conn == conn_rule_info->max_num_conn)
-	    {
-	      error = ER_CSS_CLIENTS_EXCEEDED;
-	    }
-	  else
-	    {
-	      conn_rule_info->num_curr_conn++;
-	      assert (conn_rule_info->num_curr_conn <=
-		      conn_rule_info->max_num_conn);
-	    }
-	}
+      if (css_increment_num_conn_internal (&css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX]) != NO_ERROR)
+        {
+          /* if normal conns are all occupied, uses a reserved conn */
+          if (conn_rule_info->num_curr_conn == conn_rule_info->max_num_conn)
+            {
+              error = ER_CSS_CLIENTS_EXCEEDED;
+            }
+          else
+            {
+              conn_rule_info->num_curr_conn++;
+              assert (conn_rule_info->num_curr_conn <= conn_rule_info->max_num_conn);
+            }
+        }
       break;
     case CR_RESERVED_FIRST:
       /* tries to use a reserved conn first */
       if (conn_rule_info->num_curr_conn < conn_rule_info->max_num_conn)
-	{
-	  conn_rule_info->num_curr_conn++;
-	}
-      else			/* uses a normal conn if no reserved conn is available */
-	{
-	  if (css_increment_num_conn_internal
-	      (&css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX]) != NO_ERROR)
-	    {
-	      error = ER_CSS_CLIENTS_EXCEEDED;
-	    }
-	  else
-	    {
-	      /* also increments its own conn counter */
-	      conn_rule_info->num_curr_conn++;
-	      assert (conn_rule_info->num_curr_conn <=
-		      (css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX].max_num_conn +
-		       conn_rule_info->max_num_conn));
-	    }
-	}
+        {
+          conn_rule_info->num_curr_conn++;
+        }
+      else                      /* uses a normal conn if no reserved conn is available */
+        {
+          if (css_increment_num_conn_internal (&css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX]) != NO_ERROR)
+            {
+              error = ER_CSS_CLIENTS_EXCEEDED;
+            }
+          else
+            {
+              /* also increments its own conn counter */
+              conn_rule_info->num_curr_conn++;
+              assert (conn_rule_info->num_curr_conn <=
+                      (css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX].max_num_conn + conn_rule_info->max_num_conn));
+            }
+        }
       break;
     default:
       assert (false);
@@ -507,38 +494,35 @@ css_decrement_num_conn_internal (CSS_CONN_RULE_INFO * conn_rule_info)
        * need to take the released connection first.
        */
       for (i = 1; i < css_Conn_rules_size; i++)
-	{
-	  if (css_Conn_rules[i].rule == CR_NORMAL_FIRST
-	      && css_Conn_rules[i].num_curr_conn > 0)
-	    {
-	      css_Conn_rules[i].num_curr_conn--;
+        {
+          if (css_Conn_rules[i].rule == CR_NORMAL_FIRST && css_Conn_rules[i].num_curr_conn > 0)
+            {
+              css_Conn_rules[i].num_curr_conn--;
 
-	      return;
-	    }
-	}
+              return;
+            }
+        }
       conn_rule_info->num_curr_conn--;
       break;
 
     case CR_NORMAL_FIRST:
       /* decrements reserved conn counter first if exists */
       if (conn_rule_info->num_curr_conn > 0)
-	{
-	  conn_rule_info->num_curr_conn--;
-	}
-      else			/* decrements normal conn counter if no reserved conn is in use */
-	{
-	  css_decrement_num_conn_internal (&css_Conn_rules
-					   [CSS_CR_NORMAL_ONLY_IDX]);
-	}
+        {
+          conn_rule_info->num_curr_conn--;
+        }
+      else                      /* decrements normal conn counter if no reserved conn is in use */
+        {
+          css_decrement_num_conn_internal (&css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX]);
+        }
       break;
 
     case CR_RESERVED_FIRST:
       /* decrements normal conn counter if exists */
       if (conn_rule_info->num_curr_conn > conn_rule_info->max_num_conn)
-	{
-	  css_decrement_num_conn_internal (&css_Conn_rules
-					   [CSS_CR_NORMAL_ONLY_IDX]);
-	}
+        {
+          css_decrement_num_conn_internal (&css_Conn_rules[CSS_CR_NORMAL_ONLY_IDX]);
+        }
       /* also decrements its own conn counter */
       conn_rule_info->num_curr_conn--;
       break;
@@ -569,12 +553,12 @@ css_increment_num_conn (BOOT_CLIENT_TYPE client_type)
   for (i = 0; i < css_Conn_rules_size; i++)
     {
       if (css_Conn_rules[i].check_client_type_fn (client_type))
-	{
-	  pthread_mutex_lock (&css_Conn_rule_lock);
-	  error = css_increment_num_conn_internal (&css_Conn_rules[i]);
-	  pthread_mutex_unlock (&css_Conn_rule_lock);
-	  break;
-	}
+        {
+          pthread_mutex_lock (&css_Conn_rule_lock);
+          error = css_increment_num_conn_internal (&css_Conn_rules[i]);
+          pthread_mutex_unlock (&css_Conn_rule_lock);
+          break;
+        }
     }
 
   return error;
@@ -599,12 +583,12 @@ css_decrement_num_conn (BOOT_CLIENT_TYPE client_type)
   for (i = 0; i < css_Conn_rules_size; i++)
     {
       if (css_Conn_rules[i].check_client_type_fn (client_type))
-	{
-	  pthread_mutex_lock (&css_Conn_rule_lock);
-	  css_decrement_num_conn_internal (&css_Conn_rules[i]);
-	  pthread_mutex_unlock (&css_Conn_rule_lock);
-	  break;
-	}
+        {
+          pthread_mutex_lock (&css_Conn_rule_lock);
+          css_decrement_num_conn_internal (&css_Conn_rules[i]);
+          pthread_mutex_unlock (&css_Conn_rule_lock);
+          break;
+        }
     }
 
   return;
@@ -633,22 +617,21 @@ css_free_conn (CSS_CONN_ENTRY * conn)
       next = p->next;
 
       if (p == conn)
-	{
-	  if (prev == NULL)
-	    {
-	      css_Active_conn_anchor = next;
-	    }
-	  else
-	    {
-	      prev->next = next;
-	    }
+        {
+          if (prev == NULL)
+            {
+              css_Active_conn_anchor = next;
+            }
+          else
+            {
+              prev->next = next;
+            }
 
-	  css_Num_active_conn--;
-	  assert (css_Num_active_conn >= 0
-		  && css_Num_active_conn < css_Num_max_conn);
+          css_Num_active_conn--;
+          assert (css_Num_active_conn >= 0 && css_Num_active_conn < css_Num_max_conn);
 
-	  break;
-	}
+          break;
+        }
 
       prev = p;
     }
@@ -670,9 +653,8 @@ void
 css_print_conn_entry_info (CSS_CONN_ENTRY * conn)
 {
   fprintf (stderr,
-	   "CONN_ENTRY: %p, next(%p), idx(%d),fd(%d),request_id(%d),transaction_id(%d),client_id(%d)\n",
-	   conn, conn->next, conn->idx, conn->fd, conn->request_id,
-	   conn->tran_index, conn->client_id);
+           "CONN_ENTRY: %p, next(%p), idx(%d),fd(%d),request_id(%d),transaction_id(%d),client_id(%d)\n",
+           conn, conn->next, conn->idx, conn->fd, conn->request_id, conn->tran_index, conn->client_id);
 }
 
 /*
@@ -687,21 +669,19 @@ css_print_conn_list (void)
 
   if (css_Active_conn_anchor != NULL)
     {
-      if (csect_enter_as_reader (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) !=
-	  NO_ERROR)
-	{
-	  assert (false);
-	  return;
-	}
+      if (csect_enter_as_reader (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) != NO_ERROR)
+        {
+          assert (false);
+          return;
+        }
 
       fprintf (stderr, "active conn list (%d)\n", css_Num_active_conn);
 
-      for (conn = css_Active_conn_anchor, i = 0; conn != NULL;
-	   conn = next, i++)
-	{
-	  next = conn->next;
-	  css_print_conn_entry_info (conn);
-	}
+      for (conn = css_Active_conn_anchor, i = 0; conn != NULL; conn = next, i++)
+        {
+          next = conn->next;
+          css_print_conn_entry_info (conn);
+        }
 
       assert (i == css_Num_active_conn);
 
@@ -716,8 +696,7 @@ css_print_conn_list (void)
  */
 int
 css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
-		       const PRM_NODE_INFO * node_info, int connect_type,
-		       const char *packed_name, int packed_name_len)
+                       const PRM_NODE_INFO * node_info, int connect_type, const char *packed_name, int packed_name_len)
 {
   SOCKET fd;
   int css_error = NO_ERRORS;
@@ -728,8 +707,7 @@ css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
     {
       char hostname[256];
       prm_node_info_to_str (hostname, sizeof (hostname), node_info);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1, hostname);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_TCP_CANNOT_CONNECT_TO_MASTER, 1, hostname);
       css_error = REQUEST_REFUSED;
     }
   else
@@ -739,10 +717,9 @@ css_common_connect_sr (CSS_CONN_ENTRY * conn, unsigned short *rid,
       css_error = css_send_magic (conn);
 
       if (css_error == NO_ERRORS)
-	{
-	  css_error = css_send_command_packet (conn, connect_type, rid, 1,
-					       packed_name, packed_name_len);
-	}
+        {
+          css_error = css_send_command_packet (conn, connect_type, rid, 1, packed_name, packed_name_len);
+        }
     }
 
   return css_error;
@@ -761,21 +738,20 @@ css_find_conn_by_tran_index (int tran_index)
 
   if (css_Active_conn_anchor != NULL)
     {
-      if (csect_enter_as_reader (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) !=
-	  NO_ERROR)
-	{
-	  assert (false);
-	  return NULL;
-	}
+      if (csect_enter_as_reader (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) != NO_ERROR)
+        {
+          assert (false);
+          return NULL;
+        }
 
       for (conn = css_Active_conn_anchor; conn != NULL; conn = next)
-	{
-	  next = conn->next;
-	  if (conn->tran_index == tran_index)
-	    {
-	      break;
-	    }
-	}
+        {
+          next = conn->next;
+          if (conn->tran_index == tran_index)
+            {
+              break;
+            }
+        }
 
       csect_exit (CSECT_CSS_ACTIVE_CONN);
     }
@@ -790,8 +766,7 @@ css_find_conn_by_tran_index (int tran_index)
  * count (out)	      : number of session ids
  */
 int
-css_get_session_ids_for_active_connections (SESSION_ID ** session_ids,
-					    int *count)
+css_get_session_ids_for_active_connections (SESSION_ID ** session_ids, int *count)
 {
   CSS_CONN_ENTRY *conn = NULL, *next = NULL;
   SESSION_ID *sessions_p = NULL;
@@ -811,8 +786,7 @@ css_get_session_ids_for_active_connections (SESSION_ID ** session_ids,
       return NO_ERROR;
     }
 
-  if (csect_enter_as_reader (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter_as_reader (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) != NO_ERROR)
     {
       assert (false);
       error = ER_FAILED;
@@ -820,13 +794,11 @@ css_get_session_ids_for_active_connections (SESSION_ID ** session_ids,
     }
 
   *count = css_Num_active_conn;
-  sessions_p =
-    (SESSION_ID *) malloc (css_Num_active_conn * sizeof (SESSION_ID));
+  sessions_p = (SESSION_ID *) malloc (css_Num_active_conn * sizeof (SESSION_ID));
 
   if (sessions_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      css_Num_active_conn * sizeof (SESSION_ID));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, css_Num_active_conn * sizeof (SESSION_ID));
       error = ER_FAILED;
       csect_exit (CSECT_CSS_ACTIVE_CONN);
       goto error_return;
@@ -873,22 +845,22 @@ css_shutdown_conn_by_tran_index (int tran_index)
   if (css_Active_conn_anchor != NULL)
     {
       if (csect_enter (NULL, CSECT_CSS_ACTIVE_CONN, INF_WAIT) != NO_ERROR)
-	{
-	  assert (false);
-	  return;
-	}
+        {
+          assert (false);
+          return;
+        }
 
       for (conn = css_Active_conn_anchor; conn != NULL; conn = conn->next)
-	{
-	  if (conn->tran_index == tran_index)
-	    {
-	      if (conn->status == CONN_OPEN)
-		{
-		  conn->status = CONN_CLOSING;
-		}
-	      break;
-	    }
-	}
+        {
+          if (conn->tran_index == tran_index)
+            {
+              if (conn->status == CONN_OPEN)
+                {
+                  conn->status = CONN_CLOSING;
+                }
+              break;
+            }
+        }
 
       csect_exit (CSECT_CSS_ACTIVE_CONN);
     }
@@ -970,8 +942,7 @@ css_make_eid (unsigned short entry_id, unsigned short rid)
  *   program_name(in):
  */
 void
-css_set_user_access_status (const char *db_user, const char *host,
-			    const char *program_name)
+css_set_user_access_status (const char *db_user, const char *host, const char *program_name)
 {
   LAST_ACCESS_STATUS *access = NULL;
 
@@ -981,24 +952,23 @@ css_set_user_access_status (const char *db_user, const char *host,
 
   csect_enter (NULL, CSECT_ACCESS_STATUS, INF_WAIT);
 
-  for (access = css_Access_status_anchor; access != NULL;
-       access = access->next)
+  for (access = css_Access_status_anchor; access != NULL; access = access->next)
     {
       if (strcmp (access->db_user, db_user) == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
     }
 
   if (access == NULL)
     {
       access = (LAST_ACCESS_STATUS *) malloc (sizeof (LAST_ACCESS_STATUS));
       if (access == NULL)
-	{
-	  /* if memory allocation fail, just ignore and return */
-	  csect_exit (CSECT_ACCESS_STATUS);
-	  return;
-	}
+        {
+          /* if memory allocation fail, just ignore and return */
+          csect_exit (CSECT_ACCESS_STATUS);
+          return;
+        }
       css_Num_access_user++;
 
       memset (access, 0, sizeof (LAST_ACCESS_STATUS));
@@ -1013,8 +983,7 @@ css_set_user_access_status (const char *db_user, const char *host,
 
   access->time = time (NULL);
   strncpy (access->host, host, sizeof (access->host) - 1);
-  strncpy (access->program_name, program_name,
-	   sizeof (access->program_name) - 1);
+  strncpy (access->program_name, program_name, sizeof (access->program_name) - 1);
 
   return;
 }
@@ -1027,16 +996,14 @@ css_set_user_access_status (const char *db_user, const char *host,
  *   access_status_array(out):
  */
 void
-css_get_user_access_status (int num_user,
-			    LAST_ACCESS_STATUS ** access_status_array)
+css_get_user_access_status (int num_user, LAST_ACCESS_STATUS ** access_status_array)
 {
   int i = 0;
   LAST_ACCESS_STATUS *access = NULL;
 
   csect_enter_as_reader (NULL, CSECT_ACCESS_STATUS, INF_WAIT);
 
-  for (access = css_Access_status_anchor; (access != NULL && i < num_user);
-       access = access->next, i++)
+  for (access = css_Access_status_anchor; (access != NULL && i < num_user); access = access->next, i++)
     {
       access_status_array[i] = access;
     }
@@ -1075,8 +1042,7 @@ css_free_user_access_status (void)
 
 int
 css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
-				  CSS_CONN_ENTRY * conn, int rid,
-				  int timeout, int num_buffers, ...)
+                                  CSS_CONN_ENTRY * conn, int rid, int timeout, int num_buffers, ...)
 {
   CSS_NET_PACKET *tmp_recv_packet = NULL;
   int css_error;
@@ -1089,8 +1055,7 @@ css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
 
   va_start (args, num_buffers);
 
-  css_error = css_net_packet_recv_v (&tmp_recv_packet, conn,
-				     timeout, num_buffers, args);
+  css_error = css_net_packet_recv_v (&tmp_recv_packet, conn, timeout, num_buffers, args);
 
   va_end (args);
 
@@ -1100,10 +1065,9 @@ css_recv_data_packet_from_client (CSS_NET_PACKET ** recv_packet,
     }
 
   if (tmp_recv_packet->header.request_id != rid ||
-      (tmp_recv_packet->header.packet_type != DATA_TYPE &&
-       tmp_recv_packet->header.packet_type != ERROR_TYPE))
+      (tmp_recv_packet->header.packet_type != DATA_TYPE && tmp_recv_packet->header.packet_type != ERROR_TYPE))
     {
-      assert (false);		/* TODO: NEED TEST */
+      assert (false);           /* TODO: NEED TEST */
       css_net_packet_free (tmp_recv_packet);
       return WRONG_PACKET_TYPE;
     }
@@ -1131,12 +1095,10 @@ css_find_dupliated_conn (int conn_idx)
   for (i = 0; i < css_Num_max_conn; i++)
     {
       conn = &css_Conn_array[i];
-      if (i != conn_idx
-	  && !IS_INVALID_SOCKET (conn->fd) && conn->status == CONN_OPEN
-	  && conn->tran_index == tran_index)
-	{
-	  return i;
-	}
+      if (i != conn_idx && !IS_INVALID_SOCKET (conn->fd) && conn->status == CONN_OPEN && conn->tran_index == tran_index)
+        {
+          return i;
+        }
     }
 
   return -1;

@@ -87,27 +87,23 @@ static const int LOCATOR_GUESS_NUM_NESTED_REFERENCES = 100;
 #define MAX_CLASSNAME_CACHE_ENTRIES     ONE_K
 #define CLASSNAME_CACHE_SIZE            ONE_K
 
-extern int catcls_insert_catalog_classes (THREAD_ENTRY * thread_p,
-					  RECDES * record);
-extern int catcls_delete_catalog_classes (THREAD_ENTRY * thread_p,
-					  const char *name, OID * class_oid);
-extern int catcls_update_catalog_classes (THREAD_ENTRY * thread_p,
-					  const char *name, RECDES * record);
+extern int catcls_insert_catalog_classes (THREAD_ENTRY * thread_p, RECDES * record);
+extern int catcls_delete_catalog_classes (THREAD_ENTRY * thread_p, const char *name, OID * class_oid);
+extern int catcls_update_catalog_classes (THREAD_ENTRY * thread_p, const char *name, RECDES * record);
 extern int catcls_remove_entry (THREAD_ENTRY * thread_p, OID * class_oid);
 
 typedef struct locator_tmp_classname_entry LOCATOR_TMP_CLASSNAME_ENTRY;
 struct locator_tmp_classname_entry
 {
-  char *name;			/* Name of the class */
-  int tran_index;		/* Transaction of entry */
-  LC_FIND_CLASSNAME action;	/* The transient operation, delete or reserve
-				 * name
-				 */
-  OID oid;			/* The class identifier of classname */
+  char *name;                   /* Name of the class */
+  int tran_index;               /* Transaction of entry */
+  LC_FIND_CLASSNAME action;     /* The transient operation, delete or reserve
+                                 * name
+                                 */
+  OID oid;                      /* The class identifier of classname */
 };
 
-typedef struct locator_tmp_desired_classname_entries
-  LOCATOR_TMP_DESIRED_CLASSNAME_ENTRIES;
+typedef struct locator_tmp_desired_classname_entries LOCATOR_TMP_DESIRED_CLASSNAME_ENTRIES;
 struct locator_tmp_desired_classname_entries
 {
   int tran_index;
@@ -116,33 +112,33 @@ struct locator_tmp_desired_classname_entries
 
 typedef struct locator_return_nxobj LOCATOR_RETURN_NXOBJ;
 struct locator_return_nxobj
-{				/* Location of next object to return in
-				 * communication (fetch) area
-				 */
-  LC_COPYAREA *comm_area;	/* Communication area where objects are
-				 * returned and described
-				 */
-  LC_COPYAREA_MANYOBJS *mobjs;	/* Location in the communication area
-				 * where all objects to be returned are
-				 * described.
-				 */
-  LC_COPYAREA_ONEOBJ *obj;	/* Location in the communication area
-				 * where the next object to return is
-				 * described.
-				 */
-  HEAP_SCANCACHE *ptr_scancache;	/* Scan cache used for fetching
-					 * purposes
-					 */
-  HEAP_SCANCACHE area_scancache;	/* Scan cache used for fetching
-					 * purposes
-					 */
-  RECDES recdes;		/* Location in the communication area
-				 * where the content of the next object
-				 * to return is placed.
-				 */
-  int area_offset;		/* Relative offset to recdes->data in the
-				 * communication area
-				 */
+{                               /* Location of next object to return in
+                                 * communication (fetch) area
+                                 */
+  LC_COPYAREA *comm_area;       /* Communication area where objects are
+                                 * returned and described
+                                 */
+  LC_COPYAREA_MANYOBJS *mobjs;  /* Location in the communication area
+                                 * where all objects to be returned are
+                                 * described.
+                                 */
+  LC_COPYAREA_ONEOBJ *obj;      /* Location in the communication area
+                                 * where the next object to return is
+                                 * described.
+                                 */
+  HEAP_SCANCACHE *ptr_scancache;        /* Scan cache used for fetching
+                                         * purposes
+                                         */
+  HEAP_SCANCACHE area_scancache;        /* Scan cache used for fetching
+                                         * purposes
+                                         */
+  RECDES recdes;                /* Location in the communication area
+                                 * where the content of the next object
+                                 * to return is placed.
+                                 */
+  int area_offset;              /* Relative offset to recdes->data in the
+                                 * communication area
+                                 */
 };
 
 static EHID locator_Classnames_table;
@@ -151,76 +147,53 @@ static MHT_TABLE *locator_Mht_classnames = NULL;
 
 static const HFID NULL_HFID = NULL_HFID_INITIALIZER;
 
-static void locator_permoid_class_name (THREAD_ENTRY * thread_p,
-					const char *classname,
-					OID * class_oid);
-static int locator_force_drop_class_name_entry (const void *name, void *ent,
-						void *rm);
-static int locator_drop_class_name_entry (const void *name, void *ent,
-					  void *rm);
+static void locator_permoid_class_name (THREAD_ENTRY * thread_p, const char *classname, OID * class_oid);
+static int locator_force_drop_class_name_entry (const void *name, void *ent, void *rm);
+static int locator_drop_class_name_entry (const void *name, void *ent, void *rm);
 static int locator_decache_class_name_entries (void);
-static int locator_decache_class_name_entry (const void *name, void *ent,
-					     void *dc);
-static int locator_print_class_name (FILE * outfp, const void *key,
-				     void *ent, void *ignore);
+static int locator_decache_class_name_entry (const void *name, void *ent, void *dc);
+static int locator_print_class_name (FILE * outfp, const void *key, void *ent, void *ignore);
 #if defined (ENABLE_UNUSED_FUNCTION)
-static int locator_check_class_on_heap (THREAD_ENTRY * thread_p,
-					void *classname, void *classoid,
-					void *xvalid);
+static int locator_check_class_on_heap (THREAD_ENTRY * thread_p, void *classname, void *classoid, void *xvalid);
 #endif
 static SCAN_CODE locator_return_object (THREAD_ENTRY * thread_p,
-					LOCATOR_RETURN_NXOBJ * assign,
-					OID * class_oid, OID * oid);
-static int locator_find_lockset_missing_class_oids (THREAD_ENTRY * thread_p,
-						    LC_LOCKSET * lockset);
+                                        LOCATOR_RETURN_NXOBJ * assign, OID * class_oid, OID * oid);
+static int locator_find_lockset_missing_class_oids (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset);
 static SCAN_CODE locator_return_object_assign (THREAD_ENTRY * thread_p,
-					       LOCATOR_RETURN_NXOBJ * assign,
-					       OID * class_oid, OID * oid,
-					       SCAN_CODE scan);
+                                               LOCATOR_RETURN_NXOBJ * assign,
+                                               OID * class_oid, OID * oid, SCAN_CODE scan);
 #if defined(ENABLE_UNUSED_FUNCTION)
 static DISK_ISVALID locator_check_class (THREAD_ENTRY * thread_p,
-					 OID * class_oid, RECDES * peek,
-					 HFID * class_hfid, bool repair);
+                                         OID * class_oid, RECDES * peek, HFID * class_hfid, bool repair);
 #endif
 static int locator_repl_prepare_force (THREAD_ENTRY * thread_p,
-				       int *shard_group_id,
-				       LC_COPYAREA_ONEOBJ * obj,
-				       RECDES * old_recdes, RECDES * recdes,
-				       DB_IDXKEY * key,
-				       HEAP_SCANCACHE * force_scancache);
+                                       int *shard_group_id,
+                                       LC_COPYAREA_ONEOBJ * obj,
+                                       RECDES * old_recdes, RECDES * recdes,
+                                       DB_IDXKEY * key, HEAP_SCANCACHE * force_scancache);
 static int locator_repl_get_key_value (DB_IDXKEY * key,
-				       const char **class_name,
-				       LC_COPYAREA * force_area,
-				       LC_COPYAREA_ONEOBJ * obj);
+                                       const char **class_name, LC_COPYAREA * force_area, LC_COPYAREA_ONEOBJ * obj);
 static void locator_repl_add_error_to_copyarea (LC_COPYAREA ** copy_area,
-						RECDES * recdes,
-						LC_COPYAREA_ONEOBJ * obj,
-						DB_IDXKEY * key, int err_code,
-						const char *err_msg);
+                                                RECDES * recdes,
+                                                LC_COPYAREA_ONEOBJ * obj,
+                                                DB_IDXKEY * key, int err_code, const char *err_msg);
 static int locator_insert_force (THREAD_ENTRY * thread_p, HFID * hfid,
-				 OID * class_oid, OID * oid, RECDES * recdes,
-				 HEAP_SCANCACHE * scan_cache,
-				 int *force_count);
+                                 OID * class_oid, OID * oid, RECDES * recdes,
+                                 HEAP_SCANCACHE * scan_cache, int *force_count);
 static int locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid,
-				 OID * oid, HEAP_SCANCACHE * scan_cache,
-				 int *force_count);
+                                 OID * oid, HEAP_SCANCACHE * scan_cache, int *force_count);
 static int locator_update_force (THREAD_ENTRY * thread_p, HFID * hfid,
-				 OID * class_oid, OID * oid,
-				 RECDES * ikdrecdes, RECDES * recdes,
-				 ATTR_ID * att_id, int n_att_id,
-				 HEAP_SCANCACHE * scan_cache,
-				 int *force_count);
+                                 OID * class_oid, OID * oid,
+                                 RECDES * ikdrecdes, RECDES * recdes,
+                                 ATTR_ID * att_id, int n_att_id, HEAP_SCANCACHE * scan_cache, int *force_count);
 
 #if defined(ENABLE_UNUSED_FUNCTION)
-static void locator_increase_catalog_count (THREAD_ENTRY * thread_p,
-					    OID * cls_oid);
-static void locator_decrease_catalog_count (THREAD_ENTRY * thread_p,
-					    OID * cls_oid);
+static void locator_increase_catalog_count (THREAD_ENTRY * thread_p, OID * cls_oid);
+static void locator_decrease_catalog_count (THREAD_ENTRY * thread_p, OID * cls_oid);
 #endif
 
 static LC_FIND_CLASSNAME xlocator_reserve_class_name (THREAD_ENTRY * thread_p,
-						      const char *classname,
-						      const OID * class_oid);
+                                                      const char *classname, const OID * class_oid);
 
 /*
  * locator_initialize () - Initialize the locator on the server
@@ -234,13 +207,11 @@ static LC_FIND_CLASSNAME xlocator_reserve_class_name (THREAD_ENTRY * thread_p,
  *              initialized.
  */
 EHID *
-locator_initialize (UNUSED_ARG THREAD_ENTRY * thread_p,
-		    EHID * classname_table)
+locator_initialize (UNUSED_ARG THREAD_ENTRY * thread_p, EHID * classname_table)
 {
   assert (classname_table != NULL);
 
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       /* Some kind of failure. We must notify the error to the caller. */
       return NULL;
@@ -255,9 +226,7 @@ locator_initialize (UNUSED_ARG THREAD_ENTRY * thread_p,
   else
     {
       locator_Mht_classnames = mht_create ("Memory hash Classname to OID",
-					   CLASSNAME_CACHE_SIZE,
-					   mht_1strhash,
-					   mht_compare_strings_are_equal);
+                                           CLASSNAME_CACHE_SIZE, mht_1strhash, mht_compare_strings_are_equal);
     }
 
   csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
@@ -283,8 +252,7 @@ locator_initialize (UNUSED_ARG THREAD_ENTRY * thread_p,
 void
 locator_finalize (UNUSED_ARG THREAD_ENTRY * thread_p)
 {
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       /* Some kind of failure. We will leak resources. */
       return;
@@ -302,8 +270,7 @@ locator_finalize (UNUSED_ARG THREAD_ENTRY * thread_p)
       return;
     }
 
-  (void) mht_map (locator_Mht_classnames,
-		  locator_force_drop_class_name_entry, NULL);
+  (void) mht_map (locator_Mht_classnames, locator_force_drop_class_name_entry, NULL);
   mht_destroy (locator_Mht_classnames);
   locator_Mht_classnames = NULL;
 
@@ -326,7 +293,7 @@ locator_finalize (UNUSED_ARG THREAD_ENTRY * thread_p)
  */
 LC_FIND_CLASSNAME
 xlocator_reserve_class_names (THREAD_ENTRY * thread_p, const int num_classes,
-			      const char **classnames, const OID * class_oids)
+                              const char **classnames, const OID * class_oids)
 {
   int i = 0;
   LC_FIND_CLASSNAME result = LC_CLASSNAME_RESERVED;
@@ -337,15 +304,14 @@ xlocator_reserve_class_names (THREAD_ENTRY * thread_p, const int num_classes,
     {
       assert (classnames[i] != NULL);
 
-      result = xlocator_reserve_class_name (thread_p, classnames[i],
-					    &class_oids[i]);
+      result = xlocator_reserve_class_name (thread_p, classnames[i], &class_oids[i]);
       if (result != LC_CLASSNAME_RESERVED)
-	{
-	  /* We could potentially revert the reservation but the transient
-	     entries should be properly cleaned up by the rollback so we don't
-	     really need to do this here. */
-	  break;
-	}
+        {
+          /* We could potentially revert the reservation but the transient
+             entries should be properly cleaned up by the rollback so we don't
+             really need to do this here. */
+          break;
+        }
     }
 
   return result;
@@ -379,8 +345,7 @@ xlocator_reserve_class_names (THREAD_ENTRY * thread_p, const int num_classes,
  *              the page buffer pool/database.
  */
 static LC_FIND_CLASSNAME
-xlocator_reserve_class_name (THREAD_ENTRY * thread_p, const char *classname,
-			     const OID * class_oid)
+xlocator_reserve_class_name (THREAD_ENTRY * thread_p, const char *classname, const OID * class_oid)
 {
   EH_SEARCH search;
   OID oid;
@@ -398,8 +363,7 @@ start:
 #endif
   reserve = LC_CLASSNAME_RESERVED;
 
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       /*
        * Some kind of failure. We must notify the error to the caller.
@@ -408,8 +372,7 @@ start:
     }
 
   /* Is there any transient entries on the classname hash table ? */
-  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						   classname);
+  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname);
   if (entry != NULL && entry->action != LC_CLASSNAME_EXIST)
     {
       /*
@@ -418,31 +381,30 @@ start:
        * retry the operation once the lock is granted.
        */
       if (entry->tran_index == logtb_get_current_tran_index (thread_p))
-	{
-	  /*
-	   * The name can be reserved only if it has been deleted or
-	   * previously reserved. We allow double reservations in order for
-	   * multiple table renaming to properly reserve all the names
-	   * involved.
-	   */
-	  if (entry->action == LC_CLASSNAME_DELETED
-	      || entry->action == LC_CLASSNAME_DELETED_RENAME
-	      || entry->action == LC_CLASSNAME_RESERVED)
-	    {
-	      entry->action = LC_CLASSNAME_RESERVED;
-	      COPY_OID (&entry->oid, class_oid);
-	    }
-	  else
-	    {
-	      reserve = LC_CLASSNAME_EXIST;
-	    }
-	}
+        {
+          /*
+           * The name can be reserved only if it has been deleted or
+           * previously reserved. We allow double reservations in order for
+           * multiple table renaming to properly reserve all the names
+           * involved.
+           */
+          if (entry->action == LC_CLASSNAME_DELETED
+              || entry->action == LC_CLASSNAME_DELETED_RENAME || entry->action == LC_CLASSNAME_RESERVED)
+            {
+              entry->action = LC_CLASSNAME_RESERVED;
+              COPY_OID (&entry->oid, class_oid);
+            }
+          else
+            {
+              reserve = LC_CLASSNAME_EXIST;
+            }
+        }
       else
-	{
-	  assert (false);	/* is impossbile */
+        {
+          assert (false);       /* is impossbile */
 
-	  reserve = LC_CLASSNAME_ERROR;
-	}
+          reserve = LC_CLASSNAME_ERROR;
+        }
     }
   else if (entry != NULL)
     {
@@ -472,67 +434,60 @@ start:
        */
 
       csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-      search = ehash_search (thread_p, locator_Eht_classnames,
-			     classname, &oid);
+      search = ehash_search (thread_p, locator_Eht_classnames, classname, &oid);
       if (search == EH_ERROR_OCCURRED)
-	{
-	  /*
-	   * Some kind of failure. We must notify the error to the caller.
-	   */
-	  return LC_CLASSNAME_ERROR;
-	}
-      if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT)
-	  != NO_ERROR)
-	{
-	  return LC_CLASSNAME_ERROR;
-	}
+        {
+          /*
+           * Some kind of failure. We must notify the error to the caller.
+           */
+          return LC_CLASSNAME_ERROR;
+        }
+      if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
+        {
+          return LC_CLASSNAME_ERROR;
+        }
 
       /* Double check */
-      entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						       classname);
+      entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname);
       if (entry != NULL)
-	{
-	  reserve = LC_CLASSNAME_EXIST;
-	}
+        {
+          reserve = LC_CLASSNAME_EXIST;
+        }
       else
-	{
-	  if (search == EH_KEY_NOTFOUND)
-	    {
-	      entry =
-		(LOCATOR_TMP_CLASSNAME_ENTRY *) malloc (sizeof (*entry));
+        {
+          if (search == EH_KEY_NOTFOUND)
+            {
+              entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) malloc (sizeof (*entry));
 
-	      if (entry == NULL)
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (*entry));
-		  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-		  return LC_CLASSNAME_ERROR;
-		}
+              if (entry == NULL)
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (*entry));
+                  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                  return LC_CLASSNAME_ERROR;
+                }
 
-	      entry->name = strdup (classname);
-	      if (entry->name == NULL)
-		{
-		  free_and_init (entry);
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_OUT_OF_VIRTUAL_MEMORY, 1,
-			  strlen (classname) + 1);
-		  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-		  return LC_CLASSNAME_ERROR;
-		}
+              entry->name = strdup (classname);
+              if (entry->name == NULL)
+                {
+                  free_and_init (entry);
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, strlen (classname) + 1);
+                  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                  return LC_CLASSNAME_ERROR;
+                }
 
-	      entry->tran_index = logtb_get_current_tran_index (thread_p);
-	      entry->action = LC_CLASSNAME_RESERVED;
-	      COPY_OID (&entry->oid, class_oid);
+              entry->tran_index = logtb_get_current_tran_index (thread_p);
+              entry->action = LC_CLASSNAME_RESERVED;
+              COPY_OID (&entry->oid, class_oid);
 
-	      log_increase_num_transient_classnames (entry->tran_index);
-	      (void) mht_put (locator_Mht_classnames, entry->name, entry);
-	    }
-	  else
-	    {
-	      /* We can cache this class but don't cache it. */
-	      reserve = LC_CLASSNAME_EXIST;
-	    }
-	}
+              log_increase_num_transient_classnames (entry->tran_index);
+              (void) mht_put (locator_Mht_classnames, entry->name, entry);
+            }
+          else
+            {
+              /* We can cache this class but don't cache it. */
+              reserve = LC_CLASSNAME_EXIST;
+            }
+        }
     }
 
   /*
@@ -548,28 +503,26 @@ start:
   if (reserve == LC_CLASSNAME_RESERVED && entry != NULL)
     {
       DB_MAKE_OID (&lock_val, class_oid);
-      if (lock_object (thread_p, &lock_val,
-		       X_LOCK, LK_UNCOND_LOCK) != LK_GRANTED)
-	{
-	  assert (false);	/* is impossible */
+      if (lock_object (thread_p, &lock_val, X_LOCK, LK_UNCOND_LOCK) != LK_GRANTED)
+        {
+          assert (false);       /* is impossible */
 
-	  /*
-	   * Something wrong. Remove the entry from hash table.
-	   */
-	  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE,
-			   INF_WAIT) != NO_ERROR)
-	    {
-	      return LC_CLASSNAME_ERROR;
-	    }
+          /*
+           * Something wrong. Remove the entry from hash table.
+           */
+          if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
+            {
+              return LC_CLASSNAME_ERROR;
+            }
 
-	  log_decrease_num_transient_classnames (entry->tran_index);
-	  (void) mht_rem (locator_Mht_classnames, entry->name, NULL, NULL);
-	  free_and_init (entry->name);
-	  free_and_init (entry);
+          log_decrease_num_transient_classnames (entry->tran_index);
+          (void) mht_rem (locator_Mht_classnames, entry->name, NULL, NULL);
+          free_and_init (entry->name);
+          free_and_init (entry);
 
-	  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-	  reserve = LC_CLASSNAME_ERROR;
-	}
+          csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+          reserve = LC_CLASSNAME_ERROR;
+        }
     }
 
   return reserve;
@@ -618,8 +571,7 @@ xlocator_delete_class_name (THREAD_ENTRY * thread_p, const char *classname)
 start:
   classname_delete = LC_CLASSNAME_DELETED;
 
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       /*
        * Some kind of failure. We must notify the error to the caller.
@@ -627,8 +579,7 @@ start:
       return LC_CLASSNAME_ERROR;
     }
 
-  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						   classname);
+  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname);
   if (entry != NULL && entry->action != LC_CLASSNAME_EXIST)
     {
       /*
@@ -637,63 +588,61 @@ start:
        * retry the operation once the lock is granted.
        */
       if (entry->tran_index == logtb_get_current_tran_index (thread_p))
-	{
-#if 1				/* TODO - */
-	  assert (entry->action == LC_CLASSNAME_DELETED);
+        {
+#if 1                           /* TODO - */
+          assert (entry->action == LC_CLASSNAME_DELETED);
 #endif
-	  /*
-	   * The name can be deleted only if it has been reserved by current
-	   * transaction
-	   */
-	  if (entry->action == LC_CLASSNAME_DELETED
-	      || entry->action == LC_CLASSNAME_DELETED_RENAME)
-	    {
-	      classname_delete = LC_CLASSNAME_ERROR;
-	      goto error;
-	    }
+          /*
+           * The name can be deleted only if it has been reserved by current
+           * transaction
+           */
+          if (entry->action == LC_CLASSNAME_DELETED || entry->action == LC_CLASSNAME_DELETED_RENAME)
+            {
+              classname_delete = LC_CLASSNAME_ERROR;
+              goto error;
+            }
 
-#if 1				/* TODO - */
-	  assert (false);
-	  classname_delete = LC_CLASSNAME_ERROR;
-	  goto error;
+#if 1                           /* TODO - */
+          assert (false);
+          classname_delete = LC_CLASSNAME_ERROR;
+          goto error;
 #endif
-	}
+        }
       else
-	{
-	  assert (false);	/* is impossible */
+        {
+          assert (false);       /* is impossible */
 
-	  /*
-	   * Do not know the fate of this entry until the transaction holding
-	   * this entry either commits or aborts. Get the lock and try again.
-	   */
-	  COPY_OID (&tmp_classoid, &entry->oid);
+          /*
+           * Do not know the fate of this entry until the transaction holding
+           * this entry either commits or aborts. Get the lock and try again.
+           */
+          COPY_OID (&tmp_classoid, &entry->oid);
 
-	  /*
-	   * Exit from critical section since we are going to be suspended and
-	   * then retry again.
-	   */
+          /*
+           * Exit from critical section since we are going to be suspended and
+           * then retry again.
+           */
 
-	  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+          csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
 
-	  DB_MAKE_OID (&lock_val, &tmp_classoid);
-	  if (lock_object (thread_p, &lock_val, X_LOCK,
-			   LK_UNCOND_LOCK) != LK_GRANTED)
-	    {
-	      /*
-	       * Unable to acquired lock
-	       */
-	      return LC_CLASSNAME_ERROR;
-	    }
-	  else
-	    {
-	      /*
-	       * Try again
-	       * Remove the lock.. since the above was a dirty read
-	       */
-	      lock_unlock_object (thread_p, &lock_val, LK_UNLOCK_TYPE_NORMAL);
-	      goto start;
-	    }
-	}
+          DB_MAKE_OID (&lock_val, &tmp_classoid);
+          if (lock_object (thread_p, &lock_val, X_LOCK, LK_UNCOND_LOCK) != LK_GRANTED)
+            {
+              /*
+               * Unable to acquired lock
+               */
+              return LC_CLASSNAME_ERROR;
+            }
+          else
+            {
+              /*
+               * Try again
+               * Remove the lock.. since the above was a dirty read
+               */
+              lock_unlock_object (thread_p, &lock_val, LK_UNLOCK_TYPE_NORMAL);
+              goto start;
+            }
+        }
     }
   else if (entry != NULL)
     {
@@ -733,67 +682,60 @@ start:
 
       csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
 
-      search = ehash_search (thread_p, locator_Eht_classnames,
-			     classname, &class_oid);
+      search = ehash_search (thread_p, locator_Eht_classnames, classname, &class_oid);
 
       if (search == EH_ERROR_OCCURRED)
-	{
-	  /*
-	   * Some kind of failure. We must notify the error to the caller.
-	   */
-	  return LC_CLASSNAME_ERROR;
-	}
-      if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT)
-	  != NO_ERROR)
-	{
-	  return LC_CLASSNAME_ERROR;
-	}
+        {
+          /*
+           * Some kind of failure. We must notify the error to the caller.
+           */
+          return LC_CLASSNAME_ERROR;
+        }
+      if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
+        {
+          return LC_CLASSNAME_ERROR;
+        }
 
       /* Double check */
-      entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						       classname);
+      entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname);
       if (entry != NULL)
-	{
-	  if (entry->action != LC_CLASSNAME_EXIST)
-	    {
-	      /* Transient classname by other transaction exists. */
-	      classname_delete = LC_CLASSNAME_ERROR;
-	      goto error;
-	    }
+        {
+          if (entry->action != LC_CLASSNAME_EXIST)
+            {
+              /* Transient classname by other transaction exists. */
+              classname_delete = LC_CLASSNAME_ERROR;
+              goto error;
+            }
 
-	  entry->tran_index = logtb_get_current_tran_index (thread_p);
-	  entry->action = LC_CLASSNAME_DELETED;
-	  COPY_OID (&entry->oid, &class_oid);
-	  log_increase_num_transient_classnames (entry->tran_index);
-	}
+          entry->tran_index = logtb_get_current_tran_index (thread_p);
+          entry->action = LC_CLASSNAME_DELETED;
+          COPY_OID (&entry->oid, &class_oid);
+          log_increase_num_transient_classnames (entry->tran_index);
+        }
       else
-	{
-	  entry =
-	    (LOCATOR_TMP_CLASSNAME_ENTRY *)
-	    malloc (sizeof (LOCATOR_TMP_CLASSNAME_ENTRY));
-	  if (entry == NULL)
-	    {
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-		      sizeof (LOCATOR_TMP_CLASSNAME_ENTRY));
-	      classname_delete = LC_CLASSNAME_ERROR;
-	      goto error;
-	    }
-	  entry->name = strdup (classname);
-	  if (entry->name == NULL)
-	    {
-	      free_and_init (entry);
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_OUT_OF_VIRTUAL_MEMORY, 1, strlen (classname) + 1);
-	      classname_delete = LC_CLASSNAME_ERROR;
-	      goto error;
-	    }
-	  entry->tran_index = logtb_get_current_tran_index (thread_p);
-	  entry->action = LC_CLASSNAME_DELETED;
-	  COPY_OID (&entry->oid, &class_oid);
-	  log_increase_num_transient_classnames (entry->tran_index);
-	  (void) mht_put (locator_Mht_classnames, entry->name, entry);
-	}
+        {
+          entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) malloc (sizeof (LOCATOR_TMP_CLASSNAME_ENTRY));
+          if (entry == NULL)
+            {
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (LOCATOR_TMP_CLASSNAME_ENTRY));
+              classname_delete = LC_CLASSNAME_ERROR;
+              goto error;
+            }
+          entry->name = strdup (classname);
+          if (entry->name == NULL)
+            {
+              free_and_init (entry);
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, strlen (classname) + 1);
+              classname_delete = LC_CLASSNAME_ERROR;
+              goto error;
+            }
+          entry->tran_index = logtb_get_current_tran_index (thread_p);
+          entry->action = LC_CLASSNAME_DELETED;
+          COPY_OID (&entry->oid, &class_oid);
+          log_increase_num_transient_classnames (entry->tran_index);
+          (void) mht_put (locator_Mht_classnames, entry->name, entry);
+        }
     }
 
 error:
@@ -824,8 +766,7 @@ error:
  * Note: Rename a class in transient form.
  */
 LC_FIND_CLASSNAME
-xlocator_rename_class_name (THREAD_ENTRY * thread_p, const char *oldname,
-			    const char *newname, const OID * class_oid)
+xlocator_rename_class_name (THREAD_ENTRY * thread_p, const char *oldname, const char *newname, const OID * class_oid)
 {
   LOCATOR_TMP_CLASSNAME_ENTRY *entry;
   LC_FIND_CLASSNAME renamed;
@@ -835,8 +776,7 @@ xlocator_rename_class_name (THREAD_ENTRY * thread_p, const char *oldname,
       return LC_CLASSNAME_ERROR;
     }
 
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       /*
        * Some kind of failure. We must notify the error to the caller.
@@ -845,34 +785,29 @@ xlocator_rename_class_name (THREAD_ENTRY * thread_p, const char *oldname,
     }
 
   renamed = xlocator_reserve_class_name (thread_p, newname, class_oid);
-  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						   newname);
+  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, newname);
   if (renamed == LC_CLASSNAME_RESERVED && entry != NULL)
     {
       entry->action = LC_CLASSNAME_RESERVED_RENAME;
       renamed = xlocator_delete_class_name (thread_p, oldname);
-      entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						       oldname);
+      entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, oldname);
       if (renamed == LC_CLASSNAME_DELETED && entry != NULL)
-	{
-	  entry->action = LC_CLASSNAME_DELETED_RENAME;
-	  renamed = LC_CLASSNAME_RESERVED_RENAME;
-	}
+        {
+          entry->action = LC_CLASSNAME_DELETED_RENAME;
+          renamed = LC_CLASSNAME_RESERVED_RENAME;
+        }
       else
-	{
-	  entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *)
-		   mht_get (locator_Mht_classnames, newname));
+        {
+          entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, newname));
 
-	  if (entry == NULL
-	      || csect_enter (thread_p, CSECT_CT_OID_TABLE,
-			      INF_WAIT) != NO_ERROR)
-	    {
-	      renamed = LC_CLASSNAME_ERROR;
-	      goto error;
-	    }
-	  (void) locator_drop_class_name_entry (newname, entry, NULL);
-	  csect_exit (CSECT_CT_OID_TABLE);
-	}
+          if (entry == NULL || csect_enter (thread_p, CSECT_CT_OID_TABLE, INF_WAIT) != NO_ERROR)
+            {
+              renamed = LC_CLASSNAME_ERROR;
+              goto error;
+            }
+          (void) locator_drop_class_name_entry (newname, entry, NULL);
+          csect_exit (CSECT_CT_OID_TABLE);
+        }
     }
 
 error:
@@ -903,8 +838,7 @@ error:
  *              entry cannot be predicted.
  */
 LC_FIND_CLASSNAME
-xlocator_find_class_oid (THREAD_ENTRY * thread_p, const char *classname,
-			 OID * class_oid, LOCK lock)
+xlocator_find_class_oid (THREAD_ENTRY * thread_p, const char *classname, OID * class_oid, LOCK lock)
 {
   EH_SEARCH search;
   LOCATOR_TMP_CLASSNAME_ENTRY *entry;
@@ -918,14 +852,12 @@ xlocator_find_class_oid (THREAD_ENTRY * thread_p, const char *classname,
 start:
   find = LC_CLASSNAME_EXIST;
 
-  if (csect_enter_as_reader (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE,
-			     INF_WAIT) != NO_ERROR)
+  if (csect_enter_as_reader (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       return LC_CLASSNAME_ERROR;
     }
 
-  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						   classname);
+  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname);
 
   if (entry != NULL)
     {
@@ -936,60 +868,58 @@ start:
        */
       COPY_OID (class_oid, &entry->oid);
       if (entry->tran_index == logtb_get_current_tran_index (thread_p))
-	{
-	  if (entry->action == LC_CLASSNAME_DELETED
-	      || entry->action == LC_CLASSNAME_DELETED_RENAME)
-	    {
-	      OID_SET_NULL (class_oid);
-	      find = LC_CLASSNAME_DELETED;
-	    }
-	  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-	}
+        {
+          if (entry->action == LC_CLASSNAME_DELETED || entry->action == LC_CLASSNAME_DELETED_RENAME)
+            {
+              OID_SET_NULL (class_oid);
+              find = LC_CLASSNAME_DELETED;
+            }
+          csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+        }
       else if (entry->action == LC_CLASSNAME_EXIST)
-	{
-	  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-	}
+        {
+          csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+        }
       else
-	{
+        {
 #if 1
-	  assert (false);	/* is impossible */
+          assert (false);       /* is impossible */
 #endif
 
-	  /*
-	   * Do not know the fate of this entry until the transaction is
-	   * committed or aborted. Get the lock and try again.
-	   */
-	  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+          /*
+           * Do not know the fate of this entry until the transaction is
+           * committed or aborted. Get the lock and try again.
+           */
+          csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
 
-	  if (lock != NULL_LOCK)
-	    {
-	      tmp_lock = lock;
-	    }
-	  else
-	    {
-	      tmp_lock = S_LOCK;
-	    }
+          if (lock != NULL_LOCK)
+            {
+              tmp_lock = lock;
+            }
+          else
+            {
+              tmp_lock = S_LOCK;
+            }
 
-	  DB_MAKE_OID (&lock_val, class_oid);
-	  if (lock_object (thread_p, &lock_val, tmp_lock,
-			   LK_UNCOND_LOCK) != LK_GRANTED)
-	    {
-	      /*
-	       * Unable to acquired lock
-	       */
-	      OID_SET_NULL (class_oid);
-	      find = LC_CLASSNAME_ERROR;
-	    }
-	  else
-	    {
-	      /*
-	       * Try again
-	       * Remove the lock.. since the above was a dirty read
-	       */
-	      lock_unlock_object (thread_p, &lock_val, LK_UNLOCK_TYPE_NORMAL);
-	      goto start;
-	    }
-	}
+          DB_MAKE_OID (&lock_val, class_oid);
+          if (lock_object (thread_p, &lock_val, tmp_lock, LK_UNCOND_LOCK) != LK_GRANTED)
+            {
+              /*
+               * Unable to acquired lock
+               */
+              OID_SET_NULL (class_oid);
+              find = LC_CLASSNAME_ERROR;
+            }
+          else
+            {
+              /*
+               * Try again
+               * Remove the lock.. since the above was a dirty read
+               */
+              lock_unlock_object (thread_p, &lock_val, LK_UNLOCK_TYPE_NORMAL);
+              goto start;
+            }
+        }
     }
   else
     {
@@ -998,81 +928,71 @@ start:
        * table ?
        */
       csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-      search = ehash_search (thread_p, locator_Eht_classnames,
-			     classname, class_oid);
+      search = ehash_search (thread_p, locator_Eht_classnames, classname, class_oid);
       if (search != EH_KEY_FOUND)
-	{
-	  if (search == EH_KEY_NOTFOUND)
-	    {
-	      find = LC_CLASSNAME_DELETED;
-	    }
-	  else
-	    {
-	      find = LC_CLASSNAME_ERROR;
-	    }
-	}
+        {
+          if (search == EH_KEY_NOTFOUND)
+            {
+              find = LC_CLASSNAME_DELETED;
+            }
+          else
+            {
+              find = LC_CLASSNAME_ERROR;
+            }
+        }
       else
-	{
-	  if (csect_enter
-	      (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE,
-	       INF_WAIT) != NO_ERROR)
-	    {
-	      return LC_CLASSNAME_ERROR;
-	    }
-	  /* Double check */
-	  entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *)
-		   mht_get (locator_Mht_classnames, classname));
-	  if (entry == NULL)
-	    {
-	      if ((int) mht_count (locator_Mht_classnames) <
-		  MAX_CLASSNAME_CACHE_ENTRIES
-		  || locator_decache_class_name_entries () == NO_ERROR)
-		{
-		  entry =
-		    (LOCATOR_TMP_CLASSNAME_ENTRY *) malloc (sizeof (*entry));
-		  if (entry == NULL)
-		    {
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (*entry));
-		      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-		      return LC_CLASSNAME_ERROR;
+        {
+          if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
+            {
+              return LC_CLASSNAME_ERROR;
+            }
+          /* Double check */
+          entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname));
+          if (entry == NULL)
+            {
+              if ((int) mht_count (locator_Mht_classnames) <
+                  MAX_CLASSNAME_CACHE_ENTRIES || locator_decache_class_name_entries () == NO_ERROR)
+                {
+                  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) malloc (sizeof (*entry));
+                  if (entry == NULL)
+                    {
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (*entry));
+                      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                      return LC_CLASSNAME_ERROR;
 
-		    }
+                    }
 
-		  entry->name = strdup (classname);
-		  if (entry->name == NULL)
-		    {
-		      free_and_init (entry);
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-			      strlen (classname));
-		      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-		      return LC_CLASSNAME_ERROR;
-		    }
+                  entry->name = strdup (classname);
+                  if (entry->name == NULL)
+                    {
+                      free_and_init (entry);
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, strlen (classname));
+                      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                      return LC_CLASSNAME_ERROR;
+                    }
 
-		  entry->tran_index = NULL_TRAN_INDEX;
-		  entry->action = LC_CLASSNAME_EXIST;
-		  COPY_OID (&entry->oid, class_oid);
-		  (void) mht_put (locator_Mht_classnames, entry->name, entry);
-		}
-	    }
-	  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-	}
+                  entry->tran_index = NULL_TRAN_INDEX;
+                  entry->action = LC_CLASSNAME_EXIST;
+                  COPY_OID (&entry->oid, class_oid);
+                  (void) mht_put (locator_Mht_classnames, entry->name, entry);
+                }
+            }
+          csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+        }
     }
 
   if (lock != NULL_LOCK && find == LC_CLASSNAME_EXIST)
     {
       /* Now acquired the desired lock */
       DB_MAKE_OID (&lock_val, class_oid);
-      if (lock_object (thread_p, &lock_val,
-		       lock, LK_UNCOND_LOCK) != LK_GRANTED)
-	{
-	  /*
-	   * Unable to acquired lock
-	   */
-	  OID_SET_NULL (class_oid);
-	  find = LC_CLASSNAME_ERROR;
-	}
+      if (lock_object (thread_p, &lock_val, lock, LK_UNCOND_LOCK) != LK_GRANTED)
+        {
+          /*
+           * Unable to acquired lock
+           */
+          OID_SET_NULL (class_oid);
+          find = LC_CLASSNAME_ERROR;
+        }
     }
 
   return find;
@@ -1091,25 +1011,22 @@ start:
  *              current transaction.
  */
 static void
-locator_permoid_class_name (THREAD_ENTRY * thread_p, const char *classname,
-			    OID * class_oid)
+locator_permoid_class_name (THREAD_ENTRY * thread_p, const char *classname, OID * class_oid)
 {
   LOCATOR_TMP_CLASSNAME_ENTRY *entry;
 
   /* Is there any transient entries on the classname hash table ? */
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       return;
     }
 
-  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames,
-						   classname);
+  entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname);
 
   if (entry != NULL && entry->action != LC_CLASSNAME_EXIST
       && entry->tran_index == logtb_get_current_tran_index (thread_p))
     {
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
       assert (entry->action == LC_CLASSNAME_RESERVED);
 #endif
 
@@ -1138,9 +1055,7 @@ error:
  *              entries.
  */
 int
-locator_drop_transient_class_name_entries (UNUSED_ARG THREAD_ENTRY * thread_p,
-					   int tran_index,
-					   LOG_LSA * savep_lsa)
+locator_drop_transient_class_name_entries (UNUSED_ARG THREAD_ENTRY * thread_p, int tran_index, LOG_LSA * savep_lsa)
 {
   LOCATOR_TMP_DESIRED_CLASSNAME_ENTRIES rm;
   int error_code = NO_ERROR;
@@ -1148,16 +1063,15 @@ locator_drop_transient_class_name_entries (UNUSED_ARG THREAD_ENTRY * thread_p,
   if (tran_index != NULL_TRAN_INDEX)
     {
       if (log_get_num_transient_classnames (tran_index) <= 0)
-	{
-	  return error_code;
-	}
+        {
+          return error_code;
+        }
     }
 
   rm.tran_index = tran_index;
   rm.savep_lsa = savep_lsa;
 
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       /*
        * Some kind of failure. We must notify the error to the caller.
@@ -1172,8 +1086,7 @@ locator_drop_transient_class_name_entries (UNUSED_ARG THREAD_ENTRY * thread_p,
       return ER_FAILED;
     }
 
-  error_code = mht_map (locator_Mht_classnames,
-			locator_drop_class_name_entry, &rm);
+  error_code = mht_map (locator_Mht_classnames, locator_drop_class_name_entry, &rm);
   if (error_code != NO_ERROR)
     {
       error_code = ER_FAILED;
@@ -1214,8 +1127,7 @@ locator_drop_class_name_entry (const void *name, void *ent, void *rm)
 
   classname = entry->name;
   if ((entry->action != LC_CLASSNAME_EXIST)
-      && (drop == NULL || drop->tran_index == NULL_TRAN_INDEX
-	  || drop->tran_index == entry->tran_index))
+      && (drop == NULL || drop->tran_index == NULL_TRAN_INDEX || drop->tran_index == entry->tran_index))
     {
       log_decrease_num_transient_classnames (entry->tran_index);
       (void) mht_rem (locator_Mht_classnames, name, NULL, NULL);
@@ -1278,8 +1190,7 @@ locator_decache_class_name_entries (void)
    * So you don't need to enter CSECT_LOCATOR_SR_CLASSNAME_TABLE.
    */
 
-  (void) mht_map (locator_Mht_classnames, locator_decache_class_name_entry,
-		  &decache_count);
+  (void) mht_map (locator_Mht_classnames, locator_decache_class_name_entry, &decache_count);
 
   /* You are in the critical section CSECT_LOCATOR_SR_CLASSNAME_TABLE yet.
    * So you should not exit CSECT_LOCATOR_SR_CLASSNAME_TABLE.
@@ -1315,9 +1226,9 @@ locator_decache_class_name_entry (const void *name, void *ent, void *dc)
 
       *decache_count += 1;
       if (*decache_count >= MAX_CLASSNAME_CACHE_ENTRIES * 0.1)
-	{
-	  return ER_FAILED;
-	}
+        {
+          return ER_FAILED;
+        }
     }
 
   return NO_ERROR;
@@ -1336,14 +1247,12 @@ locator_decache_class_name_entry (const void *name, void *ent, void *dc)
  * Note:Print an entry of the classname memory hash table.
  */
 static int
-locator_print_class_name (FILE * outfp, const void *key, void *ent,
-			  UNUSED_ARG void *ignore)
+locator_print_class_name (FILE * outfp, const void *key, void *ent, UNUSED_ARG void *ignore)
 {
   LOCATOR_TMP_CLASSNAME_ENTRY *entry = (LOCATOR_TMP_CLASSNAME_ENTRY *) ent;
   const char *str_action;
 
-  fprintf (outfp, "Classname = %s, TRAN_INDEX = %d,\n",
-	   (const char *) key, entry->tran_index);
+  fprintf (outfp, "Classname = %s, TRAN_INDEX = %d,\n", (const char *) key, entry->tran_index);
 
   switch (entry->action)
     {
@@ -1369,9 +1278,7 @@ locator_print_class_name (FILE * outfp, const void *key, void *ent,
     }
 
   fprintf (outfp,
-	   "     action = %s, OID = %d|%d|%d\n",
-	   str_action, entry->oid.volid, entry->oid.pageid,
-	   entry->oid.slotid);
+           "     action = %s, OID = %d|%d|%d\n", str_action, entry->oid.volid, entry->oid.pageid, entry->oid.slotid);
 
   return (true);
 }
@@ -1389,13 +1296,11 @@ locator_print_class_name (FILE * outfp, const void *key, void *ent,
 void
 locator_dump_class_names (THREAD_ENTRY * thread_p, FILE * out_fp)
 {
-  if (csect_enter_as_reader (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE,
-			     INF_WAIT) != NO_ERROR)
+  if (csect_enter_as_reader (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       return;
     }
-  (void) mht_dump (out_fp, locator_Mht_classnames, false,
-		   locator_print_class_name, NULL);
+  (void) mht_dump (out_fp, locator_Mht_classnames, false, locator_print_class_name, NULL);
 
   ehash_dump (thread_p, out_fp, locator_Eht_classnames);
 
@@ -1423,8 +1328,7 @@ locator_dump_class_names (THREAD_ENTRY * thread_p, FILE * out_fp)
  *              the map hash, otheriwse, we return true to continue.
  */
 static int
-locator_check_class_on_heap (THREAD_ENTRY * thread_p, void *classname,
-			     void *classoid, void *xvalid)
+locator_check_class_on_heap (THREAD_ENTRY * thread_p, void *classname, void *classoid, void *xvalid)
 {
   DISK_ISVALID *isvalid = (DISK_ISVALID *) xvalid;
   const char *class_name;
@@ -1434,23 +1338,20 @@ locator_check_class_on_heap (THREAD_ENTRY * thread_p, void *classname,
   class_name = (char *) classname;
   class_oid = (OID *) classoid;
 
-  heap_class_name =
-    heap_get_class_name_alloc_if_diff (thread_p, class_oid,
-				       (char *) classname);
+  heap_class_name = heap_get_class_name_alloc_if_diff (thread_p, class_oid, (char *) classname);
   if (heap_class_name == NULL)
     {
       if (er_errid () == ER_HEAP_UNKNOWN_OBJECT)
-	{
-	  er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LC_INCONSISTENT_CLASSNAME_TYPE4, 4,
-		  class_name, class_oid->volid, class_oid->pageid,
-		  class_oid->slotid);
-	  *isvalid = DISK_INVALID;
-	}
+        {
+          er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                  ER_LC_INCONSISTENT_CLASSNAME_TYPE4, 4,
+                  class_name, class_oid->volid, class_oid->pageid, class_oid->slotid);
+          *isvalid = DISK_INVALID;
+        }
       else
-	{
-	  *isvalid = DISK_ERROR;
-	}
+        {
+          *isvalid = DISK_ERROR;
+        }
 
       goto error;
     }
@@ -1464,9 +1365,8 @@ locator_check_class_on_heap (THREAD_ENTRY * thread_p, void *classname,
        * Different names
        */
       er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_LC_INCONSISTENT_CLASSNAME_TYPE1, 5,
-	      class_oid->volid, class_oid->pageid, class_oid->slotid,
-	      class_name, heap_class_name);
+              ER_LC_INCONSISTENT_CLASSNAME_TYPE1, 5,
+              class_oid->volid, class_oid->pageid, class_oid->slotid, class_name, heap_class_name);
       *isvalid = DISK_INVALID;
       free_and_init (heap_class_name);
     }
@@ -1494,7 +1394,7 @@ DISK_ISVALID
 locator_check_class_names (THREAD_ENTRY * thread_p)
 {
   DISK_ISVALID isvalid;
-  RECDES peek;			/* Record descriptor for peeking object */
+  RECDES peek;                  /* Record descriptor for peeking object */
   HFID *root_hfid;
   OID class_oid;
   char *class_name = NULL;
@@ -1502,8 +1402,7 @@ locator_check_class_names (THREAD_ENTRY * thread_p)
   HEAP_SCANCACHE scan_cache;
   EH_SEARCH search;
 
-  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) !=
-      NO_ERROR)
+  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
     {
       /*
        * Some kind of failure. We must notify the error to the caller.
@@ -1527,8 +1426,7 @@ locator_check_class_names (THREAD_ENTRY * thread_p)
     {
       goto error;
     }
-  if (heap_scancache_start (thread_p, &scan_cache, root_hfid,
-			    oid_Root_class_oid, true) != NO_ERROR)
+  if (heap_scancache_start (thread_p, &scan_cache, root_hfid, oid_Root_class_oid, true) != NO_ERROR)
     {
       goto error;
     }
@@ -1538,45 +1436,41 @@ locator_check_class_names (THREAD_ENTRY * thread_p)
   class_oid.slotid = NULL_SLOTID;
 
   isvalid = DISK_VALID;
-  while (heap_next (thread_p, root_hfid, oid_Root_class_oid, &class_oid,
-		    &peek, &scan_cache, PEEK) == S_SUCCESS)
+  while (heap_next (thread_p, root_hfid, oid_Root_class_oid, &class_oid, &peek, &scan_cache, PEEK) == S_SUCCESS)
     {
       class_name = or_class_name (&peek);
       /*
        * Make sure that this class exists in classname_to_OID table and that
        * the OIDS matches
        */
-      search = ehash_search (thread_p, locator_Eht_classnames,
-			     (void *) class_name, &class_oid2);
+      search = ehash_search (thread_p, locator_Eht_classnames, (void *) class_name, &class_oid2);
       if (search != EH_KEY_FOUND)
-	{
-	  if (search == EH_ERROR_OCCURRED)
-	    {
-	      isvalid = DISK_ERROR;
-	      break;
-	    }
-	  else
-	    {
-	      isvalid = DISK_INVALID;
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_LC_INCONSISTENT_CLASSNAME_TYPE3, 4,
-		      class_name, class_oid.volid, class_oid.pageid,
-		      class_oid.slotid);
-	    }
-	}
+        {
+          if (search == EH_ERROR_OCCURRED)
+            {
+              isvalid = DISK_ERROR;
+              break;
+            }
+          else
+            {
+              isvalid = DISK_INVALID;
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_LC_INCONSISTENT_CLASSNAME_TYPE3, 4,
+                      class_name, class_oid.volid, class_oid.pageid, class_oid.slotid);
+            }
+        }
       else
-	{
-	  /* Are OIDs the same ? */
-	  if (!OID_EQ (&class_oid, &class_oid2))
-	    {
-	      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ER_LC_INCONSISTENT_CLASSNAME_TYPE2, 7,
-		      class_name, class_oid2.volid, class_oid2.pageid,
-		      class_oid2.slotid, class_oid.volid, class_oid.pageid,
-		      class_oid.slotid);
-	      isvalid = DISK_INVALID;
-	    }
-	}
+        {
+          /* Are OIDs the same ? */
+          if (!OID_EQ (&class_oid, &class_oid2))
+            {
+              er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ER_LC_INCONSISTENT_CLASSNAME_TYPE2, 7,
+                      class_name, class_oid2.volid, class_oid2.pageid,
+                      class_oid2.slotid, class_oid.volid, class_oid.pageid, class_oid.slotid);
+              isvalid = DISK_INVALID;
+            }
+        }
     }
 
   /* End the scan cursor */
@@ -1589,8 +1483,7 @@ locator_check_class_names (THREAD_ENTRY * thread_p)
    * CHECK 2: Same that check1 but from classname_to_OID to existance of class
    */
 
-  if (ehash_map (thread_p, locator_Eht_classnames,
-		 locator_check_class_on_heap, &isvalid) != NO_ERROR)
+  if (ehash_map (thread_p, locator_Eht_classnames, locator_check_class_on_heap, &isvalid) != NO_ERROR)
     {
       isvalid = DISK_ERROR;
     }
@@ -1628,11 +1521,9 @@ error:
  */
 int
 xlocator_assign_oid (THREAD_ENTRY * thread_p, const HFID * hfid,
-		     OID * perm_oid, int expected_length, OID * class_oid,
-		     const char *classname)
+                     OID * perm_oid, int expected_length, OID * class_oid, const char *classname)
 {
-  if (heap_assign_address_with_class_oid (thread_p, hfid, class_oid, perm_oid,
-					  expected_length) != NO_ERROR)
+  if (heap_assign_address_with_class_oid (thread_p, hfid, class_oid, perm_oid, expected_length) != NO_ERROR)
     {
       return ER_FAILED;
     }
@@ -1661,14 +1552,13 @@ xlocator_assign_oid (THREAD_ENTRY * thread_p, const HFID * hfid,
  *              missing classes.
  */
 static int
-locator_find_lockset_missing_class_oids (THREAD_ENTRY * thread_p,
-					 LC_LOCKSET * lockset)
+locator_find_lockset_missing_class_oids (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset)
 {
-  LC_LOCKSET_REQOBJ *reqobjs;	/* Description of one instance to fetch */
-  LC_LOCKSET_CLASSOF *reqclasses;	/* Description of one class of a
-					 * requested object */
-  OID class_oid;		/* Uses to hold the class_oid when
-				 * it is unknown */
+  LC_LOCKSET_REQOBJ *reqobjs;   /* Description of one instance to fetch */
+  LC_LOCKSET_CLASSOF *reqclasses;       /* Description of one class of a
+                                         * requested object */
+  OID class_oid;                /* Uses to hold the class_oid when
+                                 * it is unknown */
   int i, j;
   int error_code = NO_ERROR;
 
@@ -1678,29 +1568,24 @@ locator_find_lockset_missing_class_oids (THREAD_ENTRY * thread_p,
   reqclasses = lockset->classes;
 
 #if defined(RYE_DEBUG)
-  i = (sizeof (*lockset)
-       + (lockset->num_reqobjs * (sizeof (*reqclasses) + sizeof (*reqobjs))));
+  i = (sizeof (*lockset) + (lockset->num_reqobjs * (sizeof (*reqclasses) + sizeof (*reqobjs))));
 
   if (lockset->length < i
       || lockset->classes
       != ((LC_LOCKSET_CLASSOF *) (lockset->mem + sizeof (*lockset)))
-      || lockset->objects
-      < ((LC_LOCKSET_REQOBJ *) (lockset->classes + lockset->num_reqobjs)))
+      || lockset->objects < ((LC_LOCKSET_REQOBJ *) (lockset->classes + lockset->num_reqobjs)))
     {
       er_log_debug (ARG_FILE_LINE,
-		    "locator_find_lockset_missing_class_oids: "
-		    " *** SYSTEM ERROR. Requesting area is incorrect,\n"
-		    " either area is too small %d (expect at least %d),\n"
-		    " pointer to classes %p (expected %p), or\n"
-		    " pointer to objects %p (expected >= %p) are incorrect\n",
-		    lockset->length, i, lockset->classes,
-		    ((LC_LOCKSET_CLASSOF *) (lockset->mem +
-					     sizeof (*lockset))),
-		    lockset->objects,
-		    ((LC_LOCKSET_REQOBJ *) (lockset->classes +
-					    lockset->num_reqobjs)));
-      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1,
-	      "");
+                    "locator_find_lockset_missing_class_oids: "
+                    " *** SYSTEM ERROR. Requesting area is incorrect,\n"
+                    " either area is too small %d (expect at least %d),\n"
+                    " pointer to classes %p (expected %p), or\n"
+                    " pointer to objects %p (expected >= %p) are incorrect\n",
+                    lockset->length, i, lockset->classes,
+                    ((LC_LOCKSET_CLASSOF *) (lockset->mem +
+                                             sizeof (*lockset))),
+                    lockset->objects, ((LC_LOCKSET_REQOBJ *) (lockset->classes + lockset->num_reqobjs)));
+      er_set (ER_FATAL_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
 
       error_code = ER_GENERIC_ERROR;
       goto error;
@@ -1716,27 +1601,27 @@ locator_find_lockset_missing_class_oids (THREAD_ENTRY * thread_p,
   for (i = 0; i < lockset->num_reqobjs; i++)
     {
       if (reqobjs[i].class_index != -1 || OID_ISNULL (&reqobjs[i].oid))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       /*
        * Caller does not know the class identifier of the requested object.
        * Get the class identifier from disk
        */
       if (heap_get_class_oid (thread_p, &class_oid, &reqobjs[i].oid) == NULL)
-	{
-	  /*
-	   * Unable to find the class of the object. Remove the object from
-	   * the list of requested objects.
-	   */
-	  OID_SET_NULL (&reqobjs[i].oid);
-	  if (lockset->quit_on_errors != false)
-	    {
-	      error_code = ER_FAILED;
-	      goto error;
-	    }
-	  continue;
-	}
+        {
+          /*
+           * Unable to find the class of the object. Remove the object from
+           * the list of requested objects.
+           */
+          OID_SET_NULL (&reqobjs[i].oid);
+          if (lockset->quit_on_errors != false)
+            {
+              error_code = ER_FAILED;
+              goto error;
+            }
+          continue;
+        }
 
       /*
        * Insert this class in the list of classes of requested objects.
@@ -1744,22 +1629,21 @@ locator_find_lockset_missing_class_oids (THREAD_ENTRY * thread_p,
        */
 
       for (j = 0; j < lockset->num_classes_of_reqobjs; j++)
-	{
-	  if (OID_EQ (&class_oid, &reqclasses[j].oid))
-	    {
-	      /* OID is already in the list */
-	      reqobjs[i].class_index = j;
-	      break;
-	    }
-	}
+        {
+          if (OID_EQ (&class_oid, &reqclasses[j].oid))
+            {
+              /* OID is already in the list */
+              reqobjs[i].class_index = j;
+              break;
+            }
+        }
       if (j >= lockset->num_classes_of_reqobjs)
-	{
-	  /* OID is not in the list */
-	  COPY_OID (&reqclasses[lockset->num_classes_of_reqobjs].oid,
-		    &class_oid);
-	  reqobjs[i].class_index = lockset->num_classes_of_reqobjs;
-	  lockset->num_classes_of_reqobjs++;
-	}
+        {
+          /* OID is not in the list */
+          COPY_OID (&reqclasses[lockset->num_classes_of_reqobjs].oid, &class_oid);
+          reqobjs[i].class_index = lockset->num_classes_of_reqobjs;
+          lockset->num_classes_of_reqobjs++;
+        }
     }
 
 error:
@@ -1768,10 +1652,9 @@ error:
 
 static SCAN_CODE
 locator_return_object_assign (UNUSED_ARG THREAD_ENTRY * thread_p,
-			      LOCATOR_RETURN_NXOBJ * assign,
-			      OID * class_oid, OID * oid, SCAN_CODE scan)
+                              LOCATOR_RETURN_NXOBJ * assign, OID * class_oid, OID * oid, SCAN_CODE scan)
 {
-  int round_length;		/* Length of object rounded to integer alignment */
+  int round_length;             /* Length of object rounded to integer alignment */
 
   switch (scan)
     {
@@ -1780,35 +1663,33 @@ locator_return_object_assign (UNUSED_ARG THREAD_ENTRY * thread_p,
        * The cached object was obsolete.
        */
       round_length = DB_ALIGN (assign->recdes.length, MAX_ALIGNMENT);
-      if (assign->recdes.area_size <
-	  (round_length + (int) sizeof (*assign->obj)))
-	{
-	  assign->recdes.area_size -= (round_length + sizeof (*assign->obj));
-	  scan = S_DOESNT_FIT;
-	}
+      if (assign->recdes.area_size < (round_length + (int) sizeof (*assign->obj)))
+        {
+          assign->recdes.area_size -= (round_length + sizeof (*assign->obj));
+          scan = S_DOESNT_FIT;
+        }
       else
-	{
-	  assign->mobjs->num_objs++;
+        {
+          assign->mobjs->num_objs++;
 
-	  COPY_OID (&assign->obj->class_oid, class_oid);
-	  COPY_OID (&assign->obj->oid, oid);
-	  assign->obj->hfid = NULL_HFID;
-	  assign->obj->length = assign->recdes.length;
-	  assign->obj->offset = assign->area_offset;
-	  assign->obj->operation = LC_FETCH;
-	  assign->obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (assign->obj);
+          COPY_OID (&assign->obj->class_oid, class_oid);
+          COPY_OID (&assign->obj->oid, oid);
+          assign->obj->hfid = NULL_HFID;
+          assign->obj->length = assign->recdes.length;
+          assign->obj->offset = assign->area_offset;
+          assign->obj->operation = LC_FETCH;
+          assign->obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (assign->obj);
 
 #if !defined(NDEBUG)
-	  /* suppress valgrind UMW error */
-	  memset (assign->recdes.data + assign->recdes.length, 0,
-		  MIN (round_length - assign->recdes.length,
-		       assign->recdes.area_size - assign->recdes.length));
+          /* suppress valgrind UMW error */
+          memset (assign->recdes.data + assign->recdes.length, 0,
+                  MIN (round_length - assign->recdes.length, assign->recdes.area_size - assign->recdes.length));
 #endif
-	  assign->recdes.length = round_length;
-	  assign->area_offset += round_length;
-	  assign->recdes.data += round_length;
-	  assign->recdes.area_size -= round_length + sizeof (*assign->obj);
-	}
+          assign->recdes.length = round_length;
+          assign->area_offset += round_length;
+          assign->recdes.data += round_length;
+          assign->recdes.area_size -= round_length + sizeof (*assign->obj);
+        }
 
       break;
 
@@ -1817,24 +1698,24 @@ locator_return_object_assign (UNUSED_ARG THREAD_ENTRY * thread_p,
        * The object does not exist
        */
       if (assign->recdes.area_size < (int) sizeof (*assign->obj))
-	{
-	  assign->recdes.area_size -= sizeof (*assign->obj);
-	  scan = S_DOESNT_FIT;
-	}
+        {
+          assign->recdes.area_size -= sizeof (*assign->obj);
+          scan = S_DOESNT_FIT;
+        }
       else
-	{
-	  assign->mobjs->num_objs++;
+        {
+          assign->mobjs->num_objs++;
 
-	  /* Indicate to the caller that the object does not exist any longer */
-	  COPY_OID (&assign->obj->class_oid, class_oid);
-	  COPY_OID (&assign->obj->oid, oid);
-	  assign->obj->hfid = NULL_HFID;
-	  assign->obj->length = -1;
-	  assign->obj->offset = -1;
-	  assign->obj->operation = LC_FETCH_DELETED;
-	  assign->obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (assign->obj);
-	  assign->recdes.area_size -= sizeof (*assign->obj);
-	}
+          /* Indicate to the caller that the object does not exist any longer */
+          COPY_OID (&assign->obj->class_oid, class_oid);
+          COPY_OID (&assign->obj->oid, oid);
+          assign->obj->hfid = NULL_HFID;
+          assign->obj->length = -1;
+          assign->obj->offset = -1;
+          assign->obj->operation = LC_FETCH_DELETED;
+          assign->obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (assign->obj);
+          assign->recdes.area_size -= sizeof (*assign->obj);
+        }
 
       break;
 
@@ -1866,22 +1747,18 @@ locator_return_object_assign (UNUSED_ARG THREAD_ENTRY * thread_p,
  *              a negative value in the area recdes length.
  */
 static SCAN_CODE
-locator_return_object (THREAD_ENTRY * thread_p,
-		       LOCATOR_RETURN_NXOBJ * assign,
-		       OID * class_oid, OID * oid)
+locator_return_object (THREAD_ENTRY * thread_p, LOCATOR_RETURN_NXOBJ * assign, OID * class_oid, OID * oid)
 {
-  SCAN_CODE scan;		/* Scan return value for next operation */
+  SCAN_CODE scan;               /* Scan return value for next operation */
 
   /*
    * The next object is placed in the assigned recdes area iff the cached
    * object is obsolete and the object fits in the recdes
    */
 
-  scan = heap_get (thread_p, oid, &assign->recdes, assign->ptr_scancache,
-		   COPY);
+  scan = heap_get (thread_p, oid, &assign->recdes, assign->ptr_scancache, COPY);
 
-  scan =
-    locator_return_object_assign (thread_p, assign, class_oid, oid, scan);
+  scan = locator_return_object_assign (thread_p, assign, class_oid, oid, scan);
 
   return scan;
 }
@@ -1915,12 +1792,12 @@ locator_return_object (THREAD_ENTRY * thread_p,
  */
 int
 xlocator_fetch (THREAD_ENTRY * thread_p, OID * oid, LOCK lock,
-		OID * class_oid, int prefetching, LC_COPYAREA ** fetch_area)
+                OID * class_oid, int prefetching, LC_COPYAREA ** fetch_area)
 {
-  OID tmp_oid;			/* Uses to hold the class_oid when
-				 * it is not know by the caller */
+  OID tmp_oid;                  /* Uses to hold the class_oid when
+                                 * it is not know by the caller */
   LC_COPYAREA_DESC prefetch_des;
-  LOCATOR_RETURN_NXOBJ nxobj;	/* Description to return next obj   */
+  LOCATOR_RETURN_NXOBJ nxobj;   /* Description to return next obj   */
   int copyarea_length;
   SCAN_CODE scan = S_ERROR;
   int error_code = NO_ERROR;
@@ -1940,11 +1817,11 @@ xlocator_fetch (THREAD_ENTRY * thread_p, OID * oid, LOCK lock,
        * identifier from disk
        */
       if (heap_get_class_oid (thread_p, class_oid, oid) == NULL)
-	{
-	  /* Unable to find the class of the object.. return */
-	  *fetch_area = NULL;
-	  return ER_FAILED;
-	}
+        {
+          /* Unable to find the class of the object.. return */
+          *fetch_area = NULL;
+          return ER_FAILED;
+        }
     }
 
   assert (!OID_ISNULL (class_oid));
@@ -1953,15 +1830,14 @@ xlocator_fetch (THREAD_ENTRY * thread_p, OID * oid, LOCK lock,
   if (lock != NULL_LOCK)
     {
       DB_MAKE_OID (&lock_val, oid);
-      if (lock_object (thread_p, &lock_val, lock, LK_UNCOND_LOCK) !=
-	  LK_GRANTED)
-	{
-	  /*
-	   * Unable to acquired lock
-	   */
-	  *fetch_area = NULL;
-	  return ER_FAILED;
-	}
+      if (lock_object (thread_p, &lock_val, lock, LK_UNCOND_LOCK) != LK_GRANTED)
+        {
+          /*
+           * Unable to acquired lock
+           */
+          *fetch_area = NULL;
+          return ER_FAILED;
+        }
     }
 
   /*
@@ -1975,14 +1851,13 @@ xlocator_fetch (THREAD_ENTRY * thread_p, OID * oid, LOCK lock,
 
   while (true)
     {
-      nxobj.comm_area = *fetch_area =
-	locator_allocate_copy_area_by_length (copyarea_length);
+      nxobj.comm_area = *fetch_area = locator_allocate_copy_area_by_length (copyarea_length);
       if (nxobj.comm_area == NULL)
-	{
-	  nxobj.mobjs = NULL;
-	  error_code = ER_FAILED;
-	  goto error;
-	}
+        {
+          nxobj.mobjs = NULL;
+          error_code = ER_FAILED;
+          goto error;
+        }
 
       nxobj.ptr_scancache = NULL;
       nxobj.mobjs = LC_MANYOBJS_PTR_IN_COPYAREA (nxobj.comm_area);
@@ -1995,9 +1870,9 @@ xlocator_fetch (THREAD_ENTRY * thread_p, OID * oid, LOCK lock,
 
       scan = locator_return_object (thread_p, &nxobj, class_oid, oid);
       if (scan == S_SUCCESS)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       /* Get the real length of current fetch/copy area */
 
       copyarea_length = nxobj.comm_area->length;
@@ -2009,21 +1884,19 @@ xlocator_fetch (THREAD_ENTRY * thread_p, OID * oid, LOCK lock,
        */
 
       if (scan != S_DOESNT_FIT)
-	{
-	  nxobj.comm_area = *fetch_area = NULL;
-	  error_code = ER_FAILED;
-	  goto error;
-	}
+        {
+          nxobj.comm_area = *fetch_area = NULL;
+          error_code = ER_FAILED;
+          goto error;
+        }
       if ((-nxobj.recdes.length) > copyarea_length)
-	{
-	  copyarea_length =
-	    (DB_ALIGN (-nxobj.recdes.length, MAX_ALIGNMENT) +
-	     sizeof (*nxobj.mobjs));
-	}
+        {
+          copyarea_length = (DB_ALIGN (-nxobj.recdes.length, MAX_ALIGNMENT) + sizeof (*nxobj.mobjs));
+        }
       else
-	{
-	  copyarea_length += DB_PAGESIZE;
-	}
+        {
+          copyarea_length += DB_PAGESIZE;
+        }
     }
 
   /*
@@ -2031,8 +1904,7 @@ xlocator_fetch (THREAD_ENTRY * thread_p, OID * oid, LOCK lock,
    * current.
    */
 
-  scan =
-    locator_return_object (thread_p, &nxobj, oid_Root_class_oid, class_oid);
+  scan = locator_return_object (thread_p, &nxobj, oid_Root_class_oid, class_oid);
   if (scan == S_SUCCESS && nxobj.mobjs->num_objs == 2)
     {
       LC_COPYAREA_ONEOBJ *first, *second;
@@ -2116,8 +1988,7 @@ error:
  */
 int
 xlocator_get_class (THREAD_ENTRY * thread_p, OID * class_oid,
-		    const OID * oid, LOCK lock, int prefetching,
-		    LC_COPYAREA ** fetch_area)
+                    const OID * oid, LOCK lock, int prefetching, LC_COPYAREA ** fetch_area)
 {
   int error_code;
   DB_VALUE lock_val;
@@ -2129,13 +2000,13 @@ xlocator_get_class (THREAD_ENTRY * thread_p, OID * class_oid,
        * from disk
        */
       if (heap_get_class_oid (thread_p, class_oid, oid) == NULL)
-	{
-	  /*
-	   * Unable to find out the class identifier.
-	   */
-	  *fetch_area = NULL;
-	  return ER_FAILED;
-	}
+        {
+          /*
+           * Unable to find out the class identifier.
+           */
+          *fetch_area = NULL;
+          return ER_FAILED;
+        }
     }
 
   /* Now acquired the desired lock */
@@ -2143,15 +2014,14 @@ xlocator_get_class (THREAD_ENTRY * thread_p, OID * class_oid,
     {
       /* Now acquired the desired lock */
       DB_MAKE_OID (&lock_val, class_oid);
-      if (lock_object (thread_p, &lock_val, lock,
-		       LK_UNCOND_LOCK) != LK_GRANTED)
-	{
-	  /*
-	   * Unable to acquired lock
-	   */
-	  *fetch_area = NULL;
-	  return ER_FAILED;
-	}
+      if (lock_object (thread_p, &lock_val, lock, LK_UNCOND_LOCK) != LK_GRANTED)
+        {
+          /*
+           * Unable to acquired lock
+           */
+          *fetch_area = NULL;
+          return ER_FAILED;
+        }
     }
 
   /*
@@ -2159,8 +2029,7 @@ xlocator_get_class (THREAD_ENTRY * thread_p, OID * class_oid,
    * neighbors of the instance
    */
 
-  error_code = xlocator_fetch (NULL, class_oid, NULL_LOCK,
-			       oid_Root_class_oid, prefetching, fetch_area);
+  error_code = xlocator_fetch (NULL, class_oid, NULL_LOCK, oid_Root_class_oid, prefetching, fetch_area);
 
   return error_code;
 }
@@ -2182,18 +2051,17 @@ xlocator_get_class (THREAD_ENTRY * thread_p, OID * class_oid,
  */
 int
 xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
-		    OID * class_oid, INT64 * nobjects, INT64 * nfetched,
-		    OID * last_oid, LC_COPYAREA ** fetch_area)
+                    OID * class_oid, INT64 * nobjects, INT64 * nfetched, OID * last_oid, LC_COPYAREA ** fetch_area)
 {
-  LC_COPYAREA_MANYOBJS *mobjs;	/* Describe multiple objects in
-				 * area */
-  LC_COPYAREA_ONEOBJ *obj;	/* Describe on object in area  */
-  RECDES recdes;		/* Record descriptor for
-				 * insertion */
-  int offset;			/* Place to store next object in
-				 * area */
-  int round_length;		/* Length of object rounded to
-				 * integer alignment */
+  LC_COPYAREA_MANYOBJS *mobjs;  /* Describe multiple objects in
+                                 * area */
+  LC_COPYAREA_ONEOBJ *obj;      /* Describe on object in area  */
+  RECDES recdes;                /* Record descriptor for
+                                 * insertion */
+  int offset;                   /* Place to store next object in
+                                 * area */
+  int round_length;             /* Length of object rounded to
+                                 * integer alignment */
   int copyarea_length;
   OID oid;
   HEAP_SCANCACHE scan_cache;
@@ -2207,21 +2075,19 @@ xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
 
       /* Obtain the desired lock for the class scan */
       DB_MAKE_OID (&lock_val, class_oid);
-      if (*lock != NULL_LOCK
-	  && lock_object (thread_p, &lock_val, *lock,
-			  LK_UNCOND_LOCK) != LK_GRANTED)
-	{
-	  /*
-	   * Unable to acquired lock
-	   */
-	  *fetch_area = NULL;
-	  *lock = NULL_LOCK;
-	  *nobjects = -1;
-	  *nfetched = -1;
+      if (*lock != NULL_LOCK && lock_object (thread_p, &lock_val, *lock, LK_UNCOND_LOCK) != LK_GRANTED)
+        {
+          /*
+           * Unable to acquired lock
+           */
+          *fetch_area = NULL;
+          *lock = NULL_LOCK;
+          *nobjects = -1;
+          *nfetched = -1;
 
-	  error_code = ER_FAILED;
-	  goto error;
-	}
+          error_code = ER_FAILED;
+          goto error;
+        }
 
       /* Get statistics */
       last_oid->volid = hfid->vfid.volid;
@@ -2231,18 +2097,17 @@ xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
       *nfetched = 0;
       error_code = heap_estimate_num_objects (thread_p, hfid, nobjects);
       if (error_code != NO_ERROR)
-	{
-	  *fetch_area = NULL;
-	  goto error;
-	}
+        {
+          *fetch_area = NULL;
+          goto error;
+        }
     }
 
   /* Set OID to last fetched object */
   COPY_OID (&oid, last_oid);
 
   /* Start a scan cursor for getting several classes */
-  error_code = heap_scancache_start (thread_p, &scan_cache, hfid,
-				     class_oid, true);
+  error_code = heap_scancache_start (thread_p, &scan_cache, hfid, class_oid, true);
   if (error_code != NO_ERROR)
     {
       *fetch_area = NULL;
@@ -2257,12 +2122,12 @@ xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
     {
       *fetch_area = locator_allocate_copy_area_by_length (copyarea_length);
       if (*fetch_area == NULL)
-	{
-	  (void) heap_scancache_end (thread_p, &scan_cache);
+        {
+          (void) heap_scancache_end (thread_p, &scan_cache);
 
-	  error_code = ER_FAILED;
-	  goto error;
-	}
+          error_code = ER_FAILED;
+          goto error;
+        }
 
       mobjs = LC_MANYOBJS_PTR_IN_COPYAREA (*fetch_area);
       LC_RECDES_IN_COPYAREA (*fetch_area, &recdes);
@@ -2270,39 +2135,36 @@ xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
       mobjs->num_objs = 0;
       offset = 0;
 
-      while ((scan = heap_next (thread_p, hfid, class_oid, &oid, &recdes,
-				&scan_cache, COPY)) == S_SUCCESS)
-	{
-	  mobjs->num_objs++;
-	  COPY_OID (&obj->class_oid, class_oid);
-	  COPY_OID (&obj->oid, &oid);
-	  obj->hfid = NULL_HFID;
-	  obj->length = recdes.length;
-	  obj->offset = offset;
-	  obj->operation = LC_FETCH;
-	  obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (obj);
-	  round_length = DB_ALIGN (recdes.length, MAX_ALIGNMENT);
+      while ((scan = heap_next (thread_p, hfid, class_oid, &oid, &recdes, &scan_cache, COPY)) == S_SUCCESS)
+        {
+          mobjs->num_objs++;
+          COPY_OID (&obj->class_oid, class_oid);
+          COPY_OID (&obj->oid, &oid);
+          obj->hfid = NULL_HFID;
+          obj->length = recdes.length;
+          obj->offset = offset;
+          obj->operation = LC_FETCH;
+          obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (obj);
+          round_length = DB_ALIGN (recdes.length, MAX_ALIGNMENT);
 #if !defined(NDEBUG)
-	  /* suppress valgrind UMW error */
-	  memset (recdes.data + recdes.length, 0,
-		  MIN (round_length - recdes.length,
-		       recdes.area_size - recdes.length));
+          /* suppress valgrind UMW error */
+          memset (recdes.data + recdes.length, 0, MIN (round_length - recdes.length, recdes.area_size - recdes.length));
 #endif
-	  offset += round_length;
-	  recdes.data += round_length;
-	  recdes.area_size -= round_length + sizeof (*obj);
+          offset += round_length;
+          recdes.data += round_length;
+          recdes.area_size -= round_length + sizeof (*obj);
 
-	  if (mobjs->num_objs == DB_INT32_MAX)
-	    {
-	      /* Prevent overflow */
-	      break;
-	    }
-	}
+          if (mobjs->num_objs == DB_INT32_MAX)
+            {
+              /* Prevent overflow */
+              break;
+            }
+        }
 
       if (scan != S_DOESNT_FIT || mobjs->num_objs > 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       /*
        * The first object does not fit into given copy area
        * Get a larger area
@@ -2318,14 +2180,13 @@ xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
        */
 
       if ((-recdes.length) > copyarea_length)
-	{
-	  copyarea_length =
-	    DB_ALIGN (-recdes.length, MAX_ALIGNMENT) + sizeof (*mobjs);
-	}
+        {
+          copyarea_length = DB_ALIGN (-recdes.length, MAX_ALIGNMENT) + sizeof (*mobjs);
+        }
       else
-	{
-	  copyarea_length += DB_PAGESIZE;
-	}
+        {
+          copyarea_length += DB_PAGESIZE;
+        }
     }
 
   if (scan == S_END)
@@ -2336,13 +2197,13 @@ xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
        */
       error_code = heap_scancache_end (thread_p, &scan_cache);
       if (error_code != NO_ERROR)
-	{
-	  locator_free_copy_area (*fetch_area);
-	  *fetch_area = NULL;
-	  *nobjects = *nfetched = -1;
+        {
+          locator_free_copy_area (*fetch_area);
+          *fetch_area = NULL;
+          *nobjects = *nfetched = -1;
 
-	  goto error;
-	}
+          goto error;
+        }
 
       *nfetched += mobjs->num_objs;
       *nobjects = *nfetched;
@@ -2373,17 +2234,17 @@ xlocator_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid, LOCK * lock,
        * scan
        */
       if (*nobjects <= *nfetched)
-	{
-	  *nobjects = *nfetched + 10;
-	}
+        {
+          *nobjects = *nfetched + 10;
+        }
     }
   else
     {
       error_code = heap_scancache_end (thread_p, &scan_cache);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
 
 error:
@@ -2401,13 +2262,12 @@ error:
  *
  */
 int
-xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
-			LC_COPYAREA ** fetch_area)
+xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset, LC_COPYAREA ** fetch_area)
 {
-  LOCATOR_RETURN_NXOBJ nxobj;	/* Description to return next obj   */
-  struct lc_lockset_reqobj *reqobjs;	/* Description of requested objects */
-  struct lc_lockset_classof *reqclasses;	/* Description of classes of requested
-						 * objects. */
+  LOCATOR_RETURN_NXOBJ nxobj;   /* Description to return next obj   */
+  struct lc_lockset_reqobj *reqobjs;    /* Description of requested objects */
+  struct lc_lockset_classof *reqclasses;        /* Description of classes of requested
+                                                 * objects. */
   int copyarea_length;
   SCAN_CODE scan = S_SUCCESS;
   int i, j;
@@ -2430,28 +2290,26 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
       lockset->num_reqobjs_processed = 0;
       lockset->num_classes_of_reqobjs_processed = 0;
 
-      error_code =
-	locator_find_lockset_missing_class_oids (thread_p, lockset);
+      error_code = locator_find_lockset_missing_class_oids (thread_p, lockset);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       /* Obtain the locks */
 
       if (lock_objects_lock_set (thread_p, lockset) != LK_GRANTED)
-	{
-	  if (lockset->quit_on_errors != false)
-	    {
-	      error_code = ER_FAILED;
-	      goto error;
-	    }
-	}
+        {
+          if (lockset->quit_on_errors != false)
+            {
+              error_code = ER_FAILED;
+              goto error;
+            }
+        }
     }
 
   /* Start a scan cursor for getting several classes */
-  error_code = heap_scancache_start (thread_p, &nxobj.area_scancache, NULL,
-				     NULL, true);
+  error_code = heap_scancache_start (thread_p, &nxobj.area_scancache, NULL, NULL, true);
   if (error_code != NO_ERROR)
     {
       goto error;
@@ -2469,23 +2327,22 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
   nxobj.comm_area = NULL;
 
   while (scan == S_SUCCESS
-	 && ((lockset->num_classes_of_reqobjs_processed
-	      < lockset->num_classes_of_reqobjs)
-	     || (lockset->num_reqobjs_processed < lockset->num_reqobjs)))
+         && ((lockset->num_classes_of_reqobjs_processed
+              < lockset->num_classes_of_reqobjs) || (lockset->num_reqobjs_processed < lockset->num_reqobjs)))
     {
       new_area = locator_allocate_copy_area_by_length (copyarea_length);
       if (new_area == NULL)
-	{
-	  (void) heap_scancache_end (thread_p, &nxobj.area_scancache);
-	  /* There was an error.. */
-	  if (nxobj.mobjs != NULL)
-	    {
-	      locator_free_copy_area (nxobj.comm_area);
-	      nxobj.comm_area = NULL;
-	    }
-	  error_code = ER_FAILED;
-	  goto error;
-	}
+        {
+          (void) heap_scancache_end (thread_p, &nxobj.area_scancache);
+          /* There was an error.. */
+          if (nxobj.mobjs != NULL)
+            {
+              locator_free_copy_area (nxobj.comm_area);
+              nxobj.comm_area = NULL;
+            }
+          error_code = ER_FAILED;
+          goto error;
+        }
 
       nxobj.comm_area = new_area;
 
@@ -2501,170 +2358,154 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
        * with correct chns.
        */
 
-      for (i = lockset->num_classes_of_reqobjs_processed;
-	   scan == S_SUCCESS && i < lockset->num_classes_of_reqobjs; i++)
-	{
-	  if (OID_ISNULL (&reqclasses[i].oid))
-	    {
-	      lockset->num_classes_of_reqobjs_processed++;
-	      continue;
-	    }
-	  if (OID_ISTEMP (&reqclasses[i].oid))
-	    {
-	      lockset->num_classes_of_reqobjs_processed++;
-	      continue;
-	    }
-	  scan =
-	    locator_return_object (thread_p, &nxobj, oid_Root_class_oid,
-				   &reqclasses[i].oid);
-	  if (scan == S_SUCCESS)
-	    {
-	      lockset->num_classes_of_reqobjs_processed++;
-	    }
-	  else if (scan == S_DOESNT_FIT && nxobj.mobjs->num_objs == 0)
-	    {
-	      /*
-	       * The first object does not fit into given copy area
-	       * Get a larger area
-	       */
+      for (i = lockset->num_classes_of_reqobjs_processed; scan == S_SUCCESS && i < lockset->num_classes_of_reqobjs; i++)
+        {
+          if (OID_ISNULL (&reqclasses[i].oid))
+            {
+              lockset->num_classes_of_reqobjs_processed++;
+              continue;
+            }
+          if (OID_ISTEMP (&reqclasses[i].oid))
+            {
+              lockset->num_classes_of_reqobjs_processed++;
+              continue;
+            }
+          scan = locator_return_object (thread_p, &nxobj, oid_Root_class_oid, &reqclasses[i].oid);
+          if (scan == S_SUCCESS)
+            {
+              lockset->num_classes_of_reqobjs_processed++;
+            }
+          else if (scan == S_DOESNT_FIT && nxobj.mobjs->num_objs == 0)
+            {
+              /*
+               * The first object does not fit into given copy area
+               * Get a larger area
+               */
 
-	      /* Get the real length of current fetch/copy area */
+              /* Get the real length of current fetch/copy area */
 
-	      copyarea_length = nxobj.comm_area->length;
+              copyarea_length = nxobj.comm_area->length;
 
-	      /*
-	       * If the object does not fit even when the copy area seems
-	       * to be large enough, increase the copy area by at least one
-	       * page size.
-	       */
+              /*
+               * If the object does not fit even when the copy area seems
+               * to be large enough, increase the copy area by at least one
+               * page size.
+               */
 
-	      if ((-nxobj.recdes.length) > copyarea_length)
-		{
-		  copyarea_length =
-		    (DB_ALIGN (-nxobj.recdes.length, MAX_ALIGNMENT) +
-		     sizeof (*nxobj.mobjs));
-		}
-	      else
-		{
-		  copyarea_length += DB_PAGESIZE;
-		}
+              if ((-nxobj.recdes.length) > copyarea_length)
+                {
+                  copyarea_length = (DB_ALIGN (-nxobj.recdes.length, MAX_ALIGNMENT) + sizeof (*nxobj.mobjs));
+                }
+              else
+                {
+                  copyarea_length += DB_PAGESIZE;
+                }
 
-	      locator_free_copy_area (nxobj.comm_area);
-	      nxobj.comm_area = NULL;
-	      scan = S_SUCCESS;
-	      break;		/* finish the for */
-	    }
-	  else if (scan != S_DOESNT_FIT
-		   && (scan == S_DOESNT_EXIST
-		       || lockset->quit_on_errors == false))
-	    {
-	      OID_SET_NULL (&reqclasses[i].oid);
-	      lockset->num_classes_of_reqobjs_processed += 1;
-	      scan = S_SUCCESS;
-	    }
-	  else
-	    {
-	      break;		/* Quit on errors */
-	    }
-	}
+              locator_free_copy_area (nxobj.comm_area);
+              nxobj.comm_area = NULL;
+              scan = S_SUCCESS;
+              break;            /* finish the for */
+            }
+          else if (scan != S_DOESNT_FIT && (scan == S_DOESNT_EXIST || lockset->quit_on_errors == false))
+            {
+              OID_SET_NULL (&reqclasses[i].oid);
+              lockset->num_classes_of_reqobjs_processed += 1;
+              scan = S_SUCCESS;
+            }
+          else
+            {
+              break;            /* Quit on errors */
+            }
+        }
 
       if (i >= lockset->num_classes_of_reqobjs)
-	{
-	  /*
-	   * DONE WITH CLASSES... NOW START WITH INSTANCES
-	   * Place the instances in the fetching area, don't place those
-	   * instances with correct chns or when they have been placed through
-	   * the class array
-	   */
+        {
+          /*
+           * DONE WITH CLASSES... NOW START WITH INSTANCES
+           * Place the instances in the fetching area, don't place those
+           * instances with correct chns or when they have been placed through
+           * the class array
+           */
 
-	  for (i = lockset->num_reqobjs_processed;
-	       scan == S_SUCCESS && i < lockset->num_reqobjs; i++)
-	    {
-	      if (OID_ISNULL (&reqobjs[i].oid)
-		  || OID_ISTEMP (&reqobjs[i].oid)
-		  || reqobjs[i].class_index == -1
-		  || OID_ISNULL (&reqclasses[reqobjs[i].class_index].oid))
-		{
-		  lockset->num_reqobjs_processed += 1;
-		  continue;
-		}
+          for (i = lockset->num_reqobjs_processed; scan == S_SUCCESS && i < lockset->num_reqobjs; i++)
+            {
+              if (OID_ISNULL (&reqobjs[i].oid)
+                  || OID_ISTEMP (&reqobjs[i].oid)
+                  || reqobjs[i].class_index == -1 || OID_ISNULL (&reqclasses[reqobjs[i].class_index].oid))
+                {
+                  lockset->num_reqobjs_processed += 1;
+                  continue;
+                }
 
-	      if (OID_IS_ROOTOID (&reqclasses[reqobjs[i].class_index].oid))
-		{
-		  /*
-		   * The requested object is a class. If this object is a class
-		   * of other requested objects, the object has already been
-		   * processed in the previous class iteration
-		   */
-		  for (j = 0; j < lockset->num_classes_of_reqobjs; j++)
-		    {
-		      if (OID_EQ (&reqobjs[i].oid, &reqclasses[j].oid))
-			{
-			  /* It has already been processed */
-			  lockset->num_reqobjs_processed += 1;
-			  break;
-			}
-		    }
-		  if (j < lockset->num_classes_of_reqobjs)
-		    {
-		      continue;
-		    }
-		}
+              if (OID_IS_ROOTOID (&reqclasses[reqobjs[i].class_index].oid))
+                {
+                  /*
+                   * The requested object is a class. If this object is a class
+                   * of other requested objects, the object has already been
+                   * processed in the previous class iteration
+                   */
+                  for (j = 0; j < lockset->num_classes_of_reqobjs; j++)
+                    {
+                      if (OID_EQ (&reqobjs[i].oid, &reqclasses[j].oid))
+                        {
+                          /* It has already been processed */
+                          lockset->num_reqobjs_processed += 1;
+                          break;
+                        }
+                    }
+                  if (j < lockset->num_classes_of_reqobjs)
+                    {
+                      continue;
+                    }
+                }
 
-	      /* Now return the object */
-	      scan =
-		locator_return_object (thread_p, &nxobj,
-				       &reqclasses[reqobjs[i].
-						   class_index].oid,
-				       &reqobjs[i].oid);
-	      if (scan == S_SUCCESS)
-		{
-		  lockset->num_reqobjs_processed++;
-		  continue;
-		}
+              /* Now return the object */
+              scan = locator_return_object (thread_p, &nxobj, &reqclasses[reqobjs[i].class_index].oid, &reqobjs[i].oid);
+              if (scan == S_SUCCESS)
+                {
+                  lockset->num_reqobjs_processed++;
+                  continue;
+                }
 
-	      if (scan == S_DOESNT_FIT && nxobj.mobjs->num_objs == 0)
-		{
-		  /*
-		   * The first object does not fit into given copy area
-		   * Get a larger area
-		   */
+              if (scan == S_DOESNT_FIT && nxobj.mobjs->num_objs == 0)
+                {
+                  /*
+                   * The first object does not fit into given copy area
+                   * Get a larger area
+                   */
 
-		  /* Get the real length of current fetch/copy area */
+                  /* Get the real length of current fetch/copy area */
 
-		  copyarea_length = nxobj.comm_area->length;
+                  copyarea_length = nxobj.comm_area->length;
 
-		  /*
-		   * If the object does not fit even when the copy area
-		   * seems to be large enough, increase the copy area by at
-		   * least one page size.
-		   */
+                  /*
+                   * If the object does not fit even when the copy area
+                   * seems to be large enough, increase the copy area by at
+                   * least one page size.
+                   */
 
-		  if ((-nxobj.recdes.length) > copyarea_length)
-		    {
-		      copyarea_length = ((-nxobj.recdes.length)
-					 + sizeof (*nxobj.mobjs));
-		    }
-		  else
-		    {
-		      copyarea_length += DB_PAGESIZE;
-		    }
+                  if ((-nxobj.recdes.length) > copyarea_length)
+                    {
+                      copyarea_length = ((-nxobj.recdes.length) + sizeof (*nxobj.mobjs));
+                    }
+                  else
+                    {
+                      copyarea_length += DB_PAGESIZE;
+                    }
 
-		  locator_free_copy_area (nxobj.comm_area);
-		  nxobj.comm_area = NULL;
-		  scan = S_SUCCESS;
-		  break;	/* finish the for */
-		}
-	      else if (scan != S_DOESNT_FIT
-		       && (scan == S_DOESNT_EXIST
-			   || lockset->quit_on_errors == false))
-		{
-		  OID_SET_NULL (&reqobjs[i].oid);
-		  lockset->num_reqobjs_processed += 1;
-		  scan = S_SUCCESS;
-		}
-	    }
-	}
+                  locator_free_copy_area (nxobj.comm_area);
+                  nxobj.comm_area = NULL;
+                  scan = S_SUCCESS;
+                  break;        /* finish the for */
+                }
+              else if (scan != S_DOESNT_FIT && (scan == S_DOESNT_EXIST || lockset->quit_on_errors == false))
+                {
+                  OID_SET_NULL (&reqobjs[i].oid);
+                  lockset->num_reqobjs_processed += 1;
+                  scan = S_SUCCESS;
+                }
+            }
+        }
     }
 
   /* End the scan cursor */
@@ -2673,10 +2514,10 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
     {
       /* There was an error.. */
       if (nxobj.mobjs != NULL)
-	{
-	  locator_free_copy_area (nxobj.comm_area);
-	  nxobj.comm_area = NULL;
-	}
+        {
+          locator_free_copy_area (nxobj.comm_area);
+          nxobj.comm_area = NULL;
+        }
       goto error;
     }
 
@@ -2684,10 +2525,10 @@ xlocator_fetch_lockset (THREAD_ENTRY * thread_p, LC_LOCKSET * lockset,
     {
       /* There was an error.. */
       if (nxobj.mobjs != NULL)
-	{
-	  locator_free_copy_area (nxobj.comm_area);
-	  nxobj.comm_area = NULL;
-	}
+        {
+          locator_free_copy_area (nxobj.comm_area);
+          nxobj.comm_area = NULL;
+        }
       error_code = ER_FAILED;
       goto error;
     }
@@ -2717,13 +2558,10 @@ error:
  */
 int
 locator_start_force_scan_cache (THREAD_ENTRY * thread_p,
-				HEAP_SCANCACHE * scan_cache,
-				const HFID * hfid,
-				const int force_page_allocation,
-				const OID * class_oid)
+                                HEAP_SCANCACHE * scan_cache,
+                                const HFID * hfid, const int force_page_allocation, const OID * class_oid)
 {
-  return heap_scancache_start_modify (thread_p, scan_cache, hfid,
-				      force_page_allocation, class_oid);
+  return heap_scancache_start_modify (thread_p, scan_cache, hfid, force_page_allocation, class_oid);
 }
 
 /*
@@ -2734,8 +2572,7 @@ locator_start_force_scan_cache (THREAD_ENTRY * thread_p,
  *   scan_cache(in):
  */
 void
-locator_end_force_scan_cache (THREAD_ENTRY * thread_p,
-			      HEAP_SCANCACHE * scan_cache)
+locator_end_force_scan_cache (THREAD_ENTRY * thread_p, HEAP_SCANCACHE * scan_cache)
 {
   heap_scancache_end_modify (thread_p, scan_cache);
 }
@@ -2758,10 +2595,9 @@ locator_end_force_scan_cache (THREAD_ENTRY * thread_p,
  */
 static int
 locator_insert_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
-		      OID * oid, RECDES * recdes,
-		      HEAP_SCANCACHE * scan_cache, int *force_count)
+                      OID * oid, RECDES * recdes, HEAP_SCANCACHE * scan_cache, int *force_count)
 {
-  char *classname;		/* Classname to update */
+  char *classname;              /* Classname to update */
   LC_COPYAREA *cache_attr_copyarea = NULL;
   int error_code = NO_ERROR;
   OID real_class_oid;
@@ -2786,8 +2622,7 @@ locator_insert_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
 
   /* insert object and lock it */
 
-  if (heap_insert (thread_p, &real_hfid, &real_class_oid, oid, recdes,
-		   local_scan_cache) == NULL)
+  if (heap_insert (thread_p, &real_hfid, &real_class_oid, oid, recdes, local_scan_cache) == NULL)
     {
       /*
        * Problems inserting the object...Maybe, the transaction should be
@@ -2795,9 +2630,9 @@ locator_insert_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
        */
       error_code = er_errid ();
       if (error_code == NO_ERROR)
-	{
-	  error_code = ER_FAILED;
-	}
+        {
+          error_code = ER_FAILED;
+        }
       goto error2;
     }
 
@@ -2812,63 +2647,59 @@ locator_insert_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
 
       classname = or_class_name (recdes);
 
-      if (ehash_insert (thread_p, locator_Eht_classnames,
-			(void *) classname, oid) == NULL)
-	{
-	  /*
-	   * error inserting the hash entry information.
-	   *
-	   * Maybe the transaction should be aborted by the caller.
-	   */
-	  error_code = er_errid ();
-	  if (error_code == NO_ERROR)
-	    {
-	      error_code = ER_FAILED;
-	    }
-	  goto error1;
-	}
+      if (ehash_insert (thread_p, locator_Eht_classnames, (void *) classname, oid) == NULL)
+        {
+          /*
+           * error inserting the hash entry information.
+           *
+           * Maybe the transaction should be aborted by the caller.
+           */
+          error_code = er_errid ();
+          if (error_code == NO_ERROR)
+            {
+              error_code = ER_FAILED;
+            }
+          goto error1;
+        }
 
       /* Indicate new oid to transient table */
       locator_permoid_class_name (thread_p, classname, oid);
 
       if (!OID_IS_ROOTOID (oid) && catalog_insert (thread_p, recdes, oid) < 0)
-	{
-	  /*
-	   * There is an error inserting the hash entry or catalog
-	   * information. Maybe, the transaction should be aborted by
-	   * the caller...Quit
-	   */
-	  error_code = er_errid ();
-	  if (error_code == NO_ERROR)
-	    {
-	      error_code = ER_FAILED;
-	    }
-	  goto error1;
-	}
+        {
+          /*
+           * There is an error inserting the hash entry or catalog
+           * information. Maybe, the transaction should be aborted by
+           * the caller...Quit
+           */
+          error_code = er_errid ();
+          if (error_code == NO_ERROR)
+            {
+              error_code = ER_FAILED;
+            }
+          goto error1;
+        }
 
-      if (catcls_Enable == true
-	  && catcls_insert_catalog_classes (thread_p, recdes) != NO_ERROR)
-	{
-	  error_code = er_errid ();
-	  if (error_code == NO_ERROR)
-	    {
-	      error_code = ER_FAILED;
-	    }
-	  goto error1;
-	}
+      if (catcls_Enable == true && catcls_insert_catalog_classes (thread_p, recdes) != NO_ERROR)
+        {
+          error_code = er_errid ();
+          if (error_code == NO_ERROR)
+            {
+              error_code = ER_FAILED;
+            }
+          goto error1;
+        }
     }
   else
     {
       /*
        * AN INSTANCE: Apply the necessary index insertions
        */
-      error_code = locator_add_or_remove_index (thread_p, recdes, oid,
-						&real_class_oid, true, true,
-						true, &real_hfid);
+      error_code = locator_add_or_remove_index (thread_p, recdes, oid, &real_class_oid, true, true, true, &real_hfid);
       if (error_code != NO_ERROR)
-	{
-	  goto error1;
-	}
+        {
+          goto error1;
+        }
     }
 
   *force_count = 1;
@@ -2911,15 +2742,14 @@ error2:
  */
 static int
 locator_update_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
-		      OID * oid, RECDES * oldrecdes, RECDES * recdes,
-		      ATTR_ID * att_id, int n_att_id,
-		      HEAP_SCANCACHE * scan_cache, int *force_count)
+                      OID * oid, RECDES * oldrecdes, RECDES * recdes,
+                      ATTR_ID * att_id, int n_att_id, HEAP_SCANCACHE * scan_cache, int *force_count)
 {
-  char *old_classname = NULL;	/* Classname that may have been
-				 * renamed */
-  char *classname = NULL;	/* Classname to update */
-  bool isold_object;		/* Make sure that this is an old
-				 * object */
+  char *old_classname = NULL;   /* Classname that may have been
+                                 * renamed */
+  char *classname = NULL;       /* Classname to update */
+  bool isold_object;            /* Make sure that this is an old
+                                 * object */
   RECDES copy_recdes = RECDES_INITIALIZER;
   SCAN_CODE scan;
 
@@ -2945,158 +2775,147 @@ locator_update_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
        * to oid table may need to be updated
        */
       classname = or_class_name (recdes);
-      old_classname = heap_get_class_name_alloc_if_diff (thread_p, oid,
-							 classname);
+      old_classname = heap_get_class_name_alloc_if_diff (thread_p, oid, classname);
       /*
        * Compare the classname pointers. If the same pointers classes are the
        * same since the class was no malloc
        */
       if (old_classname != NULL && old_classname != classname)
-	{
-	  /* Different names, the class was renamed. */
-	  OID existing_oid;
+        {
+          /* Different names, the class was renamed. */
+          OID existing_oid;
 
-	  /* Make it sure there's no existing class which has new class name */
-	  error = ehash_search (thread_p, locator_Eht_classnames,
-				classname, &existing_oid);
-	  if (error != EH_KEY_NOTFOUND)
-	    {
-	      if (error == EH_KEY_FOUND)
-		{
-		  error = ER_LC_CLASSNAME_EXIST;
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-			  1, classname);
-		}
-	      else
-		{
-		  error = er_errid ();
-		  error = ((error == NO_ERROR) ? ER_FAILED : error);
-		}
-	      free_and_init (old_classname);
-	      goto exit_on_error;
-	    }
+          /* Make it sure there's no existing class which has new class name */
+          error = ehash_search (thread_p, locator_Eht_classnames, classname, &existing_oid);
+          if (error != EH_KEY_NOTFOUND)
+            {
+              if (error == EH_KEY_FOUND)
+                {
+                  error = ER_LC_CLASSNAME_EXIST;
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, classname);
+                }
+              else
+                {
+                  error = er_errid ();
+                  error = ((error == NO_ERROR) ? ER_FAILED : error);
+                }
+              free_and_init (old_classname);
+              goto exit_on_error;
+            }
 
-	  error = NO_ERROR;
-	  if (ehash_insert (thread_p, locator_Eht_classnames,
-			    classname, oid) == NULL
-	      || ehash_delete (thread_p, locator_Eht_classnames,
-			       old_classname) == NULL)
-	    {
-	      /*
-	       * Problems inserting/deleting the new name to the classname to
-	       * OID table.
-	       * Maybe, the transaction should be aborted by the caller.
-	       * Quit..
-	       */
-	      free_and_init (old_classname);
+          error = NO_ERROR;
+          if (ehash_insert (thread_p, locator_Eht_classnames,
+                            classname, oid) == NULL
+              || ehash_delete (thread_p, locator_Eht_classnames, old_classname) == NULL)
+            {
+              /*
+               * Problems inserting/deleting the new name to the classname to
+               * OID table.
+               * Maybe, the transaction should be aborted by the caller.
+               * Quit..
+               */
+              free_and_init (old_classname);
 
-	      error = ER_FAILED;
-	      goto exit_on_error;
-	    }
-	}
+              error = ER_FAILED;
+              goto exit_on_error;
+            }
+        }
 
       error = heap_classrepr_decache_and_lock (thread_p, oid);
       if (error != NO_ERROR)
-	{
-	  goto exit_on_error;
-	}
+        {
+          goto exit_on_error;
+        }
 
       if ((catcls_Enable == true) && (old_classname != NULL))
-	{
-	  error = catcls_update_catalog_classes (thread_p,
-						 old_classname, recdes);
-	  if (error != NO_ERROR)
-	    {
-	      heap_classrepr_unlock_class (oid);
-	      goto exit_on_error;
-	    }
-	}
+        {
+          error = catcls_update_catalog_classes (thread_p, old_classname, recdes);
+          if (error != NO_ERROR)
+            {
+              heap_classrepr_unlock_class (oid);
+              goto exit_on_error;
+            }
+        }
 
-      if (heap_update (thread_p, hfid, class_oid, oid, recdes, &isold_object,
-		       scan_cache) == NULL)
-	{
-	  /*
-	   * Problems updating the object...Maybe, the transaction should be
-	   * aborted by the caller...Quit..
-	   */
-	  error = ER_FAILED;
-	  heap_classrepr_unlock_class (oid);
-	  goto exit_on_error;
-	}
+      if (heap_update (thread_p, hfid, class_oid, oid, recdes, &isold_object, scan_cache) == NULL)
+        {
+          /*
+           * Problems updating the object...Maybe, the transaction should be
+           * aborted by the caller...Quit..
+           */
+          error = ER_FAILED;
+          heap_classrepr_unlock_class (oid);
+          goto exit_on_error;
+        }
 
       if (isold_object)
-	{
-	  /* Update the catalog as long as it is not the root class */
-	  if (!OID_IS_ROOTOID (oid))
-	    {
-	      error = catalog_update (thread_p, recdes, oid);
-	      if (error < 0)
-		{
-		  /*
-		   * An error occurred during the update of the catalog
-		   */
-		  heap_classrepr_unlock_class (oid);
-		  goto exit_on_error;
-		}
-	    }
-	  if (old_classname != NULL && old_classname != classname)
-	    {
-	      free_and_init (old_classname);
-	    }
-	}
+        {
+          /* Update the catalog as long as it is not the root class */
+          if (!OID_IS_ROOTOID (oid))
+            {
+              error = catalog_update (thread_p, recdes, oid);
+              if (error < 0)
+                {
+                  /*
+                   * An error occurred during the update of the catalog
+                   */
+                  heap_classrepr_unlock_class (oid);
+                  goto exit_on_error;
+                }
+            }
+          if (old_classname != NULL && old_classname != classname)
+            {
+              free_and_init (old_classname);
+            }
+        }
       else
-	{
-	  /*
-	   * NEW CLASS
-	   * The class was flushed for first time. Add the classname to
-	   * class_OID entry and add the class to the catalog. We don't need
-	   * to update the transient table since the class has already a
-	   * permananet OID...
-	   */
-	  classname = or_class_name (recdes);
-	  if (ehash_insert (thread_p, locator_Eht_classnames,
-			    (void *) classname, oid) == NULL
-	      || (!OID_IS_ROOTOID (oid)
-		  && catalog_insert (thread_p, recdes, oid) < 0))
-	    {
-	      /*
-	       * There is an error inserting the hash entry or catalog
-	       * information. The transaction must be aborted by the caller
-	       */
-	      error = ER_FAILED;
-	      heap_classrepr_unlock_class (oid);
-	      goto exit_on_error;
-	    }
-	  if (catcls_Enable == true)
-	    {
-	      error = catcls_insert_catalog_classes (thread_p, recdes);
-	      if (error != NO_ERROR)
-		{
-		  heap_classrepr_unlock_class (oid);
-		  goto exit_on_error;
-		}
-	    }
-	}
+        {
+          /*
+           * NEW CLASS
+           * The class was flushed for first time. Add the classname to
+           * class_OID entry and add the class to the catalog. We don't need
+           * to update the transient table since the class has already a
+           * permananet OID...
+           */
+          classname = or_class_name (recdes);
+          if (ehash_insert (thread_p, locator_Eht_classnames,
+                            (void *) classname, oid) == NULL
+              || (!OID_IS_ROOTOID (oid) && catalog_insert (thread_p, recdes, oid) < 0))
+            {
+              /*
+               * There is an error inserting the hash entry or catalog
+               * information. The transaction must be aborted by the caller
+               */
+              error = ER_FAILED;
+              heap_classrepr_unlock_class (oid);
+              goto exit_on_error;
+            }
+          if (catcls_Enable == true)
+            {
+              error = catcls_insert_catalog_classes (thread_p, recdes);
+              if (error != NO_ERROR)
+                {
+                  heap_classrepr_unlock_class (oid);
+                  goto exit_on_error;
+                }
+            }
+        }
 #if defined(SERVER_MODE)
       assert (heap_classrepr_has_cache_entry (thread_p, oid) == false);
 #endif
 
       heap_classrepr_unlock_class (oid);
 
-      assert (prm_get_integer_value (PRM_ID_XASL_MAX_PLAN_CACHE_ENTRIES) >=
-	      1000);
+      assert (prm_get_integer_value (PRM_ID_XASL_MAX_PLAN_CACHE_ENTRIES) >= 1000);
 
       /* remove XASL cache entries which is relevant with that class */
-      if (!OID_IS_ROOTOID (oid)
-	  && qexec_remove_xasl_cache_ent_by_class (thread_p, oid,
-						   1) != NO_ERROR)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"locator_update_force:"
-			" qexec_remove_xasl_cache_ent_by_class"
-			" failed for class { %d %d %d }\n",
-			oid->pageid, oid->slotid, oid->volid);
-	}
+      if (!OID_IS_ROOTOID (oid) && qexec_remove_xasl_cache_ent_by_class (thread_p, oid, 1) != NO_ERROR)
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "locator_update_force:"
+                        " qexec_remove_xasl_cache_ent_by_class"
+                        " failed for class { %d %d %d }\n", oid->pageid, oid->slotid, oid->volid);
+        }
 
     }
   else
@@ -3106,88 +2925,81 @@ locator_update_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
       /* AN INSTANCE: Update indices if any */
 
       if (oldrecdes == NULL)
-	{
-	  scan = heap_get (thread_p, oid, &copy_recdes, local_scan_cache,
-			   COPY);
-	  oldrecdes = &copy_recdes;
-	}
+        {
+          scan = heap_get (thread_p, oid, &copy_recdes, local_scan_cache, COPY);
+          oldrecdes = &copy_recdes;
+        }
       else
-	{
-	  scan = S_SUCCESS;
-	}
+        {
+          scan = S_SUCCESS;
+        }
 
-      if (heap_update (thread_p, hfid, class_oid, oid, recdes, &isold_object,
-		       local_scan_cache) == NULL)
-	{
-	  /*
-	   * Problems updating the object...Maybe, the transaction should be
-	   * aborted by the caller...Quit..
-	   */
-	  error = ER_FAILED;
-	  goto exit_on_error;
-	}
+      if (heap_update (thread_p, hfid, class_oid, oid, recdes, &isold_object, local_scan_cache) == NULL)
+        {
+          /*
+           * Problems updating the object...Maybe, the transaction should be
+           * aborted by the caller...Quit..
+           */
+          error = ER_FAILED;
+          goto exit_on_error;
+        }
 
       if (scan == S_SUCCESS)
-	{
-	  /* Update the indices */
-	  error = locator_update_index (thread_p, recdes, oldrecdes,
-					att_id, n_att_id, oid, class_oid,
-					true, true);
-	  if (error != NO_ERROR)
-	    {
-	      /*
-	       * There is an error updating the index... Quit... The
-	       * transaction must be aborted by the caller
-	       */
-	      goto exit_on_error;
-	    }
-	}
+        {
+          /* Update the indices */
+          error = locator_update_index (thread_p, recdes, oldrecdes, att_id, n_att_id, oid, class_oid, true, true);
+          if (error != NO_ERROR)
+            {
+              /*
+               * There is an error updating the index... Quit... The
+               * transaction must be aborted by the caller
+               */
+              goto exit_on_error;
+            }
+        }
       else
-	{
-	  /*
-	   * We could not get the object.
-	   * The object may be a new instance, that is only the address
-	   * (no content) is known by the heap manager.
-	   */
-	  int err_id = er_errid ();
+        {
+          /*
+           * We could not get the object.
+           * The object may be a new instance, that is only the address
+           * (no content) is known by the heap manager.
+           */
+          int err_id = er_errid ();
 
-	  if (err_id == ER_HEAP_NODATA_NEWADDRESS)
-	    {
-	      er_clear ();	/* clear the error code */
+          if (err_id == ER_HEAP_NODATA_NEWADDRESS)
+            {
+              er_clear ();      /* clear the error code */
 
-	      /* check iff is not shard tabe
-	       */
-	      assert (!heap_classrepr_is_shard_table (thread_p, class_oid));
-	      assert (oid->groupid == or_grp_id (recdes));
-	      assert (oid->groupid == GLOBAL_GROUPID);
+              /* check iff is not shard tabe
+               */
+              assert (!heap_classrepr_is_shard_table (thread_p, class_oid));
+              assert (oid->groupid == or_grp_id (recdes));
+              assert (oid->groupid == GLOBAL_GROUPID);
 
-#if 1				/* defense code */
-	      if (oid->groupid != GLOBAL_GROUPID)
-		{
-		  oid->groupid = GLOBAL_GROUPID;
-		}
+#if 1                           /* defense code */
+              if (oid->groupid != GLOBAL_GROUPID)
+                {
+                  oid->groupid = GLOBAL_GROUPID;
+                }
 #endif
-	      error = locator_add_or_remove_index (thread_p, recdes, oid,
-						   class_oid, true,
-						   true, true, hfid);
-	      if (error != NO_ERROR)
-		{
-		  goto exit_on_error;
-		}
-	    }
-	  else
-	    {
-	      if (err_id == ER_HEAP_UNKNOWN_OBJECT)
-		{
-		  er_log_debug (ARG_FILE_LINE, "locator_update_force: "
-				"unknown oid ( %d|%d|%d )\n",
-				oid->pageid, oid->slotid, oid->volid);
-		}
+              error = locator_add_or_remove_index (thread_p, recdes, oid, class_oid, true, true, true, hfid);
+              if (error != NO_ERROR)
+                {
+                  goto exit_on_error;
+                }
+            }
+          else
+            {
+              if (err_id == ER_HEAP_UNKNOWN_OBJECT)
+                {
+                  er_log_debug (ARG_FILE_LINE, "locator_update_force: "
+                                "unknown oid ( %d|%d|%d )\n", oid->pageid, oid->slotid, oid->volid);
+                }
 
-	      error = ER_FAILED;
-	      goto exit_on_error;
-	    }
-	}
+              error = ER_FAILED;
+              goto exit_on_error;
+            }
+        }
 
       /*
        * for replication,
@@ -3195,13 +3007,13 @@ locator_update_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * class_oid,
        * The target log info was already created when the locator_update_index
        */
       if (log_does_allow_replication () == true)
-	{
-	  error = repl_add_update_lsa (thread_p, oid);
-	  if (error != NO_ERROR)
-	    {
-	      goto exit_on_error;
-	    }
-	}
+        {
+          error = repl_add_update_lsa (thread_p, oid);
+          if (error != NO_ERROR)
+            {
+              goto exit_on_error;
+            }
+        }
     }
 
   *force_count = 1;
@@ -3231,13 +3043,12 @@ exit_on_error:
  *              index entries are deleted.
  */
 static int
-locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * oid,
-		      HEAP_SCANCACHE * scan_cache, int *force_count)
+locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * oid, HEAP_SCANCACHE * scan_cache, int *force_count)
 {
-  bool isold_object;		/* Make sure that this is an old object
-				 * during the deletion */
-  OID class_oid = NULL_OID_INITIALIZER;	/* Class identifier */
-  char *classname;		/* Classname to update */
+  bool isold_object;            /* Make sure that this is an old object
+                                 * during the deletion */
+  OID class_oid = NULL_OID_INITIALIZER; /* Class identifier */
+  char *classname;              /* Classname to update */
   RECDES copy_recdes = RECDES_INITIALIZER;
   int error_code = NO_ERROR;
 
@@ -3259,38 +3070,37 @@ locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * oid,
    */
   isold_object = true;
 
-  if (heap_get_with_class_oid (thread_p, &class_oid, oid, &copy_recdes,
-			       scan_cache, COPY) != S_SUCCESS)
+  if (heap_get_with_class_oid (thread_p, &class_oid, oid, &copy_recdes, scan_cache, COPY) != S_SUCCESS)
     {
       error_code = er_errid ();
 
       if (error_code == ER_HEAP_NODATA_NEWADDRESS)
-	{
-	  isold_object = false;
-	  er_clear ();		/* clear ER_HEAP_NODATA_NEWADDRESS */
+        {
+          isold_object = false;
+          er_clear ();          /* clear ER_HEAP_NODATA_NEWADDRESS */
 
-	  error_code = NO_ERROR;
-	}
+          error_code = NO_ERROR;
+        }
       else if (error_code == ER_HEAP_UNKNOWN_OBJECT)
-	{
-	  isold_object = false;
-	  er_clear ();
+        {
+          isold_object = false;
+          er_clear ();
 
-	  error_code = NO_ERROR;
-	  goto error;
-	}
+          error_code = NO_ERROR;
+          goto error;
+        }
       else
-	{
-	  /*
-	   * Problems reading the object...Maybe, the transaction should be
-	   * aborted by the caller...Quit..
-	   */
-	  if (error_code == NO_ERROR)
-	    {
-	      error_code = ER_FAILED;
-	    }
-	  goto error;
-	}
+        {
+          /*
+           * Problems reading the object...Maybe, the transaction should be
+           * aborted by the caller...Quit..
+           */
+          if (error_code == NO_ERROR)
+            {
+              error_code = ER_FAILED;
+            }
+          goto error;
+        }
     }
 
   if (isold_object == false)
@@ -3305,13 +3115,12 @@ locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * oid,
        * aborted by the caller...Quit..
        */
       er_log_debug (ARG_FILE_LINE,
-		    "locator_delete_force: hf_delete failed for tran %d\n",
-		    logtb_get_current_tran_index (thread_p));
+                    "locator_delete_force: hf_delete failed for tran %d\n", logtb_get_current_tran_index (thread_p));
       error_code = er_errid ();
       if (error_code == NO_ERROR)
-	{
-	  error_code = ER_FAILED;
-	}
+        {
+          error_code = ER_FAILED;
+        }
       goto error;
     }
 
@@ -3326,19 +3135,18 @@ locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * oid,
 
       /* Delete the classname entry */
       classname = or_class_name (&copy_recdes);
-      if ((ehash_delete (thread_p, locator_Eht_classnames, (void *) classname)
-	   == NULL))
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"locator_delete_force: ehash_delete failed for tran %d\n",
-			logtb_get_current_tran_index (thread_p));
-	  error_code = er_errid ();
-	  if (error_code == NO_ERROR)
-	    {
-	      error_code = ER_FAILED;
-	    }
-	  goto error;
-	}
+      if ((ehash_delete (thread_p, locator_Eht_classnames, (void *) classname) == NULL))
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "locator_delete_force: ehash_delete failed for tran %d\n",
+                        logtb_get_current_tran_index (thread_p));
+          error_code = er_errid ();
+          if (error_code == NO_ERROR)
+            {
+              error_code = ER_FAILED;
+            }
+          goto error;
+        }
 
       /* Note: by now, the client has probably already requested this class
        * be deleted. We try again here
@@ -3351,41 +3159,35 @@ locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * oid,
       (void) xlocator_delete_class_name (thread_p, classname);
       /* remove from the catalog... when is not the root */
       if (!OID_IS_ROOTOID (oid))
-	{
-	  error_code = catalog_delete (thread_p, oid);
-	  if (error_code != NO_ERROR)
-	    {
-	      er_log_debug (ARG_FILE_LINE,
-			    "locator_delete_force: ct_delete_catalog failed "
-			    "for tran %d\n",
-			    logtb_get_current_tran_index (thread_p));
-	      goto error;
-	    }
-	}
+        {
+          error_code = catalog_delete (thread_p, oid);
+          if (error_code != NO_ERROR)
+            {
+              er_log_debug (ARG_FILE_LINE,
+                            "locator_delete_force: ct_delete_catalog failed "
+                            "for tran %d\n", logtb_get_current_tran_index (thread_p));
+              goto error;
+            }
+        }
       if (catcls_Enable)
-	{
-	  error_code = catcls_delete_catalog_classes (thread_p, classname,
-						      oid);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error;
-	    }
-	}
+        {
+          error_code = catcls_delete_catalog_classes (thread_p, classname, oid);
+          if (error_code != NO_ERROR)
+            {
+              goto error;
+            }
+        }
 
-      assert (prm_get_integer_value (PRM_ID_XASL_MAX_PLAN_CACHE_ENTRIES) >=
-	      1000);
+      assert (prm_get_integer_value (PRM_ID_XASL_MAX_PLAN_CACHE_ENTRIES) >= 1000);
 
       /* remove XASL cache entries which is relevant with that class */
-      if (!OID_IS_ROOTOID (oid)
-	  && qexec_remove_xasl_cache_ent_by_class (thread_p, oid,
-						   1) != NO_ERROR)
-	{
-	  er_log_debug (ARG_FILE_LINE,
-			"locator_delete_force:"
-			" qexec_remove_xasl_cache_ent_by_class"
-			" failed for class { %d %d %d }\n",
-			oid->pageid, oid->slotid, oid->volid);
-	}
+      if (!OID_IS_ROOTOID (oid) && qexec_remove_xasl_cache_ent_by_class (thread_p, oid, 1) != NO_ERROR)
+        {
+          er_log_debug (ARG_FILE_LINE,
+                        "locator_delete_force:"
+                        " qexec_remove_xasl_cache_ent_by_class"
+                        " failed for class { %d %d %d }\n", oid->pageid, oid->slotid, oid->volid);
+        }
 
     }
   else
@@ -3394,27 +3196,24 @@ locator_delete_force (THREAD_ENTRY * thread_p, HFID * hfid, OID * oid,
        * Likely an INSTANCE: Apply the necessary index deletions
        */
       if (isold_object == true)
-	{
-	  error_code = locator_add_or_remove_index (thread_p, &copy_recdes,
-						    oid, &class_oid,
-						    false, true, true, hfid);
-	  if (error_code != NO_ERROR)
-	    {
-	      /*
-	       * There is an error deleting the index... Quit... The
-	       * transaction must be aborted by the caller
-	       */
-	      goto error;
-	    }
+        {
+          error_code = locator_add_or_remove_index (thread_p, &copy_recdes, oid, &class_oid, false, true, true, hfid);
+          if (error_code != NO_ERROR)
+            {
+              /*
+               * There is an error deleting the index... Quit... The
+               * transaction must be aborted by the caller
+               */
+              goto error;
+            }
 
-	  assert (!heap_is_big_length (copy_recdes.length)
-		  || copy_recdes.type == REC_BIGONE);
+          assert (!heap_is_big_length (copy_recdes.length) || copy_recdes.type == REC_BIGONE);
 
-	  if (copy_recdes.type == REC_BIGONE)
-	    {
-	      log_append_del_ovfl_record (thread_p, &class_oid, &copy_recdes);
-	    }
-	}
+          if (copy_recdes.type == REC_BIGONE)
+            {
+              log_append_del_ovfl_record (thread_p, &class_oid, &copy_recdes);
+            }
+        }
     }
 
   *force_count = 1;
@@ -3447,9 +3246,7 @@ error:
  */
 static void
 locator_repl_add_error_to_copyarea (LC_COPYAREA ** copy_area, RECDES * recdes,
-				    LC_COPYAREA_ONEOBJ * obj,
-				    DB_IDXKEY * key,
-				    int err_code, const char *err_msg)
+                                    LC_COPYAREA_ONEOBJ * obj, DB_IDXKEY * key, int err_code, const char *err_msg)
 {
   LC_COPYAREA *new_copy_area = NULL;
   LC_COPYAREA_MANYOBJS *reply_mobjs = NULL;
@@ -3462,8 +3259,7 @@ locator_repl_add_error_to_copyarea (LC_COPYAREA ** copy_area, RECDES * recdes,
 
   reply_mobjs = LC_MANYOBJS_PTR_IN_COPYAREA (*copy_area);
 
-  reply_obj =
-    LC_FIND_ONEOBJ_PTR_IN_COPYAREA (reply_mobjs, reply_mobjs->num_objs);
+  reply_obj = LC_FIND_ONEOBJ_PTR_IN_COPYAREA (reply_mobjs, reply_mobjs->num_objs);
 
   packed_length += OR_IDXKEY_ALIGNED_SIZE (key);
   packed_length += OR_INT_SIZE;
@@ -3474,22 +3270,18 @@ locator_repl_add_error_to_copyarea (LC_COPYAREA ** copy_area, RECDES * recdes,
       prev_offset = CAST_BUFLEN (recdes->data - (*copy_area)->mem);
       prev_length = (*copy_area)->length;
 
-      new_copy_area =
-	locator_reallocate_copy_area_by_length (*copy_area,
-						(*copy_area)->length +
-						DB_PAGESIZE);
+      new_copy_area = locator_reallocate_copy_area_by_length (*copy_area, (*copy_area)->length + DB_PAGESIZE);
       if (new_copy_area == NULL)
-	{
-	  /* failed to reallocate copy area. skip the current error */
-	  return;
-	}
+        {
+          /* failed to reallocate copy area. skip the current error */
+          return;
+        }
       else
-	{
-	  recdes->data = new_copy_area->mem + prev_offset;
-	  recdes->area_size +=
-	    CAST_BUFLEN (new_copy_area->length - prev_length);
-	  *copy_area = new_copy_area;
-	}
+        {
+          recdes->data = new_copy_area->mem + prev_offset;
+          recdes->area_size += CAST_BUFLEN (new_copy_area->length - prev_length);
+          *copy_area = new_copy_area;
+        }
     }
 
   ptr = recdes->data;
@@ -3509,9 +3301,7 @@ locator_repl_add_error_to_copyarea (LC_COPYAREA ** copy_area, RECDES * recdes,
   round_length = DB_ALIGN (recdes->length, MAX_ALIGNMENT);
 #if !defined(NDEBUG)
   /* suppress valgrind UMW error */
-  memset (recdes->data + recdes->length, 0,
-	  MIN (round_length - recdes->length,
-	       recdes->area_size - recdes->length));
+  memset (recdes->data + recdes->length, 0, MIN (round_length - recdes->length, recdes->area_size - recdes->length));
 #endif
   recdes->data += round_length;
   recdes->area_size -= round_length + sizeof (*reply_obj);
@@ -3534,9 +3324,8 @@ locator_repl_add_error_to_copyarea (LC_COPYAREA ** copy_area, RECDES * recdes,
  */
 static int
 locator_repl_prepare_force (THREAD_ENTRY * thread_p, int *shard_group_id,
-			    LC_COPYAREA_ONEOBJ * obj,
-			    RECDES * old_recdes, RECDES * recdes,
-			    DB_IDXKEY * key, HEAP_SCANCACHE * force_scancache)
+                            LC_COPYAREA_ONEOBJ * obj,
+                            RECDES * old_recdes, RECDES * recdes, DB_IDXKEY * key, HEAP_SCANCACHE * force_scancache)
 {
   int error_code = NO_ERROR;
   int last_repr_id = -1;
@@ -3551,40 +3340,35 @@ locator_repl_prepare_force (THREAD_ENTRY * thread_p, int *shard_group_id,
     {
       last_repr_id = heap_get_class_repr_id (thread_p, &obj->class_oid);
       if (last_repr_id == 0)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CT_INVALID_REPRID, 1,
-		  last_repr_id);
-	  return ER_CT_INVALID_REPRID;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_CT_INVALID_REPRID, 1, last_repr_id);
+          return ER_CT_INVALID_REPRID;
+        }
       *shard_group_id = or_grp_id (recdes);
 
       error_code = or_set_rep_id (recdes, last_repr_id);
       if (error_code != NO_ERROR)
-	{
-	  return error_code;
-	}
+        {
+          return error_code;
+        }
     }
 
   if (obj->operation != LC_FLUSH_INSERT)
     {
-      assert (obj->operation == LC_FLUSH_DELETE
-	      || obj->operation == LC_FLUSH_UPDATE);
+      assert (obj->operation == LC_FLUSH_DELETE || obj->operation == LC_FLUSH_UPDATE);
       error_code = btree_get_pkey_btid (thread_p, &obj->class_oid, &btid);
       if (error_code != NO_ERROR)
-	{
-	  return error_code;
-	}
+        {
+          return error_code;
+        }
 
-      if (xbtree_find_unique (thread_p, &obj->class_oid, &btid, key,
-			      &obj->oid) != BTREE_KEY_FOUND)
-	{
-	  /* ignore error */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_OBJECT_NOT_FOUND,
-		  0);
-	  return ER_OBJ_OBJECT_NOT_FOUND;
-	}
-      assert (*shard_group_id == NULL_GROUPID
-	      || *shard_group_id == obj->oid.groupid);
+      if (xbtree_find_unique (thread_p, &obj->class_oid, &btid, key, &obj->oid) != BTREE_KEY_FOUND)
+        {
+          /* ignore error */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OBJ_OBJECT_NOT_FOUND, 0);
+          return ER_OBJ_OBJECT_NOT_FOUND;
+        }
+      assert (*shard_group_id == NULL_GROUPID || *shard_group_id == obj->oid.groupid);
 
       *shard_group_id = obj->oid.groupid;
     }
@@ -3594,23 +3378,21 @@ locator_repl_prepare_force (THREAD_ENTRY * thread_p, int *shard_group_id,
     {
       assert (!OID_ISNULL (&obj->oid));
 
-      scan = heap_get (thread_p, &obj->oid, old_recdes,
-		       force_scancache, PEEK);
+      scan = heap_get (thread_p, &obj->oid, old_recdes, force_scancache, PEEK);
 
       if (scan != S_SUCCESS)
-	{
-	  assert (er_errid () != NO_ERROR);
-	  error_code = er_errid ();
-	  if (error_code == ER_HEAP_UNKNOWN_OBJECT)
-	    {
-	      er_log_debug (ARG_FILE_LINE,
-			    "locator_repl_prepare_force : "
-			    "unknown oid ( %d|%d|%d )\n", obj->oid.pageid,
-			    obj->oid.slotid, obj->oid.volid);
-	    }
+        {
+          assert (er_errid () != NO_ERROR);
+          error_code = er_errid ();
+          if (error_code == ER_HEAP_UNKNOWN_OBJECT)
+            {
+              er_log_debug (ARG_FILE_LINE,
+                            "locator_repl_prepare_force : "
+                            "unknown oid ( %d|%d|%d )\n", obj->oid.pageid, obj->oid.slotid, obj->oid.volid);
+            }
 
-	  return error_code;
-	}
+          return error_code;
+        }
     }
 
   return NO_ERROR;
@@ -3628,8 +3410,7 @@ locator_repl_prepare_force (THREAD_ENTRY * thread_p, int *shard_group_id,
  */
 static int
 locator_repl_get_key_value (DB_IDXKEY * key, const char **class_name,
-			    LC_COPYAREA * force_area,
-			    LC_COPYAREA_ONEOBJ * obj)
+                            LC_COPYAREA * force_area, LC_COPYAREA_ONEOBJ * obj)
 {
   char *ptr, *start_ptr;
 
@@ -3656,14 +3437,13 @@ locator_repl_get_key_value (DB_IDXKEY * key, const char **class_name,
  *              object placed in the force_area.
  */
 int
-xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area,
-		     LC_COPYAREA ** reply_area)
+xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area, LC_COPYAREA ** reply_area)
 {
-  LC_COPYAREA_MANYOBJS *mobjs;	/* Describe multiple objects in area */
-  LC_COPYAREA_ONEOBJ *obj;	/* Describe on object in area        */
-  RECDES recdes = RECDES_INITIALIZER;	/* Record descriptor for object      */
+  LC_COPYAREA_MANYOBJS *mobjs;  /* Describe multiple objects in area */
+  LC_COPYAREA_ONEOBJ *obj;      /* Describe on object in area        */
+  RECDES recdes = RECDES_INITIALIZER;   /* Record descriptor for object      */
   RECDES old_recdes = RECDES_INITIALIZER;
-  RECDES reply_recdes = RECDES_INITIALIZER;	/* Describe copy area for reply */
+  RECDES reply_recdes = RECDES_INITIALIZER;     /* Describe copy area for reply */
   int i;
   HEAP_SCANCACHE *force_scancache = NULL;
   HEAP_SCANCACHE scan_cache;
@@ -3702,221 +3482,198 @@ xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area,
 
       obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (obj);
 
-      packed_key_value_len = locator_repl_get_key_value (&key, &class_name,
-							 force_area, obj);
+      packed_key_value_len = locator_repl_get_key_value (&key, &class_name, force_area, obj);
 
-      status = xlocator_find_class_oid (thread_p, class_name,
-					&obj->class_oid, NULL_LOCK);
+      status = xlocator_find_class_oid (thread_p, class_name, &obj->class_oid, NULL_LOCK);
       if (status == LC_CLASSNAME_ERROR || status == LC_CLASSNAME_DELETED)
-	{
-	  error = ER_LC_UNKNOWN_CLASSNAME;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, class_name);
+        {
+          error = ER_LC_UNKNOWN_CLASSNAME;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, class_name);
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
       DB_MAKE_OID (&class_lock_val, &obj->class_oid);
-      if (lock_object (thread_p, &class_lock_val,
-		       S_LOCK, LK_UNCOND_LOCK) != LK_GRANTED)
-	{
-	  error = er_errid ();
+      if (lock_object (thread_p, &class_lock_val, S_LOCK, LK_UNCOND_LOCK) != LK_GRANTED)
+        {
+          error = er_errid ();
 
-	  GOTO_EXIT_ON_ERROR;
-	}
+          GOTO_EXIT_ON_ERROR;
+        }
 
-      LC_REPL_RECDES_FOR_ONEOBJ (force_area, obj, packed_key_value_len,
-				 &recdes);
+      LC_REPL_RECDES_FOR_ONEOBJ (force_area, obj, packed_key_value_len, &recdes);
 
-      error = heap_get_hfid_from_class_oid (thread_p, &obj->class_oid,
-					    &obj->hfid);
+      error = heap_get_hfid_from_class_oid (thread_p, &obj->class_oid, &obj->hfid);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if (HFID_EQ (&prev_hfid, &obj->hfid) != true && force_scancache != NULL)
-	{
-	  locator_end_force_scan_cache (thread_p, force_scancache);
-	  force_scancache = NULL;
-	}
+        {
+          locator_end_force_scan_cache (thread_p, force_scancache);
+          force_scancache = NULL;
+        }
 
       if (force_scancache == NULL
-	  && (obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
-	      && obj->operation != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE))
-	{
-	  /* Initialize a modify scancache */
-	  error = locator_start_force_scan_cache (thread_p, &scan_cache,
-						  &obj->hfid, 0,
-						  &obj->class_oid);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	  force_scancache = &scan_cache;
-	  HFID_COPY (&prev_hfid, &obj->hfid);
-	}
+          && (obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
+              && obj->operation != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE))
+        {
+          /* Initialize a modify scancache */
+          error = locator_start_force_scan_cache (thread_p, &scan_cache, &obj->hfid, 0, &obj->class_oid);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+          force_scancache = &scan_cache;
+          HFID_COPY (&prev_hfid, &obj->hfid);
+        }
 
       error = xtran_server_start_topop (thread_p, &oneobj_lsa);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
-      if (obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE
-	  && obj->operation != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
-	{
-	  error = locator_repl_prepare_force (thread_p, &shard_groupid, obj,
-					      &old_recdes, &recdes,
-					      &key, force_scancache);
-	  if (error == ER_OBJ_OBJECT_NOT_FOUND)
-	    {
-	      char pkey_buf[255];
-	      int ha_error;
+      if (obj->operation != LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE && obj->operation != LC_FLUSH_HA_CATALOG_APPLIER_UPDATE)
+        {
+          error = locator_repl_prepare_force (thread_p, &shard_groupid, obj,
+                                              &old_recdes, &recdes, &key, force_scancache);
+          if (error == ER_OBJ_OBJECT_NOT_FOUND)
+            {
+              char pkey_buf[255];
+              int ha_error;
 
-	      assert (obj->operation == LC_FLUSH_DELETE
-		      || obj->operation == LC_FLUSH_UPDATE);
-	      if (obj->operation == LC_FLUSH_UPDATE)
-		{
-		  ha_error = ER_HA_LA_FAILED_TO_APPLY_UPDATE;
-		}
-	      else
-		{
-		  ha_error = ER_HA_LA_FAILED_TO_APPLY_DELETE;
-		}
+              assert (obj->operation == LC_FLUSH_DELETE || obj->operation == LC_FLUSH_UPDATE);
+              if (obj->operation == LC_FLUSH_UPDATE)
+                {
+                  ha_error = ER_HA_LA_FAILED_TO_APPLY_UPDATE;
+                }
+              else
+                {
+                  ha_error = ER_HA_LA_FAILED_TO_APPLY_DELETE;
+                }
 
-	      help_sprint_idxkey (&key, pkey_buf, sizeof (pkey_buf) - 1);
-	      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		      ha_error, 4, class_name, pkey_buf,
-		      error, "internal server error.");
+              help_sprint_idxkey (&key, pkey_buf, sizeof (pkey_buf) - 1);
+              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                      ha_error, 4, class_name, pkey_buf, error, "internal server error.");
 
-	      /* ignore error */
-	      error = NO_ERROR;
-	      goto end_one_object;
-	    }
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
+              /* ignore error */
+              error = NO_ERROR;
+              goto end_one_object;
+            }
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  if (shard_groupid < GLOBAL_GROUPID)
-	    {
-	      assert (false);
-	      GOTO_EXIT_ON_ERROR;
-	    }
+          if (shard_groupid < GLOBAL_GROUPID)
+            {
+              assert (false);
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  if (shard_groupid == GLOBAL_GROUPID)
-	    {
-	      is_shard_table = false;
-	      shard_key = NULL;
-	    }
-	  else
-	    {
-	      is_shard_table = true;
-	      shard_key = &key.vals[0];
-	    }
+          if (shard_groupid == GLOBAL_GROUPID)
+            {
+              is_shard_table = false;
+              shard_key = NULL;
+            }
+          else
+            {
+              is_shard_table = true;
+              shard_key = &key.vals[0];
+            }
 
-	  error = lock_shard_key_lock (thread_p, shard_groupid, shard_key,
-				       &obj->class_oid, is_shard_table,
-				       false, true);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	}
+          error = lock_shard_key_lock (thread_p, shard_groupid, shard_key,
+                                       &obj->class_oid, is_shard_table, false, true);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+        }
 
       switch (obj->operation)
-	{
-	case LC_FLUSH_INSERT:
-	  error = locator_insert_force (thread_p, &obj->hfid,
-					&obj->class_oid, &obj->oid,
-					&recdes, force_scancache,
-					&force_count);
+        {
+        case LC_FLUSH_INSERT:
+          error = locator_insert_force (thread_p, &obj->hfid,
+                                        &obj->class_oid, &obj->oid, &recdes, force_scancache, &force_count);
 
-	  if (error == NO_ERROR)
-	    {
-	      /* monitor */
-	      mnt_stats_counter (thread_p, MNT_STATS_QUERY_INSERTS, 1);
-	    }
-	  break;
+          if (error == NO_ERROR)
+            {
+              /* monitor */
+              mnt_stats_counter (thread_p, MNT_STATS_QUERY_INSERTS, 1);
+            }
+          break;
 
-	case LC_FLUSH_UPDATE:
-	  error = locator_update_force (thread_p, &obj->hfid,
-					&obj->class_oid, &obj->oid, NULL,
-					&recdes, NULL, 0,
-					force_scancache, &force_count);
+        case LC_FLUSH_UPDATE:
+          error = locator_update_force (thread_p, &obj->hfid,
+                                        &obj->class_oid, &obj->oid, NULL,
+                                        &recdes, NULL, 0, force_scancache, &force_count);
 
-	  if (error == NO_ERROR)
-	    {
-	      /* monitor */
-	      mnt_stats_counter (thread_p, MNT_STATS_QUERY_UPDATES, 1);
-	    }
-	  break;
+          if (error == NO_ERROR)
+            {
+              /* monitor */
+              mnt_stats_counter (thread_p, MNT_STATS_QUERY_UPDATES, 1);
+            }
+          break;
 
-	case LC_FLUSH_DELETE:
-	  error = locator_delete_force (thread_p, &obj->hfid, &obj->oid,
-					force_scancache, &force_count);
+        case LC_FLUSH_DELETE:
+          error = locator_delete_force (thread_p, &obj->hfid, &obj->oid, force_scancache, &force_count);
 
-	  if (error == NO_ERROR)
-	    {
-	      /* monitor */
-	      mnt_stats_counter (thread_p, MNT_STATS_QUERY_DELETES, 1);
-	    }
-	  break;
-	case LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE:
-	  assert (strncasecmp (class_name, CT_LOG_ANALYZER_NAME,
-			       strlen (CT_LOG_ANALYZER_NAME)) == 0);
-	  assert (recdes.length == sizeof (CIRP_CT_LOG_ANALYZER));
+          if (error == NO_ERROR)
+            {
+              /* monitor */
+              mnt_stats_counter (thread_p, MNT_STATS_QUERY_DELETES, 1);
+            }
+          break;
+        case LC_FLUSH_HA_CATALOG_ANALYZER_UPDATE:
+          assert (strncasecmp (class_name, CT_LOG_ANALYZER_NAME, strlen (CT_LOG_ANALYZER_NAME)) == 0);
+          assert (recdes.length == sizeof (CIRP_CT_LOG_ANALYZER));
 
-	  memcpy (&analyzer_info, recdes.data, sizeof (CIRP_CT_LOG_ANALYZER));
-	  error = qexec_upsert_analyzer_info (thread_p, &key, &analyzer_info);
-	  need_commit = true;
-	  break;
-	case LC_FLUSH_HA_CATALOG_APPLIER_UPDATE:
-	  assert (strncasecmp (class_name, CT_LOG_APPLIER_NAME,
-			       strlen (CT_LOG_APPLIER_NAME)) == 0);
-	  assert (recdes.length == sizeof (CIRP_CT_LOG_APPLIER));
+          memcpy (&analyzer_info, recdes.data, sizeof (CIRP_CT_LOG_ANALYZER));
+          error = qexec_upsert_analyzer_info (thread_p, &key, &analyzer_info);
+          need_commit = true;
+          break;
+        case LC_FLUSH_HA_CATALOG_APPLIER_UPDATE:
+          assert (strncasecmp (class_name, CT_LOG_APPLIER_NAME, strlen (CT_LOG_APPLIER_NAME)) == 0);
+          assert (recdes.length == sizeof (CIRP_CT_LOG_APPLIER));
 
-	  memcpy (&applier_info, recdes.data, sizeof (CIRP_CT_LOG_APPLIER));
-	  error = qexec_upsert_applier_info (thread_p, &key, &applier_info);
-	  need_commit = true;
-	  break;
+          memcpy (&applier_info, recdes.data, sizeof (CIRP_CT_LOG_APPLIER));
+          error = qexec_upsert_applier_info (thread_p, &key, &applier_info);
+          need_commit = true;
+          break;
 
-	default:
-	  /*
-	   * Problems forcing the object. Don't known what flush/force operation
-	   * to execute on the object... This is a system error...
-	   * Maybe, the transaction should be aborted by the caller...Quit..
-	   */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LC_BADFORCE_OPERATION, 4, obj->operation,
-		  obj->oid.volid, obj->oid.pageid, obj->oid.slotid);
-	  error = ER_LC_BADFORCE_OPERATION;
-	  break;
-	}			/* end-switch */
+        default:
+          /*
+           * Problems forcing the object. Don't known what flush/force operation
+           * to execute on the object... This is a system error...
+           * Maybe, the transaction should be aborted by the caller...Quit..
+           */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                  ER_LC_BADFORCE_OPERATION, 4, obj->operation, obj->oid.volid, obj->oid.pageid, obj->oid.slotid);
+          error = ER_LC_BADFORCE_OPERATION;
+          break;
+        }                       /* end-switch */
 
     end_one_object:
       if (error != NO_ERROR)
-	{
-	  if (er_la_ignore_on_error (error) == false)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
+        {
+          if (er_la_ignore_on_error (error) == false)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
 
-	  locator_repl_add_error_to_copyarea (reply_area, &reply_recdes, obj,
-					      &key, error, "");
+          locator_repl_add_error_to_copyarea (reply_area, &reply_recdes, obj, &key, error, "");
 
-	  error = NO_ERROR;
-	  num_continue_on_error++;
+          error = NO_ERROR;
+          num_continue_on_error++;
 
-	  (void) xtran_server_end_topop (thread_p,
-					 LOG_RESULT_TOPOP_ABORT, &oneobj_lsa);
-	}
+          (void) xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ABORT, &oneobj_lsa);
+        }
       else
-	{
-	  (void) xtran_server_end_topop (thread_p,
-					 LOG_RESULT_TOPOP_ATTACH_TO_OUTER,
-					 &oneobj_lsa);
-	}
+        {
+          (void) xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ATTACH_TO_OUTER, &oneobj_lsa);
+        }
 
       (void) db_idxkey_clear (&key);
     }
@@ -3926,8 +3683,7 @@ xlocator_repl_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area,
       locator_end_force_scan_cache (thread_p, force_scancache);
     }
 
-  if (need_commit == true
-      && xtran_server_commit (thread_p) != TRAN_UNACTIVE_COMMITTED)
+  if (need_commit == true && xtran_server_commit (thread_p) != TRAN_UNACTIVE_COMMITTED)
     {
       error = er_errid ();
       GOTO_EXIT_ON_ERROR;
@@ -3945,8 +3701,7 @@ exit_on_error:
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid error code");
     }
 
   (void) db_idxkey_clear (&key);
@@ -3974,9 +3729,9 @@ exit_on_error:
 int
 xlocator_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area)
 {
-  LC_COPYAREA_MANYOBJS *mobjs;	/* Describe multiple objects in area */
-  LC_COPYAREA_ONEOBJ *obj;	/* Describe on object in area        */
-  RECDES recdes;		/* Record descriptor for object      */
+  LC_COPYAREA_MANYOBJS *mobjs;  /* Describe multiple objects in area */
+  LC_COPYAREA_ONEOBJ *obj;      /* Describe on object in area        */
+  RECDES recdes;                /* Record descriptor for object      */
   int i;
   HEAP_SCANCACHE *force_scancache = NULL;
   HEAP_SCANCACHE scan_cache;
@@ -4019,103 +3774,93 @@ xlocator_force (THREAD_ENTRY * thread_p, LC_COPYAREA * force_area)
       /*
        * Initialize a modify scancache
        */
-      error = locator_start_force_scan_cache (thread_p, &scan_cache,
-					      &obj->hfid, 0, NULL);
+      error = locator_start_force_scan_cache (thread_p, &scan_cache, &obj->hfid, 0, NULL);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
       force_scancache = &scan_cache;
 
       if (LOG_CHECK_REPL_BROKER (thread_p))
-	{
-	  error = xtran_server_start_topop (thread_p, &oneobj_lsa);
-	  if (error != NO_ERROR)
-	    {
-	      GOTO_EXIT_ON_ERROR;
-	    }
-	}
+        {
+          error = xtran_server_start_topop (thread_p, &oneobj_lsa);
+          if (error != NO_ERROR)
+            {
+              GOTO_EXIT_ON_ERROR;
+            }
+        }
 
       switch (obj->operation)
-	{
-	case LC_FLUSH_INSERT:
-	  error = locator_insert_force (thread_p, &obj->hfid, &obj->class_oid,
-					&obj->oid, &recdes, force_scancache,
-					&force_count);
+        {
+        case LC_FLUSH_INSERT:
+          error = locator_insert_force (thread_p, &obj->hfid, &obj->class_oid,
+                                        &obj->oid, &recdes, force_scancache, &force_count);
 
-	  if (error == NO_ERROR)
-	    {
-	      /* monitor */
-	      mnt_stats_counter (thread_p, MNT_STATS_QUERY_INSERTS, 1);
-	    }
-	  break;
+          if (error == NO_ERROR)
+            {
+              /* monitor */
+              mnt_stats_counter (thread_p, MNT_STATS_QUERY_INSERTS, 1);
+            }
+          break;
 
-	case LC_FLUSH_UPDATE:
-	  error = locator_update_force (thread_p, &obj->hfid, &obj->class_oid,
-					&obj->oid, NULL, &recdes,
-					NULL, 0,
-					force_scancache, &force_count);
+        case LC_FLUSH_UPDATE:
+          error = locator_update_force (thread_p, &obj->hfid, &obj->class_oid,
+                                        &obj->oid, NULL, &recdes, NULL, 0, force_scancache, &force_count);
 
-	  if (error == NO_ERROR)
-	    {
-	      /* monitor */
-	      mnt_stats_counter (thread_p, MNT_STATS_QUERY_UPDATES, 1);
-	    }
-	  break;
+          if (error == NO_ERROR)
+            {
+              /* monitor */
+              mnt_stats_counter (thread_p, MNT_STATS_QUERY_UPDATES, 1);
+            }
+          break;
 
-	case LC_FLUSH_DELETE:
-	  error = locator_delete_force (thread_p, &obj->hfid, &obj->oid,
-					force_scancache, &force_count);
+        case LC_FLUSH_DELETE:
+          error = locator_delete_force (thread_p, &obj->hfid, &obj->oid, force_scancache, &force_count);
 
-	  if (error == NO_ERROR)
-	    {
-	      /* monitor */
-	      mnt_stats_counter (thread_p, MNT_STATS_QUERY_DELETES, 1);
-	    }
-	  break;
+          if (error == NO_ERROR)
+            {
+              /* monitor */
+              mnt_stats_counter (thread_p, MNT_STATS_QUERY_DELETES, 1);
+            }
+          break;
 
-	default:
-	  /*
-	   * Problems forcing the object. Don't known what flush/force operation
-	   * to execute on the object... This is a system error...
-	   * Maybe, the transaction should be aborted by the caller...Quit..
-	   */
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_LC_BADFORCE_OPERATION, 4, obj->operation,
-		  obj->oid.volid, obj->oid.pageid, obj->oid.slotid);
-	  error = ER_LC_BADFORCE_OPERATION;
-	  break;
-	}			/* end-switch */
+        default:
+          /*
+           * Problems forcing the object. Don't known what flush/force operation
+           * to execute on the object... This is a system error...
+           * Maybe, the transaction should be aborted by the caller...Quit..
+           */
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                  ER_LC_BADFORCE_OPERATION, 4, obj->operation, obj->oid.volid, obj->oid.pageid, obj->oid.slotid);
+          error = ER_LC_BADFORCE_OPERATION;
+          break;
+        }                       /* end-switch */
 
       if (LOG_CHECK_REPL_BROKER (thread_p))
-	{
-	  if (error != NO_ERROR)
-	    {
-	      (void) xtran_server_end_topop (thread_p,
-					     LOG_RESULT_TOPOP_ABORT,
-					     &oneobj_lsa);
-	    }
-	  else
-	    {
-	      (void) xtran_server_end_topop (thread_p,
-					     LOG_RESULT_TOPOP_ATTACH_TO_OUTER,
-					     &oneobj_lsa);
-	    }
-	}
+        {
+          if (error != NO_ERROR)
+            {
+              (void) xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ABORT, &oneobj_lsa);
+            }
+          else
+            {
+              (void) xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ATTACH_TO_OUTER, &oneobj_lsa);
+            }
+        }
 
       if (error != NO_ERROR)
-	{
-	  /*
-	   * Problems... Maybe, the transaction should
-	   * be aborted by the caller...Quit..
-	   */
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          /*
+           * Problems... Maybe, the transaction should
+           * be aborted by the caller...Quit..
+           */
+          GOTO_EXIT_ON_ERROR;
+        }
 
       assert (force_scancache != NULL);
       locator_end_force_scan_cache (thread_p, force_scancache);
       force_scancache = NULL;
-    }				/* end-for */
+    }                           /* end-for */
 
 #if 0
 done:
@@ -4127,8 +3872,7 @@ done:
       locator_end_force_scan_cache (thread_p, force_scancache);
     }
 
-  (void) xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ATTACH_TO_OUTER,
-				 &lsa);
+  (void) xtran_server_end_topop (thread_p, LOG_RESULT_TOPOP_ATTACH_TO_OUTER, &lsa);
 
   return error;
 
@@ -4165,15 +3909,12 @@ exit_on_error:
  */
 LC_COPYAREA *
 locator_allocate_copy_area_by_attr_info (THREAD_ENTRY * thread_p,
-					 HEAP_CACHE_ATTRINFO * attr_info,
-					 RECDES * old_recdes,
-					 RECDES * new_recdes,
-					 int shard_groupid,
-					 const int copyarea_length_hint)
+                                         HEAP_CACHE_ATTRINFO * attr_info,
+                                         RECDES * old_recdes,
+                                         RECDES * new_recdes, int shard_groupid, const int copyarea_length_hint)
 {
   LC_COPYAREA *copyarea = NULL;
-  int copyarea_length =
-    copyarea_length_hint <= 0 ? DB_PAGESIZE : copyarea_length_hint;
+  int copyarea_length = copyarea_length_hint <= 0 ? DB_PAGESIZE : copyarea_length_hint;
   SCAN_CODE scan = S_DOESNT_FIT;
 
   assert (attr_info != NULL);
@@ -4183,48 +3924,45 @@ locator_allocate_copy_area_by_attr_info (THREAD_ENTRY * thread_p,
     {
       copyarea = locator_allocate_copy_area_by_length (copyarea_length);
       if (copyarea == NULL)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       new_recdes->data = copyarea->mem;
       new_recdes->area_size = copyarea->length;
 
-      scan = heap_attrinfo_transform_to_disk (thread_p, attr_info,
-					      old_recdes, new_recdes,
-					      shard_groupid);
+      scan = heap_attrinfo_transform_to_disk (thread_p, attr_info, old_recdes, new_recdes, shard_groupid);
       if (scan != S_SUCCESS)
-	{
-	  /* Get the real length used in the copy area */
-	  copyarea_length = copyarea->length;
-	  locator_free_copy_area (copyarea);
-	  copyarea = NULL;
-	  new_recdes->data = NULL;
-	  new_recdes->area_size = 0;
+        {
+          /* Get the real length used in the copy area */
+          copyarea_length = copyarea->length;
+          locator_free_copy_area (copyarea);
+          copyarea = NULL;
+          new_recdes->data = NULL;
+          new_recdes->area_size = 0;
 
-	  /* Is more space needed ? */
-	  if (scan == S_DOESNT_FIT)
-	    {
-	      /*
-	       * The object does not fit into copy area, increase the area
-	       * to estimated size included in length of record descriptor.
-	       */
-	      if (copyarea_length < (-new_recdes->length))
-		{
-		  copyarea_length =
-		    DB_ALIGN (-new_recdes->length, MAX_ALIGNMENT);
-		}
-	      else
-		{
-		  /*
-		   * This is done for security purposes only, since the
-		   * transformation may not have given us the correct length,
-		   * somehow.
-		   */
-		  copyarea_length += DB_PAGESIZE;
-		}
-	    }
-	}
+          /* Is more space needed ? */
+          if (scan == S_DOESNT_FIT)
+            {
+              /*
+               * The object does not fit into copy area, increase the area
+               * to estimated size included in length of record descriptor.
+               */
+              if (copyarea_length < (-new_recdes->length))
+                {
+                  copyarea_length = DB_ALIGN (-new_recdes->length, MAX_ALIGNMENT);
+                }
+              else
+                {
+                  /*
+                   * This is done for security purposes only, since the
+                   * transformation may not have given us the correct length,
+                   * somehow.
+                   */
+                  copyarea_length += DB_PAGESIZE;
+                }
+            }
+        }
     }
   return copyarea;
 }
@@ -4254,14 +3992,13 @@ locator_allocate_copy_area_by_attr_info (THREAD_ENTRY * thread_p,
  */
 int
 locator_attribute_info_force (THREAD_ENTRY * thread_p, const HFID * hfid,
-			      OID * oid, HEAP_CACHE_ATTRINFO * attr_info,
-			      ATTR_ID * att_id, int n_att_id,
-			      LC_COPYAREA_OPERATION operation,
-			      HEAP_SCANCACHE * scan_cache, int *force_count)
+                              OID * oid, HEAP_CACHE_ATTRINFO * attr_info,
+                              ATTR_ID * att_id, int n_att_id,
+                              LC_COPYAREA_OPERATION operation, HEAP_SCANCACHE * scan_cache, int *force_count)
 {
   LC_COPYAREA *copyarea = NULL;
   RECDES new_recdes = RECDES_INITIALIZER;
-  SCAN_CODE scan;		/* Scan return value for next operation */
+  SCAN_CODE scan;               /* Scan return value for next operation */
   RECDES copy_recdes = RECDES_INITIALIZER;
   RECDES *old_recdes = NULL;
   int error = NO_ERROR;
@@ -4289,85 +4026,78 @@ locator_attribute_info_force (THREAD_ENTRY * thread_p, const HFID * hfid,
     case LC_FLUSH_UPDATE:
       scan = heap_get (thread_p, oid, &copy_recdes, scan_cache, COPY);
       if (scan == S_SUCCESS)
-	{
-	  old_recdes = &copy_recdes;
-	}
+        {
+          old_recdes = &copy_recdes;
+        }
       else if (scan == S_ERROR || scan == S_DOESNT_FIT)
-	{
-	  /* Whenever an error including an interrupt was broken out,
-	   * quit the update.
-	   */
-	  return ER_FAILED;
-	}
+        {
+          /* Whenever an error including an interrupt was broken out,
+           * quit the update.
+           */
+          return ER_FAILED;
+        }
       else if (scan == S_DOESNT_EXIST)
-	{
-	  int err_id = er_errid ();
+        {
+          int err_id = er_errid ();
 
-	  if (err_id == ER_HEAP_NODATA_NEWADDRESS)
-	    {
-	      /* it is an immature record. go ahead to update */
-	      er_clear ();
-	    }
-	  else if (err_id == ER_HEAP_UNKNOWN_OBJECT)
-	    {
-	      /* This means that the object we're looking for does not exist.
-	       * This information is useful for the caller of this function
-	       * so return this error code instead of ER_FAILD.
-	       */
-	      return err_id;
-	    }
-	  else
-	    {
-	      return ((err_id == NO_ERROR) ? ER_FAILED : err_id);
-	    }
-	}
+          if (err_id == ER_HEAP_NODATA_NEWADDRESS)
+            {
+              /* it is an immature record. go ahead to update */
+              er_clear ();
+            }
+          else if (err_id == ER_HEAP_UNKNOWN_OBJECT)
+            {
+              /* This means that the object we're looking for does not exist.
+               * This information is useful for the caller of this function
+               * so return this error code instead of ER_FAILD.
+               */
+              return err_id;
+            }
+          else
+            {
+              return ((err_id == NO_ERROR) ? ER_FAILED : err_id);
+            }
+        }
       else
-	{
-	  assert (false);
-	  return ER_FAILED;
-	}
+        {
+          assert (false);
+          return ER_FAILED;
+        }
 
       /* Fall through */
 
     case LC_FLUSH_INSERT:
       copyarea = locator_allocate_copy_area_by_attr_info (thread_p, attr_info,
-							  old_recdes,
-							  &new_recdes,
-							  oid->groupid, -1);
+                                                          old_recdes, &new_recdes, oid->groupid, -1);
       if (copyarea == NULL)
-	{
-	  error = ER_FAILED;
-	  break;
-	}
+        {
+          error = ER_FAILED;
+          break;
+        }
 
       /* Assume that it has indices */
       if (operation == LC_FLUSH_INSERT)
-	{
-	  error = locator_insert_force (thread_p, &class_hfid, &class_oid,
-					oid, &new_recdes, scan_cache,
-					force_count);
-	}
+        {
+          error = locator_insert_force (thread_p, &class_hfid, &class_oid, oid, &new_recdes, scan_cache, force_count);
+        }
       else
-	{
-	  assert (operation == LC_FLUSH_UPDATE);
-	  error = locator_update_force (thread_p, &class_hfid,
-					&class_oid, oid,
-					old_recdes, &new_recdes,
-					att_id, n_att_id, scan_cache,
-					force_count);
-	}
+        {
+          assert (operation == LC_FLUSH_UPDATE);
+          error = locator_update_force (thread_p, &class_hfid,
+                                        &class_oid, oid,
+                                        old_recdes, &new_recdes, att_id, n_att_id, scan_cache, force_count);
+        }
       if (copyarea != NULL)
-	{
-	  locator_free_copy_area (copyarea);
-	  copyarea = NULL;
-	  new_recdes.data = NULL;
-	  new_recdes.area_size = 0;
-	}
+        {
+          locator_free_copy_area (copyarea);
+          copyarea = NULL;
+          new_recdes.data = NULL;
+          new_recdes.area_size = 0;
+        }
       break;
 
     case LC_FLUSH_DELETE:
-      error = locator_delete_force (thread_p, &class_hfid, oid,
-				    scan_cache, force_count);
+      error = locator_delete_force (thread_p, &class_hfid, oid, scan_cache, force_count);
       break;
 
     default:
@@ -4377,7 +4107,7 @@ locator_attribute_info_force (THREAD_ENTRY * thread_p, const HFID * hfid,
        * Maybe, the transaction should be aborted by the caller...Quit..
        */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_LC_BADFORCE_OPERATION, 4,
-	      operation, oid->volid, oid->pageid, oid->slotid);
+              operation, oid->volid, oid->pageid, oid->slotid);
       error = ER_LC_BADFORCE_OPERATION;
       break;
     }
@@ -4404,9 +4134,8 @@ locator_attribute_info_force (THREAD_ENTRY * thread_p, const HFID * hfid,
  */
 int
 locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
-			     OID * inst_oid, OID * class_oid, int is_insert,
-			     bool datayn, bool need_replication,
-			     UNUSED_ARG HFID * hfid)
+                             OID * inst_oid, OID * class_oid, int is_insert,
+                             bool datayn, bool need_replication, UNUSED_ARG HFID * hfid)
 {
   int num_found;
   int i, num_btids;
@@ -4433,8 +4162,7 @@ locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
    *  Populate the index_attrinfo structure.
    *  Return the number of indexed attributes found.
    */
-  num_found = heap_attrinfo_start_with_index (thread_p, class_oid,
-					      &index_attrinfo, &idx_info);
+  num_found = heap_attrinfo_start_with_index (thread_p, class_oid, &index_attrinfo, &idx_info);
   num_btids = idx_info.num_btids;
 
   if (num_found == 0)
@@ -4457,12 +4185,11 @@ locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
    */
   if (idx_info.has_single_col)
     {
-      error_code = heap_attrinfo_read_dbvalues (thread_p, inst_oid, recdes,
-						&index_attrinfo);
+      error_code = heap_attrinfo_read_dbvalues (thread_p, inst_oid, recdes, &index_attrinfo);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
 
   for (i = 0; i < num_btids; i++)
@@ -4474,24 +4201,23 @@ locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
        *  pointer to it.
        */
       assert (DB_IDXKEY_IS_NULL (&key));
-      error_code = heap_attrvalue_get_key (thread_p, i, &index_attrinfo,
-					   inst_oid, recdes, &btid, &key);
+      error_code = heap_attrvalue_get_key (thread_p, i, &index_attrinfo, inst_oid, recdes, &btid, &key);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       btid_int.sys_btid = &btid;
       btid_int.indx_id = i;
 
       if (is_insert)
-	{
-	  key_ins_del = btree_insert (thread_p, &btid_int, &key);
-	}
+        {
+          key_ins_del = btree_insert (thread_p, &btid_int, &key);
+        }
       else
-	{
-	  key_ins_del = btree_delete (thread_p, &btid_int, &key);
-	}
+        {
+          key_ins_del = btree_delete (thread_p, &btid_int, &key);
+        }
 
       /*
        * for replication,
@@ -4503,38 +4229,36 @@ locator_add_or_remove_index (THREAD_ENTRY * thread_p, RECDES * recdes,
        * for the update cases, refer to locator_update_force()
        */
       if (need_replication
-	  && INDEX_IS_PRIMARY_KEY (indexp)
-	  && key_ins_del != NULL && log_does_allow_replication () == true)
-	{
-#if 1				/* TODO - */
-	  key.size--;		/* remove rightmost OID */
+          && INDEX_IS_PRIMARY_KEY (indexp) && key_ins_del != NULL && log_does_allow_replication () == true)
+        {
+#if 1                           /* TODO - */
+          key.size--;           /* remove rightmost OID */
 #endif
 
-	  error_code = repl_log_insert (thread_p, class_oid, inst_oid,
-					datayn ? LOG_REPLICATION_DATA :
-					LOG_REPLICATION_SCHEMA,
-					is_insert ? RVREPL_DATA_INSERT :
-					RVREPL_DATA_DELETE, &key);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error;
-	    }
-	}
+          error_code = repl_log_insert (thread_p, class_oid, inst_oid,
+                                        datayn ? LOG_REPLICATION_DATA :
+                                        LOG_REPLICATION_SCHEMA,
+                                        is_insert ? RVREPL_DATA_INSERT : RVREPL_DATA_DELETE, &key);
+          if (error_code != NO_ERROR)
+            {
+              goto error;
+            }
+        }
 
       db_idxkey_clear (&key);
 
       if (key_ins_del == NULL)
-	{
-	  if (error_code == NO_ERROR)
-	    {
-	      error_code = er_errid ();
-	      if (error_code == NO_ERROR)
-		{
-		  error_code = ER_FAILED;
-		}
-	    }
-	  goto error;
-	}
+        {
+          if (error_code == NO_ERROR)
+            {
+              error_code = er_errid ();
+              if (error_code == NO_ERROR)
+                {
+                  error_code = ER_FAILED;
+                }
+            }
+          goto error;
+        }
     }
 
 error:
@@ -4563,9 +4287,8 @@ error:
  */
 int
 locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
-		      RECDES * old_recdes, ATTR_ID * att_id, int n_att_id,
-		      OID * inst_oid, OID * class_oid,
-		      UNUSED_ARG bool data_update, bool need_replication)
+                      RECDES * old_recdes, ATTR_ID * att_id, int n_att_id,
+                      OID * inst_oid, OID * class_oid, UNUSED_ARG bool data_update, bool need_replication)
 {
   int error_code = NO_ERROR;
   HEAP_CACHE_ATTRINFO space_attrinfo[2];
@@ -4592,9 +4315,7 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
   DB_IDXKEY_MAKE_NULL (&new_key);
   DB_IDXKEY_MAKE_NULL (&old_key);
 
-  new_num_found = heap_attrinfo_start_with_index (thread_p, class_oid,
-						  &space_attrinfo[0],
-						  &new_idx_info);
+  new_num_found = heap_attrinfo_start_with_index (thread_p, class_oid, &space_attrinfo[0], &new_idx_info);
   num_btids = new_idx_info.num_btids;
   if (new_num_found < 0)
     {
@@ -4602,9 +4323,7 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
     }
   new_attrinfo = &space_attrinfo[0];
 
-  old_num_found = heap_attrinfo_start_with_index (thread_p, class_oid,
-						  &space_attrinfo[1],
-						  &old_idx_info);
+  old_num_found = heap_attrinfo_start_with_index (thread_p, class_oid, &space_attrinfo[1], &old_idx_info);
   old_num_btids = old_idx_info.num_btids;
   if (old_num_found < 0)
     {
@@ -4616,13 +4335,13 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
   if (new_num_found != old_num_found)
     {
       if (new_num_found > 0)
-	{
-	  heap_attrinfo_end (thread_p, &space_attrinfo[0]);
-	}
+        {
+          heap_attrinfo_end (thread_p, &space_attrinfo[0]);
+        }
       if (old_num_found > 0)
-	{
-	  heap_attrinfo_end (thread_p, &space_attrinfo[1]);
-	}
+        {
+          heap_attrinfo_end (thread_p, &space_attrinfo[1]);
+        }
       return ER_FAILED;
     }
 
@@ -4646,14 +4365,12 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
   new_attrinfo = &space_attrinfo[0];
   old_attrinfo = &space_attrinfo[1];
 
-  error_code = heap_attrinfo_read_dbvalues (thread_p, inst_oid, new_recdes,
-					    new_attrinfo);
+  error_code = heap_attrinfo_read_dbvalues (thread_p, inst_oid, new_recdes, new_attrinfo);
   if (error_code != NO_ERROR)
     {
       goto error;
     }
-  error_code = heap_attrinfo_read_dbvalues (thread_p, inst_oid, old_recdes,
-					    old_attrinfo);
+  error_code = heap_attrinfo_read_dbvalues (thread_p, inst_oid, old_recdes, old_attrinfo);
   if (error_code != NO_ERROR)
     {
       goto error;
@@ -4666,8 +4383,7 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
    *  Ensure that we have the same number of indexes and
    *  get the number of B-tree IDs.
    */
-  if (old_attrinfo->last_classrepr->n_indexes !=
-      new_attrinfo->last_classrepr->n_indexes)
+  if (old_attrinfo->last_classrepr->n_indexes != new_attrinfo->last_classrepr->n_indexes)
     {
       error_code = ER_FAILED;
       goto error;
@@ -4678,118 +4394,109 @@ locator_update_index (THREAD_ENTRY * thread_p, RECDES * new_recdes,
       indexp = &(new_attrinfo->last_classrepr->indexes[i]);
 
       if (pk_btid_index == -1 && need_replication
-	  && INDEX_IS_PRIMARY_KEY (indexp)
-	  && log_does_allow_replication () == true)
-	{
-	  pk_btid_index = i;
-	}
+          && INDEX_IS_PRIMARY_KEY (indexp) && log_does_allow_replication () == true)
+        {
+          pk_btid_index = i;
+        }
 
       /* check for specified update attributes */
       if (att_id)
-	{
-	  found_btid = false;	/* geuss as not found */
+        {
+          found_btid = false;   /* geuss as not found */
 
-	  for (j = 0; j < n_att_id && !found_btid; j++)
-	    {
-	      for (k = 0; k < indexp->n_atts && !found_btid; k++)
-		{
-		  if (att_id[j] == (ATTR_ID) (indexp->atts[k]->id))
-		    {		/* the index key_type has updated attr */
-		      found_btid = true;
-		    }
-		}
-	    }
+          for (j = 0; j < n_att_id && !found_btid; j++)
+            {
+              for (k = 0; k < indexp->n_atts && !found_btid; k++)
+                {
+                  if (att_id[j] == (ATTR_ID) (indexp->atts[k]->id))
+                    {           /* the index key_type has updated attr */
+                      found_btid = true;
+                    }
+                }
+            }
 
-	  if (!found_btid)
-	    {
-	      continue;		/* skip and go ahead */
-	    }
-	}
+          if (!found_btid)
+            {
+              continue;         /* skip and go ahead */
+            }
+        }
 
       assert (DB_IDXKEY_IS_NULL (&new_key));
-      error_code =
-	heap_attrvalue_get_key (thread_p, i, new_attrinfo, inst_oid,
-				new_recdes, &new_btid, &new_key);
+      error_code = heap_attrvalue_get_key (thread_p, i, new_attrinfo, inst_oid, new_recdes, &new_btid, &new_key);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       assert (DB_IDXKEY_IS_NULL (&old_key));
-      error_code =
-	heap_attrvalue_get_key (thread_p, i, old_attrinfo, inst_oid,
-				old_recdes, &old_btid, &old_key);
+      error_code = heap_attrvalue_get_key (thread_p, i, old_attrinfo, inst_oid, old_recdes, &old_btid, &old_key);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       new_isnull = DB_IDXKEY_IS_NULL (&new_key);
       old_isnull = DB_IDXKEY_IS_NULL (&old_key);
 
-      same_key = true;		/* init */
+      same_key = true;          /* init */
       if ((new_isnull && !old_isnull) || (old_isnull && !new_isnull))
-	{
-	  same_key = false;
-	}
+        {
+          same_key = false;
+        }
       else
-	{
-	  if (!(new_isnull && old_isnull))
-	    {
-	      c = btree_compare_key (thread_p, NULL, &old_key, &new_key,
-				     NULL);
-	      if (c == DB_UNK)
-		{
-		  assert (false);
-		  error_code = er_errid ();
-		  goto error;
-		}
+        {
+          if (!(new_isnull && old_isnull))
+            {
+              c = btree_compare_key (thread_p, NULL, &old_key, &new_key, NULL);
+              if (c == DB_UNK)
+                {
+                  assert (false);
+                  error_code = er_errid ();
+                  goto error;
+                }
 
-	      if (c != DB_EQ)
-		{
-		  same_key = false;
-		}
-	    }
-	}
+              if (c != DB_EQ)
+                {
+                  same_key = false;
+                }
+            }
+        }
 
       if (!same_key)
-	{
-	  btid_int.sys_btid = &new_btid;
-	  btid_int.indx_id = i;
+        {
+          btid_int.sys_btid = &new_btid;
+          btid_int.indx_id = i;
 
-	  error_code = btree_update (thread_p, &btid_int, &old_key, &new_key);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error;
-	    }
-	}
+          error_code = btree_update (thread_p, &btid_int, &old_key, &new_key);
+          if (error_code != NO_ERROR)
+            {
+              goto error;
+            }
+        }
 
       db_idxkey_clear (&new_key);
       db_idxkey_clear (&old_key);
-    }				/* for (i = 0; ...) */
+    }                           /* for (i = 0; ...) */
 
   if (pk_btid_index != -1)
     {
       assert (DB_IDXKEY_IS_NULL (&old_key));
       error_code = heap_attrvalue_get_key (thread_p, pk_btid_index,
-					   old_attrinfo, inst_oid,
-					   old_recdes, &old_btid, &old_key);
+                                           old_attrinfo, inst_oid, old_recdes, &old_btid, &old_key);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
-#if 1				/* TODO - */
-      old_key.size--;		/* remove rightmost OID */
+#if 1                           /* TODO - */
+      old_key.size--;           /* remove rightmost OID */
 #endif
 
-      error_code = repl_log_insert (thread_p, class_oid, inst_oid,
-				    LOG_REPLICATION_DATA,
-				    RVREPL_DATA_UPDATE, &old_key);
+      error_code = repl_log_insert (thread_p, class_oid, inst_oid, LOG_REPLICATION_DATA, RVREPL_DATA_UPDATE, &old_key);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
 
       db_idxkey_clear (&old_key);
     }
@@ -4828,8 +4535,7 @@ error:
  *   repair(in):
  */
 static DISK_ISVALID
-locator_check_class (THREAD_ENTRY * thread_p, OID * class_oid,
-		     RECDES * peek, HFID * class_hfid, bool repair)
+locator_check_class (THREAD_ENTRY * thread_p, OID * class_oid, RECDES * peek, HFID * class_hfid, bool repair)
 {
   DISK_ISVALID isvalid = DISK_VALID, rv = DISK_VALID;
   HEAP_CACHE_ATTRINFO attr_info;
@@ -4840,8 +4546,7 @@ locator_check_class (THREAD_ENTRY * thread_p, OID * class_oid,
   int n_attrs;
   char *btname = NULL;
 
-  if (heap_attrinfo_start_with_index (thread_p, class_oid, peek, &attr_info,
-				      &idx_info) < 0)
+  if (heap_attrinfo_start_with_index (thread_p, class_oid, peek, &attr_info, &idx_info) < 0)
     {
       return DISK_ERROR;
     }
@@ -4856,51 +4561,49 @@ locator_check_class (THREAD_ENTRY * thread_p, OID * class_oid,
     {
       btid = heap_indexinfo_get_btid (i, &attr_info);
       if (btid == NULL)
-	{
-	  isvalid = DISK_ERROR;
-	  break;
-	}
+        {
+          isvalid = DISK_ERROR;
+          break;
+        }
       n_attrs = heap_indexinfo_get_num_attrs (i, &attr_info);
       if (n_attrs <= 0)
-	{
-	  isvalid = DISK_ERROR;
-	  break;
-	}
+        {
+          isvalid = DISK_ERROR;
+          break;
+        }
 
       attrids = (ATTR_ID *) malloc (n_attrs * sizeof (ATTR_ID));
       if (attrids == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, n_attrs * sizeof (ATTR_ID));
-	  isvalid = DISK_ERROR;
-	  break;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, n_attrs * sizeof (ATTR_ID));
+          isvalid = DISK_ERROR;
+          break;
+        }
 
       if (heap_indexinfo_get_attrids (i, &attr_info, attrids) != NO_ERROR)
-	{
-	  free_and_init (attrids);
-	  isvalid = DISK_ERROR;
-	  break;
-	}
+        {
+          free_and_init (attrids);
+          isvalid = DISK_ERROR;
+          break;
+        }
 
-      if (heap_get_indexname_of_btid (thread_p, class_oid, btid, &btname) !=
-	  NO_ERROR)
-	{
-	  free_and_init (attrids);
-	  isvalid = DISK_ERROR;
-	  break;
-	}
+      if (heap_get_indexname_of_btid (thread_p, class_oid, btid, &btname) != NO_ERROR)
+        {
+          free_and_init (attrids);
+          isvalid = DISK_ERROR;
+          break;
+        }
 
       if (rv != DISK_VALID)
-	{
-	  isvalid = DISK_ERROR;
-	}
+        {
+          isvalid = DISK_ERROR;
+        }
 
       free_and_init (attrids);
       if (btname)
-	{
-	  free_and_init (btname);
-	}
+        {
+          free_and_init (btname);
+        }
     }
 
   heap_attrinfo_end (thread_p, &attr_info);
@@ -4916,8 +4619,7 @@ locator_check_class (THREAD_ENTRY * thread_p, OID * class_oid,
  *
  */
 DISK_ISVALID
-locator_check_by_class_oid (THREAD_ENTRY * thread_p, OID * cls_oid,
-			    HFID * hfid, bool repair)
+locator_check_by_class_oid (THREAD_ENTRY * thread_p, OID * cls_oid, HFID * hfid, bool repair)
 {
   RECDES peek = RECDES_INITIALIZER;
   HEAP_SCANCACHE scan;
@@ -4983,12 +4685,10 @@ locator_check_by_class_oid (THREAD_ENTRY * thread_p, OID * cls_oid,
  */
 LC_FIND_CLASSNAME
 xlocator_find_lockhint_class_oids (THREAD_ENTRY * thread_p, int num_classes,
-				   const char **many_classnames,
-				   LOCK * many_locks,
-				   UNUSED_ARG OID * guessed_class_oids,
-				   int quit_on_errors,
-				   LC_LOCKHINT ** hlock,
-				   LC_COPYAREA ** fetch_area)
+                                   const char **many_classnames,
+                                   LOCK * many_locks,
+                                   UNUSED_ARG OID * guessed_class_oids,
+                                   int quit_on_errors, LC_LOCKHINT ** hlock, LC_COPYAREA ** fetch_area)
 {
   int tran_index;
   EH_SEARCH search;
@@ -5021,189 +4721,170 @@ xlocator_find_lockhint_class_oids (THREAD_ENTRY * thread_p, int num_classes,
 
   tran_index = logtb_get_current_tran_index (thread_p);
 
-  for (i = 0;
-       i < num_classes && (allfind == LC_CLASSNAME_EXIST
-			   || quit_on_errors == false); i++)
+  for (i = 0; i < num_classes && (allfind == LC_CLASSNAME_EXIST || quit_on_errors == false); i++)
     {
       classname = many_classnames[i];
       if (classname == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       n = (*hlock)->num_classes;
       find = LC_CLASSNAME_EXIST;
       retry = 1;
 
       while (retry)
-	{
-	  retry = 0;
+        {
+          retry = 0;
 
-	  /*
-	   * Describe the hinted class
-	   */
+          /*
+           * Describe the hinted class
+           */
 
-	  (*hlock)->classes[n].lock = many_locks[i];
+          (*hlock)->classes[n].lock = many_locks[i];
 
-	  if (csect_enter_as_reader (thread_p,
-				     CSECT_LOCATOR_SR_CLASSNAME_TABLE,
-				     INF_WAIT) != NO_ERROR)
-	    {
-	      return LC_CLASSNAME_ERROR;
-	    }
+          if (csect_enter_as_reader (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
+            {
+              return LC_CLASSNAME_ERROR;
+            }
 
-	  entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *)
-		   mht_get (locator_Mht_classnames, classname));
+          entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname));
 
-	  if (entry != NULL)
-	    {
-	      /*
-	       * We can only proceed if the entry belongs to the current transaction,
-	       * otherwise, we must lock the class associated with the classname and
-	       * retry the operation once the lock is granted.
-	       */
+          if (entry != NULL)
+            {
+              /*
+               * We can only proceed if the entry belongs to the current transaction,
+               * otherwise, we must lock the class associated with the classname and
+               * retry the operation once the lock is granted.
+               */
 
-	      COPY_OID (&(*hlock)->classes[n].oid, &entry->oid);
+              COPY_OID (&(*hlock)->classes[n].oid, &entry->oid);
 
-	      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+              csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
 
-	      if (entry->tran_index == tran_index)
-		{
-		  if (entry->action == LC_CLASSNAME_DELETED
-		      || entry->action == LC_CLASSNAME_DELETED_RENAME)
-		    {
-		      find = LC_CLASSNAME_DELETED;
-		    }
-		}
-	      else if (entry->action != LC_CLASSNAME_EXIST)
-		{
-		  /*
-		   * Do not know the fate of this entry until the transaction is
-		   * committed or aborted. Get the lock and retry later on.
-		   */
-		  if ((*hlock)->classes[n].lock != NULL_LOCK)
-		    {
-		      tmp_lock = (*hlock)->classes[n].lock;
-		    }
-		  else
-		    {
-		      tmp_lock = S_LOCK;
-		    }
+              if (entry->tran_index == tran_index)
+                {
+                  if (entry->action == LC_CLASSNAME_DELETED || entry->action == LC_CLASSNAME_DELETED_RENAME)
+                    {
+                      find = LC_CLASSNAME_DELETED;
+                    }
+                }
+              else if (entry->action != LC_CLASSNAME_EXIST)
+                {
+                  /*
+                   * Do not know the fate of this entry until the transaction is
+                   * committed or aborted. Get the lock and retry later on.
+                   */
+                  if ((*hlock)->classes[n].lock != NULL_LOCK)
+                    {
+                      tmp_lock = (*hlock)->classes[n].lock;
+                    }
+                  else
+                    {
+                      tmp_lock = S_LOCK;
+                    }
 
-		  DB_MAKE_OID (&lock_val, &(*hlock)->classes[n].oid);
-		  if (lock_object (thread_p, &lock_val, tmp_lock,
-				   LK_UNCOND_LOCK) != LK_GRANTED)
-		    {
-		      /*
-		       * Unable to acquired the lock
-		       */
-		      find = LC_CLASSNAME_ERROR;
-		    }
-		  else
-		    {
-		      /*
-		       * Try again
-		       * Remove the lock.. since the above was a dirty read
-		       */
-		      lock_unlock_object (thread_p, &lock_val,
-					  LK_UNLOCK_TYPE_NORMAL);
-		      retry = 1;
-		      continue;
-		    }
-		}
-	    }
-	  else
-	    {
-	      /*
-	       * Is there a class with such a name on the permanent classname
-	       * hash table ?
-	       */
-	      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                  DB_MAKE_OID (&lock_val, &(*hlock)->classes[n].oid);
+                  if (lock_object (thread_p, &lock_val, tmp_lock, LK_UNCOND_LOCK) != LK_GRANTED)
+                    {
+                      /*
+                       * Unable to acquired the lock
+                       */
+                      find = LC_CLASSNAME_ERROR;
+                    }
+                  else
+                    {
+                      /*
+                       * Try again
+                       * Remove the lock.. since the above was a dirty read
+                       */
+                      lock_unlock_object (thread_p, &lock_val, LK_UNLOCK_TYPE_NORMAL);
+                      retry = 1;
+                      continue;
+                    }
+                }
+            }
+          else
+            {
+              /*
+               * Is there a class with such a name on the permanent classname
+               * hash table ?
+               */
+              csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
 
-	      search = ehash_search (thread_p, locator_Eht_classnames,
-				     classname, &(*hlock)->classes[n].oid);
-	      if (search != EH_KEY_FOUND)
-		{
-		  if (search == EH_KEY_NOTFOUND)
-		    {
-		      find = LC_CLASSNAME_DELETED;
-		    }
-		  else
-		    {
-		      find = LC_CLASSNAME_ERROR;
-		    }
-		}
-	      else
-		{
-		  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE,
-				   INF_WAIT) != NO_ERROR)
-		    {
-		      return LC_CLASSNAME_ERROR;
-		    }
-		  /* Double check : already cached ? */
-		  entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *)
-			   mht_get (locator_Mht_classnames, classname));
-		  if (entry == NULL)
-		    {
+              search = ehash_search (thread_p, locator_Eht_classnames, classname, &(*hlock)->classes[n].oid);
+              if (search != EH_KEY_FOUND)
+                {
+                  if (search == EH_KEY_NOTFOUND)
+                    {
+                      find = LC_CLASSNAME_DELETED;
+                    }
+                  else
+                    {
+                      find = LC_CLASSNAME_ERROR;
+                    }
+                }
+              else
+                {
+                  if (csect_enter (thread_p, CSECT_LOCATOR_SR_CLASSNAME_TABLE, INF_WAIT) != NO_ERROR)
+                    {
+                      return LC_CLASSNAME_ERROR;
+                    }
+                  /* Double check : already cached ? */
+                  entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *) mht_get (locator_Mht_classnames, classname));
+                  if (entry == NULL)
+                    {
 
-		      if (((int) mht_count (locator_Mht_classnames) <
-			   MAX_CLASSNAME_CACHE_ENTRIES)
-			  || (locator_decache_class_name_entries () ==
-			      NO_ERROR))
-			{
+                      if (((int) mht_count (locator_Mht_classnames) <
+                           MAX_CLASSNAME_CACHE_ENTRIES) || (locator_decache_class_name_entries () == NO_ERROR))
+                        {
 
-			  entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *)
-				   malloc (sizeof (*entry)));
+                          entry = ((LOCATOR_TMP_CLASSNAME_ENTRY *) malloc (sizeof (*entry)));
 
-			  if (entry == NULL)
-			    {
-			      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-				      sizeof (*entry));
-			      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-			      return LC_CLASSNAME_ERROR;
-			    }
+                          if (entry == NULL)
+                            {
+                              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (*entry));
+                              csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                              return LC_CLASSNAME_ERROR;
+                            }
 
-			  entry->name = strdup (classname);
-			  if (entry->name == NULL)
-			    {
-			      free_and_init (entry);
-			      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-				      ER_OUT_OF_VIRTUAL_MEMORY, 1,
-				      strlen (classname));
-			      csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-			      return LC_CLASSNAME_ERROR;
-			    }
+                          entry->name = strdup (classname);
+                          if (entry->name == NULL)
+                            {
+                              free_and_init (entry);
+                              er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
+                                      ER_OUT_OF_VIRTUAL_MEMORY, 1, strlen (classname));
+                              csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                              return LC_CLASSNAME_ERROR;
+                            }
 
-			  entry->tran_index = NULL_TRAN_INDEX;
-			  entry->action = LC_CLASSNAME_EXIST;
-			  COPY_OID (&entry->oid, &(*hlock)->classes[n].oid);
-			  (void) mht_put (locator_Mht_classnames,
-					  entry->name, entry);
-			}
-		    }
-		  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
-		}
-	    }
-	}
+                          entry->tran_index = NULL_TRAN_INDEX;
+                          entry->action = LC_CLASSNAME_EXIST;
+                          COPY_OID (&entry->oid, &(*hlock)->classes[n].oid);
+                          (void) mht_put (locator_Mht_classnames, entry->name, entry);
+                        }
+                    }
+                  csect_exit (CSECT_LOCATOR_SR_CLASSNAME_TABLE);
+                }
+            }
+        }
 
       if (find == LC_CLASSNAME_EXIST)
-	{
-	  n++;
-	  (*hlock)->num_classes = n;
-	}
+        {
+          n++;
+          (*hlock)->num_classes = n;
+        }
       else
-	{
-	  if (allfind != LC_CLASSNAME_ERROR)
-	    {
-	      allfind = find;
-	    }
-	  if (find == LC_CLASSNAME_DELETED)
-	    {
-	      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-		      ER_LC_UNKNOWN_CLASSNAME, 1, classname);
-	    }
-	}
+        {
+          if (allfind != LC_CLASSNAME_ERROR)
+            {
+              allfind = find;
+            }
+          if (find == LC_CLASSNAME_DELETED)
+            {
+              er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LC_UNKNOWN_CLASSNAME, 1, classname);
+            }
+        }
     }
 
   /*
@@ -5214,42 +4895,38 @@ xlocator_find_lockhint_class_oids (THREAD_ENTRY * thread_p, int num_classes,
   for (i = 0; i < (*hlock)->num_classes; i++)
     {
       if (OID_ISNULL (&(*hlock)->classes[i].oid))
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
       /*
        * Is this duplicated ?
        */
       for (j = i + 1; j < (*hlock)->num_classes; j++)
-	{
-	  if (OID_EQ (&(*hlock)->classes[i].oid, &(*hlock)->classes[j].oid))
-	    {
-	      /* Duplicate class, merge the lock and the subclass entry */
-	      assert ((*hlock)->classes[i].lock >= NULL_LOCK
-		      && (*hlock)->classes[j].lock >= NULL_LOCK);
-	      (*hlock)->classes[i].lock =
-		lock_Conv[(*hlock)->classes[i].lock]
-		[(*hlock)->classes[j].lock];
-	      assert ((*hlock)->classes[i].lock != NA_LOCK);
+        {
+          if (OID_EQ (&(*hlock)->classes[i].oid, &(*hlock)->classes[j].oid))
+            {
+              /* Duplicate class, merge the lock and the subclass entry */
+              assert ((*hlock)->classes[i].lock >= NULL_LOCK && (*hlock)->classes[j].lock >= NULL_LOCK);
+              (*hlock)->classes[i].lock = lock_Conv[(*hlock)->classes[i].lock][(*hlock)->classes[j].lock];
+              assert ((*hlock)->classes[i].lock != NA_LOCK);
 
-	      /* Now eliminate the entry */
-	      OID_SET_NULL (&(*hlock)->classes[j].oid);
-	    }
-	}
+              /* Now eliminate the entry */
+              OID_SET_NULL (&(*hlock)->classes[j].oid);
+            }
+        }
     }
 
   if (allfind == LC_CLASSNAME_EXIST || quit_on_errors == false)
     {
-      if (xlocator_fetch_lockhint_classes (thread_p, (*hlock), fetch_area) !=
-	  NO_ERROR)
-	{
-	  allfind = LC_CLASSNAME_ERROR;
-	  if (quit_on_errors == true)
-	    {
-	      locator_free_lockhint ((*hlock));
-	      *hlock = NULL;
-	    }
-	}
+      if (xlocator_fetch_lockhint_classes (thread_p, (*hlock), fetch_area) != NO_ERROR)
+        {
+          allfind = LC_CLASSNAME_ERROR;
+          if (quit_on_errors == true)
+            {
+              locator_free_lockhint ((*hlock));
+              *hlock = NULL;
+            }
+        }
     }
   else
     {
@@ -5270,11 +4947,9 @@ xlocator_find_lockhint_class_oids (THREAD_ENTRY * thread_p, int num_classes,
  *
  */
 int
-xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
-				 LC_LOCKHINT * lockhint,
-				 LC_COPYAREA ** fetch_area)
+xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p, LC_LOCKHINT * lockhint, LC_COPYAREA ** fetch_area)
 {
-  LOCATOR_RETURN_NXOBJ nxobj;	/* Description to return next object */
+  LOCATOR_RETURN_NXOBJ nxobj;   /* Description to return next object */
   SCAN_CODE scan = S_SUCCESS;
   int copyarea_length;
   int i;
@@ -5300,49 +4975,46 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
 
       /* Obtain the locks */
       if (lock_classes_lock_hint (thread_p, lockhint) != LK_GRANTED)
-	{
-	  if (lockhint->quit_on_errors != false)
-	    {
-	      return ER_FAILED;
-	    }
-	  else
-	    {
-	      error_code = ER_FAILED;
-	      /* Lock individual classes */
-	      for (i = 0; i < lockhint->num_classes; i++)
-		{
-		  if (OID_ISNULL (&lockhint->classes[i].oid))
-		    {
-		      continue;
-		    }
+        {
+          if (lockhint->quit_on_errors != false)
+            {
+              return ER_FAILED;
+            }
+          else
+            {
+              error_code = ER_FAILED;
+              /* Lock individual classes */
+              for (i = 0; i < lockhint->num_classes; i++)
+                {
+                  if (OID_ISNULL (&lockhint->classes[i].oid))
+                    {
+                      continue;
+                    }
 
-		  DB_MAKE_OID (&lock_val, &lockhint->classes[i].oid);
-		  if (lock_object (thread_p, &lock_val,
-				   lockhint->classes[i].lock,
-				   LK_UNCOND_LOCK) != LK_GRANTED)
-		    {
-		      OID_SET_NULL (&lockhint->classes[i].oid);
-		    }
-		  else
-		    {
-		      /* We are unable to continue since we lock at least one */
-		      error_code = NO_ERROR;
-		    }
-		}
-	      if (error_code != NO_ERROR)
-		{
-		  return error_code;
-		}
-	    }
-	}
+                  DB_MAKE_OID (&lock_val, &lockhint->classes[i].oid);
+                  if (lock_object (thread_p, &lock_val, lockhint->classes[i].lock, LK_UNCOND_LOCK) != LK_GRANTED)
+                    {
+                      OID_SET_NULL (&lockhint->classes[i].oid);
+                    }
+                  else
+                    {
+                      /* We are unable to continue since we lock at least one */
+                      error_code = NO_ERROR;
+                    }
+                }
+              if (error_code != NO_ERROR)
+                {
+                  return error_code;
+                }
+            }
+        }
     }
 
   /*
    * Start a scan cursor for getting the classes
    */
 
-  error_code = heap_scancache_start (thread_p, &nxobj.area_scancache, NULL,
-				     NULL, true);
+  error_code = heap_scancache_start (thread_p, &nxobj.area_scancache, NULL, NULL, true);
   if (error_code != NO_ERROR)
     {
       return error_code;
@@ -5361,21 +5033,20 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
   nxobj.mobjs = NULL;
   nxobj.comm_area = NULL;
 
-  while (scan == S_SUCCESS
-	 && (lockhint->num_classes_processed < lockhint->num_classes))
+  while (scan == S_SUCCESS && (lockhint->num_classes_processed < lockhint->num_classes))
     {
       new_area = locator_allocate_copy_area_by_length (copyarea_length);
       if (new_area == NULL)
-	{
-	  (void) heap_scancache_end (thread_p, &nxobj.area_scancache);
-	  /* There was an error.. */
-	  if (nxobj.mobjs != NULL)
-	    {
-	      locator_free_copy_area (nxobj.comm_area);
-	      nxobj.comm_area = NULL;
-	    }
-	  return ER_FAILED;
-	}
+        {
+          (void) heap_scancache_end (thread_p, &nxobj.area_scancache);
+          /* There was an error.. */
+          if (nxobj.mobjs != NULL)
+            {
+              locator_free_copy_area (nxobj.comm_area);
+              nxobj.comm_area = NULL;
+            }
+          return ER_FAILED;
+        }
 
       nxobj.comm_area = new_area;
 
@@ -5390,64 +5061,56 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
        * with correct chns.
        */
 
-      for (i = lockhint->num_classes_processed;
-	   scan == S_SUCCESS && i < lockhint->num_classes; i++)
-	{
-	  if (OID_ISNULL (&lockhint->classes[i].oid)
-	      || OID_ISTEMP (&lockhint->classes[i].oid))
-	    {
-	      lockhint->num_classes_processed += 1;
-	      continue;
-	    }
+      for (i = lockhint->num_classes_processed; scan == S_SUCCESS && i < lockhint->num_classes; i++)
+        {
+          if (OID_ISNULL (&lockhint->classes[i].oid) || OID_ISTEMP (&lockhint->classes[i].oid))
+            {
+              lockhint->num_classes_processed += 1;
+              continue;
+            }
 
-	  /* Now return the object */
-	  scan = locator_return_object (thread_p, &nxobj,
-					oid_Root_class_oid,
-					&lockhint->classes[i].oid);
-	  if (scan == S_SUCCESS)
-	    {
-	      lockhint->num_classes_processed += 1;
-	    }
-	  else if (scan == S_DOESNT_FIT && nxobj.mobjs->num_objs == 0)
-	    {
-	      /*
-	       * The first object on the copy area does not fit.
-	       * Get a larger area
-	       */
+          /* Now return the object */
+          scan = locator_return_object (thread_p, &nxobj, oid_Root_class_oid, &lockhint->classes[i].oid);
+          if (scan == S_SUCCESS)
+            {
+              lockhint->num_classes_processed += 1;
+            }
+          else if (scan == S_DOESNT_FIT && nxobj.mobjs->num_objs == 0)
+            {
+              /*
+               * The first object on the copy area does not fit.
+               * Get a larger area
+               */
 
-	      /* Get the real length of the fetch/copy area */
+              /* Get the real length of the fetch/copy area */
 
-	      copyarea_length = nxobj.comm_area->length;
+              copyarea_length = nxobj.comm_area->length;
 
-	      if ((-nxobj.recdes.length) > copyarea_length)
-		{
-		  copyarea_length =
-		    (DB_ALIGN (-nxobj.recdes.length, MAX_ALIGNMENT) +
-		     sizeof (*nxobj.mobjs));
-		}
-	      else
-		{
-		  copyarea_length += DB_PAGESIZE;
-		}
+              if ((-nxobj.recdes.length) > copyarea_length)
+                {
+                  copyarea_length = (DB_ALIGN (-nxobj.recdes.length, MAX_ALIGNMENT) + sizeof (*nxobj.mobjs));
+                }
+              else
+                {
+                  copyarea_length += DB_PAGESIZE;
+                }
 
-	      locator_free_copy_area (nxobj.comm_area);
-	      nxobj.comm_area = NULL;
-	      scan = S_SUCCESS;
-	      break;		/* finish the for */
-	    }
-	  else if (scan != S_DOESNT_FIT
-		   && (scan == S_DOESNT_EXIST
-		       || lockhint->quit_on_errors == false))
-	    {
-	      OID_SET_NULL (&lockhint->classes[i].oid);
-	      lockhint->num_classes_processed += 1;
-	      scan = S_SUCCESS;
-	    }
-	  else
-	    {
-	      break;		/* Quit on errors */
-	    }
-	}
+              locator_free_copy_area (nxobj.comm_area);
+              nxobj.comm_area = NULL;
+              scan = S_SUCCESS;
+              break;            /* finish the for */
+            }
+          else if (scan != S_DOESNT_FIT && (scan == S_DOESNT_EXIST || lockhint->quit_on_errors == false))
+            {
+              OID_SET_NULL (&lockhint->classes[i].oid);
+              lockhint->num_classes_processed += 1;
+              scan = S_SUCCESS;
+            }
+          else
+            {
+              break;            /* Quit on errors */
+            }
+        }
     }
 
   /* End the scan cursor */
@@ -5456,10 +5119,10 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
     {
       /* There was an error.. */
       if (nxobj.mobjs != NULL)
-	{
-	  locator_free_copy_area (nxobj.comm_area);
-	  nxobj.comm_area = NULL;
-	}
+        {
+          locator_free_copy_area (nxobj.comm_area);
+          nxobj.comm_area = NULL;
+        }
       return error_code;
     }
 
@@ -5467,10 +5130,10 @@ xlocator_fetch_lockhint_classes (THREAD_ENTRY * thread_p,
     {
       /* There was an error.. */
       if (nxobj.mobjs != NULL)
-	{
-	  locator_free_copy_area (nxobj.comm_area);
-	  nxobj.comm_area = NULL;
-	}
+        {
+          locator_free_copy_area (nxobj.comm_area);
+          nxobj.comm_area = NULL;
+        }
       return ER_FAILED;
     }
   else if (nxobj.mobjs != NULL && nxobj.mobjs->num_objs == 0)
@@ -5511,23 +5174,21 @@ xlocator_assign_oid_batch (THREAD_ENTRY * thread_p, LC_OIDSET * oidset)
     }
 
   /* Now assign the OID's stop on the first error */
-#if 1				/* TODO - trace */
+#if 1                           /* TODO - trace */
   assert (oidset->classes != NULL);
   assert (oidset->classes->next == NULL);
 #endif
-  for (class_oidset = oidset->classes; class_oidset != NULL;
-       class_oidset = class_oidset->next)
+  for (class_oidset = oidset->classes; class_oidset != NULL; class_oidset = class_oidset->next)
     {
       for (oid = class_oidset->oids; oid != NULL; oid = oid->next)
-	{
-	  error_code = xlocator_assign_oid (thread_p, &class_oidset->hfid,
-					    &oid->oid, oid->est_size,
-					    &class_oidset->class_oid, NULL);
-	  if (error_code != NO_ERROR)
-	    {
-	      goto error;
-	    }
-	}
+        {
+          error_code = xlocator_assign_oid (thread_p, &class_oidset->hfid,
+                                            &oid->oid, oid->est_size, &class_oidset->class_oid, NULL);
+          if (error_code != NO_ERROR)
+            {
+              goto error;
+            }
+        }
     }
 
   /* accept the operation */
@@ -5646,18 +5307,15 @@ xrepl_set_info (THREAD_ENTRY * thread_p, REPL_INFO * repl_info)
   if (log_does_allow_replication () == true)
     {
       switch (repl_info->repl_info_type)
-	{
-	case REPL_INFO_TYPE_SCHEMA:
-	  error_code =
-	    repl_log_insert_schema (thread_p,
-				    (REPL_INFO_SCHEMA *) repl_info->info);
-	  break;
-	default:
-	  error_code = ER_REPL_ERROR;
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1,
-		  "can't make repl schema info");
-	  break;
-	}
+        {
+        case REPL_INFO_TYPE_SCHEMA:
+          error_code = repl_log_insert_schema (thread_p, (REPL_INFO_SCHEMA *) repl_info->info);
+          break;
+        default:
+          error_code = ER_REPL_ERROR;
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_REPL_ERROR, 1, "can't make repl schema info");
+          break;
+        }
     }
 
   return error_code;
@@ -5694,22 +5352,21 @@ xrepl_log_get_eof_lsa (THREAD_ENTRY * thread_p, LOG_LSA * lsa)
  */
 int
 xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
-			     LOCK * instance_lock,
-			     UNUSED_ARG int *instance_lock_timeout,
-			     OID * class_oid, LOCK * class_lock,
-			     int *nobjects, int *nfetched,
-			     int *nfailed_instance_locks,
-			     OID * last_oid, LC_COPYAREA ** fetch_area)
+                             LOCK * instance_lock,
+                             UNUSED_ARG int *instance_lock_timeout,
+                             OID * class_oid, LOCK * class_lock,
+                             int *nobjects, int *nfetched,
+                             int *nfailed_instance_locks, OID * last_oid, LC_COPYAREA ** fetch_area)
 {
-  LC_COPYAREA_MANYOBJS *mobjs;	/* Describe multiple objects in
-				 * area */
-  LC_COPYAREA_ONEOBJ *obj;	/* Describe on object in area  */
-  RECDES recdes;		/* Record descriptor for
-				 * insertion */
-  int offset;			/* Place to store next object in
-				 * area */
-  int round_length;		/* Length of object rounded to
-				 * integer alignment */
+  LC_COPYAREA_MANYOBJS *mobjs;  /* Describe multiple objects in
+                                 * area */
+  LC_COPYAREA_ONEOBJ *obj;      /* Describe on object in area  */
+  RECDES recdes;                /* Record descriptor for
+                                 * insertion */
+  int offset;                   /* Place to store next object in
+                                 * area */
+  int round_length;             /* Length of object rounded to
+                                 * integer alignment */
   int copyarea_length;
   OID oid;
   HEAP_SCANCACHE scan_cache;
@@ -5735,20 +5392,18 @@ xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
 
       DB_MAKE_OID (&lock_val, class_oid);
       /* Obtain the desired lock for the class scan */
-      if (*class_lock != NULL_LOCK
-	  && lock_object (thread_p, &lock_val,
-			  *class_lock, LK_UNCOND_LOCK) != LK_GRANTED)
-	{
-	  /*
-	   * Unable to acquired lock
-	   */
-	  *class_lock = NULL_LOCK;
-	  *nobjects = -1;
-	  *nfetched = -1;
+      if (*class_lock != NULL_LOCK && lock_object (thread_p, &lock_val, *class_lock, LK_UNCOND_LOCK) != LK_GRANTED)
+        {
+          /*
+           * Unable to acquired lock
+           */
+          *class_lock = NULL_LOCK;
+          *nobjects = -1;
+          *nfetched = -1;
 
-	  error_code = ER_FAILED;
-	  goto error;
-	}
+          error_code = ER_FAILED;
+          goto error;
+        }
 
       /* Get statistics */
       last_oid->volid = hfid->vfid.volid;
@@ -5758,17 +5413,16 @@ xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
       *nfetched = 0;
       error_code = heap_estimate_num_objects (thread_p, hfid, nobjects);
       if (error_code != NO_ERROR)
-	{
-	  goto error;
-	}
+        {
+          goto error;
+        }
     }
 
   /* Set OID to last fetched object */
   COPY_OID (&oid, last_oid);
 
   /* Start a scan cursor for getting several classes */
-  error_code = heap_scancache_start (thread_p, &scan_cache, hfid,
-				     class_oid, true);
+  error_code = heap_scancache_start (thread_p, &scan_cache, hfid, class_oid, true);
   if (error_code != NO_ERROR)
     {
       goto error;
@@ -5781,11 +5435,11 @@ xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
     {
       *fetch_area = locator_allocate_copy_area_by_length (copyarea_length);
       if (*fetch_area == NULL)
-	{
-	  (void) heap_scancache_end (thread_p, &scan_cache);
-	  error_code = ER_FAILED;
-	  goto error;
-	}
+        {
+          (void) heap_scancache_end (thread_p, &scan_cache);
+          error_code = ER_FAILED;
+          goto error;
+        }
 
       mobjs = LC_MANYOBJS_PTR_IN_COPYAREA (*fetch_area);
       LC_RECDES_IN_COPYAREA (*fetch_area, &recdes);
@@ -5794,58 +5448,54 @@ xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
       offset = 0;
 
       while (true)
-	{
-	  if (instance_lock && (*instance_lock != NULL_LOCK))
-	    {
-	      scan = heap_next (thread_p, hfid, class_oid, &oid, &recdes,
-				&scan_cache, COPY);
-	      if (scan != S_SUCCESS)
-		{
-		  break;
-		}
+        {
+          if (instance_lock && (*instance_lock != NULL_LOCK))
+            {
+              scan = heap_next (thread_p, hfid, class_oid, &oid, &recdes, &scan_cache, COPY);
+              if (scan != S_SUCCESS)
+                {
+                  break;
+                }
 
-	      scan = heap_get (thread_p, &oid, &recdes, &scan_cache, COPY);
-	      if (scan != S_SUCCESS)
-		{
-		  (*nfailed_instance_locks)++;
-		  continue;
-		}
+              scan = heap_get (thread_p, &oid, &recdes, &scan_cache, COPY);
+              if (scan != S_SUCCESS)
+                {
+                  (*nfailed_instance_locks)++;
+                  continue;
+                }
 
-	    }
-	  else
-	    {
-	      scan = heap_next (thread_p, hfid, class_oid, &oid, &recdes,
-				&scan_cache, COPY);
-	      if (scan != S_SUCCESS)
-		{
-		  break;
-		}
-	    }
+            }
+          else
+            {
+              scan = heap_next (thread_p, hfid, class_oid, &oid, &recdes, &scan_cache, COPY);
+              if (scan != S_SUCCESS)
+                {
+                  break;
+                }
+            }
 
-	  mobjs->num_objs++;
-	  COPY_OID (&obj->class_oid, class_oid);
-	  COPY_OID (&obj->oid, &oid);
-	  obj->hfid = NULL_HFID;
-	  obj->length = recdes.length;
-	  obj->offset = offset;
-	  obj->operation = LC_FETCH;
-	  obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (obj);
-	  round_length = DB_ALIGN (recdes.length, MAX_ALIGNMENT);
+          mobjs->num_objs++;
+          COPY_OID (&obj->class_oid, class_oid);
+          COPY_OID (&obj->oid, &oid);
+          obj->hfid = NULL_HFID;
+          obj->length = recdes.length;
+          obj->offset = offset;
+          obj->operation = LC_FETCH;
+          obj = LC_NEXT_ONEOBJ_PTR_IN_COPYAREA (obj);
+          round_length = DB_ALIGN (recdes.length, MAX_ALIGNMENT);
 #if !defined(NDEBUG)
-	  /* suppress valgrind UMW error */
-	  memset (recdes.data + recdes.length, 0,
-		  MIN (round_length - recdes.length,
-		       recdes.area_size - recdes.length));
+          /* suppress valgrind UMW error */
+          memset (recdes.data + recdes.length, 0, MIN (round_length - recdes.length, recdes.area_size - recdes.length));
 #endif
-	  offset += round_length;
-	  recdes.data += round_length;
-	  recdes.area_size -= round_length + sizeof (*obj);
-	}
+          offset += round_length;
+          recdes.data += round_length;
+          recdes.area_size -= round_length + sizeof (*obj);
+        }
 
       if (scan != S_DOESNT_FIT || mobjs->num_objs > 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
       /*
        * The first object does not fit into given copy area
        * Get a larger area
@@ -5861,14 +5511,13 @@ xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
        */
 
       if ((-recdes.length) > copyarea_length)
-	{
-	  copyarea_length =
-	    DB_ALIGN (-recdes.length, MAX_ALIGNMENT) + sizeof (*mobjs);
-	}
+        {
+          copyarea_length = DB_ALIGN (-recdes.length, MAX_ALIGNMENT) + sizeof (*mobjs);
+        }
       else
-	{
-	  copyarea_length += DB_PAGESIZE;
-	}
+        {
+          copyarea_length += DB_PAGESIZE;
+        }
     }
 
   if (scan == S_END)
@@ -5879,10 +5528,10 @@ xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
        */
       error_code = heap_scancache_end (thread_p, &scan_cache);
       if (error_code != NO_ERROR)
-	{
-	  *nobjects = *nfetched = -1;
-	  goto error;
-	}
+        {
+          *nobjects = *nfetched = -1;
+          goto error;
+        }
 
       *nfetched += mobjs->num_objs;
       *nobjects = *nfetched;
@@ -5909,17 +5558,17 @@ xlocator_lock_and_fetch_all (THREAD_ENTRY * thread_p, const HFID * hfid,
        * scan
        */
       if (*nobjects <= *nfetched)
-	{
-	  *nobjects = *nfetched + 10;
-	}
+        {
+          *nobjects = *nfetched + 10;
+        }
     }
   else
     {
       error_code = heap_scancache_end (thread_p, &scan_cache);
       if (error_code != NO_ERROR)
-	{
-	  goto end;
-	}
+        {
+          goto end;
+        }
     }
 
 end:

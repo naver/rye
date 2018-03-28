@@ -29,17 +29,11 @@
 #include <stdio.h>
 #include "log_impl.h"
 
-extern int xlogwr_get_log_pages (THREAD_ENTRY * thread_p,
-				 LOG_PAGEID first_pageid,
-				 bool compressed_protocol);
+extern int xlogwr_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid, bool compressed_protocol);
 extern LOG_PAGEID logwr_get_min_copied_fpageid (void);
-extern LOGWR_ENTRY *logwr_find_copy_completed_entry (LOGWR_INFO *
-						     writer_info);
-extern LOGWR_ENTRY *logwr_find_entry_status (LOGWR_INFO * writer_info,
-					     LOGWR_STATUS status);
+extern LOGWR_ENTRY *logwr_find_copy_completed_entry (LOGWR_INFO * writer_info);
+extern LOGWR_ENTRY *logwr_find_entry_status (LOGWR_INFO * writer_info, LOGWR_STATUS status);
 
-extern int xmigrator_get_log_pages (THREAD_ENTRY * thread_p,
-				    LOG_PAGEID first_pageid,
-				    bool compressed_protocol);
+extern int xmigrator_get_log_pages (THREAD_ENTRY * thread_p, LOG_PAGEID first_pageid, bool compressed_protocol);
 
 #endif /* _REPL_LOG_WRITER_SR_HEADER_ */

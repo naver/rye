@@ -59,34 +59,31 @@ hm_new_srv_handle (T_SRV_HANDLE ** new_handle, unsigned int seq_num)
 
   if (current_handle_count >= shm_Appl->max_prepared_stmt_count)
     {
-      return ERROR_INFO_SET (CAS_ER_MAX_PREPARED_STMT_COUNT_EXCEEDED,
-			     CAS_ERROR_INDICATOR);
+      return ERROR_INFO_SET (CAS_ER_MAX_PREPARED_STMT_COUNT_EXCEEDED, CAS_ERROR_INDICATOR);
     }
 
   for (i = 0; i < max_srv_handle; i++)
     {
       if (srv_handle_table[i] == NULL)
-	{
-	  *new_handle = srv_handle_table[i];
-	  new_handle_id = i + 1;
-	  break;
-	}
+        {
+          *new_handle = srv_handle_table[i];
+          new_handle_id = i + 1;
+          break;
+        }
     }
 
   if (new_handle_id == 0)
     {
       new_max_srv_handle = max_srv_handle + SRV_HANDLE_ALLOC_SIZE;
       new_srv_handle_table = (T_SRV_HANDLE **)
-	RYE_REALLOC (srv_handle_table,
-		     sizeof (T_SRV_HANDLE *) * new_max_srv_handle);
+        RYE_REALLOC (srv_handle_table, sizeof (T_SRV_HANDLE *) * new_max_srv_handle);
       if (new_srv_handle_table == NULL)
-	{
-	  return ERROR_INFO_SET (CAS_ER_NO_MORE_MEMORY, CAS_ERROR_INDICATOR);
-	}
+        {
+          return ERROR_INFO_SET (CAS_ER_NO_MORE_MEMORY, CAS_ERROR_INDICATOR);
+        }
 
       new_handle_id = max_srv_handle + 1;
-      memset (new_srv_handle_table + max_srv_handle,
-	      0, sizeof (T_SRV_HANDLE *) * SRV_HANDLE_ALLOC_SIZE);
+      memset (new_srv_handle_table + max_srv_handle, 0, sizeof (T_SRV_HANDLE *) * SRV_HANDLE_ALLOC_SIZE);
       max_srv_handle = new_max_srv_handle;
       srv_handle_table = new_srv_handle_table;
     }
@@ -161,15 +158,15 @@ hm_srv_handle_free_all (bool free_holdable)
     {
       srv_handle = srv_handle_table[i];
       if (srv_handle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (srv_handle->is_holdable && !free_holdable)
-	{
-	  new_max_handle_id = i;
-	  continue;
-	}
+        {
+          new_max_handle_id = i;
+          continue;
+        }
 
       srv_handle_content_free (srv_handle);
       RYE_FREE_MEM (srv_handle);
@@ -195,31 +192,30 @@ hm_srv_handle_qresult_end_all (bool end_holdable)
     {
       srv_handle = srv_handle_table[i];
       if (srv_handle == NULL)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (srv_handle->is_holdable && !end_holdable)
-	{
-	  /* do not close holdable results */
-	  srv_handle->is_from_current_transaction = false;
-	  continue;
-	}
+        {
+          /* do not close holdable results */
+          srv_handle->is_from_current_transaction = false;
+          continue;
+        }
 
       if (srv_handle->is_holdable && !srv_handle->is_from_current_transaction)
-	{
-	  /* end only holdable handles from the current transaction */
-	  continue;
-	}
+        {
+          /* end only holdable handles from the current transaction */
+          continue;
+        }
 
       if (srv_handle->schema_type < 0
-	  || srv_handle->schema_type == CCI_SCH_TABLE
-	  || srv_handle->schema_type == CCI_SCH_COLUMN
-	  || srv_handle->schema_type == CCI_SCH_QUERY_SPEC
-	  || srv_handle->schema_type == CCI_SCH_PRIMARY_KEY)
-	{
-	  hm_qresult_end (srv_handle, FALSE);
-	}
+          || srv_handle->schema_type == CCI_SCH_TABLE
+          || srv_handle->schema_type == CCI_SCH_COLUMN
+          || srv_handle->schema_type == CCI_SCH_QUERY_SPEC || srv_handle->schema_type == CCI_SCH_PRIMARY_KEY)
+        {
+          hm_qresult_end (srv_handle, FALSE);
+        }
     }
 }
 
@@ -238,22 +234,22 @@ hm_qresult_end (T_SRV_HANDLE * srv_handle, char free_flag)
   if (q_result)
     {
       if (q_result->copied != TRUE && q_result->result)
-	{
-	  ux_free_result (q_result->result);
+        {
+          ux_free_result (q_result->result);
 
-	  if (q_result->is_holdable == true)
-	    {
-	      q_result->is_holdable = false;
-	      as_Info->num_holdable_results--;
-	    }
-	}
+          if (q_result->is_holdable == true)
+            {
+              q_result->is_holdable = false;
+              as_Info->num_holdable_results--;
+            }
+        }
       q_result->result = NULL;
       q_result->tuple_count = 0;
 
       if (free_flag == TRUE)
-	{
-	  RYE_FREE_MEM (q_result);
-	}
+        {
+          RYE_FREE_MEM (q_result);
+        }
     }
 
   if (free_flag == TRUE)
@@ -280,14 +276,12 @@ srv_handle_content_free (T_SRV_HANDLE * srv_handle)
   if (srv_handle->schema_type < 0
       || srv_handle->schema_type == CCI_SCH_TABLE
       || srv_handle->schema_type == CCI_SCH_COLUMN
-      || srv_handle->schema_type == CCI_SCH_QUERY_SPEC
-      || srv_handle->schema_type == CCI_SCH_PRIMARY_KEY)
+      || srv_handle->schema_type == CCI_SCH_QUERY_SPEC || srv_handle->schema_type == CCI_SCH_PRIMARY_KEY)
     {
       hm_qresult_end (srv_handle, TRUE);
       hm_session_free (srv_handle);
     }
-  else if (srv_handle->schema_type == CCI_SCH_TABLE_PRIVILEGE
-	   || srv_handle->schema_type == CCI_SCH_COLUMN_PRIVILEGE)
+  else if (srv_handle->schema_type == CCI_SCH_TABLE_PRIVILEGE || srv_handle->schema_type == CCI_SCH_COLUMN_PRIVILEGE)
     {
       RYE_FREE_MEM (srv_handle->session);
     }

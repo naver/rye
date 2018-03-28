@@ -44,46 +44,38 @@
 #include "cas_util.h"
 #include "cas_execute.h"
 
-static FN_RETURN fn_prepare_internal (int argc, void **argv,
-				      T_NET_BUF * net_buf,
-				      T_REQ_INFO * req_info);
+static FN_RETURN fn_prepare_internal (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info);
 static FN_RETURN fn_execute_internal (int argc, void **argv,
-				      T_NET_BUF * net_buf,
-				      T_REQ_INFO * req_info,
-				      int *prepared_srv_h_id);
+                                      T_NET_BUF * net_buf, T_REQ_INFO * req_info, int *prepared_srv_h_id);
 static const char *get_tran_type_str (int tran_type);
-static void bind_value_print (T_CAS_LOG_TYPE cas_log_type, char type,
-			      void *net_value);
+static void bind_value_print (T_CAS_LOG_TYPE cas_log_type, char type, void *net_value);
 static const char *get_error_log_eids (int err);
 static void bind_value_log (T_CAS_LOG_TYPE cas_log_type,
-			    struct timeval *log_time, int argc, void **argv,
-			    unsigned int query_seq_num);
+                            struct timeval *log_time, int argc, void **argv, unsigned int query_seq_num);
 int set_query_timeout (int query_timeout, const char **from);
 
 /* functions implemented in transaction_cl.c */
 extern void tran_set_query_timeout (int);
 
-static void update_error_query_count (T_APPL_SERVER_INFO * as_info_p,
-				      const T_ERROR_INFO * err_info_p);
+static void update_error_query_count (T_APPL_SERVER_INFO * as_info_p, const T_ERROR_INFO * err_info_p);
 
 static const char *tran_type_str[] = { "COMMIT", "ROLLBACK" };
 
 static const char *type_str_tbl[CCI_TYPE_LAST + 1] = {
-  "NULL",			/* CCI_TYPE_NULL */
-  "VARCHAR",			/* CCI_TYPE_VARCHAR */
-  "VARBINARY",			/* CCI_TYPE_VARBIT */
-  "NUMERIC",			/* CCI_TYPE_NUMERIC */
-  "INT",			/* CCI_TYPE_INT */
-  "DOUBLE",			/* CCI_TYPE_DOUBLE */
-  "DATE",			/* CCI_TYPE_DATE */
-  "TIME",			/* CCI_TYPE_TIME */
-  "BIGINT",			/* CCI_TYPE_BIGINT */
-  "DATETIME"			/* CCI_TYPE_DATETIME */
+  "NULL",                       /* CCI_TYPE_NULL */
+  "VARCHAR",                    /* CCI_TYPE_VARCHAR */
+  "VARBINARY",                  /* CCI_TYPE_VARBIT */
+  "NUMERIC",                    /* CCI_TYPE_NUMERIC */
+  "INT",                        /* CCI_TYPE_INT */
+  "DOUBLE",                     /* CCI_TYPE_DOUBLE */
+  "DATE",                       /* CCI_TYPE_DATE */
+  "TIME",                       /* CCI_TYPE_TIME */
+  "BIGINT",                     /* CCI_TYPE_BIGINT */
+  "DATETIME"                    /* CCI_TYPE_DATETIME */
 };
 
 FN_RETURN
-fn_end_tran (int argc, void **argv, T_NET_BUF * net_buf,
-	     T_REQ_INFO * req_info)
+fn_end_tran (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 {
   char tran_type;
   int err_code;
@@ -113,13 +105,11 @@ fn_end_tran (int argc, void **argv, T_NET_BUF * net_buf,
   err_code = ux_end_tran ((char) tran_type, false);
 
   gettimeofday (&end_tran_end, NULL);
-  ut_timeval_diff (&end_tran_begin, &end_tran_end, &elapsed_sec,
-		   &elapsed_msec);
+  ut_timeval_diff (&end_tran_begin, &end_tran_end, &elapsed_sec, &elapsed_msec);
 
   cas_sql_log_write (0, "end_tran %s%d time %d.%03d%s",
-		     err_code < 0 ? "error:" : "",
-		     err_Info.err_number, elapsed_sec, elapsed_msec,
-		     get_error_log_eids (err_Info.err_number));
+                     err_code < 0 ? "error:" : "",
+                     err_Info.err_number, elapsed_sec, elapsed_msec, get_error_log_eids (err_Info.err_number));
 
   if (err_code < 0)
     {
@@ -133,8 +123,7 @@ fn_end_tran (int argc, void **argv, T_NET_BUF * net_buf,
     }
 
   timeout = ut_check_timeout (&tran_Start_time, &end_tran_end,
-			      shm_Appl->long_transaction_time,
-			      &elapsed_sec, &elapsed_msec);
+                              shm_Appl->long_transaction_time, &elapsed_sec, &elapsed_msec);
   if (timeout >= 0)
     {
       as_Info->num_long_transactions %= MAX_DIAG_DATA_VALUE;
@@ -148,8 +137,7 @@ fn_end_tran (int argc, void **argv, T_NET_BUF * net_buf,
     }
   else
     {
-      cas_sql_log_end ((as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL),
-		       elapsed_sec, elapsed_msec);
+      cas_sql_log_end ((as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL), elapsed_sec, elapsed_msec);
     }
 
   gettimeofday (&tran_Start_time, NULL);
@@ -170,14 +158,12 @@ fn_end_tran (int argc, void **argv, T_NET_BUF * net_buf,
 
   if (!ux_is_database_connected ())
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "fn_end_tran: !ux_is_database_connected()");
+      er_log_debug (ARG_FILE_LINE, "fn_end_tran: !ux_is_database_connected()");
       return FN_CLOSE_CONN;
     }
   else if (restart_is_needed () || as_Info->reset_flag == TRUE)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "fn_end_tran: restart_is_needed() || reset_flag");
+      er_log_debug (ARG_FILE_LINE, "fn_end_tran: restart_is_needed() || reset_flag");
       return FN_KEEP_SESS;
     }
   return FN_KEEP_CONN;
@@ -191,8 +177,7 @@ fn_prepare (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 
 
 static FN_RETURN
-fn_prepare_internal (int argc, void **argv,
-		     T_NET_BUF * net_buf, T_REQ_INFO * req_info)
+fn_prepare_internal (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 {
   char *sql_stmt;
   char flag;
@@ -227,8 +212,7 @@ fn_prepare_internal (int argc, void **argv,
     {
       int deferred_close_handle;
       net_arg_get_int (&deferred_close_handle, argv[arg_idx++]);
-      cas_sql_log_write (0, "close_req_handle srv_h_id %d",
-			 deferred_close_handle);
+      cas_sql_log_write (0, "close_req_handle srv_h_id %d", deferred_close_handle);
       hm_srv_handle_free (deferred_close_handle);
     }
 
@@ -243,32 +227,29 @@ fn_prepare_internal (int argc, void **argv,
       char *s, *t;
       size_t l;
 
-      for (s = as_Info->log_msg, l = 0;
-	   *s && l < SHM_LOG_MSG_SIZE - 1; s++, l++)
-	{
-	  /* empty body */
-	}
+      for (s = as_Info->log_msg, l = 0; *s && l < SHM_LOG_MSG_SIZE - 1; s++, l++)
+        {
+          /* empty body */
+        }
       *s++ = ' ';
       l++;
       for (t = sql_stmt; *t && l < SHM_LOG_MSG_SIZE - 1; s++, t++, l++)
-	{
-	  *s = *t;
-	}
+        {
+          *s = *t;
+        }
       *s = '\0';
     }
 
-  srv_h_id = ux_prepare (sql_stmt, flag, auto_commit_mode,
-			 net_buf, req_info, query_seq_num_current_value ());
+  srv_h_id = ux_prepare (sql_stmt, flag, auto_commit_mode, net_buf, req_info, query_seq_num_current_value ());
 
   srv_handle = hm_find_srv_handle (srv_h_id);
 
   cas_sql_log_write (query_seq_num_current_value (),
-		     "prepare srv_h_id %s%d%s%s",
-		     (srv_h_id < 0) ? "error:" : "",
-		     (srv_h_id < 0) ? err_Info.err_number : srv_h_id,
-		     (srv_handle != NULL
-		      && srv_handle->use_plan_cache) ? " (PC)" : "",
-		     get_error_log_eids (err_Info.err_number));
+                     "prepare srv_h_id %s%d%s%s",
+                     (srv_h_id < 0) ? "error:" : "",
+                     (srv_h_id < 0) ? err_Info.err_number : srv_h_id,
+                     (srv_handle != NULL
+                      && srv_handle->use_plan_cache) ? " (PC)" : "", get_error_log_eids (err_Info.err_number));
 
   if (srv_h_id < 0)
     {
@@ -288,61 +269,51 @@ fn_execute (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 
 static void
 cas_execute_log_before_execute (T_CAS_LOG_TYPE cas_log_type,
-				struct timeval *start_time,
-				T_SRV_HANDLE * srv_handle, int srv_h_id,
-				int num_bind_value, void **bind_argv,
-				int query_timeout,
-				const char *query_timeout_from)
+                                struct timeval *start_time,
+                                T_SRV_HANDLE * srv_handle, int srv_h_id,
+                                int num_bind_value, void **bind_argv, int query_timeout, const char *query_timeout_from)
 {
   const char *exec_func_name = "execute";
 
   cas_log_write (cas_log_type,
-		 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL,
-		 start_time, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		 "set query timeout to %d ms (%s)",
-		 query_timeout, query_timeout_from);
+                 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL,
+                 start_time, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
+                 "set query timeout to %d ms (%s)", query_timeout, query_timeout_from);
 
   cas_log_write (cas_log_type, CAS_LOG_FLAG_PRINT_HEADER, start_time,
-		 SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		 "%s srv_h_id %d ", exec_func_name, srv_h_id);
+                 SRV_HANDLE_QUERY_SEQ_NUM (srv_handle), "%s srv_h_id %d ", exec_func_name, srv_h_id);
   if (srv_handle->sql_stmt != NULL)
     {
-      cas_log_write_string (cas_log_type, srv_handle->sql_stmt,
-			    strlen (srv_handle->sql_stmt), true);
-      bind_value_log (cas_log_type, start_time, num_bind_value, bind_argv,
-		      SRV_HANDLE_QUERY_SEQ_NUM (srv_handle));
+      cas_log_write_string (cas_log_type, srv_handle->sql_stmt, strlen (srv_handle->sql_stmt), true);
+      bind_value_log (cas_log_type, start_time, num_bind_value, bind_argv, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle));
     }
 }
 
 static void
 cas_execute_log_after_execute (T_CAS_LOG_TYPE cas_log_type,
-			       T_SRV_HANDLE * srv_handle, int ret_code,
-			       int elapsed_sec, int elapsed_msec,
-			       int err_number_execute, const char *eid_string,
-			       const char *plan)
+                               T_SRV_HANDLE * srv_handle, int ret_code,
+                               int elapsed_sec, int elapsed_msec,
+                               int err_number_execute, const char *eid_string, const char *plan)
 {
   const char *exec_func_name = "execute";
   cas_log_write (cas_log_type,
-		 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL,
-		 NULL, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		 "%s %s%d tuple %d time %d.%03d%s%s%s",
-		 exec_func_name, (ret_code < 0) ? "error:" : "",
-		 err_number_execute,
-		 (ret_code < 0 ? ret_code : get_tuple_count (srv_handle)),
-		 elapsed_sec, elapsed_msec, "", "", eid_string);
+                 CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL,
+                 NULL, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
+                 "%s %s%d tuple %d time %d.%03d%s%s%s",
+                 exec_func_name, (ret_code < 0) ? "error:" : "",
+                 err_number_execute,
+                 (ret_code < 0 ? ret_code : get_tuple_count (srv_handle)),
+                 elapsed_sec, elapsed_msec, "", "", eid_string);
 
   if (plan != NULL && plan[0] != '\0')
     {
       cas_log_write (cas_log_type,
-		     CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL,
-		     NULL, 0, "slow query plan\n%s", plan);
+                     CAS_LOG_FLAG_PRINT_HEADER | CAS_LOG_FLAG_PRINT_NL, NULL, 0, "slow query plan\n%s", plan);
     }
 }
 
 static FN_RETURN
-fn_execute_internal (int argc, void **argv,
-		     T_NET_BUF * net_buf, T_REQ_INFO * req_info,
-		     int *prepared_srv_h_id)
+fn_execute_internal (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info, int *prepared_srv_h_id)
 {
   int srv_h_id;
   char flag;
@@ -407,11 +378,10 @@ fn_execute_internal (int argc, void **argv,
   if (shm_Appl->max_string_length >= 0)
     {
       if (max_col_size <= 0 || max_col_size > shm_Appl->max_string_length)
-	max_col_size = shm_Appl->max_string_length;
+        max_col_size = shm_Appl->max_string_length;
     }
 
-  app_query_timeout =
-    set_query_timeout (app_query_timeout, &query_timeout_from);
+  app_query_timeout = set_query_timeout (app_query_timeout, &query_timeout_from);
 
   srv_handle->auto_commit_mode = auto_commit_mode;
   srv_handle->scrollable_cursor = FALSE;
@@ -421,13 +391,11 @@ fn_execute_internal (int argc, void **argv,
       gettimeofday (&query_Start_time, NULL);
     }
 
-  if (auto_commit_mode == FALSE ||
-      as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
+  if (auto_commit_mode == FALSE || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
     {
       cas_execute_log_before_execute (CAS_LOG_SQL_LOG, NULL,
-				      srv_handle, srv_h_id, num_bind_value,
-				      bind_argv, app_query_timeout,
-				      query_timeout_from);
+                                      srv_handle, srv_h_id, num_bind_value,
+                                      bind_argv, app_query_timeout, query_timeout_from);
     }
 
   /* append query string to as_Info->log_msg */
@@ -436,33 +404,29 @@ fn_execute_internal (int argc, void **argv,
       char *s, *t;
       size_t l;
 
-      for (s = as_Info->log_msg, l = 0;
-	   *s && l < SHM_LOG_MSG_SIZE - 1; s++, l++)
-	{
-	  /* empty body */
-	}
+      for (s = as_Info->log_msg, l = 0; *s && l < SHM_LOG_MSG_SIZE - 1; s++, l++)
+        {
+          /* empty body */
+        }
       *s++ = ' ';
       l++;
-      for (t = srv_handle->sql_stmt; *t && l < SHM_LOG_MSG_SIZE - 1;
-	   s++, t++, l++)
-	{
-	  *s = *t;
-	}
+      for (t = srv_handle->sql_stmt; *t && l < SHM_LOG_MSG_SIZE - 1; s++, t++, l++)
+        {
+          *s = *t;
+        }
       *s = '\0';
     }
 
   gettimeofday (&exec_begin, NULL);
 
   ret_code = ux_execute (srv_handle, flag, max_col_size, max_row,
-			 num_bind_value, bind_argv,
-			 group_id, net_buf, req_info);
+                         num_bind_value, bind_argv, group_id, net_buf, req_info);
   gettimeofday (&exec_end, NULL);
   ut_timeval_diff (&exec_begin, &exec_end, &elapsed_sec, &elapsed_msec);
   eid_string = get_error_log_eids (err_Info.err_number);
   err_number_execute = err_Info.err_number;
 
-  if (ux_has_stmt_result_set (srv_handle->q_result->stmt_type)
-      && ret_code >= 0)
+  if (ux_has_stmt_result_set (srv_handle->q_result->stmt_type) && ret_code >= 0)
     {
       net_buf_cp_byte (net_buf, EXEC_CONTAIN_FETCH_RESULT);
       ux_fetch (srv_handle, 1, 50, 0, net_buf, req_info);
@@ -474,60 +438,47 @@ fn_execute_internal (int argc, void **argv,
 
   plan = db_get_execution_plan ();
 
-  if (auto_commit_mode == FALSE ||
-      as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
+  if (auto_commit_mode == FALSE || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
     {
       cas_execute_log_after_execute (CAS_LOG_SQL_LOG, srv_handle, ret_code,
-				     elapsed_sec, elapsed_msec,
-				     err_number_execute, eid_string, plan);
+                                     elapsed_sec, elapsed_msec, err_number_execute, eid_string, plan);
     }
 
-  timeout = ut_check_timeout (&query_Start_time, &exec_end,
-			      shm_Appl->long_query_time,
-			      &elapsed_sec, &elapsed_msec);
+  timeout = ut_check_timeout (&query_Start_time, &exec_end, shm_Appl->long_query_time, &elapsed_sec, &elapsed_msec);
   if (timeout >= 0 || ret_code < 0)
     {
 
       sql_log_Notice_mode_flush = true;
 
       if (timeout >= 0)
-	{
-	  as_Info->num_long_queries %= MAX_DIAG_DATA_VALUE;
-	  as_Info->num_long_queries++;
-	}
+        {
+          as_Info->num_long_queries %= MAX_DIAG_DATA_VALUE;
+          as_Info->num_long_queries++;
+        }
 
       if (ret_code < 0)
-	{
-	  update_error_query_count (as_Info, &err_Info);
-	}
+        {
+          update_error_query_count (as_Info, &err_Info);
+        }
 
       if (as_Info->cur_slow_log_mode == SLOW_LOG_MODE_ON)
-	{
-	  cas_execute_log_before_execute (CAS_LOG_SLOW_LOG, &query_Start_time,
-					  srv_handle, srv_h_id,
-					  num_bind_value, bind_argv,
-					  app_query_timeout,
-					  query_timeout_from);
-	  cas_execute_log_after_execute (CAS_LOG_SLOW_LOG, srv_handle,
-					 ret_code, elapsed_sec, elapsed_msec,
-					 err_number_execute, eid_string,
-					 plan);
-	  cas_slow_log_end ();
-	}
+        {
+          cas_execute_log_before_execute (CAS_LOG_SLOW_LOG, &query_Start_time,
+                                          srv_handle, srv_h_id,
+                                          num_bind_value, bind_argv, app_query_timeout, query_timeout_from);
+          cas_execute_log_after_execute (CAS_LOG_SLOW_LOG, srv_handle,
+                                         ret_code, elapsed_sec, elapsed_msec, err_number_execute, eid_string, plan);
+          cas_slow_log_end ();
+        }
 
-      if (auto_commit_mode == TRUE &&
-	  as_Info->cur_sql_log_mode != SQL_LOG_MODE_ALL)
-	{
-	  cas_execute_log_before_execute (CAS_LOG_SQL_LOG, &query_Start_time,
-					  srv_handle, srv_h_id,
-					  num_bind_value, bind_argv,
-					  app_query_timeout,
-					  query_timeout_from);
-	  cas_execute_log_after_execute (CAS_LOG_SQL_LOG, srv_handle,
-					 ret_code, elapsed_sec, elapsed_msec,
-					 err_number_execute, eid_string,
-					 plan);
-	}
+      if (auto_commit_mode == TRUE && as_Info->cur_sql_log_mode != SQL_LOG_MODE_ALL)
+        {
+          cas_execute_log_before_execute (CAS_LOG_SQL_LOG, &query_Start_time,
+                                          srv_handle, srv_h_id,
+                                          num_bind_value, bind_argv, app_query_timeout, query_timeout_from);
+          cas_execute_log_after_execute (CAS_LOG_SQL_LOG, srv_handle,
+                                         ret_code, elapsed_sec, elapsed_msec, err_number_execute, eid_string, plan);
+        }
 
     }
 
@@ -547,8 +498,7 @@ fn_execute_internal (int argc, void **argv,
 }
 
 FN_RETURN
-fn_get_db_parameter (int argc, void **argv,
-		     T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
+fn_get_db_parameter (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int param_name;
 
@@ -566,7 +516,7 @@ fn_get_db_parameter (int argc, void **argv,
       int max_str_len = shm_Appl->max_string_length;
 
       if (max_str_len <= 0 || max_str_len > DB_MAX_STRING_LENGTH)
-	max_str_len = DB_MAX_STRING_LENGTH;
+        max_str_len = DB_MAX_STRING_LENGTH;
       net_buf_cp_int (net_buf, max_str_len, NULL);
     }
   else
@@ -580,8 +530,7 @@ fn_get_db_parameter (int argc, void **argv,
 }
 
 FN_RETURN
-fn_close_req_handle (int argc, void **argv,
-		     T_NET_BUF * net_buf, T_REQ_INFO * req_info)
+fn_close_req_handle (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 {
   int srv_h_id;
   T_SRV_HANDLE *srv_handle;
@@ -603,8 +552,7 @@ fn_close_req_handle (int argc, void **argv,
       req_info->need_auto_commit = TRAN_AUTOCOMMIT;
     }
 
-  cas_sql_log_write (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		     "close_req_handle srv_h_id %d", srv_h_id);
+  cas_sql_log_write (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle), "close_req_handle srv_h_id %d", srv_h_id);
 
   hm_srv_handle_free (srv_h_id);
 
@@ -642,18 +590,15 @@ fn_fetch (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
     }
 
   cas_sql_log_write (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		     "fetch srv_h_id %d cursor_pos %d fetch_count %d",
-		     srv_h_id, cursor_pos, fetch_count);
+                     "fetch srv_h_id %d cursor_pos %d fetch_count %d", srv_h_id, cursor_pos, fetch_count);
 
-  ux_fetch (srv_handle, cursor_pos, fetch_count,
-	    result_set_index, net_buf, req_info);
+  ux_fetch (srv_handle, cursor_pos, fetch_count, result_set_index, net_buf, req_info);
 
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_schema_info (int argc, void **argv, T_NET_BUF * net_buf,
-		UNUSED_ARG T_REQ_INFO * req_info)
+fn_schema_info (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int schema_type;
   char *arg1, *arg2;
@@ -674,22 +619,18 @@ fn_schema_info (int argc, void **argv, T_NET_BUF * net_buf,
   net_arg_get_int (&flag, argv[3]);
 
   cas_sql_log_write (query_seq_num_next_value (),
-		     "schema_info %s %s %s %d",
-		     schema_info_str (schema_type),
-		     (arg1 ? arg1 : "NULL"), (arg2 ? arg2 : "NULL"), flag);
+                     "schema_info %s %s %s %d",
+                     schema_info_str (schema_type), (arg1 ? arg1 : "NULL"), (arg2 ? arg2 : "NULL"), flag);
 
-  srv_h_id = ux_schema_info (schema_type, arg1, arg2, net_buf,
-			     query_seq_num_current_value ());
+  srv_h_id = ux_schema_info (schema_type, arg1, arg2, net_buf, query_seq_num_current_value ());
 
-  cas_sql_log_write (query_seq_num_current_value (),
-		     "schema_info srv_h_id %d", srv_h_id);
+  cas_sql_log_write (query_seq_num_current_value (), "schema_info srv_h_id %d", srv_h_id);
 
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_get_db_version (int argc, void **argv, T_NET_BUF * net_buf,
-		   T_REQ_INFO * req_info)
+fn_get_db_version (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 {
   char auto_commit_mode;
   cas_sql_log_write (0, "get_version");
@@ -715,7 +656,7 @@ fn_get_db_version (int argc, void **argv, T_NET_BUF * net_buf,
 
 FN_RETURN
 fn_get_class_num_objs (UNUSED_ARG int argc, UNUSED_ARG void **argv,
-		       T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
+                       T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   ERROR_INFO_SET (CAS_ER_ARGS, CAS_ERROR_INDICATOR);
   NET_BUF_ERR_SET (net_buf);
@@ -723,8 +664,7 @@ fn_get_class_num_objs (UNUSED_ARG int argc, UNUSED_ARG void **argv,
 }
 
 FN_RETURN
-fn_execute_batch (int argc, void **argv, T_NET_BUF * net_buf,
-		  T_REQ_INFO * req_info)
+fn_execute_batch (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 {
   int srv_h_id;
   T_SRV_HANDLE *srv_handle;
@@ -760,8 +700,7 @@ fn_execute_batch (int argc, void **argv, T_NET_BUF * net_buf,
   net_arg_get_int (&num_bind_value, argv[arg_idx++]);
 
   if ((num_bind_value > (argc - arg_idx) / 2) ||
-      (num_markers > 0 && num_execution * num_markers != num_bind_value) ||
-      (num_markers <= 0 && num_bind_value > 0))
+      (num_markers > 0 && num_execution * num_markers != num_bind_value) || (num_markers <= 0 && num_bind_value > 0))
     {
       ERROR_INFO_SET (CAS_ER_ARGS, CAS_ERROR_INDICATOR);
       NET_BUF_ERR_SET (net_buf);
@@ -785,8 +724,7 @@ fn_execute_batch (int argc, void **argv, T_NET_BUF * net_buf,
     }
 
   /* does not support query timeout for execute_batch yet */
-  driver_query_timeout =
-    set_query_timeout (driver_query_timeout, &query_timeout_from);
+  driver_query_timeout = set_query_timeout (driver_query_timeout, &query_timeout_from);
 
   if (auto_commit_mode == TRUE)
     {
@@ -795,99 +733,83 @@ fn_execute_batch (int argc, void **argv, T_NET_BUF * net_buf,
   srv_handle->auto_commit_mode = auto_commit_mode;
 
   cas_sql_log_write (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		     "set query timeout to %d ms (%s)", driver_query_timeout,
-		     query_timeout_from);
+                     "set query timeout to %d ms (%s)", driver_query_timeout, query_timeout_from);
   cas_sql_log_write_nonl (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-			  "execute_batch srv_h_id %d %d %d ", srv_h_id,
-			  num_execution, num_bind_value);
+                          "execute_batch srv_h_id %d %d %d ", srv_h_id, num_execution, num_bind_value);
   if (srv_handle->sql_stmt != NULL)
     {
-      cas_log_write_string (CAS_LOG_SQL_LOG, srv_handle->sql_stmt,
-			    strlen (srv_handle->sql_stmt), true);
+      cas_log_write_string (CAS_LOG_SQL_LOG, srv_handle->sql_stmt, strlen (srv_handle->sql_stmt), true);
     }
   if (as_Info->cur_sql_log_mode != SQL_LOG_MODE_NONE)
     {
-      bind_value_log (CAS_LOG_SQL_LOG, NULL, num_bind_value, bind_argv,
-		      SRV_HANDLE_QUERY_SEQ_NUM (srv_handle));
+      bind_value_log (CAS_LOG_SQL_LOG, NULL, num_bind_value, bind_argv, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle));
     }
 
   gettimeofday (&exec_begin, NULL);
 
-  ret_code = ux_execute_batch (srv_handle, num_execution, num_markers,
-			       group_id, bind_argv, net_buf);
+  ret_code = ux_execute_batch (srv_handle, num_execution, num_markers, group_id, bind_argv, net_buf);
 
   gettimeofday (&exec_end, NULL);
   ut_timeval_diff (&exec_begin, &exec_end, &elapsed_sec, &elapsed_msec);
 
   eid_string = get_error_log_eids (err_Info.err_number);
   cas_sql_log_write (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		     "execute_batch %s%d tuple %d time %d.%03d%s%s%s",
-		     (ret_code < 0) ? "error:" : "",
-		     err_Info.err_number,
-		     get_tuple_count (srv_handle),
-		     elapsed_sec, elapsed_msec, "", "", eid_string);
+                     "execute_batch %s%d tuple %d time %d.%03d%s%s%s",
+                     (ret_code < 0) ? "error:" : "",
+                     err_Info.err_number, get_tuple_count (srv_handle), elapsed_sec, elapsed_msec, "", "", eid_string);
 
-  timeout = ut_check_timeout (&query_Start_time, &exec_end,
-			      shm_Appl->long_query_time,
-			      &elapsed_sec, &elapsed_msec);
+  timeout = ut_check_timeout (&query_Start_time, &exec_end, shm_Appl->long_query_time, &elapsed_sec, &elapsed_msec);
 
   if (timeout >= 0 || ret_code < 0)
     {
       sql_log_Notice_mode_flush = true;
 
       if (timeout >= 0)
-	{
-	  as_Info->num_long_queries %= MAX_DIAG_DATA_VALUE;
-	  as_Info->num_long_queries++;
-	}
+        {
+          as_Info->num_long_queries %= MAX_DIAG_DATA_VALUE;
+          as_Info->num_long_queries++;
+        }
 
       if (ret_code < 0)
-	{
-	  update_error_query_count (as_Info, &err_Info);
-	}
+        {
+          update_error_query_count (as_Info, &err_Info);
+        }
 
       if (as_Info->cur_slow_log_mode == SLOW_LOG_MODE_ON)
-	{
-	  cas_slow_log_write_nonl (&query_Start_time,
-				   SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-				   "execute_batch srv_h_id %d %d ",
-				   srv_h_id, num_bind_value);
-	  if (srv_handle->sql_stmt != NULL)
-	    {
-	      cas_log_write_string (CAS_LOG_SLOW_LOG,
-				    srv_handle->sql_stmt,
-				    strlen (srv_handle->sql_stmt), true);
-	      bind_value_log (CAS_LOG_SQL_LOG, &query_Start_time,
-			      num_bind_value, bind_argv,
-			      SRV_HANDLE_QUERY_SEQ_NUM (srv_handle));
-	    }
-	  cas_slow_log_write (NULL, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-			      "execute_batch %s%d tuple %d time %d.%03d%s%s%s",
-			      (ret_code < 0) ? "error:" : "",
-			      err_Info.err_number,
-			      get_tuple_count (srv_handle), elapsed_sec,
-			      elapsed_msec, "", "", eid_string);
+        {
+          cas_slow_log_write_nonl (&query_Start_time,
+                                   SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
+                                   "execute_batch srv_h_id %d %d ", srv_h_id, num_bind_value);
+          if (srv_handle->sql_stmt != NULL)
+            {
+              cas_log_write_string (CAS_LOG_SLOW_LOG, srv_handle->sql_stmt, strlen (srv_handle->sql_stmt), true);
+              bind_value_log (CAS_LOG_SQL_LOG, &query_Start_time,
+                              num_bind_value, bind_argv, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle));
+            }
+          cas_slow_log_write (NULL, SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
+                              "execute_batch %s%d tuple %d time %d.%03d%s%s%s",
+                              (ret_code < 0) ? "error:" : "",
+                              err_Info.err_number,
+                              get_tuple_count (srv_handle), elapsed_sec, elapsed_msec, "", "", eid_string);
 
-	  plan = db_get_execution_plan ();
+          plan = db_get_execution_plan ();
 
-	  if (plan != NULL && plan[0] != '\0')
-	    {
-	      cas_slow_log_write (NULL, 0, "slow query plan\n%s", plan);
+          if (plan != NULL && plan[0] != '\0')
+            {
+              cas_slow_log_write (NULL, 0, "slow query plan\n%s", plan);
 
-	      /* reset global plan buffer */
-	      db_set_execution_plan (NULL, 0);
-	    }
-	  cas_slow_log_end ();
-	}
+              /* reset global plan buffer */
+              db_set_execution_plan (NULL, 0);
+            }
+          cas_slow_log_end ();
+        }
     }
 
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_cursor_close (UNUSED_ARG int argc, void **argv,
-		 UNUSED_ARG T_NET_BUF * net_buf,
-		 UNUSED_ARG T_REQ_INFO * req_info)
+fn_cursor_close (UNUSED_ARG int argc, void **argv, UNUSED_ARG T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int srv_h_id;
   T_SRV_HANDLE *srv_handle;
@@ -901,8 +823,7 @@ fn_cursor_close (UNUSED_ARG int argc, void **argv,
       return FN_KEEP_CONN;
     }
 
-  cas_sql_log_write (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle),
-		     "cursor_close srv_h_id %d", srv_h_id);
+  cas_sql_log_write (SRV_HANDLE_QUERY_SEQ_NUM (srv_handle), "cursor_close srv_h_id %d", srv_h_id);
 
   ux_cursor_close (srv_handle);
 
@@ -910,8 +831,7 @@ fn_cursor_close (UNUSED_ARG int argc, void **argv,
 }
 
 FN_RETURN
-fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf,
-		   UNUSED_ARG T_REQ_INFO * req_info)
+fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int size, err;
   char *sql_stmt = NULL;
@@ -934,8 +854,7 @@ fn_get_query_plan (int argc, void **argv, T_NET_BUF * net_buf,
     }
 
   snprintf (filename, sizeof (filename), "%d.plan", (int) getpid ());
-  envvar_tmpdir_file (plan_dump_filename, sizeof (plan_dump_filename),
-		      filename);
+  envvar_tmpdir_file (plan_dump_filename, sizeof (plan_dump_filename), filename);
   unlink (plan_dump_filename);
 
   db_query_plan_dump_file (plan_dump_filename);
@@ -975,16 +894,14 @@ end:
 
 FN_RETURN
 fn_con_close (UNUSED_ARG int argc, UNUSED_ARG void **argv,
-	      UNUSED_ARG T_NET_BUF * net_buf,
-	      UNUSED_ARG T_REQ_INFO * req_info)
+              UNUSED_ARG T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   cas_sql_log_write (0, "con_close");
   return FN_CLOSE_CONN;
 }
 
 FN_RETURN
-fn_check_cas (int argc, void **argv, T_NET_BUF * net_buf,
-	      UNUSED_ARG T_REQ_INFO * req_info)
+fn_check_cas (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int retcode = 0;
   char *msg = NULL;
@@ -1012,8 +929,7 @@ fn_check_cas (int argc, void **argv, T_NET_BUF * net_buf,
 }
 
 FN_RETURN
-fn_change_dbuser (int argc, void **argv, T_NET_BUF * net_buf,
-		  T_REQ_INFO * req_info)
+fn_change_dbuser (int argc, void **argv, T_NET_BUF * net_buf, T_REQ_INFO * req_info)
 {
   char *user = NULL;
   char *passwd;
@@ -1049,8 +965,7 @@ fn_change_dbuser (int argc, void **argv, T_NET_BUF * net_buf,
 
 change_dbuser_error:
   NET_BUF_ERR_SET (net_buf);
-  cas_sql_log_write (0, "change_dbuser %s error:%d",
-		     (user == NULL ? "NULL" : user), err_Info.err_number);
+  cas_sql_log_write (0, "change_dbuser %s error:%d", (user == NULL ? "NULL" : user), err_Info.err_number);
   return FN_CLOSE_CONN;
 }
 
@@ -1067,8 +982,7 @@ get_tran_type_str (int tran_type)
 
 static void
 bind_value_log (T_CAS_LOG_TYPE cas_log_type, struct timeval *log_time,
-		int num_bind_value, void **bind_argv,
-		unsigned int query_seq_num)
+                int num_bind_value, void **bind_argv, unsigned int query_seq_num)
 {
   char type;
   void *net_value;
@@ -1080,24 +994,23 @@ bind_value_log (T_CAS_LOG_TYPE cas_log_type, struct timeval *log_time,
       net_value = bind_argv[i * 2 + 1];
 
       if (cas_log_type == CAS_LOG_SLOW_LOG)
-	{
-	  cas_slow_log_write_nonl (log_time, query_seq_num, "bind %d : ",
-				   i + 1);
-	}
+        {
+          cas_slow_log_write_nonl (log_time, query_seq_num, "bind %d : ", i + 1);
+        }
       else
-	{
-	  cas_sql_log_write_nonl (query_seq_num, "bind %d : ", i + 1);
-	}
+        {
+          cas_sql_log_write_nonl (query_seq_num, "bind %d : ", i + 1);
+        }
 
       if (type > CCI_TYPE_FIRST && type <= CCI_TYPE_LAST)
-	{
-	  cas_log_write2 (cas_log_type, "%s ", type_str_tbl[(int) type]);
-	  bind_value_print (cas_log_type, type, net_value);
-	}
+        {
+          cas_log_write2 (cas_log_type, "%s ", type_str_tbl[(int) type]);
+          bind_value_print (cas_log_type, type, net_value);
+        }
       else
-	{
-	  cas_log_write2 (cas_log_type, "NULL");
-	}
+        {
+          cas_log_write2 (cas_log_type, "NULL");
+        }
       cas_log_write2 (cas_log_type, "\n");
     }
 }
@@ -1120,56 +1033,55 @@ bind_value_print (T_CAS_LOG_TYPE cas_log_type, char type, void *net_value)
     case CCI_TYPE_VARBIT:
     case CCI_TYPE_NUMERIC:
       {
-	char *str_val;
-	int val_size;
-	net_arg_get_str (&str_val, &val_size, net_value);
-	val_size--;
-	if (type != CCI_TYPE_NUMERIC)
-	  {
-	    cas_log_write2 (cas_log_type, "(%d)", val_size);
-	  }
+        char *str_val;
+        int val_size;
+        net_arg_get_str (&str_val, &val_size, net_value);
+        val_size--;
+        if (type != CCI_TYPE_NUMERIC)
+          {
+            cas_log_write2 (cas_log_type, "(%d)", val_size);
+          }
 
-	if (as_Info->cur_sql_log_mode != SQL_LOG_MODE_ALL)
-	  {
-	    val_size = MIN (val_size, 100);
-	  }
-	cas_log_write_string (cas_log_type, str_val, val_size, false);
+        if (as_Info->cur_sql_log_mode != SQL_LOG_MODE_ALL)
+          {
+            val_size = MIN (val_size, 100);
+          }
+        cas_log_write_string (cas_log_type, str_val, val_size, false);
       }
       break;
     case CCI_TYPE_BIGINT:
       {
-	INT64 bi_val;
-	net_arg_get_bigint (&bi_val, net_value);
-	cas_log_write2 (cas_log_type, "%lld", (long long) bi_val);
+        INT64 bi_val;
+        net_arg_get_bigint (&bi_val, net_value);
+        cas_log_write2 (cas_log_type, "%lld", (long long) bi_val);
       }
       break;
     case CCI_TYPE_INT:
       {
-	int i_val;
-	net_arg_get_int (&i_val, net_value);
-	cas_log_write2 (cas_log_type, "%d", i_val);
+        int i_val;
+        net_arg_get_int (&i_val, net_value);
+        cas_log_write2 (cas_log_type, "%d", i_val);
       }
       break;
     case CCI_TYPE_DOUBLE:
       {
-	double d_val;
-	net_arg_get_double (&d_val, net_value);
-	cas_log_write2 (cas_log_type, "%.15e", d_val);
+        double d_val;
+        net_arg_get_double (&d_val, net_value);
+        cas_log_write2 (cas_log_type, "%.15e", d_val);
       }
       break;
     case CCI_TYPE_DATE:
     case CCI_TYPE_TIME:
     case CCI_TYPE_DATETIME:
       {
-	short yr, mon, day, hh, mm, ss, ms;
-	net_arg_get_datetime (&yr, &mon, &day, &hh, &mm, &ss, &ms, net_value);
-	if (type == CCI_TYPE_DATE)
-	  cas_log_write2 (cas_log_type, "%d-%d-%d", yr, mon, day);
-	else if (type == CCI_TYPE_TIME)
-	  cas_log_write2 (cas_log_type, "%d:%d:%d", hh, mm, ss);
-	else
-	  cas_log_write2 (cas_log_type, "%d-%d-%d %d:%d:%d.%03d",
-			  yr, mon, day, hh, mm, ss, ms);
+        short yr, mon, day, hh, mm, ss, ms;
+        net_arg_get_datetime (&yr, &mon, &day, &hh, &mm, &ss, &ms, net_value);
+        if (type == CCI_TYPE_DATE)
+          cas_log_write2 (cas_log_type, "%d-%d-%d", yr, mon, day);
+        else if (type == CCI_TYPE_TIME)
+          cas_log_write2 (cas_log_type, "%d:%d:%d", hh, mm, ss);
+        else
+          cas_log_write2 (cas_log_type, "%d-%d-%d %d:%d:%d.%03d", yr, mon, day, hh, mm, ss, ms);
       }
       break;
 
@@ -1216,15 +1128,15 @@ set_query_timeout (int query_timeout, const char **from)
       tran_set_query_timeout (query_timeout + broker_timeout_in_millis);
 
       if (query_timeout == 0 && broker_timeout_in_millis == 0)
-	{
-	  *from = "no limit";
-	  return 0;
-	}
+        {
+          *from = "no limit";
+          return 0;
+        }
       else
-	{
-	  *from = (query_timeout > 0 ? "from app" : "from broker");
-	  return (query_timeout + broker_timeout_in_millis);
-	}
+        {
+          *from = (query_timeout > 0 ? "from app" : "from broker");
+          return (query_timeout + broker_timeout_in_millis);
+        }
     }
   else if (query_timeout > broker_timeout_in_millis)
     {
@@ -1241,8 +1153,7 @@ set_query_timeout (int query_timeout, const char **from)
 }
 
 static void
-update_error_query_count (T_APPL_SERVER_INFO * as_info_p,
-			  const T_ERROR_INFO * err_info_p)
+update_error_query_count (T_APPL_SERVER_INFO * as_info_p, const T_ERROR_INFO * err_info_p)
 {
   assert (as_info_p != NULL);
   assert (err_info_p != NULL);
@@ -1256,16 +1167,15 @@ update_error_query_count (T_APPL_SERVER_INFO * as_info_p,
   if (err_info_p->err_indicator == DBMS_ERROR_INDICATOR)
     {
       if (err_info_p->err_number == ER_BTREE_UNIQUE_FAILED)
-	{
-	  as_info_p->num_unique_error_queries %= MAX_DIAG_DATA_VALUE;
-	  as_info_p->num_unique_error_queries++;
-	}
+        {
+          as_info_p->num_unique_error_queries %= MAX_DIAG_DATA_VALUE;
+          as_info_p->num_unique_error_queries++;
+        }
     }
 }
 
 FN_RETURN
-fn_update_group_id (int argc, void **argv, T_NET_BUF * net_buf,
-		    UNUSED_ARG T_REQ_INFO * req_info)
+fn_update_group_id (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int migrator_id, group_id = -1, target, on_off;
   int error;
@@ -1291,22 +1201,19 @@ fn_update_group_id (int argc, void **argv, T_NET_BUF * net_buf,
   net_buf_cp_int (net_buf, 0, NULL);
 
   cas_sql_log_write (0,
-		     "update_group_id - migrator_id: %d, group_id: %d,"
-		     "target: %d, on_off: %d", migrator_id, group_id, target,
-		     on_off);
+                     "update_group_id - migrator_id: %d, group_id: %d,"
+                     "target: %d, on_off: %d", migrator_id, group_id, target, on_off);
 
   return FN_KEEP_CONN;
 
 error_exit:
   NET_BUF_ERR_SET (net_buf);
-  cas_sql_log_write (0, "update_group_id %d error:%d",
-		     group_id, err_Info.err_number);
+  cas_sql_log_write (0, "update_group_id %d error:%d", group_id, err_Info.err_number);
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_insert_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf,
-			    UNUSED_ARG T_REQ_INFO * req_info)
+fn_insert_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int group_id = 0;
   int error;
@@ -1334,14 +1241,12 @@ fn_insert_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf,
 
 error_exit:
   NET_BUF_ERR_SET (net_buf);
-  cas_sql_log_write (0, "insert_gid_removed_info %d error:%d",
-		     group_id, err_Info.err_number);
+  cas_sql_log_write (0, "insert_gid_removed_info %d error:%d", group_id, err_Info.err_number);
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_delete_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf,
-			    UNUSED_ARG T_REQ_INFO * req_info)
+fn_delete_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int group_id = 0;
   int error;
@@ -1369,14 +1274,12 @@ fn_delete_gid_removed_info (int argc, void **argv, T_NET_BUF * net_buf,
 
 error_exit:
   NET_BUF_ERR_SET (net_buf);
-  cas_sql_log_write (0, "delete_gid_removed_info %d error:%d",
-		     group_id, err_Info.err_number);
+  cas_sql_log_write (0, "delete_gid_removed_info %d error:%d", group_id, err_Info.err_number);
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_delete_gid_skey_info (int argc, void **argv, T_NET_BUF * net_buf,
-			 UNUSED_ARG T_REQ_INFO * req_info)
+fn_delete_gid_skey_info (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int group_id = 0;
   int error;
@@ -1404,14 +1307,12 @@ fn_delete_gid_skey_info (int argc, void **argv, T_NET_BUF * net_buf,
 
 error_exit:
   NET_BUF_ERR_SET (net_buf);
-  cas_sql_log_write (0, "delete_gid_skey_info %d error:%d",
-		     group_id, err_Info.err_number);
+  cas_sql_log_write (0, "delete_gid_skey_info %d error:%d", group_id, err_Info.err_number);
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_block_globl_dml (int argc, void **argv, T_NET_BUF * net_buf,
-		    UNUSED_ARG T_REQ_INFO * req_info)
+fn_block_globl_dml (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int start_or_end = 0;
   int error;
@@ -1439,14 +1340,12 @@ fn_block_globl_dml (int argc, void **argv, T_NET_BUF * net_buf,
 
 error_exit:
   NET_BUF_ERR_SET (net_buf);
-  cas_sql_log_write (0, "block_globl_dml %d error:%d",
-		     start_or_end, err_Info.err_number);
+  cas_sql_log_write (0, "block_globl_dml %d error:%d", start_or_end, err_Info.err_number);
   return FN_KEEP_CONN;
 }
 
 FN_RETURN
-fn_server_mode (UNUSED_ARG int argc, UNUSED_ARG void **argv,
-		T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
+fn_server_mode (UNUSED_ARG int argc, UNUSED_ARG void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int server_state;
   int server_addr;
@@ -1462,13 +1361,12 @@ fn_server_mode (UNUSED_ARG int argc, UNUSED_ARG void **argv,
 }
 
 FN_RETURN
-fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf,
-		   UNUSED_ARG T_REQ_INFO * req_info)
+fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
 #define REPL_DATA_NUM_ARGS 5
 
   int num_items;
-  RP_TRAN_TYPE tran_type = -1;	/* TODO - */
+  RP_TRAN_TYPE tran_type = -1;  /* TODO - */
   int tmp_int;
   int applier_id, tran_id;
   int arg_idx = 0;
@@ -1496,13 +1394,11 @@ fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf,
   tran_type = (RP_TRAN_TYPE) tmp_int;
   net_arg_get_int (&num_items, argv[arg_idx++]);
 
-  if (autocommit_mode == FALSE
-      || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
+  if (autocommit_mode == FALSE || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
     {
       cas_sql_log_write_with_ts (&start_time, 0,
-				 "send_repl_data(%d):tran_id(%d), tran_type(%s), num items(%d)",
-				 applier_id, tran_id,
-				 RP_TRAN_TYPE_NAME (tran_type), num_items);
+                                 "send_repl_data(%d):tran_id(%d), tran_type(%s), num items(%d)",
+                                 applier_id, tran_id, RP_TRAN_TYPE_NAME (tran_type), num_items);
     }
 
   obj_argv = argv + arg_idx;
@@ -1517,8 +1413,7 @@ fn_send_repl_data (int argc, void **argv, T_NET_BUF * net_buf,
       req_info->need_auto_commit = TRAN_AUTOCOMMIT;
     }
 
-  if (autocommit_mode == FALSE
-      || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
+  if (autocommit_mode == FALSE || as_Info->cur_sql_log_mode == SQL_LOG_MODE_ALL)
     {
       cas_sql_log_write (0, "send_repl_data success");
 #if !defined(NDEBUG)
@@ -1539,12 +1434,9 @@ error_exit:
 
   sql_log_Notice_mode_flush = true;
 
-  if (autocommit_mode == TRUE
-      && as_Info->cur_sql_log_mode != SQL_LOG_MODE_ALL)
+  if (autocommit_mode == TRUE && as_Info->cur_sql_log_mode != SQL_LOG_MODE_ALL)
     {
-      cas_sql_log_write_with_ts (&start_time, 0,
-				 "send_repl_data:tran_type:%d, num items:%d",
-				 tran_type, num_items);
+      cas_sql_log_write_with_ts (&start_time, 0, "send_repl_data:tran_type:%d, num items:%d", tran_type, num_items);
     }
 
   NET_BUF_ERR_SET (net_buf);
@@ -1558,8 +1450,7 @@ error_exit:
 }
 
 FN_RETURN
-fn_notify_ha_agent_state (int argc, void **argv, T_NET_BUF * net_buf,
-			  UNUSED_ARG T_REQ_INFO * req_info)
+fn_notify_ha_agent_state (int argc, void **argv, T_NET_BUF * net_buf, UNUSED_ARG T_REQ_INFO * req_info)
 {
   int state, autocommit_mode = FALSE;
   char host_str[MAX_NODE_INFO_STR_LEN];
@@ -1587,9 +1478,7 @@ fn_notify_ha_agent_state (int argc, void **argv, T_NET_BUF * net_buf,
   PRM_NODE_INFO_SET (&node_info, ip, port);
 
   prm_node_info_to_str (host_str, sizeof (host_str), &node_info);
-  cas_sql_log_write (0,
-		     "notify_ha_agent_state (host: %s, state: %d)",
-		     host_str, state);
+  cas_sql_log_write (0, "notify_ha_agent_state (host: %s, state: %d)", host_str, state);
 
   error = boot_notify_ha_apply_state (&node_info, state);
   if (error < 0)
@@ -1613,8 +1502,7 @@ error_exit:
     }
 
   NET_BUF_ERR_SET (net_buf);
-  cas_sql_log_write (0, "notify_ha_agent_state (error: %d)",
-		     err_Info.err_number);
+  cas_sql_log_write (0, "notify_ha_agent_state (error: %d)", err_Info.err_number);
 
   return FN_KEEP_CONN;
 }

@@ -87,10 +87,10 @@
  * Macros related to memory allocation
  */
 
-#define MEM_REGION_INIT_MARK       '\0'	/* Set this to allocated areas */
-#define MEM_REGION_SCRAMBLE_MARK         '\01'	/* Set this to allocated areas */
-#define MEM_REGION_GUARD_MARK            '\02'	/* Set this as a memory guard to detect
-						 * over/under runs  */
+#define MEM_REGION_INIT_MARK       '\0' /* Set this to allocated areas */
+#define MEM_REGION_SCRAMBLE_MARK         '\01'  /* Set this to allocated areas */
+#define MEM_REGION_GUARD_MARK            '\02'  /* Set this as a memory guard to detect
+                                                 * over/under runs  */
 
 #if defined (RYE_DEBUG)
 extern void db_scramble (void *region, int size);
@@ -158,8 +158,7 @@ extern void db_ostk_free (HL_HEAPID heap_id, void *ptr);
 
 extern HL_HEAPID db_create_private_heap (void);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern void db_clear_private_heap (THREAD_ENTRY * thread_p,
-				   HL_HEAPID heap_id);
+extern void db_clear_private_heap (THREAD_ENTRY * thread_p, HL_HEAPID heap_id);
 #endif
 extern void db_destroy_private_heap (HL_HEAPID heap_id);
 extern void db_reset_private_heap (THREAD_ENTRY * thread_p);

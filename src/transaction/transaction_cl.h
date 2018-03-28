@@ -52,8 +52,7 @@ extern int tm_Tran_wait_msecs;
 extern int tm_Tran_ID;
 
 extern void tran_cache_tran_settings (int tran_index, int lock_timeout);
-extern void tran_get_tran_settings (int *lock_timeout_in_msecs,
-				    TRAN_ISOLATION * tran_isolation);
+extern void tran_get_tran_settings (int *lock_timeout_in_msecs, TRAN_ISOLATION * tran_isolation);
 extern int tran_reset_wait_times (int wait_in_msecs);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern int tran_reset_isolation (TRAN_ISOLATION isolation);
@@ -73,14 +72,12 @@ extern void tran_free_savepoint_list (void);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern int tran_system_savepoint (const char *savept_name);
 #endif
-extern int tran_savepoint_internal (const char *savept_name,
-				    SAVEPOINT_TYPE savepoint_type);
+extern int tran_savepoint_internal (const char *savept_name, SAVEPOINT_TYPE savepoint_type);
 extern int tran_abort_upto_user_savepoint (const char *savepoint_name);
 #if defined(ENABLE_UNUSED_FUNCTION)
 extern int tran_abort_upto_system_savepoint (const char *savepoint_name);
 #endif
-extern int tran_internal_abort_upto_savepoint (const char *savepoint_name,
-					       SAVEPOINT_TYPE savepoint_type);
+extern int tran_internal_abort_upto_savepoint (const char *savepoint_name, SAVEPOINT_TYPE savepoint_type);
 extern void tran_set_query_timeout (int query_timeout);
 extern int tran_get_query_timeout (void);
 #endif /* _TRANSACTION_CL_H_ */

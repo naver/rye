@@ -54,26 +54,26 @@ typedef enum
 
 typedef enum
 {
-  QMGR_TRAN_NULL,		/* Null transaction: a transaction not
-				   issued a query
-				 */
-  QMGR_TRAN_RUNNING,		/* Running transaction */
-  QMGR_TRAN_DELAYED_START,	/* Suspended transaction: waiting for all the
-				   waiting transactions to be served
-				 */
-  QMGR_TRAN_WAITING,		/* Suspended transaction: waiting for a query
-				   file page to be freed.
-				 */
-  QMGR_TRAN_RESUME_TO_DEALLOCATE,	/* Transaction has been resumed to deallocate all
-					   query pages. Transaction will have to restart
-					   the query
-					 */
-  QMGR_TRAN_RESUME_DUE_DEADLOCK,	/* Transaction has been resumed to deallocate all
-					   query pages. The transaction was involved in a
-					   deadlock. Transaction will have to restart the
-					   query. Note that the transaction is not aborted.
-					 */
-  QMGR_TRAN_TERMINATED		/* Terminated transaction */
+  QMGR_TRAN_NULL,               /* Null transaction: a transaction not
+                                   issued a query
+                                 */
+  QMGR_TRAN_RUNNING,            /* Running transaction */
+  QMGR_TRAN_DELAYED_START,      /* Suspended transaction: waiting for all the
+                                   waiting transactions to be served
+                                 */
+  QMGR_TRAN_WAITING,            /* Suspended transaction: waiting for a query
+                                   file page to be freed.
+                                 */
+  QMGR_TRAN_RESUME_TO_DEALLOCATE,       /* Transaction has been resumed to deallocate all
+                                           query pages. Transaction will have to restart
+                                           the query
+                                         */
+  QMGR_TRAN_RESUME_DUE_DEADLOCK,        /* Transaction has been resumed to deallocate all
+                                           query pages. The transaction was involved in a
+                                           deadlock. Transaction will have to restart the
+                                           query. Note that the transaction is not aborted.
+                                         */
+  QMGR_TRAN_TERMINATED          /* Terminated transaction */
 } QMGR_TRAN_STATUS;
 
 typedef struct qmgr_temp_file QMGR_TEMP_FILE;
@@ -83,12 +83,12 @@ struct qmgr_temp_file
   QMGR_TEMP_FILE *prev;
   FILE_TYPE temp_file_type;
   VFID temp_vfid;
-  int curr_free_page_index;	/* current free page index */
-  int last_free_page_index;	/* last free page index */
-  int vpid_index;		/* index into vpid_array */
-  int vpid_count;		/* index into vpid_array */
-  VPID vpid_array[QMGR_VPID_ARRAY_SIZE];	/* an arrary of vpids */
-  int total_count;		/* total number of file pages alloc'd */
+  int curr_free_page_index;     /* current free page index */
+  int last_free_page_index;     /* last free page index */
+  int vpid_index;               /* index into vpid_array */
+  int vpid_count;               /* index into vpid_array */
+  VPID vpid_array[QMGR_VPID_ARRAY_SIZE];        /* an arrary of vpids */
+  int total_count;              /* total number of file pages alloc'd */
   int membuf_last;
   PAGE_PTR *membuf;
   int membuf_npages;
@@ -119,88 +119,66 @@ typedef struct qmgr_query_entry QMGR_QUERY_ENTRY;
 struct qmgr_query_entry
 {
 #ifdef SERVER_MODE
-  pthread_mutex_t lock;		/* mutex for error message */
+  pthread_mutex_t lock;         /* mutex for error message */
   pthread_cond_t cond;
-  unsigned int nwaits;		/* the number of waiters who wait for cond */
+  unsigned int nwaits;          /* the number of waiters who wait for cond */
 #endif
-  QUERY_ID query_id;		/* unique query identifier */
-  XASL_ID xasl_id;		/* XASL tree storage identifier */
-  XASL_CACHE_ENTRY *xasl_ent;	/* XASL cache entry for this query */
-  QFILE_LIST_ID *list_id;	/* result list file identifier */
+  QUERY_ID query_id;            /* unique query identifier */
+  XASL_ID xasl_id;              /* XASL tree storage identifier */
+  XASL_CACHE_ENTRY *xasl_ent;   /* XASL cache entry for this query */
+  QFILE_LIST_ID *list_id;       /* result list file identifier */
   QMGR_QUERY_ENTRY *next;
-  QMGR_TEMP_FILE *qe_temp_vfid;	/* head of per query temp file VFID */
-  int qe_num_temp;		/* number of tmpfiles allocated */
-  int total_count;		/* total number of file pages alloc'd
-				 * for the entire query */
-  char *er_msg;			/* pointer to error message string
-				 * of last error */
-  int errid;			/* errid for last error of query */
+  QMGR_TEMP_FILE *qe_temp_vfid; /* head of per query temp file VFID */
+  int qe_num_temp;              /* number of tmpfiles allocated */
+  int total_count;              /* total number of file pages alloc'd
+                                 * for the entire query */
+  char *er_msg;                 /* pointer to error message string
+                                 * of last error */
+  int errid;                    /* errid for last error of query */
   volatile QMGR_QUERY_MODE query_mode;
   volatile QUERY_FLAG query_flag;
-  volatile int interrupt;	/* Set to one when the query execution
-				 * must be stopped. */
+  volatile int interrupt;       /* Set to one when the query execution
+                                 * must be stopped. */
   volatile int propagate_interrupt;
 #ifdef SERVER_MODE
-  pthread_t tid;		/* used in qm_clear_tans_wakeup() */
+  pthread_t tid;                /* used in qm_clear_tans_wakeup() */
 #endif
-  VPID save_vpid;		/* Save VPID for certain async queries */
-  bool is_holdable;		/* true if this query should be available */
+  VPID save_vpid;               /* Save VPID for certain async queries */
+  bool is_holdable;             /* true if this query should be available */
 };
 
-extern QMGR_QUERY_ENTRY *qmgr_get_query_entry (THREAD_ENTRY * thread_p,
-					       QUERY_ID query_id,
-					       int trans_ind);
-extern int qmgr_allocate_tran_entries (THREAD_ENTRY * thread_p,
-				       int trans_cnt);
+extern QMGR_QUERY_ENTRY *qmgr_get_query_entry (THREAD_ENTRY * thread_p, QUERY_ID query_id, int trans_ind);
+extern int qmgr_allocate_tran_entries (THREAD_ENTRY * thread_p, int trans_cnt);
 extern void qmgr_dump (void);
 extern int qmgr_initialize (THREAD_ENTRY * thread_p);
 extern void qmgr_finalize (THREAD_ENTRY * thread_p);
-extern void qmgr_clear_trans_wakeup (THREAD_ENTRY * thread_p,
-				     int tran_index, bool tran_died,
-				     bool is_abort);
+extern void qmgr_clear_trans_wakeup (THREAD_ENTRY * thread_p, int tran_index, bool tran_died, bool is_abort);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern QMGR_TRAN_STATUS qmgr_get_tran_status (THREAD_ENTRY * thread_p,
-					      int tran_index);
-extern void qmgr_set_tran_status (THREAD_ENTRY * thread_p, int tran_index,
-				  QMGR_TRAN_STATUS trans_status);
+extern QMGR_TRAN_STATUS qmgr_get_tran_status (THREAD_ENTRY * thread_p, int tran_index);
+extern void qmgr_set_tran_status (THREAD_ENTRY * thread_p, int tran_index, QMGR_TRAN_STATUS trans_status);
 #endif /* ENABLE_UNUSED_FUNCTION */
-extern PAGE_PTR qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpidp,
-				   QMGR_TEMP_FILE * tfile_vfidp);
-extern void qmgr_free_old_page (THREAD_ENTRY * thread_p, PAGE_PTR page_ptr,
-				QMGR_TEMP_FILE * tfile_vfidp);
+extern PAGE_PTR qmgr_get_old_page (THREAD_ENTRY * thread_p, VPID * vpidp, QMGR_TEMP_FILE * tfile_vfidp);
+extern void qmgr_free_old_page (THREAD_ENTRY * thread_p, PAGE_PTR page_ptr, QMGR_TEMP_FILE * tfile_vfidp);
 extern void qmgr_set_dirty_page (THREAD_ENTRY * thread_p, PAGE_PTR page_ptr,
-				 int free_page, LOG_DATA_ADDR * addrp,
-				 QMGR_TEMP_FILE * tfile_vfidp);
-extern PAGE_PTR qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpidp,
-				   QMGR_TEMP_FILE * tfile_vfidp);
+                                 int free_page, LOG_DATA_ADDR * addrp, QMGR_TEMP_FILE * tfile_vfidp);
+extern PAGE_PTR qmgr_get_new_page (THREAD_ENTRY * thread_p, VPID * vpidp, QMGR_TEMP_FILE * tfile_vfidp);
 extern QMGR_TEMP_FILE *qmgr_create_new_temp_file (THREAD_ENTRY * thread_p,
-						  QUERY_ID query_id,
-						  QMGR_TEMP_FILE_MEMBUF_TYPE
-						  membuf_type);
+                                                  QUERY_ID query_id, QMGR_TEMP_FILE_MEMBUF_TYPE membuf_type);
 #if defined(ENABLE_UNUSED_FUNCTION)
-extern QMGR_TEMP_FILE *qmgr_create_result_file (THREAD_ENTRY * thread_p,
-						QUERY_ID query_id);
-extern int qmgr_free_query_temp_file (THREAD_ENTRY * thread_p,
-				      QUERY_ID query_id);
+extern QMGR_TEMP_FILE *qmgr_create_result_file (THREAD_ENTRY * thread_p, QUERY_ID query_id);
+extern int qmgr_free_query_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id);
 #endif
-extern int qmgr_free_list_temp_file (THREAD_ENTRY * thread_p,
-				     QUERY_ID query_id,
-				     QMGR_TEMP_FILE * tfile_vfidp);
+extern int qmgr_free_list_temp_file (THREAD_ENTRY * thread_p, QUERY_ID query_id, QMGR_TEMP_FILE * tfile_vfidp);
 extern int qmgr_free_temp_file_list (THREAD_ENTRY * thread_p,
-				     QMGR_TEMP_FILE * tfile_vfidp,
-				     QUERY_ID query_id, bool is_error);
+                                     QMGR_TEMP_FILE * tfile_vfidp, QUERY_ID query_id, bool is_error);
 
-extern void *qmgr_get_area_error_async (THREAD_ENTRY * thread_p,
-					int *length, int count,
-					QUERY_ID query_id);
+extern void *qmgr_get_area_error_async (THREAD_ENTRY * thread_p, int *length, int count, QUERY_ID query_id);
 extern bool qmgr_interrupt_query (THREAD_ENTRY * thread_p, QUERY_ID query_id);
-extern int qmgr_get_query_error_with_id (THREAD_ENTRY * thread_p,
-					 QUERY_ID query_id);
+extern int qmgr_get_query_error_with_id (THREAD_ENTRY * thread_p, QUERY_ID query_id);
 extern int qmgr_get_query_error_with_entry (QMGR_QUERY_ENTRY * query_entryp);
 extern void qmgr_set_query_error (THREAD_ENTRY * thread_p, QUERY_ID query_id);
 extern void qmgr_setup_empty_list_file (char *page_buf);
 extern int qmgr_get_temp_file_membuf_pages (QMGR_TEMP_FILE * temp_file_p);
-extern int qmgr_get_sql_id (THREAD_ENTRY * thread_p, char **sql_id_buf,
-			    char *query, int sql_len);
+extern int qmgr_get_sql_id (THREAD_ENTRY * thread_p, char **sql_id_buf, char *query, int sql_len);
 extern struct drand48_data *qmgr_get_rand_buf (THREAD_ENTRY * thread_p);
 #endif /* _QUERY_MANAGER_H_ */

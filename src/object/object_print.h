@@ -142,33 +142,23 @@ extern int help_describe_mop (DB_OBJECT * obj, char *buffer, int maxlen);
 
 #endif /* !SERVER_MODE */
 
-extern PARSER_VARCHAR *describe_data (const PARSER_CONTEXT * parser,
-				      PARSER_VARCHAR * buffer,
-				      const DB_VALUE * value);
+extern PARSER_VARCHAR *describe_data (const PARSER_CONTEXT * parser, PARSER_VARCHAR * buffer, const DB_VALUE * value);
 extern PARSER_VARCHAR *describe_value (const PARSER_CONTEXT * inparser,
-				       PARSER_VARCHAR * buffer,
-				       const DB_VALUE * value);
+                                       PARSER_VARCHAR * buffer, const DB_VALUE * value);
 extern PARSER_VARCHAR *describe_value2 (const PARSER_CONTEXT * inparser,
-					PARSER_VARCHAR * buffer,
-					const DB_VALUE * value);
+                                        PARSER_VARCHAR * buffer, const DB_VALUE * value);
 extern PARSER_VARCHAR *describe_string (const PARSER_CONTEXT * parser,
-					PARSER_VARCHAR * buffer,
-					const char *str, size_t str_length,
-					int max_token_length);
+                                        PARSER_VARCHAR * buffer,
+                                        const char *str, size_t str_length, int max_token_length);
 extern void help_fprint_value (FILE * fp, const DB_VALUE * value);
-extern int help_sprint_value (const DB_VALUE * value, char *buffer,
-			      int max_length);
+extern int help_sprint_value (const DB_VALUE * value, char *buffer, int max_length);
 
 extern PARSER_VARCHAR *describe_idxkey (const PARSER_CONTEXT * inparser,
-					PARSER_VARCHAR * buffer,
-					const DB_IDXKEY * key);
+                                        PARSER_VARCHAR * buffer, const DB_IDXKEY * key);
 extern void help_fprint_idxkey (FILE * fp, const DB_IDXKEY * key);
-extern int help_sprint_idxkey (const DB_IDXKEY * key, char *buffer,
-			       int max_length);
-extern int help_dump_value (char *buffer, int buf_len,
-			    const DB_VALUE * value);
-extern int help_dump_idxkey (char *buffer, int buf_len,
-			     const DB_IDXKEY * key);
+extern int help_sprint_idxkey (const DB_IDXKEY * key, char *buffer, int max_length);
+extern int help_dump_value (char *buffer, int buf_len, const DB_VALUE * value);
+extern int help_dump_idxkey (char *buffer, int buf_len, const DB_IDXKEY * key);
 
 #if defined(RYE_DEBUG)
 extern char *dbg_value (const DB_VALUE * value);

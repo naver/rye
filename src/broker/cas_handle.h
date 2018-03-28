@@ -45,8 +45,8 @@ typedef struct t_srv_handle T_SRV_HANDLE;
 struct t_srv_handle
 {
   int id;
-  void *session;		/* query : DB_SESSION*
-				   schema : schema info table pointer */
+  void *session;                /* query : DB_SESSION*
+                                   schema : schema info table pointer */
   T_QUERY_RESULT *q_result;
   char *sql_stmt;
   int num_markers;
@@ -68,8 +68,7 @@ struct t_srv_handle
   bool is_from_current_transaction;
 };
 
-extern int hm_new_srv_handle (T_SRV_HANDLE ** new_handle,
-			      unsigned int seq_num);
+extern int hm_new_srv_handle (T_SRV_HANDLE ** new_handle, unsigned int seq_num);
 extern void hm_srv_handle_free (int h_id);
 extern void hm_srv_handle_free_all (bool free_holdable);
 extern void hm_srv_handle_qresult_end_all (bool end_holdable);

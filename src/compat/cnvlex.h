@@ -51,7 +51,7 @@ typedef enum
   FL_VALIDATE_FLOAT_FORMAT = 11,
   FL_VALIDATE_INTEGER_FORMAT = 12,
 #if 0
-  FL_VALIDATE_MONETARY_FORMAT = 13,	/* unused */
+  FL_VALIDATE_MONETARY_FORMAT = 13,     /* unused */
 #endif
   FL_VALIDATE_TIME_FORMAT = 14,
   FL_VALIDATE_DATETIME_FORMAT = 15,
@@ -79,7 +79,7 @@ typedef enum
   FT_MINUS = 15,
   FT_MINUTE = 16,
 #if 1
-  FT_MONETARY_FORMAT = 17,	/* unused */
+  FT_MONETARY_FORMAT = 17,      /* unused */
 #endif
   FT_MONTH = 18,
   FT_MONTHDAY = 19,
@@ -101,7 +101,7 @@ typedef enum
   FT_LOCAL_TIME_SEPARATOR = 35,
   FT_UNKNOWN = 36,
 #if 1
-  FT_TIMESTAMP = 37,		/* unused */
+  FT_TIMESTAMP = 37,            /* unused */
 #endif
   FT_DATETIME_FORMAT = 38,
   FT_WEEKDAY = 39,

@@ -64,34 +64,26 @@ typedef void (*VREADER) (void *, void *);
 /*
  * Forward declaration of local functions
  */
-static int put_varinfo (OR_BUF * buf, char *obj, SM_CLASS * class_,
-			int offset_size);
+static int put_varinfo (OR_BUF * buf, char *obj, SM_CLASS * class_, int offset_size);
 static int object_size (SM_CLASS * class_, MOBJ obj, int *offset_size_ptr);
 static int put_attributes (OR_BUF * buf, char *obj, SM_CLASS * class_);
-static char *get_current (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
-			  int bound_bit_flag, int offset_size);
+static char *get_current (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr, int bound_bit_flag, int offset_size);
 #if defined (ENABLE_UNUSED_FUNCTION)
 static SM_ATTRIBUTE *find_current_attribute (SM_CLASS * class_, int id);
-static void clear_new_unbound (char *obj, SM_CLASS * class_,
-			       SM_REPRESENTATION * oldrep);
-static char *get_old (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
-		      int repid, int bound_bit_flag, int offset_size);
+static void clear_new_unbound (char *obj, SM_CLASS * class_, SM_REPRESENTATION * oldrep);
+static char *get_old (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr, int repid, int bound_bit_flag, int offset_size);
 #endif
 static char *unpack_allocator (int size);
 static OR_VARINFO *read_var_table (OR_BUF * buf, int nvars);
-static OR_VARINFO *read_var_table_internal (OR_BUF * buf, int nvars,
-					    int offset_size);
+static OR_VARINFO *read_var_table_internal (OR_BUF * buf, int nvars, int offset_size);
 static void free_var_table (OR_VARINFO * vars);
 static int string_disk_size (const char *string);
 static char *get_string (OR_BUF * buf, int length);
 static void put_string (OR_BUF * buf, const char *string);
 static int substructure_set_size (DB_LIST * list, LSIZER function);
-static void put_substructure_set (OR_BUF * buf, DB_LIST * list,
-				  LWRITER writer, OID * class_, int repid);
-static DB_LIST *get_substructure_set (OR_BUF * buf, int *num_list,
-				      LREADER reader, int expected);
-static void install_substructure_set (OR_BUF * buf, DB_LIST * list,
-				      VREADER reader, int expected);
+static void put_substructure_set (OR_BUF * buf, DB_LIST * list, LWRITER writer, OID * class_, int repid);
+static DB_LIST *get_substructure_set (OR_BUF * buf, int *num_list, LREADER reader, int expected);
+static void install_substructure_set (OR_BUF * buf, DB_LIST * list, VREADER reader, int expected);
 static int property_list_size (DB_SEQ * properties);
 static void put_property_list (OR_BUF * buf, DB_SEQ * properties);
 static DB_SEQ *get_property_list (OR_BUF * buf, int expected_size);
@@ -107,16 +99,11 @@ static SM_QUERY_SPEC *disk_to_query_spec (OR_BUF * buf);
 
 /* disk constraint */
 static int constraint_size (SM_DISK_CONSTRAINT * disk_cons);
-static int disk_constraint_attribute_size (SM_DISK_CONSTRAINT_ATTRIBUTE *
-					   disk_cons_att);
+static int disk_constraint_attribute_size (SM_DISK_CONSTRAINT_ATTRIBUTE * disk_cons_att);
 static SM_DISK_CONSTRAINT *disk_to_constraint (OR_BUF * buf);
-static SM_DISK_CONSTRAINT_ATTRIBUTE *disk_to_constraint_attribute (OR_BUF *
-								   buf);
-static int constraint_attribute_to_disk (OR_BUF * buf,
-					 SM_DISK_CONSTRAINT_ATTRIBUTE *
-					 constraint_attribute);
-static int disk_constraint_to_disk (OR_BUF * buf,
-				    SM_DISK_CONSTRAINT * disk_cons);
+static SM_DISK_CONSTRAINT_ATTRIBUTE *disk_to_constraint_attribute (OR_BUF * buf);
+static int constraint_attribute_to_disk (OR_BUF * buf, SM_DISK_CONSTRAINT_ATTRIBUTE * constraint_attribute);
+static int disk_constraint_to_disk (OR_BUF * buf, SM_DISK_CONSTRAINT * disk_cons);
 
 /* attribute */
 static int attribute_to_disk (OR_BUF * buf, SM_ATTRIBUTE * att);
@@ -175,43 +162,40 @@ tf_find_temporary_oids (LC_OIDSET * oidset, MOBJ classobj, MOBJ obj)
 
       class_ = (SM_CLASS *) classobj;
 
-      for (att = class_->attributes; att != NULL && error == NO_ERROR;
-	   att = (SM_ATTRIBUTE *) att->header.next)
-	{
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+      for (att = class_->attributes; att != NULL && error == NO_ERROR; att = (SM_ATTRIBUTE *) att->header.next)
+        {
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  type = TP_DOMAIN_TYPE (att->sma_domain);
-	  if (type == DB_TYPE_OBJECT)
-	    {
-	      WS_MEMOID *mem;
-	      OID *oid;
-	      mem = (WS_MEMOID *) (obj + att->offset);
-	      oid = &mem->oid;
+          type = TP_DOMAIN_TYPE (att->sma_domain);
+          if (type == DB_TYPE_OBJECT)
+            {
+              WS_MEMOID *mem;
+              OID *oid;
+              mem = (WS_MEMOID *) (obj + att->offset);
+              oid = &mem->oid;
 
-	      if (OID_ISTEMP (oid) && mem->pointer != NULL
-		  && !mem->pointer->deleted)
-		{
+              if (OID_ISTEMP (oid) && mem->pointer != NULL && !mem->pointer->deleted)
+                {
 
-		  /* Make sure the ws_memoid mop is temporary. */
-		  if (OID_ISTEMP (WS_OID (mem->pointer)))
-		    {
+                  /* Make sure the ws_memoid mop is temporary. */
+                  if (OID_ISTEMP (WS_OID (mem->pointer)))
+                    {
 
-		      /* its an undeleted temporary object, promote */
-		      if (locator_add_oidset_object
-			  (oidset, mem->pointer) == NULL)
-			{
-			  error = er_errid ();
-			}
-		    }
-		}
-	    }
-	  else if (TP_IS_SET_TYPE (type))
-	    {
-	      col = *(SETOBJ **) (obj + att->offset);
+                      /* its an undeleted temporary object, promote */
+                      if (locator_add_oidset_object (oidset, mem->pointer) == NULL)
+                        {
+                          error = er_errid ();
+                        }
+                    }
+                }
+            }
+          else if (TP_IS_SET_TYPE (type))
+            {
+              col = *(SETOBJ **) (obj + att->offset);
 
-	      error = setobj_find_temporary_oids (col, oidset);
-	    }
-	}
+              error = setobj_find_temporary_oids (col, oidset);
+            }
+        }
     }
 
   return error;
@@ -239,31 +223,28 @@ put_varinfo (OR_BUF * buf, char *obj, SM_CLASS * class_, int offset_size)
 
       /* calculate offset to first variable value */
       offset = OR_HEADER_SIZE +
-	OR_VAR_TABLE_SIZE_INTERNAL (class_->variable_count, offset_size) +
-	class_->fixed_size + OR_BOUND_BIT_BYTES (class_->fixed_count);
+        OR_VAR_TABLE_SIZE_INTERNAL (class_->variable_count, offset_size) +
+        class_->fixed_size + OR_BOUND_BIT_BYTES (class_->fixed_count);
 
       for (a = class_->fixed_count; a < class_->att_count; a++)
-	{
-	  att = &class_->attributes[a];
-	  mem = obj + att->offset;
+        {
+          att = &class_->attributes[a];
+          mem = obj + att->offset;
 
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  if (att->sma_domain->type->data_lengthmem != NULL)
-	    {
-	      len =
-		(*(att->sma_domain->type->data_lengthmem)) (mem,
-							    att->sma_domain,
-							    1);
-	    }
-	  else
-	    {
-	      len = att->sma_domain->type->disksize;
-	    }
+          if (att->sma_domain->type->data_lengthmem != NULL)
+            {
+              len = (*(att->sma_domain->type->data_lengthmem)) (mem, att->sma_domain, 1);
+            }
+          else
+            {
+              len = att->sma_domain->type->disksize;
+            }
 
-	  or_put_offset_internal (buf, offset, offset_size);
-	  offset += len;
-	}
+          or_put_offset_internal (buf, offset, offset_size);
+          offset += len;
+        }
 
       or_put_offset_internal (buf, offset, offset_size);
       buf->ptr = PTR_ALIGN (buf->ptr, INT_ALIGNMENT);
@@ -288,42 +269,37 @@ object_size (SM_CLASS * class_, MOBJ obj, int *offset_size_ptr)
   *offset_size_ptr = OR_BYTE_SIZE;
 
 re_check:
-  size = OR_HEADER_SIZE +
-    class_->fixed_size + OR_BOUND_BIT_BYTES (class_->fixed_count);
+  size = OR_HEADER_SIZE + class_->fixed_size + OR_BOUND_BIT_BYTES (class_->fixed_count);
 
   if (class_->variable_count)
     {
-      size +=
-	OR_VAR_TABLE_SIZE_INTERNAL (class_->variable_count, *offset_size_ptr);
+      size += OR_VAR_TABLE_SIZE_INTERNAL (class_->variable_count, *offset_size_ptr);
       for (a = class_->fixed_count; a < class_->att_count; a++)
-	{
-	  att = &class_->attributes[a];
-	  mem = obj + att->offset;
+        {
+          att = &class_->attributes[a];
+          mem = obj + att->offset;
 
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  if (att->sma_domain->type->data_lengthmem != NULL)
-	    {
-	      size +=
-		(*(att->sma_domain->type->data_lengthmem)) (mem,
-							    att->sma_domain,
-							    1);
-	    }
-	  else
-	    {
-	      size += att->sma_domain->type->disksize;
-	    }
-	}
+          if (att->sma_domain->type->data_lengthmem != NULL)
+            {
+              size += (*(att->sma_domain->type->data_lengthmem)) (mem, att->sma_domain, 1);
+            }
+          else
+            {
+              size += att->sma_domain->type->disksize;
+            }
+        }
     }
 
   if (*offset_size_ptr == OR_BYTE_SIZE && size > OR_MAX_BYTE)
     {
-      *offset_size_ptr = OR_SHORT_SIZE;	/* 2byte */
+      *offset_size_ptr = OR_SHORT_SIZE; /* 2byte */
       goto re_check;
     }
   if (*offset_size_ptr == OR_SHORT_SIZE && size > OR_MAX_SHORT)
     {
-      *offset_size_ptr = BIG_VAR_OFFSET_SIZE;	/* 4byte */
+      *offset_size_ptr = BIG_VAR_OFFSET_SIZE;   /* 4byte */
       goto re_check;
     }
   return (size);
@@ -354,8 +330,7 @@ put_attributes (OR_BUF * buf, char *obj, SM_CLASS * class_)
    * it doesn't really matter.
    */
   start = buf->ptr;
-  for (att = class_->attributes; att != NULL && !att->type->variable_p;
-       att = att->next)
+  for (att = class_->attributes; att != NULL && !att->type->variable_p; att = att->next)
     {
       assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
@@ -369,7 +344,7 @@ put_attributes (OR_BUF * buf, char *obj, SM_CLASS * class_)
       or_pad (buf, class_->fixed_size - pad);
     }
   else if (pad > class_->fixed_size)
-    {				/* mismatched fixed block calculations */
+    {                           /* mismatched fixed block calculations */
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_SM_CORRUPTED, 0);
       or_abort (buf);
     }
@@ -377,8 +352,7 @@ put_attributes (OR_BUF * buf, char *obj, SM_CLASS * class_)
   /* write the bound bits */
   if (class_->fixed_count)
     {
-      or_put_data (buf, obj + OBJ_HEADER_BOUND_BITS_OFFSET,
-		   OR_BOUND_BIT_BYTES (class_->fixed_count));
+      or_put_data (buf, obj + OBJ_HEADER_BOUND_BITS_OFFSET, OR_BOUND_BIT_BYTES (class_->fixed_count));
     }
   /* write the variable attributes */
 
@@ -409,11 +383,10 @@ put_attributes (OR_BUF * buf, char *obj, SM_CLASS * class_)
  *    setjmp/longjmp.
  */
 TF_STATUS
-tf_mem_to_disk (MOP classmop, MOBJ classobj,
-		MOBJ volatile obj, RECDES * record)
+tf_mem_to_disk (MOP classmop, MOBJ classobj, MOBJ volatile obj, RECDES * record)
 {
   OR_BUF orep, *buf;
-  SM_CLASS *volatile class_;	/* prevent register optimization */
+  SM_CLASS *volatile class_;    /* prevent register optimization */
   unsigned int repid_bits;
   TF_STATUS status;
   volatile int expected_size;
@@ -438,26 +411,26 @@ tf_mem_to_disk (MOP classmop, MOBJ classobj,
       status = TF_SUCCESS;
 
       if (OID_ISTEMP (oidp))
-	{
-	  /*
-	   * since this isn't a mem_oid, can't rely on write_oid to do this,
-	   * don't bother making this part of the deferred fixup stuff yet.
-	   */
-	  if (locator_assign_permanent_oid (classmop) == NULL)
-	    {
-	      or_abort (buf);
-	    }
+        {
+          /*
+           * since this isn't a mem_oid, can't rely on write_oid to do this,
+           * don't bother making this part of the deferred fixup stuff yet.
+           */
+          if (locator_assign_permanent_oid (classmop) == NULL)
+            {
+              or_abort (buf);
+            }
 
-	  assert (oidp->groupid == NULL_GROUPID);
-	}
+          assert (oidp->groupid == NULL_GROUPID);
+        }
 
       /* header */
 
       repid_bits = class_->repid;
       if (class_->fixed_count)
-	{
-	  repid_bits |= OR_BOUND_BIT_FLAG;
-	}
+        {
+          repid_bits |= OR_BOUND_BIT_FLAG;
+        }
       /* offset size */
       OR_SET_VAR_OFFSET_SIZE (repid_bits, offset_size);
 
@@ -466,16 +439,15 @@ tf_mem_to_disk (MOP classmop, MOBJ classobj,
       /* keep out shard table to enter
        */
       if (classobj_find_shard_key_column (class_) == NULL)
-	{
-	  or_put_int (buf, GLOBAL_GROUPID);
-	}
+        {
+          or_put_int (buf, GLOBAL_GROUPID);
+        }
       else
-	{
-	  assert (false);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-		  ER_TF_INVALID_METACLASS, 0);
-	  or_abort (buf);
-	}
+        {
+          assert (false);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_INVALID_METACLASS, 0);
+          or_abort (buf);
+        }
 
       /* variable info block */
       put_varinfo (buf, obj, class_, offset_size);
@@ -514,8 +486,7 @@ tf_mem_to_disk (MOP classmop, MOBJ classobj,
  *    bound_bit_flag(in): initial status of bound bits
  */
 static char *
-get_current (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
-	     int bound_bit_flag, int offset_size)
+get_current (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr, int bound_bit_flag, int offset_size)
 {
   SM_ATTRIBUTE *att;
   char *obj, *mem, *start;
@@ -529,20 +500,20 @@ get_current (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
     {
       vars = (int *) db_ws_alloc (sizeof (int) * class_->variable_count);
       if (vars == NULL)
-	{
-	  or_abort (buf);
-	}
+        {
+          or_abort (buf);
+        }
       else
-	{
-	  offset = or_get_offset_internal (buf, &rc, offset_size);
-	  for (i = 0; i < class_->variable_count; i++)
-	    {
-	      offset2 = or_get_offset_internal (buf, &rc, offset_size);
-	      vars[i] = offset2 - offset;
-	      offset = offset2;
-	    }
-	  buf->ptr = PTR_ALIGN (buf->ptr, INT_ALIGNMENT);
-	}
+        {
+          offset = or_get_offset_internal (buf, &rc, offset_size);
+          for (i = 0; i < class_->variable_count; i++)
+            {
+              offset2 = or_get_offset_internal (buf, &rc, offset_size);
+              vars[i] = offset2 - offset;
+              offset = offset2;
+            }
+          buf->ptr = PTR_ALIGN (buf->ptr, INT_ALIGNMENT);
+        }
     }
 
   /*
@@ -555,10 +526,10 @@ get_current (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
   if (obj == NULL)
     {
       if (vars != NULL)
-	{
-	  db_ws_free (vars);
-	  vars = NULL;
-	}
+        {
+          db_ws_free (vars);
+          vars = NULL;
+        }
       or_abort (buf);
     }
   else
@@ -566,40 +537,38 @@ get_current (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
       /* fixed */
       start = buf->ptr;
       for (i = 0; i < class_->fixed_count; i++)
-	{
-	  att = &(class_->attributes[i]);
-	  assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+        {
+          att = &(class_->attributes[i]);
+          assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	  mem = obj + att->offset;
-	  PRIM_READ (att->type, att->sma_domain, buf, mem, -1);
-	}
+          mem = obj + att->offset;
+          PRIM_READ (att->type, att->sma_domain, buf, mem, -1);
+        }
 
       /* round up to a to the end of the fixed block */
       pad = (int) (buf->ptr - start);
       if (pad < class_->fixed_size)
-	{
-	  or_advance (buf, class_->fixed_size - pad);
-	}
+        {
+          or_advance (buf, class_->fixed_size - pad);
+        }
       /* bound bits, if not present, we have to assume everything is bound */
       if (bound_bit_flag && class_->fixed_count)
-	{
-	  or_get_data (buf, obj + OBJ_HEADER_BOUND_BITS_OFFSET,
-		       OR_BOUND_BIT_BYTES (class_->fixed_count));
-	}
+        {
+          or_get_data (buf, obj + OBJ_HEADER_BOUND_BITS_OFFSET, OR_BOUND_BIT_BYTES (class_->fixed_count));
+        }
 
       /* variable */
       if (vars != NULL)
-	{
-	  for (i = class_->fixed_count, j = 0;
-	       i < class_->att_count && j < class_->variable_count; i++, j++)
-	    {
-	      att = &(class_->attributes[i]);
-	      assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
+        {
+          for (i = class_->fixed_count, j = 0; i < class_->att_count && j < class_->variable_count; i++, j++)
+            {
+              att = &(class_->attributes[i]);
+              assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-	      mem = obj + att->offset;
-	      PRIM_READ (att->type, att->sma_domain, buf, mem, vars[j]);
-	    }
-	}
+              mem = obj + att->offset;
+              PRIM_READ (att->type, att->sma_domain, buf, mem, vars[j]);
+            }
+        }
     }
 
   if (vars != NULL)
@@ -624,13 +593,12 @@ find_current_attribute (SM_CLASS * class_, int id)
   SM_ATTRIBUTE *found, *att;
 
   found = NULL;
-  for (att = class_->attributes; att != NULL && found == NULL;
-       att = att->next)
+  for (att = class_->attributes; att != NULL && found == NULL; att = att->next)
     {
       if (att->id == id)
-	{
-	  found = att;
-	}
+        {
+          found = att;
+        }
     }
   return (found);
 }
@@ -661,30 +629,28 @@ clear_new_unbound (char *obj, SM_CLASS * class_, SM_REPRESENTATION * oldrep)
       assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
       found = NULL;
-      for (rat = oldrep->attributes; rat != NULL && found == NULL;
-	   rat = rat->next)
-	{
-	  if (rat->attid == att->id)
-	    {
-	      found = rat;
-	    }
-	}
+      for (rat = oldrep->attributes; rat != NULL && found == NULL; rat = rat->next)
+        {
+          if (rat->attid == att->id)
+            {
+              found = rat;
+            }
+        }
       if (found == NULL)
-	{
-	  mem = obj + att->offset;
-	  /* initialize in case there isn't an initial value */
-	  PRIM_INITMEM (att->type, mem, att->sma_domain);
-	  if (!DB_IS_NULL (&att->default_value.original_value))
-	    {
-	      /* assign the initial value, should check for non-existance ? */
-	      PRIM_SETMEM (att->type, att->sma_domain, mem,
-			   &att->default_value.original_value);
-	      if (!att->type->variable_p)
-		{
-		  OBJ_SET_BOUND_BIT (obj, att->storage_order);
-		}
-	    }
-	}
+        {
+          mem = obj + att->offset;
+          /* initialize in case there isn't an initial value */
+          PRIM_INITMEM (att->type, mem, att->sma_domain);
+          if (!DB_IS_NULL (&att->default_value.original_value))
+            {
+              /* assign the initial value, should check for non-existance ? */
+              PRIM_SETMEM (att->type, att->sma_domain, mem, &att->default_value.original_value);
+              if (!att->type->variable_p)
+                {
+                  OBJ_SET_BOUND_BIT (obj, att->storage_order);
+                }
+            }
+        }
     }
 }
 
@@ -702,8 +668,7 @@ clear_new_unbound (char *obj, SM_CLASS * class_, SM_REPRESENTATION * oldrep)
  *    Values for deleted attributes are discarded.
  */
 static char *
-get_old (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
-	 int repid, int bound_bit_flag, int offset_size)
+get_old (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr, int repid, int bound_bit_flag, int offset_size)
 {
   SM_REPRESENTATION *oldrep;
   SM_REPR_ATTRIBUTE *rat;
@@ -718,8 +683,7 @@ get_old (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
 
   if (oldrep == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_INVALID_REPRESENTATION,
-	      1, class_->header.name);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_INVALID_REPRESENTATION, 1, class_->header.name);
     }
   else
     {
@@ -731,183 +695,168 @@ get_old (OR_BUF * buf, SM_CLASS * class_, MOBJ * obj_ptr,
       obj = *obj_ptr = obj_alloc (class_, (bound_bit_flag) ? 0 : 1);
 
       if (obj == NULL)
-	{
-	  or_abort (buf);
-	}
+        {
+          or_abort (buf);
+        }
       else
-	{
-	  /*
-	   * read the variable offset table, can't we just leave this on
-	   * disk ?
-	   */
-	  vars = NULL;
-	  if (oldrep->variable_count)
-	    {
-	      vars =
-		(int *) db_ws_alloc (sizeof (int) * oldrep->variable_count);
-	      if (vars == NULL)
-		{
-		  or_abort (buf);
-		  return NULL;
-		}
-	      else
-		{
-		  offset = or_get_offset_internal (buf, &rc, offset_size);
-		  for (i = 0; i < oldrep->variable_count; i++)
-		    {
-		      offset2 =
-			or_get_offset_internal (buf, &rc, offset_size);
-		      vars[i] = offset2 - offset;
-		      offset = offset2;
-		    }
-		  buf->ptr = PTR_ALIGN (buf->ptr, INT_ALIGNMENT);
-		}
-	    }
+        {
+          /*
+           * read the variable offset table, can't we just leave this on
+           * disk ?
+           */
+          vars = NULL;
+          if (oldrep->variable_count)
+            {
+              vars = (int *) db_ws_alloc (sizeof (int) * oldrep->variable_count);
+              if (vars == NULL)
+                {
+                  or_abort (buf);
+                  return NULL;
+                }
+              else
+                {
+                  offset = or_get_offset_internal (buf, &rc, offset_size);
+                  for (i = 0; i < oldrep->variable_count; i++)
+                    {
+                      offset2 = or_get_offset_internal (buf, &rc, offset_size);
+                      vars[i] = offset2 - offset;
+                      offset = offset2;
+                    }
+                  buf->ptr = PTR_ALIGN (buf->ptr, INT_ALIGNMENT);
+                }
+            }
 
-	  /* calculate an attribute map */
-	  total = oldrep->fixed_count + oldrep->variable_count;
-	  attmap = NULL;
-	  if (total > 0)
-	    {
-	      attmap =
-		(SM_ATTRIBUTE **) db_ws_alloc (sizeof (SM_ATTRIBUTE *) *
-					       total);
-	      if (attmap == NULL)
-		{
-		  if (vars != NULL)
-		    {
-		      db_ws_free (vars);
-		    }
-		  or_abort (buf);
-		  return NULL;
-		}
-	      else
-		{
-		  for (rat = oldrep->attributes, i = 0; rat != NULL;
-		       rat = rat->next, i++)
-		    {
-		      attmap[i] = find_current_attribute (class_, rat->attid);
-		    }
-		}
-	    }
+          /* calculate an attribute map */
+          total = oldrep->fixed_count + oldrep->variable_count;
+          attmap = NULL;
+          if (total > 0)
+            {
+              attmap = (SM_ATTRIBUTE **) db_ws_alloc (sizeof (SM_ATTRIBUTE *) * total);
+              if (attmap == NULL)
+                {
+                  if (vars != NULL)
+                    {
+                      db_ws_free (vars);
+                    }
+                  or_abort (buf);
+                  return NULL;
+                }
+              else
+                {
+                  for (rat = oldrep->attributes, i = 0; rat != NULL; rat = rat->next, i++)
+                    {
+                      attmap[i] = find_current_attribute (class_, rat->attid);
+                    }
+                }
+            }
 
-	  /* read the fixed attributes */
-	  rat = oldrep->attributes;
-	  start = buf->ptr;
-	  for (i = 0;
-	       i < oldrep->fixed_count && rat != NULL && attmap != NULL;
-	       i++, rat = rat->next)
-	    {
-	      type = PR_TYPE_FROM_ID (rat->typeid_);
-	      if (type == NULL)
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_TF_INVALID_REPRESENTATION, 1,
-			  class_->header.name);
+          /* read the fixed attributes */
+          rat = oldrep->attributes;
+          start = buf->ptr;
+          for (i = 0; i < oldrep->fixed_count && rat != NULL && attmap != NULL; i++, rat = rat->next)
+            {
+              type = PR_TYPE_FROM_ID (rat->typeid_);
+              if (type == NULL)
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_INVALID_REPRESENTATION, 1, class_->header.name);
 
-		  db_ws_free (attmap);
-		  if (vars != NULL)
-		    {
-		      db_ws_free (vars);
-		    }
+                  db_ws_free (attmap);
+                  if (vars != NULL)
+                    {
+                      db_ws_free (vars);
+                    }
 
-		  or_abort (buf);
-		  return NULL;
-		}
+                  or_abort (buf);
+                  return NULL;
+                }
 
-	      if (attmap[i] == NULL)
-		{
-		  PRIM_READ (type, rat->domain, buf, NULL, -1);
-		}
-	      else
-		{
-		  PRIM_READ (type, rat->domain, buf,
-			     obj + attmap[i]->offset, -1);
-		}
-	    }
+              if (attmap[i] == NULL)
+                {
+                  PRIM_READ (type, rat->domain, buf, NULL, -1);
+                }
+              else
+                {
+                  PRIM_READ (type, rat->domain, buf, obj + attmap[i]->offset, -1);
+                }
+            }
 
-	  fixed_size = (int) (buf->ptr - start);
-	  padded_size = DB_ATT_ALIGN (fixed_size);
-	  or_advance (buf, (padded_size - fixed_size));
+          fixed_size = (int) (buf->ptr - start);
+          padded_size = DB_ATT_ALIGN (fixed_size);
+          or_advance (buf, (padded_size - fixed_size));
 
 
-	  /*
-	   * sigh, we now have to process the bound bits in much the same way
-	   * as the attributes above, it would be nice if these could be done
-	   * in parallel but we don't have the fixed size of the old
-	   * representation so we can't easily sneak the buffer pointer
-	   * forward, work on this someday
-	   */
+          /*
+           * sigh, we now have to process the bound bits in much the same way
+           * as the attributes above, it would be nice if these could be done
+           * in parallel but we don't have the fixed size of the old
+           * representation so we can't easily sneak the buffer pointer
+           * forward, work on this someday
+           */
 
-	  if (bound_bit_flag && oldrep->fixed_count)
-	    {
-	      bits = buf->ptr;
-	      bytes = OR_BOUND_BIT_BYTES (oldrep->fixed_count);
-	      if ((buf->ptr + bytes) > buf->endptr)
-		{
-		  or_overflow (buf);
-		}
+          if (bound_bit_flag && oldrep->fixed_count)
+            {
+              bits = buf->ptr;
+              bytes = OR_BOUND_BIT_BYTES (oldrep->fixed_count);
+              if ((buf->ptr + bytes) > buf->endptr)
+                {
+                  or_overflow (buf);
+                }
 
-	      rat = oldrep->attributes;
-	      for (i = 0; i < oldrep->fixed_count && rat != NULL
-		   && attmap != NULL; i++, rat = rat->next)
-		{
-		  if (attmap[i] != NULL)
-		    {
-		      if (OR_GET_BOUND_BIT (bits, i))
-			{
-			  OBJ_SET_BOUND_BIT (obj, attmap[i]->storage_order);
-			}
-		    }
-		}
-	      or_advance (buf, bytes);
-	    }
+              rat = oldrep->attributes;
+              for (i = 0; i < oldrep->fixed_count && rat != NULL && attmap != NULL; i++, rat = rat->next)
+                {
+                  if (attmap[i] != NULL)
+                    {
+                      if (OR_GET_BOUND_BIT (bits, i))
+                        {
+                          OBJ_SET_BOUND_BIT (obj, attmap[i]->storage_order);
+                        }
+                    }
+                }
+              or_advance (buf, bytes);
+            }
 
-	  /* variable */
-	  if (vars != NULL)
-	    {
-	      for (i = 0; i < oldrep->variable_count && rat != NULL
-		   && attmap != NULL; i++, rat = rat->next)
-		{
-		  type = PR_TYPE_FROM_ID (rat->typeid_);
-		  if (type == NULL)
-		    {
-		      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			      ER_TF_INVALID_REPRESENTATION, 1,
-			      class_->header.name);
+          /* variable */
+          if (vars != NULL)
+            {
+              for (i = 0; i < oldrep->variable_count && rat != NULL && attmap != NULL; i++, rat = rat->next)
+                {
+                  type = PR_TYPE_FROM_ID (rat->typeid_);
+                  if (type == NULL)
+                    {
+                      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_INVALID_REPRESENTATION, 1, class_->header.name);
 
-		      db_ws_free (attmap);
-		      db_ws_free (vars);
+                      db_ws_free (attmap);
+                      db_ws_free (vars);
 
-		      or_abort (buf);
-		      return NULL;
-		    }
+                      or_abort (buf);
+                      return NULL;
+                    }
 
-		  att_index = oldrep->fixed_count + i;
-		  if (attmap[att_index] == NULL)
-		    {
-		      PRIM_READ (type, rat->domain, buf, NULL, vars[i]);
-		    }
-		  else
-		    {
-		      PRIM_READ (type, rat->domain, buf,
-				 obj + attmap[att_index]->offset, vars[i]);
-		    }
-		}
-	    }
+                  att_index = oldrep->fixed_count + i;
+                  if (attmap[att_index] == NULL)
+                    {
+                      PRIM_READ (type, rat->domain, buf, NULL, vars[i]);
+                    }
+                  else
+                    {
+                      PRIM_READ (type, rat->domain, buf, obj + attmap[att_index]->offset, vars[i]);
+                    }
+                }
+            }
 
-	  /* should be optimizing this operation ! */
-	  clear_new_unbound (obj, class_, oldrep);
+          /* should be optimizing this operation ! */
+          clear_new_unbound (obj, class_, oldrep);
 
-	  if (attmap != NULL)
-	    {
-	      db_ws_free (attmap);
-	    }
-	  if (vars != NULL)
-	    {
-	      db_ws_free (vars);
-	    }
-	}
+          if (attmap != NULL)
+            {
+              db_ws_free (attmap);
+            }
+          if (vars != NULL)
+            {
+              db_ws_free (vars);
+            }
+        }
     }
 
   return (obj);
@@ -968,26 +917,25 @@ tf_disk_to_mem (MOBJ classobj, RECDES * record, int *convertp)
       repid = repid_bits & ~OR_BOUND_BIT_FLAG & ~OR_OFFSET_SIZE_FLAG;
       bound_bit_flag = repid_bits & OR_BOUND_BIT_FLAG;
 
-#if 1				/* TODO - delete me someday */
+#if 1                           /* TODO - delete me someday */
       assert (repid == class_->repid);
       if (repid != class_->repid)
-	{
-	  obj = NULL;		/* something wrong */
-	  break;
-	}
+        {
+          obj = NULL;           /* something wrong */
+          break;
+        }
 
       obj = get_current (buf, class_, &obj, bound_bit_flag, offset_size);
 #else
       if (repid == class_->repid)
-	{
-	  obj = get_current (buf, class_, &obj, bound_bit_flag, offset_size);
-	}
+        {
+          obj = get_current (buf, class_, &obj, bound_bit_flag, offset_size);
+        }
       else
-	{
-	  obj =
-	    get_old (buf, class_, &obj, repid, bound_bit_flag, offset_size);
-	  convert = 1;
-	}
+        {
+          obj = get_old (buf, class_, &obj, repid, bound_bit_flag, offset_size);
+          convert = 1;
+        }
 #endif
 
       *convertp = convert;
@@ -997,10 +945,10 @@ tf_disk_to_mem (MOBJ classobj, RECDES * record, int *convertp)
       /* make sure to clear the object that was being created,
          an appropriate error will have been set */
       if (obj != NULL)
-	{
-	  obj_free_memory (class_, obj);
-	  obj = NULL;
-	}
+        {
+          obj_free_memory (class_, obj);
+          obj = NULL;
+        }
       break;
     }
 
@@ -1046,8 +994,7 @@ read_var_table (OR_BUF * buf, int nvars)
 static OR_VARINFO *
 read_var_table_internal (OR_BUF * buf, int nvars, int offset_size)
 {
-  return (or_get_var_table_internal
-	  (buf, nvars, unpack_allocator, offset_size));
+  return (or_get_var_table_internal (buf, nvars, unpack_allocator, offset_size));
 }
 
 
@@ -1085,8 +1032,7 @@ string_disk_size (const char *string)
       str_length = strlen (string);
     }
 
-  db_make_varchar (&value, DB_MAX_VARCHAR_PRECISION, (char *) string,
-		   str_length, LANG_SYS_COLLATION);
+  db_make_varchar (&value, DB_MAX_VARCHAR_PRECISION, (char *) string, str_length, LANG_SYS_COLLATION);
   return (*(tp_String.data_lengthval)) (&value, 1);
 }
 
@@ -1153,8 +1099,7 @@ put_string (OR_BUF * buf, const char *string)
       str_length = strlen (string);
     }
 
-  db_make_varchar (&value, DB_MAX_VARCHAR_PRECISION, (char *) string,
-		   str_length, LANG_SYS_COLLATION);
+  db_make_varchar (&value, DB_MAX_VARCHAR_PRECISION, (char *) string, str_length, LANG_SYS_COLLATION);
   (*(tp_String.data_writeval)) (buf, &value);
 }
 
@@ -1233,8 +1178,7 @@ substructure_set_size (DB_LIST * list, LSIZER function)
  *    defined in the catalog.
  */
 static void
-put_substructure_set (OR_BUF * buf, DB_LIST * list,
-		      LWRITER writer, OID * class_, int repid)
+put_substructure_set (OR_BUF * buf, DB_LIST * list, LWRITER writer, OID * class_, int repid)
 {
   DB_LIST *l;
   char *start;
@@ -1273,17 +1217,17 @@ put_substructure_set (OR_BUF * buf, DB_LIST * list,
       /* write the common substructure header */
       or_put_oid (buf, class_);
       or_put_int (buf, repid);
-      or_put_int (buf, 0);	/* flags */
+      or_put_int (buf, 0);      /* flags */
 
       /* write each substructure */
       for (l = list; l != NULL; l = l->next)
-	{
-	  /* determine the offset to the this element and put it in the table */
-	  OR_PUT_OFFSET (offset_ptr, (buf->ptr - start));
-	  offset_ptr += BIG_VAR_OFFSET_SIZE;
-	  /* write the substructure */
-	  (*writer) (buf, l);
-	}
+        {
+          /* determine the offset to the this element and put it in the table */
+          OR_PUT_OFFSET (offset_ptr, (buf->ptr - start));
+          offset_ptr += BIG_VAR_OFFSET_SIZE;
+          /* write the substructure */
+          (*writer) (buf, l);
+        }
       /* write the final offset */
       OR_PUT_OFFSET (offset_ptr, (buf->ptr - start));
     }
@@ -1301,8 +1245,7 @@ put_substructure_set (OR_BUF * buf, DB_LIST * list,
  *    It is important that the elements be APPENDED here.
  */
 static DB_LIST *
-get_substructure_set (OR_BUF * buf, int *num_list, LREADER reader,
-		      int expected)
+get_substructure_set (OR_BUF * buf, int *num_list, LREADER reader, int expected)
 {
   DB_LIST *list, *obj;
   int count, i;
@@ -1323,13 +1266,13 @@ get_substructure_set (OR_BUF * buf, int *num_list, LREADER reader,
     {
       obj = (*reader) (buf);
       if (obj != NULL)
-	{
-	  WS_LIST_APPEND (&list, obj);
-	}
+        {
+          WS_LIST_APPEND (&list, obj);
+        }
       else
-	{
-	  or_abort (buf);
-	}
+        {
+          or_abort (buf);
+        }
     }
 
   if (num_list != NULL)
@@ -1355,8 +1298,7 @@ get_substructure_set (OR_BUF * buf, int *num_list, LREADER reader,
  *    by the reader.
  */
 static void
-install_substructure_set (OR_BUF * buf, DB_LIST * list, VREADER reader,
-			  int expected)
+install_substructure_set (OR_BUF * buf, DB_LIST * list, VREADER reader, int expected)
 {
   DB_LIST *p;
   int count, i;
@@ -1365,9 +1307,9 @@ install_substructure_set (OR_BUF * buf, DB_LIST * list, VREADER reader,
     {
       count = or_skip_set_header (buf);
       for (i = 0, p = list; i < count && p != NULL; i++, p = p->next)
-	{
-	  (*reader) (buf, p);
-	}
+        {
+          (*reader) (buf, p);
+        }
     }
 }
 
@@ -1390,10 +1332,10 @@ property_list_size (DB_SEQ * properties)
       /* collapse empty property sequences to NULL values on disk */
       max = set_size (properties);
       if (max)
-	{
-	  db_make_sequence (&value, properties);
-	  size = (*(tp_Sequence.data_lengthval)) (&value, 1);
-	}
+        {
+          db_make_sequence (&value, properties);
+          size = (*(tp_Sequence.data_lengthval)) (&value, 1);
+        }
     }
   return size;
 }
@@ -1453,20 +1395,20 @@ get_property_list (OR_BUF * buf, int expected_size)
       (*(tp_Sequence.data_readval)) (buf, &value, NULL, expected_size, true);
       properties = db_get_set (&value);
       if (properties == NULL)
-	or_abort (buf);		/* trouble allocating a handle */
+        or_abort (buf);         /* trouble allocating a handle */
       else
-	{
-	  max = set_size (properties);
-	  if (max <= 0)
-	    {
-	      /*
-	       * there is an empty sequence here, get rid of it so we don't
-	       * have to carry it around
-	       */
-	      set_free (properties);
-	      properties = NULL;
-	    }
-	}
+        {
+          max = set_size (properties);
+          if (max <= 0)
+            {
+              /*
+               * there is an empty sequence here, get rid of it so we don't
+               * have to carry it around
+               */
+              set_free (properties);
+              properties = NULL;
+            }
+        }
     }
   return (properties);
 }
@@ -1483,13 +1425,9 @@ domain_size (TP_DOMAIN * domain)
 {
   int size;
 
-  size =
-    tf_Metaclass_domain.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_domain.n_variable);
+  size = tf_Metaclass_domain.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_domain.n_variable);
 
-  size +=
-    substructure_set_size ((DB_LIST *) domain->setdomain,
-			   (LSIZER) domain_size);
+  size += substructure_set_size ((DB_LIST *) domain->setdomain, (LSIZER) domain_size);
 
   return (size);
 }
@@ -1511,13 +1449,9 @@ domain_to_disk (OR_BUF * buf, TP_DOMAIN * domain)
 
   /* VARIABLE OFFSET TABLE */
   start = buf->ptr;
-  offset =
-    tf_Metaclass_domain.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_domain.n_variable);
+  offset = tf_Metaclass_domain.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_domain.n_variable);
   or_put_offset (buf, offset);
-  offset +=
-    substructure_set_size ((DB_LIST *) domain->setdomain,
-			   (LSIZER) domain_size);
+  offset += substructure_set_size ((DB_LIST *) domain->setdomain, (LSIZER) domain_size);
   or_put_offset (buf, offset);
 
   buf->ptr = PTR_ALIGN (buf->ptr, INT_ALIGNMENT);
@@ -1531,9 +1465,7 @@ domain_to_disk (OR_BUF * buf, TP_DOMAIN * domain)
   pr_write_mop (buf, domain->class_mop);
 
   put_substructure_set (buf, (DB_LIST *) domain->setdomain,
-			(LWRITER) domain_to_disk,
-			&tf_Metaclass_domain.classoid,
-			tf_Metaclass_domain.repid);
+                        (LWRITER) domain_to_disk, &tf_Metaclass_domain.classoid, tf_Metaclass_domain.repid);
 
   if (start + offset != buf->ptr)
     {
@@ -1581,7 +1513,7 @@ disk_to_domain2 (OR_BUF * buf)
 
   domain->precision = or_get_int (buf, &rc);
   domain->scale = or_get_int (buf, &rc);
-  (void) or_get_int (buf, &rc);	/* charset */
+  (void) or_get_int (buf, &rc); /* charset */
   domain->collation_id = or_get_int (buf, &rc);
 
   /*
@@ -1597,16 +1529,13 @@ disk_to_domain2 (OR_BUF * buf)
     {
       domain->class_mop = ws_mop (&domain->class_oid, sm_Root_class_mop);
       if (domain->class_mop == NULL)
-	{
-	  or_abort (buf);
-	}
+        {
+          or_abort (buf);
+        }
     }
 
   domain->setdomain =
-    (TP_DOMAIN *) get_substructure_set (buf, NULL,
-					(LREADER) disk_to_domain2,
-					vars[ORC_DOMAIN_SETDOMAIN_INDEX].
-					length);
+    (TP_DOMAIN *) get_substructure_set (buf, NULL, (LREADER) disk_to_domain2, vars[ORC_DOMAIN_SETDOMAIN_INDEX].length);
 
   assert (domain->next_list == NULL);
   assert (domain->is_cached == 0);
@@ -1617,8 +1546,8 @@ disk_to_domain2 (OR_BUF * buf)
 
     for (d = domain->setdomain; d != NULL; d = d->next)
       {
-	assert (d->next_list == NULL);
-	assert (d->is_cached == 0);
+        assert (d->next_list == NULL);
+        assert (d->is_cached == 0);
       }
   }
 #endif
@@ -1672,8 +1601,7 @@ query_spec_to_disk (OR_BUF * buf, SM_QUERY_SPEC * statement)
 
   start = buf->ptr;
   /* VARIABLE OFFSET TABLE */
-  offset = tf_Metaclass_query_spec.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_query_spec.n_variable);
+  offset = tf_Metaclass_query_spec.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_query_spec.n_variable);
 
   or_put_offset (buf, offset);
   offset += string_disk_size (statement->specification);
@@ -1703,8 +1631,7 @@ query_spec_size (SM_QUERY_SPEC * statement)
 {
   int size;
 
-  size = tf_Metaclass_query_spec.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_query_spec.n_variable);
+  size = tf_Metaclass_query_spec.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_query_spec.n_variable);
   size += string_disk_size (statement->specification);
 
   return (size);
@@ -1733,14 +1660,13 @@ disk_to_query_spec (OR_BUF * buf)
     {
       statement = classobj_make_query_spec (NULL);
       if (statement == NULL)
-	{
-	  or_abort (buf);
-	}
+        {
+          or_abort (buf);
+        }
       else
-	{
-	  statement->specification =
-	    get_string (buf, vars[ORC_QUERY_SPEC_SPEC_INDEX].length);
-	}
+        {
+          statement->specification = get_string (buf, vars[ORC_QUERY_SPEC_SPEC_INDEX].length);
+        }
 
       free_var_table (vars);
     }
@@ -1754,8 +1680,7 @@ disk_to_query_spec (OR_BUF * buf)
  *    disk_cons_att(in): disk constraint attribute
  */
 static int
-disk_constraint_attribute_size (UNUSED_ARG SM_DISK_CONSTRAINT_ATTRIBUTE *
-				disk_cons_att)
+disk_constraint_attribute_size (UNUSED_ARG SM_DISK_CONSTRAINT_ATTRIBUTE * disk_cons_att)
 {
   int size;
 
@@ -1781,16 +1706,14 @@ constraint_size (SM_DISK_CONSTRAINT * disk_cons)
 
   assert (disk_cons->disk_info_of_atts != NULL);
 
-  size = tf_Metaclass_constraint.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_constraint.n_variable);
+  size = tf_Metaclass_constraint.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_constraint.n_variable);
 
   size += string_disk_size (disk_cons->name);
 
   btid_to_string (buf, sizeof (buf), &disk_cons->index_btid);
   size += string_disk_size (buf);
 
-  size += substructure_set_size ((DB_LIST *) disk_cons->disk_info_of_atts,
-				 (LSIZER) disk_constraint_attribute_size);
+  size += substructure_set_size ((DB_LIST *) disk_cons->disk_info_of_atts, (LSIZER) disk_constraint_attribute_size);
 
   return (size);
 }
@@ -1805,9 +1728,7 @@ constraint_size (SM_DISK_CONSTRAINT * disk_cons)
  *    On overflow, or_overflow will call longjmp and jump to the outer caller
  */
 static int
-constraint_attribute_to_disk (OR_BUF * buf,
-			      SM_DISK_CONSTRAINT_ATTRIBUTE *
-			      constraint_attribute)
+constraint_attribute_to_disk (OR_BUF * buf, SM_DISK_CONSTRAINT_ATTRIBUTE * constraint_attribute)
 {
   char *start;
   int offset;
@@ -1861,8 +1782,7 @@ disk_constraint_to_disk (OR_BUF * buf, SM_DISK_CONSTRAINT * disk_cons)
   assert (disk_cons->disk_info_of_atts != NULL);
 
   /* name */
-  offset = tf_Metaclass_constraint.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_constraint.n_variable);
+  offset = tf_Metaclass_constraint.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_constraint.n_variable);
   or_put_offset (buf, offset);
 
   /* btid */
@@ -1875,9 +1795,7 @@ disk_constraint_to_disk (OR_BUF * buf, SM_DISK_CONSTRAINT * disk_cons)
   or_put_offset (buf, offset);
 
   /* end of object */
-  offset +=
-    substructure_set_size ((DB_LIST *) disk_cons->disk_info_of_atts,
-			   (LSIZER) disk_constraint_attribute_size);
+  offset += substructure_set_size ((DB_LIST *) disk_cons->disk_info_of_atts, (LSIZER) disk_constraint_attribute_size);
   or_put_offset (buf, offset);
 
   or_get_align (buf, INT_ALIGNMENT);
@@ -1891,9 +1809,8 @@ disk_constraint_to_disk (OR_BUF * buf, SM_DISK_CONSTRAINT * disk_cons)
   put_string (buf, buf_btid);
 
   put_substructure_set (buf, (DB_LIST *) disk_cons->disk_info_of_atts,
-			(LWRITER) constraint_attribute_to_disk,
-			&tf_Metaclass_constraint_attribute.classoid,
-			tf_Metaclass_constraint_attribute.repid);
+                        (LWRITER) constraint_attribute_to_disk,
+                        &tf_Metaclass_constraint_attribute.classoid, tf_Metaclass_constraint_attribute.repid);
 
   if (start + offset != buf->ptr)
     {
@@ -1942,26 +1859,20 @@ disk_to_constraint (OR_BUF * buf)
     }
 
   /* variable attribute 1 : constraint name */
-  disk_cons->name = get_string (buf,
-				vars[ORC_CLASS_CONSTRAINTS_NAME_INDEX].
-				length);
+  disk_cons->name = get_string (buf, vars[ORC_CLASS_CONSTRAINTS_NAME_INDEX].length);
 
   /* variable attribute 1 : btid */
-  btid_string = get_string (buf,
-			    vars[ORC_CLASS_CONSTRAINTS_BTID_INDEX].length);
+  btid_string = get_string (buf, vars[ORC_CLASS_CONSTRAINTS_BTID_INDEX].length);
   classobj_decompose_property_btid (btid_string, &disk_cons->index_btid);
   free_and_init (btid_string);
 
   /* variable attribute 3 : constranint attribute */
   disk_cons->disk_info_of_atts =
     (SM_DISK_CONSTRAINT_ATTRIBUTE *) get_substructure_set (buf,
-							   &disk_cons->
-							   num_atts,
-							   (LREADER)
-							   disk_to_constraint_attribute,
-							   vars
-							   [ORC_CLASS_CONSTRAINTS_ATTS_INDEX].
-							   length);
+                                                           &disk_cons->num_atts,
+                                                           (LREADER)
+                                                           disk_to_constraint_attribute,
+                                                           vars[ORC_CLASS_CONSTRAINTS_ATTS_INDEX].length);
 
   free_var_table (vars);
 
@@ -1990,7 +1901,7 @@ disk_to_constraint_attribute (OR_BUF * buf)
   int rc;
   char *tmp;
 
-  disk_cons_att = NULL;		/* init */
+  disk_cons_att = NULL;         /* init */
 
   vars = read_var_table (buf, tf_Metaclass_constraint_attribute.n_variable);
   if (vars == NULL)
@@ -2017,8 +1928,7 @@ disk_to_constraint_attribute (OR_BUF * buf)
       goto exit_on_error;
     }
 
-  tmp =
-    get_string (buf, vars[ORC_CLASS_CONSTRAINTS_ATTS_RESERVED_INDEX].length);
+  tmp = get_string (buf, vars[ORC_CLASS_CONSTRAINTS_ATTS_RESERVED_INDEX].length);
   free_and_init (tmp);
 
   free_var_table (vars);
@@ -2054,8 +1964,7 @@ attribute_to_disk (OR_BUF * buf, SM_ATTRIBUTE * att)
   start = buf->ptr;
   /* VARIABLE OFFSET TABLE */
   /* name */
-  offset = tf_Metaclass_attribute.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_attribute.n_variable);
+  offset = tf_Metaclass_attribute.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_attribute.n_variable);
   or_put_offset (buf, offset);
 
   offset += string_disk_size (att->name);
@@ -2072,8 +1981,7 @@ attribute_to_disk (OR_BUF * buf, SM_ATTRIBUTE * att)
 
   /* domain list */
   or_put_offset (buf, offset);
-  offset +=
-    substructure_set_size ((DB_LIST *) att->sma_domain, (LSIZER) domain_size);
+  offset += substructure_set_size ((DB_LIST *) att->sma_domain, (LSIZER) domain_size);
 
   /* property list */
   or_put_offset (buf, offset);
@@ -2086,7 +1994,7 @@ attribute_to_disk (OR_BUF * buf, SM_ATTRIBUTE * att)
   /* ATTRIBUTES */
   or_put_int (buf, att->id);
   or_put_int (buf, (int) att->type->id);
-  or_put_int (buf, 0);		/* memory offsets are now calculated after loading */
+  or_put_int (buf, 0);          /* memory offsets are now calculated after loading */
   or_put_int (buf, att->order);
   pr_write_mop (buf, att->class_mop);
   or_put_int (buf, att->flags);
@@ -2113,9 +2021,7 @@ attribute_to_disk (OR_BUF * buf, SM_ATTRIBUTE * att)
 
   /* domain */
   put_substructure_set (buf, (DB_LIST *) att->sma_domain,
-			(LWRITER) domain_to_disk,
-			&tf_Metaclass_domain.classoid,
-			tf_Metaclass_domain.repid);
+                        (LWRITER) domain_to_disk, &tf_Metaclass_domain.classoid, tf_Metaclass_domain.repid);
 
   /* formerly att_extension_to_disk(buf, att) */
   put_property_list (buf, att->properties);
@@ -2141,14 +2047,12 @@ attribute_size (SM_ATTRIBUTE * att)
 
   assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
-  size = tf_Metaclass_attribute.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_attribute.n_variable);
+  size = tf_Metaclass_attribute.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_attribute.n_variable);
 
   size += string_disk_size (att->name);
   size += or_packed_value_size (&att->default_value.value, 1, 1);
   size += or_packed_value_size (&att->default_value.original_value, 1, 1);
-  size +=
-    substructure_set_size ((DB_LIST *) att->sma_domain, (LSIZER) domain_size);
+  size += substructure_set_size ((DB_LIST *) att->sma_domain, (LSIZER) domain_size);
 
   /* size += att_extension_size(att); */
   size += property_list_size (att->properties);
@@ -2196,7 +2100,7 @@ disk_to_attribute (OR_BUF * buf, SM_ATTRIBUTE * att)
   dbval_type = (DB_TYPE) or_get_int (buf, &rc);
   att->type = PR_TYPE_FROM_ID (dbval_type);
   att->offset = or_get_int (buf, &rc);
-  att->offset = 0;		/* calculated later */
+  att->offset = 0;              /* calculated later */
   att->order = or_get_int (buf, &rc);
 
   (*(tp_Object.data_readval)) (buf, &value, NULL, -1, true);
@@ -2220,33 +2124,28 @@ disk_to_attribute (OR_BUF * buf, SM_ATTRIBUTE * att)
   att->name = get_string (buf, vars[ORC_ATT_NAME_INDEX].length);
 
   /* variable attribute 1 : value */
-  or_get_value (buf, &att->default_value.value, NULL,
-		vars[ORC_ATT_CURRENT_VALUE_INDEX].length, true);
+  or_get_value (buf, &att->default_value.value, NULL, vars[ORC_ATT_CURRENT_VALUE_INDEX].length, true);
 
   /* variable attribute 2 : original value */
-  or_get_value (buf, &att->default_value.original_value, NULL,
-		vars[ORC_ATT_ORIGINAL_VALUE_INDEX].length, true);
+  or_get_value (buf, &att->default_value.original_value, NULL, vars[ORC_ATT_ORIGINAL_VALUE_INDEX].length, true);
 
   /* variable attribute 3 : domain */
   att->sma_domain =
-    (TP_DOMAIN *) get_substructure_set (buf, NULL,
-					(LREADER) disk_to_domain,
-					vars[ORC_ATT_DOMAIN_INDEX].length);
+    (TP_DOMAIN *) get_substructure_set (buf, NULL, (LREADER) disk_to_domain, vars[ORC_ATT_DOMAIN_INDEX].length);
   assert (TP_DOMAIN_TYPE (att->sma_domain) != DB_TYPE_VARIABLE);
 
   /* variable attribute 4: property list */
   /* formerly disk_to_att_extension(buf, att, vars[4].length); */
-  att->properties =
-    get_property_list (buf, vars[ORC_ATT_PROPERTIES_INDEX].length);
+  att->properties = get_property_list (buf, vars[ORC_ATT_PROPERTIES_INDEX].length);
 
   att->default_value.default_expr = DB_DEFAULT_NONE;
   if (att->properties)
     {
       if (classobj_get_prop (att->properties, "default_expr", &value) > 0)
-	{
-	  att->default_value.default_expr = DB_GET_INTEGER (&value);
-	  db_value_clear (&value);
-	}
+        {
+          att->default_value.default_expr = DB_GET_INTEGER (&value);
+          db_value_clear (&value);
+        }
     }
 
   free_var_table (vars);
@@ -2270,13 +2169,11 @@ repattribute_to_disk (OR_BUF * buf, SM_REPR_ATTRIBUTE * rat)
 
   start = buf->ptr;
   /* VARIABLE OFFSET TABLE */
-  offset = tf_Metaclass_repattribute.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_repattribute.n_variable);
+  offset = tf_Metaclass_repattribute.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_repattribute.n_variable);
 
   /* domain list */
   or_put_offset (buf, offset);
-  offset +=
-    substructure_set_size ((DB_LIST *) rat->domain, (LSIZER) domain_size);
+  offset += substructure_set_size ((DB_LIST *) rat->domain, (LSIZER) domain_size);
 
   /* end of object */
   or_put_offset (buf, offset);
@@ -2287,9 +2184,7 @@ repattribute_to_disk (OR_BUF * buf, SM_REPR_ATTRIBUTE * rat)
 
   /* domain */
   put_substructure_set (buf, (DB_LIST *) rat->domain,
-			(LWRITER) domain_to_disk,
-			&tf_Metaclass_domain.classoid,
-			tf_Metaclass_domain.repid);
+                        (LWRITER) domain_to_disk, &tf_Metaclass_domain.classoid, tf_Metaclass_domain.repid);
 
   if (start + offset != buf->ptr)
     {
@@ -2310,11 +2205,9 @@ repattribute_size (SM_REPR_ATTRIBUTE * rat)
 {
   int size;
 
-  size = tf_Metaclass_repattribute.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_repattribute.n_variable);
+  size = tf_Metaclass_repattribute.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_repattribute.n_variable);
 
-  size +=
-    substructure_set_size ((DB_LIST *) rat->domain, (LSIZER) domain_size);
+  size += substructure_set_size ((DB_LIST *) rat->domain, (LSIZER) domain_size);
 
   return (size);
 }
@@ -2352,8 +2245,7 @@ disk_to_repattribute (OR_BUF * buf)
     }
 
   rat->domain =
-    (TP_DOMAIN *) get_substructure_set (buf, NULL, (LREADER) disk_to_domain,
-					vars[ORC_REPATT_DOMAIN_INDEX].length);
+    (TP_DOMAIN *) get_substructure_set (buf, NULL, (LREADER) disk_to_domain, vars[ORC_REPATT_DOMAIN_INDEX].length);
 
   free_var_table (vars);
 
@@ -2371,11 +2263,9 @@ representation_size (SM_REPRESENTATION * rep)
 {
   int size;
 
-  size = tf_Metaclass_representation.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_representation.n_variable);
+  size = tf_Metaclass_representation.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_representation.n_variable);
 
-  size += substructure_set_size ((DB_LIST *) rep->attributes,
-				 (LSIZER) repattribute_size);
+  size += substructure_set_size ((DB_LIST *) rep->attributes, (LSIZER) repattribute_size);
 
   size += property_list_size (NULL);
 
@@ -2399,13 +2289,10 @@ representation_to_disk (OR_BUF * buf, SM_REPRESENTATION * rep)
   int offset;
 
   start = buf->ptr;
-  offset = tf_Metaclass_representation.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_representation.n_variable);
+  offset = tf_Metaclass_representation.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_representation.n_variable);
 
   or_put_offset (buf, offset);
-  offset +=
-    substructure_set_size ((DB_LIST *) rep->attributes,
-			   (LSIZER) repattribute_size);
+  offset += substructure_set_size ((DB_LIST *) rep->attributes, (LSIZER) repattribute_size);
 
   or_put_offset (buf, offset);
   offset += property_list_size (NULL);
@@ -2422,9 +2309,8 @@ representation_to_disk (OR_BUF * buf, SM_REPRESENTATION * rep)
   or_put_int (buf, 0);
 
   put_substructure_set (buf, (DB_LIST *) rep->attributes,
-			(LWRITER) repattribute_to_disk,
-			&tf_Metaclass_repattribute.classoid,
-			tf_Metaclass_repattribute.repid);
+                        (LWRITER) repattribute_to_disk,
+                        &tf_Metaclass_repattribute.classoid, tf_Metaclass_repattribute.repid);
 
   put_property_list (buf, NULL);
 
@@ -2476,8 +2362,7 @@ disk_to_representation (OR_BUF * buf)
 
       /* variable 0 : attributes */
       rep->attributes = (SM_REPR_ATTRIBUTE *)
-	get_substructure_set (buf, NULL, (LREADER) disk_to_repattribute,
-			      vars[ORC_REP_ATTRIBUTES_INDEX].length);
+        get_substructure_set (buf, NULL, (LREADER) disk_to_repattribute, vars[ORC_REP_ATTRIBUTES_INDEX].length);
     }
 
   free_var_table (vars);
@@ -2532,8 +2417,7 @@ put_class_varinfo (OR_BUF * buf, SM_CLASS * class_)
   DB_MAKE_NULL (&owner_name);
 
   /* name */
-  offset = OR_HEADER_SIZE + tf_Metaclass_class.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_class.n_variable);
+  offset = OR_HEADER_SIZE + tf_Metaclass_class.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_class.n_variable);
   or_put_offset (buf, offset);
 
   /* owner_name */
@@ -2554,24 +2438,19 @@ put_class_varinfo (OR_BUF * buf, SM_CLASS * class_)
   or_put_offset (buf, offset);
 
   /* attributes */
-  offset += substructure_set_size ((DB_LIST *) class_->representations,
-				   (LSIZER) representation_size);
+  offset += substructure_set_size ((DB_LIST *) class_->representations, (LSIZER) representation_size);
   or_put_offset (buf, offset);
 
   /* query spec */
-  offset += substructure_set_size ((DB_LIST *) class_->attributes,
-				   (LSIZER) attribute_size);
+  offset += substructure_set_size ((DB_LIST *) class_->attributes, (LSIZER) attribute_size);
   or_put_offset (buf, offset);
 
   /* constraints */
-  offset +=
-    substructure_set_size ((DB_LIST *) class_->query_spec,
-			   (LSIZER) query_spec_size);
+  offset += substructure_set_size ((DB_LIST *) class_->query_spec, (LSIZER) query_spec_size);
   or_put_offset (buf, offset);
 
   /* end of object */
-  offset += substructure_set_size ((DB_LIST *) class_->disk_constraints,
-				   (LSIZER) constraint_size);
+  offset += substructure_set_size ((DB_LIST *) class_->disk_constraints, (LSIZER) constraint_size);
 
   or_put_offset (buf, offset);
 
@@ -2600,7 +2479,7 @@ put_class_attributes (OR_BUF * buf, SM_CLASS * class_)
 
   /* doesn't exist yet */
   or_put_int (buf, class_->att_ids);
-  or_put_int (buf, 0);		/* unused, formerly rep_ids counter */
+  or_put_int (buf, 0);          /* unused, formerly rep_ids counter */
 
   or_put_int (buf, class_->header.heap.vfid.fileid);
   or_put_int (buf, class_->header.heap.vfid.volid);
@@ -2611,8 +2490,7 @@ put_class_attributes (OR_BUF * buf, SM_CLASS * class_)
   or_put_int (buf, class_->variable_count);
   or_put_int (buf, class_->fixed_size);
 
-  assert (class_->att_count
-	  == (class_->fixed_count + class_->variable_count));
+  assert (class_->att_count == (class_->fixed_count + class_->variable_count));
   or_put_int (buf, class_->att_count);
   /* object size is now calculated after loading */
   or_put_int (buf, 0);
@@ -2621,7 +2499,7 @@ put_class_attributes (OR_BUF * buf, SM_CLASS * class_)
 
   /* owner object */
   pr_write_mop (buf, class_->owner);
-  or_put_int (buf, (int) LANG_SYS_COLLATION);	/* unused, collation_id */
+  or_put_int (buf, (int) LANG_SYS_COLLATION);   /* unused, collation_id */
 
   /* 0: NAME */
   put_string (buf, class_->header.name);
@@ -2639,27 +2517,21 @@ put_class_attributes (OR_BUF * buf, SM_CLASS * class_)
 
   /* 3: representations */
   put_substructure_set (buf, (DB_LIST *) class_->representations,
-			(LWRITER) representation_to_disk,
-			&tf_Metaclass_representation.classoid,
-			tf_Metaclass_representation.repid);
+                        (LWRITER) representation_to_disk,
+                        &tf_Metaclass_representation.classoid, tf_Metaclass_representation.repid);
 
   /* 4: attributes */
   put_substructure_set (buf, (DB_LIST *) class_->attributes,
-			(LWRITER) attribute_to_disk,
-			&tf_Metaclass_attribute.classoid,
-			tf_Metaclass_attribute.repid);
+                        (LWRITER) attribute_to_disk, &tf_Metaclass_attribute.classoid, tf_Metaclass_attribute.repid);
 
   /* 5: query_spec */
   put_substructure_set (buf, (DB_LIST *) class_->query_spec,
-			(LWRITER) query_spec_to_disk,
-			&tf_Metaclass_query_spec.classoid,
-			tf_Metaclass_query_spec.repid);
+                        (LWRITER) query_spec_to_disk, &tf_Metaclass_query_spec.classoid, tf_Metaclass_query_spec.repid);
 
   /* 6: constraint */
   put_substructure_set (buf, (DB_LIST *) class_->disk_constraints,
-			(LWRITER) disk_constraint_to_disk,
-			&tf_Metaclass_representation.classoid,
-			tf_Metaclass_representation.repid);
+                        (LWRITER) disk_constraint_to_disk,
+                        &tf_Metaclass_representation.classoid, tf_Metaclass_representation.repid);
 
   pr_clear_value (&owner_name);
 }
@@ -2695,15 +2567,15 @@ class_to_disk (OR_BUF * buf, SM_CLASS * class_)
     }
   else
     {
-      start = buf->ptr - OR_HEADER_SIZE;	/* header already written */
+      start = buf->ptr - OR_HEADER_SIZE;        /* header already written */
       offset = put_class_varinfo (buf, class_);
       put_class_attributes (buf, class_);
 
       if (start + offset != buf->ptr)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_OUT_OF_SYNC, 0);
-	  or_abort (buf);
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_OUT_OF_SYNC, 0);
+          or_abort (buf);
+        }
     }
 }
 
@@ -2731,9 +2603,8 @@ tf_class_size (MOBJ classobj)
       return (-1);
     }
 
-  size = OR_HEADER_SIZE;	/* ? */
-  size += tf_Metaclass_class.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_class.n_variable);
+  size = OR_HEADER_SIZE;        /* ? */
+  size += tf_Metaclass_class.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_class.n_variable);
 
   size += string_disk_size (class_->header.name);
 
@@ -2746,18 +2617,13 @@ tf_class_size (MOBJ classobj)
 
   size += string_disk_size (class_->loader_commands);
 
-  size += substructure_set_size ((DB_LIST *) class_->representations,
-				 (LSIZER) representation_size);
+  size += substructure_set_size ((DB_LIST *) class_->representations, (LSIZER) representation_size);
 
-  size += substructure_set_size ((DB_LIST *) class_->attributes,
-				 (LSIZER) attribute_size);
+  size += substructure_set_size ((DB_LIST *) class_->attributes, (LSIZER) attribute_size);
 
-  size +=
-    substructure_set_size ((DB_LIST *) class_->query_spec,
-			   (LSIZER) query_spec_size);
+  size += substructure_set_size ((DB_LIST *) class_->query_spec, (LSIZER) query_spec_size);
 
-  size += substructure_set_size ((DB_LIST *) class_->disk_constraints,
-				 (LSIZER) constraint_size);
+  size += substructure_set_size ((DB_LIST *) class_->disk_constraints, (LSIZER) constraint_size);
 
   pr_clear_value (&owner_name);
 
@@ -2785,9 +2651,8 @@ tf_dump_class_size (MOBJ classobj)
       return;
     }
 
-  size = OR_HEADER_SIZE;	/* ? */
-  size += tf_Metaclass_class.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_class.n_variable);
+  size = OR_HEADER_SIZE;        /* ? */
+  size += tf_Metaclass_class.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_class.n_variable);
   fprintf (stdout, "Fixed size %d\n", size);
 
   s = string_disk_size (class_->header.name);
@@ -2798,19 +2663,15 @@ tf_dump_class_size (MOBJ classobj)
   fprintf (stdout, "Loader commands %d\n", s);
   size += s;
 
-  s = substructure_set_size ((DB_LIST *) class_->representations,
-			     (LSIZER) representation_size);
+  s = substructure_set_size ((DB_LIST *) class_->representations, (LSIZER) representation_size);
   fprintf (stdout, "Representations %d\n", s);
   size += s;
 
-  s = substructure_set_size ((DB_LIST *) class_->attributes,
-			     (LSIZER) attribute_size);
+  s = substructure_set_size ((DB_LIST *) class_->attributes, (LSIZER) attribute_size);
   fprintf (stdout, "Attributes %d\n", s);
   size += s;
 
-  s =
-    substructure_set_size ((DB_LIST *) class_->query_spec,
-			   (LSIZER) query_spec_size);
+  s = substructure_set_size ((DB_LIST *) class_->query_spec, (LSIZER) query_spec_size);
   fprintf (stdout, "Query_Spec statements %d\n", s);
   size += s;
 
@@ -2857,7 +2718,7 @@ disk_to_class (OR_BUF * buf, SM_CLASS ** class_ptr)
     }
 
   class_->att_ids = or_get_int (buf, &rc);
-  (void) or_get_int (buf, &rc);	/* unused, rep_ids */
+  (void) or_get_int (buf, &rc); /* unused, rep_ids */
 
   class_->header.heap.vfid.fileid = or_get_int (buf, &rc);
   class_->header.heap.vfid.volid = or_get_int (buf, &rc);
@@ -2869,44 +2730,37 @@ disk_to_class (OR_BUF * buf, SM_CLASS ** class_ptr)
   class_->fixed_size = or_get_int (buf, &rc);
   class_->att_count = or_get_int (buf, &rc);
   class_->object_size = or_get_int (buf, &rc);
-  class_->object_size = 0;	/* calculated later */
+  class_->object_size = 0;      /* calculated later */
   class_->flags = or_get_int (buf, &rc);
   class_->class_type = (SM_CLASS_TYPE) or_get_int (buf, &rc);
 
   /* owner object */
   (*(tp_Object.data_readval)) (buf, &value, NULL, -1, true);
   class_->owner = db_get_object (&value);
-  (void) or_get_int (buf, &rc);	/* unused, collation_id */
+  (void) or_get_int (buf, &rc); /* unused, collation_id */
 
   /* variable 0 */
-  assert (vars[ORC_NAME_INDEX].offset
-	  == CAST_BUFLEN (buf->ptr - buf->buffer));
+  assert (vars[ORC_NAME_INDEX].offset == CAST_BUFLEN (buf->ptr - buf->buffer));
   class_->header.name = get_string (buf, vars[ORC_NAME_INDEX].length);
 
   /* variable 1 */
   /* skip reading owner name string value.
    * This stored value is used in catalog record insertion.
    */
-  assert (vars[ORC_OWNER_NAME_INDEX].offset
-	  == CAST_BUFLEN (buf->ptr - buf->buffer));
+  assert (vars[ORC_OWNER_NAME_INDEX].offset == CAST_BUFLEN (buf->ptr - buf->buffer));
   or_advance (buf, vars[ORC_OWNER_NAME_INDEX].length);
 
   /* variable 2 */
-  assert (vars[ORC_LOADER_COMMANDS_INDEX].offset
-	  == CAST_BUFLEN (buf->ptr - buf->buffer));
-  class_->loader_commands =
-    get_string (buf, vars[ORC_LOADER_COMMANDS_INDEX].length);
+  assert (vars[ORC_LOADER_COMMANDS_INDEX].offset == CAST_BUFLEN (buf->ptr - buf->buffer));
+  class_->loader_commands = get_string (buf, vars[ORC_LOADER_COMMANDS_INDEX].length);
 
   /* variable 3 */
-  assert (vars[ORC_REPRESENTATIONS_INDEX].offset
-	  == CAST_BUFLEN (buf->ptr - buf->buffer));
+  assert (vars[ORC_REPRESENTATIONS_INDEX].offset == CAST_BUFLEN (buf->ptr - buf->buffer));
   class_->representations = (SM_REPRESENTATION *)
-    get_substructure_set (buf, NULL, (LREADER) disk_to_representation,
-			  vars[ORC_REPRESENTATIONS_INDEX].length);
+    get_substructure_set (buf, NULL, (LREADER) disk_to_representation, vars[ORC_REPRESENTATIONS_INDEX].length);
 
   /* variable 4 */
-  class_->attributes = (SM_ATTRIBUTE *)
-    classobj_alloc_threaded_array (sizeof (SM_ATTRIBUTE), class_->att_count);
+  class_->attributes = (SM_ATTRIBUTE *) classobj_alloc_threaded_array (sizeof (SM_ATTRIBUTE), class_->att_count);
   if (class_->att_count && class_->attributes == NULL)
     {
       db_ws_free (class_);
@@ -2914,28 +2768,20 @@ disk_to_class (OR_BUF * buf, SM_CLASS ** class_ptr)
       or_abort (buf);
       return NULL;
     }
-  assert (vars[ORC_ATTRIBUTES_INDEX].offset
-	  == CAST_BUFLEN (buf->ptr - buf->buffer));
+  assert (vars[ORC_ATTRIBUTES_INDEX].offset == CAST_BUFLEN (buf->ptr - buf->buffer));
   install_substructure_set (buf, (DB_LIST *) class_->attributes,
-			    (VREADER) disk_to_attribute,
-			    vars[ORC_ATTRIBUTES_INDEX].length);
+                            (VREADER) disk_to_attribute, vars[ORC_ATTRIBUTES_INDEX].length);
 
   /* variable 5 */
-  assert (vars[ORC_QUERY_SPEC_INDEX].offset
-	  == CAST_BUFLEN (buf->ptr - buf->buffer));
+  assert (vars[ORC_QUERY_SPEC_INDEX].offset == CAST_BUFLEN (buf->ptr - buf->buffer));
   class_->query_spec = (SM_QUERY_SPEC *)
-    get_substructure_set (buf, NULL, (LREADER) disk_to_query_spec,
-			  vars[ORC_QUERY_SPEC_INDEX].length);
+    get_substructure_set (buf, NULL, (LREADER) disk_to_query_spec, vars[ORC_QUERY_SPEC_INDEX].length);
 
   /* variable 6 */
-  assert (vars[ORC_CONSTRAINTS_INDEX].offset
-	  == CAST_BUFLEN (buf->ptr - buf->buffer));
+  assert (vars[ORC_CONSTRAINTS_INDEX].offset == CAST_BUFLEN (buf->ptr - buf->buffer));
   class_->disk_constraints =
     (SM_DISK_CONSTRAINT *) get_substructure_set (buf, NULL,
-						 (LREADER)
-						 disk_to_constraint,
-						 vars[ORC_CONSTRAINTS_INDEX].
-						 length);
+                                                 (LREADER) disk_to_constraint, vars[ORC_CONSTRAINTS_INDEX].length);
 
   /* build the ordered instance instance list */
   classobj_fixup_loaded_class (class_);
@@ -2960,10 +2806,9 @@ root_to_disk (OR_BUF * buf, ROOT_CLASS * root)
   char *start;
   int offset;
 
-  start = buf->ptr - OR_HEADER_SIZE;	/* header already written */
+  start = buf->ptr - OR_HEADER_SIZE;    /* header already written */
   /* variable table */
-  offset = OR_HEADER_SIZE + tf_Metaclass_root.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_root.n_variable);
+  offset = OR_HEADER_SIZE + tf_Metaclass_root.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_root.n_variable);
 
   /* name */
   or_put_offset (buf, offset);
@@ -3000,9 +2845,8 @@ root_size (MOBJ rootobj)
 
   root = (ROOT_CLASS *) rootobj;
 
-  size = OR_HEADER_SIZE;	/* ? */
-  size += tf_Metaclass_root.fixed_size +
-    OR_VAR_TABLE_SIZE (tf_Metaclass_root.n_variable);
+  size = OR_HEADER_SIZE;        /* ? */
+  size += tf_Metaclass_root.fixed_size + OR_VAR_TABLE_SIZE (tf_Metaclass_root.n_variable);
 
   /* name */
   size += string_disk_size (root->header.name);
@@ -3104,13 +2948,13 @@ tf_disk_to_class (OID * oid, RECDES * record)
        */
 
       if (oid_is_root (oid))
-	{
-	  class_ = (MOBJ) disk_to_root (buf);
-	}
+        {
+          class_ = (MOBJ) disk_to_root (buf);
+        }
       else
-	{
-	  class_ = (MOBJ) disk_to_class (buf, (SM_CLASS **) & class_);
-	}
+        {
+          class_ = (MOBJ) disk_to_class (buf, (SM_CLASS **) & class_);
+        }
       break;
 
     default:
@@ -3119,10 +2963,10 @@ tf_disk_to_class (OID * oid, RECDES * record)
        * an appropriate error will have been set
        */
       if (class_ != NULL)
-	{
-	  classobj_free_class ((SM_CLASS *) class_);
-	  class_ = NULL;
-	}
+        {
+          classobj_free_class ((SM_CLASS *) class_);
+          class_ = NULL;
+        }
       break;
     }
 
@@ -3205,31 +3049,30 @@ tf_class_to_disk (MOBJ classobj, RECDES * record)
 
       /* representation id, offset size */
       repid = 0;
-      OR_SET_VAR_OFFSET_SIZE (repid, BIG_VAR_OFFSET_SIZE);	/* 4byte */
+      OR_SET_VAR_OFFSET_SIZE (repid, BIG_VAR_OFFSET_SIZE);      /* 4byte */
       or_put_int (buf, repid);
 
       /* get groupid from (class_->header.obj_header.xxx ) if necessary. */
       or_put_int (buf, GLOBAL_GROUPID);
 
       if (header->type == Meta_root)
-	{
-	  root_to_disk (buf, (ROOT_CLASS *) class_);
-	}
+        {
+          root_to_disk (buf, (ROOT_CLASS *) class_);
+        }
       else
-	{
-	  class_to_disk (buf, (SM_CLASS *) class_);
-	}
+        {
+          class_to_disk (buf, (SM_CLASS *) class_);
+        }
 
       record->length = CAST_BUFLEN (buf->ptr - buf->buffer);
 
       /* sanity test, this sets an error only so we can see it if it happens */
       if (record->length != expected_size)
-	{
-	  assert (false);
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_SIZE_MISMATCH, 2,
-		  expected_size, record->length);
-	  or_abort (buf);
-	}
+        {
+          assert (false);
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_TF_SIZE_MISMATCH, 2, expected_size, record->length);
+          or_abort (buf);
+        }
 
       /* fprintf(stdout, "Saved class in %d bytes\n", record->length); */
       break;
@@ -3306,33 +3149,32 @@ tf_attribute_default_expr_to_property (SM_ATTRIBUTE * attr_list)
   for (attr = attr_list; attr; attr = attr->next)
     {
       if (attr->default_value.default_expr != DB_DEFAULT_NONE)
-	{
-	  /* attr has expression as default value */
-	  DB_VALUE default_expr;
+        {
+          /* attr has expression as default value */
+          DB_VALUE default_expr;
 
-	  if (attr->properties == NULL)
-	    {
-	      /* allocate new property sequence */
-	      attr->properties = classobj_make_prop ();
+          if (attr->properties == NULL)
+            {
+              /* allocate new property sequence */
+              attr->properties = classobj_make_prop ();
 
-	      if (attr->properties == NULL)
-		{
-		  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			  ER_OUT_OF_VIRTUAL_MEMORY, sizeof (DB_SEQ));
-		  return er_errid ();
-		}
-	    }
+              if (attr->properties == NULL)
+                {
+                  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, sizeof (DB_SEQ));
+                  return er_errid ();
+                }
+            }
 
-	  /* add default_expr property to sequence */
-	  db_make_int (&default_expr, attr->default_value.default_expr);
-	  classobj_put_prop (attr->properties, "default_expr", &default_expr);
-	  pr_clear_value (&default_expr);
-	}
+          /* add default_expr property to sequence */
+          db_make_int (&default_expr, attr->default_value.default_expr);
+          classobj_put_prop (attr->properties, "default_expr", &default_expr);
+          pr_clear_value (&default_expr);
+        }
       else if (attr->properties != NULL)
-	{
-	  /* make sure property is unset for existing attributes */
-	  classobj_drop_prop (attr->properties, "default_expr");
-	}
+        {
+          /* make sure property is unset for existing attributes */
+          classobj_drop_prop (attr->properties, "default_expr");
+        }
     }
 
   /* all ok */

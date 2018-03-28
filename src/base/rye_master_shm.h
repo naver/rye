@@ -54,35 +54,25 @@ struct _rye_shm_master
 /* master use function */
 extern int master_shm_initialize (void);
 extern int master_shm_final (void);
-extern int master_shm_set_node_state (const PRM_NODE_INFO * node_info,
-				      unsigned short node_state);
-extern int master_shm_set_node_version (const PRM_NODE_INFO * node_info,
-					const RYE_VERSION * node_version);
+extern int master_shm_set_node_state (const PRM_NODE_INFO * node_info, unsigned short node_state);
+extern int master_shm_set_node_version (const PRM_NODE_INFO * node_info, const RYE_VERSION * node_version);
 extern int master_shm_reset_hb_nodes (RYE_SHM_HA_NODE * nodes, int num_nodes);
 
 extern int master_shm_get_shard_mgmt_info (const char *local_dbname,
-					   char *global_dbname,
-					   short *nodeid,
-					   PRM_NODE_INFO *
-					   shard_mgmt_node_info);
+                                           char *global_dbname, short *nodeid, PRM_NODE_INFO * shard_mgmt_node_info);
 
 /* non-master use functions */
-extern int rye_master_shm_get_new_shm_key (const char *name,
-					   RYE_SHM_TYPE type);
+extern int rye_master_shm_get_new_shm_key (const char *name, RYE_SHM_TYPE type);
 extern int rye_master_shm_get_shm_key (const char *name, RYE_SHM_TYPE type);
 
 extern int rye_master_shm_get_node_reset_time (INT64 * node_reset_time);
 
-extern int rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes,
-					int *num_nodes, int max_nodes);
-extern int rye_master_shm_get_node_state (HA_STATE * node_state,
-					  const PRM_NODE_INFO * node_info);
+extern int rye_master_shm_get_ha_nodes (RYE_SHM_HA_NODE * nodes, int *num_nodes, int max_nodes);
+extern int rye_master_shm_get_node_state (HA_STATE * node_state, const PRM_NODE_INFO * node_info);
 
 extern int rye_master_shm_add_shard_mgmt_info (const char *local_dbname,
-					       const char *global_dbname,
-					       short nodeid,
-					       const PRM_NODE_INFO
-					       * shard_mgmt_node_info);
+                                               const char *global_dbname,
+                                               short nodeid, const PRM_NODE_INFO * shard_mgmt_node_info);
 
 extern int rye_master_shm_dump (FILE * outfp);
 

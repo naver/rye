@@ -97,7 +97,7 @@ struct hbp_header
 {
   unsigned char type;
   char reserved:7;
-  char r:1;			/* is request? */
+  char r:1;                     /* is request? */
   unsigned short len;
   unsigned int seq;
   char group_id[HB_MAX_GROUP_ID_LEN];
@@ -128,21 +128,16 @@ struct hbp_proc_register
 extern const char *hb_process_type_string (int ptype);
 extern void hb_set_exec_path (const char *prog_name);
 extern void hb_set_argv (char **argv);
-extern int css_send_heartbeat_request (CSS_CONN_ENTRY * conn, int command,
-				       int num_buffers, ...);
-extern int css_receive_heartbeat_request (CSS_CONN_ENTRY * conn,
-					  CSS_NET_PACKET ** recv_packet);
+extern int css_send_heartbeat_request (CSS_CONN_ENTRY * conn, int command, int num_buffers, ...);
+extern int css_receive_heartbeat_request (CSS_CONN_ENTRY * conn, CSS_NET_PACKET ** recv_packet);
 extern int hb_process_master_request (void);
 extern int hb_register_to_master (CSS_CONN_ENTRY * conn, HB_PROC_TYPE type);
-extern int hb_process_init (const char *server_name, const char *log_path,
-			    HB_PROC_TYPE type);
+extern int hb_process_init (const char *server_name, const char *log_path, HB_PROC_TYPE type);
 extern void hb_process_term (void);
 extern int hb_make_hbp_register (HBP_PROC_REGISTER * hbp_register,
-				 const HA_CONF * ha_conf,
-				 HB_PROC_TYPE proc_type,
-				 HB_PROC_COMMAND command_type,
-				 const char *db_name,
-				 const PRM_NODE_INFO * host_info);
+                                 const HA_CONF * ha_conf,
+                                 HB_PROC_TYPE proc_type,
+                                 HB_PROC_COMMAND command_type, const char *db_name, const PRM_NODE_INFO * host_info);
 
 extern bool hb_Proc_shutdown;
 

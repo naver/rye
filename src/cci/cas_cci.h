@@ -233,7 +233,7 @@ extern "C"
     CCI_ER_INVALID_URL = -20030,
     CCI_ER_INVALID_LOB_READ_POS = -20031,
 
-#if 0				/* unused */
+#if 0                           /* unused */
     CCI_ER_INVALID_LOB_HANDLE = -20032,
 #endif
 
@@ -276,13 +276,13 @@ extern "C"
     CCI_STMT_REGISTER_DATABASE,
     CCI_STMT_CREATE_CLASS,
     CCI_STMT_CREATE_INDEX,
-    CCI_STMT_CREATE_TRIGGER,	/* do not delete me; unused */
+    CCI_STMT_CREATE_TRIGGER,    /* do not delete me; unused */
     CCI_STMT_CREATE_SERIAL,
     CCI_STMT_DROP_DATABASE,
     CCI_STMT_DROP_CLASS,
     CCI_STMT_DROP_INDEX,
     CCI_STMT_DROP_LABEL,
-    CCI_STMT_DROP_TRIGGER,	/* do not delete me; unused */
+    CCI_STMT_DROP_TRIGGER,      /* do not delete me; unused */
     CCI_STMT_DROP_SERIAL,
     CCI_STMT_EVALUATE,
     CCI_STMT_RENAME_CLASS,
@@ -300,14 +300,14 @@ extern "C"
     CCI_STMT_GET_OPT_LVL,
     CCI_STMT_SET_OPT_LVL,
     CCI_STMT_SCOPE,
-    CCI_STMT_GET_TRIGGER,	/* do not delete me; unused */
-    CCI_STMT_SET_TRIGGER,	/* do not delete me; unused */
+    CCI_STMT_GET_TRIGGER,       /* do not delete me; unused */
+    CCI_STMT_SET_TRIGGER,       /* do not delete me; unused */
     CCI_STMT_SAVEPOINT,
     CCI_STMT_PREPARE,
     CCI_STMT_ATTACH,
     CCI_STMT_USE,
-    CCI_STMT_REMOVE_TRIGGER,	/* do not delete me; unused */
-    CCI_STMT_RENAME_TRIGGER,	/* do not delete me; unused */
+    CCI_STMT_REMOVE_TRIGGER,    /* do not delete me; unused */
+    CCI_STMT_RENAME_TRIGGER,    /* do not delete me; unused */
     CCI_STMT_ON_LDB,
     CCI_STMT_GET_LDB,
     CCI_STMT_SET_LDB,
@@ -318,12 +318,12 @@ extern "C"
     CCI_STMT_SET_SYS_PARAMS,
     CCI_STMT_ALTER_INDEX,
 
-    CCI_STMT_TRUNCATE,		/* do not delete me; unused */
-    CCI_STMT_DO,		/* do not delete me; unused */
+    CCI_STMT_TRUNCATE,          /* do not delete me; unused */
+    CCI_STMT_DO,                /* do not delete me; unused */
     CCI_STMT_SELECT_UPDATE,
     CCI_STMT_SET_SESSION_VARIABLES,
     CCI_STMT_DROP_SESSION_VARIABLES,
-    CCI_STMT_MERGE,		/* do not delete me; unused */
+    CCI_STMT_MERGE,             /* do not delete me; unused */
     CCI_STMT_SET_NAMES,
     CCI_STMT_ALTER_STORED_PROCEDURE_OWNER,
 
@@ -372,12 +372,12 @@ extern "C"
     CCI_TRAN_UNKNOWN_ISOLATION = 0,
     CCI_TRAN_ISOLATION_MIN = 1,
 
-#if 0				/* unused */
+#if 0                           /* unused */
     TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE = 1,
     TRAN_COMMIT_CLASS_COMMIT_INSTANCE = 2,
 #endif
     CCI_TRAN_REP_CLASS_UNCOMMIT_INSTANCE = 3,
-#if 0				/* unused */
+#if 0                           /* unused */
     TRAN_REP_CLASS_COMMIT_INSTANCE = 4,
     TRAN_REP_CLASS_REP_INSTANCE = 5,
     TRAN_SERIALIZABLE = 6,
@@ -455,27 +455,19 @@ extern "C"
 #if !defined(CAS)
   extern int cci_get_version_string (char *str, size_t len);
   extern int cci_get_version (int *major, int *minor, int *patch);
-  extern int cci_connect (CCI_CONN * conn, char *url, const char *user,
-			  const char *pass);
+  extern int cci_connect (CCI_CONN * conn, char *url, const char *user, const char *pass);
   extern int cci_disconnect (CCI_CONN * conn);
   extern int cci_end_tran (CCI_CONN * conn, char type);
-  extern int cci_prepare (CCI_CONN * conn, CCI_STMT * stmt,
-			  const char *sql_stmt, char flag);
+  extern int cci_prepare (CCI_CONN * conn, CCI_STMT * stmt, const char *sql_stmt, char flag);
   extern int cci_get_bind_num (CCI_STMT * stmt);
-  extern T_CCI_COL_INFO *cci_get_result_info (CCI_STMT * stmt,
-					      T_CCI_STMT_TYPE * cmd_type,
-					      int *num);
-  extern int cci_bind_param (CCI_STMT * stmt, int index, T_CCI_TYPE a_type,
-			     const void *value, char flag);
+  extern T_CCI_COL_INFO *cci_get_result_info (CCI_STMT * stmt, T_CCI_STMT_TYPE * cmd_type, int *num);
+  extern int cci_bind_param (CCI_STMT * stmt, int index, T_CCI_TYPE a_type, const void *value, char flag);
   extern int cci_bind_param_ex (CCI_STMT * stmt, int index,
-				T_CCI_TYPE a_type, const void *value,
-				int length, char flag);
+                                T_CCI_TYPE a_type, const void *value, int length, char flag);
   extern int cci_execute (CCI_STMT * stmt, char flag, int max_col_size);
 
-  extern int cci_get_db_parameter (CCI_CONN * conn, T_CCI_DB_PARAM param_name,
-				   void *value);
-  extern long cci_escape_string (CCI_CONN * conn, char *to, const char *from,
-				 unsigned long length);
+  extern int cci_get_db_parameter (CCI_CONN * conn, T_CCI_DB_PARAM param_name, void *value);
+  extern long cci_escape_string (CCI_CONN * conn, char *to, const char *from, unsigned long length);
   extern int cci_close_query_result (CCI_STMT * stmt);
   extern int cci_close_req_handle (CCI_STMT * stmt);
   extern int cci_fetch_size (CCI_STMT * stmt, int fetch_size);
@@ -483,22 +475,15 @@ extern "C"
   extern int cci_fetch_first (CCI_STMT * stmt);
   extern int cci_fetch_last (CCI_STMT * stmt);
   extern int cci_get_int (CCI_STMT * stmt, int col_idx, int *indicator);
-  extern int64_t cci_get_bigint (CCI_STMT * stmt, int col_idx,
-				 int *indicator);
+  extern int64_t cci_get_bigint (CCI_STMT * stmt, int col_idx, int *indicator);
   extern double cci_get_double (CCI_STMT * stmt, int col_idx, int *indicator);
   extern char *cci_get_string (CCI_STMT * stmt, int col_idx, int *indicator);
-  extern T_CCI_DATETIME cci_get_datetime (CCI_STMT * stmt, int col_idx,
-					  int *indicator);
-  extern T_CCI_VARBIT cci_get_bit (CCI_STMT * stmt, int col_idx,
-				   int *indicator);
-  extern int cci_schema_info (CCI_CONN * conn, CCI_STMT * stmt,
-			      T_CCI_SCH_TYPE type, char *arg1, char *arg2,
-			      int flag);
-  extern int cci_get_db_version (CCI_CONN * conn, char *out_buf,
-				 int buf_size);
+  extern T_CCI_DATETIME cci_get_datetime (CCI_STMT * stmt, int col_idx, int *indicator);
+  extern T_CCI_VARBIT cci_get_bit (CCI_STMT * stmt, int col_idx, int *indicator);
+  extern int cci_schema_info (CCI_CONN * conn, CCI_STMT * stmt, T_CCI_SCH_TYPE type, char *arg1, char *arg2, int flag);
+  extern int cci_get_db_version (CCI_CONN * conn, char *out_buf, int buf_size);
   extern CCI_AUTOCOMMIT_MODE cci_get_autocommit (CCI_CONN * conn);
-  extern int cci_set_autocommit (CCI_CONN * conn,
-				 CCI_AUTOCOMMIT_MODE autocommit_mode);
+  extern int cci_set_autocommit (CCI_CONN * conn, CCI_AUTOCOMMIT_MODE autocommit_mode);
   extern int cci_set_holdability (CCI_CONN * conn, int holdable);
   extern int cci_get_holdability (CCI_CONN * conn);
   extern int cci_set_login_timeout (CCI_CONN * conn, int timeout);
@@ -506,39 +491,31 @@ extern "C"
 
   extern int cci_is_holdable (CCI_STMT * stmt);
   extern int cci_bind_param_array_size (CCI_STMT * stmt, int array_size);
-  extern int cci_bind_param_array (CCI_STMT * stmt, int index,
-				   T_CCI_TYPE a_type, const void *value,
-				   int *null_ind);
+  extern int cci_bind_param_array (CCI_STMT * stmt, int index, T_CCI_TYPE a_type, const void *value, int *null_ind);
   extern int cci_execute_batch (CCI_STMT * stmt, T_CCI_QUERY_RESULT ** qr);
   extern int cci_query_result_free (T_CCI_QUERY_RESULT * qr, int num_q);
   extern int cci_execute_result (CCI_STMT * stmt, T_CCI_QUERY_RESULT ** qr);
 
-  extern int cci_get_query_plan (CCI_CONN * conn, const char *sql,
-				 char **out_buf);
+  extern int cci_get_query_plan (CCI_CONN * conn, const char *sql, char **out_buf);
   extern int cci_query_info_free (char *out_buf);
   extern int cci_set_max_row (CCI_STMT * stmt, int max_row);
 
   extern int cci_cancel (CCI_CONN * conn);
-  extern int cci_get_error_msg (int err_code, T_CCI_ERROR * err_buf,
-				char *out_buf, int out_buf_size);
+  extern int cci_get_error_msg (int err_code, T_CCI_ERROR * err_buf, char *out_buf, int out_buf_size);
   extern int cci_get_err_msg (int err_code, char *buf, int bufsize);
 
   extern T_CCI_PROPERTIES *cci_property_create (void);
   extern void cci_property_destroy (T_CCI_PROPERTIES * properties);
-  extern int cci_property_set (T_CCI_PROPERTIES * properties, char *key,
-			       char *value);
-  extern char *cci_property_get (T_CCI_PROPERTIES * properties,
-				 const char *key);
+  extern int cci_property_set (T_CCI_PROPERTIES * properties, char *key, char *value);
+  extern char *cci_property_get (T_CCI_PROPERTIES * properties, const char *key);
   extern int cci_set_query_timeout (CCI_STMT * stmt, int timeout);
   extern int cci_get_query_timeout (CCI_STMT * stmt);
 
   extern int cci_set_allocators (CCI_MALLOC_FUNCTION malloc_func,
-				 CCI_FREE_FUNCTION free_func,
-				 CCI_REALLOC_FUNCTION realloc_func,
-				 CCI_CALLOC_FUNCTION calloc_func);
+                                 CCI_FREE_FUNCTION free_func,
+                                 CCI_REALLOC_FUNCTION realloc_func, CCI_CALLOC_FUNCTION calloc_func);
 
-  extern int cci_get_cas_info (CCI_CONN * conn, char *info_buf,
-			       int buf_length);
+  extern int cci_get_cas_info (CCI_CONN * conn, char *info_buf, int buf_length);
 #endif
 
 /************************************************************************
@@ -549,4 +526,4 @@ extern "C"
 }
 #endif
 
-#endif				/* _CAS_CCI_H_ */
+#endif                          /* _CAS_CCI_H_ */

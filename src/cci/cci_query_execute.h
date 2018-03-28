@@ -219,63 +219,40 @@
 
 extern int qe_con_close (T_CON_HANDLE * con_handle);
 extern int qe_prepare (T_REQ_HANDLE * req_handle,
-		       T_CON_HANDLE * con_handle,
-		       const char *sql_stmt, char flag, int reuse);
+                       T_CON_HANDLE * con_handle, const char *sql_stmt, char flag, int reuse);
 extern void qe_bind_value_free (T_REQ_HANDLE * req_handle);
 extern int qe_bind_param (T_REQ_HANDLE * req_handle, int index,
-			  T_CCI_TYPE a_type, const void *value, int length,
-			  char flag);
-extern int qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
-		       char flag, int max_col_size, int group_id);
+                          T_CCI_TYPE a_type, const void *value, int length, char flag);
+extern int qe_execute (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, char flag, int max_col_size, int group_id);
 extern int qe_end_tran (T_CON_HANDLE * con_handle, char type);
-extern int qe_get_db_parameter (T_CON_HANDLE * con_handle,
-				T_CCI_DB_PARAM param_name, void *value);
-extern int qe_close_query_result (T_REQ_HANDLE * req_handle,
-				  T_CON_HANDLE * con_handle);
-extern int qe_close_req_handle (T_REQ_HANDLE * req_handle,
-				T_CON_HANDLE * con_handle);
+extern int qe_get_db_parameter (T_CON_HANDLE * con_handle, T_CCI_DB_PARAM param_name, void *value);
+extern int qe_close_query_result (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle);
+extern int qe_close_req_handle (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle);
 extern void qe_close_req_handle_all (T_CON_HANDLE * con_handle);
 extern int qe_cursor (T_REQ_HANDLE * req_handle, int offset, char origin);
-extern int qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle,
-		     int result_set_index);
-extern int qe_get_data (T_REQ_HANDLE * req_handle,
-			int col_no, int a_type, void *value, int *indicator);
+extern int qe_fetch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, int result_set_index);
+extern int qe_get_data (T_REQ_HANDLE * req_handle, int col_no, int a_type, void *value, int *indicator);
 extern int qe_schema_info (T_REQ_HANDLE * req_handle,
-			   T_CON_HANDLE * con_handle,
-			   int type, char *arg1, char *arg2, int flag);
-extern int qe_get_db_version (T_CON_HANDLE * con_handle,
-			      char *out_buf, int buf_size);
+                           T_CON_HANDLE * con_handle, int type, char *arg1, char *arg2, int flag);
+extern int qe_get_db_version (T_CON_HANDLE * con_handle, char *out_buf, int buf_size);
 
-extern int qe_execute_batch (T_REQ_HANDLE * req_handle,
-			     T_CON_HANDLE * con_handle,
-			     T_CCI_QUERY_RESULT ** qr);
+extern int qe_execute_batch (T_REQ_HANDLE * req_handle, T_CON_HANDLE * con_handle, T_CCI_QUERY_RESULT ** qr);
 extern void qe_query_result_free (int num_q, T_CCI_QUERY_RESULT * qr);
-extern int qe_query_result_copy (T_REQ_HANDLE * req_handle,
-				 T_CCI_QUERY_RESULT ** res_qr);
+extern int qe_query_result_copy (T_REQ_HANDLE * req_handle, T_CCI_QUERY_RESULT ** res_qr);
 
-extern int qe_get_query_plan (T_CON_HANDLE * con_handle, const char *sql,
-			      char **out_buf);
+extern int qe_get_query_plan (T_CON_HANDLE * con_handle, const char *sql, char **out_buf);
 
-extern void tuple_value_free (T_TUPLE_VALUE * tuple_value,
-			      int num_tuple, int num_cols);
-extern int qe_update_db_group_id (T_CON_HANDLE * con_handle, int migrator_id,
-				  int group_id, int target, bool on_off);
+extern void tuple_value_free (T_TUPLE_VALUE * tuple_value, int num_tuple, int num_cols);
+extern int qe_update_db_group_id (T_CON_HANDLE * con_handle, int migrator_id, int group_id, int target, bool on_off);
 
-extern int qe_insert_gid_removed_info (T_CON_HANDLE * con_handle,
-				       int group_id);
-extern int qe_delete_gid_removed_info (T_CON_HANDLE * con_handle,
-				       int group_id);
+extern int qe_insert_gid_removed_info (T_CON_HANDLE * con_handle, int group_id);
+extern int qe_delete_gid_removed_info (T_CON_HANDLE * con_handle, int group_id);
 extern int qe_delete_gid_skey_info (T_CON_HANDLE * con_handle, int group_id);
 extern int qe_block_global_dml (T_CON_HANDLE * con_handle, bool start_or_end);
-extern int qe_get_server_mode (T_CON_HANDLE * con_handle, int *mode,
-			       unsigned int *master_addr);
-extern int qe_send_repl_data (T_CON_HANDLE * con_handle,
-			      CIRP_REPL_ITEM * head, int num_items,
-			      int applier_id);
-extern int qe_notify_ha_agent_state (T_CON_HANDLE * con_handle,
-				     in_addr_t ip, int port, int state);
-extern int qe_change_dbuser (T_CON_HANDLE * con_handle, const char *user,
-			     const char *passwd);
+extern int qe_get_server_mode (T_CON_HANDLE * con_handle, int *mode, unsigned int *master_addr);
+extern int qe_send_repl_data (T_CON_HANDLE * con_handle, CIRP_REPL_ITEM * head, int num_items, int applier_id);
+extern int qe_notify_ha_agent_state (T_CON_HANDLE * con_handle, in_addr_t ip, int port, int state);
+extern int qe_change_dbuser (T_CON_HANDLE * con_handle, const char *user, const char *passwd);
 
 /************************************************************************
  * EXPORTED VARIABLES							*

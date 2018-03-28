@@ -51,9 +51,7 @@ extern "C"
     BH_SORTED_ARRAY
   } BH_HEAP_STATE;
 
-  typedef BH_CMP_RESULT (*bh_key_comparator) (const BH_ELEM left,
-					      const BH_ELEM right,
-					      BH_CMP_ARG arg);
+  typedef BH_CMP_RESULT (*bh_key_comparator) (const BH_ELEM left, const BH_ELEM right, BH_CMP_ARG arg);
 
   typedef struct binary_heap BINARY_HEAP;
   struct binary_heap
@@ -67,8 +65,7 @@ extern "C"
   };
 
   extern BINARY_HEAP *bh_create (THREAD_ENTRY * thread_p, int max_capacity,
-				 bh_key_comparator cmp_func,
-				 BH_CMP_ARG cmp_arg);
+                                 bh_key_comparator cmp_func, BH_CMP_ARG cmp_arg);
   extern void bh_destroy (THREAD_ENTRY * thread_p, BINARY_HEAP * heap);
 
 #if defined (ENABLE_UNUSED_FUNCTION)
@@ -100,9 +97,9 @@ extern "C"
   extern bool bh_is_full (BINARY_HEAP * heap);
 #if defined(RYE_DEBUG)
   extern bool bh_tests_consistent (BINARY_HEAP * heap);
-#endif				/* RYE_DEBUG */
+#endif                          /* RYE_DEBUG */
 #ifdef __cplusplus
 }
 #endif
 
-#endif				/* _BINARYHEAP_H_ */
+#endif                          /* _BINARYHEAP_H_ */

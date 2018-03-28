@@ -80,7 +80,7 @@ typedef enum
   MSGCAT_UTIL_GENERIC_MISS_ARGUMENT = 22,
   MSGCAT_UTIL_GENERIC_RYE_USAGE = 23,
   MSGCAT_UTIL_GENERIC_ARGS_OVER = 31,
-#if 0				/* unused */
+#if 0                           /* unused */
   MSGCAT_UTIL_GENERIC_MISS_DBNAME = 32,
 #endif
   MSGCAT_UTIL_GENERIC_DEPRECATED = 33,
@@ -331,8 +331,8 @@ typedef struct
   int arg_ch;
   union
   {
-    int value_type;		/* if arg_ch is not OPTION_STRING_TABLE */
-    int num_strings;		/* if arg_ch is OPTION_STRING_TABLE */
+    int value_type;             /* if arg_ch is not OPTION_STRING_TABLE */
+    int num_strings;            /* if arg_ch is OPTION_STRING_TABLE */
   } value_info;
   union
   {
@@ -664,10 +664,10 @@ typedef int (*UTILITY_INIT_FUNC) (void);
 typedef enum
 {
   ARG_UNKNOWN,
-  ARG_UTIL_SERVICE = 1,		/* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 25 */
-  ARG_UTIL_BROKER = 2,		/* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 26 */
-  ARG_UTIL_HEARTBEAT = 3,	/* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 27 */
-  ARG_UTIL_ADMIN = 4,		/* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 28 */
+  ARG_UTIL_SERVICE = 1,         /* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 25 */
+  ARG_UTIL_BROKER = 2,          /* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 26 */
+  ARG_UTIL_HEARTBEAT = 3,       /* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 27 */
+  ARG_UTIL_ADMIN = 4,           /* MSGCAT_UTIL_GENERIC_RYE_USAGE+ 28 */
   ARG_CMD_HELP,
   ARG_CMD_VERSION,
   ARG_CMD_START,
@@ -693,12 +693,9 @@ extern int check_database_name (const char *name);
 extern int check_new_database_name (const char *name);
 extern int check_volume_name (const char *name);
 extern int utility_get_option_int_value (UTIL_ARG_MAP * arg_map, int arg_ch);
-extern bool utility_get_option_bool_value (UTIL_ARG_MAP * arg_map,
-					   int arg_ch);
-extern const char *utility_get_option_string_value (UTIL_ARG_MAP * arg_map,
-						    int arg_ch, int index);
-extern INT64 utility_get_option_bigint_value (UTIL_ARG_MAP * arg_map,
-					      int arg_ch);
+extern bool utility_get_option_bool_value (UTIL_ARG_MAP * arg_map, int arg_ch);
+extern const char *utility_get_option_string_value (UTIL_ARG_MAP * arg_map, int arg_ch, int index);
+extern INT64 utility_get_option_bigint_value (UTIL_ARG_MAP * arg_map, int arg_ch);
 extern int utility_get_option_string_table_size (UTIL_ARG_MAP * arg_map);
 
 extern void util_free_ha_conf (HA_CONF * ha_conf);
@@ -718,10 +715,8 @@ typedef struct
   const char *keystr;
 } UTIL_KEYWORD;
 
-extern int utility_keyword_value (UTIL_KEYWORD * keywords,
-				  int *keyval_p, char **keystr_p);
-extern int utility_keyword_search (UTIL_KEYWORD * keywords, int *keyval_p,
-				   const char **keystr_p);
+extern int utility_keyword_value (UTIL_KEYWORD * keywords, int *keyval_p, char **keystr_p);
+extern int utility_keyword_search (UTIL_KEYWORD * keywords, int *keyval_p, const char **keystr_p);
 
 extern int utility_localtime (const time_t * ts, struct tm *result);
 

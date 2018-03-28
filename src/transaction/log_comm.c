@@ -85,7 +85,7 @@ struct isolation_name
 typedef struct isolation_name TRAN_ISOLATION_NAME;
 
 static TRAN_ISOLATION_NAME log_Isolation_names[] = {
-#if 0				/* unused */
+#if 0                           /* unused */
   {TRAN_SERIALIZABLE,
    "SERIALIZABLE"},
   {TRAN_REP_CLASS_REP_INSTANCE,
@@ -95,7 +95,7 @@ static TRAN_ISOLATION_NAME log_Isolation_names[] = {
 #endif
   {TRAN_DEFAULT_ISOLATION,
    "REPEATABLE CLASSES AND READ UNCOMMITTED INSTANCES"}
-#if 0				/* unused */
+#if 0                           /* unused */
   ,
   {TRAN_COMMIT_CLASS_COMMIT_INSTANCE,
    "READ COMMITTED CLASSES AND READ COMMITTED INSTANCES"},
@@ -124,9 +124,9 @@ log_state_string (TRAN_STATE state)
   for (i = 0; i < num; i++)
     {
       if (log_Tran_state_names[i].state == state)
-	{
-	  return log_Tran_state_names[i].name;
-	}
+        {
+          return log_Tran_state_names[i].name;
+        }
     }
 
   return "TRAN_STATE_UNKNOWN";
@@ -156,9 +156,9 @@ log_isolation_string (TRAN_ISOLATION isolation)
   for (i = 0; i < num; i++)
     {
       if (log_Isolation_names[i].isolation == isolation)
-	{
-	  return log_Isolation_names[i].name;
-	}
+        {
+          return log_Isolation_names[i].name;
+        }
     }
 
   return "TRAN_UNKNOWN_ISOLATION";
@@ -280,8 +280,7 @@ log_pack_descriptors (int num_records, LOG_COPY * log_area, char *descriptors)
  *              that copy_area is large enough to hold the unpacked data.
  */
 char *
-log_unpack_descriptors (int num_records, LOG_COPY * log_area,
-			char *descriptors)
+log_unpack_descriptors (int num_records, LOG_COPY * log_area, char *descriptors)
 {
   struct manylogs *manylogs;
   struct onelog *onelog;
@@ -322,8 +321,7 @@ log_unpack_descriptors (int num_records, LOG_COPY * log_area,
  */
 int
 log_copy_area_send (LOG_COPY * log_area, char **contents_ptr,
-		    int *contents_length, char **descriptors_ptr,
-		    int *descriptors_length)
+                    int *contents_length, char **descriptors_ptr, int *descriptors_length)
 {
   struct manylogs *manylogs;
   struct onelog *onelog;
@@ -336,8 +334,7 @@ log_copy_area_send (LOG_COPY * log_area, char **contents_ptr,
   *contents_length = 0;
 
   manylogs = LOG_MANYLOGS_PTR_IN_LOGAREA (log_area);
-  *descriptors_length = DB_ALIGN (manylogs->num_logs * LOG_ONELOG_PACKED_SIZE,
-				  MAX_ALIGNMENT);
+  *descriptors_length = DB_ALIGN (manylogs->num_logs * LOG_ONELOG_PACKED_SIZE, MAX_ALIGNMENT);
   *descriptors_ptr = (char *) malloc (*descriptors_length);
   if (*descriptors_ptr == NULL)
     {
@@ -352,24 +349,23 @@ log_copy_area_send (LOG_COPY * log_area, char **contents_ptr,
       onelog = &manylogs->onelog;
       onelog++;
       for (i = 0; i < manylogs->num_logs; i++)
-	{
-	  onelog--;
-	  if (onelog->offset > offset)
-	    {
-	      /* To the right */
-	      *contents_length = onelog->length;
-	      offset = onelog->offset;
-	    }
-	}
+        {
+          onelog--;
+          if (onelog->offset > offset)
+            {
+              /* To the right */
+              *contents_length = onelog->length;
+              offset = onelog->offset;
+            }
+        }
 
       if (offset != -1)
-	{
-	  *contents_length = DB_ALIGN (*contents_length, DOUBLE_ALIGNMENT);
-	  *contents_length += offset;
-	}
+        {
+          *contents_length = DB_ALIGN (*contents_length, DOUBLE_ALIGNMENT);
+          *contents_length += offset;
+        }
     }
-  (void) log_pack_descriptors (manylogs->num_logs, log_area,
-			       *descriptors_ptr);
+  (void) log_pack_descriptors (manylogs->num_logs, log_area, *descriptors_ptr);
 
   return manylogs->num_logs;
 
@@ -392,15 +388,13 @@ log_copy_area_send (LOG_COPY * log_area, char **contents_ptr,
  */
 LOG_COPY *
 log_copy_area_malloc_recv (int num_records, char **packed_descriptors,
-			   int packed_descriptors_length,
-			   char **contents_ptr, int contents_length)
+                           int packed_descriptors_length, char **contents_ptr, int contents_length)
 {
   LOG_COPY *log_area;
   int length;
   int descriptors_length;
 
-  descriptors_length = (sizeof (struct manylogs) +
-			sizeof (struct onelog) * (num_records - 1));
+  descriptors_length = (sizeof (struct manylogs) + sizeof (struct onelog) * (num_records - 1));
   length = contents_length + descriptors_length;
   log_area = log_alloc_client_copy_area (length);
   if (log_area == NULL)
@@ -436,11 +430,10 @@ log_copy_area_malloc_recv (int num_records, char **packed_descriptors,
  * NOTE:Dump some log information
  */
 int
-log_dump_log_info (const char *logname_info, bool also_stdout,
-		   const char *fmt, ...)
+log_dump_log_info (const char *logname_info, bool also_stdout, const char *fmt, ...)
 {
-  FILE *fp;			/* Pointer to file                   */
-  va_list ap;			/* Point to each unnamed arg in turn */
+  FILE *fp;                     /* Pointer to file                   */
+  va_list ap;                   /* Point to each unnamed arg in turn */
   char time_array[256];
   char time_array_of_log_info[256];
   int len;
@@ -456,8 +449,7 @@ log_dump_log_info (const char *logname_info, bool also_stdout,
   fp = fopen (logname_info, "a");
   if (fp == NULL)
     {
-      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_MOUNT_FAIL, 1,
-	      logname_info);
+      er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_LOG_MOUNT_FAIL, 1, logname_info);
       va_end (ap);
       return ER_LOG_MOUNT_FAIL;
     }
@@ -470,13 +462,12 @@ log_dump_log_info (const char *logname_info, bool also_stdout,
       return ER_FAILED;
     }
 
-  len = snprintf (time_array_of_log_info, sizeof (time_array_of_log_info) - 1,
-		  "Time: %s - ", time_array);
+  len = snprintf (time_array_of_log_info, sizeof (time_array_of_log_info) - 1, "Time: %s - ", time_array);
   time_array_of_log_info[len] = '\0';
 
   if (strlen (time_array_of_log_info) != TIME_SIZE_OF_DUMP_LOG_INFO)
     {
-      assert (false);		/* is impossible */
+      assert (false);           /* is impossible */
       strcpy (time_array_of_log_info, "Time: 0000-00-00 00:00:00.000 - ");
     }
 
@@ -506,25 +497,23 @@ log_does_allow_replication (void)
 #if defined(SA_MODE)
   return false;
 
-#elif defined(CS_MODE)		/* SA_MODE */
+#elif defined(CS_MODE)          /* SA_MODE */
   int client_type;
 
   client_type = db_get_client_type ();
-  if (client_type == BOOT_CLIENT_LOG_COPIER
-      || client_type == BOOT_CLIENT_REPL_BROKER)
+  if (client_type == BOOT_CLIENT_LOG_COPIER || client_type == BOOT_CLIENT_REPL_BROKER)
     {
       return false;
     }
 
   return true;
 
-#elif defined(SERVER_MODE)	/* CS_MODE */
+#elif defined(SERVER_MODE)      /* CS_MODE */
   THREAD_ENTRY *thread_p = NULL;
   int client_type;
 
   client_type = logtb_find_current_client_type (NULL);
-  if (client_type == BOOT_CLIENT_LOG_COPIER
-      || client_type == BOOT_CLIENT_REPL_BROKER)
+  if (client_type == BOOT_CLIENT_LOG_COPIER || client_type == BOOT_CLIENT_REPL_BROKER)
     {
       return false;
     }

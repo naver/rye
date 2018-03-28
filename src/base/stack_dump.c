@@ -23,9 +23,7 @@
 
 #ident "$Id$"
 
-static int er_resolve_function_name (const void *address,
-				     const char *lib_file_name, char *buffer,
-				     int buffer_size);
+static int er_resolve_function_name (const void *address, const char *lib_file_name, char *buffer, int buffer_size);
 
 #if __WORDSIZE == 32
 
@@ -71,66 +69,63 @@ er_dump_call_stack (FILE * outfp)
   while (frame_pointer_addr)
     {
       if (dladdr ((size_t *) return_addr, &dl_info) == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (dl_info.dli_fbase >= (const void *) 0x40000000)
-	{
-	  func_addr_p = (void *) ((size_t) ((const char *) return_addr) -
-				  (size_t) dl_info.dli_fbase);
-	}
+        {
+          func_addr_p = (void *) ((size_t) ((const char *) return_addr) - (size_t) dl_info.dli_fbase);
+        }
       else
-	{
-	  func_addr_p = (void *) return_addr;
-	}
+        {
+          func_addr_p = (void *) return_addr;
+        }
 
       if (dl_info.dli_sname)
-	{
-	  func_name_p = dl_info.dli_sname;
-	}
+        {
+          func_name_p = dl_info.dli_sname;
+        }
       else
-	{
-	  if (er_resolve_function_name (func_addr_p, dl_info.dli_fname,
-					buffer, sizeof (buffer)) == NO_ERROR)
-	    {
-	      func_name_p = buffer;
-	    }
-	  else
-	    {
-	      func_name_p = "???";
-	    }
-	}
+        {
+          if (er_resolve_function_name (func_addr_p, dl_info.dli_fname, buffer, sizeof (buffer)) == NO_ERROR)
+            {
+              func_name_p = buffer;
+            }
+          else
+            {
+              func_name_p = "???";
+            }
+        }
 
-      fprintf (outfp, "%s(%p): %s", dl_info.dli_fname, func_addr_p,
-	       func_name_p);
+      fprintf (outfp, "%s(%p): %s", dl_info.dli_fname, func_addr_p, func_name_p);
 
       next_frame_pointer_addr = PEEK_DATA (frame_pointer_addr);
       nargs = (next_frame_pointer_addr - frame_pointer_addr - 8) / 4;
       if (nargs > MAXARGS)
-	{
-	  nargs = MAXARGS;
-	}
+        {
+          nargs = MAXARGS;
+        }
 
       fprintf (outfp, " (");
       if (nargs > 0)
-	{
-	  for (i = 1; i <= nargs; i++)
-	    {
-	      arg = PEEK_DATA (frame_pointer_addr + 4 * (i + 1));
-	      fprintf (outfp, "%x", arg);
-	      if (i < nargs)
-		{
-		  fprintf (outfp, ", ");
-		}
-	    }
-	}
+        {
+          for (i = 1; i <= nargs; i++)
+            {
+              arg = PEEK_DATA (frame_pointer_addr + 4 * (i + 1));
+              fprintf (outfp, "%x", arg);
+              if (i < nargs)
+                {
+                  fprintf (outfp, ", ");
+                }
+            }
+        }
       fprintf (outfp, ")\n");
 
       if (next_frame_pointer_addr == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       return_addr = PEEK_DATA (frame_pointer_addr + 4);
       frame_pointer_addr = next_frame_pointer_addr;
@@ -174,39 +169,36 @@ er_dump_call_stack (FILE * outfp)
   for (i = 0; i < trace_count; i++)
     {
       if (dladdr (return_addr[i], &dl_info) == 0)
-	{
-	  break;
-	}
+        {
+          break;
+        }
 
       if (dl_info.dli_fbase >= (const void *) 0x40000000)
-	{
-	  func_addr_p = (void *) ((size_t) ((const char *) return_addr[i]) -
-				  (size_t) dl_info.dli_fbase);
-	}
+        {
+          func_addr_p = (void *) ((size_t) ((const char *) return_addr[i]) - (size_t) dl_info.dli_fbase);
+        }
       else
-	{
-	  func_addr_p = return_addr[i];
-	}
+        {
+          func_addr_p = return_addr[i];
+        }
 
       if (dl_info.dli_sname)
-	{
-	  func_name_p = dl_info.dli_sname;
-	}
+        {
+          func_name_p = dl_info.dli_sname;
+        }
       else
-	{
-	  if (er_resolve_function_name (func_addr_p, dl_info.dli_fname,
-					buffer, sizeof (buffer)) == NO_ERROR)
-	    {
-	      func_name_p = buffer;
-	    }
-	  else
-	    {
-	      func_name_p = "???";
-	    }
-	}
+        {
+          if (er_resolve_function_name (func_addr_p, dl_info.dli_fname, buffer, sizeof (buffer)) == NO_ERROR)
+            {
+              func_name_p = buffer;
+            }
+          else
+            {
+              func_name_p = "???";
+            }
+        }
 
-      fprintf (outfp, "%s(%p): %s\n", dl_info.dli_fname, func_addr_p,
-	       func_name_p);
+      fprintf (outfp, "%s(%p): %s\n", dl_info.dli_fname, func_addr_p, func_name_p);
     }
 
   fflush (outfp);
@@ -216,8 +208,7 @@ er_dump_call_stack (FILE * outfp)
 MHT_TABLE *fname_table;
 
 static int
-er_resolve_function_name (const void *address, const char *lib_file_name_p,
-			  char *buffer, int buffer_size)
+er_resolve_function_name (const void *address, const char *lib_file_name_p, char *buffer, int buffer_size)
 {
   FILE *output;
   char cmd_line[BUFFER_SIZE];
@@ -232,8 +223,7 @@ er_resolve_function_name (const void *address, const char *lib_file_name_p,
       return NO_ERROR;
     }
 
-  snprintf (cmd_line, sizeof (cmd_line),
-	    "addr2line -f -C -e %s %p 2>/dev/null", lib_file_name_p, address);
+  snprintf (cmd_line, sizeof (cmd_line), "addr2line -f -C -e %s %p 2>/dev/null", lib_file_name_p, address);
 
   output = popen (cmd_line, "r");
   if (!output)

@@ -65,20 +65,14 @@
 static void css_master_error (const char *error_string);
 static int css_master_timeout (void);
 static int css_master_init (SOCKET * clientfd);
-static void css_reject_server_request (CSS_CONN_ENTRY * conn,
-				       unsigned short rid, int reason);
-static int css_accept_server_request (CSS_CONN_ENTRY * conn,
-				      unsigned short rid);
+static void css_reject_server_request (CSS_CONN_ENTRY * conn, unsigned short rid, int reason);
+static int css_accept_server_request (CSS_CONN_ENTRY * conn, unsigned short rid);
 static void css_register_new_server (CSS_CONN_ENTRY * conn,
-				     unsigned short rid, char *server_name,
-				     int server_name_length);
+                                     unsigned short rid, char *server_name, int server_name_length);
 static void css_process_new_connection (SOCKET fd);
-static int css_enroll_read_sockets (SOCKET_QUEUE_ENTRY * anchor_p,
-				    fd_set * fd_var);
-static int css_enroll_write_sockets (SOCKET_QUEUE_ENTRY * anchor_p,
-				     fd_set * fd_var);
-static int css_enroll_exception_sockets (SOCKET_QUEUE_ENTRY * anchor_p,
-					 fd_set * fd_var);
+static int css_enroll_read_sockets (SOCKET_QUEUE_ENTRY * anchor_p, fd_set * fd_var);
+static int css_enroll_write_sockets (SOCKET_QUEUE_ENTRY * anchor_p, fd_set * fd_var);
+static int css_enroll_exception_sockets (SOCKET_QUEUE_ENTRY * anchor_p, fd_set * fd_var);
 
 static int css_enroll_master_read_sockets (fd_set * fd_var);
 static int css_enroll_master_write_sockets (fd_set * fd_var);
@@ -120,8 +114,7 @@ pthread_mutex_t css_Master_socket_anchor_lock;
 static void
 css_master_error (const char *error_string)
 {
-  syslog (LOG_ALERT, "Master process: %s %s\n", error_string,
-	  errno > 0 ? strerror (errno) : "");
+  syslog (LOG_ALERT, "Master process: %s %s\n", error_string, errno > 0 ? strerror (errno) : "");
 }
 
 /*
@@ -142,8 +135,7 @@ css_master_timeout (void)
 
   /* check for timeout */
   if (css_Master_timeout &&
-      time ((time_t *) & timeout.tv_sec) != (time_t) - 1 &&
-      css_Master_timeout->tv_sec < timeout.tv_sec)
+      time ((time_t *) & timeout.tv_sec) != (time_t) - 1 && css_Master_timeout->tv_sec < timeout.tv_sec)
     {
       return (0);
     }
@@ -156,11 +148,11 @@ css_master_timeout (void)
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (os_send_signal (temp->pid, 0) && errno == ESRCH)
-	{
-	  hb_cleanup_conn_and_start_process (temp->conn_ptr);
+        {
+          hb_cleanup_conn_and_start_process (temp->conn_ptr);
 
-	  break;
-	}
+          break;
+        }
     }
   pthread_mutex_unlock (&css_Master_socket_anchor_lock);
 
@@ -200,8 +192,7 @@ css_master_init (SOCKET * clientfd)
   (void) os_set_signal_handler (SIGSTOP, css_master_cleanup);
   if (os_set_signal_handler (SIGTERM, css_master_cleanup) == SIG_ERR ||
       os_set_signal_handler (SIGINT, css_master_cleanup) == SIG_ERR ||
-      os_set_signal_handler (SIGPIPE, SIG_IGN) == SIG_ERR ||
-      os_set_signal_handler (SIGCHLD, SIG_IGN) == SIG_ERR)
+      os_set_signal_handler (SIGPIPE, SIG_IGN) == SIG_ERR || os_set_signal_handler (SIGCHLD, SIG_IGN) == SIG_ERR)
     {
       er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_GENERIC_ERROR, 1, "");
       return (0);
@@ -219,8 +210,7 @@ css_master_init (SOCKET * clientfd)
  *   reason(in)
  */
 static void
-css_reject_server_request (CSS_CONN_ENTRY * conn, unsigned short rid,
-			   int reason)
+css_reject_server_request (CSS_CONN_ENTRY * conn, unsigned short rid, int reason)
 {
   int reject_reason;
 
@@ -244,8 +234,7 @@ css_accept_server_request (CSS_CONN_ENTRY * conn, unsigned short rid)
   accept_reason = htonl (SERVER_REQUEST_ACCEPTED);
   css_send_data_packet (conn, rid, 1, (char *) &accept_reason, sizeof (int));
 
-  if (css_recv_data_from_server (&recv_packet, conn, rid, -1, 1,
-				 &error, sizeof (int)) != NO_ERRORS)
+  if (css_recv_data_from_server (&recv_packet, conn, rid, -1, 1, &error, sizeof (int)) != NO_ERRORS)
     {
       return ER_FAILED;
     }
@@ -266,8 +255,7 @@ css_accept_server_request (CSS_CONN_ENTRY * conn, unsigned short rid)
  * Note: This will allow us to pass fds for future requests to the server.
  */
 static void
-css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid,
-			 char *server_name, int server_name_length)
+css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid, char *server_name, int server_name_length)
 {
   SOCKET_QUEUE_ENTRY *entry;
   int length;
@@ -286,9 +274,7 @@ css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid,
   if (css_accept_server_request (conn, rid) != NO_ERROR)
     {
       assert (false);
-      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			   ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1,
-			   server_name);
+      er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ERR_CSS_ERROR_DURING_SERVER_CONNECT, 1, server_name);
       css_free_conn (conn);
       return;
     }
@@ -298,9 +284,7 @@ css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid,
 #if defined(DEBUG)
       css_Active_server_count++;
 #endif
-      entry = css_add_request_to_socket_queue (conn, server_name, conn->fd,
-					       READ_WRITE, 0,
-					       &css_Master_socket_anchor);
+      entry = css_add_request_to_socket_queue (conn, server_name, conn->fd, READ_WRITE, 0, &css_Master_socket_anchor);
     }
   else
     {
@@ -322,14 +306,14 @@ css_register_new_server (CSS_CONN_ENTRY * conn, unsigned short rid,
       server_name += length;
 
       if (entry->env_var != NULL)
-	{
-	  free (entry->env_var);
-	}
+        {
+          free (entry->env_var);
+        }
       entry->env_var = (char *) malloc (strlen (server_name) + 1);
       if (entry->env_var != NULL)
-	{
-	  strcpy (entry->env_var, server_name);
-	}
+        {
+          strcpy (entry->env_var, server_name);
+        }
 
       server_name += strlen (server_name) + 1;
 
@@ -383,23 +367,20 @@ css_process_new_connection (SOCKET fd)
       conn_type = recv_packet->header.function_code;
       request_id = recv_packet->header.request_id;
       switch (conn_type)
-	{
-	case SVR_CONNECT_TYPE_MASTER_INFO:	/* request for information */
-	  css_add_request_to_socket_queue (conn, NULL, fd,
-					   READ_WRITE, 0,
-					   &css_Master_socket_anchor);
-	  break;
-	case SVR_CONNECT_TYPE_MASTER_HB_PROC:	/* request from a new server or new repl */
-	  css_register_new_server (conn, request_id, server_name,
-				   server_name_length);
-	  /* conn is reused or freed in css_register_new_server()
-	   * do not call css_free_conn() here */
-	  break;
-	default:
-	  assert (0);
-	  css_free_conn (conn);
-	  break;
-	}
+        {
+        case SVR_CONNECT_TYPE_MASTER_INFO:     /* request for information */
+          css_add_request_to_socket_queue (conn, NULL, fd, READ_WRITE, 0, &css_Master_socket_anchor);
+          break;
+        case SVR_CONNECT_TYPE_MASTER_HB_PROC:  /* request from a new server or new repl */
+          css_register_new_server (conn, request_id, server_name, server_name_length);
+          /* conn is reused or freed in css_register_new_server()
+           * do not call css_free_conn() here */
+          break;
+        default:
+          assert (0);
+          css_free_conn (conn);
+          break;
+        }
 
       css_net_packet_free (recv_packet);
     }
@@ -427,13 +408,13 @@ css_enroll_read_sockets (SOCKET_QUEUE_ENTRY * anchor_p, fd_set * fd_var)
   for (temp = anchor_p; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd) && temp->fd_type != WRITE_ONLY)
-	{
-	  FD_SET (temp->fd, fd_var);
-	  if (temp->fd > max_fd)
-	    {
-	      max_fd = temp->fd;
-	    }
-	}
+        {
+          FD_SET (temp->fd, fd_var);
+          if (temp->fd > max_fd)
+            {
+              max_fd = temp->fd;
+            }
+        }
     }
 
   return max_fd;
@@ -460,8 +441,7 @@ css_enroll_master_read_sockets (fd_set * fd_var)
  *   fd_var(out)
  */
 static int
-css_enroll_write_sockets (UNUSED_ARG SOCKET_QUEUE_ENTRY * anchor_p,
-			  fd_set * fd_var)
+css_enroll_write_sockets (UNUSED_ARG SOCKET_QUEUE_ENTRY * anchor_p, fd_set * fd_var)
 {
   FD_ZERO (fd_var);
   return 0;
@@ -497,13 +477,13 @@ css_enroll_exception_sockets (SOCKET_QUEUE_ENTRY * anchor_p, fd_set * fd_var)
   for (temp = anchor_p; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd))
-	{
-	  FD_SET (temp->fd, fd_var);
-	  if (temp->fd > max_fd)
-	    {
-	      max_fd = temp->fd;
-	    }
-	}
+        {
+          FD_SET (temp->fd, fd_var);
+          if (temp->fd > max_fd)
+            {
+              max_fd = temp->fd;
+            }
+        }
     }
 
   return max_fd;
@@ -535,12 +515,12 @@ again:
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd) && fcntl (temp->fd, F_GETFL, 0) < 0)
-	{
-	  hb_cleanup_conn_and_start_process (temp->conn_ptr);
-	  pthread_mutex_unlock (&css_Master_socket_anchor_lock);
+        {
+          hb_cleanup_conn_and_start_process (temp->conn_ptr);
+          pthread_mutex_unlock (&css_Master_socket_anchor_lock);
 
-	  goto again;
-	}
+          goto again;
+        }
     }
 
   pthread_mutex_unlock (&css_Master_socket_anchor_lock);
@@ -566,25 +546,25 @@ css_check_master_socket_input (int *count, fd_set * fd_var)
     {
       next = temp->next;
       if (!IS_INVALID_SOCKET (temp->fd) && FD_ISSET (temp->fd, fd_var))
-	{
-	  FD_CLR (temp->fd, fd_var);
-	  (*count)--;
-	  if (temp->fd == css_Master_socket_fd)
-	    {
-	      new_fd = css_master_accept (temp->fd);
-	      if (!IS_INVALID_SOCKET (new_fd))
-		{
-		  css_process_new_connection (new_fd);
-		}
-	    }
-	  else if (!IS_INVALID_SOCKET (temp->fd))
-	    {
-	      css_master_request_handler (temp);
+        {
+          FD_CLR (temp->fd, fd_var);
+          (*count)--;
+          if (temp->fd == css_Master_socket_fd)
+            {
+              new_fd = css_master_accept (temp->fd);
+              if (!IS_INVALID_SOCKET (new_fd))
+                {
+                  css_process_new_connection (new_fd);
+                }
+            }
+          else if (!IS_INVALID_SOCKET (temp->fd))
+            {
+              css_master_request_handler (temp);
 
-	      /* stop loop in case an error caused temp to be deleted */
-	      break;
-	    }
-	}
+              /* stop loop in case an error caused temp to be deleted */
+              break;
+            }
+        }
     }
 
   pthread_mutex_unlock (&css_Master_socket_anchor_lock);
@@ -617,31 +597,29 @@ again:
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd)
-	  && ((FD_ISSET (temp->fd, fd_var)
-	       || (fcntl (temp->fd, F_GETFL, 0) < 0)
-	       || (temp->error_p == true)
-	       || (temp->conn_ptr == NULL)
-	       || (temp->conn_ptr->status == CONN_CLOSED))))
-	{
+          && ((FD_ISSET (temp->fd, fd_var)
+               || (fcntl (temp->fd, F_GETFL, 0) < 0)
+               || (temp->error_p == true) || (temp->conn_ptr == NULL) || (temp->conn_ptr->status == CONN_CLOSED))))
+        {
 #if defined(DEBUG)
-	  if (css_Active_server_count > 0)
-	    {
-	      css_Active_server_count--;
-	    }
+          if (css_Active_server_count > 0)
+            {
+              css_Active_server_count--;
+            }
 #endif
-	  FD_CLR (temp->fd, fd_var);
-	  if (temp->fd == css_Master_socket_fd)
-	    {
-	      pthread_mutex_unlock (&css_Master_socket_anchor_lock);
+          FD_CLR (temp->fd, fd_var);
+          if (temp->fd == css_Master_socket_fd)
+            {
+              pthread_mutex_unlock (&css_Master_socket_anchor_lock);
 
-	      return (0);
-	    }
-	  hb_cleanup_conn_and_start_process (temp->conn_ptr);
+              return (0);
+            }
+          hb_cleanup_conn_and_start_process (temp->conn_ptr);
 
-	  pthread_mutex_unlock (&css_Master_socket_anchor_lock);
+          pthread_mutex_unlock (&css_Master_socket_anchor_lock);
 
-	  goto again;
-	}
+          goto again;
+        }
     }
 
   pthread_mutex_unlock (&css_Master_socket_anchor_lock);
@@ -676,20 +654,20 @@ css_master_loop (void)
 
       rc = select (max_fd + 1, &read_fd, &write_fd, &exception_fd, &timeout);
       switch (rc)
-	{
-	case 0:
-	  run_code = css_master_timeout ();
-	  break;
-	case -1:
-	  /* switch error */
-	  css_master_select_error ();
-	  break;
-	default:
-	  css_check_master_socket_input (&rc, &read_fd);
-	  css_check_master_socket_output ();
-	  run_code = css_check_master_socket_exception (&exception_fd);
-	  break;
-	}
+        {
+        case 0:
+          run_code = css_master_timeout ();
+          break;
+        case -1:
+          /* switch error */
+          css_master_select_error ();
+          break;
+        default:
+          css_check_master_socket_input (&rc, &read_fd);
+          css_check_master_socket_output ();
+          run_code = css_check_master_socket_exception (&exception_fd);
+          break;
+        }
     }
 }
 
@@ -710,8 +688,7 @@ is_master_running ()
   envvar_socket_file (master_lock_file, sizeof (master_lock_file), "");
   rye_mkdir (master_lock_file, 0755);
 
-  css_get_master_domain_path (master_lock_file,
-			      sizeof (master_lock_file), true);
+  css_get_master_domain_path (master_lock_file, sizeof (master_lock_file), true);
   fd = fileio_open (master_lock_file, O_RDWR | O_CREAT, 0666);
   if (fd == NULL_VOLDES)
     {
@@ -737,9 +714,9 @@ running:
   if (fd != NULL_VOLDES)
     {
       if (file_locked)
-	{
-	  fileio_release_lock (fd);
-	}
+        {
+          fileio_release_lock (fd);
+        }
       fileio_close (fd);
     }
   return true;
@@ -771,9 +748,7 @@ main (int argc, char **argv)
 
   if (sysprm_load_and_init ((argc > 1) ? argv[1] : NULL) != NO_ERROR)
     {
-      msg_format = msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_MASTER,
-				   MASTER_MSG_NO_PARAMETERS);
+      msg_format = msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER, MASTER_MSG_NO_PARAMETERS);
       css_master_error (msg_format);
       util_log_write_errstr (msg_format);
       status = EXIT_FAILURE;
@@ -782,16 +757,13 @@ main (int argc, char **argv)
 
   if (is_master_running ())
     {
-      msg_format = msgcat_message (MSGCAT_CATALOG_UTILS,
-				   MSGCAT_UTIL_SET_MASTER,
-				   MASTER_MSG_DUPLICATE);
+      msg_format = msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER, MASTER_MSG_DUPLICATE);
       util_log_write_errstr (msg_format, argv[0]);
       status = EXIT_FAILURE;
       goto cleanup;
     }
 
-  TPRINTF (msgcat_message (MSGCAT_CATALOG_UTILS,
-			   MSGCAT_UTIL_SET_MASTER, MASTER_MSG_STARTING), 0);
+  TPRINTF (msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER, MASTER_MSG_STARTING), 0);
 
   er_stack_clearall ();
   er_clear ();
@@ -810,9 +782,7 @@ main (int argc, char **argv)
   if (css_master_init (&css_Master_socket_fd) != NO_ERROR)
     {
       PRINT_AND_LOG_ERR_MSG ("%s: %s\n", argv[0], db_error_string (1));
-      css_master_error (msgcat_message (MSGCAT_CATALOG_UTILS,
-					MSGCAT_UTIL_SET_MASTER,
-					MASTER_MSG_PROCESS_ERROR));
+      css_master_error (msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER, MASTER_MSG_PROCESS_ERROR));
       status = EXIT_FAILURE;
       goto cleanup;
     }
@@ -838,14 +808,11 @@ main (int argc, char **argv)
     }
 
   conn = css_make_conn (css_Master_socket_fd);
-  css_add_request_to_socket_queue (conn, NULL, css_Master_socket_fd,
-				   READ_WRITE, 0, &css_Master_socket_anchor);
+  css_add_request_to_socket_queue (conn, NULL, css_Master_socket_fd, READ_WRITE, 0, &css_Master_socket_anchor);
 
   css_master_loop ();
   css_master_cleanup (SIGINT);
-  css_master_error (msgcat_message (MSGCAT_CATALOG_UTILS,
-				    MSGCAT_UTIL_SET_MASTER,
-				    MASTER_MSG_EXITING));
+  css_master_error (msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER, MASTER_MSG_EXITING));
 
 cleanup:
 
@@ -894,8 +861,7 @@ css_free_entry (SOCKET_QUEUE_ENTRY * entry_p)
  *   anchor_p(out):
  */
 void
-css_remove_entry_by_conn (CSS_CONN_ENTRY * conn_p,
-			  SOCKET_QUEUE_ENTRY ** anchor_p)
+css_remove_entry_by_conn (CSS_CONN_ENTRY * conn_p, SOCKET_QUEUE_ENTRY ** anchor_p)
 {
   SOCKET_QUEUE_ENTRY *p, *q;
 
@@ -907,18 +873,18 @@ css_remove_entry_by_conn (CSS_CONN_ENTRY * conn_p,
   for (p = *anchor_p, q = NULL; p; q = p, p = p->next)
     {
       if (p->conn_ptr != conn_p)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       if (p == *anchor_p)
-	{
-	  *anchor_p = p->next;
-	}
+        {
+          *anchor_p = p->next;
+        }
       else
-	{
-	  q->next = p->next;
-	}
+        {
+          q->next = p->next;
+        }
 
       css_free_entry (p);
       break;
@@ -937,8 +903,7 @@ css_remove_entry_by_conn (CSS_CONN_ENTRY * conn_p,
  */
 SOCKET_QUEUE_ENTRY *
 css_add_request_to_socket_queue (CSS_CONN_ENTRY * conn_p,
-				 char *name_p, SOCKET fd, int fd_type,
-				 int pid, SOCKET_QUEUE_ENTRY ** anchor_p)
+                                 char *name_p, SOCKET fd, int fd_type, int pid, SOCKET_QUEUE_ENTRY ** anchor_p)
 {
   SOCKET_QUEUE_ENTRY *p;
 
@@ -955,9 +920,9 @@ css_add_request_to_socket_queue (CSS_CONN_ENTRY * conn_p,
     {
       p->name = (char *) malloc (strlen (name_p) + 1);
       if (p->name)
-	{
-	  strcpy (p->name, name_p);
-	}
+        {
+          strcpy (p->name, name_p);
+        }
     }
   else
     {
@@ -995,18 +960,18 @@ css_return_entry_of_server (const char *name_p, SOCKET_QUEUE_ENTRY * anchor_p)
   for (p = anchor_p; p; p = p->next)
     {
       if (p->name && strcmp (p->name, name_p) == 0)
-	{
-	  return p;
-	}
+        {
+          return p;
+        }
 
       /* if HA server exist */
       if (p->name && (IS_MASTER_CONN_NAME_HA_SERVER (p->name)))
-	{
-	  if (strcmp ((char *) (p->name + 1), name_p) == 0)
-	    {
-	      return p;
-	    }
-	}
+        {
+          if (strcmp ((char *) (p->name + 1), name_p) == 0)
+            {
+              return p;
+            }
+        }
     }
 
   return NULL;
@@ -1019,8 +984,7 @@ css_return_entry_of_server (const char *name_p, SOCKET_QUEUE_ENTRY * anchor_p)
  *   anchor_p(in):
  */
 SOCKET_QUEUE_ENTRY *
-css_return_entry_by_conn (CSS_CONN_ENTRY * conn_p,
-			  SOCKET_QUEUE_ENTRY ** anchor_p)
+css_return_entry_by_conn (CSS_CONN_ENTRY * conn_p, SOCKET_QUEUE_ENTRY ** anchor_p)
 {
   SOCKET_QUEUE_ENTRY *p;
 
@@ -1032,9 +996,9 @@ css_return_entry_by_conn (CSS_CONN_ENTRY * conn_p,
   for (p = *anchor_p; p; p = p->next)
     {
       if (p->conn_ptr != conn_p)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
 
       return (p);
     }
@@ -1109,7 +1073,7 @@ css_daemon_start (void)
     }
   else if (childpid > 0)
     {
-      exit (0);			/* parent goes bye-bye */
+      exit (0);                 /* parent goes bye-bye */
     }
   else
     {
@@ -1119,9 +1083,9 @@ css_daemon_start (void)
        * going to loop at all.
        */
       while (getppid () == ppid)
-	{
-	  sleep (1);
-	}
+        {
+          sleep (1);
+        }
     }
 
   /*
@@ -1132,14 +1096,14 @@ css_daemon_start (void)
 
   if (os_set_signal_handler (SIGHUP, SIG_IGN) == SIG_ERR)
     {
-      exit (0);			/* fail to immune from pgrp leader death */
+      exit (0);                 /* fail to immune from pgrp leader death */
     }
 
   setsid ();
 
 out:
 
-  errno = 0;			/* Reset errno from last close */
+  errno = 0;                    /* Reset errno from last close */
 
   /*
    * The file mode creation mask that is inherited could be set to deny

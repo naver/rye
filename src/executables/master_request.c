@@ -58,9 +58,7 @@
 #define HA_SERVER_FORMAT_STRING " HA-Server %s (rel %s, pid %d, nodeid %d)\n"
 #define HA_REPL_FORMAT_STRING " HA-Repl %s (rel %s, pid %d, nodeid %d)\n"
 
-typedef int (*css_master_func) (CSS_CONN_ENTRY * conn,
-				unsigned short rid,
-				char *buffer, int buf_size);
+typedef int (*css_master_func) (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
 
 struct css_master_request
 {
@@ -72,73 +70,31 @@ struct css_master_request
 static struct css_master_request css_Master_requests[MASTER_REQUEST_END];
 
 static int css_master_request (CSS_CONN_ENTRY * conn,
-			       CSS_MASTER_REQUEST request,
-			       unsigned short rid,
-			       char *buffer, int buf_size);
+                               CSS_MASTER_REQUEST request, unsigned short rid, char *buffer, int buf_size);
 
-static int css_process_start_time_info (CSS_CONN_ENTRY * conn,
-					unsigned short rid,
-					char *buffer, int buf_size);
-static int css_process_server_count_info (CSS_CONN_ENTRY * conn,
-					  unsigned short rid,
-					  char *buffer, int buf_size);
-static int css_process_request_count_info (CSS_CONN_ENTRY * conn,
-					   unsigned short rid,
-					   char *buffer, int buf_size);
-static int css_process_server_list_info (CSS_CONN_ENTRY * conn,
-					 unsigned short rid,
-					 char *buffer, int buf_size);
-static int css_process_ha_ping_host_info (CSS_CONN_ENTRY * conn,
-					  unsigned short rid,
-					  char *buffer, int buf_size);
-static int css_process_ha_node_list_info (CSS_CONN_ENTRY * conn,
-					  unsigned short rid,
-					  char *buffer, int buf_size);
-static int css_process_ha_process_list_info (CSS_CONN_ENTRY * conn,
-					     unsigned short rid,
-					     char *buffer, int buf_size);
-static int css_process_ha_admin_info (CSS_CONN_ENTRY * conn,
-				      unsigned short rid,
-				      char *buffer, int buf_size);
-static int css_process_is_registered_ha_procs (CSS_CONN_ENTRY * conn,
-					       unsigned short rid,
-					       char *buffer, int buf_size);
-static int css_process_server_state (CSS_CONN_ENTRY * conn,
-				     unsigned short rid,
-				     char *buffer, int buf_size);
+static int css_process_start_time_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_server_count_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_request_count_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_server_list_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_ha_ping_host_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_ha_node_list_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_ha_process_list_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_ha_admin_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_is_registered_ha_procs (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_server_state (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
 
-static int css_process_shutdown (CSS_CONN_ENTRY * conn,
-				 unsigned short rid,
-				 char *buffer, int buf_size);
+static int css_process_shutdown (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
 
-static int css_process_activate_heartbeat (CSS_CONN_ENTRY * conn,
-					   unsigned short rid,
-					   char *buffer, int buf_size);
-static int css_process_register_ha_process (CSS_CONN_ENTRY * conn,
-					    unsigned short rid,
-					    char *buffer, int buf_size);
-static int css_process_deact_stop_all (CSS_CONN_ENTRY * conn,
-				       unsigned short rid,
-				       char *buffer, int buf_size);
-static int css_process_deact_confirm_stop_all (CSS_CONN_ENTRY * conn,
-					       unsigned short rid,
-					       char *buffer, int buf_size);
-static int css_process_deactivate_heartbeat (CSS_CONN_ENTRY * conn,
-					     unsigned short rid,
-					     char *buffer, int buf_size);
-static int css_process_deact_confirm_no_server (CSS_CONN_ENTRY * conn,
-						unsigned short rid,
-						char *buffer, int buf_size);
-static int css_process_reconfig_heartbeat (CSS_CONN_ENTRY * conn,
-					   unsigned short rid,
-					   char *buffer, int buf_size);
-static int css_process_changemode (CSS_CONN_ENTRY * conn,
-				   unsigned short rid,
-				   char *buffer, int buf_size);
+static int css_process_activate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_register_ha_process (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_deact_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_deact_confirm_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_deactivate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_deact_confirm_no_server (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_reconfig_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
+static int css_process_changemode (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
 
-static int css_process_change_ha_mode (CSS_CONN_ENTRY * conn,
-				       unsigned short rid,
-				       char *buffer, int buf_size);
+static int css_process_change_ha_mode (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size);
 
 static void css_process_kill_master (void);
 
@@ -274,8 +230,7 @@ css_master_requests_init (void)
  *   recv_packet(in)
  */
 static int
-css_process_start_time_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-			     char *buffer, int buf_size)
+css_process_start_time_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   char *reply;
   UNUSED_VAR char *ptr;
@@ -317,8 +272,7 @@ css_process_start_time_info (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_server_count_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-			       char *buffer, int buf_size)
+css_process_server_count_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   int count = 0;
   SOCKET_QUEUE_ENTRY *temp;
@@ -334,17 +288,14 @@ css_process_server_count_info (CSS_CONN_ENTRY * conn, unsigned short rid,
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (!IS_INVALID_SOCKET (temp->fd) && !IS_MASTER_SOCKET_FD (temp->fd) &&
-	  temp->name &&
-	  !IS_MASTER_CONN_NAME_DRIVER (temp->name)
-	  && !IS_MASTER_CONN_NAME_HA_REPL (temp->name))
-	{
-	  count++;
-	}
+          temp->name && !IS_MASTER_CONN_NAME_DRIVER (temp->name) && !IS_MASTER_CONN_NAME_HA_REPL (temp->name))
+        {
+          count++;
+        }
     }
 
   or_pack_int (reply, count);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -354,8 +305,7 @@ css_process_server_count_info (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_request_count_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-				char *buffer, int buf_size)
+css_process_request_count_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -367,8 +317,7 @@ css_process_request_count_info (CSS_CONN_ENTRY * conn, unsigned short rid,
     }
 
   or_pack_int (reply, css_Total_request_count);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 static int
@@ -379,38 +328,33 @@ css_get_server_list_info (RYE_STRING * buffer)
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
     {
       if (IS_INVALID_SOCKET (temp->fd) || IS_MASTER_SOCKET_FD (temp->fd)
-	  || temp->name == NULL
-	  || IS_MASTER_CONN_NAME_DRIVER (temp->name)
-	  || IS_MASTER_CONN_NAME_HA_REPL (temp->name))
-	{
-	  continue;
-	}
+          || temp->name == NULL || IS_MASTER_CONN_NAME_DRIVER (temp->name) || IS_MASTER_CONN_NAME_HA_REPL (temp->name))
+        {
+          continue;
+        }
       /* if HA mode server */
       if (IS_MASTER_CONN_NAME_HA_SERVER (temp->name))
-	{
-	  short nodeid = 0;
-	  char ver_string[REL_MAX_VERSION_LENGTH];
+        {
+          short nodeid = 0;
+          char ver_string[REL_MAX_VERSION_LENGTH];
 
-	  if (temp->conn_ptr == NULL)
-	    {
-	      strcpy (ver_string, "?");
-	    }
-	  else
-	    {
-	      rel_version_to_string (&temp->conn_ptr->peer_version,
-				     ver_string, sizeof (ver_string));
-	    }
+          if (temp->conn_ptr == NULL)
+            {
+              strcpy (ver_string, "?");
+            }
+          else
+            {
+              rel_version_to_string (&temp->conn_ptr->peer_version, ver_string, sizeof (ver_string));
+            }
 
-	  rye_server_shm_get_nodeid (&nodeid, temp->name + 1);
-	  rye_append_format_string (buffer, HA_SERVER_FORMAT_STRING,
-				    temp->name + 1, ver_string,
-				    temp->pid, nodeid);
-	}
+          rye_server_shm_get_nodeid (&nodeid, temp->name + 1);
+          rye_append_format_string (buffer, HA_SERVER_FORMAT_STRING, temp->name + 1, ver_string, temp->pid, nodeid);
+        }
       else
-	{
-	  assert (false);
-	  rye_append_format_string (buffer, "ERROR");
-	}
+        {
+          assert (false);
+          rye_append_format_string (buffer, "ERROR");
+        }
     }
 
   return NO_ERROR;
@@ -423,8 +367,7 @@ css_get_server_list_info (RYE_STRING * buffer)
  *   recv_packet(in)
  */
 static int
-css_process_server_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-			      char *buffer, int buf_size)
+css_process_server_list_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   int css_error = NO_ERRORS, error = NO_ERROR;
   RYE_STRING info;
@@ -472,8 +415,7 @@ css_process_server_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_ha_ping_host_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-			       char *buffer, int buf_size)
+css_process_ha_ping_host_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   char *ping_host_info = NULL;
   int css_error = NO_ERRORS;
@@ -520,8 +462,7 @@ css_process_ha_ping_host_info (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_ha_node_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-			       char *buffer, int buf_size)
+css_process_ha_node_list_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   char *node_info = NULL;
   int css_error = NO_ERRORS;
@@ -571,8 +512,7 @@ css_process_ha_node_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_ha_process_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-				  char *buffer, int buf_size)
+css_process_ha_process_list_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   char *process_info = NULL;
   int css_error = NO_ERRORS;
@@ -622,8 +562,7 @@ css_process_ha_process_list_info (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_ha_admin_info (CSS_CONN_ENTRY * conn, unsigned short rid,
-			   char *buffer, int buf_size)
+css_process_ha_admin_info (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   char *admin_info = NULL;
   int css_error = NO_ERRORS;
@@ -670,8 +609,7 @@ css_process_ha_admin_info (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_is_registered_ha_procs (CSS_CONN_ENTRY * conn, unsigned short rid,
-				    char *buffer, int buf_size)
+css_process_is_registered_ha_procs (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   int css_error = NO_ERRORS;
   const char *result = NULL;
@@ -719,8 +657,7 @@ css_process_is_registered_ha_procs (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_server_state (CSS_CONN_ENTRY * conn, unsigned short rid,
-			  char *buffer, int buf_size)
+css_process_server_state (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -748,8 +685,7 @@ css_process_server_state (CSS_CONN_ENTRY * conn, unsigned short rid,
 send_to_client:
 
   or_pack_int (reply, server_state);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -760,9 +696,7 @@ send_to_client:
  *   recv_packet(in)
  */
 static int
-css_process_shutdown (UNUSED_ARG CSS_CONN_ENTRY * conn,
-		      UNUSED_ARG unsigned short rid,
-		      char *buffer, int buf_size)
+css_process_shutdown (UNUSED_ARG CSS_CONN_ENTRY * conn, UNUSED_ARG unsigned short rid, char *buffer, int buf_size)
 {
   int timeout;
   SOCKET_QUEUE_ENTRY *temp;
@@ -777,8 +711,7 @@ css_process_shutdown (UNUSED_ARG CSS_CONN_ENTRY * conn,
   or_unpack_int (buffer, &timeout);
 
   snprintf (reply_buffer, MASTER_TO_SRV_MSG_SIZE,
-	    msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER,
-			    MASTER_MSG_GOING_DOWN), timeout);
+            msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER, MASTER_MSG_GOING_DOWN), timeout);
   reply_buffer[sizeof (reply_buffer) - 1] = '\0';
 
   for (temp = css_Master_socket_anchor; temp; temp = temp->next)
@@ -787,22 +720,20 @@ css_process_shutdown (UNUSED_ARG CSS_CONN_ENTRY * conn,
        * cause connector crash
        */
       if (!IS_INVALID_SOCKET (temp->fd) && !IS_MASTER_SOCKET_FD (temp->fd)
-	  && temp->name
-	  && !IS_MASTER_CONN_NAME_DRIVER (temp->name)
-	  && !IS_MASTER_CONN_NAME_HA_SERVER (temp->name)
-	  && !IS_MASTER_CONN_NAME_HA_REPL (temp->name))
-	{
-	  assert (false);
+          && temp->name
+          && !IS_MASTER_CONN_NAME_DRIVER (temp->name)
+          && !IS_MASTER_CONN_NAME_HA_SERVER (temp->name) && !IS_MASTER_CONN_NAME_HA_REPL (temp->name))
+        {
+          assert (false);
 
-	  /* Normal rye_server no longer exists. */
-	  os_send_kill (temp->pid);
-	}
+          /* Normal rye_server no longer exists. */
+          os_send_kill (temp->pid);
+        }
     }
 
   if (css_Master_timeout == NULL)
     {
-      css_Master_timeout =
-	(struct timeval *) malloc (sizeof (struct timeval));
+      css_Master_timeout = (struct timeval *) malloc (sizeof (struct timeval));
     }
 
   /* check again to be sure allocation was successful */
@@ -812,17 +743,16 @@ css_process_shutdown (UNUSED_ARG CSS_CONN_ENTRY * conn,
       css_Master_timeout->tv_usec = 0;
 
       if (time ((time_t *) & css_Master_timeout->tv_sec) == (time_t) (-1))
-	{
-	  free_and_init (css_Master_timeout);
-	}
+        {
+          free_and_init (css_Master_timeout);
+        }
       else
-	{
-	  css_Master_timeout->tv_sec += timeout * 60;
-	}
+        {
+          css_Master_timeout->tv_sec += timeout * 60;
+        }
     }
 
-  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE,
-	  ERR_CSS_MINFO_MESSAGE, 1, reply_buffer);
+  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ERR_CSS_MINFO_MESSAGE, 1, reply_buffer);
 
   css_process_kill_master ();
 
@@ -837,8 +767,7 @@ css_process_shutdown (UNUSED_ARG CSS_CONN_ENTRY * conn,
  *   recv_packet(in)
  */
 static int
-css_process_activate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
-				char *buffer, int buf_size)
+css_process_activate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -866,8 +795,7 @@ css_process_activate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
   if (error != NO_ERROR)
     {
       snprintf (error_string, LINE_MAX, "%s.", HB_RESULT_FAILURE_STR);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_HB_COMMAND_EXECUTION, 2, HB_CMD_ACTIVATE_STR, error_string);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_COMMAND_EXECUTION, 2, HB_CMD_ACTIVATE_STR, error_string);
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -883,8 +811,7 @@ css_process_activate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
   if (error != NO_ERROR)
     {
       snprintf (error_string, LINE_MAX, "%s.", HB_RESULT_FAILURE_STR);
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	      ER_HB_COMMAND_EXECUTION, 2, HB_CMD_ACTIVATE_STR, error_string);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_COMMAND_EXECUTION, 2, HB_CMD_ACTIVATE_STR, error_string);
 
       util_free_ha_conf (&ha_conf);
       GOTO_EXIT_ON_ERROR;
@@ -892,19 +819,16 @@ css_process_activate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
   util_free_ha_conf (&ha_conf);
 
   snprintf (error_string, LINE_MAX, "%s.", HB_RESULT_SUCCESS_STR);
-  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-	  ER_HB_COMMAND_EXECUTION, 2, HB_CMD_ACTIVATE_STR, error_string);
+  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_HB_COMMAND_EXECUTION, 2, HB_CMD_ACTIVATE_STR, error_string);
 
   or_pack_int (reply, NO_ERROR);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 
 exit_on_error:
   assert (error != NO_ERROR);
 
   or_pack_int (reply, error);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -915,9 +839,7 @@ exit_on_error:
  *   recv_packet(in)
  */
 static int
-css_process_register_ha_process (CSS_CONN_ENTRY * conn,
-				 UNUSED_ARG unsigned short rid,
-				 char *buffer, int buf_size)
+css_process_register_ha_process (CSS_CONN_ENTRY * conn, UNUSED_ARG unsigned short rid, char *buffer, int buf_size)
 {
   HBP_PROC_REGISTER *proc_reg;
   int error = NO_ERROR;
@@ -947,8 +869,7 @@ css_process_register_ha_process (CSS_CONN_ENTRY * conn,
  */
 
 static int
-css_process_deact_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid,
-			    char *buffer, int buf_size)
+css_process_deact_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -973,14 +894,12 @@ css_process_deact_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid,
 
   if (result == HB_HC_ELIGIBLE_REMOTE)
     {
-      if (css_get_peer_name (conn->fd, request_from,
-			     sizeof (request_from)) != 0)
-	{
-	  snprintf (request_from, sizeof (request_from), "UNKNOWN");
-	}
+      if (css_get_peer_name (conn->fd, request_from, sizeof (request_from)) != 0)
+        {
+          snprintf (request_from, sizeof (request_from), "UNKNOWN");
+        }
 
-      hb_disable_er_log (HB_NOLOG_REMOTE_STOP, "deactivation request from %s",
-			 request_from);
+      hb_disable_er_log (HB_NOLOG_REMOTE_STOP, "deactivation request from %s", request_from);
     }
 
   if (hb_is_deactivation_started () == false)
@@ -988,31 +907,29 @@ css_process_deact_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid,
       hb_start_deactivate_server_info ();
 
       if ((bool) deact_immediately == true)
-	{
-	  hb_Deactivate_immediately = true;
-	}
+        {
+          hb_Deactivate_immediately = true;
+        }
       else
-	{
-	  hb_Deactivate_immediately = false;
-	}
+        {
+          hb_Deactivate_immediately = false;
+        }
 
       error = hb_prepare_deactivate_heartbeat ();
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
   or_pack_int (reply, NO_ERROR);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 
 exit_on_error:
   assert (error != NO_ERROR);
 
   or_pack_int (reply, error);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -1023,8 +940,7 @@ exit_on_error:
  *   recv_packet(in)
  */
 static int
-css_process_deact_confirm_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid,
-				    char *buffer, int buf_size)
+css_process_deact_confirm_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -1037,8 +953,7 @@ css_process_deact_confirm_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid,
 
   or_pack_int (reply, (int) hb_is_deactivation_ready ());
 
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -1049,8 +964,7 @@ css_process_deact_confirm_stop_all (CSS_CONN_ENTRY * conn, unsigned short rid,
  *   recv_packet(in)
  */
 static int
-css_process_deactivate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
-				  char *buffer, int buf_size)
+css_process_deactivate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   char *reply;
   int reply_size, strlen1;
@@ -1076,14 +990,12 @@ css_process_deactivate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
 
   if (result == HB_HC_ELIGIBLE_REMOTE)
     {
-      if (css_get_peer_name (conn->fd, request_from,
-			     sizeof (request_from)) != 0)
-	{
-	  snprintf (request_from, sizeof (request_from), "UNKNOWN");
-	}
+      if (css_get_peer_name (conn->fd, request_from, sizeof (request_from)) != 0)
+        {
+          snprintf (request_from, sizeof (request_from), "UNKNOWN");
+        }
 
-      hb_disable_er_log (HB_NOLOG_REMOTE_STOP, "deactivation request from %s",
-			 request_from);
+      hb_disable_er_log (HB_NOLOG_REMOTE_STOP, "deactivation request from %s", request_from);
     }
 
   error = hb_deactivate_heartbeat ();
@@ -1094,9 +1006,7 @@ css_process_deactivate_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
 
   if (hb_get_deactivating_server_count () > 0)
     {
-      message = msgcat_message (MSGCAT_CATALOG_UTILS,
-				MSGCAT_UTIL_SET_MASTER,
-				MASTER_MSG_FAILOVER_FINISHED);
+      message = msgcat_message (MSGCAT_CATALOG_UTILS, MSGCAT_UTIL_SET_MASTER, MASTER_MSG_FAILOVER_FINISHED);
 
     }
   else
@@ -1137,9 +1047,7 @@ send_to_client:
  *   recv_packet(in)
  */
 static int
-css_process_deact_confirm_no_server (CSS_CONN_ENTRY * conn,
-				     unsigned short rid, char *buffer,
-				     int buf_size)
+css_process_deact_confirm_no_server (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -1164,8 +1072,7 @@ css_process_deact_confirm_no_server (CSS_CONN_ENTRY * conn,
 
   or_pack_int (reply, (int) result);
 
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -1176,8 +1083,7 @@ css_process_deact_confirm_no_server (CSS_CONN_ENTRY * conn,
  *   recv_packet(in)
  */
 static int
-css_process_reconfig_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
-				char *buffer, int buf_size)
+css_process_reconfig_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -1205,8 +1111,7 @@ css_process_reconfig_heartbeat (CSS_CONN_ENTRY * conn, unsigned short rid,
     }
 
   or_pack_int (reply, NO_ERROR);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 
   return css_error;
 
@@ -1214,8 +1119,7 @@ exit_on_error:
   assert (error != NO_ERROR);
 
   or_pack_int (reply, error);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -1226,8 +1130,7 @@ exit_on_error:
  *   recv_packet(in)
  */
 static int
-css_process_changemode (CSS_CONN_ENTRY * conn, unsigned short rid,
-			char *buffer, int buf_size)
+css_process_changemode (CSS_CONN_ENTRY * conn, unsigned short rid, char *buffer, int buf_size)
 {
   OR_ALIGNED_BUF (OR_INT_SIZE) a_reply;
   char *reply = OR_ALIGNED_BUF_START (a_reply);
@@ -1255,15 +1158,13 @@ css_process_changemode (CSS_CONN_ENTRY * conn, unsigned short rid,
     }
 
   or_pack_int (reply, NO_ERROR);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 
 exit_on_error:
   assert (error != NO_ERROR);
 
   or_pack_int (reply, error);
-  return css_send_data_packet (conn, rid, 1, reply,
-			       OR_ALIGNED_BUF_SIZE (a_reply));
+  return css_send_data_packet (conn, rid, 1, reply, OR_ALIGNED_BUF_SIZE (a_reply));
 }
 
 /*
@@ -1274,9 +1175,7 @@ exit_on_error:
  *   recv_packet(in)
  */
 static int
-css_process_change_ha_mode (CSS_CONN_ENTRY * conn,
-			    UNUSED_ARG unsigned short rid,
-			    char *buffer, int buf_size)
+css_process_change_ha_mode (CSS_CONN_ENTRY * conn, UNUSED_ARG unsigned short rid, char *buffer, int buf_size)
 {
   int *state = NULL;
 
@@ -1326,16 +1225,14 @@ css_process_kill_master (void)
  *   buffer(in)
  */
 void
-css_process_start_shutdown (SOCKET_QUEUE_ENTRY * sock_entq, int timeout,
-			    char *buffer)
+css_process_start_shutdown (SOCKET_QUEUE_ENTRY * sock_entq, int timeout, char *buffer)
 {
   unsigned short rid;
 
   timeout = htonl (timeout);
 
   css_send_command_packet (sock_entq->conn_ptr, SERVER_START_SHUTDOWN, &rid,
-			   2, (char *) &timeout, sizeof (int),
-			   buffer, strlen (buffer) + 1);
+                           2, (char *) &timeout, sizeof (int), buffer, strlen (buffer) + 1);
 }
 
 /*
@@ -1347,8 +1244,7 @@ css_process_start_shutdown (SOCKET_QUEUE_ENTRY * sock_entq, int timeout,
  *    recv_packet(in):
  */
 static int
-css_master_request (CSS_CONN_ENTRY * conn, CSS_MASTER_REQUEST request,
-		    unsigned short rid, char *buffer, int buf_size)
+css_master_request (CSS_CONN_ENTRY * conn, CSS_MASTER_REQUEST request, unsigned short rid, char *buffer, int buf_size)
 {
   struct css_master_request *req;
   int css_error = NO_ERRORS;
@@ -1395,9 +1291,7 @@ css_master_request_handler (SOCKET_QUEUE_ENTRY * sock_ent)
   if (recv_packet->header.function_code < MASTER_GET_START_TIME
       || recv_packet->header.function_code >= MASTER_REQUEST_END)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "invalid function code(%d). \n",
-		    recv_packet->header.function_code);
+      er_log_debug (ARG_FILE_LINE, "invalid function code(%d). \n", recv_packet->header.function_code);
 
       css_net_packet_free (recv_packet);
 
@@ -1420,8 +1314,7 @@ css_master_request_handler (SOCKET_QUEUE_ENTRY * sock_ent)
 
   if (css_error != NO_ERRORS)
     {
-      er_log_debug (ARG_FILE_LINE,
-		    "receive error request. (error:%d). \n", css_error);
+      er_log_debug (ARG_FILE_LINE, "receive error request. (error:%d). \n", css_error);
 
       hb_cleanup_conn_and_start_process (conn);
     }

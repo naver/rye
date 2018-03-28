@@ -143,8 +143,7 @@ dbt_edit_class (MOP classobj)
  *        dbt_finish_class() or destroyed with dbt_abort_class().
  */
 DB_CTMPL *
-dbt_copy_class (const char *new_name, const char *existing_name,
-		SM_CLASS ** class_)
+dbt_copy_class (const char *new_name, const char *existing_name, SM_CLASS ** class_)
 {
   DB_CTMPL *def = NULL;
 
@@ -183,7 +182,7 @@ dbt_finish_class (DB_CTMPL * def)
 
   if (smt_finish_class (def, &classmop) != NO_ERROR)
     {
-      classmop = NULL;		/* probably not necessary but be safe */
+      classmop = NULL;          /* probably not necessary but be safe */
     }
 
   return (classmop);
@@ -259,8 +258,7 @@ dbt_constrain_non_null (DB_CTMPL * def, const char *name, int on_or_off)
  */
 int
 dbt_add_constraint (DB_CTMPL * def,
-		    DB_CONSTRAINT_TYPE constraint_type,
-		    const char *constraint_name, const char **attnames)
+                    DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name, const char **attnames)
 {
   int error = NO_ERROR;
   char *name = NULL;
@@ -269,27 +267,23 @@ dbt_add_constraint (DB_CTMPL * def,
   CHECK_2ARGS_ERROR (def, attnames);
   CHECK_MODIFICATION_ERROR ();
 
-  if (!DB_IS_CONSTRAINT_UNIQUE_FAMILY (constraint_type) &&
-      constraint_type != DB_CONSTRAINT_NOT_NULL)
+  if (!DB_IS_CONSTRAINT_UNIQUE_FAMILY (constraint_type) && constraint_type != DB_CONSTRAINT_NOT_NULL)
     {
       ERROR_SET (error, ER_SM_INVALID_CONSTRAINT);
     }
 
   if (error == NO_ERROR)
     {
-      name = sm_produce_constraint_name_tmpl (def, constraint_type,
-					      attnames, NULL,
-					      constraint_name);
+      name = sm_produce_constraint_name_tmpl (def, constraint_type, attnames, NULL, constraint_name);
       if (name == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  error = smt_add_constraint (def, constraint_type, name,
-				      attnames, NULL);
-	  free_and_init (name);
-	}
+        {
+          error = smt_add_constraint (def, constraint_type, name, attnames, NULL);
+          free_and_init (name);
+        }
     }
 
   return (error);
@@ -309,8 +303,7 @@ dbt_add_constraint (DB_CTMPL * def,
  */
 int
 dbt_drop_constraint (DB_CTMPL * def,
-		     DB_CONSTRAINT_TYPE constraint_type,
-		     const char *constraint_name, const char **attnames)
+                     DB_CONSTRAINT_TYPE constraint_type, const char *constraint_name, const char **attnames)
 {
   int error = NO_ERROR;
   char *name = NULL;
@@ -329,21 +322,19 @@ dbt_drop_constraint (DB_CTMPL * def,
 
   if (error == NO_ERROR)
     {
-      name = sm_produce_constraint_name_tmpl (def, constraint_type,
-					      attnames, NULL,
-					      constraint_name);
+      name = sm_produce_constraint_name_tmpl (def, constraint_type, attnames, NULL, constraint_name);
 
       if (name == NULL)
-	{
-	  error = er_errid ();
-	}
+        {
+          error = er_errid ();
+        }
       else
-	{
-	  /* TODO We might want to check that the dropped constraint really had
-	     the type indicated by the constraint_type parameter. */
-	  error = smt_drop_constraint (def, attnames, name, attflag);
-	  free_and_init (name);
-	}
+        {
+          /* TODO We might want to check that the dropped constraint really had
+             the type indicated by the constraint_type parameter. */
+          error = smt_drop_constraint (def, attnames, name, attflag);
+          free_and_init (name);
+        }
     }
 
   return error;
@@ -374,11 +365,10 @@ dbt_change_primary_key (DB_CTMPL * def, const char *index_name)
     {
       error = er_errid ();
       if (error == NO_ERROR)
-	{
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, "Not found unique constraint.");
-	}
+        {
+          error = ER_GENERIC_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Not found unique constraint.");
+        }
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -397,11 +387,11 @@ dbt_change_primary_key (DB_CTMPL * def, const char *index_name)
     {
       att = unique_con->attributes[i];
       if ((att->flags & SM_ATTFLAG_NON_NULL) == 0)
-	{
-	  error = ER_SM_NO_NOT_NULL_CONSTRAINT;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, att->name);
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = ER_SM_NO_NOT_NULL_CONSTRAINT;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, att->name);
+          GOTO_EXIT_ON_ERROR;
+        }
     }
 
 
@@ -413,23 +403,20 @@ dbt_change_primary_key (DB_CTMPL * def, const char *index_name)
     {
       error = er_errid ();
       if (error == NO_ERROR)
-	{
-	  error = ER_GENERIC_ERROR;
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-		  1, "Not found primary key constraint.");
-	}
+        {
+          error = ER_GENERIC_ERROR;
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Not found primary key constraint.");
+        }
 
       GOTO_EXIT_ON_ERROR;
     }
 
-  disk_con = classobj_find_disk_constraint (def->disk_constraints,
-					    pk_con->name);
+  disk_con = classobj_find_disk_constraint (def->disk_constraints, pk_con->name);
   if (disk_con == NULL)
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Not found disk constraint.");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Not found disk constraint.");
 
       GOTO_EXIT_ON_ERROR;
     }
@@ -442,27 +429,25 @@ dbt_change_primary_key (DB_CTMPL * def, const char *index_name)
       att = pk_con->attributes[i];
       error = smt_find_attribute (def, att->name, &tmpl_attp);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if (tmpl_attp->flags & SM_ATTFLAG_PRIMARY_KEY)
-	{
-	  tmpl_attp->flags &= ~SM_ATTFLAG_PRIMARY_KEY;
-	}
+        {
+          tmpl_attp->flags &= ~SM_ATTFLAG_PRIMARY_KEY;
+        }
     }
 
   /*
    * step 3: change source constraint to primary key
    */
-  disk_con = classobj_find_disk_constraint (def->disk_constraints,
-					    unique_con->name);
+  disk_con = classobj_find_disk_constraint (def->disk_constraints, unique_con->name);
   if (disk_con == NULL)
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Not found disk constraint.");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Not found disk constraint.");
       GOTO_EXIT_ON_ERROR;
     }
   assert (disk_con->type == SM_CONSTRAINT_UNIQUE);
@@ -475,14 +460,14 @@ dbt_change_primary_key (DB_CTMPL * def, const char *index_name)
 
       error = smt_find_attribute (def, att->name, &tmpl_attp);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if ((tmpl_attp->flags & SM_ATTFLAG_PRIMARY_KEY) == 0)
-	{
-	  tmpl_attp->flags |= SM_ATTFLAG_PRIMARY_KEY;
-	}
+        {
+          tmpl_attp->flags |= SM_ATTFLAG_PRIMARY_KEY;
+        }
     }
 
   assert (error == NO_ERROR);
@@ -494,8 +479,7 @@ exit_on_error:
     {
       assert (false);
       error = ER_GENERIC_ERROR;
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error,
-	      1, "Invalid error code");
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "Invalid error code");
     }
 
   return error;
@@ -530,9 +514,7 @@ dbt_drop_attribute (DB_CTMPL * def, const char *name)
  * newname(in) :
  */
 int
-dbt_rename (DB_CTMPL * def,
-	    const char *name, UNUSED_ARG int class_namespace,
-	    const char *newname)
+dbt_rename (DB_CTMPL * def, const char *name, UNUSED_ARG int class_namespace, const char *newname)
 {
   int error = NO_ERROR;
 
