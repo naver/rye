@@ -47,8 +47,7 @@
  *
  */
 int
-xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
-		  HFID * hfid)
+xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid, HFID * hfid)
 {
   int status = NO_ERROR;
   SCAN_CODE scan_result;
@@ -64,21 +63,19 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
   bool attrinfo_inited = false, scancache_inited = false;
   bool top_op_active = false;
 
-  thread_mnt_track_push (thread_p,
-			 MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA,
-			 &status);
+  thread_mnt_track_push (thread_p, MNT_STATS_DATA_PAGE_FETCHES_TRACK_BTREE_LOAD_DATA, &status);
 
   DB_IDXKEY_MAKE_NULL (&key);
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   if (HFID_IS_NULL (hfid))
     {
       /* is from createdb; au_install () */
       if (status == NO_ERROR)
-	{
-	  thread_mnt_track_pop (thread_p, &status);
-	  assert (status == NO_ERROR);
-	}
+        {
+          thread_mnt_track_pop (thread_p, &status);
+          assert (status == NO_ERROR);
+        }
 
       return NO_ERROR;
     }
@@ -95,11 +92,10 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
     DB_MAKE_OID (&oid_val, class_oid);
     if (lock_get_current_lock (thread_p, &oid_val) != U_LOCK)
       {
-	assert (false);
-	error = ER_GENERIC_ERROR;
-	er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		"xbtree_load_data(): Not acquired U_LOCK on table");
-	GOTO_EXIT_ON_ERROR;
+        assert (false);
+        error = ER_GENERIC_ERROR;
+        er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "xbtree_load_data(): Not acquired U_LOCK on table");
+        GOTO_EXIT_ON_ERROR;
       }
 
     tran_index = logtb_get_current_tran_index (thread_p);
@@ -107,25 +103,22 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
     assert (tdes != NULL);
     if (tdes == NULL || tdes->type != TRAN_TYPE_DDL)
       {
-	assert (false);
-	error = ER_GENERIC_ERROR;
-	er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1,
-		"xbtree_load_data(): Not found tran_type TRAN_TYPE_DDL");
-	GOTO_EXIT_ON_ERROR;
+        assert (false);
+        error = ER_GENERIC_ERROR;
+        er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, error, 1, "xbtree_load_data(): Not found tran_type TRAN_TYPE_DDL");
+        GOTO_EXIT_ON_ERROR;
       }
   }
 #endif /* SERVER_MODE */
 
-  error =
-    heap_scancache_start (thread_p, &hfscan_cache, hfid, class_oid, true);
+  error = heap_scancache_start (thread_p, &hfscan_cache, hfid, class_oid, true);
   if (error != NO_ERROR)
     {
       GOTO_EXIT_ON_ERROR;
     }
 
   VPID_SET_NULL (&hfscan_cache.last_vpid);
-  if (file_find_last_page (thread_p, &hfid->vfid, &hfscan_cache.last_vpid) ==
-      NULL)
+  if (file_find_last_page (thread_p, &hfid->vfid, &hfscan_cache.last_vpid) == NULL)
     {
       GOTO_EXIT_ON_ERROR;
     }
@@ -139,9 +132,7 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
   btid_int.sys_btid = btid;
   COPY_OID (&(btid_int.cls_oid), class_oid);
 
-  index_id =
-    heap_attrinfo_start_with_btid (thread_p, class_oid, btid_int.sys_btid,
-				   &attr_info);
+  index_id = heap_attrinfo_start_with_btid (thread_p, class_oid, btid_int.sys_btid, &attr_info);
   if (index_id < 0)
     {
       error = index_id;
@@ -154,7 +145,7 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
   assert (INDEX_IS_IN_PROGRESS (indexp));
   if (INDEX_IS_PRIMARY_KEY (indexp))
     {
-      assert (false);		/* is impossible */
+      assert (false);           /* is impossible */
 
       /* something wrong */
       error = ER_GENERIC_ERROR;
@@ -168,45 +159,39 @@ xbtree_load_data (THREAD_ENTRY * thread_p, BTID * btid, OID * class_oid,
   btid_int.indx_id = index_id;
 
   OID_SET_NULL (&cur_oid);
-  while ((scan_result =
-	  heap_next (thread_p, hfid, class_oid, &cur_oid, &peek_rec,
-		     &hfscan_cache, PEEK)) == S_SUCCESS)
+  while ((scan_result = heap_next (thread_p, hfid, class_oid, &cur_oid, &peek_rec, &hfscan_cache, PEEK)) == S_SUCCESS)
     {
-      error =
-	heap_attrinfo_read_dbvalues (thread_p, &cur_oid, &peek_rec,
-				     &attr_info);
+      error = heap_attrinfo_read_dbvalues (thread_p, &cur_oid, &peek_rec, &attr_info);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       assert (DB_IDXKEY_IS_NULL (&key));
-      error =
-	heap_attrvalue_get_key (thread_p, index_id, &attr_info, &cur_oid,
-				&peek_rec, btid, &key);
+      error = heap_attrvalue_get_key (thread_p, index_id, &attr_info, &cur_oid, &peek_rec, btid, &key);
       if (error != NO_ERROR)
-	{
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          GOTO_EXIT_ON_ERROR;
+        }
 
       if (log_start_system_op (thread_p) == NULL)
-	{
-	  error = er_errid ();
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = er_errid ();
+          GOTO_EXIT_ON_ERROR;
+        }
       top_op_active = true;
 
       if (btree_insert (thread_p, &btid_int, &key) == NULL)
-	{
-	  error = er_errid ();
-	  GOTO_EXIT_ON_ERROR;
-	}
+        {
+          error = er_errid ();
+          GOTO_EXIT_ON_ERROR;
+        }
 
       log_end_system_op (thread_p, LOG_RESULT_TOPOP_COMMIT);
       top_op_active = false;
 
       db_idxkey_clear (&key);
-    }				/* while (...) */
+    }                           /* while (...) */
 
   if (scan_result != S_END)
     {
@@ -291,12 +276,10 @@ btree_rv_undo_create_index (THREAD_ENTRY * thread_p, LOG_RCV * rcv)
  * Note: Dump the information to undo the creation of an index file
  */
 void
-btree_rv_dump_create_index (FILE * fp, UNUSED_ARG int length_ignore,
-			    void *data)
+btree_rv_dump_create_index (FILE * fp, UNUSED_ARG int length_ignore, void *data)
 {
   VFID *vfid;
 
   vfid = (VFID *) data;
-  (void) fprintf (fp, "Undo creation of Index vfid: %d|%d\n", vfid->volid,
-		  vfid->fileid);
+  (void) fprintf (fp, "Undo creation of Index vfid: %d|%d\n", vfid->volid, vfid->fileid);
 }

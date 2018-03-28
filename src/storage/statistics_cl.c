@@ -56,8 +56,7 @@ stats_get_statistics (OID * class_oid_p, unsigned int time_stamp)
   char *buffer_p;
   int length;
 
-  buffer_p =
-    stats_get_statistics_from_server (class_oid_p, time_stamp, &length);
+  buffer_p = stats_get_statistics_from_server (class_oid_p, time_stamp, &length);
   if (buffer_p)
     {
       stats_p = stats_client_unpack_statistics (buffer_p);
@@ -116,8 +115,7 @@ stats_client_unpack_statistics (char *ptr)
     }
 
   /* to get the doubtful statistics to be updated, need to clear timestamp */
-  if (class_stats_p->heap_num_objects == 0
-      || class_stats_p->heap_num_pages == 0)
+  if (class_stats_p->heap_num_objects == 0 || class_stats_p->heap_num_pages == 0)
     {
       class_stats_p->time_stamp = 0;
     }
@@ -136,16 +134,14 @@ stats_client_unpack_statistics (char *ptr)
       return NULL;
     }
 
-  class_stats_p->attr_stats =
-    (ATTR_STATS *) db_ws_alloc (class_stats_p->n_attrs * sizeof (ATTR_STATS));
+  class_stats_p->attr_stats = (ATTR_STATS *) db_ws_alloc (class_stats_p->n_attrs * sizeof (ATTR_STATS));
   if (class_stats_p->attr_stats == NULL)
     {
       db_ws_free (class_stats_p);
       return NULL;
     }
 
-  for (i = 0, attr_stats_p = class_stats_p->attr_stats;
-       i < class_stats_p->n_attrs; i++, attr_stats_p++)
+  for (i = 0, attr_stats_p = class_stats_p->attr_stats; i < class_stats_p->n_attrs; i++, attr_stats_p++)
     {
       ptr = or_unpack_int (ptr, &attr_stats_p->id);
 
@@ -157,76 +153,71 @@ stats_client_unpack_statistics (char *ptr)
 
       ptr = or_unpack_int (ptr, &attr_stats_p->n_btstats);
       if (attr_stats_p->n_btstats <= 0)
-	{
-	  attr_stats_p->bt_stats = NULL;
-	  continue;
-	}
+        {
+          attr_stats_p->bt_stats = NULL;
+          continue;
+        }
 
-      attr_stats_p->bt_stats =
-	(BTREE_STATS *) db_ws_alloc (attr_stats_p->n_btstats *
-				     sizeof (BTREE_STATS));
+      attr_stats_p->bt_stats = (BTREE_STATS *) db_ws_alloc (attr_stats_p->n_btstats * sizeof (BTREE_STATS));
       if (attr_stats_p->bt_stats == NULL)
-	{
-	  stats_free_statistics (class_stats_p);
-	  return NULL;
-	}
+        {
+          stats_free_statistics (class_stats_p);
+          return NULL;
+        }
 
-      for (j = 0, btree_stats_p = attr_stats_p->bt_stats;
-	   j < attr_stats_p->n_btstats; j++, btree_stats_p++)
-	{
-	  ptr = or_unpack_btid (ptr, &btree_stats_p->btid);
+      for (j = 0, btree_stats_p = attr_stats_p->bt_stats; j < attr_stats_p->n_btstats; j++, btree_stats_p++)
+        {
+          ptr = or_unpack_btid (ptr, &btree_stats_p->btid);
 
-	  ptr = or_unpack_int (ptr, &btree_stats_p->leafs);
+          ptr = or_unpack_int (ptr, &btree_stats_p->leafs);
 
-	  ptr = or_unpack_int (ptr, &btree_stats_p->pages);
+          ptr = or_unpack_int (ptr, &btree_stats_p->pages);
 
-	  ptr = or_unpack_int (ptr, &btree_stats_p->height);
+          ptr = or_unpack_int (ptr, &btree_stats_p->height);
 
-	  ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
-	  ptr = or_unpack_int64 (ptr, &btree_stats_p->keys);
+          ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
+          ptr = or_unpack_int64 (ptr, &btree_stats_p->keys);
 
-	  ptr = or_unpack_int (ptr, &btree_stats_p->pkeys_size);
-	  assert (btree_stats_p->pkeys_size > 0);
-	  assert (btree_stats_p->pkeys_size <= BTREE_STATS_PKEYS_NUM);
+          ptr = or_unpack_int (ptr, &btree_stats_p->pkeys_size);
+          assert (btree_stats_p->pkeys_size > 0);
+          assert (btree_stats_p->pkeys_size <= BTREE_STATS_PKEYS_NUM);
 
-	  /* safe code - cut-off to stats */
-	  if (btree_stats_p->pkeys_size > BTREE_STATS_PKEYS_NUM)
-	    {
-	      assert (false);	/* is impossible */
-	      btree_stats_p->pkeys_size = BTREE_STATS_PKEYS_NUM;
-	    }
+          /* safe code - cut-off to stats */
+          if (btree_stats_p->pkeys_size > BTREE_STATS_PKEYS_NUM)
+            {
+              assert (false);   /* is impossible */
+              btree_stats_p->pkeys_size = BTREE_STATS_PKEYS_NUM;
+            }
 
-	  for (k = 0; k < BTREE_STATS_PKEYS_NUM; k++)
-	    {
-	      btree_stats_p->pkeys[k] = 0;	/* init */
-	    }
+          for (k = 0; k < BTREE_STATS_PKEYS_NUM; k++)
+            {
+              btree_stats_p->pkeys[k] = 0;      /* init */
+            }
 
-	  for (k = 0; k < btree_stats_p->pkeys_size; k++)
-	    {
-	      ptr = or_unpack_int (ptr, &(btree_stats_p->pkeys[k]));
-	    }
+          for (k = 0; k < btree_stats_p->pkeys_size; k++)
+            {
+              ptr = or_unpack_int (ptr, &(btree_stats_p->pkeys[k]));
+            }
 
-	  ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
-	  ptr = or_unpack_int64 (ptr, &btree_stats_p->tot_free_space);
-	  assert (btree_stats_p->tot_free_space >= 0);
-	  assert (btree_stats_p->leafs == 0
-		  || btree_stats_p->tot_free_space <
-		  (INT64) btree_stats_p->leafs * DB_PAGESIZE);
+          ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
+          ptr = or_unpack_int64 (ptr, &btree_stats_p->tot_free_space);
+          assert (btree_stats_p->tot_free_space >= 0);
+          assert (btree_stats_p->leafs == 0
+                  || btree_stats_p->tot_free_space < (INT64) btree_stats_p->leafs * DB_PAGESIZE);
 
-	  ptr = or_unpack_int (ptr, &btree_stats_p->num_table_vpids);
-	  ptr = or_unpack_int (ptr, &btree_stats_p->num_user_pages_mrkdelete);
-	  ptr = or_unpack_int (ptr, &btree_stats_p->num_allocsets);
-	  assert (btree_stats_p->num_table_vpids >= 0);
-	  assert (btree_stats_p->num_user_pages_mrkdelete >= 0);
-	  assert (btree_stats_p->num_allocsets >= 0);
-	}
+          ptr = or_unpack_int (ptr, &btree_stats_p->num_table_vpids);
+          ptr = or_unpack_int (ptr, &btree_stats_p->num_user_pages_mrkdelete);
+          ptr = or_unpack_int (ptr, &btree_stats_p->num_allocsets);
+          assert (btree_stats_p->num_table_vpids >= 0);
+          assert (btree_stats_p->num_user_pages_mrkdelete >= 0);
+          assert (btree_stats_p->num_allocsets >= 0);
+        }
     }
 
   /* correct estimated num_objects with index keys */
   ptr = PTR_ALIGN (ptr, MAX_ALIGNMENT);
   ptr = or_unpack_int64 (ptr, &max_index_keys);
-  class_stats_p->heap_num_objects =
-    MAX (max_index_keys, class_stats_p->heap_num_objects);
+  class_stats_p->heap_num_objects = MAX (max_index_keys, class_stats_p->heap_num_objects);
 
   return class_stats_p;
 }
@@ -245,19 +236,18 @@ stats_free_statistics (CLASS_STATS * class_statsp)
   if (class_statsp)
     {
       if (class_statsp->attr_stats)
-	{
-	  for (i = 0, attr_statsp = class_statsp->attr_stats;
-	       i < class_statsp->n_attrs; i++, attr_statsp++)
-	    {
-	      if (attr_statsp->bt_stats)
-		{
-		  db_ws_free (attr_statsp->bt_stats);
-		  attr_statsp->bt_stats = NULL;
-		}
-	    }
-	  db_ws_free (class_statsp->attr_stats);
-	  class_statsp->attr_stats = NULL;
-	}
+        {
+          for (i = 0, attr_statsp = class_statsp->attr_stats; i < class_statsp->n_attrs; i++, attr_statsp++)
+            {
+              if (attr_statsp->bt_stats)
+                {
+                  db_ws_free (attr_statsp->bt_stats);
+                  attr_statsp->bt_stats = NULL;
+                }
+            }
+          db_ws_free (class_statsp->attr_stats);
+          class_statsp->attr_stats = NULL;
+        }
 
       db_ws_free (class_statsp);
     }
@@ -306,82 +296,73 @@ stats_dump (const char *class_name_p, FILE * file_p)
   fprintf (file_p, "****************\n");
   fprintf (file_p, " Table name: %s\n", class_name_p);
   fprintf (file_p, " Timestamp: %s", ctime (&tloc));
-  fprintf (file_p, " Total pages in table heap: %d\n",
-	   class_stats_p->heap_num_pages);
+  fprintf (file_p, " Total pages in table heap: %d\n", class_stats_p->heap_num_pages);
   fprintf (file_p, " Total rows: %ld\n", class_stats_p->heap_num_objects);
   fprintf (file_p, " Number of columns: %d\n", class_stats_p->n_attrs);
   fprintf (file_p,
-	   " num_table_vpids: %d , num_user_pages_mrkdelete: %d , num_allocsets: %d\n",
-	   class_stats_p->num_table_vpids,
-	   class_stats_p->num_user_pages_mrkdelete,
-	   class_stats_p->num_allocsets);
+           " num_table_vpids: %d , num_user_pages_mrkdelete: %d , num_allocsets: %d\n",
+           class_stats_p->num_table_vpids, class_stats_p->num_user_pages_mrkdelete, class_stats_p->num_allocsets);
   fprintf (file_p, "\n");
 
   n_found = 0;
   for (i = 0; i < class_stats_p->n_attrs; i++)
     {
       for (j = 0; j < class_stats_p->n_attrs; j++)
-	{
-	  attr_stats_p = &(class_stats_p->attr_stats[j]);
-	  if (attr_stats_p->id == i)
-	    {
-	      n_found++;	/* found */
-	      break;
-	    }
-	}
+        {
+          attr_stats_p = &(class_stats_p->attr_stats[j]);
+          if (attr_stats_p->id == i)
+            {
+              n_found++;        /* found */
+              break;
+            }
+        }
 
       if (j >= class_stats_p->n_attrs)
-	{
-	  /* not found */
-	  assert (false);
-	  continue;
-	}
+        {
+          /* not found */
+          assert (false);
+          continue;
+        }
 
       assert (attr_stats_p != NULL);
 
       name_p = sm_get_att_name (class_mop, attr_stats_p->id);
       fprintf (file_p, " Column: %s\n", (name_p ? name_p : "not found"));
       fprintf (file_p, "    id: %d\n", attr_stats_p->id);
-      fprintf (file_p, "    Type: %s\n",
-	       qdump_data_type_string (attr_stats_p->type));
+      fprintf (file_p, "    Type: %s\n", qdump_data_type_string (attr_stats_p->type));
 
       if (attr_stats_p->n_btstats > 0)
-	{
-	  fprintf (file_p, "    B+tree statistics:\n");
+        {
+          fprintf (file_p, "    B+tree statistics:\n");
 
-	  for (j = 0; j < attr_stats_p->n_btstats; j++)
-	    {
-	      bt_stats_p = &(attr_stats_p->bt_stats[j]);
+          for (j = 0; j < attr_stats_p->n_btstats; j++)
+            {
+              bt_stats_p = &(attr_stats_p->bt_stats[j]);
 
-	      fprintf (file_p, "        BTID: { %d , %d }\n",
-		       bt_stats_p->btid.vfid.volid,
-		       bt_stats_p->btid.vfid.fileid);
-	      fprintf (file_p, "        Cardinality: %ld (",
-		       bt_stats_p->keys);
+              fprintf (file_p, "        BTID: { %d , %d }\n",
+                       bt_stats_p->btid.vfid.volid, bt_stats_p->btid.vfid.fileid);
+              fprintf (file_p, "        Cardinality: %ld (", bt_stats_p->keys);
 
-	      prefix_p = "";
-	      assert (bt_stats_p->pkeys_size > 0);
-	      assert (bt_stats_p->pkeys_size <= BTREE_STATS_PKEYS_NUM);
-	      for (k = 0; k < bt_stats_p->pkeys_size; k++)
-		{
-		  fprintf (file_p, "%s%d", prefix_p, bt_stats_p->pkeys[k]);
-		  prefix_p = ",";
-		}
-	      fprintf (file_p, ") ,");
-	      fprintf (file_p, " Total pages: %d , Leaf pages: %d ,"
-		       " Height: %d , Free: %0.1f%%\n",
-		       bt_stats_p->pages, bt_stats_p->leafs,
-		       bt_stats_p->height,
-		       ((double) bt_stats_p->tot_free_space /
-			((double) bt_stats_p->leafs * DB_PAGESIZE)) * 100);
+              prefix_p = "";
+              assert (bt_stats_p->pkeys_size > 0);
+              assert (bt_stats_p->pkeys_size <= BTREE_STATS_PKEYS_NUM);
+              for (k = 0; k < bt_stats_p->pkeys_size; k++)
+                {
+                  fprintf (file_p, "%s%d", prefix_p, bt_stats_p->pkeys[k]);
+                  prefix_p = ",";
+                }
+              fprintf (file_p, ") ,");
+              fprintf (file_p, " Total pages: %d , Leaf pages: %d ,"
+                       " Height: %d , Free: %0.1f%%\n",
+                       bt_stats_p->pages, bt_stats_p->leafs,
+                       bt_stats_p->height,
+                       ((double) bt_stats_p->tot_free_space / ((double) bt_stats_p->leafs * DB_PAGESIZE)) * 100);
 
-	      fprintf (file_p,
-		       "        num_table_vpids: %d , num_user_pages_mrkdelete: %d , num_allocsets: %d\n",
-		       bt_stats_p->num_table_vpids,
-		       bt_stats_p->num_user_pages_mrkdelete,
-		       bt_stats_p->num_allocsets);
-	    }
-	}
+              fprintf (file_p,
+                       "        num_table_vpids: %d , num_user_pages_mrkdelete: %d , num_allocsets: %d\n",
+                       bt_stats_p->num_table_vpids, bt_stats_p->num_user_pages_mrkdelete, bt_stats_p->num_allocsets);
+            }
+        }
       fprintf (file_p, "\n");
     }
 

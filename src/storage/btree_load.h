@@ -51,13 +51,13 @@
    considerations of a delete operation */
 #define FIXED_EMPTY   ( DB_PAGESIZE * 0.33 )
 
-#define BTREE_MAX_ALIGN INT_ALIGNMENT	/* Maximum Alignment            */
-					     /* Maximum Leaf Node Entry Size */
+#define BTREE_MAX_ALIGN INT_ALIGNMENT   /* Maximum Alignment            */
+                                             /* Maximum Leaf Node Entry Size */
 #define LEAFENTSZ(n)  ( n )
-					     /* Maximum Non_Leaf Entry Size  */
+                                             /* Maximum Non_Leaf Entry Size  */
 #define NLEAFENTSZ(n) ( DISK_VPID_SIZE + n )
 
-#define HEADER 0		/* Header (Oth) record of the page  */
+#define HEADER 0                /* Header (Oth) record of the page  */
 
 #define BTREE_INVALID_INDEX_ID(btid) \
  ((btid) == NULL ||\
@@ -68,7 +68,7 @@
 #define BTREE_LEAF_NODE 	((short)0)
 #define BTREE_NON_LEAF_NODE 	((short)1)
 
-#define NODE_HEADER_SIZE       BTREE_NUM_OIDS_OFFSET	/* Node Header Disk Size */
+#define NODE_HEADER_SIZE       BTREE_NUM_OIDS_OFFSET    /* Node Header Disk Size */
 
 #define BTREE_IS_VALID_KEY_LEN(key_len) \
   ((key_len) > 0 && (key_len) <= BTREE_MAX_KEYLEN)
@@ -83,17 +83,14 @@
 
 typedef struct btree_node BTREE_NODE;
 struct btree_node
-{				/* node of the file_contents linked list */
-  BTREE_NODE *next;		/* Pointer to next node */
-  VPID pageid;			/* Identifier of the page */
+{                               /* node of the file_contents linked list */
+  BTREE_NODE *next;             /* Pointer to next node */
+  VPID pageid;                  /* Identifier of the page */
 };
 
 extern int btree_compare_key (THREAD_ENTRY * thread_p, BTID_INT * btid,
-			      const DB_IDXKEY * key1, const DB_IDXKEY * key2,
-			      int *start_colp);
+                              const DB_IDXKEY * key1, const DB_IDXKEY * key2, int *start_colp);
 /* Recovery routines */
-extern int btree_rv_undo_create_index (THREAD_ENTRY * thread_p,
-				       LOG_RCV * rcv);
-extern void btree_rv_dump_create_index (FILE * fp, int length_ignore,
-					void *data);
+extern int btree_rv_undo_create_index (THREAD_ENTRY * thread_p, LOG_RCV * rcv);
+extern void btree_rv_dump_create_index (FILE * fp, int length_ignore, void *data);
 #endif /* _BTREE_LOAD_H_ */

@@ -56,8 +56,7 @@
 #if defined(SERVER_MODE)
 static int bk_os_sysconf (void);
 #endif
-static void bk_remove_all_backup (THREAD_ENTRY * thread_p,
-				  BK_BACKUP_SESSION * session_p);
+static void bk_remove_all_backup (THREAD_ENTRY * thread_p, BK_BACKUP_SESSION * session_p);
 #if defined(SERVER_MODE)
 /*
  * bk_os_sysconf () -
@@ -75,15 +74,14 @@ bk_os_sysconf (void)
 #elif defined(_SC_CRAY_NCPU)
   nprocs = sysconf (_SC_CRAY_NCPU);
 #else
-  ;				/* give up */
+  ;                             /* give up */
 #endif
   return (nprocs > 1) ? (int) nprocs : 1;
 }
 #endif
 
 static int
-bk_initialize_backup_thread (BK_BACKUP_SESSION * session_p,
-			     UNUSED_ARG int num_threads)
+bk_initialize_backup_thread (BK_BACKUP_SESSION * session_p, UNUSED_ARG int num_threads)
 {
   BK_THREAD_INFO *thread_info_p;
   BK_QUEUE *queue_p;
@@ -128,13 +126,12 @@ bk_initialize_backup_thread (BK_BACKUP_SESSION * session_p,
     {
       thread_info_p->num_threads = MIN (num_threads, num_cpus * 2);
     }
-  thread_info_p->num_threads =
-    MIN (thread_info_p->num_threads, NUM_NORMAL_TRANS);
+  thread_info_p->num_threads = MIN (thread_info_p->num_threads, NUM_NORMAL_TRANS);
 #else /* SERVER_MODE */
   thread_info_p->num_threads = 1;
 #endif /* SERVER_MODE */
 
-#if 1				/* TODO - */
+#if 1                           /* TODO - */
   /* at here, disable multi-thread usage for fast Vol copy */
   thread_info_p->num_threads = 1;
 #endif
@@ -155,8 +152,7 @@ bk_initialize_backup_thread (BK_BACKUP_SESSION * session_p,
  *   return: error code
  */
 int
-bk_init_backup_buffer (BK_BACKUP_SESSION * session, const char *db_name,
-		       const char *backup_path, int do_compress)
+bk_init_backup_buffer (BK_BACKUP_SESSION * session, const char *db_name, const char *backup_path, int do_compress)
 {
   int vol_fd;
   struct stat stbuf;
@@ -181,15 +177,12 @@ bk_init_backup_buffer (BK_BACKUP_SESSION * session, const char *db_name,
        * If the backup_destination does not exist, try to create it to make
        * sure that we can write at this backup destination.
        */
-      vol_fd =
-	fileio_open (backup_path, FILEIO_DISK_FORMAT_MODE,
-		     FILEIO_DISK_PROTECTION_MODE);
+      vol_fd = fileio_open (backup_path, FILEIO_DISK_FORMAT_MODE, FILEIO_DISK_PROTECTION_MODE);
       if (vol_fd == NULL_VOLDES)
-	{
-	  er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE,
-			       ER_IO_MOUNT_FAIL, 1, backup_path);
-	  return ER_FAILED;
-	}
+        {
+          er_set_with_oserror (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_IO_MOUNT_FAIL, 1, backup_path);
+          return ER_FAILED;
+        }
       fileio_close (vol_fd);
       continue;
     }
@@ -202,15 +195,13 @@ bk_init_backup_buffer (BK_BACKUP_SESSION * session, const char *db_name,
        * databasename.bkLvNNN (Unix). In this case, we may destroy any previous
        * backup in this directory.
        */
-      bk_make_backup_name (session->bkup.name, db_name, backup_path,
-			   BK_INITIAL_BACKUP_UNITS);
+      bk_make_backup_name (session->bkup.name, db_name, backup_path, BK_INITIAL_BACKUP_UNITS);
     }
 
   buf_size = stbuf.st_blksize;
   /* User may override the default size by specifying a multiple of the
      natural block size for the device. */
-  session->bkup.iosize =
-    buf_size * prm_get_integer_value (PRM_ID_IO_BACKUP_NBUFFERS);
+  session->bkup.iosize = buf_size * prm_get_integer_value (PRM_ID_IO_BACKUP_NBUFFERS);
 
   /*
    * Initialize backup device related information.
@@ -223,8 +214,7 @@ bk_init_backup_buffer (BK_BACKUP_SESSION * session, const char *db_name,
   session->bkup.buffer = (char *) malloc (session->bkup.iosize);
   if (session->bkup.buffer == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      session->bkup.iosize);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, session->bkup.iosize);
 
       goto error;
     }
@@ -232,8 +222,7 @@ bk_init_backup_buffer (BK_BACKUP_SESSION * session, const char *db_name,
   session->bkuphdr = (BK_BACKUP_HEADER *) malloc (BK_BACKUP_HEADER_IO_SIZE);
   if (session->bkuphdr == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      BK_BACKUP_HEADER_IO_SIZE);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, BK_BACKUP_HEADER_IO_SIZE);
 
       goto error;
     }
@@ -286,8 +275,7 @@ error:
  *   sleep_msecs(in): sleep interval in msecs
  */
 int
-bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p, int num_threads,
-			   int sleep_msecs)
+bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p, int num_threads, int sleep_msecs)
 {
   int size;
   int io_page_size;
@@ -302,15 +290,12 @@ bk_init_backup_vol_buffer (BK_BACKUP_SESSION * session_p, int num_threads,
   io_page_size = IO_PAGESIZE;
   io_page_size *= FILEIO_FULL_LEVEL_EXP;
 
-  size =
-    MAX (io_page_size + BK_BACKUP_PAGE_OVERHEAD,
-	 BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE);
+  size = MAX (io_page_size + BK_BACKUP_PAGE_OVERHEAD, BK_VOL_HEADER_IN_BACKUP_PAGE_SIZE);
 
   session_p->dbfile.area = (BK_BACKUP_PAGE *) malloc (size);
   if (session_p->dbfile.area == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
 
       goto error;
     }
@@ -352,18 +337,16 @@ error:
  *       DB_MAX_PATH_LENGTH length.
  */
 void
-bk_make_backup_name (char *backup_name_p, const char *no_path_vol_name_p,
-		     const char *backup_path_p, int unit_num)
+bk_make_backup_name (char *backup_name_p, const char *no_path_vol_name_p, const char *backup_path_p, int unit_num)
 {
   int n;
 
   n = snprintf (backup_name_p, PATH_MAX, "%s%c%s%sv%03d",
-		backup_path_p, PATH_SEPARATOR, no_path_vol_name_p,
-		BK_SUFFIX_BACKUP, unit_num);
+                backup_path_p, PATH_SEPARATOR, no_path_vol_name_p, BK_SUFFIX_BACKUP, unit_num);
   if (n <= 0)
     {
       assert (false);
-      ;				/* TODO - avoid compile error */
+      ;                         /* TODO - avoid compile error */
     }
 }
 
@@ -411,10 +394,10 @@ bk_get_zip_level_string (BK_ZIP_LEVEL zip_level)
     case BK_ZIP_NONE_LEVEL:
       return ("NONE");
 
-    case BK_ZIP_1_LEVEL:	/* case BK_ZIP_LZO1X_DEFAULT_LEVEL: */
+    case BK_ZIP_1_LEVEL:       /* case BK_ZIP_LZO1X_DEFAULT_LEVEL: */
       return ("ZIP LEVEL 1 - BEST SPEED");
 
-    case BK_ZIP_9_LEVEL:	/* case BK_ZIP_LZO1X_999_LEVEL: */
+    case BK_ZIP_9_LEVEL:       /* case BK_ZIP_LZO1X_999_LEVEL: */
       return ("ZIP LEVEL 9 - BEST REDUCTION");
 
     default:
@@ -435,10 +418,10 @@ bk_allocate_node (BK_QUEUE * queue_p, BK_BACKUP_HEADER * backup_header_p)
   int size;
   size_t zip_page_size, wrkmem_size;
 
-  if (queue_p->free_list)	/* re-use already alloced nodes */
+  if (queue_p->free_list)       /* re-use already alloced nodes */
     {
       node_p = queue_p->free_list;
-      queue_p->free_list = node_p->next;	/* cut-off */
+      queue_p->free_list = node_p->next;        /* cut-off */
       return node_p;
     }
 
@@ -446,8 +429,7 @@ bk_allocate_node (BK_QUEUE * queue_p, BK_BACKUP_HEADER * backup_header_p)
   node_p = (BK_NODE *) malloc (sizeof (BK_NODE));
   if (node_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      sizeof (BK_NODE));
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, sizeof (BK_NODE));
       goto exit_on_error;
     }
 
@@ -458,8 +440,7 @@ bk_allocate_node (BK_QUEUE * queue_p, BK_BACKUP_HEADER * backup_header_p)
   node_p->area = (BK_BACKUP_PAGE *) malloc (size);
   if (node_p == NULL)
     {
-      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1,
-	      size);
+      er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, size);
       goto exit_on_error;
     }
 
@@ -469,30 +450,28 @@ bk_allocate_node (BK_QUEUE * queue_p, BK_BACKUP_HEADER * backup_header_p)
       zip_page_size = sizeof (lzo_uint) + size + size / 16 + 64 + 3;
       node_p->zip_page = (BK_ZIP_PAGE *) malloc (zip_page_size);
       if (node_p->zip_page == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, zip_page_size);
-	  goto exit_on_error;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, zip_page_size);
+          goto exit_on_error;
+        }
 
       if (backup_header_p->zip_level == BK_ZIP_LZO1X_999_LEVEL)
-	{
-	  /* best reduction */
-	  wrkmem_size = LZO1X_999_MEM_COMPRESS;
-	}
+        {
+          /* best reduction */
+          wrkmem_size = LZO1X_999_MEM_COMPRESS;
+        }
       else
-	{
-	  /* best speed */
-	  wrkmem_size = LZO1X_1_MEM_COMPRESS;
-	}
+        {
+          /* best speed */
+          wrkmem_size = LZO1X_1_MEM_COMPRESS;
+        }
 
       node_p->wrkmem = (lzo_bytep) malloc (wrkmem_size);
       if (node_p->wrkmem == NULL)
-	{
-	  er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY,
-		  1, wrkmem_size);
-	  goto exit_on_error;
-	}
+        {
+          er_set (ER_ERROR_SEVERITY, ARG_FILE_LINE, ER_OUT_OF_VIRTUAL_MEMORY, 1, wrkmem_size);
+          goto exit_on_error;
+        }
       break;
 
     default:
@@ -509,19 +488,19 @@ exit_on_error:
   if (node_p)
     {
       if (node_p->wrkmem)
-	{
-	  free_and_init (node_p->wrkmem);
-	}
+        {
+          free_and_init (node_p->wrkmem);
+        }
 
       if (node_p->zip_page)
-	{
-	  free_and_init (node_p->zip_page);
-	}
+        {
+          free_and_init (node_p->zip_page);
+        }
 
       if (node_p->area)
-	{
-	  free_and_init (node_p->area);
-	}
+        {
+          free_and_init (node_p->area);
+        }
 
       free_and_init (node_p);
     }
@@ -542,7 +521,7 @@ bk_free_node (BK_QUEUE * queue_p, BK_NODE * node_p)
   if (node_p)
     {
       node_p->prev = node_p->next = NULL;
-      node_p->next = queue_p->free_list;	/* add to free list */
+      node_p->next = queue_p->free_list;        /* add to free list */
       queue_p->free_list = node_p;
     }
 
@@ -561,17 +540,17 @@ bk_append_queue (BK_QUEUE * queue_p, BK_NODE * node_p)
   if (node_p)
     {
       node_p->prev = node_p->next = NULL;
-      node_p->next = queue_p->tail;	/* add to tail */
+      node_p->next = queue_p->tail;     /* add to tail */
       if (queue_p->tail)
-	{
-	  queue_p->tail->prev = node_p;
-	}
+        {
+          queue_p->tail->prev = node_p;
+        }
       queue_p->tail = node_p;
       if (queue_p->head == NULL)
-	{
-	  /* the first */
-	  queue_p->head = node_p;
-	}
+        {
+          /* the first */
+          queue_p->head = node_p;
+        }
 
       queue_p->size++;
     }
@@ -592,14 +571,14 @@ bk_delete_queue_head (BK_QUEUE * queue_p)
   node = queue_p->head;
   if (node)
     {
-      if (node == queue_p->tail)	/* only one node */
-	{
-	  queue_p->tail = NULL;
-	}
+      if (node == queue_p->tail)        /* only one node */
+        {
+          queue_p->tail = NULL;
+        }
       else
-	{
-	  node->prev->next = NULL;	/* cut-off */
-	}
+        {
+          node->prev->next = NULL;      /* cut-off */
+        }
 
       queue_p->head = node->prev;
       queue_p->size--;
@@ -632,15 +611,15 @@ bk_abort_backup_client (BK_BACKUP_SESSION * session_p, bool does_unformat_bk)
     {
       /* Remove current backup volume */
       if (fileio_is_volume_exist_and_file (session_p->bkup.vlabel))
-	{
-	  fileio_unformat (NULL, session_p->bkup.vlabel);
-	}
+        {
+          fileio_unformat (NULL, session_p->bkup.vlabel);
+        }
 
       /* Remove backup volumes previous to this one */
       if (session_p->bkuphdr)
-	{
-	  bk_remove_all_backup (NULL, session_p);
-	}
+        {
+          bk_remove_all_backup (NULL, session_p);
+        }
     }
 
   if (session_p->verbose_fp)

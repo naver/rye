@@ -43,16 +43,12 @@
 #include "backup.h"
 
 extern int bk_run_backup (char *db_name, const PRM_NODE_INFO * db_host_info,
-			  const char *backup_path,
-			  const char *backup_verbose_file_path,
-			  int num_threads, int do_compress,
-			  int sleep_msecs,
-			  int delete_unneeded_logarchives,
-			  bool force_overwrite, int make_slave,
-			  HA_STATE server_state);
-extern int bk_write_backup (BK_BACKUP_SESSION * session_p,
-			    ssize_t to_write_nbytes, int unzip_nbytes);
-extern void bk_start_vol_in_backup (BK_BACKUP_SESSION * session,
-				    int vol_type);
+                          const char *backup_path,
+                          const char *backup_verbose_file_path,
+                          int num_threads, int do_compress,
+                          int sleep_msecs,
+                          int delete_unneeded_logarchives, bool force_overwrite, int make_slave, HA_STATE server_state);
+extern int bk_write_backup (BK_BACKUP_SESSION * session_p, ssize_t to_write_nbytes, int unzip_nbytes);
+extern void bk_start_vol_in_backup (BK_BACKUP_SESSION * session, int vol_type);
 extern void bk_end_vol_in_backup (BK_BACKUP_SESSION * session);
 #endif /* BACKUP_CL_H_ */

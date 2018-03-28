@@ -30,7 +30,7 @@
 #include "storage_common.h"
 #include "dbtype.h"
 
-#define ROOTCLASS_NAME "Rootclass"	/* Name of Rootclass */
+#define ROOTCLASS_NAME "Rootclass"      /* Name of Rootclass */
 
 #if !defined(SERVER_MODE)
 #define OID_TEMPID_MIN          INT_MIN

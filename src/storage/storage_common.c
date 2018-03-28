@@ -45,8 +45,7 @@
 
 static PGLENGTH db_Io_page_size = IO_DEFAULT_PAGE_SIZE;
 static PGLENGTH db_Log_page_size = IO_DEFAULT_PAGE_SIZE;
-static PGLENGTH db_User_page_size =
-  IO_DEFAULT_PAGE_SIZE - RESERVED_SIZE_IN_PAGE;
+static PGLENGTH db_User_page_size = IO_DEFAULT_PAGE_SIZE - RESERVED_SIZE_IN_PAGE;
 
 static PGLENGTH find_valid_page_size (PGLENGTH page_size);
 
@@ -97,8 +96,7 @@ db_log_page_size (void)
 int
 db_set_page_size (PGLENGTH io_page_size, PGLENGTH log_page_size)
 {
-  assert (io_page_size >= IO_MIN_PAGE_SIZE
-	  && log_page_size >= IO_MIN_PAGE_SIZE);
+  assert (io_page_size >= IO_MIN_PAGE_SIZE && log_page_size >= IO_MIN_PAGE_SIZE);
 
   if (io_page_size < IO_MIN_PAGE_SIZE || log_page_size < IO_MIN_PAGE_SIZE)
     {
@@ -157,42 +155,40 @@ find_valid_page_size (PGLENGTH page_size)
   else
     {
       if (!IS_POWER_OF_2 (power2_page_size))
-	{
-	  /*
-	   * Not a power of 2 or page size is too small
-	   *
-	   * Round the number to a power of two. Find smaller number that it is
-	   * a power of two, and then shift to get larger number.
-	   */
-	  while (!IS_POWER_OF_2 (power2_page_size))
-	    {
-	      if (power2_page_size < IO_MIN_PAGE_SIZE)
-		{
-		  power2_page_size = IO_MIN_PAGE_SIZE;
-		  break;
-		}
-	      else
-		{
-		  /* Turn off some bits but the left most one */
-		  power2_page_size =
-		    power2_page_size & (power2_page_size - 1);
-		}
-	    }
+        {
+          /*
+           * Not a power of 2 or page size is too small
+           *
+           * Round the number to a power of two. Find smaller number that it is
+           * a power of two, and then shift to get larger number.
+           */
+          while (!IS_POWER_OF_2 (power2_page_size))
+            {
+              if (power2_page_size < IO_MIN_PAGE_SIZE)
+                {
+                  power2_page_size = IO_MIN_PAGE_SIZE;
+                  break;
+                }
+              else
+                {
+                  /* Turn off some bits but the left most one */
+                  power2_page_size = power2_page_size & (power2_page_size - 1);
+                }
+            }
 
-	  power2_page_size <<= 1;
+          power2_page_size <<= 1;
 
-	  if (power2_page_size < IO_MIN_PAGE_SIZE)
-	    {
-	      power2_page_size = IO_MIN_PAGE_SIZE;
-	    }
-	  else if (power2_page_size > IO_MAX_PAGE_SIZE)
-	    {
-	      power2_page_size = IO_MAX_PAGE_SIZE;
-	    }
+          if (power2_page_size < IO_MIN_PAGE_SIZE)
+            {
+              power2_page_size = IO_MIN_PAGE_SIZE;
+            }
+          else if (power2_page_size > IO_MAX_PAGE_SIZE)
+            {
+              power2_page_size = IO_MAX_PAGE_SIZE;
+            }
 
-	  er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_DTSR_BAD_PAGESIZE, 2,
-		  page_size, power2_page_size);
-	}
+          er_set (ER_WARNING_SEVERITY, ARG_FILE_LINE, ER_DTSR_BAD_PAGESIZE, 2, page_size, power2_page_size);
+        }
     }
 
   return power2_page_size;
@@ -233,8 +229,7 @@ recdes_set_data_area (RECDES * rec, char *data, int size)
 char *
 lsa_to_string (char *buf, int buf_size, LOG_LSA * lsa)
 {
-  snprintf (buf, buf_size, "(%lld|%d)", (long long int) lsa->pageid,
-	    lsa->offset);
+  snprintf (buf, buf_size, "(%lld|%d)", (long long int) lsa->pageid, lsa->offset);
   buf[buf_size - 1] = 0;
   return buf;
 }
@@ -267,8 +262,7 @@ int64_to_lsa (INT64 value)
 char *
 oid_to_string (char *buf, int buf_size, OID * oid)
 {
-  snprintf (buf, buf_size, "(%d|%d|%d)", oid->volid, oid->pageid,
-	    oid->slotid);
+  snprintf (buf, buf_size, "(%d|%d|%d)", oid->volid, oid->pageid, oid->slotid);
   buf[buf_size - 1] = 0;
   return buf;
 }
@@ -292,8 +286,7 @@ vfid_to_string (char *buf, int buf_size, VFID * vfid)
 char *
 hfid_to_string (char *buf, int buf_size, HFID * hfid)
 {
-  snprintf (buf, buf_size, "(%d|%d|%d)", hfid->vfid.volid, hfid->vfid.fileid,
-	    hfid->hpgid);
+  snprintf (buf, buf_size, "(%d|%d|%d)", hfid->vfid.volid, hfid->vfid.fileid, hfid->hpgid);
   buf[buf_size - 1] = 0;
   return buf;
 }
@@ -302,8 +295,7 @@ hfid_to_string (char *buf, int buf_size, HFID * hfid)
 char *
 btid_to_string (char *buf, int buf_size, BTID * btid)
 {
-  snprintf (buf, buf_size, "%d|%d|%d", btid->vfid.volid, btid->vfid.fileid,
-	    btid->root_pageid);
+  snprintf (buf, buf_size, "%d|%d|%d", btid->vfid.volid, btid->vfid.fileid, btid->root_pageid);
   buf[buf_size - 1] = 0;
   return buf;
 }
@@ -363,35 +355,35 @@ page_type_to_string (PAGE_TYPE ptype)
 {
   switch (ptype)
     {
-    case PAGE_UNKNOWN:		/* 0 */
+    case PAGE_UNKNOWN:         /* 0 */
       return "PAGE_UNKNOWN";
-    case PAGE_FILE_HEADER:	/* 1 */
+    case PAGE_FILE_HEADER:     /* 1 */
       return "PAGE_FILE_HEADER";
-    case PAGE_FILE_TAB:	/* 2 */
+    case PAGE_FILE_TAB:        /* 2 */
       return "PAGE_FILE_TAB";
-    case PAGE_HEAP_HEADER:	/* 3 */
+    case PAGE_HEAP_HEADER:     /* 3 */
       return "PAGE_HEAP_HEADER";
-    case PAGE_HEAP:		/* 4 */
+    case PAGE_HEAP:            /* 4 */
       return "PAGE_HEAP";
-    case PAGE_VOLHEADER:	/* 5 */
+    case PAGE_VOLHEADER:       /* 5 */
       return "PAGE_VOLHEADER";
-    case PAGE_VOLBITMAP:	/* 6 */
+    case PAGE_VOLBITMAP:       /* 6 */
       return "PAGE_VOLBITMAP";
-    case PAGE_XASL:		/* 7 */
+    case PAGE_XASL:            /* 7 */
       return "PAGE_XASL";
-    case PAGE_QRESULT:		/* 8 */
+    case PAGE_QRESULT:         /* 8 */
       return "PAGE_QRESULT";
-    case PAGE_EHASH:		/* 9 */
+    case PAGE_EHASH:           /* 9 */
       return "PAGE_EHASH";
-    case PAGE_OVERFLOW:	/* 10 */
+    case PAGE_OVERFLOW:        /* 10 */
       return "PAGE_OVERFLOW";
-    case PAGE_AREA:		/* 11 */
+    case PAGE_AREA:            /* 11 */
       return "PAGE_AREA";
-    case PAGE_CATALOG:		/* 12 */
+    case PAGE_CATALOG:         /* 12 */
       return "PAGE_CATALOG";
-    case PAGE_BTREE_ROOT:	/* 13 */
+    case PAGE_BTREE_ROOT:      /* 13 */
       return "PAGE_BTREE_ROOT";
-    case PAGE_BTREE:		/* 14 */
+    case PAGE_BTREE:           /* 14 */
       return "PAGE_BTREE";
 
     default:

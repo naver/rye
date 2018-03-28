@@ -33,8 +33,8 @@
 #include "storage_common.h"
 #include "log_manager.h"
 
-#define PEEK          true	/* Peek for a slotted record */
-#define COPY          false	/* Don't peek, but copy a slotted record */
+#define PEEK          true      /* Peek for a slotted record */
+#define COPY          false     /* Don't peek, but copy a slotted record */
 
 enum
 {
@@ -101,94 +101,68 @@ enum
 typedef struct spage_slot SPAGE_SLOT;
 struct spage_slot
 {
-  unsigned int offset_to_record:14;	/* Byte Offset from the beginning of the page
-					 * to the beginning of the record */
-  unsigned int record_length:14;	/* Length of record */
-  unsigned int record_type:4;	/* Record type (REC_HOME, REC_NEWHOME, ...)
-				 * described by slot. */
+  unsigned int offset_to_record:14;     /* Byte Offset from the beginning of the page
+                                         * to the beginning of the record */
+  unsigned int record_length:14;        /* Length of record */
+  unsigned int record_type:4;   /* Record type (REC_HOME, REC_NEWHOME, ...)
+                                 * described by slot. */
 };
 
 extern int spage_boot (THREAD_ENTRY * thread_p);
 extern void spage_finalize (THREAD_ENTRY * thread_p);
-extern void spage_free_saved_spaces (THREAD_ENTRY * thread_p,
-				     void *first_save_entry);
+extern void spage_free_saved_spaces (THREAD_ENTRY * thread_p, void *first_save_entry);
 extern int spage_slot_size (void);
 extern int spage_header_size (void);
 extern int spage_get_free_space (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);
-extern int spage_get_free_space_without_saving (THREAD_ENTRY * thread_p,
-						PAGE_PTR page_p);
+extern int spage_get_free_space_without_saving (THREAD_ENTRY * thread_p, PAGE_PTR page_p);
 extern PGNSLOTS spage_number_of_records (PAGE_PTR pgptr);
 extern PGNSLOTS spage_number_of_slots (PAGE_PTR pgptr);
 extern void spage_initialize (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			      INT16 slots_type, unsigned short alignment,
-			      bool safeguard_rvspace);
-extern int spage_insert (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			 RECDES * recdes, PGSLOTID * slotid);
+                              INT16 slots_type, unsigned short alignment, bool safeguard_rvspace);
+extern int spage_insert (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, RECDES * recdes, PGSLOTID * slotid);
 extern int spage_find_slot_for_insert (THREAD_ENTRY * thread_p,
-				       PAGE_PTR pgptr, RECDES * recdes,
-				       PGSLOTID * slotid, void **slotptr,
-				       int *used_space);
-extern int spage_insert_at (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			    PGSLOTID slotid, RECDES * recdes);
-extern int spage_insert_for_recovery (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-				      PGSLOTID slotid, RECDES * recdes);
-extern PGSLOTID spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			      PGSLOTID slotid);
-extern PGSLOTID spage_delete_for_recovery (THREAD_ENTRY * thread_p,
-					   PAGE_PTR pgptr, PGSLOTID slotid);
-extern int spage_update (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			 PGSLOTID slotid, const RECDES * recdes);
-extern void spage_update_record_type (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-				      PGSLOTID slotid, INT16 type);
-extern bool spage_is_updatable (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-				PGSLOTID slotid, const RECDES * recdes);
+                                       PAGE_PTR pgptr, RECDES * recdes,
+                                       PGSLOTID * slotid, void **slotptr, int *used_space);
+extern int spage_insert_at (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, RECDES * recdes);
+extern int spage_insert_for_recovery (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, RECDES * recdes);
+extern PGSLOTID spage_delete (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid);
+extern PGSLOTID spage_delete_for_recovery (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid);
+extern int spage_update (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, const RECDES * recdes);
+extern void spage_update_record_type (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, INT16 type);
+extern bool spage_is_updatable (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, const RECDES * recdes);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern bool spage_reclaim (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);
-extern int spage_split (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			PGSLOTID slotid, int offset, PGSLOTID * new_slotid);
-extern int spage_append (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			 PGSLOTID slotid, const RECDES * recdes);
+extern int spage_split (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, int offset, PGSLOTID * new_slotid);
+extern int spage_append (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, const RECDES * recdes);
 extern int spage_take_out (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			   PGSLOTID slotid, int takeout_offset,
-			   int takeout_length);
-extern int spage_put (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-		      PGSLOTID slotid, int offset, const RECDES * recdes);
+                           PGSLOTID slotid, int takeout_offset, int takeout_length);
+extern int spage_put (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid, int offset, const RECDES * recdes);
 extern int spage_overwrite (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			    PGSLOTID slotid, int overwrite_offset,
-			    const RECDES * recdes);
-extern int spage_merge (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-			PGSLOTID slotid1, PGSLOTID slotid2);
+                            PGSLOTID slotid, int overwrite_offset, const RECDES * recdes);
+extern int spage_merge (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid1, PGSLOTID slotid2);
 #endif /* ENABLE_UNUSED_FUNCTION */
-extern SCAN_CODE spage_next_record (PAGE_PTR pgptr, PGSLOTID * slotid,
-				    RECDES * recdes, int ispeeking);
-extern SCAN_CODE spage_previous_record (PAGE_PTR pgptr, PGSLOTID * slotid,
-					RECDES * recdes, int ispeeking);
-extern SCAN_CODE spage_get_record (PAGE_PTR pgptr, PGSLOTID slotid,
-				   RECDES * recdes, int ispeeking);
+extern SCAN_CODE spage_next_record (PAGE_PTR pgptr, PGSLOTID * slotid, RECDES * recdes, int ispeeking);
+extern SCAN_CODE spage_previous_record (PAGE_PTR pgptr, PGSLOTID * slotid, RECDES * recdes, int ispeeking);
+extern SCAN_CODE spage_get_record (PAGE_PTR pgptr, PGSLOTID slotid, RECDES * recdes, int ispeeking);
 #if defined (ENABLE_UNUSED_FUNCTION)
 extern bool spage_is_slot_exist (PAGE_PTR pgptr, PGSLOTID slotid);
 #endif /* ENABLE_UNUSED_FUNCTION */
-extern void spage_dump (THREAD_ENTRY * thread_p, FILE * fp, PAGE_PTR pgptr,
-			int isrecord_printed);
+extern void spage_dump (THREAD_ENTRY * thread_p, FILE * fp, PAGE_PTR pgptr, int isrecord_printed);
 #if !defined(NDEBUG)
 extern int spage_check (THREAD_ENTRY * thread_p, PAGE_PTR page_p);
 #endif
 extern int spage_get_record_length (PAGE_PTR pgptr, PGSLOTID slotid);
 extern int spage_get_space_for_record (PAGE_PTR page_p, PGSLOTID slot_id);
 extern INT16 spage_get_record_type (PAGE_PTR pgptr, PGSLOTID slotid);
-extern int spage_max_space_for_new_record (THREAD_ENTRY * thread_p,
-					   PAGE_PTR pgptr);
-extern void spage_collect_statistics (PAGE_PTR pgptr, int *npages,
-				      int *nrecords, int *rec_length);
+extern int spage_max_space_for_new_record (THREAD_ENTRY * thread_p, PAGE_PTR pgptr);
+extern void spage_collect_statistics (PAGE_PTR pgptr, int *npages, int *nrecords, int *rec_length);
 extern int spage_max_record_size (void);
-extern int spage_check_slot_owner (THREAD_ENTRY * thread_p, PAGE_PTR pgptr,
-				   PGSLOTID slotid);
+extern int spage_check_slot_owner (THREAD_ENTRY * thread_p, PAGE_PTR pgptr, PGSLOTID slotid);
 extern int spage_compact (PAGE_PTR pgptr);
 extern bool spage_is_valid_anchor_type (const INT16 anchor_type);
 extern const char *spage_anchor_flag_string (const INT16 anchor_type);
 extern const char *spage_alignment_string (unsigned short alignment);
 
-extern PGSLOTID spage_find_free_slot (PAGE_PTR page_p,
-				      SPAGE_SLOT ** out_slot_p);
+extern PGSLOTID spage_find_free_slot (PAGE_PTR page_p, SPAGE_SLOT ** out_slot_p);
 
 #endif /* _SLOTTED_PAGE_H_ */
