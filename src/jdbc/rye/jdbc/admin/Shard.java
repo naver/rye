@@ -40,8 +40,8 @@ public class Shard
     public static boolean run(String[] args, PrintStream out, PrintStream err)
     {
 	ShardCommand command = null;
-	ShardCommand[] allCommands = { new ShardInit(), new ShardNodeAdd(), new ShardInstanceAdd(),
-			new ShardNodeDrop(), new ShardInstanceDrop(), new ShardRebalance(), new ShardChangeConf() };
+	ShardCommand[] allCommands = { new ShardInit(), new ShardNodeAdd(), new ShardInstanceAdd(), new ShardNodeDrop(),
+			new ShardInstanceDrop(), new ShardRebalance(), new ShardChangeConf(), new ShardInfo() };
 
 	for (int i = 0; i < allCommands.length; i++) {
 	    if (allCommands[i].commandName().equalsIgnoreCase(args.length > 0 ? args[0] : null)) {
