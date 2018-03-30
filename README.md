@@ -1,5 +1,4 @@
 [![Build Status](https://travis-ci.org/naver/rye.svg?branch=master)](https://travis-ci.org/naver/rye)
-[![Build Status v1.1](https://travis-ci.org/naver/rye.svg?branch=v1.1)](https://travis-ci.org/naver/rye)
 [![Coverity Scan Status](https://scan.coverity.com/projects/14194/badge.svg)](https://scan.coverity.com/projects/naver-rye)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/b176ed8900494f0d836030798aa47699)](https://www.codacy.com/app/kyungsik.seo/rye?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=naver/rye&amp;utm_campaign=Badge_Grade)
 
