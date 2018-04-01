@@ -39,10 +39,14 @@ java rye.jdbc.admin.Shard init demodb 1.1.1.1:30000,1.1.1.1:31000 --num-groups=1
 ### Create table and data
 
 Rye's JDBC connection url is:
+```
 jdbc:rye://<host_ip>:<host_port>/<dbname>:<dbuser>:<dbpassword>/rw?<property>
+```
 
 So, the connection url of this example is
+```
 jdbc:rye://1.1.1.1:30000/demodb:dba:/rw
+```
 
 You can use GUI Sql client like [squirrel-sql](http://squirrel-sql.sourceforge.net/)
 
