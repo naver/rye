@@ -81,7 +81,7 @@ id5	5	hello user5	1
 
 ### Add node-2
 
-make 2 more containers for node-2
+Make 2 containers for node-2
 
 ```
 mkdir $HOME/DB2_1
@@ -136,7 +136,7 @@ MIGRATION:
     1             2              COMPLETE     736
 ```
 
-You can see that some data's nodeid is changed by select query.
+You can see that some data's nodeid is changed by SELECT query.
 You don't need to change your connection url after node is addes.
 
 ```
