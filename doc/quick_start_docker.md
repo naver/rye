@@ -2,6 +2,16 @@
 This section describes how to set up a database with docker in one machine.
 The database consists of 2 shard nodes, and each node has one master database and one slave database.
 
+### download JDBC driver
+
+Download rye jdbc driver from release page of rye github project. 
+https://github.com/naver/rye/releases
+
+set CLASSPATH
+```
+export CLASSPATH=<your_rye_jdbc_path>
+```
+
 ### run docker containers for node-1
 
 make 2 docker containers for shard node 1.
@@ -20,9 +30,16 @@ sudo docker run -d -it --name ryedb1_2 -p 31000:30000 -p 31000:30000/udp \
 ### create databases and initialize shrard information
 
 Following command creates 2 databases for shard node-1 and initialize shard information.
+This example assumes that the machine's ip address is 1.1.1.1.
 
 ```
 java rye.jdbc.admin.Shard init demodb 1.1.1.1:30000,1.1.1.1:31000 --num-groups=10000 -v
 ```
+
+### Create table and data
+
+Rye's JDBC connection url is:
+
+
 
 
