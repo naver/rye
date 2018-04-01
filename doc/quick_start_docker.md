@@ -109,11 +109,31 @@ java rye.jdbc.admin.Shard rebalance demodb 1.1.1.1:30000 1 2
 
 ```
 This command operates just rebalance scheduling, and data migration will be executed sequentially.
-You can check the shard nodes' information and rebalance status with the following command.
+You can check the shard nodes' information and rebalance status with the 'Shard info' command.
 
 ```
-java rye.jdbc.admin.Shard info demodb 1.1.1.1:30000
+$ java rye.jdbc.admin.Shard info demodb 1.1.1.1:30000
+DBNAME: demodb
+SHARD NODE:
+    nodeid    local-dbname    host       port
+    --------------------------------------------
+    1         demodb1         1.1.1.1    30000
+    1         demodb1         1.1.1.1    31000
+    2         demodb2         1.1.1.1    32000
+    2         demodb2         1.1.1.1    33000
 
+GROUPID:
+    nodeid    groupid-count
+    -----------------------
+    1         9264
+    2         736
+
+MIGRATION:
+    src_nodeid    dest_nodeid    status       groupid-count
+    -------------------------------------------------------
+    1             2              SCHEDULED    4254
+    1             2              RUNNING      10
+    1             2              COMPLETE     736
 ```
 
 You can see that some data's nodeid is changed by select query.
