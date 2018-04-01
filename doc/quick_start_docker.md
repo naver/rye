@@ -14,7 +14,7 @@ export CLASSPATH=<your_rye_jdbc_path>
 
 ### Run docker containers for node-1
 
-make 2 docker containers for shard node-1.
+Make 2 docker containers for shard node-1.
 One will be a master database and the other will be a slave database.
 
 ```
