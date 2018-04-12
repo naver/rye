@@ -137,7 +137,7 @@ MIGRATION:
 ```
 
 You can see that some data's nodeid is changed by SELECT query.
-You don't need to change your connection url after node is addes.
+You don't need to change your connection url after node is added.
 
 ```
 select mail.*, shard_nodeid() from mail
