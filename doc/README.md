@@ -2,7 +2,10 @@
 
 Scalability problems in relational databases are perceived as a major disadvantage. Sharding is one of the solutions to overcome the scalability problems, but the lack of functionality supported by DBMS makes it difficult to apply for the application. To solve it, we are developing RYE which is RDBMS supporting sharding functionality.
 
-## [Quickstart](https://github.com/naver/rye#quickstart)
+## Quickstart
+
+* [Build and Installation](quick_start.md)
+* [Using docker](quick_start_docker.md)
 
 ## [Manual](https://github.com/naver/rye/blob/master/doc/content/manual/readme.md)
 
